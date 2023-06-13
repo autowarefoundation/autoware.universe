@@ -824,9 +824,9 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
 
 void StartPlannerModule::setDebugData() const
 {
-  using marker_utils::createEgoPredictedPathMarkerArray;
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
+  using marker_utils::createPredictedPathMarkerArray;
 
   const auto add = [this](const MarkerArray & added) {
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
@@ -834,9 +834,7 @@ void StartPlannerModule::setDebugData() const
 
   // TODO(Sugahara): define param for target_velocity, acc_till_target_velocity, resolution,
   // stopping_time
-  size_t nearest_segment_index = motion_utils::findNearestIndex(
-    status_.pull_out_path.partial_paths.back().points,
-    planner_data_->self_odometry->pose.pose.position);
+
   const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
   const double target_velocity = 2.0;
   const double acc_till_target_velocity = 0.5;
@@ -846,7 +844,7 @@ void StartPlannerModule::setDebugData() const
 
   const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
     status_.pull_out_path.partial_paths.back().points, current_velocity, target_velocity,
-    acc_till_target_velocity, current_pose, nearest_segment_index, resolution, stopping_time);
+    acc_till_target_velocity, current_pose, resolution, stopping_time);
 
   debug_marker_.markers.clear();
   add(createPredictedPathMarkerArray(
