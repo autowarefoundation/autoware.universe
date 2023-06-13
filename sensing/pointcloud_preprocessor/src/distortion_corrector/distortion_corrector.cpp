@@ -20,26 +20,6 @@
 #include <string>
 #include <utility>
 
-template <typename T>
-std::deque<T> pop_time_stamp(const std::deque<T> & input_deque, const rclcpp::Time & target_stamp)
-{
-  std::deque<T> output_deque;
-  for (size_t i = 0; i < input_deque.size(); ++i) output_deque.push_back(input_deque[i]);
-
-  while (!input_deque.empty()) {
-    // for replay rosbag
-    if (rclcpp::Time(output_deque.front().header.stamp) > target_stamp) {
-      output_deque.pop_front();
-    } else if (  // NOLINT
-      rclcpp::Time(output_deque.front().header.stamp) <
-      target_stamp - rclcpp::Duration::from_seconds(1.0)) {
-      output_deque.pop_front();
-    }
-    break;
-  }
-  return output_deque;
-}
-
 namespace pointcloud_preprocessor
 {
 /** @brief Constructor. */
@@ -80,20 +60,22 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
 void DistortionCorrectorComponent::onTwistWithCovarianceStamped(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg)
 {
-  geometry_msgs::msg::Vector3Stamped velocity_msg;
-  velocity_msg.header = twist_msg->header;
-  velocity_msg.vector = twist_msg->twist.twist.linear;
-  vehicle_velocity_queue_.push_back(velocity_msg);
+  geometry_msgs::msg::TwistStamped msg;
+  msg.header = twist_msg->header;
+  msg.twist = twist_msg->twist.twist;
+  twist_queue_.push_back(msg);
 
-  geometry_msgs::msg::Vector3Stamped angular_velocity_msg;
-  angular_velocity_msg.header = twist_msg->header;
-  angular_velocity_msg.vector = twist_msg->twist.twist.linear;
-  vehicle_angular_velocity_queue_.push_back(angular_velocity_msg);
-
-  vehicle_velocity_queue_ =
-    pop_time_stamp(vehicle_velocity_queue_, rclcpp::Time(twist_msg->header.stamp));
-  vehicle_angular_velocity_queue_ =
-    pop_time_stamp(vehicle_angular_velocity_queue_, rclcpp::Time(twist_msg->header.stamp));
+  while (!twist_queue_.empty()) {
+    // for replay rosbag
+    if (rclcpp::Time(twist_queue_.front().header.stamp) > rclcpp::Time(twist_msg->header.stamp)) {
+      twist_queue_.pop_front();
+    } else if (  // NOLINT
+      rclcpp::Time(twist_queue_.front().header.stamp) <
+      rclcpp::Time(twist_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
+      twist_queue_.pop_front();
+    }
+    break;
+  }
 }
 
 void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
@@ -114,10 +96,21 @@ void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstShare
   geometry_msgs::msg::Vector3Stamped transformed_angular_velocity;
   tf2::doTransform(angular_velocity, transformed_angular_velocity, *tf_base2imu_ptr);
   transformed_angular_velocity.header = imu_msg->header;
-  imu_angular_velocity_queue_.push_back(transformed_angular_velocity);
+  angular_velocity_queue_.push_back(transformed_angular_velocity);
 
-  imu_angular_velocity_queue_ =
-    pop_time_stamp(imu_angular_velocity_queue_, rclcpp::Time(imu_msg->header.stamp));
+  while (!angular_velocity_queue_.empty()) {
+    // for replay rosbag
+    if (
+      rclcpp::Time(angular_velocity_queue_.front().header.stamp) >
+      rclcpp::Time(imu_msg->header.stamp)) {
+      angular_velocity_queue_.pop_front();
+    } else if (  // NOLINT
+      rclcpp::Time(angular_velocity_queue_.front().header.stamp) <
+      rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
+      angular_velocity_queue_.pop_front();
+    }
+    break;
+  }
 }
 
 void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_msg)
@@ -177,19 +170,10 @@ bool DistortionCorrectorComponent::getTransform(
 bool DistortionCorrectorComponent::undistortPointCloud(
   const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points)
 {
-  using Vector3Deque = std::deque<geometry_msgs::msg::Vector3Stamped>;
-  std::shared_ptr<Vector3Deque> angular_velocity_queue_ptr;
-  if (use_imu_) {
-    angular_velocity_queue_ptr = std::make_shared<Vector3Deque>(imu_angular_velocity_queue_);
-  } else {
-    angular_velocity_queue_ptr = std::make_shared<Vector3Deque>(vehicle_angular_velocity_queue_);
-  }
-
-  if (
-    points.data.empty() || vehicle_velocity_queue_.empty() || angular_velocity_queue_ptr->empty()) {
+  if (points.data.empty() || twist_queue_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       get_logger(), *get_clock(), 10000 /* ms */,
-      "input_pointcloud->points or velocity or angular velocity is empty.");
+      "input_pointcloud->points or twist_queue_ is empty.");
     return false;
   }
 
@@ -216,23 +200,23 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   double prev_time_stamp_sec{*it_time_stamp};
   const double first_point_time_stamp_sec{*it_time_stamp};
 
-  auto velocity_it = std::lower_bound(
-    std::begin(vehicle_velocity_queue_), std::end(vehicle_velocity_queue_),
-    first_point_time_stamp_sec, [](const geometry_msgs::msg::Vector3Stamped & x, const double t) {
+  auto twist_it = std::lower_bound(
+    std::begin(twist_queue_), std::end(twist_queue_), first_point_time_stamp_sec,
+    [](const geometry_msgs::msg::TwistStamped & x, const double t) {
       return rclcpp::Time(x.header.stamp).seconds() < t;
     });
-  velocity_it = velocity_it == std::end(vehicle_velocity_queue_)
-                  ? std::end(vehicle_velocity_queue_) - 1
-                  : velocity_it;
+  twist_it = twist_it == std::end(twist_queue_) ? std::end(twist_queue_) - 1 : twist_it;
 
-  auto angular_velocity_it = std::lower_bound(
-    std::begin(*angular_velocity_queue_ptr), std::end(*angular_velocity_queue_ptr),
-    first_point_time_stamp_sec, [](const geometry_msgs::msg::Vector3Stamped & x, const double t) {
-      return rclcpp::Time(x.header.stamp).seconds() < t;
-    });
-  angular_velocity_it = angular_velocity_it == std::end(*angular_velocity_queue_ptr)
-                          ? std::end(*angular_velocity_queue_ptr) - 1
-                          : angular_velocity_it;
+  decltype(angular_velocity_queue_)::iterator imu_it;
+  if (use_imu_ && !angular_velocity_queue_.empty()) {
+    imu_it = std::lower_bound(
+      std::begin(angular_velocity_queue_), std::end(angular_velocity_queue_),
+      first_point_time_stamp_sec, [](const geometry_msgs::msg::Vector3Stamped & x, const double t) {
+        return rclcpp::Time(x.header.stamp).seconds() < t;
+      });
+    imu_it =
+      imu_it == std::end(angular_velocity_queue_) ? std::end(angular_velocity_queue_) - 1 : imu_it;
+  }
 
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
 
@@ -249,25 +233,18 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   bool need_transform = points.header.frame_id != base_link_frame_;
 
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
-
-    while (velocity_it != std::end(vehicle_velocity_queue_) - 1 &&
-           *it_time_stamp > velocity_stamp) {
-      ++velocity_it;
-      velocity_stamp = rclcpp::Time(velocity_it->header.stamp).seconds();
-    }
-    while (angular_velocity_it != std::end(*angular_velocity_queue_ptr) - 1 &&
-           *it_time_stamp > angular_velocity_stamp) {
-      ++angular_velocity_it;
-      angular_velocity_stamp = rclcpp::Time(angular_velocity_it->header.stamp).seconds();
+    while (twist_it != std::end(twist_queue_) - 1 && *it_time_stamp > twist_stamp) {
+      ++twist_it;
+      twist_stamp = rclcpp::Time(twist_it->header.stamp).seconds();
     }
 
-    float v{static_cast<float>(velocity_it->vector.x)};
-    float w{static_cast<float>(angular_velocity_it->vector.z)};
+    float v{static_cast<float>(twist_it->twist.linear.x)};
+    float w{static_cast<float>(twist_it->twist.angular.z)};
 
-    if (std::abs(*it_time_stamp - velocity_stamp) > 0.1) {
+    if (std::abs(*it_time_stamp - twist_stamp) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 10000 /* ms */,
-        "Velocity timestamp is too late. Could not interpolate.");
+        "twist time_stamp is too late. Could not interpolate.");
       v = 0.0f;
       w = 0.0f;
     }
@@ -311,6 +288,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     const float dis = v * time_offset;
     x += dis * tier4_autoware_utils::cos(theta);
     y += dis * tier4_autoware_utils::sin(theta);
+
     baselink_tf_odom.setOrigin(tf2::Vector3(x, y, 0.0));
     baselink_tf_odom.setRotation(baselink_quat);
 
@@ -326,7 +304,6 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     prev_time_stamp_sec = *it_time_stamp;
   }
-
   return true;
 }
 
