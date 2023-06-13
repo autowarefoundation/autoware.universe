@@ -4,9 +4,6 @@ project(yabloc_common)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
-
 # ===================================================
 # Eigen3
 find_package(Eigen3 REQUIRED)
