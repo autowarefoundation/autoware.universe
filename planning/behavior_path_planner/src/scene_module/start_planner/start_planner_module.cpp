@@ -832,19 +832,24 @@ void StartPlannerModule::setDebugData() const
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
-  // TODO(Sugahara): define param for target_velocity, acc_till_target_velocity, resolution,
-  // stopping_time
-
   const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
-  const double target_velocity = 2.0;
-  const double acc_till_target_velocity = 0.5;
+  double target_velocity = 0.0;
+  switch (status_.planner_type) {
+    case PlannerType::SHIFT:
+      target_velocity = parameters_->shift_pull_out_velocity;
+      break;
+    case PlannerType::GEOMETRIC:
+      target_velocity = parameters_->parallel_parking_parameters.pull_out_velocity;
+      break;
+    default:
+      break;
+  }
   const Pose current_pose = planner_data_->self_odometry->pose.pose;
-  const double resolution = 0.5;
-  const double stopping_time = 1.0;
 
   const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
     status_.pull_out_path.partial_paths.back().points, current_velocity, target_velocity,
-    acc_till_target_velocity, current_pose, resolution, stopping_time);
+    parameters_->acceleration_to_target_velocity, current_pose,
+    parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
 
   debug_marker_.markers.clear();
   add(createPredictedPathMarkerArray(
