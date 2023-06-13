@@ -39,11 +39,12 @@ public:
       topic_name_source, qos, std::bind(&AdapterBase::callback, this, std::placeholders::_1));
   }
 
-  typename rclcpp::Subscription<SourceT>::SharedPtr sub_source_;
-  typename rclcpp::Publisher<TargetT>::SharedPtr pub_target_;
-
 protected:
   virtual TargetT convert(const SourceT & msg_source) = 0;
+
+private:
+  typename rclcpp::Publisher<TargetT>::SharedPtr pub_target_;
+  typename rclcpp::Subscription<SourceT>::SharedPtr sub_source_;
 
   void callback(const typename SourceT::SharedPtr msg_source)
   {
