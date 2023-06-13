@@ -32,9 +32,7 @@ class AdapterControl
 : public autoware_auto_msgs_adapter::AdapterBase<Control, AckermannControlCommand>
 {
 public:
-protected:
-public:
-  explicit AdapterControl(
+  AdapterControl(
     rclcpp::Node & node, const std::string & topic_name_source,
     const std::string & topic_name_target, const rclcpp::QoS & qos = rclcpp::QoS{1})
   : AdapterBase(node, topic_name_source, topic_name_target, qos)

@@ -30,7 +30,7 @@ class AdapterBase : public AdapterBaseInterface
 public:
   RCLCPP_SHARED_PTR_DEFINITIONS(AdapterBase<SourceT, TargetT>)
 
-  explicit AdapterBase(
+  AdapterBase(
     rclcpp::Node & node, const std::string & topic_name_source,
     const std::string & topic_name_target, const rclcpp::QoS & qos = rclcpp::QoS{1})
   {
