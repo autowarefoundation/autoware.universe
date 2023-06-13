@@ -826,29 +826,12 @@ void StartPlannerModule::setDebugData() const
 {
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
-  using marker_utils::createPredictedPathMarkerArray;
 
   const auto add = [this](const MarkerArray & added) {
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
-  // TODO(Sugahara): define param for target_velocity, acc_till_target_velocity, resolution,
-  // stopping_time
-
-  const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
-  const double target_velocity = 2.0;
-  const double acc_till_target_velocity = 0.5;
-  const Pose current_pose = planner_data_->self_odometry->pose.pose;
-  const double resolution = 0.5;
-  const double stopping_time = 1.0;
-
-  const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
-    status_.pull_out_path.partial_paths.back().points, current_velocity, target_velocity,
-    acc_till_target_velocity, current_pose, resolution, stopping_time);
-
   debug_marker_.markers.clear();
-  add(createPredictedPathMarkerArray(
-    ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
