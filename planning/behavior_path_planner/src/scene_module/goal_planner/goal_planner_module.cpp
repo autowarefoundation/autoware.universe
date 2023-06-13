@@ -488,31 +488,25 @@ void GoalPlannerModule::returnToLaneParking()
 
 void GoalPlannerModule::generateGoalCandidates()
 {
-  // initialize when receiving new route
-  const auto & route_handler = planner_data_->route_handler;
-  if (!last_received_time_ || *last_received_time_ != route_handler->getRouteHeader().stamp) {
-    // Initialize parallel parking planner status
-    resetStatus();
-
-    // calculate goal candidates
-    const Pose goal_pose = route_handler->getGoalPose();
-    refined_goal_pose_ = calcRefinedGoal(goal_pose);
-    if (allow_goal_modification_) {
-      goal_searcher_->setPlannerData(planner_data_);
-      goal_candidates_ = goal_searcher_->search(refined_goal_pose_);
-    } else {
-      GoalCandidate goal_candidate{};
-      goal_candidate.goal_pose = goal_pose;
-      goal_candidate.distance_from_original_goal = 0.0;
-      goal_candidates_.push_back(goal_candidate);
-    }
+  // calculate goal candidates
+  const Pose goal_pose = planner_data_->route_handler->getGoalPose();
+  refined_goal_pose_ = calcRefinedGoal(goal_pose);
+  if (allow_goal_modification_) {
+    goal_searcher_->setPlannerData(planner_data_);
+    goal_candidates_ = goal_searcher_->search(refined_goal_pose_);
+  } else {
+    GoalCandidate goal_candidate{};
+    goal_candidate.goal_pose = goal_pose;
+    goal_candidate.distance_from_original_goal = 0.0;
+    goal_candidates_.push_back(goal_candidate);
   }
-  last_received_time_ = std::make_unique<rclcpp::Time>(route_handler->getRouteHeader().stamp);
 }
 
 BehaviorModuleOutput GoalPlannerModule::plan()
 {
-  generateGoalCandidates();
+  if (goal_candidates_.empty()) {
+    generateGoalCandidates();
+  }
 
   if (allow_goal_modification_) {
     return planWithGoalModification();
