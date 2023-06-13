@@ -16,7 +16,6 @@
 
 #include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/safety_check.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -162,12 +161,11 @@ bool StartPlannerModule::isExecutionRequested() const
 
 bool StartPlannerModule::isExecutionReady() const
 {
-  if(status_.pull_out_path.partial_paths.empty()){
+  if (status_.pull_out_path.partial_paths.empty()) {
     return true;
   }
 
-  if (status_.is_safe)
-  {
+  if (status_.is_safe) {
     // TODO(Sugahara): safety check for dynamic objects
     return true;
   }

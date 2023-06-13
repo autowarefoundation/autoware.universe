@@ -35,6 +35,7 @@
 
 namespace behavior_path_planner::utils
 {
+using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
@@ -58,10 +59,25 @@ PathWithLaneId resamplePathWithSpline(
   const PathWithLaneId & path, const double interval, const bool keep_input_points = false,
   const std::pair<double, double> target_section = {0.0, std::numeric_limits<double>::max()});
 
-const PredictedPath createPredictedPathFromTargetVelocity(
-  const std::vector<PathPointWithLaneId> & following_trajectory, const double current_velocity,
-  const double target_velocity, const double acc_till_target_velocity, const Pose & pose,
-  const size_t nearest_seg_idx, const double resolution, const double stopping_time = 0.0);
+/**
+ * @brief Create a predicted path from the current velocity to a target velocity
+ * @param [in] following_trajectory_points The trajectory points that the vehicle is supposed to
+ * follow
+ * @param [in] current_velocity The current velocity of the vehicle
+ * @param [in] target_velocity The desired velocity the vehicle should reach
+ * @param [in] acc_till_target_velocity The acceleration of the vehicle until it reaches the target
+ * velocity(constant)
+ * @param [in] pose The current pose of the vehicle, including its position and orientation
+ * @param [in] resolution The time resolution for the path prediction, affecting the granularity of
+ * the generated path
+ * @param [in] stopping_time The time required for starting to run
+ * @return An object of type PredictedPath that contains the predicted path of the vehicle
+ */
+PredictedPath createPredictedPathFromTargetVelocity(
+  const std::vector<PathPointWithLaneId> & following_trajectory_points,
+  const double current_velocity, const double target_velocity,
+  const double acc_till_target_velocity, const Pose & pose, const double resolution,
+  const double stopping_time);
 
 Path toPath(const PathWithLaneId & input);
 
