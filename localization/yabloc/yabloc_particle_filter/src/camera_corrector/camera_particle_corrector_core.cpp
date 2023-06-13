@@ -17,10 +17,10 @@
 #include "yabloc_particle_filter/camera_corrector/logit.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <yabloc_common/color.hpp>
 #include <yabloc_common/pose_conversions.hpp>
 #include <yabloc_common/pub_sub.hpp>
-#include <yabloc_common/timer.hpp>
 #include <yabloc_common/transform_line_segments.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
@@ -131,7 +131,7 @@ CameraParticleCorrector::split_line_segments(const PointCloud2 & msg)
 
 void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments_msg)
 {
-  common::Timer timer;
+  tier4_autoware_utils::StopWatch stop_watch;
   const rclcpp::Time stamp = line_segments_msg.header.stamp;
   std::optional<ParticleArray> opt_array = this->get_synchronized_particle_array(stamp);
   if (!opt_array.has_value()) {
@@ -222,10 +222,10 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
       *pub_scored_posteriori_cloud_, rgb_cloud2, line_segments_msg.header.stamp);
   }
 
-  if (timer.milli_seconds() > 80) {
-    RCLCPP_WARN_STREAM(get_logger(), "on_line_segments: " << timer);
+  if (stop_watch.toc() > 0.080) {
+    RCLCPP_WARN_STREAM(get_logger(), "on_line_segments: " << stop_watch.toc() * 1000.0 << "[ms]");
   } else {
-    RCLCPP_INFO_STREAM(get_logger(), "on_line_segments: " << timer);
+    RCLCPP_INFO_STREAM(get_logger(), "on_line_segments: " << stop_watch.toc() * 1000.0 << "[ms]");
   }
 
   // Publish status as string
@@ -234,7 +234,7 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
     std::stringstream ss;
     ss << "-- Camera particle corrector --" << std::endl;
     ss << (enable_switch_ ? "ENABLED" : "disabled") << std::endl;
-    ss << "time: " << timer << std::endl;
+    ss << "time: " << stop_watch.toc() << std::endl;
     msg.data = ss.str();
     pub_string_->publish(msg);
   }

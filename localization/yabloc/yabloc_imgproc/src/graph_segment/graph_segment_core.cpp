@@ -17,9 +17,9 @@
 
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <yabloc_common/cv_decompress.hpp>
 #include <yabloc_common/pub_sub.hpp>
-#include <yabloc_common/timer.hpp>
 
 namespace yabloc::graph_segment
 {
@@ -92,10 +92,10 @@ void GraphSegment::on_image(const Image & msg)
   cv::resize(image, resized, cv::Size(), 0.5, 0.5);
 
   // Execute graph-based segmentation
-  common::Timer timer;
+  tier4_autoware_utils::StopWatch stop_watch;
   cv::Mat segmented;
   segmentation_->processImage(resized, segmented);
-  RCLCPP_INFO_STREAM(get_logger(), "segmentation time: " << timer);
+  RCLCPP_INFO_STREAM(get_logger(), "segmentation time: " << stop_watch.toc() * 1000 << "[ms]");
 
   //
   int target_class = search_most_road_like_class(segmented);
@@ -131,7 +131,7 @@ void GraphSegment::on_image(const Image & msg)
   common::publish_image(*pub_mask_image_, output_image, msg.header.stamp);
 
   draw_and_publish_image(image, debug_image, msg.header.stamp);
-  RCLCPP_INFO_STREAM(get_logger(), "total processing time: " << timer);
+  RCLCPP_INFO_STREAM(get_logger(), "total processing time: " << stop_watch.toc() * 1000 << "[ms]");
 }
 
 void GraphSegment::draw_and_publish_image(

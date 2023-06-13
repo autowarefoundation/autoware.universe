@@ -16,9 +16,9 @@
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <yabloc_common/cv_decompress.hpp>
 #include <yabloc_common/pub_sub.hpp>
-#include <yabloc_common/timer.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
@@ -103,7 +103,7 @@ private:
     if (!info_.has_value()) return;
     if (undistort_map_x.empty()) make_remap_lut();
 
-    common::Timer timer;
+    tier4_autoware_utils::StopWatch stop_watch;
     cv::Mat image = common::decompress_to_cv_mat(msg);
 
     cv::Mat undistorted_image;
@@ -129,7 +129,7 @@ private:
       pub_image_->publish(*bridge.toImageMsg());
     }
 
-    RCLCPP_INFO_STREAM(get_logger(), "image undistort: " << timer);
+    RCLCPP_INFO_STREAM(get_logger(), "image undistort: " << stop_watch.toc() << "[ms]");
   }
 
   void on_info(const CameraInfo & msg) { info_ = msg; }

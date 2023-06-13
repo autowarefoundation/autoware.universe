@@ -15,9 +15,9 @@
 #include "yabloc_imgproc/lsd/lsd.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <yabloc_common/cv_decompress.hpp>
 #include <yabloc_common/pub_sub.hpp>
-#include <yabloc_common/timer.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -52,10 +52,10 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
 
   cv::Mat lines;
   {
-    common::Timer timer;
+    tier4_autoware_utils::StopWatch stop_watch;
     line_segment_detector_->detect(gray_image, lines);
     line_segment_detector_->drawSegments(gray_image, lines);
-    RCLCPP_INFO_STREAM(this->get_logger(), "lsd: " << timer);
+    RCLCPP_INFO_STREAM(this->get_logger(), "lsd: " << stop_watch.toc() << "[ms]");
   }
 
   common::publish_image(*pub_image_with_line_segments_, gray_image, stamp);

@@ -21,6 +21,7 @@
   <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
   <depend>yabloc_common</depend>
+  <depend>tier4_autoware_utils</depend>
 
 
   <test_depend>ament_lint_auto</test_depend>
