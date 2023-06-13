@@ -7,9 +7,9 @@
 
   <!-- lane change module -->
   <maintainer email="zulfaqar.azmi@tier4.jp">Zulfaqar Azmi</maintainer>
-  <!-- pull over module -->
+  <!-- goal planner module -->
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
-  <!-- pull out module -->
+  <!-- start planner module -->
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
   <!-- side shift module -->
   <maintainer email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</maintainer>
@@ -39,8 +39,7 @@
   <author email="ryohsuke.mitsudome@tier4.jp">Ryohsuke Mitsudome</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
@@ -54,10 +53,10 @@
   <depend>lane_departure_checker</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
-  <depend>libopencv-dev</depend>
   <depend>magic_enum</depend>
   <depend>motion_utils</depend>
   <depend>perception_utils</depend>
+  <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>route_handler</depend>

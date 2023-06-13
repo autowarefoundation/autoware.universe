@@ -47,9 +47,12 @@
 #ifndef MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_DYNAMICS_HPP_
 #define MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_DYNAMICS_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_interface.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/LU>
+
+#include <string>
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
@@ -97,6 +100,8 @@ public:
    * @param [out] u_ref input
    */
   void calculateReferenceInput(Eigen::MatrixXd & u_ref) override;
+
+  std::string modelName() override { return "dynamics"; };
 
 private:
   double m_lf;    //!< @brief length from center of mass to front wheel [m]

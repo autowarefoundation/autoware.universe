@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2020 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,11 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>
+#else
 #include <cv_bridge/cv_bridge.h>
+#endif
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
@@ -97,11 +101,12 @@ private:
   double score_thresh_;
 
   int tlr_id_;
-  int channel_;
-  int width_;
-  int height_;
+  ssd::Shape input_shape_;
   int class_num_;
   int detection_per_class_;
+  std::optional<ssd::Dims2> box_dims_;
+  std::optional<ssd::Dims2> score_dims_;
+  std::string dnn_header_type_;
 
   std::vector<float> mean_;
   std::vector<float> std_;

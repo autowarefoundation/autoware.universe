@@ -28,7 +28,7 @@ The `vehicle_model` must be specified to make footprints with vehicle's size.
 
 ![path_footprint](../media/debug/path_footprint_visualization.png)
 
-- **Drivalbe Area**
+- **Drivable Area**
   - The Drivable area generated in the `behavior` planner.
   - The skyblue left and right line strings, that is visualized by default.
   - NOTE:
@@ -69,7 +69,7 @@ The `vehicle_model` must be specified to make footprints with vehicle's size.
 
 - **Vehicle Circles**
   - The vehicle's shape is represented by a set of circles.
-  - The `obstcle_avoidance_planner` will try to make the these circles inside the above boundaries' width.
+  - The `obstacle_avoidance_planner` will try to make the these circles inside the above boundaries' width.
 
 ![vehicle_circles](../media/debug/vehicle_circles_visualization.png)
 
@@ -147,7 +147,7 @@ onPath:= 20.737 [ms]
 With the following script, any calculation time of the above functions can be plot.
 
 ```sh
-ros2 run obstacle_avoidance_planner calclation_time_plotter.py
+ros2 run obstacle_avoidance_planner calculation_time_plotter.py
 ```
 
 ![calculation_time_plot](../media/debug/calculation_time_plot.png)
@@ -155,7 +155,7 @@ ros2 run obstacle_avoidance_planner calclation_time_plotter.py
 You can specify functions to plot with the `-f` option.
 
 ```sh
-ros2 run obstacle_avoidance_planner calclation_time_plotter.py -f "onPath, generateOptimizedTrajectory, calcReferencePoints"
+ros2 run obstacle_avoidance_planner calculation_time_plotter.py -f "onPath, generateOptimizedTrajectory, calcReferencePoints"
 ```
 
 ## Q&A for Debug

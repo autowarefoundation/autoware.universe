@@ -15,7 +15,6 @@
 #ifndef MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_OSQP_HPP_
 #define MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_OSQP_HPP_
 
-#include "eigen3/Eigen/Dense"
 #include "mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "rclcpp/rclcpp.hpp"

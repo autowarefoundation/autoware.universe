@@ -14,7 +14,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__MARKER_UTIL__DEBUG_UTILITIES_HPP_
 #define BEHAVIOR_PATH_PLANNER__MARKER_UTIL__DEBUG_UTILITIES_HPP_
 
-#include "behavior_path_planner/util/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
@@ -28,6 +28,7 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace marker_utils
@@ -63,6 +64,7 @@ struct CollisionCheckDebug
   Polygon2d ego_polygon{};
   Polygon2d obj_polygon{};
 };
+using CollisionCheckDebugMap = std::unordered_map<std::string, CollisionCheckDebug>;
 
 constexpr std::array<std::array<float, 3>, 10> colorsList()
 {
@@ -98,9 +100,13 @@ MarkerArray createShiftLineMarkerArray(
   const float & g, const float & b, const float & w);
 
 MarkerArray createShiftLengthMarkerArray(
-  const std::vector<double> & shift_distance,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & reference, std::string && ns,
+  const std::vector<double> & shift_distance, const PathWithLaneId & reference, std::string && ns,
   const float & r, const float & g, const float & b);
+
+MarkerArray createShiftGradMarkerArray(
+  const std::vector<double> & grad, const std::vector<double> & shift_distance,
+  const PathWithLaneId & reference, std::string && ns, const float & r, const float & g,
+  const float & b);
 
 MarkerArray createLaneletsAreaMarkerArray(
   const std::vector<lanelet::ConstLanelet> & lanelets, std::string && ns, const float & r,

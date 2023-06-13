@@ -12,8 +12,7 @@
   <author email="takayuki.murooka@tier4.jp">Takayuki Murooka</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_auto_planning_msgs</depend>
   <depend>geometry_msgs</depend>
@@ -21,6 +20,7 @@
   <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>osqp_interface</depend>
+  <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
