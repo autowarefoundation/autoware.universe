@@ -82,6 +82,13 @@ void ObjectLaneletFilterNode::objectCallback(
     return;
   }
 
+  // if shape is BOUNDING_BOX, make foot print
+  for (auto & object : transformed_objects.objects) {
+    if (object.shape.type == object.shape.BOUNDING_BOX) {
+      object.shape.footprint = setFootprint(object);
+    }
+  }
+
   // calculate convex hull
   const auto convex_hull = getConvexHull(transformed_objects);
   // get intersected lanelets
@@ -108,6 +115,27 @@ void ObjectLaneletFilterNode::objectCallback(
     ++index;
   }
   object_pub_->publish(output_object_msg);
+}
+
+geometry_msgs::msg::Polygon ObjectLaneletFilterNode::setFootprint(
+  const autoware_auto_perception_msgs::msg::DetectedObject & detected_object)
+{
+  const auto object_size = detected_object.shape.dimensions;
+  const double x_front = object_size.x / 2.0;
+  const double x_rear = -object_size.x / 2.0;
+  const double y_left = object_size.y / 2.0;
+  const double y_right = -object_size.y / 2.0;
+
+  geometry_msgs::msg::Polygon footprint;
+  footprint.points.push_back(
+    geometry_msgs::build<geometry_msgs::msg::Point32>().x(x_front).y(y_left).z(0.0));
+  footprint.points.push_back(
+    geometry_msgs::build<geometry_msgs::msg::Point32>().x(x_front).y(y_right).z(0.0));
+  footprint.points.push_back(
+    geometry_msgs::build<geometry_msgs::msg::Point32>().x(x_rear).y(y_right).z(0.0));
+  footprint.points.push_back(
+    geometry_msgs::build<geometry_msgs::msg::Point32>().x(x_rear).y(y_left).z(0.0));
+  return footprint;
 }
 
 LinearRing2d ObjectLaneletFilterNode::getConvexHull(
