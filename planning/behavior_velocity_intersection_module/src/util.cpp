@@ -447,6 +447,7 @@ IntersectionLanelets getObjectiveLanelets(
   // get conflicting lanes on assigned lanelet
   const auto & conflicting_lanelets =
     lanelet::utils::getConflictingLanelets(routing_graph_ptr, assigned_lanelet);
+  const auto & adjacent_followings = routing_graph_ptr->following(conflicting_lanelets.back());
 
   // final objective lanelets
   lanelet::ConstLanelets detection_lanelets;
@@ -461,14 +462,24 @@ IntersectionLanelets getObjectiveLanelets(
   if (turn_direction == std::string("straight") && has_traffic_light) {
     // if assigned lanelet is "straight" with traffic light, detection area is not necessary
   } else {
-    // otherwise we need to know the priority from RightOfWay
-    for (const auto & conflicting_lanelet : conflicting_lanelets) {
-      if (
-        lanelet::utils::contains(yield_lanelets, conflicting_lanelet) ||
-        lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
-        continue;
+    if (consider_wrong_direction_vehicle) {
+      for (const auto & conflicting_lanelet : conflicting_lanelets) {
+        if (
+          lanelet::utils::contains(yield_lanelets, conflicting_lanelet)) {
+          continue;
+        }
+        detection_lanelets.push_back(conflicting_lanelet);
       }
-      detection_lanelets.push_back(conflicting_lanelet);
+    } else {
+      // otherwise we need to know the priority from RightOfWay
+      for (const auto & conflicting_lanelet : conflicting_lanelets) {
+        if (
+          lanelet::utils::contains(yield_lanelets, conflicting_lanelet) ||
+          lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
+          continue;
+        }
+        detection_lanelets.push_back(conflicting_lanelet);
+      }
     }
   }
 
