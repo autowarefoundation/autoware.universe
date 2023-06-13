@@ -121,6 +121,7 @@ def launch_setup(context, *args, **kwargs):
         remappings=[
             ("input/control_cmd", "/control/trajectory_follower/control_cmd"),
             ("input/state", "/autoware/state"),
+            ("input/current_gear", "/vehicle/status/gear_status"),
             ("output/gear_cmd", "/control/shift_decider/gear_cmd"),
         ],
         parameters=[
@@ -178,7 +179,6 @@ def launch_setup(context, *args, **kwargs):
             ("input/emergency/hazard_lights_cmd", "/system/emergency/hazard_lights_cmd"),
             ("input/emergency/gear_cmd", "/system/emergency/gear_cmd"),
             ("input/mrm_state", "/system/fail_safe/mrm_state"),
-            ("input/gear_status", "/vehicle/status/gear_status"),
             ("input/kinematics", "/localization/kinematic_state"),
             ("input/acceleration", "/localization/acceleration"),
             ("output/vehicle_cmd_emergency", "/control/command/emergency_cmd"),
@@ -347,7 +347,7 @@ def generate_launch_description():
     add_launch_arg("check_external_emergency_heartbeat")
 
     # component
-    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
+    add_launch_arg("use_intra_process", "false", "use ROS 2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
     set_container_executable = SetLaunchConfiguration(
         "container_executable",

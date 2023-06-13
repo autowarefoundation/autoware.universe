@@ -237,8 +237,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
 
   // For performance, do not instantiate `rclcpp::Time` inside of the for-loop
-  double velocity_stamp = rclcpp::Time(velocity_it->header.stamp).seconds();
-  double angular_velocity_stamp = rclcpp::Time(angular_velocity_it->header.stamp).seconds();
+  double twist_stamp = rclcpp::Time(twist_it->header.stamp).seconds();
 
   // For performance, instantiate outside of the for-loop
   tf2::Quaternion baselink_quat{};
@@ -273,12 +272,28 @@ bool DistortionCorrectorComponent::undistortPointCloud(
       w = 0.0f;
     }
 
-    if (std::abs(*it_time_stamp - angular_velocity_stamp) > 0.1) {
-      RCLCPP_WARN_STREAM_THROTTLE(
-        get_logger(), *get_clock(), 10000 /* ms */,
-        "Angular velocity timestamp is too late. Could not interpolate.");
-      v = 0.0f;
-      w = 0.0f;
+    if (use_imu_ && !angular_velocity_queue_.empty()) {
+      // For performance, do not instantiate `rclcpp::Time` inside of the for-loop
+      double imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
+
+      for (;
+           (imu_it != std::end(angular_velocity_queue_) - 1 &&
+            *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
+           ++imu_it) {
+      }
+
+      while (imu_it != std::end(angular_velocity_queue_) - 1 && *it_time_stamp > imu_stamp) {
+        ++imu_it;
+        imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
+      }
+
+      if (std::abs(*it_time_stamp - imu_stamp) > 0.1) {
+        RCLCPP_WARN_STREAM_THROTTLE(
+          get_logger(), *get_clock(), 10000 /* ms */,
+          "imu time_stamp is too late. Could not interpolate.");
+      } else {
+        w = static_cast<float>(imu_it->vector.z);
+      }
     }
 
     const auto time_offset = static_cast<float>(*it_time_stamp - prev_time_stamp_sec);

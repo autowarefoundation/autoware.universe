@@ -38,9 +38,12 @@
 #ifndef MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_NO_DELAY_HPP_
 #define MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_NO_DELAY_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_interface.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/LU>
+
+#include <string>
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
@@ -81,6 +84,8 @@ public:
    * @param [out] u_ref input
    */
   void calculateReferenceInput(Eigen::MatrixXd & u_ref) override;
+
+  std::string modelName() override { return "kinematics_no_delay"; };
 
 private:
   double m_steer_lim;  //!< @brief steering angle limit [rad]

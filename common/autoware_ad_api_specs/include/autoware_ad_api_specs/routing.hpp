@@ -38,6 +38,18 @@ struct SetRoute
   static constexpr char name[] = "/api/routing/set_route";
 };
 
+struct ChangeRoutePoints
+{
+  using Service = autoware_adapi_v1_msgs::srv::SetRoutePoints;
+  static constexpr char name[] = "/api/routing/change_route_points";
+};
+
+struct ChangeRoute
+{
+  using Service = autoware_adapi_v1_msgs::srv::SetRoute;
+  static constexpr char name[] = "/api/routing/change_route";
+};
+
 struct ClearRoute
 {
   using Service = autoware_adapi_v1_msgs::srv::ClearRoute;
@@ -48,7 +60,7 @@ struct RouteState
 {
   using Message = autoware_adapi_v1_msgs::msg::RouteState;
   static constexpr char name[] = "/api/routing/state";
-  static constexpr size_t depth = 3;
+  static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };

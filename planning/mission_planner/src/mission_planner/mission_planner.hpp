@@ -23,6 +23,7 @@
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <route_handler/route_handler.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -41,6 +42,8 @@ namespace mission_planner
 using PoseStamped = geometry_msgs::msg::PoseStamped;
 using PoseWithUuidStamped = autoware_planning_msgs::msg::PoseWithUuidStamped;
 using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
+using LaneletPrimitive = autoware_planning_msgs::msg::LaneletPrimitive;
+using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
 using MarkerArray = visualization_msgs::msg::MarkerArray;
 using ClearRoute = planning_interface::ClearRoute;
 using SetRoutePoints = planning_interface::SetRoutePoints;
@@ -66,12 +69,22 @@ private:
   PoseStamped transform_pose(const PoseStamped & input);
 
   rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
   Odometry::ConstSharedPtr odometry_;
   void on_odometry(const Odometry::ConstSharedPtr msg);
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
-  void change_route();
+  void clear_route();
   void change_route(const LaneletRoute & route);
+  LaneletRoute create_route(const SetRoute::Service::Request::SharedPtr req);
+  LaneletRoute create_route(const SetRoutePoints::Service::Request::SharedPtr req);
+  LaneletRoute create_route(
+    const std_msgs::msg::Header & header,
+    const std::vector<autoware_adapi_v1_msgs::msg::RouteSegment> & route_segments,
+    const geometry_msgs::msg::Pose & goal_pose, const bool allow_goal_modification);
+  LaneletRoute create_route(
+    const std_msgs::msg::Header & header, const std::vector<geometry_msgs::msg::Pose> & waypoints,
+    const geometry_msgs::msg::Pose & goal_pose, const bool allow_goal_modification);
 
   RouteState::Message state_;
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
@@ -102,6 +115,9 @@ private:
     const ClearMrmRoute::Service::Request::SharedPtr req,
     const ClearMrmRoute::Service::Response::SharedPtr res);
 
+  HADMapBin::ConstSharedPtr map_ptr_{nullptr};
+  void onMap(const HADMapBin::ConstSharedPtr msg);
+
   component_interface_utils::Subscription<ModifiedGoal>::SharedPtr sub_modified_goal_;
   void on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg);
   void on_change_route(
@@ -110,6 +126,13 @@ private:
   void on_change_route_points(
     const SetRoutePoints::Service::Request::SharedPtr req,
     const SetRoutePoints::Service::Response::SharedPtr res);
+
+  double reroute_time_threshold_{10.0};
+  double minimum_reroute_length_{30.0};
+  bool checkRerouteSafety(const LaneletRoute & original_route, const LaneletRoute & target_route);
+
+  std::shared_ptr<LaneletRoute> original_route_{nullptr};
+  std::shared_ptr<LaneletRoute> normal_route_{nullptr};
 };
 
 }  // namespace mission_planner

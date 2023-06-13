@@ -24,6 +24,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -118,6 +119,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_slow_down_wall_marker_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_stop_planning_info_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_cruise_planning_info_pub_;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_slow_down_planning_info_pub_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_pub_;
 
   // subscriber
@@ -184,11 +186,60 @@ private:
     double max_lat_margin_for_stop;
     double max_lat_margin_for_cruise;
     double max_lat_margin_for_slow_down;
+    double lat_hysteresis_margin_for_slow_down;
+    int successive_num_to_entry_slow_down_condition;
+    int successive_num_to_exit_slow_down_condition;
   };
   BehaviorDeterminationParam behavior_determination_param_;
 
   std::unordered_map<std::string, bool> need_to_clear_vel_limit_{
     {"cruise", false}, {"slow_down", false}};
+
+  struct SlowDownConditionCounter
+  {
+    void resetCurrentUuids() { current_uuids_.clear(); }
+    void addCurrentUuid(const std::string & uuid) { current_uuids_.push_back(uuid); }
+    void removeCounterUnlessUpdated()
+    {
+      std::vector<std::string> obsolete_uuids;
+      for (const auto & key_and_value : counter_) {
+        if (
+          std::find(current_uuids_.begin(), current_uuids_.end(), key_and_value.first) ==
+          current_uuids_.end()) {
+          obsolete_uuids.push_back(key_and_value.first);
+        }
+      }
+
+      for (const auto & obsolete_uuid : obsolete_uuids) {
+        counter_.erase(obsolete_uuid);
+      }
+    }
+
+    int increaseCounter(const std::string & uuid)
+    {
+      if (counter_.count(uuid) != 0) {
+        counter_.at(uuid) = std::max(1, counter_.at(uuid) + 1);
+      } else {
+        counter_.emplace(uuid, 1);
+      }
+      return counter_.at(uuid);
+    }
+    int decreaseCounter(const std::string & uuid)
+    {
+      if (counter_.count(uuid) != 0) {
+        counter_.at(uuid) = std::min(-1, counter_.at(uuid) - 1);
+      } else {
+        counter_.emplace(uuid, -1);
+      }
+      return counter_.at(uuid);
+    }
+    void reset(const std::string & uuid) { counter_.emplace(uuid, 0); }
+
+    // NOTE: positive is for meeting entrying condition, and negative is for exiting.
+    std::unordered_map<std::string, int> counter_;
+    std::vector<std::string> current_uuids_;
+  };
+  SlowDownConditionCounter slow_down_condition_counter_;
 
   EgoNearestParam ego_nearest_param_;
 

@@ -57,7 +57,7 @@ This section gives details of the generation of the drivable area (`left_bound` 
 
 ### Drivable Lanes Generation
 
-Before generating drivable areas, drivable lanes need to be sorted. Drivable Lanes are selected in each module (`Lane Follow`, `Avoidance`, `Lane Change`, `Pull Over`, `Pull Out` and etc.), so more details about selection of drivable lanes can be found in each module's document. We use the following structure to define the drivable lanes.
+Before generating drivable areas, drivable lanes need to be sorted. Drivable Lanes are selected in each module (`Lane Follow`, `Avoidance`, `Lane Change`, `Goal Planner`, `Pull Out` and etc.), so more details about selection of drivable lanes can be found in each module's document. We use the following structure to define the drivable lanes.
 
 ```cpp
 struct DrivalbleLanes
@@ -134,3 +134,10 @@ To debug the issue, the maximum drivable area boundary can be visualized.
 ![drivable_area_boundary_marker2](../image/drivable_area/drivable_area_boundary_marker_example2.png)
 
 The maximum drivable area can be visualize by adding the marker from `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/maximum_drivable_area`
+
+#### Expansion with hatched road markings area
+
+If the hatched road markings area is defined in the lanelet map, the area can be used as a drivable area.
+Since the area is expressed as a polygon format of Lanelet2, several steps are required for correct expansion.
+
+![hatched_road_markings_drivable_area_expansion](../image/drivable_area/hatched_road_markings_drivable_area_expansion.drawio.svg)
