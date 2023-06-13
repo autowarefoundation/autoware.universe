@@ -52,7 +52,7 @@ void MainNode::on_timer()
 
 void MainNode::on_diag(const DiagnosticArray::ConstSharedPtr msg)
 {
-  graph_.update(*msg);
+  graph_.callback(*msg);
 }
 
 }  // namespace system_diagnostic_graph

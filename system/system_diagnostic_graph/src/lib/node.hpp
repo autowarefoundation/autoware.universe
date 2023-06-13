@@ -17,6 +17,7 @@
 
 #include "config.hpp"
 #include "debug.hpp"
+#include "expr.hpp"
 #include "types.hpp"
 
 #include <map>
@@ -33,9 +34,12 @@ class DiagGraphInit;
 class DiagNode
 {
 public:
-  virtual DiagnosticNode report() = 0;
+  virtual ~DiagNode() = default;
+  virtual void update() = 0;
+  virtual DiagnosticNode report() const = 0;
   virtual std::vector<DiagNode *> links() const = 0;
   virtual std::string name() const = 0;
+  DiagnosticLevel level() const { return level_; }
 
 protected:
   DiagnosticLevel level_;
@@ -46,9 +50,9 @@ class DiagUnit : public DiagNode
 public:
   using KeyType = std::string;
   explicit DiagUnit(const KeyType & key);
-  DiagnosticNode report() override { return DiagnosticNode(); }
+  DiagnosticNode report() const override;
   DiagDebugData debug();
-  void update();
+  void update() override;
   void create(DiagGraphInit & graph, const UnitConfig & config);
 
   std::vector<DiagNode *> links() const override { return links_; }
@@ -57,6 +61,7 @@ public:
 private:
   const KeyType key_;
   std::vector<DiagNode *> links_;
+  std::unique_ptr<BaseExpr> expr_;
 };
 
 class DiagLeaf : public DiagNode
@@ -64,9 +69,10 @@ class DiagLeaf : public DiagNode
 public:
   using KeyType = std::pair<std::string, std::string>;
   explicit DiagLeaf(const KeyType & key);
-  DiagnosticNode report() override;
+  DiagnosticNode report() const override;
   DiagDebugData debug();
-  void update(const DiagnosticStatus & status);
+  void update() override;
+  void callback(const DiagnosticStatus & status);
 
   std::vector<DiagNode *> links() const override { return {}; }
   std::string name() const override { return "Diag[" + key_.first + "]"; }

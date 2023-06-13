@@ -10,6 +10,7 @@ ament_auto_add_executable(${PROJECT_NAME}
   src/lib/debug.cpp
   src/lib/graph.cpp
   src/lib/node.cpp
+  src/lib/expr.cpp
 )
 
 install(

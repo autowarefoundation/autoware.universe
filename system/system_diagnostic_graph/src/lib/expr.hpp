@@ -12,32 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__GRAPH_HPP_
-#define LIB__GRAPH_HPP_
+#ifndef LIB__EXPR_HPP_
+#define LIB__EXPR_HPP_
 
-#include "node.hpp"
 #include "types.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace system_diagnostic_graph
 {
 
-class DiagGraph
+class BaseExpr
 {
 public:
-  void create(const std::string & file);
-  DiagnosticGraph report(const rclcpp::Time & stamp);
-  void callback(const DiagnosticArray & array);
-  void debug();
+  static std::unique_ptr<BaseExpr> create(const std::string & type);
+  virtual ~BaseExpr() = default;
+  virtual DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const = 0;
+};
 
-private:
-  void topological_sort();
-  DiagGraphData data_;
+class StaleExpr : public BaseExpr
+{
+public:
+  DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const override;
+};
+
+class AllExpr : public BaseExpr
+{
+public:
+  DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const override;
+};
+
+class AnyExpr : public BaseExpr
+{
+public:
+  DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const override;
 };
 
 }  // namespace system_diagnostic_graph
 
-#endif  // LIB__GRAPH_HPP_
+#endif  // LIB__EXPR_HPP_

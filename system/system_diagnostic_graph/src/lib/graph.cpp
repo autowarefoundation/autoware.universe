@@ -30,25 +30,28 @@ void DiagGraph::create(const std::string & file)
   const auto configs = load_config_file(file);
   data_ = DiagGraphData();
 
-  // Create unit nodes.
+  // Create nodes first because it is necessary for the link.
   std::vector<std::pair<UnitConfig, DiagUnit *>> units;
   for (const auto & config : configs) {
     DiagUnit * unit = data_.make_unit(config.name);
     units.push_back(std::make_pair(config, unit));
   }
 
+  // Reflect the config after creating all the nodes,
   DiagGraphInit graph(data_);
   for (auto & [config, unit] : units) {
     unit->create(graph, config);
   }
 
-  // Sort unit nodes in topological order.
-  std::cout << "============================== sort ==============================" << std::endl;
+  // Sort unit nodes in topological order for update dependencies.
   topological_sort();
 }
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
 {
+  for (const auto & leaf : data_.leaf_list) leaf->update();
+  for (const auto & unit : data_.unit_list) unit->update();
+
   DiagnosticGraph graph;
   graph.stamp = stamp;
   graph.nodes.reserve(data_.leaf_list.size() + data_.unit_list.size());
@@ -62,18 +65,16 @@ DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
   return graph;
 }
 
-void DiagGraph::update(const DiagnosticArray & array)
+void DiagGraph::callback(const DiagnosticArray & array)
 {
-  (void)array;
-  /*
   for (const auto & status : array.status) {
-    const auto key = DiagLeaf::get_key(status);
-    if (!data_.leaf_dict.count(key)) {
-      data_.leaf_dict.emplace(key, std::make_shared<DiagLeaf>(status));
+    auto leaf = data_.find_leaf(status.name, status.hardware_id);
+    if (leaf) {
+      leaf->callback(status);
+    } else {
+      // TODO(Takagi, Isamu): handle unknown diagnostics
     }
-    data_.leaf_dict.at(key)->update(status);
   }
-  */
 }
 
 void DiagGraph::topological_sort()

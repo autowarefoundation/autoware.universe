@@ -16,6 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <algorithm>
 #include <utility>
 
 namespace system_diagnostic_graph
@@ -24,6 +25,19 @@ namespace system_diagnostic_graph
 DiagUnit::DiagUnit(const KeyType & key) : key_(key)
 {
   level_ = DiagnosticStatus::STALE;
+}
+
+DiagnosticNode DiagUnit::report() const
+{
+  return DiagnosticNode();
+}
+
+void DiagUnit::update()
+{
+  const auto get_level = [](const auto * link) { return link->level(); };
+  std::vector<DiagnosticLevel> levels(links_.size());
+  std::transform(links_.begin(), links_.end(), levels.begin(), get_level);
+  level_ = expr_->exec(levels);
 }
 
 void DiagUnit::create(DiagGraphInit & graph, const UnitConfig & config)
@@ -35,6 +49,7 @@ void DiagUnit::create(DiagGraphInit & graph, const UnitConfig & config)
     }
     links_.push_back(node);
   }
+  expr_ = BaseExpr::create(config.expr.type);
 }
 
 DiagLeaf::DiagLeaf(const KeyType & key) : key_(key)
@@ -42,14 +57,18 @@ DiagLeaf::DiagLeaf(const KeyType & key) : key_(key)
   level_ = DiagnosticStatus::STALE;
 }
 
-DiagnosticNode DiagLeaf::report()
+DiagnosticNode DiagLeaf::report() const
 {
   return DiagnosticNode();
 }
 
-void DiagLeaf::update(const DiagnosticStatus & status)
+void DiagLeaf::update()
 {
   // TODO(Takagi, Isamu): timeout, error hold
+}
+
+void DiagLeaf::callback(const DiagnosticStatus & status)
+{
   level_ = status.level;
 }
 
