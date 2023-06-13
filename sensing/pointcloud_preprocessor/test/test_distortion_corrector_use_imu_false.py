@@ -150,7 +150,6 @@ class TestDistortionCorrector(unittest.TestCase):
         )
 
         # Publishers
-        # imu_pub = self.test_node.create_publisher(Imu, '/test/sensing/imu/imu_data', 10)
         velocity_pub = self.test_node.create_publisher(
             TwistWithCovarianceStamped,
             "/test/sensing/vehicle_velocity_converter/twist_with_covariance",
@@ -183,7 +182,7 @@ class TestDistortionCorrector(unittest.TestCase):
         header.stamp = self.test_node.get_clock().now().to_msg()
         header.frame_id = "base_link"
 
-        # Publish IMU and velocity data
+        # Publish velocity data
         for i in range(50):
             header_tmp = Header()
             header_tmp.stamp = self.test_node.get_clock().now().to_msg()
