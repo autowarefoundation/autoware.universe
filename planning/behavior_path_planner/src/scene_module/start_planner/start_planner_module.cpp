@@ -167,6 +167,7 @@ bool StartPlannerModule::isExecutionReady() const
 
   if (status_.is_safe) {
     // TODO(Sugahara): safety check for dynamic objects
+    isSafeConsideringDynamicObjects();
     return true;
   }
   return true;
@@ -828,6 +829,40 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   turn_signal.desired_end_point = end_pose;
 
   return turn_signal;
+}
+
+bool StartPlannerModule::isSafeConsideringDynamicObjects()
+{
+  const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
+  double target_velocity = 0.0;
+  switch (status_.planner_type) {
+    case PlannerType::SHIFT:
+      target_velocity = parameters_->shift_pull_out_velocity;
+      break;
+    case PlannerType::GEOMETRIC:
+      target_velocity = parameters_->parallel_parking_parameters.pull_out_velocity;
+      break;
+    default:
+      break;
+  }
+  const Pose current_pose = planner_data_->self_odometry->pose.pose;
+
+  const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
+    status_.pull_out_path.partial_paths.back().points, current_velocity, target_velocity,
+    parameters_->acceleration_to_target_velocity, current_pose,
+    parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
+
+  // TODO(Sugahara): should safety check for backward path later
+  const auto & pull_out_path = status_.pull_out_path.partial_paths.at(0);
+  // create ego predicted path
+  const auto & ego_predicted_path = createPredictedPathFromTargetVelocity(
+    path, current_twist, current_pose, current_seg_idx, check_end_time, time_resolution,
+    prepare_duration, prepare_acc, lane_changing_acc);
+  return utils::safety_check::isSafeInLaneletCollisionCheck(
+    pull_out_path, interpolated_ego, current_twist, check_durations,
+    lane_change_path.duration.prepare, obj, obj_path, common_parameter,
+    lane_change_parameter.prepare_segment_ignore_object_velocity_thresh, front_decel, rear_decel,
+    current_debug_data.second);
 }
 
 void StartPlannerModule::setDebugData() const
