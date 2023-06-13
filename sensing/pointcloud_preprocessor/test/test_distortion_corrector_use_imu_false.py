@@ -14,33 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import struct
-import time
 import unittest
 
-from ament_index_python import get_package_share_directory
+from sensor_msgs.msg import PointCloud2
 from geometry_msgs.msg import TwistWithCovarianceStamped
 import launch
-from launch.conditions import IfCondition
-from launch.conditions import UnlessCondition
 from launch.logging import get_logger
-from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
-from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
 import launch_testing
-import numpy as np
 import pytest
 import rclpy
-from rclpy.qos import QoSDurabilityPolicy
-from rclpy.qos import QoSHistoryPolicy
-from rclpy.qos import QoSProfile
-from rclpy.qos import QoSReliabilityPolicy
-from rclpy.time import Time
-from sensor_msgs.msg import Imu
-from sensor_msgs.msg import PointCloud2
-from sensor_msgs.msg import PointField
+from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy, QoSDurabilityPolicy
+import numpy as np
+from sensor_msgs.msg import PointField, PointCloud2
 from std_msgs.msg import Header
 
 logger = get_logger(__name__)
