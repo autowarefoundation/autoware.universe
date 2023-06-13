@@ -161,6 +161,14 @@ bool StartPlannerModule::isExecutionRequested() const
 
 bool StartPlannerModule::isExecutionReady() const
 {
+  if (status_.pull_out_path.partial_paths.empty()) {
+    return true;
+  }
+
+  if (status_.is_safe) {
+    // TODO(Sugahara): safety check for dynamic objects
+    return true;
+  }
   return true;
 }
 

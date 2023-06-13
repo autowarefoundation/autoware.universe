@@ -209,7 +209,6 @@ MarkerArray createPredictedPathMarkerArray(
 
   const auto & path = predicted_path.path;
 
-  // TODO(Sugahara): create foot print marker and change the color
   Marker marker = createDefaultMarker(
     "map", current_time, ns, id, Marker::LINE_STRIP, createMarkerScale(0.1, 0.1, 0.1),
     createMarkerColor(r, g, b, 0.999));
