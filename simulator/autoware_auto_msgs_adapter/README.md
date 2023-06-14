@@ -76,7 +76,8 @@ The constructors of the adapters are responsible for creating the publisher and 
 
 ### Adding a new message pair
 
-To add a new message pair, 
+To add a new message pair,
+
 - Replicate and edit:
   - [adapter_control.hpp](include/autoware_auto_msgs_adapter/adapter_control.hpp).
   - Add the new header file to the [CMakeLists.txt](CMakeLists.txt).
