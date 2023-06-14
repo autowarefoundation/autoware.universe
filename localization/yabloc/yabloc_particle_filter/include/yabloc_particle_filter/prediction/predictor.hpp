@@ -16,7 +16,6 @@
 #define YABLOC_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_
 
 #include "yabloc_particle_filter/common/visualize.hpp"
-#include "yabloc_particle_filter/prediction/experimental/suspension_adaptor.hpp"
 #include "yabloc_particle_filter/prediction/resampler.hpp"
 
 #include <Eigen/Geometry>
@@ -84,7 +83,6 @@ private:
   //
   std::unique_ptr<ParticleVisualizer> visualizer_ptr_{nullptr};
   std::unique_ptr<RetroactiveResampler> resampler_ptr_{nullptr};
-  std::unique_ptr<SwapModeAdaptor> swap_mode_adaptor_ptr_{nullptr};
 
   // Callback
   void on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose);

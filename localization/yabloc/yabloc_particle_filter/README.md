@@ -44,7 +44,6 @@ This package contains some executable nodes related to particle filter.
 | `resampling_interval_seconds` | double           | the interval of particle resamping                                                   |
 | `num_of_particles`            | int              | the number of particles                                                              |
 | `prediction_rate`             | double           | frequency of forecast updates, in Hz                                                 |
-| `is_swap_mode`                | bool             | (under development) swap_mode will allow to switch between ndt and yabloc at runtime |
 | `cov_xx_yy`                   | vector\<double\> | the covariance of initial pose                                                       |
 
 # gnss_particle_corrector

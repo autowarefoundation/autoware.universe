@@ -9,6 +9,4 @@
     num_of_particles: 500
     prediction_rate: 50.0
 
-    is_swap_mode: false # developing feature
-
     cov_xx_yy: [2.0,0.25]

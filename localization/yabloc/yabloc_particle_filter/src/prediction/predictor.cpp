@@ -71,9 +71,6 @@ Predictor::Predictor()
   if (declare_parameter<bool>("visualize", false)) {
     visualizer_ptr_ = std::make_unique<ParticleVisualizer>(*this);
   }
-  if (declare_parameter("is_swap_mode", false)) {
-    swap_mode_adaptor_ptr_ = std::make_unique<SwapModeAdaptor>(this);
-  }
 }
 
 void Predictor::on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose)
@@ -184,15 +181,6 @@ void Predictor::on_timer()
 {
   // ==========================================================================
   // Pre-check section
-  // TODO: Refactor
-  if (swap_mode_adaptor_ptr_) {
-    if (swap_mode_adaptor_ptr_->should_keep_update() == false) {
-      return;
-    }
-    if (swap_mode_adaptor_ptr_->should_call_initialize()) {
-      initialize_particles(swap_mode_adaptor_ptr_->init_pose());
-    }
-  }
   // Return if particle_array is not initialized yet
   if (!particle_array_opt_.has_value()) {
     return;
