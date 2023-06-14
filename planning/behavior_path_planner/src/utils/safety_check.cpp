@@ -154,12 +154,12 @@ bool isSafeInLaneletCollisionCheck(
   const double & ego_current_velocity, const std::vector<double> & check_duration,
   const PredictedObject & target_object, const PredictedPath & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
-  const double rear_object_deceleration, CollisionCheckDebug & debug,
-  const double prepare_duration = 0.0, const double velocity_threshold_for_prepare_duration = 0.0);
+  const double rear_object_deceleration, CollisionCheckDebug & debug, const double prepare_duration,
+  const double velocity_threshold_for_prepare_duration)
 {
   debug.lerped_path.reserve(check_duration.size());
 
-  const auto & ego_velocity = ego_current_twist.linear.x;
+  const auto & ego_velocity = ego_current_velocity;
   const auto & object_velocity =
     target_object.kinematics.initial_twist_with_covariance.twist.linear.x;
 
@@ -169,7 +169,7 @@ bool isSafeInLaneletCollisionCheck(
     // ignore low velocity object during prepare duration
     const bool prepare_phase = current_time < prepare_duration;
     const bool ignore_target_velocity_during_prepare_phase =
-      object_velocity < prepare_phase_ignore_target_velocity_thresh;
+      object_velocity < velocity_threshold_for_prepare_duration;
     if (prepare_phase && ignore_target_velocity_during_prepare_phase) {
       continue;
     }
@@ -180,8 +180,8 @@ bool isSafeInLaneletCollisionCheck(
     }
 
     const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, target_object.shape);
-    const auto & ego_pose = interpolated_ego.at(i).first;
-    const auto & ego_polygon = interpolated_ego.at(i).second;
+    const auto & ego_pose = predicted_ego_poses.at(i).first;
+    const auto & ego_polygon = predicted_ego_poses.at(i).second;
 
     // check overlap
     debug.ego_polygon = ego_polygon;
@@ -193,7 +193,7 @@ bool isSafeInLaneletCollisionCheck(
 
     // compute which one is at the front of the other
     const bool is_object_front =
-      isTargetObjectFront(path, ego_pose, common_parameters.vehicle_info, obj_polygon);
+      isTargetObjectFront(planned_path, ego_pose, common_parameters.vehicle_info, obj_polygon);
     const auto & [front_object_velocity, rear_object_velocity] =
       is_object_front ? std::make_pair(object_velocity, ego_velocity)
                       : std::make_pair(ego_velocity, object_velocity);
