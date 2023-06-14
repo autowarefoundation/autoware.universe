@@ -73,13 +73,16 @@ PathWithLaneId resamplePathWithSpline(
     const auto is_close = [&](double v, double x) { return std::abs(v - x) < epsilon; };
 
     std::vector<size_t> indices;
-    if (!vec.empty()) {
-      for (size_t i = 0; i < vec.size(); ++i) {
-        if (is_close(vec[i], x)) {
-          indices.push_back(i);
-        }
+    if (vec.empty()) {
+      return boost::optional<std::vector<size_t>>();
+    }
+
+    for (size_t i = 0; i < vec.size(); ++i) {
+      if (is_close(vec[i], x)) {
+        indices.push_back(i);
       }
     }
+
     return indices.empty() ? boost::optional<std::vector<size_t>>()
                            : boost::optional<std::vector<size_t>>(indices);
   };
