@@ -16,7 +16,7 @@
 When launching autoware, if you set `localization_mode:=yabloc` as an argument, YabLoc will be launched instead of NDT.
 By default, `localization_mode` is `ndt`.
 
-A sample command to use YabLoc is as follows
+A sample command to run YabLoc is as follows
 
 ```shell
 ros2 launch autoware_launch logging_simulator.launch.xml \
@@ -25,3 +25,7 @@ ros2 launch autoware_launch logging_simulator.launch.xml \
   sensor_model:=sample_sensor_kit \
   localization_mode:=yabloc
 ```
+
+## Architecture
+
+![node_diagram](docs/yabloc_architecture.drawio.svg)
