@@ -36,15 +36,15 @@ This package contains some executable nodes related to particle filter.
 
 ## Parameters
 
-| Name                          | Type             | Description                                                                          |
-| ----------------------------- | ---------------- | ------------------------------------------------------------------------------------ |
-| `visualize`                   | bool             | whether particles are also published in visualization_msgs or not                    |
-| `static_linear_covariance`    | double           | to override the covariance of `/twist_with_covariance`                               |
-| `static_angular_covariance`   | double           | to override the covariance of `/twist_with_covariance`                               |
-| `resampling_interval_seconds` | double           | the interval of particle resamping                                                   |
-| `num_of_particles`            | int              | the number of particles                                                              |
-| `prediction_rate`             | double           | frequency of forecast updates, in Hz                                                 |
-| `cov_xx_yy`                   | vector\<double\> | the covariance of initial pose                                                       |
+| Name                          | Type             | Description                                                       |
+| ----------------------------- | ---------------- | ----------------------------------------------------------------- |
+| `visualize`                   | bool             | whether particles are also published in visualization_msgs or not |
+| `static_linear_covariance`    | double           | to override the covariance of `/twist_with_covariance`            |
+| `static_angular_covariance`   | double           | to override the covariance of `/twist_with_covariance`            |
+| `resampling_interval_seconds` | double           | the interval of particle resamping                                |
+| `num_of_particles`            | int              | the number of particles                                           |
+| `prediction_rate`             | double           | frequency of forecast updates, in Hz                              |
+| `cov_xx_yy`                   | vector\<double\> | the covariance of initial pose                                    |
 
 # gnss_particle_corrector
 
