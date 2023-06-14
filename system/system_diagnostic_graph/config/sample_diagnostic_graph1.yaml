@@ -3,7 +3,7 @@ files:
 
 units:
   - name: /autoware/report
-    type: temp
+    type: all
     list:
       - { type: unit, name: /autoware/operation/stop }
       - { type: unit, name: /autoware/operation/autonomous }
@@ -13,7 +13,7 @@ units:
       - { type: unit, name: /autoware/operation/comfortable-stop }
 
   - name: /autoware/operation/stop
-    type: temp
+    type: ok
 
   - name: /autoware/operation/autonomous
     type: all
@@ -23,7 +23,7 @@ units:
       - { type: unit, name: /autoware/percepiton }
 
   - name: /autoware/operation/local
-    type: temp
+    type: ok
 
   - name: /autoware/operation/remote
     type: all
@@ -31,7 +31,7 @@ units:
       - { type: diag, name: /external/remote_command }
 
   - name: /autoware/operation/emergency-stop
-    type: temp
+    type: ok
 
   - name: /autoware/operation/comfortable-stop
     type: all

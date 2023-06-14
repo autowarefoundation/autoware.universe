@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
+
 from diagnostic_msgs.msg import DiagnosticArray
 from diagnostic_msgs.msg import DiagnosticStatus
 import rclpy
@@ -22,18 +24,12 @@ import rclpy.qos
 
 
 class DummyDiagnostics(rclpy.node.Node):
-    def __init__(self):
+    def __init__(self, array):
         super().__init__("dummy_diagnostics")
         qos = rclpy.qos.qos_profile_system_default
         self.diags = self.create_publisher(DiagnosticArray, "/diagnostics", qos)
         self.timer = self.create_timer(0.5, self.on_timer)
-        self.array = [
-            self.create_status("/sensing/lidars/top"),
-            self.create_status("/sensing/lidars/front"),
-            self.create_status("/sensing/radars/front"),
-            self.create_status("/planning/route"),
-            self.create_status("/external/remote_command"),
-        ]
+        self.array = [self.create_status(*data) for data in array]
 
     def on_timer(self):
         diagnostics = DiagnosticArray()
@@ -42,11 +38,46 @@ class DummyDiagnostics(rclpy.node.Node):
         self.diags.publish(diagnostics)
 
     @staticmethod
-    def create_status(name: str):
-        return DiagnosticStatus(level=DiagnosticStatus.OK, name=name, message="OK")
+    def create_status(name: str, level: int):
+        return DiagnosticStatus(level=level, name=name, message="OK")
 
 
 if __name__ == "__main__":
+    data = {
+        "ok": [
+            ("/sensing/lidars/top", DiagnosticStatus.OK),
+            ("/sensing/lidars/front", DiagnosticStatus.OK),
+            ("/sensing/radars/front", DiagnosticStatus.OK),
+            ("/planning/route", DiagnosticStatus.OK),
+            ("/external/remote_command", DiagnosticStatus.OK),
+        ],
+        "front-lidar": [
+            ("/sensing/lidars/top", DiagnosticStatus.OK),
+            ("/sensing/lidars/front", DiagnosticStatus.ERROR),
+            ("/sensing/radars/front", DiagnosticStatus.OK),
+            ("/planning/route", DiagnosticStatus.OK),
+            ("/external/remote_command", DiagnosticStatus.OK),
+        ],
+        "front-radar": [
+            ("/sensing/lidars/top", DiagnosticStatus.OK),
+            ("/sensing/lidars/front", DiagnosticStatus.OK),
+            ("/sensing/radars/front", DiagnosticStatus.ERROR),
+            ("/planning/route", DiagnosticStatus.OK),
+            ("/external/reotme_command", DiagnosticStatus.OK),
+        ],
+        "front": [
+            ("/sensing/lidars/top", DiagnosticStatus.OK),
+            ("/sensing/lidars/front", DiagnosticStatus.ERROR),
+            ("/sensing/radars/front", DiagnosticStatus.ERROR),
+            ("/planning/route", DiagnosticStatus.OK),
+            ("/external/reotme_command", DiagnosticStatus.OK),
+        ],
+    }
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data", default="ok")
+    args = parser.parse_args()
+
     rclpy.init()
-    rclpy.spin(DummyDiagnostics())
+    rclpy.spin(DummyDiagnostics(data[args.data]))
     rclpy.shutdown()

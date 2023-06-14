@@ -30,12 +30,15 @@ std::unique_ptr<BaseExpr> BaseExpr::create(const std::string & type)
   if (type == "any") {
     return std::make_unique<AnyExpr>();
   }
-  return std::make_unique<StaleExpr>();
+  if (type == "ok") {
+    return std::make_unique<ConstExpr>(DiagnosticStatus::OK);
+  }
+  return std::make_unique<ConstExpr>(DiagnosticStatus::STALE);
 }
 
-DiagnosticLevel StaleExpr::exec(const std::vector<DiagnosticLevel> &) const
+DiagnosticLevel ConstExpr::exec(const std::vector<DiagnosticLevel> &) const
 {
-  return DiagnosticStatus::STALE;
+  return level_;
 }
 
 DiagnosticLevel AllExpr::exec(const std::vector<DiagnosticLevel> & levels) const

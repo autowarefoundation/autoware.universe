@@ -32,10 +32,14 @@ public:
   virtual DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const = 0;
 };
 
-class StaleExpr : public BaseExpr
+class ConstExpr : public BaseExpr
 {
 public:
+  explicit ConstExpr(const DiagnosticLevel level) : level_(level) {}
   DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const override;
+
+private:
+  DiagnosticLevel level_;
 };
 
 class AllExpr : public BaseExpr

@@ -30,4 +30,3 @@ units:
     type: all
     list:
       - { type: diag, name: /sensing/lidars/front }
-      - { type: diag, name: /sensing/radars/front }

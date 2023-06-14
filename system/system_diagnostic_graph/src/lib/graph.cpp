@@ -78,13 +78,13 @@ void DiagGraph::create(const std::string & file)
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
 {
-  for (const auto & node : index_nodes_) {
-    node.node->update();
-  }
-
   DiagnosticGraph graph;
   graph.stamp = stamp;
   graph.nodes.reserve(data_.leaf_list.size() + data_.unit_list.size());
+
+  for (const auto & node : index_nodes_) {
+    node.node->update();
+  }
 
   for (const auto & node : index_nodes_) {
     DiagnosticNode msg;

@@ -79,6 +79,7 @@ public:
 
 private:
   const KeyType key_;
+  DiagnosticStatus status_;
 };
 
 struct DiagGraphData
