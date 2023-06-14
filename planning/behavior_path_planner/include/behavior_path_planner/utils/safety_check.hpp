@@ -98,7 +98,7 @@ double calcMinimumLongitudinalLength(
 bool isSafeInLaneletCollisionCheck(
   const PathWithLaneId & planned_path,
   const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & predicted_ego_poses,
-  const double & ego_current_velocity, const std::vector<double> & check_duration,
+  const double ego_current_velocity, const std::vector<double> & check_duration,
   const PredictedObject & target_object, const PredictedPath & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
   const double rear_object_deceleration, CollisionCheckDebug & debug,
