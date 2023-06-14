@@ -4,7 +4,7 @@
   <arg name="twist_cov_for_prediction" default="/localization/twist_estimator/twist_with_covariance"/>
   <let name="inout_weighted_particles" value="weighted_particles"/>
   <let name="output_particles_marker_array" value="predicted_particles_marker"/>
-  <node pkg="yabloc_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level info">
+  <node pkg="yabloc_particle_filter" exec="predictor_node" name="particle_predictor" output="screen" args="--ros-args --log-level info">
     <param from="$(var predictor_param_path)"/>
 
     <remap from="~/input/initialpose" to="$(var input_initialpose)"/>

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "yabloc_imgproc/lsd/lsd.hpp"
+#include "yabloc_imgproc/line_segment_detector/line_segment_detector.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
@@ -21,7 +21,7 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace yabloc::lsd
+namespace yabloc::line_segment_detector
 {
 LineSegmentDetector::LineSegmentDetector() : Node("line_detector")
 {
@@ -103,4 +103,4 @@ std::vector<cv::Mat> LineSegmentDetector::remove_too_outer_elements(
   return filtered_lines;
 }
 
-}  // namespace yabloc::lsd
+}  // namespace yabloc::line_segment_detector

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "yabloc_imgproc/lsd/lsd.hpp"
+#include "yabloc_imgproc/line_segment_detector/line_segment_detector.hpp"
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<yabloc::lsd::LineSegmentDetector>());
+  rclcpp::spin(std::make_shared<yabloc::line_segment_detector::LineSegmentDetector>());
   rclcpp::shutdown();
   return 0;
 }

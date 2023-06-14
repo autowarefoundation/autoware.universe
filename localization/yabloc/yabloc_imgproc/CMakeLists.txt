@@ -16,11 +16,11 @@ find_package(PCL REQUIRED COMPONENTS common)
 
 # ===================================================
 # Executable
-# line segment detection
-set(TARGET lsd_node)
+# line segment detector
+set(TARGET line_segment_detector_node)
 ament_auto_add_executable(${TARGET}
-  src/lsd/lsd_node.cpp
-  src/lsd/lsd_core.cpp)
+  src/line_segment_detector/line_segment_detector_node.cpp
+  src/line_segment_detector/line_segment_detector_core.cpp)
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(${TARGET} ${OpenCV_LIBS})
