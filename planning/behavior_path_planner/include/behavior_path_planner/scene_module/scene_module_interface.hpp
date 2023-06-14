@@ -25,11 +25,16 @@
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 #include <rtc_interface/rtc_interface.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+#include <tier4_planning_msgs/msg/stop_factor.hpp>
+#include <tier4_planning_msgs/msg/stop_reason.hpp>
+#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
+#include <visualization_msgs/msg/detail/marker_array__struct.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -53,6 +58,9 @@ using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::generateUUID;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
+using tier4_planning_msgs::msg::StopFactor;
+using tier4_planning_msgs::msg::StopReason;
+using tier4_planning_msgs::msg::StopReasonArray;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
@@ -92,6 +100,11 @@ public:
       const auto ns = std::string("~/virtual_wall/") + utils::convertToSnakeCase(name);
       pub_virtual_wall_ = node.create_publisher<MarkerArray>(ns, 20);
     }
+
+    {
+      const auto ns = std::string("~/output/stop_reasons");
+      pub_stop_reasons_ = node.create_publisher<StopReasonArray>(ns, 20);
+    }
 #endif
 
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
@@ -107,6 +120,11 @@ public:
    *        These condition is to be implemented in each modules.
    */
   virtual ModuleStatus updateState() = 0;
+
+  /**
+   * @brief Set the current_state_ based on updateState output.
+   */
+  virtual void updateCurrentState() { current_state_ = updateState(); }
 
   /**
    * @brief If the module plan customized reference path while waiting approval, it should output
@@ -198,6 +216,8 @@ public:
     current_state_ = ModuleStatus::IDLE;
 #endif
 
+    stop_reason_ = StopReason();
+
     processOnEntry();
   }
 
@@ -215,6 +235,8 @@ public:
     removeRTCStatus();
     unlockNewModuleLaunch();
     steering_factor_interface_ptr_->clearSteeringFactors();
+
+    stop_reason_ = StopReason();
 
     processOnExit();
   }
@@ -295,6 +317,22 @@ public:
 
   void publishDebugMarker() { pub_debug_marker_->publish(debug_marker_); }
 
+  void publishStopReasons()
+  {
+    StopReasonArray stop_reason_array;
+    stop_reason_array.header.frame_id = "map";
+    stop_reason_array.header.stamp = clock_->now();
+
+    const auto reason = getStopReason();
+    if (reason.reason == "") {
+      return;
+    }
+
+    stop_reason_array.stop_reasons.push_back(reason);
+
+    pub_stop_reasons_->publish(stop_reason_array);
+  }
+
   void publishVirtualWall()
   {
     MarkerArray markers{};
@@ -320,6 +358,9 @@ public:
       appendMarkerArray(virtual_wall, &markers);
     }
 
+    const auto module_specific_wall = getModuleVirtualWall();
+    appendMarkerArray(module_specific_wall, &markers);
+
     pub_virtual_wall_->publish(markers);
 
     resetWallPoses();
@@ -342,7 +383,11 @@ public:
 
   MarkerArray getDebugMarkers() const { return debug_marker_; }
 
+  virtual MarkerArray getModuleVirtualWall() { return MarkerArray(); }
+
   ModuleStatus getCurrentStatus() const { return current_state_; }
+
+  StopReason getStopReason() const { return stop_reason_; }
 
   virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
 
@@ -416,6 +461,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_info_marker_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
+  rclcpp::Publisher<StopReasonArray>::SharedPtr pub_stop_reasons_;
 #endif
 
   BehaviorModuleOutput previous_module_output_;
@@ -456,6 +502,23 @@ protected:
     }
   }
 
+  void setStopReason(const std::string & stop_reason, const PathWithLaneId & path)
+  {
+    stop_reason_.reason = stop_reason;
+    stop_reason_.stop_factors.clear();
+
+    if (!stop_pose_) {
+      stop_reason_.reason = "";
+      return;
+    }
+
+    StopFactor stop_factor;
+    stop_factor.stop_pose = stop_pose_.get();
+    stop_factor.dist_to_stop_pose =
+      motion_utils::calcSignedArcLength(path.points, getEgoPosition(), stop_pose_.get().position);
+    stop_reason_.stop_factors.push_back(stop_factor);
+  }
+
   BehaviorModuleOutput getPreviousModuleOutput() const { return previous_module_output_; }
 
   void lockNewModuleLaunch() { is_locked_new_module_launch_ = true; }
@@ -470,11 +533,14 @@ protected:
   {
     return planner_data_->self_odometry->pose.pose.position;
   }
+
   geometry_msgs::msg::Pose getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
+
   geometry_msgs::msg::Twist getEgoTwist() const
   {
     return planner_data_->self_odometry->twist.twist;
   }
+
   double getEgoSpeed() const
   {
     return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
@@ -507,7 +573,13 @@ protected:
   PlanResult path_candidate_;
   PlanResult path_reference_;
 
-  ModuleStatus current_state_;
+#ifdef USE_OLD_ARCHITECTURE
+  ModuleStatus current_state_{ModuleStatus::SUCCESS};
+#else
+  ModuleStatus current_state_{ModuleStatus::IDLE};
+#endif
+
+  StopReason stop_reason_;
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 

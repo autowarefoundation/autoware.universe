@@ -19,7 +19,7 @@
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
-#include "behavior_path_planner/utils/pull_out/pull_out_path.hpp"
+#include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "motion_utils/motion_utils.hpp"
 #include "perception_utils/predicted_path_utils.hpp"
 
@@ -107,11 +107,6 @@ struct FrenetPoint
 };
 
 // data conversions
-PredictedPath convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
-  const size_t nearest_seg_idx, const double duration, const double resolution,
-  const double prepare_time, const double acceleration);
-
 template <class T>
 FrenetPoint convertToFrenetPoint(
   const T & points, const Point & search_point_geom, const size_t seg_idx)
@@ -308,6 +303,10 @@ bool isInLaneletWithYawThreshold(
 bool isEgoOutOfRoute(
   const Pose & self_pose, const std::optional<PoseWithUuidStamped> & modified_goal,
   const std::shared_ptr<RouteHandler> & route_handler);
+
+bool isEgoWithinOriginalLane(
+  const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
+  const BehaviorPathPlannerParameters & common_param);
 
 // path management
 

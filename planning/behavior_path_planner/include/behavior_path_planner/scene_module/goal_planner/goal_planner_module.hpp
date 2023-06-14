@@ -152,8 +152,10 @@ private:
 
   tier4_autoware_utils::LinearRing2d vehicle_footprint_;
 
-  // save last time and pose
+// save last time and pose
+#ifdef USE_OLD_ARCHITECTURE
   std::unique_ptr<rclcpp::Time> last_received_time_;
+#endif
   std::unique_ptr<rclcpp::Time> last_approved_time_;
   std::unique_ptr<rclcpp::Time> last_increment_time_;
   std::unique_ptr<rclcpp::Time> last_path_update_time_;
@@ -161,7 +163,9 @@ private:
 
   // approximate distance from the start point to the end point of pull_over.
   // this is used as an assumed value to decelerate, etc., before generating the actual path.
-  double approximate_pull_over_distance_{20.0};
+  const double approximate_pull_over_distance_{20.0};
+  // ego may exceed the stop distance, so add a buffer
+  const double stop_distance_buffer_{2.0};
 
   // for parking policy
   bool left_side_parking_{true};
@@ -183,10 +187,12 @@ private:
 
   // goal seach
   Pose calcRefinedGoal(const Pose & goal_pose) const;
+  void generateGoalCandidates();
 
   // stop or decelerate
   void decelerateForTurnSignal(const Pose & stop_pose, PathWithLaneId & path) const;
-  void decelerateBeforeSearchStart(const Pose & search_start_pose, PathWithLaneId & path) const;
+  void decelerateBeforeSearchStart(
+    const Pose & search_start_offset_pose, PathWithLaneId & path) const;
   PathWithLaneId generateStopPath();
   PathWithLaneId generateFeasibleStopPath();
   boost::optional<double> calcFeasibleDecelDistance(const double target_velocity) const;

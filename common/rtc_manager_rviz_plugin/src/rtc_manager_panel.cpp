@@ -66,8 +66,8 @@ std::string getModuleName(const uint8_t module_type)
     case Module::GOAL_PLANNER: {
       return "goal_planner";
     }
-    case Module::PULL_OUT: {
-      return "pull_out";
+    case Module::START_PLANNER: {
+      return "start_planner";
     }
     case Module::TRAFFIC_LIGHT: {
       return "traffic_light";
@@ -105,7 +105,7 @@ bool isPathChangeModule(const uint8_t module_type)
     module_type == Module::EXT_REQUEST_LANE_CHANGE_RIGHT ||
     module_type == Module::AVOIDANCE_BY_LC_LEFT || module_type == Module::AVOIDANCE_BY_LC_RIGHT ||
     module_type == Module::AVOIDANCE_LEFT || module_type == Module::AVOIDANCE_RIGHT ||
-    module_type == Module::GOAL_PLANNER || module_type == Module::PULL_OUT) {
+    module_type == Module::GOAL_PLANNER || module_type == Module::START_PLANNER) {
     return true;
   }
   return false;
@@ -255,14 +255,14 @@ void RTCManagerPanel::onInitialize()
 {
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
-  client_rtc_commands_ = raw_node_->create_client<CooperateCommands>(
-    "/api/external/set/rtc_commands", rmw_qos_profile_services_default);
+  client_rtc_commands_ =
+    raw_node_->create_client<CooperateCommands>("/api/external/set/rtc_commands");
 
   for (size_t i = 0; i < auto_modes_.size(); i++) {
     auto & a = auto_modes_.at(i);
     // auto mode
-    a->enable_auto_mode_cli = raw_node_->create_client<AutoMode>(
-      enable_auto_mode_namespace_ + "/" + a->module_name, rmw_qos_profile_services_default);
+    a->enable_auto_mode_cli =
+      raw_node_->create_client<AutoMode>(enable_auto_mode_namespace_ + "/" + a->module_name);
   }
 
   sub_rtc_status_ = raw_node_->create_subscription<CooperateStatusArray>(

@@ -137,6 +137,8 @@ public:
 
   const BehaviorPathPlannerParameters & getCommonParam() const { return planner_data_->parameters; }
 
+  LaneChangeParameters getLaneChangeParam() const { return *lane_change_parameters_; }
+
   bool isCancelEnabled() const { return lane_change_parameters_->enable_cancel_lane_change; }
 
   bool isAbortEnabled() const { return lane_change_parameters_->enable_abort_lane_change; }
@@ -165,6 +167,10 @@ public:
 
   std::string getModuleTypeStr() const { return std::string{magic_enum::enum_name(type_)}; }
 
+  LaneChangeModuleType getModuleType() const { return type_; }
+
+  TurnSignalDecider getTurnSignalDecider() { return planner_data_->turn_signal_decider; }
+
   Direction getDirection() const
   {
     if (direction_ == Direction::NONE && !status_.lane_change_path.path.points.empty()) {
@@ -182,8 +188,7 @@ protected:
 
   virtual PathWithLaneId getPrepareSegment(
     const lanelet::ConstLanelets & current_lanes, const double arc_length_from_current,
-    const double backward_path_length, const double prepare_length,
-    const double prepare_velocity) const = 0;
+    const double backward_path_length, const double prepare_length) const = 0;
 
   virtual bool getLaneChangePaths(
     const lanelet::ConstLanelets & original_lanelets,
