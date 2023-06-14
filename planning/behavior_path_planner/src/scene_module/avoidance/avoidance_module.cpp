@@ -2845,7 +2845,7 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
     // this value should be larger than -eps consider path shifter calculation error.
     const double eps = 0.01;
     if (candidate.start_longitudinal < -eps) {
-      continue;
+      break;
     }
 
     if (!is_ignore_shift(candidate)) {
