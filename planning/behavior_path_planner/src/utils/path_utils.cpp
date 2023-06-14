@@ -73,7 +73,7 @@ PathWithLaneId resamplePathWithSpline(
   const auto find_almost_same_value = [&](const std::vector<double> & vec, double x) {
     if (vec.empty()) return boost::optional<size_t>();
 
-    auto it = std::find_if(vec.begin(), vec.end(), [&](double v) { return is_close(v, x); });
+    const auto it = std::find_if(vec.begin(), vec.end(), [&](double v) { return is_close(v, x); });
 
     if (it != vec.end()) {
       return boost::optional<size_t>(static_cast<size_t>(std::distance(vec.begin(), it)));
