@@ -167,8 +167,7 @@ bool StartPlannerModule::isExecutionReady() const
 
   if (status_.is_safe) {
     // TODO(Sugahara): safety check for dynamic objects
-    isSafeConsideringDynamicObjects();
-    return true;
+    return isSafeConsideringDynamicObjects();
   }
   return true;
 }
@@ -831,7 +830,7 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   return turn_signal;
 }
 
-bool StartPlannerModule::isSafeConsideringDynamicObjects()
+bool StartPlannerModule::isSafeConsideringDynamicObjects() const
 {
   // TODO(Sugahara): should safety check for backward path later
   const auto & pull_out_path = status_.pull_out_path.partial_paths.back();
@@ -854,11 +853,12 @@ bool StartPlannerModule::isSafeConsideringDynamicObjects()
     parameters_->acceleration_to_target_velocity, current_pose,
     parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
 
-  return utils::safety_check::isSafeInLaneletCollisionCheck(
-    pull_out_path, interpolated_ego, current_twist, check_durations,
-    lane_change_path.duration.prepare, obj, obj_path, common_parameter,
-    lane_change_parameter.prepare_segment_ignore_object_velocity_thresh, front_decel, rear_decel,
-    current_debug_data.second);
+  // return utils::safety_check::isSafeInLaneletCollisionCheck(
+  //   pull_out_path, interpolated_ego, current_twist, check_durations,
+  //   lane_change_path.duration.prepare, obj, obj_path, common_parameter,
+  //   lane_change_parameter.prepare_segment_ignore_object_velocity_thresh, front_decel, rear_decel,
+  //   current_debug_data.second);
+  return true;
 }
 
 void StartPlannerModule::setDebugData() const

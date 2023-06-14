@@ -141,7 +141,7 @@ private:
   void checkBackFinished();
   bool isStopped();
   bool hasFinishedCurrentPath();
-  bool isSafeConsideringDynamicObjects();
+  bool isSafeConsideringDynamicObjects() const;
 
   void setDebugData() const;
 
