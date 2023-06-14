@@ -45,22 +45,52 @@ void DiagGraph::create(const std::string & file)
 
   // Sort unit nodes in topological order for update dependencies.
   topological_sort();
+
+  // Fix the node index for the ros message.
+  std::vector<NodeWithIndexLink> nodes;
+  for (const auto & leaf : data_.leaf_list) {
+    nodes.push_back(NodeWithIndexLink{leaf.get(), {}});
+  }
+  for (const auto & unit : data_.unit_list) {
+    nodes.push_back(NodeWithIndexLink{unit.get(), {}});
+  }
+
+  // Set the link index for the ros message.
+  std::unordered_map<DiagNode *, size_t> indices;
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    indices[nodes[i].node] = i;
+  }
+  for (auto & node : nodes) {
+    for (const auto & link : node.node->links()) {
+      node.links.push_back(indices.at(link));
+    }
+  }
+  index_nodes_ = nodes;
+
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    std::cout << std::setw(2) << i << ": " << nodes[i].node->name();
+    for (const auto & link : nodes[i].links) {
+      std::cout << " " << link;
+    }
+    std::cout << std::endl;
+  }
 }
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
 {
-  for (const auto & leaf : data_.leaf_list) leaf->update();
-  for (const auto & unit : data_.unit_list) unit->update();
+  for (const auto & node : index_nodes_) {
+    node.node->update();
+  }
 
   DiagnosticGraph graph;
   graph.stamp = stamp;
   graph.nodes.reserve(data_.leaf_list.size() + data_.unit_list.size());
 
-  for (const auto & leaf : data_.leaf_list) {
-    graph.nodes.push_back(leaf->report());
-  }
-  for (const auto & unit : data_.unit_list) {
-    graph.nodes.push_back(unit->report());
+  for (const auto & node : index_nodes_) {
+    DiagnosticNode msg;
+    msg.status = node.node->report();
+    msg.links = node.links;
+    graph.nodes.push_back(msg);
   }
   return graph;
 }

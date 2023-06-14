@@ -21,6 +21,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <string>
+#include <vector>
 
 namespace system_diagnostic_graph
 {
@@ -36,6 +37,13 @@ public:
 private:
   void topological_sort();
   DiagGraphData data_;
+
+  struct NodeWithIndexLink
+  {
+    DiagNode * node;
+    std::vector<uint32_t> links;
+  };
+  std::vector<NodeWithIndexLink> index_nodes_;
 };
 
 }  // namespace system_diagnostic_graph

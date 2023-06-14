@@ -27,9 +27,13 @@ DiagUnit::DiagUnit(const KeyType & key) : key_(key)
   level_ = DiagnosticStatus::STALE;
 }
 
-DiagnosticNode DiagUnit::report() const
+DiagnosticStatus DiagUnit::report() const
 {
-  return DiagnosticNode();
+  DiagnosticStatus status;
+  status.level = level_;
+  status.name = key_;
+  status.hardware_id = "";
+  return status;
 }
 
 void DiagUnit::update()
@@ -57,14 +61,19 @@ DiagLeaf::DiagLeaf(const KeyType & key) : key_(key)
   level_ = DiagnosticStatus::STALE;
 }
 
-DiagnosticNode DiagLeaf::report() const
+DiagnosticStatus DiagLeaf::report() const
 {
-  return DiagnosticNode();
+  DiagnosticStatus status;
+  status.level = level_;
+  status.name = key_.first;
+  status.hardware_id = key_.second;
+  return status;
 }
 
 void DiagLeaf::update()
 {
   // TODO(Takagi, Isamu): timeout, error hold
+  // constexpr double timeout = 1.0; // TODO(Takagi, Isamu): parameterize
 }
 
 void DiagLeaf::callback(const DiagnosticStatus & status)

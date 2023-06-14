@@ -36,7 +36,7 @@ class DiagNode
 public:
   virtual ~DiagNode() = default;
   virtual void update() = 0;
-  virtual DiagnosticNode report() const = 0;
+  virtual DiagnosticStatus report() const = 0;
   virtual std::vector<DiagNode *> links() const = 0;
   virtual std::string name() const = 0;
   DiagnosticLevel level() const { return level_; }
@@ -50,7 +50,7 @@ class DiagUnit : public DiagNode
 public:
   using KeyType = std::string;
   explicit DiagUnit(const KeyType & key);
-  DiagnosticNode report() const override;
+  DiagnosticStatus report() const override;
   DiagDebugData debug();
   void update() override;
   void create(DiagGraphInit & graph, const UnitConfig & config);
@@ -69,7 +69,7 @@ class DiagLeaf : public DiagNode
 public:
   using KeyType = std::pair<std::string, std::string>;
   explicit DiagLeaf(const KeyType & key);
-  DiagnosticNode report() const override;
+  DiagnosticStatus report() const override;
   DiagDebugData debug();
   void update() override;
   void callback(const DiagnosticStatus & status);
