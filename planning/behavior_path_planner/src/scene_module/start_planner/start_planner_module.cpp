@@ -105,6 +105,18 @@ void StartPlannerModule::processOnExit()
 
 bool StartPlannerModule::isExecutionRequested() const
 {
+  // Check if ego arrives at goal
+  const Pose & goal_pose = planner_data_->route_handler->getGoalPose();
+  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  if (
+    tier4_autoware_utils::calcDistance2d(goal_pose.position, current_pose.position) <
+    parameters_->th_arrived_distance) {
+#ifdef USE_OLD_ARCHITECTURE
+    is_executed_ = false;
+#endif
+    return false;
+  }
+
   has_received_new_route_ =
     !planner_data_->prev_route_id ||
     *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
@@ -127,7 +139,7 @@ bool StartPlannerModule::isExecutionRequested() const
   }
 
   const bool is_stopped = utils::l2Norm(planner_data_->self_odometry->twist.twist.linear) <
-                          parameters_->th_arrived_distance;
+                          parameters_->th_stopped_velocity;
   if (!is_stopped) {
 #ifdef USE_OLD_ARCHITECTURE
     is_executed_ = false;
@@ -806,10 +818,10 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   const double lateral_offset = lanelet::utils::getLateralDistanceToCenterline(lane, start_pose);
 
   if (distance_from_end < 0.0 && lateral_offset > parameters_->th_blinker_on_lateral_offset) {
-    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   } else if (
     distance_from_end < 0.0 && lateral_offset < -parameters_->th_blinker_on_lateral_offset) {
-    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
   } else {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
   }
