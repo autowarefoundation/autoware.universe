@@ -23,6 +23,14 @@
 
 namespace yabloc::graph_segment
 {
+// This class takes a region-segmented image and an index referring to one of those
+// regions, and returns region with the same color as the specified region. For each region, it
+// computes the RGB histogram and determines the similarity of regions based on the distance between
+// their histograms.
+//
+// The class only has one parameter `similarity_score_threshold`, which is the threshold of
+// similarity used to determine if two histograms are considered a match. It takes a
+// value between 0 and 1. A value closer to 0 is more likely to be being considered a match.
 class SimilarAreaSearcher
 {
 public:

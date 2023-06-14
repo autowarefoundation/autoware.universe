@@ -58,7 +58,7 @@ std::set<int> SimilarAreaSearcher::search(
     key_queue.push({key, count});
   }
 
-  Eigen::MatrixXf ref_histogram = histogram_map.at(best_roadlike_class).eval();
+  const Eigen::MatrixXf ref_histogram = histogram_map.at(best_roadlike_class).eval();
 
   std::stringstream debug_ss;
   debug_ss << "histogram equality ";
@@ -77,19 +77,6 @@ std::set<int> SimilarAreaSearcher::search(
     if (++index > 10) break;
   }
   RCLCPP_INFO_STREAM(logger_, debug_ss.str());
-
-  // // DEBUG: Visualilze
-  // cv::Mat new_segmented = rgb_image.clone();
-  // for (int h = 0; h < rgb_image.rows; h++) {
-  //   const int * seg_ptr = segmented.ptr<int>(h);
-  //   cv::Vec3b * rgb_ptr = new_segmented.ptr<cv::Vec3b>(h);
-
-  //   for (int w = 0; w < rgb_image.cols; w++) {
-  //     int key = seg_ptr[w];
-  //     if (acceptable_keys.count(key)) rgb_ptr[w] = cv::Vec3b(0, 0, 255);
-  //     if (key == best_roadlike_class) rgb_ptr[w] = cv::Vec3b(0, 255, 255);
-  //   }
-  // }
 
   return acceptable_keys;
 }
