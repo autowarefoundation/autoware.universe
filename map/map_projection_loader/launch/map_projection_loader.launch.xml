@@ -1,0 +1,7 @@
+<launch>
+  <arg name="yaml_file_path" default="$(find-pkg-share map_projection_loader)/test/data/projection_info.yaml" description="Path to the yaml file"/>
+  
+  <node pkg="map_projection_loader" exec="map_projection_loader" name="map_projection_loader">
+    <param name="yaml_file_path" value="$(var yaml_file_path)"/>
+  </node>
+</launch>
