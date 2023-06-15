@@ -504,10 +504,10 @@ bool NormalLaneChange::getLaneChangePaths(
 
   const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanelets.back());
 
-  const auto shift_intervals =
-    route_handler.getLateralIntervalsToPreferredLane(target_lanelets.back());
-  const double next_lane_change_buffer =
-    utils::calcMinimumLaneChangeLength(common_parameter, shift_intervals);
+  const double lane_change_buffer = utils::calcMinimumLaneChangeLength(
+    common_parameter, route_handler.getLateralIntervalsToPreferredLane(original_lanelets.back()));
+  const double next_lane_change_buffer = utils::calcMinimumLaneChangeLength(
+    common_parameter, route_handler.getLateralIntervalsToPreferredLane(target_lanelets.back()));
 
   const auto dist_to_end_of_current_lanes =
     utils::getDistanceToEndOfLane(getEgoPose(), original_lanelets);
@@ -707,6 +707,15 @@ bool NormalLaneChange::getLaneChangePaths(
           {*candidate_path}, *dynamic_objects, backward_target_lanes_for_object_filtering,
           getEgoPose(), common_parameter.forward_path_length, *lane_change_parameters_,
           lateral_buffer);
+
+        const auto current_lane_path = route_handler.getCenterLinePath(
+          original_lanelets, 0.0, std::numeric_limits<double>::max());
+        const bool delay_lane_change = utils::lane_change::delayLaneChange(
+          *candidate_path, current_lane_path, *dynamic_objects, dynamic_object_indices.target_lane,
+          lane_change_buffer);
+        if (delay_lane_change) {
+          return false;
+        }
       }
       candidate_paths->push_back(*candidate_path);
 
