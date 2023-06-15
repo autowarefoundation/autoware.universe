@@ -209,8 +209,6 @@ If you want to adjust the effect only in the high-speed range, you can use `weig
 
 #### Descriptions for weights
 
-Here are some tips for adjusting other parameters:
-
 - `weight_lat_error`: Reduce lateral tracking error. This acts like P gain in PID.
 - `weight_heading_error`: Make a drive straight. This acts like D gain in PID.
 - `weight_heading_error_squared_vel_coeff` : Make a drive straight in high speed range.
@@ -223,6 +221,8 @@ Here are some tips for adjusting other parameters:
   for stability.
 
 #### Other tips for tuning
+
+Here are some tips for adjusting other parameters:
 
 - In theory, increasing terminal weights, `weight_terminal_lat_error` and `weight_terminal_heading_error`, can enhance the tracking stability. This method sometimes proves effective.
 - A larger `prediction_horizon` and a smaller `prediction_sampling_time` are efficient for tracking performance. However, these come at the cost of higher computational costs.
