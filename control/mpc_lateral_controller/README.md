@@ -225,7 +225,7 @@ Here are some tips for adjusting other parameters:
 #### Other tips for tuning
 
 - In theory, increasing terminal weights, `weight_terminal_lat_error` and `weight_terminal_heading_error`, can enhance the tracking stability. This method sometimes proves effective.
-- A larger `prediction_horizon` and a smaller `prediction_sampling_time` are efficient for tracking performance. However, these come with a trade-off between computational costs.
+- A larger `prediction_horizon` and a smaller `prediction_sampling_time` are efficient for tracking performance. However, these come at the cost of higher computational costs.
 - If you want to modify the weight according to the trajectory curvature (for instance, when you're driving on a sharp curve and want a larger weight), use `mpc_low_curvature_thresh_curvature` and adjust `mpc_low_curvature_weight_**` weights.
 - If you want to adjust the steering rate limit based on the vehicle speed and trajectory curvature, you can modify the values of `steer_rate_lim_dps_list_by_curvature`, `curvature_list_for_steer_rate_lim`, `steer_rate_lim_dps_list_by_velocity`, `velocity_list_for_steer_rate_lim`. By doing this, you can enforce the steering rate limit during high-speed driving or relax it while curving.
 - In case your target curvature appears jagged, adjusting `curvature_smoothing` becomes critically important for accurate curvature calculations. A larger value yields a smooth curvature calculation which reduces noise but can cause delay in feedforward computation and potentially degrade performance.
