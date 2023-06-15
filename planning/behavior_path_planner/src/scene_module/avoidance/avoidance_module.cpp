@@ -322,6 +322,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   using utils::avoidance::filterTargetObjects;
   using utils::avoidance::getTargetLanelets;
 
+  // Separate dynamic objects based on whether they are inside or outside of the expanded lanelets.
   const auto expanded_lanelets = getTargetLanelets(
     planner_data_, data.current_lanelets, parameters_->detection_area_left_expand_dist,
     parameters_->detection_area_right_expand_dist * (-1.0));
@@ -341,8 +342,11 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     objects.push_back(createObjectData(data, object));
   }
 
+  // Filter out the objects to determine the ones to be avoided.
   filterTargetObjects(objects, data, debug, planner_data_, parameters_);
 
+  // Calculate the distance needed to safely decelerate the ego vehicle to a stop line.
+  // TODO(Satoshi OTA) use helper_ after the manager transition
   helper::avoidance::AvoidanceHelper helper(planner_data_, parameters_);
 
   const auto feasible_stop_distance = helper.getFeasibleDecelDistance(0.0);
@@ -3299,18 +3303,23 @@ void AvoidanceModule::insertWaitPoint(
     return;
   }
 
+  // If we don't need to consider deceleration constraints, insert a deceleration point
+  // and return immediately
   if (!use_constraints_for_decel) {
     utils::avoidance::insertDecelPoint(
       getEgoPosition(), data.to_stop_line, 0.0, shifted_path.path, stop_pose_);
     return;
   }
 
+  // If target object can be stopped for, insert a deceleration point and return
   if (data.stop_target_object.get().is_stoppable) {
     utils::avoidance::insertDecelPoint(
       getEgoPosition(), data.to_stop_line, 0.0, shifted_path.path, stop_pose_);
     return;
   }
 
+  // If the object cannot be stopped for, calculate a "mild" deceleration distance
+  // and insert a deceleration point at that distance
   const auto stop_distance = helper_.getMildDecelDistance(0.0);
   utils::avoidance::insertDecelPoint(
     getEgoPosition(), stop_distance, 0.0, shifted_path.path, stop_pose_);
@@ -3345,8 +3354,8 @@ void AvoidanceModule::insertStopPoint(
   const auto stop_distance =
     calcSignedArcLength(shifted_path.path.points, getEgoPosition(), stop_idx);
 
-  // Insert deceleration point at stop distance without deceleration if use_constraints_for_decel is
-  // false
+  // If we don't need to consider deceleration constraints, insert a deceleration point
+  // and return immediately
   if (!use_constraints_for_decel) {
     utils::avoidance::insertDecelPoint(
       getEgoPosition(), stop_distance, 0.0, shifted_path.path, stop_pose_);
