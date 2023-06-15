@@ -572,39 +572,32 @@ void fillAvoidanceNecessity(
   const auto safety_margin =
     0.5 * vehicle_width + object_parameter.safety_buffer_lateral * object_data.distance_factor;
 
-  const auto one_shot_necessity =
-    (isOnRight(object_data) && std::abs(object_data.overhang_dist) < safety_margin) ||
-    (!isOnRight(object_data) && object_data.overhang_dist < safety_margin);
+  const auto check_necessity = [&](const auto hysteresis_factor) {
+    return (isOnRight(object_data) &&
+            std::abs(object_data.overhang_dist) < safety_margin * hysteresis_factor) ||
+           (!isOnRight(object_data) &&
+            object_data.overhang_dist < safety_margin * hysteresis_factor);
+  };
 
   const auto id = object_data.object.object_id;
   const auto same_id_obj = std::find_if(
     registered_objects.begin(), registered_objects.end(),
     [&id](const auto & o) { return o.object.object_id == id; });
 
+  // First time
   if (same_id_obj == registered_objects.end()) {
-    object_data.avoid_required = one_shot_necessity;
+    object_data.avoid_required = check_necessity(1.0);
     return;
   }
 
   // FALSE -> FALSE or FALSE -> TRUE
   if (!same_id_obj->avoid_required) {
-    object_data.avoid_required = one_shot_necessity;
+    object_data.avoid_required = check_necessity(1.0);
     return;
   }
 
-  // TRUE -> TRUE
-  if (one_shot_necessity) {
-    object_data.avoid_required = true;
-    return;
-  }
-
-  const auto hysteresis_factor = parameters->safety_check_hysteresis_factor;
-
-  // TRUE -> FALSE (check again with hysteresis factor)
-  object_data.avoid_required =
-    (isOnRight(object_data) &&
-     std::abs(object_data.overhang_dist) < safety_margin * hysteresis_factor) ||
-    (!isOnRight(object_data) && object_data.overhang_dist < safety_margin * hysteresis_factor);
+  // TRUE -> ? (check with hysteresis factor)
+  object_data.avoid_required = check_necessity(parameters->safety_check_hysteresis_factor);
 }
 
 void updateRegisteredObject(
