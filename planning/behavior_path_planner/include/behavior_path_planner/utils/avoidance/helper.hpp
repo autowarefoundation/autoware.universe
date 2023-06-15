@@ -198,26 +198,13 @@ public:
     return *itr;
   }
 
-  double getFeasibleDecelDistance(const double target_velocity) const
+  double getFeasibleDecelDistance(
+    const double target_velocity, const bool use_hard_constraints = true) const
   {
+    const auto & p = parameters_;
     const auto & a_now = data_->self_acceleration->accel.accel.linear.x;
-    const auto & a_lim = parameters_->max_deceleration;
-    const auto & j_lim = parameters_->max_jerk;
-    const auto ret = calcDecelDistWithJerkAndAccConstraints(
-      getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
-
-    if (!!ret) {
-      return ret.get();
-    }
-
-    return std::numeric_limits<double>::max();
-  }
-
-  double getMildDecelDistance(const double target_velocity) const
-  {
-    const auto & a_now = data_->self_acceleration->accel.accel.linear.x;
-    const auto & a_lim = parameters_->nominal_deceleration;
-    const auto & j_lim = parameters_->nominal_jerk;
+    const auto & a_lim = use_hard_constraints ? p->max_deceleration : p->nominal_deceleration;
+    const auto & j_lim = use_hard_constraints ? p->max_jerk : p->nominal_jerk;
     const auto ret = calcDecelDistWithJerkAndAccConstraints(
       getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
 

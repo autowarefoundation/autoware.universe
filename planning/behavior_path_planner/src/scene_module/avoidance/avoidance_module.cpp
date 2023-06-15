@@ -3320,7 +3320,7 @@ void AvoidanceModule::insertWaitPoint(
 
   // If the object cannot be stopped for, calculate a "mild" deceleration distance
   // and insert a deceleration point at that distance
-  const auto stop_distance = helper_.getMildDecelDistance(0.0);
+  const auto stop_distance = helper_.getFeasibleDecelDistance(0.0, false);
   utils::avoidance::insertDecelPoint(
     getEgoPosition(), stop_distance, 0.0, shifted_path.path, stop_pose_);
 }
@@ -3363,7 +3363,7 @@ void AvoidanceModule::insertStopPoint(
   }
 
   // Otherwise, consider deceleration constraints before inserting deceleration point
-  const auto decel_distance = helper_.getMildDecelDistance(0.0);
+  const auto decel_distance = helper_.getFeasibleDecelDistance(0.0, false);
   if (stop_distance < decel_distance) {
     return;
   }
@@ -3386,7 +3386,7 @@ void AvoidanceModule::insertYieldVelocity(ShiftedPath & shifted_path) const
     return;
   }
 
-  const auto decel_distance = helper_.getMildDecelDistance(p->yield_velocity);
+  const auto decel_distance = helper_.getFeasibleDecelDistance(p->yield_velocity, false);
   utils::avoidance::insertDecelPoint(
     getEgoPosition(), decel_distance, p->yield_velocity, shifted_path.path, slow_pose_);
 }
