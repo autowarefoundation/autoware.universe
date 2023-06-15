@@ -24,7 +24,7 @@
 namespace gnss_poser
 {
 
-CoordinateSystem convert_to_coordinate_systems(const std::string &type)
+CoordinateSystem convert_to_coordinate_systems(const std::string & type)
 {
   if (type == "MGRS") {
     return CoordinateSystem::MGRS;
@@ -55,7 +55,7 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   height_system_(declare_parameter<int>("height_system", 1))
 {
   auto qos = rclcpp::QoS(rclcpp::KeepLast(10));
-  qos.transient_local(); // Set Durability QoS policy to transient local.
+  qos.transient_local();  // Set Durability QoS policy to transient local.
 
   auto cb_map_proj_info = [this](const tier4_map_msgs::msg::MapProjectorInfo::SharedPtr msg) {
     coordinate_system_ = convert_to_coordinate_systems(msg->type);
