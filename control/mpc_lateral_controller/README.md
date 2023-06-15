@@ -114,21 +114,32 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 
 #### MPC algorithm
 
-| Name                                    | Type   | Description                                                                                     | Default value     |
-| :-------------------------------------- | :----- | :---------------------------------------------------------------------------------------------- | :---------------- |
-| qp_solver_type                          | string | QP solver option. described below in detail.                                                    | unconstraint_fast |
-| vehicle_model_type                      | string | vehicle model option. described below in detail.                                                | kinematics        |
-| prediction_horizon                      | int    | total prediction step for MPC                                                                   | 70                |
-| prediction_sampling_time                | double | prediction period for one step [s]                                                              | 0.1               |
-| weight_lat_error                        | double | weight for lateral error                                                                        | 0.1               |
-| weight_heading_error                    | double | weight for heading error                                                                        | 0.0               |
-| weight_heading_error_squared_vel_coeff  | double | weight for heading error \* velocity                                                            | 5.0               |
-| weight_steering_input                   | double | weight for steering error (steer command - reference steer)                                     | 1.0               |
-| weight_steering_input_squared_vel_coeff | double | weight for steering error (steer command - reference steer) \* velocity                         | 0.25              |
-| weight_lat_jerk                         | double | weight for lateral jerk (steer(i) - steer(i-1)) \* velocity                                     | 0.0               |
-| weight_terminal_lat_error               | double | terminal cost weight for lateral error                                                          | 1.0               |
-| weight_terminal_heading_error           | double | terminal cost weight for heading error                                                          | 0.1               |
-| zero_ff_steer_deg                       | double | threshold of feedforward angle [deg]. feedforward angle smaller than this value is set to zero. | 2.0               |
+| Name                                                | Type   | Description                                                                                                                                        | Default value     |
+| :-------------------------------------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------- |
+| qp_solver_type                                      | string | QP solver option. described below in detail.                                                                                                       | unconstraint_fast |
+| vehicle_model_type                                  | string | vehicle model option. described below in detail.                                                                                                   | kinematics        |
+| prediction_horizon                                  | int    | total prediction step for MPC                                                                                                                      | 70                |
+| prediction_sampling_time                            | double | prediction period for one step [s]                                                                                                                 | 0.1               |
+| weight_lat_error                                    | double | weight for lateral error                                                                                                                           | 0.1               |
+| weight_heading_error                                | double | weight for heading error                                                                                                                           | 0.0               |
+| weight_heading_error_squared_vel_coeff              | double | weight for heading error \* velocity                                                                                                               | 5.0               |
+| weight_steering_input                               | double | weight for steering error (steer command - reference steer)                                                                                        | 1.0               |
+| weight_steering_input_squared_vel_coeff             | double | weight for steering error (steer command - reference steer) \* velocity                                                                            | 0.25              |
+| weight_lat_jerk                                     | double | weight for lateral jerk (steer(i) - steer(i-1)) \* velocity                                                                                        | 0.0               |
+| weight_terminal_lat_error                           | double | terminal cost weight for lateral error                                                                                                             | 1.0               |
+| weight_steer_rate                                   | double | weight for steering rate [rad/s]                                                                                                                   | 0.0               |
+| weight_steer_acc                                    | double | weight for derivatives of the steering rate [rad/ss]                                                                                               | 0.0               |
+| weight_terminal_heading_error                       | double | terminal cost weight for heading error                                                                                                             | 0.1               |
+| zero_ff_steer_deg                                   | double | threshold of feedforward angle [deg]. feedforward angle smaller than this value is set to zero.                                                    | 2.0               |
+| mpc_low_curvature_thresh_curvature                  | double | trajectory curvature threshold to change the weight. If the curvature is lower than this value, the `low_curvature_weight_**` values will be used. | 0.0               |
+| mpc_low_curvature_weight_lat_error                  | double | [used in a low curvature trajectory] weight for lateral error                                                                                      | 0.0               |
+| mpc_low_curvature_weight_heading_error              | double | [used in a low curvature trajectory] weight for heading error                                                                                      | 0.0               |
+| mpc_low_curvature_weight_heading_error_squared_vel  | double | [used in a low curvature trajectory] weight for heading error \* velocity                                                                          | 0.0               |
+| mpc_low_curvature_weight_steering_input             | double | [used in a low curvature trajectory] weight for steering error (steer command - reference steer)                                                   | 0.0               |
+| mpc_low_curvature_weight_steering_input_squared_vel | double | [used in a low curvature trajectory] weight for steering error (steer command - reference steer) \* velocity                                       | 0.0               |
+| mpc_low_curvature_weight_lat_jerk                   | double | [used in a low curvature trajectory] weight for lateral jerk (steer(i) - steer(i-1)) \* velocity                                                   | 0.0               |
+| mpc_low_curvature_weight_steer_rate                 | double | [used in a low curvature trajectory] weight for steering rate [rad/s]                                                                              | 0.0               |
+| mpc_low_curvature_weight_steer_acc                  | double | [used in a low curvature trajectory] weight for derivatives of the steering rate [rad/ss]                                                          | 0.0               |
 
 #### Vehicle
 
@@ -146,26 +157,32 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 
 ### How to tune MPC parameters
 
-1. Set appropriate vehicle kinematics parameters for distance to front and rear axle and max steer angle.
-   Also check that the input `VehicleKinematicState` has appropriate values (speed: vehicle rear-wheels-center
-   velocity [km/h], angle: steering (tire) angle [rad]).
-   These values give a vehicle information to the controller for path following.
-   Errors in these values cause fundamental tracking error.
+#### Set kinematics information
 
-2. Set appropriate vehicle dynamics parameters of `steering_tau`, which is the approximated delay from steering angle
-   command to actual steering angle.
+First, it's important to set the appropriate parameters for vehicle kinematics. This includes parameters like `wheelbase`, which represents the distance between the front and rear wheels, and `max_steering_angle`, which indicates the maximum tire steering angle. These parameters should be set in the `vehicle_info.param.yaml`.
 
-3. Set `weight_steering_input` = 1.0, `weight_lat_error` = 0.1, and other weights to 0.
-   If the vehicle oscillates when driving with low speed, set `weight_lat_error` smaller.
+#### Set dynamics information
 
-4. Adjust other weights.
-   One of the simple way for tuning is to increase `weight_lat_error` until oscillation occurs.
-   If the vehicle is unstable with very small `weight_lat_error`, increase terminal weight :
-   `weight_terminal_lat_error` and `weight_terminal_heading_error` to improve tracking stability.
-   Larger `prediction_horizon` and smaller `prediction_sampling_time` is effective for tracking performance, but it is a
-   trade-off between computational costs.
-   Other parameters can be adjusted like below.
+Next, you need to set the proper parameters for the dynamics model. These include the time constant `steering_tau` for steering dynamics, and the maximum acceleration `mpc_acceleration_limit` and the time constant `mpc_velocity_time_constant` for velocity dynamics.
 
+#### MPC weight tuning
+
+It's also important to make sure the input information is accurate. Information such as the velocity of the center of the rear wheel [m/s] and the steering angle of the tire [rad] is required. Please note that there have been frequent reports of performance degradation due to errors in input information. For instance, there are cases where the velocity of the vehicle is offset due to an unexpected difference in tire radius, or the tire angle cannot be accurately measured due to a deviation in the steering gear ratio or midpoint. It is suggested to compare information from multiple sensors (e.g., integrated vehicle speed and GNSS position, steering angle and IMU angular velocity), and ensure the input information for MPC is appropriate.
+
+Then, tune the weights of the MPC. The basic steps are as follows:
+
+1. Set `weight_steering_input` = 1.0, `weight_lat_error` = 0.1, and other weights to 0.
+2. If the vehicle oscillates when driving at low speed, set `weight_steering_input` larger.
+3. If the vehicle oscillates when driving at high speed, set `mpc_weight_steering_input_squared_vel` larger.
+
+#### Other tips
+
+Here are some tips for adjusting other parameters:
+
+- One of the simple way for tuning is to increase `weight_lat_error` until oscillation occurs.
+- If the vehicle is unstable with very small `weight_lat_error`, increase terminal weight :`weight_terminal_lat_error` and `weight_terminal_heading_error` to improve tracking stability.
+- Larger `prediction_horizon` and smaller `prediction_sampling_time` is effective for tracking performance, but it is a trade-off between computational costs.
+- When you want to change the weight based on the trajectory curvature (e.g., large weight when driving on a sharp curve), use `mpc_low_curvature_thresh_curvature` and set `mpc_low_curvature_weight_**` weights.
 - `weight_lat_error`: Reduce lateral tracking error. This acts like P gain in PID.
 - `weight_heading_error`: Make a drive straight. This acts like D gain in PID.
 - `weight_heading_error_squared_vel_coeff` : Make a drive straight in high speed range.
