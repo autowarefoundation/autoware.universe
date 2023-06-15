@@ -372,10 +372,18 @@ ObjectData AvoidanceModule::createObjectData(
   const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
   const auto object_closest_index = findNearestIndex(path_points, object_pose.position);
   const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
+  const auto t = utils::getHighestProbLabel(object.classification);
+  const auto object_parameter = parameters_->object_parameters.at(t);
 
   ObjectData object_data{};
 
   object_data.object = object;
+
+  const auto lower = parameters_->lower_distance_for_polygon_expansion;
+  const auto upper = parameters_->upper_distance_for_polygon_expansion;
+  const auto clamp =
+    std::clamp(calcDistance2d(getEgoPose(), object_pose) - lower, 0.0, upper) / upper;
+  object_data.distance_factor = object_parameter.max_expand_ratio * clamp + 1.0;
 
   // Calc envelop polygon.
   utils::avoidance::fillObjectEnvelopePolygon(
@@ -395,10 +403,9 @@ ObjectData AvoidanceModule::createObjectData(
     object_data, object_closest_pose, object_data.overhang_pose.position);
 
   // Check whether the the ego should avoid the object.
-  const auto t = utils::getHighestProbLabel(object.classification);
-  const auto object_parameter = parameters_->object_parameters.at(t);
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto safety_margin = 0.5 * vehicle_width + object_parameter.safety_buffer_lateral;
+  const auto safety_margin =
+    0.5 * vehicle_width + object_parameter.safety_buffer_lateral * object_data.distance_factor;
   object_data.avoid_required =
     (utils::avoidance::isOnRight(object_data) &&
      std::abs(object_data.overhang_dist) < safety_margin) ||
@@ -602,7 +609,7 @@ void AvoidanceModule::fillDebugData(const AvoidancePlanningData & data, DebugDat
   const auto & base_link2front = planner_data_->parameters.base_link2front;
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
 
-  const auto max_avoid_margin = object_parameter.safety_buffer_lateral +
+  const auto max_avoid_margin = object_parameter.safety_buffer_lateral * o_front.distance_factor +
                                 parameters_->lateral_collision_margin + 0.5 * vehicle_width;
 
   const auto variable = helper_.getSharpAvoidanceDistance(
@@ -653,9 +660,7 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
     case AvoidanceState::YIELD: {
       insertYieldVelocity(path);
       insertWaitPoint(parameters_->use_constraints_for_decel, path);
-      initRTCStatus();
-      removeAllRegisteredShiftPoints(path_shifter_);
-      unlockNewModuleLaunch();
+      removeRegisteredShiftLines();
       break;
     }
     case AvoidanceState::AVOID_PATH_NOT_READY: {
@@ -2555,7 +2560,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
   // post processing
   {
-    postProcess(path_shifter_);  // remove old shift points
+    postProcess();  // remove old shift points
   }
 
   // set previous data
@@ -2845,7 +2850,7 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
     // this value should be larger than -eps consider path shifter calculation error.
     const double eps = 0.01;
     if (candidate.start_longitudinal < -eps) {
-      continue;
+      break;
     }
 
     if (!is_ignore_shift(candidate)) {
@@ -3265,8 +3270,8 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
   const auto t = utils::getHighestProbLabel(object.object.classification);
   const auto object_parameter = parameters_->object_parameters.at(t);
 
-  const auto avoid_margin =
-    object_parameter.safety_buffer_lateral + p->lateral_collision_margin + 0.5 * vehicle_width;
+  const auto avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
+                            p->lateral_collision_margin + 0.5 * vehicle_width;
   const auto variable = helper_.getMinimumAvoidanceDistance(
     helper_.getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin));
   const auto constant =
