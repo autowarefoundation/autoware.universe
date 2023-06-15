@@ -2,6 +2,7 @@
 <launch>
   <arg name="input_topic_fix" default="/fix"/>
   <arg name="input_topic_orientation" default="/autoware_orientation"/>
+  <arg name="input_map_projector_info" default="/map/map_projector_type"/>
   <arg name="param_file" default="$(find-pkg-share gnss_poser)/config/set_local_origin.param.yaml"/>
 
   <arg name="output_topic_gnss_pose" default="gnss_pose"/>
@@ -22,9 +23,11 @@
   <node pkg="gnss_poser" exec="gnss_poser" name="gnss_poser" output="screen">
     <remap from="fix" to="$(var input_topic_fix)"/>
     <remap from="autoware_orientation" to="$(var input_topic_orientation)"/>
+    <remap from="map_projector_info" to="$(var input_map_projector_info)"/>
     <remap from="gnss_pose" to="$(var output_topic_gnss_pose)"/>
     <remap from="gnss_pose_cov" to="$(var output_topic_gnss_pose_cov)"/>
     <remap from="gnss_fixed" to="$(var output_topic_gnss_fixed)"/>
+    <remap from="map_projector_info" to="$(var input_map_projector_info)"/>
 
     <param name="base_frame" value="$(var base_frame)"/>
     <param name="gnss_base_frame" value="$(var gnss_base_frame)"/>

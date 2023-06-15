@@ -24,6 +24,7 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <tier4_debug_msgs/msg/bool_stamped.hpp>
+#include <tier4_map_msgs/msg/map_projector_info.hpp>
 
 #include <boost/circular_buffer.hpp>
 
@@ -79,6 +80,7 @@ private:
   tf2_ros::TransformListener tf2_listener_;
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
+  rclcpp::Subscription<tier4_map_msgs::msg::MapProjectorInfo>::SharedPtr map_projector_info_sub_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr nav_sat_fix_sub_;
   rclcpp::Subscription<autoware_sensing_msgs::msg::GnssInsOrientationStamped>::SharedPtr
     autoware_orientation_sub_;
@@ -92,6 +94,7 @@ private:
   std::string gnss_frame_;
   std::string gnss_base_frame_;
   std::string map_frame_;
+  bool received_map_projector_info_ = false;
 
   sensor_msgs::msg::NavSatFix nav_sat_fix_origin_;
   bool use_gnss_ins_orientation_;
