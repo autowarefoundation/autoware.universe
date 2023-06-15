@@ -1073,25 +1073,30 @@ bool delayLaneChange(
   const auto leading_obj_idx =
     getLeadingStaticObjectIdx(lane_change_path, objects, target_lane_obj_indices);
   if (!leading_obj_idx) {
+    std::cerr << "No leading object" << std::endl;
     return false;
   }
 
   const auto & leading_obj = objects.objects.at(*leading_obj_idx);
-  if (leading_obj.shape.footprint.points.empty()) {
+  const auto & leading_obj_poly = tier4_autoware_utils::toPolygon2d(leading_obj);
+  if (leading_obj_poly.outer().empty()) {
     return false;
   }
 
   const auto & current_path_end = current_lane_path.points.back().point.pose.position;
   double min_dist_to_end_of_current_lane = std::numeric_limits<double>::max();
-  for (const auto & point : leading_obj.shape.footprint.points) {
-    const auto obj_p = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
+  for (const auto & point : leading_obj_poly.outer()) {
+    const auto obj_p = tier4_autoware_utils::createPoint(point.x(), point.y(), 0.0);
     const double dist =
       motion_utils::calcSignedArcLength(current_lane_path.points, obj_p, current_path_end);
     min_dist_to_end_of_current_lane = std::min(dist, min_dist_to_end_of_current_lane);
   }
 
   // If there are still enough length after the target object, we delay the lane change
+  std::cerr << "dist from obj to current end" << min_dist_to_end_of_current_lane << std::endl;
+  std::cerr << "lane change buffer" << minimum_lane_change_length << std::endl;
   if (min_dist_to_end_of_current_lane > minimum_lane_change_length) {
+    std::cerr << "min dist is larger than lane change buffer" << std::endl;
     return true;
   }
 

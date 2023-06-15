@@ -714,8 +714,10 @@ bool NormalLaneChange::getLaneChangePaths(
           *candidate_path, current_lane_path, *dynamic_objects, dynamic_object_indices.target_lane,
           lane_change_buffer);
         if (delay_lane_change) {
+          std::cerr << "Delay" << std::endl;
           return false;
         }
+        std::cerr << "Not delay" << std::endl;
       }
       candidate_paths->push_back(*candidate_path);
 
