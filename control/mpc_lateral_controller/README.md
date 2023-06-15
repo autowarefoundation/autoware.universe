@@ -165,9 +165,11 @@ First, it's important to set the appropriate parameters for vehicle kinematics. 
 
 Next, you need to set the proper parameters for the dynamics model. These include the time constant `steering_tau` for steering dynamics, and the maximum acceleration `mpc_acceleration_limit` and the time constant `mpc_velocity_time_constant` for velocity dynamics.
 
-#### MPC weight tuning
+#### Confirmation of the input information
 
 It's also important to make sure the input information is accurate. Information such as the velocity of the center of the rear wheel [m/s] and the steering angle of the tire [rad] is required. Please note that there have been frequent reports of performance degradation due to errors in input information. For instance, there are cases where the velocity of the vehicle is offset due to an unexpected difference in tire radius, or the tire angle cannot be accurately measured due to a deviation in the steering gear ratio or midpoint. It is suggested to compare information from multiple sensors (e.g., integrated vehicle speed and GNSS position, steering angle and IMU angular velocity), and ensure the input information for MPC is appropriate.
+
+#### MPC weight tuning
 
 Then, tune the weights of the MPC. The basic steps are as follows:
 
