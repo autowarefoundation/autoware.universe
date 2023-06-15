@@ -15,8 +15,8 @@
 #include "map_projection_loader/map_projection_loader.hpp"
 
 #include <yaml-cpp/yaml.h>
-#include <fstream>
 
+#include <fstream>
 
 tier4_map_msgs::msg::MapProjectorInfo load_yaml_file(const std::string & filename)
 {
@@ -31,10 +31,10 @@ tier4_map_msgs::msg::MapProjectorInfo load_yaml_file(const std::string & filenam
   return msg;
 }
 
-MapProjectionLoader::MapProjectionLoader()
-  : Node("map_projection_loader")
+MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
 {
-  publisher_ = this->create_publisher<tier4_map_msgs::msg::MapProjectorInfo>("map_projector_info", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local());
+  publisher_ = this->create_publisher<tier4_map_msgs::msg::MapProjectorInfo>(
+    "map_projector_info", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local());
 
   std::string filename = this->declare_parameter<std::string>("yaml_file_path", "");
 
