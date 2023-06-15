@@ -736,7 +736,7 @@ void NormalLaneChange::calcTurnSignalInfo()
   });
 
   // desired end pose
-  const auto & length_ratio =
+  const auto length_ratio =
     std::clamp(lane_change_parameters_->length_ratio_for_turn_signal_deactivation, 0.0, 1.0);
   const auto desired_end_length = path.length.lane_changing * length_ratio;
   turn_signal_info.desired_end_point = get_blinker_pose(shifted_path, desired_end_length);
