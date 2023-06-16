@@ -2977,7 +2977,6 @@ bool isParkedObject(
   const auto object_closest_index =
     motion_utils::findNearestIndex(path.points, object_pose.position);
   const auto object_closest_pose = path.points.at(object_closest_index).point.pose;
-  const auto obj_poly = tier4_autoware_utils::toPolygon2d(object);
 
   lanelet::ConstLanelet closest_lanelet;
   if (!route_handler.getClosestLaneletWithinRoute(object_closest_pose, &closest_lanelet)) {
@@ -3031,15 +3030,16 @@ bool isParkedObject(
   }
 
   return isParkedObject(
-    closest_lanelet_centerline, bound, obj_poly, center_to_bound_buffer,
+    closest_lanelet_centerline, bound, object, center_to_bound_buffer,
     object_shiftable_ratio_threshold);
 }
 
 bool isParkedObject(
   const lanelet::BasicLineString2d & centerline, const lanelet::BasicLineString2d & boundary,
-  const tier4_autoware_utils::Polygon2d obj_poly, const double buffer_to_bound,
-  const double ratio_threshold)
+  const PredictedObject & object, const double buffer_to_bound, const double ratio_threshold)
 {
+  const auto obj_poly = tier4_autoware_utils::toPolygon2d(object);
+
   double min_dist_to_bound = std::numeric_limits<double>::max();
   lanelet::Point2d closest_obj_point;
   for (const auto & obj_p : obj_poly.outer()) {
