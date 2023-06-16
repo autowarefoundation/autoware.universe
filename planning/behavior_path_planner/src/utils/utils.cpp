@@ -2956,7 +2956,8 @@ void extractObstaclesFromDrivableArea(
 }
 
 bool isParkedObject(
-  const PathWithLaneId & path, const RouteHandler & route_handler, const PredictedObject & object)
+  const PathWithLaneId & path, const RouteHandler & route_handler, const PredictedObject & object,
+  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold)
 {
   // ============================================ <- most_left_lanelet.leftBound()
   // y              road shoulder
@@ -3004,7 +3005,7 @@ bool isParkedObject(
     }
     bound = most_left_lanelet.leftBound2d().basicLineString();
     if (sub_type.value() != "road_shoulder") {
-      center_to_bound_buffer = 1.0;  // parameters->object_check_min_road_shoulder_width;
+      center_to_bound_buffer = object_check_min_road_shoulder_width;
     }
   } else {
     // right side vehicle
@@ -3025,13 +3026,13 @@ bool isParkedObject(
     }
     bound = most_right_lanelet.rightBound2d().basicLineString();
     if (sub_type.value() != "road_shoulder") {
-      center_to_bound_buffer = 1.0;  // parameters->object_check_min_road_shoulder_width;
+      center_to_bound_buffer = object_check_min_road_shoulder_width;
     }
   }
 
-  const double ratio_threshold = 0.3;
   return isParkedObject(
-    closest_lanelet_centerline, bound, obj_poly, center_to_bound_buffer, ratio_threshold);
+    closest_lanelet_centerline, bound, obj_poly, center_to_bound_buffer,
+    object_shiftable_ratio_threshold);
 }
 
 bool isParkedObject(
