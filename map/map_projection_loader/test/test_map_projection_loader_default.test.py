@@ -32,21 +32,14 @@ from tier4_map_msgs.msg import MapProjectorInfo
 
 logger = get_logger(__name__)
 
-YAML_FILE_PATH = 'test/data/projection_info_mgrs.yaml'
-
 @pytest.mark.launch_test
 def generate_test_description():
-  map_projection_info_path = os.path.join(
-    get_package_share_directory("map_projection_loader"), YAML_FILE_PATH
-  )
-
   map_projection_loader_node = Node(
     package="map_projection_loader",
     executable="map_projection_loader",
     output="screen",
     parameters=[
       {
-        "map_projector_info_path": map_projection_info_path,
         "use_local_projector": True,
       },
     ],
@@ -82,7 +75,7 @@ class TestEKFLocalizer(unittest.TestCase):
   def setUp(self):
     # Create a ROS node for tests
     self.test_node = rclpy.create_node("test_node")
-    self.evaluation_time = 0.29  # 200ms
+    self.evaluation_time = 0.2  # 200ms
     self.received_message = None
 
   def tearDown(self):
@@ -118,13 +111,6 @@ class TestEKFLocalizer(unittest.TestCase):
       rclpy.task.Future(),
       timeout_sec=self.evaluation_time
     )
-
-    # Load the yaml file directly
-    map_projection_info_path = os.path.join(
-      get_package_share_directory("map_projection_loader"), YAML_FILE_PATH
-    )
-    with open(map_projection_info_path) as f:
-      yaml_data = yaml.load(f)
 
     # Test if message received
     self.assertIsNotNone(self.received_message, "No message received on map_projector_info topic")
