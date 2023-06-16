@@ -19,6 +19,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -31,18 +32,26 @@ namespace image_projection_based_fusion
 
 using autoware_auto_perception_msgs::msg::Shape;
 using geometry_msgs::msg::Pose;
+using tier4_autoware_utils::Point2d;
+using tier4_autoware_utils::Polygon2d;
 
 double calcIoU(
   const sensor_msgs::msg::RegionOfInterest & roi_1,
   const sensor_msgs::msg::RegionOfInterest & roi_2);
 
+double calcIoU(const Polygon2d & roi_1, const Polygon2d & roi_2);
+
 double calcIoUX(
   const sensor_msgs::msg::RegionOfInterest & roi_1,
   const sensor_msgs::msg::RegionOfInterest & roi_2);
 
+double calcIoUX(const Polygon2d & roi_1, const Polygon2d & roi_2);
+
 double calcIoUY(
   const sensor_msgs::msg::RegionOfInterest & roi_1,
   const sensor_msgs::msg::RegionOfInterest & roi_2);
+
+double calcIoUY(const Polygon2d & roi_1, const Polygon2d & roi_2);
 
 void objectToVertices(
   const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices);
@@ -60,6 +69,9 @@ void transformPoints(
   const std::vector<Eigen::Vector3d> & input_points, const Eigen::Affine3d & affine_transform,
   std::vector<Eigen::Vector3d> & output_points);
 
+Polygon2d roi2Polygon(const sensor_msgs::msg::RegionOfInterest & roi);
+
+Polygon2d point2ConvexHull(const std::vector<Eigen::Vector2d> & points);
 }  // namespace image_projection_based_fusion
 
 #endif  // IMAGE_PROJECTION_BASED_FUSION__UTILS__GEOMETRY_HPP_

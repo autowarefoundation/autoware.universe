@@ -16,6 +16,7 @@
 
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
@@ -32,6 +33,8 @@
 
 namespace image_projection_based_fusion
 {
+
+using Polygon2d = tier4_autoware_utils::Polygon2d;
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>("roi_cluster_fusion", options)
@@ -100,7 +103,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     transform_stamped = transform_stamped_optional.value();
   }
 
-  std::map<std::size_t, RegionOfInterest> m_cluster_roi;
+  std::map<std::size_t, Polygon2d> m_cluster_roi;
   for (std::size_t i = 0; i < input_cluster_msg.feature_objects.size(); ++i) {
     if (input_cluster_msg.feature_objects.at(i).feature.cluster.data.empty()) {
       continue;
@@ -153,14 +156,17 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       continue;
     }
 
-    sensor_msgs::msg::RegionOfInterest roi;
-    // roi.do_rectify = m_camera_info_.at(id).do_rectify;
-    roi.x_offset = min_x;
-    roi.y_offset = min_y;
-    roi.width = max_x - min_x;
-    roi.height = max_y - min_y;
-    m_cluster_roi.insert(std::make_pair(i, roi));
-    debug_pointcloud_rois.push_back(roi);
+    Polygon2d poly_roi = point2ConvexHull(projected_points);
+    m_cluster_roi.insert(std::make_pair(i, poly_roi));
+
+    // sensor_msgs::msg::RegionOfInterest roi;
+    // // roi.do_rectify = m_camera_info_.at(id).do_rectify;
+    // roi.x_offset = min_x;
+    // roi.y_offset = min_y;
+    // roi.width = max_x - min_x;
+    // roi.height = max_y - min_y;
+    // m_cluster_roi.insert(std::make_pair(i, roi));
+    // debug_pointcloud_rois.push_back(roi);
   }
 
   for (const auto & feature_obj : input_roi_msg.feature_objects) {
@@ -168,14 +174,15 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     double max_iou = 0.0;
     for (const auto & cluster_map : m_cluster_roi) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
+      Polygon2d feature_roi = roi2Polygon(feature_obj.feature.roi);
       if (use_iou_) {
-        iou = calcIoU(cluster_map.second, feature_obj.feature.roi);
+        iou = calcIoU(cluster_map.second, feature_roi);
       }
       if (use_iou_x_) {
-        iou_x = calcIoUX(cluster_map.second, feature_obj.feature.roi);
+        iou_x = calcIoUX(cluster_map.second, feature_roi);
       }
       if (use_iou_y_) {
-        iou_y = calcIoUY(cluster_map.second, feature_obj.feature.roi);
+        iou_y = calcIoUY(cluster_map.second, feature_roi);
       }
       if (max_iou < iou + iou_x + iou_y) {
         index = cluster_map.first;

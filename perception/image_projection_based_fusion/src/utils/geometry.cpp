@@ -14,6 +14,7 @@
 
 #include "image_projection_based_fusion/utils/geometry.hpp"
 
+#include <perception_utils/matching.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace image_projection_based_fusion
@@ -43,6 +44,17 @@ double calcIoU(
   }
   return overlap_s / (s_1 + s_2 - overlap_s);
 }
+
+double calcIoU(const Polygon2d & roi_1, const Polygon2d & roi_2)
+{
+  if (boost::geometry::disjoint(roi_1, roi_2)) {
+    return 0.0;
+  }
+  const double union_area = perception_utils::getUnionArea(roi_1, roi_2);
+  const double intersection_area = perception_utils::getIntersectionArea(roi_1, roi_2);
+  return union_area < 0.01 ? 0.0 : std::min(1.0, intersection_area / union_area);
+}
+
 double calcIoUX(
   const sensor_msgs::msg::RegionOfInterest & roi_1,
   const sensor_msgs::msg::RegionOfInterest & roi_2)
@@ -66,6 +78,17 @@ double calcIoUX(
   }
   return overlap_s / (s_1 + s_2 - overlap_s);
 }
+
+double calcIouX(const Polygon2d & roi_1, const Polygon2d & roi_2)
+{
+  if (boost::geometry::disjoint(roi_1, roi_2)) {
+    return 0.0;
+  }
+
+  // TODO(ktro2828): update calculation.
+  return 1.0;
+}
+
 double calcIoUY(
   const sensor_msgs::msg::RegionOfInterest & roi_1,
   const sensor_msgs::msg::RegionOfInterest & roi_2)
@@ -88,6 +111,16 @@ double calcIoUY(
     return 0.0;
   }
   return overlap_s / (s_1 + s_2 - overlap_s);
+}
+
+double calcIouY(const Polygon2d & roi_1, const Polygon2d & roi_2)
+{
+  if (boost::geometry::disjoint(roi_1, roi_2)) {
+    return 0.0;
+  }
+
+  // TODO(ktro2828): update calculation.
+  return 1.0;
 }
 
 void objectToVertices(
@@ -160,6 +193,30 @@ void transformPoints(
   for (const auto & point : input_points) {
     output_points.push_back(affine_transform * point);
   }
+}
+
+Polygon2d roi2Polygon(const sensor_msgs::msg::RegionOfInterest & roi)
+{
+  Polygon2d polygon;
+  boost::geometry::exterior_ring(polygon).emplace_back(Point2d(roi.x_offset, roi.y_offset));
+  boost::geometry::exterior_ring(polygon).emplace_back(
+    Point2d(roi.x_offset + roi.width, roi.y_offset));
+  boost::geometry::exterior_ring(polygon).emplace_back(
+    Point2d(roi.x_offset + roi.width, roi.y_offset + roi.height));
+  boost::geometry::exterior_ring(polygon).emplace_back(
+    Point2d(roi.x_offset, roi.y_offset + roi.height));
+  return polygon;
+}
+
+Polygon2d point2ConvexHull(const std::vector<Eigen::Vector2d> & points)
+{
+  Polygon2d polygon;
+  for (const auto & pt : points) {
+    boost::geometry::exterior_ring(polygon).emplace_back(Point2d(pt.x(), pt.y()));
+  }
+  Polygon2d hull;
+  boost::geometry::convex_hull(polygon, hull);
+  return hull;
 }
 
 }  // namespace image_projection_based_fusion

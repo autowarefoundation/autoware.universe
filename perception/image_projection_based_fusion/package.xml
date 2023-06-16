@@ -18,6 +18,7 @@
   <depend>message_filters</depend>
   <depend>pcl_conversions</depend>
   <depend>pcl_ros</depend>
+  <depend>perception_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
