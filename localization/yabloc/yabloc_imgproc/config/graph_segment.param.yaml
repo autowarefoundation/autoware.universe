@@ -6,7 +6,7 @@
       #
       target_candidate_box_width: 15
 
-      # graph_segment_node will pickup additional roadlike areas
+      # graph_segment_node will pickup additional road-like areas
       pickup_additional_graph_segment: true
 
       # used when the pickup_additional_graph_segment: true

@@ -10,5 +10,5 @@
     gamma: 5.0 # cost map intensity gradient
 
     min_prob: 0.1 # minimum weight of particles
-    far_weight_gain: 0.001 # exp(-far_weight_gain_ * squared_norm) is multiplied earch measurement
+    far_weight_gain: 0.001 # exp(-far_weight_gain_ * squared_norm) is multiplied each measurement
     enabled_at_first: true # developing feature
