@@ -34,7 +34,9 @@ class SemanticSegmentationNode(Node):
 
         self.get_logger().info("model path: " + model_path)
 
-        self.sub_image_ = self.create_subscription(Image, "~/input/image_raw", self.imageCallback, 10)
+        self.sub_image_ = self.create_subscription(
+            Image, "~/input/image_raw", self.imageCallback, 10
+        )
 
         self.pub_overlay_image_ = self.create_publisher(Image, "~/output/overlay_image", 10)
         self.pub_image_ = self.create_publisher(Image, "~/output/semantic_image", 10)

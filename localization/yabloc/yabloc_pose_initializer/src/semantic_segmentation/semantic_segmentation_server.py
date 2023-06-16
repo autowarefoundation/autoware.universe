@@ -34,7 +34,9 @@ class SemanticSegmentationServer(Node):
         self.dnn_ = core.SemanticSegmentationCore(model_path)
         self.bridge_ = CvBridge()
 
-        self.srv = self.create_service(SemanticSegmentation, "semantic_segmentation_srv", self.on_service)
+        self.srv = self.create_service(
+            SemanticSegmentation, "semantic_segmentation_srv", self.on_service
+        )
 
     def on_service(self, request, response):
         response.dst_image = self.__inference(request.src_image)

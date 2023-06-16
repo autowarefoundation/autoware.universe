@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import copy
+
 import cv2
 import numpy as np
 
@@ -61,7 +62,7 @@ class SemanticSegmentationCore:
 
 
 def main():
-    print('This script is not intended to be run alone.')
+    print("This script is not intended to be run alone.")
 
 
 if __name__ == "__main__":
