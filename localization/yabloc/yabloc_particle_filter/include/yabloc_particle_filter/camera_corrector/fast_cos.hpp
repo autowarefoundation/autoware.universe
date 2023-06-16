@@ -19,12 +19,13 @@ namespace yabloc::modularized_particle_filter
 {
 struct FastCosSin
 {
-  FastCosSin(int bin = 90)
+  explicit FastCosSin(int bin = 90)
   {
     for (int i = 0; i < bin + 1; ++i) {
       cos_.push_back(std::cos(i * M_PI / 180.f));
     }
   }
+
   float cos(float deg) const
   {
     while (deg < 0) {
@@ -34,13 +35,13 @@ struct FastCosSin
       deg -= 360;
     }
     if (deg < 90) {
-      return cos_.at(int(deg));
+      return cos_.at(static_cast<int>(deg));
     } else if (deg < 180) {
-      return -cos_.at(int(180 - deg));
+      return -cos_.at(static_cast<int>(180 - deg));
     } else if (deg < 270) {
-      return -cos_.at(int(deg - 180));
+      return -cos_.at(static_cast<int>(deg - 180));
     } else {
-      return cos_.at(int(360 - deg));
+      return cos_.at(static_cast<int>(360 - deg));
     }
   }
 

@@ -21,7 +21,7 @@ namespace yabloc::common
 class GammaConverter
 {
 public:
-  GammaConverter(float gamma = 1.0f) { reset(gamma); }
+  explicit GammaConverter(float gamma = 1.0f) { reset(gamma); }
 
   void reset(float gamma)
   {

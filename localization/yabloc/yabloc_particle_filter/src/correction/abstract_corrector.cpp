@@ -12,30 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "yabloc_particle_filter/correction/abst_corrector.hpp"
+#include "yabloc_particle_filter/correction/abstract_corrector.hpp"
 
 namespace yabloc::modularized_particle_filter
 {
-AbstCorrector::AbstCorrector(const std::string & node_name)
+AbstractCorrector::AbstractCorrector(const std::string & node_name)
 : Node(node_name),
   acceptable_max_delay_(declare_parameter<float>("acceptable_max_delay")),
   visualize_(declare_parameter<bool>("visualize")),
-  logger_(rclcpp::get_logger("abst_corrector"))
+  logger_(rclcpp::get_logger("abstract_corrector"))
 {
   using std::placeholders::_1;
   particle_pub_ = create_publisher<ParticleArray>("~/output/weighted_particles", 10);
   particle_sub_ = create_subscription<ParticleArray>(
-    "~/input/predicted_particles", 10, std::bind(&AbstCorrector::on_particle_array, this, _1));
+    "~/input/predicted_particles", 10, std::bind(&AbstractCorrector::on_particle_array, this, _1));
 
   if (visualize_) visualizer_ = std::make_shared<ParticleVisualizer>(*this);
 }
 
-void AbstCorrector::on_particle_array(const ParticleArray & particle_array)
+void AbstractCorrector::on_particle_array(const ParticleArray & particle_array)
 {
   particle_array_buffer_.push_back(particle_array);
 }
 
-std::optional<AbstCorrector::ParticleArray> AbstCorrector::get_synchronized_particle_array(
+std::optional<AbstractCorrector::ParticleArray> AbstractCorrector::get_synchronized_particle_array(
   const rclcpp::Time & stamp)
 {
   auto itr = particle_array_buffer_.begin();
@@ -62,7 +62,7 @@ std::optional<AbstCorrector::ParticleArray> AbstCorrector::get_synchronized_part
   return *std::min_element(particle_array_buffer_.begin(), particle_array_buffer_.end(), comp);
 }
 
-void AbstCorrector::set_weighted_particle_array(const ParticleArray & particle_array)
+void AbstractCorrector::set_weighted_particle_array(const ParticleArray & particle_array)
 {
   particle_pub_->publish(particle_array);
   if (visualize_) visualizer_->publish(particle_array);

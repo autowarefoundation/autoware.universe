@@ -29,7 +29,7 @@ class ProjectorModule
 {
 public:
   using ProjectFunc = std::function<std::optional<Eigen::Vector3f>(const cv::Point2i &)>;
-  ProjectorModule(rclcpp::Node * node);
+  explicit ProjectorModule(rclcpp::Node * node);
 
   bool define_project_func();
 

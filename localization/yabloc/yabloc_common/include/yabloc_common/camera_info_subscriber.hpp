@@ -21,6 +21,7 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 
 #include <optional>
+#include <string>
 namespace yabloc::common
 {
 class CameraInfoSubscriber
@@ -28,7 +29,7 @@ class CameraInfoSubscriber
 public:
   using CameraInfo = sensor_msgs::msg::CameraInfo;
 
-  CameraInfoSubscriber(rclcpp::Node * node);
+  explicit CameraInfoSubscriber(rclcpp::Node * node);
 
   bool is_camera_info_ready() const;
 

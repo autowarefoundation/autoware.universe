@@ -21,6 +21,9 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/time_synchronizer.h>
 
+#include <memory>
+#include <string>
+
 namespace yabloc::common
 {
 template <typename Msg1, typename Msg2>

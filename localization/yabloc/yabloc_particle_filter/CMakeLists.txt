@@ -41,15 +41,15 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 # Libraries
 # correction library
 ament_auto_add_library(
-  abst_corrector
+  abstract_corrector
   SHARED
-  src/correction/abst_corrector.cpp
+  src/correction/abstract_corrector.cpp
   src/common/visualize.cpp
   src/common/mean.cpp
 )
-target_include_directories(abst_corrector SYSTEM PRIVATE ${PCL_INCLUDE_DIRS})
-target_link_libraries(abst_corrector Sophus::Sophus ${PCL_LIBRARIES})
-rosidl_target_interfaces(abst_corrector ${PROJECT_NAME} "rosidl_typesupport_cpp")
+target_include_directories(abstract_corrector SYSTEM PRIVATE ${PCL_INCLUDE_DIRS})
+target_link_libraries(abstract_corrector Sophus::Sophus ${PCL_LIBRARIES})
+rosidl_target_interfaces(abstract_corrector ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # Prediction library
 ament_auto_add_library(predictor

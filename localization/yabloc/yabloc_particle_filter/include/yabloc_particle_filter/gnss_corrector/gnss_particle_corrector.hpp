@@ -18,7 +18,7 @@
 #include "yabloc_particle_filter/gnss_corrector/weight_manager.hpp"
 
 #include <Eigen/Core>
-#include <yabloc_particle_filter/correction/abst_corrector.hpp>
+#include <yabloc_particle_filter/correction/abstract_corrector.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -28,7 +28,7 @@
 
 namespace yabloc::modularized_particle_filter
 {
-class GnssParticleCorrector : public AbstCorrector
+class GnssParticleCorrector : public AbstractCorrector
 {
 public:
   using PoseStamped = geometry_msgs::msg::PoseStamped;

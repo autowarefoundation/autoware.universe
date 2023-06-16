@@ -21,19 +21,22 @@
 #include <rclcpp/rclcpp.hpp>
 #include <yabloc_particle_filter/msg/particle_array.hpp>
 
+#include <list>
+#include <memory>
 #include <optional>
+#include <string>
 
 namespace yabloc
 {
 namespace modularized_particle_filter
 {
-class AbstCorrector : public rclcpp::Node
+class AbstractCorrector : public rclcpp::Node
 {
 public:
   using Particle = yabloc_particle_filter::msg::Particle;
   using ParticleArray = yabloc_particle_filter::msg::ParticleArray;
 
-  AbstCorrector(const std::string & node_name);
+  explicit AbstractCorrector(const std::string & node_name);
 
 protected:
   const float acceptable_max_delay_;  // [sec]

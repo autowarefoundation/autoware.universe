@@ -235,6 +235,7 @@ void Predictor::on_weighted_particles(const ParticleArray::ConstSharedPtr weight
       resampler_ptr_->add_weight_retroactively(particle_array, *weighted_particles_ptr);
   } catch (const resampling_skip_exception & e) {
     // Do nothing (just skipping the resample())
+    RCLCPP_INFO_STREAM(this->get_logger(), "skipped resampling");
   }
 
   // ==========================================================================
@@ -253,8 +254,8 @@ void Predictor::on_weighted_particles(const ParticleArray::ConstSharedPtr weight
 
     particle_array = resampler_ptr_->resample(particle_array);
     previous_resampling_time_opt_ = current_time;
-
   } catch (const resampling_skip_exception & e) {
+    void();
     // Do nothing (just skipping the resample())
   }
 
@@ -276,7 +277,7 @@ void Predictor::publish_mean_pose(
 
   // Publish pose with covariance
   {
-    // TODO: Use particle distribution
+    // TODO(KYabuuchi) Use particle distribution
     PoseCovStamped pose_cov_stamped;
     pose_cov_stamped.header.stamp = stamp;
     pose_cov_stamped.header.frame_id = "map";

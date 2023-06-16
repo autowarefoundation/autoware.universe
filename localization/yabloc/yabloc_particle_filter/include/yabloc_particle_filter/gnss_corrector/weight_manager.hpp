@@ -38,7 +38,7 @@ struct WeightManager
   Parameter for_fixed_;
   Parameter for_not_fixed_;
 
-  WeightManager(rclcpp::Node * node)
+  explicit WeightManager(rclcpp::Node * node)
   {
     for_fixed_.flat_radius_ = node->declare_parameter<float>("for_fixed/flat_radius");
     for_fixed_.max_radius_ = node->declare_parameter<float>("for_fixed/max_radius");

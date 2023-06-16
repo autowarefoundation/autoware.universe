@@ -23,6 +23,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <map>
+
 namespace yabloc::line_segments_overlay
 {
 class LineSegmentsOverlay : public rclcpp::Node

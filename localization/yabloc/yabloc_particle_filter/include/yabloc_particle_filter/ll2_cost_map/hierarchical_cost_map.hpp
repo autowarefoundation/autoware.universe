@@ -29,16 +29,22 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <list>
+#include <unordered_map>
+#include <vector>
+
 namespace yabloc
 {
 struct Area
 {
   Area() {}
-  Area(const Eigen::Vector2f & v)
+  explicit Area(const Eigen::Vector2f & v)
   {
-    if (unit_length_ < 0) throw_error();
-    x = static_cast<long>(std::floor(v.x() / unit_length_));
-    y = static_cast<long>(std::floor(v.y() / unit_length_));
+    if (unit_length_ < 0) {
+      throw_error();
+    }
+    x = static_cast<int>(std::floor(v.x() / unit_length_));
+    y = static_cast<int>(std::floor(v.y() / unit_length_));
   }
 
   Eigen::Vector2f real_scale() const { return {x * unit_length_, y * unit_length_}; };
@@ -95,7 +101,7 @@ public:
   using BgPoint = boost::geometry::model::d2::point_xy<double>;
   using BgPolygon = boost::geometry::model::polygon<BgPoint>;
 
-  HierarchicalCostMap(rclcpp::Node * node);
+  explicit HierarchicalCostMap(rclcpp::Node * node);
 
   void set_cloud(const pcl::PointCloud<pcl::PointNormal> & cloud);
   void set_bounding_box(const pcl::PointCloud<pcl::PointXYZL> & cloud);

@@ -20,7 +20,7 @@
 namespace yabloc::modularized_particle_filter
 {
 GnssParticleCorrector::GnssParticleCorrector()
-: AbstCorrector("gnss_particle_corrector"),
+: AbstractCorrector("gnss_particle_corrector"),
   mahalanobis_distance_threshold_(declare_parameter<float>("mahalanobis_distance_threshold")),
   weight_manager_(this)
 {

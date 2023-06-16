@@ -30,7 +30,7 @@ namespace yabloc::modularized_particle_filter
 FastCosSin fast_math;
 
 CameraParticleCorrector::CameraParticleCorrector()
-: AbstCorrector("camera_particle_corrector"),
+: AbstractCorrector("camera_particle_corrector"),
   min_prob_(declare_parameter<float>("min_prob")),
   far_weight_gain_(declare_parameter<float>("far_weight_gain")),
   cost_map_(this)

@@ -34,7 +34,8 @@ struct GroundPlane
     xyz.setZero();
     normal = Eigen::Vector3f::UnitZ();
   }
-  GroundPlane(const Float32Array & array) { set(array); }
+
+  explicit GroundPlane(const Float32Array & array) { set(array); }
 
   void set(const Float32Array & array)
   {

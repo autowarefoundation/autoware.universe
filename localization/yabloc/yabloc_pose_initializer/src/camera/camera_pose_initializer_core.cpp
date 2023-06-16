@@ -50,7 +50,7 @@ CameraPoseInitializer::CameraPoseInitializer()
   auto on_service = std::bind(&CameraPoseInitializer::on_service, this, _1, _2);
   align_server_ = create_service<RequestPoseAlignment>("~/yabloc_align_srv", on_service);
 
-  using namespace std::chrono_literals;
+  using namespace std::literals::chrono_literals;
   while (!segmentation_client_->wait_for_service(1s) && rclcpp::ok()) {
     RCLCPP_INFO_STREAM(get_logger(), "Waiting for " << segmentation_client_->get_service_name());
   }
@@ -94,7 +94,7 @@ bool CameraPoseInitializer::estimate_pose(
     RCLCPP_WARN_STREAM(get_logger(), "vector map is not ready ");
     return false;
   }
-  // TODO: check time stamp, too
+  // TODO(KYabuuchi) check time stamp, too
   if (!latest_image_msg_.has_value()) {
     RCLCPP_WARN_STREAM(get_logger(), "source image is not ready");
     return false;
@@ -106,7 +106,7 @@ bool CameraPoseInitializer::estimate_pose(
     auto request = std::make_shared<SegmentationSrv::Request>();
     request->src_image = *latest_image_msg_.value();
     auto result_future = segmentation_client_->async_send_request(request);
-    using namespace std::chrono_literals;
+    using namespace std::literals::chrono_literals;
     std::future_status status = result_future.wait_for(1000ms);
     if (status == std::future_status::ready) {
       segmented_image = result_future.get()->dst_image;
@@ -192,8 +192,6 @@ void CameraPoseInitializer::on_service(
   const double yaw_std_rad = std::sqrt(query_pos_with_cov.pose.covariance.at(35));
   const Eigen::Vector3f pos_vec3f(query_pos.x, query_pos.y, query_pos.z);
   RCLCPP_INFO_STREAM(get_logger(), "Given initial position " << pos_vec3f.transpose());
-
-  using namespace std::chrono_literals;
 
   // Estimate orientation
   const auto header = request->pose_with_covariance.header;

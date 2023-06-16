@@ -16,7 +16,7 @@
 #define YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__CAMERA_PARTICLE_CORRECTOR_HPP_
 
 #include <opencv4/opencv2/core.hpp>
-#include <yabloc_particle_filter/correction/abst_corrector.hpp>
+#include <yabloc_particle_filter/correction/abstract_corrector.hpp>
 #include <yabloc_particle_filter/ll2_cost_map/hierarchical_cost_map.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -29,12 +29,14 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <utility>
+
 namespace yabloc::modularized_particle_filter
 {
 cv::Point2f cv2pt(const Eigen::Vector3f v);
 float abs_cos(const Eigen::Vector3f & t, float deg);
 
-class CameraParticleCorrector : public modularized_particle_filter::AbstCorrector
+class CameraParticleCorrector : public modularized_particle_filter::AbstractCorrector
 {
 public:
   using LineSegment = pcl::PointXYZLNormal;

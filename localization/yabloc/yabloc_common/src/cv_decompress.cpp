@@ -37,17 +37,18 @@ cv::Mat decompress_image(const sensor_msgs::msg::CompressedImage & compressed_im
   if (!encoding_is_bayer) {
     return cv::imdecode(cv::Mat(compressed_img.data), DECODE_RGB);
   }
-
   raw_image = cv::imdecode(cv::Mat(compressed_img.data), DECODE_GRAY);
-  if (encoding == "bayer_rggb8")
+
+  // TODO(KYabuuchi) integrate with implementation in the sensing/perception component
+  if (encoding == "bayer_rggb8") {
     cv::cvtColor(raw_image, raw_image, cv::COLOR_BayerBG2BGR);
-  else if (encoding == "bayer_bggr8")
+  } else if (encoding == "bayer_bggr8") {
     cv::cvtColor(raw_image, raw_image, cv::COLOR_BayerRG2BGR);
-  else if (encoding == "bayer_grbg8")
+  } else if (encoding == "bayer_grbg8") {
     cv::cvtColor(raw_image, raw_image, cv::COLOR_BayerGB2BGR);
-  else if (encoding == "bayer_gbrg8")
+  } else if (encoding == "bayer_gbrg8") {
     cv::cvtColor(raw_image, raw_image, cv::COLOR_BayerGR2BGR);
-  else {
+  } else {
     std::cerr << encoding << " is not supported encoding" << std::endl;
     std::cerr << "Please implement additional decoding in " << __FUNCTION__ << std::endl;
     exit(EXIT_FAILURE);

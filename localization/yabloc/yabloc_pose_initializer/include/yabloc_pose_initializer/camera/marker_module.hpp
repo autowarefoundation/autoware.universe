@@ -20,6 +20,8 @@
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <vector>
+
 namespace yabloc::initializer
 {
 class MarkerModule
@@ -27,10 +29,10 @@ class MarkerModule
 public:
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
-  MarkerModule(rclcpp::Node * node);
+  explicit MarkerModule(rclcpp::Node * node);
 
   void publish_marker(
-    const std::vector<float> scores, const std::vector<float> angles,
+    const std::vector<float> & scores, const std::vector<float> & angles,
     const Eigen::Vector3f & position);
 
 private:

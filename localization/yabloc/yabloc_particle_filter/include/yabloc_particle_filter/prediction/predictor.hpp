@@ -31,6 +31,9 @@
 
 #include <tf2_ros/transform_broadcaster.h>
 
+#include <memory>
+#include <vector>
+
 namespace yabloc::modularized_particle_filter
 {
 class Predictor : public rclcpp::Node

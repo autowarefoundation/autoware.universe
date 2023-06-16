@@ -26,9 +26,11 @@ struct Color
 {
   Color(float r, float g, float b, float a = 1.0f) : r(r), g(g), b(b), a(a) {}
 
-  Color(const std_msgs::msg::ColorRGBA & rgba) : r(rgba.r), g(rgba.g), b(rgba.b), a(rgba.a) {}
+  explicit Color(const std_msgs::msg::ColorRGBA & rgba) : r(rgba.r), g(rgba.g), b(rgba.b), a(rgba.a)
+  {
+  }
 
-  Color(const cv::Scalar & rgb, float a = 1.0f)
+  explicit Color(const cv::Scalar & rgb, float a = 1.0f)
   : r(rgb[2] / 255.f), g(rgb[1] / 255.f), b(rgb[0] / 255.f), a(a)
   {
   }

@@ -33,7 +33,7 @@ struct ProbToLogitTable
   }
   float operator()(float prob) const
   {
-    int index = std::clamp(int(prob * 100), 0, 99);
+    int index = std::clamp(static_cast<int>(prob * 100), 0, 99);
     return table_.at(index);
   }
 

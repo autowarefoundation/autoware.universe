@@ -30,6 +30,7 @@
 #include <pcl/point_types.h>
 
 #include <optional>
+#include <vector>
 
 namespace yabloc::line_segment_detector
 {
