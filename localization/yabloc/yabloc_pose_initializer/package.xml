@@ -22,6 +22,9 @@
   <depend>visualization_msgs</depend>
   <depend>yabloc_common</depend>
 
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>autoware_lint_common</test_depend>
+
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
 
