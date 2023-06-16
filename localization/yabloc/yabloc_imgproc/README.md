@@ -2,56 +2,56 @@
 
 This package contains some executable nodes related to image processing.
 
-- [lsd](#lsd)
+- [line_segment_detector](#line_segment_detector)
 - [graph_segmentation](#graph_segmentation)
 - [segment_filter](#segment_filter)
 - [undistort](#undistort)
 - [lanelet2_overlay](#lanelet2_overlay)
 - [line_segments_overlay](#line_segments_overlay)
 
-# lsd
+## line_segment_detector
 
-## Purpose
+### Purpose
 
 This node extract all line segments from gray scale image.
 
-## Inputs / Outputs
+### Inputs / Outputs
 
-### Input
+#### Input
 
 | Name              | Type                      | Description       |
 | ----------------- | ------------------------- | ----------------- |
 | `input/image_raw` | `sensor_msgs::msg::Image` | undistorted image |
 
-### Output
+#### Output
 
 | Name                              | Type                            | Description                                                                                                                          |
 | --------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `output/image_with_line_segments` | `sensor_msgs::msg::Image`       | image with line segments highlighted                                                                                                 |
 | `output/line_segments_cloud`      | `sensor_msgs::msg::PointCloud2` | detected line segments as point cloud. each point contains x,y,z, normal_x, normal_y, normal_z and z, and normal_z are always empty. |
 
-# graph_segment
+## graph_segmentation
 
-## Purpose
+### Purpose
 
 This node extract road surface region by [graph-based-segmentation](https://docs.opencv.org/4.5.4/dd/d19/classcv_1_1ximgproc_1_1segmentation_1_1GraphSegmentation.html).
 
-## Inputs / Outputs
+### Inputs / Outputs
 
-### Input
+#### Input
 
 | Name              | Type                      | Description       |
 | ----------------- | ------------------------- | ----------------- |
 | `input/image_raw` | `sensor_msgs::msg::Image` | undistorted image |
 
-### Output
+#### Output
 
 | Name                     | Type                      | Description                                                |
 | ------------------------ | ------------------------- | ---------------------------------------------------------- |
 | `output/mask_image`      | `sensor_msgs::msg::Image` | image with masked segments determined as road surface area |
 | `output/segmented_image` | `sensor_msgs::msg::Image` | segmented image for visualization                          |
 
-## Parameters
+### Parameters
 
 | Name                             | Type   | Description                                                        |
 | -------------------------------- | ------ | ------------------------------------------------------------------ |
@@ -63,15 +63,15 @@ This node extract road surface region by [graph-based-segmentation](https://docs
 | `k`                              | double | parameters for cv::ximgproc::segmentation                          |
 | `min_size`                       | double | parameters for cv::ximgproc::segmentation                          |
 
-# segment_filter
+## segment_filter
 
-## Purpose
+### Purpose
 
 This is a node that integrates the results of graph_segment and lsd to extract road surface markings.
 
-## Inputs / Outputs
+### Inputs / Outputs
 
-### Input
+#### Input
 
 | Name                        | Type                            | Description                                                |
 | --------------------------- | ------------------------------- | ---------------------------------------------------------- |
@@ -79,7 +79,7 @@ This is a node that integrates the results of graph_segment and lsd to extract r
 | `input/mask_image`          | `sensor_msgs::msg::Image`       | image with masked segments determined as road surface area |
 | `input/camera_info`         | `sensor_msgs::msg::CameraInfo`  | undistorted camera info                                    |
 
-### Output
+#### Output
 
 | Name                                   | Type                            | Description                                        |
 | -------------------------------------- | ------------------------------- | -------------------------------------------------- |
@@ -87,7 +87,7 @@ This is a node that integrates the results of graph_segment and lsd to extract r
 | `output/projected_image`               | `sensor_msgs::msg::Image`       | projected filtered line segments for visualization |
 | `output/projected_line_segments_cloud` | `sensor_msgs::msg::PointCloud2` | projected filtered line segments                   |
 
-## Parameters
+### Parameters
 
 | Name                                   | Type   | Description                                                         |
 | -------------------------------------- | ------ | ------------------------------------------------------------------- |
@@ -98,29 +98,29 @@ This is a node that integrates the results of graph_segment and lsd to extract r
 | `max_range`                            | double | range of debug projection visualization                             |
 | `image_size`                           | int    | image size of debug projection visualization                        |
 
-# undistort
+## undistort
 
-## Purpose
+### Purpose
 
 This node performs image resizing and undistortion at the same time.
 
-## Inputs / Outputs
+### Inputs / Outputs
 
-### Input
+#### Input
 
 | Name                         | Type                                | Description          |
 | ---------------------------- | ----------------------------------- | -------------------- |
 | `input/camera_info`          | `sensor_msgs::msg::CameraInfo`      | raw compressed image |
 | `input/image_raw/compressed` | `sensor_msgs::msg::CompressedImage` | raw sensor info      |
 
-### Output
+#### Output
 
 | Name                 | Type                                | Description                   |
 | -------------------- | ----------------------------------- | ----------------------------- |
 | `output/camera_info` | `sensor_msgs::msg::CameraInfo`      | resized camera info           |
 | `output/image_raw`   | `sensor_msgs::msg::CompressedImage` | undistorted and resized image |
 
-## Parameters
+### Parameters
 
 | Name                | Type   | Description                                                                                    |
 | ------------------- | ------ | ---------------------------------------------------------------------------------------------- |
@@ -128,7 +128,7 @@ This node performs image resizing and undistortion at the same time.
 | `width`             | int    | resized image width size                                                                       |
 | `override_frame_id` | string | value for overriding the camera's frame_id. if blank, frame_id of static_tf is not overwritten |
 
-### about tf_static overriding
+#### about tf_static overriding
 
 <details><summary>click to open</summary><div>
 
@@ -154,15 +154,15 @@ ros2 run tf2_ros static_transform_publisher \
 
 </div></details>
 
-# lanelet2_overlay
+## lanelet2_overlay
 
-## Purpose
+### Purpose
 
 This node overlays lanelet2 on the camera image based on the estimated self-position.
 
-## Inputs / Outputs
+### Inputs / Outputs
 
-### Input
+#### Input
 
 | Name                                  | Type                               | Description                                         |
 | ------------------------------------- | ---------------------------------- | --------------------------------------------------- |
@@ -174,29 +174,29 @@ This node overlays lanelet2 on the camera image based on the estimated self-posi
 | `input/ll2_road_marking`              | `sensor_msgs::msg::PointCloud2`    | lanelet2 elements regarding road surface markings   |
 | `input/ll2_sign_board`                | `sensor_msgs::msg::PointCloud2`    | lanelet2 elements regarding traffic sign boards     |
 
-### Output
+#### Output
 
 | Name                            | Type                              | Description                                            |
 | ------------------------------- | --------------------------------- | ------------------------------------------------------ |
 | `output/lanelet2_overlay_image` | `sensor_msgs::msg::Image`         | lanelet2 overlayed image                               |
 | `output/projected_marker`       | `visualization_msgs::msg::Marker` | 3d projected line segments including non-road markings |
 
-# line_segments_overlay
+## line_segments_overlay
 
-## Purpose
+### Purpose
 
 This node visualize classified line segments on the camera image
 
-## Inputs / Outputs
+### Inputs / Outputs
 
-### Input
+#### Input
 
 | Name                        | Type                            | Description              |
 | --------------------------- | ------------------------------- | ------------------------ |
 | `input/line_segments_cloud` | `sensor_msgs::msg::PointCloud2` | classied line segments   |
 | `input/image_raw`           | `sensor_msgs::msg::Image`       | undistorted camera image |
 
-### Output
+#### Output
 
 | Name                                      | Type                      | Description                          |
 | ----------------------------------------- | ------------------------- | ------------------------------------ |
