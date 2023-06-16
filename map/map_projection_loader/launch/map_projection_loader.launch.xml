@@ -1,7 +1,8 @@
 <launch>
-  <arg name="yaml_file_path" default="$(find-pkg-share map_projection_loader)/test/data/projection_info.yaml" description="Path to the yaml file"/>
-
-  <node pkg="map_projection_loader" exec="map_projection_loader" name="map_projection_loader">
-    <param name="yaml_file_path" value="$(var yaml_file_path)"/>
+  <arg name="map_projector_info_path" description="Path to the yaml file"/>
+  
+  <node pkg="map_projection_loader" exec="map_projection_loader" name="map_projection_loader" output="screen">
+    <param name="map_projector_info_path" value="$(var map_projector_info_path)"/>
+    <param name="use_local_projector" value="false"/>
   </node>
 </launch>

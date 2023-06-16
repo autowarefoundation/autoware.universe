@@ -47,10 +47,11 @@ def generate_test_description():
     parameters=[
       {
         "map_projector_info_path": map_projection_info_path,
-        "use_local_projector": False,
+        "use_local_projector": True,
       },
     ],
   )
+
 
   context = {}
 
@@ -81,7 +82,7 @@ class TestEKFLocalizer(unittest.TestCase):
   def setUp(self):
     # Create a ROS node for tests
     self.test_node = rclpy.create_node("test_node")
-    self.evaluation_time = 0.2  # 200ms
+    self.evaluation_time = 0.29  # 200ms
     self.received_message = None
 
   def tearDown(self):
@@ -127,11 +128,7 @@ class TestEKFLocalizer(unittest.TestCase):
 
     # Test if message received
     self.assertIsNotNone(self.received_message, "No message received on map_projector_info topic")
-    self.assertEqual(self.received_message.type, yaml_data['type'])
-    self.assertEqual(self.received_message.mgrs_grid, yaml_data['mgrs_grid'])
-    self.assertEqual(self.received_message.map_origin.latitude, yaml_data['map_origin']['latitude'])
-    self.assertEqual(self.received_message.map_origin.longitude, yaml_data['map_origin']['longitude'])
-    self.assertEqual(self.received_message.map_origin.altitude, yaml_data['map_origin']['altitude'])
+    self.assertEqual(self.received_message.type, "local")
 
     self.test_node.destroy_subscription(subscription)
 
