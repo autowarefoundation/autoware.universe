@@ -125,7 +125,7 @@ public:
 
   virtual void updateSpecialData() {}
 
-  virtual void insertStopPoint([[maybe_unused]]PathWithLaneId & path){};
+  virtual void insertStopPoint([[maybe_unused]] PathWithLaneId & path){};
 
   const LaneChangeStatus & getLaneChangeStatus() const { return status_; }
 

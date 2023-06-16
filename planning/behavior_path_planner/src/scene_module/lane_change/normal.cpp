@@ -154,8 +154,8 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
 
 void NormalLaneChange::insertStopPoint(PathWithLaneId & path)
 {
-  const auto shift_intervals =
-    getRouteHandler()->getLateralIntervalsToPreferredLane(status_.lane_change_path.reference_lanelets.back());
+  const auto shift_intervals = getRouteHandler()->getLateralIntervalsToPreferredLane(
+    status_.lane_change_path.reference_lanelets.back());
   const double lane_change_buffer =
     utils::calcMinimumLaneChangeLength(getCommonParam(), shift_intervals, 0.0);
   const auto stopping_distance = motion_utils::calcArcLength(path.points) - lane_change_buffer;
