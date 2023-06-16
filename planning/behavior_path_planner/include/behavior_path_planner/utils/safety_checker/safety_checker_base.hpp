@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECKER__SAFETY_CHECKER_HPP_
-#define BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECKER__SAFETY_CHECKER_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECKER__SAFETY_CHECKER_BASE_HPP_
+#define BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECKER__SAFETY_CHECKER_BASE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/parameters.hpp"
@@ -32,12 +32,10 @@
 #include <vector>
 namespace behavior_path_planner
 {
-using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
-using tier4_autoware_utils::Polygon2d;
 
 struct TargetObjectIndices
 {
@@ -46,12 +44,24 @@ struct TargetObjectIndices
   std::vector<size_t> other_lane{};
 };
 
-struct CollisionCheckParams
+struct CollisionCheckData
 {
   // trajectory generation
   double backward_lane_length{200.0};
   double prediction_time_resolution{0.5};
+  // int longitudinal_acc_sampling_num{10};
+  // int lateral_acc_sampling_num{10};
 
+  // turn signal
+  // double min_length_for_turn_signal_activation{10.0};
+
+  // acceleration data
+  // double min_longitudinal_acc{-1.0};
+  // double max_longitudinal_acc{1.0};
+
+  // collision check
+  // bool enable_prepare_segment_collision_check{true};
+  // double prepare_segment_ignore_object_velocity_thresh{0.1};
   bool use_predicted_path_outside_lanelet{false};
   bool use_all_predicted_path{false};
 
@@ -76,10 +86,6 @@ enum class TRAJECTORY_TYPE {
   SPLINE = 1,
 };
 
-// plannerdataには依存しない
-// どう拡張するのか分からない？
-// 拡張イメージ湧けばOK
-
 class SafetyChecker
 {
 public:
@@ -98,21 +104,45 @@ public:
    */
   void isPathSafe(const PathWithLaneId & path);
 
-private:
+  ////////////////////////////////////////
+  // Utility Functions
+  ////////////////////////////////////////
+
+protected:
   std::shared_ptr<BehaviorPathPlannerParameters> common_parameters_{};
   std::shared_ptr<const PlannerData> planner_data_{};
   std::shared_ptr<CollisionCheckData> collision_check_data_{};
 
-  CollisionCheckData createCollisionCheckData();
-  PredictedPath createPredictedPath() const;
-  lanelet::ConstLanelets getBackwardLanelets() const;
-  TargetObjectIndices filterObjectIndices() const;
-  boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygon() const;
-  bool isSafeInLaneletCollisionCheck() const;
-  bool isObjectIndexIncluded() const;
-  bool isTargetObjectFront() const;
+private:
+  virtual createCollisionCheckData() = 0;
+  virtual PredictedPath createPredictedPath() const = 0;
+  virtual getBackwardLanelets() const = 0;
+  virtual filterObjectIndices() const = 0;
+  virtual getEgoExpectedPoseAndConvertToPolygon() const = 0;
+  virtual isSafeInLaneletCollisionCheck() const = 0;
+  virtual isObjectIndexIncluded() const = 0;
+  virtual isTargetObjectFront() const = 0;
+
+  ////////////////////////////////////////
+  // Helper Functions
+  ////////////////////////////////////////
+
+  /**
+   * @brief Check if the shift points are aligned in order and have no conflict range.
+   */
+  bool checkShiftLinesAlignment(const ShiftLineArray & shift_lines) const;
+
+  void addLateralOffsetOnIndexPoint(ShiftedPath * path, double offset, size_t index) const;
+
+  void shiftBaseLength(ShiftedPath * path, double offset) const;
+
+  void setBaseOffset(const double val)
+  {
+    RCLCPP_DEBUG(logger_, "base_offset is changed: %f -> %f", base_offset_, val);
+    base_offset_ = val;
+  }
 };
 
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECKER__SAFETY_CHECKER_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECKER__SAFETY_CHECKER_BASE_HPP_
