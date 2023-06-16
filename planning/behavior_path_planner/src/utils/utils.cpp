@@ -2955,4 +2955,105 @@ void extractObstaclesFromDrivableArea(
   }
 }
 
+bool isParkedObject(
+  const PathWithLaneId & path, const RouteHandler & route_handler, const PredictedObject & object)
+{
+  // ============================================ <- most_left_lanelet.leftBound()
+  // y              road shoulder
+  // ^ ------------------------------------------
+  // |   x                                +
+  // +---> --- object closest lanelet --- o ----- <- object_closest_lanelet.centerline()
+  //
+  // --------------------------------------------
+  // +: object position
+  // o: nearest point on centerline
+
+  using lanelet::geometry::distance2d;
+  using lanelet::geometry::toArcCoordinates;
+  using lanelet::utils::to2D;
+
+  const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
+  const auto object_closest_index =
+    motion_utils::findNearestIndex(path.points, object_pose.position);
+  const auto object_closest_pose = path.points.at(object_closest_index).point.pose;
+  const auto obj_poly = tier4_autoware_utils::toPolygon2d(object);
+
+  lanelet::ConstLanelet closest_lanelet;
+  if (!route_handler.getClosestLaneletWithinRoute(object_closest_pose, &closest_lanelet)) {
+    return false;
+  }
+  const auto closest_lanelet_centerline = to2D(closest_lanelet.centerline2d().basicLineString());
+
+  const double lat_dist = motion_utils::calcLateralOffset(path.points, object_pose.position);
+  lanelet::BasicLineString2d bound;
+  double center_to_bound_buffer = 0.0;
+  if (lat_dist > 0.0) {
+    // left side vehicle
+    const auto most_left_road_lanelet = route_handler.getMostLeftLanelet(closest_lanelet);
+    const auto most_left_lanelet_candidates =
+      route_handler.getLaneletMapPtr()->laneletLayer.findUsages(most_left_road_lanelet.leftBound());
+    lanelet::ConstLanelet most_left_lanelet = most_left_road_lanelet;
+    const lanelet::Attribute sub_type =
+      most_left_lanelet.attribute(lanelet::AttributeName::Subtype);
+
+    for (const auto & ll : most_left_lanelet_candidates) {
+      const lanelet::Attribute sub_type = ll.attribute(lanelet::AttributeName::Subtype);
+      if (sub_type.value() == "road_shoulder") {
+        most_left_lanelet = ll;
+      }
+    }
+    bound = most_left_lanelet.leftBound2d().basicLineString();
+    if (sub_type.value() != "road_shoulder") {
+      center_to_bound_buffer = 1.0;  // parameters->object_check_min_road_shoulder_width;
+    }
+  } else {
+    // right side vehicle
+    const auto most_right_road_lanelet = route_handler.getMostRightLanelet(closest_lanelet);
+    const auto most_right_lanelet_candidates =
+      route_handler.getLaneletMapPtr()->laneletLayer.findUsages(
+        most_right_road_lanelet.rightBound());
+
+    lanelet::ConstLanelet most_right_lanelet = most_right_road_lanelet;
+    const lanelet::Attribute sub_type =
+      most_right_lanelet.attribute(lanelet::AttributeName::Subtype);
+
+    for (const auto & ll : most_right_lanelet_candidates) {
+      const lanelet::Attribute sub_type = ll.attribute(lanelet::AttributeName::Subtype);
+      if (sub_type.value() == "road_shoulder") {
+        most_right_lanelet = ll;
+      }
+    }
+    bound = most_right_lanelet.rightBound2d().basicLineString();
+    if (sub_type.value() != "road_shoulder") {
+      center_to_bound_buffer = 1.0;  // parameters->object_check_min_road_shoulder_width;
+    }
+  }
+
+  const double ratio_threshold = 0.3;
+  return isParkedObject(
+    closest_lanelet_centerline, bound, obj_poly, center_to_bound_buffer, ratio_threshold);
+}
+
+bool isParkedObject(
+  const lanelet::BasicLineString2d & centerline, const lanelet::BasicLineString2d & boundary,
+  const tier4_autoware_utils::Polygon2d obj_poly, const double buffer_to_bound,
+  const double ratio_threshold)
+{
+  double min_dist_to_bound = std::numeric_limits<double>::max();
+  lanelet::Point2d closest_obj_point;
+  for (const auto & obj_p : obj_poly.outer()) {
+    const auto lanelet_obj_p = lanelet::Point2d(lanelet::InvalId, obj_p.x(), obj_p.y());
+    const auto dist = lanelet::geometry::distance2d(boundary, lanelet_obj_p);
+    if (dist < min_dist_to_bound) {
+      min_dist_to_bound = dist;
+      closest_obj_point = lanelet_obj_p;
+    }
+  }
+
+  const double dist_to_centerline = lanelet::geometry::distance2d(centerline, closest_obj_point);
+  const double center_to_bound =
+    std::abs(dist_to_centerline) + std::abs(min_dist_to_bound) + buffer_to_bound;
+  return (std::abs(dist_to_centerline) / center_to_bound) > ratio_threshold;
+}
+
 }  // namespace behavior_path_planner::utils
