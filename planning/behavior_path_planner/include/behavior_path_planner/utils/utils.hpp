@@ -399,6 +399,14 @@ void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound
 std::optional<lanelet::Polygon3d> getPolygonByPoint(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstPoint3d & point,
   const std::string & polygon_name);
+
+bool isParkedObject(
+  const PathWithLaneId & path, const RouteHandler & route_handler, const PredictedObject & object);
+
+bool isParkedObject(
+  const lanelet::BasicLineString2d & centerline, const lanelet::BasicLineString2d & boundary,
+  const tier4_autoware_utils::Polygon2d obj_poly, const double buffer_to_bound,
+  const double ratio_threshold);
 }  // namespace behavior_path_planner::utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_
