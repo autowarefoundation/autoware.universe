@@ -43,6 +43,6 @@ MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
 
   // Publish the message
   publisher_ = this->create_publisher<tier4_map_msgs::msg::MapProjectorInfo>(
-    "map_projector_info", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local());
+    "~/map_projector_info", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local());
   publisher_->publish(msg);
 }
