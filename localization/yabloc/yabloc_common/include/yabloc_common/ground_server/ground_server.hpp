@@ -36,6 +36,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <vector>
+
 namespace yabloc::ground_server
 {
 class GroundServer : public rclcpp::Node
@@ -49,7 +51,7 @@ public:
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
   using Float32 = std_msgs::msg::Float32;
-  using Float32Array = std_msgs::msg::Float32MultiArray;  // TODO: define new msg
+  using Float32Array = std_msgs::msg::Float32MultiArray;  // TODO(KYabuuchi) define new msg
   using Marker = visualization_msgs::msg::Marker;
   using String = std_msgs::msg::String;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;

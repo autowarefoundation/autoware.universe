@@ -28,7 +28,7 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 
-namespace yabloc ::ground_server
+namespace yabloc::ground_server
 {
 GroundServer::GroundServer()
 : Node("ground_server"),
@@ -105,7 +105,7 @@ void GroundServer::on_map(const HADMapBin & msg)
   lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
   lanelet::utils::conversion::fromBinMsg(msg, lanelet_map);
 
-  // TODO: has to be loaded from rosparm
+  // TODO(KYabuuchi) has to be loaded from rosparm
   const std::set<std::string> visible_labels = {
     "zebra_marking",      "virtual",   "line_thin", "line_thick",
     "pedestrian_marking", "stop_line", "curbstone"};
@@ -247,7 +247,7 @@ GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
 
 void GroundServer::publish_marker(const GroundPlane & plane)
 {
-  // TODO: current visual marker is so useless
+  // TODO(KYabuuchi) current visual marker is so useless
   Marker marker;
   marker.header.frame_id = "map";
   marker.header.stamp = get_clock()->now();

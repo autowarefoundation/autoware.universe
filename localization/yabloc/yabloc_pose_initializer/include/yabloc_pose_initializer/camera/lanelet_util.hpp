@@ -19,7 +19,7 @@
 
 #include <optional>
 
-// TODO: Reuse autoware_common/lanelet2_extension instead of this
+// TODO(KYabuuchi) Reuse autoware_common/lanelet2_extension instead of this
 namespace lanelet
 {
 std::optional<double> get_current_direction(

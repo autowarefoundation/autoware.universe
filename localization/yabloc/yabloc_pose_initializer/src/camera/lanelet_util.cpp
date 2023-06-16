@@ -82,7 +82,7 @@ std::optional<double> get_current_direction(
   lanelet::BasicPoint2d search_pt(query_position.x(), query_position.y());
 
   if (found) {
-    auto lanelet = current_lanelets.front();  // TODO: consider all lanelet too
+    auto lanelet = current_lanelets.front();  // TODO(KYabuuchi) consider all lanelet too
     lanelet::ConstLineString3d segment = get_closest_segment(search_pt, lanelet.centerline());
     return std::atan2(
       segment.back().y() - segment.front().y(), segment.back().x() - segment.front().x());

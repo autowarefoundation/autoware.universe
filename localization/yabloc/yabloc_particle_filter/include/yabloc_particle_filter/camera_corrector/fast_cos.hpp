@@ -15,6 +15,7 @@
 #ifndef YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__FAST_COS_HPP_
 #define YABLOC_PARTICLE_FILTER__CAMERA_CORRECTOR__FAST_COS_HPP_
 
+#include <vector>
 namespace yabloc::modularized_particle_filter
 {
 struct FastCosSin

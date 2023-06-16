@@ -148,7 +148,7 @@ TEST(ResamplerTestSuite, simpleResampling)
 
     int centroid = 0;
     for (const auto & p : predicted.particles) centroid += p.pose.position.x;
-    EXPECT_TRUE(centroid > 0);
+    EXPECT_GT(centroid, 0);
   }
 }
 

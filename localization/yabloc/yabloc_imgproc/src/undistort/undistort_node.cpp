@@ -75,8 +75,8 @@ private:
   void make_remap_lut()
   {
     if (!info_.has_value()) return;
-    cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
-    cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void *)(info_->d.data()));
+    cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, reinterpret_cast<void *>(info_->k.data()));
+    cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, reinterpret_cast<void *>(info_->d.data()));
     cv::Size size(info_->width, info_->height);
 
     cv::Size new_size = size;

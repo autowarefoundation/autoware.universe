@@ -18,12 +18,14 @@
 #include <Eigen/Core>
 #include <opencv4/opencv2/core.hpp>
 
+#include <algorithm>
+
 namespace yabloc::graph_segment
 {
 struct Histogram
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Histogram(int bin = 10) : bin(bin) { data = Eigen::MatrixXf::Zero(3, bin); }
+  explicit Histogram(int bin = 10) : bin(bin) { data = Eigen::MatrixXf::Zero(3, bin); }
 
   Eigen::MatrixXf eval() const
   {

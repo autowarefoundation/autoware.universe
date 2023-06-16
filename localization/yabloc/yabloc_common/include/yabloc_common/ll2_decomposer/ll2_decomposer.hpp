@@ -26,6 +26,9 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <set>
+#include <string>
+
 namespace yabloc::ll2_decomposer
 {
 class Ll2Decomposer : public rclcpp::Node

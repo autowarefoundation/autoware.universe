@@ -32,7 +32,7 @@ public:
   using Particle = yabloc_particle_filter::msg::Particle;
   using ParticleArray = yabloc_particle_filter::msg::ParticleArray;
 
-  ParticleVisualizer(rclcpp::Node & node);
+  explicit ParticleVisualizer(rclcpp::Node & node);
   void publish(const ParticleArray & msg);
 
 private:

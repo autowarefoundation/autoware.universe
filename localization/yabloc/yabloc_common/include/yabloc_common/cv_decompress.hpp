@@ -20,6 +20,8 @@
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
+#include <string>
+
 namespace yabloc::common
 {
 cv::Mat decompress_to_cv_mat(const sensor_msgs::msg::Image & img);

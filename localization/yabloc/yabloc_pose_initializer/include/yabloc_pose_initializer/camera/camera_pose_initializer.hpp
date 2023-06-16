@@ -29,6 +29,8 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
+#include <memory>
+
 namespace yabloc
 {
 class CameraPoseInitializer : public rclcpp::Node

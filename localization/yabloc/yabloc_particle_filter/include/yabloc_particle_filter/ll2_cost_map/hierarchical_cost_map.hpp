@@ -47,7 +47,7 @@ struct Area
     y = static_cast<int>(std::floor(v.y() / unit_length_));
   }
 
-  Eigen::Vector2f real_scale() const { return {x * unit_length_, y * unit_length_}; };
+  Eigen::Vector2f real_scale() const { return {x * unit_length_, y * unit_length_}; }
 
   std::array<Eigen::Vector2f, 2> real_scale_boundary() const
   {

@@ -23,6 +23,8 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+#include <memory>
+
 namespace yabloc::graph_segment
 {
 class GraphSegment : public rclcpp::Node

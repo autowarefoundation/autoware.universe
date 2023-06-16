@@ -51,7 +51,7 @@ GraphSegment::GraphSegment()
 
 cv::Vec3b random_hsv(int index)
 {
-  double base = (double)(index)*0.7071;
+  double base = static_cast<double>(index) * 0.7071;
   return cv::Vec3b(fmod(base, 1.2) * 255, 0.7 * 255, 0.5 * 255);
 };
 
@@ -106,7 +106,7 @@ void GraphSegment::on_image(const Image & msg)
   }
 
   // Draw output image and debug image
-  // TODO: use ptr instead of at()
+  // TODO(KYabuuchi) use ptr instead of at()
   cv::Mat output_image = cv::Mat::zeros(resized.size(), CV_8UC1);
   cv::Mat debug_image = cv::Mat::zeros(resized.size(), CV_8UC3);
   for (int h = 0; h < resized.rows; h++) {

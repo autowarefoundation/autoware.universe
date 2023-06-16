@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef YABLOC_PARTICLE_FILTER__CORRECTION__ABST_CORRECTOR_HPP_
-#define YABLOC_PARTICLE_FILTER__CORRECTION__ABST_CORRECTOR_HPP_
+#ifndef YABLOC_PARTICLE_FILTER__CORRECTION__ABSTRACT_CORRECTOR_HPP_
+#define YABLOC_PARTICLE_FILTER__CORRECTION__ABSTRACT_CORRECTOR_HPP_
 
 #include "yabloc_particle_filter/common/mean.hpp"
 #include "yabloc_particle_filter/common/visualize.hpp"
@@ -58,4 +58,4 @@ private:
 }  // namespace modularized_particle_filter
 }  // namespace yabloc
 
-#endif  // YABLOC_PARTICLE_FILTER__CORRECTION__ABST_CORRECTOR_HPP_
+#endif  // YABLOC_PARTICLE_FILTER__CORRECTION__ABSTRACT_CORRECTOR_HPP_

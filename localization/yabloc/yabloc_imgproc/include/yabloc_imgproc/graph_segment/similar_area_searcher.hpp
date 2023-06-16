@@ -34,7 +34,7 @@ namespace yabloc::graph_segment
 class SimilarAreaSearcher
 {
 public:
-  SimilarAreaSearcher(float similarity_score_threshold)
+  explicit SimilarAreaSearcher(float similarity_score_threshold)
   : similarity_score_threshold_(similarity_score_threshold),
     logger_(rclcpp::get_logger("similar_area_searcher"))
   {

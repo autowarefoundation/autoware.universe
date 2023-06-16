@@ -22,6 +22,8 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
+#include <memory>
+
 namespace yabloc
 {
 class LaneImage
@@ -29,7 +31,8 @@ class LaneImage
 public:
   using Pose = geometry_msgs::msg::Pose;
   using SharedPtr = std::shared_ptr<LaneImage>;
-  LaneImage(lanelet::LaneletMapPtr map);
+
+  explicit LaneImage(lanelet::LaneletMapPtr map);
 
   cv::Mat get_image(const Pose & pose);
 

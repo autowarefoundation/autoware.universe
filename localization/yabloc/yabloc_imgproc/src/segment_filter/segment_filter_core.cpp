@@ -67,7 +67,7 @@ bool SegmentFilter::define_project_func()
   const Eigen::Vector3f t = camera_extrinsic->translation();
   const Eigen::Quaternionf q(camera_extrinsic->rotation());
 
-  // TODO: This will take into account ground tilt and camera vibration someday.
+  // TODO(KYabuuchi) This will take into account ground tilt and camera vibration someday.
   project_func_ = [Kinv, q, t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
     Eigen::Vector3f u3(u.x(), u.y(), 1);
     Eigen::Vector3f u_bearing = (q * Kinv * u3).normalized();
@@ -263,7 +263,7 @@ std::set<int> SegmentFilter::filt_by_mask(
   mask.convertTo(mask_image, CV_16UC1);
   cv::threshold(mask_image, mask_image, 1, std::numeric_limits<ushort>::max(), cv::THRESH_BINARY);
 
-  // TODO: Using boost::geometry is more intuitive.
+  // TODO(KYabuuchi) Using boost::geometry is more intuitive.
   // https://boostjp.github.io/tips/geometry.html#disjoint
 
   // And operator

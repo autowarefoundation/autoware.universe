@@ -90,7 +90,7 @@ bool ProjectorModule::define_project_func()
   const Eigen::Vector3f t = camera_extrinsic->translation();
   const Eigen::Quaternionf q(camera_extrinsic->rotation());
 
-  // TODO: This will take into account ground tilt and camera vibration someday.
+  // TODO(KYabuuchi) This will take into account ground tilt and camera vibration someday.
   project_func_ = [Kinv, q, t](const cv::Point & u) -> std::optional<Eigen::Vector3f> {
     Eigen::Vector3f u3(u.x, u.y, 1);
     Eigen::Vector3f u_bearing = (q * Kinv * u3).normalized();

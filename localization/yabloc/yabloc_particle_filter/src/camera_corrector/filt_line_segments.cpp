@@ -29,8 +29,7 @@ cv::Point2f cv2pt(const Eigen::Vector3f v)
   return {-v.y() / METRIC_PER_PIXEL + IMAGE_RADIUS, -v.x() / METRIC_PER_PIXEL + 2 * IMAGE_RADIUS};
 }
 
-// TODO: rename
-float abs_cos2(const Eigen::Vector3f & t, float deg)
+float normalized_atan2(const Eigen::Vector3f & t, float deg)
 {
   float diff = std::atan2(t.y(), t.x()) - deg * M_PI / 180;
   diff = std::fmod(diff, M_PI);
@@ -42,7 +41,7 @@ float abs_cos2(const Eigen::Vector3f & t, float deg)
   } else if (diff < M_PI) {
     return diff / M_PI_2 - 1;
   } else {
-    throw std::runtime_error("0?" + std::to_string(diff));
+    throw std::runtime_error("invalid cos");
   }
 }
 
@@ -68,7 +67,7 @@ CameraParticleCorrector::filt(const LineSegments & iffy_lines)
     for (float distance = 0; distance < length; distance += 0.1f) {
       Eigen::Vector3f px = pose * (p2 + tangent * distance);
       CostMapValue v3 = cost_map_.at(px.topRows(2));
-      float cos2 = abs_cos2(pose.so3() * tangent, v3.angle);
+      float cos2 = normalized_atan2(pose.so3() * tangent, v3.angle);
       score += (cos2 * v3.intensity);
       count++;
 
