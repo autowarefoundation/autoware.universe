@@ -15,13 +15,11 @@
 # limitations under the License.
 
 import copy
-import os
-
 import cv2
 import numpy as np
 
 
-class SemSeg:
+class SemanticSegmentationCore:
     def __init__(self, model_path):
         self.net_ = cv2.dnn.readNet(model_path)
         self.net_.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
@@ -63,8 +61,7 @@ class SemSeg:
 
 
 def main():
-    dirname = os.path.dirname(__file__)
-    path = dirname + "/../data/model_32.pb"
+    print('This script is not intended to be run alone.')
 
 
 if __name__ == "__main__":

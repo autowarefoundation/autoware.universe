@@ -43,16 +43,16 @@ CameraPoseInitializer::CameraPoseInitializer()
   sub_image_ = create_subscription<Image>("~/input/image_raw", 10, on_image);
 
   // Client
-  semseg_client_ = create_client<SemsegSrv>(
-    "~/semseg_srv", rmw_qos_profile_services_default, service_callback_group_);
+  segmentation_client_ = create_client<SegmentationSrv>(
+    "~/semantic_segmentation_srv", rmw_qos_profile_services_default, service_callback_group_);
 
   // Server
   auto on_service = std::bind(&CameraPoseInitializer::on_service, this, _1, _2);
   align_server_ = create_service<RequestPoseAlignment>("~/yabloc_align_srv", on_service);
 
   using namespace std::chrono_literals;
-  while (!semseg_client_->wait_for_service(1s) && rclcpp::ok()) {
-    RCLCPP_INFO_STREAM(get_logger(), "Waiting for " << semseg_client_->get_service_name());
+  while (!segmentation_client_->wait_for_service(1s) && rclcpp::ok()) {
+    RCLCPP_INFO_STREAM(get_logger(), "Waiting for " << segmentation_client_->get_service_name());
   }
 }
 
@@ -100,18 +100,18 @@ bool CameraPoseInitializer::estimate_pose(
     return false;
   }
 
-  Image semseg_image;
+  Image segmented_image;
   {
     // Call semantic segmentation service
-    auto request = std::make_shared<SemsegSrv::Request>();
+    auto request = std::make_shared<SegmentationSrv::Request>();
     request->src_image = *latest_image_msg_.value();
-    auto result_future = semseg_client_->async_send_request(request);
+    auto result_future = segmentation_client_->async_send_request(request);
     using namespace std::chrono_literals;
     std::future_status status = result_future.wait_for(1000ms);
     if (status == std::future_status::ready) {
-      semseg_image = result_future.get()->dst_image;
+      segmented_image = result_future.get()->dst_image;
     } else {
-      RCLCPP_ERROR_STREAM(get_logger(), "semseg service exited unexpectedly");
+      RCLCPP_ERROR_STREAM(get_logger(), "segmentation service exited unexpectedly");
       return false;
     }
   }
@@ -119,7 +119,7 @@ bool CameraPoseInitializer::estimate_pose(
   const std::optional<double> lane_angle_rad =
     lanelet::get_current_direction(const_lanelets_, position);
 
-  cv::Mat projected_image = projector_module_->project_image(semseg_image);
+  cv::Mat projected_image = projector_module_->project_image(segmented_image);
   cv::Mat vectormap_image = lane_image_->create_vectormap_image(position);
 
   std::vector<float> scores;

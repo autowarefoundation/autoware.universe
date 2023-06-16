@@ -15,28 +15,26 @@
 # limitations under the License.
 
 import sys
-import time
 
-import cv2
 from cv_bridge import CvBridge
 import rclpy
 from rclpy.node import Node
-import semseg_core
+import semantic_segmentation_core as core
 from sensor_msgs.msg import Image
-from yabloc_pose_initializer.srv import Semseg
+from yabloc_pose_initializer.srv import SemanticSegmentation
 
 
-class SemsegServer(Node):
+class SemanticSegmentationServer(Node):
     def __init__(self):
-        super().__init__("semseg_node")
+        super().__init__("segmentation_server_node")
 
         model_path = self.declare_parameter("model_path", "").value
 
         self.get_logger().info("model path: " + model_path)
-        self.dnn_ = semseg_core.SemSeg(model_path)
+        self.dnn_ = core.SemanticSegmentationCore(model_path)
         self.bridge_ = CvBridge()
 
-        self.srv = self.create_service(Semseg, "semseg_srv", self.on_service)
+        self.srv = self.create_service(SemanticSegmentation, "semantic_segmentation_srv", self.on_service)
 
     def on_service(self, request, response):
         response.dst_image = self.__inference(request.src_image)
@@ -47,9 +45,7 @@ class SemsegServer(Node):
         self.get_logger().info("Subscribed image: " + str(stamp))
 
         src_image = self.bridge_.imgmsg_to_cv2(msg)
-        start_time = time.time()
         mask = self.dnn_.inference(src_image)
-        elapsed_time = time.time() - start_time
 
         dst_msg = self.bridge_.cv2_to_imgmsg(mask)
         dst_msg.encoding = "bgr8"
@@ -59,9 +55,9 @@ class SemsegServer(Node):
 def main():
     rclpy.init(args=sys.argv)
 
-    semseg_node = SemsegServer()
-    rclpy.spin(semseg_node)
-    semseg_node.destroy_node()
+    server_node = SemanticSegmentationServer()
+    rclpy.spin(server_node)
+    server_node.destroy_node()
     rclpy.shutdown()
 
 

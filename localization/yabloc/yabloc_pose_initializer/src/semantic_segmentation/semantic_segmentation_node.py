@@ -21,25 +21,25 @@ import cv2
 from cv_bridge import CvBridge
 import rclpy
 from rclpy.node import Node
-import semseg_core
+import semantic_segmentation_core as core
 from sensor_msgs.msg import Image
 
 
-class SemsegNode(Node):
+class SemanticSegmentationNode(Node):
     def __init__(self):
-        super().__init__("semseg_node")
+        super().__init__("semantic_segmentation_node")
 
         model_path = self.declare_parameter("model_path", "").value
         self.imshow_ = self.declare_parameter("imshow", False).value
 
         self.get_logger().info("model path: " + model_path)
 
-        self.sub_image_ = self.create_subscription(Image, "input/image_raw", self.imageCallback, 10)
+        self.sub_image_ = self.create_subscription(Image, "~/input/image_raw", self.imageCallback, 10)
 
-        self.pub_overlay_image_ = self.create_publisher(Image, "output/overlay_image", 10)
-        self.pub_image_ = self.create_publisher(Image, "output/semantic_image", 10)
+        self.pub_overlay_image_ = self.create_publisher(Image, "~/output/overlay_image", 10)
+        self.pub_image_ = self.create_publisher(Image, "~/output/semantic_image", 10)
 
-        self.dnn_ = semseg_core.SemSeg(model_path)
+        self.dnn_ = core.SemanticSegmentationCore(model_path)
         self.bridge_ = CvBridge()
 
     def imageCallback(self, msg: Image):
@@ -65,7 +65,7 @@ class SemsegNode(Node):
 
         # visualize
         if self.imshow_:
-            cv2.imshow("semseg", show_image)
+            cv2.imshow("segmentation", show_image)
             cv2.waitKey(1)
 
         # publish dst image
@@ -81,9 +81,9 @@ class SemsegNode(Node):
 def main():
     rclpy.init(args=sys.argv)
 
-    semseg_node = SemsegNode()
-    rclpy.spin(semseg_node)
-    semseg_node.destroy_node()
+    segmentation_node = SemanticSegmentationNode()
+    rclpy.spin(segmentation_node)
+    segmentation_node.destroy_node()
     rclpy.shutdown()
 
 

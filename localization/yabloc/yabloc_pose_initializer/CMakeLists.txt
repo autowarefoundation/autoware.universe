@@ -26,7 +26,7 @@ message(STATUS "PYTHON_EXECUTABLE: ${PYTHON_EXECUTABLE}")
 # ===================================================
 # Service
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "srv/Semseg.srv"
+  "srv/SemanticSegmentation.srv"
   DEPENDENCIES
   std_msgs
   sensor_msgs
@@ -50,9 +50,9 @@ target_link_libraries(${TARGET} ${PCL_LIBRARIES} Sophus::Sophus)
 
 # Semantic segmentation
 install(PROGRAMS
-  src/semantic_segmentation/semseg_core.py
-  src/semantic_segmentation/semseg_node.py
-  src/semantic_segmentation/semseg_server.py
+  src/semantic_segmentation/semantic_segmentation_core.py
+  src/semantic_segmentation/semantic_segmentation_node.py
+  src/semantic_segmentation/semantic_segmentation_server.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

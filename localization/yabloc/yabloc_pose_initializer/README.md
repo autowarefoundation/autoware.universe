@@ -35,7 +35,7 @@ Converted model URL
 ### Input
 
 | Name                | Type                                         | Description              |
-| ------------------- | -------------------------------------------- | ------------------------ |
+|---------------------|----------------------------------------------|--------------------------|
 | `input/camera_info` | `sensor_msgs::msg::CameraInfo`               | undistorted camera info  |
 | `input/image_raw`   | `sensor_msgs::msg::Image`                    | undistorted camera image |
 | `input/vector_map`  | `autoware_auto_mapping_msgs::msg::HADMapBin` | vector map               |
@@ -43,28 +43,28 @@ Converted model URL
 ### Output
 
 | Name                | Type                                   | Description             |
-| ------------------- | -------------------------------------- | ----------------------- |
+|---------------------|----------------------------------------|-------------------------|
 | `output/candidates` | `visualization_msgs::msg::MarkerArray` | initial pose candidates |
 
 ## Parameters
 
 | Name               | Type | Description                               |
-| ------------------ | ---- | ----------------------------------------- |
+|--------------------|------|-------------------------------------------|
 | `angle_resolution` | int  | how many divisions of 1 sigma angle range |
 
 ## Services
 
 | Name               | Type                                                      | Description                     |
-| ------------------ | --------------------------------------------------------- | ------------------------------- |
+|--------------------|-----------------------------------------------------------|---------------------------------|
 | `yabloc_align_srv` | `tier4_localization_msgs::srv::PoseWithCovarianceStamped` | initial pose estimation request |
 
 ## Clients
 
-| Name         | Type                                   | Description                   |
-| ------------ | -------------------------------------- | ----------------------------- |
-| `semseg_srv` | `yabloc_pose_initializer::srv::Semseg` | semantic segmentation request |
+| Name                        | Type                                                 | Description                   |
+|-----------------------------|------------------------------------------------------|-------------------------------|
+| `semantic_segmentation_srv` | `yabloc_pose_initializer::srv::SemanticSegmentation` | semantic segmentation request |
 
-# semantic_segmentation
+# semantic_segmentation_server
 
 ## Purpose
 
@@ -72,6 +72,6 @@ Converted model URL
 
 ## Services
 
-| Name         | Type                                   | Description                   |
-| ------------ | -------------------------------------- | ----------------------------- |
-| `semseg_srv` | `yabloc_pose_initializer::srv::Semseg` | semantic segmentation request |
+| Name                        | Type                                                 | Description                   |
+|-----------------------------|------------------------------------------------------|-------------------------------|
+| `semantic_segmentation_srv` | `yabloc_pose_initializer::srv::SemanticSegmentation` | semantic segmentation request |
