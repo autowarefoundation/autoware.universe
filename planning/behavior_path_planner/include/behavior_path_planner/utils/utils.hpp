@@ -406,8 +406,7 @@ bool isParkedObject(
 
 bool isParkedObject(
   const lanelet::BasicLineString2d & centerline, const lanelet::BasicLineString2d & boundary,
-  const tier4_autoware_utils::Polygon2d obj_poly, const double buffer_to_bound,
-  const double ratio_threshold);
+  const PredictedObject & object, const double buffer_to_bound, const double ratio_threshold);
 }  // namespace behavior_path_planner::utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_
