@@ -18,8 +18,6 @@
 
 #include <string>
 
-tier4_map_msgs::msg::MapProjectorInfo load_yaml_file(const std::string & filename);
-
 class MapProjectionLoader : public rclcpp::Node
 {
 public:
