@@ -967,11 +967,15 @@ void filterTargetObjects(
             }
           }
 
-          const auto center_to_left_boundary = distance2d(
-            to2D(most_left_lanelet.leftBound().basicLineString()), to2D(centerline_point));
+          double min_dist_to_left_bound = std::numeric_limits<double>::max();
+          for (const auto & obj_p : o.envelope_poly.outer()) {
+            const auto lanelet_p = lanelet::Point2d(lanelet::InvalId, obj_p.x(), obj_p.y());
+            const auto dist_to_left_bound =
+              distance2d(to2D(most_left_lanelet.leftBound().basicLineString()), lanelet_p);
+            min_dist_to_left_bound = std::min(dist_to_left_bound, min_dist_to_left_bound);
+          }
 
-          return std::make_pair(
-            center_to_left_boundary - 0.5 * o.object.shape.dimensions.y, sub_type);
+          return std::make_pair(min_dist_to_left_bound, sub_type);
         }();
 
         if (sub_type.value() != "road_shoulder") {
