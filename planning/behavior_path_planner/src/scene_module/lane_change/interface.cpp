@@ -244,9 +244,6 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   *prev_approved_path_ = *getPreviousModuleOutput().path;
   module_type_->insertStopPoint(*prev_approved_path_);
 
-  const auto candidate = planCandidate();
-  path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
-
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(*prev_approved_path_);
   out.reference_path = getPreviousModuleOutput().reference_path;
