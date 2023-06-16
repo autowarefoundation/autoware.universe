@@ -69,6 +69,19 @@ struct CollisionCheckParams
 
   // debug marker
   bool publish_debug_marker{false};
+
+  double target_velocity double stopping_time double acc_till_target_velocity
+    PredictedObjects::ConstSharedPtr dynamic_objects TargetObjectIndices & dynamic_objects_indices
+      RouteHandler route_handler lanelet::ConstLanelets reference_lanelets{};
+  lanelet::ConstLanelets target_lanelets{};
+  double vehicle_width double forward_path_length
+
+    double ego_nearest_dist_threshold double ego_nearest_yaw_threshold
+
+    double check_end_time double check_start_time
+
+    double expected_front_deceleration{-1.0};
+  double expected_rear_deceleration
 };
 
 enum class TRAJECTORY_TYPE {
