@@ -63,6 +63,7 @@ function(download FILE_NAME FILE_HASH)
 endfunction()
 
 download(yolox-tiny.onnx 97028baf73ce55e115599c9c60651b08)
+download(yolox-sPlus-opt.onnx bf3b0155351f90fcdca2626acbfd3bcf)
 download(label.txt 9ceadca8b72b6169ee6aabb861fe3e1e)
 
 ##########

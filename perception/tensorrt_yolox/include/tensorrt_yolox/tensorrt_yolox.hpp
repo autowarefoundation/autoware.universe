@@ -82,7 +82,7 @@ public:
     const float score_threshold = 0.3, const float nms_threshold = 0.7,
     const tensorrt_common::BuildConfig build_config = tensorrt_common::BuildConfig(),
     const bool use_gpu_preprocess = false,
-    const std::string & calibration_image_list_file = std::string(), const double norm_factor = 1.0,
+    std::string calibration_image_list_file = std::string(), const double norm_factor = 1.0,
     const std::string & cache_dir = "",
     const tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
     const size_t max_workspace_size = (1 << 30));
