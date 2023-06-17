@@ -402,7 +402,8 @@ std::optional<lanelet::Polygon3d> getPolygonByPoint(
 
 bool isParkedObject(
   const PathWithLaneId & path, const RouteHandler & route_handler, const PredictedObject & object,
-  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold);
+  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold,
+  const double static_object_velocity_threshold = 1.0);
 
 bool isParkedObject(
   const lanelet::BasicLineString2d & centerline, const lanelet::BasicLineString2d & boundary,

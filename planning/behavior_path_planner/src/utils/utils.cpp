@@ -2957,7 +2957,8 @@ void extractObstaclesFromDrivableArea(
 
 bool isParkedObject(
   const PathWithLaneId & path, const RouteHandler & route_handler, const PredictedObject & object,
-  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold)
+  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold,
+  const double static_object_velocity_threshold)
 {
   // ============================================ <- most_left_lanelet.leftBound()
   // y              road shoulder
@@ -2972,6 +2973,12 @@ bool isParkedObject(
   using lanelet::geometry::distance2d;
   using lanelet::geometry::toArcCoordinates;
   using lanelet::utils::to2D;
+
+  if (
+    object.kinematics.initial_twist_with_covariance.twist.linear.x >
+    static_object_velocity_threshold) {
+    return false;
+  }
 
   const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
   const auto object_closest_index =
