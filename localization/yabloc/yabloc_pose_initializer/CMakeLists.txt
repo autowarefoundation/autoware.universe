@@ -40,7 +40,6 @@ ament_auto_add_executable(${TARGET}
   src/camera/lane_image.cpp
   src/camera/marker_module.cpp
   src/camera/projector_module.cpp
-  src/camera/lanelet_util.cpp
   src/camera/camera_pose_initializer_core.cpp
   src/camera/camera_pose_initializer_node.cpp)
 target_include_directories(${TARGET} PUBLIC include)

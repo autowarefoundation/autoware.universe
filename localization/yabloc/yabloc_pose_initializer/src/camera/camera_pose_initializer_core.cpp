@@ -13,9 +13,10 @@
 // limitations under the License.
 
 #include "yabloc_pose_initializer/camera/camera_pose_initializer.hpp"
-#include "yabloc_pose_initializer/camera/lanelet_util.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -116,8 +117,16 @@ bool CameraPoseInitializer::estimate_pose(
     }
   }
 
-  const std::optional<double> lane_angle_rad =
-    lanelet::get_current_direction(const_lanelets_, position);
+  geometry_msgs::msg::Pose query_pose;
+  query_pose.position.x = position.x();
+  query_pose.position.y = position.y();
+  query_pose.position.z = position.z();
+
+  lanelet::ConstLanelets current_lanelets;
+  std::optional<double> lane_angle_rad = std::nullopt;
+  if (lanelet::utils::query::getCurrentLanelets(const_lanelets_, query_pose, &current_lanelets)) {
+    lane_angle_rad = lanelet::utils::getLaneletAngle(current_lanelets.front(), query_pose.position);
+  }
 
   cv::Mat projected_image = projector_module_->project_image(segmented_image);
   cv::Mat vectormap_image = lane_image_->create_vectormap_image(position);

@@ -21,6 +21,7 @@
   <depend>tier4_localization_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>yabloc_common</depend>
+  <depend>lanelet2_extension</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
