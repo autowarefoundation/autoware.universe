@@ -7,7 +7,7 @@
 ## Packages
 
 - [yabloc_common](yabloc_common/README.md)
-- [yabloc_imgproc](yabloc_imgproc/README.md)
+- [yabloc_image_processing](yabloc_image_processing/README.md)
 - [yabloc_particle_filter](yabloc_particle_filter/README.md)
 - [yabloc_pose_initializer](yabloc_pose_initializer/README.md)
 

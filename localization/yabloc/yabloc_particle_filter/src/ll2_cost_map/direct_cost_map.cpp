@@ -109,9 +109,9 @@ cv::Mat visualize_direction_map(const cv::Mat & cost_map)
 
 //   cv::Mat intensity = raw_map.clone();
 
-//   cv::Mat directed = imgproc::directCostMap(raw_map, intensity);
-//   cv::Mat show1 = imgproc::visualizeDirectionMap(raw_map);
-//   cv::Mat show2 = imgproc::visualizeDirectionMap(directed);
+//   cv::Mat directed = image_processing::directCostMap(raw_map, intensity);
+//   cv::Mat show1 = image_processing::visualizeDirectionMap(raw_map);
+//   cv::Mat show2 = image_processing::visualizeDirectionMap(directed);
 //   cv::hconcat(show1, show2, show1);
 //   cv::imshow("raw + directed", show1);
 //   cv::waitKey(0);

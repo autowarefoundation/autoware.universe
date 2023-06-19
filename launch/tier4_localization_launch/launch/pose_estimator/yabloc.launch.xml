@@ -12,9 +12,9 @@
   <arg name="gnss_particle_corrector_param_path" default="$(find-pkg-share yabloc_particle_filter)/config/gnss_particle_corrector.param.yaml"/>
   <arg name="predictor_param_path" default="$(find-pkg-share yabloc_particle_filter)/config/predictor.param.yaml"/>
   <!-- image processing -->
-  <arg name="graph_segment_param_path" default="$(find-pkg-share yabloc_imgproc)/config/graph_segment.param.yaml"/>
-  <arg name="segment_filter_param_path" default="$(find-pkg-share yabloc_imgproc)/config/segment_filter.param.yaml"/>
-  <arg name="undistort_param_path" default="$(find-pkg-share yabloc_imgproc)/config/undistort.param.yaml"/>
+  <arg name="graph_segment_param_path" default="$(find-pkg-share yabloc_image_processing)/config/graph_segment.param.yaml"/>
+  <arg name="segment_filter_param_path" default="$(find-pkg-share yabloc_image_processing)/config/segment_filter.param.yaml"/>
+  <arg name="undistort_param_path" default="$(find-pkg-share yabloc_image_processing)/config/undistort.param.yaml"/>
   <!-- map -->
   <arg name="ground_server_param_path" default="$(find-pkg-share yabloc_common)/config/ground_server.param.yaml"/>
   <arg name="ll2_decomposer_param_path" default="$(find-pkg-share yabloc_common)/config/ll2_decomposer.param.yaml"/>
@@ -35,8 +35,8 @@
 
   <!-- image processing -->
   <group>
-    <push-ros-namespace namespace="imgproc"/>
-    <include file="$(find-pkg-share yabloc_imgproc)/launch/yabloc_imgproc.launch.xml">
+    <push-ros-namespace namespace="image_processing"/>
+    <include file="$(find-pkg-share yabloc_image_processing)/launch/yabloc_image_processing.launch.xml">
       <arg name="src_image" value="$(var src_image)"/>
       <arg name="src_info" value="$(var src_info)"/>
       <arg name="input_pose" value="$(var input_pose)"/>

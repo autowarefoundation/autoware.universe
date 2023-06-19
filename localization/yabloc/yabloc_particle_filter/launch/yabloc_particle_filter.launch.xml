@@ -19,7 +19,7 @@
   </node>
 
   <!-- camera  correction -->
-  <arg name="input_projected_line_segments_cloud" default="/localization/yabloc/imgproc/projected_line_segments_cloud"/>
+  <arg name="input_projected_line_segments_cloud" default="/localization/yabloc/image_processing/projected_line_segments_cloud"/>
   <arg name="input_ll2_road_marking" default="/localization/yabloc/map/ll2_road_marking"/>
   <arg name="input_ll2_bounding_box" default="/localization/yabloc/map/ll2_bounding_box"/>
   <node pkg="yabloc_particle_filter" exec="camera_particle_corrector_node" name="camera_corrector" output="screen" args="--ros-args --log-level warn">
