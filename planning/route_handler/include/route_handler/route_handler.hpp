@@ -428,12 +428,14 @@ private:
   /**
    * @brief Checks if a path has a no_drivable_lane or not
    * @param path lanelet path
-   * @return true if the lanelet path includes at least one no_drivable_lane, false if it does not include any.
+   * @return true if the lanelet path includes at least one no_drivable_lane, false if it does not
+   * include any.
    */
   bool hasNoDrivableLaneInPath(const lanelet::routing::LaneletPath & path) const;
   /**
-   * @brief Searches for a path between start and goal lanelets that does not include any no_drivable_lane. 
-   * If there is more than one path fount, the function returns the shortest path that does not include any no_drivable_lane. 
+   * @brief Searches for a path between start and goal lanelets that does not include any
+   * no_drivable_lane. If there is more than one path fount, the function returns the shortest path
+   * that does not include any no_drivable_lane.
    * @param start_lanelet start lanelet
    * @param goal_lanelet goal lanelet
    * @param drivable_lane_path output path that does not include no_drivable_lane.

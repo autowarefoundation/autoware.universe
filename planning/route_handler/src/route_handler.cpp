@@ -2000,7 +2000,8 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   bool drivable_lane_path_found = false;
 
   if (shortest_path_has_no_drivable_lane) {
-    drivable_lane_path_found = findDrivableLanePath(start_lanelet, goal_lanelet, drivable_lane_path);
+    drivable_lane_path_found =
+      findDrivableLanePath(start_lanelet, goal_lanelet, drivable_lane_path);
   }
 
   lanelet::routing::LaneletPath path;
@@ -2058,8 +2059,7 @@ lanelet::ConstLanelets RouteHandler::getMainLanelets(
   return main_lanelets;
 }
 
-bool RouteHandler::hasNoDrivableLaneInPath(
-  const lanelet::routing::LaneletPath & path) const
+bool RouteHandler::hasNoDrivableLaneInPath(const lanelet::routing::LaneletPath & path) const
 {
   for (const auto & llt : path) {
     const std::string no_drivable_lane_attribute = llt.attributeOr("no_drivable_lane", "no");
