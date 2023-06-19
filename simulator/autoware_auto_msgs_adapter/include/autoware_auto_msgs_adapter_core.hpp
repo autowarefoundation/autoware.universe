@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AUTOWARE_AUTO_MSGS_ADAPTER__AUTOWARE_AUTO_MSGS_ADAPTER_CORE_HPP_
-#define AUTOWARE_AUTO_MSGS_ADAPTER__AUTOWARE_AUTO_MSGS_ADAPTER_CORE_HPP_
+#ifndef AUTOWARE_AUTO_MSGS_ADAPTER_CORE_HPP_
+#define AUTOWARE_AUTO_MSGS_ADAPTER_CORE_HPP_
 
 #include "adapter_control.hpp"
 
@@ -33,4 +33,4 @@ private:
 };
 }  // namespace autoware_auto_msgs_adapter
 
-#endif  // AUTOWARE_AUTO_MSGS_ADAPTER__AUTOWARE_AUTO_MSGS_ADAPTER_CORE_HPP_
+#endif  // AUTOWARE_AUTO_MSGS_ADAPTER_CORE_HPP_

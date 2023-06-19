@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware_auto_msgs_adapter_core.hpp"
+
 #include "adapter_control.hpp"
 
 #include <rclcpp/rclcpp.hpp>
