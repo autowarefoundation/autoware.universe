@@ -14,7 +14,7 @@
 #ifndef ADAPTER_BASE_HPP_
 #define ADAPTER_BASE_HPP_
 
-#include "adapter_base_interface.hpp"
+#include "autoware_auto_msgs_adapter/adapter_base_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

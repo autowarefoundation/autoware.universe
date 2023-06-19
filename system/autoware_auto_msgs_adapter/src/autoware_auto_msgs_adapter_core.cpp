@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_auto_msgs_adapter_core.hpp"
+#include "autoware_auto_msgs_adapter/autoware_auto_msgs_adapter_core.hpp"
 
-#include "adapter_control.hpp"
+#include "autoware_auto_msgs_adapter/adapter_control.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
