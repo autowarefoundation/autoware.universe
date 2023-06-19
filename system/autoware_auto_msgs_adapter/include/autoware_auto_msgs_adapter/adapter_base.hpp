@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef ADAPTER_BASE_HPP_
-#define ADAPTER_BASE_HPP_
+#ifndef AUTOWARE_AUTO_MSGS_ADAPTER__ADAPTER_BASE_HPP_
+#define AUTOWARE_AUTO_MSGS_ADAPTER__ADAPTER_BASE_HPP_
 
 #include "autoware_auto_msgs_adapter/adapter_base_interface.hpp"
 
@@ -54,4 +54,4 @@ private:
 
 }  // namespace autoware_auto_msgs_adapter
 
-#endif  // ADAPTER_BASE_HPP_
+#endif  // AUTOWARE_AUTO_MSGS_ADAPTER__ADAPTER_BASE_HPP_
