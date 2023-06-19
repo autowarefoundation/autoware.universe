@@ -34,8 +34,11 @@ in the `autoware_auto_msgs_adapter/config` directory. Example configuration:
 
 Set the `msg_type_target` parameter to the desired target message type from `autoware_auto_msgs`.
 
-Make sure that the `msg_type_target` has the correspondence
-in [src/autoware_auto_msgs_adapter_core.cpp](src/autoware_auto_msgs_adapter_core.cpp).
+Make sure that the `msg_type_target` has the correspondence in either:
+- [schema/autoware_auto_msgs_adapter.schema.json](schema/autoware_auto_msgs_adapter.schema.json)
+- OR [src/autoware_auto_msgs_adapter_core.cpp](src/autoware_auto_msgs_adapter_core.cpp) `AutowareAutoMsgsAdapterNode::create_adapter_map()` method.
+
+(If this package is maintained correctly, they should match each other.)
 
 Launch the adapter node by any of the following methods:
 
@@ -81,8 +84,10 @@ To add a new message pair,
 - Replicate and edit:
   - [adapter_control.hpp](include/autoware_auto_msgs_adapter/adapter_control.hpp).
   - Add the new header file to the [CMakeLists.txt](CMakeLists.txt).
-- Add a new entry in the if-else if block in the constructor of the adapter node:
+- Add a new entry to the returned map instance in the `AutowareAutoMsgsAdapterNode::create_adapter_map()` method of the adapter node:
   - [autoware_auto_msgs_adapter_core.cpp](src/autoware_auto_msgs_adapter_core.cpp)
+- Add a new entry to the [schema/autoware_auto_msgs_adapter.schema.json](schema/autoware_auto_msgs_adapter.schema.json) file in the `definitions:autoware_auto_msgs_adapter:properties:msg_type_target:enum` section.
+  - Learn more about JSON schema usage in [here](https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/parameters/#json-schema).
 - Create a new config file by replicating and editing:
   - [adapter_control.param.yaml](config/adapter_control.param.yaml)
 - Add a new test file by replicating and editing:

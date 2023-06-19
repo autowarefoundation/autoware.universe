@@ -18,11 +18,15 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <map>
+
 namespace autoware_auto_msgs_adapter
 {
 
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_control_msgs::msg::Control;
+
+using MapStringAdapter = AutowareAutoMsgsAdapterNode::MapStringAdapter;
 
 AutowareAutoMsgsAdapterNode::AutowareAutoMsgsAdapterNode(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("autoware_auto_msgs_adapter", node_options)
@@ -31,13 +35,47 @@ AutowareAutoMsgsAdapterNode::AutowareAutoMsgsAdapterNode(const rclcpp::NodeOptio
   const std::string topic_name_source = declare_parameter<std::string>("topic_name_source");
   const std::string topic_name_target = declare_parameter<std::string>("topic_name_target");
 
-  if (msg_type_target == "autoware_auto_control_msgs/msg/AckermannControlCommand") {
-    AdapterControl::SharedPtr adapter =
-      std::make_shared<AdapterControl>(*this, topic_name_source, topic_name_target);
-    adapter_ = std::static_pointer_cast<AdapterBaseInterface>(adapter);
-  } else {
-    RCLCPP_ERROR(get_logger(), "Unknown msg type: %s", msg_type_target.c_str());
+  // Map of available adapters
+  auto map_adapter = create_adapter_map(topic_name_source, topic_name_target);
+
+  print_adapter_options(map_adapter);
+
+  // Initialize the adapter with the selected option
+  if (!initialize_adapter(map_adapter, msg_type_target)) {
+    RCLCPP_ERROR(
+      get_logger(), "Unknown msg type: %s. Please refer to previous log for available options.",
+      msg_type_target.c_str());
   }
+}
+
+MapStringAdapter AutowareAutoMsgsAdapterNode::create_adapter_map(
+  const std::string & topic_name_source, const std::string & topic_name_target)
+{
+  return {
+    {"autoware_auto_control_msgs/msg/AckermannControlCommand",
+     [&] {
+       return std::static_pointer_cast<AdapterBaseInterface>(
+         std::make_shared<AdapterControl>(*this, topic_name_source, topic_name_target));
+     }},
+  };
+}
+
+void AutowareAutoMsgsAdapterNode::print_adapter_options(const MapStringAdapter & map_adapter)
+{
+  std::string std_options_available;
+  for (const auto & entry : map_adapter) {
+    std_options_available += entry.first + "\n";
+  }
+  RCLCPP_INFO(
+    get_logger(), "Available msg_type_target options:\n%s", std_options_available.c_str());
+}
+
+bool AutowareAutoMsgsAdapterNode::initialize_adapter(
+  const MapStringAdapter & map_adapter, const std::string & msg_type_target)
+{
+  auto it = map_adapter.find(msg_type_target);
+  adapter_ = (it != map_adapter.end()) ? it->second() : nullptr;
+  return adapter_ != nullptr;
 }
 
 }  // namespace autoware_auto_msgs_adapter

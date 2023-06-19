@@ -27,9 +27,19 @@ class AutowareAutoMsgsAdapterNode : public rclcpp::Node
 {
 public:
   explicit AutowareAutoMsgsAdapterNode(const rclcpp::NodeOptions & node_options);
+  using MapStringAdapter = std::map<std::string, std::function<AdapterBaseInterface::SharedPtr()>>;
 
 private:
   AdapterBaseInterface::SharedPtr adapter_;
+
+
+  MapStringAdapter create_adapter_map(
+    const std::string & topic_name_source, const std::string & topic_name_target);
+
+  void print_adapter_options(const MapStringAdapter & map_adapter);
+
+  bool initialize_adapter(
+    const MapStringAdapter & map_adapter, const std::string & msg_type_target);
 };
 }  // namespace autoware_auto_msgs_adapter
 
