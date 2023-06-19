@@ -182,11 +182,14 @@ ModuleStatus StartPlannerModule::updateState()
 {
   RCLCPP_DEBUG(getLogger(), "START_PLANNER updateState");
 
+#ifdef USE_OLD_ARCHITECTURE
   if (isActivated() && !isWaitingApproval()) {
     current_state_ = ModuleStatus::RUNNING;
   }
-#ifndef USE_OLD_ARCHITECTURE
-  else {
+#else
+  if (isActivated() && !isWaitingApproval()) {
+    current_state_ = ModuleStatus::RUNNING;
+  } else {
     current_state_ = ModuleStatus::IDLE;
   }
 #endif
