@@ -1062,11 +1062,16 @@ PredictedPath convertToPredictedPath(
 bool delayLaneChange(
   const LaneChangePath & lane_change_path, const PathWithLaneId & current_lane_path,
   const PredictedObjects & objects, const std::vector<size_t> & target_lane_obj_indices,
-  const double minimum_lane_change_length)
+  const double minimum_lane_change_length, const bool is_goal_in_route,
+  const geometry_msgs::msg::Pose & goal_pose)
 {
   const auto & path = lane_change_path.path;
 
   if (target_lane_obj_indices.empty() || path.points.empty() || current_lane_path.points.empty()) {
+    std::cerr << "Empty" << std::endl;
+    std::cerr << "Object size: " << target_lane_obj_indices.size() << std::endl;
+    std::cerr << "Lane change path size: " << path.points.size() << std::endl;
+    std::cerr << "Current path size: " << current_lane_path.points.size() << std::endl;
     return false;
   }
 
@@ -1080,6 +1085,7 @@ bool delayLaneChange(
   const auto & leading_obj = objects.objects.at(*leading_obj_idx);
   const auto & leading_obj_poly = tier4_autoware_utils::toPolygon2d(leading_obj);
   if (leading_obj_poly.outer().empty()) {
+    std::cerr << "Empty object" << std::endl;
     return false;
   }
 
@@ -1090,6 +1096,11 @@ bool delayLaneChange(
     const double dist =
       motion_utils::calcSignedArcLength(current_lane_path.points, obj_p, current_path_end);
     min_dist_to_end_of_current_lane = std::min(dist, min_dist_to_end_of_current_lane);
+    if (is_goal_in_route) {
+      const double dist_to_goal =
+        motion_utils::calcSignedArcLength(current_lane_path.points, obj_p, goal_pose.position);
+      min_dist_to_end_of_current_lane = std::min(min_dist_to_end_of_current_lane, dist_to_goal);
+    }
   }
 
   // If there are still enough length after the target object, we delay the lane change
@@ -1113,10 +1124,10 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
     return {};
   }
 
-  const auto & lane_change_end = lane_change_path.lane_changing_end;
+  const auto & lane_change_start = lane_change_path.lane_changing_start;
   const auto & path_end = path.points.back();
 
-  double dist_lc_end_to_leading_obj = 0.0;
+  double dist_lc_start_to_leading_obj = 0.0;
   boost::optional<size_t> leading_obj_idx = boost::none;
   for (const auto & obj_idx : obj_indices) {
     const auto & obj = objects.objects.at(obj_idx);
@@ -1134,15 +1145,15 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
       continue;
     }
 
-    const double dist_lc_end_to_obj =
-      motion_utils::calcSignedArcLength(path.points, lane_change_end.position, obj_pose.position);
-    if (dist_lc_end_to_obj < 0.0) {
+    const double dist_lc_start_to_obj =
+      motion_utils::calcSignedArcLength(path.points, lane_change_start.position, obj_pose.position);
+    if (dist_lc_start_to_obj < 0.0) {
       // object is on the lane changing path or behind it. It will be detected in safety check
       continue;
     }
 
-    if (dist_lc_end_to_obj > dist_lc_end_to_leading_obj) {
-      dist_lc_end_to_leading_obj = dist_lc_end_to_obj;
+    if (dist_lc_start_to_obj > dist_lc_start_to_leading_obj) {
+      dist_lc_start_to_leading_obj = dist_lc_start_to_obj;
       leading_obj_idx = obj_idx;
     }
   }

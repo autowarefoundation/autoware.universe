@@ -178,7 +178,8 @@ PredictedPath convertToPredictedPath(
 bool delayLaneChange(
   const LaneChangePath & lane_change_path, const PathWithLaneId & current_lane_path,
   const PredictedObjects & objects, const std::vector<size_t> & target_lane_obj_indices,
-  const double minimum_lane_change_length);
+  const double minimum_lane_change_length, const bool is_goal_in_route,
+  const geometry_msgs::msg::Pose & goal_pose);
 
 boost::optional<size_t> getLeadingStaticObjectIdx(
   const LaneChangePath & lane_change_path, const PredictedObjects & objects,
