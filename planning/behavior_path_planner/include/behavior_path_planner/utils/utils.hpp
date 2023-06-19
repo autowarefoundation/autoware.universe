@@ -406,7 +406,7 @@ bool isParkedObject(
   const double static_object_velocity_threshold = 1.0);
 
 bool isParkedObject(
-  const lanelet::BasicLineString2d & centerline, const lanelet::BasicLineString2d & boundary,
+  const lanelet::ConstLanelet & closest_lanelet, const lanelet::BasicLineString2d & boundary,
   const PredictedObject & object, const double buffer_to_bound, const double ratio_threshold);
 }  // namespace behavior_path_planner::utils
 
