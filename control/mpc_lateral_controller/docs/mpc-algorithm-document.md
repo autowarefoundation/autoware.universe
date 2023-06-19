@@ -12,13 +12,11 @@ In simpler terms, an MPC controller calculates a series of control inputs that o
 
 The choice between a linear or nonlinear model or constraint equation depends on the specific formulation of the MPC problem. If any nonlinear expressions are present in the motion equation or constraints, the optimization problem becomes nonlinear. In the following sections, we provide a step-by-step explanation of how linear and nonlinear optimization problems are solved within the MPC framework. Note that in this documentation, we utilize the linearization method to accommodate the nonlinear model.
 
-
 ## Linear MPC formulation
 
 ### Formulate as an optimization problem
 
-This section provides an explanation of MPC specifically for linear systems.  In the following section, it also demonstrates the formulation of a vehicle path following problem as an application.
-
+This section provides an explanation of MPC specifically for linear systems. In the following section, it also demonstrates the formulation of a vehicle path following problem as an application.
 
 In the linear MPC formulation, all motion and constraint expressions are linear. For the path following problem, let's assume that the system's motion can be described by a set of equations, denoted as (1). The state evolution and measurements are presented in a discrete state space format, where matrices $A$, $B$, and $C$ represent the state transition, control, and measurement matrices, respectively.
 
@@ -35,18 +33,9 @@ It's worth noting that another advantage of MPC is its ability to effectively ha
 
 The state transition and measurement equations in (1) are iterative, moving from time $k$ to time $k+1$. By propagating the equation starting from an initial state and control pair $(x_0, u_0)$ along with a specified horizon of $N$ steps, one can predict the trajectories of states and measurements.
 
-
 For simplicity, let's assume the initial state is $x_0$ with $k=0$.
 
 To begin, we can compute the state $x_1$ at $k=1$ using equation (1) by substituting the initial state into the equation. Since we are seeking a solution for the input sequence, we represent the inputs as decision variables in the symbolic expressions.
-
-
-
-
-
-
-
-
 
 ```math
 \begin{align}
@@ -65,7 +54,6 @@ x_{2} & = Ax_{1} + Bu_{1} + w_{1} \\
 \end{align}
 ```
 
-
 When $k=3$ , from equation (3)
 
 ```math
@@ -77,7 +65,6 @@ x_{3} & = Ax_{2} + Bu_{2} + w_{2} \\
 \end{align}
 ```
 
-
 If $k=n$ , then
 
 ```math
@@ -87,17 +74,15 @@ x_{n} = A^{n}x_{0} + \begin{bmatrix}A^{n-1}B & A^{n-2}B & \dots  & B  \end{bmatr
 \end{align}
 ```
 
-
 Putting all of them together with (2) to (5) yields the following matrix equation;
 
 ```math
 \begin{align}
 \begin{bmatrix}x_{1}\\ x_{2} \\ x_{3} \\ \vdots  \\ x_{n} \end{bmatrix} = \begin{bmatrix}A^{1}\\ A^{2} \\ A^{3} \\ \vdots  \\ A^{n} \end{bmatrix}x_{0} + \begin{bmatrix}B & 0 & \dots  & & 0 \\ AB & B & 0 & \dots & 0  \\ A^{2}B & AB & B & \dots & 0 \\ \vdots & \vdots & & & 0 \\ A^{n-1}B & A^{n-2}B & \dots & AB & B \end{bmatrix}\begin{bmatrix}u_{0}\\ u_{1} \\ u_{2} \\ \vdots  \\ u_{n-1} \end{bmatrix} \\
-+ \begin{bmatrix}I & 0 & \dots  & & 0 \\ A & I & 0 & \dots & 0  \\ A^{2} & A & I & \dots & 0 \\ \vdots & \vdots & & & 0 \\ A^{n-1} & A^{n-2} & \dots & A & I \end{bmatrix}\begin{bmatrix}w_{0}\\ w_{1} \\ w_{2} \\ \vdots  \\ w_{n-1} \end{bmatrix} 
++ \begin{bmatrix}I & 0 & \dots  & & 0 \\ A & I & 0 & \dots & 0  \\ A^{2} & A & I & \dots & 0 \\ \vdots & \vdots & & & 0 \\ A^{n-1} & A^{n-2} & \dots & A & I \end{bmatrix}\begin{bmatrix}w_{0}\\ w_{1} \\ w_{2} \\ \vdots  \\ w_{n-1} \end{bmatrix}
 \tag{6}
 \end{align}
 ```
-
 
 In this case, the measurements (outputs) become; $y_{k}=Cx_{k}$, so
 
@@ -121,18 +106,17 @@ Now that $G$, $S$, $W$, and $H$ are known, we can express the output behavior $Y
 
 The next step is to define a cost function. The cost function generally uses the following quadratic form;
 
-
 ```math
 \begin{align}
 J = (Y - Y_{ref})^{T}Q(Y - Y_{ref}) + (U - U_{ref})^{T}R(U - U_{ref}) \tag{9}
 \end{align}
 ```
 
-where $U_{ref}$ is the target or steady-state input around which the system is linearized for $U$. 
+where $U_{ref}$ is the target or steady-state input around which the system is linearized for $U$.
 
 This cost function is the same as that of the LQR controller. The first term of $J$ penalizes the deviation from the reference trajectory. The second term penalizes the deviation from the reference (or steady-state) control trajectory. The $Q$ and $R$ are the cost weights Positive and Positive semi-semidefinite matrices.
 
-Note: in some cases, $U_{ref}=0$ is used, but this can mean the steering angle should be set to $0$ even if the vehicle is turning a curve. Thus  $U_{ref}$ is used for the explanation here. This $U_{ref}$ can be pre-calculated from the curvature of the target trajectory or the steady-state analyses.
+Note: in some cases, $U_{ref}=0$ is used, but this can mean the steering angle should be set to $0$ even if the vehicle is turning a curve. Thus $U_{ref}$ is used for the explanation here. This $U_{ref}$ can be pre-calculated from the curvature of the target trajectory or the steady-state analyses.
 
 As the resulting trajectory output is now $Y=Y(x_{0}, U)$, the cost function depends only on U and the initial state conditions which yields the cost $J=J(x_{0}, U)$. Let’s find the $U$ that minimizes this.
 
@@ -140,16 +124,17 @@ Substituting equation (8) into equation (9) and tidying up the equation for $U$.
 
 ```math
 \begin{align}
-J(U) &= (H(Fx_{0}+GU+SW)-Y_{ref})^{T}Q(H(Fx_{0}+GU+SW)-Y_{ref})+(U-U_{ref})^{T}R(U-U_{ref}) \\ 
+J(U) &= (H(Fx_{0}+GU+SW)-Y_{ref})^{T}Q(H(Fx_{0}+GU+SW)-Y_{ref})+(U-U_{ref})^{T}R(U-U_{ref}) \\
 & =U^{T}(G^{T}H^{T}QHG+R)U+2\left\{(H(Fx_{0}+SW)-Yref)^{T}QHG-U_{ref}^{T}R\right\}U +(\rm{constant}) \tag{10}
 \end{align}
 ```
 
-This equation is a quadratic form of $U$ (i.e.  $U^{T}AU+B^{T}U$)
+This equation is a quadratic form of $U$ (i.e. $U^{T}AU+B^{T}U$)
 
-The coefficient matrix of the quadratic term of $U$, $G^{T}C^{T}QCG+R$ , is positive definite due to the positive and semi-positive definiteness requirement for $Q$ and $R$. Therefore, the cost function  is a convex quadratic function in U, which can efficiently be solved by convex optimization. 
+The coefficient matrix of the quadratic term of $U$, $G^{T}C^{T}QCG+R$ , is positive definite due to the positive and semi-positive definiteness requirement for $Q$ and $R$. Therefore, the cost function is a convex quadratic function in U, which can efficiently be solved by convex optimization.
 
 ### Apply to vehicle path-following problem (nonlinear problem)
+
 Because the path-following problem with a kinematic vehicle model is nonlinear, we cannot directly use the linear MPC methods described in the preceding section. There are several ways to deal with a nonlinearity such as using the nonlinear optimization solver. Here, the linearization is applied to the nonlinear vehicle model along the reference trajectory, and consequently, the nonlinear model is converted into a linear time-varying model.
 
 For a nonlinear kinematic vehicle model, the discrete-time update equations are as follows:
@@ -158,34 +143,31 @@ For a nonlinear kinematic vehicle model, the discrete-time update equations are 
 \begin{align}
 x_{k+1} &= x_{k} + v\cos\theta_{k} \text{d}t \\
 y_{k+1} &= y_{k} + v\sin\theta_{k} \text{d}t \\
-\theta_{k+1} &= \theta_{k} + \frac{v\tan\delta_{k}}{L} \text{d}t \tag{11} \\ 
-\delta_{k+1} &= \delta_{k} - \tau^{-1}\left(\delta_{k}-\delta_{des}\right)\text{d}t 
+\theta_{k+1} &= \theta_{k} + \frac{v\tan\delta_{k}}{L} \text{d}t \tag{11} \\
+\delta_{k+1} &= \delta_{k} - \tau^{-1}\left(\delta_{k}-\delta_{des}\right)\text{d}t
 \end{align}
 ```
 
 ![vehicle_kinematics](./vehicle_kinematics.png)
 
+The vehicle reference is the center of the rear axle and all states are measured at this point. The states, parameters, and control variables are shown in the following table.
 
-The vehicle reference is the center of the rear axle and all states are measured at this point. The states, parameters, and control variables are shown in the following table. 
-
-| Symbol | Represent |
-| ------ | --------- |
-|$v$ | Vehicle speed measured at the center of rear axle |
-| $\theta$ | Yaw (heading angle) in global coordinate system |
-| $\delta$ | Vehicle steering angle |
-| $\delta_{des}$ | Vehicle target steering angle |
-| $L$ | Vehicle wheelbase (distance between the rear and front axles) |
-| $\tau$ | Time constant for the first order steering dynamics |
+| Symbol         | Represent                                                     |
+| -------------- | ------------------------------------------------------------- |
+| $v$            | Vehicle speed measured at the center of rear axle             |
+| $\theta$       | Yaw (heading angle) in global coordinate system               |
+| $\delta$       | Vehicle steering angle                                        |
+| $\delta_{des}$ | Vehicle target steering angle                                 |
+| $L$            | Vehicle wheelbase (distance between the rear and front axles) |
+| $\tau$         | Time constant for the first order steering dynamics           |
 
 We assume in this example that the MPC only generates the steering control, and the trajectory generator gives the vehicle speed along the trajectory.
 
-The kinematic vehicle model discrete update equations contain trigonometric functions; sin and cos, and the vehicle coordinates $x$, $y$, and yaw angles are global coordinates. In path tracking applications, it is common to reformulate the model in error dynamics to convert the control into a regulator problem in which the targets become zero (zero error). 
-
+The kinematic vehicle model discrete update equations contain trigonometric functions; sin and cos, and the vehicle coordinates $x$, $y$, and yaw angles are global coordinates. In path tracking applications, it is common to reformulate the model in error dynamics to convert the control into a regulator problem in which the targets become zero (zero error).
 
 ![vehicle_error_kinematics](./vehicle_error_kinematics.png)
 
 We make small angle assumptions for the following derivations of linear equations. Given the nonlinear dynamics and omitting the longitudinal coordinate $x$, the resulting set of equations become;
-
 
 ```math
 \begin{align}
@@ -240,7 +222,7 @@ Using this, $\theta_{k+1}$ can be expressed
 \end{align}
 ```
 
-Finally, the linearized time-varying model equation becomes; 
+Finally, the linearized time-varying model equation becomes;
 
 ```math
 \begin{align}
@@ -256,20 +238,20 @@ x_{k+1} = A_{k}x_{k} + B_{k}u_{k}+w_{k}
 \end{align}
 ```
 
-Comparing equation (1), $A \rightarrow A_{k}$. This means that the $A$ matrix is a linear approximation in the vicinity of the trajectory after $k$ steps (i.e., $k* \text{d}t$  seconds), and it can be obtained if the trajectory is known in advance.
+Comparing equation (1), $A \rightarrow A_{k}$. This means that the $A$ matrix is a linear approximation in the vicinity of the trajectory after $k$ steps (i.e., $k* \text{d}t$ seconds), and it can be obtained if the trajectory is known in advance.
 
 Using this equation, write down the update equation likewise (2) ~ (6)
 
 ```math
 \begin{align}
 \begin{bmatrix}
- x_{1} \\ x_{2} \\ x_{3} \\ \vdots \\ x_{n} 
+ x_{1} \\ x_{2} \\ x_{3} \\ \vdots \\ x_{n}
 \end{bmatrix}
   =
 \begin{bmatrix}
  A_{1} \\ A_{1}A_{0} \\ A_{2}A_{1}A_{0} \\ \vdots \\ \prod_{i=0}^{n-1} A_{k}
-\end{bmatrix} 
-x_{0} + 
+\end{bmatrix}
+x_{0} +
 \begin{bmatrix}
  B_{0} & 0 & \dots & & 0 \\ A_{1}B_{0} & B_{1} & 0 & \dots & 0 \\ A_{2}A_{1}B_{0} & A_{2}B_{1} & B_{2} & \dots & 0 \\ \vdots & \vdots & &\ddots & 0 \\ \prod_{i=1}^{n-1} A_{k}B_{0} & \prod_{i=2}^{n-1} A_{k}B_{1} & \dots & A_{n-1}B_{n-1} & B_{n-1}
 \end{bmatrix}
@@ -281,21 +263,23 @@ I & 0 & \dots & & 0 \\ A_{1} & I & 0 & \dots & 0 \\ A_{2}A_{1} & A_{2} & I & \do
 \end{bmatrix}
 \begin{bmatrix}
  w_{0} \\ w_{1} \\ w_{2} \\ \vdots \\ w_{n-1}
-\end{bmatrix} 
+\end{bmatrix}
 \end{align}
 ```
 
 As it has the same form as equation (6), convex optimization is applicable for as much as the model in the former section.
 
 ## The cost functions and constraints
+
 In this section, we give the details on how to set up the cost function and constraint conditions.
 
 ### The cost function
+
 #### Weight in general
-MPC states and control weights appear in the cost function in a similar way as LQR  (9). In the vehicle path following the problem described above, if C is the unit matrix, the output $y = x = \left[y, \theta, \delta\right]$. (To avoid confusion with the y-directional deviation, here $e$ is used for the lateral deviation.)
 
+MPC states and control weights appear in the cost function in a similar way as LQR (9). In the vehicle path following the problem described above, if C is the unit matrix, the output $y = x = \left[y, \theta, \delta\right]$. (To avoid confusion with the y-directional deviation, here $e$ is used for the lateral deviation.)
 
-As an example, let's determine the weight matrix $Q_{1}$ of the evaluation function for the number of prediction steps $n=2$  system as follows.
+As an example, let's determine the weight matrix $Q_{1}$ of the evaluation function for the number of prediction steps $n=2$ system as follows.
 
 ```math
 \begin{align}
@@ -325,7 +309,7 @@ Q_{2} = \begin{bmatrix} 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 
 \end{align}
 ```
 
-Expanding the first term of the evaluation function using $Q_{2}$ 
+Expanding the first term of the evaluation function using $Q_{2}$
 
 ```math
 \begin{align}
@@ -337,14 +321,13 @@ The value of $q_{d}$ is weighted by the amount of change in $\delta$, which will
 
 Since the weight matrix can be added linearly, the final weight can be set as $Q = Q_{1} + Q_{2}$.
 
-
 Furthermore, MPC optimizes over a period of time, the time-varying weight can be considered in the optimization.
-
 
 ### Constraints
 
 #### Input constraint
-The main advantage of the MPC controllers is the capability to deal with any state or input constraints. The constraints can be expressed as box constraints, such as that "tire angle must be within ±30 degrees"  can be put in the form;
+
+The main advantage of the MPC controllers is the capability to deal with any state or input constraints. The constraints can be expressed as box constraints, such as that "tire angle must be within ±30 degrees" can be put in the form;
 
 ```math
 \begin{align}
@@ -355,6 +338,7 @@ u_{min} < u < u_{max}
 The constraints must be linear and convex in the linear MPC applications.
 
 #### Constraints on the derivative of the input
+
 We can also put constraints on the input deviations. As the derivative of steering angle is $\dot{u}$, its box constraint is
 
 ```math
@@ -386,7 +370,7 @@ and aligning the inequality signs
 \begin{align}
 u_{1} - u_{0} &< \dot{u}_{max}\text{d}t \\
 - u_{1} + u_{0} &< -\dot{u}_{min}\text{d}t \\
-u_{2} - u_{1} &< \dot{u}_{max}\text{d}t \\ 
+u_{2} - u_{1} &< \dot{u}_{max}\text{d}t \\
 - u_{2} + u_{1} &< - \dot{u}_{min}\text{d}t
 \end{align}
 ```
