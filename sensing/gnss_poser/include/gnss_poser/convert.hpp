@@ -19,8 +19,8 @@
 #include <GeographicLib/Geoid.hpp>
 #include <GeographicLib/LocalCartesian.hpp>
 #include <GeographicLib/MGRS.hpp>
-#include <GeographicLib/UTMUPS.hpp>
 #include <GeographicLib/TransverseMercatorExact.hpp>
+#include <GeographicLib/UTMUPS.hpp>
 #include <geo_pos_conv/geo_pos_conv.hpp>
 #include <rclcpp/logging.hpp>
 
@@ -194,9 +194,13 @@ GNSSStat NavSatFix2TransverseMercator(
   double central_meridian_ = nav_sat_fix_origin.longitude;
 
   try {
-    const GeographicLib::TransverseMercatorExact& proj = GeographicLib::TransverseMercatorExact::UTM();
-    proj.Forward(central_meridian_, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, tm.x, tm.y);
-    proj.Forward(central_meridian_, nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, tm_origin.x, tm_origin.y);
+    const GeographicLib::TransverseMercatorExact & proj =
+      GeographicLib::TransverseMercatorExact::UTM();
+    proj.Forward(
+      central_meridian_, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, tm.x, tm.y);
+    proj.Forward(
+      central_meridian_, nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, tm_origin.x,
+      tm_origin.y);
     tm.x = tm.x - tm_origin.x;
     tm.y = tm.y - tm_origin.y;
 
@@ -205,7 +209,7 @@ GNSSStat NavSatFix2TransverseMercator(
     } else {
       tm.z = nav_sat_fix_msg.altitude;
     }
-    tm.z = tm.z - nav_sat_fix_origin.altitude; // TODO (koji minoda): is this correct?
+    tm.z = tm.z - nav_sat_fix_origin.altitude;  // TODO (koji minoda): is this correct?
     tm.latitude = nav_sat_fix_msg.latitude;
     tm.longitude = nav_sat_fix_msg.longitude;
     tm.altitude = nav_sat_fix_msg.altitude;
@@ -214,7 +218,6 @@ GNSSStat NavSatFix2TransverseMercator(
   }
   return tm;
 }
-
 
 GNSSStat NavSatFix2PLANE(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const int & plane_zone,

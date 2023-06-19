@@ -233,8 +233,8 @@ GNSSStat GNSSPoser::convert(
     gnss_stat =
       NavSatFix2LocalCartesianWGS84(nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger());
   } else if (coordinate_system == CoordinateSystem::TRANSVERSE_MERCATOR) {
-    gnss_stat =
-      NavSatFix2TransverseMercator(nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(), height_system);
+    gnss_stat = NavSatFix2TransverseMercator(
+      nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(), height_system);
   } else {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),

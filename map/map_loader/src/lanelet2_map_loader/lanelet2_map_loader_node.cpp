@@ -52,7 +52,8 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
 : Node("lanelet2_map_loader", options)
 {
   const auto lanelet2_filename = declare_parameter("lanelet2_map_path", "");
-  const auto lanelet2_map_projector_type = declare_parameter("lanelet2_map_projector_type", "TransverseMercator");
+  const auto lanelet2_map_projector_type =
+    declare_parameter("lanelet2_map_projector_type", "TransverseMercator");
   const auto center_line_resolution = declare_parameter("center_line_resolution", 5.0);
   const double map_origin_lat = declare_parameter("latitude", 0.0);
   const double map_origin_lon = declare_parameter("longitude", 0.0);
