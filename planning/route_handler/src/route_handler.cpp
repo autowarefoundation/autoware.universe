@@ -1995,17 +1995,17 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   }
 
   const lanelet::routing::LaneletPath shortest_path = optional_route->shortestPath();
-  bool shortest_path_has_no_drivable_lane = noDrivableLaneInShortestPath(shortest_path);
-  lanelet::routing::LaneletPath alternative_path;
-  bool alternative_path_found = false;
+  bool shortest_path_has_no_drivable_lane = hasNoDrivableLaneInPath(shortest_path);
+  lanelet::routing::LaneletPath drivable_lane_path;
+  bool drivable_lane_path_found = false;
 
   if (shortest_path_has_no_drivable_lane) {
-    alternative_path_found = findAlternativePath(start_lanelet, goal_lanelet, alternative_path);
+    drivable_lane_path_found = findDrivableLanePath(start_lanelet, goal_lanelet, drivable_lane_path);
   }
 
   lanelet::routing::LaneletPath path;
-  if (alternative_path_found) {
-    path = alternative_path;
+  if (drivable_lane_path_found) {
+    path = drivable_lane_path;
   } else {
     path = shortest_path;
   }
@@ -2058,10 +2058,10 @@ lanelet::ConstLanelets RouteHandler::getMainLanelets(
   return main_lanelets;
 }
 
-bool RouteHandler::noDrivableLaneInShortestPath(
-  const lanelet::routing::LaneletPath & shortest_path) const
+bool RouteHandler::hasNoDrivableLaneInPath(
+  const lanelet::routing::LaneletPath & path) const
 {
-  for (const auto & llt : shortest_path) {
+  for (const auto & llt : path) {
     const std::string no_drivable_lane_attribute = llt.attributeOr("no_drivable_lane", "no");
     if (no_drivable_lane_attribute == "yes") {
       return true;
@@ -2071,12 +2071,12 @@ bool RouteHandler::noDrivableLaneInShortestPath(
   return false;
 }
 
-bool RouteHandler::findAlternativePath(
+bool RouteHandler::findDrivableLanePath(
   const lanelet::Lanelet & start_lanelet, const lanelet::Lanelet & goal_lanelet,
-  lanelet::routing::LaneletPath & alternative_path) const
+  lanelet::routing::LaneletPath & drivable_lane_path) const
 {
-  double alternative_path_length2d = std::numeric_limits<double>::max();
-  bool alternative_path_found = false;
+  double drivable_lane_path_length2d = std::numeric_limits<double>::max();
+  bool drivable_lane_path_found = false;
 
   for (const auto & llt : road_lanelets_) {
     lanelet::ConstLanelets via_lanelet;
@@ -2084,17 +2084,17 @@ bool RouteHandler::findAlternativePath(
     const lanelet::Optional<lanelet::routing::Route> optional_route =
       routing_graph_ptr_->getRouteVia(start_lanelet, via_lanelet, goal_lanelet, 0);
 
-    if ((optional_route) && (!noDrivableLaneInShortestPath(optional_route->shortestPath()))) {
-      if (optional_route->length2d() < alternative_path_length2d) {
-        alternative_path_length2d = optional_route->length2d();
-        alternative_path = optional_route->shortestPath();
-        alternative_path_found = true;
+    if ((optional_route) && (!hasNoDrivableLaneInPath(optional_route->shortestPath()))) {
+      if (optional_route->length2d() < drivable_lane_path_length2d) {
+        drivable_lane_path_length2d = optional_route->length2d();
+        drivable_lane_path = optional_route->shortestPath();
+        drivable_lane_path_found = true;
       }
     }
     via_lanelet.clear();
   }
 
-  return alternative_path_found;
+  return drivable_lane_path_found;
 }
 
 }  // namespace route_handler
