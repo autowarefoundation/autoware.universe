@@ -103,7 +103,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     transform_stamped = transform_stamped_optional.value();
   }
 
-  std::map<std::size_t, Polygon2d> m_cluster_roi;
+  std::map<std::size_t, Polygon2d> cluster_roi_map;
   for (std::size_t i = 0; i < input_cluster_msg.feature_objects.size(); ++i) {
     if (input_cluster_msg.feature_objects.at(i).feature.cluster.data.empty()) {
       continue;
@@ -123,7 +123,6 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       input_cluster_msg.feature_objects.at(i).feature.cluster, transformed_cluster,
       transform_stamped);
 
-    int min_x(camera_info.width), min_y(camera_info.height), max_x(0), max_y(0);
     std::vector<Eigen::Vector2d> projected_points;
     projected_points.reserve(transformed_cluster.data.size());
     for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cluster, "x"),
@@ -137,17 +136,10 @@ void RoiClusterFusionNode::fuseOnSingleImage(
         projection * Eigen::Vector4d(*iter_x, *iter_y, *iter_z, 1.0);
       Eigen::Vector2d normalized_projected_point = Eigen::Vector2d(
         projected_point.x() / projected_point.z(), projected_point.y() / projected_point.z());
-      if (
-        0 <= static_cast<int>(normalized_projected_point.x()) &&
-        static_cast<int>(normalized_projected_point.x()) <=
-          static_cast<int>(camera_info.width) - 1 &&
-        0 <= static_cast<int>(normalized_projected_point.y()) &&
-        static_cast<int>(normalized_projected_point.y()) <=
-          static_cast<int>(camera_info.height) - 1) {
-        min_x = std::min(static_cast<int>(normalized_projected_point.x()), min_x);
-        min_y = std::min(static_cast<int>(normalized_projected_point.y()), min_y);
-        max_x = std::max(static_cast<int>(normalized_projected_point.x()), max_x);
-        max_y = std::max(static_cast<int>(normalized_projected_point.y()), max_y);
+      if (int projected_x = static_cast<int>(normalized_projected_point.x()),
+          projected_y = static_cast<int>(normalized_projected_point.y());
+          0 <= projected_x && projected_x <= static_cast<int>(camera_info.width) - 1 &&
+          0 <= projected_y && projected_y <= static_cast<int>(camera_info.height) - 1) {
         projected_points.push_back(normalized_projected_point);
         debug_image_points.push_back(normalized_projected_point);
       }
@@ -156,36 +148,27 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       continue;
     }
 
-    Polygon2d poly_roi = point2ConvexHull(projected_points);
-    m_cluster_roi.insert(std::make_pair(i, poly_roi));
-
-    // sensor_msgs::msg::RegionOfInterest roi;
-    // // roi.do_rectify = m_camera_info_.at(id).do_rectify;
-    // roi.x_offset = min_x;
-    // roi.y_offset = min_y;
-    // roi.width = max_x - min_x;
-    // roi.height = max_y - min_y;
-    // m_cluster_roi.insert(std::make_pair(i, roi));
-    // debug_pointcloud_rois.push_back(roi);
+    Polygon2d cluster_roi = point2ConvexHull(projected_points);
+    cluster_roi_map.insert(std::make_pair(i, cluster_roi));
   }
 
   for (const auto & feature_obj : input_roi_msg.feature_objects) {
     int index = 0;
     double max_iou = 0.0;
-    for (const auto & cluster_map : m_cluster_roi) {
+    for (const auto & [cluster_idx, cluster_roi] : cluster_roi_map) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
       Polygon2d feature_roi = roi2Polygon(feature_obj.feature.roi);
       if (use_iou_) {
-        iou = calcIoU(cluster_map.second, feature_roi);
+        iou = calcIoU(cluster_roi, feature_roi);
       }
       if (use_iou_x_) {
-        iou_x = calcIoUX(cluster_map.second, feature_roi);
+        iou_x = calcIoUX(cluster_roi, feature_roi);
       }
       if (use_iou_y_) {
-        iou_y = calcIoUY(cluster_map.second, feature_roi);
+        iou_y = calcIoUY(cluster_roi, feature_roi);
       }
       if (max_iou < iou + iou_x + iou_y) {
-        index = cluster_map.first;
+        index = cluster_idx;
         max_iou = iou + iou_x + iou_y;
       }
     }
