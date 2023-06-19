@@ -13,10 +13,10 @@
 // limitations under the License.
 
 #include "yabloc_particle_filter/camera_corrector/camera_particle_corrector.hpp"
-#include "yabloc_particle_filter/camera_corrector/fast_cos.hpp"
 #include "yabloc_particle_filter/camera_corrector/logit.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
+#include <tier4_autoware_utils/math/trigonometry.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <yabloc_common/color.hpp>
 #include <yabloc_common/pose_conversions.hpp>
@@ -27,7 +27,6 @@
 
 namespace yabloc::modularized_particle_filter
 {
-FastCosSin fast_math;
 
 CameraParticleCorrector::CameraParticleCorrector()
 : AbstractCorrector("camera_particle_corrector"),
@@ -257,9 +256,9 @@ void CameraParticleCorrector::on_ll2(const PointCloud2 & ll2_msg)
 
 float abs_cos(const Eigen::Vector3f & t, float deg)
 {
-  // NOTE: use pre-computed table for std::cos & std::sin
+  const float radian = deg * M_PI / 180.0;
   Eigen::Vector2f x(t.x(), t.y());
-  Eigen::Vector2f y(fast_math.cos(deg), fast_math.sin(deg));
+  Eigen::Vector2f y(tier4_autoware_utils::cos(radian), tier4_autoware_utils::sin(radian));
   x.normalize();
   return std::abs(x.dot(y));
 }
