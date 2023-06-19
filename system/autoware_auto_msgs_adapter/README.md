@@ -35,6 +35,7 @@ in the `autoware_auto_msgs_adapter/config` directory. Example configuration:
 Set the `msg_type_target` parameter to the desired target message type from `autoware_auto_msgs`.
 
 Make sure that the `msg_type_target` has the correspondence in either:
+
 - [schema/autoware_auto_msgs_adapter.schema.json](schema/autoware_auto_msgs_adapter.schema.json)
 - OR [src/autoware_auto_msgs_adapter_core.cpp](src/autoware_auto_msgs_adapter_core.cpp) `AutowareAutoMsgsAdapterNode::create_adapter_map()` method.
 

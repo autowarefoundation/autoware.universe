@@ -32,7 +32,6 @@ public:
 private:
   AdapterBaseInterface::SharedPtr adapter_;
 
-
   MapStringAdapter create_adapter_map(
     const std::string & topic_name_source, const std::string & topic_name_target);
 
