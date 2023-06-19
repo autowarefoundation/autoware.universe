@@ -51,8 +51,9 @@ GraphSegment::GraphSegment()
 
 cv::Vec3b random_hsv(int index)
 {
-  double base = static_cast<double>(index) * 0.7071;
-  return cv::Vec3b(fmod(base, 1.2) * 255, 0.7 * 255, 0.5 * 255);
+  // It generates colors that are not too bright or too vivid, but rich in hues.
+  double base = static_cast<double>(index);
+  return cv::Vec3b(std::fmod(base * 0.7, 1.0) * 180, 0.7 * 255, 0.5 * 255);
 };
 
 int GraphSegment::search_most_road_like_class(const cv::Mat & segmented) const

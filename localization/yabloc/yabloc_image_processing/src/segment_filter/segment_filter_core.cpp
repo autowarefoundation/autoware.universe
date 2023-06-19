@@ -98,7 +98,7 @@ void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image &
   cv::Mat mask_image = common::decompress_to_cv_mat(segment_msg);
   pcl::fromROSMsg(line_segments_msg, *line_segments_cloud);
 
-  const std::set<int> indices = filt_by_mask(mask_image, *line_segments_cloud);
+  const std::set<int> indices = filter_by_mask(mask_image, *line_segments_cloud);
 
   pcl::PointCloud<pcl::PointNormal> valid_edges = project_lines(*line_segments_cloud, indices);
   pcl::PointCloud<pcl::PointNormal> invalid_edges =
@@ -244,7 +244,7 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
   return projected_points;
 }
 
-std::set<int> SegmentFilter::filt_by_mask(
+std::set<int> SegmentFilter::filter_by_mask(
   const cv::Mat & mask, const pcl::PointCloud<pcl::PointNormal> & edges)
 {
   // Create line image and assign different color to each segment.

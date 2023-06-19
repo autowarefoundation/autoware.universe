@@ -51,7 +51,8 @@ public:
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
   using Float32 = std_msgs::msg::Float32;
-  using Float32Array = std_msgs::msg::Float32MultiArray;  // TODO(KYabuuchi) define new msg
+  // pub_ground_plane publishes x, y, z and normal vector as Float32Array
+  using Float32Array = std_msgs::msg::Float32MultiArray;
   using Marker = visualization_msgs::msg::Marker;
   using String = std_msgs::msg::String;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;

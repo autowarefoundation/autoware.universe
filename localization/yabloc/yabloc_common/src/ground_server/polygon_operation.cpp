@@ -20,7 +20,7 @@ namespace yabloc::ground_server
 {
 pcl::PointCloud<pcl::PointXYZ> sample_from_polygons(const lanelet::PolygonLayer & polygons)
 {
-  // NOTE: Under constraction
+  // NOTE: Under construction
   pcl::PointCloud<pcl::PointXYZ> raw_cloud;
 
   if (polygons.size() >= 2) {

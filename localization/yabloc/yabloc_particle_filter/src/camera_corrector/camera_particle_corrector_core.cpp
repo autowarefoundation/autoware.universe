@@ -197,7 +197,7 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
       transform.translation());
 
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
-    pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud2;
+    pcl::PointCloud<pcl::PointXYZRGB> rgb_iffy_cloud;
 
     float max_score = 0;
     for (const auto p : cloud) {
@@ -213,12 +213,12 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
       pcl::PointXYZRGB rgb;
       rgb.getVector3fMap() = p.getVector3fMap();
       rgb.rgba = common::color_scale::blue_red(p.intensity / max_score);
-      rgb_cloud2.push_back(rgb);
+      rgb_iffy_cloud.push_back(rgb);
     }
 
     common::publish_cloud(*pub_scored_cloud_, rgb_cloud, line_segments_msg.header.stamp);
     common::publish_cloud(
-      *pub_scored_posteriori_cloud_, rgb_cloud2, line_segments_msg.header.stamp);
+      *pub_scored_posteriori_cloud_, rgb_iffy_cloud, line_segments_msg.header.stamp);
   }
 
   if (stop_watch.toc() > 0.080) {

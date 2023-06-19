@@ -66,7 +66,8 @@ private:
     const pcl::PointCloud<pcl::PointNormal> & lines, const std::set<int> & indices,
     bool negative = false) const;
 
-  std::set<int> filt_by_mask(const cv::Mat & mask, const pcl::PointCloud<pcl::PointNormal> & edges);
+  std::set<int> filter_by_mask(
+    const cv::Mat & mask, const pcl::PointCloud<pcl::PointNormal> & edges);
 
   cv::Point2i to_cv_point(const Eigen::Vector3f & v) const;
   void execute(const PointCloud2 & msg1, const Image & msg2);
