@@ -19,6 +19,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <map>
+#include <string>
 
 namespace autoware_auto_msgs_adapter
 {
