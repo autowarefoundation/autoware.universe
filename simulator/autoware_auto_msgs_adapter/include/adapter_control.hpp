@@ -14,7 +14,7 @@
 #ifndef AUTOWARE_AUTO_MSGS_ADAPTER__ADAPTER_CONTROL_HPP_
 #define AUTOWARE_AUTO_MSGS_ADAPTER__ADAPTER_CONTROL_HPP_
 
-#include "autoware_auto_msgs_adapter/adapter_base.hpp"
+#include "adapter_base.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

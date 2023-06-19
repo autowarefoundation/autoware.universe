@@ -8,12 +8,12 @@ set(NODE_NAME ${PROJECT_NAME}_node)
 set(EXEC_NAME ${PROJECT_NAME}_exe)
 set(TEST_NAME test_${PROJECT_NAME})
 
-ament_auto_add_library(${NODE_NAME} SHARED
-  src/autoware_auto_msgs_adapter_core.cpp
-  include/autoware_auto_msgs_adapter/adapter_base_interface.hpp
-  include/autoware_auto_msgs_adapter/adapter_base.hpp
-  include/autoware_auto_msgs_adapter/adapter_control.hpp
-  include/autoware_auto_msgs_adapter/autoware_auto_msgs_adapter_core.hpp)
+ament_auto_add_library(${NODE_NAME}
+  src/autoware_auto_msgs_adapter_core.cpp)
+
+target_include_directories(${NODE_NAME}
+  PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 rclcpp_components_register_node(${NODE_NAME}
   PLUGIN "autoware_auto_msgs_adapter::AutowareAutoMsgsAdapterNode"
