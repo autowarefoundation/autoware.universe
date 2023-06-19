@@ -3070,6 +3070,7 @@ bool isParkedObject(
   const double dist_obj_to_centerline = std::abs(distance2d(centerline, ll_obj_point));
 
   const double ratio = dist_obj_to_centerline / std::max(dist_bound_to_centerline, 1e-6);
+  std::cerr << "ratio: " << ratio << std::endl;
   const double clamped_ratio = std::clamp(ratio, 0.0, 1.0);
   return clamped_ratio > ratio_threshold;
 }

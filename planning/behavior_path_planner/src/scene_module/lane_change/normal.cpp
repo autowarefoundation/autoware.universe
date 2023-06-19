@@ -712,8 +712,8 @@ bool NormalLaneChange::getLaneChangePaths(
         const auto current_lane_path = route_handler.getCenterLinePath(
           original_lanelets, 0.0, std::numeric_limits<double>::max());
         const bool delay_lane_change = utils::lane_change::delayLaneChange(
-          *candidate_path, current_lane_path, *dynamic_objects, dynamic_object_indices.target_lane,
-          lane_change_buffer, is_goal_in_route, goal_pose);
+          route_handler, *candidate_path, current_lane_path, *dynamic_objects,
+          dynamic_object_indices.target_lane, lane_change_buffer, is_goal_in_route, goal_pose);
         if (delay_lane_change) {
           std::cerr << "Delay" << std::endl;
           return false;

@@ -1060,27 +1060,27 @@ PredictedPath convertToPredictedPath(
 }
 
 bool delayLaneChange(
-  const LaneChangePath & lane_change_path, const PathWithLaneId & current_lane_path,
-  const PredictedObjects & objects, const std::vector<size_t> & target_lane_obj_indices,
-  const double minimum_lane_change_length, const bool is_goal_in_route,
-  const geometry_msgs::msg::Pose & goal_pose)
+  const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
+  const PathWithLaneId & current_lane_path, const PredictedObjects & objects,
+  const std::vector<size_t> & target_lane_obj_indices, const double minimum_lane_change_length,
+  const bool is_goal_in_route, const geometry_msgs::msg::Pose & goal_pose)
 {
   const auto & path = lane_change_path.path;
 
   if (target_lane_obj_indices.empty() || path.points.empty() || current_lane_path.points.empty()) {
-    std::cerr << "Empty" << std::endl;
-    std::cerr << "Object size: " << target_lane_obj_indices.size() << std::endl;
-    std::cerr << "Lane change path size: " << path.points.size() << std::endl;
-    std::cerr << "Current path size: " << current_lane_path.points.size() << std::endl;
+    std::cerr << "object size: " << target_lane_obj_indices.size() << std::endl;
+    std::cerr << "path size: " << path.points.size() << std::endl;
+    std::cerr << "current path size: " << current_lane_path.points.size() << std::endl;
     return false;
   }
 
   const auto leading_obj_idx =
-    getLeadingStaticObjectIdx(lane_change_path, objects, target_lane_obj_indices);
+    getLeadingStaticObjectIdx(route_handler, lane_change_path, objects, target_lane_obj_indices);
   if (!leading_obj_idx) {
     std::cerr << "No leading object" << std::endl;
     return false;
   }
+  std::cerr << "Has Leading object" << std::endl;
 
   const auto & leading_obj = objects.objects.at(*leading_obj_idx);
   const auto & leading_obj_poly = tier4_autoware_utils::toPolygon2d(leading_obj);
@@ -1115,8 +1115,8 @@ bool delayLaneChange(
 }
 
 boost::optional<size_t> getLeadingStaticObjectIdx(
-  const LaneChangePath & lane_change_path, const PredictedObjects & objects,
-  const std::vector<size_t> & obj_indices)
+  const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
+  const PredictedObjects & objects, const std::vector<size_t> & obj_indices)
 {
   const auto & path = lane_change_path.path;
 
@@ -1138,10 +1138,20 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
       continue;
     }
 
+    // ignore non-parked object
+    constexpr double object_check_min_road_shoulder_width = 0.5;
+    constexpr double object_shiftable_ratio_threshold = 0.6;
+    if (!isParkedObject(
+          path, route_handler, obj, object_check_min_road_shoulder_width,
+          object_shiftable_ratio_threshold)) {
+      continue;
+    }
+
     const double dist_back_to_obj = motion_utils::calcSignedArcLength(
       path.points, path_end.point.pose.position, obj_pose.position);
     if (dist_back_to_obj > 0.0) {
       // object is not on the lane change path
+      std::cerr << "object is not on the lane change path" << std::endl;
       continue;
     }
 
@@ -1149,6 +1159,7 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
       motion_utils::calcSignedArcLength(path.points, lane_change_start.position, obj_pose.position);
     if (dist_lc_start_to_obj < 0.0) {
       // object is on the lane changing path or behind it. It will be detected in safety check
+      std::cerr << "" << std::endl;
       continue;
     }
 
