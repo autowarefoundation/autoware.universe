@@ -1971,8 +1971,8 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   const Pose & start_checkpoint, const Pose & goal_checkpoint,
   lanelet::ConstLanelets * path_lanelets) const
 {
-  lanelet::Lanelet start_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, start_checkpoint, &start_lanelet)) {
+  lanelet::ConstLanelets start_lanelets;
+  if (!lanelet::utils::query::getCurrentLanelets(road_lanelets_, start_checkpoint, &start_lanelets)) {
     return false;
   }
   lanelet::Lanelet goal_lanelet;
@@ -1980,19 +1980,22 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
     return false;
   }
 
-  // get all possible lanes that can be used to reach goal (including all possible lane change)
-  const lanelet::Optional<lanelet::routing::Route> optional_route =
-    routing_graph_ptr_->getRoute(start_lanelet, goal_lanelet, 0);
-  if (!optional_route) {
-    RCLCPP_ERROR_STREAM(
-      logger_, "Failed to find a proper path!"
-                 << std::endl
-                 << "start checkpoint: " << toString(start_checkpoint) << std::endl
-                 << "goal checkpoint: " << toString(goal_checkpoint) << std::endl
+  lanelet::Optional<lanelet::routing::Route> optional_route;
+  std::vector<lanelet::ConstLanelets> candidate_paths;
+  bool is_route_found = false;
+  for (const auto & start_lanelet : start_lanelets) {
+    optional_route =
+      routing_graph_ptr_->getRoute(start_lanelet, goal_lanelet, 0);
+    if (!optional_route) {
+      RCLCPP_ERROR_STREAM(
+        logger_, "Failed to find a proper path!"
+                   << std::endl
+                   << "start checkpoint: " << toString(start_checkpoint) << std::endl
+                   << "goal checkpoint: " << toString(goal_checkpoint) << std::endl
                  << "start lane id: " << start_lanelet.id() << std::endl
                  << "goal lane id: " << goal_lanelet.id() << std::endl);
-    return false;
-  }
+    } else {
+      is_route_found = true;
 
   const lanelet::routing::LaneletPath shortest_path = optional_route->shortestPath();
   bool shortest_path_has_no_drivable_lane = hasNoDrivableLaneInPath(shortest_path);
