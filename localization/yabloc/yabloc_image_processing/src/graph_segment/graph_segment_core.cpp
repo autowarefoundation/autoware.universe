@@ -107,21 +107,25 @@ void GraphSegment::on_image(const Image & msg)
   }
 
   // Draw output image and debug image
-  // TODO(KYabuuchi) use ptr instead of at()
   cv::Mat output_image = cv::Mat::zeros(resized.size(), CV_8UC1);
   cv::Mat debug_image = cv::Mat::zeros(resized.size(), CV_8UC3);
   for (int h = 0; h < resized.rows; h++) {
+    // NOTE: Accessing through ptr() is faster than at()
+    cv::Vec3b * const debug_image_ptr = debug_image.ptr<cv::Vec3b>(h);
+    uchar * const output_image_ptr = output_image.ptr<uchar>(h);
+    const int * const segmented_image_ptr = segmented.ptr<int>(h);
+
     for (int w = 0; w < resized.cols; w++) {
       cv::Point2i px(w, h);
-      int key = segmented.at<int>(px);
+      const int key = segmented_image_ptr[w];
       if (road_keys.count(key) > 0) {
-        output_image.at<uchar>(px) = 255;
+        output_image_ptr[w] = 255;
         if (key == target_class)
-          debug_image.at<cv::Vec3b>(px) = cv::Vec3b(30, 255, 255);
+          debug_image_ptr[w] = cv::Vec3b(30, 255, 255);
         else
-          debug_image.at<cv::Vec3b>(px) = cv::Vec3b(10, 255, 255);
+          debug_image_ptr[w] = cv::Vec3b(10, 255, 255);
       } else {
-        debug_image.at<cv::Vec3b>(px) = random_hsv(key);
+        debug_image_ptr[w] = random_hsv(key);
       }
     }
   }

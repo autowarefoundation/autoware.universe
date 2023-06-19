@@ -277,7 +277,7 @@ void Predictor::publish_mean_pose(
 
   // Publish pose with covariance
   {
-    // TODO(KYabuuchi) Use particle distribution
+    // TODO(KYabuuchi) Use particle distribution someday
     PoseCovStamped pose_cov_stamped;
     pose_cov_stamped.header.stamp = stamp;
     pose_cov_stamped.header.frame_id = "map";

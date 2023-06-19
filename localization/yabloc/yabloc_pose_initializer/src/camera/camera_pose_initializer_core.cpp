@@ -95,7 +95,7 @@ bool CameraPoseInitializer::estimate_pose(
     RCLCPP_WARN_STREAM(get_logger(), "vector map is not ready ");
     return false;
   }
-  // TODO(KYabuuchi) check time stamp, too
+  // TODO(KYabuuchi) check latest_image_msg's time stamp, too
   if (!latest_image_msg_.has_value()) {
     RCLCPP_WARN_STREAM(get_logger(), "source image is not ready");
     return false;

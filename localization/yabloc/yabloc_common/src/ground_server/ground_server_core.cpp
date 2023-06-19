@@ -105,8 +105,8 @@ void GroundServer::on_map(const HADMapBin & msg)
   lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
   lanelet::utils::conversion::fromBinMsg(msg, lanelet_map);
 
-  // TODO(KYabuuchi) has to be loaded from rosparm
-  const std::set<std::string> visible_labels = {
+  // These should be loaded from rosparm
+  const std::set<std::string> ground_labels = {
     "zebra_marking",      "virtual",   "line_thin", "line_thick",
     "pedestrian_marking", "stop_line", "curbstone"};
 
@@ -117,7 +117,7 @@ void GroundServer::on_map(const HADMapBin & msg)
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
 
     lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
-    if (visible_labels.count(attr.value()) == 0) continue;
+    if (ground_labels.count(attr.value()) == 0) continue;
 
     lanelet::ConstPoint3d const * from = nullptr;
     for (const lanelet::ConstPoint3d & p : line) {
@@ -127,7 +127,9 @@ void GroundServer::on_map(const HADMapBin & msg)
   }
 
   // NOTE: Under construction
-  // if (lanelet_map->polygonLayer.size() > 0)
+  // This function is used to generate a uniform point cloud from within the polygons surrounding
+  // the area when there is no lane information, such as at an intersection.
+  // if(lanelet_map->polygonLayer.size() > 0)
   //   *upsampled_cloud += sample_from_polygons(lanelet_map->polygonLayer);
 
   cloud_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -243,46 +245,6 @@ GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
 
   if (force_zero_tilt_) plane.normal = Eigen::Vector3f::UnitZ();
   return plane;
-}
-
-void GroundServer::publish_marker(const GroundPlane & plane)
-{
-  // TODO(KYabuuchi) current visual marker is so useless
-  Marker marker;
-  marker.header.frame_id = "map";
-  marker.header.stamp = get_clock()->now();
-  marker.type = Marker::TRIANGLE_LIST;
-  marker.id = 0;
-  marker.color = common::Color(0.0, 0.5, 0.0, 0.1);
-  marker.scale.x = 1.0;
-  marker.scale.y = 1.0;
-  marker.scale.z = 1.0;
-  marker.pose.position.x = plane.xyz.x();
-  marker.pose.position.y = plane.xyz.y();
-  marker.pose.position.z = plane.xyz.z();
-
-  Eigen::Vector3f n = plane.normal;
-  const int L = 20;
-  auto toPoint = [](float x, float y, float z) -> geometry_msgs::msg::Point {
-    geometry_msgs::msg::Point p;
-    p.x = x;
-    p.y = y;
-    p.z = z;
-    return p;
-  };
-  auto p1 = toPoint(L, 0, -L * n.x() / n.z());
-  auto p2 = toPoint(0, L, -L * n.y() / n.z());
-  auto p3 = toPoint(-L, 0, L * n.x() / n.z());
-  auto p4 = toPoint(0, -L, L * n.y() / n.z());
-
-  marker.points.push_back(p1);
-  marker.points.push_back(p2);
-  marker.points.push_back(p3);
-
-  marker.points.push_back(p3);
-  marker.points.push_back(p4);
-  marker.points.push_back(p1);
-  pub_marker_->publish(marker);
 }
 
 }  // namespace yabloc::ground_server

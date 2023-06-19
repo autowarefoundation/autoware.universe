@@ -99,9 +99,6 @@ private:
 
   // Return the lowest point's height around given point
   float estimate_height_simply(const Point & point) const;
-
-  // Visualize estimated ground as plane
-  void publish_marker(const GroundPlane & plane);
 };
 
 }  // namespace yabloc::ground_server
