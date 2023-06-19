@@ -1063,7 +1063,7 @@ bool delayLaneChange(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
   const PathWithLaneId & current_lane_path, const PredictedObjects & objects,
   const std::vector<size_t> & target_lane_obj_indices, const double minimum_lane_change_length,
-  const bool is_goal_in_route, const geometry_msgs::msg::Pose & goal_pose)
+  const bool is_goal_in_route)
 {
   const auto & path = lane_change_path.path;
 
@@ -1097,6 +1097,7 @@ bool delayLaneChange(
       motion_utils::calcSignedArcLength(current_lane_path.points, obj_p, current_path_end);
     min_dist_to_end_of_current_lane = std::min(dist, min_dist_to_end_of_current_lane);
     if (is_goal_in_route) {
+      const auto goal_pose = route_handler.getGoalPose();
       const double dist_to_goal =
         motion_utils::calcSignedArcLength(current_lane_path.points, obj_p, goal_pose.position);
       min_dist_to_end_of_current_lane = std::min(min_dist_to_end_of_current_lane, dist_to_goal);

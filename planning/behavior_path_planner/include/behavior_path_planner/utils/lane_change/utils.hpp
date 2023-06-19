@@ -179,7 +179,7 @@ bool delayLaneChange(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
   const PathWithLaneId & current_lane_path, const PredictedObjects & objects,
   const std::vector<size_t> & target_lane_obj_indices, const double minimum_lane_change_length,
-  const bool is_goal_in_route, const geometry_msgs::msg::Pose & goal_pose);
+  const bool is_goal_in_route);
 
 boost::optional<size_t> getLeadingStaticObjectIdx(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
