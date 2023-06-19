@@ -1069,9 +1069,6 @@ bool delayLaneChange(
   const auto & path = lane_change_path.path;
 
   if (target_lane_obj_indices.empty() || path.points.empty() || current_lane_path.points.empty()) {
-    std::cerr << "object size: " << target_lane_obj_indices.size() << std::endl;
-    std::cerr << "path size: " << path.points.size() << std::endl;
-    std::cerr << "current path size: " << current_lane_path.points.size() << std::endl;
     return false;
   }
 
@@ -1079,15 +1076,12 @@ bool delayLaneChange(
     route_handler, lane_change_path, objects, target_lane_obj_indices,
     object_check_min_road_shoulder_width, object_shiftable_ratio_threshold);
   if (!leading_obj_idx) {
-    std::cerr << "No leading object" << std::endl;
     return false;
   }
-  std::cerr << "Has Leading object" << std::endl;
 
   const auto & leading_obj = objects.objects.at(*leading_obj_idx);
   const auto & leading_obj_poly = tier4_autoware_utils::toPolygon2d(leading_obj);
   if (leading_obj_poly.outer().empty()) {
-    std::cerr << "Empty object" << std::endl;
     return false;
   }
 
@@ -1107,10 +1101,7 @@ bool delayLaneChange(
   }
 
   // If there are still enough length after the target object, we delay the lane change
-  std::cerr << "dist from obj to current end" << min_dist_to_end_of_current_lane << std::endl;
-  std::cerr << "lane change buffer" << minimum_lane_change_length << std::endl;
   if (min_dist_to_end_of_current_lane > minimum_lane_change_length) {
-    std::cerr << "min dist is larger than lane change buffer" << std::endl;
     return true;
   }
 
@@ -1153,7 +1144,6 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
       path.points, path_end.point.pose.position, obj_pose.position);
     if (dist_back_to_obj > 0.0) {
       // object is not on the lane change path
-      std::cerr << "object is not on the lane change path" << std::endl;
       continue;
     }
 
@@ -1161,7 +1151,6 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
       motion_utils::calcSignedArcLength(path.points, lane_change_start.position, obj_pose.position);
     if (dist_lc_start_to_obj < 0.0) {
       // object is on the lane changing path or behind it. It will be detected in safety check
-      std::cerr << "" << std::endl;
       continue;
     }
 
