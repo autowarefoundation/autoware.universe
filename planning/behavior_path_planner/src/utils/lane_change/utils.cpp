@@ -1063,7 +1063,8 @@ bool delayLaneChange(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
   const PathWithLaneId & current_lane_path, const PredictedObjects & objects,
   const std::vector<size_t> & target_lane_obj_indices, const double minimum_lane_change_length,
-  const bool is_goal_in_route)
+  const bool is_goal_in_route, const double object_check_min_road_shoulder_width,
+  const double object_shiftable_ratio_threshold)
 {
   const auto & path = lane_change_path.path;
 
@@ -1074,8 +1075,9 @@ bool delayLaneChange(
     return false;
   }
 
-  const auto leading_obj_idx =
-    getLeadingStaticObjectIdx(route_handler, lane_change_path, objects, target_lane_obj_indices);
+  const auto leading_obj_idx = getLeadingStaticObjectIdx(
+    route_handler, lane_change_path, objects, target_lane_obj_indices,
+    object_check_min_road_shoulder_width, object_shiftable_ratio_threshold);
   if (!leading_obj_idx) {
     std::cerr << "No leading object" << std::endl;
     return false;
@@ -1117,7 +1119,8 @@ bool delayLaneChange(
 
 boost::optional<size_t> getLeadingStaticObjectIdx(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
-  const PredictedObjects & objects, const std::vector<size_t> & obj_indices)
+  const PredictedObjects & objects, const std::vector<size_t> & obj_indices,
+  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold)
 {
   const auto & path = lane_change_path.path;
 
@@ -1140,8 +1143,6 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
     }
 
     // ignore non-parked object
-    constexpr double object_check_min_road_shoulder_width = 0.5;
-    constexpr double object_shiftable_ratio_threshold = 0.6;
     if (!isParkedObject(
           path, route_handler, obj, object_check_min_road_shoulder_width,
           object_shiftable_ratio_threshold)) {
