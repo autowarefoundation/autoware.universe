@@ -20,6 +20,7 @@
 #include <GeographicLib/LocalCartesian.hpp>
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
+#include <GeographicLib/TransverseMercatorExact.hpp>
 #include <geo_pos_conv/geo_pos_conv.hpp>
 #include <rclcpp/logging.hpp>
 
@@ -182,6 +183,38 @@ GNSSStat NavSatFix2MGRS(
   const auto mgrs = UTM2MGRS(utm, precision, logger);
   return mgrs;
 }
+
+GNSSStat NavSatFix2TransverseMercator(
+  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
+  sensor_msgs::msg::NavSatFix nav_sat_fix_origin, const rclcpp::Logger & logger, int height_system)
+{
+  GNSSStat tm;
+  GNSSStat tm_origin;
+  tm.coordinate_system = CoordinateSystem::TRANSVERSE_MERCATOR;
+  double central_meridian_ = nav_sat_fix_origin.longitude;
+
+  try {
+    const GeographicLib::TransverseMercatorExact& proj = GeographicLib::TransverseMercatorExact::UTM();
+    proj.Forward(central_meridian_, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, tm.x, tm.y);
+    proj.Forward(central_meridian_, nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, tm_origin.x, tm_origin.y);
+    tm.x = tm.x - tm_origin.x;
+    tm.y = tm.y - tm_origin.y;
+
+    if (height_system == 0) {
+      tm.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
+    } else {
+      tm.z = nav_sat_fix_msg.altitude;
+    }
+    tm.z = tm.z - nav_sat_fix_origin.altitude; // TODO (koji minoda): is this correct?
+    tm.latitude = nav_sat_fix_msg.latitude;
+    tm.longitude = nav_sat_fix_msg.longitude;
+    tm.altitude = nav_sat_fix_msg.altitude;
+  } catch (const GeographicLib::GeographicErr & err) {
+    RCLCPP_ERROR_STREAM(logger, "Failed to convert from LLH to UTM" << err.what());
+  }
+  return tm;
+}
+
 
 GNSSStat NavSatFix2PLANE(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const int & plane_zone,

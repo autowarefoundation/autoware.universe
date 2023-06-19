@@ -36,6 +36,9 @@ CoordinateSystem convert_to_coordinate_systems(const std::string & type)
     return CoordinateSystem::LOCAL_CARTESIAN_WGS84;
   } else if (type == "local_cartesian_utm") {
     return CoordinateSystem::LOCAL_CARTESIAN_UTM;
+  } else if (type == "TransverseMercator") {
+    std::cout << "KOJI!!!! 56437905843 " << std::endl;
+    return CoordinateSystem::TRANSVERSE_MERCATOR;
   }
   return CoordinateSystem::PLANE;
 }
@@ -59,12 +62,14 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
 
   auto cb_map_proj_info = [this](const tier4_map_msgs::msg::MapProjectorInfo::SharedPtr msg) {
     coordinate_system_ = convert_to_coordinate_systems(msg->type);
+    this->nav_sat_fix_origin_.latitude = msg->map_origin.latitude;
+    this->nav_sat_fix_origin_.longitude = msg->map_origin.longitude;
     received_map_projector_info_ = true;
   };
   map_projector_info_sub_ = create_subscription<tier4_map_msgs::msg::MapProjectorInfo>(
     "map_projector_info", qos, cb_map_proj_info);
-  nav_sat_fix_origin_.latitude = declare_parameter("latitude", 0.0);
-  nav_sat_fix_origin_.longitude = declare_parameter("longitude", 0.0);
+  // nav_sat_fix_origin_.latitude = declare_parameter("latitude", 0.0);
+  // nav_sat_fix_origin_.longitude = declare_parameter("longitude", 0.0);
   nav_sat_fix_origin_.altitude = declare_parameter("altitude", 0.0);
 
   int buff_epoch = declare_parameter("buff_epoch", 1);
@@ -227,6 +232,9 @@ GNSSStat GNSSPoser::convert(
   } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_WGS84) {
     gnss_stat =
       NavSatFix2LocalCartesianWGS84(nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger());
+  } else if (coordinate_system == CoordinateSystem::TRANSVERSE_MERCATOR) {
+    gnss_stat =
+      NavSatFix2TransverseMercator(nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(), height_system);
   } else {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),

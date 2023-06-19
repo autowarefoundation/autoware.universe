@@ -23,7 +23,8 @@ enum class CoordinateSystem {
   MGRS = 1,
   PLANE = 2,
   LOCAL_CARTESIAN_WGS84 = 3,
-  LOCAL_CARTESIAN_UTM = 4
+  LOCAL_CARTESIAN_UTM = 4,
+  TRANSVERSE_MERCATOR = 5
 };
 
 struct GNSSStat
