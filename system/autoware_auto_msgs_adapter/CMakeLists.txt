@@ -11,10 +11,6 @@ set(TEST_NAME test_${PROJECT_NAME})
 ament_auto_add_library(${NODE_NAME}
   src/autoware_auto_msgs_adapter_core.cpp)
 
-target_include_directories(${NODE_NAME}
-  PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-
 rclcpp_components_register_node(${NODE_NAME}
   PLUGIN "autoware_auto_msgs_adapter::AutowareAutoMsgsAdapterNode"
   EXECUTABLE ${EXEC_NAME})
