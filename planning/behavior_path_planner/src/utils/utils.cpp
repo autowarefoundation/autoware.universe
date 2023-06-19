@@ -2972,7 +2972,6 @@ bool isParkedObject(
 
   using lanelet::geometry::distance2d;
   using lanelet::geometry::toArcCoordinates;
-  using lanelet::utils::to2D;
 
   if (
     object.kinematics.initial_twist_with_covariance.twist.linear.x >
@@ -2989,7 +2988,6 @@ bool isParkedObject(
   if (!route_handler.getClosestLaneletWithinRoute(object_closest_pose, &closest_lanelet)) {
     return false;
   }
-  const auto closest_lanelet_centerline = to2D(closest_lanelet.centerline2d().basicLineString());
 
   const double lat_dist = motion_utils::calcLateralOffset(path.points, object_pose.position);
   lanelet::BasicLineString2d bound;
@@ -3037,31 +3035,43 @@ bool isParkedObject(
   }
 
   return isParkedObject(
-    closest_lanelet_centerline, bound, object, center_to_bound_buffer,
-    object_shiftable_ratio_threshold);
+    closest_lanelet, bound, object, center_to_bound_buffer, object_shiftable_ratio_threshold);
 }
 
 bool isParkedObject(
-  const lanelet::BasicLineString2d & centerline, const lanelet::BasicLineString2d & boundary,
+  const lanelet::ConstLanelet & closest_lanelet, const lanelet::BasicLineString2d & boundary,
   const PredictedObject & object, const double buffer_to_bound, const double ratio_threshold)
 {
+  using lanelet::geometry::distance2d;
+
   const auto obj_poly = tier4_autoware_utils::toPolygon2d(object);
+  const auto obj_point = object.kinematics.initial_pose_with_covariance.pose.position;
 
+  double max_dist_to_bound = std::numeric_limits<double>::lowest();
   double min_dist_to_bound = std::numeric_limits<double>::max();
-  lanelet::Point2d closest_obj_point;
-  for (const auto & obj_p : obj_poly.outer()) {
-    const auto lanelet_obj_p = lanelet::Point2d(lanelet::InvalId, obj_p.x(), obj_p.y());
-    const auto dist = lanelet::geometry::distance2d(boundary, lanelet_obj_p);
-    if (dist < min_dist_to_bound) {
-      min_dist_to_bound = dist;
-      closest_obj_point = lanelet_obj_p;
-    }
+  for (const auto & edge : obj_poly.outer()) {
+    const auto ll_edge = lanelet::Point2d(lanelet::InvalId, edge.x(), edge.y());
+    const auto dist = distance2d(boundary, ll_edge);
+    max_dist_to_bound = std::max(dist, max_dist_to_bound);
+    min_dist_to_bound = std::min(dist, min_dist_to_bound);
   }
+  const double obj_width = std::max(max_dist_to_bound - min_dist_to_bound, 0.0);
 
-  const double dist_to_centerline = lanelet::geometry::distance2d(centerline, closest_obj_point);
-  const double center_to_bound =
-    std::abs(dist_to_centerline) + std::abs(min_dist_to_bound) + buffer_to_bound;
-  return (std::abs(dist_to_centerline) / center_to_bound) > ratio_threshold;
+  // distance from centerline to the boundary line with object width
+  const auto centerline_pose = lanelet::utils::getClosestCenterPose(closest_lanelet, obj_point);
+  const lanelet::BasicPoint3d centerline_point(
+    centerline_pose.position.x, centerline_pose.position.y, centerline_pose.position.z);
+  const double dist_bound_to_centerline =
+    std::abs(distance2d(boundary, centerline_point)) - 0.5 * obj_width + buffer_to_bound;
+
+  // distance from object point to centerline
+  const auto centerline = closest_lanelet.centerline();
+  const auto ll_obj_point = lanelet::Point2d(lanelet::InvalId, obj_point.x, obj_point.y);
+  const double dist_obj_to_centerline = std::abs(distance2d(centerline, ll_obj_point));
+
+  const double ratio = dist_obj_to_centerline / std::max(dist_bound_to_centerline, 1e-6);
+  const double clamped_ratio = std::clamp(ratio, 0.0, 1.0);
+  return clamped_ratio > ratio_threshold;
 }
 
 }  // namespace behavior_path_planner::utils
