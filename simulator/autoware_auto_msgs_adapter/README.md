@@ -27,7 +27,7 @@ in the `autoware_auto_msgs_adapter/config` directory. Example configuration:
 ```yaml
 /**:
   ros__parameters:
-    msg_type_target: "autoware_auto_control_msgs::msg::AckermannControlCommand"
+    msg_type_target: "autoware_auto_control_msgs/msg/AckermannControlCommand"
     topic_name_source: "/control/command/control_cmd"
     topic_name_target: "/control/command/control_cmd_auto"
 ```
@@ -86,7 +86,7 @@ To add a new message pair,
 - Create a new config file by replicating and editing:
   - [adapter_control.param.yaml](config/adapter_control.param.yaml)
 - Add a new test file by replicating and editing:
-  - [test_msg_ackerman_control_command.cpp](test/test_msg_ackerman_control_command.cpp)
+  - [test_msg_ackermann_control_command.cpp](test/test_msg_ackermann_control_command.cpp)
   - No need to edit the `CMakeLists.txt` file as it will automatically detect the new test file.
 
 Also make sure to test the new adapter with:

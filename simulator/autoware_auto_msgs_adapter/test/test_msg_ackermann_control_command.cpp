@@ -45,7 +45,7 @@ autoware_control_msgs::msg::Control generate_control_msg()
 
 TEST(AutowareAutoMsgsAdapter, TestMsgAckermannControlCommand)  // NOLINT for gtest
 {
-  const std::string msg_type_target = "autoware_auto_control_msgs::msg::AckermannControlCommand";
+  const std::string msg_type_target = "autoware_auto_control_msgs/msg/AckermannControlCommand";
   const std::string topic_name_source = "topic_name_source";
   const std::string topic_name_target = "topic_name_target";
 

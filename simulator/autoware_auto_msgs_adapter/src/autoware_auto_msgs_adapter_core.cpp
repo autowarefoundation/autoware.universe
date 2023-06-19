@@ -31,7 +31,7 @@ AutowareAutoMsgsAdapterNode::AutowareAutoMsgsAdapterNode(const rclcpp::NodeOptio
   const std::string topic_name_source = declare_parameter<std::string>("topic_name_source");
   const std::string topic_name_target = declare_parameter<std::string>("topic_name_target");
 
-  if (msg_type_target == "autoware_auto_control_msgs::msg::AckermannControlCommand") {
+  if (msg_type_target == "autoware_auto_control_msgs/msg/AckermannControlCommand") {
     AdapterControl::SharedPtr adapter =
       std::make_shared<AdapterControl>(*this, topic_name_source, topic_name_target);
     adapter_ = std::static_pointer_cast<AdapterBaseInterface>(adapter);
