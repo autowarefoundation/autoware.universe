@@ -75,11 +75,11 @@ struct PredictedPolygons
 
 struct RSSparams
 {
-  double rear_vehicle_reaction_time{};
-  double rear_vehicle_safety_time_margin{};
-  double lateral_distance_max_threshold{};
-  double longitudinal_distance_min_threshold{};
-  double longitudinal_velocity_delta_time{};
+  double rear_vehicle_reaction_time{0.0};
+  double rear_vehicle_safety_time_margin{0.0};
+  double lateral_distance_max_threshold{0.0};
+  double longitudinal_distance_min_threshold{0.0};
+  double longitudinal_velocity_delta_time{0.0};
 };
 
 struct SafetyCheckParams
@@ -129,12 +129,11 @@ struct SafetyCheckData
   // Route and dynamic objects information
   PredictedObjects::ConstSharedPtr dynamic_objects;
   TargetObjectIndices & dynamic_objects_indices;
-  lanelet::ConstLanelets target_lanes{};
   lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets target_lanes{};
   // lanelet::ConstLanelets reference_lanes{};
 
-  marker_utils::CollisionCheckDebug & collision_check_debug;
+  marker_utils::CollisionCheckDebug collision_check_debug;
 };
 
 namespace safety_checker
@@ -143,8 +142,10 @@ namespace safety_checker
 class SafetyChecker
 {
 public:
-  explicit SafetyChecker(const std::shared_ptr<SafetyCheckParams> & safety_check_params)
-  : safety_check_params_{safety_check_params}
+  explicit SafetyChecker(
+    const std::shared_ptr<SafetyCheckParams> & safety_check_params,
+    const std::shared_ptr<SafetyCheckData> & safety_check_data)
+  : safety_check_params_{safety_check_params}, safety_check_data_{safety_check_data}
   {
   }
 
@@ -156,10 +157,10 @@ public:
   bool isPathSafe(const PathWithLaneId & path, const Odometry ego_odometry);
 
 private:
-  std::shared_ptr<SafetyCheckParams> safety_check_params_{};
-  std::shared_ptr<SafetyCheckData> safety_check_data_{};
-  std::shared_ptr<PathWithLaneId> path_to_safety_check_{};
-  std::shared_ptr<Odometry> ego_odometry_{};
+  std::shared_ptr<SafetyCheckParams> safety_check_params_;
+  std::shared_ptr<SafetyCheckData> safety_check_data_;
+  std::shared_ptr<PathWithLaneId> path_to_safety_check_;
+  std::shared_ptr<Odometry> ego_odometry_;
 
   // TODO(Sugahara): remove const from function which change member variables
   PredictedPath createPredictedPath() const;
