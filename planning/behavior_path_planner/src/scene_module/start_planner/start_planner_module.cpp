@@ -86,7 +86,9 @@ StartPlannerModule::StartPlannerModule(
 
 BehaviorModuleOutput StartPlannerModule::run()
 {
+#ifdef USE_OLD_ARCHITECTURE
   current_state_ = ModuleStatus::RUNNING;
+#endif
 
 #ifndef USE_OLD_ARCHITECTURE
   if (!isActivated()) {
@@ -176,10 +178,21 @@ bool StartPlannerModule::isExecutionReady() const
   return true;
 }
 
-// this runs only when RUNNING
 ModuleStatus StartPlannerModule::updateState()
 {
   RCLCPP_DEBUG(getLogger(), "START_PLANNER updateState");
+
+#ifdef USE_OLD_ARCHITECTURE
+  if (isActivated() && !isWaitingApproval()) {
+    current_state_ = ModuleStatus::RUNNING;
+  }
+#else
+  if (isActivated() && !isWaitingApproval()) {
+    current_state_ = ModuleStatus::RUNNING;
+  } else {
+    current_state_ = ModuleStatus::IDLE;
+  }
+#endif
 
   if (hasFinishedPullOut()) {
     return ModuleStatus::SUCCESS;
@@ -693,21 +706,6 @@ bool StartPlannerModule::hasFinishedPullOut() const
   }
 
   const auto current_pose = planner_data_->self_odometry->pose.pose;
-
-  // keep running until returning to the path, considering that other modules (e.g avoidance)
-  // are also running at the same time.
-  const double lateral_offset_to_path =
-    motion_utils::calcLateralOffset(getCurrentPath().points, current_pose.position);
-  constexpr double lateral_offset_threshold = 0.2;
-  if (std::abs(lateral_offset_to_path) > lateral_offset_threshold) {
-    return false;
-  }
-  const double yaw_deviation =
-    motion_utils::calcYawDeviation(getCurrentPath().points, current_pose);
-  constexpr double yaw_deviation_threshold = 0.087;  // 5deg
-  if (std::abs(yaw_deviation) > yaw_deviation_threshold) {
-    return false;
-  }
 
   // check that ego has passed pull out end point
   const auto arclength_current =
