@@ -135,11 +135,6 @@ struct SafetyCheckParams
   bool publish_debug_marker{false};
 };
 
-enum class TRAJECTORY_TYPE {
-  LINEAR = 0,
-  SPLINE = 1,
-};
-
 namespace safety_checker
 {
 
