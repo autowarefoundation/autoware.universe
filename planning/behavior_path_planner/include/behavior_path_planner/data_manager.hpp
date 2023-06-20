@@ -57,6 +57,7 @@ using nav_msgs::msg::Odometry;
 using route_handler::RouteHandler;
 using tier4_planning_msgs::msg::LateralOffset;
 using PlanResult = PathWithLaneId::SharedPtr;
+using unique_identifier_msgs::msg::UUID;
 
 struct BoolStamped
 {
@@ -86,9 +87,11 @@ struct DrivableAreaInfo
   {
     geometry_msgs::msg::Pose pose;
     tier4_autoware_utils::Polygon2d poly;
+    bool is_left;
   };
-  std::vector<DrivableLanes> drivable_lanes;
-  std::vector<Obstacle> obstacles;  // obstacles to extract from the drivable area
+  std::vector<DrivableLanes> drivable_lanes{};
+  std::vector<Obstacle> obstacles{};  // obstacles to extract from the drivable area
+  bool enable_expanding_hatched_road_markings{false};
 
   // temporary only for pull over's freespace planning
   double drivable_margin{0.0};
@@ -138,6 +141,7 @@ struct PlannerData
   PathWithLaneId::SharedPtr reference_path{std::make_shared<PathWithLaneId>()};
   PathWithLaneId::SharedPtr prev_output_path{std::make_shared<PathWithLaneId>()};
   std::optional<PoseWithUuidStamped> prev_modified_goal{};
+  std::optional<UUID> prev_route_id{};
   lanelet::ConstLanelets current_lanes{};
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
   BehaviorPathPlannerParameters parameters{};

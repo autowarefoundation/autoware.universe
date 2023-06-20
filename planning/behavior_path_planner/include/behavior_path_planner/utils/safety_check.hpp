@@ -60,50 +60,49 @@ bool isTargetObjectFront(
   const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
   const vehicle_info_util::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon);
 
-/**
- * @brief find which vehicle is front and rear and check for lateral,
- *        longitudinal physical and longitudinal expected stopping distance between two points
- * @param [in] expected_ego_pose ego vehicle's pose
- * @param [in] ego_current_twist ego vehicle's twist
- * @param [in] expected_object_pose object vehicle's pose
- * @param [in] object_current_twist object vehicle's twist
- * @param [in] param common behavior path planner parameters
- * @param [in] front_decel expected deceleration of front vehicle
- * @param [in] rear_decel expected deceleration of rear vehicle
- * @param [in] debug debug data
- * @return true if distance is safe.
- */
-bool hasEnoughDistance(
-  const Polygon2d & front_object_polygon, const double front_object_velocity,
-  const Polygon2d & rear_object_polygon, const double rear_object_velocity,
-  const bool is_object_front, const BehaviorPathPlannerParameters & param,
-  const double front_object_deceleration, const double rear_object_deceleration);
+Polygon2d createExtendedPolygon(
+  const Pose & base_link_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
+  const double lon_length, const double lat_margin);
+Polygon2d createExtendedPolygon(
+  const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin);
 
-void getTransformedPolygon(
-  const Pose & front_object_pose, const Pose & rear_object_pose,
-  const vehicle_info_util::VehicleInfo & ego_vehicle_info, const Shape & object_shape,
-  const bool is_object_front, Polygon2d & transformed_front_object_polygon,
-  Polygon2d & transformed_rear_object_polygon);
+double calcRssDistance(
+  const double front_object_velocity, const double rear_object_velocity,
+  const double front_object_deceleration, const double rear_object_deceleration,
+  const BehaviorPathPlannerParameters & params);
 
-double calcLateralDistance(
-  const Polygon2d & front_object_polygon, const Polygon2d & rear_object_polygon);
-
-double calcLongitudinalDistance(
-  const Polygon2d & front_object_polygon, const Polygon2d & rear_object_polygon);
+double calcMinimumLongitudinalLength(
+  const double front_object_velocity, const double rear_object_velocity,
+  const BehaviorPathPlannerParameters & params);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
+ * @param planned_path The predicted path of the ego vehicle.
+ * @param interpolated_ego A vector of pairs of ego vehicle's pose and its polygon at each moment in
+ * the future.
+ * @param ego_current_velocity Current velocity of the ego vehicle.
+ * @param check_duration The vector of times in the future at which safety check is
+ * performed.(relative time in sec from the current time)
+ * @param target_object The predicted object to check collision with.
+ * @param target_object_path The predicted path of the target object.
+ * @param common_parameters The common parameters used in behavior path planner.
+ * @param front_object_deceleration The deceleration of the object in the front.(used in RSS)
+ * @param rear_object_deceleration The deceleration of the object in the rear.(used in RSS)
+ * @param debug The debug information for collision checking.
+ * @param prepare_duration The duration to prepare before shifting lane.
+ * @param velocity_threshold_for_prepare_duration The threshold for the target velocity to
+ * ignore during preparation phase.
  * @return true if distance is safe.
  */
 bool isSafeInLaneletCollisionCheck(
-  const PathWithLaneId & path,
-  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
-  const Twist & ego_current_twist, const std::vector<double> & check_duration,
-  const double prepare_duration, const PredictedObject & target_object,
-  const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
-  const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
-  const double rear_decel, Pose & ego_pose_before_collision, CollisionCheckDebug & debug);
+  const PathWithLaneId & planned_path,
+  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & predicted_ego_poses,
+  const double ego_current_velocity, const std::vector<double> & check_duration,
+  const PredictedObject & target_object, const PredictedPath & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
+  const double rear_object_deceleration, CollisionCheckDebug & debug,
+  const double prepare_duration = 0.0, const double velocity_threshold_for_prepare_duration = 0.0);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and

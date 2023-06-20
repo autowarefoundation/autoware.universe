@@ -32,12 +32,13 @@ struct LaneChangePath
   PathWithLaneId path{};
   lanelet::ConstLanelets reference_lanelets{};
   lanelet::ConstLanelets target_lanelets{};
+  Pose lane_changing_start{};
+  Pose lane_changing_end{};
   ShiftedPath shifted_path{};
   ShiftLine shift_line{};
   double acceleration{0.0};
   LaneChangePhaseInfo length{};
   LaneChangePhaseInfo duration{};
-  TurnSignalInfo turn_signal_info{};
   PathWithLaneId prev_path{};
 };
 using LaneChangePaths = std::vector<LaneChangePath>;

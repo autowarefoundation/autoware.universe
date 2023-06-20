@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner
@@ -28,9 +29,19 @@ namespace behavior_path_planner
 struct LaneChangeParameters
 {
   // trajectory generation
+  double backward_lane_length{200.0};
   double lane_change_finish_judge_buffer{3.0};
   double prediction_time_resolution{0.5};
-  int lane_change_sampling_num{10};
+  int longitudinal_acc_sampling_num{10};
+  int lateral_acc_sampling_num{10};
+
+  // turn signal
+  double min_length_for_turn_signal_activation{10.0};
+  double length_ratio_for_turn_signal_deactivation{0.8};
+
+  // acceleration data
+  double min_longitudinal_acc{-1.0};
+  double max_longitudinal_acc{1.0};
 
   // collision check
   bool enable_prepare_segment_collision_check{true};
@@ -52,8 +63,11 @@ struct LaneChangeParameters
   bool enable_cancel_lane_change{true};
   bool enable_abort_lane_change{false};
 
-  double abort_delta_time{3.0};
+  double abort_delta_time{1.0};
+  double aborting_time{5.0};
   double abort_max_lateral_jerk{10.0};
+
+  double finish_judge_lateral_threshold{0.2};
 
   // debug marker
   bool publish_debug_marker{false};
@@ -102,5 +116,14 @@ struct AvoidanceByLCParameters
   bool execute_only_when_lane_change_finish_before_object{false};
 };
 }  // namespace behavior_path_planner
+
+namespace behavior_path_planner::data::lane_change
+{
+struct PathSafetyStatus
+{
+  bool is_safe{true};
+  bool is_object_coming_from_rear{false};
+};
+}  // namespace behavior_path_planner::data::lane_change
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_

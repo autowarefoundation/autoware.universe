@@ -13,15 +13,16 @@ The manager launches and executes scene modules in `behavior_path_planner` depen
 
 Support status:
 
-| Name                     | Simple exclusive execution | Advanced simultaneous execution |
-| :----------------------- | :------------------------: | :-----------------------------: |
-| Avoidance                |     :heavy_check_mark:     |       :heavy_check_mark:        |
-| Avoidance By Lane Change |     :heavy_check_mark:     |    :heavy_multiplication_x:     |
-| Lane Change              |     :heavy_check_mark:     |       :heavy_check_mark:        |
-| External Lane Change     |     :heavy_check_mark:     |    :heavy_multiplication_x:     |
-| Pull Over                |     :heavy_check_mark:     |    :heavy_multiplication_x:     |
-| Pull Out                 |     :heavy_check_mark:     |    :heavy_multiplication_x:     |
-| Side Shift               |     :heavy_check_mark:     |    :heavy_multiplication_x:     |
+| Name                                     | Simple exclusive execution | Advanced simultaneous execution |
+| :--------------------------------------- | :------------------------: | :-----------------------------: |
+| Avoidance                                |     :heavy_check_mark:     |       :heavy_check_mark:        |
+| Avoidance By Lane Change                 |     :heavy_check_mark:     |    :heavy_multiplication_x:     |
+| Lane Change                              |     :heavy_check_mark:     |       :heavy_check_mark:        |
+| External Lane Change                     |     :heavy_check_mark:     |    :heavy_multiplication_x:     |
+| Goal Planner (without goal modification) |     :heavy_check_mark:     |       :heavy_check_mark:        |
+| Goal Planner (with goal modification)    |     :heavy_check_mark:     |    :heavy_multiplication_x:     |
+| Pull Out                                 |     :heavy_check_mark:     |       :heavy_check_mark:        |
+| Side Shift                               |     :heavy_check_mark:     |    :heavy_multiplication_x:     |
 
 Click [here](../README.md) for supported scene modules.
 
@@ -83,6 +84,7 @@ Sub-manager has the following parameters that are needed by the manager to manag
 struct ModuleConfigParameters
 {
   bool enable_module{false};
+  bool enable_rtc{false};
   bool enable_simultaneous_execution_as_approved_module{false};
   bool enable_simultaneous_execution_as_candidate_module{false};
   uint8_t priority{0};
@@ -92,13 +94,14 @@ struct ModuleConfigParameters
 
 Code is [here](https://github.com/autowarefoundation/autoware.universe/blob/b1734916e3efd9786507a271e0fe829dd37476c8/planning/behavior_path_planner/include/behavior_path_planner/parameters.hpp#L23-L30)
 
-| Name                                                | Type    | Description                                                                                                            |
-| :-------------------------------------------------- | :------ | :--------------------------------------------------------------------------------------------------------------------- |
-| `enable_module`                                     | bool    | if true, the sub-manager is registered on the manager.                                                                 |
-| `enable_simultaneous_execution_as_candidate_module` | bool    | if true, the manager allows its scene modules to run with other scene modules as **candidate module**.                 |
-| `enable_simultaneous_execution_as_approved_module`  | bool    | if true, the manager allows its scene modules to run with other scene modules as **approved module**.                  |
-| `priority`                                          | uint8_t | the manager decides execution priority based on this parameter. The smaller the number is, the higher the priority is. |
-| `max_module_size`                                   | uint8_t | the sub-manager can run some modules simultaneously. this parameter set the maximum number of the launched modules.    |
+| Name                                                | Type    | Description                                                                                                                                     |
+| :-------------------------------------------------- | :------ | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enable_module`                                     | bool    | if true, the sub-manager is registered on the manager.                                                                                          |
+| `enable_rtc`                                        | bool    | if true, the scene modules should be approved by (request to cooperate)rtc function. if false, the module can be run without approval from rtc. |
+| `enable_simultaneous_execution_as_candidate_module` | bool    | if true, the manager allows its scene modules to run with other scene modules as **candidate module**.                                          |
+| `enable_simultaneous_execution_as_approved_module`  | bool    | if true, the manager allows its scene modules to run with other scene modules as **approved module**.                                           |
+| `priority`                                          | uint8_t | the manager decides execution priority based on this parameter. The smaller the number is, the higher the priority is.                          |
+| `max_module_size`                                   | uint8_t | the sub-manager can run some modules simultaneously. this parameter set the maximum number of the launched modules.                             |
 
 ### Scene modules
 

@@ -23,6 +23,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -37,8 +38,42 @@ namespace behavior_path_planner
 
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::StopWatch;
+using tier4_planning_msgs::msg::StopReasonArray;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;
+
+enum Action {
+  ADD = 0,
+  DELETE,
+  MOVE,
+};
+
+struct ModuleUpdateInfo
+{
+  explicit ModuleUpdateInfo(
+    const SceneModulePtr & module_ptr, const Action & action, const std::string & description)
+  : status(module_ptr->getCurrentStatus()),
+    action(action),
+    module_name(module_ptr->name()),
+    description(description)
+  {
+  }
+
+  explicit ModuleUpdateInfo(
+    const std::string & name, const Action & action, const ModuleStatus & status,
+    const std::string & description)
+  : status(status), action(action), module_name(name), description(description)
+  {
+  }
+
+  ModuleStatus status;
+
+  Action action;
+
+  std::string module_name;
+
+  std::string description;
+};
 
 struct SceneModuleStatus
 {
@@ -151,6 +186,34 @@ public:
   }
 
   /**
+   * @brief aggregate launched module's stop reasons.
+   * @return stop reason array
+   */
+  StopReasonArray getStopReasons() const
+  {
+    StopReasonArray stop_reason_array;
+    stop_reason_array.header.frame_id = "map";
+    stop_reason_array.header.stamp = clock_.now();
+
+    std::for_each(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [&](const auto & m) {
+      const auto reason = m->getStopReason();
+      if (reason.reason != "") {
+        stop_reason_array.stop_reasons.push_back(m->getStopReason());
+      }
+    });
+
+    std::for_each(
+      candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [&](const auto & m) {
+        const auto reason = m->getStopReason();
+        if (reason.reason != "") {
+          stop_reason_array.stop_reasons.push_back(m->getStopReason());
+        }
+      });
+
+    return stop_reason_array;
+  }
+
+  /**
    * @brief reset root lanelet. if there are approved modules, don't reset root lanelet.
    * @param planner data.
    * @details this function is called only when it is in disengage and drive by manual.
@@ -182,7 +245,7 @@ private:
     const auto result = module_ptr->run();
     module_ptr->unlockRTCCommand();
 
-    module_ptr->updateState();
+    module_ptr->updateCurrentState();
 
     module_ptr->publishRTCStatus();
 
@@ -280,6 +343,32 @@ private:
   }
 
   /**
+   * @brief stop and remove not RUNNING modules in candidate_module_ptrs_.
+   */
+  void clearNotRunningCandidateModules()
+  {
+    const auto it = std::remove_if(
+      candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [this](auto & m) {
+        if (m->getCurrentStatus() != ModuleStatus::RUNNING) {
+          deleteExpiredModules(m);
+          return true;
+        }
+        return false;
+      });
+    candidate_module_ptrs_.erase(it, candidate_module_ptrs_.end());
+  }
+
+  /**
+   * @brief check if there is any RUNNING module in candidate_module_ptrs_.
+   */
+  bool hasAnyRunningCandidateModule()
+  {
+    return std::any_of(candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [](auto & m) {
+      return m->getCurrentStatus() == ModuleStatus::RUNNING;
+    });
+  }
+
+  /**
    * @brief get current root lanelet. the lanelet is used for reference path generation.
    * @param planner data.
    * @return root lanelet.
@@ -362,13 +451,15 @@ private:
 
   std::vector<SceneModulePtr> candidate_module_ptrs_;
 
-  rclcpp::Logger logger_;
+  mutable rclcpp::Logger logger_;
 
-  rclcpp::Clock clock_;
+  mutable rclcpp::Clock clock_;
 
   mutable StopWatch<std::chrono::milliseconds> stop_watch_;
 
   mutable std::unordered_map<std::string, double> processing_time_;
+
+  mutable std::vector<ModuleUpdateInfo> debug_info_;
 
   bool verbose_{false};
 };

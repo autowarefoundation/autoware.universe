@@ -49,6 +49,7 @@ public:
     clock_(*node->get_clock()),
     logger_(node->get_logger().get_child(name)),
     name_(name),
+    enable_rtc_(config.enable_rtc),
     max_module_num_(config.max_module_size),
     priority_(config.priority),
     enable_simultaneous_execution_as_approved_module_(
@@ -61,7 +62,7 @@ public:
       const auto rtc_interface_name =
         rtc_type == "" ? snake_case_name : snake_case_name + "_" + rtc_type;
       rtc_interface_ptr_map_.emplace(
-        rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name));
+        rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name, enable_rtc_));
     }
 
     pub_info_marker_ = node->create_publisher<MarkerArray>("~/info/" + name, 20);
@@ -73,12 +74,13 @@ public:
 
   SceneModulePtr getNewModule()
   {
-    if (idling_module_ != nullptr) {
-      return idling_module_;
+    if (idling_module_ptr_ != nullptr) {
+      idling_module_ptr_->onEntry();
+      return idling_module_ptr_;
     }
 
-    idling_module_ = createNewSceneModuleInstance();
-    return idling_module_;
+    idling_module_ptr_ = createNewSceneModuleInstance();
+    return idling_module_ptr_;
   }
 
   bool isExecutionRequested(
@@ -117,6 +119,7 @@ public:
     }
 
     module_ptr.reset();
+    idling_module_ptr_.reset();
 
     pub_debug_marker_->publish(MarkerArray{});
   }
@@ -152,6 +155,9 @@ public:
         appendMarkerArray(virtual_wall, &markers);
       }
 
+      const auto module_specific_wall = m->getModuleVirtualWall();
+      appendMarkerArray(module_specific_wall, &markers);
+
       m->resetWallPoses();
     }
 
@@ -182,9 +188,9 @@ public:
       marker_id += marker_offset;
     }
 
-    if (registered_modules_.empty() && idling_module_ != nullptr) {
-      appendMarkerArray(idling_module_->getInfoMarkers(), &info_markers);
-      appendMarkerArray(idling_module_->getDebugMarkers(), &debug_markers);
+    if (registered_modules_.empty() && idling_module_ptr_ != nullptr) {
+      appendMarkerArray(idling_module_ptr_->getInfoMarkers(), &info_markers);
+      appendMarkerArray(idling_module_ptr_->getDebugMarkers(), &debug_markers);
     }
 
     pub_info_marker_->publish(info_markers);
@@ -201,6 +207,10 @@ public:
 
   bool isSimultaneousExecutableAsApprovedModule() const
   {
+    if (registered_modules_.empty()) {
+      return enable_simultaneous_execution_as_approved_module_;
+    }
+
     return std::all_of(
       registered_modules_.begin(), registered_modules_.end(), [](const SceneModulePtr & module) {
         return module->isSimultaneousExecutableAsApprovedModule();
@@ -209,6 +219,10 @@ public:
 
   bool isSimultaneousExecutableAsCandidateModule() const
   {
+    if (registered_modules_.empty()) {
+      return enable_simultaneous_execution_as_candidate_module_;
+    }
+
     return std::all_of(
       registered_modules_.begin(), registered_modules_.end(), [](const SceneModulePtr & module) {
         return module->isSimultaneousExecutableAsCandidateModule();
@@ -225,9 +239,11 @@ public:
     });
     registered_modules_.clear();
 
-    idling_module_->onExit();
-    idling_module_->publishRTCStatus();
-    idling_module_.reset();
+    if (idling_module_ptr_ != nullptr) {
+      idling_module_ptr_->onExit();
+      idling_module_ptr_->publishRTCStatus();
+      idling_module_ptr_.reset();
+    }
 
     pub_debug_marker_->publish(MarkerArray{});
   }
@@ -261,11 +277,13 @@ protected:
 
   std::vector<SceneModulePtr> registered_modules_;
 
-  SceneModulePtr idling_module_;
+  SceneModulePtr idling_module_ptr_;
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 
 private:
+  bool enable_rtc_;
+
   size_t max_module_num_;
 
   size_t priority_;

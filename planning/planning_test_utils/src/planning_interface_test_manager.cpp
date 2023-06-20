@@ -107,10 +107,17 @@ void PlanningInterfaceTestManager::publishParkingScenario(
 }
 
 void PlanningInterfaceTestManager::publishInitialPose(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift)
+  rclcpp::Node::SharedPtr target_node, std::string topic_name, const double shift,
+  ModuleName module_name)
 {
-  test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, initial_pose_pub_, test_utils::makeInitialPose(shift));
+  if (module_name == ModuleName::START_PLANNER) {
+    test_utils::publishToTargetNode(
+      test_node_, target_node, topic_name, initial_pose_pub_,
+      test_utils::makeInitialPoseFromLaneId(10291));
+  } else {
+    test_utils::publishToTargetNode(
+      test_node_, target_node, topic_name, initial_pose_pub_, test_utils::makeInitialPose(shift));
+  }
 }
 
 void PlanningInterfaceTestManager::publishParkingState(
@@ -163,30 +170,12 @@ void PlanningInterfaceTestManager::publishTrafficSignals(
     test_node_, target_node, topic_name, traffic_signals_pub_, TrafficSignalArray{});
 }
 
-void PlanningInterfaceTestManager::publishExternalTrafficSignals(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
-{
-  test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, external_traffic_signals_pub_, TrafficSignalArray{});
-}
 void PlanningInterfaceTestManager::publishVirtualTrafficLightState(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishToTargetNode(
     test_node_, target_node, topic_name, virtual_traffic_light_states_pub_,
     VirtualTrafficLightStateArray{});
-}
-void PlanningInterfaceTestManager::publishExternalCrosswalkStates(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
-{
-  test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, external_crosswalk_states_pub_, CrosswalkStatus{});
-}
-void PlanningInterfaceTestManager::publishExternalIntersectionStates(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
-{
-  test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, external_intersection_states_pub_, IntersectionStatus{});
 }
 
 void PlanningInterfaceTestManager::publishInitialPoseTF(
@@ -215,6 +204,11 @@ void PlanningInterfaceTestManager::setLaneDrivingTrajectoryInputTopicName(std::s
 void PlanningInterfaceTestManager::setRouteInputTopicName(std::string topic_name)
 {
   input_route_name_ = topic_name;
+}
+
+void PlanningInterfaceTestManager::setPathInputTopicName(std::string topic_name)
+{
+  input_path_name_ = topic_name;
 }
 
 void PlanningInterfaceTestManager::setPathWithLaneIdTopicName(std::string topic_name)
@@ -255,11 +249,17 @@ void PlanningInterfaceTestManager::publishNominalRoute(
 }
 
 void PlanningInterfaceTestManager::publishBehaviorNominalRoute(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+  rclcpp::Node::SharedPtr target_node, std::string topic_name, ModuleName module_name)
 {
-  test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, behavior_normal_route_pub_,
-    test_utils::makeBehaviorNormalRoute(), 5);
+  if (module_name == ModuleName::START_PLANNER) {
+    test_utils::publishToTargetNode(
+      test_node_, target_node, topic_name, behavior_normal_route_pub_,
+      test_utils::makeBehaviorRouteFromLaneId(10291, 10333), 5);
+  } else {
+    test_utils::publishToTargetNode(
+      test_node_, target_node, topic_name, behavior_normal_route_pub_,
+      test_utils::makeBehaviorNormalRoute(), 5);
+  }
 }
 
 void PlanningInterfaceTestManager::publishAbnormalRoute(
@@ -282,6 +282,21 @@ void PlanningInterfaceTestManager::publishAbNominalPathWithLaneId(
 {
   test_utils::publishToTargetNode(
     test_node_, target_node, topic_name, abnormal_path_with_lane_id_pub_, PathWithLaneId{}, 5);
+}
+
+void PlanningInterfaceTestManager::publishNominalPath(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishToTargetNode(
+    test_node_, target_node, topic_name, normal_path_pub_,
+    test_utils::toPath(test_utils::loadPathWithLaneIdInYaml()), 5);
+}
+
+void PlanningInterfaceTestManager::publishAbnormalPath(
+  rclcpp::Node::SharedPtr target_node, std::string topic_name)
+{
+  test_utils::publishToTargetNode(
+    test_node_, target_node, topic_name, abnormal_path_pub_, Path{}, 5);
 }
 
 void PlanningInterfaceTestManager::setTrajectorySubscriber(std::string topic_name)
@@ -330,9 +345,10 @@ void PlanningInterfaceTestManager::testWithNominalRoute(rclcpp::Node::SharedPtr 
 }
 
 // test for normal working
-void PlanningInterfaceTestManager::testWithBehaviorNominalRoute(rclcpp::Node::SharedPtr target_node)
+void PlanningInterfaceTestManager::testWithBehaviorNominalRoute(
+  rclcpp::Node::SharedPtr target_node, ModuleName module_name)
 {
-  publishBehaviorNominalRoute(target_node, input_route_name_);
+  publishBehaviorNominalRoute(target_node, input_route_name_, module_name);
 }
 
 // check to see if target node is dead.
@@ -416,6 +432,16 @@ void PlanningInterfaceTestManager::testOffTrackFromTrajectory(rclcpp::Node::Shar
   for (const auto & deviation : deviation_from_traj) {
     publishOdometry(target_node, input_odometry_name_, deviation);
   }
+}
+
+void PlanningInterfaceTestManager::testWithNominalPath(rclcpp::Node::SharedPtr target_node)
+{
+  publishNominalPath(target_node, input_path_name_);
+}
+
+void PlanningInterfaceTestManager::testWithAbnormalPath(rclcpp::Node::SharedPtr target_node)
+{
+  publishAbnormalPath(target_node, input_path_name_);
 }
 
 int PlanningInterfaceTestManager::getReceivedTopicNum()

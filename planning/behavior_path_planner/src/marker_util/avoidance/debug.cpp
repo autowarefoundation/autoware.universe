@@ -17,6 +17,8 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
+#include <magic_enum.hpp>
+
 #include <tf2/utils.h>
 
 #include <string>
@@ -55,11 +57,25 @@ MarkerArray createObjectsCubeMarkerArray(
   const ObjectDataArray & objects, std::string && ns, const Vector3 & scale,
   const ColorRGBA & color)
 {
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+
   MarkerArray msg;
 
-  auto marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE, scale, color);
+  const auto is_small_object = [](const auto & o) {
+    const auto t = behavior_path_planner::utils::getHighestProbLabel(o.classification);
+    return t == ObjectClassification::PEDESTRIAN || t == ObjectClassification::BICYCLE ||
+           t == ObjectClassification::MOTORCYCLE || t == ObjectClassification::UNKNOWN;
+  };
+
   for (const auto & object : objects) {
+    auto marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE, scale, color);
+
+    if (is_small_object(object.object)) {
+      marker.scale = createMarkerScale(0.5, 0.5, 1.5);
+      marker.type = Marker::CYLINDER;
+    }
+
     marker.id = uuidToInt32(object.object.object_id);
     marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
     msg.markers.push_back(marker);
@@ -194,29 +210,7 @@ MarkerArray createEgoStatusMarkerArray(
   {
     std::ostringstream string_stream;
     string_stream << "ego_state:";
-    switch (data.state) {
-      case AvoidanceState::NOT_AVOID:
-        string_stream << "NOT_AVOID";
-        break;
-      case AvoidanceState::AVOID_PATH_NOT_READY:
-        string_stream << "AVOID_PATH_NOT_READY";
-        marker.color = createMarkerColor(1.0, 0.0, 0.0, 0.999);
-        break;
-      case AvoidanceState::YIELD:
-        string_stream << "YIELD";
-        marker.color = createMarkerColor(1.0, 1.0, 0.0, 0.999);
-        break;
-      case AvoidanceState::AVOID_PATH_READY:
-        string_stream << "AVOID_PATH_READY";
-        marker.color = createMarkerColor(0.0, 1.0, 0.0, 0.999);
-        break;
-      case AvoidanceState::AVOID_EXECUTE:
-        string_stream << "AVOID_EXECUTE";
-        marker.color = createMarkerColor(0.0, 1.0, 0.0, 0.999);
-        break;
-      default:
-        throw std::domain_error("invalid behavior");
-    }
+    string_stream << magic_enum::enum_name(data.state);
     marker.text = string_stream.str();
     marker.pose.position.z += 2.0;
     marker.id++;
@@ -287,46 +281,77 @@ MarkerArray createAvoidLineMarkerArray(
   const AvoidLineArray & shift_lines, std::string && ns, const float & r, const float & g,
   const float & b, const double & w)
 {
-  AvoidLineArray shift_lines_local = shift_lines;
-  if (shift_lines_local.empty()) {
-    shift_lines_local.push_back(AvoidLine());
-  }
-
-  int32_t id{0};
-  const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
   MarkerArray msg;
 
-  for (const auto & sl : shift_lines_local) {
-    // ROS_ERROR("sl: s = (%f, %f), g = (%f, %f)", sl.start.x, sl.start.y, sl.end.x, sl.end.y);
-    auto basic_marker = createDefaultMarker(
-      "map", current_time, ns, 0L, Marker::CUBE, createMarkerScale(0.5, 0.5, 0.5),
-      createMarkerColor(r, g, b, 0.9));
-    basic_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
+  if (shift_lines.empty()) {
+    return msg;
+  }
+
+  auto marker = createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
+    createMarkerScale(0.1, 0.1, 0.1), createMarkerColor(r, g, b, 0.9));
+
+  int32_t shift_line_id{0};
+  int32_t marker_id{0};
+  for (const auto & s : shift_lines) {
+    // shift line
     {
-      // start point
-      auto marker_s = basic_marker;
-      marker_s.id = id++;
-      marker_s.pose = sl.start;
-      marker_s.pose = calcOffsetPose(marker_s.pose, 0.0, sl.start_shift_length, 0.0);
-      msg.markers.push_back(marker_s);
-
-      // end point
-      auto marker_e = basic_marker;
-      marker_e.id = id++;
-      marker_e.pose = sl.end;
-      marker_e.pose = calcOffsetPose(marker_e.pose, 0.0, sl.end_shift_length, 0.0);
-      msg.markers.push_back(marker_e);
-
-      // start-to-end line
-      auto marker_l = basic_marker;
-      marker_l.id = id++;
-      marker_l.type = Marker::LINE_STRIP;
-      marker_l.scale = tier4_autoware_utils::createMarkerScale(w, 0.0, 0.0);
-      marker_l.points.push_back(marker_s.pose.position);
-      marker_l.points.push_back(marker_e.pose.position);
-      msg.markers.push_back(marker_l);
+      auto m = marker;
+      m.id = marker_id++;
+      m.type = Marker::LINE_STRIP;
+      m.scale = createMarkerScale(w, 0.0, 0.0);
+      m.points.push_back(calcOffsetPose(s.start, 0.0, s.start_shift_length, 0.0).position);
+      m.points.push_back(calcOffsetPose(s.end, 0.0, s.end_shift_length, 0.0).position);
+      msg.markers.push_back(m);
     }
-    // current_shift = sp.length;
+
+    // start point
+    {
+      auto m = marker;
+      m.id = marker_id++;
+      m.type = Marker::CUBE;
+      m.scale = createMarkerScale(0.2, 0.2, 0.2);
+      m.pose = calcOffsetPose(s.start, 0.0, s.start_shift_length, 0.0);
+      msg.markers.push_back(m);
+    }
+
+    // end point
+    {
+      auto m = marker;
+      m.id = marker_id++;
+      m.type = Marker::CUBE;
+      m.scale = createMarkerScale(0.2, 0.2, 0.2);
+      m.pose = calcOffsetPose(s.end, 0.0, s.end_shift_length, 0.0);
+      msg.markers.push_back(m);
+    }
+
+    // start text
+    {
+      auto m = marker;
+      std::ostringstream string_stream;
+      string_stream << "(S):" << shift_line_id;
+      m.id = marker_id++;
+      m.type = Marker::TEXT_VIEW_FACING;
+      m.scale = createMarkerScale(0.3, 0.3, 0.3);
+      m.pose = calcOffsetPose(s.start, 0.0, s.start_shift_length + 0.3, 0.0);
+      m.text = string_stream.str();
+      msg.markers.push_back(m);
+    }
+
+    // end text
+    {
+      auto m = marker;
+      std::ostringstream string_stream;
+      string_stream << "(E):" << shift_line_id;
+      m.id = marker_id++;
+      m.type = Marker::TEXT_VIEW_FACING;
+      m.scale = createMarkerScale(0.3, 0.3, 0.3);
+      m.pose = calcOffsetPose(s.end, 0.0, s.end_shift_length - 0.3, 0.0);
+      m.text = string_stream.str();
+      msg.markers.push_back(m);
+    }
+
+    shift_line_id++;
   }
 
   return msg;

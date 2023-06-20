@@ -105,6 +105,8 @@ public:
   // for lanelet
   bool getPreviousLaneletsWithinRoute(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelets * prev_lanelets) const;
+  bool getNextLaneletWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
   bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getLaneletsFromPoint(const lanelet::ConstPoint3d & point) const;
   lanelet::ConstLanelets getLaneChangeableNeighbors(const lanelet::ConstLanelet & lanelet) const;
@@ -117,7 +119,7 @@ public:
    * @return vector of lanelet having same direction if true
    */
   boost::optional<lanelet::ConstLanelet> getRightLanelet(
-    const lanelet::ConstLanelet & lanelet) const;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
 
   /**
    * @brief Check if same-direction lane is available at the left side of the lanelet
@@ -127,7 +129,7 @@ public:
    * @return vector of lanelet having same direction if true
    */
   boost::optional<lanelet::ConstLanelet> getLeftLanelet(
-    const lanelet::ConstLanelet & lanelet) const;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
   lanelet::ConstLanelets getNextLanelets(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getPreviousLanelets(const lanelet::ConstLanelet & lanelet) const;
 
@@ -189,7 +191,8 @@ public:
    * @param the lanelet of interest
    * @return vector of lanelet having same direction if true
    */
-  lanelet::ConstLanelet getMostRightLanelet(const lanelet::ConstLanelet & lanelet) const;
+  lanelet::ConstLanelet getMostRightLanelet(
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
 
   /**
    * @brief Check if same-direction lane is available at the left side of the lanelet
@@ -198,7 +201,8 @@ public:
    * @param the lanelet of interest
    * @return vector of lanelet having same direction if true
    */
-  lanelet::ConstLanelet getMostLeftLanelet(const lanelet::ConstLanelet & lanelet) const;
+  lanelet::ConstLanelet getMostLeftLanelet(
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
 
   /**
    * @brief Searches the furthest linestring to the right side of the lanelet
@@ -207,7 +211,7 @@ public:
    * @return right most linestring of the lane with same direction
    */
   lanelet::ConstLineString3d getRightMostSameDirectionLinestring(
-    const lanelet::ConstLanelet & lanelet) const noexcept;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const noexcept;
 
   /**
    * @brief Searches the furthest linestring to the right side of the lanelet
@@ -216,7 +220,7 @@ public:
    * @return right most linestring
    */
   lanelet::ConstLineString3d getRightMostLinestring(
-    const lanelet::ConstLanelet & lanelet) const noexcept;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const noexcept;
 
   /**
    * @brief Searches the furthest linestring to the left side of the lanelet
@@ -225,7 +229,7 @@ public:
    * @return left most linestring of the lane with same direction
    */
   lanelet::ConstLineString3d getLeftMostSameDirectionLinestring(
-    const lanelet::ConstLanelet & lanelet) const noexcept;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const noexcept;
 
   /**
    * @brief Searches the furthest linestring to the left side of the lanelet
@@ -234,7 +238,7 @@ public:
    * @return left most linestring
    */
   lanelet::ConstLineString3d getLeftMostLinestring(
-    const lanelet::ConstLanelet & lanelet) const noexcept;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const noexcept;
 
   /**
    * @brief Return furthest linestring on both side of the lanelet
@@ -246,7 +250,7 @@ public:
    */
   lanelet::ConstLineStrings3d getFurthestLinestring(
     const lanelet::ConstLanelet & lanelet, bool is_right = true, bool is_left = true,
-    bool is_opposite = true) const noexcept;
+    bool is_opposite = true, bool enable_same_root = false) const noexcept;
 
   /**
    * Retrieves a sequence of lanelets before the given lanelet.
@@ -346,6 +350,7 @@ public:
   bool getRightShoulderLanelet(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
+  bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
 
 private:
   // MUST
@@ -379,8 +384,6 @@ private:
   bool isBijectiveConnection(
     const lanelet::ConstLanelets & lanelet_section1,
     const lanelet::ConstLanelets & lanelet_section2) const;
-  bool getNextLaneletWithinRoute(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
   bool getPreviousLaneletWithinRouteExceptGoal(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const;
   bool getNextLaneletWithinRouteExceptStart(

@@ -50,6 +50,12 @@ struct ObjectParameter
 {
   bool enable{false};
 
+  double moving_speed_threshold{0.0};
+
+  double moving_time_threshold{1.0};
+
+  double max_expand_ratio{0.0};
+
   double envelope_buffer_margin{0.0};
 
   double safety_buffer_lateral{1.0};
@@ -91,8 +97,14 @@ struct AvoidanceParameters
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
 
+  // enable yield maneuver.
+  bool enable_yield_maneuver_during_shifting{false};
+
   // disable path update
   bool disable_path_update{false};
+
+  // use hatched road markings for avoidance
+  bool use_hatched_road_markings{false};
 
   // constrains
   bool use_constraints_for_decel{false};
@@ -109,15 +121,24 @@ struct AvoidanceParameters
   // comfortable jerk
   double nominal_jerk;
 
+  // upper distance for envelope polygon expansion.
+  double upper_distance_for_polygon_expansion;
+
+  // lower distance for envelope polygon expansion.
+  double lower_distance_for_polygon_expansion;
+
   // Vehicles whose distance to the center of the path is
   // less than this will not be considered for avoidance.
   double threshold_distance_object_is_on_center;
 
-  // vehicles with speed greater than this will not be avoided
-  double threshold_speed_object_is_stopped;
+  // execute only when there is no intersection behind of the stopped vehicle.
+  double object_ignore_distance_traffic_light;
 
-  // execute only when there is no intersection or crosswalk behind of the stopped vehicle.
-  double object_check_force_avoidance_clearance;
+  // execute only when there is no crosswalk near the stopped vehicle.
+  double object_ignore_distance_crosswalk_forward;
+
+  // execute only when there is no crosswalk near the stopped vehicle.
+  double object_ignore_distance_crosswalk_backward;
 
   // distance to avoid object detection
   double object_check_forward_distance;
@@ -135,17 +156,11 @@ struct AvoidanceParameters
   // minimum road shoulder width. maybe 0.5 [m]
   double object_check_min_road_shoulder_width;
 
-  // vehicles which is moving more than this parameter will not be avoided
-  double threshold_time_object_is_moving;
-
   // force avoidance
   double threshold_time_force_avoidance_for_stopped_vehicle;
 
   // we want to keep this lateral margin when avoiding
   double lateral_collision_margin;
-
-  // if object overhang is less than this value, the ego stops behind the object.
-  double lateral_passable_safety_buffer{0.5};
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
@@ -236,7 +251,11 @@ struct AvoidanceParameters
   // avoidance points is greater than this threshold.
   // In multiple targets case: if there are multiple vehicles in a row to be avoided, no new
   // avoidance path will be generated unless their lateral margin difference exceeds this value.
-  double avoidance_execution_lateral_threshold;
+  double lateral_execution_threshold;
+
+  // shift lines whose shift length is less than threshold is added a request with other large shift
+  // line.
+  double lateral_small_shift_threshold;
 
   // For shift line generation process. The continuous shift length is quantized by this value.
   double quantize_filter_threshold;
@@ -295,6 +314,9 @@ struct ObjectData  // avoidance target
   // lateral shiftable ratio
   double shiftable_ratio{0.0};
 
+  // distance factor for perception noise (0.0~1.0)
+  double distance_factor{0.0};
+
   // count up when object disappeared. Removed when it exceeds threshold.
   rclcpp::Time last_seen;
   double lost_time{0.0};
@@ -325,14 +347,20 @@ struct ObjectData  // avoidance target
   // to intersection
   double to_stop_factor_distance{std::numeric_limits<double>::infinity()};
 
+  // to stop line distance
+  double to_stop_line{std::numeric_limits<double>::infinity()};
+
   // if lateral margin is NOT enough, the ego must avoid the object.
   bool avoid_required{false};
 
-  // unavoidable reason
-  std::string reason{""};
-
   // is avoidable by behavior module
   bool is_avoidable{false};
+
+  // is stoppable under the constraints
+  bool is_stoppable{false};
+
+  // unavoidable reason
+  std::string reason{""};
 
   // lateral avoid margin
   // NOTE: If margin is less than the minimum margin threshold, boost::none will be set.
@@ -436,6 +464,8 @@ struct AvoidancePlanningData
   bool yield_required{false};
 
   bool found_avoidance_path{false};
+
+  double to_stop_line{std::numeric_limits<double>::max()};
 };
 
 /*
@@ -501,6 +531,7 @@ struct DebugData
   AvoidLineArray extra_return_shift;
 
   AvoidLineArray merged;
+  AvoidLineArray gap_filled;
   AvoidLineArray trim_similar_grad_shift;
   AvoidLineArray quantized;
   AvoidLineArray trim_small_shift;
@@ -508,10 +539,21 @@ struct DebugData
   AvoidLineArray trim_similar_grad_shift_third;
   AvoidLineArray trim_momentary_return;
   AvoidLineArray trim_too_sharp_shift;
+
+  // shift length
   std::vector<double> pos_shift;
   std::vector<double> neg_shift;
   std::vector<double> total_shift;
   std::vector<double> output_shift;
+
+  // shift grad
+  std::vector<double> pos_shift_grad;
+  std::vector<double> neg_shift_grad;
+  std::vector<double> total_forward_grad;
+  std::vector<double> total_backward_grad;
+
+  // shift path
+  std::vector<double> proposed_spline_shift;
 
   bool exist_adjacent_objects{false};
 
