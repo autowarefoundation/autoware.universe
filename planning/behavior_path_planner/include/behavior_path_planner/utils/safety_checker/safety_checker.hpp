@@ -36,6 +36,7 @@ using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
+using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Polygon2d;
 
 struct TargetObjectIndices
@@ -43,6 +44,18 @@ struct TargetObjectIndices
   std::vector<size_t> current_lane{};
   std::vector<size_t> target_lane{};
   std::vector<size_t> other_lane{};
+};
+
+struct ObjectTypesToCheck
+{
+  bool check_car{true};
+  bool check_truck{true};
+  bool check_bus{true};
+  bool check_trailer{true};
+  bool check_unknown{true};
+  bool check_bicycle{true};
+  bool check_motorcycle{true};
+  bool check_pedestrian{true};
 };
 
 struct SafetyCheckParams
@@ -58,14 +71,7 @@ struct SafetyCheckParams
   bool use_all_predicted_path{false};
 
   // Object types to check for collisions
-  bool check_car{true};         // Check object car
-  bool check_truck{true};       // Check object truck
-  bool check_bus{true};         // Check object bus
-  bool check_trailer{true};     // Check object trailer
-  bool check_unknown{true};     // Check object unknown
-  bool check_bicycle{true};     // Check object bicycle
-  bool check_motorcycle{true};  // Check object motorbike
-  bool check_pedestrian{true};  // Check object pedestrian
+  ObjectTypesToCheck object_types_to_check;
 
   // Buffer and thresholds
   double lateral_buffer{0.2};
@@ -76,7 +82,9 @@ struct SafetyCheckParams
   double check_start_time{4.0};
   double check_end_time{10.0};
 
+  lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets target_lanes{};
+  // lanelet::ConstLanelets reference_lanes{};
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
 
   // Stopping and acceleration parameters
