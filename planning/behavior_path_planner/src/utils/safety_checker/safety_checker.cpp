@@ -35,32 +35,70 @@ void SafetyChecker::isPathSafe(const PathWithLaneId & path, const Odometry ego_o
 {
   path_to_safety_check_ = std::make_unique<PathWithLaneId>(path);
   ego_odometry_ = std::make_unique<Odometry>(ego_odometry);
+
   const auto ego_predicted_path = createPredictedPath();
+
   return;
 }
 
 PredictedPath SafetyChecker::createPredictedPath() const
 {
   const auto following_trajectory_points = path_to_safety_check_->points;
-  const auto current_velocity = ego_odometry_->twist.twist.linear.x;
-  const auto target_velocity = safety_check_params_->target_velocity;
-  const auto acc_till_target_velocity = safety_check_params_->acc_till_target_velocity;
-  const auto pose = ego_odometry_->pose.pose;
-  const auto resolution = safety_check_params_->prediction_time_resolution;
-  const auto stopping_time = safety_check_params_->stopping_time;
+  const double current_velocity = ego_odometry_->twist.twist.linear.x;
+  const double target_velocity = safety_check_params_->target_velocity;
+  const double acc_till_target_velocity = safety_check_params_->acc_till_target_velocity;
+  const auto ego_pose = ego_odometry_->pose.pose;
+  const double resolution = safety_check_params_->prediction_time_resolution;
+  const double stopping_time = safety_check_params_->stopping_time;
 
   const auto ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
-    following_trajectory_points, current_velocity, target_velocity, acc_till_target_velocity, pose,
-    resolution, stopping_time);
+    following_trajectory_points, current_velocity, target_velocity, acc_till_target_velocity,
+    ego_pose, resolution, stopping_time);
 
   return ego_predicted_path;
 }
 
 lanelet::ConstLanelets SafetyChecker::getBackwardLanelets() const
 {
-  // Implement the function to get the backward lanelets based on the safety_check_params_
-  // You can use the member variables and functions defined in the SafetyChecker class
-  return lanelet::ConstLanelets{};
+  const auto & route_handler = safety_check_params_->route_handler;
+  const auto target_lanes = safety_check_params_->target_lanes;
+  const auto ego_pose = ego_odometry_->pose.pose;
+  const double backward_length = safety_check_params_->backward_lane_length;
+
+  lanelet::ConstLanelets backward_lanes{};
+  // TODO(Sugahara): move this function from utils in lane change to common utils
+  // copied from utils in lane change
+  {
+    if (target_lanes.empty()) {
+      return {};
+    }
+
+    const auto arc_length = lanelet::utils::getArcCoordinates(target_lanes, ego_pose);
+
+    if (arc_length.length >= backward_length) {
+      return {};
+    }
+
+    const auto & front_lane = target_lanes.front();
+    const auto preceding_lanes = route_handler->getPrecedingLaneletSequence(
+      front_lane, std::abs(backward_length - arc_length.length), {front_lane});
+
+    const auto num_of_lanes = std::invoke([&preceding_lanes]() {
+      size_t sum{0};
+      for (const auto & lanes : preceding_lanes) {
+        sum += lanes.size();
+      }
+      return sum;
+    });
+
+    backward_lanes.reserve(num_of_lanes);
+
+    for (const auto & lanes : preceding_lanes) {
+      backward_lanes.insert(backward_lanes.end(), lanes.begin(), lanes.end());
+    }
+  }
+
+  return backward_lanes;
 }
 
 TargetObjectIndices SafetyChecker::filterObjectIndices() const

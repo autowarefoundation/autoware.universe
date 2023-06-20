@@ -76,6 +76,9 @@ struct SafetyCheckParams
   double check_start_time{4.0};
   double check_end_time{10.0};
 
+  lanelet::ConstLanelets target_lanes{};
+  std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
+
   // Stopping and acceleration parameters
   double stopping_time{1.0};
   double acc_till_target_velocity{1.0};
@@ -85,7 +88,6 @@ struct SafetyCheckParams
   // Route and dynamic objects information
   PredictedObjects::ConstSharedPtr dynamic_objects;
   TargetObjectIndices & dynamic_objects_indices;
-  RouteHandler route_handler;
   lanelet::ConstLanelets reference_lanelets{};
   lanelet::ConstLanelets target_lanelets{};
 
