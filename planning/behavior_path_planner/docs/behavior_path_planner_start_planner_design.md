@@ -2,7 +2,16 @@
 
 ## Purpose / Role
 
-Pull out from the shoulder lane without colliding with objects.
+Start Planner is designed for safe path generation from the current ego position to the driving lane and transition to lane following. This module is activated when a new route is received.
+
+Use cases are as follows
+
+- start smoothly from the current ego position to centerline.
+  - ![case1](../image/start_from_road_lane.drawio.svg)
+- pull out from the side of the road lane to centerline.
+  - ![case2](../image/start_from_road_side.drawio.svg)
+- pull out from the shoulder lane to the road lane centerline.
+  - ![case3](../image/start_from_road_shoulder.drawio.svg)
 
 ## Design
 
@@ -58,10 +67,10 @@ PullOutPath --o PullOutPlannerBase
 | collision_check_margin            | [m]   | double | Obstacle collision check margin                                      | 1.0           |
 | collision_check_distance_from_end | [m]   | double | collision check distance from end point. currently only for pull out | 15.0          |
 
-## **Safe check with obstacles in shoulder lane**
+## **Safe check with obstacles**
 
 1. Calculate ego-vehicle's footprint on pull out path between from current position to pull out end point. (Illustrated by blue frame)
-2. Calculate object's polygon which is located in shoulder lane
+2. Calculate object's polygon
 3. If a distance between the footprint and the polygon is lower than the threshold (default: `1.0 m`), that is judged as a unsafe path
 
 ![pull_out_collision_check](../image/pull_out_collision_check.drawio.svg)
@@ -72,9 +81,11 @@ There are two path generation methods.
 
 #### **shift pull out**
 
+This is the most basic method of starting path planning and is used on road lanes and shoulder lanes when there is no particular obstruction.
+
 Pull out distance is calculated by the speed, lateral deviation, and the lateral jerk. The lateral jerk is searched for among the predetermined minimum and maximum values, and the one that generates a safe path is selected.
 
-- Generate the shoulder lane centerline and shift it to the current position.
+- Generate the road lane centerline and shift it to the current position.
 - In the section between merge start and end, path is shifted by a method that is used to generate avoidance path (four segmental constant jerk polynomials)
 - Combine this path with center line of road lane
 
