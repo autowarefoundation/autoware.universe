@@ -104,6 +104,7 @@ void StartPlannerModule::processOnExit()
 {
   resetPathCandidate();
   resetPathReference();
+  debug_marker_.markers.clear();
 }
 
 bool StartPlannerModule::isExecutionRequested() const
