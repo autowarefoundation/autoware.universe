@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@
 
 #include <boost/optional.hpp>
 
-#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -97,12 +96,13 @@ struct SafetyCheckParams
   bool publish_debug_marker{false};
 };
 
-
 enum class TRAJECTORY_TYPE {
   LINEAR = 0,
   SPLINE = 1,
 };
 
+namespace safety_checker
+{
 // plannerdataには依存しない
 // どう拡張するのか分からない？
 // 拡張イメージ湧けばOK
@@ -110,9 +110,10 @@ enum class TRAJECTORY_TYPE {
 class SafetyChecker
 {
 public:
-  explicit SafetyChecker(
-    const std::shared_ptr<SafetyCheckParams> & safety_check_params)
+  explicit SafetyChecker(const std::shared_ptr<SafetyCheckParams> & safety_check_params)
   : safety_check_params_{safety_check_params}
+  {
+  }
 
   /**
    * @brief Check path is safe against dynamic obstacles.
@@ -123,6 +124,8 @@ public:
 
 private:
   std::shared_ptr<SafetyCheckParams> safety_check_params_{};
+  PathWithLaneId path_to_safety_check{};
+
   PredictedPath createPredictedPath() const;
   lanelet::ConstLanelets getBackwardLanelets() const;
   TargetObjectIndices filterObjectIndices() const;
@@ -131,6 +134,7 @@ private:
   bool isObjectIndexIncluded() const;
   bool isTargetObjectFront() const;
 };
+}  // namespace safety_checker
 
 }  // namespace behavior_path_planner
 
