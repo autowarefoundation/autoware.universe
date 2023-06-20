@@ -25,7 +25,7 @@ namespace autoware_ad_api::vehicle
 struct Dimensions
 {
   using Service = autoware_adapi_v1_msgs::srv::GetVehicleDimensions;
-  static constexpr char name[] = "/api/vehicle/info/dimensions";
+  static constexpr char name[] = "/api/vehicle/dimensions";
 };
 
 }  // namespace autoware_ad_api::vehicle
