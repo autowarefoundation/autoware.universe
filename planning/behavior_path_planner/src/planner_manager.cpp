@@ -39,6 +39,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
 {
   resetProcessingTime();
   stop_watch_.tic("total_time");
+  debug_info_.clear();
 
   if (!root_lanelet_) {
     root_lanelet_ = updateRootLanelet(data);
@@ -52,12 +53,16 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
       [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::RUNNING; });
 
-    const bool is_any_candidate_module_running = std::any_of(
-      candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(),
-      [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::RUNNING; });
+    // IDLE is a state in which an execution has been requested but not yet approved.
+    // once approved, it basically turns to running.
+    const bool is_any_candidate_module_running_or_idle =
+      std::any_of(candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [](const auto & m) {
+        return m->getCurrentStatus() == ModuleStatus::RUNNING ||
+               m->getCurrentStatus() == ModuleStatus::IDLE;
+      });
 
     const bool is_any_module_running =
-      is_any_approved_module_running || is_any_candidate_module_running;
+      is_any_approved_module_running || is_any_candidate_module_running_or_idle;
 
     const bool is_out_of_route = utils::isEgoOutOfRoute(
       data->self_odometry->pose.pose, data->prev_modified_goal, data->route_handler);
@@ -113,6 +118,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
        */
       addApprovedModule(highest_priority_module);
       clearCandidateModules();
+      debug_info_.emplace_back(highest_priority_module, Action::ADD, "To Approval");
     }
     return BehaviorModuleOutput{};
   }();
@@ -420,8 +426,9 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
 
 BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<PlannerData> & data)
 {
-  std::unordered_map<std::string, BehaviorModuleOutput> results;
+  const bool has_any_running_candidate_module = hasAnyRunningCandidateModule();
 
+  std::unordered_map<std::string, BehaviorModuleOutput> results;
   BehaviorModuleOutput output = getReferencePath(data);
   results.emplace("root", output);
 
@@ -452,6 +459,8 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
 
       std::for_each(
         std::next(itr), approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
+
+      debug_info_.emplace_back(*itr, Action::MOVE, "Back To Waiting Approval");
     }
 
     approved_module_ptrs_.erase(itr, approved_module_ptrs_.end());
@@ -465,7 +474,10 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
       approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
       [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::FAILURE; });
 
-    std::for_each(itr, approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
+    std::for_each(itr, approved_module_ptrs_.end(), [this](auto & m) {
+      debug_info_.emplace_back(m, Action::DELETE, "From Approved");
+      deleteExpiredModules(m);
+    });
 
     if (itr != approved_module_ptrs_.end()) {
       clearCandidateModules();
@@ -512,12 +524,14 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
    * ModuleStatus::RUNNING, the previous module keeps running even if it is in
    * ModuleStatus::SUCCESS.
    */
-  if (lane_change_itr == approved_module_ptrs_.end()) {
-    std::for_each(
-      success_itr, approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
+  if (lane_change_itr == approved_module_ptrs_.end() && !has_any_running_candidate_module) {
+    std::for_each(success_itr, approved_module_ptrs_.end(), [this](auto & m) {
+      debug_info_.emplace_back(m, Action::DELETE, "From Approved");
+      deleteExpiredModules(m);
+    });
 
     approved_module_ptrs_.erase(success_itr, approved_module_ptrs_.end());
-    clearCandidateModules();
+    clearNotRunningCandidateModules();
 
     return approved_modules_output;
   }
@@ -528,12 +542,14 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
    * root lanelet is updated at the moment of lane change module's unregistering, and that causes
    * change First In module's input.
    */
-  if (not_success_itr == approved_module_ptrs_.rend()) {
-    std::for_each(
-      success_itr, approved_module_ptrs_.end(), [this](auto & m) { deleteExpiredModules(m); });
+  if (not_success_itr == approved_module_ptrs_.rend() && !has_any_running_candidate_module) {
+    std::for_each(success_itr, approved_module_ptrs_.end(), [this](auto & m) {
+      debug_info_.emplace_back(m, Action::DELETE, "From Approved");
+      deleteExpiredModules(m);
+    });
 
     approved_module_ptrs_.erase(success_itr, approved_module_ptrs_.end());
-    clearCandidateModules();
+    clearNotRunningCandidateModules();
 
     root_lanelet_ = updateRootLanelet(data);
 
@@ -602,6 +618,17 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
     return;
   }
 
+  // when lane change module is running, don't update root lanelet.
+  const bool is_lane_change_running = std::invoke([&]() {
+    const auto lane_change_itr = std::find_if(
+      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
+      [](const auto & m) { return m->name().find("lane_change") != std::string::npos; });
+    return lane_change_itr != approved_module_ptrs_.end();
+  });
+  if (is_lane_change_running) {
+    return;
+  }
+
   const auto root_lanelet = updateRootLanelet(data);
 
   // check ego is in same lane
@@ -614,7 +641,7 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 
   // check ego is in next lane
   for (const auto & next : next_lanelets) {
-    if (next.id() == root_lanelet_.get().id()) {
+    if (next.id() == root_lanelet.id()) {
       return;
     }
   }
@@ -629,7 +656,7 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
     }
   }
 
-  reset();
+  root_lanelet_ = root_lanelet;
 
   RCLCPP_INFO_EXPRESSION(logger_, verbose_, "change ego's following lane. reset.");
 }
@@ -669,6 +696,15 @@ void PlannerManager::print() const
   for (const auto & m : candidate_module_ptrs_) {
     string_stream << "[" << m->name() << "(" << get_status(m) << ")"
                   << "]->";
+  }
+
+  string_stream << "\n";
+  string_stream << "update module info: ";
+  for (const auto & i : debug_info_) {
+    string_stream << "[Module:" << i.module_name << " Status:" << magic_enum::enum_name(i.status)
+                  << " Action:" << magic_enum::enum_name(i.action)
+                  << " Description:" << i.description << "]\n"
+                  << std::setw(28);
   }
 
   string_stream << "\n" << std::fixed << std::setprecision(1);
