@@ -39,6 +39,8 @@ bool SafetyChecker::isPathSafe(const PathWithLaneId & path, const Odometry ego_o
 
   const auto dynamic_objects = safety_check_params_->dynamic_objects;
 
+  // TODO(Sugahara): consider define of PathSafetyStatus and how to return when dynamic_objects is
+  // nullptr
   if (dynamic_objects == nullptr) {
     return true;
   }
