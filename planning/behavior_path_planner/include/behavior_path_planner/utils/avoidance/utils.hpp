@@ -94,6 +94,14 @@ void fillObjectMovingTime(
   ObjectData & object_data, ObjectDataArray & stopped_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 
+void fillAvoidanceNecessity(
+  ObjectData & object_data, const ObjectDataArray & registered_objects, const double vehicle_width,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
+
+void fillObjectStoppableJudge(
+  ObjectData & object_data, const ObjectDataArray & registered_objects,
+  const double feasible_stop_distance, const std::shared_ptr<AvoidanceParameters> & parameters);
+
 void updateRegisteredObject(
   ObjectDataArray & registered_objects, const ObjectDataArray & now_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters);

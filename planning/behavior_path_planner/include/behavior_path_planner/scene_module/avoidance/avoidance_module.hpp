@@ -231,10 +231,9 @@ private:
 
   /**
    * @brief insert stop point in output path.
-   * @param flag. if it is true, the ego decelerates within accel/jerk constraints.
    * @param target path.
    */
-  void insertPrepareVelocity(const bool avoidable, ShiftedPath & shifted_path) const;
+  void insertPrepareVelocity(ShiftedPath & shifted_path) const;
 
   /**
    * @brief insert decel point in output path in order to yield. the ego decelerates within
@@ -347,13 +346,6 @@ private:
     AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
 
   /*
-   * @brief fill gap between two shift lines.
-   * @param original shift lines.
-   * @return processed shift lines.
-   */
-  AvoidLineArray fillShiftLineGap(const AvoidLineArray & shift_lines) const;
-
-  /*
    * @brief merge negative & positive shift lines.
    * @param original shift lines.
    * @param debug data.
@@ -392,15 +384,19 @@ private:
   /*
    * @brief add return shift line from ego position.
    * @param shift lines which the return shift is added.
-   * @param current shift lines.
    * Pick up the last shift point, which is the most farthest from ego, from the current candidate
    * avoidance points and registered points in the shifter. If the last shift length of the point is
    * non-zero, add a return-shift to center line from the point. If there is no shift point in
    * candidate avoidance points nor registered points, and base_shift > 0, add a return-shift to
    * center line from ego.
    */
-  void addReturnShiftLineFromEgo(
-    AvoidLineArray & sl_candidates, AvoidLineArray & current_raw_shift_lines) const;
+  void addReturnShiftLineFromEgo(AvoidLineArray & shift_lines) const;
+
+  /*
+   * @brief fill gap between two shift lines.
+   * @param original shift lines.
+   */
+  void fillShiftLineGap(AvoidLineArray & shift_lines) const;
 
   /*
    * @brief generate total shift line. total shift line has shift length and gradient array.
@@ -431,19 +427,6 @@ private:
    * @param threshold.
    */
   void trimSimilarGradShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
-
-  /**
-   * @brief remove short "return to center" shift point. ¯¯\_/¯¯　-> ¯¯¯¯¯¯
-   * @param input shift lines.
-   * @details
-   * Is the shift point for "return to center"?
-   *  - no : Do not trim anything.
-   *  - yes: Is it short distance enough to be removed?
-   *     - no : Do not trim anything.
-   *     - yes: Remove the "return" shift point.
-   *            Recalculate longitudinal distance and modify the shift point.
-   */
-  void trimMomentaryReturn(AvoidLineArray & shift_lines) const;
 
   /*
    * @brief trim invalid shift lines whose gradient it too large to follow.
@@ -594,23 +577,32 @@ private:
 
   /**
    * @brief reset registered shift lines.
-   * @param path shifter.
+   * @details reset only when the base offset is zero. Otherwise, sudden steering will be caused;
    */
-  void removeAllRegisteredShiftPoints(PathShifter & path_shifter)
+  void removeRegisteredShiftLines()
   {
+    constexpr double THRESHOLD = 0.1;
+    if (std::abs(path_shifter_.getBaseOffset()) > THRESHOLD) {
+      RCLCPP_INFO(getLogger(), "base offset is not zero. can't reset registered shift lines.");
+      return;
+    }
+
+    initRTCStatus();
+    unlockNewModuleLaunch();
+
     current_raw_shift_lines_.clear();
     registered_raw_shift_lines_.clear();
-    path_shifter.setShiftLines(ShiftLineArray{});
+    path_shifter_.setShiftLines(ShiftLineArray{});
   }
 
   /**
    * @brief remove behind shift lines.
    * @param path shifter.
    */
-  void postProcess(PathShifter & path_shifter) const
+  void postProcess()
   {
-    const size_t nearest_idx = planner_data_->findEgoIndex(path_shifter.getReferencePath().points);
-    path_shifter.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
+    const size_t idx = planner_data_->findEgoIndex(path_shifter_.getReferencePath().points);
+    path_shifter_.removeBehindShiftLineAndSetBaseOffset(idx);
   }
 
   // misc functions

@@ -57,6 +57,8 @@ public:
 
   PathWithLaneId getReferencePath() const override;
 
+  std::optional<PathWithLaneId> extendPath() override;
+
   void resetParameters() override;
 
   TurnSignalInfo updateOutputTurnSignal() override;
@@ -100,7 +102,7 @@ protected:
 
   std::vector<DrivableLanes> getDrivableLanes() const override;
 
-  void calcTurnSignalInfo() override;
+  TurnSignalInfo calcTurnSignalInfo() override;
 
   bool isValidPath(const PathWithLaneId & path) const override;
 };
