@@ -32,14 +32,21 @@ namespace behavior_path_planner
 namespace safety_checker
 {
 
-void SafetyChecker::isPathSafe(const PathWithLaneId & path, const Odometry ego_odometry)
+bool SafetyChecker::isPathSafe(const PathWithLaneId & path, const Odometry ego_odometry)
 {
   path_to_safety_check_ = std::make_unique<PathWithLaneId>(path);
   ego_odometry_ = std::make_unique<Odometry>(ego_odometry);
 
-  const auto ego_predicted_path = createPredictedPath();
+  const auto dynamic_objects = safety_check_params_->dynamic_objects;
 
-  return;
+  if (dynamic_objects == nullptr) {
+    return true;
+  }
+  if (path_to_safety_check_->points.empty()) {
+    return false;
+  }
+
+  return isSafeInLaneletCollisionCheck();
 }
 
 PredictedPath SafetyChecker::createPredictedPath() const
@@ -198,8 +205,7 @@ TargetObjectIndices SafetyChecker::filterObjectIndices() const
   return {current_lane_obj_indices, target_lane_obj_indices, others_obj_indices};
 }
 
-std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>>
-SafetyChecker::getEgoExpectedPoseAndConvertToPolygon() const
+PredictedPolygons SafetyChecker::getEgoExpectedPoseAndConvertToPolygon() const
 {
   const auto ego_predicted_path = createPredictedPath();
   const double check_start_time = safety_check_params_->check_start_time;
@@ -209,23 +215,23 @@ SafetyChecker::getEgoExpectedPoseAndConvertToPolygon() const
 
   const auto reserve_size =
     static_cast<size_t>((check_end_time - check_start_time) / time_resolution);
-  std::vector<double> check_durations{};
-  std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> interpolated_ego{};
-  check_durations.reserve(reserve_size);
-  interpolated_ego.reserve(reserve_size);
+  PredictedPolygons predicted_polygons;
+  predicted_polygons.check_durations.reserve(reserve_size);
+  predicted_polygons.poses.reserve(reserve_size);
+  predicted_polygons.polygons.reserve(reserve_size);
 
   for (double t = check_start_time; t < check_end_time; t += time_resolution) {
-    tier4_autoware_utils::Polygon2d ego_polygon;
     const auto result =
       utils::getEgoExpectedPoseAndConvertToPolygon(ego_predicted_path, t, vehicle_info);
     if (!result) {
       continue;
     }
-    check_durations.push_back(t);
-    interpolated_ego.emplace_back(result->first, result->second);
+    predicted_polygons.check_durations.push_back(t);
+    predicted_polygons.poses.push_back(result->first);
+    predicted_polygons.polygons.push_back(result->second);
   }
 
-  return interpolated_ego;
+  return predicted_polygons;
 }
 
 bool SafetyChecker::isSafeInLaneletCollisionCheck() const
@@ -234,7 +240,7 @@ bool SafetyChecker::isSafeInLaneletCollisionCheck() const
   const auto predicted_ego_poses = getEgoExpectedPoseAndConvertToPolygon();
   const double current_velocity = ego_odometry_->twist.twist.linear.x;
   const std::vector<double> check_duration;
-  // TODO(Sugahara): implement funciton
+  // TODO(Sugahara): implement function
   // const auto target_objects = getTargetObjects();
   // const auto target_objects_paths = getTargetObjectsPaths();
   // const auto rss_params = safety_check_params_->rss_params;
@@ -248,6 +254,7 @@ bool SafetyChecker::isSafeInLaneletCollisionCheck() const
   for (size_t i = 0; i < target_objects.size(); i++) {
     const auto & target_object = target_objects[i];
     const auto & target_object_path = target_objects_paths[i];
+    // TODO(Sugahara): use structure of PredictedPolygons in the function
     if (!utils::safety_check::isSafeInLaneletCollisionCheck(
           path_to_safety_check, predicted_ego_poses, current_velocity, check_duration,
           target_object, target_object_path, common_params, front_object_deceleration,

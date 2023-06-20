@@ -59,6 +59,20 @@ struct ObjectTypesToCheck
   bool check_pedestrian{true};
 };
 
+struct PredictedPolygons
+{
+  std::vector<double> check_durations;
+  std::vector<Pose> poses;
+  std::vector<Polygon2d> polygons;
+};
+
+// struct PredictedPolygon
+// {
+//   double check_time;
+//   Pose pose;
+//   Polygon2d polygon;
+// };
+
 struct RSSparams
 {
   double rear_vehicle_reaction_time{};
@@ -142,7 +156,7 @@ public:
    * @details This function checks the safety of the path by checking the collision with the dynamic
    * obstacles.
    */
-  void isPathSafe(const PathWithLaneId & path, const Odometry ego_odometry);
+  bool isPathSafe(const PathWithLaneId & path, const Odometry ego_odometry);
 
 private:
   std::shared_ptr<SafetyCheckParams> safety_check_params_{};
@@ -153,8 +167,7 @@ private:
   PredictedPath createPredictedPath() const;
   lanelet::ConstLanelets getBackwardLanelets() const;
   TargetObjectIndices filterObjectIndices() const;
-  std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>>
-  getEgoExpectedPoseAndConvertToPolygon() const;
+  PredictedPolygons getEgoExpectedPoseAndConvertToPolygon() const;
   bool isSafeInLaneletCollisionCheck() const;
   bool isObjectIndexIncluded(
     const size_t & index, const std::vector<size_t> & dynamic_objects_indices) const;
