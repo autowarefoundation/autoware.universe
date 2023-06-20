@@ -105,16 +105,9 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 
   std::map<std::size_t, Polygon2d> cluster_roi_map;
   for (std::size_t i = 0; i < input_cluster_msg.feature_objects.size(); ++i) {
-    if (input_cluster_msg.feature_objects.at(i).feature.cluster.data.empty()) {
-      continue;
-    }
-
-    if (filter_by_distance(input_cluster_msg.feature_objects.at(i))) {
-      continue;
-    }
-
-    // filter point out of scope
-    if (debugger_ && out_of_scope(input_cluster_msg.feature_objects.at(i))) {
+    if (const auto & object = input_cluster_msg.feature_objects.at(i);
+        object.feature.cluster.data.empty() || filter_by_distance(object) ||
+        (debugger_ && out_of_scope(object))) {
       continue;
     }
 
@@ -136,12 +129,12 @@ void RoiClusterFusionNode::fuseOnSingleImage(
         projection * Eigen::Vector4d(*iter_x, *iter_y, *iter_z, 1.0);
       Eigen::Vector2d normalized_projected_point = Eigen::Vector2d(
         projected_point.x() / projected_point.z(), projected_point.y() / projected_point.z());
-      if (int projected_x = static_cast<int>(normalized_projected_point.x()),
+      if (const int projected_x = static_cast<int>(normalized_projected_point.x()),
           projected_y = static_cast<int>(normalized_projected_point.y());
           0 <= projected_x && projected_x <= static_cast<int>(camera_info.width) - 1 &&
           0 <= projected_y && projected_y <= static_cast<int>(camera_info.height) - 1) {
-        projected_points.push_back(normalized_projected_point);
-        debug_image_points.push_back(normalized_projected_point);
+        projected_points.emplace_back(normalized_projected_point);
+        debug_image_points.emplace_back(normalized_projected_point);
       }
     }
     if (projected_points.empty()) {
@@ -172,14 +165,12 @@ void RoiClusterFusionNode::fuseOnSingleImage(
         max_iou = iou + iou_x + iou_y;
       }
     }
-    if (
-      iou_threshold_ < max_iou &&
-      output_cluster_msg.feature_objects.at(index).object.existence_probability <=
-        feature_obj.object.existence_probability &&
-      feature_obj.object.classification.front().label !=
-        autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
-      output_cluster_msg.feature_objects.at(index).object.classification =
-        feature_obj.object.classification;
+    if (auto & cluster_object = output_cluster_msg.feature_objects.at(index).object;
+        iou_threshold_ < max_iou &&
+        cluster_object.existence_probability <= feature_obj.object.existence_probability &&
+        feature_obj.object.classification.front().label !=
+          autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
+      cluster_object.classification = feature_obj.object.classification;
     }
     debug_image_rois.push_back(feature_obj.feature.roi);
   }

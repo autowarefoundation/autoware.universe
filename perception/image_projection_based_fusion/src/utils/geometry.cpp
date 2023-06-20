@@ -14,7 +14,6 @@
 
 #include "image_projection_based_fusion/utils/geometry.hpp"
 
-#include <perception_utils/matching.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace image_projection_based_fusion
@@ -79,7 +78,7 @@ double calcIoUX(
   return overlap_s / (s_1 + s_2 - overlap_s);
 }
 
-double calcIouX(const Polygon2d & roi_1, const Polygon2d & roi_2)
+double calcIoUX(const Polygon2d & roi_1, const Polygon2d & roi_2)
 {
   if (boost::geometry::disjoint(roi_1, roi_2)) {
     return 0.0;
@@ -113,7 +112,7 @@ double calcIoUY(
   return overlap_s / (s_1 + s_2 - overlap_s);
 }
 
-double calcIouY(const Polygon2d & roi_1, const Polygon2d & roi_2)
+double calcIoUY(const Polygon2d & roi_1, const Polygon2d & roi_2)
 {
   if (boost::geometry::disjoint(roi_1, roi_2)) {
     return 0.0;
@@ -197,15 +196,10 @@ void transformPoints(
 
 Polygon2d roi2Polygon(const sensor_msgs::msg::RegionOfInterest & roi)
 {
-  Polygon2d polygon;
-  boost::geometry::exterior_ring(polygon).emplace_back(Point2d(roi.x_offset, roi.y_offset));
-  boost::geometry::exterior_ring(polygon).emplace_back(
-    Point2d(roi.x_offset + roi.width, roi.y_offset));
-  boost::geometry::exterior_ring(polygon).emplace_back(
-    Point2d(roi.x_offset + roi.width, roi.y_offset + roi.height));
-  boost::geometry::exterior_ring(polygon).emplace_back(
-    Point2d(roi.x_offset, roi.y_offset + roi.height));
-  return polygon;
+  return Polygon2d{
+    {Point2d(roi.x_offset, roi.y_offset), Point2d(roi.x_offset + roi.width, roi.y_offset),
+     Point2d(roi.x_offset + roi.width, roi.y_offset + roi.height),
+     Point2d(roi.x_offset, roi.y_offset + roi.height)}};
 }
 
 Polygon2d point2ConvexHull(const std::vector<Eigen::Vector2d> & points)
