@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECKER__SAFETY_CHECKER_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/marker_util/debug_utilities.hpp"
 #include "behavior_path_planner/parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -58,6 +59,15 @@ struct ObjectTypesToCheck
   bool check_pedestrian{true};
 };
 
+struct RSSparams
+{
+  double rear_vehicle_reaction_time{};
+  double rear_vehicle_safety_time_margin{};
+  double lateral_distance_max_threshold{};
+  double longitudinal_distance_min_threshold{};
+  double longitudinal_velocity_delta_time{};
+};
+
 struct SafetyCheckParams
 {
   // Trajectory generation parameters
@@ -93,6 +103,8 @@ struct SafetyCheckParams
   double expected_front_deceleration{-1.0};
   double expected_rear_deceleration{-1.0};
 
+  RSSparams rss_params{};
+
   // Route and dynamic objects information
   PredictedObjects::ConstSharedPtr dynamic_objects;
   TargetObjectIndices & dynamic_objects_indices;
@@ -102,6 +114,8 @@ struct SafetyCheckParams
   // Vehicle dimensions
   vehicle_info_util::VehicleInfo vehicle_info{};
   double vehicle_width{1.83};
+
+  marker_utils::CollisionCheckDebug & collision_check_debug;
 
   // Debug marker publishing option
   bool publish_debug_marker{false};
@@ -114,9 +128,6 @@ enum class TRAJECTORY_TYPE {
 
 namespace safety_checker
 {
-// plannerdataには依存しない
-// どう拡張するのか分からない？
-// 拡張イメージ湧けばOK
 
 class SafetyChecker
 {

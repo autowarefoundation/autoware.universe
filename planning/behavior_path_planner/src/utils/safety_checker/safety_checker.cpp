@@ -15,6 +15,7 @@
 #include "behavior_path_planner/utils/safety_checker/safety_checker.hpp"
 
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/safety_check.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
@@ -208,15 +209,20 @@ SafetyChecker::getEgoExpectedPoseAndConvertToPolygon() const
 
   const auto reserve_size =
     static_cast<size_t>((check_end_time - check_start_time) / time_resolution);
+  std::vector<double> check_durations{};
   std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> interpolated_ego{};
+  check_durations.reserve(reserve_size);
   interpolated_ego.reserve(reserve_size);
 
   for (double t = check_start_time; t < check_end_time; t += time_resolution) {
+    tier4_autoware_utils::Polygon2d ego_polygon;
     const auto result =
       utils::getEgoExpectedPoseAndConvertToPolygon(ego_predicted_path, t, vehicle_info);
-    if (result) {
-      interpolated_ego.emplace_back(result->first, result->second);
+    if (!result) {
+      continue;
     }
+    check_durations.push_back(t);
+    interpolated_ego.emplace_back(result->first, result->second);
   }
 
   return interpolated_ego;
@@ -224,10 +230,33 @@ SafetyChecker::getEgoExpectedPoseAndConvertToPolygon() const
 
 bool SafetyChecker::isSafeInLaneletCollisionCheck() const
 {
-  // Implement the function to check the safety in lanelet collision based on the
-  // safety_check_params_ You can use the member variables and functions defined in the
-  // SafetyChecker class
-  return false;
+  const auto path_to_safety_check = *path_to_safety_check_;
+  const auto predicted_ego_poses = getEgoExpectedPoseAndConvertToPolygon();
+  const double current_velocity = ego_odometry_->twist.twist.linear.x;
+  const std::vector<double> check_duration;
+  // TODO(Sugahara): implement funciton
+  // const auto target_objects = getTargetObjects();
+  // const auto target_objects_paths = getTargetObjectsPaths();
+  // const auto rss_params = safety_check_params_->rss_params;
+  std::vector<PredictedObject> target_objects;
+  std::vector<PredictedPath> target_objects_paths;
+  BehaviorPathPlannerParameters common_params;
+  const double front_object_deceleration = safety_check_params_->expected_front_deceleration;
+  const double rear_object_deceleration = safety_check_params_->expected_rear_deceleration;
+  marker_utils::CollisionCheckDebug debug_info = safety_check_params_->collision_check_debug;
+
+  for (size_t i = 0; i < target_objects.size(); i++) {
+    const auto & target_object = target_objects[i];
+    const auto & target_object_path = target_objects_paths[i];
+    if (!utils::safety_check::isSafeInLaneletCollisionCheck(
+          path_to_safety_check, predicted_ego_poses, current_velocity, check_duration,
+          target_object, target_object_path, common_params, front_object_deceleration,
+          rear_object_deceleration, debug_info)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool SafetyChecker::isObjectIndexIncluded() const
