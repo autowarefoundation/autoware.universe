@@ -197,13 +197,29 @@ TargetObjectIndices SafetyChecker::filterObjectIndices() const
   return {current_lane_obj_indices, target_lane_obj_indices, others_obj_indices};
 }
 
-boost::optional<std::pair<Pose, Polygon2d>> SafetyChecker::getEgoExpectedPoseAndConvertToPolygon()
-  const
+std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>>
+SafetyChecker::getEgoExpectedPoseAndConvertToPolygon() const
 {
-  // Implement the function to get the ego's expected pose and convert it to a polygon based on the
-  // safety_check_params_ You can use the member variables and functions defined in the
-  // SafetyChecker class
-  return boost::none;
+  const auto ego_predicted_path = createPredictedPath();
+  const double check_start_time = safety_check_params_->check_start_time;
+  const double check_end_time = safety_check_params_->check_end_time;
+  const double time_resolution = safety_check_params_->prediction_time_resolution;
+  const auto vehicle_info = safety_check_params_->vehicle_info;
+
+  const auto reserve_size =
+    static_cast<size_t>((check_end_time - check_start_time) / time_resolution);
+  std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> interpolated_ego{};
+  interpolated_ego.reserve(reserve_size);
+
+  for (double t = check_start_time; t < check_end_time; t += time_resolution) {
+    const auto result =
+      utils::getEgoExpectedPoseAndConvertToPolygon(ego_predicted_path, t, vehicle_info);
+    if (result) {
+      interpolated_ego.emplace_back(result->first, result->second);
+    }
+  }
+
+  return interpolated_ego;
 }
 
 bool SafetyChecker::isSafeInLaneletCollisionCheck() const

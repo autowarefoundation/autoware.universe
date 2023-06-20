@@ -100,6 +100,7 @@ struct SafetyCheckParams
   lanelet::ConstLanelets target_lanelets{};
 
   // Vehicle dimensions
+  vehicle_info_util::VehicleInfo vehicle_info{};
   double vehicle_width{1.83};
 
   // Debug marker publishing option
@@ -137,10 +138,12 @@ private:
   std::shared_ptr<PathWithLaneId> path_to_safety_check_{};
   std::shared_ptr<Odometry> ego_odometry_{};
 
+  // TODO(Sugahara): remove const from function which change member variables
   PredictedPath createPredictedPath() const;
   lanelet::ConstLanelets getBackwardLanelets() const;
   TargetObjectIndices filterObjectIndices() const;
-  boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygon() const;
+  std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>>
+  getEgoExpectedPoseAndConvertToPolygon() const;
   bool isSafeInLaneletCollisionCheck() const;
   bool isObjectIndexIncluded() const;
   bool isTargetObjectFront() const;
