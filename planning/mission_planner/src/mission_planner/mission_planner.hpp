@@ -52,6 +52,7 @@ using ChangeRoutePoints = planning_interface::ChangeRoutePoints;
 using ChangeRoute = planning_interface::ChangeRoute;
 using Route = planning_interface::Route;
 using NormalRoute = planning_interface::NormalRoute;
+using MrmRoute = planning_interface::MrmRoute;
 using RouteState = planning_interface::RouteState;
 using Odometry = nav_msgs::msg::Odometry;
 
@@ -91,6 +92,7 @@ private:
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
   component_interface_utils::Publisher<Route>::SharedPtr pub_route_;
   component_interface_utils::Publisher<NormalRoute>::SharedPtr pub_normal_route_;
+  component_interface_utils::Publisher<MrmRoute>::SharedPtr pub_mrm_route_;
   void change_state(RouteState::Message::_state_type state);
 
   component_interface_utils::Service<ClearRoute>::SharedPtr srv_clear_route_;
