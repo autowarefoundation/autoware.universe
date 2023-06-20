@@ -86,7 +86,9 @@ StartPlannerModule::StartPlannerModule(
 
 BehaviorModuleOutput StartPlannerModule::run()
 {
+#ifdef USE_OLD_ARCHITECTURE
   current_state_ = ModuleStatus::RUNNING;
+#endif
 
 #ifndef USE_OLD_ARCHITECTURE
   if (!isActivated()) {
@@ -105,6 +107,18 @@ void StartPlannerModule::processOnExit()
 
 bool StartPlannerModule::isExecutionRequested() const
 {
+  // Check if ego arrives at goal
+  const Pose & goal_pose = planner_data_->route_handler->getGoalPose();
+  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  if (
+    tier4_autoware_utils::calcDistance2d(goal_pose.position, current_pose.position) <
+    parameters_->th_arrived_distance) {
+#ifdef USE_OLD_ARCHITECTURE
+    is_executed_ = false;
+#endif
+    return false;
+  }
+
   has_received_new_route_ =
     !planner_data_->prev_route_id ||
     *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
@@ -127,7 +141,7 @@ bool StartPlannerModule::isExecutionRequested() const
   }
 
   const bool is_stopped = utils::l2Norm(planner_data_->self_odometry->twist.twist.linear) <
-                          parameters_->th_arrived_distance;
+                          parameters_->th_stopped_velocity;
   if (!is_stopped) {
 #ifdef USE_OLD_ARCHITECTURE
     is_executed_ = false;
@@ -164,10 +178,21 @@ bool StartPlannerModule::isExecutionReady() const
   return true;
 }
 
-// this runs only when RUNNING
 ModuleStatus StartPlannerModule::updateState()
 {
   RCLCPP_DEBUG(getLogger(), "START_PLANNER updateState");
+
+#ifdef USE_OLD_ARCHITECTURE
+  if (isActivated() && !isWaitingApproval()) {
+    current_state_ = ModuleStatus::RUNNING;
+  }
+#else
+  if (isActivated() && !isWaitingApproval()) {
+    current_state_ = ModuleStatus::RUNNING;
+  } else {
+    current_state_ = ModuleStatus::IDLE;
+  }
+#endif
 
   if (hasFinishedPullOut()) {
     return ModuleStatus::SUCCESS;
@@ -682,21 +707,6 @@ bool StartPlannerModule::hasFinishedPullOut() const
 
   const auto current_pose = planner_data_->self_odometry->pose.pose;
 
-  // keep running until returning to the path, considering that other modules (e.g avoidance)
-  // are also running at the same time.
-  const double lateral_offset_to_path =
-    motion_utils::calcLateralOffset(getCurrentPath().points, current_pose.position);
-  constexpr double lateral_offset_threshold = 0.2;
-  if (std::abs(lateral_offset_to_path) > lateral_offset_threshold) {
-    return false;
-  }
-  const double yaw_deviation =
-    motion_utils::calcYawDeviation(getCurrentPath().points, current_pose);
-  constexpr double yaw_deviation_threshold = 0.087;  // 5deg
-  if (std::abs(yaw_deviation) > yaw_deviation_threshold) {
-    return false;
-  }
-
   // check that ego has passed pull out end point
   const auto arclength_current =
     lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose);
@@ -806,10 +816,10 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   const double lateral_offset = lanelet::utils::getLateralDistanceToCenterline(lane, start_pose);
 
   if (distance_from_end < 0.0 && lateral_offset > parameters_->th_blinker_on_lateral_offset) {
-    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   } else if (
     distance_from_end < 0.0 && lateral_offset < -parameters_->th_blinker_on_lateral_offset) {
-    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
   } else {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
   }
