@@ -48,41 +48,55 @@ struct TargetObjectIndices
 
 struct CollisionCheckParams
 {
-  // trajectory generation
+  // Trajectory generation parameters
   double backward_lane_length{200.0};
   double prediction_time_resolution{0.5};
+  double target_velocity{4.0};
+  double forward_path_length{300.0};
 
+  // Prediction options
   bool use_predicted_path_outside_lanelet{false};
   bool use_all_predicted_path{false};
 
-  // true by default
-  bool check_car{true};         // check object car
-  bool check_truck{true};       // check object truck
-  bool check_bus{true};         // check object bus
-  bool check_trailer{true};     // check object trailer
-  bool check_unknown{true};     // check object unknown
-  bool check_bicycle{true};     // check object bicycle
-  bool check_motorcycle{true};  // check object motorbike
-  bool check_pedestrian{true};  // check object pedestrian
+  // Object types to check for collisions
+  bool check_car{true};         // Check object car
+  bool check_truck{true};       // Check object truck
+  bool check_bus{true};         // Check object bus
+  bool check_trailer{true};     // Check object trailer
+  bool check_unknown{true};     // Check object unknown
+  bool check_bicycle{true};     // Check object bicycle
+  bool check_motorcycle{true};  // Check object motorbike
+  bool check_pedestrian{true};  // Check object pedestrian
 
+  // Buffer and thresholds
   double lateral_buffer{0.2};
+  double ego_nearest_dist_threshold{3.0};
+  double ego_nearest_yaw_threshold{1.046};
 
-  // debug marker
-  bool publish_debug_marker{false};
+  // Time window for collision checking
+  double check_start_time{4.0};
+  double check_end_time{10.0};
 
-  double target_velocity double stopping_time double acc_till_target_velocity
-    PredictedObjects::ConstSharedPtr dynamic_objects TargetObjectIndices & dynamic_objects_indices
-      RouteHandler route_handler lanelet::ConstLanelets reference_lanelets{};
+  // Stopping and acceleration parameters
+  double stopping_time{1.0};
+  double acc_till_target_velocity{1.0};
+  double expected_front_deceleration{-1.0};
+  double expected_rear_deceleration{-1.0};
+
+  // Route and dynamic objects information
+  PredictedObjects::ConstSharedPtr dynamic_objects;
+  TargetObjectIndices & dynamic_objects_indices;
+  RouteHandler route_handler;
+  lanelet::ConstLanelets reference_lanelets{};
   lanelet::ConstLanelets target_lanelets{};
-  double vehicle_width double forward_path_length
 
-    double ego_nearest_dist_threshold double ego_nearest_yaw_threshold
+  // Vehicle dimensions
+  double vehicle_width{1.83};
 
-    double check_end_time double check_start_time
-
-    double expected_front_deceleration{-1.0};
-  double expected_rear_deceleration
+  // Debug marker publishing option
+  bool publish_debug_marker{false};
 };
+
 
 enum class TRAJECTORY_TYPE {
   LINEAR = 0,
