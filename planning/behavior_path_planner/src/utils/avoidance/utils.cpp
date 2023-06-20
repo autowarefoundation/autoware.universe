@@ -110,6 +110,53 @@ bool isTargetObjectType(
   return parameters->object_parameters.at(t).enable;
 }
 
+bool isVehicleTypeObject(const ObjectData & object)
+{
+  const auto t = utils::getHighestProbLabel(object.object.classification);
+
+  if (t == ObjectClassification::UNKNOWN) {
+    return false;
+  }
+
+  if (t == ObjectClassification::PEDESTRIAN) {
+    return false;
+  }
+
+  if (t == ObjectClassification::BICYCLE) {
+    return false;
+  }
+
+  return true;
+}
+
+bool isWithinCrosswalk(
+  const ObjectData & object,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
+{
+  using Point = boost::geometry::model::d2::point_xy<double>;
+  using boost::geometry::correct;
+  using boost::geometry::within;
+
+  const auto & p = object.object.kinematics.initial_pose_with_covariance.pose.position;
+  const Point p_object{p.x, p.y};
+
+  constexpr int PEDESTRIAN_GRAPH_ID = 1;
+  const auto conflicts =
+    overall_graphs->conflictingInGraph(object.overhang_lanelet, PEDESTRIAN_GRAPH_ID);
+
+  for (const auto & crosswalk : conflicts) {
+    auto polygon = crosswalk.polygon2d().basicPolygon();
+
+    correct(polygon);
+
+    if (within(p_object, polygon)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 double calcShiftLength(
   const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin)
 {
@@ -752,6 +799,7 @@ void filterTargetObjects(
     const auto object_parameter = parameters->object_parameters.at(t);
 
     if (!isTargetObjectType(o.object, parameters)) {
+      o.reason = AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE;
       data.other_objects.push_back(o);
       continue;
     }
@@ -840,6 +888,12 @@ void filterTargetObjects(
           rh, target_line, o.to_road_shoulder_distance, o.overhang_pose.position,
           overhang_basic_pose);
       }
+    }
+
+    if (!isVehicleTypeObject(o) && isWithinCrosswalk(o, rh->getOverallGraphPtr())) {
+      o.reason = "CrosswalkUser";
+      data.other_objects.push_back(o);
+      continue;
     }
 
     // calculate avoid_margin dynamically
