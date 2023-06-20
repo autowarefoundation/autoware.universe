@@ -890,12 +890,6 @@ void filterTargetObjects(
       }
     }
 
-    if (!isVehicleTypeObject(o) && isWithinCrosswalk(o, rh->getOverallGraphPtr())) {
-      o.reason = "CrosswalkUser";
-      data.other_objects.push_back(o);
-      continue;
-    }
-
     // calculate avoid_margin dynamically
     // NOTE: This calculation must be after calculating to_road_shoulder_distance.
     const double max_avoid_margin = object_parameter.safety_buffer_lateral * o.distance_factor +
@@ -925,6 +919,18 @@ void filterTargetObjects(
         data.other_objects.push_back(o);
         continue;
       }
+    }
+
+    if (!isVehicleTypeObject(o)) {
+      if (isWithinCrosswalk(o, rh->getOverallGraphPtr())) {
+        o.reason = "CrosswalkUser";
+        data.other_objects.push_back(o);
+      } else {
+        o.last_seen = now;
+        o.avoid_margin = avoid_margin;
+        data.target_objects.push_back(o);
+      }
+      continue;
     }
 
     const auto stop_time_longer_than_threshold =
