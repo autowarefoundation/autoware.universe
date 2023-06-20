@@ -841,7 +841,11 @@ void StartPlannerModule::setDebugData() const
   using tier4_autoware_utils::createMarkerColor;
   using tier4_autoware_utils::createMarkerScale;
 
-  const auto add = [this](const MarkerArray & added) {
+  const auto life_time = rclcpp::Duration::from_seconds(1.5);
+  auto add = [&](MarkerArray added) {
+    for (auto & marker : added.markers) {
+      marker.lifetime = life_time;
+    }
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
@@ -867,7 +871,7 @@ void StartPlannerModule::setDebugData() const
     marker.text += magic_enum::enum_name(status_.planner_type);
     marker.text += " " + std::to_string(status_.current_path_idx) + "/" +
                    std::to_string(status_.pull_out_path.partial_paths.size() - 1);
-
+    marker.lifetime = life_time;
     planner_type_marker_array.markers.push_back(marker);
     add(planner_type_marker_array);
   }
