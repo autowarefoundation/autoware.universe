@@ -156,8 +156,9 @@ private:
   std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>>
   getEgoExpectedPoseAndConvertToPolygon() const;
   bool isSafeInLaneletCollisionCheck() const;
-  bool isObjectIndexIncluded() const;
-  bool isTargetObjectFront() const;
+  bool isObjectIndexIncluded(
+    const size_t & index, const std::vector<size_t> & dynamic_objects_indices) const;
+  bool isTargetObjectFront(const Polygon2d & obj_polygon) const;
 };
 }  // namespace safety_checker
 

@@ -259,19 +259,29 @@ bool SafetyChecker::isSafeInLaneletCollisionCheck() const
   return true;
 }
 
-bool SafetyChecker::isObjectIndexIncluded() const
+bool SafetyChecker::isObjectIndexIncluded(
+  const size_t & index, const std::vector<size_t> & dynamic_objects_indices) const
 {
-  // Implement the function to check if the object index is included based on the
-  // safety_check_params_ You can use the member variables and functions defined in the
-  // SafetyChecker class
-  return false;
+  return std::count(dynamic_objects_indices.begin(), dynamic_objects_indices.end(), index) != 0;
 }
 
-bool SafetyChecker::isTargetObjectFront() const
+// TODO(Sugahara): move this function from utils in lane change to common utils
+bool SafetyChecker::isTargetObjectFront(const Polygon2d & obj_polygon) const
 {
-  // Implement the function to check if the target object is in front based on the
-  // safety_check_params_ You can use the member variables and functions defined in the
-  // SafetyChecker class
+  const auto following_trajectory_points = path_to_safety_check_->points;
+  const auto ego_pose = ego_odometry_->pose.pose;
+  const auto base_to_front = safety_check_params_->vehicle_info.max_longitudinal_offset_m;
+  const auto ego_point =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, base_to_front, 0.0, 0.0).position;
+
+  // check all edges in the polygon
+  for (const auto & obj_edge : obj_polygon.outer()) {
+    const auto obj_point = tier4_autoware_utils::createPoint(obj_edge.x(), obj_edge.y(), 0.0);
+    if (motion_utils::isTargetPointFront(following_trajectory_points, ego_point, obj_point)) {
+      return true;
+    }
+  }
+
   return false;
 }
 
