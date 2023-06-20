@@ -31,22 +31,29 @@ namespace behavior_path_planner
 namespace safety_checker
 {
 
-void SafetyChecker::isPathSafe([[maybe_unused]] const PathWithLaneId & path)
+void SafetyChecker::isPathSafe(const PathWithLaneId & path, const Odometry ego_odometry)
 {
-  // Implement the function to check the safety of the path against dynamic obstacles
-  // You can use the member variables and functions defined in the SafetyChecker class
+  path_to_safety_check_ = std::make_unique<PathWithLaneId>(path);
+  ego_odometry_ = std::make_unique<Odometry>(ego_odometry);
+  const auto ego_predicted_path = createPredictedPath();
   return;
 }
 
 PredictedPath SafetyChecker::createPredictedPath() const
 {
-  // Implement the function to create a predicted path based on the safety_check_params_
-  // You can use the member variables and functions defined in the SafetyChecker class
-  // utils::createPredictedPathFromTargetVelocity(
-  //   following_trajectory_points, current_velocity, target_velocity, acc_till_target_velocity,
-  //   pose, resolution, stopping_time);
+  const auto following_trajectory_points = path_to_safety_check_->points;
+  const auto current_velocity = ego_odometry_->twist.twist.linear.x;
+  const auto target_velocity = safety_check_params_->target_velocity;
+  const auto acc_till_target_velocity = safety_check_params_->acc_till_target_velocity;
+  const auto pose = ego_odometry_->pose.pose;
+  const auto resolution = safety_check_params_->prediction_time_resolution;
+  const auto stopping_time = safety_check_params_->stopping_time;
 
-  return PredictedPath{};
+  const auto ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
+    following_trajectory_points, current_velocity, target_velocity, acc_till_target_velocity, pose,
+    resolution, stopping_time);
+
+  return ego_predicted_path;
 }
 
 lanelet::ConstLanelets SafetyChecker::getBackwardLanelets() const

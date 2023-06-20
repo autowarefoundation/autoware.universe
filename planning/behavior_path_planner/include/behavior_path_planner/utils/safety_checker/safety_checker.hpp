@@ -120,11 +120,12 @@ public:
    * @details This function checks the safety of the path by checking the collision with the dynamic
    * obstacles.
    */
-  void isPathSafe(const PathWithLaneId & path);
+  void isPathSafe(const PathWithLaneId & path, const Odometry ego_odometry);
 
 private:
   std::shared_ptr<SafetyCheckParams> safety_check_params_{};
-  PathWithLaneId path_to_safety_check{};
+  std::shared_ptr<PathWithLaneId> path_to_safety_check_{};
+  std::shared_ptr<Odometry> ego_odometry_{};
 
   PredictedPath createPredictedPath() const;
   lanelet::ConstLanelets getBackwardLanelets() const;
