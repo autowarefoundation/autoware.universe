@@ -231,10 +231,9 @@ private:
 
   /**
    * @brief insert stop point in output path.
-   * @param flag. if it is true, the ego decelerates within accel/jerk constraints.
    * @param target path.
    */
-  void insertPrepareVelocity(const bool avoidable, ShiftedPath & shifted_path) const;
+  void insertPrepareVelocity(ShiftedPath & shifted_path) const;
 
   /**
    * @brief insert decel point in output path in order to yield. the ego decelerates within
@@ -578,23 +577,32 @@ private:
 
   /**
    * @brief reset registered shift lines.
-   * @param path shifter.
+   * @details reset only when the base offset is zero. Otherwise, sudden steering will be caused;
    */
-  void removeAllRegisteredShiftPoints(PathShifter & path_shifter)
+  void removeRegisteredShiftLines()
   {
+    constexpr double THRESHOLD = 0.1;
+    if (std::abs(path_shifter_.getBaseOffset()) > THRESHOLD) {
+      RCLCPP_INFO(getLogger(), "base offset is not zero. can't reset registered shift lines.");
+      return;
+    }
+
+    initRTCStatus();
+    unlockNewModuleLaunch();
+
     current_raw_shift_lines_.clear();
     registered_raw_shift_lines_.clear();
-    path_shifter.setShiftLines(ShiftLineArray{});
+    path_shifter_.setShiftLines(ShiftLineArray{});
   }
 
   /**
    * @brief remove behind shift lines.
    * @param path shifter.
    */
-  void postProcess(PathShifter & path_shifter) const
+  void postProcess()
   {
-    const size_t nearest_idx = planner_data_->findEgoIndex(path_shifter.getReferencePath().points);
-    path_shifter.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
+    const size_t idx = planner_data_->findEgoIndex(path_shifter_.getReferencePath().points);
+    path_shifter_.removeBehindShiftLineAndSetBaseOffset(idx);
   }
 
   // misc functions
