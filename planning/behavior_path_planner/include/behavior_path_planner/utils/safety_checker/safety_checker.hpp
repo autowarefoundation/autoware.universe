@@ -46,7 +46,7 @@ struct TargetObjectIndices
   std::vector<size_t> other_lane{};
 };
 
-struct CollisionCheckParams
+struct SafetyCheckParams
 {
   // Trajectory generation parameters
   double backward_lane_length{200.0};
@@ -111,12 +111,8 @@ class SafetyChecker
 {
 public:
   explicit SafetyChecker(
-    const std::shared_ptr<BehaviorPathPlannerParameters> & common_parameters,
-    const std::shared_ptr<PlannerData> & planner_data)
-  : planner_data_{planner_data}, common_parameters_{common_parameters}
-  {
-    collision_check_data_ = createCollisionCheckData(common_parameters, planner_data);
-  }
+    const std::shared_ptr<SafetyCheckParams> & safety_check_params)
+  : safety_check_params_{safety_check_params}
 
   /**
    * @brief Check path is safe against dynamic obstacles.
@@ -126,11 +122,7 @@ public:
   void isPathSafe(const PathWithLaneId & path);
 
 private:
-  std::shared_ptr<BehaviorPathPlannerParameters> common_parameters_{};
-  std::shared_ptr<const PlannerData> planner_data_{};
-  std::shared_ptr<CollisionCheckData> collision_check_data_{};
-
-  CollisionCheckData createCollisionCheckData();
+  std::shared_ptr<SafetyCheckParams> safety_check_params_{};
   PredictedPath createPredictedPath() const;
   lanelet::ConstLanelets getBackwardLanelets() const;
   TargetObjectIndices filterObjectIndices() const;
