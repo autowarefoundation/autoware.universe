@@ -106,9 +106,6 @@ struct SafetyCheckParams
   double check_start_time{4.0};
   double check_end_time{10.0};
 
-  lanelet::ConstLanelets current_lanes{};
-  lanelet::ConstLanelets target_lanes{};
-  // lanelet::ConstLanelets reference_lanes{};
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
 
   // Stopping and acceleration parameters
@@ -119,20 +116,25 @@ struct SafetyCheckParams
 
   RSSparams rss_params{};
 
-  // Route and dynamic objects information
-  PredictedObjects::ConstSharedPtr dynamic_objects;
-  TargetObjectIndices & dynamic_objects_indices;
-  lanelet::ConstLanelets reference_lanelets{};
-  lanelet::ConstLanelets target_lanelets{};
-
   // Vehicle dimensions
   vehicle_info_util::VehicleInfo vehicle_info{};
   double vehicle_width{1.83};
 
-  marker_utils::CollisionCheckDebug & collision_check_debug;
-
   // Debug marker publishing option
   bool publish_debug_marker{false};
+};
+
+struct SafetyCheckData
+{
+  // Route and dynamic objects information
+  PredictedObjects::ConstSharedPtr dynamic_objects;
+  TargetObjectIndices & dynamic_objects_indices;
+  lanelet::ConstLanelets target_lanes{};
+  lanelet::ConstLanelets current_lanes{};
+  lanelet::ConstLanelets target_lanes{};
+  // lanelet::ConstLanelets reference_lanes{};
+
+  marker_utils::CollisionCheckDebug & collision_check_debug;
 };
 
 namespace safety_checker
@@ -155,6 +157,7 @@ public:
 
 private:
   std::shared_ptr<SafetyCheckParams> safety_check_params_{};
+  std::shared_ptr<SafetyCheckData> safety_check_data_{};
   std::shared_ptr<PathWithLaneId> path_to_safety_check_{};
   std::shared_ptr<Odometry> ego_odometry_{};
 

@@ -32,12 +32,12 @@ namespace behavior_path_planner
 namespace safety_checker
 {
 
-bool SafetyChecker::isPathSafe(const PathWithLaneId & path, const Odometry ego_odometry)
+bool SafetyChecker::isPathSafe(const PathWithLaneId & path, const Odometry ego_odometryR)
 {
   path_to_safety_check_ = std::make_unique<PathWithLaneId>(path);
   ego_odometry_ = std::make_unique<Odometry>(ego_odometry);
 
-  const auto dynamic_objects = safety_check_params_->dynamic_objects;
+  const auto dynamic_objects = safety_check_data_->dynamic_objects;
 
   // TODO(Sugahara): consider define of PathSafetyStatus and how to return when dynamic_objects is
   // nullptr
@@ -71,7 +71,7 @@ PredictedPath SafetyChecker::createPredictedPath() const
 lanelet::ConstLanelets SafetyChecker::getBackwardLanelets() const
 {
   const auto & route_handler = safety_check_params_->route_handler;
-  const auto target_lanes = safety_check_params_->target_lanes;
+  const auto target_lanes = safety_check_data_->target_lanes;
   const auto ego_pose = ego_odometry_->pose.pose;
   const double backward_length = safety_check_params_->backward_lane_length;
 
@@ -114,9 +114,9 @@ lanelet::ConstLanelets SafetyChecker::getBackwardLanelets() const
 TargetObjectIndices SafetyChecker::filterObjectIndices() const
 {
   const auto path_to_safety_check = *path_to_safety_check_;
-  const auto current_lanes = safety_check_params_->current_lanes;
-  const auto target_lanes = safety_check_params_->target_lanes;
-  const auto objects = safety_check_params_->dynamic_objects;
+  const auto current_lanes = safety_check_data_->current_lanes;
+  const auto target_lanes = safety_check_data_->target_lanes;
+  const auto objects = safety_check_data_->dynamic_objects;
   const auto target_backward_lanes = getBackwardLanelets();
   const auto ego_pose = ego_odometry_->pose.pose;
   const double forward_path_length = safety_check_params_->forward_path_length;
