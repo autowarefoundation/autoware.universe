@@ -378,25 +378,13 @@ DynamicAvoidanceModule::calcTargetObjectsCandidate() const
           return false;
         }
 
-        constexpr double cut_out_prediction_time = 1.0;
-        const double dist_from_path_to_obj =
-          motion_utils::calcLateralOffset(prev_module_path->points, object.pose.position);
-        const double predicted_dist_from_path_to_obj =
-          dist_from_path_to_obj + object.lat_vel * cut_out_prediction_time;
-        constexpr double cut_out_thresh_margin = 0.5;  // NOTE: for object's center to edge
-        const double cut_out_thresh_abs_dist_from_path_to_obj =
-          planner_data_->parameters.vehicle_width / 2.0 + parameters_->max_lat_offset_to_avoid +
-          cut_out_thresh_margin;
+        constexpr double object_lat_vel_thresh = 0.3;
         if (is_left) {
-          if (
-            0.3 < object.lat_vel &&
-            cut_out_thresh_abs_dist_from_path_to_obj < predicted_dist_from_path_to_obj) {
+          if (object_lat_vel_thresh < object.lat_vel) {
             return true;
           }
         } else {
-          if (
-            object.lat_vel < -0.3 &&
-            predicted_dist_from_path_to_obj < -cut_out_thresh_abs_dist_from_path_to_obj) {
+          if (object.lat_vel < -object_lat_vel_thresh) {
             return true;
           }
         }
