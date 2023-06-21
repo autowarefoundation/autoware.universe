@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PATH_SMOOTHING__PATH_SMOOTHER_NODE_HPP_
-#define PATH_SMOOTHING__PATH_SMOOTHER_NODE_HPP_
+#ifndef PATH_SMOOTHING__ELASTIC_BAND_SMOOTHER_HPP_
+#define PATH_SMOOTHING__ELASTIC_BAND_SMOOTHER_HPP_
 
 #include "motion_utils/motion_utils.hpp"
 #include "path_smoothing/common_structs.hpp"
@@ -30,13 +30,12 @@
 
 namespace path_smoothing
 {
-class PathSmootherNode : public rclcpp::Node
+class ElasticBandSmoother : public rclcpp::Node
 {
 public:
-  explicit PathSmootherNode(const rclcpp::NodeOptions & node_options);
+  explicit ElasticBandSmoother(const rclcpp::NodeOptions & node_options);
 
-protected:  // for the static_centerline_optimizer package
-  // TODO(murooka) move this node to common
+protected:
   class DrivingDirectionChecker
   {
   public:
@@ -57,11 +56,6 @@ protected:  // for the static_centerline_optimizer package
 
   // flags for some functions
   bool enable_debug_info_;
-  bool enable_outside_drivable_area_stop_;
-  bool enable_smoothing_;
-  bool enable_skip_optimization_;
-  bool enable_reset_prev_optimization_;
-  bool use_footprint_polygon_for_outside_drivable_area_check_;
 
   // algorithms
   std::shared_ptr<EBPathSmoother> eb_path_smoother_ptr_{nullptr};
@@ -78,6 +72,7 @@ protected:  // for the static_centerline_optimizer package
 
   // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
+  rclcpp::Publisher<Path>::SharedPtr path_pub_;
 
   // interface subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
@@ -121,4 +116,4 @@ protected:  // for the static_centerline_optimizer package
 };
 }  // namespace path_smoothing
 
-#endif  // PATH_SMOOTHING__PATH_SMOOTHER_NODE_HPP_
+#endif  // PATH_SMOOTHING__ELASTIC_BAND_SMOOTHER_HPP_

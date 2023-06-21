@@ -32,3 +32,6 @@
 
       validation: # if enable_optimization_validation is true
         max_error: 3.0 # [m]
+    # nearest search
+    ego_nearest_dist_threshold: 3.0 # [m]
+    ego_nearest_yaw_threshold: 1.046 # [rad] = 60 [deg]

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "path_smoothing/path_smoother_node.hpp"
+#include "path_smoothing/elastic_band_smoother.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "path_smoothing/utils/geometry_utils.hpp"
@@ -60,15 +60,16 @@ bool hasZeroVelocity(const TrajectoryPoint & traj_point)
 }
 }  // namespace
 
-PathSmootherNode::PathSmootherNode(const rclcpp::NodeOptions & node_options)
+ElasticBandSmoother::ElasticBandSmoother(const rclcpp::NodeOptions & node_options)
 : Node("path_smoother", node_options), time_keeper_ptr_(std::make_shared<TimeKeeper>())
 {
   // interface publisher
-  traj_pub_ = create_publisher<Trajectory>("~/output/path", 1);
+  traj_pub_ = create_publisher<Trajectory>("~/output/traj", 1);
+  path_pub_ = create_publisher<Path>("~/output/path", 1);
 
   // interface subscriber
   path_sub_ = create_subscription<Path>(
-    "~/input/path", 1, std::bind(&PathSmootherNode::onPath, this, std::placeholders::_1));
+    "~/input/path", 1, std::bind(&ElasticBandSmoother::onPath, this, std::placeholders::_1));
   odom_sub_ = create_subscription<Odometry>(
     "~/input/odometry", 1, [this](const Odometry::SharedPtr msg) { ego_state_ptr_ = msg; });
 
@@ -92,10 +93,10 @@ PathSmootherNode::PathSmootherNode(const rclcpp::NodeOptions & node_options)
 
   // set parameter callback
   set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&PathSmootherNode::onParam, this, std::placeholders::_1));
+    std::bind(&ElasticBandSmoother::onParam, this, std::placeholders::_1));
 }
 
-rcl_interfaces::msg::SetParametersResult PathSmootherNode::onParam(
+rcl_interfaces::msg::SetParametersResult ElasticBandSmoother::onParam(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
@@ -118,7 +119,7 @@ rcl_interfaces::msg::SetParametersResult PathSmootherNode::onParam(
   return result;
 }
 
-void PathSmootherNode::initializePlanning()
+void ElasticBandSmoother::initializePlanning()
 {
   RCLCPP_INFO(get_logger(), "Initialize planning");
 
@@ -126,14 +127,14 @@ void PathSmootherNode::initializePlanning()
   resetPreviousData();
 }
 
-void PathSmootherNode::resetPreviousData()
+void ElasticBandSmoother::resetPreviousData()
 {
   eb_path_smoother_ptr_->resetPreviousData();
 
   prev_optimized_traj_points_ptr_ = nullptr;
 }
 
-void PathSmootherNode::onPath(const Path::SharedPtr path_ptr)
+void ElasticBandSmoother::onPath(const Path::SharedPtr path_ptr)
 {
   time_keeper_ptr_->init();
   time_keeper_ptr_->tic(__func__);
@@ -181,9 +182,11 @@ void PathSmootherNode::onPath(const Path::SharedPtr path_ptr)
   const auto output_traj_msg =
     trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
   traj_pub_->publish(output_traj_msg);
+  const auto output_path_msg = trajectory_utils::create_path(*path_ptr, full_traj_points);
+  path_pub_->publish(output_path_msg);
 }
 
-bool PathSmootherNode::isDataReady(const Path & path, rclcpp::Clock clock) const
+bool ElasticBandSmoother::isDataReady(const Path & path, rclcpp::Clock clock) const
 {
   if (!ego_state_ptr_) {
     RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), clock, 5000, "Waiting for ego pose and twist.");
@@ -204,7 +207,7 @@ bool PathSmootherNode::isDataReady(const Path & path, rclcpp::Clock clock) const
   return true;
 }
 
-PlannerData PathSmootherNode::createPlannerData(const Path & path) const
+PlannerData ElasticBandSmoother::createPlannerData(const Path & path) const
 {
   // create planner data
   PlannerData planner_data;
@@ -217,7 +220,7 @@ PlannerData PathSmootherNode::createPlannerData(const Path & path) const
   return planner_data;
 }
 
-std::vector<TrajectoryPoint> PathSmootherNode::generateOptimizedTrajectory(
+std::vector<TrajectoryPoint> ElasticBandSmoother::generateOptimizedTrajectory(
   const PlannerData & planner_data)
 {
   time_keeper_ptr_->tic(__func__);
@@ -234,32 +237,27 @@ std::vector<TrajectoryPoint> PathSmootherNode::generateOptimizedTrajectory(
   return optimized_traj_points;
 }
 
-std::vector<TrajectoryPoint> PathSmootherNode::optimizeTrajectory(const PlannerData & planner_data)
+std::vector<TrajectoryPoint> ElasticBandSmoother::optimizeTrajectory(
+  const PlannerData & planner_data)
 {
   time_keeper_ptr_->tic(__func__);
   const auto & p = planner_data;
 
-  const auto eb_traj =
-    enable_smoothing_ ? eb_path_smoother_ptr_->getEBTrajectory(planner_data) : p.traj_points;
-  if (!eb_traj) {
-    return getPrevOptimizedTrajectory(p.traj_points);
-  }
+  const auto eb_traj = eb_path_smoother_ptr_->getEBTrajectory(planner_data);
+  if (!eb_traj) return getPrevOptimizedTrajectory(p.traj_points);
 
   time_keeper_ptr_->toc(__func__, "    ");
   return *eb_traj;
 }
 
-std::vector<TrajectoryPoint> PathSmootherNode::getPrevOptimizedTrajectory(
+std::vector<TrajectoryPoint> ElasticBandSmoother::getPrevOptimizedTrajectory(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  if (prev_optimized_traj_points_ptr_) {
-    return *prev_optimized_traj_points_ptr_;
-  }
-
+  if (prev_optimized_traj_points_ptr_) return *prev_optimized_traj_points_ptr_;
   return traj_points;
 }
 
-void PathSmootherNode::applyInputVelocity(
+void ElasticBandSmoother::applyInputVelocity(
   std::vector<TrajectoryPoint> & output_traj_points,
   const std::vector<TrajectoryPoint> & input_traj_points,
   const geometry_msgs::msg::Pose & ego_pose) const
@@ -307,7 +305,7 @@ void PathSmootherNode::applyInputVelocity(
   time_keeper_ptr_->toc(__func__, "    ");
 }
 
-std::vector<TrajectoryPoint> PathSmootherNode::extendTrajectory(
+std::vector<TrajectoryPoint> ElasticBandSmoother::extendTrajectory(
   const std::vector<TrajectoryPoint> & traj_points,
   const std::vector<TrajectoryPoint> & optimized_traj_points) const
 {
@@ -371,4 +369,4 @@ std::vector<TrajectoryPoint> PathSmootherNode::extendTrajectory(
 }  // namespace path_smoothing
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(path_smoothing::PathSmootherNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(path_smoothing::ElasticBandSmoother)

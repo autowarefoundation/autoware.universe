@@ -57,10 +57,6 @@ struct TimeKeeper
     const auto msg = latest_stream.str();
     accumulated_msg += msg + "\n";
     latest_stream.str("");
-
-    if (enable_calculation_time_info) {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("obstacle_avoidance_planner.time"), msg);
-    }
   }
 
   void tic(const std::string & func_name) { stop_watch_.tic(func_name); }
@@ -74,7 +70,6 @@ struct TimeKeeper
 
   std::string getLog() const { return accumulated_msg; }
 
-  bool enable_calculation_time_info;
   std::string accumulated_msg = "\n";
   std::stringstream latest_stream;
 

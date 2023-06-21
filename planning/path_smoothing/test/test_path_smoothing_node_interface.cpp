@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "path_smoothing/path_smoother_node.hpp"
+#include "path_smoothing/elastic_band_smoother.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
 
@@ -36,17 +36,18 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
   node_options.arguments(
     {"--ros-args", "--params-file", planning_test_utils_dir + "/config/test_common.param.yaml",
      "--params-file", planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
-     "--params-file", path_smoothing_dir + "/config/path_smoother_node.param.yaml"});
+     "--params-file", path_smoothing_dir + "/config/elastic_band_smoother.param.yaml"});
 
-  auto test_target_node = std::make_shared<path_smoothing::PathSmootherNode>(node_options);
+  auto test_target_node = std::make_shared<path_smoothing::ElasticBandSmoother>(node_options);
 
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "path_smoother/input/odometry");
 
-  // set subscriber with topic name: obstacle_avoidance_planner → test_node_
-  test_manager->setTrajectorySubscriber("path_smoother/output/path");
+  // set subscriber with topic name
+  test_manager->setTrajectorySubscriber("path_smoother/output/traj");
+  test_manager->setPathSubscriber("path_smoother/output/path");
 
-  // set obstacle_avoidance_planner's input topic name(this topic is changed to test node)
+  // set input topic name (this topic is changed to test node)
   test_manager->setPathInputTopicName("path_smoother/input/path");
 
   // test with normal trajectory
