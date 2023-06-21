@@ -45,7 +45,7 @@ struct VehicleStatus
 struct DoorStatusArray
 {
   using Message = autoware_adapi_v1_msgs::msg::DoorStatusArray;
-  static constexpr char name[] = "/api/vehicle/door";
+  static constexpr char name[] = "/api/vehicle/doors/status";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
