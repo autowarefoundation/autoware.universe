@@ -168,7 +168,7 @@ PredictedPath createPredictedPathFromTargetVelocity(
                       const std::vector<PathPointWithLaneId> & following_trajectory_points,
                       PredictedPath & predicted_path, const double initial_velocity,
                       const double acc, const double start_time, const double end_time,
-                      double & offset) {
+                      const double offset) {
     for (double t = start_time; t < end_time; t += resolution) {
       const double delta_t = t - start_time;
       const double length = initial_velocity * delta_t + 0.5 * acc * delta_t * delta_t + offset;
