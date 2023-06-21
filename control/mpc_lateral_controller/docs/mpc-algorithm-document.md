@@ -327,7 +327,7 @@ Furthermore, MPC optimizes over a period of time, the time-varying weight can be
 
 #### Input constraint
 
-The main advantage of the MPC controllers is the capability to deal with any state or input constraints. The constraints can be expressed as box constraints, such as that "tire angle must be within ±30 degrees" can be put in the form;
+The main advantage of MPC controllers is the capability to deal with any state or input constraints. The constraints can be expressed as box constraints, such as "the tire angle must be within ±30 degrees", and can be put in the following form;
 
 ```math
 \begin{align}
