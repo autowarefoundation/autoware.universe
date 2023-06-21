@@ -21,7 +21,6 @@
 #include <component_interface_specs/vehicle.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/door_status.hpp>
 #include <autoware_adapi_v1_msgs/msg/gear.hpp>
 #include <autoware_adapi_v1_msgs/msg/hazard_lights.hpp>
 #include <autoware_adapi_v1_msgs/msg/turn_indicators.hpp>
@@ -49,8 +48,6 @@ private:
   using ApiTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicators;
   using HazardLightsReport = vehicle_interface::HazardLightStatus::Message;
   using ApiHazardLight = autoware_adapi_v1_msgs::msg::HazardLights;
-  using VehicleDoorStatus = vehicle_interface::DoorStatus::Message;
-  using ApiDoorStatus = autoware_adapi_v1_msgs::msg::DoorStatus;
   using MapProjectorInfo = vehicle_interface::MapProjectorInfo::Message;
 
   std::unordered_map<uint8_t, uint8_t> gear_type_ = {
@@ -80,19 +77,9 @@ private:
     {HazardLightsReport::ENABLE, ApiHazardLight::ENABLE},
   };
 
-  std::unordered_map<uint8_t, uint8_t> door_status_type_ = {
-    {VehicleDoorStatus::UNKNOWN, ApiDoorStatus::UNKNOWN},
-    {VehicleDoorStatus::DOOR_OPENED, ApiDoorStatus::OPENED},
-    {VehicleDoorStatus::DOOR_CLOSED, ApiDoorStatus::CLOSED},
-    {VehicleDoorStatus::DOOR_OPENING, ApiDoorStatus::OPENING},
-    {VehicleDoorStatus::DOOR_CLOSING, ApiDoorStatus::CLOSING},
-    {VehicleDoorStatus::NOT_APPLICABLE, ApiDoorStatus::NOT_AVAILABLE},
-  };
-
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   Pub<autoware_ad_api::vehicle::VehicleKinematics> pub_kinematics_;
   Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
-  Pub<autoware_ad_api::vehicle::DoorStatusArray> pub_door_;
   Sub<vehicle_interface::KinematicState> sub_kinematic_state_;
   Sub<vehicle_interface::Acceleration> sub_acceleration_;
   Sub<vehicle_interface::SteeringStatus> sub_steering_;
@@ -101,13 +88,11 @@ private:
   Sub<vehicle_interface::HazardLightStatus> sub_hazard_light_;
   Sub<vehicle_interface::MapProjectorInfo> sub_map_projector_info_;
   Sub<vehicle_interface::EnergyStatus> sub_energy_level_;
-  Sub<vehicle_interface::DoorStatus> sub_door_status_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   MapProjectorInfo::ConstSharedPtr map_projector_info_;
   autoware_ad_api::vehicle::VehicleKinematics::Message vehicle_kinematics_;
   autoware_ad_api::vehicle::VehicleStatus::Message vehicle_status_;
-  autoware_ad_api::vehicle::DoorStatusArray::Message vehicle_door_;
 
   void kinematic_state(const vehicle_interface::KinematicState::Message::ConstSharedPtr msg_ptr);
   void acceleration_status(const vehicle_interface::Acceleration::Message::ConstSharedPtr msg_ptr);
@@ -117,7 +102,6 @@ private:
   void map_projector_info(const MapProjectorInfo::ConstSharedPtr msg_ptr);
   void hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr);
   void energy_status(const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr);
-  void door_status(const VehicleDoorStatus::ConstSharedPtr msg_ptr);
   uint8_t mapping(
     std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);
   void on_timer();

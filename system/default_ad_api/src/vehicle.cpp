@@ -23,7 +23,6 @@ VehicleNode::VehicleNode(const rclcpp::NodeOptions & options) : Node("vehicle", 
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   adaptor.init_pub(pub_kinematics_);
   adaptor.init_pub(pub_status_);
-  adaptor.init_pub(pub_door_);
   adaptor.init_sub(sub_kinematic_state_, this, &VehicleNode::kinematic_state);
   adaptor.init_sub(sub_acceleration_, this, &VehicleNode::acceleration_status);
   adaptor.init_sub(sub_steering_, this, &VehicleNode::steering_status);
@@ -32,7 +31,6 @@ VehicleNode::VehicleNode(const rclcpp::NodeOptions & options) : Node("vehicle", 
   adaptor.init_sub(sub_map_projector_info_, this, &VehicleNode::map_projector_info);
   adaptor.init_sub(sub_hazard_light_, this, &VehicleNode::hazard_light_status);
   adaptor.init_sub(sub_energy_level_, this, &VehicleNode::energy_status);
-  adaptor.init_sub(sub_door_status_, this, &VehicleNode::door_status);
 
   const auto rate = rclcpp::Rate(10);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
@@ -129,21 +127,11 @@ void VehicleNode::energy_status(
   vehicle_status_.energy_percentage = msg_ptr->energy_level;
 }
 
-void VehicleNode::door_status(const VehicleDoorStatus::ConstSharedPtr msg_ptr)
-{
-  // Currently only support single door status
-  ApiDoorStatus door_status;
-  door_status.status = mapping(door_status_type_, msg_ptr->status, ApiDoorStatus::UNKNOWN);
-  vehicle_door_.stamp = now();
-  vehicle_door_.doors = {door_status};
-}
-
 void VehicleNode::on_timer()
 {
   vehicle_status_.stamp = now();
   pub_kinematics_->publish(vehicle_kinematics_);
   pub_status_->publish(vehicle_status_);
-  pub_door_->publish(vehicle_door_);
 }
 
 }  // namespace default_ad_api

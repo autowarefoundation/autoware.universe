@@ -15,7 +15,6 @@
 
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>tier4_api_msgs</depend>
   <depend>tier4_map_msgs</depend>
   <depend>tier4_vehicle_msgs</depend>
 
