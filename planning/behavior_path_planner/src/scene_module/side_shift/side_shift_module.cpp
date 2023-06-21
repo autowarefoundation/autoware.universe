@@ -186,8 +186,19 @@ ModuleStatus SideShiftModule::updateState()
 
 void SideShiftModule::updateData()
 {
-  // when side shift is not requested, don't update data.
-  if (!lateral_offset_change_request_) {
+#ifndef USE_OLD_ARCHITECTURE
+  if (
+    planner_data_->lateral_offset != nullptr &&
+    planner_data_->lateral_offset->stamp != latest_lateral_offset_stamp_) {
+    if (isReadyForNextRequest(parameters_->shift_request_time_limit)) {
+      lateral_offset_change_request_ = true;
+      requested_lateral_offset_ = planner_data_->lateral_offset->lateral_offset;
+      latest_lateral_offset_stamp_ = planner_data_->lateral_offset->stamp;
+    }
+  }
+#endif
+
+  if (!current_state_ == ModuleStatus::RUNNING) {
     return;
   }
 
@@ -243,18 +254,6 @@ void SideShiftModule::updateData()
 
   const size_t nearest_idx = planner_data_->findEgoIndex(path_shifter_.getReferencePath().points);
   path_shifter_.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
-
-#ifndef USE_OLD_ARCHITECTURE
-  if (
-    planner_data_->lateral_offset != nullptr &&
-    planner_data_->lateral_offset->stamp != latest_lateral_offset_stamp_) {
-    if (isReadyForNextRequest(parameters_->shift_request_time_limit)) {
-      lateral_offset_change_request_ = true;
-      requested_lateral_offset_ = planner_data_->lateral_offset->lateral_offset;
-      latest_lateral_offset_stamp_ = planner_data_->lateral_offset->stamp;
-    }
-  }
-#endif
 }
 
 void SideShiftModule::replaceShiftLine()
