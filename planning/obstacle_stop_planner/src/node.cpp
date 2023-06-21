@@ -14,7 +14,6 @@
 
 #include <algorithm>
 #include <limits>
-#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -24,8 +23,8 @@
 #include "obstacle_stop_planner/node.hpp"
 #include "obstacle_stop_planner/planner_utils.hpp"
 
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Geometry>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <pcl/filters/voxel_grid.h>
 #include <tf2/utils.h>
@@ -41,6 +40,7 @@
 
 namespace motion_planning
 {
+using autoware_auto_perception_msgs::msg::PredictedObject;
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcLongitudinalOffsetToSegment;
 using motion_utils::calcSignedArcLength;
@@ -64,13 +64,20 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   {
     auto & p = node_param_;
     p.enable_slow_down = declare_parameter<bool>("enable_slow_down");
+    p.enable_z_axis_obstacle_filtering =
+      declare_parameter<bool>("enable_z_axis_obstacle_filtering");
+    p.z_axis_filtering_buffer = declare_parameter<double>("z_axis_filtering_buffer");
     p.max_velocity = declare_parameter<double>("max_velocity");
     p.chattering_threshold = declare_parameter<double>("chattering_threshold");
     p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
     p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
-    p.voxel_grid_x = declare_parameter("voxel_grid_x", 0.05);
-    p.voxel_grid_y = declare_parameter("voxel_grid_y", 0.05);
-    p.voxel_grid_z = declare_parameter("voxel_grid_z", 100000.0);
+    p.voxel_grid_x = declare_parameter<double>("voxel_grid_x");
+    p.voxel_grid_y = declare_parameter<double>("voxel_grid_y");
+    p.voxel_grid_z = declare_parameter<double>("voxel_grid_z");
+    p.use_predicted_objects = declare_parameter<bool>("use_predicted_objects");
+    p.publish_obstacle_polygon = declare_parameter<bool>("publish_obstacle_polygon");
+    p.predicted_object_filtering_threshold =
+      declare_parameter<double>("predicted_object_filtering_threshold");
   }
 
   {
@@ -80,6 +87,8 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     // params for stop position
     p.max_longitudinal_margin =
       declare_parameter<double>(ns + "stop_position.max_longitudinal_margin");
+    p.max_longitudinal_margin_behind_goal =
+      declare_parameter<double>(ns + "stop_position.max_longitudinal_margin_behind_goal");
     p.min_longitudinal_margin =
       declare_parameter<double>(ns + "stop_position.min_longitudinal_margin");
     p.hold_stop_margin_distance =
@@ -87,11 +96,19 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
 
     // params for detection area
     p.lateral_margin = declare_parameter<double>(ns + "detection_area.lateral_margin");
-    p.extend_distance = declare_parameter<double>(ns + "detection_area.extend_distance");
+    p.vehicle_lateral_margin =
+      declare_parameter<double>(ns + "detection_area.vehicle_lateral_margin");
+    p.pedestrian_lateral_margin =
+      declare_parameter<double>(ns + "detection_area.pedestrian_lateral_margin");
+    p.unknown_lateral_margin =
+      declare_parameter<double>(ns + "detection_area.unknown_lateral_margin");
+    p.enable_stop_behind_goal_for_obstacle =
+      declare_parameter<bool>(ns + "detection_area.enable_stop_behind_goal_for_obstacle");
     p.step_length = declare_parameter<double>(ns + "detection_area.step_length");
 
     // apply offset
     p.max_longitudinal_margin += i.max_longitudinal_offset_m;
+    p.max_longitudinal_margin_behind_goal += i.max_longitudinal_offset_m;
     p.min_longitudinal_margin += i.max_longitudinal_offset_m;
     p.stop_search_radius =
       p.step_length +
@@ -120,6 +137,12 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
 
     // params for detection area
     p.lateral_margin = declare_parameter<double>(ns + "detection_area.lateral_margin");
+    p.vehicle_lateral_margin =
+      declare_parameter<double>(ns + "detection_area.vehicle_lateral_margin");
+    p.pedestrian_lateral_margin =
+      declare_parameter<double>(ns + "detection_area.pedestrian_lateral_margin");
+    p.unknown_lateral_margin =
+      declare_parameter<double>(ns + "detection_area.unknown_lateral_margin");
 
     // params for target velocity
     p.max_slow_down_velocity =
@@ -148,6 +171,22 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
       std::hypot(i.vehicle_width_m / 2.0 + p.lateral_margin, i.vehicle_length_m / 2.0);
   }
 
+  if (node_param_.use_predicted_objects) {
+    // Search the maximum lateral margin
+    std::vector<double> lateral_margins{
+      stop_param_.pedestrian_lateral_margin, stop_param_.vehicle_lateral_margin,
+      stop_param_.unknown_lateral_margin};
+    if (node_param_.enable_slow_down) {
+      lateral_margins.push_back(slow_down_param_.pedestrian_lateral_margin);
+      lateral_margins.push_back(slow_down_param_.vehicle_lateral_margin);
+      lateral_margins.push_back(slow_down_param_.unknown_lateral_margin);
+    }
+    const double max_lateral_margin =
+      *std::max_element(lateral_margins.begin(), lateral_margins.end());
+    object_filtering_margin_ =
+      max_lateral_margin + node_param_.predicted_object_filtering_threshold;
+  }
+
   // Initializer
   acc_controller_ = std::make_unique<AdaptiveCruiseController>(
     this, i.vehicle_width_m, i.vehicle_length_m, i.max_longitudinal_offset_m);
@@ -167,11 +206,17 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   pub_obstacle_pointcloud_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
 
+  pub_collision_pointcloud_debug_ =
+    this->create_publisher<PointCloud2>("~/debug/collision_pointcloud", 1);
+
   // Subscribers
-  sub_point_cloud_ = this->create_subscription<PointCloud2>(
-    "~/input/pointcloud", rclcpp::SensorDataQoS(),
-    std::bind(&ObstacleStopPlannerNode::onPointCloud, this, std::placeholders::_1),
-    createSubscriptionOptions(this));
+  if (!node_param_.use_predicted_objects) {
+    // No need to point cloud while using predicted objects
+    sub_point_cloud_ = this->create_subscription<PointCloud2>(
+      "~/input/pointcloud", rclcpp::SensorDataQoS(),
+      std::bind(&ObstacleStopPlannerNode::onPointCloud, this, std::placeholders::_1),
+      createSubscriptionOptions(this));
+  }
 
   sub_trajectory_ = this->create_subscription<Trajectory>(
     "~/input/trajectory", 1,
@@ -211,11 +256,16 @@ void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr inp
   PointCloud::Ptr no_height_filtered_pointcloud_ptr(new PointCloud);
 
   pcl::fromROSMsg(*input_msg, *pointcloud_ptr);
+  if (!node_param_.enable_z_axis_obstacle_filtering) {
+    filter.setInputCloud(pointcloud_ptr);
+    filter.setLeafSize(
+      node_param_.voxel_grid_x, node_param_.voxel_grid_y, node_param_.voxel_grid_z);
+    filter.filter(*no_height_filtered_pointcloud_ptr);
+    pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
+  } else {
+    pcl::toROSMsg(*pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
+  }
 
-  filter.setInputCloud(pointcloud_ptr);
-  filter.setLeafSize(node_param_.voxel_grid_x, node_param_.voxel_grid_y, node_param_.voxel_grid_z);
-  filter.filter(*no_height_filtered_pointcloud_ptr);
-  pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
   pub_obstacle_pointcloud_->publish(*obstacle_ros_pointcloud_ptr_);
 }
@@ -244,7 +294,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
       return;
     }
 
-    if (!obstacle_ros_pointcloud_ptr) {
+    if (!obstacle_ros_pointcloud_ptr && !node_param_.use_predicted_objects) {
       waiting("obstacle pointcloud");
       return;
     }
@@ -286,19 +336,29 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
     motion_utils::convertToTrajectoryPointArray(*input_msg);
 
   // trim trajectory from self pose
-  const auto base_trajectory = trimTrajectoryWithIndexFromSelfPose(
+  TrajectoryPoints base_trajectory = trimTrajectoryWithIndexFromSelfPose(
     motion_utils::convertToTrajectoryPointArray(*input_msg), planner_data.current_pose,
     planner_data.trajectory_trim_index);
+
   // extend trajectory to consider obstacles after the goal
-  const auto extend_trajectory = extendTrajectory(base_trajectory, stop_param.extend_distance);
+  if (stop_param.enable_stop_behind_goal_for_obstacle) {
+    base_trajectory = extendTrajectory(base_trajectory, stop_param.max_longitudinal_margin);
+  }
   // decimate trajectory for calculation cost
   const auto decimate_trajectory = decimateTrajectory(
-    extend_trajectory, stop_param.step_length, planner_data.decimate_trajectory_index_map);
+    base_trajectory, stop_param.step_length, planner_data.decimate_trajectory_index_map);
 
-  // search obstacles within slow-down/collision area
-  searchObstacle(
-    decimate_trajectory, output_trajectory_points, planner_data, input_msg->header, vehicle_info,
-    stop_param, obstacle_ros_pointcloud_ptr);
+  if (node_param_.use_predicted_objects) {
+    searchPredictedObject(
+      decimate_trajectory, output_trajectory_points, planner_data, input_msg->header, vehicle_info,
+      stop_param);
+  } else {
+    // search obstacles within slow-down/collision area
+    searchObstacle(
+      decimate_trajectory, output_trajectory_points, planner_data, input_msg->header, vehicle_info,
+      stop_param, obstacle_ros_pointcloud_ptr);
+  }
+
   // insert slow-down-section/stop-point
   insertVelocity(
     output_trajectory_points, planner_data, input_msg->header, vehicle_info, current_acc,
@@ -338,13 +398,16 @@ void ObstacleStopPlannerNode::searchObstacle(
     // create one step circle center for vehicle
     const auto & p_front = decimate_trajectory.at(i).pose;
     const auto & p_back = decimate_trajectory.at(i + 1).pose;
+    const auto z_axis_min = p_front.position.z;
+    const auto z_axis_max =
+      p_front.position.z + vehicle_info.vehicle_height_m + node_param_.z_axis_filtering_buffer;
     const auto prev_center_pose = getVehicleCenterFromBase(p_front, vehicle_info);
     const Point2d prev_center_point(prev_center_pose.position.x, prev_center_pose.position.y);
     const auto next_center_pose = getVehicleCenterFromBase(p_back, vehicle_info);
     const Point2d next_center_point(next_center_pose.position.x, next_center_pose.position.y);
 
     if (node_param_.enable_slow_down) {
-      std::vector<cv::Point2d> one_step_move_slow_down_range_polygon;
+      Polygon2d one_step_move_slow_down_range_polygon;
       // create one step polygon for slow_down range
       createOneStepPolygon(
         p_front, p_back, one_step_move_slow_down_range_polygon, vehicle_info,
@@ -352,11 +415,17 @@ void ObstacleStopPlannerNode::searchObstacle(
       debug_ptr_->pushPolygon(
         one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDownRange);
 
-      planner_data.found_slow_down_points = withinPolygon(
-        one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
-        prev_center_point, next_center_point, obstacle_candidate_pointcloud_ptr,
-        slow_down_pointcloud_ptr);
-
+      if (node_param_.enable_z_axis_obstacle_filtering) {
+        planner_data.found_slow_down_points = withinPolyhedron(
+          one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
+          prev_center_point, next_center_point, obstacle_candidate_pointcloud_ptr,
+          slow_down_pointcloud_ptr, z_axis_min, z_axis_max);
+      } else {
+        planner_data.found_slow_down_points = withinPolygon(
+          one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
+          prev_center_point, next_center_point, obstacle_candidate_pointcloud_ptr,
+          slow_down_pointcloud_ptr);
+      }
       const auto found_first_slow_down_points =
         planner_data.found_slow_down_points && !planner_data.slow_down_require;
 
@@ -381,20 +450,30 @@ void ObstacleStopPlannerNode::searchObstacle(
     }
 
     {
-      std::vector<cv::Point2d> one_step_move_vehicle_polygon;
+      Polygon2d one_step_move_vehicle_polygon;
       // create one step polygon for vehicle
       createOneStepPolygon(
         p_front, p_back, one_step_move_vehicle_polygon, vehicle_info, stop_param.lateral_margin);
-      debug_ptr_->pushPolygon(
-        one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
-        PolygonType::Vehicle);
+      if (node_param_.enable_z_axis_obstacle_filtering) {
+        debug_ptr_->pushPolyhedron(
+          one_step_move_vehicle_polygon, z_axis_min, z_axis_max, PolygonType::Vehicle);
+      } else {
+        debug_ptr_->pushPolygon(
+          one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Vehicle);
+      }
 
       PointCloud::Ptr collision_pointcloud_ptr(new PointCloud);
       collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
 
-      const auto found_collision_points = withinPolygon(
-        one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
-        next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr);
+      const auto found_collision_points =
+        node_param_.enable_z_axis_obstacle_filtering
+          ? withinPolyhedron(
+              one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
+              next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr, z_axis_min,
+              z_axis_max)
+          : withinPolygon(
+              one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
+              next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr);
 
       if (found_collision_points) {
         pcl::PointXYZ nearest_collision_point;
@@ -412,29 +491,41 @@ void ObstacleStopPlannerNode::searchObstacle(
   }
 
   for (size_t i = 0; i < decimate_trajectory.size() - 1; ++i) {
+    const auto old_point_cloud_ptr = getOldPointCloudPtr();
+    if (old_point_cloud_ptr->empty()) {
+      // no need to check collision
+      break;
+    }
+
     // create one step circle center for vehicle
     const auto & p_front = decimate_trajectory.at(i).pose;
     const auto & p_back = decimate_trajectory.at(i + 1).pose;
+    const auto z_axis_min = p_front.position.z;
+    const auto z_axis_max =
+      p_front.position.z + vehicle_info.vehicle_height_m + node_param_.z_axis_filtering_buffer;
     const auto prev_center_pose = getVehicleCenterFromBase(p_front, vehicle_info);
     const Point2d prev_center_point(prev_center_pose.position.x, prev_center_pose.position.y);
     const auto next_center_pose = getVehicleCenterFromBase(p_back, vehicle_info);
     const Point2d next_center_point(next_center_pose.position.x, next_center_pose.position.y);
 
-    std::vector<cv::Point2d> one_step_move_vehicle_polygon;
+    Polygon2d one_step_move_vehicle_polygon;
     // create one step polygon for vehicle
     createOneStepPolygon(
       p_front, p_back, one_step_move_vehicle_polygon, vehicle_info, stop_param.lateral_margin);
-    debug_ptr_->pushPolygon(
-      one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
-      PolygonType::Vehicle);
 
     PointCloud::Ptr collision_pointcloud_ptr(new PointCloud);
     collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
 
     // check new collision points
-    planner_data.found_collision_points = withinPolygon(
-      one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
-      next_center_point, getOldPointCloudPtr(), collision_pointcloud_ptr);
+    if (node_param_.enable_z_axis_obstacle_filtering) {
+      planner_data.found_collision_points = withinPolyhedron(
+        one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
+        next_center_point, old_point_cloud_ptr, collision_pointcloud_ptr, z_axis_min, z_axis_max);
+    } else {
+      planner_data.found_collision_points = withinPolygon(
+        one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
+        next_center_point, old_point_cloud_ptr, collision_pointcloud_ptr);
+    }
 
     if (planner_data.found_collision_points) {
       planner_data.decimate_trajectory_collision_index = i;
@@ -442,15 +533,28 @@ void ObstacleStopPlannerNode::searchObstacle(
         *collision_pointcloud_ptr, p_front, &planner_data.nearest_collision_point,
         &planner_data.nearest_collision_point_time);
 
-      debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
-      debug_ptr_->pushPolygon(
-        one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
+      if (node_param_.enable_z_axis_obstacle_filtering) {
+        debug_ptr_->pushPolyhedron(
+          one_step_move_vehicle_polygon, z_axis_min, z_axis_max, PolygonType::Collision);
+        if (
+          (pub_collision_pointcloud_debug_->get_subscription_count() +
+           pub_collision_pointcloud_debug_->get_intra_process_subscription_count()) > 0) {
+          auto obstacle_ros_pointcloud_debug_ptr = std::make_shared<PointCloud2>();
+          pcl::toROSMsg(*collision_pointcloud_ptr, *obstacle_ros_pointcloud_debug_ptr);
+          obstacle_ros_pointcloud_debug_ptr->header.frame_id = trajectory_header.frame_id;
+          pub_collision_pointcloud_debug_->publish(*obstacle_ros_pointcloud_debug_ptr);
+        }
+      } else {
+        debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
+        debug_ptr_->pushPolygon(
+          one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
+      }
 
       planner_data.stop_require = planner_data.found_collision_points;
 
       mutex_.lock();
-      const auto object_ptr = object_ptr_;
       const auto current_odometry_ptr = current_odometry_ptr_;
+      const auto object_ptr = object_ptr_;
       mutex_.unlock();
 
       acc_controller_->insertAdaptiveCruiseVelocity(
@@ -462,7 +566,414 @@ void ObstacleStopPlannerNode::searchObstacle(
       if (!planner_data.stop_require) {
         obstacle_history_.clear();
       }
+      break;
+    }
+  }
+}
 
+void ObstacleStopPlannerNode::searchPredictedObject(
+  const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
+  PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
+  const StopParam & stop_param)
+{
+  mutex_.lock();
+  const auto object_ptr = object_ptr_;
+  const auto current_odometry_pointer = current_odometry_ptr_;
+  mutex_.unlock();
+
+  const auto ego_pose = current_odometry_pointer->pose.pose;
+  PredictedObjects filtered_objects;
+  filterObstacles(
+    *object_ptr.get(), ego_pose, decimate_trajectory, object_filtering_margin_, filtered_objects);
+
+  const auto now = this->now();
+
+  updatePredictedObstacleHistory(now);
+  for (size_t i = 0; i < decimate_trajectory.size() - 1; ++i) {
+    // create one step circle center for vehicle
+    const auto & p_front = decimate_trajectory.at(i).pose;
+    const auto & p_back = decimate_trajectory.at(i + 1).pose;
+    const auto z_axis_min = p_front.position.z;
+    const auto z_axis_max =
+      p_front.position.z + vehicle_info.vehicle_height_m + node_param_.z_axis_filtering_buffer;
+
+    if (node_param_.enable_slow_down) {
+      double min_slow_down_norm = 0.0;
+      bool is_init = false;
+      size_t nearest_slow_down_object_index = 0;
+      geometry_msgs::msg::Point nearest_slow_down_point;
+      geometry_msgs::msg::PoseArray slow_down_points;
+
+      for (size_t j = 0; j < filtered_objects.objects.size(); ++j) {
+        const auto & obj = filtered_objects.objects.at(j);
+        if (node_param_.enable_z_axis_obstacle_filtering) {
+          if (!intersectsInZAxis(obj, z_axis_min, z_axis_max)) {
+            continue;
+          }
+        }
+        Polygon2d one_step_move_slow_down_range;
+        bool found_slow_down_object = false;
+        Polygon2d object_polygon{};
+        if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+          object_polygon = convertCylindricalObjectToGeometryPolygon(
+            obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
+          createOneStepPolygon(
+            p_front, p_back, one_step_move_slow_down_range, vehicle_info,
+            slow_down_param_.pedestrian_lateral_margin);
+          found_slow_down_object = bg::intersects(one_step_move_slow_down_range, object_polygon);
+
+        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+          createOneStepPolygon(
+            p_front, p_back, one_step_move_slow_down_range, vehicle_info,
+            slow_down_param_.vehicle_lateral_margin);
+          const double & length_m = obj.shape.dimensions.x / 2;
+          const double & width_m = obj.shape.dimensions.y / 2;
+          object_polygon = convertBoundingBoxObjectToGeometryPolygon(
+            obj.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
+
+          found_slow_down_object = bg::intersects(one_step_move_slow_down_range, object_polygon);
+
+        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+          createOneStepPolygon(
+            p_front, p_back, one_step_move_slow_down_range, vehicle_info,
+            slow_down_param_.unknown_lateral_margin);
+
+          object_polygon = convertPolygonObjectToGeometryPolygon(
+            obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
+
+          found_slow_down_object = bg::intersects(one_step_move_slow_down_range, object_polygon);
+
+        } else {
+          RCLCPP_WARN_THROTTLE(
+            get_logger(), *get_clock(), 3000, "Object type is not supported. type: %d",
+            obj.shape.type);
+          continue;
+        }
+        if (found_slow_down_object) {
+          geometry_msgs::msg::PoseArray slow_down_points_tmp;
+
+          std::vector<Point2d> slow_down_point;
+          bg::intersection(one_step_move_slow_down_range, object_polygon, slow_down_point);
+          for (const auto & point : slow_down_point) {
+            geometry_msgs::msg::Pose pose;
+            pose.position.x = point.x();
+            pose.position.y = point.y();
+            slow_down_points_tmp.poses.push_back(pose);
+          }
+
+          // Also check the corner points
+          for (const auto & point : object_polygon.outer()) {
+            if (bg::within(point, one_step_move_slow_down_range)) {
+              geometry_msgs::msg::Pose pose;
+              pose.position.x = point.x();
+              pose.position.y = point.y();
+              slow_down_points_tmp.poses.push_back(pose);
+            }
+          }
+          geometry_msgs::msg::Point nearest_slow_down_point_tmp;
+          const double norm = getNearestPointAndDistanceForPredictedObject(
+            slow_down_points_tmp, p_front, &nearest_slow_down_point_tmp);
+          if (norm < min_slow_down_norm || !is_init) {
+            min_slow_down_norm = norm;
+            nearest_slow_down_point = nearest_slow_down_point_tmp;
+            is_init = true;
+            nearest_slow_down_object_index = j;
+            slow_down_points = slow_down_points_tmp;
+          }
+        }
+      }
+
+      planner_data.found_slow_down_points = is_init;
+
+      const auto found_first_slow_down_points =
+        planner_data.found_slow_down_points && !planner_data.slow_down_require;
+
+      if (found_first_slow_down_points) {
+        // found nearest slow down obstacle
+        planner_data.decimate_trajectory_slow_down_index = i;
+        planner_data.slow_down_require = true;
+        planner_data.nearest_slow_down_point =
+          pointToPcl(nearest_slow_down_point.x, nearest_slow_down_point.y, p_front.position.z);
+        planner_data.nearest_collision_point_time = filtered_objects.header.stamp;
+        planner_data.slow_down_object_shape =
+          filtered_objects.objects.at(nearest_slow_down_object_index).shape;
+
+        // TODO(brkay54): lateral_nearest_slow_down_point_pose and nearest_slow_down_point_pose are
+        // not used
+        getLateralNearestPointForPredictedObject(
+          slow_down_points, p_front, &planner_data.lateral_nearest_slow_down_point,
+          &planner_data.lateral_deviation);
+
+        // Push slow down debugging points
+        Polygon2d one_step_move_slow_down_vehicle_polygon;
+
+        const auto & obj = filtered_objects.objects.at(nearest_slow_down_object_index);
+        if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+          createOneStepPolygon(
+            p_front, p_back, one_step_move_slow_down_vehicle_polygon, vehicle_info,
+            slow_down_param_.pedestrian_lateral_margin);
+        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+          createOneStepPolygon(
+            p_front, p_back, one_step_move_slow_down_vehicle_polygon, vehicle_info,
+            slow_down_param_.vehicle_lateral_margin);
+        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+          createOneStepPolygon(
+            p_front, p_back, one_step_move_slow_down_vehicle_polygon, vehicle_info,
+            slow_down_param_.unknown_lateral_margin);
+        }
+        debug_ptr_->pushObstaclePoint(planner_data.nearest_slow_down_point, PointType::SlowDown);
+
+        debug_ptr_->pushPolygon(
+          one_step_move_slow_down_vehicle_polygon, p_front.position.z, PolygonType::SlowDown);
+      } else {
+        // only used for pedestrian and debugging
+        Polygon2d one_step_move_slow_down_range_dbg;
+        createOneStepPolygon(
+          p_front, p_back, one_step_move_slow_down_range_dbg, vehicle_info,
+          slow_down_param_.pedestrian_lateral_margin);
+
+        debug_ptr_->pushPolygon(
+          one_step_move_slow_down_range_dbg, p_front.position.z, PolygonType::SlowDownRange);
+      }
+    }
+
+    {
+      double min_collision_norm = 0.0;
+      bool is_init = false;
+      size_t nearest_collision_object_index = 0;
+      geometry_msgs::msg::Point nearest_collision_point;
+
+      for (size_t j = 0; j < filtered_objects.objects.size(); ++j) {
+        const auto & obj = filtered_objects.objects.at(j);
+        if (node_param_.enable_z_axis_obstacle_filtering) {
+          if (!intersectsInZAxis(obj, z_axis_min, z_axis_max)) {
+            continue;
+          }
+        }
+        Polygon2d one_step_move_collision_polygon;
+        bool found_collision_object = false;
+        Polygon2d object_polygon{};
+        if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+          object_polygon = convertCylindricalObjectToGeometryPolygon(
+            obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
+
+          createOneStepPolygon(
+            p_front, p_back, one_step_move_collision_polygon, vehicle_info,
+            stop_param.pedestrian_lateral_margin);
+
+          found_collision_object = bg::intersects(one_step_move_collision_polygon, object_polygon);
+        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+          const double & length_m = obj.shape.dimensions.x / 2;
+          const double & width_m = obj.shape.dimensions.y / 2;
+          object_polygon = convertBoundingBoxObjectToGeometryPolygon(
+            obj.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
+          createOneStepPolygon(
+            p_front, p_back, one_step_move_collision_polygon, vehicle_info,
+            stop_param.vehicle_lateral_margin);
+
+          found_collision_object = bg::intersects(one_step_move_collision_polygon, object_polygon);
+        } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+          object_polygon = convertPolygonObjectToGeometryPolygon(
+            obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
+          createOneStepPolygon(
+            p_front, p_back, one_step_move_collision_polygon, vehicle_info,
+            stop_param.unknown_lateral_margin);
+
+          found_collision_object = bg::intersects(one_step_move_collision_polygon, object_polygon);
+        } else {
+          RCLCPP_WARN_THROTTLE(
+            get_logger(), *get_clock(), 3000, "Object type is not supported. type: %d",
+            obj.shape.type);
+          continue;
+        }
+        if (found_collision_object) {
+          geometry_msgs::msg::PoseArray collision_points_tmp;
+
+          std::vector<Point2d> collision_point;
+          bg::intersection(one_step_move_collision_polygon, object_polygon, collision_point);
+          for (const auto & point : collision_point) {
+            geometry_msgs::msg::Pose pose;
+            pose.position.x = point.x();
+            pose.position.y = point.y();
+            collision_points_tmp.poses.push_back(pose);
+          }
+
+          // Also check the corner points
+          for (const auto & point : object_polygon.outer()) {
+            if (bg::within(point, one_step_move_collision_polygon)) {
+              geometry_msgs::msg::Pose pose;
+              pose.position.x = point.x();
+              pose.position.y = point.y();
+              collision_points_tmp.poses.push_back(pose);
+            }
+          }
+          geometry_msgs::msg::Point nearest_collision_point_tmp;
+          const double norm = getNearestPointAndDistanceForPredictedObject(
+            collision_points_tmp, p_front, &nearest_collision_point_tmp);
+          if (norm < min_collision_norm || !is_init) {
+            min_collision_norm = norm;
+            nearest_collision_point = nearest_collision_point_tmp;
+            is_init = true;
+            nearest_collision_object_index = j;
+          }
+        }
+      }
+      if (is_init) {
+        predicted_object_history_.emplace_back(
+          now, nearest_collision_point,
+          filtered_objects.objects.at(nearest_collision_object_index));
+        break;
+      }
+
+      // only used for pedestrian
+      Polygon2d one_step_move_collision_dbg;
+      createOneStepPolygon(
+        p_front, p_back, one_step_move_collision_dbg, vehicle_info,
+        stop_param.pedestrian_lateral_margin);
+      if (node_param_.enable_z_axis_obstacle_filtering) {
+        debug_ptr_->pushPolyhedron(
+          one_step_move_collision_dbg, z_axis_min, z_axis_max, PolygonType::Vehicle);
+      } else {
+        debug_ptr_->pushPolygon(
+          one_step_move_collision_dbg, p_front.position.z, PolygonType::Vehicle);
+      }
+    }
+  }
+
+  for (size_t i = 0; i < decimate_trajectory.size() - 1; ++i) {
+    if (predicted_object_history_.empty()) {
+      break;
+    }
+
+    // create one step circle center for vehicle
+    const auto & p_front = decimate_trajectory.at(i).pose;
+    const auto & p_back = decimate_trajectory.at(i + 1).pose;
+    const auto z_axis_min = p_front.position.z;
+    const auto z_axis_max =
+      p_front.position.z + vehicle_info.vehicle_height_m + node_param_.z_axis_filtering_buffer;
+
+    double min_collision_norm = 0.0;
+    bool is_init = false;
+    size_t nearest_collision_object_index = 0;
+
+    for (size_t j = 0; j < predicted_object_history_.size(); ++j) {
+      // check new collision points
+      const auto & obj = predicted_object_history_.at(j).object;
+      if (node_param_.enable_z_axis_obstacle_filtering) {
+        if (!intersectsInZAxis(obj, z_axis_min, z_axis_max)) {
+          continue;
+        }
+      }
+      Point2d collision_point;
+      collision_point.x() = predicted_object_history_.at(j).point.x;
+      collision_point.y() = predicted_object_history_.at(j).point.y;
+      Polygon2d one_step_move_vehicle_polygon;
+      // create one step polygon for vehicle
+      if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+        createOneStepPolygon(
+          p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
+          stop_param.pedestrian_lateral_margin);
+
+      } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+        createOneStepPolygon(
+          p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
+          stop_param.vehicle_lateral_margin);
+
+      } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+        createOneStepPolygon(
+          p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
+          stop_param.unknown_lateral_margin);
+
+      } else {
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), 3000, "Object type is not supported. type: %d",
+          obj.shape.type);
+        continue;
+      }
+      if (bg::within(collision_point, one_step_move_vehicle_polygon)) {
+        const double norm = calcDistance2d(predicted_object_history_.at(j).point, p_front.position);
+        if (norm < min_collision_norm || !is_init) {
+          min_collision_norm = norm;
+          is_init = true;
+          nearest_collision_object_index = j;
+        }
+      }
+    }
+
+    planner_data.found_collision_points = is_init;
+
+    if (planner_data.found_collision_points) {
+      planner_data.nearest_collision_point = pointToPcl(
+        predicted_object_history_.at(nearest_collision_object_index).point.x,
+        predicted_object_history_.at(nearest_collision_object_index).point.y, p_front.position.z);
+
+      planner_data.decimate_trajectory_collision_index = i;
+
+      planner_data.nearest_collision_point_time =
+        predicted_object_history_.at(nearest_collision_object_index).detection_time;
+
+      // create one step polygon for vehicle collision debug
+      Polygon2d one_step_move_vehicle_polygon;
+      Polygon2d object_polygon{};
+
+      const auto & obj = predicted_object_history_.at(nearest_collision_object_index).object;
+      if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+        createOneStepPolygon(
+          p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
+          stop_param.pedestrian_lateral_margin);
+        object_polygon = convertCylindricalObjectToGeometryPolygon(
+          obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
+      } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+        createOneStepPolygon(
+          p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
+          stop_param.vehicle_lateral_margin);
+        const double & length_m = obj.shape.dimensions.x / 2;
+        const double & width_m = obj.shape.dimensions.y / 2;
+        object_polygon = convertBoundingBoxObjectToGeometryPolygon(
+          obj.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
+
+      } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+        createOneStepPolygon(
+          p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
+          stop_param.unknown_lateral_margin);
+        object_polygon = convertPolygonObjectToGeometryPolygon(
+          obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
+      }
+      debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
+
+      if (node_param_.enable_z_axis_obstacle_filtering) {
+        debug_ptr_->pushPolyhedron(
+          one_step_move_vehicle_polygon, z_axis_min, z_axis_max, PolygonType::Collision);
+      } else {
+        debug_ptr_->pushPolygon(
+          one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
+      }
+
+      if (node_param_.publish_obstacle_polygon) {
+        debug_ptr_->pushPolygon(object_polygon, p_front.position.z, PolygonType::Obstacle);
+      }
+
+      planner_data.stop_require = planner_data.found_collision_points;
+      mutex_.lock();
+      const auto current_odometry_ptr = current_odometry_ptr_;
+      const auto latest_object_ptr = object_ptr_;
+      mutex_.unlock();
+      // find latest state of predicted object to get latest velocity and acceleration values
+      auto obj_latest_state = getObstacleFromUuid(*latest_object_ptr, obj.object_id);
+      if (!obj_latest_state) {
+        // Can not find the object in the latest object list. Send previous state.
+        obj_latest_state = boost::make_optional(obj);
+      }
+
+      acc_controller_->insertAdaptiveCruiseVelocity(
+        decimate_trajectory, planner_data.decimate_trajectory_collision_index,
+        planner_data.current_pose, planner_data.nearest_collision_point,
+        planner_data.nearest_collision_point_time, current_odometry_ptr, &planner_data.stop_require,
+        &output, trajectory_header, *obj_latest_state);
+
+      if (!planner_data.stop_require) {
+        predicted_object_history_.clear();
+      }
       break;
     }
   }
@@ -481,7 +992,9 @@ void ObstacleStopPlannerNode::insertVelocity(
     const auto idx = planner_data.decimate_trajectory_index_map.at(
                        planner_data.decimate_trajectory_collision_index) +
                      planner_data.trajectory_trim_index;
-    const auto index_with_dist_remain = findNearestFrontIndex(
+    boost::optional<std::pair<size_t, double>> index_with_dist_remain;
+
+    index_with_dist_remain = findNearestFrontIndex(
       std::min(idx, traj_end_idx), output,
       createPoint(
         planner_data.nearest_collision_point.x, planner_data.nearest_collision_point.y, 0));
@@ -509,13 +1022,21 @@ void ObstacleStopPlannerNode::insertVelocity(
           return 0.0;
         }
 
+        if (ego_seg_idx == output.size() - 1) {
+          return 0.0;
+        }
+
         size_t stop_seg_idx = 0;
-        const double lon_offset =
-          calcLongitudinalOffsetToSegment(output, stop_point.index, getPoint(stop_point.point));
-        if (lon_offset < 0) {
-          stop_seg_idx = std::max(static_cast<size_t>(0), stop_point.index - 1);
+        if (stop_point.index < output.size() - 1) {
+          const double lon_offset =
+            calcLongitudinalOffsetToSegment(output, stop_point.index, getPoint(stop_point.point));
+          if (lon_offset < 0) {
+            stop_seg_idx = std::max(static_cast<size_t>(0), stop_point.index - 1);
+          } else {
+            stop_seg_idx = std::min(output.size() - 2, stop_point.index);
+          }
         } else {
-          stop_seg_idx = std::min(output.size() - 2, stop_point.index);
+          stop_seg_idx = output.size() - 2;
         }
 
         return calcSignedArcLength(
@@ -597,11 +1118,44 @@ void ObstacleStopPlannerNode::insertVelocity(
       const auto end_insert_point_with_idx = getBackwardInsertPointFromBasePoint(
         index_with_dist_remain.get().first, output, -index_with_dist_remain.get().second);
 
-      const auto slow_down_velocity =
-        slow_down_param_.min_slow_down_velocity +
-        (slow_down_param_.max_slow_down_velocity - slow_down_param_.min_slow_down_velocity) *
-          std::max(planner_data.lateral_deviation - vehicle_info.vehicle_width_m / 2, 0.0) /
-          slow_down_param_.lateral_margin;
+      double slow_down_velocity;
+      if (node_param_.use_predicted_objects) {
+        if (
+          planner_data.slow_down_object_shape.type ==
+          autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+          slow_down_velocity =
+            slow_down_param_.min_slow_down_velocity +
+            (slow_down_param_.max_slow_down_velocity - slow_down_param_.min_slow_down_velocity) *
+              std::max(planner_data.lateral_deviation - vehicle_info.vehicle_width_m / 2, 0.0) /
+              slow_down_param_.pedestrian_lateral_margin;
+        } else if (
+          planner_data.slow_down_object_shape.type ==
+          autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+          slow_down_velocity =
+            slow_down_param_.min_slow_down_velocity +
+            (slow_down_param_.max_slow_down_velocity - slow_down_param_.min_slow_down_velocity) *
+              std::max(planner_data.lateral_deviation - vehicle_info.vehicle_width_m / 2, 0.0) /
+              slow_down_param_.vehicle_lateral_margin;
+        } else if (
+          planner_data.slow_down_object_shape.type ==
+          autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+          slow_down_velocity =
+            slow_down_param_.min_slow_down_velocity +
+            (slow_down_param_.max_slow_down_velocity - slow_down_param_.min_slow_down_velocity) *
+              std::max(planner_data.lateral_deviation - vehicle_info.vehicle_width_m / 2, 0.0) /
+              slow_down_param_.unknown_lateral_margin;
+        } else {
+          RCLCPP_WARN_THROTTLE(
+            get_logger(), *get_clock(), 3000, "Object type is not supported. type: %d",
+            planner_data.slow_down_object_shape.type);
+        }
+      } else {
+        slow_down_velocity =
+          slow_down_param_.min_slow_down_velocity +
+          (slow_down_param_.max_slow_down_velocity - slow_down_param_.min_slow_down_velocity) *
+            std::max(planner_data.lateral_deviation - vehicle_info.vehicle_width_m / 2, 0.0) /
+            slow_down_param_.lateral_margin;
+      }
 
       const auto target_velocity = slow_down_param_.consider_constraints
                                      ? slow_down_param_.slow_down_velocity
@@ -651,8 +1205,13 @@ StopPoint ObstacleStopPlannerNode::searchInsertPoint(
   const int idx, const TrajectoryPoints & base_trajectory, const double dist_remain,
   const StopParam & stop_param)
 {
+  const bool is_behind_goal = static_cast<size_t>(idx) == base_trajectory.size() - 1;
+  const double max_longitudinal_margin = is_behind_goal
+                                           ? stop_param.max_longitudinal_margin_behind_goal
+                                           : stop_param.max_longitudinal_margin;
+
   const auto max_dist_stop_point =
-    createTargetPoint(idx, stop_param.max_longitudinal_margin, base_trajectory, dist_remain);
+    createTargetPoint(idx, max_longitudinal_margin, base_trajectory, dist_remain);
   const auto min_dist_stop_point =
     createTargetPoint(idx, stop_param.min_longitudinal_margin, base_trajectory, dist_remain);
 
@@ -912,8 +1471,9 @@ bool ObstacleStopPlannerNode::searchPointcloudNearTrajectory(
   const double squared_radius = search_radius * search_radius;
   std::vector<geometry_msgs::msg::Point> center_points;
   center_points.reserve(trajectory.size());
-  for (const auto & trajectory_point : trajectory)
+  for (const auto & trajectory_point : trajectory) {
     center_points.push_back(getVehicleCenterFromBase(trajectory_point.pose, vehicle_info).position);
+  }
   for (const auto & point : transformed_points_ptr->points) {
     for (const auto & center_point : center_points) {
       const double x = center_point.x - point.x;
@@ -971,6 +1531,46 @@ void ObstacleStopPlannerNode::resetExternalVelocityLimit(
   set_velocity_limit_ = false;
 
   RCLCPP_INFO(get_logger(), "reset velocity limit");
+}
+
+void ObstacleStopPlannerNode::filterObstacles(
+  const PredictedObjects & input_objects, const Pose & ego_pose, const TrajectoryPoints & traj,
+  const double dist_threshold, PredictedObjects & filtered_objects)
+{
+  filtered_objects.header = input_objects.header;
+
+  for (auto & object : input_objects.objects) {
+    // Check is it in front of ego vehicle
+    if (!isFrontObstacle(ego_pose, object.kinematics.initial_pose_with_covariance.pose.position)) {
+      continue;
+    }
+
+    // Check is it near to trajectory
+    const double max_length = calcObstacleMaxLength(object.shape);
+    const size_t seg_idx = motion_utils::findNearestSegmentIndex(
+      traj, object.kinematics.initial_pose_with_covariance.pose.position);
+    const auto p_front = tier4_autoware_utils::getPoint(traj.at(seg_idx));
+    const auto p_back = tier4_autoware_utils::getPoint(traj.at(seg_idx + 1));
+    const auto & p_target = object.kinematics.initial_pose_with_covariance.pose.position;
+    const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
+    const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
+
+    if (seg_idx == traj.size() - 2) {
+      // Calculate longitudinal offset
+      const auto longitudinal_dist = std::abs(segment_vec.dot(target_vec) / segment_vec.norm());
+      if (
+        longitudinal_dist - max_length - vehicle_info_.max_longitudinal_offset_m - dist_threshold >
+        0.0) {
+        continue;
+      }
+    }
+    const auto lateral_dist = std::abs(segment_vec.cross(target_vec)(2) / segment_vec.norm());
+    if (lateral_dist - max_length - vehicle_info_.max_lateral_offset_m - dist_threshold > 0.0) {
+      continue;
+    }
+    PredictedObject filtered_object = object;
+    filtered_objects.objects.push_back(filtered_object);
+  }
 }
 
 void ObstacleStopPlannerNode::publishDebugData(

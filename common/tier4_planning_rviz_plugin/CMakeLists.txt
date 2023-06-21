@@ -17,16 +17,11 @@ include_directories(
 )
 
 ament_auto_add_library(tier4_planning_rviz_plugin SHARED
-  include/drivable_area/display.hpp
-  src/drivable_area/display.cpp
   # path point
   include/path/display_base.hpp
   include/path/display.hpp
   src/path/display.cpp
   # footprint
-  include/path_footprint/display_base.hpp
-  include/path_footprint/display.hpp
-  src/path_footprint/display.cpp
   include/pose_with_uuid_stamped/display.hpp
   src/pose_with_uuid_stamped/display.cpp
   include/mission_checkpoint/mission_checkpoint.hpp

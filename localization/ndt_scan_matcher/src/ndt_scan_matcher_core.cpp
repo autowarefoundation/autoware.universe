@@ -20,6 +20,7 @@
 #include "ndt_scan_matcher/util_func.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/transform/transforms.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -77,6 +78,7 @@ bool validate_local_optimal_solution_oscillation(
   return false;
 }
 
+// cspell: ignore degrounded
 NDTScanMatcher::NDTScanMatcher()
 : Node("ndt_scan_matcher"),
   tf2_broadcaster_(*this),
@@ -312,8 +314,8 @@ void NDTScanMatcher::callback_initial_pose(
     // transform pose_frame to map_frame
     auto mapTF_initial_pose_msg_ptr =
       std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-    // mapTF_initial_pose_msg_ptr->header.stamp = initial_pose_msg_ptr->header.stamp;
     *mapTF_initial_pose_msg_ptr = transform(*initial_pose_msg_ptr, *TF_pose_to_map_ptr);
+    mapTF_initial_pose_msg_ptr->header.stamp = initial_pose_msg_ptr->header.stamp;
     initial_pose_msg_ptr_array_.push_back(mapTF_initial_pose_msg_ptr);
   }
 }
@@ -327,6 +329,11 @@ void NDTScanMatcher::callback_regularization_pose(
 void NDTScanMatcher::callback_sensor_points(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_sensorTF_msg_ptr)
 {
+  if (sensor_points_sensorTF_msg_ptr->data.empty()) {
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "Empty sensor points!");
+    return;
+  }
+
   // mutex ndt_ptr_
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
 
@@ -436,7 +443,7 @@ void NDTScanMatcher::callback_sensor_points(
 
   pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_mapTF_ptr(
     new pcl::PointCloud<PointSource>);
-  pcl::transformPointCloud(
+  tier4_autoware_utils::transformPointCloud(
     *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, ndt_result.pose);
   publish_point_cloud(sensor_ros_time, map_frame_, sensor_points_mapTF_ptr);
 
@@ -494,7 +501,7 @@ void NDTScanMatcher::transform_sensor_measurement(
     tier4_autoware_utils::transform2pose(*TF_target_to_source_ptr);
   const Eigen::Matrix4f base_to_sensor_matrix =
     pose_to_matrix4f(target_to_source_pose_stamped.pose);
-  pcl::transformPointCloud(
+  tier4_autoware_utils::transformPointCloud(
     *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }
 

@@ -25,7 +25,11 @@
 
 #include <autoware_auto_perception_msgs/msg/traffic_light.hpp>
 
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>
+#else
 #include <cv_bridge/cv_bridge.h>
+#endif
 
 #include <map>
 #include <memory>
@@ -48,7 +52,7 @@ private:
   void preProcess(cv::Mat & image, std::vector<float> & tensor, bool normalize = true);
   bool postProcess(
     std::vector<float> & output_data_host,
-    autoware_auto_perception_msgs::msg::TrafficSignal & traffic_signal);
+    autoware_auto_perception_msgs::msg::TrafficSignal & traffic_signal, bool apply_softmax = false);
   bool readLabelfile(std::string filepath, std::vector<std::string> & labels);
   bool isColorLabel(const std::string label);
   void calcSoftmax(std::vector<float> & data, std::vector<float> & probs, int num_output);
@@ -101,11 +105,12 @@ private:
   std::shared_ptr<Tn::TrtCommon> trt_;
   image_transport::Publisher image_pub_;
   std::vector<std::string> labels_;
-  std::vector<float> mean_{0.242, 0.193, 0.201};
-  std::vector<float> std_{1.0, 1.0, 1.0};
+  std::vector<double> mean_;
+  std::vector<double> std_;
   int input_c_;
   int input_h_;
   int input_w_;
+  bool apply_softmax_;
 };
 
 }  // namespace traffic_light

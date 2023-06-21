@@ -35,22 +35,28 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::TRAFFIC_LIGHT;
   } else if (module_name == "virtual_traffic_light") {
     module.type = Module::TRAFFIC_LIGHT;
-  } else if (module_name == "ext_request_lane_change_left") {
+  } else if (module_name == "external_request_lane_change_left") {
     module.type = Module::EXT_REQUEST_LANE_CHANGE_LEFT;
-  } else if (module_name == "ext_request_lane_change_right") {
+  } else if (module_name == "external_request_lane_change_right") {
     module.type = Module::EXT_REQUEST_LANE_CHANGE_RIGHT;
   } else if (module_name == "lane_change_left") {
     module.type = Module::LANE_CHANGE_LEFT;
   } else if (module_name == "lane_change_right") {
     module.type = Module::LANE_CHANGE_RIGHT;
+  } else if (module_name == "avoidance_by_lane_change_left") {
+    module.type = Module::AVOIDANCE_BY_LC_LEFT;
+  } else if (module_name == "avoidance_by_lane_change_right") {
+    module.type = Module::AVOIDANCE_BY_LC_RIGHT;
   } else if (module_name == "avoidance_left") {
     module.type = Module::AVOIDANCE_LEFT;
   } else if (module_name == "avoidance_right") {
     module.type = Module::AVOIDANCE_RIGHT;
-  } else if (module_name == "pull_over") {
-    module.type = Module::PULL_OVER;
-  } else if (module_name == "pull_out") {
-    module.type = Module::PULL_OUT;
+  } else if (module_name == "goal_planner") {
+    module.type = Module::GOAL_PLANNER;
+  } else if (module_name == "start_planner") {
+    module.type = Module::START_PLANNER;
+  } else if (module_name == "intersection_occlusion") {
+    module.type = Module::INTERSECTION_OCCLUSION;
   } else {
     module.type = Module::NONE;
   }
@@ -65,8 +71,8 @@ RTCAutoModeManagerInterface::RTCAutoModeManagerInterface(
   using std::placeholders::_2;
 
   // Service client
-  enable_cli_ = node->create_client<AutoMode>(
-    enable_auto_mode_namespace_ + "/internal/" + module_name, rmw_qos_profile_services_default);
+  enable_cli_ =
+    node->create_client<AutoMode>(enable_auto_mode_namespace_ + "/internal/" + module_name);
 
   while (!enable_cli_->wait_for_service(1s)) {
     if (!rclcpp::ok()) {

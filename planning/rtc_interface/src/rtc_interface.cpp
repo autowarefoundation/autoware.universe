@@ -52,18 +52,24 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::LANE_CHANGE_LEFT;
   } else if (module_name == "lane_change_right") {
     module.type = Module::LANE_CHANGE_RIGHT;
-  } else if (module_name == "ext_request_lane_change_left") {
+  } else if (module_name == "external_request_lane_change_left") {
     module.type = Module::EXT_REQUEST_LANE_CHANGE_LEFT;
-  } else if (module_name == "ext_request_lane_change_right") {
+  } else if (module_name == "external_request_lane_change_right") {
     module.type = Module::EXT_REQUEST_LANE_CHANGE_RIGHT;
+  } else if (module_name == "avoidance_by_lane_change_left") {
+    module.type = Module::AVOIDANCE_BY_LC_LEFT;
+  } else if (module_name == "avoidance_by_lane_change_right") {
+    module.type = Module::AVOIDANCE_BY_LC_RIGHT;
   } else if (module_name == "avoidance_left") {
     module.type = Module::AVOIDANCE_LEFT;
   } else if (module_name == "avoidance_right") {
     module.type = Module::AVOIDANCE_RIGHT;
-  } else if (module_name == "pull_over") {
-    module.type = Module::PULL_OVER;
-  } else if (module_name == "pull_out") {
-    module.type = Module::PULL_OUT;
+  } else if (module_name == "goal_planner") {
+    module.type = Module::GOAL_PLANNER;
+  } else if (module_name == "start_planner") {
+    module.type = Module::START_PLANNER;
+  } else if (module_name == "intersection_occlusion") {
+    module.type = Module::INTERSECTION_OCCLUSION;
   }
   return module;
 }
@@ -72,9 +78,9 @@ Module getModuleType(const std::string & module_name)
 
 namespace rtc_interface
 {
-RTCInterface::RTCInterface(rclcpp::Node * node, const std::string & name)
+RTCInterface::RTCInterface(rclcpp::Node * node, const std::string & name, const bool enable_rtc)
 : logger_{node->get_logger().get_child("RTCInterface[" + name + "]")},
-  is_auto_mode_{false},
+  is_auto_mode_init_{!enable_rtc},
   is_locked_{false}
 {
   using std::placeholders::_1;
@@ -160,7 +166,6 @@ void RTCInterface::updateCooperateCommandStatus(const std::vector<CooperateComma
     if (itr != registered_status_.statuses.end()) {
       itr->command_status = command.command;
       itr->auto_mode = false;
-      is_auto_mode_ = false;
     }
   }
 }
@@ -169,7 +174,7 @@ void RTCInterface::onAutoModeService(
   const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  is_auto_mode_ = request->enable;
+  is_auto_mode_init_ = request->enable;
   for (auto & status : registered_status_.statuses) {
     status.auto_mode = request->enable;
   }
@@ -196,7 +201,7 @@ void RTCInterface::updateCooperateStatus(
     status.command_status.type = Command::DEACTIVATE;
     status.start_distance = start_distance;
     status.finish_distance = finish_distance;
-    status.auto_mode = is_auto_mode_;
+    status.auto_mode = is_auto_mode_init_;
     registered_status_.statuses.push_back(status);
     return;
   }
@@ -206,7 +211,6 @@ void RTCInterface::updateCooperateStatus(
   itr->safe = safe;
   itr->start_distance = start_distance;
   itr->finish_distance = finish_distance;
-  itr->auto_mode = is_auto_mode_;
 }
 
 void RTCInterface::removeCooperateStatus(const UUID & uuid)
@@ -276,7 +280,10 @@ bool RTCInterface::isRegistered(const UUID & uuid)
   return itr != registered_status_.statuses.end();
 }
 
-void RTCInterface::lockCommandUpdate() { is_locked_ = true; }
+void RTCInterface::lockCommandUpdate()
+{
+  is_locked_ = true;
+}
 
 void RTCInterface::unlockCommandUpdate()
 {
@@ -284,8 +291,14 @@ void RTCInterface::unlockCommandUpdate()
   updateCooperateCommandStatus(stored_commands_);
 }
 
-rclcpp::Logger RTCInterface::getLogger() const { return logger_; }
+rclcpp::Logger RTCInterface::getLogger() const
+{
+  return logger_;
+}
 
-bool RTCInterface::isLocked() const { return is_locked_; }
+bool RTCInterface::isLocked() const
+{
+  return is_locked_;
+}
 
 }  // namespace rtc_interface

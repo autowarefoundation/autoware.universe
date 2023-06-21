@@ -62,7 +62,7 @@ def launch_setup(context, *args, **kwargs):
                         "vehicle_frame": "base_link",
                         "map_frame": "map",
                         "update_rate": 10.0,
-                        "activate_by_scenario": True,
+                        "activate_by_scenario": False,
                         "grid_min_value": 0.0,
                         "grid_max_value": 1.0,
                         "grid_resolution": 0.2,
@@ -136,7 +136,7 @@ def generate_launch_description():
     )
 
     # component
-    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
+    add_launch_arg("use_intra_process", "false", "use ROS 2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
 
     set_container_executable = SetLaunchConfiguration(

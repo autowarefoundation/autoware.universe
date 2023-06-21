@@ -42,10 +42,66 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
   wheelbase_ = vehicle_info.wheel_base_m;
   initCommonParam();
-  over_stop_velocity_warn_thr_ =
-    declare_parameter("over_stop_velocity_warn_thr", tier4_autoware_utils::kmph2mps(5.0));
+  over_stop_velocity_warn_thr_ = declare_parameter<double>("over_stop_velocity_warn_thr");
 
   // create smoother
+  setupSmoother(wheelbase_);
+
+  // publishers, subscribers
+  pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
+  pub_velocity_limit_ = create_publisher<VelocityLimit>(
+    "~/output/current_velocity_limit_mps", rclcpp::QoS{1}.transient_local());
+  pub_dist_to_stopline_ = create_publisher<Float32Stamped>("~/distance_to_stopline", 1);
+  pub_over_stop_velocity_ = create_publisher<StopSpeedExceeded>("~/stop_speed_exceeded", 1);
+  sub_current_trajectory_ = create_subscription<Trajectory>(
+    "~/input/trajectory", 1, std::bind(&MotionVelocitySmootherNode::onCurrentTrajectory, this, _1));
+  sub_current_odometry_ = create_subscription<Odometry>(
+    "/localization/kinematic_state", 1,
+    std::bind(&MotionVelocitySmootherNode::onCurrentOdometry, this, _1));
+  sub_external_velocity_limit_ = create_subscription<VelocityLimit>(
+    "~/input/external_velocity_limit_mps", 1,
+    std::bind(&MotionVelocitySmootherNode::onExternalVelocityLimit, this, _1));
+  sub_current_acceleration_ = create_subscription<AccelWithCovarianceStamped>(
+    "~/input/acceleration", 1,
+    [this](const AccelWithCovarianceStamped::SharedPtr msg) { current_acceleration_ptr_ = msg; });
+  sub_operation_mode_ = create_subscription<OperationModeState>(
+    "~/input/operation_mode_state", 1,
+    [this](const OperationModeState::SharedPtr msg) { operation_mode_ = *msg; });
+
+  // parameter update
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&MotionVelocitySmootherNode::onParameter, this, _1));
+
+  // debug
+  publish_debug_trajs_ = declare_parameter<bool>("publish_debug_trajs");
+  debug_closest_velocity_ = create_publisher<Float32Stamped>("~/closest_velocity", 1);
+  debug_closest_acc_ = create_publisher<Float32Stamped>("~/closest_acceleration", 1);
+  debug_closest_jerk_ = create_publisher<Float32Stamped>("~/closest_jerk", 1);
+  debug_closest_max_velocity_ = create_publisher<Float32Stamped>("~/closest_max_velocity", 1);
+  debug_calculation_time_ = create_publisher<Float32Stamped>("~/calculation_time", 1);
+  pub_trajectory_raw_ = create_publisher<Trajectory>("~/debug/trajectory_raw", 1);
+  pub_trajectory_vel_lim_ =
+    create_publisher<Trajectory>("~/debug/trajectory_external_velocity_limited", 1);
+  pub_trajectory_latacc_filtered_ =
+    create_publisher<Trajectory>("~/debug/trajectory_lateral_acc_filtered", 1);
+  pub_trajectory_steering_rate_limited_ =
+    create_publisher<Trajectory>("~/debug/trajectory_steering_rate_limited", 1);
+  pub_trajectory_resampled_ = create_publisher<Trajectory>("~/debug/trajectory_time_resampled", 1);
+
+  external_velocity_limit_.velocity = node_param_.max_velocity;
+  max_velocity_with_deceleration_ = node_param_.max_velocity;
+
+  // publish default max velocity
+  VelocityLimit max_vel_msg{};
+  max_vel_msg.stamp = this->now();
+  max_vel_msg.max_velocity = node_param_.max_velocity;
+  pub_velocity_limit_->publish(max_vel_msg);
+
+  clock_ = get_clock();
+}
+
+void MotionVelocitySmootherNode::setupSmoother(const double wheelbase)
+{
   switch (node_param_.algorithm_type) {
     case AlgorithmType::JERK_FILTERED: {
       smoother_ = std::make_shared<JerkFilteredSmoother>(*this);
@@ -76,56 +132,8 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
     default:
       throw std::domain_error("[MotionVelocitySmootherNode] invalid algorithm");
   }
-  // Initialize the wheelbase
-  auto p = smoother_->getBaseParam();
-  p.wheel_base = wheelbase_;
-  smoother_->setParam(p);
 
-  // publishers, subscribers
-  pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
-  pub_velocity_limit_ = create_publisher<VelocityLimit>(
-    "~/output/current_velocity_limit_mps", rclcpp::QoS{1}.transient_local());
-  pub_dist_to_stopline_ = create_publisher<Float32Stamped>("~/distance_to_stopline", 1);
-  pub_over_stop_velocity_ = create_publisher<StopSpeedExceeded>("~/stop_speed_exceeded", 1);
-  sub_current_trajectory_ = create_subscription<Trajectory>(
-    "~/input/trajectory", 1, std::bind(&MotionVelocitySmootherNode::onCurrentTrajectory, this, _1));
-  sub_current_odometry_ = create_subscription<Odometry>(
-    "/localization/kinematic_state", 1,
-    std::bind(&MotionVelocitySmootherNode::onCurrentOdometry, this, _1));
-  sub_external_velocity_limit_ = create_subscription<VelocityLimit>(
-    "~/input/external_velocity_limit_mps", 1,
-    std::bind(&MotionVelocitySmootherNode::onExternalVelocityLimit, this, _1));
-
-  // parameter update
-  set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&MotionVelocitySmootherNode::onParameter, this, _1));
-
-  // debug
-  publish_debug_trajs_ = declare_parameter("publish_debug_trajs", true);
-  debug_closest_velocity_ = create_publisher<Float32Stamped>("~/closest_velocity", 1);
-  debug_closest_acc_ = create_publisher<Float32Stamped>("~/closest_acceleration", 1);
-  debug_closest_jerk_ = create_publisher<Float32Stamped>("~/closest_jerk", 1);
-  debug_closest_max_velocity_ = create_publisher<Float32Stamped>("~/closest_max_velocity", 1);
-  debug_calculation_time_ = create_publisher<Float32Stamped>("~/calculation_time", 1);
-  pub_trajectory_raw_ = create_publisher<Trajectory>("~/debug/trajectory_raw", 1);
-  pub_trajectory_vel_lim_ =
-    create_publisher<Trajectory>("~/debug/trajectory_external_velocity_limited", 1);
-  pub_trajectory_latacc_filtered_ =
-    create_publisher<Trajectory>("~/debug/trajectory_lateral_acc_filtered", 1);
-  pub_trajectory_steering_rate_limited_ =
-    create_publisher<Trajectory>("~/debug/trajectory_steering_rate_limited", 1);
-  pub_trajectory_resampled_ = create_publisher<Trajectory>("~/debug/trajectory_time_resampled", 1);
-
-  external_velocity_limit_.velocity = node_param_.max_velocity;
-  max_velocity_with_deceleration_ = node_param_.max_velocity;
-
-  // publish default max velocity
-  VelocityLimit max_vel_msg{};
-  max_vel_msg.stamp = this->now();
-  max_vel_msg.max_velocity = node_param_.max_velocity;
-  pub_velocity_limit_->publish(max_vel_msg);
-
-  clock_ = get_clock();
+  smoother_->setWheelBase(wheelbase);
 }
 
 rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter(
@@ -141,6 +149,19 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
     }
     return false;
   };
+
+  // TODO(Horibe): temporally. replace with template.
+  auto update_param_bool = [&](const std::string & name, bool & v) {
+    auto it = std::find_if(
+      parameters.cbegin(), parameters.cend(),
+      [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
+    if (it != parameters.cend()) {
+      v = it->as_bool();
+      return true;
+    }
+    return false;
+  };
+
   {
     auto & p = node_param_;
     update_param("max_velocity", p.max_velocity);
@@ -157,6 +178,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
     update_param("stop_dist_to_prohibit_engage", p.stop_dist_to_prohibit_engage);
     update_param("ego_nearest_dist_threshold", p.ego_nearest_dist_threshold);
     update_param("ego_nearest_yaw_threshold", p.ego_nearest_yaw_threshold);
+    update_param_bool("plan_from_ego_speed_on_manual_mode", p.plan_from_ego_speed_on_manual_mode);
   }
 
   {
@@ -243,34 +265,36 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
 void MotionVelocitySmootherNode::initCommonParam()
 {
   auto & p = node_param_;
-  p.max_velocity = declare_parameter("max_velocity", 20.0);  // 72.0 kmph
+  p.max_velocity = declare_parameter<double>("max_velocity");  // 72.0 kmph
   p.margin_to_insert_external_velocity_limit =
-    declare_parameter("margin_to_insert_external_velocity_limit", 0.3);
-  p.replan_vel_deviation = declare_parameter("replan_vel_deviation", 3.0);
-  p.engage_velocity = declare_parameter("engage_velocity", 0.3);
-  p.engage_acceleration = declare_parameter("engage_acceleration", 0.1);
-  p.engage_exit_ratio = declare_parameter("engage_exit_ratio", 0.5);
+    declare_parameter<double>("margin_to_insert_external_velocity_limit");
+  p.replan_vel_deviation = declare_parameter<double>("replan_vel_deviation");
+  p.engage_velocity = declare_parameter<double>("engage_velocity");
+  p.engage_acceleration = declare_parameter<double>("engage_acceleration");
+  p.engage_exit_ratio = declare_parameter<double>("engage_exit_ratio");
   p.engage_exit_ratio = std::min(std::max(p.engage_exit_ratio, 0.0), 1.0);
-  p.stopping_velocity =
-    declare_parameter("stopping_velocity", tier4_autoware_utils::kmph2mps(10.0));
-  p.stopping_distance = declare_parameter("stopping_distance", 0.0);
-  p.extract_ahead_dist = declare_parameter("extract_ahead_dist", 200.0);
-  p.extract_behind_dist = declare_parameter("extract_behind_dist", 3.0);
-  p.stop_dist_to_prohibit_engage = declare_parameter("stop_dist_to_prohibit_engage", 1.5);
+  p.stopping_velocity = declare_parameter<double>("stopping_velocity");
+  p.stopping_distance = declare_parameter<double>("stopping_distance");
+  p.extract_ahead_dist = declare_parameter<double>("extract_ahead_dist");
+  p.extract_behind_dist = declare_parameter<double>("extract_behind_dist");
+  p.stop_dist_to_prohibit_engage = declare_parameter<double>("stop_dist_to_prohibit_engage");
   p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
   p.post_resample_param.max_trajectory_length =
-    declare_parameter("post_max_trajectory_length", 300.0);
+    declare_parameter<double>("post_max_trajectory_length");
   p.post_resample_param.min_trajectory_length =
-    declare_parameter("post_min_trajectory_length", 30.0);
-  p.post_resample_param.resample_time = declare_parameter("post_resample_time", 10.0);
-  p.post_resample_param.dense_resample_dt = declare_parameter("post_dense_resample_dt", 0.1);
+    declare_parameter<double>("post_min_trajectory_length");
+  p.post_resample_param.resample_time = declare_parameter<double>("post_resample_time");
+  p.post_resample_param.dense_resample_dt = declare_parameter<double>("post_dense_resample_dt");
   p.post_resample_param.dense_min_interval_distance =
-    declare_parameter("post_dense_min_interval_distance", 0.1);
-  p.post_resample_param.sparse_resample_dt = declare_parameter("post_sparse_resample_dt", 0.1);
+    declare_parameter<double>("post_dense_min_interval_distance");
+  p.post_resample_param.sparse_resample_dt = declare_parameter<double>("post_sparse_resample_dt");
   p.post_resample_param.sparse_min_interval_distance =
-    declare_parameter("post_sparse_min_interval_distance", 1.0);
-  p.algorithm_type = getAlgorithmType(declare_parameter("algorithm_type", "JerkFiltered"));
+    declare_parameter<double>("post_sparse_min_interval_distance");
+  p.algorithm_type = getAlgorithmType(declare_parameter<std::string>("algorithm_type"));
+
+  p.plan_from_ego_speed_on_manual_mode =
+    declare_parameter<bool>("plan_from_ego_speed_on_manual_mode");
 }
 
 void MotionVelocitySmootherNode::publishTrajectory(const TrajectoryPoints & trajectory) const
@@ -305,6 +329,13 @@ void MotionVelocitySmootherNode::calcExternalVelocityLimit()
 
   constexpr double eps = 1.0E-04;
   const double margin = node_param_.margin_to_insert_external_velocity_limit;
+
+  // Set distance as zero if ego vehicle is stopped and external velocity limit is zero
+  if (
+    std::fabs(current_odometry_ptr_->twist.twist.linear.x) < eps &&
+    external_velocity_limit_.velocity < eps) {
+    external_velocity_limit_.dist = 0.0;
+  }
 
   // calculate distance and maximum velocity
   // to decelerate to external velocity limit with jerk and acceleration
@@ -371,10 +402,10 @@ void MotionVelocitySmootherNode::calcExternalVelocityLimit()
 
 bool MotionVelocitySmootherNode::checkData() const
 {
-  if (!current_odometry_ptr_ || !base_traj_raw_ptr_) {
+  if (!current_odometry_ptr_ || !base_traj_raw_ptr_ || !current_acceleration_ptr_) {
     RCLCPP_DEBUG(
-      get_logger(), "wait topics : current_vel = %d, base_traj = %d", (bool)current_odometry_ptr_,
-      (bool)base_traj_raw_ptr_);
+      get_logger(), "wait topics : current_vel = %d, base_traj = %d, acceleration = %d",
+      (bool)current_odometry_ptr_, (bool)base_traj_raw_ptr_, (bool)current_acceleration_ptr_);
     return false;
   }
   if (base_traj_raw_ptr_->points.size() < 2) {
@@ -397,6 +428,16 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
     return;
   }
 
+  // calculate trajectory velocity
+  auto input_points = motion_utils::convertToTrajectoryPointArray(*base_traj_raw_ptr_);
+
+  // guard for invalid trajectory
+  input_points = motion_utils::removeOverlapPoints(input_points);
+  if (input_points.size() < 2) {
+    RCLCPP_ERROR(get_logger(), "No enough points in trajectory after overlap points removal");
+    return;
+  }
+
   // calculate prev closest point
   if (!prev_output_.empty()) {
     current_closest_point_from_prev_output_ = calcProjectedTrajectoryPointFromEgo(prev_output_);
@@ -408,9 +449,6 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
 
   // ignore current external velocity limit next time
   external_velocity_limit_ptr_ = nullptr;
-
-  // calculate trajectory velocity
-  auto input_points = motion_utils::convertToTrajectoryPointArray(*base_traj_raw_ptr_);
 
   // For negative velocity handling, multiple -1 to velocity if it is for reverse.
   // NOTE: this process must be in the beginning of the process
@@ -625,7 +663,7 @@ void MotionVelocitySmootherNode::insertBehindVelocity(
   const size_t output_closest, const InitializeType type, TrajectoryPoints & output) const
 {
   const bool keep_closest_vel_for_behind =
-    (type == InitializeType::INIT || type == InitializeType::LARGE_DEVIATION_REPLAN ||
+    (type == InitializeType::EGO_VELOCITY || type == InitializeType::LARGE_DEVIATION_REPLAN ||
      type == InitializeType::ENGAGING);
 
   for (size_t i = output_closest - 1; i < output.size(); --i) {
@@ -686,33 +724,29 @@ std::pair<Motion, MotionVelocitySmootherNode::InitializeType>
 MotionVelocitySmootherNode::calcInitialMotion(
   const TrajectoryPoints & input_traj, const size_t input_closest) const
 {
-  const double vehicle_speed{std::fabs(current_odometry_ptr_->twist.twist.linear.x)};
-  const double target_vel{std::fabs(input_traj.at(input_closest).longitudinal_velocity_mps)};
-
-  Motion initial_motion;
-  InitializeType type{};
+  const double vehicle_speed = std::fabs(current_odometry_ptr_->twist.twist.linear.x);
+  const double vehicle_acceleration = current_acceleration_ptr_->accel.accel.linear.x;
+  const double target_vel = std::fabs(input_traj.at(input_closest).longitudinal_velocity_mps);
 
   // first time
   if (!current_closest_point_from_prev_output_) {
-    initial_motion.vel = vehicle_speed;
-    initial_motion.acc = 0.0;
-    type = InitializeType::INIT;
-    return std::make_pair(initial_motion, type);
+    Motion initial_motion = {vehicle_speed, 0.0};
+    return {initial_motion, InitializeType::EGO_VELOCITY};
   }
 
   // when velocity tracking deviation is large
-  const double desired_vel{current_closest_point_from_prev_output_->longitudinal_velocity_mps};
-  const double vel_error{vehicle_speed - std::fabs(desired_vel)};
+  const double desired_vel = current_closest_point_from_prev_output_->longitudinal_velocity_mps;
+  const double desired_acc = current_closest_point_from_prev_output_->acceleration_mps2;
+  const double vel_error = vehicle_speed - std::fabs(desired_vel);
+
   if (std::fabs(vel_error) > node_param_.replan_vel_deviation) {
-    type = InitializeType::LARGE_DEVIATION_REPLAN;
-    initial_motion.vel = vehicle_speed;  // use current vehicle speed
-    initial_motion.acc = current_closest_point_from_prev_output_->acceleration_mps2;
     RCLCPP_DEBUG(
       get_logger(),
       "calcInitialMotion : Large deviation error for speed control. Use current speed for "
       "initial value, desired_vel = %f, vehicle_speed = %f, vel_error = %f, error_thr = %f",
       desired_vel, vehicle_speed, vel_error, node_param_.replan_vel_deviation);
-    return std::make_pair(initial_motion, type);
+    Motion initial_motion = {vehicle_speed, desired_acc};  // TODO(Horibe): use current acc
+    return {initial_motion, InitializeType::LARGE_DEVIATION_REPLAN};
   }
 
   // if current vehicle velocity is low && base_desired speed is high,
@@ -720,42 +754,51 @@ MotionVelocitySmootherNode::calcInitialMotion(
   const double engage_vel_thr = node_param_.engage_velocity * node_param_.engage_exit_ratio;
   if (vehicle_speed < engage_vel_thr) {
     if (target_vel >= node_param_.engage_velocity) {
-      const auto idx = motion_utils::searchZeroVelocityIndex(input_traj);
-      const double stop_dist = idx ? tier4_autoware_utils::calcDistance2d(
-                                       input_traj.at(*idx), input_traj.at(input_closest))
-                                   : 0.0;
-      if (!idx || stop_dist > node_param_.stop_dist_to_prohibit_engage) {
-        type = InitializeType::ENGAGING;
-        initial_motion.vel = node_param_.engage_velocity;
-        initial_motion.acc = node_param_.engage_acceleration;
+      const double stop_dist = trajectory_utils::calcStopDistance(input_traj, input_closest);
+      if (stop_dist > node_param_.stop_dist_to_prohibit_engage) {
         RCLCPP_DEBUG(
           get_logger(),
           "calcInitialMotion : vehicle speed is low (%.3f), and desired speed is high (%.3f). Use "
           "engage speed (%.3f) until vehicle speed reaches engage_vel_thr (%.3f). stop_dist = %.3f",
           vehicle_speed, target_vel, node_param_.engage_velocity, engage_vel_thr, stop_dist);
-        return std::make_pair(initial_motion, type);
+        Motion initial_motion = {node_param_.engage_velocity, node_param_.engage_acceleration};
+        return {initial_motion, InitializeType::ENGAGING};
       } else {
         RCLCPP_DEBUG(
           get_logger(), "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist);
       }
     } else if (target_vel > 0.0) {
-      auto clock{rclcpp::Clock{RCL_ROS_TIME}};
       RCLCPP_WARN_THROTTLE(
-        get_logger(), clock, 3000,
+        get_logger(), *clock_, 3000,
         "calcInitialMotion : target velocity(%.3f[m/s]) is lower than engage velocity(%.3f[m/s]). ",
         target_vel, node_param_.engage_velocity);
     }
   }
 
+  // If the control mode is not AUTONOMOUS (vehicle is not under control of the planning module),
+  // use ego velocity/acceleration in the planning for smooth transition from MANUAL to AUTONOMOUS.
+  if (node_param_.plan_from_ego_speed_on_manual_mode) {  // could be false for debug purpose
+    const bool is_in_autonomous_control = operation_mode_.is_autoware_control_enabled &&
+                                          operation_mode_.mode == OperationModeState::AUTONOMOUS;
+    if (!is_in_autonomous_control) {
+      RCLCPP_INFO_THROTTLE(
+        get_logger(), *clock_, 10000, "Not in autonomous control. Plan from ego velocity.");
+      // We should plan from the current vehicle speed, but if the initial value is greater than the
+      // velocity limit, the current planning algorithm decelerates with a very high deceleration.
+      // To avoid this, we set the initial value of the vehicle speed to be below the speed limit.
+      const auto v0 = std::min(target_vel, vehicle_speed);
+      const Motion initial_motion = {v0, vehicle_acceleration};
+      return {initial_motion, InitializeType::EGO_VELOCITY};
+    }
+  }
+
   // normal update: use closest in current_closest_point_from_prev_output
-  type = InitializeType::NORMAL;
-  initial_motion.vel = current_closest_point_from_prev_output_->longitudinal_velocity_mps;
-  initial_motion.acc = current_closest_point_from_prev_output_->acceleration_mps2;
+  Motion initial_motion = {desired_vel, desired_acc};
   RCLCPP_DEBUG(
     get_logger(),
     "calcInitialMotion : normal update. v0 = %f, a0 = %f, vehicle_speed = %f, target_vel = %f",
     initial_motion.vel, initial_motion.acc, vehicle_speed, target_vel);
-  return std::make_pair(initial_motion, type);
+  return {initial_motion, InitializeType::NORMAL};
 }
 
 void MotionVelocitySmootherNode::overwriteStopPoint(
@@ -814,19 +857,23 @@ void MotionVelocitySmootherNode::applyExternalVelocityLimit(TrajectoryPoints & t
   trajectory_utils::applyMaximumVelocityLimit(
     0, traj.size(), max_velocity_with_deceleration_, traj);
 
-  const size_t closest_idx = findNearestIndexFromEgo(traj);
-
-  double dist = 0.0;
-  for (size_t idx = closest_idx; idx < traj.size() - 1; ++idx) {
-    dist += tier4_autoware_utils::calcDistance2d(traj.at(idx), traj.at(idx + 1));
-    if (dist > external_velocity_limit_.dist) {
-      trajectory_utils::applyMaximumVelocityLimit(
-        idx + 1, traj.size(), external_velocity_limit_.velocity, traj);
-      return;
-    }
+  // insert the point at the distance of external velocity limit
+  const auto & current_pose = current_odometry_ptr_->pose.pose;
+  const size_t closest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    traj, current_pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
+  const auto inserted_index =
+    motion_utils::insertTargetPoint(closest_seg_idx, external_velocity_limit_.dist, traj);
+  if (!inserted_index) {
+    traj.back().longitudinal_velocity_mps = std::min(
+      traj.back().longitudinal_velocity_mps, static_cast<float>(external_velocity_limit_.velocity));
+    return;
   }
-  traj.back().longitudinal_velocity_mps = std::min(
-    traj.back().longitudinal_velocity_mps, static_cast<float>(external_velocity_limit_.velocity));
+
+  // apply external velocity limit from the inserted point
+  trajectory_utils::applyMaximumVelocityLimit(
+    *inserted_index, traj.size(), external_velocity_limit_.velocity, traj);
+
   RCLCPP_DEBUG(
     get_logger(), "externalVelocityLimit : limit_vel = %.3f", external_velocity_limit_.velocity);
 }

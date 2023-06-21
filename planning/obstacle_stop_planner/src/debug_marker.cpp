@@ -53,12 +53,12 @@ ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
 }
 
 bool ObstacleStopPlannerDebugNode::pushPolygon(
-  const std::vector<cv::Point2d> & polygon, const double z, const PolygonType & type)
+  const tier4_autoware_utils::Polygon2d & polygon, const double z, const PolygonType & type)
 {
   std::vector<Eigen::Vector3d> eigen_polygon;
-  for (const auto & point : polygon) {
+  for (const auto & point : polygon.outer()) {
     Eigen::Vector3d eigen_point;
-    eigen_point << point.x, point.y, z;
+    eigen_point << point.x(), point.y(), z;
     eigen_polygon.push_back(eigen_point);
   }
   return pushPolygon(eigen_polygon, type);
@@ -86,6 +86,43 @@ bool ObstacleStopPlannerDebugNode::pushPolygon(
     case PolygonType::SlowDown:
       if (!polygon.empty()) {
         slow_down_polygons_.push_back(polygon);
+      }
+      return true;
+    case PolygonType::Obstacle:
+      if (!polygon.empty()) {
+        obstacle_polygons_.push_back(polygon);
+      }
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool ObstacleStopPlannerDebugNode::pushPolyhedron(
+  const tier4_autoware_utils::Polygon2d & polyhedron, const double z_min, const double z_max,
+  const PolygonType & type)
+{
+  std::vector<Eigen::Vector3d> eigen_polyhedron;
+  for (const auto & point : polyhedron.outer()) {
+    eigen_polyhedron.emplace_back(point.x(), point.y(), z_min);
+    eigen_polyhedron.emplace_back(point.x(), point.y(), z_max);
+  }
+
+  return pushPolyhedron(eigen_polyhedron, type);
+}
+
+bool ObstacleStopPlannerDebugNode::pushPolyhedron(
+  const std::vector<Eigen::Vector3d> & polyhedron, const PolygonType & type)
+{
+  switch (type) {
+    case PolygonType::Vehicle:
+      if (!polyhedron.empty()) {
+        vehicle_polyhedrons_.push_back(polyhedron);
+      }
+      return true;
+    case PolygonType::Collision:
+      if (!polyhedron.empty()) {
+        collision_polyhedrons_.push_back(polyhedron);
       }
       return true;
     default:
@@ -167,6 +204,9 @@ void ObstacleStopPlannerDebugNode::publish()
   collision_polygons_.clear();
   slow_down_range_polygons_.clear();
   slow_down_polygons_.clear();
+  obstacle_polygons_.clear();
+  vehicle_polyhedrons_.clear();
+  collision_polyhedrons_.clear();
   stop_pose_ptr_ = nullptr;
   target_stop_pose_ptr_ = nullptr;
   slow_down_start_pose_ptr_ = nullptr;
@@ -224,6 +264,71 @@ MarkerArray ObstacleStopPlannerDebugNode::makeVisualizationMarker()
 {
   MarkerArray msg;
   rclcpp::Time current_time = node_->now();
+
+  // cube
+  if (!vehicle_polyhedrons_.empty()) {
+    auto marker = createDefaultMarker(
+      "map", current_time, "detection_cubes", 0, Marker::LINE_LIST,
+      createMarkerScale(0.01, 0.0, 0.0), createMarkerColor(0.0, 1.0, 0.0, 0.999));
+
+    for (size_t i = 0; i < vehicle_polyhedrons_.size(); ++i) {
+      for (size_t j = 0; j < vehicle_polyhedrons_.at(i).size(); ++j) {
+        const auto & p = vehicle_polyhedrons_.at(i).at(j);
+        marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+      }
+    }
+
+    for (size_t i = 0; i < vehicle_polyhedrons_.size(); ++i) {
+      for (size_t j = 0; j + 2 < vehicle_polyhedrons_.at(i).size(); ++j) {
+        const auto & p = vehicle_polyhedrons_.at(i).at(j);
+        marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+        const auto & p1 = vehicle_polyhedrons_.at(i).at(j + 2);
+        marker.points.push_back(createPoint(p1.x(), p1.y(), p1.z()));
+      }
+      const auto & p = vehicle_polyhedrons_.at(i).at(1);
+      marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+      const auto & p1 = vehicle_polyhedrons_.at(i).at(vehicle_polyhedrons_.at(i).size() - 1);
+      marker.points.push_back(createPoint(p1.x(), p1.y(), p1.z()));
+      const auto & p2 = vehicle_polyhedrons_.at(i).at(0);
+      marker.points.push_back(createPoint(p2.x(), p2.y(), p2.z()));
+      const auto & p3 = vehicle_polyhedrons_.at(i).at(vehicle_polyhedrons_.at(i).size() - 2);
+      marker.points.push_back(createPoint(p3.x(), p3.y(), p3.z()));
+    }
+
+    msg.markers.push_back(marker);
+  }
+
+  if (!collision_polyhedrons_.empty()) {
+    auto marker = createDefaultMarker(
+      "map", current_time, "collision_cubes", 0, Marker::LINE_LIST,
+      createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(1.0, 0.0, 0.0, 0.999));
+
+    for (size_t i = 0; i < collision_polyhedrons_.size(); ++i) {
+      for (size_t j = 0; j < collision_polyhedrons_.at(i).size(); ++j) {
+        const auto & p = collision_polyhedrons_.at(i).at(j);
+        marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+      }
+    }
+
+    for (size_t i = 0; i < collision_polyhedrons_.size(); ++i) {
+      for (size_t j = 0; j + 2 < collision_polyhedrons_.at(i).size(); ++j) {
+        const auto & p = collision_polyhedrons_.at(i).at(j);
+        marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+        const auto & p1 = collision_polyhedrons_.at(i).at(j + 2);
+        marker.points.push_back(createPoint(p1.x(), p1.y(), p1.z()));
+      }
+      const auto & p = collision_polyhedrons_.at(i).at(1);
+      marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+      const auto & p1 = collision_polyhedrons_.at(i).at(collision_polyhedrons_.at(i).size() - 1);
+      marker.points.push_back(createPoint(p1.x(), p1.y(), p1.z()));
+      const auto & p2 = collision_polyhedrons_.at(i).at(0);
+      marker.points.push_back(createPoint(p2.x(), p2.y(), p2.z()));
+      const auto & p3 = collision_polyhedrons_.at(i).at(collision_polyhedrons_.at(i).size() - 2);
+      marker.points.push_back(createPoint(p3.x(), p3.y(), p3.z()));
+    }
+
+    msg.markers.push_back(marker);
+  }
 
   // polygon
   if (!vehicle_polygons_.empty()) {
@@ -311,6 +416,29 @@ MarkerArray ObstacleStopPlannerDebugNode::makeVisualizationMarker()
           marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
         } else {
           const auto & p = slow_down_polygons_.at(i).at(j + 1);
+          marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+        }
+      }
+    }
+    msg.markers.push_back(marker);
+  }
+
+  if (!obstacle_polygons_.empty()) {
+    auto marker = createDefaultMarker(
+      "map", current_time, "obstacle_polygons", 0, Marker::LINE_LIST,
+      createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999));
+
+    for (size_t i = 0; i < obstacle_polygons_.size(); ++i) {
+      for (size_t j = 0; j < obstacle_polygons_.at(i).size(); ++j) {
+        {
+          const auto & p = obstacle_polygons_.at(i).at(j);
+          marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+        }
+        if (j + 1 == obstacle_polygons_.at(i).size()) {
+          const auto & p = obstacle_polygons_.at(i).at(0);
+          marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+        } else {
+          const auto & p = obstacle_polygons_.at(i).at(j + 1);
           marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
         }
       }

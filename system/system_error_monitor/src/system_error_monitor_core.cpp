@@ -213,7 +213,11 @@ int isInNoFaultCondition(
 AutowareErrorMonitor::AutowareErrorMonitor()
 : Node(
     "system_error_monitor",
-    rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true))
+    rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true)),
+  diag_array_stamp_(0, 0, this->get_clock()->get_clock_type()),
+  autoware_state_stamp_(0, 0, this->get_clock()->get_clock_type()),
+  current_gate_mode_stamp_(0, 0, this->get_clock()->get_clock_type()),
+  control_mode_stamp_(0, 0, this->get_clock()->get_clock_type())
 {
   // Parameter
   get_parameter_or<int>("update_rate", params_.update_rate, 10);
@@ -385,7 +389,7 @@ void AutowareErrorMonitor::onControlMode(
 bool AutowareErrorMonitor::isDataReady()
 {
   if (!diag_array_) {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for diag_array msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for diag_array msg...");
     return false;
   }
 
@@ -410,6 +414,10 @@ bool AutowareErrorMonitor::isDataReady()
 bool AutowareErrorMonitor::isDataHeartbeatTimeout()
 {
   auto isTimeout = [this](const rclcpp::Time & last_stamp, const double threshold) {
+    if (last_stamp.get_clock_type() != this->now().get_clock_type()) {
+      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "clock type is different...");
+      return false;
+    }
     const auto time_diff = this->now() - last_stamp;
     return time_diff.seconds() > threshold;
   };
@@ -443,7 +451,7 @@ void AutowareErrorMonitor::onTimer()
   if (!isDataReady()) {
     if ((this->now() - initialized_time_).seconds() > params_.data_ready_timeout) {
       RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+        get_logger(), *get_clock(), std::chrono::milliseconds(5000).count(),
         "input data is timeout");
       updateTimeoutHazardStatus();
       publishHazardStatus(hazard_status_);

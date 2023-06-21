@@ -146,13 +146,13 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
   // Parameters
   {
     auto & p = node_param_;
-    p.use_pointcloud = this->declare_parameter("use_pointcloud", true);
-    p.use_dynamic_object = this->declare_parameter("use_dynamic_object", true);
-    p.surround_check_distance = this->declare_parameter("surround_check_distance", 2.0);
+    p.use_pointcloud = this->declare_parameter<bool>("use_pointcloud");
+    p.use_dynamic_object = this->declare_parameter<bool>("use_dynamic_object");
+    p.surround_check_distance = this->declare_parameter<double>("surround_check_distance");
     p.surround_check_recover_distance =
-      this->declare_parameter("surround_check_recover_distance", 2.5);
-    p.state_clear_time = this->declare_parameter("state_clear_time", 2.0);
-    p.publish_debug_footprints = this->declare_parameter("publish_debug_footprints", true);
+      this->declare_parameter<double>("surround_check_recover_distance");
+    p.state_clear_time = this->declare_parameter<double>("state_clear_time");
+    p.publish_debug_footprints = this->declare_parameter<bool>("publish_debug_footprints");
   }
 
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -196,7 +196,7 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
 void SurroundObstacleCheckerNode::onTimer()
 {
   if (!odometry_ptr_) {
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for current velocity...");
     return;
   }
@@ -206,13 +206,13 @@ void SurroundObstacleCheckerNode::onTimer()
   }
 
   if (node_param_.use_pointcloud && !pointcloud_ptr_) {
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for pointcloud info...");
     return;
   }
 
   if (node_param_.use_dynamic_object && !object_ptr_) {
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for dynamic object info...");
     return;
   }
@@ -333,6 +333,9 @@ boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacle() cons
 
 boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByPointCloud() const
 {
+  if (pointcloud_ptr_->data.empty()) {
+    return boost::none;
+  }
   const auto transform_stamped =
     getTransform("base_link", pointcloud_ptr_->header.frame_id, pointcloud_ptr_->header.stamp, 0.5);
 
@@ -346,7 +349,8 @@ boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByPoint
   Eigen::Affine3f isometry = tf2::transformToEigen(transform_stamped.get().transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ> transformed_pointcloud;
   pcl::fromROSMsg(*pointcloud_ptr_, transformed_pointcloud);
-  pcl::transformPointCloud(transformed_pointcloud, transformed_pointcloud, isometry);
+  tier4_autoware_utils::transformPointCloud(
+    transformed_pointcloud, transformed_pointcloud, isometry);
 
   const auto ego_polygon = createSelfPolygon(vehicle_info_);
 

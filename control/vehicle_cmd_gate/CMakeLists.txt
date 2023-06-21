@@ -7,7 +7,8 @@ autoware_package()
 ament_auto_add_library(vehicle_cmd_gate_node SHARED
   src/vehicle_cmd_gate.cpp
   src/vehicle_cmd_filter.cpp
-  src/pause_interface.cpp
+  src/adapi_pause_interface.cpp
+  src/moderate_stop_interface.cpp
 )
 
 rclcpp_components_register_node(vehicle_cmd_gate_node

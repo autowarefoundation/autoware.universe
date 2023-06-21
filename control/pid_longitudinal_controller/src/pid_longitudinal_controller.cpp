@@ -526,6 +526,11 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     RCLCPP_INFO_SKIPFIRST_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000, "%s", s);
   };
 
+  // if current operation mode is not autonomous mode, then change state to stopped
+  if (m_current_operation_mode.mode != OperationModeState::AUTONOMOUS) {
+    return changeState(ControlState::STOPPED);
+  }
+
   // transit state
   // in DRIVE state
   if (m_control_state == ControlState::DRIVE) {
@@ -924,7 +929,7 @@ double PidLongitudinalController::applyVelocityFeedback(
     m_pid_vel.calculate(error_vel_filtered, dt, enable_integration, pid_contributions);
 
   // Feedforward scaling:
-  // This is for the coordinate convertion where feedforward is applied, from Time to Arclength.
+  // This is for the coordinate conversion where feedforward is applied, from Time to Arclength.
   // Details: For accurate control, the feedforward should be calculated in the arclength coordinate
   // system, not in the time coordinate system. Otherwise, even if FF is applied, the vehicle speed
   // deviation will be bigger.
@@ -941,7 +946,8 @@ double PidLongitudinalController::applyVelocityFeedback(
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_FB_P_CONTRIBUTION, pid_contributions.at(0));
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_FB_I_CONTRIBUTION, pid_contributions.at(1));
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_FB_D_CONTRIBUTION, pid_contributions.at(2));
-  m_debug_values.setValues(DebugValues::TYPE::FF_SCALE, ff_acc);
+  m_debug_values.setValues(DebugValues::TYPE::FF_SCALE, ff_scale);
+  m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_FF, ff_acc);
 
   return feedback_acc;
 }

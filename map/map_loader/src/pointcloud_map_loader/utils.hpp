@@ -19,16 +19,31 @@
 #include <geometry_msgs/msg/point.hpp>
 
 #include <pcl/common/common.h>
+#include <yaml-cpp/yaml.h>
+
+#include <map>
+#include <string>
+#include <vector>
 
 struct PCDFileMetadata
 {
   pcl::PointXYZ min;
   pcl::PointXYZ max;
+  bool operator==(const PCDFileMetadata & other) const
+  {
+    return min.x == other.min.x && min.y == other.min.y && min.z == other.min.z &&
+           max.x == other.max.x && max.y == other.max.y && max.z == other.max.z;
+  }
 };
 
-bool sphereAndBoxOverlapExists(
-  const geometry_msgs::msg::Point position, const double radius, const pcl::PointXYZ position_min,
-  const pcl::PointXYZ position_max);
+std::map<std::string, PCDFileMetadata> loadPCDMetadata(const std::string & pcd_metadata_path);
+std::map<std::string, PCDFileMetadata> replaceWithAbsolutePath(
+  const std::map<std::string, PCDFileMetadata> & pcd_metadata_path,
+  const std::vector<std::string> & pcd_paths);
+
+bool cylinderAndBoxOverlapExists(
+  const double center_x, const double center_y, const double radius,
+  const pcl::PointXYZ position_min, const pcl::PointXYZ position_max);
 bool isGridWithinQueriedArea(
   const autoware_map_msgs::msg::AreaInfo area, const PCDFileMetadata metadata);
 

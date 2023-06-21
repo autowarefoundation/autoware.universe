@@ -17,6 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -59,6 +60,12 @@ struct NodeParam
   // set True, slow down for obstacle beside the path
   bool enable_slow_down;
 
+  // set True, filter obstacles in z axis
+  bool enable_z_axis_obstacle_filtering;
+
+  // buffer for z axis filtering [m]
+  double z_axis_filtering_buffer;
+
   // max velocity [m/s]
   double max_velocity;
 
@@ -79,6 +86,16 @@ struct NodeParam
 
   // voxel grid z parameter for filtering pointcloud [m]
   double voxel_grid_z;
+
+  // It uses only predicted objects for slowdown and collision checking
+  bool use_predicted_objects;
+
+  // If use_predicted_objects is true, objects are ignored if distance to trajectory is larger than
+  // this value [m]
+  double predicted_object_filtering_threshold;
+
+  // If use_predicted_objects is true, node publishes collision polygon
+  bool publish_obstacle_polygon;
 };
 
 struct StopParam
@@ -89,6 +106,7 @@ struct StopParam
 
   // margin between obstacle and the ego's front [m]
   double max_longitudinal_margin;
+  double max_longitudinal_margin_behind_goal;
 
   // margin between obstacle and the ego's front [m]
   // if any other stop point is inserted within max_longitudinal_margin.
@@ -103,16 +121,19 @@ struct StopParam
   // if any obstacles exist within the detection area, this module plans to stop
   // before the obstacle.
   double lateral_margin;
+  double vehicle_lateral_margin;
+  double pedestrian_lateral_margin;
+  double unknown_lateral_margin;
 
   // =================================
   // params for trajectory pre-process
   // =================================
 
-  // trajectory extend distance [m]
-  double extend_distance;
-
   // step length for pointcloud search range [m]
   double step_length;
+
+  // enable extend trajectory after goal lane for obstacle detection
+  bool enable_stop_behind_goal_for_obstacle;
 
   // ======
   // others
@@ -152,6 +173,9 @@ struct SlowDownParam
   // lateral margin between the ego's footprint and the boundary of the detection area for slow down
   // obstacles [m]
   double lateral_margin;
+  double vehicle_lateral_margin;
+  double pedestrian_lateral_margin;
+  double unknown_lateral_margin;
 
   // ===================
   // params for velocity
@@ -231,6 +255,8 @@ struct PlannerData
   pcl::PointXYZ nearest_slow_down_point;
 
   pcl::PointXYZ lateral_nearest_slow_down_point;
+
+  autoware_auto_perception_msgs::msg::Shape slow_down_object_shape{};
 
   rclcpp::Time nearest_collision_point_time{};
 

@@ -84,8 +84,8 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
 
   std::vector<std::string> steering_factor_topics = {
     "/planning/steering_factor/avoidance", "/planning/steering_factor/intersection",
-    "/planning/steering_factor/lane_change", "/planning/steering_factor/pull_out",
-    "/planning/steering_factor/pull_over"};
+    "/planning/steering_factor/lane_change", "/planning/steering_factor/start_planner",
+    "/planning/steering_factor/goal_planner"};
 
   sub_velocity_factors_ =
     init_factors<VelocityFactorArray>(this, velocity_factors_, velocity_factor_topics);
@@ -102,7 +102,10 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
 }
 
-void PlanningNode::on_trajectory(const Trajectory::ConstSharedPtr msg) { trajectory_ = msg; }
+void PlanningNode::on_trajectory(const Trajectory::ConstSharedPtr msg)
+{
+  trajectory_ = msg;
+}
 
 void PlanningNode::on_kinematic_state(const KinematicState::ConstSharedPtr msg)
 {

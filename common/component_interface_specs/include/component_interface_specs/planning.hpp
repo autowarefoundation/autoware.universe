@@ -19,10 +19,10 @@
 
 #include <autoware_adapi_v1_msgs/msg/route_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
+#include <autoware_adapi_v1_msgs/srv/set_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
-#include <autoware_planning_msgs/srv/set_route.hpp>
 
 namespace planning_interface
 {
@@ -35,8 +35,20 @@ struct SetRoutePoints
 
 struct SetRoute
 {
-  using Service = autoware_planning_msgs::srv::SetRoute;
+  using Service = autoware_adapi_v1_msgs::srv::SetRoute;
   static constexpr char name[] = "/planning/mission_planning/set_route";
+};
+
+struct ChangeRoutePoints
+{
+  using Service = autoware_adapi_v1_msgs::srv::SetRoutePoints;
+  static constexpr char name[] = "/planning/mission_planning/change_route_points";
+};
+
+struct ChangeRoute
+{
+  using Service = autoware_adapi_v1_msgs::srv::SetRoute;
+  static constexpr char name[] = "/planning/mission_planning/change_route";
 };
 
 struct ClearRoute
@@ -49,7 +61,7 @@ struct RouteState
 {
   using Message = autoware_adapi_v1_msgs::msg::RouteState;
   static constexpr char name[] = "/planning/mission_planning/route_state";
-  static constexpr size_t depth = 3;
+  static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
@@ -58,6 +70,24 @@ struct Route
 {
   using Message = autoware_planning_msgs::msg::LaneletRoute;
   static constexpr char name[] = "/planning/mission_planning/route";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+};
+
+struct NormalRoute
+{
+  using Message = autoware_planning_msgs::msg::LaneletRoute;
+  static constexpr char name[] = "/planning/mission_planning/normal_route";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+};
+
+struct MrmRoute
+{
+  using Message = autoware_planning_msgs::msg::LaneletRoute;
+  static constexpr char name[] = "/planning/mission_planning/mrm_route";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;

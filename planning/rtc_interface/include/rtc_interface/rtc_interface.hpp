@@ -46,7 +46,7 @@ using unique_identifier_msgs::msg::UUID;
 class RTCInterface
 {
 public:
-  RTCInterface(rclcpp::Node * node, const std::string & name);
+  RTCInterface(rclcpp::Node * node, const std::string & name, const bool enable_rtc = true);
   void publishCooperateStatus(const rclcpp::Time & stamp);
   void updateCooperateStatus(
     const UUID & uuid, const bool safe, const double start_distance, const double finish_distance,
@@ -81,7 +81,7 @@ private:
   Module module_;
   CooperateStatusArray registered_status_;
   std::vector<CooperateCommand> stored_commands_;
-  bool is_auto_mode_;
+  bool is_auto_mode_init_;
   bool is_locked_;
 
   std::string cooperate_status_namespace_ = "/planning/cooperate_status";

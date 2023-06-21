@@ -19,6 +19,9 @@
 #include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <behaviortree_cpp_v3/behavior_tree.h>
@@ -71,7 +74,6 @@ private:
   BT::Tree bt_tree_;
   BT::Blackboard::Ptr blackboard_;
 
-  BT::NodeStatus checkForceApproval(const std::string & name);
   void resetNotRunningModulePathCandidate();
 
   // For Groot monitoring

@@ -7,9 +7,9 @@
   <!-- behavior path planner -->
   <!-- lane change module -->
   <maintainer email="zulfaqar.azmi@tier4.jp">Zulfaqar Azmi</maintainer>
-  <!-- pull over module -->
+  <!-- goal planner module -->
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
-  <!-- pull out module -->
+  <!-- start planner module -->
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
   <!-- side shift module -->
   <maintainer email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</maintainer>
@@ -52,8 +52,7 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <exec_depend>behavior_path_planner</exec_depend>
   <exec_depend>behavior_velocity_planner</exec_depend>
@@ -66,6 +65,7 @@
   <exec_depend>obstacle_avoidance_planner</exec_depend>
   <exec_depend>obstacle_cruise_planner</exec_depend>
   <exec_depend>obstacle_stop_planner</exec_depend>
+  <exec_depend>planning_evaluator</exec_depend>
   <exec_depend>planning_validator</exec_depend>
   <exec_depend>rtc_auto_mode_manager</exec_depend>
   <exec_depend>scenario_selector</exec_depend>

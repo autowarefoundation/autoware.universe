@@ -29,7 +29,11 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <std_msgs/msg/header.hpp>
 
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>
+#else
 #include <cv_bridge/cv_bridge.h>
+#endif
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
@@ -58,11 +62,12 @@ public:
     const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr &
       input_rois_msg);
 
-private:
   enum ClassifierType {
     HSVFilter = 0,
     CNN = 1,
   };
+
+private:
   void connectCb();
 
   rclcpp::TimerBase::SharedPtr timer_;

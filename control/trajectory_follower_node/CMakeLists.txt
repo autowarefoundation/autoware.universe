@@ -10,7 +10,6 @@ ament_auto_add_library(${CONTROLLER_NODE} SHARED
   src/controller_node.cpp
 )
 
-target_compile_options(${CONTROLLER_NODE} PRIVATE -Wno-error=old-style-cast)
 rclcpp_components_register_node(${CONTROLLER_NODE}
   PLUGIN "autoware::motion::control::trajectory_follower_node::Controller"
   EXECUTABLE ${CONTROLLER_NODE}_exe
@@ -23,9 +22,6 @@ ament_auto_add_library(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} SHARED
   src/simple_trajectory_follower.cpp
 )
 
-# TODO(simple_trajectory_follower) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
-# TODO(simple_trajectory_follower) : Temporary workaround until this is fixed.
-target_compile_options(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} PRIVATE -Wno-error=old-style-cast)
 rclcpp_components_register_node(${SIMPLE_TRAJECTORY_FOLLOWER_NODE}
   PLUGIN "simple_trajectory_follower::SimpleTrajectoryFollower"
   EXECUTABLE ${SIMPLE_TRAJECTORY_FOLLOWER_NODE}_exe
@@ -42,14 +38,28 @@ if(BUILD_TESTING)
     ${TRAJECTORY_FOLLOWER_NODES_TEST} ${CONTROLLER_NODE})
 
   find_package(autoware_testing REQUIRED)
+  # smoke test for MPC controller
   add_smoke_test(${PROJECT_NAME} ${CONTROLLER_NODE}_exe
-    PARAM_FILENAMES "lateral_controller_defaults.param.yaml longitudinal_controller_defaults.param.yaml
-test_vehicle_info.param.yaml test_nearest_search.param.yaml trajectory_follower_node.param.yaml"
+    PARAM_FILENAMES "lateral/mpc.param.yaml longitudinal/pid.param.yaml
+trajectory_follower_node.param.yaml"
+    TEST_PARAM_FILENAMES "test_controller_mpc.param.yaml test_controller_pid.param.yaml
+test_vehicle_info.param.yaml test_nearest_search.param.yaml"
+    TARGET_INFIX "mpc"
   )
+  # smoke test for pure pursuit controller
+  add_smoke_test(${PROJECT_NAME} ${CONTROLLER_NODE}_exe
+    PARAM_FILENAMES "lateral/pure_pursuit.param.yaml longitudinal/pid.param.yaml
+trajectory_follower_node.param.yaml"
+    TEST_PARAM_FILENAMES "test_controller_pure_pursuit.param.yaml test_controller_pid.param.yaml
+test_vehicle_info.param.yaml test_nearest_search.param.yaml"
+    TARGET_INFIX "pure_pursuit"
+  )
+
 endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
   param
+  test
   launch
 )
