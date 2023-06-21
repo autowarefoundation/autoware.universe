@@ -36,6 +36,8 @@ public:
 
   const char * getModuleName() override { return "blind_spot"; }
 
+  const bool getEnableRTC() override { return true; }
+
 private:
   BlindSpotModule::PlannerParam planner_param_;
 

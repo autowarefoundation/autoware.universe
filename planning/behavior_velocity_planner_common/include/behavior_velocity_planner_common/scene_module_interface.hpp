@@ -166,6 +166,8 @@ public:
 
   virtual const char * getModuleName() = 0;
 
+  // do something?
+
   boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
 
   void updateSceneModuleInstances(
@@ -326,8 +328,9 @@ protected:
 class SceneModuleManagerInterfaceWithRTC : public SceneModuleManagerInterface
 {
 public:
-  SceneModuleManagerInterfaceWithRTC(rclcpp::Node & node, const char * module_name)
-  : SceneModuleManagerInterface(node, module_name), rtc_interface_(&node, module_name)
+  SceneModuleManagerInterfaceWithRTC(
+    rclcpp::Node & node, const char * module_name, const bool enable_rtc = true)
+  : SceneModuleManagerInterface(node, module_name), rtc_interface_(&node, module_name, enable_rtc)
   {
   }
 
