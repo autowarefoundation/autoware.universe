@@ -2749,7 +2749,7 @@ double calcMinimumLaneChangeLength(
     accumulated_length += vel * t + common_param.minimum_prepare_length + finish_judge_buffer;
   }
   accumulated_length +=
-    common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1);
+    common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);
 
   return accumulated_length;
 }
