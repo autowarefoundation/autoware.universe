@@ -1,63 +1,84 @@
-# Safety Checker class
+# SafetyChecker
 
-Safety check function checks if the given path will collide with a given target object.
+SafetyChecker is a safety check class that verifies if a given path collides with dynamic obstacles.
 
 ## Purpose / Role
 
-In the behavior path planner, certain modules (e.g., lane change) need to perform collision checks to ensure the safe navigation of the ego vehicle. These utility functions assist the user in conducting safety checks with other road participants.
+In a behavior path planner, specific modules, such as lane change, need to perform collision checks with dynamic obstacles to ensure the safe navigation of the ego vehicle. The purpose of this utility class is to provide a versatile definition of a class that can be used for safety checks with other road users.
 
 ### Assumptions
 
-The safety check module is based on the following assumptions:
+The SafetyChecker module is based on the following assumptions:
 
-1. Users must provide the position, velocity, and shape of both the ego and target objects to the utility functions.
-2. The yaw angle of each point in the predicted path of both the ego and target objects should point to the next point in the path.
-3. The safety check module uses RSS distance to determine the safety of a potential collision with other objects.
+- The user needs to provide the position, velocity, and shape of the ego vehicle and dynamic obstacles to the utility functions.
+- The yaw angle of each point on the predicted path of the ego vehicle and dynamic obstacles should point to the next point on the path.
+- The SafetyChecker module determines the safety of potential collisions with other objects using RSS distance.
 
 ### Limitations
 
-Currently the yaw angle of each point of predicted paths of a target object does not point to the next point. Therefore, the safety check function might returns incorrect result for some edge case.
+Currently, the yaw angle of each point on the predicted path of dynamic obstacles does not point to the next point. Therefore, the SafetyChecker function may return inaccurate results in some edge cases.
 
 ### Inner working / Algorithm
 
-The flow of the safety check algorithm is described in the following explanations.
+The algorithm flow of SafetyChecker is described as follows:
 
-![safety_check_flow](../image/safety_check/safety_check_flow.drawio.svg)
+```plantuml
+@startuml
+skinparam monochrome true
 
-Here we explain each step of the algorithm flow.
+title SafetyChecker: isSafeInLaneletCollisionCheck
+start
 
-#### 1. Get pose of the target object at a given time
+:calculate path to safety check;
+:calculate predicted ego poses;
 
-For the first step, we obtain the pose of the target object at a given time. This can be done by interpolating the predicted path of the object.
+partition Check Collision {
+  while (has next target object) is (yes)
+    :calculate target object path;
+    if (isSafeInLaneletCollisionCheck) then (yes)
+        :continue checking;
+    else (no)
+        :return false;
+        stop
+    endif
+  endwhile (no)
+  :return true;
+  stop
+}
 
-#### 2. Check overlap
+@enduml
+```
 
-With the interpolated pose obtained in the step.1, we check if the object and ego vehicle overlaps at a given time. If they are overlapped each other, the given path is unsafe.
+- `isPathSafe`: This method determines if a path is safe. It takes the path and ego vehicle odometry as arguments and returns `true` if the path is safe, `false` otherwise.
 
-#### 3. Get front object
+- `createPredictedPath`: This method generates a predicted path. It creates a predicted path based on the current velocity, target velocity, acceleration, ego vehicle's pose, time resolution, and stop time.
 
-After the overlap check, it starts to perform the safety check for the broader range. In this step, it judges if ego or target object is in front of the other vehicle. We use arc length of the front point of each object along the given path to judge which one is in front of the other. In the following example, target object (red rectangle) is running in front of the ego vehicle (black rectangle).
+- `getBackwardLanelets`: This method retrieves the backward lanelets. It takes the route handler, target lane, and ego vehicle's pose as arguments and returns the backward lanelets. It is used to obtain the area of interest for safety checks.
 
-![front_object](../image/safety_check/front_object.drawio.svg)
+- `filterObjectIndices`: This method filters the object indices. It takes a list of road objects and a filter function as arguments, and returns a list of indices.
 
-#### 4. Calculate RSS distance
+- `getEgoExpectedPoseAndConvertToPolygon`: This method generates the expected pose of the ego vehicle and converts it to a polygon. This polygon is used in subsequent methods for collision checks.
 
-After we find which vehicle is running ahead of the other vehicle, we start to compute the RSS distance. With the reaction time $t_{reaction}$ and safety time margin $t_{margin}$, RSS distance can be described as:
+- `isSafeInLaneletCollisionCheck`: This method checks for collisions between lanelets. It returns `true` if there is no collision, `false` otherwise.
 
-$$
-rss_{dist} = v_{rear} (t_{reaction} + t_{margin}) + \frac{v_{rear}^2}{2|a_{rear, decel}|} - \frac{v_{front}^2}{2|a_{front, decel|}}
-$$
+- `isObjectIndexIncluded`: This method checks if the specified index is included in the list of dynamic object indices.
 
-where $V_{front}$, $v_{rear}$ are front and rear vehicle velocity respectively and $a_{rear, front}$, $a_{rear, decel}$ are front and rear vehicle deceleration.
+- `isTargetObjectFront`: This method determines if the specified object is in front of the ego vehicle. It returns `true` if it is in front, `false` otherwise.
 
-#### 5. Create extended ego and target object polygons
+By using these methods, it is possible to determine if the predicted path of the ego vehicle has the potential to collide with other road users.
 
-In this step, we compute extended ego and target object polygons. The extended polygons can be described as:
+### How to use
 
-![extended_polygons](../image/safety_check/extended_polygons.drawio.svg)
+When creating an instance of SafetyChecker, you need to define the structures SafetyCheckParams and SafetyCheckData and provide them as arguments.
 
-As the picture shows, we expand the rear object polygon. For the longitudinal side, we extend it with the RSS distance, and for the lateral side, we extend it by the lateral margin
+#### SafetyCheckParams
 
-#### 6. Check overlap
+This structure holds the parameters for safety checks. Specific parameters include the shape and size of dynamic obstacles to be checked, the velocity and position of the ego vehicle, and settings for generating predicted paths.
 
-Similar to the previous step, we check the overlap of the extended rear object polygon and front object polygon. If they are overlapped each other, we regard it as the unsafe situation.
+#### SafetyCheckData
+
+This structure holds the data required for safety checks. Specific data includes the current state of dynamic obstacles, the current state of the ego vehicle, route handler, and other related data.
+
+### Future Work
+
+There is a possibility of exploring ways to simplify the implementation of safety check features implemented in other modules to enhance the versatility of this class.
