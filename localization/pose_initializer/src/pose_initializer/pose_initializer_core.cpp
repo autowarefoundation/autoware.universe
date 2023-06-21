@@ -90,8 +90,9 @@ void PoseInitializer::on_initialize(
     auto pose = req->pose.empty() ? get_gnss_pose() : req->pose.front();
     if (ndt_) {
       pose = ndt_->align_pose(pose);
-    }
-    if (yabloc_) {
+    } else if (yabloc_) {
+      // If both the NDT and YabLoc initializer are enabled, prioritize NDT as it offers more
+      // accuracy pose.
       pose = yabloc_->align_pose(pose);
     }
     pose.pose.covariance = output_pose_covariance_;
