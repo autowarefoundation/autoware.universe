@@ -198,7 +198,7 @@ void SideShiftModule::updateData()
   }
 #endif
 
-  if (!current_state_ == ModuleStatus::RUNNING) {
+  if (current_state_ != ModuleStatus::RUNNING) {
     return;
   }
 
