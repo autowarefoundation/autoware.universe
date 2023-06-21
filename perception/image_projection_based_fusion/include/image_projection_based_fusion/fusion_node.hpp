@@ -50,7 +50,7 @@ using sensor_msgs::msg::PointCloud2;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 
-template <class Msg, class ObjType>
+template <class Msg, class ObjType, class ObstacleRoiType = sensor_msgs::msg::RegionOfInterest>
 class FusionNode : public rclcpp::Node
 {
 public:
@@ -119,7 +119,7 @@ protected:
   typename rclcpp::Publisher<Msg>::SharedPtr pub_ptr_;
 
   // debugger
-  std::shared_ptr<Debugger> debugger_;
+  std::shared_ptr<Debugger<ObstacleRoiType>> debugger_;
   virtual bool out_of_scope(const ObjType & obj) = 0;
   // cspell: ignore minx, maxx, miny, maxy, minz, maxz
   float filter_scope_minx_;

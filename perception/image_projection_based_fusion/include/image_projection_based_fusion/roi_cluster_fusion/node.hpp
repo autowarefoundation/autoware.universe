@@ -22,8 +22,10 @@
 namespace image_projection_based_fusion
 {
 
+using Polygon2d = tier4_autoware_utils::Polygon2d;
+
 class RoiClusterFusionNode
-: public FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>
+: public FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, Polygon2d>
 {
 public:
   explicit RoiClusterFusionNode(const rclcpp::NodeOptions & options);

@@ -38,8 +38,8 @@
 namespace image_projection_based_fusion
 {
 
-template <class Msg, class ObjType>
-FusionNode<Msg, ObjType>::FusionNode(
+template <class Msg, class ObjType, class ObstacleRoiType>
+FusionNode<Msg, ObjType, ObstacleRoiType>::FusionNode(
   const std::string & node_name, const rclcpp::NodeOptions & options)
 : Node(node_name, options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
@@ -103,7 +103,7 @@ FusionNode<Msg, ObjType>::FusionNode(
   if (declare_parameter("debug_mode", false)) {
     std::size_t image_buffer_size =
       static_cast<std::size_t>(declare_parameter("image_buffer_size", 15));
-    debugger_ = std::make_shared<Debugger>(this, rois_number_, image_buffer_size);
+    debugger_ = std::make_shared<Debugger<ObstacleRoiType>>(this, rois_number_, image_buffer_size);
   }
 
   // initialize debug tool
@@ -125,22 +125,23 @@ FusionNode<Msg, ObjType>::FusionNode(
   filter_scope_maxz_ = declare_parameter("filter_scope_maxz", 100);
 }
 
-template <class Msg, class Obj>
-void FusionNode<Msg, Obj>::cameraInfoCallback(
+template <class Msg, class Obj, class ObstacleRoiType>
+void FusionNode<Msg, Obj, ObstacleRoiType>::cameraInfoCallback(
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
   const std::size_t camera_id)
 {
   camera_info_map_[camera_id] = *input_camera_info_msg;
 }
 
-template <class Msg, class Obj>
-void FusionNode<Msg, Obj>::preprocess(Msg & ouput_msg __attribute__((unused)))
+template <class Msg, class Obj, class ObstacleRoiType>
+void FusionNode<Msg, Obj, ObstacleRoiType>::preprocess(Msg & ouput_msg __attribute__((unused)))
 {
   // do nothing by default
 }
 
-template <class Msg, class Obj>
-void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_msg)
+template <class Msg, class Obj, class ObstacleRoiType>
+void FusionNode<Msg, Obj, ObstacleRoiType>::subCallback(
+  const typename Msg::ConstSharedPtr input_msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -255,8 +256,8 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
   }
 }
 
-template <class Msg, class Obj>
-void FusionNode<Msg, Obj>::roiCallback(
+template <class Msg, class Obj, class ObstacleRoiType>
+void FusionNode<Msg, Obj, ObstacleRoiType>::roiCallback(
   const DetectedObjectsWithFeature::ConstSharedPtr input_roi_msg, const std::size_t roi_i)
 {
   int64_t timestamp_nsec =
@@ -312,14 +313,14 @@ void FusionNode<Msg, Obj>::roiCallback(
   (roi_stdmap_.at(roi_i))[timestamp_nsec] = input_roi_msg;
 }
 
-template <class Msg, class Obj>
-void FusionNode<Msg, Obj>::postprocess(Msg & output_msg __attribute__((unused)))
+template <class Msg, class Obj, class ObstacleRoiType>
+void FusionNode<Msg, Obj, ObstacleRoiType>::postprocess(Msg & output_msg __attribute__((unused)))
 {
   // do nothing by default
 }
 
-template <class Msg, class Obj>
-void FusionNode<Msg, Obj>::timer_callback()
+template <class Msg, class Obj, class ObstacleRoiType>
+void FusionNode<Msg, Obj, ObstacleRoiType>::timer_callback()
 {
   using std::chrono_literals::operator""ms;
   timer_->cancel();
@@ -351,8 +352,8 @@ void FusionNode<Msg, Obj>::timer_callback()
   }
 }
 
-template <class Msg, class Obj>
-void FusionNode<Msg, Obj>::setPeriod(const int64_t new_period)
+template <class Msg, class Obj, class ObstacleRoiType>
+void FusionNode<Msg, Obj, ObstacleRoiType>::setPeriod(const int64_t new_period)
 {
   if (!timer_) {
     return;
@@ -368,8 +369,8 @@ void FusionNode<Msg, Obj>::setPeriod(const int64_t new_period)
   }
 }
 
-template <class Msg, class Obj>
-void FusionNode<Msg, Obj>::publish(const Msg & output_msg)
+template <class Msg, class Obj, class ObstacleRoiType>
+void FusionNode<Msg, Obj, ObstacleRoiType>::publish(const Msg & output_msg)
 {
   if (pub_ptr_->get_subscription_count() < 1) {
     return;
@@ -378,6 +379,6 @@ void FusionNode<Msg, Obj>::publish(const Msg & output_msg)
 }
 
 template class FusionNode<DetectedObjects, DetectedObject>;
-template class FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>;
+template class FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, Polygon2d>;
 template class FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>;
 }  // namespace image_projection_based_fusion

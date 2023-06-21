@@ -21,6 +21,7 @@
 #include <Eigen/Geometry>
 #include <image_transport/image_transport.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/region_of_interest.hpp>
@@ -34,7 +35,9 @@ namespace image_projection_based_fusion
 {
 
 using sensor_msgs::msg::RegionOfInterest;
+using tier4_autoware_utils::Polygon2d;
 
+template <class ObstacleRoiType = RegionOfInterest>
 class Debugger
 {
 public:
@@ -46,10 +49,10 @@ public:
   void clear();
 
   std::vector<RegionOfInterest> image_rois_;
-  std::vector<RegionOfInterest> obstacle_rois_;
+  std::vector<ObstacleRoiType> obstacle_rois_;
   std::vector<Eigen::Vector2d> obstacle_points_;
 
-private:
+protected:
   void imageCallback(
     const sensor_msgs::msg::Image::ConstSharedPtr input_image_msg, const std::size_t image_id);
 

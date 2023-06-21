@@ -16,7 +16,6 @@
 
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
@@ -34,10 +33,9 @@
 namespace image_projection_based_fusion
 {
 
-using Polygon2d = tier4_autoware_utils::Polygon2d;
-
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>("roi_cluster_fusion", options)
+: FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, Polygon2d>(
+    "roi_cluster_fusion", options)
 {
   use_iou_x_ = declare_parameter("use_iou_x", true);
   use_iou_y_ = declare_parameter("use_iou_y", false);
@@ -83,7 +81,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjectsWithFeature & output_cluster_msg)
 {
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
-  std::vector<sensor_msgs::msg::RegionOfInterest> debug_pointcloud_rois;
+  std::vector<Polygon2d> debug_cluster_rois;
   std::vector<Eigen::Vector2d> debug_image_points;
 
   Eigen::Matrix4d projection;
@@ -143,6 +141,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 
     Polygon2d cluster_roi = point2ConvexHull(projected_points);
     cluster_roi_map.insert(std::make_pair(i, cluster_roi));
+    debug_cluster_rois.emplace_back(cluster_roi);
   }
 
   for (const auto & feature_obj : input_roi_msg.feature_objects) {
@@ -177,7 +176,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 
   if (debugger_) {
     debugger_->image_rois_ = debug_image_rois;
-    debugger_->obstacle_rois_ = debug_pointcloud_rois;
+    debugger_->obstacle_rois_ = debug_cluster_rois;
     debugger_->obstacle_points_ = debug_image_points;
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
   }

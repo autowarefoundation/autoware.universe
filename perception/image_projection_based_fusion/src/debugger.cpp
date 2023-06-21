@@ -22,8 +22,14 @@
 
 namespace
 {
-
+/* dummy declaration to restrict type of RoI RegionOfInterest or Polygon2d */
+template <class T>
 void drawRoiOnImage(
+  const cv::Mat & image, const T & roi, const int width, const int height,
+  const cv::Scalar & color);
+
+template <>
+void drawRoiOnImage<sensor_msgs::msg::RegionOfInterest>(
   const cv::Mat & image, const sensor_msgs::msg::RegionOfInterest & roi, const int width,
   const int height, const cv::Scalar & color)
 {
@@ -34,11 +40,24 @@ void drawRoiOnImage(
   cv::rectangle(image, cv::Point(left, top), cv::Point(right, bottom), color, 2);
 }
 
+template <>
+void drawRoiOnImage<tier4_autoware_utils::Polygon2d>(
+  const cv::Mat & image, const tier4_autoware_utils::Polygon2d & roi, const int, const int,
+  const cv::Scalar & color)
+{
+  std::vector<cv::Point> polygon;
+  for (const auto & pt : roi.outer()) {
+    polygon.emplace_back(cv::Point(pt.x(), pt.y()));
+  }
+  cv::polylines(image, polygon, true, color, 2);
+}
+
 }  // namespace
 
 namespace image_projection_based_fusion
 {
-Debugger::Debugger(
+template <class ObstacleRoiType>
+Debugger<ObstacleRoiType>::Debugger(
   rclcpp::Node * node_ptr, const std::size_t image_num, const std::size_t image_buffer_size)
 : node_ptr_(node_ptr)
 {
@@ -65,20 +84,23 @@ Debugger::Debugger(
   }
 }
 
-void Debugger::imageCallback(
+template <class ObstacleRoiType>
+void Debugger<ObstacleRoiType>::imageCallback(
   const sensor_msgs::msg::Image::ConstSharedPtr input_image_msg, const std::size_t image_id)
 {
   image_buffers_.at(image_id).push_front(input_image_msg);
 }
 
-void Debugger::clear()
+template <class ObstacleRoiType>
+void Debugger<ObstacleRoiType>::clear()
 {
   image_rois_.clear();
   obstacle_rois_.clear();
   obstacle_points_.clear();
 }
 
-void Debugger::publishImage(const std::size_t image_id, const rclcpp::Time & stamp)
+template <class ObstacleRoiType>
+void Debugger<ObstacleRoiType>::publishImage(const std::size_t image_id, const rclcpp::Time & stamp)
 {
   const boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr> & image_buffer =
     image_buffers_.at(image_id);
@@ -97,13 +119,13 @@ void Debugger::publishImage(const std::size_t image_id, const rclcpp::Time & sta
         cv::Scalar(255, 255, 255), 3, 4);
     }
     for (const auto & roi : obstacle_rois_) {
-      drawRoiOnImage(
+      drawRoiOnImage<ObstacleRoiType>(
         cv_ptr->image, roi, image_buffer.at(i)->width, image_buffer.at(i)->height,
         cv::Scalar(255, 0, 0));
     }
     // TODO(yukke42): show iou_score on image
     for (const auto & roi : image_rois_) {
-      drawRoiOnImage(
+      drawRoiOnImage<RegionOfInterest>(
         cv_ptr->image, roi, image_buffer.at(i)->width, image_buffer.at(i)->height,
         cv::Scalar(0, 0, 255));
     }
@@ -112,5 +134,8 @@ void Debugger::publishImage(const std::size_t image_id, const rclcpp::Time & sta
     break;
   }
 }
+
+template class Debugger<RegionOfInterest>;
+template class Debugger<Polygon2d>;
 
 }  // namespace image_projection_based_fusion
