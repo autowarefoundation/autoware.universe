@@ -2529,12 +2529,14 @@ BehaviorModuleOutput getReferencePath(
   output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
   output.drivable_area_info.drivable_lanes = drivable_lanes;
 
+#ifdef USE_OLD_ARCHITECTURE
   const auto shift_intervals =
     route_handler->getLateralIntervalsToPreferredLane(current_lanes_with_backward_margin.back());
   const double lane_change_buffer = utils::calcMinimumLaneChangeLength(p, shift_intervals, 0.0);
   const auto stopping_distance =
     motion_utils::calcArcLength(output.path->points) - lane_change_buffer;
   const auto stop_point = utils::insertStopPoint(stopping_distance, *output.path);
+#endif
 
   return output;
 }

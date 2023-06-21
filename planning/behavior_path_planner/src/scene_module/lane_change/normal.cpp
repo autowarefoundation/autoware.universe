@@ -158,7 +158,9 @@ void NormalLaneChange::insertStopPoint(PathWithLaneId & path)
     status_.lane_change_path.reference_lanelets.back());
   const double lane_change_buffer =
     utils::calcMinimumLaneChangeLength(getCommonParam(), shift_intervals, 0.0);
-  const auto stopping_distance = motion_utils::calcArcLength(path.points) - lane_change_buffer;
+  constexpr double stop_point_buffer{1.0};
+  const auto stopping_distance = std::max(
+    motion_utils::calcArcLength(path.points) - lane_change_buffer - stop_point_buffer, 0.0);
 
   const auto stop_point = utils::insertStopPoint(stopping_distance, path);
 }
