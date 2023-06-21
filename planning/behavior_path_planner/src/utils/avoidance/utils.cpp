@@ -134,22 +134,23 @@ bool isWithinCrosswalk(
   const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
 {
   using Point = boost::geometry::model::d2::point_xy<double>;
-  using boost::geometry::correct;
-  using boost::geometry::within;
 
   const auto & p = object.object.kinematics.initial_pose_with_covariance.pose.position;
   const Point p_object{p.x, p.y};
 
+  // get conflicting crosswalk crosswalk
   constexpr int PEDESTRIAN_GRAPH_ID = 1;
   const auto conflicts =
     overall_graphs->conflictingInGraph(object.overhang_lanelet, PEDESTRIAN_GRAPH_ID);
 
+  constexpr double THRESHOLD = 2.0;
   for (const auto & crosswalk : conflicts) {
     auto polygon = crosswalk.polygon2d().basicPolygon();
 
-    correct(polygon);
+    boost::geometry::correct(polygon);
 
-    if (within(p_object, polygon)) {
+    // ignore objects arround the crosswalk
+    if (boost::geometry::distance(p_object, polygon) < THRESHOLD) {
       return true;
     }
   }
