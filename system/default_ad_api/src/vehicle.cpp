@@ -109,13 +109,13 @@ void VehicleNode::gear_status(const GearReport::ConstSharedPtr msg_ptr)
 
 void VehicleNode::turn_indicator_status(const TurnIndicatorsReport::ConstSharedPtr msg_ptr)
 {
-  vehicle_state_.turn_indicator.status =
+  vehicle_state_.turn_indicators.status =
     mapping(turn_indicator_type_, msg_ptr->report, ApiTurnIndicator::UNKNOWN);
 }
 
 void VehicleNode::hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr)
 {
-  vehicle_state_.hazard_light.status =
+  vehicle_state_.hazard_lights.status =
     mapping(hazard_light_type_, msg_ptr->report, ApiHazardLight::UNKNOWN);
 }
 
@@ -127,7 +127,7 @@ void VehicleNode::map_projector_info(const MapProjectorInfo::ConstSharedPtr msg_
 void VehicleNode::energy_status(
   const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr)
 {
-  vehicle_state_.energy_level = msg_ptr->energy_level;
+  vehicle_state_.energy_percentage = msg_ptr->energy_level;
 }
 
 void VehicleNode::door_status(const VehicleDoorStatus::ConstSharedPtr msg_ptr)

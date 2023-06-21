@@ -23,8 +23,8 @@
 
 #include <autoware_adapi_v1_msgs/msg/door_status.hpp>
 #include <autoware_adapi_v1_msgs/msg/gear.hpp>
-#include <autoware_adapi_v1_msgs/msg/hazard_light.hpp>
-#include <autoware_adapi_v1_msgs/msg/turn_indicator.hpp>
+#include <autoware_adapi_v1_msgs/msg/hazard_lights.hpp>
+#include <autoware_adapi_v1_msgs/msg/turn_indicators.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_projection/UTM.h>
@@ -46,9 +46,9 @@ private:
   using GearReport = vehicle_interface::GearStatus::Message;
   using ApiGear = autoware_adapi_v1_msgs::msg::Gear;
   using TurnIndicatorsReport = vehicle_interface::TurnIndicatorStatus::Message;
-  using ApiTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicator;
+  using ApiTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicators;
   using HazardLightsReport = vehicle_interface::HazardLightStatus::Message;
-  using ApiHazardLight = autoware_adapi_v1_msgs::msg::HazardLight;
+  using ApiHazardLight = autoware_adapi_v1_msgs::msg::HazardLights;
   using VehicleDoorStatus = vehicle_interface::DoorStatus::Message;
   using ApiDoorStatus = autoware_adapi_v1_msgs::msg::DoorStatus;
   using MapProjectorInfo = vehicle_interface::MapProjectorInfo::Message;
