@@ -26,7 +26,7 @@
   <arg name="camera_info6" default="/camera_info6"/>
   <arg name="image_raw7" default="/image_raw7"/>
   <arg name="camera_info7" default="/camera_info7"/>
-  <arg name="image_number" default="1" description="choose image raw number(0-7)"/>
+  <arg name="image_number" default="1" description="choose image raw number(1-8)"/>
 
   <!-- camera lidar fusion based detection-->
   <group>
@@ -63,7 +63,7 @@
   <group>
     <push-ros-namespace namespace="radar"/>
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/radar_based_detection.launch.xml">
-      <arg name="output/objects" value="front_center/objects"/>
+      <arg name="output/objects" value="objects"/>
     </include>
   </group>
 

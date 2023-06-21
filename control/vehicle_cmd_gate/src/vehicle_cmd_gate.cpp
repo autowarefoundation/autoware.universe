@@ -88,8 +88,6 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     [this](const OperationModeState::SharedPtr msg) { current_operation_mode_ = *msg; });
   mrm_state_sub_ = create_subscription<MrmState>(
     "input/mrm_state", 1, std::bind(&VehicleCmdGate::onMrmState, this, _1));
-  gear_status_sub_ = create_subscription<GearReport>(
-    "input/gear_status", 1, [this](GearReport::SharedPtr msg) { current_gear_ptr_ = msg; });
 
   // Subscriber for auto
   auto_control_cmd_sub_ = create_subscription<AckermannControlCommand>(
@@ -145,6 +143,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     declare_parameter<double>("external_emergency_stop_heartbeat_timeout");
   stop_hold_acceleration_ = declare_parameter<double>("stop_hold_acceleration");
   emergency_acceleration_ = declare_parameter<double>("emergency_acceleration");
+  moderate_stop_service_acceleration_ =
+    declare_parameter<double>("moderate_stop_service_acceleration");
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -197,7 +197,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   updater_.add("emergency_stop_operation", this, &VehicleCmdGate::checkExternalEmergencyStop);
 
   // Pause interface
-  pause_ = std::make_unique<PauseInterface>(this);
+  adapi_pause_ = std::make_unique<AdapiPauseInterface>(this);
+  moderate_stop_interface_ = std::make_unique<ModerateStopInterface>(this);
 
   // Timer
   const auto update_period = 1.0 / declare_parameter<double>("update_rate");
@@ -321,15 +322,6 @@ void VehicleCmdGate::onTimer()
     return;
   }
 
-  if (is_gate_mode_changed_) {
-    // If gate mode is external, is_engaged_ is always true
-    // While changing gate mode external to auto, the first is_engaged_ is always true for the first
-    // loop in this scope. So we need to wait for the second loop
-    // after gate mode is changed.
-    is_gate_mode_changed_ = false;
-    return;
-  }
-
   // Select commands
   TurnIndicatorsCommand turn_indicator;
   HazardLightsCommand hazard_light;
@@ -346,11 +338,6 @@ void VehicleCmdGate::onTimer()
 
       // Don't send turn signal when autoware is not engaged
       if (!is_engaged_) {
-        if (!current_gear_ptr_) {
-          gear.command = GearCommand::NONE;
-        } else {
-          gear.command = current_gear_ptr_.get()->report;
-        }
         turn_indicator.command = TurnIndicatorsCommand::NO_COMMAND;
         hazard_light.command = HazardLightsCommand::NO_COMMAND;
       }
@@ -394,6 +381,11 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
     filtered_commands.gear = commands.gear;  // tmp
   }
 
+  if (moderate_stop_interface_->is_stop_requested()) {  // if stop requested, stop the vehicle
+    filtered_commands.control.longitudinal.speed = 0.0;
+    filtered_commands.control.longitudinal.acceleration = moderate_stop_service_acceleration_;
+  }
+
   // Check emergency
   if (use_emergency_handling_ && is_system_emergency_) {
     RCLCPP_WARN_THROTTLE(
@@ -407,9 +399,9 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
     filtered_commands.control = createStopControlCmd();
   }
 
-  // Check pause
-  pause_->update(filtered_commands.control);
-  if (pause_->is_paused()) {
+  // Check pause. Place this check after all other checks as it needs the final output.
+  adapi_pause_->update(filtered_commands.control);
+  if (adapi_pause_->is_paused()) {
     filtered_commands.control.longitudinal.speed = 0.0;
     filtered_commands.control.longitudinal.acceleration = stop_hold_acceleration_;
   }
@@ -425,6 +417,8 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   // Publish commands
   vehicle_cmd_emergency_pub_->publish(vehicle_cmd_emergency);
   control_cmd_pub_->publish(filtered_commands.control);
+  adapi_pause_->publish();
+  moderate_stop_interface_->publish();
 
   // Save ControlCmd to steering angle when disengaged
   prev_control_cmd_ = filtered_commands.control;
@@ -440,7 +434,7 @@ void VehicleCmdGate::publishEmergencyStopControlCommands()
   control_cmd = createEmergencyStopControlCmd();
 
   // Update control command
-  pause_->update(control_cmd);
+  adapi_pause_->update(control_cmd);
 
   // gear
   GearCommand gear;
@@ -488,7 +482,8 @@ void VehicleCmdGate::publishStatus()
   engage_pub_->publish(autoware_engage);
   pub_external_emergency_->publish(external_emergency);
   operation_mode_pub_->publish(current_operation_mode_);
-  pause_->publish();
+  adapi_pause_->publish();
+  moderate_stop_interface_->publish();
 }
 
 AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannControlCommand & in)
@@ -496,6 +491,9 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   AckermannControlCommand out = in;
   const double dt = getDt();
   const auto mode = current_operation_mode_;
+  const auto current_status_cmd = getActualStatusAsCommand();
+  const auto ego_is_stopped = std::abs(current_status_cmd.longitudinal.speed) < 1e-3;
+  const auto input_cmd_is_stopping = in.longitudinal.acceleration < 0.0;
 
   // Apply transition_filter when transiting from MANUAL to AUTO.
   if (mode.is_in_transition) {
@@ -507,8 +505,7 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   // set prev value for both to keep consistency over switching:
   // Actual steer, vel, acc should be considered in manual mode to prevent sudden motion when
   // switching from manual to autonomous
-  auto prev_values =
-    (mode.mode == OperationModeState::AUTONOMOUS) ? out : getActualStatusAsCommand();
+  auto prev_values = (mode.mode == OperationModeState::AUTONOMOUS) ? out : current_status_cmd;
 
   // TODO(Horibe): To prevent sudden acceleration/deceleration when switching from manual to
   // autonomous, the filter should be applied for actual speed and acceleration during manual
@@ -519,6 +516,14 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   // supposed to stop. Until the appropriate handling will be done, previous value is used for the
   // filter in manual mode.
   prev_values.longitudinal = out.longitudinal;  // TODO(Horibe): to be removed
+
+  // When ego is stopped and the input command is stopping,
+  // use the actual vehicle longitudinal state for the next filtering
+  // this is to prevent the jerk limits being applied on the "stop acceleration"
+  // which may be negative and cause delays when restarting the vehicle.
+  if (ego_is_stopped && input_cmd_is_stopping) {
+    prev_values.longitudinal = current_status_cmd.longitudinal;
+  }
 
   filter_.setPrevCmd(prev_values);
   filter_on_transition_.setPrevCmd(prev_values);
@@ -566,7 +571,7 @@ void VehicleCmdGate::onGateMode(GateMode::ConstSharedPtr msg)
 {
   const auto prev_gate_mode = current_gate_mode_;
   current_gate_mode_ = *msg;
-  is_gate_mode_changed_ = true;
+
   if (current_gate_mode_.data != prev_gate_mode.data) {
     RCLCPP_INFO(
       get_logger(), "GateMode changed: %s -> %s", getGateModeName(prev_gate_mode.data),

@@ -11,6 +11,7 @@ ament_auto_add_library(pointcloud_map_loader_node SHARED
   src/pointcloud_map_loader/pointcloud_map_loader_module.cpp
   src/pointcloud_map_loader/partial_map_loader_module.cpp
   src/pointcloud_map_loader/differential_map_loader_module.cpp
+  src/pointcloud_map_loader/selected_map_loader_module.cpp
   src/pointcloud_map_loader/utils.cpp
 )
 target_link_libraries(pointcloud_map_loader_node ${PCL_LIBRARIES})
@@ -18,7 +19,7 @@ target_link_libraries(pointcloud_map_loader_node yaml-cpp)
 
 target_include_directories(pointcloud_map_loader_node
   SYSTEM PUBLIC
-    ${PCL_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 rclcpp_components_register_node(pointcloud_map_loader_node
@@ -66,7 +67,7 @@ if(BUILD_TESTING)
 
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
-  add_testcase(test/test_sphere_box_overlap.cpp)
+  add_testcase(test/test_cylinder_box_overlap.cpp)
   add_testcase(test/test_replace_with_absolute_path.cpp)
   add_testcase(test/test_load_pcd_metadata.cpp)
   add_testcase(test/test_pointcloud_map_loader_module.cpp)

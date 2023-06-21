@@ -27,6 +27,8 @@
 namespace motion_planning
 {
 
+using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
 using motion_utils::calcDecelDistWithJerkAndAccConstraints;
 using motion_utils::findFirstNearestIndexWithSoftConstraints;
 using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
@@ -258,16 +260,11 @@ rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
 }
 
 bool withinPolygon(
-  const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
+  const Polygon2d & boost_polygon, const double radius, const Point2d & prev_point,
   const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
   PointCloud::Ptr within_points_ptr)
 {
-  Polygon2d boost_polygon;
   bool find_within_points = false;
-  for (const auto & point : cv_polygon) {
-    boost_polygon.outer().push_back(bg::make<Point2d>(point.x, point.y));
-  }
-  boost_polygon.outer().push_back(bg::make<Point2d>(cv_polygon.front().x, cv_polygon.front().y));
 
   for (size_t j = 0; j < candidate_points_ptr->size(); ++j) {
     Point2d point(candidate_points_ptr->at(j).x, candidate_points_ptr->at(j).y);
@@ -282,16 +279,11 @@ bool withinPolygon(
 }
 
 bool withinPolyhedron(
-  const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
+  const Polygon2d & boost_polygon, const double radius, const Point2d & prev_point,
   const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
   PointCloud::Ptr within_points_ptr, double z_min, double z_max)
 {
-  Polygon2d boost_polygon;
   bool find_within_points = false;
-  for (const auto & point : cv_polygon) {
-    boost_polygon.outer().push_back(bg::make<Point2d>(point.x, point.y));
-  }
-  boost_polygon.outer().push_back(bg::make<Point2d>(cv_polygon.front().x, cv_polygon.front().y));
 
   for (const auto & candidate_point : *candidate_points_ptr) {
     Point2d point(candidate_point.x, candidate_point.y);
@@ -307,79 +299,62 @@ bool withinPolyhedron(
   return find_within_points;
 }
 
-bool convexHull(
-  const std::vector<cv::Point2d> & pointcloud, std::vector<cv::Point2d> & polygon_points)
+void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point & geom_point)
 {
-  cv::Point2d centroid;
-  centroid.x = 0;
-  centroid.y = 0;
-  for (const auto & point : pointcloud) {
-    centroid.x += point.x;
-    centroid.y += point.y;
-  }
-  centroid.x = centroid.x / static_cast<double>(pointcloud.size());
-  centroid.y = centroid.y / static_cast<double>(pointcloud.size());
+  Point2d point;
+  point.x() = geom_point.x;
+  point.y() = geom_point.y;
 
-  std::vector<cv::Point> normalized_pointcloud;
-  std::vector<cv::Point> normalized_polygon_points;
-  for (const auto & p : pointcloud) {
-    normalized_pointcloud.emplace_back(
-      cv::Point((p.x - centroid.x) * 1000.0, (p.y - centroid.y) * 1000.0));
-  }
-  cv::convexHull(normalized_pointcloud, normalized_polygon_points);
-
-  for (const auto & p : normalized_polygon_points) {
-    cv::Point2d polygon_point;
-    polygon_point.x = (p.x / 1000.0 + centroid.x);
-    polygon_point.y = (p.y / 1000.0 + centroid.y);
-    polygon_points.push_back(polygon_point);
-  }
-  return true;
+  boost::geometry::append(polygon.outer(), point);
 }
 
 void createOneStepPolygon(
-  const Pose & base_step_pose, const Pose & next_step_pose, std::vector<cv::Point2d> & polygon,
+  const Pose & base_step_pose, const Pose & next_step_pose, Polygon2d & hull_polygon,
   const VehicleInfo & vehicle_info, const double expand_width)
 {
-  std::vector<cv::Point2d> one_step_move_vehicle_corner_points;
+  Polygon2d polygon;
 
-  const auto & i = vehicle_info;
-  const auto & front_m = i.max_longitudinal_offset_m;
-  const auto & width_m = i.vehicle_width_m / 2.0 + expand_width;
-  const auto & back_m = i.rear_overhang_m;
-  // start step
-  {
-    const auto yaw = getRPY(base_step_pose).z;
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      base_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * width_m,
-      base_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      base_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * -width_m,
-      base_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * -width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      base_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * -width_m,
-      base_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * -width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      base_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * width_m,
-      base_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * width_m));
+  const double longitudinal_offset = vehicle_info.max_longitudinal_offset_m;
+  const double width = vehicle_info.vehicle_width_m / 2.0 + expand_width;
+  const double rear_overhang = vehicle_info.rear_overhang_m;
+
+  {  // base step
+    appendPointToPolygon(
+      polygon, tier4_autoware_utils::calcOffsetPose(base_step_pose, longitudinal_offset, width, 0.0)
+                 .position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(base_step_pose, longitudinal_offset, -width, 0.0)
+        .position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(base_step_pose, -rear_overhang, -width, 0.0).position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(base_step_pose, -rear_overhang, width, 0.0).position);
   }
-  // next step
-  {
-    const auto yaw = getRPY(next_step_pose).z;
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      next_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * width_m,
-      next_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      next_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * -width_m,
-      next_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * -width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      next_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * -width_m,
-      next_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * -width_m));
-    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
-      next_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * width_m,
-      next_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * width_m));
+
+  {  // next step
+    appendPointToPolygon(
+      polygon, tier4_autoware_utils::calcOffsetPose(next_step_pose, longitudinal_offset, width, 0.0)
+                 .position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(next_step_pose, longitudinal_offset, -width, 0.0)
+        .position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(next_step_pose, -rear_overhang, -width, 0.0).position);
+    appendPointToPolygon(
+      polygon,
+      tier4_autoware_utils::calcOffsetPose(next_step_pose, -rear_overhang, width, 0.0).position);
   }
-  convexHull(one_step_move_vehicle_corner_points, polygon);
+
+  polygon = tier4_autoware_utils::isClockwise(polygon)
+              ? polygon
+              : tier4_autoware_utils::inverseClockwise(polygon);
+
+  boost::geometry::convex_hull(polygon, hull_polygon);
 }
 
 void insertStopPoint(
@@ -480,9 +455,9 @@ TrajectoryPoints extendTrajectory(const TrajectoryPoints & input, const double e
   }
 
   const auto goal_point = input.back();
-  double interpolation_distance = 0.1;
+  constexpr double interpolation_distance = 0.1;
 
-  double extend_sum = 0.0;
+  double extend_sum = interpolation_distance;
   while (extend_sum <= (extend_distance - interpolation_distance)) {
     const auto extend_trajectory_point = getExtendTrajectoryPoint(extend_sum, goal_point);
     output.push_back(extend_trajectory_point);
@@ -494,23 +469,29 @@ TrajectoryPoints extendTrajectory(const TrajectoryPoints & input, const double e
   return output;
 }
 
-bool getSelfPose(const Header & header, const tf2_ros::Buffer & tf_buffer, Pose & self_pose)
+bool intersectsInZAxis(const PredictedObject & object, const double z_min, const double z_max)
 {
-  try {
-    TransformStamped transform;
-    transform = tf_buffer.lookupTransform(
-      header.frame_id, "base_link", header.stamp, rclcpp::Duration::from_seconds(0.1));
-    self_pose.position.x = transform.transform.translation.x;
-    self_pose.position.y = transform.transform.translation.y;
-    self_pose.position.z = transform.transform.translation.z;
-    self_pose.orientation.x = transform.transform.rotation.x;
-    self_pose.orientation.y = transform.transform.rotation.y;
-    self_pose.orientation.z = transform.transform.rotation.z;
-    self_pose.orientation.w = transform.transform.rotation.w;
-    return true;
-  } catch (tf2::TransformException & ex) {
-    return false;
-  }
+  const auto & obj_pose = object.kinematics.initial_pose_with_covariance;
+  const auto & obj_height = object.shape.dimensions.z;
+  return obj_pose.pose.position.z - obj_height / 2.0 <= z_max &&
+         obj_pose.pose.position.z + obj_height / 2.0 >= z_min;
+}
+
+pcl::PointXYZ pointToPcl(const double x, const double y, const double z)
+{
+  // Store the point components in a variant
+  PointVariant x_variant = x;
+  PointVariant y_variant = y;
+  PointVariant z_variant = z;
+
+  // Extract the corresponding components from the variant
+  auto extract_float = [](const auto & variant) { return boost::get<float>(variant); };
+  float pcl_x = boost::apply_visitor(extract_float, x_variant);
+  float pcl_y = boost::apply_visitor(extract_float, y_variant);
+  float pcl_z = boost::apply_visitor(extract_float, z_variant);
+
+  // Create a new pcl::PointXYZ object
+  return {pcl_x, pcl_y, pcl_z};
 }
 
 void getNearestPoint(
@@ -554,34 +535,34 @@ void getLateralNearestPoint(
   *deviation = min_norm;
 }
 
-void getNearestPointForPredictedObject(
-  const PoseArray & object, const Pose & base_pose, Pose * nearest_collision_point,
-  rclcpp::Time * nearest_collision_point_time)
+double getNearestPointAndDistanceForPredictedObject(
+  const geometry_msgs::msg::PoseArray & points, const Pose & base_pose,
+  geometry_msgs::msg::Point * nearest_collision_point)
 {
   double min_norm = 0.0;
   bool is_init = false;
 
-  for (const auto & p : object.poses) {
-    double norm = calcDistance2d(p, base_pose);
+  for (const auto & p : points.poses) {
+    double norm = tier4_autoware_utils::calcDistance2d(p, base_pose);
     if (norm < min_norm || !is_init) {
       min_norm = norm;
-      *nearest_collision_point = p;
-      *nearest_collision_point_time = (object.header).stamp;
+      *nearest_collision_point = p.position;
       is_init = true;
     }
   }
+  return min_norm;
 }
 
 void getLateralNearestPointForPredictedObject(
-  const PoseArray & object, const Pose & base_pose, Pose * lateral_nearest_point,
+  const PoseArray & object, const Pose & base_pose, pcl::PointXYZ * lateral_nearest_point,
   double * deviation)
 {
   double min_norm = std::numeric_limits<double>::max();
-  for (size_t i = 0; i < object.poses.size(); ++i) {
-    double norm = calcDistance2d(object.poses.at(i), base_pose);
+  for (const auto & pose : object.poses) {
+    double norm = calcDistance2d(pose, base_pose);
     if (norm < min_norm) {
       min_norm = norm;
-      *lateral_nearest_point = object.poses.at(i);
+      *lateral_nearest_point = pointToPcl(pose.position.x, pose.position.y, base_pose.position.z);
     }
   }
   *deviation = min_norm;
@@ -637,7 +618,9 @@ Polygon2d convertBoundingBoxObjectToGeometryPolygon(
   object_polygon.outer().emplace_back(p4_obj.x(), p4_obj.y());
 
   object_polygon.outer().push_back(object_polygon.outer().front());
-
+  object_polygon = tier4_autoware_utils::isClockwise(object_polygon)
+                     ? object_polygon
+                     : tier4_autoware_utils::inverseClockwise(object_polygon);
   return object_polygon;
 }
 
@@ -658,7 +641,9 @@ Polygon2d convertCylindricalObjectToGeometryPolygon(
   }
 
   object_polygon.outer().push_back(object_polygon.outer().front());
-
+  object_polygon = tier4_autoware_utils::isClockwise(object_polygon)
+                     ? object_polygon
+                     : tier4_autoware_utils::inverseClockwise(object_polygon);
   return object_polygon;
 }
 
@@ -676,7 +661,54 @@ Polygon2d convertPolygonObjectToGeometryPolygon(
     object_polygon.outer().emplace_back(tf_obj.x(), tf_obj.y());
   }
   object_polygon.outer().push_back(object_polygon.outer().front());
-
+  object_polygon = tier4_autoware_utils::isClockwise(object_polygon)
+                     ? object_polygon
+                     : tier4_autoware_utils::inverseClockwise(object_polygon);
   return object_polygon;
 }
+
+boost::optional<PredictedObject> getObstacleFromUuid(
+  const PredictedObjects & obstacles, const unique_identifier_msgs::msg::UUID & target_object_id)
+{
+  const auto itr = std::find_if(
+    obstacles.objects.begin(), obstacles.objects.end(), [&](PredictedObject predicted_object) {
+      return predicted_object.object_id == target_object_id;
+    });
+
+  if (itr == obstacles.objects.end()) {
+    return boost::none;
+  }
+  return boost::make_optional(*itr);
+}
+
+bool isFrontObstacle(const Pose & ego_pose, const geometry_msgs::msg::Point & obstacle_pos)
+{
+  const auto yaw = tier4_autoware_utils::getRPY(ego_pose).z;
+  const Eigen::Vector2d base_pose_vec(std::cos(yaw), std::sin(yaw));
+  const Eigen::Vector2d obstacle_vec(
+    obstacle_pos.x - ego_pose.position.x, obstacle_pos.y - ego_pose.position.y);
+
+  return base_pose_vec.dot(obstacle_vec) >= 0;
+}
+
+double calcObstacleMaxLength(const autoware_auto_perception_msgs::msg::Shape & shape)
+{
+  if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    return std::hypot(shape.dimensions.x / 2.0, shape.dimensions.y / 2.0);
+  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+    return shape.dimensions.x / 2.0;
+  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+    double max_length_to_point = 0.0;
+    for (const auto rel_point : shape.footprint.points) {
+      const double length_to_point = std::hypot(rel_point.x, rel_point.y);
+      if (max_length_to_point < length_to_point) {
+        max_length_to_point = length_to_point;
+      }
+    }
+    return max_length_to_point;
+  }
+
+  throw std::logic_error("The shape type is not supported in obstacle_cruise_planner.");
+}
+
 }  // namespace motion_planning
