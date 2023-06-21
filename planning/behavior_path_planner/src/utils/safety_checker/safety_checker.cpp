@@ -32,7 +32,7 @@ namespace behavior_path_planner
 namespace safety_checker
 {
 
-bool SafetyChecker::isPathSafe(const PathWithLaneId & path, const Odometry ego_odometryR)
+bool SafetyChecker::isPathSafe(const PathWithLaneId & path, const Odometry & ego_odometry)
 {
   path_to_safety_check_ = std::make_shared<PathWithLaneId>(path);
   ego_odometry_ = std::make_shared<Odometry>(ego_odometry);
