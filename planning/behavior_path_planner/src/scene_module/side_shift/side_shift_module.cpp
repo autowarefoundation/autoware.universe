@@ -186,6 +186,11 @@ ModuleStatus SideShiftModule::updateState()
 
 void SideShiftModule::updateData()
 {
+  // when side shift is not requested, don't update data.
+  if (!lateral_offset_change_request_) {
+    return;
+  }
+
   // special for avoidance: take behind distance upt ot shift-start-point if it exist.
   const auto longest_dist_to_shift_line = [&]() {
     double max_dist = 0.0;
