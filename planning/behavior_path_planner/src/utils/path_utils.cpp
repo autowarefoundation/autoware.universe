@@ -196,7 +196,7 @@ PredictedPath createPredictedPathFromTargetVelocity(
 
   // Add constant velocity segment
   offset += current_velocity * acc_time + 0.5 * acc_till_target_velocity * acc_time * acc_time;
-  double constant_velocity_time = stopping_time + acc_time + (target_velocity / resolution);
+  const double constant_velocity_time = stopping_time + acc_time + (target_velocity / resolution);
   addSegment(
     following_trajectory_points, predicted_path, target_velocity, 0.0, stopping_time + acc_time,
     constant_velocity_time, offset);
