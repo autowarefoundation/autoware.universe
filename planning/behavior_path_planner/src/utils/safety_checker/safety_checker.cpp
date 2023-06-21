@@ -34,8 +34,8 @@ namespace safety_checker
 
 bool SafetyChecker::isPathSafe(const PathWithLaneId & path, const Odometry ego_odometryR)
 {
-  path_to_safety_check_ = std::make_unique<PathWithLaneId>(path);
-  ego_odometry_ = std::make_unique<Odometry>(ego_odometry);
+  path_to_safety_check_ = std::make_shared<PathWithLaneId>(path);
+  ego_odometry_ = std::make_shared<Odometry>(ego_odometry);
 
   const auto dynamic_objects = safety_check_data_->dynamic_objects;
 

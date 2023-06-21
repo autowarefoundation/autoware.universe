@@ -150,9 +150,20 @@ public:
   }
 
   /**
-   * @brief Check path is safe against dynamic obstacles.
-   * @details This function checks the safety of the path by checking the collision with the dynamic
-   * obstacles.
+   * @brief Check if a given path is safe based on the dynamic objects in the environment.
+   *
+   * @param path The path to be checked for safety. It is stored in the path_to_safety_check_
+   * shared_ptr.
+   * @param ego_odometry The odometry data for the ego vehicle. It is stored in the ego_odometry_
+   * shared_ptr.
+   *
+   * @details The function first checks whether dynamic objects exist in the safety_check_data_.
+   *          If no dynamic objects exist, the function assumes the path is safe and returns true.
+   *          If the path to be checked is empty, the function assumes the path is unsafe and
+   * returns false. If dynamic objects exist and the path is not empty, the function then checks if
+   * the path is safe by calling the isSafeInLaneletCollisionCheck function.
+   *
+   * @return Returns true if the path is considered safe, false otherwise.
    */
   bool isPathSafe(const PathWithLaneId & path, const Odometry ego_odometry);
 
@@ -162,11 +173,95 @@ private:
   std::shared_ptr<PathWithLaneId> path_to_safety_check_;
   std::shared_ptr<Odometry> ego_odometry_;
 
-  // TODO(Sugahara): remove const from function which change member variables
+  /**
+   * @brief Creates a predicted path based on the stored path and odometry, and safety check
+   * parameters.
+   *
+   * @details This function uses the stored path and ego odometry, along with the safety check
+   * parameters, to predict a future path for the ego vehicle. The parameters used in the prediction
+   * include the current and target velocity, acceleration until the target velocity, the pose of
+   * the ego vehicle, the resolution of the prediction time, and the stopping time.
+   *
+   *          The predicted path is created using the utility function
+   * utils::createPredictedPathFromTargetVelocity, with the above parameters as inputs.
+   *
+   * @return Returns the predicted path for the ego vehicle.
+   */
   PredictedPath createPredictedPath() const;
+
+  /**
+   * @brief Retrieves the sequence of backward lanelets based on ego vehicle's position and route
+   * handler parameters.
+   *
+   * @details This function uses the stored ego odometry, safety check parameters and safety check
+   * data to calculate the backward lanelets sequence from the ego vehicle's current position. The
+   * length of the sequence is determined by the backward_lane_length parameter in safety check
+   * parameters.
+   *
+   *          The function first checks if the target lanes are empty or if the length of the arc
+   * from the ego vehicle to the target lanes is greater than or equal to the backward length. If
+   * either of these conditions are met, the function returns an empty set of lanelets.
+   *
+   *          If the above conditions are not met, the function calculates the sequence of preceding
+   * lanelets using the route handler's getPrecedingLaneletSequence function and appends them to the
+   * backward_lanes set.
+   *
+   * @return Returns a set of lanelets constituting the backward sequence from the ego vehicle's
+   * position.
+   */
   lanelet::ConstLanelets getBackwardLanelets() const;
+
+  /**
+   * @brief Filters and categorizes dynamic objects based on their locations.
+   *
+   * @details This function uses safety check data and parameters, path to safety check and ego
+   * odometry to filter dynamic objects in the current lane, target lane and others. The filtered
+   * dynamic objects are those that fit into specific set limits and kinds of objects. The function
+   * first determines the types of objects to check based on safety check parameters. Then it
+   * creates basic polygons representing the current and target lanes. It checks each dynamic object
+   * to see if it is of a type to check and if it intersects with these polygons.
+   *
+   *          If an object intersects with the current lane polygon, it is added to the current lane
+   * objects. If an object intersects with the target lane polygon, it is added to the target lane
+   * objects. If an object does not intersect with either the current lane or target lane polygons,
+   * it is added to the others objects.
+   *
+   * @return Returns an object containing three lists of indices representing objects in the current
+   * lane, target lane and others.
+   */
   TargetObjectIndices filterObjectIndices() const;
+
+  /**
+   * @brief Calculates the expected pose of the ego vehicle and converts it to a polygon.
+   *
+   * @details This function generates a sequence of expected ego poses over time within a defined
+   *          check_start_time and check_end_time interval and converts each pose to a polygon.
+   *
+   *          The function first creates the predicted path of the ego vehicle. Then for each
+   * timestamp within the check_start_time to check_end_time interval (with step size equal to
+   * time_resolution), it calculates the expected pose and converts it to a polygon.
+   *
+   *          All timestamps, poses, and polygons are stored in a PredictedPolygons structure.
+   *
+   * @return Returns a PredictedPolygons object containing the check durations, expected poses,
+   *         and their corresponding polygons.
+   */
   PredictedPolygons getEgoExpectedPoseAndConvertToPolygon() const;
+
+  /**
+   * @brief Checks if the ego vehicle's path is safe with respect to collision with dynamic objects.
+   *
+   * @details This function checks the safety of the ego vehicle's path by predicting the ego
+   * vehicle's poses and comparing them with target objects' paths. It uses a utility function to
+   * perform safety check for each target object. If any check returns unsafe, the function returns
+   * false.
+   *
+   *          The function currently has placeholders for getting target objects and their paths,
+   * which need to be implemented.
+   *
+   * @return Returns true if all safety checks pass (i.e., no collision is expected). Returns false
+   * if a collision is expected with at least one target object.
+   */
   bool isSafeInLaneletCollisionCheck() const;
   bool isObjectIndexIncluded(
     const size_t & index, const std::vector<size_t> & dynamic_objects_indices) const;
