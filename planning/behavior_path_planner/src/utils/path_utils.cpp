@@ -179,7 +179,7 @@ PredictedPath createPredictedPathFromTargetVelocity(
   };
 
   // Calculate time required to reach target velocity
-  double acc_time = std::max(0.0, (target_velocity - current_velocity) / acc_till_target_velocity);
+  const double acc_time = std::max(0.0, (target_velocity - current_velocity) / acc_till_target_velocity);
 
   // If stopping time is greater than zero and current velocity is almost zero, add stopping segment
   if (current_velocity < 0.01 && stopping_time > 0.0) {
