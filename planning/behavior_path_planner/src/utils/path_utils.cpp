@@ -153,9 +153,9 @@ PredictedPath createPredictedPathFromTargetVelocity(
     return PredictedPath();
   }
 
-  size_t nearest_segment_index =
+  const size_t nearest_segment_index =
     motion_utils::findNearestIndex(following_trajectory_points, pose.position);
-  FrenetPoint vehicle_pose_frenet =
+  const FrenetPoint vehicle_pose_frenet =
     convertToFrenetPoint(following_trajectory_points, pose.position, nearest_segment_index);
 
   PredictedPath predicted_path;
