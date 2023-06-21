@@ -90,8 +90,8 @@ private:
   };
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
-  Pub<autoware_ad_api::vehicle::VehicleKinematic> pub_kinematic_;
-  Pub<autoware_ad_api::vehicle::VehicleState> pub_state_;
+  Pub<autoware_ad_api::vehicle::VehicleKinematics> pub_kinematics_;
+  Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
   Pub<autoware_ad_api::vehicle::DoorStatusArray> pub_door_;
   Sub<vehicle_interface::KinematicState> sub_kinematic_state_;
   Sub<vehicle_interface::Acceleration> sub_acceleration_;
@@ -105,8 +105,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   MapProjectorInfo::ConstSharedPtr map_projector_info_;
-  autoware_ad_api::vehicle::VehicleKinematic::Message vehicle_kinematic_;
-  autoware_ad_api::vehicle::VehicleState::Message vehicle_state_;
+  autoware_ad_api::vehicle::VehicleKinematics::Message vehicle_kinematics_;
+  autoware_ad_api::vehicle::VehicleStatus::Message vehicle_status_;
   autoware_ad_api::vehicle::DoorStatusArray::Message vehicle_door_;
 
   void kinematic_state(const vehicle_interface::KinematicState::Message::ConstSharedPtr msg_ptr);

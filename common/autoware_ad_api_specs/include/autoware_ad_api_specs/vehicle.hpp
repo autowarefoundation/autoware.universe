@@ -24,16 +24,16 @@
 namespace autoware_ad_api::vehicle
 {
 
-struct VehicleKinematic
+struct VehicleKinematics
 {
   using Message = autoware_adapi_v1_msgs::msg::VehicleKinematics;
-  static constexpr char name[] = "/api/vehicle/kinematic";
+  static constexpr char name[] = "/api/vehicle/kinematics";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-struct VehicleState
+struct VehicleStatus
 {
   using Message = autoware_adapi_v1_msgs::msg::VehicleStatus;
   static constexpr char name[] = "/api/vehicle/status";
