@@ -42,6 +42,21 @@ Trajectory createTrajectory(
   return traj;
 }
 
+Path create_path(Path path_msg, const std::vector<TrajectoryPoint> & traj_points)
+{
+  path_msg.points.clear();
+  PathPoint pp;
+  for (const auto & p : traj_points) {
+    pp.pose = p.pose;
+    pp.longitudinal_velocity_mps = p.longitudinal_velocity_mps;
+    pp.lateral_velocity_mps = p.lateral_velocity_mps;
+    pp.heading_rate_rps = p.heading_rate_rps;
+    pp.is_final = true;
+    path_msg.points.push_back(pp);
+  }
+  return path_msg;
+}
+
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const std::vector<TrajectoryPoint> traj_points, const double interval)
 {

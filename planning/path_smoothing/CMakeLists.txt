@@ -8,7 +8,7 @@ find_package(Eigen3 REQUIRED)
 
 ament_auto_add_library(path_smoothing SHARED
   # node
-  src/path_smoother_node.cpp
+  src/elastic_band_smoother.cpp
   # algorithms
   src/elastic_band.cpp
   # utils
@@ -22,8 +22,8 @@ target_include_directories(path_smoothing
 
 # register node
 rclcpp_components_register_node(path_smoothing
-  PLUGIN "path_smoothing::ElasticBand"
-  EXECUTABLE elastic_band_node
+  PLUGIN "path_smoothing::ElasticBandSmoother"
+  EXECUTABLE elastic_band_smoother
 )
 
 if(BUILD_TESTING)
