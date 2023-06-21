@@ -149,7 +149,7 @@ bool isWithinCrosswalk(
 
     boost::geometry::correct(polygon);
 
-    // ignore objects arround the crosswalk
+    // ignore objects around the crosswalk
     if (boost::geometry::distance(p_object, polygon) < THRESHOLD) {
       return true;
     }
@@ -922,17 +922,23 @@ void filterTargetObjects(
       }
     }
 
+    // for non vehicle type object
     if (!isVehicleTypeObject(o)) {
       if (isWithinCrosswalk(o, rh->getOverallGraphPtr())) {
+        // avoidance module ignore pedestrian and bicycle around crosswalk
         o.reason = "CrosswalkUser";
         data.other_objects.push_back(o);
       } else {
+        // if there is no crosswalk near the object, avoidance module avoids pedestrian and bicycle
+        // no matter how it is shifted.
         o.last_seen = now;
         o.avoid_margin = avoid_margin;
         data.target_objects.push_back(o);
       }
       continue;
     }
+
+    // from here condition check for vehicle type objects.
 
     const auto stop_time_longer_than_threshold =
       o.stop_time > parameters->threshold_time_force_avoidance_for_stopped_vehicle;
