@@ -85,7 +85,7 @@
         <arg name="container_name" value="$(var pointcloud_container_name)"/>
         <arg name="occupancy_grid_map_method" value="$(var occupancy_grid_map_method)"/>
         <arg name="occupancy_grid_map_param_path" value="$(var occupancy_grid_map_param_path)"/>
-        <arg name="occupancy_grid_map_updater_param_path" value="$(occupancy_grid_map_updater_param_path)"/>
+        <arg name="occupancy_grid_map_updater_param_path" value="$(var occupancy_grid_map_updater_param_path)"/>
       </include>
     </group>
 
