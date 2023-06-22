@@ -17,5 +17,4 @@
     map_width: 100.0
     map_resolution: 0.5
 
-    updater:
-      type: "binary_bayes_filter" # binary_bayes_filter, etc.
+    updater_type: "binary_bayes_filter" # binary_bayes_filter, etc.
