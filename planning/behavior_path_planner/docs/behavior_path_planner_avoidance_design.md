@@ -460,7 +460,7 @@ enable_safety_check: false
 
 # For safety check
 safety_check_backward_distance: 50.0 # [m]
-safety_check_time_horizon: 10.0 # [s]
+safety_check_time_horizon: 5.0 # [s]
 safety_check_idling_time: 1.5 # [s]
 safety_check_accel_for_rss: 2.5 # [m/ss]
 ```
@@ -620,7 +620,7 @@ namespace: `avoidance.target_filtering.`
 | Name                                   | Unit  | Type   | Description                                                                                                                                                                                                                            | Default value |
 | :------------------------------------- | :---- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
 | threshold_speed_object_is_stopped      | [m/s] | double | Vehicles with speed greater than this will be excluded from avoidance target.                                                                                                                                                          | 1.0           |
-| threshold_time_object_is_moving        | [s]   | double | Forward distance to search the avoidance target.                                                                                                                                                                                       | 1.0           |
+| threshold_time_object_is_moving        | [s]   | double | Forward distance to search the avoidance target.                                                                                                                                                                                       | 2.0           |
 | threshold_distance_object_is_on_center | [m]   | double | Vehicles around the center line within this distance will be excluded from avoidance target.                                                                                                                                           | 1.0           |
 | object_check_forward_distance          | [m]   | double | Forward distance to search the avoidance target.                                                                                                                                                                                       | 150.0         |
 | object_check_backward_distance         | [m]   | double | Backward distance to search the avoidance target.                                                                                                                                                                                      | 2.0           |
@@ -637,7 +637,7 @@ namespace: `avoidance.safety_check.`
 | Name                           | Unit   | Type   | Description                                                                       | Default value |
 | :----------------------------- | ------ | ------ | --------------------------------------------------------------------------------- | ------------- |
 | safety_check_backward_distance | [m]    | double | Backward distance to search the dynamic objects.                                  | 50.0          |
-| safety_check_time_horizon      | [s]    | double | Time horizon to check lateral/longitudinal margin is enough or not.               | 10.0          |
+| safety_check_time_horizon      | [s]    | double | Time horizon to check lateral/longitudinal margin is enough or not.               | 5.0           |
 | safety_check_idling_time       | [t]    | double | Time delay constant that be use for longitudinal margin calculation based on RSS. | 1.5           |
 | safety_check_accel_for_rss     | [m/ss] | double | Accel constant that be used for longitudinal margin calculation based on RSS.     | 2.5           |
 | safety_check_hysteresis_factor | [-]    | double | Hysteresis factor that be used for chattering prevention.                         | 2.0           |

@@ -115,7 +115,7 @@
       # For safety check
       safety_check:
         safety_check_backward_distance: 100.0            # [m]
-        safety_check_time_horizon: 10.0                  # [s]
+        safety_check_time_horizon: 5.0                   # [s]
         safety_check_idling_time: 1.5                    # [s]
         safety_check_accel_for_rss: 2.5                  # [m/ss]
         safety_check_hysteresis_factor: 2.0              # [-]
