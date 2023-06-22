@@ -519,9 +519,12 @@ void fillObjectMovingTime(
   ObjectData & object_data, ObjectDataArray & stopped_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
+  const auto t = utils::getHighestProbLabel(object_data.object.classification);
+  const auto object_parameter = parameters->object_parameters.at(t);
+
   const auto & object_vel =
     object_data.object.kinematics.initial_twist_with_covariance.twist.linear.x;
-  const auto is_faster_than_threshold = object_vel > parameters->threshold_speed_object_is_stopped;
+  const auto is_faster_than_threshold = object_vel > object_parameter.moving_speed_threshold;
 
   const auto id = object_data.object.object_id;
   const auto same_id_obj = std::find_if(
@@ -558,7 +561,7 @@ void fillObjectMovingTime(
   object_data.move_time = (now - same_id_obj->last_stop).seconds();
   object_data.stop_time = 0.0;
 
-  if (object_data.move_time > parameters->threshold_time_object_is_moving) {
+  if (object_data.move_time > object_parameter.moving_time_threshold) {
     stopped_objects.erase(same_id_obj);
   }
 }
@@ -598,6 +601,33 @@ void fillAvoidanceNecessity(
 
   // TRUE -> ? (check with hysteresis factor)
   object_data.avoid_required = check_necessity(parameters->safety_check_hysteresis_factor);
+}
+
+void fillObjectStoppableJudge(
+  ObjectData & object_data, const ObjectDataArray & registered_objects,
+  const double feasible_stop_distance, const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  if (!parameters->use_constraints_for_decel) {
+    object_data.is_stoppable = true;
+  }
+
+  const auto id = object_data.object.object_id;
+  const auto same_id_obj = std::find_if(
+    registered_objects.begin(), registered_objects.end(),
+    [&id](const auto & o) { return o.object.object_id == id; });
+
+  const auto is_stoppable = object_data.to_stop_line > feasible_stop_distance;
+  if (is_stoppable) {
+    object_data.is_stoppable = true;
+    return;
+  }
+
+  if (same_id_obj == registered_objects.end()) {
+    object_data.is_stoppable = false;
+    return;
+  }
+
+  object_data.is_stoppable = same_id_obj->is_stoppable;
 }
 
 void updateRegisteredObject(
@@ -726,7 +756,10 @@ void filterTargetObjects(
       continue;
     }
 
-    if (o.move_time > parameters->threshold_time_object_is_moving) {
+    // if following condition are satisfied, ignored the objects as moving objects.
+    // 1. speed is higher than threshold.
+    // 2. keep that speed longer than the time threshold.
+    if (o.move_time > object_parameter.moving_time_threshold) {
       o.reason = AvoidanceDebugFactor::MOVING_OBJECT;
       data.other_objects.push_back(o);
       continue;

@@ -429,6 +429,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
   p.minimum_prepare_length =
     0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
+  p.lane_change_finish_judge_buffer =
+    declare_parameter<double>("lane_change.lane_change_finish_judge_buffer");
 
   // lateral acceleration map for lane change
   const auto lateral_acc_velocity =
@@ -578,6 +580,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
       param.enable = declare_parameter<bool>(ns + "enable");
+      param.moving_speed_threshold = declare_parameter<double>(ns + "moving_speed_threshold");
+      param.moving_time_threshold = declare_parameter<double>(ns + "moving_time_threshold");
       param.max_expand_ratio = declare_parameter<double>(ns + "max_expand_ratio");
       param.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
       param.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
@@ -607,10 +611,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   // target filtering
   {
     std::string ns = "avoidance.target_filtering.";
-    p.threshold_speed_object_is_stopped =
-      declare_parameter<double>(ns + "threshold_speed_object_is_stopped");
-    p.threshold_time_object_is_moving =
-      declare_parameter<double>(ns + "threshold_time_object_is_moving");
     p.threshold_time_force_avoidance_for_stopped_vehicle =
       declare_parameter<double>(ns + "threshold_time_force_avoidance_for_stopped_vehicle");
     p.object_ignore_distance_traffic_light =
@@ -777,8 +777,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 
   // trajectory generation
   p.backward_lane_length = declare_parameter<double>(parameter("backward_lane_length"));
-  p.lane_change_finish_judge_buffer =
-    declare_parameter<double>(parameter("lane_change_finish_judge_buffer"));
   p.prediction_time_resolution = declare_parameter<double>(parameter("prediction_time_resolution"));
   p.longitudinal_acc_sampling_num =
     declare_parameter<int>(parameter("longitudinal_acceleration_sampling_num"));
@@ -847,15 +845,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
       get_logger(), "abort_delta_time: " << p.abort_delta_time << ", is too short.\n"
                                          << "Terminating the program...");
     exit(EXIT_FAILURE);
-  }
-
-  const auto lc_buffer =
-    this->get_parameter("lane_change.backward_length_buffer_for_end_of_lane").get_value<double>();
-  if (lc_buffer < p.lane_change_finish_judge_buffer + 1.0) {
-    p.lane_change_finish_judge_buffer = lc_buffer - 1;
-    RCLCPP_WARN_STREAM(
-      get_logger(), "lane change buffer is less than finish buffer. Modifying the value to "
-                      << p.lane_change_finish_judge_buffer << "....");
   }
 
   return p;
@@ -1075,18 +1064,23 @@ StartPlannerParameters BehaviorPathPlannerNode::getStartPlannerParam()
   p.th_arrived_distance = declare_parameter<double>(ns + "th_arrived_distance");
   p.th_stopped_velocity = declare_parameter<double>(ns + "th_stopped_velocity");
   p.th_stopped_time = declare_parameter<double>(ns + "th_stopped_time");
-  p.th_blinker_on_lateral_offset = declare_parameter<double>(ns + "th_blinker_on_lateral_offset");
+  p.th_turn_signal_on_lateral_offset =
+    declare_parameter<double>(ns + "th_turn_signal_on_lateral_offset");
+  p.intersection_search_length = declare_parameter<double>(ns + "intersection_search_length");
+  p.length_ratio_for_turn_signal_deactivation_near_intersection =
+    declare_parameter<double>(ns + "length_ratio_for_turn_signal_deactivation_near_intersection");
   p.collision_check_margin = declare_parameter<double>(ns + "collision_check_margin");
   p.collision_check_distance_from_end =
     declare_parameter<double>(ns + "collision_check_distance_from_end");
   // shift pull out
   p.enable_shift_pull_out = declare_parameter<bool>(ns + "enable_shift_pull_out");
-  p.shift_pull_out_velocity = declare_parameter<double>(ns + "shift_pull_out_velocity");
-  p.pull_out_sampling_num = declare_parameter<int>(ns + "pull_out_sampling_num");
   p.minimum_shift_pull_out_distance =
     declare_parameter<double>(ns + "minimum_shift_pull_out_distance");
-  p.maximum_lateral_jerk = declare_parameter<double>(ns + "maximum_lateral_jerk");
-  p.minimum_lateral_jerk = declare_parameter<double>(ns + "minimum_lateral_jerk");
+  p.lateral_acceleration_sampling_num =
+    declare_parameter<int>(ns + "lateral_acceleration_sampling_num");
+  p.lateral_jerk = declare_parameter<double>(ns + "lateral_jerk");
+  p.maximum_lateral_acc = declare_parameter<double>(ns + "maximum_lateral_acc");
+  p.minimum_lateral_acc = declare_parameter<double>(ns + "minimum_lateral_acc");
   p.deceleration_interval = declare_parameter<double>(ns + "deceleration_interval");
   // geometric pull out
   p.enable_geometric_pull_out = declare_parameter<bool>(ns + "enable_geometric_pull_out");
@@ -1110,10 +1104,10 @@ StartPlannerParameters BehaviorPathPlannerNode::getStartPlannerParam()
   p.ignore_distance_from_lane_end = declare_parameter<double>(ns + "ignore_distance_from_lane_end");
 
   // validation of parameters
-  if (p.pull_out_sampling_num < 1) {
+  if (p.lateral_acceleration_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
-      get_logger(), "pull_out_sampling_num must be positive integer. Given parameter: "
-                      << p.pull_out_sampling_num << std::endl
+      get_logger(), "lateral_acceleration_sampling_num must be positive integer. Given parameter: "
+                      << p.lateral_acceleration_sampling_num << std::endl
                       << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
@@ -1226,11 +1220,15 @@ void BehaviorPathPlannerNode::run()
   // update route
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
   if (route_ptr) {
+    planner_data_->route_handler->setRoute(*route_ptr);
+#ifndef USE_OLD_ARCHITECTURE
+    planner_manager_->resetRootLanelet(planner_data_);
+#endif
+
     // uuid is not changed when rerouting with modified goal,
     // in this case do not need to rest modules.
     const bool has_same_route_id =
       planner_data_->prev_route_id && route_ptr->uuid == planner_data_->prev_route_id;
-    planner_data_->route_handler->setRoute(*route_ptr);
     // Reset behavior tree when new route is received,
     // so that the each modules do not have to care about the "route jump".
     if (!is_first_time && !has_same_route_id) {
@@ -1464,9 +1462,16 @@ void BehaviorPathPlannerNode::publishPathCandidate(
     }
 
     for (auto & module : manager->getSceneModules()) {
-      path_candidate_publishers_.at(module->name())
-        ->publish(
-          convertToPath(module->getPathCandidate(), module->isExecutionReady(), planner_data));
+      const auto & status = module->getCurrentStatus();
+      const auto candidate_path = std::invoke([&]() {
+        if (status == ModuleStatus::SUCCESS || status == ModuleStatus::FAILURE) {
+          // clear candidate path if the module is finished
+          return convertToPath(nullptr, false, planner_data);
+        }
+        return convertToPath(module->getPathCandidate(), module->isExecutionReady(), planner_data);
+      });
+
+      path_candidate_publishers_.at(module->name())->publish(candidate_path);
     }
   }
 }
