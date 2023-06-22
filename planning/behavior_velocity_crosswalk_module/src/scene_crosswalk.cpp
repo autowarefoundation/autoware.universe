@@ -234,7 +234,7 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     return {};
   }();
 
-  const auto stop_factor = stop_point_with_factor->second;
+  const auto & stop_factor = stop_point_with_factor->second;
   insertDecelPointWithDebugInfo(stop_point_with_factor->first, 0.0, *path);
   planning_utils::appendStopReason(stop_factor, stop_reason);
   velocity_factor_.set(
