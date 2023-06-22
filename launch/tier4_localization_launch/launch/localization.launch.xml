@@ -28,11 +28,11 @@
       </include>
     </group>
     <!-- pose_estimator module -->
-    <group if="$(eval '&quot;$(var mode)&quot;==&quot;ndt&quot;')">
+    <group if="$(eval '&quot;$(var mode)&quot;==&quot;lidar&quot;')">
       <push-ros-namespace namespace="pose_estimator"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_estimator/pose_estimator.launch.xml"/>
     </group>
-    <group if="$(eval '&quot;$(var mode)&quot;==&quot;yabloc&quot;')">
+    <group if="$(eval '&quot;$(var mode)&quot;==&quot;camera&quot;')">
       <push-ros-namespace namespace="yabloc"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_estimator/yabloc.launch.xml"/>
     </group>
