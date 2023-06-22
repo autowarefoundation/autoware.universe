@@ -88,7 +88,9 @@ namespace behavior_velocity_planner
 using lanelet::autoware::Crosswalk;
 
 CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterfaceWithRTC(node, getModuleName(),node.declare_parameter<bool>(getModuleName()+".enable_rtc"))
+: SceneModuleManagerInterfaceWithRTC(
+    node, getModuleName(),
+    node.declare_parameter<bool>(std::string(getModuleName()) + ".enable_rtc"))
 {
   const std::string ns(getModuleName());
 
