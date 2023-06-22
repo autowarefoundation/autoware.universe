@@ -166,8 +166,6 @@ public:
 
   virtual const char * getModuleName() = 0;
 
-  // do something?
-
   boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
 
   void updateSceneModuleInstances(
