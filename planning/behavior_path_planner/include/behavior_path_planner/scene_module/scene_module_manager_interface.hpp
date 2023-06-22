@@ -281,16 +281,16 @@ protected:
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 
+  bool enable_simultaneous_execution_as_approved_module_{false};
+
+  bool enable_simultaneous_execution_as_candidate_module_{false};
+
 private:
   bool enable_rtc_;
 
   size_t max_module_num_;
 
   size_t priority_;
-
-  bool enable_simultaneous_execution_as_approved_module_{false};
-
-  bool enable_simultaneous_execution_as_candidate_module_{false};
 };
 
 }  // namespace behavior_path_planner
