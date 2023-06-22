@@ -196,10 +196,13 @@ void transformPoints(
 
 Polygon2d roi2Polygon(const sensor_msgs::msg::RegionOfInterest & roi)
 {
-  return Polygon2d{
+  Polygon2d polygon{
     {Point2d(roi.x_offset, roi.y_offset), Point2d(roi.x_offset + roi.width, roi.y_offset),
      Point2d(roi.x_offset + roi.width, roi.y_offset + roi.height),
-     Point2d(roi.x_offset, roi.y_offset + roi.height)}};
+     Point2d(roi.x_offset, roi.y_offset + roi.height), Point2d(roi.x_offset, roi.y_offset)}};
+  return tier4_autoware_utils::isClockwise(polygon)
+           ? polygon
+           : tier4_autoware_utils::inverseClockwise(polygon);
 }
 
 Polygon2d point2ConvexHull(const std::vector<Eigen::Vector2d> & points)
