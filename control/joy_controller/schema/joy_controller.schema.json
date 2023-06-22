@@ -6,74 +6,74 @@
     "joy_controller": {
       "type": "object",
       "properties": {
+        "joy_type": {
+          "type": "string",
+          "description": "Joy controller type",
+          "default": "P65",
+          "enum": ["P65", "DS4", "G29"]
+        },
         "update_rate": {
           "type": "number",
-          "description": "Rate, in  Hz, which ... is updated",
+          "description": "Update rate to publish control commands",
           "default": 10.0,
           "exclusiveMinimum": 0
         },
         "accel_ratio": {
           "type": "number",
-          "description": "Acceleration ratio",
-          "default": 3.0,
-          "exclusiveMinimum": 0
+          "description": "Ratio to calculate acceleration (commanded acceleration is ratio * operation)",
+          "default": 3.0
         },
         "brake_ratio": {
           "type": "number",
-          "description": "Brake ratio",
-          "default": 5.0,
-          "exclusiveMinimum": 0
+          "description": "Ratio to calculate deceleration (commanded acceleration is -ratio * operation)",
+          "default": 5.0
         },
         "steer_ratio": {
           "type": "number",
-          "description": "Steer ratio",
-          "default": 0.5,
-          "exclusiveMinimum": 0
+          "description": "Ratio to calculate deceleration (commanded steer is ratio * operation)",
+          "default": 0.5
         },
         "steering_angle_velocity": {
           "type": "number",
-          "description": "Steering angle velocity",
-          "default": 0.1,
-          "exclusiveMinimum": 0
+          "description": "Steering angle velocity for operation",
+          "default": 0.1
         },
         "accel_sensitivity": {
           "type": "number",
-          "description": "Acceleration sensitivity",
+          "description": "Sensitivity to calculate acceleration for external API (commanded acceleration is pow(operation, 1 / sensitivity))",
           "default": 1.0,
-          "exclusiveMinimum": 0
+          "exclusive": 0
         },
         "brake_sensitivity": {
           "type": "number",
-          "description": "Brake sensitivity",
+          "description": "Sensitivity to calculate deceleration for external API (commanded acceleration is pow(operation, 1 / sensitivity))",
           "default": 1.0,
-          "exclusiveMinimum": 0
+          "exclusive": 0
         },
         "control_command": {
           "type": "object",
           "properties": {
             "velocity_gain": {
               "type": "number",
-              "description": "Velocity gain",
-              "default": 3.0,
-              "exclusiveMinimum": 0
+              "description": "Ratio to calculate velocity by acceleration",
+              "default": 3.0
             },
             "max_forward_velocity": {
               "type": "number",
-              "description": "Max forward velocity",
+              "description": "Absolute max velocity to go forward",
               "default": 20.0,
               "exclusiveMinimum": 0
             },
             "max_backward_velocity": {
               "type": "number",
-              "description": "Max backward velocity",
+              "description": "Absolute max velocity to go backward",
               "default": 3.0,
               "exclusiveMinimum": 0
             },
             "backward_accel_ratio": {
               "type": "number",
-              "description": "Backward acceleration ratio",
-              "default": 1.0,
-              "exclusiveMinimum": 0
+              "description": "Ratio to calculate deceleration (commanded acceleration is -ratio * operation)",
+              "default": 1.0
             }
           },
           "required": [
@@ -85,6 +85,7 @@
         }
       },
       "required": [
+        "joy_type",
         "update_rate",
         "accel_ratio",
         "brake_ratio",
