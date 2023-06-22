@@ -6,7 +6,13 @@ This package can filter noise objects in RadarTracks.
 ## Algorithm
 
 The core algorithm of this package is `RadarTrackCrossingNoiseFilterNode::isNoise()` function.
-See the function for details.
+See the function and the parameters for details.
+
+- Y-axis threshold
+
+Radar can detect x-axis velocity as doppler velocity, but cannot detect y-axis velocity.
+Some radar can estimate y-axis velocity inside the device, but it sometimes lack precision.
+In y-axis threshold filter, if y-axis velocity of RadarTrack is more than `velocity_y_threshold`, it treats as noise objects.
 
 ## Input
 
