@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef radar_tracks_noise_filter__radar_tracks_noise_filter_NODE_HPP__
-#define radar_tracks_noise_filter__radar_tracks_noise_filter_NODE_HPP__
+#ifndef RADAR_TRACKS_NOISE_FILTER__RADAR_TRACKS_NOISE_FILTER_NODE_HPP_
+#define RADAR_TRACKS_NOISE_FILTER__RADAR_TRACKS_NOISE_FILTER_NODE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -63,4 +63,4 @@ private:
 
 }  // namespace radar_tracks_noise_filter
 
-#endif  // radar_tracks_noise_filter__radar_tracks_noise_filter_NODE_HPP__
+#endif  // RADAR_TRACKS_NOISE_FILTER__RADAR_TRACKS_NOISE_FILTER_NODE_HPP_
