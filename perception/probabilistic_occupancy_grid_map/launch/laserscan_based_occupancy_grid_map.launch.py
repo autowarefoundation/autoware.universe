@@ -26,11 +26,6 @@ from launch_ros.descriptions import ComposableNode
 import yaml
 
 
-def overwrite_config(param_dict, launch_config_name, node_params_name, context):
-    if LaunchConfiguration(launch_config_name).perform(context) != "":
-        param_dict[node_params_name] = LaunchConfiguration(launch_config_name).perform(context)
-
-
 def launch_setup(context, *args, **kwargs):
     # load parameter files
     param_file = LaunchConfiguration("param_file").perform(context)
@@ -168,6 +163,10 @@ def generate_launch_description():
                 "param_file",
                 get_package_share_directory("probabilistic_occupancy_grid_map")
                 + "/config/laserscan_based_occupancy_grid_map.param.yaml",
+            ),
+            add_launch_arg(
+                "updater_type",
+                "binary_bayes_filter",
             ),
             add_launch_arg(
                 "updater_param_file",

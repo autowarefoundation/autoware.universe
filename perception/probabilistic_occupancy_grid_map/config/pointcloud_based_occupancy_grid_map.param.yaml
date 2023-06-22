@@ -19,5 +19,3 @@
     gridmap_origin_frame: "base_link"
     # ray-tracing center: main sensor frame is preferable like: "velodyne_top"
     scan_origin_frame: "base_link"
-
-    updater_type: "binary_bayes_filter" # binary_bayes_filter, etc.
