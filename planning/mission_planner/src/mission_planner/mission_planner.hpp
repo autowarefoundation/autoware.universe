@@ -118,7 +118,7 @@ private:
     const SetMrmRoute::Service::Request::SharedPtr req,
     const SetMrmRoute::Service::Response::SharedPtr res);
   void on_clear_mrm_route(
-    [[maybe_unused]] const ClearMrmRoute::Service::Request::SharedPtr req,
+    const ClearMrmRoute::Service::Request::SharedPtr req,
     const ClearMrmRoute::Service::Response::SharedPtr res);
 
   HADMapBin::ConstSharedPtr map_ptr_{nullptr};

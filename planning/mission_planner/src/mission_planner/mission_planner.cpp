@@ -302,8 +302,8 @@ void MissionPlanner::on_set_route(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
   if (mrm_route_) {
-    RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 5000, "Cannot set route in the emergency state");
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
     return;
   }
 
@@ -342,8 +342,8 @@ void MissionPlanner::on_set_route_points(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
   if (mrm_route_) {
-    RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 5000, "Cannot set route in the emergency state");
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
     return;
   }
 
@@ -412,7 +412,7 @@ void MissionPlanner::on_set_mrm_route(
 
 // NOTE: The route interface should be mutually exclusive by callback group.
 void MissionPlanner::on_clear_mrm_route(
-  [[maybe_unused]] const ClearMrmRoute::Service::Request::SharedPtr req,
+  const ClearMrmRoute::Service::Request::SharedPtr,
   const ClearMrmRoute::Service::Response::SharedPtr res)
 {
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
@@ -595,8 +595,8 @@ void MissionPlanner::on_change_route_points(
       ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
   }
   if (mrm_route_) {
-    RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 5000, "Cannot reroute in the emergency state");
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
     return;
   }
 
