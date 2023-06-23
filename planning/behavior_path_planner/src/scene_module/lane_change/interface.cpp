@@ -116,6 +116,7 @@ ModuleStatus LaneChangeInterface::updateState()
 
   const auto [is_safe, is_object_coming_from_rear] = module_type_->isApprovedPathSafe();
 
+  setObjectDebugVisualization();
   if (is_safe) {
     module_type_->toNormalState();
     return ModuleStatus::RUNNING;
@@ -270,6 +271,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
     candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change);
   is_abort_path_approved_ = false;
 
+  setObjectDebugVisualization();
+
   return out;
 }
 
@@ -300,6 +303,10 @@ void LaneChangeInterface::setData(const std::shared_ptr<const PlannerData> & dat
 
 void LaneChangeInterface::setObjectDebugVisualization() const
 {
+  debug_marker_.markers.clear();
+  if (!parameters_->publish_debug_marker) {
+    return;
+  }
   using marker_utils::lane_change_markers::showAllValidLaneChangePath;
   using marker_utils::lane_change_markers::showLerpedPose;
   using marker_utils::lane_change_markers::showObjectInfo;
