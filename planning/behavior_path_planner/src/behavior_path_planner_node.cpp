@@ -429,6 +429,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
   p.minimum_prepare_length =
     0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
+  p.lane_change_finish_judge_buffer =
+    declare_parameter<double>("lane_change.lane_change_finish_judge_buffer");
 
   // lateral acceleration map for lane change
   const auto lateral_acc_velocity =
@@ -741,6 +743,8 @@ DynamicAvoidanceParameters BehaviorPathPlannerNode::getDynamicAvoidanceParam()
     p.avoid_motorcycle = declare_parameter<bool>(ns + "motorcycle");
     p.avoid_pedestrian = declare_parameter<bool>(ns + "pedestrian");
     p.min_obstacle_vel = declare_parameter<double>(ns + "min_obstacle_vel");
+    p.successive_num_to_entry_dynamic_avoidance_condition =
+      declare_parameter<int>(ns + "successive_num_to_entry_dynamic_avoidance_condition");
   }
 
   {  // drivable_area_generation
@@ -775,8 +779,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 
   // trajectory generation
   p.backward_lane_length = declare_parameter<double>(parameter("backward_lane_length"));
-  p.lane_change_finish_judge_buffer =
-    declare_parameter<double>(parameter("lane_change_finish_judge_buffer"));
   p.prediction_time_resolution = declare_parameter<double>(parameter("prediction_time_resolution"));
   p.longitudinal_acc_sampling_num =
     declare_parameter<int>(parameter("longitudinal_acceleration_sampling_num"));
@@ -845,15 +847,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
       get_logger(), "abort_delta_time: " << p.abort_delta_time << ", is too short.\n"
                                          << "Terminating the program...");
     exit(EXIT_FAILURE);
-  }
-
-  const auto lc_buffer =
-    this->get_parameter("lane_change.backward_length_buffer_for_end_of_lane").get_value<double>();
-  if (lc_buffer < p.lane_change_finish_judge_buffer + 1.0) {
-    p.lane_change_finish_judge_buffer = lc_buffer - 1;
-    RCLCPP_WARN_STREAM(
-      get_logger(), "lane change buffer is less than finish buffer. Modifying the value to "
-                      << p.lane_change_finish_judge_buffer << "....");
   }
 
   return p;
@@ -1073,7 +1066,11 @@ StartPlannerParameters BehaviorPathPlannerNode::getStartPlannerParam()
   p.th_arrived_distance = declare_parameter<double>(ns + "th_arrived_distance");
   p.th_stopped_velocity = declare_parameter<double>(ns + "th_stopped_velocity");
   p.th_stopped_time = declare_parameter<double>(ns + "th_stopped_time");
-  p.th_blinker_on_lateral_offset = declare_parameter<double>(ns + "th_blinker_on_lateral_offset");
+  p.th_turn_signal_on_lateral_offset =
+    declare_parameter<double>(ns + "th_turn_signal_on_lateral_offset");
+  p.intersection_search_length = declare_parameter<double>(ns + "intersection_search_length");
+  p.length_ratio_for_turn_signal_deactivation_near_intersection =
+    declare_parameter<double>(ns + "length_ratio_for_turn_signal_deactivation_near_intersection");
   p.collision_check_margin = declare_parameter<double>(ns + "collision_check_margin");
   p.collision_check_distance_from_end =
     declare_parameter<double>(ns + "collision_check_distance_from_end");
@@ -1300,6 +1297,7 @@ void BehaviorPathPlannerNode::run()
   publishPathCandidate(bt_manager_->getSceneModules(), planner_data_);
   publishSceneModuleDebugMsg(bt_manager_->getAllSceneModuleDebugMsgData());
 #else
+  publishSceneModuleDebugMsg(planner_manager_->getDebugMsg());
   publishPathCandidate(planner_manager_->getSceneModuleManagers(), planner_data_);
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
   stop_reason_publisher_->publish(planner_manager_->getStopReasons());
@@ -1421,7 +1419,6 @@ void BehaviorPathPlannerNode::publish_bounds(const PathWithLaneId & path)
   bound_publisher_->publish(msg);
 }
 
-#ifdef USE_OLD_ARCHITECTURE
 void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
   const std::shared_ptr<SceneModuleVisitor> & debug_messages_data_ptr)
 {
@@ -1435,7 +1432,6 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
     debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
   }
 }
-#endif
 
 #ifdef USE_OLD_ARCHITECTURE
 void BehaviorPathPlannerNode::publishPathCandidate(

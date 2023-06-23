@@ -20,6 +20,7 @@
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -103,6 +104,7 @@ void StartPlannerModule::processOnExit()
 {
   resetPathCandidate();
   resetPathReference();
+  debug_marker_.markers.clear();
 }
 
 bool StartPlannerModule::isExecutionRequested() const
@@ -268,6 +270,10 @@ BehaviorModuleOutput StartPlannerModule::plan()
   });
 
   if (status_.back_finished) {
+    setIsSimultaneousExecutableAsApprovedModule(
+      initial_value_simultaneously_executable_as_approved_module_);
+    setIsSimultaneousExecutableAsCandidateModule(
+      initial_value_simultaneously_executable_as_candidate_module_);
     const double start_distance = motion_utils::calcSignedArcLength(
       path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
@@ -281,6 +287,8 @@ BehaviorModuleOutput StartPlannerModule::plan()
       {start_distance, finish_distance}, SteeringFactor::START_PLANNER, steering_factor_direction,
       SteeringFactor::TURNING, "");
   } else {
+    setIsSimultaneousExecutableAsApprovedModule(false);
+    setIsSimultaneousExecutableAsCandidateModule(false);
     const double distance = motion_utils::calcSignedArcLength(
       path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
@@ -392,6 +400,10 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   });
 
   if (status_.back_finished) {
+    setIsSimultaneousExecutableAsApprovedModule(
+      initial_value_simultaneously_executable_as_approved_module_);
+    setIsSimultaneousExecutableAsCandidateModule(
+      initial_value_simultaneously_executable_as_candidate_module_);
     const double start_distance = motion_utils::calcSignedArcLength(
       stop_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
@@ -404,6 +416,8 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
       {start_distance, finish_distance}, SteeringFactor::START_PLANNER, steering_factor_direction,
       SteeringFactor::APPROACHING, "");
   } else {
+    setIsSimultaneousExecutableAsApprovedModule(false);
+    setIsSimultaneousExecutableAsCandidateModule(false);
     const double distance = motion_utils::calcSignedArcLength(
       stop_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
@@ -815,10 +829,10 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   const auto lane = planner_data_->route_handler->getLaneletMapPtr()->laneletLayer.get(lane_id);
   const double lateral_offset = lanelet::utils::getLateralDistanceToCenterline(lane, start_pose);
 
-  if (distance_from_end < 0.0 && lateral_offset > parameters_->th_blinker_on_lateral_offset) {
+  if (distance_from_end < 0.0 && lateral_offset > parameters_->th_turn_signal_on_lateral_offset) {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   } else if (
-    distance_from_end < 0.0 && lateral_offset < -parameters_->th_blinker_on_lateral_offset) {
+    distance_from_end < 0.0 && lateral_offset < -parameters_->th_turn_signal_on_lateral_offset) {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
   } else {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
@@ -826,8 +840,52 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
 
   turn_signal.desired_start_point = start_pose;
   turn_signal.required_start_point = start_pose;
-  turn_signal.required_end_point = end_pose;
   turn_signal.desired_end_point = end_pose;
+
+  // check if intersection exists within search length
+  const bool is_near_intersection = std::invoke([&]() {
+    const double check_length = parameters_->intersection_search_length;
+    double accumulated_length = 0.0;
+    for (size_t i = 0; i < path.points.size() - 1; ++i) {
+      const auto & p = path.points.at(i);
+      for (const auto & lane : planner_data_->route_handler->getLaneletsFromIds(p.lane_ids)) {
+        const std::string turn_direction = lane.attributeOr("turn_direction", "else");
+        if (turn_direction == "right" || turn_direction == "left" || turn_direction == "straight") {
+          return true;
+        }
+      }
+      accumulated_length += tier4_autoware_utils::calcDistance2d(p, path.points.at(i + 1));
+      if (accumulated_length > check_length) {
+        return false;
+      }
+    }
+    return false;
+  });
+
+  if (is_near_intersection) {
+    // offset required end pose with ration to activate turn signal for intersection
+    turn_signal.required_end_point = std::invoke([&]() {
+      const double length_start_to_end =
+        motion_utils::calcSignedArcLength(path.points, start_pose.position, end_pose.position);
+      const auto ratio = std::clamp(
+        parameters_->length_ratio_for_turn_signal_deactivation_near_intersection, 0.0, 1.0);
+
+      const double required_end_length = length_start_to_end * ratio;
+      double accumulated_length = 0.0;
+      const size_t start_idx = motion_utils::findNearestIndex(path.points, start_pose.position);
+      for (size_t i = start_idx; i < path.points.size() - 1; ++i) {
+        accumulated_length +=
+          tier4_autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
+        if (accumulated_length > required_end_length) {
+          return path.points.at(i).point.pose;
+        }
+      }
+      // not found required end point
+      return end_pose;
+    });
+  } else {
+    turn_signal.required_end_point = end_pose;
+  }
 
   return turn_signal;
 }
@@ -836,8 +894,15 @@ void StartPlannerModule::setDebugData() const
 {
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
+  using tier4_autoware_utils::createDefaultMarker;
+  using tier4_autoware_utils::createMarkerColor;
+  using tier4_autoware_utils::createMarkerScale;
 
-  const auto add = [this](const MarkerArray & added) {
+  const auto life_time = rclcpp::Duration::from_seconds(1.5);
+  auto add = [&](MarkerArray added) {
+    for (auto & marker : added.markers) {
+      marker.lifetime = life_time;
+    }
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
@@ -846,5 +911,26 @@ void StartPlannerModule::setDebugData() const
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
   add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
+
+  // Visualize planner type text
+  const auto header = planner_data_->route_handler->getRouteHeader();
+  {
+    visualization_msgs::msg::MarkerArray planner_type_marker_array{};
+    const auto color = status_.is_safe ? createMarkerColor(1.0, 1.0, 1.0, 0.99)
+                                       : createMarkerColor(1.0, 0.0, 0.0, 0.99);
+    auto marker = createDefaultMarker(
+      header.frame_id, header.stamp, "planner_type", 0,
+      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0), color);
+    marker.pose = status_.pull_out_start_pose;
+    if (!status_.back_finished) {
+      marker.text = "BACK -> ";
+    }
+    marker.text += magic_enum::enum_name(status_.planner_type);
+    marker.text += " " + std::to_string(status_.current_path_idx) + "/" +
+                   std::to_string(status_.pull_out_path.partial_paths.size() - 1);
+    marker.lifetime = life_time;
+    planner_type_marker_array.markers.push_back(marker);
+    add(planner_type_marker_array);
+  }
 }
 }  // namespace behavior_path_planner
