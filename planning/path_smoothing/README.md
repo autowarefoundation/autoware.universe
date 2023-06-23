@@ -8,4 +8,4 @@ This package contains code to smooth a path or trajectory.
 
 ### Elastic Band
 
-More details about elastic band can be seen [here](docs/eb.md).
+More details about the elastic band can be found [here](docs/eb.md).
