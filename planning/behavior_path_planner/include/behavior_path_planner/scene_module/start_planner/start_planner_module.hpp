@@ -104,7 +104,7 @@ public:
   {
   }
 
-  // set is_simulataneously_executable_ as false when backward driving.
+  // set is_simultaneously_executable_ as false when backward driving.
   // keep initial value to return it after finishing backward driving.
   bool initial_value_simultaneously_executable_as_approved_module_;
   bool initial_value_simultaneously_executable_as_candidate_module_;
