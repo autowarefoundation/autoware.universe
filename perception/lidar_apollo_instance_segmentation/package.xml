@@ -21,7 +21,6 @@
   <depend>tensorrt_common</depend>
   <depend>tf2_eigen</depend>
   <depend>tier4_autoware_utils</depend>
-  <depend>tier4_debug_msgs</depend>
   <depend>tier4_perception_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

@@ -18,7 +18,6 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_adapi_v1_msgs</depend>
-  <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_planning_msgs</depend>
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>

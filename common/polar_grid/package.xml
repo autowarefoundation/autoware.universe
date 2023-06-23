@@ -10,13 +10,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <depend>libqt5-core</depend>
-  <depend>libqt5-gui</depend>
-  <depend>libqt5-widgets</depend>
-  <depend>qtbase5-dev</depend>
   <depend>rviz_common</depend>
-  <depend>rviz_default_plugins</depend>
-  <depend>rviz_ogre_vendor</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

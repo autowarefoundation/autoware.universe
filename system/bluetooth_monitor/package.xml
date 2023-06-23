@@ -12,7 +12,6 @@
 
   <build_depend>libboost-serialization-dev</build_depend>
 
-  <depend>diagnostic_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>fmt</depend>
   <depend>libboost-dev</depend>

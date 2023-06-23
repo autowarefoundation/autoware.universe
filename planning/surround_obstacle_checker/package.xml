@@ -15,7 +15,6 @@
 
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
-  <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_tf2</depend>
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
@@ -25,7 +24,6 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>

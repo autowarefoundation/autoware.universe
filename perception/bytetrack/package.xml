@@ -15,7 +15,6 @@
   <buildtool_export_depend>tensorrt_cmake_module</buildtool_export_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
-  <depend>cuda_utils</depend>
   <depend>cv_bridge</depend>
   <depend>eigen</depend>
   <depend>image_transport</depend>
@@ -23,8 +22,6 @@
   <depend>libopencv-dev</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>sensor_msgs</depend>
-  <depend>tensorrt_common</depend>
   <depend>tier4_perception_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
