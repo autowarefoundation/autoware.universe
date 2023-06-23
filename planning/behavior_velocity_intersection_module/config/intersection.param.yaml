@@ -11,7 +11,6 @@
         stop_overshoot_margin: 0.5 # [m] overshoot margin for stuck, collision detection
         use_intersection_area: false
         path_interpolation_ds: 0.2 # [m]
-        enable_rtc: true # if true, the scene modules should be approved by (request to cooperate)rtc function. if false, the module can be run without approval from rtc.
 
 
       stuck_vehicle:
@@ -45,7 +44,10 @@
         max_vehicle_velocity_for_rss: 16.66 # [m/s] == 60kmph
         denoise_kernel: 1.0 # [m]
         pub_debug_grid: false
-        enable_rtc: true # if true, the scene modules should be approved by (request to cooperate)rtc function. if false, the module can be run without approval from rtc.
+
+      enable_rtc:
+        interaction: true # if true, the scene modules should be approved by (request to cooperate)rtc function. if false, the module can be run without approval from rtc.
+        intersection_to_occlusion: true
 
     merge_from_private:
       stop_duration_sec: 1.0
