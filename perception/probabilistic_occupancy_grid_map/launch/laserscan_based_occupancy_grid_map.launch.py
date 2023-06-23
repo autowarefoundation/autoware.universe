@@ -108,6 +108,7 @@ def launch_setup(context, *args, **kwargs):
                         "input_obstacle_and_raw_pointcloud"
                     ),
                 },
+                {"updater_type": LaunchConfiguration("updater_type")},
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
         ),
@@ -166,7 +167,6 @@ def generate_launch_description():
             ),
             add_launch_arg(
                 "updater_type",
-                "binary_bayes_filter",
             ),
             add_launch_arg(
                 "updater_param_file",
