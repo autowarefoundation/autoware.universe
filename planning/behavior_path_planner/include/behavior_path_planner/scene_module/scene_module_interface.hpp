@@ -185,7 +185,9 @@ public:
    */
   virtual BehaviorModuleOutput run()
   {
+#ifdef USE_OLD_ARCHITECTURE
     current_state_ = ModuleStatus::RUNNING;
+#endif
 
     updateData();
 
@@ -505,6 +507,7 @@ protected:
   void setStopReason(const std::string & stop_reason, const PathWithLaneId & path)
   {
     stop_reason_.reason = stop_reason;
+    stop_reason_.stop_factors.clear();
 
     if (!stop_pose_) {
       stop_reason_.reason = "";

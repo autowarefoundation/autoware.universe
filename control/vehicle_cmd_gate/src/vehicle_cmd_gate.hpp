@@ -15,7 +15,8 @@
 #ifndef VEHICLE_CMD_GATE_HPP_
 #define VEHICLE_CMD_GATE_HPP_
 
-#include "pause_interface.hpp"
+#include "adapi_pause_interface.hpp"
+#include "moderate_stop_interface.hpp"
 #include "vehicle_cmd_filter.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -160,6 +161,7 @@ private:
   double external_emergency_stop_heartbeat_timeout_;
   double stop_hold_acceleration_;
   double emergency_acceleration_;
+  double moderate_stop_service_acceleration_;
 
   // Service
   rclcpp::Service<EngageSrv>::SharedPtr srv_engage_;
@@ -215,7 +217,8 @@ private:
   VehicleCmdFilter filter_on_transition_;
 
   // Pause interface for API
-  std::unique_ptr<PauseInterface> pause_;
+  std::unique_ptr<AdapiPauseInterface> adapi_pause_;
+  std::unique_ptr<ModerateStopInterface> moderate_stop_interface_;
 };
 
 }  // namespace vehicle_cmd_gate

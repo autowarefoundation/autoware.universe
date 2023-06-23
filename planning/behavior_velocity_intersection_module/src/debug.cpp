@@ -131,44 +131,60 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
 
   const auto now = this->clock_->now();
 
-  appendMarkerArray(
-    createLaneletPolygonsMarkerArray(
-      debug_data_.detection_area, "detection_area", lane_id_, 0.0, 1.0, 0.0),
-    &debug_marker_array);
+  if (debug_data_.attention_area) {
+    appendMarkerArray(
+      createLaneletPolygonsMarkerArray(
+        debug_data_.attention_area.value(), "attention_area", lane_id_, 0.0, 1.0, 0.0),
+      &debug_marker_array);
+  }
 
-  appendMarkerArray(
-    createLaneletPolygonsMarkerArray(
-      debug_data_.adjacent_area, "adjacent_area", lane_id_, 0.913, 0.639, 0.149),
-    &debug_marker_array);
+  if (debug_data_.adjacent_area) {
+    appendMarkerArray(
+      createLaneletPolygonsMarkerArray(
+        debug_data_.adjacent_area.value(), "adjacent_area", lane_id_, 0.913, 0.639, 0.149),
+      &debug_marker_array);
+  }
 
-  appendMarkerArray(
-    debug::createPolygonMarkerArray(
-      debug_data_.intersection_area, "intersection_area", lane_id_, now, 0.3, 0.0, 0.0, 0.0, 1.0,
-      0.0),
-    &debug_marker_array);
+  if (debug_data_.intersection_area) {
+    appendMarkerArray(
+      debug::createPolygonMarkerArray(
+        debug_data_.intersection_area.value(), "intersection_area", lane_id_, now, 0.3, 0.0, 0.0,
+        0.0, 1.0, 0.0),
+      &debug_marker_array);
+  }
 
-  appendMarkerArray(
-    debug::createPolygonMarkerArray(
-      debug_data_.stuck_vehicle_detect_area, "stuck_vehicle_detect_area", lane_id_, now, 0.3, 0.0,
-      0.0, 0.0, 0.5, 0.5),
-    &debug_marker_array, now);
+  if (debug_data_.stuck_vehicle_detect_area) {
+    appendMarkerArray(
+      debug::createPolygonMarkerArray(
+        debug_data_.stuck_vehicle_detect_area.value(), "stuck_vehicle_detect_area", lane_id_, now,
+        0.3, 0.0, 0.0, 0.0, 0.5, 0.5),
+      &debug_marker_array, now);
+  }
 
-  appendMarkerArray(
-    createLaneletPolygonsMarkerArray({debug_data_.ego_lane}, "ego_lane", lane_id_, 1, 0.647, 0.0),
-    &debug_marker_array, now);
+  if (debug_data_.ego_lane) {
+    appendMarkerArray(
+      createLaneletPolygonsMarkerArray(
+        {debug_data_.ego_lane.value()}, "ego_lane", lane_id_, 1, 0.647, 0.0),
+      &debug_marker_array, now);
+  }
 
-  appendMarkerArray(
-    debug::createPolygonMarkerArray(
-      debug_data_.candidate_collision_ego_lane_polygon, "candidate_collision_ego_lane_polygon",
-      module_id_, now, 0.3, 0.0, 0.0, 0.5, 0.0, 0.0),
-    &debug_marker_array, now);
+  if (debug_data_.candidate_collision_ego_lane_polygon) {
+    appendMarkerArray(
+      debug::createPolygonMarkerArray(
+        debug_data_.candidate_collision_ego_lane_polygon.value(),
+        "candidate_collision_ego_lane_polygon", module_id_, now, 0.3, 0.0, 0.0, 0.5, 0.0, 0.0),
+      &debug_marker_array, now);
+  }
 
-  if (!occlusion_safety_) {
+  if (debug_data_.nearest_occlusion_point) {
     debug_marker_array.markers.push_back(createPointMarkerArray(
-      debug_data_.nearest_occlusion_point, "nearest_occlusion", module_id_, 0.5, 0.5, 0.0));
+      debug_data_.nearest_occlusion_point.value(), "nearest_occlusion", module_id_, 0.5, 0.5, 0.0));
+  }
+
+  if (debug_data_.nearest_occlusion_projection_point) {
     debug_marker_array.markers.push_back(createPointMarkerArray(
-      debug_data_.nearest_occlusion_projection_point, "nearest_occlusion_projection", module_id_,
-      0.5, 0.5, 0.0));
+      debug_data_.nearest_occlusion_projection_point.value(), "nearest_occlusion_projection",
+      module_id_, 0.5, 0.5, 0.0));
   }
 
   size_t i{0};
@@ -190,56 +206,50 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       debug_data_.stuck_targets, "stuck_targets", module_id_, now, 0.99, 0.99, 0.2),
     &debug_marker_array, now);
 
+  /*
   appendMarkerArray(
     createPoseMarkerArray(
       debug_data_.predicted_obj_pose, "predicted_obj_pose", module_id_, 0.7, 0.85, 0.9),
     &debug_marker_array, now);
+  */
 
-  appendMarkerArray(
-    createPoseMarkerArray(
-      debug_data_.pass_judge_wall_pose, "pass_judge_wall_pose", module_id_, 0.7, 0.85, 0.9),
-    &debug_marker_array, now);
+  if (debug_data_.pass_judge_wall_pose) {
+    appendMarkerArray(
+      createPoseMarkerArray(
+        debug_data_.pass_judge_wall_pose.value(), "pass_judge_wall_pose", module_id_, 0.7, 0.85,
+        0.9),
+      &debug_marker_array, now);
+  }
 
   return debug_marker_array;
 }
 
-visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarkerArray()
+motion_utils::VirtualWalls IntersectionModule::createVirtualWalls()
 {
-  visualization_msgs::msg::MarkerArray wall_marker;
-
-  const auto now = this->clock_->now();
-
   // TODO(Mamoru Sobue): collision stop pose depends on before/after occlusion clearance
-  if (!activated_) {
-    appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.collision_stop_wall_pose}, "intersection", now, 0.0,
-        "intersection" + std::to_string(module_id_) + "_"),
-      &wall_marker, now);
-  }
-  if (!activated_ && occlusion_first_stop_required_) {
-    appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.occlusion_first_stop_wall_pose}, "intersection", now, 0.0,
-        "intersection_occlusion_first_stop" + std::to_string(module_id_) + "_"),
-      &wall_marker, now);
-  }
-  if (!occlusion_activated_) {
-    appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        {debug_data_.occlusion_stop_wall_pose}, "intersection_occlusion", now, 0.0,
-        "intersection_occlusion" + std::to_string(module_id_) + "_"),
-      &wall_marker, now);
-  }
+  motion_utils::VirtualWalls virtual_walls;
+  motion_utils::VirtualWall wall;
+  wall.style = motion_utils::VirtualWallType::stop;
 
-  auto id = planning_utils::bitShift(module_id_);
-  for (auto & marker : wall_marker.markers) {
-    if (marker.action == visualization_msgs::msg::Marker::ADD) {
-      marker.id = id;
-      id++;
-    }
+  if (debug_data_.collision_stop_wall_pose) {
+    wall.text = "intersection";
+    wall.ns = "intersection" + std::to_string(module_id_) + "_";
+    wall.pose = debug_data_.collision_stop_wall_pose.value();
+    virtual_walls.push_back(wall);
   }
-  return wall_marker;
+  if (debug_data_.occlusion_first_stop_wall_pose) {
+    wall.text = "intersection";
+    wall.ns = "intersection_occlusion_first_stop" + std::to_string(module_id_) + "_";
+    wall.pose = debug_data_.occlusion_first_stop_wall_pose.value();
+    virtual_walls.push_back(wall);
+  }
+  if (debug_data_.occlusion_stop_wall_pose) {
+    wall.text = "intersection_occlusion";
+    wall.ns = "intersection_occlusion" + std::to_string(module_id_) + "_";
+    wall.pose = debug_data_.occlusion_stop_wall_pose.value();
+    virtual_walls.push_back(wall);
+  }
+  return virtual_walls;
 }
 
 visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMarkerArray()
@@ -259,20 +269,17 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMark
   return debug_marker_array;
 }
 
-visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createVirtualWallMarkerArray()
+motion_utils::VirtualWalls MergeFromPrivateRoadModule::createVirtualWalls()
 {
-  visualization_msgs::msg::MarkerArray wall_marker;
-
+  motion_utils::VirtualWalls virtual_walls;
   const auto state = state_machine_.getState();
-  const auto now = this->clock_->now();
   if (state == StateMachine::State::STOP) {
-    const std::vector<Pose> & pose = {debug_data_.virtual_wall_pose};
-    appendMarkerArray(
-      virtual_wall_marker_creator_->createStopVirtualWallMarker(
-        pose, "merge_from_private_road", now),
-      &wall_marker, now);
+    motion_utils::VirtualWall wall;
+    wall.style = motion_utils::VirtualWallType::stop;
+    wall.pose = debug_data_.virtual_wall_pose;
+    wall.text = "merge_from_private_road";
+    virtual_walls.push_back(wall);
   }
-
-  return wall_marker;
+  return virtual_walls;
 }
 }  // namespace behavior_velocity_planner

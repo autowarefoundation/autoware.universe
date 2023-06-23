@@ -15,6 +15,10 @@
       longitudinal_acceleration_sampling_num: 5
       lateral_acceleration_sampling_num: 3
 
+      # turn signal
+      min_length_for_turn_signal_activation: 10.0 # [m]
+      length_ratio_for_turn_signal_deactivation: 0.8 # ratio (desired end position)
+
       # longitudinal acceleration
       min_longitudinal_acc: -1.0
       max_longitudinal_acc: 1.0
@@ -49,6 +53,8 @@
       abort_delta_time: 1.0                      # [s]
       aborting_time: 5.0                         # [s]
       abort_max_lateral_jerk: 1000.0             # [m/s3]
+
+      finish_judge_lateral_threshold: 0.2        # [m]
 
       # debug
       publish_debug_marker: false

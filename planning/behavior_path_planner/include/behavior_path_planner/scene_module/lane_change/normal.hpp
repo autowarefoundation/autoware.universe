@@ -55,7 +55,11 @@ public:
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) override;
 
+  void insertStopPoint(PathWithLaneId & path) override;
+
   PathWithLaneId getReferencePath() const override;
+
+  std::optional<PathWithLaneId> extendPath() override;
 
   void resetParameters() override;
 
@@ -100,7 +104,7 @@ protected:
 
   std::vector<DrivableLanes> getDrivableLanes() const override;
 
-  void calcTurnSignalInfo() override;
+  TurnSignalInfo calcTurnSignalInfo() override;
 
   bool isValidPath(const PathWithLaneId & path) const override;
 };

@@ -75,6 +75,8 @@ public:
 
   virtual PathWithLaneId getReferencePath() const = 0;
 
+  virtual std::optional<PathWithLaneId> extendPath() = 0;
+
   virtual void resetParameters() = 0;
 
   virtual TurnSignalInfo updateOutputTurnSignal() = 0;
@@ -123,6 +125,8 @@ public:
 
   virtual void updateSpecialData() {}
 
+  virtual void insertStopPoint([[maybe_unused]] PathWithLaneId & path) {}
+
   const LaneChangeStatus & getLaneChangeStatus() const { return status_; }
 
   const LaneChangePaths & getDebugValidPath() const { return debug_valid_path_; }
@@ -136,6 +140,8 @@ public:
   const Twist & getEgoTwist() const { return planner_data_->self_odometry->twist.twist; }
 
   const BehaviorPathPlannerParameters & getCommonParam() const { return planner_data_->parameters; }
+
+  LaneChangeParameters getLaneChangeParam() const { return *lane_change_parameters_; }
 
   bool isCancelEnabled() const { return lane_change_parameters_->enable_cancel_lane_change; }
 
@@ -165,6 +171,10 @@ public:
 
   std::string getModuleTypeStr() const { return std::string{magic_enum::enum_name(type_)}; }
 
+  LaneChangeModuleType getModuleType() const { return type_; }
+
+  TurnSignalDecider getTurnSignalDecider() { return planner_data_->turn_signal_decider; }
+
   Direction getDirection() const
   {
     if (direction_ == Direction::NONE && !status_.lane_change_path.path.points.empty()) {
@@ -191,7 +201,7 @@ protected:
 
   virtual std::vector<DrivableLanes> getDrivableLanes() const = 0;
 
-  virtual void calcTurnSignalInfo() = 0;
+  virtual TurnSignalInfo calcTurnSignalInfo() = 0;
 
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 

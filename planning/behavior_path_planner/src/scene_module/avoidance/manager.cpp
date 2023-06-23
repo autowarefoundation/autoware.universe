@@ -48,6 +48,9 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
                                      const auto & semantic, const std::string & ns) {
     auto & config = p->object_parameters.at(semantic);
     updateParam<bool>(parameters, ns + "enable", config.enable);
+    updateParam<double>(parameters, ns + "moving_speed_threshold", config.moving_speed_threshold);
+    updateParam<double>(parameters, ns + "moving_time_threshold", config.moving_time_threshold);
+    updateParam<double>(parameters, ns + "max_expand_ratio", config.max_expand_ratio);
     updateParam<double>(parameters, ns + "envelope_buffer_margin", config.envelope_buffer_margin);
     updateParam<double>(parameters, ns + "safety_buffer_lateral", config.safety_buffer_lateral);
     updateParam<double>(
@@ -64,12 +67,21 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
     update_object_param(ObjectClassification::PEDESTRIAN, ns + "pedestrian.");
     update_object_param(ObjectClassification::BICYCLE, ns + "bicycle.");
     update_object_param(ObjectClassification::UNKNOWN, ns + "unknown.");
+
+    updateParam<double>(
+      parameters, ns + "lower_distance_for_polygon_expansion",
+      p->lower_distance_for_polygon_expansion);
+    updateParam<double>(
+      parameters, ns + "upper_distance_for_polygon_expansion",
+      p->upper_distance_for_polygon_expansion);
   }
 
   {
     const std::string ns = "avoidance.avoidance.lateral.";
     updateParam<double>(
       parameters, ns + "lateral_execution_threshold", p->lateral_execution_threshold);
+    updateParam<double>(
+      parameters, ns + "lateral_small_shift_threshold", p->lateral_small_shift_threshold);
     updateParam<double>(parameters, ns + "lateral_collision_margin", p->lateral_collision_margin);
     updateParam<double>(
       parameters, ns + "road_shoulder_safety_margin", p->road_shoulder_safety_margin);

@@ -45,13 +45,14 @@ public:
     double stop_duration_sec;
   };
   WalkwayModule(
-    const int64_t module_id, lanelet::ConstLanelet walkway, const PlannerParam & planner_param,
+    const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
+    const PlannerParam & planner_param, const bool use_regulatory_element,
     const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
+  motion_utils::VirtualWalls createVirtualWalls() override;
 
 private:
   int64_t module_id_;
@@ -62,6 +63,8 @@ private:
   enum class State { APPROACH, STOP, SURPASSED };
 
   lanelet::ConstLanelet walkway_;
+
+  lanelet::ConstLineStrings3d stop_lines_;
 
   std::vector<geometry_msgs::msg::Point> path_intersects_;
 
@@ -74,8 +77,8 @@ private:
   // Debug
   DebugData debug_data_;
 
-  std::shared_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_walkway_ =
-    std::make_shared<motion_utils::VirtualWallMarkerCreator>();
+  // flag to use regulatory element
+  bool use_regulatory_element_;
 };
 }  // namespace behavior_velocity_planner
 

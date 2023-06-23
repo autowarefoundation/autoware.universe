@@ -433,10 +433,10 @@ PathSafetyStatus isLaneChangePathSafe(
       utils::getPredictedPathFromObj(obj, lane_change_parameter.use_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
       if (!utils::safety_check::isSafeInLaneletCollisionCheck(
-            path, interpolated_ego, current_twist, check_durations,
-            lane_change_path.duration.prepare, obj, obj_path, common_parameter,
-            lane_change_parameter.prepare_segment_ignore_object_velocity_thresh, front_decel,
-            rear_decel, current_debug_data.second)) {
+            path, interpolated_ego, current_twist.linear.x, check_durations, obj, obj_path,
+            common_parameter, front_decel, rear_decel, current_debug_data.second,
+            lane_change_path.duration.prepare,
+            lane_change_parameter.prepare_segment_ignore_object_velocity_thresh)) {
         path_safety_status.is_safe = false;
         appendDebugInfo(current_debug_data, false);
         if (isObjectIndexIncluded(i, dynamic_objects_indices.target_lane)) {
@@ -588,29 +588,6 @@ ShiftLine getLaneChangingShiftLine(
       .get_child("getLaneChangingShiftLine"),
     "shift_line distance: %f", shift_length);
   return shift_line;
-}
-
-bool isEgoWithinOriginalLane(
-  const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
-  const BehaviorPathPlannerParameters & common_param)
-{
-  const auto lane_length = lanelet::utils::getLaneletLength2d(current_lanes);
-  const auto lane_poly = lanelet::utils::getPolygonFromArcLength(current_lanes, 0, lane_length);
-  const auto base_link2front = common_param.base_link2front;
-  const auto base_link2rear = common_param.base_link2rear;
-  const auto vehicle_width = common_param.vehicle_width;
-  const auto vehicle_poly =
-    tier4_autoware_utils::toFootprint(current_pose, base_link2front, base_link2rear, vehicle_width);
-  return boost::geometry::within(vehicle_poly, lanelet::utils::to2D(lane_poly).basicPolygon());
-}
-
-void get_turn_signal_info(
-  const LaneChangePath & lane_change_path, TurnSignalInfo * turn_signal_info)
-{
-  turn_signal_info->desired_start_point = lane_change_path.turn_signal_info.desired_start_point;
-  turn_signal_info->required_start_point = lane_change_path.turn_signal_info.required_start_point;
-  turn_signal_info->required_end_point = lane_change_path.turn_signal_info.required_end_point;
-  turn_signal_info->desired_end_point = lane_change_path.turn_signal_info.desired_end_point;
 }
 
 std::vector<DrivableLanes> generateDrivableLanes(
