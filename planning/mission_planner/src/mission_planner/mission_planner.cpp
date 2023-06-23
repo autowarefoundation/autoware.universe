@@ -368,23 +368,21 @@ void MissionPlanner::on_set_mrm_route(
   const SetMrmRoute::Service::Response::SharedPtr res)
 {
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
-  change_state(RouteState::Message::CHANGING);
 
   if (!planner_->ready()) {
-    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
   if (!odometry_) {
-    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
   if (!normal_route_) {
-    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
   }
+
+  change_state(RouteState::Message::CHANGING);
 
   // Plan route.
   const auto new_route = create_route(req);
@@ -416,7 +414,6 @@ void MissionPlanner::on_clear_mrm_route(
   const ClearMrmRoute::Service::Response::SharedPtr res)
 {
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
-  change_state(RouteState::Message::CHANGING);
 
   if (!planner_->ready()) {
     change_state(RouteState::Message::SET);
@@ -424,20 +421,18 @@ void MissionPlanner::on_clear_mrm_route(
       ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
   if (!odometry_) {
-    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
   if (!normal_route_) {
-    change_state(RouteState::Message::SET);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
   }
   if (!mrm_route_) {
-    change_state(RouteState::Message::SET);
-    throw component_interface_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "Mrm route is not set.");
+    throw component_interface_utils::NoEffectWarning("MRM route is not set");
   }
+
+  change_state(RouteState::Message::CHANGING);
 
   // check route safety
   if (checkRerouteSafety(*mrm_route_, *normal_route_)) {
@@ -538,6 +533,11 @@ void MissionPlanner::on_change_route(
   if (!normal_route_) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
+  }
+  if (mrm_route_) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
+    return;
   }
 
   // set to changing state
