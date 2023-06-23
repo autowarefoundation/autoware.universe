@@ -377,15 +377,27 @@ void MissionPlanner::on_set_mrm_route(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
-  if (!normal_route_) {
-    throw component_interface_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
-  }
 
+  const auto prev_state = state_.state;
   change_state(RouteState::Message::CHANGING);
 
   // Plan route.
   const auto new_route = create_route(req);
+
+  if (new_route.segments.empty()) {
+    change_state(prev_state);
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_FAILED, "Failed to plan a new route.");
+    return;
+  }
+
+  if (!normal_route_) {
+    // if it does not set normal route, just use the new planned route
+    change_mrm_route(new_route);
+    change_state(RouteState::Message::SET);
+    res->status.success = true;
+    return;
+  }
 
   // check route safety
   if (checkRerouteSafety(*normal_route_, new_route)) {
@@ -424,15 +436,18 @@ void MissionPlanner::on_clear_mrm_route(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
-  if (!normal_route_) {
-    throw component_interface_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "Normal route is not set.");
-  }
   if (!mrm_route_) {
     throw component_interface_utils::NoEffectWarning("MRM route is not set");
   }
 
   change_state(RouteState::Message::CHANGING);
+
+  if (!normal_route_) {
+    clear_mrm_route();
+    change_state(RouteState::Message::UNSET);
+    res->success = true;
+    return;
+  }
 
   // check route safety
   if (checkRerouteSafety(*mrm_route_, *normal_route_)) {
