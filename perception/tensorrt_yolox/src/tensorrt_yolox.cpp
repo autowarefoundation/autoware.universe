@@ -104,9 +104,9 @@ namespace tensorrt_yolox
 TrtYoloX::TrtYoloX(
   const std::string & model_path, const std::string & precision, const int num_class,
   const float score_threshold, const float nms_threshold, tensorrt_common::BuildConfig build_config,
-  const bool use_gpu_preprocess, std::string calibration_image_list_file,
-  const double norm_factor, [[maybe_unused]] const std::string & cache_dir,
-  const tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size)
+  const bool use_gpu_preprocess, std::string calibration_image_list_file, const double norm_factor,
+  [[maybe_unused]] const std::string & cache_dir, const tensorrt_common::BatchConfig & batch_config,
+  const size_t max_workspace_size)
 {
   src_width_ = -1;
   src_height_ = -1;
@@ -115,8 +115,8 @@ TrtYoloX::TrtYoloX(
     if (build_config.clip_value <= 0.0) {
       if (calibration_image_list_file.empty()) {
         throw std::runtime_error(
-            "calibration_image_list_file should be passed to generate int8 engine "
-            "or specify values larger than zero to clip_value.");
+          "calibration_image_list_file should be passed to generate int8 engine "
+          "or specify values larger than zero to clip_value.");
       }
     } else {
       // if clip value is larger than zero, calibration file is not needed
