@@ -45,7 +45,7 @@ std::vector<T> convert_vector(const L & input)
 NewList convert(const OldList & input)
 {
   NewList output;
-  output.stamp = input.header.stamp;
+  output.header.stamp = input.header.stamp;
   output.lights = convert_vector<NewData>(input.signals);
   return output;
 }
