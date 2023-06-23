@@ -1387,7 +1387,7 @@ void BehaviorPathPlannerNode::publish_steering_factor(
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
 }
 
-void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDebugData& debug_data)
+void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDebugData & debug_data)
 {
   MarkerArray marker_array;
 
@@ -1404,20 +1404,20 @@ void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDeb
     const auto & turn_signal_info = debug_data.intersection_turn_signal_info;
 
     auto desired_start_marker = tier4_autoware_utils::createDefaultMarker(
-    "map", current_time, "intersection_turn_signal_desired_start", 0L, Marker::SPHERE,
-    scale, desired_section_color);
+      "map", current_time, "intersection_turn_signal_desired_start", 0L, Marker::SPHERE, scale,
+      desired_section_color);
     auto desired_end_marker = tier4_autoware_utils::createDefaultMarker(
-    "map", current_time, "intersection_turn_signal_desired_end", 0L, Marker::SPHERE,
-    scale, desired_section_color);
+      "map", current_time, "intersection_turn_signal_desired_end", 0L, Marker::SPHERE, scale,
+      desired_section_color);
     desired_start_marker.pose = turn_signal_info.desired_start_point;
     desired_end_marker.pose = turn_signal_info.desired_end_point;
 
     auto required_start_marker = tier4_autoware_utils::createDefaultMarker(
-    "map", current_time, "intersection_turn_signal_required_start", 0L, Marker::SPHERE,
-    scale, required_section_color);
+      "map", current_time, "intersection_turn_signal_required_start", 0L, Marker::SPHERE, scale,
+      required_section_color);
     auto required_end_marker = tier4_autoware_utils::createDefaultMarker(
-    "map", current_time, "intersection_turn_signal_required_end", 0L, Marker::SPHERE,
-    scale, required_section_color);
+      "map", current_time, "intersection_turn_signal_required_end", 0L, Marker::SPHERE, scale,
+      required_section_color);
     required_start_marker.pose = turn_signal_info.required_start_point;
     required_end_marker.pose = turn_signal_info.required_end_point;
 
@@ -1432,20 +1432,20 @@ void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDeb
     const auto & turn_signal_info = debug_data.behavior_turn_signal_info;
 
     auto desired_start_marker = tier4_autoware_utils::createDefaultMarker(
-    "map", current_time, "behavior_turn_signal_desired_start", 0L, Marker::CUBE,
-    scale, desired_section_color);
+      "map", current_time, "behavior_turn_signal_desired_start", 0L, Marker::CUBE, scale,
+      desired_section_color);
     auto desired_end_marker = tier4_autoware_utils::createDefaultMarker(
-    "map", current_time, "behavior_turn_signal_desired_end", 0L, Marker::CUBE,
-    scale, desired_section_color);
+      "map", current_time, "behavior_turn_signal_desired_end", 0L, Marker::CUBE, scale,
+      desired_section_color);
     desired_start_marker.pose = turn_signal_info.desired_start_point;
     desired_end_marker.pose = turn_signal_info.desired_end_point;
 
     auto required_start_marker = tier4_autoware_utils::createDefaultMarker(
-    "map", current_time, "behavior_turn_signal_required_start", 0L, Marker::CUBE,
-    scale, required_section_color);
+      "map", current_time, "behavior_turn_signal_required_start", 0L, Marker::CUBE, scale,
+      required_section_color);
     auto required_end_marker = tier4_autoware_utils::createDefaultMarker(
-    "map", current_time, "behavior_turn_signal_required_end", 0L, Marker::CUBE,
-    scale, required_section_color);
+      "map", current_time, "behavior_turn_signal_required_end", 0L, Marker::CUBE, scale,
+      required_section_color);
     required_start_marker.pose = turn_signal_info.required_start_point;
     required_end_marker.pose = turn_signal_info.required_end_point;
 

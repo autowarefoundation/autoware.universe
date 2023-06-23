@@ -230,7 +230,7 @@ private:
   /**
    * @brief publish turn signal debug info
    */
-  void publish_turn_signal_debug_data(const TurnSignalDebugData& debug_data);
+  void publish_turn_signal_debug_data(const TurnSignalDebugData & debug_data);
 
   /**
    * @brief publish left and right bound

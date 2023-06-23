@@ -78,7 +78,7 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
     extended_path, current_pose, current_vel, ego_seg_idx, *route_handler, nearest_dist_threshold,
     nearest_yaw_threshold);
 
-  if(intersection_turn_signal_info) {
+  if (intersection_turn_signal_info) {
     debug_data.intersection_turn_signal_info = *intersection_turn_signal_info;
   }
 
