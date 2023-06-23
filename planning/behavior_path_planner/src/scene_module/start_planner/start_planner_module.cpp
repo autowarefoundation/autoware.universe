@@ -271,9 +271,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
 
   if (status_.back_finished) {
     setIsSimultaneousExecutableAsApprovedModule(
-      initial_is_simultaneously_executable_as_approved_module_);
+      initial_value_simultaneously_executable_as_approved_module_);
     setIsSimultaneousExecutableAsCandidateModule(
-      initial_is_simultaneously_executable_as_candidate_module_);
+      initial_value_simultaneously_executable_as_candidate_module_);
     const double start_distance = motion_utils::calcSignedArcLength(
       path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
@@ -401,9 +401,9 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 
   if (status_.back_finished) {
     setIsSimultaneousExecutableAsApprovedModule(
-      initial_is_simultaneously_executable_as_approved_module_);
+      initial_value_simultaneously_executable_as_approved_module_);
     setIsSimultaneousExecutableAsCandidateModule(
-      initial_is_simultaneously_executable_as_candidate_module_);
+      initial_value_simultaneously_executable_as_candidate_module_);
     const double start_distance = motion_utils::calcSignedArcLength(
       stop_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);

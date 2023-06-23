@@ -106,15 +106,15 @@ public:
 
   // set is_simulataneously_executable_ as false when backward driving.
   // keep initial value to return it after finishing backward driving.
-  bool initial_is_simultaneously_executable_as_approved_module_;
-  bool initial_is_simultaneously_executable_as_candidate_module_;
+  bool initial_value_simultaneously_executable_as_approved_module_;
+  bool initial_value_simultaneously_executable_as_candidate_module_;
   void setInitialIsSimultaneousExecutableAsApprovedModule(const bool is_simultaneously_executable)
   {
-    initial_is_simultaneously_executable_as_approved_module_ = is_simultaneously_executable;
+    initial_value_simultaneously_executable_as_approved_module_ = is_simultaneously_executable;
   };
   void setInitialIsSimultaneousExecutableAsCandidateModule(const bool is_simultaneously_executable)
   {
-    initial_is_simultaneously_executable_as_candidate_module_ = is_simultaneously_executable;
+    initial_value_simultaneously_executable_as_candidate_module_ = is_simultaneously_executable;
   };
 
 private:
