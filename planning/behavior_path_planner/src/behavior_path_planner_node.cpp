@@ -743,6 +743,8 @@ DynamicAvoidanceParameters BehaviorPathPlannerNode::getDynamicAvoidanceParam()
     p.avoid_motorcycle = declare_parameter<bool>(ns + "motorcycle");
     p.avoid_pedestrian = declare_parameter<bool>(ns + "pedestrian");
     p.min_obstacle_vel = declare_parameter<double>(ns + "min_obstacle_vel");
+    p.successive_num_to_entry_dynamic_avoidance_condition =
+      declare_parameter<int>(ns + "successive_num_to_entry_dynamic_avoidance_condition");
   }
 
   {  // drivable_area_generation
@@ -1295,6 +1297,7 @@ void BehaviorPathPlannerNode::run()
   publishPathCandidate(bt_manager_->getSceneModules(), planner_data_);
   publishSceneModuleDebugMsg(bt_manager_->getAllSceneModuleDebugMsgData());
 #else
+  publishSceneModuleDebugMsg(planner_manager_->getDebugMsg());
   publishPathCandidate(planner_manager_->getSceneModuleManagers(), planner_data_);
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
   stop_reason_publisher_->publish(planner_manager_->getStopReasons());
@@ -1416,7 +1419,6 @@ void BehaviorPathPlannerNode::publish_bounds(const PathWithLaneId & path)
   bound_publisher_->publish(msg);
 }
 
-#ifdef USE_OLD_ARCHITECTURE
 void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
   const std::shared_ptr<SceneModuleVisitor> & debug_messages_data_ptr)
 {
@@ -1430,7 +1432,6 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
     debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
   }
 }
-#endif
 
 #ifdef USE_OLD_ARCHITECTURE
 void BehaviorPathPlannerNode::publishPathCandidate(
