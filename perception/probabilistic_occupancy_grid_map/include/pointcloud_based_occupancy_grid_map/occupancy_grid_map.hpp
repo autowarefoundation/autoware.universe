@@ -52,6 +52,7 @@
 #ifndef POINTCLOUD_BASED_OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_HPP_
 #define POINTCLOUD_BASED_OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_HPP_
 
+#include <grid_map_core/GridMap.hpp>
 #include <nav2_costmap_2d/costmap_2d.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -70,9 +71,14 @@ public:
   OccupancyGridMap(
     const unsigned int cells_size_x, const unsigned int cells_size_y, const float resolution);
 
-  void updateWithPointCloud(
+  void updateWithPointCloudSimple(
     const PointCloud2 & raw_pointcloud, const PointCloud2 & obstacle_pointcloud,
     const Pose & robot_pose, const Pose & scan_origin);
+
+  void updateWithPointCloud3D(
+    const PointCloud2 & raw_pointcloud, const PointCloud2 & obstacle_pointcloud,
+    const Pose & robot_pose, const Pose & scan_origin, const double projection_dz_threshold,
+    const double obstacle_separation_threshold, grid_map::GridMap * debug);
 
   void updateOrigin(double new_origin_x, double new_origin_y) override;
 

@@ -20,11 +20,13 @@
 #include "updater/occupancy_grid_map_updater_interface.hpp"
 
 #include <builtin_interfaces/msg/time.hpp>
+#include <grid_map_core/GridMap.hpp>
 #include <laser_geometry/laser_geometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
+#include <grid_map_msgs/msg/grid_map.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
@@ -69,6 +71,7 @@ private:
   message_filters::Subscriber<PointCloud2> raw_pointcloud_sub_;
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{};
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_ptr_{};
+  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr debug_grid_map_publisher_ptr_;
 
   std::shared_ptr<Buffer> tf2_{std::make_shared<Buffer>(get_clock())};
   std::shared_ptr<TransformListener> tf2_listener_{std::make_shared<TransformListener>(*tf2_)};
@@ -89,6 +92,10 @@ private:
   double max_height_;
   bool enable_single_frame_mode_;
   bool filter_obstacle_pointcloud_by_raw_pointcloud_;
+  bool use_projection_;
+  double projection_dz_threshold_;
+  double obstacle_separation_threshold_;
+  bool pub_debug_grid_;
 };
 
 }  // namespace occupancy_grid_map

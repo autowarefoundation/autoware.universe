@@ -22,6 +22,7 @@ from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
+from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode
 import yaml
 
@@ -37,6 +38,13 @@ def launch_setup(context, *args, **kwargs):
     updater_param_file = LaunchConfiguration("updater_param_file").perform(context)
     with open(updater_param_file, "r") as f:
         occupancy_grid_map_updater_params = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    grid_map_param_file = (
+        get_package_share_directory("probabilistic_occupancy_grid_map")
+        + "/config/grid_map_param.yaml"
+    )
+    with open(grid_map_param_file, "r") as f:
+        grid_map_params = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     composable_nodes = [
         ComposableNode(
@@ -73,13 +81,25 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
+    grid_map_visualization_node = Node(
+        package="grid_map_visualization",
+        executable="grid_map_visualization",
+        name="grid_map_visualization",
+        output="screen",
+        parameters=[grid_map_params],
+    )
+
     load_composable_nodes = LoadComposableNodes(
         composable_node_descriptions=composable_nodes,
         target_container=LaunchConfiguration("container_name"),
         condition=IfCondition(LaunchConfiguration("use_pointcloud_container")),
     )
 
-    return [occupancy_grid_map_container, load_composable_nodes]
+    return [
+        occupancy_grid_map_container,
+        load_composable_nodes,
+        grid_map_visualization_node,
+    ]
 
 
 def generate_launch_description():

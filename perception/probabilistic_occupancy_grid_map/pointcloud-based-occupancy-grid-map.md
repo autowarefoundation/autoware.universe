@@ -104,3 +104,11 @@ In several places we have modified the external code written in BSD3 license.
 
 - The update probability of the binary Bayesian filter is currently hard-coded and requires a code change to be modified.
 - Since there is no special support for moving objects, the probability of existence is not increased for fast objects.
+
+## How to debug
+
+set `pub_debug_grid` to `true` and
+
+```shell
+ros2 launch autoware_launch logging_simulator.launch.xml vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit map_path:=<sample-map-rosbag> rviz_config:=$(ros2 pkg prefix --share probabilistic_occupancy_grid_map)/config/debug.rviz planning:=false control:=false api:=false system:=false
+```
