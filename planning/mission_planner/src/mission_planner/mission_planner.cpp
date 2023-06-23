@@ -304,7 +304,6 @@ void MissionPlanner::on_set_route(
   if (mrm_route_) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
-    return;
   }
 
   // Convert request to a new route.
@@ -344,7 +343,6 @@ void MissionPlanner::on_set_route_points(
   if (mrm_route_) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
-    return;
   }
 
   // Plan route.
@@ -388,7 +386,6 @@ void MissionPlanner::on_set_mrm_route(
     change_state(prev_state);
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_FAILED, "Failed to plan a new route.");
-    return;
   }
 
   if (!normal_route_) {
@@ -400,24 +397,32 @@ void MissionPlanner::on_set_mrm_route(
   }
 
   // check route safety
-  if (checkRerouteSafety(*normal_route_, new_route)) {
-    // success to reroute
-    change_mrm_route(new_route);
+  // step1. if in mrm state, check with mrm route
+  if (mrm_route_) {
+    if (checkRerouteSafety(*mrm_route_, new_route)) {
+      // success to reroute
+      change_mrm_route(new_route);
+      res->status.success = true;
+    } else {
+      // failed to reroute
+      change_mrm_route(*mrm_route_);
+      res->status.success = false;
+    }
     change_state(RouteState::Message::SET);
-    res->status.success = true;
     return;
   }
 
-  // Failed to reroute
-  if (mrm_route_) {
-    // if it has the old mrm route, use it
-    change_mrm_route(*mrm_route_);
+  // step2. if not in mrm state, check with normal route
+  if (checkRerouteSafety(*normal_route_, new_route)) {
+    // success to reroute
+    change_mrm_route(new_route);
+    res->status.success = true;
   } else {
-    // failed to go to mrm state, use normal route
+    // Failed to reroute
     change_route(*normal_route_);
+    res->status.success = false;
   }
   change_state(RouteState::Message::SET);
-  res->status.success = false;
 }
 
 // NOTE: The route interface should be mutually exclusive by callback group.
@@ -552,7 +557,6 @@ void MissionPlanner::on_change_route(
   if (mrm_route_) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
-    return;
   }
 
   // set to changing state
@@ -612,7 +616,6 @@ void MissionPlanner::on_change_route_points(
   if (mrm_route_) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
-    return;
   }
 
   change_state(RouteState::Message::CHANGING);
