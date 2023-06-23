@@ -19,6 +19,7 @@
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
@@ -32,8 +33,6 @@
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
-
-#include <motion_utils/marker/marker_helper.hpp>
 
 #include <memory>
 #include <string>

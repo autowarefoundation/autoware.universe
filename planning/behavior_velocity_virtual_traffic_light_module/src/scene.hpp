@@ -18,6 +18,7 @@
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/regulatory_elements/virtual_traffic_light.hpp>
 #include <lanelet2_extension/utility/query.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
 #include <nlohmann/json.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logger.hpp>
@@ -26,8 +27,6 @@
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
-
-#include <motion_utils/marker/marker_helper.hpp>
 
 #include <memory>
 #include <string>

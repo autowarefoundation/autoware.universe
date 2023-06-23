@@ -18,14 +18,13 @@
 #include "types.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
-
-#include <motion_utils/marker/marker_helper.hpp>
 
 #include <memory>
 #include <string>

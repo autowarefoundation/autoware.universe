@@ -21,6 +21,7 @@
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <grid_map_core/grid_map_core.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -33,8 +34,6 @@
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
-
-#include <motion_utils/marker/marker_helper.hpp>
 
 #include <algorithm>
 #include <memory>

@@ -20,6 +20,7 @@
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -38,8 +39,6 @@
 #include <pcl/common/distances.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
-
-#include <motion_utils/marker/marker_helper.hpp>
 
 #include <memory>
 #include <string>

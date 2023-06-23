@@ -26,12 +26,11 @@
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <lanelet2_extension/regulatory_elements/detection_area.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <tf2/LinearMath/Transform.h>
-
-#include <motion_utils/marker/marker_helper.hpp>
 
 namespace behavior_velocity_planner
 {

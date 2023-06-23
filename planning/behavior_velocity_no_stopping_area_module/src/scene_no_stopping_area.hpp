@@ -22,6 +22,7 @@
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <lanelet2_extension/regulatory_elements/no_stopping_area.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
@@ -33,8 +34,6 @@
 
 #include <lanelet2_core/LaneletMap.h>
 #include <tf2/LinearMath/Transform.h>
-
-#include <motion_utils/marker/marker_helper.hpp>
 
 #include <memory>
 #include <utility>
