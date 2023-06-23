@@ -18,6 +18,8 @@
 
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 
+#include <motion_utils/marker/marker_helper.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>

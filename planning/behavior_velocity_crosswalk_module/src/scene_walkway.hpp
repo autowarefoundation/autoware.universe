@@ -29,6 +29,8 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 
+#include <motion_utils/marker/marker_helper.hpp>
+
 #include <memory>
 #include <utility>
 #include <vector>

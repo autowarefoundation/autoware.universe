@@ -31,6 +31,8 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
+#include <motion_utils/marker/marker_helper.hpp>
+
 #include <memory>
 #include <set>
 #include <string>

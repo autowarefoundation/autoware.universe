@@ -34,6 +34,8 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <tf2/LinearMath/Transform.h>
 
+#include <motion_utils/marker/marker_helper.hpp>
+
 #include <memory>
 #include <utility>
 #include <vector>

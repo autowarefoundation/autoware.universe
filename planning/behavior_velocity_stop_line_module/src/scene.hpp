@@ -33,6 +33,8 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
+#include <motion_utils/marker/marker_helper.hpp>
+
 namespace behavior_velocity_planner
 {
 class StopLineModule : public SceneModuleInterface

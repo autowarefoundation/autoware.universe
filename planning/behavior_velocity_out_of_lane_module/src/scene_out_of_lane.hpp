@@ -25,6 +25,8 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
+#include <motion_utils/marker/marker_helper.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>

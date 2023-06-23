@@ -39,6 +39,8 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <motion_utils/marker/marker_helper.hpp>
+
 #include <memory>
 #include <string>
 #include <unordered_map>

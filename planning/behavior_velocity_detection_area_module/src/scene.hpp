@@ -31,6 +31,8 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <tf2/LinearMath/Transform.h>
 
+#include <motion_utils/marker/marker_helper.hpp>
+
 namespace behavior_velocity_planner
 {
 using PathIndexWithPose = std::pair<size_t, geometry_msgs::msg::Pose>;  // front index, pose
