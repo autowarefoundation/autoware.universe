@@ -12,7 +12,6 @@
         use_intersection_area: false
         path_interpolation_ds: 0.2 # [m]
 
-
       stuck_vehicle:
         use_stuck_stopline: false # stopline generate before the intersection lanelet when is_stuck
         stuck_vehicle_detect_dist: 3.0 # this should be the length between cars when they are stopped. The actual stuck vehicle detection length will be this value + vehicle_length.
@@ -45,8 +44,8 @@
         denoise_kernel: 1.0 # [m]
         pub_debug_grid: false
 
-      enable_rtc:
-        interaction: true # if true, the scene modules should be approved by (request to cooperate)rtc function. if false, the module can be run without approval from rtc.
+      enable_rtc: # If set to true, the scene modules require approval from the rtc (request to cooperate) function. If set to false, the modules can be executed without requiring rtc approval
+        interaction: true
         intersection_to_occlusion: true
 
     merge_from_private:

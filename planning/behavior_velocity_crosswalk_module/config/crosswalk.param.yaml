@@ -2,7 +2,7 @@
   ros__parameters:
     crosswalk:
       show_processing_time: false # [-] whether to show processing time
-      enable_rtc: true # if true, the scene modules should be approved by (request to cooperate)rtc function. if false, the module can be run without approval from rtc.
+      enable_rtc: true # If set to true, the scene modules require approval from the rtc (request to cooperate) function. If set to false, the modules can be executed without requiring rtc approval
 
       # param for stop position
       stop_line_distance: 3.5 # [m] make stop line away from crosswalk when no explicit stop line exists
