@@ -41,6 +41,26 @@ def launch_setup(context, *args, **kwargs):
     with open(LaunchConfiguration("nearest_search_param_path").perform(context), "r") as f:
         nearest_search_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    # path smoother
+    with open(LaunchConfiguration("elastic_band_smoother_param_path").perform(context), "r") as f:
+        elastic_band_smoother_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    elastic_band_smoother_component = ComposableNode(
+        package="path_smoothing",
+        plugin="path_smoothing::ElasticBandSmoother",
+        name="elastic_band_smoother",
+        namespace="",
+        remappings=[
+            ("~/input/path", LaunchConfiguration("input_path_topic")),
+            ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/output/path", "path_smoother/path"),
+        ],
+        parameters=[
+            nearest_search_param,
+            elastic_band_smoother_param,
+        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+    )
+
     # obstacle avoidance planner
     with open(
         LaunchConfiguration("obstacle_avoidance_planner_param_path").perform(context), "r"
@@ -52,7 +72,7 @@ def launch_setup(context, *args, **kwargs):
         name="obstacle_avoidance_planner",
         namespace="",
         remappings=[
-            ("~/input/path", LaunchConfiguration("input_path_topic")),
+            ("~/input/path", "path_smoother/path"),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/output/path", "obstacle_avoidance_planner/trajectory"),
         ],
@@ -73,7 +93,7 @@ def launch_setup(context, *args, **kwargs):
         name="path_sampler",
         namespace="",
         remappings=[
-            ("~/input/path", LaunchConfiguration("input_path_topic")),
+            ("~/input/path", "path_smoother/path"),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/output/path", "obstacle_avoidance_planner/trajectory"),
         ],
@@ -251,6 +271,12 @@ def launch_setup(context, *args, **kwargs):
         condition=LaunchConfigurationEquals("cruise_planner_type", "none"),
     )
 
+    smoother_loader = LoadComposableNodes(
+        composable_node_descriptions=[elastic_band_smoother_component],
+        target_container=container,
+        condition=LaunchConfigurationEquals("path_smoother_type", "elastic_band"),
+    )
+
     obstacle_avoidance_planner_loader = LoadComposableNodes(
         composable_node_descriptions=[obstacle_avoidance_planner_component],
         target_container=container,
@@ -272,6 +298,7 @@ def launch_setup(context, *args, **kwargs):
     group = GroupAction(
         [
             container,
+            smoother_loader,
             obstacle_avoidance_planner_loader,
             path_sampler_loader,
             obstacle_stop_planner_loader,
