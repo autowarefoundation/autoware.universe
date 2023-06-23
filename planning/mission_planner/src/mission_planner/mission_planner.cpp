@@ -388,14 +388,6 @@ void MissionPlanner::on_set_mrm_route(
       ResponseCode::ERROR_PLANNER_FAILED, "Failed to plan a new route.");
   }
 
-  if (!normal_route_) {
-    // if it does not set normal route, just use the new planned route
-    change_mrm_route(new_route);
-    change_state(RouteState::Message::SET);
-    res->status.success = true;
-    return;
-  }
-
   // check route safety
   // step1. if in mrm state, check with mrm route
   if (mrm_route_) {
@@ -409,6 +401,14 @@ void MissionPlanner::on_set_mrm_route(
       res->status.success = false;
     }
     change_state(RouteState::Message::SET);
+    return;
+  }
+
+  if (!normal_route_) {
+    // if it does not set normal route, just use the new planned route
+    change_mrm_route(new_route);
+    change_state(RouteState::Message::SET);
+    res->status.success = true;
     return;
   }
 
