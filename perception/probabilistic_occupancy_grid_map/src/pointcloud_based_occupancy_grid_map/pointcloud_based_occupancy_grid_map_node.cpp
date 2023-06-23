@@ -15,6 +15,8 @@
 #include "pointcloud_based_occupancy_grid_map/pointcloud_based_occupancy_grid_map_node.hpp"
 
 #include "cost_value.hpp"
+#include "updater/occupancy_grid_map_binary_bayes_filter2_updater.hpp"
+#include "updater/occupancy_grid_map_binary_bayes_filter_updater.hpp"
 #include "utils/utils.hpp"
 
 #include <pcl_ros/transforms.hpp>
@@ -41,6 +43,7 @@ namespace occupancy_grid_map
 {
 using costmap_2d::OccupancyGridMap;
 using costmap_2d::OccupancyGridMapBBFUpdater;
+using costmap_2d::OccupancyGridMapBBFUpdater2;
 using geometry_msgs::msg::Pose;
 
 PointcloudBasedOccupancyGridMapNode::PointcloudBasedOccupancyGridMapNode(
@@ -79,6 +82,9 @@ PointcloudBasedOccupancyGridMapNode::PointcloudBasedOccupancyGridMapNode(
   const std::string updater_type = this->declare_parameter<std::string>("updater_type");
   if (updater_type == "binary_bayes_filter") {
     occupancy_grid_map_updater_ptr_ = std::make_shared<OccupancyGridMapBBFUpdater>(
+      map_length / map_resolution, map_length / map_resolution, map_resolution);
+  } else if (updater_type == "binary_bayes_filter2") {
+    occupancy_grid_map_updater_ptr_ = std::make_shared<OccupancyGridMapBBFUpdater2>(
       map_length / map_resolution, map_length / map_resolution, map_resolution);
   } else {
     RCLCPP_WARN(

@@ -16,7 +16,6 @@
 #define LASERSCAN_BASED_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP_NODE_HPP_
 
 #include "laserscan_based_occupancy_grid_map/occupancy_grid_map.hpp"
-#include "updater/occupancy_grid_map_binary_bayes_filter_updater.hpp"
 #include "updater/occupancy_grid_map_updater_interface.hpp"
 
 #include <builtin_interfaces/msg/time.hpp>
