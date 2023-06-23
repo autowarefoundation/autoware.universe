@@ -2695,8 +2695,10 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
     [](const auto & o) { return !o.is_avoidable; });
 
   const auto candidate = planCandidate();
-  if (!avoidance_data_.safe_new_sl.empty()) {
+  if (!data.safe_new_sl.empty()) {
     updateCandidateRTCStatus(candidate);
+    waitApproval();
+  } else if (path_shifter_.getShiftLines().empty()) {
     waitApproval();
   } else if (all_unavoidable) {
     waitApproval();
