@@ -50,22 +50,18 @@ std::size_t VoxelGenerator::pointsToVoxels(
       pd_ptr_->getCurrentTimestamp() - rclcpp::Time(pc_msg.header.stamp).seconds());
 
     for (sensor_msgs::PointCloud2ConstIterator<float> x_iter(pc_msg, "x"), y_iter(pc_msg, "y"),
-         z_iter(pc_msg, "z"), car_iter(pc_msg, "CAR"), ped_iter(pc_msg, "PEDESTRIAN"),
-         bic_iter(pc_msg, "BICYCLE"), trk_iter(pc_msg, "TRUCK"), bus_iter(pc_msg, "BUS");
-         x_iter != x_iter.end();
-         ++x_iter, ++y_iter, ++z_iter, ++car_iter, ++ped_iter, ++bic_iter, ++trk_iter, ++bus_iter) {
+         z_iter(pc_msg, "z"), class_iter(pc_msg, "CLASS");
+         x_iter != x_iter.end(); ++x_iter, ++y_iter, ++z_iter, ++class_iter) {
       point_past << *x_iter, *y_iter, *z_iter;
       point_current = affine_past2current * point_past;
 
       point[0] = point_current.x();
       point[1] = point_current.y();
       point[2] = point_current.z();
-      point[3] = time_lag;
-      point[4] = *car_iter;
-      point[5] = *trk_iter;
-      point[6] = *bus_iter;
-      point[7] = *bic_iter;
-      point[8] = *ped_iter;
+      point[3] = timelag;
+      for (std::size_t i = 1; i <= config_.class_size_; i++) {
+        point[3 + i] = (*class_iter == i) ? 1 : 0;
+      }
 
       out_of_range = false;
       for (std::size_t di = 0; di < config_.point_dim_size_; di++) {

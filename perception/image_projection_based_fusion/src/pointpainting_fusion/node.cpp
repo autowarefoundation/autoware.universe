@@ -121,7 +121,10 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
       isClassTable_.erase(cls);
     }
   }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0abf418b7 (fix: class according to config)
   has_twist_ = this->declare_parameter("has_twist", false);
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
@@ -189,14 +192,12 @@ void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
   pcd_modifier.clear();
   pcd_modifier.reserve(tmp.width);
   painted_pointcloud_msg.width = tmp.width;
-  constexpr int num_fields = 9;
+  constexpr int num_fields = 5;
   pcd_modifier.setPointCloud2Fields(
     num_fields, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
     sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "intensity", 1, sensor_msgs::msg::PointField::FLOAT32, "CAR", 1,
-    sensor_msgs::msg::PointField::FLOAT32, "TRUCK", 1, sensor_msgs::msg::PointField::FLOAT32, "BUS",
-    1, sensor_msgs::msg::PointField::FLOAT32, "BICYCLE", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "PEDESTRIAN", 1, sensor_msgs::msg::PointField::FLOAT32);
+    "intensity", 1, sensor_msgs::msg::PointField::FLOAT32, "CLASS", 1,
+    sensor_msgs::msg::PointField::FLOAT32);
   painted_pointcloud_msg.point_step = num_fields * sizeof(float);
   // filter points out of range
   const auto painted_point_step = painted_pointcloud_msg.point_step;

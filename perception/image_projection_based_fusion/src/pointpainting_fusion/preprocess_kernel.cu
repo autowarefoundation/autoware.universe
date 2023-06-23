@@ -38,6 +38,7 @@ namespace
 const std::size_t MAX_POINT_IN_VOXEL_SIZE = 32;  // the same as max_point_in_voxel_size_ in config
 const std::size_t WARPS_PER_BLOCK = 4;
 const std::size_t ENCODER_IN_FEATURE_SIZE = 14;  // same as encoder_in_feature_size_ in config.hpp
+const int POINT_FEATURE_SIZE = 9;
 
 // cspell: ignore divup
 std::size_t divup(const std::size_t a, const std::size_t b)
@@ -72,7 +73,6 @@ __global__ void generateFeatures_kernel(
   if (pillar_idx >= num_voxels) return;
 
   // load src
-  const int POINT_FEATURE_SIZE = 9;
   __shared__ float pillarSM[WARPS_PER_BLOCK][MAX_POINT_IN_VOXEL_SIZE][POINT_FEATURE_SIZE];
   __shared__ float3 pillarSumSM[WARPS_PER_BLOCK];
   __shared__ int3 cordsSM[WARPS_PER_BLOCK];
