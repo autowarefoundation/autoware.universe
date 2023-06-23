@@ -322,9 +322,8 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   };
 
   add(showObjectInfo(debug_data, "object_debug_info"));
-  add(showLerpedPose(debug_data, "lerp_pose_before_true"));
-  add(showPolygonPose(debug_data, "expected_pose"));
-  add(showPolygon(debug_data, "lerped_polygon"));
+  add(showLerpedPose(debug_data, "ego_predicted_path"));
+  add(showPolygon(debug_data, "ego_and_target_polygon_relation"));
   add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
 }
 
