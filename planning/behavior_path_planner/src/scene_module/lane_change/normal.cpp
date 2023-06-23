@@ -764,9 +764,9 @@ bool NormalLaneChange::getLaneChangePaths(
 
 std::vector<DrivableLanes> NormalLaneChange::getDrivableLanes() const
 {
-  const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
+  return utils::lane_change::generateDrivableLanes(
     *getRouteHandler(), status_.current_lanes, status_.lane_change_lanes);
-  return utils::combineDrivableLanes(prev_drivable_area_info_.drivable_lanes, drivable_lanes);
+  // return utils::combineDrivableLanes(prev_drivable_area_info_.drivable_lanes, drivable_lanes);
 }
 
 PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
