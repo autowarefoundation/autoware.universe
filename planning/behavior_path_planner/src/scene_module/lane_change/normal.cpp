@@ -152,6 +152,19 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
     *output.path, expanded_lanes, false, common_parameters.vehicle_length, planner_data_);
 }
 
+void NormalLaneChange::insertStopPoint(PathWithLaneId & path)
+{
+  const auto shift_intervals = getRouteHandler()->getLateralIntervalsToPreferredLane(
+    status_.lane_change_path.reference_lanelets.back());
+  const double lane_change_buffer =
+    utils::calcMinimumLaneChangeLength(getCommonParam(), shift_intervals, 0.0);
+  constexpr double stop_point_buffer{1.0};
+  const auto stopping_distance = std::max(
+    motion_utils::calcArcLength(path.points) - lane_change_buffer - stop_point_buffer, 0.0);
+
+  const auto stop_point = utils::insertStopPoint(stopping_distance, path);
+}
+
 PathWithLaneId NormalLaneChange::getReferencePath() const
 {
   return utils::getCenterLinePathFromRootLanelet(status_.lane_change_lanes.front(), planner_data_);
@@ -321,9 +334,9 @@ bool NormalLaneChange::hasFinishedLaneChange() const
   const auto & lane_change_end = status_.lane_change_path.shift_line.end;
   const double dist_to_lane_change_end = motion_utils::calcSignedArcLength(
     lane_change_path.points, current_pose.position, lane_change_end.position);
+  const double finish_judge_buffer = planner_data_->parameters.lane_change_finish_judge_buffer;
 
-  const auto reach_lane_change_end =
-    dist_to_lane_change_end + lane_change_parameters_->lane_change_finish_judge_buffer < 0.0;
+  const auto reach_lane_change_end = dist_to_lane_change_end + finish_judge_buffer < 0.0;
   if (!reach_lane_change_end) {
     return false;
   }
@@ -620,8 +633,8 @@ bool NormalLaneChange::getLaneChangePaths(
         const double s_goal =
           lanelet::utils::getArcCoordinates(target_lanelets, route_handler.getGoalPose()).length;
         if (
-          s_start + lane_changing_length +
-            lane_change_parameters_->lane_change_finish_judge_buffer + next_lane_change_buffer >
+          s_start + lane_changing_length + common_parameter.lane_change_finish_judge_buffer +
+            next_lane_change_buffer >
           s_goal) {
           RCLCPP_DEBUG(
             rclcpp::get_logger("behavior_path_planner").get_child("util").get_child("lane_change"),
