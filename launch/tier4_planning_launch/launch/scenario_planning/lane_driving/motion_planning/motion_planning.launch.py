@@ -21,6 +21,7 @@ from launch.conditions import IfCondition
 from launch.conditions import LaunchConfigurationEquals
 from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
@@ -42,6 +43,7 @@ def launch_setup(context, *args, **kwargs):
         nearest_search_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     # path smoother
+    smoother_output_path_topic = "path_smoother/path"
     with open(LaunchConfiguration("elastic_band_smoother_param_path").perform(context), "r") as f:
         elastic_band_smoother_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     elastic_band_smoother_component = ComposableNode(
@@ -52,7 +54,7 @@ def launch_setup(context, *args, **kwargs):
         remappings=[
             ("~/input/path", LaunchConfiguration("input_path_topic")),
             ("~/input/odometry", "/localization/kinematic_state"),
-            ("~/output/path", "path_smoother/path"),
+            ("~/output/path", smoother_output_path_topic),
         ],
         parameters=[
             nearest_search_param,
@@ -61,6 +63,18 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
+    planner_input_path_topic = PythonExpression(
+        [
+            "'",
+            LaunchConfiguration("input_path_topic"),
+            "' if '",
+            LaunchConfiguration("path_smoother_type"),
+            "' == 'none'",
+            " else '",
+            smoother_output_path_topic,
+            "'",
+        ]
+    )
     # obstacle avoidance planner
     with open(
         LaunchConfiguration("obstacle_avoidance_planner_param_path").perform(context), "r"
@@ -72,7 +86,7 @@ def launch_setup(context, *args, **kwargs):
         name="obstacle_avoidance_planner",
         namespace="",
         remappings=[
-            ("~/input/path", "path_smoother/path"),
+            ("~/input/path", planner_input_path_topic),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/output/path", "obstacle_avoidance_planner/trajectory"),
         ],
@@ -93,7 +107,7 @@ def launch_setup(context, *args, **kwargs):
         name="path_sampler",
         namespace="",
         remappings=[
-            ("~/input/path", "path_smoother/path"),
+            ("~/input/path", planner_input_path_topic),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/output/path", "obstacle_avoidance_planner/trajectory"),
         ],
@@ -336,6 +350,7 @@ def generate_launch_description():
     add_launch_arg(
         "path_planner_type", "obstacle_avoidance_planner"
     )  # select from "obstacle_avoidance_planner", "path_sampler"
+    add_launch_arg("path_smoother_type", "elastic_band")  # select from "elastic_band", "none"
 
     add_launch_arg("use_intra_process", "false", "use ROS 2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
