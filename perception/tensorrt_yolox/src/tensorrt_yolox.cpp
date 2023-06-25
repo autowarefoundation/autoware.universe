@@ -125,7 +125,10 @@ TrtYoloX::TrtYoloX(
 
     int max_batch_size = 1;
     nvinfer1::Dims input_dims = tensorrt_common::get_input_dims(model_path);
-    std::vector<std::string> calibration_images = loadImageList(calibration_image_list_file, "");
+    std::vector<std::string> calibration_images;
+    if (calibration_image_list_file != "") {
+      calibration_images = loadImageList(calibration_image_list_file, "");
+    }
     tensorrt_yolox::ImageStream stream(max_batch_size, input_dims, calibration_images);
     fs::path calibration_table{model_path};
     std::string calibName = "";
