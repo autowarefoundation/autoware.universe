@@ -710,11 +710,11 @@ bool NormalLaneChange::getLaneChangePaths(
           lane_change_parameters_->object_shiftable_ratio_threshold;
         const auto current_lane_path = route_handler.getCenterLinePath(
           original_lanelets, 0.0, std::numeric_limits<double>::max());
-        const bool delay_lane_change = utils::lane_change::delayLaneChange(
+        const bool pass_parked_object = utils::lane_change::passParkedObject(
           route_handler, *candidate_path, current_lane_path, *dynamic_objects,
           dynamic_object_indices.target_lane, lane_change_buffer, is_goal_in_route,
           object_check_min_road_shoulder_width, object_shiftable_ratio_threshold);
-        if (delay_lane_change) {
+        if (pass_parked_object) {
           return false;
         }
       }

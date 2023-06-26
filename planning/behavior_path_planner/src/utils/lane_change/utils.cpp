@@ -1059,7 +1059,7 @@ PredictedPath convertToPredictedPath(
   return predicted_path;
 }
 
-bool delayLaneChange(
+bool passParkedObject(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
   const PathWithLaneId & current_lane_path, const PredictedObjects & objects,
   const std::vector<size_t> & target_lane_obj_indices, const double minimum_lane_change_length,
@@ -1129,7 +1129,7 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
     const auto & obj_pose = obj.kinematics.initial_pose_with_covariance.pose;
 
     // ignore non-static object
-    // TODO: parametrize threshold
+    // TODO(shimizu): parametrize threshold
     if (obj.kinematics.initial_twist_with_covariance.twist.linear.x > 1.0) {
       continue;
     }

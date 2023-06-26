@@ -175,7 +175,7 @@ PredictedPath convertToPredictedPath(
   const size_t nearest_seg_idx, const double duration, const double resolution,
   const double prepare_time, const double prepare_acc, const double lane_changing_acc);
 
-bool delayLaneChange(
+bool passParkedObject(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
   const PathWithLaneId & current_lane_path, const PredictedObjects & objects,
   const std::vector<size_t> & target_lane_obj_indices, const double minimum_lane_change_length,
