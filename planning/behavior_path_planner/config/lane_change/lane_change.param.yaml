@@ -53,6 +53,7 @@
       abort_delta_time: 1.0                      # [s]
       aborting_time: 5.0                         # [s]
       abort_max_lateral_jerk: 1000.0             # [m/s3]
+      abort_exec_lateral_threshold: 0.0
 
       finish_judge_lateral_threshold: 0.2        # [m]
 
