@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/marker_util/debug_utilities.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
 #include <behavior_path_planner/marker_util/lane_change/debug.hpp>
@@ -24,6 +25,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -52,8 +54,9 @@ MarkerArray showObjectInfo(
 
     std::ostringstream ss;
 
-    ss << info.failed_reason << "\nLon: " << std::setprecision(4) << info.relative_to_ego.position.x
-       << "\nLat: " << info.relative_to_ego.position.y
+    ss << info.failed_reason << "\nRSS dist: " << std::setprecision(4) << info.rss_longitudinal
+       << "\nEgo to obj: " << info.ego_to_obj_margin << "\nLateral offset: " << info.lateral_offset
+       << "\nLongitudinal offset: " << info.longitudinal_offset
        << "\nPosition: " << (info.is_front ? "front" : "back");
 
     marker.text = ss.str();
@@ -171,19 +174,22 @@ MarkerArray showPolygon(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, id, Marker::LINE_STRIP,
     createMarkerScale(scale_val, scale_val, scale_val), createMarkerColor(1.0, 1.0, 1.0, 0.9));
   Marker obj_marker = ego_marker;
+
+  Marker text_marker = createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::TEXT_VIEW_FACING,
+    createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(0.0, 1.0, 1.0, 0.999));
+
   MarkerArray marker_array;
 
-  constexpr auto colors = colorsList();
-  const auto loop_size = std::min(obj_debug_vec.size(), colors.size());
+  constexpr auto red_color = colorsList().at(0);
+  constexpr auto green_color = colorsList().at(1);
+  const auto reserve_size = obj_debug_vec.size();
 
-  marker_array.markers.reserve(loop_size * 2);
+  marker_array.markers.reserve(reserve_size * 4);
   size_t idx{0};
 
   for (const auto & [uuid, info] : obj_debug_vec) {
-    if (idx >= loop_size) {
-      break;
-    }
-    const auto & color = colors.at(idx);
+    const auto & color = info.allow_lane_change ? green_color : red_color;
     const auto & ego_polygon = info.ego_polygon.outer();
     ego_marker.id = ++id;
     ego_marker.color = createMarkerColor(color[0], color[1], color[2], 0.8);
@@ -193,6 +199,13 @@ MarkerArray showPolygon(
     }
     marker_array.markers.push_back(ego_marker);
 
+    text_marker.id = ++id;
+    text_marker.pose = info.expected_ego_pose;
+
+    std::ostringstream ss;
+    ss << idx << ": " << (info.allow_lane_change ? "safe" : "unsafe");
+    marker_array.markers.push_back(text_marker);
+
     const auto & obj_polygon = info.obj_polygon.outer();
     obj_marker.id = ++id;
     obj_marker.color = createMarkerColor(color[0], color[1], color[2], 0.8);
@@ -201,9 +214,13 @@ MarkerArray showPolygon(
       obj_marker.points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0));
     }
     marker_array.markers.push_back(obj_marker);
-    ++idx;
     ego_marker.points.clear();
     obj_marker.points.clear();
+
+    text_marker.id = ++id;
+    text_marker.pose = info.expected_obj_pose;
+    marker_array.markers.push_back(text_marker);
+    ++idx;
   }
 
   return marker_array;
