@@ -155,6 +155,7 @@ void ElasticBandSmoother::onPath(const Path::SharedPtr path_ptr)
     const auto traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
     const auto output_traj_msg = trajectory_utils::createTrajectory(path_ptr->header, traj_points);
     traj_pub_->publish(output_traj_msg);
+    path_pub_->publish(*path_ptr);
     return;
   }
 
