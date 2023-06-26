@@ -20,6 +20,8 @@
 #include <cv_bridge/cv_bridge.h>
 #endif
 
+// cspell: ignore polylines
+
 namespace
 {
 /* dummy declaration to restrict type of RoI RegionOfInterest or Polygon2d */
