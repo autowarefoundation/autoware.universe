@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@
 
 #include "traffic_light_classifier/classifier_interface.hpp"
 
+#include <cuda_utils/cuda_unique_ptr.hpp>
+#include <cuda_utils/stream_unique_ptr.hpp>
 #include <image_transport/image_transport.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <trt_common.hpp>
+#include <tensorrt_common/tensorrt_common.hpp>
 
 #include <autoware_auto_perception_msgs/msg/traffic_light.hpp>
 
@@ -31,6 +34,7 @@
 #include <cv_bridge/cv_bridge.h>
 #endif
 
+#include <fstream>
 #include <map>
 #include <memory>
 #include <string>
@@ -38,6 +42,12 @@
 
 namespace traffic_light
 {
+
+using cuda_utils::CudaUniquePtr;
+using cuda_utils::CudaUniquePtrHost;
+using cuda_utils::makeCudaStream;
+using cuda_utils::StreamUniquePtr;
+
 class CNNClassifier : public ClassifierInterface
 {
 public:
@@ -73,6 +83,8 @@ private:
     {autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW, "left"},
     {autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW, "right"},
     {autoware_auto_perception_msgs::msg::TrafficLight::UP_ARROW, "straight"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::UP_LEFT_ARROW, "up_left"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::UP_RIGHT_ARROW, "up_right"},
     {autoware_auto_perception_msgs::msg::TrafficLight::DOWN_ARROW, "down"},
     {autoware_auto_perception_msgs::msg::TrafficLight::DOWN_LEFT_ARROW, "down_left"},
     {autoware_auto_perception_msgs::msg::TrafficLight::DOWN_RIGHT_ARROW, "down_right"},
@@ -92,6 +104,8 @@ private:
     {"left", autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW},
     {"right", autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW},
     {"straight", autoware_auto_perception_msgs::msg::TrafficLight::UP_ARROW},
+    {"up_left", autoware_auto_perception_msgs::msg::TrafficLight::UP_LEFT_ARROW},
+    {"up_right", autoware_auto_perception_msgs::msg::TrafficLight::UP_RIGHT_ARROW},
     {"down", autoware_auto_perception_msgs::msg::TrafficLight::DOWN_ARROW},
     {"down_left", autoware_auto_perception_msgs::msg::TrafficLight::DOWN_LEFT_ARROW},
     {"down_right", autoware_auto_perception_msgs::msg::TrafficLight::DOWN_RIGHT_ARROW},
@@ -102,14 +116,18 @@ private:
 
   rclcpp::Node * node_ptr_;
 
-  std::shared_ptr<Tn::TrtCommon> trt_;
+  std::unique_ptr<tensorrt_common::TrtCommon> trt_common_;
+  StreamUniquePtr stream_{makeCudaStream()};
   image_transport::Publisher image_pub_;
   std::vector<std::string> labels_;
   std::vector<double> mean_;
   std::vector<double> std_;
+  int batch_size_;
   int input_c_;
   int input_h_;
   int input_w_;
+  int num_input_;
+  int num_output_;
   bool apply_softmax_;
 };
 
