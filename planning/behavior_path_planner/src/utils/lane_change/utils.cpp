@@ -1129,6 +1129,7 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
     const auto & obj_pose = obj.kinematics.initial_pose_with_covariance.pose;
 
     // ignore non-static object
+    // TODO: parametrize threshold
     if (obj.kinematics.initial_twist_with_covariance.twist.linear.x > 1.0) {
       continue;
     }
