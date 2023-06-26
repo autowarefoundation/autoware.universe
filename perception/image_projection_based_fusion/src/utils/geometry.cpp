@@ -44,13 +44,13 @@ double calcIoU(
   return overlap_s / (s_1 + s_2 - overlap_s);
 }
 
-double calcIoU(const Polygon2d & roi_1, const Polygon2d & roi_2)
+double calcIoU(const PolygonRoi & roi_1, const PolygonRoi & roi_2)
 {
-  if (boost::geometry::disjoint(roi_1, roi_2)) {
+  if (boost::geometry::disjoint(roi_1.roi, roi_2.roi)) {
     return 0.0;
   }
-  const double union_area = perception_utils::getUnionArea(roi_1, roi_2);
-  const double intersection_area = perception_utils::getIntersectionArea(roi_1, roi_2);
+  const double union_area = perception_utils::getUnionArea(roi_1.roi, roi_2.roi);
+  const double intersection_area = perception_utils::getIntersectionArea(roi_1.roi, roi_2.roi);
   return union_area < 0.01 ? 0.0 : std::min(1.0, intersection_area / union_area);
 }
 
@@ -78,14 +78,24 @@ double calcIoUX(
   return overlap_s / (s_1 + s_2 - overlap_s);
 }
 
-double calcIoUX(const Polygon2d & roi_1, const Polygon2d & roi_2)
+double calcIoUX(const PolygonRoi & roi_1, const PolygonRoi & roi_2)
 {
-  if (boost::geometry::disjoint(roi_1, roi_2)) {
+  if (boost::geometry::disjoint(roi_1.roi, roi_2.roi)) {
     return 0.0;
   }
 
-  // TODO(ktro2828): update calculation.
-  return 1.0;
+  const double s_1 = roi_1.max_x - roi_1.min_x;
+  const double s_2 = roi_2.max_x - roi_2.min_x;
+
+  const double overlap_min_x = roi_1.min_x < roi_2.min_x ? roi_2.min_x : roi_1.min_x;
+  const double overlap_min_y = roi_1.min_y < roi_2.min_y ? roi_2.min_y : roi_1.min_y;
+  const double overlap_max_x = roi_1.max_x < roi_2.max_x ? roi_1.max_x : roi_2.max_x;
+  const double overlap_max_y = roi_1.max_y < roi_2.max_y ? roi_1.max_y : roi_2.max_y;
+  const double overlap_s = (overlap_max_y - overlap_min_y);
+
+  return overlap_max_x < overlap_min_x || overlap_max_y < overlap_min_y
+           ? 0.0
+           : overlap_s / (s_1 + s_2 - overlap_s);
 }
 
 double calcIoUY(
@@ -112,14 +122,24 @@ double calcIoUY(
   return overlap_s / (s_1 + s_2 - overlap_s);
 }
 
-double calcIoUY(const Polygon2d & roi_1, const Polygon2d & roi_2)
+double calcIoUY(const PolygonRoi & roi_1, const PolygonRoi & roi_2)
 {
-  if (boost::geometry::disjoint(roi_1, roi_2)) {
+  if (boost::geometry::disjoint(roi_1.roi, roi_2.roi)) {
     return 0.0;
   }
 
-  // TODO(ktro2828): update calculation.
-  return 1.0;
+  const double s_1 = roi_1.max_y - roi_1.min_y;
+  const double s_2 = roi_2.max_y - roi_2.min_y;
+
+  const double overlap_min_x = roi_1.min_x < roi_2.min_x ? roi_2.min_x : roi_1.min_x;
+  const double overlap_min_y = roi_1.min_y < roi_2.min_y ? roi_2.min_y : roi_1.min_y;
+  const double overlap_max_x = roi_1.max_x < roi_2.max_x ? roi_1.max_x : roi_2.max_x;
+  const double overlap_max_y = roi_1.max_y < roi_2.max_y ? roi_1.max_y : roi_2.max_y;
+  const double overlap_s = (overlap_max_y - overlap_min_y);
+
+  return overlap_max_x < overlap_min_x || overlap_max_y < overlap_min_y
+           ? 0.0
+           : overlap_s / (s_1 + s_2 - overlap_s);
 }
 
 void objectToVertices(

@@ -14,7 +14,6 @@
 
 #include "image_projection_based_fusion/roi_cluster_fusion/node.hpp"
 
-#include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -148,10 +147,10 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     }
 
     centroid /= static_cast<double>(projected_points.size());
-    Polygon2d polygon_roi = point2ConvexHull(projected_points);
+    PolygonRoi polygon_roi = PolygonRoi(point2ConvexHull(projected_points));
     ClusterRoi cluster_roi{i, polygon_roi, centroid};
     cluster_roi_buffer.emplace_back(cluster_roi);
-    debug_cluster_rois.emplace_back(polygon_roi);
+    debug_cluster_rois.emplace_back(polygon_roi.roi);
   }
 
   for (const auto & feature_obj : input_roi_msg.feature_objects) {
@@ -160,7 +159,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     std::vector<ClusterRoi> candidates;
     for (const auto & cluster_roi : cluster_roi_buffer) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
-      Polygon2d feature_roi = roi2Polygon(feature_obj.feature.roi);
+      PolygonRoi feature_roi = PolygonRoi(roi2Polygon(feature_obj.feature.roi));
       if (use_iou_) {
         iou = calcIoU(cluster_roi.roi, feature_roi);
       }

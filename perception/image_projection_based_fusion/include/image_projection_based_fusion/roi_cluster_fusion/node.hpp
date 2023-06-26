@@ -17,6 +17,8 @@
 
 #include "image_projection_based_fusion/fusion_node.hpp"
 
+#include <image_projection_based_fusion/utils/geometry.hpp>
+
 #include <memory>
 
 namespace image_projection_based_fusion
@@ -27,7 +29,7 @@ using Polygon2d = tier4_autoware_utils::Polygon2d;
 struct ClusterRoi
 {
   size_t index;
-  Polygon2d roi;
+  PolygonRoi roi;
   Eigen::Vector3d centroid;
 };
 

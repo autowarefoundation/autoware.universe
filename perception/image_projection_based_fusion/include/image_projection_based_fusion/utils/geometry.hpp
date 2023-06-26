@@ -36,23 +36,47 @@ using geometry_msgs::msg::Pose;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 
+struct PolygonRoi
+{
+  double min_x{0.0}, min_y{0.0}, max_x{0.0}, max_y{0.0};
+  Polygon2d roi;
+
+  explicit PolygonRoi(const Polygon2d & _roi) : roi(_roi)
+  {
+    for (const auto & point : roi.outer()) {
+      if (point.x() < min_x) {
+        min_x = point.x();
+      }
+      if (point.y() < min_y) {
+        min_y = point.y();
+      }
+      if (max_x < point.x()) {
+        max_x = point.x();
+      }
+      if (max_y < point.y()) {
+        max_y = point.y();
+      }
+    }
+  }
+};
+
 double calcIoU(
   const sensor_msgs::msg::RegionOfInterest & roi_1,
   const sensor_msgs::msg::RegionOfInterest & roi_2);
 
-double calcIoU(const Polygon2d & roi_1, const Polygon2d & roi_2);
+double calcIoU(const PolygonRoi & roi_1, const PolygonRoi & roi_2);
 
 double calcIoUX(
   const sensor_msgs::msg::RegionOfInterest & roi_1,
   const sensor_msgs::msg::RegionOfInterest & roi_2);
 
-double calcIoUX(const Polygon2d & roi_1, const Polygon2d & roi_2);
+double calcIoUX(const PolygonRoi & roi_1, const PolygonRoi & roi_2);
 
 double calcIoUY(
   const sensor_msgs::msg::RegionOfInterest & roi_1,
   const sensor_msgs::msg::RegionOfInterest & roi_2);
 
-double calcIoUY(const Polygon2d & roi_1, const Polygon2d & roi_2);
+double calcIoUY(const PolygonRoi & roi_1, const PolygonRoi & roi_2);
 
 void objectToVertices(
   const Pose & pose, const Shape & shape, std::vector<Eigen::Vector3d> & vertices);
