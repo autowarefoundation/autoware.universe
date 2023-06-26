@@ -117,14 +117,6 @@ bool AvoidanceModule::isExecutionRequested() const
 {
   DEBUG_PRINT("AVOIDANCE isExecutionRequested");
 
-#ifndef USE_OLD_ARCHITECTURE
-  const auto is_driving_forward =
-    motion_utils::isDrivingForward(getPreviousModuleOutput().path->points);
-  if (!is_driving_forward || !(*is_driving_forward)) {
-    return false;
-  }
-#endif
-
   if (current_state_ == ModuleStatus::RUNNING) {
     return true;
   }
@@ -208,7 +200,15 @@ ModuleStatus AvoidanceModule::updateState()
   }
 
   helper_.setPreviousDrivingLanes(data.current_lanelets);
+
+#ifdef USE_OLD_ARCHITECTURE
   return ModuleStatus::RUNNING;
+#else
+  if (is_plan_running || current_state_ == ModuleStatus::RUNNING) {
+    return ModuleStatus::RUNNING;
+  }
+  return ModuleStatus::IDLE;
+#endif
 }
 
 bool AvoidanceModule::isAvoidancePlanRunning() const
@@ -620,7 +620,7 @@ void AvoidanceModule::fillDebugData(const AvoidancePlanningData & data, DebugDat
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
 
   const auto max_avoid_margin = object_parameter.safety_buffer_lateral * o_front.distance_factor +
-                                parameters_->lateral_collision_margin + 0.5 * vehicle_width;
+                                object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
 
   const auto variable = helper_.getSharpAvoidanceDistance(
     helper_.getShiftLength(o_front, utils::avoidance::isOnRight(o_front), max_avoid_margin));
@@ -871,11 +871,13 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
   const auto & base_link2front = planner_data_->parameters.base_link2front;
   const auto & base_link2rear = planner_data_->parameters.base_link2rear;
 
+  const auto is_forward_object = [](const auto & object) { return object.longitudinal > 0.0; };
+
   AvoidLineArray avoid_lines;
   for (auto & o : data.target_objects) {
     if (!o.avoid_margin) {
       o.reason = AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN;
-      if (o.avoid_required) {
+      if (o.avoid_required && is_forward_object(o)) {
         break;
       } else {
         continue;
@@ -886,7 +888,7 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
     const auto shift_length = helper_.getShiftLength(o, is_object_on_right, o.avoid_margin.get());
     if (utils::avoidance::isSameDirectionShift(is_object_on_right, shift_length)) {
       o.reason = AvoidanceDebugFactor::SAME_DIRECTION_SHIFT;
-      if (o.avoid_required) {
+      if (o.avoid_required && is_forward_object(o)) {
         break;
       } else {
         continue;
@@ -923,7 +925,7 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
         // is not zero.
         if (!data.avoiding_now) {
           o.reason = AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
-          if (o.avoid_required) {
+          if (o.avoid_required && is_forward_object(o)) {
             break;
           } else {
             continue;
@@ -937,7 +939,7 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
       if (required_jerk > parameters_->max_lateral_jerk) {
         if (!data.avoiding_now) {
           o.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
-          if (o.avoid_required) {
+          if (o.avoid_required && is_forward_object(o)) {
             break;
           } else {
             continue;
@@ -2685,8 +2687,10 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
     [](const auto & o) { return !o.is_avoidable; });
 
   const auto candidate = planCandidate();
-  if (!avoidance_data_.safe_new_sl.empty()) {
+  if (!data.safe_new_sl.empty()) {
     updateCandidateRTCStatus(candidate);
+    waitApproval();
+  } else if (path_shifter_.getShiftLines().empty()) {
     waitApproval();
   } else if (all_unavoidable) {
     waitApproval();
@@ -3168,6 +3172,7 @@ void AvoidanceModule::updateDebugMarker(
   add(createOtherObjectsMarkerArray(data.other_objects, AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE));
   add(createOtherObjectsMarkerArray(data.other_objects, AvoidanceDebugFactor::NOT_PARKING_OBJECT));
   add(createOtherObjectsMarkerArray(data.other_objects, std::string("MovingObject")));
+  add(createOtherObjectsMarkerArray(data.other_objects, std::string("CrosswalkUser")));
   add(createOtherObjectsMarkerArray(data.other_objects, std::string("OutOfTargetArea")));
   add(createOtherObjectsMarkerArray(data.other_objects, std::string("NotNeedAvoidance")));
   add(createOtherObjectsMarkerArray(data.other_objects, std::string("LessThanExecutionThreshold")));
@@ -3280,7 +3285,7 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
   const auto object_parameter = parameters_->object_parameters.at(t);
 
   const auto avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
-                            p->lateral_collision_margin + 0.5 * vehicle_width;
+                            object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
   const auto variable = helper_.getMinimumAvoidanceDistance(
     helper_.getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin));
   const auto constant =

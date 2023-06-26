@@ -28,16 +28,18 @@ struct StartPlannerParameters
   double th_arrived_distance;
   double th_stopped_velocity;
   double th_stopped_time;
-  double th_blinker_on_lateral_offset;
+  double th_turn_signal_on_lateral_offset;
+  double intersection_search_length;
+  double length_ratio_for_turn_signal_deactivation_near_intersection;
   double collision_check_margin;
   double collision_check_distance_from_end;
   // shift pull out
   bool enable_shift_pull_out;
-  double shift_pull_out_velocity;
-  int pull_out_sampling_num;
   double minimum_shift_pull_out_distance;
-  double maximum_lateral_jerk;
-  double minimum_lateral_jerk;
+  int lateral_acceleration_sampling_num;
+  double lateral_jerk;
+  double maximum_lateral_acc;
+  double minimum_lateral_acc;
   double deceleration_interval;
   // geometric pull out
   bool enable_geometric_pull_out;
