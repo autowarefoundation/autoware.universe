@@ -22,6 +22,7 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/traffic_light_roi_array.hpp>
 #include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -72,6 +73,8 @@ public:
   typedef autoware_auto_perception_msgs::msg::TrafficSignalArray SignalArrayType;
   typedef autoware_auto_perception_msgs::msg::TrafficLightRoiArray RoiArrayType;
   typedef autoware_auto_perception_msgs::msg::TrafficLightRoi::_id_type IdType;
+  typedef autoware_perception_msgs::msg::TrafficSignal NewSignalType;
+  typedef autoware_perception_msgs::msg::TrafficSignalArray NewSignalArrayType;
 
   typedef std::pair<RoiArrayType, SignalArrayType> RecordArrayType;
 
@@ -86,7 +89,12 @@ private:
 
   void multiCameraFusion(std::map<IdType, FusionRecord> & fusioned_record_map);
 
-  void groupFusion(std::map<IdType, FusionRecord> & fusioned_record_map);
+  void convertOutputMsg(
+    const std::map<IdType, FusionRecord> & grouped_record_map, NewSignalArrayType & msg_out);
+
+  void groupFusion(
+    std::map<IdType, FusionRecord> & fusioned_record_map,
+    std::map<IdType, FusionRecord> & grouped_record_map);
 
   typedef mf::sync_policies::ExactTime<CamInfoType, RoiArrayType, SignalArrayType> ExactSyncPolicy;
   typedef mf::Synchronizer<ExactSyncPolicy> ExactSync;
@@ -101,7 +109,7 @@ private:
   std::vector<std::unique_ptr<ApproSync>> appro_sync_subs_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
 
-  rclcpp::Publisher<SignalArrayType>::SharedPtr signal_pub_;
+  rclcpp::Publisher<NewSignalArrayType>::SharedPtr signal_pub_;
   /*
   the mappping from traffic light id (instance id) to regulatory element id (group id)
   */
@@ -118,13 +126,6 @@ private:
   it would be discarded
   */
   double message_lifespan_;
-  /*
-  if true, the traffic lights of the same group (sharing the same regulatory element id) would be
-  fused. It's recommended to configure this values so that it's a little bit smaller than the cycle
-  time of your sensors. For example, if the camera frequency is 10Hz, it should be between 0.09 ~
-  0.1
-  */
-  bool perform_group_fusion_;
 };
 }  // namespace traffic_light
 #endif  // TRAFFIC_LIGHT_MULTI_CAMERA_FUSION__NODE_HPP_
