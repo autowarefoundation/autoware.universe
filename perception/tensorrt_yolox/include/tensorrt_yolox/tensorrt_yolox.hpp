@@ -100,7 +100,7 @@ public:
    * @warning if we don't allocate buffers using it, "preprocess_gpu" allocates buffers at the
    * beginning
    */
-  void initPreprocesBuffer(int width, int height);
+  void initPreprocessBuffer(int width, int height);
 
   /**
    * @brief output TensorRT profiles for each layer
@@ -168,11 +168,11 @@ private:
 
   CudaUniquePtrHost<float[]> out_prob_h_;
 
-  // flag whether prepreceses are performed on GPU
+  // flag whether preprocess are performed on GPU
   bool use_gpu_preprocess_;
-  // host buffer for preprecessing on GPU
+  // host buffer for preprocessing on GPU
   CudaUniquePtrHost<unsigned char[]> image_buf_h_;
-  // device buffer for preprecessing on GPU
+  // device buffer for preprocessing on GPU
   CudaUniquePtr<unsigned char[]> image_buf_d_;
   // normalization factor used for preprocessing
   double norm_factor_;

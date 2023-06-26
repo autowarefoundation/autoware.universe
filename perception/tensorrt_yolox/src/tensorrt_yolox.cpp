@@ -241,9 +241,9 @@ TrtYoloX::TrtYoloX(
   }
 }
 
-void TrtYoloX::initPreprocesBuffer(int width, int height)
+void TrtYoloX::initPreprocessBuffer(int width, int height)
 {
-  // if size of source input has benn changed...
+  // if size of source input has been changed...
   if (src_width_ != -1 || src_height_ != -1) {
     if (width != src_width_ || height != src_height_) {
       // Free cuda memory to reallocate
@@ -325,7 +325,7 @@ void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
     CHECK_CUDA_ERROR(cudaMemcpyAsync(
       image_buf_d_.get(), image_buf_h_.get(), image.cols * image.rows * 3 * sizeof(unsigned char),
       cudaMemcpyHostToDevice, *stream_));
-    // Preprcess on GPU
+    // Preprocess on GPU
     resize_bilinear_letterbox_nhwc_to_nchw32_gpu(
       input_d_.get(), image_buf_d_.get(), input_width, input_height, 3, image.cols, image.rows, 3,
       static_cast<float>(norm_factor_), *stream_);
