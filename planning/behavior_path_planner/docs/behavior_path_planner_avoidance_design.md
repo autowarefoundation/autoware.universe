@@ -621,8 +621,8 @@ car:
 | Name                       | Unit  | Type   | Description                                                                                                | Default value |
 | :------------------------- | ----- | ------ | ---------------------------------------------------------------------------------------------------------- | ------------- |
 | enable                     | [-]   | bool   | Allow avoidance for object type CAR                                                                        | false         |
-| moving_speed_threshold     | [m/s] | double | Vehicles with speed greater than this will be judged as moving ones.                                       | 1.0           |
-| moving_time_threshold      | [s]   | double | Vehicles keep moving more long duration than this will be excluded from avoidance target.                  | 1.0           |
+| moving_speed_threshold     | [m/s] | double | Objects with speed greater than this will be judged as moving ones.                                        | 1.0           |
+| moving_time_threshold      | [s]   | double | Objects keep moving longer duration than this will be excluded from avoidance target.                      | 1.0           |
 | envelope_buffer_margin     | [m]   | double | Allow avoidance for object type TRAILER                                                                    | 0.3           |
 | avoid_margin_lateral       | [m]   | double | The lateral distance between ego and avoidance targets.                                                    | 1.0           |
 | safety_buffer_lateral      | [m]   | double | Creates an additional lateral gap that will prevent the vehicle from getting to near to the obstacle.      | 0.5           |
