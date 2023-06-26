@@ -69,7 +69,8 @@ void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_clust
   for (auto & feature_object : output_cluster_msg.feature_objects) {
     if (
       feature_object.object.classification.front().label !=
-      autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
+      autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN ||
+      feature_object.object.existence_probability > 0.0) { // keep unknown object fused with unknow roi
       known_objects.feature_objects.push_back(feature_object);
     }
   }
@@ -197,6 +198,19 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       output_cluster_msg.feature_objects.at(index).object.classification =
         feature_obj.object.classification;
     }
+
+    // Fusion also unknown_roi without iout_threshold
+    if(max_iou > 0.0 &&
+      output_cluster_msg.feature_objects.at(index).object.existence_probability <=
+        feature_obj.object.existence_probability && 
+        output_cluster_msg.feature_objects.at(index).object.classification.front().label == 
+      autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN &&
+      output_cluster_msg.feature_objects.at(index).object.existence_probability < 0.1){
+        output_cluster_msg.feature_objects.at(index).object.classification =
+        feature_obj.object.classification;
+        output_cluster_msg.feature_objects.at(index).object.existence_probability = 0.1;
+      }
+
     debug_image_rois.push_back(feature_obj.feature.roi);
   }
 
