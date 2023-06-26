@@ -56,11 +56,12 @@ MarkerArray showObjectInfo(
 
     std::ostringstream ss;
 
-    ss << "Idx: " << ++idx << "\nReason " << info.failed_reason
+    ss << "Idx: " << ++idx << "\nReason: " << info.failed_reason
        << "\nRSS dist: " << std::setprecision(4) << info.rss_longitudinal
        << "\nEgo to obj: " << info.ego_to_obj_margin << "\nLateral offset: " << info.lateral_offset
        << "\nLongitudinal offset: " << info.longitudinal_offset
-       << "\nPosition: " << (info.is_front ? "front" : "back");
+       << "\nPosition: " << (info.is_front ? "front" : "back")
+       << "\nSafe: " << (info.allow_lane_change ? "Yes" : "No");
 
     obj_marker.text = ss.str();
 
@@ -173,10 +174,15 @@ MarkerArray showPolygon(
 
   constexpr float scale_val{0.2};
   int32_t id{0};
+  const auto now = rclcpp::Clock{RCL_ROS_TIME}.now();
   Marker ego_marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, id, Marker::LINE_STRIP,
-    createMarkerScale(scale_val, scale_val, scale_val), createMarkerColor(1.0, 1.0, 1.0, 0.9));
+    "map", now, ns, id, Marker::LINE_STRIP, createMarkerScale(scale_val, scale_val, scale_val),
+    createMarkerColor(1.0, 1.0, 1.0, 0.9));
   Marker obj_marker = ego_marker;
+
+  auto text_marker = createDefaultMarker(
+    "map", now, ns + "_text", id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+    createMarkerScale(1.5, 1.5, 1.5), createMarkerColor(1.0, 1.0, 1.0, 1.0));
 
   MarkerArray marker_array;
 
@@ -185,6 +191,8 @@ MarkerArray showPolygon(
   const auto reserve_size = obj_debug_vec.size();
 
   marker_array.markers.reserve(reserve_size * 4);
+
+  int32_t idx = {0};
 
   for (const auto & [uuid, info] : obj_debug_vec) {
     const auto & color = info.allow_lane_change ? green_color : red_color;
@@ -197,6 +205,14 @@ MarkerArray showPolygon(
     }
     marker_array.markers.push_back(ego_marker);
 
+    std::ostringstream ss;
+    text_marker.id = ego_marker.id;
+    ss << ++idx;
+    text_marker.text = ss.str();
+    text_marker.pose = info.expected_ego_pose;
+
+    marker_array.markers.push_back(text_marker);
+
     const auto & obj_polygon = info.obj_polygon.outer();
     obj_marker.id = ++id;
     obj_marker.color = createMarkerColor(color[0], color[1], color[2], 0.8);
@@ -205,6 +221,11 @@ MarkerArray showPolygon(
       obj_marker.points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0));
     }
     marker_array.markers.push_back(obj_marker);
+
+    text_marker.id = obj_marker.id;
+    text_marker.pose = info.expected_obj_pose;
+    marker_array.markers.push_back(text_marker);
+
     ego_marker.points.clear();
     obj_marker.points.clear();
   }
