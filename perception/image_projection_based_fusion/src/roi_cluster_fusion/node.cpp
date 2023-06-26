@@ -28,6 +28,8 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
+#include <cmath>
+
 // cspell: ignore minx, maxx, miny, maxy, minz, maxz
 
 namespace image_projection_based_fusion
@@ -101,7 +103,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     transform_stamped = transform_stamped_optional.value();
   }
 
-  std::map<std::size_t, Polygon2d> cluster_roi_map;
+  std::vector<ClusterRoi> cluster_roi_buffer;
   for (std::size_t i = 0; i < input_cluster_msg.feature_objects.size(); ++i) {
     if (const auto & object = input_cluster_msg.feature_objects.at(i);
         object.feature.cluster.data.empty() || filter_by_distance(object) ||
@@ -115,6 +117,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       transform_stamped);
 
     std::vector<Eigen::Vector2d> projected_points;
+    Eigen::Vector3d centroid(0.0, 0.0, 0.0);
     projected_points.reserve(transformed_cluster.data.size());
     for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cluster, "x"),
          iter_y(transformed_cluster, "y"), iter_z(transformed_cluster, "z");
@@ -125,6 +128,11 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 
       Eigen::Vector4d projected_point =
         projection * Eigen::Vector4d(*iter_x, *iter_y, *iter_z, 1.0);
+
+      centroid.x() += projected_point.x();
+      centroid.y() += projected_point.y();
+      centroid.z() += projected_point.z();
+
       Eigen::Vector2d normalized_projected_point = Eigen::Vector2d(
         projected_point.x() / projected_point.z(), projected_point.y() / projected_point.z());
       if (const int projected_x = static_cast<int>(normalized_projected_point.x()),
@@ -139,38 +147,74 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       continue;
     }
 
-    Polygon2d cluster_roi = point2ConvexHull(projected_points);
-    cluster_roi_map.insert(std::make_pair(i, cluster_roi));
-    debug_cluster_rois.emplace_back(cluster_roi);
+    centroid /= static_cast<double>(projected_points.size());
+    Polygon2d polygon_roi = point2ConvexHull(projected_points);
+    ClusterRoi cluster_roi{i, polygon_roi, centroid};
+    cluster_roi_buffer.emplace_back(cluster_roi);
+    debug_cluster_rois.emplace_back(polygon_roi);
   }
 
   for (const auto & feature_obj : input_roi_msg.feature_objects) {
-    int index = 0;
+    size_t index = 0;
     double max_iou = 0.0;
-    for (const auto & [cluster_idx, cluster_roi] : cluster_roi_map) {
+    std::vector<ClusterRoi> candidates;
+    for (const auto & cluster_roi : cluster_roi_buffer) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
       Polygon2d feature_roi = roi2Polygon(feature_obj.feature.roi);
       if (use_iou_) {
-        iou = calcIoU(cluster_roi, feature_roi);
+        iou = calcIoU(cluster_roi.roi, feature_roi);
       }
       if (use_iou_x_) {
-        iou_x = calcIoUX(cluster_roi, feature_roi);
+        iou_x = calcIoUX(cluster_roi.roi, feature_roi);
       }
       if (use_iou_y_) {
-        iou_y = calcIoUY(cluster_roi, feature_roi);
+        iou_y = calcIoUY(cluster_roi.roi, feature_roi);
       }
+
       if (max_iou < iou + iou_x + iou_y) {
-        index = cluster_idx;
         max_iou = iou + iou_x + iou_y;
+        index = cluster_roi.index;
+      }
+
+      if (0.0 < iou + iou_x + iou_y) {
+        candidates.emplace_back(cluster_roi);
       }
     }
-    if (auto & cluster_object = output_cluster_msg.feature_objects.at(index).object;
-        iou_threshold_ < max_iou &&
-        cluster_object.existence_probability <= feature_obj.object.existence_probability &&
-        feature_obj.object.classification.front().label !=
-          autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
-      cluster_object.classification = feature_obj.object.classification;
+
+    if (!candidates.empty()) {
+      double max_cluster_iou = 0.0;
+      ClusterRoi *cluster_ptr_i = nullptr, *cluster_ptr_j = nullptr;
+      // calculate iou for each two candidates.
+      for (size_t i = 0; i < candidates.size() - 1; ++i) {
+        for (size_t j = i + 1; j < candidates.size(); ++j) {
+          double cluster_iou = calcIoU(candidates.at(i).roi, candidates.at(j).roi);
+          if (max_cluster_iou < cluster_iou) {
+            max_cluster_iou = cluster_iou;
+            cluster_ptr_i = &candidates.at(i);
+            cluster_ptr_j = &candidates.at(j);
+          }
+        }
+      }
+
+      if (0.25 < max_cluster_iou && cluster_ptr_i != nullptr && cluster_ptr_j != nullptr) {
+        // occlusion case -> adopt farther object
+        const auto & centroid_i = cluster_ptr_i->centroid;
+        const auto & centroid_j = cluster_ptr_j->centroid;
+        index = std::hypot(centroid_i.x(), centroid_i.y(), centroid_i.z()) <
+                    std::hypot(centroid_j.x(), centroid_j.y(), centroid_j.z())
+                  ? cluster_ptr_j->index
+                  : cluster_ptr_i->index;
+      }
+
+      if (auto & cluster_object = output_cluster_msg.feature_objects.at(index).object;
+          iou_threshold_ < max_iou &&
+          cluster_object.existence_probability <= feature_obj.object.existence_probability &&
+          feature_obj.object.classification.front().label !=
+            autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
+        cluster_object.classification = feature_obj.object.classification;
+      }
     }
+
     debug_image_rois.push_back(feature_obj.feature.roi);
   }
 
@@ -184,7 +228,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 
 bool RoiClusterFusionNode::out_of_scope(const DetectedObjectWithFeature & obj)
 {
-  auto cluster = obj.feature.cluster;
+  const auto & cluster = obj.feature.cluster;
   bool is_out = false;
   auto valid_point = [](float p, float min_num, float max_num) -> bool {
     return (p > min_num) && (p < max_num);
