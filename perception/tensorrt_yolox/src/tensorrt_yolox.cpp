@@ -104,7 +104,7 @@ namespace tensorrt_yolox
 TrtYoloX::TrtYoloX(
   const std::string & model_path, const std::string & precision, const int num_class,
   const float score_threshold, const float nms_threshold, tensorrt_common::BuildConfig build_config,
-  const bool use_gpu_preprocess, std::string calibration_image_list_file, const double norm_factor,
+  const bool use_gpu_preprocess, std::string calibration_image_list_path, const double norm_factor,
   [[maybe_unused]] const std::string & cache_dir, const tensorrt_common::BatchConfig & batch_config,
   const size_t max_workspace_size)
 {
@@ -113,21 +113,21 @@ TrtYoloX::TrtYoloX(
   norm_factor_ = norm_factor;
   if (precision == "int8") {
     if (build_config.clip_value <= 0.0) {
-      if (calibration_image_list_file.empty()) {
+      if (calibration_image_list_path.empty()) {
         throw std::runtime_error(
-          "calibration_image_list_file should be passed to generate int8 engine "
+          "calibration_image_list_path should be passed to generate int8 engine "
           "or specify values larger than zero to clip_value.");
       }
     } else {
       // if clip value is larger than zero, calibration file is not needed
-      calibration_image_list_file = "";
+      calibration_image_list_path = "";
     }
 
     int max_batch_size = 1;
     nvinfer1::Dims input_dims = tensorrt_common::get_input_dims(model_path);
     std::vector<std::string> calibration_images;
-    if (calibration_image_list_file != "") {
-      calibration_images = loadImageList(calibration_image_list_file, "");
+    if (calibration_image_list_path != "") {
+      calibration_images = loadImageList(calibration_image_list_path, "");
     }
     tensorrt_yolox::ImageStream stream(max_batch_size, input_dims, calibration_images);
     fs::path calibration_table{model_path};
