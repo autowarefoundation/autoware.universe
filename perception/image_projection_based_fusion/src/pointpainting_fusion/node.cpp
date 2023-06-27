@@ -93,7 +93,28 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   const std::string encoder_engine_path = this->declare_parameter("encoder_engine_path", "");
   const std::string head_onnx_path = this->declare_parameter("head_onnx_path", "");
   const std::string head_engine_path = this->declare_parameter("head_engine_path", "");
+
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
+  std::vector<std::string> classes_{"CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"};
+  if (std::find(class_names_.begin(), class_names_.end(), "TRUCK") != class_names_.end()) {
+    isClassTable_["CAR"] = std::bind(&isCar, std::placeholders::_1);
+  } else {
+    isClassTable_["CAR"] = std::bind(&isVehicle, std::placeholders::_1);
+  }
+  isClassTable_["TRUCK"] = std::bind(&isTruck, std::placeholders::_1);
+  isClassTable_["BUS"] = std::bind(&isBus, std::placeholders::_1);
+  isClassTable_["BICYCLE"] = std::bind(&isBicycle, std::placeholders::_1);
+  isClassTable_["PEDESTRIAN"] = std::bind(&isPedestrian, std::placeholders::_1);
+  for (const auto & cls : classes_) {
+    auto it = find(class_names_.begin(), class_names_.end(), cls);
+    if (it != class_names_.end()) {
+      int index = it - class_names_.begin();
+      class_index_[cls] = index + 1;
+    } else {
+      isClassTable_.erase(cls);
+    }
+  }
+
   has_twist_ = this->declare_parameter("has_twist", false);
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
@@ -124,6 +145,16 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
 
   detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
+
+  {
+    centerpoint::NMSParams p;
+    p.nms_type_ = centerpoint::NMS_TYPE::IoU_BEV;
+    p.target_class_names_ =
+      this->declare_parameter<std::vector<std::string>>("iou_nms_target_class_names");
+    p.search_distance_2d_ = this->declare_parameter<double>("iou_nms_search_distance_2d");
+    p.iou_threshold_ = this->declare_parameter<double>("iou_nms_threshold");
+    iou_bev_nms_.setParameters(p);
+  }
 
   centerpoint::NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
   centerpoint::NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
@@ -259,6 +290,7 @@ dc   | dc dc dc  dc ||zc|
   for (int i = 0; i < iterations; i++) {
     int stride = p_step * i;
     unsigned char * data = &transformed_pointcloud.data[0];
+    unsigned char * output = &painted_pointcloud_msg.data[0];
     float p_x = *reinterpret_cast<const float *>(&data[stride + x_offset]);
     float p_y = *reinterpret_cast<const float *>(&data[stride + y_offset]);
     float p_z = *reinterpret_cast<const float *>(&data[stride + z_offset]);
@@ -276,16 +308,10 @@ dc   | dc dc dc  dc ||zc|
         !isUnknown(label2d) &&
         isInsideBbox(normalized_projected_point.x(), normalized_projected_point.y(), roi, p_z)) {
         data = &painted_pointcloud_msg.data[0];
-        unsigned char * p_car = &data[stride + car_offset];
-        unsigned char * p_trk = &data[stride + trk_offset];
-        unsigned char * p_bus = &data[stride + bus_offset];
-        unsigned char * p_bic = &data[stride + bic_offset];
-        unsigned char * p_ped = &data[stride + ped_offset];
-        *p_car = (isVehicle(label2d)) ? 1 : *p_car;
-        *p_ped = (isPedestrian(label2d)) ? 1 : *p_ped;
-        *p_bic = (isBicycle(label2d)) ? 1 : *p_bic;
-        *p_trk = (isTruck(label2d)) ? 1 : *p_bic;
-        *p_bus = (isBus(label2d)) ? 1 : *p_bic;
+        auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
+        for (const auto & cls : isClassTable_) {
+          *p_class = cls.second(label2d) ? class_index_[cls.first] : *p_class;
+        }
       }
 #if 0
       //Parallelizing loop don't support push_back
@@ -317,24 +343,43 @@ dc   | dc dc dc  dc ||zc|
 
 void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
+  const auto objects_sub_count =
+    obj_pub_ptr_->get_subscription_count() + obj_pub_ptr_->get_intra_process_subscription_count();
+  if (objects_sub_count < 1) {
+    return;
+  }
+
+  std::chrono::system_clock::time_point start, end;
+  start = std::chrono::system_clock::now();
+
   std::vector<centerpoint::Box3D> det_boxes3d;
   bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d);
   if (!is_success) {
     return;
   }
 
-  autoware_auto_perception_msgs::msg::DetectedObjects output_obj_msg;
-  output_obj_msg.header = painted_pointcloud_msg.header;
+  std::vector<autoware_auto_perception_msgs::msg::DetectedObject> raw_objects;
+  raw_objects.reserve(det_boxes3d.size());
   for (const auto & box3d : det_boxes3d) {
-    if (box3d.score < score_threshold_) {
-      continue;
-    }
     autoware_auto_perception_msgs::msg::DetectedObject obj;
-    centerpoint::box3DToDetectedObject(box3d, class_names_, has_twist_, obj);
-    output_obj_msg.objects.emplace_back(obj);
+    box3DToDetectedObject(box3d, class_names_, has_twist_, obj);
+    raw_objects.emplace_back(obj);
   }
 
-  obj_pub_ptr_->publish(output_obj_msg);
+  autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
+  output_msg.header = painted_pointcloud_msg.header;
+  output_msg.objects = iou_bev_nms_.apply(raw_objects);
+
+  detection_class_remapper_.mapClasses(output_msg);
+
+  if (objects_sub_count > 0) {
+    obj_pub_ptr_->publish(output_msg);
+  }
+
+  end = std::chrono::system_clock::now();
+  auto time = end - start;
+  auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
+  std::cout << "postprocess time: " << msec << " msec" << std::endl;
 }
 
 bool PointPaintingFusionNode::out_of_scope(__attribute__((unused)) const DetectedObjects & obj)
