@@ -51,7 +51,7 @@
       use_all_predicted_path: false
 
       # lane change cancel
-      lane_change_cancel:
+      cancel:
         enable_on_prepare_phase: true
         enable_on_lane_changing_phase: false
         delta_time: 1.0                     # [s]

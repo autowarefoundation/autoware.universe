@@ -827,13 +827,12 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 
   // lane change cancel
   p.cancel.enable_on_prepare_phase =
-    declare_parameter<bool>(parameter("lane_change_cancel.enable_on_prepare_phase"));
+    declare_parameter<bool>(parameter("cancel.enable_on_prepare_phase"));
   p.cancel.enable_on_lane_changing_phase =
-    declare_parameter<bool>(parameter("lane_change_cancel.enable_on_lane_changing_phase"));
-  p.cancel.delta_time = declare_parameter<double>(parameter("lane_change_cancel.delta_time"));
-  p.cancel.duration = declare_parameter<double>(parameter("lane_change_cancel.duration"));
-  p.cancel.max_lateral_jerk =
-    declare_parameter<double>(parameter("lane_change_cancel.max_lateral_jerk"));
+    declare_parameter<bool>(parameter("cancel.enable_on_lane_changing_phase"));
+  p.cancel.delta_time = declare_parameter<double>(parameter("cancel.delta_time"));
+  p.cancel.duration = declare_parameter<double>(parameter("cancel.duration"));
+  p.cancel.max_lateral_jerk = declare_parameter<double>(parameter("cancel.max_lateral_jerk"));
 
   p.finish_judge_lateral_threshold =
     declare_parameter<double>("lane_change.finish_judge_lateral_threshold");
