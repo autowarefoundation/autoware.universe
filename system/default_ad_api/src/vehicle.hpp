@@ -18,6 +18,8 @@
 #include "lanelet2_extension/projection/mgrs_projector.hpp"
 
 #include <autoware_ad_api_specs/vehicle.hpp>
+#include <component_interface_specs/localization.hpp>
+#include <component_interface_specs/map.hpp>
 #include <component_interface_specs/vehicle.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -48,7 +50,7 @@ private:
   using ApiTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicators;
   using HazardLightsReport = vehicle_interface::HazardLightStatus::Message;
   using ApiHazardLight = autoware_adapi_v1_msgs::msg::HazardLights;
-  using MapProjectorInfo = vehicle_interface::MapProjectorInfo::Message;
+  using MapProjectorInfo = map_interface::MapProjectorInfo::Message;
 
   std::unordered_map<uint8_t, uint8_t> gear_type_ = {
     {GearReport::NONE, ApiGear::UNKNOWN},    {GearReport::NEUTRAL, ApiGear::NEUTRAL},
@@ -80,13 +82,13 @@ private:
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   Pub<autoware_ad_api::vehicle::VehicleKinematics> pub_kinematics_;
   Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
-  Sub<vehicle_interface::KinematicState> sub_kinematic_state_;
-  Sub<vehicle_interface::Acceleration> sub_acceleration_;
+  Sub<localization_interface::KinematicState> sub_kinematic_state_;
+  Sub<localization_interface::Acceleration> sub_acceleration_;
   Sub<vehicle_interface::SteeringStatus> sub_steering_;
   Sub<vehicle_interface::GearStatus> sub_gear_state_;
   Sub<vehicle_interface::TurnIndicatorStatus> sub_turn_indicator_;
   Sub<vehicle_interface::HazardLightStatus> sub_hazard_light_;
-  Sub<vehicle_interface::MapProjectorInfo> sub_map_projector_info_;
+  Sub<map_interface::MapProjectorInfo> sub_map_projector_info_;
   Sub<vehicle_interface::EnergyStatus> sub_energy_level_;
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -94,8 +96,10 @@ private:
   autoware_ad_api::vehicle::VehicleKinematics::Message vehicle_kinematics_;
   autoware_ad_api::vehicle::VehicleStatus::Message vehicle_status_;
 
-  void kinematic_state(const vehicle_interface::KinematicState::Message::ConstSharedPtr msg_ptr);
-  void acceleration_status(const vehicle_interface::Acceleration::Message::ConstSharedPtr msg_ptr);
+  void kinematic_state(
+    const localization_interface::KinematicState::Message::ConstSharedPtr msg_ptr);
+  void acceleration_status(
+    const localization_interface::Acceleration::Message::ConstSharedPtr msg_ptr);
   void steering_status(const vehicle_interface::SteeringStatus::Message::ConstSharedPtr msg_ptr);
   void gear_status(const GearReport::ConstSharedPtr msg_ptr);
   void turn_indicator_status(const TurnIndicatorsReport::ConstSharedPtr msg_ptr);

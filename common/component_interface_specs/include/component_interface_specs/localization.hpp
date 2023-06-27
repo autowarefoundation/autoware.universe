@@ -48,6 +48,15 @@ struct KinematicState
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
+struct Acceleration
+{
+  using Message = geometry_msgs::msg::AccelWithCovarianceStamped;
+  static constexpr char name[] = "/localization/acceleration";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
+};
+
 }  // namespace localization_interface
 
 #endif  // COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_

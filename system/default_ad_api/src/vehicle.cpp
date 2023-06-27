@@ -47,7 +47,7 @@ uint8_t VehicleNode::mapping(
 }
 
 void VehicleNode::kinematic_state(
-  const vehicle_interface::KinematicState::Message::ConstSharedPtr msg_ptr)
+  const localization_interface::KinematicState::Message::ConstSharedPtr msg_ptr)
 {
   vehicle_kinematics_.pose.header = msg_ptr->header;
   vehicle_kinematics_.pose.pose = msg_ptr->pose;
@@ -87,7 +87,7 @@ Eigen::Vector3d VehicleNode::toBasicPoint3dPt(const geometry_msgs::msg::Point sr
 }
 
 void VehicleNode::acceleration_status(
-  const vehicle_interface::Acceleration::Message::ConstSharedPtr msg_ptr)
+  const localization_interface::Acceleration::Message::ConstSharedPtr msg_ptr)
 {
   vehicle_kinematics_.accel.header = msg_ptr->header;
   vehicle_kinematics_.accel.accel = msg_ptr->accel;

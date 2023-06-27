@@ -21,31 +21,10 @@
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
-#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <tier4_map_msgs/msg/map_projector_info.hpp>
 #include <tier4_vehicle_msgs/msg/battery_status.hpp>
 
 namespace vehicle_interface
 {
-
-struct KinematicState
-{
-  using Message = nav_msgs::msg::Odometry;
-  static constexpr char name[] = "/localization/kinematic_state";
-  static constexpr size_t depth = 1;
-  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
-  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
-};
-
-struct Acceleration
-{
-  using Message = geometry_msgs::msg::AccelWithCovarianceStamped;
-  static constexpr char name[] = "/localization/acceleration";
-  static constexpr size_t depth = 1;
-  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
-  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
-};
 
 struct SteeringStatus
 {
@@ -81,15 +60,6 @@ struct HazardLightStatus
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
-};
-
-struct MapProjectorInfo
-{
-  using Message = tier4_map_msgs::msg::MapProjectorInfo;
-  static constexpr char name[] = "/map/map_projector_type";
-  static constexpr size_t depth = 1;
-  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
-  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
 struct EnergyStatus
