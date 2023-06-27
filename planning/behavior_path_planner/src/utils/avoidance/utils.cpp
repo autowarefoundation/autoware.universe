@@ -107,7 +107,7 @@ bool isTargetObjectType(
     return false;
   }
 
-  return parameters->object_parameters.at(t).enable;
+  return parameters->object_parameters.at(t).is_target;
 }
 
 bool isVehicleTypeObject(const ObjectData & object)
@@ -894,7 +894,7 @@ void filterTargetObjects(
     // calculate avoid_margin dynamically
     // NOTE: This calculation must be after calculating to_road_shoulder_distance.
     const double max_avoid_margin = object_parameter.safety_buffer_lateral * o.distance_factor +
-                                    parameters->lateral_collision_margin + 0.5 * vehicle_width;
+                                    object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
     const double min_safety_lateral_distance =
       object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
     const auto max_allowable_lateral_distance =
@@ -951,7 +951,8 @@ void filterTargetObjects(
       const auto to_traffic_light =
         utils::getDistanceToNextTrafficLight(object_pose, data.current_lanelets);
       {
-        not_parked_object = to_traffic_light < parameters->object_ignore_distance_traffic_light;
+        not_parked_object =
+          to_traffic_light < parameters->object_ignore_section_traffic_light_in_front_distance;
       }
 
       // check crosswalk
@@ -961,8 +962,8 @@ void filterTargetObjects(
         o.longitudinal;
       {
         const auto stop_for_crosswalk =
-          to_crosswalk < parameters->object_ignore_distance_crosswalk_forward &&
-          to_crosswalk > -1.0 * parameters->object_ignore_distance_crosswalk_backward;
+          to_crosswalk < parameters->object_ignore_section_crosswalk_in_front_distance &&
+          to_crosswalk > -1.0 * parameters->object_ignore_section_crosswalk_behind_distance;
         not_parked_object = not_parked_object || stop_for_crosswalk;
       }
 

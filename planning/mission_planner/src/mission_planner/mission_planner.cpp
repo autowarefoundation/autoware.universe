@@ -391,7 +391,7 @@ void MissionPlanner::on_set_mrm_route(
   // check route safety
   // step1. if in mrm state, check with mrm route
   if (mrm_route_) {
-    if (checkRerouteSafety(*mrm_route_, new_route)) {
+    if (check_reroute_safety(*mrm_route_, new_route)) {
       // success to reroute
       change_mrm_route(new_route);
       res->status.success = true;
@@ -413,7 +413,7 @@ void MissionPlanner::on_set_mrm_route(
   }
 
   // step2. if not in mrm state, check with normal route
-  if (checkRerouteSafety(*normal_route_, new_route)) {
+  if (check_reroute_safety(*normal_route_, new_route)) {
     // success to reroute
     change_mrm_route(new_route);
     res->status.success = true;
@@ -455,7 +455,7 @@ void MissionPlanner::on_clear_mrm_route(
   }
 
   // check route safety
-  if (checkRerouteSafety(*mrm_route_, *normal_route_)) {
+  if (check_reroute_safety(*mrm_route_, *normal_route_)) {
     clear_mrm_route();
     change_route(*normal_route_);
     change_state(RouteState::Message::SET);
@@ -470,7 +470,7 @@ void MissionPlanner::on_clear_mrm_route(
     normal_route_->allow_modification);
 
   // check new route safety
-  if (new_route.segments.empty() || !checkRerouteSafety(*mrm_route_, new_route)) {
+  if (new_route.segments.empty() || !check_reroute_safety(*mrm_route_, new_route)) {
     // failed to create a new route
     RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "Reroute with normal goal failed.");
     change_mrm_route(*mrm_route_);
@@ -503,9 +503,25 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
     RCLCPP_ERROR(get_logger(), "Normal route has not set yet.");
     return;
   }
-  if (mrm_route_) {
-    RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 5000, "Cannot modify goal in the emergency state");
+
+  if (mrm_route_ && mrm_route_->uuid == msg->uuid) {
+    // set to changing state
+    change_state(RouteState::Message::CHANGING);
+
+    const std::vector<geometry_msgs::msg::Pose> empty_waypoints;
+    auto new_route =
+      create_route(msg->header, empty_waypoints, msg->pose, mrm_route_->allow_modification);
+    // create_route generate new uuid, so set the original uuid again to keep that.
+    new_route.uuid = msg->uuid;
+    if (new_route.segments.empty()) {
+      change_mrm_route(*mrm_route_);
+      change_state(RouteState::Message::SET);
+      RCLCPP_ERROR(get_logger(), "The planned route is empty.");
+      return;
+    }
+
+    change_mrm_route(new_route);
+    change_state(RouteState::Message::SET);
     return;
   }
 
@@ -575,7 +591,7 @@ void MissionPlanner::on_change_route(
   }
 
   // check route safety
-  if (checkRerouteSafety(*normal_route_, new_route)) {
+  if (check_reroute_safety(*normal_route_, new_route)) {
     // success to reroute
     change_route(new_route);
     res->status.success = true;
@@ -633,7 +649,7 @@ void MissionPlanner::on_change_route_points(
   }
 
   // check route safety
-  if (checkRerouteSafety(*normal_route_, new_route)) {
+  if (check_reroute_safety(*normal_route_, new_route)) {
     // success to reroute
     change_route(new_route);
     res->status.success = true;
@@ -648,7 +664,7 @@ void MissionPlanner::on_change_route_points(
   }
 }
 
-bool MissionPlanner::checkRerouteSafety(
+bool MissionPlanner::check_reroute_safety(
   const LaneletRoute & original_route, const LaneletRoute & target_route)
 {
   if (original_route.segments.empty() || target_route.segments.empty() || !map_ptr_ || !odometry_) {

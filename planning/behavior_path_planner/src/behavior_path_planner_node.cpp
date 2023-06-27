@@ -581,11 +581,12 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   {
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
-      param.enable = declare_parameter<bool>(ns + "enable");
+      param.is_target = declare_parameter<bool>(ns + "is_target");
       param.moving_speed_threshold = declare_parameter<double>(ns + "moving_speed_threshold");
       param.moving_time_threshold = declare_parameter<double>(ns + "moving_time_threshold");
       param.max_expand_ratio = declare_parameter<double>(ns + "max_expand_ratio");
       param.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
+      param.avoid_margin_lateral = declare_parameter<double>(ns + "avoid_margin_lateral");
       param.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
       param.safety_buffer_longitudinal =
         declare_parameter<double>(ns + "safety_buffer_longitudinal");
@@ -615,12 +616,12 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
     std::string ns = "avoidance.target_filtering.";
     p.threshold_time_force_avoidance_for_stopped_vehicle =
       declare_parameter<double>(ns + "threshold_time_force_avoidance_for_stopped_vehicle");
-    p.object_ignore_distance_traffic_light =
-      declare_parameter<double>(ns + "object_ignore_distance_traffic_light");
-    p.object_ignore_distance_crosswalk_forward =
-      declare_parameter<double>(ns + "object_ignore_distance_crosswalk_forward");
-    p.object_ignore_distance_crosswalk_backward =
-      declare_parameter<double>(ns + "object_ignore_distance_crosswalk_backward");
+    p.object_ignore_section_traffic_light_in_front_distance =
+      declare_parameter<double>(ns + "object_ignore_section_traffic_light_in_front_distance");
+    p.object_ignore_section_crosswalk_in_front_distance =
+      declare_parameter<double>(ns + "object_ignore_section_crosswalk_in_front_distance");
+    p.object_ignore_section_crosswalk_behind_distance =
+      declare_parameter<double>(ns + "object_ignore_section_crosswalk_behind_distance");
     p.object_check_forward_distance =
       declare_parameter<double>(ns + "object_check_forward_distance");
     p.object_check_backward_distance =
@@ -649,7 +650,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   // avoidance maneuver (lateral)
   {
     std::string ns = "avoidance.avoidance.lateral.";
-    p.lateral_collision_margin = declare_parameter<double>(ns + "lateral_collision_margin");
     p.road_shoulder_safety_margin = declare_parameter<double>(ns + "road_shoulder_safety_margin");
     p.lateral_execution_threshold = declare_parameter<double>(ns + "lateral_execution_threshold");
     p.lateral_small_shift_threshold =
@@ -787,6 +787,12 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.lateral_acc_sampling_num =
     declare_parameter<int>(parameter("lateral_acceleration_sampling_num"));
 
+  // parked vehicle detection
+  p.object_check_min_road_shoulder_width =
+    declare_parameter<double>(parameter("object_check_min_road_shoulder_width"));
+  p.object_shiftable_ratio_threshold =
+    declare_parameter<double>(parameter("object_shiftable_ratio_threshold"));
+
   // turn signal
   p.min_length_for_turn_signal_activation =
     declare_parameter<double>(parameter("min_length_for_turn_signal_activation"));
@@ -819,15 +825,15 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
     p.check_pedestrian = declare_parameter<bool>(ns + "pedestrian");
   }
 
-  // abort
-  p.enable_cancel_lane_change = declare_parameter<bool>(parameter("enable_cancel_lane_change"));
-  p.enable_abort_lane_change = declare_parameter<bool>(parameter("enable_abort_lane_change"));
-
-  p.abort_delta_time = declare_parameter<double>(parameter("abort_delta_time"));
-  p.aborting_time = declare_parameter<double>(parameter("aborting_time"));
-  p.abort_max_lateral_jerk = declare_parameter<double>(parameter("abort_max_lateral_jerk"));
-  p.abort_exec_lateral_threshold =
-    declare_parameter<double>(parameter("abort_exec_lateral_threshold"));
+  // lane change cancel
+  p.cancel.enable_on_prepare_phase =
+    declare_parameter<bool>(parameter("cancel.enable_on_prepare_phase"));
+  p.cancel.enable_on_lane_changing_phase =
+    declare_parameter<bool>(parameter("cancel.enable_on_lane_changing_phase"));
+  p.cancel.delta_time = declare_parameter<double>(parameter("cancel.delta_time"));
+  p.cancel.duration = declare_parameter<double>(parameter("cancel.duration"));
+  p.cancel.max_lateral_jerk = declare_parameter<double>(parameter("cancel.max_lateral_jerk"));
+  p.cancel.overhang_tolerance = declare_parameter<double>(parameter("cancel.overhang_tolerance"));
 
   p.finish_judge_lateral_threshold =
     declare_parameter<double>("lane_change.finish_judge_lateral_threshold");
@@ -846,10 +852,10 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
     exit(EXIT_FAILURE);
   }
 
-  if (p.abort_delta_time < 1.0) {
+  if (p.cancel.delta_time < 1.0) {
     RCLCPP_FATAL_STREAM(
-      get_logger(), "abort_delta_time: " << p.abort_delta_time << ", is too short.\n"
-                                         << "Terminating the program...");
+      get_logger(), "cancel.delta_time: " << p.cancel.delta_time << ", is too short.\n"
+                                          << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
 
@@ -1248,7 +1254,10 @@ void BehaviorPathPlannerNode::run()
   }
 
 #ifndef USE_OLD_ARCHITECTURE
-  if (planner_data_->operation_mode->mode != OperationModeState::AUTONOMOUS) {
+  const auto controlled_by_autoware_autonomously =
+    planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
+    planner_data_->operation_mode->is_autoware_control_enabled;
+  if (!controlled_by_autoware_autonomously) {
     planner_manager_->resetRootLanelet(planner_data_);
   }
 #endif
