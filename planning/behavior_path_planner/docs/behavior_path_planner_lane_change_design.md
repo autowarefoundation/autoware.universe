@@ -301,13 +301,13 @@ The following parameters are configurable in `behavior_path_planner.param.yaml`.
 
 The following parameters are configurable in `lane_change.param.yaml`.
 
-| Name                            | Unit    | Type    | Description                                                    | Default value |
-| :------------------------------ | ------- | ------- | -------------------------------------------------------------- | ------------- |
-| `enable_on_prepare_phase`       | [-]     | boolean | Enable cancel lane change                                      | true          |
-| `enable_on_lane_changing_phase` | [-]     | boolean | Enable abort lane change.                                      | false         |
-| `delta_time`                    | [s]     | double  | The time taken to start steering to return to the center line. | 3.0           |
-| `duration`                      | [s]     | double  | The time taken to complete returning to the center line.       | 3.0           |
-| `max_lateral_jerk`              | [m/sss] | double  | The maximum lateral jerk for abort path                        | 1000.0        |
+| Name                                               | Unit    | Type    | Description                                                    | Default value |
+| :------------------------------------------------- | ------- | ------- | -------------------------------------------------------------- | ------------- |
+| `lane_change_cancel.enable_on_prepare_phase`       | [-]     | boolean | Enable cancel lane change                                      | true          |
+| `lane_change_cancel.enable_on_lane_changing_phase` | [-]     | boolean | Enable abort lane change.                                      | false         |
+| `lane_change_cancel.delta_time`                    | [s]     | double  | The time taken to start steering to return to the center line. | 3.0           |
+| `lane_change_cancel.duration`                      | [s]     | double  | The time taken to complete returning to the center line.       | 3.0           |
+| `lane_change_cancel.max_lateral_jerk`              | [m/sss] | double  | The maximum lateral jerk for abort path                        | 1000.0        |
 
 ### Debug
 
