@@ -4,11 +4,11 @@
   <name>object_velocity_splitter</name>
   <version>0.1.0</version>
   <description>object_velocity_splitter</description>
-  <author email="satoshi.tanaka@tier4.jp">Sathshi Tanaka</author>
   <maintainer email="satoshi.tanaka@tier4.jp">Sathshi Tanaka</maintainer>
   <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
   <license>Apache License 2.0</license>
+  <author email="satoshi.tanaka@tier4.jp">Sathshi Tanaka</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
