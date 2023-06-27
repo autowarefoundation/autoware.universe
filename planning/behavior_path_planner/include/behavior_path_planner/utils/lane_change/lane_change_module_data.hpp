@@ -30,10 +30,13 @@ struct LaneChangeParameters
 {
   // trajectory generation
   double backward_lane_length{200.0};
-  double lane_change_finish_judge_buffer{3.0};
   double prediction_time_resolution{0.5};
   int longitudinal_acc_sampling_num{10};
   int lateral_acc_sampling_num{10};
+
+  // parked vehicle
+  double object_check_min_road_shoulder_width{0.5};
+  double object_shiftable_ratio_threshold{0.6};
 
   // turn signal
   double min_length_for_turn_signal_activation{10.0};

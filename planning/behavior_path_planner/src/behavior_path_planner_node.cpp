@@ -78,6 +78,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       create_publisher<MarkerArray>("~/maximum_drivable_area", 1);
   }
 
+  debug_turn_signal_info_publisher_ = create_publisher<MarkerArray>("~/debug/turn_signal_info", 1);
+
   bound_publisher_ = create_publisher<MarkerArray>("~/debug/bound", 1);
 
   // subscriber
@@ -429,6 +431,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
   p.minimum_prepare_length =
     0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
+  p.lane_change_finish_judge_buffer =
+    declare_parameter<double>("lane_change.lane_change_finish_judge_buffer");
 
   // lateral acceleration map for lane change
   const auto lateral_acc_velocity =
@@ -582,6 +586,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
       param.moving_time_threshold = declare_parameter<double>(ns + "moving_time_threshold");
       param.max_expand_ratio = declare_parameter<double>(ns + "max_expand_ratio");
       param.envelope_buffer_margin = declare_parameter<double>(ns + "envelope_buffer_margin");
+      param.avoid_margin_lateral = declare_parameter<double>(ns + "avoid_margin_lateral");
       param.safety_buffer_lateral = declare_parameter<double>(ns + "safety_buffer_lateral");
       param.safety_buffer_longitudinal =
         declare_parameter<double>(ns + "safety_buffer_longitudinal");
@@ -645,7 +650,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   // avoidance maneuver (lateral)
   {
     std::string ns = "avoidance.avoidance.lateral.";
-    p.lateral_collision_margin = declare_parameter<double>(ns + "lateral_collision_margin");
     p.road_shoulder_safety_margin = declare_parameter<double>(ns + "road_shoulder_safety_margin");
     p.lateral_execution_threshold = declare_parameter<double>(ns + "lateral_execution_threshold");
     p.lateral_small_shift_threshold =
@@ -741,6 +745,8 @@ DynamicAvoidanceParameters BehaviorPathPlannerNode::getDynamicAvoidanceParam()
     p.avoid_motorcycle = declare_parameter<bool>(ns + "motorcycle");
     p.avoid_pedestrian = declare_parameter<bool>(ns + "pedestrian");
     p.min_obstacle_vel = declare_parameter<double>(ns + "min_obstacle_vel");
+    p.successive_num_to_entry_dynamic_avoidance_condition =
+      declare_parameter<int>(ns + "successive_num_to_entry_dynamic_avoidance_condition");
   }
 
   {  // drivable_area_generation
@@ -775,13 +781,17 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 
   // trajectory generation
   p.backward_lane_length = declare_parameter<double>(parameter("backward_lane_length"));
-  p.lane_change_finish_judge_buffer =
-    declare_parameter<double>(parameter("lane_change_finish_judge_buffer"));
   p.prediction_time_resolution = declare_parameter<double>(parameter("prediction_time_resolution"));
   p.longitudinal_acc_sampling_num =
     declare_parameter<int>(parameter("longitudinal_acceleration_sampling_num"));
   p.lateral_acc_sampling_num =
     declare_parameter<int>(parameter("lateral_acceleration_sampling_num"));
+
+  // parked vehicle detection
+  p.object_check_min_road_shoulder_width =
+    declare_parameter<double>(parameter("object_check_min_road_shoulder_width"));
+  p.object_shiftable_ratio_threshold =
+    declare_parameter<double>(parameter("object_shiftable_ratio_threshold"));
 
   // turn signal
   p.min_length_for_turn_signal_activation =
@@ -845,15 +855,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
       get_logger(), "abort_delta_time: " << p.abort_delta_time << ", is too short.\n"
                                          << "Terminating the program...");
     exit(EXIT_FAILURE);
-  }
-
-  const auto lc_buffer =
-    this->get_parameter("lane_change.backward_length_buffer_for_end_of_lane").get_value<double>();
-  if (lc_buffer < p.lane_change_finish_judge_buffer + 1.0) {
-    p.lane_change_finish_judge_buffer = lc_buffer - 1;
-    RCLCPP_WARN_STREAM(
-      get_logger(), "lane change buffer is less than finish buffer. Modifying the value to "
-                      << p.lane_change_finish_judge_buffer << "....");
   }
 
   return p;
@@ -1304,6 +1305,7 @@ void BehaviorPathPlannerNode::run()
   publishPathCandidate(bt_manager_->getSceneModules(), planner_data_);
   publishSceneModuleDebugMsg(bt_manager_->getAllSceneModuleDebugMsgData());
 #else
+  publishSceneModuleDebugMsg(planner_manager_->getDebugMsg());
   publishPathCandidate(planner_manager_->getSceneModuleManagers(), planner_data_);
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
   stop_reason_publisher_->publish(planner_manager_->getStopReasons());
@@ -1345,12 +1347,13 @@ void BehaviorPathPlannerNode::computeTurnSignal(
   const BehaviorModuleOutput & output)
 {
   TurnIndicatorsCommand turn_signal;
+  TurnSignalDebugData debug_data;
   HazardLightsCommand hazard_signal;
   if (output.turn_signal_info.hazard_signal.command == HazardLightsCommand::ENABLE) {
     turn_signal.command = TurnIndicatorsCommand::DISABLE;
     hazard_signal.command = output.turn_signal_info.hazard_signal.command;
   } else {
-    turn_signal = planner_data->getTurnSignal(path, output.turn_signal_info);
+    turn_signal = planner_data->getTurnSignal(path, output.turn_signal_info, debug_data);
     hazard_signal.command = HazardLightsCommand::DISABLE;
   }
   turn_signal.stamp = get_clock()->now();
@@ -1358,6 +1361,7 @@ void BehaviorPathPlannerNode::computeTurnSignal(
   turn_signal_publisher_->publish(turn_signal);
   hazard_signal_publisher_->publish(hazard_signal);
 
+  publish_turn_signal_debug_data(debug_data);
   publish_steering_factor(planner_data, turn_signal);
 }
 
@@ -1390,6 +1394,77 @@ void BehaviorPathPlannerNode::publish_steering_factor(
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
+}
+
+void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDebugData & debug_data)
+{
+  MarkerArray marker_array;
+
+  const auto current_time = rclcpp::Time();
+  constexpr double scale_x = 1.0;
+  constexpr double scale_y = 1.0;
+  constexpr double scale_z = 1.0;
+  const auto scale = tier4_autoware_utils::createMarkerScale(scale_x, scale_y, scale_z);
+  const auto desired_section_color = tier4_autoware_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999);
+  const auto required_section_color = tier4_autoware_utils::createMarkerColor(1.0, 0.0, 1.0, 0.999);
+
+  // intersection turn signal info
+  {
+    const auto & turn_signal_info = debug_data.intersection_turn_signal_info;
+
+    auto desired_start_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", current_time, "intersection_turn_signal_desired_start", 0L, Marker::SPHERE, scale,
+      desired_section_color);
+    auto desired_end_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", current_time, "intersection_turn_signal_desired_end", 0L, Marker::SPHERE, scale,
+      desired_section_color);
+    desired_start_marker.pose = turn_signal_info.desired_start_point;
+    desired_end_marker.pose = turn_signal_info.desired_end_point;
+
+    auto required_start_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", current_time, "intersection_turn_signal_required_start", 0L, Marker::SPHERE, scale,
+      required_section_color);
+    auto required_end_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", current_time, "intersection_turn_signal_required_end", 0L, Marker::SPHERE, scale,
+      required_section_color);
+    required_start_marker.pose = turn_signal_info.required_start_point;
+    required_end_marker.pose = turn_signal_info.required_end_point;
+
+    marker_array.markers.push_back(desired_start_marker);
+    marker_array.markers.push_back(desired_end_marker);
+    marker_array.markers.push_back(required_start_marker);
+    marker_array.markers.push_back(required_end_marker);
+  }
+
+  // behavior turn signal info
+  {
+    const auto & turn_signal_info = debug_data.behavior_turn_signal_info;
+
+    auto desired_start_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", current_time, "behavior_turn_signal_desired_start", 0L, Marker::CUBE, scale,
+      desired_section_color);
+    auto desired_end_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", current_time, "behavior_turn_signal_desired_end", 0L, Marker::CUBE, scale,
+      desired_section_color);
+    desired_start_marker.pose = turn_signal_info.desired_start_point;
+    desired_end_marker.pose = turn_signal_info.desired_end_point;
+
+    auto required_start_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", current_time, "behavior_turn_signal_required_start", 0L, Marker::CUBE, scale,
+      required_section_color);
+    auto required_end_marker = tier4_autoware_utils::createDefaultMarker(
+      "map", current_time, "behavior_turn_signal_required_end", 0L, Marker::CUBE, scale,
+      required_section_color);
+    required_start_marker.pose = turn_signal_info.required_start_point;
+    required_end_marker.pose = turn_signal_info.required_end_point;
+
+    marker_array.markers.push_back(desired_start_marker);
+    marker_array.markers.push_back(desired_end_marker);
+    marker_array.markers.push_back(required_start_marker);
+    marker_array.markers.push_back(required_end_marker);
+  }
+
+  debug_turn_signal_info_publisher_->publish(marker_array);
 }
 
 void BehaviorPathPlannerNode::publish_bounds(const PathWithLaneId & path)
@@ -1425,7 +1500,6 @@ void BehaviorPathPlannerNode::publish_bounds(const PathWithLaneId & path)
   bound_publisher_->publish(msg);
 }
 
-#ifdef USE_OLD_ARCHITECTURE
 void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
   const std::shared_ptr<SceneModuleVisitor> & debug_messages_data_ptr)
 {
@@ -1439,7 +1513,6 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
     debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
   }
 }
-#endif
 
 #ifdef USE_OLD_ARCHITECTURE
 void BehaviorPathPlannerNode::publishPathCandidate(
