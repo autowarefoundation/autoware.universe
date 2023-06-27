@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef object_velocity_splitter__object_velocity_splitter_NODE_HPP__
-#define object_velocity_splitter__object_velocity_splitter_NODE_HPP__
+#ifndef OBJECT_VELOCITY_SPLITTER__OBJECT_VELOCITY_SPLITTER_NODE_HPP_
+#define OBJECT_VELOCITY_SPLITTER__OBJECT_VELOCITY_SPLITTER_NODE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -64,4 +64,4 @@ private:
 
 }  // namespace object_velocity_splitter
 
-#endif  // object_velocity_splitter__object_velocity_splitter_NODE_HPP__
+#endif  // OBJECT_VELOCITY_SPLITTER__OBJECT_VELOCITY_SPLITTER_NODE_HPP_
