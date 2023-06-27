@@ -45,6 +45,8 @@ protected:
   bool only_allow_inside_cluster_{false};
   float roi_scale_factor_{1.1f};
   float iou_threshold_{0.0f};
+  float unknown_iou_threshold_{0.0f};
+  float min_roi_existence_prob_{0.1f};
   bool remove_unknown_;
   float trust_distance_;
 
