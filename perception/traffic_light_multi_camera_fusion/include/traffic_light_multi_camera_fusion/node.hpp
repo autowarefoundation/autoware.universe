@@ -20,10 +20,10 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_light_roi_array.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
+#include <tier4_perception_msgs/msg/traffic_signal_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <message_filters/subscriber.h>
@@ -47,16 +47,16 @@ struct FusionRecord
 {
   std_msgs::msg::Header header;
   sensor_msgs::msg::CameraInfo cam_info;
-  autoware_auto_perception_msgs::msg::TrafficLightRoi roi;
-  autoware_auto_perception_msgs::msg::TrafficSignal signal;
+  tier4_perception_msgs::msg::TrafficLightRoi roi;
+  tier4_perception_msgs::msg::TrafficSignal signal;
 };
 
 struct FusionRecordArr
 {
   std_msgs::msg::Header header;
   sensor_msgs::msg::CameraInfo cam_info;
-  autoware_auto_perception_msgs::msg::TrafficLightRoiArray rois;
-  autoware_auto_perception_msgs::msg::TrafficSignalArray signals;
+  tier4_perception_msgs::msg::TrafficLightRoiArray rois;
+  tier4_perception_msgs::msg::TrafficSignalArray signals;
 };
 
 bool operator<(const FusionRecordArr & r1, const FusionRecordArr & r2)
@@ -68,11 +68,11 @@ class MultiCameraFusion : public rclcpp::Node
 {
 public:
   typedef sensor_msgs::msg::CameraInfo CamInfoType;
-  typedef autoware_auto_perception_msgs::msg::TrafficLightRoi RoiType;
-  typedef autoware_auto_perception_msgs::msg::TrafficSignal SignalType;
-  typedef autoware_auto_perception_msgs::msg::TrafficSignalArray SignalArrayType;
-  typedef autoware_auto_perception_msgs::msg::TrafficLightRoiArray RoiArrayType;
-  typedef autoware_auto_perception_msgs::msg::TrafficLightRoi::_id_type IdType;
+  typedef tier4_perception_msgs::msg::TrafficLightRoi RoiType;
+  typedef tier4_perception_msgs::msg::TrafficSignal SignalType;
+  typedef tier4_perception_msgs::msg::TrafficSignalArray SignalArrayType;
+  typedef tier4_perception_msgs::msg::TrafficLightRoiArray RoiArrayType;
+  typedef tier4_perception_msgs::msg::TrafficLightRoi::_traffic_light_id_type IdType;
   typedef autoware_perception_msgs::msg::TrafficSignal NewSignalType;
   typedef autoware_perception_msgs::msg::TrafficSignalArray NewSignalArrayType;
 

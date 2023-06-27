@@ -13,7 +13,6 @@
 
   <build_depend>autoware_cmake</build_depend>
 
-  <depend>autoware_auto_perception_msgs</depend>
   <depend>cuda_utils</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
@@ -23,6 +22,7 @@
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
   <depend>tensorrt_common</depend>
+  <depend>tier4_perception_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

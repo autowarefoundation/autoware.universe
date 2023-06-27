@@ -162,11 +162,10 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
     std::bind(&MapBasedDetector::routeCallback, this, _1));
 
   // publishers
-  roi_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>(
-    "~/output/rois", 1);
+  roi_pub_ =
+    this->create_publisher<tier4_perception_msgs::msg::TrafficLightRoiArray>("~/output/rois", 1);
   expect_roi_pub_ =
-    this->create_publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>(
-      "~/expect/rois", 1);
+    this->create_publisher<tier4_perception_msgs::msg::TrafficLightRoiArray>("~/expect/rois", 1);
   viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 1);
 }
 
@@ -193,9 +192,9 @@ void MapBasedDetector::cameraInfoCallback(
   image_geometry::PinholeCameraModel pinhole_camera_model;
   pinhole_camera_model.fromCameraInfo(*input_msg);
 
-  autoware_auto_perception_msgs::msg::TrafficLightRoiArray output_msg;
+  tier4_perception_msgs::msg::TrafficLightRoiArray output_msg;
   output_msg.header = input_msg->header;
-  autoware_auto_perception_msgs::msg::TrafficLightRoiArray expect_roi_msg;
+  tier4_perception_msgs::msg::TrafficLightRoiArray expect_roi_msg;
   expect_roi_msg = output_msg;
 
   /* Camera pose in the period*/
@@ -255,7 +254,7 @@ void MapBasedDetector::cameraInfoCallback(
   expect_roi_cfg.max_vibration_yaw = 0;
   expect_roi_cfg.max_vibration_pitch = 0;
   for (const auto & traffic_light : visible_traffic_lights) {
-    autoware_auto_perception_msgs::msg::TrafficLightRoi rough_roi, expect_roi;
+    tier4_perception_msgs::msg::TrafficLightRoi rough_roi, expect_roi;
     if (!getTrafficLightRoi(
           tf_map2camera, pinhole_camera_model, traffic_light, expect_roi_cfg, expect_roi)) {
       continue;
@@ -278,10 +277,9 @@ bool MapBasedDetector::getTrafficLightRoi(
   const tf2::Transform & tf_map2camera,
   const image_geometry::PinholeCameraModel & pinhole_camera_model,
   const lanelet::ConstLineString3d traffic_light, const Config & config,
-  autoware_auto_perception_msgs::msg::TrafficLightRoi & roi) const
+  tier4_perception_msgs::msg::TrafficLightRoi & roi) const
 {
-  // id
-  roi.id = traffic_light.id();
+  roi.traffic_light_id = traffic_light.id();
 
   // for roi.x_offset and roi.y_offset
   {
@@ -341,11 +339,11 @@ bool MapBasedDetector::getTrafficLightRoi(
   const std::vector<tf2::Transform> & tf_map2camera_vec,
   const image_geometry::PinholeCameraModel & pinhole_camera_model,
   const lanelet::ConstLineString3d traffic_light, const Config & config,
-  autoware_auto_perception_msgs::msg::TrafficLightRoi & out_roi) const
+  tier4_perception_msgs::msg::TrafficLightRoi & out_roi) const
 {
-  std::vector<autoware_auto_perception_msgs::msg::TrafficLightRoi> rois;
+  std::vector<tier4_perception_msgs::msg::TrafficLightRoi> rois;
   for (const auto & tf_map2camera : tf_map2camera_vec) {
-    autoware_auto_perception_msgs::msg::TrafficLightRoi roi;
+    tier4_perception_msgs::msg::TrafficLightRoi roi;
     if (getTrafficLightRoi(tf_map2camera, pinhole_camera_model, traffic_light, config, roi)) {
       rois.push_back(roi);
     }

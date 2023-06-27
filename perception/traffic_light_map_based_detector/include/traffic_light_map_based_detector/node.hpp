@@ -20,10 +20,10 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_light_roi_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <image_geometry/pinhole_camera_model.h>
@@ -78,13 +78,12 @@ private:
    * @brief publish the rois of traffic lights with angular and distance offset
    *
    */
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr roi_pub_;
+  rclcpp::Publisher<tier4_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr roi_pub_;
   /**
    * @brief publish the rois of traffic lights with zero angular and distance offset
    *
    */
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr
-    expect_roi_pub_;
+  rclcpp::Publisher<tier4_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr expect_roi_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr viz_pub_;
 
   tf2_ros::Buffer tf_buffer_;
@@ -157,7 +156,7 @@ private:
     const tf2::Transform & tf_map2camera,
     const image_geometry::PinholeCameraModel & pinhole_camera_model,
     const lanelet::ConstLineString3d traffic_light, const Config & config,
-    autoware_auto_perception_msgs::msg::TrafficLightRoi & roi) const;
+    tier4_perception_msgs::msg::TrafficLightRoi & roi) const;
   /**
    * @brief Calculate one traffic light roi for every tf and return the roi containing all of them
    *
@@ -173,7 +172,7 @@ private:
     const std::vector<tf2::Transform> & tf_map2camera_vec,
     const image_geometry::PinholeCameraModel & pinhole_camera_model,
     const lanelet::ConstLineString3d traffic_light, const Config & config,
-    autoware_auto_perception_msgs::msg::TrafficLightRoi & roi) const;
+    tier4_perception_msgs::msg::TrafficLightRoi & roi) const;
   /**
    * @brief Publish the traffic lights for visualization
    *

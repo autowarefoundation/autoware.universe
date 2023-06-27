@@ -135,7 +135,7 @@ void TrafficLightFineDetectorNodelet::callback(
   std::map<int, TrafficLightRoi> id2expectRoi;
   std::map<int, tensorrt_yolox::ObjectArray> id2detections;
   for (const auto & expect_roi : expect_roi_msg->rois) {
-    id2expectRoi[expect_roi.id] = expect_roi;
+    id2expectRoi[expect_roi.traffic_light_id] = expect_roi;
   }
 
   rosMsg2CvMat(in_image_msg, original_image, "bgr8");
@@ -162,7 +162,7 @@ void TrafficLightFineDetectorNodelet::callback(
       det.y_offset = lt_roi.y;
       det.width = rb_roi.x - lt_roi.x;
       det.height = rb_roi.y - lt_roi.y;
-      id2detections[rough_roi.id].push_back(det);
+      id2detections[rough_roi.traffic_light_id].push_back(det);
     }
   }
   detectionMatch(id2expectRoi, id2detections, out_rois);
@@ -238,7 +238,7 @@ void TrafficLightFineDetectorNodelet::detectionMatch(
   out_rois.rois.clear();
   for (const auto & p : bestDetections) {
     TrafficLightRoi tlr;
-    tlr.id = p.first;
+    tlr.traffic_light_id = p.first;
     tlr.roi.x_offset = p.second.x_offset;
     tlr.roi.y_offset = p.second.y_offset;
     tlr.roi.width = p.second.width;

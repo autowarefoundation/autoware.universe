@@ -22,10 +22,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tensorrt_yolox/tensorrt_yolox.hpp>
 
-#include <autoware_auto_perception_msgs/msg/traffic_light_roi_array.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
 #include <cv_bridge/cv_bridge.hpp>
@@ -54,8 +54,8 @@ namespace traffic_light
 {
 class TrafficLightFineDetectorNodelet : public rclcpp::Node
 {
-  using TrafficLightRoi = autoware_auto_perception_msgs::msg::TrafficLightRoi;
-  using TrafficLightRoiArray = autoware_auto_perception_msgs::msg::TrafficLightRoiArray;
+  using TrafficLightRoi = tier4_perception_msgs::msg::TrafficLightRoi;
+  using TrafficLightRoiArray = tier4_perception_msgs::msg::TrafficLightRoiArray;
 
 public:
   explicit TrafficLightFineDetectorNodelet(const rclcpp::NodeOptions & options);

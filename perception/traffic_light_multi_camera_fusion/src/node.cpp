@@ -22,11 +22,11 @@
 namespace
 {
 
-bool isUnknown(const autoware_auto_perception_msgs::msg::TrafficSignal & signal)
+bool isUnknown(const tier4_perception_msgs::msg::TrafficSignal & signal)
 {
-  return signal.lights.size() == 1 &&
-         signal.lights[0].color == autoware_auto_perception_msgs::msg::TrafficLight::UNKNOWN &&
-         signal.lights[0].shape == autoware_auto_perception_msgs::msg::TrafficLight::UNKNOWN;
+  return signal.elements.size() == 1 &&
+         signal.elements[0].color == tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN &&
+         signal.elements[0].shape == tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
 }
 
 /**
@@ -98,9 +98,9 @@ V at_or(const std::unordered_map<K, V> & map, const K & key, const V & value)
 }
 
 autoware_perception_msgs::msg::TrafficLightElement convert(
-  const autoware_auto_perception_msgs::msg::TrafficLight & input)
+  const tier4_perception_msgs::msg::TrafficLightElement & input)
 {
-  typedef autoware_auto_perception_msgs::msg::TrafficLight OldElem;
+  typedef tier4_perception_msgs::msg::TrafficLightElement OldElem;
   typedef autoware_perception_msgs::msg::TrafficLightElement NewElem;
   static const std::unordered_map<OldElem::_color_type, NewElem::_color_type> color_map(
     {{OldElem::RED, NewElem::RED},
@@ -230,7 +230,7 @@ void MultiCameraFusion::convertOutputMsg(
     const SignalType & signal = p.second.signal;
     NewSignalType signal_out;
     signal_out.traffic_signal_id = reg_ele_id;
-    for (const auto & ele : signal.lights) {
+    for (const auto & ele : signal.elements) {
       signal_out.elements.push_back(convert(ele));
     }
     msg_out.signals.push_back(signal_out);
@@ -266,7 +266,7 @@ void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusio
         const RoiType & roi = record_arr.rois.rois[i];
         auto signal_it = std::find_if(
           record_arr.signals.signals.begin(), record_arr.signals.signals.end(),
-          [roi](const SignalType & s1) { return roi.id == s1.map_primitive_id; });
+          [roi](const SignalType & s1) { return roi.traffic_light_id == s1.traffic_light_id; });
         /*
         failed to find corresponding signal. skip it
         */
@@ -279,9 +279,9 @@ void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fusio
         update it
         */
         if (
-          fusioned_record_map.find(roi.id) == fusioned_record_map.end() ||
-          ::compareRecord(record, fusioned_record_map[roi.id]) >= 0) {
-          fusioned_record_map[roi.id] = record;
+          fusioned_record_map.find(roi.traffic_light_id) == fusioned_record_map.end() ||
+          ::compareRecord(record, fusioned_record_map[roi.traffic_light_id]) >= 0) {
+          fusioned_record_map[roi.traffic_light_id] = record;
         }
       }
       it++;
@@ -295,7 +295,7 @@ void MultiCameraFusion::groupFusion(
 {
   grouped_record_map.clear();
   for (auto & p : fusioned_record_map) {
-    IdType roi_id = p.second.roi.id;
+    IdType roi_id = p.second.roi.traffic_light_id;
     /*
     this should not happen
     */
@@ -306,7 +306,7 @@ void MultiCameraFusion::groupFusion(
       /*
       keep the best record for every regulatory element id
       */
-      IdType reg_ele_id = traffic_light_id_to_regulatory_ele_id_[p.second.roi.id];
+      IdType reg_ele_id = traffic_light_id_to_regulatory_ele_id_[p.second.roi.traffic_light_id];
       if (
         grouped_record_map.count(reg_ele_id) == 0 ||
         ::compareRecord(p.second, grouped_record_map[reg_ele_id]) >= 0) {
