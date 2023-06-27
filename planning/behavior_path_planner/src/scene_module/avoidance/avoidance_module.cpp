@@ -620,7 +620,7 @@ void AvoidanceModule::fillDebugData(const AvoidancePlanningData & data, DebugDat
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
 
   const auto max_avoid_margin = object_parameter.safety_buffer_lateral * o_front.distance_factor +
-                                parameters_->lateral_collision_margin + 0.5 * vehicle_width;
+                                object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
 
   const auto variable = helper_.getSharpAvoidanceDistance(
     helper_.getShiftLength(o_front, utils::avoidance::isOnRight(o_front), max_avoid_margin));
@@ -3045,7 +3045,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   }
 
   // compute blinker start idx and end idx
-  const size_t blinker_start_idx = [&]() {
+  size_t blinker_start_idx = [&]() {
     for (size_t idx = start_idx; idx <= end_idx; ++idx) {
       const double current_shift_length = path.shift_length.at(idx);
       if (current_shift_length > 0.1) {
@@ -3054,7 +3054,13 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
     }
     return start_idx;
   }();
-  const size_t blinker_end_idx = end_idx;
+  size_t blinker_end_idx = end_idx;
+
+  // prevent invalid access for out-of-range
+  blinker_start_idx =
+    std::min(std::max(std::size_t(0), blinker_start_idx), path.path.points.size() - 1);
+  blinker_end_idx =
+    std::min(std::max(blinker_start_idx, blinker_end_idx), path.path.points.size() - 1);
 
   const auto blinker_start_pose = path.path.points.at(blinker_start_idx).point.pose;
   const auto blinker_end_pose = path.path.points.at(blinker_end_idx).point.pose;
@@ -3285,7 +3291,7 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
   const auto object_parameter = parameters_->object_parameters.at(t);
 
   const auto avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
-                            p->lateral_collision_margin + 0.5 * vehicle_width;
+                            object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
   const auto variable = helper_.getMinimumAvoidanceDistance(
     helper_.getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin));
   const auto constant =
