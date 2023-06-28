@@ -60,7 +60,7 @@ public:
   /**
    * @brief constructor
    */
-  explicit MpcLateralController(rclcpp::Node & node);
+  explicit MpcLateralController(rclcpp::Node * node);
 
   /**
    * @brief destructor
@@ -68,7 +68,8 @@ public:
   virtual ~MpcLateralController();
 
 private:
-  rclcpp::Node * node_;
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Logger logger_;
 
   //!< @brief topic publisher for predicted trajectory
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_pub_predicted_traj;
@@ -204,7 +205,7 @@ private:
   /**
    * @brief Declare MPC parameters as ROS parameters to allow tuning on the fly
    */
-  void declareMPCparameters();
+  void declareMPCparameters(rclcpp::Node * node);
 
   /**
    * @brief Called when parameters are changed outside of node
