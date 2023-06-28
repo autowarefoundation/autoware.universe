@@ -77,7 +77,7 @@ private:
     double slope_angle{0.0};
     double dt{0.0};
   };
-  rclcpp::Node * node_;
+  rclcpp::Node & node_;
   // ros variables
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_slope;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_debug;
@@ -202,7 +202,7 @@ private:
   // debug values
   DebugValues m_debug_values;
 
-  std::shared_ptr<rclcpp::Time> m_last_running_time{std::make_shared<rclcpp::Time>(node_->now())};
+  std::shared_ptr<rclcpp::Time> m_last_running_time{std::make_shared<rclcpp::Time>(node_.now())};
 
   // Diagnostic
 
