@@ -12,7 +12,7 @@ Therefore the output path may have a collision with road boundaries or obstacles
 
 ```plantuml
 @startuml
-title getEBTrajectory
+title get_trajectory
 start
 
 :crop trajectory;
@@ -21,24 +21,24 @@ Forward length is eb.common.num_points * eb.common.delta_arc_length.
 Backward length is common.output_backward_traj_length.
 end note
 
-:insertFixedPoint;
+:insert_fixed_point;
 
 :resample trajectory;
 note right
 Resampling interval is eb.common.delta_arc_length.
 end note
 
-:getPaddedTrajectoryPoints;
+:get_padded_trajectory_points;
 note right
 Pad the last optimization point so that the number will be always eb.common.num_points.
 This is for enabling warm start.
 end note
 
-:updateConstraint;
+:update_constraint;
 
-:optimizeTrajectory;
+:optimize_trajectory;
 
-:convertOptimizedPointsToTrajectory;
+:convert_optimized_points_to_trajectory;
 note right
 The validation function is contained.
 When eb.option.enable_optimization_validation is true, the optimization result will be ignored if the validation fails.

@@ -37,11 +37,11 @@ public:
     rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
     const CommonParam & common_param, const std::shared_ptr<TimeKeeper> time_keeper_ptr);
 
-  std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
+  std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> get_trajectory(
     const PlannerData & planner_data);
 
   void initialize(const bool enable_debug_info, const CommonParam & common_param);
-  void resetPreviousData();
+  void reset_previous_data();
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
 private:
@@ -73,20 +73,20 @@ private:
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_points_ptr_{nullptr};
 
-  std::vector<TrajectoryPoint> insertFixedPoint(
+  std::vector<TrajectoryPoint> insert_fixed_point(
     const std::vector<TrajectoryPoint> & traj_point) const;
 
-  std::tuple<std::vector<TrajectoryPoint>, size_t> getPaddedTrajectoryPoints(
+  std::tuple<std::vector<TrajectoryPoint>, size_t> get_padded_trajectory_points(
     const std::vector<TrajectoryPoint> & traj_points) const;
 
-  void updateConstraint(
+  void update_constraint(
     const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points,
     const bool is_goal_contained, const int pad_start_idx);
 
-  std::optional<std::vector<double>> optimizeTrajectory();
+  std::optional<std::vector<double>> optimize_trajectory();
 
   std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
-  convertOptimizedPointsToTrajectory(
+  convert_optimized_points_to_trajectory(
     const std::vector<double> & optimized_points, const std::vector<TrajectoryPoint> & traj_points,
     const int pad_start_idx) const;
 };

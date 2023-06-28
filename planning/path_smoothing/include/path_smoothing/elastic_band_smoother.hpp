@@ -92,7 +92,7 @@ protected:
 
   // reset functions
   void initializePlanning();
-  void resetPreviousData();
+  void reset_previous_data();
 
   // main functions
   bool isDataReady(const Path & path, rclcpp::Clock clock) const;
@@ -103,7 +103,7 @@ protected:
     const std::vector<TrajectoryPoint> & optimized_points) const;
 
   // functions in generateOptimizedTrajectory
-  std::vector<TrajectoryPoint> optimizeTrajectory(const PlannerData & planner_data);
+  std::vector<TrajectoryPoint> optimize_trajectory(const PlannerData & planner_data);
   std::vector<TrajectoryPoint> getPrevOptimizedTrajectory(
     const std::vector<TrajectoryPoint> & traj_points) const;
   void applyInputVelocity(

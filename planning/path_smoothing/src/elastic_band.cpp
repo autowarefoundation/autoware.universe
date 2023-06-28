@@ -47,7 +47,7 @@ const auto value_dist_1(const int r, const int c, const int num_points)
     return -4.0;
 }
 
-double p_matrice_value(const int r, const int c, const int num_points)
+double p_matrix_value(const int r, const int c, const int num_points)
 {
   double value = 0.0;
   if (r == c)
@@ -59,22 +59,22 @@ double p_matrice_value(const int r, const int c, const int num_points)
   return value;
 }
 
-Eigen::MatrixXd makePMatrix(const int num_points)
+Eigen::MatrixXd make_p_matrix(const int num_points)
 {
   // create P block matrix
-  Eigen::MatrixXd P_quarter = Eigen::MatrixXd::Zero(num_points, num_points);
+  Eigen::MatrixXd p_quarter = Eigen::MatrixXd::Zero(num_points, num_points);
   for (int r = 0; r < num_points; ++r)
-    for (int c = 0; c < num_points; ++c) P_quarter(r, c) = p_matrice_value(r, c, num_points);
+    for (int c = 0; c < num_points; ++c) p_quarter(r, c) = p_matrix_value(r, c, num_points);
 
   // create P matrix
-  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(num_points * 2, num_points * 2);
-  P.block(0, 0, num_points, num_points) = P_quarter;
-  P.block(num_points, num_points, num_points, num_points) = P_quarter;
+  Eigen::MatrixXd p = Eigen::MatrixXd::Zero(num_points * 2, num_points * 2);
+  p.block(0, 0, num_points, num_points) = p_quarter;
+  p.block(num_points, num_points, num_points, num_points) = p_quarter;
 
-  return P;
+  return p;
 }
 
-std::vector<double> toStdVector(const Eigen::VectorXd & eigen_vec)
+std::vector<double> to_std_vector(const Eigen::VectorXd & eigen_vec)
 {
   return {eigen_vec.data(), eigen_vec.data() + eigen_vec.rows()};
 }
@@ -111,13 +111,13 @@ void EBPathSmoother::initialize(const bool enable_debug_info, const CommonParam 
   common_param_ = common_param;
 }
 
-void EBPathSmoother::resetPreviousData()
+void EBPathSmoother::reset_previous_data()
 {
   prev_eb_traj_points_ptr_ = nullptr;
 }
 
 std::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
-EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
+EBPathSmoother::get_trajectory(const PlannerData & planner_data)
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -138,7 +138,7 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
 
   // 2. insert fixed point
   // NOTE: This should be after cropping trajectory so that fixed point will not be cropped.
-  const auto traj_points_with_fixed_point = insertFixedPoint(cropped_traj_points);
+  const auto traj_points_with_fixed_point = insert_fixed_point(cropped_traj_points);
 
   // 3. resample trajectory with delta_arc_length
   const auto resampled_traj_points = [&]() {
@@ -155,13 +155,14 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
   }();
 
   // 4. pad trajectory points
-  const auto [padded_traj_points, pad_start_idx] = getPaddedTrajectoryPoints(resampled_traj_points);
+  const auto [padded_traj_points, pad_start_idx] =
+    get_padded_trajectory_points(resampled_traj_points);
 
   // 5. update constraint for elastic band's QP
-  updateConstraint(p.header, padded_traj_points, is_goal_contained, pad_start_idx);
+  update_constraint(p.header, padded_traj_points, is_goal_contained, pad_start_idx);
 
   // 6. get optimization result
-  const auto optimized_points = optimizeTrajectory();
+  const auto optimized_points = optimize_trajectory();
   if (!optimized_points) {
     RCLCPP_INFO_EXPRESSION(
       logger_, enable_debug_info_, "return std::nullopt since smoothing failed");
@@ -170,7 +171,7 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
 
   // 7. convert optimization result to trajectory
   const auto eb_traj_points =
-    convertOptimizedPointsToTrajectory(*optimized_points, padded_traj_points, pad_start_idx);
+    convert_optimized_points_to_trajectory(*optimized_points, padded_traj_points, pad_start_idx);
   if (!eb_traj_points) {
     RCLCPP_WARN(logger_, "return std::nullopt since x or y error is too large");
     return std::nullopt;
@@ -186,7 +187,7 @@ EBPathSmoother::getEBTrajectory(const PlannerData & planner_data)
   return *eb_traj_points;
 }
 
-std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
+std::vector<TrajectoryPoint> EBPathSmoother::insert_fixed_point(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
   time_keeper_ptr_->tic(__func__);
@@ -205,7 +206,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::insertFixedPoint(
   return traj_points_with_fixed_point;
 }
 
-std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajectoryPoints(
+std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::get_padded_trajectory_points(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
   time_keeper_ptr_->tic(__func__);
@@ -253,7 +254,7 @@ std::vector<double> calculate_upper_bound(
   return upper_bound;
 }
 
-void EBPathSmoother::updateConstraint(
+void EBPathSmoother::update_constraint(
   const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points,
   const bool is_goal_contained, const int pad_start_idx)
 {
@@ -286,7 +287,7 @@ void EBPathSmoother::updateConstraint(
   }
 
   // calculate P
-  const Eigen::MatrixXd raw_P_for_smooth = p.smooth_weight * makePMatrix(p.num_points);
+  const Eigen::MatrixXd raw_P_for_smooth = p.smooth_weight * make_p_matrix(p.num_points);
   const Eigen::MatrixXd P_for_smooth = theta_mat * raw_P_for_smooth * theta_mat.transpose();
   const Eigen::MatrixXd P_for_lat_error =
     p.lat_error_weight * Eigen::MatrixXd::Identity(p.num_points, p.num_points);
@@ -294,7 +295,7 @@ void EBPathSmoother::updateConstraint(
 
   // calculate q
   const Eigen::VectorXd raw_q_for_smooth = theta_mat * raw_P_for_smooth * x_mat;
-  const auto q = toStdVector(raw_q_for_smooth);
+  const auto q = to_std_vector(raw_q_for_smooth);
 
   if (p.enable_warm_start && osqp_solver_ptr_) {
     osqp_solver_ptr_->updateP(P);
@@ -317,7 +318,7 @@ void EBPathSmoother::updateConstraint(
   time_keeper_ptr_->toc(__func__, "        ");
 }
 
-std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory()
+std::optional<std::vector<double>> EBPathSmoother::optimize_trajectory()
 {
   time_keeper_ptr_->tic(__func__);
 
@@ -343,7 +344,7 @@ std::optional<std::vector<double>> EBPathSmoother::optimizeTrajectory()
   return optimized_points;
 }
 
-std::optional<std::vector<TrajectoryPoint>> EBPathSmoother::convertOptimizedPointsToTrajectory(
+std::optional<std::vector<TrajectoryPoint>> EBPathSmoother::convert_optimized_points_to_trajectory(
   const std::vector<double> & optimized_points, const std::vector<TrajectoryPoint> & traj_points,
   const int pad_start_idx) const
 {
