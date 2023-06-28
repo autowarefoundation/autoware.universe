@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef Traffic_LIGHT_RECOGNITION_MARKER_PUBLISHER_HPP_
-#define Traffic_LIGHT_RECOGNITION_MARKER_PUBLISHER_HPP_
+#ifndef TRAFFIC_LIGHT_RECOGNITION_MARKER_PUBLISHER_HPP_
+#define TRAFFIC_LIGHT_RECOGNITION_MARKER_PUBLISHER_HPP_
 
 #include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -25,6 +25,9 @@
 #include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+
+#include <map>
+#include <string>
 
 class TrafficLightRecognitionMarkerPublisher : public rclcpp::Node
 {
@@ -56,4 +59,4 @@ private:
   int32_t marker_id = 0;
 };
 
-#endif  // Traffic_LIGHT_RECOGNITION_MARKER_PUBLISHER_HPP_
+#endif  // TRAFFIC_LIGHT_RECOGNITION_MARKER_PUBLISHER_HPP_
