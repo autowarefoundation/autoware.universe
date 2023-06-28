@@ -101,8 +101,8 @@ PathSafetyStatus isLaneChangePathSafe(
   const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameter,
   const behavior_path_planner::LaneChangeParameters & lane_change_parameter,
   const double front_decel, const double rear_decel,
-  std::unordered_map<std::string, CollisionCheckDebug> & debug_data, const double prepare_acc = 0.0,
-  const double lane_changing_acc = 0.0);
+  std::unordered_map<std::string, CollisionCheckDebug> & debug_data, const double prepare_acc,
+  const double lane_changing_acc);
 
 bool isObjectIndexIncluded(
   const size_t & index, const std::vector<size_t> & dynamic_objects_indices);
