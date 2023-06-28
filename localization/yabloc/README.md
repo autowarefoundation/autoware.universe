@@ -49,7 +49,7 @@ YabLoc transforms these segments for each particle and determines the particle's
 
 These topics are not visualized by default.
 
-![yabloc rviz](docs/yabloc_rviz_description.png){width="800"}
+<img src="docs/yabloc_rviz_description.png" width=800>
 
 | index | topic name                                                     | description                                                                                                                                                            |
 | ----- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -61,7 +61,7 @@ These topics are not visualized by default.
 
 These topics are not visualized by default.
 
-![yabloc image topics](docs/yabloc_image_description.png){width="800"}
+<img src="docs/yabloc_image_description.png" width=800>
 
 | index | topic name                                                              | description                                                                   |
 | ----- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
