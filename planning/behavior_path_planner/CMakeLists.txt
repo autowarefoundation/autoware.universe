@@ -138,6 +138,9 @@ if(BUILD_TESTING)
   target_link_libraries(test_${PROJECT_NAME}_node_interface
     behavior_path_planner_node
   )
+  if(COMPILE_WITH_OLD_ARCHITECTURE)
+  target_compile_definitions(test_${PROJECT_NAME}_node_interface PRIVATE USE_OLD_ARCHITECTURE)
+  endif()
 endif()
 
 ament_auto_package(
