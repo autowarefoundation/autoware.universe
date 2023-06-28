@@ -17,6 +17,7 @@
 
 #include "osqp_interface/osqp_interface.hpp"
 #include "path_smoothing/common_structs.hpp"
+#include "path_smoothing/parameters.hpp"
 #include "path_smoothing/type_alias.hpp"
 
 #include <Eigen/Core>
@@ -44,45 +45,6 @@ public:
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
 private:
-  struct EBParam
-  {
-    // qp
-    struct QPParam
-    {
-      int max_iteration;
-      double eps_abs;
-      double eps_rel;
-    };
-
-    EBParam() = default;
-    explicit EBParam(rclcpp::Node * node);
-    void onParam(const std::vector<rclcpp::Parameter> & parameters);
-
-    // option
-    bool enable_warm_start;
-    bool enable_optimization_validation;
-
-    // common
-    double delta_arc_length;
-    int num_points;
-
-    // clearance
-    int num_joint_points;
-    double clearance_for_fix;
-    double clearance_for_joint;
-    double clearance_for_smooth;
-
-    // weight
-    double smooth_weight;
-    double lat_error_weight;
-
-    // qp
-    QPParam qp_param;
-
-    // validation
-    double max_validation_error;
-  };
-
   struct Constraint2d
   {
     struct Constraint

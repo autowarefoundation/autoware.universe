@@ -26,35 +26,45 @@
 
 namespace
 {
+
+const auto value_dist_0(const int r, const int num_points)
+{
+  if (r == 0 || r == num_points - 1)
+    return 1.0;
+  else if (r == 1 || r == num_points - 2)
+    return 5.0;
+  else
+    return 6.0;
+}
+
+const auto value_dist_1(const int r, const int c, const int num_points)
+{
+  if (r == 0 || r == num_points - 1)
+    return -2.0;
+  else if (c == 0 || c == num_points - 1)
+    return -2.0;
+  else
+    return -4.0;
+}
+
+double p_matrice_value(const int r, const int c, const int num_points)
+{
+  double value = 0.0;
+  if (r == c)
+    value = value_dist_0(r, num_points);
+  else if (std::abs(c - r) == 1)
+    value = value_dist_1(r, c, num_points);
+  else if (std::abs(c - r) == 2)
+    value = 1.0;
+  return value;
+}
+
 Eigen::MatrixXd makePMatrix(const int num_points)
 {
   // create P block matrix
   Eigen::MatrixXd P_quarter = Eigen::MatrixXd::Zero(num_points, num_points);
-  for (int r = 0; r < num_points; ++r) {
-    for (int c = 0; c < num_points; ++c) {
-      if (r == c) {
-        if (r == 0 || r == num_points - 1) {
-          P_quarter(r, c) = 1.0;
-        } else if (r == 1 || r == num_points - 2) {
-          P_quarter(r, c) = 5.0;
-        } else {
-          P_quarter(r, c) = 6.0;
-        }
-      } else if (std::abs(c - r) == 1) {
-        if (r == 0 || r == num_points - 1) {
-          P_quarter(r, c) = -2.0;
-        } else if (c == 0 || c == num_points - 1) {
-          P_quarter(r, c) = -2.0;
-        } else {
-          P_quarter(r, c) = -4.0;
-        }
-      } else if (std::abs(c - r) == 2) {
-        P_quarter(r, c) = 1.0;
-      } else {
-        P_quarter(r, c) = 0.0;
-      }
-    }
-  }
+  for (int r = 0; r < num_points; ++r)
+    for (int c = 0; c < num_points; ++c) P_quarter(r, c) = p_matrice_value(r, c, num_points);
 
   // create P matrix
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(num_points * 2, num_points * 2);
@@ -72,79 +82,6 @@ std::vector<double> toStdVector(const Eigen::VectorXd & eigen_vec)
 
 namespace path_smoothing
 {
-EBPathSmoother::EBParam::EBParam(rclcpp::Node * node)
-{
-  {  // option
-    enable_warm_start = node->declare_parameter<bool>("elastic_band.option.enable_warm_start");
-    enable_optimization_validation =
-      node->declare_parameter<bool>("elastic_band.option.enable_optimization_validation");
-  }
-
-  {  // common
-    delta_arc_length = node->declare_parameter<double>("elastic_band.common.delta_arc_length");
-    num_points = node->declare_parameter<int>("elastic_band.common.num_points");
-  }
-
-  {  // clearance
-    num_joint_points = node->declare_parameter<int>("elastic_band.clearance.num_joint_points");
-    clearance_for_fix = node->declare_parameter<double>("elastic_band.clearance.clearance_for_fix");
-    clearance_for_joint =
-      node->declare_parameter<double>("elastic_band.clearance.clearance_for_joint");
-    clearance_for_smooth =
-      node->declare_parameter<double>("elastic_band.clearance.clearance_for_smooth");
-  }
-
-  {  // weight
-    smooth_weight = node->declare_parameter<double>("elastic_band.weight.smooth_weight");
-    lat_error_weight = node->declare_parameter<double>("elastic_band.weight.lat_error_weight");
-  }
-
-  {  // qp
-    qp_param.max_iteration = node->declare_parameter<int>("elastic_band.qp.max_iteration");
-    qp_param.eps_abs = node->declare_parameter<double>("elastic_band.qp.eps_abs");
-    qp_param.eps_rel = node->declare_parameter<double>("elastic_band.qp.eps_rel");
-  }
-
-  // validation
-  max_validation_error = node->declare_parameter<double>("elastic_band.validation.max_error");
-}
-
-void EBPathSmoother::EBParam::onParam(const std::vector<rclcpp::Parameter> & parameters)
-{
-  using tier4_autoware_utils::updateParam;
-
-  {  // option
-    updateParam<bool>(parameters, "elastic_band.option.enable_warm_start", enable_warm_start);
-    updateParam<bool>(
-      parameters, "elastic_band.option.enable_optimization_validation",
-      enable_optimization_validation);
-  }
-
-  {  // common
-    updateParam<double>(parameters, "elastic_band.common.delta_arc_length", delta_arc_length);
-    updateParam<int>(parameters, "elastic_band.common.num_points", num_points);
-  }
-
-  {  // clearance
-    updateParam<int>(parameters, "elastic_band.clearance.num_joint_points", num_joint_points);
-    updateParam<double>(parameters, "elastic_band.clearance.clearance_for_fix", clearance_for_fix);
-    updateParam<double>(
-      parameters, "elastic_band.clearance.clearance_for_joint", clearance_for_joint);
-    updateParam<double>(
-      parameters, "elastic_band.clearance.clearance_for_smooth", clearance_for_smooth);
-  }
-
-  {  // weight
-    updateParam<double>(parameters, "elastic_band.weight.smooth_weight", smooth_weight);
-    updateParam<double>(parameters, "elastic_band.weight.lat_error_weight", lat_error_weight);
-  }
-
-  {  // qp
-    updateParam<int>(parameters, "elastic_band.qp.max_iteration", qp_param.max_iteration);
-    updateParam<double>(parameters, "elastic_band.qp.eps_abs", qp_param.eps_abs);
-    updateParam<double>(parameters, "elastic_band.qp.eps_rel", qp_param.eps_rel);
-  }
-}
 
 EBPathSmoother::EBPathSmoother(
   rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
@@ -286,6 +223,36 @@ std::tuple<std::vector<TrajectoryPoint>, size_t> EBPathSmoother::getPaddedTrajec
   return {padded_traj_points, pad_start_idx};
 }
 
+std::vector<double> calculate_upper_bound(
+  const EBParam & eb_param, const bool is_goal_contained, const int pad_start_idx,
+  std::vector<size_t> & debug_fixed_traj_point_indexes)
+{
+  const auto & p = eb_param;
+
+  const auto constraint_segment_length = [&](const auto i) {
+    // NOTE: fix goal and its previous pose to keep goal orientation
+    const auto is_goal_or_previous =
+      is_goal_contained &&
+      (p.num_points - 2 <= static_cast<int>(i) || pad_start_idx - 2 <= static_cast<int>(i));
+    // NOTE: Only first point can be fixed since there is a lateral deviation
+    //       between the two points.
+    //       The front point is previous optimized one, and the others are the input ones.
+    const auto use_clearance_for_fix = i == 0 || is_goal_or_previous;
+    if (use_clearance_for_fix) return p.clearance_for_fix;
+    if (i < static_cast<size_t>(p.num_joint_points) + 1)  // 1 is added since index 0 is fixed point
+      return p.clearance_for_joint;
+    return p.clearance_for_smooth;
+  };
+
+  std::vector<double> upper_bound(eb_param.num_points, 0.0);
+  for (size_t i = 0; i < upper_bound.size(); ++i) {
+    upper_bound[i] = constraint_segment_length(i);
+
+    if (upper_bound[i] == 0.0) debug_fixed_traj_point_indexes.push_back(i);
+  }
+  return upper_bound;
+}
+
 void EBPathSmoother::updateConstraint(
   const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points,
   const bool is_goal_contained, const int pad_start_idx)
@@ -294,39 +261,18 @@ void EBPathSmoother::updateConstraint(
 
   const auto & p = eb_param_;
 
-  std::vector<TrajectoryPoint> debug_fixed_traj_points;  // for debug
+  std::vector<size_t> debug_fixed_traj_point_indexes;
 
   const Eigen::MatrixXd A = Eigen::MatrixXd::Identity(p.num_points, p.num_points);
-  std::vector<double> upper_bound(p.num_points, 0.0);
-  std::vector<double> lower_bound(p.num_points, 0.0);
-  for (size_t i = 0; i < static_cast<size_t>(p.num_points); ++i) {
-    const double constraint_segment_length = [&]() {
-      if (i == 0) {
-        // NOTE: Only first point can be fixed since there is a lateral deviation
-        //       between the two points.
-        //       The front point is previous optimized one, and the others are the input ones.
-        return p.clearance_for_fix;
-      }
-      if (is_goal_contained) {
-        // NOTE: fix goal and its previous pose to keep goal orientation
-        if (p.num_points - 2 <= static_cast<int>(i) || pad_start_idx - 2 <= static_cast<int>(i)) {
-          return p.clearance_for_fix;
-        }
-      }
-      if (i < static_cast<size_t>(p.num_joint_points) + 1) {  // 1 is added since index 0 is fixed
-                                                              // point
-        return p.clearance_for_joint;
-      }
-      return p.clearance_for_smooth;
-    }();
 
-    upper_bound.at(i) = constraint_segment_length;
-    lower_bound.at(i) = -constraint_segment_length;
+  const auto upper_bound = calculate_upper_bound(
+    eb_param_, is_goal_contained, pad_start_idx, debug_fixed_traj_point_indexes);
+  std::vector<double> lower_bound = upper_bound;
+  for (auto & lb : lower_bound) lb *= -1;
 
-    if (constraint_segment_length == 0.0) {
-      debug_fixed_traj_points.push_back(traj_points.at(i));
-    }
-  }
+  std::vector<TrajectoryPoint> debug_fixed_traj_points;
+  for (const auto idx : debug_fixed_traj_point_indexes)
+    debug_fixed_traj_points.push_back(traj_points[idx]);
 
   Eigen::VectorXd x_mat(2 * p.num_points);
   Eigen::MatrixXd theta_mat = Eigen::MatrixXd::Zero(p.num_points, 2 * p.num_points);
