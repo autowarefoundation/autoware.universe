@@ -70,7 +70,7 @@ void TrafficLightRecognitionMarkerPublisher::onTrafficSignalArray(
   }
   MarkerArray markers;
   marker_id = 0;
-  for (const auto tl : msg_ptr->signals) {
+  for (const auto & tl : msg_ptr->signals) {
     if (tl_position_map_.count(tl.map_primitive_id) == 0) continue;
     auto tl_position = tl_position_map_[tl.map_primitive_id];
     for (const auto tl_light : tl.lights) {
