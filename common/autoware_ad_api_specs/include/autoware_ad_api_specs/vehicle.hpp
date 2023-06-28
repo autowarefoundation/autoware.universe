@@ -19,6 +19,7 @@
 
 #include <autoware_adapi_v1_msgs/msg/vehicle_kinematics.hpp>
 #include <autoware_adapi_v1_msgs/msg/vehicle_status.hpp>
+#include <autoware_adapi_v1_msgs/srv/get_vehicle_dimensions.hpp>
 
 namespace autoware_ad_api::vehicle
 {
@@ -39,6 +40,12 @@ struct VehicleStatus
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
+};
+
+struct Dimensions
+{
+  using Service = autoware_adapi_v1_msgs::srv::GetVehicleDimensions;
+  static constexpr char name[] = "/api/vehicle/dimensions";
 };
 
 }  // namespace autoware_ad_api::vehicle

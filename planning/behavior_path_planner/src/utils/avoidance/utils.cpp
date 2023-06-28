@@ -107,7 +107,55 @@ bool isTargetObjectType(
     return false;
   }
 
-  return parameters->object_parameters.at(t).enable;
+  return parameters->object_parameters.at(t).is_target;
+}
+
+bool isVehicleTypeObject(const ObjectData & object)
+{
+  const auto t = utils::getHighestProbLabel(object.object.classification);
+
+  if (t == ObjectClassification::UNKNOWN) {
+    return false;
+  }
+
+  if (t == ObjectClassification::PEDESTRIAN) {
+    return false;
+  }
+
+  if (t == ObjectClassification::BICYCLE) {
+    return false;
+  }
+
+  return true;
+}
+
+bool isWithinCrosswalk(
+  const ObjectData & object,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
+{
+  using Point = boost::geometry::model::d2::point_xy<double>;
+
+  const auto & p = object.object.kinematics.initial_pose_with_covariance.pose.position;
+  const Point p_object{p.x, p.y};
+
+  // get conflicting crosswalk crosswalk
+  constexpr int PEDESTRIAN_GRAPH_ID = 1;
+  const auto conflicts =
+    overall_graphs->conflictingInGraph(object.overhang_lanelet, PEDESTRIAN_GRAPH_ID);
+
+  constexpr double THRESHOLD = 2.0;
+  for (const auto & crosswalk : conflicts) {
+    auto polygon = crosswalk.polygon2d().basicPolygon();
+
+    boost::geometry::correct(polygon);
+
+    // ignore objects around the crosswalk
+    if (boost::geometry::distance(p_object, polygon) < THRESHOLD) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 double calcShiftLength(
@@ -752,6 +800,7 @@ void filterTargetObjects(
     const auto object_parameter = parameters->object_parameters.at(t);
 
     if (!isTargetObjectType(o.object, parameters)) {
+      o.reason = AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE;
       data.other_objects.push_back(o);
       continue;
     }
@@ -845,7 +894,7 @@ void filterTargetObjects(
     // calculate avoid_margin dynamically
     // NOTE: This calculation must be after calculating to_road_shoulder_distance.
     const double max_avoid_margin = object_parameter.safety_buffer_lateral * o.distance_factor +
-                                    parameters->lateral_collision_margin + 0.5 * vehicle_width;
+                                    object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
     const double min_safety_lateral_distance =
       object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
     const auto max_allowable_lateral_distance =
@@ -873,6 +922,24 @@ void filterTargetObjects(
       }
     }
 
+    // for non vehicle type object
+    if (!isVehicleTypeObject(o)) {
+      if (isWithinCrosswalk(o, rh->getOverallGraphPtr())) {
+        // avoidance module ignore pedestrian and bicycle around crosswalk
+        o.reason = "CrosswalkUser";
+        data.other_objects.push_back(o);
+      } else {
+        // if there is no crosswalk near the object, avoidance module avoids pedestrian and bicycle
+        // no matter how it is shifted.
+        o.last_seen = now;
+        o.avoid_margin = avoid_margin;
+        data.target_objects.push_back(o);
+      }
+      continue;
+    }
+
+    // from here condition check for vehicle type objects.
+
     const auto stop_time_longer_than_threshold =
       o.stop_time > parameters->threshold_time_force_avoidance_for_stopped_vehicle;
 
@@ -884,7 +951,8 @@ void filterTargetObjects(
       const auto to_traffic_light =
         utils::getDistanceToNextTrafficLight(object_pose, data.current_lanelets);
       {
-        not_parked_object = to_traffic_light < parameters->object_ignore_distance_traffic_light;
+        not_parked_object =
+          to_traffic_light < parameters->object_ignore_section_traffic_light_in_front_distance;
       }
 
       // check crosswalk
@@ -894,8 +962,8 @@ void filterTargetObjects(
         o.longitudinal;
       {
         const auto stop_for_crosswalk =
-          to_crosswalk < parameters->object_ignore_distance_crosswalk_forward &&
-          to_crosswalk > -1.0 * parameters->object_ignore_distance_crosswalk_backward;
+          to_crosswalk < parameters->object_ignore_section_crosswalk_in_front_distance &&
+          to_crosswalk > -1.0 * parameters->object_ignore_section_crosswalk_behind_distance;
         not_parked_object = not_parked_object || stop_for_crosswalk;
       }
 
