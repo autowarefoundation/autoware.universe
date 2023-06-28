@@ -2,8 +2,10 @@
 
 ## Purpose
 
-This node publishes a distance from the closest path point from the self-position to the end point of the path.
-Note that the distance means the arc-length along the path, not the Euclidean distance between the two points.
+This node publishes a marker array for visualizing traffic signal recognition results on Rviz.
+
+   ![sample_img](./images/traffic_light_recognition_visualization_sample.png)
+
 
 ## Inner-workings / Algorithms
 
@@ -11,18 +13,20 @@ Note that the distance means the arc-length along the path, not the Euclidean di
 
 ### Input
 
-| Name                                                              | Type                                     | Description    |
-| ----------------------------------------------------------------- | ---------------------------------------- | -------------- |
-| `/planning/scenario_planning/lane_driving/behavior_planning/path` | `autoware_auto_planning_msgs::msg::Path` | Reference path |
-| `/tf`                                                             | `tf2_msgs/TFMessage`                     | TF (self-pose) |
+| Name                                                    | Type                                                     | Description                                       |
+| ------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------- |
+| `/map/vector_map`                                       | `autoware_auto_mapping_msgs::msg::HADMapBin`             | Vector map for getting traffic signal information |
+| `/perception/traffic_light_recognition/traffic_signals` | `autoware_auto_perception_msgs::msg::TrafficSignalArray` | The result of traffic signal recognition          |
+
 
 ### Output
 
-| Name         | Type                                    | Description                                                                                           |
-| ------------ | --------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `~/distance` | `tier4_debug_msgs::msg::Float64Stamped` | Publish a distance from the closest path point from the self-position to the end point of the path[m] |
+| Name                                                           | Type                                   | Description                                                                    |
+| -------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
+| `/perception/traffic_light_recognition/traffic_signals_marker` | `visualization_msgs::msg::MarkerArray` | Publish a marker array for visualization of traffic signal recognition results |
 
 ## Parameters
+None.
 
 ### Node Parameters
 
