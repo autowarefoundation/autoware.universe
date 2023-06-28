@@ -74,6 +74,7 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
   LaneChangePaths valid_paths{};
   const auto found_safe_path =
     getLaneChangePaths(current_lanes, target_lanes, direction_, &valid_paths);
+  debug_valid_path_ = valid_paths;
 
   if (valid_paths.empty()) {
     return {false, false};
@@ -387,7 +388,7 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
 
   const double ego_velocity =
     std::max(getEgoVelocity(), planner_data_->parameters.minimum_lane_changing_velocity);
-  const double estimated_travel_dist = ego_velocity * lane_change_parameters_->abort_delta_time;
+  const double estimated_travel_dist = ego_velocity * lane_change_parameters_->cancel.delta_time;
 
   double dist = 0.0;
   for (size_t idx = nearest_idx; idx < status_.lane_change_path.path.points.size() - 1; ++idx) {
@@ -395,7 +396,8 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
     if (dist > estimated_travel_dist) {
       const auto & estimated_pose = status_.lane_change_path.path.points.at(idx + 1).point.pose;
       return utils::isEgoWithinOriginalLane(
-        status_.current_lanes, estimated_pose, planner_data_->parameters);
+        status_.current_lanes, estimated_pose, planner_data_->parameters,
+        lane_change_parameters_->cancel.overhang_tolerance);
     }
   }
 
@@ -454,7 +456,7 @@ bool NormalLaneChange::hasFinishedAbort() const
 
 bool NormalLaneChange::isAbortState() const
 {
-  if (!lane_change_parameters_->enable_abort_lane_change) {
+  if (!lane_change_parameters_->cancel.enable_on_lane_changing_phase) {
     return false;
   }
 
@@ -945,9 +947,9 @@ bool NormalLaneChange::getAbortPath()
   };
 
   const auto [abort_start_idx, abort_start_dist] =
-    get_abort_idx_and_distance(lane_change_parameters_->abort_delta_time);
+    get_abort_idx_and_distance(lane_change_parameters_->cancel.delta_time);
   const auto [abort_return_idx, abort_return_dist] = get_abort_idx_and_distance(
-    lane_change_parameters_->abort_delta_time + lane_change_parameters_->aborting_time);
+    lane_change_parameters_->cancel.delta_time + lane_change_parameters_->cancel.delta_time);
 
   if (abort_start_idx >= abort_return_idx) {
     RCLCPP_ERROR(logger_, "abort start idx and return idx is equal. can't compute abort path.");
@@ -983,7 +985,7 @@ bool NormalLaneChange::getAbortPath()
   const double & max_lateral_acc = lateral_acc_range.second;
   path_shifter.setLateralAccelerationLimit(max_lateral_acc);
 
-  if (lateral_jerk > lane_change_parameters_->abort_max_lateral_jerk) {
+  if (lateral_jerk > lane_change_parameters_->cancel.max_lateral_jerk) {
     RCLCPP_ERROR(logger_, "Aborting jerk is too strong. lateral_jerk = %f", lateral_jerk);
     return false;
   }

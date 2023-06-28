@@ -581,7 +581,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   {
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
-      param.enable = declare_parameter<bool>(ns + "enable");
+      param.is_target = declare_parameter<bool>(ns + "is_target");
       param.moving_speed_threshold = declare_parameter<double>(ns + "moving_speed_threshold");
       param.moving_time_threshold = declare_parameter<double>(ns + "moving_time_threshold");
       param.max_expand_ratio = declare_parameter<double>(ns + "max_expand_ratio");
@@ -616,12 +616,12 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
     std::string ns = "avoidance.target_filtering.";
     p.threshold_time_force_avoidance_for_stopped_vehicle =
       declare_parameter<double>(ns + "threshold_time_force_avoidance_for_stopped_vehicle");
-    p.object_ignore_distance_traffic_light =
-      declare_parameter<double>(ns + "object_ignore_distance_traffic_light");
-    p.object_ignore_distance_crosswalk_forward =
-      declare_parameter<double>(ns + "object_ignore_distance_crosswalk_forward");
-    p.object_ignore_distance_crosswalk_backward =
-      declare_parameter<double>(ns + "object_ignore_distance_crosswalk_backward");
+    p.object_ignore_section_traffic_light_in_front_distance =
+      declare_parameter<double>(ns + "object_ignore_section_traffic_light_in_front_distance");
+    p.object_ignore_section_crosswalk_in_front_distance =
+      declare_parameter<double>(ns + "object_ignore_section_crosswalk_in_front_distance");
+    p.object_ignore_section_crosswalk_behind_distance =
+      declare_parameter<double>(ns + "object_ignore_section_crosswalk_behind_distance");
     p.object_check_forward_distance =
       declare_parameter<double>(ns + "object_check_forward_distance");
     p.object_check_backward_distance =
@@ -825,13 +825,15 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
     p.check_pedestrian = declare_parameter<bool>(ns + "pedestrian");
   }
 
-  // abort
-  p.enable_cancel_lane_change = declare_parameter<bool>(parameter("enable_cancel_lane_change"));
-  p.enable_abort_lane_change = declare_parameter<bool>(parameter("enable_abort_lane_change"));
-
-  p.abort_delta_time = declare_parameter<double>(parameter("abort_delta_time"));
-  p.aborting_time = declare_parameter<double>(parameter("aborting_time"));
-  p.abort_max_lateral_jerk = declare_parameter<double>(parameter("abort_max_lateral_jerk"));
+  // lane change cancel
+  p.cancel.enable_on_prepare_phase =
+    declare_parameter<bool>(parameter("cancel.enable_on_prepare_phase"));
+  p.cancel.enable_on_lane_changing_phase =
+    declare_parameter<bool>(parameter("cancel.enable_on_lane_changing_phase"));
+  p.cancel.delta_time = declare_parameter<double>(parameter("cancel.delta_time"));
+  p.cancel.duration = declare_parameter<double>(parameter("cancel.duration"));
+  p.cancel.max_lateral_jerk = declare_parameter<double>(parameter("cancel.max_lateral_jerk"));
+  p.cancel.overhang_tolerance = declare_parameter<double>(parameter("cancel.overhang_tolerance"));
 
   p.finish_judge_lateral_threshold =
     declare_parameter<double>("lane_change.finish_judge_lateral_threshold");
@@ -850,11 +852,10 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
     exit(EXIT_FAILURE);
   }
 
-  if (p.abort_delta_time < 1.0) {
-    RCLCPP_FATAL_STREAM(
-      get_logger(), "abort_delta_time: " << p.abort_delta_time << ", is too short.\n"
-                                         << "Terminating the program...");
-    exit(EXIT_FAILURE);
+  if (p.cancel.delta_time < 1.0) {
+    RCLCPP_WARN_STREAM(
+      get_logger(), "cancel.delta_time: " << p.cancel.delta_time
+                                          << ", is too short. This could cause a danger behavior.");
   }
 
   return p;
@@ -1252,7 +1253,10 @@ void BehaviorPathPlannerNode::run()
   }
 
 #ifndef USE_OLD_ARCHITECTURE
-  if (planner_data_->operation_mode->mode != OperationModeState::AUTONOMOUS) {
+  const auto controlled_by_autoware_autonomously =
+    planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
+    planner_data_->operation_mode->is_autoware_control_enabled;
+  if (!controlled_by_autoware_autonomously) {
     planner_manager_->resetRootLanelet(planner_data_);
   }
 #endif
