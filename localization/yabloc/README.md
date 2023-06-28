@@ -6,7 +6,7 @@
 
 It estimates position by matching road surface markings extracted from images with a vector map.
 Point cloud maps and LiDAR are not required.
-YabLoc enables users localize with vehicles that are not equipped with LiDAR and in environments where point cloud maps are not available.
+YabLoc enables users localize vehicles that are not equipped with LiDAR and in environments where point cloud maps are not available.
 
 ## Packages
 
@@ -37,7 +37,7 @@ ros2 launch autoware_launch logging_simulator.launch.xml \
 ## Principle
 
 The diagram below illustrates the basic principle of YabLoc.
-It extracts road surface markings by masking the line segments using the road area obtained from graph-based segmentation.
+It extracts road surface markings by extracting the line segments using the road area obtained from graph-based segmentation.
 The red line at the center-top of the diagram represents the line segments identified as road surface markings.
 YabLoc transforms these segments for each particle and determines the particle's weight by comparing them with the cost map generated from Lanelet2.
 
@@ -74,10 +74,10 @@ These topics are not visualized by default.
 ## Limitation
 
 - Running YabLoc and NDT simultaneously is not supported.
-  - This is because both are computationally expensive.
+  - This is because running both at the same time may be computationally too expensive.
   - Also, in most cases, NDT is superior to YabLoc, so there is less benefit to running them at the same time.
 - It does not estimate roll and pitch, therefore some of the perception nodes may not work well.
-- It doesn't support multiple cameras now. But it will in the future.
-- In places where there are few road surface markings, such as intersections, the estimation heavily relies on GNSS, IMU, and vehicles twist.
-- If the road boundary or road surface markings are not included in the Lanelet2, the estimation fails.
+- It does not support multiple cameras now. But it will in the future.
+- In places where there are few road surface markings, such as intersections, the estimation heavily relies on GNSS, IMU, and vehicle's wheel odometry.
+- If the road boundary or road surface markings are not included in the Lanelet2, the estimation is likely to fail.
 - The sample rosbag provided in the autoware tutorial does not include images, so it is not possible to run YabLoc with it.
