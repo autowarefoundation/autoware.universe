@@ -14,8 +14,8 @@
 
 #include "velocity_panel.hpp"
 
-#include <rviz_common/display_context.hpp>
 #include <Qt>
+#include <rviz_common/display_context.hpp>
 
 namespace rviz_plugins
 {
@@ -23,8 +23,8 @@ namespace rviz_plugins
 VelocityPanel::VelocityPanel(QWidget * parent) : rviz_common::Panel(parent)
 {
   // Set up the layout
-  QVBoxLayout* vlayout = new QVBoxLayout();
-  QGridLayout* glayout = new QGridLayout();
+  QVBoxLayout * vlayout = new QVBoxLayout();
+  QGridLayout * glayout = new QGridLayout();
 
   // Create legends
   glayout->addWidget(new QLabel("[km/h]"), 0, 0, Qt::AlignCenter);
@@ -49,7 +49,7 @@ VelocityPanel::VelocityPanel(QWidget * parent) : rviz_common::Panel(parent)
   glayout->addWidget(max_vehicle_speed_display_, 2, 2, Qt::AlignCenter);
 
   // Create the button display
-  QPushButton* reset_button = new QPushButton("Reset");
+  QPushButton * reset_button = new QPushButton("Reset");
   connect(reset_button, &QPushButton::clicked, this, [this]() {
     vehicle_speed_max_ = 0.0;
     command_speed_max_ = 0.0;
@@ -67,13 +67,16 @@ void VelocityPanel::onInitialize()
   using std::placeholders::_1;
 
   node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
-  sub_velocity_report_ = node_->create_subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>(
-    "/vehicle/status/velocity_status", 1, std::bind(&VelocityPanel::onVelocityReport, this, _1));
-  sub_velocity_command_ = node_->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-    "/control/command/control_cmd", 1, std::bind(&VelocityPanel::onVelocityCommand, this, _1));
+  sub_velocity_report_ =
+    node_->create_subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>(
+      "/vehicle/status/velocity_status", 1, std::bind(&VelocityPanel::onVelocityReport, this, _1));
+  sub_velocity_command_ =
+    node_->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+      "/control/command/control_cmd", 1, std::bind(&VelocityPanel::onVelocityCommand, this, _1));
 }
 
-void VelocityPanel::onVelocityReport(const autoware_auto_vehicle_msgs::msg::VelocityReport::SharedPtr msg)
+void VelocityPanel::onVelocityReport(
+  const autoware_auto_vehicle_msgs::msg::VelocityReport::SharedPtr msg)
 {
   // Process the velocity message and update the vehicle speed
   // 車両CANからの実車速
@@ -86,7 +89,8 @@ void VelocityPanel::onVelocityReport(const autoware_auto_vehicle_msgs::msg::Velo
   }
 }
 
-void VelocityPanel::onVelocityCommand(const autoware_auto_control_msgs::msg::AckermannControlCommand::SharedPtr msg)
+void VelocityPanel::onVelocityCommand(
+  const autoware_auto_control_msgs::msg::AckermannControlCommand::SharedPtr msg)
 {
   // Process the command message and update the actual speed
   // Autowareからの制御速度
