@@ -13,8 +13,6 @@ This installation guide will be split into instruction for installing the ROS 2 
 
 ## Native on Ubuntu 20.04
 
-**Install the following dependencies:**
-- **ROS 2** Follow the instructions [here](https://docs.ros.org/en/foxy/Installation.html) to install ROS 2 Foxy.
 - **F1TENTH Gym**
   ```bash
   git clone https://github.com/f1tenth/f1tenth_gym
