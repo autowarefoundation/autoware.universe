@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym" kind="namespace" language="Python">
+    <compoundname>f110_gym</compoundname>
+    <innernamespace refid="namespacef110__gym_1_1envs">f110_gym::envs</innernamespace>
+    <innernamespace refid="namespacef110__gym_1_1unittest">f110_gym::unittest</innernamespace>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="____init_____8py_1a053265813f14380af323db53967da5f4" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.id</definition>
+        <argsstring></argsstring>
+        <name>id</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/__init__.py" line="3" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/__init__.py" bodystart="3" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="____init_____8py_1a5a9b8348f0cb72c71b742a16e2bd2c4e" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym.entry_point</definition>
+        <argsstring></argsstring>
+        <name>entry_point</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/__init__.py" line="4" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/__init__.py" bodystart="4" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/__init__.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

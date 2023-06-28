@@ -1,0 +1,566 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="namespacef110__gym_1_1envs_1_1dynamic__models" kind="namespace" language="Python">
+    <compoundname>f110_gym::envs::dynamic_models</compoundname>
+    <innerclass refid="classf110__gym_1_1envs_1_1dynamic__models_1_1_dynamics_test" prot="public">f110_gym::envs::dynamic_models::DynamicsTest</innerclass>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="dynamic__models_8py_1ab8a10c74a1f1dbbfd4adf3d8b264647f" prot="public" static="no" mutable="no">
+        <type></type>
+        <definition>f110_gym::envs::dynamic_models.cache</definition>
+        <argsstring></argsstring>
+        <name>cache</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" line="29" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" bodystart="29" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="dynamic__models_8py_1a431101ae67a4c958eb02126cf2ee5e66" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.dynamic_models.accl_constraints</definition>
+        <argsstring>(vel, accl, v_switch, a_max, v_min, v_max)</argsstring>
+        <name>accl_constraints</name>
+        <param>
+          <type>vel</type>
+          <defname>vel</defname>
+        </param>
+        <param>
+          <type>accl</type>
+          <defname>accl</defname>
+        </param>
+        <param>
+          <type>v_switch</type>
+          <defname>v_switch</defname>
+        </param>
+        <param>
+          <type>a_max</type>
+          <defname>a_max</defname>
+        </param>
+        <param>
+          <type>v_min</type>
+          <defname>v_min</defname>
+        </param>
+        <param>
+          <type>v_max</type>
+          <defname>v_max</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Acceleration constraints, adjusts the acceleration based on constraints
+
+    Args:
+        vel (float): current velocity of the vehicle
+        accl (float): unconstraint desired acceleration
+        v_switch (float): switching velocity (velocity at which the acceleration is no longer able to create wheel spin)
+        a_max (float): maximum allowed acceleration
+        v_min (float): minimum allowed velocity
+        v_max (float): maximum allowed velocity
+
+    Returns:
+        accl (float): adjusted acceleration
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" line="30" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" bodystart="30" bodyend="62"/>
+      </memberdef>
+      <memberdef kind="function" id="dynamic__models_8py_1a08dd4fc40f33742219b2798addf0aaf2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.dynamic_models.steering_constraint</definition>
+        <argsstring>(steering_angle, steering_velocity, s_min, s_max, sv_min, sv_max)</argsstring>
+        <name>steering_constraint</name>
+        <param>
+          <type>steering_angle</type>
+          <defname>steering_angle</defname>
+        </param>
+        <param>
+          <type>steering_velocity</type>
+          <defname>steering_velocity</defname>
+        </param>
+        <param>
+          <type>s_min</type>
+          <defname>s_min</defname>
+        </param>
+        <param>
+          <type>s_max</type>
+          <defname>s_max</defname>
+        </param>
+        <param>
+          <type>sv_min</type>
+          <defname>sv_min</defname>
+        </param>
+        <param>
+          <type>sv_max</type>
+          <defname>sv_max</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Steering constraints, adjusts the steering velocity based on constraints
+
+    Args:
+        steering_angle (float): current steering_angle of the vehicle
+        steering_velocity (float): unconstraint desired steering_velocity
+        s_min (float): minimum steering angle
+        s_max (float): maximum steering angle
+        sv_min (float): minimum steering velocity
+        sv_max (float): maximum steering velocity
+
+    Returns:
+        steering_velocity (float): adjusted steering velocity
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" line="63" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" bodystart="63" bodyend="90"/>
+      </memberdef>
+      <memberdef kind="function" id="dynamic__models_8py_1a44ce97966ffccf3d94aad7e3a766cf91" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.dynamic_models.vehicle_dynamics_ks</definition>
+        <argsstring>(x, u_init, mu, C_Sf, C_Sr, lf, lr, h, m, I, s_min, s_max, sv_min, sv_max, v_switch, a_max, v_min, v_max)</argsstring>
+        <name>vehicle_dynamics_ks</name>
+        <param>
+          <type>x</type>
+          <defname>x</defname>
+        </param>
+        <param>
+          <type>u_init</type>
+          <defname>u_init</defname>
+        </param>
+        <param>
+          <type>mu</type>
+          <defname>mu</defname>
+        </param>
+        <param>
+          <type>C_Sf</type>
+          <defname>C_Sf</defname>
+        </param>
+        <param>
+          <type>C_Sr</type>
+          <defname>C_Sr</defname>
+        </param>
+        <param>
+          <type>lf</type>
+          <defname>lf</defname>
+        </param>
+        <param>
+          <type>lr</type>
+          <defname>lr</defname>
+        </param>
+        <param>
+          <type>h</type>
+          <defname>h</defname>
+        </param>
+        <param>
+          <type>m</type>
+          <defname>m</defname>
+        </param>
+        <param>
+          <type>I</type>
+          <defname>I</defname>
+        </param>
+        <param>
+          <type>s_min</type>
+          <defname>s_min</defname>
+        </param>
+        <param>
+          <type>s_max</type>
+          <defname>s_max</defname>
+        </param>
+        <param>
+          <type>sv_min</type>
+          <defname>sv_min</defname>
+        </param>
+        <param>
+          <type>sv_max</type>
+          <defname>sv_max</defname>
+        </param>
+        <param>
+          <type>v_switch</type>
+          <defname>v_switch</defname>
+        </param>
+        <param>
+          <type>a_max</type>
+          <defname>a_max</defname>
+        </param>
+        <param>
+          <type>v_min</type>
+          <defname>v_min</defname>
+        </param>
+        <param>
+          <type>v_max</type>
+          <defname>v_max</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Single Track Kinematic Vehicle Dynamics.
+
+    Args:
+        x (numpy.ndarray (3, )): vehicle state vector (x1, x2, x3, x4, x5)
+            x1: x position in global coordinates
+            x2: y position in global coordinates
+            x3: steering angle of front wheels
+            x4: velocity in x direction
+            x5: yaw angle
+        u (numpy.ndarray (2, )): control input vector (u1, u2)
+            u1: steering angle velocity of front wheels
+            u2: longitudinal acceleration 
+
+    Returns:
+        f (numpy.ndarray): right hand side of differential equations
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" line="91" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" bodystart="91" bodyend="123"/>
+      </memberdef>
+      <memberdef kind="function" id="dynamic__models_8py_1a2491848cc1db2e106c039da6ed7041c6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.dynamic_models.vehicle_dynamics_st</definition>
+        <argsstring>(x, u_init, mu, C_Sf, C_Sr, lf, lr, h, m, I, s_min, s_max, sv_min, sv_max, v_switch, a_max, v_min, v_max)</argsstring>
+        <name>vehicle_dynamics_st</name>
+        <param>
+          <type>x</type>
+          <defname>x</defname>
+        </param>
+        <param>
+          <type>u_init</type>
+          <defname>u_init</defname>
+        </param>
+        <param>
+          <type>mu</type>
+          <defname>mu</defname>
+        </param>
+        <param>
+          <type>C_Sf</type>
+          <defname>C_Sf</defname>
+        </param>
+        <param>
+          <type>C_Sr</type>
+          <defname>C_Sr</defname>
+        </param>
+        <param>
+          <type>lf</type>
+          <defname>lf</defname>
+        </param>
+        <param>
+          <type>lr</type>
+          <defname>lr</defname>
+        </param>
+        <param>
+          <type>h</type>
+          <defname>h</defname>
+        </param>
+        <param>
+          <type>m</type>
+          <defname>m</defname>
+        </param>
+        <param>
+          <type>I</type>
+          <defname>I</defname>
+        </param>
+        <param>
+          <type>s_min</type>
+          <defname>s_min</defname>
+        </param>
+        <param>
+          <type>s_max</type>
+          <defname>s_max</defname>
+        </param>
+        <param>
+          <type>sv_min</type>
+          <defname>sv_min</defname>
+        </param>
+        <param>
+          <type>sv_max</type>
+          <defname>sv_max</defname>
+        </param>
+        <param>
+          <type>v_switch</type>
+          <defname>v_switch</defname>
+        </param>
+        <param>
+          <type>a_max</type>
+          <defname>a_max</defname>
+        </param>
+        <param>
+          <type>v_min</type>
+          <defname>v_min</defname>
+        </param>
+        <param>
+          <type>v_max</type>
+          <defname>v_max</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Single Track Dynamic Vehicle Dynamics.
+
+    Args:
+        x (numpy.ndarray (3, )): vehicle state vector (x1, x2, x3, x4, x5, x6, x7)
+            x1: x position in global coordinates
+            x2: y position in global coordinates
+            x3: steering angle of front wheels
+            x4: velocity in x direction
+            x5: yaw angle
+            x6: yaw rate
+            x7: slip angle at vehicle center
+        u (numpy.ndarray (2, )): control input vector (u1, u2)
+            u1: steering angle velocity of front wheels
+            u2: longitudinal acceleration 
+
+    Returns:
+        f (numpy.ndarray): right hand side of differential equations
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" line="124" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" bodystart="124" bodyend="178"/>
+      </memberdef>
+      <memberdef kind="function" id="dynamic__models_8py_1acadb3628c14a8cc2a59509833762f9c5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.dynamic_models.pid</definition>
+        <argsstring>(speed, steer, current_speed, current_steer, max_sv, max_a, max_v, min_v)</argsstring>
+        <name>pid</name>
+        <param>
+          <type>speed</type>
+          <defname>speed</defname>
+        </param>
+        <param>
+          <type>steer</type>
+          <defname>steer</defname>
+        </param>
+        <param>
+          <type>current_speed</type>
+          <defname>current_speed</defname>
+        </param>
+        <param>
+          <type>current_steer</type>
+          <defname>current_steer</defname>
+        </param>
+        <param>
+          <type>max_sv</type>
+          <defname>max_sv</defname>
+        </param>
+        <param>
+          <type>max_a</type>
+          <defname>max_a</defname>
+        </param>
+        <param>
+          <type>max_v</type>
+          <defname>max_v</defname>
+        </param>
+        <param>
+          <type>min_v</type>
+          <defname>min_v</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><verbatim>Basic controller for speed/steer -&gt; accl./steer vel.
+
+    Args:
+        speed (float): desired input speed
+        steer (float): desired input steering angle
+
+    Returns:
+        accl (float): desired input acceleration
+        sv (float): desired input steering velocity
+</verbatim> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" line="179" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" bodystart="179" bodyend="222"/>
+      </memberdef>
+      <memberdef kind="function" id="dynamic__models_8py_1a57b901e4cb2e0ad2ff8df6ad2b6035b1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.dynamic_models.func_KS</definition>
+        <argsstring>(x, t, u, mu, C_Sf, C_Sr, lf, lr, h, m, I, s_min, s_max, sv_min, sv_max, v_switch, a_max, v_min, v_max)</argsstring>
+        <name>func_KS</name>
+        <param>
+          <type>x</type>
+          <defname>x</defname>
+        </param>
+        <param>
+          <type>t</type>
+          <defname>t</defname>
+        </param>
+        <param>
+          <type>u</type>
+          <defname>u</defname>
+        </param>
+        <param>
+          <type>mu</type>
+          <defname>mu</defname>
+        </param>
+        <param>
+          <type>C_Sf</type>
+          <defname>C_Sf</defname>
+        </param>
+        <param>
+          <type>C_Sr</type>
+          <defname>C_Sr</defname>
+        </param>
+        <param>
+          <type>lf</type>
+          <defname>lf</defname>
+        </param>
+        <param>
+          <type>lr</type>
+          <defname>lr</defname>
+        </param>
+        <param>
+          <type>h</type>
+          <defname>h</defname>
+        </param>
+        <param>
+          <type>m</type>
+          <defname>m</defname>
+        </param>
+        <param>
+          <type>I</type>
+          <defname>I</defname>
+        </param>
+        <param>
+          <type>s_min</type>
+          <defname>s_min</defname>
+        </param>
+        <param>
+          <type>s_max</type>
+          <defname>s_max</defname>
+        </param>
+        <param>
+          <type>sv_min</type>
+          <defname>sv_min</defname>
+        </param>
+        <param>
+          <type>sv_max</type>
+          <defname>sv_max</defname>
+        </param>
+        <param>
+          <type>v_switch</type>
+          <defname>v_switch</defname>
+        </param>
+        <param>
+          <type>a_max</type>
+          <defname>a_max</defname>
+        </param>
+        <param>
+          <type>v_min</type>
+          <defname>v_min</defname>
+        </param>
+        <param>
+          <type>v_max</type>
+          <defname>v_max</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" line="223" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" bodystart="223" bodyend="226"/>
+      </memberdef>
+      <memberdef kind="function" id="dynamic__models_8py_1a99b883cf5f7f438b805dcbc2cff6b4ef" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>def</type>
+        <definition>def f110_gym.envs.dynamic_models.func_ST</definition>
+        <argsstring>(x, t, u, mu, C_Sf, C_Sr, lf, lr, h, m, I, s_min, s_max, sv_min, sv_max, v_switch, a_max, v_min, v_max)</argsstring>
+        <name>func_ST</name>
+        <param>
+          <type>x</type>
+          <defname>x</defname>
+        </param>
+        <param>
+          <type>t</type>
+          <defname>t</defname>
+        </param>
+        <param>
+          <type>u</type>
+          <defname>u</defname>
+        </param>
+        <param>
+          <type>mu</type>
+          <defname>mu</defname>
+        </param>
+        <param>
+          <type>C_Sf</type>
+          <defname>C_Sf</defname>
+        </param>
+        <param>
+          <type>C_Sr</type>
+          <defname>C_Sr</defname>
+        </param>
+        <param>
+          <type>lf</type>
+          <defname>lf</defname>
+        </param>
+        <param>
+          <type>lr</type>
+          <defname>lr</defname>
+        </param>
+        <param>
+          <type>h</type>
+          <defname>h</defname>
+        </param>
+        <param>
+          <type>m</type>
+          <defname>m</defname>
+        </param>
+        <param>
+          <type>I</type>
+          <defname>I</defname>
+        </param>
+        <param>
+          <type>s_min</type>
+          <defname>s_min</defname>
+        </param>
+        <param>
+          <type>s_max</type>
+          <defname>s_max</defname>
+        </param>
+        <param>
+          <type>sv_min</type>
+          <defname>sv_min</defname>
+        </param>
+        <param>
+          <type>sv_max</type>
+          <defname>sv_max</defname>
+        </param>
+        <param>
+          <type>v_switch</type>
+          <defname>v_switch</defname>
+        </param>
+        <param>
+          <type>a_max</type>
+          <defname>a_max</defname>
+        </param>
+        <param>
+          <type>v_min</type>
+          <defname>v_min</defname>
+        </param>
+        <param>
+          <type>v_max</type>
+          <defname>v_max</defname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" line="227" column="1" bodyfile="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" bodystart="227" bodyend="230"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/envs/dynamic_models.py" line="1" column="1"/>
+  </compounddef>
+</doxygen>

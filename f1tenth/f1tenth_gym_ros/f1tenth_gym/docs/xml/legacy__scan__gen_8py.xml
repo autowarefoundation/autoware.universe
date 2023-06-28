@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.17">
+  <compounddef id="legacy__scan__gen_8py" kind="file" language="Python">
+    <compoundname>legacy_scan_gen.py</compoundname>
+    <innernamespace refid="namespacef110__gym_1_1unittest_1_1legacy__scan__gen">f110_gym::unittest::legacy_scan_gen</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">#<sp/>MIT<sp/>License</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="comment">#<sp/>Copyright<sp/>(c)<sp/>2020<sp/>Joseph<sp/>Auckley,<sp/>Matthew<sp/>O&apos;Kelly,<sp/>Aman<sp/>Sinha,<sp/>Hongrui<sp/>Zheng</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="comment">#<sp/>Permission<sp/>is<sp/>hereby<sp/>granted,<sp/>free<sp/>of<sp/>charge,<sp/>to<sp/>any<sp/>person<sp/>obtaining<sp/>a<sp/>copy</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="comment">#<sp/>of<sp/>this<sp/>software<sp/>and<sp/>associated<sp/>documentation<sp/>files<sp/>(the<sp/>&quot;Software&quot;),<sp/>to<sp/>deal</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="comment">#<sp/>in<sp/>the<sp/>Software<sp/>without<sp/>restriction,<sp/>including<sp/>without<sp/>limitation<sp/>the<sp/>rights</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="comment">#<sp/>to<sp/>use,<sp/>copy,<sp/>modify,<sp/>merge,<sp/>publish,<sp/>distribute,<sp/>sublicense,<sp/>and/or<sp/>sell</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="comment">#<sp/>copies<sp/>of<sp/>the<sp/>Software,<sp/>and<sp/>to<sp/>permit<sp/>persons<sp/>to<sp/>whom<sp/>the<sp/>Software<sp/>is</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="comment">#<sp/>furnished<sp/>to<sp/>do<sp/>so,<sp/>subject<sp/>to<sp/>the<sp/>following<sp/>conditions:</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="comment">#<sp/>The<sp/>above<sp/>copyright<sp/>notice<sp/>and<sp/>this<sp/>permission<sp/>notice<sp/>shall<sp/>be<sp/>included<sp/>in<sp/>all</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="comment">#<sp/>copies<sp/>or<sp/>substantial<sp/>portions<sp/>of<sp/>the<sp/>Software.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="comment">#<sp/>THE<sp/>SOFTWARE<sp/>IS<sp/>PROVIDED<sp/>&quot;AS<sp/>IS&quot;,<sp/>WITHOUT<sp/>WARRANTY<sp/>OF<sp/>ANY<sp/>KIND,<sp/>EXPRESS<sp/>OR</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="comment">#<sp/>IMPLIED,<sp/>INCLUDING<sp/>BUT<sp/>NOT<sp/>LIMITED<sp/>TO<sp/>THE<sp/>WARRANTIES<sp/>OF<sp/>MERCHANTABILITY,</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight><highlight class="comment">#<sp/>FITNESS<sp/>FOR<sp/>A<sp/>PARTICULAR<sp/>PURPOSE<sp/>AND<sp/>NONINFRINGEMENT.<sp/>IN<sp/>NO<sp/>EVENT<sp/>SHALL<sp/>THE</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="comment">#<sp/>AUTHORS<sp/>OR<sp/>COPYRIGHT<sp/>HOLDERS<sp/>BE<sp/>LIABLE<sp/>FOR<sp/>ANY<sp/>CLAIM,<sp/>DAMAGES<sp/>OR<sp/>OTHER</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="comment">#<sp/>LIABILITY,<sp/>WHETHER<sp/>IN<sp/>AN<sp/>ACTION<sp/>OF<sp/>CONTRACT,<sp/>TORT<sp/>OR<sp/>OTHERWISE,<sp/>ARISING<sp/>FROM,</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight><highlight class="comment">#<sp/>OUT<sp/>OF<sp/>OR<sp/>IN<sp/>CONNECTION<sp/>WITH<sp/>THE<sp/>SOFTWARE<sp/>OR<sp/>THE<sp/>USE<sp/>OR<sp/>OTHER<sp/>DEALINGS<sp/>IN<sp/>THE</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="comment">#<sp/>SOFTWARE.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight></codeline>
+<codeline lineno="24"><highlight class="normal"></highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight><highlight class="stringliteral">&quot;&quot;&quot;</highlight></codeline>
+<codeline lineno="26"><highlight class="stringliteral">Utility<sp/>functions<sp/>to<sp/>generate<sp/>sample<sp/>scan<sp/>data<sp/>from<sp/>legacy<sp/>C++<sp/>backend</highlight></codeline>
+<codeline lineno="27"><highlight class="stringliteral">Author:<sp/>Hongrui<sp/>Zheng</highlight></codeline>
+<codeline lineno="28"><highlight class="stringliteral"></highlight></codeline>
+<codeline lineno="29"><highlight class="stringliteral">The<sp/>script<sp/>generates<sp/>sample<sp/>scan<sp/>data<sp/>for<sp/>3<sp/>different<sp/>maps<sp/>used<sp/>in<sp/>the<sp/>unit<sp/>tests.</highlight></codeline>
+<codeline lineno="30"><highlight class="stringliteral"></highlight></codeline>
+<codeline lineno="31"><highlight class="stringliteral">Map<sp/>1:<sp/>Levine</highlight></codeline>
+<codeline lineno="32"><highlight class="stringliteral"></highlight></codeline>
+<codeline lineno="33"><highlight class="stringliteral">Map<sp/>2:<sp/>Berlin</highlight></codeline>
+<codeline lineno="34"><highlight class="stringliteral"></highlight></codeline>
+<codeline lineno="35"><highlight class="stringliteral">Map<sp/>3:<sp/>Skirkanich</highlight></codeline>
+<codeline lineno="36"><highlight class="stringliteral">&quot;&quot;&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"></highlight><highlight class="keyword">import</highlight><highlight class="normal"><sp/>numpy<sp/></highlight><highlight class="keyword">as</highlight><highlight class="normal"><sp/>np</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight><highlight class="keyword">import</highlight><highlight class="normal"><sp/>gym</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight><highlight class="keyword">import</highlight><highlight class="normal"><sp/>matplotlib.pyplot<sp/></highlight><highlight class="keyword">as</highlight><highlight class="normal"><sp/>plt</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight></codeline>
+<codeline lineno="42"><highlight class="normal">thetas<sp/>=<sp/>np.linspace(-2.35,<sp/>2.35,<sp/>num=1080)</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"></highlight><highlight class="comment">#<sp/>init</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="normal">executable_dir<sp/>=<sp/></highlight><highlight class="stringliteral">&apos;../../../build/&apos;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="46"><highlight class="normal">mass=<sp/>3.74</highlight></codeline>
+<codeline lineno="47"><highlight class="normal">l_r<sp/>=<sp/>0.17145</highlight></codeline>
+<codeline lineno="48"><highlight class="normal">I_z<sp/>=<sp/>0.04712</highlight></codeline>
+<codeline lineno="49"><highlight class="normal">mu<sp/>=<sp/>0.523</highlight></codeline>
+<codeline lineno="50"><highlight class="normal">h_cg<sp/>=<sp/>0.074</highlight></codeline>
+<codeline lineno="51"><highlight class="normal">cs_f<sp/>=<sp/>4.718</highlight></codeline>
+<codeline lineno="52"><highlight class="normal">cs_r<sp/>=<sp/>5.4562</highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal"></highlight><highlight class="comment">#<sp/>test<sp/>poses</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="55"><highlight class="normal">num_test<sp/>=<sp/>10</highlight></codeline>
+<codeline lineno="56"><highlight class="normal">test_poses<sp/>=<sp/>np.zeros((num_test,<sp/>3))</highlight></codeline>
+<codeline lineno="57"><highlight class="normal">test_poses[:,<sp/>2]<sp/>=<sp/>np.linspace(-1.,<sp/>1.,<sp/>num=num_test)</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"></highlight><highlight class="comment">#<sp/>map<sp/>1:<sp/>vegas</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="60"><highlight class="normal">map_path<sp/>=<sp/></highlight><highlight class="stringliteral">&apos;../../../maps/vegas.yaml&apos;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal">map_ext<sp/>=<sp/></highlight><highlight class="stringliteral">&apos;.png&apos;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="62"><highlight class="normal">racecar_env<sp/>=<sp/>gym.make(</highlight><highlight class="stringliteral">&apos;f110_gym:f110-v0&apos;</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="63"><highlight class="normal">racecar_env.init_map(map_path,<sp/>map_ext,<sp/></highlight><highlight class="keyword">False</highlight><highlight class="normal">,<sp/></highlight><highlight class="keyword">False</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="64"><highlight class="normal">racecar_env.update_params(mu,<sp/>h_cg,<sp/>l_r,<sp/>cs_f,<sp/>cs_r,<sp/>I_z,<sp/>mass,<sp/>executable_dir,<sp/>double_finish=</highlight><highlight class="keyword">True</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="65"><highlight class="normal">vegas_scan<sp/>=<sp/>np.empty((num_test,<sp/>1080))</highlight></codeline>
+<codeline lineno="66"><highlight class="normal"></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>i<sp/></highlight><highlight class="keywordflow">in</highlight><highlight class="normal"><sp/>range(test_poses.shape[0]):</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"><sp/><sp/><sp/><sp/>x<sp/>=<sp/>[test_poses[i,<sp/>0],<sp/>200.]</highlight></codeline>
+<codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/>y<sp/>=<sp/>[test_poses[i,<sp/>1],<sp/>200.]</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/>theta<sp/>=<sp/>[test_poses[i,<sp/>2],<sp/>0.]</highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/>obs,_,_,_<sp/>=<sp/>racecar_env.reset({</highlight><highlight class="stringliteral">&apos;x&apos;</highlight><highlight class="normal">:<sp/>x,<sp/></highlight><highlight class="stringliteral">&apos;y&apos;</highlight><highlight class="normal">:<sp/>y,<sp/></highlight><highlight class="stringliteral">&apos;theta&apos;</highlight><highlight class="normal">:<sp/>theta})</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/>vegas_scan[i,:]<sp/>=<sp/>obs[</highlight><highlight class="stringliteral">&apos;scans&apos;</highlight><highlight class="normal">][0]</highlight></codeline>
+<codeline lineno="72"><highlight class="normal"></highlight></codeline>
+<codeline lineno="73"><highlight class="normal"></highlight><highlight class="comment">#<sp/>map<sp/>2:<sp/>berlin</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="74"><highlight class="normal">map_path<sp/>=<sp/></highlight><highlight class="stringliteral">&apos;../../../maps/berlin.yaml&apos;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="75"><highlight class="normal">map_ext<sp/>=<sp/></highlight><highlight class="stringliteral">&apos;.png&apos;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="76"><highlight class="normal">racecar_env<sp/>=<sp/>gym.make(</highlight><highlight class="stringliteral">&apos;f110_gym:f110-v0&apos;</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="77"><highlight class="normal">racecar_env.init_map(map_path,<sp/>map_ext,<sp/></highlight><highlight class="keyword">False</highlight><highlight class="normal">,<sp/></highlight><highlight class="keyword">False</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="78"><highlight class="normal">racecar_env.update_params(mu,<sp/>h_cg,<sp/>l_r,<sp/>cs_f,<sp/>cs_r,<sp/>I_z,<sp/>mass,<sp/>executable_dir,<sp/>double_finish=</highlight><highlight class="keyword">True</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="79"><highlight class="normal">berlin_scan<sp/>=<sp/>np.empty((num_test,<sp/>1080))</highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>i<sp/></highlight><highlight class="keywordflow">in</highlight><highlight class="normal"><sp/>range(test_poses.shape[0]):</highlight></codeline>
+<codeline lineno="81"><highlight class="normal"><sp/><sp/><sp/><sp/>x<sp/>=<sp/>[test_poses[i,<sp/>0],<sp/>200.]</highlight></codeline>
+<codeline lineno="82"><highlight class="normal"><sp/><sp/><sp/><sp/>y<sp/>=<sp/>[test_poses[i,<sp/>1],<sp/>200.]</highlight></codeline>
+<codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/>theta<sp/>=<sp/>[test_poses[i,<sp/>2],<sp/>0.]</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/>obs,_,_,_<sp/>=<sp/>racecar_env.reset({</highlight><highlight class="stringliteral">&apos;x&apos;</highlight><highlight class="normal">:<sp/>x,<sp/></highlight><highlight class="stringliteral">&apos;y&apos;</highlight><highlight class="normal">:<sp/>y,<sp/></highlight><highlight class="stringliteral">&apos;theta&apos;</highlight><highlight class="normal">:<sp/>theta})</highlight></codeline>
+<codeline lineno="85"><highlight class="normal"><sp/><sp/><sp/><sp/>berlin_scan[i,:]<sp/>=<sp/>obs[</highlight><highlight class="stringliteral">&apos;scans&apos;</highlight><highlight class="normal">][0]</highlight></codeline>
+<codeline lineno="86"><highlight class="normal"></highlight></codeline>
+<codeline lineno="87"><highlight class="normal"></highlight><highlight class="comment">#<sp/>map<sp/>3:<sp/>skirk</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="88"><highlight class="normal">map_path<sp/>=<sp/></highlight><highlight class="stringliteral">&apos;../../../maps/skirk.yaml&apos;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="89"><highlight class="normal">map_ext<sp/>=<sp/></highlight><highlight class="stringliteral">&apos;.png&apos;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="90"><highlight class="normal">racecar_env<sp/>=<sp/>gym.make(</highlight><highlight class="stringliteral">&apos;f110_gym:f110-v0&apos;</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="91"><highlight class="normal">racecar_env.init_map(map_path,<sp/>map_ext,<sp/></highlight><highlight class="keyword">False</highlight><highlight class="normal">,<sp/></highlight><highlight class="keyword">False</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="92"><highlight class="normal">racecar_env.update_params(mu,<sp/>h_cg,<sp/>l_r,<sp/>cs_f,<sp/>cs_r,<sp/>I_z,<sp/>mass,<sp/>executable_dir,<sp/>double_finish=</highlight><highlight class="keyword">True</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="93"><highlight class="normal">skirk_scan<sp/>=<sp/>np.empty((num_test,<sp/>1080))</highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>i<sp/></highlight><highlight class="keywordflow">in</highlight><highlight class="normal"><sp/>range(test_poses.shape[0]):</highlight></codeline>
+<codeline lineno="95"><highlight class="normal"><sp/><sp/><sp/><sp/>x<sp/>=<sp/>[test_poses[i,<sp/>0],<sp/>200.]</highlight></codeline>
+<codeline lineno="96"><highlight class="normal"><sp/><sp/><sp/><sp/>y<sp/>=<sp/>[test_poses[i,<sp/>1],<sp/>200.]</highlight></codeline>
+<codeline lineno="97"><highlight class="normal"><sp/><sp/><sp/><sp/>theta<sp/>=<sp/>[test_poses[i,<sp/>2],<sp/>0.]</highlight></codeline>
+<codeline lineno="98"><highlight class="normal"><sp/><sp/><sp/><sp/>obs,_,_,_<sp/>=<sp/>racecar_env.reset({</highlight><highlight class="stringliteral">&apos;x&apos;</highlight><highlight class="normal">:<sp/>x,<sp/></highlight><highlight class="stringliteral">&apos;y&apos;</highlight><highlight class="normal">:<sp/>y,<sp/></highlight><highlight class="stringliteral">&apos;theta&apos;</highlight><highlight class="normal">:<sp/>theta})</highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/><sp/><sp/>skirk_scan[i,:]<sp/>=<sp/>obs[</highlight><highlight class="stringliteral">&apos;scans&apos;</highlight><highlight class="normal">][0]</highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight><highlight class="comment">#<sp/>package<sp/>data</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal">np.savez_compressed(</highlight><highlight class="stringliteral">&apos;legacy_scan.npz&apos;</highlight><highlight class="normal">,<sp/>vegas=vegas_scan,<sp/>berlin=berlin_scan,<sp/>skirk=skirk_scan)</highlight></codeline>
+    </programlisting>
+    <location file="/home/billyzheng/f1tenth_gym/gym/f110_gym/unittest/legacy_scan_gen.py"/>
+  </compounddef>
+</doxygen>
