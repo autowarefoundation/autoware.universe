@@ -44,41 +44,6 @@ public:
   explicit VehicleNode(const rclcpp::NodeOptions & options);
 
 private:
-  using GearReport = vehicle_interface::GearStatus::Message;
-  using ApiGear = autoware_adapi_v1_msgs::msg::Gear;
-  using TurnIndicatorsReport = vehicle_interface::TurnIndicatorStatus::Message;
-  using ApiTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicators;
-  using HazardLightsReport = vehicle_interface::HazardLightStatus::Message;
-  using ApiHazardLight = autoware_adapi_v1_msgs::msg::HazardLights;
-  using MapProjectorInfo = map_interface::MapProjectorInfo::Message;
-
-  std::unordered_map<uint8_t, uint8_t> gear_type_ = {
-    {GearReport::NONE, ApiGear::UNKNOWN},    {GearReport::NEUTRAL, ApiGear::NEUTRAL},
-    {GearReport::DRIVE, ApiGear::DRIVE},     {GearReport::DRIVE_2, ApiGear::DRIVE},
-    {GearReport::DRIVE_3, ApiGear::DRIVE},   {GearReport::DRIVE_4, ApiGear::DRIVE},
-    {GearReport::DRIVE_5, ApiGear::DRIVE},   {GearReport::DRIVE_6, ApiGear::DRIVE},
-    {GearReport::DRIVE_7, ApiGear::DRIVE},   {GearReport::DRIVE_8, ApiGear::DRIVE},
-    {GearReport::DRIVE_9, ApiGear::DRIVE},   {GearReport::DRIVE_10, ApiGear::DRIVE},
-    {GearReport::DRIVE_11, ApiGear::DRIVE},  {GearReport::DRIVE_12, ApiGear::DRIVE},
-    {GearReport::DRIVE_13, ApiGear::DRIVE},  {GearReport::DRIVE_14, ApiGear::DRIVE},
-    {GearReport::DRIVE_15, ApiGear::DRIVE},  {GearReport::DRIVE_16, ApiGear::DRIVE},
-    {GearReport::DRIVE_17, ApiGear::DRIVE},  {GearReport::DRIVE_18, ApiGear::DRIVE},
-    {GearReport::REVERSE, ApiGear::REVERSE}, {GearReport::REVERSE_2, ApiGear::REVERSE},
-    {GearReport::PARK, ApiGear::PARK},       {GearReport::LOW, ApiGear::LOW},
-    {GearReport::LOW_2, ApiGear::LOW},
-  };
-
-  std::unordered_map<uint8_t, uint8_t> turn_indicator_type_ = {
-    {TurnIndicatorsReport::DISABLE, ApiTurnIndicator::DISABLE},
-    {TurnIndicatorsReport::ENABLE_LEFT, ApiTurnIndicator::LEFT},
-    {TurnIndicatorsReport::ENABLE_RIGHT, ApiTurnIndicator::RIGHT},
-  };
-
-  std::unordered_map<uint8_t, uint8_t> hazard_light_type_ = {
-    {HazardLightsReport::DISABLE, ApiHazardLight::DISABLE},
-    {HazardLightsReport::ENABLE, ApiHazardLight::ENABLE},
-  };
-
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   Pub<autoware_ad_api::vehicle::VehicleKinematics> pub_kinematics_;
   Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
@@ -92,7 +57,7 @@ private:
   Sub<vehicle_interface::EnergyStatus> sub_energy_level_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  MapProjectorInfo::ConstSharedPtr map_projector_info_;
+  map_interface::MapProjectorInfo::Message::ConstSharedPtr map_projector_info_;
   autoware_ad_api::vehicle::VehicleKinematics::Message vehicle_kinematics_;
   autoware_ad_api::vehicle::VehicleStatus::Message vehicle_status_;
 
@@ -101,10 +66,12 @@ private:
   void acceleration_status(
     const localization_interface::Acceleration::Message::ConstSharedPtr msg_ptr);
   void steering_status(const vehicle_interface::SteeringStatus::Message::ConstSharedPtr msg_ptr);
-  void gear_status(const GearReport::ConstSharedPtr msg_ptr);
-  void turn_indicator_status(const TurnIndicatorsReport::ConstSharedPtr msg_ptr);
-  void map_projector_info(const MapProjectorInfo::ConstSharedPtr msg_ptr);
-  void hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr);
+  void gear_status(const vehicle_interface::GearStatus::Message::ConstSharedPtr msg_ptr);
+  void turn_indicator_status(
+    const vehicle_interface::TurnIndicatorStatus::Message::ConstSharedPtr msg_ptr);
+  void map_projector_info(const map_interface::MapProjectorInfo::Message::ConstSharedPtr msg_ptr);
+  void hazard_light_status(
+    const vehicle_interface::HazardLightStatus::Message::ConstSharedPtr msg_ptr);
   void energy_status(const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr);
   uint8_t mapping(
     std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);

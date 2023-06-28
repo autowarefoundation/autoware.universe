@@ -17,6 +17,41 @@
 namespace default_ad_api
 {
 
+using GearReport = vehicle_interface::GearStatus::Message;
+using ApiGear = autoware_adapi_v1_msgs::msg::Gear;
+using TurnIndicatorsReport = vehicle_interface::TurnIndicatorStatus::Message;
+using ApiTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicators;
+using HazardLightsReport = vehicle_interface::HazardLightStatus::Message;
+using ApiHazardLight = autoware_adapi_v1_msgs::msg::HazardLights;
+using MapProjectorInfo = map_interface::MapProjectorInfo::Message;
+
+std::unordered_map<uint8_t, uint8_t> gear_type_ = {
+  {GearReport::NONE, ApiGear::UNKNOWN},    {GearReport::NEUTRAL, ApiGear::NEUTRAL},
+  {GearReport::DRIVE, ApiGear::DRIVE},     {GearReport::DRIVE_2, ApiGear::DRIVE},
+  {GearReport::DRIVE_3, ApiGear::DRIVE},   {GearReport::DRIVE_4, ApiGear::DRIVE},
+  {GearReport::DRIVE_5, ApiGear::DRIVE},   {GearReport::DRIVE_6, ApiGear::DRIVE},
+  {GearReport::DRIVE_7, ApiGear::DRIVE},   {GearReport::DRIVE_8, ApiGear::DRIVE},
+  {GearReport::DRIVE_9, ApiGear::DRIVE},   {GearReport::DRIVE_10, ApiGear::DRIVE},
+  {GearReport::DRIVE_11, ApiGear::DRIVE},  {GearReport::DRIVE_12, ApiGear::DRIVE},
+  {GearReport::DRIVE_13, ApiGear::DRIVE},  {GearReport::DRIVE_14, ApiGear::DRIVE},
+  {GearReport::DRIVE_15, ApiGear::DRIVE},  {GearReport::DRIVE_16, ApiGear::DRIVE},
+  {GearReport::DRIVE_17, ApiGear::DRIVE},  {GearReport::DRIVE_18, ApiGear::DRIVE},
+  {GearReport::REVERSE, ApiGear::REVERSE}, {GearReport::REVERSE_2, ApiGear::REVERSE},
+  {GearReport::PARK, ApiGear::PARK},       {GearReport::LOW, ApiGear::LOW},
+  {GearReport::LOW_2, ApiGear::LOW},
+};
+
+std::unordered_map<uint8_t, uint8_t> turn_indicator_type_ = {
+  {TurnIndicatorsReport::DISABLE, ApiTurnIndicator::DISABLE},
+  {TurnIndicatorsReport::ENABLE_LEFT, ApiTurnIndicator::LEFT},
+  {TurnIndicatorsReport::ENABLE_RIGHT, ApiTurnIndicator::RIGHT},
+};
+
+std::unordered_map<uint8_t, uint8_t> hazard_light_type_ = {
+  {HazardLightsReport::DISABLE, ApiHazardLight::DISABLE},
+  {HazardLightsReport::ENABLE, ApiHazardLight::ENABLE},
+};
+
 VehicleNode::VehicleNode(const rclcpp::NodeOptions & options) : Node("vehicle", options)
 {
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
