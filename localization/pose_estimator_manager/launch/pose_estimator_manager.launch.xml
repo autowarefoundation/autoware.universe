@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node pkg="pose_estimator_manager" exec="pose_estimator_manager" name="pose_estimator_manager" output="screen">
+  </node>
+
+  <node pkg="pose_estimator_manager" exec="yabloc_sub_manager" name="yabloc_sub_manager" output="screen">
+    <remap from="~/enable_srv" to="/yabloc_enable_srv"/>
+
+    <remap from="~/input/image" to="/sensing/camera/undistorted/image_raw"/>
+    <remap from="~/output/image" to="/sensing/camera/undistorted/image_raw/relay"/>
+    <remap from="~/input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
+    <remap from="~/output/navpvt" to="/sensing/gnss/ublox/navpvt/relay"/>
+  </node>
+
+  <node pkg="pose_estimator_manager" exec="ndt_sub_manager" name="ndt_sub_manager" output="screen">
+    <remap from="~/enable_srv" to="/ndt_enable_srv"/>
+    <remap from="~/input/pointcloud" to="/sensing/lidar/top/outlier_filtered/pointcloud"/>
+    <remap from="~/output/pointcloud" to="/sensing/lidar/top/outlier_filtered/pointcloud/relay"/>
+  </node>
+
+</launch>
