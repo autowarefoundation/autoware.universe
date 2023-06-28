@@ -44,11 +44,15 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
   const auto & route_handler = planner_data_->route_handler;
   const auto & common_parameters = planner_data_->parameters;
   const auto & dynamic_objects = planner_data_->dynamic_object;
-  const auto & road_lanes = utils::getExtendedCurrentLanes(planner_data_);
-  const auto & shoulder_lanes = getPullOutLanes(planner_data_);
+  const auto shoulder_lanes = getPullOutLanes(planner_data_);
   if (shoulder_lanes.empty()) {
     return boost::none;
   }
+
+  const double backward_path_length =
+    planner_data_->parameters.backward_path_length + parameters_.max_back_distance;
+  const auto road_lanes =
+    utils::getCurrentLanes(planner_data_, backward_path_length, std::numeric_limits<double>::max());
 
   // find candidate paths
   auto pull_out_paths = calcPullOutPaths(
