@@ -57,8 +57,9 @@ private:
   Sub<vehicle_interface::EnergyStatus> sub_energy_level_;
   rclcpp::TimerBase::SharedPtr timer_;
 
+  localization_interface::KinematicState::Message::ConstSharedPtr kinematic_state_msgs_;
+  localization_interface::Acceleration::Message::ConstSharedPtr acceleration_msgs_;
   map_interface::MapProjectorInfo::Message::ConstSharedPtr map_projector_info_;
-  autoware_ad_api::vehicle::VehicleKinematics::Message vehicle_kinematics_;
   autoware_ad_api::vehicle::VehicleStatus::Message vehicle_status_;
 
   void kinematic_state(
