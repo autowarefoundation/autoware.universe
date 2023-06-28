@@ -1084,20 +1084,20 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
   return leading_obj_idx;
 }
 
-LaneChangeTargetObjectIndices filterObject(const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets& target_lanes,
-  const lanelet::ConstLanelets& target_backward_lanes,
-  const Pose & current_pose,
-  const RouteHandler & route_handler,
+LaneChangeTargetObjectIndices filterObject(
+  const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
+  const Pose & current_pose, const RouteHandler & route_handler,
   const LaneChangeParameters & lane_change_parameter)
 {
   // Guard
-  if(objects.objects.empty() || current_lanes.empty()) {
+  if (objects.objects.empty() || current_lanes.empty()) {
     return {};
   }
 
   // Get path
-  const auto path = route_handler.getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto path =
+    route_handler.getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
 
   const auto get_basic_polygon =
     [](const lanelet::ConstLanelets & lanes, const double start_dist, const double end_dist) {
@@ -1125,14 +1125,15 @@ LaneChangeTargetObjectIndices filterObject(const PredictedObjects & objects, con
 
     // calc distance from the current ego position
     double max_dist_ego_to_obj = std::numeric_limits<double>::lowest();
-    for(const auto& polygon_p : obj_polygon.outer()) {
+    for (const auto & polygon_p : obj_polygon.outer()) {
       const auto obj_p = tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
-      const double dist_ego_to_obj = motion_utils::calcSignedArcLength(path.points, current_pose.position, obj_p);
+      const double dist_ego_to_obj =
+        motion_utils::calcSignedArcLength(path.points, current_pose.position, obj_p);
       max_dist_ego_to_obj = std::max(dist_ego_to_obj, max_dist_ego_to_obj);
     }
 
     // ignore static object that are behind the ego vehicle
-    if(obj_velocity < 1.0 && max_dist_ego_to_obj < 0.0) {
+    if (obj_velocity < 1.0 && max_dist_ego_to_obj < 0.0) {
       continue;
     }
 

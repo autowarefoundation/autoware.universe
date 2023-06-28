@@ -181,11 +181,10 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
   const PredictedObjects & objects, const std::vector<size_t> & obj_indices,
   const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold);
 
-LaneChangeTargetObjectIndices filterObject(const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const lanelet::ConstLanelets & target_backward_lanes,
-  const Pose & current_pose,
-  const RouteHandler & route_handler,
+LaneChangeTargetObjectIndices filterObject(
+  const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
+  const Pose & current_pose, const RouteHandler & route_handler,
   const LaneChangeParameters & lane_change_parameter);
 }  // namespace behavior_path_planner::utils::lane_change
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_

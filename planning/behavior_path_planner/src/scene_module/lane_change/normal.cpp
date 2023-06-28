@@ -566,8 +566,12 @@ bool NormalLaneChange::getLaneChangePaths(
     lanelet::utils::to2D(target_preferred_lane_poly).basicPolygon();
 
   const auto backward_length = lane_change_parameters_->backward_lane_length;
-  const auto backward_target_lanes_for_object_filtering = utils::lane_change::getBackwardLanelets(route_handler, target_lanelets, getEgoPose(), backward_length);
-  const auto dynamic_object_indices = utils::lane_change::filterObject(*dynamic_objects, original_lanelets, target_lanelets, backward_target_lanes_for_object_filtering, current_pose, route_handler, *lane_change_parameters_);
+  const auto backward_target_lanes_for_object_filtering = utils::lane_change::getBackwardLanelets(
+    route_handler, target_lanelets, getEgoPose(), backward_length);
+  const auto dynamic_object_indices = utils::lane_change::filterObject(
+    *dynamic_objects, original_lanelets, target_lanelets,
+    backward_target_lanes_for_object_filtering, current_pose, route_handler,
+    *lane_change_parameters_);
 
   candidate_paths->reserve(longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num);
   for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
@@ -773,11 +777,11 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
 
   // get lanes used for detection
   const auto backward_target_lanes_for_object_filtering = utils::lane_change::getBackwardLanelets(
-    route_handler, path.target_lanelets, current_pose,
-    lane_change_parameters.backward_lane_length);
+    route_handler, path.target_lanelets, current_pose, lane_change_parameters.backward_lane_length);
 
-  const auto dynamic_object_indices = utils::lane_change::filterObject(*dynamic_objects, current_lanes, target_lanes,
-    backward_target_lanes_for_object_filtering, current_pose, route_handler, *lane_change_parameters_);
+  const auto dynamic_object_indices = utils::lane_change::filterObject(
+    *dynamic_objects, current_lanes, target_lanes, backward_target_lanes_for_object_filtering,
+    current_pose, route_handler, *lane_change_parameters_);
 
   CollisionCheckDebugMap debug_data;
   const auto safety_status = utils::lane_change::isLaneChangePathSafe(
