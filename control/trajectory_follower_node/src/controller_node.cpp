@@ -42,7 +42,7 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
       break;
     }
     case LateralControllerMode::PURE_PURSUIT: {
-      lateral_controller_ = std::make_shared<pure_pursuit::PurePursuitLateralController>(*this);
+      lateral_controller_ = std::make_shared<pure_pursuit::PurePursuitLateralController>(this);
       break;
     }
     default:
