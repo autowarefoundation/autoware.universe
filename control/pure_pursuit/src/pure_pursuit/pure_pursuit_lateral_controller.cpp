@@ -57,10 +57,7 @@ enum TYPE {
 namespace pure_pursuit
 {
 PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
-: clock_(node.get_clock())
-, logger_(node.get_logger())
-, tf_buffer_(clock_)
-, tf_listener_(tf_buffer_)
+: clock_(node.get_clock()), logger_(node.get_logger()), tf_buffer_(clock_), tf_listener_(tf_buffer_)
 {
   pure_pursuit_ = std::make_unique<PurePursuit>();
 
@@ -86,8 +83,7 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   param_.curvature_calculation_distance =
     node.declare_parameter<double>("curvature_calculation_distance");
   param_.enable_path_smoothing = node.declare_parameter<bool>("enable_path_smoothing");
-  param_.path_filter_moving_ave_num =
-    node.declare_parameter<int64_t>("path_filter_moving_ave_num");
+  param_.path_filter_moving_ave_num = node.declare_parameter<int64_t>("path_filter_moving_ave_num");
 
   // Debug Publishers
   pub_debug_marker_ =
@@ -302,9 +298,7 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
         tmp_msg = generateCtrlCmdMsg(pp_output->curvature);
         predicted_trajectory.points.at(i).longitudinal_velocity_mps = pp_output->velocity;
       } else {
-        RCLCPP_WARN_THROTTLE(
-          logger_, *clock_, 5000,
-          "failed to solve pure_pursuit for prediction");
+        RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "failed to solve pure_pursuit for prediction");
         tmp_msg = generateCtrlCmdMsg(0.0);
       }
       TrajectoryPoint p2;
@@ -319,9 +313,7 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
         tmp_msg = generateCtrlCmdMsg(pp_output->curvature);
         predicted_trajectory.points.at(i).longitudinal_velocity_mps = pp_output->velocity;
       } else {
-        RCLCPP_WARN_THROTTLE(
-          logger_, *clock_, 5000,
-          "failed to solve pure_pursuit for prediction");
+        RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "failed to solve pure_pursuit for prediction");
         tmp_msg = generateCtrlCmdMsg(0.0);
       }
       predicted_trajectory.points.push_back(
@@ -388,8 +380,7 @@ AckermannLateralCommand PurePursuitLateralController::generateOutputControlCmd()
     publishDebugMarker();
   } else {
     RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 5000,
-      "failed to solve pure_pursuit for control command calculation");
+      logger_, *clock_, 5000, "failed to solve pure_pursuit for control command calculation");
     if (prev_cmd_) {
       output_cmd = *prev_cmd_;
     } else {
@@ -427,8 +418,7 @@ boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
 {
   // Ignore invalid trajectory
   if (trajectory_resampled_->points.size() < 3) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 5000, "received path size is < 3, ignored");
+    RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "received path size is < 3, ignored");
     return {};
   }
 

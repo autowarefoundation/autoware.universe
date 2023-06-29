@@ -161,7 +161,8 @@ private:
    * @param wheelbase Vehicle's wheelbase.
    * @return Pointer to the created steering offset estimator.
    */
-  std::shared_ptr<SteeringOffsetEstimator> createSteerOffsetEstimator(const double wheelbase, rclcpp::Node & node);
+  std::shared_ptr<SteeringOffsetEstimator> createSteerOffsetEstimator(
+    const double wheelbase, rclcpp::Node & node);
 
   /**
    * @brief Check if all necessary data is received and ready to run the control.

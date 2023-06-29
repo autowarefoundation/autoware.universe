@@ -36,8 +36,7 @@ namespace autoware::motion::control::mpc_lateral_controller
 {
 
 MpcLateralController::MpcLateralController(rclcpp::Node & node)
-: clock_(node.get_clock())
-, logger_(node.get_logger())
+: clock_(node.get_clock()), logger_(node.get_logger())
 {
   const auto dp_int = [&](const std::string & s) { return node.declare_parameter<int>(s); };
   const auto dp_bool = [&](const std::string & s) { return node.declare_parameter<bool>(s); };
@@ -136,15 +135,14 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node)
   m_pub_predicted_traj = node.create_publisher<Trajectory>("~/output/predicted_trajectory", 1);
   m_pub_debug_values =
     node.create_publisher<Float32MultiArrayStamped>("~/output/lateral_diagnostic", 1);
-  m_pub_steer_offset =
-    node.create_publisher<Float32Stamped>("~/output/estimated_steer_offset", 1);
+  m_pub_steer_offset = node.create_publisher<Float32Stamped>("~/output/estimated_steer_offset", 1);
 
   declareMPCparameters(node);
 
   /* get parameter updates */
   using std::placeholders::_1;
-  m_set_param_res = node.add_on_set_parameters_callback(
-    std::bind(&MpcLateralController::paramCallback, this, _1));
+  m_set_param_res =
+    node.add_on_set_parameters_callback(std::bind(&MpcLateralController::paramCallback, this, _1));
 
   m_mpc.initializeSteeringPredictor();
 
@@ -161,8 +159,7 @@ std::shared_ptr<VehicleModelInterface> MpcLateralController::createVehicleModel(
 {
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr;
 
-  const std::string vehicle_model_type =
-    node.declare_parameter<std::string>("vehicle_model_type");
+  const std::string vehicle_model_type = node.declare_parameter<std::string>("vehicle_model_type");
 
   if (vehicle_model_type == "kinematics") {
     vehicle_model_ptr = std::make_shared<KinematicsBicycleModel>(wheelbase, steer_lim, steer_tau);
@@ -192,7 +189,8 @@ std::shared_ptr<VehicleModelInterface> MpcLateralController::createVehicleModel(
   return vehicle_model_ptr;
 }
 
-std::shared_ptr<QPSolverInterface> MpcLateralController::createQPSolverInterface(rclcpp::Node & node)
+std::shared_ptr<QPSolverInterface> MpcLateralController::createQPSolverInterface(
+  rclcpp::Node & node)
 {
   std::shared_ptr<QPSolverInterface> qpsolver_ptr;
 

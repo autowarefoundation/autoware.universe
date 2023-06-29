@@ -27,10 +27,10 @@
 namespace autoware::motion::control::pid_longitudinal_controller
 {
 PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
-: node_parameters_(node.get_node_parameters_interface())
-, clock_(node.get_clock())
-, logger_(node.get_logger())
-, diagnostic_updater_(&node)
+: node_parameters_(node.get_node_parameters_interface()),
+  clock_(node.get_clock()),
+  logger_(node.get_logger()),
+  diagnostic_updater_(&node)
 {
   using std::placeholders::_1;
 
@@ -59,13 +59,11 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
     p.drive_state_offset_stop_dist =
       node.declare_parameter<double>("drive_state_offset_stop_dist");  // [m]
     // stopping
-    p.stopping_state_stop_dist =
-      node.declare_parameter<double>("stopping_state_stop_dist");  // [m]
+    p.stopping_state_stop_dist = node.declare_parameter<double>("stopping_state_stop_dist");  // [m]
     p.stopped_state_entry_duration_time =
       node.declare_parameter<double>("stopped_state_entry_duration_time");  // [s]
     // stop
-    p.stopped_state_entry_vel =
-      node.declare_parameter<double>("stopped_state_entry_vel");  // [m/s]
+    p.stopped_state_entry_vel = node.declare_parameter<double>("stopped_state_entry_vel");  // [m/s]
     p.stopped_state_entry_acc =
       node.declare_parameter<double>("stopped_state_entry_acc");  // [m/s²]
 
@@ -121,8 +119,7 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
     const double strong_stop_acc{
       node.declare_parameter<double>("smooth_stop_strong_stop_acc")};  // [m/s^2]
 
-    const double max_fast_vel{
-      node.declare_parameter<double>("smooth_stop_max_fast_vel")};  // [m/s]
+    const double max_fast_vel{node.declare_parameter<double>("smooth_stop_max_fast_vel")};  // [m/s]
     const double min_running_vel{
       node.declare_parameter<double>("smooth_stop_min_running_vel")};  // [m/s]
     const double min_running_acc{
@@ -215,14 +212,12 @@ void PidLongitudinalController::setTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & msg)
 {
   if (!longitudinal_utils::isValidTrajectory(msg)) {
-    RCLCPP_ERROR_THROTTLE(
-      logger_, *clock_, 3000, "received invalid trajectory. ignore.");
+    RCLCPP_ERROR_THROTTLE(logger_, *clock_, 3000, "received invalid trajectory. ignore.");
     return;
   }
 
   if (msg.points.size() < 2) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 3000, "Unexpected trajectory size < 2. Ignored.");
+    RCLCPP_WARN_THROTTLE(logger_, *clock_, 3000, "Unexpected trajectory size < 2. Ignored.");
     return;
   }
 
@@ -292,17 +287,25 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
 
   // stopping state
   {
-    double max_strong_acc{node_parameters_->get_parameter("smooth_stop_max_strong_acc").as_double()};
-    double min_strong_acc{node_parameters_->get_parameter("smooth_stop_min_strong_acc").as_double()};
+    double max_strong_acc{
+      node_parameters_->get_parameter("smooth_stop_max_strong_acc").as_double()};
+    double min_strong_acc{
+      node_parameters_->get_parameter("smooth_stop_min_strong_acc").as_double()};
     double weak_acc{node_parameters_->get_parameter("smooth_stop_weak_acc").as_double()};
     double weak_stop_acc{node_parameters_->get_parameter("smooth_stop_weak_stop_acc").as_double()};
-    double strong_stop_acc{node_parameters_->get_parameter("smooth_stop_strong_stop_acc").as_double()};
+    double strong_stop_acc{
+      node_parameters_->get_parameter("smooth_stop_strong_stop_acc").as_double()};
     double max_fast_vel{node_parameters_->get_parameter("smooth_stop_max_fast_vel").as_double()};
-    double min_running_vel{node_parameters_->get_parameter("smooth_stop_min_running_vel").as_double()};
-    double min_running_acc{node_parameters_->get_parameter("smooth_stop_min_running_acc").as_double()};
-    double weak_stop_time{node_parameters_->get_parameter("smooth_stop_weak_stop_time").as_double()};
-    double weak_stop_dist{node_parameters_->get_parameter("smooth_stop_weak_stop_dist").as_double()};
-    double strong_stop_dist{node_parameters_->get_parameter("smooth_stop_strong_stop_dist").as_double()};
+    double min_running_vel{
+      node_parameters_->get_parameter("smooth_stop_min_running_vel").as_double()};
+    double min_running_acc{
+      node_parameters_->get_parameter("smooth_stop_min_running_acc").as_double()};
+    double weak_stop_time{
+      node_parameters_->get_parameter("smooth_stop_weak_stop_time").as_double()};
+    double weak_stop_dist{
+      node_parameters_->get_parameter("smooth_stop_weak_stop_dist").as_double()};
+    double strong_stop_dist{
+      node_parameters_->get_parameter("smooth_stop_strong_stop_dist").as_double()};
     update_param("smooth_stop_max_strong_acc", max_strong_acc);
     update_param("smooth_stop_min_strong_acc", min_strong_acc);
     update_param("smooth_stop_weak_acc", weak_acc);
@@ -473,8 +476,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcEmergencyCtrlCm
     longitudinal_utils::applyDiffLimitFilter(p.acc, m_prev_raw_ctrl_cmd.acc, dt, p.jerk);
 
   RCLCPP_ERROR_THROTTLE(
-    logger_, *clock_, 3000, "[Emergency stop] vel: %3.3f, acc: %3.3f", vel,
-    acc);
+    logger_, *clock_, 3000, "[Emergency stop] vel: %3.3f, acc: %3.3f", vel, acc);
 
   return Motion{vel, acc};
 }
@@ -518,8 +520,7 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
   const auto changeState = [this](const auto s) {
     if (s != m_control_state) {
       RCLCPP_DEBUG_STREAM(
-        logger_,
-        "controller state changed: " << toStr(m_control_state) << " -> " << toStr(s));
+        logger_, "controller state changed: " << toStr(m_control_state) << " -> " << toStr(s));
     }
     m_control_state = s;
     return;
@@ -655,8 +656,8 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     raw_ctrl_cmd.vel = m_stopped_state_params.vel;
 
     RCLCPP_DEBUG(
-      logger_, "[smooth stop]: Smooth stopping. vel: %3.3f, acc: %3.3f",
-      raw_ctrl_cmd.vel, raw_ctrl_cmd.acc);
+      logger_, "[smooth stop]: Smooth stopping. vel: %3.3f, acc: %3.3f", raw_ctrl_cmd.vel,
+      raw_ctrl_cmd.acc);
   } else if (m_control_state == ControlState::STOPPED) {
     // This acceleration is without slope compensation
     const auto & p = m_stopped_state_params;
@@ -664,8 +665,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     raw_ctrl_cmd.acc = longitudinal_utils::applyDiffLimitFilter(
       p.acc, m_prev_raw_ctrl_cmd.acc, control_data.dt, p.jerk);
 
-    RCLCPP_DEBUG(
-      logger_, "[Stopped]. vel: %3.3f, acc: %3.3f", raw_ctrl_cmd.vel, raw_ctrl_cmd.acc);
+    RCLCPP_DEBUG(logger_, "[Stopped]. vel: %3.3f, acc: %3.3f", raw_ctrl_cmd.vel, raw_ctrl_cmd.acc);
   } else if (m_control_state == ControlState::EMERGENCY) {
     raw_ctrl_cmd = calcEmergencyCtrlCmd(control_data.dt);
   }
