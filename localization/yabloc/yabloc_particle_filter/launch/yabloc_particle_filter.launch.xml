@@ -48,7 +48,7 @@
 
     <remap from="~/input/predicted_particles" to="predicted_particles"/>
     <remap from="~/input/height" to="/localization/pose_estimator/map/height"/>
-    <remap from="~/input/pose_with_covariance" to="/sensing/gnss/pose_with_covariance"/>
+    <remap from="~/input/pose_with_covariance" to="/sensing/gnss/pose_with_covariance/relay"/>
 
     <remap from="~/output/weighted_particles" to="$(var output_weighted_particles)"/>
     <remap from="~/debug/gnss_range_marker" to="gnss_range_marker"/>
