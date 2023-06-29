@@ -159,14 +159,12 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
 }
 
 AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
-  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
-  std::shared_ptr<AvoidanceParameters> avoidance_parameters,
-  std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lane_change_parameters)
+  rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
 : LaneChangeModuleManager(
-    node, name, config, Direction::NONE, LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE),
-  avoidance_parameters_(std::move(avoidance_parameters)),
-  avoidance_by_lane_change_parameters_(std::move(avoidance_by_lane_change_parameters))
+    node, name, config, Direction::NONE, LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE)
 {
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+
   rtc_interface_ptr_map_.clear();
   const std::vector<std::string> rtc_types = {"left", "right"};
   for (const auto & rtc_type : rtc_types) {
@@ -175,14 +173,110 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
     rtc_interface_ptr_map_.emplace(
       rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name));
   }
+
+  AvoidanceByLCParameters p{};
+  // unique parameters
+  {
+    std::string ns = "avoidance_by_lane_change.";
+    p.execute_object_num = get_parameter<int>(node, ns + "execute_object_num");
+    p.execute_object_longitudinal_margin =
+      get_parameter<double>(node, ns + "execute_object_longitudinal_margin");
+    p.execute_only_when_lane_change_finish_before_object =
+      get_parameter<bool>(node, ns + "execute_only_when_lane_change_finish_before_object");
+  }
+
+  if (p.execute_object_num < 1) {
+    RCLCPP_WARN_STREAM(logger_, "execute_object_num cannot be lesser than 1.");
+  }
+
+  // general params
+  {
+    std::string ns = "avoidance.";
+    p.resample_interval_for_planning =
+      get_parameter<double>(node, ns + "resample_interval_for_planning");
+    p.resample_interval_for_output =
+      get_parameter<double>(node, ns + "resample_interval_for_output");
+    p.detection_area_right_expand_dist =
+      get_parameter<double>(node, ns + "detection_area_right_expand_dist");
+    p.detection_area_left_expand_dist =
+      get_parameter<double>(node, ns + "detection_area_left_expand_dist");
+    p.enable_avoidance_over_same_direction =
+      get_parameter<bool>(node, ns + "enable_avoidance_over_same_direction");
+    p.enable_avoidance_over_opposite_direction =
+      get_parameter<bool>(node, ns + "enable_avoidance_over_opposite_direction");
+    p.enable_update_path_when_object_is_gone =
+      get_parameter<bool>(node, ns + "enable_update_path_when_object_is_gone");
+    p.enable_force_avoidance_for_stopped_vehicle =
+      get_parameter<bool>(node, ns + "enable_force_avoidance_for_stopped_vehicle");
+  }
+
+  // target object
+  {
+    const auto get_object_param = [&](std::string && ns) {
+      ObjectParameter param{};
+      param.is_target = get_parameter<bool>(node, ns + "is_target");
+      param.moving_speed_threshold = get_parameter<double>(node, ns + "moving_speed_threshold");
+      param.moving_time_threshold = get_parameter<double>(node, ns + "moving_time_threshold");
+      param.max_expand_ratio = get_parameter<double>(node, ns + "max_expand_ratio");
+      param.envelope_buffer_margin = get_parameter<double>(node, ns + "envelope_buffer_margin");
+      param.avoid_margin_lateral = get_parameter<double>(node, ns + "avoid_margin_lateral");
+      param.safety_buffer_lateral = get_parameter<double>(node, ns + "safety_buffer_lateral");
+      param.safety_buffer_longitudinal =
+        get_parameter<double>(node, ns + "safety_buffer_longitudinal");
+      return param;
+    };
+
+    const std::string ns = "avoidance.target_object.";
+    p.object_parameters.emplace(
+      ObjectClassification::MOTORCYCLE, get_object_param(ns + "motorcycle."));
+    p.object_parameters.emplace(ObjectClassification::CAR, get_object_param(ns + "car."));
+    p.object_parameters.emplace(ObjectClassification::TRUCK, get_object_param(ns + "truck."));
+    p.object_parameters.emplace(ObjectClassification::TRAILER, get_object_param(ns + "trailer."));
+    p.object_parameters.emplace(ObjectClassification::BUS, get_object_param(ns + "bus."));
+    p.object_parameters.emplace(
+      ObjectClassification::PEDESTRIAN, get_object_param(ns + "pedestrian."));
+    p.object_parameters.emplace(ObjectClassification::BICYCLE, get_object_param(ns + "bicycle."));
+    p.object_parameters.emplace(ObjectClassification::UNKNOWN, get_object_param(ns + "unknown."));
+
+    p.lower_distance_for_polygon_expansion =
+      get_parameter<double>(node, ns + "lower_distance_for_polygon_expansion");
+    p.upper_distance_for_polygon_expansion =
+      get_parameter<double>(node, ns + "upper_distance_for_polygon_expansion");
+  }
+
+  // target filtering
+  {
+    std::string ns = "avoidance.target_filtering.";
+    p.threshold_time_force_avoidance_for_stopped_vehicle =
+      get_parameter<double>(node, ns + "threshold_time_force_avoidance_for_stopped_vehicle");
+    p.object_ignore_section_traffic_light_in_front_distance =
+      get_parameter<double>(node, ns + "object_ignore_section_traffic_light_in_front_distance");
+    p.object_ignore_section_crosswalk_in_front_distance =
+      get_parameter<double>(node, ns + "object_ignore_section_crosswalk_in_front_distance");
+    p.object_ignore_section_crosswalk_behind_distance =
+      get_parameter<double>(node, ns + "object_ignore_section_crosswalk_behind_distance");
+    p.object_check_forward_distance =
+      get_parameter<double>(node, ns + "object_check_forward_distance");
+    p.object_check_backward_distance =
+      get_parameter<double>(node, ns + "object_check_backward_distance");
+    p.object_check_goal_distance = get_parameter<double>(node, ns + "object_check_goal_distance");
+    p.threshold_distance_object_is_on_center =
+      get_parameter<double>(node, ns + "threshold_distance_object_is_on_center");
+    p.object_check_shiftable_ratio =
+      get_parameter<double>(node, ns + "object_check_shiftable_ratio");
+    p.object_check_min_road_shoulder_width =
+      get_parameter<double>(node, ns + "object_check_min_road_shoulder_width");
+    p.object_last_seen_threshold = get_parameter<double>(node, ns + "object_last_seen_threshold");
+  }
+
+  avoidance_parameters_ = std::make_shared<AvoidanceByLCParameters>(p);
 }
 
 std::shared_ptr<SceneModuleInterface>
 AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
   return std::make_shared<AvoidanceByLaneChangeInterface>(
-    name_, *node_, parameters_, avoidance_parameters_, avoidance_by_lane_change_parameters_,
-    rtc_interface_ptr_map_);
+    name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_);
 }
 
 }  // namespace behavior_path_planner
