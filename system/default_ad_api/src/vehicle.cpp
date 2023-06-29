@@ -14,6 +14,8 @@
 
 #include "vehicle.hpp"
 
+#include <limits>
+
 namespace default_ad_api
 {
 
@@ -165,6 +167,11 @@ void VehicleNode::on_timer()
     vehicle_kinematics.geographic_pose.position.latitude = projected_gps_point.lat;
     vehicle_kinematics.geographic_pose.position.longitude = projected_gps_point.lon;
     vehicle_kinematics.geographic_pose.position.altitude = projected_gps_point.ele;
+  } else {
+    vehicle_kinematics.geographic_pose.position.latitude = std::numeric_limits<double>::quiet_NaN();
+    vehicle_kinematics.geographic_pose.position.longitude =
+      std::numeric_limits<double>::quiet_NaN();
+    vehicle_kinematics.geographic_pose.position.altitude = std::numeric_limits<double>::quiet_NaN();
   }
   vehicle_kinematics.accel.header = acceleration_msgs_->header;
   vehicle_kinematics.accel.accel = acceleration_msgs_->accel;
