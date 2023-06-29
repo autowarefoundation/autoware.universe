@@ -574,6 +574,7 @@ void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
   const auto walkways = lanelet::utils::query::walkwayLanelets(all_lanelets);
   crosswalks_.insert(crosswalks_.end(), crosswalks.begin(), crosswalks.end());
   crosswalks_.insert(crosswalks_.end(), walkways.begin(), walkways.end());
+  route_handler_.setMap(*msg);
 }
 
 void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPtr in_objects)
@@ -973,6 +974,7 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
       continue;
     }
 
+    std::cerr << "current " << lanelet.second.id() << std::endl;
     LaneletData closest_lanelet;
     closest_lanelet.lanelet = lanelet.second;
     closest_lanelet.probability = calculateLocalLikelihood(lanelet.second, object);
@@ -1122,20 +1124,37 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
     // Step1. Get the path
     // Step1.1 Get the left lanelet
+    const auto opt_left = [&]() -> boost::optional<lanelet::ConstLanelet> {
+      lanelet::ConstLanelet neighboring_lane{};
+      if (route_handler_.getLeftShoulderLanelet(current_lanelet_data.lanelet, &neighboring_lane)) {
+        return neighboring_lane;
+      }
+      return route_handler_.getLeftLanelet(current_lanelet_data.lanelet);
+    }();
     lanelet::routing::LaneletPaths left_paths;
-    auto opt_left = routing_graph_ptr_->left(current_lanelet_data.lanelet);
     if (!!opt_left) {
+      std::cerr << "left " << opt_left->id() << std::endl;
+      // TODO(Ri): create another function
       left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
     }
 
     // Step1.2 Get the right lanelet
+    const auto opt_right = [&]() -> boost::optional<lanelet::ConstLanelet> {
+      lanelet::ConstLanelet neighboring_lane{};
+      if (route_handler_.getRightShoulderLanelet(current_lanelet_data.lanelet, &neighboring_lane)) {
+        return neighboring_lane;
+      }
+      return route_handler_.getRightLanelet(current_lanelet_data.lanelet);
+    }();
     lanelet::routing::LaneletPaths right_paths;
-    auto opt_right = routing_graph_ptr_->right(current_lanelet_data.lanelet);
     if (!!opt_right) {
+      std::cerr << "right " << opt_right->id() << std::endl;
+      // TODO(Ri): create another function
       right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
     }
 
     // Step1.3 Get the centerline
+    // TODO(Ri): create another function
     lanelet::routing::LaneletPaths center_paths =
       routing_graph_ptr_->possiblePaths(current_lanelet_data.lanelet, possible_params);
 

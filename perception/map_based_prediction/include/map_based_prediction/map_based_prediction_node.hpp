@@ -22,6 +22,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -126,6 +127,7 @@ private:
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
   std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph_ptr_;
   std::shared_ptr<lanelet::traffic_rules::TrafficRules> traffic_rules_ptr_;
+  route_handler::RouteHandler route_handler_;
 
   // Pose Transform Listener
   tier4_autoware_utils::TransformListener transform_listener_{this};
