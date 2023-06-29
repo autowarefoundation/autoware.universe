@@ -181,6 +181,9 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
   const PredictedObjects & objects, const std::vector<size_t> & obj_indices,
   const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold);
 
+std::optional<lanelet::BasicPolygon2d> createPolygon(
+  const lanelet::ConstLanelets & lanes, const double start_dist, const double end_dist);
+
 LaneChangeTargetObjectIndices filterObject(
   const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
