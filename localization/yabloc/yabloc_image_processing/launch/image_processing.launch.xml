@@ -1,7 +1,7 @@
 <launch>
   <arg name="src_image" default="/sensing/camera/traffic_light/image_raw/compressed"/>
   <arg name="src_info" default="/sensing/camera/traffic_light/camera_info"/>
-  <arg name="resized_image" default="/sensing/camera/undistorted/image_raw/relay"/>
+  <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
   <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
   <!-- undistort -->
@@ -10,7 +10,7 @@
 
     <remap from="~/input/image_raw" to="$(var src_image)"/>
     <remap from="~/input/camera_info" to="$(var src_info)"/>
-    <remap from="~/output/resized_image" to="$(var resized_image)"/>
+    <remap from="~/output/resized_image" to="/localization/yabloc/image_processing/undistorted/image_raw"/>
     <remap from="~/output/resized_info" to="$(var resized_info)"/>
   </node>
 

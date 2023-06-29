@@ -6,7 +6,9 @@
 #include <sstream>
 namespace multi_pose_estimator
 {
-PoseEstimatorManager::PoseEstimatorManager() : Node("pose_estimator_manager")
+PoseEstimatorManager::PoseEstimatorManager()
+: Node("pose_estimator_manager"),
+  pcd_density_threshold(declare_parameter<int>("pcd_density_threshold"))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -117,13 +119,15 @@ void PoseEstimatorManager::on_timer()
   std::vector<int> indices;
   std::vector<float> distances;
   const int count = kdtree_->radiusSearch(query, 50, indices, distances, 0);
-  constexpr int COUNT_THR = 40;
-  toggle_mode(count > COUNT_THR);
+  const bool is_ndt_mode = count > pcd_density_threshold;
+  toggle_mode(is_ndt_mode);
 
   {
     String msg;
     std::stringstream ss;
-    ss << "PCD occupancy: " << count << " > " << COUNT_THR;
+    ss << "PCD occupancy: " << count << " > " << pcd_density_threshold << "\n";
+    ss << (is_ndt_mode ? "NDT" : "YabLoc");
+
     msg.data = ss.str();
     pub_debug_string_->publish(msg);
   }

@@ -27,6 +27,7 @@ public:
   PoseEstimatorManager();
 
 private:
+  const int pcd_density_threshold;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_cov_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_grid_marker_;

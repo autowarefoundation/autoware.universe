@@ -1,7 +1,7 @@
 <launch>
   <arg name="src_image"/>
   <arg name="src_info"/>
-  <arg name="resized_image" default="undistorted/image_raw"/>
+  <arg name="resized_image" default="undistorted/image_raw/relay"/>
   <arg name="resized_info" default="undistorted/camera_info"/>
   <arg name="input_pose" default="undistorted"/>
   <arg name="validation" default="true"/>

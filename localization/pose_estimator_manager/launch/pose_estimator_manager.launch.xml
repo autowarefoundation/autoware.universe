@@ -2,13 +2,14 @@
 <launch>
 
   <node pkg="pose_estimator_manager" exec="pose_estimator_manager" name="pose_estimator_manager" output="screen">
+    <param name="pcd_density_threshold" value="20"/>
   </node>
 
   <node pkg="pose_estimator_manager" exec="yabloc_sub_manager" name="yabloc_sub_manager" output="screen">
     <remap from="~/enable_srv" to="/yabloc_enable_srv"/>
 
-    <remap from="~/input/image" to="/sensing/camera/traffic_light/image_raw/compressed"/>
-    <remap from="~/output/image" to="/sensing/camera/traffic_light/image_raw/compressed/relay"/>
+    <remap from="~/input/image" to="/localization/yabloc/image_processing/undistorted/image_raw"/>
+    <remap from="~/output/image" to="/localization/yabloc/image_processing/undistorted/image_raw/relay"/>
     <remap from="~/input/navpvt" to="/sensing/gnss/pose_with_covariance"/>
     <remap from="~/output/navpvt" to="/sensing/gnss/pose_with_covariance/relay"/>
   </node>
