@@ -76,6 +76,8 @@ private:
   void energy_status(const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr);
   uint8_t mapping(
     std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);
+  void publish_kinematics();
+  void publish_status();
   void on_timer();
   Eigen::Vector3d toBasicPoint3dPt(const geometry_msgs::msg::Point src);
 };

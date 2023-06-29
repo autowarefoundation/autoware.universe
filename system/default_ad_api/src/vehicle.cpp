@@ -138,9 +138,10 @@ void VehicleNode::energy_status(
   vehicle_status_.energy_percentage = msg_ptr->energy_level;
 }
 
-void VehicleNode::on_timer()
+void VehicleNode::publish_kinematics()
 {
-  vehicle_status_.stamp = now();
+  if (!kinematic_state_msgs_ || !acceleration_msgs_) return;
+
   autoware_ad_api::vehicle::VehicleKinematics::Message vehicle_kinematics;
   vehicle_kinematics.pose.header = kinematic_state_msgs_->header;
   vehicle_kinematics.pose.pose = kinematic_state_msgs_->pose;
@@ -176,7 +177,18 @@ void VehicleNode::on_timer()
   vehicle_kinematics.accel.header = acceleration_msgs_->header;
   vehicle_kinematics.accel.accel = acceleration_msgs_->accel;
   pub_kinematics_->publish(vehicle_kinematics);
+}
+
+void VehicleNode::publish_status()
+{
+  vehicle_status_.stamp = now();
   pub_status_->publish(vehicle_status_);
+}
+
+void VehicleNode::on_timer()
+{
+  publish_kinematics();
+  publish_status();
 }
 
 }  // namespace default_ad_api
