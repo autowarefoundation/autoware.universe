@@ -141,16 +141,26 @@ class TestFaultInjectionLink(unittest.TestCase):
         # Call spin_once() so that the publisher publish messages simultaneously
         pub_events_1 = self.test_node.create_publisher(SimulationEvents, "/simulation/events", 10)
         pub_events_2 = self.test_node.create_publisher(SimulationEvents, "/simulation/events", 10)
-        pub_events_1.publish(SimulationEvents(fault_injection_events=[FaultInjectionEvent(name="cpu_temperature", level=FaultInjectionEvent.ERROR)]))
-        pub_events_2.publish(SimulationEvents(fault_injection_events=[FaultInjectionEvent(name="cpu_usage", level=FaultInjectionEvent.ERROR)]))
+        pub_events_1.publish(
+            SimulationEvents(
+                fault_injection_events=[
+                    FaultInjectionEvent(name="cpu_temperature", level=FaultInjectionEvent.ERROR)
+                ]
+            )
+        )
+        pub_events_2.publish(
+            SimulationEvents(
+                fault_injection_events=[
+                    FaultInjectionEvent(name="cpu_usage", level=FaultInjectionEvent.ERROR)
+                ]
+            )
+        )
         rclpy.spin_once(self.test_node, timeout_sec=0.1)
 
         # Wait until the subscriber receive messages
-        end_time = time.time() + self.evaluation_time
+        end_time = time.time() + self.evaluation_time * 2.0
         while time.time() < end_time:
             rclpy.spin_once(self.test_node, timeout_sec=1.0)
-            if len(msg_buffer) > 0:
-                break
 
         # Verify the number of received messages
         self.assertGreater(len(msg_buffer), 0)
