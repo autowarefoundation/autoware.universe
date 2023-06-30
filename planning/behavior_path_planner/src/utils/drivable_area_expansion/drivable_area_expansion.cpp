@@ -68,9 +68,7 @@ polygon_t createExpandedDrivableAreaPolygon(
   for (const auto & p : expansion_polygons) {
     unions.clear();
     boost::geometry::union_(expanded_da_poly, p, unions);
-    if (unions.size() != 1)  // union of overlapping polygons should produce a single polygon
-      continue;
-    else
+    if (unions.size() == 1)  // union of overlapping polygons should produce a single polygon
       expanded_da_poly = unions[0];
   }
   return expanded_da_poly;
