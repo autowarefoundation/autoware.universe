@@ -53,14 +53,18 @@ private:
   Sub<vehicle_interface::GearStatus> sub_gear_state_;
   Sub<vehicle_interface::TurnIndicatorStatus> sub_turn_indicator_;
   Sub<vehicle_interface::HazardLightStatus> sub_hazard_light_;
-  Sub<map_interface::MapProjectorInfo> sub_map_projector_info_;
   Sub<vehicle_interface::EnergyStatus> sub_energy_level_;
+  Sub<map_interface::MapProjectorInfo> sub_map_projector_info_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   localization_interface::KinematicState::Message::ConstSharedPtr kinematic_state_msgs_;
   localization_interface::Acceleration::Message::ConstSharedPtr acceleration_msgs_;
+  vehicle_interface::SteeringStatus::Message::ConstSharedPtr steering_status_msgs_;
+  vehicle_interface::GearStatus::Message::ConstSharedPtr gear_status_msgs_;
+  vehicle_interface::TurnIndicatorStatus::Message::ConstSharedPtr turn_indicator_status_msgs_;
+  vehicle_interface::HazardLightStatus::Message::ConstSharedPtr hazard_light_status_msgs_;
+  vehicle_interface::EnergyStatus::Message::ConstSharedPtr energy_status_msgs_;
   map_interface::MapProjectorInfo::Message::ConstSharedPtr map_projector_info_;
-  autoware_ad_api::vehicle::VehicleStatus::Message vehicle_status_;
 
   void kinematic_state(
     const localization_interface::KinematicState::Message::ConstSharedPtr msg_ptr);

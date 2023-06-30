@@ -107,35 +107,33 @@ void VehicleNode::acceleration_status(
 void VehicleNode::steering_status(
   const vehicle_interface::SteeringStatus::Message::ConstSharedPtr msg_ptr)
 {
-  vehicle_status_.steering_tire_angle = msg_ptr->steering_tire_angle;
+  steering_status_msgs_ = msg_ptr;
 }
 
 void VehicleNode::gear_status(const GearReport::ConstSharedPtr msg_ptr)
 {
-  vehicle_status_.gear.status = mapping(gear_type_, msg_ptr->report, ApiGear::UNKNOWN);
+  gear_status_msgs_ = msg_ptr;
 }
 
 void VehicleNode::turn_indicator_status(const TurnIndicatorsReport::ConstSharedPtr msg_ptr)
 {
-  vehicle_status_.turn_indicators.status =
-    mapping(turn_indicator_type_, msg_ptr->report, ApiTurnIndicator::UNKNOWN);
+  turn_indicator_status_msgs_ = msg_ptr;
 }
 
 void VehicleNode::hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr)
 {
-  vehicle_status_.hazard_lights.status =
-    mapping(hazard_light_type_, msg_ptr->report, ApiHazardLight::UNKNOWN);
-}
-
-void VehicleNode::map_projector_info(const MapProjectorInfo::ConstSharedPtr msg_ptr)
-{
-  map_projector_info_ = msg_ptr;
+  hazard_light_status_msgs_ = msg_ptr;
 }
 
 void VehicleNode::energy_status(
   const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr)
 {
-  vehicle_status_.energy_percentage = msg_ptr->energy_level;
+  energy_status_msgs_ = msg_ptr;
+}
+
+void VehicleNode::map_projector_info(const MapProjectorInfo::ConstSharedPtr msg_ptr)
+{
+  map_projector_info_ = msg_ptr;
 }
 
 void VehicleNode::publish_kinematics()
@@ -181,8 +179,21 @@ void VehicleNode::publish_kinematics()
 
 void VehicleNode::publish_status()
 {
-  vehicle_status_.stamp = now();
-  pub_status_->publish(vehicle_status_);
+  if (
+    !steering_status_msgs_ || !gear_status_msgs_ || !turn_indicator_status_msgs_ ||
+    hazard_light_status_msgs_ || energy_status_msgs_)
+    return;
+
+  autoware_ad_api::vehicle::VehicleStatus::Message vehicle_status;
+  vehicle_status.stamp = now();
+  vehicle_status.steering_tire_angle = steering_status_msgs_->steering_tire_angle;
+  vehicle_status.gear.status = mapping(gear_type_, gear_status_msgs_->report, ApiGear::UNKNOWN);
+  vehicle_status.turn_indicators.status =
+    mapping(turn_indicator_type_, turn_indicator_status_msgs_->report, ApiTurnIndicator::UNKNOWN);
+  vehicle_status.hazard_lights.status =
+    mapping(hazard_light_type_, hazard_light_status_msgs_->report, ApiHazardLight::UNKNOWN);
+  vehicle_status.energy_percentage = energy_status_msgs_->energy_level;
+  pub_status_->publish(vehicle_status);
 }
 
 void VehicleNode::on_timer()
