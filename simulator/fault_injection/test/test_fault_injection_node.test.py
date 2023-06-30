@@ -26,6 +26,10 @@ from launch.logging import get_logger
 import launch_testing
 import pytest
 import rclpy
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 from tier4_simulation_msgs.msg import FaultInjectionEvent
 from tier4_simulation_msgs.msg import SimulationEvents
 
@@ -141,6 +145,7 @@ class TestFaultInjectionLink(unittest.TestCase):
         # Call spin_once() so that the publisher publish messages simultaneously
         pub_events_1 = self.test_node.create_publisher(SimulationEvents, "/simulation/events", 10)
         pub_events_2 = self.test_node.create_publisher(SimulationEvents, "/simulation/events", 10)
+        rclpy.spin_once(self.test_node, timeout_sec=0.1)
         pub_events_1.publish(
             SimulationEvents(
                 fault_injection_events=[
@@ -155,10 +160,9 @@ class TestFaultInjectionLink(unittest.TestCase):
                 ]
             )
         )
-        rclpy.spin_once(self.test_node, timeout_sec=0.1)
 
         # Wait until the subscriber receive messages
-        end_time = time.time() + self.evaluation_time * 2.0
+        end_time = time.time() + self.evaluation_time
         while time.time() < end_time:
             rclpy.spin_once(self.test_node, timeout_sec=1.0)
 
