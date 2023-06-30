@@ -43,7 +43,7 @@ CloudOcclusionPredictor::CloudOcclusionPredictor(
 
 void CloudOcclusionPredictor::predict(
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr & camera_info_msg,
-  const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & rois_msg,
+  const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & rois_msg,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & cloud_msg,
   const tf2_ros::Buffer & tf_buffer,
   const std::map<lanelet::Id, tf2::Vector3> & traffic_light_position_map,
@@ -108,15 +108,15 @@ void CloudOcclusionPredictor::predict(
 }
 
 void CloudOcclusionPredictor::calcRoiVectex3D(
-  const autoware_auto_perception_msgs::msg::TrafficLightRoi & roi,
+  const tier4_perception_msgs::msg::TrafficLightRoi & roi,
   const image_geometry::PinholeCameraModel & pinhole_model,
   const std::map<lanelet::Id, tf2::Vector3> & traffic_light_position_map,
   const tf2::Transform & tf_camera2map, pcl::PointXYZ & top_left, pcl::PointXYZ & bottom_right)
 {
-  if (traffic_light_position_map.count(roi.id) == 0) {
+  if (traffic_light_position_map.count(roi.traffic_light_id) == 0) {
     return;
   }
-  double dist2cam = (tf_camera2map * traffic_light_position_map.at(roi.id)).length();
+  double dist2cam = (tf_camera2map * traffic_light_position_map.at(roi.traffic_light_id)).length();
   {
     cv::Point2d pixel(roi.roi.x_offset, roi.roi.y_offset);
     cv::Point2d rectified_pixel = pinhole_model.rectifyPoint(pixel);

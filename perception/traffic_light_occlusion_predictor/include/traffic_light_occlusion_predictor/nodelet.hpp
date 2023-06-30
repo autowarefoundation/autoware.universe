@@ -21,11 +21,11 @@
 #include <traffic_light_occlusion_predictor/occlusion_predictor.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_light_occlusion_array.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_light_roi_array.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
+#include <tier4_perception_msgs/msg/traffic_signal_array.hpp>
 
 #include <image_geometry/pinhole_camera_model.h>
 #include <message_filters/subscriber.h>
@@ -53,6 +53,7 @@ private:
     double max_valid_pt_dist;
     double max_image_cloud_delay;
     double max_wait_t;
+    int max_occlusion_ratio;
   };
 
 private:
@@ -67,7 +68,8 @@ private:
    *
    */
   void syncCallback(
-    const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg,
+    const tier4_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr in_signal_msg,
+    const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg,
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr in_cam_info_msg,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr in_cloud_msg);
 
@@ -76,8 +78,7 @@ private:
    * @brief publishers
    *
    */
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightOcclusionArray>::SharedPtr
-    occlusion_pub_;
+  rclcpp::Publisher<tier4_perception_msgs::msg::TrafficSignalArray>::SharedPtr signal_pub_;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
@@ -90,7 +91,8 @@ private:
   std::shared_ptr<CloudOcclusionPredictor> cloud_occlusion_predictor_;
 
   typedef perception_utils::PrimeSynchronizer<
-    autoware_auto_perception_msgs::msg::TrafficLightRoiArray, sensor_msgs::msg::CameraInfo,
+    tier4_perception_msgs::msg::TrafficSignalArray,
+    tier4_perception_msgs::msg::TrafficLightRoiArray, sensor_msgs::msg::CameraInfo,
     sensor_msgs::msg::PointCloud2>
     SynchronizerType;
 

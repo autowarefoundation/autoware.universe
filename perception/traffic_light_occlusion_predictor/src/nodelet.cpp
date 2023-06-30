@@ -20,8 +20,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
-#include <autoware_auto_perception_msgs/msg/traffic_light_roi.hpp>
-
 #include <lanelet2_core/Exceptions.h>
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_projection/UTM.h>
@@ -50,6 +48,7 @@ TrafficLightOcclusionPredictorNodelet::TrafficLightOcclusionPredictorNodelet(
   using std::placeholders::_1;
   using std::placeholders::_2;
   using std::placeholders::_3;
+  using std::placeholders::_4;
 
   // subscribers
   map_sub_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
@@ -57,9 +56,8 @@ TrafficLightOcclusionPredictorNodelet::TrafficLightOcclusionPredictorNodelet(
     std::bind(&TrafficLightOcclusionPredictorNodelet::mapCallback, this, _1));
 
   // publishers
-  occlusion_pub_ =
-    this->create_publisher<autoware_auto_perception_msgs::msg::TrafficLightOcclusionArray>(
-      "~/output/occlusion", 1);
+  signal_pub_ =
+    create_publisher<tier4_perception_msgs::msg::TrafficSignalArray>("~/output/traffic_signals", 1);
   // configuration parameters
   config_.azimuth_occlusion_resolution =
     declare_parameter<double>("azimuth_occlusion_resolution", 0.15);
@@ -68,16 +66,18 @@ TrafficLightOcclusionPredictorNodelet::TrafficLightOcclusionPredictorNodelet(
   config_.max_valid_pt_dist = declare_parameter<double>("max_valid_pt_dist", 50.0);
   config_.max_image_cloud_delay = declare_parameter<double>("max_image_cloud_delay", 1.0);
   config_.max_wait_t = declare_parameter<double>("max_wait_t", 0.02);
+  config_.max_occlusion_ratio = declare_parameter<int>("max_occlusion_ratio", 50);
 
   cloud_occlusion_predictor_ = std::make_shared<CloudOcclusionPredictor>(
     config_.max_valid_pt_dist, config_.azimuth_occlusion_resolution,
     config_.elevation_occlusion_resolution);
 
-  const std::vector<std::string> topics{"~/input/rois", "~/input/camera_info", "~/input/cloud"};
+  const std::vector<std::string> topics{
+    "~/input/traffic_signals", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
   const std::vector<rclcpp::QoS> qos(topics.size(), rclcpp::SensorDataQoS());
   synchronizer_ = std::make_shared<SynchronizerType>(
     this, topics, qos,
-    std::bind(&TrafficLightOcclusionPredictorNodelet::syncCallback, this, _1, _2, _3),
+    std::bind(&TrafficLightOcclusionPredictorNodelet::syncCallback, this, _1, _2, _3, _4),
     config_.max_image_cloud_delay, config_.max_wait_t);
 }
 
@@ -108,30 +108,28 @@ void TrafficLightOcclusionPredictorNodelet::mapCallback(
 }
 
 void TrafficLightOcclusionPredictorNodelet::syncCallback(
-  const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg,
+  const tier4_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr in_signal_msg,
+  const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg,
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr in_cam_info_msg,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr in_cloud_msg)
 {
-  autoware_auto_perception_msgs::msg::TrafficLightOcclusionArray out_msg;
-  out_msg.header = in_roi_msg->header;
+  tier4_perception_msgs::msg::TrafficSignalArray out_msg = *in_signal_msg;
   std::vector<int> occlusion_ratios;
-  if (in_cloud_msg == nullptr || in_cam_info_msg == nullptr) {
+  if (
+    in_cloud_msg == nullptr || in_cam_info_msg == nullptr || in_roi_msg == nullptr ||
+    in_roi_msg->rois.size() != in_signal_msg->signals.size()) {
     occlusion_ratios.resize(in_roi_msg->rois.size(), 0);
   } else {
     cloud_occlusion_predictor_->predict(
       in_cam_info_msg, in_roi_msg, in_cloud_msg, tf_buffer_, traffic_light_position_map_,
       occlusion_ratios);
   }
-  out_msg.occlusion_ratios.resize(in_roi_msg->rois.size());
-  if (in_roi_msg->rois.size() != occlusion_ratios.size()) {
-    RCLCPP_ERROR_STREAM(get_logger(), "rois size not match occlusion size!");
-  } else {
-    for (size_t i = 0; i < in_roi_msg->rois.size(); i++) {
-      out_msg.occlusion_ratios[i].id = in_roi_msg->rois[i].id;
-      out_msg.occlusion_ratios[i].occlusion_ratio = occlusion_ratios[i];
+  for (size_t i = 0; i < occlusion_ratios.size(); i++) {
+    if (occlusion_ratios[i] >= config_.max_occlusion_ratio) {
+      perception_utils::traffic_light::setSignalUnknown(out_msg.signals[i]);
     }
   }
-  occlusion_pub_->publish(out_msg);
+  signal_pub_->publish(out_msg);
 }
 
 }  // namespace traffic_light

@@ -21,9 +21,8 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/pcl_conversion.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_light_roi_array.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 
 #include <image_geometry/pinhole_camera_model.h>
 #include <lanelet2_core/LaneletMap.h>
@@ -60,7 +59,7 @@ public:
 
   void predict(
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr & camera_info_msg,
-    const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & rois_msg,
+    const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & rois_msg,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & cloud_msg,
     const tf2_ros::Buffer & tf_buffer,
     const std::map<lanelet::Id, tf2::Vector3> & traffic_light_position_map,
@@ -79,7 +78,7 @@ private:
     pcl::PointCloud<pcl::PointXYZ> & cloud_out);
 
   void calcRoiVectex3D(
-    const autoware_auto_perception_msgs::msg::TrafficLightRoi & roi,
+    const tier4_perception_msgs::msg::TrafficLightRoi & roi,
     const image_geometry::PinholeCameraModel & pinhole_model,
     const std::map<lanelet::Id, tf2::Vector3> & traffic_light_position_map,
     const tf2::Transform & tf_camera2map, pcl::PointXYZ & top_left, pcl::PointXYZ & bottom_right);
