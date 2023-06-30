@@ -26,10 +26,6 @@ from launch.logging import get_logger
 import launch_testing
 import pytest
 import rclpy
-from rclpy.qos import QoSDurabilityPolicy
-from rclpy.qos import QoSHistoryPolicy
-from rclpy.qos import QoSProfile
-from rclpy.qos import QoSReliabilityPolicy
 from tier4_simulation_msgs.msg import FaultInjectionEvent
 from tier4_simulation_msgs.msg import SimulationEvents
 
