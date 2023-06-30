@@ -163,6 +163,8 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     p.min_avoidance_distance = get_parameter<double>(node, ns + "min_avoidance_distance");
     p.min_nominal_avoidance_speed = get_parameter<double>(node, ns + "min_nominal_avoidance_speed");
     p.min_sharp_avoidance_speed = get_parameter<double>(node, ns + "min_sharp_avoidance_speed");
+    p.min_slow_down_speed = get_parameter<double>(node, ns + "min_slow_down_speed");
+    p.buf_slow_down_speed = get_parameter<double>(node, ns + "buf_slow_down_speed");
   }
 
   // yield
@@ -289,6 +291,8 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
   {
     const std::string ns = "avoidance.avoidance.longitudinal.";
     updateParam<double>(parameters, ns + "prepare_time", p->prepare_time);
+    updateParam<double>(parameters, ns + "min_slow_down_speed", p->min_slow_down_speed);
+    updateParam<double>(parameters, ns + "buf_slow_down_speed", p->buf_slow_down_speed);
   }
 
   {
