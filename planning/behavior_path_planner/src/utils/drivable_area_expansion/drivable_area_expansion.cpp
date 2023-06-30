@@ -19,6 +19,7 @@
 #include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/types.hpp"
+#include "interpolation/linear_interpolation.hpp"
 
 #include <boost/geometry.hpp>
 
@@ -144,8 +145,12 @@ void copy_z_over_arc_length(
       s_from_prev = s_from;
       s_from += tier4_autoware_utils::calcDistance2d(from[i_from], from[i_from + 1]);
     }
-    const auto ratio = (s_to - s_from_prev) / (s_from - s_from_prev);
-    to[i_to].z = from[i_from - 1].z + ratio * (from[i_from].z - from[i_from - 1].z);
+    if (s_from - s_from_prev != 0.0) {
+      const auto ratio = (s_to - s_from_prev) / (s_from - s_from_prev);
+      to[i_to].z = interpolation::lerp(from[i_from - 1].z, from[i_from].z, ratio);
+    } else {
+      to[i_to].z = to[i_to - 1].z;
+    }
   }
 }
 
