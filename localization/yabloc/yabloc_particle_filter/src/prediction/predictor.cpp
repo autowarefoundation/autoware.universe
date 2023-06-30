@@ -53,6 +53,9 @@ Predictor::Predictor()
   auto on_twist_cov = std::bind(&Predictor::on_twist_cov, this, _1);
   auto on_particle = std::bind(&Predictor::on_weighted_particles, this, _1);
   auto on_height = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
+  auto on_ekf_pose = [this](PoseCovStamped::ConstSharedPtr m) -> void {
+    this->latest_ekf_pose_ptr_ = m;
+  };
 
   initialpose_sub_ = create_subscription<PoseCovStamped>("~/input/initialpose", 1, on_initial);
   particles_sub_ =
@@ -60,6 +63,7 @@ Predictor::Predictor()
   height_sub_ = create_subscription<std_msgs::msg::Float32>("~/input/height", 10, on_height);
   twist_cov_sub_ =
     create_subscription<TwistCovStamped>("~/input/twist_with_covariance", 10, on_twist_cov);
+  ekf_pose_sub_ = create_subscription<PoseCovStamped>("~/input/ekf_pose", 10, on_ekf_pose);
 
   // Timer callback
   const double prediction_rate = declare_parameter<double>("prediction_rate");
@@ -67,9 +71,33 @@ Predictor::Predictor()
   timer_ = rclcpp::create_timer(
     this, this->get_clock(), rclcpp::Rate(prediction_rate).period(), std::move(on_timer));
 
+  // Service server
+  using std::placeholders::_2;
+  auto on_service = std::bind(&Predictor::on_service, this, _1, _2);
+  enable_server_ = create_service<SetBool>("~/yabloc_suspend_srv", on_service);
+
   // Optional modules
   if (declare_parameter<bool>("visualize", false)) {
     visualizer_ptr_ = std::make_unique<ParticleVisualizer>(*this);
+  }
+}
+
+void Predictor::on_service(
+  SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "particle filter activatation is set to " << request->data);
+  const bool before_activated_ = yabloc_activated_;
+  yabloc_activated_ = request->data;
+  response->success = true;
+
+  if (yabloc_activated_ && (!before_activated_)) {
+    RCLCPP_INFO_STREAM(get_logger(), "restart particle filter");
+    if (latest_ekf_pose_ptr_) {
+      on_initial_pose(latest_ekf_pose_ptr_);
+    } else {
+      yabloc_activated_ = false;
+      response->success = false;
+    }
   }
 }
 
@@ -181,6 +209,10 @@ void Predictor::on_timer()
 {
   // ==========================================================================
   // Pre-check section
+  // Return if yabloc is suspended
+  if (!yabloc_activated_) {
+    return;
+  }
   // Return if particle_array is not initialized yet
   if (!particle_array_opt_.has_value()) {
     return;

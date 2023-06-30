@@ -12,6 +12,7 @@
     <remap from="~/output/image" to="/localization/yabloc/image_processing/undistorted/image_raw/relay"/>
     <remap from="~/input/navpvt" to="/sensing/gnss/pose_with_covariance"/>
     <remap from="~/output/navpvt" to="/sensing/gnss/pose_with_covariance/relay"/>
+    <remap from="~/yabloc_suspend_srv" to="/yabloc_suspend_srv"/>
   </node>
 
   <node pkg="pose_estimator_manager" exec="ndt_sub_manager" name="ndt_sub_manager" output="screen">
