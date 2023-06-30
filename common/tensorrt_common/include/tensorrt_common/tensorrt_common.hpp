@@ -44,65 +44,15 @@ namespace tensorrt_common
  */
 struct BuildConfig
 {
-  // type for calibration
-  std::string calib_type_str;
-
-  // DLA core ID that the process uses
-  int dla_core_id;
-
-  // flag for partial quantization in first layer
-  bool quantize_first_layer;  // For partial quantization
-
-  // flag for partial quantization in last layer
-  bool quantize_last_layer;  // For partial quantization
-
-  // flag for per-layer profiler using IProfiler
-  bool profile_per_layer;
-
-  // clip value for implicit quantization
-  double clip_value;  // For implicit quantization
-
-  // Supported calibration type
-  const std::array<std::string, 4> valid_calib_type = {"Entropy", "Legacy", "Percentile", "MinMax"};
-
-  BuildConfig()
-  : calib_type_str("MinMax"),
-    dla_core_id(-1),
-    quantize_first_layer(false),
-    quantize_last_layer(false),
-    profile_per_layer(false),
-    clip_value(0.0)
-  {
-  }
-
-  explicit BuildConfig(
-    const std::string & calib_type_str, const int dla_core_id = -1,
-    const bool quantize_first_layer = false, const bool quantize_last_layer = false,
-    const bool profile_per_layer = false, const double clip_value = 0.0)
-  : calib_type_str(calib_type_str),
-    dla_core_id(dla_core_id),
-    quantize_first_layer(quantize_first_layer),
-    quantize_last_layer(quantize_last_layer),
-    profile_per_layer(profile_per_layer),
-    clip_value(clip_value)
-  {
-    if (
-      std::find(valid_calib_type.begin(), valid_calib_type.end(), calib_type_str) ==
-      valid_calib_type.end()) {
-      std::stringstream message;
-      message << "Invalid calibration type was specified: " << calib_type_str << std::endl
-              << "Valid value is one of: [Entropy, (Legacy | Percentile), MinMax]" << std::endl
-              << "Default calibration type will be used: MinMax" << std::endl;
-      std::cerr << message.str();
-    }
-  }
+  nvinfer1::CalibrationAlgoType calibType;
+  int dla;
+  bool first;  // For partial quantization
+  bool last;   // For partial quantization
+  bool prof;
+  double clip;  // For implicit quantization
 };
 
 nvinfer1::Dims get_input_dims(const std::string & onnx_file_path);
-
-const std::array<std::string, 3> valid_precisions = {"fp32", "fp16", "int8"};
-bool is_valid_precision_string(const std::string & precision);
-
 template <typename T>
 struct InferDeleter  // NOLINT
 {
@@ -143,24 +93,23 @@ public:
    */
   TrtCommon(
     const std::string & model_path, const std::string & precision,
-    std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator = nullptr,
+    std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator,
     const BatchConfig & batch_config = {1, 1, 1}, const size_t max_workspace_size = (16 << 20),
-    const BuildConfig & buildConfig = BuildConfig(),
+    const BuildConfig buildConfig =
+      {nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION, -1, false, false},
     const std::vector<std::string> & plugin_paths = {});
+
+  /**
+   * @brief Deconstruct TrtCommon
+   */
+  ~TrtCommon();
 
   /**
    * @brief Load TensorRT engine
    * @param[in] engine_file_path path for a engine file
-   * @return flag for whether loading are succeeded or failed
+   * @return flg for whether loading are succedded or failed
    */
   bool loadEngine(const std::string & engine_file_path);
-
-  /**
-   * @brief Output layer information including GFLOPs and parameters
-   * @param[in] onnx_file_path path for a onnx file
-   * @warning This function is based on darknet log.
-   */
-  void printNetworkInfo(const std::string & onnx_file_path);
 
   /**
    * @brief build TensorRT engine from ONNX
@@ -182,15 +131,10 @@ public:
   bool setBindingDimensions(const int32_t index, const nvinfer1::Dims & dimensions) const;
   bool enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed);
 
-  /**
-   * @brief output per-layer information
-   */
-  void printProfiling(void);
-
+/**
+ * @brief get per-layer information for trt-engine-profiler
+ */
 #if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8200
-  /**
-   * @brief get per-layer information for trt-engine-profiler
-   */
   std::string getLayerInformation(nvinfer1::LayerInformationFormat format);
 #endif
 
@@ -201,20 +145,28 @@ private:
   TrtUniquePtr<nvinfer1::ICudaEngine> engine_;
   TrtUniquePtr<nvinfer1::IExecutionContext> context_;
   std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator_;
-
   nvinfer1::Dims input_dims_;
   nvinfer1::Dims output_dims_;
   std::string precision_;
   BatchConfig batch_config_;
   size_t max_workspace_size_;
   bool is_initialized_{false};
-
   // profiler for per-layer
-  SimpleProfiler model_profiler_;
+  SimpleProfiler m_model_profiler;
   // profiler for whole model
-  SimpleProfiler host_profiler_;
-
-  std::unique_ptr<const BuildConfig> build_config_;
+  SimpleProfiler m_host_profiler;
+  // type for calibration
+  nvinfer1::CalibrationAlgoType m_calibType;
+  // flg for dla
+  int m_dla;
+  // flg for partial quanitzation in first layer
+  bool m_first;
+  // flg for partial quanitzation in last layer
+  bool m_last;
+  // clip value for implicit quantization
+  double m_clip;
+  // flg for per-layer profiler using IProfiler
+  bool m_prof;
 };
 
 }  // namespace tensorrt_common

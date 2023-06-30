@@ -11,8 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef TENSORRT_YOLOX__PREPROCESS_HPP_
-#define TENSORRT_YOLOX__PREPROCESS_HPP_
+
+#ifndef TENSORRT_CLASSIFIER__PREPROCESS_H_
+#define TENSORRT_CLASSIFIER__PREPROCESS_H_
 
 #include <cublas_v2.h>
 #include <cuda.h>
@@ -20,8 +21,6 @@
 #include <cuda_runtime_api.h>
 #include <curand.h>
 
-namespace tensorrt_yolox
-{
 typedef struct _roi
 {
   int x;
@@ -178,6 +177,5 @@ extern void crop_resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
 extern void multi_scale_resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
   float * dst, unsigned char * src, int d_w, int d_h, int d_c, Roi * d_roi, int s_w, int s_h,
   int s_c, int batch, float norm, cudaStream_t stream);
-}  // namespace tensorrt_yolox
 
-#endif  // TENSORRT_YOLOX__PREPROCESS_HPP_
+#endif  // TENSORRT_CLASSIFIER__PREPROCESS_H_

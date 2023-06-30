@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,19 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <tensorrt_yolox/preprocess.hpp>
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <tensorrt_classifier/preprocess.h>
 
 #include <algorithm>
 
 #define BLOCK 512
 
 #define MIN(x, y) x < y ? x : y
-
-namespace tensorrt_yolox
-{
 
 dim3 cuda_gridsize(size_t n)
 {
@@ -402,25 +398,31 @@ __global__ void resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel(
   int stride = src_w * C;
   int b_stride = src_h * src_w * C;
   int b;
+  const float mean[3] = {123.675, 116.28, 103.53};
+  const float std[3] = {58.395, 57.12, 57.375};
   for (b = 0; b < batch; b++) {
     for (c = 0; c < C; c++) {
       // NHWC
-      f00 = src_h_idx * stride + src_w_idx * C + c + b * b_stride;
-      f01 = src_h_idx * stride + (src_w_idx + 1) * C + c + b * b_stride;
-      f10 = (src_h_idx + 1) * stride + src_w_idx * C + c + b * b_stride;
-      f11 = (src_h_idx + 1) * stride + (src_w_idx + 1) * C + c + b * b_stride;
+      // bgr2rgb
+      f00 = src_h_idx * stride + src_w_idx * C + (C - c - 1) + b * b_stride;
+
+      f01 = src_h_idx * stride + (src_w_idx + 1) * C + (C - c - 1) + b * b_stride;
+
+      f10 = (src_h_idx + 1) * stride + src_w_idx * C + (C - c - 1) + b * b_stride;
+      f11 = (src_h_idx + 1) * stride + (src_w_idx + 1) * C + (C - c - 1) + b * b_stride;
 
       float rs = lroundf(lerp2d(
         (int)src_img[f00], (int)src_img[f01], (int)src_img[f10], (int)src_img[f11], centroid_h,
         centroid_w));
 
       // NCHW
-      int dst_index = w + (W * h) + (W * H * c) + b * (W * H * C);
+      int dst_index = b * (W * H * C) + (W * H * c) + (W * h) + w;
 
       dst_img[dst_index] = (float)rs;
-      dst_img[dst_index] = (h >= letter_bot) ? 114.0 : dst_img[dst_index];
-      dst_img[dst_index] = (w >= letter_right) ? 114.0 : dst_img[dst_index];
-      dst_img[dst_index] *= norm;
+      dst_img[dst_index] = (h >= letter_bot) ? 0.0 : dst_img[dst_index];
+      dst_img[dst_index] = (w >= letter_right) ? 0.0 : dst_img[dst_index];
+      dst_img[dst_index] -= mean[c];
+      dst_img[dst_index] /= std[c];
     }
   }
 }
@@ -592,5 +594,3 @@ void multi_scale_resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
   multi_scale_resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel<<<
     cuda_gridsize(N), BLOCK, 0, stream>>>(N, dst, src, d_h, d_w, s_h, s_w, d_roi, norm, batch);
 }
-
-}  // namespace tensorrt_yolox
