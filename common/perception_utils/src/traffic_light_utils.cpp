@@ -21,7 +21,7 @@ namespace traffic_light
 {
 
 bool isRoiValid(
-  const autoware_auto_perception_msgs::msg::TrafficLightRoi & roi, uint32_t width, uint32_t height)
+  const tier4_perception_msgs::msg::TrafficLightRoi & roi, uint32_t width, uint32_t height)
 {
   uint32_t x1 = roi.roi.x_offset;
   uint32_t x2 = roi.roi.x_offset + roi.roi.width;
@@ -31,23 +31,23 @@ bool isRoiValid(
          y2 < height;
 }
 
-void setRoiInvalid(autoware_auto_perception_msgs::msg::TrafficLightRoi & roi)
+void setRoiInvalid(tier4_perception_msgs::msg::TrafficLightRoi & roi)
 {
   roi.roi.height = roi.roi.width = 0;
 }
 
-bool isSignalUnknown(const autoware_perception_msgs::msg::TrafficLight & signal)
+bool isSignalUnknown(const tier4_perception_msgs::msg::TrafficSignal & signal)
 {
   return signal.elements.size() == 1 &&
-         signal.elements[0].shape == autoware_perception_msgs::msg::TrafficLightElement::UNKNOWN &&
-         signal.elements[0].color == autoware_perception_msgs::msg::TrafficLightElement::UNKNOWN;
+         signal.elements[0].shape == tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN &&
+         signal.elements[0].color == tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
 }
 
-void setSignalUnknown(autoware_perception_msgs::msg::TrafficLight & signal, float confidence)
+void setSignalUnknown(tier4_perception_msgs::msg::TrafficSignal & signal, float confidence)
 {
   signal.elements.resize(1);
-  signal.elements[0].shape = autoware_perception_msgs::msg::TrafficLightElement::UNKNOWN;
-  signal.elements[0].color = autoware_perception_msgs::msg::TrafficLightElement::UNKNOWN;
+  signal.elements[0].shape = tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
+  signal.elements[0].color = tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
   // the default value is -1, which means to not set confidence
   if (confidence >= 0) {
     signal.elements[0].confidence = confidence;
