@@ -28,11 +28,15 @@ public:
     const auto on_service = [this](
                               const PoseWithCovarianceStamped::Request::SharedPtr req,
                               const PoseWithCovarianceStamped::Response::SharedPtr res) {
-      const auto & point = req->pose_with_covariance.pose.pose.position;
-      const auto & frame = req->pose_with_covariance.header.frame_id;
-      res->pose_with_covariance = req->pose_with_covariance;
-      res->pose_with_covariance.pose.pose.position = fitter_.fit(point, frame);
-      res->success = true;
+      const auto & pose = req->pose_with_covariance;
+      const auto fitted = fitter_.fit(pose.pose.pose.position, pose.header.frame_id);
+      if (fitted) {
+        res->pose_with_covariance = req->pose_with_covariance;
+        res->pose_with_covariance.pose.pose.position = fitted.value();
+        res->success = true;
+      } else {
+        res->success = false;
+      }
     };
     srv_ = create_service<PoseWithCovarianceStamped>("~/service", on_service);
   }
