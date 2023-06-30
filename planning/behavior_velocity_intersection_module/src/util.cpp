@@ -668,9 +668,10 @@ bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane)
 }
 
 bool isTrafficLightArrowActivated(
-  lanelet::ConstLanelet lane,
-  const std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> & tl_infos)
+  lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos)
 {
+  using TrafficLightElement = autoware_perception_msgs::msg::TrafficLightElement;
+
   const auto & turn_direction = lane.attributeOr("turn_direction", "else");
   std::optional<int> tl_id = std::nullopt;
   for (auto && tl_reg_elem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
@@ -687,16 +688,13 @@ bool isTrafficLightArrowActivated(
     return false;
   }
   const auto & tl_info = tl_info_it->second;
-  for (auto && tl_light : tl_info.signal.lights) {
-    if (tl_light.color != autoware_auto_perception_msgs::msg::TrafficLight::GREEN) continue;
-    if (tl_light.status != autoware_auto_perception_msgs::msg::TrafficLight::SOLID_ON) continue;
-    if (
-      turn_direction == std::string("left") &&
-      tl_light.shape == autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW)
+  for (auto && tl_light : tl_info.signal.elements) {
+    if (tl_light.color != TrafficLightElement::GREEN) continue;
+    if (tl_light.status != TrafficLightElement::SOLID_ON) continue;
+    if (turn_direction == std::string("left") && tl_light.shape == TrafficLightElement::LEFT_ARROW)
       return true;
     if (
-      turn_direction == std::string("right") &&
-      tl_light.shape == autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW)
+      turn_direction == std::string("right") && tl_light.shape == TrafficLightElement::RIGHT_ARROW)
       return true;
   }
   return false;

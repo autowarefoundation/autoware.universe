@@ -25,7 +25,7 @@ import time
 from autoware_auto_perception_msgs.msg import DetectedObjects
 from autoware_auto_perception_msgs.msg import PredictedObjects
 from autoware_auto_perception_msgs.msg import TrackedObjects
-from autoware_auto_perception_msgs.msg import TrafficSignalArray
+from autoware_perception_msgs.msg import TrafficSignalArray
 from geometry_msgs.msg import Quaternion
 from nav_msgs.msg import Odometry
 import numpy as np
@@ -238,11 +238,11 @@ class PerceptionReproducer(Node):
 
                 self.objects_pub.publish(objects_msg)
             if traffic_signals_msg:
-                traffic_signals_msg.header.stamp = timestamp
+                traffic_signals_msg.stamp = timestamp
                 self.traffic_signals_pub.publish(traffic_signals_msg)
                 self.prev_traffic_signals_msg = traffic_signals_msg
             elif self.prev_traffic_signals_msg:
-                self.prev_traffic_signals_msg.header.stamp = timestamp
+                self.prev_traffic_signals_msg.stamp = timestamp
                 self.traffic_signals_pub.publish(self.prev_traffic_signals_msg)
         else:
             print("No ego pose found.")
