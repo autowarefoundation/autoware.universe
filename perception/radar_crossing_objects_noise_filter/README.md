@@ -55,14 +55,14 @@ To filter the objects crossing to ego vehicle, this package filter the objects a
 
 | Name              | Type                                                  | Description          |
 | ----------------- | ----------------------------------------------------- | -------------------- |
-| `~/input/objects` | autoware_auto_perception_msgs/msg/DetectedObjects.msg | 3D detected objects. |
+| `~/input/objects` | autoware_auto_perception_msgs/msg/DetectedObjects.msg | Radar objects. |
 
 ## Output
 
 | Name                        | Type                                                  | Description      |
 | --------------------------- | ----------------------------------------------------- | ---------------- |
-| `~/output/noise_objects`    | autoware_auto_perception_msgs/msg/DetectedObjects.msg | Noise Objects    |
-| `~/output/filtered_objects` | autoware_auto_perception_msgs/msg/DetectedObjects.msg | Filtered Objects |
+| `~/output/noise_objects`    | autoware_auto_perception_msgs/msg/DetectedObjects.msg | Noise objects    |
+| `~/output/filtered_objects` | autoware_auto_perception_msgs/msg/DetectedObjects.msg | Filtered objects |
 
 ## Parameters
 
