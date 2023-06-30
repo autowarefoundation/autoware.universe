@@ -12,8 +12,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Run json-schema-check
         uses: autowarefoundation/autoware-github-actions/json-schema-check@v1
