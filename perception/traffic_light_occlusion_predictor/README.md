@@ -1,37 +1,34 @@
-# The `traffic_light_map_based_detector` Package
+# The `traffic_light_occlusion_predictor` Package
 
 ## Overview
 
-`traffic_light_map_based_detector` calculates where the traffic lights will appear in the image based on the HD map.
+`traffic_light_occlusion_predictor` receives the detected traffic lights rois and calculates the occlusion ratios of each roi with point cloud.
 
-Calibration and vibration errors can be entered as parameters, and the size of the detected RegionOfInterest will change according to the error.
+For each traffic light roi, hundreds of pixels would be selected and projected into the 3D space. Then from the camera point of view, the number of projected pixels that are occluded by the point cloud is counted and used for calculating the occlusion ratio for the roi.
 
-![traffic_light_map_based_detector_result](./docs/traffic_light_map_based_detector_result.svg)
-
-If the node receives route information, it only looks at traffic lights on that route.
-If the node receives no route information, it looks at a radius of 200 meters and the angle between the traffic light and the camera is less than 40 degrees.
+If no point cloud is received or all point clouds have very large stamp difference with the camera image, the occlusion ratio of each roi would be set as 0.
 
 ## Input topics
 
-| Name                 | Type                                     | Description             |
-| -------------------- | ---------------------------------------- | ----------------------- |
-| `~input/vector_map`  | autoware_auto_mapping_msgs::HADMapBin    | vector map              |
-| `~input/camera_info` | sensor_msgs::CameraInfo                  | target camera parameter |
-| `~input/route`       | autoware_auto_planning_msgs::HADMapRoute | optional: route         |
+| Name                 | Type                                                | Description              |
+| -------------------- | --------------------------------------------------- | ------------------------ |
+| `~input/vector_map`  | autoware_auto_mapping_msgs::HADMapBin               | vector map               |
+| `~/input/rois`       | autoware_auto_perception_msgs::TrafficLightRoiArray | traffic light detections |
+| `~input/camera_info` | sensor_msgs::CameraInfo                             | target camera parameter  |
+| `~/input/cloud`      | sensor_msgs::PointCloud2                            | LiDAR point cloud        |
 
 ## Output topics
 
-| Name             | Type                                        | Description                                                          |
-| ---------------- | ------------------------------------------- | -------------------------------------------------------------------- |
-| `~output/rois`   | tier4_perception_msgs::TrafficLightRoiArray | location of traffic lights in image corresponding to the camera info |
-| `~debug/markers` | visualization_msgs::MarkerArray             | visualization to debug                                               |
+| Name                 | Type                                                      | Description                  |
+| -------------------- | --------------------------------------------------------- | ---------------------------- |
+| `~/output/occlusion` | autoware_auto_perception_msgs::TrafficLightOcclusionArray | occlusion ratios of each roi |
 
 ## Node parameters
 
-| Parameter              | Type   | Description                                                 |
-| ---------------------- | ------ | ----------------------------------------------------------- |
-| `max_vibration_pitch`  | double | Maximum error in pitch direction. If -5~+5, it will be 10.  |
-| `max_vibration_yaw`    | double | Maximum error in yaw direction. If -5~+5, it will be 10.    |
-| `max_vibration_height` | double | Maximum error in height direction. If -5~+5, it will be 10. |
-| `max_vibration_width`  | double | Maximum error in width direction. If -5~+5, it will be 10.  |
-| `max_vibration_depth`  | double | Maximum error in depth direction. If -5~+5, it will be 10.  |
+| Parameter                        | Type   | Description                                                   |
+| -------------------------------- | ------ | ------------------------------------------------------------- |
+| `azimuth_occlusion_resolution`   | double | azimuth resolution of LiDAR point cloud (degree)              |
+| `elevation_occlusion_resolution` | double | elevation resolution of LiDAR point cloud (degree)            |
+| `max_valid_pt_dist`              | double | The points within this distance would be used for calculation |
+| `max_image_cloud_delay`          | double | The maximum delay between LiDAR point cloud and camera image  |
+| `max_wait_t`                     | double | The maximum time waiting for the LiDAR point cloud            |
