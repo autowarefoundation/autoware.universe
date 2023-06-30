@@ -66,11 +66,6 @@ struct PullOutStatus
 class StartPlannerModule : public SceneModuleInterface
 {
 public:
-#ifdef USE_OLD_ARCHITECTURE
-  StartPlannerModule(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<StartPlannerParameters> & parameters);
-#else
   StartPlannerModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<StartPlannerParameters> & parameters,
@@ -80,7 +75,6 @@ public:
   {
     parameters_ = parameters;
   }
-#endif
 
   BehaviorModuleOutput run() override;
 
@@ -103,6 +97,19 @@ public:
     [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
   {
   }
+
+  // set is_simultaneously_executable_ as false when backward driving.
+  // keep initial value to return it after finishing backward driving.
+  bool initial_value_simultaneously_executable_as_approved_module_;
+  bool initial_value_simultaneously_executable_as_candidate_module_;
+  void setInitialIsSimultaneousExecutableAsApprovedModule(const bool is_simultaneously_executable)
+  {
+    initial_value_simultaneously_executable_as_approved_module_ = is_simultaneously_executable;
+  };
+  void setInitialIsSimultaneousExecutableAsCandidateModule(const bool is_simultaneously_executable)
+  {
+    initial_value_simultaneously_executable_as_candidate_module_ = is_simultaneously_executable;
+  };
 
 private:
   std::shared_ptr<StartPlannerParameters> parameters_;
@@ -143,11 +150,6 @@ private:
   bool hasFinishedCurrentPath();
 
   void setDebugData() const;
-
-// temporary for old architecture
-#ifdef USE_OLD_ARCHITECTURE
-  mutable bool is_executed_{false};
-#endif
 };
 }  // namespace behavior_path_planner
 

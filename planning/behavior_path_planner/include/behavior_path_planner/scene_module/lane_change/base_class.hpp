@@ -85,6 +85,8 @@ public:
 
   virtual bool hasFinishedAbort() const = 0;
 
+  virtual bool isLaneChangeRequired() const = 0;
+
   virtual bool isAbortState() const = 0;
 
   virtual bool isAbleToReturnCurrentLane() const = 0;
@@ -143,9 +145,12 @@ public:
 
   LaneChangeParameters getLaneChangeParam() const { return *lane_change_parameters_; }
 
-  bool isCancelEnabled() const { return lane_change_parameters_->enable_cancel_lane_change; }
+  bool isCancelEnabled() const { return lane_change_parameters_->cancel.enable_on_prepare_phase; }
 
-  bool isAbortEnabled() const { return lane_change_parameters_->enable_abort_lane_change; }
+  bool isAbortEnabled() const
+  {
+    return lane_change_parameters_->cancel.enable_on_lane_changing_phase;
+  }
 
   bool isSafe() const { return status_.is_safe; }
 
@@ -197,9 +202,7 @@ protected:
   virtual bool getLaneChangePaths(
     const lanelet::ConstLanelets & original_lanelets,
     const lanelet::ConstLanelets & target_lanelets, Direction direction,
-    LaneChangePaths * candidate_paths) const = 0;
-
-  virtual std::vector<DrivableLanes> getDrivableLanes() const = 0;
+    LaneChangePaths * candidate_paths, const bool check_safety) const = 0;
 
   virtual TurnSignalInfo calcTurnSignalInfo() = 0;
 

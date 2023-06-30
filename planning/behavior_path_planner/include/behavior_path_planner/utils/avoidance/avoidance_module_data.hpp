@@ -48,7 +48,7 @@ using geometry_msgs::msg::TransformStamped;
 
 struct ObjectParameter
 {
-  bool enable{false};
+  bool is_target{false};
 
   double moving_speed_threshold{0.0};
 
@@ -57,6 +57,8 @@ struct ObjectParameter
   double max_expand_ratio{0.0};
 
   double envelope_buffer_margin{0.0};
+
+  double avoid_margin_lateral{1.0};
 
   double safety_buffer_lateral{1.0};
 
@@ -132,13 +134,13 @@ struct AvoidanceParameters
   double threshold_distance_object_is_on_center;
 
   // execute only when there is no intersection behind of the stopped vehicle.
-  double object_ignore_distance_traffic_light;
+  double object_ignore_section_traffic_light_in_front_distance;
 
   // execute only when there is no crosswalk near the stopped vehicle.
-  double object_ignore_distance_crosswalk_forward;
+  double object_ignore_section_crosswalk_in_front_distance;
 
   // execute only when there is no crosswalk near the stopped vehicle.
-  double object_ignore_distance_crosswalk_backward;
+  double object_ignore_section_crosswalk_behind_distance;
 
   // distance to avoid object detection
   double object_check_forward_distance;
@@ -158,9 +160,6 @@ struct AvoidanceParameters
 
   // force avoidance
   double threshold_time_force_avoidance_for_stopped_vehicle;
-
-  // we want to keep this lateral margin when avoiding
-  double lateral_collision_margin;
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction

@@ -16,26 +16,14 @@
 #define BEHAVIOR_PATH_PLANNER__BEHAVIOR_PATH_PLANNER_NODE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-
-#ifdef USE_OLD_ARCHITECTURE
-#include "behavior_path_planner/behavior_tree_manager.hpp"
-#include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
-#include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
-#include "behavior_path_planner/scene_module/goal_planner/goal_planner_module.hpp"
-#include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
-#include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
-#include "behavior_path_planner/scene_module/start_planner/start_planner_module.hpp"
-#else
 #include "behavior_path_planner/planner_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/manager.hpp"
 #include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
 #include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
 #include "behavior_path_planner/scene_module/lane_change/manager.hpp"
+#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/side_shift/manager.hpp"
 #include "behavior_path_planner/scene_module/start_planner/manager.hpp"
-#endif
-
 #include "behavior_path_planner/steering_factor_interface.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utils/goal_planner/goal_planner_parameters.hpp"
@@ -127,11 +115,7 @@ private:
 
   std::shared_ptr<PlannerData> planner_data_;
 
-#ifdef USE_OLD_ARCHITECTURE
-  std::shared_ptr<BehaviorTreeManager> bt_manager_;
-#else
   std::shared_ptr<PlannerManager> planner_manager_;
-#endif
 
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   Scenario::SharedPtr current_scenario_{nullptr};
@@ -159,10 +143,6 @@ private:
   std::shared_ptr<GoalPlannerParameters> goal_planner_param_ptr_;
 
   BehaviorPathPlannerParameters getCommonParam();
-
-#ifdef USE_OLD_ARCHITECTURE
-  BehaviorTreeManagerParam getBehaviorTreeManagerParam();
-#endif
 
   AvoidanceParameters getAvoidanceParam();
   DynamicAvoidanceParameters getDynamicAvoidanceParam();
@@ -196,15 +176,9 @@ private:
   /**
    * @brief extract path from behavior tree output
    */
-#ifdef USE_OLD_ARCHITECTURE
-  PathWithLaneId::SharedPtr getPath(
-    const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> & planner_data,
-    const std::shared_ptr<BehaviorTreeManager> & bt_manager);
-#else
   PathWithLaneId::SharedPtr getPath(
     const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> & planner_data,
     const std::shared_ptr<PlannerManager> & planner_manager);
-#endif
 
   bool keepInputPoints(const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const;
 
@@ -219,12 +193,18 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_maximum_drivable_area_publisher_;
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
   rclcpp::Publisher<LaneChangeDebugMsgArray>::SharedPtr debug_lane_change_msg_array_publisher_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr debug_turn_signal_info_publisher_;
 
   /**
    * @brief publish steering factor from intersection
    */
   void publish_steering_factor(
     const std::shared_ptr<PlannerData> & planner_data, const TurnIndicatorsCommand & turn_signal);
+
+  /**
+   * @brief publish turn signal debug info
+   */
+  void publish_turn_signal_debug_data(const TurnSignalDebugData & debug_data);
 
   /**
    * @brief publish left and right bound
@@ -234,19 +214,12 @@ private:
   /**
    * @brief publish debug messages
    */
-#ifdef USE_OLD_ARCHITECTURE
   void publishSceneModuleDebugMsg(
     const std::shared_ptr<SceneModuleVisitor> & debug_messages_data_ptr);
-#endif
 
   /**
    * @brief publish path candidate
    */
-#ifdef USE_OLD_ARCHITECTURE
-  void publishPathCandidate(
-    const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules,
-    const std::shared_ptr<PlannerData> & planner_data);
-#else
   void publishPathCandidate(
     const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers,
     const std::shared_ptr<PlannerData> & planner_data);
@@ -254,7 +227,6 @@ private:
   void publishPathReference(
     const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers,
     const std::shared_ptr<PlannerData> & planner_data);
-#endif
 
   /**
    * @brief convert path with lane id to path for publish path candidate
