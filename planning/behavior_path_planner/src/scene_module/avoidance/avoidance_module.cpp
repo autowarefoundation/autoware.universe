@@ -3238,8 +3238,8 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
                             object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
   const auto variable = helper_.getMinimumAvoidanceDistance(
     helper_.getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin));
-  const auto constant =
-    p->min_prepare_distance + object_parameter.safety_buffer_longitudinal + base_link2front;
+  const auto constant = p->min_prepare_distance + object_parameter.safety_buffer_longitudinal +
+                        base_link2front + p->stop_buffer;
 
   return object.longitudinal -
          std::clamp(variable + constant, p->stop_min_distance, p->stop_max_distance);

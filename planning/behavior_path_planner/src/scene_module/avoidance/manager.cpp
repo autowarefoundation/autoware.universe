@@ -176,6 +176,7 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     std::string ns = "avoidance.stop.";
     p.stop_min_distance = get_parameter<double>(node, ns + "min_distance");
     p.stop_max_distance = get_parameter<double>(node, ns + "max_distance");
+    p.stop_buffer = get_parameter<double>(node, ns + "stop_buffer");
   }
 
   // constraints
@@ -294,6 +295,7 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
     const std::string ns = "avoidance.stop.";
     updateParam<double>(parameters, ns + "max_distance", p->stop_max_distance);
     updateParam<double>(parameters, ns + "min_distance", p->stop_min_distance);
+    updateParam<double>(parameters, ns + "stop_buffer", p->stop_buffer);
   }
 
   {
