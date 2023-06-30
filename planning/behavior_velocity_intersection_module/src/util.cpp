@@ -401,10 +401,9 @@ IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path,
   const std::set<int> & associative_ids, const InterpolatedPathInfo & interpolated_path_info,
-  const double detection_area_length, const double occlusion_detection_area_length, const bool consider_wrong_direction_vehicle,
-  const bool tl_arrow_solid_on)
+  const double detection_area_length, const double occlusion_detection_area_length,
+  const bool consider_wrong_direction_vehicle, const bool tl_arrow_solid_on)
 {
-
   const auto turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
 
   // retrieve a stopline associated with a traffic light
@@ -464,12 +463,11 @@ IntersectionLanelets getObjectiveLanelets(
   } else {
     if (consider_wrong_direction_vehicle) {
       for (const auto & conflicting_lanelet : conflicting_lanelets) {
-        if (
-          lanelet::utils::contains(yield_lanelets, conflicting_lanelet)) {
+        if (lanelet::utils::contains(yield_lanelets, conflicting_lanelet)) {
           continue;
         }
         detection_lanelets.push_back(conflicting_lanelet);
-        if (!adjacent_followings.empty()){
+        if (!adjacent_followings.empty()) {
           detection_lanelets.push_back(adjacent_followings.front());
         }
       }
@@ -1003,7 +1001,9 @@ bool checkAngleForTargetLanelets(
     const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
     const double pose_angle = tf2::getYaw(pose.orientation);
     const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle);
-    if (std::fabs(angle_diff) < detection_area_angle_thr/2 || std::fabs(angle_diff) > detection_area_angle_thr) {
+    if (
+      std::fabs(angle_diff) < detection_area_angle_thr / 2 ||
+      std::fabs(angle_diff) > detection_area_angle_thr) {
       return true;
     }
   }
