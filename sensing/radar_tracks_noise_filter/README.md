@@ -22,10 +22,10 @@ In y-axis threshold filter, if y-axis velocity of RadarTrack is more than `veloc
 
 ## Output
 
-| Name                       | Type                           | Description           |
-| -------------------------- | ------------------------------ | --------------------- |
-| `~/output/noise_tracks`    | radar_msgs/msg/RadarTracks.msg | Noise objects         |
-| `~/output/filtered_tracks` | radar_msgs/msg/RadarTracks.msg | Objects without noise |
+| Name                       | Type                           | Description      |
+| -------------------------- | ------------------------------ | ---------------- |
+| `~/output/noise_tracks`    | radar_msgs/msg/RadarTracks.msg | Noise objects    |
+| `~/output/filtered_tracks` | radar_msgs/msg/RadarTracks.msg | Filtered objects |
 
 ## Parameters
 
