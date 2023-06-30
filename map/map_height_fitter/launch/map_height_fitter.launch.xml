@@ -1,0 +1,8 @@
+<launch>
+  <group>
+    <push-ros-namespace namespace="map"/>
+    <node pkg="map_height_fitter" exec="node" name="map_height_fitter">
+      <param name="map_loader_name" value="/map/pointcloud_map_loader"/>
+    </node>
+  </group>
+</launch>
