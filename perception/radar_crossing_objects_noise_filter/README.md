@@ -53,8 +53,8 @@ To filter the objects crossing to ego vehicle, this package filter the objects a
 
 ## Input
 
-| Name              | Type                                                  | Description          |
-| ----------------- | ----------------------------------------------------- | -------------------- |
+| Name              | Type                                                  | Description    |
+| ----------------- | ----------------------------------------------------- | -------------- |
 | `~/input/objects` | autoware_auto_perception_msgs/msg/DetectedObjects.msg | Radar objects. |
 
 ## Output
