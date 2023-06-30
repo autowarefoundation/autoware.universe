@@ -96,7 +96,6 @@ rcl_interfaces::msg::SetParametersResult RadarTrackCrossingNoiseFilterNode::onSe
       // Update params
       update_param(params, "velocity_y_threshold", p.velocity_y_threshold);
     }
-
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();
