@@ -246,9 +246,7 @@ $$
 \begin{bmatrix}
  x_{1} \\ x_{2} \\ x_{3} \\ \vdots \\ x_{n}
 \end{bmatrix}
-  =
-
-\begin{bmatrix}
+= \begin{bmatrix}
  A_{1} \\ A_{1}A_{0} \\ A_{2}A_{1}A_{0} \\ \vdots \\ \prod_{i=0}^{n-1} A_{k}
 \end{bmatrix}
 x_{0} +
