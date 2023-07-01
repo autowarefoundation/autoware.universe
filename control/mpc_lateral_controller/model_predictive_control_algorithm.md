@@ -1,4 +1,4 @@
-# Model Predictive Control Algorithm
+# MPC Algorithm
 
 ## Introduction
 
@@ -369,6 +369,7 @@ and aligning the inequality signs
 $$
 \begin{align}
 u_{1} - u_{0} &< \dot{u}_{max}\text{d}t \\
+
 + u_{1} + u_{0} &< -\dot{u}_{min}\text{d}t \\
 u_{2} - u_{1} &< \dot{u}_{max}\text{d}t \\
 + u_{2} + u_{1} &< - \dot{u}_{min}\text{d}t
