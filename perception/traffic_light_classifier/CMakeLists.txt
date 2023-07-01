@@ -84,14 +84,14 @@ function(download FILE_NAME FILE_HASH)
     else()
       message(STATUS "diff ${FILE_NAME}")
       message(STATUS "File hash changes. Downloading now ...")
-      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/traffic_light_classifier/v1/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
       list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
       list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
     endif()
   else()
     message(STATUS "not found ${FILE_NAME}")
     message(STATUS "File doesn't exists. Downloading now ...")
-    file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+    file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/traffic_light_classifier/v1/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
     list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
     list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
   endif()
@@ -101,8 +101,9 @@ function(download FILE_NAME FILE_HASH)
     message(FATAL_ERROR "Error occurred during download: ${ERROR_MESSAGE}")
   endif()
 endfunction()
-download(traffic_light_classifier_mobilenetv2.onnx 7dc31c696b0400ddfc2cc5521586fa51)
-download(lamp_labels.txt 20167c8e9a1f9d2ec7b0b0088c4100f0)
+download(traffic_light_classifier_mobilenetv2.onnx caa51f2080aa2df943e4f884c41898eb)
+download(traffic_light_classifier_efficientNet_b1.onnx 82baba4fcf1abe0c040cd55005e34510)
+download(lamp_labels.txt 4b2cf910d97d05d464e7c26901af3d4c)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
@@ -113,23 +114,8 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   add_definitions(-DENABLE_GPU)
 
   include_directories(
-    utils
     ${OpenCV_INCLUDE_DIRS}
     ${CUDA_INCLUDE_DIRS}
-  )
-
-  ament_auto_add_library(libutils SHARED
-    utils/trt_common.cpp
-  )
-  target_link_libraries(libutils
-    ${OpenCV_LIBRARIES}
-    ${NVINFER}
-    ${NVONNXPARSER}
-    ${NVINFER_PLUGIN}
-    ${CUDA_LIBRARIES}
-    ${CUBLAS_LIBRARIES}
-    ${CUDNN_LIBRARY}
-    stdc++fs
   )
 
   ament_auto_add_library(traffic_light_classifier_nodelet SHARED
@@ -138,8 +124,14 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     src/nodelet.cpp
   )
   target_link_libraries(traffic_light_classifier_nodelet
-    libutils
     ${OpenCV_LIBRARIES}
+    ${NVINFER}
+    ${NVONNXPARSER}
+    ${NVINFER_PLUGIN}
+    ${CUDA_LIBRARIES}
+    ${CUBLAS_LIBRARIES}
+    ${CUDNN_LIBRARY}
+    stdc++fs
   )
   rclcpp_components_register_node(traffic_light_classifier_nodelet
     PLUGIN "traffic_light::TrafficLightClassifierNodelet"
@@ -153,7 +145,14 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     src/single_image_debug_inference_node.cpp
   )
   target_link_libraries(single_image_debug_inference_node
-    libutils
+    ${OpenCV_LIBRARIES}
+    ${NVINFER}
+    ${NVONNXPARSER}
+    ${NVINFER_PLUGIN}
+    ${CUDA_LIBRARIES}
+    ${CUBLAS_LIBRARIES}
+    ${CUDNN_LIBRARY}
+    stdc++fs
     opencv_core
     opencv_highgui
   )

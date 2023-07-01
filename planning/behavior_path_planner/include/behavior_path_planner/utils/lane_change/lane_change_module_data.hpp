@@ -94,6 +94,11 @@ struct LaneChangePhaseInfo
   double lane_changing{0.0};
 
   [[nodiscard]] double sum() const { return prepare + lane_changing; }
+
+  LaneChangePhaseInfo(const double _prepare, const double _lane_changing)
+  : prepare(_prepare), lane_changing(_lane_changing)
+  {
+  }
 };
 
 struct LaneChangeTargetObjectIndices
@@ -109,11 +114,8 @@ enum class LaneChangeModuleType {
   AVOIDANCE_BY_LANE_CHANGE,
 };
 
-struct AvoidanceByLCParameters
+struct AvoidanceByLCParameters : public AvoidanceParameters
 {
-  std::shared_ptr<AvoidanceParameters> avoidance{};
-  std::shared_ptr<LaneChangeParameters> lane_change{};
-
   // execute if the target object number is larger than this param.
   size_t execute_object_num{1};
 
