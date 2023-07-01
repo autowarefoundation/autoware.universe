@@ -78,9 +78,8 @@ Putting all of them together with (2) to (5) yields the following matrix equatio
 
 $$
 \begin{align}
-\begin{bmatrix}x_{1}\\ x_{2} \\ x_{3} \\ \vdots  \\ x_{n} \end{bmatrix} = \begin{bmatrix}A^{1}\\ A^{2} \\ A^{3} \\ \vdots  \\ A^{n} \end{bmatrix}x_{0} + \begin{bmatrix}B & 0 & \dots  & & 0 \\ AB & B & 0 & \dots & 0  \\ A^{2}B & AB & B & \dots & 0 \\ \vdots & \vdots & & & 0 \\ A^{n-1}B & A^{n-2}B & \dots & AB & B \end{bmatrix}\begin{bmatrix}u_{0}\\ u_{1} \\ u_{2} \\ \vdots  \\ u_{n-1} \end{bmatrix} \\
-
-+ \begin{bmatrix}I & 0 & \dots  & & 0 \\ A & I & 0 & \dots & 0  \\ A^{2} & A & I & \dots & 0 \\ \vdots & \vdots & & & 0 \\ A^{n-1} & A^{n-2} & \dots & A & I \end{bmatrix}\begin{bmatrix}w_{0}\\ w_{1} \\ w_{2} \\ \vdots  \\ w_{n-1} \end{bmatrix}
+\begin{bmatrix}x_{1}\\ x_{2} \\ x_{3} \\ \vdots  \\ x_{n} \end{bmatrix} = \begin{bmatrix}A^{1}\\ A^{2} \\ A^{3} \\ \vdots  \\ A^{n} \end{bmatrix}x_{0} + \begin{bmatrix}B & 0 & \dots  & & 0 \\ AB & B & 0 & \dots & 0  \\ A^{2}B & AB & B & \dots & 0 \\ \vdots & \vdots & & & 0 \\ A^{n-1}B & A^{n-2}B & \dots & AB & B \end{bmatrix}\begin{bmatrix}u_{0}\\ u_{1} \\ u_{2} \\ \vdots  \\ u_{n-1} \end{bmatrix} \\ +
+\begin{bmatrix}I & 0 & \dots  & & 0 \\ A & I & 0 & \dots & 0  \\ A^{2} & A & I & \dots & 0 \\ \vdots & \vdots & & & 0 \\ A^{n-1} & A^{n-2} & \dots & A & I \end{bmatrix}\begin{bmatrix}w_{0}\\ w_{1} \\ w_{2} \\ \vdots  \\ w_{n-1} \end{bmatrix}
 \tag{6}
 \end{align}
 $$
@@ -366,11 +365,10 @@ and aligning the inequality signs
 
 $$
 \begin{align}
-u_{1} - u_{0} &< \dot{u}_{max}\text{d}t \\
-
-+ u_{1} + u_{0} &< -\dot{u}_{min}\text{d}t \\
-u_{2} - u_{1} &< \dot{u}_{max}\text{d}t \\
-+ u_{2} + u_{1} &< - \dot{u}_{min}\text{d}t
+u_{1} - u_{0} &< \dot{u}_{max}\text{d}t \\ +
+u_{1} + u_{0} &< -\dot{u}_{min}\text{d}t \\
+u_{2} - u_{1} &< \dot{u}_{max}\text{d}t \\ +
+u_{2} + u_{1} &< - \dot{u}_{min}\text{d}t
 \end{align}
 $$
 
