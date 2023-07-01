@@ -47,10 +47,18 @@ struct FrenetPoint
   float d_vel;
   float s_acc;
   float d_acc;
-};
+};  // struct FrenetPoint
+
+struct FrenetPath
+{
+  std::vector<FrenetPoint> path;
+  double cost;
+
+  size_t size() const { return path.size(); }
+  FrenetPoint at(const size_t idx) const { return path.at(idx); }
+};  // struct FrenetPath
 
 using EntryPoint = std::pair<Eigen::Vector2d /*in*/, Eigen::Vector2d /*out*/>;
-using FrenetPath = std::vector<FrenetPoint>;
 using PosePath = std::vector<geometry_msgs::msg::Pose>;
 
 class PathGenerator
@@ -80,6 +88,8 @@ private:
   double time_horizon_;
   double sampling_time_interval_;
   double min_crosswalk_user_velocity_;
+
+  static constexpr float KJ_ = 0.1, KT_ = 0.1, KD_ = 1.0, K_LAT_ = 1.0, K_LON_ = 1.0;
 
   // Member functions
   PredictedPath generateStraightPath(const TrackedObject & object) const;

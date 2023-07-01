@@ -211,7 +211,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
 FrenetPath PathGenerator::generateFrenetPath(
   const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length)
 {
-  FrenetPath path;
+  std::vector<FrenetPoint> path;
   const double duration = time_horizon_;
 
   // Compute Lateral and Longitudinal Coefficients to generate the trajectory
@@ -219,6 +219,7 @@ FrenetPath PathGenerator::generateFrenetPath(
   const Eigen::Vector2d lon_coeff = calcLonCoefficients(current_point, target_point, duration);
 
   path.reserve(static_cast<size_t>(duration / sampling_time_interval_));
+  double sum_d_jerk = 0.0, sum_s_jerk = 0.0;
   for (double t = 0.0; t <= duration; t += sampling_time_interval_) {
     const double d_next = current_point.d + current_point.d_vel * t + 0 * 2 * std::pow(t, 2) +
                           lat_coeff(0) * std::pow(t, 3) + lat_coeff(1) * std::pow(t, 4) +
@@ -229,6 +230,11 @@ FrenetPath PathGenerator::generateFrenetPath(
       break;
     }
 
+    sum_d_jerk += std::pow(
+      6 * lat_coeff(0) + 24 + lat_coeff(1) * t + 60 * lat_coeff(2) * std::pow(t, 2),
+      2);                                                                 // square of jerk
+    sum_s_jerk += std::pow(6 * lon_coeff(0) + 24 * lon_coeff(1) * t, 2);  // square of jerk
+
     // We assume the object is traveling at a constant speed along s direction
     FrenetPoint point;
     point.s = std::max(s_next, 0.0);
@@ -237,10 +243,14 @@ FrenetPath PathGenerator::generateFrenetPath(
     point.d = d_next;
     point.d_vel = current_point.d_vel;
     point.d_acc = current_point.d_acc;
-    path.push_back(point);
+    path.emplace_back(point);
   }
 
-  return path;
+  // TODO(ktro2828): update cost
+  const double cost_d = KJ_ * sum_d_jerk;
+  const double cost_s = KJ_ * sum_s_jerk;
+  const double cost = K_LAT_ * cost_d + K_LON_ * cost_s;
+  return {path, cost};
 }
 
 Eigen::Vector3d PathGenerator::calcLatCoefficients(
