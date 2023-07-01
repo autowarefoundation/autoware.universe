@@ -19,6 +19,7 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
+#include <limits>
 
 namespace map_based_prediction
 {
@@ -261,9 +262,10 @@ Eigen::Vector3d PathGenerator::calcLatCoefficients(
     7 / std::pow(T, 3), -1 / std::pow(T, 2), 6 / std::pow(T, 5), -3 / std::pow(T, 4),
     1 / (2 * std::pow(T, 3));
   Eigen::Vector3d b_lat;
-  b_lat[0] = target_point.d - current_point.d - current_point.d_vel * T;
-  b_lat[1] = target_point.d_vel - current_point.d_vel;
-  b_lat[2] = target_point.d_acc;
+  b_lat[0] = target_point.d - current_point.d - current_point.d_vel * T -
+             current_point.d_acc * std::pow(T, 2);
+  b_lat[1] = target_point.d_vel - current_point.d_vel - current_point.d_acc * T;
+  b_lat[2] = target_point.d_acc - current_point.d_acc;
 
   return A_lat_inv * b_lat;
 }
@@ -273,16 +275,18 @@ Eigen::Vector2d PathGenerator::calcLonCoefficients(
 {
   // Longitudinal Path Calculation
   // Quadric polynomial
+  // A = np.array([[3 * T ** 2, 4 * T ** 3],
+  //               [6 * T, 12 * T ** 2]])
   // A_inv = np.matrix([[1/(T**2), -1/(3*T)],
-  //                         [-1/(2*T**3), 1/(4*T**2)]])
+  //                    [-1/(2*T**3), 1/(4*T**2)]])
   // b = np.matrix([[vxe - self.a1 - 2 * self.a2 * T],
   //               [axe - 2 * self.a2]])
   Eigen::Matrix2d A_lon_inv;
   A_lon_inv << 1 / std::pow(T, 2), -1 / (3 * T), -1 / (2 * std::pow(T, 3)),
     1 / (4 * std::pow(T, 2));
   Eigen::Vector2d b_lon;
-  b_lon[0] = target_point.s_vel - current_point.s_vel;
-  b_lon[1] = 0.0;
+  b_lon[0] = target_point.s_vel - current_point.s_vel - current_point.s_acc * T;
+  b_lon[1] = target_point.s_acc - current_point.s_acc;
   return A_lon_inv * b_lon;
 }
 
