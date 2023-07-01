@@ -229,26 +229,37 @@ FrenetPath PathGenerator::generateFrenetPath(
     if (s_next > max_length) {
       break;
     }
+    const double d_vel_next = current_point.d_vel + 2 * current_point.d_acc * t +
+                              3 * lat_coeff(0) * std::pow(t, 2) +
+                              4 * lat_coeff(1) * std::pow(t, 3) * 5 * lat_coeff(2) * std::pow(t, 4);
+    const double d_acc_next = 2 * current_point.d_acc + 6 * lat_coeff(0) * t +
+                              12 * lat_coeff(1) * std::pow(t, 2) +
+                              20 * lat_coeff(2) * std::pow(t, 3);
+    const double s_vel_next = current_point.s_vel + 2 * current_point.s_acc * t +
+                              3 * lon_coeff(0) * std::pow(t, 2) + 4 * lon_coeff(1) * std::pow(t, 3);
+    const double s_acc_next =
+      2 * current_point.s_acc + 6 * lon_coeff(0) * t + 12 * lon_coeff(1) * std::pow(t, 2);
 
-    sum_d_jerk += std::pow(
-      6 * lat_coeff(0) + 24 + lat_coeff(1) * t + 60 * lat_coeff(2) * std::pow(t, 2),
-      2);                                                                 // square of jerk
-    sum_s_jerk += std::pow(6 * lon_coeff(0) + 24 * lon_coeff(1) * t, 2);  // square of jerk
+    // square of jerk
+    sum_d_jerk +=
+      std::pow(6 * lat_coeff(0) + 24 + lat_coeff(1) * t + 60 * lat_coeff(2) * std::pow(t, 2), 2);
+    sum_s_jerk += std::pow(6 * lon_coeff(0) + 24 * lon_coeff(1) * t, 2);
 
-    // We assume the object is traveling at a constant speed along s direction
     FrenetPoint point;
     point.s = std::max(s_next, 0.0);
-    point.s_vel = current_point.s_vel;
-    point.s_acc = current_point.s_acc;
+    point.s_vel = s_vel_next;
+    point.s_acc = s_acc_next;
     point.d = d_next;
-    point.d_vel = current_point.d_vel;
-    point.d_acc = current_point.d_acc;
+    point.d_vel = d_vel_next;
+    point.d_acc = d_acc_next;
     path.emplace_back(point);
   }
 
-  // TODO(ktro2828): update cost
-  const double cost_d = KJ_ * sum_d_jerk;
-  const double cost_s = KJ_ * sum_s_jerk;
+  const double last_d_cost = path.empty() ? 0.0 : std::pow(path.back().d, 2);
+  const double last_s_cost =
+    path.empty() ? 0.0 : std::pow(current_point.s_vel - path.back().s_vel, 2);
+  const double cost_d = KJ_ * sum_d_jerk + KT_ * duration + KD_ * last_d_cost;
+  const double cost_s = KJ_ * sum_s_jerk + KT_ * duration + KD_ * last_s_cost;
   const double cost = K_LAT_ * cost_d + K_LON_ * cost_s;
   return {path, cost};
 }
