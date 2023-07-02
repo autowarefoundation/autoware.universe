@@ -183,19 +183,32 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const double ref_path_len = motion_utils::calcArcLength(ref_path);
   const auto current_point = getFrenetPoint(object, ref_path);
 
-  // Step1. Set Target Frenet Point
-  // Note that we do not set position s,
-  // since we don't know the target longitudinal position
-  FrenetPoint terminal_point;
-  terminal_point.s_vel = current_point.s_vel;
-  terminal_point.s_acc = 0.0;
-  terminal_point.d = 0.0;
-  terminal_point.d_vel = 0.0;
-  terminal_point.d_acc = 0.0;
+  // TODO(ktro2828): get MIN_WIDTH and MAX_WIDTH from lane width
+  constexpr double MIN_WIDTH = -3.0, MAX_WIDTH = 3.0;
+  constexpr double SAMPLE_WIDTH = 1.0;
+  std::vector<FrenetPath> frenet_paths;
+  for (double terminal_d = MIN_WIDTH; terminal_d <= MAX_WIDTH; terminal_d += SAMPLE_WIDTH) {
+    // Step1. Set Target Frenet Point
+    // Note that we do not set position s,
+    // since we don't know the target longitudinal position
+    FrenetPoint terminal_point;
+    terminal_point.s_vel = current_point.s_vel;
+    terminal_point.s_acc = 0.0;
+    terminal_point.d = terminal_d;
+    terminal_point.d_vel = 0.0;
+    terminal_point.d_acc = 0.0;
 
-  // Step2. Generate Predicted Path on a Frenet coordinate
-  const auto frenet_predicted_path =
-    generateFrenetPath(current_point, terminal_point, ref_path_len);
+    // Step2. Generate Predicted Path on a Frenet coordinate
+    const auto frenet_path = generateFrenetPath(current_point, terminal_point, ref_path_len);
+    frenet_paths.emplace_back(frenet_path);
+  }
+
+  std::sort(frenet_paths.begin(), frenet_paths.end(), [](const auto & p1, const auto p2) {
+    return p1.cost < p2.cost;
+  });
+
+  // TODO(ktro2828): check whether path is valid (collision, speed, acceleration, curvature)
+  const auto & frenet_predicted_path = frenet_paths.at(0);
 
   // Step3. Interpolate Reference Path for converting predicted path coordinate
   const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);
