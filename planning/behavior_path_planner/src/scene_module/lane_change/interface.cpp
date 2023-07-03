@@ -232,6 +232,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
   module_type_->updateLaneChangeStatus();
+  setObjectDebugVisualization();
 
   // change turn signal when the vehicle reaches at the end of the path for waiting lane change
   out.turn_signal_info = getCurrentTurnSignalInfo(*out.path, out.turn_signal_info);
@@ -248,8 +249,6 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   updateRTCStatus(
     candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change);
   is_abort_path_approved_ = false;
-
-  setObjectDebugVisualization();
 
   return out;
 }
@@ -487,13 +486,11 @@ void SceneModuleVisitor::visitLaneChangeInterface(const LaneChangeInterface * in
 AvoidanceByLaneChangeInterface::AvoidanceByLaneChangeInterface(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<LaneChangeParameters> & parameters,
-  const std::shared_ptr<AvoidanceParameters> & avoidance_parameters,
   const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
 : LaneChangeInterface{
     name, node, parameters, rtc_interface_ptr_map,
-    std::make_unique<AvoidanceByLaneChange>(
-      parameters, avoidance_parameters, avoidance_by_lane_change_parameters)}
+    std::make_unique<AvoidanceByLaneChange>(parameters, avoidance_by_lane_change_parameters)}
 {
 }
 
