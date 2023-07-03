@@ -8,6 +8,7 @@ In other word, this package can combine multiple radar detections from one objec
 ![](docs/radar_clustering.drawio.svg)
 
 ## Algorithm
+
 ### Background
 
 In radars with object output, there are cases that multiple detection results are obtained from one object, especially for large vehicles such as trucks and trailers.
@@ -26,7 +27,7 @@ After grouping for all radar objects, if multiple radar objects are grouping, th
 - Fixed label correction
 
 When the label information from radar outputs lack accuracy, `is_fixed_label` parameter is recommended to set `true`.
-If the parameter is true, the label of a clustered object is overwritten by the label set by  `fixed_label` parameter.
+If the parameter is true, the label of a clustered object is overwritten by the label set by `fixed_label` parameter.
 If this package use for faraway dynamic object detection with radar, the parameter is recommended to set to `VEHICLE`.
 
 - Fixed size correction
@@ -56,15 +57,14 @@ So `is_fixed_size` parameter is recommended to set `true`, and size parameters i
 
 ## Parameters
 
-
-| Name                 | Type   | Description                                                                                                                                     | Default value |
-| :------------------- | :----- | :---------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `angle_threshold`    | double | Angle threshold to judge whether radar detections come from one object.                                                                   [rad] | 0.174         |
-| `distance_threshold` | double | Distance threshold to judge whether radar detections come from one object. [m]                                                                  | 4.0           |
-| `velocity_threshold` | double | Velocity threshold to judge whether radar detections come from one object. [m/s]                                                                | 2.0           |
-| `is_fixed_label`     | bool   | If this parameter is true, the label of a clustered object is overwritten by the label set by  `fixed_label` parameter.                         | false         |
-| `fixed_label`        | string | If `is_fixed_label` is true, the label of a clustered object is overwritten by this parameter.                                                  | "UNKNOWN"     |
-| `is_fixed_size`      | bool   | If this parameter is true, the size of a clustered object is overwritten by the label set by `size_x`, `size_y`, and `size_z` parameters.       | false         |
-| `size_x`             | double | If `is_fixed_size` is true, the x-axis size of a clustered object is overwritten by this parameter. [m]                                         | 4.0           |
-| `size_y`             | double | If `is_fixed_size` is true, the y-axis size of a clustered object is overwritten by this parameter. [m]                                         | 1.5           |
-| `size_z`             | double | If `is_fixed_size` is true, the z-axis size of a clustered object is overwritten by this parameter. [m]                                         | 1.5           |
+| Name                 | Type   | Description                                                                                                                               | Default value |
+| :------------------- | :----- | :---------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `angle_threshold`    | double | Angle threshold to judge whether radar detections come from one object. [rad]                                                             | 0.174         |
+| `distance_threshold` | double | Distance threshold to judge whether radar detections come from one object. [m]                                                            | 4.0           |
+| `velocity_threshold` | double | Velocity threshold to judge whether radar detections come from one object. [m/s]                                                          | 2.0           |
+| `is_fixed_label`     | bool   | If this parameter is true, the label of a clustered object is overwritten by the label set by `fixed_label` parameter.                    | false         |
+| `fixed_label`        | string | If `is_fixed_label` is true, the label of a clustered object is overwritten by this parameter.                                            | "UNKNOWN"     |
+| `is_fixed_size`      | bool   | If this parameter is true, the size of a clustered object is overwritten by the label set by `size_x`, `size_y`, and `size_z` parameters. | false         |
+| `size_x`             | double | If `is_fixed_size` is true, the x-axis size of a clustered object is overwritten by this parameter. [m]                                   | 4.0           |
+| `size_y`             | double | If `is_fixed_size` is true, the y-axis size of a clustered object is overwritten by this parameter. [m]                                   | 1.5           |
+| `size_z`             | double | If `is_fixed_size` is true, the z-axis size of a clustered object is overwritten by this parameter. [m]                                   | 1.5           |
