@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="publish_rate" default="10.0"/>
-  <arg name="enable_delay_compensation" default="false"/>
+  <arg name="enable_delay_compensation" default="true"/>
 
   <group>
     <include file="$(find-pkg-share multi_object_tracker)/launch/multi_object_tracker.launch.xml">
