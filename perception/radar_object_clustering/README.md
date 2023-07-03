@@ -5,7 +5,7 @@ This package contains a radar object clustering for [autoware_auto_perception_ms
 This package can make clustered objects from radar DetectedObjects, the objects which is converted from RadarTracks by [radar_tracks_msgs_converter](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/radar_tracks_msgs_converter) and is processed by noise filter.
 In other word, this package can combine multiple radar detections from one object into one and adjust class and size.
 
-![](docs/radar_clustering.drawio.svg)
+![radar_clustering](docs/radar_clustering.drawio.svg)
 
 ## Algorithm
 
@@ -22,7 +22,7 @@ Therefore, by this package the multiple detection results are clustered into one
 If two radar objects are near, and yaw angle direction and velocity between two radar objects is similar (the degree of these is defined by parameters), then these are clustered.
 After grouping for all radar objects, if multiple radar objects are grouping, the kinematics of the new clustered object is calculated from average of that and label and shape of the new clustered object is calculated from top confidence in radar objects.
 
-![](docs/clustering.drawio.svg)
+![clustering](docs/clustering.drawio.svg)
 
 - Fixed label correction
 
