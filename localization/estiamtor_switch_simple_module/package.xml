@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>pose_estimator_manager</name>
+  <name>estimator_switch_simple_module</name>
   <version>0.1.0</version>
-  <description>The manager of multiple pose estimators</description>
+  <description>The plugin of pose estimator switcher</description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
   <license>Apache License 2.0</license>
   <author email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</author>
@@ -12,6 +12,7 @@
 
   <build_depend>autoware_cmake</build_depend>
 
+  <depend>pose_estimator_manager</depend>
   <depend>visualization_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>

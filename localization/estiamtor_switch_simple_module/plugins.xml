@@ -1,0 +1,3 @@
+<library path="estimator_switch_simple_module">
+  <class type="multi_pose_estimator::SimpleSwitchRule" base_class_type="multi_pose_estimator::PluginInterface"/>
+</library>

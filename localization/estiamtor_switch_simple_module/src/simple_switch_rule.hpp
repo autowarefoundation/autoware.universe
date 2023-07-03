@@ -1,7 +1,6 @@
 #pragma once
 
-#include "pose_estimator_manager/plugin_interface.hpp"
-
+#include <pose_estimator_manager/plugin_interface.hpp>
 #include <rclcpp/logger.hpp>
 
 namespace multi_pose_estimator

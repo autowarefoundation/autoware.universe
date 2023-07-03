@@ -1,5 +1,0 @@
-<library path="lib/libsimple_switch_rule">
-  <class name="multi_pose_estimator/SimpleSwitchRule" type="multi_pose_estimator::SimpleSwitchRule" base_class_type="multi_pose_estimator::PluginInterface">
-    <description>This is a sample plugin.</description>
-  </class>
-</library>

@@ -1,0 +1,3 @@
+<library path="service_switch_rule">
+  <class type="multi_pose_estimator::ServiceSwitchRule" base_class_type="multi_pose_estimator::PluginInterface"/>
+</library>

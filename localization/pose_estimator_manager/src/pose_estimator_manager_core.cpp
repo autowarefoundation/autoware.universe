@@ -10,7 +10,7 @@ namespace multi_pose_estimator
 PoseEstimatorManager::PoseEstimatorManager()
 : Node("pose_estimator_manager"),
   pcd_density_threshold(declare_parameter<int>("pcd_density_threshold")),
-  plugin_loader_("behavior_velocity_planner", "behavior_velocity_planner::PluginInterface")
+  plugin_loader_("pose_estimator_manager", "multi_pose_estimator::PluginInterface")
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -47,7 +47,8 @@ PoseEstimatorManager::PoseEstimatorManager()
   toggle_mode(true);
 
   // Load plugins
-  load_switch_rule_plugin(*this, "multi_pose_estimator/SimpleSwitchRule");
+  // load_switch_rule_plugin(*this, "multi_pose_estimator::SimpleSwitchRule");
+  load_switch_rule_plugin(*this, "multi_pose_estimator::ServiceSwitchRule");
 }
 
 void PoseEstimatorManager::load_switch_rule_plugin(rclcpp::Node & node, const std::string & name)
@@ -58,6 +59,7 @@ void PoseEstimatorManager::load_switch_rule_plugin(rclcpp::Node & node, const st
     switch_rule_plugin_ = plugin;
   } else {
     RCLCPP_ERROR_STREAM(get_logger(), "The switch rule plugin '" << name << "' is not available.");
+    const auto plugin = plugin_loader_.createSharedInstance(name);
   }
 }
 

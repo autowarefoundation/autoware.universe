@@ -1,4 +1,4 @@
-#include "pose_estimator_manager/simple_switch_rule.hpp"
+#include "simple_switch_rule.hpp"
 
 namespace multi_pose_estimator
 {
