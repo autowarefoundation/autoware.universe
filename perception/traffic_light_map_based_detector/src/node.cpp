@@ -286,15 +286,25 @@ bool MapBasedDetector::getTrafficLightRoi(
     tf2::Vector3 map2tl = getTrafficLightTopLeft(traffic_light);
     tf2::Vector3 camera2tl = tf_map2camera.inverse() * map2tl;
     // max vibration
-    const double max_vibration_x =
-      std::sin(config.max_vibration_yaw * 0.5) * camera2tl.z() + config.max_vibration_width * 0.5;
-    const double max_vibration_y = std::sin(config.max_vibration_pitch * 0.5) * camera2tl.z() +
-                                   config.max_vibration_height * 0.5;
-    const double max_vibration_z = config.max_vibration_depth * 0.5;
+    double camera2tl_xz_distance = tf2::Vector3(camera2tl.getX(), 0.0, camera2tl.getZ()).length();
+    double camera2tl_yz_distance = tf2::Vector3(0.0, camera2tl.getY(), camera2tl.getZ()).length();
+
+    tf2::Vector3 tlr_z_basis =
+      tf2::Vector3(camera2tl.getX(), camera2tl.getY(), camera2tl.getZ()).normalized();
+    tf2::Vector3 tlr_y_basis = tf2::Vector3(0.0, 1.0, 0.0);
+    tf2::Vector3 tlr_x_basis = tlr_y_basis.cross(tlr_z_basis);
+
+    tf2::Vector3 tlr_offset = (std::sin(config.max_vibration_yaw * 0.5) * camera2tl_xz_distance +
+                               config.max_vibration_width * 0.5) *
+                                tlr_x_basis +
+                              (std::sin(config.max_vibration_pitch * 0.5) * camera2tl_yz_distance +
+                               config.max_vibration_height * 0.5) *
+                                tlr_y_basis +
+                              (config.max_vibration_depth * 0.5) * tlr_z_basis;
+
     // enlarged target position in camera coordinate
     {
-      tf2::Vector3 point3d =
-        camera2tl - tf2::Vector3(max_vibration_x, max_vibration_y, max_vibration_z);
+      tf2::Vector3 point3d = camera2tl - tlr_offset;
       if (point3d.z() <= 0.0) {
         return false;
       }
@@ -310,15 +320,25 @@ bool MapBasedDetector::getTrafficLightRoi(
     tf2::Vector3 map2tl = getTrafficLightBottomRight(traffic_light);
     tf2::Vector3 camera2tl = tf_map2camera.inverse() * map2tl;
     // max vibration
-    const double max_vibration_x =
-      std::sin(config.max_vibration_yaw * 0.5) * camera2tl.z() + config.max_vibration_width * 0.5;
-    const double max_vibration_y = std::sin(config.max_vibration_pitch * 0.5) * camera2tl.z() +
-                                   config.max_vibration_height * 0.5;
-    const double max_vibration_z = config.max_vibration_depth * 0.5;
+    double camera2tl_xz_distance = tf2::Vector3(camera2tl.getX(), 0.0, camera2tl.getZ()).length();
+    double camera2tl_yz_distance = tf2::Vector3(0.0, camera2tl.getY(), camera2tl.getZ()).length();
+
+    tf2::Vector3 tlr_z_basis =
+      tf2::Vector3(camera2tl.getX(), camera2tl.getY(), camera2tl.getZ()).normalized();
+    tf2::Vector3 tlr_y_basis = tf2::Vector3(0.0, 1.0, 0.0);
+    tf2::Vector3 tlr_x_basis = tlr_y_basis.cross(tlr_z_basis);
+
+    tf2::Vector3 tlr_offset = (std::sin(config.max_vibration_yaw * 0.5) * camera2tl_xz_distance +
+                               config.max_vibration_width * 0.5) *
+                                tlr_x_basis +
+                              (std::sin(config.max_vibration_pitch * 0.5) * camera2tl_yz_distance +
+                               config.max_vibration_height * 0.5) *
+                                tlr_y_basis +
+                              (config.max_vibration_depth * 0.5) * tlr_z_basis;
+
     // enlarged target position in camera coordinate
     {
-      tf2::Vector3 point3d =
-        camera2tl + tf2::Vector3(max_vibration_x, max_vibration_y, -max_vibration_z);
+      tf2::Vector3 point3d = camera2tl + tlr_offset;
       if (point3d.z() <= 0.0) {
         return false;
       }
