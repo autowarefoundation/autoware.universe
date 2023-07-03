@@ -177,7 +177,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       if (use_iou_y_) {
         iou_y = calcIoUY(cluster_map.second, feature_obj.feature.roi);
       }
-      if (max_iou < iou + iou_x + iou_y) {
+      if (max_iou < iou + iou_x + iou_y && is_inside(feature_obj.feature.roi, cluster_map.second)) {
         index = cluster_map.first;
         max_iou = iou + iou_x + iou_y;
       }
