@@ -111,6 +111,11 @@ private:
     const PosePath & ref_path);
 
   FrenetPoint getFrenetPoint(const TrackedObject & object, const PosePath & ref_path);
+
+  // TODO(ktro2828): add support of max curvature threshold and collision
+  size_t get_best_path_index(
+    std::vector<FrenetPath> & frenet_paths, const double max_velocity,
+    const double max_acceleration) const;
 };
 }  // namespace map_based_prediction
 
