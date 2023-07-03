@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef radar_object_clustering__radar_object_clustering_NODE_HPP__
-#define radar_object_clustering__radar_object_clustering_NODE_HPP__
+#ifndef RADAR_OBJECT_CLUSTERING__RADAR_OBJECT_CLUSTERING_NODE_HPP_
+#define RADAR_OBJECT_CLUSTERING__RADAR_OBJECT_CLUSTERING_NODE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
@@ -75,4 +75,4 @@ private:
 
 }  // namespace radar_object_clustering
 
-#endif  // radar_object_clustering__radar_object_clustering_NODE_HPP__
+#endif  // RADAR_OBJECT_CLUSTERING__RADAR_OBJECT_CLUSTERING_NODE_HPP_

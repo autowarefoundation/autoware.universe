@@ -4,20 +4,20 @@
   <name>radar_object_clustering</name>
   <version>0.1.0</version>
   <description>radar_object_clustering</description>
-  <author email="satoshi.tanaka@tier4.jp">Sathshi Tanaka</author>
   <maintainer email="satoshi.tanaka@tier4.jp">Sathshi Tanaka</maintainer>
   <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
 
   <license>Apache License 2.0</license>
+  <author email="satoshi.tanaka@tier4.jp">Sathshi Tanaka</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>perception_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>perception_utils</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tier4_autoware_utils</depend>
