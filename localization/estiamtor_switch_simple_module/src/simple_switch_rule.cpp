@@ -8,9 +8,10 @@ void SimpleSwitchRule::init(rclcpp::Node &)
   RCLCPP_INFO_STREAM(logger_, "pluginlib is initialized");
 }
 
-void SimpleSwitchRule::best_estimator()
+bool SimpleSwitchRule::ndt_is_best()
 {
   RCLCPP_INFO_STREAM(logger_, "pluginlib try to choice the best pose_estimator");
+  return true;
 }
 
 const char * SimpleSwitchRule::get_module_name()

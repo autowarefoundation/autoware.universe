@@ -47,8 +47,7 @@ PoseEstimatorManager::PoseEstimatorManager()
   toggle_mode(true);
 
   // Load plugins
-  // load_switch_rule_plugin(*this, "multi_pose_estimator::SimpleSwitchRule");
-  load_switch_rule_plugin(*this, "multi_pose_estimator::ServiceSwitchRule");
+  load_switch_rule_plugin(*this, declare_parameter<std::string>("estimator_switch_plugin"));
 }
 
 void PoseEstimatorManager::load_switch_rule_plugin(rclcpp::Node & node, const std::string & name)
@@ -125,26 +124,29 @@ void PoseEstimatorManager::on_timer()
 {
   RCLCPP_INFO_STREAM(get_logger(), "on_timer");
 
-  if (switch_rule_plugin_) {
-    switch_rule_plugin_->best_estimator();
-  } else {
-    RCLCPP_WARN_STREAM(get_logger(), "swtich_rule is not activated");
-  }
-
   if (!latest_pose_.has_value()) {
     RCLCPP_WARN_STREAM(
       get_logger(), "Unable to determine which estimation to use, due to lack of latest position");
     return;
   }
 
-  auto position = latest_pose_->pose.pose.position;
-  pcl::PointXYZ query(position.x, position.y, position.z);
+  bool is_ndt_mode = false;
+  int count = 0;
 
-  std::vector<int> indices;
-  std::vector<float> distances;
-  const int count = kdtree_->radiusSearch(query, 50, indices, distances, 0);
-  const bool is_ndt_mode = count > pcd_density_threshold;
-  toggle_mode(is_ndt_mode);
+  if (switch_rule_plugin_) {
+    is_ndt_mode = switch_rule_plugin_->ndt_is_best();
+  } else {
+    RCLCPP_WARN_STREAM(get_logger(), "swtich_rule is not activated");
+
+    auto position = latest_pose_->pose.pose.position;
+    pcl::PointXYZ query(position.x, position.y, position.z);
+
+    std::vector<int> indices;
+    std::vector<float> distances;
+    count = kdtree_->radiusSearch(query, 50, indices, distances, 0);
+    const bool is_ndt_mode = count > pcd_density_threshold;
+    toggle_mode(is_ndt_mode);
+  }
 
   {
     String msg;

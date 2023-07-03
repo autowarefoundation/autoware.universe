@@ -10,7 +10,7 @@ class SimpleSwitchRule : public PluginInterface
 {
 public:
   void init(rclcpp::Node & node) override;
-  void best_estimator() override;
+  bool ndt_is_best() override;
   const char * get_module_name() override;
 
   rclcpp::Logger logger_{rclcpp::get_logger("simple_switch_rule")};

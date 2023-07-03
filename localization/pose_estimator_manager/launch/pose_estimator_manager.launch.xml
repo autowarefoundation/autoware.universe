@@ -1,8 +1,15 @@
 <?xml version="1.0"?>
 <launch>
 
+  <arg name="estimator_switch_plugin" default="multi_pose_estimator::SimpleSwitchRule" description="
+    multi_pose_estimator::ServiceSwitchRule
+    multi_pose_estimator::SimpleSwitchRule
+  "/>
+
   <node pkg="pose_estimator_manager" exec="pose_estimator_manager" name="pose_estimator_manager" output="screen" args="--ros-args --log-level info">
     <param name="pcd_density_threshold" value="20"/>
+    <param name="estimator_switch_plugin" value="$(var estimator_switch_plugin)"/>
+    <remap from="~/switch_ndt_srv" to="/plugin_srv"/>
   </node>
 
   <node pkg="pose_estimator_manager" exec="yabloc_sub_manager" name="yabloc_sub_manager" output="screen">

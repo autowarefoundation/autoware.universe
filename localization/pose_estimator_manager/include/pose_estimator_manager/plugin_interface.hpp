@@ -12,7 +12,7 @@ class PluginInterface
 public:
   virtual ~PluginInterface() = default;
   virtual void init(rclcpp::Node & node) = 0;
-  virtual void best_estimator() = 0;
+  virtual bool ndt_is_best() = 0;
   virtual const char * get_module_name() = 0;
 };
 
