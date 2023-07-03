@@ -4,6 +4,12 @@ project(pose_estimator_manager)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+ament_auto_add_library(simple_switch_rule
+  SHARED
+  src/simple_switch_rule.cpp
+)
+target_include_directories(simple_switch_rule PUBLIC include)
+
 ament_auto_add_executable(${PROJECT_NAME}
   src/pose_estimator_manager_core.cpp
   src/pose_estimator_manager_node.cpp

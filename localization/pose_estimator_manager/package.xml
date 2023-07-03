@@ -18,7 +18,7 @@
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>ublox_msgs</depend>
-
+  <depend>pluginlib</depend>
   <depend>tier4_autoware_utils</depend>
   <depend>pcl_conversions</depend>
   <depend>pcl_ros</depend>
@@ -31,6 +31,7 @@
   <test_depend>autoware_lint_common</test_depend>
 
   <export>
+    <adv_lecture plugin="${prefix}/plugin_description.xml" />
     <build_type>ament_cmake</build_type>
   </export>
 </package>

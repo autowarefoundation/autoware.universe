@@ -2,7 +2,9 @@
 #define POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_MANAGER_HPP_
 
 #include "pose_estimator_manager/manager_client.hpp"
+#include "pose_estimator_manager/plugin_interface.hpp"
 
+#include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -40,6 +42,9 @@ private:
   std::unordered_map<std::string, ManagerClient::SharedPtr> clients_;
   std::optional<PoseCovStamped> latest_pose_{std::nullopt};
 
+  pluginlib::ClassLoader<PluginInterface> plugin_loader_;
+  std::shared_ptr<PluginInterface> switch_rule_plugin_;
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr occupied_areas_;
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
 
@@ -50,6 +55,8 @@ private:
   void on_map(PointCloud2::ConstSharedPtr msg);
   void on_timer();
   void on_pose_cov(PoseCovStamped::ConstSharedPtr msg);
+
+  void load_switch_rule_plugin(rclcpp::Node & node, const std::string & name);
 };
 }  // namespace multi_pose_estimator
 

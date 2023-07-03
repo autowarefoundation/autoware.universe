@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-  <node pkg="pose_estimator_manager" exec="pose_estimator_manager" name="pose_estimator_manager" output="screen">
+  <node pkg="pose_estimator_manager" exec="pose_estimator_manager" name="pose_estimator_manager" output="screen" args="--ros-args --log-level info">
     <param name="pcd_density_threshold" value="20"/>
   </node>
 

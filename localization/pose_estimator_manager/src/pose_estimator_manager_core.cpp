@@ -6,9 +6,11 @@
 #include <sstream>
 namespace multi_pose_estimator
 {
+
 PoseEstimatorManager::PoseEstimatorManager()
 : Node("pose_estimator_manager"),
-  pcd_density_threshold(declare_parameter<int>("pcd_density_threshold"))
+  pcd_density_threshold(declare_parameter<int>("pcd_density_threshold")),
+  plugin_loader_("behavior_velocity_planner", "behavior_velocity_planner::PluginInterface")
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -43,6 +45,20 @@ PoseEstimatorManager::PoseEstimatorManager()
     rclcpp::create_timer(this, this->get_clock(), rclcpp::Rate(1).period(), std::move(on_timer));
 
   toggle_mode(true);
+
+  // Load plugins
+  load_switch_rule_plugin(*this, "multi_pose_estimator/SimpleSwitchRule");
+}
+
+void PoseEstimatorManager::load_switch_rule_plugin(rclcpp::Node & node, const std::string & name)
+{
+  if (plugin_loader_.isClassAvailable(name)) {
+    const auto plugin = plugin_loader_.createSharedInstance(name);
+    plugin->init(node);
+    switch_rule_plugin_ = plugin;
+  } else {
+    RCLCPP_ERROR_STREAM(get_logger(), "The switch rule plugin '" << name << "' is not available.");
+  }
 }
 
 bool PoseEstimatorManager::toggle_mode(bool enable_ndt)
@@ -106,6 +122,12 @@ void PoseEstimatorManager::publish_occupied_area(const std_msgs::msg::Header & h
 void PoseEstimatorManager::on_timer()
 {
   RCLCPP_INFO_STREAM(get_logger(), "on_timer");
+
+  if (switch_rule_plugin_) {
+    switch_rule_plugin_->best_estimator();
+  } else {
+    RCLCPP_WARN_STREAM(get_logger(), "swtich_rule is not activated");
+  }
 
   if (!latest_pose_.has_value()) {
     RCLCPP_WARN_STREAM(
