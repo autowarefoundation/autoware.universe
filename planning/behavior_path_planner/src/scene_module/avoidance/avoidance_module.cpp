@@ -343,8 +343,8 @@ ObjectData AvoidanceModule::createObjectData(
   const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
   const auto object_closest_index = findNearestIndex(path_points, object_pose.position);
   const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
-  const auto t = utils::getHighestProbLabel(object.classification);
-  const auto object_parameter = parameters_->object_parameters.at(t);
+  const auto object_type = utils::getHighestProbLabel(object.classification);
+  const auto object_parameter = parameters_->object_parameters.at(object_type);
 
   ObjectData object_data{};
 
@@ -571,8 +571,8 @@ void AvoidanceModule::fillDebugData(const AvoidancePlanningData & data, DebugDat
   }
 
   const auto o_front = data.stop_target_object.get();
-  const auto t = utils::getHighestProbLabel(o_front.object.classification);
-  const auto object_parameter = parameters_->object_parameters.at(t);
+  const auto object_type = utils::getHighestProbLabel(o_front.object.classification);
+  const auto object_parameter = parameters_->object_parameters.at(object_type);
   const auto & base_link2front = planner_data_->parameters.base_link2front;
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
 
@@ -861,8 +861,8 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
     const auto nominal_return_distance = helper_.getNominalAvoidanceDistance(return_shift);
 
     // use each object param
-    const auto t = utils::getHighestProbLabel(o.object.classification);
-    const auto object_parameter = parameters_->object_parameters.at(t);
+    const auto object_type = utils::getHighestProbLabel(o.object.classification);
+    const auto object_parameter = parameters_->object_parameters.at(object_type);
 
     /**
      * Is there enough distance from ego to object for avoidance?
@@ -3232,8 +3232,8 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
   // D4: o_front.longitudinal
   // D5: base_link2front
 
-  const auto t = utils::getHighestProbLabel(object.object.classification);
-  const auto object_parameter = parameters_->object_parameters.at(t);
+  const auto object_type = utils::getHighestProbLabel(object.object.classification);
+  const auto object_parameter = parameters_->object_parameters.at(object_type);
 
   const auto avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
                             object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
@@ -3370,8 +3370,8 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
 
   // calculate shift length for front object.
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto t = utils::getHighestProbLabel(object.object.classification);
-  const auto object_parameter = parameters_->object_parameters.at(t);
+  const auto object_type = utils::getHighestProbLabel(object.object.classification);
+  const auto object_parameter = parameters_->object_parameters.at(object_type);
   const auto avoid_margin = object_parameter.safety_buffer_lateral * object.distance_factor +
                             object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
   const auto shift_length =
