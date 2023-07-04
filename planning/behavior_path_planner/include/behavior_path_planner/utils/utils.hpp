@@ -306,7 +306,7 @@ bool isEgoOutOfRoute(
 
 bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
-  const BehaviorPathPlannerParameters & common_param);
+  const BehaviorPathPlannerParameters & common_param, const double outer_margin = 0.0);
 
 // path management
 
@@ -350,6 +350,9 @@ BehaviorModuleOutput getReferencePath(
 // object label
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
+lanelet::ConstLanelets getCurrentLanes(
+  const std::shared_ptr<const PlannerData> & planner_data, const double backward_path_length,
+  const double forward_path_length);
 lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data);
 
 lanelet::ConstLanelets getCurrentLanesFromPath(

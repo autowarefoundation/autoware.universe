@@ -26,6 +26,16 @@
 
 namespace behavior_path_planner
 {
+
+struct LaneChangeCancelParameters
+{
+  bool enable_on_prepare_phase{true};
+  bool enable_on_lane_changing_phase{false};
+  double delta_time{1.0};
+  double duration{5.0};
+  double max_lateral_jerk{10.0};
+  double overhang_tolerance{0.0};
+};
 struct LaneChangeParameters
 {
   // trajectory generation
@@ -63,12 +73,7 @@ struct LaneChangeParameters
   bool check_pedestrian{true};  // check object pedestrian
 
   // abort
-  bool enable_cancel_lane_change{true};
-  bool enable_abort_lane_change{false};
-
-  double abort_delta_time{1.0};
-  double aborting_time{5.0};
-  double abort_max_lateral_jerk{10.0};
+  LaneChangeCancelParameters cancel;
 
   double finish_judge_lateral_threshold{0.2};
 
@@ -89,6 +94,11 @@ struct LaneChangePhaseInfo
   double lane_changing{0.0};
 
   [[nodiscard]] double sum() const { return prepare + lane_changing; }
+
+  LaneChangePhaseInfo(const double _prepare, const double _lane_changing)
+  : prepare(_prepare), lane_changing(_lane_changing)
+  {
+  }
 };
 
 struct LaneChangeTargetObjectIndices
@@ -104,11 +114,8 @@ enum class LaneChangeModuleType {
   AVOIDANCE_BY_LANE_CHANGE,
 };
 
-struct AvoidanceByLCParameters
+struct AvoidanceByLCParameters : public AvoidanceParameters
 {
-  std::shared_ptr<AvoidanceParameters> avoidance{};
-  std::shared_ptr<LaneChangeParameters> lane_change{};
-
   // execute if the target object number is larger than this param.
   size_t execute_object_num{1};
 
