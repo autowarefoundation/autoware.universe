@@ -29,9 +29,6 @@
 
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -55,6 +52,7 @@ using autoware_auto_perception_msgs::msg::TrafficLight;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using lanelet::autoware::Crosswalk;
 using tier4_api_msgs::msg::CrosswalkStatus;
+using tier4_autoware_utils::Polygon2d;
 using tier4_autoware_utils::StopWatch;
 
 class CrosswalkModule : public SceneModuleInterface
@@ -118,9 +116,7 @@ private:
 
   std::vector<CollisionPoint> getCollisionPoints(
     const PathWithLaneId & ego_path, const PredictedObject & object,
-    const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> &
-      attention_area,
-    const std::pair<double, double> & crosswalk_attention_range);
+    const Polygon2d & attention_area, const std::pair<double, double> & crosswalk_attention_range);
 
   std::pair<double, double> getAttentionRange(const PathWithLaneId & ego_path);
 
