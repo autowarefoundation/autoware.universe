@@ -206,8 +206,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
   // TODO(ktro2828): check whether path is valid (collision, speed, acceleration, curvature)
   const double max_velocity = current_point.s_acc * time_horizon_;
   const double max_acceleration = current_point.s_acc;
-  const size_t index = get_best_path_index(frenet_paths, max_velocity, max_acceleration);
-  const auto & frenet_predicted_path = frenet_paths.at(index);
+  const auto frenet_predicted_path = get_best_path(frenet_paths, max_velocity, max_acceleration);
 
   // Step3. Interpolate Reference Path for converting predicted path coordinate
   const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);
@@ -438,7 +437,7 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
   return frenet_point;
 }
 
-size_t PathGenerator::get_best_path_index(
+FrenetPath & PathGenerator::get_best_path(
   std::vector<FrenetPath> & frenet_paths, const double max_velocity,
   const double max_acceleration) const
 {
@@ -446,16 +445,15 @@ size_t PathGenerator::get_best_path_index(
     return p1.cost < p2.cost;
   });
 
-  for (size_t idx = 0; idx < frenet_paths.size(); ++idx) {
-    const auto & frenet_path = frenet_paths.at(idx);
+  for (auto & frenet_path : frenet_paths) {
     const bool is_invalid =
       std::any_of(frenet_path.path.cbegin(), frenet_path.path.cend(), [&](const auto & point) {
         return max_velocity < point.s_vel || max_acceleration < std::abs(point.s_acc);
       });
     if (!is_invalid) {
-      return idx;
+      return frenet_path;
     }
   }
-  return frenet_paths.size() - 1;
+  return frenet_paths.at(0);
 }
 }  // namespace map_based_prediction
