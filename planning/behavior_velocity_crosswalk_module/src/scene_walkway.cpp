@@ -58,29 +58,18 @@ boost::optional<std::pair<double, geometry_msgs::msg::Point>> WalkwayModule::get
   const PathWithLaneId & ego_path, bool & exist_stopline_in_map) const
 {
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
-
-  const auto get_stop_point =
-    [&](const auto & stop_line) -> boost::optional<geometry_msgs::msg::Point> {
-    const auto intersects = getLinestringIntersects(
-      ego_path, lanelet::utils::to2D(stop_line).basicLineString(), ego_pos, 2);
-
-    if (intersects.empty()) {
-      return boost::none;
-    }
-
-    return intersects.front();
-  };
-
   for (const auto & stop_line : stop_lines_) {
-    const auto p_stop_line = get_stop_point(stop_line);
-    if (!p_stop_line) {
+    const auto p_stop_lines = getLinestringIntersects(
+      ego_path, lanelet::utils::to2D(stop_line).basicLineString(), ego_pos, 2);
+    if (p_stop_lines.empty()) {
       continue;
     }
 
     exist_stopline_in_map = true;
 
-    const auto dist_ego_to_stop = calcSignedArcLength(ego_path.points, ego_pos, p_stop_line.get());
-    return std::make_pair(dist_ego_to_stop, p_stop_line.get());
+    const auto dist_ego_to_stop =
+      calcSignedArcLength(ego_path.points, ego_pos, p_stop_lines.front());
+    return std::make_pair(dist_ego_to_stop, p_stop_lines.front());
   }
 
   {
