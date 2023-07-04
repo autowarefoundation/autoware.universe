@@ -52,7 +52,7 @@ RadarTrackCrossingNoiseFilterNode::RadarTrackCrossingNoiseFilterNode(
     std::bind(&RadarTrackCrossingNoiseFilterNode::onSetParam, this, std::placeholders::_1));
 
   // Node Parameter
-  node_param_.velocity_y_threshold = declare_parameter<double>("velocity_y_threshold", 1.0472);
+  node_param_.velocity_y_threshold = declare_parameter<double>("velocity_y_threshold", 2.0);
 
   // Subscriber
   sub_tracks_ = create_subscription<RadarTracks>(
