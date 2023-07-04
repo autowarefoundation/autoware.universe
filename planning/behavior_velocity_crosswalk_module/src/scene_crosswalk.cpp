@@ -204,24 +204,23 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   setSafe(!nearest_stop_point_with_factor);
 
   if (isActivated()) {
-    if (!nearest_stop_point_with_factor) {
-      if (!rtc_stop_point_with_factor) {
-        setDistance(std::numeric_limits<double>::lowest());
-        return true;
-      }
+    if (nearest_stop_point_with_factor) {
+      const auto target_velocity =
+        calcTargetVelocity(nearest_stop_point_with_factor->first, ego_path);
+      insertDecelPointWithDebugInfo(
+        nearest_stop_point_with_factor->first,
+        std::max(planner_param_.min_slow_down_velocity, target_velocity), *path);
+      return true;
+    }
 
+    if (rtc_stop_point_with_factor) {
       const auto crosswalk_distance =
         calcSignedArcLength(ego_path.points, ego_pos, getPoint(rtc_stop_point_with_factor->first));
       setDistance(crosswalk_distance);
       return true;
     }
 
-    const auto target_velocity =
-      calcTargetVelocity(nearest_stop_point_with_factor->first, ego_path);
-    insertDecelPointWithDebugInfo(
-      nearest_stop_point_with_factor->first,
-      std::max(planner_param_.min_slow_down_velocity, target_velocity), *path);
-
+    setDistance(std::numeric_limits<double>::lowest());
     return true;
   }
 
