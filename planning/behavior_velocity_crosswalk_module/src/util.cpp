@@ -42,14 +42,13 @@
 
 namespace behavior_velocity_planner
 {
-
 namespace bg = boost::geometry;
 using motion_utils::calcSignedArcLength;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::Line2d;
 using tier4_autoware_utils::Point2d;
 
-std::vector<Point2d> getPolygonIntersects(
+std::vector<geometry_msgs::msg::Point> getPolygonIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
   const geometry_msgs::msg::Point & ego_pos,
   const size_t max_num = std::numeric_limits<size_t>::max())
@@ -90,10 +89,15 @@ std::vector<Point2d> getPolygonIntersects(
 
   std::sort(intersects.begin(), intersects.end(), compare);
 
-  return intersects;
+  // convert tier4_autoware_utils::Point2d to geometry::msg::Point
+  std::vector<geometry_msgs::msg::Point> geometry_points;
+  for (const auto & p : intersects) {
+    geometry_points.push_back(createPoint(p.x(), p.y(), ego_pos.z));
+  }
+  return geometry_points;
 }
 
-std::vector<Point2d> getLinestringIntersects(
+std::vector<geometry_msgs::msg::Point> getLinestringIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicLineString2d & linestring,
   const geometry_msgs::msg::Point & ego_pos,
   const size_t max_num = std::numeric_limits<size_t>::max())
@@ -134,7 +138,12 @@ std::vector<Point2d> getLinestringIntersects(
 
   std::sort(intersects.begin(), intersects.end(), compare);
 
-  return intersects;
+  // convert tier4_autoware_utils::Point2d to geometry::msg::Point
+  std::vector<geometry_msgs::msg::Point> geometry_points;
+  for (const auto & p : intersects) {
+    geometry_points.push_back(createPoint(p.x(), p.y(), ego_pos.z));
+  }
+  return geometry_points;
 }
 
 lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(

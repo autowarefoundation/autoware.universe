@@ -68,7 +68,7 @@ boost::optional<std::pair<double, geometry_msgs::msg::Point>> WalkwayModule::get
       return boost::none;
     }
 
-    return createPoint(intersects.front().x(), intersects.front().y(), ego_pos.z);
+    return intersects.front();
   };
 
   for (const auto & stop_line : stop_lines_) {
@@ -107,15 +107,8 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
 
   const auto input = *path;
 
-  path_intersects_.clear();
-
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
-  const auto intersects =
-    getPolygonIntersects(input, walkway_.polygon2d().basicPolygon(), ego_pos, 2);
-
-  for (const auto & p : intersects) {
-    path_intersects_.push_back(createPoint(p.x(), p.y(), ego_pos.z));
-  }
+  path_intersects_ = getPolygonIntersects(input, walkway_.polygon2d().basicPolygon(), ego_pos, 2);
 
   if (path_intersects_.empty()) {
     return false;

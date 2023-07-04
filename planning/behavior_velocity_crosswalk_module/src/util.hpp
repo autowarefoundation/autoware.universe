@@ -72,11 +72,11 @@ struct DebugData
   std::vector<geometry_msgs::msg::Polygon> obj_polygons;
 };
 
-std::vector<Point2d> getPolygonIntersects(
+std::vector<geometry_msgs::msg::Point> getPolygonIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
   const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
 
-std::vector<Point2d> getLinestringIntersects(
+std::vector<geometry_msgs::msg::Point> getLinestringIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicLineString2d & linestring,
   const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
 

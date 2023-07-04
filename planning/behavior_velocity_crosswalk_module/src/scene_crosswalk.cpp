@@ -101,22 +101,18 @@ void sortCrosswalksByDistance(
   lanelet::ConstLanelets & crosswalks)
 {
   const auto compare = [&](const lanelet::ConstLanelet & l1, const lanelet::ConstLanelet & l2) {
-    const std::vector<Point2d> l1_intersects =
+    const auto l1_intersects =
       getPolygonIntersects(ego_path, l1.polygon2d().basicPolygon(), ego_pos, 2);
-    const std::vector<Point2d> l2_intersects =
+    const auto l2_intersects =
       getPolygonIntersects(ego_path, l2.polygon2d().basicPolygon(), ego_pos, 2);
 
     if (l1_intersects.empty() || l2_intersects.empty()) {
       return true;
     }
 
-    const auto dist_l1 = calcSignedArcLength(
-      ego_path.points, size_t(0),
-      createPoint(l1_intersects.front().x(), l1_intersects.front().y(), ego_pos.z));
+    const auto dist_l1 = calcSignedArcLength(ego_path.points, size_t(0), l1_intersects.front());
 
-    const auto dist_l2 = calcSignedArcLength(
-      ego_path.points, size_t(0),
-      createPoint(l2_intersects.front().x(), l2_intersects.front().y(), ego_pos.z));
+    const auto dist_l2 = calcSignedArcLength(ego_path.points, size_t(0), l2_intersects.front());
 
     return dist_l1 < dist_l2;
   };
@@ -168,15 +164,9 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     logger_, planner_param_.show_processing_time, "- step1: %f ms",
     stop_watch_.toc("total_processing_time", false));
 
-  path_intersects_.clear();
-
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
-  const auto intersects =
+  path_intersects_ =
     getPolygonIntersects(ego_path, crosswalk_.polygon2d().basicPolygon(), ego_pos, 2);
-
-  for (const auto & p : intersects) {
-    path_intersects_.push_back(createPoint(p.x(), p.y(), ego_pos.z));
-  }
 
   for (const auto & p : crosswalk_.polygon2d().basicPolygon()) {
     debug_data_.crosswalk_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));
@@ -264,7 +254,7 @@ boost::optional<std::pair<double, geometry_msgs::msg::Point>> CrosswalkModule::g
       return boost::none;
     }
 
-    return createPoint(intersects.front().x(), intersects.front().y(), ego_pos.z);
+    return intersects.front();
   };
 
   for (const auto & stop_line : stop_lines_) {
@@ -629,28 +619,24 @@ void CrosswalkModule::clampAttentionRangeByNeighborCrosswalks(
     auto reverse_ego_path = ego_path;
     std::reverse(reverse_ego_path.points.begin(), reverse_ego_path.points.end());
 
-    const std::vector<Point2d> prev_crosswalk_intersects = getPolygonIntersects(
+    const auto prev_crosswalk_intersects = getPolygonIntersects(
       reverse_ego_path, prev_crosswalk.get().polygon2d().basicPolygon(), ego_pos, 2);
 
     if (!prev_crosswalk_intersects.empty()) {
-      const auto dist_to_prev_crosswalk = calcSignedArcLength(
-        ego_path.points, ego_pos,
-        createPoint(
-          prev_crosswalk_intersects.front().x(), prev_crosswalk_intersects.front().y(), ego_pos.z));
+      const auto dist_to_prev_crosswalk =
+        calcSignedArcLength(ego_path.points, ego_pos, prev_crosswalk_intersects.front());
 
       near_attention_range = std::max(near_attention_range, dist_to_prev_crosswalk);
     }
   }
 
   if (next_crosswalk) {
-    const std::vector<Point2d> next_crosswalk_intersects =
+    const auto next_crosswalk_intersects =
       getPolygonIntersects(ego_path, next_crosswalk.get().polygon2d().basicPolygon(), ego_pos, 2);
 
     if (!next_crosswalk_intersects.empty()) {
-      const auto dist_to_next_crosswalk = calcSignedArcLength(
-        ego_path.points, ego_pos,
-        createPoint(
-          next_crosswalk_intersects.front().x(), next_crosswalk_intersects.front().y(), ego_pos.z));
+      const auto dist_to_next_crosswalk =
+        calcSignedArcLength(ego_path.points, ego_pos, next_crosswalk_intersects.front());
 
       far_attention_range = std::min(far_attention_range, dist_to_next_crosswalk);
     }
