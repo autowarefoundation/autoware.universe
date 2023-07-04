@@ -46,7 +46,7 @@ private:
   void onExternalMsg(const TrafficSignalArray::ConstSharedPtr msg);
   void arbitrateAndPublish(const builtin_interfaces::msg::Time & stamp);
 
-  std::unordered_set<lanelet::Id> map_regulatory_elements_set_;
+  std::unordered_set<lanelet::Id> map_traffic_signal_id_set_;
 
   double external_time_tolerance_;
   double perception_time_tolerance_;

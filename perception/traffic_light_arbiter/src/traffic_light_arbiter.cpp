@@ -74,9 +74,9 @@ void TrafficLightArbiter::onMap(const LaneletMapBin::ConstSharedPtr msg)
   lanelet::utils::conversion::fromBinMsg(*msg, map);
 
   const auto traffic_signal_ids = lanelet::filter_traffic_signal_ids(map);
-  map_regulatory_elements_set_.clear();
+  map_traffic_signal_id_set_.clear();
   for (const auto & traffic_light_id : traffic_signal_ids) {
-    map_regulatory_elements_set_.emplace(traffic_light_id);
+    map_traffic_signal_id_set_.emplace(traffic_light_id);
   }
 }
 
@@ -111,14 +111,14 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
   using ElementAndPriority = std::pair<Element, bool>;
   std::unordered_map<lanelet::Id, std::vector<ElementAndPriority>> regulatory_element_signals_map;
 
-  if (map_regulatory_elements_set_.empty()) {
+  if (map_traffic_signal_id_set_.empty()) {
     RCLCPP_WARN(get_logger(), "Received traffic signal messages before a map");
     return;
   }
 
   auto add_signal_function = [&](const auto & signal, bool priority) {
     const auto id = signal.traffic_signal_id;
-    if (!map_regulatory_elements_set_.count(id)) {
+    if (!map_traffic_signal_id_set_.count(id)) {
       RCLCPP_WARN(
         get_logger(), "Received a traffic signal not present in the current map (%lu)", id);
       return;
