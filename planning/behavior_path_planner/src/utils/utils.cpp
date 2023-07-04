@@ -1114,7 +1114,7 @@ bool isEgoOutOfRoute(
 
 bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
-  const BehaviorPathPlannerParameters & common_param)
+  const BehaviorPathPlannerParameters & common_param, const double outer_margin)
 {
   const auto lane_length = lanelet::utils::getLaneletLength2d(current_lanes);
   const auto lane_poly = lanelet::utils::getPolygonFromArcLength(current_lanes, 0, lane_length);
@@ -1124,9 +1124,17 @@ bool isEgoWithinOriginalLane(
   const auto vehicle_poly =
     tier4_autoware_utils::toFootprint(current_pose, base_link2front, base_link2rear, vehicle_width);
 
-  // Check if the ego vehicle is entirely within the lane by checking if the vehicle's polygon
-  // is within the lane's polygon
-  return boost::geometry::within(vehicle_poly, lanelet::utils::to2D(lane_poly).basicPolygon());
+  // Check if the ego vehicle is entirely within the lane with a given outer margin.
+  for (const auto & p : vehicle_poly.outer()) {
+    // When the point is in the polygon, the distance is 0. When it is out of the polygon, return a
+    // positive value.
+    const auto dist = boost::geometry::distance(p, lanelet::utils::to2D(lane_poly).basicPolygon());
+    if (dist > std::max(outer_margin, 0.0)) {
+      return false;  // out of polygon
+    }
+  }
+
+  return true;  // inside polygon
 }
 
 lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes)
@@ -2388,7 +2396,7 @@ PathWithLaneId getCenterLinePathFromRootLanelet(
 PathWithLaneId getCenterLinePath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & lanelet_sequence,
   const Pose & pose, const double backward_path_length, const double forward_path_length,
-  const BehaviorPathPlannerParameters & parameter, const double optional_length)
+  const BehaviorPathPlannerParameters & parameter)
 {
   PathWithLaneId reference_path;
 
@@ -2401,27 +2409,20 @@ PathWithLaneId getCenterLinePath(
   const double s_backward = std::max(0., s - backward_path_length);
   double s_forward = s + forward_path_length;
 
-  const double lane_length = lanelet::utils::getLaneletLength2d(lanelet_sequence);
-  const auto shift_intervals =
-    route_handler.getLateralIntervalsToPreferredLane(lanelet_sequence.back());
-  const double lane_change_buffer =
-    utils::calcMinimumLaneChangeLength(parameter, shift_intervals, optional_length);
-
   if (route_handler.isDeadEndLanelet(lanelet_sequence.back())) {
-    const double forward_length = std::max(lane_length - lane_change_buffer, 0.0);
-    s_forward = std::min(s_forward, forward_length);
+    const auto lane_length = lanelet::utils::getLaneletLength2d(lanelet_sequence);
+    s_forward = std::clamp(s_forward, 0.0, lane_length);
   }
 
   if (route_handler.isInGoalRouteSection(lanelet_sequence.back())) {
     const auto goal_arc_coordinates =
       lanelet::utils::getArcCoordinates(lanelet_sequence, route_handler.getGoalPose());
-    const double forward_length = std::max(goal_arc_coordinates.length - lane_change_buffer, 0.0);
-    s_forward = std::min(s_forward, forward_length);
+    s_forward = std::clamp(s_forward, 0.0, goal_arc_coordinates.length);
   }
 
   const auto raw_path_with_lane_id =
     route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
-  const auto resampled_path_with_lane_id = motion_utils::resamplePath(
+  auto resampled_path_with_lane_id = motion_utils::resamplePath(
     raw_path_with_lane_id, parameter.input_path_interval, parameter.enable_akima_spline_first);
 
   // convert centerline, which we consider as CoG center,  to rear wheel center
@@ -2552,23 +2553,32 @@ std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & class
   return label;
 }
 
-lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data)
+lanelet::ConstLanelets getCurrentLanes(
+  const std::shared_ptr<const PlannerData> & planner_data, const double backward_path_length,
+  const double forward_path_length)
 {
   const auto & route_handler = planner_data->route_handler;
   const auto current_pose = planner_data->self_odometry->pose.pose;
-  const auto & common_parameters = planner_data->parameters;
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
-    // RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
-    std::cerr << "failed to find closest lanelet within route!!!" << std::endl;
+    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"), clock, 1000,
+      "failed to find closest lanelet within route!!!");
     return {};  // TODO(Horibe) what should be returned?
   }
 
   // For current_lanes with desired length
   return route_handler->getLaneletSequence(
-    current_lane, current_pose, common_parameters.backward_path_length,
-    common_parameters.forward_path_length);
+    current_lane, current_pose, backward_path_length, forward_path_length);
+}
+
+lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto & common_parameters = planner_data->parameters;
+  return getCurrentLanes(
+    planner_data, common_parameters.backward_path_length, common_parameters.forward_path_length);
 }
 
 lanelet::ConstLanelets getCurrentLanesFromPath(
@@ -2740,14 +2750,16 @@ double calcMinimumLaneChangeLength(
   const auto lat_acc = common_param.lane_change_lat_acc_map.find(vel);
   const double & max_lateral_acc = lat_acc.second;
   const double & lateral_jerk = common_param.lane_changing_lateral_jerk;
+  const double & finish_judge_buffer = common_param.lane_change_finish_judge_buffer;
 
-  double accumulated_length =
-    length_to_intersection + common_param.backward_length_buffer_for_end_of_lane;
+  double accumulated_length = length_to_intersection;
   for (const auto & shift_interval : shift_intervals) {
     const double t =
       PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
-    accumulated_length += vel * t + common_param.minimum_prepare_length;
+    accumulated_length += vel * t + common_param.minimum_prepare_length + finish_judge_buffer;
   }
+  accumulated_length +=
+    common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);
 
   return accumulated_length;
 }
@@ -2872,10 +2884,8 @@ DrivableAreaInfo combineDrivableAreaInfo(
   DrivableAreaInfo combined_drivable_area_info;
 
   // drivable lanes
-#ifndef USE_OLD_ARCHITECTURE
   combined_drivable_area_info.drivable_lanes =
     combineDrivableLanes(drivable_area_info1.drivable_lanes, drivable_area_info2.drivable_lanes);
-#endif
 
   // obstacles
   for (const auto & obstacle : drivable_area_info1.obstacles) {
