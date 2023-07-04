@@ -4,7 +4,7 @@
   <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
   <arg name="nearest_search_param_path" default="$(find-pkg-share autoware_launch)/config/control/common/nearest_search.param.yaml"/>
 
-  <arg name="vehicle_model" default="lexus"/>
+  <arg name="vehicle_model" default="sample_vehicle"/>
   <arg name="vehicle_param_file" default="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
 
   <!-- operation_mode_transition_manager -->
