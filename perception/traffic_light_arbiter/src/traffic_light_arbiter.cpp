@@ -28,18 +28,20 @@
 namespace lanelet
 {
 
-using TrafficLightConstPtr = std::shared_ptr<const TrafficLight>;
-
-std::vector<TrafficLightConstPtr> filter_traffic_signals(const LaneletMapConstPtr map)
+std::vector<lanelet::Id> filter_traffic_signal_ids(const LaneletMapConstPtr map)
 {
-  std::vector<TrafficLightConstPtr> signals;
+  std::vector<lanelet::Id> signal_ids;
   for (const auto & element : map->regulatoryElementLayer) {
-    const auto signal = std::dynamic_pointer_cast<const TrafficLight>(element);
-    if (signal) {
-      signals.push_back(signal);
+    const auto signal_regulatory_element = std::dynamic_pointer_cast<const TrafficLight>(element);
+    if (!signal_regulatory_element) {
+      continue;
+    }
+
+    for (const auto & signal : signal_regulatory_element->trafficLights()) {
+      signal_ids.push_back(signal.id());
     }
   }
-  return signals;
+  return signal_ids;
 }
 
 }  // namespace lanelet
@@ -71,10 +73,10 @@ void TrafficLightArbiter::onMap(const LaneletMapBin::ConstSharedPtr msg)
   const auto map = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, map);
 
-  const auto signals = lanelet::filter_traffic_signals(map);
+  const auto traffic_signal_ids = lanelet::filter_traffic_signal_ids(map);
   map_regulatory_elements_set_.clear();
-  for (const auto & signal : signals) {
-    map_regulatory_elements_set_.emplace(signal->id());
+  for (const auto & traffic_light_id : traffic_signal_ids) {
+    map_regulatory_elements_set_.emplace(traffic_light_id);
   }
 }
 
