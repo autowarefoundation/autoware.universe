@@ -69,4 +69,4 @@ To filter the objects crossing to ego vehicle, this package filter the objects a
 | Name                 | Type   | Description                                                                                                                                         | Default value |
 | :------------------- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
 | `angle_threshold`    | double | The angle threshold parameter to filter [rad]. This parameter has condition that 0 < `angle_threshold` < pi / 2. See algorithm chapter for details. | 1.0472        |
-| `velocity_threshold` | double | The velocity threshold parameter to filter [m/s]. See algorithm chapter for details.                                                                | 5.0           |
+| `velocity_threshold` | double | The velocity threshold parameter to filter [m/s]. See algorithm chapter for details.                                                                | 3.0           |

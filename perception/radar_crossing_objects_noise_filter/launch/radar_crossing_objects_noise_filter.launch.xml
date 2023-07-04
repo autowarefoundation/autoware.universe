@@ -6,7 +6,7 @@
   <arg name="output/filtered_objects" default="~/output/filtered_objects"/>
   <!-- Parameter -->
   <arg name="angle_threshold" default="1.0472"/>
-  <arg name="velocity_threshold" default="5.0"/>
+  <arg name="velocity_threshold" default="3.0"/>
 
   <!-- Node -->
   <node pkg="radar_crossing_objects_noise_filter" exec="radar_crossing_objects_noise_filter_node" name="radar_crossing_objects_noise_filter" output="screen">
