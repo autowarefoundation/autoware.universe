@@ -55,7 +55,8 @@ WalkwayModule::WalkwayModule(
 }
 
 boost::optional<std::pair<double, geometry_msgs::msg::Point>> WalkwayModule::getStopLine(
-  const PathWithLaneId & ego_path, bool & exist_stopline_in_map) const
+  const PathWithLaneId & ego_path, bool & exist_stopline_in_map,
+  const std::vector<geometry_msgs::msg::Point> & path_intersects) const
 {
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
   for (const auto & stop_line : stop_lines_) {
@@ -75,8 +76,8 @@ boost::optional<std::pair<double, geometry_msgs::msg::Point>> WalkwayModule::get
   {
     exist_stopline_in_map = false;
 
-    if (!path_intersects_.empty()) {
-      const auto p_stop_line = path_intersects_.front();
+    if (!path_intersects.empty()) {
+      const auto p_stop_line = path_intersects.front();
       const auto dist_ego_to_stop = calcSignedArcLength(ego_path.points, ego_pos, p_stop_line) -
                                     planner_param_.stop_line_distance;
       return std::make_pair(dist_ego_to_stop, p_stop_line);
@@ -97,15 +98,16 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
   const auto input = *path;
 
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
-  path_intersects_ = getPolygonIntersects(input, walkway_.polygon2d().basicPolygon(), ego_pos, 2);
+  const auto path_intersects =
+    getPolygonIntersects(input, walkway_.polygon2d().basicPolygon(), ego_pos, 2);
 
-  if (path_intersects_.empty()) {
+  if (path_intersects.empty()) {
     return false;
   }
 
   if (state_ == State::APPROACH) {
     bool exist_stopline_in_map;
-    const auto p_stop_line = getStopLine(input, exist_stopline_in_map);
+    const auto p_stop_line = getStopLine(input, exist_stopline_in_map, path_intersects);
     if (!p_stop_line) {
       return false;
     }
@@ -127,7 +129,7 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
     /* get stop point and stop factor */
     StopFactor stop_factor;
     stop_factor.stop_pose = stop_pose.get();
-    stop_factor.stop_factor_points.push_back(path_intersects_.front());
+    stop_factor.stop_factor_points.push_back(path_intersects.front());
     planning_utils::appendStopReason(stop_factor, stop_reason);
     velocity_factor_.set(
       path->points, planner_data_->current_odometry->pose, stop_pose.get(),
