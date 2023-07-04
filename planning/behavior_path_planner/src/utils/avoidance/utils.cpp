@@ -657,6 +657,12 @@ void fillObjectStoppableJudge(
 {
   if (!parameters->use_constraints_for_decel) {
     object_data.is_stoppable = true;
+    return;
+  }
+
+  if (!object_data.avoid_required) {
+    object_data.is_stoppable = false;
+    return;
   }
 
   const auto id = object_data.object.object_id;
