@@ -7,7 +7,6 @@
   <maintainer email="shpark@morai.ai">shpark</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>autoware_control_msgs</depend>
   <depend>autoware_auto_geometry_msgs</depend>
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_msgs</depend>
@@ -15,6 +14,7 @@
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_control_msgs</depend>
   <depend>rclpy</depend>
 
   <test_depend>ament_copyright</test_depend>

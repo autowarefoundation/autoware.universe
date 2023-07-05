@@ -22,8 +22,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>

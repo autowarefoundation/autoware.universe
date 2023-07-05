@@ -20,8 +20,8 @@
 #include <raw_vehicle_cmd_converter/brake_map.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_external_api_msgs/msg/control_command_stamped.hpp>

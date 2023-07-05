@@ -54,10 +54,8 @@ public:
   void limitLongitudinalWithJerk(const double dt, Control & input) const;
   void limitLateralWithLatAcc(const double dt, Control & input) const;
   void limitLateralWithLatJerk(const double dt, Control & input) const;
-  void limitActualSteerDiff(
-    const double current_steer_angle, Control & input) const;
-  void filterAll(
-    const double dt, const double current_steer_angle, Control & input) const;
+  void limitActualSteerDiff(const double current_steer_angle, Control & input) const;
+  void filterAll(const double dt, const double current_steer_angle, Control & input) const;
 
 private:
   VehicleCmdFilterParam param_;

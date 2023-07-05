@@ -180,8 +180,8 @@ void ManualController::onInitialize()
 
   pub_gate_mode_ = raw_node_->create_publisher<GateMode>("/control/gate_mode_cmd", rclcpp::QoS(1));
 
-  pub_control_command_ = raw_node_->create_publisher<Control>(
-    "/external/selected/control_cmd", rclcpp::QoS(1));
+  pub_control_command_ =
+    raw_node_->create_publisher<Control>("/external/selected/control_cmd", rclcpp::QoS(1));
 
   pub_gear_cmd_ = raw_node_->create_publisher<GearCommand>("/external/selected/gear_cmd", 1);
 }

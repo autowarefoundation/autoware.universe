@@ -21,8 +21,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <memory>

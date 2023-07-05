@@ -17,10 +17,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 
 #include <memory>
 
@@ -38,8 +38,7 @@ private:
   void initTimer(double period_s);
 
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr pub_shift_cmd_;
-  rclcpp::Subscription<autoware_control_msgs::msg::Control>::SharedPtr
-    sub_control_cmd_;
+  rclcpp::Subscription<autoware_control_msgs::msg::Control>::SharedPtr sub_control_cmd_;
   rclcpp::Subscription<autoware_auto_system_msgs::msg::AutowareState>::SharedPtr
     sub_autoware_state_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr sub_current_gear_;

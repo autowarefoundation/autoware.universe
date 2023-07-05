@@ -14,8 +14,8 @@
 
 ## Output topics
 
-| Name                | Type                                                     | Description                                                        |
-| ------------------- | -------------------------------------------------------- | ------------------------------------------------------------------ |
+| Name                | Type                                | Description                                                        |
+| ------------------- | ----------------------------------- | ------------------------------------------------------------------ |
 | `~/out/control_cmd` | autoware_control_msgs::msg::Control | ackermann control command converted from selected external command |
 
 ## Parameters

@@ -4,11 +4,11 @@
 
 ## Input topics
 
-| Name                  | Type                                                     | Description                                                                                                        |
-| --------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `~/input/control_cmd` | autoware_control_msgs::msg::Control | target `velocity/acceleration/steering_angle/steering_angle_velocity` is necessary to calculate actuation command. |
-| `~/input/steering"`   | autoware_auto_vehicle_msgs::SteeringReport               | current status of steering used for steering feed back control                                                     |
-| `~/input/twist`       | navigation_msgs::Odometry                                | twist topic in odometry is used.                                                                                   |
+| Name                  | Type                                       | Description                                                                                                        |
+| --------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `~/input/control_cmd` | autoware_control_msgs::msg::Control        | target `velocity/acceleration/steering_angle/steering_angle_velocity` is necessary to calculate actuation command. |
+| `~/input/steering"`   | autoware_auto_vehicle_msgs::SteeringReport | current status of steering used for steering feed back control                                                     |
+| `~/input/twist`       | navigation_msgs::Odometry                  | twist topic in odometry is used.                                                                                   |
 
 ## Output topics
 

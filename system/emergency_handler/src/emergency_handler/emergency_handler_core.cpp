@@ -36,10 +36,9 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     create_subscription<autoware_auto_system_msgs::msg::HazardStatusStamped>(
       "~/input/hazard_status", rclcpp::QoS{1},
       std::bind(&EmergencyHandler::onHazardStatusStamped, this, _1));
-  sub_prev_control_command_ =
-    create_subscription<autoware_control_msgs::msg::Control>(
-      "~/input/prev_control_command", rclcpp::QoS{1},
-      std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
+  sub_prev_control_command_ = create_subscription<autoware_control_msgs::msg::Control>(
+    "~/input/prev_control_command", rclcpp::QoS{1},
+    std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onOdometry, this, _1));
   // subscribe control mode
@@ -77,8 +76,8 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
   control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
-  prev_control_command_ = autoware_control_msgs::msg::Control::ConstSharedPtr(
-    new autoware_control_msgs::msg::Control);
+  prev_control_command_ =
+    autoware_control_msgs::msg::Control::ConstSharedPtr(new autoware_control_msgs::msg::Control);
   mrm_comfortable_stop_status_ =
     std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
   mrm_emergency_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
@@ -104,8 +103,7 @@ void EmergencyHandler::onPrevControlCommand(
 {
   auto control_command = new autoware_control_msgs::msg::Control(*msg);
   control_command->stamp = msg->stamp;
-  prev_control_command_ =
-    autoware_control_msgs::msg::Control::ConstSharedPtr(control_command);
+  prev_control_command_ = autoware_control_msgs::msg::Control::ConstSharedPtr(control_command);
 }
 
 void EmergencyHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)

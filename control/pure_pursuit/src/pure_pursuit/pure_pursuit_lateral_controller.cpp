@@ -400,8 +400,7 @@ Lateral PurePursuitLateralController::generateOutputControlCmd()
   return output_cmd;
 }
 
-Lateral PurePursuitLateralController::generateCtrlCmdMsg(
-  const double target_curvature)
+Lateral PurePursuitLateralController::generateCtrlCmdMsg(const double target_curvature)
 {
   const double tmp_steering =
     planning_utils::convertCurvatureToSteeringAngle(param_.wheel_base, target_curvature);

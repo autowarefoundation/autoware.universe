@@ -44,9 +44,7 @@ class Test03LongitudinalCommandAndReportBase:
             lambda msg: cls.msgs_rx.append(msg),
             10,
         )
-        cls.pub = cls.node.create_publisher(
-            Control, "/control/command/control_cmd", QOS_RKL10TL
-        )
+        cls.pub = cls.node.create_publisher(Control, "/control/command/control_cmd", QOS_RKL10TL)
         cls.sub_velocity_report = SubscriberVelocityReport()
         cls.executor = MultiThreadedExecutor()
         cls.executor.add_node(cls.sub_velocity_report)

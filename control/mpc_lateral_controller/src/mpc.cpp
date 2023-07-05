@@ -27,9 +27,8 @@ using tier4_autoware_utils::normalizeRadian;
 using tier4_autoware_utils::rad2deg;
 
 bool MPC::calculateMPC(
-  const SteeringReport & current_steer, const Odometry & current_kinematics,
-  Lateral & ctrl_cmd, Trajectory & predicted_trajectory,
-  Float32MultiArrayStamped & diagnostic)
+  const SteeringReport & current_steer, const Odometry & current_kinematics, Lateral & ctrl_cmd,
+  Trajectory & predicted_trajectory, Float32MultiArrayStamped & diagnostic)
 {
   // since the reference trajectory does not take into account the current velocity of the ego
   // vehicle, it needs to calculate the trajectory velocity considering the longitudinal dynamics.

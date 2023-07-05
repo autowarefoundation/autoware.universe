@@ -36,8 +36,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
-#include <autoware_control_msgs/msg/lateral.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_control_msgs/msg/lateral.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -96,8 +96,7 @@ private:
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
 
   // Publisher
-  rclcpp::Publisher<autoware_control_msgs::msg::Lateral>::SharedPtr
-    pub_ctrl_cmd_;
+  rclcpp::Publisher<autoware_control_msgs::msg::Lateral>::SharedPtr pub_ctrl_cmd_;
 
   void publishCommand(const double target_curvature);
 

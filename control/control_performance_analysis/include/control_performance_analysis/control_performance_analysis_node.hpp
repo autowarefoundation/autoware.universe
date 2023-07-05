@@ -23,9 +23,9 @@
 #include <signal_processing/lowpass_filter_1d.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
-#include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
@@ -36,9 +36,9 @@
 
 namespace control_performance_analysis
 {
-using autoware_control_msgs::msg::Control;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using autoware_control_msgs::msg::Control;
 using control_performance_analysis::msg::DrivingMonitorStamped;
 using control_performance_analysis::msg::ErrorStamped;
 using geometry_msgs::msg::PoseStamped;
@@ -52,9 +52,8 @@ public:
 private:
   // Subscribers and Local Variable Assignment
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;  // subscribe to trajectory
-  rclcpp::Subscription<Control>::SharedPtr
-    sub_control_cmd_;                                       // subscribe to steering control value
-  rclcpp::Subscription<Odometry>::SharedPtr sub_velocity_;  // subscribe to velocity
+  rclcpp::Subscription<Control>::SharedPtr sub_control_cmd_;  // subscribe to steering control value
+  rclcpp::Subscription<Odometry>::SharedPtr sub_velocity_;    // subscribe to velocity
   rclcpp::Subscription<SteeringReport>::SharedPtr sub_vehicle_steering_;
 
   // Publishers

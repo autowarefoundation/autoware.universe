@@ -93,8 +93,7 @@ void ControlPerformanceAnalysisNode::onTrajectory(const Trajectory::ConstSharedP
   current_trajectory_ptr_ = msg;
 }
 
-void ControlPerformanceAnalysisNode::onControlRaw(
-  const Control::ConstSharedPtr control_msg)
+void ControlPerformanceAnalysisNode::onControlRaw(const Control::ConstSharedPtr control_msg)
 {
   if (last_control_cmd_) {
     const rclcpp::Duration & duration =

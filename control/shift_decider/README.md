@@ -37,8 +37,8 @@ stop
 
 ### Input
 
-| Name                  | Type                                                       | Description                  |
-| --------------------- | ---------------------------------------------------------- | ---------------------------- |
+| Name                  | Type                                  | Description                  |
+| --------------------- | ------------------------------------- | ---------------------------- |
 | `~/input/control_cmd` | `autoware_control_msgs::msg::Control` | Control command for vehicle. |
 
 ### Output

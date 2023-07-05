@@ -20,7 +20,6 @@
 #include "simple_planning_simulator/visibility_control.hpp"
 #include "tier4_api_utils/tier4_api_utils.hpp"
 
-#include "autoware_control_msgs/msg/control.hpp"
 #include "autoware_auto_geometry_msgs/msg/complex32.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/control_mode_command.hpp"
@@ -36,6 +35,7 @@
 #include "autoware_auto_vehicle_msgs/msg/vehicle_control_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
 #include "autoware_auto_vehicle_msgs/srv/control_mode_command.hpp"
+#include "autoware_control_msgs/msg/control.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -60,7 +60,6 @@ namespace simulation
 namespace simple_planning_simulator
 {
 
-using autoware_control_msgs::msg::Control;
 using autoware_auto_geometry_msgs::msg::Complex32;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::ControlModeReport;
@@ -75,6 +74,7 @@ using autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport;
 using autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
 using autoware_auto_vehicle_msgs::msg::VelocityReport;
 using autoware_auto_vehicle_msgs::srv::ControlModeCommand;
+using autoware_control_msgs::msg::Control;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;

@@ -20,10 +20,10 @@
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 
-#include "autoware_control_msgs/msg/lateral.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
+#include "autoware_control_msgs/msg/lateral.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
@@ -40,10 +40,10 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 
-using autoware_control_msgs::msg::Lateral;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using autoware_control_msgs::msg::Lateral;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
