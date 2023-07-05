@@ -24,22 +24,22 @@ Config parameters are managed in `config/*.yaml` and here shows its outline.
 
 - Pointcloud based occupancy grid map
 
-| Ros param name                               | Default value  |
-| -------------------------------------------- | -------------- |
-| map_frame                                    | "map"          |
-| base_link_frame                              | "base_link"    |
-| scan_origin_frame                            | "velodyne_top" |
-| gridmap_origin_frame                         | "base_link"    |
-| use_height_filter                            | true           |
-| enable_single_frame_mode                     | false          |
-| filter_obstacle_pointcloud_by_raw_pointcloud | false          |
-| map_length                                   | 150.0 [m]      |
-| map_resolution                               | 0.5 [m]        |
-| use_projection                               | true           |
-| projection_dz_threshold                      | 0.01           |
-| obstacle_separation_threshold                | 1.0            |
-| input_obstacle_pointcloud                    | true           |
-| input_obstacle_and_raw_pointcloud            | true           |
+| Ros param name                               | Default value |
+| -------------------------------------------- | ------------- |
+| map_frame                                    | "map"         |
+| base_link_frame                              | "base_link"   |
+| scan_origin_frame                            | "base_link"   |
+| gridmap_origin_frame                         | "base_link"   |
+| use_height_filter                            | true          |
+| enable_single_frame_mode                     | false         |
+| filter_obstacle_pointcloud_by_raw_pointcloud | false         |
+| map_length                                   | 150.0 [m]     |
+| map_resolution                               | 0.5 [m]       |
+| use_projection                               | false         |
+| projection_dz_threshold                      | 0.01          |
+| obstacle_separation_threshold                | 1.0           |
+| input_obstacle_pointcloud                    | true          |
+| input_obstacle_and_raw_pointcloud            | true          |
 
 - Laserscan based occupancy grid map
 

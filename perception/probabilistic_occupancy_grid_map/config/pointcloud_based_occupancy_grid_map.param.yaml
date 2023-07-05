@@ -18,10 +18,10 @@
     # center of the grid map
     gridmap_origin_frame: "base_link"
     # ray-tracing center: main sensor frame is preferable like: "velodyne_top"
-    scan_origin_frame: "velodyne_top"
+    scan_origin_frame: "base_link"
 
-    use_projection: true
+    use_projection: false
     projection_dz_threshold: 0.01 # [m] for avoiding null division
-    obstacle_separation_threshold: 1.0 # [m] fill the interval between obstacls with unknown for this length
+    obstacle_separation_threshold: 1.0 # [m] fill the interval between obstacles with unknown for this length
 
     pub_debug_grid: false
