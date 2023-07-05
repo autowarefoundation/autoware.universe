@@ -24,43 +24,43 @@ VehicleCmdFilter::VehicleCmdFilter()
 {
 }
 
-void VehicleCmdFilter::limitLongitudinalWithVel(AckermannControlCommand & input) const
+void VehicleCmdFilter::limitLongitudinalWithVel(Control & input) const
 {
-  input.longitudinal.speed = std::max(
-    std::min(static_cast<double>(input.longitudinal.speed), param_.vel_lim), -param_.vel_lim);
+  input.longitudinal.velocity = std::max(
+    std::min(static_cast<double>(input.longitudinal.velocity), param_.vel_lim), -param_.vel_lim);
 }
 
 void VehicleCmdFilter::limitLongitudinalWithAcc(
-  const double dt, AckermannControlCommand & input) const
+  const double dt, Control & input) const
 {
   input.longitudinal.acceleration = std::max(
     std::min(static_cast<double>(input.longitudinal.acceleration), param_.lon_acc_lim),
     -param_.lon_acc_lim);
-  input.longitudinal.speed =
-    limitDiff(input.longitudinal.speed, prev_cmd_.longitudinal.speed, param_.lon_acc_lim * dt);
+  input.longitudinal.velocity =
+    limitDiff(input.longitudinal.velocity, prev_cmd_.longitudinal.velocity, param_.lon_acc_lim * dt);
 }
 
 void VehicleCmdFilter::VehicleCmdFilter::limitLongitudinalWithJerk(
-  const double dt, AckermannControlCommand & input) const
+  const double dt, Control & input) const
 {
   input.longitudinal.acceleration = limitDiff(
     input.longitudinal.acceleration, prev_cmd_.longitudinal.acceleration, param_.lon_jerk_lim * dt);
 }
 
 void VehicleCmdFilter::limitLateralWithLatAcc(
-  [[maybe_unused]] const double dt, AckermannControlCommand & input) const
+  [[maybe_unused]] const double dt, Control & input) const
 {
   double latacc = calcLatAcc(input);
   if (std::fabs(latacc) > param_.lat_acc_lim) {
     double v_sq =
-      std::max(static_cast<double>(input.longitudinal.speed * input.longitudinal.speed), 0.001);
+      std::max(static_cast<double>(input.longitudinal.velocity * input.longitudinal.velocity), 0.001);
     double steer_lim = std::atan(param_.lat_acc_lim * param_.wheel_base / v_sq);
     input.lateral.steering_tire_angle = latacc > 0.0 ? steer_lim : -steer_lim;
   }
 }
 
 void VehicleCmdFilter::limitLateralWithLatJerk(
-  const double dt, AckermannControlCommand & input) const
+  const double dt, Control & input) const
 {
   double curr_latacc = calcLatAcc(input);
   double prev_latacc = calcLatAcc(prev_cmd_);
@@ -69,14 +69,14 @@ void VehicleCmdFilter::limitLateralWithLatJerk(
   const double latacc_min = prev_latacc - param_.lat_jerk_lim * dt;
 
   if (curr_latacc > latacc_max) {
-    input.lateral.steering_tire_angle = calcSteerFromLatacc(input.longitudinal.speed, latacc_max);
+    input.lateral.steering_tire_angle = calcSteerFromLatacc(input.longitudinal.velocity, latacc_max);
   } else if (curr_latacc < latacc_min) {
-    input.lateral.steering_tire_angle = calcSteerFromLatacc(input.longitudinal.speed, latacc_min);
+    input.lateral.steering_tire_angle = calcSteerFromLatacc(input.longitudinal.velocity, latacc_min);
   }
 }
 
 void VehicleCmdFilter::limitActualSteerDiff(
-  const double current_steer_angle, AckermannControlCommand & input) const
+  const double current_steer_angle, Control & input) const
 {
   auto ds = input.lateral.steering_tire_angle - current_steer_angle;
   ds = std::clamp(ds, -param_.actual_steer_diff_lim, param_.actual_steer_diff_lim);
@@ -84,7 +84,7 @@ void VehicleCmdFilter::limitActualSteerDiff(
 }
 
 void VehicleCmdFilter::filterAll(
-  const double dt, const double current_steer_angle, AckermannControlCommand & cmd) const
+  const double dt, const double current_steer_angle, Control & cmd) const
 {
   limitLongitudinalWithJerk(dt, cmd);
   limitLongitudinalWithAcc(dt, cmd);
@@ -101,9 +101,9 @@ double VehicleCmdFilter::calcSteerFromLatacc(const double v, const double latacc
   return std::atan(latacc * param_.wheel_base / v_sq);
 }
 
-double VehicleCmdFilter::calcLatAcc(const AckermannControlCommand & cmd) const
+double VehicleCmdFilter::calcLatAcc(const Control & cmd) const
 {
-  double v = cmd.longitudinal.speed;
+  double v = cmd.longitudinal.velocity;
   return v * v * std::tan(cmd.lateral.steering_tire_angle) / param_.wheel_base;
 }
 

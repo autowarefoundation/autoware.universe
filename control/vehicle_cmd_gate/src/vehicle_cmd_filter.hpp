@@ -17,11 +17,11 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 
 namespace vehicle_cmd_gate
 {
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_control_msgs::msg::Control;
 
 struct VehicleCmdFilterParam
 {
@@ -47,23 +47,23 @@ public:
   void setLatJerkLim(double v) { param_.lat_jerk_lim = v; }
   void setActualSteerDiffLim(double v) { param_.actual_steer_diff_lim = v; }
   void setParam(const VehicleCmdFilterParam & p) { param_ = p; }
-  void setPrevCmd(const AckermannControlCommand & v) { prev_cmd_ = v; }
+  void setPrevCmd(const Control & v) { prev_cmd_ = v; }
 
-  void limitLongitudinalWithVel(AckermannControlCommand & input) const;
-  void limitLongitudinalWithAcc(const double dt, AckermannControlCommand & input) const;
-  void limitLongitudinalWithJerk(const double dt, AckermannControlCommand & input) const;
-  void limitLateralWithLatAcc(const double dt, AckermannControlCommand & input) const;
-  void limitLateralWithLatJerk(const double dt, AckermannControlCommand & input) const;
+  void limitLongitudinalWithVel(Control & input) const;
+  void limitLongitudinalWithAcc(const double dt, Control & input) const;
+  void limitLongitudinalWithJerk(const double dt, Control & input) const;
+  void limitLateralWithLatAcc(const double dt, Control & input) const;
+  void limitLateralWithLatJerk(const double dt, Control & input) const;
   void limitActualSteerDiff(
-    const double current_steer_angle, AckermannControlCommand & input) const;
+    const double current_steer_angle, Control & input) const;
   void filterAll(
-    const double dt, const double current_steer_angle, AckermannControlCommand & input) const;
+    const double dt, const double current_steer_angle, Control & input) const;
 
 private:
   VehicleCmdFilterParam param_;
-  AckermannControlCommand prev_cmd_;
+  Control prev_cmd_;
 
-  double calcLatAcc(const AckermannControlCommand & cmd) const;
+  double calcLatAcc(const Control & cmd) const;
   double calcSteerFromLatacc(const double v, const double latacc) const;
   double limitDiff(const double curr, const double prev, const double diff_lim) const;
 };

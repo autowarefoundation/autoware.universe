@@ -24,7 +24,7 @@
 #define ASSERT_LT_NEAR(x, y) ASSERT_LT(x, y + THRESHOLD)
 #define ASSERT_GT_NEAR(x, y) ASSERT_GT(x, y - THRESHOLD)
 
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_control_msgs::msg::Control;
 
 constexpr double NOMINAL_INTERVAL = 1.0;
 
@@ -40,25 +40,25 @@ void setFilterParams(
   f.setWheelBase(wheelbase);
 }
 
-AckermannControlCommand genCmd(double s, double sr, double v, double a)
+Control genCmd(double s, double sr, double v, double a)
 {
-  AckermannControlCommand cmd;
+  Control cmd;
   cmd.lateral.steering_tire_angle = s;
   cmd.lateral.steering_tire_rotation_rate = sr;
-  cmd.longitudinal.speed = v;
+  cmd.longitudinal.velocity = v;
   cmd.longitudinal.acceleration = a;
   return cmd;
 }
 
-double calcLatAcc(const AckermannControlCommand & cmd, const double wheelbase)
+double calcLatAcc(const Control & cmd, const double wheelbase)
 {
-  double v = cmd.longitudinal.speed;
+  double v = cmd.longitudinal.velocity;
   return v * v * std::tan(cmd.lateral.steering_tire_angle) / wheelbase;
 }
 
 void test_all(
   double V_LIM, double A_LIM, double J_LIM, double LAT_A_LIM, double LAT_J_LIM,
-  const AckermannControlCommand & prev_cmd, const AckermannControlCommand & raw_cmd)
+  const Control & prev_cmd, const Control & raw_cmd)
 {
   const double WHEELBASE = 3.0;
   const double DT = 0.1;  // [s]
@@ -73,11 +73,11 @@ void test_all(
     filter.limitLongitudinalWithVel(filtered_cmd);
 
     // check if the filtered value does not exceed the limit.
-    ASSERT_LT_NEAR(filtered_cmd.longitudinal.speed, V_LIM);
+    ASSERT_LT_NEAR(filtered_cmd.longitudinal.velocity, V_LIM);
 
     // check if the undesired filter is not applied.
-    if (std::abs(raw_cmd.longitudinal.speed) < V_LIM) {
-      ASSERT_NEAR(filtered_cmd.longitudinal.speed, raw_cmd.longitudinal.speed, THRESHOLD);
+    if (std::abs(raw_cmd.longitudinal.velocity) < V_LIM) {
+      ASSERT_NEAR(filtered_cmd.longitudinal.velocity, raw_cmd.longitudinal.velocity, THRESHOLD);
     }
   }
 
@@ -99,14 +99,14 @@ void test_all(
     }
 
     // check if the filtered value does not exceed the limit.
-    const double v_max = prev_cmd.longitudinal.speed + A_LIM * DT;
-    const double v_min = prev_cmd.longitudinal.speed - A_LIM * DT;
-    ASSERT_LT_NEAR(filtered_cmd.longitudinal.speed, v_max);
-    ASSERT_GT_NEAR(filtered_cmd.longitudinal.speed, v_min);
+    const double v_max = prev_cmd.longitudinal.velocity + A_LIM * DT;
+    const double v_min = prev_cmd.longitudinal.velocity - A_LIM * DT;
+    ASSERT_LT_NEAR(filtered_cmd.longitudinal.velocity, v_max);
+    ASSERT_GT_NEAR(filtered_cmd.longitudinal.velocity, v_min);
 
     // check if the undesired filter is not applied.
-    if (v_min < raw_cmd.longitudinal.speed && raw_cmd.longitudinal.speed < v_max) {
-      ASSERT_NEAR(filtered_cmd.longitudinal.speed, raw_cmd.longitudinal.speed, THRESHOLD);
+    if (v_min < raw_cmd.longitudinal.velocity && raw_cmd.longitudinal.velocity < v_max) {
+      ASSERT_NEAR(filtered_cmd.longitudinal.velocity, raw_cmd.longitudinal.velocity, THRESHOLD);
     }
   }
 
@@ -174,10 +174,10 @@ TEST(VehicleCmdFilter, VehicleCmdFilter)
   const std::vector<double> lat_a_arr = {0.01, 1.0, 100.0};
   const std::vector<double> lat_j_arr = {0.01, 1.0, 100.0};
 
-  const std::vector<AckermannControlCommand> prev_cmd_arr = {
+  const std::vector<Control> prev_cmd_arr = {
     genCmd(0.0, 0.0, 0.0, 0.0), genCmd(1.0, 1.0, 1.0, 1.0)};
 
-  const std::vector<AckermannControlCommand> raw_cmd_arr = {
+  const std::vector<Control> raw_cmd_arr = {
     genCmd(1.0, 1.0, 1.0, 1.0), genCmd(10.0, -1.0, -1.0, -1.0)};
 
   for (const auto & v : v_arr) {

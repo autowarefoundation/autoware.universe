@@ -32,7 +32,7 @@
 #include <Eigen/Geometry>
 
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
-#include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
+#include "autoware_control_msgs/msg/longitudinal.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -186,7 +186,7 @@ private:
   double m_ego_nearest_yaw_threshold;
 
   // buffer of send command
-  std::vector<autoware_auto_control_msgs::msg::LongitudinalCommand> m_ctrl_cmd_vec;
+  std::vector<autoware_control_msgs::msg::Longitudinal> m_ctrl_cmd_vec;
 
   // for calculating dt
   std::shared_ptr<rclcpp::Time> m_prev_control_time{nullptr};
@@ -279,7 +279,7 @@ private:
    * @param [in] ctrl_cmd calculated control command to control velocity
    * @param [in] current_vel current velocity of the vehicle
    */
-  autoware_auto_control_msgs::msg::LongitudinalCommand createCtrlCmdMsg(
+  autoware_control_msgs::msg::Longitudinal createCtrlCmdMsg(
     const Motion & ctrl_cmd, const double & current_vel);
 
   /**

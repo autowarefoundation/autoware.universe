@@ -21,7 +21,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
@@ -63,10 +63,10 @@ private:
   bool hasDangerAcceleration();
   std::pair<bool, bool> hasDangerLateralAcceleration();
 
-  using AckermannControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
+  using Control = autoware_control_msgs::msg::Control;
   using Odometry = nav_msgs::msg::Odometry;
   using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
-  rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_control_cmd_;
+  rclcpp::Subscription<Control>::SharedPtr sub_control_cmd_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
   rclcpp::Logger logger_;
@@ -77,7 +77,7 @@ private:
   double nearest_yaw_deviation_threshold_;   // [rad] for finding nearest index
   EngageAcceptableParam engage_acceptable_param_;
   StableCheckParam stable_check_param_;
-  AckermannControlCommand control_cmd_;
+  Control control_cmd_;
   Odometry kinematics_;
   Trajectory trajectory_;
   vehicle_info_util::VehicleInfo vehicle_info_;

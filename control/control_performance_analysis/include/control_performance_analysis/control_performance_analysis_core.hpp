@@ -24,7 +24,7 @@
 #include <Eigen/Core>
 #include <rclcpp/time.hpp>
 
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -38,7 +38,7 @@
 
 namespace control_performance_analysis
 {
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_control_msgs::msg::Control;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using control_performance_analysis::msg::DrivingMonitorStamped;
@@ -72,7 +72,7 @@ public:
   // Setters
   void setCurrentPose(const Pose & msg);
   void setCurrentWaypoints(const Trajectory & trajectory);
-  void setCurrentControlValue(const AckermannControlCommand & msg);
+  void setCurrentControlValue(const Control & msg);
   void setInterpolatedVars(
     const Pose & interpolated_pose, const double & interpolated_velocity,
     const double & interpolated_acceleration, const double & interpolated_steering_angle);
@@ -102,7 +102,7 @@ private:
   std::shared_ptr<autoware_auto_planning_msgs::msg::Trajectory> current_trajectory_ptr_;
   std::shared_ptr<Pose> current_vec_pose_ptr_;
   std::shared_ptr<std::vector<Odometry>> odom_history_ptr_;  // velocities at k-2, k-1, k, k+1
-  std::shared_ptr<AckermannControlCommand> current_control_ptr_;
+  std::shared_ptr<Control> current_control_ptr_;
   std::shared_ptr<SteeringReport> current_vec_steering_msg_ptr_;
 
   // State holder

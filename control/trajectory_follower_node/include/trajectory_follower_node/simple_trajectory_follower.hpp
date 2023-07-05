@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -28,7 +28,7 @@
 
 namespace simple_trajectory_follower
 {
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_control_msgs::msg::Control;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using geometry_msgs::msg::Pose;
@@ -44,7 +44,7 @@ public:
 private:
   rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
-  rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_cmd_;
+  rclcpp::Publisher<Control>::SharedPtr pub_cmd_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   Trajectory::SharedPtr trajectory_;

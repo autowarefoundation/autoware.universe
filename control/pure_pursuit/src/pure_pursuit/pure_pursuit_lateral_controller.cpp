@@ -140,7 +140,7 @@ double PurePursuitLateralController::calcLookaheadDistance(
 }
 
 TrajectoryPoint PurePursuitLateralController::calcNextPose(
-  const double ds, TrajectoryPoint & point, AckermannLateralCommand cmd) const
+  const double ds, TrajectoryPoint & point, Lateral cmd) const
 {
   geometry_msgs::msg::Transform transform;
   transform.translation = tier4_autoware_utils::createTranslation(ds, 0.0, 0.0);
@@ -297,7 +297,7 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
       predicted_trajectory.points.push_back(p);
 
       const auto pp_output = calcTargetCurvature(true, predicted_trajectory.points.at(i).pose);
-      AckermannLateralCommand tmp_msg;
+      Lateral tmp_msg;
 
       if (pp_output) {
         tmp_msg = generateCtrlCmdMsg(pp_output->curvature);
@@ -314,7 +314,7 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
 
     } else {
       const auto pp_output = calcTargetCurvature(false, predicted_trajectory.points.at(i).pose);
-      AckermannLateralCommand tmp_msg;
+      Lateral tmp_msg;
 
       if (pp_output) {
         tmp_msg = generateCtrlCmdMsg(pp_output->curvature);
@@ -371,21 +371,21 @@ LateralOutput PurePursuitLateralController::run(const InputData & input_data)
   return output;
 }
 
-bool PurePursuitLateralController::calcIsSteerConverged(const AckermannLateralCommand & cmd)
+bool PurePursuitLateralController::calcIsSteerConverged(const Lateral & cmd)
 {
   return std::abs(cmd.steering_tire_angle - current_steering_.steering_tire_angle) <
          static_cast<float>(param_.converged_steer_rad_);
 }
 
-AckermannLateralCommand PurePursuitLateralController::generateOutputControlCmd()
+Lateral PurePursuitLateralController::generateOutputControlCmd()
 {
   // Generate the control command
   const auto pp_output = calcTargetCurvature(true, current_odometry_.pose.pose);
-  AckermannLateralCommand output_cmd;
+  Lateral output_cmd;
 
   if (pp_output) {
     output_cmd = generateCtrlCmdMsg(pp_output->curvature);
-    prev_cmd_ = boost::optional<AckermannLateralCommand>(output_cmd);
+    prev_cmd_ = boost::optional<Lateral>(output_cmd);
     publishDebugMarker();
   } else {
     RCLCPP_WARN_THROTTLE(
@@ -400,12 +400,12 @@ AckermannLateralCommand PurePursuitLateralController::generateOutputControlCmd()
   return output_cmd;
 }
 
-AckermannLateralCommand PurePursuitLateralController::generateCtrlCmdMsg(
+Lateral PurePursuitLateralController::generateCtrlCmdMsg(
   const double target_curvature)
 {
   const double tmp_steering =
     planning_utils::convertCurvatureToSteeringAngle(param_.wheel_base, target_curvature);
-  AckermannLateralCommand cmd;
+  Lateral cmd;
   cmd.stamp = node_->get_clock()->now();
   cmd.steering_tire_angle = static_cast<float>(
     std::min(std::max(tmp_steering, -param_.max_steering_angle), param_.max_steering_angle));

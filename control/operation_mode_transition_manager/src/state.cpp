@@ -34,9 +34,9 @@ AutonomousMode::AutonomousMode(rclcpp::Node * node)
 {
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*node).getVehicleInfo();
 
-  sub_control_cmd_ = node->create_subscription<AckermannControlCommand>(
+  sub_control_cmd_ = node->create_subscription<Control>(
     "control_cmd", 1,
-    [this](const AckermannControlCommand::SharedPtr msg) { control_cmd_ = *msg; });
+    [this](const Control::SharedPtr msg) { control_cmd_ = *msg; });
 
   sub_kinematics_ = node->create_subscription<Odometry>(
     "kinematics", 1, [this](const Odometry::SharedPtr msg) { kinematics_ = *msg; });
@@ -204,7 +204,7 @@ bool AutonomousMode::isModeChangeAvailable()
   }
 
   const auto current_speed = kinematics_.twist.twist.linear.x;
-  const auto target_control_speed = control_cmd_.longitudinal.speed;
+  const auto target_control_speed = control_cmd_.longitudinal.velocity;
   const auto & param = engage_acceptable_param_;
 
   if (trajectory_.points.size() < 2) {

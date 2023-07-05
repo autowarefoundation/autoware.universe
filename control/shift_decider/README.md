@@ -39,7 +39,7 @@ stop
 
 | Name                  | Type                                                       | Description                  |
 | --------------------- | ---------------------------------------------------------- | ---------------------------- |
-| `~/input/control_cmd` | `autoware_auto_control_msgs::msg::AckermannControlCommand` | Control command for vehicle. |
+| `~/input/control_cmd` | `autoware_control_msgs::msg::Control` | Control command for vehicle. |
 
 ### Output
 

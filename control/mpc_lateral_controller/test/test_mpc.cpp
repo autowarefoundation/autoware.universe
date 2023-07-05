@@ -20,7 +20,7 @@
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 
-#include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
+#include "autoware_control_msgs/msg/lateral.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
@@ -40,7 +40,7 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 
-using autoware_auto_control_msgs::msg::AckermannLateralCommand;
+using autoware_control_msgs::msg::Lateral;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
@@ -195,7 +195,7 @@ TEST_F(MPCTest, InitializeAndCalculate)
   initializeMPC(mpc);
 
   // Calculate MPC
-  AckermannLateralCommand ctrl_cmd;
+  Lateral ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
   const auto odom = makeOdometry(pose_zero, default_velocity);
@@ -224,7 +224,7 @@ TEST_F(MPCTest, InitializeAndCalculateRightTurn)
   mpc.setReferenceTrajectory(dummy_right_turn_trajectory, trajectory_param);
 
   // Calculate MPC
-  AckermannLateralCommand ctrl_cmd;
+  Lateral ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
   const auto odom = makeOdometry(pose_zero, default_velocity);
@@ -249,7 +249,7 @@ TEST_F(MPCTest, OsqpCalculate)
   ASSERT_TRUE(mpc.hasQPSolver());
 
   // Calculate MPC
-  AckermannLateralCommand ctrl_cmd;
+  Lateral ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
   // with OSQP this function returns false despite finding correct solutions
@@ -275,7 +275,7 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
   ASSERT_TRUE(mpc.hasQPSolver());
 
   // Calculate MPC
-  AckermannLateralCommand ctrl_cmd;
+  Lateral ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
   const auto odom = makeOdometry(pose_zero, default_velocity);
@@ -303,7 +303,7 @@ TEST_F(MPCTest, KinematicsNoDelayCalculate)
   // Init trajectory
   mpc.setReferenceTrajectory(dummy_straight_trajectory, trajectory_param);
   // Calculate MPC
-  AckermannLateralCommand ctrl_cmd;
+  Lateral ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
   const auto odom = makeOdometry(pose_zero, default_velocity);
@@ -331,7 +331,7 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
   mpc.initializeLowPassFilters(steering_lpf_cutoff_hz, error_deriv_lpf_cutoff_hz);
 
   // Calculate MPC
-  AckermannLateralCommand ctrl_cmd;
+  Lateral ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
   const auto odom = makeOdometry(pose_zero, default_velocity);
@@ -355,7 +355,7 @@ TEST_F(MPCTest, DynamicCalculate)
   ASSERT_TRUE(mpc.hasQPSolver());
 
   // Calculate MPC
-  AckermannLateralCommand ctrl_cmd;
+  Lateral ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
   const auto odom = makeOdometry(pose_zero, default_velocity);
@@ -378,7 +378,7 @@ TEST_F(MPCTest, MultiSolveWithBuffer)
 
   mpc.m_input_buffer = {0.0, 0.0, 0.0};
   // Calculate MPC
-  AckermannLateralCommand ctrl_cmd;
+  Lateral ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
   const auto odom = makeOdometry(pose_zero, default_velocity);
@@ -417,7 +417,7 @@ TEST_F(MPCTest, FailureCases)
   Pose pose_far;
   pose_far.position.x = pose_zero.position.x - admissible_position_error - 1.0;
   pose_far.position.y = pose_zero.position.y - admissible_position_error - 1.0;
-  AckermannLateralCommand ctrl_cmd;
+  Lateral ctrl_cmd;
   Trajectory pred_traj;
   Float32MultiArrayStamped diag;
   const auto odom = makeOdometry(pose_far, default_velocity);

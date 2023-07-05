@@ -13,7 +13,7 @@ Inputs
 - `input/reference_trajectory` [autoware_auto_planning_msgs::msg::Trajectory] : reference trajectory to follow.
 - `input/current_kinematic_state` [nav_msgs::msg::Odometry] : current state of the vehicle (position, velocity, etc).
 - Output
-- `output/control_cmd` [autoware_auto_control_msgs::msg::AckermannControlCommand] : generated control command.
+- `output/control_cmd` [autoware_control_msgs::msg::Control] : generated control command.
 
 ### Parameters
 

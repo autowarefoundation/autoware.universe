@@ -38,7 +38,7 @@ For the mode transition:
 
 For the transition availability/completion check:
 
-- /control/command/control_cmd [`autoware_auto_control_msgs/msg/AckermannControlCommand`]: vehicle control signal
+- /control/command/control_cmd [`autoware_control_msgs/msg/Control`]: vehicle control signal
 - /localization/kinematic_state [`nav_msgs/msg/Odometry`]: ego vehicle state
 - /planning/scenario_planning/trajectory [`autoware_auto_planning_msgs/msg/Trajectory`]: planning trajectory
 - /vehicle/status/control_mode [`autoware_auto_vehicle_msgs/msg/ControlModeReport`]: vehicle control mode (autonomous/manual)

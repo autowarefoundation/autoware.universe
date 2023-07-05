@@ -681,13 +681,13 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
 }
 
 // Do not use nearest_idx here
-autoware_auto_control_msgs::msg::LongitudinalCommand PidLongitudinalController::createCtrlCmdMsg(
+autoware_control_msgs::msg::Longitudinal PidLongitudinalController::createCtrlCmdMsg(
   const Motion & ctrl_cmd, const double & current_vel)
 {
   // publish control command
-  autoware_auto_control_msgs::msg::LongitudinalCommand cmd{};
+  autoware_control_msgs::msg::Longitudinal cmd{};
   cmd.stamp = node_->now();
-  cmd.speed = static_cast<decltype(cmd.speed)>(ctrl_cmd.vel);
+  cmd.velocity = static_cast<decltype(cmd.velocity)>(ctrl_cmd.vel);
   cmd.acceleration = static_cast<decltype(cmd.acceleration)>(ctrl_cmd.acc);
 
   // store current velocity history
@@ -784,7 +784,7 @@ void PidLongitudinalController::storeAccelCmd(const double accel)
 {
   if (m_control_state == ControlState::DRIVE) {
     // convert format
-    autoware_auto_control_msgs::msg::LongitudinalCommand cmd;
+    autoware_control_msgs::msg::Longitudinal cmd;
     cmd.stamp = node_->now();
     cmd.acceleration = static_cast<decltype(cmd.acceleration)>(accel);
 

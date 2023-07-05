@@ -21,7 +21,7 @@
 
 #include <trajectory_follower_node/longitudinal_controller_node.hpp>
 
-#include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
+#include "autoware_control_msgs/msg/longitudinal.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -33,7 +33,7 @@
 
 using LongitudinalController =
   autoware::motion::control::trajectory_follower_node::LongitudinalController;
-using LongitudinalCommand = autoware_auto_control_msgs::msg::LongitudinalCommand;
+using Longitudinal = autoware_control_msgs::msg::Longitudinal;
 using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
 using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using VehicleOdometry = nav_msgs::msg::Odometry;
@@ -65,7 +65,7 @@ std::shared_ptr<LongitudinalController> makeLongitudinalNode()
 TEST_F(FakeNodeFixture, longitudinal_keep_velocity)
 {
   // Data to test
-  LongitudinalCommand::SharedPtr cmd_msg;
+  Longitudinal::SharedPtr cmd_msg;
   bool received_longitudinal_command = false;
 
   // Node
@@ -76,10 +76,10 @@ TEST_F(FakeNodeFixture, longitudinal_keep_velocity)
     this->create_publisher<VehicleOdometry>("longitudinal_controller/input/current_odometry");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>("longitudinal_controller/input/current_trajectory");
-  rclcpp::Subscription<LongitudinalCommand>::SharedPtr cmd_sub =
-    this->create_subscription<LongitudinalCommand>(
+  rclcpp::Subscription<Longitudinal>::SharedPtr cmd_sub =
+    this->create_subscription<Longitudinal>(
       "longitudinal_controller/output/control_cmd", *this->get_fake_node(),
-      [&cmd_msg, &received_longitudinal_command](const LongitudinalCommand::SharedPtr msg) {
+      [&cmd_msg, &received_longitudinal_command](const Longitudinal::SharedPtr msg) {
         cmd_msg = msg;
         received_longitudinal_command = true;
       });
@@ -122,7 +122,7 @@ TEST_F(FakeNodeFixture, longitudinal_keep_velocity)
   test_utils::waitForMessage(node, this, received_longitudinal_command);
 
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_DOUBLE_EQ(cmd_msg->speed, 1.0);
+  EXPECT_DOUBLE_EQ(cmd_msg->velocity, 1.0);
   EXPECT_DOUBLE_EQ(cmd_msg->acceleration, 0.0);
 
   // Generate another control message
@@ -130,14 +130,14 @@ TEST_F(FakeNodeFixture, longitudinal_keep_velocity)
   traj_pub->publish(traj);
   test_utils::waitForMessage(node, this, received_longitudinal_command);
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_DOUBLE_EQ(cmd_msg->speed, 1.0);
+  EXPECT_DOUBLE_EQ(cmd_msg->velocity, 1.0);
   EXPECT_DOUBLE_EQ(cmd_msg->acceleration, 0.0);
 }
 
 TEST_F(FakeNodeFixture, longitudinal_slow_down)
 {
   // Data to test
-  LongitudinalCommand::SharedPtr cmd_msg;
+  Longitudinal::SharedPtr cmd_msg;
   bool received_longitudinal_command = false;
 
   // Node
@@ -148,10 +148,10 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down)
     this->create_publisher<VehicleOdometry>("longitudinal_controller/input/current_odometry");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>("longitudinal_controller/input/current_trajectory");
-  rclcpp::Subscription<LongitudinalCommand>::SharedPtr cmd_sub =
-    this->create_subscription<LongitudinalCommand>(
+  rclcpp::Subscription<Longitudinal>::SharedPtr cmd_sub =
+    this->create_subscription<Longitudinal>(
       "longitudinal_controller/output/control_cmd", *this->get_fake_node(),
-      [&cmd_msg, &received_longitudinal_command](const LongitudinalCommand::SharedPtr msg) {
+      [&cmd_msg, &received_longitudinal_command](const Longitudinal::SharedPtr msg) {
         cmd_msg = msg;
         received_longitudinal_command = true;
       });
@@ -194,7 +194,7 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down)
   test_utils::waitForMessage(node, this, received_longitudinal_command);
 
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_LT(cmd_msg->speed, static_cast<float>(odom_msg.twist.twist.linear.x));
+  EXPECT_LT(cmd_msg->velocity, static_cast<float>(odom_msg.twist.twist.linear.x));
   EXPECT_LT(cmd_msg->acceleration, 0.0f);
 
   // Generate another control message
@@ -202,14 +202,14 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down)
   traj_pub->publish(traj);
   test_utils::waitForMessage(node, this, received_longitudinal_command);
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_LT(cmd_msg->speed, static_cast<float>(odom_msg.twist.twist.linear.x));
+  EXPECT_LT(cmd_msg->velocity, static_cast<float>(odom_msg.twist.twist.linear.x));
   EXPECT_LT(cmd_msg->acceleration, 0.0f);
 }
 
 TEST_F(FakeNodeFixture, longitudinal_accelerate)
 {
   // Data to test
-  LongitudinalCommand::SharedPtr cmd_msg;
+  Longitudinal::SharedPtr cmd_msg;
   bool received_longitudinal_command = false;
 
   // Node
@@ -220,10 +220,10 @@ TEST_F(FakeNodeFixture, longitudinal_accelerate)
     this->create_publisher<VehicleOdometry>("longitudinal_controller/input/current_odometry");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>("longitudinal_controller/input/current_trajectory");
-  rclcpp::Subscription<LongitudinalCommand>::SharedPtr cmd_sub =
-    this->create_subscription<LongitudinalCommand>(
+  rclcpp::Subscription<Longitudinal>::SharedPtr cmd_sub =
+    this->create_subscription<Longitudinal>(
       "longitudinal_controller/output/control_cmd", *this->get_fake_node(),
-      [&cmd_msg, &received_longitudinal_command](const LongitudinalCommand::SharedPtr msg) {
+      [&cmd_msg, &received_longitudinal_command](const Longitudinal::SharedPtr msg) {
         cmd_msg = msg;
         received_longitudinal_command = true;
       });
@@ -266,7 +266,7 @@ TEST_F(FakeNodeFixture, longitudinal_accelerate)
   test_utils::waitForMessage(node, this, received_longitudinal_command);
 
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_GT(cmd_msg->speed, static_cast<float>(odom_msg.twist.twist.linear.x));
+  EXPECT_GT(cmd_msg->velocity, static_cast<float>(odom_msg.twist.twist.linear.x));
   EXPECT_GT(cmd_msg->acceleration, 0.0f);
 
   // Generate another control message
@@ -274,14 +274,14 @@ TEST_F(FakeNodeFixture, longitudinal_accelerate)
   traj_pub->publish(traj);
   test_utils::waitForMessage(node, this, received_longitudinal_command);
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_GT(cmd_msg->speed, static_cast<float>(odom_msg.twist.twist.linear.x));
+  EXPECT_GT(cmd_msg->velocity, static_cast<float>(odom_msg.twist.twist.linear.x));
   EXPECT_GT(cmd_msg->acceleration, 0.0f);
 }
 
 TEST_F(FakeNodeFixture, longitudinal_stopped)
 {
   // Data to test
-  LongitudinalCommand::SharedPtr cmd_msg;
+  Longitudinal::SharedPtr cmd_msg;
   bool received_longitudinal_command = false;
 
   // Node
@@ -292,10 +292,10 @@ TEST_F(FakeNodeFixture, longitudinal_stopped)
     this->create_publisher<VehicleOdometry>("longitudinal_controller/input/current_odometry");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>("longitudinal_controller/input/current_trajectory");
-  rclcpp::Subscription<LongitudinalCommand>::SharedPtr cmd_sub =
-    this->create_subscription<LongitudinalCommand>(
+  rclcpp::Subscription<Longitudinal>::SharedPtr cmd_sub =
+    this->create_subscription<Longitudinal>(
       "longitudinal_controller/output/control_cmd", *this->get_fake_node(),
-      [&cmd_msg, &received_longitudinal_command](const LongitudinalCommand::SharedPtr msg) {
+      [&cmd_msg, &received_longitudinal_command](const Longitudinal::SharedPtr msg) {
         cmd_msg = msg;
         received_longitudinal_command = true;
       });
@@ -338,14 +338,14 @@ TEST_F(FakeNodeFixture, longitudinal_stopped)
   test_utils::waitForMessage(node, this, received_longitudinal_command);
 
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_DOUBLE_EQ(cmd_msg->speed, 0.0f);
+  EXPECT_DOUBLE_EQ(cmd_msg->velocity, 0.0f);
   EXPECT_LT(cmd_msg->acceleration, 0.0f);  // when stopped negative acceleration to brake
 }
 
 TEST_F(FakeNodeFixture, longitudinal_reverse)
 {
   // Data to test
-  LongitudinalCommand::SharedPtr cmd_msg;
+  Longitudinal::SharedPtr cmd_msg;
   bool received_longitudinal_command = false;
 
   // Node
@@ -356,10 +356,10 @@ TEST_F(FakeNodeFixture, longitudinal_reverse)
     this->create_publisher<VehicleOdometry>("longitudinal_controller/input/current_odometry");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>("longitudinal_controller/input/current_trajectory");
-  rclcpp::Subscription<LongitudinalCommand>::SharedPtr cmd_sub =
-    this->create_subscription<LongitudinalCommand>(
+  rclcpp::Subscription<Longitudinal>::SharedPtr cmd_sub =
+    this->create_subscription<Longitudinal>(
       "longitudinal_controller/output/control_cmd", *this->get_fake_node(),
-      [&cmd_msg, &received_longitudinal_command](const LongitudinalCommand::SharedPtr msg) {
+      [&cmd_msg, &received_longitudinal_command](const Longitudinal::SharedPtr msg) {
         cmd_msg = msg;
         received_longitudinal_command = true;
       });
@@ -402,14 +402,14 @@ TEST_F(FakeNodeFixture, longitudinal_reverse)
   test_utils::waitForMessage(node, this, received_longitudinal_command);
 
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_LT(cmd_msg->speed, 0.0f);
+  EXPECT_LT(cmd_msg->velocity, 0.0f);
   EXPECT_GT(cmd_msg->acceleration, 0.0f);
 }
 
 TEST_F(FakeNodeFixture, longitudinal_emergency)
 {
   // Data to test
-  LongitudinalCommand::SharedPtr cmd_msg;
+  Longitudinal::SharedPtr cmd_msg;
   bool received_longitudinal_command = false;
 
   // Node
@@ -420,10 +420,10 @@ TEST_F(FakeNodeFixture, longitudinal_emergency)
     this->create_publisher<VehicleOdometry>("longitudinal_controller/input/current_odometry");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>("longitudinal_controller/input/current_trajectory");
-  rclcpp::Subscription<LongitudinalCommand>::SharedPtr cmd_sub =
-    this->create_subscription<LongitudinalCommand>(
+  rclcpp::Subscription<Longitudinal>::SharedPtr cmd_sub =
+    this->create_subscription<Longitudinal>(
       "longitudinal_controller/output/control_cmd", *this->get_fake_node(),
-      [&cmd_msg, &received_longitudinal_command](const LongitudinalCommand::SharedPtr msg) {
+      [&cmd_msg, &received_longitudinal_command](const Longitudinal::SharedPtr msg) {
         cmd_msg = msg;
         received_longitudinal_command = true;
       });
@@ -467,6 +467,6 @@ TEST_F(FakeNodeFixture, longitudinal_emergency)
 
   ASSERT_TRUE(received_longitudinal_command);
   // Emergencies (e.g., far from trajectory) produces braking command (0 vel, negative accel)
-  EXPECT_DOUBLE_EQ(cmd_msg->speed, 0.0f);
+  EXPECT_DOUBLE_EQ(cmd_msg->velocity, 0.0f);
   EXPECT_LT(cmd_msg->acceleration, 0.0f);
 }

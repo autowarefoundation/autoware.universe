@@ -72,7 +72,7 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
   sub_operation_mode_ = create_subscription<OperationModeState>(
     "~/input/current_operation_mode", rclcpp::QoS{1},
     [this](const OperationModeState::SharedPtr msg) { current_operation_mode_ptr_ = msg; });
-  control_cmd_pub_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+  control_cmd_pub_ = create_publisher<autoware_control_msgs::msg::Control>(
     "~/output/control_cmd", rclcpp::QoS{1}.transient_local());
   debug_marker_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_marker", rclcpp::QoS{1});
@@ -213,7 +213,7 @@ void Controller::callbackTimerControl()
   if (isTimeOut(lon_out, lat_out)) return;
 
   // 5. publish control command
-  autoware_auto_control_msgs::msg::AckermannControlCommand out;
+  autoware_control_msgs::msg::Control out;
   out.stamp = this->now();
   out.lateral = lat_out.control_cmd;
   out.longitudinal = lon_out.control_cmd;

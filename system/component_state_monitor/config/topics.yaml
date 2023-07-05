@@ -108,7 +108,7 @@
   args:
     node_name_suffix: trajectory_follower_control_cmd
     topic: /control/trajectory_follower/control_cmd
-    topic_type: autoware_auto_control_msgs/msg/AckermannControlCommand
+    topic_type: autoware_control_msgs/msg/Control
     best_effort: false
     transient_local: false
     warn_rate: 5.0
@@ -121,7 +121,7 @@
   args:
     node_name_suffix: control_command_control_cmd
     topic: /control/command/control_cmd
-    topic_type: autoware_auto_control_msgs/msg/AckermannControlCommand
+    topic_type: autoware_control_msgs/msg/Control
     best_effort: false
     transient_local: false
     warn_rate: 5.0
@@ -160,7 +160,7 @@
   args:
     node_name_suffix: system_emergency_control_cmd
     topic: /system/emergency/control_cmd
-    topic_type: autoware_auto_control_msgs/msg/AckermannControlCommand
+    topic_type: autoware_control_msgs/msg/Control
     best_effort: false
     transient_local: false
     warn_rate: 5.0

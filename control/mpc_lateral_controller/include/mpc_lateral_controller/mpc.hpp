@@ -22,7 +22,7 @@
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
+#include "autoware_control_msgs/msg/lateral.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -38,7 +38,7 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 
-using autoware_auto_control_msgs::msg::AckermannLateralCommand;
+using autoware_control_msgs::msg::Lateral;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using geometry_msgs::msg::Pose;
@@ -376,7 +376,7 @@ private:
    */
   Float32MultiArrayStamped generateDiagData(
     const MPCTrajectory & reference_trajectory, const MPCData & mpc_data,
-    const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
+    const MPCMatrix & mpc_matrix, const Lateral & ctrl_cmd, const VectorXd & Uex,
     const Odometry & current_kinematics) const;
 
   //!< @brief logging with warn and return false
@@ -430,7 +430,7 @@ public:
    */
   bool calculateMPC(
     const SteeringReport & current_steer, const Odometry & current_kinematics,
-    AckermannLateralCommand & ctrl_cmd, Trajectory & predicted_trajectory,
+    Lateral & ctrl_cmd, Trajectory & predicted_trajectory,
     Float32MultiArrayStamped & diagnostic);
 
   /**

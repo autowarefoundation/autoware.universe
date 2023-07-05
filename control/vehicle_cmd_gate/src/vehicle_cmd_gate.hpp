@@ -26,7 +26,7 @@
 
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
@@ -51,7 +51,7 @@ namespace vehicle_cmd_gate
 
 using autoware_adapi_v1_msgs::msg::MrmState;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_control_msgs::msg::Control;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
@@ -74,7 +74,7 @@ using EngageSrv = tier4_external_api_msgs::srv::Engage;
 using motion_utils::VehicleStopChecker;
 struct Commands
 {
-  AckermannControlCommand control;
+  Control control;
   TurnIndicatorsCommand turn_indicator;
   HazardLightsCommand hazard_light;
   GearCommand gear;
@@ -92,7 +92,7 @@ public:
 private:
   // Publisher
   rclcpp::Publisher<VehicleEmergencyStamped>::SharedPtr vehicle_cmd_emergency_pub_;
-  rclcpp::Publisher<AckermannControlCommand>::SharedPtr control_cmd_pub_;
+  rclcpp::Publisher<Control>::SharedPtr control_cmd_pub_;
   rclcpp::Publisher<GearCommand>::SharedPtr gear_cmd_pub_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_indicator_cmd_pub_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_light_cmd_pub_;
@@ -135,26 +135,26 @@ private:
 
   // Subscriber for auto
   Commands auto_commands_;
-  rclcpp::Subscription<AckermannControlCommand>::SharedPtr auto_control_cmd_sub_;
+  rclcpp::Subscription<Control>::SharedPtr auto_control_cmd_sub_;
   rclcpp::Subscription<TurnIndicatorsCommand>::SharedPtr auto_turn_indicator_cmd_sub_;
   rclcpp::Subscription<HazardLightsCommand>::SharedPtr auto_hazard_light_cmd_sub_;
   rclcpp::Subscription<GearCommand>::SharedPtr auto_gear_cmd_sub_;
-  void onAutoCtrlCmd(AckermannControlCommand::ConstSharedPtr msg);
+  void onAutoCtrlCmd(Control::ConstSharedPtr msg);
 
   // Subscription for external
   Commands remote_commands_;
-  rclcpp::Subscription<AckermannControlCommand>::SharedPtr remote_control_cmd_sub_;
+  rclcpp::Subscription<Control>::SharedPtr remote_control_cmd_sub_;
   rclcpp::Subscription<TurnIndicatorsCommand>::SharedPtr remote_turn_indicator_cmd_sub_;
   rclcpp::Subscription<HazardLightsCommand>::SharedPtr remote_hazard_light_cmd_sub_;
   rclcpp::Subscription<GearCommand>::SharedPtr remote_gear_cmd_sub_;
-  void onRemoteCtrlCmd(AckermannControlCommand::ConstSharedPtr msg);
+  void onRemoteCtrlCmd(Control::ConstSharedPtr msg);
 
   // Subscription for emergency
   Commands emergency_commands_;
-  rclcpp::Subscription<AckermannControlCommand>::SharedPtr emergency_control_cmd_sub_;
+  rclcpp::Subscription<Control>::SharedPtr emergency_control_cmd_sub_;
   rclcpp::Subscription<HazardLightsCommand>::SharedPtr emergency_hazard_light_cmd_sub_;
   rclcpp::Subscription<GearCommand>::SharedPtr emergency_gear_cmd_sub_;
-  void onEmergencyCtrlCmd(AckermannControlCommand::ConstSharedPtr msg);
+  void onEmergencyCtrlCmd(Control::ConstSharedPtr msg);
 
   // Parameter
   bool use_emergency_handling_;
@@ -203,16 +203,16 @@ private:
   void checkExternalEmergencyStop(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   // Algorithm
-  AckermannControlCommand prev_control_cmd_;
-  AckermannControlCommand createStopControlCmd() const;
-  AckermannControlCommand createEmergencyStopControlCmd() const;
+  Control prev_control_cmd_;
+  Control createStopControlCmd() const;
+  Control createEmergencyStopControlCmd() const;
 
   std::shared_ptr<rclcpp::Time> prev_time_;
   double getDt();
-  AckermannControlCommand getActualStatusAsCommand();
+  Control getActualStatusAsCommand();
 
   VehicleCmdFilter filter_;
-  AckermannControlCommand filterControlCommand(const AckermannControlCommand & msg);
+  Control filterControlCommand(const Control & msg);
 
   // filtering on transition
   OperationModeState current_operation_mode_;

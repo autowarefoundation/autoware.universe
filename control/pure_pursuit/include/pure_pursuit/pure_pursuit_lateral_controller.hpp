@@ -41,7 +41,7 @@
 #include <motion_utils/trajectory/tmp_conversion.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 
-#include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
+#include "autoware_control_msgs/msg/lateral.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
@@ -56,7 +56,7 @@
 using autoware::motion::control::trajectory_follower::InputData;
 using autoware::motion::control::trajectory_follower::LateralControllerBase;
 using autoware::motion::control::trajectory_follower::LateralOutput;
-using autoware_auto_control_msgs::msg::AckermannLateralCommand;
+using autoware_control_msgs::msg::Lateral;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
@@ -109,7 +109,7 @@ private:
   autoware_auto_planning_msgs::msg::Trajectory trajectory_;
   nav_msgs::msg::Odometry current_odometry_;
   autoware_auto_vehicle_msgs::msg::SteeringReport current_steering_;
-  boost::optional<AckermannLateralCommand> prev_cmd_;
+  boost::optional<Lateral> prev_cmd_;
 
   // Debug Publisher
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_marker_;
@@ -137,7 +137,7 @@ private:
   bool isReady([[maybe_unused]] const InputData & input_data) override;
   LateralOutput run(const InputData & input_data) override;
 
-  AckermannLateralCommand generateCtrlCmdMsg(const double target_curvature);
+  Lateral generateCtrlCmdMsg(const double target_curvature);
 
   // Parameter
   Param param_{};
@@ -154,13 +154,13 @@ private:
    */
 
   TrajectoryPoint calcNextPose(
-    const double ds, TrajectoryPoint & point, AckermannLateralCommand cmd) const;
+    const double ds, TrajectoryPoint & point, Lateral cmd) const;
 
   boost::optional<Trajectory> generatePredictedTrajectory();
 
-  AckermannLateralCommand generateOutputControlCmd();
+  Lateral generateOutputControlCmd();
 
-  bool calcIsSteerConverged(const AckermannLateralCommand & cmd);
+  bool calcIsSteerConverged(const Lateral & cmd);
 
   double calcLookaheadDistance(
     const double lateral_error, const double curvature, const double velocity, const double min_ld,

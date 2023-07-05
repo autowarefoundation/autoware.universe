@@ -141,7 +141,7 @@ Set the following from the [controller_node](../trajectory_follower_node/README.
 
 Return LongitudinalOutput which contains the following to the controller node
 
-- `autoware_auto_control_msgs/LongitudinalCommand`: command to control the longitudinal motion of the vehicle. It contains the target velocity and target acceleration.
+- `autoware_control_msgs/msg/Longitudinal`: command to control the longitudinal motion of the vehicle. It contains the target velocity and target acceleration.
 - LongitudinalSyncData
   - velocity convergence(currently not used)
 

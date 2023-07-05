@@ -18,8 +18,8 @@ The purpose of this simulator is for the integration test of planning and contro
 ### input
 
 - input/initialpose [`geometry_msgs/msg/PoseWithCovarianceStamped`] : for initial pose
-- input/ackermann_control_command [`autoware_auto_msgs/msg/AckermannControlCommand`] : target command to drive a vehicle
-- input/manual_ackermann_control_command [`autoware_auto_msgs/msg/AckermannControlCommand`] : manual target command to drive a vehicle (used when control_mode_request = Manual)
+- input/ackermann_control_command [`autoware_control_msgs/msg/Control`] : target command to drive a vehicle
+- input/manual_ackermann_control_command [`autoware_control_msgs/msg/Control`] : manual target command to drive a vehicle (used when control_mode_request = Manual)
 - input/gear_command [`autoware_auto_vehicle_msgs/msg/GearCommand`] : target gear command.
 - input/manual_gear_command [`autoware_auto_vehicle_msgs/msg/GearCommand`] : target gear command (used when control_mode_request = Manual)
 - input/turn_indicators_command [`autoware_auto_vehicle_msgs/msg/TurnIndicatorsCommand`] : target turn indicator command

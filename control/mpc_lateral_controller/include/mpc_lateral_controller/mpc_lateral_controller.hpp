@@ -22,7 +22,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "trajectory_follower_base/lateral_controller_base.hpp"
 
-#include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
+#include "autoware_control_msgs/msg/lateral.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
@@ -42,7 +42,7 @@ namespace autoware::motion::control::mpc_lateral_controller
 {
 
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
-using autoware_auto_control_msgs::msg::AckermannLateralCommand;
+using autoware_control_msgs::msg::Lateral;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using nav_msgs::msg::Odometry;
@@ -95,10 +95,10 @@ private:
   bool m_is_mpc_history_filled{false};
 
   // store the last mpc outputs for 1 sec
-  std::vector<std::pair<AckermannLateralCommand, rclcpp::Time>> m_mpc_steering_history{};
+  std::vector<std::pair<Lateral, rclcpp::Time>> m_mpc_steering_history{};
 
   // set the mpc steering output to history
-  void setSteeringToHistory(const AckermannLateralCommand & steering);
+  void setSteeringToHistory(const Lateral & steering);
 
   // check if the mpc steering output is converged
   bool isMpcConverged();
@@ -116,7 +116,7 @@ private:
   bool m_is_ctrl_cmd_prev_initialized = false;
 
   // Previous control command for path following.
-  AckermannLateralCommand m_ctrl_cmd_prev;
+  Lateral m_ctrl_cmd_prev;
 
   //  Flag indicating whether the first trajectory has been received.
   bool m_has_received_first_trajectory = false;
@@ -194,7 +194,7 @@ private:
    * @param ctrl_cmd Control command to be created.
    * @return Created control command.
    */
-  AckermannLateralCommand createCtrlCmdMsg(const AckermannLateralCommand & ctrl_cmd);
+  Lateral createCtrlCmdMsg(const Lateral & ctrl_cmd);
 
   /**
    * @brief Publish the predicted future trajectory.
@@ -212,13 +212,13 @@ private:
    * @brief Get the stop control command.
    * @return Stop control command.
    */
-  AckermannLateralCommand getStopControlCommand() const;
+  Lateral getStopControlCommand() const;
 
   /**
    * @brief Get the control command applied before initialization.
    * @return Initial control command.
    */
-  AckermannLateralCommand getInitialControlCommand() const;
+  Lateral getInitialControlCommand() const;
 
   /**
    * @brief Check if the ego car is in a stopped state.
@@ -244,7 +244,7 @@ private:
    * @param cmd Steering control command to be checked.
    * @return True if the steering control is converged and stable, false otherwise.
    */
-  bool isSteerConverged(const AckermannLateralCommand & cmd) const;
+  bool isSteerConverged(const Lateral & cmd) const;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
 

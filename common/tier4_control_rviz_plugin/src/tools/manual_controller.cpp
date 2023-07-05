@@ -110,11 +110,11 @@ ManualController::ManualController(QWidget * parent) : rviz_common::Panel(parent
 void ManualController::update()
 {
   if (!raw_node_) return;
-  AckermannControlCommand ackermann;
+  Control ackermann;
   {
     ackermann.stamp = raw_node_->get_clock()->now();
     ackermann.lateral.steering_tire_angle = steering_angle_;
-    ackermann.longitudinal.speed = cruise_velocity_;
+    ackermann.longitudinal.velocity = cruise_velocity_;
     if (current_acceleration_) {
       /**
        * @brief Calculate desired acceleration by simple BackSteppingControl
@@ -133,9 +133,9 @@ void ManualController::update()
   GearCommand gear_cmd;
   {
     const double eps = 0.001;
-    if (ackermann.longitudinal.speed > eps) {
+    if (ackermann.longitudinal.velocity > eps) {
       gear_cmd.command = GearCommand::DRIVE;
-    } else if (ackermann.longitudinal.speed < -eps && current_velocity_ < eps) {
+    } else if (ackermann.longitudinal.velocity < -eps && current_velocity_ < eps) {
       gear_cmd.command = GearCommand::REVERSE;
       ackermann.longitudinal.acceleration *= -1.0;
     } else {
@@ -180,7 +180,7 @@ void ManualController::onInitialize()
 
   pub_gate_mode_ = raw_node_->create_publisher<GateMode>("/control/gate_mode_cmd", rclcpp::QoS(1));
 
-  pub_control_command_ = raw_node_->create_publisher<AckermannControlCommand>(
+  pub_control_command_ = raw_node_->create_publisher<Control>(
     "/external/selected/control_cmd", rclcpp::QoS(1));
 
   pub_gear_cmd_ = raw_node_->create_publisher<GearCommand>("/external/selected/gear_cmd", 1);

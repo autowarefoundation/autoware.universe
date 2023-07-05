@@ -16,7 +16,7 @@
 
 import time
 
-from autoware_auto_control_msgs.msg import AckermannControlCommand
+from autoware_control_msgs.msg import Control
 from autoware_auto_planning_msgs.msg import Path
 from autoware_auto_planning_msgs.msg import PathWithLaneId
 from autoware_auto_planning_msgs.msg import Trajectory
@@ -104,13 +104,13 @@ class VelocityChecker(Node):
 
         # control commands
         self.sub6 = self.create_subscription(
-            AckermannControlCommand,
+            Control,
             "/control/trajectory_follower/control_cmd",
             self.CallBackControlCmd,
             1,
         )
         self.sub7 = self.create_subscription(
-            AckermannControlCommand, "/control/command/control_cmd", self.CallBackVehicleCmd, 1
+            Control, "/control/command/control_cmd", self.CallBackVehicleCmd, 1
         )
 
         # others related to velocity
@@ -274,13 +274,13 @@ class VelocityChecker(Node):
 
     def CallBackControlCmd(self, msg):
         # self.get_logger().info('CONTROL_CMD called')
-        self.data_arr[CONTROL_CMD] = msg.longitudinal.speed
+        self.data_arr[CONTROL_CMD] = msg.longitudinal.velocity
         self.data_arr[CONTROL_CMD_ACC] = msg.longitudinal.acceleration
         return
 
     def CallBackVehicleCmd(self, msg):
         # self.get_logger().info('VEHICLE_CMD called')
-        self.data_arr[VEHICLE_CMD] = msg.longitudinal.speed
+        self.data_arr[VEHICLE_CMD] = msg.longitudinal.velocity
         self.data_arr[VEHICLE_CMD_ACC] = msg.longitudinal.acceleration
         return
 
