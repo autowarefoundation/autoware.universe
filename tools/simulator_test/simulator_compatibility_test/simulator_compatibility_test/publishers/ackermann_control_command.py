@@ -9,7 +9,7 @@ from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 
 
-class PublisherAckermannControlCommand(Node):
+class PublisherControl(Node):
     def __init__(self):
         super().__init__("ackermann_control_command_publisher")
 
