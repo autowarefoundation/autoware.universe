@@ -159,29 +159,26 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     logger_, planner_param_.show_processing_time,
     "=========== module_id: %ld ===========", module_id_);
 
-  debug_data_ = DebugData();
-  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   *stop_reason = planning_utils::initializeStopReason(StopReason::CROSSWALK);
+  const auto & ego_pos = planner_data_->current_odometry->pose.position;
 
-  auto ego_path = *path;
+  // Initialize debug data
+  debug_data_ = DebugData(planner_data_);
+  for (const auto & p : crosswalk_.polygon2d().basicPolygon()) {
+    debug_data_.crosswalk_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));
+  }
 
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step1: %f ms",
     stop_watch_.toc("total_processing_time", false));
 
-  const auto & ego_pos = planner_data_->current_odometry->pose.position;
+  // Calculate intersection between path and crosswalks
   const auto path_intersects =
-    getPolygonIntersects(ego_path, crosswalk_.polygon2d().basicPolygon(), ego_pos, 2);
+    getPolygonIntersects(*path, crosswalk_.polygon2d().basicPolygon(), ego_pos, 2);
 
-  for (const auto & p : crosswalk_.polygon2d().basicPolygon()) {
-    debug_data_.crosswalk_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));
-  }
-
+  // Apply safety slow down speed if defined in Lanelet2 map
   if (crosswalk_.hasAttribute("safety_slow_down_speed")) {
-    // Safety slow down is on
-    if (applySafetySlowDownSpeed(*path, path_intersects)) {
-      ego_path = *path;
-    }
+    applySafetySlowDownSpeed(*path, path_intersects);
   }
 
   RCLCPP_INFO_EXPRESSION(
@@ -189,19 +186,19 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     stop_watch_.toc("total_processing_time", false));
 
   const auto nearest_stop_point_with_factor =
-    findNearestStopPointWithFactor(ego_path, path_intersects);
-  const auto rtc_stop_point_with_factor = findRTCStopPointWithFactor(ego_path, path_intersects);
+    findNearestStopPointWithFactor(*path, path_intersects);
+  const auto rtc_stop_point_with_factor = findRTCStopPointWithFactor(*path, path_intersects);
 
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step3: %f ms",
     stop_watch_.toc("total_processing_time", false));
 
+  // Set safe or unsafe
   setSafe(!nearest_stop_point_with_factor);
 
   if (isActivated()) {
     if (nearest_stop_point_with_factor) {
-      const auto target_velocity =
-        calcTargetVelocity(nearest_stop_point_with_factor->first, ego_path);
+      const auto target_velocity = calcTargetVelocity(nearest_stop_point_with_factor->first, *path);
       insertDecelPointWithDebugInfo(
         nearest_stop_point_with_factor->first,
         std::max(planner_param_.min_slow_down_velocity, target_velocity), *path);
@@ -210,7 +207,7 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
     if (rtc_stop_point_with_factor) {
       const auto crosswalk_distance =
-        calcSignedArcLength(ego_path.points, ego_pos, getPoint(rtc_stop_point_with_factor->first));
+        calcSignedArcLength(path->points, ego_pos, getPoint(rtc_stop_point_with_factor->first));
       setDistance(crosswalk_distance);
       return true;
     }
@@ -783,11 +780,11 @@ CollisionPointState CrosswalkModule::getCollisionPointState(
   return CollisionPointState::YIELD;
 }
 
-bool CrosswalkModule::applySafetySlowDownSpeed(
+void CrosswalkModule::applySafetySlowDownSpeed(
   PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects)
 {
   if (path_intersects.empty()) {
-    return false;
+    return;
   }
 
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
@@ -829,7 +826,6 @@ bool CrosswalkModule::applySafetySlowDownSpeed(
       }
     }
   }
-  return true;
 }
 
 bool CrosswalkModule::isStuckVehicle(

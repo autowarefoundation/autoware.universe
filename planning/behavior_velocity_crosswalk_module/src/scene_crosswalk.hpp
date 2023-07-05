@@ -103,7 +103,7 @@ public:
   motion_utils::VirtualWalls createVirtualWalls() override;
 
 private:
-  int64_t module_id_;
+  const int64_t module_id_;
 
   boost::optional<std::pair<geometry_msgs::msg::Point, StopFactor>> findRTCStopPointWithFactor(
     const PathWithLaneId & ego_path,
@@ -140,7 +140,7 @@ private:
 
   CollisionPointState getCollisionPointState(const double ttc, const double ttv) const;
 
-  bool applySafetySlowDownSpeed(
+  void applySafetySlowDownSpeed(
     PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects);
 
   float calcTargetVelocity(
@@ -167,7 +167,7 @@ private:
   lanelet::ConstLineStrings3d stop_lines_;
 
   // Parameter
-  PlannerParam planner_param_;
+  const PlannerParam planner_param_;
 
   // Ignore objects
   std::unordered_map<std::string, rclcpp::Time> stopped_objects_;
@@ -183,7 +183,7 @@ private:
   bool passed_safety_slow_point_;
 
   // whether use regulatory element
-  bool use_regulatory_element_;
+  const bool use_regulatory_element_;
 };
 }  // namespace behavior_velocity_planner
 
