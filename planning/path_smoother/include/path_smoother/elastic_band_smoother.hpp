@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PATH_SMOOTHING__ELASTIC_BAND_SMOOTHER_HPP_
-#define PATH_SMOOTHING__ELASTIC_BAND_SMOOTHER_HPP_
+#ifndef PATH_SMOOTHER__ELASTIC_BAND_SMOOTHER_HPP_
+#define PATH_SMOOTHER__ELASTIC_BAND_SMOOTHER_HPP_
 
 #include "motion_utils/motion_utils.hpp"
-#include "path_smoothing/common_structs.hpp"
-#include "path_smoothing/elastic_band.hpp"
-#include "path_smoothing/type_alias.hpp"
+#include "path_smoother/common_structs.hpp"
+#include "path_smoother/elastic_band.hpp"
+#include "path_smoother/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-namespace path_smoothing
+namespace path_smoother
 {
 class ElasticBandSmoother : public rclcpp::Node
 {
@@ -114,6 +114,6 @@ protected:
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points) const;
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
 };
-}  // namespace path_smoothing
+}  // namespace path_smoother
 
-#endif  // PATH_SMOOTHING__ELASTIC_BAND_SMOOTHER_HPP_
+#endif  // PATH_SMOOTHER__ELASTIC_BAND_SMOOTHER_HPP_

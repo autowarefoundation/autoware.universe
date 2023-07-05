@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PATH_SMOOTHING__COMMON_STRUCTS_HPP_
-#define PATH_SMOOTHING__COMMON_STRUCTS_HPP_
+#ifndef PATH_SMOOTHER__COMMON_STRUCTS_HPP_
+#define PATH_SMOOTHER__COMMON_STRUCTS_HPP_
 
-#include "path_smoothing/type_alias.hpp"
+#include "path_smoother/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace path_smoothing
+namespace path_smoother
 {
 struct Bounds;
 
@@ -121,6 +121,6 @@ struct EgoNearestParam
   double dist_threshold{0.0};
   double yaw_threshold{0.0};
 };
-}  // namespace path_smoothing
+}  // namespace path_smoother
 
-#endif  // PATH_SMOOTHING__COMMON_STRUCTS_HPP_
+#endif  // PATH_SMOOTHER__COMMON_STRUCTS_HPP_

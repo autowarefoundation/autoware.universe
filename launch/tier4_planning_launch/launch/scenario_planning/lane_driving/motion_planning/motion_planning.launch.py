@@ -47,8 +47,8 @@ def launch_setup(context, *args, **kwargs):
     with open(LaunchConfiguration("elastic_band_smoother_param_path").perform(context), "r") as f:
         elastic_band_smoother_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     elastic_band_smoother_component = ComposableNode(
-        package="path_smoothing",
-        plugin="path_smoothing::ElasticBandSmoother",
+        package="path_smoother",
+        plugin="path_smoother::ElasticBandSmoother",
         name="elastic_band_smoother",
         namespace="",
         remappings=[

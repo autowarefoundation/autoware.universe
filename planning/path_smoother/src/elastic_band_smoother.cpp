@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "path_smoothing/elastic_band_smoother.hpp"
+#include "path_smoother/elastic_band_smoother.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
-#include "path_smoothing/utils/geometry_utils.hpp"
-#include "path_smoothing/utils/trajectory_utils.hpp"
+#include "path_smoother/utils/geometry_utils.hpp"
+#include "path_smoother/utils/trajectory_utils.hpp"
 #include "rclcpp/time.hpp"
 
 #include <chrono>
 #include <limits>
 
-namespace path_smoothing
+namespace path_smoother
 {
 namespace
 {
@@ -367,7 +367,7 @@ std::vector<TrajectoryPoint> ElasticBandSmoother::extendTrajectory(
   time_keeper_ptr_->toc(__func__, "  ");
   return resampled_traj_points;
 }
-}  // namespace path_smoothing
+}  // namespace path_smoother
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(path_smoothing::ElasticBandSmoother)
+RCLCPP_COMPONENTS_REGISTER_NODE(path_smoother::ElasticBandSmoother)

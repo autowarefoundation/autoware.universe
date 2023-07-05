@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "path_smoothing/elastic_band.hpp"
+#include "path_smoother/elastic_band.hpp"
 
 #include "motion_utils/motion_utils.hpp"
-#include "path_smoothing/type_alias.hpp"
-#include "path_smoothing/utils/geometry_utils.hpp"
-#include "path_smoothing/utils/trajectory_utils.hpp"
+#include "path_smoother/type_alias.hpp"
+#include "path_smoother/utils/geometry_utils.hpp"
+#include "path_smoother/utils/trajectory_utils.hpp"
 #include "tf2/utils.h"
 
 #include <algorithm>
@@ -70,7 +70,7 @@ std::vector<double> toStdVector(const Eigen::VectorXd & eigen_vec)
 }
 }  // namespace
 
-namespace path_smoothing
+namespace path_smoother
 {
 EBPathSmoother::EBParam::EBParam(rclcpp::Node * node)
 {
@@ -428,4 +428,4 @@ std::optional<std::vector<TrajectoryPoint>> EBPathSmoother::convertOptimizedPoin
   time_keeper_ptr_->toc(__func__, "        ");
   return eb_traj_points;
 }
-}  // namespace path_smoothing
+}  // namespace path_smoother

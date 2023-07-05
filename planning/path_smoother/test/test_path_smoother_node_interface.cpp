@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "path_smoothing/elastic_band_smoother.hpp"
+#include "path_smoother/elastic_band_smoother.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager.hpp"
 #include "planning_interface_test_manager/planning_interface_test_manager_utils.hpp"
 
@@ -31,14 +31,14 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
 
   const auto planning_test_utils_dir =
     ament_index_cpp::get_package_share_directory("planning_test_utils");
-  const auto path_smoothing_dir = ament_index_cpp::get_package_share_directory("path_smoothing");
+  const auto path_smoothing_dir = ament_index_cpp::get_package_share_directory("path_smoother");
 
   node_options.arguments(
     {"--ros-args", "--params-file", planning_test_utils_dir + "/config/test_common.param.yaml",
      "--params-file", planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
      "--params-file", path_smoothing_dir + "/config/elastic_band_smoother.param.yaml"});
 
-  auto test_target_node = std::make_shared<path_smoothing::ElasticBandSmoother>(node_options);
+  auto test_target_node = std::make_shared<path_smoother::ElasticBandSmoother>(node_options);
 
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "path_smoother/input/odometry");

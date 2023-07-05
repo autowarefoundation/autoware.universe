@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PATH_SMOOTHING__TYPE_ALIAS_HPP_
-#define PATH_SMOOTHING__TYPE_ALIAS_HPP_
+#ifndef PATH_SMOOTHER__TYPE_ALIAS_HPP_
+#define PATH_SMOOTHER__TYPE_ALIAS_HPP_
 
 #include "autoware_auto_planning_msgs/msg/path.hpp"
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
@@ -26,7 +26,7 @@
 #include "std_msgs/msg/header.hpp"
 #include "tier4_debug_msgs/msg/string_stamped.hpp"
 
-namespace path_smoothing
+namespace path_smoother
 {
 // std_msgs
 using std_msgs::msg::Header;
@@ -39,6 +39,6 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using nav_msgs::msg::Odometry;
 // debug
 using tier4_debug_msgs::msg::StringStamped;
-}  // namespace path_smoothing
+}  // namespace path_smoother
 
-#endif  // PATH_SMOOTHING__TYPE_ALIAS_HPP_
+#endif  // PATH_SMOOTHER__TYPE_ALIAS_HPP_
