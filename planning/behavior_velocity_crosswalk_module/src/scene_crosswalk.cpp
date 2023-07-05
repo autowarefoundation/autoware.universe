@@ -182,38 +182,26 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   // Calculate stop point
   const auto default_stop_factor = findDefaultStopFactor(*path, path_intersects);
   const auto nearest_stop_factor = findNearestStopFactor(*path, path_intersects);
+
+  // Generate stop factor with type (NEAREST or DEFAULT)
+  const auto stop_factor_info = generateStopFactorInfo(nearest_stop_factor, default_stop_factor);
   recordTime(3);
 
   // Set safe or unsafe
-  setSafe(!nearest_stop_factor);
+  setSafe(!stop_factor_info || stop_factor_info->type != StopFactorInfo::Type::NEAREST);
 
-  if (isActivated()) {
-    planGo(nearest_stop_factor, default_stop_factor, *path);
-    // TODO(murooka) call setDistance here
-    return true;
-  }
-
-  // TODO(murooka) create planStop function
-  const auto & stop_factor = [&]() -> boost::optional<StopFactor> {
-    if (nearest_stop_factor)
-      return *nearest_stop_factor;
-    else if (default_stop_factor)
-      return *default_stop_factor;
-    return {};
+  // plan Go/Stop
+  const bool result = [&]() {
+    if (isActivated()) {
+      planGo(stop_factor_info, *path);
+      // TODO(murooka) call setDistance here
+      return true;
+    }
+    return planStop(stop_factor_info, *path, stop_reason);
   }();
-
-  if (!stop_factor) {
-    return false;
-  }
-
-  insertDecelPointWithDebugInfo(stop_factor->stop_pose.position, 0.0, *path);
-  planning_utils::appendStopReason(*stop_factor, stop_reason);
-  velocity_factor_.set(
-    path->points, planner_data_->current_odometry->pose, stop_factor->stop_pose,
-    VelocityFactor::UNKNOWN);
   recordTime(4);
 
-  return true;
+  return result;
 }
 
 boost::optional<std::pair<double, geometry_msgs::msg::Point>> CrosswalkModule::getStopLine(
@@ -976,29 +964,58 @@ geometry_msgs::msg::Polygon CrosswalkModule::createVehiclePolygon(
   return polygon;
 }
 
-void CrosswalkModule::planGo(
+boost::optional<StopFactorInfo> CrosswalkModule::generateStopFactorInfo(
   const boost::optional<StopFactor> & nearest_stop_factor,
-  const boost::optional<StopFactor> & default_stop_factor, PathWithLaneId & ego_path)
+  const boost::optional<StopFactor> & default_stop_factor) const
+{
+  if (nearest_stop_factor) {
+    return StopFactorInfo{*nearest_stop_factor, StopFactorInfo::Type::NEAREST};
+  }
+  if (default_stop_factor) {
+    return StopFactorInfo{*default_stop_factor, StopFactorInfo::Type::DEFAULT};
+  }
+  return {};
+}
+
+void CrosswalkModule::planGo(
+  const boost::optional<StopFactorInfo> & stop_factor_info, PathWithLaneId & ego_path)
 {
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
 
-  if (nearest_stop_factor) {
+  if (!stop_factor_info) {
+    setDistance(std::numeric_limits<double>::lowest());
+    return;
+  }
+
+  if (stop_factor_info->type == StopFactorInfo::Type::NEAREST) {
     // Plan slow down
     const auto target_velocity =
-      calcTargetVelocity(nearest_stop_factor->stop_pose.position, ego_path);
+      calcTargetVelocity(stop_factor_info->stop_factor.stop_pose.position, ego_path);
     insertDecelPointWithDebugInfo(
-      nearest_stop_factor->stop_pose.position,
+      stop_factor_info->stop_factor.stop_pose.position,
       std::max(planner_param_.min_slow_down_velocity, target_velocity), ego_path);
     return;
   }
 
-  if (default_stop_factor) {
-    const auto crosswalk_distance = calcSignedArcLength(
-      ego_path.points, ego_pos, getPoint(default_stop_factor->stop_pose.position));
-    setDistance(crosswalk_distance);
-    return;
+  // NOTE: if (stop_factor_info->type == StopFactorInfo::Type::DEFAULT)
+  const auto crosswalk_distance = calcSignedArcLength(
+    ego_path.points, ego_pos, getPoint(stop_factor_info->stop_factor.stop_pose.position));
+  setDistance(crosswalk_distance);
+}
+
+bool CrosswalkModule::planStop(
+  const boost::optional<StopFactorInfo> & stop_factor_info, PathWithLaneId & ego_path,
+  StopReason * stop_reason)
+{
+  if (!stop_factor_info) {
+    return false;
   }
 
-  setDistance(std::numeric_limits<double>::lowest());
+  insertDecelPointWithDebugInfo(stop_factor_info->stop_factor.stop_pose.position, 0.0, ego_path);
+  planning_utils::appendStopReason(stop_factor_info->stop_factor, stop_reason);
+  velocity_factor_.set(
+    ego_path.points, planner_data_->current_odometry->pose, stop_factor_info->stop_factor.stop_pose,
+    VelocityFactor::UNKNOWN);
+  return true;
 }
 }  // namespace behavior_velocity_planner

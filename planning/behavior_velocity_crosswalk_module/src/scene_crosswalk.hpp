@@ -166,9 +166,14 @@ private:
   static geometry_msgs::msg::Polygon createVehiclePolygon(
     const vehicle_info_util::VehicleInfo & vehicle_info);
 
-  void planGo(
+  boost::optional<StopFactorInfo> generateStopFactorInfo(
     const boost::optional<StopFactor> & nearest_stop_factor,
-    const boost::optional<StopFactor> & default_stop_factor, PathWithLaneId & ego_path);
+    const boost::optional<StopFactor> & default_stop_factor) const;
+
+  void planGo(const boost::optional<StopFactorInfo> & stop_factor_info, PathWithLaneId & ego_path);
+  bool planStop(
+    const boost::optional<StopFactorInfo> & stop_factor_info, PathWithLaneId & ego_path,
+    StopReason * stop_reason);
 
   void recordTime(const int step_num)
   {

@@ -32,6 +32,7 @@
 #include <behavior_velocity_planner_common/planner_data.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/stop_factor.hpp>
 
 namespace behavior_velocity_planner
 {
@@ -40,6 +41,7 @@ using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::Point2d;
+using tier4_planning_msgs::msg::StopFactor;
 
 enum class CollisionPointState { YIELD, EGO_PASS_FIRST, EGO_PASS_LATER, IGNORE };
 
@@ -49,6 +51,13 @@ struct CollisionPoint
   double time_to_collision{};
   double time_to_vehicle{};
   CollisionPointState state{CollisionPointState::EGO_PASS_FIRST};
+};
+
+struct StopFactorInfo
+{
+  enum class Type { NEAREST = 0, DEFAULT };
+  StopFactor stop_factor;
+  Type type;
 };
 
 struct DebugData
