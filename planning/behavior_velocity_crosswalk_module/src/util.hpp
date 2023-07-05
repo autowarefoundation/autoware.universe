@@ -68,8 +68,8 @@ struct DebugData
   std::vector<geometry_msgs::msg::Pose> slow_poses;
   std::vector<geometry_msgs::msg::Point> stop_factor_points;
   std::vector<geometry_msgs::msg::Point> crosswalk_polygon;
-  std::vector<geometry_msgs::msg::Polygon> ego_polygons;
-  std::vector<geometry_msgs::msg::Polygon> obj_polygons;
+  std::vector<std::vector<geometry_msgs::msg::Point>> ego_polygons;
+  std::vector<std::vector<geometry_msgs::msg::Point>> obj_polygons;
 };
 
 std::vector<geometry_msgs::msg::Point> getPolygonIntersects(

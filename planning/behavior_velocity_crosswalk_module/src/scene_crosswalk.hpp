@@ -129,8 +129,9 @@ private:
     const geometry_msgs::msg::Point & stop_point, const float target_velocity,
     PathWithLaneId & output);
 
-  void clampAttentionRangeByNeighborCrosswalks(
-    const PathWithLaneId & ego_path, double & near_attention_range, double & far_attention_range);
+  std::pair<double, double> clampAttentionRangeByNeighborCrosswalks(
+    const PathWithLaneId & ego_path, const double near_attention_range,
+    const double far_attention_range);
 
   CollisionPoint createCollisionPoint(
     const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
@@ -146,7 +147,7 @@ private:
     const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;
 
   bool isStuckVehicle(
-    const PathWithLaneId & ego_path, const PredictedObject & object,
+    const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
     const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
 
   bool isRedSignalForPedestrians() const;
