@@ -48,8 +48,8 @@ public:
 private:
   struct Config
   {
-    double azimuth_occlusion_resolution;
-    double elevation_occlusion_resolution;
+    double azimuth_occlusion_resolution_deg;
+    double elevation_occlusion_resolution_deg;
     double max_valid_pt_dist;
     double max_image_cloud_delay;
     double max_wait_t;

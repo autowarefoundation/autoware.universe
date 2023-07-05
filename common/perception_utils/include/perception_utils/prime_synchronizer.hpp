@@ -30,7 +30,7 @@ namespace perception_utils
 {
 
 /**
- * @brief  This class implemented a multi-topic approxiamate time synchronizer.
+ * @brief  This class implemented a multi-topic approximate time synchronizer.
  * Different from message_filters::sync::ApproximateTime, this class assumes there's a primary topic
  * and more than one secondary topics and the registered callback function will always been called
  * for every primary topic message, while for message_filters::sync::ApproximateTime, the callback

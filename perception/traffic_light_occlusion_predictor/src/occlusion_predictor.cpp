@@ -33,11 +33,12 @@ namespace traffic_light
 {
 
 CloudOcclusionPredictor::CloudOcclusionPredictor(
-  float max_valid_pt_distance, float azimuth_occlusion_resolution,
-  float elevation_occlusion_resolution)
-: max_valid_pt_distance_(max_valid_pt_distance),
-  azimuth_occlusion_resolution_(azimuth_occlusion_resolution),
-  elevation_occlusion_resolution_(elevation_occlusion_resolution)
+  rclcpp::Node * node_ptr, float max_valid_pt_distance, float azimuth_occlusion_resolution_deg,
+  float elevation_occlusion_resolution_deg)
+: node_ptr_(node_ptr),
+  max_valid_pt_distance_(max_valid_pt_distance),
+  azimuth_occlusion_resolution_deg_(azimuth_occlusion_resolution_deg),
+  elevation_occlusion_resolution_deg_(elevation_occlusion_resolution_deg)
 {
 }
 
@@ -63,8 +64,10 @@ void CloudOcclusionPredictor::predict(
                               rclcpp::Duration::from_seconds(0.2)))
         .matrix();
   } catch (tf2::TransformException & ex) {
-    std::cout << "Error: cannot get transform from << " << camera_info_msg->header.frame_id
-              << " to " << cloud_msg->header.frame_id << std::endl;
+    RCLCPP_ERROR_STREAM(
+      node_ptr_->get_logger(), "Error: cannot get transform from << "
+                                 << camera_info_msg->header.frame_id << " to "
+                                 << cloud_msg->header.frame_id);
     return;
   }
   // get transformation from map to camera
@@ -75,8 +78,9 @@ void CloudOcclusionPredictor::predict(
       rclcpp::Duration::from_seconds(0.2));
     tf2::fromMsg(tf_stamped.transform, tf_camera2map);
   } catch (tf2::TransformException & ex) {
-    std::cout << "Error: cannot get transform from << " << camera_info_msg->header.frame_id
-              << " to " << cloud_msg->header.frame_id << std::endl;
+    RCLCPP_ERROR_STREAM(
+      node_ptr_->get_logger(),
+      "Error: cannot get transform from << " << camera_info_msg->header.frame_id << " to map");
     return;
   }
 
@@ -214,10 +218,10 @@ uint32_t CloudOcclusionPredictor::predict(
     Ray tl_ray = ::point2ray(tl_pt);
     bool occluded = false;
     // the azimuth and elevation range to search for points that may occlude tl_pt
-    int min_azimuth = static_cast<int>(tl_ray.azimuth - azimuth_occlusion_resolution_);
-    int max_azimuth = static_cast<int>(tl_ray.azimuth + azimuth_occlusion_resolution_);
-    int min_elevation = static_cast<int>(tl_ray.elevation - elevation_occlusion_resolution_);
-    int max_elevation = static_cast<int>(tl_ray.elevation + elevation_occlusion_resolution_);
+    int min_azimuth = static_cast<int>(tl_ray.azimuth - azimuth_occlusion_resolution_deg_);
+    int max_azimuth = static_cast<int>(tl_ray.azimuth + azimuth_occlusion_resolution_deg_);
+    int min_elevation = static_cast<int>(tl_ray.elevation - elevation_occlusion_resolution_deg_);
+    int max_elevation = static_cast<int>(tl_ray.elevation + elevation_occlusion_resolution_deg_);
     /**
      * search among lidar rays whose azimuth and elevation angle are close to the tl_ray.
      * for a lidar ray r1 whose azimuth and elevation are very close to tl_pt,
@@ -228,8 +232,9 @@ uint32_t CloudOcclusionPredictor::predict(
       for (int elevation = min_elevation; (elevation <= max_elevation) && !occluded; elevation++) {
         for (const Ray & lidar_ray : lidar_rays_[azimuth][elevation]) {
           if (
-            std::abs(lidar_ray.azimuth - tl_ray.azimuth) <= azimuth_occlusion_resolution_ &&
-            std::abs(lidar_ray.elevation - tl_ray.elevation) <= elevation_occlusion_resolution_ &&
+            std::abs(lidar_ray.azimuth - tl_ray.azimuth) <= azimuth_occlusion_resolution_deg_ &&
+            std::abs(lidar_ray.elevation - tl_ray.elevation) <=
+              elevation_occlusion_resolution_deg_ &&
             lidar_ray.dist < tl_ray.dist - min_dist_from_occlusion_to_tl) {
             occluded = true;
             break;

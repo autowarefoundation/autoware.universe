@@ -54,8 +54,8 @@ class CloudOcclusionPredictor
 {
 public:
   CloudOcclusionPredictor(
-    float max_valid_pt_distance, float azimuth_occlusion_resolution,
-    float elevation_occlusion_resolution);
+    rclcpp::Node * node_ptr, float max_valid_pt_distance, float azimuth_occlusion_resolution_deg,
+    float elevation_occlusion_resolution_deg);
 
   void predict(
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr & camera_info_msg,
@@ -84,9 +84,10 @@ private:
     const tf2::Transform & tf_camera2map, pcl::PointXYZ & top_left, pcl::PointXYZ & bottom_right);
 
   std::map<int, std::map<int, std::vector<Ray> > > lidar_rays_;
+  rclcpp::Node * node_ptr_;
   float max_valid_pt_distance_;
-  float azimuth_occlusion_resolution_;
-  float elevation_occlusion_resolution_;
+  float azimuth_occlusion_resolution_deg_;
+  float elevation_occlusion_resolution_deg_;
 };
 
 }  // namespace traffic_light

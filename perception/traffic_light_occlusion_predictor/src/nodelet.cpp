@@ -59,18 +59,18 @@ TrafficLightOcclusionPredictorNodelet::TrafficLightOcclusionPredictorNodelet(
   signal_pub_ =
     create_publisher<tier4_perception_msgs::msg::TrafficSignalArray>("~/output/traffic_signals", 1);
   // configuration parameters
-  config_.azimuth_occlusion_resolution =
-    declare_parameter<double>("azimuth_occlusion_resolution", 0.15);
-  config_.elevation_occlusion_resolution =
-    declare_parameter<double>("elevation_occlusion_resolution", 0.08);
+  config_.azimuth_occlusion_resolution_deg =
+    declare_parameter<double>("azimuth_occlusion_resolution_deg", 0.15);
+  config_.elevation_occlusion_resolution_deg =
+    declare_parameter<double>("elevation_occlusion_resolution_deg", 0.08);
   config_.max_valid_pt_dist = declare_parameter<double>("max_valid_pt_dist", 50.0);
   config_.max_image_cloud_delay = declare_parameter<double>("max_image_cloud_delay", 1.0);
   config_.max_wait_t = declare_parameter<double>("max_wait_t", 0.02);
   config_.max_occlusion_ratio = declare_parameter<int>("max_occlusion_ratio", 50);
 
   cloud_occlusion_predictor_ = std::make_shared<CloudOcclusionPredictor>(
-    config_.max_valid_pt_dist, config_.azimuth_occlusion_resolution,
-    config_.elevation_occlusion_resolution);
+    this, config_.max_valid_pt_dist, config_.azimuth_occlusion_resolution_deg,
+    config_.elevation_occlusion_resolution_deg);
 
   const std::vector<std::string> topics{
     "~/input/traffic_signals", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
