@@ -6,8 +6,8 @@
 
 ### 1st step
 
-First of all, obstacle and raw pointcloud as input are transformed into a polar coordinate system and divided into bin per angle_increment.
-At this time, each point belonging to each bin is stored as range data. In addition, the x,y information in the map coordinate is also stored for ray trace on map coordinate.
+First of all, input obstacle/raw pointcloud are transformed into the polar coordinate centered around `scan_origin` and divided int ocircular bins per angle_increment respectively.
+At this time, each point belonging to each bin is stored as range data. In addition, the x,y information in the map coordinate is also stored for raytracing on the map coordinate.
 The bin contains the following information for each point
 
 - range data from origin of raytrace
@@ -30,8 +30,7 @@ The ray trace is done by Bresenham's line algorithm.
    ![pointcloud_based_occupancy_grid_map_side_view_1st](./image/pointcloud_based_occupancy_grid_map_side_view_1st.svg)
 
 2. Fill in the unknown cells.
-   Assume that unknown is behind the obstacle, since the back of the obstacle is a blind spot.
-   Therefore, the unknown are assumed to be the cells that are more than a distance margin from each obstacle point.
+   Based on the assumption that `UNKNOWN` is behind the obstacle, the cells that are more than a distance margin from each obstacle point are filled with `UNKOWN`
 
    ![pointcloud_based_occupancy_grid_map_side_view_2nd](./image/pointcloud_based_occupancy_grid_map_side_view_2nd.svg)
 
@@ -41,9 +40,13 @@ The ray trace is done by Bresenham's line algorithm.
    - The obstacle point cloud is processed and may not match the raw pointcloud.
    - The input may be inaccurate and obstacle points may not be determined as obstacles.
 
+   When the parameter `use_projeciton` is true, for each obstacle pointcloud, if there are no _visible_ raw pointclouds that are located above the projected ray from the `scan_origin` to that obstacle pointcloud, the cells between the obstacle pointcloud and the `projected point` are filled with `UNKNOWN`. Note that the `scan_origin` should not be `base_link` if this flag is true because otherwise all the cells behind the obstacle point clouds would be filled with `UNKNOWN`.
+
+   ![pointcloud_based_occupancy_grid_map_side_view_2nd_projection](./image/pointcloud_based_occupancy_grid_map_side_view_2nd_projection.drawio.svg)
+
 3. Fill in the occupied cells.
    Fill in the point where the obstacle point is located with occupied.
-   In addition, If the distance between obstacle points is less than or equal to the distance margin, it is filled with occupied because the input may be inaccurate and obstacle points may not be determined as obstacles.
+   In addition, If the distance between obstacle points is less than or equal to the distance margin, that interval is filled with `OCCUPIED` because the input may be inaccurate and obstacle points may not be determined as obstacles.
 
    ![pointcloud_based_occupancy_grid_map_side_view_3rd](./image/pointcloud_based_occupancy_grid_map_side_view_3rd.svg)
 
