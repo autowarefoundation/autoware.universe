@@ -159,9 +159,9 @@ private:
   nvinfer1::CalibrationAlgoType m_calibType;
   // flg for dla
   int m_dla;
-  // flg for partial quanitzation in first layer
+  // flg for partial quantization in first layer
   bool m_first;
-  // flg for partial quanitzation in last layer
+  // flg for partial quantization in last layer
   bool m_last;
   // clip value for implicit quantization
   double m_clip;
