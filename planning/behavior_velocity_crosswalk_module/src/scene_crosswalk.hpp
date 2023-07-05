@@ -146,6 +146,10 @@ private:
   float calcTargetVelocity(
     const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;
 
+  Polygon2d getAttentionArea(
+    const PathWithLaneId & sparse_resample_path,
+    const std::pair<double, double> & crosswalk_attention_range) const;
+
   bool isStuckVehicle(
     const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
     const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
@@ -174,7 +178,7 @@ private:
   std::unordered_map<std::string, rclcpp::Time> ignore_objects_;
 
   // Debug
-  DebugData debug_data_;
+  mutable DebugData debug_data_;
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
