@@ -1164,7 +1164,7 @@ LaneChangeTargetObjectIndices filterObject(
       continue;
     }
 
-    // ignore all of the objects that are behind the ego vehicle and not on the current and target
+    // ignore all objects that are behind the ego vehicle and not on the current and target
     // lanes
     if (max_dist_ego_to_obj < 0.0) {
       continue;
