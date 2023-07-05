@@ -167,10 +167,7 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   for (const auto & p : crosswalk_.polygon2d().basicPolygon()) {
     debug_data_.crosswalk_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));
   }
-
-  RCLCPP_INFO_EXPRESSION(
-    logger_, planner_param_.show_processing_time, "- step1: %f ms",
-    stop_watch_.toc("total_processing_time", false));
+  recordTime(1);
 
   // Calculate intersection between path and crosswalks
   const auto path_intersects =
@@ -180,66 +177,41 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   if (crosswalk_.hasAttribute("safety_slow_down_speed")) {
     applySafetySlowDownSpeed(*path, path_intersects);
   }
-
-  RCLCPP_INFO_EXPRESSION(
-    logger_, planner_param_.show_processing_time, "- step2: %f ms",
-    stop_watch_.toc("total_processing_time", false));
+  recordTime(2);
 
   // Calculate stop point
-  const auto nearest_stop_point_with_factor =
-    findNearestStopPointWithFactor(*path, path_intersects);
-  const auto rtc_stop_point_with_factor = findRTCStopPointWithFactor(*path, path_intersects);
-
-  RCLCPP_INFO_EXPRESSION(
-    logger_, planner_param_.show_processing_time, "- step3: %f ms",
-    stop_watch_.toc("total_processing_time", false));
+  const auto default_stop_factor = findDefaultStopFactor(*path, path_intersects);
+  const auto nearest_stop_factor = findNearestStopFactor(*path, path_intersects);
+  recordTime(3);
 
   // Set safe or unsafe
-  setSafe(!nearest_stop_point_with_factor);
+  setSafe(!nearest_stop_factor);
 
   if (isActivated()) {
-    if (nearest_stop_point_with_factor) {
-      const auto target_velocity = calcTargetVelocity(nearest_stop_point_with_factor->first, *path);
-      insertDecelPointWithDebugInfo(
-        nearest_stop_point_with_factor->first,
-        std::max(planner_param_.min_slow_down_velocity, target_velocity), *path);
-      return true;
-    }
-
-    if (rtc_stop_point_with_factor) {
-      const auto crosswalk_distance =
-        calcSignedArcLength(path->points, ego_pos, getPoint(rtc_stop_point_with_factor->first));
-      setDistance(crosswalk_distance);
-      return true;
-    }
-
-    setDistance(std::numeric_limits<double>::lowest());
+    planGo(nearest_stop_factor, default_stop_factor, *path);
+    // TODO(murooka) call setDistance here
     return true;
   }
 
-  const auto & stop_point_with_factor =
-    [&]() -> boost::optional<std::pair<geometry_msgs::msg::Point, StopFactor>> {
-    if (nearest_stop_point_with_factor)
-      return nearest_stop_point_with_factor.get();
-    else if (rtc_stop_point_with_factor)
-      return rtc_stop_point_with_factor.get();
+  // TODO(murooka) create planStop function
+  const auto & stop_factor = [&]() -> boost::optional<StopFactor> {
+    if (nearest_stop_factor)
+      return *nearest_stop_factor;
+    else if (default_stop_factor)
+      return *default_stop_factor;
     return {};
   }();
 
-  if (!stop_point_with_factor) {
+  if (!stop_factor) {
     return false;
   }
 
-  const auto & stop_factor = stop_point_with_factor->second;
-  insertDecelPointWithDebugInfo(stop_point_with_factor->first, 0.0, *path);
-  planning_utils::appendStopReason(stop_factor, stop_reason);
+  insertDecelPointWithDebugInfo(stop_factor->stop_pose.position, 0.0, *path);
+  planning_utils::appendStopReason(*stop_factor, stop_reason);
   velocity_factor_.set(
-    path->points, planner_data_->current_odometry->pose, stop_factor.stop_pose,
+    path->points, planner_data_->current_odometry->pose, stop_factor->stop_pose,
     VelocityFactor::UNKNOWN);
-
-  RCLCPP_INFO_EXPRESSION(
-    logger_, planner_param_.show_processing_time, "- step4: %f ms",
-    stop_watch_.toc("total_processing_time", false));
+  recordTime(4);
 
   return true;
 }
@@ -277,8 +249,7 @@ boost::optional<std::pair<double, geometry_msgs::msg::Point>> CrosswalkModule::g
   return {};
 }
 
-boost::optional<std::pair<geometry_msgs::msg::Point, StopFactor>>
-CrosswalkModule::findRTCStopPointWithFactor(
+boost::optional<StopFactor> CrosswalkModule::findDefaultStopFactor(
   const PathWithLaneId & ego_path, const std::vector<geometry_msgs::msg::Point> & path_intersects)
 {
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -300,12 +271,10 @@ CrosswalkModule::findRTCStopPointWithFactor(
 
   StopFactor stop_factor;
   stop_factor.stop_pose = stop_pose.get();
-
-  return std::make_pair(stop_pose.get().position, stop_factor);
+  return stop_factor;
 }
 
-boost::optional<std::pair<geometry_msgs::msg::Point, StopFactor>>
-CrosswalkModule::findNearestStopPointWithFactor(
+boost::optional<StopFactor> CrosswalkModule::findNearestStopFactor(
   const PathWithLaneId & ego_path, const std::vector<geometry_msgs::msg::Point> & path_intersects)
 {
   if (ego_path.points.size() < 2) {
@@ -453,8 +422,7 @@ CrosswalkModule::findNearestStopPointWithFactor(
   }
 
   stop_factor.stop_pose = stop_pose.get();
-
-  return std::make_pair(stop_pose.get().position, stop_factor);
+  return stop_factor;
 }
 
 std::pair<double, double> CrosswalkModule::getAttentionRange(
@@ -1006,5 +974,31 @@ geometry_msgs::msg::Polygon CrosswalkModule::createVehiclePolygon(
   polygon.points.push_back(createPoint32(-back_m, -width_m, 0.0));
 
   return polygon;
+}
+
+void CrosswalkModule::planGo(
+  const boost::optional<StopFactor> & nearest_stop_factor,
+  const boost::optional<StopFactor> & default_stop_factor, PathWithLaneId & ego_path)
+{
+  const auto & ego_pos = planner_data_->current_odometry->pose.position;
+
+  if (nearest_stop_factor) {
+    // Plan slow down
+    const auto target_velocity =
+      calcTargetVelocity(nearest_stop_factor->stop_pose.position, ego_path);
+    insertDecelPointWithDebugInfo(
+      nearest_stop_factor->stop_pose.position,
+      std::max(planner_param_.min_slow_down_velocity, target_velocity), ego_path);
+    return;
+  }
+
+  if (default_stop_factor) {
+    const auto crosswalk_distance = calcSignedArcLength(
+      ego_path.points, ego_pos, getPoint(default_stop_factor->stop_pose.position));
+    setDistance(crosswalk_distance);
+    return;
+  }
+
+  setDistance(std::numeric_limits<double>::lowest());
 }
 }  // namespace behavior_velocity_planner

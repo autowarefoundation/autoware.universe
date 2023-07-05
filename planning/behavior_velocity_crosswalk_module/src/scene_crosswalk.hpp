@@ -105,11 +105,11 @@ public:
 private:
   const int64_t module_id_;
 
-  boost::optional<std::pair<geometry_msgs::msg::Point, StopFactor>> findRTCStopPointWithFactor(
+  boost::optional<StopFactor> findDefaultStopFactor(
     const PathWithLaneId & ego_path,
     const std::vector<geometry_msgs::msg::Point> & path_intersects);
 
-  boost::optional<std::pair<geometry_msgs::msg::Point, StopFactor>> findNearestStopPointWithFactor(
+  boost::optional<StopFactor> findNearestStopFactor(
     const PathWithLaneId & ego_path,
     const std::vector<geometry_msgs::msg::Point> & path_intersects);
 
@@ -165,6 +165,17 @@ private:
 
   static geometry_msgs::msg::Polygon createVehiclePolygon(
     const vehicle_info_util::VehicleInfo & vehicle_info);
+
+  void planGo(
+    const boost::optional<StopFactor> & nearest_stop_factor,
+    const boost::optional<StopFactor> & default_stop_factor, PathWithLaneId & ego_path);
+
+  void recordTime(const int step_num)
+  {
+    RCLCPP_INFO_EXPRESSION(
+      logger_, planner_param_.show_processing_time, "- step%d: %f ms", step_num,
+      stop_watch_.toc("total_processing_time", false));
+  }
 
   lanelet::ConstLanelet crosswalk_;
 
