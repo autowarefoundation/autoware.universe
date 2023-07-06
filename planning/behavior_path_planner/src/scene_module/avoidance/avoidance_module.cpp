@@ -2371,79 +2371,6 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
   }
 }
 
-void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & path)
-{
-  const auto ego_idx = avoidance_data_.ego_closest_path_index;
-  const auto N = path.shift_length.size();
-
-  if (!ego_velocity_starting_avoidance_ptr_) {
-    ego_velocity_starting_avoidance_ptr_ = std::make_shared<double>(getEgoSpeed());
-  }
-
-  // find first shift-change point from ego
-  constexpr auto SHIFT_DIFF_THR = 0.1;
-  size_t target_idx = N;
-  const auto current_shift = path.shift_length.at(ego_idx);
-  for (size_t i = ego_idx + 1; i < N; ++i) {
-    if (std::abs(path.shift_length.at(i) - current_shift) > SHIFT_DIFF_THR) {
-      // this index do not have to be accurate, so it can be i or i + 1.
-      // but if the ego point is already on the shift-change point, ego index should be a target_idx
-      // so that the distance for acceleration will be 0 and the ego speed is directly applied
-      // to the path velocity (no acceleration while avoidance)
-      target_idx = i - 1;
-      break;
-    }
-  }
-  if (target_idx == N) {
-    DEBUG_PRINT("shift length has no changes. No velocity limit is applied.");
-    return;
-  }
-
-  constexpr auto NO_ACCEL_TIME_THR = 3.0;
-
-  // update ego velocity if the shift point is far
-  const auto s_from_ego = avoidance_data_.arclength_from_ego.at(target_idx) -
-                          avoidance_data_.arclength_from_ego.at(ego_idx);
-  const auto t_from_ego = s_from_ego / std::max(getEgoSpeed(), 1.0);
-  if (t_from_ego > NO_ACCEL_TIME_THR) {
-    *ego_velocity_starting_avoidance_ptr_ = getEgoSpeed();
-  }
-
-  // update ego velocity if the ego is faster than saved velocity.
-  if (*ego_velocity_starting_avoidance_ptr_ < getEgoSpeed()) {
-    *ego_velocity_starting_avoidance_ptr_ = getEgoSpeed();
-  }
-
-  // calc index and velocity to NO_ACCEL_TIME_THR
-  const auto v0 = *ego_velocity_starting_avoidance_ptr_;
-  auto vmax = 0.0;
-  size_t insert_idx = ego_idx;
-  for (size_t i = ego_idx; i <= target_idx; ++i) {
-    const auto s =
-      avoidance_data_.arclength_from_ego.at(target_idx) - avoidance_data_.arclength_from_ego.at(i);
-    const auto t = s / std::max(v0, 1.0);
-    if (t < NO_ACCEL_TIME_THR) {
-      insert_idx = i;
-      vmax = std::max(
-        parameters_->min_avoidance_speed_for_acc_prevention,
-        std::sqrt(v0 * v0 + 2.0 * s * parameters_->max_avoidance_acceleration));
-      break;
-    }
-  }
-
-  // apply velocity limit
-  constexpr size_t V_LIM_APPLY_IDX_MARGIN = 0;
-  for (size_t i = insert_idx + V_LIM_APPLY_IDX_MARGIN; i < std::min(path.path.points.size(), N);
-       ++i) {
-    path.path.points.at(i).point.longitudinal_velocity_mps =
-      std::min(path.path.points.at(i).point.longitudinal_velocity_mps, static_cast<float>(vmax));
-  }
-
-  DEBUG_PRINT(
-    "s: %f, t: %f, v0: %f, a: %f, vmax: %f, ego_i: %lu, target_i: %lu", s_from_ego, t_from_ego, v0,
-    parameters_->max_avoidance_acceleration, vmax, ego_idx, target_idx);
-}
-
 PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & original_path) const
 {
   // special for avoidance: take behind distance upt ot shift-start-point if it exist.
@@ -2531,9 +2458,6 @@ BehaviorModuleOutput AvoidanceModule::plan()
   // generate path with shift points that have been inserted.
   auto avoidance_path = generateAvoidancePath(path_shifter_);
   debug_data_.output_shift = avoidance_path.shift_length;
-
-  // modify max speed to prevent acceleration in avoidance maneuver.
-  modifyPathVelocityToPreventAccelerationOnAvoidance(avoidance_path);
 
   // post processing
   {
