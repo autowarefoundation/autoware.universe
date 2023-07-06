@@ -2717,8 +2717,9 @@ void AvoidanceModule::addNewShiftLines(
   }
 
   const auto current_shift_lines = path_shifter.getShiftLines();
-  const auto new_shift_length = new_shift_lines.front().end_shift_length;
-  const auto new_shift_end_idx = new_shift_lines.front().end_idx;
+  const auto front_new_shift_line = new_shift_lines.front();
+  const auto new_shift_length = front_new_shift_line.end_shift_length;
+  const auto new_shift_end_idx = front_new_shift_line.end_idx;
 
   DEBUG_PRINT("min_start_idx = %lu", min_start_idx);
 
@@ -2756,7 +2757,19 @@ void AvoidanceModule::addNewShiftLines(
     future.push_back(sl);
   }
 
+  const double road_velocity =
+    avoidance_data_.reference_path.points.at(front_new_shift_line.start_idx)
+      .point.longitudinal_velocity_mps;
+  const double shift_time = PathShifter::calcShiftTimeFromJerk(
+    front_new_shift_line.getRelativeLength(), parameters_->max_lateral_jerk,
+    parameters_->max_lateral_acceleration);
+  const double longitudinal_acc =
+    std::clamp(road_velocity / shift_time, 0.0, parameters_->max_acceleration);
+
   path_shifter.setShiftLines(future);
+  path_shifter.setVelocity(getEgoSpeed());
+  path_shifter.setLongitudinalAcceleration(longitudinal_acc);
+  path_shifter.setLateralAccelerationLimit(parameters_->max_lateral_acceleration);
 }
 
 AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidates) const
