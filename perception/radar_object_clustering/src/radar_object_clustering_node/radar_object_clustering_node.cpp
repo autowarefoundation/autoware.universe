@@ -47,6 +47,13 @@ bool update_param(
   value = itr->template get_value<T>();
   return true;
 }
+
+double get_distance(const autoware_auto_perception_msgs::msg::DetectedObject & object)
+{
+  const auto & position = object.kinematics.pose_with_covariance.pose.position;
+  return std::hypot(position.x, position.y);
+}
+
 }  // namespace
 
 namespace radar_object_clustering
@@ -85,8 +92,14 @@ void RadarObjectClusteringNode::onObjects(const DetectedObjects::ConstSharedPtr 
 {
   DetectedObjects output_objects;
   output_objects.header = objects_data_->header;
-  const auto & objects = objects_data_->objects;
+  std::vector<DetectedObject> objects = objects_data_->objects;
+
   std::vector<bool> used_flags(objects.size(), false);
+
+  auto func = [](DetectedObject const & lhs, DetectedObject const & rhs) {
+    return get_distance(lhs) < get_distance(rhs);
+  };
+  std::sort(objects.begin(), objects.end(), func);
 
   for (size_t i = 0; i < objects.size(); i++) {
     if (used_flags.at(i) == true) {
