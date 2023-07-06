@@ -51,6 +51,9 @@ void InitialPoseAdaptor::on_initial_pose(const PoseWithCovarianceStamped::ConstS
   const auto fitted = fitter_.fit(pose.pose.pose.position, pose.header.frame_id);
   if (fitted) {
     pose.pose.pose.position = fitted.value();
+  } else {
+    RCLCPP_WARN_STREAM(get_logger(), "on_initial_pose failed due to invalid height fitting");
+    return;
   }
   pose.pose.covariance = rviz_particle_covariance_;
 

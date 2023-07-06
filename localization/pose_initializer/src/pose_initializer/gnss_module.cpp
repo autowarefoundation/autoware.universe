@@ -47,6 +47,10 @@ geometry_msgs::msg::PoseWithCovarianceStamped GnssModule::get_pose()
   const auto fitted = fitter_.fit(pose.pose.pose.position, pose.header.frame_id);
   if (fitted) {
     pose.pose.pose.position = fitted.value();
+  } else {
+    throw component_interface_utils::ServiceException(
+      Initialize::Service::Response::ERROR_ESTIMATION,
+      "GNSS-based initialization failed due to invalid height fitting");
   }
   return pose;
 }

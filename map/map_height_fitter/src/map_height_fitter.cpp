@@ -33,7 +33,9 @@ struct MapHeightFitter::Impl
   explicit Impl(rclcpp::Node * node);
   void on_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
   bool get_partial_point_cloud_map(const Point & point);
-  double get_ground_height(const tf2::Vector3 & point) const;
+
+  // When unable to get a valid height from the surrounding point cloud map, return nullopt.
+  std::optional<double> get_ground_height(const tf2::Vector3 & point) const;
   std::optional<Point> fit(const Point & position, const std::string & frame);
 
   tf2::BufferCore tf2_buffer_;
@@ -134,7 +136,7 @@ bool MapHeightFitter::Impl::get_partial_point_cloud_map(const Point & point)
   return true;
 }
 
-double MapHeightFitter::Impl::get_ground_height(const tf2::Vector3 & point) const
+std::optional<double> MapHeightFitter::Impl::get_ground_height(const tf2::Vector3 & point) const
 {
   const double x = point.getX();
   const double y = point.getY();
@@ -160,7 +162,11 @@ double MapHeightFitter::Impl::get_ground_height(const tf2::Vector3 & point) cons
     }
   }
 
-  return std::isfinite(height) ? height : point.getZ();
+  if (std::isfinite(height)) {
+    return height;
+  }
+  // if height is not valid, return nullopt
+  return std::nullopt;
 }
 
 std::optional<Point> MapHeightFitter::Impl::fit(const Point & position, const std::string & frame)
@@ -186,7 +192,14 @@ std::optional<Point> MapHeightFitter::Impl::fit(const Point & position, const st
     tf2::Transform transform{tf2::Quaternion{}, tf2::Vector3{}};
     tf2::fromMsg(stamped.transform, transform);
     point = transform * point;
-    point.setZ(get_ground_height(point));
+
+    //
+    auto point_optional = get_ground_height(point);
+    if (!point_optional.has_value()) {
+      RCLCPP_WARN_STREAM(logger, "no point cloud available around the given position");
+      return std::nullopt;
+    }
+    point.setZ(point_optional.value());
     point = transform.inverse() * point;
   } catch (tf2::TransformException & exception) {
     RCLCPP_WARN_STREAM(logger, "failed to lookup transform: " << exception.what());
