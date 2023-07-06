@@ -99,6 +99,7 @@ private:
   std::string layer_name_;
   std::string map_frame_;
   std::string elevation_map_directory_;
+  std::string elevation_map_hash_;
   bool use_inpaint_;
   float inpaint_radius_;
   unsigned int sequential_map_load_num_;

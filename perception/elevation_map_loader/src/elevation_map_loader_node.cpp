@@ -53,6 +53,24 @@
 #include <rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp>
 #endif
 
+bool checkBagFileExist(std::filesystem::path elevation_map_path, std::string elevation_map_hash)
+{
+  // Check if bag files exist in directory
+  std::regex db3_file_pattern(elevation_map_hash + R"(_\d+\.db3)");
+  int expected_file_count = 0;
+  // Count .db3 files which match expected file name pattern in directory
+  for (const auto & entry : std::filesystem::directory_iterator(elevation_map_path)) {
+    if (
+      entry.path().extension() == ".db3" &&
+      std::regex_match(entry.path().filename().string(), db3_file_pattern)) {
+      ++expected_file_count;
+    }
+  }
+  return std::distance(
+           std::filesystem::directory_iterator(elevation_map_path),
+           std::filesystem::directory_iterator{}) == expected_file_count;
+}
+
 ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & options)
 : Node("elevation_map_loader", options)
 {
@@ -129,25 +147,30 @@ void ElevationMapLoaderNode::publish()
 {
   struct stat info;
   if (stat(data_manager_.elevation_map_path_->c_str(), &info) != 0) {
+    // Create Elevation Map
     RCLCPP_INFO(this->get_logger(), "Create elevation map from pointcloud map ");
     createElevationMap();
   } else if (info.st_mode & S_IFDIR) {
+    // Load Elevation Map
     RCLCPP_INFO(
       this->get_logger(), "Load elevation map from: %s",
       data_manager_.elevation_map_path_->c_str());
 
     // Check if bag can be loaded
     bool is_bag_loaded = false;
-    try {
-      is_bag_loaded = grid_map::GridMapRosConverter::loadFromBag(
-        *data_manager_.elevation_map_path_, "elevation_map", elevation_map_);
-    } catch (rosbag2_storage_plugins::SqliteException & e) {
-      is_bag_loaded = false;
+    if (checkBagFileExist(*data_manager_.elevation_map_path_, elevation_map_hash_)) {
+      try {
+        is_bag_loaded = grid_map::GridMapRosConverter::loadFromBag(
+          *data_manager_.elevation_map_path_, "elevation_map", elevation_map_);
+      } catch (rosbag2_storage_plugins::SqliteException & e) {
+        is_bag_loaded = false;
+      }
     }
+
     if (!is_bag_loaded) {
       // Delete directory including elevation map if bag is broken
       RCLCPP_ERROR(
-        this->get_logger(), "Try to loading bag, but bag is broken. Remove %s",
+        this->get_logger(), "Try to load bag, but bag is broken. Remove %s",
         data_manager_.elevation_map_path_->c_str());
       std::filesystem::remove_all(data_manager_.elevation_map_path_->c_str());
       // Create elevation map from pointcloud map if bag is broken
@@ -187,9 +210,9 @@ void ElevationMapLoaderNode::onMapHash(
   const tier4_external_api_msgs::msg::MapHash::ConstSharedPtr map_hash)
 {
   RCLCPP_INFO(this->get_logger(), "subscribe map_hash");
-  const auto elevation_map_hash = map_hash->pcd;
+  elevation_map_hash_ = map_hash->pcd;
   data_manager_.elevation_map_path_ = std::make_unique<std::filesystem::path>(
-    std::filesystem::path(elevation_map_directory_) / elevation_map_hash);
+    std::filesystem::path(elevation_map_directory_) / elevation_map_hash_);
   if (data_manager_.isInitialized()) {
     publish();
   }
