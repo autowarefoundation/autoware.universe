@@ -13,23 +13,25 @@ include_directories(
     ${EIGEN3_INCLUDE_DIR}
 )
 
-ament_auto_add_library(${PROJECT_NAME} SHARED
+ament_auto_add_library(${PROJECT_NAME}_common SHARED
   src/updater/occupancy_grid_map_binary_bayes_filter_updater.cpp
   src/utils/utils.cpp
 )
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}_common
   ${PCL_LIBRARIES}
 )
 
 # PointcloudBasedOccupancyGridMap
 ament_auto_add_library(pointcloud_based_occupancy_grid_map SHARED
   src/pointcloud_based_occupancy_grid_map/pointcloud_based_occupancy_grid_map_node.cpp
-  src/pointcloud_based_occupancy_grid_map/occupancy_grid_map.cpp
+  src/pointcloud_based_occupancy_grid_map/occupancy_grid_map_base.cpp
+  src/pointcloud_based_occupancy_grid_map/occupancy_grid_map_fixed.cpp
+  src/pointcloud_based_occupancy_grid_map/occupancy_grid_map_projective.cpp
 )
 
 target_link_libraries(pointcloud_based_occupancy_grid_map
   ${PCL_LIBRARIES}
-  ${PROJECT_NAME}
+  ${PROJECT_NAME}_common
 )
 
 rclcpp_components_register_node(pointcloud_based_occupancy_grid_map
@@ -45,7 +47,7 @@ ament_auto_add_library(laserscan_based_occupancy_grid_map SHARED
 
 target_link_libraries(laserscan_based_occupancy_grid_map
   ${PCL_LIBRARIES}
-  ${PROJECT_NAME}
+  ${PROJECT_NAME}_common
 )
 
 rclcpp_components_register_node(laserscan_based_occupancy_grid_map
