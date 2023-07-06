@@ -142,6 +142,7 @@ void ElevationMapLoaderNode::publish()
       is_bag_loaded = grid_map::GridMapRosConverter::loadFromBag(
         *data_manager_.elevation_map_path_, "elevation_map", elevation_map_);
     } catch (const std::runtime_error & e) {
+      RCLCPP_ERROR(this->get_logger(), e.what());
       is_bag_loaded = false;
     }
     if (!is_bag_loaded) {
