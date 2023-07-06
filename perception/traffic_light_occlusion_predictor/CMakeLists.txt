@@ -5,7 +5,7 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Eigen3 REQUIRED)
-find_package(PCL 1.8 REQUIRED )
+find_package(PCL 1.8 REQUIRED)
 
 include_directories(
   SYSTEM
@@ -23,8 +23,8 @@ rclcpp_components_register_node(traffic_light_occlusion_predictor
   EXECUTABLE traffic_light_occlusion_predictor_node
 )
 
-link_directories(${PCL_LIBRARY_DIRS} )
-target_link_libraries(traffic_light_occlusion_predictor ${PCL_LIBRARIES} )
+link_directories(${PCL_LIBRARY_DIRS})
+target_link_libraries(traffic_light_occlusion_predictor ${PCL_LIBRARIES})
 
 ament_auto_package(INSTALL_TO_SHARE
   config
