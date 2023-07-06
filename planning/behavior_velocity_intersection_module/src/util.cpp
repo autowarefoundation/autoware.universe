@@ -448,7 +448,7 @@ IntersectionLanelets getObjectiveLanelets(
     lanelet::utils::getConflictingLanelets(routing_graph_ptr, assigned_lanelet);
   std::vector<lanelet::ConstLanelet> adjacent_followings;
 
-  if(!conflicting_lanelets.empty()){
+  if (!conflicting_lanelets.empty()) {
     for (const auto & conflicting_lanelet : conflicting_lanelets) {
       for (const auto & following_lanelet : routing_graph_ptr->following(conflicting_lanelet)) {
         adjacent_followings.push_back(following_lanelet);
