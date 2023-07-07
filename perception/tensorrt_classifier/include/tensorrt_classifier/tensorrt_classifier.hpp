@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -78,10 +78,10 @@ public:
    * @brief allocate buffer for preprocess on GPU
    * @param[in] width original image width
    * @param[in] height original image height
-   * @warning if we don't allocate buffers using it, "preprocess_gpu" allocates buffers at the
+   * @warning if we don't allocate buffers using it, "preprocessGpu" allocates buffers at the
    * beginning
    */
-  void init_preproces_buffer(int width, int height);
+  void initPreprocessBuffer(int width, int height);
 
 private:
   /**
@@ -95,7 +95,7 @@ private:
    * @param[in] images batching images
    * @warning Current support is only a single batch image
    */
-  void preprocess_gpu(const std::vector<cv::Mat> & images);
+  void preprocessGpu(const std::vector<cv::Mat> & images);
 
   bool feedforwardAndDecode(
     const std::vector<cv::Mat> & images, std::vector<int> & results, std::vector<float> & probs);

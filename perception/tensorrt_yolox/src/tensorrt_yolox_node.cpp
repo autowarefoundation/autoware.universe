@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,17 +94,9 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   }
   replaceLabelMap();
 
-  nvinfer1::CalibrationAlgoType calib_type;
-  if (calibration_algorithm == "MinMax") {
-    calib_type = nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION;
-  } else if (calibration_algorithm == "Entropy") {
-    calib_type = nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION;
-  } else {
-    calib_type = nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION;
-  }
-  tensorrt_common::BuildConfig build_config{calib_type,           dla_core_id,
-                                            quantize_first_layer, quantize_last_layer,
-                                            profile_per_layer,    clip_value};
+  tensorrt_common::BuildConfig build_config(
+    calibration_algorithm, dla_core_id, quantize_first_layer, quantize_last_layer,
+    profile_per_layer, clip_value);
 
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
     model_path, precision, label_map_.size(), score_threshold, nms_threshold, build_config,
@@ -207,6 +199,8 @@ void TrtYoloXNode::replaceLabelMap()
     auto & label = label_map_[i];
     if (label == "PERSON") {
       label = "PEDESTRIAN";
+    } else if (label == "MOTORBIKE") {
+      label = "MOTORCYCLE";
     } else if (
       label != "CAR" && label != "PEDESTRIAN" && label != "BUS" && label != "TRUCK" &&
       label != "BICYCLE" && label != "MOTORCYCLE") {

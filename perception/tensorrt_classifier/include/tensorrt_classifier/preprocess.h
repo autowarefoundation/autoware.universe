@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ extern void resize_bilinear_letterbox_gpu(
  * @param[in] norm normalization
  * @param[in] stream cuda stream
  */
-extern void resize_bilinear_letterbox_NHWC2NCHW32_gpu(
+extern void resize_bilinear_letterbox_nhwc_to_nchw32_gpu(
   float * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
   float norm, cudaStream_t stream);
 
@@ -134,7 +134,7 @@ extern void resize_bilinear_letterbox_NHWC2NCHW32_gpu(
  * @param[in] norm normalization
  * @param[in] stream cuda stream
  */
-extern void resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
+extern void resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
   float * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c, int batch,
   float norm, cudaStream_t stream);
 
@@ -154,7 +154,7 @@ extern void resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
  * @param[in] norm normalization
  * @param[in] stream cuda stream
  */
-extern void crop_resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
+extern void crop_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
   float * dst, unsigned char * src, int d_w, int d_h, int d_c, Roi * d_roi, int s_w, int s_h,
   int s_c, int batch, float norm, cudaStream_t stream);
 
@@ -174,7 +174,7 @@ extern void crop_resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
  * @param[in] norm normalization
  * @param[in] stream cuda stream
  */
-extern void multi_scale_resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
+extern void multi_scale_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
   float * dst, unsigned char * src, int d_w, int d_h, int d_c, Roi * d_roi, int s_w, int s_h,
   int s_c, int batch, float norm, cudaStream_t stream);
 

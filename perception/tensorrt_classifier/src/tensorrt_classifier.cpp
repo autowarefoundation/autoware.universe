@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-static void leftTrim(std::string & s)
+static void trimLeft(std::string & s)
 {
   s.erase(s.begin(), find_if(s.begin(), s.end(), [](int ch) { return !isspace(ch); }));
 }
@@ -38,15 +38,17 @@ static void rightTrim(std::string & s)
 
 std::string trim(std::string s)
 {
-  leftTrim(s);
+  trimLeft(s);
   rightTrim(s);
   return s;
 }
 
-bool fileExists(const std::string fileName, bool verbose)
+bool fileExists(const std::string & file_name, bool verbose)
 {
-  if (!std::experimental::filesystem::exists(std::experimental::filesystem::path(fileName))) {
-    if (verbose) std::cout << "File does not exist : " << fileName << std::endl;
+  if (!std::experimental::filesystem::exists(std::experimental::filesystem::path(file_name))) {
+    if (verbose) {
+      std::cout << "File does not exist : " << file_name << std::endl;
+    }
     return false;
   }
   return true;
@@ -75,7 +77,7 @@ std::vector<std::string> loadListFromTextFile(const std::string filename)
   return list;
 }
 
-std::vector<std::string> loadImageList(const std::string filename, const std::string prefix)
+std::vector<std::string> loadImageList(const std::string & filename, const std::string & prefix)
 {
   std::vector<std::string> fileList = loadListFromTextFile(filename);
   for (auto & file : fileList) {
@@ -99,7 +101,7 @@ TrtClassifier::TrtClassifier(
   const std::string & model_path, const std::string & precision,
   const tensorrt_common::BatchConfig & batch_config, const std::vector<float> & mean,
   const std::vector<float> & std, const size_t max_workspace_size,
-  const std::string & calibration_image_list, tensorrt_common::BuildConfig buildConfig,
+  const std::string & calibration_image_list_path, tensorrt_common::BuildConfig buildConfig,
   const bool cuda)
 {
   src_width_ = -1;
@@ -114,7 +116,10 @@ TrtClassifier::TrtClassifier(
   if (precision == "int8") {
     int max_batch_size = batch_config[2];
     nvinfer1::Dims input_dims = tensorrt_common::get_input_dims(model_path);
-    std::vector<std::string> calibration_images = loadImageList(calibration_image_list, "");
+    std::vector<std::string> calibration_images;
+    if (calibration_image_list_path != "") {
+      calibration_images = loadImageList(calibration_image_list_path, "");
+    }
     tensorrt_classifier::ImageStream stream(max_batch_size, input_dims, calibration_images);
     fs::path calibration_table{model_path};
     std::string calibName = "";
@@ -189,7 +194,7 @@ TrtClassifier::~TrtClassifier()
   }
 }
 
-void TrtClassifier::init_preproces_buffer(int width, int height)
+void TrtClassifier::initPreprocessBuffer(int width, int height)
 {
   // if size of source input has benn changed...
   if (src_width_ != -1 || src_height_ != -1) {
@@ -229,7 +234,7 @@ void TrtClassifier::init_preproces_buffer(int width, int height)
   }
 }
 
-void TrtClassifier::preprocess_gpu(const std::vector<cv::Mat> & images)
+void TrtClassifier::preprocessGpu(const std::vector<cv::Mat> & images)
 {
   const auto batch_size = images.size();
   auto input_dims = trt_common_->getBindingDimensions(0);
@@ -279,7 +284,7 @@ void TrtClassifier::preprocess_gpu(const std::vector<cv::Mat> & images)
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     d_img_, h_img_, images[0].cols * images[0].rows * 3 * batch_size * sizeof(unsigned char),
     cudaMemcpyHostToDevice, *stream_));
-  resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
+  resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
     input_d_.get(), d_img_, input_width, input_height, 3, images[0].cols, images[0].rows, 3,
     batch_size, static_cast<float>(1.0), *stream_);
   // No Need for Sync and used for timer

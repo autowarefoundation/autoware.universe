@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include <tensorrt_yolox/preprocess.hpp>
 
 #include <stdio.h>
@@ -18,21 +19,20 @@
 
 #include <algorithm>
 
-#define BLOCK 512
-
 #define MIN(x, y) x < y ? x : y
 
 namespace tensorrt_yolox
 {
+constexpr size_t block = 512;
 
 dim3 cuda_gridsize(size_t n)
 {
-  size_t k = (n - 1) / BLOCK + 1;
+  size_t k = (n - 1) / block + 1;
   size_t x = k;
   size_t y = 1;
   if (x > 65535) {
     x = ceil(sqrt(k));
-    y = (n - 1) / (x * BLOCK) + 1;
+    y = (n - 1) / (x * block) + 1;
   }
   dim3 d;
   d.x = x;
@@ -114,7 +114,7 @@ void resize_bilinear_gpu(
   float stride_h = (float)s_h / (float)d_h;
   float stride_w = (float)s_w / (float)d_w;
 
-  resize_bilinear_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(
+  resize_bilinear_kernel<<<cuda_gridsize(N), block, 0, stream>>>(
     N, dst, src, d_h, d_w, s_h, s_w, stride_h, stride_w);
 }
 
@@ -153,11 +153,11 @@ void letterbox_gpu(
 
   float stride_h = (float)s_h / (float)r_h;
   float stride_w = (float)s_w / (float)r_w;
-  letterbox_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(
+  letterbox_kernel<<<cuda_gridsize(N), block, 0, stream>>>(
     N, dst, src, d_h, d_w, r_h, r_w, 1.0 / scale, r_h, r_w);
 }
 
-__global__ void NHWC2NCHW_kernel(
+__global__ void nhwc_to_nchw_kernel(
   int N, unsigned char * dst_img, unsigned char * src_img, int height, int width)
 {
   // NHWC
@@ -177,14 +177,14 @@ __global__ void NHWC2NCHW_kernel(
   }
 }
 
-void NHWC2NCHW_gpu(
+void nhwc_to_nchw_gpu(
   unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, cudaStream_t stream)
 {
   int N = d_w * d_h;
-  NHWC2NCHW_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(N, dst, src, d_h, d_w);
+  nhwc_to_nchw_kernel<<<cuda_gridsize(N), block, 0, stream>>>(N, dst, src, d_h, d_w);
 }
 
-__global__ void NCHW2NHWC_kernel(
+__global__ void nchw_to_nhwc_kernel(
   int N, unsigned char * dst, unsigned char * src, int height, int width)
 {
   // NHWC
@@ -206,14 +206,14 @@ __global__ void NCHW2NHWC_kernel(
   }
 }
 
-void NCHW2NHWC_gpu(
+void nchw_to_nhwc_gpu(
   unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, cudaStream_t stream)
 {
   int N = d_w * d_h;
-  NCHW2NHWC_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(N, dst, src, d_h, d_w);
+  nchw_to_nhwc_kernel<<<cuda_gridsize(N), block, 0, stream>>>(N, dst, src, d_h, d_w);
 }
 
-__global__ void toFloat_kernel(int N, float * dst32, unsigned char * src8, int height, int width)
+__global__ void to_float_kernel(int N, float * dst32, unsigned char * src8, int height, int width)
 {
   // NHWC
   int index = (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
@@ -231,10 +231,11 @@ __global__ void toFloat_kernel(int N, float * dst32, unsigned char * src8, int h
   }
 }
 
-void toFloat_gpu(float * dst32, unsigned char * src, int d_w, int d_h, int d_c, cudaStream_t stream)
+void to_float_gpu(
+  float * dst32, unsigned char * src, int d_w, int d_h, int d_c, cudaStream_t stream)
 {
   int N = d_w * d_h;
-  toFloat_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(N, dst32, src, d_h, d_w);
+  to_float_kernel<<<cuda_gridsize(N), block, 0, stream>>>(N, dst32, src, d_h, d_w);
 }
 
 __global__ void resize_bilinear_letterbox_kernel(
@@ -301,11 +302,11 @@ void resize_bilinear_letterbox_gpu(
   int r_w = (int)(scale * s_w);
   float stride_h = (float)s_h / (float)r_h;
   float stride_w = (float)s_w / (float)r_w;
-  resize_bilinear_letterbox_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(
+  resize_bilinear_letterbox_kernel<<<cuda_gridsize(N), block, 0, stream>>>(
     N, dst, src, d_h, d_w, s_h, s_w, 1.0 / scale, r_h, r_w);
 }
 
-__global__ void resize_bilinear_letterbox_NHWC2NCHW32_kernel(
+__global__ void resize_bilinear_letterbox_nhwc_to_nchw32_kernel(
   int N, float * dst_img, unsigned char * src_img, int dst_h, int dst_w, int src_h, int src_w,
   float scale, int letter_bot, int letter_right, float norm)
 {
@@ -355,7 +356,7 @@ __global__ void resize_bilinear_letterbox_NHWC2NCHW32_kernel(
   }
 }
 
-void resize_bilinear_letterbox_NHWC2NCHW32_gpu(
+void resize_bilinear_letterbox_nhwc_to_nchw32_gpu(
   float * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
   float norm, cudaStream_t stream)
 {
@@ -366,11 +367,11 @@ void resize_bilinear_letterbox_NHWC2NCHW32_gpu(
   float stride_h = (float)s_h / (float)r_h;
   float stride_w = (float)s_w / (float)r_w;
 
-  resize_bilinear_letterbox_NHWC2NCHW32_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(
+  resize_bilinear_letterbox_nhwc_to_nchw32_kernel<<<cuda_gridsize(N), block, 0, stream>>>(
     N, dst, src, d_h, d_w, s_h, s_w, 1.0 / scale, r_h, r_w, norm);
 }
 
-__global__ void resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel(
+__global__ void resize_bilinear_letterbox_nhwc_to_nchw32_batch_kernel(
   int N, float * dst_img, unsigned char * src_img, int dst_h, int dst_w, int src_h, int src_w,
   float scale, int letter_bot, int letter_right, float norm, int batch)
 {
@@ -425,7 +426,7 @@ __global__ void resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel(
   }
 }
 
-void resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
+void resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
   float * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c, int batch,
   float norm, cudaStream_t stream)
 {
@@ -436,21 +437,21 @@ void resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
   float stride_h = (float)s_h / (float)r_h;
   float stride_w = (float)s_w / (float)r_w;
 
-  resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(
+  resize_bilinear_letterbox_nhwc_to_nchw32_batch_kernel<<<cuda_gridsize(N), block, 0, stream>>>(
     N, dst, src, d_h, d_w, s_h, s_w, 1.0 / scale, r_h, r_w, norm, batch);
   /*
   int b
   for (b = 0; b < batch; b++) {
     int index_dst = b * d_w * d_h * d_c;
     int index_src = b * s_w * s_h * s_c;
-    resize_bilinear_letterbox_NHWC2NCHW32_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(N,
+    resize_bilinear_letterbox_nhwc_to_nchw32_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(N,
   &dst[index_dst], &src[index_src], d_h, d_w, s_h, s_w, 1.0/scale, r_h, r_w, norm
                                                                                        );
   }
   */
 }
 
-__global__ void crop_resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel(
+__global__ void crop_resize_bilinear_letterbox_nhwc_to_nchw32_batch_kernel(
   int N, float * dst_img, unsigned char * src_img, int dst_h, int dst_w, int src_h, int src_w,
   Roi * d_roi, float norm, int batch)
 {
@@ -516,16 +517,16 @@ __global__ void crop_resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel(
   }
 }
 
-void crop_resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
+void crop_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
   float * dst, unsigned char * src, int d_w, int d_h, int d_c, Roi * d_roi, int s_w, int s_h,
   int s_c, int batch, float norm, cudaStream_t stream)
 {
   int N = d_w * d_h;
-  crop_resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(
+  crop_resize_bilinear_letterbox_nhwc_to_nchw32_batch_kernel<<<cuda_gridsize(N), block, 0, stream>>>(
     N, dst, src, d_h, d_w, s_h, s_w, d_roi, norm, batch);
 }
 
-__global__ void multi_scale_resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel(
+__global__ void multi_scale_resize_bilinear_letterbox_nhwc_to_nchw32_batch_kernel(
   int N, float * dst_img, unsigned char * src_img, int dst_h, int dst_w, int src_h, int src_w,
   Roi * d_roi, float norm, int batch)
 {
@@ -584,13 +585,13 @@ __global__ void multi_scale_resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel(
   }
 }
 
-void multi_scale_resize_bilinear_letterbox_NHWC2NCHW32_batch_gpu(
+void multi_scale_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
   float * dst, unsigned char * src, int d_w, int d_h, int d_c, Roi * d_roi, int s_w, int s_h,
   int s_c, int batch, float norm, cudaStream_t stream)
 {
   int N = d_w * d_h;
-  multi_scale_resize_bilinear_letterbox_NHWC2NCHW32_batch_kernel<<<
-    cuda_gridsize(N), BLOCK, 0, stream>>>(N, dst, src, d_h, d_w, s_h, s_w, d_roi, norm, batch);
+  multi_scale_resize_bilinear_letterbox_nhwc_to_nchw32_batch_kernel<<<
+    cuda_gridsize(N), block, 0, stream>>>(N, dst, src, d_h, d_w, s_h, s_w, d_roi, norm, batch);
 }
 
 }  // namespace tensorrt_yolox
