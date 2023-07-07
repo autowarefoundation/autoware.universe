@@ -27,6 +27,7 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <rviz_common/display_context.hpp>
 
+#include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/RegulatoryElement.h>
 
 #include <memory>

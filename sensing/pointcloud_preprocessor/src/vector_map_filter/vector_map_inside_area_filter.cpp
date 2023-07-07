@@ -14,6 +14,7 @@
 
 #include "pointcloud_preprocessor/vector_map_filter/vector_map_inside_area_filter.hpp"
 
+#include <lanelet2_core/LaneletMap.h>
 namespace
 {
 tier4_autoware_utils::Box2d calcBoundingBox(

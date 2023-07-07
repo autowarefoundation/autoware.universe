@@ -18,6 +18,7 @@
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "util.hpp"
 
+#include <lanelet2_extension/regulatory_elements/speed_bump.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace behavior_velocity_planner

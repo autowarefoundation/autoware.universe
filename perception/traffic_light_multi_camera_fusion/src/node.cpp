@@ -14,6 +14,8 @@
 
 #include "traffic_light_multi_camera_fusion/node.hpp"
 
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <string>

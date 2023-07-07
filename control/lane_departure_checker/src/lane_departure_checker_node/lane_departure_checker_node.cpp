@@ -23,6 +23,8 @@
 
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
 
+#include <lanelet2_routing/RoutingGraph.h>
+
 #include <map>
 #include <memory>
 #include <string>

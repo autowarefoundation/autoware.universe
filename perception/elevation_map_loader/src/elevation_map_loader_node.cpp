@@ -29,6 +29,7 @@
 #include <boost/geometry/algorithms/intersects.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 
+#include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/Polygon.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/pcl_base.h>
