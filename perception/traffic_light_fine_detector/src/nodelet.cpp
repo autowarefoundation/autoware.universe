@@ -77,8 +77,8 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
     RCLCPP_ERROR(this->get_logger(), "Could not find tlr id");
   }
 
-  const tensorrt_common::BuildConfig buildConfig = {
-    nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION, -1, false, false, false, 0.0};
+  const tensorrt_common::BuildConfig build_config = {
+    "MinMax", -1, false, false, false, 0.0};
   const bool cuda_preprocess = true;
   const std::string calib_image_list = "";
   const double scale = 1.0;
@@ -89,7 +89,7 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
   const tensorrt_common::BatchConfig batch_config{batch_size_, batch_size_, batch_size_};
 
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
-    model_path, precision, num_class, score_thresh_, nms_threshold, buildConfig, cuda_preprocess,
+    model_path, precision, num_class, score_thresh_, nms_threshold, build_config, cuda_preprocess,
     calib_image_list, scale, cache_dir, batch_config);
 
   using std::chrono_literals::operator""ms;

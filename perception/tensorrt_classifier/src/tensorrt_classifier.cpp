@@ -31,15 +31,15 @@ static void trimLeft(std::string & s)
   s.erase(s.begin(), find_if(s.begin(), s.end(), [](int ch) { return !isspace(ch); }));
 }
 
-static void rightTrim(std::string & s)
+static void trimRight(std::string & s)
 {
   s.erase(find_if(s.rbegin(), s.rend(), [](int ch) { return !isspace(ch); }).base(), s.end());
 }
 
-std::string trim(std::string s)
+std::string trim(std::string & s)
 {
   trimLeft(s);
-  rightTrim(s);
+  trimRight(s);
   return s;
 }
 
@@ -101,7 +101,7 @@ TrtClassifier::TrtClassifier(
   const std::string & model_path, const std::string & precision,
   const tensorrt_common::BatchConfig & batch_config, const std::vector<float> & mean,
   const std::vector<float> & std, const size_t max_workspace_size,
-  const std::string & calibration_image_list_path, tensorrt_common::BuildConfig buildConfig,
+  const std::string & calibration_image_list_path, tensorrt_common::BuildConfig build_config,
   const bool cuda)
 {
   src_width_ = -1;
@@ -124,9 +124,10 @@ TrtClassifier::TrtClassifier(
     fs::path calibration_table{model_path};
     std::string calibName = "";
     std::string ext = "";
-    if (buildConfig.calibType == nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION) {
+    if (build_config.calib_type_str == "Entropy") {
       ext = "EntropyV2-";
-    } else if (buildConfig.calibType == nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION) {
+    } else if (
+      build_config.calib_type_str == "Legacy" || build_config.calib_type_str == "Percentile") {
       ext = "Legacy-";
     } else {
       ext = "MinMax-";
@@ -138,10 +139,11 @@ TrtClassifier::TrtClassifier(
     histogram_table.replace_extension(ext);
 
     std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator;
-    if (buildConfig.calibType == nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION) {
+    if (build_config.calib_type_str == "Entropy") {
       calibrator.reset(
         new tensorrt_classifier::Int8EntropyCalibrator(stream, calibration_table, mean_, std_));
-    } else if (buildConfig.calibType == nvinfer1::CalibrationAlgoType::kLEGACY_CALIBRATION) {
+    } else if (
+      build_config.calib_type_str == "Legacy" || build_config.calib_type_str == "Percentile") {
       double quantile = 0.999999;
       double cutoff = 0.999999;
       calibrator.reset(new tensorrt_classifier::Int8LegacyCalibrator(
@@ -151,10 +153,10 @@ TrtClassifier::TrtClassifier(
         new tensorrt_classifier::Int8MinMaxCalibrator(stream, calibration_table, mean_, std_));
     }
     trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
-      model_path, precision, std::move(calibrator), batch_config, max_workspace_size, buildConfig);
+      model_path, precision, std::move(calibrator), batch_config, max_workspace_size, build_config);
   } else {
     trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
-      model_path, precision, nullptr, batch_config, max_workspace_size, buildConfig);
+      model_path, precision, nullptr, batch_config, max_workspace_size, build_config);
   }
   trt_common_->setup();
 

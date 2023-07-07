@@ -422,28 +422,26 @@ bool TrtCommon::buildEngineFromOnnx(
             layer->setPrecision(nvinfer1::DataType::kHALF);
             std::cout << "Set kHALF in " << name << std::endl;
           }
+          for (int i = num - 1; i >= 0; i--) {
+            nvinfer1::ILayer * layer = network->getLayer(i);
+            auto ltype = layer->getType();
+            std::string name = layer->getName();
+            if (ltype == nvinfer1::LayerType::kCONVOLUTION) {
+              layer->setPrecision(nvinfer1::DataType::kHALF);
+              std::cout << "Set kHALF in " << name << std::endl;
+              break;
+            }
+            if (ltype == nvinfer1::LayerType::kMATRIX_MULTIPLY) {
+              layer->setPrecision(nvinfer1::DataType::kHALF);
+              std::cout << "Set kHALF in " << name << std::endl;
+              break;
+            }
+          }
         }
       }
     }
   }
 
-  if (last) {
-    for (int i = num - 1; i >= 0; i--) {
-      nvinfer1::ILayer * layer = network->getLayer(i);
-      auto ltype = layer->getType();
-      std::string name = layer->getName();
-      if (ltype == nvinfer1::LayerType::kCONVOLUTION) {
-        layer->setPrecision(nvinfer1::DataType::kHALF);
-        std::cout << "Set kHALF in " << name << std::endl;
-        break;
-      }
-      if (ltype == nvinfer1::LayerType::kMATRIX_MULTIPLY) {
-        layer->setPrecision(nvinfer1::DataType::kHALF);
-        std::cout << "Set kHALF in " << name << std::endl;
-        break;
-      }
-    }
-  }
   const auto input = network->getInput(0);
   const auto input_dims = input->getDimensions();
   const auto input_channel = input_dims.d[1];

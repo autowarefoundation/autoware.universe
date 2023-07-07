@@ -39,7 +39,7 @@ static void trimRight(std::string & s)
   s.erase(find_if(s.rbegin(), s.rend(), [](int ch) { return !isspace(ch); }).base(), s.end());
 }
 
-std::string trim(std::string s)
+std::string trim(std::string & s)
 {
   trimLeft(s);
   trimRight(s);
