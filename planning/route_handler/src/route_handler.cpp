@@ -2004,8 +2004,7 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
     } else {
       is_route_found = true;
 
-
-      if(optional_route->length2d() < shortest_path_length2d){
+      if (optional_route->length2d() < shortest_path_length2d) {
         shortest_path_length2d = optional_route->length2d();
         shortest_path = optional_route->shortestPath();
         start_lanelet = st_llt;
