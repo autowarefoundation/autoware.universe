@@ -777,7 +777,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
 
   // get lanes used for detection
   const auto backward_target_lanes_for_object_filtering = utils::lane_change::getBackwardLanelets(
-    route_handler, path.target_lanelets, current_pose, lane_change_parameters.backward_lane_length);
+    route_handler, target_lanes, current_pose, lane_change_parameters.backward_lane_length);
 
   const auto dynamic_object_indices = utils::lane_change::filterObject(
     *dynamic_objects, current_lanes, target_lanes, backward_target_lanes_for_object_filtering,
@@ -942,7 +942,7 @@ bool NormalLaneChange::getAbortPath()
   const auto [abort_start_idx, abort_start_dist] =
     get_abort_idx_and_distance(lane_change_parameters_->cancel.delta_time);
   const auto [abort_return_idx, abort_return_dist] = get_abort_idx_and_distance(
-    lane_change_parameters_->cancel.delta_time + lane_change_parameters_->cancel.delta_time);
+    lane_change_parameters_->cancel.delta_time + lane_change_parameters_->cancel.duration);
 
   if (abort_start_idx >= abort_return_idx) {
     RCLCPP_ERROR(logger_, "abort start idx and return idx is equal. can't compute abort path.");

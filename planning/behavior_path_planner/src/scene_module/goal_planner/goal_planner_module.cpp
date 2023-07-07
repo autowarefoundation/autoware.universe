@@ -152,7 +152,9 @@ void GoalPlannerModule::onTimer()
   mutex_.unlock();
 
   // generate valid pull over path candidates and calculate closest start pose
-  const auto current_lanes = utils::getExtendedCurrentLanes(planner_data_);
+  const auto current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_->backward_goal_search_length,
+    parameters_->forward_goal_search_length);
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
   double min_start_arc_length = std::numeric_limits<double>::max();
@@ -284,7 +286,7 @@ bool GoalPlannerModule::isExecutionRequested() const
       return lanelet::utils::isInLanelet(goal_pose, current_lane);
     });
 
-  // check that goal is in current neghibor shoulder lane
+  // check that goal is in current neighbor shoulder lane
   const bool goal_is_in_current_shoulder_lanes = std::invoke([&]() {
     lanelet::ConstLanelet neighbor_shoulder_lane{};
     for (const auto & lane : current_lanes) {
@@ -590,7 +592,9 @@ void GoalPlannerModule::selectSafePullOverPath()
 
 void GoalPlannerModule::setLanes()
 {
-  status_.current_lanes = utils::getExtendedCurrentLanes(planner_data_);
+  status_.current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_->backward_goal_search_length,
+    parameters_->forward_goal_search_length);
   status_.pull_over_lanes =
     goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
   status_.lanes =
