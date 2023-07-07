@@ -523,8 +523,8 @@ void crop_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
   int s_c, int batch, float norm, cudaStream_t stream)
 {
   int N = d_w * d_h;
-  crop_resize_bilinear_letterbox_nhwc_to_nchw32_batch_kernel<<<cuda_gridsize(N), BLOCK, 0, stream>>>(
-    N, dst, src, d_h, d_w, s_h, s_w, d_roi, norm, batch);
+  crop_resize_bilinear_letterbox_nhwc_to_nchw32_batch_kernel<<<
+    cuda_gridsize(N), BLOCK, 0, stream>>>(N, dst, src, d_h, d_w, s_h, s_w, d_roi, norm, batch);
 }
 
 __global__ void multi_scale_resize_bilinear_letterbox_nhwc_to_nchw32_batch_kernel(

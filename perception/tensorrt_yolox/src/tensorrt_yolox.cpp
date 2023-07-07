@@ -291,7 +291,7 @@ void TrtYoloX::initPreprocessBuffer(int width, int height)
         scales_.emplace_back(scale);
       }
       image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
-          width * height * 3 * batch_size_, cudaHostAllocWriteCombined);
+        width * height * 3 * batch_size_, cudaHostAllocWriteCombined);
       image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(width * height * 3 * batch_size_);
     }
   }
@@ -339,22 +339,25 @@ void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
       scales_.emplace_back(scale);
       image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
         image.cols * image.rows * 3 * batch_size, cudaHostAllocWriteCombined);
-      image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(image.cols * image.rows * 3 * batch_size);
+      image_buf_d_ =
+        cuda_utils::make_unique<unsigned char[]>(image.cols * image.rows * 3 * batch_size);
     }
     int index = b * image.cols * image.rows * 3;
     // Copy into pinned memory
-    memcpy(image_buf_h_.get() + index, &image.data[0],
-           image.cols * image.rows * 3 * sizeof(unsigned char));
+    memcpy(
+      image_buf_h_.get() + index, &image.data[0],
+      image.cols * image.rows * 3 * sizeof(unsigned char));
     b++;
   }
   // Copy into device memory
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    image_buf_d_.get(), image_buf_h_.get(), images[0].cols * images[0].rows * 3 * batch_size * sizeof(unsigned char),
+    image_buf_d_.get(), image_buf_h_.get(),
+    images[0].cols * images[0].rows * 3 * batch_size * sizeof(unsigned char),
     cudaMemcpyHostToDevice, *stream_));
   // Preprocess on GPU
   resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
-    input_d_.get(), image_buf_d_.get(), input_width, input_height, 3, images[0].cols, images[0].rows, 3,
-    batch_size, static_cast<float>(norm_factor_), *stream_);
+    input_d_.get(), image_buf_d_.get(), input_width, input_height, 3, images[0].cols,
+    images[0].rows, 3, batch_size, static_cast<float>(norm_factor_), *stream_);
 }
 
 void TrtYoloX::preprocess(const std::vector<cv::Mat> & images)
@@ -467,14 +470,17 @@ void TrtYoloX::preprocessWithRoiGpu(
     scales_.emplace_back(scale);
     if (!image_buf_h_) {
       image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
-          image.cols * image.rows * 3 * batch_size, cudaHostAllocWriteCombined);
-      image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(image.cols * image.rows * 3 * batch_size);
+        image.cols * image.rows * 3 * batch_size, cudaHostAllocWriteCombined);
+      image_buf_d_ =
+        cuda_utils::make_unique<unsigned char[]>(image.cols * image.rows * 3 * batch_size);
     }
     int index = b * image.cols * image.rows * 3;
     // Copy into pinned memory
-    //memcpy(&(m_h_img[index]), &image.data[0], image.cols * image.rows * 3 * sizeof(unsigned char));
-    memcpy(image_buf_h_.get() + index, &image.data[0],
-           image.cols * image.rows * 3 * sizeof(unsigned char));
+    // memcpy(&(m_h_img[index]), &image.data[0], image.cols * image.rows * 3 * sizeof(unsigned
+    // char));
+    memcpy(
+      image_buf_h_.get() + index, &image.data[0],
+      image.cols * image.rows * 3 * sizeof(unsigned char));
     roi_h_[b].x = rois[b].x;
     roi_h_[b].y = rois[b].y;
     roi_h_[b].w = rois[b].width;
@@ -483,13 +489,14 @@ void TrtYoloX::preprocessWithRoiGpu(
   }
   // Copy into device memory
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-      image_buf_d_.get(), image_buf_h_.get(), images[0].cols * images[0].rows * 3 * batch_size * sizeof(unsigned char),
+    image_buf_d_.get(), image_buf_h_.get(),
+    images[0].cols * images[0].rows * 3 * batch_size * sizeof(unsigned char),
     cudaMemcpyHostToDevice, *stream_));
-  CHECK_CUDA_ERROR(
-      cudaMemcpyAsync(roi_d_.get(), roi_h_.get(), batch_size * sizeof(Roi), cudaMemcpyHostToDevice, *stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    roi_d_.get(), roi_h_.get(), batch_size * sizeof(Roi), cudaMemcpyHostToDevice, *stream_));
   crop_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
-      input_d_.get(), image_buf_d_.get(), input_width, input_height, 3, roi_d_.get(), images[0].cols, images[0].rows,
-    3, batch_size, static_cast<float>(norm_factor_), *stream_);
+    input_d_.get(), image_buf_d_.get(), input_width, input_height, 3, roi_d_.get(), images[0].cols,
+    images[0].rows, 3, batch_size, static_cast<float>(norm_factor_), *stream_);
 }
 
 void TrtYoloX::preprocessWithRoi(
@@ -532,8 +539,8 @@ void TrtYoloX::preprocessWithRoi(
       dst_images.emplace_back(dst_image);
     }
   }
-  const auto chw_images =
-    cv::dnn::blobFromImages(dst_images, norm_factor_, cv::Size(), cv::Scalar(), false, false, CV_32F);
+  const auto chw_images = cv::dnn::blobFromImages(
+    dst_images, norm_factor_, cv::Size(), cv::Scalar(), false, false, CV_32F);
 
   const auto data_length = chw_images.total();
   input_h_.reserve(data_length);
@@ -557,12 +564,12 @@ void TrtYoloX::multiScalepreprocessGpu(const cv::Mat & image, const std::vector<
   if (src_width_ != -1 || src_height_ != -1) {
     if (width != src_width_ || height != src_height_) {
       // Free cuda memory to reallocate
-        if (image_buf_h_) {
-          image_buf_h_.reset();
-        }
-        if (image_buf_d_) {
-          image_buf_d_.reset();
-        }
+      if (image_buf_h_) {
+        image_buf_h_.reset();
+      }
+      if (image_buf_d_) {
+        image_buf_d_.reset();
+      }
     }
   }
   src_width_ = width;
@@ -593,22 +600,24 @@ void TrtYoloX::multiScalepreprocessGpu(const cv::Mat & image, const std::vector<
   }
   if (!image_buf_h_) {
     image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
-        image.cols * image.rows * 3 * 1, cudaHostAllocWriteCombined);
+      image.cols * image.rows * 3 * 1, cudaHostAllocWriteCombined);
     image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(image.cols * image.rows * 3 * 1);
   }
   int index = 0 * image.cols * image.rows * 3;
   // Copy into pinned memory
-  memcpy(image_buf_h_.get() + index, &image.data[0], image.cols * image.rows * 3 * sizeof(unsigned char));
+  memcpy(
+    image_buf_h_.get() + index, &image.data[0],
+    image.cols * image.rows * 3 * sizeof(unsigned char));
 
   // Copy into device memory
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-      image_buf_d_.get(), image_buf_h_.get(), image.cols * image.rows * 3 * 1 * sizeof(unsigned char),
+    image_buf_d_.get(), image_buf_h_.get(), image.cols * image.rows * 3 * 1 * sizeof(unsigned char),
     cudaMemcpyHostToDevice, *stream_));
-  CHECK_CUDA_ERROR(
-      cudaMemcpyAsync(roi_d_.get(), roi_h_.get(), batch_size * sizeof(Roi), cudaMemcpyHostToDevice, *stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    roi_d_.get(), roi_h_.get(), batch_size * sizeof(Roi), cudaMemcpyHostToDevice, *stream_));
   multi_scale_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
-      input_d_.get(), image_buf_d_.get(), input_width, input_height, 3, roi_d_.get(), image.cols, image.rows, 3,
-    batch_size, static_cast<float>(norm_factor_), *stream_);
+    input_d_.get(), image_buf_d_.get(), input_width, input_height, 3, roi_d_.get(), image.cols,
+    image.rows, 3, batch_size, static_cast<float>(norm_factor_), *stream_);
 }
 
 void TrtYoloX::multiScalePreprocess(const cv::Mat & image, const std::vector<cv::Rect> & rois)
@@ -635,8 +644,8 @@ void TrtYoloX::multiScalePreprocess(const cv::Mat & image, const std::vector<cv:
     copyMakeBorder(dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
     dst_images.emplace_back(dst_image);
   }
-  const auto chw_images =
-    cv::dnn::blobFromImages(dst_images, norm_factor_, cv::Size(), cv::Scalar(), false, false, CV_32F);
+  const auto chw_images = cv::dnn::blobFromImages(
+    dst_images, norm_factor_, cv::Size(), cv::Scalar(), false, false, CV_32F);
 
   const auto data_length = chw_images.total();
   input_h_.reserve(data_length);

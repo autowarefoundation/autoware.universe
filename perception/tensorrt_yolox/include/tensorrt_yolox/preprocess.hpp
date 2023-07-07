@@ -23,7 +23,8 @@
 
 namespace tensorrt_yolox
 {
-struct Roi {
+struct Roi
+{
   int x;
   int y;
   int w;
