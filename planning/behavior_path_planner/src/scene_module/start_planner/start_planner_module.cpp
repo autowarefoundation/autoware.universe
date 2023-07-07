@@ -112,7 +112,6 @@ bool StartPlannerModule::isExecutionRequested() const
     tier4_autoware_utils::pose2transform(planner_data_->self_odometry->pose.pose));
 
   // Check if ego is not out of lanes
-  // const auto current_lanes = utils::getExtendedCurrentLanes(planner_data_);
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
   const auto current_lanes =
@@ -310,7 +309,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     return output;
   }
 
-  // const auto current_lanes = utils::getExtendedCurrentLanes(planner_data_);
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
   const auto current_lanes =
@@ -588,7 +586,6 @@ void StartPlannerModule::updatePullOutStatus()
   status_.pull_out_lane_ids = utils::getIds(status_.pull_out_lanes);
 }
 
-// make this class?
 std::vector<Pose> StartPlannerModule::searchPullOutStartPoses()
 {
   std::vector<Pose> pull_out_start_pose{};
@@ -682,7 +679,9 @@ bool StartPlannerModule::hasFinishedPullOut() const
   const auto arclength_pull_out_end =
     lanelet::utils::getArcCoordinates(status_.current_lanes, status_.pull_out_path.end_pose);
 
-  const bool has_finished = arclength_current.length - arclength_pull_out_end.length > 0.0;
+  // offset to not finish the module before engage
+  constexpr double offset = 0.1;
+  const bool has_finished = arclength_current.length - arclength_pull_out_end.length > offset;
 
   return has_finished;
 }

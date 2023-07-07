@@ -101,28 +101,28 @@ bool isOnRight(const ObjectData & obj)
 bool isTargetObjectType(
   const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  const auto t = utils::getHighestProbLabel(object.classification);
+  const auto object_type = utils::getHighestProbLabel(object.classification);
 
-  if (parameters->object_parameters.count(t) == 0) {
+  if (parameters->object_parameters.count(object_type) == 0) {
     return false;
   }
 
-  return parameters->object_parameters.at(t).is_target;
+  return parameters->object_parameters.at(object_type).is_target;
 }
 
 bool isVehicleTypeObject(const ObjectData & object)
 {
-  const auto t = utils::getHighestProbLabel(object.object.classification);
+  const auto object_type = utils::getHighestProbLabel(object.object.classification);
 
-  if (t == ObjectClassification::UNKNOWN) {
+  if (object_type == ObjectClassification::UNKNOWN) {
     return false;
   }
 
-  if (t == ObjectClassification::PEDESTRIAN) {
+  if (object_type == ObjectClassification::PEDESTRIAN) {
     return false;
   }
 
-  if (t == ObjectClassification::BICYCLE) {
+  if (object_type == ObjectClassification::BICYCLE) {
     return false;
   }
 
@@ -422,8 +422,8 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
       continue;
     }
 
-    const auto t = utils::getHighestProbLabel(object.object.classification);
-    const auto object_parameter = parameters->object_parameters.at(t);
+    const auto object_type = utils::getHighestProbLabel(object.object.classification);
+    const auto object_parameter = parameters->object_parameters.at(object_type);
 
     // generate obstacle polygon
     const double diff_poly_buffer =
@@ -535,8 +535,8 @@ void fillObjectEnvelopePolygon(
 {
   using boost::geometry::within;
 
-  const auto t = utils::getHighestProbLabel(object_data.object.classification);
-  const auto object_parameter = parameters->object_parameters.at(t);
+  const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
+  const auto object_parameter = parameters->object_parameters.at(object_type);
 
   const auto & envelope_buffer_margin =
     object_parameter.envelope_buffer_margin * object_data.distance_factor;
@@ -567,8 +567,8 @@ void fillObjectMovingTime(
   ObjectData & object_data, ObjectDataArray & stopped_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  const auto t = utils::getHighestProbLabel(object_data.object.classification);
-  const auto object_parameter = parameters->object_parameters.at(t);
+  const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
+  const auto object_parameter = parameters->object_parameters.at(object_type);
 
   const auto & object_vel =
     object_data.object.kinematics.initial_twist_with_covariance.twist.linear.x;
@@ -618,8 +618,8 @@ void fillAvoidanceNecessity(
   ObjectData & object_data, const ObjectDataArray & registered_objects, const double vehicle_width,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  const auto t = utils::getHighestProbLabel(object_data.object.classification);
-  const auto object_parameter = parameters->object_parameters.at(t);
+  const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
+  const auto object_parameter = parameters->object_parameters.at(object_type);
   const auto safety_margin =
     0.5 * vehicle_width + object_parameter.safety_buffer_lateral * object_data.distance_factor;
 
@@ -657,6 +657,12 @@ void fillObjectStoppableJudge(
 {
   if (!parameters->use_constraints_for_decel) {
     object_data.is_stoppable = true;
+    return;
+  }
+
+  if (!object_data.avoid_required) {
+    object_data.is_stoppable = false;
+    return;
   }
 
   const auto id = object_data.object.object_id;
@@ -791,13 +797,32 @@ void filterTargetObjects(
       ? calcSignedArcLength(path_points, ego_pos, rh->getGoalPose().position)
       : std::numeric_limits<double>::max();
 
+  // extend lanelets if the reference path is cut for lane change.
+  const auto & ego_pose = planner_data->self_odometry->pose.pose;
+  lanelet::ConstLanelets extend_lanelets = data.current_lanelets;
+  while (rclcpp::ok()) {
+    const double lane_length = lanelet::utils::getLaneletLength2d(extend_lanelets);
+    const auto arclength = lanelet::utils::getArcCoordinates(extend_lanelets, ego_pose);
+    const auto next_lanelets = rh->getNextLanelets(extend_lanelets.back());
+
+    if (next_lanelets.empty()) {
+      break;
+    }
+
+    if (lane_length - arclength.length < planner_data->parameters.forward_path_length) {
+      extend_lanelets.push_back(next_lanelets.front());
+    } else {
+      break;
+    }
+  }
+
   for (auto & o : objects) {
     const auto & object_pose = o.object.kinematics.initial_pose_with_covariance.pose;
     const auto object_closest_index = findNearestIndex(path_points, object_pose.position);
     const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
 
-    const auto t = utils::getHighestProbLabel(o.object.classification);
-    const auto object_parameter = parameters->object_parameters.at(t);
+    const auto object_type = utils::getHighestProbLabel(o.object.classification);
+    const auto object_parameter = parameters->object_parameters.at(object_type);
 
     if (!isTargetObjectType(o.object, parameters)) {
       o.reason = AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE;
@@ -949,16 +974,15 @@ void filterTargetObjects(
 
       // check traffic light
       const auto to_traffic_light =
-        utils::getDistanceToNextTrafficLight(object_pose, data.current_lanelets);
+        utils::getDistanceToNextTrafficLight(object_pose, extend_lanelets);
       {
         not_parked_object =
           to_traffic_light < parameters->object_ignore_section_traffic_light_in_front_distance;
       }
 
       // check crosswalk
-      const auto & ego_pose = planner_data->self_odometry->pose.pose;
       const auto to_crosswalk =
-        utils::getDistanceToCrosswalk(ego_pose, data.current_lanelets, *rh->getOverallGraphPtr()) -
+        utils::getDistanceToCrosswalk(ego_pose, extend_lanelets, *rh->getOverallGraphPtr()) -
         o.longitudinal;
       {
         const auto stop_for_crosswalk =
