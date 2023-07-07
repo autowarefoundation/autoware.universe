@@ -59,7 +59,7 @@ public:
     const std::vector<float> & std = {58.395, 57.12, 57.375},
     const size_t max_workspace_size = (1 << 30), const std::string & calibration_images = "",
     const tensorrt_common::BuildConfig build_config = 
-      {"MinMax", -1, false, false, false, 0.0},
+    tensorrt_common::BuildConfig("MinMax", -1, false, false, false, 0.0),
     const bool cuda = false);
   /**
    * @brief Deconstruct TrtClassifier
