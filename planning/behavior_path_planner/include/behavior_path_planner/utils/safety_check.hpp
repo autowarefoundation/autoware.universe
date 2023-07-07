@@ -50,10 +50,27 @@ using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 
 namespace bg = boost::geometry;
-struct ProjectedDistancePoint
+
+struct PoseWithPolygonStamped
 {
-  Point2d projected_point;
-  double distance{0.0};
+  double time;
+  Pose pose;
+  Polygon2d poly;
+};
+
+struct PredictedPathWithPolygon
+{
+  float confidence;
+  std::vector<PoseWithPolygonStamped> path;
+};
+
+struct ExtendedPredictedObject
+{
+  unique_identifier_msgs::msg::UUID uuid;
+  geometry_msgs::msg::PoseWithCovariance initial_pose;
+  geometry_msgs::msg::TwistWithCovariance initial_twist;
+  geometry_msgs::msg::AccelWithCovariance initial_acceleration;
+  std::vector<PredictedPathWithPolygon> predicted_path;
 };
 
 bool isTargetObjectFront(

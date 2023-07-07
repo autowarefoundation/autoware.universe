@@ -19,6 +19,7 @@
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
+#include "behavior_path_planner/utils/safety_check.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <route_handler/route_handler.hpp>
@@ -42,6 +43,9 @@ using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using behavior_path_planner::utils::safety_check::ExtendedPredictedObject;
+using behavior_path_planner::utils::safety_check::PoseWithPolygonStamped;
+using behavior_path_planner::utils::safety_check::PredictedPathWithPolygon;
 using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -188,6 +192,17 @@ LaneChangeTargetObjectIndices filterObject(
   const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
   const Pose & current_pose, const RouteHandler & route_handler,
-  const LaneChangeParameters & lane_change_parameter);
+  const LaneChangeParameters & lane_change_parameters);
+
+ExtendedPredictedObject transform(
+  const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
+  const LaneChangeParameters & lane_change_parameters);
+
+LaneChangeTargetObjects getTargetObjects(
+  const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
+  const Pose & current_pose, const RouteHandler & route_handler,
+  const BehaviorPathPlannerParameters & common_parameters,
+  const LaneChangeParameters & lane_change_parameters);
 }  // namespace behavior_path_planner::utils::lane_change
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_
