@@ -167,7 +167,6 @@ def generate_launch_description():
                 parameters=[
                     {"input_topic": "classified/traffic_signals"},
                     {"output_topic": "estimated/traffic_signals"},
-                    {"type": "autoware_auto_perception_msgs/msg/TrafficSignalArray"},
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
