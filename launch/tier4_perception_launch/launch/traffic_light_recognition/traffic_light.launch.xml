@@ -11,8 +11,8 @@
   <arg name="use_crosswalk_traffic_light_estimator" default="true" description="output pedestrian's traffic light signals"/>
   <let name="namespace1" value="camera6"/>
   <let name="namespace2" value="camera7"/>
-  <let name="output/rois1" value="/perception/traffic_light_recognition/$(var namespace1)/rois"/>
-  <let name="output/rois2" value="/perception/traffic_light_recognition/$(var namespace2)/rois"/>
+  <let name="output/rois1" value="/perception/traffic_light_recognition/$(var namespace1)/detection/rois"/>
+  <let name="output/rois2" value="/perception/traffic_light_recognition/$(var namespace2)/detection/rois"/>
   <let name="output/traffic_signals1" value="/perception/traffic_light_recognition/$(var namespace1)/traffic_signals"/>
   <let name="output/traffic_signals2" value="/perception/traffic_light_recognition/$(var namespace2)/traffic_signals"/>
   <let name="all_camera_namespaces" value="[$(var namespace1), $(var namespace2)]"/>
