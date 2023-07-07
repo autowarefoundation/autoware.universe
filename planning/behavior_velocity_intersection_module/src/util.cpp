@@ -447,17 +447,16 @@ IntersectionLanelets getObjectiveLanelets(
   const auto & conflicting_lanelets =
     lanelet::utils::getConflictingLanelets(routing_graph_ptr, assigned_lanelet);
   std::vector<lanelet::ConstLanelet> adjacent_followings;
-
-  if (!conflicting_lanelets.empty()) {
-    for (const auto & conflicting_lanelet : conflicting_lanelets) {
-      for (const auto & following_lanelet : routing_graph_ptr->following(conflicting_lanelet)) {
-        adjacent_followings.push_back(following_lanelet);
-      }
-      for (const auto & following_lanelet : routing_graph_ptr->previous(conflicting_lanelet)) {
-        adjacent_followings.push_back(following_lanelet);
-      }
+  
+  for (const auto & conflicting_lanelet : conflicting_lanelets) {
+    for (const auto & following_lanelet : routing_graph_ptr->following(conflicting_lanelet)) {
+      adjacent_followings.push_back(following_lanelet);
+    }
+    for (const auto & following_lanelet : routing_graph_ptr->previous(conflicting_lanelet)) {
+      adjacent_followings.push_back(following_lanelet);
     }
   }
+
   // final objective lanelets
   lanelet::ConstLanelets detection_lanelets;
   lanelet::ConstLanelets conflicting_ex_ego_lanelets;
@@ -477,11 +476,9 @@ IntersectionLanelets getObjectiveLanelets(
           continue;
         }
         detection_lanelets.push_back(conflicting_lanelet);
-        if (!adjacent_followings.empty()) {
-          for (const auto & adjacent_following : adjacent_followings) {
-            detection_lanelets.push_back(adjacent_following);
-          }
-        }
+      }
+      for (const auto & adjacent_following : adjacent_followings) {
+        detection_lanelets.push_back(adjacent_following);
       }
     } else {
       // otherwise we need to know the priority from RightOfWay
