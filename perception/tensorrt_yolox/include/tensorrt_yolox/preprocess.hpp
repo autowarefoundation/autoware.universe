@@ -23,6 +23,13 @@
 
 namespace tensorrt_yolox
 {
+struct Roi {
+  int x;
+  int y;
+  int w;
+  int h;
+};
+
 /**
  * @brief Resize a image using bilinear interpolation on gpus
  * @param[out] dst Resized image

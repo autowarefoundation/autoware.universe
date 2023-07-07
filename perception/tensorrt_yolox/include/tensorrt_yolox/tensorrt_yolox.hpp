@@ -244,6 +244,11 @@ private:
 
   int src_width_;
   int src_height_;
+
+  // host pointer for ROI
+  CudaUniquePtrHost<Roi[]> roi_h_;
+  // device pointer for ROI
+  CudaUniquePtr<Roi[]> roi_d_;
 };
 
 }  // namespace tensorrt_yolox
