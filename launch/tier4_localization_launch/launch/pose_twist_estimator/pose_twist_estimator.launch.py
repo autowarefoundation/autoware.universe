@@ -67,35 +67,39 @@ def launch_gyro_odometer():
     )
     return gyro_odometer_launcher
 
+def launch_eagleye(mode):
+    return None
 
 def launch_setup(context, *args, **kwargs):
     pose_sources = LaunchConfiguration("pose_sources").perform(context).split(',')
     twist_sources = LaunchConfiguration("twist_sources").perform(context).split(',')
-    pose_twist_sources = LaunchConfiguration("pose_twist_sources").perform(context).split(',')
 
-    # Namespace: /localization/pose_estimator
-    pose_group_actions = [PushRosNamespace('pose_estimator')]
-    for source in pose_sources:
-        if source == 'lidar':
-            pose_group_actions.append(launch_ndt_scan_matcher())
-        elif source == 'camera':
-            pose_group_actions.append(launch_yabloc())
+    pose_group_actions = [PushRosNamespace('pose_estimator')]  # Namespace: /localization/pose_estimator
+    twist_group_actions = [PushRosNamespace('twist_estimator')]  # Namespace: /localization/twist_estimator
+    pose_twist_group_actions = [PushRosNamespace('pose_twist_estimator')]  # Namespace: /localization/pose_twist_estimator
 
-    # Namespace: /localization/twist_estimator
-    twist_group_actions = [PushRosNamespace('twist_estimator')]
-    for source in twist_sources:
-        if source == 'gyro_odom':
-            twist_group_actions.append(launch_gyro_odometer())
-        elif source == 'imu_odom_gnss':
-            # Launch Eagleye with twist
-            raise NotImplementedError
+    # ndt_scan_matcher: pose_estimator
+    if 'lidar' in pose_sources:
+        pose_group_actions.append(launch_ndt_scan_matcher())
 
-    # Namespace: /localization/pose_twist_estimator
-    pose_twist_group_actions = [PushRosNamespace('pose_twist_estimator')]
-    for source in pose_twist_sources:
-        if source == 'imu_odom_gnss':
-            # Launch Eagleye with pose+twist
-            raise NotImplementedError
+    # yabloc: pose_estimator
+    if 'camera' in pose_sources:
+        pose_group_actions.append(launch_yabloc())
+
+    # gyro_odometer: twist_estimator
+    if 'gyro_odom' in twist_sources:
+        twist_group_actions.append(launch_gyro_odometer())
+
+    # eagleye: Could be used as sources for twist, pose, and both
+    if 'gnss' in pose_sources and 'gnss' in twist_sources:
+        # Launch eagleye as pose_twist_estimator
+        pose_twist_group_actions.append(launch_eagleye(mode='pose_twist_estimator'))
+    elif 'gnss' in pose_sources:
+        # Launch eagleye as pose_estimator
+        pose_group_actions.append(launch_eagleye(mode='pose_estimator'))
+    elif 'gnss' in twist_sources:
+        # Launch eagleye as twist_estimator
+        twist_group_actions.append(launch_eagleye(mode='twist_estimator'))
 
     return [
         GroupAction(pose_group_actions),
@@ -114,7 +118,6 @@ def generate_launch_description():
 
     add_launch_arg("pose_sources", "lidar", "TO BE FILLED"),
     add_launch_arg("twist_sources", "gyro_odom", "TO BE FILLED"),
-    add_launch_arg("pose_twist_sources", "imu_odom", "TO BE FILLED"),
 
     ### TO BE DELETED ### 
     add_launch_arg(
