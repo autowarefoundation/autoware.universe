@@ -1001,7 +1001,7 @@ Polygon2d generateStuckVehicleDetectAreaPolygon(
 
 bool checkAngleForTargetLanelets(
   const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
-  const double detection_area_angle_thr, const double margin)
+  const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle, const double margin)
 {
   for (const auto & ll : target_lanelets) {
     if (!lanelet::utils::isInLanelet(pose, ll, margin)) {
@@ -1010,10 +1010,15 @@ bool checkAngleForTargetLanelets(
     const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
     const double pose_angle = tf2::getYaw(pose.orientation);
     const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle);
-    if (
-      std::fabs(angle_diff) < detection_area_angle_thr / 2 ||
-      std::fabs(angle_diff) > detection_area_angle_thr) {
-      return true;
+    if (consider_wrong_direction_vehicle) {
+      if (std::fabs(angle_diff) > 1.57 ||
+          std::fabs(angle_diff) < detection_area_angle_thr) {
+        return true;
+      }
+    } else {
+      if (std::fabs(angle_diff) < detection_area_angle_thr) {
+        return true;
+      }
     }
   }
   return false;
