@@ -77,8 +77,9 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
     RCLCPP_ERROR(this->get_logger(), "Could not find tlr id");
   }
 
-  const tensorrt_common::BuildConfig build_config = {
-    "MinMax", -1, false, false, false, 0.0};
+  const tensorrt_common::BuildConfig build_config =
+    tensorrt_common::BuildConfig("MinMax", -1, false, false, false, 0.0);
+
   const bool cuda_preprocess = true;
   const std::string calib_image_list = "";
   const double scale = 1.0;
