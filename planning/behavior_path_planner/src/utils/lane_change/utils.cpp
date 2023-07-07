@@ -1186,16 +1186,16 @@ ExtendedPredictedObject transform(
   extended_object.initial_twist = object.kinematics.initial_twist_with_covariance;
   extended_object.initial_acceleration = object.kinematics.initial_acceleration_with_covariance;
 
-  const auto & time_resolution = lane_change_parameter.prediction_time_resolution;
+  const auto & time_resolution = lane_change_parameters.prediction_time_resolution;
   const auto & check_at_prepare_phase =
-    lane_change_parameter.enable_prepare_segment_collision_check;
+    lane_change_parameters.enable_prepare_segment_collision_check;
   const auto & prepare_duration = common_parameters.lane_change_prepare_duration;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
 
   extended_object.predicted_path.resize(object.kinematics.predicted_paths.size());
   for (size_t i = 0; i < object.kinematics.predicted_paths.size(); ++i) {
-    const double end_time = predicted_path.time_step * predicted_path.path.size();
     const auto & predicted_path = object.kinematics.predicted_paths.at(i);
+    const double end_time = predicted_path.time_step * predicted_path.path.size();
     extended_object.predicted_path.at(i).confidence = predicted_path.confidence;
 
     // create path
@@ -1203,7 +1203,7 @@ ExtendedPredictedObject transform(
          t += time_resolution) {
       const auto obj_pose = perception_utils::calcInterpolatedPose(predicted_path, t);
       if (obj_pose) {
-        const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, target_object.shape);
+        const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, object.shape);
         extended_object.predicted_path.at(i).path.emplace_back(t, obj_pose, obj_polygon);
       }
     }
@@ -1217,11 +1217,11 @@ LaneChangeTargetObjects getTargetObjects(
   const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
   const Pose & current_pose, const RouteHandler & route_handler,
   const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameter)
+  const LaneChangeParameters & lane_change_parameters)
 {
   const auto target_obj_index = filterObject(
     objects, current_lanes, target_lanes, target_backward_lanes, current_pose, route_handler,
-    lane_change_parameter);
+    lane_change_parameters);
 
   LaneChangeTargetObjects target_objects;
   target_objects.current_lane.reserve(target_obj_index.current_lane.size());
@@ -1234,5 +1234,21 @@ LaneChangeTargetObjects getTargetObjects(
       transform(objects.at(i), common_parameters, lane_change_parameters);
     target_objects.current_lane.push_back(extended_object);
   }
+
+  // objects in target lane
+  for (const auto & obj_idx : target_obj_index.target_lane) {
+    const auto extended_object =
+      transform(objects.at(i), common_parameters, lane_change_parameters);
+    target_objects.target_lane.push_back(extended_object);
+  }
+
+  // objects in other lane
+  for (const auto & obj_idx : target_obj_index.other_lane) {
+    const auto extended_object =
+      transform(objects.at(i), common_parameters, lane_change_parameters);
+    target_objects.other_lane.push_back(extended_object);
+  }
+
+  return target_objects;
 }
 }  // namespace behavior_path_planner::utils::lane_change
