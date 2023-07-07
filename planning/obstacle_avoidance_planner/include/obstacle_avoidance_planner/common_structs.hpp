@@ -19,6 +19,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
+#include <boost/optional.hpp>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -97,6 +99,7 @@ struct DebugData
   std::vector<std::vector<geometry_msgs::msg::Pose>> vehicle_circles_pose;
 
   std::vector<TrajectoryPoint> extended_traj_points;
+  boost::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area = boost::none;
 };
 
 struct TrajectoryParam

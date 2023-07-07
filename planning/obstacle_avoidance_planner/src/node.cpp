@@ -448,6 +448,7 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   }();
 
   if (first_outside_idx) {
+    debug_data_ptr_->stop_pose_by_drivable_area = optimized_traj_points.at(i).pose;
     const auto stop_idx = [&]() {
       const auto dist = tier4_autoware_utils::calcDistance2d(
         optimized_traj_points.at(0), optimized_traj_points.at(*first_outside_idx));
@@ -466,6 +467,7 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
       for (size_t i = stop_idx; i < optimized_traj_points.size(); ++i) {
         optimized_traj_points.at(i).longitudinal_velocity_mps = 0.0;
       }
+      
     }
   }
 
