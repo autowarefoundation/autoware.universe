@@ -446,7 +446,6 @@ IntersectionLanelets getObjectiveLanelets(
   // get conflicting lanes on assigned lanelet
   const auto & conflicting_lanelets =
     lanelet::utils::getConflictingLanelets(routing_graph_ptr, assigned_lanelet);
-  const auto & adjacent_followings = routing_graph_ptr->following(conflicting_lanelets.back());
 
   // final objective lanelets
   lanelet::ConstLanelets detection_lanelets;
@@ -463,6 +462,8 @@ IntersectionLanelets getObjectiveLanelets(
   } else {
     if (consider_wrong_direction_vehicle) {
       for (const auto & conflicting_lanelet : conflicting_lanelets) {
+        const auto & adjacent_followings =
+          routing_graph_ptr->following(conflicting_lanelets.back());
         if (lanelet::utils::contains(yield_lanelets, conflicting_lanelet)) {
           continue;
         }
