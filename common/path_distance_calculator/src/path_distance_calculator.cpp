@@ -15,7 +15,6 @@
 #include "path_distance_calculator.hpp"
 
 #include <motion_utils/motion_utils.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 #include <chrono>
