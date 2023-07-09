@@ -10,4 +10,8 @@ Output is [autoware_auto_perception_msgs/msg/TrackedObjects](https://gitlab.com/
 
 ### Details
 
+### Tracker Models
+
+We asign a tracker model to each object class.
+
 ## References
