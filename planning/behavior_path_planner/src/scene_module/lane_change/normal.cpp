@@ -155,7 +155,6 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
 
 void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
 {
-  const auto & common_parameters = planner_data_->parameters;
   const auto & dp = planner_data_->drivable_area_expansion_parameters;
 
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
@@ -170,10 +169,6 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
   current_drivable_area_info.drivable_lanes = expanded_lanes;
   output.drivable_area_info =
     utils::combineDrivableAreaInfo(current_drivable_area_info, prev_drivable_area_info_);
-
-  // for old architecture
-  utils::generateDrivableArea(
-    *output.path, expanded_lanes, false, common_parameters.vehicle_length, planner_data_);
 }
 
 void NormalLaneChange::insertStopPoint(PathWithLaneId & path)
