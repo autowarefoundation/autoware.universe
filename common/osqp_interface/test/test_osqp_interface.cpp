@@ -73,20 +73,18 @@ TEST(TestOsqpInterface, BasicQp)
   {
     // Define problem during optimization
     autoware::common::osqp::OSQPInterface osqp;
-    std::tuple<std::vector<double>, std::vector<double>, int, int, int> result =
-      osqp.optimize(P, A, q, l, u);
+    const auto result = osqp.optimize(P, A, q, l, u);
     check_result(result);
   }
 
   {
     // Define problem during initialization
     autoware::common::osqp::OSQPInterface osqp(P, A, q, l, u, 1e-6);
-    std::tuple<std::vector<double>, std::vector<double>, int, int, int> result = osqp.optimize();
+    const auto result = osqp.optimize();
     check_result(result);
   }
 
   {
-    std::tuple<std::vector<double>, std::vector<double>, int, int, int> result;
     // Dummy initial problem
     Eigen::MatrixXd P_ini = Eigen::MatrixXd::Zero(2, 2);
     Eigen::MatrixXd A_ini = Eigen::MatrixXd::Zero(4, 2);
@@ -98,24 +96,23 @@ TEST(TestOsqpInterface, BasicQp)
 
     // Redefine problem before optimization
     osqp.initializeProblem(P, A, q, l, u);
-    result = osqp.optimize();
+    const auto result = osqp.optimize();
     check_result(result);
   }
 
   {
     // Define problem during initialization with csc matrix
-    CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
-    CSC_Matrix A_csc = calCSCMatrix(A);
+    const CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
+    const CSC_Matrix A_csc = calCSCMatrix(A);
     autoware::common::osqp::OSQPInterface osqp(P_csc, A_csc, q, l, u, 1e-6);
-    std::tuple<std::vector<double>, std::vector<double>, int, int, int> result = osqp.optimize();
+    const auto result = osqp.optimize();
     check_result(result);
   }
 
   {
-    std::tuple<std::vector<double>, std::vector<double>, int, int, int> result;
     // Dummy initial problem with csc matrix
-    CSC_Matrix P_ini_csc = calCSCMatrixTrapezoidal(Eigen::MatrixXd::Zero(2, 2));
-    CSC_Matrix A_ini_csc = calCSCMatrix(Eigen::MatrixXd::Zero(4, 2));
+    const CSC_Matrix P_ini_csc = calCSCMatrixTrapezoidal(Eigen::MatrixXd::Zero(2, 2));
+    const CSC_Matrix A_ini_csc = calCSCMatrix(Eigen::MatrixXd::Zero(4, 2));
     std::vector<double> q_ini(2, 0.0);
     std::vector<double> l_ini(4, 0.0);
     std::vector<double> u_ini(4, 0.0);
@@ -123,19 +120,18 @@ TEST(TestOsqpInterface, BasicQp)
     osqp.optimize();
 
     // Redefine problem before optimization
-    CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
-    CSC_Matrix A_csc = calCSCMatrix(A);
+    const CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
+    const CSC_Matrix A_csc = calCSCMatrix(A);
     osqp.initializeProblem(P_csc, A_csc, q, l, u);
-    result = osqp.optimize();
+    const auto result = osqp.optimize();
     check_result(result);
   }
 
   // add warm startup
   {
-    std::tuple<std::vector<double>, std::vector<double>, int, int, int> result;
     // Dummy initial problem with csc matrix
-    CSC_Matrix P_ini_csc = calCSCMatrixTrapezoidal(Eigen::MatrixXd::Zero(2, 2));
-    CSC_Matrix A_ini_csc = calCSCMatrix(Eigen::MatrixXd::Zero(4, 2));
+    const CSC_Matrix P_ini_csc = calCSCMatrixTrapezoidal(Eigen::MatrixXd::Zero(2, 2));
+    const CSC_Matrix A_ini_csc = calCSCMatrix(Eigen::MatrixXd::Zero(4, 2));
     std::vector<double> q_ini(2, 0.0);
     std::vector<double> l_ini(4, 0.0);
     std::vector<double> u_ini(4, 0.0);
@@ -143,10 +139,10 @@ TEST(TestOsqpInterface, BasicQp)
     osqp.optimize();
 
     // Redefine problem before optimization
-    CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
-    CSC_Matrix A_csc = calCSCMatrix(A);
+    const CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
+    const CSC_Matrix A_csc = calCSCMatrix(A);
     osqp.initializeProblem(P_csc, A_csc, q, l, u);
-    result = osqp.optimize();
+    auto result = osqp.optimize();
     check_result(result);
 
     osqp.updateCheckTermination(1);

@@ -24,6 +24,7 @@
 
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -42,28 +43,11 @@ constexpr c_float INF = 1e30;
  */
 class OSQP_INTERFACE_PUBLIC OSQPInterface
 {
-private:
-  std::unique_ptr<OSQPWorkspace, std::function<void(OSQPWorkspace *)>> m_work;
-  std::unique_ptr<OSQPSettings> m_settings;
-  std::unique_ptr<OSQPData> m_data;
-  // store last work info since work is cleaned up at every execution to prevent memory leak.
-  OSQPInfo m_latest_work_info;
-  // Number of parameters to optimize
-  int64_t m_param_n;
-  // Flag to check if the current work exists
-  bool m_work_initialized = false;
-  // Exitflag
-  int64_t m_exitflag;
-
-  // Runs the solver on the stored problem.
-  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> solve();
-
-  static void OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept;
-
 public:
   /// \brief Constructor without problem formulation
   explicit OSQPInterface(
-    const c_float eps_abs = std::numeric_limits<c_float>::epsilon(), const bool polish = true);
+    const c_float eps_abs = std::numeric_limits<c_float>::epsilon(), const bool polish = true,
+    const bool warm_start = true);
   /// \brief Constructor with problem setup
   /// \param P: (n,n) matrix defining relations between parameters.
   /// \param A: (m,n) matrix defining parameter constraints relative to the lower and upper bound.
@@ -73,11 +57,30 @@ public:
   /// \param eps_abs: Absolute convergence tolerance.
   OSQPInterface(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
-    const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs);
+    const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
+    const bool polish = true, const bool warm_start = true);
   OSQPInterface(
     const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<double> & q,
-    const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs);
-  ~OSQPInterface();
+    const std::vector<double> & l, const std::vector<double> & u, const c_float eps_abs,
+    const bool polish = true, const bool warm_start = true);
+  ~OSQPInterface() = default;
+
+  static void OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept;
+  static void OSQPDataDeleter(OSQPData * ptr) noexcept;
+  static void OSQPSettingsDeleter(OSQPSettings * ptr) noexcept;
+
+  /// \brief Converts the input data and sets up the workspace object.
+  /// \param P (n,n) matrix defining relations between parameters.
+  /// \param A (m,n) matrix defining parameter constraints relative to the lower and upper bound.
+  /// \param q (n) vector defining the linear cost of the problem.
+  /// \param l (m) vector defining the lower bound problem constraint.
+  /// \param u (m) vector defining the upper bound problem constraint.
+  int64_t initializeProblem(
+    const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
+    const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start = true);
+  int64_t initializeProblem(
+    const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<double> & q,
+    const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start = true);
 
   /****************
    * OPTIMIZATION
@@ -100,7 +103,8 @@ public:
   /// \details        std::vector<float> param = std::get<0>(result);
   /// \details        double x_0 = param[0];
   /// \details        double x_1 = param[1];
-  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> optimize();
+  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> optimize(
+    const bool do_warm_start = true);
 
   /// \brief Solves convex quadratic programs (QPs) using the OSQP solver.
   /// \return The function returns a tuple containing the solution as two float vectors.
@@ -120,43 +124,12 @@ public:
   /// \details        double x_1 = param[1];
   std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> optimize(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
-    const std::vector<double> & l, const std::vector<double> & u);
-
-  /// \brief Converts the input data and sets up the workspace object.
-  /// \param P (n,n) matrix defining relations between parameters.
-  /// \param A (m,n) matrix defining parameter constraints relative to the lower and upper bound.
-  /// \param q (n) vector defining the linear cost of the problem.
-  /// \param l (m) vector defining the lower bound problem constraint.
-  /// \param u (m) vector defining the upper bound problem constraint.
-  int64_t initializeProblem(
-    const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
-    const std::vector<double> & l, const std::vector<double> & u);
-  int64_t initializeProblem(
-    CSC_Matrix P, CSC_Matrix A, const std::vector<double> & q, const std::vector<double> & l,
-    const std::vector<double> & u);
+    const std::vector<double> & l, const std::vector<double> & u, const bool do_warm_start = true);
 
   // Setter functions for warm start
   bool setWarmStart(
     const std::vector<double> & primal_variables, const std::vector<double> & dual_variables);
-  bool setPrimalVariables(const std::vector<double> & primal_variables);
-  bool setDualVariables(const std::vector<double> & dual_variables);
 
-  // Updates problem parameters while keeping solution in memory.
-  //
-  // Args:
-  //   P_new: (n,n) matrix defining relations between parameters.
-  //   A_new: (m,n) matrix defining parameter constraints relative to the lower and upper bound.
-  //   q_new: (n) vector defining the linear cost of the problem.
-  //   l_new: (m) vector defining the lower bound problem constraint.
-  //   u_new: (m) vector defining the upper bound problem constraint.
-  void updateP(const Eigen::MatrixXd & P_new);
-  void updateCscP(const CSC_Matrix & P_csc);
-  void updateA(const Eigen::MatrixXd & A_new);
-  void updateCscA(const CSC_Matrix & A_csc);
-  void updateQ(const std::vector<double> & q_new);
-  void updateL(const std::vector<double> & l_new);
-  void updateU(const std::vector<double> & u_new);
-  void updateBounds(const std::vector<double> & l_new, const std::vector<double> & u_new);
   void updateEpsAbs(const double eps_abs);
   void updateEpsRel(const double eps_rel);
   void updateMaxIter(const int iter);
@@ -191,6 +164,47 @@ public:
   inline int64_t getExitFlag() const { return m_exitflag; }
 
   void logUnsolvedStatus(const std::string & prefix_message = "") const;
+
+private:
+  std::unique_ptr<OSQPWorkspace, std::function<void(OSQPWorkspace *)>> m_work;
+  std::unique_ptr<OSQPSettings, std::function<void(OSQPSettings *)>> m_settings;
+  // store last work info since work is cleaned up at every execution to prevent memory leak.
+  OSQPInfo m_latest_work_info;
+  // Number of parameters to optimize
+  int64_t m_param_n;
+  int64_t m_param_m;
+  // Exitflag
+  int64_t m_exitflag;
+  // warm start
+  const bool m_warm_start;
+  std::optional<int> m_param_n_prev;
+  std::optional<int> m_param_m_prev;
+  std::optional<std::vector<double>> m_sol_prev;
+  std::optional<std::vector<double>> m_lagrange_multiplier_prev;
+
+  // Runs the solver on the stored problem.
+  std::tuple<std::vector<double>, std::vector<double>, int64_t, int64_t, int64_t> solve(
+    const bool do_warm_start);
+  bool warmStartReady() const;
+
+  // Updates problem parameters while keeping solution in memory.
+  //
+  // Args:
+  //   P_new: (n,n) matrix defining relations between parameters.
+  //   A_new: (m,n) matrix defining parameter constraints relative to the lower and upper bound.
+  //   q_new: (n) vector defining the linear cost of the problem.
+  //   l_new: (m) vector defining the lower bound problem constraint.
+  //   u_new: (m) vector defining the upper bound problem constraint.
+  void updateP(const Eigen::MatrixXd & P_new);
+  void updateCscP(const CSC_Matrix & P_csc);
+  void updateA(const Eigen::MatrixXd & A_new);
+  void updateCscA(const CSC_Matrix & A_csc);
+  void updateQ(const std::vector<double> & q_new);
+  void updateL(const std::vector<double> & l_new);
+  void updateU(const std::vector<double> & u_new);
+  void updateBounds(const std::vector<double> & l_new, const std::vector<double> & u_new);
+  bool setPrimalVariables(const std::vector<double> & primal_variables);
+  bool setDualVariables(const std::vector<double> & dual_variables);
 };
 
 }  // namespace osqp
