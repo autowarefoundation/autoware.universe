@@ -16,9 +16,9 @@ if(BUILD_TESTING)
 
   file(GLOB_RECURSE test_files test/**/*.cpp)
 
-  ament_add_ros_isolated_gtest(test_perception_utils ${test_files})
+  ament_add_ros_isolated_gtest(test_object_recognition_utils ${test_files})
 
-  target_link_libraries(test_perception_utils
+  target_link_libraries(test_object_recognition_utils
     object_recognition_utils
   )
 endif()
