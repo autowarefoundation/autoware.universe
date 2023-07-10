@@ -76,57 +76,9 @@ enum MSG_COV_IDX {
   YAW_YAW = 35
 };
 
-// concatenate matrices vertically
-Eigen::MatrixXd stackMatricesVertically(const std::vector<Eigen::MatrixXd> & matrices)
-{
-  int totalRows = 0;
-  int cols = -1;
-
-  // calculate total number of rows and check that all matrices have the same number of columns
-  for (const auto & matrix : matrices) {
-    totalRows += matrix.rows();
-    if (cols == -1) {
-      cols = matrix.cols();
-    } else if (cols != matrix.cols()) {
-      throw std::invalid_argument("All matrices must have the same number of columns.");
-    }
-  }
-
-  Eigen::MatrixXd result(totalRows, cols);
-
-  int currentRow = 0;
-  for (const auto & matrix : matrices) {
-    // copy each matrix into result
-    result.block(currentRow, 0, matrix.rows(), cols) = matrix;
-    currentRow += matrix.rows();
-  }
-  return result;
-}
-
-// concatenate matrices diagonally
-Eigen::MatrixXd stackMatricesDiagonally(const std::vector<Eigen::MatrixXd> & matrices)
-{
-  int dimension = 0;
-
-  // calc dimension of result matrix
-  for (const auto & matrix : matrices) {
-    if (matrix.rows() != matrix.cols()) {
-      throw std::invalid_argument("All matrices must be square.");
-    }
-    dimension += matrix.rows();
-  }
-
-  Eigen::MatrixXd result = Eigen::MatrixXd::Zero(dimension, dimension);
-
-  int currentDimension = 0;
-  for (const auto & matrix : matrices) {
-    // copy each matrix into result
-    result.block(currentDimension, currentDimension, matrix.rows(), matrix.cols()) = matrix;
-    currentDimension += matrix.rows();
-  }
-
-  return result;
-}
+// matrix concatenate
+Eigen::MatrixXd stackMatricesVertically(const std::vector<Eigen::MatrixXd> & matrices);
+Eigen::MatrixXd stackMatricesDiagonally(const std::vector<Eigen::MatrixXd> & matrices);
 
 }  // namespace utils
 
