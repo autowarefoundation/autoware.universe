@@ -163,7 +163,7 @@ double calcMinimumLongitudinalLength(
   return params.longitudinal_velocity_delta_time * std::abs(max_vel) + lon_threshold;
 }
 
-boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygon(
+boost::optional<PoseWithPolygon> getEgoExpectedPoseAndConvertToPolygon(
   const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info)
 {
   const auto interpolated_pose = perception_utils::calcInterpolatedPose(pred_path, current_time);
@@ -180,7 +180,7 @@ boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygo
   const auto ego_polygon =
     tier4_autoware_utils::toFootprint(*interpolated_pose, base_to_front, base_to_rear, width);
 
-  return std::make_pair(*interpolated_pose, ego_polygon);
+  return PoseWithPolygon{*interpolated_pose, ego_polygon};
 }
 
 bool checkCollision(
@@ -209,8 +209,8 @@ bool checkCollision(
     if (!ego_pose_with_polygon) {
       continue;
     }
-    const auto & ego_pose = ego_pose_with_polygon->first;
-    const auto & ego_polygon = ego_pose_with_polygon->second;
+    const auto & ego_pose = ego_pose_with_polygon->pose;
+    const auto & ego_polygon = ego_pose_with_polygon->poly;
 
     {
       debug.lerped_path.push_back(ego_pose);
