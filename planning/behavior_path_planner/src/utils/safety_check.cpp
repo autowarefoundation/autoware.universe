@@ -163,7 +163,7 @@ double calcMinimumLongitudinalLength(
   return params.longitudinal_velocity_delta_time * std::abs(max_vel) + lon_threshold;
 }
 
-boost::optional<PoseWithPolygon> getEgoExpectedPoseAndConvertToPolygon(
+boost::optional<PoseWithPolygon> getEgoInterpolatedPoseWithPolygon(
   const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info)
 {
   const auto interpolated_pose = perception_utils::calcInterpolatedPose(pred_path, current_time);
@@ -214,7 +214,7 @@ bool checkCollision(
     // get ego information at current time
     const auto & ego_vehicle_info = common_parameters.vehicle_info;
     const auto ego_pose_with_polygon =
-      getEgoExpectedPoseAndConvertToPolygon(predicted_ego_path, current_time, ego_vehicle_info);
+      getEgoInterpolatedPoseWithPolygon(predicted_ego_path, current_time, ego_vehicle_info);
     if (!ego_pose_with_polygon) {
       continue;
     }

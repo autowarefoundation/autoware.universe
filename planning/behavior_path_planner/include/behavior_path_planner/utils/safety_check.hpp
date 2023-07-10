@@ -72,7 +72,7 @@ double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
   const BehaviorPathPlannerParameters & params);
 
-boost::optional<PoseWithPolygon> getEgoExpectedPoseAndConvertToPolygon(
+boost::optional<PoseWithPolygon> getEgoInterpolatedPoseWithPolygon(
   const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info);
 
 /**
