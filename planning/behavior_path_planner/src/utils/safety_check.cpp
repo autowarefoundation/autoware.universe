@@ -16,7 +16,7 @@
 
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "perception_utils/predicted_path_utils.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 
 namespace behavior_path_planner::utils::safety_check
 {
@@ -189,7 +189,8 @@ bool isSafeInLaneletCollisionCheck(
       continue;
     }
 
-    const auto obj_pose = perception_utils::calcInterpolatedPose(target_object_path, current_time);
+    const auto obj_pose =
+      object_recognition_utils::calcInterpolatedPose(target_object_path, current_time);
     if (!obj_pose) {
       continue;
     }
