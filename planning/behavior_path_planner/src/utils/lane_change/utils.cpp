@@ -424,12 +424,6 @@ PathSafetyStatus isLaneChangePathSafe(
   return path_safety_status;
 }
 
-bool isObjectIndexIncluded(
-  const size_t & index, const std::vector<size_t> & dynamic_objects_indices)
-{
-  return std::count(dynamic_objects_indices.begin(), dynamic_objects_indices.end(), index) != 0;
-}
-
 PathWithLaneId getTargetSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanelets,
   const double forward_path_length, const Pose & lane_changing_start_pose,
