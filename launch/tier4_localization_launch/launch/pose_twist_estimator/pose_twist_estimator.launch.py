@@ -45,6 +45,7 @@ def launch_ndt_scan_matcher():
             'param_file': LaunchConfiguration("ndt_scan_matcher_param_path")
         }.items()
     )
+    # TODO (kminoda): move sensing preprocessing here as well
     return ndt_scan_matcher_launcher
 
 def launch_yabloc():
