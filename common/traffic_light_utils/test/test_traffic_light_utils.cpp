@@ -36,6 +36,4 @@ TEST(object_classification, test_getHighestProbLabel)
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using traffic_light_utils::getHighestProbLabel;
-
 }
-

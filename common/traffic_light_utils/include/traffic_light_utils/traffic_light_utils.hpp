@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
-#define PERCEPTION_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
+#ifndef TRAFFIC_LIGHT_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
+#define TRAFFIC_LIGHT_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
 
 #include "tier4_perception_msgs/msg/traffic_light_element.hpp"
 #include "tier4_perception_msgs/msg/traffic_light_roi.hpp"
@@ -49,4 +49,4 @@ tf2::Vector3 getTrafficLightCenter(const lanelet::ConstLineString3d & traffic_li
 
 }  // namespace perception_utils
 
-#endif  // PERCEPTION_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
+#endif  // TRAFFIC_LIGHT_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
