@@ -221,6 +221,14 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       &debug_marker_array, now);
   }
 
+  size_t j{0};
+  for (const auto & p : debug_data_.occlusion_polygons) {
+    appendMarkerArray(
+      debug::createPolygonMarkerArray(
+        p, "occlusion_polygons", lane_id_ + j++, now, 0.3, 0.0, 0.0, 1.0, 0.0, 0.0),
+      &debug_marker_array, now);
+  }
+
   return debug_marker_array;
 }
 
