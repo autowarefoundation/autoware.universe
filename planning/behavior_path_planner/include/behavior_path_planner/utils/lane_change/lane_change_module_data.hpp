@@ -27,14 +27,20 @@
 namespace behavior_path_planner
 {
 
-struct PoseWithPolygonStamped
+struct PoseWithPolygon
 {
-  double time;
   Pose pose;
   Polygon2d poly;
 
+  PoseWithPolygon(const Pose & pose, const Polygon2d & poly) : pose(pose), poly(poly) {}
+};
+
+struct PoseWithPolygonStamped : public PoseWithPolygon
+{
+  double time;
+
   PoseWithPolygonStamped(const double time, const Pose & pose, const Polygon2d & poly)
-  : time(time), pose(pose), poly(poly)
+  : PoseWithPolygon(pose, poly), time(time)
   {
   }
 };
