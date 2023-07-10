@@ -46,7 +46,7 @@ def launch_setup(context, *args, **kwargs):
             'ekf_enabled': 'true',
             'yabloc_enabled': yabloc_enabled,
             'stop_check_enabled': stop_check_enabled,
-            'param_file': LaunchConfiguration("pose_initializer_param_path"),
+            'config_file': LaunchConfiguration("pose_initializer_param_path"),
             'sub_gnss_pose_cov': '/sensing/gnss/pose_with_covariance',
         }.items()
     )
