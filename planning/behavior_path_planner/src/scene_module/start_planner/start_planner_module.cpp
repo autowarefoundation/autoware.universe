@@ -156,7 +156,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
   if (IsGoalBehindOfEgoInSameRouteSegment()) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
-      return generateStopOutput();
+    return generateStopOutput();
   }
 
   if (isWaitingApproval()) {
@@ -303,7 +303,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   if (IsGoalBehindOfEgoInSameRouteSegment()) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
-      return generateStopOutput();
+    return generateStopOutput();
   }
 
   BehaviorModuleOutput output;
