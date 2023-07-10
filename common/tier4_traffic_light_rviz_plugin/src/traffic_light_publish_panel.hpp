@@ -36,7 +36,7 @@ namespace rviz_plugins
 {
 
 using autoware_auto_mapping_msgs::msg::HADMapBin;
-using autoware_perception_msgs::msg::TrafficLightElement;
+using autoware_perception_msgs::msg::TrafficSignalElement;
 using autoware_perception_msgs::msg::TrafficSignal;
 using autoware_perception_msgs::msg::TrafficSignalArray;
 class TrafficLightPublishPanel : public rviz_common::Panel

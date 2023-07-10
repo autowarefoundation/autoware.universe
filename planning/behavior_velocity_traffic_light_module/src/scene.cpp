@@ -344,7 +344,7 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
 bool TrafficLightModule::isTrafficSignalStop(
   const autoware_perception_msgs::msg::TrafficSignal & tl_state) const
 {
-  if (hasTrafficLightCircleColor(tl_state, TrafficLightElement::GREEN)) {
+  if (hasTrafficLightCircleColor(tl_state, TrafficSignalElement::GREEN)) {
     return false;
   }
 
@@ -354,14 +354,17 @@ bool TrafficLightModule::isTrafficSignalStop(
     return true;
   }
   if (
-    turn_direction == "right" && hasTrafficLightShape(tl_state, TrafficLightElement::RIGHT_ARROW)) {
-    return false;
-  }
-  if (turn_direction == "left" && hasTrafficLightShape(tl_state, TrafficLightElement::LEFT_ARROW)) {
+    turn_direction == "right" &&
+    hasTrafficLightShape(tl_state, TrafficSignalElement::RIGHT_ARROW)) {
     return false;
   }
   if (
-    turn_direction == "straight" && hasTrafficLightShape(tl_state, TrafficLightElement::UP_ARROW)) {
+    turn_direction == "left" && hasTrafficLightShape(tl_state, TrafficSignalElement::LEFT_ARROW)) {
+    return false;
+  }
+  if (
+    turn_direction == "straight" &&
+    hasTrafficLightShape(tl_state, TrafficSignalElement::UP_ARROW)) {
     return false;
   }
 
@@ -400,7 +403,7 @@ bool TrafficLightModule::getHighestConfidenceTrafficSignal(
 
     if (
       tl_state.elements.empty() ||
-      tl_state.elements.front().color == TrafficLightElement::UNKNOWN) {
+      tl_state.elements.front().color == TrafficSignalElement::UNKNOWN) {
       reason = "TrafficLightUnknown";
       continue;
     }
@@ -472,7 +475,7 @@ bool TrafficLightModule::hasTrafficLightCircleColor(
 {
   const auto it_lamp =
     std::find_if(tl_state.elements.begin(), tl_state.elements.end(), [&lamp_color](const auto & x) {
-      return x.shape == TrafficLightElement::CIRCLE && x.color == lamp_color;
+      return x.shape == TrafficSignalElement::CIRCLE && x.color == lamp_color;
     });
 
   return it_lamp != tl_state.elements.end();

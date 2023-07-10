@@ -38,7 +38,7 @@ class TrafficLightModule : public SceneModuleInterface
 {
 public:
   using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
-  using TrafficLightElement = autoware_perception_msgs::msg::TrafficLightElement;
+  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
   enum class State { APPROACH, GO_OUT };
 
   struct DebugData

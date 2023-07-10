@@ -887,7 +887,7 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
         continue;
       }
 
-      if (lights.front().color == TrafficLightElement::RED) {
+      if (lights.front().color == TrafficSignalElement::RED) {
         return true;
       }
     }

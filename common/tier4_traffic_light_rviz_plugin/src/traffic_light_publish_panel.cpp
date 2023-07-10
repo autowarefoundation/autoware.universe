@@ -139,47 +139,47 @@ void TrafficLightPublishPanel::onSetTrafficLightState()
   const auto shape = light_shape_combo_->currentText();
   const auto status = light_status_combo_->currentText();
 
-  TrafficLightElement traffic_light;
+  TrafficSignalElement traffic_light;
   traffic_light.confidence = traffic_light_confidence_input_->value();
 
   if (color == "RED") {
-    traffic_light.color = TrafficLightElement::RED;
+    traffic_light.color = TrafficSignalElement::RED;
   } else if (color == "AMBER") {
-    traffic_light.color = TrafficLightElement::AMBER;
+    traffic_light.color = TrafficSignalElement::AMBER;
   } else if (color == "GREEN") {
-    traffic_light.color = TrafficLightElement::GREEN;
+    traffic_light.color = TrafficSignalElement::GREEN;
   } else if (color == "WHITE") {
-    traffic_light.color = TrafficLightElement::WHITE;
+    traffic_light.color = TrafficSignalElement::WHITE;
   } else if (color == "UNKNOWN") {
-    traffic_light.color = TrafficLightElement::UNKNOWN;
+    traffic_light.color = TrafficSignalElement::UNKNOWN;
   }
 
   if (shape == "CIRCLE") {
-    traffic_light.shape = TrafficLightElement::CIRCLE;
+    traffic_light.shape = TrafficSignalElement::CIRCLE;
   } else if (shape == "LEFT_ARROW") {
-    traffic_light.shape = TrafficLightElement::LEFT_ARROW;
+    traffic_light.shape = TrafficSignalElement::LEFT_ARROW;
   } else if (shape == "RIGHT_ARROW") {
-    traffic_light.shape = TrafficLightElement::RIGHT_ARROW;
+    traffic_light.shape = TrafficSignalElement::RIGHT_ARROW;
   } else if (shape == "UP_ARROW") {
-    traffic_light.shape = TrafficLightElement::UP_ARROW;
+    traffic_light.shape = TrafficSignalElement::UP_ARROW;
   } else if (shape == "DOWN_ARROW") {
-    traffic_light.shape = TrafficLightElement::DOWN_ARROW;
+    traffic_light.shape = TrafficSignalElement::DOWN_ARROW;
   } else if (shape == "DOWN_LEFT_ARROW") {
-    traffic_light.shape = TrafficLightElement::DOWN_LEFT_ARROW;
+    traffic_light.shape = TrafficSignalElement::DOWN_LEFT_ARROW;
   } else if (shape == "DOWN_RIGHT_ARROW") {
-    traffic_light.shape = TrafficLightElement::DOWN_RIGHT_ARROW;
+    traffic_light.shape = TrafficSignalElement::DOWN_RIGHT_ARROW;
   } else if (shape == "UNKNOWN") {
-    traffic_light.shape = TrafficLightElement::UNKNOWN;
+    traffic_light.shape = TrafficSignalElement::UNKNOWN;
   }
 
   if (status == "SOLID_OFF") {
-    traffic_light.status = TrafficLightElement::SOLID_OFF;
+    traffic_light.status = TrafficSignalElement::SOLID_OFF;
   } else if (status == "SOLID_ON") {
-    traffic_light.status = TrafficLightElement::SOLID_ON;
+    traffic_light.status = TrafficSignalElement::SOLID_ON;
   } else if (status == "FLASHING") {
-    traffic_light.status = TrafficLightElement::FLASHING;
+    traffic_light.status = TrafficSignalElement::FLASHING;
   } else if (status == "UNKNOWN") {
-    traffic_light.status = TrafficLightElement::UNKNOWN;
+    traffic_light.status = TrafficSignalElement::UNKNOWN;
   }
 
   TrafficSignal traffic_signal;
@@ -273,23 +273,23 @@ void TrafficLightPublishPanel::onTimer()
 
     const auto & light = signal.elements.front();
     switch (light.color) {
-      case TrafficLightElement::RED:
+      case TrafficSignalElement::RED:
         color_label->setText("RED");
         color_label->setStyleSheet("background-color: #FF0000;");
         break;
-      case TrafficLightElement::AMBER:
+      case TrafficSignalElement::AMBER:
         color_label->setText("AMBER");
         color_label->setStyleSheet("background-color: #FFBF00;");
         break;
-      case TrafficLightElement::GREEN:
+      case TrafficSignalElement::GREEN:
         color_label->setText("GREEN");
         color_label->setStyleSheet("background-color: #7CFC00;");
         break;
-      case TrafficLightElement::WHITE:
+      case TrafficSignalElement::WHITE:
         color_label->setText("WHITE");
         color_label->setStyleSheet("background-color: #FFFFFF;");
         break;
-      case TrafficLightElement::UNKNOWN:
+      case TrafficSignalElement::UNKNOWN:
         color_label->setText("UNKNOWN");
         color_label->setStyleSheet("background-color: #808080;");
         break;
@@ -301,28 +301,28 @@ void TrafficLightPublishPanel::onTimer()
     shape_label->setAlignment(Qt::AlignCenter);
 
     switch (light.shape) {
-      case TrafficLightElement::CIRCLE:
+      case TrafficSignalElement::CIRCLE:
         shape_label->setText("CIRCLE");
         break;
-      case TrafficLightElement::LEFT_ARROW:
+      case TrafficSignalElement::LEFT_ARROW:
         shape_label->setText("LEFT_ARROW");
         break;
-      case TrafficLightElement::RIGHT_ARROW:
+      case TrafficSignalElement::RIGHT_ARROW:
         shape_label->setText("RIGHT_ARROW");
         break;
-      case TrafficLightElement::UP_ARROW:
+      case TrafficSignalElement::UP_ARROW:
         shape_label->setText("UP_ARROW");
         break;
-      case TrafficLightElement::DOWN_ARROW:
+      case TrafficSignalElement::DOWN_ARROW:
         shape_label->setText("DOWN_ARROW");
         break;
-      case TrafficLightElement::DOWN_LEFT_ARROW:
+      case TrafficSignalElement::DOWN_LEFT_ARROW:
         shape_label->setText("DOWN_LEFT_ARROW");
         break;
-      case TrafficLightElement::DOWN_RIGHT_ARROW:
+      case TrafficSignalElement::DOWN_RIGHT_ARROW:
         shape_label->setText("DOWN_RIGHT_ARROW");
         break;
-      case TrafficLightElement::UNKNOWN:
+      case TrafficSignalElement::UNKNOWN:
         shape_label->setText("UNKNOWN");
         break;
       default:
@@ -333,16 +333,16 @@ void TrafficLightPublishPanel::onTimer()
     status_label->setAlignment(Qt::AlignCenter);
 
     switch (light.status) {
-      case TrafficLightElement::SOLID_OFF:
+      case TrafficSignalElement::SOLID_OFF:
         status_label->setText("SOLID_OFF");
         break;
-      case TrafficLightElement::SOLID_ON:
+      case TrafficSignalElement::SOLID_ON:
         status_label->setText("SOLID_ON");
         break;
-      case TrafficLightElement::FLASHING:
+      case TrafficSignalElement::FLASHING:
         status_label->setText("FLASHING");
         break;
-      case TrafficLightElement::UNKNOWN:
+      case TrafficSignalElement::UNKNOWN:
         status_label->setText("UNKNOWN");
         break;
       default:
