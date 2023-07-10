@@ -185,8 +185,7 @@ boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygo
 
 bool checkCollision(
   const PathWithLaneId & planned_path, const PredictedPath & predicted_ego_path,
-  const VehicleInfo & ego_info, const double ego_current_velocity,
-  const ExtendedPredictedObject & target_object,
+  const double ego_current_velocity, const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
   const double rear_object_deceleration, CollisionCheckDebug & debug, const double prepare_duration,
@@ -198,7 +197,7 @@ bool checkCollision(
   const auto & object_velocity = target_object.initial_twist.twist.linear.x;
 
   for (const auto & obj_pose_with_poly : target_object_path.path) {
-    const auto current_time = obj_pose_with_poly.time;
+    const auto & current_time = obj_pose_with_poly.time;
 
     // ignore low velocity object during prepare duration
     const bool prepare_phase = current_time < prepare_duration;
@@ -213,8 +212,9 @@ bool checkCollision(
     const auto & obj_polygon = obj_pose_with_poly.poly;
 
     // get ego information at current time
+    const auto & ego_vehicle_info = common_parameters.vehicle_info;
     const auto ego_pose_with_polygon =
-      getEgoExpectedPoseAndConvertToPolygon(predicted_ego_path, current_time, ego_info);
+      getEgoExpectedPoseAndConvertToPolygon(predicted_ego_path, current_time, ego_vehicle_info);
     if (!ego_pose_with_polygon) {
       continue;
     }
@@ -252,7 +252,6 @@ bool checkCollision(
       calcMinimumLongitudinalLength(front_object_velocity, rear_object_velocity, common_parameters);
 
     const auto & lon_offset = std::max(rss_dist, min_lon_length);
-    const auto & ego_vehicle_info = common_parameters.vehicle_info;
     const auto & lat_margin = common_parameters.lateral_distance_max_threshold;
     const auto & extended_ego_polygon =
       is_object_front

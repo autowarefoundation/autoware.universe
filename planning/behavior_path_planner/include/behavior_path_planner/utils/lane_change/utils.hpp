@@ -173,6 +173,17 @@ PredictedPath convertToPredictedPath(
   const size_t nearest_seg_idx, const double duration, const double resolution,
   const double prepare_time, const double prepare_acc, const double lane_changing_acc);
 
+bool isParkedObject(
+  const PathWithLaneId & path, const RouteHandler & route_handler,
+  const ExtendedPredictedObject & object, const double object_check_min_road_shoulder_width,
+  const double object_shiftable_ratio_threshold,
+  const double static_object_velocity_threshold = 1.0);
+
+bool isParkedObject(
+  const lanelet::ConstLanelet & closest_lanelet, const lanelet::BasicLineString2d & boundary,
+  const ExtendedPredictedObject & object, const double buffer_to_bound,
+  const double ratio_threshold);
+
 bool passParkedObject(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
   const PathWithLaneId & current_lane_path, const std::vector<ExtendedPredictedObject> & objects,

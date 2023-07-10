@@ -79,11 +79,8 @@ boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygo
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
  * @param planned_path The predicted path of the ego vehicle.
- * @param interpolated_ego A vector of pairs of ego vehicle's pose and its polygon at each moment in
- * the future.
+ * @param predicted_ego_path Ego vehicle's predicted path
  * @param ego_current_velocity Current velocity of the ego vehicle.
- * @param check_duration The vector of times in the future at which safety check is
- * performed.(relative time in sec from the current time)
  * @param target_object The predicted object to check collision with.
  * @param target_object_path The predicted path of the target object.
  * @param common_parameters The common parameters used in behavior path planner.
@@ -97,8 +94,7 @@ boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygo
  */
 bool checkCollision(
   const PathWithLaneId & planned_path, const PredictedPath & predicted_ego_path,
-  const VehicleInfo & ego_info, const double ego_current_velocity,
-  const ExtendedPredictedObject & target_object,
+  const double ego_current_velocity, const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
   const double rear_object_deceleration, CollisionCheckDebug & debug,
