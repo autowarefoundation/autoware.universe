@@ -868,28 +868,24 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
     crosswalk_.regulatoryElementsAs<const lanelet::TrafficLight>();
 
   for (const auto & traffic_lights_reg_elem : traffic_lights_reg_elems) {
-    lanelet::ConstLineStringsOrPolygons3d traffic_lights = traffic_lights_reg_elem->trafficLights();
-    for (const auto & traffic_light : traffic_lights) {
-      const auto ll_traffic_light = static_cast<lanelet::ConstLineString3d>(traffic_light);
-      const auto traffic_signal_stamped = planner_data_->getTrafficSignal(ll_traffic_light.id());
-      if (!traffic_signal_stamped) {
-        continue;
-      }
+    const auto traffic_signal_stamped =
+      planner_data_->getTrafficSignal(traffic_lights_reg_elem->id());
+    if (!traffic_signal_stamped) {
+      return false;
+    }
 
-      if (
-        planner_param_.tl_state_timeout <
-        (clock_->now() - traffic_signal_stamped->stamp).seconds()) {
-        continue;
-      }
+    if (
+      planner_param_.tl_state_timeout < (clock_->now() - traffic_signal_stamped->stamp).seconds()) {
+      return false;
+    }
 
-      const auto & lights = traffic_signal_stamped->signal.elements;
-      if (lights.empty()) {
-        continue;
-      }
+    const auto & lights = traffic_signal_stamped->signal.elements;
+    if (lights.empty()) {
+      return false;
+    }
 
-      if (lights.front().color == TrafficSignalElement::RED) {
-        return true;
-      }
+    if (lights.front().color == TrafficSignalElement::RED) {
+      return true;
     }
   }
 

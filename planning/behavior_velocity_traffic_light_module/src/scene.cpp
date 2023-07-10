@@ -159,22 +159,6 @@ bool calcStopPointAndInsertIndex(
   }
   return false;
 }
-
-geometry_msgs::msg::Point getTrafficLightPosition(
-  const lanelet::ConstLineStringOrPolygon3d & traffic_light)
-{
-  if (!traffic_light.lineString()) {
-    throw std::invalid_argument{"Traffic light is not LineString"};
-  }
-  geometry_msgs::msg::Point tl_center;
-  auto traffic_light_ls = traffic_light.lineString().value();
-  for (const auto & tl_point : traffic_light_ls) {
-    tl_center.x += tl_point.x() / traffic_light_ls.size();
-    tl_center.y += tl_point.y() / traffic_light_ls.size();
-    tl_center.z += tl_point.z() / traffic_light_ls.size();
-  }
-  return tl_center;
-}
 }  // namespace
 
 TrafficLightModule::TrafficLightModule(
@@ -205,9 +189,8 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   const auto & self_pose = planner_data_->current_odometry;
 
-  // Get lanelet2 traffic lights and stop lines.
+  // Get lanelet2 stop lines.
   lanelet::ConstLineString3d lanelet_stop_lines = *(traffic_light_reg_elem_.stopLine());
-  lanelet::ConstLineStringsOrPolygons3d traffic_lights = traffic_light_reg_elem_.trafficLights();
 
   // Calculate stop pose and insert index
   Eigen::Vector2d stop_line_point{};
@@ -243,7 +226,7 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     first_ref_stop_path_point_index_ = stop_line_point_idx;
 
     // Check if stop is coming.
-    setSafe(!isStopSignal(traffic_lights));
+    setSafe(!isStopSignal());
     if (isActivated()) {
       is_prev_state_stop_ = false;
       return true;
@@ -271,20 +254,19 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   return false;
 }
 
-bool TrafficLightModule::isStopSignal(const lanelet::ConstLineStringsOrPolygons3d & traffic_lights)
+bool TrafficLightModule::isStopSignal()
 {
-  if (!updateTrafficSignal(traffic_lights)) {
+  if (!updateTrafficSignal()) {
     return false;
   }
 
   return isTrafficSignalStop(looking_tl_state_);
 }
 
-bool TrafficLightModule::updateTrafficSignal(
-  const lanelet::ConstLineStringsOrPolygons3d & traffic_lights)
+bool TrafficLightModule::updateTrafficSignal()
 {
   TrafficSignal signal;
-  bool found_signal = getHighestConfidenceTrafficSignal(traffic_lights, signal);
+  bool found_signal = findValidTrafficSignal(signal);
 
   if (!found_signal) {
     // Don't stop when UNKNOWN or TIMEOUT as discussed at #508
@@ -371,63 +353,27 @@ bool TrafficLightModule::isTrafficSignalStop(
   return true;
 }
 
-bool TrafficLightModule::getHighestConfidenceTrafficSignal(
-  const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
-  autoware_perception_msgs::msg::TrafficSignal & highest_confidence_tl_state)
+bool TrafficLightModule::findValidTrafficSignal(TrafficSignal & valid_traffic_signal)
 {
-  // search traffic light state
-  bool found = false;
-  double highest_confidence = 0.0;
-  std::string reason;
-  for (const auto & traffic_light : traffic_lights) {
-    // traffic light must be linestrings
-    if (!traffic_light.isLineString()) {
-      reason = "NotLineString";
-      continue;
-    }
-
-    const int id = static_cast<lanelet::ConstLineString3d>(traffic_light).id();
-    RCLCPP_DEBUG(logger_, "traffic light id: %d (on route)", id);
-    const auto tl_state_stamped = planner_data_->getTrafficSignal(id);
-    if (!tl_state_stamped) {
-      reason = "TrafficSignalNotFound";
-      continue;
-    }
-
-    const auto stamp = tl_state_stamped->stamp;
-    const auto tl_state = tl_state_stamped->signal;
-    if (!((clock_->now() - stamp).seconds() < planner_param_.tl_state_timeout)) {
-      reason = "TimeOut";
-      continue;
-    }
-
-    if (
-      tl_state.elements.empty() ||
-      tl_state.elements.front().color == TrafficSignalElement::UNKNOWN) {
-      reason = "TrafficLightUnknown";
-      continue;
-    }
-
-    if (highest_confidence < tl_state.elements.front().confidence) {
-      highest_confidence = tl_state.elements.front().confidence;
-      highest_confidence_tl_state = tl_state_stamped->signal;
-      try {
-        auto tl_position = getTrafficLightPosition(traffic_light);
-        debug_data_.traffic_light_points.push_back(tl_position);
-        debug_data_.highest_confidence_traffic_light_point = std::make_optional(tl_position);
-      } catch (const std::invalid_argument & ex) {
-        RCLCPP_WARN_STREAM(logger_, ex.what());
-        continue;
-      }
-      found = true;
-    }
-  }
-  if (!found) {
+  // get traffic signal associated with the regulatory element id
+  const auto traffic_signal_stamped = planner_data_->getTrafficSignal(traffic_light_reg_elem_.id());
+  if (!traffic_signal_stamped) {
     RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 5000 /* ms */, "cannot find traffic light lamp state (%s).",
-      reason.c_str());
+      logger_, *clock_, 5000 /* ms */,
+      "the traffic signal data associated with regulatory element id is not received");
     return false;
   }
+
+  // check if the traffic signal data is outdated
+  const auto is_traffic_signal_timeout =
+    (clock_->now() - traffic_signal_stamped->stamp).seconds() > planner_param_.tl_state_timeout;
+  if (is_traffic_signal_timeout) {
+    RCLCPP_WARN_THROTTLE(
+      logger_, *clock_, 5000 /* ms */, "the received traffic signal data is outdated");
+    return false;
+  }
+
+  valid_traffic_signal = traffic_signal_stamped->signal;
   return true;
 }
 

@@ -219,7 +219,7 @@ void TrafficLightPublishPanel::onInitialize()
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
   pub_traffic_signals_ = raw_node_->create_publisher<TrafficSignalArray>(
-    "/perception/traffic_light_recognition/traffic_signals", rclcpp::QoS(1));
+    "/perception/traffic_light_arbiter/traffic_signals", rclcpp::QoS(1));
 
   sub_vector_map_ = raw_node_->create_subscription<HADMapBin>(
     "/map/vector_map", rclcpp::QoS{1}.transient_local(),
@@ -373,11 +373,9 @@ void TrafficLightPublishPanel::onVectorMap(const HADMapBin::ConstSharedPtr msg)
   std::string info = "Fetching traffic lights :";
   std::string delim = " ";
   for (auto && tl_reg_elem_ptr : tl_reg_elems) {
-    for (auto && traffic_light : tl_reg_elem_ptr->trafficLights()) {
-      auto id = static_cast<int>(traffic_light.id());
-      info += (std::exchange(delim, ", ") + std::to_string(id));
-      traffic_light_ids_.insert(id);
-    }
+    auto id = static_cast<int>(tl_reg_elem_ptr->id());
+    info += (std::exchange(delim, ", ") + std::to_string(id));
+    traffic_light_ids_.insert(id);
   }
   RCLCPP_INFO_STREAM(raw_node_->get_logger(), info);
   received_vector_map_ = true;

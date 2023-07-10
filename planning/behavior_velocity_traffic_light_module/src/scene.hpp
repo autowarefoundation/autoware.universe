@@ -85,7 +85,7 @@ public:
   }
 
 private:
-  bool isStopSignal(const lanelet::ConstLineStringsOrPolygons3d & traffic_lights);
+  bool isStopSignal();
 
   bool isTrafficSignalStop(const TrafficSignal & tl_state) const;
 
@@ -100,11 +100,9 @@ private:
 
   bool hasTrafficLightShape(const TrafficSignal & tl_state, const uint8_t & lamp_shape) const;
 
-  bool getHighestConfidenceTrafficSignal(
-    const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
-    TrafficSignal & highest_confidence_tl_state);
+  bool findValidTrafficSignal(TrafficSignal & valid_traffic_signal);
 
-  bool updateTrafficSignal(const lanelet::ConstLineStringsOrPolygons3d & traffic_lights);
+  bool updateTrafficSignal();
 
   // Lane id
   const int64_t lane_id_;
