@@ -24,7 +24,7 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Transform.h>
 
-namespace perception_utils
+namespace traffic_light_utils
 {
 
 namespace traffic_light
@@ -47,6 +47,6 @@ tf2::Vector3 getTrafficLightCenter(const lanelet::ConstLineString3d & traffic_li
 
 }  // namespace traffic_light
 
-}  // namespace perception_utils
+}  // namespace traffic_light_utils
 
 #endif  // TRAFFIC_LIGHT_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
