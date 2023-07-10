@@ -92,6 +92,68 @@ public:
     bool look_pedestrian;
   };
 
+  struct ObjectInfo
+  {
+    enum class State { STOP = 0, OTHER };  // APPROACH, LEAVE, OTHER };
+    State state;
+    boost::optional<rclcpp::Time> time_to_stop{boost::none};
+  };
+  struct ObjectInfoManager
+  {
+    void init() { current_uuids_.clear(); }
+    void update(const std::string & uuid, const bool is_object_stopped, const rclcpp::Time & now)
+    {
+      // update current uuids
+      current_uuids_.push_back(uuid);
+
+      // update object info
+      const auto state = is_object_stopped ? ObjectInfo::State::STOP : ObjectInfo::State::OTHER;
+      const auto time_to_stop = [&]() -> boost::optional<rclcpp::Time> {
+        if (is_object_stopped) return now;
+        return boost::none;
+      }();
+      if (objects.count(uuid) == 0) {
+        objects.emplace(uuid, ObjectInfo{state, time_to_stop});
+        return;
+      }
+
+      objects.at(uuid).state = state;
+      objects.at(uuid).time_to_stop = time_to_stop;
+    }
+    void finalize()
+    {
+      std::vector<std::string> obsolete_uuids;
+      for (const auto & object : objects) {
+        if (
+          std::find(current_uuids_.begin(), current_uuids_.end(), object.first) ==
+          current_uuids_.end()) {
+          obsolete_uuids.push_back(object.first);
+        }
+      }
+      for (const auto & obsolete_uuid : obsolete_uuids) {
+        objects.erase(obsolete_uuid);
+      }
+    }
+
+    bool isStopped(const std::string & uuid) const
+    {
+      if (objects.count(uuid) != 0) {
+        return objects.at(uuid).state == ObjectInfo::State::STOP;
+      }
+      return false;
+    }
+    boost::optional<double> getTimeToStop(const std::string & uuid, const rclcpp::Time & now) const
+    {
+      if (objects.count(uuid) == 0 || !objects.at(uuid).time_to_stop) {
+        return boost::none;
+      }
+      return (now - *objects.at(uuid).time_to_stop).seconds();
+    }
+
+    std::unordered_map<std::string, ObjectInfo> objects;
+    std::vector<std::string> current_uuids_;
+  };
+
   CrosswalkModule(
     const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
     const PlannerParam & planner_param, const bool use_regulatory_element,
@@ -138,7 +200,8 @@ private:
     const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
     const geometry_msgs::msg::Vector3 & obj_vel) const;
 
-  CollisionPointState getCollisionPointState(const double ttc, const double ttv) const;
+  CollisionState getCollisionState(
+    const std::string & obj_uuid, const double ttc, const double ttv) const;
 
   void applySafetySlowDownSpeed(
     PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects);
@@ -158,7 +221,7 @@ private:
 
   static bool isVehicle(const PredictedObject & object);
 
-  bool isTargetType(const PredictedObject & object) const;
+  bool isCrosswalkUserType(const PredictedObject & object) const;
 
   static geometry_msgs::msg::Polygon createObjectPolygon(
     const double width_m, const double length_m);
@@ -190,8 +253,9 @@ private:
   const PlannerParam planner_param_;
 
   // Ignore objects
-  std::unordered_map<std::string, rclcpp::Time> stopped_objects_;
   std::unordered_map<std::string, rclcpp::Time> ignore_objects_;
+
+  ObjectInfoManager object_info_manager_;
 
   // Debug
   mutable DebugData debug_data_;
