@@ -4,18 +4,18 @@
 
 euclidean_cluster is a package for clustering points into smaller parts to classify objects.
 
-This package has two clustering methods: `euclidean_cluster` and `voxel_grid_based_euclidean_cluster`.
+This package has three clustering methods: `euclidean_cluster`, `fast_euclidean_cluster` and `voxel_grid_based_euclidean_cluster`.
 
 ## Inner-workings / Algorithms
 
 ### euclidean_cluster
 
-`pcl::EuclideanClusterExtraction` is applied to points. See [official document](https://pcl.readthedocs.io/en/latest/cluster_extraction.html) for details.
+`pcl::EuclideanClusterExtraction` or `Fast Euclidean Cluster` is applied to points. See [official document](https://pcl.readthedocs.io/en/latest/cluster_extraction.html) or [1] for details.
 
 ### voxel_grid_based_euclidean_cluster
 
 1. A centroid in each voxel is calculated by `pcl::VoxelGrid`.
-2. The centroids are clustered by `pcl::EuclideanClusterExtraction`.
+2. The centroids are clustered by `pcl::EuclideanClusterExtraction` or `Fast Euclidean Cluster`[1].
 3. The input points are clustered based on the clustered centroids.
 
 ## Inputs / Outputs
@@ -39,12 +39,13 @@ This package has two clustering methods: `euclidean_cluster` and `voxel_grid_bas
 
 #### euclidean_cluster
 
-| Name               | Type  | Description                                                                                  |
-| ------------------ | ----- | -------------------------------------------------------------------------------------------- |
-| `use_height`       | bool  | use point.z for clustering                                                                   |
-| `min_cluster_size` | int   | the minimum number of points that a cluster needs to contain in order to be considered valid |
-| `max_cluster_size` | int   | the maximum number of points that a cluster needs to contain in order to be considered valid |
-| `tolerance`        | float | the spatial cluster tolerance as a measure in the L2 Euclidean space                         |
+| Name                         | Type  | Description                                                                                  |
+| ---------------------------- | ----- | -------------------------------------------------------------------------------------------- |
+| `use_height`                 | bool  | use point.z for clustering                                                                   |
+| `min_cluster_size`           | int   | the minimum number of points that a cluster needs to contain in order to be considered valid |
+| `max_cluster_size`           | int   | the maximum number of points that a cluster needs to contain in order to be considered valid |
+| `tolerance`                  | float | the spatial cluster tolerance as a measure in the L2 Euclidean space                         |
+| `use_fast_euclidean_cluster` | bool  | select fast euclidean cluster method                                                         |
 
 #### voxel_grid_based_euclidean_cluster
 
@@ -56,6 +57,7 @@ This package has two clustering methods: `euclidean_cluster` and `voxel_grid_bas
 | `tolerance`                   | float | the spatial cluster tolerance as a measure in the L2 Euclidean space                         |
 | `voxel_leaf_size`             | float | the voxel leaf size of x and y                                                               |
 | `min_points_number_per_voxel` | int   | the minimum number of points for a voxel                                                     |
+| `use_fast_euclidean_cluster`  | bool  | select fast euclidean cluster method                                                         |
 
 ## Assumptions / Known limits
 
@@ -90,12 +92,7 @@ Example:
 
 ## (Optional) References/External links
 
-<!-- Write links you referred to when you implemented.
-
-Example:
-  [1] {link_to_a_thesis}
-  [2] {link_to_an_issue}
--->
+[1] [Yu Cao, Yancheng Wang, Yifei Xue, Huiqing Zhang and Yizhen Lao, FEC: Fast Euclidean Clustering for Point Cloud Segmentation](https://doi.org/10.3390/drones6110325).
 
 ## (Optional) Future extensions / Unimplemented parts
 

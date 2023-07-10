@@ -15,6 +15,7 @@ include_directories(
 
 ament_auto_add_library(cluster_lib SHARED
   lib/utils.cpp
+  lib/euclidean_cluster_interface.cpp
   lib/euclidean_cluster.cpp
   lib/voxel_grid_based_euclidean_cluster.cpp
 )

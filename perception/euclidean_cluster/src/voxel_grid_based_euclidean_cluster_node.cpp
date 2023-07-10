@@ -30,9 +30,11 @@ VoxelGridBasedEuclideanClusterNode::VoxelGridBasedEuclideanClusterNode(
   const float tolerance = this->declare_parameter("tolerance", 1.0);
   const float voxel_leaf_size = this->declare_parameter("voxel_leaf_size", 0.5);
   const int min_points_number_per_voxel = this->declare_parameter("min_points_number_per_voxel", 3);
+  const bool use_fast_euclidean_cluster =
+    this->declare_parameter("use_fast_euclidean_cluster", false);
   cluster_ = std::make_shared<VoxelGridBasedEuclideanCluster>(
     use_height, min_cluster_size, max_cluster_size, tolerance, voxel_leaf_size,
-    min_points_number_per_voxel);
+    min_points_number_per_voxel, use_fast_euclidean_cluster);
 
   using std::placeholders::_1;
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(

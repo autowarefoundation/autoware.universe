@@ -6,6 +6,7 @@
     min_cluster_size: 10
     max_cluster_size: 3000
     use_height: false
+    use_fast_euclidean_cluster: true
     input_frame: "base_link"
     max_x: 70.0
     min_x: -70.0

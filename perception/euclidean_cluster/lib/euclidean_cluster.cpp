@@ -29,8 +29,11 @@ EuclideanCluster::EuclideanCluster(bool use_height, int min_cluster_size, int ma
 }
 
 EuclideanCluster::EuclideanCluster(
-  bool use_height, int min_cluster_size, int max_cluster_size, float tolerance)
-: EuclideanClusterInterface(use_height, min_cluster_size, max_cluster_size), tolerance_(tolerance)
+  bool use_height, int min_cluster_size, int max_cluster_size, float tolerance,
+  bool use_fast_euclidean_cluster)
+: EuclideanClusterInterface(use_height, min_cluster_size, max_cluster_size),
+  tolerance_(tolerance),
+  use_fast_euclidean_cluster_(use_fast_euclidean_cluster)
 {
 }
 
@@ -39,7 +42,7 @@ bool EuclideanCluster::cluster(
   std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters)
 {
   // convert 2d pointcloud
-  pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   if (!use_height_) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_2d_ptr(new pcl::PointCloud<pcl::PointXYZ>);
     for (const auto & point : pointcloud->points) {
@@ -51,22 +54,27 @@ bool EuclideanCluster::cluster(
     }
     pointcloud_ptr = pointcloud_2d_ptr;
   } else {
-    pointcloud_ptr = pointcloud;
+    *pointcloud_ptr = *pointcloud;
   }
 
-  // create tree
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-  tree->setInputCloud(pointcloud_ptr);
-
-  // clustering
   std::vector<pcl::PointIndices> cluster_indices;
-  pcl::EuclideanClusterExtraction<pcl::PointXYZ> pcl_euclidean_cluster;
-  pcl_euclidean_cluster.setClusterTolerance(tolerance_);
-  pcl_euclidean_cluster.setMinClusterSize(min_cluster_size_);
-  pcl_euclidean_cluster.setMaxClusterSize(max_cluster_size_);
-  pcl_euclidean_cluster.setSearchMethod(tree);
-  pcl_euclidean_cluster.setInputCloud(pointcloud_ptr);
-  pcl_euclidean_cluster.extract(cluster_indices);
+  if (!use_fast_euclidean_cluster_) {
+    // create tree
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(pointcloud_ptr);
+
+    // clustering
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> pcl_euclidean_cluster;
+    pcl_euclidean_cluster.setClusterTolerance(tolerance_);
+    pcl_euclidean_cluster.setMinClusterSize(min_cluster_size_);
+    pcl_euclidean_cluster.setMaxClusterSize(max_cluster_size_);
+    pcl_euclidean_cluster.setSearchMethod(tree);
+    pcl_euclidean_cluster.setInputCloud(pointcloud_ptr);
+    pcl_euclidean_cluster.extract(cluster_indices);
+  } else {
+    fastClusterExtract(
+      pointcloud_ptr, min_cluster_size_, tolerance_, max_cluster_size_, cluster_indices);
+  }
 
   // build output
   {

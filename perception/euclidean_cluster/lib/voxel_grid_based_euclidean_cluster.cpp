@@ -33,11 +33,12 @@ VoxelGridBasedEuclideanCluster::VoxelGridBasedEuclideanCluster(
 
 VoxelGridBasedEuclideanCluster::VoxelGridBasedEuclideanCluster(
   bool use_height, int min_cluster_size, int max_cluster_size, float tolerance,
-  float voxel_leaf_size, int min_points_number_per_voxel)
+  float voxel_leaf_size, int min_points_number_per_voxel, bool use_fast_euclidean_cluster)
 : EuclideanClusterInterface(use_height, min_cluster_size, max_cluster_size),
   tolerance_(tolerance),
   voxel_leaf_size_(voxel_leaf_size),
-  min_points_number_per_voxel_(min_points_number_per_voxel)
+  min_points_number_per_voxel_(min_points_number_per_voxel),
+  use_fast_euclidean_cluster_(use_fast_euclidean_cluster)
 {
 }
 
@@ -65,19 +66,24 @@ bool VoxelGridBasedEuclideanCluster::cluster(
     pointcloud_2d_ptr->push_back(point2d);
   }
 
-  // create tree
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-  tree->setInputCloud(pointcloud_2d_ptr);
-
-  // clustering
   std::vector<pcl::PointIndices> cluster_indices;
-  pcl::EuclideanClusterExtraction<pcl::PointXYZ> pcl_euclidean_cluster;
-  pcl_euclidean_cluster.setClusterTolerance(tolerance_);
-  pcl_euclidean_cluster.setMinClusterSize(1);
-  pcl_euclidean_cluster.setMaxClusterSize(max_cluster_size_);
-  pcl_euclidean_cluster.setSearchMethod(tree);
-  pcl_euclidean_cluster.setInputCloud(pointcloud_2d_ptr);
-  pcl_euclidean_cluster.extract(cluster_indices);
+  if (!use_fast_euclidean_cluster_) {
+    // create tree
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(pointcloud_2d_ptr);
+
+    // clustering
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> pcl_euclidean_cluster;
+    pcl_euclidean_cluster.setClusterTolerance(tolerance_);
+    pcl_euclidean_cluster.setMinClusterSize(1);
+    pcl_euclidean_cluster.setMaxClusterSize(max_cluster_size_);
+    pcl_euclidean_cluster.setSearchMethod(tree);
+    pcl_euclidean_cluster.setInputCloud(pointcloud_2d_ptr);
+    pcl_euclidean_cluster.extract(cluster_indices);
+  } else {
+    fastClusterExtract(
+      pointcloud_2d_ptr, min_cluster_size_, tolerance_, max_cluster_size_, cluster_indices);
+  }
 
   // create map to search cluster index from voxel grid index
   std::unordered_map</* voxel grid index */ int, /* cluster index */ int> map;

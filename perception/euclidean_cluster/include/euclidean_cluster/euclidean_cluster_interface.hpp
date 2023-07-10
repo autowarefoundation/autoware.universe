@@ -16,16 +16,28 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <omp.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/kdtree/kdtree.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/segmentation/extract_clusters.h>
 
+#include <ctime>
+#include <iostream>
 #include <vector>
 
 namespace euclidean_cluster
 {
+
 class EuclideanClusterInterface
 {
 public:
+  struct ClassifedPoint
+  {
+    size_t point_indice;
+    int class_index;
+  };
   EuclideanClusterInterface() = default;
   EuclideanClusterInterface(bool use_height, int min_cluster_size, int max_cluster_size)
   : use_height_(use_height),
@@ -37,6 +49,10 @@ public:
   void setUseHeight(bool use_height) { use_height_ = use_height; }
   void setMinClusterSize(int size) { min_cluster_size_ = size; }
   void setMaxClusterSize(int size) { max_cluster_size_ = size; }
+  void fastClusterExtract(
+    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & cloud, const int min_cluster_size,
+    const double tolerance, const int max_cluster_size,
+    std::vector<pcl::PointIndices> & cluster_indices);
   virtual bool cluster(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters) = 0;
