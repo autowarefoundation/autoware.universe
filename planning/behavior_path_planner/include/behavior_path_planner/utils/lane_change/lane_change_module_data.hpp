@@ -15,7 +15,6 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
 
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/utils/safety_check.hpp"
 #include "lanelet2_core/geometry/Lanelet.h"
 
 #include "autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp"
@@ -27,6 +26,34 @@
 
 namespace behavior_path_planner
 {
+
+struct PoseWithPolygonStamped
+{
+  double time;
+  Pose pose;
+  Polygon2d poly;
+
+  PoseWithPolygonStamped(const double time, const Pose & pose, const Polygon2d & poly)
+  : time(time), pose(pose), poly(poly)
+  {
+  }
+};
+
+struct PredictedPathWithPolygon
+{
+  float confidence;
+  std::vector<PoseWithPolygonStamped> path;
+};
+
+struct ExtendedPredictedObject
+{
+  unique_identifier_msgs::msg::UUID uuid;
+  geometry_msgs::msg::PoseWithCovariance initial_pose;
+  geometry_msgs::msg::TwistWithCovariance initial_twist;
+  geometry_msgs::msg::AccelWithCovariance initial_acceleration;
+  autoware_auto_perception_msgs::msg::Shape shape;
+  std::vector<PredictedPathWithPolygon> predicted_paths;
+};
 
 struct LaneChangeCancelParameters
 {
@@ -111,9 +138,9 @@ struct LaneChangeTargetObjectIndices
 
 struct LaneChangeTargetObjects
 {
-  std::vector<behavior_path_planner::utils::safety_check::ExtendedPredictedObject> current_lane{};
-  std::vector<behavior_path_planner::utils::safety_check::ExtendedPredictedObject> target_lane{};
-  std::vector<behavior_path_planner::utils::safety_check::ExtendedPredictedObject> other_lane{};
+  std::vector<ExtendedPredictedObject> current_lane{};
+  std::vector<ExtendedPredictedObject> target_lane{};
+  std::vector<ExtendedPredictedObject> other_lane{};
 };
 
 enum class LaneChangeModuleType {

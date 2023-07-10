@@ -48,30 +48,9 @@ using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
+using vehicle_info_util::VehicleInfo;
 
 namespace bg = boost::geometry;
-
-struct PoseWithPolygonStamped
-{
-  double time;
-  Pose pose;
-  Polygon2d poly;
-};
-
-struct PredictedPathWithPolygon
-{
-  float confidence;
-  std::vector<PoseWithPolygonStamped> path;
-};
-
-struct ExtendedPredictedObject
-{
-  unique_identifier_msgs::msg::UUID uuid;
-  geometry_msgs::msg::PoseWithCovariance initial_pose;
-  geometry_msgs::msg::TwistWithCovariance initial_twist;
-  geometry_msgs::msg::AccelWithCovariance initial_acceleration;
-  std::vector<PredictedPathWithPolygon> predicted_path;
-};
 
 bool isTargetObjectFront(
   const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
@@ -93,6 +72,9 @@ double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
   const BehaviorPathPlannerParameters & params);
 
+boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygon(
+  const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info);
+
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
@@ -113,28 +95,14 @@ double calcMinimumLongitudinalLength(
  * ignore during preparation phase.
  * @return true if distance is safe.
  */
-bool isSafeInLaneletCollisionCheck(
-  const PathWithLaneId & planned_path,
-  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & predicted_ego_poses,
-  const double ego_current_velocity, const std::vector<double> & check_duration,
-  const PredictedObject & target_object, const PredictedPath & target_object_path,
+bool checkCollision(
+  const PathWithLaneId & planned_path, const PredictedPath & predicted_ego_path,
+  const VehicleInfo & ego_info, const double ego_current_velocity,
+  const ExtendedPredictedObject & target_object,
+  const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
   const double rear_object_deceleration, CollisionCheckDebug & debug,
   const double prepare_duration = 0.0, const double velocity_threshold_for_prepare_duration = 0.0);
-
-/**
- * @brief Iterate the points in the ego and target's predicted path and
- *        perform safety check for each of the iterated points.
- * @return true if distance is safe.
- */
-bool isSafeInFreeSpaceCollisionCheck(
-  const PathWithLaneId & path,
-  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
-  const Twist & ego_current_twist, const std::vector<double> & check_duration,
-  const double prepare_duration, const PredictedObject & target_object,
-  const BehaviorPathPlannerParameters & common_parameters,
-  const double prepare_phase_ignore_target_velocity_thresh, const double front_object_deceleration,
-  const double rear_object_deceleration, CollisionCheckDebug & debug);
 
 }  // namespace behavior_path_planner::utils::safety_check
 

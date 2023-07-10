@@ -2695,44 +2695,19 @@ lanelet::ConstLanelets calcLaneAroundPose(
   return current_lanes;
 }
 
-boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygon(
-  const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info)
-{
-  const auto interpolated_pose = perception_utils::calcInterpolatedPose(pred_path, current_time);
-
-  if (!interpolated_pose) {
-    return {};
-  }
-
-  const auto & i = ego_info;
-  const auto & base_to_front = i.max_longitudinal_offset_m;
-  const auto & base_to_rear = i.rear_overhang_m;
-  const auto & width = i.vehicle_width_m;
-
-  const auto ego_polygon =
-    tier4_autoware_utils::toFootprint(*interpolated_pose, base_to_front, base_to_rear, width);
-
-  return std::make_pair(*interpolated_pose, ego_polygon);
-}
-
-std::vector<PredictedPath> getPredictedPathFromObj(
-  const PredictedObject & obj, const bool & is_use_all_predicted_path)
+std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
+  const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path)
 {
   if (!is_use_all_predicted_path) {
     const auto max_confidence_path = std::max_element(
-      obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
+      obj.predicted_paths.begin(), obj.predicted_paths.end(),
       [](const auto & path1, const auto & path2) { return path1.confidence < path2.confidence; });
-    if (max_confidence_path != obj.kinematics.predicted_paths.end()) {
+    if (max_confidence_path != obj.predicted_paths.end()) {
       return {*max_confidence_path};
     }
   }
 
-  std::vector<PredictedPath> predicted_path_vec;
-  std::copy_if(
-    obj.kinematics.predicted_paths.cbegin(), obj.kinematics.predicted_paths.cend(),
-    std::back_inserter(predicted_path_vec),
-    [](const PredictedPath & path) { return !path.path.empty(); });
-  return predicted_path_vec;
+  return obj.predicted_paths;
 }
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold)
@@ -3008,9 +2983,9 @@ void extractObstaclesFromDrivableArea(
 }
 
 bool isParkedObject(
-  const PathWithLaneId & path, const RouteHandler & route_handler, const PredictedObject & object,
-  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold,
-  const double static_object_velocity_threshold)
+  const PathWithLaneId & path, const RouteHandler & route_handler,
+  const ExtendedPredictedObject & object, const double object_check_min_road_shoulder_width,
+  const double object_shiftable_ratio_threshold, const double static_object_velocity_threshold)
 {
   // ============================================ <- most_left_lanelet.leftBound()
   // y              road shoulder
@@ -3025,13 +3000,11 @@ bool isParkedObject(
   using lanelet::geometry::distance2d;
   using lanelet::geometry::toArcCoordinates;
 
-  if (
-    object.kinematics.initial_twist_with_covariance.twist.linear.x >
-    static_object_velocity_threshold) {
+  if (object.initial_twist.twist.linear.x > static_object_velocity_threshold) {
     return false;
   }
 
-  const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
+  const auto & object_pose = object.initial_pose.pose;
   const auto object_closest_index =
     motion_utils::findNearestIndex(path.points, object_pose.position);
   const auto object_closest_pose = path.points.at(object_closest_index).point.pose;
@@ -3092,12 +3065,15 @@ bool isParkedObject(
 
 bool isParkedObject(
   const lanelet::ConstLanelet & closest_lanelet, const lanelet::BasicLineString2d & boundary,
-  const PredictedObject & object, const double buffer_to_bound, const double ratio_threshold)
+  const ExtendedPredictedObject & object, const double buffer_to_bound,
+  const double ratio_threshold)
 {
   using lanelet::geometry::distance2d;
 
-  const auto obj_poly = tier4_autoware_utils::toPolygon2d(object);
-  const auto obj_point = object.kinematics.initial_pose_with_covariance.pose.position;
+  const auto & obj_pose = object.initial_pose.pose;
+  const auto & obj_shape = object.shape;
+  const auto obj_poly = tier4_autoware_utils::toPolygon2d(obj_pose, obj_shape);
+  const auto obj_point = obj_pose.position;
 
   double max_dist_to_bound = std::numeric_limits<double>::lowest();
   double min_dist_to_bound = std::numeric_limits<double>::max();

@@ -43,9 +43,9 @@ using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using behavior_path_planner::utils::safety_check::ExtendedPredictedObject;
-using behavior_path_planner::utils::safety_check::PoseWithPolygonStamped;
-using behavior_path_planner::utils::safety_check::PredictedPathWithPolygon;
+using behavior_path_planner::ExtendedPredictedObject;
+using behavior_path_planner::PoseWithPolygonStamped;
+using behavior_path_planner::PredictedPathWithPolygon;
 using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -100,9 +100,9 @@ std::optional<LaneChangePath> constructCandidatePath(
   const double terminal_lane_changing_velocity, const LaneChangePhaseInfo lane_change_time);
 
 PathSafetyStatus isLaneChangePathSafe(
-  const LaneChangePath & lane_change_path, const PredictedObjects::ConstSharedPtr dynamic_objects,
-  const LaneChangeTargetObjectIndices & dynamic_object_indices, const Pose & current_pose,
-  const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameter,
+  const LaneChangePath & lane_change_path, const LaneChangeTargetObjects & target_objects,
+  const Pose & current_pose, const Twist & current_twist,
+  const BehaviorPathPlannerParameters & common_parameter,
   const behavior_path_planner::LaneChangeParameters & lane_change_parameter,
   const double front_decel, const double rear_decel,
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data, const double prepare_acc,
@@ -175,14 +175,13 @@ PredictedPath convertToPredictedPath(
 
 bool passParkedObject(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
-  const PathWithLaneId & current_lane_path, const PredictedObjects & objects,
-  const std::vector<size_t> & target_lane_obj_indices, const double minimum_lane_change_length,
-  const bool is_goal_in_route, const double object_check_min_road_shoulder_width,
-  const double object_shiftable_ratio_threshold);
+  const PathWithLaneId & current_lane_path, const std::vector<ExtendedPredictedObject> & objects,
+  const double minimum_lane_change_length, const bool is_goal_in_route,
+  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold);
 
 boost::optional<size_t> getLeadingStaticObjectIdx(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
-  const PredictedObjects & objects, const std::vector<size_t> & obj_indices,
+  const std::vector<ExtendedPredictedObject> & objects,
   const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold);
 
 std::optional<lanelet::BasicPolygon2d> createPolygon(

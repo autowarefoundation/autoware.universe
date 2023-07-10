@@ -380,11 +380,8 @@ lanelet::ConstLanelets calcLaneAroundPose(
   const double dist_threshold = std::numeric_limits<double>::max(),
   const double yaw_threshold = std::numeric_limits<double>::max());
 
-std::vector<PredictedPath> getPredictedPathFromObj(
-  const PredictedObject & obj, const bool & is_use_all_predicted_path);
-
-boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygon(
-  const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info);
+std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
+  const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 
@@ -414,13 +411,15 @@ std::optional<lanelet::Polygon3d> getPolygonByPoint(
   const std::string & polygon_name);
 
 bool isParkedObject(
-  const PathWithLaneId & path, const RouteHandler & route_handler, const PredictedObject & object,
-  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold,
+  const PathWithLaneId & path, const RouteHandler & route_handler,
+  const ExtendedPredictedObject & object, const double object_check_min_road_shoulder_width,
+  const double object_shiftable_ratio_threshold,
   const double static_object_velocity_threshold = 1.0);
 
 bool isParkedObject(
   const lanelet::ConstLanelet & closest_lanelet, const lanelet::BasicLineString2d & boundary,
-  const PredictedObject & object, const double buffer_to_bound, const double ratio_threshold);
+  const ExtendedPredictedObject & object, const double buffer_to_bound,
+  const double ratio_threshold);
 }  // namespace behavior_path_planner::utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_
