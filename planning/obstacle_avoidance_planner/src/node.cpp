@@ -86,7 +86,6 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     // parameter for option
     enable_outside_drivable_area_stop_ =
       declare_parameter<bool>("option.enable_outside_drivable_area_stop");
-    enable_smoothing_ = declare_parameter<bool>("option.enable_smoothing");
     enable_skip_optimization_ = declare_parameter<bool>("option.enable_skip_optimization");
     enable_reset_prev_optimization_ =
       declare_parameter<bool>("option.enable_reset_prev_optimization");
@@ -110,8 +109,6 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
 
   // create core algorithm pointers with parameter declaration
   replan_checker_ptr_ = std::make_shared<ReplanChecker>(this, ego_nearest_param_);
-  eb_path_smoother_ptr_ = std::make_shared<EBPathSmoother>(
-    this, enable_debug_info_, ego_nearest_param_, traj_param_, time_keeper_ptr_);
   mpt_optimizer_ptr_ = std::make_shared<MPTOptimizer>(
     this, enable_debug_info_, ego_nearest_param_, vehicle_info_, traj_param_, debug_data_ptr_,
     time_keeper_ptr_);
@@ -136,7 +133,6 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
   // parameters for option
   updateParam<bool>(
     parameters, "option.enable_outside_drivable_area_stop", enable_outside_drivable_area_stop_);
-  updateParam<bool>(parameters, "option.enable_smoothing", enable_smoothing_);
   updateParam<bool>(parameters, "option.enable_skip_optimization", enable_skip_optimization_);
   updateParam<bool>(
     parameters, "option.enable_reset_prev_optimization", enable_reset_prev_optimization_);
@@ -161,7 +157,6 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
 
   // parameters for core algorithms
   replan_checker_ptr_->onParam(parameters);
-  eb_path_smoother_ptr_->onParam(parameters);
   mpt_optimizer_ptr_->onParam(parameters);
 
   // reset planners
@@ -177,7 +172,6 @@ void ObstacleAvoidancePlanner::initializePlanning()
 {
   RCLCPP_INFO(get_logger(), "Initialize planning");
 
-  eb_path_smoother_ptr_->initialize(enable_debug_info_, traj_param_);
   mpt_optimizer_ptr_->initialize(enable_debug_info_, traj_param_);
 
   resetPreviousData();
@@ -185,7 +179,6 @@ void ObstacleAvoidancePlanner::initializePlanning()
 
 void ObstacleAvoidancePlanner::resetPreviousData()
 {
-  eb_path_smoother_ptr_->resetPreviousData();
   mpt_optimizer_ptr_->resetPreviousData();
 
   prev_optimized_traj_points_ptr_ = nullptr;
@@ -287,7 +280,7 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::generateOptimizedTrajecto
 
   const auto & input_traj_points = planner_data.traj_points;
 
-  // 1. calculate trajectory with EB and MPT
+  // 1. calculate trajectory with MPT
   //    NOTE: This function may return previously optimized trajectory points.
   //          Also, velocity on some points will not be updated for a logic purpose.
   auto optimized_traj_points = optimizeTrajectory(planner_data);
@@ -333,21 +326,15 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
     return p.traj_points;
   }
 
-  // 2. smooth trajectory with elastic band
-  const auto eb_traj =
-    enable_smoothing_ ? eb_path_smoother_ptr_->getEBTrajectory(planner_data) : p.traj_points;
-  if (!eb_traj) {
-    return getPrevOptimizedTrajectory(p.traj_points);
-  }
-
-  // 3. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
+  // 2. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
   //    with model predictive trajectory
-  const auto mpt_traj = mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, *eb_traj);
+  const auto mpt_traj =
+    mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, p.traj_points);
   if (!mpt_traj) {
     return getPrevOptimizedTrajectory(p.traj_points);
   }
 
-  // 4. make prev trajectories
+  // 3. make prev trajectories
   prev_optimized_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(*mpt_traj);
 
   time_keeper_ptr_->toc(__func__, "    ");

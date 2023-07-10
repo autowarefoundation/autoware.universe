@@ -49,13 +49,13 @@ StartPlannerModule::StartPlannerModule(
 
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
-    start_planner_planners_.push_back(
+    start_planners_.push_back(
       std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_));
   }
   if (parameters_->enable_geometric_pull_out) {
-    start_planner_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
+    start_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
   }
-  if (start_planner_planners_.empty()) {
+  if (start_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");
   }
 }
@@ -192,8 +192,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
   }
 
   const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
-  utils::generateDrivableArea(
-    path, target_drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
 
   DrivableAreaInfo current_drivable_area_info;
   current_drivable_area_info.drivable_lanes = target_drivable_lanes;
@@ -257,7 +255,7 @@ CandidateOutput StartPlannerModule::planCandidate() const
 
 std::shared_ptr<PullOutPlannerBase> StartPlannerModule::getCurrentPlanner() const
 {
-  for (const auto & planner : start_planner_planners_) {
+  for (const auto & planner : start_planners_) {
     if (status_.planner_type == planner->getPlannerType()) {
       return planner;
     }
@@ -322,8 +320,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   const auto expanded_lanes = utils::expandLanelets(
     drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
-  utils::generateDrivableArea(
-    stop_path, expanded_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
   for (auto & p : stop_path.points) {
     p.point.longitudinal_velocity_mps = 0.0;
   }
@@ -334,7 +330,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
 
   output.path = std::make_shared<PathWithLaneId>(stop_path);
-  output.drivable_area_info.drivable_lanes = status_.lanes;
   output.reference_path = getPreviousModuleOutput().reference_path;
   output.turn_signal_info = calcTurnSignalInfo();
   path_candidate_ = std::make_shared<PathWithLaneId>(getFullPath());
@@ -458,7 +453,7 @@ void StartPlannerModule::planWithPriority(
   using PriorityOrder = std::vector<std::pair<size_t, std::shared_ptr<PullOutPlannerBase>>>;
   const auto make_loop_order_planner_first = [&]() {
     PriorityOrder order_priority;
-    for (const auto & planner : start_planner_planners_) {
+    for (const auto & planner : start_planners_) {
       for (size_t i = 0; i < start_pose_candidates.size(); i++) {
         order_priority.emplace_back(i, planner);
       }
@@ -469,7 +464,7 @@ void StartPlannerModule::planWithPriority(
   const auto make_loop_order_pose_first = [&]() {
     PriorityOrder order_priority;
     for (size_t i = 0; i < start_pose_candidates.size(); i++) {
-      for (const auto & planner : start_planner_planners_) {
+      for (const auto & planner : start_planners_) {
         order_priority.emplace_back(i, planner);
       }
     }
@@ -519,10 +514,6 @@ PathWithLaneId StartPlannerModule::generateStopPath() const
 
   // generate drivable area
   const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
-
-  // for old architecture
-  utils::generateDrivableArea(
-    path, target_drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
 
   return path;
 }
