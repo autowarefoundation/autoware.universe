@@ -59,9 +59,6 @@ PathWithLaneId resamplePathWithSpline(
   const PathWithLaneId & path, const double interval, const bool keep_input_points,
   const std::pair<double, double> target_section)
 {
-  std::cerr << "path.points.size() = " << path.points.size() << std::endl;
-  std::cerr << "path length = " << motion_utils::calcArcLength(path.points) << std::endl;
-
   if (path.points.size() < 2) {
     return path;
   }
