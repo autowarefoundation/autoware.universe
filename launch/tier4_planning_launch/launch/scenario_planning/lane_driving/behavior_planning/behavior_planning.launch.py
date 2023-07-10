@@ -173,7 +173,7 @@ def launch_setup(context, *args, **kwargs):
             ),
             (
                 "~/input/traffic_signals",
-                "/perception/traffic_light_recognition/traffic_signals",
+                "/perception/traffic_light_arbiter/traffic_signals",
             ),
             (
                 "~/input/external_velocity_limit_mps",
