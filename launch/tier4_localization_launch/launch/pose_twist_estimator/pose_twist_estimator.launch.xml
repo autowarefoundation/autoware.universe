@@ -1,8 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="pose_source" default="ndt"/>
-  <arg name="twist_source" default="ndt"/>
-
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='online'&quot;)" value="true"/>
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='logging_simulation'&quot;)" value="false"/>
 
