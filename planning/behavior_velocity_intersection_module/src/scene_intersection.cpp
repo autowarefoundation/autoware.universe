@@ -1176,7 +1176,7 @@ bool IntersectionModule::isOcclusionCleared(
     }
   }
   for (const auto & poly : attention_area_cv_polygons) {
-    cv::fillPoly(attention_mask, poly, cv::Scalar(255), cv::LINE_AA);
+    cv::fillPoly(attention_mask, poly, cv::Scalar(255), cv::LINE_4);
   }
   // (1.1)
   // reset adjacent_lanelets area to 0 on attention_mask
@@ -1201,8 +1201,8 @@ bool IntersectionModule::isOcclusionCleared(
     for (const auto & common_area : common_areas) {
       std::vector<cv::Point> adjacent_lane_cv_polygon;
       for (const auto & p : common_area.outer()) {
-        const int idx_x = static_cast<int>((p.x() - origin.x) / resolution);
-        const int idx_y = static_cast<int>((p.y() - origin.y) / resolution);
+        const int idx_x = std::floor<int>((p.x() - origin.x) / resolution);
+        const int idx_y = std::floor<int>((p.y() - origin.y) / resolution);
         adjacent_lane_cv_polygon.emplace_back(idx_x, height - 1 - idx_y);
       }
       adjacent_lane_cv_polygons.push_back(adjacent_lane_cv_polygon);
@@ -1231,10 +1231,26 @@ bool IntersectionModule::isOcclusionCleared(
   cv::bitwise_and(attention_mask, unknown_mask, occlusion_mask_raw);
   // (3.1) apply morphologyEx
   cv::Mat occlusion_mask;
-  const int morph_size = std::ceil(planner_param_.occlusion.denoise_kernel / resolution);
+  const int morph_size = static_cast<int>(planner_param_.occlusion.denoise_kernel / resolution);
   cv::morphologyEx(
     occlusion_mask_raw, occlusion_mask, cv::MORPH_OPEN,
     cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morph_size, morph_size)));
+  {
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(occlusion_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    for (const auto & contour : contours) {
+      // std::vector<cv::Point> approx_contour;
+      // cv::approxPolyDP(contour, approx_contour, 0.05 * cv::arcLength(contour, true), true);
+      Polygon2d polygon;
+      // [[maybe_unused]] const double poly_area = cv::contourArea(contour);
+      for (const auto & p : contour) {
+        const double glob_x = (p.x + 0.5) * resolution + origin.x;
+        const double glob_y = (height - 0.5 - p.y) * resolution + origin.y;
+        polygon.outer().emplace_back(glob_x, glob_y);
+      }
+      debug_data_.occlusion_polygons.push_back(toGeomPoly(polygon));
+    }
+  }
 
   // (4) create distance grid
   // value: 0 - 254: signed distance representing [distance_min, distance_max]
