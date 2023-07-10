@@ -46,12 +46,6 @@
                   contains: [": trajectory_validation_relative_angle"]
                   timeout: 1.0
 
-                trajectory_relative_angle:
-                  type: diagnostic_aggregator/GenericAnalyzer
-                  path: trajectory_validation_relative_angle
-                  contains: [": trajectory_validation_relative_angle"]
-                  timeout: 1.0
-
                 trajectory_lateral_acceleration:
                   type: diagnostic_aggregator/GenericAnalyzer
                   path: trajectory_validation_lateral_acceleration
