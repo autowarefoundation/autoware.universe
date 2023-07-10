@@ -27,9 +27,6 @@
 namespace traffic_light_utils
 {
 
-namespace traffic_light
-{
-
 bool isRoiValid(
   const tier4_perception_msgs::msg::TrafficLightRoi & roi, uint32_t width, uint32_t height);
 
@@ -44,8 +41,6 @@ tf2::Vector3 getTrafficLightTopLeft(const lanelet::ConstLineString3d & traffic_l
 tf2::Vector3 getTrafficLightBottomRight(const lanelet::ConstLineString3d & traffic_light);
 
 tf2::Vector3 getTrafficLightCenter(const lanelet::ConstLineString3d & traffic_light);
-
-}  // namespace traffic_light
 
 }  // namespace traffic_light_utils
 
