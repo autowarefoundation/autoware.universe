@@ -23,6 +23,7 @@ from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch.launch_description_sources import AnyLaunchDescriptionSource
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import Node
 from launch_ros.actions import PushRosNamespace
@@ -31,6 +32,34 @@ from launch_ros.substitutions import FindPackageShare
 import yaml
 import os
 
+
+def launch_pose_initializer(system_run_mode, ndt_enabled=False, yabloc_enabled=False):
+    if system_run_mode == 'online':
+        stop_check_enabled = 'false'
+    elif system_run_mode == 'logging_simulation':
+        stop_check_enabled = 'true'
+    else:
+        raise NotImplementedError
+
+    pose_initializer_launch_path = os.path.join(get_package_share_directory("pose_initializer"), "launch/pose_initializer.launch.xml")
+    pose_initializer_launcher = IncludeLaunchDescription(
+        AnyLaunchDescriptionSource([pose_initializer_launch_path]),
+        launch_arguments={
+            'gnss_enabled': 'true',
+            'ndt_enabled': 'true' if ndt_enabled else 'false',
+            'ekf_enabled': 'true',
+            'yabloc_enabled': 'true' if yabloc_enabled else 'false',
+            'stop_check_enabled': stop_check_enabled,
+            'config_file': LaunchConfiguration("pose_initializer_param_path"),
+            'sub_gnss_pose_cov': '/sensing/gnss/pose_with_covariance',
+        }.items()
+    )
+
+    automatic_pose_initializer_launch_path = os.path.join(get_package_share_directory("automatic_pose_initializer"), "launch/automatic_pose_initializer.launch.xml")
+    automatic_pose_initializer_launcher = IncludeLaunchDescription(
+        AnyLaunchDescriptionSource([automatic_pose_initializer_launch_path]),
+    )
+    return [pose_initializer_launcher, automatic_pose_initializer_launcher]
 
 def launch_ndt_scan_matcher():
     launch_path = os.path.join(get_package_share_directory("ndt_scan_matcher"), "launch/ndt_scan_matcher.launch.xml")
@@ -45,16 +74,28 @@ def launch_ndt_scan_matcher():
             'param_file': LaunchConfiguration("ndt_scan_matcher_param_path")
         }.items()
     )
-    # TODO (kminoda): move sensing preprocessing here as well
     return ndt_scan_matcher_launcher
 
+def launch_preprocessing_for_ndt():
+    launch_path = os.path.join(get_package_share_directory("tier4_localization_launch"), "launch/util/util.launch.py")
+    pcd_preprocessor_launcher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([launch_path]),
+        launch_arguments={
+            'input/pointcloud': LaunchConfiguration("input/pointcloud"),
+            'output/pointcloud': LaunchConfiguration("output/pointcloud"),
+            'use_pointcloud_container': LaunchConfiguration("use_pointcloud_container"),
+            'pointcloud_container_name': LaunchConfiguration("pointcloud_container_name"),
+            'use_intra_process': LaunchConfiguration("use_intra_process"),
+        }.items()
+    )
+    return pcd_preprocessor_launcher
+
 def launch_yabloc():
-    # メモ：ここはできればtier4_localization_launch以下ではなくyabloc以下にあるlaunchを直接呼びに行ったほうが、上との並列性が出てわかりやすい気がする
     launch_path = os.path.join(get_package_share_directory("tier4_localization_launch"), "launch/pose_estimator/yabloc.launch.xml")
-    ndt_scan_matcher_launcher = IncludeLaunchDescription(
+    yabloc_launcher = IncludeLaunchDescription(
         AnyLaunchDescriptionSource([launch_path]),
     )
-    return ndt_scan_matcher_launcher
+    return yabloc_launcher
 
 def launch_gyro_odometer():
     launch_path = os.path.join(get_package_share_directory("gyro_odometer"), "launch/gyro_odometer.launch.xml")
@@ -72,40 +113,45 @@ def launch_eagleye(mode):
     return None
 
 def launch_setup(context, *args, **kwargs):
-    pose_sources = LaunchConfiguration("pose_sources").perform(context).split(',')
-    twist_sources = LaunchConfiguration("twist_sources").perform(context).split(',')
+    pose_source = LaunchConfiguration("pose_source").perform(context)
+    twist_source = LaunchConfiguration("twist_source").perform(context)
+    system_run_mode = LaunchConfiguration("system_run_mode").perform(context)
 
     pose_group_actions = [PushRosNamespace('pose_estimator')]  # Namespace: /localization/pose_estimator
     twist_group_actions = [PushRosNamespace('twist_estimator')]  # Namespace: /localization/twist_estimator
     pose_twist_group_actions = [PushRosNamespace('pose_twist_estimator')]  # Namespace: /localization/pose_twist_estimator
+    util_group_actions = [PushRosNamespace('util')]  # Namespace: /localization/util
 
     # ndt_scan_matcher: pose_estimator
-    if 'lidar' in pose_sources:
-        pose_group_actions.append(launch_ndt_scan_matcher())
+    if 'lidar' == pose_source:
+        pose_group_actions += [launch_ndt_scan_matcher()] # ndt_scan_matcher
+        util_group_actions += launch_pose_initializer(system_run_mode, ndt_enabled=True, yabloc_enabled=False) # pose_initializer
+        util_group_actions += [launch_preprocessing_for_ndt()] # pointcloud_preprocessor
 
     # yabloc: pose_estimator
-    if 'camera' in pose_sources:
-        pose_group_actions.append(launch_yabloc())
+    if 'camera' == pose_source:
+        pose_group_actions += [launch_yabloc()] # yabloc
+        util_group_actions += launch_pose_initializer(system_run_mode, ndt_enabled=False, yabloc_enabled=True) # pose_initializer
 
     # gyro_odometer: twist_estimator
-    if 'gyro_odom' in twist_sources:
-        twist_group_actions.append(launch_gyro_odometer())
+    if 'gyro_odom' == twist_source:
+        twist_group_actions += [launch_gyro_odometer()] # gyro_odometer
 
     # eagleye: Could be used as sources for twist, pose, and both
-    if 'gnss' in pose_sources and 'gnss' in twist_sources:
-        # Launch eagleye as pose_twist_estimator
-        pose_twist_group_actions.append(launch_eagleye(mode='pose_twist_estimator'))
-    elif 'gnss' in pose_sources:
-        # Launch eagleye as pose_estimator
-        pose_group_actions.append(launch_eagleye(mode='pose_estimator'))
-    elif 'gnss' in twist_sources:
-        # Launch eagleye as twist_estimator
-        twist_group_actions.append(launch_eagleye(mode='twist_estimator'))
+    if 'gnss' == pose_source and 'gnss' == twist_source:
+        pose_twist_group_actions += [launch_eagleye(mode='pose_twist_estimator')] # eagleye (pose + twist mode)
+        util_group_actions += launch_pose_initializer(system_run_mode, ndt_enabled=False, yabloc_enabled=False) # pose_initializer
+    elif 'gnss' == pose_source:
+        pose_group_actions += [launch_eagleye(mode='pose_estimator')] # eagleye (pose mode)
+        util_group_actions += launch_pose_initializer(system_run_mode, ndt_enabled=False, yabloc_enabled=False) # pose_initializer
+    elif 'gnss' == twist_source:
+        twist_group_actions += [launch_eagleye(mode='twist_estimator')] # eagleye (twist mode)
 
     return [
         GroupAction(pose_group_actions),
         GroupAction(twist_group_actions),
-        GroupAction(pose_twist_group_actions)
+        GroupAction(pose_twist_group_actions),
+        GroupAction(util_group_actions),
     ]
 
 
@@ -117,20 +163,12 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    add_launch_arg("pose_sources", "lidar", "TO BE FILLED"),
-    add_launch_arg("twist_sources", "gyro_odom", "TO BE FILLED"),
+    add_launch_arg("pose_source", "lidar", "TO BE FILLED")
+    add_launch_arg("twist_source", "gyro_odom", "TO BE FILLED")
 
-    ### TO BE DELETED ### 
-    add_launch_arg(
-        "ndt_scan_matcher_param_path",
-        [
-            FindPackageShare("ndt_scan_matcher"),
-            "/config/ndt_scan_matcher.param.yaml",
-        ],
-        "path to ndt_scan_matcher param file",
-    ),
-    ### TO BE DELETED ### 
-
+    add_launch_arg("input/pointcloud", "", "input topic name")
+    add_launch_arg("output/pointcloud", "downsample/pointcloud", "final output topic name")
+    add_launch_arg("use_intra_process", "true", "use ROS 2 component container communication")
 
     return launch.LaunchDescription(
         launch_arguments
