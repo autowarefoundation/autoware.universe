@@ -16,8 +16,8 @@
   <depend>geometry_msgs</depend>
   <depend>image_geometry</depend>
   <depend>lanelet2_extension</depend>
-  <depend>object_recognition_utils</depend>
   <depend>pcl_msgs</depend>
+  <depend>perception_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
