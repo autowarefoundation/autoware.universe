@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -199,6 +199,8 @@ void TrtYoloXNode::replaceLabelMap()
     auto & label = label_map_[i];
     if (label == "PERSON") {
       label = "PEDESTRIAN";
+    } else if (label == "MOTORBIKE") {
+      label = "MOTORCYCLE";
     } else if (
       label != "CAR" && label != "PEDESTRIAN" && label != "BUS" && label != "TRUCK" &&
       label != "BICYCLE" && label != "MOTORCYCLE") {

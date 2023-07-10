@@ -48,7 +48,7 @@ using geometry_msgs::msg::TransformStamped;
 
 struct ObjectParameter
 {
-  bool enable{false};
+  bool is_target{false};
 
   double moving_speed_threshold{0.0};
 
@@ -57,6 +57,8 @@ struct ObjectParameter
   double max_expand_ratio{0.0};
 
   double envelope_buffer_margin{0.0};
+
+  double avoid_margin_lateral{1.0};
 
   double safety_buffer_lateral{1.0};
 
@@ -132,13 +134,13 @@ struct AvoidanceParameters
   double threshold_distance_object_is_on_center;
 
   // execute only when there is no intersection behind of the stopped vehicle.
-  double object_ignore_distance_traffic_light;
+  double object_ignore_section_traffic_light_in_front_distance;
 
   // execute only when there is no crosswalk near the stopped vehicle.
-  double object_ignore_distance_crosswalk_forward;
+  double object_ignore_section_crosswalk_in_front_distance;
 
   // execute only when there is no crosswalk near the stopped vehicle.
-  double object_ignore_distance_crosswalk_backward;
+  double object_ignore_section_crosswalk_behind_distance;
 
   // distance to avoid object detection
   double object_check_forward_distance;
@@ -158,9 +160,6 @@ struct AvoidanceParameters
 
   // force avoidance
   double threshold_time_force_avoidance_for_stopped_vehicle;
-
-  // we want to keep this lateral margin when avoiding
-  double lateral_collision_margin;
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
@@ -188,6 +187,9 @@ struct AvoidanceParameters
   // transit hysteresis (unsafe to safe)
   double safety_check_hysteresis_factor;
 
+  // don't output new candidate path if the offset between ego and path is larger than this.
+  double safety_check_ego_offset;
+
   // keep target velocity in yield maneuver
   double yield_velocity;
 
@@ -196,6 +198,9 @@ struct AvoidanceParameters
 
   // maximum stop distance
   double stop_max_distance;
+
+  // stop buffer
+  double stop_buffer;
 
   // start avoidance after this time to avoid sudden path change
   double prepare_time;
@@ -216,6 +221,12 @@ struct AvoidanceParameters
   // minimum speed for jerk calculation in a tight situation, i.e. there is NOT an enough
   // distance for avoidance. Need a sharp avoidance path to avoid the object.
   double min_sharp_avoidance_speed;
+
+  // minimum slow down speed
+  double min_slow_down_speed;
+
+  // slow down speed buffer
+  double buf_slow_down_speed;
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.

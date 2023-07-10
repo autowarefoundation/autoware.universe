@@ -967,7 +967,6 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
 {
   BehaviorModuleOutput output;
 
-  const auto & p = planner_data->parameters;
   const auto & route_handler = planner_data->route_handler;
   const auto & modified_goal = planner_data->prev_modified_goal;
 
@@ -1001,9 +1000,6 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
   const auto expanded_lanes = expandLanelets(
     shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
-
-  // for old architecture
-  generateDrivableArea(reference_path, expanded_lanes, false, p.vehicle_length, planner_data);
 
   output.path = std::make_shared<PathWithLaneId>(reference_path);
   output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
@@ -1114,7 +1110,7 @@ bool isEgoOutOfRoute(
 
 bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
-  const BehaviorPathPlannerParameters & common_param)
+  const BehaviorPathPlannerParameters & common_param, const double outer_margin)
 {
   const auto lane_length = lanelet::utils::getLaneletLength2d(current_lanes);
   const auto lane_poly = lanelet::utils::getPolygonFromArcLength(current_lanes, 0, lane_length);
@@ -1124,9 +1120,17 @@ bool isEgoWithinOriginalLane(
   const auto vehicle_poly =
     tier4_autoware_utils::toFootprint(current_pose, base_link2front, base_link2rear, vehicle_width);
 
-  // Check if the ego vehicle is entirely within the lane by checking if the vehicle's polygon
-  // is within the lane's polygon
-  return boost::geometry::within(vehicle_poly, lanelet::utils::to2D(lane_poly).basicPolygon());
+  // Check if the ego vehicle is entirely within the lane with a given outer margin.
+  for (const auto & p : vehicle_poly.outer()) {
+    // When the point is in the polygon, the distance is 0. When it is out of the polygon, return a
+    // positive value.
+    const auto dist = boost::geometry::distance(p, lanelet::utils::to2D(lane_poly).basicPolygon());
+    if (dist > std::max(outer_margin, 0.0)) {
+      return false;  // out of polygon
+    }
+  }
+
+  return true;  // inside polygon
 }
 
 lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes)
@@ -2278,9 +2282,6 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 
   centerline_path->header = route_handler->getRouteHeader();
 
-  utils::generateDrivableArea(
-    *centerline_path, drivable_lanes, false, p.vehicle_length, planner_data);
-
   return centerline_path;
 }
 
@@ -2401,25 +2402,6 @@ PathWithLaneId getCenterLinePath(
   const double s_backward = std::max(0., s - backward_path_length);
   double s_forward = s + forward_path_length;
 
-#ifdef USE_OLD_ARCHITECTURE
-  const double lane_length = lanelet::utils::getLaneletLength2d(lanelet_sequence);
-  const auto shift_intervals =
-    route_handler.getLateralIntervalsToPreferredLane(lanelet_sequence.back());
-  const double lane_change_buffer =
-    utils::calcMinimumLaneChangeLength(parameter, shift_intervals, 0.0);
-
-  if (route_handler.isDeadEndLanelet(lanelet_sequence.back())) {
-    const double forward_length = std::max(lane_length - lane_change_buffer, 0.0);
-    s_forward = std::min(s_forward, forward_length);
-  }
-
-  if (route_handler.isInGoalRouteSection(lanelet_sequence.back())) {
-    const auto goal_arc_coordinates =
-      lanelet::utils::getArcCoordinates(lanelet_sequence, route_handler.getGoalPose());
-    const double forward_length = std::max(goal_arc_coordinates.length - lane_change_buffer, 0.0);
-    s_forward = std::min(s_forward, forward_length);
-  }
-#else
   if (route_handler.isDeadEndLanelet(lanelet_sequence.back())) {
     const auto lane_length = lanelet::utils::getLaneletLength2d(lanelet_sequence);
     s_forward = std::clamp(s_forward, 0.0, lane_length);
@@ -2430,7 +2412,6 @@ PathWithLaneId getCenterLinePath(
       lanelet::utils::getArcCoordinates(lanelet_sequence, route_handler.getGoalPose());
     s_forward = std::clamp(s_forward, 0.0, goal_arc_coordinates.length);
   }
-#endif
 
   const auto raw_path_with_lane_id =
     route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
@@ -2565,23 +2546,32 @@ std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & class
   return label;
 }
 
-lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data)
+lanelet::ConstLanelets getCurrentLanes(
+  const std::shared_ptr<const PlannerData> & planner_data, const double backward_path_length,
+  const double forward_path_length)
 {
   const auto & route_handler = planner_data->route_handler;
   const auto current_pose = planner_data->self_odometry->pose.pose;
-  const auto & common_parameters = planner_data->parameters;
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
-    // RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
-    std::cerr << "failed to find closest lanelet within route!!!" << std::endl;
+    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"), clock, 1000,
+      "failed to find closest lanelet within route!!!");
     return {};  // TODO(Horibe) what should be returned?
   }
 
   // For current_lanes with desired length
   return route_handler->getLaneletSequence(
-    current_lane, current_pose, common_parameters.backward_path_length,
-    common_parameters.forward_path_length);
+    current_lane, current_pose, backward_path_length, forward_path_length);
+}
+
+lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data)
+{
+  const auto & common_parameters = planner_data->parameters;
+  return getCurrentLanes(
+    planner_data, common_parameters.backward_path_length, common_parameters.forward_path_length);
 }
 
 lanelet::ConstLanelets getCurrentLanesFromPath(
@@ -2610,7 +2600,7 @@ lanelet::ConstLanelets getCurrentLanesFromPath(
     current_lane, current_pose, p.backward_path_length, p.forward_path_length);
 }
 
-lanelet::ConstLanelets extendLanes(
+lanelet::ConstLanelets extendNextLane(
   const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
 {
   auto extended_lanes = lanes;
@@ -2621,6 +2611,14 @@ lanelet::ConstLanelets extendLanes(
     extended_lanes.push_back(next_lanes.front());
   }
 
+  return extended_lanes;
+}
+
+lanelet::ConstLanelets extendPrevLane(
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
+{
+  auto extended_lanes = lanes;
+
   // Add previous lane
   const auto prev_lanes = route_handler->getPreviousLanelets(extended_lanes.front());
   if (!prev_lanes.empty()) {
@@ -2628,6 +2626,47 @@ lanelet::ConstLanelets extendLanes(
   }
 
   return extended_lanes;
+}
+
+lanelet::ConstLanelets extendLanes(
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
+{
+  auto extended_lanes = extendNextLane(route_handler, lanes);
+  extended_lanes = extendPrevLane(route_handler, extended_lanes);
+
+  return extended_lanes;
+}
+
+lanelet::ConstLanelets getExtendedCurrentLanes(
+  const std::shared_ptr<const PlannerData> & planner_data, const double backward_length,
+  const double forward_length)
+{
+  auto lanes = getCurrentLanes(planner_data);
+
+  double forward_length_sum = 0.0;
+  double backward_length_sum = 0.0;
+
+  while (backward_length_sum < backward_length) {
+    auto extended_lanes = extendPrevLane(planner_data->route_handler, lanes);
+    if (extended_lanes.size() > lanes.size()) {
+      backward_length_sum += lanelet::utils::getLaneletLength2d(extended_lanes.front());
+    } else {
+      break;  // no more previous lanes to add
+    }
+    lanes = extended_lanes;
+  }
+
+  while (forward_length_sum < forward_length) {
+    auto extended_lanes = extendNextLane(planner_data->route_handler, lanes);
+    if (extended_lanes.size() > lanes.size()) {
+      forward_length_sum += lanelet::utils::getLaneletLength2d(extended_lanes.back());
+    } else {
+      break;  // no more next lanes to add
+    }
+    lanes = extended_lanes;
+  }
+
+  return lanes;
 }
 
 lanelet::ConstLanelets getExtendedCurrentLanes(
@@ -2887,10 +2926,8 @@ DrivableAreaInfo combineDrivableAreaInfo(
   DrivableAreaInfo combined_drivable_area_info;
 
   // drivable lanes
-#ifndef USE_OLD_ARCHITECTURE
   combined_drivable_area_info.drivable_lanes =
     combineDrivableLanes(drivable_area_info1.drivable_lanes, drivable_area_info2.drivable_lanes);
-#endif
 
   // obstacles
   for (const auto & obstacle : drivable_area_info1.obstacles) {
