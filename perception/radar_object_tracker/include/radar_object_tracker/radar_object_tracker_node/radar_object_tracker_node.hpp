@@ -41,9 +41,6 @@
 #include <memory>
 #include <string>
 
-namespace radar_object_tracker
-{
-
 using autoware_auto_perception_msgs::msg::DetectedObject;
 using autoware_auto_perception_msgs::msg::DetectedObjects;
 
@@ -84,7 +81,5 @@ private:
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
 };
-
-}  // namespace radar_object_tracker
 
 #endif  // RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE__RADAR_OBJECT_TRACKER_NODE_HPP_

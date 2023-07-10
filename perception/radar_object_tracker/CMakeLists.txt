@@ -18,13 +18,26 @@ include_directories(
 )
 
 # Targets
-ament_auto_add_library(radar_object_tracker_node_component SHARED
-  src/radar_object_tracker_node/radar_object_tracker_node.cpp
+ament_auto_add_library(mu_successive_shortest_path SHARED
+  src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
 )
 
-rclcpp_components_register_node(radar_object_tracker_node_component
-  PLUGIN "radar_object_clustering::RadarObjectTrackerNode"
-  EXECUTABLE radar_object_tracker_node
+ament_auto_add_library(radar_object_tracker_node SHARED
+  src/radar_object_tracker_node/radar_object_tracker_node.cpp
+  src/tracker/model/tracker_base.cpp
+  src/tracker/model/linear_motion_tracker.cpp
+  src/utils/utils.cpp
+  src/data_association/data_association.cpp
+)
+
+target_link_libraries(radar_object_tracker_node
+  mu_successive_shortest_path
+  Eigen3::Eigen
+)
+
+rclcpp_components_register_node(radar_object_tracker_node
+  PLUGIN "RadarObjectTrackerNode"
+  EXECUTABLE radar_object_tracker
 )
 
 # testing

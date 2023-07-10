@@ -36,6 +36,7 @@
 
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
+#include <Eigen/Dense>
 #include <Eigen/Geometry>
 
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
@@ -59,8 +60,10 @@ LinearMotionTracker::LinearMotionTracker(
   float r_stddev_vy = 0.4;                                 // [m]
   float p0_stddev_x = 1.0;                                 // [m/s]
   float p0_stddev_y = 1.0;                                 // [m/s]
-  float p0_stddev_vx = tier4_autoware_utils::kmph2mps(5);  // [m/(s*s)]
-  float p0_stddev_vy = tier4_autoware_utils::kmph2mps(5);  // [m/(s*s)]
+  float p0_stddev_vx = tier4_autoware_utils::kmph2mps(5);  // [m/(s)]
+  float p0_stddev_vy = tier4_autoware_utils::kmph2mps(5);  // [m/(s)]
+  float p0_stddev_ax = 0.05;                               // [m/(s*s)]
+  float p0_stddev_ay = 0.05;                               // [m/(s*s)]
   ekf_params_.q_cov_ax = std::pow(q_stddev_ax, 2.0);
   ekf_params_.q_cov_ay = std::pow(q_stddev_ay, 2.0);
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
@@ -146,12 +149,14 @@ LinearMotionTracker::LinearMotionTracker(
   const bool has_acceleration_covariance =
     false;  // currently message does not have acceleration covariance
   if (has_acceleration_covariance) {
-    const auto ax_cov =
-      object.kinematics.acceleration_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
-    const auto ay_cov =
-      object.kinematics.acceleration_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-    Eigen::Matrix2d P_axy_local;
-    P_axy_local << ax_cov, 0.0, 0.0, ay_cov;
+    // const auto ax_cov =
+    //   object.kinematics.acceleration_with_covariance.covariance[utils::MSG_COV_IDX::X_X]; // This
+    //   is future update
+    // const auto ay_cov =
+    //   object.kinematics.acceleration_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y]; // This
+    //   is future update
+    //  Eigen::Matrix2d P_axy_local;
+    //  P_axy_local << ax_cov, 0.0, 0.0, ay_cov;
     P_axy = R * P_axy_local * R.transpose();
   } else {
     P_axy = R * P_axy_local * R.transpose();
@@ -257,7 +262,9 @@ bool LinearMotionTracker::predict(const double dt, KalmanFilter & ekf) const
   // [R 0 0]             [R^T 0 0]
   // [0 R 0] * Q_local * [0 R^T 0]
   // [0 0 R]             [0 0 R^T]
-  RotateCovMatrix = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
+  Eigen::MatrixXd R = Eigen::MatrixXd::Zero(2, 2);
+  R << cos(yaw_), -sin(yaw_), sin(yaw_), cos(yaw_);
+  Eigen::MatrixXd RotateCovMatrix = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   RotateCovMatrix.block<2, 2>(IDX::X, IDX::X) = R;
   RotateCovMatrix.block<2, 2>(IDX::VX, IDX::VX) = R;
   RotateCovMatrix.block<2, 2>(IDX::AX, IDX::AX) = R;
@@ -312,14 +319,14 @@ bool LinearMotionTracker::measureWithPose(
     Y_list.push_back(Yxy);
 
     // covariance need to be rotated since it is in the vehicle coordinate system
-    Eigen::Matrix2d Rxy_local = Eigen::Matrix2d::Zero(2);
+    Eigen::MatrixXd Rxy_local = Eigen::MatrixXd::Zero(2, 2);
     if (!object.kinematics.has_position_covariance) {
-      Rxy_local = ekf_params_.r_cov_x, 0, 0, ekf_params_.r_cov_y;
+      Rxy_local << ekf_params_.r_cov_x, 0, 0, ekf_params_.r_cov_y;
     } else {
-      Rxy_local = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X],
-      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y],
-      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X],
-      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
+      Rxy_local << object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X],
+        object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y],
+        object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X],
+        object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
     }
     Eigen::MatrixXd Rxy = Eigen::MatrixXd::Zero(2, 2);
     Rxy = RotationYaw * Rxy_local * RotationYaw.transpose();
@@ -337,16 +344,17 @@ bool LinearMotionTracker::measureWithPose(
     // velocity is in the target vehicle coordinate system
     Eigen::MatrixXd Vxy_local = Eigen::MatrixXd::Zero(2, 1);
     Eigen::MatrixXd Vxy = Eigen::MatrixXd::Zero(2, 1);
-    P_vxy_local << object.kinematics.twist.twist.linear.x, object.kinematics.twist.twist.linear.y;
+    Vxy_local << object.kinematics.twist_with_covariance.twist.linear.x,
+      object.kinematics.twist_with_covariance.twist.linear.y;
     Vxy = RotationYaw * Vxy_local;
     Y_list.push_back(Vxy);
 
     Eigen::Matrix2d Rvxy_local = Eigen::MatrixXd::Zero(2, 2);
     if (!object.kinematics.has_twist_covariance) {
-      Rvxy_local = ekf_params_.r_cov_vx, 0, 0, ekf_params_.r_cov_vy;
+      Rvxy_local << ekf_params_.r_cov_vx, 0, 0, ekf_params_.r_cov_vy;
     } else {
-      Rvxy_local = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X], 0,
-      0, object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
+      Rvxy_local << object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X], 0,
+        0, object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
     }
     Eigen::MatrixXd Rvxy = Eigen::MatrixXd::Zero(2, 2);
     Rvxy = RotationYaw * Rvxy_local * RotationYaw.transpose();
@@ -361,9 +369,9 @@ bool LinearMotionTracker::measureWithPose(
     RCLCPP_WARN(logger_, "No measurement is available");
     return false;
   }
-  Eigen::MatrixXd C = Eigen::MatrixXd::Zero(row_number, ekf_params_.dim_x);
-  Eigen::MatrixXd Y = Eigen::MatrixXd::Zero(row_number, 1);
-  Eigen::MatrixXd R = Eigen::MatrixXd::Zero(row_number, row_number);
+  // Eigen::MatrixXd C = Eigen::MatrixXd::Zero(row_number, ekf_params_.dim_x);
+  // Eigen::MatrixXd Y = Eigen::MatrixXd::Zero(row_number, 1);
+  // Eigen::MatrixXd R = Eigen::MatrixXd::Zero(row_number, row_number);
 
   // stacking matrices vertically or diagonally
   const auto C = utils::stackMatricesVertically(C_list);

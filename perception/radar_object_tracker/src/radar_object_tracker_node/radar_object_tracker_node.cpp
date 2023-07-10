@@ -62,12 +62,10 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
 
 }  // namespace
 
-namespace radar_object_tracker
-{
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("radar object tracker", node_options),
+: rclcpp::Node("radar_object_tracker", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {
@@ -340,6 +338,4 @@ void RadarObjectTrackerNode::publish(const rclcpp::Time & time) const
   tracked_objects_pub_->publish(output_msg);
 }
 
-}  // namespace radar_object_tracker
-
-RCLCPP_COMPONENTS_REGISTER_NODE(radar_object_tracker::RadarObjectTrackerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(RadarObjectTrackerNode)
