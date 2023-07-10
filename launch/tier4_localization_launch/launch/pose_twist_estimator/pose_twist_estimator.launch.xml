@@ -34,26 +34,80 @@
       <push-ros-namespace namespace="pose_estimator"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_estimator/yabloc.launch.xml"/>
     </group>
+    <group>
+      <push-ros-namespace namespace="util"/>
+      <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
+        <arg name="ndt_enabled" value="false"/>
+        <arg name="gnss_enabled" value="true"/>
+        <arg name="ekf_enabled" value="true"/>
+        <arg name="yabloc_enabled" value="true"/>
+        <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
+        <arg name="config_file" value="$(var pose_initializer_param_path)"/>
+        <arg name="sub_gnss_pose_cov" value="/sensing/gnss/pose_with_covariance"/>
+      </include>
+      <include file="$(find-pkg-share automatic_pose_initializer)/launch/automatic_pose_initializer.launch.xml"/>
+    </group>
   </group>
 
   <!-- Gyro Odometer Launch -->
   <group if="$(eval &quot;'$(var twist_source)'=='gyro_odom'&quot;)">
     <push-ros-namespace namespace="twist_estimator"/>
-    <include file="$(find-pkg-share tier4_localization_launch)/launch/twist_estimator/twist_estimator.launch.xml"/>
+    <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/gyro_odometer.launch.xml"/>
   </group>
 
-  <!-- Eagleye Launch -->
+  <!-- Eagleye Launch (pose + twist mode) -->
   <group if="$(eval &quot;'$(var pose_source)'=='eagleye' and '$(var twist_source)'=='eagleye'&quot;)">
-    <push-ros-namespace namespace="hogehoge1"/>
-    <include file="$(find-pkg-share tier4_localization_launch)/launch/twist_estimator/twist_estimator.launch.xml"/>
+    <group>
+      <push-ros-namespace namespace="pose_twist_estimator"/>
+      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/eagleye_rt.launch.xml">
+        <arg name="output_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
+        <arg name="output_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance"/>
+      </include>
+    </group>
+    <group>
+      <push-ros-namespace namespace="util"/>
+      <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
+        <arg name="ndt_enabled" value="false"/>
+        <arg name="gnss_enabled" value="true"/>
+        <arg name="ekf_enabled" value="true"/>
+        <arg name="yabloc_enabled" value="false"/>
+        <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
+        <arg name="config_file" value="$(var pose_initializer_param_path)"/>
+        <arg name="sub_gnss_pose_cov" value="/sensing/gnss/pose_with_covariance"/>
+      </include>
+      <include file="$(find-pkg-share automatic_pose_initializer)/launch/automatic_pose_initializer.launch.xml"/>
+    </group>
   </group>
+
+  <!-- Eagleye Launch (pose mode) -->
   <group if="$(eval &quot;'$(var pose_source)'=='eagleye' and '$(var twist_source)'!='eagleye'&quot;)">
-    <push-ros-namespace namespace="hogehoge2"/>
-    <include file="$(find-pkg-share tier4_localization_launch)/launch/twist_estimator/twist_estimator.launch.xml"/>
+    <group>
+      <push-ros-namespace namespace="pose_estimator"/>
+      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/eagleye_rt.launch.xml">
+        <arg name="output_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance"/>
+      </include>
+    </group>
+    <group>
+      <push-ros-namespace namespace="util"/>
+      <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
+        <arg name="ndt_enabled" value="false"/>
+        <arg name="gnss_enabled" value="true"/>
+        <arg name="ekf_enabled" value="true"/>
+        <arg name="yabloc_enabled" value="false"/>
+        <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
+        <arg name="config_file" value="$(var pose_initializer_param_path)"/>
+        <arg name="sub_gnss_pose_cov" value="/sensing/gnss/pose_with_covariance"/>
+      </include>
+      <include file="$(find-pkg-share automatic_pose_initializer)/launch/automatic_pose_initializer.launch.xml"/>
+    </group>
   </group>
+
+  <!-- Eagleye Launch (twist mode) -->
   <group if="$(eval &quot;'$(var pose_source)'!='eagleye' and '$(var twist_source)'=='eagleye'&quot;)">
-    <push-ros-namespace namespace="hogehoge3"/>
-    <include file="$(find-pkg-share tier4_localization_launch)/launch/twist_estimator/twist_estimator.launch.xml"/>
+    <push-ros-namespace namespace="twist_estimator"/>
+    <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/eagleye_rt.launch.xml">
+      <arg name="output_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
+    </include>
   </group>
 
 </launch>

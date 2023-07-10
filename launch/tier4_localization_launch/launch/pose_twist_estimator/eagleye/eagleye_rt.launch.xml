@@ -4,8 +4,8 @@
   <arg name="config_path" default="$(find-pkg-share autoware_launch)/config/localization/$(var config_yaml)"/>
   <arg name="output_pose_with_cov_name" default="/localization/pose_estimator/pose_with_covariance"/>
   <arg name="output_twist_with_cov_name" default="/localization/twist_estimator/twist_with_covariance"/>
-  <arg name="directory_with_related_launches" default="$(find-pkg-share map4_localization_launch)/eagleye_twist_localization_launch/twist_estimator/eagleye"/>
-  <arg name="use_eagleye_pose" default="false"/>
+  <arg name="directory_with_related_launches" default="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye"/>
+  <arg name="use_eagleye_pose" default="true"/>
 
   <arg name="enable_additional_rolling" default="false"/>
   <arg name="use_multi_antenna_mode" default="false"/>
