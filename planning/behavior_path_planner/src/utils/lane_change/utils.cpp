@@ -1142,15 +1142,15 @@ ExtendedPredictedObject transform(
 
   extended_object.predicted_paths.resize(object.kinematics.predicted_paths.size());
   for (size_t i = 0; i < object.kinematics.predicted_paths.size(); ++i) {
-    const auto & predicted_path = object.kinematics.predicted_paths.at(i);
+    const auto & path = object.kinematics.predicted_paths.at(i);
     const double end_time =
-      predicted_path.time_step.sec * static_cast<double>(predicted_path.path.size());
-    extended_object.predicted_paths.at(i).confidence = predicted_path.confidence;
+      rclcpp::Duration(path.time_step).seconds() * static_cast<double>(path.path.size() - 1);
+    extended_object.predicted_paths.at(i).confidence = path.confidence;
 
     // create path
     for (double t = start_time; t < end_time + std::numeric_limits<double>::epsilon();
          t += time_resolution) {
-      const auto obj_pose = perception_utils::calcInterpolatedPose(predicted_path, t);
+      const auto obj_pose = perception_utils::calcInterpolatedPose(path, t);
       if (obj_pose) {
         const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, object.shape);
         extended_object.predicted_paths.at(i).path.emplace_back(t, *obj_pose, obj_polygon);
