@@ -143,10 +143,7 @@ std::optional<std::pair<double, double>> object_time_to_range(
       logger, "\t\t\tPath ? %d [from %ld to %ld]\n", path.has_value(), lane.id(), range.lane.id());
     if (path) {
       lanelet::ConstLanelets lls;
-      for (const auto & ll : *path) {
-        RCLCPP_WARN(logger, "%ld", ll.id());
-        lls.push_back(ll);
-      }
+      for (const auto & ll : *path) lls.push_back(ll);
       pose.position.set__x(object_point.x()).set__y(object_point.y());
       const auto object_curr_length = lanelet::utils::getArcCoordinates(lls, pose).length;
       pose.position.set__x(range.entering_point.x()).set__y(range.entering_point.y());
