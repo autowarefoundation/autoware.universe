@@ -469,6 +469,8 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
       }
       
     }
+  } else {
+    debug_data_ptr_->stop_pose_by_drivable_area = boost::none;
   }
 
   time_keeper_ptr_->toc(__func__, "    ");
