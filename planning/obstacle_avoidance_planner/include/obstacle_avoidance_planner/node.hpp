@@ -128,9 +128,8 @@ protected:  // for the static_centerline_optimizer package
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
   void publishDebugMarkerOfOptimization(const std::vector<TrajectoryPoint> & traj_points) const;
 
-  private:
+private:
   double vehicle_stop_margin_outside_drivable_area_;
-
 };
 }  // namespace obstacle_avoidance_planner
 
