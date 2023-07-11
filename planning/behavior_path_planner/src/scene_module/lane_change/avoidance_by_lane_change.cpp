@@ -34,13 +34,25 @@ AvoidanceByLaneChange::AvoidanceByLaneChange(
 bool AvoidanceByLaneChange::specialRequiredCheck() const
 {
   const auto & data = avoidance_data_;
-  const auto & execute_object_num = avoidance_parameters_->execute_object_num;
 
   if (!status_.is_safe) {
     return false;
   }
 
-  if (data.target_objects.size() < execute_object_num) {
+  const auto & objects = avoidance_data_.target_objects;
+
+  bool is_more_than_threshold = false;
+  for (const auto & p : avoidance_parameters_->object_parameters) {
+    const size_t num = std::count_if(objects.begin(), objects.end(), [&p](const auto & object) {
+      return utils::getHighestProbLabel(object.object.classification) == p.first;
+    });
+
+    if (num >= p.second.execute_num) {
+      is_more_than_threshold = true;
+    }
+  }
+
+  if (!is_more_than_threshold) {
     return false;
   }
 
@@ -179,7 +191,7 @@ ObjectData AvoidanceByLaneChange::createObjectData(
   const auto object_closest_index = findNearestIndex(path_points, object_pose.position);
   const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
   const auto t = utils::getHighestProbLabel(object.classification);
-  const auto object_parameter = p->object_parameters.at(t);
+  const auto object_parameter = avoidance_parameters_->object_parameters.at(t);
 
   ObjectData object_data{};
 
