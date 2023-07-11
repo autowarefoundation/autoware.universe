@@ -118,6 +118,29 @@ multipolygon_t createExpansionPolygons(
     path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
   for (const auto & p : path.left_bound) left_ls.emplace_back(p.x, p.y);
   for (const auto & p : path.right_bound) right_ls.emplace_back(p.x, p.y);
+  // extend the path linestring to the beginning and end of the drivable area
+  if (!right_ls.empty() && !left_ls.empty() && path_ls.size() > 2) {
+    const auto left_proj_begin = point_to_line_projection(left_ls.front(), path_ls[0], path_ls[1]);
+    const auto right_proj_begin =
+      point_to_line_projection(right_ls.front(), path_ls[0], path_ls[1]);
+    const auto left_ls_proj_begin = point_to_linestring_projection(left_proj_begin.point, path_ls);
+    const auto right_ls_proj_begin =
+      point_to_linestring_projection(right_proj_begin.point, path_ls);
+    if (left_ls_proj_begin.arc_length < right_ls_proj_begin.arc_length)
+      path_ls.insert(path_ls.begin(), left_proj_begin.point);
+    else
+      path_ls.insert(path_ls.begin(), right_proj_begin.point);
+    const auto left_proj_end =
+      point_to_line_projection(left_ls.back(), path_ls[path_ls.size() - 2], path_ls.back());
+    const auto right_proj_end =
+      point_to_line_projection(right_ls.back(), path_ls[path_ls.size() - 2], path_ls.back());
+    const auto left_ls_proj_end = point_to_linestring_projection(left_proj_end.point, path_ls);
+    const auto right_ls_proj_end = point_to_linestring_projection(right_proj_end.point, path_ls);
+    if (left_ls_proj_end.arc_length > right_ls_proj_end.arc_length)
+      path_ls.push_back(left_proj_end.point);
+    else
+      path_ls.push_back(right_proj_end.point);
+  }
   const auto path_length = static_cast<double>(boost::geometry::length(path_ls));
 
   multipolygon_t expansion_polygons;
