@@ -19,6 +19,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 
 #include <boost/optional.hpp>
@@ -80,6 +81,13 @@ RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_
   double publish_rate = declare_parameter<double>("publish_rate", 30.0);
   world_frame_id_ = declare_parameter<std::string>("world_frame_id", "world");
   bool enable_delay_compensation{declare_parameter("enable_delay_compensation", false)};
+  tracker_config_directory_ = declare_parameter<std::string>("tracking_config_directory", "");
+
+  // Load tracking config file
+  if (tracker_config_directory_.empty()) {
+    tracker_config_directory_ =
+      ament_index_cpp::get_package_share_directory("radar_object_tracker") + "/config/tracking/";
+  }
 
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
     this->get_node_base_interface(), this->get_node_timers_interface());
@@ -185,20 +193,22 @@ void RadarObjectTrackerNode::onMeasurement(
 
 std::shared_ptr<Tracker> RadarObjectTrackerNode::createNewTracker(
   const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform) const
+  const geometry_msgs::msg::Transform & /*self_transform*/) const
 {
   const std::uint8_t label = perception_utils::getHighestProbLabel(object.classification);
   if (tracker_map_.count(label) != 0) {
     const auto tracker = tracker_map_.at(label);
 
     if (tracker == "linear_motion_tracker") {
-      return std::make_shared<LinearMotionTracker>(time, object, self_transform);
+      std::string config_file = tracker_config_directory_ + "linear_motion_tracker.yaml";
+      return std::make_shared<LinearMotionTracker>(time, object, config_file, label);
     } else {
       // not implemented yet so put warning
       RCLCPP_WARN(get_logger(), "Tracker %s is not implemented yet", tracker.c_str());
     }
   }
-  return std::make_shared<LinearMotionTracker>(time, object, self_transform);
+  std::string config_file = tracker_config_directory_ + "linear_motion_tracker.yaml";
+  return std::make_shared<LinearMotionTracker>(time, object, config_file, label);
 }
 
 void RadarObjectTrackerNode::onTimer()

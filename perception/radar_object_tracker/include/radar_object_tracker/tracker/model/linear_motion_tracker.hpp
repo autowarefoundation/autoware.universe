@@ -21,6 +21,7 @@
 
 #include <string>
 
+using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 class LinearMotionTracker : public Tracker
 {
 private:
@@ -82,9 +83,9 @@ private:
 public:
   LinearMotionTracker(
     const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-    const geometry_msgs::msg::Transform & self_transform);
+    const std::string & tracker_param_file, const std::uint8_t & label);
 
-  void loadModelParameters(const std::string & path);
+  void loadDefaultModelParameters(const std::string & path);
   bool predict(const rclcpp::Time & time) override;
   bool predict(const double dt, KalmanFilter & ekf) const;
   bool measure(

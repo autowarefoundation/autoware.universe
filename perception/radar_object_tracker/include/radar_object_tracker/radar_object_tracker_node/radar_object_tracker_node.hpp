@@ -66,6 +66,7 @@ private:
   void onTimer();
 
   std::string world_frame_id_;  // tracking frame
+  std::string tracker_config_directory_;
   std::list<std::shared_ptr<Tracker>> list_tracker_;
   std::unique_ptr<DataAssociation> data_association_;
 
