@@ -233,6 +233,8 @@ bool checkCollision(
     const auto & object_velocity = obj_pose_with_poly.velocity;
 
     // get ego information at current time
+    // Note: we can create these polygons in advance. However, it can decrease the readability and
+    // variability
     const auto & ego_vehicle_info = common_parameters.vehicle_info;
     const auto interpolated_data = getInterpolatedPoseWithVelocityAndPolygonStamped(
       predicted_ego_path, current_time, ego_vehicle_info);
