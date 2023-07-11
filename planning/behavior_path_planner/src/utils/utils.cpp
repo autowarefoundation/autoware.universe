@@ -1608,7 +1608,8 @@ std::vector<geometry_msgs::msg::Point> calcBound(
 
     // expand drivable area by intersection areas.
     const std::string id = bound_lane.attributeOr("intersection_area", "else");
-    if (enable_expanding_intersection_areas && id != "else") {
+    const auto use_intersection_area = enable_expanding_intersection_areas && id != "else";
+    if (use_intersection_area) {
       const auto polygon =
         route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(id.c_str()));
 

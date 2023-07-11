@@ -1144,23 +1144,18 @@ double extendToRoadShoulderDistanceWithPolygon(
   // get expandable polygons for avoidance (e.g. hatched road markings)
   std::vector<lanelet::Polygon3d> expandable_polygons;
 
+  const auto exist_polygon = [&](const auto & candidate_polygon) {
+    return std::any_of(
+      expandable_polygons.begin(), expandable_polygons.end(),
+      [&](const auto & polygon) { return polygon.id() == candidate_polygon.id(); });
+  };
+
   if (use_hatched_road_markings) {
     for (const auto & point : target_line) {
       const auto new_polygon_candidate =
         utils::getPolygonByPoint(rh, point, "hatched_road_markings");
-      if (!new_polygon_candidate) {
-        continue;
-      }
 
-      bool is_new_polygon{true};
-      for (const auto & polygon : expandable_polygons) {
-        if (polygon.id() == new_polygon_candidate->id()) {
-          is_new_polygon = false;
-          break;
-        }
-      }
-
-      if (is_new_polygon) {
+      if (!!new_polygon_candidate && !exist_polygon(*new_polygon_candidate)) {
         expandable_polygons.push_back(*new_polygon_candidate);
       }
     }
