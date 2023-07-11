@@ -82,6 +82,9 @@ RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_
   world_frame_id_ = declare_parameter<std::string>("world_frame_id", "world");
   bool enable_delay_compensation{declare_parameter("enable_delay_compensation", false)};
   tracker_config_directory_ = declare_parameter<std::string>("tracking_config_directory", "");
+  logging_.enable = declare_parameter<bool>("enable_logging", false);
+  logging_.path =
+    declare_parameter<std::string>("logging_file_path", "~/.ros/association_log.json");
 
   // Load tracking config file
   if (tracker_config_directory_.empty()) {
@@ -154,7 +157,8 @@ void RadarObjectTrackerNode::onMeasurement(
   /* global nearest neighbor */
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
   Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
-    transformed_objects, list_tracker_);  // row : tracker, col : measurement
+    transformed_objects, list_tracker_,  // row : tracker, col : measurement
+    logging_.enable, logging_.path);
   data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
 
   /* tracker measurement update */

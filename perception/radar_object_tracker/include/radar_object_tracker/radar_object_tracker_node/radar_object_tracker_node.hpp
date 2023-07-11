@@ -70,6 +70,13 @@ private:
   std::list<std::shared_ptr<Tracker>> list_tracker_;
   std::unique_ptr<DataAssociation> data_association_;
 
+  // debug parameters
+  struct logging
+  {
+    bool enable = false;
+    std::string path;
+  } logging_;
+
   void checkTrackerLifeCycle(
     std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform);

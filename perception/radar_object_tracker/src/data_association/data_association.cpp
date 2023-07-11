@@ -15,10 +15,14 @@
 #include "radar_object_tracker/data_association/data_association.hpp"
 
 #include "radar_object_tracker/data_association/solver/gnn_solver.hpp"
+
+#include <nlohmann/json.hpp>
+
 // #include "multi_object_tracker/utils/utils.hpp"
 #include "perception_utils/perception_utils.hpp"
 
 #include <algorithm>
+#include <fstream>
 #include <list>
 #include <memory>
 #include <unordered_map>
@@ -148,8 +152,19 @@ void DataAssociation::assign(
 
 Eigen::MatrixXd DataAssociation::calcScoreMatrix(
   const autoware_auto_perception_msgs::msg::DetectedObjects & measurements,
-  const std::list<std::shared_ptr<Tracker>> & trackers)
+  const std::list<std::shared_ptr<Tracker>> & trackers, const bool debug_log,
+  const std::string & file_name)
 {
+  // for debug
+  nlohmann::json log_data;
+  std::string log_file_name = "association_log.json";
+  if (!file_name.empty()) {
+    log_file_name = file_name;
+  }
+  // current time
+  log_data["time"] = measurements.header.stamp.sec + measurements.header.stamp.nanosec * 1e-9;
+  nlohmann::json data_array = nlohmann::json::array();
+
   Eigen::MatrixXd score_matrix =
     Eigen::MatrixXd::Zero(trackers.size(), measurements.objects.size());
   size_t tracker_idx = 0;
@@ -163,12 +178,31 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         measurements.objects.at(measurement_idx);
       const std::uint8_t measurement_label =
         perception_utils::getHighestProbLabel(measurement_object.classification);
+      // Create a JSON object to hold the log data for this pair
+      nlohmann::json pair_log_data;
+
+      autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
+      (*tracker_itr)->getTrackedObject(measurements.header.stamp, tracked_object);
+
+      std::vector<double> tracker_pose = {
+        tracked_object.kinematics.pose_with_covariance.pose.position.x,
+        tracked_object.kinematics.pose_with_covariance.pose.position.y};
+      std::vector<double> measurement_pose = {
+        measurement_object.kinematics.pose_with_covariance.pose.position.x,
+        measurement_object.kinematics.pose_with_covariance.pose.position.y};
+      pair_log_data["tracker_uuid"] = tracked_object.object_id.uuid;
+      pair_log_data["tracker_idx"] = tracker_idx;
+      pair_log_data["measurement_idx"] = measurement_idx;
+      pair_log_data["tracker_label"] = tracker_label;
+      pair_log_data["measurement_label"] = measurement_label;
+      pair_log_data["gate_name"] = "";
+      pair_log_data["gate_value"] = 0.0;
+      pair_log_data["gate_threshold"] = 0.0;
+      pair_log_data["tracker_pose"] = tracker_pose;
+      pair_log_data["measurement_pose"] = measurement_pose;
 
       double score = 0.0;
       if (can_assign_matrix_(tracker_label, measurement_label)) {
-        autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
-        (*tracker_itr)->getTrackedObject(measurements.header.stamp, tracked_object);
-
         const double max_dist = max_dist_matrix_(tracker_label, measurement_label);
         const double dist = tier4_autoware_utils::calcDistance2d(
           measurement_object.kinematics.pose_with_covariance.pose.position,
@@ -178,6 +212,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         // dist gate
         if (passed_gate) {
           if (max_dist < dist) passed_gate = false;
+          pair_log_data["gate_name"] = "dist gate";
+          pair_log_data["gate_value"] = dist;
+          pair_log_data["gate_threshold"] = max_dist;
         }
         // area gate
         if (passed_gate) {
@@ -185,6 +222,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           const double min_area = min_area_matrix_(tracker_label, measurement_label);
           const double area = tier4_autoware_utils::getArea(measurement_object.shape);
           if (area < min_area || max_area < area) passed_gate = false;
+          pair_log_data["gate_name"] = "area gate";
+          pair_log_data["gate_value"] = area;
+          pair_log_data["gate_threshold"] = max_area;
         }
         // angle gate
         if (passed_gate) {
@@ -194,6 +234,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
             tracked_object.kinematics.pose_with_covariance.pose.orientation, false);
           if (std::fabs(max_rad) < M_PI && std::fabs(max_rad) < std::fabs(angle))
             passed_gate = false;
+          pair_log_data["gate_name"] = "angle gate";
+          pair_log_data["gate_value"] = angle;
+          pair_log_data["gate_threshold"] = max_rad;
         }
         // mahalanobis dist gate
         if (passed_gate) {
@@ -202,6 +245,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
             tracked_object.kinematics.pose_with_covariance.pose.position,
             getXYCovariance(tracked_object.kinematics.pose_with_covariance));
           if (2.448 /*95%*/ <= mahalanobis_dist) passed_gate = false;
+          pair_log_data["gate_name"] = "mahalanobis dist gate";
+          pair_log_data["gate_value"] = mahalanobis_dist;
+          pair_log_data["gate_threshold"] = 2.448;
         }
         // 2d iou gate
         if (passed_gate) {
@@ -210,16 +256,30 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           const double iou =
             perception_utils::get2dIoU(measurement_object, tracked_object, min_union_iou_area);
           if (iou < min_iou) passed_gate = false;
+          pair_log_data["gate_name"] = "2d iou gate";
+          pair_log_data["gate_value"] = iou;
+          pair_log_data["gate_threshold"] = min_iou;
         }
 
         // all gate is passed
         if (passed_gate) {
+          pair_log_data["gate_name"] = "all gate passed";
           score = (max_dist - std::min(dist, max_dist)) / max_dist;
           if (score < score_threshold_) score = 0.0;
         }
+        pair_log_data["passed_gate"] = passed_gate;
+        pair_log_data["score"] = score;
+        data_array.push_back(pair_log_data);
       }
       score_matrix(tracker_idx, measurement_idx) = score;
     }
+  }
+  // Write the log data to a file
+  log_data["data"] = data_array;
+  if (debug_log) {
+    std::ofstream log_file(log_file_name, std::ios::app);
+    log_file << log_data << std::endl;
+    log_file.close();
   }
 
   return score_matrix;

@@ -14,6 +14,8 @@
     <param name="world_frame_id" value="$(var world_frame_id)"/>
     <param name="publish_rate" value="$(var publish_rate)"/>
     <param name="enable_delay_compensation" value="$(var enable_delay_compensation)"/>
+    <param name="enable_logging" value="true"/>
+    <param name="logging_file_path" value="association_log.json"/>
     <param from="$(var tracker_setting_path)"/>
     <param from="$(var data_association_matrix_path)"/>
   </node>
