@@ -51,7 +51,6 @@ private:
     struct QPParam
     {
       std::string solver;
-      bool enable_warm_start;
       int max_iteration;
       double eps_abs;
       double eps_rel;
@@ -62,6 +61,7 @@ private:
     void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
     // option
+    bool enable_warm_start;
     bool enable_optimization_validation;
 
     // common

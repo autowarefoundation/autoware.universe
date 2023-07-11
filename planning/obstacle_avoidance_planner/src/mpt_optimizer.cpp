@@ -175,6 +175,8 @@ MPTOptimizer::MPTParam::MPTParam(
     enable_optimization_validation =
       node->declare_parameter<bool>("mpt.option.enable_optimization_validation");
     mpt_visualize_sampling_num = node->declare_parameter<int>("mpt.option.visualize_sampling_num");
+    enable_warm_start = node->declare_parameter<bool>("mpt.option.enable_warm_start");
+    enable_manual_warm_start = node->declare_parameter<bool>("mpt.option.enable_manual_warm_start");
   }
 
   {  // common
@@ -184,8 +186,6 @@ MPTOptimizer::MPTParam::MPTParam(
 
   {  // qp
     solver = node->declare_parameter<std::string>("mpt.qp.solver");
-    enable_warm_start = node->declare_parameter<bool>("mpt.qp.enable_warm_start");
-    enable_manual_warm_start = node->declare_parameter<bool>("mpt.qp.enable_manual_warm_start");
     eps_abs = node->declare_parameter<double>("mpt.qp.eps_abs");
   }
 

@@ -173,9 +173,10 @@ EBPathSmoother::EBPathSmoother(
   // qp interface
   const auto & p = eb_param_.qp_param;
   if (p.solver == "proxqp") {
-    qp_interface_ptr_ = std::make_shared<qp::ProxQPInterface>(p.enable_warm_start, p.eps_abs);
+    qp_interface_ptr_ =
+      std::make_shared<qp::ProxQPInterface>(eb_param_.enable_warm_start, p.eps_abs);
   } else if (p.solver == "osqp") {
-    qp_interface_ptr_ = std::make_shared<qp::OSQPInterface>(p.enable_warm_start, p.eps_abs);
+    qp_interface_ptr_ = std::make_shared<qp::OSQPInterface>(eb_param_.enable_warm_start, p.eps_abs);
   } else {
     throw std::invalid_argument("QP solver is invalid.");
   }
