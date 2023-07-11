@@ -44,7 +44,7 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using behavior_path_planner::ExtendedPredictedObject;
-using behavior_path_planner::PoseWithPolygonStamped;
+using behavior_path_planner::PoseWithVelocityAndPolygonStamped;
 using behavior_path_planner::PredictedPathWithPolygon;
 using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
@@ -165,10 +165,13 @@ boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType type, const Direction & direction);
 
-PredictedPath convertToPredictedPath(
+std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
   const size_t nearest_seg_idx, const double duration, const double resolution,
   const double prepare_time, const double prepare_acc, const double lane_changing_acc);
+
+PredictedPath convertToPredictedPath(
+  const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);
 
 bool isParkedObject(
   const PathWithLaneId & path, const RouteHandler & route_handler,
