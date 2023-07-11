@@ -597,8 +597,6 @@ bool NormalLaneChange::getLaneChangePaths(
       break;
     }
 
-    std::cerr << "prepare length " << prepare_length << '\n';
-
     auto prepare_segment = getPrepareSegment(
       original_lanelets, arc_length_in_current, backward_path_length, prepare_length);
 
