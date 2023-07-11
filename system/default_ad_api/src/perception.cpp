@@ -19,6 +19,19 @@
 namespace default_ad_api
 {
 
+using DynamicObjectArray = autoware_ad_api::perception::DynamicObjectArray;
+using ObjectClassification = autoware_adapi_v1_msgs::msg::ObjectClassification;
+using DynamicObject = autoware_adapi_v1_msgs::msg::DynamicObject;
+using DynamicObjectPath = autoware_adapi_v1_msgs::msg::DynamicObjectPath;
+using API_Shape = shape_msgs::msg::SolidPrimitive;
+using Shape = autoware_auto_perception_msgs::msg::Shape;
+
+std::unordered_map<uint8_t, uint8_t> shape_type_ = {
+  {Shape::BOUNDING_BOX, API_Shape::BOX},
+  {Shape::CYLINDER, API_Shape::CYLINDER},
+  {Shape::POLYGON, API_Shape::PRISM},
+};
+
 PerceptionNode::PerceptionNode(const rclcpp::NodeOptions & options) : Node("perception", options)
 {
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
