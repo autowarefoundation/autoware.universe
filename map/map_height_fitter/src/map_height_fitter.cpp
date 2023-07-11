@@ -29,6 +29,7 @@ namespace map_height_fitter
 struct MapHeightFitter::Impl
 {
   static constexpr char enable_partial_load[] = "enable_partial_load";
+  static constexpr double max_search_radius = 50.0;
 
   explicit Impl(rclcpp::Node * node);
   void on_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
@@ -150,6 +151,11 @@ std::optional<double> MapHeightFitter::Impl::get_ground_height(const tf2::Vector
     min_dist2 = std::min(min_dist2, sd);
   }
 
+  // if the nearest point is father than 'max_search_radisu', it cannot estimate the proper height
+  if (min_dist2 > std::pow(max_search_radius, 2.0)) {
+    return std::nullopt;
+  }
+
   // find lowest height within radius (d+1.0)
   const double radius2 = std::pow(std::sqrt(min_dist2) + 1.0, 2.0);
   double height = INFINITY;
@@ -165,7 +171,9 @@ std::optional<double> MapHeightFitter::Impl::get_ground_height(const tf2::Vector
   if (std::isfinite(height)) {
     return height;
   }
-  // if height is not valid, return nullopt
+
+  // if height is not finite, return nullopt
+  // (Point cloud data can have a non-finite value)
   return std::nullopt;
 }
 
@@ -193,13 +201,13 @@ std::optional<Point> MapHeightFitter::Impl::fit(const Point & position, const st
     tf2::fromMsg(stamped.transform, transform);
     point = transform * point;
 
-    //
-    auto point_optional = get_ground_height(point);
-    if (!point_optional.has_value()) {
-      RCLCPP_WARN_STREAM(logger, "no point cloud available around the given position");
+    const auto height_optional = get_ground_height(point);
+    if (!height_optional.has_value()) {
+      RCLCPP_WARN_STREAM(
+        logger, "no valid point exists within " << max_search_radius << "m of the given position");
       return std::nullopt;
     }
-    point.setZ(point_optional.value());
+    point.setZ(height_optional.value());
     point = transform.inverse() * point;
   } catch (tf2::TransformException & exception) {
     RCLCPP_WARN_STREAM(logger, "failed to lookup transform: " << exception.what());
