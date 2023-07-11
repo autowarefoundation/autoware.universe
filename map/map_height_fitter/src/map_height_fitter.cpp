@@ -151,7 +151,7 @@ std::optional<double> MapHeightFitter::Impl::get_ground_height(const tf2::Vector
     min_dist2 = std::min(min_dist2, sd);
   }
 
-  // if the nearest point is father than 'max_search_radisu', it cannot estimate the proper height
+  // if the nearest point is father than 'max_search_radius', it cannot estimate the proper height
   if (min_dist2 > std::pow(max_search_radius, 2.0)) {
     return std::nullopt;
   }
