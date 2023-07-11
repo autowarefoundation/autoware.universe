@@ -441,7 +441,6 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
         use_footprint_polygon_for_outside_drivable_area_check_);
 
       if (is_outside) {
-        publishVirtualWall(traj_point.pose);
         return i;
       }
     }
@@ -449,22 +448,23 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   }();
 
   if (first_outside_idx) {
-    for (size_t i = *first_outside_idx; i < optimized_traj_points.size(); ++i) {
-      size_t stop_idx = i;
-      const auto & op_target_point = motion_utils::calcLongitudinalOffsetPoint(
-        optimized_traj_points, optimized_traj_points.at(i).pose.position,
-        -1.0 * vehicle_stop_margin_outside_drivable_area_);
-      if (op_target_point) {
-        const auto target_point = op_target_point.get();
-        // confirm that target point doesn't overlap with the stop point outside drivable area
-        const auto dist =
-          tier4_autoware_utils::calcDistance2d(optimized_traj_points.at(i), target_point);
-        const double overlap_threshold = 1e-3;
-        if (dist > overlap_threshold) {
-          stop_idx = motion_utils::findNearestSegmentIndex(optimized_traj_points, target_point);
-        }
+    size_t stop_idx = *first_outside_idx;
+    const auto & op_target_point = motion_utils::calcLongitudinalOffsetPoint(
+      optimized_traj_points, optimized_traj_points.at(stop_idx).pose.position,
+      -1.0 * vehicle_stop_margin_outside_drivable_area_);
+    if (op_target_point) {
+      const auto target_point = op_target_point.get();
+      // confirm that target point doesn't overlap with the stop point outside drivable area
+      const auto dist =
+        tier4_autoware_utils::calcDistance2d(optimized_traj_points.at(stop_idx), target_point);
+      const double overlap_threshold = 1e-3;
+      if (dist > overlap_threshold) {
+        stop_idx = motion_utils::findNearestSegmentIndex(optimized_traj_points, target_point);
       }
-      optimized_traj_points.at(stop_idx).longitudinal_velocity_mps = 0.0;
+    }
+    publishVirtualWall(optimized_traj_points.at(stop_idx).pose);
+    for (size_t i = stop_idx; i < optimized_traj_points.size(); ++i) {
+      optimized_traj_points.at(i).longitudinal_velocity_mps = 0.0;
     }
   }
 
