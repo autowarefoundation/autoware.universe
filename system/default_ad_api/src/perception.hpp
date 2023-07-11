@@ -19,12 +19,11 @@
 #include <component_interface_specs/perception.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/dynamic_object.hpp>
+#include <autoware_adapi_v1_msgs/msg/dynamic_object_path.hpp>
 #include <autoware_adapi_v1_msgs/msg/object_classification.hpp>
-#include <autoware_adapi_v1_msgs/msg/predicted_object.hpp>
-#include <autoware_adapi_v1_msgs/msg/predicted_object_kinematics.hpp>
-#include <autoware_adapi_v1_msgs/msg/predicted_path.hpp>
-#include <autoware_adapi_v1_msgs/msg/shape.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
+#include <shape_msgs/msg/solid_primitive.hpp>
 
 #include <unordered_map>
 #include <vector>
@@ -41,11 +40,11 @@ public:
   explicit PerceptionNode(const rclcpp::NodeOptions & options);
 
 private:
-  using PredictedObjectArray = autoware_ad_api::perception::PredictedObjectArray;
+  using DynamicObjectArray = autoware_ad_api::perception::DynamicObjectArray;
   using ObjectClassification = autoware_adapi_v1_msgs::msg::ObjectClassification;
-  using PredictedObject = autoware_adapi_v1_msgs::msg::PredictedObject;
-  using PredictedPath = autoware_adapi_v1_msgs::msg::PredictedPath;
-  using API_Shape = autoware_adapi_v1_msgs::msg::Shape;
+  using DynamicObject = autoware_adapi_v1_msgs::msg::DynamicObject;
+  using DynamicObjectPath = autoware_adapi_v1_msgs::msg::DynamicObjectPath;
+  using API_Shape = shape_msgs::msg::SolidPrimitive;
   using Shape = autoware_auto_perception_msgs::msg::Shape;
 
   std::unordered_map<uint8_t, uint8_t> shape_type_ = {
@@ -54,7 +53,7 @@ private:
     {Shape::POLYGON, API_Shape::PRISM},
   };
 
-  Pub<PredictedObjectArray> pub_object_recognized_;
+  Pub<DynamicObjectArray> pub_object_recognized_;
   Sub<perception_interface::ObjectRecognition> sub_object_recognized_;
   void object_recognize(const perception_interface::ObjectRecognition::Message::ConstSharedPtr msg);
   uint8_t mapping(

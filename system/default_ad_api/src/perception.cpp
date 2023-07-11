@@ -39,10 +39,10 @@ uint8_t PerceptionNode::mapping(
 void PerceptionNode::object_recognize(
   const perception_interface::ObjectRecognition::Message::ConstSharedPtr msg)
 {
-  PredictedObjectArray::Message objects;
+  DynamicObjectArray::Message objects;
   objects.header = msg->header;
   for (const auto & msg_object : msg->objects) {
-    PredictedObject object;
+    DynamicObject object;
     object.id = msg_object.object_id;
     object.existence_probability = msg_object.existence_probability;
     for (const auto & msg_classification : msg_object.classification) {
@@ -51,11 +51,11 @@ void PerceptionNode::object_recognize(
       classification.probability = msg_classification.probability;
       object.classification.insert(object.classification.begin(), classification);
     }
-    object.kinematics.pose = msg_object.kinematics.initial_pose_with_covariance;
-    object.kinematics.twist = msg_object.kinematics.initial_twist_with_covariance;
-    object.kinematics.accel = msg_object.kinematics.initial_acceleration_with_covariance;
+    object.kinematics.pose = msg_object.kinematics.initial_pose_with_covariance.pose;
+    object.kinematics.twist = msg_object.kinematics.initial_twist_with_covariance.twist;
+    object.kinematics.accel = msg_object.kinematics.initial_acceleration_with_covariance.accel;
     for (const auto & msg_predicted_path : msg_object.kinematics.predicted_paths) {
-      PredictedPath predicted_path;
+      DynamicObjectPath predicted_path;
       for (const auto & msg_path : msg_predicted_path.path) {
         predicted_path.path.insert(predicted_path.path.begin(), msg_path);
       }
@@ -64,9 +64,10 @@ void PerceptionNode::object_recognize(
       object.kinematics.predicted_paths.insert(
         object.kinematics.predicted_paths.begin(), predicted_path);
     }
-    object.shape.type = mapping(shape_type_, msg_object.shape.type, API_Shape::UNKNOWN);
-    object.shape.dimensions = msg_object.shape.dimensions;
-    object.shape.footprint = msg_object.shape.footprint;
+    object.shape.type = mapping(shape_type_, msg_object.shape.type, API_Shape::PRISM);
+    object.shape.dimensions = {
+      msg_object.shape.dimensions.x, msg_object.shape.dimensions.y, msg_object.shape.dimensions.z};
+    object.shape.polygon = msg_object.shape.footprint;
     objects.objects.insert(objects.objects.begin(), object);
   }
 
