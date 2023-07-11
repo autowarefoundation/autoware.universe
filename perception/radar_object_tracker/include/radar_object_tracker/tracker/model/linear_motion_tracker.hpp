@@ -19,6 +19,8 @@
 
 #include <kalman_filter/kalman_filter.hpp>
 
+#include <string>
+
 class LinearMotionTracker : public Tracker
 {
 private:
@@ -82,6 +84,7 @@ public:
     const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
     const geometry_msgs::msg::Transform & self_transform);
 
+  void loadModelParameters(const std::string & path);
   bool predict(const rclcpp::Time & time) override;
   bool predict(const double dt, KalmanFilter & ekf) const;
   bool measure(

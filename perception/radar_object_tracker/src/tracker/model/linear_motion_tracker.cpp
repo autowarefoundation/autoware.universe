@@ -39,6 +39,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
+#include <yaml-cpp/yaml.h>
+
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 LinearMotionTracker::LinearMotionTracker(
@@ -51,33 +53,11 @@ LinearMotionTracker::LinearMotionTracker(
 {
   object_ = object;
 
-  // initialize params
-  float q_stddev_ax = 0.4;                                 // [m/(s*s)]
-  float q_stddev_ay = 0.4;                                 // [m/(s*s)]
-  float r_stddev_x = 0.4;                                  // [m]
-  float r_stddev_y = 0.4;                                  // [m]
-  float r_stddev_vx = 0.4;                                 // [m]
-  float r_stddev_vy = 0.4;                                 // [m]
-  float p0_stddev_x = 1.0;                                 // [m/s]
-  float p0_stddev_y = 1.0;                                 // [m/s]
-  float p0_stddev_vx = tier4_autoware_utils::kmph2mps(5);  // [m/(s)]
-  float p0_stddev_vy = tier4_autoware_utils::kmph2mps(5);  // [m/(s)]
-  float p0_stddev_ax = 0.05;                               // [m/(s*s)]
-  float p0_stddev_ay = 0.05;                               // [m/(s*s)]
-  ekf_params_.q_cov_ax = std::pow(q_stddev_ax, 2.0);
-  ekf_params_.q_cov_ay = std::pow(q_stddev_ay, 2.0);
-  ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
-  ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
-  ekf_params_.r_cov_vx = std::pow(r_stddev_vx, 2.0);
-  ekf_params_.r_cov_vy = std::pow(r_stddev_vy, 2.0);
-  ekf_params_.p0_cov_x = std::pow(p0_stddev_x, 2.0);
-  ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
-  ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
-  ekf_params_.p0_cov_vy = std::pow(p0_stddev_vy, 2.0);
-  ekf_params_.p0_cov_ay = std::pow(p0_stddev_ax, 2.0);
-  ekf_params_.p0_cov_ay = std::pow(p0_stddev_ay, 2.0);
-  max_vx_ = tier4_autoware_utils::kmph2mps(80);  // [m/s]
-  max_vy_ = tier4_autoware_utils::kmph2mps(80);  // [rad/s]
+  // load setting from yaml file
+  const std::string tmp_setting_file =
+    "/home/yoshiri/autoware/src/universe/autoware.universe/perception/radar_object_tracker/config/"
+    "model/linear_motion_tracker.yaml";
+  loadModelParameters(tmp_setting_file);
 
   // initialize X matrix and position
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
@@ -98,10 +78,6 @@ LinearMotionTracker::LinearMotionTracker(
   // init ax and ay
   X(IDX::AX) = 0.0;
   X(IDX::AY) = 0.0;
-
-  // lpf filter parameters
-  filter_tau_ = 1.0;  // [s]
-  filter_dt_ = 0.1;   // [s]
 
   // initialize P matrix
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -168,8 +144,7 @@ LinearMotionTracker::LinearMotionTracker(
   P.block<2, 2>(IDX::VX, IDX::VX) = P_vxy;
   P.block<2, 2>(IDX::AX, IDX::AX) = P_axy;
 
-  bounding_box_ = {0.5, 0.5, 1.7};
-  cylinder_ = {0.3, 1.7};
+  // init shape
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
@@ -178,6 +153,59 @@ LinearMotionTracker::LinearMotionTracker(
   }
 
   ekf_.init(X, P);
+}
+
+void LinearMotionTracker::loadModelParameters(const std::string & path)
+{
+  YAML::Node config = YAML::LoadFile(path);
+  // initialize ekf params
+  const float q_stddev_ax =
+    config["ekf_params"]["process_noise_std"]["ax"].as<float>();  // [m/(s*s)]
+  const float q_stddev_ay =
+    config["ekf_params"]["process_noise_std"]["ay"].as<float>();  // [m/(s*s)]
+  const float r_stddev_x = config["ekf_params"]["measurement_noise_std"]["x"].as<float>();    // [m]
+  const float r_stddev_y = config["ekf_params"]["measurement_noise_std"]["y"].as<float>();    // [m]
+  const float r_stddev_vx = config["ekf_params"]["measurement_noise_std"]["vx"].as<float>();  // [m]
+  const float r_stddev_vy = config["ekf_params"]["measurement_noise_std"]["vy"].as<float>();  // [m]
+  const float p0_stddev_x =
+    config["ekf_params"]["initial_covariance_std"]["x"].as<float>();  // [m/s]
+  const float p0_stddev_y =
+    config["ekf_params"]["initial_covariance_std"]["y"].as<float>();  // [m/s]
+  const float p0_stddev_vx =
+    config["ekf_params"]["initial_covariance_std"]["vx"].as<float>();  // [m/(s)]
+  const float p0_stddev_vy =
+    config["ekf_params"]["initial_covariance_std"]["vy"].as<float>();  // [m/(s)]
+  const float p0_stddev_ax =
+    config["ekf_params"]["initial_covariance_std"]["ax"].as<float>();  // [m/(s*s)]
+  const float p0_stddev_ay =
+    config["ekf_params"]["initial_covariance_std"]["ay"].as<float>();  // [m/(s*s)]
+  ekf_params_.q_cov_ax = std::pow(q_stddev_ax, 2.0);
+  ekf_params_.q_cov_ay = std::pow(q_stddev_ay, 2.0);
+  ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
+  ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
+  ekf_params_.r_cov_vx = std::pow(r_stddev_vx, 2.0);
+  ekf_params_.r_cov_vy = std::pow(r_stddev_vy, 2.0);
+  ekf_params_.p0_cov_x = std::pow(p0_stddev_x, 2.0);
+  ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
+  ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
+  ekf_params_.p0_cov_vy = std::pow(p0_stddev_vy, 2.0);
+  ekf_params_.p0_cov_ay = std::pow(p0_stddev_ax, 2.0);
+  ekf_params_.p0_cov_ay = std::pow(p0_stddev_ay, 2.0);
+
+  // lpf filter parameters
+  filter_tau_ = config["low_pass_filter"]["time_constant"].as<float>(1.0);  // [s]
+  filter_dt_ = config["low_pass_filter"]["sampling_time"].as<float>(0.1);   // [s]
+
+  // limitation
+  // (TODO): this may be written in another yaml file based on classify result
+  const float max_speed_kmph = config["limit"]["max_speed"].as<float>();  // [km/h]
+  max_vx_ = tier4_autoware_utils::kmph2mps(max_speed_kmph);               // [m/s]
+  max_vy_ = tier4_autoware_utils::kmph2mps(max_speed_kmph);               // [rad/s]
+
+  // shape initialization
+  // (TODO): this may be written in another yaml file based on classify result
+  bounding_box_ = {0.5, 0.5, 1.7};
+  cylinder_ = {0.3, 1.7};
 }
 
 bool LinearMotionTracker::predict(const rclcpp::Time & time)

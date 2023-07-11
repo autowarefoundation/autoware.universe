@@ -33,6 +33,7 @@ ament_auto_add_library(radar_object_tracker_node SHARED
 target_link_libraries(radar_object_tracker_node
   mu_successive_shortest_path
   Eigen3::Eigen
+  yaml-cpp
 )
 
 rclcpp_components_register_node(radar_object_tracker_node
