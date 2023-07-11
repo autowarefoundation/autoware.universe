@@ -660,7 +660,9 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       planning_utils::getLaneletsOnPath(*path, lanelet_map_ptr, current_pose);
     intersection_lanelets_ = util::getObjectiveLanelets(
       lanelet_map_ptr, routing_graph_ptr, assigned_lanelet, lanelets_on_path, associative_ids_,
-      interpolated_path_info, planner_param_.common.attention_area_length, tl_arrow_solid_on);
+      interpolated_path_info, planner_param_.common.attention_area_length,
+      planner_param_.occlusion.occlusion_attention_area_length,
+      planner_param_.common.consider_wrong_direction_vehicle, tl_arrow_solid_on);
   }
 
   const auto & conflicting_lanelets = intersection_lanelets_.value().conflicting;
@@ -897,6 +899,7 @@ bool IntersectionModule::checkCollision(
     const auto object_direction = util::getObjectPoseWithVelocityDirection(object.kinematics);
     const auto is_in_adjacent_lanelets = util::checkAngleForTargetLanelets(
       object_direction, adjacent_lanelets, planner_param_.common.attention_area_angle_thr,
+      planner_param_.common.consider_wrong_direction_vehicle,
       planner_param_.common.attention_area_margin);
     if (is_in_adjacent_lanelets) {
       continue;
@@ -911,12 +914,14 @@ bool IntersectionModule::checkCollision(
       } else if (util::checkAngleForTargetLanelets(
                    object_direction, attention_area_lanelets,
                    planner_param_.common.attention_area_angle_thr,
+                   planner_param_.common.consider_wrong_direction_vehicle,
                    planner_param_.common.attention_area_margin)) {
         target_objects.objects.push_back(object);
       }
     } else if (util::checkAngleForTargetLanelets(
                  object_direction, attention_area_lanelets,
                  planner_param_.common.attention_area_angle_thr,
+                 planner_param_.common.consider_wrong_direction_vehicle,
                  planner_param_.common.attention_area_margin)) {
       // intersection_area is not available, use detection_area_with_margin as before
       target_objects.objects.push_back(object);

@@ -16,9 +16,11 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>interpolation</depend>
+  <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
   <depend>rclcpp</depend>
   <depend>tier4_autoware_utils</depend>
+  <depend>tier4_perception_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>

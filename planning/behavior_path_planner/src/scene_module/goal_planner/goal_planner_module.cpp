@@ -152,7 +152,9 @@ void GoalPlannerModule::onTimer()
   mutex_.unlock();
 
   // generate valid pull over path candidates and calculate closest start pose
-  const auto current_lanes = utils::getExtendedCurrentLanes(planner_data_);
+  const auto current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_->backward_goal_search_length,
+    parameters_->forward_goal_search_length);
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
   double min_start_arc_length = std::numeric_limits<double>::max();
@@ -284,7 +286,7 @@ bool GoalPlannerModule::isExecutionRequested() const
       return lanelet::utils::isInLanelet(goal_pose, current_lane);
     });
 
-  // check that goal is in current neghibor shoulder lane
+  // check that goal is in current neighbor shoulder lane
   const bool goal_is_in_current_shoulder_lanes = std::invoke([&]() {
     lanelet::ConstLanelet neighbor_shoulder_lane{};
     for (const auto & lane : current_lanes) {
@@ -582,15 +584,14 @@ void GoalPlannerModule::selectSafePullOverPath()
   for (auto & path : status_.pull_over_path->partial_paths) {
     const size_t ego_idx = planner_data_->findEgoIndex(path.points);
     utils::clipPathLength(path, ego_idx, planner_data_->parameters);
-    const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
-    utils::generateDrivableArea(
-      path, target_drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
   }
 }
 
 void GoalPlannerModule::setLanes()
 {
-  status_.current_lanes = utils::getExtendedCurrentLanes(planner_data_);
+  status_.current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_->backward_goal_search_length,
+    parameters_->forward_goal_search_length);
   status_.pull_over_lanes =
     goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
   status_.lanes =
@@ -972,12 +973,6 @@ PathWithLaneId GoalPlannerModule::generateStopPath()
     }
   }
 
-  // generate drivable area
-  const auto drivable_lanes = utils::generateDrivableLanes(status_.current_lanes);
-  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(reference_path, drivable_lanes);
-  utils::generateDrivableArea(
-    reference_path, target_drivable_lanes, false, common_parameters.vehicle_length, planner_data_);
-
   return reference_path;
 }
 
@@ -1006,12 +1001,6 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
   if (stop_idx) {
     status_.stop_pose = stop_path.points.at(*stop_idx).point.pose;
   }
-
-  // generate drivable area
-  const auto drivable_lanes = utils::generateDrivableLanes(status_.current_lanes);
-  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(stop_path, drivable_lanes);
-  utils::generateDrivableArea(
-    stop_path, target_drivable_lanes, false, common_parameters.vehicle_length, planner_data_);
 
   return stop_path;
 }
