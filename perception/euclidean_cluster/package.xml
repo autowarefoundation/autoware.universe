@@ -18,6 +18,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
+  <depend>tier4_debug_msgs</depend>
   <depend>tier4_perception_msgs</depend>
 
   <test_depend>autoware_lint_common</test_depend>
