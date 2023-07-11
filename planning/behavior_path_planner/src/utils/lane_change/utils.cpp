@@ -334,7 +334,7 @@ bool hasEnoughLength(
     const auto lane_changing_time =
       PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, max_lat_acc);
     minimum_lane_change_length_to_preferred_lane +=
-      minimum_lane_changing_velocity * lane_changing_time + common_parameter.minimum_prepare_length;
+      minimum_lane_changing_velocity * lane_changing_time;
   }
 
   if (lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
