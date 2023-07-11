@@ -28,8 +28,8 @@
 #include <boost/circular_buffer.hpp>
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace image_projection_based_fusion
 {
