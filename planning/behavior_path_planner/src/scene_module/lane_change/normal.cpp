@@ -548,9 +548,6 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto sorted_lane_ids = utils::lane_change::getSortedLaneIds(
     route_handler, original_lanelets, target_lanelets, arc_position_from_target.distance);
 
-  const auto target_preferred_lanelets = utils::lane_change::getTargetPreferredLanes(
-    route_handler, original_lanelets, target_lanelets, direction, type_);
-
   const auto target_neighbor_lanelets =
     utils::lane_change::getTargetNeighborLanes(route_handler, original_lanelets, type_);
 
