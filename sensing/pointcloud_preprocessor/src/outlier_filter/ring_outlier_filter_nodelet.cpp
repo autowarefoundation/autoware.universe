@@ -76,28 +76,28 @@ void RingOutlierFilterComponent::faster_filter(
     RCLCPP_ERROR(get_logger(), "input cloud does not contain 'intensity' data field");
     return;
   }
-  const auto intensity_offset = *maybe_intensity_offset;
+  const auto intensity_offset = input->fields.at(*maybe_intensity_offset).offset;
 
   auto maybe_ring_offset = utils::getRingOffset(*input);
   if (!maybe_ring_offset) {
     RCLCPP_ERROR(get_logger(), "input cloud does not contain 'ring' data field");
     return;
   }
-  const auto ring_offset = *maybe_ring_offset;
+  const auto ring_offset = input->fields.at(*maybe_ring_offset).offset;
 
   auto maybe_azimuth_offset = utils::getAzimuthOffset(*input);
   if (!maybe_azimuth_offset) {
     RCLCPP_ERROR(get_logger(), "input cloud does not contain 'azimuth' data field");
     return;
   }
-  const auto azimuth_offset = *maybe_azimuth_offset;
+  const auto azimuth_offset = input->fields.at(*maybe_azimuth_offset).offset;
 
   auto maybe_distance_offset = utils::getDistanceOffset(*input);
   if (!maybe_distance_offset) {
     RCLCPP_ERROR(get_logger(), "input cloud does not contain 'distance' data field");
     return;
   }
-  const auto distance_offset = *maybe_distance_offset;
+  const auto distance_offset = input->fields.at(*maybe_distance_offset).offset;
 
   // extract intensity from point raw data
   auto getPointIntensity = [=](const unsigned char * raw_p) {
@@ -266,10 +266,13 @@ void RingOutlierFilterComponent::faster_filter(
           first_walk.first_point_distance, first_walk.first_point_azimuth,
           last_walk.last_point_distance, last_walk.last_point_azimuth)) {
       // merge
+      auto combined_num_points = first_walk.num_points + last_walk.num_points;
       first_walk.first_point_distance = last_walk.first_point_distance;
       first_walk.first_point_azimuth = last_walk.first_point_azimuth;
+      first_walk.num_points = combined_num_points;
       last_walk.last_point_distance = first_walk.last_point_distance;
       last_walk.last_point_azimuth = first_walk.last_point_azimuth;
+      last_walk.num_points = combined_num_points;
     }
   }
 
