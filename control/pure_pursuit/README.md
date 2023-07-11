@@ -2,7 +2,6 @@
 
 The Pure Pursuit Controller module calculates the steering angle for tracking a desired trajectory using the pure pursuit algorithm. This is used as a lateral controller plugin in the `trajectory_follower_node`.
 
-
 ## Inputs
 
 Set the following from the [controller_node](../trajectory_follower_node/README.md)
