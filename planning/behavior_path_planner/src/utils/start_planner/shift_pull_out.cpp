@@ -306,22 +306,8 @@ double ShiftPullOut::calcPullOutLongitudinalDistance(
   }();
 
   // Take all requirements
-  // const auto min_pull_out_distance =
-  //   std::max(min_pull_out_distance_by_acc, min_pull_out_distance_by_curvature);
-  double min_pull_out_distance;
-  if (min_pull_out_distance_by_acc > min_pull_out_distance_by_curvature) {
-    min_pull_out_distance = min_pull_out_distance_by_acc;
-    RCLCPP_WARN(
-      rclcpp::get_logger("pullout"),
-      "use acceleration: distance -- acc: %f, curvature: %f, result: %f",
-      min_pull_out_distance_by_acc, min_pull_out_distance_by_curvature, min_pull_out_distance);
-  } else {
-    min_pull_out_distance = min_pull_out_distance_by_curvature;
-    RCLCPP_ERROR(
-      rclcpp::get_logger("pullout"),
-      "use curvature: distance -- acc: %f, curvature: %f, result: %f", min_pull_out_distance_by_acc,
-      min_pull_out_distance_by_curvature, min_pull_out_distance);
-  }
+  const auto min_pull_out_distance =
+    std::max(min_pull_out_distance_by_acc, min_pull_out_distance_by_curvature);
 
   return min_pull_out_distance;
 }
