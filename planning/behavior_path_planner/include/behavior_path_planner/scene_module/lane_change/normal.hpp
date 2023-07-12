@@ -15,7 +15,6 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_
 
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
-#include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/lane_change/base_class.hpp"
 
 #include <memory>
