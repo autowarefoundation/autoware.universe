@@ -193,8 +193,9 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       road_lane_reference_path.points.at(shift_start_idx).point.longitudinal_velocity_mps;
     const double shift_time =
       PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, lateral_acc);
-    const double longitudinal_acc = std::clamp(road_velocity / shift_time, 0.0, 1.0);
-    const double pull_out_distance = (longitudinal_acc * std::pow(shift_time, 2)) / 2.0;
+    const double longitudinal_acc = std::clamp(road_velocity / shift_time, 0.0, /* max acc */ 1.0);
+    const auto pull_out_distance = calcBeforePullOutLongitudinalDistance(
+      longitudinal_acc, shift_time, shift_length, parameter.maximum_curvature);
     const double terminal_velocity = longitudinal_acc * shift_time;
 
     // clip from ego pose
@@ -287,6 +288,41 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   }
 
   return candidate_paths;
+}
+
+double ShiftPullOut::calcBeforePullOutLongitudinalDistance(
+  const double lon_acc, const double shift_time, const double shift_length,
+  const double max_curvature) const
+{
+  // Required distance for acceleration limit
+  const double min_pull_out_distance_by_acc = (lon_acc * std::pow(shift_time, 2)) / 2.0;
+
+  // Required distance for curvature limit
+  const auto min_pull_out_distance_by_curvature = [&]() {
+    const double distance =
+      std::sqrt(std::max(4.0 * shift_length / max_curvature - shift_length * shift_length, 0.0));
+    return distance;
+  }();
+
+  // Take all requirements
+  // const auto min_pull_out_distance =
+  //   std::max(min_pull_out_distance_by_acc, min_pull_out_distance_by_curvature);
+  double min_pull_out_distance;
+  if (min_pull_out_distance_by_acc > min_pull_out_distance_by_curvature) {
+    min_pull_out_distance = min_pull_out_distance_by_acc;
+    RCLCPP_WARN(
+      rclcpp::get_logger("pullout"),
+      "use acceleration: distance -- acc: %f, curvature: %f, result: %f",
+      min_pull_out_distance_by_acc, min_pull_out_distance_by_curvature, min_pull_out_distance);
+  } else {
+    min_pull_out_distance = min_pull_out_distance_by_curvature;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("pullout"),
+      "use curvature: distance -- acc: %f, curvature: %f, result: %f", min_pull_out_distance_by_acc,
+      min_pull_out_distance_by_curvature, min_pull_out_distance);
+  }
+
+  return min_pull_out_distance;
 }
 
 bool ShiftPullOut::hasEnoughDistance(
