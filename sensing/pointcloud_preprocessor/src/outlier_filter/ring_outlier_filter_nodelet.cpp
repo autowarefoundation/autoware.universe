@@ -160,11 +160,6 @@ void RingOutlierFilterComponent::faster_filter(
   };
 
   // helper functions
-  double d_alloc_vectors;
-  double d_build_walks;
-  double d_fuse_walks;
-  double d_check_clusters;
-  double d_write_outputs;
 
   // check if walk is a valid cluster
   const float object_length_threshold2 = object_length_threshold_ * object_length_threshold_;
@@ -194,8 +189,6 @@ void RingOutlierFilterComponent::faster_filter(
              azimuth_diff < 100.f;
     };
 
-  stop_watch_ptr_->toc("cyclic_time", true);
-
   // tmp vectors to keep track of walk/ring state while processing points in order (cache efficient)
   std::vector<WalkInfo> walks;            // all walks
   std::vector<RingWalkInfo> rings;        // info for each ring
@@ -209,9 +202,7 @@ void RingOutlierFilterComponent::faster_filter(
   rings.resize(max_rings_num_, RingWalkInfo{nullptr, nullptr});
   // points are initially associated to no walk
   points_walk_id.resize(input->width * input->height, -1UL);
-  walks_cluster_status.reserve(input->width * input->height); // In the worst case, this could grow to the number of input points
-
-  d_alloc_vectors = stop_watch_ptr_->toc("cyclic_time", true);
+  walks_cluster_status.reserve(max_rings_num_ * 2); // In the worst case, this could grow to the number of input points
 
   int invalid_ring_count = 0;
 
@@ -267,8 +258,6 @@ void RingOutlierFilterComponent::faster_filter(
     }
   }
 
-  d_build_walks = stop_watch_ptr_->toc("cyclic_time", true);
-
   // So far, we have processed ring points as if rings were not circular. Of course, the last and
   // first points of a ring could totally be part of the same walk. When such thing happens, we need
   // to merge the two walks
@@ -307,10 +296,6 @@ void RingOutlierFilterComponent::faster_filter(
       walks_cluster_status.at(last_walk.id) = isCluster(last_walk);
     }
   }
-
-  d_fuse_walks = stop_watch_ptr_->toc("cyclic_time", true);
-
-  d_check_clusters = stop_watch_ptr_->toc("cyclic_time", true);
 
   // finally copy points
   output.point_step = sizeof(PointXYZI);
@@ -387,16 +372,6 @@ void RingOutlierFilterComponent::faster_filter(
       get_logger(), "%d points had ring index over max_rings_num (%d) and have been ignored.",
       invalid_ring_count, max_rings_num_);
   }
-
-  d_write_outputs = stop_watch_ptr_->toc("cyclic_time", true);
-
-  //double d_alloc_vectors;
-  //double d_build_walks;
-  //double d_fuse_walks;
-  //double d_check_clusters;
-  //double d_write_outputs;
-  RCLCPP_INFO(get_logger(), "AAA {'av': %f, 'bw': %f, 'fw': %f, 'cc': %f, 'wo': %f, 'nw': %zu, 'in': %u, 'out': %u} BBB", d_alloc_vectors, d_build_walks,
-              d_fuse_walks, d_check_clusters, d_write_outputs, walks.size(), input->width * input->height, output.width);
 
   // add processing time for debug
   if (debug_publisher_) {
