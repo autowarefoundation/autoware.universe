@@ -15,6 +15,8 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_
 
 #include "behavior_path_planner/scene_module/lane_change/base_class.hpp"
+#include "behavior_path_planner/marker_util/debug_utilities.hpp"
+#include "behavior_path_planner/marker_util/lane_change/debug.hpp"
 
 #include <memory>
 #include <string>
@@ -28,6 +30,7 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebugMap;
+using marker_utils::CollisionCheckDebug;
 using route_handler::Direction;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
@@ -107,6 +110,11 @@ protected:
   TurnSignalInfo calcTurnSignalInfo() override;
 
   bool isValidPath(const PathWithLaneId & path) const override;
+
+  PathSafetyStatus isLaneChangePathSafe(
+    const LaneChangePath & lane_change_path, const LaneChangeTargetObjects & target_objects,
+    const double front_decel, const double rear_decel,
+    std::unordered_map<std::string, CollisionCheckDebug> & debug_data) const;
 
   rclcpp::Logger logger_ = rclcpp::get_logger("lane_change").get_child(getModuleTypeStr());
 };
