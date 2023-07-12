@@ -25,10 +25,11 @@ namespace map_based_prediction
 {
 PathGenerator::PathGenerator(
   const double time_horizon, const double sampling_time_interval,
-  const double min_crosswalk_user_velocity)
+  const double min_crosswalk_user_velocity, const size_t num_sample)
 : time_horizon_(time_horizon),
   sampling_time_interval_(sampling_time_interval),
-  min_crosswalk_user_velocity_(min_crosswalk_user_velocity)
+  min_crosswalk_user_velocity_(min_crosswalk_user_velocity),
+  num_sample_(num_sample)
 {
 }
 
@@ -148,13 +149,13 @@ PredictedPath PathGenerator::generatePathForOffLaneVehicle(const TrackedObject &
 }
 
 PredictedPath PathGenerator::generatePathForOnLaneVehicle(
-  const TrackedObject & object, const PosePath & ref_paths)
+  const TrackedObject & object, const PosePath & ref_path, const double lane_width)
 {
-  if (ref_paths.size() < 2) {
+  if (ref_path.size() < 2) {
     return generateStraightPath(object);
   }
 
-  return generatePolynomialPath(object, ref_paths);
+  return generatePolynomialPath(object, ref_path, lane_width);
 }
 
 PredictedPath PathGenerator::generateStraightPath(const TrackedObject & object) const
@@ -177,17 +178,16 @@ PredictedPath PathGenerator::generateStraightPath(const TrackedObject & object) 
 }
 
 PredictedPath PathGenerator::generatePolynomialPath(
-  const TrackedObject & object, const PosePath & ref_path)
+  const TrackedObject & object, const PosePath & ref_path, const double lane_width)
 {
   // Get current Frenet Point
   const double ref_path_len = motion_utils::calcArcLength(ref_path);
   const auto current_point = getFrenetPoint(object, ref_path);
 
-  // TODO(ktro2828): get MIN_WIDTH and MAX_WIDTH from lane width
-  constexpr double MIN_WIDTH = -3.0, MAX_WIDTH = 3.0;
-  constexpr double SAMPLE_WIDTH = 1.0;
+  const double min_width = -0.5 * lane_width, max_width = 0.5 * lane_width;
+  const double sample_width = lane_width / num_sample_;
   std::vector<FrenetPath> frenet_paths;
-  for (double terminal_d = MIN_WIDTH; terminal_d <= MAX_WIDTH; terminal_d += SAMPLE_WIDTH) {
+  for (double terminal_d = min_width; terminal_d <= max_width; terminal_d += sample_width) {
     // Step1. Set Target Frenet Point
     // Note that we do not set position s,
     // since we don't know the target longitudinal position
@@ -204,8 +204,8 @@ PredictedPath PathGenerator::generatePolynomialPath(
   }
 
   // TODO(ktro2828): check whether path is valid (collision, speed, acceleration, curvature)
-  const double max_velocity = current_point.s_acc * time_horizon_;
   const double max_acceleration = current_point.s_acc;
+  const double max_velocity = current_point.s_vel + max_acceleration * time_horizon_;
   const auto frenet_predicted_path = get_best_path(frenet_paths, max_velocity, max_acceleration);
 
   // Step3. Interpolate Reference Path for converting predicted path coordinate
@@ -421,6 +421,10 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
     motion_utils::calcLongitudinalOffsetToSegment(ref_path, nearest_segment_idx, obj_point);
   const float vx = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.x);
   const float vy = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.y);
+  const float ax =
+    static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.x);
+  const float ay =
+    static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.y);
   const float obj_yaw =
     static_cast<float>(tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
   const float lane_yaw =
@@ -431,8 +435,8 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
   frenet_point.d = motion_utils::calcLateralOffset(ref_path, obj_point);
   frenet_point.s_vel = vx * std::cos(delta_yaw) - vy * std::sin(delta_yaw);
   frenet_point.d_vel = vx * std::sin(delta_yaw) + vy * std::cos(delta_yaw);
-  frenet_point.s_acc = 0.0;
-  frenet_point.d_acc = 0.0;
+  frenet_point.s_acc = ax * std::cos(delta_yaw) - ay * std::sin(delta_yaw);
+  frenet_point.d_acc = ax * std::sin(delta_yaw) + ay * std::cos(delta_yaw);
 
   return frenet_point;
 }

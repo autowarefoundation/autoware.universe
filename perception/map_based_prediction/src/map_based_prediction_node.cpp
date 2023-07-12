@@ -14,7 +14,7 @@
 
 #include "map_based_prediction/map_based_prediction_node.hpp"
 
-#include <interpolation/linear_interpolation.hpp>
+#include <interpolation/spline_interpolation.hpp>
 #include <motion_utils/resample/resample.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -825,8 +825,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
       // Generate Predicted Path
       std::vector<PredictedPath> predicted_paths;
       for (const auto & ref_path : ref_paths) {
-        PredictedPath predicted_path =
-          path_generator_->generatePathForOnLaneVehicle(transformed_object, ref_path.path);
+        PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
+          transformed_object, ref_path.path, ref_path.lane_width);
         if (predicted_path.path.empty()) {
           continue;
         }
@@ -1280,21 +1280,26 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     // Step1. Get the path
     // Step1.1 Get the left lanelet
     lanelet::routing::LaneletPaths left_paths;
+    double left_lane_width{0.0};
     const auto left_lanelet = getLeftOrRightLanelets(current_lanelet_data.lanelet, true);
     if (!!left_lanelet) {
       left_paths = getPathsForNormalOrIsolatedLanelet(left_lanelet.value());
+      left_lane_width = calculate_lane_width(left_lanelet.value());
     }
 
     // Step1.2 Get the right lanelet
     lanelet::routing::LaneletPaths right_paths;
+    double right_lane_width{0.0};
     const auto right_lanelet = getLeftOrRightLanelets(current_lanelet_data.lanelet, false);
     if (!!right_lanelet) {
       right_paths = getPathsForNormalOrIsolatedLanelet(right_lanelet.value());
+      right_lane_width = calculate_lane_width(right_lanelet.value());
     }
 
     // Step1.3 Get the centerline
     lanelet::routing::LaneletPaths center_paths =
       getPathsForNormalOrIsolatedLanelet(current_lanelet_data.lanelet);
+    double center_lane_width = calculate_lane_width(current_lanelet_data.lanelet);
 
     // Skip calculations if all paths are empty
     if (left_paths.empty() && right_paths.empty() && center_paths.empty()) {
@@ -1311,15 +1316,62 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
     // Step4. add candidate reference paths to the all_ref_paths
     const float path_prob = current_lanelet_data.probability;
-    const auto addReferencePathsLocal = [&](const auto & paths, const auto & maneuver) {
-      addReferencePaths(object, paths, path_prob, maneuver_prob, maneuver, all_ref_paths);
-    };
-    addReferencePathsLocal(left_paths, Maneuver::LEFT_LANE_CHANGE);
-    addReferencePathsLocal(right_paths, Maneuver::RIGHT_LANE_CHANGE);
-    addReferencePathsLocal(center_paths, Maneuver::LANE_FOLLOW);
+    const auto addReferencePathsLocal =
+      [&](const auto & paths, const auto & lane_width, const auto & maneuver) {
+        addReferencePaths(
+          object, paths, lane_width, path_prob, maneuver_prob, maneuver, all_ref_paths);
+      };
+    addReferencePathsLocal(left_paths, left_lane_width, Maneuver::LEFT_LANE_CHANGE);
+    addReferencePathsLocal(right_paths, right_lane_width, Maneuver::RIGHT_LANE_CHANGE);
+    addReferencePathsLocal(center_paths, center_lane_width, Maneuver::LANE_FOLLOW);
   }
 
   return all_ref_paths;
+}
+
+double MapBasedPredictionNode::calculate_lane_width(const lanelet::ConstLanelet & lane) const
+{
+  const auto left_bound = lane.leftBound2d();
+  const auto right_bound = lane.rightBound2d();
+
+  const auto & query_bound = left_bound.size() < right_bound.size() ? right_bound : left_bound;
+  const auto & base_bound = left_bound.size() < right_bound.size() ? left_bound : right_bound;
+
+  auto calculate_distance = [&](const auto & pred_pt, const auto curr_pt) -> double {
+    const double vec_x = pred_pt.x() - curr_pt.x();
+    const double vec_y = pred_pt.y() - curr_pt.y();
+    return std::hypot(vec_x, vec_y);
+  };
+
+  std::vector<double> base_bound_x(base_bound.size());
+  std::vector<double> base_bound_y(base_bound.size());
+  std::vector<double> base_keys(base_bound.size(), 0.0);
+  for (size_t i = 0; i < base_bound.size(); ++i) {
+    base_bound_x.at(i) = base_bound[i].x();
+    base_bound_y.at(i) = base_bound[i].y();
+    if (0 < i) {
+      base_keys.at(i) = base_keys.at(i - 1) + calculate_distance(base_bound[i - 1], base_bound[i]);
+    }
+  }
+
+  std::vector<double> query_keys(query_bound.size(), 0.0);
+  for (size_t i = 1; i < query_bound.size(); ++i) {
+    query_keys.at(i) = calculate_distance(query_bound[i - 1], query_bound[i]);
+  }
+
+  std::vector<double> spline_x = interpolation::spline(base_keys, base_bound_x, query_keys);
+  std::vector<double> spline_y = interpolation::spline(base_keys, base_bound_y, query_keys);
+
+  const size_t num_interpolate = query_bound.size();
+  double max_width = 0.0;
+  for (size_t i = 0; i < num_interpolate; ++i) {
+    if (const auto ith_width =
+          std::hypot(spline_x.at(i) - query_bound[i].x(), spline_y.at(i) - query_bound[i].y());
+        max_width < ith_width) {
+      max_width = ith_width;
+    }
+  }
+  return max_width;
 }
 
 /**
@@ -1632,18 +1684,20 @@ void MapBasedPredictionNode::updateFuturePossibleLanelets(
 
 void MapBasedPredictionNode::addReferencePaths(
   const TrackedObject & object, const lanelet::routing::LaneletPaths & candidate_paths,
-  const float path_probability, const ManeuverProbability & maneuver_probability,
-  const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths)
+  const double lane_width, const float path_probability,
+  const ManeuverProbability & maneuver_probability, const Maneuver & maneuver,
+  std::vector<PredictedRefPath> & reference_paths)
 {
   if (!candidate_paths.empty()) {
     updateFuturePossibleLanelets(object, candidate_paths);
     const auto converted_paths = convertPathType(candidate_paths);
     for (const auto & converted_path : converted_paths) {
       PredictedRefPath predicted_path;
+      predicted_path.lane_width = lane_width;
       predicted_path.probability = maneuver_probability.at(maneuver) * path_probability;
       predicted_path.path = converted_path;
       predicted_path.maneuver = maneuver;
-      reference_paths.push_back(predicted_path);
+      reference_paths.emplace_back(predicted_path);
     }
   }
 }
