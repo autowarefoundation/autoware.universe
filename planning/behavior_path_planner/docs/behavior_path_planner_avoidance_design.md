@@ -655,13 +655,14 @@ namespace: `avoidance.target_filtering.`
 
 namespace: `avoidance.safety_check.`
 
-| Name                           | Unit   | Type   | Description                                                                       | Default value |
-| :----------------------------- | ------ | ------ | --------------------------------------------------------------------------------- | ------------- |
-| safety_check_backward_distance | [m]    | double | Backward distance to search the dynamic objects.                                  | 50.0          |
-| safety_check_time_horizon      | [s]    | double | Time horizon to check lateral/longitudinal margin is enough or not.               | 10.0          |
-| safety_check_idling_time       | [t]    | double | Time delay constant that be use for longitudinal margin calculation based on RSS. | 1.5           |
-| safety_check_accel_for_rss     | [m/ss] | double | Accel constant that be used for longitudinal margin calculation based on RSS.     | 2.5           |
-| safety_check_hysteresis_factor | [-]    | double | Hysteresis factor that be used for chattering prevention.                         | 2.0           |
+| Name                           | Unit   | Type   | Description                                                                                                | Default value |
+| :----------------------------- | ------ | ------ | ---------------------------------------------------------------------------------------------------------- | ------------- |
+| safety_check_backward_distance | [m]    | double | Backward distance to search the dynamic objects.                                                           | 50.0          |
+| safety_check_time_horizon      | [s]    | double | Time horizon to check lateral/longitudinal margin is enough or not.                                        | 10.0          |
+| safety_check_idling_time       | [t]    | double | Time delay constant that be use for longitudinal margin calculation based on RSS.                          | 1.5           |
+| safety_check_accel_for_rss     | [m/ss] | double | Accel constant that be used for longitudinal margin calculation based on RSS.                              | 2.5           |
+| safety_check_hysteresis_factor | [-]    | double | Hysteresis factor that be used for chattering prevention.                                                  | 2.0           |
+| safety_check_ego_offset        | [m]    | double | Output new avoidance path **only when** the offset between ego and previous output path is less than this. | 1.0           |
 
 ### Avoidance maneuver parameters
 
@@ -677,14 +678,16 @@ namespace: `avoidance.avoidance.lateral.`
 
 namespace: `avoidance.avoidance.longitudinal.`
 
-| Name                                 | Unit  | Type   | Description                                                                                            | Default value |
-| :----------------------------------- | :---- | :----- | :----------------------------------------------------------------------------------------------------- | :------------ |
-| prepare_time                         | [s]   | double | Avoidance shift starts from point ahead of this time x ego_speed to avoid sudden path change.          | 2.0           |
-| longitudinal_collision_safety_buffer | [s]   | double | Longitudinal collision buffer between target object and shift line.                                    | 0.0           |
-| min_prepare_distance                 | [m]   | double | Minimum distance for "prepare_time" x "ego_speed".                                                     | 1.0           |
-| min_avoidance_distance               | [m]   | double | Minimum distance of avoidance path (i.e. this distance is needed even if its lateral jerk is very low) | 10.0          |
-| min_nominal_avoidance_speed          | [m/s] | double | Minimum speed for jerk calculation in a nominal situation (\*1).                                       | 7.0           |
-| min_sharp_avoidance_speed            | [m/s] | double | Minimum speed for jerk calculation in a sharp situation (\*1).                                         | 1.0           |
+| Name                                 | Unit  | Type   | Description                                                                                                                                                                                                                                                                                                                                                       | Default value  |
+| :----------------------------------- | :---- | :----- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
+| prepare_time                         | [s]   | double | Avoidance shift starts from point ahead of this time x ego_speed to avoid sudden path change.                                                                                                                                                                                                                                                                     | 2.0            |
+| longitudinal_collision_safety_buffer | [s]   | double | Longitudinal collision buffer between target object and shift line.                                                                                                                                                                                                                                                                                               | 0.0            |
+| min_prepare_distance                 | [m]   | double | Minimum distance for "prepare_time" x "ego_speed".                                                                                                                                                                                                                                                                                                                | 1.0            |
+| min_avoidance_distance               | [m]   | double | Minimum distance of avoidance path (i.e. this distance is needed even if its lateral jerk is very low)                                                                                                                                                                                                                                                            | 10.0           |
+| min_nominal_avoidance_speed          | [m/s] | double | Minimum speed for jerk calculation in a nominal situation (\*1).                                                                                                                                                                                                                                                                                                  | 7.0            |
+| min_sharp_avoidance_speed            | [m/s] | double | Minimum speed for jerk calculation in a sharp situation (\*1).                                                                                                                                                                                                                                                                                                    | 1.0            |
+| min_slow_down_speed                  | [m/s] | double | Minimum slow speed for avoidance prepare section.                                                                                                                                                                                                                                                                                                                 | 1.38 (5km/h)   |
+| buf_slow_down_speed                  | [m/s] | double | Buffer for controller tracking error. Basically, vehicle always cannot follow velocity profile precisely. Therefore, the module inserts lower speed than target speed that satisfies conditions to avoid object within accel/jerk constraints so that the avoidance path always can be output even if the current speed is a little bit higher than target speed. | 0.57 (2.0km/h) |
 
 ### Yield maneuver parameters
 
@@ -702,6 +705,7 @@ namespace: `avoidance.stop.`
 | :----------- | :--- | :----- | :---------------------------------------------------------------------------------------------------- | :------------ |
 | min_distance | [m]  | double | Minimum stop distance in the situation where avoidance maneuver is not approved or in yield maneuver. | 10.0          |
 | max_distance | [m]  | double | Maximum stop distance in the situation where avoidance maneuver is not approved or in yield maneuver. | 20.0          |
+| stop_buffer  | [m]  | double | Buffer distance in the situation where avoidance maneuver is not approved or in yield maneuver.       | 1.0           |
 
 ### Constraints parameters
 

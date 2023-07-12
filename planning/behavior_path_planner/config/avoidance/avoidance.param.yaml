@@ -20,6 +20,7 @@
       enable_yield_maneuver_during_shifting: false
       disable_path_update: false
       use_hatched_road_markings: false
+      use_intersection_areas: false
 
       # for debug
       publish_debug_marker: false
@@ -127,6 +128,7 @@
         safety_check_idling_time: 1.5                    # [s]
         safety_check_accel_for_rss: 2.5                  # [m/ss]
         safety_check_hysteresis_factor: 2.0              # [-]
+        safety_check_ego_offset: 1.0                     # [m]
 
       # For avoidance maneuver
       avoidance:
@@ -144,6 +146,8 @@
           min_avoidance_distance: 10.0                  # [m]
           min_nominal_avoidance_speed: 7.0              # [m/s]
           min_sharp_avoidance_speed: 1.0                # [m/s]
+          min_slow_down_speed: 1.38                     # [m/s]
+          buf_slow_down_speed: 0.56                     # [m/s]
 
       # For yield maneuver
       yield:
@@ -153,6 +157,7 @@
       stop:
         min_distance: 10.0                              # [m]
         max_distance: 20.0                              # [m]
+        stop_buffer: 1.0                                # [m]
 
       constraints:
         # vehicle slows down under longitudinal constraints
