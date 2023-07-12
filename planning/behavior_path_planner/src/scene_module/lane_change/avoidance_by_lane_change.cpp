@@ -44,7 +44,8 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
   bool is_more_than_threshold = false;
   for (const auto & p : avoidance_parameters_->object_parameters) {
     const size_t num = std::count_if(objects.begin(), objects.end(), [&p](const auto & object) {
-      return utils::getHighestProbLabel(object.object.classification) == p.first;
+      const auto target_class = utils::getHighestProbLabel(object.object.classification) == p.first;
+      return target_class && object.avoid_required;
     });
 
     if (num >= p.second.execute_num) {
@@ -134,14 +135,8 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
 {
   const auto p = std::dynamic_pointer_cast<AvoidanceParameters>(avoidance_parameters_);
 
-  const auto left_expand_dist = p->detection_area_left_expand_dist;
-  const auto right_expand_dist = p->detection_area_right_expand_dist;
-
-  const auto expanded_lanelets = lanelet::utils::getExpandedLanelets(
-    data.current_lanelets, left_expand_dist, right_expand_dist * (-1.0));
-
   const auto [object_within_target_lane, object_outside_target_lane] =
-    utils::separateObjectsByLanelets(*planner_data_->dynamic_object, expanded_lanelets);
+    utils::separateObjectsByLanelets(*planner_data_->dynamic_object, data.current_lanelets);
 
   // Assume that the maximum allocation for data.other object is the sum of
   // objects_within_target_lane and object_outside_target_lane. The maximum allocation for
