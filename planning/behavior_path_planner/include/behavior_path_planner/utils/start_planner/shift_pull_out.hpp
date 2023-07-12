@@ -55,7 +55,7 @@ public:
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
 private:
-  double calcBeforePullOutLongitudinalDistance(
+  double calcPullOutLongitudinalDistance(
     const double lon_acc, const double shift_time, const double shift_length,
     const double max_curvature) const;
 };

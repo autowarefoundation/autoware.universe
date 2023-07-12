@@ -194,7 +194,7 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     const double shift_time =
       PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, lateral_acc);
     const double longitudinal_acc = std::clamp(road_velocity / shift_time, 0.0, /* max acc */ 1.0);
-    const auto pull_out_distance = calcBeforePullOutLongitudinalDistance(
+    const auto pull_out_distance = calcPullOutLongitudinalDistance(
       longitudinal_acc, shift_time, shift_length, parameter.maximum_curvature);
     const double terminal_velocity = longitudinal_acc * shift_time;
 
@@ -290,7 +290,7 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   return candidate_paths;
 }
 
-double ShiftPullOut::calcBeforePullOutLongitudinalDistance(
+double ShiftPullOut::calcPullOutLongitudinalDistance(
   const double lon_acc, const double shift_time, const double shift_length,
   const double max_curvature) const
 {
@@ -299,6 +299,7 @@ double ShiftPullOut::calcBeforePullOutLongitudinalDistance(
 
   // Required distance for curvature limit
   const auto min_pull_out_distance_by_curvature = [&]() {
+    // Simple model for the shifted path by a double circular-arc approximation on a straight road.
     const double distance =
       std::sqrt(std::max(4.0 * shift_length / max_curvature - shift_length * shift_length, 0.0));
     return distance;
