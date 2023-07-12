@@ -112,7 +112,7 @@
       <arg name="gnss_enabled" value="false"/>
       <arg name="ekf_enabled" value="false"/>
       <arg name="yabloc_enabled" value="false"/>
-      <arg name="yabloc_enabled" value="false"/>
+      <arg name="stop_check_enabled" value="false"/>
       <arg name="config_file" value="$(var pose_initializer_param_path)"/>
     </include>
   </group>
