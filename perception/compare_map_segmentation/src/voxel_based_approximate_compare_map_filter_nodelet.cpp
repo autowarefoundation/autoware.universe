@@ -83,14 +83,16 @@ VoxelBasedApproximateCompareMapFilterComponent::VoxelBasedApproximateCompareMapF
 
   distance_threshold_ = declare_parameter<double>("distance_threshold");
   bool use_dynamic_map_loading = declare_parameter<bool>("use_dynamic_map_loading");
+  bool skip_lower_neighbor_points = declare_parameter<bool>("skip_lower_neighbor_points");
   if (use_dynamic_map_loading) {
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
     main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     voxel_based_approximate_map_loader_ = std::make_unique<VoxelBasedApproximateDynamicMapLoader>(
-      this, distance_threshold_, &tf_input_frame_, &mutex_, main_callback_group);
+      this, distance_threshold_, skip_lower_neighbor_points, &tf_input_frame_, &mutex_,
+      main_callback_group);
   } else {
     voxel_based_approximate_map_loader_ = std::make_unique<VoxelBasedApproximateStaticMapLoader>(
-      this, distance_threshold_, &tf_input_frame_, &mutex_);
+      this, distance_threshold_, skip_lower_neighbor_points, &tf_input_frame_, &mutex_);
   }
 }
 
