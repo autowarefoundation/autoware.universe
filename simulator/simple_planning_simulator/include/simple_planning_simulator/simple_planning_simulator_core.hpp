@@ -180,6 +180,8 @@ private:
   bool simulate_motion_;  //!< stop vehicle motion simulation if false
   ControlModeReport current_control_mode_;
 
+  std::string pos_z_source_;  // how to get z position information, "INITIAL_POSE" or "TRAJECTORY"
+
   /* frame_id */
   std::string simulated_frame_id_;  //!< @brief simulated vehicle frame id
   std::string origin_frame_id_;     //!< @brief map frame_id
@@ -261,12 +263,17 @@ private:
     const ControlModeCommand::Response::SharedPtr response);
 
   /**
+   * @brief get z-position
+   */
+  double get_z_position() const;
+
+  /**
    * @brief get z-position from trajectory
    * @param [in] x current x-position
    * @param [in] y current y-position
    * @return get z-position from trajectory
    */
-  double get_z_pose_from_trajectory(const double x, const double y);
+  double get_z_pose_from_trajectory(const double x, const double y) const;
 
   /**
    * @brief get transform from two frame_ids

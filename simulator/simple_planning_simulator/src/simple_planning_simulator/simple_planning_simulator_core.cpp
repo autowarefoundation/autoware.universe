@@ -162,6 +162,9 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     // initialpose sub already exists. Do nothing.
   }
 
+  pos_z_source_ = declare_parameter("pos_z_source", "INITIAL_POSE");
+  RCLCPP_INFO(this->get_logger(), "pos_z_source : %s", pos_z_source_.c_str());
+
   // measurement noise
   {
     std::random_device seed;
@@ -277,8 +280,7 @@ void SimplePlanningSimulator::on_timer()
 
   // set current state
   current_odometry_ = to_odometry(vehicle_model_ptr_);
-  current_odometry_.pose.pose.position.z = get_z_pose_from_trajectory(
-    current_odometry_.pose.pose.position.x, current_odometry_.pose.pose.position.y);
+  current_odometry_.pose.pose.position.z = get_z_position();
 
   current_velocity_ = to_velocity_report(vehicle_model_ptr_);
   current_steer_ = to_steering_report(vehicle_model_ptr_);
@@ -477,7 +479,19 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
   is_initialized_ = true;
 }
 
-double SimplePlanningSimulator::get_z_pose_from_trajectory(const double x, const double y)
+double SimplePlanningSimulator::get_z_position() const
+{
+  if (pos_z_source_ == "TRAJECTORY") {
+    return get_z_pose_from_trajectory(
+      current_odometry_.pose.pose.position.x, current_odometry_.pose.pose.position.y);
+  } else if (pos_z_source_ == "INITIAL_POSE") {
+    return initial_pose_->pose.pose.position.z;
+  }
+
+  throw std::domain_error("pos_z_source is invalid: " + pos_z_source_);
+}
+
+double SimplePlanningSimulator::get_z_pose_from_trajectory(const double x, const double y) const
 {
   // calculate closest point on trajectory
   if (!current_trajectory_ptr_) {
