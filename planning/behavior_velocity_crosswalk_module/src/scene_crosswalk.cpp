@@ -850,17 +850,17 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
     const auto traffic_signal_stamped =
       planner_data_->getTrafficSignal(traffic_lights_reg_elem->id());
     if (!traffic_signal_stamped) {
-      return false;
+      continue;
     }
 
     if (
       planner_param_.tl_state_timeout < (clock_->now() - traffic_signal_stamped->stamp).seconds()) {
-      return false;
+      continue;
     }
 
     const auto & lights = traffic_signal_stamped->signal.elements;
     if (lights.empty()) {
-      return false;
+      continue;
     }
 
     if (lights.front().color == TrafficSignalElement::RED) {
