@@ -692,7 +692,7 @@ CollisionState CrosswalkModule::getCollisionState(
 {
   // First, check if the object can be ignored
   const auto obj_state = object_info_manager_.getState(obj_uuid);
-  if (obj_state == ObjectInfo::State::IGNORED) {
+  if (obj_state == ObjectInfo::State::FULLY_STOPPED) {
     return CollisionState::IGNORE;
   }
 

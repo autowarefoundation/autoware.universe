@@ -93,16 +93,10 @@ public:
     bool look_pedestrian;
   };
 
-  struct PointWithDistance
-  {
-    geometry_msgs::msg::Point point;
-    double dist;
-  };
-
   struct ObjectInfo
   {
-    // NOTE: Objects with FULLY_STOPPED can be ignored on stop decision
-    enum class State { STOPPED = 0, IGNORED, OTHER };
+    // NOTE: FULLY_STOPPED means stopped object which can be ignored.
+    enum class State { STOPPED = 0, FULLY_STOPPED, OTHER };
     State state{State::OTHER};
     boost::optional<rclcpp::Time> time_to_start_stopped{boost::none};
 
@@ -113,7 +107,7 @@ public:
       const bool is_stopped = obj_vel < planner_param.stop_object_velocity;
 
       if (is_stopped) {
-        if (state == State::IGNORED) {
+        if (state == State::FULLY_STOPPED) {
           return;
         }
 
@@ -123,7 +117,7 @@ public:
         const bool intent_to_cross =
           (now - *time_to_start_stopped).seconds() < planner_param.max_yield_timeout;
         if ((is_ego_yielding || planner_param.disable_stop_for_yield_cancel) && !intent_to_cross) {
-          state = State::IGNORED;
+          state = State::FULLY_STOPPED;
         } else {
           // NOTE: Object may start moving
           state = State::STOPPED;
@@ -154,6 +148,7 @@ public:
     }
     void finalize()
     {
+      // remove objects not set in current_uuids_
       std::vector<std::string> obsolete_uuids;
       for (const auto & object : objects) {
         if (
