@@ -84,6 +84,7 @@ This filter is a combination of the distance_based_compare_map_filter and voxel_
 | `map_loader_radius`             | float | Radius of map need to be loaded (in dynamic map loading) [m]                                                                            | 150.0         |
 | `timer_interval_ms`             | int   | Timer interval to check if the map update is necessary (in dynamic map loading) [ms]                                                    | 100           |
 | `publish_debug_pcd`             | bool  | Enable to publish voxelized updated map in `debug/downsampled_map/pointcloud` for debugging. It might cause additional computation cost | false         |
+| `skip_lower_neighbor_points`    | bool  | Option to skip comparing lower neighbor points with map                                                                                 | false         |
 
 ## Assumptions / Known limits
 
