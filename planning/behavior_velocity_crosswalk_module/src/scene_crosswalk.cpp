@@ -332,7 +332,7 @@ boost::optional<StopFactor> CrosswalkModule::findNearestStopFactor(
     const auto obj_uuid = toHexString(object.object_id);
     const auto & obj_vel = object.kinematics.initial_twist_with_covariance.twist.linear;
     object_info_manager_.update(
-      obj_uuid, std::hypot(obj_vel.x, obj_vel.y), clock_->now(), planner_param_);
+      obj_uuid, std::hypot(obj_vel.x, obj_vel.y), clock_->now(), is_ego_yielding, planner_param_);
   }
   object_info_manager_.finalize();
 
@@ -363,7 +363,7 @@ boost::optional<StopFactor> CrosswalkModule::findNearestStopFactor(
         planner_param_.stop_margin;
 
       const auto collision_state =
-        getCollisionState(obj_uuid, cp.time_to_collision, cp.time_to_vehicle, is_ego_yielding);
+        getCollisionState(obj_uuid, cp.time_to_collision, cp.time_to_vehicle);
       debug_data_.collision_points.push_back(std::make_pair(cp, collision_state));
 
       if (collision_state != CollisionState::YIELD) {
@@ -688,14 +688,11 @@ CollisionPoint CrosswalkModule::createCollisionPoint(
 }
 
 CollisionState CrosswalkModule::getCollisionState(
-  const std::string & obj_uuid, const double ttc, const double ttv,
-  const bool is_ego_yielding) const
+  const std::string & obj_uuid, const double ttc, const double ttv) const
 {
   // First, check if the object can be ignored
   const auto obj_state = object_info_manager_.getState(obj_uuid);
-  if (
-    (is_ego_yielding || planner_param_.disable_stop_for_yield_cancel) &&
-    obj_state == ObjectInfo::State::FULLY_STOPPED) {
+  if (obj_state == ObjectInfo::State::IGNORED) {
     return CollisionState::IGNORE;
   }
 

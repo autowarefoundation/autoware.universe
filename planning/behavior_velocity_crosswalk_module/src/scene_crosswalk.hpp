@@ -102,24 +102,31 @@ public:
   struct ObjectInfo
   {
     // NOTE: Objects with FULLY_STOPPED can be ignored on stop decision
-    enum class State { STOPPED = 0, FULLY_STOPPED, OTHER };
+    enum class State { STOPPED = 0, IGNORED, OTHER };
     State state{State::OTHER};
     boost::optional<rclcpp::Time> time_to_start_stopped{boost::none};
 
     void updateState(
-      const rclcpp::Time & now, const double obj_vel, const PlannerParam & planner_param)
+      const rclcpp::Time & now, const double obj_vel, const bool is_ego_yielding,
+      const PlannerParam & planner_param)
     {
       const bool is_stopped = obj_vel < planner_param.stop_object_velocity;
 
       if (is_stopped) {
+        if (state == State::IGNORED) {
+          return;
+        }
+
         if (!time_to_start_stopped) {
           time_to_start_stopped = now;
         }
-        if ((now - *time_to_start_stopped).seconds() < planner_param.max_yield_timeout) {
+        const bool intent_to_cross =
+          (now - *time_to_start_stopped).seconds() < planner_param.max_yield_timeout;
+        if ((is_ego_yielding || planner_param.disable_stop_for_yield_cancel) && !intent_to_cross) {
+          state = State::IGNORED;
+        } else {
           // NOTE: Object may start moving
           state = State::STOPPED;
-        } else {
-          state = State::FULLY_STOPPED;
         }
       } else {
         time_to_start_stopped = boost::none;
@@ -132,7 +139,7 @@ public:
     void init() { current_uuids_.clear(); }
     void update(
       const std::string & uuid, const double obj_vel, const rclcpp::Time & now,
-      const PlannerParam & planner_param)
+      const bool is_ego_yielding, const PlannerParam & planner_param)
     {
       // update current uuids
       current_uuids_.push_back(uuid);
@@ -143,8 +150,7 @@ public:
       }
 
       // update object state
-      objects.at(uuid).updateState(now, obj_vel, planner_param);
-      std::cerr << state << std::endl;
+      objects.at(uuid).updateState(now, obj_vel, is_ego_yielding, planner_param);
     }
     void finalize()
     {
@@ -213,8 +219,7 @@ private:
     const geometry_msgs::msg::Vector3 & obj_vel) const;
 
   CollisionState getCollisionState(
-    const std::string & obj_uuid, const double ttc, const double ttv,
-    const bool is_ego_yielding) const;
+    const std::string & obj_uuid, const double ttc, const double ttv) const;
 
   void applySafetySlowDownSpeed(
     PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects);
