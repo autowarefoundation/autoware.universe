@@ -21,7 +21,7 @@
   <group>
     <push-ros-namespace namespace="localization"/>
     <!-- pose_twist_estimator module -->
-    <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/pose_twist_estimator.launch.xml"/>  
+    <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/pose_twist_estimator.launch.xml"/>
 
     <!-- pose_twist_fusion_filter module -->
     <group>

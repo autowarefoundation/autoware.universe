@@ -106,5 +106,4 @@
       <arg name="output_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
     </include>
   </group>
-
 </launch>
