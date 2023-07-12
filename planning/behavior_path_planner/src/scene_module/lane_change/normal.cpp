@@ -757,8 +757,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
 
   CollisionCheckDebugMap debug_data;
   const auto safety_status = isLaneChangePathSafe(
-    path, target_objects,
-    common_parameters.expected_front_deceleration_for_abort,
+    path, target_objects, common_parameters.expected_front_deceleration_for_abort,
     common_parameters.expected_rear_deceleration_for_abort, debug_data);
 
   return safety_status;
@@ -1000,9 +999,9 @@ bool NormalLaneChange::getAbortPath()
 }
 
 PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
-    const LaneChangePath & lane_change_path, const LaneChangeTargetObjects & target_objects,
-    const double front_decel, const double rear_decel,
-    std::unordered_map<std::string, CollisionCheckDebug> & debug_data) const
+  const LaneChangePath & lane_change_path, const LaneChangeTargetObjects & target_objects,
+  const double front_decel, const double rear_decel,
+  std::unordered_map<std::string, CollisionCheckDebug> & debug_data) const
 {
   PathSafetyStatus path_safety_status;
 
@@ -1020,7 +1019,8 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
 
   const auto ego_predicted_path = utils::lane_change::convertToPredictedPath(
     lane_change_path, current_twist, current_pose, common_parameter, time_resolution);
-  const auto debug_predicted_path = utils::lane_change::convertToPredictedPath(ego_predicted_path, time_resolution);
+  const auto debug_predicted_path =
+    utils::lane_change::convertToPredictedPath(ego_predicted_path, time_resolution);
 
   auto collision_check_objects = target_objects.target_lane;
   collision_check_objects.insert(
