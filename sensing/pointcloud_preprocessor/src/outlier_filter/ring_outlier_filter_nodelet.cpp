@@ -144,6 +144,7 @@ void RingOutlierFilterComponent::faster_filter(
   // ad-hoc struct to store finished walks information (for isCluster())
   struct WalkInfo
   {
+    size_t id;
     int num_points;
     float first_point_distance;
     float first_point_azimuth;
@@ -154,12 +155,16 @@ void RingOutlierFilterComponent::faster_filter(
   // ad-hoc struct to keep track of each ring current walk
   struct RingWalkInfo
   {
-    size_t walk_idx;      // index of associated walk in walks vector
-    float prev_azimuth;   // azimuth of previous point on the ring
-    float prev_distance;  // distance of previous point on the ring
+    WalkInfo *first_walk;
+    WalkInfo *current_walk;
   };
 
   // helper functions
+  double d_alloc_vectors;
+  double d_build_walks;
+  double d_fuse_walks;
+  double d_check_clusters;
+  double d_write_outputs;
 
   // check if walk is a valid cluster
   const float object_length_threshold2 = object_length_threshold_ * object_length_threshold_;
@@ -189,82 +194,106 @@ void RingOutlierFilterComponent::faster_filter(
              azimuth_diff < 100.f;
     };
 
-  // tmp vectors to keep track of walk/ring state while processing points in order (cache efficient)
-  std::vector<WalkInfo> walks;                // all walks
-  std::vector<RingWalkInfo> rings_curr_walk;  // each ring curr walk info
-  std::vector<size_t> rings_first_walk_idx;   // each ring very first walk idx
-  std::vector<size_t> points_walk_idx;        // each point walk idx
+  stop_watch_ptr_->toc("cyclic_time", true);
 
-  walks.reserve(max_rings_num_);
+  // tmp vectors to keep track of walk/ring state while processing points in order (cache efficient)
+  std::vector<WalkInfo> walks;            // all walks
+  std::vector<RingWalkInfo> rings;        // info for each ring
+  std::vector<size_t> points_walk_id;        // each point walk idx
+  std::vector<bool> walks_cluster_status; // for each generated walk, stores whether it is a cluter
+
+  size_t latest_walk_id = -1UL;           // ID given to the last walk created
+
+  walks.reserve(max_rings_num_ * 2); // only store first and last walk for each ring
   // initialize each ring with empty walk
-  rings_curr_walk.resize(max_rings_num_, RingWalkInfo{-1U, 0., 0.});
-  rings_first_walk_idx.resize(max_rings_num_, -1U);
+  rings.resize(max_rings_num_, RingWalkInfo{nullptr, nullptr});
   // points are initially associated to no walk
-  points_walk_idx.resize(input->width * input->height, -1U);
+  points_walk_id.resize(input->width * input->height, -1UL);
+  walks_cluster_status.reserve(input->width * input->height); // In the worst case, this could grow to the number of input points
+
+  d_alloc_vectors = stop_watch_ptr_->toc("cyclic_time", true);
 
   int invalid_ring_count = 0;
 
   // Build walks and classify points
-  for (const auto & [raw_p, point_walk_idx] :
-       ranges::views::zip(input->data | ranges::views::chunk(input->point_step), points_walk_idx)) {
+  for (const auto & [raw_p, point_walk_id] :
+       ranges::views::zip(input->data | ranges::views::chunk(input->point_step), points_walk_id)) {
     const uint16_t ring_idx = getPointRing(raw_p.data());
     const float curr_azimuth = getPointAzimuth(raw_p.data());
     const float curr_distance = getPointDistance(raw_p.data());
 
     if (ring_idx >= max_rings_num_) {
       // Either the data is corrupted or max_rings_num_ is not set correctly
-      // Note: point_walk_idx == -1 so the point will be filtered out
+      // Note: point_walk_id == -1 so the point will be filtered out
       invalid_ring_count += 1;
       continue;
     }
 
-    auto & ring = rings_curr_walk[ring_idx];
-    if (ring.walk_idx == -1U) {
+    auto & ring = rings[ring_idx];
+    if (ring.current_walk == nullptr) {
       // first walk ever for this ring
-      walks.push_back(WalkInfo{1, curr_distance, curr_azimuth, curr_distance, curr_azimuth});
-      const auto walk_idx = walks.size() - 1;
-      point_walk_idx = walk_idx;
-      rings_first_walk_idx[ring_idx] = walk_idx;
-      ring.walk_idx = walk_idx;
-      ring.prev_azimuth = curr_azimuth;
-      ring.prev_distance = curr_distance;
+      walks.push_back(WalkInfo{++latest_walk_id, 1, curr_distance, curr_azimuth, curr_distance, curr_azimuth});
+      point_walk_id = latest_walk_id;
+      ring.first_walk = &walks.back();
+      ring.current_walk = &walks.back();
       continue;
     }
 
-    auto & walk = walks[ring.walk_idx];
-    if (isSameWalk(curr_distance, curr_azimuth, ring.prev_distance, ring.prev_azimuth)) {
+    auto & walk = *ring.current_walk;
+    if (isSameWalk(curr_distance, curr_azimuth, walk.last_point_distance, walk.last_point_azimuth)) {
       // current point is part of previous walk
       walk.num_points += 1;
       walk.last_point_distance = curr_distance;
       walk.last_point_azimuth = curr_azimuth;
-      point_walk_idx = ring.walk_idx;
+      point_walk_id = walk.id;
     } else {
       // previous walk is finished, start a new one
-      walks.push_back(WalkInfo{1, curr_distance, curr_azimuth, curr_distance, curr_azimuth});
-      point_walk_idx = walks.size() - 1;
-      ring.walk_idx = walks.size() - 1;
-    }
+      const WalkInfo new_walk{++latest_walk_id, 1, curr_distance, curr_azimuth, curr_distance, curr_azimuth};
 
-    ring.prev_azimuth = curr_azimuth;
-    ring.prev_distance = curr_distance;
+      if (walk.id >= walks_cluster_status.size())
+        walks_cluster_status.resize(walk.id + 1, false);
+      walks_cluster_status.at(walk.id) = isCluster(walk);
+      //then overwrite the old (non-cluster) walk with the new one
+      if (ring.first_walk == &walk) { 
+        // Only one walk is in the ring so far, allocate the second one
+        // This happens because first_walk = current_walk in the beginning
+        walks.push_back(new_walk);
+        ring.first_walk = &walks.back();
+      } else {
+        // There are already two walks in the ring, overwrite the second one
+        *ring.current_walk = new_walk;
+      }
+      point_walk_id = new_walk.id;
+    }
   }
+
+  d_build_walks = stop_watch_ptr_->toc("cyclic_time", true);
 
   // So far, we have processed ring points as if rings were not circular. Of course, the last and
   // first points of a ring could totally be part of the same walk. When such thing happens, we need
   // to merge the two walks
-  for (const auto & [first_walk_idx, last_walk_idx] : ranges::views::zip(
-         rings_first_walk_idx, rings_curr_walk | ranges::views::transform([](const auto & ring) {
-                                 return ring.walk_idx;
-                               }))) {
-    if (first_walk_idx == -1U || last_walk_idx == -1U) {
+  for (const auto & ring : rings) {
+    if (ring.current_walk == nullptr){
       continue;
     }
-    auto & first_walk = walks[first_walk_idx];
-    auto & last_walk = walks[last_walk_idx];
+
+    const auto & walk = *ring.current_walk;
+    if (walk.id >= walks_cluster_status.size())
+      walks_cluster_status.resize(walk.id + 1, false);
+    walks_cluster_status.at(walk.id) = isCluster(walk);
+
+    if (ring.first_walk == ring.current_walk) {
+      continue;
+    }
+
+    auto & first_walk = *ring.first_walk;
+    auto & last_walk = *ring.current_walk;
+
     // check if the two walks are connected
     if (isSameWalk(
           first_walk.first_point_distance, first_walk.first_point_azimuth,
           last_walk.last_point_distance, last_walk.last_point_azimuth)) {
+
       // merge
       auto combined_num_points = first_walk.num_points + last_walk.num_points;
       first_walk.first_point_distance = last_walk.first_point_distance;
@@ -273,24 +302,26 @@ void RingOutlierFilterComponent::faster_filter(
       last_walk.last_point_distance = first_walk.last_point_distance;
       last_walk.last_point_azimuth = first_walk.last_point_azimuth;
       last_walk.num_points = combined_num_points;
+
+      walks_cluster_status.at(first_walk.id) = isCluster(first_walk);
+      walks_cluster_status.at(last_walk.id) = isCluster(last_walk);
     }
   }
 
-  // segregate walks by cluster (for fast lookup)
-  std::vector<bool> walk_is_cluster;
-  walk_is_cluster.reserve(walks.size());
-  for (const auto & walk_info : walks) {
-    walk_is_cluster.push_back(isCluster(walk_info));
-  }
+  d_fuse_walks = stop_watch_ptr_->toc("cyclic_time", true);
+
+  d_check_clusters = stop_watch_ptr_->toc("cyclic_time", true);
 
   // finally copy points
   output.point_step = sizeof(PointXYZI);
   output.data.resize(output.point_step * input->width * input->height);
   size_t output_size = 0;
   if (transform_info.need_transform) {
-    for (const auto & [raw_p, point_walk_idx] : ranges::views::zip(
-           input->data | ranges::views::chunk(input->point_step), points_walk_idx)) {
-      if (point_walk_idx == -1U || !walk_is_cluster[point_walk_idx]) {
+    for (const auto & [raw_p, point_walk_id] : ranges::views::zip(
+           input->data | ranges::views::chunk(input->point_step), points_walk_id)) {
+      
+      // Filter out points on invalid rings and points not in a cluster
+      if (point_walk_id == -1UL || !walks_cluster_status.at(point_walk_id)) {
         continue;
       }
 
@@ -310,9 +341,11 @@ void RingOutlierFilterComponent::faster_filter(
       output_size += sizeof(PointXYZI);
     }
   } else {
-    for (const auto & [raw_p, point_walk_idx] : ranges::views::zip(
-           input->data | ranges::views::chunk(input->point_step), points_walk_idx)) {
-      if (point_walk_idx == -1U || !walk_is_cluster[point_walk_idx]) {
+    for (const auto & [raw_p, point_walk_id] : ranges::views::zip(
+           input->data | ranges::views::chunk(input->point_step), points_walk_id)) {
+      
+      // Filter out points on invalid rings and points not in a cluster
+      if (point_walk_id == -1UL || !walks_cluster_status.at(point_walk_id)) {
         continue;
       }
 
@@ -354,6 +387,16 @@ void RingOutlierFilterComponent::faster_filter(
       get_logger(), "%d points had ring index over max_rings_num (%d) and have been ignored.",
       invalid_ring_count, max_rings_num_);
   }
+
+  d_write_outputs = stop_watch_ptr_->toc("cyclic_time", true);
+
+  //double d_alloc_vectors;
+  //double d_build_walks;
+  //double d_fuse_walks;
+  //double d_check_clusters;
+  //double d_write_outputs;
+  RCLCPP_INFO(get_logger(), "AAA {'av': %f, 'bw': %f, 'fw': %f, 'cc': %f, 'wo': %f, 'nw': %zu, 'in': %u, 'out': %u} BBB", d_alloc_vectors, d_build_walks,
+              d_fuse_walks, d_check_clusters, d_write_outputs, walks.size(), input->width * input->height, output.width);
 
   // add processing time for debug
   if (debug_publisher_) {
