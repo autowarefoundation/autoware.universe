@@ -80,6 +80,7 @@ public:
     double ego_pass_later_margin;
     double stop_object_velocity;
     double min_object_velocity;
+    bool disable_stop_for_yield_cancel;
     double max_yield_timeout;
     double ego_yield_query_stop_duration;
     // param for input data
@@ -92,35 +93,58 @@ public:
     bool look_pedestrian;
   };
 
+  struct PointWithDistance
+  {
+    geometry_msgs::msg::Point point;
+    double dist;
+  };
+
+  struct ObjectInfo
+  {
+    // NOTE: Objects with FULLY_STOPPED can be ignored on stop decision
+    enum class State { STOPPED = 0, FULLY_STOPPED, OTHER };
+    State state{State::OTHER};
+    boost::optional<rclcpp::Time> time_to_start_stopped{boost::none};
+
+    void updateState(
+      const rclcpp::Time & now, const double obj_vel, const PlannerParam & planner_param)
+    {
+      const bool is_stopped = obj_vel < planner_param.stop_object_velocity;
+
+      if (is_stopped) {
+        if (!time_to_start_stopped) {
+          time_to_start_stopped = now;
+        }
+        if ((now - *time_to_start_stopped).seconds() < planner_param.max_yield_timeout) {
+          // NOTE: Object may start moving
+          state = State::STOPPED;
+        } else {
+          state = State::FULLY_STOPPED;
+        }
+      } else {
+        time_to_start_stopped = boost::none;
+        state = State::OTHER;
+      }
+    }
+  };
   struct ObjectInfoManager
   {
-    struct ObjectInfo
-    {
-      enum class State { STOP = 0, OTHER };  // APPROACH, LEAVE, OTHER };
-      State state;
-      boost::optional<rclcpp::Time> time_to_start_stopped{boost::none};
-    };
     void init() { current_uuids_.clear(); }
-    void update(const std::string & uuid, const bool is_object_stopped, const rclcpp::Time & now)
+    void update(
+      const std::string & uuid, const double obj_vel, const rclcpp::Time & now,
+      const PlannerParam & planner_param)
     {
       // update current uuids
       current_uuids_.push_back(uuid);
 
-      // update object info
-      const auto state = is_object_stopped ? ObjectInfo::State::STOP : ObjectInfo::State::OTHER;
-      const auto time_to_start_stopped = [&]() -> boost::optional<rclcpp::Time> {
-        if (is_object_stopped) return now;
-        return boost::none;
-      }();
+      // add new object
       if (objects.count(uuid) == 0) {
-        objects.emplace(uuid, ObjectInfo{state, time_to_start_stopped});
-        return;
+        objects.emplace(uuid, ObjectInfo{});
       }
 
-      if (objects.at(uuid).state != ObjectInfo::State::STOP) {
-        objects.at(uuid).time_to_start_stopped = time_to_start_stopped;
-      }
-      objects.at(uuid).state = state;
+      // update object state
+      objects.at(uuid).updateState(now, obj_vel, planner_param);
+      std::cerr << state << std::endl;
     }
     void finalize()
     {
@@ -136,21 +160,7 @@ public:
         objects.erase(obsolete_uuid);
       }
     }
-
-    bool isStopped(const std::string & uuid) const
-    {
-      if (objects.count(uuid) != 0) {
-        return objects.at(uuid).state == ObjectInfo::State::STOP;
-      }
-      return false;
-    }
-    boost::optional<double> getTimeToStop(const std::string & uuid, const rclcpp::Time & now) const
-    {
-      if (objects.count(uuid) == 0 || !objects.at(uuid).time_to_start_stopped) {
-        return boost::none;
-      }
-      return (now - *objects.at(uuid).time_to_start_stopped).seconds();
-    }
+    ObjectInfo::State getState(const std::string & uuid) const { return objects.at(uuid).state; }
 
     std::unordered_map<std::string, ObjectInfo> objects;
     std::vector<std::string> current_uuids_;
@@ -203,7 +213,8 @@ private:
     const geometry_msgs::msg::Vector3 & obj_vel) const;
 
   CollisionState getCollisionState(
-    const std::string & obj_uuid, const double ttc, const double ttv) const;
+    const std::string & obj_uuid, const double ttc, const double ttv,
+    const bool is_ego_yielding) const;
 
   void applySafetySlowDownSpeed(
     PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects);
