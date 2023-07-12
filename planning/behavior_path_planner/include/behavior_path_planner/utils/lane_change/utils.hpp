@@ -109,8 +109,7 @@ PathSafetyStatus isLaneChangePathSafe(
   const BehaviorPathPlannerParameters & common_parameter,
   const behavior_path_planner::LaneChangeParameters & lane_change_parameter,
   const double front_decel, const double rear_decel,
-  std::unordered_map<std::string, CollisionCheckDebug> & debug_data, const double prepare_acc,
-  const double lane_changing_acc);
+  std::unordered_map<std::string, CollisionCheckDebug> & debug_data);
 
 bool hasEnoughLength(
   const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
@@ -170,9 +169,8 @@ boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
   const LaneChangeModuleType type, const Direction & direction);
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
-  const size_t nearest_seg_idx, const double duration, const double resolution,
-  const double prepare_time, const double prepare_acc, const double lane_changing_acc);
+  const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & pose,
+  const BehaviorPathPlannerParameters & common_parameter, const double resolution);
 
 PredictedPath convertToPredictedPath(
   const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);

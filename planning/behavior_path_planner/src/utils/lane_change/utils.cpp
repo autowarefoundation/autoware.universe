@@ -368,8 +368,7 @@ PathSafetyStatus isLaneChangePathSafe(
   const Pose & current_pose, const Twist & current_twist,
   const BehaviorPathPlannerParameters & common_parameter,
   const LaneChangeParameters & lane_change_parameter, const double front_decel,
-  const double rear_decel, std::unordered_map<std::string, CollisionCheckDebug> & debug_data,
-  const double prepare_acc, const double lane_changing_acc)
+  const double rear_decel, std::unordered_map<std::string, CollisionCheckDebug> & debug_data)
 {
   PathSafetyStatus path_safety_status;
 
@@ -380,17 +379,10 @@ PathSafetyStatus isLaneChangePathSafe(
     return path_safety_status;
   }
 
-  const double time_resolution = lane_change_parameter.prediction_time_resolution;
-  const double check_end_time = lane_change_path.duration.sum();
-  const double & prepare_duration = common_parameter.lane_change_prepare_duration;
-
-  const auto current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.points, current_pose, common_parameter.ego_nearest_dist_threshold,
-    common_parameter.ego_nearest_yaw_threshold);
+  const double & time_resolution = lane_change_parameter.prediction_time_resolution;
 
   const auto ego_predicted_path = convertToPredictedPath(
-    path, current_twist, current_pose, current_seg_idx, check_end_time, time_resolution,
-    prepare_duration, prepare_acc, lane_changing_acc);
+    lane_change_path, current_twist, current_pose, common_parameter, time_resolution);
   const auto debug_predicted_path = convertToPredictedPath(ego_predicted_path, time_resolution);
 
   auto collision_check_objects = target_objects.target_lane;
@@ -900,22 +892,33 @@ boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
 }
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const size_t nearest_seg_idx, const double duration, const double resolution,
-  const double prepare_time, const double prepare_acc, const double lane_changing_acc)
+  const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & vehicle_pose,
+  const BehaviorPathPlannerParameters & common_parameter, const double resolution)
 {
-  if (path.points.empty()) {
+  if (lane_change_path.path.points.empty()) {
     return {};
   }
 
+  const auto & path = lane_change_path.path;
+  const auto & prepare_acc = lane_change_path.longitudinal_acceleration.prepare;
+  const auto & lane_changing_acc = lane_change_path.longitudinal_acceleration.lane_changing;
+  const auto & duration = lane_change_path.duration.sum();
+  const auto & prepare_time = lane_change_path.duration.prepare;
+  const auto & minimum_lane_changing_velocity = common_parameter.minimum_lane_changing_velocity;
+
+  const auto nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    path.points, vehicle_pose, common_parameter.ego_nearest_dist_threshold,
+    common_parameter.ego_nearest_yaw_threshold);
+
   std::vector<PoseWithVelocityStamped> predicted_path;
-  FrenetPoint vehicle_pose_frenet =
+  const auto vehicle_pose_frenet =
     convertToFrenetPoint(path.points, vehicle_pose.position, nearest_seg_idx);
   const double initial_velocity = std::abs(vehicle_twist.linear.x);
 
   // prepare segment
   for (double t = 0.0; t < prepare_time; t += resolution) {
-    const double velocity = std::max(initial_velocity + prepare_acc * t, 0.0);
+    const double velocity =
+      std::max(initial_velocity + prepare_acc * t, minimum_lane_changing_velocity);
     const double length = initial_velocity * t + 0.5 * prepare_acc * t * t;
     const auto pose =
       motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length);
@@ -924,7 +927,7 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
 
   // lane changing segment
   const double lane_changing_velocity =
-    std::max(initial_velocity + prepare_acc * prepare_time, 0.0);
+    std::max(initial_velocity + prepare_acc * prepare_time, minimum_lane_changing_velocity);
   const double offset =
     initial_velocity * prepare_time + 0.5 * prepare_acc * prepare_time * prepare_time;
   for (double t = prepare_time; t < duration; t += resolution) {
