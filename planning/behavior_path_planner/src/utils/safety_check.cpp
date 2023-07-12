@@ -17,7 +17,7 @@
 #include "behavior_path_planner/marker_util/debug_utilities.hpp"
 #include "interpolation/linear_interpolation.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "perception_utils/predicted_path_utils.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 
 namespace behavior_path_planner::utils::safety_check
 {
@@ -261,7 +261,7 @@ bool checkCollision(
 
     // compute which one is at the front of the other
     const bool is_object_front =
-      isTargetObjectFront(planned_path, ego_pose, common_parameters.vehicle_info, obj_polygon);
+      isTargetObjectFront(planned_path, ego_pose, ego_vehicle_info, obj_polygon);
     const auto & [front_object_velocity, rear_object_velocity] =
       is_object_front ? std::make_pair(object_velocity, ego_velocity)
                       : std::make_pair(ego_velocity, object_velocity);
