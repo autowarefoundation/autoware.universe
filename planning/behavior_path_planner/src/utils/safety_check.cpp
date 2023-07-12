@@ -166,7 +166,8 @@ double calcMinimumLongitudinalLength(
 boost::optional<PoseWithPolygon> getEgoInterpolatedPoseWithPolygon(
   const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info)
 {
-  const auto interpolated_pose = perception_utils::calcInterpolatedPose(pred_path, current_time);
+  const auto interpolated_pose =
+    object_recognition_utils::calcInterpolatedPose(pred_path, current_time);
 
   if (!interpolated_pose) {
     return {};
