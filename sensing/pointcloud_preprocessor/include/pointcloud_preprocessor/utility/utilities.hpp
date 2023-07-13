@@ -26,7 +26,6 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <optional>
 #include <vector>
 
 using K = CGAL::Exact_predicates_inexact_constructions_kernel;
@@ -86,33 +85,6 @@ bool is_data_layout_compatible_with_PointXYZI(const sensor_msgs::msg::PointCloud
 /** \brief Return whether the input PointCloud2 data has the same layout than PointXYZIRADRT. That
  * is to say whether you can memcpy from the PointCloud2 data buffer to a PointXYZIRADRT */
 bool is_data_layout_compatible_with_PointXYZIRADRT(const sensor_msgs::msg::PointCloud2 & input);
-
-/** \brief Return offset of X field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getXOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg);
-
-/** \brief Return offset of Y field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getYOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg);
-
-/** \brief Return offset of Z field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getZOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg);
-
-/** \brief Return offset of intensity field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getIntensityOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg);
-
-/** \brief Return offset of ring field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getRingOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg);
-
-/** \brief Return offset of azimuth field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getAzimuthOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg);
-
-/** \brief Return offset of distance field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getDistanceOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg);
-
-/** \brief Return offset of return type field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getReturnTypeOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg);
-
-/** \brief Return offset of time stamp field (if any). The field should match PointXYZIRADRT one */
-std::optional<std::size_t> getTimeStampOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg);
 
 }  // namespace pointcloud_preprocessor::utils
 

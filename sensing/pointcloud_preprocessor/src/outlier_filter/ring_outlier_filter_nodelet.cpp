@@ -67,65 +67,15 @@ void RingOutlierFilterComponent::faster_filter(
   }
   stop_watch_ptr_->toc("processing_time", true);
 
-  // point field extraction helpers
-
-  // FIXME(VRichardJP) Everything would be simpler if Autoware enforced strict PointCloud2 format
-
-  auto maybe_intensity_offset = utils::getIntensityOffset(*input);
-  if (!maybe_intensity_offset) {
-    RCLCPP_ERROR(get_logger(), "input cloud does not contain 'intensity' data field");
-    return;
-  }
-  const auto intensity_offset = input->fields.at(*maybe_intensity_offset).offset;
-
-  auto maybe_ring_offset = utils::getRingOffset(*input);
-  if (!maybe_ring_offset) {
-    RCLCPP_ERROR(get_logger(), "input cloud does not contain 'ring' data field");
-    return;
-  }
-  const auto ring_offset = input->fields.at(*maybe_ring_offset).offset;
-
-  auto maybe_azimuth_offset = utils::getAzimuthOffset(*input);
-  if (!maybe_azimuth_offset) {
-    RCLCPP_ERROR(get_logger(), "input cloud does not contain 'azimuth' data field");
-    return;
-  }
-  const auto azimuth_offset = input->fields.at(*maybe_azimuth_offset).offset;
-
-  auto maybe_distance_offset = utils::getDistanceOffset(*input);
-  if (!maybe_distance_offset) {
-    RCLCPP_ERROR(get_logger(), "input cloud does not contain 'distance' data field");
-    return;
-  }
-  const auto distance_offset = input->fields.at(*maybe_distance_offset).offset;
-
-  // extract intensity from point raw data
-  auto getPointIntensity = [=](const unsigned char * raw_p) {
-    float intensity{};
-    std::memcpy(&intensity, &raw_p[intensity_offset], sizeof(intensity));
-    return intensity;
-  };
-
-  // extract ring from point raw data
-  auto getPointRing = [=](const unsigned char * raw_p) {
-    uint16_t ring{};
-    std::memcpy(&ring, &raw_p[ring_offset], sizeof(ring));
-    return ring;
-  };
-
-  // extract azimuth from point raw data
-  auto getPointAzimuth = [=](const unsigned char * raw_p) {
-    float azimuth{};
-    std::memcpy(&azimuth, &raw_p[azimuth_offset], sizeof(azimuth));
-    return azimuth;
-  };
-
-  // extract distance from point raw data
-  auto getPointDistance = [=](const unsigned char * raw_p) {
-    float distance{};
-    std::memcpy(&distance, &raw_p[distance_offset], sizeof(distance));
-    return distance;
-  };
+  // as per the specification of this node, these fields must be present in the input
+  const auto ring_offset =
+    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Ring)).offset;
+  const auto azimuth_offset =
+    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Azimuth)).offset;
+  const auto distance_offset =
+    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Distance)).offset;
+  const auto intensity_offset =
+    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Intensity)).offset;
 
   // The initial implementation of ring outlier filter looked like this:
   //   1. Iterate over the input cloud and group point indices by ring
@@ -155,8 +105,8 @@ void RingOutlierFilterComponent::faster_filter(
   // ad-hoc struct to keep track of each ring current walk
   struct RingWalkInfo
   {
-    WalkInfo * first_walk;
-    WalkInfo * current_walk;
+    WalkInfo first_walk;
+    WalkInfo current_walk;
   };
 
   // helper functions
@@ -190,17 +140,15 @@ void RingOutlierFilterComponent::faster_filter(
     };
 
   // tmp vectors to keep track of walk/ring state while processing points in order (cache efficient)
-  std::vector<WalkInfo> walks;             // all walks
-  std::vector<RingWalkInfo> rings;         // info for each ring
-  std::vector<size_t> points_walk_id;      // each point walk idx
+  std::vector<RingWalkInfo> rings;         // info for each LiDAR ring
+  std::vector<size_t> points_walk_id;      // for each input point, the walk index associated with it
   std::vector<bool> walks_cluster_status;  // for each generated walk, stores whether it is a cluter
 
-  size_t latest_walk_id = -1UL;  // ID given to the last walk created
+  size_t latest_walk_id = -1UL;  // ID given to the latest walk created
 
-  walks.reserve(max_rings_num_ * 2);  // only store first and last walk for each ring
-  // initialize each ring with empty walk
-  rings.resize(max_rings_num_, RingWalkInfo{nullptr, nullptr});
-  // points are initially associated to no walk
+  // initialize each ring with two empty walks (first and current walk)
+  rings.resize(max_rings_num_, RingWalkInfo{{-1UL, 0, 0, 0, 0, 0}, {-1UL, 0, 0, 0, 0, 0}});
+  // points are initially associated to no walk (-1UL)
   points_walk_id.resize(input->width * input->height, -1UL);
   walks_cluster_status.reserve(
     max_rings_num_ * 2);  // In the worst case, this could grow to the number of input points
@@ -210,29 +158,30 @@ void RingOutlierFilterComponent::faster_filter(
   // Build walks and classify points
   for (const auto & [raw_p, point_walk_id] :
        ranges::views::zip(input->data | ranges::views::chunk(input->point_step), points_walk_id)) {
-    const uint16_t ring_idx = getPointRing(raw_p.data());
-    const float curr_azimuth = getPointAzimuth(raw_p.data());
-    const float curr_distance = getPointDistance(raw_p.data());
+    uint16_t ring_idx{};
+    float curr_azimuth{};
+    float curr_distance{};
+    std::memcpy(&ring_idx, &raw_p.data()[ring_offset], sizeof(ring_idx));
+    std::memcpy(&curr_azimuth, &raw_p.data()[azimuth_offset], sizeof(curr_azimuth));
+    std::memcpy(&curr_distance, &raw_p.data()[distance_offset], sizeof(curr_distance));
 
     if (ring_idx >= max_rings_num_) {
       // Either the data is corrupted or max_rings_num_ is not set correctly
       // Note: point_walk_id == -1 so the point will be filtered out
-      invalid_ring_count += 1;
+      ++invalid_ring_count;
       continue;
     }
 
     auto & ring = rings[ring_idx];
-    if (ring.current_walk == nullptr) {
-      // first walk ever for this ring
-      walks.push_back(
-        WalkInfo{++latest_walk_id, 1, curr_distance, curr_azimuth, curr_distance, curr_azimuth});
+    if (ring.current_walk.id == -1UL) {
+      // first walk ever for this ring. It is both the first and current walk of the ring.
+      ring.first_walk = WalkInfo{++latest_walk_id, 1, curr_distance, curr_azimuth, curr_distance, curr_azimuth};
+      ring.current_walk = ring.first_walk;
       point_walk_id = latest_walk_id;
-      ring.first_walk = &walks.back();
-      ring.current_walk = &walks.back();
       continue;
     }
 
-    auto & walk = *ring.current_walk;
+    auto & walk = ring.current_walk;
     if (isSameWalk(
           curr_distance, curr_azimuth, walk.last_point_distance, walk.last_point_azimuth)) {
       // current point is part of previous walk
@@ -242,43 +191,34 @@ void RingOutlierFilterComponent::faster_filter(
       point_walk_id = walk.id;
     } else {
       // previous walk is finished, start a new one
-      const WalkInfo new_walk{++latest_walk_id, 1,           curr_distance, curr_azimuth,
-                              curr_distance,    curr_azimuth};
 
+      // check and store whether the previous walks is a cluster
       if (walk.id >= walks_cluster_status.size()) walks_cluster_status.resize(walk.id + 1, false);
       walks_cluster_status.at(walk.id) = isCluster(walk);
-      // then overwrite the old (non-cluster) walk with the new one
-      if (ring.first_walk == &walk) {
-        // Only one walk is in the ring so far, allocate the second one
-        // This happens because first_walk = current_walk in the beginning
-        walks.push_back(new_walk);
-        ring.first_walk = &walks.back();
-      } else {
-        // There are already two walks in the ring, overwrite the second one
-        *ring.current_walk = new_walk;
-      }
-      point_walk_id = new_walk.id;
+
+      ring.current_walk = WalkInfo{++latest_walk_id, 1, curr_distance, curr_azimuth, curr_distance, curr_azimuth};
+      point_walk_id = latest_walk_id;
     }
   }
 
   // So far, we have processed ring points as if rings were not circular. Of course, the last and
   // first points of a ring could totally be part of the same walk. When such thing happens, we need
   // to merge the two walks
-  for (const auto & ring : rings) {
-    if (ring.current_walk == nullptr) {
+  for (auto & ring : rings) {
+    if (ring.current_walk.id == -1UL) {
       continue;
     }
 
-    const auto & walk = *ring.current_walk;
+    const auto & walk = ring.current_walk;
     if (walk.id >= walks_cluster_status.size()) walks_cluster_status.resize(walk.id + 1, false);
     walks_cluster_status.at(walk.id) = isCluster(walk);
 
-    if (ring.first_walk == ring.current_walk) {
+    if (ring.first_walk.id == ring.current_walk.id) {
       continue;
     }
 
-    auto & first_walk = *ring.first_walk;
-    auto & last_walk = *ring.current_walk;
+    auto & first_walk = ring.first_walk;
+    auto & last_walk = ring.current_walk;
 
     // check if the two walks are connected
     if (isSameWalk(
@@ -320,7 +260,7 @@ void RingOutlierFilterComponent::faster_filter(
       out_point.y = p[1];
       out_point.z = p[2];
       // FIXME(VRichardJP) tmp fix because input data does not have the same layout than PointXYZI
-      out_point.intensity = getPointIntensity(raw_p.data());
+      std::memcpy(&out_point.intensity, &raw_p.data()[intensity_offset], sizeof(out_point.intensity));
 
       std::memcpy(&output.data[output_size], &out_point, sizeof(PointXYZI));
       output_size += sizeof(PointXYZI);
@@ -333,16 +273,12 @@ void RingOutlierFilterComponent::faster_filter(
         continue;
       }
 
-#if 0
-      // assume binary representation of input point is compatible with PointXYZI
-      std::memcpy(&output.data[output_size], raw_p.data(), sizeof(PointXYZI));
-#else
-      // FIXME(VRichardJP) tmp fix because input data does not have the same layout than PointXYZI
       PointXYZI out_point;
       std::memcpy(&out_point, raw_p.data(), sizeof(PointXYZI));
-      out_point.intensity = getPointIntensity(raw_p.data());
+      // FIXME(VRichardJP) tmp fix because input data does not have the same layout than PointXYZI
+      std::memcpy(&out_point.intensity, &raw_p.data()[intensity_offset], sizeof(out_point.intensity));
+
       std::memcpy(&output.data[output_size], &out_point, sizeof(PointXYZI));
-#endif
 
       output_size += sizeof(PointXYZI);
     }

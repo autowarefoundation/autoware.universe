@@ -16,9 +16,6 @@
 
 #include <autoware_point_types/types.hpp>
 
-#include <algorithm>
-#include <cstring>
-
 namespace pointcloud_preprocessor::utils
 {
 void to_cgal_polygon(const geometry_msgs::msg::Polygon & polygon_in, PolygonCgal & polygon_out)
@@ -237,87 +234,6 @@ bool is_data_layout_compatible_with_PointXYZIRADRT(const sensor_msgs::msg::Point
   same_layout &= field_time_stamp.datatype == sensor_msgs::msg::PointField::FLOAT64;
   same_layout &= field_time_stamp.count == 1;
   return same_layout;
-}
-
-std::optional<std::size_t> getXOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg)
-{
-  int idx = pcl::getFieldIndex(cloud_msg, "x");
-  if (idx < 0 || cloud_msg.fields[idx].datatype != sensor_msgs::msg::PointField::FLOAT32) {
-    return std::nullopt;
-  }
-  return std::optional{static_cast<std::size_t>(idx)};
-}
-
-std::optional<std::size_t> getYOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg)
-{
-  int idx = pcl::getFieldIndex(cloud_msg, "y");
-  if (idx < 0 || cloud_msg.fields[idx].datatype != sensor_msgs::msg::PointField::FLOAT32) {
-    return std::nullopt;
-  }
-  return std::optional{static_cast<std::size_t>(idx)};
-}
-
-std::optional<std::size_t> getZOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg)
-{
-  int idx = pcl::getFieldIndex(cloud_msg, "z");
-  if (idx < 0 || cloud_msg.fields[idx].datatype != sensor_msgs::msg::PointField::FLOAT32) {
-    return std::nullopt;
-  }
-  return std::optional{static_cast<std::size_t>(idx)};
-}
-
-std::optional<std::size_t> getIntensityOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg)
-{
-  int idx = pcl::getFieldIndex(cloud_msg, "intensity");
-  if (idx < 0 || cloud_msg.fields[idx].datatype != sensor_msgs::msg::PointField::FLOAT32) {
-    return std::nullopt;
-  }
-  return std::optional{static_cast<std::size_t>(idx)};
-}
-
-std::optional<std::size_t> getRingOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg)
-{
-  int idx = pcl::getFieldIndex(cloud_msg, "ring");
-  if (idx < 0 || cloud_msg.fields[idx].datatype != sensor_msgs::msg::PointField::UINT16) {
-    return std::nullopt;
-  }
-  return std::optional{static_cast<std::size_t>(idx)};
-}
-
-std::optional<std::size_t> getAzimuthOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg)
-{
-  int idx = pcl::getFieldIndex(cloud_msg, "azimuth");
-  if (idx < 0 || cloud_msg.fields[idx].datatype != sensor_msgs::msg::PointField::FLOAT32) {
-    return std::nullopt;
-  }
-  return std::optional{static_cast<std::size_t>(idx)};
-}
-
-std::optional<std::size_t> getDistanceOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg)
-{
-  int idx = pcl::getFieldIndex(cloud_msg, "distance");
-  if (idx < 0 || cloud_msg.fields[idx].datatype != sensor_msgs::msg::PointField::FLOAT32) {
-    return std::nullopt;
-  }
-  return std::optional{static_cast<std::size_t>(idx)};
-}
-
-std::optional<std::size_t> getReturnTypeOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg)
-{
-  int idx = pcl::getFieldIndex(cloud_msg, "return_type");
-  if (idx < 0 || cloud_msg.fields[idx].datatype != sensor_msgs::msg::PointField::UINT8) {
-    return std::nullopt;
-  }
-  return std::optional{static_cast<std::size_t>(idx)};
-}
-
-std::optional<std::size_t> getTimeStampOffset(const sensor_msgs::msg::PointCloud2 & cloud_msg)
-{
-  int idx = pcl::getFieldIndex(cloud_msg, "time_stamp");
-  if (idx < 0 || cloud_msg.fields[idx].datatype != sensor_msgs::msg::PointField::FLOAT64) {
-    return std::nullopt;
-  }
-  return std::optional{static_cast<std::size_t>(idx)};
 }
 
 }  // namespace pointcloud_preprocessor::utils
