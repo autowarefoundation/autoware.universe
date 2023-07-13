@@ -688,7 +688,7 @@ bool NormalLaneChange::getLaneChangePaths(
       LaneChangeInfo lane_change_info;
       lane_change_info.longitudinal_acceleration =
         LaneChangePhaseInfo{longitudinal_acc_on_prepare, longitudinal_acc_on_lane_changing};
-      lane_change_info.time = LaneChangePhaseInfo{prepare_duration, lane_changing_time};
+      lane_change_info.duration = LaneChangePhaseInfo{prepare_duration, lane_changing_time};
       lane_change_info.velocity =
         LaneChangePhaseInfo{prepare_velocity, initial_lane_changing_velocity};
       lane_change_info.length = LaneChangePhaseInfo{prepare_length, lane_changing_length};
@@ -702,9 +702,8 @@ bool NormalLaneChange::getLaneChangePaths(
       lane_change_info.terminal_lane_changing_velocity = terminal_lane_changing_velocity;
 
       const auto candidate_path = utils::lane_change::constructCandidatePath(
-        prepare_segment, target_segment, target_lane_reference_path, shift_line, original_lanelets,
-        target_lanelets, sorted_lane_ids, lc_longitudinal_acc, lateral_acc, lc_length, lc_velocity,
-        terminal_lane_changing_velocity, lc_time);
+        lane_change_info, prepare_segment, target_segment, target_lane_reference_path,
+        sorted_lane_ids);
 
       if (!candidate_path) {
         RCLCPP_DEBUG(logger_, "no candidate path!!");
@@ -1005,7 +1004,7 @@ bool NormalLaneChange::getAbortPath()
   auto abort_path = selected_path;
   abort_path.shifted_path = shifted_path;
   abort_path.path = start_to_abort_return_pose;
-  // abort_path.shift_line = shift_line;
+  abort_path.lane_change_info.shift_line = shift_line;
   abort_path_ = std::make_shared<LaneChangePath>(abort_path);
   return true;
 }
