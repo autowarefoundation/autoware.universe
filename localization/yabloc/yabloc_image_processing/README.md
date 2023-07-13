@@ -57,7 +57,7 @@ This node extract road surface region by [graph-based-segmentation](https://docs
 | -------------------------------- | ------ | ------------------------------------------------------------------ |
 | `target_height_ratio`            | double | height on the image to retrieve the candidate road surface         |
 | `target_candidate_box_width`     | int    | size of the square area to search for candidate road surfaces      |
-| `pickup_addtional_graph_segment` | bool   | if this is true, additional regions of similar color are retrieved |
+| `pickup_additional_graph_segment` | bool   | if this is true, additional regions of similar color are retrieved |
 | `similarity_score_threshold`     | double | threshold for picking up additional areas                          |
 | `sigma`                          | double | parameters for cv::ximgproc::segmentation                          |
 | `k`                              | double | parameters for cv::ximgproc::segmentation                          |
@@ -91,7 +91,7 @@ This is a node that integrates the results of graph_segment and lsd to extract r
 
 | Name                                   | Type   | Description                                                         |
 | -------------------------------------- | ------ | ------------------------------------------------------------------- |
-| `min_segment_length`                   | double | min lenght threshold (if it is negative, it is unlimited)           |
+| `min_segment_length`                   | double | min length threshold (if it is negative, it is unlimited)           |
 | `max_segment_distance`                 | double | max distance threshold (if it is negative, it is unlimited)         |
 | `max_lateral_distance`                 | double | max lateral distance threshold (if it is negative, it is unlimited) |
 | `publish_image_with_segment_for_debug` | bool   | toggle whether to publish the filtered line segment for debug       |
@@ -193,7 +193,7 @@ This node visualize classified line segments on the camera image
 
 | Name                        | Type                            | Description              |
 | --------------------------- | ------------------------------- | ------------------------ |
-| `input/line_segments_cloud` | `sensor_msgs::msg::PointCloud2` | classied line segments   |
+| `input/line_segments_cloud` | `sensor_msgs::msg::PointCloud2` | classified line segments   |
 | `input/image_raw`           | `sensor_msgs::msg::Image`       | undistorted camera image |
 
 #### Output
