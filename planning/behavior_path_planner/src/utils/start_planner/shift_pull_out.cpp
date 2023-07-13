@@ -209,7 +209,8 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     // the calcBeforeShiftedArcLength is an approximate conversion from center line to center line
     // (not shift path to centerline), the conversion result may too long or short. To prevent too
     // short length, take maximum with the original distance.
-    // TODO(kosuke55): update the conversion function and get rid of the comparison with original distance.
+    // TODO(kosuke55): update the conversion function and get rid of the comparison with original
+    // distance.
     const double pull_out_distance_converted = calcBeforeShiftedArcLength(
       road_lane_reference_path_from_ego, pull_out_distance, shift_length);
     const double before_shifted_pull_out_distance =
