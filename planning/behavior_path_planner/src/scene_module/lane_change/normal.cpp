@@ -567,7 +567,8 @@ bool NormalLaneChange::getLaneChangePaths(
         ? dist_to_end_of_current_lanes
         : utils::getSignedDistance(getEgoPose(), route_handler.getGoalPose(), original_lanelets);
 
-    return std::abs(distance - lane_change_buffer) < 4.0;
+    return std::abs(distance - lane_change_buffer) <
+           lane_change_parameters_->min_length_for_turn_signal_activation;
   });
 
   for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
