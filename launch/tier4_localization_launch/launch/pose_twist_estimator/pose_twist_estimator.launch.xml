@@ -72,7 +72,7 @@
         <arg name="yabloc_enabled" value="false"/>
         <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
         <arg name="config_file" value="$(var pose_initializer_param_path)"/>
-        <arg name="sub_gnss_pose_cov" value="/sensing/gnss/pose_with_covariance"/>
+        <arg name="sub_gnss_pose_cov" value="/localization/pose_estimator/pose_with_covariance"/>
       </include>
       <include file="$(find-pkg-share automatic_pose_initializer)/launch/automatic_pose_initializer.launch.xml"/>
     </group>
@@ -97,7 +97,7 @@
         <arg name="yabloc_enabled" value="false"/>
         <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
         <arg name="config_file" value="$(var pose_initializer_param_path)"/>
-        <arg name="sub_gnss_pose_cov" value="/sensing/gnss/pose_with_covariance"/>
+        <arg name="sub_gnss_pose_cov" value="/localization/pose_estimator/pose_with_covariance"/>
       </include>
       <include file="$(find-pkg-share automatic_pose_initializer)/launch/automatic_pose_initializer.launch.xml"/>
     </group>
