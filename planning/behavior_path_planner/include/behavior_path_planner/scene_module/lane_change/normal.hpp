@@ -98,6 +98,11 @@ protected:
 
   int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
 
+  LaneChangeTargetObjects getTargetObjects(
+    const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes,
+    const lanelet::ConstLanelets & target_backward_lanes) const;
+
   PathWithLaneId getPrepareSegment(
     const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
     const double prepare_length) const override;

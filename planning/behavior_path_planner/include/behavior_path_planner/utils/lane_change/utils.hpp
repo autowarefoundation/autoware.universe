@@ -182,12 +182,5 @@ LaneChangeTargetObjectIndices filterObject(
 ExtendedPredictedObject transform(
   const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters);
-
-LaneChangeTargetObjects getTargetObjects(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
-  const Pose & current_pose, const RouteHandler & route_handler,
-  const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters);
 }  // namespace behavior_path_planner::utils::lane_change
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_

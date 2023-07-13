@@ -1157,44 +1157,4 @@ ExtendedPredictedObject transform(
 
   return extended_object;
 }
-
-LaneChangeTargetObjects getTargetObjects(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
-  const Pose & current_pose, const RouteHandler & route_handler,
-  const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters)
-{
-  const auto target_obj_index = filterObject(
-    objects, current_lanes, target_lanes, target_backward_lanes, current_pose, route_handler,
-    lane_change_parameters);
-
-  LaneChangeTargetObjects target_objects;
-  target_objects.current_lane.reserve(target_obj_index.current_lane.size());
-  target_objects.target_lane.reserve(target_obj_index.target_lane.size());
-  target_objects.other_lane.reserve(target_obj_index.other_lane.size());
-
-  // objects in current lane
-  for (const auto & obj_idx : target_obj_index.current_lane) {
-    const auto extended_object =
-      transform(objects.objects.at(obj_idx), common_parameters, lane_change_parameters);
-    target_objects.current_lane.push_back(extended_object);
-  }
-
-  // objects in target lane
-  for (const auto & obj_idx : target_obj_index.target_lane) {
-    const auto extended_object =
-      transform(objects.objects.at(obj_idx), common_parameters, lane_change_parameters);
-    target_objects.target_lane.push_back(extended_object);
-  }
-
-  // objects in other lane
-  for (const auto & obj_idx : target_obj_index.other_lane) {
-    const auto extended_object =
-      transform(objects.objects.at(obj_idx), common_parameters, lane_change_parameters);
-    target_objects.other_lane.push_back(extended_object);
-  }
-
-  return target_objects;
-}
 }  // namespace behavior_path_planner::utils::lane_change

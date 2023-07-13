@@ -482,6 +482,49 @@ PathWithLaneId NormalLaneChange::getPrepareSegment(
   return prepare_segment;
 }
 
+LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
+  const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes,
+  const lanelet::ConstLanelets & target_backward_lanes) const
+{
+  const auto current_pose = getEgoPose();
+  const auto & route_handler = *getRouteHandler();
+  const auto & common_parameters = planner_data_->parameters;
+
+  // filter objects to get target object index
+  const auto target_obj_index = utils::lane_change::filterObject(
+    objects, current_lanes, target_lanes, target_backward_lanes, current_pose, route_handler,
+    *lane_change_parameters_);
+
+  LaneChangeTargetObjects target_objects;
+  target_objects.current_lane.reserve(target_obj_index.current_lane.size());
+  target_objects.target_lane.reserve(target_obj_index.target_lane.size());
+  target_objects.other_lane.reserve(target_obj_index.other_lane.size());
+
+  // objects in current lane
+  for (const auto & obj_idx : target_obj_index.current_lane) {
+    const auto extended_object = utils::lane_change::transform(
+      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_);
+    target_objects.current_lane.push_back(extended_object);
+  }
+
+  // objects in target lane
+  for (const auto & obj_idx : target_obj_index.target_lane) {
+    const auto extended_object = utils::lane_change::transform(
+      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_);
+    target_objects.target_lane.push_back(extended_object);
+  }
+
+  // objects in other lane
+  for (const auto & obj_idx : target_obj_index.other_lane) {
+    const auto extended_object = utils::lane_change::transform(
+      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_);
+    target_objects.other_lane.push_back(extended_object);
+  }
+
+  return target_objects;
+}
+
 PathWithLaneId NormalLaneChange::getTargetSegment(
   const lanelet::ConstLanelets & target_lanelets, const Pose & lane_changing_start_pose,
   const double target_lane_length, const double lane_changing_length,
@@ -585,7 +628,6 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto & route_handler = *getRouteHandler();
   const auto & dynamic_objects = planner_data_->dynamic_object;
   const auto & common_parameter = planner_data_->parameters;
-  const auto & current_pose = getEgoPose();
 
   const auto backward_path_length = common_parameter.backward_path_length;
   const auto forward_path_length = common_parameter.forward_path_length;
@@ -649,10 +691,9 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto backward_length = lane_change_parameters_->backward_lane_length;
   const auto backward_target_lanes_for_object_filtering = utils::lane_change::getBackwardLanelets(
     route_handler, target_lanelets, getEgoPose(), backward_length);
-  const auto target_objects = utils::lane_change::getTargetObjects(
+  const auto target_objects = getTargetObjects(
     *dynamic_objects, original_lanelets, target_lanelets,
-    backward_target_lanes_for_object_filtering, current_pose, route_handler, common_parameter,
-    *lane_change_parameters_);
+    backward_target_lanes_for_object_filtering);
 
   candidate_paths->reserve(longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num);
   for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
@@ -846,9 +887,8 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
   const auto backward_target_lanes_for_object_filtering = utils::lane_change::getBackwardLanelets(
     route_handler, target_lanes, current_pose, lane_change_parameters.backward_lane_length);
 
-  const auto target_objects = utils::lane_change::getTargetObjects(
-    *dynamic_objects, current_lanes, target_lanes, backward_target_lanes_for_object_filtering,
-    current_pose, route_handler, common_parameters, *lane_change_parameters_);
+  const auto target_objects = getTargetObjects(
+    *dynamic_objects, current_lanes, target_lanes, backward_target_lanes_for_object_filtering);
 
   CollisionCheckDebugMap debug_data;
   const auto safety_status = isLaneChangePathSafe(
