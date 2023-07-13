@@ -4,6 +4,7 @@
   <arg name="output_twist_with_cov_name" default="/localization/twist_estimator/twist_with_covariance"/>
   <arg name="directory_with_related_launches" default="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye"/>
   <arg name="use_eagleye_pose" default="true"/>
+  <arg name="use_eagleye_twist" default="true"/>
 
   <arg name="enable_additional_rolling" default="false"/>
   <arg name="use_multi_antenna_mode" default="false"/>
@@ -11,7 +12,9 @@
   <group>
     <push-ros-namespace namespace="eagleye"/>
 
-    <node pkg="topic_tools" exec="relay" name="eagleye_output_twist_relay" args="twist_with_covariance $(var output_twist_with_cov_name)"/>
+    <group if="$(var use_eagleye_twist)">
+      <node pkg="topic_tools" exec="relay" name="eagleye_output_twist_relay" args="twist_with_covariance $(var output_twist_with_cov_name)"/>
+    </group>
 
     <arg name="use_rtk_dead_reckoning" default="false"/>
     <arg name="use_rtk_heading" default="false"/>

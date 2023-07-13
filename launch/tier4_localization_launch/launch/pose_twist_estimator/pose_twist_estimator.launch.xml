@@ -59,6 +59,8 @@
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/eagleye_rt.launch.xml">
         <arg name="output_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
         <arg name="output_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance"/>
+        <arg name="use_eagleye_pose" value="true"/>
+        <arg name="use_eagleye_twist" value="true"/>
       </include>
     </group>
     <group>
@@ -82,6 +84,8 @@
       <push-ros-namespace namespace="pose_estimator"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/eagleye_rt.launch.xml">
         <arg name="output_pose_with_cov_name" value="/localization/pose_estimator/pose_with_covariance"/>
+        <arg name="use_eagleye_pose" value="true"/>
+        <arg name="use_eagleye_twist" value="false"/>
       </include>
     </group>
     <group>
@@ -104,6 +108,8 @@
     <push-ros-namespace namespace="twist_estimator"/>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/eagleye_rt.launch.xml">
       <arg name="output_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
+      <arg name="use_eagleye_pose" value="false"/>
+      <arg name="use_eagleye_twist" value="true"/>
     </include>
   </group>
 </launch>
