@@ -296,6 +296,41 @@ PlannerData PathSampler::createPlannerData(const Path & path) const
   return planner_data;
 }
 
+void copyVelocity(
+  const std::vector<TrajectoryPoint> & from_traj, std::vector<TrajectoryPoint> & to_traj,
+  const geometry_msgs::msg::Pose & ego_pose)
+{
+  if (to_traj.empty() || from_traj.empty()) return;
+
+  const auto closest_fn = [&](const auto & p1, const auto & p2) {
+    return tier4_autoware_utils::calcDistance2d(p1.pose, ego_pose) <=
+           tier4_autoware_utils::calcDistance2d(p2.pose, ego_pose);
+  };
+  const auto first_from = std::min_element(from_traj.begin(), from_traj.end() - 1, closest_fn);
+  const auto first_to = std::min_element(to_traj.begin(), to_traj.end() - 1, closest_fn);
+
+  auto to = to_traj.begin();
+  for (; to != first_to; ++to)
+    to->longitudinal_velocity_mps = first_from->longitudinal_velocity_mps;
+
+  auto from = first_from;
+  auto s_from = tier4_autoware_utils::calcDistance2d(from->pose, std::next(from)->pose);
+  auto s_to = 0.0;
+  auto s_from_prev = 0.0;
+  for (; to + 1 != to_traj.end(); ++to) {
+    s_to += tier4_autoware_utils::calcDistance2d(to->pose, std::next(to)->pose);
+    for (; s_from < s_to && from + 1 != from_traj.end(); ++from) {
+      s_from_prev = s_from;
+      s_from += tier4_autoware_utils::calcDistance2d(from->pose, std::next(from)->pose);
+    }
+    const auto ratio = (s_to - s_from_prev) / (s_from - s_from_prev);
+    to->longitudinal_velocity_mps =
+      std::prev(from)->longitudinal_velocity_mps +
+      ratio * (from->longitudinal_velocity_mps - std::prev(from)->longitudinal_velocity_mps);
+  }
+  to_traj.back().longitudinal_velocity_mps = from->longitudinal_velocity_mps;
+}
+
 std::vector<TrajectoryPoint> PathSampler::generateTrajectory(const PlannerData & planner_data)
 {
   time_keeper_ptr_->tic(__func__);
@@ -304,7 +339,8 @@ std::vector<TrajectoryPoint> PathSampler::generateTrajectory(const PlannerData &
 
   auto generated_traj_points = generatePath(planner_data);
 
-  applyInputVelocity(generated_traj_points, input_traj_points, planner_data.ego_pose);
+  // applyInputVelocity(generated_traj_points, input_traj_points, planner_data.ego_pose);
+  copyVelocity(input_traj_points, generated_traj_points, planner_data.ego_pose);
   publishDebugMarker(planner_data.header, generated_traj_points);
 
   time_keeper_ptr_->toc(__func__, " ");
@@ -488,10 +524,10 @@ void PathSampler::publishDebugMarker(
 
   // debug marker
   time_keeper_ptr_->tic("getDebugMarker");
-  visualization_msgs::msg::MarkerArray markers;
 
+  raw_traj_pub_->publish(trajectory_utils::createTrajectory(header, traj_points));
+  visualization_msgs::msg::MarkerArray markers;
   if (debug_markers_pub_->get_subscription_count() > 0LU) {
-    raw_traj_pub_->publish(trajectory_utils::createTrajectory(header, traj_points));
     visualization_msgs::msg::Marker m;
     m.header.frame_id = "map";
     m.header.stamp = this->now();
