@@ -31,6 +31,13 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   gnss_frame_(declare_parameter("gnss_frame", "gnss")),
   gnss_base_frame_(declare_parameter("gnss_base_frame", "gnss_base_link")),
   map_frame_(declare_parameter("map_frame", "map")),
+  input_topic_fix_(declare_parameter("input_topic_fix", "ublox/nav_sat_fix")),
+  input_topic_autoware_orientation_(
+    declare_parameter("input_topic_autoware_orientation", "/autoware_orientation")),
+  output_topic_gnss_pose_(declare_parameter("output_topic_gnss_pose", "pose")),
+  output_topic_gnss_pose_cov_(
+    declare_parameter("output_topic_gnss_pose_cov", "pose_with_covariance")),
+  output_topic_gnss_fixed_(declare_parameter("output_topic_gnss_fixed", "fixed")),
   use_gnss_ins_orientation_(declare_parameter("use_gnss_ins_orientation", true)),
   plane_zone_(declare_parameter<int>("plane_zone", 9)),
   msg_gnss_ins_orientation_stamped_(
@@ -48,17 +55,21 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   int buff_epoch = declare_parameter("buff_epoch", 1);
   position_buffer_.set_capacity(buff_epoch);
 
-  nav_sat_fix_sub_ = create_subscription<sensor_msgs::msg::NavSatFix>(
-    "fix", rclcpp::QoS{1}, std::bind(&GNSSPoser::callbackNavSatFix, this, std::placeholders::_1));
+  nav_sat_fix_sub_ =
+    create_subscription<sensor_msgs::msg::NavSatFix>(
+      input_topic_fix_, rclcpp::QoS{1},
+      std::bind(&GNSSPoser::callbackNavSatFix, this, std::placeholders::_1));
   autoware_orientation_sub_ =
     create_subscription<autoware_sensing_msgs::msg::GnssInsOrientationStamped>(
-      "autoware_orientation", rclcpp::QoS{1},
+      input_topic_autoware_orientation_, rclcpp::QoS{1},
       std::bind(&GNSSPoser::callbackGnssInsOrientationStamped, this, std::placeholders::_1));
 
-  pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("gnss_pose", rclcpp::QoS{1});
+  pose_pub_ =
+    create_publisher<geometry_msgs::msg::PoseStamped>(output_topic_gnss_pose_, rclcpp::QoS{1});
   pose_cov_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "gnss_pose_cov", rclcpp::QoS{1});
-  fixed_pub_ = create_publisher<tier4_debug_msgs::msg::BoolStamped>("gnss_fixed", rclcpp::QoS{1});
+    output_topic_gnss_pose_cov_, rclcpp::QoS{1});
+  fixed_pub_ =
+    create_publisher<tier4_debug_msgs::msg::BoolStamped>(output_topic_gnss_fixed_, rclcpp::QoS{1});
 }
 
 void GNSSPoser::callbackNavSatFix(

@@ -6,6 +6,13 @@
     gnss_frame: "gnss"
     map_frame: "map"
 
+    # Topic names
+    input_topic_fix: ublox/nav_sat_fix
+    input_topic_autoware_orientation: /autoware_orientation
+    output_topic_gnss_pose: pose
+    output_topic_gnss_pose_cov: pose_with_covariance
+    output_topic_gnss_fixed: fixed
+
     # Common param
     coordinate_system: 4                # 0:UTM, 1:MGRS, 2:PLANE, 3:LocalCartesianWGS84, 4:LocalCartesianUTM
     buff_epoch: 1

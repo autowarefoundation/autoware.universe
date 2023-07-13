@@ -92,6 +92,11 @@ private:
   std::string gnss_frame_;
   std::string gnss_base_frame_;
   std::string map_frame_;
+  std::string input_topic_fix_;
+  std::string input_topic_autoware_orientation_;
+  std::string output_topic_gnss_pose_;
+  std::string output_topic_gnss_pose_cov_;
+  std::string output_topic_gnss_fixed_;
 
   sensor_msgs::msg::NavSatFix nav_sat_fix_origin_;
   bool use_gnss_ins_orientation_;
