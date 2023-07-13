@@ -98,13 +98,6 @@ std::optional<LaneChangePath> constructCandidatePath(
   const PathWithLaneId & target_segment, const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 
-bool hasEnoughLength(
-  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const RouteHandler & route_handler, const double minimum_lane_changing_velocity,
-  const BehaviorPathPlannerParameters & common_parameters,
-  const Direction direction = Direction::NONE);
-
 ShiftLine getLaneChangingShiftLine(
   const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
   const PathWithLaneId & reference_path, const double shift_length);

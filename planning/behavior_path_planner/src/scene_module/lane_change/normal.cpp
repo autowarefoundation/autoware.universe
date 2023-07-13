@@ -524,6 +524,56 @@ PathWithLaneId NormalLaneChange::getTargetSegment(
   return target_segment;
 }
 
+bool NormalLaneChange::hasEnoughLength(
+  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes, const Direction direction) const
+{
+  const auto current_pose = getEgoPose();
+  const auto & route_handler = *getRouteHandler();
+  const auto & common_parameters = planner_data_->parameters;
+  const auto minimum_lane_changing_velocity = common_parameters.minimum_lane_changing_velocity;
+  const auto lateral_jerk = common_parameters.lane_changing_lateral_jerk;
+  const double lane_change_length = path.info.length.sum();
+  const double max_lat_acc =
+    common_parameters.lane_change_lat_acc_map.find(minimum_lane_changing_velocity).second;
+  const auto shift_intervals =
+    route_handler.getLateralIntervalsToPreferredLane(target_lanes.back(), direction);
+
+  double minimum_lane_change_length_to_preferred_lane = 0.0;
+  for (const auto & shift_length : shift_intervals) {
+    const auto lane_changing_time =
+      PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, max_lat_acc);
+    minimum_lane_change_length_to_preferred_lane +=
+      minimum_lane_changing_velocity * lane_changing_time +
+      common_parameters.minimum_prepare_length;
+  }
+
+  if (lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
+    return false;
+  }
+
+  const auto goal_pose = route_handler.getGoalPose();
+  if (
+    route_handler.isInGoalRouteSection(current_lanes.back()) &&
+    lane_change_length + minimum_lane_change_length_to_preferred_lane >
+      utils::getSignedDistance(current_pose, goal_pose, current_lanes)) {
+    return false;
+  }
+
+  // return if there are no target lanes
+  if (target_lanes.empty()) {
+    return true;
+  }
+
+  if (
+    lane_change_length + minimum_lane_change_length_to_preferred_lane >
+    utils::getDistanceToEndOfLane(current_pose, target_lanes)) {
+    return false;
+  }
+
+  return true;
+}
+
 bool NormalLaneChange::getLaneChangePaths(
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
   Direction direction, LaneChangePaths * candidate_paths, const bool check_safety) const
@@ -749,9 +799,8 @@ bool NormalLaneChange::getLaneChangePaths(
         continue;
       }
 
-      const auto is_valid = utils::lane_change::hasEnoughLength(
-        *candidate_path, original_lanelets, target_lanelets, getEgoPose(), route_handler,
-        minimum_lane_changing_velocity, common_parameter, direction);
+      const auto is_valid =
+        hasEnoughLength(*candidate_path, original_lanelets, target_lanelets, direction);
 
       if (!is_valid) {
         RCLCPP_DEBUG(logger_, "invalid candidate path!!");
