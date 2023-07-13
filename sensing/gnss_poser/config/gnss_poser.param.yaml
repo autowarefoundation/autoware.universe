@@ -1,0 +1,23 @@
+/**:
+  ros__parameters:
+    # Frame ids
+    base_frame: "base_link"
+    gnss_base_frame: "gnss_base_link"
+    gnss_frame: "gnss"
+    map_frame: "map"
+
+    # Common param
+    coordinate_system: 4                # 0:UTM, 1:MGRS, 2:PLANE, 3:LocalCartesianWGS84, 4:LocalCartesianUTM
+    buff_epoch: 1
+    use_gnss_ins_orientation: true
+    plane_zone: 9                       # identification number of the plane rectangular coordinate systems.
+    height_system: 1                    # 0:Orthometric Height 1:Ellipsoid Height
+
+    # Latitude of local origin
+    latitude: 40.81187906
+
+    # Longitude of local origin
+    longitude: 29.35810110
+
+    # Altitude of local origin
+    altitude: 47.62
