@@ -188,8 +188,8 @@ private:
     const PathWithLaneId & ego_path,
     const std::vector<geometry_msgs::msg::Point> & path_intersects);
 
-  boost::optional<std::pair<double, geometry_msgs::msg::Point>> getStopLine(
-    const PathWithLaneId & ego_path, bool & exist_stopline_in_map,
+  boost::optional<std::pair<geometry_msgs::msg::Point, double>> getStopLine(
+    const PathWithLaneId & ego_path,
     const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
 
   std::vector<CollisionPoint> getCollisionPoints(

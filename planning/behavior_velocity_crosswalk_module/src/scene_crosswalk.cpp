@@ -224,8 +224,8 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   return result;
 }
 
-boost::optional<std::pair<double, geometry_msgs::msg::Point>> CrosswalkModule::getStopLine(
-  const PathWithLaneId & ego_path, bool & exist_stopline_in_map,
+boost::optional<std::pair<geometry_msgs::msg::Point, double>> CrosswalkModule::getStopLine(
+  const PathWithLaneId & ego_path,
   const std::vector<geometry_msgs::msg::Point> & path_intersects) const
 {
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
@@ -236,22 +236,25 @@ boost::optional<std::pair<double, geometry_msgs::msg::Point>> CrosswalkModule::g
       continue;
     }
 
+    /*
     exist_stopline_in_map = true;
-
     const auto dist_ego_to_stop =
       calcSignedArcLength(ego_path.points, ego_pos, p_stop_lines.front());
     return std::make_pair(dist_ego_to_stop, p_stop_lines.front());
+    */
+    return std::make_pair(p_stop_lines.front(), -planner_param_.stop_margin);
   }
 
-  {
-    exist_stopline_in_map = false;
+  // exist_stopline_in_map = false;
 
-    if (!path_intersects.empty()) {
+  if (!path_intersects.empty()) {
+    /*
       const auto p_stop_line = path_intersects.front();
       const auto dist_ego_to_stop = calcSignedArcLength(ego_path.points, ego_pos, p_stop_line) -
-                                    planner_param_.stop_line_distance;
+      planner_param_.stop_line_distance;
       return std::make_pair(dist_ego_to_stop, p_stop_line);
-    }
+    */
+    return std::make_pair(path_intersects.front(), -planner_param_.stop_line_distance);
   }
 
   return {};
@@ -262,16 +265,13 @@ boost::optional<StopFactor> CrosswalkModule::findDefaultStopFactor(
 {
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  bool exist_stopline_in_map;
-  const auto p_stop_line = getStopLine(ego_path, exist_stopline_in_map, path_intersects);
+  const auto p_stop_line = getStopLine(ego_path, path_intersects);
   if (!p_stop_line) {
     return {};
   }
 
-  const auto & p_stop = p_stop_line.get().second;
-  const auto stop_line_distance = exist_stopline_in_map ? 0.0 : planner_param_.stop_line_distance;
-  const auto margin = stop_line_distance + base_link2front;
-  const auto stop_pose = calcLongitudinalOffsetPose(ego_path.points, p_stop, -margin);
+  const auto stop_pose = calcLongitudinalOffsetPose(
+    ego_path.points, p_stop_line->first, p_stop_line->second - base_link2front);
 
   if (!stop_pose) {
     return {};
@@ -303,12 +303,12 @@ boost::optional<StopFactor> CrosswalkModule::findNearestStopFactor(
   const auto crosswalk_attention_range = getAttentionRange(sparse_resample_path, path_intersects);
 
   // Calculate stop line
-  bool exist_stopline_in_map;
-  const auto p_stop_line =
-    getStopLine(sparse_resample_path, exist_stopline_in_map, path_intersects);
+  const auto p_stop_line = getStopLine(sparse_resample_path, path_intersects);
   if (!p_stop_line) {
     return {};
   }
+  const auto dist_ego_to_stop =
+    calcSignedArcLength(ego_path.points, ego_pos, p_stop_line->first) + p_stop_line->second;
 
   // Get attention area, which is ego's footprints on the crosswalk
   const auto attention_area = getAttentionArea(sparse_resample_path, crosswalk_attention_range);
@@ -320,7 +320,7 @@ boost::optional<StopFactor> CrosswalkModule::findNearestStopFactor(
   // Check if ego is yielding
   const bool is_ego_yielding = [&]() {
     const auto has_reached_stop_point =
-      p_stop_line.get().first - base_link2front < planner_param_.stop_position_threshold;
+      dist_ego_to_stop - base_link2front < planner_param_.stop_position_threshold;
 
     return planner_data_->isVehicleStopped(planner_param_.ego_yield_query_stop_duration) &&
            has_reached_stop_point;
@@ -386,20 +386,18 @@ boost::optional<StopFactor> CrosswalkModule::findNearestStopFactor(
   }
 
   if (!nearest_stop_info) {
-    nearest_stop_info = std::make_pair(p_stop_line.get().second, p_stop_line.get().first);
+    nearest_stop_info = std::make_pair(p_stop_line->first, dist_ego_to_stop);
   }
 
   const auto within_stop_line_margin =
-    p_stop_line.get().first < nearest_stop_info->second &&
-    nearest_stop_info->second < p_stop_line.get().first + planner_param_.stop_line_margin;
+    dist_ego_to_stop < nearest_stop_info->second &&
+    nearest_stop_info->second < dist_ego_to_stop + planner_param_.stop_line_margin;
 
   const auto stop_at_stop_line = !found_pedestrians || within_stop_line_margin;
 
-  const auto & p_stop = stop_at_stop_line ? p_stop_line.get().second : nearest_stop_info->first;
-  const auto stop_line_distance = exist_stopline_in_map ? 0.0 : planner_param_.stop_line_distance;
-  const auto margin = stop_at_stop_line ? stop_line_distance + base_link2front
-                                        : planner_param_.stop_margin + base_link2front;
-  const auto stop_pose = calcLongitudinalOffsetPose(ego_path.points, p_stop, -margin);
+  const auto & p_stop = stop_at_stop_line ? p_stop_line->first : nearest_stop_info->first;
+  const auto stop_pose =
+    calcLongitudinalOffsetPose(ego_path.points, p_stop, p_stop_line->second - base_link2front);
 
   if (!stop_pose) {
     return {};
