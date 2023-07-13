@@ -496,7 +496,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
   const auto backward_path_length = common_parameter.backward_path_length;
   const auto forward_path_length = common_parameter.forward_path_length;
-  const auto max_prepare_duration = common_parameter.lane_change_prepare_duration;
+  const auto prepare_duration = common_parameter.lane_change_prepare_duration;
   const auto minimum_lane_changing_velocity = common_parameter.minimum_lane_changing_velocity;
   const auto longitudinal_acc_sampling_num = lane_change_parameters_->longitudinal_acc_sampling_num;
   const auto lateral_acc_sampling_num = lane_change_parameters_->lateral_acc_sampling_num;
@@ -536,9 +536,6 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto dist_to_end_of_current_lanes =
     utils::getDistanceToEndOfLane(getEgoPose(), original_lanelets);
 
-  const auto arc_length_in_current =
-    lanelet::utils::getArcCoordinates(original_lanelets, getEgoPose()).length;
-
   const auto arc_position_from_target =
     lanelet::utils::getArcCoordinates(target_lanelets, getEgoPose());
 
@@ -564,17 +561,14 @@ bool NormalLaneChange::getLaneChangePaths(
     *lane_change_parameters_);
 
   candidate_paths->reserve(longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num);
-  const auto minimum_prepare_length = std::invoke([&]() {
+  const auto is_near_end_of_road = std::invoke([&]() {
     const auto distance =
       !is_goal_in_route
         ? dist_to_end_of_current_lanes
         : utils::getSignedDistance(getEgoPose(), route_handler.getGoalPose(), original_lanelets);
 
-    return distance - lane_change_buffer;
+    return std::abs(distance - lane_change_buffer) < 4.0;
   });
-
-  const auto prepare_duration =
-    std::clamp(minimum_prepare_length / minimum_lane_changing_velocity, 0.1, max_prepare_duration);
 
   for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
     const auto prepare_velocity = std::max(
@@ -590,15 +584,15 @@ bool NormalLaneChange::getLaneChangePaths(
       current_velocity * prepare_duration +
       0.5 * longitudinal_acc_on_prepare * std::pow(prepare_duration, 2);
     const auto prepare_length =
-      std::abs(expected_prepare_length) > 1.0 ? expected_prepare_length : 0.0;
+      !is_near_end_of_road || (getEgoVelocity() >= 1.0) ? expected_prepare_length : 0.0;
 
     if (prepare_length < target_length) {
       RCLCPP_DEBUG(logger_, "prepare length is shorter than distance to target lane!!");
       break;
     }
 
-    auto prepare_segment = getPrepareSegment(
-      original_lanelets, arc_length_in_current, backward_path_length, prepare_length);
+    auto prepare_segment =
+      getPrepareSegment(original_lanelets, backward_path_length, prepare_length);
 
     if (prepare_segment.points.empty()) {
       RCLCPP_DEBUG(logger_, "prepare segment is empty!!");
