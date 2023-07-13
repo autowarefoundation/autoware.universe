@@ -140,8 +140,8 @@ void RingOutlierFilterComponent::faster_filter(
     };
 
   // tmp vectors to keep track of walk/ring state while processing points in order (cache efficient)
-  std::vector<RingWalkInfo> rings;         // info for each LiDAR ring
-  std::vector<size_t> points_walk_id;      // for each input point, the walk index associated with it
+  std::vector<RingWalkInfo> rings;     // info for each LiDAR ring
+  std::vector<size_t> points_walk_id;  // for each input point, the walk index associated with it
   std::vector<bool> walks_cluster_status;  // for each generated walk, stores whether it is a cluter
 
   size_t latest_walk_id = -1UL;  // ID given to the latest walk created
@@ -175,7 +175,8 @@ void RingOutlierFilterComponent::faster_filter(
     auto & ring = rings[ring_idx];
     if (ring.current_walk.id == -1UL) {
       // first walk ever for this ring. It is both the first and current walk of the ring.
-      ring.first_walk = WalkInfo{++latest_walk_id, 1, curr_distance, curr_azimuth, curr_distance, curr_azimuth};
+      ring.first_walk =
+        WalkInfo{++latest_walk_id, 1, curr_distance, curr_azimuth, curr_distance, curr_azimuth};
       ring.current_walk = ring.first_walk;
       point_walk_id = latest_walk_id;
       continue;
@@ -196,7 +197,8 @@ void RingOutlierFilterComponent::faster_filter(
       if (walk.id >= walks_cluster_status.size()) walks_cluster_status.resize(walk.id + 1, false);
       walks_cluster_status.at(walk.id) = isCluster(walk);
 
-      ring.current_walk = WalkInfo{++latest_walk_id, 1, curr_distance, curr_azimuth, curr_distance, curr_azimuth};
+      ring.current_walk =
+        WalkInfo{++latest_walk_id, 1, curr_distance, curr_azimuth, curr_distance, curr_azimuth};
       point_walk_id = latest_walk_id;
     }
   }
@@ -260,7 +262,8 @@ void RingOutlierFilterComponent::faster_filter(
       out_point.y = p[1];
       out_point.z = p[2];
       // FIXME(VRichardJP) tmp fix because input data does not have the same layout than PointXYZI
-      std::memcpy(&out_point.intensity, &raw_p.data()[intensity_offset], sizeof(out_point.intensity));
+      std::memcpy(
+        &out_point.intensity, &raw_p.data()[intensity_offset], sizeof(out_point.intensity));
 
       std::memcpy(&output.data[output_size], &out_point, sizeof(PointXYZI));
       output_size += sizeof(PointXYZI);
@@ -276,7 +279,8 @@ void RingOutlierFilterComponent::faster_filter(
       PointXYZI out_point;
       std::memcpy(&out_point, raw_p.data(), sizeof(PointXYZI));
       // FIXME(VRichardJP) tmp fix because input data does not have the same layout than PointXYZI
-      std::memcpy(&out_point.intensity, &raw_p.data()[intensity_offset], sizeof(out_point.intensity));
+      std::memcpy(
+        &out_point.intensity, &raw_p.data()[intensity_offset], sizeof(out_point.intensity));
 
       std::memcpy(&output.data[output_size], &out_point, sizeof(PointXYZI));
 
