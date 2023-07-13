@@ -53,15 +53,15 @@ This node extract road surface region by [graph-based-segmentation](https://docs
 
 ### Parameters
 
-| Name                             | Type   | Description                                                        |
-| -------------------------------- | ------ | ------------------------------------------------------------------ |
-| `target_height_ratio`            | double | height on the image to retrieve the candidate road surface         |
-| `target_candidate_box_width`     | int    | size of the square area to search for candidate road surfaces      |
+| Name                              | Type   | Description                                                        |
+| --------------------------------- | ------ | ------------------------------------------------------------------ |
+| `target_height_ratio`             | double | height on the image to retrieve the candidate road surface         |
+| `target_candidate_box_width`      | int    | size of the square area to search for candidate road surfaces      |
 | `pickup_additional_graph_segment` | bool   | if this is true, additional regions of similar color are retrieved |
-| `similarity_score_threshold`     | double | threshold for picking up additional areas                          |
-| `sigma`                          | double | parameters for cv::ximgproc::segmentation                          |
-| `k`                              | double | parameters for cv::ximgproc::segmentation                          |
-| `min_size`                       | double | parameters for cv::ximgproc::segmentation                          |
+| `similarity_score_threshold`      | double | threshold for picking up additional areas                          |
+| `sigma`                           | double | parameters for cv::ximgproc::segmentation                          |
+| `k`                               | double | parameters for cv::ximgproc::segmentation                          |
+| `min_size`                        | double | parameters for cv::ximgproc::segmentation                          |
 
 ## segment_filter
 
@@ -193,7 +193,7 @@ This node visualize classified line segments on the camera image
 
 | Name                        | Type                            | Description              |
 | --------------------------- | ------------------------------- | ------------------------ |
-| `input/line_segments_cloud` | `sensor_msgs::msg::PointCloud2` | classified line segments   |
+| `input/line_segments_cloud` | `sensor_msgs::msg::PointCloud2` | classified line segments |
 | `input/image_raw`           | `sensor_msgs::msg::Image`       | undistorted camera image |
 
 #### Output
