@@ -32,7 +32,7 @@ struct LaneChangePath
   PathWithLaneId path{};
   ShiftedPath shifted_path{};
   PathWithLaneId prev_path{};
-  LaneChangeInfo lane_change_info{};
+  LaneChangeInfo info{};
 };
 using LaneChangePaths = std::vector<LaneChangePath>;
 

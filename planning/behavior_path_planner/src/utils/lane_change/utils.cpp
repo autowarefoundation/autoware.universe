@@ -263,7 +263,7 @@ std::optional<LaneChangePath> constructCandidatePath(
   const auto & lane_changing_length = lane_change_length.lane_changing;
 
   LaneChangePath candidate_path;
-  candidate_path.lane_change_info = lane_change_info;
+  candidate_path.info = lane_change_info;
 
   RCLCPP_DEBUG(
     rclcpp::get_logger("behavior_path_planner")
@@ -272,8 +272,8 @@ std::optional<LaneChangePath> constructCandidatePath(
       .get_child("constructCandidatePath"),
     "prepare_length: %f, lane_change: %f", prepare_length, lane_changing_length);
 
-  const auto lane_change_end_idx = motion_utils::findNearestIndex(
-    shifted_path.path.points, candidate_path.lane_change_info.lane_changing_end);
+  const auto lane_change_end_idx =
+    motion_utils::findNearestIndex(shifted_path.path.points, candidate_path.info.lane_changing_end);
 
   if (!lane_change_end_idx) {
     RCLCPP_ERROR_STREAM(
@@ -317,7 +317,7 @@ bool hasEnoughLength(
   const RouteHandler & route_handler, const double minimum_lane_changing_velocity,
   const BehaviorPathPlannerParameters & common_parameter, const Direction direction)
 {
-  const double lane_change_length = path.lane_change_info.length.sum();
+  const double lane_change_length = path.info.length.sum();
   const double & lateral_jerk = common_parameter.lane_changing_lateral_jerk;
   const double max_lat_acc =
     common_parameter.lane_change_lat_acc_map.find(minimum_lane_changing_velocity).second;
@@ -627,8 +627,8 @@ std::vector<DrivableLanes> generateDrivableLanes(
 
 double getLateralShift(const LaneChangePath & path)
 {
-  const auto start_idx = path.lane_change_info.shift_line.start_idx;
-  const auto end_idx = path.lane_change_info.shift_line.end_idx;
+  const auto start_idx = path.info.shift_line.start_idx;
+  const auto end_idx = path.info.shift_line.end_idx;
 
   return path.shifted_path.shift_length.at(end_idx) - path.shifted_path.shift_length.at(start_idx);
 }
@@ -793,11 +793,9 @@ CandidateOutput assignToCandidate(
   candidate_output.path_candidate = lane_change_path.path;
   candidate_output.lateral_shift = utils::lane_change::getLateralShift(lane_change_path);
   candidate_output.start_distance_to_path_change = motion_utils::calcSignedArcLength(
-    lane_change_path.path.points, ego_position,
-    lane_change_path.lane_change_info.shift_line.start.position);
+    lane_change_path.path.points, ego_position, lane_change_path.info.shift_line.start.position);
   candidate_output.finish_distance_to_path_change = motion_utils::calcSignedArcLength(
-    lane_change_path.path.points, ego_position,
-    lane_change_path.lane_change_info.shift_line.end.position);
+    lane_change_path.path.points, ego_position, lane_change_path.info.shift_line.end.position);
 
   return candidate_output;
 }
@@ -822,11 +820,10 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   }
 
   const auto & path = lane_change_path.path;
-  const auto prepare_acc = lane_change_path.lane_change_info.longitudinal_acceleration.prepare;
-  const auto lane_changing_acc =
-    lane_change_path.lane_change_info.longitudinal_acceleration.lane_changing;
-  const auto duration = lane_change_path.lane_change_info.duration.sum();
-  const auto prepare_time = lane_change_path.lane_change_info.duration.prepare;
+  const auto prepare_acc = lane_change_path.info.longitudinal_acceleration.prepare;
+  const auto lane_changing_acc = lane_change_path.info.longitudinal_acceleration.lane_changing;
+  const auto duration = lane_change_path.info.duration.sum();
+  const auto prepare_time = lane_change_path.info.duration.prepare;
   const auto & minimum_lane_changing_velocity = common_parameter.minimum_lane_changing_velocity;
 
   const auto nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
@@ -1009,7 +1006,7 @@ bool passParkedObject(
   const auto & object_shiftable_ratio_threshold =
     lane_change_parameters.object_shiftable_ratio_threshold;
   const auto & path = lane_change_path.path;
-  const auto & current_lanes = lane_change_path.lane_change_info.reference_lanelets;
+  const auto & current_lanes = lane_change_path.info.reference_lanelets;
   const auto current_lane_path =
     route_handler.getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
 
@@ -1065,7 +1062,7 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
     return {};
   }
 
-  const auto & lane_change_start = lane_change_path.lane_change_info.lane_changing_start;
+  const auto & lane_change_start = lane_change_path.info.lane_changing_start;
   const auto & path_end = path.points.back();
 
   double dist_lc_start_to_leading_obj = 0.0;
