@@ -561,7 +561,7 @@ bool NormalLaneChange::getLaneChangePaths(
     *lane_change_parameters_);
 
   candidate_paths->reserve(longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num);
-  const auto is_near_end_of_road = std::invoke([&]() {
+  const auto is_near_end_of_current_lane = std::invoke([&]() {
     const auto distance =
       !is_goal_in_route
         ? dist_to_end_of_current_lanes
@@ -581,12 +581,12 @@ bool NormalLaneChange::getLaneChangePaths(
       (prepare_velocity - current_velocity) / prepare_duration;
 
     // get path on original lanes
-    const double expected_prepare_length =
-      current_velocity * prepare_duration +
-      0.5 * longitudinal_acc_on_prepare * std::pow(prepare_duration, 2);
-    const auto prepare_length =
-      !is_near_end_of_road || (getEgoVelocity() >= 1.0) ? expected_prepare_length : 0.0;
+    const bool disable_prepare_segment = is_near_end_of_current_lane && (getEgoVelocity() < 1.0);
+    const double prepare_duration =
+      disable_prepare_segment ? 0.0 : common_parameter.lane_change_prepare_duration;
 
+    const double prepare_length = current_velocity * prepare_duration +
+                                  0.5 * longitudinal_acc_on_prepare * std::pow(prepare_duration, 2);
     if (prepare_length < target_length) {
       RCLCPP_DEBUG(logger_, "prepare length is shorter than distance to target lane!!");
       break;

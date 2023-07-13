@@ -330,11 +330,14 @@ bool hasEnoughLength(
     route_handler.getLateralIntervalsToPreferredLane(target_lanes.back(), direction);
 
   double minimum_lane_change_length_to_preferred_lane = 0.0;
+  const auto minimum_prepare_length = 0.5 * common_parameter.max_acc *
+                                      common_parameter.lane_change_prepare_duration *
+                                      common_parameter.lane_change_prepare_duration;
   for (const auto & shift_length : shift_intervals) {
     const auto lane_changing_time =
       PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, max_lat_acc);
     minimum_lane_change_length_to_preferred_lane +=
-      minimum_lane_changing_velocity * lane_changing_time;
+      minimum_lane_changing_velocity * lane_changing_time + minimum_prepare_length;
   }
 
   if (lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
