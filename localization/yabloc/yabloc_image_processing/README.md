@@ -178,7 +178,7 @@ This node overlays lanelet2 on the camera image based on the estimated self-posi
 
 | Name                            | Type                              | Description                                            |
 | ------------------------------- | --------------------------------- | ------------------------------------------------------ |
-| `output/lanelet2_overlay_image` | `sensor_msgs::msg::Image`         | lanelet2 overlaid image                               |
+| `output/lanelet2_overlay_image` | `sensor_msgs::msg::Image`         | lanelet2 overlaid image                                |
 | `output/projected_marker`       | `visualization_msgs::msg::Marker` | 3d projected line segments including non-road markings |
 
 ## line_segments_overlay
