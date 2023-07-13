@@ -822,11 +822,11 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   }
 
   const auto & path = lane_change_path.path;
-  const auto & prepare_acc = lane_change_path.lane_change_info.longitudinal_acceleration.prepare;
-  const auto & lane_changing_acc =
+  const auto prepare_acc = lane_change_path.lane_change_info.longitudinal_acceleration.prepare;
+  const auto lane_changing_acc =
     lane_change_path.lane_change_info.longitudinal_acceleration.lane_changing;
-  const auto & duration = lane_change_path.lane_change_info.duration.sum();
-  const auto & prepare_time = lane_change_path.lane_change_info.duration.prepare;
+  const auto duration = lane_change_path.lane_change_info.duration.sum();
+  const auto prepare_time = lane_change_path.lane_change_info.duration.prepare;
   const auto & minimum_lane_changing_velocity = common_parameter.minimum_lane_changing_velocity;
 
   const auto nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
