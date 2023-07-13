@@ -235,10 +235,10 @@ std::optional<LaneChangePath> constructCandidatePath(
   const auto & shift_line = lane_change_info.shift_line;
   const auto & original_lanelets = lane_change_info.reference_lanelets;
   const auto & target_lanelets = lane_change_info.target_lanelets;
-  const auto & terminal_lane_changing_velocity = lane_change_info.terminal_lane_changing_velocity;
-  const auto & longitudinal_acceleration = lane_change_info.longitudinal_acceleration;
-  const auto & lane_change_velocity = lane_change_info.velocity;
-  const auto & lane_change_length = lane_change_info.length;
+  const auto terminal_lane_changing_velocity = lane_change_info.terminal_lane_changing_velocity;
+  const auto longitudinal_acceleration = lane_change_info.longitudinal_acceleration;
+  const auto lane_change_velocity = lane_change_info.velocity;
+  const auto lane_change_length = lane_change_info.length;
 
   PathShifter path_shifter;
   path_shifter.setPath(target_lane_reference_path);
