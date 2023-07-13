@@ -465,8 +465,7 @@ void NDTScanMatcher::callback_sensor_points(
     pcl::shared_ptr<pcl::PointCloud<PointSource>> no_ground_points_in_map_ptr(
       new pcl::PointCloud<PointSource>);
     for (std::size_t i = 0; i < sensor_points_in_map_ptr->size(); i++) {
-      const float point_z =
-        sensor_points_in_map_ptr->points[i].z;  // NOLINT(cppcoreguidelines-pro-type-union-access)
+      const float point_z = sensor_points_in_map_ptr->points[i].z;  // NOLINT
       if (point_z - matrix4f_to_pose(ndt_result.pose).position.z > z_margin_for_ground_removal_) {
         no_ground_points_in_map_ptr->points.push_back(sensor_points_in_map_ptr->points[i]);
       }
