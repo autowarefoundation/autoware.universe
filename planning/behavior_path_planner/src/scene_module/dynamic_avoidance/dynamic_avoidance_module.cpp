@@ -145,19 +145,11 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
 }
 }  // namespace
 
-#ifdef USE_OLD_ARCHITECTURE
-DynamicAvoidanceModule::DynamicAvoidanceModule(
-  const std::string & name, rclcpp::Node & node,
-  std::shared_ptr<DynamicAvoidanceParameters> parameters)
-: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {""})},
-  parameters_{std::move(parameters)}
-#else
 DynamicAvoidanceModule::DynamicAvoidanceModule(
   const std::string & name, rclcpp::Node & node,
   std::shared_ptr<DynamicAvoidanceParameters> parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{std::move(parameters)}
-#endif
 {
 }
 
@@ -215,12 +207,6 @@ ModuleStatus DynamicAvoidanceModule::updateState()
   if (!has_avoidance_target) {
     return ModuleStatus::SUCCESS;
   }
-
-#ifndef USE_OLD_ARCHITECTURE
-  if (!isActivated() || isWaitingApproval()) {
-    return ModuleStatus::IDLE;
-  }
-#endif
 
   return ModuleStatus::RUNNING;
 }
@@ -339,7 +325,8 @@ DynamicAvoidanceModule::calcTargetObjectsCandidate() const
   const auto objects_in_right_lanes = getObjectsInLanes(input_objects, right_lanes);
   const auto objects_in_left_lanes = getObjectsInLanes(input_objects, left_lanes);
 
-  // 4. check if object will cut into the ego lane or cut out to the next lane.
+  // 4. check if object will not cut into the ego lane or cut out to the next lane,
+  //    or close to the ego's path considering ego's lane change.
   // NOTE: The oncoming object will be ignored.
   constexpr double epsilon_path_lat_diff = 0.3;
   std::vector<DynamicAvoidanceObjectCandidate> output_objects_candidate;
@@ -391,6 +378,15 @@ DynamicAvoidanceModule::calcTargetObjectsCandidate() const
         return false;
       }();
       if (will_object_cut_out) {
+        continue;
+      }
+
+      // Ignore object that is close to the ego's path.
+      const double lat_offset_to_path =
+        motion_utils::calcLateralOffset(prev_module_path->points, object.pose.position);
+      if (
+        std::abs(lat_offset_to_path) < planner_data_->parameters.vehicle_width / 2.0 +
+                                         parameters_->min_obj_lat_offset_to_ego_path) {
         continue;
       }
 

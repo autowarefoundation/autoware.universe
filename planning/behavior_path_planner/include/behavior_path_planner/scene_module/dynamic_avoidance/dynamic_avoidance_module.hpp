@@ -48,6 +48,7 @@ struct DynamicAvoidanceParameters
   bool avoid_pedestrian{false};
   double min_obstacle_vel{0.0};
   int successive_num_to_entry_dynamic_avoidance_condition{0};
+  double min_obj_lat_offset_to_ego_path{0.0};
 
   // drivable area generation
   double lat_offset_from_obstacle{0.0};
@@ -109,11 +110,6 @@ public:
     }
   };
 
-#ifdef USE_OLD_ARCHITECTURE
-  DynamicAvoidanceModule(
-    const std::string & name, rclcpp::Node & node,
-    std::shared_ptr<DynamicAvoidanceParameters> parameters);
-#else
   DynamicAvoidanceModule(
     const std::string & name, rclcpp::Node & node,
     std::shared_ptr<DynamicAvoidanceParameters> parameters,
@@ -123,7 +119,6 @@ public:
   {
     parameters_ = parameters;
   }
-#endif
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
