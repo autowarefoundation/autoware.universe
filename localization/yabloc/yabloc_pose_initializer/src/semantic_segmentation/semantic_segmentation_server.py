@@ -14,14 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import sys
 
 from cv_bridge import CvBridge
+import numpy as np
 import rclpy
 from rclpy.node import Node
 import semantic_segmentation_core as core
 from sensor_msgs.msg import Image
 from yabloc_pose_initializer.srv import SemanticSegmentation
+
+error_message = """\
+The yabloc_pose_initializer is not working correctly because the DNN model has not been downloaded correctly.
+To download models, -DDOWNLOAD_ARTIFACTS=ON is required at build time.
+Please see the README of yabloc_pose_initializer for more information."""
 
 
 class SemanticSegmentationServer(Node):
@@ -31,12 +38,22 @@ class SemanticSegmentationServer(Node):
         model_path = self.declare_parameter("model_path", "").value
 
         self.get_logger().info("model path: " + model_path)
-        self.dnn_ = core.SemanticSegmentationCore(model_path)
         self.bridge_ = CvBridge()
+
+        if os.path.exists(model_path):
+            self.dnn_ = core.SemanticSegmentationCore(model_path)
+        else:
+            self.dnn_ = None
+            self.__print_error_message()
 
         self.srv = self.create_service(
             SemanticSegmentation, "semantic_segmentation_srv", self.on_service
         )
+
+    def __print_error_message(self):
+        messages = error_message.split("\n")
+        for message in messages:
+            self.get_logger().error(message)
 
     def on_service(self, request, response):
         response.dst_image = self.__inference(request.src_image)
@@ -45,12 +62,17 @@ class SemanticSegmentationServer(Node):
     def __inference(self, msg: Image):
         stamp = msg.header.stamp
         self.get_logger().info("Subscribed image: " + str(stamp))
-
         src_image = self.bridge_.imgmsg_to_cv2(msg)
-        mask = self.dnn_.inference(src_image)
+
+        if self.dnn_:
+            mask = self.dnn_.inference(src_image)
+        else:
+            mask = np.zeros(src_image.shape, np.uint8)
+            self.__print_error_message()
 
         dst_msg = self.bridge_.cv2_to_imgmsg(mask)
         dst_msg.encoding = "bgr8"
+
         return dst_msg
 
 

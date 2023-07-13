@@ -32,7 +32,7 @@ void MarkerModule::publish_marker(
   auto minmax = std::minmax_element(scores.begin(), scores.end());
   auto normalize = [minmax](int score) -> float {
     return static_cast<float>(score - *minmax.first) /
-           static_cast<float>(*minmax.second - *minmax.first);
+           static_cast<float>(*minmax.second - *minmax.first + 1e-4);
   };
 
   MarkerArray array;

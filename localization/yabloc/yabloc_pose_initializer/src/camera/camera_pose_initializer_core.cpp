@@ -74,7 +74,7 @@ cv::Mat bitwise_and_3ch(const cv::Mat src1, const cv::Mat src2)
   return merged;
 }
 
-int count_nonzero(cv::Mat image_3ch)
+int count_non_zero(cv::Mat image_3ch)
 {
   std::vector<cv::Mat> images;
   cv::split(image_3ch, images);
@@ -149,7 +149,8 @@ bool CameraPoseInitializer::estimate_pose(
     if (lane_angle_rad) {
       gain = 2 + std::cos((lane_angle_rad.value() - angle_rad) / 2.0);
     }
-    const float score = gain * count_nonzero(dst);
+    // If count_non_zero() returns 0 everywhere, the orientation is chosen by the only gain
+    const float score = gain * (1 + count_non_zero(dst));
 
     // DEBUG:
     constexpr bool imshow = false;
