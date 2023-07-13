@@ -4,7 +4,7 @@
   <let name="stop_check_enabled" if="$(eval &quot;'$(var system_run_mode)'=='logging_simulation'&quot;)" value="false"/>
 
   <!-- NDT Scan Matcher Launch (as pose estimator) -->
-  <group if="$(eval &quot;'$(var pose_source)'=='lidar'&quot;)">
+  <group if="$(eval &quot;'$(var pose_source)'=='ndt'&quot;)">
     <group>
       <push-ros-namespace namespace="pose_estimator"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/ndt_scan_matcher.launch.xml"/>
@@ -26,7 +26,7 @@
   </group>
 
   <!-- YabLoc Launch (as pose estimator) -->
-  <group if="$(eval &quot;'$(var pose_source)'=='camera'&quot;)">
+  <group if="$(eval &quot;'$(var pose_source)'=='yabloc'&quot;)">
     <group>
       <push-ros-namespace namespace="pose_estimator"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/yabloc.launch.xml"/>
@@ -62,7 +62,7 @@
       </include>
     </group>
     <group>
-      <push-ros-namespace namespace="util!!!!!!!!!hoge"/>
+      <push-ros-namespace namespace="util"/>
       <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
         <arg name="ndt_enabled" value="false"/>
         <arg name="gnss_enabled" value="true"/>
@@ -85,7 +85,7 @@
       </include>
     </group>
     <group>
-      <push-ros-namespace namespace="util!!!!!!!!!fuga"/>
+      <push-ros-namespace namespace="util"/>
       <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
         <arg name="ndt_enabled" value="false"/>
         <arg name="gnss_enabled" value="true"/>
