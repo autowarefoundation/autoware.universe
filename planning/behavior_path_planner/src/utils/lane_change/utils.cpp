@@ -313,7 +313,7 @@ std::optional<LaneChangePath> constructCandidatePath(
 
 bool hasEnoughLength(
   const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-  [[maybe_unused]] const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
+  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
   const RouteHandler & route_handler, const double minimum_lane_changing_velocity,
   const BehaviorPathPlannerParameters & common_parameter, const Direction direction)
 {
@@ -356,46 +356,6 @@ bool hasEnoughLength(
   }
 
   return true;
-}
-
-PathWithLaneId getTargetSegment(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanelets,
-  const double forward_path_length, const Pose & lane_changing_start_pose,
-  const double target_lane_length, const double lane_changing_length,
-  const double lane_changing_velocity, const double total_required_min_dist)
-{
-  const double s_start =
-    std::invoke([&lane_changing_start_pose, &target_lanelets, &lane_changing_length,
-                 &target_lane_length, &total_required_min_dist]() {
-      const auto arc_to_start_pose =
-        lanelet::utils::getArcCoordinates(target_lanelets, lane_changing_start_pose);
-      const double dist_from_front_target_lanelet = arc_to_start_pose.length + lane_changing_length;
-      const double end_of_lane_dist_without_buffer = target_lane_length - total_required_min_dist;
-      return std::min(dist_from_front_target_lanelet, end_of_lane_dist_without_buffer);
-    });
-
-  const double s_end =
-    std::invoke([&s_start, &forward_path_length, &target_lane_length, &total_required_min_dist]() {
-      const double dist_from_start = s_start + forward_path_length;
-      const double dist_from_end = target_lane_length - total_required_min_dist;
-      return std::max(
-        std::min(dist_from_start, dist_from_end), s_start + std::numeric_limits<double>::epsilon());
-    });
-
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("behavior_path_planner")
-      .get_child("lane_change")
-      .get_child("util")
-      .get_child("getTargetSegment"),
-    "start: %f, end: %f", s_start, s_end);
-
-  PathWithLaneId target_segment = route_handler.getCenterLinePath(target_lanelets, s_start, s_end);
-  for (auto & point : target_segment.points) {
-    point.point.longitudinal_velocity_mps =
-      std::min(point.point.longitudinal_velocity_mps, static_cast<float>(lane_changing_velocity));
-  }
-
-  return target_segment;
 }
 
 PathWithLaneId getReferencePathFromTargetLane(

@@ -116,12 +116,6 @@ PathWithLaneId getReferencePathFromTargetLane(
   const double resample_interval, const bool is_goal_in_route,
   const double next_lane_change_buffer);
 
-PathWithLaneId getTargetSegment(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanelets,
-  const double forward_path_length, const Pose & lane_changing_start_pose,
-  const double target_lane_length, const double lane_changing_length,
-  const double lane_changing_velocity, const double total_required_min_dist);
-
 std::vector<DrivableLanes> generateDrivableLanes(
   const std::vector<DrivableLanes> original_drivable_lanes, const RouteHandler & route_handler,
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & lane_change_lanes);
