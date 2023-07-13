@@ -45,7 +45,6 @@
   <arg name="image_raw7" default="/sensing/camera/camera7/image_rect_color"/>
   <arg name="camera_info7" default="/sensing/camera/camera7/camera_info"/>
   <arg name="image_number" default="6" description="choose image raw number(1-8)"/>
-  <arg name="object_recognition_detection_fusion_sync_param_path" description="you need change the size of 'input_offset_ms' in the file in this path when you want to change image_number"/>
   <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
   <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
   <arg name="use_object_filter" default="true" description="use object filter"/>
@@ -128,6 +127,7 @@
           <arg name="camera_info7" value="$(var camera_info7)"/>
           <arg name="image_number" value="$(var image_number)"/>
           <arg name="sync_param_path" value="$(var object_recognition_detection_fusion_sync_param_path)"/>
+          <arg name="pointpainting_model_param_path" value="$(var object_recognition_detection_pointpainting_model_param_path)"/>
           <arg name="compare_map_param_path" value="$(var object_recognition_detection_compare_map_param_path)"/>
           <arg name="euclidean_param_path" value="$(var object_recognition_detection_euclidean_cluster_param_path)"/>
           <arg name="outlier_param_path" value="$(var object_recognition_detection_outlier_param_path)"/>

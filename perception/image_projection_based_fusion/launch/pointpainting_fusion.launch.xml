@@ -20,8 +20,8 @@
   <arg name="output/objects" default="objects"/>
   <arg name="model_name" default="pointpainting" description="options: `pointpainting`"/>
   <arg name="model_path" default="$(find-pkg-share image_projection_based_fusion)/data"/>
-  <arg name="model_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/$(var model_name).param.yaml"/>
   <arg name="class_remapper_param_path" default="$(find-pkg-share lidar_centerpoint)/config/detection_class_remapper.param.yaml"/>
+  <arg name="pointpainting_model_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/$(var model_name).param.yaml"/>
   <arg name="sync_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/roi_sync.param.yaml"/>
 
   <!-- for eval variable-->
@@ -49,7 +49,7 @@
       <param name="encoder_engine_path" value="$(var model_path)/pts_voxel_encoder_$(var model_name).engine"/>
       <param name="head_onnx_path" value="$(var model_path)/pts_backbone_neck_head_$(var model_name).onnx"/>
       <param name="head_engine_path" value="$(var model_path)/pts_backbone_neck_head_$(var model_name).engine"/>
-      <param from="$(var model_param_path)"/>
+      <param from="$(var pointpainting_model_param_path)"/>
       <param from="$(var sync_param_path)"/>
       <param from="$(var class_remapper_param_path)"/>
       <param name="rois_number" value="$(var input/rois_number)"/>
