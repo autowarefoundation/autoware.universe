@@ -5,5 +5,4 @@
   <node pkg="gnss_poser" exec="gnss_poser" name="gnss_poser" output="screen">
     <param from="$(var param_file)"/>
   </node>
-
 </launch>

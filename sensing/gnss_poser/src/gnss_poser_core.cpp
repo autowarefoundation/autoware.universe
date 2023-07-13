@@ -55,10 +55,9 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   int buff_epoch = declare_parameter("buff_epoch", 1);
   position_buffer_.set_capacity(buff_epoch);
 
-  nav_sat_fix_sub_ =
-    create_subscription<sensor_msgs::msg::NavSatFix>(
-      input_topic_fix_, rclcpp::QoS{1},
-      std::bind(&GNSSPoser::callbackNavSatFix, this, std::placeholders::_1));
+  nav_sat_fix_sub_ = create_subscription<sensor_msgs::msg::NavSatFix>(
+    input_topic_fix_, rclcpp::QoS{1},
+    std::bind(&GNSSPoser::callbackNavSatFix, this, std::placeholders::_1));
   autoware_orientation_sub_ =
     create_subscription<autoware_sensing_msgs::msg::GnssInsOrientationStamped>(
       input_topic_autoware_orientation_, rclcpp::QoS{1},
