@@ -10,7 +10,7 @@ This package can filter the noise objects which cross to the ego vehicle.
 This package aim to filter the noise objects which cross from the ego vehicle.
 The reason why these objects are noise is as below.
 
-- 1. The objects which has doppler velocity can be trusted more than vertical velocity to doppler velocity.
+- 1. The objects with doppler velocity can be trusted more than those with vertical velocity to it.
 
 Radars can get velocity information of objects as doppler velocity, but cannot get vertical velocity to doppler velocity directory.
 Some radars can output the objects with not only doppler velocity but also vertical velocity by estimation.
