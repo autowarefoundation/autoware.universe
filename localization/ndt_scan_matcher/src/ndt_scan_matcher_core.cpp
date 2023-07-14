@@ -710,9 +710,10 @@ void NDTScanMatcher::service_ndt_align(
     get_clock()->now(), map_frame_, req->pose_with_covariance.header.frame_id, tf_pose_to_map_ptr);
 
   // transform pose_frame to map_frame
-  const auto initial_pose_in_map_frame = transform(req->pose_with_covariance, *tf_pose_to_map_ptr);
+  const auto initial_pose_msg_in_map_frame =
+    transform(req->pose_with_covariance, *tf_pose_to_map_ptr);
   if (use_dynamic_map_loading_) {
-    map_update_module_->update_map(initial_pose_in_map_frame.pose.pose.position);
+    map_update_module_->update_map(initial_pose_msg_in_map_frame.pose.pose.position);
   }
 
   if (ndt_ptr_->getInputTarget() == nullptr) {
@@ -731,7 +732,7 @@ void NDTScanMatcher::service_ndt_align(
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
 
   (*state_ptr_)["state"] = "Aligning";
-  res->pose_with_covariance = align_using_monte_carlo(ndt_ptr_, initial_pose_in_map_frame);
+  res->pose_with_covariance = align_using_monte_carlo(ndt_ptr_, initial_pose_msg_in_map_frame);
   (*state_ptr_)["state"] = "Sleeping";
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
