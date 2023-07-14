@@ -1573,12 +1573,21 @@ std::vector<geometry_msgs::msg::Point> calcBound(
         ret.push_back(lanelet::utils::conversion::toGeomMsgPt(polygon[i]));
 
         if (i + 1 == polygon.size() && clockwise) {
+          if (end_idx == 0) {
+            ret.push_back(lanelet::utils::conversion::toGeomMsgPt(polygon[end_idx]));
+            return ret;
+          }
           i = 0;
           continue;
         }
 
         if (i == 0 && !clockwise) {
+          if (end_idx == polygon.size() - 1) {
+            ret.push_back(lanelet::utils::conversion::toGeomMsgPt(polygon[end_idx]));
+            return ret;
+          }
           i = polygon.size() - 1;
+          continue;
         }
       }
 
