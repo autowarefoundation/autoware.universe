@@ -578,24 +578,11 @@ bool NormalLaneChange::hasEnoughLength(
   const auto current_pose = getEgoPose();
   const auto & route_handler = *getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
-  const auto minimum_lane_changing_velocity = common_parameters.minimum_lane_changing_velocity;
-  const auto lateral_jerk = common_parameters.lane_changing_lateral_jerk;
   const double lane_change_length = path.info.length.sum();
-  const double max_lat_acc =
-    common_parameters.lane_change_lat_acc_map.find(minimum_lane_changing_velocity).second;
   const auto shift_intervals =
     route_handler.getLateralIntervalsToPreferredLane(target_lanes.back(), direction);
-  const auto minimum_prepare_length = 0.5 * common_parameters.max_acc *
-                                      common_parameters.lane_change_prepare_duration *
-                                      common_parameters.lane_change_prepare_duration;
-
-  double minimum_lane_change_length_to_preferred_lane = 0.0;
-  for (const auto & shift_length : shift_intervals) {
-    const auto lane_changing_time =
-      PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, max_lat_acc);
-    minimum_lane_change_length_to_preferred_lane +=
-      minimum_lane_changing_velocity * lane_changing_time + minimum_prepare_length;
-  }
+  double minimum_lane_change_length_to_preferred_lane =
+    utils::calcMinimumLaneChangeLength(common_parameters, shift_intervals);
 
   if (lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     return false;
