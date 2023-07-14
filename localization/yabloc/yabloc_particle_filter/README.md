@@ -41,7 +41,7 @@ This package contains some executable nodes related to particle filter.
 | `visualize`                   | bool             | whether particles are also published in visualization_msgs or not |
 | `static_linear_covariance`    | double           | to override the covariance of `/twist_with_covariance`            |
 | `static_angular_covariance`   | double           | to override the covariance of `/twist_with_covariance`            |
-| `resampling_interval_seconds` | double           | the interval of particle resamping                                |
+| `resampling_interval_seconds` | double           | the interval of particle resampling                                |
 | `num_of_particles`            | int              | the number of particles                                           |
 | `prediction_rate`             | double           | frequency of forecast updates, in Hz                              |
 | `cov_xx_yy`                   | vector\<double\> | the covariance of initial pose                                    |
