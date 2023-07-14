@@ -649,9 +649,6 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto longitudinal_acc_sampling_values = utils::lane_change::getAccelerationValues(
     maximum_deceleration, maximum_acceleration, longitudinal_acc_sampling_num);
 
-  const auto target_length =
-    utils::getArcLengthToTargetLanelet(original_lanelets, target_lanelets.front(), getEgoPose());
-
   const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanelets.back());
 
   const double lane_change_buffer = utils::calcMinimumLaneChangeLength(
@@ -690,13 +687,12 @@ bool NormalLaneChange::getLaneChangePaths(
     return std::abs(distance - lane_change_buffer) <
            lane_change_parameters_->min_length_for_turn_signal_activation;
   });
+  const bool disable_prepare_segment = is_near_end_of_current_lane && (getEgoVelocity() < 1.0);
+  const double prepare_duration =
+    disable_prepare_segment ? 0.0 : common_parameter.lane_change_prepare_duration;
 
   for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
     // get path on original lanes
-    const bool disable_prepare_segment = is_near_end_of_current_lane && (getEgoVelocity() < 1.0);
-    const double prepare_duration =
-      disable_prepare_segment ? 0.0 : common_parameter.lane_change_prepare_duration;
-
     const auto prepare_velocity = std::max(
       current_velocity + sampled_longitudinal_acc * prepare_duration,
       minimum_lane_changing_velocity);
@@ -707,10 +703,6 @@ bool NormalLaneChange::getLaneChangePaths(
 
     const double prepare_length = current_velocity * prepare_duration +
                                   0.5 * longitudinal_acc_on_prepare * std::pow(prepare_duration, 2);
-    if (prepare_length < target_length) {
-      RCLCPP_DEBUG(logger_, "prepare length is shorter than distance to target lane!!");
-      break;
-    }
 
     auto prepare_segment =
       getPrepareSegment(original_lanelets, backward_path_length, prepare_length);
@@ -722,12 +714,10 @@ bool NormalLaneChange::getLaneChangePaths(
 
     // lane changing start getEgoPose() is at the end of prepare segment
     const auto & lane_changing_start_pose = prepare_segment.points.back().point.pose;
-
     const auto target_length_from_lane_change_start_pose = utils::getArcLengthToTargetLanelet(
       original_lanelets, target_lanelets.front(), lane_changing_start_pose);
-    // In new architecture, there is a possibility that the lane change start getEgoPose() is behind
-    // of the target lanelet, even if the condition prepare_length > target_length is satisfied. In
-    // that case, the lane change shouldn't be executed.
+
+    // Check if the lane changing start point is not on the lanes next to target lanes,
     if (target_length_from_lane_change_start_pose > 0.0) {
       RCLCPP_DEBUG(
         logger_, "[only new arch] lane change start getEgoPose() is behind target lanelet!!");
@@ -908,8 +898,7 @@ TurnSignalInfo NormalLaneChange::calcTurnSignalInfo()
   // desired start pose = prepare start pose
   turn_signal_info.desired_start_point = std::invoke([&]() {
     const auto blinker_start_duration = planner_data_->parameters.turn_signal_search_time;
-    const auto prepare_duration = planner_data_->parameters.lane_change_prepare_duration;
-    const auto diff_time = prepare_duration - blinker_start_duration;
+    const auto diff_time = path.info.duration.prepare - blinker_start_duration;
     if (diff_time < 1e-5) {
       return path.path.points.front().point.pose;
     }
