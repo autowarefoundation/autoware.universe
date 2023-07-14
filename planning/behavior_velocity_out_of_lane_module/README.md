@@ -140,7 +140,7 @@ Moreover, parameter `action.distance_buffer` adds an extra distance between the 
 
 | Parameter /objects    | Type   | Description                                                                                                                                                               |
 | --------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `minimum_velocity`    | double | [m/s] consider objects with an estimated time to collision bellow this value while on the overlap                                                                         |
+| `minimum_velocity`    | double | [m/s] ignore objects with a velocity lower than this value                                                                                                                |
 | `use_predicted_paths` | bool   | [-] if true, use the predicted paths to estimate future positions; if false, assume the object moves at constant velocity along _all_ lanelets it currently is located in |
 
 | Parameter /overlap | Type   | Description                                                                                          |
