@@ -165,6 +165,14 @@ void LinearMotionTracker::loadDefaultModelParameters(const std::string & path)
     config["default"]["ekf_params"]["process_noise_std"]["ax"].as<float>();  // [m/(s*s)]
   const float q_stddev_ay =
     config["default"]["ekf_params"]["process_noise_std"]["ay"].as<float>();  // [m/(s*s)]
+  const float q_stddev_vx =
+    config["default"]["ekf_params"]["process_noise_std"]["vx"].as<float>();  // [m/s]
+  const float q_stddev_vy =
+    config["default"]["ekf_params"]["process_noise_std"]["vy"].as<float>();  // [m/s]
+  const float q_stddev_x =
+    config["default"]["ekf_params"]["process_noise_std"]["x"].as<float>();  // [m]
+  const float q_stddev_y =
+    config["default"]["ekf_params"]["process_noise_std"]["y"].as<float>();  // [m]
   const float r_stddev_x =
     config["default"]["ekf_params"]["measurement_noise_std"]["x"].as<float>();  // [m]
   const float r_stddev_y =
@@ -187,6 +195,10 @@ void LinearMotionTracker::loadDefaultModelParameters(const std::string & path)
     config["default"]["ekf_params"]["initial_covariance_std"]["ay"].as<float>();  // [m/(s*s)]
   ekf_params_.q_cov_ax = std::pow(q_stddev_ax, 2.0);
   ekf_params_.q_cov_ay = std::pow(q_stddev_ay, 2.0);
+  ekf_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
+  ekf_params_.q_cov_vy = std::pow(q_stddev_vy, 2.0);
+  ekf_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
+  ekf_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_vx = std::pow(r_stddev_vx, 2.0);
@@ -283,11 +295,16 @@ bool LinearMotionTracker::predict(const double dt, KalmanFilter & ekf) const
   //
   // Q_local = [dt^3/6 0 dt^2/2 0 dt 0] ^ T qcov_ax [dt^3/6 0 dt^2/2 0 dt 0]
   //           + [0 dt^3/6 0 dt^2/2 0 dt] ^ T qcov_ay [0 dt^3/6 0 dt^2/2 0 dt]
-  Eigen::MatrixXd qx = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
-  Eigen::MatrixXd qy = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
-  qx << dt * dt * dt / 6, 0, dt * dt / 2, 0, dt, 0;
-  qy << 0, dt * dt * dt / 6, 0, dt * dt / 2, 0, dt;
-  Q_local = qx * ekf_params_.q_cov_ax * qx.transpose() + qy * ekf_params_.q_cov_ay * qy.transpose();
+  // Eigen::MatrixXd qx = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
+  // Eigen::MatrixXd qy = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
+  // qx << dt * dt * dt / 6, 0, dt * dt / 2, 0, dt, 0;
+  // qy << 0, dt * dt * dt / 6, 0, dt * dt / 2, 0, dt;
+  // Q_local = qx * ekf_params_.q_cov_ax * qx.transpose() + qy * ekf_params_.q_cov_ay *
+  // qy.transpose(); just create diag matrix
+  Eigen::VectorXd q_diag_vector = Eigen::VectorXd::Zero(ekf_params_.dim_x);
+  q_diag_vector << ekf_params_.q_cov_x, ekf_params_.q_cov_y, ekf_params_.q_cov_vx,
+    ekf_params_.q_cov_vy, ekf_params_.q_cov_ax, ekf_params_.q_cov_ay;
+  Q_local = q_diag_vector.asDiagonal();
 
   // Rotate the covariance matrix according to the vehicle yaw
   // because q_cov_x and y are in the vehicle coordinate system.

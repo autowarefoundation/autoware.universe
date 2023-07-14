@@ -40,6 +40,10 @@ private:
     // system noise
     double q_cov_ax;
     double q_cov_ay;
+    double q_cov_vx;
+    double q_cov_vy;
+    double q_cov_x;
+    double q_cov_y;
     // measurement noise
     double r_cov_x;
     double r_cov_y;
