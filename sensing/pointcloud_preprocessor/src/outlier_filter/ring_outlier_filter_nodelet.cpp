@@ -79,7 +79,7 @@ void RingOutlierFilterComponent::faster_filter(
     }
 
     auto field = (*input).fields.at(field_index);
-    if(field.datatype != expected_type) {
+    if (field.datatype != expected_type) {
       RCLCPP_ERROR(
         get_logger(), "Field %s has unexpected type %d (expected %d)", field_name.c_str(),
         field.datatype, expected_type);
