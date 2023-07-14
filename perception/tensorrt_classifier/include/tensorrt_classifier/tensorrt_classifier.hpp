@@ -85,7 +85,7 @@ public:
 
 private:
   /**
-   * @brief run preprcess including resizing, letterbox, BGR2RGB, NHWC2NCHW and toFloat on CPU
+   * @brief run preprocess including resizing, letterbox, BGR2RGB, NHWC2NCHW and toFloat on CPU
    * @param[in] images batching images
    */
   void preprocess_opt(const std::vector<cv::Mat> & images);
