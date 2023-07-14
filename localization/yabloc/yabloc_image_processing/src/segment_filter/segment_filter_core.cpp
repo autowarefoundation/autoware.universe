@@ -68,7 +68,8 @@ bool SegmentFilter::define_project_func()
   const Eigen::Quaternionf q(camera_extrinsic->rotation());
 
   // TODO(KYabuuchi) This will take into account ground tilt and camera vibration someday.
-  project_func_ = [intrinsic_inv, q, t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
+  project_func_ = [intrinsic_inv, q,
+                   t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
     Eigen::Vector3f u3(u.x(), u.y(), 1);
     Eigen::Vector3f u_bearing = (q * intrinsic_inv * u3).normalized();
     if (u_bearing.z() > -0.01) return std::nullopt;
