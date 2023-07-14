@@ -128,7 +128,7 @@ RetroactiveResampler::ParticleArray RetroactiveResampler::resample(
 
   //
   int predicted_particle_index = 0;
-  double accumulated_normzlied_weights = n_th_normalized_weight(0);
+  double accumulated_normalized_weights = n_th_normalized_weight(0);
   // Here, 'm' means resampled_particle_index
   for (int m = 0; m < number_of_particles_; m++) {
     const double m_th_weight_threshold = m * num_of_particles_inv + weight_threshold_residual;
@@ -136,9 +136,9 @@ RetroactiveResampler::ParticleArray RetroactiveResampler::resample(
     // Accumulate predicted particles' weight until it exceeds the threshold
     // (If the previous weights are sufficiently large, this accumulation can be skipped over
     // several resampled particles. It means that a probable particle will make many successors.)
-    while (accumulated_normzlied_weights < m_th_weight_threshold) {
+    while (accumulated_normalized_weights < m_th_weight_threshold) {
       predicted_particle_index++;
-      accumulated_normzlied_weights += n_th_normalized_weight(predicted_particle_index);
+      accumulated_normalized_weights += n_th_normalized_weight(predicted_particle_index);
     }
     // Copy particle to resampled variable
     resampled_particles.particles[m] = predicted_particles.particles[predicted_particle_index];
