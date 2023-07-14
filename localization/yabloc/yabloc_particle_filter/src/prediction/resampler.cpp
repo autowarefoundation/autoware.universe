@@ -81,21 +81,21 @@ RetroactiveResampler::ParticleArray RetroactiveResampler::add_weight_retroactive
     }
   }
 
-  ParticleArray reweighted_particles = predicted_particles;
+  ParticleArray weighted_particles_updated = predicted_particles;
 
   // Add weights to current particles
   float sum_weight = 0;
-  for (auto && it : reweighted_particles.particles | boost::adaptors::indexed()) {
+  for (auto && it : weighted_particles_updated.particles | boost::adaptors::indexed()) {
     it.value().weight *= weighted_particles.particles[index_table[it.index()]].weight;
     sum_weight += it.value().weight;
   }
 
   // Normalize all weight
-  for (auto & particle : reweighted_particles.particles) {
+  for (auto & particle : weighted_particles_updated.particles) {
     particle.weight /= sum_weight;
   }
 
-  return reweighted_particles;
+  return weighted_particles_updated;
 }
 
 RetroactiveResampler::ParticleArray RetroactiveResampler::resample(
