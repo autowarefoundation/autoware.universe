@@ -483,13 +483,17 @@ PathWithLaneId NormalLaneChange::getPrepareSegment(
 }
 
 LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const lanelet::ConstLanelets & target_backward_lanes) const
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
 {
   const auto current_pose = getEgoPose();
   const auto & route_handler = *getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
+  const auto & objects = *planner_data_->dynamic_object;
+
+  // get backward lanes
+  const auto backward_length = lane_change_parameters_->backward_lane_length;
+  const auto target_backward_lanes = utils::lane_change::getBackwardLanelets(
+    route_handler, target_lanes, current_pose, backward_length);
 
   // filter objects to get target object index
   const auto target_obj_index = utils::lane_change::filterObject(
@@ -626,7 +630,6 @@ bool NormalLaneChange::getLaneChangePaths(
     return false;
   }
   const auto & route_handler = *getRouteHandler();
-  const auto & dynamic_objects = planner_data_->dynamic_object;
   const auto & common_parameter = planner_data_->parameters;
 
   const auto backward_path_length = common_parameter.backward_path_length;
@@ -688,12 +691,7 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto target_neighbor_preferred_lane_poly_2d =
     lanelet::utils::to2D(target_neighbor_preferred_lane_poly).basicPolygon();
 
-  const auto backward_length = lane_change_parameters_->backward_lane_length;
-  const auto backward_target_lanes_for_object_filtering = utils::lane_change::getBackwardLanelets(
-    route_handler, target_lanelets, getEgoPose(), backward_length);
-  const auto target_objects = getTargetObjects(
-    *dynamic_objects, original_lanelets, target_lanelets,
-    backward_target_lanes_for_object_filtering);
+  const auto target_objects = getTargetObjects(original_lanelets, target_lanelets);
 
   candidate_paths->reserve(longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num);
   for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
@@ -874,21 +872,12 @@ bool NormalLaneChange::getLaneChangePaths(
 
 PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
 {
-  const auto current_pose = getEgoPose();
-  const auto & dynamic_objects = planner_data_->dynamic_object;
   const auto & common_parameters = getCommonParam();
-  const auto & lane_change_parameters = *lane_change_parameters_;
-  const auto & route_handler = *getRouteHandler();
   const auto & path = status_.lane_change_path;
   const auto & current_lanes = status_.current_lanes;
   const auto & target_lanes = status_.lane_change_lanes;
 
-  // get lanes used for detection
-  const auto backward_target_lanes_for_object_filtering = utils::lane_change::getBackwardLanelets(
-    route_handler, target_lanes, current_pose, lane_change_parameters.backward_lane_length);
-
-  const auto target_objects = getTargetObjects(
-    *dynamic_objects, current_lanes, target_lanes, backward_target_lanes_for_object_filtering);
+  const auto target_objects = getTargetObjects(current_lanes, target_lanes);
 
   CollisionCheckDebugMap debug_data;
   const auto safety_status = isLaneChangePathSafe(
