@@ -100,8 +100,10 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
     const auto expanded_lanes = utils::expandLanelets(
       drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
       dp.drivable_area_types_to_skip);
-    if (lane_departure_checker_->checkPathWillLeaveLane(
-          utils::transformToLanelets(expanded_lanes), path_start_to_end)) {
+    if (
+      parameters_.check_shift_path_lane_departure &&
+      lane_departure_checker_->checkPathWillLeaveLane(
+        utils::transformToLanelets(expanded_lanes), path_start_to_end)) {
       continue;
     }
 
@@ -111,13 +113,6 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
           parameters_.collision_check_margin)) {
       continue;
     }
-
-    // Generate drivable area
-    // for old architecture
-    // NOTE: drivable_area_info is assigned outside this function.
-    const auto shorten_lanes = utils::cutOverlappedLanes(shift_path, drivable_lanes);
-    utils::generateDrivableArea(
-      shift_path, shorten_lanes, false, common_parameters.vehicle_length, planner_data_);
 
     shift_path.header = planner_data_->route_handler->getRouteHeader();
 
@@ -253,6 +248,13 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     path_shifter.setVelocity(0.0);  // initial velocity is 0
     path_shifter.setLongitudinalAcceleration(longitudinal_acc);
     path_shifter.setLateralAccelerationLimit(lateral_acc);
+
+    const auto shift_line_idx = path_shifter.getShiftLines().front();
+    if (!has_non_shifted_path && (shift_line_idx.end_idx - shift_line_idx.start_idx <= 1)) {
+      candidate_paths.push_back(non_shifted_path);
+      has_non_shifted_path = true;
+      continue;
+    }
 
     // offset front side
     ShiftedPath shifted_path;
