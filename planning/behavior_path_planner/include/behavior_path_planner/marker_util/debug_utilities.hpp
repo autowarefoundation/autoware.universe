@@ -57,6 +57,10 @@ struct CollisionCheckDebug
   Pose expected_ego_pose{};
   Pose expected_obj_pose{};
   Pose relative_to_ego{};
+  double rss_longitudinal{0.0};
+  double ego_to_obj_margin{0.0};
+  double longitudinal_offset{0.0};
+  double lateral_offset{0.0};
   bool is_front{false};
   bool allow_lane_change{false};
   std::vector<Pose> lerped_path;
@@ -100,9 +104,13 @@ MarkerArray createShiftLineMarkerArray(
   const float & g, const float & b, const float & w);
 
 MarkerArray createShiftLengthMarkerArray(
-  const std::vector<double> & shift_distance,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & reference, std::string && ns,
+  const std::vector<double> & shift_distance, const PathWithLaneId & reference, std::string && ns,
   const float & r, const float & g, const float & b);
+
+MarkerArray createShiftGradMarkerArray(
+  const std::vector<double> & grad, const std::vector<double> & shift_distance,
+  const PathWithLaneId & reference, std::string && ns, const float & r, const float & g,
+  const float & b);
 
 MarkerArray createLaneletsAreaMarkerArray(
   const std::vector<lanelet::ConstLanelet> & lanelets, std::string && ns, const float & r,

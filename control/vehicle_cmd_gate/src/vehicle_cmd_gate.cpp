@@ -51,6 +51,9 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
 
+  // Stop Checker
+  vehicle_stop_checker_ = std::make_unique<VehicleStopChecker>(this);
+
   // Publisher
   vehicle_cmd_emergency_pub_ =
     create_publisher<VehicleEmergencyStamped>("output/vehicle_cmd_emergency", durable_qos);
@@ -145,6 +148,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   emergency_acceleration_ = declare_parameter<double>("emergency_acceleration");
   moderate_stop_service_acceleration_ =
     declare_parameter<double>("moderate_stop_service_acceleration");
+  stop_check_duration_ = declare_parameter<double>("stop_check_duration");
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -197,7 +201,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   updater_.add("emergency_stop_operation", this, &VehicleCmdGate::checkExternalEmergencyStop);
 
   // Pause interface
-  pause_ = std::make_unique<PauseInterface>(this);
+  adapi_pause_ = std::make_unique<AdapiPauseInterface>(this);
   moderate_stop_interface_ = std::make_unique<ModerateStopInterface>(this);
 
   // Timer
@@ -399,9 +403,9 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
     filtered_commands.control = createStopControlCmd();
   }
 
-  // Check pause
-  pause_->update(filtered_commands.control);
-  if (pause_->is_paused()) {
+  // Check pause. Place this check after all other checks as it needs the final output.
+  adapi_pause_->update(filtered_commands.control);
+  if (adapi_pause_->is_paused()) {
     filtered_commands.control.longitudinal.speed = 0.0;
     filtered_commands.control.longitudinal.acceleration = stop_hold_acceleration_;
   }
@@ -417,7 +421,7 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   // Publish commands
   vehicle_cmd_emergency_pub_->publish(vehicle_cmd_emergency);
   control_cmd_pub_->publish(filtered_commands.control);
-  pause_->publish();
+  adapi_pause_->publish();
   moderate_stop_interface_->publish();
 
   // Save ControlCmd to steering angle when disengaged
@@ -434,7 +438,7 @@ void VehicleCmdGate::publishEmergencyStopControlCommands()
   control_cmd = createEmergencyStopControlCmd();
 
   // Update control command
-  pause_->update(control_cmd);
+  adapi_pause_->update(control_cmd);
 
   // gear
   GearCommand gear;
@@ -482,7 +486,7 @@ void VehicleCmdGate::publishStatus()
   engage_pub_->publish(autoware_engage);
   pub_external_emergency_->publish(external_emergency);
   operation_mode_pub_->publish(current_operation_mode_);
-  pause_->publish();
+  adapi_pause_->publish();
   moderate_stop_interface_->publish();
 }
 
@@ -492,7 +496,7 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   const double dt = getDt();
   const auto mode = current_operation_mode_;
   const auto current_status_cmd = getActualStatusAsCommand();
-  const auto ego_is_stopped = std::abs(current_status_cmd.longitudinal.speed) < 1e-3;
+  const auto ego_is_stopped = vehicle_stop_checker_->isVehicleStopped(stop_check_duration_);
   const auto input_cmd_is_stopping = in.longitudinal.acceleration < 0.0;
 
   // Apply transition_filter when transiting from MANUAL to AUTO.

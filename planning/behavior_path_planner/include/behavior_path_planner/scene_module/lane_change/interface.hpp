@@ -93,6 +93,9 @@ public:
 
   MarkerArray getModuleVirtualWall() override;
 
+  TurnSignalInfo getCurrentTurnSignalInfo(
+    const PathWithLaneId & path, const TurnSignalInfo & original_turn_signal_info);
+
 protected:
   std::shared_ptr<LaneChangeParameters> parameters_;
 
@@ -127,7 +130,6 @@ public:
   AvoidanceByLaneChangeInterface(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<LaneChangeParameters> & parameters,
-    const std::shared_ptr<AvoidanceParameters> & avoidance_parameters,
     const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
 

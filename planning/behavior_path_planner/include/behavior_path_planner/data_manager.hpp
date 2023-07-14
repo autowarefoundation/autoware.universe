@@ -57,6 +57,7 @@ using nav_msgs::msg::Odometry;
 using route_handler::RouteHandler;
 using tier4_planning_msgs::msg::LateralOffset;
 using PlanResult = PathWithLaneId::SharedPtr;
+using unique_identifier_msgs::msg::UUID;
 
 struct BoolStamped
 {
@@ -140,6 +141,7 @@ struct PlannerData
   PathWithLaneId::SharedPtr reference_path{std::make_shared<PathWithLaneId>()};
   PathWithLaneId::SharedPtr prev_output_path{std::make_shared<PathWithLaneId>()};
   std::optional<PoseWithUuidStamped> prev_modified_goal{};
+  std::optional<UUID> prev_route_id{};
   lanelet::ConstLanelets current_lanes{};
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
   BehaviorPathPlannerParameters parameters{};
@@ -148,12 +150,13 @@ struct PlannerData
   mutable TurnSignalDecider turn_signal_decider;
 
   TurnIndicatorsCommand getTurnSignal(
-    const PathWithLaneId & path, const TurnSignalInfo & turn_signal_info)
+    const PathWithLaneId & path, const TurnSignalInfo & turn_signal_info,
+    TurnSignalDebugData & debug_data)
   {
     const auto & current_pose = self_odometry->pose.pose;
     const auto & current_vel = self_odometry->twist.twist.linear.x;
     return turn_signal_decider.getTurnSignal(
-      route_handler, path, turn_signal_info, current_pose, current_vel, parameters);
+      route_handler, path, turn_signal_info, current_pose, current_vel, parameters, debug_data);
   }
 
   template <class T>

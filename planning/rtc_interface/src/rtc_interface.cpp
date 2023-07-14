@@ -66,8 +66,8 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::AVOIDANCE_RIGHT;
   } else if (module_name == "goal_planner") {
     module.type = Module::GOAL_PLANNER;
-  } else if (module_name == "pull_out") {
-    module.type = Module::PULL_OUT;
+  } else if (module_name == "start_planner") {
+    module.type = Module::START_PLANNER;
   } else if (module_name == "intersection_occlusion") {
     module.type = Module::INTERSECTION_OCCLUSION;
   }
@@ -78,9 +78,9 @@ Module getModuleType(const std::string & module_name)
 
 namespace rtc_interface
 {
-RTCInterface::RTCInterface(rclcpp::Node * node, const std::string & name)
+RTCInterface::RTCInterface(rclcpp::Node * node, const std::string & name, const bool enable_rtc)
 : logger_{node->get_logger().get_child("RTCInterface[" + name + "]")},
-  is_auto_mode_init_{false},
+  is_auto_mode_init_{!enable_rtc},
   is_locked_{false}
 {
   using std::placeholders::_1;
