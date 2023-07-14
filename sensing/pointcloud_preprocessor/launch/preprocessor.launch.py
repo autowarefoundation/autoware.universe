@@ -40,9 +40,12 @@ def generate_launch_description():
     tf_output_frame_param = DeclareLaunchArgument("tf_output_frame", default_value="base_link")
 
     # set concat filter as a component
-    # if you want to use single node, set use_single_node = True
-    use_single_node = False
-    if use_single_node:
+    separate_concatenate_node_and_timesync_node = DeclareLaunchArgument(
+        "separate_concatenate_node_and_timesync_node",
+        default_value="False",
+        description="Set True to separate concatenate node and timesync node. which will cause to larger memory usage.",
+    )
+    if separate_concatenate_node_and_timesync_node:
         sync_and_concat_component = ComposableNode(
             package=pkg,
             plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
