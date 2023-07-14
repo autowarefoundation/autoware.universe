@@ -135,13 +135,15 @@ def generate_launch_description():
                 "voxel_grid_param_path",
                 [
                     FindPackageShare("autoware_launch"),
-                    "/config/perception/object_recognition/detection/clustering/voxel_grid.param.yaml"],
+                    "/config/perception/object_recognition/detection/clustering/voxel_grid.param.yaml",
+                ],
             ),
             add_launch_arg(
                 "euclidean_param_path",
                 [
                     FindPackageShare("autoware_launch"),
-                    "/config/perception/object_recognition/detection/clustering/euclidean_cluster.param.yaml"],
+                    "/config/perception/object_recognition/detection/clustering/euclidean_cluster.param.yaml",
+                ],
             ),
             OpaqueFunction(function=launch_setup),
         ]
