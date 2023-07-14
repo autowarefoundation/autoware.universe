@@ -38,6 +38,7 @@ public:
   struct NodeParam
   {
     double update_rate_hz{};
+    double timeout_threshold{};
     std::vector<std::string> topic_names{};
     std::string new_frame_id{};
   };

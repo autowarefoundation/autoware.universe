@@ -80,6 +80,7 @@ SimpleObjectMergerNode::SimpleObjectMergerNode(const rclcpp::NodeOptions & node_
   // Node Parameter
   node_param_.update_rate_hz = declare_parameter<double>("update_rate_hz", 20.0);
   node_param_.new_frame_id = declare_parameter<std::string>("new_frame_id", "base_link");
+  node_param_.timeout_threshold = declare_parameter<double>("timeout_threshold", 1.0);
 
   declare_parameter("input_topics", std::vector<std::string>());
   node_param_.topic_names = get_parameter("input_topics").as_string_array();
@@ -130,8 +131,9 @@ rcl_interfaces::msg::SetParametersResult SimpleObjectMergerNode::onSetParam(
       auto & p = node_param_;
       // Update params
       update_param(params, "update_rate_hz", p.update_rate_hz);
-      update_param(params, "topic_names", p.topic_names);
+      update_param(params, "timeout_threshold", p.timeout_threshold);
       update_param(params, "new_frame_id", p.new_frame_id);
+      update_param(params, "topic_names", p.topic_names);
     }
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
@@ -166,16 +168,24 @@ void SimpleObjectMergerNode::onTimer()
   output_objects.header.frame_id = node_param_.new_frame_id;
 
   for (size_t i = 0; i < input_topic_size; i++) {
-    transform_ = transform_listener_->getTransform(
-      node_param_.new_frame_id, objects_data_.at(i)->header.frame_id,
-      objects_data_.at(i)->header.stamp, rclcpp::Duration::from_seconds(0.01));
+    double time_diff = (this->get_clock()->now()).seconds() -
+                       rclcpp::Time(objects_data_.at(0)->header.stamp).seconds();
+    if (std::abs(time_diff) < node_param_.timeout_threshold) {
+      transform_ = transform_listener_->getTransform(
+        node_param_.new_frame_id, objects_data_.at(i)->header.frame_id,
+        objects_data_.at(i)->header.stamp, rclcpp::Duration::from_seconds(0.01));
 
-    DetectedObjects::SharedPtr transformed_objects =
-      getTransformedObjects(objects_data_.at(i), node_param_.new_frame_id, transform_);
+      DetectedObjects::SharedPtr transformed_objects =
+        getTransformedObjects(objects_data_.at(i), node_param_.new_frame_id, transform_);
 
-    output_objects.objects.insert(
-      output_objects.objects.end(), std::begin(transformed_objects->objects),
-      std::end(transformed_objects->objects));
+      output_objects.objects.insert(
+        output_objects.objects.end(), std::begin(transformed_objects->objects),
+        std::end(transformed_objects->objects));
+    } else {
+      RCLCPP_INFO(
+        rclcpp::get_logger("simple_object_merger"), "Topic of %s is timeout by %f sec",
+        node_param_.topic_names.at(i).c_str(), time_diff);
+    }
   }
 
   pub_objects_->publish(output_objects);

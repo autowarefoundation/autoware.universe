@@ -16,7 +16,20 @@ This package do not use data association algorithm to reduce the computational c
 
 ### Limitation
 
-Because this package does not have matching processing, so it does not use without post-processing.
+- Sensor data drops and delay
+
+Merged objects will not be published until all topic data is received when initializing.
+In addition, to care sensor data drops and delayed, this package has a parameter to judge timeout.
+When the latest time of the data of a topic is older than the timeout parameter, it is not merged for output objects.
+For now specification of this package, if all topic data is received at first and after that the data drops, and the merged objects are published without objects which is judged as timeout.
+The timeout parameter should be determined by sensor cycle time.
+
+- Post-processing
+
+Because this package does not have matching processing, so it can be used only when post-processing is used.
+For now, [clustering processing](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/radar_object_clustering) can be used as post-processing.
+
+### Use case
 
 Use case is as below.
 
@@ -39,8 +52,9 @@ Since [clustering processing](https://github.com/autowarefoundation/autoware.uni
 
 ## Parameters
 
-| Name             | Type         | Description                         | Default value |
-| :--------------- | :----------- | :---------------------------------- | :------------ |
-| `update_rate_hz` | double       | Update rate. [hz]                   | 20.0          |
-| `new_frame_id`   | string       | The header frame_id of output topic | "base_link"   |
-| `input_topics`   | List[string] | Input topics name                   | "[]"          |
+| Name                | Type         | Description                          | Default value |
+| :------------------ | :----------- | :----------------------------------- | :------------ |
+| `update_rate_hz`    | double       | Update rate. [hz]                    | 20.0          |
+| `new_frame_id`      | string       | The header frame_id of output topic. | "base_link"   |
+| `timeout_threshold` | double       | Threshold for timeout judgement [s]. | 1.0           |
+| `input_topics`      | List[string] | Input topics name.                   | "[]"          |
