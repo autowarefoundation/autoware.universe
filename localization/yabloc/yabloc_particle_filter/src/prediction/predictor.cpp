@@ -212,7 +212,7 @@ void Predictor::on_timer()
   //
   predicted_particles_pub_->publish(particle_array);
   //
-  publish_mean_pose(mean_pose(particle_array), this->now());
+  publish_mean_pose(get_mean_pose(particle_array), this->now());
   // If visualizer exists,
   if (visualizer_ptr_) {
     visualizer_ptr_->publish(particle_array);
