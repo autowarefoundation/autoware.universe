@@ -116,7 +116,7 @@ protected:
     const lanelet::ConstLanelets & target_lanes, const Direction direction = Direction::NONE) const;
 
   bool getLaneChangePaths(
-    const lanelet::ConstLanelets & original_lanes, const lanelet::ConstLanelets & target_lanes,
+    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
     Direction direction, LaneChangePaths * candidate_paths,
     const bool check_safety = true) const override;
 

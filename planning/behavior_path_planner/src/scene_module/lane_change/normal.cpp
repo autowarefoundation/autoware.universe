@@ -610,11 +610,11 @@ bool NormalLaneChange::hasEnoughLength(
 }
 
 bool NormalLaneChange::getLaneChangePaths(
-  const lanelet::ConstLanelets & original_lanes, const lanelet::ConstLanelets & target_lanes,
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
   Direction direction, LaneChangePaths * candidate_paths, const bool check_safety) const
 {
   object_debug_.clear();
-  if (original_lanes.empty() || target_lanes.empty()) {
+  if (current_lanes.empty() || target_lanes.empty()) {
     return false;
   }
   const auto & route_handler = *getRouteHandler();
@@ -651,12 +651,12 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanes.back());
 
   const double lane_change_buffer = utils::calcMinimumLaneChangeLength(
-    common_parameter, route_handler.getLateralIntervalsToPreferredLane(original_lanes.back()));
+    common_parameter, route_handler.getLateralIntervalsToPreferredLane(current_lanes.back()));
   const double next_lane_change_buffer = utils::calcMinimumLaneChangeLength(
     common_parameter, route_handler.getLateralIntervalsToPreferredLane(target_lanes.back()));
 
   const auto dist_to_end_of_current_lanes =
-    utils::getDistanceToEndOfLane(getEgoPose(), original_lanes);
+    utils::getDistanceToEndOfLane(getEgoPose(), current_lanes);
 
   const auto arc_position_from_target =
     lanelet::utils::getArcCoordinates(target_lanes, getEgoPose());
@@ -664,17 +664,17 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto target_lane_length = lanelet::utils::getLaneletLength2d(target_lanes);
 
   const auto sorted_lane_ids = utils::lane_change::getSortedLaneIds(
-    route_handler, original_lanes, target_lanes, arc_position_from_target.distance);
+    route_handler, current_lanes, target_lanes, arc_position_from_target.distance);
 
   const auto target_neighbor_lanelets =
-    utils::lane_change::getTargetNeighborLanes(route_handler, original_lanes, type_);
+    utils::lane_change::getTargetNeighborLanes(route_handler, current_lanes, type_);
 
   const auto target_neighbor_preferred_lane_poly = lanelet::utils::getPolygonFromArcLength(
     target_neighbor_lanelets, 0, std::numeric_limits<double>::max());
   const auto target_neighbor_preferred_lane_poly_2d =
     lanelet::utils::to2D(target_neighbor_preferred_lane_poly).basicPolygon();
 
-  const auto target_objects = getTargetObjects(original_lanes, target_lanes);
+  const auto target_objects = getTargetObjects(current_lanes, target_lanes);
 
   candidate_paths->reserve(longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num);
 
@@ -682,7 +682,7 @@ bool NormalLaneChange::getLaneChangePaths(
     const auto distance =
       !is_goal_in_route
         ? dist_to_end_of_current_lanes
-        : utils::getSignedDistance(getEgoPose(), route_handler.getGoalPose(), original_lanes);
+        : utils::getSignedDistance(getEgoPose(), route_handler.getGoalPose(), current_lanes);
 
     return std::abs(distance - lane_change_buffer) <
            lane_change_parameters_->min_length_for_turn_signal_activation;
@@ -704,7 +704,7 @@ bool NormalLaneChange::getLaneChangePaths(
     const double prepare_length = current_velocity * prepare_duration +
                                   0.5 * longitudinal_acc_on_prepare * std::pow(prepare_duration, 2);
 
-    auto prepare_segment = getPrepareSegment(original_lanes, backward_path_length, prepare_length);
+    auto prepare_segment = getPrepareSegment(current_lanes, backward_path_length, prepare_length);
 
     if (prepare_segment.points.empty()) {
       RCLCPP_DEBUG(logger_, "prepare segment is empty!!");
@@ -714,7 +714,7 @@ bool NormalLaneChange::getLaneChangePaths(
     // lane changing start getEgoPose() is at the end of prepare segment
     const auto & lane_changing_start_pose = prepare_segment.points.back().point.pose;
     const auto target_length_from_lane_change_start_pose = utils::getArcLengthToTargetLanelet(
-      original_lanes, target_lanes.front(), lane_changing_start_pose);
+      current_lanes, target_lanes.front(), lane_changing_start_pose);
 
     // Check if the lane changing start point is not on the lanes next to target lanes,
     if (target_length_from_lane_change_start_pose > 0.0) {
@@ -807,7 +807,7 @@ bool NormalLaneChange::getLaneChangePaths(
       lane_change_info.velocity =
         LaneChangePhaseInfo{prepare_velocity, initial_lane_changing_velocity};
       lane_change_info.length = LaneChangePhaseInfo{prepare_length, lane_changing_length};
-      lane_change_info.current_lanes = original_lanes;
+      lane_change_info.current_lanes = current_lanes;
       lane_change_info.target_lanes = target_lanes;
       lane_change_info.lane_changing_start = prepare_segment.points.back().point.pose;
       lane_change_info.lane_changing_end = target_segment.points.front().point.pose;
@@ -826,7 +826,7 @@ bool NormalLaneChange::getLaneChangePaths(
       }
 
       const auto is_valid =
-        hasEnoughLength(*candidate_path, original_lanes, target_lanes, direction);
+        hasEnoughLength(*candidate_path, current_lanes, target_lanes, direction);
 
       if (!is_valid) {
         RCLCPP_DEBUG(logger_, "invalid candidate path!!");
