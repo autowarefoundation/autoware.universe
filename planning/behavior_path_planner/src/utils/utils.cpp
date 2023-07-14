@@ -2562,18 +2562,22 @@ BehaviorModuleOutput getReferencePath(
   // calculate path with backward margin to avoid end points' instability by spline interpolation
   constexpr double extra_margin = 10.0;
   const double backward_length = p.backward_path_length + extra_margin;
-  const auto current_lanes_with_backward_margin = route_handler->getLaneletSequence(
-    current_lane, current_pose, backward_length, p.forward_path_length);
+  const auto current_lanes_with_backward_margin =
+    route_handler->getLaneletSequence(current_lane, backward_length, p.forward_path_length);
+  const auto no_shift_pose =
+    lanelet::utils::getClosestCenterPose(current_lane, current_pose.position);
   reference_path = getCenterLinePath(
-    *route_handler, current_lanes_with_backward_margin, current_pose, backward_length,
+    *route_handler, current_lanes_with_backward_margin, no_shift_pose, backward_length,
     p.forward_path_length, p);
 
   // clip backward length
   // NOTE: In order to keep backward_path_length at least, resampling interval is added to the
   // backward.
-  const size_t current_seg_idx = planner_data->findEgoSegmentIndex(reference_path.points);
+  const size_t current_seg_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    reference_path.points, no_shift_pose, p.ego_nearest_dist_threshold,
+    p.ego_nearest_yaw_threshold);
   reference_path.points = motion_utils::cropPoints(
-    reference_path.points, current_pose.position, current_seg_idx, p.forward_path_length,
+    reference_path.points, no_shift_pose.position, current_seg_idx, p.forward_path_length,
     p.backward_path_length + p.input_path_interval);
 
   const auto drivable_lanelets = getLaneletsFromPath(reference_path, route_handler);
