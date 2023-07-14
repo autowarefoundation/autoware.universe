@@ -67,15 +67,40 @@ void RingOutlierFilterComponent::faster_filter(
   }
   stop_watch_ptr_->toc("processing_time", true);
 
+  // The ring_outlier_filter specifies the expected input point cloud format,
+  // however, we want to verify the input is correct and make failures explicit.
+  auto getFieldOffsetSafely = [=](
+                                const std::string & field_name,
+                                const pcl::PCLPointField::PointFieldTypes expected_type) -> size_t {
+    const auto field_index = pcl::getFieldIndex(*input, field_name);
+    if (field_index == -1) {
+      RCLCPP_ERROR(get_logger(), "Field %s not found in input point cloud", field_name.c_str());
+      return -1UL;
+    }
+
+    auto field = (*input).fields.at(field_index);
+    if(field.datatype != expected_type) {
+      RCLCPP_ERROR(
+        get_logger(), "Field %s has unexpected type %d (expected %d)", field_name.c_str(),
+        field.datatype, expected_type);
+      return -1UL;
+    }
+
+    return static_cast<size_t>(field.offset);
+  };
+
   // as per the specification of this node, these fields must be present in the input
-  const auto ring_offset =
-    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Ring)).offset;
-  const auto azimuth_offset =
-    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Azimuth)).offset;
-  const auto distance_offset =
-    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Distance)).offset;
-  const auto intensity_offset =
-    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Intensity)).offset;
+  const auto ring_offset = getFieldOffsetSafely("ring", pcl::PCLPointField::UINT16);
+  const auto azimuth_offset = getFieldOffsetSafely("azimuth", pcl::PCLPointField::FLOAT32);
+  const auto distance_offset = getFieldOffsetSafely("distance", pcl::PCLPointField::FLOAT32);
+  const auto intensity_offset = getFieldOffsetSafely("intensity", pcl::PCLPointField::FLOAT32);
+
+  if (
+    ring_offset == -1UL || azimuth_offset == -1UL || distance_offset == -1UL ||
+    intensity_offset == -1UL) {
+    RCLCPP_ERROR(get_logger(), "One or more required fields are missing in input point cloud");
+    return;
+  }
 
   // The initial implementation of ring outlier filter looked like this:
   //   1. Iterate over the input cloud and group point indices by ring
@@ -84,7 +109,7 @@ void RingOutlierFilterComponent::faster_filter(
   //   2.2. when a walk is closed, copy indexed points to the output cloud if the walk is long
   //   enough.
   //
-  // Because LIDAR data is naturally "azimut-major order" and not "ring-major order", such
+  // Because LIDAR data is naturally "azimuth-major order" and not "ring-major order", such
   // implementation is not cache friendly at all, and has negative impact on all the other nodes.
   //
   // To tackle this issue, the algorithm has been rewritten so that points would be accessed in
@@ -142,7 +167,8 @@ void RingOutlierFilterComponent::faster_filter(
   // tmp vectors to keep track of walk/ring state while processing points in order (cache efficient)
   std::vector<RingWalkInfo> rings;     // info for each LiDAR ring
   std::vector<size_t> points_walk_id;  // for each input point, the walk index associated with it
-  std::vector<bool> walks_cluster_status;  // for each generated walk, stores whether it is a cluter
+  std::vector<bool>
+    walks_cluster_status;  // for each generated walk, stores whether it is a cluster
 
   size_t latest_walk_id = -1UL;  // ID given to the latest walk created
 
