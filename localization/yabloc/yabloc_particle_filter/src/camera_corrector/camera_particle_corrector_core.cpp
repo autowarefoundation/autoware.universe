@@ -147,7 +147,7 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
   ParticleArray weighted_particles = opt_array.value();
 
   bool publish_weighted_particles = true;
-  const Pose mean_pose = mean_pose(weighted_particles);
+  const Pose mean_pose = get_mean_pose(weighted_particles);
   {
     // Check travel distance and publish weights if it is enough long
     Eigen::Vector3f mean_position = common::pose_to_affine(mean_pose).translation();
@@ -187,7 +187,7 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
 
   // DEBUG: just visualization
   {
-    Pose mean_pose = mean_pose(weighted_particles);
+    Pose mean_pose = get_mean_pose(weighted_particles);
     Sophus::SE3f transform = common::pose_to_se3(mean_pose);
 
     pcl::PointCloud<pcl::PointXYZI> cloud = evaluate_cloud(

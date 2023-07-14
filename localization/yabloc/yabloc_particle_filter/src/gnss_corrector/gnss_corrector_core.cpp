@@ -82,7 +82,7 @@ void GnssParticleCorrector::process(
   }
 
   const Eigen::Matrix3f sigma = modularized_particle_filter::std_of_distribution(*opt_particles);
-  const geometry_msgs::msg::Pose mean_pose = mean_pose(opt_particles.value());
+  const geometry_msgs::msg::Pose mean_pose = get_mean_pose(opt_particles.value());
   const Eigen::Vector3f mean_position = common::pose_to_affine(mean_pose).translation();
 
   // Check validity of GNSS measurement by mahalanobis distance
