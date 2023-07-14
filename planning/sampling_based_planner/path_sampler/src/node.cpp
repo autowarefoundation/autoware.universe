@@ -301,7 +301,6 @@ void copyZ(const std::vector<TrajectoryPoint> & from_traj, std::vector<Trajector
   if (from_traj.empty() || to_traj.empty()) return;
   to_traj.front().pose.position.z = from_traj.front().pose.position.z;
   if (from_traj.size() < 2 || to_traj.size() < 2) return;
-  to_traj.back().pose.position.z = from_traj.back().pose.position.z;
   auto from = from_traj.begin() + 1;
   auto s_from = tier4_autoware_utils::calcDistance2d(from->pose, std::next(from)->pose);
   auto s_to = 0.0;
@@ -316,6 +315,7 @@ void copyZ(const std::vector<TrajectoryPoint> & from_traj, std::vector<Trajector
     to->pose.position.z = std::prev(from)->pose.position.z +
                           ratio * (from->pose.position.z - std::prev(from)->pose.position.z);
   }
+  to_traj.back().pose.position.z = from->pose.position.z;
 }
 
 void copyVelocity(
