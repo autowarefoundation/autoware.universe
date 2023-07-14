@@ -575,14 +575,14 @@ bool NormalLaneChange::getLaneChangePaths(
       current_velocity + sampled_longitudinal_acc * prepare_duration,
       minimum_lane_changing_velocity);
 
-
     // get path on original lanes
     const bool disable_prepare_segment = is_near_end_of_current_lane && (getEgoVelocity() < 1.0);
     const double prepare_duration =
       disable_prepare_segment ? 0.0 : common_parameter.lane_change_prepare_duration;
 
     // compute actual longitudinal acceleration
-    const double longitudinal_acc_on_prepare = (prepare_duration < 1e-3) ? 0.0 : ((prepare_velocity - current_velocity) / prepare_duration);
+    const double longitudinal_acc_on_prepare =
+      (prepare_duration < 1e-3) ? 0.0 : ((prepare_velocity - current_velocity) / prepare_duration);
 
     const double prepare_length = current_velocity * prepare_duration +
                                   0.5 * longitudinal_acc_on_prepare * std::pow(prepare_duration, 2);
