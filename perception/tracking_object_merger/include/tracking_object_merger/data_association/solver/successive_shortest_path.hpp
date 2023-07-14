@@ -15,7 +15,7 @@
 #ifndef TRACKING_OBJECT_MERGER__DATA_ASSOCIATION__SOLVER__SUCCESSIVE_SHORTEST_PATH_HPP_
 #define TRACKING_OBJECT_MERGER__DATA_ASSOCIATION__SOLVER__SUCCESSIVE_SHORTEST_PATH_HPP_
 
-#include "object_association_merger/data_association/solver/gnn_solver_interface.hpp"
+#include "tracking_object_merger/data_association/solver/gnn_solver_interface.hpp"
 
 #include <unordered_map>
 #include <vector>

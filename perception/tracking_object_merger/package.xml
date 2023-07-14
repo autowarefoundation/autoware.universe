@@ -8,7 +8,9 @@
   <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
   <license>Apache License 2.0</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
+  <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
   <depend>eigen</depend>

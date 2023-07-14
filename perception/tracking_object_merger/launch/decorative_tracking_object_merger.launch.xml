@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="input/main_object" default="main_object"/>
+  <arg name="input/sub_object" default="sub_object"/>
+  <arg name="output/object" default="merged_object"/>
+  <arg name="priority_mode" default="2" description="0: main_object, 1: sub_object, 2: Confidence"/>
+  <arg name="data_association_matrix_path" default="$(find-pkg-share object_merger)/config/data_association_matrix.param.yaml"/>
+  <arg name="distance_threshold_list_path" default="$(find-pkg-share object_merger)/config/overlapped_judge.param.yaml"/>
+
+  <node pkg="tracking_object_merger" exec="decorative_tracking_object_merger" name="$(anon tracking_object_merger)" output="screen">
+    <remap from="input/main_object" to="$(var input/main_object)"/>
+    <remap from="input/sub_object" to="$(var input/sub_object)"/>
+    <remap from="output/object" to="$(var output/object)"/>
+    <param from="$(var data_association_matrix_path)"/>
+    <param from="$(var distance_threshold_list_path)"/>
+    <param name="priority_mode" value="$(var priority_mode)"/>
+    <param name="generalized_iou_threshold" value="-0.6"/>
+    <param name="precision_threshold_to_judge_overlapped" value="0.4"/>
+  </node>
+</launch>
