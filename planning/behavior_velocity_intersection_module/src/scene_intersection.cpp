@@ -665,7 +665,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto & conflicting_lanelets = intersection_lanelets_.value().conflicting();
   const auto & first_conflicting_area = intersection_lanelets_.value().first_conflicting_area();
   if (conflicting_lanelets.empty() || !first_conflicting_area) {
-    RCLCPP_DEBUG(logger_, "conflicting area is empty");
     return IntersectionModule::Indecisive{};
   }
 
