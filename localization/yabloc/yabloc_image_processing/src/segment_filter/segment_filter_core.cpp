@@ -184,7 +184,7 @@ bool SegmentFilter::is_near_element(
 std::set<ushort> get_unique_pixel_value(cv::Mat & image)
 {
   // `image` is a set of ushort.
-  // The purpose is to find the unduplicated set of values contained in `image`.
+  // The purpose is to find the unique set of values contained in `image`.
   // For example, if `image` is {0,1,2,0,1,2,3}, this function returns {0,1,2,3}.
 
   if (image.depth() != CV_16U) throw std::runtime_error("image's depth must be ushort");
@@ -215,7 +215,7 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
     if (!opt1.has_value()) continue;
     if (!opt2.has_value()) continue;
 
-    // If linesegment has shoter length than config, it is excluded
+    // If line segment has shorter length than config, it is excluded
     if (min_segment_length_ > 0) {
       float length = (opt1.value() - opt2.value()).norm();
       if (length < min_segment_length_) continue;

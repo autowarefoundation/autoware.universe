@@ -69,7 +69,7 @@ RetroactiveResampler::ParticleArray RetroactiveResampler::add_weight_retroactive
   }
 
   // Initialize corresponding index lookup table
-  // The m-th addres has the m-th particle's parent index
+  // The m-th address has the m-th particle's parent index
   std::vector<int> index_table(weighted_particles.particles.size());
   std::iota(index_table.begin(), index_table.end(), 0);
 
@@ -150,8 +150,8 @@ RetroactiveResampler::ParticleArray RetroactiveResampler::resample(
 
   // NOTE: This check wastes the computation time
   if (!resampling_history_.check_history_validity()) {
-    RCLCPP_ERROR_STREAM(logger_, "resampling_hisotry may be broken");
-    throw std::runtime_error("resampling_hisotry may be broken");
+    RCLCPP_ERROR_STREAM(logger_, "resampling_history may be broken");
+    throw std::runtime_error("resampling_history may be broken");
   }
 
   return resampled_particles;

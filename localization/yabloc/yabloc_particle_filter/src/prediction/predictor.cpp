@@ -185,7 +185,7 @@ void Predictor::on_timer()
   if (!particle_array_opt_.has_value()) {
     return;
   }
-  // Return if twist is not subscirbed yet
+  // Return if twist is not subscribed yet
   if (!latest_twist_opt_.has_value()) {
     return;
   }
