@@ -47,11 +47,11 @@ extern void resize_bilinear_gpu(
 
 /**
  * @brief Letterbox a image on gpus
- * @param[out] dst letterboxed image
+ * @param[out] dst letterbox-ed image
  * @param[in] src image
- * @param[in] d_w width for letterboxing
- * @param[in] d_h height foletterboxing
- * @param[in] d_c channel foletterboxing
+ * @param[in] d_w width for letterbox-ing
+ * @param[in] d_h height for letterbox-ing
+ * @param[in] d_c channel for letterbox-ing
  * @param[in] s_w width for input image
  * @param[in] s_h height for input image
  * @param[in] s_c channel for input image

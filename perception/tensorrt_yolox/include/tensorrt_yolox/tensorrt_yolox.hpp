@@ -170,7 +170,7 @@ private:
    * @param[in] images batching images
    * @param[in] rois region of interest
    */
-  void multiScalepreprocessGpu(const cv::Mat & image, const std::vector<cv::Rect> & rois);
+  void multiScalePreprocessGpu(const cv::Mat & image, const std::vector<cv::Rect> & rois);
 
   bool multiScaleFeedforward(const cv::Mat & image, int batch_size, ObjectArrays & objects);
   bool multiScaleFeedforwardAndDecode(
