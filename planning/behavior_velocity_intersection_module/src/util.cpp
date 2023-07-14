@@ -403,7 +403,7 @@ IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path,
   const std::set<int> & associative_ids, const double detection_area_length,
-  const double occlusion_detection_area_length)
+  const double occlusion_detection_area_length, const bool consider_wrong_direction_vehicle)
 {
   const auto turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
 

@@ -656,7 +656,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     intersection_lanelets_ = util::getObjectiveLanelets(
       lanelet_map_ptr, routing_graph_ptr, assigned_lanelet, lanelets_on_path, associative_ids_,
       planner_param_.common.attention_area_length,
-      planner_param_.occlusion.occlusion_attention_area_length);
+      planner_param_.occlusion.occlusion_attention_area_length,
+      planner_param_.common.consider_wrong_direction_vehicle);
   }
   const bool tl_arrow_solid_on =
     util::isTrafficLightArrowActivated(assigned_lanelet, planner_data_->traffic_light_id_map);
