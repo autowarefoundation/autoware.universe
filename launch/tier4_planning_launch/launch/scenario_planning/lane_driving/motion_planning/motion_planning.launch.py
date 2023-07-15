@@ -24,7 +24,6 @@ from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
-from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode
 import yaml
 
@@ -102,10 +101,9 @@ def launch_setup(context, *args, **kwargs):
     # path sampler
     with open(LaunchConfiguration("path_sampler_param_path").perform(context), "r") as f:
         path_sampler_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    path_sampler_component = Node(
+    path_sampler_component = ComposableNode(
         package="path_sampler",
-        # plugin="path_sampler::PathSampler",
-        executable="path_sampler_exe",
+        plugin="path_sampler::PathSampler",
         name="path_sampler",
         namespace="",
         remappings=[
@@ -118,8 +116,7 @@ def launch_setup(context, *args, **kwargs):
             path_sampler_param,
             vehicle_info_param,
         ],
-        prefix="konsole -e gdb -ex run --args",
-        # extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     # obstacle velocity limiter
@@ -300,11 +297,11 @@ def launch_setup(context, *args, **kwargs):
         condition=LaunchConfigurationEquals("path_planner_type", "obstacle_avoidance_planner"),
     )
 
-    # path_sampler_loader = LoadComposableNodes(
-    #     composable_node_descriptions=[path_sampler_component],
-    #     target_container=container,
-    #     condition=LaunchConfigurationEquals("path_planner_type", "path_sampler"),
-    # )
+    path_sampler_loader = LoadComposableNodes(
+        composable_node_descriptions=[path_sampler_component],
+        target_container=container,
+        condition=LaunchConfigurationEquals("path_planner_type", "path_sampler"),
+    )
 
     surround_obstacle_checker_loader = LoadComposableNodes(
         composable_node_descriptions=[surround_obstacle_checker_component],
@@ -317,8 +314,7 @@ def launch_setup(context, *args, **kwargs):
             container,
             smoother_loader,
             obstacle_avoidance_planner_loader,
-            # path_sampler_loader,
-            path_sampler_component,
+            path_sampler_loader,
             obstacle_stop_planner_loader,
             obstacle_cruise_planner_loader,
             obstacle_cruise_planner_relay_loader,
