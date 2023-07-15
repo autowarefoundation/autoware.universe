@@ -25,11 +25,11 @@ namespace map_based_prediction
 {
 PathGenerator::PathGenerator(
   const double time_horizon, const double sampling_time_interval,
-  const double min_crosswalk_user_velocity, const size_t num_sample)
+  const double min_crosswalk_user_velocity, const int num_sampling_path)
 : time_horizon_(time_horizon),
   sampling_time_interval_(sampling_time_interval),
   min_crosswalk_user_velocity_(min_crosswalk_user_velocity),
-  num_sample_(num_sample)
+  num_sampling_path_(num_sampling_path)
 {
 }
 
@@ -184,10 +184,9 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const double ref_path_len = motion_utils::calcArcLength(ref_path);
   const auto current_point = getFrenetPoint(object, ref_path);
 
-  const double min_width = -0.5 * lane_width, max_width = 0.5 * lane_width;
-  const double sample_width = lane_width / num_sample_;
   std::vector<FrenetPath> frenet_paths;
-  for (double terminal_d = min_width; terminal_d <= max_width; terminal_d += sample_width) {
+  for (int n = -num_sampling_path_ / 2; n < num_sampling_path_ / 2 + 1; ++n) {
+    const double terminal_d = n * lane_width / num_sampling_path_;
     // Step1. Set Target Frenet Point
     // Note that we do not set position s,
     // since we don't know the target longitudinal position
