@@ -1640,51 +1640,6 @@ void AvoidanceModule::trimSharpReturn(AvoidLineArray & shift_lines, const double
   DEBUG_PRINT("trimSharpReturn: size %lu -> %lu", shift_lines_orig.size(), shift_lines.size());
 }
 
-void AvoidanceModule::trimTooSharpShift(AvoidLineArray & avoid_lines) const
-{
-  if (avoid_lines.empty()) {
-    return;
-  }
-
-  AvoidLineArray avoid_lines_orig = avoid_lines;
-  avoid_lines.clear();
-
-  const auto isInJerkLimit = [this](const auto & al) {
-    const auto required_jerk = path_shifter_.calcJerkFromLatLonDistance(
-      al.getRelativeLength(), al.getRelativeLongitudinal(), helper_.getAvoidanceEgoSpeed());
-    return std::fabs(required_jerk) < helper_.getLateralMaxJerkLimit();
-  };
-
-  for (size_t i = 0; i < avoid_lines_orig.size(); ++i) {
-    auto al_now = avoid_lines_orig.at(i);
-
-    if (isInJerkLimit(al_now)) {
-      avoid_lines.push_back(al_now);
-      continue;
-    }
-
-    DEBUG_PRINT("over jerk is detected: i = %lu", i);
-    printShiftLines(AvoidLineArray{al_now}, "points with over jerk");
-
-    // The avoidance_point_now exceeds jerk limit, so merge it with the next avoidance_point.
-    for (size_t j = i + 1; j < avoid_lines_orig.size(); ++j) {
-      auto al_next = avoid_lines_orig.at(j);
-      utils::avoidance::setEndData(
-        al_now, al_next.end_shift_length, al_next.end, al_next.end_idx, al_next.end_longitudinal);
-      if (isInJerkLimit(al_now)) {
-        avoid_lines.push_back(al_now);
-        DEBUG_PRINT("merge finished. i = %lu, j = %lu", i, j);
-        i = j;  // skip check until j index.
-        break;
-      }
-    }
-  }
-
-  helper_.alignShiftLinesOrder(avoid_lines);
-
-  DEBUG_PRINT("size %lu -> %lu", avoid_lines_orig.size(), avoid_lines.size());
-}
-
 void AvoidanceModule::addReturnShiftLineFromEgo(AvoidLineArray & sl_candidates) const
 {
   constexpr double ep = 1.0e-3;
