@@ -20,10 +20,6 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
-
 namespace yabloc
 {
 CameraPoseInitializer::CameraPoseInitializer()
@@ -110,9 +106,17 @@ bool CameraPoseInitializer::estimate_pose(
     using namespace std::literals::chrono_literals;
     std::future_status status = result_future.wait_for(1000ms);
     if (status == std::future_status::ready) {
-      segmented_image = result_future.get()->dst_image;
+      const auto response = result_future.get();
+      if (response->success) {
+        segmented_image = response->dst_image;
+      } else {
+        RCLCPP_WARN_STREAM(get_logger(), "segmentation service failed unexpectedly");
+        // NOTE:
+        return true;
+      }
     } else {
-      RCLCPP_ERROR_STREAM(get_logger(), "segmentation service exited unexpectedly");
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "segmentation service did not return within the expected time");
       return false;
     }
   }
@@ -165,11 +169,9 @@ bool CameraPoseInitializer::estimate_pose(
     angles_rad.push_back(angle_rad);
   }
 
-  {
-    size_t max_index =
-      std::distance(scores.begin(), std::max_element(scores.begin(), scores.end()));
-    yaw_angle_rad = angles_rad.at(max_index);
-  }
+  const size_t max_index =
+    std::distance(scores.begin(), std::max_element(scores.begin(), scores.end()));
+  yaw_angle_rad = angles_rad.at(max_index);
 
   marker_module_->publish_marker(scores, angles_rad, position);
 
