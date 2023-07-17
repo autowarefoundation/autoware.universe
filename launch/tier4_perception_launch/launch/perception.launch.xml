@@ -11,6 +11,8 @@
   <arg name="object_recognition_prediction_map_based_prediction_param_path"/>
   <arg name="object_recognition_detection_object_merger_data_association_matrix_param_path"/>
   <arg name="object_recognition_detection_object_merger_distance_threshold_list_path"/>
+  <arg name="object_recognition_detection_fusion_sync_param_path"/>
+  <arg name="object_recognition_detection_lidar_model_param_path"/>
   <arg name="object_recognition_tracking_multi_object_tracker_data_association_matrix_param_path"/>
   <arg name="obstacle_segmentation_ground_segmentation_param_path"/>
   <arg name="obstacle_segmentation_ground_segmentation_elevation_map_param_path"/>
@@ -127,7 +129,7 @@
           <arg name="camera_info7" value="$(var camera_info7)"/>
           <arg name="image_number" value="$(var image_number)"/>
           <arg name="sync_param_path" value="$(var object_recognition_detection_fusion_sync_param_path)"/>
-          <arg name="pointpainting_model_param_path" value="$(var object_recognition_detection_pointpainting_model_param_path)"/>
+          <arg name="lidar_model_param_path" value="$(var object_recognition_detection_lidar_model_param_path)"/>
           <arg name="compare_map_param_path" value="$(var object_recognition_detection_compare_map_param_path)"/>
           <arg name="euclidean_param_path" value="$(var object_recognition_detection_euclidean_cluster_param_path)"/>
           <arg name="outlier_param_path" value="$(var object_recognition_detection_outlier_param_path)"/>
