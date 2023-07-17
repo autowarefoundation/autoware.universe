@@ -631,6 +631,17 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     num_continuous_state_transition_ =
       declare_parameter<int>("lane_change_detection.num_continuous_state_transition");
   }
+
+  // weights of path generation cost
+  PathGenerator::CostParams cost_params;
+  {
+    cost_params.KJ = declare_parameter<double>("path_cost_params.jerk", 0.1);
+    cost_params.KT = declare_parameter<double>("path_cost_params.time", 0.1);
+    cost_params.KD = declare_parameter<double>("path_cost_params.position", 1.0);
+    cost_params.K_LAT = declare_parameter<double>("path_cost_params.lateral", 1.0);
+    cost_params.K_LON = declare_parameter<double>("path_cost_params.longitudinal", 1.0);
+  }
+
   reference_path_resolution_ = declare_parameter("reference_path_resolution", 0.5);
   /* prediction path will disabled when the estimated path length exceeds lanelet length. This
    * parameter control the estimated path length = vx * th * (rate)  */
@@ -639,7 +650,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
 
   path_generator_ = std::make_shared<PathGenerator>(
     prediction_time_horizon_, prediction_sampling_time_interval_, min_crosswalk_user_velocity_,
-    num_sampling_path_);
+    num_sampling_path_, cost_params);
 
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "/perception/object_recognition/tracking/objects", 1,

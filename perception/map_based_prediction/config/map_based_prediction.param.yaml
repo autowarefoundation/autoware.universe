@@ -26,4 +26,11 @@
         diff_dist_threshold_to_right_bound: -0.29 #[m]
       num_continuous_state_transition: 3
 
+    path_cost_params:
+      jerk: 0.1
+      time: 0.1
+      position: 1.0
+      lateral: 1.0
+      longitudinal: 1.0
+
     reference_path_resolution: 0.5 #[m]

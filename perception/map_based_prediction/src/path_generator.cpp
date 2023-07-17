@@ -25,11 +25,13 @@ namespace map_based_prediction
 {
 PathGenerator::PathGenerator(
   const double time_horizon, const double sampling_time_interval,
-  const double min_crosswalk_user_velocity, const int num_sampling_path)
+  const double min_crosswalk_user_velocity, const int num_sampling_path,
+  const CostParams & cost_params)
 : time_horizon_(time_horizon),
   sampling_time_interval_(sampling_time_interval),
   min_crosswalk_user_velocity_(min_crosswalk_user_velocity),
-  num_sampling_path_(num_sampling_path)
+  num_sampling_path_(num_sampling_path),
+  cost_params_(cost_params)
 {
 }
 
@@ -268,9 +270,11 @@ FrenetPath PathGenerator::generateFrenetPath(
   const double last_d_cost = path.empty() ? 0.0 : std::pow(path.back().d, 2);
   const double last_s_cost =
     path.empty() ? 0.0 : std::pow(current_point.s_vel - path.back().s_vel, 2);
-  const double cost_d = KJ_ * sum_d_jerk + KT_ * duration + KD_ * last_d_cost;
-  const double cost_s = KJ_ * sum_s_jerk + KT_ * duration + KD_ * last_s_cost;
-  const double cost = K_LAT_ * cost_d + K_LON_ * cost_s;
+  const double cost_d =
+    cost_params_.KJ * sum_d_jerk + cost_params_.KT * duration + cost_params_.KD * last_d_cost;
+  const double cost_s =
+    cost_params_.KJ * sum_s_jerk + cost_params_.KT * duration + cost_params_.KD * last_s_cost;
+  const double cost = cost_params_.K_LAT * cost_d + cost_params_.K_LON * cost_s;
   return {path, cost};
 }
 

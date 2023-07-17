@@ -64,9 +64,15 @@ using PosePath = std::vector<geometry_msgs::msg::Pose>;
 class PathGenerator
 {
 public:
+  struct CostParams
+  {
+    double KJ, KT, KD, K_LAT, K_LON;
+  };  // struct CostParams
+
   PathGenerator(
     const double time_horizon, const double sampling_time_interval,
-    const double min_crosswalk_user_velocity, const int num_sampling_path);
+    const double min_crosswalk_user_velocity, const int num_sampling_path,
+    const CostParams & cost_params);
 
   PredictedPath generatePathForNonVehicleObject(const TrackedObject & object);
 
@@ -89,8 +95,7 @@ private:
   double sampling_time_interval_;
   double min_crosswalk_user_velocity_;
   int num_sampling_path_;
-
-  static constexpr float KJ_ = 0.1, KT_ = 0.1, KD_ = 1.0, K_LAT_ = 1.0, K_LON_ = 1.0;
+  CostParams cost_params_;
 
   // Member functions
   PredictedPath generateStraightPath(const TrackedObject & object) const;
