@@ -1365,15 +1365,15 @@ double MapBasedPredictionNode::calculate_lane_width(const lanelet::ConstLanelet 
   std::vector<double> spline_y = interpolation::spline(base_keys, base_bound_y, query_keys);
 
   const size_t num_interpolate = query_bound.size();
-  double max_width = 0.0;
+  double min_width = 1e9;
   for (size_t i = 0; i < num_interpolate; ++i) {
     if (const auto ith_width =
           std::hypot(spline_x.at(i) - query_bound[i].x(), spline_y.at(i) - query_bound[i].y());
-        max_width < ith_width) {
-      max_width = ith_width;
+        ith_width < min_width) {
+      min_width = ith_width;
     }
   }
-  return max_width;
+  return min_width != 1e9 ? min_width : 0.0;
 }
 
 /**
