@@ -24,6 +24,7 @@ import semantic_segmentation_core as core
 from sensor_msgs.msg import Image
 from yabloc_pose_initializer.srv import SemanticSegmentation
 
+# cspell: ignore DDOWNLOAD
 error_message = """\
 The yabloc_pose_initializer is not working correctly because the DNN model has not been downloaded correctly.
 To download models, "-DDOWNLOAD_ARTIFACTS=ON" is required at build time.
