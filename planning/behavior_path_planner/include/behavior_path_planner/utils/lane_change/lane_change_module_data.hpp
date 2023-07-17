@@ -27,20 +27,31 @@
 namespace behavior_path_planner
 {
 
-struct PoseWithPolygon
+struct PoseWithVelocity
 {
   Pose pose;
-  Polygon2d poly;
+  double velocity;
 
-  PoseWithPolygon(const Pose & pose, const Polygon2d & poly) : pose(pose), poly(poly) {}
+  PoseWithVelocity(const Pose & pose, const double velocity) : pose(pose), velocity(velocity) {}
 };
 
-struct PoseWithPolygonStamped : public PoseWithPolygon
+struct PoseWithVelocityStamped : public PoseWithVelocity
 {
   double time;
 
-  PoseWithPolygonStamped(const double time, const Pose & pose, const Polygon2d & poly)
-  : PoseWithPolygon(pose, poly), time(time)
+  PoseWithVelocityStamped(const double time, const Pose & pose, const double velocity)
+  : PoseWithVelocity(pose, velocity), time(time)
+  {
+  }
+};
+
+struct PoseWithVelocityAndPolygonStamped : public PoseWithVelocityStamped
+{
+  Polygon2d poly;
+
+  PoseWithVelocityAndPolygonStamped(
+    const double time, const Pose & pose, const double velocity, const Polygon2d & poly)
+  : PoseWithVelocityStamped(time, pose, velocity), poly(poly)
   {
   }
 };
@@ -48,7 +59,7 @@ struct PoseWithPolygonStamped : public PoseWithPolygon
 struct PredictedPathWithPolygon
 {
   float confidence;
-  std::vector<PoseWithPolygonStamped> path;
+  std::vector<PoseWithVelocityAndPolygonStamped> path;
 };
 
 struct ExtendedPredictedObject
@@ -133,6 +144,25 @@ struct LaneChangePhaseInfo
   : prepare(_prepare), lane_changing(_lane_changing)
   {
   }
+};
+
+struct LaneChangeInfo
+{
+  LaneChangePhaseInfo longitudinal_acceleration{0.0, 0.0};
+  LaneChangePhaseInfo velocity{0.0, 0.0};
+  LaneChangePhaseInfo duration{0.0, 0.0};
+  LaneChangePhaseInfo length{0.0, 0.0};
+
+  lanelet::ConstLanelets reference_lanelets{};
+  lanelet::ConstLanelets target_lanelets{};
+
+  Pose lane_changing_start{};
+  Pose lane_changing_end{};
+
+  ShiftLine shift_line{};
+
+  double lateral_acceleration{0.0};
+  double terminal_lane_changing_velocity{0.0};
 };
 
 struct LaneChangeTargetObjectIndices
