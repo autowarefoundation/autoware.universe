@@ -111,7 +111,11 @@ bool CameraPoseInitializer::estimate_pose(
         segmented_image = response->dst_image;
       } else {
         RCLCPP_WARN_STREAM(get_logger(), "segmentation service failed unexpectedly");
-        // NOTE:
+        // NOTE: Even if the segmentation service fails, the function will still return the
+        // yaw_angle_rad as it is and complete the initialization. The service fails
+        // when the DNN model is not downloaded. Ideally, initialization should rely on
+        // segmentation, but this implementation allows initialization even in cases where network
+        // connectivity is not available.
         return true;
       }
     } else {
@@ -155,15 +159,6 @@ bool CameraPoseInitializer::estimate_pose(
     }
     // If count_non_zero() returns 0 everywhere, the orientation is chosen by the only gain
     const float score = gain * (1 + count_non_zero(dst));
-
-    // DEBUG:
-    constexpr bool imshow = false;
-    if (imshow) {
-      cv::Mat show_image;
-      cv::hconcat(std::vector<cv::Mat>{rotated_image, vectormap_image, dst}, show_image);
-      cv::imshow("and operator", show_image);
-      cv::waitKey(50);
-    }
 
     scores.push_back(score);
     angles_rad.push_back(angle_rad);
