@@ -9,7 +9,9 @@ Ideally, this package downloads a pre-trained semantic segmentation model during
 However, to handle cases where network connectivity is not available at build time, **the default behavior is not to download the model during build.**
 Even if the model is not downloaded, initialization will still complete, but the accuracy may be compromised.
 
-To download the model, please specify `--cmake-args -DDOWNLOAD_ARTIFACTS=ON` to the buid command.
+<!-- cspell: ignore DDOWNLOAD_ARTIFACTS -->
+
+To download the model, please specify `--cmake-args -DDOWNLOAD_ARTIFACTS=ON` to the build command.
 
 ```bash
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_ARTIFACTS=ON --packages-select yabloc_pose_initializer
