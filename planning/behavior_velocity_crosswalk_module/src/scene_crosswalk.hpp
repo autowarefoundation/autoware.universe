@@ -74,7 +74,7 @@ public:
     double no_relax_velocity;
     // param for stuck vehicle
     double stuck_vehicle_velocity;
-    double max_lateral_offset;
+    double max_stuck_vehicle_lateral_offset;
     double stuck_vehicle_attention_range;
     // param for pass judge logic
     double ego_pass_first_margin;
@@ -82,8 +82,8 @@ public:
     double stop_object_velocity;
     double min_object_velocity;
     bool disable_stop_for_yield_cancel;
-    double max_yield_timeout;
-    double ego_yield_query_stop_duration;
+    double timeout_no_intention_to_walk;
+    double timeout_ego_stop_for_yield;
     // param for input data
     double traffic_light_state_timeout;
     // param for target area & object
@@ -116,7 +116,7 @@ public:
           time_to_start_stopped = now;
         }
         const bool intent_to_cross =
-          (now - *time_to_start_stopped).seconds() < planner_param.max_yield_timeout;
+          (now - *time_to_start_stopped).seconds() < planner_param.timeout_no_intention_to_walk;
         if ((is_ego_yielding || planner_param.disable_stop_for_yield_cancel) && !intent_to_cross) {
           state = State::FULLY_STOPPED;
         } else {

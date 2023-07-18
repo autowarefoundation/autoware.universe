@@ -17,9 +17,15 @@ The manager launch crosswalk scene modules when the reference path conflicts cro
 
 #### Common parameters
 
-| Parameter              | Type | Description                     |
-| ---------------------- | ---- | ------------------------------- |
-| `show_processing_time` | bool | whether to show processing time |
+| Parameter                     | Type | Description                     |
+| ----------------------------- | ---- | ------------------------------- |
+| `common.show_processing_time` | bool | whether to show processing time |
+
+#### Parameters for input data
+
+| Parameter                            | Type   | Description                                    |
+| ------------------------------------ | ------ | ---------------------------------------------- |
+| `common.traffic_light_state_timeout` | double | [s] timeout threshold for traffic light signal |
 
 #### Parameters for stop position
 
@@ -51,14 +57,14 @@ On the other hand, if pedestrian (bicycle) is crossing **wide** crosswalks seen 
 
 See the workflow in algorithms section.
 
-| Parameter                      | Type   | Description                                                                                                                                                               |
-| ------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stop_distance_from_object`    | double | [m] the vehicle decelerates to be able to stop in front of object with margin                                                                                             |
-| `stop_distance_from_crosswalk` | double | [m] make stop line away from crosswalk when no explicit stop line exists                                                                                                  |
-| `far_object_threshold`         | double | [m] if objects cross X meters behind the stop line, the stop position is determined according to the object position (stop_distance_from_object meters before the object) |
-| `stop_position_threshold`      | double | [m] threshold for check whether the vehicle stop in front of crosswalk                                                                                                    |
+| Parameter                                    | Type   | Description                                                                                                                                                               |
+| -------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stop_position.stop_distance_from_object`    | double | [m] the vehicle decelerates to be able to stop in front of object with margin                                                                                             |
+| `stop_position.stop_distance_from_crosswalk` | double | [m] make stop line away from crosswalk when no explicit stop line exists                                                                                                  |
+| `stop_position.far_object_threshold`         | double | [m] if objects cross X meters behind the stop line, the stop position is determined according to the object position (stop_distance_from_object meters before the object) |
+| `stop_position.stop_position_threshold`      | double | [m] threshold for check whether the vehicle stop in front of crosswalk                                                                                                    |
 
-#### Parameters for ego velocity
+#### Parameters for ego's slow down velocity
 
 | Parameter             | Type   | Description                                                                                                                 |
 | --------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
@@ -76,32 +82,26 @@ If there are low speed or stop vehicle ahead of the crosswalk, and there is not 
   <figcaption>stuck vehicle attention range</figcaption>
 </figure>
 
-| Parameter                       | Type   | Description                                                            |
-| ------------------------------- | ------ | ---------------------------------------------------------------------- |
-| `stuck_vehicle_velocity`        | double | [m/s] maximum velocity threshold whether the vehicle is stuck          |
-| `max_lateral_offset`            | double | [m] maximum lateral offset for stuck vehicle position should be looked |
-| `stuck_vehicle_attention_range` | double | [m] the detection area is defined as X meters behind the crosswalk     |
+| Parameter                                        | Type   | Description                                                            |
+| ------------------------------------------------ | ------ | ---------------------------------------------------------------------- |
+| `stuck_vehicle.stuck_vehicle_velocity`           | double | [m/s] maximum velocity threshold whether the vehicle is stuck          |
+| `stuck_vehicle.max_stuck_vehicle_lateral_offset` | double | [m] maximum lateral offset for stuck vehicle position should be looked |
+| `stuck_vehicle.stuck_vehicle_attention_range`    | double | [m] the detection area is defined as X meters behind the crosswalk     |
 
 #### Parameters for pass judge logic
 
 Also see algorithm section.
 
-| Parameter                        | Type   | Description                                                                                                                                        |
-| -------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ego_pass_first_margin`          | double | [s] time margin for ego pass first situation                                                                                                       |
-| `ego_pass_later_margin`          | double | [s] time margin for object pass first situation                                                                                                    |
-| `stop_object_velocity_threshold` | double | [m/s] velocity threshold for the module to judge whether the objects is stopped                                                                    |
-| `min_object_velocity`            | double | [m/s] minimum object velocity (compare the estimated velocity by perception module with this parameter and adopt the larger one to calculate TTV.) |
-| `max_yield_timeout`              | double | [s] if the pedestrian does not move for X seconds after stopping before the crosswalk, the module judge that ego is able to pass first.            |
-| `ego_yield_query_stop_duration`  | double | [s] the amount of time which ego should be stopping to query whether it yields or not.                                                             |
+| Parameter                                   | Type   | Description                                                                                                                                        |
+| ------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pass_judge.ego_pass_first_margin`          | double | [s] time margin for ego pass first situation                                                                                                       |
+| `pass_judge.ego_pass_later_margin`          | double | [s] time margin for object pass first situation                                                                                                    |
+| `pass_judge.stop_object_velocity_threshold` | double | [m/s] velocity threshold for the module to judge whether the objects is stopped                                                                    |
+| `pass_judge.min_object_velocity`            | double | [m/s] minimum object velocity (compare the estimated velocity by perception module with this parameter and adopt the larger one to calculate TTV.) |
+| `pass_judge.timeout_no_intention_to_walk`   | double | [s] if the pedestrian does not move for X seconds after stopping before the crosswalk, the module judge that ego is able to pass first.            |
+| `pass_judge.timeout_ego_stop_for_yield`     | double | [s] the amount of time which ego should be stopping to query whether it yields or not.                                                             |
 
-#### Parameters for input data
-
-| Parameter                     | Type   | Description                                    |
-| ----------------------------- | ------ | ---------------------------------------------- |
-| `traffic_light_state_timeout` | double | [s] timeout threshold for traffic light signal |
-
-#### Parameters for target area & object
+#### Parameters for object filtering
 
 As a countermeasure against pedestrians attempting to cross outside the crosswalk area, this module watches not only the crosswalk zebra area but also in front of and behind space of the crosswalk, and if there are pedestrians or bicycles attempting to pass through the watch area, this module judges whether ego should pass or stop.
 
@@ -191,7 +191,7 @@ end
 
 #### Dead lock prevention
 
-If there are objects stop within a radius of `min_object_velocity * ego_pass_later_margin` meters from virtual collision point, this module judges that ego should stop based on the pass judge logic described above at all times. In such a situation, even if the pedestrian has no intention of crossing, ego continues the stop decision on the spot. So, this module has another logic for dead lock prevention, and if the object continues to stop for more than `max_yield_timeout` seconds after ego stops in front of the crosswalk, this module judges that the object has no intention of crossing and switches from **STOP** state to **PASS** state. The parameter `stop_object_velocity_threshold` is used to judge whether the objects are stopped or not. In addition, if the object starts to move after the module judges that the object has no intention of crossing, this module judges whether ego should stop or not once again.
+If there are objects stop within a radius of `min_object_velocity * ego_pass_later_margin` meters from virtual collision point, this module judges that ego should stop based on the pass judge logic described above at all times. In such a situation, even if the pedestrian has no intention of crossing, ego continues the stop decision on the spot. So, this module has another logic for dead lock prevention, and if the object continues to stop for more than `timeout_no_intention_to_walk` seconds after ego stops in front of the crosswalk, this module judges that the object has no intention of crossing and switches from **STOP** state to **PASS** state. The parameter `stop_object_velocity_threshold` is used to judge whether the objects are stopped or not. In addition, if the object starts to move after the module judges that the object has no intention of crossing, this module judges whether ego should stop or not once again.
 
 <figure markdown>
   ![no-intension](docs/no-intension.svg){width=1000}

@@ -778,7 +778,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
 
     const auto & obj_pos = object.kinematics.initial_pose_with_covariance.pose.position;
     const auto lateral_offset = calcLateralOffset(ego_path.points, obj_pos);
-    if (planner_param_.max_lateral_offset < std::abs(lateral_offset)) {
+    if (planner_param_.max_stuck_vehicle_lateral_offset < std::abs(lateral_offset)) {
       continue;
     }
 
@@ -836,7 +836,7 @@ void CrosswalkModule::updateObjectState(const double dist_ego_to_stop)
   const bool is_ego_yielding = [&]() {
     const auto has_reached_stop_point = dist_ego_to_stop < planner_param_.stop_position_threshold;
 
-    return planner_data_->isVehicleStopped(planner_param_.ego_yield_query_stop_duration) &&
+    return planner_data_->isVehicleStopped(planner_param_.timeout_ego_stop_for_yield) &&
            has_reached_stop_point;
   }();
 
