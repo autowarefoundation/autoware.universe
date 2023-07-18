@@ -60,7 +60,6 @@ protected:  // for the static_centerline_optimizer package
 
   // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr raw_traj_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr virtual_wall_pub_;
 
   // interface subscriber
@@ -100,8 +99,7 @@ protected:  // for the static_centerline_optimizer package
     const geometry_msgs::msg::Pose & ego_pose);
   std::vector<TrajectoryPoint> generatePath(const PlannerData & planner_data);
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
-  void publishDebugMarker(
-    const Header & header, const std::vector<TrajectoryPoint> & traj_points) const;
+  void publishDebugMarker(const std::vector<TrajectoryPoint> & traj_points) const;
 };
 }  // namespace path_sampler
 

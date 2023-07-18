@@ -61,7 +61,6 @@ PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
 {
   // interface publisher
   traj_pub_ = create_publisher<Trajectory>("~/output/path", 1);
-  raw_traj_pub_ = create_publisher<Trajectory>("~/output/debug/raw_trajectory", 1);
   virtual_wall_pub_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
 
   // interface subscriber
@@ -368,7 +367,7 @@ std::vector<TrajectoryPoint> PathSampler::generateTrajectory(const PlannerData &
 
   copyVelocity(input_traj_points, generated_traj_points, planner_data.ego_pose);
   copyZ(input_traj_points, generated_traj_points);
-  publishDebugMarker(planner_data.header, generated_traj_points);
+  publishDebugMarker(generated_traj_points);
 
   time_keeper_ptr_->toc(__func__, " ");
   return generated_traj_points;
@@ -470,10 +469,7 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
       k += static_cast<int>(!p.constraint_results.curvature);
     }
     RCLCPP_WARN(get_logger(), "\tInvalid coll/da/k = %d/%d/%d\n", coll, da, k);
-    if (prev_path_)
-      trajectory = trajectory_utils::convertToTrajectoryPoints(*prev_path_);
-    else
-      trajectory = trajectory_utils::convertToTrajectoryPoints(planner_data.traj_points);
+    if (prev_path_) trajectory = trajectory_utils::convertToTrajectoryPoints(*prev_path_);
   }
   time_keeper_ptr_->toc(__func__, "    ");
   debug_data_.previous_sampled_candidates_nb = debug_data_.sampled_candidates.size();
@@ -493,15 +489,14 @@ void PathSampler::publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose)
   time_keeper_ptr_->toc(__func__, "      ");
 }
 
-void PathSampler::publishDebugMarker(
-  const Header & header, const std::vector<TrajectoryPoint> & traj_points) const
+void PathSampler::publishDebugMarker(const std::vector<TrajectoryPoint> & traj_points) const
 {
+  (void)traj_points;
+
   time_keeper_ptr_->tic(__func__);
 
   // debug marker
   time_keeper_ptr_->tic("getDebugMarker");
-
-  raw_traj_pub_->publish(trajectory_utils::createTrajectory(header, traj_points));
   visualization_msgs::msg::MarkerArray markers;
   if (debug_markers_pub_->get_subscription_count() > 0LU) {
     visualization_msgs::msg::Marker m;
