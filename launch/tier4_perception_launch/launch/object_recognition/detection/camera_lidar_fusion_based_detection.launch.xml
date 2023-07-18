@@ -29,6 +29,7 @@
   <arg name="score_threshold" default="0.35"/>
   <arg name="remove_unknown" default="true"/>
   <arg name="trust_distance" default="30.0"/>
+  <arg name="input/radar" default="/sensing/radar/detected_objects"/>
 
   <!-- Jetson AGX -->
   <!-- <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">
