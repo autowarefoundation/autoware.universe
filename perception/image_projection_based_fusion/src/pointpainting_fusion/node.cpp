@@ -41,6 +41,14 @@ inline bool isInsideBbox(
 
 inline bool isVehicle(int label2d)
 {
+  return label2d == autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
+         label2d == autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
+         label2d == autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
+         label2d == autoware_auto_perception_msgs::msg::ObjectClassification::BUS;
+}
+
+inline bool isCar(int label2d)
+{
   return label2d == autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
 }
 
@@ -263,11 +271,7 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   const auto z_offset =
     transformed_pointcloud.fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Z))
       .offset;
-  const auto car_offset = painted_pointcloud_msg.fields.at(4).offset;
-  const auto trk_offset = painted_pointcloud_msg.fields.at(5).offset;
-  const auto bus_offset = painted_pointcloud_msg.fields.at(6).offset;
-  const auto bic_offset = painted_pointcloud_msg.fields.at(7).offset;
-  const auto ped_offset = painted_pointcloud_msg.fields.at(8).offset;
+  const auto class_offset = painted_pointcloud_msg.fields.at(4).offset;
   const auto p_step = transformed_pointcloud.point_step;
   // projection matrix
   Eigen::Matrix3f camera_projection;  // use only x,y,z
