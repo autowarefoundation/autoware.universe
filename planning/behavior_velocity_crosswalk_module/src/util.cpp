@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "util.hpp"
+#include "behavior_velocity_crosswalk_module/util.hpp"
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>

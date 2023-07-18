@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTIL_HPP_
-#define UTIL_HPP_
+#ifndef BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_
+#define BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_
 
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
@@ -95,4 +95,4 @@ std::optional<lanelet::ConstLineString3d> getStopLineFromMap(
   const std::string & attribute_name);
 }  // namespace behavior_velocity_planner
 
-#endif  // UTIL_HPP_
+#endif  // BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_
