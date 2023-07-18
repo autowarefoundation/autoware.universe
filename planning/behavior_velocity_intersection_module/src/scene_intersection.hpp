@@ -164,6 +164,11 @@ public:
     // NOTE: if RTC is disapproved status, default stop lines are still needed.
     util::IntersectionStopLines stop_lines;
   };
+  struct TrafficLightArrowSolidOn
+  {
+    bool collision_detected;
+    util::IntersectionStopLines stop_lines;
+  };
   using DecisionResult = std::variant<
     Indecisive,                // internal process error, or over the pass judge line
     StuckStop,                 // detected stuck vehicle
@@ -171,8 +176,8 @@ public:
     FirstWaitBeforeOcclusion,  // stop for a while before peeking to occlusion
     PeekingTowardOcclusion,    // peeking into occlusion while collision is not detected
     OccludedCollisionStop,     // occlusion and collision are both detected
-    Safe                       // judge as safe
-    /* TODO(Mamoru Sobue): TrafficLightArrowSolidOn */
+    Safe,                      // judge as safe
+    TrafficLightArrowSolidOn   // only detect vehicles violating traffic rules
     >;
 
   IntersectionModule(

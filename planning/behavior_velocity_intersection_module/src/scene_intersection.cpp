@@ -262,6 +262,26 @@ void prepareRTCByDecisionResult(
   return;
 }
 
+template <>
+void prepareRTCByDecisionResult(
+  const IntersectionModule::TrafficLightArrowSolidOn & result,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
+  double * default_distance, bool * occlusion_safety, double * occlusion_distance,
+  [[maybe_unused]] bool * occlusion_first_stop_required)
+{
+  RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "TrafficLightArrowSolidOn");
+  const auto closest_idx = result.stop_lines.closest_idx;
+  const auto default_stop_line_idx = result.stop_lines.default_stop_line;
+  const auto occlusion_stop_line_idx = result.stop_lines.occlusion_peeking_stop_line;
+  *default_safety = result.collision_detected;
+  *default_distance =
+    motion_utils::calcSignedArcLength(path.points, closest_idx, default_stop_line_idx);
+  *occlusion_safety = true;
+  *occlusion_distance =
+    motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
+  return;
+}
+
 void IntersectionModule::prepareRTCStatus(
   const DecisionResult & decision_result,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
@@ -584,6 +604,35 @@ void reactRTCApprovalByDecisionResult(
   return;
 }
 
+template <>
+void reactRTCApprovalByDecisionResult(
+  const bool rtc_default_approved, const bool rtc_occlusion_approved,
+  const IntersectionModule::TrafficLightArrowSolidOn & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  const double baselink2front, autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  StopReason * stop_reason, VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
+{
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
+    "TrafficLightArrowSolidOn, approval = (default: %d, occlusion: %d)", rtc_default_approved,
+    rtc_occlusion_approved);
+  if (!rtc_default_approved) {
+    const auto stop_line_idx = decision_result.stop_lines.default_stop_line;
+    planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
+    debug_data->collision_stop_wall_pose =
+      planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
+    {
+      tier4_planning_msgs::msg::StopFactor stop_factor;
+      stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
+      planning_utils::appendStopReason(stop_factor, stop_reason);
+      velocity_factor->set(
+        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
+        path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
+    }
+  }
+  return;
+}
+
 void reactRTCApproval(
   const bool rtc_default_approval, const bool rtc_occlusion_approval,
   const IntersectionModule::DecisionResult & decision_result,
@@ -772,6 +821,10 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const bool has_collision_with_margin =
     collision_state_machine_.getState() == StateMachine::State::STOP;
 
+  if (tl_arrow_solid_on) {
+    return TrafficLightArrowSolidOn{has_collision, intersection_stop_lines};
+  }
+
   // check occlusion on detection lane
   if (!occlusion_attention_divisions_) {
     occlusion_attention_divisions_ = util::generateDetectionLaneDivisions(
@@ -783,7 +836,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     std::pow(planner_param_.occlusion.max_vehicle_velocity_for_rss, 2) /
     (2 * planner_param_.occlusion.min_vehicle_brake_for_rss));
   const bool is_occlusion_cleared =
-    (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty())
+    (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty() && !tl_arrow_solid_on)
       ? isOcclusionCleared(
           *planner_data_->occupancy_grid, occlusion_attention_area, adjacent_lanelets,
           first_attention_area.value(), interpolated_path_info,
