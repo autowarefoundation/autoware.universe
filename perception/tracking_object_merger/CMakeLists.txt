@@ -27,6 +27,7 @@ ament_auto_add_library(mu_successive_shortest_path SHARED
 ament_auto_add_library(decorative_tracking_object_merger SHARED
   src/data_association/data_association.cpp
   src/decorative_tracker_merger.cpp
+  src/utils/utils.cpp
 )
 
 target_link_libraries(decorative_tracking_object_merger
