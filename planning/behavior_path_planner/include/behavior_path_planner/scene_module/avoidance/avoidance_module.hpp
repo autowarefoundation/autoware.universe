@@ -46,19 +46,14 @@ using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 class AvoidanceModule : public SceneModuleInterface
 {
 public:
-#ifdef USE_OLD_ARCHITECTURE
-  AvoidanceModule(
-    const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters);
-#else
   AvoidanceModule(
     const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
-#endif
 
   ModuleStatus updateState() override;
   ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
-  BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
+  BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -67,12 +62,10 @@ public:
   void updateData() override;
   void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
 
-#ifndef USE_OLD_ARCHITECTURE
   void updateModuleParams(const std::shared_ptr<AvoidanceParameters> & parameters)
   {
     parameters_ = parameters;
   }
-#endif
   std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
 private:
@@ -231,10 +224,9 @@ private:
 
   /**
    * @brief insert stop point in output path.
-   * @param flag. if it is true, the ego decelerates within accel/jerk constraints.
    * @param target path.
    */
-  void insertPrepareVelocity(const bool avoidable, ShiftedPath & shifted_path) const;
+  void insertPrepareVelocity(ShiftedPath & shifted_path) const;
 
   /**
    * @brief insert decel point in output path in order to yield. the ego decelerates within
@@ -323,20 +315,6 @@ private:
   // shift line generation
 
   /**
-   * @brief fill index and longitudinal.
-   * @param target shift line.
-   * @return processed shift line.
-   */
-  AvoidLine fillAdditionalInfo(const AvoidLine & shift_line) const;
-
-  /**
-   * @brief fill index and longitudinal.
-   * @param target shift lines.
-   * @return processed shift lines.
-   */
-  AvoidLineArray fillAdditionalInfo(const AvoidLineArray & shift_lines) const;
-
-  /**
    * @brief Calculate the shift points (start/end point, shift length) from the object lateral
    * and longitudinal positions in the Frenet coordinate. The jerk limit is also considered here.
    * @param avoidance data.
@@ -359,23 +337,6 @@ private:
    */
   AvoidLineArray applyPreProcessToRawShiftLines(
     AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
-
-  /*
-   * @brief Combine points A into B. If shift_line of A which has same object_id and
-   * similar shape is already in B, it will not be added into B.
-   * @param original shift lines.
-   * @param new shift lines.
-   * @return processed shift lines.
-   */
-  AvoidLineArray combineRawShiftLinesWithUniqueCheck(
-    const AvoidLineArray & base_lines, const AvoidLineArray & added_lines) const;
-
-  /*
-   * @brief fill gap between two shift lines.
-   * @param original shift lines.
-   * @return processed shift lines.
-   */
-  AvoidLineArray fillShiftLineGap(const AvoidLineArray & shift_lines) const;
 
   /*
    * @brief merge negative & positive shift lines.
@@ -414,26 +375,21 @@ private:
   AvoidLineArray findNewShiftLine(const AvoidLineArray & shift_lines) const;
 
   /*
-   * @brief calculate parent ids.
-   * @param parent shift lines.
-   * @param child shift lines.
-   * @return parent ids.
-   */
-  std::vector<size_t> calcParentIds(
-    const AvoidLineArray & parent_candidates, const AvoidLine & child) const;
-
-  /*
    * @brief add return shift line from ego position.
    * @param shift lines which the return shift is added.
-   * @param current shift lines.
    * Pick up the last shift point, which is the most farthest from ego, from the current candidate
    * avoidance points and registered points in the shifter. If the last shift length of the point is
    * non-zero, add a return-shift to center line from the point. If there is no shift point in
    * candidate avoidance points nor registered points, and base_shift > 0, add a return-shift to
    * center line from ego.
    */
-  void addReturnShiftLineFromEgo(
-    AvoidLineArray & sl_candidates, AvoidLineArray & current_raw_shift_lines) const;
+  void addReturnShiftLineFromEgo(AvoidLineArray & shift_lines) const;
+
+  /*
+   * @brief fill gap between two shift lines.
+   * @param original shift lines.
+   */
+  void fillShiftLineGap(AvoidLineArray & shift_lines) const;
 
   /*
    * @brief generate total shift line. total shift line has shift length and gradient array.
@@ -465,19 +421,6 @@ private:
    */
   void trimSimilarGradShiftLine(AvoidLineArray & shift_lines, const double threshold) const;
 
-  /**
-   * @brief remove short "return to center" shift point. ¯¯\_/¯¯　-> ¯¯¯¯¯¯
-   * @param input shift lines.
-   * @details
-   * Is the shift point for "return to center"?
-   *  - no : Do not trim anything.
-   *  - yes: Is it short distance enough to be removed?
-   *     - no : Do not trim anything.
-   *     - yes: Remove the "return" shift point.
-   *            Recalculate longitudinal distance and modify the shift point.
-   */
-  void trimMomentaryReturn(AvoidLineArray & shift_lines) const;
-
   /*
    * @brief trim invalid shift lines whose gradient it too large to follow.
    * @param target shift lines.
@@ -489,26 +432,6 @@ private:
    * @param target shift lines.
    */
   void trimSharpReturn(AvoidLineArray & shift_lines, const double threshold) const;
-
-  /*
-   * @brief sort shift line order based on their end longitudinal distance.
-   * @param target shift lines.
-   * @param re-calculate shift line start length from previous one's. (optional)
-   */
-  void alignShiftLinesOrder(
-    AvoidLineArray & shift_lines, const bool recalculate_start_length = true) const;
-
-  /**
-   * @brief fill index and longitudinal.
-   * @param target shift line.
-   */
-  void fillAdditionalInfoFromPoint(AvoidLineArray & shift_lines) const;
-
-  /**
-   * @brief fill index and pose.
-   * @param target shift line.
-   */
-  void fillAdditionalInfoFromLongitudinal(AvoidLineArray & shift_lines) const;
 
   /**
    * @brief add new shift line to path shifter if the RTC status is activated.
@@ -533,12 +456,6 @@ private:
   // generate output data
 
   /**
-   * @brief generate avoidance path from path shifter.
-   * @return avoidance path.
-   */
-  ShiftedPath generateAvoidancePath(PathShifter & shifter) const;
-
-  /**
    * @brief calculate turn signal infomation.
    * @param avoidance path.
    * @return turn signal command.
@@ -551,12 +468,6 @@ private:
   // NOTE: Assume that there is no situation where there is an object in the middle lane of more
   // than two lanes since which way to avoid is not obvious
   void generateExtendedDrivableArea(BehaviorModuleOutput & output) const;
-
-  /**
-   * @brief insert slow down point to prevent acceleration in avoidance maneuver.
-   * @param avoidance path.
-   */
-  void modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & shifted_path);
 
   /**
    * @brief fill debug markers.
@@ -647,23 +558,31 @@ private:
 
   /**
    * @brief reset registered shift lines.
-   * @param path shifter.
+   * @details reset only when the base offset is zero. Otherwise, sudden steering will be caused;
    */
-  void removeAllRegisteredShiftPoints(PathShifter & path_shifter)
+  void removeRegisteredShiftLines()
   {
+    constexpr double THRESHOLD = 0.1;
+    if (std::abs(path_shifter_.getBaseOffset()) > THRESHOLD) {
+      RCLCPP_INFO(getLogger(), "base offset is not zero. can't reset registered shift lines.");
+      return;
+    }
+
+    unlockNewModuleLaunch();
+
     current_raw_shift_lines_.clear();
     registered_raw_shift_lines_.clear();
-    path_shifter.setShiftLines(ShiftLineArray{});
+    path_shifter_.setShiftLines(ShiftLineArray{});
   }
 
   /**
    * @brief remove behind shift lines.
    * @param path shifter.
    */
-  void postProcess(PathShifter & path_shifter) const
+  void postProcess()
   {
-    const size_t nearest_idx = planner_data_->findEgoIndex(path_shifter.getReferencePath().points);
-    path_shifter.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
+    const size_t idx = planner_data_->findEgoIndex(path_shifter_.getReferencePath().points);
+    path_shifter_.removeBehindShiftLineAndSetBaseOffset(idx);
   }
 
   // misc functions
@@ -689,8 +608,6 @@ private:
   bool arrived_path_end_{false};
 
   std::shared_ptr<AvoidanceParameters> parameters_;
-
-  std::shared_ptr<double> ego_velocity_starting_avoidance_ptr_;
 
   helper::avoidance::AvoidanceHelper helper_;
 

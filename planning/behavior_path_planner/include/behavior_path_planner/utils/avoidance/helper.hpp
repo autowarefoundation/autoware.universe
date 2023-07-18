@@ -21,6 +21,7 @@
 #include <motion_utils/distance/distance.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 
 namespace behavior_path_planner::helper::avoidance
@@ -36,6 +37,13 @@ class AvoidanceHelper
 public:
   explicit AvoidanceHelper(const std::shared_ptr<AvoidanceParameters> & parameters)
   : parameters_{parameters}
+  {
+  }
+
+  AvoidanceHelper(
+    const std::shared_ptr<const PlannerData> & data,
+    const std::shared_ptr<AvoidanceParameters> & parameters)
+  : data_{data}, parameters_{parameters}
   {
   }
 
@@ -66,13 +74,6 @@ public:
     return std::max(getEgoSpeed(), parameters_->min_sharp_avoidance_speed);
   }
 
-  float getMaximumAvoidanceEgoSpeed() const
-  {
-    return parameters_->target_velocity_matrix.at(parameters_->col_size - 1);
-  }
-
-  float getMinimumAvoidanceEgoSpeed() const { return parameters_->target_velocity_matrix.front(); }
-
   double getNominalPrepareDistance() const
   {
     const auto & p = parameters_;
@@ -95,7 +96,7 @@ public:
   {
     const auto & p = parameters_;
     const auto distance_by_jerk = PathShifter::calcLongitudinalDistFromJerk(
-      shift_length, p->nominal_lateral_jerk, getMinimumAvoidanceEgoSpeed());
+      shift_length, p->max_lateral_jerk, p->min_sharp_avoidance_speed);
 
     return std::max(p->min_avoidance_distance, distance_by_jerk);
   }
@@ -156,6 +157,26 @@ public:
                        : std::max(shift_length, getRightShiftBound());
   }
 
+  void alignShiftLinesOrder(AvoidLineArray & lines, const bool align_shift_length = true) const
+  {
+    if (lines.empty()) {
+      return;
+    }
+
+    std::sort(lines.begin(), lines.end(), [](auto a, auto b) {
+      return a.end_longitudinal < b.end_longitudinal;
+    });
+
+    if (!align_shift_length) {
+      return;
+    }
+
+    lines.front().start_shift_length = getEgoLinearShift();
+    for (size_t i = 1; i < lines.size(); ++i) {
+      lines.at(i).start_shift_length = lines.at(i - 1).end_shift_length;
+    }
+  }
+
   AvoidLine getMainShiftLine(const AvoidLineArray & lines) const
   {
     const auto itr =
@@ -170,22 +191,21 @@ public:
     return *itr;
   }
 
-  boost::optional<double> getFeasibleDecelDistance(const double target_velocity) const
+  double getFeasibleDecelDistance(
+    const double target_velocity, const bool use_hard_constraints = true) const
   {
+    const auto & p = parameters_;
     const auto & a_now = data_->self_acceleration->accel.accel.linear.x;
-    const auto & a_lim = parameters_->max_deceleration;
-    const auto & j_lim = parameters_->max_jerk;
-    return calcDecelDistWithJerkAndAccConstraints(
+    const auto & a_lim = use_hard_constraints ? p->max_deceleration : p->nominal_deceleration;
+    const auto & j_lim = use_hard_constraints ? p->max_jerk : p->nominal_jerk;
+    const auto ret = calcDecelDistWithJerkAndAccConstraints(
       getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
-  }
 
-  boost::optional<double> getMildDecelDistance(const double target_velocity) const
-  {
-    const auto & a_now = data_->self_acceleration->accel.accel.linear.x;
-    const auto & a_lim = parameters_->nominal_deceleration;
-    const auto & j_lim = parameters_->nominal_jerk;
-    return calcDecelDistWithJerkAndAccConstraints(
-      getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
+    if (!!ret) {
+      return ret.get();
+    }
+
+    return std::numeric_limits<double>::max();
   }
 
   bool isInitialized() const

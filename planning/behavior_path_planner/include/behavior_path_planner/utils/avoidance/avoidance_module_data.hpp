@@ -48,9 +48,17 @@ using geometry_msgs::msg::TransformStamped;
 
 struct ObjectParameter
 {
-  bool enable{false};
+  bool is_target{false};
+
+  double moving_speed_threshold{0.0};
+
+  double moving_time_threshold{1.0};
+
+  double max_expand_ratio{0.0};
 
   double envelope_buffer_margin{0.0};
+
+  double avoid_margin_lateral{1.0};
 
   double safety_buffer_lateral{1.0};
 
@@ -73,11 +81,11 @@ struct AvoidanceParameters
   double detection_area_left_expand_dist = 1.0;
 
   // enable avoidance to be perform only in lane with same direction
-  bool enable_avoidance_over_same_direction{true};
+  bool use_adjacent_lane{true};
 
   // enable avoidance to be perform in opposite lane direction
   // to use this, enable_avoidance_over_same_direction need to be set to true.
-  bool enable_avoidance_over_opposite_direction{true};
+  bool use_opposite_lane{true};
 
   // enable update path when if detected objects on planner data is gone.
   bool enable_update_path_when_object_is_gone{false};
@@ -100,6 +108,9 @@ struct AvoidanceParameters
   // use hatched road markings for avoidance
   bool use_hatched_road_markings{false};
 
+  // use intersection area for avoidance
+  bool use_intersection_areas{false};
+
   // constrains
   bool use_constraints_for_decel{false};
 
@@ -115,21 +126,27 @@ struct AvoidanceParameters
   // comfortable jerk
   double nominal_jerk;
 
+  // To prevent large acceleration while avoidance.
+  double max_acceleration;
+
+  // upper distance for envelope polygon expansion.
+  double upper_distance_for_polygon_expansion;
+
+  // lower distance for envelope polygon expansion.
+  double lower_distance_for_polygon_expansion;
+
   // Vehicles whose distance to the center of the path is
   // less than this will not be considered for avoidance.
   double threshold_distance_object_is_on_center;
 
-  // vehicles with speed greater than this will not be avoided
-  double threshold_speed_object_is_stopped;
-
   // execute only when there is no intersection behind of the stopped vehicle.
-  double object_ignore_distance_traffic_light;
+  double object_ignore_section_traffic_light_in_front_distance;
 
   // execute only when there is no crosswalk near the stopped vehicle.
-  double object_ignore_distance_crosswalk_forward;
+  double object_ignore_section_crosswalk_in_front_distance;
 
   // execute only when there is no crosswalk near the stopped vehicle.
-  double object_ignore_distance_crosswalk_backward;
+  double object_ignore_section_crosswalk_behind_distance;
 
   // distance to avoid object detection
   double object_check_forward_distance;
@@ -147,14 +164,8 @@ struct AvoidanceParameters
   // minimum road shoulder width. maybe 0.5 [m]
   double object_check_min_road_shoulder_width;
 
-  // vehicles which is moving more than this parameter will not be avoided
-  double threshold_time_object_is_moving;
-
   // force avoidance
   double threshold_time_force_avoidance_for_stopped_vehicle;
-
-  // we want to keep this lateral margin when avoiding
-  double lateral_collision_margin;
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
@@ -182,6 +193,9 @@ struct AvoidanceParameters
   // transit hysteresis (unsafe to safe)
   double safety_check_hysteresis_factor;
 
+  // don't output new candidate path if the offset between ego and path is larger than this.
+  double safety_check_ego_offset;
+
   // keep target velocity in yield maneuver
   double yield_velocity;
 
@@ -190,6 +204,9 @@ struct AvoidanceParameters
 
   // maximum stop distance
   double stop_max_distance;
+
+  // stop buffer
+  double stop_buffer;
 
   // start avoidance after this time to avoid sudden path change
   double prepare_time;
@@ -211,6 +228,12 @@ struct AvoidanceParameters
   // distance for avoidance. Need a sharp avoidance path to avoid the object.
   double min_sharp_avoidance_speed;
 
+  // minimum slow down speed
+  double min_slow_down_speed;
+
+  // slow down speed buffer
+  double buf_slow_down_speed;
+
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
   double road_shoulder_safety_margin{1.0};
@@ -228,18 +251,13 @@ struct AvoidanceParameters
   // if the avoidance path exceeds this lateral jerk, it will be not used anymore.
   double max_lateral_jerk;
 
+  // To prevent large acceleration while avoidance.
+  double max_lateral_acceleration;
+
   // For the compensation of the detection lost. Once an object is observed, it is registered and
   // will be used for planning from the next time. If the object is not observed, it counts up the
   // lost_count and the registered object will be removed when the count exceeds this max count.
   double object_last_seen_threshold;
-
-  // For velocity planning to avoid acceleration during avoidance.
-  // Speeds smaller than this are not inserted.
-  double min_avoidance_speed_for_acc_prevention;
-
-  // To prevent large acceleration while avoidance. The max velocity is limited with this
-  // acceleration.
-  double max_avoidance_acceleration;
 
   // The avoidance path generation is performed when the shift distance of the
   // avoidance points is greater than this threshold.
@@ -308,6 +326,9 @@ struct ObjectData  // avoidance target
   // lateral shiftable ratio
   double shiftable_ratio{0.0};
 
+  // distance factor for perception noise (0.0~1.0)
+  double distance_factor{0.0};
+
   // count up when object disappeared. Removed when it exceeds threshold.
   rclcpp::Time last_seen;
   double lost_time{0.0};
@@ -338,14 +359,20 @@ struct ObjectData  // avoidance target
   // to intersection
   double to_stop_factor_distance{std::numeric_limits<double>::infinity()};
 
+  // to stop line distance
+  double to_stop_line{std::numeric_limits<double>::infinity()};
+
   // if lateral margin is NOT enough, the ego must avoid the object.
   bool avoid_required{false};
 
-  // unavoidable reason
-  std::string reason{""};
-
   // is avoidable by behavior module
   bool is_avoidable{false};
+
+  // is stoppable under the constraints
+  bool is_stoppable{false};
+
+  // unavoidable reason
+  std::string reason{""};
 
   // lateral avoid margin
   // NOTE: If margin is less than the minimum margin threshold, boost::none will be set.
