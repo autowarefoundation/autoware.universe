@@ -23,14 +23,14 @@ The manager launch crosswalk scene modules when the reference path conflicts cro
 
 #### Parameters for stop position
 
-The crosswalk module determines a stop position at least `stop_margin` away from the object.
+The crosswalk module determines a stop position at least `stop_distance_from_object` away from the object.
 
 <figure markdown>
-  ![stop_margin](docs/stop_margin.svg){width=1000}
+  ![stop_distance_from_object](docs/stop_distance_from_object.svg){width=1000}
   <figcaption>stop margin</figcaption>
 </figure>
 
-The stop line is the reference point for the stopping position of the vehicle, but if there is no stop line in front of the crosswalk, the position `stop_line_distance` meters before the crosswalk is the virtual stop line for the vehicle. Then, if the stop position determined from `stop_margin` exists in front of the stop line determined from the HDMap or `stop_line_distance`, the actual stop position is determined according to `stop_margin` in principle, and vice versa.
+The stop line is the reference point for the stopping position of the vehicle, but if there is no stop line in front of the crosswalk, the position `stop_distance_from_crosswalk` meters before the crosswalk is the virtual stop line for the vehicle. Then, if the stop position determined from `stop_distance_from_object` exists in front of the stop line determined from the HDMap or `stop_distance_from_crosswalk`, the actual stop position is determined according to `stop_distance_from_object` in principle, and vice versa.
 
 <figure markdown>
   ![stop_line](docs/stop_line.svg){width=700}
@@ -38,25 +38,25 @@ The stop line is the reference point for the stopping position of the vehicle, b
 </figure>
 
 <figure markdown>
-  ![stop_line_distance](docs/stop_line_distance.svg){width=700}
+  ![stop_distance_from_crosswalk](docs/stop_distance_from_crosswalk.svg){width=700}
   <figcaption>virtual stop point</figcaption>
 </figure>
 
-On the other hand, if pedestrian (bicycle) is crossing **wide** crosswalks seen in scramble intersections, and the pedestrian position is more than `stop_line_margin` meters away from the stop line, the actual stop position is determined to be `stop_margin` and pedestrian position, not at the stop line.
+On the other hand, if pedestrian (bicycle) is crossing **wide** crosswalks seen in scramble intersections, and the pedestrian position is more than `far_object_threshold` meters away from the stop line, the actual stop position is determined to be `stop_distance_from_object` and pedestrian position, not at the stop line.
 
 <figure markdown>
-  ![stop_line_margin](docs/stop_line_margin.svg){width=1000}
+  ![far_object_threshold](docs/far_object_threshold.svg){width=1000}
   <figcaption>stop at wide crosswalk</figcaption>
 </figure>
 
 See the workflow in algorithms section.
 
-| Parameter                 | Type   | Description                                                                                                                                                 |
-| ------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stop_margin`             | double | [m] the vehicle decelerates to be able to stop in front of object with margin                                                                               |
-| `stop_line_distance`      | double | [m] make stop line away from crosswalk when no explicit stop line exists                                                                                    |
-| `stop_line_margin`        | double | [m] if objects cross X meters behind the stop line, the stop position is determined according to the object position (stop_margin meters before the object) |
-| `stop_position_threshold` | double | [m] threshold for check whether the vehicle stop in front of crosswalk                                                                                      |
+| Parameter                      | Type   | Description                                                                                                                                                               |
+| ------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stop_distance_from_object`    | double | [m] the vehicle decelerates to be able to stop in front of object with margin                                                                                             |
+| `stop_distance_from_crosswalk` | double | [m] make stop line away from crosswalk when no explicit stop line exists                                                                                                  |
+| `far_object_threshold`         | double | [m] if objects cross X meters behind the stop line, the stop position is determined according to the object position (stop_distance_from_object meters before the object) |
+| `stop_position_threshold`      | double | [m] threshold for check whether the vehicle stop in front of crosswalk                                                                                                    |
 
 #### Parameters for ego velocity
 
@@ -97,9 +97,9 @@ Also see algorithm section.
 
 #### Parameters for input data
 
-| Parameter          | Type   | Description                                    |
-| ------------------ | ------ | ---------------------------------------------- |
-| `tl_state_timeout` | double | [s] timeout threshold for traffic light signal |
+| Parameter                     | Type   | Description                                    |
+| ----------------------------- | ------ | ---------------------------------------------- |
+| `traffic_light_state_timeout` | double | [s] timeout threshold for traffic light signal |
 
 #### Parameters for target area & object
 
@@ -131,15 +131,15 @@ The stop position is determined by the existence of the stop line defined by the
 
 ```plantuml
 start
-:calculate stop point from **stop_margin** (POINT-1);
+:calculate stop point from **stop_distance_from_object** (POINT-1);
 if (There is the stop line in front of the crosswalk?) then (yes)
   :calculate stop point from stop line (POINT-2.1);
 else (no)
-  :calculate stop point from **stop_line_distance** (POINT-2.2);
+  :calculate stop point from **stop_distance_from_crosswalk** (POINT-2.2);
 endif
 if (The distance ego to **POINT-1** is shorter than the distance ego to **POINT-2**) then (yes)
   :ego stops at POINT-1;
-else if (The distance ego to **POINT-1** is longer than the distance ego to **POINT-2** + **stop_line_margin**) then (yes)
+else if (The distance ego to **POINT-1** is longer than the distance ego to **POINT-2** + **far_object_threshold**) then (yes)
   :ego stops at POINT-1;
 else (no)
   :ego stops at POINT-2;

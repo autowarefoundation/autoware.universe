@@ -37,9 +37,10 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   cp.show_processing_time = node.declare_parameter<bool>(ns + ".show_processing_time");
 
   // param for stop position
-  cp.stop_line_distance = node.declare_parameter<double>(ns + ".stop_line_distance");
-  cp.stop_margin = node.declare_parameter<double>(ns + ".stop_margin");
-  cp.stop_line_margin = node.declare_parameter<double>(ns + ".stop_line_margin");
+  cp.stop_distance_from_crosswalk =
+    node.declare_parameter<double>(ns + ".stop_distance_from_crosswalk");
+  cp.stop_distance_from_object = node.declare_parameter<double>(ns + ".stop_distance_from_object");
+  cp.far_object_threshold = node.declare_parameter<double>(ns + ".far_object_threshold");
   cp.stop_position_threshold = node.declare_parameter<double>(ns + ".stop_position_threshold");
 
   // param for ego velocity
@@ -66,7 +67,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".ego_yield_query_stop_duration");
 
   // param for input data
-  cp.tl_state_timeout = node.declare_parameter<double>(ns + ".tl_state_timeout");
+  cp.traffic_light_state_timeout =
+    node.declare_parameter<double>(ns + ".traffic_light_state_timeout");
 
   // param for target area & object
   cp.crosswalk_attention_range = node.declare_parameter<double>(ns + ".crosswalk_attention_range");

@@ -63,9 +63,9 @@ public:
   {
     bool show_processing_time;
     // param for stop position
-    double stop_margin;
-    double stop_line_distance;
-    double stop_line_margin;
+    double stop_distance_from_object;
+    double stop_distance_from_crosswalk;
+    double far_object_threshold;
     double stop_position_threshold;
     // param for ego velocity
     float min_slow_down_velocity;
@@ -85,7 +85,7 @@ public:
     double max_yield_timeout;
     double ego_yield_query_stop_duration;
     // param for input data
-    double tl_state_timeout;
+    double traffic_light_state_timeout;
     // param for target area & object
     double crosswalk_attention_range;
     bool look_unknown;
@@ -193,7 +193,7 @@ private:
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
     const std::optional<geometry_msgs::msg::Pose> & default_stop_pose);
 
-  std::optional<StopFactor> checkStopForStuckedVehicles(
+  std::optional<StopFactor> checkStopForStuckVehicles(
     const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
     const std::optional<geometry_msgs::msg::Pose> & stop_pose) const;
@@ -205,7 +205,7 @@ private:
   std::optional<StopFactor> getNearestStopFactor(
     const PathWithLaneId & ego_path,
     const std::optional<StopFactor> & stop_factor_for_crosswalk_users,
-    const std::optional<StopFactor> & stop_factor_for_stucked_vehicles);
+    const std::optional<StopFactor> & stop_factor_for_stuck_vehicles);
 
   void planGo(PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor);
 
