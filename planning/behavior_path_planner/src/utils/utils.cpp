@@ -1353,6 +1353,10 @@ void generateDrivableArea(
   const auto route_handler = planner_data->route_handler;
   constexpr double overlap_threshold = 0.01;
 
+  if (path.points.empty()) {
+    return;
+  }
+
   auto addPoints =
     [](const lanelet::ConstLineString3d & points, std::vector<geometry_msgs::msg::Point> & bound) {
       for (const auto & bound_p : points) {
