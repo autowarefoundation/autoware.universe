@@ -344,8 +344,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter<double>("lane_change.minimum_lane_changing_velocity");
   p.minimum_lane_changing_velocity =
     std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
-  p.minimum_prepare_length =
-    0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
   p.lane_change_finish_judge_buffer =
     declare_parameter<double>("lane_change.lane_change_finish_judge_buffer");
 
@@ -573,7 +571,13 @@ void BehaviorPathPlannerNode::run()
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
   stop_reason_publisher_->publish(planner_manager_->getStopReasons());
 
-  if (output.modified_goal) {
+  // publish modified goal only when it is updated
+  if (
+    output.modified_goal &&
+    /* has changed modified goal */ (
+      !planner_data_->prev_modified_goal || tier4_autoware_utils::calcDistance2d(
+                                              planner_data_->prev_modified_goal->pose.position,
+                                              output.modified_goal->pose.position) > 0.01)) {
     PoseWithUuidStamped modified_goal = *(output.modified_goal);
     modified_goal.header.stamp = path->header.stamp;
     planner_data_->prev_modified_goal = modified_goal;

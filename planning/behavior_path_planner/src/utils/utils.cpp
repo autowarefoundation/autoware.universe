@@ -2707,12 +2707,26 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
   const double forward_length)
 {
   auto lanes = getCurrentLanes(planner_data);
+  if (lanes.empty()) return lanes;
 
   double forward_length_sum = 0.0;
   double backward_length_sum = 0.0;
 
+  const auto is_loop = [&](const auto & target_lane) {
+    auto it = std::find_if(lanes.begin(), lanes.end(), [&](const lanelet::ConstLanelet & lane) {
+      return lane.id() == target_lane.id();
+    });
+
+    return it != lanes.end();
+  };
+
   while (backward_length_sum < backward_length) {
     auto extended_lanes = extendPrevLane(planner_data->route_handler, lanes);
+
+    if (extended_lanes.empty() || is_loop(extended_lanes.front())) {
+      return lanes;
+    }
+
     if (extended_lanes.size() > lanes.size()) {
       backward_length_sum += lanelet::utils::getLaneletLength2d(extended_lanes.front());
     } else {
@@ -2723,6 +2737,11 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 
   while (forward_length_sum < forward_length) {
     auto extended_lanes = extendNextLane(planner_data->route_handler, lanes);
+
+    if (extended_lanes.empty() || is_loop(extended_lanes.back())) {
+      return lanes;
+    }
+
     if (extended_lanes.size() > lanes.size()) {
       forward_length_sum += lanelet::utils::getLaneletLength2d(extended_lanes.back());
     } else {
@@ -2833,12 +2852,15 @@ double calcMinimumLaneChangeLength(
   const double & max_lateral_acc = lat_acc.second;
   const double & lateral_jerk = common_param.lane_changing_lateral_jerk;
   const double & finish_judge_buffer = common_param.lane_change_finish_judge_buffer;
+  const auto prepare_length = 0.5 * common_param.max_acc *
+                              common_param.lane_change_prepare_duration *
+                              common_param.lane_change_prepare_duration;
 
   double accumulated_length = length_to_intersection;
   for (const auto & shift_interval : shift_intervals) {
     const double t =
       PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
-    accumulated_length += vel * t + common_param.minimum_prepare_length + finish_judge_buffer;
+    accumulated_length += vel * t + prepare_length + finish_judge_buffer;
   }
   accumulated_length +=
     common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);
