@@ -15,8 +15,6 @@
     "**/tools/**",
     "**/vehicles/**"
   ],
-  "ignoreRegExpList": [
-  ],
-  "words": [
-  ]
+  "ignoreRegExpList": [],
+  "words": []
 }
