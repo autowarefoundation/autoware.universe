@@ -83,6 +83,7 @@ private:
   std::map<uint8_t, int> max_search_distance_for_divider_;
 
   bool ignore_unknown_tracker_;
+  bool use_fast_euclidean_cluster_;
 
   void setMaxSearchRange();
 

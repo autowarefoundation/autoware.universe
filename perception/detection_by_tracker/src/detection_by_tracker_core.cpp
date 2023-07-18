@@ -158,13 +158,14 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
     "~/output", rclcpp::QoS{1});
 
   ignore_unknown_tracker_ = declare_parameter<bool>("ignore_unknown_tracker", true);
+  use_fast_euclidean_cluster_ = declare_parameter<bool>("use_fast_euclidean_cluster", false);
 
   // set maximum search setting for merger/divider
   setMaxSearchRange();
 
   shape_estimator_ = std::make_shared<ShapeEstimator>(true, true);
   cluster_ = std::make_shared<euclidean_cluster::VoxelGridBasedEuclideanCluster>(
-    false, 10, 10000, 0.7, 0.3, 0);
+    false, 10, 10000, 0.7, 0.3, 0, use_fast_euclidean_cluster_);
   debugger_ = std::make_shared<Debugger>(this);
 }
 
@@ -319,7 +320,7 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
 
   // initialize clustering parameters
   euclidean_cluster::VoxelGridBasedEuclideanCluster cluster(
-    false, 4, 10000, initial_cluster_range, initial_voxel_size, 0);
+    false, 4, 10000, initial_cluster_range, initial_voxel_size, 0, use_fast_euclidean_cluster_);
 
   // convert to pcl
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cluster(new pcl::PointCloud<pcl::PointXYZ>);
