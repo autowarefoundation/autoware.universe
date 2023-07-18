@@ -186,13 +186,13 @@ private:
     const PathWithLaneId & ego_path,
     const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
 
-  boost::optional<StopFactor> stopForCrosswalkUsers(
+  boost::optional<StopFactor> checkStopForCrosswalkUsers(
     const PathWithLaneId & ego_path, const PathWithLaneId & sparse_resample_path,
     const boost::optional<std::pair<geometry_msgs::msg::Point, double>> & p_stop_line,
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
     const boost::optional<geometry_msgs::msg::Pose> & default_stop_pose);
 
-  boost::optional<StopFactor> stopForStuckedVehicles(
+  boost::optional<StopFactor> checkStopForStuckedVehicles(
     const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
     const boost::optional<geometry_msgs::msg::Pose> & stop_pose) const;
