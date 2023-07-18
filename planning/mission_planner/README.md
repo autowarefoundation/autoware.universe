@@ -24,7 +24,7 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 | `enable_correct_goal_pose`  | bool   | Enabling correction of goal pose according to the closest lanelet orientation                                    |
 | `reroute_time_threshold`    | double | If the time to the rerouting point at the current velocity is greater than this threshold, rerouting is possible |
 | `minimum_reroute_length`    | double | Minimum Length for publishing a new route                                                                        |
-| `consider_no_drivable_lanes`| bool   | This flag is for considering no_drivable_lanes in planning or not. Set to true when behavior_velocity_planner::NoDrivableLaneModulePlugin in uncommented in autoware_launch |
+| `consider_no_drivable_lanes`| bool   | This flag is for considering no_drivable_lanes in planning or not.                                               |
 
 
 ### Services
