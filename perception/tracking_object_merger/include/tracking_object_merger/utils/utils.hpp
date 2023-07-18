@@ -21,8 +21,10 @@
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_object.hpp>
+#include <autoware_auto_perception_msgs/msg/tracked_object_kinematics.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
@@ -31,6 +33,8 @@
 #include <tuple>
 #include <vector>
 
+using autoware_auto_perception_msgs::msg::TrackedObject;
+using autoware_auto_perception_msgs::msg::TrackedObjects;
 namespace utils
 {
 enum MSG_COV_IDX {
@@ -72,9 +76,6 @@ enum MSG_COV_IDX {
   YAW_YAW = 35
 };
 
-using autoware_auto_perception_msgs::msg::TrackedObject;
-using autoware_auto_perception_msgs::msg::TrackedObjects;
-
 // linear interpolation for tracked objects
 TrackedObject linearInterpolationForTrackedObject(
   const TrackedObject & obj1, const TrackedObject & obj2);
@@ -87,5 +88,27 @@ TrackedObjects interpolateTrackedObjects(
   const TrackedObjects & objects1, const TrackedObjects & objects2, std_msgs::msg::Header header);
 
 }  // namespace utils
+
+namespace merger_utils
+{
+// merge policy
+enum MergePolicy : int { SKIP = 0, OVERWRITE = 1, FUSION = 2 };
+
+// object kinematics merger
+autoware_auto_perception_msgs::msg::TrackedObjectKinematics objectKinematicsMerger(
+  const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy);
+
+// object classification merger
+TrackedObject objectClassificationMerger(
+  const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy);
+
+// probability merger
+double probabilityMerger(const double main_prob, const double sub_prob, const MergePolicy policy);
+
+// shape merger
+autoware_auto_perception_msgs::msg::Shape shapeMerger(
+  const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy);
+
+}  // namespace merger_utils
 
 #endif  // TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_

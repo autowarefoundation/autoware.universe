@@ -23,10 +23,10 @@
 #include <string>
 #include <unordered_map>
 
-namespace utils
-{
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
+namespace utils
+{
 
 /**
  * @brief linear interpolation for tracked object
@@ -207,27 +207,111 @@ TrackedObjects interpolateTrackedObjects(
     }
   }
 
-  // // search for objects
-  // for (const auto & obj1 : objects1.objects) {
-  //   for (const auto & obj2 : objects2.objects) {
-  //     if (obj1.object_id == obj2.object_id) {
-  //       // if id is same, interpolate
-  //       const auto interp_objects = linearInterpolationForTrackedObject(obj1, obj2, weight);
-  //       output_objects.objects.push_back(interp_objects);
-  //       selected_objects1[obj1.object_id] = true;
-  //       // selected_objects2[obj2.object_id] = true;
-  //       break;
-  //     }
-  //   }
-  //   if (selected_objects1[obj1.object_id] == false) {
-  //     // if obj1 is not selected, predict future
-  //     const auto pred_objects = predictPastOrFutureTrackedObject(obj1, dt1);
-  //     output_objects.objects.push_back(pred_objects);
-  //   }
-  // }
-  // currently not append objects2 which is future only object
-
   return output_objects;
 }
 
 }  // namespace utils
+
+namespace merger_utils
+{
+
+double mean(const double a, const double b)
+{
+  return (a + b) / 2.0;
+}
+
+// object kinematics merger
+autoware_auto_perception_msgs::msg::TrackedObjectKinematics objectKinematicsMerger(
+  const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy)
+{
+  autoware_auto_perception_msgs::msg::TrackedObjectKinematics output_kinematics;
+  // copy main object at first
+  output_kinematics = main_obj.kinematics;
+  (void)sub_obj;
+  (void)policy;
+  return output_kinematics;
+}
+
+// object classification merger
+TrackedObject objectClassificationMerger(
+  const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy)
+{
+  if (policy == MergePolicy::SKIP) {
+    return main_obj;
+  } else if (policy == MergePolicy::OVERWRITE) {
+    return sub_obj;
+  } else if (policy == MergePolicy::FUSION) {
+    // merge two std::vector into one
+    TrackedObject dummy_obj;
+    dummy_obj.classification = main_obj.classification;
+    for (const auto & sub_class : sub_obj.classification) {
+      dummy_obj.classification.push_back(sub_class);
+    }
+    return dummy_obj;
+  } else {
+    std::cerr << "unknown merge policy in objectClassificationMerger function." << std::endl;
+    return main_obj;
+  }
+}
+
+// probability merger
+double probabilityMerger(const double main_prob, const double sub_prob, const MergePolicy policy)
+{
+  if (policy == MergePolicy::SKIP) {
+    return main_prob;
+  } else if (policy == MergePolicy::OVERWRITE) {
+    return sub_prob;
+  } else if (policy == MergePolicy::FUSION) {
+    return mean(main_prob, sub_prob);
+  } else {
+    std::cerr << "unknown merge policy in probabilityMerger function." << std::endl;
+    return main_prob;
+  }
+}
+
+// shape merger
+autoware_auto_perception_msgs::msg::Shape shapeMerger(
+  const autoware_auto_perception_msgs::msg::Shape & main_obj_shape,
+  const autoware_auto_perception_msgs::msg::Shape & sub_obj_shape, const MergePolicy policy)
+{
+  autoware_auto_perception_msgs::msg::Shape output_shape;
+  // copy main object at first
+  output_shape = main_obj_shape;
+
+  if (main_obj_shape.type != sub_obj_shape.type) {
+    // if shape type is different, return main object
+    return output_shape;
+  }
+
+  if (policy == MergePolicy::SKIP) {
+    return output_shape;
+  } else if (policy == MergePolicy::OVERWRITE) {
+    return sub_obj_shape;
+  } else if (policy == MergePolicy::FUSION) {
+    // write down fusion method for each shape type
+    if (main_obj_shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+      // if shape type is bounding box, merge bounding box
+      output_shape.dimensions.x = mean(main_obj_shape.dimensions.x, sub_obj_shape.dimensions.x);
+      output_shape.dimensions.y = mean(main_obj_shape.dimensions.y, sub_obj_shape.dimensions.y);
+      output_shape.dimensions.z = mean(main_obj_shape.dimensions.z, sub_obj_shape.dimensions.z);
+      return output_shape;
+    } else if (main_obj_shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+      // if shape type is cylinder, merge cylinder
+      // (TODO) implement
+      return output_shape;
+    } else if (main_obj_shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+      // if shape type is polygon, merge polygon
+      // (TODO)
+      return output_shape;
+    } else {
+      // when type is unknown, print warning and do nothing
+      std::cerr << "unknown shape type in shapeMerger function." << std::endl;
+      return output_shape;
+    }
+  } else {
+    std::cerr << "unknown merge policy in shapeMerger function." << std::endl;
+    return output_shape;
+  }
+}
+
+}  // namespace merger_utils
