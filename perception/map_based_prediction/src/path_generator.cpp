@@ -207,7 +207,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
   // TODO(ktro2828): check whether path is valid (collision, speed, acceleration, curvature)
   const double max_acceleration = current_point.s_acc;
   const double max_velocity = current_point.s_vel + max_acceleration * time_horizon_;
-  const auto frenet_predicted_path = get_best_path(frenet_paths, max_velocity, max_acceleration);
+  const auto & frenet_predicted_path = get_best_path(frenet_paths, max_velocity, max_acceleration);
 
   // Step3. Interpolate Reference Path for converting predicted path coordinate
   const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);
@@ -444,7 +444,7 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
   return frenet_point;
 }
 
-FrenetPath & PathGenerator::get_best_path(
+const FrenetPath & PathGenerator::get_best_path(
   std::vector<FrenetPath> & frenet_paths, const double max_velocity,
   const double max_acceleration) const
 {

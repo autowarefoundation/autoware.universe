@@ -635,7 +635,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   // weights of path generation cost
   PathGenerator::CostParams cost_params;
   {
-    cost_params.KJ = declare_parameter<double>("path_cost_params.jerk", 0.1);
+    cost_params.KJ = declare_parameter<double>("path_cost_params.jerk", 0.001);
     cost_params.KT = declare_parameter<double>("path_cost_params.time", 0.1);
     cost_params.KD = declare_parameter<double>("path_cost_params.position", 1.0);
     cost_params.K_LAT = declare_parameter<double>("path_cost_params.lateral", 1.0);

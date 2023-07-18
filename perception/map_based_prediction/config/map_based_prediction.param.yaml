@@ -27,7 +27,7 @@
       num_continuous_state_transition: 3
 
     path_cost_params:
-      jerk: 0.1
+      jerk: 0.001
       time: 0.1
       position: 1.0
       lateral: 1.0
