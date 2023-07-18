@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "motion_utils/resample/resample_utils.hpp"
-
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <interpolation/linear_interpolation.hpp>
 #include <interpolation/spline_interpolation.hpp>
@@ -46,9 +44,6 @@ bool splineInterpolate(
     return false;
   }
 
-  if (!resample_utils::validate_arguments(input.points, interval)) {
-    RCLCPP_ERROR(logger, "intersection: input path is not valid");
-  }
   output = motion_utils::resamplePath(input, interval, false, true, true, false);
 
   return true;
