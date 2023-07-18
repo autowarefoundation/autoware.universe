@@ -74,6 +74,7 @@ inline bool isUnknown(int label2d)
 PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>("pointpainting_fusion", options)
 {
+  omp_num_threads_ = this->declare_parameter<int>("omp_num_threads", 1);
   const float score_threshold =
     static_cast<float>(this->declare_parameter<double>("score_threshold", 0.4));
   const float circle_nms_dist_threshold =
@@ -284,6 +285,7 @@ dc   | dc dc dc  dc ||zc|
   int iterations = transformed_pointcloud.data.size() / transformed_pointcloud.point_step;
   // iterate points
   // Requires 'OMP_NUM_THREADS=N'
+  omp_set_num_threads(omp_num_threads_);
 #pragma omp parallel for
   for (int i = 0; i < iterations; i++) {
     int stride = p_step * i;
@@ -312,9 +314,9 @@ dc   | dc dc dc  dc ||zc|
         }
       }
 #if 0
-      //Parallelizing loop don't support push_back
+      // Parallelizing loop don't support push_back
       if (debugger_) {
-	debug_image_points.push_back(normalized_projected_point);
+        debug_image_points.push_back(normalized_projected_point);
       }
 #endif
     }

@@ -53,6 +53,7 @@ protected:
 
   std::vector<double> tan_h_;  // horizontal field of view
 
+  int omp_num_threads_{1};
   float score_threshold_{0.0};
   std::vector<std::string> class_names_;
   std::map<std::string, float> class_index_;

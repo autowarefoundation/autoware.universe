@@ -13,3 +13,5 @@
     iou_nms_target_class_names: ["CAR"]
     iou_nms_search_distance_2d: 10.0
     iou_nms_threshold: 0.1
+    # omp params
+    omp_num_threads: 1
