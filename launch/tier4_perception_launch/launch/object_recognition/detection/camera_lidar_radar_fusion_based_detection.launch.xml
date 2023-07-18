@@ -68,13 +68,13 @@
     <include file="$(find-pkg-share perception_launch)/launch/object_recognition/detection/radar_based_detection.launch.xml">
       <arg name="input/radar" value="$(var input/radar)"/>
       <arg name="output/objects" value="far_objects"/>
-      <arg name="filter/angle_threshold" value="1.0472" />
-      <arg name="filter/velocity_threshold" value="3.0" />
-      <arg name="split/velocity_threshold" value="4.5" />
+      <arg name="filter/angle_threshold" value="1.0472"/>
+      <arg name="filter/velocity_threshold" value="3.0"/>
+      <arg name="split/velocity_threshold" value="4.5"/>
       <arg name="split_range" value="70.0"/>
-      <arg name="clustering/angle_threshold" value="0.174" />
-      <arg name="clustering/distance_threshold" value="10.0" />
-      <arg name="clustering/velocity_threshold" value="4.0" />
+      <arg name="clustering/angle_threshold" value="0.174"/>
+      <arg name="clustering/distance_threshold" value="10.0"/>
+      <arg name="clustering/velocity_threshold" value="4.0"/>
     </include>
   </group>
 
@@ -84,5 +84,4 @@
     <arg name="input/radars" value="radar/noise_filtered_objects"/>
     <arg name="output/objects" value="objects"/>
   </include>
-
 </launch>
