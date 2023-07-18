@@ -348,7 +348,7 @@ def generate_launch_description():
         "cruise_planner_type"
     )  # select from "obstacle_stop_planner", "obstacle_cruise_planner", "none"
     add_launch_arg(
-        "path_planner_type", "path_sampler"
+        "path_planner_type", "obstacle_avoidance_planner"
     )  # select from "obstacle_avoidance_planner", "path_sampler"
     add_launch_arg("path_smoother_type", "elastic_band")  # select from "elastic_band", "none"
 
