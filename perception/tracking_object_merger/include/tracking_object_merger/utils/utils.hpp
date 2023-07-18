@@ -21,8 +21,9 @@
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
+#include <autoware_auto_perception_msgs/msg/tracked_object.hpp>
+#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 
@@ -70,6 +71,21 @@ enum MSG_COV_IDX {
   YAW_PITCH = 34,
   YAW_YAW = 35
 };
+
+using autoware_auto_perception_msgs::msg::TrackedObject;
+using autoware_auto_perception_msgs::msg::TrackedObjects;
+
+// linear interpolation for tracked objects
+TrackedObject linearInterpolationForTrackedObject(
+  const TrackedObject & obj1, const TrackedObject & obj2);
+
+// predict tracked objects
+TrackedObject predictPastOrFutureTrackedObject(const TrackedObject & obj, const double dt);
+
+// predict tracked objects
+TrackedObjects interpolateTrackedObjects(
+  const TrackedObjects & objects1, const TrackedObjects & objects2, std_msgs::msg::Header header);
+
 }  // namespace utils
 
 #endif  // TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
