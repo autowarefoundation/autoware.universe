@@ -273,7 +273,7 @@ void prepareRTCByDecisionResult(
   const auto closest_idx = result.stop_lines.closest_idx;
   const auto default_stop_line_idx = result.stop_lines.default_stop_line;
   const auto occlusion_stop_line_idx = result.stop_lines.occlusion_peeking_stop_line;
-  *default_safety = result.collision_detected;
+  *default_safety = !result.collision_detected;
   *default_distance =
     motion_utils::calcSignedArcLength(path.points, closest_idx, default_stop_line_idx);
   *occlusion_safety = true;
