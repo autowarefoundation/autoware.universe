@@ -55,10 +55,12 @@ private:
   void subObjectsCallback(
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
 
+  autoware_auto_perception_msgs::msg::TrackedObjects decorativeMerger(
+    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & main_object_msg);
   autoware_auto_perception_msgs::msg::TrackedObjects predictFutureState(
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg,
     const std_msgs::msg::Header & header);
-  autoware_auto_perception_msgs::msg::TrackedObjects interpolateState(
+  std::optional<autoware_auto_perception_msgs::msg::TrackedObjects> interpolateObjectState(
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg1,
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg2,
     const std_msgs::msg::Header & header);
@@ -79,6 +81,7 @@ private:
   std::vector<autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr>
     sub_objects_buffer_;
   double sub_object_timeout_sec_;
+  double time_sync_threshold_;
 
   struct
   {

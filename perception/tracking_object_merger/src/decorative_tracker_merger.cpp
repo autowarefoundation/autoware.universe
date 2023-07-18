@@ -33,6 +33,7 @@ using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 namespace tracking_object_merger
 {
 
+using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
 
 // get unix time from header
@@ -70,6 +71,7 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   overlapped_judge_param_.generalized_iou_threshold =
     declare_parameter<double>("generalized_iou_threshold");
   sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec", 0.5);
+  time_sync_threshold_ = declare_parameter<double>("time_sync_threshold", 0.05);
 }
 
 void DecorativeTrackerMergerNode::mainObjectsCallback(
@@ -82,23 +84,6 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
   }
 
   // else, merge main objects and sub objects
-
-  // get newest sub objects which timestamp is earlier to main objects
-  TrackedObjects::ConstSharedPtr closest_sub_objects;
-  TrackedObjects::ConstSharedPtr closest_sub_objects_later;
-  for (const auto & sub_object : sub_objects_buffer_) {
-    if (getUnixTime(sub_object->header) < getUnixTime(main_objects->header)) {
-      closest_sub_objects = sub_object;
-    } else {
-      closest_sub_objects_later = sub_object;
-      break;
-    }
-  }
-
-  // There three possible patterns
-  // 1. closest_sub_objects is nullptr
-  // 2. closest_sub_objects_later is nullptr
-  // 3. both closest_sub_objects and closest_sub_objects_later are not nullptr
 
   // finally publish merged objects
 }
@@ -115,7 +100,84 @@ void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::Const
   sub_objects_buffer_.erase(remove_itr, sub_objects_buffer_.end());
 }
 
-// TrackedObjects DecorativeTrackerMergerNode::
+TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
+  const TrackedObjects::ConstSharedPtr & main_objects)
+{
+  // get interpolated sub objects
+  // get newest sub objects which timestamp is earlier to main objects
+  TrackedObjects::ConstSharedPtr closest_time_sub_objects;
+  TrackedObjects::ConstSharedPtr closest_time_sub_objects_later;
+  for (const auto & sub_object : sub_objects_buffer_) {
+    if (getUnixTime(sub_object->header) < getUnixTime(main_objects->header)) {
+      closest_time_sub_objects = sub_object;
+    } else {
+      closest_time_sub_objects_later = sub_object;
+      break;
+    }
+  }
+  const auto interpolated_sub_objects = interpolateObjectState(
+    closest_time_sub_objects, closest_time_sub_objects_later, main_objects->header);
+
+  // if there are no sub objects, return main objects as it is
+  if (!interpolated_sub_objects) {
+    return *main_objects;
+  }
+
+  // else, merge main objects and sub objects
+  return *main_objects;
+}
+
+std::optional<TrackedObjects> DecorativeTrackerMergerNode::interpolateObjectState(
+  const TrackedObjects::ConstSharedPtr & former_msg,
+  const TrackedObjects::ConstSharedPtr & latter_msg, const std_msgs::msg::Header & output_header)
+{
+  // Assumption: output_header must be newer than former_msg and older than latter_msg
+  // There three possible patterns
+  // 1. both msg is nullptr
+  // 2. former_msg is nullptr
+  // 3. latter_msg is nullptr
+  // 4. both msg is not nullptr
+
+  // 1. both msg is nullptr
+  if (former_msg == nullptr && latter_msg == nullptr) {
+    // return null optional
+    return std::nullopt;
+  }
+
+  // 2. former_msg is nullptr
+  if (former_msg == nullptr) {
+    // depends on header stamp difference
+    if (
+      (rclcpp::Time(latter_msg->header.stamp) - rclcpp::Time(output_header.stamp)).seconds() >
+      time_sync_threshold_) {
+      // do nothing
+      return std::nullopt;
+    } else {  // else, return latter_msg
+      return *latter_msg;
+    }
+
+    // 3. latter_msg is nullptr
+  } else if (latter_msg == nullptr) {
+    // depends on header stamp difference
+    if (
+      (rclcpp::Time(output_header.stamp) - rclcpp::Time(former_msg->header.stamp)).seconds() >
+      time_sync_threshold_) {
+      // do nothing
+      return std::nullopt;
+    } else {
+      // else, return former_msg
+      return *former_msg;
+      // (TODO) do prediction in here
+    }
+
+    // 4. both msg is not nullptr
+  } else {
+    // do the interpolation
+    TrackedObjects interpolated_msg =
+      utils::interpolateTrackedObjects(*former_msg, *latter_msg, output_header);
+    return interpolated_msg;
+  }
+}
 
 }  // namespace tracking_object_merger
 
