@@ -164,7 +164,7 @@ void transformPoints(
 
 bool is_inside(
   const sensor_msgs::msg::RegionOfInterest & outer,
-  const sensor_msgs::msg::RegionOfInterest & inner, const double outer_offset_scale)
+  const sensor_msgs::msg::RegionOfInterest & inner, const float outer_offset_scale)
 {
   const double lower_scale = 1.0 - std::abs(outer_offset_scale - 1.0);
   return outer.x_offset * lower_scale <= inner.x_offset &&
