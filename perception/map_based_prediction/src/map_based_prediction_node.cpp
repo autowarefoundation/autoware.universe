@@ -1347,8 +1347,8 @@ double MapBasedPredictionNode::calculate_lane_width(const lanelet::ConstLanelet 
   const auto left_bound = lane.leftBound2d();
   const auto right_bound = lane.rightBound2d();
 
-  const auto & query_bound = left_bound.size() < right_bound.size() ? right_bound : left_bound;
-  const auto & base_bound = left_bound.size() < right_bound.size() ? left_bound : right_bound;
+  const auto & query_bound = left_bound.size() < right_bound.size() ? left_bound : right_bound;
+  const auto & base_bound = left_bound.size() < right_bound.size() ? right_bound : left_bound;
 
   auto calculate_distance = [&](const auto & pred_pt, const auto curr_pt) -> double {
     const double vec_x = pred_pt.x() - curr_pt.x();
@@ -1369,7 +1369,19 @@ double MapBasedPredictionNode::calculate_lane_width(const lanelet::ConstLanelet 
 
   std::vector<double> query_keys(query_bound.size(), 0.0);
   for (size_t i = 1; i < query_bound.size(); ++i) {
-    query_keys.at(i) = calculate_distance(query_bound[i - 1], query_bound[i]);
+    query_keys.at(i) =
+      query_keys.at(i - 1) + calculate_distance(query_bound[i - 1], query_bound[i]);
+  }
+
+  if (query_keys.front() < base_keys.front()) {
+    base_keys.insert(base_keys.begin(), query_keys.front());
+    base_bound_x.insert(base_bound_x.begin(), base_bound_x.front());
+    base_bound_y.insert(base_bound_y.begin(), base_bound_y.front());
+  }
+  if (base_keys.back() < query_keys.back()) {
+    base_keys.insert(base_keys.end(), query_keys.back());
+    base_bound_x.insert(base_bound_x.end(), base_bound_x.back());
+    base_bound_y.insert(base_bound_y.end(), base_bound_y.back());
   }
 
   std::vector<double> spline_x = interpolation::spline(base_keys, base_bound_x, query_keys);
