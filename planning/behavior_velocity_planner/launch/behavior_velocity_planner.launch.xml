@@ -30,6 +30,7 @@
   <node pkg="behavior_velocity_planner" exec="behavior_velocity_planner_node" name="behavior_velocity_planner" output="screen">
     <param from="$(find-pkg-share behavior_velocity_planner)/config/blind_spot.param.yaml"/>
     <param from="$(find-pkg-share behavior_velocity_planner)/config/crosswalk.param.yaml"/>
+    <param from="$(find-pkg-share behavior_velocity_planner)/config/walkway.param.yaml"/>
     <param from="$(find-pkg-share behavior_velocity_planner)/config/detection_area.param.yaml"/>
     <param from="$(find-pkg-share behavior_velocity_planner)/config/intersection.param.yaml"/>
     <param from="$(find-pkg-share behavior_velocity_planner)/config/stop_line.param.yaml"/>
