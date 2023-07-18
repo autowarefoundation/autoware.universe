@@ -24,6 +24,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -81,6 +82,20 @@ struct DebugData
   std::vector<std::vector<geometry_msgs::msg::Point>> ego_polygons;
   std::vector<std::vector<geometry_msgs::msg::Point>> obj_polygons;
 };
+
+std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
+  const geometry_msgs::msg::Pose & current_pose,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
+
+std::set<int64_t> getCrosswalkIdSetOnPath(
+  const geometry_msgs::msg::Pose & current_pose,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
+
+bool checkRegulatoryElementExistence(const lanelet::LaneletMapPtr & lanelet_map_ptr);
 
 std::vector<geometry_msgs::msg::Point> getPolygonIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,

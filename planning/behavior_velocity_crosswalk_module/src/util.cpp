@@ -48,6 +48,63 @@ using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::Line2d;
 using tier4_autoware_utils::Point2d;
 
+std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
+  const geometry_msgs::msg::Pose & current_pose,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
+{
+  std::vector<lanelet::ConstLanelet> crosswalks;
+
+  // Add current lane id
+  const auto nearest_lane_id =
+    behavior_velocity_planner::planning_utils::getNearestLaneId(path, lanelet_map, current_pose);
+
+  std::vector<int64_t> unique_lane_ids;
+  if (nearest_lane_id) {
+    // Add subsequent lane_ids from nearest lane_id
+    unique_lane_ids = behavior_velocity_planner::planning_utils::getSubsequentLaneIdsSetOnPath(
+      path, *nearest_lane_id);
+  } else {
+    // Add all lane_ids in path
+    unique_lane_ids = behavior_velocity_planner::planning_utils::getSortedLaneIdsFromPath(path);
+  }
+
+  for (const auto lane_id : unique_lane_ids) {
+    const auto ll = lanelet_map->laneletLayer.get(lane_id);
+
+    constexpr int PEDESTRIAN_GRAPH_ID = 1;
+    const auto conflicting_crosswalks = overall_graphs->conflictingInGraph(ll, PEDESTRIAN_GRAPH_ID);
+    for (const auto & crosswalk : conflicting_crosswalks) {
+      crosswalks.push_back(crosswalk);
+    }
+  }
+
+  return crosswalks;
+}
+
+std::set<int64_t> getCrosswalkIdSetOnPath(
+  const geometry_msgs::msg::Pose & current_pose,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
+{
+  std::set<int64_t> crosswalk_id_set;
+
+  for (const auto & crosswalk :
+       getCrosswalksOnPath(current_pose, path, lanelet_map, overall_graphs)) {
+    crosswalk_id_set.insert(crosswalk.id());
+  }
+
+  return crosswalk_id_set;
+}
+
+bool checkRegulatoryElementExistence(const lanelet::LaneletMapPtr & lanelet_map_ptr)
+{
+  const auto all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr);
+  return !lanelet::utils::query::crosswalks(all_lanelets).empty();
+}
+
 std::vector<geometry_msgs::msg::Point> getPolygonIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
   const geometry_msgs::msg::Point & ego_pos,
