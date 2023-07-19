@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// thisisanintendedtypo (This is an intended typo)
+
 #ifndef GNSS_POSER__CONVERT_HPP_
 #define GNSS_POSER__CONVERT_HPP_
 
