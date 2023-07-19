@@ -25,7 +25,7 @@
 namespace system_diagnostic_graph
 {
 
-void DiagGraph::create(const std::string & file)
+DiagnosticGraph DiagGraph::create(const std::string & file)
 {
   const auto configs = load_config_file(file);
   data_ = DiagGraphData();
@@ -74,25 +74,24 @@ void DiagGraph::create(const std::string & file)
     }
     std::cout << std::endl;
   }
+
+  return DiagnosticGraph();
 }
 
-DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
+DiagnosticArray DiagGraph::report(const rclcpp::Time & stamp)
 {
-  DiagnosticGraph graph;
-  graph.stamp = stamp;
-  graph.nodes.reserve(data_.leaf_list.size() + data_.unit_list.size());
+  DiagnosticArray array;
+  array.header.stamp = stamp;
+  array.status.reserve(data_.leaf_list.size() + data_.unit_list.size());
 
   for (const auto & node : index_nodes_) {
     node.node->update();
   }
 
   for (const auto & node : index_nodes_) {
-    DiagnosticNode msg;
-    msg.status = node.node->report();
-    msg.links = node.links;
-    graph.nodes.push_back(msg);
+    array.status.push_back(node.node->report());
   }
-  return graph;
+  return array;
 }
 
 void DiagGraph::callback(const DiagnosticArray & array)

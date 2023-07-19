@@ -29,8 +29,8 @@ namespace system_diagnostic_graph
 class DiagGraph
 {
 public:
-  void create(const std::string & file);
-  DiagnosticGraph report(const rclcpp::Time & stamp);
+  DiagnosticGraph create(const std::string & file);
+  DiagnosticArray report(const rclcpp::Time & stamp);
   void callback(const DiagnosticArray & array);
   void debug();
 
