@@ -18,7 +18,6 @@
 
 #include "radar_object_tracker/tracker/model/linear_motion_tracker.hpp"
 
-#include "perception_utils/perception_utils.hpp"
 #include "radar_object_tracker/utils/utils.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -484,7 +483,7 @@ bool LinearMotionTracker::measure(
 {
   const auto & current_classification = getClassification();
   object_ = object;
-  if (perception_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+  if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
@@ -504,7 +503,7 @@ bool LinearMotionTracker::measure(
 bool LinearMotionTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = perception_utils::toTrackedObject(object_);
+  object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 

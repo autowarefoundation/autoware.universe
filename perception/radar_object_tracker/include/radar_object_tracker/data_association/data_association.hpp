@@ -25,6 +25,7 @@
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
+#include "object_recognition_utils/object_recognition_utils.hpp"
 #include "radar_object_tracker/data_association/solver/gnn_solver.hpp"
 #include "radar_object_tracker/tracker/tracker.hpp"
 

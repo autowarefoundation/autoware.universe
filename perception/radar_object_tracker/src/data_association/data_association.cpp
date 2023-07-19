@@ -19,7 +19,6 @@
 #include <nlohmann/json.hpp>
 
 // #include "multi_object_tracker/utils/utils.hpp"
-#include "perception_utils/perception_utils.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -177,7 +176,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
       const autoware_auto_perception_msgs::msg::DetectedObject & measurement_object =
         measurements.objects.at(measurement_idx);
       const std::uint8_t measurement_label =
-        perception_utils::getHighestProbLabel(measurement_object.classification);
+        object_recognition_utils::getHighestProbLabel(measurement_object.classification);
       // Create a JSON object to hold the log data for this pair
       nlohmann::json pair_log_data;
 
@@ -253,8 +252,8 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         if (passed_gate) {
           const double min_iou = min_iou_matrix_(tracker_label, measurement_label);
           const double min_union_iou_area = 1e-2;
-          const double iou =
-            perception_utils::get2dIoU(measurement_object, tracked_object, min_union_iou_area);
+          const double iou = object_recognition_utils::get2dIoU(
+            measurement_object, tracked_object, min_union_iou_area);
           if (iou < min_iou) passed_gate = false;
           pair_log_data["gate_name"] = "2d iou gate";
           pair_log_data["gate_value"] = iou;
