@@ -48,13 +48,9 @@ using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
+using vehicle_info_util::VehicleInfo;
 
 namespace bg = boost::geometry;
-struct ProjectedDistancePoint
-{
-  Point2d projected_point;
-  double distance{0.0};
-};
 
 bool isTargetObjectFront(
   const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
@@ -62,9 +58,10 @@ bool isTargetObjectFront(
 
 Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const double lon_length, const double lat_margin);
+  const double lon_length, const double lat_margin, CollisionCheckDebug & debug);
 Polygon2d createExtendedPolygon(
-  const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin);
+  const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin,
+  CollisionCheckDebug & debug);
 
 double calcRssDistance(
   const double front_object_velocity, const double rear_object_velocity,
@@ -75,32 +72,33 @@ double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
   const BehaviorPathPlannerParameters & params);
 
-/**
- * @brief Iterate the points in the ego and target's predicted path and
- *        perform safety check for each of the iterated points.
- * @return true if distance is safe.
- */
-bool isSafeInLaneletCollisionCheck(
-  const PathWithLaneId & path,
-  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
-  const Twist & ego_current_twist, const std::vector<double> & check_duration,
-  const double prepare_duration, const PredictedObject & target_object,
-  const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
-  const double prepare_phase_ignore_target_speed_thresh, const double front_decel,
-  const double rear_decel, CollisionCheckDebug & debug);
+boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
+  const std::vector<PoseWithVelocityStamped> & path, const double relative_time);
+
+boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
+  const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
+  const VehicleInfo & ego_info);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
+ * @param planned_path The predicted path of the ego vehicle.
+ * @param predicted_ego_path Ego vehicle's predicted path
+ * @param ego_current_velocity Current velocity of the ego vehicle.
+ * @param target_object The predicted object to check collision with.
+ * @param target_object_path The predicted path of the target object.
+ * @param common_parameters The common parameters used in behavior path planner.
+ * @param front_object_deceleration The deceleration of the object in the front.(used in RSS)
+ * @param rear_object_deceleration The deceleration of the object in the rear.(used in RSS)
+ * @param debug The debug information for collision checking.
  * @return true if distance is safe.
  */
-bool isSafeInFreeSpaceCollisionCheck(
-  const PathWithLaneId & path,
-  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
-  const Twist & ego_current_twist, const std::vector<double> & check_duration,
-  const double prepare_duration, const PredictedObject & target_object,
-  const BehaviorPathPlannerParameters & common_parameters,
-  const double prepare_phase_ignore_target_velocity_thresh, const double front_object_deceleration,
+bool checkCollision(
+  const PathWithLaneId & planned_path,
+  const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
+  const ExtendedPredictedObject & target_object,
+  const PredictedPathWithPolygon & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
   const double rear_object_deceleration, CollisionCheckDebug & debug);
 
 }  // namespace behavior_path_planner::utils::safety_check

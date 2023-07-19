@@ -21,6 +21,7 @@
 #include <behavior_velocity_planner_common/plugin_interface.hpp>
 #include <behavior_velocity_planner_common/plugin_wrapper.hpp>
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <lanelet2_extension/regulatory_elements/crosswalk.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -28,11 +29,15 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <set>
 #include <vector>
 
 namespace behavior_velocity_planner
 {
+
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
+
 class CrosswalkModuleManager : public SceneModuleManagerInterfaceWithRTC
 {
 public:
@@ -43,10 +48,12 @@ public:
 private:
   CrosswalkModule::PlannerParam crosswalk_planner_param_{};
 
-  void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+  void launchNewModules(const PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+    const PathWithLaneId & path) override;
+
+  std::optional<bool> opt_use_regulatory_element_{std::nullopt};
 };
 
 class WalkwayModuleManager : public SceneModuleManagerInterface
@@ -59,10 +66,12 @@ public:
 private:
   WalkwayModule::PlannerParam walkway_planner_param_{};
 
-  void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+  void launchNewModules(const PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+    const PathWithLaneId & path) override;
+
+  std::optional<bool> opt_use_regulatory_element_{std::nullopt};
 };
 
 class CrosswalkModulePlugin : public PluginWrapper<CrosswalkModuleManager>

@@ -28,6 +28,12 @@ using behavior_path_planner::PlannerData;
 
 bool isOnRight(const ObjectData & obj);
 
+bool isVehicleTypeObject(const ObjectData & object);
+
+bool isWithinCrosswalk(
+  const ObjectData & object,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
+
 bool isTargetObjectType(
   const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters);
 
@@ -47,6 +53,8 @@ ShiftLineArray toShiftLineArray(const AvoidLineArray & avoid_points);
 
 std::vector<size_t> concatParentIds(
   const std::vector<size_t> & ids1, const std::vector<size_t> & ids2);
+
+std::vector<size_t> calcParentIds(const AvoidLineArray & lines1, const AvoidLine & lines2);
 
 double lerpShiftLengthOnArc(double arc, const AvoidLine & al);
 
@@ -92,6 +100,14 @@ void fillObjectMovingTime(
   ObjectData & object_data, ObjectDataArray & stopped_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 
+void fillAvoidanceNecessity(
+  ObjectData & object_data, const ObjectDataArray & registered_objects, const double vehicle_width,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
+
+void fillObjectStoppableJudge(
+  ObjectData & object_data, const ObjectDataArray & registered_objects,
+  const double feasible_stop_distance, const std::shared_ptr<AvoidanceParameters> & parameters);
+
 void updateRegisteredObject(
   ObjectDataArray & registered_objects, const ObjectDataArray & now_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters);
@@ -108,8 +124,18 @@ void filterTargetObjects(
 double extendToRoadShoulderDistanceWithPolygon(
   const std::shared_ptr<route_handler::RouteHandler> & rh,
   const lanelet::ConstLineString3d & target_line, const double to_road_shoulder_distance,
-  const geometry_msgs::msg::Point & overhang_pos,
-  const lanelet::BasicPoint3d & overhang_basic_pose);
+  const lanelet::ConstLanelet & overhang_lanelet, const geometry_msgs::msg::Point & overhang_pos,
+  const lanelet::BasicPoint3d & overhang_basic_pose, const bool use_hatched_road_markings,
+  const bool use_intersection_areas);
+
+void fillAdditionalInfoFromPoint(const AvoidancePlanningData & data, AvoidLineArray & lines);
+
+void fillAdditionalInfoFromLongitudinal(const AvoidancePlanningData & data, AvoidLineArray & lines);
+
+AvoidLine fillAdditionalInfo(const AvoidancePlanningData & data, const AvoidLine & line);
+
+AvoidLineArray combineRawShiftLinesWithUniqueCheck(
+  const AvoidLineArray & base_lines, const AvoidLineArray & added_lines);
 }  // namespace behavior_path_planner::utils::avoidance
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__UTILS_HPP_

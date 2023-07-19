@@ -23,7 +23,9 @@
 
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
@@ -32,56 +34,64 @@
 #include <behavior_velocity_planner_common/planner_data.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/stop_factor.hpp>
 
 namespace behavior_velocity_planner
 {
 
-namespace bg = boost::geometry;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using tier4_autoware_utils::createPoint;
+using tier4_autoware_utils::Point2d;
+using tier4_planning_msgs::msg::StopFactor;
 
-enum class CollisionPointState { YIELD, EGO_PASS_FIRST, EGO_PASS_LATER, IGNORE };
+enum class CollisionState { YIELD, EGO_PASS_FIRST, EGO_PASS_LATER, IGNORE };
 
 struct CollisionPoint
 {
   geometry_msgs::msg::Point collision_point{};
   double time_to_collision{};
   double time_to_vehicle{};
-  CollisionPointState state{CollisionPointState::EGO_PASS_FIRST};
 };
 
 struct DebugData
 {
+  DebugData() = default;
+  explicit DebugData(const std::shared_ptr<const PlannerData> planner_data)
+  : base_link2front(planner_data->vehicle_info_.max_longitudinal_offset_m)
+  {
+  }
+
   bool ignore_crosswalk{false};
   double base_link2front;
-  double stop_judge_range;
+  double stop_judge_range{};
 
   geometry_msgs::msg::Pose first_stop_pose;
   geometry_msgs::msg::Point nearest_collision_point;
 
-  boost::optional<geometry_msgs::msg::Point> range_near_point{boost::none};
-  boost::optional<geometry_msgs::msg::Point> range_far_point{boost::none};
+  std::optional<geometry_msgs::msg::Point> range_near_point{std::nullopt};
+  std::optional<geometry_msgs::msg::Point> range_far_point{std::nullopt};
 
-  std::vector<CollisionPoint> collision_points;
+  std::vector<std::pair<CollisionPoint, CollisionState>> collision_points;
 
   std::vector<geometry_msgs::msg::Pose> stop_poses;
   std::vector<geometry_msgs::msg::Pose> slow_poses;
   std::vector<geometry_msgs::msg::Point> stop_factor_points;
   std::vector<geometry_msgs::msg::Point> crosswalk_polygon;
-  std::vector<geometry_msgs::msg::Polygon> ego_polygons;
-  std::vector<geometry_msgs::msg::Polygon> obj_polygons;
+  std::vector<std::vector<geometry_msgs::msg::Point>> ego_polygons;
+  std::vector<std::vector<geometry_msgs::msg::Point>> obj_polygons;
 };
 
-std::vector<bg::model::d2::point_xy<double>> getPolygonIntersects(
+std::vector<geometry_msgs::msg::Point> getPolygonIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
   const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
 
-std::vector<bg::model::d2::point_xy<double>> getLinestringIntersects(
+std::vector<geometry_msgs::msg::Point> getLinestringIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicLineString2d & linestring,
   const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
 
-lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(
-  const int lane_id, const std::shared_ptr<const PlannerData> & planner_data,
+std::optional<lanelet::ConstLineString3d> getStopLineFromMap(
+  const int lane_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const std::string & attribute_name);
 }  // namespace behavior_velocity_planner
 

@@ -1,10 +1,6 @@
 /**:
   ros__parameters:
     verbose: false
-
-    groot_zmq_publisher_port: 1666
-    groot_zmq_server_port: 1667
-
     planning_hz: 10.0
     backward_path_length: 5.0
     forward_path_length: 300.0
@@ -31,6 +27,7 @@
 
     lateral_distance_max_threshold: 2.0
     longitudinal_distance_min_threshold: 3.0
+    longitudinal_velocity_delta_time: 0.8 # [s]
 
     expected_front_deceleration: -1.0
     expected_rear_deceleration: -1.0
