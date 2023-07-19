@@ -74,7 +74,9 @@ public:
 
   bool isRequiredStop(const bool is_object_coming_from_rear) const override;
 
-  bool isNearEndOfCurrentLanes(const double threshold) const override;
+  bool isNearEndOfCurrentLanes(
+    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+    const double threshold) const override;
 
   bool hasFinishedLaneChange() const override;
 
@@ -98,7 +100,9 @@ protected:
 
   int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
 
-  double calcPrepareDuration() const;
+  double calcPrepareDuration(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
 
   LaneChangeTargetObjects getTargetObjects(
     const lanelet::ConstLanelets & current_lanes,

@@ -319,21 +319,23 @@ lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
     lane_change_lane.get(), getEgoPose(), backward_length, forward_length);
 }
 
-bool NormalLaneChange::isNearEndOfCurrentLanes(const double threshold) const
+bool NormalLaneChange::isNearEndOfCurrentLanes(
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+  const double threshold) const
 {
   const auto & route_handler = getRouteHandler();
   const auto & current_pose = getEgoPose();
   const auto shift_intervals =
-    route_handler->getLateralIntervalsToPreferredLane(status_.current_lanes.back());
+    route_handler->getLateralIntervalsToPreferredLane(current_lanes.back());
   const auto lane_change_buffer =
     utils::calcMinimumLaneChangeLength(planner_data_->parameters, shift_intervals);
 
-  auto distance_to_end = utils::getDistanceToEndOfLane(current_pose, status_.current_lanes);
+  auto distance_to_end = utils::getDistanceToEndOfLane(current_pose, current_lanes);
 
-  if (route_handler->isInGoalRouteSection(status_.target_lanes.back())) {
+  if (route_handler->isInGoalRouteSection(target_lanes.back())) {
     distance_to_end = std::min(
       distance_to_end,
-      utils::getSignedDistance(current_pose, route_handler->getGoalPose(), status_.current_lanes));
+      utils::getSignedDistance(current_pose, route_handler->getGoalPose(), current_lanes));
   }
 
   return (std::max(0.0, distance_to_end) - lane_change_buffer) < threshold;
@@ -465,14 +467,15 @@ int NormalLaneChange::getNumToPreferredLane(const lanelet::ConstLanelet & lane) 
   return std::abs(getRouteHandler()->getNumLaneToPreferredLane(lane, get_opposite_direction));
 }
 
-double NormalLaneChange::calcPrepareDuration() const
+double NormalLaneChange::calcPrepareDuration(
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
 {
   const auto & common_parameters = planner_data_->parameters;
   const auto threshold = lane_change_parameters_->min_length_for_turn_signal_activation;
   const auto current_vel = getEgoVelocity();
 
   // if the ego vehicle is close to the end of the lane at a low speed
-  if (isNearEndOfCurrentLanes(threshold) && current_vel < 1.0) {
+  if (isNearEndOfCurrentLanes(current_lanes, target_lanes, threshold) && current_vel < 1.0) {
     return 0.0;
   }
 
@@ -692,7 +695,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
   candidate_paths->reserve(longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num);
 
-  const auto prepare_duration = calcPrepareDuration();
+  const auto prepare_duration = calcPrepareDuration(current_lanes, target_lanes);
 
   for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
     // get path on original lanes
@@ -980,7 +983,8 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
 bool NormalLaneChange::isRequiredStop(const bool is_object_coming_from_rear) const
 {
   const auto threshold = planner_data_->parameters.backward_length_buffer_for_end_of_lane;
-  return isNearEndOfCurrentLanes(threshold) && isAbleToStopSafely() && is_object_coming_from_rear;
+  return isNearEndOfCurrentLanes(status_.current_lanes, status_.target_lanes, threshold) &&
+         isAbleToStopSafely() && is_object_coming_from_rear;
 }
 
 bool NormalLaneChange::getAbortPath()
