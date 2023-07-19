@@ -152,7 +152,9 @@ void GoalPlannerModule::onTimer()
   mutex_.unlock();
 
   // generate valid pull over path candidates and calculate closest start pose
-  const auto current_lanes = utils::getExtendedCurrentLanes(planner_data_);
+  const auto current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_->backward_goal_search_length,
+    parameters_->forward_goal_search_length);
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
   double min_start_arc_length = std::numeric_limits<double>::max();
@@ -582,15 +584,14 @@ void GoalPlannerModule::selectSafePullOverPath()
   for (auto & path : status_.pull_over_path->partial_paths) {
     const size_t ego_idx = planner_data_->findEgoIndex(path.points);
     utils::clipPathLength(path, ego_idx, planner_data_->parameters);
-    const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
-    utils::generateDrivableArea(
-      path, target_drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
   }
 }
 
 void GoalPlannerModule::setLanes()
 {
-  status_.current_lanes = utils::getExtendedCurrentLanes(planner_data_);
+  status_.current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_->backward_goal_search_length,
+    parameters_->forward_goal_search_length);
   status_.pull_over_lanes =
     goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
   status_.lanes =
@@ -676,11 +677,8 @@ void GoalPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
 
 void GoalPlannerModule::setModifiedGoal(BehaviorModuleOutput & output) const
 {
-  // set the modified goal only when it is updated
   const auto & route_handler = planner_data_->route_handler;
-  const bool has_changed_goal =
-    modified_goal_pose_ && (!prev_goal_id_ || *prev_goal_id_ != modified_goal_pose_->id);
-  if (status_.is_safe && has_changed_goal) {
+  if (status_.is_safe) {
     PoseWithUuidStamped modified_goal{};
     modified_goal.uuid = route_handler->getRouteUuid();
     modified_goal.pose = modified_goal_pose_->goal_pose;
@@ -972,12 +970,6 @@ PathWithLaneId GoalPlannerModule::generateStopPath()
     }
   }
 
-  // generate drivable area
-  const auto drivable_lanes = utils::generateDrivableLanes(status_.current_lanes);
-  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(reference_path, drivable_lanes);
-  utils::generateDrivableArea(
-    reference_path, target_drivable_lanes, false, common_parameters.vehicle_length, planner_data_);
-
   return reference_path;
 }
 
@@ -1006,12 +998,6 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
   if (stop_idx) {
     status_.stop_pose = stop_path.points.at(*stop_idx).point.pose;
   }
-
-  // generate drivable area
-  const auto drivable_lanes = utils::generateDrivableLanes(status_.current_lanes);
-  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(stop_path, drivable_lanes);
-  utils::generateDrivableArea(
-    stop_path, target_drivable_lanes, false, common_parameters.vehicle_length, planner_data_);
 
   return stop_path;
 }

@@ -103,6 +103,10 @@ public:
 
   virtual bool getAbortPath() = 0;
 
+  virtual bool specialRequiredCheck() const { return false; }
+
+  virtual bool specialExpiredCheck() const { return false; }
+
   virtual void setPreviousModulePaths(
     const std::shared_ptr<PathWithLaneId> & prev_module_reference_path,
     const std::shared_ptr<PathWithLaneId> & prev_module_path)
@@ -196,8 +200,8 @@ protected:
   virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
 
   virtual PathWithLaneId getPrepareSegment(
-    const lanelet::ConstLanelets & current_lanes, const double arc_length_from_current,
-    const double backward_path_length, const double prepare_length) const = 0;
+    const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
+    const double prepare_length) const = 0;
 
   virtual bool getLaneChangePaths(
     const lanelet::ConstLanelets & original_lanelets,

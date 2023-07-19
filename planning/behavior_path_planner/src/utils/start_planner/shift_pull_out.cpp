@@ -114,13 +114,6 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
       continue;
     }
 
-    // Generate drivable area
-    // for old architecture
-    // NOTE: drivable_area_info is assigned outside this function.
-    const auto shorten_lanes = utils::cutOverlappedLanes(shift_path, drivable_lanes);
-    utils::generateDrivableArea(
-      shift_path, shorten_lanes, false, common_parameters.vehicle_length, planner_data_);
-
     shift_path.header = planner_data_->route_handler->getRouteHeader();
 
     return pull_out_path;
@@ -143,7 +136,6 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   // rename parameter
   const double forward_path_length = common_parameter.forward_path_length;
   const double backward_path_length = common_parameter.backward_path_length;
-  const double minimum_shift_pull_out_distance = parameter.minimum_shift_pull_out_distance;
   const double lateral_jerk = parameter.lateral_jerk;
   const double minimum_lateral_acc = parameter.minimum_lateral_acc;
   const double maximum_lateral_acc = parameter.maximum_lateral_acc;
@@ -200,8 +192,10 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       road_lane_reference_path.points.at(shift_start_idx).point.longitudinal_velocity_mps;
     const double shift_time =
       PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, lateral_acc);
-    const double longitudinal_acc = std::clamp(road_velocity / shift_time, 0.0, 1.0);
-    const double pull_out_distance = (longitudinal_acc * std::pow(shift_time, 2)) / 2.0;
+    const double longitudinal_acc = std::clamp(road_velocity / shift_time, 0.0, /* max acc */ 1.0);
+    const auto pull_out_distance = calcPullOutLongitudinalDistance(
+      longitudinal_acc, shift_time, shift_length, parameter.maximum_curvature,
+      parameter.minimum_shift_pull_out_distance);
     const double terminal_velocity = longitudinal_acc * shift_time;
 
     // clip from ego pose
@@ -210,10 +204,17 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       road_lane_reference_path_from_ego.points.begin(),
       road_lane_reference_path_from_ego.points.begin() + shift_start_idx);
     // before means distance on road lane
-    const double before_shifted_pull_out_distance = std::max(
-      minimum_shift_pull_out_distance,
-      calcBeforeShiftedArcLength(
-        road_lane_reference_path_from_ego, pull_out_distance, shift_length));
+    // Note: the pull_out_distance is the required distance on the shifted path. Now we need to
+    // calculate the distance on the center line used for the shift path generation. However, since
+    // the calcBeforeShiftedArcLength is an approximate conversion from center line to center line
+    // (not shift path to centerline), the conversion result may too long or short. To prevent too
+    // short length, take maximum with the original distance.
+    // TODO(kosuke55): update the conversion function and get rid of the comparison with original
+    // distance.
+    const double pull_out_distance_converted = calcBeforeShiftedArcLength(
+      road_lane_reference_path_from_ego, pull_out_distance, shift_length);
+    const double before_shifted_pull_out_distance =
+      std::max(pull_out_distance, pull_out_distance_converted);
 
     // check has enough distance
     const bool is_in_goal_route_section = route_handler.isInGoalRouteSection(road_lanes.back());
@@ -256,6 +257,13 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     path_shifter.setLongitudinalAcceleration(longitudinal_acc);
     path_shifter.setLateralAccelerationLimit(lateral_acc);
 
+    const auto shift_line_idx = path_shifter.getShiftLines().front();
+    if (!has_non_shifted_path && (shift_line_idx.end_idx - shift_line_idx.start_idx <= 1)) {
+      candidate_paths.push_back(non_shifted_path);
+      has_non_shifted_path = true;
+      continue;
+    }
+
     // offset front side
     ShiftedPath shifted_path;
     const bool offset_back = false;
@@ -287,6 +295,28 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   }
 
   return candidate_paths;
+}
+
+double ShiftPullOut::calcPullOutLongitudinalDistance(
+  const double lon_acc, const double shift_time, const double shift_length,
+  const double max_curvature, const double min_distance) const
+{
+  // Required distance for acceleration limit
+  const double min_pull_out_distance_by_acc = (lon_acc * std::pow(shift_time, 2)) / 2.0;
+
+  // Required distance for curvature limit
+  const auto min_pull_out_distance_by_curvature = [&]() {
+    // Simple model for the shifted path by a double circular-arc approximation on a straight road.
+    const double distance =
+      std::sqrt(std::max(4.0 * shift_length / max_curvature - shift_length * shift_length, 0.0));
+    return distance;
+  }();
+
+  // Take all requirements
+  const auto min_pull_out_distance = std::max(
+    std::max(min_pull_out_distance_by_acc, min_pull_out_distance_by_curvature), min_distance);
+
+  return min_pull_out_distance;
 }
 
 bool ShiftPullOut::hasEnoughDistance(
