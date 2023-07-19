@@ -221,14 +221,45 @@ double mean(const double a, const double b)
 }
 
 // object kinematics merger
-autoware_auto_perception_msgs::msg::TrackedObjectKinematics objectKinematicsMerger(
+// currently only support velocity fusion
+autoware_auto_perception_msgs::msg::TrackedObjectKinematics objectKinematicsVXMerger(
   const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy)
 {
   autoware_auto_perception_msgs::msg::TrackedObjectKinematics output_kinematics;
   // copy main object at first
   output_kinematics = main_obj.kinematics;
-  (void)sub_obj;
-  (void)policy;
+  if (policy == MergePolicy::SKIP) {
+    return output_kinematics;
+  } else if (policy == MergePolicy::OVERWRITE) {
+    output_kinematics.twist_with_covariance.twist.linear.x =
+      sub_obj.kinematics.twist_with_covariance.twist.linear.x;
+    return sub_obj.kinematics;
+  } else if (policy == MergePolicy::FUSION) {
+    const auto main_vx = main_obj.kinematics.twist_with_covariance.twist.linear.x;
+    const auto sub_vx = sub_obj.kinematics.twist_with_covariance.twist.linear.x;
+    // inverse weight
+    const auto main_vx_cov = main_obj.kinematics.twist_with_covariance.covariance[0];
+    const auto sub_vx_cov = sub_obj.kinematics.twist_with_covariance.covariance[0];
+    double main_vx_weight, sub_vx_weight;
+    if (main_vx_cov == 0.0) {
+      main_vx_weight = 1.0 * 1e6;
+    } else {
+      main_vx_weight = 1.0 / main_vx_cov;
+    }
+    if (sub_vx_cov == 0.0) {
+      sub_vx_weight = 1.0 * 1e6;
+    } else {
+      sub_vx_weight = 1.0 / sub_vx_cov;
+    }
+    // merge with covariance
+    output_kinematics.twist_with_covariance.twist.linear.x =
+      (main_vx * main_vx_weight + sub_vx * sub_vx_weight) / (main_vx_weight + sub_vx_weight);
+    output_kinematics.twist_with_covariance.covariance[0] = 1.0 / (main_vx_weight + sub_vx_weight);
+    return output_kinematics;
+  } else {
+    std::cerr << "unknown merge policy in objectKinematicsMerger function." << std::endl;
+    return output_kinematics;
+  }
   return output_kinematics;
 }
 

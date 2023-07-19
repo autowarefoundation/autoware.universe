@@ -94,8 +94,8 @@ namespace merger_utils
 // merge policy
 enum MergePolicy : int { SKIP = 0, OVERWRITE = 1, FUSION = 2 };
 
-// object kinematics merger
-autoware_auto_perception_msgs::msg::TrackedObjectKinematics objectKinematicsMerger(
+// object kinematics velocity merger
+autoware_auto_perception_msgs::msg::TrackedObjectKinematics objectKinematicsVXMerger(
   const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy);
 
 // object classification merger
