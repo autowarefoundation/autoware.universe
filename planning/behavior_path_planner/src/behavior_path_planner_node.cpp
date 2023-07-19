@@ -122,8 +122,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     createSubscriptionOptions(this));
 
   {
-    RCLCPP_INFO(get_logger(), "not use behavior tree.");
-
     const std::string path_candidate_name_space = "/planning/path_candidate/";
     const std::string path_reference_name_space = "/planning/path_reference/";
 
@@ -346,8 +344,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter<double>("lane_change.minimum_lane_changing_velocity");
   p.minimum_lane_changing_velocity =
     std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
-  p.minimum_prepare_length =
-    0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
   p.lane_change_finish_judge_buffer =
     declare_parameter<double>("lane_change.lane_change_finish_judge_buffer");
 
@@ -508,7 +504,7 @@ void BehaviorPathPlannerNode::run()
     planner_data_->route_handler->setMap(*map_ptr);
   }
 
-  std::unique_lock<std::mutex> lk_manager(mutex_manager_);  // for bt_manager_ or planner_manager_
+  std::unique_lock<std::mutex> lk_manager(mutex_manager_);  // for planner_manager_
 
   // update route
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
@@ -523,7 +519,6 @@ void BehaviorPathPlannerNode::run()
     // Reset behavior tree when new route is received,
     // so that the each modules do not have to care about the "route jump".
     if (!is_first_time && !has_same_route_id) {
-      RCLCPP_DEBUG(get_logger(), "new route is received. reset behavior tree.");
       planner_manager_->reset();
     }
   }
@@ -576,7 +571,13 @@ void BehaviorPathPlannerNode::run()
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
   stop_reason_publisher_->publish(planner_manager_->getStopReasons());
 
-  if (output.modified_goal) {
+  // publish modified goal only when it is updated
+  if (
+    output.modified_goal &&
+    /* has changed modified goal */ (
+      !planner_data_->prev_modified_goal || tier4_autoware_utils::calcDistance2d(
+                                              planner_data_->prev_modified_goal->pose.position,
+                                              output.modified_goal->pose.position) > 0.01)) {
     PoseWithUuidStamped modified_goal = *(output.modified_goal);
     modified_goal.header.stamp = path->header.stamp;
     planner_data_->prev_modified_goal = modified_goal;
@@ -852,16 +853,14 @@ Path BehaviorPathPlannerNode::convertToPath(
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
-  const BehaviorModuleOutput & bt_output, const std::shared_ptr<PlannerData> & planner_data,
+  const BehaviorModuleOutput & output, const std::shared_ptr<PlannerData> & planner_data,
   const std::shared_ptr<PlannerManager> & planner_manager)
 {
   // TODO(Horibe) do some error handling when path is not available.
 
-  auto path = bt_output.path ? bt_output.path : planner_data->prev_output_path;
+  auto path = output.path ? output.path : planner_data->prev_output_path;
   path->header = planner_data->route_handler->getRouteHeader();
   path->header.stamp = this->now();
-  RCLCPP_DEBUG(
-    get_logger(), "BehaviorTreeManager: output is %s.", bt_output.path ? "FOUND" : "NOT FOUND");
 
   PathWithLaneId connected_path;
   const auto module_status_ptr_vec = planner_manager->getSceneModuleStatus();

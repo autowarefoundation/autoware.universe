@@ -81,11 +81,11 @@ struct AvoidanceParameters
   double detection_area_left_expand_dist = 1.0;
 
   // enable avoidance to be perform only in lane with same direction
-  bool enable_avoidance_over_same_direction{true};
+  bool use_adjacent_lane{true};
 
   // enable avoidance to be perform in opposite lane direction
   // to use this, enable_avoidance_over_same_direction need to be set to true.
-  bool enable_avoidance_over_opposite_direction{true};
+  bool use_opposite_lane{true};
 
   // enable update path when if detected objects on planner data is gone.
   bool enable_update_path_when_object_is_gone{false};
@@ -108,6 +108,9 @@ struct AvoidanceParameters
   // use hatched road markings for avoidance
   bool use_hatched_road_markings{false};
 
+  // use intersection area for avoidance
+  bool use_intersection_areas{false};
+
   // constrains
   bool use_constraints_for_decel{false};
 
@@ -122,6 +125,9 @@ struct AvoidanceParameters
 
   // comfortable jerk
   double nominal_jerk;
+
+  // To prevent large acceleration while avoidance.
+  double max_acceleration;
 
   // upper distance for envelope polygon expansion.
   double upper_distance_for_polygon_expansion;
@@ -187,6 +193,9 @@ struct AvoidanceParameters
   // transit hysteresis (unsafe to safe)
   double safety_check_hysteresis_factor;
 
+  // don't output new candidate path if the offset between ego and path is larger than this.
+  double safety_check_ego_offset;
+
   // keep target velocity in yield maneuver
   double yield_velocity;
 
@@ -195,6 +204,9 @@ struct AvoidanceParameters
 
   // maximum stop distance
   double stop_max_distance;
+
+  // stop buffer
+  double stop_buffer;
 
   // start avoidance after this time to avoid sudden path change
   double prepare_time;
@@ -216,6 +228,12 @@ struct AvoidanceParameters
   // distance for avoidance. Need a sharp avoidance path to avoid the object.
   double min_sharp_avoidance_speed;
 
+  // minimum slow down speed
+  double min_slow_down_speed;
+
+  // slow down speed buffer
+  double buf_slow_down_speed;
+
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
   double road_shoulder_safety_margin{1.0};
@@ -233,18 +251,13 @@ struct AvoidanceParameters
   // if the avoidance path exceeds this lateral jerk, it will be not used anymore.
   double max_lateral_jerk;
 
+  // To prevent large acceleration while avoidance.
+  double max_lateral_acceleration;
+
   // For the compensation of the detection lost. Once an object is observed, it is registered and
   // will be used for planning from the next time. If the object is not observed, it counts up the
   // lost_count and the registered object will be removed when the count exceeds this max count.
   double object_last_seen_threshold;
-
-  // For velocity planning to avoid acceleration during avoidance.
-  // Speeds smaller than this are not inserted.
-  double min_avoidance_speed_for_acc_prevention;
-
-  // To prevent large acceleration while avoidance. The max velocity is limited with this
-  // acceleration.
-  double max_avoidance_acceleration;
 
   // The avoidance path generation is performed when the shift distance of the
   // avoidance points is greater than this threshold.

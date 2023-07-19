@@ -70,6 +70,9 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     if (!is_any_module_running && is_out_of_route) {
       BehaviorModuleOutput output = utils::createGoalAroundPath(data);
       generateCombinedDrivableArea(output, data);
+      RCLCPP_WARN_THROTTLE(
+        logger_, clock_, 5000,
+        "Ego is out of route, no module is running. Skip running scene modules.");
       return output;
     }
 
@@ -141,17 +144,18 @@ void PlannerManager::generateCombinedDrivableArea(
   const auto & di = output.drivable_area_info;
   constexpr double epsilon = 1e-3;
 
+  const auto is_driving_forward_opt = motion_utils::isDrivingForward(output.path->points);
+  const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
+
   if (epsilon < std::abs(di.drivable_margin)) {
     // for single free space pull over
-    const auto is_driving_forward_opt = motion_utils::isDrivingForward(output.path->points);
-    const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
-
     utils::generateDrivableArea(
       *output.path, data->parameters.vehicle_length, di.drivable_margin, is_driving_forward);
   } else if (di.is_already_expanded) {
     // for single side shift
     utils::generateDrivableArea(
-      *output.path, di.drivable_lanes, false, data->parameters.vehicle_length, data);
+      *output.path, di.drivable_lanes, false, false, data->parameters.vehicle_length, data,
+      is_driving_forward);
   } else {
     const auto shorten_lanes = utils::cutOverlappedLanes(*output.path, di.drivable_lanes);
 
@@ -163,7 +167,8 @@ void PlannerManager::generateCombinedDrivableArea(
     // for other modules where multiple modules may be launched
     utils::generateDrivableArea(
       *output.path, expanded_lanes, di.enable_expanding_hatched_road_markings,
-      data->parameters.vehicle_length, data);
+      di.enable_expanding_intersection_areas, data->parameters.vehicle_length, data,
+      is_driving_forward);
   }
 
   // extract obstacles from drivable area
