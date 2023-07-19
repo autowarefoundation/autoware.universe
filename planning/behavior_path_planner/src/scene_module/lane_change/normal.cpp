@@ -319,13 +319,13 @@ lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
     lane_change_lane.get(), getEgoPose(), backward_length, forward_length);
 }
 
-bool NormalLaneChange::isNearEndOfLane() const
+bool NormalLaneChange::isNearEndOfCurrentLanes(const double threshold) const
 {
   const auto & route_handler = getRouteHandler();
   const auto & current_pose = getEgoPose();
   const auto shift_intervals =
     route_handler->getLateralIntervalsToPreferredLane(status_.current_lanes.back());
-  const auto threshold =
+  const auto lane_change_buffer =
     utils::calcMinimumLaneChangeLength(planner_data_->parameters, shift_intervals);
 
   auto distance_to_end = utils::getDistanceToEndOfLane(current_pose, status_.current_lanes);
@@ -336,8 +336,7 @@ bool NormalLaneChange::isNearEndOfLane() const
       utils::getSignedDistance(current_pose, route_handler->getGoalPose(), status_.current_lanes));
   }
 
-  return (std::max(0.0, distance_to_end) - threshold) <
-         planner_data_->parameters.backward_length_buffer_for_end_of_lane;
+  return (std::max(0.0, distance_to_end) - lane_change_buffer) < threshold;
 }
 
 bool NormalLaneChange::hasFinishedLaneChange() const
@@ -464,6 +463,20 @@ int NormalLaneChange::getNumToPreferredLane(const lanelet::ConstLanelet & lane) 
   const auto get_opposite_direction =
     (direction_ == Direction::RIGHT) ? Direction::LEFT : Direction::RIGHT;
   return std::abs(getRouteHandler()->getNumLaneToPreferredLane(lane, get_opposite_direction));
+}
+
+double NormalLaneChange::calcPrepareDuration() const
+{
+  const auto & common_parameters = planner_data_->parameters;
+  const auto threshold = lane_change_parameters_->min_length_for_turn_signal_activation;
+  const auto current_vel = getEgoVelocity();
+
+  // if the ego vehicle is close to the end of the lane at a low speed
+  if (isNearEndOfCurrentLanes(threshold) && current_vel < 1.0) {
+    return 0.0;
+  }
+
+  return common_parameters.lane_change_prepare_duration;
 }
 
 PathWithLaneId NormalLaneChange::getPrepareSegment(
@@ -679,18 +692,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
   candidate_paths->reserve(longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num);
 
-  const auto is_near_end_of_current_lane = std::invoke([&]() {
-    const auto distance =
-      !is_goal_in_route
-        ? dist_to_end_of_current_lanes
-        : utils::getSignedDistance(getEgoPose(), route_handler.getGoalPose(), current_lanes);
-
-    return std::abs(distance - lane_change_buffer) <
-           lane_change_parameters_->min_length_for_turn_signal_activation;
-  });
-  const bool disable_prepare_segment = is_near_end_of_current_lane && (getEgoVelocity() < 1.0);
-  const double prepare_duration =
-    disable_prepare_segment ? 0.0 : common_parameter.lane_change_prepare_duration;
+  const auto prepare_duration = calcPrepareDuration();
 
   for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
     // get path on original lanes
@@ -977,7 +979,8 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
 
 bool NormalLaneChange::isRequiredStop(const bool is_object_coming_from_rear) const
 {
-  return isNearEndOfLane() && isAbleToStopSafely() && is_object_coming_from_rear;
+  const auto threshold = planner_data_->parameters.backward_length_buffer_for_end_of_lane;
+  return isNearEndOfCurrentLanes(threshold) && isAbleToStopSafely() && is_object_coming_from_rear;
 }
 
 bool NormalLaneChange::getAbortPath()

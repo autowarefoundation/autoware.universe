@@ -103,7 +103,7 @@ public:
 
   virtual PathSafetyStatus isApprovedPathSafe() const = 0;
 
-  virtual bool isNearEndOfLane() const = 0;
+  virtual bool isNearEndOfCurrentLanes(const double threshold) const = 0;
 
   virtual bool getAbortPath() = 0;
 
