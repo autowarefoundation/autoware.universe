@@ -39,7 +39,7 @@ class DummyDiagnostics(rclpy.node.Node):
 
     @staticmethod
     def create_status(name: str, level: int):
-        return DiagnosticStatus(level=level, name=name, message="OK")
+        return DiagnosticStatus(level=level, name=name, message="OK", hardware_id="test")
 
 
 if __name__ == "__main__":

@@ -28,7 +28,7 @@ units:
   - name: /autoware/operation/remote
     type: and
     list:
-      - { type: diag, name: /external/remote_command }
+      - { type: diag, hardware: test, name: /external/remote_command }
 
   - name: /autoware/operation/emergency-stop
     type: dummy

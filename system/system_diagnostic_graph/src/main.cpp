@@ -35,7 +35,7 @@ MainNode::MainNode() : Node("system_diagnostic_graph")
     const auto callback = std::bind(&MainNode::on_diag, this, _1);
     sub_source_ = create_subscription<DiagnosticArray>("/diagnostics", sub_source, callback);
 
-    const auto rate = rclcpp::Rate(declare_parameter<int64_t>("update_rate"));
+    const auto rate = rclcpp::Rate(declare_parameter<double>("update_rate"));
     timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
   }
 

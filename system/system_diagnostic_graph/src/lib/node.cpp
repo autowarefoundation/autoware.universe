@@ -73,7 +73,7 @@ DiagLeaf::DiagLeaf(const KeyType & key) : key_(key)
 
 DiagnosticStatus DiagLeaf::report() const
 {
-  DiagnosticStatus status;
+  DiagnosticStatus status = status_;
   status.level = level_;
   status.name = key_.first;
   status.hardware_id = key_.second;
@@ -89,6 +89,7 @@ void DiagLeaf::update()
 void DiagLeaf::callback(const DiagnosticStatus & status)
 {
   level_ = status.level;
+  status_ = status;
 }
 
 DiagUnit * DiagGraphData::make_unit(const std::string & name)

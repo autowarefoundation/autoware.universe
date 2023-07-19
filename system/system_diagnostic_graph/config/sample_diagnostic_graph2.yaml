@@ -2,7 +2,7 @@ units:
   - name: /autoware/localization
     type: and
     list:
-      - { type: diag, name: /sensing/lidars/top }
+      - { type: diag, hardware: test, name: /sensing/lidars/top }
 
   - name: /autoware/planning
     type: and
@@ -12,7 +12,7 @@ units:
   - name: /autoware/planning/route
     type: and
     list:
-      - { type: diag, name: /planning/route }
+      - { type: diag, hardware: test, name: /planning/route }
 
   - name: /autoware/percepiton
     type: and
@@ -23,10 +23,10 @@ units:
   - name: /autoware/percepiton/front-obstable-detection
     type: or
     list:
-      - { type: diag, name: /sensing/lidars/front }
-      - { type: diag, name: /sensing/radars/front }
+      - { type: diag, hardware: test, name: /sensing/lidars/front }
+      - { type: diag, hardware: test, name: /sensing/radars/front }
 
   - name: /autoware/perception/front-obstable-prediction
     type: and
     list:
-      - { type: diag, name: /sensing/lidars/front }
+      - { type: diag, hardware: test, name: /sensing/lidars/front }
