@@ -286,7 +286,7 @@ TrackedObject objectClassificationMerger(
 }
 
 // probability merger
-double probabilityMerger(const double main_prob, const double sub_prob, const MergePolicy policy)
+float probabilityMerger(const float main_prob, const float sub_prob, const MergePolicy policy)
 {
   if (policy == MergePolicy::SKIP) {
     return main_prob;
