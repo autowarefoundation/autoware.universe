@@ -121,10 +121,6 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
       isClassTable_.erase(cls);
     }
   }
-<<<<<<< HEAD
-
-=======
->>>>>>> 0abf418b7 (fix: class according to config)
   has_twist_ = this->declare_parameter("has_twist", false);
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));

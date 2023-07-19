@@ -58,7 +58,7 @@ std::size_t VoxelGenerator::pointsToVoxels(
       point[0] = point_current.x();
       point[1] = point_current.y();
       point[2] = point_current.z();
-      point[3] = timelag;
+      point[3] = time_lag;
       for (std::size_t i = 1; i <= config_.class_size_; i++) {
         point[3 + i] = (*class_iter == i) ? 1 : 0;
       }
