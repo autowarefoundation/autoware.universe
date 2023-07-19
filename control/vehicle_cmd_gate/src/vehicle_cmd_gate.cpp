@@ -527,7 +527,9 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   // set prev value for both to keep consistency over switching:
   // Actual steer, vel, acc should be considered in manual mode to prevent sudden motion when
   // switching from manual to autonomous
-  auto prev_values = (mode.mode == OperationModeState::AUTONOMOUS) ? out : current_status_cmd;
+  const auto in_autonomous =
+    (mode.mode == OperationModeState::AUTONOMOUS && mode.is_autoware_control_enabled);
+  auto prev_values = in_autonomous ? out : current_status_cmd;
 
   // TODO(Horibe): To prevent sudden acceleration/deceleration when switching from manual to
   // autonomous, the filter should be applied for actual speed and acceleration during manual
