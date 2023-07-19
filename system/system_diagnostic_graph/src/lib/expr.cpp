@@ -24,13 +24,13 @@ namespace system_diagnostic_graph
 
 std::unique_ptr<BaseExpr> BaseExpr::create(const std::string & type)
 {
-  if (type == "all") {
+  if (type == "and") {
     return std::make_unique<AllExpr>();
   }
-  if (type == "any") {
+  if (type == "or") {
     return std::make_unique<AnyExpr>();
   }
-  if (type == "ok") {
+  if (type == "dummy") {
     return std::make_unique<ConstExpr>(DiagnosticStatus::OK);
   }
   return std::make_unique<ConstExpr>(DiagnosticStatus::STALE);

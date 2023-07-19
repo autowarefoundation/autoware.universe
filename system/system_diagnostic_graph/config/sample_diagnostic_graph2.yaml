@@ -1,32 +1,32 @@
 units:
   - name: /autoware/localization
-    type: all
+    type: and
     list:
       - { type: diag, name: /sensing/lidars/top }
 
   - name: /autoware/planning
-    type: all
+    type: and
     list:
       - { type: unit, name: /autoware/planning/route }
 
   - name: /autoware/planning/route
-    type: all
+    type: and
     list:
       - { type: diag, name: /planning/route }
 
   - name: /autoware/percepiton
-    type: all
+    type: and
     list:
       - { type: unit, name: /autoware/percepiton/front-obstable-detection }
       - { type: unit, name: /autoware/perception/front-obstable-prediction }
 
   - name: /autoware/percepiton/front-obstable-detection
-    type: any
+    type: or
     list:
       - { type: diag, name: /sensing/lidars/front }
       - { type: diag, name: /sensing/radars/front }
 
   - name: /autoware/perception/front-obstable-prediction
-    type: all
+    type: and
     list:
       - { type: diag, name: /sensing/lidars/front }
