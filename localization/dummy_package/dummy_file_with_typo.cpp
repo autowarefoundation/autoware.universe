@@ -2,6 +2,6 @@
 
 int main()
 {
-    // thisisatypo
-    return 0;
+  // thisisatypo
+  return 0;
 }
