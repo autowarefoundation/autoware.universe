@@ -104,7 +104,7 @@ struct LaneChangeParameters
   // collision check
   bool enable_prepare_segment_collision_check{true};
   double prepare_segment_ignore_object_velocity_thresh{0.1};
-  bool check_objects_on_current_lanes{false};
+  bool check_objects_on_current_lanes{true};
   bool check_objects_on_other_lanes{true};
   bool use_all_predicted_path{false};
 
