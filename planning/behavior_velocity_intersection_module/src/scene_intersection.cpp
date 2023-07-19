@@ -934,9 +934,8 @@ bool IntersectionModule::checkCollision(
   using lanelet::utils::getPolygonFromArcLength;
 
   const auto & objects_ptr = planner_data_->predicted_objects;
-  const auto lanelets_on_path =
-    planning_utils::getLaneletsOnPath(path, planner_data_->route_handler_->getLaneletMapPtr(),
-                                      planner_data_->current_odometry->pose);
+  const auto lanelets_on_path = planning_utils::getLaneletsOnPath(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
   // extract target objects
   autoware_auto_perception_msgs::msg::PredictedObjects target_objects;
   target_objects.header = objects_ptr->header;
