@@ -72,6 +72,15 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
     declare_parameter<double>("generalized_iou_threshold");
   sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec", 0.5);
   time_sync_threshold_ = declare_parameter<double>("time_sync_threshold", 0.05);
+
+  // init association
+  const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");
+  const std::vector<int> can_assign_matrix(tmp.begin(), tmp.end());
+  const auto max_dist_matrix = this->declare_parameter<std::vector<double>>("max_dist_matrix");
+  const auto max_rad_matrix = this->declare_parameter<std::vector<double>>("max_rad_matrix");
+  const auto min_iou_matrix = this->declare_parameter<std::vector<double>>("min_iou_matrix");
+  data_association_ = std::make_unique<DataAssociation>(
+    can_assign_matrix, max_dist_matrix, max_rad_matrix, min_iou_matrix);
 }
 
 void DecorativeTrackerMergerNode::mainObjectsCallback(
@@ -118,12 +127,53 @@ TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
   const auto interpolated_sub_objects = interpolateObjectState(
     closest_time_sub_objects, closest_time_sub_objects_later, main_objects->header);
 
+  // define output object
+  TrackedObjects output_objects;
+
   // if there are no sub objects, return main objects as it is
   if (!interpolated_sub_objects) {
     return *main_objects;
   }
 
   // else, merge main objects and sub objects
+  // first, do association
+  /* global nearest neighbor */
+  std::unordered_map<int, int> direct_assignment, reverse_assignment;
+  const auto & objects0 = main_objects->objects;
+  const auto & objects1 = interpolated_sub_objects->objects;
+  Eigen::MatrixXd score_matrix =
+    data_association_->calcScoreMatrix(*main_objects, *interpolated_sub_objects);
+  data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
+
+  for (size_t object0_idx = 0; object0_idx < objects0.size(); ++object0_idx) {
+    const auto & object0 = objects0.at(object0_idx);
+    if (direct_assignment.find(object0_idx) != direct_assignment.end()) {  // found and merge
+      const auto & object1 = objects1.at(direct_assignment.at(object0_idx));
+      // merge object0 and object1
+      TrackedObject merged_object = object0;
+      merged_object.kinematics = merger_utils::objectKinematicsVXMerger(
+        object0, object1, merger_utils::MergePolicy::OVERWRITE);
+      merged_object.shape =
+        merger_utils::shapeMerger(object0, object1, merger_utils::MergePolicy::SKIP);
+      merged_object.existence_probability = merger_utils::probabilityMerger(
+        object0.existence_probability, object1.existence_probability,
+        merger_utils::MergePolicy::SKIP);
+      auto merged_classification =
+        merger_utils::objectClassificationMerger(object0, object1, merger_utils::MergePolicy::SKIP);
+      merged_object.classification = merged_classification.classification;
+      output_objects.objects.push_back(merged_object);
+    } else {  // not found
+      output_objects.objects.push_back(object0);
+    }
+  }
+  for (size_t object1_idx = 0; object1_idx < objects1.size(); ++object1_idx) {
+    const auto & object1 = objects1.at(object1_idx);
+    if (reverse_assignment.find(object1_idx) != reverse_assignment.end()) {  // found
+    } else {                                                                 // not found
+      output_objects.objects.push_back(object1);
+    }
+  }
+
   return *main_objects;
 }
 

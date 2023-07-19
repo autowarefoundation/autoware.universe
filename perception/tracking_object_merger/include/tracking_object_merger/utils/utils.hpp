@@ -103,7 +103,7 @@ TrackedObject objectClassificationMerger(
   const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy);
 
 // probability merger
-double probabilityMerger(const double main_prob, const double sub_prob, const MergePolicy policy);
+float probabilityMerger(const float main_prob, const float sub_prob, const MergePolicy policy);
 
 // shape merger
 autoware_auto_perception_msgs::msg::Shape shapeMerger(
