@@ -514,8 +514,11 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
       auto prev_cmd = filter_.getPrevCmd();
       prev_cmd.longitudinal.acceleration =
         std::max(prev_cmd.longitudinal.acceleration, current_status_cmd.longitudinal.acceleration);
+      // consider reverse driving
       prev_cmd.longitudinal.speed =
-        std::max(prev_cmd.longitudinal.speed, current_status_cmd.longitudinal.speed);
+        std::fabs(prev_cmd.longitudinal.speed) > std::fabs(current_status_cmd.longitudinal.speed)
+          ? prev_cmd.longitudinal.speed
+          : current_status_cmd.longitudinal.speed;
       filter_.setPrevCmd(prev_cmd);
     }
     filter_.filterAll(dt, current_steer_, out);
