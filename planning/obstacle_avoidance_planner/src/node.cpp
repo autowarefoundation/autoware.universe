@@ -456,9 +456,8 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
         motion_utils::insertStopPoint(dist_with_margin, optimized_traj_points);
       if (first_outside_idx_with_margin) {
         return *first_outside_idx_with_margin;
-      } else {
-        return *first_outside_idx;
       }
+      return *first_outside_idx;
     }();
 
     publishVirtualWall(optimized_traj_points.at(stop_idx).pose);
