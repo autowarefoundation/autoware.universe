@@ -29,8 +29,8 @@ MainNode::MainNode() : Node("system_diagnostic_graph")
     const auto pub_status = rclcpp::QoS(declare_parameter<int64_t>("status_qos_depth"));
     const auto sub_source = rclcpp::QoS(declare_parameter<int64_t>("source_qos_depth"));
 
-    pub_struct_ = create_publisher<DiagnosticGraph>("/diagnostics_graph_struct", pub_struct);
-    pub_status_ = create_publisher<DiagnosticArray>("/diagnostics_graph_status", pub_status);
+    pub_struct_ = create_publisher<DiagnosticGraph>("/diagnostics_graph/struct", pub_struct);
+    pub_status_ = create_publisher<DiagnosticArray>("/diagnostics_graph/status", pub_status);
 
     const auto callback = std::bind(&MainNode::on_diag, this, _1);
     sub_source_ = create_subscription<DiagnosticArray>("/diagnostics", sub_source, callback);

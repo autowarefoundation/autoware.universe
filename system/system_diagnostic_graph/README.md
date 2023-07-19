@@ -2,7 +2,9 @@
 
 ## Overview
 
-This package subscribes to a topic of type DiagnosticArray and publishes aggregated diagnostic status.
+The system diagnostic graph node subscribes to diagnostic status and publishes aggregated diagnostic status.
+As shown in the diagram below, this node introduces extra diagnostic status for intermediate functions and update them.
+Diagnostic status dependencies will be directed acyclic graph (DAG).
 
 ![overview](./doc/overview.drawio.svg)
 
@@ -11,8 +13,8 @@ This package subscribes to a topic of type DiagnosticArray and publishes aggrega
 | Interface Type | Interface Name              | Data Type                               | Description        |
 | -------------- | --------------------------- | --------------------------------------- | ------------------ |
 | subscription   | `/diagnostics`              | `diagnostic_msgs/msg/DiagnosticArray`   | Input diagnostics. |
-| publisher      | `/diagnostics_graph_status` | `diagnostic_msgs/msg/DiagnosticArray`   | Graph status.      |
-| publisher      | `/diagnostics_graph_struct` | `tier4_system_msgs/msg/DiagnosticGraph` | Graph structure.   |
+| publisher      | `/diagnostics_graph/status` | `diagnostic_msgs/msg/DiagnosticArray`   | Graph status.      |
+| publisher      | `/diagnostics_graph/struct` | `tier4_system_msgs/msg/DiagnosticGraph` | Graph structure.   |
 
 ## Parameters
 
@@ -24,3 +26,11 @@ This package subscribes to a topic of type DiagnosticArray and publishes aggrega
 | `source_qos_depth` | `uint`   | QoS depth of source topic.                 |
 
 ## Config
+
+- ConfigFile
+- Path
+- Node
+  - Input
+  - Extra
+  - And
+  - Or
