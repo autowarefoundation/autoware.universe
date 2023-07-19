@@ -25,16 +25,17 @@ MainNode::MainNode() : Node("system_diagnostic_graph")
   // Init ros interface.
   {
     using std::placeholders::_1;
-    const auto sub_source = rclcpp::QoS(declare_parameter<int64_t>("array_qos_depth"));
-    const auto pub_status = rclcpp::QoS(declare_parameter<int64_t>("graph_qos_depth"));
     const auto pub_struct = rclcpp::QoS(1).transient_local();
+    const auto pub_status = rclcpp::QoS(declare_parameter<int64_t>("status_qos_depth"));
+    const auto sub_source = rclcpp::QoS(declare_parameter<int64_t>("source_qos_depth"));
 
-    sub_source_ = create_subscription<DiagnosticArray>(
-      "/diagnostics", sub_source, std::bind(&MainNode::on_diag, this, _1));
-    pub_status_ = create_publisher<DiagnosticArray>("/diagnostics_graph_status", pub_status);
     pub_struct_ = create_publisher<DiagnosticGraph>("/diagnostics_graph_struct", pub_struct);
+    pub_status_ = create_publisher<DiagnosticArray>("/diagnostics_graph_status", pub_status);
 
-    const auto rate = rclcpp::Rate(declare_parameter<int64_t>("rate"));
+    const auto callback = std::bind(&MainNode::on_diag, this, _1);
+    sub_source_ = create_subscription<DiagnosticArray>("/diagnostics", sub_source, callback);
+
+    const auto rate = rclcpp::Rate(declare_parameter<int64_t>("update_rate"));
     timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
   }
 
@@ -42,15 +43,15 @@ MainNode::MainNode() : Node("system_diagnostic_graph")
   {
     const auto file = declare_parameter<std::string>("file");
     const auto data = graph_.create(file);
+    graph_.debug();
     pub_struct_->publish(data);
   }
 }
 
 void MainNode::on_timer()
 {
-  graph_.debug();
-
   const auto data = graph_.report(now());
+  graph_.debug();
   pub_status_->publish(data);
 }
 

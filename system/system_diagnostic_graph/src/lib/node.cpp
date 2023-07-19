@@ -22,6 +22,16 @@
 namespace system_diagnostic_graph
 {
 
+DiagnosticNode DiagNode::struct_message() const
+{
+  DiagnosticNode message;
+  message.name = name();
+  for (const auto & link : links()) {
+    message.links.push_back(link->index());
+  }
+  return message;
+}
+
 DiagUnit::DiagUnit(const KeyType & key) : key_(key)
 {
   level_ = DiagnosticStatus::STALE;

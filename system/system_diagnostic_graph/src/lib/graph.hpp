@@ -35,15 +35,9 @@ public:
   void debug();
 
 private:
-  void topological_sort();
+  static std::vector<DiagNode *> topological_sort(const DiagGraphData & data);
   DiagGraphData data_;
-
-  struct NodeWithIndexLink
-  {
-    DiagNode * node;
-    std::vector<uint32_t> links;
-  };
-  std::vector<NodeWithIndexLink> index_nodes_;
+  std::vector<DiagNode *> topological_nodes_;
 };
 
 }  // namespace system_diagnostic_graph

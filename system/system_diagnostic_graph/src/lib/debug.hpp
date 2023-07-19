@@ -21,7 +21,7 @@
 namespace system_diagnostic_graph
 {
 
-constexpr size_t diag_debug_size = 4;
+constexpr size_t diag_debug_size = 5;
 using DiagDebugData = std::array<std::string, diag_debug_size>;
 
 }  // namespace system_diagnostic_graph

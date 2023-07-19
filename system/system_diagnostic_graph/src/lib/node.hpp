@@ -37,11 +37,18 @@ public:
   virtual ~DiagNode() = default;
   virtual void update() = 0;
   virtual DiagnosticStatus report() const = 0;
+  virtual DiagDebugData debug() const = 0;
   virtual std::vector<DiagNode *> links() const = 0;
   virtual std::string name() const = 0;
+
+  DiagnosticNode struct_message() const;
+
   DiagnosticLevel level() const { return level_; }
+  size_t index() const { return index_; }
+  void set_index(const size_t index) { index_ = index; }
 
 protected:
+  size_t index_ = 0;
   DiagnosticLevel level_;
 };
 
@@ -51,12 +58,12 @@ public:
   using KeyType = std::string;
   explicit DiagUnit(const KeyType & key);
   DiagnosticStatus report() const override;
-  DiagDebugData debug();
+  DiagDebugData debug() const override;
   void update() override;
   void create(DiagGraphInit & graph, const UnitConfig & config);
 
   std::vector<DiagNode *> links() const override { return links_; }
-  std::string name() const override { return "Unit[" + key_ + "]"; }
+  std::string name() const override { return key_; }
 
 private:
   const KeyType key_;
@@ -70,12 +77,12 @@ public:
   using KeyType = std::pair<std::string, std::string>;
   explicit DiagLeaf(const KeyType & key);
   DiagnosticStatus report() const override;
-  DiagDebugData debug();
+  DiagDebugData debug() const override;
   void update() override;
   void callback(const DiagnosticStatus & status);
 
   std::vector<DiagNode *> links() const override { return {}; }
-  std::string name() const override { return "Diag[" + key_.first + "]"; }
+  std::string name() const override { return key_.first; }
 
 private:
   const KeyType key_;
