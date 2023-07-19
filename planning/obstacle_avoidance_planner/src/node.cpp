@@ -467,10 +467,9 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
       for (size_t i = stop_idx; i < optimized_traj_points.size(); ++i) {
         optimized_traj_points.at(i).longitudinal_velocity_mps = 0.0;
       }
-      
-    } 
-    } else {
-      debug_data_ptr_->stop_pose_by_drivable_area = boost::none;
+    }
+  } else {
+    debug_data_ptr_->stop_pose_by_drivable_area = boost::none;
   }
 
   time_keeper_ptr_->toc(__func__, "    ");
