@@ -80,6 +80,11 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
     return true;
   }
   if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y - distance_threshold, point.z - distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
         pcl::PointXYZ(point.x, point.y - distance_threshold, point.z), point, distance_threshold,
         map, voxel)) {
     return true;
@@ -90,8 +95,18 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
     return true;
   }
   if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y, point.z - distance_threshold), point, distance_threshold,
+        map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
         pcl::PointXYZ(point.x, point.y, point.z + distance_threshold), point, distance_threshold,
         map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(point.x, point.y + distance_threshold, point.z - distance_threshold), point,
+        distance_threshold, map, voxel)) {
     return true;
   }
   if (is_in_voxel(
@@ -102,6 +117,13 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
   if (is_in_voxel(
         pcl::PointXYZ(point.x, point.y + distance_threshold, point.z + distance_threshold), point,
         distance_threshold, map, voxel)) {
+    return true;
+  }
+
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x - distance_threshold, point.y - distance_threshold, point.z - distance_threshold),
+        point, distance_threshold, map, voxel)) {
     return true;
   }
   if (is_in_voxel(
@@ -116,6 +138,11 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
     return true;
   }
   if (is_in_voxel(
+        pcl::PointXYZ(point.x - distance_threshold, point.y, point.z - distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
         pcl::PointXYZ(point.x - distance_threshold, point.y, point.z), point, distance_threshold,
         map, voxel)) {
     return true;
@@ -123,6 +150,12 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
   if (is_in_voxel(
         pcl::PointXYZ(point.x - distance_threshold, point.y, point.z + distance_threshold), point,
         distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x - distance_threshold, point.y + distance_threshold, point.z - distance_threshold),
+        point, distance_threshold, map, voxel)) {
     return true;
   }
   if (is_in_voxel(
@@ -138,6 +171,12 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
   }
 
   if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x + distance_threshold, point.y - distance_threshold, point.z - distance_threshold),
+        point, distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
         pcl::PointXYZ(point.x + distance_threshold, point.y - distance_threshold, point.z), point,
         distance_threshold, map, voxel)) {
     return true;
@@ -149,6 +188,11 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
     return true;
   }
   if (is_in_voxel(
+        pcl::PointXYZ(point.x + distance_threshold, point.y, point.z - distance_threshold), point,
+        distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
         pcl::PointXYZ(point.x + distance_threshold, point.y, point.z), point, distance_threshold,
         map, voxel)) {
     return true;
@@ -156,6 +200,12 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
   if (is_in_voxel(
         pcl::PointXYZ(point.x + distance_threshold, point.y, point.z + distance_threshold), point,
         distance_threshold, map, voxel)) {
+    return true;
+  }
+  if (is_in_voxel(
+        pcl::PointXYZ(
+          point.x + distance_threshold, point.y + distance_threshold, point.z - distance_threshold),
+        point, distance_threshold, map, voxel)) {
     return true;
   }
   if (is_in_voxel(
