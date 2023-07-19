@@ -1060,6 +1060,10 @@ bool IntersectionModule::checkCollision(
         const auto trimmed_ego_polygon =
           getPolygonFromArcLength(ego_lane_with_next_lane, start_arc_length, end_arc_length);
 
+        if (trimmed_ego_polygon.empty()) {
+          continue;
+        }
+
         Polygon2d polygon{};
         for (const auto & p : trimmed_ego_polygon) {
           polygon.outer().emplace_back(p.x(), p.y());
