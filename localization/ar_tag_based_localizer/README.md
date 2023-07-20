@@ -9,25 +9,25 @@ The positions and orientations of the ArTags are assumed to be written in the La
 
 This package includes two nodes.
 
-* `ar_tag_based_localizer` : A node that detects AR-Tags from camera images and publishes the pose of the ego vehicle.
-* `tag_tf_caster` : A node that publishes the pose of the AR-Tags applied in LaneLet2 as `tf_static`.
+- `ar_tag_based_localizer` : A node that detects AR-Tags from camera images and publishes the pose of the ego vehicle.
+- `tag_tf_caster` : A node that publishes the pose of the AR-Tags applied in LaneLet2 as `tf_static`.
 
 ## Inputs / Outputs
 
 ### Input
 
-|Name|Type|Description|
-|:---|:---|:----------|
-| `image` | `sensor_msgs::msg::Image` | Camera Image |
-| `camera_info` | `sensor_msgs::msg::CameraInfo` | Camera Info |
+| Name          | Type                           | Description  |
+| :------------ | :----------------------------- | :----------- |
+| `image`       | `sensor_msgs::msg::Image`      | Camera Image |
+| `camera_info` | `sensor_msgs::msg::CameraInfo` | Camera Info  |
 
 ### Output
 
-|Name|Type|Description|
-|:---|:---|:----------|
-| `pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Estimated Pose |
-| `result` | `sensor_msgs::msg::Image` | [debug topic] Image in which marker detection results are superimposed on the input image |
-| `tf` | `geometry_msgs::msg::TransformStamped` | [debug topic] TF from camera to detected tag |
+| Name                   | Type                                            | Description                                                                               |
+| :--------------------- | :---------------------------------------------- | :---------------------------------------------------------------------------------------- |
+| `pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Estimated Pose                                                                            |
+| `result`               | `sensor_msgs::msg::Image`                       | [debug topic] Image in which marker detection results are superimposed on the input image |
+| `tf`                   | `geometry_msgs::msg::TransformStamped`          | [debug topic] TF from camera to detected tag                                              |
 
 ## How to launch
 
@@ -51,8 +51,8 @@ The four vertices of AR-Tag are defined counterclockwise.
 
 The order of the four vertices is defined as follows. In the coordinate system of AR-Tag,
 
-* the x-axis is parallel to the vector from the first vertex to the second vertex
-* the y-axis is parallel to the vector from the second vertex to the third vertex
+- the x-axis is parallel to the vector from the first vertex to the second vertex
+- the y-axis is parallel to the vector from the second vertex to the third vertex
 
 ![node_diagram](./doc_image/lanelet2_data_structure.drawio.svg)
 

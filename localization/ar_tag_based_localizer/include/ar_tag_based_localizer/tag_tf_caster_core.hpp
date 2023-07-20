@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AR_TAG_BASED_LOCALIZER__TAG_TF_CASTER_HPP_
-#define AR_TAG_BASED_LOCALIZER__TAG_TF_CASTER_HPP_
+#ifndef AR_TAG_BASED_LOCALIZER__TAG_TF_CASTER_CORE_HPP_
+#define AR_TAG_BASED_LOCALIZER__TAG_TF_CASTER_CORE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -44,4 +44,4 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_bin_sub_;
 };
 
-#endif  // AR_TAG_BASED_LOCALIZER__TAG_TF_CASTER_HPP_
+#endif  // AR_TAG_BASED_LOCALIZER__TAG_TF_CASTER_CORE_HPP_

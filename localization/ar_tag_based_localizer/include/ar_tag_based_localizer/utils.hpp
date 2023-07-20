@@ -41,8 +41,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AR_TAG_BASED_LOCALIZED__UTILS_HPP_
-#define AR_TAG_BASED_LOCALIZED__UTILS_HPP_
+#ifndef AR_TAG_BASED_LOCALIZER__UTILS_HPP_
+#define AR_TAG_BASED_LOCALIZER__UTILS_HPP_
 
 #include <sensor_msgs/msg/camera_info.hpp>
 
@@ -62,4 +62,4 @@ aruco::CameraParameters ros_camera_info_2_aruco_cam_params(
 
 tf2::Transform aruco_marker_2_tf2(const aruco::Marker & marker);
 
-#endif  // AR_TAG_BASED_LOCALIZED__UTILS_HPP_
+#endif  // AR_TAG_BASED_LOCALIZER__UTILS_HPP_
