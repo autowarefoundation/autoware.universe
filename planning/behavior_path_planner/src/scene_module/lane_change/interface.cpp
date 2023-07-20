@@ -134,7 +134,8 @@ ModuleStatus LaneChangeInterface::updateState()
     return ModuleStatus::RUNNING;
   }
 
-  const auto threshold = planner_data_->parameters.backward_length_buffer_for_end_of_lane;
+  const auto & common_parameters = module_type_->getCommonParam();
+  const auto threshold = common_parameters.backward_length_buffer_for_end_of_lane;
   const auto status = module_type_->getLaneChangeStatus();
   if (module_type_->isNearEndOfCurrentLanes(status.current_lanes, status.target_lanes, threshold)) {
     RCLCPP_WARN_STREAM_THROTTLE(
