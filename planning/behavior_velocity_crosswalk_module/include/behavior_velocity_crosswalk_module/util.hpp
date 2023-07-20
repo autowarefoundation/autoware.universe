@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTIL_HPP_
-#define UTIL_HPP_
+#ifndef BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_
+#define BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_
 
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
@@ -23,6 +23,8 @@
 
 #include <limits>
 #include <memory>
+#include <optional>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -68,8 +70,8 @@ struct DebugData
   geometry_msgs::msg::Pose first_stop_pose;
   geometry_msgs::msg::Point nearest_collision_point;
 
-  boost::optional<geometry_msgs::msg::Point> range_near_point{boost::none};
-  boost::optional<geometry_msgs::msg::Point> range_far_point{boost::none};
+  std::optional<geometry_msgs::msg::Point> range_near_point{std::nullopt};
+  std::optional<geometry_msgs::msg::Point> range_far_point{std::nullopt};
 
   std::vector<std::pair<CollisionPoint, CollisionState>> collision_points;
 
@@ -81,6 +83,20 @@ struct DebugData
   std::vector<std::vector<geometry_msgs::msg::Point>> obj_polygons;
 };
 
+std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
+  const geometry_msgs::msg::Pose & current_pose,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
+
+std::set<int64_t> getCrosswalkIdSetOnPath(
+  const geometry_msgs::msg::Pose & current_pose,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
+
+bool checkRegulatoryElementExistence(const lanelet::LaneletMapPtr & lanelet_map_ptr);
+
 std::vector<geometry_msgs::msg::Point> getPolygonIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
   const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
@@ -89,9 +105,9 @@ std::vector<geometry_msgs::msg::Point> getLinestringIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicLineString2d & linestring,
   const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
 
-lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(
+std::optional<lanelet::ConstLineString3d> getStopLineFromMap(
   const int lane_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const std::string & attribute_name);
 }  // namespace behavior_velocity_planner
 
-#endif  // UTIL_HPP_
+#endif  // BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_
