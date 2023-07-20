@@ -24,20 +24,20 @@ ament_auto_add_library(mu_successive_shortest_path SHARED
   src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
 )
 
-ament_auto_add_library(decorative_tracking_object_merger SHARED
+ament_auto_add_library(decorative_tracker_merger_node SHARED
   src/data_association/data_association.cpp
   src/decorative_tracker_merger.cpp
   src/utils/utils.cpp
 )
 
-target_link_libraries(decorative_tracking_object_merger
+target_link_libraries(decorative_tracker_merger_node
   mu_successive_shortest_path
   Eigen3::Eigen
 )
 
-rclcpp_components_register_node(decorative_tracking_object_merger
-  PLUGIN "tacking_object_merger::DecorativeTrackerMergerNode"
-  EXECUTABLE decorative_tracking_object_merger_node
+rclcpp_components_register_node(decorative_tracker_merger_node
+  PLUGIN "tracking_object_merger::DecorativeTrackerMergerNode"
+  EXECUTABLE decorative_tracker_merger
 )
 
 ament_auto_package(INSTALL_TO_SHARE

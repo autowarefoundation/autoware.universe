@@ -16,6 +16,7 @@
 #define TRACKING_OBJECT_MERGER__DECORATIVE_TRACKER_MERGER_HPP_
 
 #include "tracking_object_merger/data_association/data_association.hpp"
+#include "tracking_object_merger/utils/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -85,11 +86,17 @@ private:
 
   struct
   {
-    double precision_threshold;
-    double recall_threshold;
-    double generalized_iou_threshold;
-    std::map<int /*class label*/, double /*distance_threshold*/> distance_threshold_map;
-  } overlapped_judge_param_;
+    std::string kinematics_to_be_merged;
+    merger_utils::MergePolicy kinematics_merge_policy;
+    merger_utils::MergePolicy classification_merge_policy;
+    merger_utils::MergePolicy existence_prob_merge_policy;
+    merger_utils::MergePolicy shape_merge_policy;
+  } merger_policy_params_;
+
+  std::map<std::string, merger_utils::MergePolicy> merger_policy_map_ = {
+    {"skip", merger_utils::MergePolicy::SKIP},
+    {"overwrite", merger_utils::MergePolicy::OVERWRITE},
+    {"fusion", merger_utils::MergePolicy::FUSION}};
 };
 
 }  // namespace tracking_object_merger
