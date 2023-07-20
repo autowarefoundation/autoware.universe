@@ -23,4 +23,4 @@
       # behavior_velocity_planner::RunOutModulePlugin
       # behavior_velocity_planner::SpeedBumpModulePlugin
       - behavior_velocity_planner::OutOfLaneModulePlugin
-      # behavior_velocity_planner::NoDrivableLaneModulePlugin
+      - behavior_velocity_planner::NoDrivableLaneModulePlugin
