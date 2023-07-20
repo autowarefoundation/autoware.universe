@@ -186,7 +186,9 @@ void RadarObjectTrackerNode::onMeasurement(
     }
     std::shared_ptr<Tracker> tracker =
       createNewTracker(transformed_objects.objects.at(i), measurement_time, *self_transform);
-    if (tracker) list_tracker_.push_back(tracker);
+    if (tracker) {
+      list_tracker_.push_back(tracker);
+    }
   }
 
   if (publish_timer_ == nullptr) {

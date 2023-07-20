@@ -4,7 +4,7 @@
   <name>radar_object_tracker</name>
   <version>0.0.0</version>
   <description>Do tracking radar object</description>
-  <maintainer email="yoshiyoshidetteiu@gmail.com">yoshiri</maintainer>
+  <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
   <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
   <maintainer email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</maintainer>
   <license>Apache License 2.0</license>
@@ -28,7 +28,7 @@
   <depend>yaml-cpp</depend>
 
   <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
+  <test_depend>autoware_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

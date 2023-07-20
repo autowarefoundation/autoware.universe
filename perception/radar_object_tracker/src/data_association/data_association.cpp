@@ -210,7 +210,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         bool passed_gate = true;
         // dist gate
         if (passed_gate) {
-          if (max_dist < dist) passed_gate = false;
+          if (max_dist < dist) {
+            passed_gate = false;
+          }
           pair_log_data["gate_name"] = "dist gate";
           pair_log_data["gate_value"] = dist;
           pair_log_data["gate_threshold"] = max_dist;
@@ -220,7 +222,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           const double max_area = max_area_matrix_(tracker_label, measurement_label);
           const double min_area = min_area_matrix_(tracker_label, measurement_label);
           const double area = tier4_autoware_utils::getArea(measurement_object.shape);
-          if (area < min_area || max_area < area) passed_gate = false;
+          if (area < min_area || max_area < area) {
+            passed_gate = false;
+          }
           pair_log_data["gate_name"] = "area gate";
           pair_log_data["gate_value"] = area;
           pair_log_data["gate_threshold"] = max_area;
@@ -231,8 +235,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           const double angle = getFormedYawAngle(
             measurement_object.kinematics.pose_with_covariance.pose.orientation,
             tracked_object.kinematics.pose_with_covariance.pose.orientation, false);
-          if (std::fabs(max_rad) < M_PI && std::fabs(max_rad) < std::fabs(angle))
+          if (std::fabs(max_rad) < M_PI && std::fabs(max_rad) < std::fabs(angle)) {
             passed_gate = false;
+          }
           pair_log_data["gate_name"] = "angle gate";
           pair_log_data["gate_value"] = angle;
           pair_log_data["gate_threshold"] = max_rad;
@@ -243,7 +248,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
             measurement_object.kinematics.pose_with_covariance.pose.position,
             tracked_object.kinematics.pose_with_covariance.pose.position,
             getXYCovariance(tracked_object.kinematics.pose_with_covariance));
-          if (2.448 /*95%*/ <= mahalanobis_dist) passed_gate = false;
+          if (2.448 /*95%*/ <= mahalanobis_dist) {
+            passed_gate = false;
+          }
           pair_log_data["gate_name"] = "mahalanobis dist gate";
           pair_log_data["gate_value"] = mahalanobis_dist;
           pair_log_data["gate_threshold"] = 2.448;
@@ -254,7 +261,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           const double min_union_iou_area = 1e-2;
           const double iou = object_recognition_utils::get2dIoU(
             measurement_object, tracked_object, min_union_iou_area);
-          if (iou < min_iou) passed_gate = false;
+          if (iou < min_iou) {
+            passed_gate = false;
+          }
           pair_log_data["gate_name"] = "2d iou gate";
           pair_log_data["gate_value"] = iou;
           pair_log_data["gate_threshold"] = min_iou;
@@ -264,7 +273,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         if (passed_gate) {
           pair_log_data["gate_name"] = "all gate passed";
           score = (max_dist - std::min(dist, max_dist)) / max_dist;
-          if (score < score_threshold_) score = 0.0;
+          if (score < score_threshold_) {
+            score = 0.0;
+          }
         }
         pair_log_data["passed_gate"] = passed_gate;
         pair_log_data["score"] = score;
