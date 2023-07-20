@@ -83,6 +83,13 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
     can_assign_matrix, max_dist_matrix, max_rad_matrix, min_iou_matrix);
 }
 
+/**
+ * @brief callback function for main objects
+ *
+ * @param main_objects
+ * @note if there are no sub objects, publish main objects as it is
+ *       else, merge main objects and sub objects
+ */
 void DecorativeTrackerMergerNode::mainObjectsCallback(
   const TrackedObjects::ConstSharedPtr & main_objects)
 {
@@ -93,10 +100,18 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
   }
 
   // else, merge main objects and sub objects
+  const auto merged_objects = decorativeMerger(main_objects);
 
-  // finally publish merged objects
+  // publish merged objects
+  merged_object_pub_->publish(merged_objects);
 }
 
+/**
+ * @brief callback function for sub objects
+ *
+ * @param msg
+ * @note push back sub objects to buffer and remove old sub objects
+ */
 void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::ConstSharedPtr & msg)
 {
   sub_objects_buffer_.push_back(msg);
@@ -109,6 +124,16 @@ void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::Const
   sub_objects_buffer_.erase(remove_itr, sub_objects_buffer_.end());
 }
 
+/**
+ * @brief merge main objects and sub objects
+ *
+ * @param main_objects
+ * @return TrackedObjects
+ *
+ * @note 1. interpolate sub objects to sync main objects
+ *       2. do association
+ *       3. merge objects
+ */
 TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
   const TrackedObjects::ConstSharedPtr & main_objects)
 {
@@ -177,6 +202,19 @@ TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
   return *main_objects;
 }
 
+/**
+ * @brief interpolate sub objects to sync main objects
+ *
+ * @param former_msg
+ * @param latter_msg
+ * @param output_header
+ * @return std::optional<TrackedObjects>
+ *
+ * @note 1. if both msg is nullptr, return null optional
+ *       2. if former_msg is nullptr, return latter_msg
+ *       3. if latter_msg is nullptr, return former_msg
+ *       4. if both msg is not nullptr, do the interpolation
+ */
 std::optional<TrackedObjects> DecorativeTrackerMergerNode::interpolateObjectState(
   const TrackedObjects::ConstSharedPtr & former_msg,
   const TrackedObjects::ConstSharedPtr & latter_msg, const std_msgs::msg::Header & output_header)
