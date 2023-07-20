@@ -153,3 +153,11 @@ If a safe path cannot be generated from the current position, search backwards f
 | backward_search_resolution    | [m]  | double | distance interval for searching backward pull out start point                                                                                                        | 2.0            |
 | backward_path_update_duration | [s]  | double | time interval for searching backward pull out start point. this prevents chattering between back driving and pull_out                                                | 3.0            |
 | ignore_distance_from_lane_end | [m]  | double | distance from end of pull out lanes for ignoring start candidates                                                                                                    | 15.0           |
+
+## Limitations
+
+### Overlapped backward path
+
+If the lanelet where the ego vehicle is currently located and the lanelet where the goal is placed are connected, and the goal is positioned "behind" the ego vehicle, the mission planner generates a route, forming a loop. When the behavior path planner generates the path, it embeds the lanelets' IDs into each point of the path.
+
+However, an issue arises because the behavior path planner also generates a backward path. When the ego vehicle is placed near the starting edge of the connected route, the generated backward path points may include the lane ID of the goal lanelet. The drivable area generator checks for overlapped lanes, and since the first lane and the goal lane are connected, the goal lane is assumed to be overlapped. This assumption of the goal lane being overlapped, along with the backward path having a similar lane ID to the goal, causes the path points to be removed. This situation may lead to some unknown bugs.
