@@ -48,10 +48,12 @@ DiagnosticStatus DiagUnit::report() const
 
 void DiagUnit::update()
 {
-  const auto get_level = [](const auto * link) { return link->level(); };
-  std::vector<DiagnosticLevel> levels(links_.size());
-  std::transform(links_.begin(), links_.end(), levels.begin(), get_level);
-  level_ = expr_->exec(levels);
+  if (!links_.empty()) {
+    const auto get_level = [](const auto * link) { return link->level(); };
+    std::vector<DiagnosticLevel> levels(links_.size());
+    std::transform(links_.begin(), links_.end(), levels.begin(), get_level);
+    level_ = expr_->exec(levels);
+  }
 }
 
 void DiagUnit::create(DiagGraphInit & graph, const UnitConfig & config)

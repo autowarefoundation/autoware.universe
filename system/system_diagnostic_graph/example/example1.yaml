@@ -4,7 +4,7 @@ files:
 nodes:
   - name: /autoware/report
     type: and
-    inputs:
+    list:
       - { type: unit, name: /autoware/operation/stop }
       - { type: unit, name: /autoware/operation/autonomous }
       - { type: unit, name: /autoware/operation/local }
@@ -17,7 +17,7 @@ nodes:
 
   - name: /autoware/operation/autonomous
     type: and
-    inputs:
+    list:
       - { type: unit, name: /autoware/localization }
       - { type: unit, name: /autoware/planning }
       - { type: unit, name: /autoware/percepiton }
@@ -27,7 +27,7 @@ nodes:
 
   - name: /autoware/operation/remote
     type: and
-    inputs:
+    list:
       - { type: diag, hardware: test, name: /external/remote_command }
 
   - name: /autoware/operation/emergency-stop
@@ -35,7 +35,7 @@ nodes:
 
   - name: /autoware/operation/comfortable-stop
     type: and
-    inputs:
+    list:
       - { type: unit, name: /autoware/localization }
       - { type: unit, name: /autoware/planning }
       - { type: unit, name: /autoware/percepiton/front-obstable-detection }
