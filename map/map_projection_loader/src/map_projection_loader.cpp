@@ -36,7 +36,6 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::str
   return msg;
 }
 
-
 MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
 {
   std::string yaml_filename = this->declare_parameter<std::string>("map_projector_info_path");
@@ -50,7 +49,10 @@ MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
     RCLCPP_INFO(this->get_logger(), "Load %s", yaml_filename.c_str());
     msg = load_info_from_yaml(yaml_filename);
   } else {
-    RCLCPP_WARN(this->get_logger(), "DEPRECATED WARNING: Loading map projection info from lanelet2 map may soon be deleted. Please use map_projector_info.yaml instead.");
+    RCLCPP_WARN(
+      this->get_logger(),
+      "DEPRECATED WARNING: Loading map projection info from lanelet2 map may soon be deleted. "
+      "Please use map_projector_info.yaml instead.");
     msg = load_info_from_lanelet2_map(yaml_filename);
   }
 

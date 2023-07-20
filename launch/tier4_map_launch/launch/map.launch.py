@@ -12,25 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ament_index_python import get_package_share_directory
+import os
 
+from ament_index_python import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
+from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
+from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import Node
 from launch_ros.actions import PushRosNamespace
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import AnyLaunchDescriptionSource
 import yaml
-import os
+
 
 def launch_setup(context, *args, **kwargs):
     lanelet2_map_loader_param_path = LaunchConfiguration("lanelet2_map_loader_param_path").perform(
@@ -122,8 +123,8 @@ def launch_setup(context, *args, **kwargs):
     map_projection_loader = IncludeLaunchDescription(
         AnyLaunchDescriptionSource(map_projection_loader_launch_file),
         launch_arguments={
-            'map_projector_info_path': 'value1',
-            'lanelet2_map_path': LaunchConfiguration("lanelet2_map_path"),
+            "map_projector_info_path": "value1",
+            "lanelet2_map_path": LaunchConfiguration("lanelet2_map_path"),
         }.items(),
     )
 

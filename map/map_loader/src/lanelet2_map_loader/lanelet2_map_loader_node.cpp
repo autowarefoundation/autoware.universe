@@ -73,7 +73,6 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
   pub_map_bin_ =
     create_publisher<HADMapBin>("output/lanelet2_map", rclcpp::QoS{1}.transient_local());
   pub_map_bin_->publish(map_bin_msg);
-
 }
 
 lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
@@ -131,7 +130,6 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
   }
   return nullptr;
 }
-
 
 HADMapBin Lanelet2MapLoaderNode::create_map_bin_msg(
   const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
