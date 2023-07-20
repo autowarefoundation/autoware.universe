@@ -375,17 +375,17 @@ MarkerArray createDrivableLanesMarkerArray(
         "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, bitShift(lanelet.id()) + i++,
         Marker::LINE_STRIP, createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(r, g, b, 0.999));
 
-      if (!lanelet.polygon3d().empty()) {
-        marker.points.reserve(lanelet.polygon3d().size() + 1);
+      if (lanelet.polygon3d().empty()) {
+        return marker;
       }
+
+      marker.points.reserve(lanelet.polygon3d().size() + 1);
 
       for (const auto & p : lanelet.polygon3d()) {
         marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
       }
 
-      if (!marker.points.empty()) {
-        marker.points.push_back(marker.points.front());
-      }
+      marker.points.push_back(marker.points.front());
 
       return marker;
     };
