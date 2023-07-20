@@ -14,7 +14,7 @@
 
 #include "tracking_object_merger/data_association/data_association.hpp"
 
-#include "perception_utils/perception_utils.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tracking_object_merger/data_association/solver/gnn_solver.hpp"
 #include "tracking_object_merger/utils/utils.hpp"
@@ -121,12 +121,12 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
   for (size_t objects1_idx = 0; objects1_idx < objects1.objects.size(); ++objects1_idx) {
     const auto & object1 = objects1.objects.at(objects1_idx);
     const std::uint8_t object1_label =
-      perception_utils::getHighestProbLabel(object1.classification);
+      object_recognition_utils::getHighestProbLabel(object1.classification);
 
     for (size_t objects0_idx = 0; objects0_idx < objects0.objects.size(); ++objects0_idx) {
       const auto & object0 = objects0.objects.at(objects0_idx);
       const std::uint8_t object0_label =
-        perception_utils::getHighestProbLabel(object0.classification);
+        object_recognition_utils::getHighestProbLabel(object0.classification);
 
       double score = 0.0;
       if (can_assign_matrix_(object1_label, object0_label)) {
@@ -153,7 +153,8 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         if (passed_gate) {
           const double min_iou = min_iou_matrix_(object1_label, object0_label);
           const double min_union_iou_area = 1e-2;
-          const double iou = perception_utils::get2dIoU(object0, object1, min_union_iou_area);
+          const double iou =
+            object_recognition_utils::get2dIoU(object0, object1, min_union_iou_area);
           if (iou < min_iou) passed_gate = false;
         }
 
