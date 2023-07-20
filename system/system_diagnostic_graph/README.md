@@ -3,7 +3,7 @@
 ## Overview
 
 The system diagnostic graph node subscribes to diagnostic status and publishes aggregated diagnostic status.
-As shown in the diagram below, this node introduces extra diagnostic status for intermediate functions and update them.
+As shown in the diagram below, this node introduces extra diagnostic status for intermediate functional unit.
 Diagnostic status dependencies will be directed acyclic graph (DAG).
 
 ![overview](./doc/overview.drawio.svg)
@@ -27,10 +27,10 @@ Diagnostic status dependencies will be directed acyclic graph (DAG).
 
 ## Config
 
-- ConfigFile
-- Path
-- Node
-  - Input
-  - Extra
-  - And
-  - Or
+- [ConfigFile](./doc/format/config-file.md)
+- [Path](./doc/format/path.md)
+- [Node](./doc/format/node.md)
+  - [Diag](./doc/format/diag.md)
+  - [Unit](./doc/format/unit.md)
+  - [And](./doc/format/and.md)
+  - [Or](./doc/format/or.md)
