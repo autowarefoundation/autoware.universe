@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(tensorrt_classifier)
 
+# cspell: ignore fopenmp
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3 -Wno-write-strings -fopenmp -Wall")
 
 find_package(autoware_cmake REQUIRED)
