@@ -1061,7 +1061,8 @@ bool IntersectionModule::checkCollision(
         std::vector<lanelet::ConstLanelet> ego_lane_with_next_lanes;
 
         const auto lanelets_on_path = planning_utils::getLaneletsOnPath(
-          path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
+          path, planner_data_->route_handler_->getLaneletMapPtr(),
+          planner_data_->current_odometry->pose);
         for (const auto & lane : lanelets_on_path) {
           lanes_length += bg::length(lane.centerline());
           ego_lane_with_next_lanes.push_back(lane);
