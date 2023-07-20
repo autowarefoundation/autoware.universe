@@ -323,6 +323,10 @@ bool NormalLaneChange::isNearEndOfCurrentLanes(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
   const double threshold) const
 {
+  if (current_lanes.empty()) {
+    return false;
+  }
+
   const auto & route_handler = getRouteHandler();
   const auto & current_pose = getEgoPose();
   const auto shift_intervals =
@@ -332,7 +336,7 @@ bool NormalLaneChange::isNearEndOfCurrentLanes(
 
   auto distance_to_end = utils::getDistanceToEndOfLane(current_pose, current_lanes);
 
-  if (route_handler->isInGoalRouteSection(target_lanes.back())) {
+  if (!target_lanes.empty() && route_handler->isInGoalRouteSection(target_lanes.back())) {
     distance_to_end = std::min(
       distance_to_end,
       utils::getSignedDistance(current_pose, route_handler->getGoalPose(), current_lanes));
