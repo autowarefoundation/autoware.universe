@@ -14,6 +14,8 @@
 
 #include "expr.hpp"
 
+#include "config.hpp"
+
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -30,10 +32,19 @@ std::unique_ptr<BaseExpr> BaseExpr::create(const std::string & type)
   if (type == "or") {
     return std::make_unique<AnyExpr>();
   }
-  if (type == "dummy") {
+  if (type == "debug-ok") {
     return std::make_unique<ConstExpr>(DiagnosticStatus::OK);
   }
-  return std::make_unique<ConstExpr>(DiagnosticStatus::STALE);
+  if (type == "debug-warn") {
+    return std::make_unique<ConstExpr>(DiagnosticStatus::WARN);
+  }
+  if (type == "debug-error") {
+    return std::make_unique<ConstExpr>(DiagnosticStatus::ERROR);
+  }
+  if (type == "debug-stale") {
+    return std::make_unique<ConstExpr>(DiagnosticStatus::STALE);
+  }
+  throw ConfigError("unknown node type: " + type);
 }
 
 DiagnosticLevel ConstExpr::exec(const std::vector<DiagnosticLevel> &) const

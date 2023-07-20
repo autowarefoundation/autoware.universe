@@ -13,7 +13,7 @@ nodes:
       - { type: unit, name: /autoware/operation/comfortable-stop }
 
   - name: /autoware/operation/stop
-    type: dummy
+    type: debug-ok
 
   - name: /autoware/operation/autonomous
     type: and
@@ -23,7 +23,7 @@ nodes:
       - { type: unit, name: /autoware/percepiton }
 
   - name: /autoware/operation/local
-    type: dummy
+    type: debug-ok
 
   - name: /autoware/operation/remote
     type: and
@@ -31,7 +31,7 @@ nodes:
       - { type: diag, hardware: test, name: /external/remote_command }
 
   - name: /autoware/operation/emergency-stop
-    type: dummy
+    type: debug-ok
 
   - name: /autoware/operation/comfortable-stop
     type: and
