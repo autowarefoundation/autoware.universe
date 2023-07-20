@@ -20,8 +20,8 @@
   <arg name="output/objects" default="objects"/>
   <arg name="model_name" default="pointpainting" description="options: `pointpainting`"/>
   <arg name="model_path" default="$(find-pkg-share image_projection_based_fusion)/data"/>
-  <arg name="class_remapper_param_path" default="$(find-pkg-share lidar_centerpoint)/config/detection_class_remapper.param.yaml"/>
   <arg name="model_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/$(var model_name).param.yaml"/>
+  <arg name="class_remapper_param_path" default="$(find-pkg-share lidar_centerpoint)/config/detection_class_remapper.param.yaml"/>
   <arg name="sync_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/roi_sync.param.yaml"/>
 
   <!-- for eval variable-->

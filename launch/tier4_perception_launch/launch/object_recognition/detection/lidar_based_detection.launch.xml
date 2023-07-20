@@ -69,6 +69,7 @@
         <arg name="model_name" value="$(var centerpoint_model_name)"/>
         <arg name="model_path" value="$(var centerpoint_model_path)"/>
         <arg name="model_param_path" value="$(var lidar_model_param_path)/$(var centerpoint_model_name).param.yaml"/>
+        <arg name="class_remapper_param_path" value="$(var lidar_model_param_path)/detection_class_remapper.param.yaml"/>
       </include>
     </group>
   </group>
