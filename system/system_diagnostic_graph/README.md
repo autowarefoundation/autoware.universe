@@ -37,6 +37,9 @@ Diagnostic status dependencies will be directed acyclic graph (DAG).
 
 ## Example
 
+- [example1.yaml](./example/example1.yaml)
+- [example2.yaml](./example/example2.yaml)
+
 ```bash
 ros2 launch system_diagnostic_graph example.launch.xml
 ```
