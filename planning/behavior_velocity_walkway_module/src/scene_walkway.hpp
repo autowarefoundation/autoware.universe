@@ -15,21 +15,19 @@
 #ifndef SCENE_WALKWAY_HPP_
 #define SCENE_WALKWAY_HPP_
 
-#include "scene_crosswalk.hpp"
-#include "util.hpp"
+#include "behavior_velocity_crosswalk_module/util.hpp"
+#include "scene_walkway.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
-
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -41,8 +39,8 @@ class WalkwayModule : public SceneModuleInterface
 public:
   struct PlannerParam
   {
-    double stop_line_distance;
-    double stop_duration_sec;
+    double stop_distance_from_crosswalk;
+    double stop_duration;
   };
   WalkwayModule(
     const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
@@ -57,7 +55,7 @@ public:
 private:
   const int64_t module_id_;
 
-  [[nodiscard]] boost::optional<std::pair<double, geometry_msgs::msg::Point>> getStopLine(
+  [[nodiscard]] std::optional<std::pair<double, geometry_msgs::msg::Point>> getStopLine(
     const PathWithLaneId & ego_path, bool & exist_stopline_in_map,
     const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
 
