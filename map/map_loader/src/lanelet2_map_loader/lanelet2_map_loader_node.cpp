@@ -69,16 +69,11 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
   // create map bin msg
   const auto map_bin_msg = create_map_bin_msg(map, lanelet2_filename, now());
 
-  const auto map_projector_type_msg = get_map_projector_type(
-    lanelet2_filename, lanelet2_map_projector_type, map_origin_lat, map_origin_lon);
   // create publisher and publish
   pub_map_bin_ =
     create_publisher<HADMapBin>("output/lanelet2_map", rclcpp::QoS{1}.transient_local());
   pub_map_bin_->publish(map_bin_msg);
-  // create publisher and publish
-  pub_map_projector_type_ =
-    create_publisher<MapProjectorInfo>("map_projector_type", rclcpp::QoS{1}.transient_local());
-  pub_map_projector_type_->publish(map_projector_type_msg);
+
 }
 
 lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
@@ -137,26 +132,6 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
   return nullptr;
 }
 
-const MapProjectorInfo Lanelet2MapLoaderNode::get_map_projector_type(
-  const std::string & lanelet2_filename, const std::string & lanelet2_map_projector_type,
-  const double & map_origin_lat, const double & map_origin_lon)
-{
-  lanelet::ErrorMessages errors{};
-  MapProjectorInfo map_projector_type_msg;
-  if (lanelet2_map_projector_type == "MGRS") {
-    lanelet::projection::MGRSProjector projector{};
-    const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
-    map_projector_type_msg.type = "MGRS";
-    map_projector_type_msg.mgrs_grid = projector.getProjectedMGRSGrid();
-  } else if (lanelet2_map_projector_type == "UTM") {
-    map_projector_type_msg.type = "UTM";
-    map_projector_type_msg.map_origin.latitude = map_origin_lat;
-    map_projector_type_msg.map_origin.longitude = map_origin_lon;
-  } else {
-    map_projector_type_msg.type = "local";
-  }
-  return map_projector_type_msg;
-}
 
 HADMapBin Lanelet2MapLoaderNode::create_map_bin_msg(
   const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
