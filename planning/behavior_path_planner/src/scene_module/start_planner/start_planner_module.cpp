@@ -36,30 +36,6 @@ using tier4_autoware_utils::inverseTransformPoint;
 
 namespace behavior_path_planner
 {
-#ifdef USE_OLD_ARCHITECTURE
-StartPlannerModule::StartPlannerModule(
-  const std::string & name, rclcpp::Node & node,
-  const std::shared_ptr<StartPlannerParameters> & parameters)
-: SceneModuleInterface{name, node, createRTCInterfaceMap(node, name, {""})},
-  parameters_{parameters},
-  vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
-{
-  lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
-  lane_departure_checker_->setVehicleInfo(vehicle_info_);
-
-  // set enabled planner
-  if (parameters_->enable_shift_pull_out) {
-    start_planner_planners_.push_back(
-      std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_));
-  }
-  if (parameters_->enable_geometric_pull_out) {
-    start_planner_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
-  }
-  if (start_planner_planners_.empty()) {
-    RCLCPP_ERROR(getLogger(), "Not found enabled planner");
-  }
-}
-#else
 StartPlannerModule::StartPlannerModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<StartPlannerParameters> & parameters,
@@ -73,29 +49,22 @@ StartPlannerModule::StartPlannerModule(
 
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
-    start_planner_planners_.push_back(
+    start_planners_.push_back(
       std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_));
   }
   if (parameters_->enable_geometric_pull_out) {
-    start_planner_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
+    start_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters));
   }
-  if (start_planner_planners_.empty()) {
+  if (start_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");
   }
 }
-#endif
 
 BehaviorModuleOutput StartPlannerModule::run()
 {
-#ifdef USE_OLD_ARCHITECTURE
-  current_state_ = ModuleStatus::RUNNING;
-#endif
-
-#ifndef USE_OLD_ARCHITECTURE
   if (!isActivated()) {
     return planWaitingApproval();
   }
-#endif
 
   return plan();
 }
@@ -115,9 +84,6 @@ bool StartPlannerModule::isExecutionRequested() const
   if (
     tier4_autoware_utils::calcDistance2d(goal_pose.position, current_pose.position) <
     parameters_->th_arrived_distance) {
-#ifdef USE_OLD_ARCHITECTURE
-    is_executed_ = false;
-#endif
     return false;
   }
 
@@ -125,29 +91,17 @@ bool StartPlannerModule::isExecutionRequested() const
     !planner_data_->prev_route_id ||
     *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
 
-#ifdef USE_OLD_ARCHITECTURE
-  if (is_executed_) {
-    return true;
-  }
-#endif
-
   if (current_state_ == ModuleStatus::RUNNING) {
     return true;
   }
 
   if (!has_received_new_route_) {
-#ifdef USE_OLD_ARCHITECTURE
-    is_executed_ = false;
-#endif
     return false;
   }
 
   const bool is_stopped = utils::l2Norm(planner_data_->self_odometry->twist.twist.linear) <
                           parameters_->th_stopped_velocity;
   if (!is_stopped) {
-#ifdef USE_OLD_ARCHITECTURE
-    is_executed_ = false;
-#endif
     return false;
   }
 
@@ -158,20 +112,28 @@ bool StartPlannerModule::isExecutionRequested() const
     tier4_autoware_utils::pose2transform(planner_data_->self_odometry->pose.pose));
 
   // Check if ego is not out of lanes
-  const auto current_lanes = utils::getExtendedCurrentLanes(planner_data_);
-  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(planner_data_);
+  const double backward_path_length =
+    planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
+  const auto current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, backward_path_length, std::numeric_limits<double>::max());
+  const auto pull_out_lanes =
+    start_planner_utils::getPullOutLanes(planner_data_, backward_path_length);
   auto lanes = current_lanes;
-  lanes.insert(lanes.end(), pull_out_lanes.begin(), pull_out_lanes.end());
+  for (const auto & pull_out_lane : pull_out_lanes) {
+    auto it = std::find_if(
+      lanes.begin(), lanes.end(), [&pull_out_lane](const lanelet::ConstLanelet & lane) {
+        return lane.id() == pull_out_lane.id();
+      });
+
+    if (it == lanes.end()) {
+      lanes.push_back(pull_out_lane);
+    }
+  }
+
   if (LaneDepartureChecker::isOutOfLane(lanes, vehicle_footprint)) {
-#ifdef USE_OLD_ARCHITECTURE
-    is_executed_ = false;
-#endif
     return false;
   }
 
-#ifdef USE_OLD_ARCHITECTURE
-  is_executed_ = true;
-#endif
   return true;
 }
 
@@ -184,17 +146,11 @@ ModuleStatus StartPlannerModule::updateState()
 {
   RCLCPP_DEBUG(getLogger(), "START_PLANNER updateState");
 
-#ifdef USE_OLD_ARCHITECTURE
-  if (isActivated() && !isWaitingApproval()) {
-    current_state_ = ModuleStatus::RUNNING;
-  }
-#else
   if (isActivated() && !isWaitingApproval()) {
     current_state_ = ModuleStatus::RUNNING;
   } else {
     current_state_ = ModuleStatus::IDLE;
   }
-#endif
 
   if (hasFinishedPullOut()) {
     return ModuleStatus::SUCCESS;
@@ -207,6 +163,12 @@ ModuleStatus StartPlannerModule::updateState()
 
 BehaviorModuleOutput StartPlannerModule::plan()
 {
+  if (IsGoalBehindOfEgoInSameRouteSegment()) {
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
+    return generateStopOutput();
+  }
+
   if (isWaitingApproval()) {
     clearWaitingApproval();
     resetPathCandidate();
@@ -246,8 +208,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
   }
 
   const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
-  utils::generateDrivableArea(
-    path, target_drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
 
   DrivableAreaInfo current_drivable_area_info;
   current_drivable_area_info.drivable_lanes = target_drivable_lanes;
@@ -270,6 +230,10 @@ BehaviorModuleOutput StartPlannerModule::plan()
   });
 
   if (status_.back_finished) {
+    setIsSimultaneousExecutableAsApprovedModule(
+      initial_value_simultaneously_executable_as_approved_module_);
+    setIsSimultaneousExecutableAsCandidateModule(
+      initial_value_simultaneously_executable_as_candidate_module_);
     const double start_distance = motion_utils::calcSignedArcLength(
       path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
@@ -283,6 +247,8 @@ BehaviorModuleOutput StartPlannerModule::plan()
       {start_distance, finish_distance}, SteeringFactor::START_PLANNER, steering_factor_direction,
       SteeringFactor::TURNING, "");
   } else {
+    setIsSimultaneousExecutableAsApprovedModule(false);
+    setIsSimultaneousExecutableAsCandidateModule(false);
     const double distance = motion_utils::calcSignedArcLength(
       path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
@@ -305,7 +271,7 @@ CandidateOutput StartPlannerModule::planCandidate() const
 
 std::shared_ptr<PullOutPlannerBase> StartPlannerModule::getCurrentPlanner() const
 {
-  for (const auto & planner : start_planner_planners_) {
+  for (const auto & planner : start_planners_) {
     if (status_.planner_type == planner->getPlannerType()) {
       return planner;
     }
@@ -342,23 +308,33 @@ PathWithLaneId StartPlannerModule::getFullPath() const
 BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 {
   updatePullOutStatus();
-  waitApproval();
+
+  if (IsGoalBehindOfEgoInSameRouteSegment()) {
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
+    path_reference_ = getPreviousModuleOutput().reference_path;
+    clearWaitingApproval();
+    return generateStopOutput();
+  }
 
   BehaviorModuleOutput output;
   if (!status_.is_safe) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
-    // the path of getCurrent() is generated by generateStopPath()
-    const PathWithLaneId stop_path = getCurrentPath();
-    output.path = std::make_shared<PathWithLaneId>(stop_path);
-    output.reference_path = getPreviousModuleOutput().reference_path;
-    path_candidate_ = std::make_shared<PathWithLaneId>(stop_path);
     path_reference_ = getPreviousModuleOutput().reference_path;
-    return output;
+    clearWaitingApproval();
+    return generateStopOutput();
   }
 
-  const auto current_lanes = utils::getExtendedCurrentLanes(planner_data_);
-  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(planner_data_);
+  waitApproval();
+
+  const double backward_path_length =
+    planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
+  const auto current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, backward_path_length, std::numeric_limits<double>::max());
+
+  const auto pull_out_lanes =
+    start_planner_utils::getPullOutLanes(planner_data_, backward_path_length);
   auto stop_path = status_.back_finished ? getCurrentPath() : status_.backward_path;
   const auto drivable_lanes =
     utils::generateDrivableLanesWithShoulderLanes(current_lanes, pull_out_lanes);
@@ -366,8 +342,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   const auto expanded_lanes = utils::expandLanelets(
     drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
-  utils::generateDrivableArea(
-    stop_path, expanded_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
   for (auto & p : stop_path.points) {
     p.point.longitudinal_velocity_mps = 0.0;
   }
@@ -378,7 +352,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
 
   output.path = std::make_shared<PathWithLaneId>(stop_path);
-  output.drivable_area_info.drivable_lanes = status_.lanes;
   output.reference_path = getPreviousModuleOutput().reference_path;
   output.turn_signal_info = calcTurnSignalInfo();
   path_candidate_ = std::make_shared<PathWithLaneId>(getFullPath());
@@ -394,6 +367,10 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   });
 
   if (status_.back_finished) {
+    setIsSimultaneousExecutableAsApprovedModule(
+      initial_value_simultaneously_executable_as_approved_module_);
+    setIsSimultaneousExecutableAsCandidateModule(
+      initial_value_simultaneously_executable_as_candidate_module_);
     const double start_distance = motion_utils::calcSignedArcLength(
       stop_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
@@ -406,6 +383,8 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
       {start_distance, finish_distance}, SteeringFactor::START_PLANNER, steering_factor_direction,
       SteeringFactor::APPROACHING, "");
   } else {
+    setIsSimultaneousExecutableAsApprovedModule(false);
+    setIsSimultaneousExecutableAsCandidateModule(false);
     const double distance = motion_utils::calcSignedArcLength(
       stop_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
@@ -496,7 +475,7 @@ void StartPlannerModule::planWithPriority(
   using PriorityOrder = std::vector<std::pair<size_t, std::shared_ptr<PullOutPlannerBase>>>;
   const auto make_loop_order_planner_first = [&]() {
     PriorityOrder order_priority;
-    for (const auto & planner : start_planner_planners_) {
+    for (const auto & planner : start_planners_) {
       for (size_t i = 0; i < start_pose_candidates.size(); i++) {
         order_priority.emplace_back(i, planner);
       }
@@ -507,7 +486,7 @@ void StartPlannerModule::planWithPriority(
   const auto make_loop_order_pose_first = [&]() {
     PriorityOrder order_priority;
     for (size_t i = 0; i < start_pose_candidates.size(); i++) {
-      for (const auto & planner : start_planner_planners_) {
+      for (const auto & planner : start_planners_) {
         order_priority.emplace_back(i, planner);
       }
     }
@@ -558,10 +537,6 @@ PathWithLaneId StartPlannerModule::generateStopPath() const
   // generate drivable area
   const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
 
-  // for old architecture
-  utils::generateDrivableArea(
-    path, target_drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
-
   return path;
 }
 
@@ -588,8 +563,12 @@ void StartPlannerModule::updatePullOutStatus()
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
-  status_.current_lanes = utils::getExtendedCurrentLanes(planner_data_);
-  status_.pull_out_lanes = start_planner_utils::getPullOutLanes(planner_data_);
+  const double backward_path_length =
+    planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
+  status_.current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, backward_path_length, std::numeric_limits<double>::max());
+  status_.pull_out_lanes =
+    start_planner_utils::getPullOutLanes(planner_data_, backward_path_length);
 
   // combine road and shoulder lanes
   status_.lanes =
@@ -621,7 +600,6 @@ void StartPlannerModule::updatePullOutStatus()
   status_.pull_out_lane_ids = utils::getIds(status_.pull_out_lanes);
 }
 
-// make this class?
 std::vector<Pose> StartPlannerModule::searchPullOutStartPoses()
 {
   std::vector<Pose> pull_out_start_pose{};
@@ -715,11 +693,9 @@ bool StartPlannerModule::hasFinishedPullOut() const
   const auto arclength_pull_out_end =
     lanelet::utils::getArcCoordinates(status_.current_lanes, status_.pull_out_path.end_pose);
 
-  const bool has_finished = arclength_current.length - arclength_pull_out_end.length > 0.0;
-
-#ifdef USE_OLD_ARCHITECTURE
-  is_executed_ = !has_finished;
-#endif
+  // offset to not finish the module before engage
+  constexpr double offset = 0.1;
+  const bool has_finished = arclength_current.length - arclength_pull_out_end.length > offset;
 
   return has_finished;
 }
@@ -834,7 +810,8 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   const bool is_near_intersection = std::invoke([&]() {
     const double check_length = parameters_->intersection_search_length;
     double accumulated_length = 0.0;
-    for (size_t i = 0; i < path.points.size() - 1; ++i) {
+    const size_t current_idx = motion_utils::findNearestIndex(path.points, current_pose.position);
+    for (size_t i = current_idx; i < path.points.size() - 1; ++i) {
       const auto & p = path.points.at(i);
       for (const auto & lane : planner_data_->route_handler->getLaneletsFromIds(p.lane_ids)) {
         const std::string turn_direction = lane.attributeOr("turn_direction", "else");
@@ -876,6 +853,46 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   }
 
   return turn_signal;
+}
+
+bool StartPlannerModule::IsGoalBehindOfEgoInSameRouteSegment() const
+{
+  const auto & rh = planner_data_->route_handler;
+
+  // Check if the goal and ego are in the same route segment. If not, this is out of scope of this
+  // function. Return false.
+  lanelet::ConstLanelet ego_lanelet;
+  rh->getClosestLaneletWithinRoute(getEgoPose(), &ego_lanelet);
+  const auto is_ego_in_goal_route_section = rh->isInGoalRouteSection(ego_lanelet);
+
+  if (!is_ego_in_goal_route_section) {
+    return false;
+  }
+
+  // If the goal and ego are in the same route segment, check the goal and ego pose relation.
+  // Return true when the goal is located behind of ego.
+  const auto ego_lane_path = rh->getCenterLinePath(
+    lanelet::ConstLanelets{ego_lanelet}, 0.0, std::numeric_limits<double>::max());
+  const auto dist_ego_to_goal = motion_utils::calcSignedArcLength(
+    ego_lane_path.points, getEgoPosition(), rh->getGoalPose().position);
+
+  const bool is_goal_behind_of_ego = (dist_ego_to_goal < 0.0);
+  return is_goal_behind_of_ego;
+}
+
+// NOTE: this must be called after updatePullOutStatus(). This must be fixed.
+BehaviorModuleOutput StartPlannerModule::generateStopOutput() const
+{
+  BehaviorModuleOutput output;
+  output.path = std::make_shared<PathWithLaneId>(generateStopPath());
+
+  DrivableAreaInfo current_drivable_area_info;
+  current_drivable_area_info.drivable_lanes = status_.lanes;
+  output.drivable_area_info = utils::combineDrivableAreaInfo(
+    current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+
+  output.reference_path = getPreviousModuleOutput().reference_path;
+  return output;
 }
 
 void StartPlannerModule::setDebugData() const

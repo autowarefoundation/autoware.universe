@@ -101,13 +101,61 @@ bool isOnRight(const ObjectData & obj)
 bool isTargetObjectType(
   const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  const auto t = utils::getHighestProbLabel(object.classification);
+  const auto object_type = utils::getHighestProbLabel(object.classification);
 
-  if (parameters->object_parameters.count(t) == 0) {
+  if (parameters->object_parameters.count(object_type) == 0) {
     return false;
   }
 
-  return parameters->object_parameters.at(t).enable;
+  return parameters->object_parameters.at(object_type).is_target;
+}
+
+bool isVehicleTypeObject(const ObjectData & object)
+{
+  const auto object_type = utils::getHighestProbLabel(object.object.classification);
+
+  if (object_type == ObjectClassification::UNKNOWN) {
+    return false;
+  }
+
+  if (object_type == ObjectClassification::PEDESTRIAN) {
+    return false;
+  }
+
+  if (object_type == ObjectClassification::BICYCLE) {
+    return false;
+  }
+
+  return true;
+}
+
+bool isWithinCrosswalk(
+  const ObjectData & object,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
+{
+  using Point = boost::geometry::model::d2::point_xy<double>;
+
+  const auto & p = object.object.kinematics.initial_pose_with_covariance.pose.position;
+  const Point p_object{p.x, p.y};
+
+  // get conflicting crosswalk crosswalk
+  constexpr int PEDESTRIAN_GRAPH_ID = 1;
+  const auto conflicts =
+    overall_graphs->conflictingInGraph(object.overhang_lanelet, PEDESTRIAN_GRAPH_ID);
+
+  constexpr double THRESHOLD = 2.0;
+  for (const auto & crosswalk : conflicts) {
+    auto polygon = crosswalk.polygon2d().basicPolygon();
+
+    boost::geometry::correct(polygon);
+
+    // ignore objects around the crosswalk
+    if (boost::geometry::distance(p_object, polygon) < THRESHOLD) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 double calcShiftLength(
@@ -374,8 +422,8 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
       continue;
     }
 
-    const auto t = utils::getHighestProbLabel(object.object.classification);
-    const auto object_parameter = parameters->object_parameters.at(t);
+    const auto object_type = utils::getHighestProbLabel(object.object.classification);
+    const auto object_parameter = parameters->object_parameters.at(object_type);
 
     // generate obstacle polygon
     const double diff_poly_buffer =
@@ -487,8 +535,8 @@ void fillObjectEnvelopePolygon(
 {
   using boost::geometry::within;
 
-  const auto t = utils::getHighestProbLabel(object_data.object.classification);
-  const auto object_parameter = parameters->object_parameters.at(t);
+  const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
+  const auto object_parameter = parameters->object_parameters.at(object_type);
 
   const auto & envelope_buffer_margin =
     object_parameter.envelope_buffer_margin * object_data.distance_factor;
@@ -519,8 +567,8 @@ void fillObjectMovingTime(
   ObjectData & object_data, ObjectDataArray & stopped_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  const auto t = utils::getHighestProbLabel(object_data.object.classification);
-  const auto object_parameter = parameters->object_parameters.at(t);
+  const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
+  const auto object_parameter = parameters->object_parameters.at(object_type);
 
   const auto & object_vel =
     object_data.object.kinematics.initial_twist_with_covariance.twist.linear.x;
@@ -570,8 +618,8 @@ void fillAvoidanceNecessity(
   ObjectData & object_data, const ObjectDataArray & registered_objects, const double vehicle_width,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  const auto t = utils::getHighestProbLabel(object_data.object.classification);
-  const auto object_parameter = parameters->object_parameters.at(t);
+  const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
+  const auto object_parameter = parameters->object_parameters.at(object_type);
   const auto safety_margin =
     0.5 * vehicle_width + object_parameter.safety_buffer_lateral * object_data.distance_factor;
 
@@ -609,6 +657,12 @@ void fillObjectStoppableJudge(
 {
   if (!parameters->use_constraints_for_decel) {
     object_data.is_stoppable = true;
+    return;
+  }
+
+  if (!object_data.avoid_required) {
+    object_data.is_stoppable = false;
+    return;
   }
 
   const auto id = object_data.object.object_id;
@@ -738,20 +792,40 @@ void filterTargetObjects(
   const rclcpp::Time now = rclcpp::Clock(RCL_ROS_TIME).now();
 
   // for goal
-  const auto dist_to_goal =
-    rh->isInGoalRouteSection(data.current_lanelets.back())
-      ? calcSignedArcLength(path_points, ego_pos, rh->getGoalPose().position)
-      : std::numeric_limits<double>::max();
+  const auto ego_idx = planner_data->findEgoIndex(path_points);
+  const auto dist_to_goal = rh->isInGoalRouteSection(data.current_lanelets.back())
+                              ? calcSignedArcLength(path_points, ego_idx, path_points.size() - 1)
+                              : std::numeric_limits<double>::max();
+
+  // extend lanelets if the reference path is cut for lane change.
+  const auto & ego_pose = planner_data->self_odometry->pose.pose;
+  lanelet::ConstLanelets extend_lanelets = data.current_lanelets;
+  while (rclcpp::ok()) {
+    const double lane_length = lanelet::utils::getLaneletLength2d(extend_lanelets);
+    const auto arclength = lanelet::utils::getArcCoordinates(extend_lanelets, ego_pose);
+    const auto next_lanelets = rh->getNextLanelets(extend_lanelets.back());
+
+    if (next_lanelets.empty()) {
+      break;
+    }
+
+    if (lane_length - arclength.length < planner_data->parameters.forward_path_length) {
+      extend_lanelets.push_back(next_lanelets.front());
+    } else {
+      break;
+    }
+  }
 
   for (auto & o : objects) {
     const auto & object_pose = o.object.kinematics.initial_pose_with_covariance.pose;
     const auto object_closest_index = findNearestIndex(path_points, object_pose.position);
     const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
 
-    const auto t = utils::getHighestProbLabel(o.object.classification);
-    const auto object_parameter = parameters->object_parameters.at(t);
+    const auto object_type = utils::getHighestProbLabel(o.object.classification);
+    const auto object_parameter = parameters->object_parameters.at(object_type);
 
     if (!isTargetObjectType(o.object, parameters)) {
+      o.reason = AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE;
       data.other_objects.push_back(o);
       continue;
     }
@@ -803,9 +877,9 @@ void filterTargetObjects(
       lanelet::BasicPoint3d overhang_basic_pose(
         o.overhang_pose.position.x, o.overhang_pose.position.y, o.overhang_pose.position.z);
 
-      const bool get_left = isOnRight(o) && parameters->enable_avoidance_over_same_direction;
-      const bool get_right = !isOnRight(o) && parameters->enable_avoidance_over_same_direction;
-      const bool get_opposite = parameters->enable_avoidance_over_opposite_direction;
+      const bool get_left = isOnRight(o) && parameters->use_adjacent_lane;
+      const bool get_right = !isOnRight(o) && parameters->use_adjacent_lane;
+      const bool get_opposite = parameters->use_opposite_lane;
 
       lanelet::ConstLineString3d target_line{};
       o.to_road_shoulder_distance = std::numeric_limits<double>::max();
@@ -834,18 +908,18 @@ void filterTargetObjects(
       }
       debug.bounds.push_back(target_line);
 
-      // update to_road_shoulder_distance with expandable polygons
-      if (parameters->use_hatched_road_markings) {
+      {
         o.to_road_shoulder_distance = extendToRoadShoulderDistanceWithPolygon(
-          rh, target_line, o.to_road_shoulder_distance, o.overhang_pose.position,
-          overhang_basic_pose);
+          rh, target_line, o.to_road_shoulder_distance, overhang_lanelet, o.overhang_pose.position,
+          overhang_basic_pose, parameters->use_hatched_road_markings,
+          parameters->use_intersection_areas);
       }
     }
 
     // calculate avoid_margin dynamically
     // NOTE: This calculation must be after calculating to_road_shoulder_distance.
     const double max_avoid_margin = object_parameter.safety_buffer_lateral * o.distance_factor +
-                                    parameters->lateral_collision_margin + 0.5 * vehicle_width;
+                                    object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
     const double min_safety_lateral_distance =
       object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
     const auto max_allowable_lateral_distance =
@@ -873,6 +947,24 @@ void filterTargetObjects(
       }
     }
 
+    // for non vehicle type object
+    if (!isVehicleTypeObject(o)) {
+      if (isWithinCrosswalk(o, rh->getOverallGraphPtr())) {
+        // avoidance module ignore pedestrian and bicycle around crosswalk
+        o.reason = "CrosswalkUser";
+        data.other_objects.push_back(o);
+      } else {
+        // if there is no crosswalk near the object, avoidance module avoids pedestrian and bicycle
+        // no matter how it is shifted.
+        o.last_seen = now;
+        o.avoid_margin = avoid_margin;
+        data.target_objects.push_back(o);
+      }
+      continue;
+    }
+
+    // from here condition check for vehicle type objects.
+
     const auto stop_time_longer_than_threshold =
       o.stop_time > parameters->threshold_time_force_avoidance_for_stopped_vehicle;
 
@@ -882,20 +974,20 @@ void filterTargetObjects(
 
       // check traffic light
       const auto to_traffic_light =
-        utils::getDistanceToNextTrafficLight(object_pose, data.current_lanelets);
+        utils::getDistanceToNextTrafficLight(object_pose, extend_lanelets);
       {
-        not_parked_object = to_traffic_light < parameters->object_ignore_distance_traffic_light;
+        not_parked_object =
+          to_traffic_light < parameters->object_ignore_section_traffic_light_in_front_distance;
       }
 
       // check crosswalk
-      const auto & ego_pose = planner_data->self_odometry->pose.pose;
       const auto to_crosswalk =
-        utils::getDistanceToCrosswalk(ego_pose, data.current_lanelets, *rh->getOverallGraphPtr()) -
+        utils::getDistanceToCrosswalk(ego_pose, extend_lanelets, *rh->getOverallGraphPtr()) -
         o.longitudinal;
       {
         const auto stop_for_crosswalk =
-          to_crosswalk < parameters->object_ignore_distance_crosswalk_forward &&
-          to_crosswalk > -1.0 * parameters->object_ignore_distance_crosswalk_backward;
+          to_crosswalk < parameters->object_ignore_section_crosswalk_in_front_distance &&
+          to_crosswalk > -1.0 * parameters->object_ignore_section_crosswalk_behind_distance;
         not_parked_object = not_parked_object || stop_for_crosswalk;
       }
 
@@ -1045,27 +1137,41 @@ void filterTargetObjects(
 double extendToRoadShoulderDistanceWithPolygon(
   const std::shared_ptr<route_handler::RouteHandler> & rh,
   const lanelet::ConstLineString3d & target_line, const double to_road_shoulder_distance,
-  const geometry_msgs::msg::Point & overhang_pos, const lanelet::BasicPoint3d & overhang_basic_pose)
+  const lanelet::ConstLanelet & overhang_lanelet, const geometry_msgs::msg::Point & overhang_pos,
+  const lanelet::BasicPoint3d & overhang_basic_pose, const bool use_hatched_road_markings,
+  const bool use_intersection_areas)
 {
   // get expandable polygons for avoidance (e.g. hatched road markings)
   std::vector<lanelet::Polygon3d> expandable_polygons;
-  for (const auto & point : target_line) {
-    const auto new_polygon_candidate = utils::getPolygonByPoint(rh, point, "hatched_road_markings");
-    if (!new_polygon_candidate) {
-      continue;
-    }
 
-    bool is_new_polygon{true};
-    for (const auto & polygon : expandable_polygons) {
-      if (polygon.id() == new_polygon_candidate->id()) {
-        is_new_polygon = false;
-        break;
+  const auto exist_polygon = [&](const auto & candidate_polygon) {
+    return std::any_of(
+      expandable_polygons.begin(), expandable_polygons.end(),
+      [&](const auto & polygon) { return polygon.id() == candidate_polygon.id(); });
+  };
+
+  if (use_hatched_road_markings) {
+    for (const auto & point : target_line) {
+      const auto new_polygon_candidate =
+        utils::getPolygonByPoint(rh, point, "hatched_road_markings");
+
+      if (!!new_polygon_candidate && !exist_polygon(*new_polygon_candidate)) {
+        expandable_polygons.push_back(*new_polygon_candidate);
       }
     }
+  }
 
-    if (is_new_polygon) {
-      expandable_polygons.push_back(*new_polygon_candidate);
+  if (use_intersection_areas) {
+    const std::string area_id_str = overhang_lanelet.attributeOr("intersection_area", "else");
+
+    if (area_id_str != "else") {
+      expandable_polygons.push_back(
+        rh->getLaneletMapPtr()->polygonLayer.get(std::atoi(area_id_str.c_str())));
     }
+  }
+
+  if (expandable_polygons.empty()) {
+    return to_road_shoulder_distance;
   }
 
   // calculate point laterally offset from overhang position to calculate intersection with
@@ -1078,7 +1184,7 @@ double extendToRoadShoulderDistanceWithPolygon(
     const auto closest_target_line_point =
       lanelet::geometry::fromArcCoordinates(target_line, arc_coordinates);
 
-    const double ratio = 10.0 / to_road_shoulder_distance;
+    const double ratio = 100.0 / to_road_shoulder_distance;
     lat_offset_overhang_pos.x =
       closest_target_line_point.x() + (closest_target_line_point.x() - overhang_pos.x) * ratio;
     lat_offset_overhang_pos.y =
@@ -1104,13 +1210,13 @@ double extendToRoadShoulderDistanceWithPolygon(
       }
     }
 
-    std::sort(intersect_dist_vec.begin(), intersect_dist_vec.end());
-    if (1 < intersect_dist_vec.size()) {
-      if (std::abs(updated_to_road_shoulder_distance - intersect_dist_vec.at(0)) < 1e-3) {
-        updated_to_road_shoulder_distance =
-          std::max(updated_to_road_shoulder_distance, intersect_dist_vec.at(1));
-      }
+    if (intersect_dist_vec.empty()) {
+      continue;
     }
+
+    std::sort(intersect_dist_vec.begin(), intersect_dist_vec.end());
+    updated_to_road_shoulder_distance =
+      std::max(updated_to_road_shoulder_distance, intersect_dist_vec.back());
   }
   return updated_to_road_shoulder_distance;
 }

@@ -35,11 +35,13 @@ struct StartPlannerParameters
   double collision_check_distance_from_end;
   // shift pull out
   bool enable_shift_pull_out;
+  bool check_shift_path_lane_departure;
   double minimum_shift_pull_out_distance;
   int lateral_acceleration_sampling_num;
   double lateral_jerk;
   double maximum_lateral_acc;
   double minimum_lateral_acc;
+  double maximum_curvature;  // maximum curvature considered in the path generation
   double deceleration_interval;
   // geometric pull out
   bool enable_geometric_pull_out;

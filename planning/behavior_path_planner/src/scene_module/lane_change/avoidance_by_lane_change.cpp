@@ -25,80 +25,68 @@ namespace behavior_path_planner
 {
 AvoidanceByLaneChange::AvoidanceByLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters,
-  std::shared_ptr<AvoidanceParameters> avoidance_parameters,
-  std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lane_change_parameters)
+  std::shared_ptr<AvoidanceByLCParameters> avoidance_parameters)
 : NormalLaneChange(parameters, LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE, Direction::NONE),
-  avoidance_parameters_(std::move(avoidance_parameters)),
-  avoidance_by_lane_change_parameters_(std::move(avoidance_by_lane_change_parameters))
+  avoidance_parameters_(std::move(avoidance_parameters))
 {
 }
 
-std::pair<bool, bool> AvoidanceByLaneChange::getSafePath(LaneChangePath & safe_path) const
+bool AvoidanceByLaneChange::specialRequiredCheck() const
 {
-  const auto & avoidance_objects = avoidance_data_.target_objects;
-  const auto execute_object_num = avoidance_by_lane_change_parameters_->execute_object_num;
+  const auto & data = avoidance_data_;
+  const auto & execute_object_num = avoidance_parameters_->execute_object_num;
 
-  if (avoidance_objects.size() < execute_object_num) {
-    return {false, false};
+  if (!status_.is_safe) {
+    return false;
   }
 
-  const auto current_lanes = getCurrentLanes();
-
-  if (current_lanes.empty()) {
-    return {false, false};
+  if (data.target_objects.size() < execute_object_num) {
+    return false;
   }
 
-  const auto & o_front = avoidance_objects.front();
+  const auto & front_object = data.target_objects.front();
 
-  // check distance from ego to o_front vs acceptable longitudinal margin
-  const auto execute_object_longitudinal_margin =
-    avoidance_by_lane_change_parameters_->execute_object_longitudinal_margin;
-  if (execute_object_longitudinal_margin > o_front.longitudinal) {
-    return {false, false};
+  const auto THRESHOLD = avoidance_parameters_->execute_object_longitudinal_margin;
+  if (front_object.longitudinal < THRESHOLD) {
+    return false;
   }
 
-  const auto direction = utils::avoidance::isOnRight(o_front) ? Direction::LEFT : Direction::RIGHT;
-  const auto target_lanes = getLaneChangeLanes(current_lanes, direction);
-
-  if (target_lanes.empty()) {
-    return {false, false};
-  }
-
-  // find candidate paths
-  LaneChangePaths valid_paths{};
-  const auto found_safe_path =
-    getLaneChangePaths(current_lanes, target_lanes, direction, &valid_paths);
-
-  if (valid_paths.empty()) {
-    return {false, false};
-  }
-
-  if (found_safe_path) {
-    safe_path = valid_paths.back();
-  } else {
-    // force candidate
-    safe_path = valid_paths.front();
-  }
-
-  const auto to_lane_change_end_distance = motion_utils::calcSignedArcLength(
-    safe_path.path.points, getEgoPose().position, safe_path.shift_line.end.position);
-  const auto lane_change_finish_before_object = o_front.longitudinal > to_lane_change_end_distance;
+  const auto path = status_.lane_change_path.path;
+  const auto to_lc_end = motion_utils::calcSignedArcLength(
+    status_.lane_change_path.path.points, getEgoPose().position,
+    status_.lane_change_path.info.shift_line.end.position);
   const auto execute_only_when_lane_change_finish_before_object =
-    avoidance_by_lane_change_parameters_->execute_only_when_lane_change_finish_before_object;
-  if (!lane_change_finish_before_object && execute_only_when_lane_change_finish_before_object) {
-    return {false, found_safe_path};
+    avoidance_parameters_->execute_only_when_lane_change_finish_before_object;
+  const auto not_enough_distance = front_object.longitudinal < to_lc_end;
+
+  if (execute_only_when_lane_change_finish_before_object && not_enough_distance) {
+    return false;
   }
-  return {true, found_safe_path};
+
+  return true;
+}
+
+bool AvoidanceByLaneChange::specialExpiredCheck() const
+{
+  return !specialRequiredCheck();
 }
 
 void AvoidanceByLaneChange::updateSpecialData()
 {
+  const auto p = std::dynamic_pointer_cast<AvoidanceParameters>(avoidance_parameters_);
+
   avoidance_debug_data_ = DebugData();
   avoidance_data_ = calcAvoidancePlanningData(avoidance_debug_data_);
 
-  utils::avoidance::updateRegisteredObject(
-    registered_objects_, avoidance_data_.target_objects,
-    avoidance_by_lane_change_parameters_->avoidance);
+  if (avoidance_data_.target_objects.empty()) {
+    direction_ = Direction::NONE;
+  } else {
+    direction_ = utils::avoidance::isOnRight(avoidance_data_.target_objects.front())
+                   ? Direction::LEFT
+                   : Direction::RIGHT;
+  }
+
+  utils::avoidance::updateRegisteredObject(registered_objects_, avoidance_data_.target_objects, p);
   utils::avoidance::compensateDetectionLost(
     registered_objects_, avoidance_data_.target_objects, avoidance_data_.other_objects);
 
@@ -117,8 +105,7 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
 
   data.reference_path_rough = prev_module_path_;
 
-  const auto resample_interval =
-    avoidance_by_lane_change_parameters_->avoidance->resample_interval_for_planning;
+  const auto resample_interval = avoidance_parameters_->resample_interval_for_planning;
   data.reference_path = utils::resamplePathWithSpline(data.reference_path_rough, resample_interval);
 
   data.current_lanelets = getCurrentLanes();
@@ -133,8 +120,10 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
 void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
   AvoidancePlanningData & data, DebugData & debug) const
 {
-  const auto left_expand_dist = avoidance_parameters_->detection_area_left_expand_dist;
-  const auto right_expand_dist = avoidance_parameters_->detection_area_right_expand_dist;
+  const auto p = std::dynamic_pointer_cast<AvoidanceParameters>(avoidance_parameters_);
+
+  const auto left_expand_dist = p->detection_area_left_expand_dist;
+  const auto right_expand_dist = p->detection_area_right_expand_dist;
 
   const auto expanded_lanelets = lanelet::utils::getExpandedLanelets(
     data.current_lanelets, left_expand_dist, right_expand_dist * (-1.0));
@@ -173,8 +162,7 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
       [&](const auto & object) { return createObjectData(data, object); });
   }
 
-  utils::avoidance::filterTargetObjects(
-    target_lane_objects, data, debug, planner_data_, avoidance_parameters_);
+  utils::avoidance::filterTargetObjects(target_lane_objects, data, debug, planner_data_, p);
 }
 
 ObjectData AvoidanceByLaneChange::createObjectData(
@@ -184,32 +172,34 @@ ObjectData AvoidanceByLaneChange::createObjectData(
   using motion_utils::findNearestIndex;
   using tier4_autoware_utils::calcDistance2d;
 
+  const auto p = std::dynamic_pointer_cast<AvoidanceParameters>(avoidance_parameters_);
+
   const auto & path_points = data.reference_path.points;
   const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
   const auto object_closest_index = findNearestIndex(path_points, object_pose.position);
   const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
   const auto t = utils::getHighestProbLabel(object.classification);
-  const auto object_parameter = avoidance_parameters_->object_parameters.at(t);
+  const auto object_parameter = p->object_parameters.at(t);
 
   ObjectData object_data{};
 
   object_data.object = object;
 
-  const auto lower = avoidance_parameters_->lower_distance_for_polygon_expansion;
-  const auto upper = avoidance_parameters_->upper_distance_for_polygon_expansion;
+  const auto lower = p->lower_distance_for_polygon_expansion;
+  const auto upper = p->upper_distance_for_polygon_expansion;
   const auto clamp =
     std::clamp(calcDistance2d(getEgoPose(), object_pose) - lower, 0.0, upper) / upper;
   object_data.distance_factor = object_parameter.max_expand_ratio * clamp + 1.0;
 
   // Calc envelop polygon.
   utils::avoidance::fillObjectEnvelopePolygon(
-    object_data, registered_objects_, object_closest_pose, avoidance_parameters_);
+    object_data, registered_objects_, object_closest_pose, p);
 
   // calc object centroid.
   object_data.centroid = return_centroid<Point2d>(object_data.envelope_poly);
 
   // Calc moving time.
-  utils::avoidance::fillObjectMovingTime(object_data, stopped_objects_, avoidance_parameters_);
+  utils::avoidance::fillObjectMovingTime(object_data, stopped_objects_, p);
 
   // Calc lateral deviation from path to target object.
   object_data.lateral =
@@ -221,8 +211,7 @@ ObjectData AvoidanceByLaneChange::createObjectData(
 
   // Check whether the the ego should avoid the object.
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  utils::avoidance::fillAvoidanceNecessity(
-    object_data, registered_objects_, vehicle_width, avoidance_parameters_);
+  utils::avoidance::fillAvoidanceNecessity(object_data, registered_objects_, vehicle_width, p);
 
   return object_data;
 }

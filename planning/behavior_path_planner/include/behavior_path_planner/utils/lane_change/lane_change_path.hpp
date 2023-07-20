@@ -30,16 +30,9 @@ using behavior_path_planner::TurnSignalInfo;
 struct LaneChangePath
 {
   PathWithLaneId path{};
-  lanelet::ConstLanelets reference_lanelets{};
-  lanelet::ConstLanelets target_lanelets{};
-  Pose lane_changing_start{};
-  Pose lane_changing_end{};
   ShiftedPath shifted_path{};
-  ShiftLine shift_line{};
-  double acceleration{0.0};
-  LaneChangePhaseInfo length{};
-  LaneChangePhaseInfo duration{};
   PathWithLaneId prev_path{};
+  LaneChangeInfo info{};
 };
 using LaneChangePaths = std::vector<LaneChangePath>;
 
@@ -48,7 +41,7 @@ struct LaneChangeStatus
   PathWithLaneId lane_follow_path{};
   LaneChangePath lane_change_path{};
   lanelet::ConstLanelets current_lanes{};
-  lanelet::ConstLanelets lane_change_lanes{};
+  lanelet::ConstLanelets target_lanes{};
   std::vector<uint64_t> lane_follow_lane_ids{};
   std::vector<uint64_t> lane_change_lane_ids{};
   bool is_safe{false};
