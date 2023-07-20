@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from graphviz import Digraph
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy
@@ -22,27 +21,65 @@ from rclpy.qos import QoSProfile
 from tier4_system_msgs.msg import DiagnosticGraph
 
 
-class MyNode(Node):
+class StructNode(Node):
     def __init__(self):
-        super().__init__("system_diagnostic_graph_debug")
+        super().__init__("system_diagnostic_graph_tools_struct")
         qos_struct = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
         self.sub_struct = self.create_subscription(
-            DiagnosticGraph, "/diagnostics_graph_struct", self.on_struct, qos_struct
+            DiagnosticGraph, "/diagnostics_graph/struct", self.callback, qos_struct
         )
+        self.message = None
 
-    def on_struct(self, msg):
-        print(msg)
+    def callback(self, msg):
+        self.message = msg
 
 
-def test():
-    graph = Digraph()
-    graph.attr("node", shape="circle")
-    graph.edge("N0", "N1", "E1")
-    graph.edge("N0", "N2", "E2")
-    graph.view()
+class NodeSpinner:
+    def __init__(self, time):
+        self.time = time
+        self.wait = True
+
+    def on_timer(self):
+        self.wait = False
+
+    def spin(self, node):
+        timer = node.create_timer(self.time, self.on_timer)
+        while self.wait:
+            rclpy.spin_once(node)
+        node.destroy_timer(timer)
+
+
+class GraphNode:
+    def __init__(self, msg):
+        self.name = msg.name
+        self.links = msg.links
+
+
+class GraphStruct:
+    def __init__(self, msg):
+        self.nodes = [GraphNode(node) for node in msg.nodes]
+
+    @staticmethod
+    def Subscribe():
+        spin = NodeSpinner(1.0)
+        node = StructNode()
+        spin.spin(node)
+        return GraphStruct(node.message)
+
+    def visualize(self):
+        from graphviz import Digraph
+
+        graph = Digraph()
+        graph.attr("node", shape="box")
+        for node in self.nodes:
+            graph.node(node.name)
+            for link in node.links:
+                graph.edge(node.name, self.nodes[link].name)
+        graph.view()
 
 
 if __name__ == "__main__":
     rclpy.init()
-    rclpy.spin(MyNode())
+    graph = GraphStruct.Subscribe()
     rclpy.shutdown()
+    graph.visualize()
