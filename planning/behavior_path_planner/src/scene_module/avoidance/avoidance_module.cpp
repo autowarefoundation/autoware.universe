@@ -304,7 +304,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   // TODO(Satoshi OTA) use helper_ after the manager transition
   helper::avoidance::AvoidanceHelper helper(planner_data_, parameters_);
 
-  const auto feasible_stop_distance = helper.getFeasibleDecelDistance(0.0);
+  const auto feasible_stop_distance = helper.getFeasibleDecelDistance(0.0, false);
   std::for_each(data.target_objects.begin(), data.target_objects.end(), [&, this](auto & o) {
     o.to_stop_line = calcDistanceToStopLine(o);
     fillObjectStoppableJudge(o, registered_objects_, feasible_stop_distance, parameters_);
@@ -2261,7 +2261,7 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
 
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_lanes = avoidance_data_.current_lanelets;
-  const auto & enable_opposite = parameters_->enable_avoidance_over_opposite_direction;
+  const auto & enable_opposite = parameters_->use_opposite_lane;
   std::vector<DrivableLanes> drivable_lanes;
 
   for (const auto & current_lane : current_lanes) {
@@ -2269,7 +2269,7 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
     current_drivable_lanes.left_lane = current_lane;
     current_drivable_lanes.right_lane = current_lane;
 
-    if (!parameters_->enable_avoidance_over_same_direction) {
+    if (!parameters_->use_adjacent_lane) {
       drivable_lanes.push_back(current_drivable_lanes);
       continue;
     }
@@ -3244,6 +3244,14 @@ void AvoidanceModule::insertWaitPoint(
     return;
   }
 
+  // If the stop distance is not enough for comfortable stop, don't insert wait point.
+  const auto is_comfortable_stop = helper_.getFeasibleDecelDistance(0.0) < data.to_stop_line;
+  const auto is_slow_speed = getEgoSpeed() < parameters_->min_slow_down_speed;
+  if (!is_comfortable_stop && !is_slow_speed) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "not execute uncomfortable deceleration.");
+    return;
+  }
+
   // If target object can be stopped for, insert a deceleration point and return
   if (data.stop_target_object.get().is_stoppable) {
     utils::avoidance::insertDecelPoint(
@@ -3386,6 +3394,9 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
 
     shifted_path.path.points.at(i).point.longitudinal_velocity_mps = std::min(v_original, v_insert);
   }
+
+  slow_pose_ = motion_utils::calcLongitudinalOffsetPose(
+    shifted_path.path.points, start_idx, distance_to_object);
 }
 
 std::shared_ptr<AvoidanceDebugMsgArray> AvoidanceModule::get_debug_msg_array() const
