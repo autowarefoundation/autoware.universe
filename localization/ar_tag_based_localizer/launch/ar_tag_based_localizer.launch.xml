@@ -1,0 +1,21 @@
+<launch>
+  <arg name="param_file" default="$(find-pkg-share ar_tag_based_localizer)/config/ar_tag_based_localizer.param.yaml"/>
+  <arg name="node_name" default="ar_tag_based_localizer"/>
+
+  <!-- Topic names -->
+  <arg name="input_image" default="image"/>
+  <arg name="input_camera_info" default="camera_info"/>
+
+  <arg name="output_image" default="result"/>
+  <arg name="output_pose_with_covariance" default="pose_with_covariance"/>
+
+  <node pkg="ar_tag_based_localizer" exec="ar_tag_based_localizer" name="$(var node_name)" output="log">
+    <remap from="image" to="$(var input_image)"/>
+    <remap from="camera_info" to="$(var input_camera_info)"/>
+
+    <remap from="result" to="$(var output_image)"/>
+    <remap from="pose_with_covariance" to="$(var output_pose_with_covariance)"/>
+
+    <param from="$(var param_file)"/>
+  </node>
+</launch>
