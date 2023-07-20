@@ -33,9 +33,9 @@ namespace euclidean_cluster
 class EuclideanClusterInterface
 {
 public:
-  struct ClassifedPoint
+  struct ClassifiedPoint
   {
-    size_t point_indice;
+    size_t point_indices;
     int class_index;
   };
   EuclideanClusterInterface() = default;

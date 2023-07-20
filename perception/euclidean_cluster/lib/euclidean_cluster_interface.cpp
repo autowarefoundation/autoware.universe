@@ -36,10 +36,10 @@ void EuclideanClusterInterface::fastClusterExtract(
   pcl::KdTreeFLANN<pcl::PointXYZ> cloud_kdtreeflann;
   cloud_kdtreeflann.setInputCloud(cloud);
 
-  std::vector<ClassifedPoint> classified_points;
+  std::vector<ClassifiedPoint> classified_points;
   for (size_t i = 0; i < cloud->points.size(); ++i) {
-    ClassifedPoint current_point;
-    current_point.point_indice = i;
+    ClassifiedPoint current_point;
+    current_point.point_indices = i;
     current_point.class_index = 0;
     classified_points.push_back(current_point);
   }
@@ -81,7 +81,7 @@ void EuclideanClusterInterface::fastClusterExtract(
   }
   std::sort(
     classified_points.begin(), classified_points.end(),
-    [](const ClassifedPoint & p0, const ClassifedPoint & p1) {
+    [](const ClassifiedPoint & p0, const ClassifiedPoint & p1) {
       return p0.class_index < p1.class_index;
     });
   int new_class_idx = 0;
@@ -93,7 +93,7 @@ void EuclideanClusterInterface::fastClusterExtract(
   for (auto point = classified_points.begin(); point < classified_points.end(); point++) {
     if (point->class_index == prev_class_idx) {
       point->class_index = new_class_idx;
-      object_indices->indices.push_back(point->point_indice);
+      object_indices->indices.push_back(point->point_indices);
       continue;
     }
 
@@ -105,7 +105,7 @@ void EuclideanClusterInterface::fastClusterExtract(
         cluster_indices.push_back(*object_indices);
         object_indices->indices.clear();
       }
-      object_indices->indices.push_back(point->point_indice);
+      object_indices->indices.push_back(point->point_indices);
       continue;
     }
 
@@ -118,7 +118,7 @@ void EuclideanClusterInterface::fastClusterExtract(
         cluster_indices.push_back(*object_indices);
         object_indices->indices.clear();
       }
-      object_indices->indices.push_back(point->point_indice);
+      object_indices->indices.push_back(point->point_indices);
       continue;
     }
   }
