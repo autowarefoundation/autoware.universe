@@ -390,7 +390,7 @@ MarkerArray createDrivableLanesMarkerArray(
       return marker;
     };
 
-  for (const auto & drivable_lane : drivable_lanes) {
+  const auto get_drivable_lanes = [&msg, &get_lanelet_marker](const DrivableLanes & drivable_lane) {
     {
       msg.markers.push_back(get_lanelet_marker(drivable_lane.right_lane, 1.0, 0.0, 0.0));
     }
@@ -402,7 +402,9 @@ MarkerArray createDrivableLanesMarkerArray(
     std::for_each(
       drivable_lane.middle_lanes.begin(), drivable_lane.middle_lanes.end(),
       [&](const auto & lane) { msg.markers.push_back(get_lanelet_marker(lane, 0.0, 0.0, 1.0)); });
-  }
+  };
+
+  std::for_each(drivable_lanes.begin(), drivable_lanes.end(), get_drivable_lanes);
 
   return msg;
 }
