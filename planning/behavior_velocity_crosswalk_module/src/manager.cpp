@@ -30,7 +30,7 @@ using lanelet::autoware::Crosswalk;
 CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
     node, getModuleName(),
-    node.declare_parameter<bool>(std::string(getModuleName()) + ".enable_rtc"))
+    node.declare_parameter<bool>(std::string(getModuleName()) + "common.enable_rtc"))
 {
   const std::string ns(getModuleName());
 
