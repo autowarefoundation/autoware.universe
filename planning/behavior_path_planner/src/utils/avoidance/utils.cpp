@@ -792,10 +792,10 @@ void filterTargetObjects(
   const rclcpp::Time now = rclcpp::Clock(RCL_ROS_TIME).now();
 
   // for goal
-  const auto dist_to_goal =
-    rh->isInGoalRouteSection(data.current_lanelets.back())
-      ? calcSignedArcLength(path_points, ego_pos, rh->getGoalPose().position)
-      : std::numeric_limits<double>::max();
+  const auto ego_idx = planner_data->findEgoIndex(path_points);
+  const auto dist_to_goal = rh->isInGoalRouteSection(data.current_lanelets.back())
+                              ? calcSignedArcLength(path_points, ego_idx, path_points.size() - 1)
+                              : std::numeric_limits<double>::max();
 
   // extend lanelets if the reference path is cut for lane change.
   const auto & ego_pose = planner_data->self_odometry->pose.pose;
@@ -877,9 +877,9 @@ void filterTargetObjects(
       lanelet::BasicPoint3d overhang_basic_pose(
         o.overhang_pose.position.x, o.overhang_pose.position.y, o.overhang_pose.position.z);
 
-      const bool get_left = isOnRight(o) && parameters->enable_avoidance_over_same_direction;
-      const bool get_right = !isOnRight(o) && parameters->enable_avoidance_over_same_direction;
-      const bool get_opposite = parameters->enable_avoidance_over_opposite_direction;
+      const bool get_left = isOnRight(o) && parameters->use_adjacent_lane;
+      const bool get_right = !isOnRight(o) && parameters->use_adjacent_lane;
+      const bool get_opposite = parameters->use_opposite_lane;
 
       lanelet::ConstLineString3d target_line{};
       o.to_road_shoulder_distance = std::numeric_limits<double>::max();
@@ -1208,6 +1208,10 @@ double extendToRoadShoulderDistanceWithPolygon(
       if (intersect_pos) {
         intersect_dist_vec.push_back(calcDistance2d(*intersect_pos, overhang_pos));
       }
+    }
+
+    if (intersect_dist_vec.empty()) {
+      continue;
     }
 
     std::sort(intersect_dist_vec.begin(), intersect_dist_vec.end());

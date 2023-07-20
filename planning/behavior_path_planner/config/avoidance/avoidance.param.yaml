@@ -11,16 +11,18 @@
 
       # avoidance module common setting
       enable_bound_clipping: false
-      enable_avoidance_over_same_direction: true
-      enable_avoidance_over_opposite_direction: true
       enable_update_path_when_object_is_gone: false
       enable_force_avoidance_for_stopped_vehicle: false
       enable_safety_check: true
       enable_yield_maneuver: true
       enable_yield_maneuver_during_shifting: false
       disable_path_update: false
-      use_hatched_road_markings: false
+
+      # drivable area setting
+      use_adjacent_lane: true
+      use_opposite_lane: true
       use_intersection_areas: false
+      use_hatched_road_markings: false
 
       # for debug
       publish_debug_marker: false
@@ -165,18 +167,17 @@
 
         # lateral constraints
         lateral:
-          nominal_lateral_jerk: 0.2                     # [m/s3]
-          max_lateral_jerk: 1.0                         # [m/s3]
+          nominal_lateral_jerk: 0.2                     # [m/sss]
+          max_lateral_jerk: 1.0                         # [m/sss]
+          max_lateral_acceleration: 0.5                 # [m/ss]
 
         # longitudinal constraints
         longitudinal:
           nominal_deceleration: -1.0                    # [m/ss]
           nominal_jerk: 0.5                             # [m/sss]
           max_deceleration: -2.0                        # [m/ss]
-          max_jerk: 1.0
-          # For prevention of large acceleration while avoidance
-          min_avoidance_speed_for_acc_prevention: 3.0   # [m/s]
-          max_avoidance_acceleration: 0.5               # [m/ss]
+          max_jerk: 1.0                                 # [m/sss]
+          max_acceleration: 1.0                         # [m/ss]
 
       target_velocity_matrix:
         col_size: 2

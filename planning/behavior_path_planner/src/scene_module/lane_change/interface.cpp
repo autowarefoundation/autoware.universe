@@ -77,6 +77,12 @@ bool LaneChangeInterface::isExecutionReady() const
 
 ModuleStatus LaneChangeInterface::updateState()
 {
+  if (module_type_->specialExpiredCheck()) {
+    if (isWaitingApproval()) {
+      return ModuleStatus::SUCCESS;
+    }
+  }
+
   if (!isActivated() || isWaitingApproval()) {
     return ModuleStatus::IDLE;
   }
@@ -293,6 +299,7 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   using marker_utils::lane_change_markers::showPolygonPose;
 
   const auto debug_data = module_type_->getDebugData();
+  const auto debug_after_approval = module_type_->getAfterApprovalDebugData();
   const auto debug_valid_path = module_type_->getDebugValidPath();
 
   debug_marker_.markers.clear();
@@ -300,10 +307,18 @@ void LaneChangeInterface::setObjectDebugVisualization() const
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
-  add(showObjectInfo(debug_data, "object_debug_info"));
-  add(showLerpedPose(debug_data, "ego_predicted_path"));
-  add(showPolygon(debug_data, "ego_and_target_polygon_relation"));
   add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
+  if (!debug_data.empty()) {
+    add(showObjectInfo(debug_data, "object_debug_info"));
+    add(showLerpedPose(debug_data, "ego_predicted_path"));
+    add(showPolygon(debug_data, "ego_and_target_polygon_relation"));
+  }
+
+  if (!debug_after_approval.empty()) {
+    add(showObjectInfo(debug_after_approval, "object_debug_info_after_approval"));
+    add(showLerpedPose(debug_after_approval, "ego_predicted_path_after_approval"));
+    add(showPolygon(debug_after_approval, "ego_and_target_polygon_relation_after_approval"));
+  }
 }
 
 std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeInterface::get_debug_msg_array() const
@@ -339,11 +354,11 @@ MarkerArray LaneChangeInterface::getModuleVirtualWall()
   if (isWaitingApproval() || current_state_ != ModuleStatus::RUNNING) {
     return marker;
   }
-  const auto & start_pose = module_type_->getLaneChangePath().lane_changing_start;
+  const auto & start_pose = module_type_->getLaneChangePath().info.lane_changing_start;
   const auto start_marker =
     createLaneChangingVirtualWallMarker(start_pose, name(), clock_->now(), "lane_change_start");
 
-  const auto & end_pose = module_type_->getLaneChangePath().lane_changing_end;
+  const auto & end_pose = module_type_->getLaneChangePath().info.lane_changing_end;
   const auto end_marker =
     createLaneChangingVirtualWallMarker(end_pose, name(), clock_->now(), "lane_change_end");
   marker.markers.reserve(start_marker.markers.size() + end_marker.markers.size());
@@ -367,13 +382,13 @@ void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & o
   const auto current_position = module_type_->getEgoPosition();
   const auto status = module_type_->getLaneChangeStatus();
   const auto start_distance = motion_utils::calcSignedArcLength(
-    output.path->points, current_position, status.lane_change_path.shift_line.start.position);
+    output.path->points, current_position, status.lane_change_path.info.shift_line.start.position);
   const auto finish_distance = motion_utils::calcSignedArcLength(
-    output.path->points, current_position, status.lane_change_path.shift_line.end.position);
+    output.path->points, current_position, status.lane_change_path.info.shift_line.end.position);
 
   // TODO(tkhmy) add handle status TRYING
   steering_factor_interface_ptr_->updateSteeringFactor(
-    {status.lane_change_path.shift_line.start, status.lane_change_path.shift_line.end},
+    {status.lane_change_path.info.shift_line.start, status.lane_change_path.info.shift_line.end},
     {start_distance, finish_distance}, SteeringFactor::LANE_CHANGE, steering_factor_direction,
     SteeringFactor::TURNING, "");
 }
@@ -389,7 +404,7 @@ void LaneChangeInterface::updateSteeringFactorPtr(
   });
 
   steering_factor_interface_ptr_->updateSteeringFactor(
-    {selected_path.shift_line.start, selected_path.shift_line.end},
+    {selected_path.info.shift_line.start, selected_path.info.shift_line.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
     SteeringFactor::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
 }
@@ -427,8 +442,8 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
   if (path.points.empty()) {
     current_turn_signal_info.desired_start_point = current_pose;
     current_turn_signal_info.required_start_point = current_pose;
-    current_turn_signal_info.desired_end_point = lane_change_path.lane_changing_end;
-    current_turn_signal_info.required_end_point = lane_change_path.lane_changing_end;
+    current_turn_signal_info.desired_end_point = lane_change_path.info.lane_changing_end;
+    current_turn_signal_info.required_end_point = lane_change_path.info.lane_changing_end;
     return current_turn_signal_info;
   }
 
@@ -459,7 +474,7 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
   if (path_length - length_front_to_ego < buffer && start_pose) {
     // modify turn signal
     current_turn_signal_info.desired_start_point = *start_pose;
-    current_turn_signal_info.desired_end_point = lane_change_path.lane_changing_end;
+    current_turn_signal_info.desired_end_point = lane_change_path.info.lane_changing_end;
     current_turn_signal_info.required_start_point = current_turn_signal_info.desired_start_point;
     current_turn_signal_info.required_end_point = current_turn_signal_info.desired_end_point;
 
@@ -494,6 +509,11 @@ AvoidanceByLaneChangeInterface::AvoidanceByLaneChangeInterface(
     name, node, parameters, rtc_interface_ptr_map,
     std::make_unique<AvoidanceByLaneChange>(parameters, avoidance_by_lane_change_parameters)}
 {
+}
+
+bool AvoidanceByLaneChangeInterface::isExecutionRequested() const
+{
+  return module_type_->specialRequiredCheck() && module_type_->isLaneChangeRequired();
 }
 
 void AvoidanceByLaneChangeInterface::updateRTCStatus(
