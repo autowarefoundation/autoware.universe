@@ -60,18 +60,25 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
 
   // Parameters
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
-  // priority_mode_ = static_cast<PriorityMode>(
-  //   declare_parameter<int>("priority_mode", static_cast<int>(PriorityMode::Confidence)));
-  // remove_overlapped_unknown_objects_ =
-  //   declare_parameter<bool>("remove_overlapped_unknown_objects", true);
-  overlapped_judge_param_.precision_threshold =
-    declare_parameter<double>("precision_threshold_to_judge_overlapped");
-  overlapped_judge_param_.recall_threshold =
-    declare_parameter<double>("recall_threshold_to_judge_overlapped", 0.5);
-  overlapped_judge_param_.generalized_iou_threshold =
-    declare_parameter<double>("generalized_iou_threshold");
-  sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec", 0.5);
-  time_sync_threshold_ = declare_parameter<double>("time_sync_threshold", 0.05);
+
+  // Merger policy parameters
+  merger_policy_params_.kinematics_to_be_merged =
+    declare_parameter<std::string>("kinematics_to_be_merged", "velocity");
+
+  std::string kinematics_merge_policy =
+    declare_parameter<std::string>("kinematics_merge_policy", "overwrite");
+  std::string classification_merge_policy =
+    declare_parameter<std::string>("classification_merge_policy", "skip");
+  std::string existence_prob_merge_policy =
+    declare_parameter<std::string>("existence_prob_merge_policy", "skip");
+  std::string shape_merge_policy = declare_parameter<std::string>("shape_merge_policy", "skip");
+
+  merger_policy_params_.kinematics_merge_policy = merger_policy_map_[kinematics_merge_policy];
+  merger_policy_params_.classification_merge_policy =
+    merger_policy_map_[classification_merge_policy];
+  merger_policy_params_.existence_prob_merge_policy =
+    merger_policy_map_[existence_prob_merge_policy];
+  merger_policy_params_.shape_merge_policy = merger_policy_map_[shape_merge_policy];
 
   // init association
   const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");
@@ -175,16 +182,17 @@ TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
     if (direct_assignment.find(object0_idx) != direct_assignment.end()) {  // found and merge
       const auto & object1 = objects1.at(direct_assignment.at(object0_idx));
       // merge object0 and object1
+      // with each merge policy defined in merger_policy_params_
       TrackedObject merged_object = object0;
       merged_object.kinematics = merger_utils::objectKinematicsVXMerger(
-        object0, object1, merger_utils::MergePolicy::OVERWRITE);
+        object0, object1, merger_policy_params_.kinematics_merge_policy);
       merged_object.shape =
-        merger_utils::shapeMerger(object0, object1, merger_utils::MergePolicy::SKIP);
+        merger_utils::shapeMerger(object0, object1, merger_policy_params_.shape_merge_policy);
       merged_object.existence_probability = merger_utils::probabilityMerger(
         object0.existence_probability, object1.existence_probability,
-        merger_utils::MergePolicy::SKIP);
-      auto merged_classification =
-        merger_utils::objectClassificationMerger(object0, object1, merger_utils::MergePolicy::SKIP);
+        merger_policy_params_.existence_prob_merge_policy);
+      auto merged_classification = merger_utils::objectClassificationMerger(
+        object0, object1, merger_policy_params_.classification_merge_policy);
       merged_object.classification = merged_classification.classification;
       output_objects.objects.push_back(merged_object);
     } else {  // not found
