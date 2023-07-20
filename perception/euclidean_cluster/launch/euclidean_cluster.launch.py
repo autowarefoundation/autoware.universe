@@ -64,7 +64,7 @@ def launch_setup(context, *args, **kwargs):
                 "distance_threshold": 0.5,
                 "timer_interval_ms": 100,
                 "use_dynamic_map_loading": True,
-                "skip_lower_neighbor_points": False,
+                "is_downsize_z_threshold": False,
                 "map_update_distance_threshold": 10.0,
                 "map_loader_radius": 150.0,
                 "publish_debug_pcd": True,

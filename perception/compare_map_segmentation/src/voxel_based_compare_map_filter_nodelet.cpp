@@ -40,18 +40,18 @@ VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
 
   distance_threshold_ = declare_parameter<double>("distance_threshold");
   bool use_dynamic_map_loading = declare_parameter<bool>("use_dynamic_map_loading");
-  bool skip_lower_neighbor_points = declare_parameter<bool>("skip_lower_neighbor_points");
+  bool downsize_z_distance_threshold = declare_parameter<bool>("is_downsize_z_threshold");
 
   set_map_in_voxel_grid_ = false;
   if (use_dynamic_map_loading) {
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
     main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     voxel_grid_map_loader_ = std::make_unique<VoxelGridDynamicMapLoader>(
-      this, distance_threshold_, skip_lower_neighbor_points, &tf_input_frame_, &mutex_,
+      this, distance_threshold_, downsize_z_distance_threshold, &tf_input_frame_, &mutex_,
       main_callback_group);
   } else {
     voxel_grid_map_loader_ = std::make_unique<VoxelGridStaticMapLoader>(
-      this, distance_threshold_, skip_lower_neighbor_points, &tf_input_frame_, &mutex_);
+      this, distance_threshold_, downsize_z_distance_threshold, &tf_input_frame_, &mutex_);
   }
   tf_input_frame_ = *(voxel_grid_map_loader_->tf_map_input_frame_);
 }

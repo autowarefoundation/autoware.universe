@@ -96,7 +96,7 @@ protected:
   rclcpp::Logger logger_;
   std::mutex * mutex_ptr_;
   double voxel_leaf_size_;
-  bool skip_lower_neighbor_points_ = false;
+  bool downsize_z_threshold_ = false;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_map_pub_;
   bool debug_ = false;
 
@@ -105,7 +105,7 @@ public:
   typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
   typedef typename PointCloud::Ptr PointCloudPtr;
   explicit VoxelGridMapLoader(
-    rclcpp::Node * node, double leaf_size, bool skip_lower_neighbor_points,
+    rclcpp::Node * node, double leaf_size, bool downsize_z_distance_threshold,
     std::string * tf_map_input_frame, std::mutex * mutex);
 
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
@@ -135,7 +135,7 @@ protected:
 
 public:
   explicit VoxelGridStaticMapLoader(
-    rclcpp::Node * node, double leaf_size, bool skip_lower_neighbor_points,
+    rclcpp::Node * node, double leaf_size, bool downsize_z_distance_threshold,
     std::string * tf_map_input_frame, std::mutex * mutex);
   virtual void onMapCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map);
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
@@ -196,7 +196,7 @@ protected:
 
 public:
   explicit VoxelGridDynamicMapLoader(
-    rclcpp::Node * node, double leaf_size, bool skip_lower_neighbor_points,
+    rclcpp::Node * node, double leaf_size, bool downsize_z_distance_threshold,
     std::string * tf_map_input_frame, std::mutex * mutex,
     rclcpp::CallbackGroup::SharedPtr main_callback_group);
   void onEstimatedPoseCallback(geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose);

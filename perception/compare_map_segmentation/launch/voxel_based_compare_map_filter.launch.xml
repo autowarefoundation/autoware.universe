@@ -5,7 +5,7 @@
   <arg name="output" default="/output" description="output topic name"/>
   <arg name="map_loader_service" default="/map/get_differential_pointcloud_map" description="map loader service name"/>
   <arg name="distance_threshold" default="0.3"/>
-  <arg name="skip_lower_neighbor_points" default="false"/>
+  <arg name="is_downsize_z_threshold" default="false"/>
   <arg name="use_dynamic_map_loading" default="true"/>
   <arg name="timer_interval_ms" default="100"/>
   <arg name="map_update_distance_threshold" default="10.0"/>
@@ -16,7 +16,7 @@
     <remap from="map" to="$(var input_map)"/>
     <remap from="output" to="$(var output)"/>
     <param name="distance_threshold" value="$(var distance_threshold)"/>
-    <param name="skip_lower_neighbor_points" value="$(var skip_lower_neighbor_points)"/>
+    <param name="is_downsize_z_threshold" value="$(var is_downsize_z_threshold)"/>
     <param name="use_dynamic_map_loading" value="$(var use_dynamic_map_loading)"/>
     <param name="timer_interval_ms" value="$(var timer_interval_ms)"/>
     <param name="map_update_distance_threshold" value="$(var map_update_distance_threshold)"/>
