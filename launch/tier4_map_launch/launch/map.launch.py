@@ -123,7 +123,7 @@ def launch_setup(context, *args, **kwargs):
     map_projection_loader = IncludeLaunchDescription(
         AnyLaunchDescriptionSource(map_projection_loader_launch_file),
         launch_arguments={
-            "map_projector_info_path": "value1",
+            "map_projector_info_path": LaunchConfiguration("map_projector_info_path"),
             "lanelet2_map_path": LaunchConfiguration("lanelet2_map_path"),
         }.items(),
     )
@@ -177,6 +177,11 @@ def generate_launch_description():
         "pointcloud_map_metadata_path",
         [LaunchConfiguration("map_path"), "/pointcloud_map_metadata.yaml"],
         "path to pointcloud map metadata file",
+    ),
+    add_launch_arg(
+        "map_projector_info_path",
+        [LaunchConfiguration("map_path"), "/map_projector_info.yaml"],
+        "path to map projector info yaml file",
     ),
     add_launch_arg(
         "lanelet2_map_loader_param_path",
