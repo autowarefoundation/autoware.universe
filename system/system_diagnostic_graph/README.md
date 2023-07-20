@@ -20,8 +20,8 @@ Diagnostic status dependencies will be directed acyclic graph (DAG).
 
 | Name               | Type     | Description                                |
 | ------------------ | -------- | ------------------------------------------ |
-| `config_file`      | `string` | Path of the config file.                   |
-| `update_rate`      | `double` | Rate of aggregation and topic publication. |
+| `graph_file`       | `string` | Path of the config file.                   |
+| `rate`             | `double` | Rate of aggregation and topic publication. |
 | `status_qos_depth` | `uint`   | QoS depth of status topic.                 |
 | `source_qos_depth` | `uint`   | QoS depth of source topic.                 |
 

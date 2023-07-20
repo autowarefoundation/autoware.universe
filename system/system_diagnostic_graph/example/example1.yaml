@@ -1,5 +1,5 @@
 files:
-  - { package: system_diagnostic_graph, path: config/sample_diagnostic_graph2.yaml }
+  - { package: system_diagnostic_graph, path: example/example2.yaml }
 
 nodes:
   - name: /autoware/report

@@ -1,5 +1,5 @@
 /**:
   ros__parameters:
-    update_rate: 1
+    rate: 1.0
     source_qos_depth: 1000
     status_qos_depth: 1

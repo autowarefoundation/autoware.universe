@@ -35,13 +35,13 @@ MainNode::MainNode() : Node("system_diagnostic_graph")
     const auto callback = std::bind(&MainNode::on_diag, this, _1);
     sub_source_ = create_subscription<DiagnosticArray>("/diagnostics", sub_source, callback);
 
-    const auto rate = rclcpp::Rate(declare_parameter<double>("update_rate"));
+    const auto rate = rclcpp::Rate(declare_parameter<double>("rate"));
     timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
   }
 
   // Init diagnostics graph.
   {
-    const auto file = declare_parameter<std::string>("file");
+    const auto file = declare_parameter<std::string>("graph_file");
     const auto data = graph_.create(file);
     graph_.debug();
     pub_struct_->publish(data);

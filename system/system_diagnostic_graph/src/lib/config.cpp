@@ -114,13 +114,13 @@ UnitConfig parse_unit(YAML::Node yaml, ErrorHint hint)
   return UnitConfig{name, hint, expr};
 }
 
-std::vector<UnitConfig> parse_units(YAML::Node yaml, ErrorHint hint)
+std::vector<UnitConfig> parse_nodes(YAML::Node yaml, ErrorHint hint)
 {
   if (!yaml.IsDefined() || yaml.IsNull()) {
     return {};
   }
   if (!yaml.IsSequence()) {
-    throw hint.create_error("units section is not a list");
+    throw hint.create_error("nodes section is not a list");
   }
   std::vector<UnitConfig> units;
   for (const auto & unit : yaml) {
@@ -165,7 +165,7 @@ std::vector<UnitConfig> load_config_file(const std::string & path)
   if (!yaml.IsMap()) {
     throw hint.create_error("config file is not a dict");
   }
-  const auto units = parse_units(yaml["units"], hint);
+  const auto units = parse_nodes(yaml["nodes"], hint);
   const auto files = parse_files(yaml["files"], hint);
 
   std::vector<UnitConfig> result;
