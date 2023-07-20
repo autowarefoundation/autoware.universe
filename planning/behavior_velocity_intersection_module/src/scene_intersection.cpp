@@ -934,8 +934,6 @@ bool IntersectionModule::checkCollision(
   using lanelet::utils::getPolygonFromArcLength;
 
   const auto & objects_ptr = planner_data_->predicted_objects;
-  const auto lanelets_on_path = planning_utils::getLaneletsOnPath(
-    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
   // extract target objects
   autoware_auto_perception_msgs::msg::PredictedObjects target_objects;
   target_objects.header = objects_ptr->header;
@@ -1062,6 +1060,8 @@ bool IntersectionModule::checkCollision(
         long double lanes_length = 0.0;
         std::vector<lanelet::ConstLanelet> ego_lane_with_next_lanes;
 
+        const auto lanelets_on_path = planning_utils::getLaneletsOnPath(
+          path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
         for (const auto & lane : lanelets_on_path) {
           lanes_length += bg::length(lane.centerline());
           ego_lane_with_next_lanes.push_back(lane);
