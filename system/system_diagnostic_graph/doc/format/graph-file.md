@@ -1,6 +1,6 @@
-# ConfigFile
+# GraphFile
 
-ConfigFile is the top level object that makes up the configuration file.
+GraphFile is the top level object that makes up the configuration file.
 
 ## Format
 
