@@ -41,6 +41,21 @@ ament_target_dependencies(pointcloud_preprocessor_filter_base
   pcl_ros
 )
 
+add_library(faster_voxel_grid_downsample_filter SHARED
+  src/downsample_filter/faster_voxel_grid_downsample_filter.cpp
+)
+
+target_include_directories(faster_voxel_grid_downsample_filter PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+)
+
+ament_target_dependencies(faster_voxel_grid_downsample_filter
+  pcl_conversions
+  rclcpp
+  sensor_msgs
+)
+
 ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/utility/utilities.cpp
   src/concatenate_data/concatenate_data_nodelet.cpp
@@ -65,6 +80,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
 
 target_link_libraries(pointcloud_preprocessor_filter
   pointcloud_preprocessor_filter_base
+  faster_voxel_grid_downsample_filter
   ${Boost_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${PCL_LIBRARIES}
@@ -168,6 +184,13 @@ install(
 )
 
 install(
+  TARGETS faster_voxel_grid_downsample_filter EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(
   DIRECTORY include/
   DESTINATION include/${PROJECT_NAME}
 )
@@ -177,3 +200,15 @@ ament_export_targets(export_${PROJECT_NAME})
 ament_auto_package(INSTALL_TO_SHARE
   launch
 )
+
+
+if(BUILD_TESTING)
+  add_ros_test(
+    test/test_distortion_corrector.py
+    TIMEOUT "30"
+  )
+  add_ros_test(
+    test/test_distortion_corrector_use_imu_false.py
+    TIMEOUT "30"
+  )
+endif()

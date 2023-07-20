@@ -17,6 +17,7 @@
 #include <rclcpp/logging.hpp>
 #include <tier4_api_utils/tier4_api_utils.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -50,6 +51,9 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
+
+  // Stop Checker
+  vehicle_stop_checker_ = std::make_unique<VehicleStopChecker>(this);
 
   // Publisher
   vehicle_cmd_emergency_pub_ =
@@ -145,6 +149,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   emergency_acceleration_ = declare_parameter<double>("emergency_acceleration");
   moderate_stop_service_acceleration_ =
     declare_parameter<double>("moderate_stop_service_acceleration");
+  stop_check_duration_ = declare_parameter<double>("stop_check_duration");
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -492,38 +497,49 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   const double dt = getDt();
   const auto mode = current_operation_mode_;
   const auto current_status_cmd = getActualStatusAsCommand();
-  const auto ego_is_stopped = std::abs(current_status_cmd.longitudinal.speed) < 1e-3;
+  const auto ego_is_stopped = vehicle_stop_checker_->isVehicleStopped(stop_check_duration_);
   const auto input_cmd_is_stopping = in.longitudinal.acceleration < 0.0;
 
   // Apply transition_filter when transiting from MANUAL to AUTO.
   if (mode.is_in_transition) {
     filter_on_transition_.filterAll(dt, current_steer_, out);
   } else {
+    // When ego is stopped and the input command is not stopping,
+    // use the higher of actual vehicle longitudinal state
+    // and previous longitudinal command for the filtering
+    // this is to prevent the jerk limits being applied and causing
+    // a delay when restarting the vehicle.
+
+    if (ego_is_stopped && !input_cmd_is_stopping) {
+      auto prev_cmd = filter_.getPrevCmd();
+      prev_cmd.longitudinal.acceleration =
+        std::max(prev_cmd.longitudinal.acceleration, current_status_cmd.longitudinal.acceleration);
+      // consider reverse driving
+      prev_cmd.longitudinal.speed =
+        std::fabs(prev_cmd.longitudinal.speed) > std::fabs(current_status_cmd.longitudinal.speed)
+          ? prev_cmd.longitudinal.speed
+          : current_status_cmd.longitudinal.speed;
+      filter_.setPrevCmd(prev_cmd);
+    }
     filter_.filterAll(dt, current_steer_, out);
   }
 
   // set prev value for both to keep consistency over switching:
   // Actual steer, vel, acc should be considered in manual mode to prevent sudden motion when
   // switching from manual to autonomous
-  auto prev_values = (mode.mode == OperationModeState::AUTONOMOUS) ? out : current_status_cmd;
+  const auto in_autonomous =
+    (mode.mode == OperationModeState::AUTONOMOUS && mode.is_autoware_control_enabled);
+  auto prev_values = in_autonomous ? out : current_status_cmd;
+
+  if (ego_is_stopped) {
+    prev_values.longitudinal = out.longitudinal;
+  }
 
   // TODO(Horibe): To prevent sudden acceleration/deceleration when switching from manual to
   // autonomous, the filter should be applied for actual speed and acceleration during manual
   // driving. However, this means that the output command from Gate will always be close to the
-  // driving state during manual driving. Since the Gate's output is checked by various modules as
-  // the intended value of Autoware, it should be closed to planned values. Conversely, it is
-  // undesirable for the target vehicle speed to be non-zero in a situation where the vehicle is
-  // supposed to stop. Until the appropriate handling will be done, previous value is used for the
-  // filter in manual mode.
-  prev_values.longitudinal = out.longitudinal;  // TODO(Horibe): to be removed
-
-  // When ego is stopped and the input command is stopping,
-  // use the actual vehicle longitudinal state for the next filtering
-  // this is to prevent the jerk limits being applied on the "stop acceleration"
-  // which may be negative and cause delays when restarting the vehicle.
-  if (ego_is_stopped && input_cmd_is_stopping) {
-    prev_values.longitudinal = current_status_cmd.longitudinal;
-  }
+  // driving state during manual driving. Here, let autoware publish the stop command when the ego
+  // is stopped to intend the autoware is trying to keep stopping.
 
   filter_.setPrevCmd(prev_values);
   filter_on_transition_.setPrevCmd(prev_values);

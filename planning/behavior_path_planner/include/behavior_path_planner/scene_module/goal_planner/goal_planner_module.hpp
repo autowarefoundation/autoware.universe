@@ -87,11 +87,6 @@ struct PUllOverStatus
 class GoalPlannerModule : public SceneModuleInterface
 {
 public:
-#ifdef USE_OLD_ARCHITECTURE
-  GoalPlannerModule(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<GoalPlannerParameters> & parameters);
-#else
   GoalPlannerModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<GoalPlannerParameters> & parameters,
@@ -101,7 +96,6 @@ public:
   {
     parameters_ = parameters;
   }
-#endif
 
   BehaviorModuleOutput run() override;
   bool isExecutionRequested() const override;
@@ -134,7 +128,6 @@ private:
   // goal searcher
   std::shared_ptr<GoalSearcherBase> goal_searcher_;
   std::optional<GoalCandidate> modified_goal_pose_;
-  std::optional<size_t> prev_goal_id_;
   Pose refined_goal_pose_;
   GoalCandidates goal_candidates_;
 
@@ -152,10 +145,7 @@ private:
 
   tier4_autoware_utils::LinearRing2d vehicle_footprint_;
 
-// save last time and pose
-#ifdef USE_OLD_ARCHITECTURE
-  std::unique_ptr<rclcpp::Time> last_received_time_;
-#endif
+  // save last time and pose
   std::unique_ptr<rclcpp::Time> last_approved_time_;
   std::unique_ptr<rclcpp::Time> last_increment_time_;
   std::unique_ptr<rclcpp::Time> last_path_update_time_;

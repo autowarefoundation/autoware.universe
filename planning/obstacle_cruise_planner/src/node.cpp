@@ -16,9 +16,9 @@
 
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 #include "obstacle_cruise_planner/polygon_utils.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
-#include "perception_utils/predicted_path_utils.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
@@ -79,7 +79,8 @@ PredictedPath resampleHighestConfidencePredictedPath(
     [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
 
   // resample
-  return perception_utils::resamplePredictedPath(*reliable_path, time_interval, time_horizon);
+  return object_recognition_utils::resamplePredictedPath(
+    *reliable_path, time_interval, time_horizon);
 }
 
 double calcDiffAngleAgainstTrajectory(
@@ -1251,7 +1252,7 @@ void ObstacleCruisePlannerNode::publishDebugMarker() const
   for (size_t i = 0; i < debug_data_ptr_->obstacles_to_cruise.size(); ++i) {
     // obstacle
     const auto obstacle_marker = obstacle_cruise_utils::getObjectMarker(
-      debug_data_ptr_->obstacles_to_cruise.at(i).pose, i, "obstacles_to_cruise", 1.0, 0.5, 0.5);
+      debug_data_ptr_->obstacles_to_cruise.at(i).pose, i, "obstacles_to_cruise", 1.0, 0.6, 0.1);
     debug_marker.markers.push_back(obstacle_marker);
 
     // collision points

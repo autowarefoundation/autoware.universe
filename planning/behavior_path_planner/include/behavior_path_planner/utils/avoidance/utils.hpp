@@ -28,6 +28,12 @@ using behavior_path_planner::PlannerData;
 
 bool isOnRight(const ObjectData & obj);
 
+bool isVehicleTypeObject(const ObjectData & object);
+
+bool isWithinCrosswalk(
+  const ObjectData & object,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
+
 bool isTargetObjectType(
   const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters);
 
@@ -94,6 +100,14 @@ void fillObjectMovingTime(
   ObjectData & object_data, ObjectDataArray & stopped_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 
+void fillAvoidanceNecessity(
+  ObjectData & object_data, const ObjectDataArray & registered_objects, const double vehicle_width,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
+
+void fillObjectStoppableJudge(
+  ObjectData & object_data, const ObjectDataArray & registered_objects,
+  const double feasible_stop_distance, const std::shared_ptr<AvoidanceParameters> & parameters);
+
 void updateRegisteredObject(
   ObjectDataArray & registered_objects, const ObjectDataArray & now_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters);
@@ -110,8 +124,9 @@ void filterTargetObjects(
 double extendToRoadShoulderDistanceWithPolygon(
   const std::shared_ptr<route_handler::RouteHandler> & rh,
   const lanelet::ConstLineString3d & target_line, const double to_road_shoulder_distance,
-  const geometry_msgs::msg::Point & overhang_pos,
-  const lanelet::BasicPoint3d & overhang_basic_pose);
+  const lanelet::ConstLanelet & overhang_lanelet, const geometry_msgs::msg::Point & overhang_pos,
+  const lanelet::BasicPoint3d & overhang_basic_pose, const bool use_hatched_road_markings,
+  const bool use_intersection_areas);
 
 void fillAdditionalInfoFromPoint(const AvoidancePlanningData & data, AvoidLineArray & lines);
 
