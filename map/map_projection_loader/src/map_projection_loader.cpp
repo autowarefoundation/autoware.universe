@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "map_projection_loader/map_projection_loader.hpp"
+#include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 
 #include <yaml-cpp/yaml.h>
 
@@ -29,12 +30,6 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string & fi
   return msg;
 }
 
-tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::string & filename)
-{
-  (void)filename;
-  tier4_map_msgs::msg::MapProjectorInfo msg;
-  return msg;
-}
 
 MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
 {
@@ -49,11 +44,9 @@ MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
     RCLCPP_INFO(this->get_logger(), "Load %s", yaml_filename.c_str());
     msg = load_info_from_yaml(yaml_filename);
   } else {
-    RCLCPP_WARN(
-      this->get_logger(),
-      "DEPRECATED WARNING: Loading map projection info from lanelet2 map may soon be deleted. "
-      "Please use map_projector_info.yaml instead.");
-    msg = load_info_from_lanelet2_map(yaml_filename);
+    RCLCPP_INFO(this->get_logger(), "Load %s", lanelet2_map_filename.c_str());
+    RCLCPP_WARN(this->get_logger(), "DEPRECATED WARNING: Loading map projection info from lanelet2 map may soon be deleted. Please use map_projector_info.yaml instead.");
+    msg = load_info_from_lanelet2_map(lanelet2_map_filename);
   }
 
   // Publish the message

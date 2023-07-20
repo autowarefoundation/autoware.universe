@@ -13,6 +13,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tier4_map_msgs</depend>
+  <depend>lanelet2_extension</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
