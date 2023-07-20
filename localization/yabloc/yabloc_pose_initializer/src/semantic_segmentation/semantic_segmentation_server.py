@@ -25,7 +25,7 @@ from sensor_msgs.msg import Image
 from yabloc_pose_initializer.srv import SemanticSegmentation
 
 # cspell: ignore DDOWNLOAD
-error_message = """\
+ERROR_MESSAGE = """\
 The yabloc_pose_initializer is not working correctly because the DNN model has not been downloaded correctly.
 To download models, "-DDOWNLOAD_ARTIFACTS=ON" is required at build time.
 Please see the README of yabloc_pose_initializer for more information."""
@@ -51,7 +51,7 @@ class SemanticSegmentationServer(Node):
         )
 
     def __print_error_message(self):
-        messages = error_message.split("\n")
+        messages = ERROR_MESSAGE.split("\n")
         for message in messages:
             self.get_logger().error(message)
 
