@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-and-test-differential:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, X64]
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
