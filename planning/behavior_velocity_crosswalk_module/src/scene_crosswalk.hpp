@@ -15,7 +15,7 @@
 #ifndef SCENE_CROSSWALK_HPP_
 #define SCENE_CROSSWALK_HPP_
 
-#include "util.hpp"
+#include "behavior_velocity_crosswalk_module/util.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/regulatory_elements/crosswalk.hpp>
@@ -38,6 +38,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -62,9 +63,9 @@ public:
   {
     bool show_processing_time;
     // param for stop position
-    double stop_margin;
-    double stop_line_distance;
-    double stop_line_margin;
+    double stop_distance_from_object;
+    double stop_distance_from_crosswalk;
+    double far_object_threshold;
     double stop_position_threshold;
     // param for ego velocity
     float min_slow_down_velocity;
@@ -73,7 +74,7 @@ public:
     double no_relax_velocity;
     // param for stuck vehicle
     double stuck_vehicle_velocity;
-    double max_lateral_offset;
+    double max_stuck_vehicle_lateral_offset;
     double stuck_vehicle_attention_range;
     // param for pass judge logic
     double ego_pass_first_margin;
@@ -81,10 +82,10 @@ public:
     double stop_object_velocity;
     double min_object_velocity;
     bool disable_stop_for_yield_cancel;
-    double max_yield_timeout;
-    double ego_yield_query_stop_duration;
+    double timeout_no_intention_to_walk;
+    double timeout_ego_stop_for_yield;
     // param for input data
-    double tl_state_timeout;
+    double traffic_light_state_timeout;
     // param for target area & object
     double crosswalk_attention_range;
     bool look_unknown;
@@ -98,7 +99,7 @@ public:
     // NOTE: FULLY_STOPPED means stopped object which can be ignored.
     enum class State { STOPPED = 0, FULLY_STOPPED, OTHER };
     State state{State::OTHER};
-    boost::optional<rclcpp::Time> time_to_start_stopped{boost::none};
+    std::optional<rclcpp::Time> time_to_start_stopped{std::nullopt};
 
     void updateState(
       const rclcpp::Time & now, const double obj_vel, const bool is_ego_yielding,
@@ -115,7 +116,7 @@ public:
           time_to_start_stopped = now;
         }
         const bool intent_to_cross =
-          (now - *time_to_start_stopped).seconds() < planner_param.max_yield_timeout;
+          (now - *time_to_start_stopped).seconds() < planner_param.timeout_no_intention_to_walk;
         if ((is_ego_yielding || planner_param.disable_stop_for_yield_cancel) && !intent_to_cross) {
           state = State::FULLY_STOPPED;
         } else {
@@ -123,7 +124,7 @@ public:
           state = State::STOPPED;
         }
       } else {
-        time_to_start_stopped = boost::none;
+        time_to_start_stopped = std::nullopt;
         state = State::OTHER;
       }
     }
@@ -182,35 +183,35 @@ private:
   void applySafetySlowDownSpeed(
     PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects);
 
-  boost::optional<std::pair<geometry_msgs::msg::Point, double>> getStopPointWithMargin(
+  std::optional<std::pair<geometry_msgs::msg::Point, double>> getStopPointWithMargin(
     const PathWithLaneId & ego_path,
     const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
 
-  boost::optional<StopFactor> checkStopForCrosswalkUsers(
+  std::optional<StopFactor> checkStopForCrosswalkUsers(
     const PathWithLaneId & ego_path, const PathWithLaneId & sparse_resample_path,
-    const boost::optional<std::pair<geometry_msgs::msg::Point, double>> & p_stop_line,
+    const std::optional<std::pair<geometry_msgs::msg::Point, double>> & p_stop_line,
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
-    const boost::optional<geometry_msgs::msg::Pose> & default_stop_pose);
+    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose);
 
-  boost::optional<StopFactor> checkStopForStuckedVehicles(
+  std::optional<StopFactor> checkStopForStuckVehicles(
     const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
-    const boost::optional<geometry_msgs::msg::Pose> & stop_pose) const;
+    const std::optional<geometry_msgs::msg::Pose> & stop_pose) const;
 
   std::vector<CollisionPoint> getCollisionPoints(
     const PathWithLaneId & ego_path, const PredictedObject & object,
     const Polygon2d & attention_area, const std::pair<double, double> & crosswalk_attention_range);
 
-  boost::optional<StopFactor> getNearestStopFactor(
+  std::optional<StopFactor> getNearestStopFactor(
     const PathWithLaneId & ego_path,
-    const boost::optional<StopFactor> & stop_factor_for_crosswalk_users,
-    const boost::optional<StopFactor> & stop_factor_for_stucked_vehicles);
+    const std::optional<StopFactor> & stop_factor_for_crosswalk_users,
+    const std::optional<StopFactor> & stop_factor_for_stuck_vehicles);
 
-  void planGo(PathWithLaneId & ego_path, const boost::optional<StopFactor> & stop_factor);
+  void planGo(PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor);
 
   void planStop(
-    PathWithLaneId & ego_path, const boost::optional<StopFactor> & nearest_stop_factor,
-    const boost::optional<geometry_msgs::msg::Pose> & default_stop_pose, StopReason * stop_reason);
+    PathWithLaneId & ego_path, const std::optional<StopFactor> & nearest_stop_factor,
+    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose, StopReason * stop_reason);
 
   // minor functions
   std::pair<double, double> getAttentionRange(
