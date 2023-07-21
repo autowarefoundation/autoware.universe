@@ -295,7 +295,7 @@ dc   | dc dc dc  dc ||zc|
     float p_x = *reinterpret_cast<const float *>(&data[stride + x_offset]);
     float p_y = *reinterpret_cast<const float *>(&data[stride + y_offset]);
     float p_z = *reinterpret_cast<const float *>(&data[stride + z_offset]);
-    if (p_z <= 0.0 || (p_x / p_z) > tan_h_.at(image_id) || (p_x / p_z) < -tan_h_.at(image_id)) {
+    if (p_z <= 0.0 || p_x > (tan_h_.at(image_id) * p_z) || p_x < (-tan_h_.at(image_id) * p_z)) {
       continue;
     }
     // project

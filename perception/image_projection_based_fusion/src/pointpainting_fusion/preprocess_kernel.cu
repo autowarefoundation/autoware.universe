@@ -124,17 +124,17 @@ __global__ void generateFeatures_kernel(
 
   // store output
   if (point_idx < pointsNumSM[pillar_idx_inBlock]) {
-    for (std::size_t i = 0; i < encoder_in_feature_size - 5; ++i) {
+    for (std::size_t i = 0; i < POINT_FEATURE_SIZE; ++i) {
       pillarOutSM[pillar_idx_inBlock][point_idx][i] = pillarSM[pillar_idx_inBlock][point_idx][i];
     }
 
     // change index
-    pillarOutSM[pillar_idx_inBlock][point_idx][encoder_in_feature_size - 5] = mean.x;
-    pillarOutSM[pillar_idx_inBlock][point_idx][encoder_in_feature_size - 4] = mean.y;
-    pillarOutSM[pillar_idx_inBlock][point_idx][encoder_in_feature_size - 3] = mean.z;
+    pillarOutSM[pillar_idx_inBlock][point_idx][POINT_FEATURE_SIZE] = mean.x;
+    pillarOutSM[pillar_idx_inBlock][point_idx][POINT_FEATURE_SIZE + 1] = mean.y;
+    pillarOutSM[pillar_idx_inBlock][point_idx][POINT_FEATURE_SIZE + 2] = mean.z;
 
-    pillarOutSM[pillar_idx_inBlock][point_idx][encoder_in_feature_size - 2] = center.x;
-    pillarOutSM[pillar_idx_inBlock][point_idx][encoder_in_feature_size - 1] = center.y;
+    pillarOutSM[pillar_idx_inBlock][point_idx][POINT_FEATURE_SIZE + 3] = center.x;
+    pillarOutSM[pillar_idx_inBlock][point_idx][POINT_FEATURE_SIZE + 4] = center.y;
 
   } else {
     for (std::size_t i = 0; i < encoder_in_feature_size; ++i) {
