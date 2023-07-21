@@ -87,8 +87,8 @@ __global__ void generateFeatures_kernel(
 
   for (std::size_t i = 0; i < POINT_FEATURE_SIZE; ++i) {
     pillarSM[pillar_idx_inBlock][point_idx][i] = voxel_features
-      [(POINT_FEATURE_SIZE) * pillar_idx * MAX_POINT_IN_VOXEL_SIZE +
-       (POINT_FEATURE_SIZE) * point_idx + i];
+      [(POINT_FEATURE_SIZE)*pillar_idx * MAX_POINT_IN_VOXEL_SIZE + (POINT_FEATURE_SIZE)*point_idx +
+       i];
   }
   __syncthreads();
 
