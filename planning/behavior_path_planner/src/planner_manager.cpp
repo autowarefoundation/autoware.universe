@@ -750,7 +750,7 @@ std::shared_ptr<SceneModuleVisitor> PlannerManager::getDebugMsg()
   return debug_msg_ptr_;
 }
 
-std::string getNames(const std::vector<SceneModulePtr> & modules) const
+std::string PlannerManager::getNames(const std::vector<SceneModulePtr> & modules) const
 {
   std::stringstream ss;
   for (const auto & m : modules) {
