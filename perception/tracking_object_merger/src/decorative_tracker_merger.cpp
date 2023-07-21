@@ -58,6 +58,11 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   // merged object publisher
   merged_object_pub_ = create_publisher<TrackedObjects>("output/object", rclcpp::QoS{1});
 
+  // logging
+  logging_.enable = declare_parameter<bool>("enable_logging", false);
+  logging_.path =
+    declare_parameter<std::string>("logging_file_path", "~/.ros/association_log.json");
+
   // Parameters
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
   time_sync_threshold_ = declare_parameter<double>("time_sync_threshold", 0.05);
@@ -178,8 +183,8 @@ TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
   const auto & objects0 = main_objects->objects;
   const auto & objects1 = interpolated_sub_objects->objects;
-  Eigen::MatrixXd score_matrix =
-    data_association_->calcScoreMatrix(*interpolated_sub_objects, *main_objects);
+  Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
+    *interpolated_sub_objects, *main_objects, logging_.enable, logging_.path);
   data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
 
   for (size_t object0_idx = 0; object0_idx < objects0.size(); ++object0_idx) {

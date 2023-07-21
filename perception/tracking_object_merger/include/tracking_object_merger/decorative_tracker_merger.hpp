@@ -97,6 +97,13 @@ private:
     {"skip", merger_utils::MergePolicy::SKIP},
     {"overwrite", merger_utils::MergePolicy::OVERWRITE},
     {"fusion", merger_utils::MergePolicy::FUSION}};
+
+  // debug parameters
+  struct logging
+  {
+    bool enable = false;
+    std::string path;
+  } logging_;
 };
 
 }  // namespace tracking_object_merger
