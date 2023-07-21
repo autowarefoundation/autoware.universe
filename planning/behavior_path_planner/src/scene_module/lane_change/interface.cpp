@@ -423,9 +423,7 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
   const auto & lane_change_path = module_type_->getLaneChangeStatus().lane_change_path;
   const auto & lane_change_param = module_type_->getLaneChangeParam();
 
-  if (
-    module_type_->getModuleType() != LaneChangeModuleType::NORMAL || current_lanes.empty() ||
-    !is_valid) {
+  if (module_type_->getModuleType() != LaneChangeModuleType::NORMAL || current_lanes.empty()) {
     return original_turn_signal_info;
   }
 
@@ -459,13 +457,34 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
   const double & nearest_yaw_threshold = common_parameter.ego_nearest_yaw_threshold;
   const double & base_to_front = common_parameter.base_link2front;
 
+  const size_t & current_nearest_seg_idx =
+    motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
+
+  if (is_valid) {
+    // if the path is valid, we turn on the blinker
+    current_turn_signal_info.desired_start_point = current_pose;
+    current_turn_signal_info.desired_end_point = lane_change_path.info.lane_changing_end;
+    current_turn_signal_info.required_start_point = current_turn_signal_info.desired_start_point;
+    current_turn_signal_info.required_end_point = current_turn_signal_info.desired_end_point;
+
+    const auto & original_command = original_turn_signal_info.turn_signal.command;
+    if (
+      original_command == TurnIndicatorsCommand::DISABLE ||
+      original_command == TurnIndicatorsCommand::NO_COMMAND) {
+      return current_turn_signal_info;
+    }
+
+    // check the priority of turn signals
+    return module_type_->getTurnSignalDecider().use_prior_turn_signal(
+      path, current_pose, current_nearest_seg_idx, original_turn_signal_info,
+      current_turn_signal_info, nearest_dist_threshold, nearest_yaw_threshold);
+  }
+
   const double buffer =
     next_lane_change_buffer + min_length_for_turn_signal_activation + base_to_front;
   const double path_length = motion_utils::calcArcLength(path.points);
   const auto & front_point = path.points.front().point.pose.position;
-  const size_t & current_nearest_seg_idx =
-    motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
   const double length_front_to_ego = motion_utils::calcSignedArcLength(
     path.points, front_point, static_cast<size_t>(0), current_pose.position,
     current_nearest_seg_idx);
