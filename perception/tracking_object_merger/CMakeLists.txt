@@ -7,6 +7,8 @@ endif()
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
+find_package(nlohmann_json REQUIRED) # for debug
+
 
 # find dependencies
 find_package(eigen3_cmake_module REQUIRED)
@@ -33,6 +35,7 @@ ament_auto_add_library(decorative_tracker_merger_node SHARED
 target_link_libraries(decorative_tracker_merger_node
   mu_successive_shortest_path
   Eigen3::Eigen
+  nlohmann_json::nlohmann_json # for debug
 )
 
 rclcpp_components_register_node(decorative_tracker_merger_node
