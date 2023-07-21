@@ -60,6 +60,8 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
 
   // Parameters
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
+  time_sync_threshold_ = declare_parameter<double>("time_sync_threshold", 0.05);
+  sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec", 0.15);
 
   // Merger policy parameters
   merger_policy_params_.kinematics_to_be_merged =
@@ -73,6 +75,7 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
     declare_parameter<std::string>("existence_prob_merge_policy", "skip");
   std::string shape_merge_policy = declare_parameter<std::string>("shape_merge_policy", "skip");
 
+  // str to map
   merger_policy_params_.kinematics_merge_policy = merger_policy_map_[kinematics_merge_policy];
   merger_policy_params_.classification_merge_policy =
     merger_policy_map_[classification_merge_policy];
@@ -123,10 +126,11 @@ void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::Const
 {
   sub_objects_buffer_.push_back(msg);
   // remove old sub objects
-  const auto now = get_clock()->now();
+  // const auto now = get_clock()->now();
+  const auto now = rclcpp::Time(msg->header.stamp);
   const auto remove_itr = std::remove_if(
     sub_objects_buffer_.begin(), sub_objects_buffer_.end(), [now, this](const auto & sub_object) {
-      return (now - sub_object->header.stamp).seconds() > sub_object_timeout_sec_;
+      return (now - rclcpp::Time(sub_object->header.stamp)).seconds() > sub_object_timeout_sec_;
     });
   sub_objects_buffer_.erase(remove_itr, sub_objects_buffer_.end());
 }
@@ -161,6 +165,7 @@ TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
 
   // define output object
   TrackedObjects output_objects;
+  output_objects.header = main_objects->header;
 
   // if there are no sub objects, return main objects as it is
   if (!interpolated_sub_objects) {
@@ -174,7 +179,7 @@ TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
   const auto & objects0 = main_objects->objects;
   const auto & objects1 = interpolated_sub_objects->objects;
   Eigen::MatrixXd score_matrix =
-    data_association_->calcScoreMatrix(*main_objects, *interpolated_sub_objects);
+    data_association_->calcScoreMatrix(*interpolated_sub_objects, *main_objects);
   data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
 
   for (size_t object0_idx = 0; object0_idx < objects0.size(); ++object0_idx) {
@@ -186,14 +191,14 @@ TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
       TrackedObject merged_object = object0;
       merged_object.kinematics = merger_utils::objectKinematicsVXMerger(
         object0, object1, merger_policy_params_.kinematics_merge_policy);
-      merged_object.shape =
-        merger_utils::shapeMerger(object0, object1, merger_policy_params_.shape_merge_policy);
-      merged_object.existence_probability = merger_utils::probabilityMerger(
-        object0.existence_probability, object1.existence_probability,
-        merger_policy_params_.existence_prob_merge_policy);
-      auto merged_classification = merger_utils::objectClassificationMerger(
-        object0, object1, merger_policy_params_.classification_merge_policy);
-      merged_object.classification = merged_classification.classification;
+      // merged_object.shape =
+      //   merger_utils::shapeMerger(object0, object1, merger_policy_params_.shape_merge_policy);
+      // merged_object.existence_probability = merger_utils::probabilityMerger(
+      //   object0.existence_probability, object1.existence_probability,
+      //   merger_policy_params_.existence_prob_merge_policy);
+      // auto merged_classification = merger_utils::objectClassificationMerger(
+      //   object0, object1, merger_policy_params_.classification_merge_policy);
+      // merged_object.classification = merged_classification.classification;
       output_objects.objects.push_back(merged_object);
     } else {  // not found
       output_objects.objects.push_back(object0);
@@ -207,7 +212,7 @@ TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
     }
   }
 
-  return *main_objects;
+  return output_objects;
 }
 
 /**
