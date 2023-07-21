@@ -36,7 +36,7 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   msg_gnss_ins_orientation_stamped_(
     std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>()),
   height_system_(declare_parameter<int>("height_system", 1)),
-  gnss_pose_pub_method(declare_parameter<int>("gnss_pose_pub_method",0))
+  gnss_pose_pub_method(declare_parameter<int>("gnss_pose_pub_method", 0))
 {
   int coordinate_system =
     declare_parameter("coordinate_system", static_cast<int>(CoordinateSystem::MGRS));
@@ -88,10 +88,9 @@ void GNSSPoser::callbackNavSatFix(
   geometry_msgs::msg::Pose gnss_antenna_pose{};
 
   // publish pose immediately
-  if(!gnss_pose_pub_method){
-    gnss_antenna_pose.position=position;
-  }
-  else{
+  if (!gnss_pose_pub_method) {
+    gnss_antenna_pose.position = position;
+  } else {
     // fill position buffer
     position_buffer_.push_front(position);
     if (!position_buffer_.full()) {
@@ -101,7 +100,8 @@ void GNSSPoser::callbackNavSatFix(
       return;
     }
     // publish average pose or median pose of position buffer
-    gnss_antenna_pose.position = (gnss_pose_pub_method == 1) ? getAveragePosition(position_buffer_) : getMedianPosition(position_buffer_);
+    gnss_antenna_pose.position = (gnss_pose_pub_method == 1) ? getAveragePosition(position_buffer_)
+                                                             : getMedianPosition(position_buffer_);
   }
 
   // calc gnss antenna orientation
@@ -167,7 +167,6 @@ void GNSSPoser::callbackNavSatFix(
 
   // broadcast map to gnss_base_link
   publishTF(map_frame_, gnss_base_frame_, gnss_base_pose_msg);
-
 }
 
 void GNSSPoser::callbackGnssInsOrientationStamped(
@@ -250,7 +249,9 @@ geometry_msgs::msg::Point GNSSPoser::getMedianPosition(
   return median_point;
 }
 
-geometry_msgs::msg::Point GNSSPoser::getAveragePosition(const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer){
+geometry_msgs::msg::Point GNSSPoser::getAveragePosition(
+  const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer)
+{
   std::vector<double> array_x;
   std::vector<double> array_y;
   std::vector<double> array_z;
@@ -261,9 +262,12 @@ geometry_msgs::msg::Point GNSSPoser::getAveragePosition(const boost::circular_bu
   }
 
   geometry_msgs::msg::Point average_point;
-  average_point.x = std::reduce(array_x.begin(), array_x.end()) / static_cast<double>(array_x.size());
-  average_point.y = std::reduce(array_y.begin(), array_y.end()) / static_cast<double>(array_y.size());
-  average_point.z = std::reduce(array_z.begin(), array_z.end()) / static_cast<double>(array_z.size());
+  average_point.x =
+    std::reduce(array_x.begin(), array_x.end()) / static_cast<double>(array_x.size());
+  average_point.y =
+    std::reduce(array_y.begin(), array_y.end()) / static_cast<double>(array_y.size());
+  average_point.z =
+    std::reduce(array_z.begin(), array_z.end()) / static_cast<double>(array_z.size());
   return average_point;
 }
 
