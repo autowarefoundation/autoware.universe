@@ -30,7 +30,7 @@
   <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
   <arg name="image_raw0" default="/sensing/camera/camera0/image_rect_color" description="image raw topic name"/>
   <arg name="camera_info0" default="/sensing/camera/camera0/camera_info" description="camera info topic name"/>
-  <arg name="detection_rois0" default="/perception/object_recognition/detection/rois0" description="detection rois output topi name"/>
+  <arg name="detection_rois0" default="/perception/object_recognition/detection/rois0" description="detection rois output topic name"/>
   <arg name="image_raw1" default="/sensing/camera/camera1/image_rect_color"/>
   <arg name="camera_info1" default="/sensing/camera/camera1/camera_info"/>
   <arg name="detection_rois1" default="/perception/object_recognition/detection/rois1"/>
