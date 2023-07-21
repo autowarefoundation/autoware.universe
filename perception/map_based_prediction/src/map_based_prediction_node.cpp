@@ -207,6 +207,62 @@ double calcAbsYawDiffBetweenLaneletAndObject(
   return abs_norm_delta;
 }
 
+/**
+ * @brief Get the Right LineSharing Lanelets object
+ *
+ * @param current_lanelet
+ * @param lanelet_map_ptr
+ * @return lanelet::ConstLanelets
+ */
+lanelet::ConstLanelets getRightLineSharingLanelets(
+  const lanelet::ConstLanelet & current_lanelet, const lanelet::LaneletMapPtr & lanelet_map_ptr)
+{
+  lanelet::ConstLanelets
+    output_lanelets;  // create an empty container of type lanelet::ConstLanelets
+
+  // step1: look for lane sharing current right bound
+  lanelet::Lanelets right_lane_candidates =
+    lanelet_map_ptr->laneletLayer.findUsages(current_lanelet.rightBound());
+  for (auto & candidate : right_lane_candidates) {
+    // exclude self lanelet
+    if (candidate == current_lanelet) continue;
+    // if candidate has linestring as leftbound, assign it to output
+    if (candidate.leftBound() == current_lanelet.rightBound()) {
+      output_lanelets.push_back(candidate);
+    }
+  }
+  return output_lanelets;  // return empty
+}
+
+/**
+ * @brief Get the Left LineSharing Lanelets object
+ *
+ * @param current_lanelet
+ * @param lanelet_map_ptr
+ * @return lanelet::ConstLanelets
+ */
+lanelet::ConstLanelets getLeftLineSharingLanelets(
+  const lanelet::ConstLanelet & current_lanelet, const lanelet::LaneletMapPtr & lanelet_map_ptr)
+{
+  lanelet::ConstLanelets
+    output_lanelets;  // create an empty container of type lanelet::ConstLanelets
+
+  // step1: look for lane sharing current left bound
+  lanelet::Lanelets left_lane_candidates =
+    lanelet_map_ptr->laneletLayer.findUsages(current_lanelet.leftBound());
+  for (auto & candidate : left_lane_candidates) {
+    // exclude self lanelet
+    if (candidate == current_lanelet) continue;
+    // if candidate has linestring as rightbound, assign it to output
+    if (candidate.rightBound() == current_lanelet.leftBound()) {
+      output_lanelets.push_back(candidate);
+    }
+  }
+  return output_lanelets;  // return empty
+}
+
+
+
 lanelet::ConstLanelets getLanelets(const map_based_prediction::LaneletsData & data)
 {
   lanelet::ConstLanelets lanelets;
@@ -1129,6 +1185,14 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
     } else if (!!adjacent_left) {
       left_paths = routing_graph_ptr_->possiblePaths(*adjacent_left, possible_params);
+    } else{
+      // if no left lanelet in graph
+      auto unconnected_lefts = getLeftLineSharingLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
+      for (const auto & unconnected_left_lanelet : unconnected_lefts) {
+        // check lane id for debug
+        std::cout << "current lane id" << current_lanelet_data.lanelet.id() << "  ," <<
+        "unconnected left lanelet id: " << unconnected_left_lanelet.id() << std::endl;
+      }
     }
 
     // Step1.2 Get the right lanelet
@@ -1138,7 +1202,16 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     if (!!opt_right) {
       right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
     } else if (!!adjacent_right) {
+      std::cout << adjacent_right->id() << std::endl;
       right_paths = routing_graph_ptr_->possiblePaths(*adjacent_right, possible_params);
+    } else {
+      // if no right lanele in graph
+      auto unconnected_rights = getRightLineSharingLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
+      for (const auto & unconnected_right_lanelet : unconnected_rights) {
+        // check lane id for debug
+        std::cout << "current lane id" << current_lanelet_data.lanelet.id() << "  ," <<
+        "unconnected right lanelet id: " << unconnected_right_lanelet.id() << std::endl;
+      }
     }
 
     // Step1.3 Get the centerline
