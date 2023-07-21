@@ -33,6 +33,8 @@
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 
+#include <string>
+
 class DataAssociation
 {
 private:
@@ -53,7 +55,8 @@ public:
     std::unordered_map<int, int> & reverse_assignment);
   Eigen::MatrixXd calcScoreMatrix(
     const autoware_auto_perception_msgs::msg::TrackedObjects & objects0,
-    const autoware_auto_perception_msgs::msg::TrackedObjects & objects1);
+    const autoware_auto_perception_msgs::msg::TrackedObjects & objects1, const bool debug_log,
+    const std::string & file_name);
   virtual ~DataAssociation() {}
 };
 

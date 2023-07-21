@@ -19,12 +19,14 @@
 #include "tracking_object_merger/data_association/solver/gnn_solver.hpp"
 #include "tracking_object_merger/utils/utils.hpp"
 
+#include <nlohmann/json.hpp>  // for debug json library
+
 #include <algorithm>
+#include <fstream>
 #include <list>
 #include <memory>
 #include <unordered_map>
 #include <vector>
-
 namespace
 {
 double getFormedYawAngle(
@@ -112,10 +114,30 @@ void DataAssociation::assign(
   }
 }
 
+/**
+ * @brief calc score matrix between two tracked objects
+ *
+ * @param objects0 : measurements
+ * @param objects1 : base objects(tracker objects)
+ * @param debug_log
+ * @param file_name
+ * @return Eigen::MatrixXd
+ */
 Eigen::MatrixXd DataAssociation::calcScoreMatrix(
   const autoware_auto_perception_msgs::msg::TrackedObjects & objects0,
-  const autoware_auto_perception_msgs::msg::TrackedObjects & objects1)
+  const autoware_auto_perception_msgs::msg::TrackedObjects & objects1, const bool debug_log,
+  const std::string & file_name)
 {
+  // for debug
+  nlohmann::json log_data;
+  std::string log_file_name = "association_log.json";
+  if (!file_name.empty()) {
+    log_file_name = file_name;
+  }
+  // current time
+  log_data["time"] = objects0.header.stamp.sec + objects0.header.stamp.nanosec * 1e-9;
+  nlohmann::json data_array = nlohmann::json::array();
+
   Eigen::MatrixXd score_matrix =
     Eigen::MatrixXd::Zero(objects1.objects.size(), objects0.objects.size());
   for (size_t objects1_idx = 0; objects1_idx < objects1.objects.size(); ++objects1_idx) {
@@ -128,6 +150,26 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
       const std::uint8_t object0_label =
         object_recognition_utils::getHighestProbLabel(object0.classification);
 
+      // Create a JSON object to hold the log data for this pair
+      nlohmann::json pair_log_data;
+      std::vector<double> tracker_pose = {
+        object1.kinematics.pose_with_covariance.pose.position.x,
+        object1.kinematics.pose_with_covariance.pose.position.y};
+      std::vector<double> measurement_pose = {
+        object0.kinematics.pose_with_covariance.pose.position.x,
+        object0.kinematics.pose_with_covariance.pose.position.y};
+      pair_log_data["tracker_uuid"] = object1.object_id.uuid;
+      pair_log_data["tracker_idx"] = objects1_idx;
+      pair_log_data["measurement_uuid"] = object0.object_id.uuid;
+      pair_log_data["measurement_idx"] = objects0_idx;
+      pair_log_data["tracker_label"] = object1_label;
+      pair_log_data["measurement_label"] = object0_label;
+      pair_log_data["gate_name"] = "";
+      pair_log_data["gate_value"] = 0.0;
+      pair_log_data["gate_threshold"] = 0.0;
+      pair_log_data["tracker_pose"] = tracker_pose;
+      pair_log_data["measurement_pose"] = measurement_pose;
+
       double score = 0.0;
       if (can_assign_matrix_(object1_label, object0_label)) {
         const double max_dist = max_dist_matrix_(object1_label, object0_label);
@@ -139,6 +181,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         // dist gate
         if (passed_gate) {
           if (max_dist < dist) passed_gate = false;
+          pair_log_data["gate_name"] = "dist gate";
+          pair_log_data["gate_value"] = dist;
+          pair_log_data["gate_threshold"] = max_dist;
         }
         // angle gate
         if (passed_gate) {
@@ -148,6 +193,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
             object1.kinematics.pose_with_covariance.pose.orientation, false);
           if (std::fabs(max_rad) < M_PI && std::fabs(max_rad) < std::fabs(angle))
             passed_gate = false;
+          pair_log_data["gate_name"] = "angle gate";
+          pair_log_data["gate_value"] = angle;
+          pair_log_data["gate_threshold"] = max_rad;
         }
         // 2d iou gate
         if (passed_gate) {
@@ -156,16 +204,28 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           const double iou =
             object_recognition_utils::get2dIoU(object0, object1, min_union_iou_area);
           if (iou < min_iou) passed_gate = false;
+          pair_log_data["gate_name"] = "2d iou gate";
+          pair_log_data["gate_value"] = iou;
+          pair_log_data["gate_threshold"] = min_iou;
         }
 
         // all gate is passed
         if (passed_gate) {
           score = (max_dist - std::min(dist, max_dist)) / max_dist;
           if (score < score_threshold_) score = 0.0;
+          pair_log_data["gate_name"] = "all gate passed";
+          pair_log_data["score"] = score;
         }
       }
       score_matrix(objects1_idx, objects0_idx) = score;
     }
+  }
+  // Write the log data to a file
+  log_data["data"] = data_array;
+  if (debug_log) {
+    std::ofstream log_file(log_file_name, std::ios::app);
+    log_file << log_data << std::endl;
+    log_file.close();
   }
 
   return score_matrix;
