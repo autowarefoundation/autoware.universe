@@ -164,17 +164,38 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
     utils::combineDrivableAreaInfo(current_drivable_area_info, prev_drivable_area_info_);
 }
 
-void NormalLaneChange::insertStopPoint(PathWithLaneId & path)
+void NormalLaneChange::insertStopPoint(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path)
 {
-  const auto shift_intervals = getRouteHandler()->getLateralIntervalsToPreferredLane(
-    status_.lane_change_path.info.current_lanes.back());
+  if (lanelets.empty()) {
+    return;
+  }
+
+  const auto & route_handler = getRouteHandler();
+
+  if (route_handler->getNumLaneToPreferredLane(lanelets.back()) == 0) {
+    return;
+  }
+
+  const auto shift_intervals = route_handler->getLateralIntervalsToPreferredLane(lanelets.back());
   const double lane_change_buffer =
     utils::calcMinimumLaneChangeLength(getCommonParam(), shift_intervals, 0.0);
-  constexpr double stop_point_buffer{1.0};
-  const auto stopping_distance = std::max(
-    motion_utils::calcArcLength(path.points) - lane_change_buffer - stop_point_buffer, 0.0);
 
-  const auto stop_point = utils::insertStopPoint(stopping_distance, path);
+  // If lanelets.back() is in goal route section, get distance to goal.
+  // Otherwise, get distance to end of lane.
+  double distance_to_stop_point = 0.0;
+  if (route_handler->isInGoalRouteSection(lanelets.back())) {
+    const auto goal = route_handler->getGoalPose();
+    distance_to_stop_point = motion_utils::calcSignedArcLength(path.points, 0, goal.position);
+  } else {
+    const auto end_point = lanelet::utils::conversion::toGeomMsgPt(lanelets.back().centerline().back());
+    distance_to_stop_point = motion_utils::calcSignedArcLength(path.points, 0, end_point);
+  }
+
+  constexpr double stop_point_buffer{0.0};
+  const double stopping_distance = distance_to_stop_point - lane_change_buffer - stop_point_buffer;
+  if (stopping_distance > 0.0) {
+    const auto stop_point = utils::insertStopPoint(stopping_distance, path);
+  }
 }
 
 PathWithLaneId NormalLaneChange::getReferencePath() const
@@ -598,12 +619,24 @@ bool NormalLaneChange::hasEnoughLength(
   const auto current_pose = getEgoPose();
   const auto & route_handler = *getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
+  // const auto minimum_lane_changing_velocity = common_parameters.minimum_lane_changing_velocity;
+  // const auto lateral_jerk = common_parameters.lane_changing_lateral_jerk;
   const double lane_change_length = path.info.length.sum();
+  // const double max_lat_acc =
+  //   common_parameters.lane_change_lat_acc_map.find(minimum_lane_changing_velocity).second;
   const auto shift_intervals =
     route_handler.getLateralIntervalsToPreferredLane(target_lanes.back(), direction);
-  double minimum_lane_change_length_to_preferred_lane =
-    utils::calcMinimumLaneChangeLength(common_parameters, shift_intervals);
 
+  double minimum_lane_change_length_to_preferred_lane = utils::calcMinimumLaneChangeLength(common_parameters, shift_intervals);
+  // for (const auto & shift_length : shift_intervals) {
+  //   const auto lane_changing_time =
+  //     PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, max_lat_acc);
+  //   minimum_lane_change_length_to_preferred_lane +=
+  //     minimum_lane_changing_velocity * lane_changing_time +
+  //     common_parameters.minimum_prepare_length;
+  // }
+
+  RCLCPP_WARN_STREAM(logger_, "lane_change_length = " << lane_change_length << ", dist_to_end = " << utils::getDistanceToEndOfLane(current_pose, current_lanes) << ", minimum_lane_change_length = " << minimum_lane_change_length_to_preferred_lane);
   if (lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     return false;
   }
@@ -760,14 +793,23 @@ bool NormalLaneChange::getLaneChangePaths(
       }
 
       if (is_goal_in_route) {
+<<<<<<< HEAD
         const double s_start =
           lanelet::utils::getArcCoordinates(target_lanes, lane_changing_start_pose).length;
+=======
+        const double s_current = lanelet::utils::getArcCoordinates(target_lanelets, getEgoPose()).length;
+        const double s_start = prepare_length + s_current;
+        // const double s_start = 
+        //   lanelet::utils::getArcCoordinates(target_lanelets, lane_changing_start_pose).length;
+>>>>>>> 6bea24be9b (fix(behavior_path_planner): fix for multiple lane change)
         const double s_goal =
           lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose()).length;
         if (
           s_start + lane_changing_length + common_parameters.lane_change_finish_judge_buffer +
             next_lane_change_buffer >
           s_goal) {
+          RCLCPP_WARN_STREAM(logger_, "s_start = " << s_start << ", lane_changing_length = " << lane_changing_length << ", next_lane_change_buffer = " << next_lane_change_buffer << ", s_goal = " << s_goal);
+          RCLCPP_WARN_STREAM(logger_, "prepare_length = " << prepare_length << ", s_current = " << s_current);
           RCLCPP_DEBUG(logger_, "length of lane changing path is longer than length to goal!!");
           continue;
         }
