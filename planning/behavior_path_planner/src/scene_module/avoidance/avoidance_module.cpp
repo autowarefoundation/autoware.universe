@@ -256,8 +256,8 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
     calcSignedArcLength(data.reference_path.points, getEgoPosition(), 0));
 
   // lanelet info
-  data.current_lanelets =
-    utils::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_);
+  data.current_lanelets = utils::avoidance::getCurrentLanesFromPath(
+    *getPreviousModuleOutput().reference_path, planner_data_);
 
   // keep avoidance state
   data.state = avoidance_data_.state;
@@ -304,7 +304,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   // TODO(Satoshi OTA) use helper_ after the manager transition
   helper::avoidance::AvoidanceHelper helper(planner_data_, parameters_);
 
-  const auto feasible_stop_distance = helper.getFeasibleDecelDistance(0.0);
+  const auto feasible_stop_distance = helper.getFeasibleDecelDistance(0.0, false);
   std::for_each(data.target_objects.begin(), data.target_objects.end(), [&, this](auto & o) {
     o.to_stop_line = calcDistanceToStopLine(o);
     fillObjectStoppableJudge(o, registered_objects_, feasible_stop_distance, parameters_);
@@ -2869,8 +2869,8 @@ void AvoidanceModule::updateData()
     helper_.setPreviousSplineShiftPath(toShiftedPath(*getPreviousModuleOutput().path));
     helper_.setPreviousLinearShiftPath(toShiftedPath(*getPreviousModuleOutput().path));
     helper_.setPreviousReferencePath(*getPreviousModuleOutput().path);
-    helper_.setPreviousDrivingLanes(
-      utils::getCurrentLanesFromPath(*getPreviousModuleOutput().reference_path, planner_data_));
+    helper_.setPreviousDrivingLanes(utils::avoidance::getCurrentLanesFromPath(
+      *getPreviousModuleOutput().reference_path, planner_data_));
   }
 
   debug_data_ = DebugData();
@@ -3244,6 +3244,14 @@ void AvoidanceModule::insertWaitPoint(
     return;
   }
 
+  // If the stop distance is not enough for comfortable stop, don't insert wait point.
+  const auto is_comfortable_stop = helper_.getFeasibleDecelDistance(0.0) < data.to_stop_line;
+  const auto is_slow_speed = getEgoSpeed() < parameters_->min_slow_down_speed;
+  if (!is_comfortable_stop && !is_slow_speed) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "not execute uncomfortable deceleration.");
+    return;
+  }
+
   // If target object can be stopped for, insert a deceleration point and return
   if (data.stop_target_object.get().is_stoppable) {
     utils::avoidance::insertDecelPoint(
@@ -3386,6 +3394,9 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
 
     shifted_path.path.points.at(i).point.longitudinal_velocity_mps = std::min(v_original, v_insert);
   }
+
+  slow_pose_ = motion_utils::calcLongitudinalOffsetPose(
+    shifted_path.path.points, start_idx, distance_to_object);
 }
 
 std::shared_ptr<AvoidanceDebugMsgArray> AvoidanceModule::get_debug_msg_array() const
