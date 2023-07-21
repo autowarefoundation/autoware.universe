@@ -814,7 +814,7 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   if (path.points.empty()) {
     return {};
   }
-  const auto closest_idx = motion_utils::findNearestIndex(path.points, start_pose.position);
+  const auto closest_idx = motion_utils::findNearestIndex(path.points, end_pose.position);
   const auto lane_id = path.points.at(closest_idx).lane_ids.front();
   const auto lane = planner_data_->route_handler->getLaneletMapPtr()->laneletLayer.get(lane_id);
   const double lateral_offset = lanelet::utils::getLateralDistanceToCenterline(lane, start_pose);
