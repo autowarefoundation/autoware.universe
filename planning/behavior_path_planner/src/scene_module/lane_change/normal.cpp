@@ -164,7 +164,8 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output)
     utils::combineDrivableAreaInfo(current_drivable_area_info, prev_drivable_area_info_);
 }
 
-void NormalLaneChange::insertStopPoint(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path)
+void NormalLaneChange::insertStopPoint(
+  const lanelet::ConstLanelets & lanelets, PathWithLaneId & path)
 {
   if (lanelets.empty()) {
     return;
@@ -187,7 +188,8 @@ void NormalLaneChange::insertStopPoint(const lanelet::ConstLanelets & lanelets, 
     const auto goal = route_handler->getGoalPose();
     distance_to_stop_point = motion_utils::calcSignedArcLength(path.points, 0, goal.position);
   } else {
-    const auto end_point = lanelet::utils::conversion::toGeomMsgPt(lanelets.back().centerline().back());
+    const auto end_point =
+      lanelet::utils::conversion::toGeomMsgPt(lanelets.back().centerline().back());
     distance_to_stop_point = motion_utils::calcSignedArcLength(path.points, 0, end_point);
   }
 
@@ -627,7 +629,8 @@ bool NormalLaneChange::hasEnoughLength(
   const auto shift_intervals =
     route_handler.getLateralIntervalsToPreferredLane(target_lanes.back(), direction);
 
-  double minimum_lane_change_length_to_preferred_lane = utils::calcMinimumLaneChangeLength(common_parameters, shift_intervals);
+  double minimum_lane_change_length_to_preferred_lane =
+    utils::calcMinimumLaneChangeLength(common_parameters, shift_intervals);
   // for (const auto & shift_length : shift_intervals) {
   //   const auto lane_changing_time =
   //     PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, max_lat_acc);
@@ -636,7 +639,11 @@ bool NormalLaneChange::hasEnoughLength(
   //     common_parameters.minimum_prepare_length;
   // }
 
-  RCLCPP_WARN_STREAM(logger_, "lane_change_length = " << lane_change_length << ", dist_to_end = " << utils::getDistanceToEndOfLane(current_pose, current_lanes) << ", minimum_lane_change_length = " << minimum_lane_change_length_to_preferred_lane);
+  RCLCPP_WARN_STREAM(
+    logger_, "lane_change_length = " << lane_change_length << ", dist_to_end = "
+                                     << utils::getDistanceToEndOfLane(current_pose, current_lanes)
+                                     << ", minimum_lane_change_length = "
+                                     << minimum_lane_change_length_to_preferred_lane);
   if (lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     return false;
   }
@@ -793,23 +800,23 @@ bool NormalLaneChange::getLaneChangePaths(
       }
 
       if (is_goal_in_route) {
-<<<<<<< HEAD
-        const double s_start =
-          lanelet::utils::getArcCoordinates(target_lanes, lane_changing_start_pose).length;
-=======
-        const double s_current = lanelet::utils::getArcCoordinates(target_lanelets, getEgoPose()).length;
+        const double s_current =
+          lanelet::utils::getArcCoordinates(target_lanes, getEgoPose()).length;
         const double s_start = prepare_length + s_current;
-        // const double s_start = 
+        // const double s_start =
         //   lanelet::utils::getArcCoordinates(target_lanelets, lane_changing_start_pose).length;
->>>>>>> 6bea24be9b (fix(behavior_path_planner): fix for multiple lane change)
         const double s_goal =
           lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose()).length;
         if (
           s_start + lane_changing_length + common_parameters.lane_change_finish_judge_buffer +
             next_lane_change_buffer >
           s_goal) {
-          RCLCPP_WARN_STREAM(logger_, "s_start = " << s_start << ", lane_changing_length = " << lane_changing_length << ", next_lane_change_buffer = " << next_lane_change_buffer << ", s_goal = " << s_goal);
-          RCLCPP_WARN_STREAM(logger_, "prepare_length = " << prepare_length << ", s_current = " << s_current);
+          RCLCPP_WARN_STREAM(
+            logger_, "s_start = " << s_start << ", lane_changing_length = " << lane_changing_length
+                                  << ", next_lane_change_buffer = " << next_lane_change_buffer
+                                  << ", s_goal = " << s_goal);
+          RCLCPP_WARN_STREAM(
+            logger_, "prepare_length = " << prepare_length << ", s_current = " << s_current);
           RCLCPP_DEBUG(logger_, "length of lane changing path is longer than length to goal!!");
           continue;
         }

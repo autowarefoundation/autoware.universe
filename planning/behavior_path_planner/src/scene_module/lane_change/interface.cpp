@@ -220,7 +220,7 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   auto output = module_type_->generateOutput();
   path_reference_ = output.reference_path;
   *prev_approved_path_ = *getPreviousModuleOutput().path;
-  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().lane_change_lanes, *output.path);
+  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().target_lanes, *output.path);
 
   updateSteeringFactorPtr(output);
   clearWaitingApproval();
@@ -231,7 +231,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 {
   *prev_approved_path_ = *getPreviousModuleOutput().path;
-  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().current_lanes, *prev_approved_path_);
+  module_type_->insertStopPoint(
+    module_type_->getLaneChangeStatus().current_lanes, *prev_approved_path_);
 
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(*prev_approved_path_);
