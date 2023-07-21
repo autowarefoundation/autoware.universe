@@ -16,7 +16,6 @@
 #define MANAGER_HPP_
 
 #include "scene_crosswalk.hpp"
-#include "scene_walkway.hpp"
 
 #include <behavior_velocity_planner_common/plugin_interface.hpp>
 #include <behavior_velocity_planner_common/plugin_wrapper.hpp>
@@ -56,32 +55,9 @@ private:
   std::optional<bool> opt_use_regulatory_element_{std::nullopt};
 };
 
-class WalkwayModuleManager : public SceneModuleManagerInterface
-{
-public:
-  explicit WalkwayModuleManager(rclcpp::Node & node);
-
-  const char * getModuleName() override { return "walkway"; }
-
-private:
-  WalkwayModule::PlannerParam walkway_planner_param_{};
-
-  void launchNewModules(const PathWithLaneId & path) override;
-
-  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const PathWithLaneId & path) override;
-
-  std::optional<bool> opt_use_regulatory_element_{std::nullopt};
-};
-
 class CrosswalkModulePlugin : public PluginWrapper<CrosswalkModuleManager>
 {
 };
-
-class WalkwayModulePlugin : public PluginWrapper<WalkwayModuleManager>
-{
-};
-
 }  // namespace behavior_velocity_planner
 
 #endif  // MANAGER_HPP_
