@@ -1,9 +1,12 @@
 name: build-and-test-differential
 
 on:
-  pull_request:
+  pull_request_review:
+    types: [submitted]
 
 jobs:
+  check-state:
+      if: github.event.review.state == 'approved'
   build-and-test-differential:
     runs-on: [self-hosted, linux, X64]
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
