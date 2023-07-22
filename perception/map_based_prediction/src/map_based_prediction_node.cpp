@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <functional>
 #include <limits>
 
 namespace map_based_prediction
@@ -1234,6 +1235,22 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     const double validate_time_horizon =
       prediction_time_horizon_ * prediction_time_horizon_rate_for_validate_lane_length_;
 
+    // lambda function to get possible paths for isolated lanelet
+    // isolated is often caused by lanelet with no connection e.g. shoulder-lane
+    auto getPathsForNormalOrIsolatedLanelet = [&](const lanelet::ConstLanelet & lanelet) {
+      // if lanelet is not isolated, return normal possible paths
+      if (!isIsolatedLanelet(lanelet, routing_graph_ptr_)) {
+        return routing_graph_ptr_->possiblePaths(lanelet, possible_params);
+      }
+      // if lanelet is isolated, check if it has enough length
+      if (!validateIsolatedLaneletLength(lanelet, object, validate_time_horizon)) {
+        return lanelet::routing::LaneletPaths{};
+      } else {
+        // if lanelet has enough length, return possible paths
+        return getPossiblePathsForIsolatedLanelet(lanelet);
+      }
+    };
+
     // Step1. Get the path
     // Step1.1 Get the left lanelet
     lanelet::routing::LaneletPaths left_paths;
@@ -1249,19 +1266,8 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
         getLeftLineSharingLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
       // search for only first unconnected lanelet
       for (const auto & unconnected_left_lanelet : unconnected_lefts) {
-        // if lanelet is isolated in routing graph
-        if (isIsolatedLanelet(unconnected_left_lanelet, routing_graph_ptr_)) {
-          // need to validate isolated lanelet has enough length
-          if (!validateIsolatedLaneletLength(
-                unconnected_left_lanelet, object, validate_time_horizon))
-            continue;
-          // get possible path for isolated lanelet
-          left_paths = getPossiblePathsForIsolatedLanelet(unconnected_left_lanelet);
-        } else {
-          // if it has connection it should have paths
-          left_paths = routing_graph_ptr_->possiblePaths(unconnected_left_lanelet, possible_params);
-          if (!left_paths.empty()) break;
-        }
+        left_paths = getPathsForNormalOrIsolatedLanelet(unconnected_left_lanelet);
+        if (!left_paths.empty()) break;
       }
     }
 
@@ -1279,35 +1285,14 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
         getRightLineSharingLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
       // search for only first unconnected lanelet
       for (const auto & unconnected_right_lanelet : unconnected_rights) {
-        if (isIsolatedLanelet(unconnected_right_lanelet, routing_graph_ptr_)) {
-          if (!validateIsolatedLaneletLength(
-                unconnected_right_lanelet, object, validate_time_horizon))
-            continue;
-          // get possible path for isolated lanelet
-          right_paths = getPossiblePathsForIsolatedLanelet(unconnected_right_lanelet);
-        } else {
-          // if it has connection it should have paths
-          right_paths =
-            routing_graph_ptr_->possiblePaths(unconnected_right_lanelet, possible_params);
-          if (!right_paths.empty()) break;
-        }
+        right_paths = getPathsForNormalOrIsolatedLanelet(unconnected_right_lanelet);
+        if (!right_paths.empty()) break;
       }
     }
 
     // Step1.3 Get the centerline
     lanelet::routing::LaneletPaths center_paths =
-      routing_graph_ptr_->possiblePaths(current_lanelet_data.lanelet, possible_params);
-    // prediction path for isolated lanelet
-    if (center_paths.empty()) {
-      if (isIsolatedLanelet(current_lanelet_data.lanelet, routing_graph_ptr_)) {
-        // if lanelet has valid length
-        if (validateIsolatedLaneletLength(
-              current_lanelet_data.lanelet, object, validate_time_horizon)) {
-          // get possible path for isolated lanelet
-          center_paths = getPossiblePathsForIsolatedLanelet(current_lanelet_data.lanelet);
-        }
-      }
-    }
+      getPathsForNormalOrIsolatedLanelet(current_lanelet_data.lanelet);
 
     // Skip calculations if all paths are empty
     if (left_paths.empty() && right_paths.empty() && center_paths.empty()) {
