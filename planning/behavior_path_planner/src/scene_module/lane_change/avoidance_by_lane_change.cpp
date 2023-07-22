@@ -39,19 +39,19 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
     return false;
   }
 
-  const auto & objects = avoidance_data_.target_objects;
+  const auto & object_parameters = avoidance_parameters_->object_parameters;
+  const auto is_more_than_threshold =
+    std::any_of(object_parameters.begin(), object_parameters.end(), [&](const auto & p) {
+      const auto & objects = avoidance_data_.target_objects;
 
-  bool is_more_than_threshold = false;
-  for (const auto & p : avoidance_parameters_->object_parameters) {
-    const size_t num = std::count_if(objects.begin(), objects.end(), [&p](const auto & object) {
-      const auto target_class = utils::getHighestProbLabel(object.object.classification) == p.first;
-      return target_class && object.avoid_required;
+      const size_t num = std::count_if(objects.begin(), objects.end(), [&p](const auto & object) {
+        const auto target_class =
+          utils::getHighestProbLabel(object.object.classification) == p.first;
+        return target_class && object.avoid_required;
+      });
+
+      return num >= p.second.execute_num;
     });
-
-    if (num >= p.second.execute_num) {
-      is_more_than_threshold = true;
-    }
-  }
 
   if (!is_more_than_threshold) {
     return false;
@@ -186,7 +186,7 @@ ObjectData AvoidanceByLaneChange::createObjectData(
   const auto object_closest_index = findNearestIndex(path_points, object_pose.position);
   const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
   const auto t = utils::getHighestProbLabel(object.classification);
-  const auto object_parameter = avoidance_parameters_->object_parameters.at(t);
+  const auto & object_parameter = avoidance_parameters_->object_parameters.at(t);
 
   ObjectData object_data{};
 
