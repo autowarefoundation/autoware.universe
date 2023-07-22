@@ -156,6 +156,8 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     p.lateral_execution_threshold = get_parameter<double>(node, ns + "lateral_execution_threshold");
     p.lateral_small_shift_threshold =
       get_parameter<double>(node, ns + "lateral_small_shift_threshold");
+    p.lateral_avoid_check_threshold =
+      get_parameter<double>(node, ns + "lateral_avoid_check_threshold");
     p.max_right_shift_length = get_parameter<double>(node, ns + "max_right_shift_length");
     p.max_left_shift_length = get_parameter<double>(node, ns + "max_left_shift_length");
   }
@@ -165,11 +167,9 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     std::string ns = "avoidance.avoidance.longitudinal.";
     p.prepare_time = get_parameter<double>(node, ns + "prepare_time");
     p.min_prepare_distance = get_parameter<double>(node, ns + "min_prepare_distance");
-    p.min_avoidance_distance = get_parameter<double>(node, ns + "min_avoidance_distance");
-    p.min_nominal_avoidance_speed = get_parameter<double>(node, ns + "min_nominal_avoidance_speed");
-    p.min_sharp_avoidance_speed = get_parameter<double>(node, ns + "min_sharp_avoidance_speed");
     p.min_slow_down_speed = get_parameter<double>(node, ns + "min_slow_down_speed");
     p.buf_slow_down_speed = get_parameter<double>(node, ns + "buf_slow_down_speed");
+    p.nominal_avoidance_speed = get_parameter<double>(node, ns + "nominal_avoidance_speed");
   }
 
   // yield
@@ -181,7 +181,6 @@ AvoidanceModuleManager::AvoidanceModuleManager(
   // stop
   {
     std::string ns = "avoidance.stop.";
-    p.stop_min_distance = get_parameter<double>(node, ns + "min_distance");
     p.stop_max_distance = get_parameter<double>(node, ns + "max_distance");
     p.stop_buffer = get_parameter<double>(node, ns + "stop_buffer");
   }
@@ -205,9 +204,26 @@ AvoidanceModuleManager::AvoidanceModuleManager(
   // constraints (lateral)
   {
     std::string ns = "avoidance.constraints.lateral.";
-    p.nominal_lateral_jerk = get_parameter<double>(node, ns + "nominal_lateral_jerk");
-    p.max_lateral_jerk = get_parameter<double>(node, ns + "max_lateral_jerk");
-    p.max_lateral_acceleration = get_parameter<double>(node, ns + "max_lateral_acceleration");
+    p.velocity_map = get_parameter<std::vector<double>>(node, ns + "velocity");
+    p.lateral_max_accel_map = get_parameter<std::vector<double>>(node, ns + "max_accel_values");
+    p.lateral_min_jerk_map = get_parameter<std::vector<double>>(node, ns + "min_jerk_values");
+    p.lateral_max_jerk_map = get_parameter<std::vector<double>>(node, ns + "max_jerk_values");
+
+    if (p.velocity_map.empty()) {
+      throw std::domain_error("invalid velocity map.");
+    }
+
+    if (p.velocity_map.size() != p.lateral_max_accel_map.size()) {
+      throw std::domain_error("inconsistency among the constraints map.");
+    }
+
+    if (p.velocity_map.size() != p.lateral_min_jerk_map.size()) {
+      throw std::domain_error("inconsistency among the constraints map.");
+    }
+
+    if (p.velocity_map.size() != p.lateral_max_jerk_map.size()) {
+      throw std::domain_error("inconsistency among the constraints map.");
+    }
   }
 
   // velocity matrix
@@ -289,6 +305,8 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
     updateParam<double>(
       parameters, ns + "lateral_small_shift_threshold", p->lateral_small_shift_threshold);
     updateParam<double>(
+      parameters, ns + "lateral_avoid_check_threshold", p->lateral_avoid_check_threshold);
+    updateParam<double>(
       parameters, ns + "road_shoulder_safety_margin", p->road_shoulder_safety_margin);
   }
 
@@ -302,15 +320,36 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
   {
     const std::string ns = "avoidance.stop.";
     updateParam<double>(parameters, ns + "max_distance", p->stop_max_distance);
-    updateParam<double>(parameters, ns + "min_distance", p->stop_min_distance);
     updateParam<double>(parameters, ns + "stop_buffer", p->stop_buffer);
   }
 
   {
     const std::string ns = "avoidance.constrains.lateral.";
-    updateParam<double>(parameters, ns + "nominal_lateral_jerk", p->nominal_lateral_jerk);
-    updateParam<double>(parameters, ns + "max_lateral_jerk", p->max_lateral_jerk);
-    updateParam<double>(parameters, ns + "max_lateral_acceleration", p->max_lateral_acceleration);
+
+    std::vector<double> velocity_map;
+    updateParam<std::vector<double>>(parameters, ns + "velocity", velocity_map);
+    std::vector<double> lateral_max_accel_map;
+    updateParam<std::vector<double>>(parameters, ns + "max_accel_values", lateral_max_accel_map);
+    std::vector<double> lateral_min_jerk_map;
+    updateParam<std::vector<double>>(parameters, ns + "min_jerk_values", lateral_min_jerk_map);
+    std::vector<double> lateral_max_jerk_map;
+    updateParam<std::vector<double>>(parameters, ns + "max_jerk_values", lateral_max_jerk_map);
+
+    if (!velocity_map.empty()) {
+      p->velocity_map = velocity_map;
+    }
+
+    if (!velocity_map.empty() && velocity_map.size() == lateral_max_accel_map.size()) {
+      p->lateral_max_accel_map = lateral_max_accel_map;
+    }
+
+    if (!velocity_map.empty() && velocity_map.size() == lateral_min_jerk_map.size()) {
+      p->lateral_min_jerk_map = lateral_min_jerk_map;
+    }
+
+    if (!velocity_map.empty() && velocity_map.size() == lateral_max_jerk_map.size()) {
+      p->lateral_max_jerk_map = lateral_max_jerk_map;
+    }
   }
 
   {

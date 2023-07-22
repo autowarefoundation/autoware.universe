@@ -14,7 +14,7 @@
 
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 
-#include "behavior_path_planner/marker_util/lane_change/debug.hpp"
+#include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
 #include "behavior_path_planner/module_status.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
@@ -134,7 +134,10 @@ ModuleStatus LaneChangeInterface::updateState()
     return ModuleStatus::RUNNING;
   }
 
-  if (module_type_->isNearEndOfLane()) {
+  const auto & common_parameters = module_type_->getCommonParam();
+  const auto threshold = common_parameters.backward_length_buffer_for_end_of_lane;
+  const auto status = module_type_->getLaneChangeStatus();
+  if (module_type_->isNearEndOfCurrentLanes(status.current_lanes, status.target_lanes, threshold)) {
     RCLCPP_WARN_STREAM_THROTTLE(
       getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
       "Lane change path is unsafe but near end of lane. Continue lane change.");
