@@ -1272,10 +1272,9 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     if (!!opt_right) {
       right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
     } else if (!!adjacent_right) {
-      std::cout << adjacent_right->id() << std::endl;
       right_paths = routing_graph_ptr_->possiblePaths(*adjacent_right, possible_params);
     } else {
-      // if no right lanele in graph
+      // if no right lanelet in graph
       auto unconnected_rights =
         getRightLineSharingLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
       // search for only first unconnected lanelet
