@@ -187,8 +187,6 @@ void ObstacleAvoidancePlanner::initializePlanning()
 void ObstacleAvoidancePlanner::resetPreviousData()
 {
   mpt_optimizer_ptr_->resetPreviousData();
-
-  prev_optimized_traj_points_ptr_ = nullptr;
 }
 
 void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
@@ -337,24 +335,18 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
   //    with model predictive trajectory
   const auto mpt_traj =
     mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, p.traj_points);
-  if (!mpt_traj) {
-    return getPrevOptimizedTrajectory(p.traj_points);
-  }
-
-  // 3. make prev trajectories
-  prev_optimized_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(*mpt_traj);
 
   time_keeper_ptr_->toc(__func__, "    ");
-  return *mpt_traj;
+  return mpt_traj;
 }
 
 std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::getPrevOptimizedTrajectory(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  if (prev_optimized_traj_points_ptr_) {
-    return *prev_optimized_traj_points_ptr_;
+  const auto prev_mpt_traj_points = mpt_optimizer_ptr_->getPrevMPTTrajectoryPoints();
+  if (prev_mpt_traj_points) {
+    return *prev_mpt_traj_points;
   }
-
   return traj_points;
 }
 
