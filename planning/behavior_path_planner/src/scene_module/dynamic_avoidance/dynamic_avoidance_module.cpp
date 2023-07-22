@@ -180,6 +180,33 @@ bool isLeft(
     return true;
   }
   return false;
+
+std::vector<TrajectoryPoint> convertToTrajectoryPoints(
+  const std::vector<PathPointWithLaneId> & path_points)
+{
+  std::vector<TrajectoryPoint> traj_points;
+  for (const auto & path_point : path_points) {
+    TrajectoryPoint traj_point;
+    traj_point.pose = tier4_autoware_utils::getPose(path_point.point.pose.position);
+    traj_point.longitudinal_velocity_mps =
+      tier4_autoware_utils::getLongitudinalVelocity(path_points.point.longitudinal_velocity_mps);
+    traj_points.push_back(traj_point);
+  }
+  return traj_points;
+}
+
+std::vector<PathPointWithLaneId> convertToPathPoints(
+  const std::vector<TrajectoryPoint> & path_points)
+{
+  std::vector<PathPointWithLaneId> path_points;
+  for (const auto & traj_point : traj_points) {
+    PathPointWithLaneId path_point;
+    path_point.point.pose = tier4_autoware_utils::getPose(traj_point.pose.position);
+    path_point.point.longitudinal_velocity_mps =
+      tier4_autoware_utils::getLongitudinalVelocity(traj_points.longitudinal_velocity_mps);
+    path_points.push_back(path_point);
+  }
+  return traj_points;
 }
 }  // namespace
 
@@ -272,14 +299,66 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   }
   prev_objects_min_bound_lat_offset_.removeCounterUnlessUpdated();
 
+  // create drivable area info
+  DrivableAreaInfo drivable_area_info;
+  drivable_area_info.drivable_lanes = drivable_lanes;
+  drivable_area_info.obstacles = obstacles_for_drivable_area;
+
+  // plan path
+  const auto output_path =
+    enable_path_planning_ ? planPath(*prev_module_path, drivable_area_info) : prev_module_path;
+
+  // create output
   BehaviorModuleOutput output;
-  output.path = prev_module_path;
+  output.path = std::make_shared<PathWithLaneId>(output_path);
   output.reference_path = getPreviousModuleOutput().reference_path;
   output.drivable_area_info.drivable_lanes = drivable_lanes;
   output.drivable_area_info.obstacles = obstacles_for_drivable_area;
   output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
   return output;
+}
+
+PathWithLaneId DynamicAvoidanceModule::planPath(
+  const PathWithLaneId & input_path, const DrivableAreaInfo & drivable_area_info)
+{
+  auto ref_path = input_path;
+
+  // extract obstacles from drivable area
+  const auto & di = drivable_area_info;
+  const auto is_driving_forward_opt = motion_utils::isDrivingForward(ref_path.points);
+  const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
+  utils::generateDrivableArea(
+    ref_path, di.drivable_lanes, di.enable_expanding_hatched_road_markings,
+    di.enable_expanding_intersection_areas, planner_data_->parameters.vehicle_length, planner_data_,
+    is_driving_forward);
+  utils::extractObstaclesFromDrivableArea(ref_path, di.obstacles);
+
+  // create data for obstacle avoidance planner
+  obstacle_avoidance_planner::PlannerData obstacle_avoidance_planner_data;
+  obstacle_avoidance_planner_data.header = input_path.header;
+  obstacle_avoidance_planner_data.traj_points = convertToTrajectoryPoints(input_path.points);
+  obstacle_avoidance_planner_data.left_bound = input_path.left_bound;
+  obstacle_avoidance_planner_data.right_bound = input_path.right_bound;
+  obstacle_avoidance_planner_data.ego_pose = getEgoPose();
+  obstacle_avoidance_planner_data.ego_vel = getEgoSpeed();
+
+  // optimize path
+  const auto ref_traj_points = convertToTrajectoryPoints(ref_path.points);
+  const auto smoothed_traj_points =
+    eb_optimizer_->getEBTrajectory(obstacle_avoidance_planner_data, ref_traj_points);
+  const auto avoidance_traj_points =
+    mpt_optimizer_->getModelPredictiveTrajectory(obstacle_avoidance_planner_data, smoothed_points);
+
+  // extend path
+  // NOTE: Optimized path is shorter than the reference path due to the calculation cost.
+  const auto extended_traj_points =
+    motion_utils::extendTrajectory(avoidance_traj_points, ref_traj_points);
+  const auto extended_path_points = convertToPathPoints(extended_traj_points);
+
+  auto output_path = input_path;
+  output_path.points = extended_path_points;
+  return output_path;
 }
 
 CandidateOutput DynamicAvoidanceModule::planCandidate() const
