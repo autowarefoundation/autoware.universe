@@ -1251,43 +1251,45 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       }
     };
 
+    // lambda function to extract left/right lanelets
+    auto getLeftOrRightLanelets = [&](
+                                    const lanelet::ConstLanelet & lanelet,
+                                    const bool get_left) -> std::optional<lanelet::ConstLanelet> {
+      const auto opt =
+        get_left ? routing_graph_ptr_->left(lanelet) : routing_graph_ptr_->right(lanelet);
+      if (!!opt) {
+        return *opt;
+      }
+      const auto adjacent = get_left ? routing_graph_ptr_->adjacentLeft(lanelet)
+                                     : routing_graph_ptr_->adjacentRight(lanelet);
+      if (!!adjacent) {
+        return *adjacent;
+      }
+      // search for unconnected lanelet
+      const auto unconnected_lanelets = get_left
+                                          ? getLeftLineSharingLanelets(lanelet, lanelet_map_ptr_)
+                                          : getRightLineSharingLanelets(lanelet, lanelet_map_ptr_);
+      // just return first candidate of unconnected lanelet for now
+      if (!unconnected_lanelets.empty()) {
+        return unconnected_lanelets.front();
+      }
+      // if no candidate lanelet found, return empty
+      return std::nullopt;
+    };
+
     // Step1. Get the path
     // Step1.1 Get the left lanelet
     lanelet::routing::LaneletPaths left_paths;
-    auto opt_left = routing_graph_ptr_->left(current_lanelet_data.lanelet);
-    auto adjacent_left = routing_graph_ptr_->adjacentLeft(current_lanelet_data.lanelet);
-    if (!!opt_left) {
-      left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
-    } else if (!!adjacent_left) {
-      left_paths = routing_graph_ptr_->possiblePaths(*adjacent_left, possible_params);
-    } else {
-      // if no left lanelet in graph search for unconnected lanelet
-      auto unconnected_lefts =
-        getLeftLineSharingLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
-      // search for only first unconnected lanelet
-      for (const auto & unconnected_left_lanelet : unconnected_lefts) {
-        left_paths = getPathsForNormalOrIsolatedLanelet(unconnected_left_lanelet);
-        if (!left_paths.empty()) break;
-      }
+    const auto left_lanelet = getLeftOrRightLanelets(current_lanelet_data.lanelet, true);
+    if (!!left_lanelet) {
+      left_paths = getPathsForNormalOrIsolatedLanelet(left_lanelet.value());
     }
 
     // Step1.2 Get the right lanelet
     lanelet::routing::LaneletPaths right_paths;
-    auto opt_right = routing_graph_ptr_->right(current_lanelet_data.lanelet);
-    auto adjacent_right = routing_graph_ptr_->adjacentRight(current_lanelet_data.lanelet);
-    if (!!opt_right) {
-      right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
-    } else if (!!adjacent_right) {
-      right_paths = routing_graph_ptr_->possiblePaths(*adjacent_right, possible_params);
-    } else {
-      // if no right lanelet in graph
-      auto unconnected_rights =
-        getRightLineSharingLanelets(current_lanelet_data.lanelet, lanelet_map_ptr_);
-      // search for only first unconnected lanelet
-      for (const auto & unconnected_right_lanelet : unconnected_rights) {
-        right_paths = getPathsForNormalOrIsolatedLanelet(unconnected_right_lanelet);
-        if (!right_paths.empty()) break;
-      }
+    const auto right_lanelet = getLeftOrRightLanelets(current_lanelet_data.lanelet, false);
+    if (!!right_lanelet) {
+      right_paths = getPathsForNormalOrIsolatedLanelet(right_lanelet.value());
     }
 
     // Step1.3 Get the centerline
