@@ -103,6 +103,7 @@ private:
   EBParam eb_param_;
   mutable std::shared_ptr<TimeKeeper> time_keeper_ptr_;
   rclcpp::Logger logger_;
+  rclcpp::Clock clock_;
 
   // publisher
   rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;

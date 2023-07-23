@@ -69,10 +69,11 @@ std::vector<double> toStdVector(const Eigen::VectorXd & eigen_vec)
   return {eigen_vec.data(), eigen_vec.data() + eigen_vec.rows()};
 }
 
-std_msgs::msg::Header createHeader()
+std_msgs::msg::Header createHeader(const rclcpp::Time & now)
 {
   std_msgs::msg::Header header;
   header.frame_id = "map";
+  header.stamp = now;
   return header;
 }
 }  // namespace
@@ -160,7 +161,8 @@ EBPathSmoother::EBPathSmoother(
   ego_nearest_param_(ego_nearest_param),
   common_param_(common_param),
   time_keeper_ptr_(time_keeper_ptr),
-  logger_(node->get_logger().get_child("elastic_band_smoother"))
+  logger_(node->get_logger().get_child("elastic_band_smoother")),
+  clock_(*node->get_clock())
 {
   // eb param
   eb_param_ = EBParam(node);
@@ -254,7 +256,8 @@ std::vector<TrajectoryPoint> EBPathSmoother::smoothTrajectory(
   prev_eb_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(*eb_traj_points);
 
   // 8. publish eb trajectory
-  const auto eb_traj = trajectory_utils::createTrajectory(createHeader(), *eb_traj_points);
+  const auto eb_traj =
+    trajectory_utils::createTrajectory(createHeader(clock_.now()), *eb_traj_points);
   debug_eb_traj_pub_->publish(eb_traj);
 
   time_keeper_ptr_->toc(__func__, "      ");
@@ -378,7 +381,7 @@ void EBPathSmoother::updateConstraint(
 
   // publish fixed trajectory
   const auto eb_fixed_traj =
-    trajectory_utils::createTrajectory(createHeader(), debug_fixed_traj_points);
+    trajectory_utils::createTrajectory(createHeader(clock_.now()), debug_fixed_traj_points);
   debug_eb_fixed_traj_pub_->publish(eb_fixed_traj);
 
   time_keeper_ptr_->toc(__func__, "        ");
