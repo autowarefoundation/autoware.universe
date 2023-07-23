@@ -469,7 +469,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
         std::min(traj_point.longitudinal_velocity_mps, static_cast<float>(stable_slow_down_vel));
     }
 
-    // add debug data and virtual wall
+    // add debug data
     slow_down_debug_multi_array_.data.push_back(obstacle.precise_lat_dist);
     slow_down_debug_multi_array_.data.push_back(dist_to_slow_down_start);
     slow_down_debug_multi_array_.data.push_back(dist_to_slow_down_end);
@@ -477,12 +477,32 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     slow_down_debug_multi_array_.data.push_back(stable_slow_down_vel);
     slow_down_debug_multi_array_.data.push_back(slow_down_start_idx ? *slow_down_start_idx : -1.0);
     slow_down_debug_multi_array_.data.push_back(slow_down_end_idx ? *slow_down_end_idx : -1.0);
+
+    // add virtual wall
+    if (slow_down_start_idx && slow_down_end_idx) {
+      const size_t ego_idx =
+        ego_nearest_param_.findIndex(slow_down_traj_points, planner_data.ego_pose);
+      const size_t slow_down_wall_idx = [&]() {
+        if (ego_idx < *slow_down_start_idx) return *slow_down_start_idx;
+        if (ego_idx < *slow_down_end_idx) return ego_idx;
+        return *slow_down_end_idx;
+      }();
+
+      const auto markers = motion_utils::createSlowDownVirtualWallMarker(
+        slow_down_traj_points.at(slow_down_wall_idx).pose, "obstacle slow down",
+        planner_data.current_time, i, abs_ego_offset);
+      tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
+    }
+
+    // add debug virtual wall
+    /*
     if (slow_down_start_idx) {
       add_slow_down_marker(i, slow_down_start_idx, true);
     }
     if (slow_down_end_idx) {
       add_slow_down_marker(i, slow_down_end_idx, false);
     }
+    */
 
     debug_data_ptr_->obstacles_to_slow_down.push_back(obstacle);
 
