@@ -1692,7 +1692,6 @@ void makeBoundLongitudinallyMonotonic(
   PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
   const bool is_bound_left)
 {
-  using drivable_area_processing::intersect;
   using motion_utils::findNearestSegmentIndex;
   using tier4_autoware_utils::calcAzimuthAngle;
   using tier4_autoware_utils::calcDistance2d;
@@ -1700,6 +1699,7 @@ void makeBoundLongitudinallyMonotonic(
   using tier4_autoware_utils::createQuaternionFromRPY;
   using tier4_autoware_utils::getPoint;
   using tier4_autoware_utils::getPose;
+  using tier4_autoware_utils::intersect;
   using tier4_autoware_utils::normalizeRadian;
 
   const auto set_orientation = [](
@@ -1713,13 +1713,13 @@ void makeBoundLongitudinallyMonotonic(
     std::vector<std::pair<size_t, Point>> intersects;
     for (size_t i = start_idx; i < bound_with_pose.size() - 1; i++) {
       const auto opt_intersect =
-        tier4_autoware_utils::intersect(p1, p2, bound_with_pose.at(i).position, bound_with_pose.at(i + 1).position);
+        intersect(p1, p2, bound_with_pose.at(i).position, bound_with_pose.at(i + 1).position);
 
       if (!opt_intersect) {
         continue;
       }
 
-      intersects.emplace_back(i, opt_intersect.get());
+      intersects.emplace_back(i, *opt_intersect);
     }
 
     if (intersects.empty()) {
@@ -1806,15 +1806,14 @@ void makeBoundLongitudinallyMonotonic(
 
       // skip non monotonic points
       for (size_t i = bound_idx + 1; i < bound_with_pose.size() - 1; ++i) {
-        const auto intersect_point = tier4_autoware_utils::intersect(
+        const auto intersect_point = intersect(
           p_bound_1, p_bound_offset.position, bound_with_pose.at(i).position,
           bound_with_pose.at(i + 1).position);
 
         if (intersect_point) {
           Pose pose;
-          pose.position = intersect_point.get();
-          const auto yaw =
-            calcAzimuthAngle(intersect_point.get(), bound_with_pose.at(i + 1).position);
+          pose.position = *intersect_point;
+          const auto yaw = calcAzimuthAngle(*intersect_point, bound_with_pose.at(i + 1).position);
           pose.orientation = createQuaternionFromRPY(0.0, 0.0, yaw);
           monotonic_bound.push_back(pose);
           bound_idx = i;
