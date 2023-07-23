@@ -411,17 +411,6 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     }
     return std::nullopt;
   };
-  const auto add_slow_down_marker =
-    [&](const size_t obstacle_idx, const auto slow_down_traj_idx, const bool is_start) {
-      if (!slow_down_traj_idx) return;
-
-      const int id = obstacle_idx * 2 + (is_start ? 0 : 1);
-      const auto text = is_start ? "obstacle slow down start" : "obstacle slow down end";
-      const auto pose = slow_down_traj_points.at(*slow_down_traj_idx).pose;
-      const auto markers = motion_utils::createSlowDownVirtualWallMarker(
-        pose, text, planner_data.current_time, id, abs_ego_offset);
-      tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
-    };
 
   std::vector<SlowDownOutput> new_prev_slow_down_output;
   for (size_t i = 0; i < obstacles.size(); ++i) {
@@ -433,7 +422,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
       planner_data, slow_down_traj_points, obstacle, prev_output, dist_to_ego);
     if (!dist_vec_to_slow_down) {
       RCLCPP_INFO_EXPRESSION(
-        rclcpp::get_logger("ObstacleCruisePlanner::Plannerinterface"), enable_debug_info_,
+        rclcpp::get_logger("ObstacleCruisePlanner::PlannerInterface"), enable_debug_info_,
         "[SlowDown] Ignore obstacle (%s) since distance to slow down is not valid",
         obstacle.uuid.c_str());
       continue;
@@ -495,14 +484,20 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     }
 
     // add debug virtual wall
-    /*
     if (slow_down_start_idx) {
-      add_slow_down_marker(i, slow_down_start_idx, true);
+      const auto markers = motion_utils::createSlowDownVirtualWallMarker(
+        slow_down_traj_points.at(*slow_down_start_idx).pose, "obstacle slow down start",
+        planner_data.current_time, i * 2, abs_ego_offset);
+      tier4_autoware_utils::appendMarkerArray(
+        markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
     if (slow_down_end_idx) {
-      add_slow_down_marker(i, slow_down_end_idx, false);
+      const auto markers = motion_utils::createSlowDownVirtualWallMarker(
+        slow_down_traj_points.at(*slow_down_end_idx).pose, "obstacle slow down end",
+        planner_data.current_time, i * 2 + 1, abs_ego_offset);
+      tier4_autoware_utils::appendMarkerArray(
+        markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
-    */
 
     debug_data_ptr_->obstacles_to_slow_down.push_back(obstacle);
 
