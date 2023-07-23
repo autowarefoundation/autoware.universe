@@ -172,11 +172,11 @@ MPTOptimizer::MPTParam::MPTParam(
 {
   {  // option
     steer_limit_constraint = node->declare_parameter<bool>("mpt.option.steer_limit_constraint");
+    enable_warm_start = node->declare_parameter<bool>("mpt.option.enable_warm_start");
+    enable_manual_warm_start = node->declare_parameter<bool>("mpt.option.enable_manual_warm_start");
     enable_optimization_validation =
       node->declare_parameter<bool>("mpt.option.enable_optimization_validation");
     mpt_visualize_sampling_num = node->declare_parameter<int>("mpt.option.visualize_sampling_num");
-    enable_warm_start = node->declare_parameter<bool>("mpt.option.enable_warm_start");
-    enable_manual_warm_start = node->declare_parameter<bool>("mpt.option.enable_manual_warm_start");
   }
 
   {  // common
