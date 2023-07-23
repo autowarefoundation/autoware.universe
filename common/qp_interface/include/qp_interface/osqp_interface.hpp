@@ -69,6 +69,8 @@ public:
   void updateEpsRel(const double eps_rel) override;
   void updateVerbose(const bool verbose) override;
 
+  bool isSolved() const override;
+
   // Updates problem parameters while keeping solution in memory.
   //
   // Args:
@@ -98,7 +100,7 @@ public:
   /// \brief Get the number of iteration taken to solve the problem
   inline int64_t getTakenIter() const { return static_cast<int64_t>(m_latest_work_info.iter); }
   /// \brief Get the status message for the latest problem solved
-  inline std::string getStatusMessage() const
+  inline std::string getStatusMessage() const override
   {
     return static_cast<std::string>(m_latest_work_info.status);
   }
@@ -108,8 +110,6 @@ public:
   inline double getObjVal() const { return m_latest_work_info.obj_val; }
   /// \brief Returns flag asserting interface condition (Healthy condition: 0).
   inline int64_t getExitFlag() const { return m_exitflag; }
-
-  void logUnsolvedStatus(const std::string & prefix_message = "") const;
 
   // Setter functions for warm start
   bool setWarmStart(
