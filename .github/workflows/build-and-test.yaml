@@ -44,7 +44,7 @@ jobs:
 
       - name: Build
         if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
-        uses: autowarefoundation/autoware-github-actions/colcon-build@v1
+        uses: esteve/autoware-github-actions/colcon-build@ci-disable-internet-during-build
         with:
           rosdistro: ${{ matrix.rosdistro }}
           target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
