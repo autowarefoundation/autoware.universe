@@ -16,7 +16,6 @@
 #define BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__UTIL_HPP_
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
-#include <lanelet2_extension/utility/query.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
@@ -34,14 +33,9 @@
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-
+#include <lanelet2_core/Forward.h>
 #include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_core/geometry/Lanelet.h>
-#include <lanelet2_core/geometry/Point.h>
-#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_routing/Forward.h>
 #include <pcl/point_types.h>
 #include <tf2/utils.h>
 
