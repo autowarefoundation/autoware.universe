@@ -157,20 +157,20 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
 
   // for each marker, draw info and its boundaries in the image
   for (const aruco::Marker & marker : markers) {
-    tf2::Transform tf_cam_2_marker = right_to_left_ * aruco_marker_2_tf2(marker);
+    tf2::Transform tf_cam_to_marker = right_to_left_ * aruco_marker_to_tf2(marker);
 
-    geometry_msgs::msg::TransformStamped tf_cam_2_marker_stamped;
-    tf2::toMsg(tf_cam_2_marker, tf_cam_2_marker_stamped.transform);
-    tf_cam_2_marker_stamped.header.stamp = curr_stamp;
-    tf_cam_2_marker_stamped.header.frame_id = camera_frame_;
-    tf_cam_2_marker_stamped.child_frame_id = "detected_marker_" + std::to_string(marker.id);
-    tf_broadcaster_->sendTransform(tf_cam_2_marker_stamped);
+    geometry_msgs::msg::TransformStamped tf_cam_to_marker_stamped;
+    tf2::toMsg(tf_cam_to_marker, tf_cam_to_marker_stamped.transform);
+    tf_cam_to_marker_stamped.header.stamp = curr_stamp;
+    tf_cam_to_marker_stamped.header.frame_id = camera_frame_;
+    tf_cam_to_marker_stamped.child_frame_id = "detected_marker_" + std::to_string(marker.id);
+    tf_broadcaster_->sendTransform(tf_cam_to_marker_stamped);
 
-    geometry_msgs::msg::PoseStamped pose_cam_2_marker;
-    tf2::toMsg(tf_cam_2_marker, pose_cam_2_marker.pose);
-    pose_cam_2_marker.header.stamp = curr_stamp;
-    pose_cam_2_marker.header.frame_id = std::to_string(marker.id);
-    publish_pose_as_base_link(pose_cam_2_marker);
+    geometry_msgs::msg::PoseStamped pose_cam_to_marker;
+    tf2::toMsg(tf_cam_to_marker, pose_cam_to_marker.pose);
+    pose_cam_to_marker.header.stamp = curr_stamp;
+    pose_cam_to_marker.header.frame_id = std::to_string(marker.id);
+    publish_pose_as_base_link(pose_cam_to_marker);
 
     // drawing the detected markers
     marker.draw(in_image, cv::Scalar(0, 0, 255), 2);
@@ -200,7 +200,7 @@ void ArTagBasedLocalizer::cam_info_callback(const sensor_msgs::msg::CameraInfo &
     return;
   }
 
-  cam_param_ = ros_camera_info_2_aruco_cam_params(msg, true);
+  cam_param_ = ros_camera_info_to_aruco_cam_params(msg, true);
 
   // handle cartesian offset between stereo pairs
   // see the sensor_msgs/CameraInfo documentation for details

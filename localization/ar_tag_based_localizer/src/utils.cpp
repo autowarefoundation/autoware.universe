@@ -47,7 +47,7 @@
 #include <opencv4/opencv2/calib3d.hpp>
 #include <rclcpp/logging.hpp>
 
-aruco::CameraParameters ros_camera_info_2_aruco_cam_params(
+aruco::CameraParameters ros_camera_info_to_aruco_cam_params(
   const sensor_msgs::msg::CameraInfo & cam_info, bool use_rectified_parameters)
 {
   cv::Mat camera_matrix(3, 4, CV_64FC1, 0.0);
@@ -96,7 +96,7 @@ aruco::CameraParameters ros_camera_info_2_aruco_cam_params(
   return {camera_matrix, distortion_coeff, size};
 }
 
-tf2::Transform aruco_marker_2_tf2(const aruco::Marker & marker)
+tf2::Transform aruco_marker_to_tf2(const aruco::Marker & marker)
 {
   cv::Mat rot(3, 3, CV_64FC1);
   cv::Mat r_vec64;

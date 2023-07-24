@@ -51,16 +51,16 @@
 #include <tf2/LinearMath/Transform.h>
 
 /**
- * @brief ros_camera_info_2_aruco_cam_params gets the camera intrinsics from a CameraInfo message
+ * @brief ros_camera_info_to_aruco_cam_params gets the camera intrinsics from a CameraInfo message
  * and copies them to aruco's data structure
  * @param cam_info
  * @param use_rectified_parameters if true, the intrinsics are taken from cam_info.P and the
  * distortion parameters are set to 0. Otherwise, cam_info.K and cam_info.D are taken.
  * @return
  */
-aruco::CameraParameters ros_camera_info_2_aruco_cam_params(
+aruco::CameraParameters ros_camera_info_to_aruco_cam_params(
   const sensor_msgs::msg::CameraInfo & cam_info, bool use_rectified_parameters);
 
-tf2::Transform aruco_marker_2_tf2(const aruco::Marker & marker);
+tf2::Transform aruco_marker_to_tf2(const aruco::Marker & marker);
 
 #endif  // AR_TAG_BASED_LOCALIZER__UTILS_HPP_
