@@ -150,4 +150,50 @@
     </group>
   </group>
 
+  <!-- Redundant Launch for NDT & YabLoc & Eagleye -->
+  <group if="$(eval &quot;'$(var pose_source)'=='ndt_yabloc_eagleye'&quot;)">
+    <group>
+      <include file="$(find-pkg-share pose_estimator_manager)/launch/pose_estimator_manager.launch.xml"/>
+    </group>
+
+    <group>
+      <push-ros-namespace namespace="pose_estimator"/>
+      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/ndt_scan_matcher.launch.xml"/>
+    </group>
+
+    <group>
+      <push-ros-namespace namespace="pose_estimator"/>
+      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/yabloc.launch.xml">
+        <arg name="redundant_mode" value="true"/>
+      </include>
+    </group>
+
+    <group>
+      <push-ros-namespace namespace="pose_estimator"/>
+      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/eagleye_rt.launch.xml">
+        <arg name="output_pose_with_cov_name" value="/localization/eagleye/pose_with_covariance/to_relay"/>
+        <arg name="use_eagleye_pose" value="true"/>
+        <arg name="use_eagleye_twist" value="false"/>
+      </include>
+    </group>
+
+    <group>
+      <push-ros-namespace namespace="util"/>
+      <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
+        <arg name="ndt_enabled" value="true"/>
+        <arg name="gnss_enabled" value="true"/>
+        <arg name="ekf_enabled" value="true"/>
+        <arg name="yabloc_enabled" value="false"/>
+        <arg name="stop_check_enabled" value="$(var stop_check_enabled)"/>
+        <arg name="config_file" value="$(var pose_initializer_param_path)"/>
+        <arg name="sub_gnss_pose_cov" value="/sensing/gnss/pose_with_covariance"/>
+      </include>
+      <include file="$(find-pkg-share automatic_pose_initializer)/launch/automatic_pose_initializer.launch.xml"/>
+
+      <include file="$(find-pkg-share tier4_localization_launch)/launch/util/util.launch.py">
+        <arg name="input/pointcloud" value="$(var input/pointcloud)/relay"/>
+      </include>
+    </group>
+  </group>
+
 </launch>

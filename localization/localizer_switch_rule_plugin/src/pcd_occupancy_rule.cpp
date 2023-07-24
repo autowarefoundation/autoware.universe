@@ -8,7 +8,7 @@ namespace multi_pose_estimator
 {
 std::vector<PoseEstimatorName> PcdOccupancyRule::supporting_pose_estimators()
 {
-  return {PoseEstimatorName::NDT, PoseEstimatorName::YABLOC};
+  return {PoseEstimatorName::NDT, PoseEstimatorName::YABLOC, PoseEstimatorName::EAGLEYE};
 }
 
 void PcdOccupancyRule::init(rclcpp::Node & node)
@@ -38,6 +38,7 @@ std::unordered_map<PoseEstimatorName, bool> PcdOccupancyRule::update()
   std::unordered_map<PoseEstimatorName, bool> toggle_list;
   toggle_list[PoseEstimatorName::NDT] = true;
   toggle_list[PoseEstimatorName::YABLOC] = false;
+  toggle_list[PoseEstimatorName::EAGLEYE] = false;
 
   if (!latest_pose_.has_value()) {
     RCLCPP_WARN_STREAM(
@@ -52,19 +53,28 @@ std::unordered_map<PoseEstimatorName, bool> PcdOccupancyRule::update()
   std::vector<float> distances;
   const int count = kdtree_->radiusSearch(query, 50, indices, distances, 0);
 
+  std::stringstream ss;
+  ss << "PCD occupancy: " << count << " > " << pcd_density_threshold_ << "\n";
   const bool is_ndt_mode = count > pcd_density_threshold_;
   if (is_ndt_mode) {
     toggle_list[PoseEstimatorName::NDT] = true;
     toggle_list[PoseEstimatorName::YABLOC] = false;
+    toggle_list[PoseEstimatorName::EAGLEYE] = false;
+    ss << "NDT";
   } else {
-    toggle_list[PoseEstimatorName::NDT] = false;
-    toggle_list[PoseEstimatorName::YABLOC] = true;
+    if (position.x > 89374) {
+      toggle_list[PoseEstimatorName::NDT] = false;
+      toggle_list[PoseEstimatorName::YABLOC] = false;
+      toggle_list[PoseEstimatorName::EAGLEYE] = true;
+      ss << "Eagleye";
+    } else {
+      toggle_list[PoseEstimatorName::NDT] = false;
+      toggle_list[PoseEstimatorName::YABLOC] = true;
+      toggle_list[PoseEstimatorName::EAGLEYE] = false;
+      ss << "YabLoc";
+    }
   }
 
-  std::stringstream ss;
-  ss << "NOT IMPLEMENTED";
-  ss << "PCD occupancy: " << count << " > " << pcd_density_threshold_ << "\n";
-  ss << (is_ndt_mode ? "NDT" : "YabLoc");
   debug_string_msg_ = ss.str();
 
   return toggle_list;
