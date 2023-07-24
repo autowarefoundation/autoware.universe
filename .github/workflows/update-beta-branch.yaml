@@ -26,7 +26,7 @@ jobs:
           if [ -n "$branch_names" ]; then
             branch_names_json=$(printf '"%s", ' $branch_names)
             branch_names_json="[${branch_names_json%, }]"
-            echo ::set-output name=value::"$branch_names_json"
+            echo "value=$branch_names_json" >> $GITHUB_OUTPUT
           fi
           echo "Detected beta branch: $branch_names_json"
 
@@ -72,7 +72,7 @@ jobs:
       - name: Set git config
         run: |
           git config --local user.email "actions@example.com"
-          git config --local user.name "Github Actions"
+          git config --local user.name "GitHub Actions"
 
       - name: Run update script
         run: |
