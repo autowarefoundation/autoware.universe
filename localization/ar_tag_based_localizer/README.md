@@ -41,7 +41,7 @@ ros2 launch autoware_launch ... \
 
 ## Architecture
 
-![node_diagram](./doc_image/node_diagram.drawio.svg)
+![node diagram](./doc_image/node_diagram.drawio.svg)
 
 ## Map specifications
 
@@ -54,7 +54,7 @@ The order of the four vertices is defined as follows. In the coordinate system o
 - the x-axis is parallel to the vector from the first vertex to the second vertex
 - the y-axis is parallel to the vector from the second vertex to the third vertex
 
-![node_diagram](./doc_image/lanelet2_data_structure.drawio.svg)
+![lanelet2 data structure](./doc_image/lanelet2_data_structure.drawio.svg)
 
 ### example of `lanelet2_map.osm`
 
