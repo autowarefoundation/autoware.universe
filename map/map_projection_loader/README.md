@@ -24,6 +24,7 @@ sample-map-rosbag
 ### Using local coordinate
 
 ```yaml
+# map_projector_info.yaml
 type: "Local"
 ```
 
@@ -32,6 +33,7 @@ type: "Local"
 If you want to use MGRS, please specify MGRS grid as well.
 
 ```yaml
+# map_projector_info.yaml
 type: "MGRS"
 mgrs_grid: "54SUE"
 ```
@@ -39,8 +41,8 @@ mgrs_grid: "54SUE"
 ### Using UTM
 
 If you want to use UTM, please specify the map origin as well.
-
-```
+```yaml
+# map_projector_info.yaml
 type: "UTM"
 map_origin:
   latitude: 35.6092
@@ -52,7 +54,8 @@ map_origin:
 
 If you want to use Transverse Mercator projection, please specify the map origin as well.
 
-```
+```yaml
+# map_projector_info.yaml
 type: "TransverseMercator"
 map_origin:
   latitude: 36.1148
