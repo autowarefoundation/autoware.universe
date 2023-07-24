@@ -176,7 +176,7 @@ bool isLeft(
     path_points.at(target_idx).point.pose.position, target_pos);
   const double diff_yaw = tier4_autoware_utils::normalizeRadian(angle_to_target_pos - target_yaw);
 
-  if (diff_yaw < 0) {
+  if (0 < diff_yaw) {
     return true;
   }
   return false;
