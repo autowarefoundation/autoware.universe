@@ -14,7 +14,7 @@
 
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
 
-#include "behavior_path_planner/marker_util/avoidance/debug.hpp"
+#include "behavior_path_planner/marker_utils/avoidance/debug.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/avoidance/utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
@@ -379,7 +379,7 @@ ObjectData AvoidanceModule::createObjectData(
 bool AvoidanceModule::canYieldManeuver(const AvoidancePlanningData & data) const
 {
   // transit yield maneuver only when the avoidance maneuver is not initiated.
-  if (data.avoiding_now) {
+  if (helper_.isShifted()) {
     return false;
   }
 
@@ -413,9 +413,6 @@ bool AvoidanceModule::canYieldManeuver(const AvoidancePlanningData & data) const
 
 void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const
 {
-  constexpr double AVOIDING_SHIFT_THR = 0.1;
-  data.avoiding_now = std::abs(helper_.getEgoShift()) > AVOIDING_SHIFT_THR;
-
   auto path_shifter = path_shifter_;
 
   /**
@@ -578,7 +575,7 @@ void AvoidanceModule::fillDebugData(const AvoidancePlanningData & data, DebugDat
     return;
   }
 
-  if (data.avoiding_now) {
+  if (helper_.isShifted()) {
     return;
   }
 
@@ -2385,7 +2382,7 @@ PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & orig
     planner_data_->parameters.backward_path_length, longest_dist_to_shift_point + extra_margin);
   const auto previous_path = helper_.getPreviousReferencePath();
 
-  const size_t orig_ego_idx = findNearestIndex(original_path.points, getEgoPosition());
+  const size_t orig_ego_idx = planner_data_->findEgoIndex(original_path.points);
   const size_t prev_ego_idx =
     findNearestSegmentIndex(previous_path.points, getPoint(original_path.points.at(orig_ego_idx)));
 
@@ -2403,6 +2400,12 @@ PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & orig
       extended_path.points.end(), previous_path.points.begin() + clip_idx,
       previous_path.points.begin() + prev_ego_idx);
   }
+
+  // overwrite backward path velocity by latest one.
+  std::for_each(extended_path.points.begin(), extended_path.points.end(), [&](auto & p) {
+    p.point.longitudinal_velocity_mps =
+      original_path.points.at(orig_ego_idx).point.longitudinal_velocity_mps;
+  });
 
   {
     extended_path.points.insert(
@@ -3183,7 +3186,7 @@ void AvoidanceModule::insertWaitPoint(
     return;
   }
 
-  if (data.avoiding_now) {
+  if (helper_.isShifted()) {
     return;
   }
 
@@ -3274,7 +3277,7 @@ void AvoidanceModule::insertYieldVelocity(ShiftedPath & shifted_path) const
     return;
   }
 
-  if (data.avoiding_now) {
+  if (helper_.isShifted()) {
     return;
   }
 
@@ -3293,7 +3296,7 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
   }
 
   // insert slow down speed only when the avoidance maneuver is not initiated.
-  if (data.avoiding_now) {
+  if (helper_.isShifted()) {
     return;
   }
 

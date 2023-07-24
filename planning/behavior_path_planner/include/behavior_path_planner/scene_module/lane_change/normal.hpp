@@ -14,7 +14,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_
 
-#include "behavior_path_planner/marker_util/debug_utilities.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/lane_change/base_class.hpp"
 
 #include <memory>
@@ -74,7 +74,9 @@ public:
 
   bool isRequiredStop(const bool is_object_coming_from_rear) const override;
 
-  bool isNearEndOfLane() const override;
+  bool isNearEndOfCurrentLanes(
+    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+    const double threshold) const override;
 
   bool hasFinishedLaneChange() const override;
 
@@ -97,6 +99,10 @@ protected:
     const lanelet::ConstLanelets & current_lanes, Direction direction) const override;
 
   int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
+
+  double calcPrepareDuration(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
 
   LaneChangeTargetObjects getTargetObjects(
     const lanelet::ConstLanelets & current_lanes,
