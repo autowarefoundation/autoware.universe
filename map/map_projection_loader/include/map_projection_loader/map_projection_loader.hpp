@@ -32,4 +32,4 @@ private:
   rclcpp::Publisher<tier4_map_msgs::msg::MapProjectorInfo>::SharedPtr publisher_;
 };
 
-#endif MAP_PROJECTION_LOADER__MAP_PROJECTION_LOADER_HPP_
+#endif  // MAP_PROJECTION_LOADER__MAP_PROJECTION_LOADER_HPP_
