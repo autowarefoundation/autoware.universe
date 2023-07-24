@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef MAP_PROJECTION_LOADER__MAP_PROJECTION_LOADER_HPP_
+#define MAP_PROJECTION_LOADER__MAP_PROJECTION_LOADER_HPP_
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "tier4_map_msgs/msg/map_projector_info.hpp"
@@ -28,3 +31,5 @@ public:
 private:
   rclcpp::Publisher<tier4_map_msgs::msg::MapProjectorInfo>::SharedPtr publisher_;
 };
+
+#endif MAP_PROJECTION_LOADER__MAP_PROJECTION_LOADER_HPP_
