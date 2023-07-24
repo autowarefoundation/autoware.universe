@@ -147,8 +147,8 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
   if (sub_std_pair_.second != nullptr) {
     stop_watch_ptr_->toc("processing_time", true);
     timer_->cancel();
-    postprocess(*(sub_std_pair_.second));
     publish(*(sub_std_pair_.second));
+    postprocess(*(sub_std_pair_.second));
     sub_std_pair_.second = nullptr;
     std::fill(is_fused_.begin(), is_fused_.end(), false);
 
@@ -241,8 +241,8 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
   // Msg
   if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
     timer_->cancel();
-    postprocess(*output_msg);
     publish(*output_msg);
+    postprocess(*output_msg);
     std::fill(is_fused_.begin(), is_fused_.end(), false);
     sub_std_pair_.second = nullptr;
 
@@ -303,8 +303,8 @@ void FusionNode<Msg, Obj>::roiCallback(
 
       if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
         timer_->cancel();
-        postprocess(*(sub_std_pair_.second));
         publish(*(sub_std_pair_.second));
+        postprocess(*(sub_std_pair_.second));
         std::fill(is_fused_.begin(), is_fused_.end(), false);
         sub_std_pair_.second = nullptr;
 
@@ -343,8 +343,8 @@ void FusionNode<Msg, Obj>::timer_callback()
     if (sub_std_pair_.second != nullptr) {
       stop_watch_ptr_->toc("processing_time", true);
 
-      postprocess(*(sub_std_pair_.second));
       publish(*(sub_std_pair_.second));
+      postprocess(*(sub_std_pair_.second));
 
       // add processing time for debug
       if (debug_publisher_) {
