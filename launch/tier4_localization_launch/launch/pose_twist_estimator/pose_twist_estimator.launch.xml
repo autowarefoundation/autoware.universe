@@ -113,7 +113,7 @@
     </include>
   </group>
 
-  <!-- AR Tag Based Localizer Launch (as pose estimator) -->
+  <!-- AR Tag Based Localizer with NDT Launch (as pose estimator) -->
   <group if="$(eval &quot;'$(var pose_source)'=='ndt_and_ar_tag_based_localizer'&quot;)">
     <group>
       <push-ros-namespace namespace="pose_estimator"/>
