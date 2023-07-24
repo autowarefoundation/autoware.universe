@@ -82,6 +82,7 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
       param.is_target = get_parameter<bool>(node, ns + "is_target");
+      param.execute_num = get_parameter<int>(node, ns + "execute_num");
       param.moving_speed_threshold = get_parameter<double>(node, ns + "moving_speed_threshold");
       param.moving_time_threshold = get_parameter<double>(node, ns + "moving_time_threshold");
       param.max_expand_ratio = get_parameter<double>(node, ns + "max_expand_ratio");
@@ -156,6 +157,8 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     p.lateral_execution_threshold = get_parameter<double>(node, ns + "lateral_execution_threshold");
     p.lateral_small_shift_threshold =
       get_parameter<double>(node, ns + "lateral_small_shift_threshold");
+    p.lateral_avoid_check_threshold =
+      get_parameter<double>(node, ns + "lateral_avoid_check_threshold");
     p.max_right_shift_length = get_parameter<double>(node, ns + "max_right_shift_length");
     p.max_left_shift_length = get_parameter<double>(node, ns + "max_left_shift_length");
   }
@@ -302,6 +305,8 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
       parameters, ns + "lateral_execution_threshold", p->lateral_execution_threshold);
     updateParam<double>(
       parameters, ns + "lateral_small_shift_threshold", p->lateral_small_shift_threshold);
+    updateParam<double>(
+      parameters, ns + "lateral_avoid_check_threshold", p->lateral_avoid_check_threshold);
     updateParam<double>(
       parameters, ns + "road_shoulder_safety_margin", p->road_shoulder_safety_margin);
   }
