@@ -109,7 +109,10 @@ class TestEKFLocalizer(unittest.TestCase):
 
         # Create subscription to map_projector_info topic
         subscription = self.test_node.create_subscription(
-            MapProjectorInfo, "/map_projection_loader/map_projector_info", self.callback, custom_qos_profile
+            MapProjectorInfo,
+            "/map_projection_loader/map_projector_info",
+            self.callback,
+            custom_qos_profile,
         )
 
         # Give time for the message to be received and processed
