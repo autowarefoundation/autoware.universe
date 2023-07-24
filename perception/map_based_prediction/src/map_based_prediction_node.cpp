@@ -37,6 +37,7 @@
 #include <functional>
 #include <limits>
 
+// cspell: ignore leftbound, rightbound, constlanelets
 namespace map_based_prediction
 {
 
