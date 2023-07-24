@@ -439,12 +439,13 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   }();
 
   if (first_outside_idx) {
+    debug_data_ptr_->stop_pose_by_drivable_area = optimized_traj_points.at(*first_outside_idx).pose;
     const auto stop_idx = [&]() {
       const auto dist = tier4_autoware_utils::calcDistance2d(
         optimized_traj_points.at(0), optimized_traj_points.at(*first_outside_idx));
       const auto dist_with_margin = dist - vehicle_stop_margin_outside_drivable_area_;
       const auto first_outside_idx_with_margin =
-        motion_utils::insertStopPoint(dist_with_margin, optimized_traj_points);
+        motion_utils::insertTargetPoint(0, dist_with_margin, optimized_traj_points);
       if (first_outside_idx_with_margin) {
         return *first_outside_idx_with_margin;
       }
@@ -458,6 +459,8 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
         optimized_traj_points.at(i).longitudinal_velocity_mps = 0.0;
       }
     }
+  } else {
+    debug_data_ptr_->stop_pose_by_drivable_area = std::nullopt;
   }
 
   time_keeper_ptr_->toc(__func__, "    ");
