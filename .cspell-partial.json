@@ -5,6 +5,7 @@
     "**/docs/**",
     "**/evaluator/**",
     "**/launch/**",
+    "**/localization/**",
     "**/perception/**",
     "**/planning/**",
     "**/sensing/**",
