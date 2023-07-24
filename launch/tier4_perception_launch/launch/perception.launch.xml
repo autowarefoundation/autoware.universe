@@ -48,7 +48,7 @@
   <arg name="object_recognition_detection_fusion_sync_param_path" description="you need change the size of 'input_offset_ms' in the file in this path when you want to change image_number"/>
   <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
   <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
-  <arg name="use_downsample_pointcloud" default="false" description="use use downsample pointcloud in perception"/>
+  <arg name="use_downsample_pointcloud" default="false" description="use downsample pointcloud in perception"/>
   <arg name="use_object_filter" default="true" description="use object filter"/>
   <arg
     name="use_empty_dynamic_object_publisher"
