@@ -5,7 +5,6 @@
 
   <let name="resized_image" value="undistorted/image_raw" unless="$(var redundant_mode)"/>
   <let name="resized_image" value="undistorted/image_raw/relay" if="$(var redundant_mode)"/>
-  <let name="resized_image" value="undistorted/image_raw"/>
 
   <arg name="resized_info" default="undistorted/camera_info"/>
   <arg name="input_pose" default="undistorted"/>

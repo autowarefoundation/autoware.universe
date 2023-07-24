@@ -8,8 +8,8 @@
     <param name="estimator_switch_plugin" value="$(var estimator_switch_plugin)"/>
 
     <!-- yabloc -->
-    <remap from="~/input/image" to="/localization/yabloc/image_processing/undistorted/image_raw"/>
-    <remap from="~/output/image" to="/localization/yabloc/image_processing/undistorted/image_raw/relay"/>
+    <remap from="~/input/image" to="/localization/pose_estimator/image_processing/undistorted/image_raw"/>
+    <remap from="~/output/image" to="/localization/pose_estimator/image_processing/undistorted/image_raw/relay"/>
     <remap from="~/yabloc_suspend_srv" to="/yabloc_suspend_srv"/>
     <!-- eagleye -->
     <remap from="~/input/pose" to="/localization/eagleye/pose_with_covariance/to_relay"/>
