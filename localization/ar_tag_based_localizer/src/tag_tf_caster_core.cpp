@@ -36,7 +36,7 @@ TagTfCaster::TagTfCaster() : Node("tag_tf_caster")
 
   // Subscribers
   map_bin_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
-    "lanelet2_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
+    "~/input/lanelet2_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
     std::bind(&TagTfCaster::map_bin_callback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "finish setup");
 }

@@ -3,11 +3,11 @@
   <arg name="node_name" default="ar_tag_based_localizer"/>
 
   <!-- Topic names -->
-  <arg name="input_image" default="image"/>
-  <arg name="input_camera_info" default="camera_info"/>
+  <arg name="input_image" default="~/input/image"/>
+  <arg name="input_camera_info" default="~/input/camera_info"/>
 
-  <arg name="output_image" default="result"/>
-  <arg name="output_pose_with_covariance" default="pose_with_covariance"/>
+  <arg name="output_image" default="~/debug/result"/>
+  <arg name="output_pose_with_covariance" default="~/output/pose_with_covariance"/>
 
   <node pkg="ar_tag_based_localizer" exec="ar_tag_based_localizer" name="$(var node_name)" output="log">
     <remap from="image" to="$(var input_image)"/>
