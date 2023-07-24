@@ -16,12 +16,12 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_util/debug_utilities.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "motion_utils/motion_utils.hpp"
-#include "perception_utils/predicted_path_utils.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -226,7 +226,8 @@ std::vector<DrivableLanes> generateDrivableLanesWithShoulderLanes(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & shoulder_lanes);
 std::vector<geometry_msgs::msg::Point> calcBound(
   const std::shared_ptr<RouteHandler> route_handler,
-  const std::vector<DrivableLanes> & drivable_lanes, const bool enable_expanding_polygon,
+  const std::vector<DrivableLanes> & drivable_lanes,
+  const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
   const bool is_left);
 
 boost::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes);
@@ -235,8 +236,9 @@ std::vector<DrivableLanes> cutOverlappedLanes(
 
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
-  const bool enable_expanding_polygon, const double vehicle_length,
-  const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward = true);
+  const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
+  const double vehicle_length, const std::shared_ptr<const PlannerData> planner_data,
+  const bool is_driving_forward = true);
 
 void generateDrivableArea(
   PathWithLaneId & path, const double vehicle_length, const double offset,
@@ -380,11 +382,8 @@ lanelet::ConstLanelets calcLaneAroundPose(
   const double dist_threshold = std::numeric_limits<double>::max(),
   const double yaw_threshold = std::numeric_limits<double>::max());
 
-std::vector<PredictedPath> getPredictedPathFromObj(
-  const PredictedObject & obj, const bool & is_use_all_predicted_path);
-
-boost::optional<std::pair<Pose, Polygon2d>> getEgoExpectedPoseAndConvertToPolygon(
-  const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info);
+std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
+  const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 
@@ -407,20 +406,13 @@ DrivableAreaInfo combineDrivableAreaInfo(
 void extractObstaclesFromDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableAreaInfo::Obstacle> & obstacles);
 
-void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound_left);
+void makeBoundLongitudinallyMonotonic(
+  PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const bool is_bound_left);
 
 std::optional<lanelet::Polygon3d> getPolygonByPoint(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstPoint3d & point,
   const std::string & polygon_name);
-
-bool isParkedObject(
-  const PathWithLaneId & path, const RouteHandler & route_handler, const PredictedObject & object,
-  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold,
-  const double static_object_velocity_threshold = 1.0);
-
-bool isParkedObject(
-  const lanelet::ConstLanelet & closest_lanelet, const lanelet::BasicLineString2d & boundary,
-  const PredictedObject & object, const double buffer_to_bound, const double ratio_threshold);
 }  // namespace behavior_path_planner::utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_

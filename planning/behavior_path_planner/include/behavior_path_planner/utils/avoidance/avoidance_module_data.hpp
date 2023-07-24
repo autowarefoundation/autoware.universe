@@ -50,6 +50,8 @@ struct ObjectParameter
 {
   bool is_target{false};
 
+  size_t execute_num{1};
+
   double moving_speed_threshold{0.0};
 
   double moving_time_threshold{1.0};
@@ -81,11 +83,11 @@ struct AvoidanceParameters
   double detection_area_left_expand_dist = 1.0;
 
   // enable avoidance to be perform only in lane with same direction
-  bool enable_avoidance_over_same_direction{true};
+  bool use_adjacent_lane{true};
 
   // enable avoidance to be perform in opposite lane direction
   // to use this, enable_avoidance_over_same_direction need to be set to true.
-  bool enable_avoidance_over_opposite_direction{true};
+  bool use_opposite_lane{true};
 
   // enable update path when if detected objects on planner data is gone.
   bool enable_update_path_when_object_is_gone{false};
@@ -108,6 +110,9 @@ struct AvoidanceParameters
   // use hatched road markings for avoidance
   bool use_hatched_road_markings{false};
 
+  // use intersection area for avoidance
+  bool use_intersection_areas{false};
+
   // constrains
   bool use_constraints_for_decel{false};
 
@@ -122,6 +127,9 @@ struct AvoidanceParameters
 
   // comfortable jerk
   double nominal_jerk;
+
+  // To prevent large acceleration while avoidance.
+  double max_acceleration;
 
   // upper distance for envelope polygon expansion.
   double upper_distance_for_polygon_expansion;
@@ -193,9 +201,6 @@ struct AvoidanceParameters
   // keep target velocity in yield maneuver
   double yield_velocity;
 
-  // minimum stop distance
-  double stop_min_distance;
-
   // maximum stop distance
   double stop_max_distance;
 
@@ -208,25 +213,14 @@ struct AvoidanceParameters
   // Even if the vehicle speed is zero, avoidance will start after a distance of this much.
   double min_prepare_distance;
 
-  // minimum distance while avoiding TODO(Horibe): will be changed to jerk constraint later
-  double min_avoidance_distance;
-
-  // minimum speed for jerk calculation in a nominal situation, i.e. there is an enough
-  // distance for avoidance, and the object is very far from ego. In that case, the
-  // vehicle speed is unknown passing along the object. Then use this speed as a minimum.
-  // Note: This parameter is needed because we have to plan an avoidance path in advance
-  //       without knowing the speed of the distant path.
-  double min_nominal_avoidance_speed;
-
-  // minimum speed for jerk calculation in a tight situation, i.e. there is NOT an enough
-  // distance for avoidance. Need a sharp avoidance path to avoid the object.
-  double min_sharp_avoidance_speed;
-
   // minimum slow down speed
   double min_slow_down_speed;
 
   // slow down speed buffer
   double buf_slow_down_speed;
+
+  // nominal avoidance sped
+  double nominal_avoidance_speed;
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
@@ -238,25 +232,13 @@ struct AvoidanceParameters
   // Even if the obstacle is very large, it will not avoid more than this length for left direction
   double max_left_shift_length;
 
-  // Avoidance path is generated with this jerk.
-  // If there is no margin, the jerk increases up to max lateral jerk.
-  double nominal_lateral_jerk;
-
-  // if the avoidance path exceeds this lateral jerk, it will be not used anymore.
-  double max_lateral_jerk;
+  // To prevent large acceleration while avoidance.
+  double max_lateral_acceleration;
 
   // For the compensation of the detection lost. Once an object is observed, it is registered and
   // will be used for planning from the next time. If the object is not observed, it counts up the
   // lost_count and the registered object will be removed when the count exceeds this max count.
   double object_last_seen_threshold;
-
-  // For velocity planning to avoid acceleration during avoidance.
-  // Speeds smaller than this are not inserted.
-  double min_avoidance_speed_for_acc_prevention;
-
-  // To prevent large acceleration while avoidance. The max velocity is limited with this
-  // acceleration.
-  double max_avoidance_acceleration;
 
   // The avoidance path generation is performed when the shift distance of the
   // avoidance points is greater than this threshold.
@@ -267,6 +249,9 @@ struct AvoidanceParameters
   // shift lines whose shift length is less than threshold is added a request with other large shift
   // line.
   double lateral_small_shift_threshold;
+
+  // use for judge if the ego is shifting or not.
+  double lateral_avoid_check_threshold;
 
   // For shift line generation process. The continuous shift length is quantized by this value.
   double quantize_filter_threshold;
@@ -282,6 +267,18 @@ struct AvoidanceParameters
 
   // For shift line generation process. Remove sharp(=jerky) shift line.
   double sharp_shift_filter_threshold;
+
+  // target velocity matrix
+  std::vector<double> velocity_map;
+
+  // Minimum lateral jerk limitation map.
+  std::vector<double> lateral_min_jerk_map;
+
+  // Maximum lateral jerk limitation map.
+  std::vector<double> lateral_max_jerk_map;
+
+  // Maximum lateral acceleration limitation map.
+  std::vector<double> lateral_max_accel_map;
 
   // target velocity matrix
   std::vector<double> target_velocity_matrix;
@@ -467,8 +464,6 @@ struct AvoidancePlanningData
   AvoidLineArray safe_new_sl{};
 
   bool safe{false};
-
-  bool avoiding_now{false};
 
   bool avoid_required{false};
 

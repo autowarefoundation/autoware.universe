@@ -21,11 +21,57 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace behavior_path_planner
 {
+
+struct PoseWithVelocity
+{
+  Pose pose;
+  double velocity;
+
+  PoseWithVelocity(const Pose & pose, const double velocity) : pose(pose), velocity(velocity) {}
+};
+
+struct PoseWithVelocityStamped : public PoseWithVelocity
+{
+  double time;
+
+  PoseWithVelocityStamped(const double time, const Pose & pose, const double velocity)
+  : PoseWithVelocity(pose, velocity), time(time)
+  {
+  }
+};
+
+struct PoseWithVelocityAndPolygonStamped : public PoseWithVelocityStamped
+{
+  Polygon2d poly;
+
+  PoseWithVelocityAndPolygonStamped(
+    const double time, const Pose & pose, const double velocity, const Polygon2d & poly)
+  : PoseWithVelocityStamped(time, pose, velocity), poly(poly)
+  {
+  }
+};
+
+struct PredictedPathWithPolygon
+{
+  float confidence;
+  std::vector<PoseWithVelocityAndPolygonStamped> path;
+};
+
+struct ExtendedPredictedObject
+{
+  unique_identifier_msgs::msg::UUID uuid;
+  geometry_msgs::msg::PoseWithCovariance initial_pose;
+  geometry_msgs::msg::TwistWithCovariance initial_twist;
+  geometry_msgs::msg::AccelWithCovariance initial_acceleration;
+  autoware_auto_perception_msgs::msg::Shape shape;
+  std::vector<PredictedPathWithPolygon> predicted_paths;
+};
 
 struct LaneChangeCancelParameters
 {
@@ -59,7 +105,8 @@ struct LaneChangeParameters
   // collision check
   bool enable_prepare_segment_collision_check{true};
   double prepare_segment_ignore_object_velocity_thresh{0.1};
-  bool use_predicted_path_outside_lanelet{false};
+  bool check_objects_on_current_lanes{true};
+  bool check_objects_on_other_lanes{true};
   bool use_all_predicted_path{false};
 
   // true by default
@@ -101,11 +148,37 @@ struct LaneChangePhaseInfo
   }
 };
 
+struct LaneChangeInfo
+{
+  LaneChangePhaseInfo longitudinal_acceleration{0.0, 0.0};
+  LaneChangePhaseInfo velocity{0.0, 0.0};
+  LaneChangePhaseInfo duration{0.0, 0.0};
+  LaneChangePhaseInfo length{0.0, 0.0};
+
+  lanelet::ConstLanelets current_lanes{};
+  lanelet::ConstLanelets target_lanes{};
+
+  Pose lane_changing_start{};
+  Pose lane_changing_end{};
+
+  ShiftLine shift_line{};
+
+  double lateral_acceleration{0.0};
+  double terminal_lane_changing_velocity{0.0};
+};
+
 struct LaneChangeTargetObjectIndices
 {
   std::vector<size_t> current_lane{};
   std::vector<size_t> target_lane{};
   std::vector<size_t> other_lane{};
+};
+
+struct LaneChangeTargetObjects
+{
+  std::vector<ExtendedPredictedObject> current_lane{};
+  std::vector<ExtendedPredictedObject> target_lane{};
+  std::vector<ExtendedPredictedObject> other_lane{};
 };
 
 enum class LaneChangeModuleType {
@@ -116,9 +189,6 @@ enum class LaneChangeModuleType {
 
 struct AvoidanceByLCParameters : public AvoidanceParameters
 {
-  // execute if the target object number is larger than this param.
-  size_t execute_object_num{1};
-
   // execute only when the target object longitudinal distance is larger than this param.
   double execute_object_longitudinal_margin{0.0};
 

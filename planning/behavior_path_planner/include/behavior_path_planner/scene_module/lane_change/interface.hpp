@@ -15,7 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__INTERFACE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__INTERFACE_HPP_
 
-#include "behavior_path_planner/marker_util/lane_change/debug.hpp"
+#include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/lane_change/avoidance_by_lane_change.hpp"
 #include "behavior_path_planner/scene_module/lane_change/base_class.hpp"
 #include "behavior_path_planner/scene_module/lane_change/external_request.hpp"
@@ -133,64 +133,10 @@ public:
     const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
 
-protected:
-  void updateRTCStatus(const double start_distance, const double finish_distance) override;
-};
-
-class LaneChangeBTInterface : public LaneChangeInterface
-{
-public:
-  LaneChangeBTInterface(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<LaneChangeParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
-    std::unique_ptr<LaneChangeBase> && module_type);
-
-  LaneChangeBTInterface(const LaneChangeBTInterface &) = delete;
-  LaneChangeBTInterface(LaneChangeBTInterface &&) = delete;
-  LaneChangeBTInterface & operator=(const LaneChangeBTInterface &) = delete;
-  LaneChangeBTInterface & operator=(LaneChangeBTInterface &&) = delete;
-  ~LaneChangeBTInterface() override = default;
-
-  void processOnEntry() override;
-
-  BehaviorModuleOutput plan() override;
-
-  BehaviorModuleOutput planWaitingApproval() override;
-
-  CandidateOutput planCandidate() const override;
-
-  void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
-
-protected:
-  bool is_activated_{false};
-};
-
-class LaneChangeBTModule : public LaneChangeBTInterface
-{
-public:
-  LaneChangeBTModule(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<LaneChangeParameters> & parameters);
+  bool isExecutionRequested() const override;
 
 protected:
   void updateRTCStatus(const double start_distance, const double finish_distance) override;
-};
-
-class ExternalRequestLaneChangeLeftBTModule : public LaneChangeBTInterface
-{
-public:
-  ExternalRequestLaneChangeLeftBTModule(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<LaneChangeParameters> & parameters);
-};
-
-class ExternalRequestLaneChangeRightBTModule : public LaneChangeBTInterface
-{
-public:
-  ExternalRequestLaneChangeRightBTModule(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<LaneChangeParameters> & parameters);
 };
 }  // namespace behavior_path_planner
 
