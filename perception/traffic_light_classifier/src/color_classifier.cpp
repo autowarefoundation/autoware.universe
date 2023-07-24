@@ -191,7 +191,8 @@ bool ColorClassifier::getTrafficSignals(
 }
 
 bool ColorClassifier::filterHSV(
-  const cv::Mat & input_image_test, cv::Mat & green_image, cv::Mat & yellow_image, cv::Mat & red_image)
+  const cv::Mat & input_image_test, cv::Mat & green_image, cv::Mat & yellow_image,
+  cv::Mat & red_image)
 {
   cv::Mat hsv_image;
   cv::cvtColor(input_image_test, hsv_image, cv::COLOR_BGR2HSV);
