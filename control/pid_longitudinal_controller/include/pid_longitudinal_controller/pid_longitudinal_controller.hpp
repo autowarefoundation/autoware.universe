@@ -56,6 +56,7 @@ namespace trajectory_follower = ::autoware::motion::control::trajectory_follower
 class PidLongitudinalController : public trajectory_follower::LongitudinalControllerBase
 {
 public:
+  //! @param node Reference to te node used only for the initialization.
   explicit PidLongitudinalController(rclcpp::Node & node);
 
 private:

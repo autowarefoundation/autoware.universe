@@ -100,6 +100,7 @@ struct DebugData
 class PurePursuitLateralController : public LateralControllerBase
 {
 public:
+  //! @param node Reference to te node used only for the initialization.
   explicit PurePursuitLateralController(rclcpp::Node & node);
 
 private:

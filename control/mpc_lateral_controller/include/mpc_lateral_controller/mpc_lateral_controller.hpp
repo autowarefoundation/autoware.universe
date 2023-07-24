@@ -52,6 +52,7 @@ using tier4_debug_msgs::msg::Float32Stamped;
 class MpcLateralController : public trajectory_follower::LateralControllerBase
 {
 public:
+  //! @param node Reference to te node used only for the initialization.
   explicit MpcLateralController(rclcpp::Node & node);
   virtual ~MpcLateralController();
 
@@ -145,6 +146,7 @@ private:
    * @param wheelbase Vehicle's wheelbase.
    * @param steer_lim Steering command limit.
    * @param steer_tau Steering time constant.
+   * @param node Reference to the node.
    * @return Pointer to the created vehicle model.
    */
   std::shared_ptr<VehicleModelInterface> createVehicleModel(
@@ -152,6 +154,7 @@ private:
 
   /**
    * @brief Create the quadratic problem solver interface.
+   * @param node Reference to the node.
    * @return Pointer to the created QP solver interface.
    */
   std::shared_ptr<QPSolverInterface> createQPSolverInterface(rclcpp::Node & node);
@@ -159,6 +162,7 @@ private:
   /**
    * @brief Create the steering offset estimator for offset compensation.
    * @param wheelbase Vehicle's wheelbase.
+   * @param node Reference to the node.
    * @return Pointer to the created steering offset estimator.
    */
   std::shared_ptr<SteeringOffsetEstimator> createSteerOffsetEstimator(
@@ -252,6 +256,7 @@ private:
 
   /**
    * @brief Declare MPC parameters as ROS parameters to allow tuning on the fly.
+   * @param node Reference to the node.
    */
   void declareMPCparameters(rclcpp::Node & node);
 
