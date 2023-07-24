@@ -55,6 +55,10 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <memory>
+#include <string>
+#include <vector>
+
 class ArTagBasedLocalizer : public rclcpp::Node
 {
 public:

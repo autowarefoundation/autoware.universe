@@ -24,6 +24,8 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 
+#include <memory>
+
 class TagTfCaster : public rclcpp::Node
 {
 public:
