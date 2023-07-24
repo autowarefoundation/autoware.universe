@@ -68,7 +68,7 @@ public:
 
 private:
   bool filterHSV(
-    const cv::Mat & input_image, cv::Mat & green_image, cv::Mat & yellow_image,
+    const cv::Mat & input_image_test, cv::Mat & green_image, cv::Mat & yellow_image,
     cv::Mat & red_image);
   rcl_interfaces::msg::SetParametersResult parametersCallback(
     const std::vector<rclcpp::Parameter> & parameters);

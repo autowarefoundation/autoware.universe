@@ -28,7 +28,7 @@ class ClassifierInterface
 {
 public:
   virtual bool getTrafficSignals(
-    const std::vector<cv::Mat> & input_image,
+    const std::vector<cv::Mat> & input_image_test,
     tier4_perception_msgs::msg::TrafficSignalArray & traffic_signals) = 0;
 };
 }  // namespace traffic_light

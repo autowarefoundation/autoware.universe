@@ -60,12 +60,12 @@ bool ColorClassifier::getTrafficSignals(
     return false;
   }
   for (size_t image_i = 0; image_i < images.size(); image_i++) {
-    const auto & input_image = images[image_i];
+    const auto & input_image_test = images[image_i];
     auto & traffic_signal = traffic_signals.signals[image_i];
     cv::Mat green_image;
     cv::Mat yellow_image;
     cv::Mat red_image;
-    filterHSV(input_image, green_image, yellow_image, red_image);
+    filterHSV(input_image_test, green_image, yellow_image, red_image);
     // binarize
     cv::Mat green_bin_image;
     cv::Mat yellow_bin_image;
@@ -94,8 +94,8 @@ bool ColorClassifier::getTrafficSignals(
       cv::Mat debug_green_image;
       cv::Mat debug_yellow_image;
       cv::Mat debug_red_image;
-      cv::hconcat(input_image, input_image, debug_raw_image);
-      cv::hconcat(debug_raw_image, input_image, debug_raw_image);
+      cv::hconcat(input_image_test, input_image_test, debug_raw_image);
+      cv::hconcat(debug_raw_image, input_image_test, debug_raw_image);
       cv::hconcat(green_image, green_bin_image, debug_green_image);
       cv::hconcat(debug_green_image, green_filtered_bin_image, debug_green_image);
       cv::hconcat(yellow_image, yellow_bin_image, debug_yellow_image);
@@ -108,8 +108,8 @@ bool ColorClassifier::getTrafficSignals(
       cv::vconcat(debug_image, debug_red_image, debug_image);
       cv::cvtColor(debug_image, debug_image, cv::COLOR_GRAY2RGB);
       cv::vconcat(debug_raw_image, debug_image, debug_image);
-      const int width = input_image.cols;
-      const int height = input_image.rows;
+      const int width = input_image_test.cols;
+      const int height = input_image_test.rows;
       cv::line(
         debug_image, cv::Point(0, 0), cv::Point(debug_image.cols, 0), cv::Scalar(255, 255, 255), 1,
         CV_AA, 0);
@@ -191,10 +191,10 @@ bool ColorClassifier::getTrafficSignals(
 }
 
 bool ColorClassifier::filterHSV(
-  const cv::Mat & input_image, cv::Mat & green_image, cv::Mat & yellow_image, cv::Mat & red_image)
+  const cv::Mat & input_image_test, cv::Mat & green_image, cv::Mat & yellow_image, cv::Mat & red_image)
 {
   cv::Mat hsv_image;
-  cv::cvtColor(input_image, hsv_image, cv::COLOR_BGR2HSV);
+  cv::cvtColor(input_image_test, hsv_image, cv::COLOR_BGR2HSV);
   try {
     cv::inRange(hsv_image, min_hsv_green_, max_hsv_green_, green_image);
     cv::inRange(hsv_image, min_hsv_yellow_, max_hsv_yellow_, yellow_image);
