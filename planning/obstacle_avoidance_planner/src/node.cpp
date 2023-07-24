@@ -187,8 +187,6 @@ void ObstacleAvoidancePlanner::initializePlanning()
 void ObstacleAvoidancePlanner::resetPreviousData()
 {
   mpt_optimizer_ptr_->resetPreviousData();
-
-  prev_optimized_traj_points_ptr_ = nullptr;
 }
 
 void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
@@ -335,26 +333,19 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
 
   // 2. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
   //    with model predictive trajectory
-  const auto mpt_traj =
-    mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, p.traj_points);
-  if (!mpt_traj) {
-    return getPrevOptimizedTrajectory(p.traj_points);
-  }
-
-  // 3. make prev trajectories
-  prev_optimized_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(*mpt_traj);
+  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data, p.traj_points);
 
   time_keeper_ptr_->toc(__func__, "    ");
-  return *mpt_traj;
+  return mpt_traj;
 }
 
 std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::getPrevOptimizedTrajectory(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  if (prev_optimized_traj_points_ptr_) {
-    return *prev_optimized_traj_points_ptr_;
+  const auto prev_optimized_traj_points = mpt_optimizer_ptr_->getPrevOptimizedTrajectoryPoints();
+  if (prev_optimized_traj_points) {
+    return *prev_optimized_traj_points;
   }
-
   return traj_points;
 }
 
@@ -448,6 +439,7 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   }();
 
   if (first_outside_idx) {
+    debug_data_ptr_->stop_pose_by_drivable_area = optimized_traj_points.at(*first_outside_idx).pose;
     const auto stop_idx = [&]() {
       const auto dist = tier4_autoware_utils::calcDistance2d(
         optimized_traj_points.at(0), optimized_traj_points.at(*first_outside_idx));
@@ -467,6 +459,8 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
         optimized_traj_points.at(i).longitudinal_velocity_mps = 0.0;
       }
     }
+  } else {
+    debug_data_ptr_->stop_pose_by_drivable_area = std::nullopt;
   }
 
   time_keeper_ptr_->toc(__func__, "    ");

@@ -50,6 +50,8 @@ struct ObjectParameter
 {
   bool is_target{false};
 
+  size_t execute_num{1};
+
   double moving_speed_threshold{0.0};
 
   double moving_time_threshold{1.0};
@@ -247,6 +249,9 @@ struct AvoidanceParameters
   // shift lines whose shift length is less than threshold is added a request with other large shift
   // line.
   double lateral_small_shift_threshold;
+
+  // use for judge if the ego is shifting or not.
+  double lateral_avoid_check_threshold;
 
   // For shift line generation process. The continuous shift length is quantized by this value.
   double quantize_filter_threshold;
@@ -459,8 +464,6 @@ struct AvoidancePlanningData
   AvoidLineArray safe_new_sl{};
 
   bool safe{false};
-
-  bool avoiding_now{false};
 
   bool avoid_required{false};
 
