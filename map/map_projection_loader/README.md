@@ -41,6 +41,7 @@ mgrs_grid: "54SUE"
 ### Using UTM
 
 If you want to use UTM, please specify the map origin as well.
+
 ```yaml
 # map_projector_info.yaml
 type: "UTM"
