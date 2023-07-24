@@ -1,5 +1,8 @@
 #include "pose_estimator_manager/pose_estimator_manager.hpp"
 #include "pose_estimator_manager/pose_estimator_name.hpp"
+#include "pose_estimator_manager/sub_manager/sub_manager_eagleye.hpp"
+#include "pose_estimator_manager/sub_manager/sub_manager_ndt.hpp"
+#include "pose_estimator_manager/sub_manager/sub_manager_yabloc.hpp"
 
 #include <sstream>
 namespace multi_pose_estimator
@@ -23,19 +26,14 @@ PoseEstimatorManager::PoseEstimatorManager()
   for (auto pose_estimator_name : switch_rule_plugin_->supporting_pose_estimators()) {
     switch (pose_estimator_name) {
       case PoseEstimatorName::NDT:
-        clients_.emplace(
-          PoseEstimatorName::NDT,
-          std::make_shared<ManagerClient>(this, "~/ndt_enable_srv", service_callback_group_));
+        sub_managers_.emplace(PoseEstimatorName::NDT, std::make_shared<SubManagerNdt>(this));
         break;
       case PoseEstimatorName::YABLOC:
-        clients_.emplace(
-          PoseEstimatorName::YABLOC,
-          std::make_shared<ManagerClient>(this, "~/yabloc_enable_srv", service_callback_group_));
+        sub_managers_.emplace(PoseEstimatorName::YABLOC, std::make_shared<SubManagerYabLoc>(this));
         break;
-      case PoseEstimatorName::ARUCO:
-        clients_.emplace(
-          PoseEstimatorName::ARUCO,
-          std::make_shared<ManagerClient>(this, "~/aruco_enable_srv", service_callback_group_));
+      case PoseEstimatorName::EAGLEYE:
+        sub_managers_.emplace(
+          PoseEstimatorName::EAGLEYE, std::make_shared<SubManagerEagleye>(this));
         break;
       default:
         RCLCPP_WARN_STREAM(get_logger(), "invalid pose_estimator is specified");
@@ -66,11 +64,11 @@ void PoseEstimatorManager::load_switch_rule_plugin(rclcpp::Node & node, const st
 void PoseEstimatorManager::toggle_each(
   const std::unordered_map<PoseEstimatorName, bool> & toggle_list)
 {
-  for (auto c : clients_) {
-    if (toggle_list.at(c.first)) {
-      c.second->enable();
+  for (auto s : sub_managers_) {
+    if (toggle_list.at(s.first)) {
+      s.second->enable();
     } else {
-      c.second->disable();
+      s.second->disable();
     }
   }
 }
@@ -78,8 +76,8 @@ void PoseEstimatorManager::toggle_each(
 void PoseEstimatorManager::toggle_all(bool enabled)
 {
   std::unordered_map<PoseEstimatorName, bool> toggle_list;
-  for (auto c : clients_) {
-    toggle_list.emplace(c.first, enabled);
+  for (auto s : sub_managers_) {
+    toggle_list.emplace(s.first, enabled);
   }
 
   toggle_each(toggle_list);

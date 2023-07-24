@@ -3,29 +3,24 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <std_srvs/srv/set_bool.hpp>
-
 namespace multi_pose_estimator
 {
 class BasePoseEstimatorSubManager
 {
 public:
-  using SetBool = std_srvs::srv::SetBool;
+  using SharedPtr = std::shared_ptr<BasePoseEstimatorSubManager>;
 
-  BasePoseEstimatorSubManager(rclcpp::Node * node)
-  {
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    auto on_service = std::bind(&BasePoseEstimatorSubManager::on_service, this, _1, _2);
-    enable_server_ = node->create_service<SetBool>("~/enable_srv", on_service);
-  }
+  BasePoseEstimatorSubManager(rclcpp::Node * node) : logger_(node->get_logger()) {}
+
+  void enable() { set_enable(true); }
+  void disable() { set_enable(false); }
+
+  virtual void set_enable(bool enabled) = 0;
 
 protected:
-  virtual void on_service(
-    SetBool::Request::ConstSharedPtr request, SetBool::Response::SharedPtr response) = 0;
+  rclcpp::Logger logger_;
 
 private:
-  rclcpp::Service<SetBool>::SharedPtr enable_server_;
 };
 }  // namespace multi_pose_estimator
 

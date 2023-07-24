@@ -7,22 +7,14 @@
     <param name="pcd_occupancy_rule/pcd_density_threshold" value="20"/>
     <param name="estimator_switch_plugin" value="$(var estimator_switch_plugin)"/>
 
-    <remap from="~/ndt_enable_srv" to="/ndt_enable_srv"/>
-    <remap from="~/yabloc_enable_srv" to="/yabloc_enable_srv"/>
-  </node>
-
-  <node pkg="pose_estimator_manager" exec="yabloc_sub_manager" name="yabloc_sub_manager" output="screen">
-    <remap from="~/enable_srv" to="/yabloc_enable_srv"/>
-
+    <!-- yabloc -->
     <remap from="~/input/image" to="/localization/yabloc/image_processing/undistorted/image_raw"/>
     <remap from="~/output/image" to="/localization/yabloc/image_processing/undistorted/image_raw/relay"/>
-    <remap from="~/input/navpvt" to="/sensing/gnss/pose_with_covariance"/>
-    <remap from="~/output/navpvt" to="/sensing/gnss/pose_with_covariance/relay"/>
     <remap from="~/yabloc_suspend_srv" to="/yabloc_suspend_srv"/>
-  </node>
-
-  <node pkg="pose_estimator_manager" exec="ndt_sub_manager" name="ndt_sub_manager" output="screen">
-    <remap from="~/enable_srv" to="/ndt_enable_srv"/>
+    <!-- eagleye -->
+    <remap from="~/input/pose" to="/localization/eagleye/pose_with_covariance/to_relay"/>
+    <remap from="~/output/pose" to="/localization/pose_estimator/pose_with_covariance"/>
+    <!-- ndt -->
     <remap from="~/input/pointcloud" to="/sensing/lidar/top/outlier_filtered/pointcloud"/>
     <remap from="~/output/pointcloud" to="/sensing/lidar/top/outlier_filtered/pointcloud/relay"/>
   </node>

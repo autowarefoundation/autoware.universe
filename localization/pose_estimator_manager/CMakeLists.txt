@@ -9,12 +9,6 @@ ament_auto_add_executable(${PROJECT_NAME}
   src/pose_estimator_manager_node.cpp
 )
 
-ament_auto_add_executable(ndt_sub_manager
-  src/ndt_sub_manager.cpp
-)
-ament_auto_add_executable(yabloc_sub_manager
-  src/yabloc_sub_manager.cpp
-)
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${PCL_INCLUDE_DIRS})
 

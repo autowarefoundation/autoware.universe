@@ -1,6 +1,7 @@
 #ifndef POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_MANAGER_HPP_
 #define POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_MANAGER_HPP_
 
+#include "pose_estimator_manager/base_pose_estimator_sub_manager.hpp"
 #include "pose_estimator_manager/manager_client.hpp"
 #include "pose_estimator_manager/plugin_interface.hpp"
 
@@ -29,7 +30,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  std::unordered_map<PoseEstimatorName, ManagerClient::SharedPtr> clients_;
+  std::unordered_map<PoseEstimatorName, BasePoseEstimatorSubManager::SharedPtr> sub_managers_;
 
   pluginlib::ClassLoader<PluginInterface> plugin_loader_;
   std::shared_ptr<PluginInterface> switch_rule_plugin_;
