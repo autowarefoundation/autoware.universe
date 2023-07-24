@@ -210,29 +210,6 @@ void ArTagBasedLocalizer::cam_info_callback(const sensor_msgs::msg::CameraInfo &
   cam_info_received_ = true;
 }
 
-bool ArTagBasedLocalizer::get_transform(
-  const std::string & ref_frame, const std::string & child_frame,
-  geometry_msgs::msg::TransformStamped & transform)
-{
-  std::string err_msg;
-  if (!tf_buffer_->canTransform(
-        ref_frame, child_frame, tf2::TimePointZero, tf2::durationFromSec(0.5), &err_msg)) {
-    RCLCPP_ERROR_STREAM(this->get_logger(), "Unable to get pose from TF: " << err_msg);
-    return false;
-  }
-
-  try {
-    transform = tf_buffer_->lookupTransform(
-      ref_frame, child_frame, tf2::TimePointZero, tf2::durationFromSec(0.5));
-  } catch (const tf2::TransformException & e) {
-    RCLCPP_ERROR_STREAM(
-      this->get_logger(),
-      "Error in lookupTransform of " << child_frame << " in " << ref_frame << " : " << e.what());
-    return false;
-  }
-  return true;
-}
-
 void ArTagBasedLocalizer::publish_pose_as_base_link(const geometry_msgs::msg::PoseStamped & msg)
 {
   // Check if frame_id is in target_tag_ids

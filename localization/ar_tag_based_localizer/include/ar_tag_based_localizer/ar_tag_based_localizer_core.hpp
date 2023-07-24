@@ -69,9 +69,6 @@ public:
 private:
   void image_callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg);
   void cam_info_callback(const sensor_msgs::msg::CameraInfo & msg);
-  bool get_transform(
-    const std::string & ref_frame, const std::string & child_frame,
-    geometry_msgs::msg::TransformStamped & transform);
   void publish_pose_as_base_link(const geometry_msgs::msg::PoseStamped & msg);
 
   // Parameters
