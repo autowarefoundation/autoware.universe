@@ -14,11 +14,7 @@ target_link_libraries(map_projection_loader yaml-cpp)
 
 if(BUILD_TESTING)
   add_launch_test(
-    test/test_map_projection_loader_mgrs.test.py
-    TIMEOUT "30"
-  )
-  add_launch_test(
-    test/test_map_projection_loader_default.test.py
+    test/test_map_projection_loader_from_yaml.test.py
     TIMEOUT "30"
   )
   install(DIRECTORY

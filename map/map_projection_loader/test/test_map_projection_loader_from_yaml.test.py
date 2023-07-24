@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import unittest
 
 from ament_index_python import get_package_share_directory
@@ -32,16 +33,24 @@ import yaml
 
 logger = get_logger(__name__)
 
+YAML_FILE_PATH = "test/data/projection_info_mgrs.yaml"
+
 
 @pytest.mark.launch_test
 def generate_test_description():
+    map_projection_info_path = os.path.join(
+        get_package_share_directory("map_projection_loader"), YAML_FILE_PATH
+    )
+
     map_projection_loader_node = Node(
         package="map_projection_loader",
         executable="map_projection_loader",
         output="screen",
         parameters=[
             {
-                "use_local_projector": True,
+                "map_projector_info_path": map_projection_info_path,
+                "lanelet2_map_path": "",
+                "use_local_projector": False,
             },
         ],
     )
@@ -100,7 +109,7 @@ class TestEKFLocalizer(unittest.TestCase):
 
         # Create subscription to map_projector_info topic
         subscription = self.test_node.create_subscription(
-            MapProjectorInfo, "map_projector_info", self.callback, custom_qos_profile
+            MapProjectorInfo, "/map_projection_loader/map_projector_info", self.callback, custom_qos_profile
         )
 
         # Give time for the message to be received and processed
@@ -108,11 +117,28 @@ class TestEKFLocalizer(unittest.TestCase):
             self.test_node, rclpy.task.Future(), timeout_sec=self.evaluation_time
         )
 
+        # Load the yaml file directly
+        map_projection_info_path = os.path.join(
+            get_package_share_directory("map_projection_loader"), YAML_FILE_PATH
+        )
+        with open(map_projection_info_path) as f:
+            yaml_data = yaml.load(f)
+
         # Test if message received
         self.assertIsNotNone(
             self.received_message, "No message received on map_projector_info topic"
         )
-        self.assertEqual(self.received_message.type, "local")
+        self.assertEqual(self.received_message.type, yaml_data["type"])
+        self.assertEqual(self.received_message.mgrs_grid, yaml_data["mgrs_grid"])
+        self.assertEqual(
+            self.received_message.map_origin.latitude, yaml_data["map_origin"]["latitude"]
+        )
+        self.assertEqual(
+            self.received_message.map_origin.longitude, yaml_data["map_origin"]["longitude"]
+        )
+        self.assertEqual(
+            self.received_message.map_origin.altitude, yaml_data["map_origin"]["altitude"]
+        )
 
         self.test_node.destroy_subscription(subscription)
 
