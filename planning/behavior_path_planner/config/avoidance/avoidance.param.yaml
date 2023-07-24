@@ -11,16 +11,18 @@
 
       # avoidance module common setting
       enable_bound_clipping: false
-      enable_avoidance_over_same_direction: true
-      enable_avoidance_over_opposite_direction: true
       enable_update_path_when_object_is_gone: false
       enable_force_avoidance_for_stopped_vehicle: false
       enable_safety_check: true
       enable_yield_maneuver: true
       enable_yield_maneuver_during_shifting: false
       disable_path_update: false
-      use_hatched_road_markings: false
+
+      # drivable area setting
+      use_adjacent_lane: true
+      use_opposite_lane: true
       use_intersection_areas: false
+      use_hatched_road_markings: false
 
       # for debug
       publish_debug_marker: false
@@ -136,6 +138,7 @@
         lateral:
           lateral_execution_threshold: 0.499            # [m]
           lateral_small_shift_threshold: 0.101          # [m]
+          lateral_avoid_check_threshold: 0.1            # [m]
           road_shoulder_safety_margin: 0.3              # [m]
           max_right_shift_length: 5.0
           max_left_shift_length: 5.0
@@ -143,11 +146,9 @@
         longitudinal:
           prepare_time: 2.0                             # [s]
           min_prepare_distance: 1.0                     # [m]
-          min_avoidance_distance: 10.0                  # [m]
-          min_nominal_avoidance_speed: 7.0              # [m/s]
-          min_sharp_avoidance_speed: 1.0                # [m/s]
           min_slow_down_speed: 1.38                     # [m/s]
           buf_slow_down_speed: 0.56                     # [m/s]
+          nominal_avoidance_speed: 8.33                 # [m/s]
 
       # For yield maneuver
       yield:
@@ -155,7 +156,6 @@
 
       # For stop maneuver
       stop:
-        min_distance: 10.0                              # [m]
         max_distance: 20.0                              # [m]
         stop_buffer: 1.0                                # [m]
 
@@ -165,9 +165,10 @@
 
         # lateral constraints
         lateral:
-          nominal_lateral_jerk: 0.2                     # [m/sss]
-          max_lateral_jerk: 1.0                         # [m/sss]
-          max_lateral_acceleration: 0.5                 # [m/ss]
+          velocity: [1.0, 1.38, 11.1]                   # [m/s]
+          max_accel_values: [0.5, 0.5, 0.5]             # [m/ss]
+          min_jerk_values: [0.2, 0.2, 0.2]              # [m/sss]
+          max_jerk_values: [1.0, 1.0, 1.0]             # [m/sss]
 
         # longitudinal constraints
         longitudinal:

@@ -100,6 +100,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     time_keeper_ptr_->enable_calculation_time_info =
       declare_parameter<bool>("option.debug.enable_calculation_time_info");
 
+    vehicle_stop_margin_outside_drivable_area_ =
+      declare_parameter<double>("common.vehicle_stop_margin_outside_drivable_area");
+
     // parameters for ego nearest search
     ego_nearest_param_ = EgoNearestParam(this);
 
@@ -149,6 +152,10 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
     parameters, "option.debug.enable_calculation_time_info",
     time_keeper_ptr_->enable_calculation_time_info);
 
+  updateParam<double>(
+    parameters, "common.vehicle_stop_margin_outside_drivable_area",
+    vehicle_stop_margin_outside_drivable_area_);
+
   // parameters for ego nearest search
   ego_nearest_param_.onParam(parameters);
 
@@ -180,8 +187,6 @@ void ObstacleAvoidancePlanner::initializePlanning()
 void ObstacleAvoidancePlanner::resetPreviousData()
 {
   mpt_optimizer_ptr_->resetPreviousData();
-
-  prev_optimized_traj_points_ptr_ = nullptr;
 }
 
 void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
@@ -328,26 +333,19 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
 
   // 2. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
   //    with model predictive trajectory
-  const auto mpt_traj =
-    mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, p.traj_points);
-  if (!mpt_traj) {
-    return getPrevOptimizedTrajectory(p.traj_points);
-  }
-
-  // 3. make prev trajectories
-  prev_optimized_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(*mpt_traj);
+  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data, p.traj_points);
 
   time_keeper_ptr_->toc(__func__, "    ");
-  return *mpt_traj;
+  return mpt_traj;
 }
 
 std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::getPrevOptimizedTrajectory(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  if (prev_optimized_traj_points_ptr_) {
-    return *prev_optimized_traj_points_ptr_;
+  const auto prev_optimized_traj_points = mpt_optimizer_ptr_->getPrevOptimizedTrajectoryPoints();
+  if (prev_optimized_traj_points) {
+    return *prev_optimized_traj_points;
   }
-
   return traj_points;
 }
 
@@ -434,16 +432,29 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
         use_footprint_polygon_for_outside_drivable_area_check_);
 
       if (is_outside) {
-        publishVirtualWall(traj_point.pose);
         return i;
       }
     }
     return std::nullopt;
   }();
 
-  if (enable_outside_drivable_area_stop_) {
-    if (first_outside_idx) {
-      for (size_t i = *first_outside_idx; i < optimized_traj_points.size(); ++i) {
+  if (first_outside_idx) {
+    const auto stop_idx = [&]() {
+      const auto dist = tier4_autoware_utils::calcDistance2d(
+        optimized_traj_points.at(0), optimized_traj_points.at(*first_outside_idx));
+      const auto dist_with_margin = dist - vehicle_stop_margin_outside_drivable_area_;
+      const auto first_outside_idx_with_margin =
+        motion_utils::insertStopPoint(dist_with_margin, optimized_traj_points);
+      if (first_outside_idx_with_margin) {
+        return *first_outside_idx_with_margin;
+      }
+      return *first_outside_idx;
+    }();
+
+    publishVirtualWall(optimized_traj_points.at(stop_idx).pose);
+
+    if (enable_outside_drivable_area_stop_) {
+      for (size_t i = stop_idx; i < optimized_traj_points.size(); ++i) {
         optimized_traj_points.at(i).longitudinal_velocity_mps = 0.0;
       }
     }

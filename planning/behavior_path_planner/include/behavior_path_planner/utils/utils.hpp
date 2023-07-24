@@ -16,7 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_util/debug_utilities.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
@@ -406,7 +406,9 @@ DrivableAreaInfo combineDrivableAreaInfo(
 void extractObstaclesFromDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableAreaInfo::Obstacle> & obstacles);
 
-void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound_left);
+void makeBoundLongitudinallyMonotonic(
+  PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const bool is_bound_left);
 
 std::optional<lanelet::Polygon3d> getPolygonByPoint(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstPoint3d & point,
