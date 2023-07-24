@@ -119,7 +119,7 @@ public:
    * @return vector of lanelet having same direction if true
    */
   boost::optional<lanelet::ConstLanelet> getRightLanelet(
-    const lanelet::ConstLanelet & lanelet) const;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
 
   /**
    * @brief Check if same-direction lane is available at the left side of the lanelet
@@ -129,7 +129,7 @@ public:
    * @return vector of lanelet having same direction if true
    */
   boost::optional<lanelet::ConstLanelet> getLeftLanelet(
-    const lanelet::ConstLanelet & lanelet) const;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
   lanelet::ConstLanelets getNextLanelets(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getPreviousLanelets(const lanelet::ConstLanelet & lanelet) const;
 
@@ -191,7 +191,8 @@ public:
    * @param the lanelet of interest
    * @return vector of lanelet having same direction if true
    */
-  lanelet::ConstLanelet getMostRightLanelet(const lanelet::ConstLanelet & lanelet) const;
+  lanelet::ConstLanelet getMostRightLanelet(
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
 
   /**
    * @brief Check if same-direction lane is available at the left side of the lanelet
@@ -200,7 +201,8 @@ public:
    * @param the lanelet of interest
    * @return vector of lanelet having same direction if true
    */
-  lanelet::ConstLanelet getMostLeftLanelet(const lanelet::ConstLanelet & lanelet) const;
+  lanelet::ConstLanelet getMostLeftLanelet(
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
 
   /**
    * @brief Searches the furthest linestring to the right side of the lanelet
@@ -209,7 +211,7 @@ public:
    * @return right most linestring of the lane with same direction
    */
   lanelet::ConstLineString3d getRightMostSameDirectionLinestring(
-    const lanelet::ConstLanelet & lanelet) const noexcept;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const noexcept;
 
   /**
    * @brief Searches the furthest linestring to the right side of the lanelet
@@ -218,7 +220,7 @@ public:
    * @return right most linestring
    */
   lanelet::ConstLineString3d getRightMostLinestring(
-    const lanelet::ConstLanelet & lanelet) const noexcept;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const noexcept;
 
   /**
    * @brief Searches the furthest linestring to the left side of the lanelet
@@ -227,7 +229,7 @@ public:
    * @return left most linestring of the lane with same direction
    */
   lanelet::ConstLineString3d getLeftMostSameDirectionLinestring(
-    const lanelet::ConstLanelet & lanelet) const noexcept;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const noexcept;
 
   /**
    * @brief Searches the furthest linestring to the left side of the lanelet
@@ -236,7 +238,7 @@ public:
    * @return left most linestring
    */
   lanelet::ConstLineString3d getLeftMostLinestring(
-    const lanelet::ConstLanelet & lanelet) const noexcept;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const noexcept;
 
   /**
    * @brief Return furthest linestring on both side of the lanelet
@@ -248,7 +250,7 @@ public:
    */
   lanelet::ConstLineStrings3d getFurthestLinestring(
     const lanelet::ConstLanelet & lanelet, bool is_right = true, bool is_left = true,
-    bool is_opposite = true) const noexcept;
+    bool is_opposite = true, bool enable_same_root = false) const noexcept;
 
   /**
    * Retrieves a sequence of lanelets before the given lanelet.
@@ -323,6 +325,7 @@ public:
     const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
   lanelet::ConstLanelets getShoulderLanelets() const;
   bool isShoulderLanelet(const lanelet::ConstLanelet & lanelet) const;
+  bool isRouteLanelet(const lanelet::ConstLanelet & lanelet) const;
 
   // for path
   PathWithLaneId getCenterLinePath(
@@ -423,6 +426,25 @@ private:
   // for path
 
   PathWithLaneId updatePathTwist(const PathWithLaneId & path) const;
+  /**
+   * @brief Checks if a path has a no_drivable_lane or not
+   * @param path lanelet path
+   * @return true if the lanelet path includes at least one no_drivable_lane, false if it does not
+   * include any.
+   */
+  bool hasNoDrivableLaneInPath(const lanelet::routing::LaneletPath & path) const;
+  /**
+   * @brief Searches for a path between start and goal lanelets that does not include any
+   * no_drivable_lane. If there is more than one path fount, the function returns the shortest path
+   * that does not include any no_drivable_lane.
+   * @param start_lanelet start lanelet
+   * @param goal_lanelet goal lanelet
+   * @param drivable_lane_path output path that does not include no_drivable_lane.
+   * @return true if a path without any no_drivable_lane found, false if this path is not found.
+   */
+  bool findDrivableLanePath(
+    const lanelet::ConstLanelet & start_lanelet, const lanelet::ConstLanelet & goal_lanelet,
+    lanelet::routing::LaneletPath & drivable_lane_path) const;
 };
 }  // namespace route_handler
 #endif  // ROUTE_HANDLER__ROUTE_HANDLER_HPP_

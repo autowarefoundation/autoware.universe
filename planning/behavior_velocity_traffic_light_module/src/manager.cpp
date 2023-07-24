@@ -28,7 +28,9 @@ namespace behavior_velocity_planner
 using lanelet::TrafficLight;
 
 TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterfaceWithRTC(node, getModuleName())
+: SceneModuleManagerInterfaceWithRTC(
+    node, getModuleName(),
+    node.declare_parameter<bool>(std::string(getModuleName()) + ".enable_rtc"))
 {
   const std::string ns(getModuleName());
   planner_param_.stop_margin = node.declare_parameter<double>(ns + ".stop_margin");
@@ -93,16 +95,15 @@ void TrafficLightModuleManager::modifyPathVelocity(
     for (const auto & marker : traffic_light_scene_module->createDebugMarkerArray().markers) {
       debug_marker_array.markers.push_back(marker);
     }
-    for (const auto & marker : traffic_light_scene_module->createVirtualWallMarkerArray().markers) {
-      virtual_wall_marker_array.markers.push_back(marker);
-    }
+    virtual_wall_marker_creator_.add_virtual_walls(
+      traffic_light_scene_module->createVirtualWalls());
   }
   if (!stop_reason_array.stop_reasons.empty()) {
     pub_stop_reason_->publish(stop_reason_array);
   }
   pub_velocity_factor_->publish(velocity_factor_array);
   pub_debug_->publish(debug_marker_array);
-  pub_virtual_wall_->publish(virtual_wall_marker_array);
+  pub_virtual_wall_->publish(virtual_wall_marker_creator_.create_markers(clock_->now()));
   pub_tl_state_->publish(tl_state);
 }
 

@@ -13,14 +13,15 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
+  <depend>object_recognition_utils</depend>
   <depend>pcl_ros</depend>
-  <depend>perception_utils</depend>
   <depend>python3-open3d</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tensorrt_common</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_sensor_msgs</depend>
   <depend>tier4_autoware_utils</depend>
 
   <test_depend>ament_lint_auto</test_depend>

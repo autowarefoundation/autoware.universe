@@ -46,7 +46,12 @@
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
+#if __has_include(<rosbag2_storage_sqlite3/sqlite_statement_wrapper.hpp>)
+#include <rosbag2_storage_sqlite3/sqlite_statement_wrapper.hpp>
+#else
 #include <rosbag2_storage_default_plugins/sqlite/sqlite_statement_wrapper.hpp>
+#endif
 
 ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & options)
 : Node("elevation_map_loader", options)
@@ -136,7 +141,8 @@ void ElevationMapLoaderNode::publish()
     try {
       is_bag_loaded = grid_map::GridMapRosConverter::loadFromBag(
         *data_manager_.elevation_map_path_, "elevation_map", elevation_map_);
-    } catch (rosbag2_storage_plugins::SqliteException & e) {
+    } catch (const std::runtime_error & e) {
+      RCLCPP_ERROR(this->get_logger(), e.what());
       is_bag_loaded = false;
     }
     if (!is_bag_loaded) {

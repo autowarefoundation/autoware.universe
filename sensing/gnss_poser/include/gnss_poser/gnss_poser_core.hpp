@@ -55,9 +55,12 @@ private:
   bool isFixed(const sensor_msgs::msg::NavSatStatus & nav_sat_status_msg);
   bool canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg);
   GNSSStat convert(
-    const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, CoordinateSystem coordinate_system);
+    const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, CoordinateSystem coordinate_system,
+    int height_system);
   geometry_msgs::msg::Point getPosition(const GNSSStat & gnss_stat);
   geometry_msgs::msg::Point getMedianPosition(
+    const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer);
+  geometry_msgs::msg::Point getAveragePosition(
     const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer);
   geometry_msgs::msg::Quaternion getQuaternionByHeading(const int heading);
   geometry_msgs::msg::Quaternion getQuaternionByPositionDifference(
@@ -101,6 +104,8 @@ private:
 
   autoware_sensing_msgs::msg::GnssInsOrientationStamped::SharedPtr
     msg_gnss_ins_orientation_stamped_;
+  int height_system_;
+  int gnss_pose_pub_method;
 };
 }  // namespace gnss_poser
 

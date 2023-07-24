@@ -49,19 +49,20 @@ public:
     clock_(*node->get_clock()),
     logger_(node->get_logger().get_child(name)),
     name_(name),
-    max_module_num_(config.max_module_size),
-    priority_(config.priority),
     enable_simultaneous_execution_as_approved_module_(
       config.enable_simultaneous_execution_as_approved_module),
     enable_simultaneous_execution_as_candidate_module_(
-      config.enable_simultaneous_execution_as_candidate_module)
+      config.enable_simultaneous_execution_as_candidate_module),
+    enable_rtc_(config.enable_rtc),
+    max_module_num_(config.max_module_size),
+    priority_(config.priority)
   {
     for (const auto & rtc_type : rtc_types) {
       const auto snake_case_name = utils::convertToSnakeCase(name);
       const auto rtc_interface_name =
         rtc_type == "" ? snake_case_name : snake_case_name + "_" + rtc_type;
       rtc_interface_ptr_map_.emplace(
-        rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name));
+        rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name, enable_rtc_));
     }
 
     pub_info_marker_ = node->create_publisher<MarkerArray>("~/info/" + name, 20);
@@ -154,6 +155,9 @@ public:
         appendMarkerArray(virtual_wall, &markers);
       }
 
+      const auto module_specific_wall = m->getModuleVirtualWall();
+      appendMarkerArray(module_specific_wall, &markers);
+
       m->resetWallPoses();
     }
 
@@ -203,6 +207,10 @@ public:
 
   bool isSimultaneousExecutableAsApprovedModule() const
   {
+    if (registered_modules_.empty()) {
+      return enable_simultaneous_execution_as_approved_module_;
+    }
+
     return std::all_of(
       registered_modules_.begin(), registered_modules_.end(), [](const SceneModulePtr & module) {
         return module->isSimultaneousExecutableAsApprovedModule();
@@ -211,6 +219,10 @@ public:
 
   bool isSimultaneousExecutableAsCandidateModule() const
   {
+    if (registered_modules_.empty()) {
+      return enable_simultaneous_execution_as_candidate_module_;
+    }
+
     return std::all_of(
       registered_modules_.begin(), registered_modules_.end(), [](const SceneModulePtr & module) {
         return module->isSimultaneousExecutableAsCandidateModule();
@@ -269,14 +281,16 @@ protected:
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 
-private:
-  size_t max_module_num_;
-
-  size_t priority_;
-
   bool enable_simultaneous_execution_as_approved_module_{false};
 
   bool enable_simultaneous_execution_as_candidate_module_{false};
+
+private:
+  bool enable_rtc_;
+
+  size_t max_module_num_;
+
+  size_t priority_;
 };
 
 }  // namespace behavior_path_planner

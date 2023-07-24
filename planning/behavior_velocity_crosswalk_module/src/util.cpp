@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "util.hpp"
+#include "behavior_velocity_crosswalk_module/util.hpp"
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -42,28 +42,83 @@
 
 namespace behavior_velocity_planner
 {
-
 namespace bg = boost::geometry;
-using Point = bg::model::d2::point_xy<double>;
-using Polygon = bg::model::polygon<Point>;
-using Line = bg::model::linestring<Point>;
 using motion_utils::calcSignedArcLength;
 using tier4_autoware_utils::createPoint;
+using tier4_autoware_utils::Line2d;
+using tier4_autoware_utils::Point2d;
 
-std::vector<Point> getPolygonIntersects(
+std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
+  const geometry_msgs::msg::Pose & current_pose,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
+{
+  std::vector<lanelet::ConstLanelet> crosswalks;
+
+  // Add current lane id
+  const auto nearest_lane_id =
+    behavior_velocity_planner::planning_utils::getNearestLaneId(path, lanelet_map, current_pose);
+
+  std::vector<int64_t> unique_lane_ids;
+  if (nearest_lane_id) {
+    // Add subsequent lane_ids from nearest lane_id
+    unique_lane_ids = behavior_velocity_planner::planning_utils::getSubsequentLaneIdsSetOnPath(
+      path, *nearest_lane_id);
+  } else {
+    // Add all lane_ids in path
+    unique_lane_ids = behavior_velocity_planner::planning_utils::getSortedLaneIdsFromPath(path);
+  }
+
+  for (const auto lane_id : unique_lane_ids) {
+    const auto ll = lanelet_map->laneletLayer.get(lane_id);
+
+    constexpr int PEDESTRIAN_GRAPH_ID = 1;
+    const auto conflicting_crosswalks = overall_graphs->conflictingInGraph(ll, PEDESTRIAN_GRAPH_ID);
+    for (const auto & crosswalk : conflicting_crosswalks) {
+      crosswalks.push_back(crosswalk);
+    }
+  }
+
+  return crosswalks;
+}
+
+std::set<int64_t> getCrosswalkIdSetOnPath(
+  const geometry_msgs::msg::Pose & current_pose,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::LaneletMapPtr lanelet_map,
+  const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
+{
+  std::set<int64_t> crosswalk_id_set;
+
+  for (const auto & crosswalk :
+       getCrosswalksOnPath(current_pose, path, lanelet_map, overall_graphs)) {
+    crosswalk_id_set.insert(crosswalk.id());
+  }
+
+  return crosswalk_id_set;
+}
+
+bool checkRegulatoryElementExistence(const lanelet::LaneletMapPtr & lanelet_map_ptr)
+{
+  const auto all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr);
+  return !lanelet::utils::query::crosswalks(all_lanelets).empty();
+}
+
+std::vector<geometry_msgs::msg::Point> getPolygonIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
   const geometry_msgs::msg::Point & ego_pos,
   const size_t max_num = std::numeric_limits<size_t>::max())
 {
-  std::vector<Point> intersects{};
+  std::vector<Point2d> intersects{};
 
   bool found_max_num = false;
   for (size_t i = 0; i < ego_path.points.size() - 1; ++i) {
     const auto & p_back = ego_path.points.at(i).point.pose.position;
     const auto & p_front = ego_path.points.at(i + 1).point.pose.position;
-    const Line segment{{p_back.x, p_back.y}, {p_front.x, p_front.y}};
+    const Line2d segment{{p_back.x, p_back.y}, {p_front.x, p_front.y}};
 
-    std::vector<Point> tmp_intersects{};
+    std::vector<Point2d> tmp_intersects{};
     bg::intersection(segment, polygon, tmp_intersects);
 
     for (const auto & p : tmp_intersects) {
@@ -79,7 +134,7 @@ std::vector<Point> getPolygonIntersects(
     }
   }
 
-  const auto compare = [&](const Point & p1, const Point & p2) {
+  const auto compare = [&](const Point2d & p1, const Point2d & p2) {
     const auto dist_l1 =
       calcSignedArcLength(ego_path.points, size_t(0), createPoint(p1.x(), p1.y(), ego_pos.z));
 
@@ -91,23 +146,28 @@ std::vector<Point> getPolygonIntersects(
 
   std::sort(intersects.begin(), intersects.end(), compare);
 
-  return intersects;
+  // convert tier4_autoware_utils::Point2d to geometry::msg::Point
+  std::vector<geometry_msgs::msg::Point> geometry_points;
+  for (const auto & p : intersects) {
+    geometry_points.push_back(createPoint(p.x(), p.y(), ego_pos.z));
+  }
+  return geometry_points;
 }
 
-std::vector<Point> getLinestringIntersects(
+std::vector<geometry_msgs::msg::Point> getLinestringIntersects(
   const PathWithLaneId & ego_path, const lanelet::BasicLineString2d & linestring,
   const geometry_msgs::msg::Point & ego_pos,
   const size_t max_num = std::numeric_limits<size_t>::max())
 {
-  std::vector<Point> intersects{};
+  std::vector<Point2d> intersects{};
 
   bool found_max_num = false;
   for (size_t i = 0; i < ego_path.points.size() - 1; ++i) {
     const auto & p_back = ego_path.points.at(i).point.pose.position;
     const auto & p_front = ego_path.points.at(i + 1).point.pose.position;
-    const Line segment{{p_back.x, p_back.y}, {p_front.x, p_front.y}};
+    const Line2d segment{{p_back.x, p_back.y}, {p_front.x, p_front.y}};
 
-    std::vector<Point> tmp_intersects{};
+    std::vector<Point2d> tmp_intersects{};
     bg::intersection(segment, linestring, tmp_intersects);
 
     for (const auto & p : tmp_intersects) {
@@ -123,7 +183,7 @@ std::vector<Point> getLinestringIntersects(
     }
   }
 
-  const auto compare = [&](const Point & p1, const Point & p2) {
+  const auto compare = [&](const Point2d & p1, const Point2d & p2) {
     const auto dist_l1 =
       calcSignedArcLength(ego_path.points, size_t(0), createPoint(p1.x(), p1.y(), ego_pos.z));
 
@@ -135,15 +195,19 @@ std::vector<Point> getLinestringIntersects(
 
   std::sort(intersects.begin(), intersects.end(), compare);
 
-  return intersects;
+  // convert tier4_autoware_utils::Point2d to geometry::msg::Point
+  std::vector<geometry_msgs::msg::Point> geometry_points;
+  for (const auto & p : intersects) {
+    geometry_points.push_back(createPoint(p.x(), p.y(), ego_pos.z));
+  }
+  return geometry_points;
 }
 
-lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(
-  const int lane_id, const std::shared_ptr<const PlannerData> & planner_data,
+std::optional<lanelet::ConstLineString3d> getStopLineFromMap(
+  const int lane_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const std::string & attribute_name)
 {
-  lanelet::ConstLanelet lanelet =
-    planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id);
+  lanelet::ConstLanelet lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
   const auto road_markings = lanelet.regulatoryElementsAs<lanelet::autoware::RoadMarking>();
   lanelet::ConstLineStrings3d stop_line;
   for (const auto & road_marking : road_markings) {

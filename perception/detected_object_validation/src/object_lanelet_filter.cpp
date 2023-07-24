@@ -14,7 +14,7 @@
 
 #include "detected_object_filter/object_lanelet_filter.hpp"
 
-#include <perception_utils/perception_utils.hpp>
+#include <object_recognition_utils/object_recognition_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <boost/geometry/algorithms/convex_hull.hpp>
@@ -76,7 +76,7 @@ void ObjectLaneletFilterNode::objectCallback(
     return;
   }
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
-  if (!perception_utils::transformObjects(
+  if (!object_recognition_utils::transformObjects(
         *input_msg, lanelet_frame_id_, tf_buffer_, transformed_objects)) {
     RCLCPP_ERROR(get_logger(), "Failed transform to %s.", lanelet_frame_id_.c_str());
     return;
@@ -89,7 +89,7 @@ void ObjectLaneletFilterNode::objectCallback(
 
   int index = 0;
   for (const auto & object : transformed_objects.objects) {
-    const auto & footprint = object.shape.footprint;
+    const auto footprint = setFootprint(object);
     const auto & label = object.classification.front().label;
     if (filter_target_.isTarget(label)) {
       Polygon2d polygon;
@@ -110,13 +110,39 @@ void ObjectLaneletFilterNode::objectCallback(
   object_pub_->publish(output_object_msg);
 }
 
+geometry_msgs::msg::Polygon ObjectLaneletFilterNode::setFootprint(
+  const autoware_auto_perception_msgs::msg::DetectedObject & detected_object)
+{
+  geometry_msgs::msg::Polygon footprint;
+  if (detected_object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    const auto object_size = detected_object.shape.dimensions;
+    const double x_front = object_size.x / 2.0;
+    const double x_rear = -object_size.x / 2.0;
+    const double y_left = object_size.y / 2.0;
+    const double y_right = -object_size.y / 2.0;
+
+    footprint.points.push_back(
+      geometry_msgs::build<geometry_msgs::msg::Point32>().x(x_front).y(y_left).z(0.0));
+    footprint.points.push_back(
+      geometry_msgs::build<geometry_msgs::msg::Point32>().x(x_front).y(y_right).z(0.0));
+    footprint.points.push_back(
+      geometry_msgs::build<geometry_msgs::msg::Point32>().x(x_rear).y(y_right).z(0.0));
+    footprint.points.push_back(
+      geometry_msgs::build<geometry_msgs::msg::Point32>().x(x_rear).y(y_left).z(0.0));
+  } else {
+    footprint = detected_object.shape.footprint;
+  }
+  return footprint;
+}
+
 LinearRing2d ObjectLaneletFilterNode::getConvexHull(
   const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects)
 {
   MultiPoint2d candidate_points;
   for (const auto & object : detected_objects.objects) {
     const auto & pos = object.kinematics.pose_with_covariance.pose.position;
-    for (const auto & p : object.shape.footprint.points) {
+    const auto footprint = setFootprint(object);
+    for (const auto & p : footprint.points) {
       candidate_points.emplace_back(p.x + pos.x, p.y + pos.y);
     }
   }
