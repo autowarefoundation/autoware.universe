@@ -52,7 +52,7 @@ using tier4_debug_msgs::msg::Float32Stamped;
 class MpcLateralController : public trajectory_follower::LateralControllerBase
 {
 public:
-  //! @param node Reference to te node used only for the initialization.
+  /// \param node Reference to the node used only for the component and parameter initialization.
   explicit MpcLateralController(rclcpp::Node & node);
   virtual ~MpcLateralController();
 
