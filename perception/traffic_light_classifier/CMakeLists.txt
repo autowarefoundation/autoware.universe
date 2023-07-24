@@ -109,6 +109,8 @@ function(download FILE_NAME FILE_HASH)
     message(FATAL_ERROR "Error occurred during download: ${ERROR_MESSAGE}")
   endif()
 endfunction()
+
+# Test that internet connection is not available
 download(traffic_light_classifier_mobilenetv2_batch_1.onnx ${MOBILENET_BATCH_1_HASH})
 download(traffic_light_classifier_mobilenetv2_batch_4.onnx ${MOBILENET_BATCH_4_HASH})
 download(traffic_light_classifier_mobilenetv2_batch_6.onnx ${MOBILENET_BATCH_6_HASH})
