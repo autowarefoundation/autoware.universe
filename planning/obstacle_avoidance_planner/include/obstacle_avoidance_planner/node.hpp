@@ -17,7 +17,6 @@
 
 #include "motion_utils/motion_utils.hpp"
 #include "obstacle_avoidance_planner/common_structs.hpp"
-#include "obstacle_avoidance_planner/eb_path_smoother.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/replan_checker.hpp"
 #include "obstacle_avoidance_planner/type_alias.hpp"
@@ -64,14 +63,12 @@ protected:  // for the static_centerline_optimizer package
   bool enable_pub_debug_marker_;
   bool enable_debug_info_;
   bool enable_outside_drivable_area_stop_;
-  bool enable_smoothing_;
   bool enable_skip_optimization_;
   bool enable_reset_prev_optimization_;
   bool use_footprint_polygon_for_outside_drivable_area_check_;
 
   // core algorithms
   std::shared_ptr<ReplanChecker> replan_checker_ptr_{nullptr};
-  std::shared_ptr<EBPathSmoother> eb_path_smoother_ptr_{nullptr};
   std::shared_ptr<MPTOptimizer> mpt_optimizer_ptr_{nullptr};
 
   // parameters
@@ -80,9 +77,6 @@ protected:  // for the static_centerline_optimizer package
 
   // variables for subscribers
   Odometry::SharedPtr ego_state_ptr_;
-
-  // variables for previous information
-  std::shared_ptr<std::vector<TrajectoryPoint>> prev_optimized_traj_points_ptr_;
 
   // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
@@ -130,6 +124,9 @@ protected:  // for the static_centerline_optimizer package
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points) const;
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
   void publishDebugMarkerOfOptimization(const std::vector<TrajectoryPoint> & traj_points) const;
+
+private:
+  double vehicle_stop_margin_outside_drivable_area_;
 };
 }  // namespace obstacle_avoidance_planner
 

@@ -9,8 +9,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/debug.cpp
   src/manager.cpp
   src/scene_crosswalk.cpp
-  src/scene_walkway.cpp
   src/util.cpp
 )
 
-ament_auto_package()
+ament_auto_package(INSTALL_TO_SHARE config)

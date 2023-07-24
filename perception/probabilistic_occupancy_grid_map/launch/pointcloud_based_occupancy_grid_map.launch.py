@@ -26,11 +26,6 @@ from launch_ros.descriptions import ComposableNode
 import yaml
 
 
-def overwrite_config(param_dict, launch_config_name, node_params_name, context):
-    if LaunchConfiguration(launch_config_name).perform(context) != "":
-        param_dict[node_params_name] = LaunchConfiguration(launch_config_name).perform(context)
-
-
 def launch_setup(context, *args, **kwargs):
     # load parameter files
     param_file = LaunchConfiguration("param_file").perform(context)
@@ -38,15 +33,10 @@ def launch_setup(context, *args, **kwargs):
         pointcloud_based_occupancy_grid_map_node_params = yaml.safe_load(f)["/**"][
             "ros__parameters"
         ]
-    overwrite_config(
-        pointcloud_based_occupancy_grid_map_node_params,
-        "map_origin",
-        "gridmap_origin_frame",
-        context,
-    )
-    overwrite_config(
-        pointcloud_based_occupancy_grid_map_node_params, "scan_origin", "scan_origin_frame", context
-    )
+
+    updater_param_file = LaunchConfiguration("updater_param_file").perform(context)
+    with open(updater_param_file, "r") as f:
+        occupancy_grid_map_updater_params = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     composable_nodes = [
         ComposableNode(
@@ -54,11 +44,21 @@ def launch_setup(context, *args, **kwargs):
             plugin="occupancy_grid_map::PointcloudBasedOccupancyGridMapNode",
             name="occupancy_grid_map_node",
             remappings=[
-                ("~/input/obstacle_pointcloud", LaunchConfiguration("input/obstacle_pointcloud")),
-                ("~/input/raw_pointcloud", LaunchConfiguration("input/raw_pointcloud")),
+                (
+                    "~/input/obstacle_pointcloud",
+                    LaunchConfiguration("input/obstacle_pointcloud"),
+                ),
+                (
+                    "~/input/raw_pointcloud",
+                    LaunchConfiguration("input/raw_pointcloud"),
+                ),
                 ("~/output/occupancy_grid_map", LaunchConfiguration("output")),
             ],
-            parameters=[pointcloud_based_occupancy_grid_map_node_params],
+            parameters=[
+                pointcloud_based_occupancy_grid_map_node_params,
+                occupancy_grid_map_updater_params,
+                {"updater_type": LaunchConfiguration("updater_type")},
+            ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
         ),
     ]
@@ -112,8 +112,12 @@ def generate_launch_description():
                 get_package_share_directory("probabilistic_occupancy_grid_map")
                 + "/config/pointcloud_based_occupancy_grid_map.param.yaml",
             ),
-            add_launch_arg("map_origin", ""),
-            add_launch_arg("scan_origin", ""),
+            add_launch_arg("updater_type", "binary_bayes_filter"),
+            add_launch_arg(
+                "updater_param_file",
+                get_package_share_directory("probabilistic_occupancy_grid_map")
+                + "/config/updater.param.yaml",
+            ),
             set_container_executable,
             set_container_mt_executable,
         ]

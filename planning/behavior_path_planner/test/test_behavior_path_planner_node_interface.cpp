@@ -48,9 +48,6 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
   const auto behavior_path_planner_dir =
     ament_index_cpp::get_package_share_directory("behavior_path_planner");
 
-  node_options.append_parameter_override(
-    "bt_tree_config_path", behavior_path_planner_dir + "/config/behavior_path_planner_tree.xml");
-
   test_utils::updateNodeOptions(
     node_options,
     {planning_test_utils_dir + "/config/test_common.param.yaml",
@@ -62,7 +59,7 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
      behavior_path_planner_dir + "/config/avoidance/avoidance.param.yaml",
      behavior_path_planner_dir + "/config/dynamic_avoidance/dynamic_avoidance.param.yaml",
      behavior_path_planner_dir + "/config/lane_change/lane_change.param.yaml",
-     behavior_path_planner_dir + "/config/pull_out/pull_out.param.yaml",
+     behavior_path_planner_dir + "/config/start_planner/start_planner.param.yaml",
      behavior_path_planner_dir + "/config/goal_planner/goal_planner.param.yaml",
      behavior_path_planner_dir + "/config/avoidance_by_lc/avoidance_by_lc.param.yaml",
      behavior_path_planner_dir + "/config/side_shift/side_shift.param.yaml"});
