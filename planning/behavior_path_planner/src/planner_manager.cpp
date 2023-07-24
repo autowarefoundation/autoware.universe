@@ -638,7 +638,7 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 
   // if root_lanelet is not route lanelets, reset root lanelet.
   // this can be caused by rerouting.
-  const auto route_handler = data->route_handler;
+  const auto & route_handler = data->route_handler;
   if (!route_handler->isRouteLanelet(root_lanelet_.get())) {
     root_lanelet_ = root_lanelet;
     return;
