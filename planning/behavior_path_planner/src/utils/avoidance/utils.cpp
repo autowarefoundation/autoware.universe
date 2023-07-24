@@ -69,28 +69,6 @@ geometry_msgs::msg::Polygon toMsg(const tier4_autoware_utils::Polygon2d & polygo
   }
   return ret;
 }
-
-boost::optional<Point> intersect(
-  const Point & p1, const Point & p2, const Point & p3, const Point & p4)
-{
-  // calculate intersection point
-  const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
-  if (det == 0.0) {
-    return {};
-  }
-
-  const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
-  const double s = ((p2.y - p1.y) * (p4.x - p2.x) + (p1.x - p2.x) * (p4.y - p2.y)) / det;
-  if (t < 0 || 1 < t || s < 0 || 1 < s) {
-    return {};
-  }
-
-  Point intersect_point;
-  intersect_point.x = t * p1.x + (1.0 - t) * p2.x;
-  intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
-  intersect_point.z = t * p1.z + (1.0 - t) * p2.z;
-  return intersect_point;
-}
 }  // namespace
 
 bool isOnRight(const ObjectData & obj)
@@ -496,6 +474,25 @@ lanelet::ConstLanelets getTargetLanelets(
   }
 
   return target_lanelets;
+}
+
+lanelet::ConstLanelets getCurrentLanesFromPath(
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data)
+{
+  if (path.points.empty()) {
+    throw std::logic_error("empty path.");
+  }
+
+  if (path.points.front().lane_ids.empty()) {
+    throw std::logic_error("empty lane ids.");
+  }
+
+  const auto start_id = path.points.front().lane_ids.front();
+  const auto start_lane = planner_data->route_handler->getLaneletsFromId(start_id);
+  const auto & p = planner_data->parameters;
+
+  return planner_data->route_handler->getLaneletSequence(
+    start_lane, p.backward_path_length, p.forward_path_length);
 }
 
 void insertDecelPoint(
@@ -1203,8 +1200,8 @@ double extendToRoadShoulderDistanceWithPolygon(
                                         .y(polygon[(i + 1) % polygon.size()].y())
                                         .z(0.0);
 
-      const auto intersect_pos =
-        intersect(overhang_pos, lat_offset_overhang_pos, polygon_current_point, polygon_next_point);
+      const auto intersect_pos = tier4_autoware_utils::intersect(
+        overhang_pos, lat_offset_overhang_pos, polygon_current_point, polygon_next_point);
       if (intersect_pos) {
         intersect_dist_vec.push_back(calcDistance2d(*intersect_pos, overhang_pos));
       }
