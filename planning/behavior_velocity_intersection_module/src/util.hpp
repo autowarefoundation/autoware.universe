@@ -111,8 +111,7 @@ std::optional<Polygon2d> getIntersectionArea(
 
 bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane);
 bool isTrafficLightArrowActivated(
-  lanelet::ConstLanelet lane,
-  const std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> & tl_infos);
+  lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos);
 
 std::vector<DescritizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets,
