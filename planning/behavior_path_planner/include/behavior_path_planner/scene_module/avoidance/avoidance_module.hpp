@@ -425,12 +425,6 @@ private:
    * @brief trim invalid shift lines whose gradient it too large to follow.
    * @param target shift lines.
    */
-  void trimTooSharpShift(AvoidLineArray & shift_lines) const;
-
-  /*
-   * @brief trim invalid shift lines whose gradient it too large to follow.
-   * @param target shift lines.
-   */
   void trimSharpReturn(AvoidLineArray & shift_lines, const double threshold) const;
 
   /**
@@ -456,12 +450,6 @@ private:
   // generate output data
 
   /**
-   * @brief generate avoidance path from path shifter.
-   * @return avoidance path.
-   */
-  ShiftedPath generateAvoidancePath(PathShifter & shifter) const;
-
-  /**
    * @brief calculate turn signal infomation.
    * @param avoidance path.
    * @return turn signal command.
@@ -474,12 +462,6 @@ private:
   // NOTE: Assume that there is no situation where there is an object in the middle lane of more
   // than two lanes since which way to avoid is not obvious
   void generateExtendedDrivableArea(BehaviorModuleOutput & output) const;
-
-  /**
-   * @brief insert slow down point to prevent acceleration in avoidance maneuver.
-   * @param avoidance path.
-   */
-  void modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & shifted_path);
 
   /**
    * @brief fill debug markers.
@@ -580,7 +562,6 @@ private:
       return;
     }
 
-    initRTCStatus();
     unlockNewModuleLaunch();
 
     current_raw_shift_lines_.clear();
@@ -621,8 +602,6 @@ private:
   bool arrived_path_end_{false};
 
   std::shared_ptr<AvoidanceParameters> parameters_;
-
-  std::shared_ptr<double> ego_velocity_starting_avoidance_ptr_;
 
   helper::avoidance::AvoidanceHelper helper_;
 

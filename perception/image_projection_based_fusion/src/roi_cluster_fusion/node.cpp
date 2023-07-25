@@ -40,7 +40,10 @@ RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
   use_iou_y_ = declare_parameter("use_iou_y", false);
   use_iou_ = declare_parameter("use_iou", false);
   use_cluster_semantic_type_ = declare_parameter("use_cluster_semantic_type", false);
+  only_allow_inside_cluster_ = declare_parameter("only_allow_inside_cluster_", true);
+  roi_scale_factor_ = declare_parameter("roi_scale_factor", 1.1);
   iou_threshold_ = declare_parameter("iou_threshold", 0.1);
+  unknown_iou_threshold_ = declare_parameter("unknown_iou_threshold", 0.1);
   remove_unknown_ = declare_parameter("remove_unknown", false);
   trust_distance_ = declare_parameter("trust_distance", 100.0);
 }
@@ -65,9 +68,11 @@ void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_clust
   DetectedObjectsWithFeature known_objects;
   known_objects.feature_objects.reserve(output_cluster_msg.feature_objects.size());
   for (auto & feature_object : output_cluster_msg.feature_objects) {
+    bool is_roi_label_known = feature_object.object.classification.front().label !=
+                              autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
     if (
-      feature_object.object.classification.front().label !=
-      autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
+      is_roi_label_known ||
+      feature_object.object.existence_probability >= min_roi_existence_prob_) {
       known_objects.feature_objects.push_back(feature_object);
     }
   }
@@ -177,20 +182,47 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       if (use_iou_y_) {
         iou_y = calcIoUY(cluster_map.second, feature_obj.feature.roi);
       }
-      if (max_iou < iou + iou_x + iou_y) {
+      const bool passed_inside_cluster_gate =
+        only_allow_inside_cluster_
+          ? is_inside(feature_obj.feature.roi, cluster_map.second, roi_scale_factor_)
+          : true;
+      if (max_iou < iou + iou_x + iou_y && passed_inside_cluster_gate) {
         index = cluster_map.first;
         max_iou = iou + iou_x + iou_y;
       }
     }
-    if (
-      iou_threshold_ < max_iou &&
+    bool is_roi_label_known = feature_obj.object.classification.front().label !=
+                              autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+    bool is_roi_existence_prob_higher =
       output_cluster_msg.feature_objects.at(index).object.existence_probability <=
-        feature_obj.object.existence_probability &&
-      feature_obj.object.classification.front().label !=
-        autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
+      feature_obj.object.existence_probability;
+    if (iou_threshold_ < max_iou && is_roi_existence_prob_higher && is_roi_label_known) {
       output_cluster_msg.feature_objects.at(index).object.classification =
         feature_obj.object.classification;
+
+      // Update existence_probability for fused objects
+      if (
+        output_cluster_msg.feature_objects.at(index).object.existence_probability <
+        min_roi_existence_prob_) {
+        output_cluster_msg.feature_objects.at(index).object.existence_probability =
+          min_roi_existence_prob_;
+      }
     }
+
+    // fuse with unknown roi
+
+    if (unknown_iou_threshold_ < max_iou && is_roi_existence_prob_higher && !is_roi_label_known) {
+      output_cluster_msg.feature_objects.at(index).object.classification =
+        feature_obj.object.classification;
+      // Update existence_probability for fused objects
+      if (
+        output_cluster_msg.feature_objects.at(index).object.existence_probability <
+        min_roi_existence_prob_) {
+        output_cluster_msg.feature_objects.at(index).object.existence_probability =
+          min_roi_existence_prob_;
+      }
+    }
+
     debug_image_rois.push_back(feature_obj.feature.roi);
   }
 

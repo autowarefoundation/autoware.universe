@@ -56,9 +56,8 @@ std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
 IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path,
-  const std::set<int> & associative_ids, const InterpolatedPathInfo & interpolated_path_info,
-  const double detection_area_length, const double occlusion_detection_area_length,
-  const bool tl_arrow_solid_on = false);
+  const std::set<int> & associative_ids, const double detection_area_length,
+  const double occlusion_detection_area_length, const bool consider_wrong_direction_vehicle);
 
 /**
  * @brief Generate a stop line for stuck vehicle
@@ -144,7 +143,8 @@ Polygon2d generateStuckVehicleDetectAreaPolygon(
 
 bool checkAngleForTargetLanelets(
   const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
-  const double detection_area_angle_thr, const double margin = 0.0);
+  const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle,
+  const double margin = 0.0);
 
 void cutPredictPathWithDuration(
   autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
