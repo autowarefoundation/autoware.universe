@@ -14,7 +14,7 @@
 
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 
-#include "behavior_path_planner/marker_util/lane_change/debug.hpp"
+#include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
 #include "behavior_path_planner/module_status.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
@@ -134,7 +134,10 @@ ModuleStatus LaneChangeInterface::updateState()
     return ModuleStatus::RUNNING;
   }
 
-  if (module_type_->isNearEndOfLane()) {
+  const auto & common_parameters = module_type_->getCommonParam();
+  const auto threshold = common_parameters.backward_length_buffer_for_end_of_lane;
+  const auto status = module_type_->getLaneChangeStatus();
+  if (module_type_->isNearEndOfCurrentLanes(status.current_lanes, status.target_lanes, threshold)) {
     RCLCPP_WARN_STREAM_THROTTLE(
       getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
       "Lane change path is unsafe but near end of lane. Continue lane change.");
@@ -299,6 +302,7 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   using marker_utils::lane_change_markers::showPolygonPose;
 
   const auto debug_data = module_type_->getDebugData();
+  const auto debug_after_approval = module_type_->getAfterApprovalDebugData();
   const auto debug_valid_path = module_type_->getDebugValidPath();
 
   debug_marker_.markers.clear();
@@ -306,10 +310,18 @@ void LaneChangeInterface::setObjectDebugVisualization() const
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
-  add(showObjectInfo(debug_data, "object_debug_info"));
-  add(showLerpedPose(debug_data, "ego_predicted_path"));
-  add(showPolygon(debug_data, "ego_and_target_polygon_relation"));
   add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
+  if (!debug_data.empty()) {
+    add(showObjectInfo(debug_data, "object_debug_info"));
+    add(showLerpedPose(debug_data, "ego_predicted_path"));
+    add(showPolygon(debug_data, "ego_and_target_polygon_relation"));
+  }
+
+  if (!debug_after_approval.empty()) {
+    add(showObjectInfo(debug_after_approval, "object_debug_info_after_approval"));
+    add(showLerpedPose(debug_after_approval, "ego_predicted_path_after_approval"));
+    add(showPolygon(debug_after_approval, "ego_and_target_polygon_relation_after_approval"));
+  }
 }
 
 std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeInterface::get_debug_msg_array() const

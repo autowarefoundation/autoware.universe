@@ -15,7 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_
 
-#include "behavior_path_planner/marker_util/lane_change/debug.hpp"
+#include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
@@ -90,8 +90,8 @@ lanelet::ConstLanelets getTargetNeighborLanes(
   const LaneChangeModuleType & type);
 
 bool isPathInLanelets(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
-  const lanelet::ConstLanelets & target_lanelets);
+  const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes);
 
 std::optional<LaneChangePath> constructCandidatePath(
   const LaneChangeInfo & lane_change_info, const PathWithLaneId & prepare_segment,
@@ -128,7 +128,7 @@ lanelet::ConstLanelets getBackwardLanelets(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & current_pose, const double backward_length);
 
-bool isTargetObjectType(const PredictedObject & object, const LaneChangeParameters & parameter);
+bool isTargetObjectType(const PredictedObject & object, const LaneChangeParameters & parameters);
 
 double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer = 0.0);
 
@@ -144,7 +144,7 @@ boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & pose,
-  const BehaviorPathPlannerParameters & common_parameter, const double resolution);
+  const BehaviorPathPlannerParameters & common_parameters, const double resolution);
 
 PredictedPath convertToPredictedPath(
   const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);

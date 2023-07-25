@@ -14,7 +14,7 @@
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
-#include "behavior_path_planner/marker_util/debug_utilities.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
@@ -571,7 +571,13 @@ void BehaviorPathPlannerNode::run()
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
   stop_reason_publisher_->publish(planner_manager_->getStopReasons());
 
-  if (output.modified_goal) {
+  // publish modified goal only when it is updated
+  if (
+    output.modified_goal &&
+    /* has changed modified goal */ (
+      !planner_data_->prev_modified_goal || tier4_autoware_utils::calcDistance2d(
+                                              planner_data_->prev_modified_goal->pose.position,
+                                              output.modified_goal->pose.position) > 0.01)) {
     PoseWithUuidStamped modified_goal = *(output.modified_goal);
     modified_goal.header.stamp = path->header.stamp;
     planner_data_->prev_modified_goal = modified_goal;
