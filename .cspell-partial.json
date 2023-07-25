@@ -4,7 +4,6 @@
     "**/control/**",
     "**/evaluator/**",
     "**/launch/**",
-    "**/localization/**",
     "**/perception/**",
     "**/planning/**",
     "**/sensing/**",

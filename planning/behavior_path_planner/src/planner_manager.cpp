@@ -178,6 +178,14 @@ void PlannerManager::generateCombinedDrivableArea(
 std::vector<SceneModulePtr> PlannerManager::getRequestModules(
   const BehaviorModuleOutput & previous_module_output) const
 {
+  if (!previous_module_output.path) {
+    RCLCPP_ERROR_STREAM(
+      logger_, "Current module output is null. Skip candidate module check."
+                 << "\n      - Approved  module list: " << getNames(approved_module_ptrs_)
+                 << "\n      - Candidate module list: " << getNames(candidate_module_ptrs_));
+    return {};
+  }
+
   std::vector<SceneModulePtr> request_modules{};
 
   /**
@@ -636,15 +644,21 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 
   const auto root_lanelet = updateRootLanelet(data);
 
+  // if root_lanelet is not route lanelets, reset root lanelet.
+  // this can be caused by rerouting.
+  const auto & route_handler = data->route_handler;
+  if (!route_handler->isRouteLanelet(root_lanelet_.get())) {
+    root_lanelet_ = root_lanelet;
+    return;
+  }
+
   // check ego is in same lane
   if (root_lanelet_.get().id() == root_lanelet.id()) {
     return;
   }
 
-  const auto route_handler = data->route_handler;
-  const auto next_lanelets = route_handler->getRoutingGraphPtr()->following(root_lanelet_.get());
-
   // check ego is in next lane
+  const auto next_lanelets = route_handler->getRoutingGraphPtr()->following(root_lanelet_.get());
   for (const auto & next : next_lanelets) {
     if (next.id() == root_lanelet.id()) {
       return;
@@ -734,6 +748,15 @@ std::shared_ptr<SceneModuleVisitor> PlannerManager::getDebugMsg()
     candidate_module->acceptVisitor(debug_msg_ptr_);
   }
   return debug_msg_ptr_;
+}
+
+std::string PlannerManager::getNames(const std::vector<SceneModulePtr> & modules) const
+{
+  std::stringstream ss;
+  for (const auto & m : modules) {
+    ss << "[" << m->name() << "], ";
+  }
+  return ss.str();
 }
 
 }  // namespace behavior_path_planner
