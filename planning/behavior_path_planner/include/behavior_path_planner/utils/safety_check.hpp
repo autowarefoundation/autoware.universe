@@ -52,14 +52,14 @@ using vehicle_info_util::VehicleInfo;
 struct PoseWithVelocity
 {
   Pose pose;
-  double velocity;
+  double velocity{0.0};
 
   PoseWithVelocity(const Pose & pose, const double velocity) : pose(pose), velocity(velocity) {}
 };
 
 struct PoseWithVelocityStamped : public PoseWithVelocity
 {
-  double time;
+  double time{0.0};
 
   PoseWithVelocityStamped(const double time, const Pose & pose, const double velocity)
   : PoseWithVelocity(pose, velocity), time(time)
@@ -80,7 +80,7 @@ struct PoseWithVelocityAndPolygonStamped : public PoseWithVelocityStamped
 
 struct PredictedPathWithPolygon
 {
-  float confidence;
+  float confidence{0.0};
   std::vector<PoseWithVelocityAndPolygonStamped> path;
 };
 
