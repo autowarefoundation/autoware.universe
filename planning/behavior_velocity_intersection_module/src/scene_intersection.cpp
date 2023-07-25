@@ -1236,13 +1236,16 @@ bool IntersectionModule::isOcclusionCleared(
     occlusion_mask_raw, occlusion_mask, cv::MORPH_OPEN,
     cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morph_size, morph_size)));
   {
+    const auto & possible_object_bbox = planner_param_.occlusion.possible_object_bbox;
+    const double possible_object_area = possible_object_bbox.at(0) * possible_object_bbox.at(1);
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(occlusion_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
     for (const auto & contour : contours) {
       // std::vector<cv::Point> approx_contour;
       // cv::approxPolyDP(contour, approx_contour, 0.05 * cv::arcLength(contour, true), true);
       Polygon2d polygon;
-      // [[maybe_unused]] const double poly_area = cv::contourArea(contour);
+      const double poly_area = cv::contourArea(contour);
+      if (poly_area < possible_object_area) continue;
       for (const auto & p : contour) {
         const double glob_x = (p.x + 0.5) * resolution + origin.x;
         const double glob_y = (height - 0.5 - p.y) * resolution + origin.y;
