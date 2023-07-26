@@ -3,10 +3,10 @@
   <arg name="node_name" default="tag_tf_caster"/>
 
   <!-- Topic names -->
-  <arg name="input_lanelet2_map" default="lanelet2_map"/>
+  <arg name="input_lanelet2_map" default="~/input/lanelet2_map"/>
 
   <node pkg="ar_tag_based_localizer" exec="tag_tf_caster" name="$(var node_name)" output="log">
-    <remap from="lanelet2_map" to="$(var input_lanelet2_map)"/>
+    <remap from="~/input/lanelet2_map" to="$(var input_lanelet2_map)"/>
     <param from="$(var param_file)"/>
   </node>
 </launch>
