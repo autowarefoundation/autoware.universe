@@ -116,7 +116,7 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
   const auto is_left_of_segment = [](const point_t & a, const point_t & b, const point_t & p) {
     return (b.x() - a.x()) * (p.y() - a.y()) - (b.y() - a.y()) * (p.x() - a.x()) > 0;
   };
-
+  // prepare delimiting lines: start and end of the original expanded drivable area
   const auto start_segment =
     segment_t{convert_point(path.left_bound.front()), convert_point(path.right_bound.front())};
   const auto end_segment =
@@ -129,15 +129,6 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
   boost::geometry::centroid(end_segment, end_segment_center);
   const auto path_end_segment =
     segment_t{convert_point(path.points.back().point.pose.position), end_segment_center};
-  const auto is_left_of_path_start = [&](const point_t & p) {
-    return is_left_of_segment(
-      convert_point(path.points[0].point.pose.position),
-      convert_point(path.points[1].point.pose.position), p);
-  };
-  const auto is_left_of_path_end = [&](const point_t & p) {
-    return is_left_of_segment(
-      convert_point(path.points.back().point.pose.position), end_segment_center, p);
-  };
   const auto segment_to_line_intersection =
     [](const auto p1, const auto p2, const auto q1, const auto q2) -> std::optional<point_t> {
     const auto line = Eigen::Hyperplane<double, 2>::Through(q1, q2);
@@ -152,40 +143,34 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
     if (is_on_segment) result = point_t{intersection.x(), intersection.y()};
     return result;
   };
+  // find intersection between the expanded drivable area and the delimiting lines
+  const auto & da = expanded_drivable_area.outer();
   struct Intersection
   {
-    ring_t::const_iterator segment_it;
     point_t intersection_point;
+    ring_t::const_iterator segment_it;
     double distance = std::numeric_limits<double>::max();
-  };
-  const auto & da = expanded_drivable_area.outer();
-  Intersection start_left;
-  start_left.segment_it = da.end();
-  Intersection end_left;
-  end_left.segment_it = da.end();
-  Intersection start_right;
-  start_right.segment_it = da.end();
-  Intersection end_right;
-  end_right.segment_it = da.end();
-
-  for (auto it = da.begin(); it != da.end(); ++it) {
-    if (boost::geometry::distance(*it, start_segment.first) < 1e-3) {
-      start_left.intersection_point = *it;
-      start_left.segment_it = it;
-      start_left.distance = 0.0;
-    } else if (boost::geometry::distance(*it, start_segment.second) < 1e-3) {
-      start_right.intersection_point = *it;
-      start_right.segment_it = it;
-      start_right.distance = 0.0;
-    } else if (boost::geometry::distance(*it, end_segment.first) < 1e-3) {
-      end_left.intersection_point = *it;
-      end_left.segment_it = it;
-      end_left.distance = 0.0;
-    } else if (boost::geometry::distance(*it, end_segment.second) < 1e-3) {
-      end_right.intersection_point = *it;
-      end_right.segment_it = it;
-      end_right.distance = 0.0;
+    explicit Intersection(ring_t::const_iterator it) : segment_it(it) {}
+    void update(const point_t & p, const ring_t::const_iterator & it, const double dist)
+    {
+      intersection_point = p;
+      segment_it = it;
+      distance = dist;
     }
+  };
+  Intersection start_left(da.end());
+  Intersection end_left(da.end());
+  Intersection start_right(da.end());
+  Intersection end_right(da.end());
+  for (auto it = da.begin(); it != da.end(); ++it) {
+    if (boost::geometry::distance(*it, start_segment.first) < 1e-3)
+      start_left.update(*it, it, 0.0);
+    else if (boost::geometry::distance(*it, start_segment.second) < 1e-3)
+      start_right.update(*it, it, 0.0);
+    else if (boost::geometry::distance(*it, end_segment.first) < 1e-3)
+      end_left.update(*it, it, 0.0);
+    else if (boost::geometry::distance(*it, end_segment.second) < 1e-3)
+      end_right.update(*it, it, 0.0);
     const auto inter_start =
       std::next(it) == da.end()
         ? segment_to_line_intersection(*it, da.front(), start_segment.first, start_segment.second)
@@ -193,19 +178,13 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
             *it, *std::next(it), start_segment.first, start_segment.second);
     if (inter_start) {
       const auto dist = boost::geometry::distance(*inter_start, path_start_segment);
-      if (is_left_of_path_start(*inter_start)) {
-        if (dist < start_left.distance) {
-          start_left.intersection_point = *inter_start;
-          start_left.segment_it = it;
-          start_left.distance = dist;
-        }
-      } else {
-        if (dist < start_right.distance) {
-          start_right.intersection_point = *inter_start;
-          start_right.segment_it = it;
-          start_right.distance = dist;
-        }
-      }
+      const auto is_left_of_path_start = is_left_of_segment(
+        convert_point(path.points[0].point.pose.position),
+        convert_point(path.points[1].point.pose.position), *inter_start);
+      if (is_left_of_path_start && dist < start_left.distance)
+        start_left.update(*inter_start, it, dist);
+      else if (!is_left_of_path_start && dist < start_right.distance)
+        start_right.update(*inter_start, it, dist);
     }
     const auto inter_end =
       std::next(it) == da.end()
@@ -213,30 +192,20 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
         : segment_to_line_intersection(*it, *std::next(it), end_segment.first, end_segment.second);
     if (inter_end) {
       const auto dist = boost::geometry::distance(*inter_end, path_end_segment);
-      if (is_left_of_path_end(*inter_end)) {
-        if (dist < end_left.distance) {
-          end_left.intersection_point = *inter_end;
-          end_left.segment_it = it;
-          end_left.distance = dist;
-        }
-      } else {
-        if (dist < end_right.distance) {
-          end_right.intersection_point = *inter_end;
-          end_right.segment_it = it;
-          end_right.distance = dist;
-        }
-      }
+      const auto is_left_of_path_end = is_left_of_segment(
+        convert_point(path.points.back().point.pose.position), end_segment_center, *inter_end);
+      if (is_left_of_path_end && dist < end_left.distance)
+        end_left.update(*inter_end, it, dist);
+      else if (!is_left_of_path_end && dist < end_right.distance)
+        end_right.update(*inter_end, it, dist);
     }
   }
-  if (
+  if (  // illformed expanded drivable area -> keep the original bounds
     start_left.segment_it == da.end() || start_right.segment_it == da.end() ||
     end_left.segment_it == da.end() || end_right.segment_it == da.end()) {
-    std::cerr << (start_left.segment_it == da.end()) << " " << (start_right.segment_it == da.end())
-              << " " << (end_left.segment_it == da.end()) << " "
-              << (end_right.segment_it == da.end()) << std::endl;
     return;
   }
-
+  // extract the expanded left and right bound from the expanded drivable area
   path.left_bound.clear();
   path.right_bound.clear();
   path.left_bound.push_back(convert_point(start_left.intersection_point));
@@ -265,7 +234,6 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
   }
   if (!boost::geometry::equals(end_right.intersection_point, *std::next(end_right.segment_it)))
     path.right_bound.push_back(convert_point(end_right.intersection_point));
-
   // remove possible duplicated points
   const auto point_cmp = [](const auto & p1, const auto & p2) {
     return p1.x == p2.x && p1.y == p2.y;
@@ -275,5 +243,4 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
   copy_z_over_arc_length(original_left_bound, path.left_bound);
   copy_z_over_arc_length(original_right_bound, path.right_bound);
 }
-
 }  // namespace drivable_area_expansion
