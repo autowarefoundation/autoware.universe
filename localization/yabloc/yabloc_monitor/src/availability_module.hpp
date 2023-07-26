@@ -17,20 +17,20 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
 class AvailabilityModule
 {
 private:
-  using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
 
 public:
   AvailabilityModule(rclcpp::Node * node);
   bool is_available() const;
 
 private:
-  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_yabloc_pose_;
-  void on_yabloc_pose(PoseWithCovarianceStamped::ConstSharedPtr msg);
+  rclcpp::Subscription<PoseStamped>::SharedPtr sub_yabloc_pose_;
+  void on_yabloc_pose(PoseStamped::ConstSharedPtr msg);
 
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<rclcpp::Time> latest_yabloc_pose_stamp_ptr_;

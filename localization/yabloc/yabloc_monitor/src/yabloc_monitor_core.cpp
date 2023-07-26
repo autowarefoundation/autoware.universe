@@ -45,7 +45,11 @@ void YabLocMonitor::timer_callback()
 
   // Check availability
   key_value_msg.key = "availability";
-  key_value_msg.value = availability_module_->is_available();
+  if (availability_module_->is_available()) {
+    key_value_msg.value = "OK";
+  } else {
+    key_value_msg.value = "NG";
+  }
   diag_status_msg.values.push_back(key_value_msg);
 
   // Update total diag status of YabLoc

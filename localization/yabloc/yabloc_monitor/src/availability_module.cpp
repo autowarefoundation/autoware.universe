@@ -22,16 +22,16 @@
 #include <string>
 #include <utility>
 
-using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+using PoseStamped = geometry_msgs::msg::PoseStamped;
 
 AvailabilityModule::AvailabilityModule(rclcpp::Node * node)
 : clock_(node->get_clock()),
   latest_yabloc_pose_stamp_ptr_(nullptr),
   timestamp_threshold_(node->declare_parameter<double>("availability/timestamp_tolerance", 1.0))
 {
-  sub_yabloc_pose_ = node->create_subscription<PoseWithCovarianceStamped>(
-    "yabloc_pose", 10,
-    [this](PoseWithCovarianceStamped::ConstSharedPtr msg) { on_yabloc_pose(msg); });
+  sub_yabloc_pose_ = node->create_subscription<PoseStamped>(
+    "~/input/yabloc_pose", 10,
+    [this](PoseStamped::ConstSharedPtr msg) { on_yabloc_pose(msg); });
 }
 
 bool AvailabilityModule::is_available() const
@@ -53,7 +53,7 @@ bool AvailabilityModule::is_available() const
   return false;
 }
 
-void AvailabilityModule::on_yabloc_pose(const PoseWithCovarianceStamped::ConstSharedPtr msg)
+void AvailabilityModule::on_yabloc_pose(const PoseStamped::ConstSharedPtr msg)
 {
   latest_yabloc_pose_stamp_ptr_ = std::make_shared<rclcpp::Time>(rclcpp::Time(msg->header.stamp));
 }
