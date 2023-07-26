@@ -1,3 +1,7 @@
 <launch>
-  <node name="yabloc_monitor" pkg="yabloc_monitor" exec="yabloc_monitor" output="screen"/>
+  <arg name="param_file" default="$(find-pkg-share yabloc_monitor)/config/yabloc_monitor.param.yaml"/>
+
+  <node name="yabloc_monitor" pkg="yabloc_monitor" exec="yabloc_monitor" output="screen">
+    <param from="$(var param_file)"/>
+  </node>
 </launch>

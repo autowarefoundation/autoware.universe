@@ -27,7 +27,7 @@ using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 AvailabilityModule::AvailabilityModule(rclcpp::Node * node)
 : clock_(node->get_clock()),
   latest_yabloc_pose_stamp_ptr_(nullptr),
-  timestamp_threshold_(node->declare_parameter<double>("availability/timestamp_threshold", 1.0))
+  timestamp_threshold_(node->declare_parameter<double>("availability/timestamp_tolerance", 1.0))
 {
   sub_yabloc_pose_ = node->create_subscription<PoseWithCovarianceStamped>(
     "yabloc_pose", 10,
