@@ -20,6 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <chrono>
 #include <fstream>
@@ -36,9 +37,10 @@ public:
   YabLocMonitor();
 
 private:
-  void timer_callback();
+  void update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void on_timer();
 
-  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
+  diagnostic_updater::Updater updater_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   // Evaluation modules

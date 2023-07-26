@@ -24,40 +24,27 @@
 
 using std::placeholders::_1;
 
-YabLocMonitor::YabLocMonitor() : Node("yabloc_monitor")
+YabLocMonitor::YabLocMonitor() : Node("yabloc_monitor"), updater_(this)
 {
-  diagnostics_pub_ =
-    this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
+  updater_.setHardwareID(get_name());
+  updater_.add("yabloc_status", this, &YabLocMonitor::update_diagnostics);
+
+  // Set timer
+  using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(
-    this, get_clock(), rclcpp::Rate(100).period(), std::bind(&YabLocMonitor::timer_callback, this));
+    this, get_clock(), 100ms, std::bind(&YabLocMonitor::on_timer, this));
 
   // Evaluation moduels
   availability_module_ = std::make_unique<AvailabilityModule>(this);
 }
 
-void YabLocMonitor::timer_callback()
+void YabLocMonitor::on_timer()
 {
-  diagnostic_msgs::msg::DiagnosticStatus diag_status_msg;
-  diag_status_msg.name = "yabloc";
-  diag_status_msg.hardware_id = "";
+  updater_.force_update();
+}
 
-  diagnostic_msgs::msg::KeyValue key_value_msg;
-
-  // Check availability
-  key_value_msg.key = "availability";
-  if (availability_module_->is_available()) {
-    key_value_msg.value = "OK";
-  } else {
-    key_value_msg.value = "NG";
-  }
-  diag_status_msg.values.push_back(key_value_msg);
-
-  // Update total diag status of YabLoc
-  diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-
-  // Publish msg
-  diagnostic_msgs::msg::DiagnosticArray diag_msg;
-  diag_msg.header.stamp = this->now();
-  diag_msg.status.push_back(diag_status_msg);
-  diagnostics_pub_->publish(diag_msg);
+void YabLocMonitor::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  stat.add("Availability", availability_module_->is_available() ? "OK" : "NG");
+  stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "OK"); // TODO
 }
