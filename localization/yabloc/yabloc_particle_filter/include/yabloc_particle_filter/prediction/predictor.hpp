@@ -83,7 +83,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   float ground_height_{0};
-  bool yabloc_activated_{false};
+  bool yabloc_activated_{true};
   PoseCovStamped::ConstSharedPtr latest_ekf_pose_ptr_{nullptr};
 
   std::optional<ParticleArray> particle_array_opt_{std::nullopt};
