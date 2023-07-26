@@ -9,7 +9,7 @@
       <remap from="~/sub/vector_map" to="/map/vector_map"/>
       <remap from="~/sub/perception_traffic_signals" to="$(var perception_traffic_signals)"/>
       <remap from="~/sub/external_traffic_signals" to="$(var external_traffic_signals)"/>
-      <remap from="~/pub/traffic_signals" to="$(var output_traffic_signals)" />
+      <remap from="~/pub/traffic_signals" to="$(var output_traffic_signals)"/>
     </composable_node>
   </node_container>
 </launch>
