@@ -410,15 +410,12 @@ DynamicAvoidanceModule::calcTargetObjectsCandidate()
         "[DynamicAvoidance] Ignore obstacle (%s) since it will cut in.", obj_uuid.c_str());
       continue;
     }
-    /*
     if (will_object_cut_out) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
-        "[DynamicAvoidance] Ignore obstacle (%s) since it will cut out.",
-        obj_uuid.c_str());
+        "[DynamicAvoidance] Ignore obstacle (%s) since it will cut out.", obj_uuid.c_str());
       continue;
     }
-    */
 
     // 7. check if time to collision
     const double time_to_collision =
