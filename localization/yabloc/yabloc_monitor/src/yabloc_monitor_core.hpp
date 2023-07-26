@@ -17,10 +17,10 @@
 
 #include "availability_module.hpp"
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <chrono>
 #include <fstream>

@@ -31,8 +31,8 @@ YabLocMonitor::YabLocMonitor() : Node("yabloc_monitor"), updater_(this)
 
   // Set timer
   using std::chrono_literals::operator""ms;
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), 100ms, std::bind(&YabLocMonitor::on_timer, this));
+  timer_ =
+    rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&YabLocMonitor::on_timer, this));
 
   // Evaluation moduels
   availability_module_ = std::make_unique<AvailabilityModule>(this);
@@ -46,5 +46,5 @@ void YabLocMonitor::on_timer()
 void YabLocMonitor::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   stat.add("Availability", availability_module_->is_available() ? "OK" : "NG");
-  stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "OK"); // TODO
+  stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "OK");  // TODO
 }
