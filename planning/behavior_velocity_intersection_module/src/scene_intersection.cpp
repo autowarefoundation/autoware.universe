@@ -1235,25 +1235,6 @@ bool IntersectionModule::isOcclusionCleared(
   cv::morphologyEx(
     occlusion_mask_raw, occlusion_mask, cv::MORPH_OPEN,
     cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morph_size, morph_size)));
-  {
-    const auto & possible_object_bbox = planner_param_.occlusion.possible_object_bbox;
-    const double possible_object_area = possible_object_bbox.at(0) * possible_object_bbox.at(1);
-    std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(occlusion_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-    for (const auto & contour : contours) {
-      // std::vector<cv::Point> approx_contour;
-      // cv::approxPolyDP(contour, approx_contour, 0.05 * cv::arcLength(contour, true), true);
-      Polygon2d polygon;
-      const double poly_area = cv::contourArea(contour);
-      if (poly_area < possible_object_area) continue;
-      for (const auto & p : contour) {
-        const double glob_x = (p.x + 0.5) * resolution + origin.x;
-        const double glob_y = (height - 0.5 - p.y) * resolution + origin.y;
-        polygon.outer().emplace_back(glob_x, glob_y);
-      }
-      debug_data_.occlusion_polygons.push_back(toGeomPoly(polygon));
-    }
-  }
 
   // (4) create distance grid
   // value: 0 - 254: signed distance representing [distance_min, distance_max]
@@ -1354,6 +1335,39 @@ bool IntersectionModule::isOcclusionCleared(
         }
       }
     }
+  }
+
+  const auto & possible_object_bbox = planner_param_.occlusion.possible_object_bbox;
+  const double possible_object_area = possible_object_bbox.at(0) * possible_object_bbox.at(1);
+  std::vector<std::vector<cv::Point>> contours;
+  cv::findContours(occlusion_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+  std::vector<std::vector<cv::Point>> valid_contours;
+  for (const auto & contour : contours) {
+    // std::vector<cv::Point> approx_contour;
+    // cv::approxPolyDP(contour, approx_contour, 0.05 * cv::arcLength(contour, true), true);
+
+    // check size
+    const double poly_area = cv::contourArea(contour);
+    if (poly_area < possible_object_area) continue;
+
+    // check if distance is positive
+    std::vector<cv::Point> positive_contour;
+    for (const auto & p : contour) {
+      const int i = p.x, j = p.y;
+      if (distance_grid.at<unsigned char>(j, i) != undef_pixel) {
+        positive_contour.push_back(p);
+      }
+    }
+    if (positive_contour.empty()) continue;
+
+    valid_contours.push_back(positive_contour);
+    Polygon2d polygon;
+    for (const auto & p : contour) {
+      const double glob_x = (p.x + 0.5) * resolution + origin.x;
+      const double glob_y = (height - 0.5 - p.y) * resolution + origin.y;
+      polygon.outer().emplace_back(glob_x, glob_y);
+    }
+    debug_data_.occlusion_polygons.push_back(toGeomPoly(polygon));
   }
 
   // clean-up and find nearest risk
