@@ -421,9 +421,10 @@ DynamicAvoidanceModule::calcTargetObjectsCandidate()
     const double time_to_collision =
       calcTimeToCollision(prev_module_path->points, obj_pose, obj_tangent_vel);
     if (
-      (0 <= object.vel &&
+      (0 <= obj_tangent_vel &&
        parameters_->max_time_to_collision_overtaking_object < time_to_collision) ||
-      (object.vel <= 0 && parameters_->max_time_to_collision_oncoming_object < time_to_collision)) {
+      (obj_tangent_vel <= 0 &&
+       parameters_->max_time_to_collision_oncoming_object < time_to_collision)) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
         "[DynamicAvoidance] Ignore obstacle (%s) since time to collision is large.",
