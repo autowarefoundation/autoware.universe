@@ -218,6 +218,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         }
       }
       score_matrix(objects1_idx, objects0_idx) = score;
+      data_array.push_back(pair_log_data);
     }
   }
   // Write the log data to a file
