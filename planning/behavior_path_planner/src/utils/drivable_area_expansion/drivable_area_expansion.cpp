@@ -25,15 +25,6 @@
 
 #include <boost/geometry.hpp>
 
-// for writing the svg file
-#include <fstream>
-#include <iostream>
-// for the geometry types
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-// for the svg mapper
-#include <boost/geometry/io/svg/svg_mapper.hpp>
-#include <boost/geometry/io/svg/write.hpp>
-
 namespace drivable_area_expansion
 {
 
@@ -177,9 +168,6 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
   Intersection end_right;
   end_right.segment_it = da.end();
 
-  // Declare a stream and an SVG mapper
-  std::ofstream svg("/home/mclement/Pictures/debug.svg");
-  boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
   for (auto it = da.begin(); it != da.end(); ++it) {
     if (boost::geometry::distance(*it, start_segment.first) < 1e-3) {
       start_left.intersection_point = *it;
@@ -240,24 +228,6 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
       }
     }
   }
-  mapper.add(expanded_drivable_area);
-  mapper.add(path_start_segment);
-  mapper.add(path_end_segment);
-  mapper.add(start_segment);
-  mapper.add(end_segment);
-  mapper.map(expanded_drivable_area, "fill-opacity:0.0;fill:black;stroke:black;stroke-width:1", 1);
-  mapper.map(start_segment, "fill-opacity:0.5;fill:blue;stroke:blue;stroke-width:2", 2);
-  mapper.map(end_segment, "fill-opacity:0.5;fill:blue;stroke:blue;stroke-width:2", 2);
-  mapper.map(path_start_segment, "fill-opacity:0.5;fill:green;stroke:green;stroke-width:2", 2);
-  mapper.map(path_end_segment, "fill-opacity:0.5;fill:green;stroke:green;stroke-width:2", 2);
-  mapper.map(
-    start_left.intersection_point, "fill-opacity:0.5;fill:red;stroke:red;stroke-width:2", 2);
-  mapper.map(
-    start_right.intersection_point, "fill-opacity:0.5;fill:red;stroke:red;stroke-width:2", 2);
-  mapper.map(end_left.intersection_point, "fill-opacity:0.5;fill:red;stroke:red;stroke-width:2", 2);
-  mapper.map(
-    end_right.intersection_point, "fill-opacity:0.5;fill:red;stroke:red;stroke-width:2", 2);
-
   if (
     start_left.segment_it == da.end() || start_right.segment_it == da.end() ||
     end_left.segment_it == da.end() || end_right.segment_it == da.end()) {
@@ -304,11 +274,6 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
   std::unique(path.right_bound.begin(), path.right_bound.end(), point_cmp);
   copy_z_over_arc_length(original_left_bound, path.left_bound);
   copy_z_over_arc_length(original_right_bound, path.right_bound);
-
-  for (const auto & p : path.right_bound) {
-    mapper.add(convert_point(p));
-    mapper.map(convert_point(p), "fill-opacity:0.5;fill:grey;stroke:grey;stroke-width:2", 1);
-  }
 }
 
 }  // namespace drivable_area_expansion
