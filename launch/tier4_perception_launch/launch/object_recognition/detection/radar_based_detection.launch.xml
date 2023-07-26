@@ -9,7 +9,6 @@
   <arg name="clustering/angle_threshold" default="0.174"/>
   <arg name="clustering/distance_threshold" default="10.0"/>
   <arg name="clustering/velocity_threshold" default="4.0"/>
-  <arg name="radar_lanelet_filtering_range_param" default="$(find-pkg-share detected_object_validation)/config/object_position_filter.param.yaml"/>
 
   <!-- Detection for far dynamic objects -->
   <include file="$(find-pkg-share radar_crossing_objects_noise_filter)/launch/radar_crossing_objects_noise_filter.launch.xml">
@@ -20,10 +19,17 @@
     <arg name="velocity_threshold" value="$(var filter/velocity_threshold)"/>
   </include>
 
-  <include file="$(find-pkg-share detected_object_validation)/launch/object_lanelet_filter.launch.xml">
-    <arg name="input/object" value="noise_filtered_objects"/>
-    <arg name="output/object" value="lanelet_filtered_objects"/>
-    <arg name="filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
+  <!-- Filter -->
+  <include if="$(eval &quot;'$(var objects_filter_method)'=='position_filter'&quot;)" file="$(find-pkg-share detected_object_validation)/launch/object_lanelet_filter.launch.xml">
+    <arg name="input/object" value="objects_before_filter"/>
+    <arg name="output/object" value="$(var output/objects)"/>
+    <arg name="filtering_range_param" value="$(var object_recognition_detection_object_lanelet_filter_param_path)"/>
+  </include>
+
+  <include if="$(eval &quot;'$(var objects_filter_method)'=='position_filter'&quot;)" file="$(find-pkg-share detected_object_validation)/launch/object_position_filter.launch.xml">
+    <arg name="input/object" value="objects_before_filter"/>
+    <arg name="output/object" value="$(var output/objects)"/>
+    <arg name="filtering_range_param" value="$(var object_recognition_detection_object_position_filter_param_path)"/>
   </include>
 
   <include file="$(find-pkg-share object_velocity_splitter)/launch/object_velocity_splitter.launch.xml">
