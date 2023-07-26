@@ -1434,7 +1434,7 @@ ExtendedPredictedObject transform(
 
 lanelet::ConstLanelets getAdjacentLane(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right)
+  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift)
 {
   const auto & rh = planner_data->route_handler;
   const auto & forward_distance = parameters->object_check_forward_distance;
@@ -1455,17 +1455,17 @@ lanelet::ConstLanelets getAdjacentLane(
   lanelet::ConstLanelets lanes{};
   for (const auto & lane : ego_succeeding_lanes) {
     const auto opt_left_lane = rh->getLeftLanelet(lane);
-    if (!is_right && opt_left_lane) {
+    if (!is_right_shift && opt_left_lane) {
       lanes.push_back(opt_left_lane.get());
     }
 
     const auto opt_right_lane = rh->getRightLanelet(lane);
-    if (is_right && opt_right_lane) {
+    if (is_right_shift && opt_right_lane) {
       lanes.push_back(opt_right_lane.get());
     }
 
     const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
-    if (is_right && !right_opposite_lanes.empty()) {
+    if (is_right_shift && !right_opposite_lanes.empty()) {
       lanes.push_back(right_opposite_lanes.front());
     }
   }
@@ -1475,13 +1475,13 @@ lanelet::ConstLanelets getAdjacentLane(
 
 std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right)
+  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift)
 {
   const auto & p = parameters;
   const auto check_right_lanes =
-    (is_right && p->check_shift_side_lane) || (!is_right && p->check_other_side_lane);
+    (is_right_shift && p->check_shift_side_lane) || (!is_right_shift && p->check_other_side_lane);
   const auto check_left_lanes =
-    (!is_right && p->check_shift_side_lane) || (is_right && p->check_other_side_lane);
+    (!is_right_shift && p->check_shift_side_lane) || (is_right_shift && p->check_other_side_lane);
 
   std::vector<ExtendedPredictedObject> target_objects;
 
