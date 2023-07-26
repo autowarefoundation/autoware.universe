@@ -157,6 +157,7 @@ If the target object is inside the road or crosswalk, this module outputs one or
 | `prediction_sampling_delta_time`            | double | sampling time for points in predicted path [s]                                                               |
 | `min_velocity_for_map_based_prediction`     | double | apply map-based prediction to the objects with higher velocity than this value                               |
 | `min_crosswalk_user_velocity`               | double | minimum velocity use in path prediction for crosswalk users                                                  |
+| `num_sampling_path`                         | int    | The number of paths to be sampled.                                                                           |
 | `dist_threshold_for_searching_lanelet`      | double | The threshold of the angle used when searching for the lane to which the object belongs [rad]                |
 | `delta_yaw_threshold_for_searching_lanelet` | double | The threshold of the distance used when searching for the lane to which the object belongs [m]               |
 | `sigma_lateral_offset`                      | double | Standard deviation for lateral position of objects [m]                                                       |
@@ -167,6 +168,11 @@ If the target object is inside the road or crosswalk, this module outputs one or
 | `dist_ratio_threshold_to_right_bound`       | double | Conditions for using lane change detection of objects. Distance to the right bound of lanelet.               |
 | `diff_dist_threshold_to_left_bound`         | double | Conditions for using lane change detection of objects. Differential value of horizontal position of objects. |
 | `diff_dist_threshold_to_right_bound`        | double | Conditions for using lane change detection of objects. Differential value of horizontal position of objects. |
+| `path_cost_params.jerk`                     | double | Weight of jerk cost.                                                                                         |
+| `path_cost_params.time`                     | double | Weight of time cost.                                                                                         |
+| `path_cost_params.position`                 | double | Weight of position cost.                                                                                     |
+| `path_cost_params.lateral`                  | double | Weight of lateral cost.                                                                                      |
+| `path_cost_params.longitudinal`             | double | Weight of longitudinal cost.                                                                                 |
 
 ## Assumptions / Known limits
 
