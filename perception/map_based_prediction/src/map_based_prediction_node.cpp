@@ -596,7 +596,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   min_velocity_for_map_based_prediction_ =
     declare_parameter("min_velocity_for_map_based_prediction", 1.0);
   min_crosswalk_user_velocity_ = declare_parameter("min_crosswalk_user_velocity", 1.0);
-  num_sampling_path_ = declare_parameter<int>("num_sampling_path", 5);
+  num_sampling_path_ = declare_parameter<int>("num_sampling_path");
   dist_threshold_for_searching_lanelet_ =
     declare_parameter("dist_threshold_for_searching_lanelet", 3.0);
   delta_yaw_threshold_for_searching_lanelet_ =
@@ -636,11 +636,11 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   // weights of path generation cost
   PathGenerator::CostParams cost_params;
   {
-    cost_params.KJ = declare_parameter<double>("path_cost_params.jerk", 0.001);
-    cost_params.KT = declare_parameter<double>("path_cost_params.time", 0.1);
-    cost_params.KD = declare_parameter<double>("path_cost_params.position", 1.0);
-    cost_params.K_LAT = declare_parameter<double>("path_cost_params.lateral", 1.0);
-    cost_params.K_LON = declare_parameter<double>("path_cost_params.longitudinal", 1.0);
+    cost_params.KJ = declare_parameter<double>("path_cost_params.jerk");
+    cost_params.KT = declare_parameter<double>("path_cost_params.time");
+    cost_params.KD = declare_parameter<double>("path_cost_params.position");
+    cost_params.K_LAT = declare_parameter<double>("path_cost_params.lateral");
+    cost_params.K_LON = declare_parameter<double>("path_cost_params.longitudinal");
   }
 
   reference_path_resolution_ = declare_parameter("reference_path_resolution", 0.5);
