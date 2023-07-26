@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef YABLOC_MONITOR__AVAILABILITY_MODULE_HPP_
-#define YABLOC_MONITOR__AVAILABILITY_MODULE_HPP_
+#ifndef AVAILABILITY_MODULE_HPP_
+#define AVAILABILITY_MODULE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -37,4 +37,4 @@ private:
   double timestamp_threshold_;
 };
 
-#endif  // YABLOC_MONITOR__AVAILABILITY_MODULE_HPP_
+#endif  // AVAILABILITY_MODULE_HPP_

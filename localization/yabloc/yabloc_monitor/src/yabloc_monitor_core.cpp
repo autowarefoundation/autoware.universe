@@ -29,8 +29,7 @@ YabLocMonitor::YabLocMonitor() : Node("yabloc_monitor")
   diagnostics_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
   timer_ = rclcpp::create_timer(
-    this, get_clock(), rclcpp::Rate(100).period(),
-    std::bind(&YabLocMonitor::timer_callback, this));
+    this, get_clock(), rclcpp::Rate(100).period(), std::bind(&YabLocMonitor::timer_callback, this));
 
   // Evaluation moduels
   availability_module_ = std::make_unique<AvailabilityModule>(this);

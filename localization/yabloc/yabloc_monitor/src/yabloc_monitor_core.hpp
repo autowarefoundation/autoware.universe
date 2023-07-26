@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef YABLOC_MONITOR__YABLOC_MONITOR_HPP_
-#define YABLOC_MONITOR__YABLOC_MONITOR_HPP_
+#ifndef YABLOC_MONITOR_CORE_HPP_
+#define YABLOC_MONITOR_CORE_HPP_
 
 #include "availability_module.hpp"
 
@@ -44,4 +44,4 @@ private:
   // Evaluation modules
   std::unique_ptr<AvailabilityModule> availability_module_;
 };
-#endif  // YABLOC_MONITOR__YABLOC_MONITOR_HPP_
+#endif  // YABLOC_MONITOR_CORE_HPP_

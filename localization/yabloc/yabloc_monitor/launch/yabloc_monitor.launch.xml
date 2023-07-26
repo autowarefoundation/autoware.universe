@@ -1,4 +1,3 @@
 <launch>
-  <node name="yabloc_monitor" pkg="yabloc_monitor" exec="yabloc_monitor" output="screen">
-  </node>
+  <node name="yabloc_monitor" pkg="yabloc_monitor" exec="yabloc_monitor" output="screen"/>
 </launch>
