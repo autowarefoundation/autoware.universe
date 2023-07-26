@@ -3,16 +3,21 @@
 YabLoc monitor is a node that monitors the status of the YabLoc localization system. It is a wrapper node that monitors the status of the YabLoc localization system and publishes the status as diagnostics.
 
 ## Feature
+
 ### Availability
-The node monitors the final output pose of YabLoc to verify the availability of YabLoc. 
+
+The node monitors the final output pose of YabLoc to verify the availability of YabLoc.
 
 ## Interfaces
+
 ### Input
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+
+| Name           | Type                        | Description                     |
+| -------------- | --------------------------- | ------------------------------- |
 | `/yabloc/pose` | `geometry_msgs/PoseStamped` | The final output pose of YabLoc |
 
 ### Output
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+
+| Name           | Type                              | Description         |
+| -------------- | --------------------------------- | ------------------- |
 | `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | Diagnostics outputs |
