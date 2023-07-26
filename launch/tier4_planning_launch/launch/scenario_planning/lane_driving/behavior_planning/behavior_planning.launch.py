@@ -23,9 +23,7 @@ from launch.conditions import UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
-from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import Node
-from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 import yaml
 
@@ -150,9 +148,10 @@ def launch_setup(context, *args, **kwargs):
         with open(path) as f:
             behavior_velocity_planner_params.update(yaml.safe_load(f)["/**"]["ros__parameters"])
 
-    behavior_velocity_planner_component = ComposableNode(
+    behavior_velocity_planner_component = Node(
         package="behavior_velocity_planner",
-        plugin="behavior_velocity_planner::BehaviorVelocityPlannerNode",
+        # plugin="behavior_velocity_planner::BehaviorVelocityPlannerNode",
+        executable="behavior_velocity_planner_node",
         name="behavior_velocity_planner",
         namespace="",
         remappings=[
@@ -206,18 +205,8 @@ def launch_setup(context, *args, **kwargs):
             motion_velocity_smoother_param,
             behavior_velocity_smoother_type_param,
         ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
-    )
-
-    container = ComposableNodeContainer(
-        name="behavior_planning_container",
-        namespace="",
-        package="rclcpp_components",
-        executable=LaunchConfiguration("container_executable"),
-        composable_node_descriptions=[
-            behavior_velocity_planner_component,
-        ],
-        output="screen",
+        prefix="konsole -e gdb -ex run --args",
+        # extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     # This condition is true if run_out module is enabled and its detection method is Points
@@ -262,7 +251,7 @@ def launch_setup(context, *args, **kwargs):
 
     group = GroupAction(
         [
-            container,
+            behavior_velocity_planner_component,
             behavior_path_planner_component,
             load_compare_map,
             load_vector_map_inside_area_filter,
