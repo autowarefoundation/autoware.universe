@@ -1,5 +1,5 @@
 
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,31 +61,31 @@ RadarObjectFusionToDetectedObjectNode::RadarObjectFusionToDetectedObjectNode(
     std::bind(&RadarObjectFusionToDetectedObjectNode::onSetParam, this, _1));
 
   // Node Parameter
-  node_param_.update_rate_hz = declare_parameter<double>("node_params.update_rate_hz", 10.0);
+  node_param_.update_rate_hz = declare_parameter<double>("node_params.update_rate_hz");
 
   // Core Parameter
   core_param_.bounding_box_margin =
-    declare_parameter<double>("core_params.bounding_box_margin", 0.5);
+    declare_parameter<double>("core_params.bounding_box_margin");
   core_param_.split_threshold_velocity =
-    declare_parameter<double>("core_params.split_threshold_velocity", 0.0);
+    declare_parameter<double>("core_params.split_threshold_velocity";
   core_param_.threshold_yaw_diff =
-    declare_parameter<double>("core_params.threshold_yaw_diff", 0.35);
+    declare_parameter<double>("core_params.threshold_yaw_diff");
   core_param_.velocity_weight_min_distance =
-    declare_parameter<double>("core_params.velocity_weight_min_distance", 1.0);
+    declare_parameter<double>("core_params.velocity_weight_min_distance");
   core_param_.velocity_weight_average =
-    declare_parameter<double>("core_params.velocity_weight_average", 0.0);
+    declare_parameter<double>("core_params.velocity_weight_average");
   core_param_.velocity_weight_median =
-    declare_parameter<double>("core_params.velocity_weight_median", 0.0);
+    declare_parameter<double>("core_params.velocity_weight_median");
   core_param_.velocity_weight_target_value_average =
-    declare_parameter<double>("core_params.velocity_weight_target_value_average", 0.0);
+    declare_parameter<double>("core_params.velocity_weight_target_value_average");
   core_param_.velocity_weight_target_value_top =
-    declare_parameter<double>("core_params.velocity_weight_target_value_top", 1.0);
+    declare_parameter<double>("core_params.velocity_weight_target_value_top");
   core_param_.convert_doppler_to_twist =
-    declare_parameter<bool>("core_params.convert_doppler_to_twist", false);
+    declare_parameter<bool>("core_params.convert_doppler_to_twist");
   core_param_.threshold_probability =
-    declare_parameter<float>("core_params.threshold_probability", 0.0);
+    declare_parameter<float>("core_params.threshold_probability");
   core_param_.compensate_probability =
-    declare_parameter<bool>("core_params.compensate_probability", false);
+    declare_parameter<bool>("core_params.compensate_probability");
 
   // Core
   radar_fusion_to_detected_object_ = std::make_unique<RadarFusionToDetectedObject>(get_logger());
