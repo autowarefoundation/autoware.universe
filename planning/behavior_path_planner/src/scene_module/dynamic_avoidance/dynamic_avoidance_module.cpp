@@ -187,7 +187,11 @@ DynamicAvoidanceModule::DynamicAvoidanceModule(
   const std::string & name, rclcpp::Node & node,
   std::shared_ptr<DynamicAvoidanceParameters> parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{std::move(parameters)}
+: SceneModuleInterface{name, node, rtc_interface_ptr_map},
+  parameters_{std::move(parameters)},
+  target_objects_manager_{TargetObjectsManager(
+    parameters_->successive_num_to_entry_dynamic_avoidance_condition,
+    parameters_->successive_num_to_exit_dynamic_avoidance_condition)}
 {
 }
 
@@ -224,17 +228,9 @@ bool DynamicAvoidanceModule::isExecutionReady() const
 void DynamicAvoidanceModule::updateData()
 {
   // calculate target objects candidate
-  const auto target_objects_candidate = calcTargetObjectsCandidate();
+  updateTargetObjects();
 
-  // calculate target objects considering flickering suppress
-  target_objects_.clear();
-  for (const auto & target_object_candidate : target_objects_candidate) {
-    if (
-      parameters_->successive_num_to_entry_dynamic_avoidance_condition <=
-      target_object_candidate.alive_counter) {
-      target_objects_.push_back(target_object_candidate.object);
-    }
-  }
+  target_objects_ = target_objects_manager_.getValidObjects();
 }
 
 ModuleStatus DynamicAvoidanceModule::updateState()
@@ -326,14 +322,12 @@ bool DynamicAvoidanceModule::isLabelTargetObstacle(const uint8_t label) const
   return false;
 }
 
-std::vector<DynamicAvoidanceModule::DynamicAvoidanceObjectCandidate>
-DynamicAvoidanceModule::calcTargetObjectsCandidate()
+void DynamicAvoidanceModule::updateTargetObjects()
 {
   const auto prev_module_path = getPreviousModuleOutput().path;
   const auto & predicted_objects = planner_data_->dynamic_object->objects;
 
-  // convert predicted objects to dynamic avoidance objects
-  std::vector<DynamicAvoidanceObjectCandidate> output_objects_candidate;
+  target_objects_manager_.decreaseAllCounters();
   for (const auto & predicted_object : predicted_objects) {
     const auto obj_uuid = tier4_autoware_utils::toHexString(predicted_object.object_id);
     const auto & obj_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
@@ -441,6 +435,7 @@ DynamicAvoidanceModule::calcTargetObjectsCandidate()
                                      ? isLeft(prev_module_path->points, future_obj_pose->position)
                                      : is_object_left;
 
+    /*
     // 8. calculate alive counter for filtering objects
     const auto prev_target_object_candidate =
       DynamicAvoidanceObjectCandidate::getObjectFromUuid(prev_target_objects_candidate_, obj_uuid);
@@ -450,16 +445,14 @@ DynamicAvoidanceModule::calcTargetObjectsCandidate()
             parameters_->successive_num_to_entry_dynamic_avoidance_condition,
             prev_target_object_candidate->alive_counter + 1)
         : 0;
+    */
 
     const auto target_object = DynamicAvoidanceObject(
       predicted_object, obj_tangent_vel, obj_normal_vel, is_collision_left, time_to_collision);
-    const auto target_object_candidate =
-      DynamicAvoidanceObjectCandidate{target_object, alive_counter};
-    output_objects_candidate.push_back(target_object_candidate);
-  }
 
-  prev_target_objects_candidate_ = output_objects_candidate;
-  return output_objects_candidate;
+    target_objects_manager_.addObject(obj_uuid, target_object, 2);
+  }
+  target_objects_manager_.removeOutOfCounter();
 }
 
 [[maybe_unused]] std::optional<std::pair<size_t, size_t>>

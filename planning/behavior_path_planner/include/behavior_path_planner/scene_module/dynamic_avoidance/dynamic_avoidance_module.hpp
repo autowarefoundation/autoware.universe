@@ -51,6 +51,7 @@ struct DynamicAvoidanceParameters
   bool avoid_pedestrian{false};
   double min_obstacle_vel{0.0};
   int successive_num_to_entry_dynamic_avoidance_condition{0};
+  int successive_num_to_exit_dynamic_avoidance_condition{0};
 
   double min_obj_lat_offset_to_ego_path{0.0};
   double max_obj_lat_offset_to_ego_path{0.0};
@@ -105,6 +106,101 @@ public:
     double time_to_collision;
     std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths{};
   };
+
+  struct TargetObjectsManager
+  {
+    // void resetCurrentUuids() {current_uuids_.clear(); }
+    // void addCurrentUuid(const std::string & uuid) { current_uuids_.push_back(uuid); }
+    // void removeCounterUnlessUpdated()
+    // {
+    //   std::vector<std::string> obsolete_uuids;
+    //   for (const auto & key_and_value : counter_map_) {
+    //     if (
+    //       std::find(current_uuids_.begin(), current_uuids_.end(), key_and_value.first) ==
+    //       current_uuids_.end()) {
+    //       obsolete_uuids.push_back(key_and_value.first);
+    //     }
+    //   }
+    //   for (const auto & obsolete_uuid : obsolete_uuids) {
+    //     counter_map_.erase(obsolete_uuid);
+    //     object_map_.erase(obsolete_uuid);
+    //   }
+    // }
+
+    TargetObjectsManager(const int arg_max_count, const int arg_min_count)
+    : max_count_(arg_max_count), min_count_(arg_min_count)
+    {
+    }
+    int max_count_;
+    int min_count_;
+
+    void increaseCounter(const std::string & uuid, const int times = 1)
+    {
+      for ([[maybe_unused]] int i = 0; i < times; ++i) {
+        if (counter_map_.count(uuid) != 0) {
+          counter_map_.at(uuid) = std::min(max_count_ + 1, std::max(1, counter_map_.at(uuid) + 1));
+        } else {
+          counter_map_.emplace(uuid, 1);
+        }
+      }
+    }
+    void decreaseCounter(const std::string & uuid)
+    {
+      if (counter_map_.count(uuid) != 0) {
+        counter_map_.at(uuid) = std::max(min_count_, std::min(-1, counter_map_.at(uuid) - 1));
+      } else {
+        counter_map_.emplace(uuid, -1);
+      }
+    }
+    void decreaseAllCounters()
+    {
+      for (const auto & key_and_value : counter_map_) {
+        decreaseCounter(key_and_value.first);
+      }
+    }
+
+    void addObject(
+      const std::string & uuid, const DynamicAvoidanceObject & object, const int increase_times = 1)
+    {
+      // add/update object
+      if (object_map_.count(uuid) != 0) {
+        object_map_.at(uuid) = object;
+      } else {
+        object_map_.emplace(uuid, object);
+      }
+
+      // add/update counter
+      increaseCounter(uuid, increase_times);
+    }
+
+    void removeOutOfCounter()
+    {
+      std::vector<std::string> obsolete_uuids;
+      for (const auto & key_and_value : counter_map_) {
+        if (key_and_value.second < min_count_) {
+          obsolete_uuids.push_back(key_and_value.first);
+        }
+      }
+      for (const auto & obsolete_uuid : obsolete_uuids) {
+        counter_map_.erase(obsolete_uuid);
+        object_map_.erase(obsolete_uuid);
+      }
+    }
+    std::vector<DynamicAvoidanceObject> getValidObjects()
+    {
+      std::vector<DynamicAvoidanceObject> objects;
+      for (const auto & object : object_map_) {
+        objects.push_back(object.second);
+      }
+      return objects;
+    }
+
+    // NOTE: positive is for meeting entrying condition, and negative is for exiting.
+    std::unordered_map<std::string, int> counter_map_;
+    std::unordered_map<std::string, DynamicAvoidanceObject> object_map_;
+  };
+
+  /*
   struct DynamicAvoidanceObjectCandidate
   {
     DynamicAvoidanceObject object;
@@ -123,6 +219,7 @@ public:
       return *itr;
     }
   };
+  */
 
   DynamicAvoidanceModule(
     const std::string & name, rclcpp::Node & node,
@@ -157,7 +254,7 @@ private:
   };
 
   bool isLabelTargetObstacle(const uint8_t label) const;
-  std::vector<DynamicAvoidanceObjectCandidate> calcTargetObjectsCandidate();
+  void updateTargetObjects();
   bool willObjectCutIn(
     const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & predicted_path,
     const double obj_tangent_vel, const LatLonOffset & lat_lon_offset) const;
@@ -178,8 +275,6 @@ private:
   std::optional<tier4_autoware_utils::Polygon2d> calcDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
 
-  std::vector<DynamicAvoidanceModule::DynamicAvoidanceObjectCandidate>
-    prev_target_objects_candidate_;
   std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> target_objects_;
   // std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> prev_target_objects_;
   std::shared_ptr<DynamicAvoidanceParameters> parameters_;
@@ -224,6 +319,7 @@ private:
     std::vector<std::string> current_uuids_;
   };
   mutable ObjectsVariable prev_objects_min_bound_lat_offset_;
+  TargetObjectsManager target_objects_manager_;
 };
 }  // namespace behavior_path_planner
 
