@@ -41,8 +41,10 @@ public:
     const rclcpp::Time & now);
 
 private:
+  void on_map_projector_info(const MapProjectorInfo::ConstSharedPtr msg);
+
+  rclcpp::Subscription<MapProjectorInfo>::SharedPtr sub_map_projector_type_;
   rclcpp::Publisher<HADMapBin>::SharedPtr pub_map_bin_;
-  rclcpp::Publisher<MapProjectorInfo>::SharedPtr pub_map_projector_type_;
 };
 
 #endif  // MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_

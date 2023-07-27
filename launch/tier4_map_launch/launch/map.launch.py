@@ -62,7 +62,10 @@ def launch_setup(context, *args, **kwargs):
         package="map_loader",
         plugin="Lanelet2MapLoaderNode",
         name="lanelet2_map_loader",
-        remappings=[("output/lanelet2_map", "vector_map")],
+        remappings=[
+            ("output/lanelet2_map", "vector_map"),
+            ("input/map_projector_info", "map_projector_type"),
+        ],
         parameters=[
             {
                 "lanelet2_map_path": LaunchConfiguration("lanelet2_map_path"),
