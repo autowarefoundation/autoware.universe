@@ -146,8 +146,8 @@ The node projects lan/lon coordinates into arbitrary coordinates defined in `/ma
 `ros2 run map_loader lanelet2_map_loader --ros-args -p lanelet2_map_path:=path/to/map.osm`
 
 ### Subscribed Topics
-- ~input/map_projector_info (tier4_map_msgs/MapProjectorInfo) : Projection type for Autoware
 
+- ~input/map_projector_info (tier4_map_msgs/MapProjectorInfo) : Projection type for Autoware
 
 ### Published Topics
 
@@ -179,7 +179,7 @@ lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messa
 
 ### Parameters
 
-| Name                        | Type        | Description                                                  | Default value |
-| :-------------------------- | :---------- | :----------------------------------------------------------- | :------------ |
-| center_line_resolution      | double      | Define the resolution of the lanelet center line             | 5.0           |
-| lanelet2_map_path           | std::string | The lanelet2 map path                                        | None          |
+| Name                   | Type        | Description                                      | Default value |
+| :--------------------- | :---------- | :----------------------------------------------- | :------------ |
+| center_line_resolution | double      | Define the resolution of the lanelet center line | 5.0           |
+| lanelet2_map_path      | std::string | The lanelet2 map path                            | None          |
