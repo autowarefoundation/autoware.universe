@@ -345,4 +345,19 @@ autoware_auto_perception_msgs::msg::Shape shapeMerger(
   }
 }
 
+void updateOnlyObjectVelocity(TrackedObject & main_obj, const TrackedObject & sub_obj)
+{
+  main_obj.kinematics = objectKinematicsVXMerger(main_obj, sub_obj, MergePolicy::OVERWRITE);
+}
+
+void updateOnlyClassification(TrackedObject & main_obj, const TrackedObject & sub_obj)
+{
+  main_obj = objectClassificationMerger(main_obj, sub_obj, MergePolicy::OVERWRITE);
+}
+
+void updateWholeTrackedObject(TrackedObject & main_obj, const TrackedObject & sub_obj)
+{
+  main_obj = sub_obj;
+}
+
 }  // namespace merger_utils
