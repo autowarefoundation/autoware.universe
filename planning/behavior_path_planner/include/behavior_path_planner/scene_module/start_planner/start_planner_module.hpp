@@ -66,11 +66,6 @@ struct PullOutStatus
 class StartPlannerModule : public SceneModuleInterface
 {
 public:
-#ifdef USE_OLD_ARCHITECTURE
-  StartPlannerModule(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<StartPlannerParameters> & parameters);
-#else
   StartPlannerModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<StartPlannerParameters> & parameters,
@@ -80,7 +75,6 @@ public:
   {
     parameters_ = parameters;
   }
-#endif
 
   BehaviorModuleOutput run() override;
 
@@ -104,11 +98,24 @@ public:
   {
   }
 
+  // set is_simultaneously_executable_ as false when backward driving.
+  // keep initial value to return it after finishing backward driving.
+  bool initial_value_simultaneously_executable_as_approved_module_;
+  bool initial_value_simultaneously_executable_as_candidate_module_;
+  void setInitialIsSimultaneousExecutableAsApprovedModule(const bool is_simultaneously_executable)
+  {
+    initial_value_simultaneously_executable_as_approved_module_ = is_simultaneously_executable;
+  };
+  void setInitialIsSimultaneousExecutableAsCandidateModule(const bool is_simultaneously_executable)
+  {
+    initial_value_simultaneously_executable_as_candidate_module_ = is_simultaneously_executable;
+  };
+
 private:
   std::shared_ptr<StartPlannerParameters> parameters_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
-  std::vector<std::shared_ptr<PullOutPlannerBase>> start_planner_planners_;
+  std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;
   PullOutStatus status_;
 
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
@@ -142,12 +149,13 @@ private:
   bool isStopped();
   bool hasFinishedCurrentPath();
 
-  void setDebugData() const;
+  // check if the goal is located behind the ego in the same route segment.
+  bool IsGoalBehindOfEgoInSameRouteSegment() const;
 
-// temporary for old architecture
-#ifdef USE_OLD_ARCHITECTURE
-  mutable bool is_executed_{false};
-#endif
+  // generate BehaviorPathOutput with stopping path.
+  BehaviorModuleOutput generateStopOutput() const;
+
+  void setDebugData() const;
 };
 }  // namespace behavior_path_planner
 

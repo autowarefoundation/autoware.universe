@@ -49,13 +49,13 @@ public:
     clock_(*node->get_clock()),
     logger_(node->get_logger().get_child(name)),
     name_(name),
-    enable_rtc_(config.enable_rtc),
-    max_module_num_(config.max_module_size),
-    priority_(config.priority),
     enable_simultaneous_execution_as_approved_module_(
       config.enable_simultaneous_execution_as_approved_module),
     enable_simultaneous_execution_as_candidate_module_(
-      config.enable_simultaneous_execution_as_candidate_module)
+      config.enable_simultaneous_execution_as_candidate_module),
+    enable_rtc_(config.enable_rtc),
+    max_module_num_(config.max_module_size),
+    priority_(config.priority)
   {
     for (const auto & rtc_type : rtc_types) {
       const auto snake_case_name = utils::convertToSnakeCase(name);
@@ -68,6 +68,7 @@ public:
     pub_info_marker_ = node->create_publisher<MarkerArray>("~/info/" + name, 20);
     pub_debug_marker_ = node->create_publisher<MarkerArray>("~/debug/" + name, 20);
     pub_virtual_wall_ = node->create_publisher<MarkerArray>("~/virtual_wall/" + name, 20);
+    pub_drivable_lanes_ = node->create_publisher<MarkerArray>("~/drivable_lanes/" + name, 20);
   }
 
   virtual ~SceneModuleManagerInterface() = default;
@@ -170,6 +171,7 @@ public:
 
     MarkerArray info_markers{};
     MarkerArray debug_markers{};
+    MarkerArray drivable_lanes_markers{};
 
     const auto marker_offset = std::numeric_limits<uint8_t>::max();
 
@@ -185,16 +187,23 @@ public:
         debug_markers.markers.push_back(marker);
       }
 
+      for (auto & marker : m->getDrivableLanesMarkers().markers) {
+        marker.id += marker_id;
+        drivable_lanes_markers.markers.push_back(marker);
+      }
+
       marker_id += marker_offset;
     }
 
     if (registered_modules_.empty() && idling_module_ptr_ != nullptr) {
       appendMarkerArray(idling_module_ptr_->getInfoMarkers(), &info_markers);
       appendMarkerArray(idling_module_ptr_->getDebugMarkers(), &debug_markers);
+      appendMarkerArray(idling_module_ptr_->getDrivableLanesMarkers(), &drivable_lanes_markers);
     }
 
     pub_info_marker_->publish(info_markers);
     pub_debug_marker_->publish(debug_markers);
+    pub_drivable_lanes_->publish(drivable_lanes_markers);
   }
 
   bool exist(const SceneModulePtr & module_ptr) const
@@ -271,6 +280,8 @@ protected:
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
 
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_drivable_lanes_;
+
   std::string name_;
 
   std::shared_ptr<PlannerData> planner_data_;
@@ -281,16 +292,16 @@ protected:
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 
+  bool enable_simultaneous_execution_as_approved_module_{false};
+
+  bool enable_simultaneous_execution_as_candidate_module_{false};
+
 private:
   bool enable_rtc_;
 
   size_t max_module_num_;
 
   size_t priority_;
-
-  bool enable_simultaneous_execution_as_approved_module_{false};
-
-  bool enable_simultaneous_execution_as_candidate_module_{false};
 };
 
 }  // namespace behavior_path_planner

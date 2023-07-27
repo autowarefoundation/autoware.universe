@@ -47,6 +47,14 @@ struct DynamicAvoidanceParameters
   bool avoid_motorcycle{false};
   bool avoid_pedestrian{false};
   double min_obstacle_vel{0.0};
+  int successive_num_to_entry_dynamic_avoidance_condition{0};
+
+  double min_obj_lat_offset_to_ego_path{0.0};
+  double max_obj_lat_offset_to_ego_path{0.0};
+
+  double max_front_object_angle{0.0};
+  double min_crossing_object_vel{0.0};
+  double max_crossing_object_angle{0.0};
 
   // drivable area generation
   double lat_offset_from_obstacle{0.0};
@@ -67,40 +75,59 @@ class DynamicAvoidanceModule : public SceneModuleInterface
 public:
   struct DynamicAvoidanceObject
   {
-    explicit DynamicAvoidanceObject(
-      const PredictedObject & predicted_object, const double arg_path_projected_vel)
-    : pose(predicted_object.kinematics.initial_pose_with_covariance.pose),
-      path_projected_vel(arg_path_projected_vel),
-      shape(predicted_object.shape)
+    DynamicAvoidanceObject(
+      const PredictedObject & predicted_object, const double arg_vel, const double arg_lat_vel,
+      const bool arg_is_left, const double arg_time_to_collision)
+    : uuid(tier4_autoware_utils::toHexString(predicted_object.object_id)),
+      pose(predicted_object.kinematics.initial_pose_with_covariance.pose),
+      shape(predicted_object.shape),
+      vel(arg_vel),
+      lat_vel(arg_lat_vel),
+      is_left(arg_is_left),
+      time_to_collision(arg_time_to_collision)
     {
       for (const auto & path : predicted_object.kinematics.predicted_paths) {
         predicted_paths.push_back(path);
       }
     }
 
-    const geometry_msgs::msg::Pose pose;
-    const double path_projected_vel;
-    const autoware_auto_perception_msgs::msg::Shape shape;
-    std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths{};
-
+    std::string uuid;
+    geometry_msgs::msg::Pose pose;
+    autoware_auto_perception_msgs::msg::Shape shape;
+    double vel;
+    double lat_vel;
     bool is_left;
+    double time_to_collision;
+    std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths{};
+  };
+  struct DynamicAvoidanceObjectCandidate
+  {
+    DynamicAvoidanceObject object;
+    int alive_counter;
+
+    static std::optional<DynamicAvoidanceObjectCandidate> getObjectFromUuid(
+      const std::vector<DynamicAvoidanceObjectCandidate> & objects, const std::string & target_uuid)
+    {
+      const auto itr = std::find_if(objects.begin(), objects.end(), [&](const auto & object) {
+        return object.object.uuid == target_uuid;
+      });
+
+      if (itr == objects.end()) {
+        return std::nullopt;
+      }
+      return *itr;
+    }
   };
 
-#ifdef USE_OLD_ARCHITECTURE
-  DynamicAvoidanceModule(
-    const std::string & name, rclcpp::Node & node,
-    std::shared_ptr<DynamicAvoidanceParameters> parameters);
-#else
   DynamicAvoidanceModule(
     const std::string & name, rclcpp::Node & node,
     std::shared_ptr<DynamicAvoidanceParameters> parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
   void updateModuleParams(const std::shared_ptr<DynamicAvoidanceParameters> & parameters)
   {
     parameters_ = parameters;
   }
-#endif
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -117,14 +144,71 @@ public:
 
 private:
   bool isLabelTargetObstacle(const uint8_t label) const;
-  std::vector<DynamicAvoidanceObject> calcTargetObjects() const;
+  std::vector<DynamicAvoidanceObjectCandidate> calcTargetObjectsCandidate();
+  bool willObjectCutIn(
+    const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & predicted_path,
+    const double obj_tangent_vel) const;
+  bool willObjectCutOut(
+    const double obj_tangent_vel, const double obj_normal_vel, const bool is_left) const;
+  bool isObjectFarFromPath(
+    const PredictedObject & predicted_object, const double obj_dist_to_path) const;
+  double calcTimeToCollision(
+    const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
+    const double obj_tangent_vel) const;
+  std::optional<std::pair<size_t, size_t>> calcCollisionSection(
+    const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & obj_path) const;
+
   std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> getAdjacentLanes(
     const double forward_distance, const double backward_distance) const;
   std::optional<tier4_autoware_utils::Polygon2d> calcDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
 
+  std::vector<DynamicAvoidanceModule::DynamicAvoidanceObjectCandidate>
+    prev_target_objects_candidate_;
   std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> target_objects_;
+  // std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> prev_target_objects_;
   std::shared_ptr<DynamicAvoidanceParameters> parameters_;
+
+  struct ObjectsVariable
+  {
+    void resetCurrentUuids() { current_uuids_.clear(); }
+    void addCurrentUuid(const std::string & uuid) { current_uuids_.push_back(uuid); }
+    void removeCounterUnlessUpdated()
+    {
+      std::vector<std::string> obsolete_uuids;
+      for (const auto & key_and_value : variable_) {
+        if (
+          std::find(current_uuids_.begin(), current_uuids_.end(), key_and_value.first) ==
+          current_uuids_.end()) {
+          obsolete_uuids.push_back(key_and_value.first);
+        }
+      }
+
+      for (const auto & obsolete_uuid : obsolete_uuids) {
+        variable_.erase(obsolete_uuid);
+      }
+    }
+
+    std::optional<double> get(const std::string & uuid) const
+    {
+      if (variable_.count(uuid) != 0) {
+        return variable_.at(uuid);
+      }
+      return std::nullopt;
+    }
+    void update(const std::string & uuid, const double new_variable)
+    {
+      if (variable_.count(uuid) != 0) {
+        variable_.at(uuid) = new_variable;
+      } else {
+        variable_.emplace(uuid, new_variable);
+      }
+    }
+
+    std::unordered_map<std::string, double> variable_;
+    std::vector<std::string> current_uuids_;
+  };
+  mutable ObjectsVariable prev_objects_min_bound_lat_offset_;
 };
 }  // namespace behavior_path_planner
 

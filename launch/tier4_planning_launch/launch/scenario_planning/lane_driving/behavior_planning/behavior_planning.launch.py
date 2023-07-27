@@ -102,7 +102,7 @@ def launch_setup(context, *args, **kwargs):
             behavior_path_planner_param,
             vehicle_param,
             {
-                "lane_change.enable_abort_lane_change": LaunchConfiguration(
+                "lane_change.cancel.enable_on_lane_changing_phase": LaunchConfiguration(
                     "use_experimental_lane_change_function"
                 ),
                 "lane_change.enable_collision_check_at_prepare_phase": LaunchConfiguration(
@@ -114,7 +114,6 @@ def launch_setup(context, *args, **kwargs):
                 "lane_change.use_all_predicted_path": LaunchConfiguration(
                     "use_experimental_lane_change_function"
                 ),
-                "bt_tree_config_path": LaunchConfiguration("behavior_path_planner_tree_param_path"),
             },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
