@@ -47,7 +47,7 @@
     <push-ros-namespace namespace="$(var eagleye_name_space)"/>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/eagleye_rt.launch.xml">
       <arg name="output_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
-      <arg name="output_pose_with_cov_name" value="output_pose_with_cov_name"/>
+      <arg name="output_pose_with_cov_name" value="$(var output_pose_with_cov_name)"/>
       <arg name="use_eagleye_pose" value="$(var use_eagleye_pose)"/>
       <arg name="use_eagleye_twist" value="$(var use_eagleye_twist)"/>
     </include>
