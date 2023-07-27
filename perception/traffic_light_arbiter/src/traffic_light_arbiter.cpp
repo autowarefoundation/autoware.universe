@@ -115,6 +115,14 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
     return;
   }
 
+  TrafficSignalArray output_signals_msg;
+  output_signals_msg.stamp = stamp;
+
+  if (map_regulatory_elements_set_->empty()) {
+    pub_->publish(output_signals_msg);
+    return;
+  }
+
   auto add_signal_function = [&](const auto & signal, bool priority) {
     const auto id = signal.traffic_signal_id;
     if (!map_regulatory_elements_set_->count(id)) {
@@ -166,8 +174,6 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
       return highest_score_elements_vector;
     };
 
-  TrafficSignalArray output_signals_msg;
-  output_signals_msg.stamp = stamp;
   output_signals_msg.signals.reserve(regulatory_element_signals_map.size());
 
   for (const auto & [regulatory_element_id, elements] : regulatory_element_signals_map) {
