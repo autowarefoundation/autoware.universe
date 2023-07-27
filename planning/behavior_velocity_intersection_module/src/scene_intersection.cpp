@@ -35,6 +35,11 @@
 #include <magic_enum.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include <boost/geometry/algorithms/area.hpp>
+#include <boost/geometry/algorithms/simplify.hpp>
+#include <boost/geometry/core/cs.hpp>
+#include <boost/geometry/geometries/register/point.hpp>
+
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
@@ -43,6 +48,8 @@
 #include <memory>
 #include <tuple>
 #include <vector>
+
+BOOST_GEOMETRY_REGISTER_POINT_2D(cv::Point, int, cs::cartesian, x, y)  // NOLINT
 
 namespace behavior_velocity_planner
 {
@@ -1104,6 +1111,8 @@ bool IntersectionModule::checkCollision(
   return collision_detected;
 }
 
+using CvPolygon = boost::geometry::model::polygon<cv::Point>;
+
 bool IntersectionModule::isOcclusionCleared(
   const nav_msgs::msg::OccupancyGrid & occ_grid,
   const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
@@ -1346,23 +1355,26 @@ bool IntersectionModule::isOcclusionCleared(
     // std::vector<cv::Point> approx_contour;
     // cv::approxPolyDP(contour, approx_contour, 0.05 * cv::arcLength(contour, true), true);
 
-    // check size
-    const double poly_area = cv::contourArea(contour);
-    if (poly_area < possible_object_area) continue;
-
     // check if distance is positive
-    std::vector<cv::Point> positive_contour;
+    CvPolygon positive_contour;
     for (const auto & p : contour) {
       const int i = p.x, j = p.y;
       if (distance_grid.at<unsigned char>(j, i) != undef_pixel) {
-        positive_contour.push_back(p);
+        positive_contour.outer().emplace_back(i, j);
       }
     }
-    if (positive_contour.empty()) continue;
+    if (positive_contour.outer().empty()) continue;
+    // bg::correct(positive_contour);
+    CvPolygon simplified_contour;
+    bg::simplify(positive_contour, simplified_contour, 0.5);
 
-    valid_contours.push_back(positive_contour);
+    // check size
+    const double poly_area = bg::area(simplified_contour);
+    if (poly_area < possible_object_area) continue;
+
+    valid_contours.push_back(simplified_contour.outer());
     Polygon2d polygon;
-    for (const auto & p : contour) {
+    for (const auto & p : simplified_contour.outer()) {
       const double glob_x = (p.x + 0.5) * resolution + origin.x;
       const double glob_y = (height - 0.5 - p.y) * resolution + origin.y;
       polygon.outer().emplace_back(glob_x, glob_y);
