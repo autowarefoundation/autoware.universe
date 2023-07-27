@@ -129,8 +129,8 @@ public:
     // for new architecture
     const auto lanes = utils::getLaneletsFromPath(*out.path, planner_data_->route_handler);
     const auto drivable_lanes = utils::generateDrivableLanes(lanes);
-    out.drivable_area_info.drivable_lanes =
-      getNonOverlappingExpandedLanes(*out.path, drivable_lanes);
+    out.drivable_area_info.drivable_lanes = utils::getNonOverlappingExpandedLanes(
+      *out.path, drivable_lanes, planner_data_->drivable_area_expansion_parameters);
 
     return out;
   }
@@ -437,18 +437,6 @@ protected:
   double getEgoSpeed() const
   {
     return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
-  }
-
-  std::vector<DrivableLanes> getNonOverlappingExpandedLanes(
-    PathWithLaneId & path, const std::vector<DrivableLanes> & lanes) const
-  {
-    const auto & dp = planner_data_->drivable_area_expansion_parameters;
-
-    const auto shorten_lanes = utils::cutOverlappedLanes(path, lanes);
-    const auto expanded_lanes = utils::expandLanelets(
-      shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
-      dp.drivable_area_types_to_skip);
-    return expanded_lanes;
   }
 
   bool is_simultaneously_executable_as_approved_module_{false};

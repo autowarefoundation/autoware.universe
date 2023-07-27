@@ -207,7 +207,8 @@ BehaviorModuleOutput StartPlannerModule::plan()
     path = status_.backward_path;
   }
 
-  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
+  const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
+    path, status_.lanes, planner_data_->drivable_area_expansion_parameters);
 
   DrivableAreaInfo current_drivable_area_info;
   current_drivable_area_info.drivable_lanes = target_drivable_lanes;
@@ -535,7 +536,8 @@ PathWithLaneId StartPlannerModule::generateStopPath() const
   path.points.push_back(toPathPointWithLaneId(moved_pose));
 
   // generate drivable area
-  const auto target_drivable_lanes = getNonOverlappingExpandedLanes(path, status_.lanes);
+  const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
+    path, status_.lanes, planner_data_->drivable_area_expansion_parameters);
 
   return path;
 }
