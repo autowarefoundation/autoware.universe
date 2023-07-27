@@ -41,6 +41,12 @@ void YabLocMonitor::on_timer()
 
 void YabLocMonitor::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  stat.add("Availability", availability_module_->is_available() ? "OK" : "NG");
-  stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "OK");  // TODO
+  bool is_available = availability_module_->is_available() ? "OK" : "NG";
+  stat.add("Availability", is_available);
+
+  if (is_available) {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "OK");
+  } else {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "NG");
+  }
 }
