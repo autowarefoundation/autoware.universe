@@ -1112,6 +1112,7 @@ bool IntersectionModule::checkCollision(
 }
 
 using CvPolygon = boost::geometry::model::polygon<cv::Point>;
+using CvLineString = boost::geometry::model::linestring<cv::Point>;
 
 bool IntersectionModule::isOcclusionCleared(
   const nav_msgs::msg::OccupancyGrid & occ_grid,
@@ -1356,32 +1357,40 @@ bool IntersectionModule::isOcclusionCleared(
     // cv::approxPolyDP(contour, approx_contour, 0.05 * cv::arcLength(contour, true), true);
 
     // check if distance is positive
-    CvPolygon positive_contour;
+    CvLineString positive_contour_line;
     for (const auto & p : contour) {
       const int i = p.x, j = p.y;
       if (distance_grid.at<unsigned char>(j, i) != undef_pixel) {
-        positive_contour.outer().emplace_back(i, j);
+        positive_contour_line.emplace_back(i, j);
       }
     }
-    if (positive_contour.outer().empty()) continue;
-    // bg::correct(positive_contour);
-    CvPolygon simplified_contour;
-    bg::simplify(positive_contour, simplified_contour, 0.5);
+    if (positive_contour_line.empty()) continue;
 
+    CvLineString simplified_contour_line;
+    bg::simplify(positive_contour_line, simplified_contour_line, 0.5);
+    CvPolygon simplified_contour;
+    for (const auto & p : simplified_contour_line) {
+      simplified_contour.outer().push_back(p);
+    }
+    if (simplified_contour.outer().empty()) continue;
+    simplified_contour.outer().push_back(simplified_contour.outer().front());
     // check size
     const double poly_area = bg::area(simplified_contour);
     if (poly_area < possible_object_area) continue;
 
     valid_contours.push_back(simplified_contour.outer());
-    Polygon2d polygon;
-    for (const auto & p : simplified_contour.outer()) {
+    geometry_msgs::msg::Polygon polygon_msg;
+    geometry_msgs::msg::Point32 point_msg;
+    for (const auto & p : simplified_contour_line) {
       const double glob_x = (p.x + 0.5) * resolution + origin.x;
       const double glob_y = (height - 0.5 - p.y) * resolution + origin.y;
-      polygon.outer().emplace_back(glob_x, glob_y);
+      point_msg.x = glob_x;
+      point_msg.y = glob_y;
+      point_msg.z = origin.z;
+      polygon_msg.points.push_back(point_msg);
     }
-    debug_data_.occlusion_polygons.push_back(toGeomPoly(polygon));
+    debug_data_.occlusion_polygons.push_back(polygon_msg);
   }
-
   // clean-up and find nearest risk
   const int min_cost_thr = dist2pixel(occlusion_dist_thr);
   int min_cost = undef_pixel - 1;
@@ -1463,9 +1472,8 @@ bool IntersectionModule::checkFrontVehicleDeceleration(
   // get the nearest centerpoint to object
   std::vector<double> dist_obj_center_points;
   for (const auto & p : center_points)
-    dist_obj_center_points.push_back(tier4_autoware_utils::calcDistance2d(object_pose.position, p));
-  const int obj_closest_centerpoint_idx = std::distance(
-    dist_obj_center_points.begin(),
+    dist_obj_center_points.push_back(tier4_autoware_utils::calcDistance2d(object_pose.position,
+p)); const int obj_closest_centerpoint_idx = std::distance( dist_obj_center_points.begin(),
     std::min_element(dist_obj_center_points.begin(), dist_obj_center_points.end()));
   // find two center_points whose distances from `closest_centerpoint` cross stopping_distance
   double acc_dist_prev = 0.0, acc_dist = 0.0;
