@@ -529,11 +529,15 @@ bool DynamicAvoidanceModule::willObjectCutIn(
 
   // Ignore object close to the ego
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(ego_path);
+  const double relative_velocity = getEgoSpeed() - obj_tangent_vel;
   const double lon_offset_ego_to_obj =
     motion_utils::calcSignedArcLength(
       ego_path, getEgoPose().position, ego_seg_idx, lat_lon_offset.nearest_idx) +
     lat_lon_offset.min_lon_offset;
-  if (lon_offset_ego_to_obj < parameters_->min_lon_offset_ego_to_cut_in_object) {
+  if (
+    lon_offset_ego_to_obj < std::max(
+                              parameters_->min_lon_offset_ego_to_cut_in_object,
+                              relative_velocity * parameters_->min_time_to_start_cut_in)) {
     return false;
   }
 
