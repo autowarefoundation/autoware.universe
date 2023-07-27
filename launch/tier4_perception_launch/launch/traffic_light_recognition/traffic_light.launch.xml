@@ -10,7 +10,7 @@
   <arg name="input/cloud" default="/sensing/lidar/top/pointcloud_raw" description="point cloud for occlusion prediction"/>
   <arg name="internal/traffic_signals" default="/perception/traffic_light_recognition/internal/traffic_signals"/>
   <arg name="external/traffic_signals" default="/perception/traffic_light_recognition/external/traffic_signals"/>
-  <arg name="output/traffic_signals" default="/perception/traffic_light_arbiter/traffic_signals"/>
+  <arg name="output/traffic_signals" default="/perception/traffic_light_recognition/traffic_signals"/>
   <arg name="use_crosswalk_traffic_light_estimator" default="true" description="output pedestrian's traffic light signals"/>
   <arg name="image_number" default="1" description="choose image raw number(1-2)"/>
   <arg name="namespace1" default="camera6"/>
