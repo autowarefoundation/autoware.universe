@@ -70,26 +70,77 @@ geometry_msgs::msg::Polygon toMsg(const tier4_autoware_utils::Polygon2d & polygo
   return ret;
 }
 
-boost::optional<Point> intersect(
-  const Point & p1, const Point & p2, const Point & p3, const Point & p4)
+template <class T>
+size_t findFirstNearestIndex(const T & points, const geometry_msgs::msg::Point & point)
 {
-  // calculate intersection point
-  const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
-  if (det == 0.0) {
-    return {};
+  motion_utils::validateNonEmpty(points);
+
+  double min_dist = std::numeric_limits<double>::max();
+  size_t min_idx = 0;
+  bool decreasing = false;
+
+  for (size_t i = 0; i < points.size(); ++i) {
+    const auto dist = tier4_autoware_utils::calcSquaredDistance2d(points.at(i), point);
+    if (dist < min_dist) {
+      decreasing = true;
+      min_dist = dist;
+      min_idx = i;
+      continue;
+    }
+
+    if (decreasing) {
+      return min_idx;
+    }
   }
 
-  const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
-  const double s = ((p2.y - p1.y) * (p4.x - p2.x) + (p1.x - p2.x) * (p4.y - p2.y)) / det;
-  if (t < 0 || 1 < t || s < 0 || 1 < s) {
-    return {};
+  return min_idx;
+}
+
+template <class T>
+size_t findFirstNearestSegmentIndex(const T & points, const geometry_msgs::msg::Point & point)
+{
+  const size_t nearest_idx = findFirstNearestIndex(points, point);
+
+  if (nearest_idx == 0) {
+    return 0;
+  }
+  if (nearest_idx == points.size() - 1) {
+    return points.size() - 2;
   }
 
-  Point intersect_point;
-  intersect_point.x = t * p1.x + (1.0 - t) * p2.x;
-  intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
-  intersect_point.z = t * p1.z + (1.0 - t) * p2.z;
-  return intersect_point;
+  const double signed_length =
+    motion_utils::calcLongitudinalOffsetToSegment(points, nearest_idx, point);
+
+  if (signed_length <= 0) {
+    return nearest_idx - 1;
+  }
+
+  return nearest_idx;
+}
+
+template <class T>
+double calcSignedArcLengthToFirstNearestPoint(
+  const T & points, const geometry_msgs::msg::Point & src_point,
+  const geometry_msgs::msg::Point & dst_point)
+{
+  try {
+    motion_utils::validateNonEmpty(points);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return 0.0;
+  }
+
+  const size_t src_seg_idx = findFirstNearestSegmentIndex(points, src_point);
+  const size_t dst_seg_idx = findFirstNearestSegmentIndex(points, dst_point);
+
+  const double signed_length_on_traj =
+    motion_utils::calcSignedArcLength(points, src_seg_idx, dst_seg_idx);
+  const double signed_length_src_offset =
+    motion_utils::calcLongitudinalOffsetToSegment(points, src_seg_idx, src_point);
+  const double signed_length_dst_offset =
+    motion_utils::calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_point);
+
+  return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
 }
 }  // namespace
 
@@ -292,7 +343,7 @@ void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   double max_distance = std::numeric_limits<double>::lowest();
   for (const auto & p : obj.envelope_poly.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    const double arc_length = motion_utils::calcSignedArcLength(path.points, ego_pos, point);
+    const double arc_length = calcSignedArcLengthToFirstNearestPoint(path.points, ego_pos, point);
     min_distance = std::min(min_distance, arc_length);
     max_distance = std::max(max_distance, arc_length);
   }
@@ -496,6 +547,25 @@ lanelet::ConstLanelets getTargetLanelets(
   }
 
   return target_lanelets;
+}
+
+lanelet::ConstLanelets getCurrentLanesFromPath(
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data)
+{
+  if (path.points.empty()) {
+    throw std::logic_error("empty path.");
+  }
+
+  if (path.points.front().lane_ids.empty()) {
+    throw std::logic_error("empty lane ids.");
+  }
+
+  const auto start_id = path.points.front().lane_ids.front();
+  const auto start_lane = planner_data->route_handler->getLaneletsFromId(start_id);
+  const auto & p = planner_data->parameters;
+
+  return planner_data->route_handler->getLaneletSequence(
+    start_lane, p.backward_path_length, p.forward_path_length);
 }
 
 void insertDecelPoint(
@@ -877,9 +947,9 @@ void filterTargetObjects(
       lanelet::BasicPoint3d overhang_basic_pose(
         o.overhang_pose.position.x, o.overhang_pose.position.y, o.overhang_pose.position.z);
 
-      const bool get_left = isOnRight(o) && parameters->enable_avoidance_over_same_direction;
-      const bool get_right = !isOnRight(o) && parameters->enable_avoidance_over_same_direction;
-      const bool get_opposite = parameters->enable_avoidance_over_opposite_direction;
+      const bool get_left = isOnRight(o) && parameters->use_adjacent_lane;
+      const bool get_right = !isOnRight(o) && parameters->use_adjacent_lane;
+      const bool get_opposite = parameters->use_opposite_lane;
 
       lanelet::ConstLineString3d target_line{};
       o.to_road_shoulder_distance = std::numeric_limits<double>::max();
@@ -1203,8 +1273,8 @@ double extendToRoadShoulderDistanceWithPolygon(
                                         .y(polygon[(i + 1) % polygon.size()].y())
                                         .z(0.0);
 
-      const auto intersect_pos =
-        intersect(overhang_pos, lat_offset_overhang_pos, polygon_current_point, polygon_next_point);
+      const auto intersect_pos = tier4_autoware_utils::intersect(
+        overhang_pos, lat_offset_overhang_pos, polygon_current_point, polygon_next_point);
       if (intersect_pos) {
         intersect_dist_vec.push_back(calcDistance2d(*intersect_pos, overhang_pos));
       }
