@@ -182,8 +182,7 @@ void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
 {
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!"
-    );
+      this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
     return;
   }
 
@@ -241,8 +240,7 @@ void PointPaintingFusionNode::fuseOnSingleImage(
 {
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!"
-    );
+      this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
     return;
   }
 
@@ -358,8 +356,7 @@ void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
 
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!"
-    );
+      this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
     return;
   }
 
