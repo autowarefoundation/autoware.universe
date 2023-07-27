@@ -30,7 +30,7 @@ YabLocMonitor::YabLocMonitor() : Node("yabloc_monitor"), updater_(this)
   timer_ =
     rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&YabLocMonitor::on_timer, this));
 
-  // Evaluation moduels
+  // Evaluation modules
   availability_module_ = std::make_unique<AvailabilityModule>(this);
 }
 
@@ -41,8 +41,8 @@ void YabLocMonitor::on_timer()
 
 void YabLocMonitor::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  bool is_available = availability_module_->is_available() ? "OK" : "NG";
-  stat.add("Availability", is_available);
+  bool is_available = availability_module_->is_available();
+  stat.add("Availability", is_available ? "OK" : "NG");
 
   if (is_available) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "OK");
