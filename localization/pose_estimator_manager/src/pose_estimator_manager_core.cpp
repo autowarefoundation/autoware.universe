@@ -3,27 +3,46 @@
 #include "pose_estimator_manager/sub_manager/sub_manager_eagleye.hpp"
 #include "pose_estimator_manager/sub_manager/sub_manager_ndt.hpp"
 #include "pose_estimator_manager/sub_manager/sub_manager_yabloc.hpp"
+#include "pose_estimator_manager/switch_rule/pcd_occupancy_rule.hpp"
 
 #include <sstream>
+
 namespace multi_pose_estimator
 {
 
+static std::vector<PoseEstimatorName> parse_estimator_name_args(
+  const std::vector<std::string> & arg)
+{
+  std::vector<PoseEstimatorName> running_estimator_list;
+  for (const auto & estimator_name : arg) {
+    // TODO: Use magic_enum or fuzzy interpretation
+    if (estimator_name == "ndt") {
+      running_estimator_list.push_back(PoseEstimatorName::NDT);
+    } else if (estimator_name == "yabloc") {
+      running_estimator_list.push_back(PoseEstimatorName::YABLOC);
+    } else if (estimator_name == "eagleye") {
+      running_estimator_list.push_back(PoseEstimatorName::EAGLEYE);
+    } else {
+      RCLCPP_ERROR_STREAM(
+        rclcpp::get_logger("pose_estimator_manager"),
+        "invalid pose_estimator_name is spciefied: " << estimator_name);
+    }
+  }
+  return running_estimator_list;
+}
+
 PoseEstimatorManager::PoseEstimatorManager()
 : Node("pose_estimator_manager"),
-  plugin_loader_("pose_estimator_manager", "multi_pose_estimator::PluginInterface")
+  running_estimator_list_(
+    parse_estimator_name_args(declare_parameter<std::vector<std::string>>("pose_sources")))
 {
   // Publisher
   pub_debug_string_ = create_publisher<String>("~/debug/string", 10);
   pub_debug_marker_array_ = create_publisher<MarkerArray>("~/debug/marker_array", 10);
 
-  // Load plugin
-  RCLCPP_INFO_STREAM(get_logger(), "load plugin");
-  load_switch_rule_plugin(*this, declare_parameter<std::string>("estimator_switch_plugin"));
-
-  // Service client
-  RCLCPP_INFO_STREAM(get_logger(), "define service client");
-  service_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  for (auto pose_estimator_name : switch_rule_plugin_->supporting_pose_estimators()) {
+  // sub-managers
+  for (auto pose_estimator_name : running_estimator_list_) {
+    // TODO: Use magic enum
     switch (pose_estimator_name) {
       case PoseEstimatorName::NDT:
         sub_managers_.emplace(PoseEstimatorName::NDT, std::make_shared<SubManagerNdt>(this));
@@ -40,25 +59,23 @@ PoseEstimatorManager::PoseEstimatorManager()
     }
   }
 
+  // Load switching rule
+  load_switch_rule();
+
   // Timer callback
   auto on_timer = std::bind(&PoseEstimatorManager::on_timer, this);
   timer_ =
     rclcpp::create_timer(this, this->get_clock(), rclcpp::Rate(1).period(), std::move(on_timer));
 
-  RCLCPP_INFO_STREAM(get_logger(), "toggle all");
+  // Enable all pose estimators at the first
   toggle_all(true);
 }
 
-void PoseEstimatorManager::load_switch_rule_plugin(rclcpp::Node & node, const std::string & name)
+void PoseEstimatorManager::load_switch_rule()
 {
-  if (plugin_loader_.isClassAvailable(name)) {
-    const auto plugin = plugin_loader_.createSharedInstance(name);
-    plugin->init(node);
-    switch_rule_plugin_ = plugin;
-  } else {
-    RCLCPP_ERROR_STREAM(get_logger(), "The switch rule plugin '" << name << "' is not available.");
-    exit(EXIT_FAILURE);
-  }
+  // NOTE: In the future, some rule will be laid below
+  RCLCPP_INFO_STREAM(get_logger(), "load default switching rule");
+  switch_rule_ = std::make_shared<PcdOccupancyRule>(*this);
 }
 
 void PoseEstimatorManager::toggle_each(
@@ -75,11 +92,12 @@ void PoseEstimatorManager::toggle_each(
 
 void PoseEstimatorManager::toggle_all(bool enabled)
 {
+  RCLCPP_INFO_STREAM(get_logger(), (enabled ? "Enable" : "Disable") << " all pose estimators");
+
   std::unordered_map<PoseEstimatorName, bool> toggle_list;
   for (auto s : sub_managers_) {
     toggle_list.emplace(s.first, enabled);
   }
-
   toggle_each(toggle_list);
 }
 
@@ -87,17 +105,17 @@ void PoseEstimatorManager::on_timer()
 {
   RCLCPP_INFO_STREAM(get_logger(), "on_timer");
 
-  if (switch_rule_plugin_) {
-    auto toggle_list = switch_rule_plugin_->update();
+  if (switch_rule_) {
+    auto toggle_list = switch_rule_->update();
     toggle_each(toggle_list);
 
     {
       String msg;
-      msg.data = switch_rule_plugin_->debug_string();
+      msg.data = switch_rule_->debug_string();
       pub_debug_string_->publish(msg);
     }
     {
-      MarkerArray msg = switch_rule_plugin_->debug_marker_array();
+      MarkerArray msg = switch_rule_->debug_marker_array();
       pub_debug_marker_array_->publish(msg);
     }
 

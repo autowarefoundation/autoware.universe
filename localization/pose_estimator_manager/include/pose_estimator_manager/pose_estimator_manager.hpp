@@ -2,10 +2,8 @@
 #define POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_MANAGER_HPP_
 
 #include "pose_estimator_manager/base_pose_estimator_sub_manager.hpp"
-#include "pose_estimator_manager/manager_client.hpp"
-#include "pose_estimator_manager/plugin_interface.hpp"
+#include "pose_estimator_manager/switch_rule/base_switch_rule.hpp"
 
-#include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -24,23 +22,23 @@ public:
   PoseEstimatorManager();
 
 private:
+  const std::vector<PoseEstimatorName> running_estimator_list_;
+
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_array_;
   rclcpp::Publisher<String>::SharedPtr pub_debug_string_;
 
-  rclcpp::CallbackGroup::SharedPtr service_callback_group_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::unordered_map<PoseEstimatorName, BasePoseEstimatorSubManager::SharedPtr> sub_managers_;
 
-  pluginlib::ClassLoader<PluginInterface> plugin_loader_;
-  std::shared_ptr<PluginInterface> switch_rule_plugin_;
+  std::shared_ptr<BaseSwitchRule> switch_rule_{nullptr};
 
   void toggle_all(bool enabled);
   void toggle_each(const std::unordered_map<PoseEstimatorName, bool> & toggle_list);
 
   void on_timer();
 
-  void load_switch_rule_plugin(rclcpp::Node & node, const std::string & name);
+  void load_switch_rule();
 };
 }  // namespace multi_pose_estimator
 

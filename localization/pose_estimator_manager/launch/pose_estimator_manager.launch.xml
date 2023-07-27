@@ -2,10 +2,11 @@
 <launch>
 
   <arg name="estimator_switch_plugin" default="multi_pose_estimator::PcdOccupancyRule" description=""/>
+  <arg name="pose_sources" default="" description=""/>
 
   <node pkg="pose_estimator_manager" exec="pose_estimator_manager" name="pose_estimator_manager" output="screen" args="--ros-args --log-level info">
     <param name="pcd_occupancy_rule/pcd_density_threshold" value="20"/>
-    <param name="estimator_switch_plugin" value="$(var estimator_switch_plugin)"/>
+    <param name="pose_sources" value="$(var pose_sources)"/>
 
     <!-- yabloc -->
     <remap from="~/input/image" to="/localization/pose_estimator/image_processing/undistorted/image_raw"/>
@@ -17,6 +18,10 @@
     <!-- ndt -->
     <remap from="~/input/pointcloud" to="/sensing/lidar/top/outlier_filtered/pointcloud"/>
     <remap from="~/output/pointcloud" to="/sensing/lidar/top/outlier_filtered/pointcloud/relay"/>
+
+    <!-- rule -->
+    <remap from="~/input/pointcloud_map" to="/map/pointcloud_map"/>
+    <remap from="~/input/pose_with_covariance" to="/localization/pose_with_covariance"/>
   </node>
 
 </launch>

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <pose_estimator_manager/plugin_interface.hpp>
-#include <pose_estimator_manager/pose_estimator_name.hpp>
+#include "pose_estimator_manager/pose_estimator_name.hpp"
+#include "pose_estimator_manager/switch_rule/base_switch_rule.hpp"
+
 #include <rclcpp/logger.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -13,14 +14,13 @@
 
 namespace multi_pose_estimator
 {
-
-class PcdOccupancyRule : public PluginInterface
+class PcdOccupancyRule : public BaseSwitchRule
 {
 public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-  void init(rclcpp::Node & node) override;
+  PcdOccupancyRule(rclcpp::Node & node);
   std::unordered_map<PoseEstimatorName, bool> update() override;
   std::vector<PoseEstimatorName> supporting_pose_estimators() override;
 

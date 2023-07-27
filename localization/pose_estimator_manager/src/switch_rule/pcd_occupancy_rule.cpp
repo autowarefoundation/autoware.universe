@@ -1,6 +1,6 @@
-#include "pcd_occupancy_rule.hpp"
+#include "pose_estimator_manager/switch_rule/pcd_occupancy_rule.hpp"
 
-#include "grid_info.hpp"
+#include "pose_estimator_manager/switch_rule/grid_info.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -11,7 +11,7 @@ std::vector<PoseEstimatorName> PcdOccupancyRule::supporting_pose_estimators()
   return {PoseEstimatorName::NDT, PoseEstimatorName::YABLOC, PoseEstimatorName::EAGLEYE};
 }
 
-void PcdOccupancyRule::init(rclcpp::Node & node)
+PcdOccupancyRule::PcdOccupancyRule(rclcpp::Node & node)
 {
   logger_ptr_ = std::make_shared<rclcpp::Logger>(node.get_logger());
   RCLCPP_INFO_STREAM(*logger_ptr_, "PcdOccupancyRule is initialized");
@@ -26,9 +26,9 @@ void PcdOccupancyRule::init(rclcpp::Node & node)
   auto on_map = std::bind(&PcdOccupancyRule::on_map, this, _1);
   auto on_pose_cov = std::bind(&PcdOccupancyRule::on_pose_cov, this, _1);
 
-  sub_map_ = node.create_subscription<PointCloud2>("/map/pointcloud_map", map_qos, on_map);
+  sub_map_ = node.create_subscription<PointCloud2>("~/input/pointcloud_map", map_qos, on_map);
   sub_pose_cov_ =
-    node.create_subscription<PoseCovStamped>("/localization/pose_with_covariance", 10, on_pose_cov);
+    node.create_subscription<PoseCovStamped>("~/input/pose_with_covariance", 10, on_pose_cov);
 }
 
 std::unordered_map<PoseEstimatorName, bool> PcdOccupancyRule::update()
@@ -135,7 +135,3 @@ void PcdOccupancyRule::on_pose_cov(PoseCovStamped::ConstSharedPtr msg)
 }
 
 }  // namespace multi_pose_estimator
-
-#include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(
-  multi_pose_estimator::PcdOccupancyRule, multi_pose_estimator::PluginInterface)

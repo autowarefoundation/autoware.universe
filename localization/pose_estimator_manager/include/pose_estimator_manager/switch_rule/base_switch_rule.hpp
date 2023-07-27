@@ -12,13 +12,12 @@
 namespace multi_pose_estimator
 {
 
-class PluginInterface
+class BaseSwitchRule
 {
 public:
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
-  virtual ~PluginInterface() = default;
-  virtual void init(rclcpp::Node & node) = 0;
+  virtual ~BaseSwitchRule() = default;
   virtual std::unordered_map<PoseEstimatorName, bool> update() = 0;
   virtual std::vector<PoseEstimatorName> supporting_pose_estimators() = 0;
 
