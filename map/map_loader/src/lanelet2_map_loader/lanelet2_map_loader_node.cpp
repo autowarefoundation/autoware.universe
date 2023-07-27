@@ -54,7 +54,7 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
   // subscription
   sub_map_projector_type_ = create_subscription<MapProjectorInfo>(
     "input/map_projector_info", rclcpp::QoS{1}.transient_local(),
-    [this](const MapProjectorInfo::ConstSharedPtr msg) {on_map_projector_info(msg);});
+    [this](const MapProjectorInfo::ConstSharedPtr msg) { on_map_projector_info(msg); });
 }
 
 void Lanelet2MapLoaderNode::on_map_projector_info(const MapProjectorInfo::ConstSharedPtr msg)
@@ -144,7 +144,7 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     }
 
     return map;
-    
+
   } else {
     RCLCPP_ERROR(rclcpp::get_logger("map_loader"), "lanelet2_map_projector_type is not supported");
     return nullptr;
