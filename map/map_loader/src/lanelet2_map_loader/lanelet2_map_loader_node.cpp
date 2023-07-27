@@ -60,11 +60,6 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
 void Lanelet2MapLoaderNode::on_map_projector_info(const MapProjectorInfo::ConstSharedPtr msg)
 {
   const auto lanelet2_filename = declare_parameter("lanelet2_map_path", "");
-<<<<<<< HEAD
-  const auto lanelet2_map_projector_type =
-    declare_parameter("lanelet2_map_projector_type", "TransverseMercator");
-=======
->>>>>>> feat/add_map_projection_loader
   const auto center_line_resolution = declare_parameter("center_line_resolution", 5.0);
 
   // load map from file
@@ -161,34 +156,6 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
   return nullptr;
 }
 
-<<<<<<< HEAD
-const MapProjectorInfo Lanelet2MapLoaderNode::get_map_projector_type(
-  const std::string & lanelet2_filename, const std::string & lanelet2_map_projector_type,
-  const double & map_origin_lat, const double & map_origin_lon)
-{
-  lanelet::ErrorMessages errors{};
-  MapProjectorInfo map_projector_type_msg;
-  if (lanelet2_map_projector_type == "MGRS") {
-    lanelet::projection::MGRSProjector projector{};
-    const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
-    map_projector_type_msg.type = "MGRS";
-    map_projector_type_msg.mgrs_grid = projector.getProjectedMGRSGrid();
-  } else if (lanelet2_map_projector_type == "UTM") {
-    map_projector_type_msg.type = "UTM";
-    map_projector_type_msg.map_origin.latitude = map_origin_lat;
-    map_projector_type_msg.map_origin.longitude = map_origin_lon;
-  } else if (lanelet2_map_projector_type == "TransverseMercator") {
-    map_projector_type_msg.type = "TransverseMercator";
-    map_projector_type_msg.map_origin.latitude = map_origin_lat;
-    map_projector_type_msg.map_origin.longitude = map_origin_lon;
-  } else {
-    map_projector_type_msg.type = "local";
-  }
-  return map_projector_type_msg;
-}
-
-=======
->>>>>>> feat/add_map_projection_loader
 HADMapBin Lanelet2MapLoaderNode::create_map_bin_msg(
   const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
 {
