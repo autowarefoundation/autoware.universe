@@ -36,9 +36,6 @@ public:
   static lanelet::LaneletMapPtr load_map(
     const std::string & lanelet2_filename, const std::string & lanelet2_map_projector_type,
     const double & map_origin_lat = 0.0, const double & map_origin_lon = 0.0);
-  static const MapProjectorInfo get_map_projector_type(
-    const std::string & lanelet2_filename, const std::string & lanelet2_map_projector_type,
-    const double & map_origin_lat, const double & map_origin_lon);
   static HADMapBin create_map_bin_msg(
     const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename,
     const rclcpp::Time & now);

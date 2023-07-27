@@ -1,0 +1,5 @@
+type: "TransverseMercator"
+map_origin:
+  latitude: 0.0
+  longitude: 0.0
+  altitude: 0.0

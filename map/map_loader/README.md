@@ -69,6 +69,7 @@ sample-map-rosbag
 │ ├── B.pcd
 │ ├── C.pcd
 │ └── ...
+├── map_projector_info.yaml
 └── pointcloud_map_metadata.yaml
 ```
 
