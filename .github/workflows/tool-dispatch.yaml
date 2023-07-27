@@ -6,7 +6,7 @@ on:
 jobs:
   make_dispatch_event:
     runs-on: ubuntu-latest
-    if: github.event.label.name == 'evaluator'
+    if: github.event.label.name == 'low priority'
     steps:
     - name: trigger
       run: |
