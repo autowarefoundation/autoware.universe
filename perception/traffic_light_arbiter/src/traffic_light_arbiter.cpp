@@ -72,7 +72,7 @@ void TrafficLightArbiter::onMap(const LaneletMapBin::ConstSharedPtr msg)
   lanelet::utils::conversion::fromBinMsg(*msg, map);
 
   const auto signals = lanelet::filter_traffic_signals(map);
-  map_regulatory_elements_set_ = std::make_shared<std::unordered_set<lanelet::Id>>();
+  map_regulatory_elements_set_ = std::make_unique<std::unordered_set<lanelet::Id>>();
 
   for (const auto & signal : signals) {
     map_regulatory_elements_set_->emplace(signal->id());
