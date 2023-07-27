@@ -86,7 +86,6 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
   const double & map_origin_lat, const double & map_origin_lon)
 {
   lanelet::ErrorMessages errors{};
-  std::cout << "KOJI!!!!!!!!!!! " << lanelet2_map_projector_type << std::endl;
   if (lanelet2_map_projector_type == "MGRS") {
     lanelet::projection::MGRSProjector projector{};
     const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
@@ -135,7 +134,6 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     }
 
     return map;
-
   } else {
     RCLCPP_ERROR(rclcpp::get_logger("map_loader"), "lanelet2_map_projector_type is not supported");
     return nullptr;
