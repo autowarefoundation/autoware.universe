@@ -21,14 +21,16 @@ from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
-def launch_setup(context, *args, **kwargs):
 
+def launch_setup(context, *args, **kwargs):
     ns = "pointcloud_preprocessor"
     pkg = "pointcloud_preprocessor"
 
-    separate_concatenate_node_and_timesync_node = LaunchConfiguration("separate_concatenate_node_and_timesync_node").perform(context)
+    separate_concatenate_node_and_timesync_node = LaunchConfiguration(
+        "separate_concatenate_node_and_timesync_node"
+    ).perform(context)
     is_separate_concatenate_node_and_timesync_node = (
-            separate_concatenate_node_and_timesync_node.lower() == "true"
+        separate_concatenate_node_and_timesync_node.lower() == "true"
     )
 
     if not is_separate_concatenate_node_and_timesync_node:
@@ -134,6 +136,7 @@ def launch_setup(context, *args, **kwargs):
     )
     return [container, log_info]
 
+
 def generate_launch_description():
     launch_arguments = []
 
@@ -142,19 +145,19 @@ def generate_launch_description():
         launch_arguments.append(
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
+
     add_launch_arg(
         "input_points_raw_list",
-        ['/points_raw'],
-        "Input pointcloud topic_name list as a string_array. " 
-        "To subscribe multiple topics, write as: \"['/points_raw0', '/points_raw1', ...]\"")
+        ["/points_raw"],
+        "Input pointcloud topic_name list as a string_array. "
+        "To subscribe multiple topics, write as: \"['/points_raw0', '/points_raw1', ...]\"",
+    )
     add_launch_arg("output_points_raw", "/points_raw/cropbox/filtered")
     add_launch_arg("tf_output_frame", "base_link")
     add_launch_arg(
         "separate_concatenate_node_and_timesync_node",
         "true",
-        "Set True to separate concatenate node and timesync node. which will cause to larger memory usage.")
-
-    return launch.LaunchDescription(
-        launch_arguments
-        + [OpaqueFunction(function=launch_setup)]
+        "Set True to separate concatenate node and timesync node. which will cause to larger memory usage.",
     )
+
+    return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
