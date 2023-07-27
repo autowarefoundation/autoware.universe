@@ -71,7 +71,7 @@ def generate_test_description():
     )
 
 
-class TestEKFLocalizer(unittest.TestCase):
+class TestLoadMGRS(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Initialize the ROS context for the test node
