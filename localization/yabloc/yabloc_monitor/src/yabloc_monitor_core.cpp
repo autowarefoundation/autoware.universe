@@ -16,11 +16,7 @@
 
 #include <rclcpp/logging.hpp>
 
-#include <algorithm>
-#include <functional>
 #include <memory>
-#include <string>
-#include <utility>
 
 using std::placeholders::_1;
 

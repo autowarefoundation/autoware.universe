@@ -22,14 +22,7 @@
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 
-#include <chrono>
-#include <fstream>
-#include <iostream>
 #include <memory>
-#include <mutex>
-#include <queue>
-#include <string>
-#include <vector>
 
 class YabLocMonitor : public rclcpp::Node
 {

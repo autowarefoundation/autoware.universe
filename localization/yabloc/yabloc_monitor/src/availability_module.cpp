@@ -16,18 +16,14 @@
 
 #include <rclcpp/logging.hpp>
 
-#include <algorithm>
-#include <functional>
 #include <memory>
-#include <string>
-#include <utility>
 
 using PoseStamped = geometry_msgs::msg::PoseStamped;
 
 AvailabilityModule::AvailabilityModule(rclcpp::Node * node)
 : clock_(node->get_clock()),
   latest_yabloc_pose_stamp_ptr_(nullptr),
-  timestamp_threshold_(node->declare_parameter<double>("availability/timestamp_tolerance", 1.0))
+  timestamp_threshold_(node->declare_parameter<double>("availability/timestamp_tolerance"))
 {
   sub_yabloc_pose_ = node->create_subscription<PoseStamped>(
     "~/input/yabloc_pose", 10, [this](PoseStamped::ConstSharedPtr msg) { on_yabloc_pose(msg); });
