@@ -180,7 +180,7 @@ bool isLeft(
     return true;
   }
   return false;
-
+}
 std::vector<TrajectoryPoint> convertToTrajectoryPoints(
   const std::vector<PathPointWithLaneId> & path_points)
 {
@@ -207,6 +207,64 @@ std::vector<PathPointWithLaneId> convertToPathPoints(
     path_points.push_back(path_point);
   }
   return traj_points;
+}
+
+std::vector<TrajectoryPoint> extendTrajectory(
+  const std::vector<TrajectoryPoint> & optimized_traj_points,
+  const std::vector<TrajectoryPoint> & traj_points) const
+{
+  const auto & joint_start_pose = optimized_traj_points.back().pose;
+
+  // calculate end idx of optimized points on path points
+  const size_t joint_start_traj_seg_idx =
+    trajectory_utils::findEgoSegmentIndex(traj_points, joint_start_pose, ego_nearest_param_);
+
+  // crop trajectory for extension
+  constexpr double joint_traj_max_length_for_smoothing = 15.0;
+  constexpr double joint_traj_min_length_for_smoothing = 5.0;
+  const auto joint_end_traj_point_idx = trajectory_utils::getPointIndexAfter(
+    traj_points, joint_start_pose.position, joint_start_traj_seg_idx,
+    joint_traj_max_length_for_smoothing, joint_traj_min_length_for_smoothing);
+
+  // calculate full trajectory points
+  const auto full_traj_points = [&]() {
+    if (!joint_end_traj_point_idx) {
+      return optimized_traj_points;
+    }
+
+    const auto extended_traj_points = std::vector<TrajectoryPoint>{
+      traj_points.begin() + *joint_end_traj_point_idx, traj_points.end()};
+
+    // NOTE: if optimized_traj_points's back is non zero velocity and extended_traj_points' front
+    // is zero velocity, the zero velocity will be inserted in the whole joint trajectory.
+    auto modified_optimized_traj_points = optimized_traj_points;
+    if (!extended_traj_points.empty() && !modified_optimized_traj_points.empty()) {
+      modified_optimized_traj_points.back().longitudinal_velocity_mps =
+        extended_traj_points.front().longitudinal_velocity_mps;
+    }
+
+    return concatVectors(modified_optimized_traj_points, extended_traj_points);
+  }();
+
+  // resample trajectory points
+  auto resampled_traj_points = trajectory_utils::resampleTrajectoryPoints(
+    full_traj_points, traj_param_.output_delta_arc_length);
+
+  // update stop velocity on joint
+  for (size_t i = joint_start_traj_seg_idx + 1; i <= joint_end_traj_point_idx; ++i) {
+    if (hasZeroVelocity(traj_points.at(i))) {
+      if (i != 0 && !hasZeroVelocity(traj_points.at(i - 1))) {
+        // Here is when current point is 0 velocity, but previous point is not 0 velocity.
+        const auto & input_stop_pose = traj_points.at(i).pose;
+        const size_t stop_seg_idx = trajectory_utils::findEgoSegmentIndex(
+          resampled_traj_points, input_stop_pose, ego_nearest_param_);
+
+        // calculate and insert stop pose on output trajectory
+        trajectory_utils::insertStopPoint(resampled_traj_points, input_stop_pose, stop_seg_idx);
+      }
+    }
+  }
+  return resampled_traj_points;
 }
 }  // namespace
 
@@ -343,17 +401,15 @@ PathWithLaneId DynamicAvoidanceModule::planPath(
   obstacle_avoidance_planner_data.ego_pose = getEgoPose();
   obstacle_avoidance_planner_data.ego_vel = getEgoSpeed();
 
-  // optimize path
+  // smooth and optimize path
   const auto ref_traj_points = convertToTrajectoryPoints(ref_path.points);
-  const auto smoothed_traj_points =
-    eb_optimizer_->getEBTrajectory(obstacle_avoidance_planner_data, ref_traj_points);
+  const auto smoothed_traj_points = eb_optimizer_->smoothTrajectory(ref_traj_points, getEgoPose());
   const auto avoidance_traj_points =
-    mpt_optimizer_->getModelPredictiveTrajectory(obstacle_avoidance_planner_data, smoothed_points);
+    mpt_optimizer_->optimizeTrajectory(obstacle_avoidance_planner_data, smoothed_points);
 
   // extend path
   // NOTE: Optimized path is shorter than the reference path due to the calculation cost.
-  const auto extended_traj_points =
-    motion_utils::extendTrajectory(avoidance_traj_points, ref_traj_points);
+  const auto extended_traj_points = extendTrajectory(avoidance_traj_points, ref_traj_points);
   const auto extended_path_points = convertToPathPoints(extended_traj_points);
 
   auto output_path = input_path;
