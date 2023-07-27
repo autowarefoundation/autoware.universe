@@ -1348,40 +1348,26 @@ bool IntersectionModule::isOcclusionCleared(
   }
 
   const auto & possible_object_bbox = planner_param_.occlusion.possible_object_bbox;
-  const double possible_object_area = possible_object_bbox.at(0) * possible_object_bbox.at(1);
+  const double possible_object_bbox_x = possible_object_bbox.at(0) / resolution;
+  const double possible_object_bbox_y = possible_object_bbox.at(1) / resolution;
+  const double possible_object_area = possible_object_bbox_x * possible_object_bbox_y;
   std::vector<std::vector<cv::Point>> contours;
   cv::findContours(occlusion_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
   std::vector<std::vector<cv::Point>> valid_contours;
   for (const auto & contour : contours) {
-    // std::vector<cv::Point> approx_contour;
-    // cv::approxPolyDP(contour, approx_contour, 0.05 * cv::arcLength(contour, true), true);
-
-    // check if distance is positive
-    CvLineString positive_contour_line;
-    for (const auto & p : contour) {
-      const int i = p.x, j = p.y;
-      if (distance_grid.at<unsigned char>(j, i) != undef_pixel) {
-        positive_contour_line.emplace_back(i, j);
-      }
-    }
-    if (positive_contour_line.empty()) continue;
-
-    CvLineString simplified_contour_line;
-    bg::simplify(positive_contour_line, simplified_contour_line, 0.5);
-    CvPolygon simplified_contour;
-    for (const auto & p : simplified_contour_line) {
-      simplified_contour.outer().push_back(p);
-    }
-    if (simplified_contour.outer().empty()) continue;
-    simplified_contour.outer().push_back(simplified_contour.outer().front());
-    // check size
-    const double poly_area = bg::area(simplified_contour);
+    std::vector<cv::Point> approx_contour;
+    cv::approxPolyDP(
+      contour, approx_contour,
+      std::round(std::min(possible_object_bbox_x, possible_object_bbox_y) / resolution), true);
+    if (approx_contour.size() <= 1) continue;
+    // check area
+    const double poly_area = cv::contourArea(approx_contour);
     if (poly_area < possible_object_area) continue;
 
-    valid_contours.push_back(simplified_contour.outer());
+    valid_contours.push_back(approx_contour);
     geometry_msgs::msg::Polygon polygon_msg;
     geometry_msgs::msg::Point32 point_msg;
-    for (const auto & p : simplified_contour_line) {
+    for (const auto & p : approx_contour) {
       const double glob_x = (p.x + 0.5) * resolution + origin.x;
       const double glob_y = (height - 0.5 - p.y) * resolution + origin.y;
       point_msg.x = glob_x;
@@ -1391,6 +1377,7 @@ bool IntersectionModule::isOcclusionCleared(
     }
     debug_data_.occlusion_polygons.push_back(polygon_msg);
   }
+
   // clean-up and find nearest risk
   const int min_cost_thr = dist2pixel(occlusion_dist_thr);
   int min_cost = undef_pixel - 1;
