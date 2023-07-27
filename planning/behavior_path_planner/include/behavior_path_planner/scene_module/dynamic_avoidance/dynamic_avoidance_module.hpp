@@ -37,6 +37,9 @@ namespace behavior_path_planner
 {
 struct DynamicAvoidanceParameters
 {
+  // common
+  bool enable_debug_info{true};
+
   // obstacle types to avoid
   bool avoid_car{true};
   bool avoid_truck{true};
@@ -132,7 +135,6 @@ public:
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   ModuleStatus updateState() override;
-  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
   BehaviorModuleOutput planWaitingApproval() override;

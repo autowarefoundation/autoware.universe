@@ -81,7 +81,6 @@ public:
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   ModuleStatus updateState() override;
-  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -152,8 +151,8 @@ private:
   // check if the goal is located behind the ego in the same route segment.
   bool IsGoalBehindOfEgoInSameRouteSegment() const;
 
-  // generate BehaviorPathOutput with stopping path.
-  BehaviorModuleOutput generateStopOutput() const;
+  // generate BehaviorPathOutput with stopping path and update status
+  BehaviorModuleOutput generateStopOutput();
 
   void setDebugData() const;
 };
