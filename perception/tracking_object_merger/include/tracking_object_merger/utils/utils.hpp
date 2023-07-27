@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -108,6 +108,13 @@ float probabilityMerger(const float main_prob, const float sub_prob, const Merge
 // shape merger
 autoware_auto_perception_msgs::msg::Shape shapeMerger(
   const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy);
+
+// update tracked object
+void updateOnlyObjectVelocity(TrackedObject & main_obj, const TrackedObject & sub_obj);
+
+void updateOnlyClassification(TrackedObject & main_obj, const TrackedObject & sub_obj);
+
+void updateWholeTrackedObject(TrackedObject & main_obj, const TrackedObject & sub_obj);
 
 }  // namespace merger_utils
 
