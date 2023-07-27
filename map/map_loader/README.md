@@ -139,11 +139,15 @@ Please see [the description of `GetSelectedPointCloudMap.srv`](https://github.co
 ### Feature
 
 lanelet2_map_loader loads Lanelet2 file and publishes the map data as autoware_auto_mapping_msgs/HADMapBin message.
-The node projects lan/lon coordinates into MGRS coordinates.
+The node projects lan/lon coordinates into arbitrary coordinates defined in `/map/map_projector_type` from `map_projection_loader`.
 
 ### How to run
 
 `ros2 run map_loader lanelet2_map_loader --ros-args -p lanelet2_map_path:=path/to/map.osm`
+
+### Subscribed Topics
+
+- ~input/map_projector_info (tier4_map_msgs/MapProjectorInfo) : Projection type for Autoware
 
 ### Published Topics
 
@@ -175,10 +179,7 @@ lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messa
 
 ### Parameters
 
-| Name                        | Type        | Description                                                  | Default value |
-| :-------------------------- | :---------- | :----------------------------------------------------------- | :------------ |
-| lanelet2_map_projector_type | std::string | The type of the map projector using, can be MGRS, UTM, local | MGRS          |
-| latitude                    | double      | Latitude of map_origin, only using in UTM map projector      | 0.0           |
-| longitude                   | double      | Longitude of map_origin, only using in UTM map projector     | 0.0           |
-| center_line_resolution      | double      | Define the resolution of the lanelet center line             | 5.0           |
-| lanelet2_map_path           | std::string | The lanelet2 map path                                        | None          |
+| Name                   | Type        | Description                                      | Default value |
+| :--------------------- | :---------- | :----------------------------------------------- | :------------ |
+| center_line_resolution | double      | Define the resolution of the lanelet center line | 5.0           |
+| lanelet2_map_path      | std::string | The lanelet2 map path                            | None          |

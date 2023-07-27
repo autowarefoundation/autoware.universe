@@ -144,7 +144,6 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     }
 
     return map;
-
   } else {
     RCLCPP_ERROR(rclcpp::get_logger("map_loader"), "lanelet2_map_projector_type is not supported");
     return nullptr;
