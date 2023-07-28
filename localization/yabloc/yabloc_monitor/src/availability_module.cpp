@@ -22,7 +22,7 @@ using PoseStamped = geometry_msgs::msg::PoseStamped;
 
 AvailabilityModule::AvailabilityModule(rclcpp::Node * node)
 : clock_(node->get_clock()),
-  latest_yabloc_pose_stamp_ptr_(nullptr),
+  latest_yabloc_pose_stamp_(std::nullopt),
   timestamp_threshold_(node->declare_parameter<double>("availability/timestamp_tolerance"))
 {
   sub_yabloc_pose_ = node->create_subscription<PoseStamped>(
@@ -31,18 +31,18 @@ AvailabilityModule::AvailabilityModule(rclcpp::Node * node)
 
 bool AvailabilityModule::is_available() const
 {
-  if (latest_yabloc_pose_stamp_ptr_ == nullptr) {
+  if (!latest_yabloc_pose_stamp_.has_value()) {
     return false;
   }
 
   const auto now = clock_->now();
 
-  const auto diff_time = now - *latest_yabloc_pose_stamp_ptr_;
+  const auto diff_time = now - latest_yabloc_pose_stamp_.value();
   const auto diff_time_sec = diff_time.seconds();
   return diff_time_sec < timestamp_threshold_;
 }
 
 void AvailabilityModule::on_yabloc_pose(const PoseStamped::ConstSharedPtr msg)
 {
-  latest_yabloc_pose_stamp_ptr_ = std::make_shared<rclcpp::Time>(rclcpp::Time(msg->header.stamp));
+  latest_yabloc_pose_stamp_ = rclcpp::Time(msg->header.stamp);
 }

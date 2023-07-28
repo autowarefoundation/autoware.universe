@@ -20,6 +20,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <memory>
+#include <optional>
 
 class AvailabilityModule
 {
@@ -35,8 +36,8 @@ private:
   void on_yabloc_pose(PoseStamped::ConstSharedPtr msg);
 
   rclcpp::Clock::SharedPtr clock_;
-  std::shared_ptr<rclcpp::Time> latest_yabloc_pose_stamp_ptr_;
-  double timestamp_threshold_;
+  std::optional<rclcpp::Time> latest_yabloc_pose_stamp_;
+  const double timestamp_threshold_;
 };
 
 #endif  // AVAILABILITY_MODULE_HPP_
