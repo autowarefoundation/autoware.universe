@@ -18,7 +18,7 @@ To be added,
 
 | Name           | Type                        | Description                     |
 | -------------- | --------------------------- | ------------------------------- |
-| `/yabloc/pose` | `geometry_msgs/PoseStamped` | The final output pose of YabLoc |
+| `~/input/yabloc_pose` | `geometry_msgs/PoseStamped` | The final output pose of YabLoc |
 
 ### Output
 
