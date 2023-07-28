@@ -28,7 +28,7 @@ private:
 
 public:
   explicit AvailabilityModule(rclcpp::Node * node);
-  bool is_available() const;
+  [[nodiscard]] bool is_available() const;
 
 private:
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_yabloc_pose_;

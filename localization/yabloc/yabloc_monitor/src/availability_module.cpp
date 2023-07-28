@@ -45,5 +45,5 @@ bool AvailabilityModule::is_available() const
 void AvailabilityModule::on_yabloc_pose(const PoseStamped::ConstSharedPtr msg)
 {
   latest_yabloc_pose_stamp_ptr_ =
-    std::shared_ptr<rclcpp::Time>(new rclcpp::Time(msg->header.stamp));
+    std::make_shared<rclcpp::Time>(rclcpp::Time(msg->header.stamp));
 }
