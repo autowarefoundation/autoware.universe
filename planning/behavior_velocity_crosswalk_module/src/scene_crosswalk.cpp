@@ -787,7 +787,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
     }
 
     const auto & ego_pos = planner_data_->current_odometry->pose.position;
-    const auto & ego_vel = planner_data_->current_velocity->twist.linear.x;
+    const auto ego_vel = planner_data_->current_velocity->twist.linear.x;
     const auto ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
 
     const double near_attention_range =
@@ -797,22 +797,27 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
     const auto dist_ego2obj = calcSignedArcLength(ego_path.points, ego_pos, obj_pos);
 
     if (near_attention_range < dist_ego2obj && dist_ego2obj < far_attention_range) {
-      const auto min_feasible_dist_to_stop = calcDecelDistWithJerkAndAccConstraints(
+      // Plan STOP considering min_acc, max_jerk and min_jerk.
+      const auto min_feasible_dist_ego2stop = calcDecelDistWithJerkAndAccConstraints(
         ego_vel, 0.0, ego_acc, p.min_acc_for_stuck_vehicle, p.max_jerk_for_stuck_vehicle,
         p.min_jerk_for_stuck_vehicle);
-      if (!min_feasible_dist_to_stop) {
-        return createStopFactor(*stop_pose, {obj_pos});
+      if (!min_feasible_dist_ego2stop) {
+        continue;
       }
 
       const double dist_ego2stop =
         calcSignedArcLength(ego_path.points, ego_pos, stop_pose->position);
-      const double feasible_dist_to_stop = std::max(*min_feasible_dist_to_stop, dist_ego2stop);
+      const double feasible_dist_ego2stop = std::max(*min_feasible_dist_ego2stop, dist_ego2stop);
+      const double dist_to_ego =
+        calcSignedArcLength(ego_path.points, ego_path.points.front().point.pose.position, ego_pos);
 
       const auto feasible_stop_pose =
-        calcLongitudinalOffsetPose(ego_path.points, 0, feasible_dist_to_stop);
-      if (feasible_stop_pose) {
-        return createStopFactor(*feasible_stop_pose, {obj_pos});
+        calcLongitudinalOffsetPose(ego_path.points, 0, dist_to_ego + feasible_dist_ego2stop);
+      if (!feasible_stop_pose) {
+        continue;
       }
+
+      return createStopFactor(*feasible_stop_pose, {obj_pos});
     }
   }
 
