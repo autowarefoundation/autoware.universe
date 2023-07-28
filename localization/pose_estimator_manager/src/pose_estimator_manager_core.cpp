@@ -3,7 +3,7 @@
 #include "pose_estimator_manager/sub_manager/sub_manager_eagleye.hpp"
 #include "pose_estimator_manager/sub_manager/sub_manager_ndt.hpp"
 #include "pose_estimator_manager/sub_manager/sub_manager_yabloc.hpp"
-#include "pose_estimator_manager/switch_rule/pcd_occupancy_rule.hpp"
+#include "pose_estimator_manager/switch_rule/map_based_rule.hpp"
 
 #include <sstream>
 
@@ -28,6 +28,7 @@ static std::vector<PoseEstimatorName> parse_estimator_name_args(
         "invalid pose_estimator_name is spciefied: " << estimator_name);
     }
   }
+
   return running_estimator_list;
 }
 
@@ -75,7 +76,7 @@ void PoseEstimatorManager::load_switch_rule()
 {
   // NOTE: In the future, some rule will be laid below
   RCLCPP_INFO_STREAM(get_logger(), "load default switching rule");
-  switch_rule_ = std::make_shared<PcdOccupancyRule>(*this);
+  switch_rule_ = std::make_shared<MapBasedRule>(*this);
 }
 
 void PoseEstimatorManager::toggle_each(

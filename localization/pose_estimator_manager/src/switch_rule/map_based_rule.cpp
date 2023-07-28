@@ -1,4 +1,4 @@
-#include "pose_estimator_manager/switch_rule/pcd_occupancy_rule.hpp"
+#include "pose_estimator_manager/switch_rule/map_based_rule.hpp"
 
 #include "pose_estimator_manager/switch_rule/grid_info.hpp"
 
@@ -6,34 +6,34 @@
 
 namespace multi_pose_estimator
 {
-std::vector<PoseEstimatorName> PcdOccupancyRule::supporting_pose_estimators()
+std::vector<PoseEstimatorName> MapBasedRule::supporting_pose_estimators()
 {
   return {PoseEstimatorName::NDT, PoseEstimatorName::YABLOC, PoseEstimatorName::EAGLEYE};
 }
 
-PcdOccupancyRule::PcdOccupancyRule(rclcpp::Node & node)
+MapBasedRule::MapBasedRule(rclcpp::Node & node)
+: BaseSwitchRule(node),
+  pcd_density_threshold_(node.declare_parameter<int>("pcd_occupancy_rule/pcd_density_threshold"))
 {
-  logger_ptr_ = std::make_shared<rclcpp::Logger>(node.get_logger());
-  RCLCPP_INFO_STREAM(*logger_ptr_, "PcdOccupancyRule is initialized");
+  RCLCPP_INFO_STREAM(get_logger(), "MapBasedRule is initialized");
 
   using std::placeholders::_1;
   const auto map_qos = rclcpp::QoS(1).transient_local().reliable();
 
-  // Parameters
-  pcd_density_threshold_ = node.declare_parameter<int>("pcd_occupancy_rule/pcd_density_threshold");
-
-  // Subscriber
-  auto on_map = std::bind(&PcdOccupancyRule::on_map, this, _1);
-  auto on_pose_cov = std::bind(&PcdOccupancyRule::on_pose_cov, this, _1);
-
-  sub_map_ = node.create_subscription<PointCloud2>("~/input/pointcloud_map", map_qos, on_map);
+  auto on_point_cloud_map = std::bind(&MapBasedRule::on_point_cloud_map, this, _1);
+  auto on_vector_map = std::bind(&MapBasedRule::on_vector_map, this, _1);
+  auto on_pose_cov = std::bind(&MapBasedRule::on_pose_cov, this, _1);
+  sub_vector_map_ =
+    node.create_subscription<HADMapBin>("~/input/vector_map", map_qos, on_vector_map);
+  sub_point_cloud_map_ =
+    node.create_subscription<PointCloud2>("~/input/pointcloud_map", map_qos, on_point_cloud_map);
   sub_pose_cov_ =
     node.create_subscription<PoseCovStamped>("~/input/pose_with_covariance", 10, on_pose_cov);
 }
 
-std::unordered_map<PoseEstimatorName, bool> PcdOccupancyRule::update()
+std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 {
-  RCLCPP_WARN_STREAM(*logger_ptr_, "pluginlib try to choice the best localizer");
+  RCLCPP_WARN_STREAM(get_logger(), "pluginlib try to choice the best localizer");
 
   std::unordered_map<PoseEstimatorName, bool> toggle_list;
   toggle_list[PoseEstimatorName::NDT] = true;
@@ -42,7 +42,7 @@ std::unordered_map<PoseEstimatorName, bool> PcdOccupancyRule::update()
 
   if (!latest_pose_.has_value()) {
     RCLCPP_WARN_STREAM(
-      *logger_ptr_, "Unable to determine which estimation to use, due to lack of latest position");
+      get_logger(), "Unable to determine which estimation to use, due to lack of latest position");
     return toggle_list;
   }
 
@@ -75,17 +75,19 @@ std::unordered_map<PoseEstimatorName, bool> PcdOccupancyRule::update()
     }
   }
 
+  ss << "\nEagleye: " << (eagleye_area_.within(position) ? "ON" : "OFF");
+
   debug_string_msg_ = ss.str();
 
   return toggle_list;
 }
 
-std::string PcdOccupancyRule::debug_string()
+std::string MapBasedRule::debug_string()
 {
   return debug_string_msg_;
 }
 
-PcdOccupancyRule::MarkerArray PcdOccupancyRule::debug_marker_array()
+MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
 {
   MarkerArray array_msg;
   visualization_msgs::msg::Marker msg;
@@ -96,16 +98,25 @@ PcdOccupancyRule::MarkerArray PcdOccupancyRule::debug_marker_array()
   msg.scale.set__x(3.0f).set__y(3.0f).set__z(3.f);
   msg.color.set__r(1.0f).set__g(1.0f).set__b(0.2f).set__a(1.0f);
 
-  for (auto p : occupied_areas_->points) {
-    geometry_msgs::msg::Point geometry_point{};
-    geometry_point.set__x(p.x).set__y(p.y).set__z(p.z);
-    msg.points.push_back(geometry_point);
+  if (occupied_areas_) {
+    for (auto p : occupied_areas_->points) {
+      geometry_msgs::msg::Point geometry_point{};
+      geometry_point.set__x(p.x).set__y(p.y).set__z(p.z);
+      msg.points.push_back(geometry_point);
+    }
   }
+
   array_msg.markers.push_back(msg);
   return array_msg;
 }
 
-void PcdOccupancyRule::on_map(PointCloud2::ConstSharedPtr msg)
+void MapBasedRule::on_vector_map(HADMapBin::ConstSharedPtr msg)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "subscribed binary vector map");
+  eagleye_area_.init(msg);
+}
+
+void MapBasedRule::on_point_cloud_map(PointCloud2::ConstSharedPtr msg)
 {
   pcl::PointCloud<pcl::PointXYZ> cloud;
   pcl::fromROSMsg(*msg, cloud);
@@ -126,10 +137,10 @@ void PcdOccupancyRule::on_map(PointCloud2::ConstSharedPtr msg)
   kdtree_->setInputCloud(occupied_areas_);
 
   RCLCPP_INFO_STREAM(
-    *logger_ptr_, "pose_estiamtor_manager has loaded PCD map " << occupied_areas_->size());
+    get_logger(), "pose_estiamtor_manager has loaded PCD map " << occupied_areas_->size());
 }
 
-void PcdOccupancyRule::on_pose_cov(PoseCovStamped::ConstSharedPtr msg)
+void MapBasedRule::on_pose_cov(PoseCovStamped::ConstSharedPtr msg)
 {
   latest_pose_ = *msg;
 }

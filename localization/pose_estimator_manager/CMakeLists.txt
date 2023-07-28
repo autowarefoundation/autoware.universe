@@ -6,14 +6,15 @@ autoware_package()
 
 ament_auto_add_library(switch_rule
   SHARED
-  src/switch_rule/pcd_occupancy_rule.cpp
+  src/switch_rule/map_based_rule.cpp
+  src/switch_rule/eagleye_area.cpp
 )
+target_include_directories(switch_rule PUBLIC include)
 
 ament_auto_add_executable(${PROJECT_NAME}
   src/pose_estimator_manager_core.cpp
   src/pose_estimator_manager_node.cpp
 )
-
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${PCL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} switch_rule)
