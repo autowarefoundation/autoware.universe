@@ -37,9 +37,9 @@ bool AvailabilityModule::is_available() const
 
   const auto now = clock_->now();
 
-  const auto diff_pose = now - *latest_yabloc_pose_stamp_ptr_;
-  const auto diff_pose_sec = diff_pose.seconds();
-  return diff_pose_sec < timestamp_threshold_;
+  const auto diff_time = now - *latest_yabloc_pose_stamp_ptr_;
+  const auto diff_time_sec = diff_time.seconds();
+  return diff_time_sec < timestamp_threshold_;
 }
 
 void AvailabilityModule::on_yabloc_pose(const PoseStamped::ConstSharedPtr msg)
