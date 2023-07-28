@@ -259,13 +259,14 @@ TEST(DrivableAreaExpansionProjection, expandDrivableArea)
     params.max_path_arc_length = 0.0;     // means no limit
     params.extra_arc_length = 1.0;
     params.expansion_method = "polygon";
-    // 4m x 4m ego footprint
+    // 2m x 4m ego footprint
     params.ego_front_offset = 1.0;
     params.ego_rear_offset = -1.0;
     params.ego_left_offset = 2.0;
     params.ego_right_offset = -2.0;
   }
-  // we expect the expand the drivable area by 1m on each side
+  // we expect the drivable area to be expanded by 1m on each side
+  // BUT short paths, due to pruning at the edge of the driving area, there is no expansion
   drivable_area_expansion::expandDrivableArea(
     path, params, dynamic_objects, route_handler, path_lanes);
   // unchanged path points
@@ -274,18 +275,21 @@ TEST(DrivableAreaExpansionProjection, expandDrivableArea)
     EXPECT_NEAR(path.points[i].point.pose.position.x, i, eps);
     EXPECT_NEAR(path.points[i].point.pose.position.y, 0.0, eps);
   }
+
   // expanded left bound
-  ASSERT_EQ(path.left_bound.size(), 2ul);
+  ASSERT_EQ(path.left_bound.size(), 3ul);
   EXPECT_NEAR(path.left_bound[0].x, 0.0, eps);
-  EXPECT_NEAR(path.left_bound[0].y, 2.0, eps);
-  EXPECT_NEAR(path.left_bound[1].x, 2.0, eps);
-  EXPECT_NEAR(path.left_bound[1].y, 2.0, eps);
+  EXPECT_NEAR(path.left_bound[0].y, 1.0, eps);
+  EXPECT_NEAR(path.left_bound[1].x, 1.0, eps);
+  EXPECT_NEAR(path.left_bound[1].y, 1.0, eps);
+  EXPECT_NEAR(path.left_bound[2].x, 2.0, eps);
+  EXPECT_NEAR(path.left_bound[2].y, 1.0, eps);
   // expanded right bound
   ASSERT_EQ(path.right_bound.size(), 3ul);
   EXPECT_NEAR(path.right_bound[0].x, 0.0, eps);
-  EXPECT_NEAR(path.right_bound[0].y, -2.0, eps);
-  EXPECT_NEAR(path.right_bound[1].x, 2.0, eps);
-  EXPECT_NEAR(path.right_bound[1].y, -2.0, eps);
+  EXPECT_NEAR(path.right_bound[0].y, -1.0, eps);
+  EXPECT_NEAR(path.right_bound[1].x, 1.0, eps);
+  EXPECT_NEAR(path.right_bound[1].y, -1.0, eps);
   EXPECT_NEAR(path.right_bound[2].x, 2.0, eps);
   EXPECT_NEAR(path.right_bound[2].y, -1.0, eps);
 }
