@@ -797,15 +797,19 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
     const auto dist_ego2obj = calcSignedArcLength(ego_path.points, ego_pos, obj_pos);
 
     if (near_attention_range < dist_ego2obj && dist_ego2obj < far_attention_range) {
-      const double min_feasible_dist_to_stop = calcDecelDistWithJerkAndAccConstraints(
+      const auto min_feasible_dist_to_stop = calcDecelDistWithJerkAndAccConstraints(
         ego_vel, 0.0, ego_acc, p.min_acc_for_stuck_vehicle, p.max_jerk_for_stuck_vehicle,
         p.min_jerk_for_stuck_vehicle);
+      if (!min_feasible_dist_to_stop) {
+        return createStopFactor(*stop_pose, {obj_pos});
+      }
+
       const double dist_ego2stop =
         calcSignedArcLength(ego_path.points, ego_pos, stop_pose->position);
-      const double feasible_dist_to_stop = std::max(min_feasible_dist_to_stop, dist_ego2stop);
+      const double feasible_dist_to_stop = std::max(*min_feasible_dist_to_stop, dist_ego2stop);
 
       const auto feasible_stop_pose =
-        calcLongitudinalOffsetPose(ego_path, 0, feasible_dist_to_stop);
+        calcLongitudinalOffsetPose(ego_path.points, 0, feasible_dist_to_stop);
       if (feasible_stop_pose) {
         return createStopFactor(*feasible_stop_pose, {obj_pos});
       }
