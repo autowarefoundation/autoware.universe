@@ -621,29 +621,12 @@ bool NormalLaneChange::hasEnoughLength(
   const auto current_pose = getEgoPose();
   const auto & route_handler = *getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
-  // const auto minimum_lane_changing_velocity = common_parameters.minimum_lane_changing_velocity;
-  // const auto lateral_jerk = common_parameters.lane_changing_lateral_jerk;
   const double lane_change_length = path.info.length.sum();
-  // const double max_lat_acc =
-  //   common_parameters.lane_change_lat_acc_map.find(minimum_lane_changing_velocity).second;
   const auto shift_intervals =
     route_handler.getLateralIntervalsToPreferredLane(target_lanes.back(), direction);
-
   double minimum_lane_change_length_to_preferred_lane =
     utils::calcMinimumLaneChangeLength(common_parameters, shift_intervals);
-  // for (const auto & shift_length : shift_intervals) {
-  //   const auto lane_changing_time =
-  //     PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, max_lat_acc);
-  //   minimum_lane_change_length_to_preferred_lane +=
-  //     minimum_lane_changing_velocity * lane_changing_time +
-  //     common_parameters.minimum_prepare_length;
-  // }
 
-  RCLCPP_WARN_STREAM(
-    logger_, "lane_change_length = " << lane_change_length << ", dist_to_end = "
-                                     << utils::getDistanceToEndOfLane(current_pose, current_lanes)
-                                     << ", minimum_lane_change_length = "
-                                     << minimum_lane_change_length_to_preferred_lane);
   if (lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     return false;
   }
@@ -803,20 +786,12 @@ bool NormalLaneChange::getLaneChangePaths(
         const double s_current =
           lanelet::utils::getArcCoordinates(target_lanes, getEgoPose()).length;
         const double s_start = prepare_length + s_current;
-        // const double s_start =
-        //   lanelet::utils::getArcCoordinates(target_lanelets, lane_changing_start_pose).length;
         const double s_goal =
           lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose()).length;
         if (
           s_start + lane_changing_length + common_parameters.lane_change_finish_judge_buffer +
             next_lane_change_buffer >
           s_goal) {
-          RCLCPP_WARN_STREAM(
-            logger_, "s_start = " << s_start << ", lane_changing_length = " << lane_changing_length
-                                  << ", next_lane_change_buffer = " << next_lane_change_buffer
-                                  << ", s_goal = " << s_goal);
-          RCLCPP_WARN_STREAM(
-            logger_, "prepare_length = " << prepare_length << ", s_current = " << s_current);
           RCLCPP_DEBUG(logger_, "length of lane changing path is longer than length to goal!!");
           continue;
         }
