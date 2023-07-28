@@ -20,8 +20,6 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
-
 #include <memory>
 
 class YabLocMonitor : public rclcpp::Node
