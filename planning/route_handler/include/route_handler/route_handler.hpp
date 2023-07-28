@@ -325,6 +325,7 @@ public:
     const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
   lanelet::ConstLanelets getShoulderLanelets() const;
   bool isShoulderLanelet(const lanelet::ConstLanelet & lanelet) const;
+  bool isRouteLanelet(const lanelet::ConstLanelet & lanelet) const;
 
   // for path
   PathWithLaneId getCenterLinePath(
@@ -442,7 +443,7 @@ private:
    * @return true if a path without any no_drivable_lane found, false if this path is not found.
    */
   bool findDrivableLanePath(
-    const lanelet::Lanelet & start_lanelet, const lanelet::Lanelet & goal_lanelet,
+    const lanelet::ConstLanelet & start_lanelet, const lanelet::ConstLanelet & goal_lanelet,
     lanelet::routing::LaneletPath & drivable_lane_path) const;
 };
 }  // namespace route_handler

@@ -29,6 +29,11 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
 {
   DynamicAvoidanceParameters p{};
 
+  {  // common
+    std::string ns = "dynamic_avoidance.common.";
+    p.enable_debug_info = node->declare_parameter<bool>(ns + "enable_debug_info");
+  }
+
   {  // target object
     std::string ns = "dynamic_avoidance.target_object.";
     p.avoid_car = node->declare_parameter<bool>(ns + "car");
@@ -42,8 +47,24 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
     p.min_obstacle_vel = node->declare_parameter<double>(ns + "min_obstacle_vel");
     p.successive_num_to_entry_dynamic_avoidance_condition =
       node->declare_parameter<int>(ns + "successive_num_to_entry_dynamic_avoidance_condition");
+
     p.min_obj_lat_offset_to_ego_path =
       node->declare_parameter<double>(ns + "min_obj_lat_offset_to_ego_path");
+    p.max_obj_lat_offset_to_ego_path =
+      node->declare_parameter<double>(ns + "max_obj_lat_offset_to_ego_path");
+
+    p.min_time_to_start_cut_in =
+      node->declare_parameter<double>(ns + "cut_in_object.min_time_to_start_cut_in");
+    p.min_lon_offset_ego_to_cut_in_object =
+      node->declare_parameter<double>(ns + "cut_in_object.min_lon_offset_ego_to_object");
+
+    p.max_front_object_angle =
+      node->declare_parameter<double>(ns + "front_object.max_object_angle");
+
+    p.min_crossing_object_vel =
+      node->declare_parameter<double>(ns + "crossing_object.min_object_vel");
+    p.max_crossing_object_angle =
+      node->declare_parameter<double>(ns + "crossing_object.max_object_angle");
   }
 
   {  // drivable_area_generation
@@ -77,6 +98,11 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
   using tier4_autoware_utils::updateParam;
   auto & p = parameters_;
 
+  {  // common
+    const std::string ns = "dynamic_avoidance.common.";
+    updateParam<bool>(parameters, ns + "enable_debug_info", p->enable_debug_info);
+  }
+
   {  // target object
     const std::string ns = "dynamic_avoidance.target_object.";
 
@@ -94,8 +120,25 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
     updateParam<int>(
       parameters, ns + "successive_num_to_entry_dynamic_avoidance_condition",
       p->successive_num_to_entry_dynamic_avoidance_condition);
+
     updateParam<double>(
       parameters, ns + "min_obj_lat_offset_to_ego_path", p->min_obj_lat_offset_to_ego_path);
+    updateParam<double>(
+      parameters, ns + "max_obj_lat_offset_to_ego_path", p->max_obj_lat_offset_to_ego_path);
+
+    updateParam<double>(
+      parameters, ns + "cut_in_object.min_time_to_start_cut_in", p->min_time_to_start_cut_in);
+    updateParam<double>(
+      parameters, ns + "cut_in_object.min_lon_offset_ego_to_object",
+      p->min_lon_offset_ego_to_cut_in_object);
+
+    updateParam<double>(
+      parameters, ns + "front_object.max_object_angle", p->max_front_object_angle);
+
+    updateParam<double>(
+      parameters, ns + "crossing_object.min_object_vel", p->min_crossing_object_vel);
+    updateParam<double>(
+      parameters, ns + "crossing_object.max_object_angle", p->max_crossing_object_angle);
   }
 
   {  // drivable_area_generation

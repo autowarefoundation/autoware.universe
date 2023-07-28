@@ -16,8 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECK_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_util/debug_utilities.hpp"
-#include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
@@ -50,6 +49,51 @@ using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using vehicle_info_util::VehicleInfo;
 
+struct PoseWithVelocity
+{
+  Pose pose;
+  double velocity{0.0};
+
+  PoseWithVelocity(const Pose & pose, const double velocity) : pose(pose), velocity(velocity) {}
+};
+
+struct PoseWithVelocityStamped : public PoseWithVelocity
+{
+  double time{0.0};
+
+  PoseWithVelocityStamped(const double time, const Pose & pose, const double velocity)
+  : PoseWithVelocity(pose, velocity), time(time)
+  {
+  }
+};
+
+struct PoseWithVelocityAndPolygonStamped : public PoseWithVelocityStamped
+{
+  Polygon2d poly;
+
+  PoseWithVelocityAndPolygonStamped(
+    const double time, const Pose & pose, const double velocity, const Polygon2d & poly)
+  : PoseWithVelocityStamped(time, pose, velocity), poly(poly)
+  {
+  }
+};
+
+struct PredictedPathWithPolygon
+{
+  float confidence{0.0};
+  std::vector<PoseWithVelocityAndPolygonStamped> path;
+};
+
+struct ExtendedPredictedObject
+{
+  unique_identifier_msgs::msg::UUID uuid;
+  geometry_msgs::msg::PoseWithCovariance initial_pose;
+  geometry_msgs::msg::TwistWithCovariance initial_twist;
+  geometry_msgs::msg::AccelWithCovariance initial_acceleration;
+  autoware_auto_perception_msgs::msg::Shape shape;
+  std::vector<PredictedPathWithPolygon> predicted_paths;
+};
+
 namespace bg = boost::geometry;
 
 bool isTargetObjectFront(
@@ -72,8 +116,12 @@ double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
   const BehaviorPathPlannerParameters & params);
 
-boost::optional<PoseWithPolygon> getEgoInterpolatedPoseWithPolygon(
-  const PredictedPath & pred_path, const double current_time, const VehicleInfo & ego_info);
+boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
+  const std::vector<PoseWithVelocityStamped> & path, const double relative_time);
+
+boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
+  const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
+  const VehicleInfo & ego_info);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and
@@ -90,8 +138,9 @@ boost::optional<PoseWithPolygon> getEgoInterpolatedPoseWithPolygon(
  * @return true if distance is safe.
  */
 bool checkCollision(
-  const PathWithLaneId & planned_path, const PredictedPath & predicted_ego_path,
-  const double ego_current_velocity, const ExtendedPredictedObject & target_object,
+  const PathWithLaneId & planned_path,
+  const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
+  const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
   const double rear_object_deceleration, CollisionCheckDebug & debug);
