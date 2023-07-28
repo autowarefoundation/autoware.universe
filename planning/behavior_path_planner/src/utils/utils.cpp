@@ -1268,39 +1268,75 @@ boost::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> 
 std::vector<DrivableLanes> cutOverlappedLanes(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes)
 {
+  // 1. Cut drivable lanes
+  // 1.a. Get lane id where overlapping begins
   const auto overlapped_lanelet_id = getOverlappedLaneletId(lanes);
   if (!overlapped_lanelet_id) {
     return lanes;
   }
 
+  // 1.b. Create shorten lanes
   const std::vector<DrivableLanes> shorten_lanes{
     lanes.begin(), lanes.begin() + *overlapped_lanelet_id};
-  const auto shorten_lanelets = utils::transformToLanelets(shorten_lanes);
 
-  // create removed lanelets
-  std::vector<int64_t> removed_lane_ids;
-  for (size_t i = *overlapped_lanelet_id; i < lanes.size(); ++i) {
-    const auto target_lanelets = utils::transformToLanelets(lanes.at(i));
-    for (const auto & target_lanelet : target_lanelets) {
-      // if target lane is inside of the shorten lanelets, we do not remove it
-      if (checkHasSameLane(shorten_lanelets, target_lanelet)) {
-        continue;
-      }
-      removed_lane_ids.push_back(target_lanelet.id());
-    }
-  }
+  // 2. Cut path
+  const auto is_point_inside_polygon = [&](const auto & point, const auto & lanes) {
+    const auto boost_point = boost::geometry::model::d2::point_xy<double>{point.x, point.y};
+    const auto lanelets = transformToLanelets(lanes);
 
-  for (size_t i = 0; i < path.points.size(); ++i) {
-    const auto & lane_ids = path.points.at(i).lane_ids;
-    for (const auto & lane_id : lane_ids) {
-      if (
-        std::find(removed_lane_ids.begin(), removed_lane_ids.end(), lane_id) !=
-        removed_lane_ids.end()) {
-        path.points.erase(path.points.begin() + i, path.points.end());
-        return shorten_lanes;
+    for (const auto & lanelet : lanelets) {
+      const bool is_inside =
+        boost::geometry::within(boost_point, lanelet.polygon2d().basicPolygon());
+      if (is_inside) {
+        return true;
       }
     }
-  }
+    return false;
+  };
+
+  // 2.a. Calculate first path point inside shorten lanes
+  // NOTE: First path point may be outside shorten lanes.
+  const auto first_indices_inside_shorten_lanes = [&]() -> std::pair<size_t, size_t> {
+    for (size_t i = 0; i < path.points.size(); ++i) {
+      const auto & path_point = path.points.at(i).point.pose.position;
+      for (size_t shorten_lanes_idx = 0; shorten_lanes_idx < shorten_lanes.size();
+           ++shorten_lanes_idx) {
+        if (is_point_inside_polygon(path_point, shorten_lanes)) {
+          return std::make_pair(i, shorten_lanes_idx);
+        }
+      }
+    }
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
+      "failed to calculate first path point inside shorten lanes");
+    return std::make_pair(0, 0);
+  }();
+
+  // 2.b. Calculate last path point inside shorten lanes
+  const size_t last_path_index_inside_shorten_lanes = [&]() {
+    size_t shorten_lanes_idx = first_indices_inside_shorten_lanes.second;
+    for (size_t i = first_indices_inside_shorten_lanes.first; i < path.points.size(); ++i) {
+      const auto & path_point = path.points.at(i).point.pose.position;
+
+      bool is_inside{false};
+      for (; shorten_lanes_idx < shorten_lanes.size(); ++shorten_lanes_idx) {
+        if (is_point_inside_polygon(path_point, shorten_lanes)) {
+          is_inside = true;
+          break;
+        }
+      }
+
+      if (!is_inside) {
+        return std::max(0, static_cast<int>(i) - 1);
+      }
+    }
+    return std::max(0, static_cast<int>(path.points.size()) - 1);
+  }();
+
+  // 2.c. Cut path
+  path.points = std::vector<PathPointWithLaneId>(
+    path.points.cbegin() + first_indices_inside_shorten_lanes.first,
+    path.points.cbegin() + last_path_index_inside_shorten_lanes + 1);
 
   return shorten_lanes;
 }
