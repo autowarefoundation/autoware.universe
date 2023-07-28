@@ -19,13 +19,15 @@
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
+#include <memory>
+
 class AvailabilityModule
 {
 private:
   using PoseStamped = geometry_msgs::msg::PoseStamped;
 
 public:
-  AvailabilityModule(rclcpp::Node * node);
+  explicit AvailabilityModule(rclcpp::Node * node);
   bool is_available() const;
 
 private:
