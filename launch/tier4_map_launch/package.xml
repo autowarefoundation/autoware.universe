@@ -13,8 +13,8 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <exec_depend>map_loader</exec_depend>
-  <exec_depend>map_tf_generator</exec_depend>
   <exec_depend>map_projection_loader</exec_depend>
+  <exec_depend>map_tf_generator</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
