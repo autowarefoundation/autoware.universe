@@ -18,8 +18,6 @@
 
 #include <memory>
 
-using std::placeholders::_1;
-
 YabLocMonitor::YabLocMonitor() : Node("yabloc_monitor"), updater_(this)
 {
   updater_.setHardwareID(get_name());
@@ -27,9 +25,9 @@ YabLocMonitor::YabLocMonitor() : Node("yabloc_monitor"), updater_(this)
 
   // Set timer
   using std::chrono_literals::operator""ms;
-  timer_ =
-    rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&YabLocMonitor::on_timer, this));
-
+timer_ = create_wall_timer(100ms, [this] {
+  on_timer();
+});
   // Evaluation modules
   availability_module_ = std::make_unique<AvailabilityModule>(this);
 }
@@ -39,7 +37,7 @@ void YabLocMonitor::on_timer()
   updater_.force_update();
 }
 
-void YabLocMonitor::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void YabLocMonitor::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat)
 {
   bool is_available = availability_module_->is_available();
   stat.add("Availability", is_available ? "OK" : "NG");
