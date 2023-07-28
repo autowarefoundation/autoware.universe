@@ -15,6 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -46,9 +47,13 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 
+using marker_utils::CollisionCheckDebug;
+
 struct ObjectParameter
 {
   bool is_target{false};
+
+  size_t execute_num{1};
 
   double moving_speed_threshold{0.0};
 
@@ -92,9 +97,6 @@ struct AvoidanceParameters
 
   // enable avoidance for all parking vehicle
   bool enable_force_avoidance_for_stopped_vehicle{false};
-
-  // enable safety check. if avoidance path is NOT safe, the ego will execute yield maneuver
-  bool enable_safety_check{false};
 
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
@@ -175,20 +177,23 @@ struct AvoidanceParameters
   // for longitudinal direction
   double longitudinal_collision_margin_time;
 
+  // parameters for safety check area
+  bool enable_safety_check{false};
+  bool check_current_lane{false};
+  bool check_shift_side_lane{false};
+  bool check_other_side_lane{false};
+
+  // parameters for safety check target.
+  bool check_unavoidable_object{false};
+  bool check_other_object{false};
+
+  // parameters for collision check.
+  bool check_all_predicted_path{false};
+  double safety_check_time_horizon{0.0};
+  double safety_check_time_resolution{0.0};
+
   // find adjacent lane vehicles
   double safety_check_backward_distance;
-
-  // minimum longitudinal margin for vehicles in adjacent lane
-  double safety_check_min_longitudinal_margin;
-
-  // safety check time horizon
-  double safety_check_time_horizon;
-
-  // use in RSS calculation
-  double safety_check_idling_time;
-
-  // use in RSS calculation
-  double safety_check_accel_for_rss;
 
   // transit hysteresis (unsafe to safe)
   double safety_check_hysteresis_factor;
@@ -198,9 +203,6 @@ struct AvoidanceParameters
 
   // keep target velocity in yield maneuver
   double yield_velocity;
-
-  // minimum stop distance
-  double stop_min_distance;
 
   // maximum stop distance
   double stop_max_distance;
@@ -214,25 +216,14 @@ struct AvoidanceParameters
   // Even if the vehicle speed is zero, avoidance will start after a distance of this much.
   double min_prepare_distance;
 
-  // minimum distance while avoiding TODO(Horibe): will be changed to jerk constraint later
-  double min_avoidance_distance;
-
-  // minimum speed for jerk calculation in a nominal situation, i.e. there is an enough
-  // distance for avoidance, and the object is very far from ego. In that case, the
-  // vehicle speed is unknown passing along the object. Then use this speed as a minimum.
-  // Note: This parameter is needed because we have to plan an avoidance path in advance
-  //       without knowing the speed of the distant path.
-  double min_nominal_avoidance_speed;
-
-  // minimum speed for jerk calculation in a tight situation, i.e. there is NOT an enough
-  // distance for avoidance. Need a sharp avoidance path to avoid the object.
-  double min_sharp_avoidance_speed;
-
   // minimum slow down speed
   double min_slow_down_speed;
 
   // slow down speed buffer
   double buf_slow_down_speed;
+
+  // nominal avoidance sped
+  double nominal_avoidance_speed;
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
@@ -243,13 +234,6 @@ struct AvoidanceParameters
 
   // Even if the obstacle is very large, it will not avoid more than this length for left direction
   double max_left_shift_length;
-
-  // Avoidance path is generated with this jerk.
-  // If there is no margin, the jerk increases up to max lateral jerk.
-  double nominal_lateral_jerk;
-
-  // if the avoidance path exceeds this lateral jerk, it will be not used anymore.
-  double max_lateral_jerk;
 
   // To prevent large acceleration while avoidance.
   double max_lateral_acceleration;
@@ -269,6 +253,9 @@ struct AvoidanceParameters
   // line.
   double lateral_small_shift_threshold;
 
+  // use for judge if the ego is shifting or not.
+  double lateral_avoid_check_threshold;
+
   // For shift line generation process. The continuous shift length is quantized by this value.
   double quantize_filter_threshold;
 
@@ -285,10 +272,16 @@ struct AvoidanceParameters
   double sharp_shift_filter_threshold;
 
   // target velocity matrix
-  std::vector<double> target_velocity_matrix;
+  std::vector<double> velocity_map;
 
-  // matrix col size
-  size_t col_size;
+  // Minimum lateral jerk limitation map.
+  std::vector<double> lateral_min_jerk_map;
+
+  // Maximum lateral jerk limitation map.
+  std::vector<double> lateral_max_jerk_map;
+
+  // Maximum lateral acceleration limitation map.
+  std::vector<double> lateral_max_accel_map;
 
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
@@ -468,8 +461,6 @@ struct AvoidancePlanningData
   AvoidLineArray safe_new_sl{};
 
   bool safe{false};
-
-  bool avoiding_now{false};
 
   bool avoid_required{false};
 
