@@ -787,7 +787,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
     }
 
     const auto & ego_pos = planner_data_->current_odometry->pose.position;
-    const auto & ego_vel = planner_data_->current_velocity->twist.linear;
+    const auto & ego_vel = planner_data_->current_velocity->twist.linear.x;
     const auto ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
 
     const double near_attention_range =
