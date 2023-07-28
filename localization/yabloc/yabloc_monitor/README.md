@@ -8,6 +8,10 @@ YabLoc monitor is a node that monitors the status of the YabLoc localization sys
 
 The node monitors the final output pose of YabLoc to verify the availability of YabLoc.
 
+### Others
+
+To be added,
+
 ## Interfaces
 
 ### Input
