@@ -12,33 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <grid_map_cv/grid_map_cv.hpp>
-#include <grid_map_ros/grid_map_ros.hpp>
-#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-
-#if __has_include(<cv_bridge/cv_bridge.hpp>)
-#include <cv_bridge/cv_bridge.hpp>
-#else
-#include <cv_bridge/cv_bridge.h>
-#endif
-// #include <sensor_msgs/image_encodings.h>
-// #include <opencv2/highgui/highgui.hpp>
 #include "scene_intersection.hpp"
+
 #include "util.hpp"
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
 #include <opencv2/imgproc.hpp>
-
-#include <boost/geometry/algorithms/area.hpp>
-#include <boost/geometry/algorithms/simplify.hpp>
-#include <boost/geometry/core/cs.hpp>
-#include <boost/geometry/geometries/register/point.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -48,8 +34,6 @@
 #include <memory>
 #include <tuple>
 #include <vector>
-
-BOOST_GEOMETRY_REGISTER_POINT_2D(cv::Point, int, cs::cartesian, x, y)  // NOLINT
 
 namespace behavior_velocity_planner
 {
@@ -100,10 +84,6 @@ IntersectionModule::IntersectionModule(
     planner_param_.collision_detection.state_transit_margin_time);
   before_creep_state_machine_.setMarginTime(planner_param_.occlusion.before_creep_stop_time);
   before_creep_state_machine_.setState(StateMachine::State::STOP);
-  if (enable_occlusion_detection) {
-    occlusion_grid_pub_ = node_.create_publisher<grid_map_msgs::msg::GridMap>(
-      "~/debug/intersection/occlusion_grid", rclcpp::QoS(1).transient_local());
-  }
   stuck_private_area_timeout_.setMarginTime(planner_param_.stuck_vehicle.timeout_private_area);
   stuck_private_area_timeout_.setState(StateMachine::State::STOP);
 }
@@ -1111,9 +1091,6 @@ bool IntersectionModule::checkCollision(
   return collision_detected;
 }
 
-using CvPolygon = boost::geometry::model::polygon<cv::Point>;
-using CvLineString = boost::geometry::model::linestring<cv::Point>;
-
 bool IntersectionModule::isOcclusionCleared(
   const nav_msgs::msg::OccupancyGrid & occ_grid,
   const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
@@ -1355,10 +1332,20 @@ bool IntersectionModule::isOcclusionCleared(
   cv::findContours(occlusion_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
   std::vector<std::vector<cv::Point>> valid_contours;
   for (const auto & contour : contours) {
+    std::vector<cv::Point> valid_contour;
+    for (const auto & p : contour) {
+      if (distance_grid.at<unsigned char>(p.y, p.x) == undef_pixel) {
+        continue;
+      }
+      valid_contour.push_back(p);
+    }
+    if (valid_contour.size() <= 2) {
+      continue;
+    }
     std::vector<cv::Point> approx_contour;
     cv::approxPolyDP(
-      contour, approx_contour,
-      std::round(std::min(possible_object_bbox_x, possible_object_bbox_y) / resolution), true);
+      valid_contour, approx_contour,
+      std::round(std::min(possible_object_bbox_x, possible_object_bbox_y) / std::sqrt(2.0)), true);
     if (approx_contour.size() <= 1) continue;
     // check area
     const double poly_area = cv::contourArea(approx_contour);
@@ -1378,59 +1365,29 @@ bool IntersectionModule::isOcclusionCleared(
     debug_data_.occlusion_polygons.push_back(polygon_msg);
   }
 
-  // clean-up and find nearest risk
   const int min_cost_thr = dist2pixel(occlusion_dist_thr);
   int min_cost = undef_pixel - 1;
-  int max_cost = 0;
-  std::optional<int> min_cost_projection_ind = std::nullopt;
   geometry_msgs::msg::Point nearest_occlusion_point;
-  for (int i = 0; i < width; ++i) {
-    for (int j = 0; j < height; ++j) {
-      const int pixel = static_cast<int>(distance_grid.at<unsigned char>(height - 1 - j, i));
-      const bool occluded = (occlusion_mask.at<unsigned char>(height - 1 - j, i) == 255);
+  for (const auto & occlusion_contour : valid_contours) {
+    for (const auto & p : occlusion_contour) {
+      const int pixel = static_cast<int>(distance_grid.at<unsigned char>(p.y, p.x));
+      const bool occluded = (occlusion_mask.at<unsigned char>(p.y, p.x) == 255);
       if (pixel == undef_pixel || !occluded) {
-        // ignore outside of cropped
-        // some cell maybe undef still
-        distance_grid.at<unsigned char>(height - 1 - j, i) = 0;
         continue;
       }
-      if (max_cost < pixel) {
-        max_cost = pixel;
-      }
-      const int projection_ind = projection_ind_grid.at<int>(height - 1 - j, i);
       if (pixel < min_cost) {
-        assert(projection_ind >= 0);
         min_cost = pixel;
-        min_cost_projection_ind = projection_ind;
-        nearest_occlusion_point.x = origin.x + i * resolution;
-        nearest_occlusion_point.y = origin.y + j * resolution;
-        nearest_occlusion_point.z = origin.z + distance_max * pixel / max_cost_pixel;
+        nearest_occlusion_point.x = origin.x + p.x * resolution;
+        nearest_occlusion_point.y = origin.y + (height - 1 - p.y) * resolution;
+        nearest_occlusion_point.z = origin.z;
       }
     }
   }
-  debug_data_.nearest_occlusion_point = nearest_occlusion_point;
 
-  if (planner_param_.occlusion.pub_debug_grid) {
-    cv::Mat distance_grid_heatmap;
-    cv::applyColorMap(distance_grid, distance_grid_heatmap, cv::COLORMAP_JET);
-    grid_map::GridMap occlusion_grid({"elevation"});
-    occlusion_grid.setFrameId("map");
-    occlusion_grid.setGeometry(
-      grid_map::Length(width * resolution, height * resolution), resolution,
-      grid_map::Position(origin.x + width * resolution / 2, origin.y + height * resolution / 2));
-    cv::rotate(distance_grid, distance_grid, cv::ROTATE_90_COUNTERCLOCKWISE);
-    cv::rotate(distance_grid_heatmap, distance_grid_heatmap, cv::ROTATE_90_COUNTERCLOCKWISE);
-    grid_map::GridMapCvConverter::addLayerFromImage<unsigned char, 1>(
-      distance_grid, "elevation", occlusion_grid, origin.z /* elevation for 0 */,
-      origin.z + distance_max /* elevation for 255 */);
-    grid_map::GridMapCvConverter::addColorLayerFromImage<unsigned char, 3>(
-      distance_grid_heatmap, "color", occlusion_grid);
-    occlusion_grid_pub_->publish(grid_map::GridMapRosConverter::toMessage(occlusion_grid));
-  }
-
-  if (min_cost > min_cost_thr || !min_cost_projection_ind.has_value()) {
+  if (min_cost > min_cost_thr) {
     return true;
   } else {
+    debug_data_.nearest_occlusion_point = nearest_occlusion_point;
     return false;
   }
 }
