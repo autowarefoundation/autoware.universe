@@ -84,6 +84,12 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjectsWithFeature & output_cluster_msg)
 {
+  if (input_cluster_msg.feature_objects.empty() || output_cluster_msg.feature_objects.empty()) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000, "Empty clusters!");
+    return;
+  }
+
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_pointcloud_rois;
   std::vector<Eigen::Vector2d> debug_image_points;
@@ -169,7 +175,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   }
 
   for (const auto & feature_obj : input_roi_msg.feature_objects) {
-    int index = 0;
+    int index = -1;
     double max_iou = 0.0;
     for (const auto & cluster_map : m_cluster_roi) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
@@ -191,6 +197,10 @@ void RoiClusterFusionNode::fuseOnSingleImage(
         max_iou = iou + iou_x + iou_y;
       }
     }
+    if (index == -1) {
+      continue;
+    }
+
     bool is_roi_label_known = feature_obj.object.classification.front().label !=
                               autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
     bool is_roi_existence_prob_higher =
