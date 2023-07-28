@@ -85,8 +85,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjectsWithFeature & output_cluster_msg)
 {
   if (input_cluster_msg.feature_objects.empty() || output_cluster_msg.feature_objects.empty()) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000, "Empty clusters!");
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Empty clusters!");
     return;
   }
 
