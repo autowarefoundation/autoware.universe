@@ -16,8 +16,8 @@ To be added,
 
 ### Input
 
-| Name           | Type                        | Description                     |
-| -------------- | --------------------------- | ------------------------------- |
+| Name                  | Type                        | Description                     |
+| --------------------- | --------------------------- | ------------------------------- |
 | `~/input/yabloc_pose` | `geometry_msgs/PoseStamped` | The final output pose of YabLoc |
 
 ### Output
