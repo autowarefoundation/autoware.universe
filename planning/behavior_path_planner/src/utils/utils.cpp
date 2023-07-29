@@ -2913,6 +2913,8 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
       return lanes;
     }
     // loop check
+    // if current map lanes is looping and has a very large value for backward_length,
+    // the extending process will not finish.
     if (extended_lanes.front().id() == start_lane.id()) {
       return lanes;
     }
@@ -2927,6 +2929,8 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 
   while (forward_length_sum < forward_length) {
     // stop extending if the goal lane is included
+    // if forward_length is a very large value, set it to true,
+    // as it may continue to extend lanes outside the route ahead of goal forever.
     if (until_goal_lane) {
       lanelet::ConstLanelet goal_lane;
       planner_data->route_handler->getGoalLanelet(&goal_lane);
@@ -2940,6 +2944,8 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
       return lanes;
     }
     // loop check
+    // if current map lanes is looping and has a very large value for forward_length,
+    // the extending process will not finish.
     if (extended_lanes.back().id() == start_lane.id()) {
       return lanes;
     }
