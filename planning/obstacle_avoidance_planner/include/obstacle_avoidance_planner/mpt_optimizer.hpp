@@ -106,8 +106,8 @@ public:
   MPTOptimizer(
     rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
     const vehicle_info_util::VehicleInfo & vehicle_info, const TrajectoryParam & traj_param,
-    const std::shared_ptr<DebugData> debug_data_ptr,
-    const std::shared_ptr<TimeKeeper> time_keeper_ptr);
+    const std::shared_ptr<DebugData> debug_data_ptr = std::make_shared<DebugData>(),
+    const std::shared_ptr<TimeKeeper> time_keeper_ptr = std::make_shared<TimeKeeper>());
 
   std::vector<TrajectoryPoint> optimizeTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points);

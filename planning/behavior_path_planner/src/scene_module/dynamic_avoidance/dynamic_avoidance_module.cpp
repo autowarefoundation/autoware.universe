@@ -31,6 +31,8 @@
 
 namespace behavior_path_planner
 {
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+
 namespace
 {
 geometry_msgs::msg::Point toGeometryPoint(const tier4_autoware_utils::Point2d & point)
@@ -187,32 +189,34 @@ std::vector<TrajectoryPoint> convertToTrajectoryPoints(
   std::vector<TrajectoryPoint> traj_points;
   for (const auto & path_point : path_points) {
     TrajectoryPoint traj_point;
-    traj_point.pose = tier4_autoware_utils::getPose(path_point.point.pose.position);
-    traj_point.longitudinal_velocity_mps =
-      tier4_autoware_utils::getLongitudinalVelocity(path_points.point.longitudinal_velocity_mps);
+    traj_point.pose = path_point.point.pose;
+    traj_point.longitudinal_velocity_mps = path_point.point.longitudinal_velocity_mps;
     traj_points.push_back(traj_point);
   }
   return traj_points;
 }
 
 std::vector<PathPointWithLaneId> convertToPathPoints(
-  const std::vector<TrajectoryPoint> & path_points)
+  const std::vector<TrajectoryPoint> & traj_points)
 {
   std::vector<PathPointWithLaneId> path_points;
   for (const auto & traj_point : traj_points) {
     PathPointWithLaneId path_point;
-    path_point.point.pose = tier4_autoware_utils::getPose(traj_point.pose.position);
-    path_point.point.longitudinal_velocity_mps =
-      tier4_autoware_utils::getLongitudinalVelocity(traj_points.longitudinal_velocity_mps);
+    path_point.point.pose = traj_point.pose;
+    path_point.point.longitudinal_velocity_mps = traj_point.longitudinal_velocity_mps;
     path_points.push_back(path_point);
   }
-  return traj_points;
+  return path_points;
 }
 
 std::vector<TrajectoryPoint> extendTrajectory(
   const std::vector<TrajectoryPoint> & optimized_traj_points,
-  const std::vector<TrajectoryPoint> & traj_points) const
+  [[maybe_unused]] const std::vector<TrajectoryPoint> & traj_points)
 {
+  return optimized_traj_points;
+
+  // TODO(murooka) enable the following function
+  /*
   const auto & joint_start_pose = optimized_traj_points.back().pose;
 
   // calculate end idx of optimized points on path points
@@ -265,6 +269,7 @@ std::vector<TrajectoryPoint> extendTrajectory(
     }
   }
   return resampled_traj_points;
+  */
 }
 }  // namespace
 
@@ -274,6 +279,12 @@ DynamicAvoidanceModule::DynamicAvoidanceModule(
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{std::move(parameters)}
 {
+  eb_path_smoother_ = std::make_shared<path_smoother::EBPathSmoother>(
+    &node, false, path_smoother::EgoNearestParam(&node), path_smoother::CommonParam(&node));
+  mpt_optimizer_ = std::make_shared<obstacle_avoidance_planner::MPTOptimizer>(
+    &node, false, obstacle_avoidance_planner::EgoNearestParam(&node),
+    vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo(),
+    obstacle_avoidance_planner::TrajectoryParam(&node));
 }
 
 bool DynamicAvoidanceModule::isExecutionRequested() const
@@ -363,8 +374,9 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   drivable_area_info.obstacles = obstacles_for_drivable_area;
 
   // plan path
-  const auto output_path =
-    enable_path_planning_ ? planPath(*prev_module_path, drivable_area_info) : prev_module_path;
+  const auto output_path = parameters_->enable_path_planning
+                             ? planPath(*prev_module_path, drivable_area_info)
+                             : *prev_module_path;
 
   // create output
   BehaviorModuleOutput output;
@@ -394,26 +406,29 @@ PathWithLaneId DynamicAvoidanceModule::planPath(
 
   // create data for obstacle avoidance planner
   obstacle_avoidance_planner::PlannerData obstacle_avoidance_planner_data;
-  obstacle_avoidance_planner_data.header = input_path.header;
-  obstacle_avoidance_planner_data.traj_points = convertToTrajectoryPoints(input_path.points);
-  obstacle_avoidance_planner_data.left_bound = input_path.left_bound;
-  obstacle_avoidance_planner_data.right_bound = input_path.right_bound;
+  obstacle_avoidance_planner_data.header = ref_path.header;
+  obstacle_avoidance_planner_data.traj_points = convertToTrajectoryPoints(ref_path.points);
+  obstacle_avoidance_planner_data.left_bound = ref_path.left_bound;
+  obstacle_avoidance_planner_data.right_bound = ref_path.right_bound;
   obstacle_avoidance_planner_data.ego_pose = getEgoPose();
   obstacle_avoidance_planner_data.ego_vel = getEgoSpeed();
 
   // smooth and optimize path
   const auto ref_traj_points = convertToTrajectoryPoints(ref_path.points);
-  const auto smoothed_traj_points = eb_optimizer_->smoothTrajectory(ref_traj_points, getEgoPose());
-  const auto avoidance_traj_points =
-    mpt_optimizer_->optimizeTrajectory(obstacle_avoidance_planner_data, smoothed_points);
+  /*
+  const auto smoothed_traj_points = eb_path_smoother_->smoothTrajectory(ref_traj_points,
+  getEgoPose()); const auto avoidance_traj_points =
+    mpt_optimizer_->optimizeTrajectory(obstacle_avoidance_planner_data, smoothed_traj_points);
 
   // extend path
   // NOTE: Optimized path is shorter than the reference path due to the calculation cost.
   const auto extended_traj_points = extendTrajectory(avoidance_traj_points, ref_traj_points);
   const auto extended_path_points = convertToPathPoints(extended_traj_points);
+  */
+  const auto extended_path_points = convertToPathPoints(ref_traj_points);
 
-  auto output_path = input_path;
-  output_path.points = extended_path_points;
+  auto output_path = ref_path;
+  output_path.points = ref_path.points;
   return output_path;
 }
 

@@ -57,6 +57,8 @@
   <depend>magic_enum</depend>
   <depend>motion_utils</depend>
   <depend>object_recognition_utils</depend>
+  <depend>obstacle_avoidance_planner</depend>
+  <depend>path_smoother</depend>
   <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

@@ -32,6 +32,7 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
   {  // common
     std::string ns = "dynamic_avoidance.common.";
     p.enable_debug_info = node->declare_parameter<bool>(ns + "enable_debug_info");
+    p.enable_path_planning = node->declare_parameter<bool>(ns + "enable_path_planning");
   }
 
   {  // target object
@@ -101,6 +102,7 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
   {  // common
     const std::string ns = "dynamic_avoidance.common.";
     updateParam<bool>(parameters, ns + "enable_debug_info", p->enable_debug_info);
+    updateParam<bool>(parameters, ns + "enable_path_planning", p->enable_path_planning);
   }
 
   {  // target object
