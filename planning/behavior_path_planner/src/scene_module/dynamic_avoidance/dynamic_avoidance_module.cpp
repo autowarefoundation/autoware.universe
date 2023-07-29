@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTE: Since the cmake is too slow with the obstacle_avoidance_planner and path_smoother package,
+// ENABLE_PATH_PLANNING is set to false by default.
+
+// #define ENABLE_PATH_PLANNING
+
 #include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
 
 #include "behavior_path_planner/utils/path_utils.hpp"
@@ -183,7 +188,8 @@ bool isLeft(
   }
   return false;
 }
-std::vector<TrajectoryPoint> convertToTrajectoryPoints(
+
+[[maybe_unused]] std::vector<TrajectoryPoint> convertToTrajectoryPoints(
   const std::vector<PathPointWithLaneId> & path_points)
 {
   std::vector<TrajectoryPoint> traj_points;
@@ -196,7 +202,7 @@ std::vector<TrajectoryPoint> convertToTrajectoryPoints(
   return traj_points;
 }
 
-std::vector<PathPointWithLaneId> convertToPathPoints(
+[[maybe_unused]] std::vector<PathPointWithLaneId> convertToPathPoints(
   const std::vector<TrajectoryPoint> & traj_points)
 {
   std::vector<PathPointWithLaneId> path_points;
@@ -209,13 +215,15 @@ std::vector<PathPointWithLaneId> convertToPathPoints(
   return path_points;
 }
 
-std::vector<TrajectoryPoint> extendTrajectory(
+// NOTE: Moved from obstacle_avoidance_planner
+[[maybe_unused]] std::vector<TrajectoryPoint> extendTrajectory(
   const std::vector<TrajectoryPoint> & optimized_traj_points,
   [[maybe_unused]] const std::vector<TrajectoryPoint> & traj_points)
 {
   return optimized_traj_points;
 
-  // TODO(murooka) enable the following function
+  // TODO(murooka) enable the following function by removing the dependency to
+  // obstacle_avoidance_planner
   /*
   const auto & joint_start_pose = optimized_traj_points.back().pose;
 
@@ -279,12 +287,14 @@ DynamicAvoidanceModule::DynamicAvoidanceModule(
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{std::move(parameters)}
 {
+#ifdef ENABLE_PATH_PLANNING
   eb_path_smoother_ = std::make_shared<path_smoother::EBPathSmoother>(
     &node, false, path_smoother::EgoNearestParam(&node), path_smoother::CommonParam(&node));
   mpt_optimizer_ = std::make_shared<obstacle_avoidance_planner::MPTOptimizer>(
     &node, false, obstacle_avoidance_planner::EgoNearestParam(&node),
     vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo(),
     obstacle_avoidance_planner::TrajectoryParam(&node));
+#endif
 }
 
 bool DynamicAvoidanceModule::isExecutionRequested() const
@@ -390,8 +400,9 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
 }
 
 PathWithLaneId DynamicAvoidanceModule::planPath(
-  const PathWithLaneId & input_path, const DrivableAreaInfo & drivable_area_info)
+  const PathWithLaneId & input_path, [[maybe_unused]] const DrivableAreaInfo & drivable_area_info)
 {
+#ifdef ENABLE_PATH_PLANNING
   auto ref_path = input_path;
 
   // extract obstacles from drivable area
@@ -430,6 +441,9 @@ PathWithLaneId DynamicAvoidanceModule::planPath(
   auto output_path = ref_path;
   output_path.points = ref_path.points;
   return output_path;
+#else
+  return input_path;
+#endif
 }
 
 CandidateOutput DynamicAvoidanceModule::planCandidate() const

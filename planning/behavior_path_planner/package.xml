@@ -57,8 +57,6 @@
   <depend>magic_enum</depend>
   <depend>motion_utils</depend>
   <depend>object_recognition_utils</depend>
-  <depend>obstacle_avoidance_planner</depend>
-  <depend>path_smoother</depend>
   <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
@@ -74,6 +72,10 @@
   <depend>tier4_planning_msgs</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
+  <!-- Currently, uncommenting the following makes
+       the cmake of behavior_path_planner too slow -->
+  <!-- <depend>obstacle_avoidance_planner</depend> -->
+  <!-- <depend>path_smoother</depend> -->
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
