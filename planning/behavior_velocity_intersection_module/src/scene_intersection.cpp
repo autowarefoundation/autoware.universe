@@ -1408,7 +1408,14 @@ bool IntersectionModule::isOcclusionCleared(
     // check area
     const double poly_area = cv::contourArea(approx_contour);
     if (poly_area < possible_object_area) continue;
-
+    // check bounding box size
+    const auto bbox = cv::minAreaRect(approx_contour);
+    if (const auto size = bbox.size; std::min(size.height, size.width) <
+                                       std::min(possible_object_bbox_x, possible_object_bbox_y) ||
+                                     std::max(size.height, size.width) <
+                                       std::max(possible_object_bbox_x, possible_object_bbox_y)) {
+      continue;
+    }
     valid_contours.push_back(approx_contour);
     geometry_msgs::msg::Polygon polygon_msg;
     geometry_msgs::msg::Point32 point_msg;
