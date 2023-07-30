@@ -1387,7 +1387,7 @@ bool IntersectionModule::isOcclusionCleared(
   const double possible_object_bbox_y = possible_object_bbox.at(1) / resolution;
   const double possible_object_area = possible_object_bbox_x * possible_object_bbox_y;
   std::vector<std::vector<cv::Point>> contours;
-  cv::findContours(occlusion_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+  cv::findContours(occlusion_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
   std::vector<std::vector<cv::Point>> valid_contours;
   for (const auto & contour : contours) {
     std::vector<cv::Point> valid_contour;
