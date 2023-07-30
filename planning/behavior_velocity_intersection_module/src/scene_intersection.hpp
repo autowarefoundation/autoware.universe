@@ -109,6 +109,7 @@ public:
       double denoise_kernel;
       std::vector<double> possible_object_bbox;
       double ignore_parked_vehicle_speed_threshold;
+      double first_stop_velocity_threshold;
     } occlusion;
   };
 
