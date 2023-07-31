@@ -118,6 +118,9 @@ TrackedObject predictPastOrFutureTrackedObject(const TrackedObject & obj, const 
   TrackedObject output;
   // copy input object at first
   output = obj;
+  if (dt == 0) {
+    return output;
+  }
 
   // get current twist and pose
   const auto twist = obj.kinematics.twist_with_covariance.twist;

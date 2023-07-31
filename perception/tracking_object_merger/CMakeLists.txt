@@ -30,6 +30,7 @@ ament_auto_add_library(decorative_tracker_merger_node SHARED
   src/data_association/data_association.cpp
   src/decorative_tracker_merger.cpp
   src/utils/utils.cpp
+  src/utils/tracker_state.cpp
 )
 
 target_link_libraries(decorative_tracker_merger_node
