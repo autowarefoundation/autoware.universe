@@ -537,10 +537,6 @@ PathWithLaneId StartPlannerModule::generateStopPath() const
 
 lanelet::ConstLanelets StartPlannerModule::getPathLanes(const PathWithLaneId & path) const
 {
-  lanelet::ConstLanelets path_lanes;
-
-  const auto & lanelet_layer = planner_data_->route_handler->getLaneletMapPtr()->laneletLayer;
-
   std::vector<lanelet::Id> lane_ids;
   for (const auto & p : path.points) {
     for (const auto & id : p.lane_ids) {
@@ -549,6 +545,11 @@ lanelet::ConstLanelets StartPlannerModule::getPathLanes(const PathWithLaneId & p
       }
     }
   }
+
+  const auto & lanelet_layer = planner_data_->route_handler->getLaneletMapPtr()->laneletLayer;
+  
+  lanelet::ConstLanelets path_lanes;
+  path_lanes.reserve(lane_ids.size());
   for (const auto & id : lane_ids) {
     path_lanes.push_back(lanelet_layer.get(id));
   }
