@@ -79,11 +79,11 @@
       <arg name="sub_gnss_pose_cov" value="$(var sub_gnss_pose_cov)"/>
     </include>
 
-    <let name="input_pointcloud" value="$(var input/pointcloud)"/>
-    <let name="input_pointcloud" value="$(var input/pointcloud)/relay" if="$(var redundant_mode)"/>
+    <let name="override_input_pointcloud" value="$(var input_pointcloud)"/>
+    <let name="override_input_pointcloud" value="$(var input_pointcloud)/relay" if="$(var redundant_mode)"/>
     <include file="$(find-pkg-share automatic_pose_initializer)/launch/automatic_pose_initializer.launch.xml"/>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/util/util.launch.py" if="$(var use_ndt_pose)">
-      <arg name="input/pointcloud" value="$(var input_pointcloud)"/>
+      <arg name="input_pointcloud" value="$(var override_input_pointcloud)"/>
     </include>
 
   </group>
