@@ -34,10 +34,11 @@ jobs:
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN_MFC }}
-          ec2-image-id: ami-0b4f1da68afafd2b8
+          ec2-image-id: ami-092a175a6ad1aad7a
           ec2-instance-type: t2.micro
           subnet-id: subnet-070b3d46464230127
           security-group-id: sg-0cca5762919221f16
+          runner-home-dir: /home/ubuntu/actions-runner
 
   build-and-test-differential:
     needs: start-runner
