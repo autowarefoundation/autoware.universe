@@ -27,9 +27,11 @@ using autoware_auto_perception_msgs::msg::TrackedObjects;
  * @param last_update_time : last update time
  */
 TrackerState::TrackerState(
-  const int input_source, const autoware_auto_perception_msgs::msg::TrackedObject & tracked_object,
-  const rclcpp::Time & last_update_time)
-: tracked_object_(tracked_object), last_update_time_(last_update_time)
+  const int input_source, const rclcpp::Time & last_update_time,
+  const autoware_auto_perception_msgs::msg::TrackedObject & tracked_object)
+: tracked_object_(tracked_object),
+  last_update_time_(last_update_time),
+  const_uuid_(tracked_object.object_id)
 {
   input_uuid_map_[input_source] = tracked_object_.object_id;
   last_updated_time_map_[input_source] = last_update_time;
@@ -98,13 +100,15 @@ bool TrackerState::update(
   std::function<void(TrackedObject &, const TrackedObject &)> update_func)
 {
   // put input uuid and last update time
-  last_update_time_ = current_time;
+  if (current_time > last_update_time_) {
+    predict(current_time);
+  }
   last_updated_time_map_[input] = current_time;
   input_uuid_map_[input] = input_tracked_object.object_id;
 
   // update tracked object
   update_func(tracked_object_, input_tracked_object);
-
+  tracked_object_.object_id = const_uuid_;  // overwrite uuid to stay same
   return true;
 }
 

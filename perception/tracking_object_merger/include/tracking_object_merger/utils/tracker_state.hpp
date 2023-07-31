@@ -59,6 +59,7 @@ private:
 
   // handle uuid
   std::unordered_map<int, std::optional<unique_identifier_msgs::msg::UUID>> input_uuid_map_;
+  const unique_identifier_msgs::msg::UUID const_uuid_;
   MEASUREMENT_STATE measurement_state_;
 
   // timer handle
@@ -67,7 +68,7 @@ private:
 
 public:
   TrackerState(
-    const int input, const TrackedObject & tracked_object, const rclcpp::Time & last_update_time);
+    const int input, const rclcpp::Time & last_update_time, const TrackedObject & tracked_object);
   ~TrackerState();
 
 public:
@@ -83,6 +84,7 @@ public:
   TrackedObject getObject() const;
 };
 
-TrackedObjects getTrackedObjectsFromTrackerStates(const std::vector<TrackerState> & tracker_states);
+TrackedObjects getTrackedObjectsFromTrackerStates(
+  const std::vector<TrackerState> & tracker_states, const rclcpp::Time & time);
 
 #endif  // TRACKING_OBJECT_MERGER__UTILS__TRACKER_STATE_HPP_

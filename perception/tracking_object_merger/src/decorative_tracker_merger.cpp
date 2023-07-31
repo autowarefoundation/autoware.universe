@@ -108,17 +108,32 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
 void DecorativeTrackerMergerNode::mainObjectsCallback(
   const TrackedObjects::ConstSharedPtr & main_objects)
 {
-  // if there are no sub objects, publish main objects as it is
-  if (sub_objects_buffer_.empty()) {
-    merged_object_pub_->publish(*main_objects);
-    return;
+  // try to merge main object at first
+  this->decorativeMerger(0, main_objects);
+
+  // try to merge sub object
+  if (!sub_objects_buffer_.empty()) {
+    // get interpolated sub objects
+    // get newest sub objects which timestamp is earlier to main objects
+    TrackedObjects::ConstSharedPtr closest_time_sub_objects;
+    TrackedObjects::ConstSharedPtr closest_time_sub_objects_later;
+    for (const auto & sub_object : sub_objects_buffer_) {
+      if (getUnixTime(sub_object->header) < getUnixTime(main_objects->header)) {
+        closest_time_sub_objects = sub_object;
+      } else {
+        closest_time_sub_objects_later = sub_object;
+        break;
+      }
+    }
+    // get delay compensated sub objects
+    const auto interpolated_sub_objects = interpolateObjectState(
+      closest_time_sub_objects, closest_time_sub_objects_later, main_objects->header);
+    if (!interpolated_sub_objects) {
+      this->decorativeMerger(1, std::make_shared<TrackedObjects>(interpolated_sub_objects.value()));
+    }
   }
 
-  // else, merge main objects and sub objects
-  const auto merged_objects = decorativeMerger(main_objects);
-
-  // publish merged objects
-  merged_object_pub_->publish(merged_objects);
+  merged_object_pub_->publish(getTrackedObjects(main_objects->header));
 }
 
 /**
@@ -141,7 +156,7 @@ void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::Const
 }
 
 /**
- * @brief merge main objects and sub objects
+ * @brief merge objects into inner_tracker_objects_
  *
  * @param main_objects
  * @return TrackedObjects
@@ -150,74 +165,59 @@ void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::Const
  *       2. do association
  *       3. merge objects
  */
-TrackedObjects DecorativeTrackerMergerNode::decorativeMerger(
-  const TrackedObjects::ConstSharedPtr & main_objects)
+bool DecorativeTrackerMergerNode::decorativeMerger(
+  const int input_index, const TrackedObjects::ConstSharedPtr & input_objects_msg)
 {
-  // get interpolated sub objects
-  // get newest sub objects which timestamp is earlier to main objects
-  TrackedObjects::ConstSharedPtr closest_time_sub_objects;
-  TrackedObjects::ConstSharedPtr closest_time_sub_objects_later;
-  for (const auto & sub_object : sub_objects_buffer_) {
-    if (getUnixTime(sub_object->header) < getUnixTime(main_objects->header)) {
-      closest_time_sub_objects = sub_object;
-    } else {
-      closest_time_sub_objects_later = sub_object;
-      break;
+  // get current time
+  const auto current_time = rclcpp::Time(input_objects_msg->header.stamp);
+  if (input_objects_msg->objects.empty()) {
+    return false;
+  }
+  if (inner_tracker_objects_.empty()) {
+    for (const auto & object : input_objects_msg->objects) {
+      TrackerState new_tracker_state(input_index, current_time, object);
+      inner_tracker_objects_.push_back(new_tracker_state);
     }
   }
-  const auto interpolated_sub_objects = interpolateObjectState(
-    closest_time_sub_objects, closest_time_sub_objects_later, main_objects->header);
 
-  // define output object
-  TrackedObjects output_objects;
-  output_objects.header = main_objects->header;
-
-  // if there are no sub objects, return main objects as it is
-  if (!interpolated_sub_objects) {
-    return *main_objects;
+  // do prediction for inner objects
+  for (auto & object : inner_tracker_objects_) {
+    object.predict(current_time);
   }
 
-  // else, merge main objects and sub objects
-  // first, do association
+  // TODO(yoshiri): pre-association
+
+  // associate inner objects and input objects
   /* global nearest neighbor */
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
-  const auto & objects0 = main_objects->objects;
-  const auto & objects1 = interpolated_sub_objects->objects;
+  const auto & objects1 = input_objects_msg->objects;
   Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
-    *interpolated_sub_objects, *main_objects, logging_.enable, logging_.path);
+    *input_objects_msg, inner_tracker_objects_, logging_.enable, logging_.path);
   data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
 
-  for (size_t object0_idx = 0; object0_idx < objects0.size(); ++object0_idx) {
-    const auto & object0 = objects0.at(object0_idx);
-    if (direct_assignment.find(object0_idx) != direct_assignment.end()) {  // found and merge
-      const auto & object1 = objects1.at(direct_assignment.at(object0_idx));
-      // merge object0 and object1
-      // with each merge policy defined in merger_policy_params_
-      TrackedObject merged_object = object0;
-      merged_object.kinematics = merger_utils::objectKinematicsVXMerger(
-        object0, object1, merger_policy_params_.kinematics_merge_policy);
-      // merged_object.shape =
-      //   merger_utils::shapeMerger(object0, object1, merger_policy_params_.shape_merge_policy);
-      // merged_object.existence_probability = merger_utils::probabilityMerger(
-      //   object0.existence_probability, object1.existence_probability,
-      //   merger_policy_params_.existence_prob_merge_policy);
-      // auto merged_classification = merger_utils::objectClassificationMerger(
-      //   object0, object1, merger_policy_params_.classification_merge_policy);
-      // merged_object.classification = merged_classification.classification;
-      output_objects.objects.push_back(merged_object);
+  // look for tracker
+  for (size_t tracker_idx = 0; tracker_idx < inner_tracker_objects_.size(); ++tracker_idx) {
+    auto & object0_state = inner_tracker_objects_.at(tracker_idx);
+    if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found and merge
+      const auto & object1 = objects1.at(direct_assignment.at(tracker_idx));
+      // merge object1 into object0_state
+      object0_state.update(
+        input_index, current_time, object1, merger_utils::updateWholeTrackedObject);
     } else {  // not found
-      output_objects.objects.push_back(object0);
+      // do nothing
+      // or decrease existence probability
     }
   }
+  // look for new object
   for (size_t object1_idx = 0; object1_idx < objects1.size(); ++object1_idx) {
     const auto & object1 = objects1.at(object1_idx);
     if (reverse_assignment.find(object1_idx) != reverse_assignment.end()) {  // found
     } else {                                                                 // not found
-      output_objects.objects.push_back(object1);
+      TrackerState new_tracker_state(input_index, current_time, object1);
+      inner_tracker_objects_.push_back(new_tracker_state);
     }
   }
-
-  return output_objects;
+  return true;
 }
 
 /**
@@ -283,6 +283,14 @@ std::optional<TrackedObjects> DecorativeTrackerMergerNode::interpolateObjectStat
       utils::interpolateTrackedObjects(*former_msg, *latter_msg, output_header);
     return interpolated_msg;
   }
+}
+
+// get merged objects
+TrackedObjects DecorativeTrackerMergerNode::getTrackedObjects(const std_msgs::msg::Header & header)
+{
+  // get main objects
+  rclcpp::Time current_time = rclcpp::Time(header.stamp);
+  return getTrackedObjectsFromTrackerStates(inner_tracker_objects_, current_time);
 }
 
 }  // namespace tracking_object_merger
