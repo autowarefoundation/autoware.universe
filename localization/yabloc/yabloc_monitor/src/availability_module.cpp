@@ -24,7 +24,7 @@ AvailabilityModule::AvailabilityModule(rclcpp::Node * node)
   timestamp_threshold_(node->declare_parameter<double>("availability/timestamp_tolerance"))
 {
   sub_yabloc_pose_ = node->create_subscription<PoseStamped>(
-    "~/input/yabloc_pose", 10, [this](PoseStamped::ConstSharedPtr msg) { on_yabloc_pose(msg); });
+    "~/input/yabloc_pose", 10, [this](const PoseStamped::ConstSharedPtr msg) { on_yabloc_pose(msg); });
 }
 
 bool AvailabilityModule::is_available() const
