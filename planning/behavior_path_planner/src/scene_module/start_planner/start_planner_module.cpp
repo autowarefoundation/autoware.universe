@@ -547,7 +547,7 @@ lanelet::ConstLanelets StartPlannerModule::getPathLanes(const PathWithLaneId & p
   }
 
   const auto & lanelet_layer = planner_data_->route_handler->getLaneletMapPtr()->laneletLayer;
-  
+
   lanelet::ConstLanelets path_lanes;
   path_lanes.reserve(lane_ids.size());
   for (const auto & id : lane_ids) {
