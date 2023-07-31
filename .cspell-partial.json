@@ -1,8 +1,6 @@
 {
   "ignorePaths": [
     "**/control/**",
-    "**/evaluator/**",
-    "**/launch/**",
     "**/perception/**",
     "**/planning/**",
     "**/sensing/**",
