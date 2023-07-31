@@ -16,6 +16,7 @@
 #define TRACKING_OBJECT_MERGER__DECORATIVE_TRACKER_MERGER_HPP_
 
 #include "tracking_object_merger/data_association/data_association.hpp"
+#include "tracking_object_merger/utils/tracker_state.hpp"
 #include "tracking_object_merger/utils/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -56,8 +57,9 @@ private:
   void subObjectsCallback(
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
 
-  autoware_auto_perception_msgs::msg::TrackedObjects decorativeMerger(
-    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & main_object_msg);
+  bool decorativeMerger(
+    const int input_index,
+    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
   autoware_auto_perception_msgs::msg::TrackedObjects predictFutureState(
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg,
     const std_msgs::msg::Header & header);
@@ -65,7 +67,9 @@ private:
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg1,
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg2,
     const std_msgs::msg::Header & header);
+  TrackedObjects getTrackedObjects(const std_msgs::msg::Header & header);
 
+private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
@@ -75,6 +79,8 @@ private:
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
     sub_sub_objects_;
 
+  /* handle objects */
+  std::vector<TrackerState> inner_tracker_objects_;
   std::unique_ptr<DataAssociation> data_association_;
   std::string target_frame_;
   std::string base_link_frame_id_;
