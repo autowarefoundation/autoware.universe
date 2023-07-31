@@ -5,7 +5,7 @@
     "**/launch/**",
     "**/perception/**",
     "**/planning/**",
-    "**/sensing/**",
+    "**/sensing/**"
   ],
   "ignoreRegExpList": [],
   "words": []
