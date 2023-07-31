@@ -22,7 +22,7 @@ public:
   PoseEstimatorManager();
 
 private:
-  const std::vector<PoseEstimatorName> running_estimator_list_;
+  const std::unordered_set<PoseEstimatorName> running_estimator_list_;
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_array_;
   rclcpp::Publisher<String>::SharedPtr pub_debug_string_;

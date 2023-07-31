@@ -10,18 +10,18 @@
 namespace multi_pose_estimator
 {
 
-static std::vector<PoseEstimatorName> parse_estimator_name_args(
+static std::unordered_set<PoseEstimatorName> parse_estimator_name_args(
   const std::vector<std::string> & arg)
 {
-  std::vector<PoseEstimatorName> running_estimator_list;
+  std::unordered_set<PoseEstimatorName> running_estimator_list;
   for (const auto & estimator_name : arg) {
-    // TODO: Use magic_enum or fuzzy interpretation
+    // TODO(KYabuuchi): Use magic_enum or fuzzy interpretation
     if (estimator_name == "ndt") {
-      running_estimator_list.push_back(PoseEstimatorName::NDT);
+      running_estimator_list.insert(PoseEstimatorName::NDT);
     } else if (estimator_name == "yabloc") {
-      running_estimator_list.push_back(PoseEstimatorName::YABLOC);
+      running_estimator_list.insert(PoseEstimatorName::YABLOC);
     } else if (estimator_name == "eagleye") {
-      running_estimator_list.push_back(PoseEstimatorName::EAGLEYE);
+      running_estimator_list.insert(PoseEstimatorName::EAGLEYE);
     } else {
       RCLCPP_ERROR_STREAM(
         rclcpp::get_logger("pose_estimator_manager"),
@@ -43,7 +43,7 @@ PoseEstimatorManager::PoseEstimatorManager()
 
   // sub-managers
   for (auto pose_estimator_name : running_estimator_list_) {
-    // TODO: Use magic enum
+    // TODO(KYabuuchi): Use magic enum
     switch (pose_estimator_name) {
       case PoseEstimatorName::NDT:
         sub_managers_.emplace(PoseEstimatorName::NDT, std::make_shared<SubManagerNdt>(this));
@@ -76,7 +76,7 @@ void PoseEstimatorManager::load_switch_rule()
 {
   // NOTE: In the future, some rule will be laid below
   RCLCPP_INFO_STREAM(get_logger(), "load default switching rule");
-  switch_rule_ = std::make_shared<MapBasedRule>(*this);
+  switch_rule_ = std::make_shared<MapBasedRule>(*this, running_estimator_list_);
 }
 
 void PoseEstimatorManager::toggle_each(
@@ -104,8 +104,6 @@ void PoseEstimatorManager::toggle_all(bool enabled)
 
 void PoseEstimatorManager::on_timer()
 {
-  RCLCPP_INFO_STREAM(get_logger(), "on_timer");
-
   if (switch_rule_) {
     auto toggle_list = switch_rule_->update();
     toggle_each(toggle_list);

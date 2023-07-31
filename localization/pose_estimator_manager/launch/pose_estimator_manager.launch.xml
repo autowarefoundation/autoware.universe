@@ -13,15 +13,18 @@
     <remap from="~/output/image" to="/localization/pose_estimator/image_processing/undistorted/image_raw/relay"/>
     <remap from="~/yabloc_suspend_srv" to="/yabloc_suspend_srv"/>
     <!-- eagleye -->
-    <remap from="~/input/pose" to="/localization/eagleye/pose_with_covariance/to_relay"/>
-    <remap from="~/output/pose" to="/localization/pose_estimator/pose_with_covariance"/>
+    <remap from="~/input/eagleye/pose_with_covariance" to="/localization/eagleye/pose_with_covariance/to_relay"/>
+    <remap from="~/output/eagleye/pose_with_covariance" to="/localization/pose_estimator/pose_with_covariance"/>
     <!-- ndt -->
     <remap from="~/input/pointcloud" to="/sensing/lidar/top/outlier_filtered/pointcloud"/>
     <remap from="~/output/pointcloud" to="/sensing/lidar/top/outlier_filtered/pointcloud/relay"/>
 
     <!-- rule -->
     <remap from="~/input/pointcloud_map" to="/map/pointcloud_map"/>
+    <remap from="~/input/vector_map" to="/map/vector_map"/>
     <remap from="~/input/pose_with_covariance" to="/localization/pose_with_covariance"/>
+    <remap from="~/input/initialization_state" to="/localization/initialization_state"/>
+    <remap from="~/input/eagleye/fix" to="/localization/pose_estimator/eagleye/fix"/>
   </node>
 
 </launch>

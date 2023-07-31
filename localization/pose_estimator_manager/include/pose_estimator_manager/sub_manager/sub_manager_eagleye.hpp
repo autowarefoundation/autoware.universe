@@ -16,8 +16,9 @@ public:
 
     using std::placeholders::_1;
     auto on_pose = std::bind(&SubManagerEagleye::on_pose, this, _1);
-    sub_pose_ = node->create_subscription<PoseCovStamped>("~/input/pose", 5, on_pose);
-    pub_pose_ = node->create_publisher<PoseCovStamped>("~/output/pose", 5);
+    sub_pose_ =
+      node->create_subscription<PoseCovStamped>("~/input/eagleye/pose_with_covariance", 5, on_pose);
+    pub_pose_ = node->create_publisher<PoseCovStamped>("~/output/eagleye/pose_with_covariance", 5);
   }
 
   void set_enable(bool enabled) override { eagleye_is_enabled_ = enabled; }
