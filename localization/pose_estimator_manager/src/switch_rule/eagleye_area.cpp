@@ -3,6 +3,8 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 
+#include <boost/geometry/geometry.hpp>
+
 namespace multi_pose_estimator
 {
 using BoostPoint = boost::geometry::model::d2::point_xy<double>;
@@ -73,6 +75,7 @@ void EagleyeArea::Impl::init(HADMapBin::ConstSharedPtr msg)
     marker.color.set__r(1.0f).set__g(1.0f).set__b(0.0f).set__a(1.0f);
     marker.ns = "eagleye_area";
     marker.header.frame_id = "map";
+    marker.id = marker_array_.markers.size();
 
     BoostPolygon poly;
     for (const lanelet::ConstPoint3d & p : polygon) {
@@ -82,6 +85,8 @@ void EagleyeArea::Impl::init(HADMapBin::ConstSharedPtr msg)
       point_msg.set__x(p.x()).set__y(p.y()).set__z(p.z());
       marker.points.push_back(point_msg);
     }
+    // to enclose the polygon
+    poly.outer().push_back(poly.outer().front());
 
     bounding_boxes_.push_back(poly);
     marker.points.push_back(marker.points.front());

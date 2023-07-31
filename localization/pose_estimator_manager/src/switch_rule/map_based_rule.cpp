@@ -75,7 +75,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 {
   // (1) If the localization state is not 'INITIALIZED'
   if (initialization_state_.state != InitializationState::INITIALIZED) {
-    debug_string_msg_ = "Enable all\nlocalization is not initialized";
+    debug_string_msg_ = "enable All\nlocalization is not initialized";
     RCLCPP_WARN_STREAM(
       get_logger(), "Enable all estimators because localization component is not initialized");
     return {
@@ -87,7 +87,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 
   // (2) If no pose are published, enable all;
   if (!latest_pose_.has_value()) {
-    debug_string_msg_ = "Enable all\nestimated pose is not published";
+    debug_string_msg_ = "enable All\nestimated pose has not been published yet";
     RCLCPP_WARN_STREAM(
       get_logger(), "Unable to determine which estimation to use, due to lack of latest position");
     return {
@@ -99,7 +99,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 
   // (3) If no pose are published, enable all;
   if (eagleye_is_available()) {
-    debug_string_msg_ = "Enable eagleye\nthe vehicle is within eagleye_area";
+    debug_string_msg_ = "enable Eagleye\nthe vehicle is within eagleye_area";
     RCLCPP_WARN_STREAM(get_logger(), "Enable eagleye");
     return {
       {PoseEstimatorName::NDT, false},
@@ -110,7 +110,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 
   // (4) If yabloc is disabled, enable NDT
   if (!yabloc_is_available()) {
-    debug_string_msg_ = "Enable ndt\nonly NDT is available";
+    debug_string_msg_ = "enable NDT\nonly NDT is available";
     RCLCPP_WARN_STREAM(get_logger(), "Enable NDT");
     return {
       {PoseEstimatorName::NDT, true},
@@ -121,7 +121,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 
   // (5) If ndt is disabled, enable YabLoc
   if (!ndt_is_available()) {
-    debug_string_msg_ = "Enable yabloc\nonly yabloc is available";
+    debug_string_msg_ = "enable YabLoc\nonly yabloc is available";
     RCLCPP_WARN_STREAM(get_logger(), "Enable YABLOC");
     return {
       {PoseEstimatorName::NDT, false},
@@ -144,14 +144,14 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
     toggle_list[PoseEstimatorName::NDT] = true;
     toggle_list[PoseEstimatorName::YABLOC] = false;
     toggle_list[PoseEstimatorName::EAGLEYE] = false;
-    ss << "Enable NDT";
+    ss << "enable NDT";
   } else {
     toggle_list[PoseEstimatorName::NDT] = false;
     toggle_list[PoseEstimatorName::YABLOC] = true;
     toggle_list[PoseEstimatorName::EAGLEYE] = false;
-    ss << "Enable YabLoc";
+    ss << "enable YabLoc";
   }
-  ss << "\nPCD occupancy: " << count << " > " << pcd_density_threshold_;
+  ss << "\npcd occupancy: " << count << " > " << pcd_density_threshold_;
   debug_string_msg_ = ss.str();
   return toggle_list;
 }

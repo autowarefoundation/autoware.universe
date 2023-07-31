@@ -4,8 +4,6 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <boost/geometry/geometry.hpp>
-
 #include <memory>
 
 namespace multi_pose_estimator
