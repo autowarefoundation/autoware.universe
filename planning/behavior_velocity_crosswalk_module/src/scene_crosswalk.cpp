@@ -835,7 +835,6 @@ void CrosswalkModule::updateObjectState(const double dist_ego_to_stop)
   const auto traffic_lights_reg_elems =
     crosswalk_.regulatoryElementsAs<const lanelet::TrafficLight>();
   const bool has_traffic_light = !traffic_lights_reg_elems.empty();
-  std::cerr << has_traffic_light << std::endl;
 
   // Check if ego is yielding
   const bool is_ego_yielding = [&]() {
