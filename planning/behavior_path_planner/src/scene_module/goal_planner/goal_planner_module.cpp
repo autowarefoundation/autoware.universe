@@ -153,7 +153,8 @@ void GoalPlannerModule::onTimer()
   // generate valid pull over path candidates and calculate closest start pose
   const auto current_lanes = utils::getExtendedCurrentLanes(
     planner_data_, parameters_->backward_goal_search_length,
-    parameters_->forward_goal_search_length);
+    parameters_->forward_goal_search_length,
+    /*until_goal_lane*/ false);
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
   double min_start_arc_length = std::numeric_limits<double>::max();
@@ -590,7 +591,8 @@ void GoalPlannerModule::setLanes()
 {
   status_.current_lanes = utils::getExtendedCurrentLanes(
     planner_data_, parameters_->backward_goal_search_length,
-    parameters_->forward_goal_search_length);
+    parameters_->forward_goal_search_length,
+    /*until_goal_lane*/ false);
   status_.pull_over_lanes =
     goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
   status_.lanes =
@@ -664,7 +666,8 @@ void GoalPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
     output.drivable_area_info.drivable_margin =
       planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
   } else {
-    const auto target_drivable_lanes = getNonOverlappingExpandedLanes(*output.path, status_.lanes);
+    const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
+      *output.path, status_.lanes, planner_data_->drivable_area_expansion_parameters);
 
     DrivableAreaInfo current_drivable_area_info;
     current_drivable_area_info.drivable_lanes = target_drivable_lanes;
@@ -854,7 +857,8 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification(
     out.drivable_area_info.drivable_margin =
       planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
   } else {
-    const auto target_drivable_lanes = getNonOverlappingExpandedLanes(*out.path, status_.lanes);
+    const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
+      *out.path, status_.lanes, planner_data_->drivable_area_expansion_parameters);
 
     DrivableAreaInfo current_drivable_area_info;
     current_drivable_area_info.drivable_lanes = target_drivable_lanes;
@@ -1108,8 +1112,15 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo() const
     const double distance_to_end =
       calcSignedArcLength(full_path.points, current_pose.position, end_pose.position);
     const bool is_before_end_pose = distance_to_end >= 0.0;
-    turn_signal.turn_signal.command =
-      is_before_end_pose ? TurnIndicatorsCommand::ENABLE_LEFT : TurnIndicatorsCommand::NO_COMMAND;
+    if (is_before_end_pose) {
+      if (left_side_parking_) {
+        turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+      } else {
+        turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+      }
+    } else {
+      turn_signal.turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
+    }
   }
 
   // calc desired/required start/end point
