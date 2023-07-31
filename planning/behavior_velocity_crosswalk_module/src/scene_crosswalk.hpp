@@ -138,13 +138,25 @@ public:
 
       // Compare time to collision and vehicle
       if (collision_point) {
+        // Check if ego will pass first
+        const double ego_pass_first_additional_margin =
+          collision_state == CollisionState::EGO_PASS_FIRST
+            ? 0.0
+            : planner_param.ego_pass_first_additional_margin;
         if (
-          collision_point->time_to_collision + planner_param.ego_pass_first_margin <
+          collision_point->time_to_collision + planner_param.ego_pass_first_margin +
+            ego_pass_first_additional_margin <
           collision_point->time_to_vehicle) {
           collision_state = CollisionState::EGO_PASS_FIRST;
         }
+        // Check if ego will pass later
+        const double ego_pass_later_additional_margin =
+          collision_state == CollisionState::EGO_PASS_LATER
+            ? 0.0
+            : planner_param.ego_pass_later_additional_margin;
         if (
-          collision_point->time_to_vehicle + planner_param.ego_pass_later_margin <
+          collision_point->time_to_vehicle + planner_param.ego_pass_later_margin +
+            ego_pass_later_additional_margin <
           collision_point->time_to_collision) {
           collision_state = CollisionState::EGO_PASS_LATER;
         }
