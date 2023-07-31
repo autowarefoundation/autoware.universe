@@ -42,8 +42,27 @@ double time_along_path(const EgoData & ego_data, const size_t target_idx)
 
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
-  const rclcpp::Logger & logger)
+  const std::shared_ptr<route_handler::RouteHandler> route_handler, const rclcpp::Logger & logger)
 {
+  // skip the predicted path if the object is not in a lanelet that comes to the range
+  const auto object_point = lanelet::BasicPoint2d(
+    object.kinematics.initial_pose_with_covariance.pose.position.x,
+    object.kinematics.initial_pose_with_covariance.pose.position.y);
+  const auto lanelets = route_handler->getPrecedingLaneletSequence(range.lane, 50.0);
+  bool is_incoming_object =
+    boost::geometry::within(object_point, range.lane.polygon2d().basicPolygon());
+  for (const auto & lls : lanelets) {
+    for (const auto & ll : lls) {
+      std::cout << ll.id() << std::endl;
+      if (boost::geometry::within(object_point, ll.polygon2d().basicPolygon())) {
+        is_incoming_object = true;
+        break;
+      }
+    }
+    if (is_incoming_object) break;
+  }
+  if (!is_incoming_object) return {};
+
   const auto max_deviation = object.shape.dimensions.y * 2.0;
 
   auto worst_enter_time = std::optional<double>();
@@ -274,9 +293,10 @@ bool should_not_enter(
       continue;  // skip objects with velocity bellow a threshold
     }
     // skip objects that are already on the interval
-    const auto enter_exit_time = params.objects_use_predicted_paths
-                                   ? object_time_to_range(object, range, logger)
-                                   : object_time_to_range(object, range, inputs, logger);
+    const auto enter_exit_time =
+      params.objects_use_predicted_paths
+        ? object_time_to_range(object, range, inputs.route_handler, logger)
+        : object_time_to_range(object, range, inputs, logger);
     if (!enter_exit_time) {
       RCLCPP_DEBUG(logger, " SKIP (no enter/exit times found)\n");
       continue;  // skip objects that are not driving towards the overlapping range
