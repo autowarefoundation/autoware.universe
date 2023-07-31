@@ -53,7 +53,6 @@ std::optional<std::pair<double, double>> object_time_to_range(
     boost::geometry::within(object_point, range.lane.polygon2d().basicPolygon());
   for (const auto & lls : lanelets) {
     for (const auto & ll : lls) {
-      std::cout << ll.id() << std::endl;
       if (boost::geometry::within(object_point, ll.polygon2d().basicPolygon())) {
         is_incoming_object = true;
         break;
