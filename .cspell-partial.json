@@ -1,10 +1,5 @@
 {
-  "ignorePaths": [
-    "**/control/**",
-    "**/perception/**",
-    "**/planning/**",
-    "**/sensing/**"
-  ],
+  "ignorePaths": ["**/control/**", "**/perception/**", "**/planning/**", "**/sensing/**"],
   "ignoreRegExpList": [],
   "words": []
 }
