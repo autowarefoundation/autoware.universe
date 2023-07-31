@@ -42,7 +42,7 @@ jobs:
 
   build-and-test-differential:
     needs: start-runner
-    runs-on: [self-hosted, linux, X64]
+    runs-on: ${{ needs.start-runner.outputs.label }}
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
