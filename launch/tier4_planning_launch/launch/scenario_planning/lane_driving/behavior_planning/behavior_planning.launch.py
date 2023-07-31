@@ -24,7 +24,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
-from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 import yaml
@@ -65,10 +64,9 @@ def launch_setup(context, *args, **kwargs):
     with open(LaunchConfiguration("behavior_path_planner_param_path").perform(context), "r") as f:
         behavior_path_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-    behavior_path_planner_component = Node(
+    behavior_path_planner_component = ComposableNode(
         package="behavior_path_planner",
-        # plugin="behavior_path_planner::BehaviorPathPlannerNode",
-        executable="behavior_path_planner",
+        plugin="behavior_path_planner::BehaviorPathPlannerNode",
         name="behavior_path_planner",
         namespace="",
         remappings=[
@@ -118,8 +116,7 @@ def launch_setup(context, *args, **kwargs):
                 ),
             },
         ],
-        prefix="konsole -e gdb -ex run --args",
-        # extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     # smoother param
@@ -215,6 +212,7 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
+            behavior_path_planner_component,
             behavior_velocity_planner_component,
         ],
         output="screen",
@@ -263,7 +261,6 @@ def launch_setup(context, *args, **kwargs):
     group = GroupAction(
         [
             container,
-            behavior_path_planner_component,
             load_compare_map,
             load_vector_map_inside_area_filter,
         ]
