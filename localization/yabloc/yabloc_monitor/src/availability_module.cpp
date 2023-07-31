@@ -18,8 +18,6 @@
 
 #include <memory>
 
-using PoseStamped = geometry_msgs::msg::PoseStamped;
-
 AvailabilityModule::AvailabilityModule(rclcpp::Node * node)
 : clock_(node->get_clock()),
   latest_yabloc_pose_stamp_(std::nullopt),
