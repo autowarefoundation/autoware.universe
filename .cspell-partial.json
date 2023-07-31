@@ -6,7 +6,6 @@
     "**/perception/**",
     "**/planning/**",
     "**/sensing/**",
-    "**/system/**"
   ],
   "ignoreRegExpList": [],
   "words": []
