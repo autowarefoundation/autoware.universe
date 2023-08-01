@@ -502,6 +502,12 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   const auto max_acc = utils::lane_change::calcMaximumAcceleration(
     current_velocity, max_path_velocity, vehicle_max_acc, common_parameters);
 
+  // if max acc is not positive, then we do the normal sampling
+  if (max_acc <= 0.0) {
+    return utils::lane_change::getAccelerationValues(
+      min_acc, max_acc, longitudinal_acc_sampling_num);
+  }
+
   // calculate maximum lane change length
   const double max_lane_change_length = utils::lane_change::calcMaximumLaneChangeLength(
     common_parameters, route_handler.getLateralIntervalsToPreferredLane(current_lanes.back()),
