@@ -344,7 +344,7 @@ $$
 \end{align}
 $$
 
-Discretizing $\dot{u}$ as $\left(u_{k} - u_{k-1}\right)/\text{d}t$ and multiply both sides by dt the resulting constraint become linear and convex
+We discretize $\dot{u}$ as $\left(u_{k} - u_{k-1}\right)/\text{d}t$ and multiply both sides by dt, and the resulting constraint become linear and convex
 
 $$
 \begin{align}
