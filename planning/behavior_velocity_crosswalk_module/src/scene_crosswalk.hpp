@@ -76,12 +76,16 @@ public:
     double stuck_vehicle_velocity;
     double max_stuck_vehicle_lateral_offset;
     double stuck_vehicle_attention_range;
+    double min_acc_for_stuck_vehicle;
+    double max_jerk_for_stuck_vehicle;
+    double min_jerk_for_stuck_vehicle;
     // param for pass judge logic
     double ego_pass_first_margin;
     double ego_pass_later_margin;
     double stop_object_velocity;
     double min_object_velocity;
     bool disable_stop_for_yield_cancel;
+    bool disable_yield_for_new_stopped_object;
     double timeout_no_intention_to_walk;
     double timeout_ego_stop_for_yield;
     // param for input data
@@ -98,12 +102,12 @@ public:
   {
     // NOTE: FULLY_STOPPED means stopped object which can be ignored.
     enum class State { STOPPED = 0, FULLY_STOPPED, OTHER };
-    State state{State::OTHER};
+    State state;
     std::optional<rclcpp::Time> time_to_start_stopped{std::nullopt};
 
     void updateState(
       const rclcpp::Time & now, const double obj_vel, const bool is_ego_yielding,
-      const PlannerParam & planner_param)
+      const bool has_traffic_light, const PlannerParam & planner_param)
     {
       const bool is_stopped = obj_vel < planner_param.stop_object_velocity;
 
@@ -117,7 +121,9 @@ public:
         }
         const bool intent_to_cross =
           (now - *time_to_start_stopped).seconds() < planner_param.timeout_no_intention_to_walk;
-        if ((is_ego_yielding || planner_param.disable_stop_for_yield_cancel) && !intent_to_cross) {
+        if (
+          (is_ego_yielding || (has_traffic_light && planner_param.disable_stop_for_yield_cancel)) &&
+          !intent_to_cross) {
           state = State::FULLY_STOPPED;
         } else {
           // NOTE: Object may start moving
@@ -134,18 +140,24 @@ public:
     void init() { current_uuids_.clear(); }
     void update(
       const std::string & uuid, const double obj_vel, const rclcpp::Time & now,
-      const bool is_ego_yielding, const PlannerParam & planner_param)
+      const bool is_ego_yielding, const bool has_traffic_light, const PlannerParam & planner_param)
     {
       // update current uuids
       current_uuids_.push_back(uuid);
 
       // add new object
       if (objects.count(uuid) == 0) {
-        objects.emplace(uuid, ObjectInfo{});
+        if (
+          has_traffic_light && planner_param.disable_stop_for_yield_cancel &&
+          planner_param.disable_yield_for_new_stopped_object) {
+          objects.emplace(uuid, ObjectInfo{ObjectInfo::State::FULLY_STOPPED});
+        } else {
+          objects.emplace(uuid, ObjectInfo{ObjectInfo::State::OTHER});
+        }
       }
 
       // update object state
-      objects.at(uuid).updateState(now, obj_vel, is_ego_yielding, planner_param);
+      objects.at(uuid).updateState(now, obj_vel, is_ego_yielding, has_traffic_light, planner_param);
     }
     void finalize()
     {

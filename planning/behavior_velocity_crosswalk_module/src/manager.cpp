@@ -66,6 +66,9 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".stuck_vehicle.max_stuck_vehicle_lateral_offset");
   cp.stuck_vehicle_attention_range =
     node.declare_parameter<double>(ns + ".stuck_vehicle.stuck_vehicle_attention_range");
+  cp.min_acc_for_stuck_vehicle = node.declare_parameter<double>(ns + ".stuck_vehicle.min_acc");
+  cp.max_jerk_for_stuck_vehicle = node.declare_parameter<double>(ns + ".stuck_vehicle.max_jerk");
+  cp.min_jerk_for_stuck_vehicle = node.declare_parameter<double>(ns + ".stuck_vehicle.min_jerk");
 
   // param for pass judge logic
   cp.ego_pass_first_margin =
@@ -77,6 +80,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   cp.min_object_velocity = node.declare_parameter<double>(ns + ".pass_judge.min_object_velocity");
   cp.disable_stop_for_yield_cancel =
     node.declare_parameter<bool>(ns + ".pass_judge.disable_stop_for_yield_cancel");
+  cp.disable_yield_for_new_stopped_object =
+    node.declare_parameter<bool>(ns + ".pass_judge.disable_yield_for_new_stopped_object");
   cp.timeout_no_intention_to_walk =
     node.declare_parameter<double>(ns + ".pass_judge.timeout_no_intention_to_walk");
   cp.timeout_ego_stop_for_yield =
