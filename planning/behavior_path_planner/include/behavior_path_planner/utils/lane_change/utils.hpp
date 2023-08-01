@@ -58,8 +58,8 @@ double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);
 
 double calcMaximumLaneChangeLength(
-  const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
-  const double max_acc);
+  const double current_velocity, const BehaviorPathPlannerParameters & common_param,
+  const std::vector<double> & shift_intervals, const double max_acc);
 
 double calcMinimumAcceleration(
   const double current_velocity, const double min_longitudinal_acc,

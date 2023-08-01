@@ -62,26 +62,33 @@ double calcLaneChangeResampleInterval(
 }
 
 double calcMaximumLaneChangeLength(
-  const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
-  const double max_acc)
+  const double current_velocity, const BehaviorPathPlannerParameters & common_param,
+  const std::vector<double> & shift_intervals, const double max_acc)
 {
   if (shift_intervals.empty()) {
     return 0.0;
   }
 
-  const double & vel = common_param.minimum_lane_changing_velocity;
-  const auto lat_acc = common_param.lane_change_lat_acc_map.find(vel);
-  const double & max_lateral_acc = lat_acc.second;
-  const double & lateral_jerk = common_param.lane_changing_lateral_jerk;
   const double & finish_judge_buffer = common_param.lane_change_finish_judge_buffer;
-  const auto prepare_length = 0.5 * max_acc * common_param.lane_change_prepare_duration *
-                              common_param.lane_change_prepare_duration;
+  const double & lateral_jerk = common_param.lane_changing_lateral_jerk;
+  const double & t_prepare = common_param.lane_change_prepare_duration;
 
+  double vel = current_velocity;
   double accumulated_length = 0.0;
   for (const auto & shift_interval : shift_intervals) {
-    const double t =
-      PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
-    accumulated_length += vel * t + 0.5 * max_acc * t * t + prepare_length + finish_judge_buffer;
+    // prepare section
+    const double prepare_length = vel * t_prepare + 0.5 * max_acc * t_prepare * t_prepare;
+    vel = vel + max_acc * t_prepare;
+
+    // lane changing section
+    const auto lat_acc = common_param.lane_change_lat_acc_map.find(vel);
+    const double t_lane_changing =
+      PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, lat_acc.second);
+    const double lane_changing_length =
+      vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
+
+    accumulated_length += prepare_length + lane_changing_length + finish_judge_buffer;
+    vel = vel + max_acc * t_lane_changing;
   }
   accumulated_length +=
     common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);

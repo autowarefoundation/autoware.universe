@@ -510,8 +510,8 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
 
   // calculate maximum lane change length
   const double max_lane_change_length = utils::lane_change::calcMaximumLaneChangeLength(
-    common_parameters, route_handler.getLateralIntervalsToPreferredLane(current_lanes.back()),
-    max_acc);
+    current_velocity, common_parameters,
+    route_handler.getLateralIntervalsToPreferredLane(current_lanes.back()), max_acc);
 
   // if maximum lane change length is less than length to goal or the end of target lanes, only
   // sample max acc
