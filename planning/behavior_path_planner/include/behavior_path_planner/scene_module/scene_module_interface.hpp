@@ -101,12 +101,6 @@ public:
   virtual void updateCurrentState() { current_state_ = updateState(); }
 
   /**
-   * @brief If the module plan customized reference path while waiting approval, it should output
-   * SUCCESS. Otherwise, it should output FAILURE to check execution request of next module.
-   */
-  virtual ModuleStatus getNodeStatusWhileWaitingApproval() const { return ModuleStatus::FAILURE; }
-
-  /**
    * @brief Return true if the module has request for execution (not necessarily feasible)
    */
   virtual bool isExecutionRequested() const = 0;
@@ -135,8 +129,8 @@ public:
     // for new architecture
     const auto lanes = utils::getLaneletsFromPath(*out.path, planner_data_->route_handler);
     const auto drivable_lanes = utils::generateDrivableLanes(lanes);
-    out.drivable_area_info.drivable_lanes =
-      getNonOverlappingExpandedLanes(*out.path, drivable_lanes);
+    out.drivable_area_info.drivable_lanes = utils::getNonOverlappingExpandedLanes(
+      *out.path, drivable_lanes, planner_data_->drivable_area_expansion_parameters);
 
     return out;
   }
@@ -296,6 +290,8 @@ public:
 
   MarkerArray getDebugMarkers() const { return debug_marker_; }
 
+  MarkerArray getDrivableLanesMarkers() const { return drivable_lanes_marker_; }
+
   virtual MarkerArray getModuleVirtualWall() { return MarkerArray(); }
 
   ModuleStatus getCurrentStatus() const { return current_state_; }
@@ -343,6 +339,12 @@ public:
     dead_pose_ = boost::none;
   }
 
+  void setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes)
+  {
+    drivable_lanes_marker_ =
+      marker_utils::createDrivableLanesMarkerArray(drivable_lanes, "drivable_lanes");
+  }
+
   rclcpp::Logger getLogger() const { return logger_; }
 
   void setIsSimultaneousExecutableAsApprovedModule(const bool enable)
@@ -373,21 +375,6 @@ private:
   BehaviorModuleOutput previous_module_output_;
 
 protected:
-  // TODO(murooka) Remove this function when BT-based architecture will be removed
-  std::unordered_map<std::string, std::shared_ptr<RTCInterface>> createRTCInterfaceMap(
-    rclcpp::Node & node, const std::string & name, const std::vector<std::string> & rtc_types)
-  {
-    std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map;
-    for (const auto & rtc_type : rtc_types) {
-      const auto snake_case_name = utils::convertToSnakeCase(name);
-      const auto rtc_interface_name =
-        rtc_type.empty() ? snake_case_name : (snake_case_name + "_" + rtc_type);
-      rtc_interface_ptr_map.emplace(
-        rtc_type, std::make_shared<RTCInterface>(&node, rtc_interface_name));
-    }
-    return rtc_interface_ptr_map;
-  }
-
   virtual void updateRTCStatus(const double start_distance, const double finish_distance)
   {
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
@@ -452,18 +439,6 @@ protected:
     return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
   }
 
-  std::vector<DrivableLanes> getNonOverlappingExpandedLanes(
-    PathWithLaneId & path, const std::vector<DrivableLanes> & lanes) const
-  {
-    const auto & dp = planner_data_->drivable_area_expansion_parameters;
-
-    const auto shorten_lanes = utils::cutOverlappedLanes(path, lanes);
-    const auto expanded_lanes = utils::expandLanelets(
-      shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
-      dp.drivable_area_types_to_skip);
-    return expanded_lanes;
-  }
-
   bool is_simultaneously_executable_as_approved_module_{false};
   bool is_simultaneously_executable_as_candidate_module_{false};
 
@@ -496,6 +471,8 @@ protected:
   mutable MarkerArray info_marker_;
 
   mutable MarkerArray debug_marker_;
+
+  mutable MarkerArray drivable_lanes_marker_;
 };
 
 }  // namespace behavior_path_planner

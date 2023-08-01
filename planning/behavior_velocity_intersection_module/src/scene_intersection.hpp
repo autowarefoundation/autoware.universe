@@ -20,13 +20,12 @@
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
-#include <grid_map_core/grid_map_core.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <grid_map_msgs/msg/grid_map.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -78,12 +77,20 @@ public:
     } stuck_vehicle;
     struct CollisionDetection
     {
-      double state_transit_margin_time;
       double min_predicted_path_confidence;
       //! minimum confidence value of predicted path to use for collision detection
       double minimum_ego_predicted_velocity;  //! used to calculate ego's future velocity profile
-      double collision_start_margin_time;     //! start margin time to check collision
-      double collision_end_margin_time;       //! end margin time to check collision
+      double state_transit_margin_time;
+      struct Normal
+      {
+        double collision_start_margin_time;  //! start margin time to check collision
+        double collision_end_margin_time;    //! end margin time to check collision
+      } normal;
+      struct Relaxed
+      {
+        double collision_start_margin_time;
+        double collision_end_margin_time;
+      } relaxed;
       double keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
     } collision_detection;
     struct Occlusion
@@ -100,7 +107,8 @@ public:
       double min_vehicle_brake_for_rss;
       double max_vehicle_velocity_for_rss;
       double denoise_kernel;
-      bool pub_debug_grid;
+      std::vector<double> possible_object_bbox;
+      double ignore_parked_vehicle_speed_threshold;
     } occlusion;
   };
 
@@ -156,6 +164,11 @@ public:
     // NOTE: if RTC is disapproved status, default stop lines are still needed.
     util::IntersectionStopLines stop_lines;
   };
+  struct TrafficLightArrowSolidOn
+  {
+    bool collision_detected;
+    util::IntersectionStopLines stop_lines;
+  };
   using DecisionResult = std::variant<
     Indecisive,                // internal process error, or over the pass judge line
     StuckStop,                 // detected stuck vehicle
@@ -163,8 +176,8 @@ public:
     FirstWaitBeforeOcclusion,  // stop for a while before peeking to occlusion
     PeekingTowardOcclusion,    // peeking into occlusion while collision is not detected
     OccludedCollisionStop,     // occlusion and collision are both detected
-    Safe                       // judge as safe
-    /* TODO(Mamoru Sobue): TrafficLightArrowSolidOn */
+    Safe,                      // judge as safe
+    TrafficLightArrowSolidOn   // only detect vehicles violating traffic rules
     >;
 
   IntersectionModule(
@@ -236,13 +249,16 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
     const util::IntersectionStopLines & intersection_stop_lines);
 
-  bool checkCollision(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  autoware_auto_perception_msgs::msg::PredictedObjects filterTargetObjects(
     const lanelet::ConstLanelets & attention_area_lanelets,
     const lanelet::ConstLanelets & adjacent_lanelets,
-    const std::optional<Polygon2d> & intersection_area,
+    const std::optional<Polygon2d> & intersection_area) const;
+
+  bool checkCollision(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const autoware_auto_perception_msgs::msg::PredictedObjects & target_objects,
     const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
-    const double time_delay);
+    const double time_delay, const bool tl_arrow_solid_on);
 
   bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,
@@ -250,7 +266,10 @@ private:
     const lanelet::ConstLanelets & adjacent_lanelets,
     const lanelet::CompoundPolygon3d & first_attention_area,
     const util::InterpolatedPathInfo & interpolated_path_info,
-    const std::vector<util::DescritizedLane> & lane_divisions, const double occlusion_dist_thr);
+    const std::vector<util::DescritizedLane> & lane_divisions,
+    const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> &
+      parked_attention_objects,
+    const double occlusion_dist_thr);
 
   /*
   bool IntersectionModule::checkFrontVehicleDeceleration(
@@ -261,7 +280,7 @@ private:
   */
 
   util::DebugData debug_data_;
-  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr occlusion_grid_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr decision_state_pub_;
 };
 
 }  // namespace behavior_velocity_planner

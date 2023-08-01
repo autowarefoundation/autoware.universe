@@ -18,6 +18,7 @@
 #include "motion_utils/motion_utils.hpp"
 #include "path_smoother/common_structs.hpp"
 #include "path_smoother/elastic_band.hpp"
+#include "path_smoother/replan_checker.hpp"
 #include "path_smoother/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
@@ -59,13 +60,14 @@ protected:
 
   // algorithms
   std::shared_ptr<EBPathSmoother> eb_path_smoother_ptr_{nullptr};
+  std::shared_ptr<ReplanChecker> replan_checker_ptr_{nullptr};
 
   // parameters
   CommonParam common_param_{};
   EgoNearestParam ego_nearest_param_{};
 
   // variables for subscribers
-  Odometry::SharedPtr ego_state_ptr_;
+  Odometry::ConstSharedPtr ego_state_ptr_;
 
   // variables for previous information
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_optimized_traj_points_ptr_;
@@ -88,7 +90,7 @@ protected:
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
   // subscriber callback function
-  void onPath(const Path::SharedPtr);
+  void onPath(const Path::ConstSharedPtr path_ptr);
 
   // reset functions
   void initializePlanning();
@@ -96,23 +98,13 @@ protected:
 
   // main functions
   bool isDataReady(const Path & path, rclcpp::Clock clock) const;
-  PlannerData createPlannerData(const Path & path) const;
-  std::vector<TrajectoryPoint> generateOptimizedTrajectory(const PlannerData & planner_data);
-  std::vector<TrajectoryPoint> extendTrajectory(
-    const std::vector<TrajectoryPoint> & traj_points,
-    const std::vector<TrajectoryPoint> & optimized_points) const;
-
-  // functions in generateOptimizedTrajectory
-  std::vector<TrajectoryPoint> optimizeTrajectory(const PlannerData & planner_data);
-  std::vector<TrajectoryPoint> getPrevOptimizedTrajectory(
-    const std::vector<TrajectoryPoint> & traj_points) const;
   void applyInputVelocity(
     std::vector<TrajectoryPoint> & output_traj_points,
     const std::vector<TrajectoryPoint> & input_traj_points,
     const geometry_msgs::msg::Pose & ego_pose) const;
-  void insertZeroVelocityOutsideDrivableArea(
-    const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points) const;
-  void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
+  std::vector<TrajectoryPoint> extendTrajectory(
+    const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<TrajectoryPoint> & optimized_points) const;
 };
 }  // namespace path_smoother
 

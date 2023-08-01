@@ -11,14 +11,16 @@
 
       # avoidance module common setting
       enable_bound_clipping: false
-      enable_avoidance_over_same_direction: true
-      enable_avoidance_over_opposite_direction: true
       enable_update_path_when_object_is_gone: false
       enable_force_avoidance_for_stopped_vehicle: false
-      enable_safety_check: true
       enable_yield_maneuver: true
       enable_yield_maneuver_during_shifting: false
       disable_path_update: false
+
+      # drivable area setting
+      use_adjacent_lane: true
+      use_opposite_lane: true
+      use_intersection_areas: false
       use_hatched_road_markings: false
 
       # for debug
@@ -29,6 +31,7 @@
       target_object:
         car:
           is_target: true                              # [-]
+          execute_num: 1                               # [-]
           moving_speed_threshold: 1.0                  # [m/s]
           moving_time_threshold: 1.0                   # [s]
           max_expand_ratio: 0.0                        # [-]
@@ -38,6 +41,7 @@
           safety_buffer_longitudinal: 0.0              # [m]
         truck:
           is_target: true
+          execute_num: 1
           moving_speed_threshold: 1.0
           moving_time_threshold: 1.0
           max_expand_ratio: 0.0
@@ -47,6 +51,7 @@
           safety_buffer_longitudinal: 0.0
         bus:
           is_target: true
+          execute_num: 1
           moving_speed_threshold: 1.0
           moving_time_threshold: 1.0
           max_expand_ratio: 0.0
@@ -56,6 +61,7 @@
           safety_buffer_longitudinal: 0.0
         trailer:
           is_target: true
+          execute_num: 1
           moving_speed_threshold: 1.0
           moving_time_threshold: 1.0
           max_expand_ratio: 0.0
@@ -65,6 +71,7 @@
           safety_buffer_longitudinal: 0.0
         unknown:
           is_target: false
+          execute_num: 1
           moving_speed_threshold: 1.0
           moving_time_threshold: 1.0
           max_expand_ratio: 0.0
@@ -74,6 +81,7 @@
           safety_buffer_longitudinal: 0.0
         bicycle:
           is_target: false
+          execute_num: 1
           moving_speed_threshold: 1.0
           moving_time_threshold: 1.0
           max_expand_ratio: 0.0
@@ -83,6 +91,7 @@
           safety_buffer_longitudinal: 1.0
         motorcycle:
           is_target: false
+          execute_num: 1
           moving_speed_threshold: 1.0
           moving_time_threshold: 1.0
           max_expand_ratio: 0.0
@@ -92,6 +101,7 @@
           safety_buffer_longitudinal: 1.0
         pedestrian:
           is_target: false
+          execute_num: 1
           moving_speed_threshold: 1.0
           moving_time_threshold: 1.0
           max_expand_ratio: 0.0
@@ -122,10 +132,18 @@
 
       # For safety check
       safety_check:
+        # safety check configuration
+        enable: true                                     # [-]
+        check_current_lane: false                        # [-]
+        check_shift_side_lane: true                      # [-]
+        check_other_side_lane: false                     # [-]
+        check_unavoidable_object: false                  # [-]
+        check_other_object: true                         # [-]
+        # collision check parameters
+        check_all_predicted_path: false                  # [-]
+        time_resolution: 0.5                             # [s]
+        time_horizon: 10.0                               # [s]
         safety_check_backward_distance: 100.0            # [m]
-        safety_check_time_horizon: 10.0                  # [s]
-        safety_check_idling_time: 1.5                    # [s]
-        safety_check_accel_for_rss: 2.5                  # [m/ss]
         safety_check_hysteresis_factor: 2.0              # [-]
         safety_check_ego_offset: 1.0                     # [m]
 
@@ -135,6 +153,7 @@
         lateral:
           lateral_execution_threshold: 0.499            # [m]
           lateral_small_shift_threshold: 0.101          # [m]
+          lateral_avoid_check_threshold: 0.1            # [m]
           road_shoulder_safety_margin: 0.3              # [m]
           max_right_shift_length: 5.0
           max_left_shift_length: 5.0
@@ -142,11 +161,9 @@
         longitudinal:
           prepare_time: 2.0                             # [s]
           min_prepare_distance: 1.0                     # [m]
-          min_avoidance_distance: 10.0                  # [m]
-          min_nominal_avoidance_speed: 7.0              # [m/s]
-          min_sharp_avoidance_speed: 1.0                # [m/s]
           min_slow_down_speed: 1.38                     # [m/s]
           buf_slow_down_speed: 0.56                     # [m/s]
+          nominal_avoidance_speed: 8.33                 # [m/s]
 
       # For yield maneuver
       yield:
@@ -154,7 +171,6 @@
 
       # For stop maneuver
       stop:
-        min_distance: 10.0                              # [m]
         max_distance: 20.0                              # [m]
         stop_buffer: 1.0                                # [m]
 
@@ -164,24 +180,18 @@
 
         # lateral constraints
         lateral:
-          nominal_lateral_jerk: 0.2                     # [m/s3]
-          max_lateral_jerk: 1.0                         # [m/s3]
+          velocity: [1.0, 1.38, 11.1]                   # [m/s]
+          max_accel_values: [0.5, 0.5, 0.5]             # [m/ss]
+          min_jerk_values: [0.2, 0.2, 0.2]              # [m/sss]
+          max_jerk_values: [1.0, 1.0, 1.0]             # [m/sss]
 
         # longitudinal constraints
         longitudinal:
           nominal_deceleration: -1.0                    # [m/ss]
           nominal_jerk: 0.5                             # [m/sss]
           max_deceleration: -2.0                        # [m/ss]
-          max_jerk: 1.0
-          # For prevention of large acceleration while avoidance
-          min_avoidance_speed_for_acc_prevention: 3.0   # [m/s]
-          max_avoidance_acceleration: 0.5               # [m/ss]
-
-      target_velocity_matrix:
-        col_size: 2
-        matrix:
-          [2.78, 13.9,                                  # velocity [m/s]
-           0.50, 1.00]                                  # margin [m]
+          max_jerk: 1.0                                 # [m/sss]
+          max_acceleration: 1.0                         # [m/ss]
 
       shift_line_pipeline:
         trim:
