@@ -95,10 +95,10 @@ RTCInterface::RTCInterface(rclcpp::Node * node, const std::string & name, const 
   srv_commands_ = node->create_service<CooperateCommands>(
     cooperate_commands_namespace_ + "/" + name,
     std::bind(&RTCInterface::onCooperateCommandService, this, _1, _2),
-    rmw_qos_profile_services_default, callback_group_);
+    rclcpp::SystemDefaultsQoS(), callback_group_);
   srv_auto_mode_ = node->create_service<AutoMode>(
     enable_auto_mode_namespace_ + "/" + name,
-    std::bind(&RTCInterface::onAutoModeService, this, _1, _2), rmw_qos_profile_services_default,
+    std::bind(&RTCInterface::onAutoModeService, this, _1, _2), rclcpp::SystemDefaultsQoS(),
     callback_group_);
 
   // Module

@@ -59,7 +59,7 @@ public:
   : interface_(interface)
   {
     service_ = interface_->node->create_service<typename SpecT::Service>(
-      SpecT::name, wrap(callback), rmw_qos_profile_services_default, group);
+      SpecT::name, wrap(callback), rclcpp::SystemDefaultsQoS(), group);
   }
 
   /// Create a service callback with logging added.

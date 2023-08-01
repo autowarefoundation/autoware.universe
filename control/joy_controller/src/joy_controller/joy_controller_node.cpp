@@ -501,7 +501,7 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
 
   // Service Client
   client_emergency_stop_ = this->create_client<tier4_external_api_msgs::srv::SetEmergency>(
-    "service/emergency_stop", rmw_qos_profile_services_default, callback_group_services_);
+    "service/emergency_stop", rclcpp::SystemDefaultsQoS(), callback_group_services_);
   while (!client_emergency_stop_->wait_for_service(std::chrono::seconds(1))) {
     if (!rclcpp::ok()) {
       RCLCPP_ERROR(get_logger(), "Interrupted while waiting for service.");

@@ -66,12 +66,12 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   client_mrm_comfortable_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_mrm_comfortable_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
-    "~/output/mrm/comfortable_stop/operate", rmw_qos_profile_services_default,
+    "~/output/mrm/comfortable_stop/operate", rclcpp::SystemDefaultsQoS(),
     client_mrm_comfortable_stop_group_);
   client_mrm_emergency_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_mrm_emergency_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
-    "~/output/mrm/emergency_stop/operate", rmw_qos_profile_services_default,
+    "~/output/mrm/emergency_stop/operate", rclcpp::SystemDefaultsQoS(),
     client_mrm_emergency_stop_group_);
 
   // Initialize

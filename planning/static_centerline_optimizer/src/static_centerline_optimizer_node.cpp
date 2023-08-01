@@ -202,19 +202,19 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
     std::bind(
       &StaticCenterlineOptimizerNode::on_load_map, this, std::placeholders::_1,
       std::placeholders::_2),
-    rmw_qos_profile_services_default, callback_group_);
+    rclcpp::SystemDefaultsQoS(), callback_group_);
   srv_plan_route_ = create_service<PlanRoute>(
     "/planning/static_centerline_optimizer/plan_route",
     std::bind(
       &StaticCenterlineOptimizerNode::on_plan_route, this, std::placeholders::_1,
       std::placeholders::_2),
-    rmw_qos_profile_services_default, callback_group_);
+    rclcpp::SystemDefaultsQoS(), callback_group_);
   srv_plan_path_ = create_service<PlanPath>(
     "/planning/static_centerline_optimizer/plan_path",
     std::bind(
       &StaticCenterlineOptimizerNode::on_plan_path, this, std::placeholders::_1,
       std::placeholders::_2),
-    rmw_qos_profile_services_default, callback_group_);
+    rclcpp::SystemDefaultsQoS(), callback_group_);
 
   // vehicle info
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();

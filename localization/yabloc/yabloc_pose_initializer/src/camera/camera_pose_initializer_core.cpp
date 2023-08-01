@@ -41,7 +41,7 @@ CameraPoseInitializer::CameraPoseInitializer()
 
   // Client
   segmentation_client_ = create_client<SegmentationSrv>(
-    "~/semantic_segmentation_srv", rmw_qos_profile_services_default, service_callback_group_);
+    "~/semantic_segmentation_srv", rclcpp::SystemDefaultsQoS(), service_callback_group_);
 
   // Server
   auto on_service = std::bind(&CameraPoseInitializer::on_service, this, _1, _2);

@@ -43,7 +43,7 @@ public:
   : interface_(interface)
   {
     client_ = interface->node->create_client<typename SpecT::Service>(
-      SpecT::name, rmw_qos_profile_services_default, group);
+      SpecT::name, rclcpp::SystemDefaultsQoS(), group);
   }
 
   /// Send request.
