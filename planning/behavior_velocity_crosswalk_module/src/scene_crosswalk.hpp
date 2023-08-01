@@ -148,6 +148,7 @@ public:
             ego_pass_first_additional_margin <
           collision_point->time_to_vehicle) {
           collision_state = CollisionState::EGO_PASS_FIRST;
+          return;
         }
         // Check if ego will pass later
         const double ego_pass_later_additional_margin =
@@ -159,8 +160,10 @@ public:
             ego_pass_later_additional_margin <
           collision_point->time_to_collision) {
           collision_state = CollisionState::EGO_PASS_LATER;
+          return;
         }
         collision_state = CollisionState::YIELD;
+        return;
       }
     }
   };
