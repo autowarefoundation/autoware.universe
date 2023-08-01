@@ -144,17 +144,18 @@ void PlannerManager::generateCombinedDrivableArea(
   const auto & di = output.drivable_area_info;
   constexpr double epsilon = 1e-3;
 
+  const auto is_driving_forward_opt = motion_utils::isDrivingForward(output.path->points);
+  const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
+
   if (epsilon < std::abs(di.drivable_margin)) {
     // for single free space pull over
-    const auto is_driving_forward_opt = motion_utils::isDrivingForward(output.path->points);
-    const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
-
     utils::generateDrivableArea(
       *output.path, data->parameters.vehicle_length, di.drivable_margin, is_driving_forward);
   } else if (di.is_already_expanded) {
     // for single side shift
     utils::generateDrivableArea(
-      *output.path, di.drivable_lanes, false, false, data->parameters.vehicle_length, data);
+      *output.path, di.drivable_lanes, false, false, data->parameters.vehicle_length, data,
+      is_driving_forward);
   } else {
     const auto shorten_lanes = utils::cutOverlappedLanes(*output.path, di.drivable_lanes);
 
@@ -166,7 +167,8 @@ void PlannerManager::generateCombinedDrivableArea(
     // for other modules where multiple modules may be launched
     utils::generateDrivableArea(
       *output.path, expanded_lanes, di.enable_expanding_hatched_road_markings,
-      di.enable_expanding_intersection_areas, data->parameters.vehicle_length, data);
+      di.enable_expanding_intersection_areas, data->parameters.vehicle_length, data,
+      is_driving_forward);
   }
 
   // extract obstacles from drivable area
@@ -176,6 +178,14 @@ void PlannerManager::generateCombinedDrivableArea(
 std::vector<SceneModulePtr> PlannerManager::getRequestModules(
   const BehaviorModuleOutput & previous_module_output) const
 {
+  if (!previous_module_output.path) {
+    RCLCPP_ERROR_STREAM(
+      logger_, "Current module output is null. Skip candidate module check."
+                 << "\n      - Approved  module list: " << getNames(approved_module_ptrs_)
+                 << "\n      - Candidate module list: " << getNames(candidate_module_ptrs_));
+    return {};
+  }
+
   std::vector<SceneModulePtr> request_modules{};
 
   /**
@@ -634,15 +644,21 @@ void PlannerManager::resetRootLanelet(const std::shared_ptr<PlannerData> & data)
 
   const auto root_lanelet = updateRootLanelet(data);
 
+  // if root_lanelet is not route lanelets, reset root lanelet.
+  // this can be caused by rerouting.
+  const auto & route_handler = data->route_handler;
+  if (!route_handler->isRouteLanelet(root_lanelet_.get())) {
+    root_lanelet_ = root_lanelet;
+    return;
+  }
+
   // check ego is in same lane
   if (root_lanelet_.get().id() == root_lanelet.id()) {
     return;
   }
 
-  const auto route_handler = data->route_handler;
-  const auto next_lanelets = route_handler->getRoutingGraphPtr()->following(root_lanelet_.get());
-
   // check ego is in next lane
+  const auto next_lanelets = route_handler->getRoutingGraphPtr()->following(root_lanelet_.get());
   for (const auto & next : next_lanelets) {
     if (next.id() == root_lanelet.id()) {
       return;
@@ -732,6 +748,15 @@ std::shared_ptr<SceneModuleVisitor> PlannerManager::getDebugMsg()
     candidate_module->acceptVisitor(debug_msg_ptr_);
   }
   return debug_msg_ptr_;
+}
+
+std::string PlannerManager::getNames(const std::vector<SceneModulePtr> & modules) const
+{
+  std::stringstream ss;
+  for (const auto & m : modules) {
+    ss << "[" << m->name() << "], ";
+  }
+  return ss.str();
 }
 
 }  // namespace behavior_path_planner

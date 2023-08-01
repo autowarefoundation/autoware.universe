@@ -53,6 +53,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   p.lateral_jerk = node->declare_parameter<double>(ns + "lateral_jerk");
   p.maximum_lateral_acc = node->declare_parameter<double>(ns + "maximum_lateral_acc");
   p.minimum_lateral_acc = node->declare_parameter<double>(ns + "minimum_lateral_acc");
+  p.maximum_curvature = node->declare_parameter<double>(ns + "maximum_curvature");
   p.deceleration_interval = node->declare_parameter<double>(ns + "deceleration_interval");
   // geometric pull out
   p.enable_geometric_pull_out = node->declare_parameter<bool>(ns + "enable_geometric_pull_out");
@@ -99,10 +100,11 @@ void StartPlannerModuleManager::updateModuleParams(
   [[maybe_unused]] std::string ns = name_ + ".";
 
   std::for_each(registered_modules_.begin(), registered_modules_.end(), [&](const auto & m) {
-    m->updateModuleParams(p);
-    m->setInitialIsSimultaneousExecutableAsApprovedModule(
+    const auto start_planner_ptr = std::dynamic_pointer_cast<StartPlannerModule>(m);
+    start_planner_ptr->updateModuleParams(p);
+    start_planner_ptr->setInitialIsSimultaneousExecutableAsApprovedModule(
       enable_simultaneous_execution_as_approved_module_);
-    m->setInitialIsSimultaneousExecutableAsCandidateModule(
+    start_planner_ptr->setInitialIsSimultaneousExecutableAsCandidateModule(
       enable_simultaneous_execution_as_candidate_module_);
   });
 }

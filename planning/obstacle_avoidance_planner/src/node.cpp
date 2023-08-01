@@ -75,7 +75,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   path_sub_ = create_subscription<Path>(
     "~/input/path", 1, std::bind(&ObstacleAvoidancePlanner::onPath, this, std::placeholders::_1));
   odom_sub_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, [this](const Odometry::SharedPtr msg) { ego_state_ptr_ = msg; });
+    "~/input/odometry", 1, [this](const Odometry::ConstSharedPtr msg) { ego_state_ptr_ = msg; });
 
   // debug publisher
   debug_extended_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_traj", 1);
@@ -99,6 +99,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     enable_debug_info_ = declare_parameter<bool>("option.debug.enable_debug_info");
     time_keeper_ptr_->enable_calculation_time_info =
       declare_parameter<bool>("option.debug.enable_calculation_time_info");
+
+    vehicle_stop_margin_outside_drivable_area_ =
+      declare_parameter<double>("common.vehicle_stop_margin_outside_drivable_area");
 
     // parameters for ego nearest search
     ego_nearest_param_ = EgoNearestParam(this);
@@ -149,6 +152,10 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
     parameters, "option.debug.enable_calculation_time_info",
     time_keeper_ptr_->enable_calculation_time_info);
 
+  updateParam<double>(
+    parameters, "common.vehicle_stop_margin_outside_drivable_area",
+    vehicle_stop_margin_outside_drivable_area_);
+
   // parameters for ego nearest search
   ego_nearest_param_.onParam(parameters);
 
@@ -180,11 +187,9 @@ void ObstacleAvoidancePlanner::initializePlanning()
 void ObstacleAvoidancePlanner::resetPreviousData()
 {
   mpt_optimizer_ptr_->resetPreviousData();
-
-  prev_optimized_traj_points_ptr_ = nullptr;
 }
 
-void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
+void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
 {
   time_keeper_ptr_->init();
   time_keeper_ptr_->tic(__func__);
@@ -328,26 +333,19 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
 
   // 2. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
   //    with model predictive trajectory
-  const auto mpt_traj =
-    mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, p.traj_points);
-  if (!mpt_traj) {
-    return getPrevOptimizedTrajectory(p.traj_points);
-  }
-
-  // 3. make prev trajectories
-  prev_optimized_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(*mpt_traj);
+  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data, p.traj_points);
 
   time_keeper_ptr_->toc(__func__, "    ");
-  return *mpt_traj;
+  return mpt_traj;
 }
 
 std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::getPrevOptimizedTrajectory(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  if (prev_optimized_traj_points_ptr_) {
-    return *prev_optimized_traj_points_ptr_;
+  const auto prev_optimized_traj_points = mpt_optimizer_ptr_->getPrevOptimizedTrajectoryPoints();
+  if (prev_optimized_traj_points) {
+    return *prev_optimized_traj_points;
   }
-
   return traj_points;
 }
 
@@ -406,10 +404,6 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
 {
   time_keeper_ptr_->tic(__func__);
 
-  if (!enable_outside_drivable_area_stop_) {
-    return;
-  }
-
   if (optimized_traj_points.empty()) {
     return;
   }
@@ -430,7 +424,7 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   // 3. assign zero velocity to the first point being outside the drivable area
   const auto first_outside_idx = [&]() -> std::optional<size_t> {
     for (size_t i = ego_idx; i < static_cast<size_t>(end_idx); ++i) {
-      auto & traj_point = optimized_traj_points.at(i);
+      const auto & traj_point = optimized_traj_points.at(i);
 
       // check if the footprint is outside the drivable area
       const bool is_outside = geometry_utils::isOutsideDrivableAreaFromRectangleFootprint(
@@ -438,7 +432,6 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
         use_footprint_polygon_for_outside_drivable_area_check_);
 
       if (is_outside) {
-        publishVirtualWall(traj_point.pose);
         return i;
       }
     }
@@ -446,9 +439,28 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   }();
 
   if (first_outside_idx) {
-    for (size_t i = *first_outside_idx; i < optimized_traj_points.size(); ++i) {
-      optimized_traj_points.at(i).longitudinal_velocity_mps = 0.0;
+    debug_data_ptr_->stop_pose_by_drivable_area = optimized_traj_points.at(*first_outside_idx).pose;
+    const auto stop_idx = [&]() {
+      const auto dist =
+        motion_utils::calcSignedArcLength(optimized_traj_points, 0, *first_outside_idx);
+      const auto dist_with_margin = dist - vehicle_stop_margin_outside_drivable_area_;
+      const auto first_outside_idx_with_margin =
+        motion_utils::insertTargetPoint(0, dist_with_margin, optimized_traj_points);
+      if (first_outside_idx_with_margin) {
+        return *first_outside_idx_with_margin;
+      }
+      return *first_outside_idx;
+    }();
+
+    publishVirtualWall(optimized_traj_points.at(stop_idx).pose);
+
+    if (enable_outside_drivable_area_stop_) {
+      for (size_t i = stop_idx; i < optimized_traj_points.size(); ++i) {
+        optimized_traj_points.at(i).longitudinal_velocity_mps = 0.0;
+      }
     }
+  } else {
+    debug_data_ptr_->stop_pose_by_drivable_area = std::nullopt;
   }
 
   time_keeper_ptr_->toc(__func__, "    ");
@@ -458,8 +470,12 @@ void ObstacleAvoidancePlanner::publishVirtualWall(const geometry_msgs::msg::Pose
 {
   time_keeper_ptr_->tic(__func__);
 
-  const auto virtual_wall_marker = motion_utils::createStopVirtualWallMarker(
+  auto virtual_wall_marker = motion_utils::createStopVirtualWallMarker(
     stop_pose, "outside drivable area", now(), 0, vehicle_info_.max_longitudinal_offset_m);
+  if (!enable_outside_drivable_area_stop_) {
+    virtual_wall_marker.markers.front().color =
+      tier4_autoware_utils::createMarkerColor(0.0, 1.0, 0.0, 0.5);
+  }
 
   virtual_wall_pub_->publish(virtual_wall_marker);
   time_keeper_ptr_->toc(__func__, "      ");

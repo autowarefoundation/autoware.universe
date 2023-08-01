@@ -51,11 +51,7 @@ struct PullOutStatus
   size_t current_path_idx{0};
   PlannerType planner_type{PlannerType::NONE};
   PathWithLaneId backward_path{};
-  lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_out_lanes{};
-  std::vector<DrivableLanes> lanes{};
-  std::vector<uint64_t> lane_follow_lane_ids{};
-  std::vector<uint64_t> pull_out_lane_ids{};
   bool is_safe{false};
   bool back_finished{false};
   Pose pull_out_start_pose{};
@@ -71,9 +67,9 @@ public:
     const std::shared_ptr<StartPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
-  void updateModuleParams(const std::shared_ptr<StartPlannerParameters> & parameters)
+  void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = parameters;
+    parameters_ = std::any_cast<std::shared_ptr<StartPlannerParameters>>(parameters);
   }
 
   BehaviorModuleOutput run() override;
@@ -81,7 +77,6 @@ public:
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   ModuleStatus updateState() override;
-  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -140,6 +135,8 @@ private:
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
     const std::string search_priority);
   PathWithLaneId generateStopPath() const;
+  lanelet::ConstLanelets getPathLanes(const PathWithLaneId & path) const;
+  std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,
@@ -152,8 +149,8 @@ private:
   // check if the goal is located behind the ego in the same route segment.
   bool IsGoalBehindOfEgoInSameRouteSegment() const;
 
-  // generate BehaviorPathOutput with stopping path.
-  BehaviorModuleOutput generateStopOutput() const;
+  // generate BehaviorPathOutput with stopping path and update status
+  BehaviorModuleOutput generateStopOutput();
 
   void setDebugData() const;
 };

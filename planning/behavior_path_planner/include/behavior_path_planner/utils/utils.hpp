@@ -16,12 +16,13 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_util/debug_utilities.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
+#include "behavior_path_planner/utils/safety_check.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "motion_utils/motion_utils.hpp"
-#include "perception_utils/predicted_path_utils.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -65,6 +66,11 @@ using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using behavior_path_planner::utils::safety_check::ExtendedPredictedObject;
+using behavior_path_planner::utils::safety_check::PoseWithVelocityAndPolygonStamped;
+using behavior_path_planner::utils::safety_check::PoseWithVelocityStamped;
+using behavior_path_planner::utils::safety_check::PredictedPathWithPolygon;
+using drivable_area_expansion::DrivableAreaExpansionParameters;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
@@ -224,6 +230,9 @@ boost::optional<lanelet::ConstLanelet> getLeftLanelet(
 std::vector<DrivableLanes> generateDrivableLanes(const lanelet::ConstLanelets & current_lanes);
 std::vector<DrivableLanes> generateDrivableLanesWithShoulderLanes(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & shoulder_lanes);
+std::vector<DrivableLanes> getNonOverlappingExpandedLanes(
+  PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
+  const DrivableAreaExpansionParameters & parameters);
 std::vector<geometry_msgs::msg::Point> calcBound(
   const std::shared_ptr<RouteHandler> route_handler,
   const std::vector<DrivableLanes> & drivable_lanes,
@@ -374,7 +383,7 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 
 lanelet::ConstLanelets getExtendedCurrentLanes(
   const std::shared_ptr<const PlannerData> & planner_data, const double backward_length,
-  const double forward_length);
+  const double forward_length, const bool until_goal_lane);
 
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<RouteHandler> route_handler, const geometry_msgs::msg::Pose & pose,
@@ -406,7 +415,9 @@ DrivableAreaInfo combineDrivableAreaInfo(
 void extractObstaclesFromDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableAreaInfo::Obstacle> & obstacles);
 
-void makeBoundLongitudinallyMonotonic(PathWithLaneId & path, const bool is_bound_left);
+void makeBoundLongitudinallyMonotonic(
+  PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const bool is_bound_left);
 
 std::optional<lanelet::Polygon3d> getPolygonByPoint(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstPoint3d & point,

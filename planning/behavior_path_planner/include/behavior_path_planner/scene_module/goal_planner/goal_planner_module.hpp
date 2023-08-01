@@ -92,16 +92,15 @@ public:
     const std::shared_ptr<GoalPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
-  void updateModuleParams(const std::shared_ptr<GoalPlannerParameters> & parameters)
+  void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = parameters;
+    parameters_ = std::any_cast<std::shared_ptr<GoalPlannerParameters>>(parameters);
   }
 
   BehaviorModuleOutput run() override;
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   ModuleStatus updateState() override;
-  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   void processOnEntry() override;
@@ -128,7 +127,6 @@ private:
   // goal searcher
   std::shared_ptr<GoalSearcherBase> goal_searcher_;
   std::optional<GoalCandidate> modified_goal_pose_;
-  std::optional<size_t> prev_goal_id_;
   Pose refined_goal_pose_;
   GoalCandidates goal_candidates_;
 
@@ -196,7 +194,7 @@ private:
     std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer, const double time);
   bool hasFinishedCurrentPath();
   bool hasFinishedGoalPlanner();
-  bool isOnGoal() const;
+  bool isOnModifiedGoal() const;
   double calcModuleRequestLength() const;
   void resetStatus();
   bool needPathUpdate(const double path_update_duration) const;
