@@ -75,10 +75,14 @@ repositories:
     type: git
     url: git@github.com:tier4/lidar_driver.git
     version: v0.1.4
-  vendor/velodyne_vls:
+  vendor/nebula:
     type: git
-    url: https://github.com/tier4/velodyne_vls.git
-    version: tier4/universe
+    url: https://github.com/tier4/nebula.git
+    version: main
+  vendor/transport_drivers:
+    type: git
+    url: https://github.com/MapIV/transport_drivers.git
+    version: tcp
   vendor/ndt_omp:
     type: git
     url: https://github.com/tier4/ndt_omp.git
