@@ -230,7 +230,7 @@ NDTScanMatcher::NDTScanMatcher()
     "trigger_node_srv",
     std::bind(
       &NDTScanMatcher::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
-    rclcpp::SystemDefaultsQoS(),  main_callback_group);
+    rclcpp::SystemDefaultsQoS(), main_callback_group);
 
   diagnostic_thread_ = std::thread(&NDTScanMatcher::timer_diagnostic, this);
   diagnostic_thread_.detach();
