@@ -61,24 +61,50 @@ double calcLaneChangeResampleInterval(
     lane_changing_length / min_resampling_points, lane_changing_velocity * resampling_dt);
 }
 
-double calcMaximumAcceleration(
-  const PathWithLaneId & path, const Pose & current_pose, const double current_velocity,
-  const double max_longitudinal_acc, const BehaviorPathPlannerParameters & params)
+double calcMaximumLaneChangeLength(
+  const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
+  const double max_acc)
 {
-  if (path.points.empty()) {
-    return max_longitudinal_acc;
+  if (shift_intervals.empty()) {
+    return 0.0;
   }
 
-  const double & nearest_dist_threshold = params.ego_nearest_dist_threshold;
-  const double & nearest_yaw_threshold = params.ego_nearest_yaw_threshold;
+  const double & vel = common_param.minimum_lane_changing_velocity;
+  const auto lat_acc = common_param.lane_change_lat_acc_map.find(vel);
+  const double & max_lateral_acc = lat_acc.second;
+  const double & lateral_jerk = common_param.lane_changing_lateral_jerk;
+  const double & finish_judge_buffer = common_param.lane_change_finish_judge_buffer;
+  const auto prepare_length = 0.5 * max_acc * common_param.lane_change_prepare_duration *
+                              common_param.lane_change_prepare_duration;
 
-  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
-  const double & max_path_velocity =
-    path.points.at(current_seg_idx).point.longitudinal_velocity_mps;
-  const double & prepare_duration = params.lane_change_prepare_duration;
+  double accumulated_length = 0.0;
+  for (const auto & shift_interval : shift_intervals) {
+    const double t =
+      PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
+    accumulated_length += vel * t + 0.5 * max_acc * t * t + prepare_length + finish_judge_buffer;
+  }
+  accumulated_length +=
+    common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);
 
-  const double acc = (max_path_velocity - current_velocity) / prepare_duration;
+  return accumulated_length;
+}
+
+double calcMinimumAcceleration(
+  const double current_velocity, const double min_longitudinal_acc,
+  const BehaviorPathPlannerParameters & params)
+{
+  const double min_lane_changing_velocity = params.minimum_lane_changing_velocity;
+  const double prepare_duration = params.lane_change_prepare_duration;
+  const double acc = (min_lane_changing_velocity - current_velocity) / prepare_duration;
+  return std::clamp(acc, -std::abs(min_longitudinal_acc), -std::numeric_limits<double>::epsilon());
+}
+
+double calcMaximumAcceleration(
+  const double current_velocity, const double current_max_velocity,
+  const double max_longitudinal_acc, const BehaviorPathPlannerParameters & params)
+{
+  const double prepare_duration = params.lane_change_prepare_duration;
+  const double acc = (current_max_velocity - current_velocity) / prepare_duration;
   return std::clamp(acc, 0.0, max_longitudinal_acc);
 }
 
