@@ -33,13 +33,13 @@ import yaml
 
 logger = get_logger(__name__)
 
-YAML_FILE_PATH = "test/data/projection_info_transverse_mercator.yaml"
+LANELET2_MAP_PATH = "test/data/lanelet2_map_mgrs.osm"
 
 
 @pytest.mark.launch_test
 def generate_test_description():
-    map_projection_info_path = os.path.join(
-        get_package_share_directory("map_projection_loader"), YAML_FILE_PATH
+    lanelet2_map_path = os.path.join(
+        get_package_share_directory("map_projection_loader"), LANELET2_MAP_PATH
     )
 
     map_projection_loader_node = Node(
@@ -48,8 +48,8 @@ def generate_test_description():
         output="screen",
         parameters=[
             {
-                "map_projector_info_path": map_projection_info_path,
-                "lanelet2_map_path": "",
+                "map_projector_info_path": "",
+                "lanelet2_map_path": lanelet2_map_path,
                 "use_local_projector": False,
             },
         ],
@@ -71,7 +71,7 @@ def generate_test_description():
     )
 
 
-class TestLoadTransverseMercator(unittest.TestCase):
+class TestLoadMGRS(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Initialize the ROS context for the test node
@@ -132,6 +132,7 @@ class TestLoadTransverseMercator(unittest.TestCase):
             self.received_message, "No message received on map_projector_info topic"
         )
         self.assertEqual(self.received_message.type, yaml_data["type"])
+        self.assertEqual(self.received_message.mgrs_grid, yaml_data["mgrs_grid"])
         self.assertEqual(
             self.received_message.map_origin.latitude, yaml_data["map_origin"]["latitude"]
         )

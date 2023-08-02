@@ -71,7 +71,7 @@ def generate_test_description():
     )
 
 
-class TestLoadMGRS(unittest.TestCase):
+class TestLoadMGRSFromYaml(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Initialize the ROS context for the test node

@@ -159,10 +159,11 @@ The node projects lan/lon coordinates into arbitrary coordinates defined in `/ma
 
 ### Feature
 
-lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray. There are 3 types of map can be loaded in autoware. Please make sure you selected the correct lanelet2_map_projector_type when you launch this package.
+lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray. There are four types of map can be loaded in autoware. Please make sure you selected the correct lanelet2_map_projector_type when you launch this package.
 
 - MGRS
 - UTM
+- TransverseMercator
 - local
 
 ### How to Run

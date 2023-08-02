@@ -14,11 +14,19 @@ target_link_libraries(map_projection_loader yaml-cpp)
 
 if(BUILD_TESTING)
   add_launch_test(
-    test/test_load_mgrs.test.py
+    test/test_load_mgrs_from_yaml.test.py
     TIMEOUT "30"
   )
   add_launch_test(
-    test/test_load_transverse_mercator.test.py
+    test/test_load_transverse_mercator_from_yaml.test.py
+    TIMEOUT "30"
+  )
+  # add_launch_test(
+  #   test/test_load_mgrs_from_lanelet2_map.test.py
+  #   TIMEOUT "30"
+  # )
+  add_launch_test(
+    test/test_load_local_from_lanelet2_map.test.py
     TIMEOUT "30"
   )
   install(DIRECTORY
