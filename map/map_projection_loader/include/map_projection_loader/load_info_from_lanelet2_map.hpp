@@ -31,8 +31,6 @@
 
 tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::string & filename)
 {
-  tier4_map_msgs::msg::MapProjectorInfo msg;
-
   lanelet::ErrorMessages errors{};
   lanelet::projection::MGRSProjector projector{};
   const lanelet::LaneletMapPtr map = lanelet::load(filename, projector, &errors);
@@ -40,6 +38,7 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::str
     throw std::runtime_error("Error occurred while loading lanelet2 map");
   }
 
+  tier4_map_msgs::msg::MapProjectorInfo msg;
   msg.type = "MGRS";
   msg.mgrs_grid = projector.getProjectedMGRSGrid();
   return msg;
