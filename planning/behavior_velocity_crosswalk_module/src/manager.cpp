@@ -73,13 +73,19 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   // param for pass judge logic
   cp.ego_pass_first_margin =
     node.declare_parameter<double>(ns + ".pass_judge.ego_pass_first_margin");
+  cp.ego_pass_first_additional_margin =
+    node.declare_parameter<double>(ns + ".pass_judge.ego_pass_first_additional_margin");
   cp.ego_pass_later_margin =
     node.declare_parameter<double>(ns + ".pass_judge.ego_pass_later_margin");
+  cp.ego_pass_later_additional_margin =
+    node.declare_parameter<double>(ns + ".pass_judge.ego_pass_later_additional_margin");
   cp.stop_object_velocity =
     node.declare_parameter<double>(ns + ".pass_judge.stop_object_velocity_threshold");
   cp.min_object_velocity = node.declare_parameter<double>(ns + ".pass_judge.min_object_velocity");
   cp.disable_stop_for_yield_cancel =
     node.declare_parameter<bool>(ns + ".pass_judge.disable_stop_for_yield_cancel");
+  cp.disable_yield_for_new_stopped_object =
+    node.declare_parameter<bool>(ns + ".pass_judge.disable_yield_for_new_stopped_object");
   cp.timeout_no_intention_to_walk =
     node.declare_parameter<double>(ns + ".pass_judge.timeout_no_intention_to_walk");
   cp.timeout_ego_stop_for_yield =
