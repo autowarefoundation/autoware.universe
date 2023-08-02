@@ -136,6 +136,9 @@ public:
   virtual bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory) const;
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
 
+  void resetFindGoal(){success_to_find_goal_ = false;}
+  void successToFindGoal(){success_to_find_goal_ = true;}
+
   virtual ~AbstractPlanningAlgorithm() {}
 
 protected:
@@ -185,6 +188,10 @@ protected:
 
   // result path
   PlannerWaypoints waypoints_;
+
+  // Flag for finding goal
+  bool success_to_find_goal_ = false;
+
 };
 
 }  // namespace freespace_planning_algorithms

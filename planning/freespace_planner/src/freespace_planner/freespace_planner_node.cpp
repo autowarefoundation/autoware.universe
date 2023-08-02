@@ -318,6 +318,9 @@ void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
   goal_pose_.header = msg->header;
   goal_pose_.pose = msg->goal_pose;
 
+  algo_->resetFindGoal();
+  RCLCPP_INFO(get_logger(), "----------Trajectory is reseted because of onRoute().----------");
+  
   reset();
 }
 
@@ -370,6 +373,7 @@ bool FreespacePlannerNode::isPlanRequired()
       algo_->hasObstacleOnTrajectory(trajectory2PoseArray(forward_trajectory));
     if (is_obstacle_found) {
       RCLCPP_INFO(get_logger(), "Found obstacle");
+      RCLCPP_INFO(get_logger(), "==========Planning is required because of an Obstacle.==========");
       return true;
     }
   }
@@ -423,6 +427,7 @@ void FreespacePlannerNode::onTimer()
 
   if (!isActive(scenario_)) {
     reset();
+    RCLCPP_INFO(get_logger(), "----------Trajectory is reseted because the scenario is not active.----------");
     return;
   }
 
@@ -485,6 +490,7 @@ void FreespacePlannerNode::planTrajectory()
   const auto goal_pose_in_costmap_frame = transformPose(
     goal_pose_.pose, getTransform(occupancy_grid_->header.frame_id, goal_pose_.header.frame_id));
 
+  algo_->resetFindGoal();
   // execute planning
   const rclcpp::Time start = get_clock()->now();
   const bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
@@ -493,6 +499,7 @@ void FreespacePlannerNode::planTrajectory()
   RCLCPP_INFO(get_logger(), "Freespace planning: %f [s]", (end - start).seconds());
 
   if (result) {
+    algo_->successToFindGoal();
     RCLCPP_INFO(get_logger(), "Found goal!");
     trajectory_ =
       createTrajectory(current_pose_, algo_->getWaypoints(), node_param_.waypoints_velocity);

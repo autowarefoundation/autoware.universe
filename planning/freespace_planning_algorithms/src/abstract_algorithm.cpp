@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+#include <rclcpp/rclcpp.hpp>
 #include "freespace_planning_algorithms/abstract_algorithm.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -207,14 +207,16 @@ bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) con
     return false;
   }
 
-  const auto & vertex_indexes_2d = vertex_indexes_table_[base_index.theta];
-  for (const auto & vertex_index_2d : vertex_indexes_2d) {
-    IndexXYT vertex_index{vertex_index_2d.x, vertex_index_2d.y, 0};
-    // must slide to current base position
-    vertex_index.x += base_index.x;
-    vertex_index.y += base_index.y;
-    if (isOutOfRange(vertex_index)) {
-      return true;
+  if (success_to_find_goal_ == false) {
+    const auto & vertex_indexes_2d = vertex_indexes_table_[base_index.theta];
+    for (const auto & vertex_index_2d : vertex_indexes_2d) {
+      IndexXYT vertex_index{vertex_index_2d.x, vertex_index_2d.y, 0};
+      // must slide to current base position
+      vertex_index.x += base_index.x;
+      vertex_index.y += base_index.y;
+      if (isOutOfRange(vertex_index)) {
+        return true;
+      }
     }
   }
 
@@ -226,8 +228,18 @@ bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) con
     coll_index.x += base_index.x;
     coll_index.y += base_index.y;
 
-    if (isObs(coll_index)) {
-      return true;
+    if (success_to_find_goal_ == true) {
+      if (0 <= coll_index.x && coll_index.x < costmap_.info.width &&
+          0 <= coll_index.y && coll_index.y < costmap_.info.height) {
+        if (isObs(coll_index)) {
+          return true;
+        }
+      }
+    }
+    else {
+      if (isObs(coll_index)) {
+        return true;
+      }
     }
   }
 
