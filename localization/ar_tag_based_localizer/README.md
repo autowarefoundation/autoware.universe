@@ -43,6 +43,10 @@ ros2 launch autoware_launch ... \
 
 ![node diagram](./doc_image/node_diagram.drawio.svg)
 
+## Principle
+
+![principle](./doc_image/principle.png)
+
 ## Map specifications
 
 For this package to function correctly, the pose of the AR-Tags must be specified in the LaneLet2 map format that Autoware can interpret.
