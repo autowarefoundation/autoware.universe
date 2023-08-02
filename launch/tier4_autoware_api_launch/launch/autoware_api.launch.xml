@@ -1,6 +1,6 @@
 <launch>
   <!-- AD API options -->
-  <arg name="launch_deprecated_api" default="false"/>
+  <arg name="launch_deprecated_api" default="true"/>
   <arg name="launch_default_ad_api" default="true"/>
   <arg name="launch_rviz_adaptors" default="true"/>
 
@@ -35,4 +35,22 @@
       <arg name="max_message_size" value="$(var rosbridge_max_message_size)"/>
     </include>
   </group>
+    <!-- awapi -->
+    <group>
+        <include file="$(find-pkg-share awapi_awiv_adapter)/launch/awapi_awiv_adapter.launch.xml"/>
+    </group>
+
+    <!-- autoware api adaptor -->
+    <group>
+        <push-ros-namespace namespace="autoware_api"/>
+        <include file="$(find-pkg-share autoware_iv_external_api_adaptor)/launch/external_api_adaptor.launch.py"/>
+        <include file="$(find-pkg-share autoware_iv_internal_api_adaptor)/launch/internal_api_adaptor.launch.py"/>
+        <include file="$(find-pkg-share autoware_iv_internal_api_adaptor)/launch/internal_api_relay.launch.xml"/>
+    </group>
+
+    <!-- autoware api utils -->
+    <group>
+        <push-ros-namespace namespace="autoware_api/utils"/>
+        <include file="$(find-pkg-share path_distance_calculator)/launch/path_distance_calculator.launch.xml"/>
+    </group>
 </launch>
