@@ -14,12 +14,12 @@
 
 #include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 
-#include <gmock/gmock.h>
-
-#include <fstream>
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 
+#include <gmock/gmock.h>
+
+#include <fstream>
 
 void save_dummy_lanelet2_map(const std::string & mgrs_coord, const std::string & output_path)
 {
@@ -66,4 +66,3 @@ int main(int argc, char ** argv)
   ::testing::InitGoogleMock(&argc, argv);
   return RUN_ALL_TESTS();
 }
-
