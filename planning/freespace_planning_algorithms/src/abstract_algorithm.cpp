@@ -11,9 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <rclcpp/rclcpp.hpp>
 #include "freespace_planning_algorithms/abstract_algorithm.hpp"
 
+#include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <vector>
@@ -229,14 +229,14 @@ bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) con
     coll_index.y += base_index.y;
 
     if (success_to_find_goal_ == true) {
-      if (0 <= coll_index.x && coll_index.x < costmap_.info.width &&
-          0 <= coll_index.y && coll_index.y < costmap_.info.height) {
+      if (
+        0 <= coll_index.x && coll_index.x < costmap_.info.width && 0 <= coll_index.y &&
+        coll_index.y < costmap_.info.height) {
         if (isObs(coll_index)) {
           return true;
         }
       }
-    }
-    else {
+    } else {
       if (isObs(coll_index)) {
         return true;
       }

@@ -320,7 +320,7 @@ void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 
   algo_->resetFindGoal();
   RCLCPP_INFO(get_logger(), "----------Trajectory is reseted because of onRoute().----------");
-  
+
   reset();
 }
 
@@ -427,7 +427,9 @@ void FreespacePlannerNode::onTimer()
 
   if (!isActive(scenario_)) {
     reset();
-    RCLCPP_INFO(get_logger(), "----------Trajectory is reseted because the scenario is not active.----------");
+    RCLCPP_INFO(
+      get_logger(),
+      "----------Trajectory is reseted because the scenario is not active.----------");
     return;
   }
 
