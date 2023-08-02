@@ -50,6 +50,9 @@ public:
   std::optional<Stat<double>> calculate(const Metric metric, const Trajectory & traj) const;
   std::optional<Stat<double>> calculate(
     const Metric metric, const Pose & base_pose, const Pose & target_pose) const;
+  std::optional<Stat<double>> calculate(
+    const Metric metric, const Trajectory & predicted_trajectory,
+    const Trajectory & trajectory) const;
 
   /**
    * @brief set the reference trajectory used to calculate the deviation metrics
@@ -74,12 +77,6 @@ public:
    * @param [in] traj input previous trajectory
    */
   void setEgoPose(const geometry_msgs::msg::Pose & pose);
-
-  /**
-   * @brief set the predicted trajectory
-   * @param [in] traj input predicted trajectory
-   */
-  void setPredictedTrajectory(const Trajectory & traj);
 
   /**
    * @brief get the ego pose

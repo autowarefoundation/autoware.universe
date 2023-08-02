@@ -189,15 +189,13 @@ void PlanningEvaluatorNode::onPredictedTrajectory(
   if (!traj_ptr_) {
     return;
   }
-  metrics_calculator_.setPredictedTrajectory(*predicted_trajectory_msg);
   auto start = now();
 
   DiagnosticArray metrics_msg;
   metrics_msg.header.stamp = now();
   for (Metric metric : metrics_) {
-    
-    const auto metric_stat = metrics_calculator_.calculate(
-      Metric(metric), *predicted_trajectory_msg, *traj_ptr_);
+    const auto metric_stat =
+      metrics_calculator_.calculate(Metric(metric), *predicted_trajectory_msg, *traj_ptr_);
     if (!metric_stat) {
       continue;
     }

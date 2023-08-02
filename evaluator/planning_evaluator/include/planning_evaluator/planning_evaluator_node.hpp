@@ -83,6 +83,11 @@ public:
    */
   void onModifiedGoal(const PoseWithUuidStamped::ConstSharedPtr modified_goal_msg);
 
+  /** @brief callback on receiving a previous trajectory
+   *  @param [in] predicted_trajectory_msg received predicted trajectory message
+   */
+  void onPredictedTrajectory(const Trajectory::ConstSharedPtr predicted_trajectory_msg);
+
   /**
    * @brief publish the given metric statistic
    */
@@ -99,6 +104,7 @@ private:
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
   rclcpp::Subscription<PoseWithUuidStamped>::SharedPtr modified_goal_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
+  rclcpp::Subscription<Trajectory>::SharedPtr predicted_trajectory_sub_;
 
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
