@@ -2,12 +2,12 @@
 
 ## Feature
 
-`map_projection_loader` is responsible for publishing `map_projector_info` that defines in which kind of coordinate the Autoware is operating on.
-This is a necessary information especially when you want to convert from global (geoid) to local coordinate or the other way around.
+`map_projection_loader` is responsible for publishing `map_projector_info` that defines in which kind of coordinate Autoware is operating.
+This is necessary information especially when you want to convert from global (geoid) to local coordinate or the other way around.
 
-- If `map_projector_info_path` DOES exist, this node loads it and publish the map projection information accordingly.
-- If `map_projector_info_path` does NOT exist, the node assumes that you are using `MGRS` projection type, and loads lanelet2 map instead to extract MGRS grid.
-  - **DEPRECATED WARNING: This interface that uses lanelet2 map is not recommended. Please prepare YAML file instead.**
+- If `map_projector_info_path` DOES exist, this node loads it and publishes the map projection information accordingly.
+- If `map_projector_info_path` does NOT exist, the node assumes that you are using the `MGRS` projection type, and loads the lanelet2 map instead to extract the MGRS grid.
+  - **DEPRECATED WARNING: This interface that uses the lanelet2 map is not recommended. Please prepare the YAML file instead.**
 
 ## Map projector info file specification
 
@@ -30,7 +30,7 @@ type: "Local"
 
 ### Using MGRS
 
-If you want to use MGRS, please specify MGRS grid as well.
+If you want to use MGRS, please specify the MGRS grid as well.
 
 ```yaml
 # map_projector_info.yaml
