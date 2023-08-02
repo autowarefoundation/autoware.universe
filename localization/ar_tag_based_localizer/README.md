@@ -39,6 +39,8 @@ ros2 launch autoware_launch ... \
     ...
 ```
 
+[Sample rosbag and map](https://drive.google.com/file/d/1wiCQjyjRnYbb0dg8G6mRecdSGh8tv3zR/view)
+
 ## Architecture
 
 ![node diagram](./doc_image/node_diagram.drawio.svg)
