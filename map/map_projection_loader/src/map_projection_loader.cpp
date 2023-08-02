@@ -53,7 +53,9 @@ MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
     RCLCPP_WARN(
       this->get_logger(),
       "DEPRECATED WARNING: Loading map projection info from lanelet2 map may soon be deleted. "
-      "Please use map_projector_info.yaml instead. For more info, visit https://github.com/autowarefoundation/autoware.universe/blob/main/map/map_projection_loader/README.md");
+      "Please use map_projector_info.yaml instead. For more info, visit "
+      "https://github.com/autowarefoundation/autoware.universe/blob/main/map/map_projection_loader/"
+      "README.md");
     msg = load_info_from_lanelet2_map(lanelet2_map_filename);
   }
 
