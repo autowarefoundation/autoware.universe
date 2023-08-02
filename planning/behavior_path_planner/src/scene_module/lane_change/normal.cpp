@@ -787,9 +787,8 @@ bool NormalLaneChange::getLaneChangePaths(
       }
 
       if (is_goal_in_route) {
-        const double s_current =
-          lanelet::utils::getArcCoordinates(target_lanes, getEgoPose()).length;
-        const double s_start = prepare_length + s_current;
+        const double s_start =
+          lanelet::utils::getArcCoordinates(target_lanes, lane_changing_start_pose).length;
         const double s_goal =
           lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose()).length;
         const auto num =
