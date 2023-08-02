@@ -79,12 +79,6 @@ struct AvoidanceParameters
   // computational cost for latter modules.
   double resample_interval_for_output = 3.0;
 
-  // lanelet expand length for right side to find avoidance target vehicles
-  double detection_area_right_expand_dist = 0.0;
-
-  // lanelet expand length for left side to find avoidance target vehicles
-  double detection_area_left_expand_dist = 1.0;
-
   // enable avoidance to be perform only in lane with same direction
   bool use_adjacent_lane{true};
 
@@ -539,8 +533,9 @@ using MarginDataArray = std::vector<MarginData>;
  */
 struct DebugData
 {
-  std::shared_ptr<lanelet::ConstLanelets> expanded_lanelets;
   std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
+
+  geometry_msgs::msg::Polygon detection_area;
 
   lanelet::ConstLineStrings3d bounds;
 
