@@ -117,6 +117,7 @@ private:
 
   Odometry::ConstSharedPtr ego_state_ptr_;
   PoseWithUuidStamped::ConstSharedPtr modified_goal_ptr_;
+  Trajectory::ConstSharedPtr traj_ptr_;
 };
 }  // namespace planning_diagnostics
 

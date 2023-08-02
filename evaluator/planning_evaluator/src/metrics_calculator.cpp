@@ -91,6 +91,24 @@ std::optional<Stat<double>> MetricsCalculator::calculate(
   }
 }
 
+std::optional<Stat<double>> MetricsCalculator::calculate(
+  const Metric metric, const Trajectory & predicted_trajectory, const Trajectory & trajectory) const
+{
+  // Functions to calculate trajectory metrics
+  switch (metric) {
+    case Metric::predicted_path_deviation_from_trajectory:
+      return metrics::calcLateralDistance(
+        getLookaheadTrajectory(
+          predicted_trajectory, parameters.trajectory.lookahead.max_dist_m,
+          parameters.trajectory.lookahead.max_time_s),
+        getLookaheadTrajectory(
+          trajectory, parameters.trajectory.lookahead.max_dist_m,
+          parameters.trajectory.lookahead.max_time_s));
+    default:
+      return {};
+  }
+}
+
 void MetricsCalculator::setReferenceTrajectory(const Trajectory & traj)
 {
   reference_trajectory_ = traj;

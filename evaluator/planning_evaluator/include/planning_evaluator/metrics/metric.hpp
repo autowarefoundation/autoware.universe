@@ -44,6 +44,7 @@ enum class Metric {
   modified_goal_longitudinal_deviation,
   modified_goal_lateral_deviation,
   modified_goal_yaw_deviation,
+  predicted_path_deviation_from_trajectory,
   SIZE,
 };
 
@@ -68,7 +69,8 @@ static const std::unordered_map<std::string, Metric> str_to_metric = {
   {"obstacle_ttc", Metric::obstacle_ttc},
   {"modified_goal_longitudinal_deviation", Metric::modified_goal_longitudinal_deviation},
   {"modified_goal_lateral_deviation", Metric::modified_goal_lateral_deviation},
-  {"modified_goal_yaw_deviation", Metric::modified_goal_yaw_deviation}};
+  {"modified_goal_yaw_deviation", Metric::modified_goal_yaw_deviation},
+  {"predicted_path_deviation_from_trajectory", Metric::predicted_path_deviation_from_trajectory}};
 
 static const std::unordered_map<Metric, std::string> metric_to_str = {
   {Metric::curvature, "curvature"},
@@ -88,7 +90,8 @@ static const std::unordered_map<Metric, std::string> metric_to_str = {
   {Metric::obstacle_ttc, "obstacle_ttc"},
   {Metric::modified_goal_longitudinal_deviation, "modified_goal_longitudinal_deviation"},
   {Metric::modified_goal_lateral_deviation, "modified_goal_lateral_deviation"},
-  {Metric::modified_goal_yaw_deviation, "modified_goal_yaw_deviation"}};
+  {Metric::modified_goal_yaw_deviation, "modified_goal_yaw_deviation"}
+  {Metric::predicted_path_deviation_from_trajectory, "predicted_path_deviation_from_trajectory"}};
 
 // Metrics descriptions
 static const std::unordered_map<Metric, std::string> metric_descriptions = {
@@ -109,7 +112,8 @@ static const std::unordered_map<Metric, std::string> metric_descriptions = {
   {Metric::obstacle_ttc, "Obstacle_time_to_collision[s]"},
   {Metric::modified_goal_longitudinal_deviation, "Modified_goal_longitudinal_deviation[m]"},
   {Metric::modified_goal_lateral_deviation, "Modified_goal_lateral_deviation[m]"},
-  {Metric::modified_goal_yaw_deviation, "Modified_goal_yaw_deviation[rad]"}};
+  {Metric::modified_goal_yaw_deviation, "Modified_goal_yaw_deviation[rad]"},
+  {Metric::predicted_path_deviation_from_trajectory, "Predicted_path_deviation_from_trajectory[m]"}};
 
 namespace details
 {

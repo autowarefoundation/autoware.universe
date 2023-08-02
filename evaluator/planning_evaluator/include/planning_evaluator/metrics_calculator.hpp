@@ -76,6 +76,12 @@ public:
   void setEgoPose(const geometry_msgs::msg::Pose & pose);
 
   /**
+   * @brief set the predicted trajectory
+   * @param [in] traj input predicted trajectory
+   */
+  void setPredictedTrajectory(const Trajectory & traj);
+
+  /**
    * @brief get the ego pose
    * @return ego pose
    */

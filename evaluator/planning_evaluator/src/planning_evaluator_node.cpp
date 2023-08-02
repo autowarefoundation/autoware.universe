@@ -47,6 +47,10 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
   odom_sub_ = create_subscription<Odometry>(
     "~/input/odometry", 1, std::bind(&PlanningEvaluatorNode::onOdometry, this, _1));
 
+  predicted_trajectory_sub_ = create_subscription<Trajectory>(
+    "~/input/predicted_trajectory", 1,
+    std::bind(&PlanningEvaluatorNode::onPredictedTrajectory, this, _1));
+
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
@@ -129,6 +133,7 @@ void PlanningEvaluatorNode::onTrajectory(const Trajectory::ConstSharedPtr traj_m
   if (!ego_state_ptr_) {
     return;
   }
+  traj_ptr_ = traj_msg;
 
   auto start = now();
   if (!output_file_str_.empty()) {
@@ -176,6 +181,38 @@ void PlanningEvaluatorNode::onOdometry(const Odometry::ConstSharedPtr odometry_m
   if (modified_goal_ptr_) {
     publishModifiedGoalDeviationMetrics();
   }
+}
+
+void PlanningEvaluatorNode::onPredictedTrajectory(
+  const Trajectory::ConstSharedPtr predicted_trajectory_msg)
+{
+  if (!traj_ptr_) {
+    return;
+  }
+  metrics_calculator_.setPredictedTrajectory(*predicted_trajectory_msg);
+  auto start = now();
+
+  DiagnosticArray metrics_msg;
+  metrics_msg.header.stamp = now();
+  for (Metric metric : metrics_) {
+    
+    const auto metric_stat = metrics_calculator_.calculate(
+      Metric(metric), *predicted_trajectory_msg, *traj_ptr_);
+    if (!metric_stat) {
+      continue;
+    }
+    metric_stats_[static_cast<size_t>(metric)].push_back(*metric_stat);
+    if (metric_stat->count() > 0) {
+      metrics_msg.status.push_back(generateDiagnosticStatus(metric, *metric_stat));
+    }
+  }
+  if (!metrics_msg.status.empty()) {
+    metrics_pub_->publish(metrics_msg);
+  }
+  auto runtime = (now() - start).seconds();
+  RCLCPP_DEBUG(
+    get_logger(), "Planning evaluation modified goal deviation calculation time: %2.2f ms",
+    runtime * 1e3);
 }
 
 void PlanningEvaluatorNode::publishModifiedGoalDeviationMetrics()

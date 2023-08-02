@@ -4,6 +4,7 @@
   <arg name="input/reference_trajectory" default="/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/trajectory"/>
   <arg name="input/objects" default="/perception/object_recognition/objects"/>
   <arg name="input/modified_goal" default="/planning/scenario_planning/modified_goal"/>
+  <arg name="input/predicted_trajectory" default="/control/trajectory_follower/predicted_trajectory"/>
 
   <!-- planning evaluator -->
   <group>
@@ -14,6 +15,7 @@
       <remap from="~/input/reference_trajectory" to="$(var input/reference_trajectory)"/>
       <remap from="~/input/objects" to="$(var input/objects)"/>
       <remap from="~/input/modified_goal" to="$(var input/modified_goal)"/>
+      <remap from="~/input/predicted_trajectory" to="$(var input/predicted_trajectory)"/>
       <remap from="~/metrics" to="/diagnostic/planning_evaluator/metrics"/>
     </node>
   </group>
