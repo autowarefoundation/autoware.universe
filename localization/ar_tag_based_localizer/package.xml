@@ -4,7 +4,8 @@
   <name>ar_tag_based_localizer</name>
   <version>0.0.0</version>
   <description>The ar_tag_based_localizer package</description>
-  <maintainer email="shintaro.sakoda@tier4.jp">shintarosakoda</maintainer>
+  <maintainer email="shintaro.sakoda@tier4.jp">Shintaro Sakoda</maintainer>
+  <maintainer email="masahiro.sakamoto@tier4.jp">Masahiro Sakamoto</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
