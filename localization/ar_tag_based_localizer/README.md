@@ -36,7 +36,7 @@ This package includes two nodes.
 #### Input
 
 | Name                   | Type                                         | Description      |
-| :--------------------  | :------------------------------------------- | :--------------- |
+| :--------------------- | :------------------------------------------- | :--------------- |
 | `~/input/lanelet2_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | Data of lanelet2 |
 
 #### Output
