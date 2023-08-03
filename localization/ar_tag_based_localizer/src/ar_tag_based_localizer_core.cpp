@@ -159,7 +159,7 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
 
   // for each marker, draw info and its boundaries in the image
   for (const aruco::Marker & marker : markers) {
-    tf2::Transform tf_cam_to_marker = right_to_left_ * aruco_marker_to_tf2(marker);
+    tf2::Transform tf_cam_to_marker = aruco_marker_to_tf2(marker);
 
     geometry_msgs::msg::TransformStamped tf_cam_to_marker_stamped;
     tf2::toMsg(tf_cam_to_marker, tf_cam_to_marker_stamped.transform);
@@ -203,12 +203,6 @@ void ArTagBasedLocalizer::cam_info_callback(const sensor_msgs::msg::CameraInfo &
   }
 
   cam_param_ = ros_camera_info_to_aruco_cam_params(msg, true);
-
-  // handle cartesian offset between stereo pairs
-  // see the sensor_msgs/CameraInfo documentation for details
-  right_to_left_.setIdentity();
-  right_to_left_.setOrigin(tf2::Vector3(-msg.p[3] / msg.p[0], -msg.p[7] / msg.p[5], 0.0));
-
   cam_info_received_ = true;
 }
 

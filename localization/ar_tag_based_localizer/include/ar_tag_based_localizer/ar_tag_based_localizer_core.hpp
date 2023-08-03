@@ -97,7 +97,6 @@ private:
   // Others
   aruco::MarkerDetector detector_;
   aruco::CameraParameters cam_param_;
-  tf2::Stamped<tf2::Transform> right_to_left_;
   bool cam_info_received_;
 };
 
