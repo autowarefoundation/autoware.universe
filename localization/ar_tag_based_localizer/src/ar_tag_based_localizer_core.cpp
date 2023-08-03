@@ -118,8 +118,8 @@ bool ArTagBasedLocalizer::setup()
   qos.reliable();
   qos.transient_local();
   image_pub_ = it_->advertise("~/debug/result", 1);
-  pose_pub_ =
-    this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("~/output/pose_with_covariance", qos);
+  pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    "~/output/pose_with_covariance", qos);
 
   RCLCPP_INFO(this->get_logger(), "Setup of ar_tag_based_localizer node is successful!");
   return true;
