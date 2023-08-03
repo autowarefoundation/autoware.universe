@@ -175,11 +175,11 @@ void AccelerationMeterDisplay::update(float wall_dt, float ros_dt)
   painter.setPen(QPen(label_color, static_cast<int>(2), Qt::SolidLine));
   QFont label_font = painter.font();
   font.setPixelSize(
-    std::max(static_cast<int>(static_cast<double>(w) * 0.08), 1));
+    std::max(static_cast<int>(static_cast<double>(w) * property_label_scale_->getFloat()), 1));
   font.setBold(true);
   painter.setFont(font); // Use the font as the meter panel but smaller.
   std::ostringstream label_ss;
-  label_ss << std::fixed << "Limits ±5 m/s^2"<< std::endl << "Acceleration Meter" ;
+  label_ss << std::fixed << "Acceleration Meter" ;
   painter.drawText(
     0, std::min(property_value_height_offset_->getInt(), h - 1), w,
     std::max(h - property_value_height_offset_->getInt(), 1), Qt::AlignCenter | Qt::AlignBottom, 
