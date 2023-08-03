@@ -51,7 +51,6 @@ map_origin:
   altitude: 0.0
 ```
 
-
 ## Published Topics
 
 - ~/map_projector_info (tier4_map_msgs/MapProjectorInfo) : Topic for defining map projector information
