@@ -1322,8 +1322,10 @@ boost::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> 
 }
 
 std::vector<DrivableLanes> cutOverlappedLanes(
-  PathWithLaneId & path, const std::vector<DrivableLanes> & lanes)
+  [[maybe_unused]] PathWithLaneId & path, const std::vector<DrivableLanes> & lanes)
 {
+  return lanes;
+
   const auto overlapped_lanelet_idx = getOverlappedLaneletId(lanes);
   if (!overlapped_lanelet_idx) {
     return lanes;
