@@ -466,7 +466,7 @@ void NDTScanMatcher::callback_sensor_points(
     make_float32_stamped(sensor_ros_time, ndt_result.nearest_voxel_transformation_likelihood));
   iteration_num_pub_->publish(make_int32_stamped(sensor_ros_time, ndt_result.iteration_num));
   publish_tf(sensor_ros_time, result_pose_msg);
-  publish_pose(sensor_ros_time, result_pose_msg, ndt_covarianve, is_converged);
+  publish_pose(sensor_ros_time, result_pose_msg, ndt_covariance, is_converged);
   publish_marker(sensor_ros_time, transformation_msg_array);
   publish_initial_to_result_distances(
     sensor_ros_time, result_pose_msg, interpolator.get_current_pose(), interpolator.get_old_pose(),
@@ -548,7 +548,7 @@ void NDTScanMatcher::publish_tf(
 
 void NDTScanMatcher::publish_pose(
   const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
-  const std::array<double, 36> & ndt_covarianve, const bool is_converged)
+  const std::array<double, 36> & ndt_covariance, const bool is_converged)
 {
   geometry_msgs::msg::PoseStamped result_pose_stamped_msg;
   result_pose_stamped_msg.header.stamp = sensor_ros_time;
@@ -559,7 +559,7 @@ void NDTScanMatcher::publish_pose(
   result_pose_with_cov_msg.header.stamp = sensor_ros_time;
   result_pose_with_cov_msg.header.frame_id = map_frame_;
   result_pose_with_cov_msg.pose.pose = result_pose_msg;
-  result_pose_with_cov_msg.pose.covariance = ndt_covarianve;
+  result_pose_with_cov_msg.pose.covariance = ndt_covariance;
 
   if (is_converged) {
     ndt_pose_pub_->publish(result_pose_stamped_msg);

@@ -106,7 +106,7 @@ private:
     const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg);
   void publish_pose(
     const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
-    const std::array<double, 36> & ndt_covarianve, const bool is_converged);
+    const std::array<double, 36> & ndt_covariance, const bool is_converged);
   void publish_point_cloud(
     const rclcpp::Time & sensor_ros_time, const std::string & frame_id,
     const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr);
