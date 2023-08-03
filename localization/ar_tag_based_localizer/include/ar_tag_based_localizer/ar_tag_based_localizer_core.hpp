@@ -75,7 +75,7 @@ private:
   float marker_size_{};
   std::vector<std::string> target_tag_ids_;
   std::vector<double> covariance_;
-  double range_squared_{};
+  double distance_threshold_squared_{};
   std::string camera_frame_;
 
   // tf

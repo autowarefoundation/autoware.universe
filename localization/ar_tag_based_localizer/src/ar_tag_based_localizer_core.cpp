@@ -70,7 +70,7 @@ bool ArTagBasedLocalizer::setup()
   marker_size_ = static_cast<float>(this->declare_parameter("marker_size", 0.05));
   target_tag_ids_ = this->declare_parameter<std::vector<std::string>>("target_tag_ids", {""});
   covariance_ = this->declare_parameter<std::vector<double>>("covariance", std::vector<double>());
-  range_squared_ = std::pow(this->declare_parameter<double>("range", 5.0), 2);
+  distance_threshold_squared_ = std::pow(this->declare_parameter<double>("distance_threshold"), 2);
   camera_frame_ = this->declare_parameter<std::string>("camera_frame", "camera");
   float min_marker_size = static_cast<float>(this->declare_parameter("min_marker_size", 0.02));
   std::string detection_mode = this->declare_parameter<std::string>("detection_mode", "");
@@ -224,7 +224,7 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(const geometry_msgs::msg::Po
   const double distance_squared = msg.pose.position.x * msg.pose.position.x +
                                   msg.pose.position.y * msg.pose.position.y +
                                   msg.pose.position.z * msg.pose.position.z;
-  if (range_squared_ < distance_squared) {
+  if (distance_threshold_squared_ < distance_squared) {
     return;
   }
 
