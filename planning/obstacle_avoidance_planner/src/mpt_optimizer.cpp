@@ -124,9 +124,9 @@ bool isLeft(const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Poi
 }
 
 // NOTE: Regarding boundary's sign, left is positive, and right is negative
-double calcLateralDistToBounds(
+std::pair<std::optional<size_t>, double> calcLateralDistToBounds(
   const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & bound,
-  const double additional_offset, const bool is_left_bound = true)
+  const double additional_offset, const size_t search_start_idx, const bool is_left_bound = true)
 {
   constexpr double max_lat_offset_for_left = 5.0;
   constexpr double min_lat_offset_for_left = -5.0;
@@ -138,8 +138,9 @@ double calcLateralDistToBounds(
   const auto min_lat_offset_point =
     tier4_autoware_utils::calcOffsetPose(pose, 0.0, min_lat_offset, 0.0).position;
 
+  std::optional<size_t> closest_idx{std::nullopt};
   double closest_dist_to_bound = max_lat_offset;
-  for (size_t i = 0; i < bound.size() - 1; ++i) {
+  for (size_t i = search_start_idx; i < bound.size() - 1; ++i) {
     const auto intersect_point = tier4_autoware_utils::intersect(
       min_lat_offset_point, max_lat_offset_point, bound.at(i), bound.at(i + 1));
     if (intersect_point) {
@@ -152,12 +153,17 @@ double calcLateralDistToBounds(
       const double tmp_dist_to_bound =
         is_left_bound ? dist_to_bound - additional_offset : dist_to_bound + additional_offset;
       if (std::abs(tmp_dist_to_bound) < std::abs(closest_dist_to_bound)) {
+        closest_idx = i;
         closest_dist_to_bound = tmp_dist_to_bound;
+      }
+    } else {
+      if (closest_idx) {
+        break;
       }
     }
   }
 
-  return closest_dist_to_bound;
+  return std::make_pair(closest_idx, closest_dist_to_bound);
 }
 }  // namespace
 
@@ -793,13 +799,27 @@ void MPTOptimizer::updateBounds(
   //       bound, some beginning bounds are copied from the following one.
   const size_t min_ref_point_index = std::min(
     static_cast<size_t>(std::ceil(1.0 / mpt_param_.delta_arc_length)), ref_points.size() - 1);
+  size_t left_bound_search_start_idx{0};
+  size_t right_bound_search_start_idx{0};
   for (size_t i = 0; i < ref_points.size(); ++i) {
     const auto ref_point_for_bound_search = ref_points.at(std::max(min_ref_point_index, i));
-    const double dist_to_left_bound = calcLateralDistToBounds(
-      ref_point_for_bound_search.pose, left_bound, soft_road_clearance, true);
-    const double dist_to_right_bound = calcLateralDistToBounds(
-      ref_point_for_bound_search.pose, right_bound, soft_road_clearance, false);
+    const auto [opt_left_bound_search_start_idx, dist_to_left_bound] = calcLateralDistToBounds(
+      ref_point_for_bound_search.pose, left_bound, soft_road_clearance, left_bound_search_start_idx,
+      true);
+    const auto [opt_right_bound_search_start_idx, dist_to_right_bound] = calcLateralDistToBounds(
+      ref_point_for_bound_search.pose, right_bound, soft_road_clearance,
+      right_bound_search_start_idx, false);
+
+    // update bounds
     ref_points.at(i).bounds = Bounds{dist_to_right_bound, dist_to_left_bound};
+
+    // update search index
+    if (opt_left_bound_search_start_idx) {
+      left_bound_search_start_idx = *opt_left_bound_search_start_idx;
+    }
+    if (opt_right_bound_search_start_idx) {
+      right_bound_search_start_idx = *opt_right_bound_search_start_idx;
+    }
   }
 
   // keep vehicle width + margin
