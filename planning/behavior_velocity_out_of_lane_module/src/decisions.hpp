@@ -82,7 +82,7 @@ std::optional<std::pair<double, double>> object_time_to_range(
 /// @param [in] range_times times when ego and the object enter/exit the range
 /// @param [in] params parameters
 /// @param [in] logger ros logger
-bool object_is_incoming(
+bool will_collide_on_range(
   const RangeTimes & range_times, const PlannerParam & params, const rclcpp::Logger & logger);
 /// @brief check whether we should avoid entering the given range
 /// @param [in] range the range to check
