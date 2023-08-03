@@ -79,7 +79,6 @@ This plugin provides a visual and easy-to-understand display of vehicle speed, t
 | `property_label_scale_`          | float  | 0.08                 | Label text scale                             |
 | `property_emergency_threshold_`  | float  | 2.0                  | Acceleration threshold for emergency [m/s^2] |
 
-
 ## Assumptions / Known limits
 
 TBD.

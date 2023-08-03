@@ -35,7 +35,8 @@ AccelerationMeterDisplay::AccelerationMeterDisplay()
   property_normal_text_color_ = new rviz_common::properties::ColorProperty(
     "Text Color", QColor(25, 255, 240), "text color", this, SLOT(updateVisualization()), this);
   property_emergency_text_color_ = new rviz_common::properties::ColorProperty(
-    "Emergency Color", QColor(255, 80, 80), "emergency text color", this, SLOT(updateVisualization()), this);
+    "Emergency Color", QColor(255, 80, 80), "emergency text color", this,
+    SLOT(updateVisualization()), this);
   property_left_ = new rviz_common::properties::IntProperty(
     "Left", left, "Left of the plotter window", this, SLOT(updateVisualization()), this);
   property_left_->setMin(0);
@@ -50,7 +51,8 @@ AccelerationMeterDisplay::AccelerationMeterDisplay()
     "Value height offset", 0, "Height offset of the plotter window", this,
     SLOT(updateVisualization()));
   property_emergency_threshold_ = new rviz_common::properties::FloatProperty(
-    "Emergency Threshold", 2.0, "Emergency Threshold for acceleration", this, SLOT(updateVisualization()), this);
+    "Emergency Threshold", 2.0, "Emergency Threshold for acceleration", this,
+    SLOT(updateVisualization()), this);
   property_value_scale_ = new rviz_common::properties::FloatProperty(
     "Value Scale", 1.0 / 6.667, "Value scale", this, SLOT(updateVisualization()), this);
   property_value_scale_->setMin(0.01);
@@ -149,7 +151,10 @@ void AccelerationMeterDisplay::update(float wall_dt, float ros_dt)
 
   // text
   QColor text_color;
-  if (std::abs(acceleration_x) > property_emergency_threshold_->getFloat()) { // Write in Red if acceleration is over emergency threshold.
+  if (std::abs(acceleration_x) > property_emergency_threshold_->getFloat()) {  // Write in Red if
+                                                                               // acceleration is
+                                                                               // over emergency
+                                                                               // threshold.
     text_color = property_emergency_text_color_->getColor();
   } else {
     text_color = property_normal_text_color_->getColor();
@@ -163,7 +168,7 @@ void AccelerationMeterDisplay::update(float wall_dt, float ros_dt)
   painter.setFont(font);
   std::ostringstream acceleration_ss;
   // Write acceleration in m/s^2 for debugging usage.
-  acceleration_ss << std::fixed << std::setprecision(2) << acceleration_x << "m/s^2"; 
+  acceleration_ss << std::fixed << std::setprecision(2) << acceleration_x << "m/s^2";
   painter.drawText(
     0, std::min(property_value_height_offset_->getInt(), h - 1), w,
     std::max(h - property_value_height_offset_->getInt(), 1), Qt::AlignCenter | Qt::AlignVCenter,
@@ -177,13 +182,13 @@ void AccelerationMeterDisplay::update(float wall_dt, float ros_dt)
   font.setPixelSize(
     std::max(static_cast<int>(static_cast<double>(w) * property_label_scale_->getFloat()), 1));
   font.setBold(true);
-  painter.setFont(font); // Use the font as the meter panel but smaller.
+  painter.setFont(font);  // Use the font as the meter panel but smaller.
   std::ostringstream label_ss;
-  label_ss << std::fixed << "Acceleration Meter" ;
+  label_ss << std::fixed << "Acceleration Meter";
   painter.drawText(
     0, std::min(property_value_height_offset_->getInt(), h - 1), w,
-    std::max(h - property_value_height_offset_->getInt(), 1), Qt::AlignCenter | Qt::AlignBottom, 
-    label_ss.str().c_str()); // Aligned to the bottom of the meter panel.
+    std::max(h - property_value_height_offset_->getInt(), 1), Qt::AlignCenter | Qt::AlignBottom,
+    label_ss.str().c_str());  // Aligned to the bottom of the meter panel.
 
   painter.end();
   updateVisualization();

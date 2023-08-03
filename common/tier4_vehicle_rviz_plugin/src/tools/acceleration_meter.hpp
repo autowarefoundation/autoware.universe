@@ -93,4 +93,4 @@ private:
 
 }  // namespace rviz_plugins
 
-#endif  // TOOLS__CONSOLE_METER_HPP_
+#endif  // TOOLS__ACCELERATION_METER_HPP_
