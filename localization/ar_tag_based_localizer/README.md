@@ -4,7 +4,7 @@
 
 <img src="./doc_image/ar_tag_image.png" width="320px">
 
-This package uses [the Aruco library](https://index.ros.org/p/aruco/) to detect AR-Tags from camera images and calculates and publishes the pose of the ego vehicle based on these detections.
+This package uses [the ArUco library](https://index.ros.org/p/aruco/) to detect AR-Tags from camera images and calculates and publishes the pose of the ego vehicle based on these detections.
 The positions and orientations of the ArTags are assumed to be written in the LaneLet2 format.
 
 This package includes two nodes.
