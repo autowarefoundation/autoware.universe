@@ -28,10 +28,6 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string & fi
   msg.type = data["type"].as<std::string>();
   if (msg.type == "MGRS") {
     msg.mgrs_grid = data["mgrs_grid"].as<std::string>();
-  } else if (msg.type == "TransverseMercator") {
-    msg.map_origin.latitude = data["map_origin"]["latitude"].as<double>();
-    msg.map_origin.longitude = data["map_origin"]["longitude"].as<double>();
-    msg.map_origin.altitude = data["map_origin"]["altitude"].as<double>();
   }
   return msg;
 }

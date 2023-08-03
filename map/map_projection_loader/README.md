@@ -51,18 +51,6 @@ map_origin:
   altitude: 0.0
 ```
 
-### Using Transverse Mercator
-
-If you want to use Transverse Mercator projection, please specify the map origin as well.
-
-```yaml
-# map_projector_info.yaml
-type: "TransverseMercator"
-map_origin:
-  latitude: 36.1148
-  longitude: 137.9532
-  altitude: 0.0
-```
 
 ## Published Topics
 

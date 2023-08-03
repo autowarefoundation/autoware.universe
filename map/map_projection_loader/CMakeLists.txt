@@ -34,7 +34,7 @@ if(BUILD_TESTING)
     TIMEOUT "30"
   )
   add_launch_test(
-    test/test_node_load_transverse_mercator_from_yaml.test.py
+    test/test_node_load_local_from_yaml.test.py
     TIMEOUT "30"
   )
   install(DIRECTORY

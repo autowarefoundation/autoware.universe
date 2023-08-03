@@ -33,7 +33,7 @@ import yaml
 
 logger = get_logger(__name__)
 
-YAML_FILE_PATH = "test/data/projection_info_transverse_mercator.yaml"
+YAML_FILE_PATH = "test/data/projection_info_local.yaml"
 
 
 @pytest.mark.launch_test
@@ -71,7 +71,7 @@ def generate_test_description():
     )
 
 
-class TestLoadTransverseMercatorFromYaml(unittest.TestCase):
+class TestLoadLocalFromYaml(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Initialize the ROS context for the test node
@@ -132,15 +132,6 @@ class TestLoadTransverseMercatorFromYaml(unittest.TestCase):
             self.received_message, "No message received on map_projector_info topic"
         )
         self.assertEqual(self.received_message.type, yaml_data["type"])
-        self.assertEqual(
-            self.received_message.map_origin.latitude, yaml_data["map_origin"]["latitude"]
-        )
-        self.assertEqual(
-            self.received_message.map_origin.longitude, yaml_data["map_origin"]["longitude"]
-        )
-        self.assertEqual(
-            self.received_message.map_origin.altitude, yaml_data["map_origin"]["altitude"]
-        )
 
         self.test_node.destroy_subscription(subscription)
 
