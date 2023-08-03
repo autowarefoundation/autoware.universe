@@ -176,7 +176,7 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
   }
 
   // draw a 3d cube in each marker if there is 3d info
-  if (cam_param_.isValid() && marker_size_ != -1) {
+  if (cam_param_.isValid()) {
     for (aruco::Marker & marker : markers) {
       aruco::CvDrawingUtils::draw3dAxis(in_image, marker, cam_param_);
     }
