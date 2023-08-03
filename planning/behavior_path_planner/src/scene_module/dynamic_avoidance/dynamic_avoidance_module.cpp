@@ -227,7 +227,7 @@ bool DynamicAvoidanceModule::isExecutionReady() const
 
 void DynamicAvoidanceModule::updateData()
 {
-  // calculate target objects candidate
+  // calculate target objects
   updateTargetObjects();
 
   target_objects_ = target_objects_manager_.getValidObjects();
@@ -327,7 +327,7 @@ void DynamicAvoidanceModule::updateTargetObjects()
   const auto prev_module_path = getPreviousModuleOutput().path;
   const auto & predicted_objects = planner_data_->dynamic_object->objects;
 
-  target_objects_manager_.decreaseAllCounters();
+  target_objects_manager_.initialize();
   for (const auto & predicted_object : predicted_objects) {
     const auto obj_uuid = tier4_autoware_utils::toHexString(predicted_object.object_id);
     const auto & obj_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
@@ -395,7 +395,7 @@ void DynamicAvoidanceModule::updateTargetObjects()
     const auto lat_lon_offset =
       getLateralLongitudinalOffset(prev_module_path->points, predicted_object);
 
-    // 6. check if object will not cut in or cut out
+    // 7. check if object will not cut in or cut out
     const bool will_object_cut_in =
       willObjectCutIn(prev_module_path->points, obj_path, obj_tangent_vel, lat_lon_offset);
     const bool will_object_cut_out =
@@ -413,7 +413,7 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // 7. check if time to collision
+    // 8. check if time to collision
     const double time_to_collision =
       calcTimeToCollision(prev_module_path->points, obj_pose, obj_tangent_vel);
     if (
@@ -428,31 +428,19 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // calculate which side object will be against ego's path
+    // 9. calculate which side object will be against ego's path
     const auto future_obj_pose =
       object_recognition_utils::calcInterpolatedPose(obj_path, time_to_collision);
     const bool is_collision_left = future_obj_pose
                                      ? isLeft(prev_module_path->points, future_obj_pose->position)
                                      : is_object_left;
 
-    /*
-    // 8. calculate alive counter for filtering objects
-    const auto prev_target_object_candidate =
-      DynamicAvoidanceObjectCandidate::getObjectFromUuid(prev_target_objects_candidate_, obj_uuid);
-    const int alive_counter =
-      prev_target_object_candidate
-        ? std::min(
-            parameters_->successive_num_to_entry_dynamic_avoidance_condition,
-            prev_target_object_candidate->alive_counter + 1)
-        : 0;
-    */
-
     const auto target_object = DynamicAvoidanceObject(
       predicted_object, obj_tangent_vel, obj_normal_vel, is_collision_left, time_to_collision);
 
-    target_objects_manager_.addObject(obj_uuid, target_object, 2);
+    target_objects_manager_.updateObject(obj_uuid, target_object);
   }
-  target_objects_manager_.removeOutOfCounter();
+  target_objects_manager_.finalize();
 }
 
 [[maybe_unused]] std::optional<std::pair<size_t, size_t>>

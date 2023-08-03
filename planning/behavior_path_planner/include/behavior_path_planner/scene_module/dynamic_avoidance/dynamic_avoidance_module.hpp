@@ -109,24 +109,6 @@ public:
 
   struct TargetObjectsManager
   {
-    // void resetCurrentUuids() {current_uuids_.clear(); }
-    // void addCurrentUuid(const std::string & uuid) { current_uuids_.push_back(uuid); }
-    // void removeCounterUnlessUpdated()
-    // {
-    //   std::vector<std::string> obsolete_uuids;
-    //   for (const auto & key_and_value : counter_map_) {
-    //     if (
-    //       std::find(current_uuids_.begin(), current_uuids_.end(), key_and_value.first) ==
-    //       current_uuids_.end()) {
-    //       obsolete_uuids.push_back(key_and_value.first);
-    //     }
-    //   }
-    //   for (const auto & obsolete_uuid : obsolete_uuids) {
-    //     counter_map_.erase(obsolete_uuid);
-    //     object_map_.erase(obsolete_uuid);
-    //   }
-    // }
-
     TargetObjectsManager(const int arg_max_count, const int arg_min_count)
     : max_count_(arg_max_count), min_count_(arg_min_count)
     {
@@ -134,33 +116,8 @@ public:
     int max_count_;
     int min_count_;
 
-    void increaseCounter(const std::string & uuid, const int times = 1)
-    {
-      for ([[maybe_unused]] int i = 0; i < times; ++i) {
-        if (counter_map_.count(uuid) != 0) {
-          counter_map_.at(uuid) = std::min(max_count_ + 1, std::max(1, counter_map_.at(uuid) + 1));
-        } else {
-          counter_map_.emplace(uuid, 1);
-        }
-      }
-    }
-    void decreaseCounter(const std::string & uuid)
-    {
-      if (counter_map_.count(uuid) != 0) {
-        counter_map_.at(uuid) = std::max(min_count_, std::min(-1, counter_map_.at(uuid) - 1));
-      } else {
-        counter_map_.emplace(uuid, -1);
-      }
-    }
-    void decreaseAllCounters()
-    {
-      for (const auto & key_and_value : counter_map_) {
-        decreaseCounter(key_and_value.first);
-      }
-    }
-
-    void addObject(
-      const std::string & uuid, const DynamicAvoidanceObject & object, const int increase_times = 1)
+    void initialize() { current_uuids_.clear(); }
+    void updateObject(const std::string & uuid, const DynamicAvoidanceObject & object)
     {
       // add/update object
       if (object_map_.count(uuid) != 0) {
@@ -169,16 +126,41 @@ public:
         object_map_.emplace(uuid, object);
       }
 
-      // add/update counter
-      increaseCounter(uuid, increase_times);
+      // increase counter
+      if (counter_map_.count(uuid) != 0) {
+        counter_map_.at(uuid) = std::min(max_count_ + 1, std::max(1, counter_map_.at(uuid) + 1));
+      } else {
+        counter_map_.emplace(uuid, 1);
+      }
+
+      // memorize uuid
+      current_uuids_.push_back(uuid);
     }
 
-    void removeOutOfCounter()
+    void finalize()
     {
+      // decrease counter for not updated uuids
+      std::vector<std::string> not_updated_uuids;
+      for (const auto & object : object_map_) {
+        if (
+          std::find(current_uuids_.begin(), current_uuids_.end(), object.first) ==
+          current_uuids_.end()) {
+          not_updated_uuids.push_back(object.first);
+        }
+      }
+      for (const auto & uuid : not_updated_uuids) {
+        if (counter_map_.count(uuid) != 0) {
+          counter_map_.at(uuid) = std::max(min_count_ - 1, std::min(-1, counter_map_.at(uuid) - 1));
+        } else {
+          counter_map_.emplace(uuid, -1);
+        }
+      }
+
+      // remove objects whose counter is lower than threshold
       std::vector<std::string> obsolete_uuids;
-      for (const auto & key_and_value : counter_map_) {
-        if (key_and_value.second < min_count_) {
-          obsolete_uuids.push_back(key_and_value.first);
+      for (const auto & counter : counter_map_) {
+        if (counter.second < min_count_) {
+          obsolete_uuids.push_back(counter.first);
         }
       }
       for (const auto & obsolete_uuid : obsolete_uuids) {
@@ -186,40 +168,24 @@ public:
         object_map_.erase(obsolete_uuid);
       }
     }
-    std::vector<DynamicAvoidanceObject> getValidObjects()
+    std::vector<DynamicAvoidanceObject> getValidObjects() const
     {
       std::vector<DynamicAvoidanceObject> objects;
       for (const auto & object : object_map_) {
-        objects.push_back(object.second);
+        if (counter_map_.count(object.first) != 0) {
+          if (max_count_ <= counter_map_.at(object.first)) {
+            objects.push_back(object.second);
+          }
+        }
       }
       return objects;
     }
 
+    std::vector<std::string> current_uuids_;
     // NOTE: positive is for meeting entrying condition, and negative is for exiting.
     std::unordered_map<std::string, int> counter_map_;
     std::unordered_map<std::string, DynamicAvoidanceObject> object_map_;
   };
-
-  /*
-  struct DynamicAvoidanceObjectCandidate
-  {
-    DynamicAvoidanceObject object;
-    int alive_counter;
-
-    static std::optional<DynamicAvoidanceObjectCandidate> getObjectFromUuid(
-      const std::vector<DynamicAvoidanceObjectCandidate> & objects, const std::string & target_uuid)
-    {
-      const auto itr = std::find_if(objects.begin(), objects.end(), [&](const auto & object) {
-        return object.object.uuid == target_uuid;
-      });
-
-      if (itr == objects.end()) {
-        return std::nullopt;
-      }
-      return *itr;
-    }
-  };
-  */
 
   DynamicAvoidanceModule(
     const std::string & name, rclcpp::Node & node,
