@@ -41,6 +41,16 @@ ros2 launch autoware_launch ... \
 
 [Sample rosbag and map](https://drive.google.com/file/d/1wiCQjyjRnYbb0dg8G6mRecdSGh8tv3zR/view)
 
+This dataset contains issues such as missing IMU data, and overall the accuracy is low. Even when running AR tag-based self-localization, significant difference from the true trajectory can be observed.
+
+The image below shows the trajectory when the sample is executed and plotted.
+
+![sample_result](./doc_image/sample_result.png)
+
+The pull request video below should also be helpful.
+
+<https://github.com/autowarefoundation/autoware.universe/pull/4347#issuecomment-1663155248>
+
 ## Architecture
 
 ![node diagram](./doc_image/node_diagram.drawio.svg)
