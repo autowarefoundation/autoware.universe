@@ -4,7 +4,7 @@
   <arg name="input/reference_trajectory" default="/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/trajectory"/>
   <arg name="input/objects" default="/perception/object_recognition/objects"/>
   <arg name="input/modified_goal" default="/planning/scenario_planning/modified_goal"/>
-  <arg name="input/predicted_trajectory" default="/control/trajectory_follower/predicted_trajectory"/>
+  <arg name="input/predicted_trajectory" default="/control/trajectory_follower/lateral/predicted_trajectory"/>
 
   <!-- planning evaluator -->
   <group>
