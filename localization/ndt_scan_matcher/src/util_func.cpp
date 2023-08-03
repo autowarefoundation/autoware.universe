@@ -18,6 +18,19 @@
 
 static std::random_device seed_gen;
 
+void create_offset_array(
+  const std::vector<double> & x, const std::vector<double> & y,
+  std::vector<Eigen::Vector2d> & offset_array)
+{
+  int size = x.size();
+  offset_array.resize(size);
+  if (x.size() == y.size())
+    for (int i = 0; i < size; i++) {
+      offset_array[i].x() = x[i];
+      offset_array[i].y() = y[i];
+    }
+}
+
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
 std_msgs::msg::ColorRGBA exchange_color_crc(double x)
 {

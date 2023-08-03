@@ -35,6 +35,10 @@
 #include <random>
 #include <vector>
 
+void create_offset_array(
+  const std::vector<double> & x, const std::vector<double> & y,
+  std::vector<Eigen::Vector2d> & offset_array);
+
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
 std_msgs::msg::ColorRGBA exchange_color_crc(double x);
 

@@ -47,6 +47,10 @@
     num_threads: 4
 
     # The covariance of output pose
+    use_covariance_estimation: false
+    offset_array_x: [0.0,0.0,0.5,-0.5,1.0,-1.0]
+    offset_array_y: [0.5,-0.5,0.0,0.0,0.0,0.0]
+
     # Do note that this covariance matrix is empirically derived
     output_pose_covariance:
       [
