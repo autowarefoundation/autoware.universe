@@ -14,20 +14,36 @@ This package includes two nodes.
 
 ## Inputs / Outputs
 
-### Input
+### `ar_tag_based_localizer` node
+
+#### Input
 
 | Name                  | Type                           | Description  |
 | :-------------------- | :----------------------------- | :----------- |
 | `~/input/image`       | `sensor_msgs::msg::Image`      | Camera Image |
 | `~/input/camera_info` | `sensor_msgs::msg::CameraInfo` | Camera Info  |
 
-### Output
+#### Output
 
 | Name                            | Type                                            | Description                                                                               |
 | :------------------------------ | :---------------------------------------------- | :---------------------------------------------------------------------------------------- |
 | `~/output/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Estimated Pose                                                                            |
 | `~/debug/result`                | `sensor_msgs::msg::Image`                       | [debug topic] Image in which marker detection results are superimposed on the input image |
 | `tf`                            | `geometry_msgs::msg::TransformStamped`          | [debug topic] TF from camera to detected tag                                              |
+
+### `tag_tf_caster` node
+
+#### Input
+
+| Name                   | Type                                         | Description      |
+| :--------------------  | :------------------------------------------- | :--------------- |
+| `~/input/lanelet2_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | Data of lanelet2 |
+
+#### Output
+
+| Name        | Type                                   | Description        |
+| :---------- | :------------------------------------- | :----------------- |
+| `tf_static` | `geometry_msgs::msg::TransformStamped` | TF from map to tag |
 
 ## How to launch
 
