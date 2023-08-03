@@ -16,6 +16,7 @@
 #include <lidar_apollo_segmentation_tvm/feature_map.hpp>
 #include <lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
 #include <tvm_utility/pipeline.hpp>
+#include <tier4_autoware_utils/transform/transforms.hpp>
 
 #include <memory>
 #include <string>
