@@ -401,7 +401,7 @@ void DynamicAvoidanceModule::updateTargetObjects()
     const bool will_object_cut_in =
       willObjectCutIn(prev_module_path->points, obj_path, obj_tangent_vel, lat_lon_offset);
     const bool will_object_cut_out =
-      willObjectCutOut(obj_tangent_vel, obj_normal_vel, is_object_left);
+      willObjectCutOut(obj_tangent_vel, obj_normal_vel, is_object_left, prev_object);
     if (will_object_cut_in) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
@@ -452,9 +452,21 @@ void DynamicAvoidanceModule::updateTargetObjects()
     const auto lat_offset_to_avoid = calcMinMaxLateralOffsetToAvoid(
       *path_points_for_object_polygon, obj_points, is_collision_left, prev_object);
 
+    const auto latest_time_inside_ego_path = [&]() -> std::optional<rclcpp::Time> {
+      if (!prev_object || !prev_object->latest_time_inside_ego_path) {
+        if (is_object_on_ego_path) {
+          return clock_->now();
+        }
+        return std::nullopt;
+      }
+      if (is_object_on_ego_path) {
+        return clock_->now();
+      }
+      return *prev_object->latest_time_inside_ego_path;
+    }();
     const auto target_object = DynamicAvoidanceObject(
       predicted_object, obj_tangent_vel, obj_normal_vel, is_collision_left, time_to_collision,
-      lon_offset_to_avoid, lat_offset_to_avoid);
+      lon_offset_to_avoid, lat_offset_to_avoid, latest_time_inside_ego_path);
 
     target_objects_manager_.updateObject(obj_uuid, target_object);
   }
@@ -582,20 +594,28 @@ bool DynamicAvoidanceModule::willObjectCutIn(
 }
 
 bool DynamicAvoidanceModule::willObjectCutOut(
-  const double obj_tangent_vel, const double obj_normal_vel, const bool is_collision_left) const
+  const double obj_tangent_vel, const double obj_normal_vel, const bool is_collision_left,
+  const std::optional<DynamicAvoidanceObject> & prev_object) const
 {
   // Ignore oncoming object
   if (obj_tangent_vel < 0) {
     return false;
   }
 
-  constexpr double object_lat_vel_thresh = 0.3;
+  if (prev_object && prev_object->latest_time_inside_ego_path) {
+    if (
+      parameters_->max_time_from_outside_ego_path_for_cut_out <
+      (clock_->now() - *prev_object->latest_time_inside_ego_path).seconds()) {
+      return false;
+    }
+  }
+
   if (is_collision_left) {
-    if (object_lat_vel_thresh < obj_normal_vel) {
+    if (parameters_->min_cut_out_object_lat_vel < obj_normal_vel) {
       return true;
     }
   } else {
-    if (obj_normal_vel < -object_lat_vel_thresh) {
+    if (obj_normal_vel < -parameters_->min_cut_out_object_lat_vel) {
       return true;
     }
   }

@@ -64,6 +64,8 @@ struct DynamicAvoidanceParameters
 
   double min_time_to_start_cut_in{0.0};
   double min_lon_offset_ego_to_cut_in_object{0.0};
+  double max_time_from_outside_ego_path_for_cut_out{0.0};
+  double min_cut_out_object_lat_vel{0.0};
   double max_front_object_angle{0.0};
   double min_crossing_object_vel{0.0};
   double max_crossing_object_angle{0.0};
@@ -90,7 +92,8 @@ public:
     DynamicAvoidanceObject(
       const PredictedObject & predicted_object, const double arg_vel, const double arg_lat_vel,
       const bool arg_is_collision_left, const double arg_time_to_collision,
-      const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid)
+      const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid,
+      const std::optional<rclcpp::Time> & arg_latest_time_inside_ego_path)
     : uuid(tier4_autoware_utils::toHexString(predicted_object.object_id)),
       pose(predicted_object.kinematics.initial_pose_with_covariance.pose),
       shape(predicted_object.shape),
@@ -99,7 +102,8 @@ public:
       is_collision_left(arg_is_collision_left),
       time_to_collision(arg_time_to_collision),
       lon_offset_to_avoid(arg_lon_offset_to_avoid),
-      lat_offset_to_avoid(arg_lat_offset_to_avoid)
+      lat_offset_to_avoid(arg_lat_offset_to_avoid),
+      latest_time_inside_ego_path(arg_latest_time_inside_ego_path)
     {
       for (const auto & path : predicted_object.kinematics.predicted_paths) {
         predicted_paths.push_back(path);
@@ -115,6 +119,7 @@ public:
     double time_to_collision;
     MinMaxValue lon_offset_to_avoid;
     MinMaxValue lat_offset_to_avoid;
+    std::optional<rclcpp::Time> latest_time_inside_ego_path{std::nullopt};
     std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths{};
   };
 
@@ -251,7 +256,8 @@ private:
     const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & predicted_path,
     const double obj_tangent_vel, const LatLonOffset & lat_lon_offset) const;
   bool willObjectCutOut(
-    const double obj_tangent_vel, const double obj_normal_vel, const bool is_collision_left) const;
+    const double obj_tangent_vel, const double obj_normal_vel, const bool is_collision_left,
+    const std::optional<DynamicAvoidanceObject> & prev_object) const;
   bool isObjectFarFromPath(
     const PredictedObject & predicted_object, const double obj_dist_to_path) const;
   double calcTimeToCollision(
