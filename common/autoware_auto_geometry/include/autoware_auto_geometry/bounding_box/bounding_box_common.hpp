@@ -67,7 +67,7 @@ void compute_height(const IT begin, const IT end, BoundingBox & box)
   for (auto & corner : box.corners) {
     corner.z = box.centroid.z;
   }
-  box.size.z = (max_z - min_z) * 0.5F;
+  box.size.z = (max_z - min_z);
 }
 
 /// \brief Computes height of bounding box given a full list of points
