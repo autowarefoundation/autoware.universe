@@ -16,18 +16,18 @@ This package includes two nodes.
 
 ### Input
 
-| Name          | Type                           | Description  |
-| :------------ | :----------------------------- | :----------- |
-| `image`       | `sensor_msgs::msg::Image`      | Camera Image |
-| `camera_info` | `sensor_msgs::msg::CameraInfo` | Camera Info  |
+| Name                  | Type                           | Description  |
+| :-------------------- | :----------------------------- | :----------- |
+| `~/input/image`       | `sensor_msgs::msg::Image`      | Camera Image |
+| `~/input/camera_info` | `sensor_msgs::msg::CameraInfo` | Camera Info  |
 
 ### Output
 
-| Name                   | Type                                            | Description                                                                               |
-| :--------------------- | :---------------------------------------------- | :---------------------------------------------------------------------------------------- |
-| `pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Estimated Pose                                                                            |
-| `result`               | `sensor_msgs::msg::Image`                       | [debug topic] Image in which marker detection results are superimposed on the input image |
-| `tf`                   | `geometry_msgs::msg::TransformStamped`          | [debug topic] TF from camera to detected tag                                              |
+| Name                            | Type                                            | Description                                                                               |
+| :------------------------------ | :---------------------------------------------- | :---------------------------------------------------------------------------------------- |
+| `~/output/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Estimated Pose                                                                            |
+| `~/debug/result`                | `sensor_msgs::msg::Image`                       | [debug topic] Image in which marker detection results are superimposed on the input image |
+| `tf`                            | `geometry_msgs::msg::TransformStamped`          | [debug topic] TF from camera to detected tag                                              |
 
 ## How to launch
 
