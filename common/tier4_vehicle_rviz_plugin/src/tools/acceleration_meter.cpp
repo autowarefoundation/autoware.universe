@@ -73,7 +73,7 @@ void AccelerationMeterDisplay::onInitialize()
   RTDClass::onInitialize();
   static int count = 0;
   rviz_common::UniformStringStream ss;
-  ss << "AcclerationMeterDisplayObject" << count++;
+  ss << "AccelerationMeterDisplayObject" << count++;
   overlay_.reset(new jsk_rviz_plugins::OverlayObject(ss.str()));
 
   overlay_->show();
