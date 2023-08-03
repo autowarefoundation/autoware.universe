@@ -67,20 +67,23 @@ bool ArTagBasedLocalizer::setup()
   /*
     Declare node parameters
   */
-  marker_size_ = static_cast<float>(this->declare_parameter("marker_size", 0.05));
-  target_tag_ids_ = this->declare_parameter<std::vector<std::string>>("target_tag_ids", {""});
-  covariance_ = this->declare_parameter<std::vector<double>>("covariance", std::vector<double>());
+  marker_size_ = static_cast<float>(this->declare_parameter<double>("marker_size"));
+  target_tag_ids_ = this->declare_parameter<std::vector<std::string>>("target_tag_ids");
+  covariance_ = this->declare_parameter<std::vector<double>>("covariance");
   distance_threshold_squared_ = std::pow(this->declare_parameter<double>("distance_threshold"), 2);
-  camera_frame_ = this->declare_parameter<std::string>("camera_frame", "camera");
-  float min_marker_size = static_cast<float>(this->declare_parameter("min_marker_size", 0.02));
-  std::string detection_mode = this->declare_parameter<std::string>("detection_mode", "");
-  if (detection_mode == "DM_FAST") {
+  camera_frame_ = this->declare_parameter<std::string>("camera_frame");
+  std::string detection_mode = this->declare_parameter<std::string>("detection_mode");
+  float min_marker_size = static_cast<float>(this->declare_parameter<double>("min_marker_size"));
+  if (detection_mode == "DM_NORMAL") {
+    detector_.setDetectionMode(aruco::DM_NORMAL, min_marker_size);
+  } else if (detection_mode == "DM_FAST") {
     detector_.setDetectionMode(aruco::DM_FAST, min_marker_size);
   } else if (detection_mode == "DM_VIDEO_FAST") {
     detector_.setDetectionMode(aruco::DM_VIDEO_FAST, min_marker_size);
   } else {
-    // Aruco version 2 mode
-    detector_.setDetectionMode(aruco::DM_NORMAL, min_marker_size);
+    // Error
+    RCLCPP_ERROR_STREAM(this->get_logger(), "Invalid detection_mode: " << detection_mode);
+    return false;
   }
 
   /*
