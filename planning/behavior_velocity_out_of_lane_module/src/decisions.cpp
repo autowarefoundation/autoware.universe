@@ -42,7 +42,8 @@ double time_along_path(const EgoData & ego_data, const size_t target_idx)
 
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
-  const std::shared_ptr<route_handler::RouteHandler> route_handler, const rclcpp::Logger & logger)
+  const std::shared_ptr<route_handler::RouteHandler> route_handler, const double min_confidence,
+  const rclcpp::Logger & logger)
 {
   // skip the predicted path if the object is not in a lanelet that comes to the range
   const auto object_point = lanelet::BasicPoint2d(
@@ -68,6 +69,7 @@ std::optional<std::pair<double, double>> object_time_to_range(
   auto worst_exit_time = std::optional<double>();
 
   for (const auto & predicted_path : object.kinematics.predicted_paths) {
+    if (predicted_path.confidence < min_confidence) continue;
     const auto time_step = rclcpp::Duration(predicted_path.time_step).seconds();
     const auto enter_point =
       geometry_msgs::msg::Point().set__x(range.entering_point.x()).set__y(range.entering_point.y());
@@ -294,7 +296,8 @@ bool should_not_enter(
     // skip objects that are already on the interval
     const auto enter_exit_time =
       params.objects_use_predicted_paths
-        ? object_time_to_range(object, range, inputs.route_handler, logger)
+        ? object_time_to_range(
+            object, range, inputs.route_handler, params.objects_min_confidence, logger)
         : object_time_to_range(object, range, inputs, logger);
     if (!enter_exit_time) {
       RCLCPP_DEBUG(logger, " SKIP (no enter/exit times found)\n");

@@ -57,12 +57,14 @@ double time_along_path(const EgoData & ego_data, const size_t target_idx);
 /// @param [in] object dynamic object
 /// @param [in] range overlapping range
 /// @param [in] route_handler route handler used to estimate the path of the dynamic object
+/// @param [in] min_confidence minimum confidence to consider a predicted path
 /// @param [in] logger ros logger
 /// @return an optional pair (time at enter [s], time at exit [s]). If the dynamic object drives in
 /// the opposite direction, time at enter > time at exit
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
-  const std::shared_ptr<route_handler::RouteHandler> route_handler, const rclcpp::Logger & logger);
+  const std::shared_ptr<route_handler::RouteHandler> route_handler, const double min_confidence,
+  const rclcpp::Logger & logger);
 /// @brief use the lanelet map to estimate the times when an object will reach the enter and exit
 /// points of an overlapping range
 /// @param [in] object dynamic object
