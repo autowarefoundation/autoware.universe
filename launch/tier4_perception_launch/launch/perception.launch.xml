@@ -22,6 +22,7 @@
   <arg name="occupancy_grid_map_param_path"/>
   <arg name="occupancy_grid_map_updater"/>
   <arg name="occupancy_grid_map_updater_param_path"/>
+  <arg name="traffic_light_arbiter_param_path"/>
 
   <!-- centerpoint model configs -->
   <arg name="centerpoint_model_name" default="centerpoint_tiny" description="options: `centerpoint` or `centerpoint_tiny`"/>
@@ -33,23 +34,32 @@
   <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
   <arg name="image_raw0" default="/sensing/camera/camera0/image_rect_color" description="image raw topic name"/>
   <arg name="camera_info0" default="/sensing/camera/camera0/camera_info" description="camera info topic name"/>
+  <arg name="detection_rois0" default="/perception/object_recognition/detection/rois0" description="detection rois output topic name"/>
   <arg name="image_raw1" default="/sensing/camera/camera1/image_rect_color"/>
   <arg name="camera_info1" default="/sensing/camera/camera1/camera_info"/>
+  <arg name="detection_rois1" default="/perception/object_recognition/detection/rois1"/>
   <arg name="image_raw2" default="/sensing/camera/camera2/image_rect_color"/>
   <arg name="camera_info2" default="/sensing/camera/camera2/camera_info"/>
+  <arg name="detection_rois2" default="/perception/object_recognition/detection/rois2"/>
   <arg name="image_raw3" default="/sensing/camera/camera3/image_rect_color"/>
   <arg name="camera_info3" default="/sensing/camera/camera3/camera_info"/>
+  <arg name="detection_rois3" default="/perception/object_recognition/detection/rois3"/>
   <arg name="image_raw4" default="/sensing/camera/camera4/image_rect_color"/>
   <arg name="camera_info4" default="/sensing/camera/camera4/camera_info"/>
+  <arg name="detection_rois4" default="/perception/object_recognition/detection/rois4"/>
   <arg name="image_raw5" default="/sensing/camera/camera5/image_rect_color"/>
   <arg name="camera_info5" default="/sensing/camera/camera5/camera_info"/>
+  <arg name="detection_rois5" default="/perception/object_recognition/detection/rois5"/>
   <arg name="image_raw6" default="/sensing/camera/camera6/image_rect_color"/>
   <arg name="camera_info6" default="/sensing/camera/camera6/camera_info"/>
+  <arg name="detection_rois6" default="/perception/object_recognition/detection/rois6"/>
   <arg name="image_raw7" default="/sensing/camera/camera7/image_rect_color"/>
   <arg name="camera_info7" default="/sensing/camera/camera7/camera_info"/>
+  <arg name="detection_rois7" default="/perception/object_recognition/detection/rois7"/>
   <arg name="image_number" default="6" description="choose image raw number(1-8)"/>
   <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
   <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
+  <arg name="use_downsample_pointcloud" default="false" description="use downsample pointcloud in perception"/>
   <arg name="use_object_filter" default="true" description="use object filter"/>
   <arg
     name="use_empty_dynamic_object_publisher"
@@ -137,6 +147,7 @@
           <arg name="voxel_grid_param_path" value="$(var object_recognition_detection_voxel_grid_based_euclidean_param_path)"/>
           <arg name="voxel_grid_based_euclidean_param_path" value="$(var object_recognition_detection_voxel_grid_based_euclidean_cluster_param_path)"/>
           <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
+          <arg name="use_downsample_pointcloud" value="$(var use_downsample_pointcloud)"/>
           <arg name="use_object_filter" value="$(var use_object_filter)"/>
           <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
           <arg name="container_name" value="$(var pointcloud_container_name)"/>

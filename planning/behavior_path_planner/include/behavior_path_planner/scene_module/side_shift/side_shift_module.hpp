@@ -43,7 +43,7 @@ public:
   SideShiftModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<SideShiftParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -51,7 +51,6 @@ public:
     const double & min_request_time_sec, bool override_requests = false) const noexcept;
   ModuleStatus updateState() override;
   void updateData() override;
-  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -60,9 +59,9 @@ public:
 
   void setParameters(const std::shared_ptr<SideShiftParameters> & parameters);
 
-  void updateModuleParams(const std::shared_ptr<SideShiftParameters> & parameters)
+  void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = parameters;
+    parameters_ = std::any_cast<std::shared_ptr<SideShiftParameters>>(parameters);
   }
 
   void acceptVisitor(

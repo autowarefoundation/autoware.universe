@@ -59,7 +59,6 @@ AvoidanceModuleManager::AvoidanceModuleManager(
       get_parameter<bool>(node, ns + "enable_update_path_when_object_is_gone");
     p.enable_force_avoidance_for_stopped_vehicle =
       get_parameter<bool>(node, ns + "enable_force_avoidance_for_stopped_vehicle");
-    p.enable_safety_check = get_parameter<bool>(node, ns + "enable_safety_check");
     p.enable_yield_maneuver = get_parameter<bool>(node, ns + "enable_yield_maneuver");
     p.enable_yield_maneuver_during_shifting =
       get_parameter<bool>(node, ns + "enable_yield_maneuver_during_shifting");
@@ -140,11 +139,17 @@ AvoidanceModuleManager::AvoidanceModuleManager(
   // safety check
   {
     std::string ns = "avoidance.safety_check.";
+    p.enable_safety_check = get_parameter<bool>(node, ns + "enable");
+    p.check_current_lane = get_parameter<bool>(node, ns + "check_current_lane");
+    p.check_shift_side_lane = get_parameter<bool>(node, ns + "check_shift_side_lane");
+    p.check_other_side_lane = get_parameter<bool>(node, ns + "check_other_side_lane");
+    p.check_unavoidable_object = get_parameter<bool>(node, ns + "check_unavoidable_object");
+    p.check_other_object = get_parameter<bool>(node, ns + "check_other_object");
+    p.check_all_predicted_path = get_parameter<bool>(node, ns + "check_all_predicted_path");
+    p.safety_check_time_horizon = get_parameter<double>(node, ns + "time_horizon");
+    p.safety_check_time_resolution = get_parameter<double>(node, ns + "time_resolution");
     p.safety_check_backward_distance =
       get_parameter<double>(node, ns + "safety_check_backward_distance");
-    p.safety_check_time_horizon = get_parameter<double>(node, ns + "safety_check_time_horizon");
-    p.safety_check_idling_time = get_parameter<double>(node, ns + "safety_check_idling_time");
-    p.safety_check_accel_for_rss = get_parameter<double>(node, ns + "safety_check_accel_for_rss");
     p.safety_check_hysteresis_factor =
       get_parameter<double>(node, ns + "safety_check_hysteresis_factor");
     p.safety_check_ego_offset = get_parameter<double>(node, ns + "safety_check_ego_offset");
@@ -168,6 +173,7 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     std::string ns = "avoidance.avoidance.longitudinal.";
     p.prepare_time = get_parameter<double>(node, ns + "prepare_time");
     p.min_prepare_distance = get_parameter<double>(node, ns + "min_prepare_distance");
+    p.remain_buffer_distance = get_parameter<double>(node, ns + "remain_buffer_distance");
     p.min_slow_down_speed = get_parameter<double>(node, ns + "min_slow_down_speed");
     p.buf_slow_down_speed = get_parameter<double>(node, ns + "buf_slow_down_speed");
     p.nominal_avoidance_speed = get_parameter<double>(node, ns + "nominal_avoidance_speed");
@@ -225,13 +231,6 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     if (p.velocity_map.size() != p.lateral_max_jerk_map.size()) {
       throw std::domain_error("inconsistency among the constraints map.");
     }
-  }
-
-  // velocity matrix
-  {
-    std::string ns = "avoidance.target_velocity_matrix.";
-    p.col_size = get_parameter<int>(node, ns + "col_size");
-    p.target_velocity_matrix = get_parameter<std::vector<double>>(node, ns + "matrix");
   }
 
   // shift line pipeline

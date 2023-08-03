@@ -43,9 +43,10 @@ using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using behavior_path_planner::ExtendedPredictedObject;
-using behavior_path_planner::PoseWithVelocityAndPolygonStamped;
-using behavior_path_planner::PredictedPathWithPolygon;
+using behavior_path_planner::utils::safety_check::ExtendedPredictedObject;
+using behavior_path_planner::utils::safety_check::PoseWithVelocityAndPolygonStamped;
+using behavior_path_planner::utils::safety_check::PoseWithVelocityStamped;
+using behavior_path_planner::utils::safety_check::PredictedPathWithPolygon;
 using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -75,8 +76,8 @@ std::vector<int64_t> replaceWithSortedIds(
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 
 std::vector<std::vector<int64_t>> getSortedLaneIds(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const double rough_shift_length);
+  const RouteHandler & route_handler, const Pose & current_pose,
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes);
 
 PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2);
 
@@ -87,6 +88,10 @@ lanelet::ConstLanelets getTargetPreferredLanes(
 
 lanelet::ConstLanelets getTargetNeighborLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
+  const LaneChangeModuleType & type);
+
+lanelet::BasicPolygon2d getTargetNeighborLanesPolygon(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType & type);
 
 bool isPathInLanelets(
