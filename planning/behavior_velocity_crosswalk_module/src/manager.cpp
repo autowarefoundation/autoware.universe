@@ -66,17 +66,32 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".stuck_vehicle.max_stuck_vehicle_lateral_offset");
   cp.stuck_vehicle_attention_range =
     node.declare_parameter<double>(ns + ".stuck_vehicle.stuck_vehicle_attention_range");
+  cp.min_acc_for_stuck_vehicle = node.declare_parameter<double>(ns + ".stuck_vehicle.min_acc");
+  cp.max_jerk_for_stuck_vehicle = node.declare_parameter<double>(ns + ".stuck_vehicle.max_jerk");
+  cp.min_jerk_for_stuck_vehicle = node.declare_parameter<double>(ns + ".stuck_vehicle.min_jerk");
 
   // param for pass judge logic
-  cp.ego_pass_first_margin =
-    node.declare_parameter<double>(ns + ".pass_judge.ego_pass_first_margin");
-  cp.ego_pass_later_margin =
-    node.declare_parameter<double>(ns + ".pass_judge.ego_pass_later_margin");
+  cp.ego_pass_first_margin_x =
+    node.declare_parameter<std::vector<double>>(ns + ".pass_judge.ego_pass_first_margin_x");
+  cp.ego_pass_first_margin_y =
+    node.declare_parameter<std::vector<double>>(ns + ".pass_judge.ego_pass_first_margin_y");
+  cp.ego_pass_first_additional_margin =
+    node.declare_parameter<double>(ns + ".pass_judge.ego_pass_first_additional_margin");
+  cp.ego_pass_later_margin_x =
+    node.declare_parameter<std::vector<double>>(ns + ".pass_judge.ego_pass_later_margin_x");
+  cp.ego_pass_later_margin_y =
+    node.declare_parameter<std::vector<double>>(ns + ".pass_judge.ego_pass_later_margin_y");
+  cp.ego_pass_later_additional_margin =
+    node.declare_parameter<double>(ns + ".pass_judge.ego_pass_later_additional_margin");
+  cp.max_offset_to_crosswalk_for_yield =
+    node.declare_parameter<double>(ns + ".pass_judge.max_offset_to_crosswalk_for_yield");
   cp.stop_object_velocity =
     node.declare_parameter<double>(ns + ".pass_judge.stop_object_velocity_threshold");
   cp.min_object_velocity = node.declare_parameter<double>(ns + ".pass_judge.min_object_velocity");
   cp.disable_stop_for_yield_cancel =
     node.declare_parameter<bool>(ns + ".pass_judge.disable_stop_for_yield_cancel");
+  cp.disable_yield_for_new_stopped_object =
+    node.declare_parameter<bool>(ns + ".pass_judge.disable_yield_for_new_stopped_object");
   cp.timeout_no_intention_to_walk =
     node.declare_parameter<double>(ns + ".pass_judge.timeout_no_intention_to_walk");
   cp.timeout_ego_stop_for_yield =

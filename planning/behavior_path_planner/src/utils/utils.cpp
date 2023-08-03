@@ -81,28 +81,33 @@ template <class T>
 size_t findNearestSegmentIndexFromLateralDistance(
   const std::vector<T> & points, const geometry_msgs::msg::Point & target_point)
 {
-  size_t closest_idx = motion_utils::findNearestSegmentIndex(points, target_point);
-  double min_lateral_dist =
-    std::fabs(motion_utils::calcLateralOffset(points, target_point, closest_idx));
-
+  std::optional<size_t> closest_idx{std::nullopt};
+  double min_lateral_dist = std::numeric_limits<double>::max();
   for (size_t seg_idx = 0; seg_idx < points.size() - 1; ++seg_idx) {
     const double lon_dist =
       motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, target_point);
     const double segment_length =
       tier4_autoware_utils::calcDistance2d(points.at(seg_idx), points.at(seg_idx + 1));
-    if (lon_dist < 0.0 || segment_length < lon_dist) {
-      continue;
-    }
-
-    const double lat_dist =
-      std::fabs(motion_utils::calcLateralOffset(points, target_point, seg_idx));
+    const double lat_dist = [&]() {
+      if (lon_dist < 0.0) {
+        return tier4_autoware_utils::calcDistance2d(points.at(seg_idx), target_point);
+      }
+      if (segment_length < lon_dist) {
+        return tier4_autoware_utils::calcDistance2d(points.at(seg_idx + 1), target_point);
+      }
+      return std::abs(motion_utils::calcLateralOffset(points, target_point, seg_idx));
+    }();
     if (lat_dist < min_lateral_dist) {
       closest_idx = seg_idx;
       min_lateral_dist = lat_dist;
     }
   }
 
-  return closest_idx;
+  if (closest_idx) {
+    return *closest_idx;
+  }
+
+  return motion_utils::findNearestSegmentIndex(points, target_point);
 }
 
 bool checkHasSameLane(
@@ -1268,18 +1273,17 @@ boost::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> 
 std::vector<DrivableLanes> cutOverlappedLanes(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes)
 {
-  const auto overlapped_lanelet_id = getOverlappedLaneletId(lanes);
-  if (!overlapped_lanelet_id) {
+  const auto overlapped_lanelet_idx = getOverlappedLaneletId(lanes);
+  if (!overlapped_lanelet_idx) {
     return lanes;
   }
 
-  const std::vector<DrivableLanes> shorten_lanes{
-    lanes.begin(), lanes.begin() + *overlapped_lanelet_id};
+  std::vector<DrivableLanes> shorten_lanes{lanes.begin(), lanes.begin() + *overlapped_lanelet_idx};
   const auto shorten_lanelets = utils::transformToLanelets(shorten_lanes);
 
   // create removed lanelets
   std::vector<int64_t> removed_lane_ids;
-  for (size_t i = *overlapped_lanelet_id; i < lanes.size(); ++i) {
+  for (size_t i = *overlapped_lanelet_idx; i < lanes.size(); ++i) {
     const auto target_lanelets = utils::transformToLanelets(lanes.at(i));
     for (const auto & target_lanelet : target_lanelets) {
       // if target lane is inside of the shorten lanelets, we do not remove it
@@ -1290,18 +1294,22 @@ std::vector<DrivableLanes> cutOverlappedLanes(
     }
   }
 
-  for (size_t i = 0; i < path.points.size(); ++i) {
-    const auto & lane_ids = path.points.at(i).lane_ids;
+  const auto is_same_lane_id = [&removed_lane_ids](const auto & point) {
+    const auto & lane_ids = point.lane_ids;
     for (const auto & lane_id : lane_ids) {
-      if (
-        std::find(removed_lane_ids.begin(), removed_lane_ids.end(), lane_id) !=
-        removed_lane_ids.end()) {
-        path.points.erase(path.points.begin() + i, path.points.end());
-        return shorten_lanes;
+      const auto is_same_id = [&lane_id](const auto id) { return lane_id == id; };
+
+      if (std::any_of(removed_lane_ids.begin(), removed_lane_ids.end(), is_same_id)) {
+        return true;
       }
     }
-  }
+    return false;
+  };
 
+  const auto points_with_overlapped_id =
+    std::remove_if(path.points.begin(), path.points.end(), is_same_lane_id);
+
+  path.points.erase(points_with_overlapped_id, path.points.end());
   return shorten_lanes;
 }
 
@@ -2864,7 +2872,14 @@ lanelet::ConstLanelets extendNextLane(
   // Add next lane
   const auto next_lanes = route_handler->getNextLanelets(extended_lanes.back());
   if (!next_lanes.empty()) {
-    extended_lanes.push_back(next_lanes.front());
+    // use the next lane in route if it exists
+    auto target_next_lane = next_lanes.front();
+    for (const auto & next_lane : next_lanes) {
+      if (route_handler->isRouteLanelet(next_lane)) {
+        target_next_lane = next_lane;
+      }
+    }
+    extended_lanes.push_back(target_next_lane);
   }
 
   return extended_lanes;
@@ -2878,9 +2893,15 @@ lanelet::ConstLanelets extendPrevLane(
   // Add previous lane
   const auto prev_lanes = route_handler->getPreviousLanelets(extended_lanes.front());
   if (!prev_lanes.empty()) {
-    extended_lanes.insert(extended_lanes.begin(), prev_lanes.front());
+    // use the previous lane in route if it exists
+    auto target_prev_lane = prev_lanes.front();
+    for (const auto & prev_lane : prev_lanes) {
+      if (route_handler->isRouteLanelet(prev_lane)) {
+        target_prev_lane = prev_lane;
+      }
+    }
+    extended_lanes.insert(extended_lanes.begin(), target_prev_lane);
   }
-
   return extended_lanes;
 }
 
@@ -2895,26 +2916,24 @@ lanelet::ConstLanelets extendLanes(
 
 lanelet::ConstLanelets getExtendedCurrentLanes(
   const std::shared_ptr<const PlannerData> & planner_data, const double backward_length,
-  const double forward_length)
+  const double forward_length, const bool until_goal_lane)
 {
   auto lanes = getCurrentLanes(planner_data);
   if (lanes.empty()) return lanes;
+  const auto start_lane = lanes.front();
 
   double forward_length_sum = 0.0;
   double backward_length_sum = 0.0;
 
-  const auto is_loop = [&](const auto & target_lane) {
-    auto it = std::find_if(lanes.begin(), lanes.end(), [&](const lanelet::ConstLanelet & lane) {
-      return lane.id() == target_lane.id();
-    });
-
-    return it != lanes.end();
-  };
-
   while (backward_length_sum < backward_length) {
     auto extended_lanes = extendPrevLane(planner_data->route_handler, lanes);
-
-    if (extended_lanes.empty() || is_loop(extended_lanes.front())) {
+    if (extended_lanes.empty()) {
+      return lanes;
+    }
+    // loop check
+    // if current map lanes is looping and has a very large value for backward_length,
+    // the extending process will not finish.
+    if (extended_lanes.front().id() == start_lane.id()) {
       return lanes;
     }
 
@@ -2927,9 +2946,23 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
   }
 
   while (forward_length_sum < forward_length) {
-    auto extended_lanes = extendNextLane(planner_data->route_handler, lanes);
+    // stop extending when the goal route section is reached
+    // if forward_length is a very large value, set it to true,
+    // as it may continue to extend lanes outside the route ahead of goal forever.
+    if (until_goal_lane) {
+      if (planner_data->route_handler->isInGoalRouteSection(lanes.back())) {
+        return lanes;
+      }
+    }
 
-    if (extended_lanes.empty() || is_loop(extended_lanes.back())) {
+    auto extended_lanes = extendNextLane(planner_data->route_handler, lanes);
+    if (extended_lanes.empty()) {
+      return lanes;
+    }
+    // loop check
+    // if current map lanes is looping and has a very large value for forward_length,
+    // the extending process will not finish.
+    if (extended_lanes.back().id() == start_lane.id()) {
       return lanes;
     }
 

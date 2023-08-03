@@ -96,6 +96,7 @@ public:
   // for goal
   bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
   Pose getGoalPose() const;
+  Pose getStartPose() const;
   lanelet::Id getGoalLaneId() const;
   bool getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const;
   std::vector<lanelet::ConstLanelet> getLanesBeforePose(
@@ -299,6 +300,8 @@ public:
     const lanelet::ConstLanelet & lanelet, const Direction direction = Direction::NONE) const;
 
   bool getClosestLaneletWithinRoute(
+    const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
+  bool getClosestPreferredLaneletWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
   bool getClosestLaneletWithConstrainsWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet, const double dist_threshold,

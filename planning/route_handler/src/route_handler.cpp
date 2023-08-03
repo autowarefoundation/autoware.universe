@@ -418,6 +418,15 @@ lanelet::ConstLanelets RouteHandler::getRouteLanelets() const
   return route_lanelets_;
 }
 
+Pose RouteHandler::getStartPose() const
+{
+  if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getStartPose: Route has not been set yet");
+    Pose();
+  }
+  return route_ptr_->start_pose;
+}
+
 Pose RouteHandler::getGoalPose() const
 {
   if (!route_ptr_) {
@@ -777,6 +786,13 @@ bool RouteHandler::getClosestLaneletWithinRoute(
   const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const
 {
   return lanelet::utils::query::getClosestLanelet(route_lanelets_, search_pose, closest_lanelet);
+}
+
+bool RouteHandler::getClosestPreferredLaneletWithinRoute(
+  const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const
+{
+  return lanelet::utils::query::getClosestLanelet(
+    preferred_lanelets_, search_pose, closest_lanelet);
 }
 
 bool RouteHandler::getClosestLaneletWithConstrainsWithinRoute(
