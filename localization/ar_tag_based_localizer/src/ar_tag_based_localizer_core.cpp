@@ -221,9 +221,9 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(const geometry_msgs::msg::Po
   }
 
   // Range filter
-  const double distance_squared = std::pow(msg.pose.position.x, 2) +
-                                  std::pow(msg.pose.position.y, 2) +
-                                  std::pow(msg.pose.position.z, 2);
+  const double distance_squared = msg.pose.position.x * msg.pose.position.x +
+                                  msg.pose.position.y * msg.pose.position.y +
+                                  msg.pose.position.z * msg.pose.position.z;
   if (range_squared_ < distance_squared) {
     return;
   }
