@@ -14,6 +14,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <exec_depend>ar_tag_based_localizer</exec_depend>
   <exec_depend>automatic_pose_initializer</exec_depend>
   <exec_depend>eagleye_fix2pose</exec_depend>
   <exec_depend>eagleye_gnss_converter</exec_depend>
@@ -29,7 +30,6 @@
   <exec_depend>yabloc_monitor</exec_depend>
   <exec_depend>yabloc_particle_filter</exec_depend>
   <exec_depend>yabloc_pose_initializer</exec_depend>
-  <exec_depend>ar_tag_based_localizer</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
