@@ -5,12 +5,12 @@
 <img src="./doc_image/ar_tag_image.png" width="320px">
 
 This package uses [the ArUco library](https://index.ros.org/p/aruco/) to detect AR-Tags from camera images and calculates and publishes the pose of the ego vehicle based on these detections.
-The positions and orientations of the AR-Tags are assumed to be written in the LaneLet2 format.
+The positions and orientations of the AR-Tags are assumed to be written in the Lanelet2 format.
 
 This package includes two nodes.
 
 - `ar_tag_based_localizer` : A node that detects AR-Tags from camera images and publishes the pose of the ego vehicle.
-- `tag_tf_caster` : A node that publishes the pose of the AR-Tags applied in LaneLet2 as `tf_static`.
+- `tag_tf_caster` : A node that publishes the pose of the AR-Tags applied in Lanelet2 as `tf_static`.
 
 ## Inputs / Outputs
 
@@ -61,7 +61,7 @@ The pull request video below should also be helpful.
 
 ## Map specifications
 
-For this package to function correctly, the pose of the AR-Tags must be specified in the LaneLet2 map format that Autoware can interpret.
+For this package to function correctly, the pose of the AR-Tags must be specified in the Lanelet2 map format that Autoware can interpret.
 
 The four vertices of AR-Tag are defined counterclockwise.
 
