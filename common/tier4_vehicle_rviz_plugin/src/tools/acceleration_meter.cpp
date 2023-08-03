@@ -56,9 +56,6 @@ AccelerationMeterDisplay::AccelerationMeterDisplay()
   property_value_scale_ = new rviz_common::properties::FloatProperty(
     "Value Scale", 1.0 / 6.667, "Value scale", this, SLOT(updateVisualization()), this);
   property_value_scale_->setMin(0.01);
-  property_label_scale_ = new rviz_common::properties::FloatProperty(
-    "Label Scale", 0.08, "Label scale", this, SLOT(updateVisualization()), this);
-  property_label_scale_->setMin(0.01);
 }
 
 AccelerationMeterDisplay::~AccelerationMeterDisplay()
@@ -125,7 +122,7 @@ void AccelerationMeterDisplay::update(float wall_dt, float ros_dt)
   QColor white_color(Qt::white);
   white_color.setAlpha(255);
   const float acceleration_ratio = std::min(
-    std::max(std::fabs(acceleration_x) - meter_min_acceleration_, 0.0) /
+    std::max(acceleration_x - meter_min_acceleration_, 0.0) /
       (meter_max_acceleration_ - meter_min_acceleration_),
     1.0);
   const float theta =
@@ -173,22 +170,6 @@ void AccelerationMeterDisplay::update(float wall_dt, float ros_dt)
     0, std::min(property_value_height_offset_->getInt(), h - 1), w,
     std::max(h - property_value_height_offset_->getInt(), 1), Qt::AlignCenter | Qt::AlignVCenter,
     acceleration_ss.str().c_str());
-
-  // Write Labels
-  QColor label_color(property_normal_text_color_->getColor());
-  text_color.setAlpha(255);
-  painter.setPen(QPen(label_color, static_cast<int>(2), Qt::SolidLine));
-  QFont label_font = painter.font();
-  font.setPixelSize(
-    std::max(static_cast<int>(static_cast<double>(w) * property_label_scale_->getFloat()), 1));
-  font.setBold(true);
-  painter.setFont(font);  // Use the font as the meter panel but smaller.
-  std::ostringstream label_ss;
-  label_ss << std::fixed << "Acceleration Meter";
-  painter.drawText(
-    0, std::min(property_value_height_offset_->getInt(), h - 1), w,
-    std::max(h - property_value_height_offset_->getInt(), 1), Qt::AlignCenter | Qt::AlignBottom,
-    label_ss.str().c_str());  // Aligned to the bottom of the meter panel.
 
   painter.end();
   updateVisualization();

@@ -76,7 +76,6 @@ This plugin provides a visual and easy-to-understand display of vehicle speed, t
 | `property_length_`               | int    | 256                  | Height of the plotter window [px]            |
 | `property_value_height_offset_`  | int    | 0                    | Height offset of the plotter window [px]     |
 | `property_value_scale_`          | float  | 1 / 6.667            | Value text scale                             |
-| `property_label_scale_`          | float  | 0.08                 | Label text scale                             |
 | `property_emergency_threshold_`  | float  | 2.0                  | Acceleration threshold for emergency [m/s^2] |
 
 ## Assumptions / Known limits

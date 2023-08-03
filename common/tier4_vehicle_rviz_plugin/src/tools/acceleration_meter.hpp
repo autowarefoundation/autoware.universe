@@ -60,7 +60,6 @@ protected:
   rviz_common::properties::IntProperty * property_length_;
   rviz_common::properties::IntProperty * property_value_height_offset_;
   rviz_common::properties::FloatProperty * property_value_scale_;
-  rviz_common::properties::FloatProperty * property_label_scale_;
   rviz_common::properties::FloatProperty * property_emergency_threshold_;
   // QImage hud_;
 
