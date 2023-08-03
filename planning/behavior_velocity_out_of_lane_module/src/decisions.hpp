@@ -69,7 +69,6 @@ std::optional<std::pair<double, double>> object_time_to_range(
 /// points of an overlapping range
 /// @param [in] object dynamic object
 /// @param [in] range overlapping range
-/// @param [in] lanelets objects to consider
 /// @param [in] inputs information used to take decisions (ranges, ego and objects data, route
 /// handler, lanelets)
 /// @param [in] logger ros logger
