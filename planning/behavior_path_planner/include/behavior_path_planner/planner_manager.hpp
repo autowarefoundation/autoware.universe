@@ -105,9 +105,9 @@ public:
    */
   void registerSceneModuleManager(const SceneModuleManagerPtr & manager_ptr)
   {
-    RCLCPP_INFO(logger_, "register %s module", manager_ptr->getModuleName().c_str());
+    RCLCPP_INFO(logger_, "register %s module", manager_ptr->name().c_str());
     manager_ptrs_.push_back(manager_ptr);
-    processing_time_.emplace(manager_ptr->getModuleName(), 0.0);
+    processing_time_.emplace(manager_ptr->name(), 0.0);
   }
 
   /**
@@ -301,8 +301,9 @@ private:
    */
   void deleteExpiredModules(SceneModulePtr & module_ptr) const
   {
-    const auto manager = getManager(module_ptr);
-    manager->deleteModules(module_ptr);
+    module_ptr->onExit();
+    module_ptr->publishRTCStatus();
+    module_ptr.reset();
   }
 
   /**
@@ -349,40 +350,20 @@ private:
   }
 
   /**
-   * @brief stop and remove not RUNNING modules in candidate_module_ptrs_.
-   */
-  void clearNotRunningCandidateModules()
-  {
-    const auto it = std::remove_if(
-      candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [this](auto & m) {
-        if (m->getCurrentStatus() != ModuleStatus::RUNNING) {
-          deleteExpiredModules(m);
-          return true;
-        }
-        return false;
-      });
-    candidate_module_ptrs_.erase(it, candidate_module_ptrs_.end());
-  }
-
-  /**
-   * @brief check if there is any RUNNING module in candidate_module_ptrs_.
-   */
-  bool hasAnyRunningCandidateModule()
-  {
-    return std::any_of(candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [](auto & m) {
-      return m->getCurrentStatus() == ModuleStatus::RUNNING;
-    });
-  }
-
-  /**
    * @brief get current root lanelet. the lanelet is used for reference path generation.
    * @param planner data.
    * @return root lanelet.
    */
-  lanelet::ConstLanelet updateRootLanelet(const std::shared_ptr<PlannerData> & data) const
+  lanelet::ConstLanelet updateRootLanelet(
+    const std::shared_ptr<PlannerData> & data, bool success_lane_change = false) const
   {
     lanelet::ConstLanelet ret{};
-    data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
+    if (success_lane_change) {
+      data->route_handler->getClosestPreferredLaneletWithinRoute(
+        data->self_odometry->pose.pose, &ret);
+    } else {
+      data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
+    }
     RCLCPP_DEBUG(logger_, "update start lanelet. id:%ld", ret.id());
     return ret;
   }
@@ -396,7 +377,7 @@ private:
   {
     const auto itr = std::find_if(
       manager_ptrs_.begin(), manager_ptrs_.end(),
-      [&module_ptr](const auto & m) { return m->getModuleName() == module_ptr->name(); });
+      [&module_ptr](const auto & m) { return m->name() == module_ptr->name(); });
 
     if (itr == manager_ptrs_.end()) {
       throw std::domain_error("unknown manager name.");
