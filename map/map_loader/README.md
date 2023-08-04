@@ -141,6 +141,11 @@ Please see [the description of `GetSelectedPointCloudMap.srv`](https://github.co
 
 lanelet2_map_loader loads Lanelet2 file and publishes the map data as autoware_auto_mapping_msgs/HADMapBin message.
 The node projects lan/lon coordinates into arbitrary coordinates defined in `/map/map_projector_type` from `map_projection_loader`.
+The node supports the following three types of coordinate systems:
+
+- MGRS
+- UTM
+- local
 
 ### How to run
 
@@ -154,18 +159,20 @@ The node projects lan/lon coordinates into arbitrary coordinates defined in `/ma
 
 - ~output/lanelet2_map (autoware_auto_mapping_msgs/HADMapBin) : Binary data of loaded Lanelet2 Map
 
+### Parameters
+
+| Name                   | Type        | Description                                      | Default value |
+| :--------------------- | :---------- | :----------------------------------------------- | :------------ |
+| center_line_resolution | double      | Define the resolution of the lanelet center line | 5.0           |
+| lanelet2_map_path      | std::string | The lanelet2 map path                            | None          |
+
 ---
 
 ## lanelet2_map_visualization
 
 ### Feature
 
-lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray. There are four types of map can be loaded in autoware. Please make sure you selected the correct lanelet2_map_projector_type when you launch this package.
-
-- MGRS
-- UTM
-- TransverseMercator
-- local
+lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray. 
 
 ### How to Run
 
@@ -178,10 +185,3 @@ lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messa
 ### Published Topics
 
 - ~output/lanelet2_map_marker (visualization_msgs/MarkerArray) : visualization messages for RViz
-
-### Parameters
-
-| Name                   | Type        | Description                                      | Default value |
-| :--------------------- | :---------- | :----------------------------------------------- | :------------ |
-| center_line_resolution | double      | Define the resolution of the lanelet center line | 5.0           |
-| lanelet2_map_path      | std::string | The lanelet2 map path                            | None          |
