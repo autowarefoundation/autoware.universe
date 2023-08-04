@@ -33,7 +33,7 @@ import yaml
 
 logger = get_logger(__name__)
 
-YAML_FILE_PATH = "test/data/projection_info_mgrs.yaml"
+YAML_FILE_PATH = "test/data/projection_info_utm.yaml"
 
 
 @pytest.mark.launch_test
@@ -71,7 +71,7 @@ def generate_test_description():
     )
 
 
-class TestLoadMGRSFromYaml(unittest.TestCase):
+class TestLoadUTMFromYaml(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Initialize the ROS context for the test node
@@ -132,7 +132,12 @@ class TestLoadMGRSFromYaml(unittest.TestCase):
             self.received_message, "No message received on map_projector_info topic"
         )
         self.assertEqual(self.received_message.type, yaml_data["type"])
-        self.assertEqual(self.received_message.mgrs_grid, yaml_data["mgrs_grid"])
+        self.assertEqual(
+            self.received_message.map_origin.latitude, yaml_data["map_origin"]["latitude"]
+        )
+        self.assertEqual(
+            self.received_message.map_origin.longitude, yaml_data["map_origin"]["longitude"]
+        )
 
         self.test_node.destroy_subscription(subscription)
 

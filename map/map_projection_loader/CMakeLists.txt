@@ -37,6 +37,10 @@ if(BUILD_TESTING)
     test/test_node_load_local_from_yaml.test.py
     TIMEOUT "30"
   )
+  add_launch_test(
+    test/test_node_load_utm_from_yaml.test.py
+    TIMEOUT "30"
+  )
   install(DIRECTORY
     test/data/
     DESTINATION share/${PROJECT_NAME}/test/data/

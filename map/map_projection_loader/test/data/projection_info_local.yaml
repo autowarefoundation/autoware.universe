@@ -1,6 +1,1 @@
-type: MGRS
-mgrs_grid: 54SUE
-map_origin:
-  latitude: 0.0
-  longitude: 0.0
-  altitude: 0.0
+type: local
