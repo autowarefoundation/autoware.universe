@@ -1,4 +1,6 @@
-files: []
+files:
+  - { package: system_diagnostic_monitor, path: config/localization.yaml }
+  - { package: system_diagnostic_monitor, path: config/planning.yaml }
 
 nodes:
   - name: /autoware

@@ -1,0 +1,5 @@
+nodes:
+  - name: /autoware/planning
+    type: and
+    list:
+      - { type: diag, name: "component_state_diagnostics: route_state" }
