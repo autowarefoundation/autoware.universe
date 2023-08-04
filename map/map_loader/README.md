@@ -172,7 +172,7 @@ The node supports the following three types of coordinate systems:
 
 ### Feature
 
-lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray. 
+lanelet2_map_visualization visualizes autoware_auto_mapping_msgs/HADMapBin messages into visualization_msgs/MarkerArray.
 
 ### How to Run
 
