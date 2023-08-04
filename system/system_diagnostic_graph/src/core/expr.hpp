@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__EXPR_HPP_
-#define LIB__EXPR_HPP_
+#ifndef CORE__EXPR_HPP_
+#define CORE__EXPR_HPP_
 
 #include "types.hpp"
 
@@ -56,4 +56,4 @@ public:
 
 }  // namespace system_diagnostic_graph
 
-#endif  // LIB__EXPR_HPP_
+#endif  // CORE__EXPR_HPP_

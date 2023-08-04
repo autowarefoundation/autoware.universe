@@ -12,18 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__ACTION_HPP_
-#define LIB__ACTION_HPP_
+#ifndef CORE__TYPES_HPP_
+#define CORE__TYPES_HPP_
 
-#include <yaml-cpp/yaml.h>
-
-#include <stdexcept>
-#include <string>
-#include <vector>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <tier4_system_msgs/msg/diagnostic_graph.hpp>
+#include <tier4_system_msgs/msg/diagnostic_node.hpp>
 
 namespace system_diagnostic_graph
 {
 
+using diagnostic_msgs::msg::DiagnosticArray;
+using diagnostic_msgs::msg::DiagnosticStatus;
+using tier4_system_msgs::msg::DiagnosticGraph;
+using tier4_system_msgs::msg::DiagnosticNode;
+
+using DiagnosticLevel = DiagnosticStatus::_level_type;
+
 }  // namespace system_diagnostic_graph
 
-#endif  // LIB__ACTION_HPP_
+#endif  // CORE__TYPES_HPP_

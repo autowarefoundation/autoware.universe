@@ -12,24 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__TYPES_HPP_
-#define LIB__TYPES_HPP_
+#ifndef CORE__GRAPH_HPP_
+#define CORE__GRAPH_HPP_
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
-#include <tier4_system_msgs/msg/diagnostic_graph.hpp>
-#include <tier4_system_msgs/msg/diagnostic_node.hpp>
+#include "node.hpp"
+#include "types.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <string>
+#include <vector>
 
 namespace system_diagnostic_graph
 {
 
-using diagnostic_msgs::msg::DiagnosticArray;
-using diagnostic_msgs::msg::DiagnosticStatus;
-using tier4_system_msgs::msg::DiagnosticGraph;
-using tier4_system_msgs::msg::DiagnosticNode;
+class DiagGraph
+{
+public:
+  void create(const std::string & file);
+  void callback(const DiagnosticArray & array);
+  DiagnosticGraph report(const rclcpp::Time & stamp);
 
-using DiagnosticLevel = DiagnosticStatus::_level_type;
+  void debug();
+
+private:
+  static std::vector<BaseNode *> topological_sort(const DiagGraphData & data);
+  DiagGraphData data_;
+  std::vector<BaseNode *> topological_nodes_;
+};
 
 }  // namespace system_diagnostic_graph
 
-#endif  // LIB__TYPES_HPP_
+#endif  // CORE__GRAPH_HPP_

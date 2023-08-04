@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__CONFIG_HPP_
-#define LIB__CONFIG_HPP_
+#ifndef CORE__CONFIG_HPP_
+#define CORE__CONFIG_HPP_
 
 #include <yaml-cpp/yaml.h>
 
@@ -54,4 +54,4 @@ std::vector<UnitConfig> load_config_file(const std::string & path);
 
 }  // namespace system_diagnostic_graph
 
-#endif  // LIB__CONFIG_HPP_
+#endif  // CORE__CONFIG_HPP_

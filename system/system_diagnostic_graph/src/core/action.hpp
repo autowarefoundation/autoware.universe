@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB__DEBUG_HPP_
-#define LIB__DEBUG_HPP_
+#ifndef CORE__ACTION_HPP_
+#define CORE__ACTION_HPP_
 
-#include <array>
+#include <yaml-cpp/yaml.h>
+
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace system_diagnostic_graph
 {
 
-constexpr size_t diag_debug_size = 5;
-using DiagDebugData = std::array<std::string, diag_debug_size>;
-
 }  // namespace system_diagnostic_graph
 
-#endif  // LIB__DEBUG_HPP_
+#endif  // CORE__ACTION_HPP_

@@ -15,8 +15,8 @@
 #ifndef MAIN_HPP_
 #define MAIN_HPP_
 
-#include "lib/graph.hpp"
-#include "lib/types.hpp"
+#include "core/graph.hpp"
+#include "core/types.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
