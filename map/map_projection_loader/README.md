@@ -48,7 +48,6 @@ type: "UTM"
 map_origin:
   latitude: 35.6092
   longitude: 139.7303
-  altitude: 0.0
 ```
 
 ## Published Topics
