@@ -4,13 +4,17 @@ project(system_diagnostic_graph)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_executable(${PROJECT_NAME}
+ament_auto_add_executable(aggregator
   src/main.cpp
   src/core/config.cpp
   src/core/debug.cpp
   src/core/graph.cpp
   src/core/node.cpp
   src/core/expr.cpp
+)
+
+ament_auto_add_executable(converter
+  src/tool.cpp
 )
 
 install(

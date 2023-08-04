@@ -20,7 +20,7 @@
 namespace system_diagnostic_graph
 {
 
-MainNode::MainNode() : Node("system_diagnostic_graph")
+MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
 {
   // Init ros interface.
   {

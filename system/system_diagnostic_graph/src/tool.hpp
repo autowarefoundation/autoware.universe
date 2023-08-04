@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MAIN_HPP_
-#define MAIN_HPP_
+#ifndef TOOL_HPP_
+#define TOOL_HPP_
 
 #include "core/graph.hpp"
 #include "core/types.hpp"
@@ -23,20 +23,17 @@
 namespace system_diagnostic_graph
 {
 
-class MainNode : public rclcpp::Node
+class ToolNode : public rclcpp::Node
 {
 public:
-  MainNode();
+  ToolNode();
 
 private:
-  DiagGraph graph_;
-  rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Subscription<DiagnosticArray>::SharedPtr sub_input_;
-  rclcpp::Publisher<DiagnosticGraph>::SharedPtr pub_graph_;
-  void on_timer();
-  void on_diag(const DiagnosticArray::ConstSharedPtr msg);
+  rclcpp::Subscription<DiagnosticGraph>::SharedPtr sub_graph_;
+  rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_array_;
+  void on_graph(const DiagnosticGraph::ConstSharedPtr msg);
 };
 
 }  // namespace system_diagnostic_graph
 
-#endif  // MAIN_HPP_
+#endif  // TOOL_HPP_
