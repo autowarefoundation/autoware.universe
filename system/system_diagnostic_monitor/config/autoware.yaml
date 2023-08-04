@@ -1,0 +1,34 @@
+files: []
+
+nodes:
+  - name: /autoware
+    type: and
+    list:
+      - { type: unit, name: /autoware/operation/stop }
+      - { type: unit, name: /autoware/operation/autonomous }
+      - { type: unit, name: /autoware/operation/local }
+      - { type: unit, name: /autoware/operation/remote }
+      - { type: unit, name: /autoware/operation/emergency-stop }
+      - { type: unit, name: /autoware/operation/comfortable-stop }
+      - { type: unit, name: /autoware/operation/pull-over }
+
+  - name: /autoware/operation/stop
+    type: debug-ok
+
+  - name: /autoware/operation/autonomous
+    type: debug-ok
+
+  - name: /autoware/operation/local
+    type: debug-ok
+
+  - name: /autoware/operation/remote
+    type: debug-ok
+
+  - name: /autoware/operation/emergency-stop
+    type: debug-ok
+
+  - name: /autoware/operation/comfortable-stop
+    type: debug-ok
+
+  - name: /autoware/operation/pull-over
+    type: debug-ok
