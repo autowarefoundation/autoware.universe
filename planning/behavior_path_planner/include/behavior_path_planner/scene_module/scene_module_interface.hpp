@@ -82,9 +82,6 @@ public:
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
-    is_waiting_approval_{false},
-    is_locked_new_module_launch_{false},
-    current_state_{ModuleStatus::IDLE},
     rtc_interface_ptr_map_(rtc_interface_ptr_map),
     steering_factor_interface_ptr_(
       std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name)))
@@ -97,6 +94,8 @@ public:
   virtual ~SceneModuleInterface() = default;
 
   virtual void updateModuleParams(const std::any & parameters) = 0;
+
+  virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
 
   /**
    * @brief Return SUCCESS if plan is not needed or plan is successfully finished,
@@ -119,36 +118,6 @@ public:
    * @brief Return true if the execution is available (e.g. safety check for lane change)
    */
   virtual bool isExecutionReady() const = 0;
-
-  /**
-   * @brief Calculate path. This function is called with the plan is approved.
-   */
-  virtual BehaviorModuleOutput plan() = 0;
-
-  /**
-   * @brief Calculate path under waiting_approval condition.
-   *        The default implementation is just to return the reference path.
-   */
-  virtual BehaviorModuleOutput planWaitingApproval()
-  {
-    BehaviorModuleOutput out;
-    out.path = utils::generateCenterLinePath(planner_data_);
-    const auto candidate = planCandidate();
-    path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
-
-    // for new architecture
-    const auto lanes = utils::getLaneletsFromPath(*out.path, planner_data_->route_handler);
-    const auto drivable_lanes = utils::generateDrivableLanes(lanes);
-    out.drivable_area_info.drivable_lanes = utils::getNonOverlappingExpandedLanes(
-      *out.path, drivable_lanes, planner_data_->drivable_area_expansion_parameters);
-
-    return out;
-  }
-
-  /**
-   * @brief Get candidate path. This information is used for external judgement.
-   */
-  virtual CandidateOutput planCandidate() const = 0;
 
   /**
    * @brief update data for planning. Note that the call of this function does not mean
@@ -193,8 +162,6 @@ public:
     processOnEntry();
   }
 
-  virtual void processOnEntry() {}
-
   /**
    * @brief Called when the module exit from RUNNING.
    */
@@ -213,8 +180,6 @@ public:
     processOnExit();
   }
 
-  virtual void processOnExit() {}
-
   /**
    * @brief Publish status if the module is requested to run
    */
@@ -225,24 +190,6 @@ public:
         itr->second->publishCooperateStatus(clock_->now());
       }
     }
-  }
-
-  /**
-   * @brief Return true if the activation command is received from the RTC interface.
-   *        If no RTC interface is registered, return true.
-   */
-  bool isActivated()
-  {
-    if (rtc_interface_ptr_map_.empty()) {
-      return true;
-    }
-
-    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
-      if (itr->second->isRegistered(uuid_map_.at(itr->first))) {
-        return itr->second->isActivated(uuid_map_.at(itr->first));
-      }
-    }
-    return false;
   }
 
   void publishSteeringFactor()
@@ -288,10 +235,6 @@ public:
 
   bool isLockedNewModuleLaunch() const { return is_locked_new_module_launch_; }
 
-  void resetPathCandidate() { path_candidate_.reset(); }
-
-  void resetPathReference() { path_reference_.reset(); }
-
   PlanResult getPathCandidate() const { return path_candidate_; }
 
   PlanResult getPathReference() const { return path_reference_; }
@@ -307,8 +250,6 @@ public:
   ModuleStatus getCurrentStatus() const { return current_state_; }
 
   StopReason getStopReason() const { return stop_reason_; }
-
-  virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
 
   std::string name() const { return name_; }
 
@@ -349,12 +290,6 @@ public:
     dead_pose_ = boost::none;
   }
 
-  void setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes)
-  {
-    drivable_lanes_marker_ =
-      marker_utils::createDrivableLanesMarkerArray(drivable_lanes, "drivable_lanes");
-  }
-
   rclcpp::Logger getLogger() const { return logger_; }
 
   void setIsSimultaneousExecutableAsApprovedModule(const bool enable)
@@ -384,7 +319,47 @@ private:
 
   BehaviorModuleOutput previous_module_output_;
 
+  StopReason stop_reason_;
+
+  bool is_simultaneously_executable_as_approved_module_{false};
+
+  bool is_simultaneously_executable_as_candidate_module_{false};
+
+  bool is_locked_new_module_launch_{false};
+
 protected:
+  /**
+   * @brief Calculate path. This function is called with the plan is approved.
+   */
+  virtual BehaviorModuleOutput plan() = 0;
+
+  /**
+   * @brief Calculate path under waiting_approval condition.
+   *        The default implementation is just to return the reference path.
+   */
+  virtual BehaviorModuleOutput planWaitingApproval()
+  {
+    path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
+    path_reference_ = getPreviousModuleOutput().reference_path;
+
+    return getPreviousModuleOutput();
+  }
+
+  /**
+   * @brief Get candidate path. This information is used for external judgement.
+   */
+  virtual CandidateOutput planCandidate() const = 0;
+
+  /**
+   * @brief Module unique entry process.
+   */
+  virtual void processOnEntry() {}
+
+  /**
+   * @brief Module unique exit process.
+   */
+  virtual void processOnExit() {}
+
   virtual void updateRTCStatus(const double start_distance, const double finish_distance)
   {
     for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
@@ -394,6 +369,24 @@ protected:
           clock_->now());
       }
     }
+  }
+
+  /**
+   * @brief Return true if the activation command is received from the RTC interface.
+   *        If no RTC interface is registered, return true.
+   */
+  bool isActivated()
+  {
+    if (rtc_interface_ptr_map_.empty()) {
+      return true;
+    }
+
+    for (auto itr = rtc_interface_ptr_map_.begin(); itr != rtc_interface_ptr_map_.end(); ++itr) {
+      if (itr->second->isRegistered(uuid_map_.at(itr->first))) {
+        return itr->second->isActivated(uuid_map_.at(itr->first));
+      }
+    }
+    return false;
   }
 
   void removeRTCStatus()
@@ -422,6 +415,12 @@ protected:
     stop_reason_.stop_factors.push_back(stop_factor);
   }
 
+  void setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes)
+  {
+    drivable_lanes_marker_ =
+      marker_utils::createDrivableLanesMarkerArray(drivable_lanes, "drivable_lanes");
+  }
+
   BehaviorModuleOutput getPreviousModuleOutput() const { return previous_module_output_; }
 
   void lockNewModuleLaunch() { is_locked_new_module_launch_ = true; }
@@ -431,6 +430,10 @@ protected:
   void waitApproval() { is_waiting_approval_ = true; }
 
   void clearWaitingApproval() { is_waiting_approval_ = false; }
+
+  void resetPathCandidate() { path_candidate_.reset(); }
+
+  void resetPathReference() { path_reference_.reset(); }
 
   geometry_msgs::msg::Point getEgoPosition() const
   {
@@ -449,15 +452,11 @@ protected:
     return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
   }
 
-  bool is_simultaneously_executable_as_approved_module_{false};
-  bool is_simultaneously_executable_as_candidate_module_{false};
-
   rclcpp::Clock::SharedPtr clock_;
 
   std::shared_ptr<const PlannerData> planner_data_;
 
-  bool is_waiting_approval_;
-  bool is_locked_new_module_launch_;
+  bool is_waiting_approval_{false};
 
   std::unordered_map<std::string, UUID> uuid_map_;
 
@@ -465,8 +464,6 @@ protected:
   PlanResult path_reference_;
 
   ModuleStatus current_state_{ModuleStatus::IDLE};
-
-  StopReason stop_reason_;
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 
