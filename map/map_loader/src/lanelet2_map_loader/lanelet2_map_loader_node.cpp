@@ -100,15 +100,6 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     if (errors.empty()) {
       return map;
     }
-  } else if (lanelet2_map_projector_type == "TransverseMercator") {
-    lanelet::GPSPoint position{map_origin_lat, map_origin_lon};
-    lanelet::Origin origin{position};
-
-    lanelet::projection::TransverseMercatorProjector projector{origin};
-    const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
-    if (errors.empty()) {
-      return map;
-    }
   } else if (lanelet2_map_projector_type == "local") {
     // Use MGRSProjector as parser
     lanelet::projection::MGRSProjector projector{};
