@@ -50,9 +50,14 @@ AccelerationMeterDisplay::AccelerationMeterDisplay()
   property_value_height_offset_ = new rviz_common::properties::IntProperty(
     "Value height offset", 0, "Height offset of the plotter window", this,
     SLOT(updateVisualization()));
-  property_emergency_threshold_ = new rviz_common::properties::FloatProperty(
-    "Emergency Threshold", 2.0, "Emergency Threshold for acceleration", this,
+  property_emergency_threshold_max_ = new rviz_common::properties::FloatProperty(
+    "Max Emergency Threshold", 1.0, "Max emergency threshold for acceleration", this,
     SLOT(updateVisualization()), this);
+  property_emergency_threshold_max_->setMin(0.01);
+  property_emergency_threshold_min_ = new rviz_common::properties::FloatProperty(
+    "Min Emergency Threshold", -2.5, "Min emergency threshold for acceleration", this,
+    SLOT(updateVisualization()), this);
+  property_emergency_threshold_min_->setMax(-0.01);
   property_value_scale_ = new rviz_common::properties::FloatProperty(
     "Value Scale", 1.0 / 6.667, "Value scale", this, SLOT(updateVisualization()), this);
   property_value_scale_->setMin(0.01);
@@ -148,10 +153,9 @@ void AccelerationMeterDisplay::update(float wall_dt, float ros_dt)
 
   // text
   QColor text_color;
-  if (std::abs(acceleration_x) > property_emergency_threshold_->getFloat()) {  // Write in Red if
-                                                                               // acceleration is
-                                                                               // over emergency
-                                                                               // threshold.
+  if ( (acceleration_x > property_emergency_threshold_max_->getFloat()) || 
+        (acceleration_x < property_emergency_threshold_min_->getFloat()) 
+      ) {  // Write in Red if acceleration is over emergency threshold.
     text_color = property_emergency_text_color_->getColor();
   } else {
     text_color = property_normal_text_color_->getColor();

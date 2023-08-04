@@ -60,12 +60,13 @@ protected:
   rviz_common::properties::IntProperty * property_length_;
   rviz_common::properties::IntProperty * property_value_height_offset_;
   rviz_common::properties::FloatProperty * property_value_scale_;
-  rviz_common::properties::FloatProperty * property_emergency_threshold_;
+  rviz_common::properties::FloatProperty * property_emergency_threshold_max_;
+  rviz_common::properties::FloatProperty * property_emergency_threshold_min_;
   // QImage hud_;
 
 private:
-  static constexpr float meter_min_acceleration_ = -5.0f;
-  static constexpr float meter_max_acceleration_ = 5.0f;
+  static constexpr float meter_min_acceleration_ = -10.0f;
+  static constexpr float meter_max_acceleration_ = 10.0f;
   static constexpr float meter_min_angle_ = tier4_autoware_utils::deg2rad(40.f);
   static constexpr float meter_max_angle_ = tier4_autoware_utils::deg2rad(320.f);
   static constexpr int line_width_ = 2;

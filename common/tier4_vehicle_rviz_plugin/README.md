@@ -67,16 +67,17 @@ This plugin provides a visual and easy-to-understand display of vehicle speed, t
 
 #### AccelerationMeter
 
-| Name                             | Type   | Default Value        | Description                                  |
-| -------------------------------- | ------ | -------------------- | -------------------------------------------- |
-| `property_normal_text_color_`    | QColor | QColor(25, 255, 240) | Normal text color                            |
-| `property_emergency_text_color_` | QColor | QColor(255, 80, 80)  | Emergency acceleration color                 |
-| `property_left_`                 | int    | 896                  | Left of the plotter window [px]              |
-| `property_top_`                  | int    | 128                  | Top of the plotter window [px]               |
-| `property_length_`               | int    | 256                  | Height of the plotter window [px]            |
-| `property_value_height_offset_`  | int    | 0                    | Height offset of the plotter window [px]     |
-| `property_value_scale_`          | float  | 1 / 6.667            | Value text scale                             |
-| `property_emergency_threshold_`  | float  | 2.0                  | Acceleration threshold for emergency [m/s^2] |
+| Name                                | Type   | Default Value        | Description                                      |
+| ----------------------------------- | ------ | -------------------- | ------------------------------------------------ |
+| `property_normal_text_color_`       | QColor | QColor(25, 255, 240) | Normal text color                                |
+| `property_emergency_text_color_`    | QColor | QColor(255, 80, 80)  | Emergency acceleration color                     |
+| `property_left_`                    | int    | 896                  | Left of the plotter window [px]                  |
+| `property_top_`                     | int    | 128                  | Top of the plotter window [px]                   |
+| `property_length_`                  | int    | 256                  | Height of the plotter window [px]                |
+| `property_value_height_offset_`     | int    | 0                    | Height offset of the plotter window [px]         |
+| `property_value_scale_`             | float  | 1 / 6.667            | Value text scale                                 |
+| `property_emergency_threshold_max_` | float  | 1.0                  | Max acceleration threshold for emergency [m/s^2] |
+| `property_emergency_threshold_min_` | float  | -2.5                 | Min acceleration threshold for emergency [m/s^2] |
 
 ## Assumptions / Known limits
 
