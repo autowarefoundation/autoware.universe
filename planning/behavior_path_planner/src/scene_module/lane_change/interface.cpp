@@ -14,7 +14,7 @@
 
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 
-#include "behavior_path_planner/marker_util/lane_change/debug.hpp"
+#include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
 #include "behavior_path_planner/module_status.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
@@ -36,7 +36,7 @@ using utils::lane_change::assignToCandidate;
 
 LaneChangeInterface::LaneChangeInterface(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map,
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unique_ptr<LaneChangeBase> && module_type)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map},
   parameters_{std::move(parameters)},
@@ -134,7 +134,10 @@ ModuleStatus LaneChangeInterface::updateState()
     return ModuleStatus::RUNNING;
   }
 
-  if (module_type_->isNearEndOfLane()) {
+  const auto & common_parameters = module_type_->getCommonParam();
+  const auto threshold = common_parameters.backward_length_buffer_for_end_of_lane;
+  const auto status = module_type_->getLaneChangeStatus();
+  if (module_type_->isNearEndOfCurrentLanes(status.current_lanes, status.target_lanes, threshold)) {
     RCLCPP_WARN_STREAM_THROTTLE(
       getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
       "Lane change path is unsafe but near end of lane. Continue lane change.");
@@ -217,6 +220,7 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   auto output = module_type_->generateOutput();
   path_reference_ = output.reference_path;
   *prev_approved_path_ = *getPreviousModuleOutput().path;
+  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().target_lanes, *output.path);
 
   updateSteeringFactorPtr(output);
   clearWaitingApproval();
@@ -227,7 +231,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 {
   *prev_approved_path_ = *getPreviousModuleOutput().path;
-  module_type_->insertStopPoint(*prev_approved_path_);
+  module_type_->insertStopPoint(
+    module_type_->getLaneChangeStatus().current_lanes, *prev_approved_path_);
 
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(*prev_approved_path_);
@@ -275,10 +280,9 @@ CandidateOutput LaneChangeInterface::planCandidate() const
   return output;
 }
 
-void LaneChangeInterface::updateModuleParams(
-  const std::shared_ptr<LaneChangeParameters> & parameters)
+void LaneChangeInterface::updateModuleParams(const std::any & parameters)
 {
-  parameters_ = parameters;
+  parameters_ = std::any_cast<std::shared_ptr<LaneChangeParameters>>(parameters);
 }
 
 void LaneChangeInterface::setData(const std::shared_ptr<const PlannerData> & data)
@@ -504,7 +508,7 @@ AvoidanceByLaneChangeInterface::AvoidanceByLaneChangeInterface(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<LaneChangeParameters> & parameters,
   const std::shared_ptr<AvoidanceByLCParameters> & avoidance_by_lane_change_parameters,
-  const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
 : LaneChangeInterface{
     name, node, parameters, rtc_interface_ptr_map,
     std::make_unique<AvoidanceByLaneChange>(parameters, avoidance_by_lane_change_parameters)}
