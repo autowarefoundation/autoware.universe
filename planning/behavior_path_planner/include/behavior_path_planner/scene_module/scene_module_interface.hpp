@@ -16,7 +16,6 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/module_status.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -65,6 +64,14 @@ using tier4_planning_msgs::msg::StopReasonArray;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
+
+enum class ModuleStatus {
+  IDLE = 0,
+  RUNNING = 1,
+  WAITING_APPROVAL = 1,
+  SUCCESS = 2,
+  FAILURE = 3,
+};
 
 class SceneModuleInterface
 {
