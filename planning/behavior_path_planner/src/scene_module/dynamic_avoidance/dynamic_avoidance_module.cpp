@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTE: Since the cmake is too slow with the obstacle_avoidance_planner and path_smoother package,
+// ENABLE_PATH_PLANNING is set to false by default.
+
+// #define ENABLE_PATH_PLANNING
+
 #include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
 
 #include "behavior_path_planner/utils/path_utils.hpp"
@@ -31,6 +36,8 @@
 
 namespace behavior_path_planner
 {
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+
 namespace
 {
 geometry_msgs::msg::Point toGeometryPoint(const tier4_autoware_utils::Point2d & point)
@@ -181,6 +188,97 @@ bool isLeft(
   }
   return false;
 }
+
+[[maybe_unused]] std::vector<TrajectoryPoint> convertToTrajectoryPoints(
+  const std::vector<PathPointWithLaneId> & path_points)
+{
+  std::vector<TrajectoryPoint> traj_points;
+  for (const auto & path_point : path_points) {
+    TrajectoryPoint traj_point;
+    traj_point.pose = path_point.point.pose;
+    traj_point.longitudinal_velocity_mps = path_point.point.longitudinal_velocity_mps;
+    traj_points.push_back(traj_point);
+  }
+  return traj_points;
+}
+
+[[maybe_unused]] std::vector<PathPointWithLaneId> convertToPathPoints(
+  const std::vector<TrajectoryPoint> & traj_points)
+{
+  std::vector<PathPointWithLaneId> path_points;
+  for (const auto & traj_point : traj_points) {
+    PathPointWithLaneId path_point;
+    path_point.point.pose = traj_point.pose;
+    path_point.point.longitudinal_velocity_mps = traj_point.longitudinal_velocity_mps;
+    path_points.push_back(path_point);
+  }
+  return path_points;
+}
+
+// NOTE: Moved from obstacle_avoidance_planner
+[[maybe_unused]] std::vector<TrajectoryPoint> extendTrajectory(
+  const std::vector<TrajectoryPoint> & optimized_traj_points,
+  [[maybe_unused]] const std::vector<TrajectoryPoint> & traj_points)
+{
+  return optimized_traj_points;
+
+  // TODO(murooka) enable the following function by removing the dependency to
+  // obstacle_avoidance_planner
+  /*
+  const auto & joint_start_pose = optimized_traj_points.back().pose;
+
+  // calculate end idx of optimized points on path points
+  const size_t joint_start_traj_seg_idx =
+    trajectory_utils::findEgoSegmentIndex(traj_points, joint_start_pose, ego_nearest_param_);
+
+  // crop trajectory for extension
+  constexpr double joint_traj_max_length_for_smoothing = 15.0;
+  constexpr double joint_traj_min_length_for_smoothing = 5.0;
+  const auto joint_end_traj_point_idx = trajectory_utils::getPointIndexAfter(
+    traj_points, joint_start_pose.position, joint_start_traj_seg_idx,
+    joint_traj_max_length_for_smoothing, joint_traj_min_length_for_smoothing);
+
+  // calculate full trajectory points
+  const auto full_traj_points = [&]() {
+    if (!joint_end_traj_point_idx) {
+      return optimized_traj_points;
+    }
+
+    const auto extended_traj_points = std::vector<TrajectoryPoint>{
+      traj_points.begin() + *joint_end_traj_point_idx, traj_points.end()};
+
+    // NOTE: if optimized_traj_points's back is non zero velocity and extended_traj_points' front
+    // is zero velocity, the zero velocity will be inserted in the whole joint trajectory.
+    auto modified_optimized_traj_points = optimized_traj_points;
+    if (!extended_traj_points.empty() && !modified_optimized_traj_points.empty()) {
+      modified_optimized_traj_points.back().longitudinal_velocity_mps =
+        extended_traj_points.front().longitudinal_velocity_mps;
+    }
+
+    return concatVectors(modified_optimized_traj_points, extended_traj_points);
+  }();
+
+  // resample trajectory points
+  auto resampled_traj_points = trajectory_utils::resampleTrajectoryPoints(
+    full_traj_points, traj_param_.output_delta_arc_length);
+
+  // update stop velocity on joint
+  for (size_t i = joint_start_traj_seg_idx + 1; i <= joint_end_traj_point_idx; ++i) {
+    if (hasZeroVelocity(traj_points.at(i))) {
+      if (i != 0 && !hasZeroVelocity(traj_points.at(i - 1))) {
+        // Here is when current point is 0 velocity, but previous point is not 0 velocity.
+        const auto & input_stop_pose = traj_points.at(i).pose;
+        const size_t stop_seg_idx = trajectory_utils::findEgoSegmentIndex(
+          resampled_traj_points, input_stop_pose, ego_nearest_param_);
+
+        // calculate and insert stop pose on output trajectory
+        trajectory_utils::insertStopPoint(resampled_traj_points, input_stop_pose, stop_seg_idx);
+      }
+    }
+  }
+  return resampled_traj_points;
+  */
+}
 }  // namespace
 
 DynamicAvoidanceModule::DynamicAvoidanceModule(
@@ -189,6 +287,14 @@ DynamicAvoidanceModule::DynamicAvoidanceModule(
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{std::move(parameters)}
 {
+#ifdef ENABLE_PATH_PLANNING
+  eb_path_smoother_ = std::make_shared<path_smoother::EBPathSmoother>(
+    &node, false, path_smoother::EgoNearestParam(&node), path_smoother::CommonParam(&node));
+  mpt_optimizer_ = std::make_shared<obstacle_avoidance_planner::MPTOptimizer>(
+    &node, false, obstacle_avoidance_planner::EgoNearestParam(&node),
+    vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo(),
+    obstacle_avoidance_planner::TrajectoryParam(&node));
+#endif
 }
 
 bool DynamicAvoidanceModule::isExecutionRequested() const
@@ -273,14 +379,72 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   }
   prev_objects_min_bound_lat_offset_.removeCounterUnlessUpdated();
 
+  // create drivable area info
+  DrivableAreaInfo drivable_area_info;
+  drivable_area_info.drivable_lanes = drivable_lanes;
+  drivable_area_info.obstacles = obstacles_for_drivable_area;
+
+  // plan path
+  const auto output_path = parameters_->enable_path_planning
+                             ? planPath(*prev_module_path, drivable_area_info)
+                             : *prev_module_path;
+
+  // create output
   BehaviorModuleOutput output;
-  output.path = prev_module_path;
+  output.path = std::make_shared<PathWithLaneId>(output_path);
   output.reference_path = getPreviousModuleOutput().reference_path;
   output.drivable_area_info.drivable_lanes = drivable_lanes;
   output.drivable_area_info.obstacles = obstacles_for_drivable_area;
   output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
   return output;
+}
+
+PathWithLaneId DynamicAvoidanceModule::planPath(
+  const PathWithLaneId & input_path, [[maybe_unused]] const DrivableAreaInfo & drivable_area_info)
+{
+#ifdef ENABLE_PATH_PLANNING
+  auto ref_path = input_path;
+
+  // extract obstacles from drivable area
+  const auto & di = drivable_area_info;
+  const auto is_driving_forward_opt = motion_utils::isDrivingForward(ref_path.points);
+  const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
+  utils::generateDrivableArea(
+    ref_path, di.drivable_lanes, di.enable_expanding_hatched_road_markings,
+    di.enable_expanding_intersection_areas, planner_data_->parameters.vehicle_length, planner_data_,
+    is_driving_forward);
+  utils::extractObstaclesFromDrivableArea(ref_path, di.obstacles);
+
+  // create data for obstacle avoidance planner
+  obstacle_avoidance_planner::PlannerData obstacle_avoidance_planner_data;
+  obstacle_avoidance_planner_data.header = ref_path.header;
+  obstacle_avoidance_planner_data.traj_points = convertToTrajectoryPoints(ref_path.points);
+  obstacle_avoidance_planner_data.left_bound = ref_path.left_bound;
+  obstacle_avoidance_planner_data.right_bound = ref_path.right_bound;
+  obstacle_avoidance_planner_data.ego_pose = getEgoPose();
+  obstacle_avoidance_planner_data.ego_vel = getEgoSpeed();
+
+  // smooth and optimize path
+  const auto ref_traj_points = convertToTrajectoryPoints(ref_path.points);
+  /*
+  const auto smoothed_traj_points = eb_path_smoother_->smoothTrajectory(ref_traj_points,
+  getEgoPose()); const auto avoidance_traj_points =
+    mpt_optimizer_->optimizeTrajectory(obstacle_avoidance_planner_data, smoothed_traj_points);
+
+  // extend path
+  // NOTE: Optimized path is shorter than the reference path due to the calculation cost.
+  const auto extended_traj_points = extendTrajectory(avoidance_traj_points, ref_traj_points);
+  const auto extended_path_points = convertToPathPoints(extended_traj_points);
+  */
+  const auto extended_path_points = convertToPathPoints(ref_traj_points);
+
+  auto output_path = ref_path;
+  output_path.points = ref_path.points;
+  return output_path;
+#else
+  return input_path;
+#endif
 }
 
 CandidateOutput DynamicAvoidanceModule::planCandidate() const

@@ -34,7 +34,8 @@ class EBPathSmoother
 public:
   EBPathSmoother(
     rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
-    const CommonParam & common_param, const std::shared_ptr<TimeKeeper> time_keeper_ptr);
+    const CommonParam & common_param,
+    const std::shared_ptr<TimeKeeper> time_keeper_ptr = std::make_shared<TimeKeeper>());
 
   std::vector<TrajectoryPoint> smoothTrajectory(
     const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & ego_pose);

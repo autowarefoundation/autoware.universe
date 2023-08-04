@@ -15,7 +15,17 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__DYNAMIC_AVOIDANCE__DYNAMIC_AVOIDANCE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__DYNAMIC_AVOIDANCE__DYNAMIC_AVOIDANCE_MODULE_HPP_
 
+// NOTE: Since the cmake is too slow with the obstacle_avoidance_planner and path_smoother package,
+// ENABLE_PATH_PLANNING is set to false by default.
+
+// #define ENABLE_PATH_PLANNING
+
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+
+#ifdef ENABLE_PATH_PLANNING
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
+#include "path_smoother/elastic_band.hpp"
+#endif
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -39,6 +49,7 @@ struct DynamicAvoidanceParameters
 {
   // common
   bool enable_debug_info{true};
+  bool enable_path_planning{false};
 
   // obstacle types to avoid
   bool avoid_car{true};
@@ -178,6 +189,9 @@ private:
   std::optional<tier4_autoware_utils::Polygon2d> calcDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
 
+  PathWithLaneId planPath(
+    const PathWithLaneId & input_path, const DrivableAreaInfo & drivable_area_info);
+
   std::vector<DynamicAvoidanceModule::DynamicAvoidanceObjectCandidate>
     prev_target_objects_candidate_;
   std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> target_objects_;
@@ -224,6 +238,11 @@ private:
     std::vector<std::string> current_uuids_;
   };
   mutable ObjectsVariable prev_objects_min_bound_lat_offset_;
+
+#ifdef ENABLE_PATH_PLANNING
+  std::shared_ptr<path_smoother::EBPathSmoother> eb_path_smoother_;
+  std::shared_ptr<obstacle_avoidance_planner::MPTOptimizer> mpt_optimizer_;
+#endif
 };
 }  // namespace behavior_path_planner
 
