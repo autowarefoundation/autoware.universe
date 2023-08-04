@@ -153,9 +153,11 @@ void AccelerationMeterDisplay::update(float wall_dt, float ros_dt)
 
   // text
   QColor text_color;
-  if ( (acceleration_x > property_emergency_threshold_max_->getFloat()) || 
-        (acceleration_x < property_emergency_threshold_min_->getFloat()) 
-      ) {  // Write in Red if acceleration is over emergency threshold.
+  if (
+    (acceleration_x > property_emergency_threshold_max_->getFloat()) ||
+    (acceleration_x <
+     property_emergency_threshold_min_
+       ->getFloat())) {  // Write in Red if acceleration is over emergency threshold.
     text_color = property_emergency_text_color_->getColor();
   } else {
     text_color = property_normal_text_color_->getColor();
