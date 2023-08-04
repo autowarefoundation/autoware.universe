@@ -34,10 +34,12 @@ using autoware_auto_planning_msgs::msg::Trajectory;
 Stat<double> calcFrechetDistance(const Trajectory & traj1, const Trajectory & traj2);
 
 /**
- * @brief calculate the lateral distance between two trajectories
- * @param [in] traj1 first trajectory
- * @param [in] traj2 second trajectory
- * @return calculated statistics
+ * @brief Calculates the lateral distance between two trajectories.
+ * @param traj1 The first trajectory.
+ * @param traj2 The second trajectory.
+ * @return The lateral distance between the two trajectories.
+ *
+ * This function calculates the lateral distance between two trajectories by finding the nearest segment in the first trajectory to each point in the second trajectory and calculating the orthogonal distance to that segment.
  */
 Stat<double> calcLateralDistance(const Trajectory & traj1, const Trajectory & traj2);
 

@@ -74,6 +74,11 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
     Metric metric = str_to_metric.at(selected_metric);
     metrics_.push_back(metric);
   }
+
+  look_ahead_predicted_trajectory_pub_ =
+    create_publisher<Trajectory>("~/debug/look_ahead_predicted_trajectory", 1);
+  look_ahead_motion_velocity_smoother_trajectory_pub_ = create_publisher<Trajectory>(
+    "~/debug/look_ahead_motion_velocity_smoother_trajectory", 1);
 }
 
 PlanningEvaluatorNode::~PlanningEvaluatorNode()
@@ -125,6 +130,14 @@ DiagnosticStatus PlanningEvaluatorNode::generateDiagnosticStatus(
   key_value.key = "mean";
   key_value.value = boost::lexical_cast<decltype(key_value.value)>(metric_stat.mean());
   status.values.push_back(key_value);
+  switch (metric) {
+    case Metric::predicted_path_deviation_from_trajectory:
+      std::cerr << "Max predicted path deviation from trajectory: " << metric_stat.max()
+                << std::endl;
+      break;
+    default:
+      break;
+  }
   return status;
 }
 
@@ -205,6 +218,12 @@ void PlanningEvaluatorNode::onPredictedTrajectory(
     }
   }
   if (!metrics_msg.status.empty()) {
+    look_ahead_predicted_trajectory_pub_->publish(metrics_calculator_.getLookaheadTrajectory(
+      *predicted_trajectory_msg, metrics_calculator_.parameters.trajectory.lookahead.max_dist_m,
+      metrics_calculator_.parameters.trajectory.lookahead.max_time_s));
+    look_ahead_motion_velocity_smoother_trajectory_pub_->publish(metrics_calculator_.getLookaheadTrajectory(
+      *traj_ptr_, metrics_calculator_.parameters.trajectory.lookahead.max_dist_m,
+      metrics_calculator_.parameters.trajectory.lookahead.max_time_s));
     metrics_pub_->publish(metrics_msg);
   }
   auto runtime = (now() - start).seconds();

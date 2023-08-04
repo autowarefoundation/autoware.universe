@@ -107,6 +107,8 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr predicted_trajectory_sub_;
 
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
+  rclcpp::Publisher<Trajectory>::SharedPtr look_ahead_predicted_trajectory_pub_;
+  rclcpp::Publisher<Trajectory>::SharedPtr look_ahead_motion_velocity_smoother_trajectory_pub_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 

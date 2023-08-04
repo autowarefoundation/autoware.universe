@@ -466,3 +466,15 @@ TEST_F(EvalTest, TestModifiedGoalYawDeviation)
   EXPECT_NEAR(publishModifiedGoalAndGetMetric(1.0, 1.0, -M_PI_2), M_PI_2, epsilon);
   EXPECT_NEAR(publishModifiedGoalAndGetMetric(1.0, 1.0, -M_PI_4), M_PI_4, epsilon);
 }
+
+// TEST_F(EvalTest, TestPredictedPathDeviationFromTrajectory)
+// {
+//   setTargetMetric(planning_diagnostics::Metric::predicted_path_deviation_from_trajectory);
+//   Trajectory t = makeTrajectory({{0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}, {0.0, 3.0}});
+//   for (TrajectoryPoint & p : t.points) {
+//     p.longitudinal_velocity_mps = 1.0;
+//   }
+//   EXPECT_NEAR(publishModifiedGoalAndGetMetric(0.0, 0.0, M_PI_2), M_PI_2, epsilon);
+//   EXPECT_NEAR(publishModifiedGoalAndGetMetric(1.0, 1.0, -M_PI_2), M_PI_2, epsilon);
+//   EXPECT_NEAR(publishModifiedGoalAndGetMetric(1.0, 1.0, -M_PI_4), M_PI_4, epsilon);
+// }
