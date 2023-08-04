@@ -67,7 +67,7 @@ RadarObjectFusionToDetectedObjectNode::RadarObjectFusionToDetectedObjectNode(
   core_param_.bounding_box_margin =
     declare_parameter<double>("core_params.bounding_box_margin");
   core_param_.split_threshold_velocity =
-    declare_parameter<double>("core_params.split_threshold_velocity";
+    declare_parameter<double>("core_params.split_threshold_velocity");
   core_param_.threshold_yaw_diff =
     declare_parameter<double>("core_params.threshold_yaw_diff");
   core_param_.velocity_weight_min_distance =
