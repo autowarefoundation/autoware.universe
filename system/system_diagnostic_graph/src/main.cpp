@@ -25,15 +25,12 @@ MainNode::MainNode() : Node("system_diagnostic_graph")
   // Init ros interface.
   {
     using std::placeholders::_1;
-    const auto pub_struct = rclcpp::QoS(1).transient_local();
-    const auto pub_status = rclcpp::QoS(declare_parameter<int64_t>("status_qos_depth"));
-    const auto sub_source = rclcpp::QoS(declare_parameter<int64_t>("source_qos_depth"));
-
-    pub_struct_ = create_publisher<DiagnosticGraph>("/diagnostics_graph/struct", pub_struct);
-    pub_status_ = create_publisher<DiagnosticArray>("/diagnostics_graph/status", pub_status);
+    const auto qos_input = rclcpp::QoS(declare_parameter<int64_t>("input_qos_depth"));
+    const auto qos_graph = rclcpp::QoS(declare_parameter<int64_t>("graph_qos_depth"));
 
     const auto callback = std::bind(&MainNode::on_diag, this, _1);
-    sub_source_ = create_subscription<DiagnosticArray>("/diagnostics", sub_source, callback);
+    sub_input_ = create_subscription<DiagnosticArray>("/diagnostics", qos_input, callback);
+    pub_graph_ = create_publisher<DiagnosticGraph>("/diagnostics_graph", qos_graph);
 
     const auto rate = rclcpp::Rate(declare_parameter<double>("rate"));
     timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
@@ -42,9 +39,8 @@ MainNode::MainNode() : Node("system_diagnostic_graph")
   // Init diagnostics graph.
   {
     const auto file = declare_parameter<std::string>("graph_file");
-    const auto data = graph_.create(file);
+    graph_.create(file);
     graph_.debug();
-    pub_struct_->publish(data);
   }
 }
 
@@ -52,7 +48,7 @@ void MainNode::on_timer()
 {
   const auto data = graph_.report(now());
   graph_.debug();
-  pub_status_->publish(data);
+  pub_graph_->publish(data);
 }
 
 void MainNode::on_diag(const DiagnosticArray::ConstSharedPtr msg)

@@ -57,12 +57,12 @@ void DiagGraph::debug()
   }
 }
 
-DiagDebugData DiagUnit::debug() const
+DiagDebugData UnitNode::debug() const
 {
   return DiagDebugData{std::to_string(index()), "unit", key_, "-----", level_names.at(level_)};
 }
 
-DiagDebugData DiagLeaf::debug() const
+DiagDebugData DiagNode::debug() const
 {
   return DiagDebugData{
     std::to_string(index()), "diag", key_.first, key_.second, level_names.at(level_)};

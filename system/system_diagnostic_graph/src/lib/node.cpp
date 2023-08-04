@@ -22,31 +22,24 @@
 namespace system_diagnostic_graph
 {
 
-DiagnosticNode DiagNode::struct_message() const
-{
-  DiagnosticNode message;
-  message.name = name();
-  for (const auto & link : links()) {
-    message.links.push_back(link->index());
-  }
-  return message;
-}
-
-DiagUnit::DiagUnit(const KeyType & key) : key_(key)
+UnitNode::UnitNode(const KeyType & key) : key_(key)
 {
   level_ = DiagnosticStatus::STALE;
 }
 
-DiagnosticStatus DiagUnit::report() const
+DiagnosticNode UnitNode::report() const
 {
   DiagnosticStatus status;
   status.level = level_;
   status.name = key_;
   status.hardware_id = "";
-  return status;
+
+  DiagnosticNode message;
+  message.status = status;
+  return message;
 }
 
-void DiagUnit::update()
+void UnitNode::update()
 {
   std::vector<DiagnosticLevel> levels;
   if (!links_.empty()) {
@@ -57,10 +50,10 @@ void DiagUnit::update()
   level_ = expr_->exec(levels);
 }
 
-void DiagUnit::create(DiagGraphInit & graph, const UnitConfig & config)
+void UnitNode::create(DiagGraphInit & graph, const UnitConfig & config)
 {
   for (const auto & link : config.expr.list) {
-    DiagNode * node = graph.get(link);
+    BaseNode * node = graph.get(link);
     if (!node) {
       throw ConfigError("unknown unit name: " + config.hint);
     }
@@ -69,61 +62,64 @@ void DiagUnit::create(DiagGraphInit & graph, const UnitConfig & config)
   expr_ = BaseExpr::create(config.expr.type);
 }
 
-DiagLeaf::DiagLeaf(const KeyType & key) : key_(key)
+DiagNode::DiagNode(const KeyType & key) : key_(key)
 {
   level_ = DiagnosticStatus::STALE;
 }
 
-DiagnosticStatus DiagLeaf::report() const
+DiagnosticNode DiagNode::report() const
 {
   DiagnosticStatus status = status_;
   status.level = level_;
   status.name = key_.first;
   status.hardware_id = key_.second;
-  return status;
+
+  DiagnosticNode message;
+  message.status = status;
+  return message;
 }
 
-void DiagLeaf::update()
+void DiagNode::update()
 {
   // TODO(Takagi, Isamu): timeout, error hold
   // constexpr double timeout = 1.0; // TODO(Takagi, Isamu): parameterize
 }
 
-void DiagLeaf::callback(const DiagnosticStatus & status)
+void DiagNode::callback(const DiagnosticStatus & status)
 {
   level_ = status.level;
   status_ = status;
 }
 
-DiagUnit * DiagGraphData::make_unit(const std::string & name)
+UnitNode * DiagGraphData::make_unit(const std::string & name)
 {
   const auto key = name;
-  auto unit = unit_list.emplace_back(std::make_unique<DiagUnit>(key)).get();
+  auto unit = unit_list.emplace_back(std::make_unique<UnitNode>(key)).get();
   unit_dict[key] = unit;
   return unit;
 }
 
-DiagUnit * DiagGraphData::find_unit(const std::string & name)
+UnitNode * DiagGraphData::find_unit(const std::string & name)
 {
   const auto key = name;
   return unit_dict.count(key) ? unit_dict.at(key) : nullptr;
 }
 
-DiagLeaf * DiagGraphData::make_leaf(const std::string & name, const std::string & hardware)
+DiagNode * DiagGraphData::make_leaf(const std::string & name, const std::string & hardware)
 {
   const auto key = std::make_pair(name, hardware);
-  auto leaf = leaf_list.emplace_back(std::make_unique<DiagLeaf>(key)).get();
+  auto leaf = leaf_list.emplace_back(std::make_unique<DiagNode>(key)).get();
   leaf_dict[key] = leaf;
   return leaf;
 }
 
-DiagLeaf * DiagGraphData::find_leaf(const std::string & name, const std::string & hardware)
+DiagNode * DiagGraphData::find_leaf(const std::string & name, const std::string & hardware)
 {
   const auto key = std::make_pair(name, hardware);
   return leaf_dict.count(key) ? leaf_dict.at(key) : nullptr;
 }
 
-DiagNode * DiagGraphInit::get(const LinkConfig & link)
+BaseNode * DiagGraphInit::get(const LinkConfig & link)
 {
   // For link to unit type.
   if (link.is_unit_type) {

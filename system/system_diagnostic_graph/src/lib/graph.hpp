@@ -29,15 +29,16 @@ namespace system_diagnostic_graph
 class DiagGraph
 {
 public:
-  DiagnosticGraph create(const std::string & file);
-  DiagnosticArray report(const rclcpp::Time & stamp);
+  void create(const std::string & file);
   void callback(const DiagnosticArray & array);
+  DiagnosticGraph report(const rclcpp::Time & stamp);
+
   void debug();
 
 private:
-  static std::vector<DiagNode *> topological_sort(const DiagGraphData & data);
+  static std::vector<BaseNode *> topological_sort(const DiagGraphData & data);
   DiagGraphData data_;
-  std::vector<DiagNode *> topological_nodes_;
+  std::vector<BaseNode *> topological_nodes_;
 };
 
 }  // namespace system_diagnostic_graph

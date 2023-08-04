@@ -26,15 +26,15 @@
 namespace system_diagnostic_graph
 {
 
-DiagnosticGraph DiagGraph::create(const std::string & file)
+void DiagGraph::create(const std::string & file)
 {
   const auto configs = load_config_file(file);
   data_ = DiagGraphData();
 
   // Create nodes first because it is necessary for the link.
-  std::vector<std::pair<UnitConfig, DiagUnit *>> units;
+  std::vector<std::pair<UnitConfig, UnitNode *>> units;
   for (const auto & config : configs) {
-    DiagUnit * unit = data_.make_unit(config.name);
+    UnitNode * unit = data_.make_unit(config.name);
     units.push_back(std::make_pair(config, unit));
   }
 
@@ -51,28 +51,21 @@ DiagnosticGraph DiagGraph::create(const std::string & file)
   for (size_t i = 0; i < topological_nodes_.size(); ++i) {
     topological_nodes_[i]->set_index(i);
   }
-
-  // Create graph structure message.
-  DiagnosticGraph message;
-  for (const auto & node : topological_nodes_) {
-    message.nodes.push_back(node->struct_message());
-  }
-  return message;
 }
 
-DiagnosticArray DiagGraph::report(const rclcpp::Time & stamp)
+DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
 {
-  DiagnosticArray array;
-  array.header.stamp = stamp;
-  array.status.reserve(topological_nodes_.size());
+  DiagnosticGraph message;
+  message.stamp = stamp;
+  message.nodes.reserve(topological_nodes_.size());
 
   for (const auto & node : topological_nodes_) {
     node->update();
   }
   for (const auto & node : topological_nodes_) {
-    array.status.push_back(node->report());
+    message.nodes.push_back(node->report());
   }
-  return array;
+  return message;
 }
 
 void DiagGraph::callback(const DiagnosticArray & array)
@@ -87,12 +80,12 @@ void DiagGraph::callback(const DiagnosticArray & array)
   }
 }
 
-std::vector<DiagNode *> DiagGraph::topological_sort(const DiagGraphData & data)
+std::vector<BaseNode *> DiagGraph::topological_sort(const DiagGraphData & data)
 {
-  std::unordered_map<DiagNode *, int> degrees;
-  std::deque<DiagNode *> nodes;
-  std::deque<DiagNode *> result;
-  std::deque<DiagNode *> buffer;
+  std::unordered_map<BaseNode *, int> degrees;
+  std::deque<BaseNode *> nodes;
+  std::deque<BaseNode *> result;
+  std::deque<BaseNode *> buffer;
 
   // Create a list of unit nodes and leaf nodes.
   for (const auto & unit : data.unit_list) {
@@ -133,7 +126,7 @@ std::vector<DiagNode *> DiagGraph::topological_sort(const DiagGraphData & data)
     throw ConfigError("detect graph circulation");
   }
 
-  return std::vector<DiagNode *>(result.rbegin(), result.rend());
+  return std::vector<BaseNode *>(result.rbegin(), result.rend());
 }
 
 }  // namespace system_diagnostic_graph
