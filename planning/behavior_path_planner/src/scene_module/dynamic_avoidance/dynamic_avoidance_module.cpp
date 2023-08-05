@@ -424,7 +424,7 @@ void DynamicAvoidanceModule::updateTargetObjects()
   target_objects_manager_.finalize();
 
   // 2. Precise filtering of target objects and check if they should be avoided
-  for (auto & object : target_objects_manager_.getValidObjects()) {
+  for (const auto & object : target_objects_manager_.getValidObjects()) {
     const auto obj_uuid = object.uuid;
     const auto prev_object = getObstacleFromUuid(prev_objects, obj_uuid);
     const auto obj_path = *std::max_element(
@@ -505,7 +505,8 @@ void DynamicAvoidanceModule::updateTargetObjects()
       *path_points_for_object_polygon, obj_points, is_collision_left, prev_object);
 
     const bool should_be_avoided = true;
-    object.update(lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided);
+    target_objects_manager_.updateObject(
+      obj_uuid, lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided);
   }
 }
 

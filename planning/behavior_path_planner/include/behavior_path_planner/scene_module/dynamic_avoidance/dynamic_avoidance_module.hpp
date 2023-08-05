@@ -218,6 +218,16 @@ public:
       }
       return object_map_.at(uuid);
     }
+    void updateObject(
+      const std::string & uuid, const MinMaxValue & lon_offset_to_avoid,
+      const MinMaxValue & lat_offset_to_avoid, const bool is_collision_left,
+      const bool should_be_avoided)
+    {
+      if (object_map_.count(uuid) != 0) {
+        object_map_.at(uuid).update(
+          lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided);
+      }
+    }
 
     std::vector<std::string> current_uuids_;
     // NOTE: positive is for meeting entrying condition, and negative is for exiting.
