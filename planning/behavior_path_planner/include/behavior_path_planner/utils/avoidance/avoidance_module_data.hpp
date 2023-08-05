@@ -465,6 +465,8 @@ struct AvoidancePlanningData
 
   bool safe{false};
 
+  bool comfortable{false};
+
   bool avoid_required{false};
 
   bool yield_required{false};

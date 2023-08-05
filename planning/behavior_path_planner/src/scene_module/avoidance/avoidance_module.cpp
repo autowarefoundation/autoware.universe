@@ -129,7 +129,7 @@ bool AvoidanceModule::isExecutionRequested() const
 bool AvoidanceModule::isExecutionReady() const
 {
   DEBUG_PRINT("AVOIDANCE isExecutionReady");
-  return avoidance_data_.safe;
+  return avoidance_data_.safe && avoidance_data_.comfortable;
 }
 
 bool AvoidanceModule::canTransitSuccessState()
@@ -448,6 +448,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * Check avoidance path safety. For each target objects and the objects in adjacent lanes,
    * check that there is a certain amount of margin in the lateral and longitudinal direction.
    */
+  data.comfortable = isComfortable(data.unapproved_new_sl);
   data.safe = isSafePath(data.candidate_path, debug);
 }
 
@@ -2369,13 +2370,6 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
     return subsequent;
   };
 
-  // check jerk limit.
-  const auto is_large_jerk = [this](const auto & s) {
-    const auto jerk = PathShifter::calcJerkFromLatLonDistance(
-      s.getRelativeLength(), s.getRelativeLongitudinal(), helper_.getAvoidanceEgoSpeed());
-    return jerk > helper_.getLateralMaxJerkLimit();
-  };
-
   // check ignore or not.
   const auto is_ignore_shift = [this](const auto & s) {
     return std::abs(helper_.getRelativeShiftToPath(s)) < parameters_->lateral_execution_threshold;
@@ -2392,10 +2386,6 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
     }
 
     if (!is_ignore_shift(candidate)) {
-      if (is_large_jerk(candidate)) {
-        break;
-      }
-
       return get_subsequent_shift(i);
     }
   }
