@@ -181,6 +181,20 @@ bool isLeft(
   }
   return false;
 }
+
+template <typename T>
+std::optional<T> getObstacleFromUuid(
+  const std::vector<T> & obstacles, const std::string & target_uuid)
+{
+  const auto itr = std::find_if(obstacles.begin(), obstacles.end(), [&](const auto & obstacle) {
+    return obstacle.uuid == target_uuid;
+  });
+
+  if (itr == obstacles.end()) {
+    return std::nullopt;
+  }
+  return *itr;
+}
 }  // namespace
 
 DynamicAvoidanceModule::DynamicAvoidanceModule(
@@ -230,7 +244,13 @@ void DynamicAvoidanceModule::updateData()
   // calculate target objects
   updateTargetObjects();
 
-  target_objects_ = target_objects_manager_.getValidObjects();
+  const auto target_objects_candidate = target_objects_manager_.getValidObjects();
+  target_objects_.clear();
+  for (const auto & target_object_candidate : target_objects_candidate) {
+    if (target_object_candidate.should_be_avoided) {
+      target_objects_.push_back(target_object_candidate);
+    }
+  }
 }
 
 ModuleStatus DynamicAvoidanceModule::updateState()
@@ -336,7 +356,7 @@ void DynamicAvoidanceModule::updateTargetObjects()
     const auto obj_uuid = tier4_autoware_utils::toHexString(predicted_object.object_id);
     const auto & obj_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
     const double obj_vel = predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
-    const auto prev_object = target_objects_manager_.getValidObject(obj_uuid);
+    const auto prev_object = getObstacleFromUuid(prev_objects, obj_uuid);
 
     // 1.a. check label
     const bool is_label_target_obstacle =
@@ -367,22 +387,8 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // 1.d. check if object is not to be followed by ego
-    const double obj_dist_to_path = calcDistanceToPath(prev_module_path->points, obj_pose.position);
-    const bool is_object_on_ego_path =
-      obj_dist_to_path <
-      planner_data_->parameters.vehicle_width / 2.0 + parameters_->min_obj_lat_offset_to_ego_path;
-    const bool is_object_aligned_to_path =
-      std::abs(obj_angle) < parameters_->max_front_object_angle ||
-      M_PI - parameters_->max_front_object_angle < std::abs(obj_angle);
-    if (is_object_on_ego_path && is_object_aligned_to_path) {
-      RCLCPP_INFO_EXPRESSION(
-        getLogger(), parameters_->enable_debug_info,
-        "[DynamicAvoidance] Ignore obstacle (%s) since it is to be followed.", obj_uuid.c_str());
-      continue;
-    }
-
     // 1.e. check if object lateral offset to ego's path is small enough
+    const double obj_dist_to_path = calcDistanceToPath(prev_module_path->points, obj_pose.position);
     const bool is_object_far_from_path = isObjectFarFromPath(predicted_object, obj_dist_to_path);
     if (is_object_far_from_path) {
       RCLCPP_INFO_EXPRESSION(
@@ -391,7 +397,12 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // 1.f. calculate latest time inside ego's path
+    // 1.f. calculate the object is on ego's path or not
+    const bool is_object_on_ego_path =
+      obj_dist_to_path <
+      planner_data_->parameters.vehicle_width / 2.0 + parameters_->min_obj_lat_offset_to_ego_path;
+
+    // 1.g. calculate latest time inside ego's path
     const auto latest_time_inside_ego_path = [&]() -> std::optional<rclcpp::Time> {
       if (!prev_object || !prev_object->latest_time_inside_ego_path) {
         if (is_object_on_ego_path) {
@@ -406,25 +417,38 @@ void DynamicAvoidanceModule::updateTargetObjects()
     }();
 
     const auto target_object = DynamicAvoidanceObject(
-      predicted_object, obj_tangent_vel, obj_normal_vel, latest_time_inside_ego_path);
+      predicted_object, obj_tangent_vel, obj_normal_vel, is_object_on_ego_path,
+      latest_time_inside_ego_path);
     target_objects_manager_.updateObject(obj_uuid, target_object);
   }
   target_objects_manager_.finalize();
 
-  // 2. Precise filtering of target objects and update offset to avoid
+  // 2. Precise filtering of target objects and check if they should be avoided
   for (auto & object : target_objects_manager_.getValidObjects()) {
     const auto obj_uuid = object.uuid;
-    const auto prev_object = target_objects_manager_.getValidObject(obj_uuid);
+    const auto prev_object = getObstacleFromUuid(prev_objects, obj_uuid);
     const auto obj_path = *std::max_element(
       object.predicted_paths.begin(), object.predicted_paths.end(),
       [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
 
-    // 2.a. calculate which side object exists against ego's path
+    // 2.a. check if object is not to be followed by ego
+    const double obj_angle = calcDiffAngleAgainstPath(prev_module_path->points, object.pose);
+    const bool is_object_aligned_to_path =
+      std::abs(obj_angle) < parameters_->max_front_object_angle ||
+      M_PI - parameters_->max_front_object_angle < std::abs(obj_angle);
+    if (object.is_object_on_ego_path && is_object_aligned_to_path) {
+      RCLCPP_INFO_EXPRESSION(
+        getLogger(), parameters_->enable_debug_info,
+        "[DynamicAvoidance] Ignore obstacle (%s) since it is to be followed.", obj_uuid.c_str());
+      continue;
+    }
+
+    // 2.b. calculate which side object exists against ego's path
     const bool is_object_left = isLeft(prev_module_path->points, object.pose.position);
     const auto lat_lon_offset =
       getLateralLongitudinalOffset(prev_module_path->points, object.pose, object.shape);
 
-    // 2.b. check if object will not cut in
+    // 2.c. check if object will not cut in
     const bool will_object_cut_in =
       willObjectCutIn(prev_module_path->points, obj_path, object.vel, lat_lon_offset);
     if (will_object_cut_in) {
@@ -434,7 +458,7 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // 2.c. check if object will not cut out
+    // 2.d. check if object will not cut out
     const bool will_object_cut_out =
       willObjectCutOut(object.vel, object.lat_vel, is_object_left, prev_object);
     if (will_object_cut_out) {
@@ -444,7 +468,7 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // 2.d. check if time to collision
+    // 2.e. check if time to collision
     const double time_to_collision =
       calcTimeToCollision(prev_module_path->points, object.pose, object.vel);
     if (
@@ -466,21 +490,22 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // 2.e. calculate which side object will be against ego's path
+    // 2.f. calculate which side object will be against ego's path
     const auto future_obj_pose =
       object_recognition_utils::calcInterpolatedPose(obj_path, time_to_collision);
     const bool is_collision_left = future_obj_pose
                                      ? isLeft(prev_module_path->points, future_obj_pose->position)
                                      : is_object_left;
 
-    // 2.f. calculate longitudinal and lateral offset to avoid
+    // 2.g. calculate longitudinal and lateral offset to avoid
     const auto obj_points = tier4_autoware_utils::toPolygon2d(object.pose, object.shape);
     const auto lon_offset_to_avoid = calcMinMaxLongitudinalOffsetToAvoid(
       *path_points_for_object_polygon, object.pose, obj_points, object.vel, time_to_collision);
     const auto lat_offset_to_avoid = calcMinMaxLateralOffsetToAvoid(
       *path_points_for_object_polygon, obj_points, is_collision_left, prev_object);
 
-    object.update(lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left);
+    const bool should_be_avoided = true;
+    object.update(lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided);
   }
 }
 

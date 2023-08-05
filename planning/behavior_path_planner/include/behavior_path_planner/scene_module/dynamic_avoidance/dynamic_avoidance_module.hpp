@@ -91,12 +91,14 @@ public:
   {
     DynamicAvoidanceObject(
       const PredictedObject & predicted_object, const double arg_vel, const double arg_lat_vel,
+      const bool arg_is_object_on_ego_path,
       const std::optional<rclcpp::Time> & arg_latest_time_inside_ego_path)
     : uuid(tier4_autoware_utils::toHexString(predicted_object.object_id)),
       pose(predicted_object.kinematics.initial_pose_with_covariance.pose),
       shape(predicted_object.shape),
       vel(arg_vel),
       lat_vel(arg_lat_vel),
+      is_object_on_ego_path(arg_is_object_on_ego_path),
       latest_time_inside_ego_path(arg_latest_time_inside_ego_path)
     {
       for (const auto & path : predicted_object.kinematics.predicted_paths) {
@@ -109,20 +111,23 @@ public:
     autoware_auto_perception_msgs::msg::Shape shape;
     double vel;
     double lat_vel;
+    bool is_object_on_ego_path;
     std::optional<rclcpp::Time> latest_time_inside_ego_path{std::nullopt};
     std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths{};
 
     MinMaxValue lon_offset_to_avoid;
     MinMaxValue lat_offset_to_avoid;
     bool is_collision_left;
+    bool should_be_avoided{false};
 
     void update(
       const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid,
-      const bool arg_is_collision_left)
+      const bool arg_is_collision_left, const bool arg_should_be_avoided)
     {
       lon_offset_to_avoid = arg_lon_offset_to_avoid;
       lat_offset_to_avoid = arg_lat_offset_to_avoid;
       is_collision_left = arg_is_collision_left;
+      should_be_avoided = arg_should_be_avoided;
     }
   };
 
