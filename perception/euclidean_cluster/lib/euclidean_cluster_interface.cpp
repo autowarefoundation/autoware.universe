@@ -74,7 +74,9 @@ void EuclideanClusterInterface::fastClusterExtract(
             }
           }
         }
-        classified_points[nn_indices[j]].class_index = min_class_idx;
+        if (temp_class_idx == 0) {
+          classified_points[nn_indices[j]].class_index = min_class_idx;
+        }
       }
       class_idx++;
     }
