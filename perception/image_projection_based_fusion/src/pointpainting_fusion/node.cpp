@@ -115,8 +115,9 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   const std::string head_engine_path = this->declare_parameter("head_engine_path", "");
 
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
+  const auto paint_class_names = this->declare_parameter<std::vector<std::string>>("paint_class_names");
   std::vector<std::string> classes_{"CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"};
-  if (std::find(class_names_.begin(), class_names_.end(), "TRUCK") != class_names_.end()) {
+  if (std::find(paint_class_names.begin(), paint_class_names.end(), "TRUCK") != paint_class_names.end()) {
     isClassTable_["CAR"] = std::bind(&isCar, std::placeholders::_1);
   } else {
     isClassTable_["CAR"] = std::bind(&isVehicle, std::placeholders::_1);
@@ -126,9 +127,9 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   isClassTable_["BICYCLE"] = std::bind(&isBicycle, std::placeholders::_1);
   isClassTable_["PEDESTRIAN"] = std::bind(&isPedestrian, std::placeholders::_1);
   for (const auto & cls : classes_) {
-    auto it = find(class_names_.begin(), class_names_.end(), cls);
-    if (it != class_names_.end()) {
-      int index = it - class_names_.begin();
+    auto it = find(paint_class_names.begin(), paint_class_names.end(), cls);
+    if (it != paint_class_names.end()) {
+      int index = it - paint_class_names.begin();
       class_index_[cls] = index + 1;
     } else {
       isClassTable_.erase(cls);
