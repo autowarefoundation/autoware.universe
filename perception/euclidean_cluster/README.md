@@ -92,6 +92,7 @@ Example:
 
 ## (Optional) References/External links
 
+<!-- cspell:ignore Yancheng, Yifei, Huiqing, Yizhen -->
 [1] [Yu Cao, Yancheng Wang, Yifei Xue, Huiqing Zhang and Yizhen Lao, FEC: Fast Euclidean Clustering for Point Cloud Segmentation](https://doi.org/10.3390/drones6110325).
 
 ## (Optional) Future extensions / Unimplemented parts
