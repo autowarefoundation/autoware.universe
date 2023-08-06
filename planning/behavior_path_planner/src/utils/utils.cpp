@@ -119,16 +119,6 @@ bool checkHasSameLane(
   return std::find_if(lanelets.begin(), lanelets.end(), has_same) != lanelets.end();
 }
 
-bool isLeft(
-  const geometry_msgs::msg::Point & start_point, const geometry_msgs::msg::Point & end_point,
-  const geometry_msgs::msg::Point & target_point)
-{
-  const double angle_to_target =
-    std::atan2(target_point.y - start_point.y, target_point.x - start_point.x);
-  const double angle_to_end = std::atan2(end_point.y - start_point.y, end_point.x - start_point.x);
-  return 0.0 < tier4_autoware_utils::normalizeRadian(angle_to_target - angle_to_end);
-}
-
 bool isSamePoint(const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2)
 {
   constexpr double epsilon = 1e-3;
@@ -334,7 +324,9 @@ std::vector<PolygonPoint> concatenateTwoPolygons(
 
   // NOTE: Polygon points is assumed to be clock-wise.
   std::vector<PolygonPoint> concatenated_polygon;
-  while (rclcpp::ok()) {
+  // NOTE: Maximum number of loop is set to avoid infinity loop calculation just in case.
+  const size_t max_loop_num = (unique_front_polygon.size() + unique_back_polygon.size()) * 2;
+  for (size_t loop_idx = 0; loop_idx < max_loop_num; ++loop_idx) {
     concatenated_polygon.push_back(get_out_poly().at(before_outside_idx));
     if (before_outside_idx == get_out_poly().size() - 1) {
       break;
@@ -353,12 +345,6 @@ std::vector<PolygonPoint> concatenateTwoPolygons(
         get_in_poly().at(i).point, get_in_poly().at(i + 1).point);
       if (!intersection) {
         continue;
-      }
-      if (!isLeft(
-            get_out_poly().at(curr_idx).point, get_out_poly().at(next_idx).point,
-            get_in_poly().at(i + 1).point)) {
-        // NOTE: Polygon points is assumed to be clock-wise.
-        // continue;
       }
       if (
         isSamePoint(get_out_poly().at(curr_idx).point, get_in_poly().at(i).point) ||
@@ -387,11 +373,9 @@ std::vector<PolygonPoint> concatenateTwoPolygons(
 
     before_outside_idx += 1;
 
-    /*
-    if (99 <= loop_idx) {
+    if (loop_idx == max_loop_num - 1) {
       return front_polygon;
     }
-    */
   }
 
   return concatenated_polygon;
