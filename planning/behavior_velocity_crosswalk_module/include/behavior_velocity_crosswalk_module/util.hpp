@@ -35,6 +35,9 @@
 #include <Eigen/Geometry>
 #include <behavior_velocity_planner_common/planner_data.hpp>
 
+// TODO(Mamoru Sobue): keep this temporarily
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_factor.hpp>
 
