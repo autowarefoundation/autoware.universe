@@ -97,6 +97,9 @@ std::optional<Stat<double>> MetricsCalculator::calculate(
   // Functions to calculate trajectory metrics
   switch (metric) {
     case Metric::predicted_path_deviation_from_trajectory:
+      const auto first_point_on_predicted_path = predicted_trajectory.points.front();
+      const auto longitudinal_offset = motion_utils::calcLongitudinalOffsetToSegment(
+        trajectory.points, 0, first_point_on_predicted_path);
       return metrics::calcLateralDistance(
         getLookaheadTrajectory(
           predicted_trajectory, parameters.trajectory.lookahead.max_dist_m,
