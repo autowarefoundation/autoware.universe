@@ -170,6 +170,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 
   for (const auto & feature_obj : input_roi_msg.feature_objects) {
     int index = -1;
+    bool associated = false;
     double max_iou = 0.0;
     for (const auto & cluster_map : m_cluster_roi) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
@@ -189,9 +190,10 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       if (max_iou < iou + iou_x + iou_y && passed_inside_cluster_gate) {
         index = cluster_map.first;
         max_iou = iou + iou_x + iou_y;
+        associated = true;
       }
     }
-    if (index == -1) {
+    if (!associated) {
       continue;
     }
 
