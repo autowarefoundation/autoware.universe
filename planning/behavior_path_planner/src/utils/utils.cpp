@@ -81,28 +81,33 @@ template <class T>
 size_t findNearestSegmentIndexFromLateralDistance(
   const std::vector<T> & points, const geometry_msgs::msg::Point & target_point)
 {
-  size_t closest_idx = motion_utils::findNearestSegmentIndex(points, target_point);
-  double min_lateral_dist =
-    std::fabs(motion_utils::calcLateralOffset(points, target_point, closest_idx));
-
+  std::optional<size_t> closest_idx{std::nullopt};
+  double min_lateral_dist = std::numeric_limits<double>::max();
   for (size_t seg_idx = 0; seg_idx < points.size() - 1; ++seg_idx) {
     const double lon_dist =
       motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, target_point);
     const double segment_length =
       tier4_autoware_utils::calcDistance2d(points.at(seg_idx), points.at(seg_idx + 1));
-    if (lon_dist < 0.0 || segment_length < lon_dist) {
-      continue;
-    }
-
-    const double lat_dist =
-      std::fabs(motion_utils::calcLateralOffset(points, target_point, seg_idx));
+    const double lat_dist = [&]() {
+      if (lon_dist < 0.0) {
+        return tier4_autoware_utils::calcDistance2d(points.at(seg_idx), target_point);
+      }
+      if (segment_length < lon_dist) {
+        return tier4_autoware_utils::calcDistance2d(points.at(seg_idx + 1), target_point);
+      }
+      return std::abs(motion_utils::calcLateralOffset(points, target_point, seg_idx));
+    }();
     if (lat_dist < min_lateral_dist) {
       closest_idx = seg_idx;
       min_lateral_dist = lat_dist;
     }
   }
 
-  return closest_idx;
+  if (closest_idx) {
+    return *closest_idx;
+  }
+
+  return motion_utils::findNearestSegmentIndex(points, target_point);
 }
 
 bool checkHasSameLane(
@@ -112,6 +117,12 @@ bool checkHasSameLane(
 
   const auto has_same = [&](const auto & ll) { return ll.id() == target_lane.id(); };
   return std::find_if(lanelets.begin(), lanelets.end(), has_same) != lanelets.end();
+}
+
+bool isSamePoint(const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2)
+{
+  constexpr double epsilon = 1e-3;
+  return std::abs(point1.x - point2.x) < epsilon && std::abs(point1.y - point2.y) < epsilon;
 }
 }  // namespace
 
@@ -283,43 +294,88 @@ std::vector<geometry_msgs::msg::Point> convertToGeometryPoints(
   return points;
 }
 
+// NOTE: See the PR's figure. https://github.com/autowarefoundation/autoware.universe/pull/2880
 std::vector<PolygonPoint> concatenateTwoPolygons(
   const std::vector<PolygonPoint> & front_polygon, const std::vector<PolygonPoint> & back_polygon)
 {
+  const auto make_unique_polygon = [&](const auto & polygon) {
+    std::vector<PolygonPoint> unique_polygon;
+    for (const auto & point : polygon) {
+      if (!unique_polygon.empty() && isSamePoint(unique_polygon.back().point, point.point)) {
+        continue;
+      }
+      unique_polygon.push_back(point);
+    }
+    return unique_polygon;
+  };
+  const auto unique_front_polygon = make_unique_polygon(front_polygon);
+  const auto unique_back_polygon = make_unique_polygon(back_polygon);
+
   // At first, the front polygon is the outside polygon
   bool is_front_polygon_outside = true;
-  size_t outside_idx = 0;
+  size_t before_outside_idx = 0;
 
   const auto get_out_poly = [&]() {
-    return is_front_polygon_outside ? front_polygon : back_polygon;
+    return is_front_polygon_outside ? unique_front_polygon : unique_back_polygon;
   };
   const auto get_in_poly = [&]() {
-    return is_front_polygon_outside ? back_polygon : front_polygon;
+    return is_front_polygon_outside ? unique_back_polygon : unique_front_polygon;
   };
 
+  // NOTE: Polygon points is assumed to be clock-wise.
   std::vector<PolygonPoint> concatenated_polygon;
-  while (rclcpp::ok()) {
-    concatenated_polygon.push_back(get_out_poly().at(outside_idx));
-    if (outside_idx == get_out_poly().size() - 1) {
+  // NOTE: Maximum number of loop is set to avoid infinity loop calculation just in case.
+  const size_t max_loop_num = (unique_front_polygon.size() + unique_back_polygon.size()) * 2;
+  for (size_t loop_idx = 0; loop_idx < max_loop_num; ++loop_idx) {
+    concatenated_polygon.push_back(get_out_poly().at(before_outside_idx));
+    if (before_outside_idx == get_out_poly().size() - 1) {
       break;
     }
-    const size_t curr_idx = outside_idx;
-    const size_t next_idx = outside_idx + 1;
+    const size_t curr_idx = before_outside_idx;
+    const size_t next_idx = before_outside_idx + 1;
 
+    // NOTE: Two polygons may have two intersection points. Therefore the closest intersection
+    //       point is used.
+    std::optional<size_t> closest_idx = std::nullopt;
+    double min_dist_to_intersection = std::numeric_limits<double>::max();
+    PolygonPoint closest_intersect_point;
     for (size_t i = 0; i < get_in_poly().size() - 1; ++i) {
       const auto intersection = tier4_autoware_utils::intersect(
         get_out_poly().at(curr_idx).point, get_out_poly().at(next_idx).point,
         get_in_poly().at(i).point, get_in_poly().at(i + 1).point);
-      if (intersection) {
-        const auto intersect_point = PolygonPoint{*intersection, 0, 0.0, 0.0};
-        concatenated_polygon.push_back(intersect_point);
+      if (!intersection) {
+        continue;
+      }
+      if (
+        isSamePoint(get_out_poly().at(curr_idx).point, get_in_poly().at(i).point) ||
+        isSamePoint(get_out_poly().at(curr_idx).point, get_in_poly().at(i + 1).point) ||
+        isSamePoint(get_out_poly().at(next_idx).point, get_in_poly().at(i).point) ||
+        isSamePoint(get_out_poly().at(next_idx).point, get_in_poly().at(i + 1).point)) {
+        // NOTE: If the segments shares one point, the while loop will not end.
+        continue;
+      }
 
-        is_front_polygon_outside = !is_front_polygon_outside;
-        outside_idx = i;
-        break;
+      const auto intersect_point = PolygonPoint{*intersection, 0, 0.0, 0.0};
+      const double dist_to_intersection =
+        tier4_autoware_utils::calcDistance2d(get_out_poly().at(curr_idx).point, *intersection);
+      if (dist_to_intersection < min_dist_to_intersection) {
+        closest_idx = i;
+        min_dist_to_intersection = dist_to_intersection;
+        closest_intersect_point = intersect_point;
       }
     }
-    outside_idx += 1;
+
+    if (closest_idx) {
+      before_outside_idx = *closest_idx;
+      concatenated_polygon.push_back(closest_intersect_point);
+      is_front_polygon_outside = !is_front_polygon_outside;
+    }
+
+    before_outside_idx += 1;
+
+    if (loop_idx == max_loop_num - 1) {
+      return front_polygon;
+    }
   }
 
   return concatenated_polygon;
@@ -2779,10 +2835,6 @@ BehaviorModuleOutput getReferencePath(
   const auto expanded_lanes = expandLanelets(
     shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
-
-  // for old architecture
-  generateDrivableArea(
-    reference_path, expanded_lanes, false, false, p.vehicle_length, planner_data);
 
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(reference_path);
