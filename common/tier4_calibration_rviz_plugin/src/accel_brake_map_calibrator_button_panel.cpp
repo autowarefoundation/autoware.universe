@@ -135,7 +135,7 @@ void AccelBrakeMapCalibratorButtonPanel::pushCalibrationButton()
 
     // wait 3 second
     after_calib_ = true;
-    rclcpp::Rate(0.33).sleep();
+    rclcpp::Rate(1.0 / 3.0).sleep();
     after_calib_ = false;
 
     // unlock button
