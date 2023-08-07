@@ -4,6 +4,7 @@ project(mission_planner)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+
 ament_auto_add_library(goal_pose_visualizer_component SHARED
   src/goal_pose_visualizer/goal_pose_visualizer.cpp
 )
@@ -11,6 +12,15 @@ ament_auto_add_library(goal_pose_visualizer_component SHARED
 rclcpp_components_register_node(goal_pose_visualizer_component
   PLUGIN "mission_planner::GoalPoseVisualizer"
   EXECUTABLE goal_pose_visualizer
+)
+
+ament_auto_add_library(rerouting_static_obstacle_component SHARED
+  src/rerouting_static_obstacle/rerouting_static_obstacle.cpp
+)
+
+rclcpp_components_register_node(rerouting_static_obstacle_component
+  PLUGIN "mission_planner::ReroutingStaticObstacle"
+  EXECUTABLE rerouting_static_obstacle
 )
 
 ament_auto_add_library(${PROJECT_NAME}_component SHARED

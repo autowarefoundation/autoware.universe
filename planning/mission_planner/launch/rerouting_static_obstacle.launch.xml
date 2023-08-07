@@ -1,0 +1,7 @@
+<launch>
+  <!-- <arg name="route_topic_name" default="/planning/mission_planning/route"/> -->
+
+  <node pkg="mission_planner" exec="rerouting_static_obstacle" name="rerouting_static_obstacle" output="screen">
+    <!-- <remap from="input/route" to="$(var route_topic_name)"/> -->
+  </node>
+</launch>

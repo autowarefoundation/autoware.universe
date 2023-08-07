@@ -8,4 +8,8 @@
   <group>
     <include file="$(find-pkg-share mission_planner)/launch/goal_pose_visualizer.launch.xml"/>
   </group>
+
+  <group>
+    <include file="$(find-pkg-share mission_planner)/launch/rerouting_static_obstacle.launch.xml"/>
+  </group>
 </launch>
