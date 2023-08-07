@@ -66,7 +66,7 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   // Parameters
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
   time_sync_threshold_ = declare_parameter<double>("time_sync_threshold", 0.05);
-  sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec", 0.15);
+  sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec", 0.5);
 
   // // merger function map
   // // main merger
@@ -125,7 +125,13 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
 
     // break if closest_time_sub_objects is not found
     if (!closest_time_sub_objects) {
-      // do nothing
+      // show buffer size
+      std::cout << "sub_objects_buffer_.size(): " << sub_objects_buffer_.size() << std::endl;
+      if (sub_objects_buffer_.size() > 0) {
+        std::cout << "oldest stamp: " << getUnixTime(sub_objects_buffer_.front()->header)
+                  << std::endl;
+        std::cout << "current stamp: " << getUnixTime(main_objects->header) << std::endl;
+      }
     } else {
       // show fo sub objects
       for (const auto & sub_obj : closest_time_sub_objects->objects) {

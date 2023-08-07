@@ -236,7 +236,7 @@ autoware_auto_perception_msgs::msg::TrackedObjectKinematics objectKinematicsVXMe
   } else if (policy == MergePolicy::OVERWRITE) {
     output_kinematics.twist_with_covariance.twist.linear.x =
       sub_obj.kinematics.twist_with_covariance.twist.linear.x;
-    return sub_obj.kinematics;
+    return output_kinematics;
   } else if (policy == MergePolicy::FUSION) {
     const auto main_vx = main_obj.kinematics.twist_with_covariance.twist.linear.x;
     const auto sub_vx = sub_obj.kinematics.twist_with_covariance.twist.linear.x;

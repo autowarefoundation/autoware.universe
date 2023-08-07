@@ -210,7 +210,9 @@ bool TrackerState::updateWithFunction(
 
 TrackedObject TrackerState::getObject() const
 {
-  return tracked_object_;
+  TrackedObject tracked_object = tracked_object_;
+  tracked_object.object_id = const_uuid_;
+  return tracked_object;
 }
 
 bool TrackerState::hasUUID(
