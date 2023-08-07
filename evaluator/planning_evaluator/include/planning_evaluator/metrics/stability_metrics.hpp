@@ -39,7 +39,9 @@ Stat<double> calcFrechetDistance(const Trajectory & traj1, const Trajectory & tr
  * @param [in] traj2 second trajectory
  * @return The lateral distance between the two trajectories.
  *
- * This function calculates the lateral distance between two trajectories by finding the nearest segment in the first trajectory to each point in the second trajectory and calculating the orthogonal distance to that segment.
+ * This function calculates the lateral distance between two trajectories by finding the nearest
+ * segment in the first trajectory to each point in the second trajectory and calculating the
+ * orthogonal distance to that segment.
  */
 Stat<double> calcLateralDistance(const Trajectory & traj1, const Trajectory & traj2);
 
