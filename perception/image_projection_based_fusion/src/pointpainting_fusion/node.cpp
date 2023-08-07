@@ -22,9 +22,9 @@
 #include <lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <lidar_centerpoint/ros_utils.hpp>
 #include <lidar_centerpoint/utils.hpp>
+#include <pcl_ros/transforms.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
-#include <pcl_ros/transforms.hpp>
 
 #include <omp.h>
 
@@ -115,9 +115,12 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   const std::string head_engine_path = this->declare_parameter("head_engine_path", "");
 
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
-  const auto paint_class_names = this->declare_parameter<std::vector<std::string>>("paint_class_names");
+  const auto paint_class_names =
+    this->declare_parameter<std::vector<std::string>>("paint_class_names");
   std::vector<std::string> classes_{"CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"};
-  if (std::find(paint_class_names.begin(), paint_class_names.end(), "TRUCK") != paint_class_names.end()) {
+  if (
+    std::find(paint_class_names.begin(), paint_class_names.end(), "TRUCK") !=
+    paint_class_names.end()) {
     isClassTable_["CAR"] = std::bind(&isCar, std::placeholders::_1);
   } else {
     isClassTable_["CAR"] = std::bind(&isVehicle, std::placeholders::_1);
@@ -321,7 +324,7 @@ dc   | dc dc dc  dc ||zc|
     float p_y = *reinterpret_cast<const float *>(&data[stride + y_offset]);
     float p_z = *reinterpret_cast<const float *>(&data[stride + z_offset]);
     point_lidar << p_x, p_y, p_z;
-    point_camera =  lidar2cam_affine * point_lidar;
+    point_camera = lidar2cam_affine * point_lidar;
     p_x = point_camera.x();
     p_y = point_camera.y();
     p_z = point_camera.z();
