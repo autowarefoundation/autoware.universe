@@ -195,11 +195,7 @@ void RoiDetectedObjectFusionNode::fuseObjectsOnImage(
     return;
   }
   auto & fused_object_flags = fused_object_flags_map_.at(timestamp_nsec);
-<<<<<<< HEAD
   auto & ignored_object_flags = ignored_object_flags_map_.at(timestamp_nsec);
-=======
-  auto & ignored_object_flags = fused_object_flags_map_.at(timestamp_nsec);
->>>>>>> 026ac9598 (tmp)
 
   for (const auto & object_pair : object_roi_map) {
     const auto & obj_i = object_pair.first;
@@ -278,7 +274,7 @@ void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
   }
   auto & passthrough_object_flags = passthrough_object_flags_map_.at(timestamp_nsec);
   auto & fused_object_flags = fused_object_flags_map_.at(timestamp_nsec);
-  auto & ignored_object_flags = fused_object_flags_map_.at(timestamp_nsec);
+  auto & ignored_object_flags = ignored_object_flags_map_.at(timestamp_nsec);
 
   DetectedObjects output_objects_msg, debug_fused_objects_msg, debug_ignored_objects_msg;
   output_objects_msg.header = output_msg.header;
