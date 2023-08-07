@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2023 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__MODULE_STATUS_HPP_
-#define BEHAVIOR_PATH_PLANNER__MODULE_STATUS_HPP_
+#include "ar_tag_based_localizer/tag_tf_caster_core.hpp"
 
-namespace behavior_path_planner
+int main(int argc, char ** argv)
 {
-enum class ModuleStatus {
-  IDLE = 0,
-  RUNNING = 1,
-  SUCCESS = 2,
-  FAILURE = 3,
-  // SKIPPED = 4,
-};
-}  // namespace behavior_path_planner
-
-#endif  // BEHAVIOR_PATH_PLANNER__MODULE_STATUS_HPP_
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<TagTfCaster>());
+  rclcpp::shutdown();
+}
