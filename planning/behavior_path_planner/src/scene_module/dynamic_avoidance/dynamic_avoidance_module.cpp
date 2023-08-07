@@ -374,7 +374,6 @@ void DynamicAvoidanceModule::updateTargetObjects()
 
     // 1.c. check if object is not crossing ego's path
     const double obj_angle = calcDiffAngleAgainstPath(prev_module_path->points, obj_pose);
-    std::cerr << obj_uuid << " " << obj_angle << std::endl;
     const double max_crossing_object_angle = 0.0 <= obj_tangent_vel
                                                ? parameters_->max_overtaking_crossing_object_angle
                                                : parameters_->max_oncoming_crossing_object_angle;
