@@ -466,9 +466,9 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // 2.e. check if time to collision
+    // 2.e. check time to collision
     const double time_to_collision =
-      calcTimeToCollision(prev_module_path->points, object.pose, object.vel);
+      calcTimeToCollision(prev_module_path->points, object.pose, object.vel, lat_lon_offset);
     if (
       (0 <= object.vel &&
        parameters_->max_time_to_collision_overtaking_object < time_to_collision) ||
@@ -494,7 +494,6 @@ void DynamicAvoidanceModule::updateTargetObjects()
     const bool is_collision_left = future_obj_pose
                                      ? isLeft(prev_module_path->points, future_obj_pose->position)
                                      : is_object_left;
-    std::cerr << obj_uuid << " " << time_to_collision << " " << is_collision_left << std::endl;
 
     // 2.g. calculate longitudinal and lateral offset to avoid
     const auto obj_points = tier4_autoware_utils::toPolygon2d(object.pose, object.shape);
@@ -573,15 +572,24 @@ DynamicAvoidanceModule::calcCollisionSection(
 
 double DynamicAvoidanceModule::calcTimeToCollision(
   const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
-  const double obj_tangent_vel) const
+  const double obj_tangent_vel, const LatLonOffset & lat_lon_offset) const
 {
-  const double relative_velocity = getEgoSpeed() - obj_tangent_vel;
+  // Set maximum time-to-collision 0 if the object longitudinally overlaps ego.
+  // NOTE: This is to avoid objects running right beside ego even if time-to-collision is negative.
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(ego_path);
+  const double lon_offset_ego_to_obj =
+    motion_utils::calcSignedArcLength(
+      ego_path, getEgoPose().position, ego_seg_idx, lat_lon_offset.nearest_idx) +
+    lat_lon_offset.max_lon_offset;
+  const double maximum_time_to_collision =
+    (0.0 < lon_offset_ego_to_obj) ? 0.0 : -std::numeric_limits<double>::max();
+
+  const double relative_velocity = getEgoSpeed() - obj_tangent_vel;
   const size_t obj_seg_idx = motion_utils::findNearestSegmentIndex(ego_path, obj_pose.position);
   const double signed_lon_length = motion_utils::calcSignedArcLength(
     ego_path, getEgoPosition(), ego_seg_idx, obj_pose.position, obj_seg_idx);
   const double positive_relative_velocity = std::max(relative_velocity, 1.0);
-  return signed_lon_length / positive_relative_velocity;
+  return std::max(maximum_time_to_collision, signed_lon_length / positive_relative_velocity);
 }
 
 bool DynamicAvoidanceModule::isObjectFarFromPath(

@@ -312,7 +312,7 @@ private:
     const PredictedObject & predicted_object, const double obj_dist_to_path) const;
   double calcTimeToCollision(
     const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
-    const double obj_tangent_vel) const;
+    const double obj_tangent_vel, const LatLonOffset & lat_lon_offset) const;
   std::optional<std::pair<size_t, size_t>> calcCollisionSection(
     const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & obj_path) const;
   LatLonOffset getLateralLongitudinalOffset(
