@@ -16,5 +16,6 @@
     <param from="$(var merge_options_path)"/>
     <param name="enable_logging" value="$(var enable_logging)"/>
     <param name="logging_file_path" value="$(var logging_file_path)"/>
+    <param name="sub_object_timeout_sec" value="0.5"/>
   </node>
 </launch>
