@@ -173,6 +173,7 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     std::string ns = "avoidance.avoidance.longitudinal.";
     p.prepare_time = get_parameter<double>(node, ns + "prepare_time");
     p.min_prepare_distance = get_parameter<double>(node, ns + "min_prepare_distance");
+    p.remain_buffer_distance = get_parameter<double>(node, ns + "remain_buffer_distance");
     p.min_slow_down_speed = get_parameter<double>(node, ns + "min_slow_down_speed");
     p.buf_slow_down_speed = get_parameter<double>(node, ns + "buf_slow_down_speed");
     p.nominal_avoidance_speed = get_parameter<double>(node, ns + "nominal_avoidance_speed");
@@ -365,8 +366,8 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
       parameters, ns + "trim.sharp_shift_filter_threshold", p->sharp_shift_filter_threshold);
   }
 
-  std::for_each(registered_modules_.begin(), registered_modules_.end(), [&p](const auto & m) {
-    m->updateModuleParams(p);
+  std::for_each(observers_.begin(), observers_.end(), [&p](const auto & observer) {
+    if (!observer.expired()) observer.lock()->updateModuleParams(p);
   });
 }
 }  // namespace behavior_path_planner

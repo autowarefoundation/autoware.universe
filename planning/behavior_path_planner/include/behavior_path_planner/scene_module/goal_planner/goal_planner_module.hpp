@@ -80,7 +80,6 @@ struct PUllOverStatus
   bool prev_is_safe{false};
   bool has_decided_velocity{false};
   bool has_requested_approval{false};
-  std::optional<Pose> stop_pose{};
   bool is_ready{false};
 };
 
@@ -92,9 +91,9 @@ public:
     const std::shared_ptr<GoalPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
-  void updateModuleParams(const std::shared_ptr<GoalPlannerParameters> & parameters)
+  void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = parameters;
+    parameters_ = std::any_cast<std::shared_ptr<GoalPlannerParameters>>(parameters);
   }
 
   BehaviorModuleOutput run() override;
@@ -194,7 +193,7 @@ private:
     std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer, const double time);
   bool hasFinishedCurrentPath();
   bool hasFinishedGoalPlanner();
-  bool isOnGoal() const;
+  bool isOnModifiedGoal() const;
   double calcModuleRequestLength() const;
   void resetStatus();
   bool needPathUpdate(const double path_update_duration) const;

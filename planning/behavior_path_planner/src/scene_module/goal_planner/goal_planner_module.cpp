@@ -153,7 +153,8 @@ void GoalPlannerModule::onTimer()
   // generate valid pull over path candidates and calculate closest start pose
   const auto current_lanes = utils::getExtendedCurrentLanes(
     planner_data_, parameters_->backward_goal_search_length,
-    parameters_->forward_goal_search_length);
+    parameters_->forward_goal_search_length,
+    /*until_goal_lane*/ false);
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
   double min_start_arc_length = std::numeric_limits<double>::max();
@@ -590,7 +591,8 @@ void GoalPlannerModule::setLanes()
 {
   status_.current_lanes = utils::getExtendedCurrentLanes(
     planner_data_, parameters_->backward_goal_search_length,
-    parameters_->forward_goal_search_length);
+    parameters_->forward_goal_search_length,
+    /*until_goal_lane*/ false);
   status_.pull_over_lanes =
     goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
   status_.lanes =
@@ -602,7 +604,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
   if (status_.is_safe) {
     // clear stop pose when the path is safe and activated
     if (isActivated()) {
-      status_.stop_pose.reset();
+      resetWallPoses();
     }
 
     // keep stop if not enough time passed,
@@ -817,6 +819,8 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
     printParkingPositionError();
   }
 
+  setStopReason(StopReason::GOAL_PLANNER, status_.pull_over_path->getFullPath());
+
   return output;
 }
 
@@ -871,6 +875,8 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification(
     {status_.pull_over_path->start_pose, modified_goal_pose_->goal_pose},
     {distance_to_path_change.first, distance_to_path_change.second}, SteeringFactor::APPROACHING);
 
+  setStopReason(StopReason::GOAL_PLANNER, status_.pull_over_path->getFullPath());
+
   return out;
 }
 
@@ -909,6 +915,7 @@ PathWithLaneId GoalPlannerModule::generateStopPath()
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & common_parameters = planner_data_->parameters;
+  const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
   const double pull_over_velocity = parameters_->pull_over_velocity;
 
   if (status_.current_lanes.empty()) {
@@ -946,13 +953,16 @@ PathWithLaneId GoalPlannerModule::generateStopPath()
   // if stop pose is closer than min_stop_distance, stop as soon as possible
   const double ego_to_stop_distance = calcSignedArcLengthFromEgo(reference_path, stop_pose);
   const auto min_stop_distance = calcFeasibleDecelDistance(0.0);
-  if (min_stop_distance && ego_to_stop_distance + stop_distance_buffer_ < *min_stop_distance) {
+  const double eps_vel = 0.01;
+  const bool is_stopped = std::abs(current_vel) < eps_vel;
+  const double buffer = is_stopped ? stop_distance_buffer_ : 0.0;
+  if (min_stop_distance && ego_to_stop_distance + buffer < *min_stop_distance) {
     return generateFeasibleStopPath();
   }
 
   // slow down for turn signal, insert stop point to stop_pose
   decelerateForTurnSignal(stop_pose, reference_path);
-  status_.stop_pose = stop_pose;
+  stop_pose_ = stop_pose;
 
   // slow down before the search area.
   if (search_start_offset_pose) {
@@ -996,7 +1006,7 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
   const auto stop_idx =
     motion_utils::insertStopPoint(current_pose, *min_stop_distance, stop_path.points);
   if (stop_idx) {
-    status_.stop_pose = stop_path.points.at(*stop_idx).point.pose;
+    stop_pose_ = stop_path.points.at(*stop_idx).point.pose;
   }
 
   return stop_path;
@@ -1083,17 +1093,20 @@ bool GoalPlannerModule::hasFinishedCurrentPath()
   return is_near_target && isStopped();
 }
 
-bool GoalPlannerModule::isOnGoal() const
+bool GoalPlannerModule::isOnModifiedGoal() const
 {
+  if (!modified_goal_pose_) {
+    return false;
+  }
+
   const Pose current_pose = planner_data_->self_odometry->pose.pose;
-  const Pose goal_pose = modified_goal_pose_ ? modified_goal_pose_->goal_pose
-                                             : planner_data_->route_handler->getGoalPose();
-  return calcDistance2d(current_pose, goal_pose) < parameters_->th_arrived_distance;
+  return calcDistance2d(current_pose, modified_goal_pose_->goal_pose) <
+         parameters_->th_arrived_distance;
 }
 
 bool GoalPlannerModule::hasFinishedGoalPlanner()
 {
-  return isOnGoal() && isStopped();
+  return isOnModifiedGoal() && isStopped();
 }
 
 TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo() const
@@ -1166,13 +1179,12 @@ bool GoalPlannerModule::hasEnoughDistance(const PullOverPath & pull_over_path) c
   // distance to restart should be less than decide_path_distance.
   // otherwise, the goal would change immediately after departure.
   const bool is_separated_path = status_.pull_over_path->partial_paths.size() > 1;
-  constexpr double eps_vel = 0.01;
   const double distance_to_start = calcSignedArcLength(
     pull_over_path.getFullPath().points, current_pose.position, pull_over_path.start_pose.position);
   const double distance_to_restart = parameters_->decide_path_distance / 2;
-  if (
-    is_separated_path && std::abs(current_vel) < eps_vel &&
-    distance_to_start < distance_to_restart) {
+  const double eps_vel = 0.01;
+  const bool is_stopped = std::abs(current_vel) < eps_vel;
+  if (is_separated_path && is_stopped && distance_to_start < distance_to_restart) {
     return false;
   }
 
@@ -1181,7 +1193,11 @@ bool GoalPlannerModule::hasEnoughDistance(const PullOverPath & pull_over_path) c
     return false;
   }
 
-  if (distance_to_start + stop_distance_buffer_ < *current_to_stop_distance) {
+  // If the stop line is subtly exceeded, it is assumed that there is not enough distance to the
+  // starting point of parking, so to prevent this, once the vehicle has stopped, it also has a
+  // stop_distance_buffer to allow for the amount exceeded.
+  const double buffer = is_stopped ? stop_distance_buffer_ : 0.0;
+  if (distance_to_start + buffer < *current_to_stop_distance) {
     return false;
   }
 
@@ -1471,13 +1487,6 @@ void GoalPlannerModule::setDebugData()
     add(createPoseMarkerArray(
       debug_poses.at(i), "debug_pose_" + std::to_string(i), 0, 0.3, 0.3, 0.3));
   }
-
-  // Visualize stop pose
-  if (status_.stop_pose) {
-    add(createStopVirtualWallMarker(
-      *status_.stop_pose, "pull_over", clock_->now(), 0,
-      planner_data_->parameters.base_link2front));
-  }
 }
 
 void GoalPlannerModule::printParkingPositionError() const
@@ -1514,7 +1523,7 @@ bool GoalPlannerModule::checkOriginalGoalIsInShoulder() const
 
 bool GoalPlannerModule::needPathUpdate(const double path_update_duration) const
 {
-  return !isOnGoal() && hasEnoughTimePassedSincePathUpdate(path_update_duration);
+  return !isOnModifiedGoal() && hasEnoughTimePassedSincePathUpdate(path_update_duration);
 }
 
 bool GoalPlannerModule::hasEnoughTimePassedSincePathUpdate(const double duration) const

@@ -62,7 +62,7 @@ public:
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) override;
 
-  void insertStopPoint(PathWithLaneId & path) override;
+  void insertStopPoint(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path) override;
 
   PathWithLaneId getReferencePath() const override;
 
@@ -103,6 +103,10 @@ protected:
     const lanelet::ConstLanelets & current_lanes, Direction direction) const override;
 
   int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
+
+  std::vector<double> sampleLongitudinalAccValues(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
 
   double calcPrepareDuration(
     const lanelet::ConstLanelets & current_lanes,
