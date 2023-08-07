@@ -508,27 +508,6 @@ struct ShiftLineData
 };
 
 /*
- * Data struct for longitudinal margin
- */
-struct MarginData
-{
-  Pose pose{};
-
-  bool enough_lateral_margin{true};
-
-  double longitudinal_distance{std::numeric_limits<double>::max()};
-
-  double longitudinal_margin{std::numeric_limits<double>::lowest()};
-
-  double vehicle_width;
-
-  double base_link2front;
-
-  double base_link2rear;
-};
-using MarginDataArray = std::vector<MarginData>;
-
-/*
  * Debug information for marker array
  */
 struct DebugData
@@ -571,13 +550,8 @@ struct DebugData
   // shift path
   std::vector<double> proposed_spline_shift;
 
-  bool exist_adjacent_objects{false};
-
   // future pose
   PathWithLaneId path_with_planned_velocity;
-
-  // margin
-  MarginDataArray margin_data_array;
 
   // avoidance require objects
   ObjectDataArray unavoidable_objects;

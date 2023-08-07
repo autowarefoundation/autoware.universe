@@ -2660,7 +2660,6 @@ void AvoidanceModule::updateDebugMarker(
   using marker_utils::avoidance_marker::createOtherObjectsMarkerArray;
   using marker_utils::avoidance_marker::createOverhangFurthestLineStringMarkerArray;
   using marker_utils::avoidance_marker::createPredictedVehiclePositions;
-  using marker_utils::avoidance_marker::createSafetyCheckMarkerArray;
   using marker_utils::avoidance_marker::createUnsafeObjectsMarkerArray;
   using marker_utils::avoidance_marker::makeOverhangToRoadShoulderMarkerArray;
   using tier4_autoware_utils::appendMarkerArray;
@@ -2695,8 +2694,6 @@ void AvoidanceModule::updateDebugMarker(
   add(createPathMarkerArray(
     helper_.getPreviousLinearShiftPath().path, "prev_linear_shift", 0, 0.5, 0.4, 0.6));
   add(createPoseMarkerArray(data.reference_pose, "reference_pose", 0, 0.9, 0.3, 0.3));
-
-  add(createSafetyCheckMarkerArray(data.state, getEgoPose(), debug));
 
   add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
   add(createPolygonMarkerArray(debug.detection_area, "detection_area", 0L, 0.16, 1.0, 0.69, 0.1));
