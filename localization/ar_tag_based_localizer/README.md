@@ -47,11 +47,11 @@ This package includes two nodes.
 
 ## How to launch
 
-When launching Autoware, specify `ar_tag_based_localizer` for `pose_source`.
+When launching Autoware, specify `artag` for `pose_source`.
 
 ```bash
 ros2 launch autoware_launch ... \
-    pose_source:=ar_tag_based_localizer \
+    pose_source:=artag \
     ...
 ```
 

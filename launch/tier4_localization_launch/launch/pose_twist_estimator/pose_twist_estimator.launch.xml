@@ -114,7 +114,7 @@
   </group>
 
   <!-- AR Tag Based Localizer (as pose estimator) -->
-  <group if="$(eval &quot;'$(var pose_source)'=='ar_tag_based_localizer'&quot;)">
+  <group if="$(eval &quot;'$(var pose_source)'=='artag'&quot;)">
     <group>
       <push-ros-namespace namespace="pose_estimator"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/ar_tag_based_localizer.launch.xml"/>
