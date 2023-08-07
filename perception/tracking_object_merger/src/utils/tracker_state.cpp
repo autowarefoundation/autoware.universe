@@ -27,11 +27,25 @@ using autoware_auto_perception_msgs::msg::TrackedObjects;
  * @param last_update_time : last update time
  */
 TrackerState::TrackerState(
-  const int input_source, const rclcpp::Time & last_update_time,
+  const MEASUREMENT_STATE input_source, const rclcpp::Time & last_update_time,
   const autoware_auto_perception_msgs::msg::TrackedObject & tracked_object)
 : tracked_object_(tracked_object),
   last_update_time_(last_update_time),
-  const_uuid_(tracked_object.object_id)
+  const_uuid_(tracked_object.object_id),
+  measurement_state_(input_source)
+{
+  input_uuid_map_[input_source] = tracked_object_.object_id;
+  last_updated_time_map_[input_source] = last_update_time;
+}
+
+TrackerState::TrackerState(
+  const MEASUREMENT_STATE input_source, const rclcpp::Time & last_update_time,
+  const autoware_auto_perception_msgs::msg::TrackedObject & tracked_object,
+  const unique_identifier_msgs::msg::UUID & uuid)
+: tracked_object_(tracked_object),
+  last_update_time_(last_update_time),
+  const_uuid_(uuid),
+  measurement_state_(input_source)
 {
   input_uuid_map_[input_source] = tracked_object_.object_id;
   last_updated_time_map_[input_source] = last_update_time;
@@ -74,8 +88,34 @@ bool TrackerState::predict(
   return true;
 }
 
-bool TrackerState::update(
-  const int input, const rclcpp::Time & current_time, const TrackedObject & tracked_object)
+// get current measurement state
+MEASUREMENT_STATE TrackerState::getCurrentMeasurementState(const rclcpp::Time & current_time)
+{
+  MEASUREMENT_STATE measurement_state = MEASUREMENT_STATE::NONE;
+  // check LIDAR
+  if (last_updated_time_map_.find(MEASUREMENT_STATE::LIDAR) != last_updated_time_map_.end()) {
+    if ((current_time - last_updated_time_map_.at(MEASUREMENT_STATE::LIDAR)).seconds() < max_dt_) {
+      measurement_state = measurement_state | MEASUREMENT_STATE::LIDAR;
+    }
+  }
+  // check RADAR
+  if (last_updated_time_map_.find(MEASUREMENT_STATE::RADAR) != last_updated_time_map_.end()) {
+    if ((current_time - last_updated_time_map_.at(MEASUREMENT_STATE::RADAR)).seconds() < max_dt_) {
+      measurement_state = measurement_state | MEASUREMENT_STATE::RADAR;
+    }
+  }
+  // check CAMERA
+  if (last_updated_time_map_.find(MEASUREMENT_STATE::CAMERA) != last_updated_time_map_.end()) {
+    if ((current_time - last_updated_time_map_.at(MEASUREMENT_STATE::CAMERA)).seconds() < max_dt_) {
+      measurement_state = measurement_state | MEASUREMENT_STATE::CAMERA;
+    }
+  }
+  return measurement_state;
+}
+
+bool TrackerState::updateState(
+  const MEASUREMENT_STATE input, const rclcpp::Time & current_time,
+  const TrackedObject & tracked_object)
 {
   // calc dt
   double dt = (current_time - last_update_time_).seconds();
@@ -89,22 +129,78 @@ bool TrackerState::update(
     this->predict(dt, utils::predictPastOrFutureTrackedObject);
   }
 
-  // merge update
-  // update with suitable function
-  this->update(input, current_time, tracked_object, merger_utils::updateWholeTrackedObject);
+  // get current measurement state
+  measurement_state_ = getCurrentMeasurementState(current_time);
+
+  // update with input
+  if (input & MEASUREMENT_STATE::LIDAR) {
+    updateWithLIDAR(current_time, tracked_object);
+  }
+  if (input & MEASUREMENT_STATE::RADAR) {
+    updateWithRADAR(current_time, tracked_object);
+  }
+  if (input & MEASUREMENT_STATE::CAMERA) {
+    updateWithCAMERA(current_time, tracked_object);
+  }
   return true;
 }
 
-bool TrackerState::update(
-  const int input, const rclcpp::Time & current_time, const TrackedObject & input_tracked_object,
+void TrackerState::updateWithCAMERA(
+  const rclcpp::Time & current_time, const TrackedObject & tracked_object)
+{
+  // update tracked object
+  updateWithFunction(
+    MEASUREMENT_STATE::CAMERA, current_time, tracked_object,
+    merger_utils::updateOnlyClassification);
+}
+
+void TrackerState::updateWithLIDAR(
+  const rclcpp::Time & current_time, const TrackedObject & tracked_object)
+{
+  // if radar is available, do not update velocity
+  if (measurement_state_ & MEASUREMENT_STATE::RADAR) {
+    // update tracked object
+    updateWithFunction(
+      MEASUREMENT_STATE::LIDAR, current_time, tracked_object, merger_utils::updateExceptVelocity);
+  } else {
+    // else just update tracked object
+    updateWithFunction(
+      MEASUREMENT_STATE::LIDAR, current_time, tracked_object,
+      merger_utils::updateWholeTrackedObject);
+  }
+}
+
+void TrackerState::updateWithRADAR(
+  const rclcpp::Time & current_time, const TrackedObject & tracked_object)
+{
+  // if lidar is available, update only velocity
+  if (measurement_state_ & MEASUREMENT_STATE::LIDAR) {
+    // update tracked object
+    updateWithFunction(
+      MEASUREMENT_STATE::RADAR, current_time, tracked_object,
+      merger_utils::updateOnlyObjectVelocity);
+  } else {
+    // else just update tracked object
+    updateWithFunction(
+      MEASUREMENT_STATE::RADAR, current_time, tracked_object,
+      merger_utils::updateWholeTrackedObject);
+  }
+}
+
+bool TrackerState::updateWithFunction(
+  const MEASUREMENT_STATE input, const rclcpp::Time & current_time,
+  const TrackedObject & input_tracked_object,
   std::function<void(TrackedObject &, const TrackedObject &)> update_func)
 {
   // put input uuid and last update time
   if (current_time > last_update_time_) {
     predict(current_time);
   }
+
+  // update with measurement state
   last_updated_time_map_[input] = current_time;
   input_uuid_map_[input] = input_tracked_object.object_id;
+  measurement_state_ = measurement_state_ | input;
 
   // update tracked object
   update_func(tracked_object_, input_tracked_object);
@@ -117,12 +213,18 @@ TrackedObject TrackerState::getObject() const
   return tracked_object_;
 }
 
-bool TrackerState::hasUUID(const int input, const unique_identifier_msgs::msg::UUID & uuid)
+bool TrackerState::hasUUID(
+  const MEASUREMENT_STATE input, const unique_identifier_msgs::msg::UUID & uuid)
 {
   if (input_uuid_map_.find(input) == input_uuid_map_.end()) {
     return false;
   }
   return input_uuid_map_.at(input) == uuid;
+}
+
+TrackerState::~TrackerState()
+{
+  // destructor
 }
 
 TrackedObjects getTrackedObjectsFromTrackerStates(

@@ -110,6 +110,8 @@ autoware_auto_perception_msgs::msg::Shape shapeMerger(
   const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy);
 
 // update tracked object
+void updateExceptVelocity(TrackedObject & main_obj, const TrackedObject & sub_obj);
+
 void updateOnlyObjectVelocity(TrackedObject & main_obj, const TrackedObject & sub_obj);
 
 void updateOnlyClassification(TrackedObject & main_obj, const TrackedObject & sub_obj);
