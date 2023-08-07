@@ -459,12 +459,10 @@ void DynamicAvoidanceModule::updateTargetObjects()
     }
 
     // 2.d. check if object will not cut out
-    const bool will_object_cut_out =
+    const auto will_object_cut_out =
       willObjectCutOut(object.vel, object.lat_vel, is_object_left, prev_object);
-    if (will_object_cut_out) {
-      RCLCPP_INFO_EXPRESSION(
-        getLogger(), parameters_->enable_debug_info,
-        "[DynamicAvoidance] Ignore obstacle (%s) since it will cut out.", obj_uuid.c_str());
+    if (will_object_cut_out.decision) {
+      printIgnoreReason(obj_uuid.c_str(), will_object_cut_out.reason);
       continue;
     }
 
@@ -477,16 +475,16 @@ void DynamicAvoidanceModule::updateTargetObjects()
       (object.vel <= 0 && parameters_->max_time_to_collision_oncoming_object < time_to_collision)) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
-        "[DynamicAvoidance] Ignore obstacle (%s) since time to collision is large.",
-        obj_uuid.c_str());
+        "[DynamicAvoidance] Ignore obstacle (%s) since time to collision (%f) is large.",
+        obj_uuid.c_str(), time_to_collision);
       continue;
     }
     if (time_to_collision < -parameters_->duration_to_hold_avoidance_overtaking_object) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
-        "[DynamicAvoidance] Ignore obstacle (%s) since time to collision is a small negative "
+        "[DynamicAvoidance] Ignore obstacle (%s) since time to collision (%f) is a small negative "
         "value.",
-        obj_uuid.c_str());
+        obj_uuid.c_str(), time_to_collision);
       continue;
     }
 
@@ -496,6 +494,7 @@ void DynamicAvoidanceModule::updateTargetObjects()
     const bool is_collision_left = future_obj_pose
                                      ? isLeft(prev_module_path->points, future_obj_pose->position)
                                      : is_object_left;
+    std::cerr << obj_uuid << " " << time_to_collision << " " << is_collision_left << std::endl;
 
     // 2.g. calculate longitudinal and lateral offset to avoid
     const auto obj_points = tier4_autoware_utils::toPolygon2d(object.pose, object.shape);
@@ -630,33 +629,45 @@ bool DynamicAvoidanceModule::willObjectCutIn(
   return false;
 }
 
-bool DynamicAvoidanceModule::willObjectCutOut(
+DynamicAvoidanceModule::DecisionWithReason DynamicAvoidanceModule::willObjectCutOut(
   const double obj_tangent_vel, const double obj_normal_vel, const bool is_object_left,
   const std::optional<DynamicAvoidanceObject> & prev_object) const
 {
   // Ignore oncoming object
   if (obj_tangent_vel < 0) {
-    return false;
+    return DecisionWithReason{false};
   }
 
-  if (prev_object && prev_object->latest_time_inside_ego_path) {
-    if (
-      parameters_->max_time_from_outside_ego_path_for_cut_out <
-      (clock_->now() - *prev_object->latest_time_inside_ego_path).seconds()) {
-      return false;
-    }
+  // Check if previous object is memorized
+  if (!prev_object || !prev_object->latest_time_inside_ego_path) {
+    return DecisionWithReason{false};
+  }
+  if (
+    parameters_->max_time_from_outside_ego_path_for_cut_out <
+    (clock_->now() - *prev_object->latest_time_inside_ego_path).seconds()) {
+    return DecisionWithReason{false};
   }
 
+  // Check object's lateral velocity
+  std::stringstream reason;
+  reason << "since latest time inside ego's path is small enough ("
+         << (clock_->now() - *prev_object->latest_time_inside_ego_path).seconds() << "<"
+         << parameters_->max_time_from_outside_ego_path_for_cut_out << ")";
   if (is_object_left) {
     if (parameters_->min_cut_out_object_lat_vel < obj_normal_vel) {
-      return true;
+      reason << ", and lateral velocity is large enough ("
+             << parameters_->min_cut_out_object_lat_vel << "<abs(" << obj_normal_vel << ")";
+      return DecisionWithReason{true, reason.str()};
     }
   } else {
     if (obj_normal_vel < -parameters_->min_cut_out_object_lat_vel) {
-      return true;
+      reason << ", and lateral velocity is large enough ("
+             << parameters_->min_cut_out_object_lat_vel << "<abs(" << obj_normal_vel << ")";
+      return DecisionWithReason{true, reason.str()};
     }
   }
-  return false;
+
+  return DecisionWithReason{false};
 }
 
 std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> DynamicAvoidanceModule::getAdjacentLanes(
