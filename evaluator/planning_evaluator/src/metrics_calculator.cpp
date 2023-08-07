@@ -99,8 +99,14 @@ std::optional<Stat<double>> MetricsCalculator::calculate(
 
   // Functions to calculate trajectory metrics
   switch (metric) {
-    case Metric::predicted_path_deviation_from_trajectory:
+    case Metric::predicted_path_deviation_from_trajectory: {
+      const auto modified_predicted_trajectory =
+        modifyPredictedTrajectory(trajectory, predicted_trajectory);
+      if (modified_predicted_trajectory.points.empty()) {
+        return {Stat<double>()};
+      }
       return metrics::calcLateralDistance(trajectory, modified_predicted_trajectory);
+    }
     default:
       return {};
   }
@@ -180,36 +186,76 @@ Trajectory MetricsCalculator::modifyPredictedTrajectory(
     }
   };
 
+  const auto last_seg_length = motion_utils::calcSignedArcLength(
+    trajectory.points, trajectory.points.size() - 2, trajectory.points.size() - 1);
+
+  // If p2 is in front of t1 or p2 is behind of t2, return empty trajectory
+  // predicted_trajectory:   p1------------------p2
+  // trajectory:                                     t1------------------t2
+  // predicted_trajectory:                           p1------------------p2
+  // trajectory:             t1------------------t2
+  const bool is_no_overlapping =
+    motion_utils::calcLongitudinalOffsetToSegment(
+      trajectory.points, 0, predicted_trajectory.points.back().pose.position) < 0.0 ||
+    motion_utils::calcLongitudinalOffsetToSegment(
+      trajectory.points, trajectory.points.size() - 2,
+      predicted_trajectory.points.front().pose.position) -
+        last_seg_length >
+      0.0;
+  if (is_no_overlapping) {
+    return Trajectory();
+  }
+
   Trajectory modified_predicted_trajectory = predicted_trajectory;
 
-  // If p1 is in front of t1, erase p1 and insert p3 in the predicted trajectory
-  // ----> trajectory direction
-  // predicted_trajectory:   p1--------------------------p2
-  // trajectory:                     t1------------------t2
+  // If first point of predicted_trajectory is in front of start of trajectory, erase points which
+  // are in front of trajectory start point and insert pNew along the predicted_trajectory
+  // predicted_trajectory:   　　　　p1-----p2-----p3----//------pN
+  // trajectory:                               t1--------//------tN
   // ↓
-  // predicted_trajectory:           p3------------------p2 p3:point_to_interpolate_front
-  // trajectory:                     t1------------------t2
-  const bool is_predicted_trajectory_first_point_front =
-    motion_utils::calcLongitudinalOffsetToSegment(
-      trajectory.points, 0, predicted_trajectory.points.front().pose.position) < 0.0;
+  // predicted_trajectory:   　　　　        tNew--p3----//------pN
+  // trajectory:                               t1--------//------tN
+
+  bool is_predicted_trajectory_first_point_front = false;
+  for (auto it = predicted_trajectory.points.begin(); it != predicted_trajectory.points.end();
+       ++it) {
+    if (
+      motion_utils::calcLongitudinalOffsetToSegment(trajectory.points, 0, it->pose.position) <
+      0.0) {
+      modified_predicted_trajectory.points.erase(modified_predicted_trajectory.points.begin());
+    } else {
+      break;
+    }
+    is_predicted_trajectory_first_point_front = true;
+  }
 
   update_trajectory_point(
     is_predicted_trajectory_first_point_front, modified_predicted_trajectory,
     trajectory.points.front().pose, true, predicted_trajectory);
 
-  // If p2 is behind of t2, erase p2 and insert p3 in the predicted trajectory
-  // ----> trajectory direction
-  // predicted_trajectory:   　　　　p1--------------------------p2
-  // trajectory:                     t1------------------t2
+  // If last point of predicted_trajectory is behind of end of trajectory, erase points which are
+  // behind trajectory last point and insert pNew along the predicted_trajectory
+  // predicted_trajectory:   　　　　p1-----//------pN-2-----pN-1-----pN
+  // trajectory:                     t1-----//-----tN-1--tN
   // ↓
-  // predicted_trajectory:           p3------------------p2 p3:point_to_interpolate_front
-  // trajectory:                     t1------------------t2
-  const bool is_predicted_trajectory_last_point_back =
-    motion_utils::calcLongitudinalOffsetToSegment(
-      trajectory.points, 0, predicted_trajectory.points.back().pose.position) > 0.0;
-
+  // predicted_trajectory:           p1-----//------pN-2-pNew
+  // trajectory:                     t1-----//-----tN-1--tN
+  bool is_predicted_trajectory_last_point_behind = false;
+  for (auto it = predicted_trajectory.points.rbegin(); it != predicted_trajectory.points.rend();
+       ++it) {
+    if (
+      motion_utils::calcLongitudinalOffsetToSegment(
+        trajectory.points, trajectory.points.size() - 2, it->pose.position) -
+        last_seg_length >
+      0.0) {
+      modified_predicted_trajectory.points.pop_back();
+    } else {
+      break;
+    }
+    is_predicted_trajectory_last_point_behind = true;
+  }
   update_trajectory_point(
-    is_predicted_trajectory_last_point_back, modified_predicted_trajectory,
+    is_predicted_trajectory_last_point_behind, modified_predicted_trajectory,
     trajectory.points.back().pose, false, predicted_trajectory);
 
   return modified_predicted_trajectory;
