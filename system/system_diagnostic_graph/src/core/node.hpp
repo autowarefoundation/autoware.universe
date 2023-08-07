@@ -29,7 +29,7 @@
 namespace system_diagnostic_graph
 {
 
-class DiagGraphInit;
+class GraphData;
 
 class BaseNode
 {
@@ -55,10 +55,11 @@ class UnitNode : public BaseNode
 public:
   using KeyType = std::string;
   explicit UnitNode(const KeyType & key);
+
   DiagnosticNode report() const override;
   DiagDebugData debug() const override;
   void update() override;
-  void create(DiagGraphInit & graph, const UnitConfig & config);
+  void create(GraphData & graph, const NodeConfig & config);
 
   std::vector<BaseNode *> links() const override { return links_; }
   std::string name() const override { return key_; }
@@ -74,6 +75,7 @@ class DiagNode : public BaseNode
 public:
   using KeyType = std::pair<std::string, std::string>;
   explicit DiagNode(const KeyType & key);
+
   DiagnosticNode report() const override;
   DiagDebugData debug() const override;
   void update() override;
@@ -87,27 +89,11 @@ private:
   DiagnosticStatus status_;
 };
 
-struct DiagGraphData
+struct GraphData
 {
-  std::vector<std::unique_ptr<UnitNode>> unit_list;
-  std::vector<std::unique_ptr<DiagNode>> leaf_list;
-  std::map<UnitNode::KeyType, UnitNode *> unit_dict;
-  std::map<DiagNode::KeyType, DiagNode *> leaf_dict;
-
-  UnitNode * make_unit(const std::string & name);
-  UnitNode * find_unit(const std::string & name);
-  DiagNode * make_leaf(const std::string & name, const std::string & hardware);
-  DiagNode * find_leaf(const std::string & name, const std::string & hardware);
-};
-
-class DiagGraphInit
-{
-public:
-  explicit DiagGraphInit(DiagGraphData & data) : data_(data) {}
-  BaseNode * get(const LinkConfig & link);
-
-private:
-  DiagGraphData & data_;
+  std::vector<std::unique_ptr<BaseNode>> nodes;
+  std::map<UnitNode::KeyType, UnitNode *> units;
+  std::map<DiagNode::KeyType, DiagNode *> diags;
 };
 
 }  // namespace system_diagnostic_graph

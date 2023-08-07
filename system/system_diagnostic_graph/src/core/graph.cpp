@@ -28,9 +28,10 @@ namespace system_diagnostic_graph
 
 void DiagGraph::create(const std::string & file)
 {
-  const auto configs = load_config_file(file);
+  const auto config = load_config_file(file);
   data_ = DiagGraphData();
 
+  /*
   // Create nodes first because it is necessary for the link.
   std::vector<std::pair<UnitConfig, UnitNode *>> units;
   for (const auto & config : configs) {
@@ -51,6 +52,7 @@ void DiagGraph::create(const std::string & file)
   for (size_t i = 0; i < topological_nodes_.size(); ++i) {
     topological_nodes_[i]->set_index(i);
   }
+  */
 }
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)

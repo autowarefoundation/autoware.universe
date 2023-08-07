@@ -18,160 +18,105 @@
 
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <string>
 
 namespace system_diagnostic_graph
 {
 
-class ErrorHint
+ConfigError create_error(const FileConfig & config, const std::string & message)
 {
-public:
-  explicit ErrorHint(const std::string & file);
-  operator std::string() const;
-  ConfigError create_error(const std::string & message) const;
-
-private:
-  std::string file_;
-};
-
-ErrorHint::ErrorHint(const std::string & file)
-{
-  file_ = file;
+  const std::string marker = config ? "File:" + config->path : "Parameter";
+  return ConfigError(message + " (" + marker + ")");
 }
 
-ErrorHint::operator std::string() const
+ConfigError create_error(const NodeConfig & config, const std::string & message)
 {
-  return file_;
+  const std::string marker = config ? "File:" + config->path : "Parameter";
+  return ConfigError(message + " (" + marker + ")");
 }
 
-ConfigError ErrorHint::create_error(const std::string & message) const
-{
-  return ConfigError(message + ": " + file_);
-}
-
-LinkConfig parse_link(YAML::Node yaml, ErrorHint hint)
+NodeConfig parse_config_node(YAML::Node yaml, const FileConfig & scope)
 {
   if (!yaml.IsMap()) {
-    throw hint.create_error("link object is not a dict");
-  }
-  if (!yaml["type"]) {
-    throw hint.create_error("link object has no type");
+    throw create_error(scope, "node object is not a dict");
   }
   if (!yaml["name"]) {
-    throw hint.create_error("link object has no name");
+    throw create_error(scope, "node object has no 'name' field");
   }
 
-  const auto type = yaml["type"].as<std::string>();
-  const auto name = yaml["name"].as<std::string>();
-  if (type == "unit") {
-    return LinkConfig{true, name, ""};
-  }
-  if (type == "diag") {
-    const auto hardware = yaml["hardware"].as<std::string>("");
-    return LinkConfig{false, name, hardware};
-  }
-  throw hint.create_error("link object has invalid type");
+  const auto config = std::make_shared<NodeConfig_>();
+  config->path = scope->path;
+  config->name = yaml["name"].as<std::string>();
+  config->yaml = yaml;
+  return config;
 }
 
-std::vector<LinkConfig> parse_list(YAML::Node yaml, ErrorHint hint)
-{
-  if (!yaml.IsDefined() || yaml.IsNull()) {
-    return {};
-  }
-  if (!yaml.IsSequence()) {
-    throw hint.create_error("list object is not a list");
-  }
-  std::vector<LinkConfig> list;
-  for (const auto & link : yaml) {
-    list.push_back(parse_link(link, hint));
-  }
-  return list;
-}
-
-ExprConfig parse_expr(YAML::Node yaml, ErrorHint hint)
+FileConfig parse_config_path(YAML::Node yaml, const FileConfig & scope)
 {
   if (!yaml.IsMap()) {
-    throw hint.create_error("expr object is not a dict");
+    throw create_error(scope, "file object is not a dict");
   }
-  if (!yaml["type"]) {
-    throw hint.create_error("expr object has no type");
+  if (!yaml["package"]) {
+    throw create_error(scope, "file object has no 'package' field");
   }
-  const auto type = yaml["type"].as<std::string>();
-  const auto list = parse_list(yaml["list"], hint);
-  return ExprConfig{type, list, yaml};
-}
+  if (!yaml["path"]) {
+    throw create_error(scope, "file object has no 'path' field");
+  }
 
-UnitConfig parse_unit(YAML::Node yaml, ErrorHint hint)
-{
-  if (!yaml.IsMap()) {
-    throw hint.create_error("unit object is not a dict");
-  }
-  if (!yaml["name"]) {
-    throw hint.create_error("unit object has no name");
-  }
-  const auto name = yaml["name"].as<std::string>();
-  const auto expr = parse_expr(yaml, hint);
-  return UnitConfig{name, hint, expr};
-}
-
-std::vector<UnitConfig> parse_nodes(YAML::Node yaml, ErrorHint hint)
-{
-  if (!yaml.IsDefined() || yaml.IsNull()) {
-    return {};
-  }
-  if (!yaml.IsSequence()) {
-    throw hint.create_error("nodes section is not a list");
-  }
-  std::vector<UnitConfig> units;
-  for (const auto & unit : yaml) {
-    units.push_back(parse_unit(unit, hint));
-  }
-  return units;
-}
-
-std::vector<UnitConfig> parse_file(YAML::Node yaml, ErrorHint hint)
-{
-  if (!yaml.IsMap()) {
-    throw hint.create_error("file object is not a dict");
-  }
   const auto package_name = yaml["package"].as<std::string>();
   const auto package_path = ament_index_cpp::get_package_share_directory(package_name);
-  return load_config_file(package_path + "/" + yaml["path"].as<std::string>());
+  return parse_config_path(package_path + "/" + yaml["path"].as<std::string>(), scope);
 }
 
-std::vector<UnitConfig> parse_files(YAML::Node yaml, ErrorHint hint)
+FileConfig parse_config_path(const std::string & path, const FileConfig & scope)
 {
-  if (!yaml.IsDefined() || yaml.IsNull()) {
-    return {};
-  }
-  if (!yaml.IsSequence()) {
-    throw hint.create_error("files section is not a list");
-  }
-  std::vector<UnitConfig> files;
-  for (const auto & file : yaml) {
-    const auto units = parse_file(file, hint);
-    files.insert(files.end(), units.begin(), units.end());
-  }
-  return files;
-}
-
-std::vector<UnitConfig> load_config_file(const std::string & path)
-{
-  const auto hint = ErrorHint(path);
   if (!std::filesystem::exists(path)) {
-    throw hint.create_error("config file is not exist");
+    throw create_error(scope, "config file '" + path + "' does not exist");
   }
+  return parse_config_file(path);
+}
+
+FileConfig parse_config_file(const std::string & path)
+{
+  const auto config = std::make_shared<FileConfig_>();
+  config->path = path;
+
   const auto yaml = YAML::LoadFile(path);
   if (!yaml.IsMap()) {
-    throw hint.create_error("config file is not a dict");
+    throw create_error(config, "config file is not a dict");
   }
-  const auto units = parse_nodes(yaml["nodes"], hint);
-  const auto files = parse_files(yaml["files"], hint);
 
-  std::vector<UnitConfig> result;
-  result.insert(result.end(), units.begin(), units.end());
-  result.insert(result.end(), files.begin(), files.end());
-  return result;
+  const auto files = yaml["files"] ? yaml["files"] : YAML::Node(YAML::NodeType::Sequence);
+  if (!files.IsSequence()) {
+    throw create_error(config, "files section is not a list");
+  }
+  for (const auto file : files) {
+    config->files.push_back(parse_config_path(file, config));
+  }
+
+  const auto nodes = yaml["nodes"] ? yaml["nodes"] : YAML::Node(YAML::NodeType::Sequence);
+  if (!nodes.IsSequence()) {
+    throw create_error(config, "nodes section is not a list");
+  }
+  for (const auto node : nodes) {
+    config->nodes.push_back(parse_config_node(node, config));
+  }
+
+  return config;
+}
+
+void walk_config_tree(const FileConfig & config, std::vector<NodeConfig> & nodes)
+{
+  nodes.insert(nodes.end(), config->nodes.begin(), config->nodes.end());
+  for (const auto & file : config->files) walk_config_tree(file, nodes);
+}
+
+std::vector<NodeConfig> load_config_file(const std::string & path)
+{
+  std::vector<NodeConfig> nodes;
+  walk_config_tree(parse_config_path(path, nullptr), nodes);
+  return nodes;
 }
 
 }  // namespace system_diagnostic_graph

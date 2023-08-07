@@ -50,7 +50,7 @@ void UnitNode::update()
   level_ = expr_->exec(levels);
 }
 
-void UnitNode::create(DiagGraphInit & graph, const UnitConfig & config)
+void UnitNode::create(DiagGraphInit & graph, const NodeConfig & config)
 {
   for (const auto & link : config.expr.list) {
     BaseNode * node = graph.get(link);

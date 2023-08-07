@@ -17,6 +17,7 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -29,28 +30,30 @@ struct ConfigError : public std::runtime_error
   using runtime_error::runtime_error;
 };
 
-struct LinkConfig
+struct NodeConfig_
 {
-  bool is_unit_type;
+  std::string path;
   std::string name;
-  std::string hardware;
-};
-
-struct ExprConfig
-{
-  std::string type;
-  std::vector<LinkConfig> list;
   YAML::Node yaml;
 };
 
-struct UnitConfig
+struct FileConfig_
 {
-  std::string name;
-  std::string hint;
-  ExprConfig expr;
+  std::string path;
+  std::vector<std::shared_ptr<FileConfig_>> files;
+  std::vector<std::shared_ptr<NodeConfig_>> nodes;
 };
 
-std::vector<UnitConfig> load_config_file(const std::string & path);
+using NodeConfig = std::shared_ptr<NodeConfig_>;
+using FileConfig = std::shared_ptr<FileConfig_>;
+ConfigError create_error(const FileConfig & config, const std::string & message);
+ConfigError create_error(const NodeConfig & config, const std::string & message);
+std::vector<NodeConfig> load_config_file(const std::string & path);
+
+NodeConfig parse_config_node(YAML::Node yaml, const FileConfig & scope);
+FileConfig parse_config_path(YAML::Node yaml, const FileConfig & scope);
+FileConfig parse_config_path(const std::string & path, const FileConfig & scope);
+FileConfig parse_config_file(const std::string & path);
 
 }  // namespace system_diagnostic_graph
 
