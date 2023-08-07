@@ -96,12 +96,8 @@
           "$ref": "#/definitions/radar_fusion_to_detected_object"
         }
       },
-      "required": [
-        "ros__parameters"
-      ]
+      "required": ["ros__parameters"]
     }
   },
-  "required": [
-    "/**"
-  ]
+  "required": ["/**"]
 }
