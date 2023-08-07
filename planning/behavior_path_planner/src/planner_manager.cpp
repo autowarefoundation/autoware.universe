@@ -234,11 +234,8 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
         candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), find_same_name_module);
 
       if (itr == candidate_module_ptrs_.end()) {
-        if (manager_ptr->canLaunchNewModule()) {
-          manager_ptr->updateIdleModuleInstance();
-          if (manager_ptr->isExecutionRequested(previous_module_output)) {
-            request_modules.emplace_back(manager_ptr->getIdleModule());
-          }
+        if (manager_ptr->launchNewModule(previous_module_output)) {
+          request_modules.emplace_back(manager_ptr->getIdleModule());
         }
 
         toc(manager_ptr->name());
@@ -280,24 +277,6 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
         toc(manager_ptr->name());
         continue;
       }
-    }
-
-    /**
-     * same name module doesn't exist in candidate modules. launch new module.
-     */
-    {
-      if (!manager_ptr->canLaunchNewModule()) {
-        toc(manager_ptr->name());
-        continue;
-      }
-
-      manager_ptr->updateIdleModuleInstance();
-      if (!manager_ptr->isExecutionRequested(previous_module_output)) {
-        toc(manager_ptr->name());
-        continue;
-      }
-
-      request_modules.emplace_back(manager_ptr->getIdleModule());
     }
 
     toc(manager_ptr->name());

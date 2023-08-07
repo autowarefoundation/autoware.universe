@@ -216,7 +216,15 @@ public:
     });
   }
 
-  bool canLaunchNewModule() const { return observers_.size() < max_module_num_; }
+  bool launchNewModule(const BehaviorModuleOutput & previous_module_output)
+  {
+    if (!observers_.size() < max_module_num_) {
+      return false;
+    }
+
+    updateIdleModuleInstance();
+    return isExecutionRequested(previous_module_output);
+  }
 
   bool isSimultaneousExecutableAsApprovedModule() const
   {
