@@ -35,14 +35,34 @@
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
 
-// measurement state
+// Enum classes to distinguish input sources
 enum class MEASUREMENT_STATE : int {
-  MAIN_AND_SUB = 0,
-  MAIN_ONLY = 1,
-  SUB_ONLY = 2,
-  NONE = 3,
+  NONE = 0,                // 0000
+  LIDAR = 1,               // 0001
+  RADAR = 2,               // 0010
+  CAMERA = 4,              // 0100
+  LIDAR_RADAR = 3,         // 0011
+  LIDAR_CAMERA = 5,        // 0101
+  RADAR_CAMERA = 6,        // 0110
+  LIDAR_RADAR_CAMERA = 7,  // 0111
 };
 
+// Operator overloading for MEASUREMENT_STATE
+// 1. operator| for MEASUREMENT_STATE
+//    e.g. MEASUREMENT_STATE::LIDAR | MEASUREMENT_STATE::RADAR == MEASUREMENT_STATE::LIDAR_RADAR
+// 2. operator& for MEASUREMENT_STATE
+//    e.g. MEASUREMENT_STATE::LIDAR_RADAR & MEASUREMENT_STATE::LIDAR == true
+//    e.g. MEASUREMENT_STATE::LIDAR_RADAR & MEASUREMENT_STATE::CAMERA == false
+inline MEASUREMENT_STATE operator|(MEASUREMENT_STATE lhs, MEASUREMENT_STATE rhs)
+{
+  return static_cast<MEASUREMENT_STATE>(static_cast<int>(lhs) | static_cast<int>(rhs));
+}
+inline bool operator&(MEASUREMENT_STATE combined, MEASUREMENT_STATE target)
+{
+  return (static_cast<int>(combined) & static_cast<int>(target)) != 0;
+}
+
+// Class to handle tracker state
 class TrackerState
 {
 private:
@@ -55,33 +75,49 @@ private:
   // handle existence probability
   double can_publish_threshold_ = 0.5;
   double remove_threshold_ = 0.3;
-  std::unordered_map<int, double> existence_probability_map_;
-
-  // handle uuid
-  std::unordered_map<int, std::optional<unique_identifier_msgs::msg::UUID>> input_uuid_map_;
-  const unique_identifier_msgs::msg::UUID const_uuid_;
-  MEASUREMENT_STATE measurement_state_;
 
   // timer handle
-  std::unordered_map<int, rclcpp::Time> last_updated_time_map_;
+  std::unordered_map<MEASUREMENT_STATE, rclcpp::Time> last_updated_time_map_;
   double max_dt_ = 2.0;
 
 public:
   TrackerState(
-    const int input, const rclcpp::Time & last_update_time, const TrackedObject & tracked_object);
+    const MEASUREMENT_STATE input, const rclcpp::Time & last_update_time,
+    const TrackedObject & tracked_object);
+  TrackerState(
+    const MEASUREMENT_STATE input_source, const rclcpp::Time & last_update_time,
+    const autoware_auto_perception_msgs::msg::TrackedObject & tracked_object,
+    const unique_identifier_msgs::msg::UUID & uuid);
+
   ~TrackerState();
 
 public:
   bool predict(const rclcpp::Time & time);
   bool predict(const double dt, std::function<TrackedObject(const TrackedObject &, double)> func);
-  bool update(
-    const int input, const rclcpp::Time & current_time, const TrackedObject & tracked_object);
-  bool update(const int input, const TrackedObject & tracked_object);
-  bool update(
-    const int input, const rclcpp::Time & current_time, const TrackedObject & tracked_object,
+  MEASUREMENT_STATE getCurrentMeasurementState(const rclcpp::Time & current_time);
+  bool updateState(
+    const MEASUREMENT_STATE input, const rclcpp::Time & current_time,
+    const TrackedObject & tracked_object);
+  void updateWithLIDAR(const rclcpp::Time & current_time, const TrackedObject & tracked_object);
+  void updateWithRADAR(const rclcpp::Time & current_time, const TrackedObject & tracked_object);
+  void updateWithCAMERA(const rclcpp::Time & current_time, const TrackedObject & tracked_object);
+  bool update(const MEASUREMENT_STATE input, const TrackedObject & tracked_object);
+  bool updateWithFunction(
+    const MEASUREMENT_STATE input, const rclcpp::Time & current_time,
+    const TrackedObject & tracked_object,
     std::function<void(TrackedObject &, const TrackedObject &)> update_func);
-  bool hasUUID(const int input, const unique_identifier_msgs::msg::UUID & uuid);
+  bool hasUUID(const MEASUREMENT_STATE input, const unique_identifier_msgs::msg::UUID & uuid);
   TrackedObject getObject() const;
+
+public:
+  // handle uuid
+  const unique_identifier_msgs::msg::UUID const_uuid_;
+  // each sensor input to uuid map
+  std::unordered_map<MEASUREMENT_STATE, std::optional<unique_identifier_msgs::msg::UUID>>
+    input_uuid_map_;
+  MEASUREMENT_STATE measurement_state_;
+
+  std::unordered_map<MEASUREMENT_STATE, double> existence_probability_map_;
 };
 
 TrackedObjects getTrackedObjectsFromTrackerStates(

@@ -15,6 +15,12 @@ Detailed process depends on the merger policy.
 In decorative_tracker_merger, we assume there are dominant tracking objects and sub tracking objects.
 Sub tracking objects are merged into dominant tracking objects.
 
+| state\priority             | 1st    | 2nd   | 3rd    |
+| -------------------------- | ------ | ----- | ------ |
+| Kinematics except velocity | LiDAR  | Radar | Camera |
+| Forward velocity           | Radar  | LiDAR | Camera |
+| Object classification      | Camera | LiDAR | Radar  |
+
 ### equivalent_tracker_merger
 
 This is future work.

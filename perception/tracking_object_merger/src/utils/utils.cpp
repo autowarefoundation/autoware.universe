@@ -348,6 +348,13 @@ autoware_auto_perception_msgs::msg::Shape shapeMerger(
   }
 }
 
+void updateExceptVelocity(TrackedObject & main_obj, const TrackedObject & sub_obj)
+{
+  const auto vx_temp = main_obj.kinematics.twist_with_covariance.twist.linear.x;
+  main_obj = sub_obj;
+  main_obj.kinematics.twist_with_covariance.twist.linear.x = vx_temp;
+}
+
 void updateOnlyObjectVelocity(TrackedObject & main_obj, const TrackedObject & sub_obj)
 {
   main_obj.kinematics = objectKinematicsVXMerger(main_obj, sub_obj, MergePolicy::OVERWRITE);

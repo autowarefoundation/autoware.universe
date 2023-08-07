@@ -40,6 +40,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace tracking_object_merger
@@ -58,7 +59,7 @@ private:
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
 
   bool decorativeMerger(
-    const int input_index,
+    const MEASUREMENT_STATE input_index,
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
   autoware_auto_perception_msgs::msg::TrackedObjects predictFutureState(
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg,
@@ -68,6 +69,9 @@ private:
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg2,
     const std_msgs::msg::Header & header);
   TrackedObjects getTrackedObjects(const std_msgs::msg::Header & header);
+  TrackerState createNewTracker(
+    const MEASUREMENT_STATE input_index, rclcpp::Time current_time,
+    const autoware_auto_perception_msgs::msg::TrackedObject & input_object);
 
 private:
   tf2_ros::Buffer tf_buffer_;
@@ -80,6 +84,8 @@ private:
     sub_sub_objects_;
 
   /* handle objects */
+  std::unordered_map<MEASUREMENT_STATE, std::function<void(TrackedObject &, const TrackedObject &)>>
+    input_merger_map_;
   std::vector<TrackerState> inner_tracker_objects_;
   std::unique_ptr<DataAssociation> data_association_;
   std::string target_frame_;
