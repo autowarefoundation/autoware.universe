@@ -68,6 +68,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   modified_goal_publisher_ = create_publisher<PoseWithUuidStamped>("~/output/modified_goal", 1);
   stop_reason_publisher_ = create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
+  reroute_availability_publisher_ = create_publisher<Bool>("~/output/is_reroute_available", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
   debug_lane_change_msg_array_publisher_ =
@@ -539,6 +540,9 @@ void BehaviorPathPlannerNode::run()
   // compute turn signal
   computeTurnSignal(planner_data_, *path, output);
 
+  // publish reroute availability
+  publish_reroute_availability();
+
   // publish drivable bounds
   publish_bounds(*path);
 
@@ -652,6 +656,21 @@ void BehaviorPathPlannerNode::publish_steering_factor(
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
+}
+
+void BehaviorPathPlannerNode::publish_reroute_availability()
+{
+  const bool has_approved_modules = planner_manager_->hasApprovedModules();
+  const bool has_candidate_modules = planner_manager_->hasCandidateModules();
+
+  Bool is_reroute_available;
+  if (has_approved_modules || has_candidate_modules) {
+    is_reroute_available.data = false;
+  } else {
+    is_reroute_available.data = true;
+  }
+
+  reroute_availability_publisher_->publish(is_reroute_available);
 }
 
 void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDebugData & debug_data)
