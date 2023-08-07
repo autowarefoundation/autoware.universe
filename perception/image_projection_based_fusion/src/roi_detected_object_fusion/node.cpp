@@ -62,8 +62,8 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
   Eigen::Affine3d object2camera_affine;
   {
     const auto transform_stamped_optional = getTransformStamped(
-      tf_buffer_, /*target*/ camera_info.header.frame_id,
-      /*source*/ input_object_msg.header.frame_id, input_object_msg.header.stamp);
+      tf_buffer_, /*target*/ input_roi_msg.header.frame_id,
+      /*source*/ input_object_msg.header.frame_id, input_roi_msg.header.stamp);
     if (!transform_stamped_optional) {
       return;
     }
@@ -154,7 +154,7 @@ std::map<std::size_t, RegionOfInterest> RoiDetectedObjectFusionNode::generateDet
         }
       }
     }
-    if (point_on_image_cnt == 0) {
+    if (point_on_image_cnt == 3) {
       continue;
     }
 
@@ -195,7 +195,7 @@ void RoiDetectedObjectFusionNode::fuseObjectsOnImage(
     return;
   }
   auto & fused_object_flags = fused_object_flags_map_.at(timestamp_nsec);
-  auto & ignored_object_flags = fused_object_flags_map_.at(timestamp_nsec);
+  auto & ignored_object_flags = ignored_object_flags_map_.at(timestamp_nsec);
 
   for (const auto & object_pair : object_roi_map) {
     const auto & obj_i = object_pair.first;
@@ -274,7 +274,7 @@ void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
   }
   auto & passthrough_object_flags = passthrough_object_flags_map_.at(timestamp_nsec);
   auto & fused_object_flags = fused_object_flags_map_.at(timestamp_nsec);
-  auto & ignored_object_flags = fused_object_flags_map_.at(timestamp_nsec);
+  auto & ignored_object_flags = ignored_object_flags_map_.at(timestamp_nsec);
 
   DetectedObjects output_objects_msg, debug_fused_objects_msg, debug_ignored_objects_msg;
   output_objects_msg.header = output_msg.header;
@@ -288,7 +288,8 @@ void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
     if (fused_object_flags.at(obj_i)) {
       output_objects_msg.objects.emplace_back(obj);
       debug_fused_objects_msg.objects.emplace_back(obj);
-    } else if (ignored_object_flags.at(obj_i)) {
+    }
+    if (ignored_object_flags.at(obj_i)) {
       debug_ignored_objects_msg.objects.emplace_back(obj);
     }
   }
