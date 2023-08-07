@@ -14,6 +14,8 @@
 
 #include "image_projection_based_fusion/roi_detected_object_fusion/node.hpp"
 
+#include "object_recognition_utils/object_recognition_utils.hpp"
+
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
 
@@ -25,11 +27,11 @@ namespace image_projection_based_fusion
 RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<DetectedObjects, DetectedObject>("roi_detected_object_fusion", options)
 {
-  fusion_params_.passthrough_lower_bound_probability_threshold =
-    declare_parameter<double>("passthrough_lower_bound_probability_threshold");
+  fusion_params_.passthrough_lower_bound_probability_thresholds =
+    declare_parameter<std::vector<double>>("passthrough_lower_bound_probability_thresholds");
+  fusion_params_.min_iou_threshold = declare_parameter<double>("min_iou_threshold");
   fusion_params_.use_roi_probability = declare_parameter<bool>("use_roi_probability");
   fusion_params_.roi_probability_threshold = declare_parameter<double>("roi_probability_threshold");
-  fusion_params_.min_iou_threshold = declare_parameter<double>("min_iou_threshold");
 }
 
 void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
@@ -39,9 +41,10 @@ void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
   fused_object_flags.resize(output_msg.objects.size());
   ignored_object_flags.resize(output_msg.objects.size());
   for (std::size_t obj_i = 0; obj_i < output_msg.objects.size(); ++obj_i) {
-    if (
-      output_msg.objects.at(obj_i).existence_probability >
-      fusion_params_.passthrough_lower_bound_probability_threshold) {
+    auto label =
+      object_recognition_utils::getHighestProbLabel(output_msg.objects.at(obj_i).classification);
+    auto prob_threshold = fusion_params_.passthrough_lower_bound_probability_thresholds.at(label);
+    if (output_msg.objects.at(obj_i).existence_probability > prob_threshold) {
       passthrough_object_flags.at(obj_i) = true;
     }
   }

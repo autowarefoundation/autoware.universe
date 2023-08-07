@@ -56,7 +56,7 @@ protected:
 private:
   struct
   {
-    double passthrough_lower_bound_probability_threshold{};
+    std::vector<double> passthrough_lower_bound_probability_thresholds{};
     double min_iou_threshold{};
     bool use_roi_probability{};
     double roi_probability_threshold{};

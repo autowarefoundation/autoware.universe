@@ -1,0 +1,8 @@
+/**:
+  ros__parameters:
+    # UNKNOWN, CAR, TRUCK, BUS, TRAILER, MOTORBIKE, BICYCLE, PEDESTRIAN
+    passthrough_lower_bound_probability_thresholds: [0.35, 0.35, 0.35, 0.35, 0.35, 0.50, 0.50, 0.50]
+    min_iou_threshold: 0.5
+    use_roi_probability: false
+    roi_probability_threshold: 0.5
+
