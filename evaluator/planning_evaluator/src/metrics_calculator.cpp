@@ -92,21 +92,15 @@ std::optional<Stat<double>> MetricsCalculator::calculate(
 }
 
 std::optional<Stat<double>> MetricsCalculator::calculate(
-  const Metric metric, const Trajectory & predicted_trajectory, const Trajectory & trajectory) const
+  const Metric metric, const Trajectory & trajectory, const Trajectory & predicted_trajectory) const
 {
+  const auto modified_predicted_trajectory =
+    modifyPredictedTrajectory(trajectory, predicted_trajectory);
+
   // Functions to calculate trajectory metrics
   switch (metric) {
     case Metric::predicted_path_deviation_from_trajectory:
-      const auto first_point_on_predicted_path = predicted_trajectory.points.front();
-      const auto longitudinal_offset = motion_utils::calcLongitudinalOffsetToSegment(
-        trajectory.points, 0, first_point_on_predicted_path);
-      return metrics::calcLateralDistance(
-        getLookaheadTrajectory(
-          predicted_trajectory, parameters.trajectory.lookahead.max_dist_m,
-          parameters.trajectory.lookahead.max_time_s),
-        getLookaheadTrajectory(
-          trajectory, parameters.trajectory.lookahead.max_dist_m,
-          parameters.trajectory.lookahead.max_time_s));
+      return metrics::calcLateralDistance(trajectory, modified_predicted_trajectory);
     default:
       return {};
   }
@@ -163,6 +157,62 @@ Trajectory MetricsCalculator::getLookaheadTrajectory(
     ++curr_point_it;
   }
   return lookahead_traj;
+}
+
+Trajectory MetricsCalculator::modifyPredictedTrajectory(
+  const Trajectory & trajectory, const Trajectory & predicted_trajectory) const
+{
+  auto update_trajectory_point = [](
+                                   bool condition, Trajectory & modified_trajectory,
+                                   const Pose & reference_pose, bool is_front,
+                                   const Trajectory & predicted_trajectory) {
+    if (condition) {
+      const auto point_to_interpolate =
+        motion_utils::calcInterpolatedPoint(predicted_trajectory, reference_pose);
+
+      if (is_front) {
+        // Replace the front point with the new point
+        modified_trajectory.points.front() = point_to_interpolate;
+      } else {
+        // Replace the back point with the new point
+        modified_trajectory.points.back() = point_to_interpolate;
+      }
+    }
+  };
+
+  Trajectory modified_predicted_trajectory = predicted_trajectory;
+
+  // If p1 is in front of t1, erase p1 and insert p3 in the predicted trajectory
+  // ----> trajectory direction
+  // predicted_trajectory:   p1--------------------------p2
+  // trajectory:                     t1------------------t2
+  // ↓
+  // predicted_trajectory:           p3------------------p2 p3:point_to_interpolate_front
+  // trajectory:                     t1------------------t2
+  const bool is_predicted_trajectory_first_point_front =
+    motion_utils::calcLongitudinalOffsetToSegment(
+      trajectory.points, 0, predicted_trajectory.points.front().pose.position) < 0.0;
+
+  update_trajectory_point(
+    is_predicted_trajectory_first_point_front, modified_predicted_trajectory,
+    trajectory.points.front().pose, true, predicted_trajectory);
+
+  // If p2 is behind of t2, erase p2 and insert p3 in the predicted trajectory
+  // ----> trajectory direction
+  // predicted_trajectory:   　　　　p1--------------------------p2
+  // trajectory:                     t1------------------t2
+  // ↓
+  // predicted_trajectory:           p3------------------p2 p3:point_to_interpolate_front
+  // trajectory:                     t1------------------t2
+  const bool is_predicted_trajectory_last_point_back =
+    motion_utils::calcLongitudinalOffsetToSegment(
+      trajectory.points, 0, predicted_trajectory.points.back().pose.position) > 0.0;
+
+  update_trajectory_point(
+    is_predicted_trajectory_last_point_back, modified_predicted_trajectory,
+    trajectory.points.back().pose, false, predicted_trajectory);
+
+  return modified_predicted_trajectory;
 }
 
 }  // namespace planning_diagnostics

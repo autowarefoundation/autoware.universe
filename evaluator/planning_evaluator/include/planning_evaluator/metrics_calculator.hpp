@@ -95,6 +95,9 @@ public:
   Trajectory getLookaheadTrajectory(
     const Trajectory & traj, const double max_dist_m, const double max_time_s) const;
 
+  Trajectory modifyPredictedTrajectory(
+     const Trajectory & trajectory, const Trajectory & predicted_trajectory) const;
+
 private:
 
   Trajectory reference_trajectory_;

@@ -76,9 +76,9 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
   }
 
   look_ahead_predicted_trajectory_pub_ =
-    create_publisher<Trajectory>("~/debug/look_ahead_predicted_trajectory", 1);
-  look_ahead_motion_velocity_smoother_trajectory_pub_ = create_publisher<Trajectory>(
-    "~/debug/look_ahead_motion_velocity_smoother_trajectory", 1);
+    create_publisher<Trajectory>("~/debug/modified_predicted_trajectory", 1);
+  look_ahead_motion_velocity_smoother_trajectory_pub_ =
+    create_publisher<Trajectory>("~/debug/motion_velocity_smoother_trajectory", 1);
 }
 
 PlanningEvaluatorNode::~PlanningEvaluatorNode()
@@ -208,7 +208,7 @@ void PlanningEvaluatorNode::onPredictedTrajectory(
   metrics_msg.header.stamp = now();
   for (Metric metric : metrics_) {
     const auto metric_stat =
-      metrics_calculator_.calculate(Metric(metric), *predicted_trajectory_msg, *traj_ptr_);
+      metrics_calculator_.calculate(Metric(metric), *traj_ptr_, *predicted_trajectory_msg);
     if (!metric_stat) {
       continue;
     }
@@ -218,12 +218,9 @@ void PlanningEvaluatorNode::onPredictedTrajectory(
     }
   }
   if (!metrics_msg.status.empty()) {
-    look_ahead_predicted_trajectory_pub_->publish(metrics_calculator_.getLookaheadTrajectory(
-      *predicted_trajectory_msg, metrics_calculator_.parameters.trajectory.lookahead.max_dist_m,
-      metrics_calculator_.parameters.trajectory.lookahead.max_time_s));
-    look_ahead_motion_velocity_smoother_trajectory_pub_->publish(metrics_calculator_.getLookaheadTrajectory(
-      *traj_ptr_, metrics_calculator_.parameters.trajectory.lookahead.max_dist_m,
-      metrics_calculator_.parameters.trajectory.lookahead.max_time_s));
+    look_ahead_predicted_trajectory_pub_->publish(
+      metrics_calculator_.modifyPredictedTrajectory(*traj_ptr_, *predicted_trajectory_msg));
+    look_ahead_motion_velocity_smoother_trajectory_pub_->publish(*traj_ptr_);
     metrics_pub_->publish(metrics_msg);
   }
   auto runtime = (now() - start).seconds();
