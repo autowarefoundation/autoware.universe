@@ -34,7 +34,8 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string & fi
   } else if (msg.type == "local") {
     continue;  // do nothing
   } else {
-    throw std::runtime_error("Invalid map projector type. Currently supported types: MGRS, UTM, and local");
+    throw std::runtime_error(
+      "Invalid map projector type. Currently supported types: MGRS, UTM, and local");
   }
   return msg;
 }
