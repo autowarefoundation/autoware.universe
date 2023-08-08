@@ -28,8 +28,7 @@ namespace autoware_auto_msgs_adapter
 using Objects_auto = autoware_auto_perception_msgs::msg::PredictedObjects;
 using Objects = autoware_perception_msgs::msg::PredictedObjects;
 
-class AdapterPerception
-: public autoware_auto_msgs_adapter::AdapterBase<Objects, Objects_auto>
+class AdapterPerception : public autoware_auto_msgs_adapter::AdapterBase<Objects, Objects_auto>
 {
 public:
   AdapterPerception(
@@ -49,32 +48,37 @@ protected:
     msg_auto.header = msg_source.header;
 
     autoware_auto_perception_msgs::msg::PredictedObject object_auto;
-    for (size_t it_of_objects = 0; it_of_objects < msg_source.objects.size(); it_of_objects++)
-    {
+    for (size_t it_of_objects = 0; it_of_objects < msg_source.objects.size(); it_of_objects++) {
       // convert id and probability
       object_auto.object_id = msg_source.objects[it_of_objects].object_id;
       object_auto.existence_probability = msg_source.objects[it_of_objects].existence_probability;
       // convert classification
       autoware_auto_perception_msgs::msg::ObjectClassification classification;
-      for (size_t i = 0; i < msg_source.objects[it_of_objects].classification.size(); i++)
-      {
+      for (size_t i = 0; i < msg_source.objects[it_of_objects].classification.size(); i++) {
         classification.label = msg_source.objects[it_of_objects].classification[i].label;
-        classification.probability = msg_source.objects[it_of_objects].classification[i].probability;
+        classification.probability =
+          msg_source.objects[it_of_objects].classification[i].probability;
         object_auto.classification.push_back(classification);
       }
       // convert kinematics
-      object_auto.kinematics.initial_pose_with_covariance = msg_source.objects[it_of_objects].kinematics.initial_pose_with_covariance;
-      object_auto.kinematics.initial_twist_with_covariance = msg_source.objects[it_of_objects].kinematics.initial_twist_with_covariance;
-      object_auto.kinematics.initial_acceleration_with_covariance = msg_source.objects[it_of_objects].kinematics.initial_acceleration_with_covariance;
-      for (size_t j = 0; j < msg_source.objects[it_of_objects].kinematics.predicted_paths.size(); j++)
-      {
+      object_auto.kinematics.initial_pose_with_covariance =
+        msg_source.objects[it_of_objects].kinematics.initial_pose_with_covariance;
+      object_auto.kinematics.initial_twist_with_covariance =
+        msg_source.objects[it_of_objects].kinematics.initial_twist_with_covariance;
+      object_auto.kinematics.initial_acceleration_with_covariance =
+        msg_source.objects[it_of_objects].kinematics.initial_acceleration_with_covariance;
+      for (size_t j = 0; j < msg_source.objects[it_of_objects].kinematics.predicted_paths.size();
+           j++) {
         autoware_auto_perception_msgs::msg::PredictedPath predicted_path;
-        for (size_t k = 0; k < msg_source.objects[it_of_objects].kinematics.predicted_paths[j].path.size(); k++)
-        {
-          predicted_path.path.push_back(msg_source.objects[it_of_objects].kinematics.predicted_paths[j].path[k]);
+        for (size_t k = 0;
+             k < msg_source.objects[it_of_objects].kinematics.predicted_paths[j].path.size(); k++) {
+          predicted_path.path.push_back(
+            msg_source.objects[it_of_objects].kinematics.predicted_paths[j].path[k]);
         }
-        predicted_path.time_step = msg_source.objects[it_of_objects].kinematics.predicted_paths[j].time_step;
-        predicted_path.confidence = msg_source.objects[it_of_objects].kinematics.predicted_paths[j].confidence;
+        predicted_path.time_step =
+          msg_source.objects[it_of_objects].kinematics.predicted_paths[j].time_step;
+        predicted_path.confidence =
+          msg_source.objects[it_of_objects].kinematics.predicted_paths[j].confidence;
         object_auto.kinematics.predicted_paths.push_back(predicted_path);
       }
       // convert shape
