@@ -113,8 +113,11 @@ struct AvoidanceParameters
   // use intersection area for avoidance
   bool use_intersection_areas{false};
 
-  // constrains
-  bool use_constraints_for_decel{false};
+  // // constrains
+  // bool use_constraints_for_decel{false};
+
+  // // policy
+  // bool use_relaxed_margin_immediately{false};
 
   // max deceleration for
   double max_deceleration;
@@ -273,6 +276,15 @@ struct AvoidanceParameters
 
   // For shift line generation process. Remove sharp(=jerky) shift line.
   double sharp_shift_filter_threshold;
+
+  // policy
+  bool use_shorten_margin_immediately{false};
+
+  // policy
+  std::string policy_deceleration{"best_effort"};
+
+  // policy
+  std::string policy_lateral_margin{"best_effort"};
 
   // target velocity matrix
   std::vector<double> velocity_map;
