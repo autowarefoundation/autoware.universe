@@ -323,7 +323,7 @@ void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
 
   passthrough_object_flags_map_.erase(timestamp_nsec);
   fused_object_flags_map_.erase(timestamp_nsec);
-  fused_object_flags_map_.erase(timestamp_nsec);
+  ignored_object_flags_map_.erase(timestamp_nsec);
 }
 
 }  // namespace image_projection_based_fusion
