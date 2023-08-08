@@ -270,7 +270,6 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   debug_marker_.markers.clear();
 
   const auto prev_module_path = getPreviousModuleOutput().path;
-  const auto drivable_lanes = getPreviousModuleOutput().drivable_area_info.drivable_lanes;
 
   // create obstacles to avoid (= extract from the drivable area)
   std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
@@ -285,11 +284,18 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
     }
   }
 
+  DrivableAreaInfo current_drivable_area_info;
+  current_drivable_area_info.drivable_lanes =
+    getPreviousModuleOutput().drivable_area_info.drivable_lanes;
+  current_drivable_area_info.obstacles = obstacles_for_drivable_area;
+  current_drivable_area_info.enable_expanding_hatched_road_markings =
+    parameters_->use_hatched_road_markings;
+
   BehaviorModuleOutput output;
   output.path = prev_module_path;
+  output.drivable_area_info = utils::combineDrivableAreaInfo(
+    current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
   output.reference_path = getPreviousModuleOutput().reference_path;
-  output.drivable_area_info.drivable_lanes = drivable_lanes;
-  output.drivable_area_info.obstacles = obstacles_for_drivable_area;
   output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
   return output;

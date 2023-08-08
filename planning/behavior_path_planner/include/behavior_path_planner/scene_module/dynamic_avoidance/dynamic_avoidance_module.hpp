@@ -45,6 +45,7 @@ struct DynamicAvoidanceParameters
 {
   // common
   bool enable_debug_info{true};
+  bool use_hatched_road_markings{true};
 
   // obstacle types to avoid
   bool avoid_car{true};

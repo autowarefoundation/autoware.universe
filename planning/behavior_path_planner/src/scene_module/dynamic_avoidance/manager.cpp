@@ -32,6 +32,7 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
   {  // common
     std::string ns = "dynamic_avoidance.common.";
     p.enable_debug_info = node->declare_parameter<bool>(ns + "enable_debug_info");
+    p.use_hatched_road_markings = node->declare_parameter<bool>(ns + "use_hatched_road_markings");
   }
 
   {  // target object
@@ -112,6 +113,7 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
   {  // common
     const std::string ns = "dynamic_avoidance.common.";
     updateParam<bool>(parameters, ns + "enable_debug_info", p->enable_debug_info);
+    updateParam<bool>(parameters, ns + "use_hatched_road_markings", p->use_hatched_road_markings);
   }
 
   {  // target object
