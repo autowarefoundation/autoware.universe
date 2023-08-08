@@ -94,14 +94,11 @@ std::optional<Stat<double>> MetricsCalculator::calculate(
 std::optional<Stat<double>> MetricsCalculator::calculate(
   const Metric metric, const Trajectory & trajectory, const Trajectory & predicted_trajectory) const
 {
-  const auto modified_predicted_trajectory =
-    modifyPredictedTrajectory(trajectory, predicted_trajectory);
-
   // Functions to calculate trajectory metrics
   switch (metric) {
     case Metric::predicted_path_deviation_from_trajectory: {
       const auto modified_predicted_trajectory =
-        modifyPredictedTrajectory(trajectory, predicted_trajectory);
+        alignPredictedTrajectoryWithTrajectory(trajectory, predicted_trajectory);
       if (modified_predicted_trajectory.points.empty()) {
         return {Stat<double>()};
       }
@@ -165,7 +162,7 @@ Trajectory MetricsCalculator::getLookaheadTrajectory(
   return lookahead_traj;
 }
 
-Trajectory MetricsCalculator::modifyPredictedTrajectory(
+Trajectory MetricsCalculator::alignPredictedTrajectoryWithTrajectory(
   const Trajectory & trajectory, const Trajectory & predicted_trajectory) const
 {
   auto update_trajectory_point = [](
