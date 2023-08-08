@@ -28,32 +28,27 @@ class TimeManagerWidget(QMainWindow):
         self.setupUI()
 
     def setupUI(self):
-        self.setObjectName("MainWindow")
+        self.setObjectName("PerceptionReplayer")
         self.resize(480, 120)
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
-        self.centralwidget = QWidget(self)
-        self.centralwidget.setObjectName("centralwidget")
+        self.central_widget = QWidget(self)
+        self.central_widget.setObjectName("central_widget")
 
-        self.gridLayout = QGridLayout(self.centralwidget)
-        self.gridLayout.setContentsMargins(10, 10, 10, 10)
-        self.gridLayout.setObjectName("gridLayout")
+        self.grid_layout = QGridLayout(self.central_widget)
+        self.grid_layout.setContentsMargins(10, 10, 10, 10)
+        self.grid_layout.setObjectName("grid_layout")
 
         self.rate_button = []
         for i, rate in enumerate([0.1, 0.5, 1.0, 2.0, 5.0, 10.0]):
-            btn = QPushButton(str(rate))
-            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            self.rate_button.append(btn)
-            self.gridLayout.addWidget(self.rate_button[-1], 0, i, 1, 1)
+            button = QPushButton(str(rate))
+            button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.rate_button.append(button)
+            self.grid_layout.addWidget(self.rate_button[-1], 0, i, 1, 1)
 
         self.button = QPushButton("pause")
         self.button.setCheckable(True)
         self.button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        self.gridLayout.addWidget(self.button, 1, 0, 1, -1)
-        self.setCentralWidget(self.centralwidget)
-
-        """
-    def onSetRate(self, button):
-        print(button.text(), button)
-        """
+        self.grid_layout.addWidget(self.button, 1, 0, 1, -1)
+        self.setCentralWidget(self.central_widget)

@@ -107,11 +107,8 @@ if __name__ == "__main__":
 
     rclpy.init()
     node = PerceptionReproducer(args)
-    rclpy.spin(node)
 
     try:
-        rclpy.init()
-        node = PerceptionReproducer(args)
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
