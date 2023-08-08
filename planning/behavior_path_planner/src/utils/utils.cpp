@@ -118,6 +118,12 @@ bool checkHasSameLane(
   const auto has_same = [&](const auto & ll) { return ll.id() == target_lane.id(); };
   return std::find_if(lanelets.begin(), lanelets.end(), has_same) != lanelets.end();
 }
+
+bool isSamePoint(const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2)
+{
+  constexpr double epsilon = 1e-3;
+  return std::abs(point1.x - point2.x) < epsilon && std::abs(point1.y - point2.y) < epsilon;
+}
 }  // namespace
 
 namespace behavior_path_planner::utils
@@ -288,43 +294,88 @@ std::vector<geometry_msgs::msg::Point> convertToGeometryPoints(
   return points;
 }
 
+// NOTE: See the PR's figure. https://github.com/autowarefoundation/autoware.universe/pull/2880
 std::vector<PolygonPoint> concatenateTwoPolygons(
   const std::vector<PolygonPoint> & front_polygon, const std::vector<PolygonPoint> & back_polygon)
 {
+  const auto make_unique_polygon = [&](const auto & polygon) {
+    std::vector<PolygonPoint> unique_polygon;
+    for (const auto & point : polygon) {
+      if (!unique_polygon.empty() && isSamePoint(unique_polygon.back().point, point.point)) {
+        continue;
+      }
+      unique_polygon.push_back(point);
+    }
+    return unique_polygon;
+  };
+  const auto unique_front_polygon = make_unique_polygon(front_polygon);
+  const auto unique_back_polygon = make_unique_polygon(back_polygon);
+
   // At first, the front polygon is the outside polygon
   bool is_front_polygon_outside = true;
-  size_t outside_idx = 0;
+  size_t before_outside_idx = 0;
 
   const auto get_out_poly = [&]() {
-    return is_front_polygon_outside ? front_polygon : back_polygon;
+    return is_front_polygon_outside ? unique_front_polygon : unique_back_polygon;
   };
   const auto get_in_poly = [&]() {
-    return is_front_polygon_outside ? back_polygon : front_polygon;
+    return is_front_polygon_outside ? unique_back_polygon : unique_front_polygon;
   };
 
+  // NOTE: Polygon points is assumed to be clock-wise.
   std::vector<PolygonPoint> concatenated_polygon;
-  while (rclcpp::ok()) {
-    concatenated_polygon.push_back(get_out_poly().at(outside_idx));
-    if (outside_idx == get_out_poly().size() - 1) {
+  // NOTE: Maximum number of loop is set to avoid infinity loop calculation just in case.
+  const size_t max_loop_num = (unique_front_polygon.size() + unique_back_polygon.size()) * 2;
+  for (size_t loop_idx = 0; loop_idx < max_loop_num; ++loop_idx) {
+    concatenated_polygon.push_back(get_out_poly().at(before_outside_idx));
+    if (before_outside_idx == get_out_poly().size() - 1) {
       break;
     }
-    const size_t curr_idx = outside_idx;
-    const size_t next_idx = outside_idx + 1;
+    const size_t curr_idx = before_outside_idx;
+    const size_t next_idx = before_outside_idx + 1;
 
+    // NOTE: Two polygons may have two intersection points. Therefore the closest intersection
+    //       point is used.
+    std::optional<size_t> closest_idx = std::nullopt;
+    double min_dist_to_intersection = std::numeric_limits<double>::max();
+    PolygonPoint closest_intersect_point;
     for (size_t i = 0; i < get_in_poly().size() - 1; ++i) {
       const auto intersection = tier4_autoware_utils::intersect(
         get_out_poly().at(curr_idx).point, get_out_poly().at(next_idx).point,
         get_in_poly().at(i).point, get_in_poly().at(i + 1).point);
-      if (intersection) {
-        const auto intersect_point = PolygonPoint{*intersection, 0, 0.0, 0.0};
-        concatenated_polygon.push_back(intersect_point);
+      if (!intersection) {
+        continue;
+      }
+      if (
+        isSamePoint(get_out_poly().at(curr_idx).point, get_in_poly().at(i).point) ||
+        isSamePoint(get_out_poly().at(curr_idx).point, get_in_poly().at(i + 1).point) ||
+        isSamePoint(get_out_poly().at(next_idx).point, get_in_poly().at(i).point) ||
+        isSamePoint(get_out_poly().at(next_idx).point, get_in_poly().at(i + 1).point)) {
+        // NOTE: If the segments shares one point, the while loop will not end.
+        continue;
+      }
 
-        is_front_polygon_outside = !is_front_polygon_outside;
-        outside_idx = i;
-        break;
+      const auto intersect_point = PolygonPoint{*intersection, 0, 0.0, 0.0};
+      const double dist_to_intersection =
+        tier4_autoware_utils::calcDistance2d(get_out_poly().at(curr_idx).point, *intersection);
+      if (dist_to_intersection < min_dist_to_intersection) {
+        closest_idx = i;
+        min_dist_to_intersection = dist_to_intersection;
+        closest_intersect_point = intersect_point;
       }
     }
-    outside_idx += 1;
+
+    if (closest_idx) {
+      before_outside_idx = *closest_idx;
+      concatenated_polygon.push_back(closest_intersect_point);
+      is_front_polygon_outside = !is_front_polygon_outside;
+    }
+
+    before_outside_idx += 1;
+
+    if (loop_idx == max_loop_num - 1) {
+      return front_polygon;
+    }
   }
 
   return concatenated_polygon;
@@ -2912,7 +2963,7 @@ lanelet::ConstLanelets extendLanes(
 
 lanelet::ConstLanelets getExtendedCurrentLanes(
   const std::shared_ptr<const PlannerData> & planner_data, const double backward_length,
-  const double forward_length, const bool until_goal_lane)
+  const double forward_length, const bool forward_only_in_route)
 {
   auto lanes = getCurrentLanes(planner_data);
   if (lanes.empty()) return lanes;
@@ -2942,15 +2993,6 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
   }
 
   while (forward_length_sum < forward_length) {
-    // stop extending when the goal route section is reached
-    // if forward_length is a very large value, set it to true,
-    // as it may continue to extend lanes outside the route ahead of goal forever.
-    if (until_goal_lane) {
-      if (planner_data->route_handler->isInGoalRouteSection(lanes.back())) {
-        return lanes;
-      }
-    }
-
     auto extended_lanes = extendNextLane(planner_data->route_handler, lanes);
     if (extended_lanes.empty()) {
       return lanes;
@@ -2967,6 +3009,16 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
     } else {
       break;  // no more next lanes to add
     }
+
+    // stop extending when the lane outside of the route is reached
+    // if forward_length is a very large value, set it to true,
+    // as it may continue to extend forever.
+    if (forward_only_in_route) {
+      if (!planner_data->route_handler->isRouteLanelet(extended_lanes.back())) {
+        return lanes;
+      }
+    }
+
     lanes = extended_lanes;
   }
 

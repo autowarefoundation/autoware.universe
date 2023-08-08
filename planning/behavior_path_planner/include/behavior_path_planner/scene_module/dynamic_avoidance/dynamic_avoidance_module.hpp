@@ -64,6 +64,8 @@ struct DynamicAvoidanceParameters
 
   double min_time_to_start_cut_in{0.0};
   double min_lon_offset_ego_to_cut_in_object{0.0};
+  double max_time_from_outside_ego_path_for_cut_out{0.0};
+  double min_cut_out_object_lat_vel{0.0};
   double max_front_object_angle{0.0};
   double min_crossing_object_vel{0.0};
   double max_crossing_object_angle{0.0};
@@ -89,17 +91,15 @@ public:
   {
     DynamicAvoidanceObject(
       const PredictedObject & predicted_object, const double arg_vel, const double arg_lat_vel,
-      const bool arg_is_collision_left, const double arg_time_to_collision,
-      const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid)
+      const bool arg_is_object_on_ego_path,
+      const std::optional<rclcpp::Time> & arg_latest_time_inside_ego_path)
     : uuid(tier4_autoware_utils::toHexString(predicted_object.object_id)),
       pose(predicted_object.kinematics.initial_pose_with_covariance.pose),
       shape(predicted_object.shape),
       vel(arg_vel),
       lat_vel(arg_lat_vel),
-      is_collision_left(arg_is_collision_left),
-      time_to_collision(arg_time_to_collision),
-      lon_offset_to_avoid(arg_lon_offset_to_avoid),
-      lat_offset_to_avoid(arg_lat_offset_to_avoid)
+      is_object_on_ego_path(arg_is_object_on_ego_path),
+      latest_time_inside_ego_path(arg_latest_time_inside_ego_path)
     {
       for (const auto & path : predicted_object.kinematics.predicted_paths) {
         predicted_paths.push_back(path);
@@ -111,11 +111,24 @@ public:
     autoware_auto_perception_msgs::msg::Shape shape;
     double vel;
     double lat_vel;
-    bool is_collision_left;
-    double time_to_collision;
+    bool is_object_on_ego_path;
+    std::optional<rclcpp::Time> latest_time_inside_ego_path{std::nullopt};
+    std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths{};
+
     MinMaxValue lon_offset_to_avoid;
     MinMaxValue lat_offset_to_avoid;
-    std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths{};
+    bool is_collision_left;
+    bool should_be_avoided{false};
+
+    void update(
+      const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid,
+      const bool arg_is_collision_left, const bool arg_should_be_avoided)
+    {
+      lon_offset_to_avoid = arg_lon_offset_to_avoid;
+      lat_offset_to_avoid = arg_lat_offset_to_avoid;
+      is_collision_left = arg_is_collision_left;
+      should_be_avoided = arg_should_be_avoided;
+    }
   };
 
   struct TargetObjectsManager
@@ -205,9 +218,19 @@ public:
       }
       return object_map_.at(uuid);
     }
+    void updateObject(
+      const std::string & uuid, const MinMaxValue & lon_offset_to_avoid,
+      const MinMaxValue & lat_offset_to_avoid, const bool is_collision_left,
+      const bool should_be_avoided)
+    {
+      if (object_map_.count(uuid) != 0) {
+        object_map_.at(uuid).update(
+          lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided);
+      }
+    }
 
     std::vector<std::string> current_uuids_;
-    // NOTE: positive is for meeting entrying condition, and negative is for exiting.
+    // NOTE: positive is for meeting entry condition, and negative is for exiting.
     std::unordered_map<std::string, int> counter_map_;
     std::unordered_map<std::string, DynamicAvoidanceObject> object_map_;
   };
@@ -222,12 +245,32 @@ public:
     parameters_ = std::any_cast<std::shared_ptr<DynamicAvoidanceParameters>>(parameters);
   }
 
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] BehaviorModuleOutput run() override
+  {
+    updateData();
+
+    if (!isWaitingApproval()) {
+      return plan();
+    }
+
+    // module is waiting approval. Check it.
+    if (isActivated()) {
+      RCLCPP_DEBUG(getLogger(), "Was waiting approval, and now approved. Do plan().");
+      return plan();
+    } else {
+      RCLCPP_DEBUG(getLogger(), "keep waiting approval... Do planCandidate().");
+      return planWaitingApproval();
+    }
+  }
+
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  ModuleStatus updateState() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] ModuleStatus updateState() override;
   BehaviorModuleOutput plan() override;
-  CandidateOutput planCandidate() const override;
   BehaviorModuleOutput planWaitingApproval() override;
+  CandidateOutput planCandidate() const override;
   void updateData() override;
   void acceptVisitor(
     [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
@@ -244,6 +287,12 @@ private:
     const double min_lon_offset;
   };
 
+  bool canTransitSuccessState() override { return false; }
+
+  bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override { return false; }
+
   bool isLabelTargetObstacle(const uint8_t label) const;
   void updateTargetObjects();
   std::optional<std::vector<PathPointWithLaneId>> calcPathForObjectPolygon() const;
@@ -251,7 +300,8 @@ private:
     const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & predicted_path,
     const double obj_tangent_vel, const LatLonOffset & lat_lon_offset) const;
   bool willObjectCutOut(
-    const double obj_tangent_vel, const double obj_normal_vel, const bool is_collision_left) const;
+    const double obj_tangent_vel, const double obj_normal_vel, const bool is_object_left,
+    const std::optional<DynamicAvoidanceObject> & prev_object) const;
   bool isObjectFarFromPath(
     const PredictedObject & predicted_object, const double obj_dist_to_path) const;
   double calcTimeToCollision(
@@ -260,14 +310,15 @@ private:
   std::optional<std::pair<size_t, size_t>> calcCollisionSection(
     const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & obj_path) const;
   LatLonOffset getLateralLongitudinalOffset(
-    const std::vector<PathPointWithLaneId> & ego_path, const PredictedObject & object) const;
+    const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
+    const autoware_auto_perception_msgs::msg::Shape & obj_shape) const;
   MinMaxValue calcMinMaxLongitudinalOffsetToAvoid(
     const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
     const geometry_msgs::msg::Pose & obj_pose, const Polygon2d & obj_points, const double obj_vel,
     const double time_to_collision) const;
   MinMaxValue calcMinMaxLateralOffsetToAvoid(
     const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
-    const Polygon2d & obj_points, const bool is_collision_left,
+    const Polygon2d & obj_points, const bool is_collision_left, const double obj_normal_vel,
     const std::optional<DynamicAvoidanceObject> & prev_object) const;
 
   std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> getAdjacentLanes(
