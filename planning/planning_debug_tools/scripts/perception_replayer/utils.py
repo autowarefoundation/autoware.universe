@@ -17,6 +17,7 @@
 import math
 
 from geometry_msgs.msg import Quaternion
+import numpy as np
 import rosbag2_py
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs.msg import PointField
@@ -83,3 +84,42 @@ def get_quaternion_from_yaw(yaw):
     orientation.z = q[2]
     orientation.w = q[3]
     return orientation
+
+
+def translate_objects_coordinate(ego_pose, log_ego_pose, objects_msg):
+    log_ego_yaw = get_yaw_from_quaternion(log_ego_pose.orientation)
+    log_ego_pose_trans_mat = np.array(
+        [
+            [
+                math.cos(log_ego_yaw),
+                -math.sin(log_ego_yaw),
+                log_ego_pose.position.x,
+            ],
+            [math.sin(log_ego_yaw), math.cos(log_ego_yaw), log_ego_pose.position.y],
+            [0.0, 0.0, 1.0],
+        ]
+    )
+
+    ego_yaw = get_yaw_from_quaternion(ego_pose.orientation)
+    ego_pose_trans_mat = np.array(
+        [
+            [math.cos(ego_yaw), -math.sin(ego_yaw), ego_pose.position.x],
+            [math.sin(ego_yaw), math.cos(ego_yaw), ego_pose.position.y],
+            [0.0, 0.0, 1.0],
+        ]
+    )
+
+    for o in objects_msg.objects:
+        log_object_pose = o.kinematics.pose_with_covariance.pose
+        log_object_yaw = get_yaw_from_quaternion(log_object_pose.orientation)
+        log_object_pos_vec = np.array([log_object_pose.position.x, log_object_pose.position.y, 1.0])
+
+        # translate object pose from ego pose in log to ego pose in simulation
+        object_pos_vec = np.linalg.inv(ego_pose_trans_mat).dot(
+            log_ego_pose_trans_mat.dot(log_object_pos_vec.T)
+        )
+
+        object_pose = o.kinematics.pose_with_covariance.pose
+        object_pose.position.x = object_pos_vec[0]
+        object_pose.position.y = object_pos_vec[1]
+        object_pose.orientation = get_quaternion_from_yaw(log_object_yaw + log_ego_yaw - ego_yaw)

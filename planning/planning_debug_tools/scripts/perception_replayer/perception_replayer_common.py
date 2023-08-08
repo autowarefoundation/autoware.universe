@@ -23,6 +23,7 @@ from autoware_auto_perception_msgs.msg import DetectedObjects
 from autoware_auto_perception_msgs.msg import PredictedObjects
 from autoware_auto_perception_msgs.msg import TrackedObjects
 from autoware_auto_perception_msgs.msg import TrafficSignalArray
+from nav_msgs.msg import Odometry
 import psutil
 from rclpy.node import Node
 from rclpy.serialization import deserialize_message
@@ -36,6 +37,16 @@ class PerceptionReplayerCommon(Node):
     def __init__(self, args, name):
         super().__init__(name)
         self.args = args
+
+        self.ego_pose = None
+        self.rosbag_objects_data = []
+        self.rosbag_ego_odom_data = []
+        self.rosbag_traffic_signals_data = []
+
+        # subscriber
+        self.sub_odom = self.create_subscription(
+            Odometry, "/localization/kinematic_state", self.on_odom, 1
+        )
 
         # publisher
         if self.args.detected_object:
@@ -58,10 +69,6 @@ class PerceptionReplayerCommon(Node):
             TrafficSignalArray, "/perception/traffic_light_recognition/traffic_signals", 1
         )
 
-        self.rosbag_objects_data = []
-        self.rosbag_ego_odom_data = []
-        self.rosbag_traffic_signals_data = []
-
         # load rosbag
         print("Stared loading rosbag")
         if os.path.isdir(args.bag):
@@ -73,6 +80,9 @@ class PerceptionReplayerCommon(Node):
 
         # wait for ready to publish/subscribe
         time.sleep(1.0)
+
+    def on_odom(self, odom):
+        self.ego_pose = odom.pose.pose
 
     def load_rosbag(self, rosbag2_path: str):
         reader = open_reader(str(rosbag2_path))
@@ -120,3 +130,27 @@ class PerceptionReplayerCommon(Node):
                 process.terminate()
             except CalledProcessError:
                 pass
+
+    def find_topics_by_timestamp(self, timestamp):
+        objects_data = None
+        for data in self.rosbag_objects_data:
+            if timestamp < data[0]:
+                objects_data = data[1]
+                break
+
+        traffic_signals_data = None
+        for data in self.rosbag_traffic_signals_data:
+            if timestamp < data[0]:
+                traffic_signals_data = data[1]
+                break
+
+        return objects_data, traffic_signals_data
+
+    def find_ego_odom_by_timestamp(self, timestamp):
+        ego_odom_data = None
+        for data in self.rosbag_ego_odom_data:
+            if timestamp < data[0]:
+                ego_odom_data = data[1]
+                break
+
+        return ego_odom_data

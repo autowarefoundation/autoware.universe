@@ -16,23 +16,35 @@
 
 import argparse
 import copy
+import functools
+import sys
 
+from PyQt5.QtWidgets import QApplication
 from perception_replayer_common import PerceptionReplayerCommon
 import rclpy
-from utils import calc_squared_distance
+from time_manager_widget import TimeManagerWidget
 from utils import create_empty_pointcloud
 from utils import translate_objects_coordinate
 
 
-class PerceptionReproducer(PerceptionReplayerCommon):
+class PerceptionReplayer(PerceptionReplayerCommon):
     def __init__(self, args):
-        super().__init__(args, "perception_reproducer")
+        super().__init__(args, "perception_replayer")
 
-        self.ego_pose_idx = None
-        self.prev_traffic_signals_msg = None
+        self.bag_timestamp = self.rosbag_objects_data[0][0]
+        self.is_pause = False
+        self.rate = 1.0
+
+        # initialize widget
+        self.widget = TimeManagerWidget()
+        self.widget.show()
+        self.widget.button.clicked.connect(self.onPushed)
+        for button in self.widget.rate_button:
+            button.clicked.connect(functools.partial(self.onSetRate, button))
 
         # start timer callback
-        self.timer = self.create_timer(0.01, self.on_timer)
+        self.delta_time = 0.1
+        self.timer = self.create_timer(self.delta_time, self.on_timer)
         print("Start timer callback")
 
     def on_timer(self):
@@ -44,17 +56,12 @@ class PerceptionReproducer(PerceptionReplayerCommon):
             pointcloud_msg = create_empty_pointcloud(timestamp)
             self.pointcloud_pub.publish(pointcloud_msg)
 
-        if not self.ego_pose:
-            print("No ego pose found.")
-            return
+        # step timestamp
+        if not self.is_pause:
+            self.bag_timestamp += self.rate * self.delta_time * 1e9  # seconds to timestamp
 
-        # find nearest ego odom by simulation observation
-        ego_odom = self.find_nearest_ego_odom_by_observation(self.ego_pose)
-        pose_timestamp = ego_odom[0]
-        log_ego_pose = ego_odom[1].pose.pose
-
-        # extract message by the nearest ego odom timestamp
-        msgs = copy.deepcopy(self.find_topics_by_timestamp(pose_timestamp))
+        # extract message by the timestamp
+        msgs = copy.deepcopy(self.find_topics_by_timestamp(self.bag_timestamp))
         objects_msg = msgs[0]
         traffic_signals_msg = msgs[1]
 
@@ -62,6 +69,13 @@ class PerceptionReproducer(PerceptionReplayerCommon):
         if objects_msg:
             objects_msg.header.stamp = timestamp
             if self.args.detected_object:
+                if not self.ego_pose:
+                    print("No ego pose found.")
+                    return
+
+                ego_odom = self.find_ego_odom_by_timestamp(self.bag_timestamp)
+                log_ego_pose = ego_odom[1].pose.pose
+
                 translate_objects_coordinate(self.ego_pose, log_ego_pose, objects_msg)
             self.objects_pub.publish(objects_msg)
 
@@ -74,24 +88,14 @@ class PerceptionReproducer(PerceptionReplayerCommon):
             self.prev_traffic_signals_msg.header.stamp = timestamp
             self.traffic_signals_pub.publish(self.prev_traffic_signals_msg)
 
-    def find_nearest_ego_odom_by_observation(self, ego_pose):
-        if self.ego_pose_idx:
-            start_idx = self.ego_pose_idx - 10
-            end_idx = self.ego_pose_idx + 10
+    def onPushed(self, event):
+        if self.widget.button.isChecked():
+            self.is_pause = True
         else:
-            start_idx = 0
-            end_idx = len(self.rosbag_ego_odom_data) - 1
+            self.is_pause = False
 
-        nearest_idx = 0
-        nearest_dist = float("inf")
-        for idx in range(start_idx, end_idx + 1):
-            data = self.rosbag_ego_odom_data[idx]
-            dist = calc_squared_distance(data[1].pose.pose.position, ego_pose.position)
-            if dist < nearest_dist:
-                nearest_dist = dist
-                nearest_idx = idx
-
-        return self.rosbag_ego_odom_data[nearest_idx]
+    def onSetRate(self, button):
+        self.rate = float(button.text())
 
 
 if __name__ == "__main__":
@@ -105,14 +109,15 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    app = QApplication(sys.argv)
+
     rclpy.init()
-    node = PerceptionReproducer(args)
-    rclpy.spin(node)
+    node = PerceptionReplayer(args)
 
     try:
-        rclpy.init()
-        node = PerceptionReproducer(args)
-        rclpy.spin(node)
+        while True:
+            app.processEvents()
+            rclpy.spin_once(node, timeout_sec=0.01)
     except KeyboardInterrupt:
         pass
     finally:
