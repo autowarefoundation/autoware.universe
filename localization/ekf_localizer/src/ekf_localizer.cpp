@@ -349,8 +349,8 @@ void EKFLocalizer::callbackPoseWithCovariance(
   }
   /* Considering change of z value due to NDT delay*/
   const rclcpp::Time t_curr = this->now();
-  double delay_time = (t_curr - msg->header.stamp).seconds();
-  double dz_delay = considering_z_ndt_delay(current_ekf_twist_, delay_time);
+  const double delay_time = (t_curr - msg->header.stamp).seconds();
+  const double dz_delay = considering_z_ndt_delay(current_ekf_twist_, delay_time);
   msg->pose.pose.position.z += dz_delay;
   pose_queue_.push(msg);
 }
@@ -645,13 +645,13 @@ void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovaria
   pitch_filter_.init(rpy.y, pitch_dev, pose.header.stamp);
 }
 double EKFLocalizer::considering_z_ndt_delay(
-  geometry_msgs::msg::TwistStamped twist, double delay_time)
+  geometry_msgs::msg::TwistStamped & twist, const double delay_time)
 {
-  double vx = twist.twist.linear.x;
-  double pitch_rad = pitch_from_ndt;
-  double val_sin = std::sin(-pitch_rad);
+  const double vx = twist.twist.linear.x;
+  const double pitch_rad = pitch_from_ndt;
+  const double val_sin = std::sin(-pitch_rad);
 
-  double dz = val_sin * vx * delay_time;
+  const double dz = val_sin * vx * delay_time;
 
   return dz;
 }
