@@ -504,7 +504,6 @@ void DynamicAvoidanceModule::updateTargetObjects()
 
     // 2.g. calculate longitudinal and lateral offset to avoid
     const auto obj_points = tier4_autoware_utils::toPolygon2d(object.pose, object.shape);
-    std::cerr << obj_uuid << std::endl;
     const auto lon_offset_to_avoid = calcMinMaxLongitudinalOffsetToAvoid(
       path_points_for_object_polygon, object.pose, obj_points, object.vel, time_to_collision);
     const auto lat_offset_to_avoid = calcMinMaxLateralOffsetToAvoid(
@@ -833,12 +832,6 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoid(
                                      parameters_->lpf_gain_for_lat_avoid_to_offset)
                                  : min_bound_lat_offset;
 
-  if (prev_min_lat_avoid_to_offset) {
-    std::cerr << min_bound_lat_offset << " " << *prev_min_lat_avoid_to_offset << " then "
-              << filtered_min_bound_lat_offset << std::endl;
-  } else {
-    std::cerr << filtered_min_bound_lat_offset << std::endl;
-  }
   return MinMaxValue{filtered_min_bound_lat_offset, max_bound_lat_offset};
 }
 
