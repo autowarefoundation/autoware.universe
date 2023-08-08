@@ -87,6 +87,19 @@ public:
     latest_time_ = time;
     return;
   };
+  void update_z_add(double vx, double pitch_rad, double t)
+  {
+    double val_sin = -std::sin(pitch_rad);
+    double dz = val_sin*vx*t;
+    x_ = x_ + dz;
+    return;
+  };
+  void update_pitch_add(double pitch_rate, double t)
+  {  
+    double dp = pitch_rate*t;
+    x_ = x_ + dp;
+    return;
+  }
   void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
   double get_x() { return x_; }
 
@@ -154,6 +167,8 @@ private:
 
   double ekf_rate_;
   double ekf_dt_;
+  double pitch_from_ndt;
+  double pitch_rate;
 
   /* parameters */
 
@@ -256,12 +271,12 @@ private:
    */
   void updateSimple1DFilters(
     const geometry_msgs::msg::PoseWithCovarianceStamped & pose, const size_t smoothing_step);
-
+    double considering_z_ndt_delay(geometry_msgs::msg::TwistStamped twist, double delay_time);
   /**
    * @brief initialize simple1DFilter
    */
   void initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
-
+  
   /**
    * @brief trigger node
    */
