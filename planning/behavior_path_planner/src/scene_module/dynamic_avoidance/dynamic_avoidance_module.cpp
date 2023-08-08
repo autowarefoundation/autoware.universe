@@ -833,10 +833,9 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoid(
 
   // calculate bound min and max lateral offset
   const double min_bound_lat_offset = [&]() {
-    constexpr double object_time_to_shift = 2.0;
     const double lat_abs_offset_to_shift =
       std::max(0.0, obj_normal_vel * (is_collision_left ? -1.0 : 1.0)) *
-      object_time_to_shift;  // TODO(murooka) use rosparam
+      parameters_->max_time_for_lat_shift;
     const double raw_min_bound_lat_offset =
       min_obj_lat_abs_offset - parameters_->lat_offset_from_obstacle - lat_abs_offset_to_shift;
     const double min_bound_lat_abs_offset_limit =
@@ -858,7 +857,8 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoid(
   const double filtered_min_bound_lat_offset =
     prev_min_lat_avoid_to_offset
       ? signal_processing::lowpassFilter(
-          min_bound_lat_offset, *prev_min_lat_avoid_to_offset, 0.5)  // TODO(murooka) use rosparam
+          min_bound_lat_offset, *prev_min_lat_avoid_to_offset,
+          parameters_->lpf_gain_for_lat_avoid_to_offset)  // TODO(murooka) use rosparam
       : min_bound_lat_offset;
 
   return MinMaxValue{filtered_min_bound_lat_offset, max_bound_lat_offset};
