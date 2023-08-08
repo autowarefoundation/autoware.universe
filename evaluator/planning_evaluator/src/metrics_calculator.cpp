@@ -189,11 +189,12 @@ Trajectory MetricsCalculator::modifyPredictedTrajectory(
   const auto last_seg_length = motion_utils::calcSignedArcLength(
     trajectory.points, trajectory.points.size() - 2, trajectory.points.size() - 1);
 
-  // If p2 is in front of t1 or p2 is behind of t2, return empty trajectory
-  // predicted_trajectory:   p1------------------p2
-  // trajectory:                                     t1------------------t2
-  // predicted_trajectory:                           p1------------------p2
-  // trajectory:             t1------------------t2
+  // If no overlapping between trajectory and predicted_trajectory, return empty trajectory
+  // predicted_trajectory:   p1------------------pN
+  // trajectory:                                     t1------------------tN
+  //     OR
+  // predicted_trajectory:                           p1------------------pN
+  // trajectory:             t1------------------tN
   const bool is_no_overlapping =
     motion_utils::calcLongitudinalOffsetToSegment(
       trajectory.points, 0, predicted_trajectory.points.back().pose.position) < 0.0 ||
