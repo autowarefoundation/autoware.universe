@@ -33,17 +33,15 @@ public:
   GoalPlannerModuleManager(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config);
 
-  std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
+  std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {
-    return std::make_shared<GoalPlannerModule>(name_, *node_, parameters_, rtc_interface_ptr_map_);
+    return std::make_unique<GoalPlannerModule>(name_, *node_, parameters_, rtc_interface_ptr_map_);
   }
 
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
 
 private:
   std::shared_ptr<GoalPlannerParameters> parameters_;
-
-  std::vector<std::shared_ptr<GoalPlannerModule>> registered_modules_;
 };
 
 }  // namespace behavior_path_planner

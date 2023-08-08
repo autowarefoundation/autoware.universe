@@ -14,7 +14,7 @@
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
-#include "behavior_path_planner/marker_util/debug_utilities.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
@@ -122,8 +122,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     createSubscriptionOptions(this));
 
   {
-    RCLCPP_INFO(get_logger(), "not use behavior tree.");
-
     const std::string path_candidate_name_space = "/planning/path_candidate/";
     const std::string path_reference_name_space = "/planning/path_reference/";
 
@@ -133,7 +131,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     planner_manager_ = std::make_shared<PlannerManager>(*this, p.verbose);
 
     const auto register_and_create_publisher = [&](const auto & manager) {
-      const auto & module_name = manager->getModuleName();
+      const auto & module_name = manager->name();
       planner_manager_->registerSceneModuleManager(manager);
       path_candidate_publishers_.emplace(
         module_name, create_publisher<Path>(path_candidate_name_space + module_name, 1));
@@ -339,15 +337,11 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
   p.lane_changing_lateral_jerk =
     declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
-  p.lateral_acc_switching_velocity =
-    declare_parameter<double>("lane_change.lateral_acc_switching_velocity");
   p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
   p.minimum_lane_changing_velocity =
     declare_parameter<double>("lane_change.minimum_lane_changing_velocity");
   p.minimum_lane_changing_velocity =
     std::min(p.minimum_lane_changing_velocity, p.max_acc * p.lane_change_prepare_duration);
-  p.minimum_prepare_length =
-    0.5 * p.max_acc * p.lane_change_prepare_duration * p.lane_change_prepare_duration;
   p.lane_change_finish_judge_buffer =
     declare_parameter<double>("lane_change.lane_change_finish_judge_buffer");
 
@@ -508,7 +502,7 @@ void BehaviorPathPlannerNode::run()
     planner_data_->route_handler->setMap(*map_ptr);
   }
 
-  std::unique_lock<std::mutex> lk_manager(mutex_manager_);  // for bt_manager_ or planner_manager_
+  std::unique_lock<std::mutex> lk_manager(mutex_manager_);  // for planner_manager_
 
   // update route
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
@@ -523,7 +517,6 @@ void BehaviorPathPlannerNode::run()
     // Reset behavior tree when new route is received,
     // so that the each modules do not have to care about the "route jump".
     if (!is_first_time && !has_same_route_id) {
-      RCLCPP_DEBUG(get_logger(), "new route is received. reset behavior tree.");
       planner_manager_->reset();
     }
   }
@@ -576,7 +569,13 @@ void BehaviorPathPlannerNode::run()
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
   stop_reason_publisher_->publish(planner_manager_->getStopReasons());
 
-  if (output.modified_goal) {
+  // publish modified goal only when it is updated
+  if (
+    output.modified_goal &&
+    /* has changed modified goal */ (
+      !planner_data_->prev_modified_goal || tier4_autoware_utils::calcDistance2d(
+                                              planner_data_->prev_modified_goal->pose.position,
+                                              output.modified_goal->pose.position) > 0.01)) {
     PoseWithUuidStamped modified_goal = *(output.modified_goal);
     modified_goal.header.stamp = path->header.stamp;
     planner_data_->prev_modified_goal = modified_goal;
@@ -778,27 +777,31 @@ void BehaviorPathPlannerNode::publishPathCandidate(
   const std::shared_ptr<PlannerData> & planner_data)
 {
   for (auto & manager : managers) {
-    if (path_candidate_publishers_.count(manager->getModuleName()) == 0) {
+    if (path_candidate_publishers_.count(manager->name()) == 0) {
       continue;
     }
 
-    if (manager->getSceneModules().empty()) {
-      path_candidate_publishers_.at(manager->getModuleName())
+    if (manager->getSceneModuleObservers().empty()) {
+      path_candidate_publishers_.at(manager->name())
         ->publish(convertToPath(nullptr, false, planner_data));
       continue;
     }
 
-    for (auto & module : manager->getSceneModules()) {
-      const auto & status = module->getCurrentStatus();
+    for (auto & observer : manager->getSceneModuleObservers()) {
+      if (observer.expired()) {
+        continue;
+      }
+      const auto & status = observer.lock()->getCurrentStatus();
       const auto candidate_path = std::invoke([&]() {
         if (status == ModuleStatus::SUCCESS || status == ModuleStatus::FAILURE) {
           // clear candidate path if the module is finished
           return convertToPath(nullptr, false, planner_data);
         }
-        return convertToPath(module->getPathCandidate(), module->isExecutionReady(), planner_data);
+        return convertToPath(
+          observer.lock()->getPathCandidate(), observer.lock()->isExecutionReady(), planner_data);
       });
 
-      path_candidate_publishers_.at(module->name())->publish(candidate_path);
+      path_candidate_publishers_.at(observer.lock()->name())->publish(candidate_path);
     }
   }
 }
@@ -808,19 +811,22 @@ void BehaviorPathPlannerNode::publishPathReference(
   const std::shared_ptr<PlannerData> & planner_data)
 {
   for (auto & manager : managers) {
-    if (path_reference_publishers_.count(manager->getModuleName()) == 0) {
+    if (path_reference_publishers_.count(manager->name()) == 0) {
       continue;
     }
 
-    if (manager->getSceneModules().empty()) {
-      path_reference_publishers_.at(manager->getModuleName())
+    if (manager->getSceneModuleObservers().empty()) {
+      path_reference_publishers_.at(manager->name())
         ->publish(convertToPath(nullptr, false, planner_data));
       continue;
     }
 
-    for (auto & module : manager->getSceneModules()) {
-      path_reference_publishers_.at(module->name())
-        ->publish(convertToPath(module->getPathReference(), true, planner_data));
+    for (auto & observer : manager->getSceneModuleObservers()) {
+      if (observer.expired()) {
+        continue;
+      }
+      path_reference_publishers_.at(observer.lock()->name())
+        ->publish(convertToPath(observer.lock()->getPathReference(), true, planner_data));
     }
   }
 }
@@ -852,16 +858,14 @@ Path BehaviorPathPlannerNode::convertToPath(
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
-  const BehaviorModuleOutput & bt_output, const std::shared_ptr<PlannerData> & planner_data,
+  const BehaviorModuleOutput & output, const std::shared_ptr<PlannerData> & planner_data,
   const std::shared_ptr<PlannerManager> & planner_manager)
 {
   // TODO(Horibe) do some error handling when path is not available.
 
-  auto path = bt_output.path ? bt_output.path : planner_data->prev_output_path;
+  auto path = output.path ? output.path : planner_data->prev_output_path;
   path->header = planner_data->route_handler->getRouteHeader();
   path->header.stamp = this->now();
-  RCLCPP_DEBUG(
-    get_logger(), "BehaviorTreeManager: output is %s.", bt_output.path ? "FOUND" : "NOT FOUND");
 
   PathWithLaneId connected_path;
   const auto module_status_ptr_vec = planner_manager->getSceneModuleStatus();

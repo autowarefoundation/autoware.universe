@@ -15,12 +15,14 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
 
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/utils/safety_check.hpp"
 #include "lanelet2_core/geometry/Lanelet.h"
 
 #include "autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp"
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -59,7 +61,8 @@ struct LaneChangeParameters
   // collision check
   bool enable_prepare_segment_collision_check{true};
   double prepare_segment_ignore_object_velocity_thresh{0.1};
-  bool use_predicted_path_outside_lanelet{false};
+  bool check_objects_on_current_lanes{true};
+  bool check_objects_on_other_lanes{true};
   bool use_all_predicted_path{false};
 
   // true by default
@@ -101,11 +104,37 @@ struct LaneChangePhaseInfo
   }
 };
 
+struct LaneChangeInfo
+{
+  LaneChangePhaseInfo longitudinal_acceleration{0.0, 0.0};
+  LaneChangePhaseInfo velocity{0.0, 0.0};
+  LaneChangePhaseInfo duration{0.0, 0.0};
+  LaneChangePhaseInfo length{0.0, 0.0};
+
+  lanelet::ConstLanelets current_lanes{};
+  lanelet::ConstLanelets target_lanes{};
+
+  Pose lane_changing_start{};
+  Pose lane_changing_end{};
+
+  ShiftLine shift_line{};
+
+  double lateral_acceleration{0.0};
+  double terminal_lane_changing_velocity{0.0};
+};
+
 struct LaneChangeTargetObjectIndices
 {
   std::vector<size_t> current_lane{};
   std::vector<size_t> target_lane{};
   std::vector<size_t> other_lane{};
+};
+
+struct LaneChangeTargetObjects
+{
+  std::vector<utils::safety_check::ExtendedPredictedObject> current_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> target_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> other_lane{};
 };
 
 enum class LaneChangeModuleType {
@@ -116,9 +145,6 @@ enum class LaneChangeModuleType {
 
 struct AvoidanceByLCParameters : public AvoidanceParameters
 {
-  // execute if the target object number is larger than this param.
-  size_t execute_object_num{1};
-
   // execute only when the target object longitudinal distance is larger than this param.
   double execute_object_longitudinal_margin{0.0};
 

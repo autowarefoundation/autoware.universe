@@ -89,13 +89,15 @@ public:
   // for routing
   bool planPathLaneletsBetweenCheckpoints(
     const Pose & start_checkpoint, const Pose & goal_checkpoint,
-    lanelet::ConstLanelets * path_lanelets) const;
+    lanelet::ConstLanelets * path_lanelets, const bool consider_no_drivable_lanes = false) const;
   std::vector<LaneletSegment> createMapSegments(const lanelet::ConstLanelets & path_lanelets) const;
   static bool isRouteLooped(const RouteSections & route_sections);
 
   // for goal
   bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
   Pose getGoalPose() const;
+  Pose getStartPose() const;
+  Pose getOriginalStartPose() const;
   lanelet::Id getGoalLaneId() const;
   bool getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const;
   std::vector<lanelet::ConstLanelet> getLanesBeforePose(
@@ -300,6 +302,8 @@ public:
 
   bool getClosestLaneletWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
+  bool getClosestPreferredLaneletWithinRoute(
+    const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
   bool getClosestLaneletWithConstrainsWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet, const double dist_threshold,
     const double yaw_threshold) const;
@@ -325,6 +329,7 @@ public:
     const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
   lanelet::ConstLanelets getShoulderLanelets() const;
   bool isShoulderLanelet(const lanelet::ConstLanelet & lanelet) const;
+  bool isRouteLanelet(const lanelet::ConstLanelet & lanelet) const;
 
   // for path
   PathWithLaneId getCenterLinePath(
@@ -370,6 +375,9 @@ private:
 
   bool is_map_msg_ready_{false};
   bool is_handler_ready_{false};
+
+  // save original(not modified) route start pose for start planer execution
+  Pose original_start_pose_;
 
   // non-const methods
   void setLaneletsFromRouteMsg();
@@ -442,7 +450,7 @@ private:
    * @return true if a path without any no_drivable_lane found, false if this path is not found.
    */
   bool findDrivableLanePath(
-    const lanelet::Lanelet & start_lanelet, const lanelet::Lanelet & goal_lanelet,
+    const lanelet::ConstLanelet & start_lanelet, const lanelet::ConstLanelet & goal_lanelet,
     lanelet::routing::LaneletPath & drivable_lane_path) const;
 };
 }  // namespace route_handler

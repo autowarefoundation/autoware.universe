@@ -101,8 +101,7 @@ void TrafficLightOcclusionPredictorNodelet::mapCallback(
         continue;
       }
       lanelet::ConstLineString3d string3d = static_cast<lanelet::ConstLineString3d>(lsp);
-      traffic_light_position_map_[lsp.id()] =
-        perception_utils::traffic_light::getTrafficLightCenter(string3d);
+      traffic_light_position_map_[lsp.id()] = traffic_light_utils::getTrafficLightCenter(string3d);
     }
   }
 }
@@ -118,7 +117,7 @@ void TrafficLightOcclusionPredictorNodelet::syncCallback(
   if (
     in_cloud_msg == nullptr || in_cam_info_msg == nullptr || in_roi_msg == nullptr ||
     in_roi_msg->rois.size() != in_signal_msg->signals.size()) {
-    occlusion_ratios.resize(in_roi_msg->rois.size(), 0);
+    occlusion_ratios.resize(out_msg.signals.size(), 0);
   } else {
     cloud_occlusion_predictor_->predict(
       in_cam_info_msg, in_roi_msg, in_cloud_msg, tf_buffer_, traffic_light_position_map_,
@@ -126,7 +125,7 @@ void TrafficLightOcclusionPredictorNodelet::syncCallback(
   }
   for (size_t i = 0; i < occlusion_ratios.size(); i++) {
     if (occlusion_ratios[i] >= config_.max_occlusion_ratio) {
-      perception_utils::traffic_light::setSignalUnknown(out_msg.signals[i]);
+      traffic_light_utils::setSignalUnknown(out_msg.signals[i]);
     }
   }
   signal_pub_->publish(out_msg);
