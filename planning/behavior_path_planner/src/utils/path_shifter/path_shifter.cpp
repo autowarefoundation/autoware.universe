@@ -48,6 +48,37 @@ std::string toStr(const std::vector<double> & v)
   }
   return ss.str();
 }
+void removeDensePoints(
+  behavior_path_planner::ShiftedPath * shifted_path, const double min_distance = 0.3)
+{
+  for (size_t i = 1; i < shifted_path->path.points.size();) {
+    if (
+      min_distance > std::abs(tier4_autoware_utils::calcDistance2d(
+                       shifted_path->path.points.at(i - 1), shifted_path->path.points.at(i)))) {
+      shifted_path->path.points.erase(shifted_path->path.points.begin() + i);
+      shifted_path->shift_length.erase(shifted_path->shift_length.begin() + i);
+    } else {
+      ++i;
+    }
+  }
+}
+void removeInvalidOrientationPoints(
+  behavior_path_planner::ShiftedPath * shifted_path, const double max_yaw_diff = M_PI_2)
+{
+  for (size_t i = 1; i < shifted_path->path.points.size();) {
+    const double yaw1 =
+      tf2::getYaw(tier4_autoware_utils::getPose(shifted_path->path.points.at(i - 1)).orientation);
+    const double yaw2 =
+      tf2::getYaw(tier4_autoware_utils::getPose(shifted_path->path.points.at(i)).orientation);
+
+    if (max_yaw_diff < std::abs(tier4_autoware_utils::normalizeRadian(yaw1 - yaw2))) {
+      shifted_path->path.points.erase(shifted_path->path.points.begin() + i);
+      shifted_path->shift_length.erase(shifted_path->shift_length.begin() + i);
+    } else {
+      ++i;
+    }
+  }
+}
 }  // namespace
 
 namespace behavior_path_planner
@@ -55,7 +86,6 @@ namespace behavior_path_planner
 
 using motion_utils::findNearestIndex;
 using motion_utils::insertOrientation;
-using motion_utils::removeInvalidOrientationPoints;
 
 void PathShifter::setPath(const PathWithLaneId & path)
 {
@@ -148,8 +178,9 @@ bool PathShifter::generate(
                              : applyLinearShifter(shifted_path);
 
   const bool is_driving_forward = true;
+  removeDensePoints(shifted_path);
   insertOrientation(shifted_path->path.points, is_driving_forward);
-  removeInvalidOrientationPoints(shifted_path->path.points);
+  removeInvalidOrientationPoints(shifted_path);
 
   // DEBUG
   RCLCPP_DEBUG_STREAM_THROTTLE(
