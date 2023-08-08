@@ -43,15 +43,16 @@ public:
 
   void validate() const
   {
-    const auto reference_points_size = prev_reference_path_.points.size();
+    const auto linear_shift_path_size = prev_linear_shift_path_.path.points.size();
     const auto linear_shift_size = prev_linear_shift_path_.shift_length.size();
+    const auto spline_shift_path_size = prev_spline_shift_path_.path.points.size();
     const auto spline_shift_size = prev_spline_shift_path_.shift_length.size();
 
-    if (reference_points_size != linear_shift_size) {
+    if (linear_shift_path_size != linear_shift_size) {
       throw std::logic_error("there is an inconsistency among the previous data.");
     }
 
-    if (reference_points_size != spline_shift_size) {
+    if (spline_shift_path_size != spline_shift_size) {
       throw std::logic_error("there is an inconsistency among the previous data.");
     }
   }
@@ -129,28 +130,28 @@ public:
   double getEgoShift() const
   {
     validate();
-    const auto idx = data_->findEgoIndex(prev_reference_path_.points);
+    const auto idx = data_->findEgoIndex(prev_spline_shift_path_.path.points);
     return prev_spline_shift_path_.shift_length.at(idx);
   }
 
   double getEgoLinearShift() const
   {
     validate();
-    const auto idx = data_->findEgoIndex(prev_reference_path_.points);
+    const auto idx = data_->findEgoIndex(prev_linear_shift_path_.path.points);
     return prev_linear_shift_path_.shift_length.at(idx);
   }
 
   double getShift(const Point & p) const
   {
     validate();
-    const auto idx = findNearestIndex(prev_reference_path_.points, p);
+    const auto idx = findNearestIndex(prev_spline_shift_path_.path.points, p);
     return prev_spline_shift_path_.shift_length.at(idx);
   }
 
   double getLinearShift(const Point & p) const
   {
     validate();
-    const auto idx = findNearestIndex(prev_reference_path_.points, p);
+    const auto idx = findNearestIndex(prev_linear_shift_path_.path.points, p);
     return prev_linear_shift_path_.shift_length.at(idx);
   }
 
