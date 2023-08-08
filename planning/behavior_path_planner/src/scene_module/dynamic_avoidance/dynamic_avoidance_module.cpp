@@ -855,11 +855,10 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoid(
     return prev_object->lat_offset_to_avoid.min_value;
   }();
   const double filtered_min_bound_lat_offset =
-    prev_min_lat_avoid_to_offset
-      ? signal_processing::lowpassFilter(
-          min_bound_lat_offset, *prev_min_lat_avoid_to_offset,
-          parameters_->lpf_gain_for_lat_avoid_to_offset)  // TODO(murooka) use rosparam
-      : min_bound_lat_offset;
+    prev_min_lat_avoid_to_offset ? signal_processing::lowpassFilter(
+                                     min_bound_lat_offset, *prev_min_lat_avoid_to_offset,
+                                     parameters_->lpf_gain_for_lat_avoid_to_offset)
+                                 : min_bound_lat_offset;
 
   return MinMaxValue{filtered_min_bound_lat_offset, max_bound_lat_offset};
 }
