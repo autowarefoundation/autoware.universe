@@ -18,6 +18,10 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 
+#include <limits>
+#include <memory>
+#include <vector>
+
 namespace mission_planner
 {
 ReroutingStaticObstacle::ReroutingStaticObstacle(const rclcpp::NodeOptions & node_options)
