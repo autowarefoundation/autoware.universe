@@ -5,20 +5,31 @@
   <version>0.1.0</version>
   <description>The tier4_localization_launch package</description>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
+  <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <maintainer email="ryu.yamamoto@tier4.jp">Ryu Yamamoto</maintainer>
   <license>Apache License 2.0</license>
   <author email="yamato.ando@tier4.jp">Yamato Ando</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <build_depend>autoware_cmake</build_depend>
-
+  <exec_depend>ar_tag_based_localizer</exec_depend>
   <exec_depend>automatic_pose_initializer</exec_depend>
+  <exec_depend>eagleye_fix2pose</exec_depend>
+  <exec_depend>eagleye_gnss_converter</exec_depend>
+  <exec_depend>eagleye_rt</exec_depend>
   <exec_depend>ekf_localizer</exec_depend>
   <exec_depend>gyro_odometer</exec_depend>
   <exec_depend>ndt_scan_matcher</exec_depend>
   <exec_depend>pointcloud_preprocessor</exec_depend>
   <exec_depend>pose_initializer</exec_depend>
   <exec_depend>topic_tools</exec_depend>
+  <exec_depend>yabloc_common</exec_depend>
+  <exec_depend>yabloc_image_processing</exec_depend>
+  <exec_depend>yabloc_monitor</exec_depend>
+  <exec_depend>yabloc_particle_filter</exec_depend>
+  <exec_depend>yabloc_pose_initializer</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

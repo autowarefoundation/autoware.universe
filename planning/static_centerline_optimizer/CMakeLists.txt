@@ -24,7 +24,7 @@ autoware_package()
 ament_auto_add_executable(main
   src/main.cpp
   src/static_centerline_optimizer_node.cpp
-  src/collision_free_optimizer_node.cpp
+  src/successive_trajectory_optimizer_node.cpp
   src/utils.cpp
 )
 
@@ -53,6 +53,17 @@ ament_auto_package(
     config
     rviz
 )
+
+if(BUILD_TESTING)
+  add_launch_test(
+    test/test_static_centerline_optimizer.test.py
+    TIMEOUT "30"
+  )
+  install(DIRECTORY
+    test/data/
+    DESTINATION share/${PROJECT_NAME}/test/data/
+  )
+endif()
 
 install(PROGRAMS
   scripts/app.py

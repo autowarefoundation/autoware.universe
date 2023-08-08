@@ -5,29 +5,35 @@
   <version>0.1.0</version>
   <description>The default_ad_api package</description>
   <maintainer email="isamu.takagi@tier4.jp">Takagi, Isamu</maintainer>
-  <maintainer email="makoto.yabuta@tier4.jp">yabuta</maintainer>
   <maintainer email="kahhooi.tan@tier4.jp">Kah Hooi Tan</maintainer>
-  <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
+  <maintainer email="makoto.yabuta@tier4.jp">yabuta</maintainer>
+  <maintainer email="ryohsuke.mitsudome@tier4.jp">Ryohsuke Mitsudome</maintainer>
+  <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_ad_api_specs</depend>
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_adapi_version_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_planning_msgs</depend>
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
+  <depend>lanelet2_extension</depend>
   <depend>motion_utils</depend>
+  <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>shape_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>tier4_api_msgs</depend>
   <depend>tier4_control_msgs</depend>
   <depend>tier4_system_msgs</depend>
+  <depend>vehicle_info_util</depend>
 
   <exec_depend>python3-flask</exec_depend>
 

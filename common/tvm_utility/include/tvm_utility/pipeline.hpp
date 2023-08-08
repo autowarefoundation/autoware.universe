@@ -23,6 +23,7 @@
 #include <tvm_vendor/tvm/runtime/packed_func.h>
 #include <tvm_vendor/tvm/runtime/registry.h>
 
+#include <cstdint>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -200,7 +201,7 @@ typedef struct
 typedef struct
 {
   // Network info
-  std::array<char, 3> modelzoo_version;
+  std::array<int8_t, 3> modelzoo_version;
   std::string network_name;
   std::string network_backend;
 
@@ -320,7 +321,7 @@ public:
    * @param[in] version_from Earliest supported model version.
    * @return The version status.
    */
-  Version version_check(const std::array<char, 3> & version_from) const
+  Version version_check(const std::array<int8_t, 3> & version_from) const
   {
     auto x{config_.modelzoo_version[0]};
     auto y{config_.modelzoo_version[1]};
@@ -344,7 +345,60 @@ private:
   tvm::runtime::PackedFunc execute;
   tvm::runtime::PackedFunc get_output;
   // Latest supported model version.
-  const std::array<char, 3> version_up_to{2, 1, 0};
+  const std::array<int8_t, 3> version_up_to{2, 1, 0};
+};
+
+template <
+  class PreProcessorType, class InferenceEngineType, class TVMScriptEngineType,
+  class PostProcessorType>
+class TowStagePipeline
+{
+  using InputType = decltype(std::declval<PreProcessorType>().input_type_indicator_);
+  using OutputType = decltype(std::declval<PostProcessorType>().output_type_indicator_);
+
+public:
+  /**
+   * @brief Construct a new Pipeline object
+   *
+   * @param pre_processor a PreProcessor object
+   * @param post_processor a PostProcessor object
+   * @param inference_engine a InferenceEngine object
+   */
+  TowStagePipeline(
+    std::shared_ptr<PreProcessorType> pre_processor,
+    std::shared_ptr<InferenceEngineType> inference_engine_1,
+    std::shared_ptr<TVMScriptEngineType> tvm_script_engine,
+    std::shared_ptr<InferenceEngineType> inference_engine_2,
+    std::shared_ptr<PostProcessorType> post_processor)
+  : pre_processor_(pre_processor),
+    inference_engine_1_(inference_engine_1),
+    tvm_script_engine_(tvm_script_engine),
+    inference_engine_2_(inference_engine_2),
+    post_processor_(post_processor)
+  {
+  }
+
+  /**
+   * @brief run the pipeline. Return asynchronously in a callback.
+   *
+   * @param input The data to push into the pipeline
+   * @return The pipeline output
+   */
+  OutputType schedule(const InputType & input)
+  {
+    auto input_tensor = pre_processor_->schedule(input);
+    auto output_infer_1 = inference_engine_1_->schedule(input_tensor);
+    auto output_tvm_script = tvm_script_engine_->schedule(output_infer_1);
+    auto output_infer_2 = inference_engine_2_->schedule(output_tvm_script);
+    return post_processor_->schedule(output_infer_2);
+  }
+
+private:
+  std::shared_ptr<PreProcessorType> pre_processor_;
+  std::shared_ptr<InferenceEngineType> inference_engine_1_;
+  std::shared_ptr<TVMScriptEngineType> tvm_script_engine_;
+  std::shared_ptr<InferenceEngineType> inference_engine_2_;
+  std::shared_ptr<PostProcessorType> post_processor_;
 };
 
 }  // namespace pipeline

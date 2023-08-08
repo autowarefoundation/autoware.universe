@@ -38,6 +38,14 @@ class PointcloudMapFilterPipeline:
         self.use_down_sample_filter = self.pointcloud_map_filter_param["use_down_sample_filter"]
         self.voxel_size = self.pointcloud_map_filter_param["down_sample_voxel_size"]
         self.distance_threshold = self.pointcloud_map_filter_param["distance_threshold"]
+        self.downsize_ratio_z_axis = self.pointcloud_map_filter_param["downsize_ratio_z_axis"]
+        self.timer_interval_ms = self.pointcloud_map_filter_param["timer_interval_ms"]
+        self.use_dynamic_map_loading = self.pointcloud_map_filter_param["use_dynamic_map_loading"]
+        self.map_update_distance_threshold = self.pointcloud_map_filter_param[
+            "map_update_distance_threshold"
+        ]
+        self.map_loader_radius = self.pointcloud_map_filter_param["map_loader_radius"]
+        self.publish_debug_pcd = self.pointcloud_map_filter_param["publish_debug_pcd"]
 
     def create_pipeline(self):
         if self.use_down_sample_filter:
@@ -56,10 +64,19 @@ class PointcloudMapFilterPipeline:
                     ("input", LaunchConfiguration("input_topic")),
                     ("map", "/map/pointcloud_map"),
                     ("output", LaunchConfiguration("output_topic")),
+                    ("map_loader_service", "/map/get_differential_pointcloud_map"),
+                    ("kinematic_state", "/localization/kinematic_state"),
                 ],
                 parameters=[
                     {
                         "distance_threshold": self.distance_threshold,
+                        "downsize_ratio_z_axis": self.downsize_ratio_z_axis,
+                        "timer_interval_ms": self.timer_interval_ms,
+                        "use_dynamic_map_loading": self.use_dynamic_map_loading,
+                        "map_update_distance_threshold": self.map_update_distance_threshold,
+                        "map_loader_radius": self.map_loader_radius,
+                        "publish_debug_pcd": self.publish_debug_pcd,
+                        "input_frame": "map",
                     }
                 ],
                 extra_arguments=[
@@ -104,10 +121,19 @@ class PointcloudMapFilterPipeline:
                     ("input", down_sample_topic),
                     ("map", "/map/pointcloud_map"),
                     ("output", LaunchConfiguration("output_topic")),
+                    ("map_loader_service", "/map/get_differential_pointcloud_map"),
+                    ("kinematic_state", "/localization/kinematic_state"),
                 ],
                 parameters=[
                     {
                         "distance_threshold": self.distance_threshold,
+                        "downsize_ratio_z_axis": self.downsize_ratio_z_axis,
+                        "timer_interval_ms": self.timer_interval_ms,
+                        "use_dynamic_map_loading": self.use_dynamic_map_loading,
+                        "map_update_distance_threshold": self.map_update_distance_threshold,
+                        "map_loader_radius": self.map_loader_radius,
+                        "publish_debug_pcd": self.publish_debug_pcd,
+                        "input_frame": "map",
                     }
                 ],
                 extra_arguments=[

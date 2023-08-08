@@ -11,8 +11,9 @@
       - "lane_change_right"
       - "avoidance_left"
       - "avoidance_right"
-      - "pull_over"
-      - "pull_out"
+      - "goal_planner"
+      - "start_planner"
+      - "intersection_occlusion"
 
     default_enable_list:
       - "blind_spot"
@@ -25,5 +26,6 @@
       - "lane_change_right"
       - "avoidance_left"
       - "avoidance_right"
-      - "pull_over"
-      - "pull_out"
+      - "goal_planner"
+      - "start_planner"
+      - "intersection_occlusion"

@@ -14,33 +14,36 @@ The clusters are projected onto image planes, and then if the ROIs of clusters a
 
 ### Input
 
-| Name                  | Type                                                     | Description                                                                        |
-| --------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `input`               | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | clustered pointcloud                                                               |
-| `input/camera_infoID` | `sensor_msgs::msg::CameraInfo`                           | camera information to project 3d points onto image planes, `ID` is between 0 and 7 |
-| `input/roisID`        | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | ROIs from each image, `ID` is between 0 and 7                                      |
-| `input/image_rawID`   | `sensor_msgs::msg::Image`                                | images for visualization, `ID` is between 0 and 7                                  |
+| Name                     | Type                                                     | Description                                               |
+| ------------------------ | -------------------------------------------------------- | --------------------------------------------------------- |
+| `input`                  | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | clustered pointcloud                                      |
+| `input/camera_info[0-7]` | `sensor_msgs::msg::CameraInfo`                           | camera information to project 3d points onto image planes |
+| `input/rois[0-7]`        | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | ROIs from each image                                      |
+| `input/image_raw[0-7]`   | `sensor_msgs::msg::Image`                                | images for visualization                                  |
 
 ### Output
 
-| Name                 | Type                                                     | Description                                       |
-| -------------------- | -------------------------------------------------------- | ------------------------------------------------- |
-| `output`             | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | labeled cluster pointcloud                        |
-| `output/image_rawID` | `sensor_msgs::msg::Image`                                | images for visualization, `ID` is between 0 and 7 |
+| Name                     | Type                                                     | Description                |
+| ------------------------ | -------------------------------------------------------- | -------------------------- |
+| `output`                 | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | labeled cluster pointcloud |
+| `~/debug/image_raw[0-7]` | `sensor_msgs::msg::Image`                                | images for visualization   |
 
 ## Parameters
 
 ### Core Parameters
 
-| Name                        | Type  | Description                                                                   |
-| --------------------------- | ----- | ----------------------------------------------------------------------------- |
-| `use_iou_x`                 | bool  | calculate IoU only along x-axis                                               |
-| `use_iou_y`                 | bool  | calculate IoU only along y-axis                                               |
-| `use_iou`                   | bool  | calculate IoU both along x-axis and y-axis                                    |
-| `use_cluster_semantic_type` | bool  | if `false`, the labels of clusters are overwritten by `UNKNOWN` before fusion |
-| `iou_threshold`             | float | the IoU threshold to overwrite a label of clusters with a label of roi        |
-| `rois_number`               | int   | the number of input rois                                                      |
-| `debug_mode`                | bool  | If `true`, subscribe and publish images for visualization.                    |
+| Name                        | Type  | Description                                                                      |
+| --------------------------- | ----- | -------------------------------------------------------------------------------- |
+| `use_iou_x`                 | bool  | calculate IoU only along x-axis                                                  |
+| `use_iou_y`                 | bool  | calculate IoU only along y-axis                                                  |
+| `use_iou`                   | bool  | calculate IoU both along x-axis and y-axis                                       |
+| `use_cluster_semantic_type` | bool  | if `false`, the labels of clusters are overwritten by `UNKNOWN` before fusion    |
+| `only_allow_inside_cluster` | bool  | if `true`, the only clusters contained inside RoIs by a detector                 |
+| `roi_scale_factor`          | float | the scale factor for offset of detector RoIs if `only_allow_inside_cluster=true` |
+| `iou_threshold`             | float | the IoU threshold to overwrite a label of clusters with a label of roi           |
+| `unknown_iou_threshold`     | float | the IoU threshold to fuse cluster with unknown label of roi                      |
+| `rois_number`               | int   | the number of input rois                                                         |
+| `debug_mode`                | bool  | If `true`, subscribe and publish images for visualization.                       |
 
 ## Assumptions / Known limits
 

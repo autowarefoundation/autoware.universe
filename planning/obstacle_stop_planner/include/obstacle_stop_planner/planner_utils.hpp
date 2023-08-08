@@ -18,18 +18,18 @@
 
 #include "obstacle_stop_planner/planner_data.hpp"
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/pose_array.hpp>
 
 #include <boost/optional.hpp>
+#include <boost/variant.hpp>
 
 #include <map>
 #include <string>
@@ -45,6 +45,7 @@ using diagnostic_msgs::msg::DiagnosticStatus;
 using diagnostic_msgs::msg::KeyValue;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::TransformStamped;
 using std_msgs::msg::Header;
 
@@ -55,56 +56,9 @@ using vehicle_info_util::VehicleInfo;
 
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
-
-bool validCheckDecelPlan(
-  const double v_end, const double a_end, const double v_target, const double a_target,
-  const double v_margin, const double a_margin);
-
-/**
- * @brief calculate distance until velocity is reached target velocity (TYPE1)
- * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
- * @param (a0) current acceleration [m/ss]
- * @param (am) minimum deceleration [m/ss]
- * @param (ja) maximum jerk [m/sss]
- * @param (jd) minimum jerk [m/sss]
- * @param (t_min) duration of constant deceleration [s]
- * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
- */
-boost::optional<double> calcDecelDistPlanType1(
-  const double v0, const double vt, const double a0, const double am, const double ja,
-  const double jd, const double t_min);
-
-/**
- * @brief calculate distance until velocity is reached target velocity (TYPE2)
- * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
- * @param (a0) current acceleration [m/ss]
- * @param (am) minimum deceleration [m/ss]
- * @param (ja) maximum jerk [m/sss]
- * @param (jd) minimum jerk [m/sss]
- * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
- */
-boost::optional<double> calcDecelDistPlanType2(
-  const double v0, const double vt, const double a0, const double ja, const double jd);
-
-/**
- * @brief calculate distance until velocity is reached target velocity (TYPE3)
- * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
- * @param (a0) current acceleration [m/ss]
- * @param (ja) maximum jerk [m/sss]
- * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
- */
-boost::optional<double> calcDecelDistPlanType3(
-  const double v0, const double vt, const double a0, const double ja);
-
-boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
-  const double current_vel, const double target_vel, const double current_acc, const double acc_min,
-  const double jerk_acc, const double jerk_dec);
+using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using PointVariant = boost::variant<float, double>;
 
 boost::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
   const SlowDownParam & slow_down_param, const double dist_baselink_to_obstacle,
@@ -127,18 +81,20 @@ bool isInFrontOfTargetPoint(const Pose & pose, const Point & point);
 bool checkValidIndex(const Pose & p_base, const Pose & p_next, const Pose & p_target);
 
 bool withinPolygon(
-  const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
+  const Polygon2d & boost_polygon, const double radius, const Point2d & prev_point,
   const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
   PointCloud::Ptr within_points_ptr);
 
-bool convexHull(
-  const std::vector<cv::Point2d> & pointcloud, std::vector<cv::Point2d> & polygon_points);
+bool withinPolyhedron(
+  const Polygon2d & boost_polygon, const double radius, const Point2d & prev_point,
+  const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
+  PointCloud::Ptr within_points_ptr, double z_min, double z_max);
+
+void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point & geom_point);
 
 void createOneStepPolygon(
-  const Pose & base_step_pose, const Pose & next_step_pose, std::vector<cv::Point2d> & polygon,
+  const Pose & base_step_pose, const Pose & next_step_pose, Polygon2d & hull_polygon,
   const VehicleInfo & vehicle_info, const double expand_width = 0.0);
-
-bool getSelfPose(const Header & header, const tf2_ros::Buffer & tf_buffer, Pose & self_pose);
 
 void getNearestPoint(
   const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * nearest_collision_point,
@@ -148,7 +104,25 @@ void getLateralNearestPoint(
   const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * lateral_nearest_point,
   double * deviation);
 
+double getNearestPointAndDistanceForPredictedObject(
+  const geometry_msgs::msg::PoseArray & points, const Pose & base_pose,
+  geometry_msgs::msg::Point * nearest_collision_point);
+
+void getLateralNearestPointForPredictedObject(
+  const PoseArray & object, const Pose & base_pose, pcl::PointXYZ * lateral_nearest_point,
+  double * deviation);
+
 Pose getVehicleCenterFromBase(const Pose & base_pose, const VehicleInfo & vehicle_info);
+
+Polygon2d convertPolygonObjectToGeometryPolygon(
+  const Pose & current_pose, const autoware_auto_perception_msgs::msg::Shape & obj_shape);
+
+Polygon2d convertCylindricalObjectToGeometryPolygon(
+  const Pose & current_pose, const autoware_auto_perception_msgs::msg::Shape & obj_shape);
+
+Polygon2d convertBoundingBoxObjectToGeometryPolygon(
+  const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
+  const double & base_to_width);
 
 std::string jsonDumpsPose(const Pose & pose);
 
@@ -165,6 +139,17 @@ TrajectoryPoints extendTrajectory(const TrajectoryPoints & input, const double e
 
 TrajectoryPoint getExtendTrajectoryPoint(
   double extend_distance, const TrajectoryPoint & goal_point);
+
+bool intersectsInZAxis(const PredictedObject & object, const double z_min, const double z_max);
+
+pcl::PointXYZ pointToPcl(const double x, const double y, const double z);
+
+boost::optional<PredictedObject> getObstacleFromUuid(
+  const PredictedObjects & obstacles, const unique_identifier_msgs::msg::UUID & target_object_id);
+
+bool isFrontObstacle(const Pose & ego_pose, const geometry_msgs::msg::Point & obstacle_pos);
+
+double calcObstacleMaxLength(const autoware_auto_perception_msgs::msg::Shape & shape);
 
 rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr);
 

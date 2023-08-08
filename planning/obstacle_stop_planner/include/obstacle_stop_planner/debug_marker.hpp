@@ -14,9 +14,6 @@
 #ifndef OBSTACLE_STOP_PLANNER__DEBUG_MARKER_HPP_
 #define OBSTACLE_STOP_PLANNER__DEBUG_MARKER_HPP_
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
@@ -33,8 +30,9 @@
 #include <string>
 #include <vector>
 #define EIGEN_MPL2_ONLY
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Geometry>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 namespace motion_planning
 {
 
@@ -51,7 +49,7 @@ using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
 using tier4_planning_msgs::msg::StopReasonArray;
 
-enum class PolygonType : int8_t { Vehicle = 0, Collision, SlowDownRange, SlowDown };
+enum class PolygonType : int8_t { Vehicle = 0, Collision, SlowDownRange, SlowDown, Obstacle };
 
 enum class PointType : int8_t { Stop = 0, SlowDown };
 
@@ -108,8 +106,12 @@ public:
   explicit ObstacleStopPlannerDebugNode(rclcpp::Node * node, const double base_link2front);
   ~ObstacleStopPlannerDebugNode() {}
   bool pushPolygon(
-    const std::vector<cv::Point2d> & polygon, const double z, const PolygonType & type);
+    const tier4_autoware_utils::Polygon2d & polygon, const double z, const PolygonType & type);
   bool pushPolygon(const std::vector<Eigen::Vector3d> & polygon, const PolygonType & type);
+  bool pushPolyhedron(
+    const tier4_autoware_utils::Polygon2d & polyhedron, const double z_min, const double z_max,
+    const PolygonType & type);
+  bool pushPolyhedron(const std::vector<Eigen::Vector3d> & polyhedron, const PolygonType & type);
   bool pushPose(const Pose & pose, const PoseType & type);
   bool pushObstaclePoint(const Point & obstacle_point, const PointType & type);
   bool pushObstaclePoint(const pcl::PointXYZ & obstacle_point, const PointType & type);
@@ -143,6 +145,9 @@ private:
   std::vector<std::vector<Eigen::Vector3d>> slow_down_range_polygons_;
   std::vector<std::vector<Eigen::Vector3d>> collision_polygons_;
   std::vector<std::vector<Eigen::Vector3d>> slow_down_polygons_;
+  std::vector<std::vector<Eigen::Vector3d>> vehicle_polyhedrons_;
+  std::vector<std::vector<Eigen::Vector3d>> collision_polyhedrons_;
+  std::vector<std::vector<Eigen::Vector3d>> obstacle_polygons_;
 
   DebugValues debug_values_;
 };

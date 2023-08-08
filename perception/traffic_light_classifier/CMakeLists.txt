@@ -65,7 +65,16 @@ else()
   set(CUDNN_AVAIL OFF)
 endif()
 
+# cspell: ignore EFFICIENTNET, MOBILENET
 # Download caffemodel and prototxt
+set(EFFICIENTNET_BATCH_1_HASH 82baba4fcf1abe0c040cd55005e34510)
+set(EFFICIENTNET_BATCH_4_HASH 21b549c2fe4fbb20d32cc019e6d70cd7)
+set(EFFICIENTNET_BATCH_6_HASH 28b408710bcb24f4cdd4d746301d4e78)
+set(MOBILENET_BATCH_1_HASH caa51f2080aa2df943e4f884c41898eb)
+set(MOBILENET_BATCH_4_HASH c2beaf60210f471debfe72b86d076ca0)
+set(MOBILENET_BATCH_6_HASH 47255a11bde479320d703f1f45db1242)
+set(LAMP_LABEL_HASH e9f45efb02f2a9aa8ac27b3d5c164905)
+set(AWS_DIR https://awf.ml.dev.web.auto/perception/models/traffic_light_classifier/v2)
 set(DATA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
 if(NOT EXISTS "${DATA_PATH}")
   execute_process(COMMAND mkdir -p ${DATA_PATH})
@@ -84,14 +93,14 @@ function(download FILE_NAME FILE_HASH)
     else()
       message(STATUS "diff ${FILE_NAME}")
       message(STATUS "File hash changes. Downloading now ...")
-      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+      file(DOWNLOAD ${AWS_DIR}/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
       list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
       list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
     endif()
   else()
     message(STATUS "not found ${FILE_NAME}")
     message(STATUS "File doesn't exists. Downloading now ...")
-    file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+    file(DOWNLOAD ${AWS_DIR}/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
     list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
     list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
   endif()
@@ -101,8 +110,13 @@ function(download FILE_NAME FILE_HASH)
     message(FATAL_ERROR "Error occurred during download: ${ERROR_MESSAGE}")
   endif()
 endfunction()
-download(traffic_light_classifier_mobilenetv2.onnx 7dc31c696b0400ddfc2cc5521586fa51)
-download(lamp_labels.txt 20167c8e9a1f9d2ec7b0b0088c4100f0)
+download(traffic_light_classifier_mobilenetv2_batch_1.onnx ${MOBILENET_BATCH_1_HASH})
+download(traffic_light_classifier_mobilenetv2_batch_4.onnx ${MOBILENET_BATCH_4_HASH})
+download(traffic_light_classifier_mobilenetv2_batch_6.onnx ${MOBILENET_BATCH_6_HASH})
+download(traffic_light_classifier_efficientNet_b1_batch_1.onnx ${EFFICIENTNET_BATCH_1_HASH})
+download(traffic_light_classifier_efficientNet_b1_batch_4.onnx ${EFFICIENTNET_BATCH_4_HASH})
+download(traffic_light_classifier_efficientNet_b1_batch_6.onnx ${EFFICIENTNET_BATCH_6_HASH})
+download(lamp_labels.txt 4b2cf910d97d05d464e7c26901af3d4c)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
@@ -113,15 +127,16 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   add_definitions(-DENABLE_GPU)
 
   include_directories(
-    utils
     ${OpenCV_INCLUDE_DIRS}
     ${CUDA_INCLUDE_DIRS}
   )
 
-  ament_auto_add_library(libutils SHARED
-    utils/trt_common.cpp
+  ament_auto_add_library(traffic_light_classifier_nodelet SHARED
+    src/color_classifier.cpp
+    src/cnn_classifier.cpp
+    src/nodelet.cpp
   )
-  target_link_libraries(libutils
+  target_link_libraries(traffic_light_classifier_nodelet
     ${OpenCV_LIBRARIES}
     ${NVINFER}
     ${NVONNXPARSER}
@@ -131,19 +146,32 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${CUDNN_LIBRARY}
     stdc++fs
   )
-
-  ament_auto_add_library(traffic_light_classifier_nodelet SHARED
-    src/color_classifier.cpp
-    src/cnn_classifier.cpp
-    src/nodelet.cpp
-  )
-  target_link_libraries(traffic_light_classifier_nodelet
-    libutils
-    ${OpenCV_LIBRARIES}
-  )
   rclcpp_components_register_node(traffic_light_classifier_nodelet
     PLUGIN "traffic_light::TrafficLightClassifierNodelet"
     EXECUTABLE traffic_light_classifier_node
+  )
+
+  ament_auto_add_library(single_image_debug_inference_node SHARED
+    src/cnn_classifier.cpp
+    src/color_classifier.cpp
+    src/nodelet.cpp
+    src/single_image_debug_inference_node.cpp
+  )
+  target_link_libraries(single_image_debug_inference_node
+    ${OpenCV_LIBRARIES}
+    ${NVINFER}
+    ${NVONNXPARSER}
+    ${NVINFER_PLUGIN}
+    ${CUDA_LIBRARIES}
+    ${CUBLAS_LIBRARIES}
+    ${CUDNN_LIBRARY}
+    stdc++fs
+    opencv_core
+    opencv_highgui
+  )
+  rclcpp_components_register_node(single_image_debug_inference_node
+    PLUGIN "traffic_light::SingleImageDebugInferenceNode"
+    EXECUTABLE single_image_debug_inference
   )
 
   ament_auto_package(INSTALL_TO_SHARE

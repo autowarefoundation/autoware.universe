@@ -56,6 +56,20 @@ def launch_setup(context, *args, **kwargs):
             ("input", "voxel_grid_filtered/pointcloud"),
             ("map", LaunchConfiguration("input_map")),
             ("output", "compare_map_filtered/pointcloud"),
+            ("map_loader_service", "/map/get_differential_pointcloud_map"),
+            ("kinematic_state", "/localization/kinematic_state"),
+        ],
+        parameters=[
+            {
+                "distance_threshold": 0.5,
+                "timer_interval_ms": 100,
+                "use_dynamic_map_loading": True,
+                "downsize_ratio_z_axis": 0.5,
+                "map_update_distance_threshold": 10.0,
+                "map_loader_radius": 150.0,
+                "publish_debug_pcd": True,
+                "input_frame": "map",
+            }
         ],
     )
 
@@ -120,11 +134,17 @@ def generate_launch_description():
             add_launch_arg("use_pointcloud_map", "false"),
             add_launch_arg(
                 "voxel_grid_param_path",
-                [FindPackageShare("euclidean_cluster"), "/config/voxel_grid.param.yaml"],
+                [
+                    FindPackageShare("autoware_launch"),
+                    "/config/perception/object_recognition/detection/clustering/voxel_grid.param.yaml",
+                ],
             ),
             add_launch_arg(
                 "euclidean_param_path",
-                [FindPackageShare("euclidean_cluster"), "/config/euclidean_cluster.param.yaml"],
+                [
+                    FindPackageShare("autoware_launch"),
+                    "/config/perception/object_recognition/detection/clustering/euclidean_cluster.param.yaml",
+                ],
             ),
             OpaqueFunction(function=launch_setup),
         ]

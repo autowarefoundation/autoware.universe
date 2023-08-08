@@ -14,8 +14,9 @@
 
 #include "motion_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
 
-#include "eigen3/Eigen/Core"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
+
+#include <Eigen/Core>
 
 #include <algorithm>
 #include <chrono>
@@ -27,9 +28,9 @@ namespace motion_velocity_smoother
 LinfPseudoJerkSmoother::LinfPseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(node)
 {
   auto & p = smoother_param_;
-  p.pseudo_jerk_weight = node.declare_parameter("pseudo_jerk_weight", 200.0);
-  p.over_v_weight = node.declare_parameter("over_v_weight", 100000.0);
-  p.over_a_weight = node.declare_parameter("over_a_weight", 5000.0);
+  p.pseudo_jerk_weight = node.declare_parameter<double>("pseudo_jerk_weight");
+  p.over_v_weight = node.declare_parameter<double>("over_v_weight");
+  p.over_a_weight = node.declare_parameter<double>("over_a_weight");
 
   qp_solver_.updateMaxIter(20000);
   qp_solver_.updateRhoInterval(5000);
@@ -43,7 +44,10 @@ void LinfPseudoJerkSmoother::setParam(const Param & smoother_param)
   smoother_param_ = smoother_param;
 }
 
-LinfPseudoJerkSmoother::Param LinfPseudoJerkSmoother::getParam() const { return smoother_param_; }
+LinfPseudoJerkSmoother::Param LinfPseudoJerkSmoother::getParam() const
+{
+  return smoother_param_;
+}
 
 bool LinfPseudoJerkSmoother::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
@@ -201,6 +205,17 @@ bool LinfPseudoJerkSmoother::apply(
   // [b0, b1, ..., bN, |  a0, a1, ..., aN, |
   //  delta0, delta1, ..., deltaN, | sigma0, sigma1, ..., sigmaN]
   const std::vector<double> optval = std::get<0>(result);
+  const int status_val = std::get<3>(result);
+  if (status_val != 1) {
+    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    return false;
+  }
+  const auto has_nan =
+    std::any_of(optval.begin(), optval.end(), [](const auto v) { return std::isnan(v); });
+  if (has_nan) {
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
+    return false;
+  }
 
   /* get velocity & acceleration */
   for (unsigned int i = 0; i < N; ++i) {

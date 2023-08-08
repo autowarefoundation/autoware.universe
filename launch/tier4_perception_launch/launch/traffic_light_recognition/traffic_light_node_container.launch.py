@@ -35,37 +35,43 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    ssd_fine_detector_share_dir = get_package_share_directory("traffic_light_ssd_fine_detector")
+    fine_detector_share_dir = get_package_share_directory("traffic_light_fine_detector")
     classifier_share_dir = get_package_share_directory("traffic_light_classifier")
     add_launch_arg("enable_image_decompressor", "True")
     add_launch_arg("enable_fine_detection", "True")
     add_launch_arg("input/image", "/sensing/camera/traffic_light/image_raw")
+    add_launch_arg("output/rois", "/perception/traffic_light_recognition/rois")
+    add_launch_arg(
+        "output/traffic_signals", "/perception/traffic_light_recognition/traffic_signals"
+    )
 
-    # traffic_light_ssd_fine_detector
+    # traffic_light_fine_detector
     add_launch_arg(
-        "onnx_file", os.path.join(ssd_fine_detector_share_dir, "data", "mb2-ssd-lite-tlr.onnx")
+        "fine_detector_model_path",
+        os.path.join(fine_detector_share_dir, "data", "tlr_yolox_s.onnx"),
     )
     add_launch_arg(
-        "label_file", os.path.join(ssd_fine_detector_share_dir, "data", "voc_labels_tl.txt")
+        "fine_detector_label_path",
+        os.path.join(fine_detector_share_dir, "data", "tlr_labels.txt"),
     )
-    add_launch_arg("fine_detector_precision", "FP32")
-    add_launch_arg("score_thresh", "0.7")
-    add_launch_arg("max_batch_size", "8")
+    add_launch_arg("fine_detector_precision", "fp16")
+    add_launch_arg("fine_detector_score_thresh", "0.3")
+    add_launch_arg("fine_detector_nms_thresh", "0.65")
+
     add_launch_arg("approximate_sync", "False")
-    add_launch_arg("mean", "[0.5, 0.5, 0.5]")
-    add_launch_arg("std", "[0.5, 0.5, 0.5]")
 
     # traffic_light_classifier
     add_launch_arg("classifier_type", "1")
     add_launch_arg(
-        "model_file_path",
-        os.path.join(classifier_share_dir, "data", "traffic_light_classifier_mobilenetv2.onnx"),
+        "classifier_model_path",
+        os.path.join(classifier_share_dir, "data", "traffic_light_classifier_efficientNet_b1.onnx"),
     )
-    add_launch_arg("label_file_path", os.path.join(classifier_share_dir, "data", "lamp_labels.txt"))
-    add_launch_arg("precision", "fp16")
-    add_launch_arg("input_c", "3")
-    add_launch_arg("input_h", "224")
-    add_launch_arg("input_w", "224")
+    add_launch_arg(
+        "classifier_label_path", os.path.join(classifier_share_dir, "data", "lamp_labels.txt")
+    )
+    add_launch_arg("classifier_precision", "fp16")
+    add_launch_arg("classifier_mean", "[123.675, 116.28, 103.53]")
+    add_launch_arg("classifier_std", "[58.395, 57.12, 57.375]")
 
     add_launch_arg("use_crosswalk_traffic_light_estimator", "True")
     add_launch_arg("use_intra_process", "False")
@@ -79,7 +85,7 @@ def generate_launch_description():
 
     container = ComposableNodeContainer(
         name="traffic_light_node_container",
-        namespace="/perception/traffic_light_recognition",
+        namespace="",
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
@@ -87,21 +93,21 @@ def generate_launch_description():
                 package="traffic_light_classifier",
                 plugin="traffic_light::TrafficLightClassifierNodelet",
                 name="traffic_light_classifier",
+                namespace="classification",
                 parameters=[
                     create_parameter_dict(
                         "approximate_sync",
                         "classifier_type",
-                        "model_file_path",
-                        "label_file_path",
-                        "precision",
-                        "input_c",
-                        "input_h",
-                        "input_w",
+                        "classifier_model_path",
+                        "classifier_label_path",
+                        "classifier_precision",
+                        "classifier_mean",
+                        "classifier_std",
                     )
                 ],
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
-                    ("~/input/rois", "rois"),
+                    ("~/input/rois", LaunchConfiguration("output/rois")),
                     ("~/output/traffic_signals", "classified/traffic_signals"),
                 ],
                 extra_arguments=[
@@ -115,9 +121,9 @@ def generate_launch_description():
                 parameters=[create_parameter_dict("enable_fine_detection")],
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
-                    ("~/input/rois", "rois"),
-                    ("~/input/rough/rois", "rough/rois"),
-                    ("~/input/traffic_signals", "traffic_signals"),
+                    ("~/input/rois", LaunchConfiguration("output/rois")),
+                    ("~/input/rough/rois", "detection/rough/rois"),
+                    ("~/input/traffic_signals", LaunchConfiguration("output/traffic_signals")),
                     ("~/output/image", "debug/rois"),
                     ("~/output/image/compressed", "debug/rois/compressed"),
                     ("~/output/image/compressedDepth", "debug/rois/compressedDepth"),
@@ -137,11 +143,12 @@ def generate_launch_description():
                 package="crosswalk_traffic_light_estimator",
                 plugin="traffic_light::CrosswalkTrafficLightEstimatorNode",
                 name="crosswalk_traffic_light_estimator",
+                namespace="classification",
                 remappings=[
                     ("~/input/vector_map", "/map/vector_map"),
                     ("~/input/route", "/planning/mission_planning/route"),
                     ("~/input/classified/traffic_signals", "classified/traffic_signals"),
-                    ("~/output/traffic_signals", "traffic_signals"),
+                    ("~/output/traffic_signals", "estimated/traffic_signals"),
                 ],
                 extra_arguments=[{"use_intra_process_comms": False}],
             ),
@@ -156,11 +163,10 @@ def generate_launch_description():
                 package="topic_tools",
                 plugin="topic_tools::RelayNode",
                 name="classified_signals_relay",
-                namespace="",
+                namespace="classification",
                 parameters=[
                     {"input_topic": "classified/traffic_signals"},
-                    {"output_topic": "traffic_signals"},
-                    {"type": "autoware_auto_perception_msgs/msg/TrafficSignalArray"},
+                    {"output_topic": "estimated/traffic_signals"},
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -194,28 +200,27 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration("enable_image_decompressor")),
     )
 
-    ssd_fine_detector_param = create_parameter_dict(
-        "onnx_file",
-        "label_file",
-        "score_thresh",
-        "max_batch_size",
-        "approximate_sync",
-        "mean",
-        "std",
+    fine_detector_param = create_parameter_dict(
+        "fine_detector_model_path",
+        "fine_detector_label_path",
+        "fine_detector_precision",
+        "fine_detector_score_thresh",
+        "fine_detector_nms_thresh",
     )
-    ssd_fine_detector_param["mode"] = LaunchConfiguration("fine_detector_precision")
 
     fine_detector_loader = LoadComposableNodes(
         composable_node_descriptions=[
             ComposableNode(
-                package="traffic_light_ssd_fine_detector",
-                plugin="traffic_light::TrafficLightSSDFineDetectorNodelet",
-                name="traffic_light_ssd_fine_detector",
-                parameters=[ssd_fine_detector_param],
+                package="traffic_light_fine_detector",
+                plugin="traffic_light::TrafficLightFineDetectorNodelet",
+                name="traffic_light_fine_detector",
+                namespace="detection",
+                parameters=[fine_detector_param],
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", "rough/rois"),
-                    ("~/output/rois", "rois"),
+                    ("~/expect/rois", "expect/rois"),
+                    ("~/output/rois", LaunchConfiguration("output/rois")),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}

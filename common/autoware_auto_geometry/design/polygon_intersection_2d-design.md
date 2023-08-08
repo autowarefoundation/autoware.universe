@@ -2,7 +2,7 @@
 
 Two convex polygon's intersection can be visualized on the image below as the blue area:
 
-<img src="convex_polygon_intersection.png">
+<!-- <img src="convex_polygon_intersection.png"> -->
 
 ## Purpose / Use cases
 
@@ -12,7 +12,7 @@ association and in any application that deals with the objects around the percei
 
 ## Design
 
-[\(Livermore, Calif, 1977\)](https://www.osti.gov/biblio/7309916/) mention the following
+[\(Livermore, Calif, 1977\)](https://doi.org/10.2172/7309916) mention the following
 observations about convex polygon intersection:
 
 - Intersection of two convex polygons is a convex polygon

@@ -30,6 +30,7 @@ public:
 
 protected:
   void preprocess(DetectedObjectsWithFeature & output_cluster_msg) override;
+  void postprocess(DetectedObjectsWithFeature & output_cluster_msg) override;
 
   void fuseOnSingleImage(
     const DetectedObjectsWithFeature & input_cluster_msg, const std::size_t image_id,
@@ -41,9 +42,18 @@ protected:
   bool use_iou_y_{false};
   bool use_iou_{false};
   bool use_cluster_semantic_type_{false};
+  bool only_allow_inside_cluster_{false};
+  float roi_scale_factor_{1.1f};
   float iou_threshold_{0.0f};
+  float unknown_iou_threshold_{0.0f};
+  const float min_roi_existence_prob_ =
+    0.1;  // keep small value to lessen affect on merger object stage
+  bool remove_unknown_;
+  float trust_distance_;
 
+  bool filter_by_distance(const DetectedObjectWithFeature & obj);
   bool out_of_scope(const DetectedObjectWithFeature & obj);
+  // bool CheckUnknown(const DetectedObjectsWithFeature & obj);
 };
 
 }  // namespace image_projection_based_fusion

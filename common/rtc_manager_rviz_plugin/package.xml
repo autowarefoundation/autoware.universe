@@ -5,11 +5,12 @@
   <version>0.0.0</version>
   <description>The rtc manager rviz plugin package</description>
   <maintainer email="taiki.tanaka@tier4.jp">Taiki Tanaka</maintainer>
+  <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
+
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>libqt5-core</depend>
   <depend>libqt5-gui</depend>

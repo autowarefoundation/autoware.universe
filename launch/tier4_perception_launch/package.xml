@@ -6,11 +6,11 @@
   <description>The tier4_perception_launch package</description>
   <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
   <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
+  <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <exec_depend>compare_map_segmentation</exec_depend>
   <exec_depend>crosswalk_traffic_light_estimator</exec_depend>
@@ -26,15 +26,24 @@
   <exec_depend>multi_object_tracker</exec_depend>
   <exec_depend>object_merger</exec_depend>
   <exec_depend>object_range_splitter</exec_depend>
+  <exec_depend>object_velocity_splitter</exec_depend>
   <exec_depend>occupancy_grid_map_outlier_filter</exec_depend>
   <exec_depend>pointcloud_preprocessor</exec_depend>
   <exec_depend>pointcloud_to_laserscan</exec_depend>
   <exec_depend>probabilistic_occupancy_grid_map</exec_depend>
+  <exec_depend>radar_crossing_objects_noise_filter</exec_depend>
+  <exec_depend>radar_fusion_to_detected_object</exec_depend>
+  <exec_depend>radar_object_clustering</exec_depend>
+  <exec_depend>radar_object_tracker</exec_depend>
   <exec_depend>shape_estimation</exec_depend>
   <exec_depend>tensorrt_yolo</exec_depend>
+  <exec_depend>topic_tools</exec_depend>
+  <exec_depend>traffic_light_arbiter</exec_depend>
   <exec_depend>traffic_light_classifier</exec_depend>
+  <exec_depend>traffic_light_fine_detector</exec_depend>
   <exec_depend>traffic_light_map_based_detector</exec_depend>
-  <exec_depend>traffic_light_ssd_fine_detector</exec_depend>
+  <exec_depend>traffic_light_multi_camera_fusion</exec_depend>
+  <exec_depend>traffic_light_occlusion_predictor</exec_depend>
   <exec_depend>traffic_light_visualization</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>

@@ -14,8 +14,9 @@
 
 #include "motion_velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
 
-#include "eigen3/Eigen/Core"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
+
+#include <Eigen/Core>
 
 #include <algorithm>
 #include <chrono>
@@ -27,9 +28,9 @@ namespace motion_velocity_smoother
 L2PseudoJerkSmoother::L2PseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(node)
 {
   auto & p = smoother_param_;
-  p.pseudo_jerk_weight = node.declare_parameter("pseudo_jerk_weight", 100.0);
-  p.over_v_weight = node.declare_parameter("over_v_weight", 100000.0);
-  p.over_a_weight = node.declare_parameter("over_a_weight", 1000.0);
+  p.pseudo_jerk_weight = node.declare_parameter<double>("pseudo_jerk_weight");
+  p.over_v_weight = node.declare_parameter<double>("over_v_weight");
+  p.over_a_weight = node.declare_parameter<double>("over_a_weight");
 
   qp_solver_.updateMaxIter(4000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
@@ -43,7 +44,10 @@ void L2PseudoJerkSmoother::setParam(const Param & smoother_param)
   smoother_param_ = smoother_param;
 }
 
-L2PseudoJerkSmoother::Param L2PseudoJerkSmoother::getParam() const { return smoother_param_; }
+L2PseudoJerkSmoother::Param L2PseudoJerkSmoother::getParam() const
+{
+  return smoother_param_;
+}
 
 bool L2PseudoJerkSmoother::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
@@ -186,6 +190,17 @@ bool L2PseudoJerkSmoother::apply(
   // [b0, b1, ..., bN, |  a0, a1, ..., aN, |
   //  delta0, delta1, ..., deltaN, | sigma0, sigma1, ..., sigmaN]
   const std::vector<double> optval = std::get<0>(result);
+  const int status_val = std::get<3>(result);
+  if (status_val != 1) {
+    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    return false;
+  }
+  const auto has_nan =
+    std::any_of(optval.begin(), optval.end(), [](const auto v) { return std::isnan(v); });
+  if (has_nan) {
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
+    return false;
+  }
 
   for (unsigned int i = 0; i < N; ++i) {
     double v = optval.at(i);

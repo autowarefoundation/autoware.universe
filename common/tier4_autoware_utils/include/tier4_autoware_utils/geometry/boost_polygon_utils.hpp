@@ -33,13 +33,21 @@ bool isClockwise(const Polygon2d & polygon);
 Polygon2d inverseClockwise(const Polygon2d & polygon);
 geometry_msgs::msg::Polygon rotatePolygon(
   const geometry_msgs::msg::Polygon & polygon, const double & angle);
+/// @brief rotate a polygon by some angle around the origin
+/// @param[in] polygon input polygon
+/// @param[in] angle angle of rotation [rad]
+/// @return rotated polygon
+Polygon2d rotatePolygon(const Polygon2d & polygon, const double angle);
 Polygon2d toPolygon2d(
   const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape);
 Polygon2d toPolygon2d(const autoware_auto_perception_msgs::msg::DetectedObject & object);
 Polygon2d toPolygon2d(const autoware_auto_perception_msgs::msg::TrackedObject & object);
 Polygon2d toPolygon2d(const autoware_auto_perception_msgs::msg::PredictedObject & object);
+Polygon2d toFootprint(
+  const geometry_msgs::msg::Pose & base_link_pose, const double base_to_front,
+  const double base_to_rear, const double width);
 double getArea(const autoware_auto_perception_msgs::msg::Shape & shape);
-
+Polygon2d expandPolygon(const Polygon2d & input_polygon, const double offset);
 }  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__GEOMETRY__BOOST_POLYGON_UTILS_HPP_

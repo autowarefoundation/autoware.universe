@@ -105,6 +105,16 @@ geometry_msgs::msg::Polygon rotatePolygon(
   return rotated_polygon;
 }
 
+Polygon2d rotatePolygon(const Polygon2d & polygon, const double angle)
+{
+  Polygon2d rotated_polygon;
+  const boost::geometry::strategy::transform::rotate_transformer<
+    boost::geometry::radian, double, 2, 2>
+    rotation(-angle);
+  boost::geometry::transform(polygon, rotated_polygon, rotation);
+  return rotated_polygon;
+}
+
 Polygon2d toPolygon2d(
   const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape)
 {
@@ -188,6 +198,29 @@ tier4_autoware_utils::Polygon2d toPolygon2d(
     object.kinematics.initial_pose_with_covariance.pose, object.shape);
 }
 
+Polygon2d toFootprint(
+  const geometry_msgs::msg::Pose & base_link_pose, const double base_to_front,
+  const double base_to_rear, const double width)
+{
+  Polygon2d polygon;
+  const auto point0 =
+    tier4_autoware_utils::calcOffsetPose(base_link_pose, base_to_front, width / 2.0, 0.0).position;
+  const auto point1 =
+    tier4_autoware_utils::calcOffsetPose(base_link_pose, base_to_front, -width / 2.0, 0.0).position;
+  const auto point2 =
+    tier4_autoware_utils::calcOffsetPose(base_link_pose, -base_to_rear, -width / 2.0, 0.0).position;
+  const auto point3 =
+    tier4_autoware_utils::calcOffsetPose(base_link_pose, -base_to_rear, width / 2.0, 0.0).position;
+
+  appendPointToPolygon(polygon, point0);
+  appendPointToPolygon(polygon, point1);
+  appendPointToPolygon(polygon, point2);
+  appendPointToPolygon(polygon, point3);
+  appendPointToPolygon(polygon, point0);
+
+  return isClockwise(polygon) ? polygon : inverseClockwise(polygon);
+}
+
 double getArea(const autoware_auto_perception_msgs::msg::Shape & shape)
 {
   if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -199,5 +232,38 @@ double getArea(const autoware_auto_perception_msgs::msg::Shape & shape)
   }
 
   throw std::logic_error("The shape type is not supported in tier4_autoware_utils.");
+}
+
+// NOTE: The number of vertices on the expanded polygon by boost::geometry::buffer
+//       is larger than the original one.
+//       This function fixes the issue.
+Polygon2d expandPolygon(const Polygon2d & input_polygon, const double offset)
+{
+  // NOTE: input_polygon is supposed to have a duplicated point.
+  const size_t num_points = input_polygon.outer().size() - 1;
+
+  Polygon2d expanded_polygon;
+  for (size_t i = 0; i < num_points; ++i) {
+    const auto & curr_p = input_polygon.outer().at(i);
+    const auto & next_p = input_polygon.outer().at(i + 1);
+    const auto & prev_p =
+      i == 0 ? input_polygon.outer().at(num_points - 1) : input_polygon.outer().at(i - 1);
+
+    Eigen::Vector2d current_to_next(next_p.x() - curr_p.x(), next_p.y() - curr_p.y());
+    Eigen::Vector2d current_to_prev(prev_p.x() - curr_p.x(), prev_p.y() - curr_p.y());
+    current_to_next.normalize();
+    current_to_prev.normalize();
+
+    const Eigen::Vector2d offset_vector = (-current_to_next - current_to_prev).normalized();
+    const double theta = std::acos(offset_vector.dot(current_to_next));
+    const double scaled_offset = offset / std::sin(theta);
+    const Eigen::Vector2d offset_point =
+      Eigen::Vector2d(curr_p.x(), curr_p.y()) + offset_vector * scaled_offset;
+
+    expanded_polygon.outer().push_back(Point2d(offset_point.x(), offset_point.y()));
+  }
+
+  boost::geometry::correct(expanded_polygon);
+  return expanded_polygon;
 }
 }  // namespace tier4_autoware_utils

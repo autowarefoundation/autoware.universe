@@ -22,11 +22,11 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_light.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_signal.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_element.hpp>
+#include <tier4_perception_msgs/msg/traffic_signal.hpp>
+#include <tier4_perception_msgs/msg/traffic_signal_array.hpp>
 
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/LaneletMap.h>
@@ -36,20 +36,22 @@
 
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace traffic_light
 {
 
 using autoware_auto_mapping_msgs::msg::HADMapBin;
-using autoware_auto_perception_msgs::msg::TrafficLight;
-using autoware_auto_perception_msgs::msg::TrafficSignal;
-using autoware_auto_perception_msgs::msg::TrafficSignalArray;
 using autoware_planning_msgs::msg::LaneletRoute;
 using tier4_autoware_utils::DebugPublisher;
 using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::Float64Stamped;
-using TrafficLightIdMap = std::unordered_map<lanelet::Id, TrafficSignal>;
+using tier4_perception_msgs::msg::TrafficLightElement;
+using tier4_perception_msgs::msg::TrafficSignal;
+using tier4_perception_msgs::msg::TrafficSignalArray;
+using TrafficSignalAndTime = std::pair<TrafficSignal, rclcpp::Time>;
+using TrafficLightIdMap = std::unordered_map<lanelet::Id, TrafficSignalAndTime>;
 
 class CrosswalkTrafficLightEstimatorNode : public rclcpp::Node
 {
@@ -77,11 +79,11 @@ private:
   void setCrosswalkTrafficSignal(
     const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & msg) const;
 
-  lanelet::ConstLanelets getGreenLanelets(
+  lanelet::ConstLanelets getNonRedLanelets(
     const lanelet::ConstLanelets & lanelets, const TrafficLightIdMap & traffic_light_id_map) const;
 
   uint8_t estimateCrosswalkTrafficSignal(
-    const lanelet::ConstLanelet & crosswalk, const lanelet::ConstLanelets & green_lanelets) const;
+    const lanelet::ConstLanelet & crosswalk, const lanelet::ConstLanelets & non_red_lanelets) const;
 
   boost::optional<uint8_t> getHighestConfidenceTrafficSignal(
     const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
@@ -89,6 +91,7 @@ private:
 
   // Node param
   bool use_last_detect_color_;
+  double last_detect_color_hold_time_;
 
   // Signal history
   TrafficLightIdMap last_detect_color_;

@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <tensorrt_yolox/tensorrt_yolox_node.hpp>
+#include "tensorrt_yolox/tensorrt_yolox_node.hpp"
+
+#include "object_recognition_utils/object_classification.hpp"
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 
@@ -30,22 +32,75 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   using std::placeholders::_1;
   using std::chrono_literals::operator""ms;
 
-  std::string model_path = declare_parameter("model_path", "");
-  std::string label_path = declare_parameter("label_path", "");
-  std::string precision = declare_parameter("precision", "fp32");
-  // Objects with a score lower than this value will be ignored.
-  // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
-  float score_threshold = declare_parameter("score_threshold", 0.3);
-  // Detection results will be ignored if IoU over this value.
-  // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
-  float nms_threshold = declare_parameter("nms_threshold", 0.7);
+  auto declare_parameter_with_description =
+    [this](std::string name, auto default_val, std::string description = "") {
+      auto param_desc = rcl_interfaces::msg::ParameterDescriptor{};
+      param_desc.description = description;
+      return this->declare_parameter(name, default_val, param_desc);
+    };
+
+  std::string model_path =
+    declare_parameter_with_description("model_path", "", "The onnx file name for YOLOX model");
+  std::string label_path = declare_parameter_with_description(
+    "label_path", "",
+    "The label file that consists of label name texts for detected object categories");
+  std::string precision = declare_parameter_with_description(
+    "precision", "fp32",
+    "operation precision to be used on inference. Valid value is one of: [fp32, fp16, int8]");
+  float score_threshold = declare_parameter_with_description(
+    "score_threshold", 0.3,
+    ("Objects with a score lower than this value will be ignored. "
+     "This threshold will be ignored if specified model contains EfficientNMS_TRT module in it"));
+  float nms_threshold = declare_parameter_with_description(
+    "nms_threshold", 0.7,
+    ("Detection results will be ignored if IoU over this value. "
+     "This threshold will be ignored if specified model contains EfficientNMS_TRT module in it"));
+  std::string calibration_algorithm = declare_parameter_with_description(
+    "calibration_algorithm", "MinMax",
+    ("Calibration algorithm to be used for quantization when precision==int8. "
+     "Valid value is one of: [Entropy, (Legacy | Percentile), MinMax]"));
+  int dla_core_id = declare_parameter_with_description(
+    "dla_core_id", -1,
+    "If positive ID value is specified, the node assign inference task to the DLA core");
+  bool quantize_first_layer = declare_parameter_with_description(
+    "quantize_first_layer", false,
+    ("If true, set the operating precision for the first (input) layer to be fp16. "
+     "This option is valid only when precision==int8"));
+  bool quantize_last_layer = declare_parameter_with_description(
+    "quantize_last_layer", false,
+    ("If true, set the operating precision for the last (output) layer to be fp16. "
+     "This option is valid only when precision==int8"));
+  bool profile_per_layer = declare_parameter_with_description(
+    "profile_per_layer", false,
+    ("If true, profiler function will be enabled. "
+     "Since the profile function may affect execution speed, it is recommended "
+     "to set this flag true only for development purpose."));
+  double clip_value = declare_parameter_with_description(
+    "clip_value", 0.0,
+    ("If positive value is specified, "
+     "the value of each layer output will be clipped between [0.0, clip_value]. "
+     "This option is valid only when precision==int8 and used to manually specify "
+     "the dynamic range instead of using any calibration"));
+  bool preprocess_on_gpu = declare_parameter_with_description(
+    "preprocess_on_gpu", true, "If true, pre-processing is performed on GPU");
+  std::string calibration_image_list_path = declare_parameter_with_description(
+    "calibration_image_list_path", "",
+    ("Path to a file which contains path to images."
+     "Those images will be used for int8 quantization."));
 
   if (!readLabelFile(label_path)) {
     RCLCPP_ERROR(this->get_logger(), "Could not find label file");
     rclcpp::shutdown();
   }
+  replaceLabelMap();
+
+  tensorrt_common::BuildConfig build_config(
+    calibration_algorithm, dla_core_id, quantize_first_layer, quantize_last_layer,
+    profile_per_layer, clip_value);
+
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
-    model_path, precision, label_map_.size(), score_threshold, nms_threshold);
+    model_path, precision, label_map_.size(), score_threshold, nms_threshold, build_config,
+    preprocess_on_gpu, calibration_image_list_path);
 
   timer_ =
     rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&TrtYoloXNode::onConnect, this));
@@ -53,6 +108,11 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   objects_pub_ = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
     "~/out/objects", 1);
   image_pub_ = image_transport::create_publisher(this, "~/out/image");
+
+  if (declare_parameter("build_only", false)) {
+    RCLCPP_INFO(this->get_logger(), "TensorRT engine file is built and exit.");
+    rclcpp::shutdown();
+  }
 }
 
 void TrtYoloXNode::onConnect()
@@ -72,8 +132,6 @@ void TrtYoloXNode::onConnect()
 
 void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
-  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
-
   tier4_perception_msgs::msg::DetectedObjectsWithFeature out_objects;
 
   cv_bridge::CvImagePtr in_image_ptr;
@@ -97,23 +155,9 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     object.feature.roi.y_offset = yolox_object.y_offset;
     object.feature.roi.width = yolox_object.width;
     object.feature.roi.height = yolox_object.height;
-    object.object.classification.emplace_back(autoware_auto_perception_msgs::build<Label>()
-                                                .label(Label::UNKNOWN)
-                                                .probability(yolox_object.score));
-    if (label_map_[yolox_object.type] == "CAR") {
-      object.object.classification.front().label = Label::CAR;
-    } else if (
-      label_map_[yolox_object.type] == "PEDESTRIAN" || label_map_[yolox_object.type] == "PERSON") {
-      object.object.classification.front().label = Label::PEDESTRIAN;
-    } else if (label_map_[yolox_object.type] == "BUS") {
-      object.object.classification.front().label = Label::BUS;
-    } else if (label_map_[yolox_object.type] == "TRUCK") {
-      object.object.classification.front().label = Label::TRUCK;
-    } else if (label_map_[yolox_object.type] == "BICYCLE") {
-      object.object.classification.front().label = Label::BICYCLE;
-    } else if (label_map_[yolox_object.type] == "MOTORCYCLE") {
-      object.object.classification.front().label = Label::MOTORCYCLE;
-    }
+    object.object.existence_probability = yolox_object.score;
+    object.object.classification =
+      object_recognition_utils::toObjectClassifications(label_map_[yolox_object.type], 1.0f);
     out_objects.feature_objects.push_back(object);
     const auto left = std::max(0, static_cast<int>(object.feature.roi.x_offset));
     const auto top = std::max(0, static_cast<int>(object.feature.roi.y_offset));
@@ -147,6 +191,22 @@ bool TrtYoloXNode::readLabelFile(const std::string & label_path)
     ++label_index;
   }
   return true;
+}
+
+void TrtYoloXNode::replaceLabelMap()
+{
+  for (std::size_t i = 0; i < label_map_.size(); ++i) {
+    auto & label = label_map_[i];
+    if (label == "PERSON") {
+      label = "PEDESTRIAN";
+    } else if (label == "MOTORBIKE") {
+      label = "MOTORCYCLE";
+    } else if (
+      label != "CAR" && label != "PEDESTRIAN" && label != "BUS" && label != "TRUCK" &&
+      label != "BICYCLE" && label != "MOTORCYCLE") {
+      label = "UNKNOWN";
+    }
+  }
 }
 
 }  // namespace tensorrt_yolox

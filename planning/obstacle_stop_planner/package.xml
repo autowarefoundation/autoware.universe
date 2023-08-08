@@ -9,6 +9,7 @@
   <maintainer email="taiki.tanaka@tier4.jp">Taiki Tanaka</maintainer>
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
   <maintainer email="shumpei.wakabayashi@tier4.jp">Shumpei Wakabayashi</maintainer>
+  <maintainer email="berkay@leodrive.ai">Berkay Karaman</maintainer>
 
   <license>Apache License 2.0</license>
 
@@ -16,8 +17,7 @@
   <author email="yukihiro.saito@tier4.jp">Yukihiro Saito</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
@@ -27,6 +27,7 @@
   <depend>nav_msgs</depend>
   <depend>pcl_conversions</depend>
   <depend>pcl_ros</depend>
+  <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
@@ -42,6 +43,7 @@
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
 
+  <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 

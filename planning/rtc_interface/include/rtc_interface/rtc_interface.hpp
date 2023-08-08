@@ -46,15 +46,15 @@ using unique_identifier_msgs::msg::UUID;
 class RTCInterface
 {
 public:
-  RTCInterface(rclcpp::Node * node, const std::string & name);
+  RTCInterface(rclcpp::Node * node, const std::string & name, const bool enable_rtc = true);
   void publishCooperateStatus(const rclcpp::Time & stamp);
   void updateCooperateStatus(
     const UUID & uuid, const bool safe, const double start_distance, const double finish_distance,
     const rclcpp::Time & stamp);
   void removeCooperateStatus(const UUID & uuid);
   void clearCooperateStatus();
-  bool isActivated(const UUID & uuid);
-  bool isRegistered(const UUID & uuid);
+  bool isActivated(const UUID & uuid) const;
+  bool isRegistered(const UUID & uuid) const;
   void lockCommandUpdate();
   void unlockCommandUpdate();
 
@@ -74,19 +74,20 @@ private:
   rclcpp::Publisher<CooperateStatusArray>::SharedPtr pub_statuses_;
   rclcpp::Service<CooperateCommands>::SharedPtr srv_commands_;
   rclcpp::Service<AutoMode>::SharedPtr srv_auto_mode_;
-
-  std::mutex mutex_;
   rclcpp::CallbackGroup::SharedPtr callback_group_;
   rclcpp::Logger logger_;
+
   Module module_;
   CooperateStatusArray registered_status_;
   std::vector<CooperateCommand> stored_commands_;
-  bool is_auto_mode_;
+  bool is_auto_mode_init_;
   bool is_locked_;
 
   std::string cooperate_status_namespace_ = "/planning/cooperate_status";
   std::string cooperate_commands_namespace_ = "/planning/cooperate_commands";
   std::string enable_auto_mode_namespace_ = "/planning/enable_auto_mode/internal";
+
+  mutable std::mutex mutex_;
 };
 
 }  // namespace rtc_interface

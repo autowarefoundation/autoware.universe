@@ -24,7 +24,11 @@
 #include <std_msgs/msg/header.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>
+#else
 #include <cv_bridge/cv_bridge.h>
+#endif
 
 #include <chrono>
 #include <fstream>
@@ -46,6 +50,7 @@ private:
   void onConnect();
   void onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg);
   bool readLabelFile(const std::string & label_path);
+  void replaceLabelMap();
 
   image_transport::Publisher image_pub_;
   rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr objects_pub_;

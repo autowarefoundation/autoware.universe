@@ -66,6 +66,7 @@ def launch_setup(context, *args, **kwargs):
             ("output/twist", "/vehicle/status/velocity_status"),
             ("output/odometry", "/localization/kinematic_state"),
             ("output/acceleration", "/localization/acceleration"),
+            ("output/imu", "/sensing/imu/imu_data"),
             ("output/steering", "/vehicle/status/steering_status"),
             ("output/gear_report", "/vehicle/status/gear_status"),
             ("output/turn_indicators_report", "/vehicle/status/turn_indicators_status"),
@@ -79,7 +80,12 @@ def launch_setup(context, *args, **kwargs):
         executable="static_transform_publisher",
         name="static_map_to_odom_tf_publisher",
         output="screen",
-        arguments=["0.0", "0.0", "0.0", "0", "0", "0", "map", "odom"],
+        arguments=[
+            "--frame-id",
+            "map",
+            "--child-frame-id",
+            "odom",
+        ],
     )
 
     group = GroupAction([simple_planning_simulator_node, map_to_odom_tf_publisher])

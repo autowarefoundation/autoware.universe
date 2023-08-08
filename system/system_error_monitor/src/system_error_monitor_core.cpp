@@ -182,20 +182,6 @@ std::set<std::string> getErrorModules(
   return error_modules;
 }
 
-autoware_auto_system_msgs::msg::HazardStatus createTimeoutHazardStatus()
-{
-  autoware_auto_system_msgs::msg::HazardStatus hazard_status;
-  hazard_status.level = autoware_auto_system_msgs::msg::HazardStatus::SINGLE_POINT_FAULT;
-  hazard_status.emergency = true;
-  hazard_status.emergency_holding = false;
-  diagnostic_msgs::msg::DiagnosticStatus diag;
-  diag.name = "system_error_monitor/input_data_timeout";
-  diag.hardware_id = "system_error_monitor";
-  diag.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-  hazard_status.diag_single_point_fault.push_back(diag);
-  return hazard_status;
-}
-
 int isInNoFaultCondition(
   const autoware_auto_system_msgs::msg::AutowareState & autoware_state,
   const tier4_control_msgs::msg::GateMode & current_gate_mode)
@@ -227,7 +213,11 @@ int isInNoFaultCondition(
 AutowareErrorMonitor::AutowareErrorMonitor()
 : Node(
     "system_error_monitor",
-    rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true))
+    rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true)),
+  diag_array_stamp_(0, 0, this->get_clock()->get_clock_type()),
+  autoware_state_stamp_(0, 0, this->get_clock()->get_clock_type()),
+  current_gate_mode_stamp_(0, 0, this->get_clock()->get_clock_type()),
+  control_mode_stamp_(0, 0, this->get_clock()->get_clock_type())
 {
   // Parameter
   get_parameter_or<int>("update_rate", params_.update_rate, 10);
@@ -399,7 +389,7 @@ void AutowareErrorMonitor::onControlMode(
 bool AutowareErrorMonitor::isDataReady()
 {
   if (!diag_array_) {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for diag_array msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for diag_array msg...");
     return false;
   }
 
@@ -424,6 +414,10 @@ bool AutowareErrorMonitor::isDataReady()
 bool AutowareErrorMonitor::isDataHeartbeatTimeout()
 {
   auto isTimeout = [this](const rclcpp::Time & last_stamp, const double threshold) {
+    if (last_stamp.get_clock_type() != this->now().get_clock_type()) {
+      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "clock type is different...");
+      return false;
+    }
     const auto time_diff = this->now() - last_stamp;
     return time_diff.seconds() > threshold;
   };
@@ -457,15 +451,17 @@ void AutowareErrorMonitor::onTimer()
   if (!isDataReady()) {
     if ((this->now() - initialized_time_).seconds() > params_.data_ready_timeout) {
       RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+        get_logger(), *get_clock(), std::chrono::milliseconds(5000).count(),
         "input data is timeout");
-      publishHazardStatus(createTimeoutHazardStatus());
+      updateTimeoutHazardStatus();
+      publishHazardStatus(hazard_status_);
     }
     return;
   }
 
   if (isDataHeartbeatTimeout()) {
-    publishHazardStatus(createTimeoutHazardStatus());
+    updateTimeoutHazardStatus();
+    publishHazardStatus(hazard_status_);
     return;
   }
 
@@ -607,6 +603,35 @@ void AutowareErrorMonitor::updateHazardStatus()
   // Update emergency_holding condition
   if (params_.use_emergency_hold) {
     hazard_status_.emergency_holding = isEmergencyHoldingRequired();
+  }
+}
+
+void AutowareErrorMonitor::updateTimeoutHazardStatus()
+{
+  const bool prev_emergency_status = hazard_status_.emergency;
+
+  hazard_status_.level = autoware_auto_system_msgs::msg::HazardStatus::SINGLE_POINT_FAULT;
+  hazard_status_.emergency = true;
+
+  if (hazard_status_.emergency != prev_emergency_status) {
+    emergency_state_switch_time_ = this->now();
+  }
+
+  hazard_status_.diag_no_fault = std::vector<diagnostic_msgs::msg::DiagnosticStatus>();
+  hazard_status_.diag_safe_fault = std::vector<diagnostic_msgs::msg::DiagnosticStatus>();
+  hazard_status_.diag_latent_fault = std::vector<diagnostic_msgs::msg::DiagnosticStatus>();
+
+  diagnostic_msgs::msg::DiagnosticStatus diag;
+  diag.name = "system_error_monitor/input_data_timeout";
+  diag.hardware_id = "system_error_monitor";
+  diag.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+  hazard_status_.diag_single_point_fault =
+    std::vector<diagnostic_msgs::msg::DiagnosticStatus>{diag};
+
+  // Update emergency_holding condition
+  if (params_.use_emergency_hold) {
+    const auto emergency_duration = (this->now() - emergency_state_switch_time_).seconds();
+    hazard_status_.emergency_holding = emergency_duration > params_.hazard_recovery_timeout;
   }
 }
 

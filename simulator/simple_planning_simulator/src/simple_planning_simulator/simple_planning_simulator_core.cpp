@@ -125,11 +125,12 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     create_publisher<TurnIndicatorsReport>("output/turn_indicators_report", QoS{1});
   pub_hazard_lights_report_ =
     create_publisher<HazardLightsReport>("output/hazard_lights_report", QoS{1});
-  pub_current_pose_ = create_publisher<PoseStamped>("/current_pose", QoS{1});
+  pub_current_pose_ = create_publisher<PoseStamped>("output/debug/pose", QoS{1});
   pub_velocity_ = create_publisher<VelocityReport>("output/twist", QoS{1});
   pub_odom_ = create_publisher<Odometry>("output/odometry", QoS{1});
   pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
   pub_acc_ = create_publisher<AccelWithCovarianceStamped>("output/acceleration", QoS{1});
+  pub_imu_ = create_publisher<Imu>("output/imu", QoS{1});
   pub_tf_ = create_publisher<tf2_msgs::msg::TFMessage>("/tf", QoS{1});
 
   /* set param callback */
@@ -298,6 +299,7 @@ void SimplePlanningSimulator::on_timer()
   publish_velocity(current_velocity_);
   publish_steering(current_steer_);
   publish_acceleration();
+  publish_imu();
 
   publish_control_mode_report();
   publish_gear_report();
@@ -561,6 +563,29 @@ void SimplePlanningSimulator::publish_acceleration()
   msg.accel.covariance.at(COV_IDX::PITCH_PITCH) = COV;  // angular y
   msg.accel.covariance.at(COV_IDX::YAW_YAW) = COV;      // angular z
   pub_acc_->publish(msg);
+}
+
+void SimplePlanningSimulator::publish_imu()
+{
+  using COV_IDX = tier4_autoware_utils::xyz_covariance_index::XYZ_COV_IDX;
+
+  sensor_msgs::msg::Imu imu;
+  imu.header.frame_id = "base_link";
+  imu.header.stamp = now();
+  imu.linear_acceleration.x = vehicle_model_ptr_->getAx();
+  constexpr auto COV = 0.001;
+  imu.linear_acceleration_covariance.at(COV_IDX::X_X) = COV;
+  imu.linear_acceleration_covariance.at(COV_IDX::Y_Y) = COV;
+  imu.linear_acceleration_covariance.at(COV_IDX::Z_Z) = COV;
+  imu.angular_velocity = current_odometry_.twist.twist.angular;
+  imu.angular_velocity_covariance.at(COV_IDX::X_X) = COV;
+  imu.angular_velocity_covariance.at(COV_IDX::Y_Y) = COV;
+  imu.angular_velocity_covariance.at(COV_IDX::Z_Z) = COV;
+  imu.orientation = current_odometry_.pose.pose.orientation;
+  imu.orientation_covariance.at(COV_IDX::X_X) = COV;
+  imu.orientation_covariance.at(COV_IDX::Y_Y) = COV;
+  imu.orientation_covariance.at(COV_IDX::Z_Z) = COV;
+  pub_imu_->publish(imu);
 }
 
 void SimplePlanningSimulator::publish_control_mode_report()

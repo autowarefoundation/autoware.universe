@@ -79,7 +79,10 @@ CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & optio
     p.max_x = static_cast<float>(declare_parameter("max_x", 1.0));
     p.max_y = static_cast<float>(declare_parameter("max_y", 1.0));
     p.max_z = static_cast<float>(declare_parameter("max_z", 1.0));
-    p.negative = static_cast<float>(declare_parameter("negative", false));
+    p.negative = static_cast<bool>(declare_parameter("negative", false));
+    if (tf_input_frame_.empty()) {
+      throw std::invalid_argument("Crop box requires non-empty input_frame");
+    }
   }
 
   // set additional publishers
@@ -96,43 +99,75 @@ CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & optio
   }
 }
 
+// TODO(sykwer): Temporary Implementation: Delete this function definition when all the filter nodes
+// conform to new API.
 void CropBoxFilterComponent::filter(
-  const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
-  PointCloud2 & output)
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+{
+  (void)input;
+  (void)indices;
+  (void)output;
+}
+
+// TODO(sykwer): Temporary Implementation: Rename this function to `filter()` when all the filter
+// nodes conform to new API. Then delete the old `filter()` defined above.
+void CropBoxFilterComponent::faster_filter(
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
+  const TransformInfo & transform_info)
 {
   std::scoped_lock lock(mutex_);
   stop_watch_ptr_->toc("processing_time", true);
+
+  if (indices) {
+    RCLCPP_WARN(get_logger(), "Indices are not supported and will be ignored");
+  }
+
+  int x_offset = input->fields[pcl::getFieldIndex(*input, "x")].offset;
+  int y_offset = input->fields[pcl::getFieldIndex(*input, "y")].offset;
+  int z_offset = input->fields[pcl::getFieldIndex(*input, "z")].offset;
+
   output.data.resize(input->data.size());
-  Eigen::Vector3f pt(Eigen::Vector3f::Zero());
-  size_t j = 0;
-  const auto data_size = input->data.size();
-  const auto point_step = input->point_step;
-  // If inside the cropbox
-  if (!param_.negative) {
-    for (size_t i = 0; i + point_step < data_size; i += point_step) {
-      memcpy(pt.data(), &input->data[i], sizeof(float) * 3);
-      if (
-        param_.min_z < pt.z() && pt.z() < param_.max_z && param_.min_y < pt.y() &&
-        pt.y() < param_.max_y && param_.min_x < pt.x() && pt.x() < param_.max_x) {
-        memcpy(&output.data[j], &input->data[i], point_step);
-        j += point_step;
-      }
+  size_t output_size = 0;
+
+  for (size_t global_offset = 0; global_offset + input->point_step <= input->data.size();
+       global_offset += input->point_step) {
+    Eigen::Vector4f point;
+    std::memcpy(&point[0], &input->data[global_offset + x_offset], sizeof(float));
+    std::memcpy(&point[1], &input->data[global_offset + y_offset], sizeof(float));
+    std::memcpy(&point[2], &input->data[global_offset + z_offset], sizeof(float));
+    point[3] = 1;
+
+    if (!std::isfinite(point[0]) || !std::isfinite(point[1]) || !std::isfinite(point[2])) {
+      RCLCPP_WARN(this->get_logger(), "Ignoring point containing NaN values");
+      continue;
     }
-    // If outside the cropbox
-  } else {
-    for (size_t i = 0; i + point_step < data_size; i += point_step) {
-      memcpy(pt.data(), &input->data[i], sizeof(float) * 3);
-      if (
-        param_.min_z > pt.z() || pt.z() > param_.max_z || param_.min_y > pt.y() ||
-        pt.y() > param_.max_y || param_.min_x > pt.x() || pt.x() > param_.max_x) {
-        memcpy(&output.data[j], &input->data[i], point_step);
-        j += point_step;
+
+    if (transform_info.need_transform) {
+      point = transform_info.eigen_transform * point;
+    }
+
+    bool point_is_inside = point[2] > param_.min_z && point[2] < param_.max_z &&
+                           point[1] > param_.min_y && point[1] < param_.max_y &&
+                           point[0] > param_.min_x && point[0] < param_.max_x;
+    if ((!param_.negative && point_is_inside) || (param_.negative && !point_is_inside)) {
+      memcpy(&output.data[output_size], &input->data[global_offset], input->point_step);
+
+      if (transform_info.need_transform) {
+        std::memcpy(&output.data[output_size + x_offset], &point[0], sizeof(float));
+        std::memcpy(&output.data[output_size + y_offset], &point[1], sizeof(float));
+        std::memcpy(&output.data[output_size + z_offset], &point[2], sizeof(float));
       }
+
+      output_size += input->point_step;
     }
   }
 
-  output.data.resize(j);
-  output.header.frame_id = input->header.frame_id;
+  output.data.resize(output_size);
+
+  // Note that tf_input_orig_frame_ is the input frame, while tf_input_frame_ is the frame of the
+  // crop box
+  output.header.frame_id = tf_input_frame_;
+
   output.height = 1;
   output.fields = input->fields;
   output.is_bigendian = input->is_bigendian;
@@ -142,6 +177,7 @@ void CropBoxFilterComponent::filter(
   output.row_step = static_cast<uint32_t>(output.data.size() / output.height);
 
   publishCropBoxPolygon();
+
   // add processing time for debug
   if (debug_publisher_) {
     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);

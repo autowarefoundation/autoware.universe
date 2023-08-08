@@ -21,9 +21,6 @@
 
 #include <motion_utils/trajectory/tmp_conversion.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
@@ -58,6 +55,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <utility>
 #include <vector>
 
 namespace motion_planning
@@ -90,6 +88,30 @@ using vehicle_info_util::VehicleInfo;
 
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
+using autoware_auto_perception_msgs::msg::PredictedObject;
+struct ObstacleWithDetectionTime
+{
+  explicit ObstacleWithDetectionTime(const rclcpp::Time & t, pcl::PointXYZ & p)
+  : detection_time(t), point(p)
+  {
+  }
+
+  rclcpp::Time detection_time;
+  pcl::PointXYZ point;
+};
+
+struct PredictedObjectWithDetectionTime
+{
+  explicit PredictedObjectWithDetectionTime(
+    const rclcpp::Time & t, geometry_msgs::msg::Point & p, PredictedObject obj)
+  : detection_time(t), point(p), object(std::move(obj))
+  {
+  }
+
+  rclcpp::Time detection_time;
+  geometry_msgs::msg::Point point;
+  PredictedObject object;
+};
 
 class ObstacleStopPlannerNode : public rclcpp::Node
 {
@@ -117,22 +139,27 @@ private:
 
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
 
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
+
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_collision_pointcloud_debug_;
+
   std::unique_ptr<AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
-  boost::optional<StopPoint> latest_stop_point_{boost::none};
   boost::optional<SlowDownSection> latest_slow_down_section_{boost::none};
+  std::vector<ObstacleWithDetectionTime> obstacle_history_{};
+  std::vector<PredictedObjectWithDetectionTime> predicted_object_history_{};
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   PredictedObjects::ConstSharedPtr object_ptr_{nullptr};
-  rclcpp::Time last_detect_time_collision_point_;
-  rclcpp::Time last_detect_time_slowdown_point_;
 
-  Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};
+  Odometry::ConstSharedPtr current_odometry_ptr_{nullptr};
   AccelWithCovarianceStamped::ConstSharedPtr current_acceleration_ptr_{nullptr};
   bool is_driving_forward_{true};
 
   bool set_velocity_limit_{false};
+
+  double object_filtering_margin_{};  // only valid if use_predicted_objects is true
 
   VehicleInfo vehicle_info_;
   NodeParam node_param_;
@@ -148,6 +175,11 @@ private:
     const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
     PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
     const StopParam & stop_param, const PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr);
+
+  void searchPredictedObject(
+    const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
+    PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
+    const StopParam & stop_param);
 
   void insertVelocity(
     TrajectoryPoints & trajectory, PlannerData & planner_data, const Header & trajectory_header,
@@ -188,6 +220,10 @@ private:
   void publishDebugData(
     const PlannerData & planner_data, const double current_acc, const double current_vel);
 
+  void filterObstacles(
+    const PredictedObjects & input_objects, const Pose & ego_pose, const TrajectoryPoints & traj,
+    const double dist_threshold, PredictedObjects & filtered_objects);
+
   // Callback
   void onTrigger(const Trajectory::ConstSharedPtr input_msg);
 
@@ -200,6 +236,45 @@ private:
   void onDynamicObjects(const PredictedObjects::ConstSharedPtr input_msg);
 
   void onExpandStopRange(const ExpandStopRange::ConstSharedPtr input_msg);
+
+  void updateObstacleHistory(const rclcpp::Time & now)
+  {
+    for (auto itr = obstacle_history_.begin(); itr != obstacle_history_.end();) {
+      const auto expired = (now - itr->detection_time).seconds() > node_param_.chattering_threshold;
+
+      if (expired) {
+        itr = obstacle_history_.erase(itr);
+        continue;
+      }
+
+      itr++;
+    }
+  }
+
+  void updatePredictedObstacleHistory(const rclcpp::Time & now)
+  {
+    for (auto itr = predicted_object_history_.begin(); itr != predicted_object_history_.end();) {
+      const auto expired = (now - itr->detection_time).seconds() > node_param_.chattering_threshold;
+
+      if (expired) {
+        itr = predicted_object_history_.erase(itr);
+        continue;
+      }
+
+      itr++;
+    }
+  }
+
+  PointCloud::Ptr getOldPointCloudPtr() const
+  {
+    PointCloud::Ptr ret(new PointCloud);
+
+    for (const auto & p : obstacle_history_) {
+      ret->push_back(p.point);
+    }
+
+    return ret;
+  }
 };
 }  // namespace motion_planning
 

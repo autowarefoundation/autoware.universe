@@ -1,5 +1,5 @@
 //
-//  Copyright 2020 Tier IV, Inc. All rights reserved.
+//  Copyright 2020 TIER IV, Inc. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QString>
 #include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
@@ -25,9 +26,10 @@
 #include <memory>
 #include <string>
 
-inline std::string Bool2String(const bool var) { return var ? "True" : "False"; }
-
-using std::placeholders::_1;
+inline std::string Bool2String(const bool var)
+{
+  return var ? "True" : "False";
+}
 
 namespace rviz_plugins
 {
@@ -64,6 +66,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
     h_layout->addWidget(makeRoutingGroup());
     h_layout->addWidget(makeLocalizationGroup());
     h_layout->addWidget(makeMotionGroup());
+    h_layout->addWidget(makeFailSafeGroup());
     v_layout->addLayout(h_layout);
   }
 
@@ -163,6 +166,10 @@ QGroupBox * AutowareStatePanel::makeLocalizationGroup()
   localization_label_ptr_->setStyleSheet("border:1px solid black;");
   grid->addWidget(localization_label_ptr_, 0, 0);
 
+  init_by_gnss_button_ptr_ = new QPushButton("Init by GNSS");
+  connect(init_by_gnss_button_ptr_, SIGNAL(clicked()), SLOT(onClickInitByGnss()));
+  grid->addWidget(init_by_gnss_button_ptr_, 1, 0);
+
   group->setLayout(grid);
   return group;
 }
@@ -186,8 +193,29 @@ QGroupBox * AutowareStatePanel::makeMotionGroup()
   return group;
 }
 
+QGroupBox * AutowareStatePanel::makeFailSafeGroup()
+{
+  auto * group = new QGroupBox("FailSafe");
+  auto * grid = new QGridLayout;
+
+  mrm_state_label_ptr_ = new QLabel("INIT");
+  mrm_state_label_ptr_->setAlignment(Qt::AlignCenter);
+  mrm_state_label_ptr_->setStyleSheet("border:1px solid black;");
+  grid->addWidget(mrm_state_label_ptr_, 0, 0);
+
+  mrm_behavior_label_ptr_ = new QLabel("INIT");
+  mrm_behavior_label_ptr_->setAlignment(Qt::AlignCenter);
+  mrm_behavior_label_ptr_->setStyleSheet("border:1px solid black;");
+  grid->addWidget(mrm_behavior_label_ptr_, 1, 0);
+
+  group->setLayout(grid);
+  return group;
+}
+
 void AutowareStatePanel::onInitialize()
 {
+  using std::placeholders::_1;
+
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
   // Operation Mode
@@ -195,45 +223,52 @@ void AutowareStatePanel::onInitialize()
     "/api/operation_mode/state", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStatePanel::onOperationMode, this, _1));
 
-  client_change_to_autonomous_ = raw_node_->create_client<ChangeOperationMode>(
-    "/api/operation_mode/change_to_autonomous", rmw_qos_profile_services_default);
+  client_change_to_autonomous_ =
+    raw_node_->create_client<ChangeOperationMode>("/api/operation_mode/change_to_autonomous");
 
-  client_change_to_stop_ = raw_node_->create_client<ChangeOperationMode>(
-    "/api/operation_mode/change_to_stop", rmw_qos_profile_services_default);
+  client_change_to_stop_ =
+    raw_node_->create_client<ChangeOperationMode>("/api/operation_mode/change_to_stop");
 
-  client_change_to_local_ = raw_node_->create_client<ChangeOperationMode>(
-    "/api/operation_mode/change_to_local", rmw_qos_profile_services_default);
+  client_change_to_local_ =
+    raw_node_->create_client<ChangeOperationMode>("/api/operation_mode/change_to_local");
 
-  client_change_to_remote_ = raw_node_->create_client<ChangeOperationMode>(
-    "/api/operation_mode/change_to_remote", rmw_qos_profile_services_default);
+  client_change_to_remote_ =
+    raw_node_->create_client<ChangeOperationMode>("/api/operation_mode/change_to_remote");
 
-  client_enable_autoware_control_ = raw_node_->create_client<ChangeOperationMode>(
-    "/api/operation_mode/enable_autoware_control", rmw_qos_profile_services_default);
+  client_enable_autoware_control_ =
+    raw_node_->create_client<ChangeOperationMode>("/api/operation_mode/enable_autoware_control");
 
-  client_enable_direct_control_ = raw_node_->create_client<ChangeOperationMode>(
-    "/api/operation_mode/disable_autoware_control", rmw_qos_profile_services_default);
+  client_enable_direct_control_ =
+    raw_node_->create_client<ChangeOperationMode>("/api/operation_mode/disable_autoware_control");
 
   // Routing
   sub_route_ = raw_node_->create_subscription<RouteState>(
     "/api/routing/state", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStatePanel::onRoute, this, _1));
 
-  client_clear_route_ = raw_node_->create_client<ClearRoute>(
-    "/api/routing/clear_route", rmw_qos_profile_services_default);
+  client_clear_route_ = raw_node_->create_client<ClearRoute>("/api/routing/clear_route");
 
   // Localization
   sub_localization_ = raw_node_->create_subscription<LocalizationInitializationState>(
     "/api/localization/initialization_state", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStatePanel::onLocalization, this, _1));
 
+  client_init_by_gnss_ =
+    raw_node_->create_client<InitializeLocalization>("/api/localization/initialize");
+
   // Motion
   sub_motion_ = raw_node_->create_subscription<MotionState>(
     "/api/motion/state", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStatePanel::onMotion, this, _1));
 
-  client_accept_start_ = raw_node_->create_client<AcceptStart>(
-    "/api/motion/accept_start", rmw_qos_profile_services_default);
+  client_accept_start_ = raw_node_->create_client<AcceptStart>("/api/motion/accept_start");
 
+  // FailSafe
+  sub_mrm_ = raw_node_->create_subscription<MRMState>(
+    "/api/fail_safe/mrm_state", rclcpp::QoS{1}.transient_local(),
+    std::bind(&AutowareStatePanel::onMRMState, this, _1));
+
+  // Others
   sub_gear_ = raw_node_->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
     "/vehicle/status/gear_status", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
 
@@ -241,7 +276,7 @@ void AutowareStatePanel::onInitialize()
     "/api/autoware/get/emergency", 10, std::bind(&AutowareStatePanel::onEmergencyStatus, this, _1));
 
   client_emergency_stop_ = raw_node_->create_client<tier4_external_api_msgs::srv::SetEmergency>(
-    "/api/autoware/set/emergency", rmw_qos_profile_services_default);
+    "/api/autoware/set/emergency");
 
   pub_velocity_limit_ = raw_node_->create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
     "/planning/scenario_planning/max_velocity_default", rclcpp::QoS{1}.transient_local());
@@ -421,6 +456,72 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
   }
 }
 
+void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
+{
+  // state
+  {
+    QString text = "";
+    QString style_sheet = "";
+    switch (msg->state) {
+      case MRMState::NONE:
+        text = "NONE";
+        style_sheet = "background-color: #00FF00;";  // green
+        break;
+
+      case MRMState::MRM_OPERATING:
+        text = "MRM_OPERATING";
+        style_sheet = "background-color: #FFA500;";  // orange
+        break;
+
+      case MRMState::MRM_SUCCEEDED:
+        text = "MRM_SUCCEEDED";
+        style_sheet = "background-color: #FFFF00;";  // yellow
+        break;
+
+      case MRMState::MRM_FAILED:
+        text = "MRM_FAILED";
+        style_sheet = "background-color: #FF0000;";  // red
+        break;
+
+      default:
+        text = "UNKNOWN";
+        style_sheet = "background-color: #FF0000;";  // red
+        break;
+    }
+
+    updateLabel(mrm_state_label_ptr_, text, style_sheet);
+  }
+
+  // behavior
+  {
+    QString text = "";
+    QString style_sheet = "";
+    switch (msg->behavior) {
+      case MRMState::NONE:
+        text = "NONE";
+        style_sheet = "background-color: #00FF00;";  // green
+        break;
+
+      case MRMState::COMFORTABLE_STOP:
+        text = "COMFORTABLE_STOP";
+        style_sheet = "background-color: #FFFF00;";  // yellow
+        break;
+
+      case MRMState::EMERGENCY_STOP:
+        text = "EMERGENCY_STOP";
+        style_sheet = "background-color: #FFA500;";  // orange
+        break;
+
+      default:
+        text = "UNKNOWN";
+        style_sheet = "background-color: #FF0000;";  // red
+        break;
+    }
+
+    updateLabel(mrm_behavior_label_ptr_, text, style_sheet);
+  }
+}
+
 void AutowareStatePanel::onShift(
   const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg)
 {
@@ -433,6 +534,9 @@ void AutowareStatePanel::onShift(
       break;
     case autoware_auto_vehicle_msgs::msg::GearReport::DRIVE:
       gear_label_ptr_->setText("DRIVE");
+      break;
+    case autoware_auto_vehicle_msgs::msg::GearReport::NEUTRAL:
+      gear_label_ptr_->setText("NEUTRAL");
       break;
     case autoware_auto_vehicle_msgs::msg::GearReport::LOW:
       gear_label_ptr_->setText("LOW");
@@ -488,6 +592,11 @@ void AutowareStatePanel::onClickDirectControl()
 void AutowareStatePanel::onClickClearRoute()
 {
   callServiceWithoutResponse<ClearRoute>(client_clear_route_);
+}
+
+void AutowareStatePanel::onClickInitByGnss()
+{
+  callServiceWithoutResponse<InitializeLocalization>(client_init_by_gnss_);
 }
 
 void AutowareStatePanel::onClickAcceptStart()

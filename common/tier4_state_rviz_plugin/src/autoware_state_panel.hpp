@@ -1,5 +1,5 @@
 //
-//  Copyright 2020 Tier IV, Inc. All rights reserved.
+//  Copyright 2020 TIER IV, Inc. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -22,16 +22,19 @@
 #include <QLayout>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QTableWidget>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/motion_state.hpp>
+#include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/route_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/accept_start.hpp>
 #include <autoware_adapi_v1_msgs/srv/change_operation_mode.hpp>
 #include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
+#include <autoware_adapi_v1_msgs/srv/initialize_localization.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
@@ -49,8 +52,10 @@ class AutowareStatePanel : public rviz_common::Panel
   using ClearRoute = autoware_adapi_v1_msgs::srv::ClearRoute;
   using LocalizationInitializationState =
     autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
+  using InitializeLocalization = autoware_adapi_v1_msgs::srv::InitializeLocalization;
   using MotionState = autoware_adapi_v1_msgs::msg::MotionState;
   using AcceptStart = autoware_adapi_v1_msgs::srv::AcceptStart;
+  using MRMState = autoware_adapi_v1_msgs::msg::MrmState;
 
   Q_OBJECT
 
@@ -66,6 +71,7 @@ public Q_SLOTS:  // NOLINT for Qt
   void onClickAutowareControl();
   void onClickDirectControl();
   void onClickClearRoute();
+  void onClickInitByGnss();
   void onClickAcceptStart();
   void onClickVelocityLimit();
   void onClickEmergencyButton();
@@ -77,6 +83,7 @@ protected:
   QGroupBox * makeRoutingGroup();
   QGroupBox * makeLocalizationGroup();
   QGroupBox * makeMotionGroup();
+  QGroupBox * makeFailSafeGroup();
 
   void onShift(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg);
   void onEmergencyStatus(const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg);
@@ -126,7 +133,10 @@ protected:
 
   // Localization
   QLabel * localization_label_ptr_{nullptr};
+  QPushButton * init_by_gnss_button_ptr_{nullptr};
+
   rclcpp::Subscription<LocalizationInitializationState>::SharedPtr sub_localization_;
+  rclcpp::Client<InitializeLocalization>::SharedPtr client_init_by_gnss_;
 
   void onLocalization(const LocalizationInitializationState::ConstSharedPtr msg);
 
@@ -139,6 +149,15 @@ protected:
 
   void onMotion(const MotionState::ConstSharedPtr msg);
 
+  // FailSafe
+  QLabel * mrm_state_label_ptr_{nullptr};
+  QLabel * mrm_behavior_label_ptr_{nullptr};
+
+  rclcpp::Subscription<MRMState>::SharedPtr sub_mrm_;
+
+  void onMRMState(const MRMState::ConstSharedPtr msg);
+
+  // Others
   QPushButton * velocity_limit_button_ptr_;
   QLabel * gear_label_ptr_;
 
