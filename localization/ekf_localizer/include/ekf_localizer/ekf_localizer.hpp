@@ -90,13 +90,13 @@ public:
   void update_z_add(double vx, double pitch_rad, double t)
   {
     double val_sin = -std::sin(pitch_rad);
-    double dz = val_sin*vx*t;
+    double dz = val_sin * vx * t;
     x_ = x_ + dz;
     return;
   };
   void update_pitch_add(double pitch_rate, double t)
-  {  
-    double dp = pitch_rate*t;
+  {
+    double dp = pitch_rate * t;
     x_ = x_ + dp;
     return;
   }
