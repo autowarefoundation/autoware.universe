@@ -271,11 +271,14 @@ private:
    */
   void updateSimple1DFilters(
     const geometry_msgs::msg::PoseWithCovarianceStamped & pose, const size_t smoothing_step);
-    double considering_z_ndt_delay(geometry_msgs::msg::TwistStamped twist, double delay_time);
   /**
    * @brief initialize simple1DFilter
    */
   void initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
+  /**
+   * @brief update z value by considering ndt delay
+   */
+  double considering_z_ndt_delay(geometry_msgs::msg::TwistStamped twist, double delay_time);
   /**
    * @brief trigger node
    */
