@@ -20,7 +20,6 @@
 
 #include <limits>
 #include <memory>
-#include <vector>
 
 namespace mission_planner
 {

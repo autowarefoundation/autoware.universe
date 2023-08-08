@@ -28,6 +28,8 @@
 
 #include <lanelet2_routing/RoutingGraph.h>
 
+#include <vector>
+
 namespace mission_planner
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
