@@ -36,6 +36,7 @@ TrackerState::TrackerState(
 {
   input_uuid_map_[input_source] = tracked_object_.object_id;
   last_updated_time_map_[input_source] = last_update_time;
+  existence_probability_ = default_existence_probability_map_[input_source];
 }
 
 TrackerState::TrackerState(
@@ -49,6 +50,7 @@ TrackerState::TrackerState(
 {
   input_uuid_map_[input_source] = tracked_object_.object_id;
   last_updated_time_map_[input_source] = last_update_time;
+  existence_probability_ = default_existence_probability_map_[input_source];
 }
 
 /**
@@ -201,6 +203,8 @@ bool TrackerState::updateWithFunction(
   last_updated_time_map_[input] = current_time;
   input_uuid_map_[input] = input_tracked_object.object_id;
   measurement_state_ = measurement_state_ | input;
+  existence_probability_ =
+    std::max(existence_probability_, default_existence_probability_map_[input]);
 
   // update tracked object
   update_func(tracked_object_, input_tracked_object);
@@ -208,20 +212,60 @@ bool TrackerState::updateWithFunction(
   return true;
 }
 
+void TrackerState::updateWithoutSensor(const rclcpp::Time & current_time)
+{
+  // calc dt
+  double dt = (current_time - last_update_time_).seconds();
+  if (dt < 0) {
+    std::cerr << "[tracking_object_merger] dt is negative: " << dt << std::endl;
+    return;
+  }
+
+  // predict
+  if (dt > 0.0) {
+    this->predict(dt, utils::predictPastOrFutureTrackedObject);
+  }
+
+  // reduce probability
+  existence_probability_ -= 0.1;
+  if (existence_probability_ < 0.0) {
+    existence_probability_ = 0.0;
+  }
+}
+
 TrackedObject TrackerState::getObject() const
 {
   TrackedObject tracked_object = tracked_object_;
   tracked_object.object_id = const_uuid_;
+  tracked_object.existence_probability = existence_probability_;
   return tracked_object;
 }
 
 bool TrackerState::hasUUID(
-  const MEASUREMENT_STATE input, const unique_identifier_msgs::msg::UUID & uuid)
+  const MEASUREMENT_STATE input, const unique_identifier_msgs::msg::UUID & uuid) const
 {
   if (input_uuid_map_.find(input) == input_uuid_map_.end()) {
     return false;
   }
   return input_uuid_map_.at(input) == uuid;
+}
+
+bool TrackerState::isValid() const
+{
+  // check if tracker state is valid
+  if (existence_probability_ < remove_probability_threshold_) {
+    return false;
+  }
+  return true;
+}
+
+bool TrackerState::canPublish() const
+{
+  // check if tracker state is valid
+  if (existence_probability_ < publish_probability_threshold_) {
+    return false;
+  }
+  return true;
 }
 
 TrackerState::~TrackerState()
@@ -230,13 +274,24 @@ TrackerState::~TrackerState()
 }
 
 TrackedObjects getTrackedObjectsFromTrackerStates(
-  const std::vector<TrackerState> & tracker_states, const rclcpp::Time & current_time)
+  std::vector<TrackerState> & tracker_states, const rclcpp::Time & current_time)
 {
   TrackedObjects tracked_objects;
-  for (const auto & tracker_state : tracker_states) {
-    tracked_objects.objects.push_back(tracker_state.getObject());
+
+  // sanitize and get tracked objects
+  for (auto it = tracker_states.begin(); it != tracker_states.end();) {
+    // check if tracker state is valid
+    if (it->isValid()) {
+      if (it->canPublish()) {
+        // if valid, get tracked object
+        tracked_objects.objects.push_back(it->getObject());
+      }
+      ++it;
+    } else {
+      // if not valid, delete tracker state
+      it = tracker_states.erase(it);
+    }
   }
-  // TODO(yoshiri): do prediction if object last input state is older than current time
 
   // update header
   tracked_objects.header.stamp = current_time;

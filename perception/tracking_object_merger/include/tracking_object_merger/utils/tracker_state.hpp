@@ -101,26 +101,37 @@ public:
   void updateWithLIDAR(const rclcpp::Time & current_time, const TrackedObject & tracked_object);
   void updateWithRADAR(const rclcpp::Time & current_time, const TrackedObject & tracked_object);
   void updateWithCAMERA(const rclcpp::Time & current_time, const TrackedObject & tracked_object);
+  void updateWithoutSensor(const rclcpp::Time & current_time);
   bool update(const MEASUREMENT_STATE input, const TrackedObject & tracked_object);
   bool updateWithFunction(
     const MEASUREMENT_STATE input, const rclcpp::Time & current_time,
     const TrackedObject & tracked_object,
     std::function<void(TrackedObject &, const TrackedObject &)> update_func);
-  bool hasUUID(const MEASUREMENT_STATE input, const unique_identifier_msgs::msg::UUID & uuid);
+  // const functions
+  bool hasUUID(const MEASUREMENT_STATE input, const unique_identifier_msgs::msg::UUID & uuid) const;
+  bool isValid() const;
+  bool canPublish() const;
   TrackedObject getObject() const;
 
 public:
   // handle uuid
-  const unique_identifier_msgs::msg::UUID const_uuid_;
+  unique_identifier_msgs::msg::UUID const_uuid_;
   // each sensor input to uuid map
   std::unordered_map<MEASUREMENT_STATE, std::optional<unique_identifier_msgs::msg::UUID>>
     input_uuid_map_;
   MEASUREMENT_STATE measurement_state_;
 
-  std::unordered_map<MEASUREMENT_STATE, double> existence_probability_map_;
+  std::unordered_map<MEASUREMENT_STATE, double> default_existence_probability_map_ = {
+    {MEASUREMENT_STATE::LIDAR, 0.8},
+    {MEASUREMENT_STATE::RADAR, 0.7},
+    {MEASUREMENT_STATE::CAMERA, 0.6},
+  };
+  double existence_probability_ = 0.0;
+  double publish_probability_threshold_ = 0.5;
+  double remove_probability_threshold_ = 0.3;
 };
 
 TrackedObjects getTrackedObjectsFromTrackerStates(
-  const std::vector<TrackerState> & tracker_states, const rclcpp::Time & time);
+  std::vector<TrackerState> & tracker_states, const rclcpp::Time & time);
 
 #endif  // TRACKING_OBJECT_MERGER__UTILS__TRACKER_STATE_HPP_
