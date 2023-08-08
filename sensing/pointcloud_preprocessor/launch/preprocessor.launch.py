@@ -15,44 +15,69 @@
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import LogInfo
+from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 
-def generate_launch_description():
+def launch_setup(context, *args, **kwargs):
     ns = "pointcloud_preprocessor"
     pkg = "pointcloud_preprocessor"
 
-    # declare launch arguments
-    input_points_raw_list_param = DeclareLaunchArgument(
-        "input_points_raw_list",
-        default_value="['/points_raw']",
-        description="Input pointcloud topic_name list as a string_array. "
-        "To subscribe multiple topics, write as: \"['/points_raw0', '/points_raw1', ...]\"",
+    separate_concatenate_node_and_timesync_node = LaunchConfiguration(
+        "separate_concatenate_node_and_timesync_node"
+    ).perform(context)
+    is_separate_concatenate_node_and_timesync_node = (
+        separate_concatenate_node_and_timesync_node.lower() == "true"
     )
 
-    output_points_raw_param = DeclareLaunchArgument(
-        "output_points_raw", default_value="/points_raw/cropbox/filtered"
-    )
+    if not is_separate_concatenate_node_and_timesync_node:
+        sync_and_concat_component = ComposableNode(
+            package=pkg,
+            plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
+            name="sync_and_concatenate_filter",
+            remappings=[("output", "points_raw/concatenated")],
+            parameters=[
+                {
+                    "input_topics": LaunchConfiguration("input_points_raw_list"),
+                    "output_frame": LaunchConfiguration("tf_output_frame"),
+                    "approximate_sync": True,
+                    "publish_synchronized_pointcloud": False,
+                }
+            ],
+        )
+        concat_components = [sync_and_concat_component]
+    else:
+        time_sync_component = ComposableNode(
+            package=pkg,
+            plugin="pointcloud_preprocessor::PointCloudDataSynchronizerComponent",
+            name="synchronizer_filter",
+            remappings=[("output", "points_raw/concatenated")],
+            parameters=[
+                {
+                    "input_topics": LaunchConfiguration("input_points_raw_list"),
+                    "output_frame": LaunchConfiguration("tf_output_frame"),
+                    "approximate_sync": True,
+                }
+            ],
+        )
 
-    tf_output_frame_param = DeclareLaunchArgument("tf_output_frame", default_value="base_link")
-
-    # set concat filter as a component
-    concat_component = ComposableNode(
-        package=pkg,
-        plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
-        name="concatenate_filter",
-        remappings=[("output", "points_raw/concatenated")],
-        parameters=[
-            {
-                "input_topics": LaunchConfiguration("input_points_raw_list"),
-                "output_frame": LaunchConfiguration("tf_output_frame"),
-                "approximate_sync": True,
-            }
-        ],
-    )
+        concat_component = ComposableNode(
+            package=pkg,
+            plugin="pointcloud_preprocessor::PointCloudConcatenationComponent",
+            name="concatenate_filter",
+            remappings=[("output", "points_raw/concatenated")],
+            parameters=[
+                {
+                    "input_topics": LaunchConfiguration("input_points_raw_list"),
+                    "output_frame": LaunchConfiguration("tf_output_frame"),
+                    "approximate_sync": True,
+                }
+            ],
+        )
+        concat_components = [time_sync_component, concat_component]
 
     # set crop box filter as a component
     cropbox_component = ComposableNode(
@@ -66,7 +91,9 @@ def generate_launch_description():
                     [
                         "'points_raw/concatenated' if len(",
                         LaunchConfiguration("input_points_raw_list"),
-                        ") > 1 else 'input_points_raw0'",
+                        ") > 1 else ",
+                        LaunchConfiguration("input_points_raw_list"),
+                        "[0]",
                     ]
                 ),
             ),
@@ -93,7 +120,7 @@ def generate_launch_description():
         namespace=ns,
         package="rclcpp_components",
         executable="component_container",
-        composable_node_descriptions=[concat_component, cropbox_component],
+        composable_node_descriptions=concat_components + [cropbox_component],
         output="screen",
     )
 
@@ -107,13 +134,30 @@ def generate_launch_description():
             ]
         )
     )
+    return [container, log_info]
 
-    return launch.LaunchDescription(
-        [
-            input_points_raw_list_param,
-            output_points_raw_param,
-            tf_output_frame_param,
-            container,
-            log_info,
-        ]
+
+def generate_launch_description():
+    launch_arguments = []
+
+    def add_launch_arg(name: str, default_value=None, description=None):
+        # a default_value of None is equivalent to not passing that kwarg at all
+        launch_arguments.append(
+            DeclareLaunchArgument(name, default_value=default_value, description=description)
+        )
+
+    add_launch_arg(
+        "input_points_raw_list",
+        ["/points_raw"],
+        "Input pointcloud topic_name list as a string_array. "
+        "To subscribe multiple topics, write as: \"['/points_raw0', '/points_raw1', ...]\"",
     )
+    add_launch_arg("output_points_raw", "/points_raw/cropbox/filtered")
+    add_launch_arg("tf_output_frame", "base_link")
+    add_launch_arg(
+        "separate_concatenate_node_and_timesync_node",
+        "true",
+        "Set True to separate concatenate node and timesync node. which will cause to larger memory usage.",
+    )
+
+    return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])

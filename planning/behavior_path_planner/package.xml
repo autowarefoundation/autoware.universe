@@ -53,15 +53,17 @@
   <depend>lane_departure_checker</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
+  <depend>libopencv-dev</depend>
   <depend>magic_enum</depend>
   <depend>motion_utils</depend>
-  <depend>perception_utils</depend>
+  <depend>object_recognition_utils</depend>
   <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>route_handler</depend>
   <depend>rtc_interface</depend>
   <depend>sensor_msgs</depend>
+  <depend>signal_processing</depend>
   <depend>tf2</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
