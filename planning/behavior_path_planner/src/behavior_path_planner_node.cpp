@@ -68,7 +68,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   modified_goal_publisher_ = create_publisher<PoseWithUuidStamped>("~/output/modified_goal", 1);
   stop_reason_publisher_ = create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
-  reroute_availability_publisher_ = create_publisher<Bool>("~/output/is_reroute_available", 1);
+  reroute_availability_publisher_ =
+    create_publisher<RerouteAvailability>("~/output/is_reroute_available", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
   debug_lane_change_msg_array_publisher_ =
@@ -663,11 +664,12 @@ void BehaviorPathPlannerNode::publish_reroute_availability()
   const bool has_approved_modules = planner_manager_->hasApprovedModules();
   const bool has_candidate_modules = planner_manager_->hasCandidateModules();
 
-  Bool is_reroute_available;
+  RerouteAvailability is_reroute_available;
+  is_reroute_available.stamp = this->now();
   if (has_approved_modules || has_candidate_modules) {
-    is_reroute_available.data = false;
+    is_reroute_available.availability = false;
   } else {
-    is_reroute_available.data = true;
+    is_reroute_available.availability = true;
   }
 
   reroute_availability_publisher_->publish(is_reroute_available);
