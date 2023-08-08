@@ -664,6 +664,10 @@ void BehaviorPathPlannerNode::publish_reroute_availability()
   const bool has_approved_modules = planner_manager_->hasApprovedModules();
   const bool has_candidate_modules = planner_manager_->hasCandidateModules();
 
+  // In the current behavior path planner, we might get unexpected behavior when rerouting while
+  // modules other than lane follow are active. Therefore, rerouting will be allowed only when the
+  // lane follow module is running Note that if there is a approved module or candidate module, it
+  // means non-lane-following modules are runnning.
   RerouteAvailability is_reroute_available;
   is_reroute_available.stamp = this->now();
   if (has_approved_modules || has_candidate_modules) {
