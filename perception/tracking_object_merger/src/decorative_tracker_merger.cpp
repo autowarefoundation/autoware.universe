@@ -134,13 +134,14 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
       }
     } else {
       // show fo sub objects
-      for (const auto & sub_obj : closest_time_sub_objects->objects) {
-        std::cout << "sub_objects(x,y): " << sub_obj.kinematics.pose_with_covariance.pose.position.x
-                  << ", " << sub_obj.kinematics.pose_with_covariance.pose.position.y << std::endl;
-      }
-      // update with old sub objects
-      this->decorativeMerger(MEASUREMENT_STATE::RADAR, closest_time_sub_objects);
+      // for (const auto & sub_obj : closest_time_sub_objects->objects) {
+      //   std::cout << "sub_objects(x,y): " <<
+      //   sub_obj.kinematics.pose_with_covariance.pose.position.x
+      //             << ", " << sub_obj.kinematics.pose_with_covariance.pose.position.y <<
+      //             std::endl;
     }
+    // update with old sub objects
+    this->decorativeMerger(MEASUREMENT_STATE::RADAR, closest_time_sub_objects);
   }
 
   // try to merge main object
@@ -215,8 +216,8 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
       // merge object1 into object0_state
       object0_state.updateState(input_index, current_time, object1);
     } else {  // not found
-      // do nothing
-      // or decrease existence probability
+      // decrease existence probability
+      object0_state.updateWithoutSensor(current_time);
     }
   }
   // look for new object
