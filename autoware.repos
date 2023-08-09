@@ -82,7 +82,7 @@ repositories:
   vendor/transport_drivers:
     type: git
     url: https://github.com/MapIV/transport_drivers.git
-    version: tcp
+    version: boost
   vendor/ndt_omp:
     type: git
     url: https://github.com/tier4/ndt_omp.git
