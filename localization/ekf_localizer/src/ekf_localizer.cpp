@@ -208,11 +208,9 @@ void EKFLocalizer::timerCallback()
   const double x = ekf_.getXelement(IDX::X);
   const double y = ekf_.getXelement(IDX::Y);
 
-  pitch_filter_.update_pitch_add(pitch_rate, dt);  // estimate (1/dt)Hz
-  const double pitch = pitch_filter_.get_x();
-
-  z_filter_.update_z_add(ekf_.getXelement(IDX::VX), pitch, dt);  // estimate (1/dt)Hz
-  const double z = z_filter_.get_x();
+  const double current_pitch = pitch_filter_.get_x();
+  const double new_pitch = current_pitch + pitch_rate_ * dt * cntTimerCallback_;
+  cntTimerCallback_++;
 
   const double biased_yaw = ekf_.getXelement(IDX::YAW);
   const double yaw_bias = ekf_.getXelement(IDX::YAWB);
@@ -222,15 +220,20 @@ void EKFLocalizer::timerCallback()
   const double vx = ekf_.getXelement(IDX::VX);
   const double wz = ekf_.getXelement(IDX::WZ);
 
+  const double z = z_filter_.get_x();
+  const double val_sin = -std::sin(pitch_from_ndt_);
+  const double z_addition = val_sin * vx * dt;
+  const double new_z = z + z_addition;
+
   current_ekf_pose_.header.frame_id = params_.pose_frame_id;
   current_ekf_pose_.header.stamp = this->now();
-  current_ekf_pose_.pose.position = tier4_autoware_utils::createPoint(x, y, z);
+  current_ekf_pose_.pose.position = tier4_autoware_utils::createPoint(x, y, new_z);
   current_ekf_pose_.pose.orientation =
-    tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, yaw);
+    tier4_autoware_utils::createQuaternionFromRPY(roll, new_pitch, yaw);
 
   current_biased_ekf_pose_ = current_ekf_pose_;
   current_biased_ekf_pose_.pose.orientation =
-    tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, biased_yaw);
+    tier4_autoware_utils::createQuaternionFromRPY(roll, new_pitch, biased_yaw);
 
   current_ekf_twist_.header.frame_id = "base_link";
   current_ekf_twist_.header.stamp = this->now();
@@ -347,10 +350,11 @@ void EKFLocalizer::callbackPoseWithCovariance(
   if (!is_activated_) {
     return;
   }
+  cntTimerCallback_ = 0;
   /* Considering change of z value due to NDT delay*/
   const rclcpp::Time t_curr = this->now();
   const double delay_time = (t_curr - msg->header.stamp).seconds();
-  const double dz_delay = considering_z_ndt_delay(current_ekf_twist_, delay_time);
+  const double dz_delay = updateZConsideringDelay(current_ekf_twist_, delay_time);
   msg->pose.pose.position.z += dz_delay;
   pose_queue_.push(msg);
 }
@@ -474,7 +478,7 @@ void EKFLocalizer::measurementUpdateTwist(
       "twist frame_id must be base_link");
   }
 
-  pitch_rate = twist.twist.twist.angular.y;
+  pitch_rate_ = twist.twist.twist.angular.y;
 
   const Eigen::MatrixXd X_curr = ekf_.getLatestX();
   DEBUG_PRINT_MAT(X_curr.transpose());
@@ -616,7 +620,7 @@ void EKFLocalizer::updateSimple1DFilters(
 
   const auto rpy = tier4_autoware_utils::getRPY(pose.pose.pose.orientation);
 
-  pitch_from_ndt = rpy.y;
+  pitch_from_ndt_ = rpy.y;
 
   using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z] * static_cast<double>(smoothing_step);
@@ -644,11 +648,11 @@ void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovaria
   roll_filter_.init(rpy.x, roll_dev, pose.header.stamp);
   pitch_filter_.init(rpy.y, pitch_dev, pose.header.stamp);
 }
-double EKFLocalizer::considering_z_ndt_delay(
-  geometry_msgs::msg::TwistStamped & twist, const double delay_time)
+double EKFLocalizer::updateZConsideringDelay(
+  const geometry_msgs::msg::TwistStamped & twist, const double delay_time)
 {
   const double vx = twist.twist.linear.x;
-  const double pitch_rad = pitch_from_ndt;
+  const double pitch_rad = pitch_from_ndt_;
   const double val_sin = std::sin(-pitch_rad);
 
   const double dz = val_sin * vx * delay_time;
