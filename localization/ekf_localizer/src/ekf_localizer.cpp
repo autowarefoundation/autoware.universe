@@ -225,7 +225,7 @@ void EKFLocalizer::timerCallback()
 <<<<<<< HEAD
   const double z_addition = val_sin * vx * dt * cntTimerCallback_;
 =======
-  const double z_addition = val_sin * vx * dt *cnt_timer_callback_;
+  const double z_addition = val_sin * vx * dt * cnt_timer_callback_;
 >>>>>>> 17f7946b (change name of function)
   const double new_z = z + z_addition;
 
