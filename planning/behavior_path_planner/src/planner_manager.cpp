@@ -234,8 +234,9 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
         candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), find_same_name_module);
 
       if (itr == candidate_module_ptrs_.end()) {
-        if (manager_ptr->launchNewModule(previous_module_output)) {
-          request_modules.emplace_back(manager_ptr->getIdleModule());
+        const auto & module_ptr = manager_ptr->launchNewModule(previous_module_output);
+        if (module_ptr) {
+          request_modules.push_back(module_ptr);
         }
 
         toc(manager_ptr->name());

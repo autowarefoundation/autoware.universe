@@ -76,21 +76,38 @@ public:
 
   void updateIdleModuleInstance()
   {
-    if (idle_module_ptr_) {
-      idle_module_ptr_->onEntry();
+    if (idle_module_ptrs_.empty()) {
+      idle_module_ptrs_ = createNewSceneModuleInstance();
       return;
     }
 
-    idle_module_ptr_ = createNewSceneModuleInstance();
+    for (auto & idle_module_ptr : idle_module_ptrs_) {
+      if (idle_module_ptr) {
+        idle_module_ptr->onEntry();
+      }
+    }
   }
 
-  bool isExecutionRequested(const BehaviorModuleOutput & previous_module_output) const
+  std::shared_ptr<SceneModuleInterface> getExecutionRequestedModule(
+    const BehaviorModuleOutput & previous_module_output)
   {
-    idle_module_ptr_->setData(planner_data_);
-    idle_module_ptr_->setPreviousModuleOutput(previous_module_output);
-    idle_module_ptr_->updateData();
+    std::for_each(idle_module_ptrs_.begin(), idle_module_ptrs_.end(), [&](const auto & ptr) {
+      if (ptr) {
+        ptr->setData(planner_data_);
+        ptr->setPreviousModuleOutput(previous_module_output);
+        ptr->updateData();
+      }
+    });
 
-    return idle_module_ptr_->isExecutionRequested();
+    for (auto & idle_module_ptr : idle_module_ptrs_) {
+      if (idle_module_ptr) {
+        if (idle_module_ptr->isExecutionRequested()) {
+          return std::move(idle_module_ptr);
+        }
+      }
+    }
+
+    return nullptr;
   }
 
   void registerNewModule(
@@ -198,10 +215,14 @@ public:
       marker_id += marker_offset;
     }
 
-    if (observers_.empty() && idle_module_ptr_ != nullptr) {
-      appendMarkerArray(idle_module_ptr_->getInfoMarkers(), &info_markers);
-      appendMarkerArray(idle_module_ptr_->getDebugMarkers(), &debug_markers);
-      appendMarkerArray(idle_module_ptr_->getDrivableLanesMarkers(), &drivable_lanes_markers);
+    if (observers_.empty()) {
+      for (const auto & idle_module_ptr : idle_module_ptrs_) {
+        if (idle_module_ptr) {
+          appendMarkerArray(idle_module_ptr->getInfoMarkers(), &info_markers);
+          appendMarkerArray(idle_module_ptr->getDebugMarkers(), &debug_markers);
+          appendMarkerArray(idle_module_ptr->getDrivableLanesMarkers(), &drivable_lanes_markers);
+        }
+      }
     }
 
     pub_info_marker_->publish(info_markers);
@@ -218,14 +239,15 @@ public:
 
   bool canLaunchNewModule() const { return observers_.size() < max_module_num_; }
 
-  bool launchNewModule(const BehaviorModuleOutput & previous_module_output)
+  std::shared_ptr<SceneModuleInterface> launchNewModule(
+    const BehaviorModuleOutput & previous_module_output)
   {
     if (!canLaunchNewModule()) {
-      return false;
+      return nullptr;
     }
 
     updateIdleModuleInstance();
-    return isExecutionRequested(previous_module_output);
+    return getExecutionRequestedModule(previous_module_output);
   }
 
   bool isSimultaneousExecutableAsApprovedModule() const
@@ -273,11 +295,13 @@ public:
 
     observers_.clear();
 
-    if (idle_module_ptr_ != nullptr) {
-      idle_module_ptr_->onExit();
-      idle_module_ptr_->publishRTCStatus();
-      idle_module_ptr_.reset();
+    for (auto & idle_module_ptr : idle_module_ptrs_) {
+      if (idle_module_ptr != nullptr) {
+        idle_module_ptr->onExit();
+        idle_module_ptr->publishRTCStatus();
+      }
     }
+    idle_module_ptrs_.clear();
 
     pub_debug_marker_->publish(MarkerArray{});
   }
@@ -288,12 +312,10 @@ public:
 
   std::vector<SceneModuleObserver> getSceneModuleObservers() { return observers_; }
 
-  std::shared_ptr<SceneModuleInterface> getIdleModule() { return std::move(idle_module_ptr_); }
-
   virtual void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) = 0;
 
 protected:
-  virtual std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() = 0;
+  virtual std::vector<std::unique_ptr<SceneModuleInterface>> createNewSceneModuleInstance() = 0;
 
   rclcpp::Node * node_;
 
@@ -315,7 +337,7 @@ protected:
 
   std::vector<SceneModuleObserver> observers_;
 
-  std::unique_ptr<SceneModuleInterface> idle_module_ptr_;
+  std::vector<std::unique_ptr<SceneModuleInterface>> idle_module_ptrs_;
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 

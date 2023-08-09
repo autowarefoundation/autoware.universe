@@ -133,16 +133,20 @@ LaneChangeModuleManager::LaneChangeModuleManager(
   parameters_ = std::make_shared<LaneChangeParameters>(p);
 }
 
-std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneModuleInstance()
+std::vector<std::unique_ptr<SceneModuleInterface>>
+LaneChangeModuleManager::createNewSceneModuleInstance()
 {
+  std::vector<std::unique_ptr<SceneModuleInterface>> scene_module_ptrs;
   if (type_ == LaneChangeModuleType::NORMAL) {
-    return std::make_unique<LaneChangeInterface>(
+    scene_module_ptrs.emplace_back(std::make_unique<LaneChangeInterface>(
       name_, *node_, parameters_, rtc_interface_ptr_map_,
-      std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
+      std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_)));
+    return scene_module_ptrs;
   }
-  return std::make_unique<LaneChangeInterface>(
+  scene_module_ptrs.emplace_back(std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
-    std::make_unique<ExternalRequestLaneChange>(parameters_, direction_));
+    std::make_unique<ExternalRequestLaneChange>(parameters_, direction_)));
+  return scene_module_ptrs;
 }
 
 void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Parameter> & parameters)
@@ -269,11 +273,13 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
   avoidance_parameters_ = std::make_shared<AvoidanceByLCParameters>(p);
 }
 
-std::unique_ptr<SceneModuleInterface>
+std::vector<std::unique_ptr<SceneModuleInterface>>
 AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
-  return std::make_unique<AvoidanceByLaneChangeInterface>(
-    name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_);
+  std::vector<std::unique_ptr<SceneModuleInterface>> scene_module_ptrs;
+  scene_module_ptrs.emplace_back(std::make_unique<AvoidanceByLaneChangeInterface>(
+    name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_));
+  return scene_module_ptrs;
 }
 
 }  // namespace behavior_path_planner
