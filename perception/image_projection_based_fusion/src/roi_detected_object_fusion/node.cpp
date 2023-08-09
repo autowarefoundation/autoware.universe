@@ -52,12 +52,13 @@ void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
   DetectedObject dummy_object;
   for (std::size_t obj_i = 0; obj_i < output_msg.objects.size(); ++obj_i) {
     const auto & object = output_msg.objects.at(obj_i);
-    const auto label =
-      object_recognition_utils::getHighestProbLabel(object.classification);
+    const auto label = object_recognition_utils::getHighestProbLabel(object.classification);
     const auto pos = object_recognition_utils::getPose(object).position;
     const auto object_sqr_dist = pos.x * pos.x + pos.y * pos.y;
-    const auto prob_threshold = fusion_params_.passthrough_lower_bound_probability_thresholds.at(label);
-    const auto thrust_sqr_dist = fusion_params_.thrust_distances.at(label) * fusion_params_.thrust_distances.at(label);
+    const auto prob_threshold =
+      fusion_params_.passthrough_lower_bound_probability_thresholds.at(label);
+    const auto thrust_sqr_dist =
+      fusion_params_.thrust_distances.at(label) * fusion_params_.thrust_distances.at(label);
     if (object.existence_probability > prob_threshold || object_sqr_dist > thrust_sqr_dist) {
       passthrough_object_flags.at(obj_i) = true;
     }
