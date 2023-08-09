@@ -49,7 +49,6 @@ void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
   passthrough_object_flags.resize(output_msg.objects.size());
   fused_object_flags.resize(output_msg.objects.size());
   ignored_object_flags.resize(output_msg.objects.size());
-  DetectedObject dummy_object;
   for (std::size_t obj_i = 0; obj_i < output_msg.objects.size(); ++obj_i) {
     const auto & object = output_msg.objects.at(obj_i);
     const auto label = object_recognition_utils::getHighestProbLabel(object.classification);
