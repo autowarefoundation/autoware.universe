@@ -351,11 +351,11 @@ void EKFLocalizer::callbackPoseWithCovariance(
     return;
   }
   cntTimerCallback_ = 0;
-  /* Considering change of z value due to NDT delay*/
-  const rclcpp::Time t_curr = this->now();
-  const double delay_time = (t_curr - msg->header.stamp).seconds();
-  const double dz_delay = updateZConsideringDelay(current_ekf_twist_, delay_time);
-  msg->pose.pose.position.z += dz_delay;
+  // /* Considering change of z value due to NDT delay*/
+  // const rclcpp::Time t_curr = this->now();
+  // const double delay_time = (t_curr - msg->header.stamp).seconds();
+  // const double dz_delay = updateZConsideringDelay(current_ekf_twist_, delay_time);
+  // msg->pose.pose.position.z += dz_delay;
   pose_queue_.push(msg);
 }
 
@@ -628,6 +628,12 @@ void EKFLocalizer::updateSimple1DFilters(
   double pitch_dev =
     pose.pose.covariance[COV_IDX::PITCH_PITCH] * static_cast<double>(smoothing_step);
 
+  /* Considering change of z value due to NDT delay*/
+  const rclcpp::Time t_curr = this->now();
+  const double delay_time = (t_curr - pose.header.stamp).seconds();
+  const double dz_delay = updateZConsideringDelay(current_ekf_twist_, delay_time);
+  z += dz_delay;
+
   z_filter_.update(z, z_dev, pose.header.stamp);
   roll_filter_.update(rpy.x, roll_dev, pose.header.stamp);
   pitch_filter_.update(rpy.y, pitch_dev, pose.header.stamp);
@@ -654,9 +660,7 @@ double EKFLocalizer::updateZConsideringDelay(
   const double vx = twist.twist.linear.x;
   const double pitch_rad = pitch_from_ndt_;
   const double val_sin = std::sin(-pitch_rad);
-
   const double dz = val_sin * vx * delay_time;
-
   return dz;
 }
 /**
