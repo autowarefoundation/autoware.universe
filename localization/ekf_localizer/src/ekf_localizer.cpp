@@ -218,8 +218,12 @@ void EKFLocalizer::timerCallback()
   const double wz = ekf_.getXelement(IDX::WZ);
 
   /* z and pitch update for slopes */
-  const rclcpp::Time t_curr = this->now();
-  double time_from_ndt = (t_curr - t_receive_pose).seconds();
+  double time_from_ndt = 0;
+  if(t_receive_pose.seconds() != 0){
+    const rclcpp::Time t_curr = this->now();
+    time_from_ndt = (t_curr - t_receive_pose).seconds();
+  }
+   
   const double new_pitch = pitch + pitch_rate_ * time_from_ndt;
   const double val_sin = -std::sin(new_pitch);
   const double z_addition = val_sin * vx * time_from_ndt;
@@ -350,7 +354,7 @@ void EKFLocalizer::callbackPoseWithCovariance(
   if (!is_activated_) {
     return;
   }
-  t_receive_pose = this->now();
+  t_receive_pose = msg->header.stamp;
   pose_queue_.push(msg);
 }
 
