@@ -1076,11 +1076,22 @@ bool GoalPlannerModule::isStopped()
 
 bool GoalPlannerModule::isStuck()
 {
+  constexpr double stuck_time = 5.0;
+  if (!isStopped(odometry_buffer_stuck_, stuck_time)) {
+    return false;
+  }
+
+  // not found safe path
+  if (!status_.is_safe) {
+    return true;
+  }
+
+  // any path has never been found
   if (!status_.pull_over_path) {
     return false;
   }
-  constexpr double stuck_time = 5.0;
-  return isStopped(odometry_buffer_stuck_, stuck_time) && checkCollision(getCurrentPath());
+
+  return checkCollision(getCurrentPath());
 }
 
 bool GoalPlannerModule::hasFinishedCurrentPath()
@@ -1425,7 +1436,10 @@ void GoalPlannerModule::setDebugData()
 
   const auto header = planner_data_->route_handler->getRouteHeader();
 
-  const auto add = [this](const MarkerArray & added) {
+  const auto add = [this](MarkerArray added) {
+    for (auto & marker : added.markers) {
+      marker.lifetime = rclcpp::Duration::from_seconds(1.5);
+    }
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
@@ -1467,7 +1481,8 @@ void GoalPlannerModule::setDebugData()
     auto marker = createDefaultMarker(
       header.frame_id, header.stamp, "planner_type", 0,
       visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0), color);
-    marker.pose = modified_goal_pose_->goal_pose;
+    marker.pose = modified_goal_pose_ ? modified_goal_pose_->goal_pose
+                                      : planner_data_->self_odometry->pose.pose;
     marker.text = magic_enum::enum_name(status_.pull_over_path->type);
     marker.text += " " + std::to_string(status_.current_path_idx) + "/" +
                    std::to_string(status_.pull_over_path->partial_paths.size() - 1);
