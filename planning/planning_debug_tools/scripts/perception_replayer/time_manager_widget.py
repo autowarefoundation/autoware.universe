@@ -26,10 +26,12 @@ from PyQt5.QtWidgets import QWidget
 class TimeManagerWidget(QMainWindow):
     def __init__(self, start_timestamp, end_timestamp):
         super(self.__class__, self).__init__()
-        self.setupUI()
 
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
+        self.max_value = 1000000
+
+        self.setupUI()
 
     def setupUI(self):
         self.setObjectName("PerceptionReplayer")
@@ -59,10 +61,21 @@ class TimeManagerWidget(QMainWindow):
 
         # slider
         self.slider = QSlider(QtCore.Qt.Horizontal)
-        self.slider.setMinimum(self.start_timestamp)
-        self.slider.setMaximum(self.end_timestamp)
-        self.slider.setValue(self.start_timestamp)
-        self.slider.valueChanged.connect(self.value_change)
+        self.slider.setMinimum(0)
+        self.slider.setMaximum(self.max_value)
+        self.slider.setValue(0)
         self.grid_layout.addWidget(self.slider, 2, 0, 1, -1)
 
         self.setCentralWidget(self.central_widget)
+
+    def timestamp_to_value(self, timestamp):
+        return int(
+            (timestamp - self.start_timestamp)
+            / (self.end_timestamp - self.start_timestamp)
+            * self.max_value
+        )
+
+    def value_to_timestamp(self, value):
+        return self.start_timestamp + self.slider.value() / self.max_value * (
+            self.end_value - self.start_value
+        )

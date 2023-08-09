@@ -59,11 +59,16 @@ class PerceptionReplayer(PerceptionReplayerCommon):
             self.pointcloud_pub.publish(pointcloud_msg)
 
         # step timestamp
-        print(self.widget.slider.value())
-        # self.bag_timestamp = self.widget.slider.value()
+        # get timestamp from slider
+        self.bag_timestamp = self.rosbag_objects_data[0][
+            0
+        ] + self.widget.slider.value() / 1000000 * (
+            self.rosbag_objects_data[-1][0] - self.rosbag_objects_data[0][0]
+        )
         if not self.is_pause:
             self.bag_timestamp += self.rate * self.delta_time * 1e9  # seconds to timestamp
-        # self.widget.slider.setValue(self.bag_timestamp)
+        # update slider value from the updated timestamp
+        self.widget.slider.setValue(self.widget.timestamp_to_value(self.bag_timestamp))
 
         # extract message by the timestamp
         msgs = copy.deepcopy(self.find_topics_by_timestamp(self.bag_timestamp))
