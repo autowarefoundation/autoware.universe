@@ -17,6 +17,7 @@
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
+#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -41,6 +42,39 @@ using tier4_autoware_utils::StopWatch;
 using tier4_planning_msgs::msg::StopReasonArray;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;
+
+enum Action {
+  ADD = 0,
+  DELETE,
+  MOVE,
+};
+
+struct ModuleUpdateInfo
+{
+  explicit ModuleUpdateInfo(
+    const SceneModulePtr & module_ptr, const Action & action, const std::string & description)
+  : status(module_ptr->getCurrentStatus()),
+    action(action),
+    module_name(module_ptr->name()),
+    description(description)
+  {
+  }
+
+  explicit ModuleUpdateInfo(
+    const std::string & name, const Action & action, const ModuleStatus & status,
+    const std::string & description)
+  : status(status), action(action), module_name(name), description(description)
+  {
+  }
+
+  ModuleStatus status;
+
+  Action action;
+
+  std::string module_name;
+
+  std::string description;
+};
 
 struct SceneModuleStatus
 {
@@ -71,9 +105,9 @@ public:
    */
   void registerSceneModuleManager(const SceneModuleManagerPtr & manager_ptr)
   {
-    RCLCPP_INFO(logger_, "register %s module", manager_ptr->getModuleName().c_str());
+    RCLCPP_INFO(logger_, "register %s module", manager_ptr->name().c_str());
     manager_ptrs_.push_back(manager_ptr);
-    processing_time_.emplace(manager_ptr->getModuleName(), 0.0);
+    processing_time_.emplace(manager_ptr->name(), 0.0);
   }
 
   /**
@@ -181,6 +215,16 @@ public:
   }
 
   /**
+   * @brief check if there are approved modules.
+   */
+  bool hasApprovedModules() const { return !approved_module_ptrs_.empty(); }
+
+  /**
+   * @brief check if there are candidate modules.
+   */
+  bool hasCandidateModules() const { return !candidate_module_ptrs_.empty(); }
+
+  /**
    * @brief reset root lanelet. if there are approved modules, don't reset root lanelet.
    * @param planner data.
    * @details this function is called only when it is in disengage and drive by manual.
@@ -191,6 +235,11 @@ public:
    * @brief show planner manager internal condition.
    */
   void print() const;
+
+  /**
+   * @brief visit each module and get debug information.
+   */
+  std::shared_ptr<SceneModuleVisitor> getDebugMsg();
 
 private:
   /**
@@ -262,8 +311,9 @@ private:
    */
   void deleteExpiredModules(SceneModulePtr & module_ptr) const
   {
-    const auto manager = getManager(module_ptr);
-    manager->deleteModules(module_ptr);
+    module_ptr->onExit();
+    module_ptr->publishRTCStatus();
+    module_ptr.reset();
   }
 
   /**
@@ -314,10 +364,16 @@ private:
    * @param planner data.
    * @return root lanelet.
    */
-  lanelet::ConstLanelet updateRootLanelet(const std::shared_ptr<PlannerData> & data) const
+  lanelet::ConstLanelet updateRootLanelet(
+    const std::shared_ptr<PlannerData> & data, bool success_lane_change = false) const
   {
     lanelet::ConstLanelet ret{};
-    data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
+    if (success_lane_change) {
+      data->route_handler->getClosestPreferredLaneletWithinRoute(
+        data->self_odometry->pose.pose, &ret);
+    } else {
+      data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
+    }
     RCLCPP_DEBUG(logger_, "update start lanelet. id:%ld", ret.id());
     return ret;
   }
@@ -331,7 +387,7 @@ private:
   {
     const auto itr = std::find_if(
       manager_ptrs_.begin(), manager_ptrs_.end(),
-      [&module_ptr](const auto & m) { return m->getModuleName() == module_ptr->name(); });
+      [&module_ptr](const auto & m) { return m->name() == module_ptr->name(); });
 
     if (itr == manager_ptrs_.end()) {
       throw std::domain_error("unknown manager name.");
@@ -384,6 +440,8 @@ private:
     const std::vector<SceneModulePtr> & request_modules, const std::shared_ptr<PlannerData> & data,
     const BehaviorModuleOutput & previous_module_output);
 
+  std::string getNames(const std::vector<SceneModulePtr> & modules) const;
+
   boost::optional<lanelet::ConstLanelet> root_lanelet_{boost::none};
 
   std::vector<SceneModuleManagerPtr> manager_ptrs_;
@@ -399,6 +457,10 @@ private:
   mutable StopWatch<std::chrono::milliseconds> stop_watch_;
 
   mutable std::unordered_map<std::string, double> processing_time_;
+
+  mutable std::vector<ModuleUpdateInfo> debug_info_;
+
+  mutable std::shared_ptr<SceneModuleVisitor> debug_msg_ptr_;
 
   bool verbose_{false};
 };

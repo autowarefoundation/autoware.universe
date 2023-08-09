@@ -147,6 +147,7 @@ void DefaultPlanner::initialize_common(rclcpp::Node * node)
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*node_).getVehicleInfo();
   param_.goal_angle_threshold_deg = node_->declare_parameter<double>("goal_angle_threshold_deg");
   param_.enable_correct_goal_pose = node_->declare_parameter<bool>("enable_correct_goal_pose");
+  param_.consider_no_drivable_lanes = node_->declare_parameter<bool>("consider_no_drivable_lanes");
 }
 
 void DefaultPlanner::initialize(rclcpp::Node * node)
@@ -204,7 +205,7 @@ PlannerPlugin::MarkerArray DefaultPlanner::visualize(const LaneletRoute & route)
   std_msgs::msg::ColorRGBA cl_end;
   std_msgs::msg::ColorRGBA cl_normal;
   std_msgs::msg::ColorRGBA cl_goal;
-  set_color(&cl_route, 0.2, 0.4, 0.2, 0.05);
+  set_color(&cl_route, 0.8, 0.99, 0.8, 0.15);
   set_color(&cl_goal, 0.2, 0.4, 0.4, 0.05);
   set_color(&cl_end, 0.2, 0.2, 0.4, 0.05);
   set_color(&cl_normal, 0.2, 0.4, 0.2, 0.05);
@@ -401,7 +402,8 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     const auto goal_check_point = points.at(i);
     lanelet::ConstLanelets path_lanelets;
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
-          start_check_point, goal_check_point, &path_lanelets)) {
+          start_check_point, goal_check_point, &path_lanelets, param_.consider_no_drivable_lanes)) {
+      RCLCPP_WARN(logger, "Failed to plan route.");
       return route_msg;
     }
     for (const auto & lane : path_lanelets) {

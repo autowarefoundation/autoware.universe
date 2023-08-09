@@ -34,16 +34,16 @@ class AvoidanceByLaneChange : public NormalLaneChange
 public:
   AvoidanceByLaneChange(
     const std::shared_ptr<LaneChangeParameters> & parameters,
-    std::shared_ptr<AvoidanceParameters> avoidance_parameters,
     std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lane_change_parameters);
+
+  bool specialRequiredCheck() const override;
+
+  bool specialExpiredCheck() const override;
 
   void updateSpecialData() override;
 
-  std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const override;
-
 private:
-  std::shared_ptr<AvoidanceParameters> avoidance_parameters_;
-  std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lane_change_parameters_;
+  std::shared_ptr<AvoidanceByLCParameters> avoidance_parameters_;
 
   AvoidancePlanningData calcAvoidancePlanningData(AvoidanceDebugData & debug) const;
   AvoidancePlanningData avoidance_data_;

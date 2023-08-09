@@ -27,6 +27,7 @@
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <tier4_planning_msgs/msg/reroute_availability.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -51,8 +52,11 @@ using SetRoute = planning_interface::SetRoute;
 using ChangeRoutePoints = planning_interface::ChangeRoutePoints;
 using ChangeRoute = planning_interface::ChangeRoute;
 using Route = planning_interface::Route;
+using NormalRoute = planning_interface::NormalRoute;
+using MrmRoute = planning_interface::MrmRoute;
 using RouteState = planning_interface::RouteState;
 using Odometry = nav_msgs::msg::Odometry;
+using RerouteAvailability = tier4_planning_msgs::msg::RerouteAvailability;
 
 class MissionPlanner : public rclcpp::Node
 {
@@ -69,13 +73,20 @@ private:
   PoseStamped transform_pose(const PoseStamped & input);
 
   rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
-  rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
+  rclcpp::Subscription<RerouteAvailability>::SharedPtr sub_reroute_availability_;
   Odometry::ConstSharedPtr odometry_;
+  HADMapBin::ConstSharedPtr map_ptr_;
+  RerouteAvailability::ConstSharedPtr reroute_availability_;
   void on_odometry(const Odometry::ConstSharedPtr msg);
+  void on_map(const HADMapBin::ConstSharedPtr msg);
+  void on_reroute_availability(const RerouteAvailability::ConstSharedPtr msg);
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   void clear_route();
+  void clear_mrm_route();
   void change_route(const LaneletRoute & route);
+  void change_mrm_route(const LaneletRoute & route);
   LaneletRoute create_route(const SetRoute::Service::Request::SharedPtr req);
   LaneletRoute create_route(const SetRoutePoints::Service::Request::SharedPtr req);
   LaneletRoute create_route(
@@ -89,6 +100,8 @@ private:
   RouteState::Message state_;
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
   component_interface_utils::Publisher<Route>::SharedPtr pub_route_;
+  component_interface_utils::Publisher<NormalRoute>::SharedPtr pub_normal_route_;
+  component_interface_utils::Publisher<MrmRoute>::SharedPtr pub_mrm_route_;
   void change_state(RouteState::Message::_state_type state);
 
   component_interface_utils::Service<ClearRoute>::SharedPtr srv_clear_route_;
@@ -115,9 +128,6 @@ private:
     const ClearMrmRoute::Service::Request::SharedPtr req,
     const ClearMrmRoute::Service::Response::SharedPtr res);
 
-  HADMapBin::ConstSharedPtr map_ptr_{nullptr};
-  void onMap(const HADMapBin::ConstSharedPtr msg);
-
   component_interface_utils::Subscription<ModifiedGoal>::SharedPtr sub_modified_goal_;
   void on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg);
   void on_change_route(
@@ -129,10 +139,10 @@ private:
 
   double reroute_time_threshold_{10.0};
   double minimum_reroute_length_{30.0};
-  bool checkRerouteSafety(const LaneletRoute & original_route, const LaneletRoute & target_route);
+  bool check_reroute_safety(const LaneletRoute & original_route, const LaneletRoute & target_route);
 
-  std::shared_ptr<LaneletRoute> original_route_{nullptr};
   std::shared_ptr<LaneletRoute> normal_route_{nullptr};
+  std::shared_ptr<LaneletRoute> mrm_route_{nullptr};
 };
 
 }  // namespace mission_planner

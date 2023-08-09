@@ -35,17 +35,14 @@ class LaneChangeModuleManager : public SceneModuleManagerInterface
 public:
   LaneChangeModuleManager(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
-    std::shared_ptr<LaneChangeParameters> parameters, const Direction direction,
-    const LaneChangeModuleType type);
+    const Direction direction, const LaneChangeModuleType type);
 
-  std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
+  std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
 
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
 
 protected:
   std::shared_ptr<LaneChangeParameters> parameters_;
-
-  std::vector<std::shared_ptr<LaneChangeInterface>> registered_modules_;
 
   Direction direction_;
 
@@ -56,18 +53,14 @@ class AvoidanceByLaneChangeModuleManager : public LaneChangeModuleManager
 {
 public:
   AvoidanceByLaneChangeModuleManager(
-    rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
-    std::shared_ptr<LaneChangeParameters> parameters,
-    std::shared_ptr<AvoidanceParameters> avoidance_parameters,
-    std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lane_change_parameters);
+    rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config);
 
-  std::shared_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
+  std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
 
   // void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
 
 private:
-  std::shared_ptr<AvoidanceParameters> avoidance_parameters_;
-  std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lane_change_parameters_;
+  std::shared_ptr<AvoidanceByLCParameters> avoidance_parameters_;
 };
 }  // namespace behavior_path_planner
 
