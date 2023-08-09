@@ -59,7 +59,7 @@ private:
   struct
   {
     std::vector<double> passthrough_lower_bound_probability_thresholds{};
-    std::vector<double> thrust_distances{};
+    std::vector<double> trust_distances{};
     double min_iou_threshold{};
     bool use_roi_probability{};
     double roi_probability_threshold{};

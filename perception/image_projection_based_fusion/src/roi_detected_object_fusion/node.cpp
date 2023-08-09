@@ -30,7 +30,7 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
   fusion_params_.passthrough_lower_bound_probability_thresholds =
     declare_parameter<std::vector<double>>("passthrough_lower_bound_probability_thresholds");
   fusion_params_.min_iou_threshold = declare_parameter<double>("min_iou_threshold");
-  fusion_params_.thrust_distances = declare_parameter<std::vector<double>>("thrust_distances");
+  fusion_params_.trust_distances = declare_parameter<std::vector<double>>("trust_distances");
   fusion_params_.use_roi_probability = declare_parameter<bool>("use_roi_probability");
   fusion_params_.roi_probability_threshold = declare_parameter<double>("roi_probability_threshold");
   {
@@ -56,9 +56,9 @@ void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
     const auto object_sqr_dist = pos.x * pos.x + pos.y * pos.y;
     const auto prob_threshold =
       fusion_params_.passthrough_lower_bound_probability_thresholds.at(label);
-    const auto thrust_sqr_dist =
-      fusion_params_.thrust_distances.at(label) * fusion_params_.thrust_distances.at(label);
-    if (object.existence_probability > prob_threshold || object_sqr_dist > thrust_sqr_dist) {
+    const auto trust_sqr_dist =
+      fusion_params_.trust_distances.at(label) * fusion_params_.trust_distances.at(label);
+    if (object.existence_probability > prob_threshold || object_sqr_dist > trust_sqr_dist) {
       passthrough_object_flags.at(obj_i) = true;
     }
   }
