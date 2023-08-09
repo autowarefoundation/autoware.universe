@@ -8,6 +8,7 @@ ament_auto_find_build_dependencies()
 
 ament_auto_add_library(map_projection_loader_lib SHARED
   src/map_projection_loader.cpp
+  src/load_info_from_lanelet2_map.cpp
 )
 
 target_link_libraries(map_projection_loader_lib yaml-cpp)

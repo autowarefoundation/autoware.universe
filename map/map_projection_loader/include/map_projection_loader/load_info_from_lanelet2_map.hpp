@@ -22,26 +22,8 @@
 
 #include "tier4_map_msgs/msg/map_projector_info.hpp"
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_core/geometry/LineString.h>
-#include <lanelet2_io/Io.h>
-#include <lanelet2_projection/UTM.h>
-
 #include <string>
 
-tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::string & filename)
-{
-  lanelet::ErrorMessages errors{};
-  lanelet::projection::MGRSProjector projector{};
-  const lanelet::LaneletMapPtr map = lanelet::load(filename, projector, &errors);
-  if (!errors.empty()) {
-    throw std::runtime_error("Error occurred while loading lanelet2 map");
-  }
-
-  tier4_map_msgs::msg::MapProjectorInfo msg;
-  msg.type = "MGRS";
-  msg.mgrs_grid = projector.getProjectedMGRSGrid();
-  return msg;
-}
+tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::string & filename);
 
 #endif  // MAP_PROJECTION_LOADER__LOAD_INFO_FROM_LANELET2_MAP_HPP_

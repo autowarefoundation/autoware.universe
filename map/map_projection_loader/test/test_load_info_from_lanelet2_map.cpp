@@ -26,8 +26,10 @@ void save_dummy_lanelet2_map(const std::string & mgrs_coord, const std::string &
   int zone = std::stoi(mgrs_coord.substr(0, 2));
   bool is_north = false;
   int precision = 0;
-  double utm_x, utm_y;
-  double lat, lon;
+  double utm_x{};
+  double utm_y{};
+  double lat{};
+  double lon{};
   GeographicLib::MGRS::Reverse(mgrs_coord, zone, is_north, utm_x, utm_y, precision, false);
   GeographicLib::UTMUPS::Reverse(zone, is_north, utm_x, utm_y, lat, lon);
 
