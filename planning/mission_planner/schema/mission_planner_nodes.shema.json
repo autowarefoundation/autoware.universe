@@ -65,7 +65,7 @@
         "reroute_time_threshold",
         "minimum_reroute_length",
         "consider_no_drivable_lanes"
-    ]
+      ]
     }
   },
   "properties": {
