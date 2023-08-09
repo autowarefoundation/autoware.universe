@@ -87,19 +87,6 @@ public:
     latest_time_ = time;
     return;
   };
-  // void update_z_add(const double vx, const double pitch_rad, const double t)
-  // {
-  //   const double val_sin = -std::sin(pitch_rad);
-  //   const double dz = val_sin * vx * t;
-  //   x_ = x_ + dz;
-  //   return;
-  // };
-  // void update_pitch_add(const double pitch_rate, const double t)
-  // {
-  //   const double dp = pitch_rate * t;
-  //   x_ = x_ + dp;
-  //   return;
-  // }
   void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
   double get_x() { return x_; }
 
