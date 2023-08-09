@@ -219,11 +219,11 @@ void EKFLocalizer::timerCallback()
 
   /* z and pitch update for slopes */
   double time_from_ndt = 0;
-  if(t_receive_pose.seconds() != 0){
+  if (t_receive_pose.seconds() != 0) {
     const rclcpp::Time t_curr = this->now();
     time_from_ndt = (t_curr - t_receive_pose).seconds();
   }
-   
+
   const double new_pitch = pitch + pitch_rate_ * time_from_ndt;
   const double val_sin = -std::sin(new_pitch);
   const double z_addition = val_sin * vx * time_from_ndt;
