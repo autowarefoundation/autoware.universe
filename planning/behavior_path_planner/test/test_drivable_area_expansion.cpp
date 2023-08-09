@@ -165,13 +165,13 @@ TEST(DrivableAreaExpansionProjection, SubLinestring)
     for (auto i = 0lu; i < ls.size(); ++i) EXPECT_TRUE(boost::geometry::equals(ls[i], sub[i]));
   }
   {
-    // arc lengths equal to existing point: sublinestring with same points
+    // arc lengths equal to existing point: sub-linestring with same points
     const auto sub = sub_linestring(ls, 1.0, 5.0);
     ASSERT_EQ(ls.size() - 2lu, sub.size());
     for (auto i = 0lu; i < sub.size(); ++i) EXPECT_TRUE(boost::geometry::equals(ls[i + 1], sub[i]));
   }
   {
-    // arc lengths inside the original: sublinestring with some interpolated points
+    // arc lengths inside the original: sub-linestring with some interpolated points
     const auto sub = sub_linestring(ls, 1.5, 2.5);
     ASSERT_EQ(sub.size(), 3lu);
     EXPECT_NEAR(sub[0].x(), 1.5, eps);

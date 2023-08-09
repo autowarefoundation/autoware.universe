@@ -200,7 +200,7 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
         end_right.update(*inter_end, it, dist);
     }
   }
-  if (  // illformed expanded drivable area -> keep the original bounds
+  if (  // ill-formed expanded drivable area -> keep the original bounds
     start_left.segment_it == da.end() || start_right.segment_it == da.end() ||
     end_left.segment_it == da.end() || end_right.segment_it == da.end()) {
     return;
