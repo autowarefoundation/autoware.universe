@@ -1,0 +1,42 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Parameters for Mission Planner nodes",
+    "type": "object",
+    "definitions": {
+      "mission_planner_node": {
+        "type": "object",
+        "properties": {
+          "map_frame": {
+            "type": "string",
+            "description": "frame name",
+            "default": "map"
+          },
+          "reroute_time_threshold": {
+            "type": "number",
+            "description": "",
+            "default": "10.0",
+            "minimum": "0.0"
+          },
+          "minimum_reroute_length": {
+            "type": "number",
+            "description": "",
+            "default": "10.0",
+            "minimum": "0.0"
+          }
+        },
+        "required": ["map_frame", "reroute_time_threshold","minimum_reroute_length"]
+      }
+    },
+    "properties": {
+      "/**": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "$ref": "#/definitions/mission_planner_node"
+          }
+        },
+        "required": ["ros__parameters"]
+      }
+    },
+    "required": ["/**"]
+  }
