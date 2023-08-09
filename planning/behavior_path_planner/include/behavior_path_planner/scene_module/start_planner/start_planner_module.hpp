@@ -51,11 +51,7 @@ struct PullOutStatus
   size_t current_path_idx{0};
   PlannerType planner_type{PlannerType::NONE};
   PathWithLaneId backward_path{};
-  lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_out_lanes{};
-  std::vector<DrivableLanes> lanes{};
-  std::vector<uint64_t> lane_follow_lane_ids{};
-  std::vector<uint64_t> pull_out_lane_ids{};
   bool is_safe{false};
   bool back_finished{false};
   Pose pull_out_start_pose{};
@@ -66,31 +62,27 @@ struct PullOutStatus
 class StartPlannerModule : public SceneModuleInterface
 {
 public:
-#ifdef USE_OLD_ARCHITECTURE
-  StartPlannerModule(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<StartPlannerParameters> & parameters);
-#else
   StartPlannerModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<StartPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
-  void updateModuleParams(const std::shared_ptr<StartPlannerParameters> & parameters)
+  void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = parameters;
+    parameters_ = std::any_cast<std::shared_ptr<StartPlannerParameters>>(parameters);
   }
-#endif
 
-  BehaviorModuleOutput run() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] BehaviorModuleOutput run() override;
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  ModuleStatus updateState() override;
-  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] ModuleStatus updateState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
+
   void processOnExit() override;
 
   void setParameters(const std::shared_ptr<StartPlannerParameters> & parameters)
@@ -118,10 +110,16 @@ public:
   };
 
 private:
+  bool canTransitSuccessState() override { return false; }
+
+  bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override { return false; }
+
   std::shared_ptr<StartPlannerParameters> parameters_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
-  std::vector<std::shared_ptr<PullOutPlannerBase>> start_planner_planners_;
+  std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;
   PullOutStatus status_;
 
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
@@ -129,7 +127,6 @@ private:
   std::unique_ptr<rclcpp::Time> last_route_received_time_;
   std::unique_ptr<rclcpp::Time> last_pull_out_start_update_time_;
   std::unique_ptr<Pose> last_approved_pose_;
-  mutable bool has_received_new_route_{false};
 
   std::shared_ptr<PullOutPlannerBase> getCurrentPlanner() const;
   PathWithLaneId getFullPath() const;
@@ -146,6 +143,8 @@ private:
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
     const std::string search_priority);
   PathWithLaneId generateStopPath() const;
+  lanelet::ConstLanelets getPathLanes(const PathWithLaneId & path) const;
+  std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,
@@ -155,12 +154,13 @@ private:
   bool isStopped();
   bool hasFinishedCurrentPath();
 
-  void setDebugData() const;
+  // check if the goal is located behind the ego in the same route segment.
+  bool IsGoalBehindOfEgoInSameRouteSegment() const;
 
-// temporary for old architecture
-#ifdef USE_OLD_ARCHITECTURE
-  mutable bool is_executed_{false};
-#endif
+  // generate BehaviorPathOutput with stopping path and update status
+  BehaviorModuleOutput generateStopOutput();
+
+  void setDebugData() const;
 };
 }  // namespace behavior_path_planner
 

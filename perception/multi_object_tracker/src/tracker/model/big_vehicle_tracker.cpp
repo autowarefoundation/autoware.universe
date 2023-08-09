@@ -30,7 +30,7 @@
 #define EIGEN_MPL2_ONLY
 #include "multi_object_tracker/tracker/model/big_vehicle_tracker.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
-#include "perception_utils/perception_utils.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -150,7 +150,7 @@ BigVehicleTracker::BigVehicleTracker(
   setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 
   // Set lf, lr
-  double point_ratio = 0.5;  // comes to front if larger
+  double point_ratio = 0.1;  // under steered if smaller than 0.5
   lf_ = bounding_box_.length * point_ratio;
   lr_ = bounding_box_.length * (1.0 - point_ratio);
 }
@@ -245,7 +245,7 @@ bool BigVehicleTracker::measureWithPose(
 
   float r_cov_x;
   float r_cov_y;
-  const uint8_t label = perception_utils::getHighestProbLabel(object.classification);
+  const uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
 
   if (label == Label::CAR) {
     constexpr float r_stddev_x = 8.0;  // [m]
@@ -396,7 +396,7 @@ bool BigVehicleTracker::measure(
 {
   const auto & current_classification = getClassification();
   object_ = object;
-  if (perception_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+  if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
@@ -418,7 +418,7 @@ bool BigVehicleTracker::measure(
 bool BigVehicleTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = perception_utils::toTrackedObject(object_);
+  object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 

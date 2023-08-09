@@ -40,24 +40,18 @@ using tier4_planning_msgs::msg::LateralOffset;
 class SideShiftModule : public SceneModuleInterface
 {
 public:
-#ifdef USE_OLD_ARCHITECTURE
-  SideShiftModule(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<SideShiftParameters> & parameters);
-#else
   SideShiftModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<SideShiftParameters> & parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
-#endif
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   bool isReadyForNextRequest(
     const double & min_request_time_sec, bool override_requests = false) const noexcept;
-  ModuleStatus updateState() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] ModuleStatus updateState() override;
   void updateData() override;
-  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -66,9 +60,9 @@ public:
 
   void setParameters(const std::shared_ptr<SideShiftParameters> & parameters);
 
-  void updateModuleParams(const std::shared_ptr<SideShiftParameters> & parameters)
+  void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = parameters;
+    parameters_ = std::any_cast<std::shared_ptr<SideShiftParameters>>(parameters);
   }
 
   void acceptVisitor(
@@ -76,14 +70,34 @@ public:
   {
   }
 
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] BehaviorModuleOutput run() override
+  {
+    updateData();
+
+    if (!isWaitingApproval()) {
+      return plan();
+    }
+
+    // module is waiting approval. Check it.
+    if (isActivated()) {
+      RCLCPP_DEBUG(getLogger(), "Was waiting approval, and now approved. Do plan().");
+      return plan();
+    } else {
+      RCLCPP_DEBUG(getLogger(), "keep waiting approval... Do planCandidate().");
+      return planWaitingApproval();
+    }
+  }
+
 private:
+  bool canTransitSuccessState() override { return false; }
+
+  bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override { return false; }
   rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;
 
   void initVariables();
-
-#ifdef USE_OLD_ARCHITECTURE
-  void onLateralOffset(const LateralOffset::ConstSharedPtr lateral_offset_msg);
-#endif
 
   // non-const methods
   BehaviorModuleOutput adjustDrivableArea(const ShiftedPath & path) const;

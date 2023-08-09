@@ -107,6 +107,7 @@ def launch_setup(context, *args, **kwargs):
                     "input_obstacle_and_raw_pointcloud": LaunchConfiguration(
                         "input_obstacle_and_raw_pointcloud"
                     ),
+                    "updater_type": LaunchConfiguration("updater_type"),
                 },
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -164,15 +165,14 @@ def generate_launch_description():
                 get_package_share_directory("probabilistic_occupancy_grid_map")
                 + "/config/laserscan_based_occupancy_grid_map.param.yaml",
             ),
-            add_launch_arg(
-                "updater_type",
-                "binary_bayes_filter",
-            ),
+            add_launch_arg("updater_type", "binary_bayes_filter"),
             add_launch_arg(
                 "updater_param_file",
                 get_package_share_directory("probabilistic_occupancy_grid_map")
                 + "/config/updater.param.yaml",
             ),
+            add_launch_arg("input_obstacle_pointcloud", "false"),
+            add_launch_arg("input_obstacle_and_raw_pointcloud", "true"),
             add_launch_arg("use_pointcloud_container", "false"),
             add_launch_arg("container_name", "occupancy_grid_map_container"),
             set_container_executable,

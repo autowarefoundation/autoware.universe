@@ -75,6 +75,9 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   plugin_loader_("mission_planner", "mission_planner::PlannerPlugin"),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
+  odometry_(nullptr),
+  map_ptr_(nullptr),
+  reroute_availability_(nullptr),
   normal_route_(nullptr),
   mrm_route_(nullptr)
 {
@@ -85,15 +88,19 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   planner_ = plugin_loader_.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
   planner_->initialize(this);
 
-  odometry_ = nullptr;
   sub_odometry_ = create_subscription<Odometry>(
     "/localization/kinematic_state", rclcpp::QoS(1),
     std::bind(&MissionPlanner::on_odometry, this, std::placeholders::_1));
+  sub_reroute_availability_ = create_subscription<RerouteAvailability>(
+    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/output/"
+    "is_reroute_available",
+    rclcpp::QoS(1),
+    std::bind(&MissionPlanner::on_reroute_availability, this, std::placeholders::_1));
 
   auto qos_transient_local = rclcpp::QoS{1}.transient_local();
-  vector_map_subscriber_ = create_subscription<HADMapBin>(
+  sub_vector_map_ = create_subscription<HADMapBin>(
     "input/vector_map", qos_transient_local,
-    std::bind(&MissionPlanner::onMap, this, std::placeholders::_1));
+    std::bind(&MissionPlanner::on_map, this, std::placeholders::_1));
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   pub_marker_ = create_publisher<MarkerArray>("debug/route_marker", durable_qos);
@@ -130,7 +137,12 @@ void MissionPlanner::on_odometry(const Odometry::ConstSharedPtr msg)
   }
 }
 
-void MissionPlanner::onMap(const HADMapBin::ConstSharedPtr msg)
+void MissionPlanner::on_reroute_availability(const RerouteAvailability::ConstSharedPtr msg)
+{
+  reroute_availability_ = msg;
+}
+
+void MissionPlanner::on_map(const HADMapBin::ConstSharedPtr msg)
 {
   map_ptr_ = msg;
 }
@@ -375,6 +387,10 @@ void MissionPlanner::on_set_mrm_route(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
+  if (reroute_availability_ && !reroute_availability_->availability) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute as the planner is not in lane following.");
+  }
 
   const auto prev_state = state_.state;
   change_state(RouteState::Message::CHANGING);
@@ -391,7 +407,7 @@ void MissionPlanner::on_set_mrm_route(
   // check route safety
   // step1. if in mrm state, check with mrm route
   if (mrm_route_) {
-    if (checkRerouteSafety(*mrm_route_, new_route)) {
+    if (check_reroute_safety(*mrm_route_, new_route)) {
       // success to reroute
       change_mrm_route(new_route);
       res->status.success = true;
@@ -413,7 +429,7 @@ void MissionPlanner::on_set_mrm_route(
   }
 
   // step2. if not in mrm state, check with normal route
-  if (checkRerouteSafety(*normal_route_, new_route)) {
+  if (check_reroute_safety(*normal_route_, new_route)) {
     // success to reroute
     change_mrm_route(new_route);
     res->status.success = true;
@@ -444,6 +460,10 @@ void MissionPlanner::on_clear_mrm_route(
   if (!mrm_route_) {
     throw component_interface_utils::NoEffectWarning("MRM route is not set");
   }
+  if (reroute_availability_ && !reroute_availability_->availability) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute as the planner is not in lane following.");
+  }
 
   change_state(RouteState::Message::CHANGING);
 
@@ -455,7 +475,7 @@ void MissionPlanner::on_clear_mrm_route(
   }
 
   // check route safety
-  if (checkRerouteSafety(*mrm_route_, *normal_route_)) {
+  if (check_reroute_safety(*mrm_route_, *normal_route_)) {
     clear_mrm_route();
     change_route(*normal_route_);
     change_state(RouteState::Message::SET);
@@ -470,7 +490,7 @@ void MissionPlanner::on_clear_mrm_route(
     normal_route_->allow_modification);
 
   // check new route safety
-  if (new_route.segments.empty() || !checkRerouteSafety(*mrm_route_, new_route)) {
+  if (new_route.segments.empty() || !check_reroute_safety(*mrm_route_, new_route)) {
     // failed to create a new route
     RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "Reroute with normal goal failed.");
     change_mrm_route(*mrm_route_);
@@ -503,9 +523,25 @@ void MissionPlanner::on_modified_goal(const ModifiedGoal::Message::ConstSharedPt
     RCLCPP_ERROR(get_logger(), "Normal route has not set yet.");
     return;
   }
-  if (mrm_route_) {
-    RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 5000, "Cannot modify goal in the emergency state");
+
+  if (mrm_route_ && mrm_route_->uuid == msg->uuid) {
+    // set to changing state
+    change_state(RouteState::Message::CHANGING);
+
+    const std::vector<geometry_msgs::msg::Pose> empty_waypoints;
+    auto new_route =
+      create_route(msg->header, empty_waypoints, msg->pose, mrm_route_->allow_modification);
+    // create_route generate new uuid, so set the original uuid again to keep that.
+    new_route.uuid = msg->uuid;
+    if (new_route.segments.empty()) {
+      change_mrm_route(*mrm_route_);
+      change_state(RouteState::Message::SET);
+      RCLCPP_ERROR(get_logger(), "The planned route is empty.");
+      return;
+    }
+
+    change_mrm_route(new_route);
+    change_state(RouteState::Message::SET);
     return;
   }
 
@@ -558,6 +594,10 @@ void MissionPlanner::on_change_route(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
   }
+  if (reroute_availability_ && !reroute_availability_->availability) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute as the planner is not in lane following.");
+  }
 
   // set to changing state
   change_state(RouteState::Message::CHANGING);
@@ -575,7 +615,7 @@ void MissionPlanner::on_change_route(
   }
 
   // check route safety
-  if (checkRerouteSafety(*normal_route_, new_route)) {
+  if (check_reroute_safety(*normal_route_, new_route)) {
     // success to reroute
     change_route(new_route);
     res->status.success = true;
@@ -617,6 +657,10 @@ void MissionPlanner::on_change_route_points(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Cannot reroute in the emergency state.");
   }
+  if (reroute_availability_ && !reroute_availability_->availability) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Cannot reroute as the planner is not in lane following.");
+  }
 
   change_state(RouteState::Message::CHANGING);
 
@@ -633,7 +677,7 @@ void MissionPlanner::on_change_route_points(
   }
 
   // check route safety
-  if (checkRerouteSafety(*normal_route_, new_route)) {
+  if (check_reroute_safety(*normal_route_, new_route)) {
     // success to reroute
     change_route(new_route);
     res->status.success = true;
@@ -648,7 +692,7 @@ void MissionPlanner::on_change_route_points(
   }
 }
 
-bool MissionPlanner::checkRerouteSafety(
+bool MissionPlanner::check_reroute_safety(
   const LaneletRoute & original_route, const LaneletRoute & target_route)
 {
   if (original_route.segments.empty() || target_route.segments.empty() || !map_ptr_ || !odometry_) {
