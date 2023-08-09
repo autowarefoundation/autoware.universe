@@ -260,10 +260,13 @@ bool AstarSearch::search()
       }
 
       geometry_msgs::msg::Pose relative_goal_pose;
-      relative_goal_pose.position.x = goal_pose_.position.x - (next_pose.position.x - start_pose_.position.x);
-      relative_goal_pose.position.y = goal_pose_.position.y - (next_pose.position.y - start_pose_.position.y);
+      relative_goal_pose.position.x =
+        goal_pose_.position.x - (next_pose.position.x - start_pose_.position.x);
+      relative_goal_pose.position.y =
+        goal_pose_.position.y - (next_pose.position.y - start_pose_.position.y);
       relative_goal_pose.orientation = goal_pose_.orientation;
-      const auto relative_goal_index = pose2index(costmap_, relative_goal_pose, planner_common_param_.theta_size);
+      const auto relative_goal_index =
+        pose2index(costmap_, relative_goal_pose, planner_common_param_.theta_size);
 
       const auto & vertex_indexes_2d = vertex_indexes_table_[relative_goal_index.theta];
       bool relative_goal_is_out_of_range = false;
