@@ -156,7 +156,7 @@ private:
   double ekf_dt_;
   double pitch_from_ndt_;
   double pitch_rate_;
-  int cntTimerCallback_;
+  int cnt_timer_callback_;
 
   /* parameters */
 
@@ -266,7 +266,7 @@ private:
   /**
    * @brief update z value by considering ndt delay
    */
-  double updateZConsideringDelay(
+  double calculateDeltaZFromPitch(
     const geometry_msgs::msg::TwistStamped & twist, const double delay_time);
   /**
    * @brief trigger node

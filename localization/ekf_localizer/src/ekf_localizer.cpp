@@ -209,8 +209,8 @@ void EKFLocalizer::timerCallback()
   const double y = ekf_.getXelement(IDX::Y);
 
   const double current_pitch = pitch_filter_.get_x();
-  const double new_pitch = current_pitch + pitch_rate_ * dt * cntTimerCallback_;
-  cntTimerCallback_++;
+  const double new_pitch = current_pitch + pitch_rate_ * dt * cnt_timer_callback_;
+  cnt_timer_callback_++;
 
   const double biased_yaw = ekf_.getXelement(IDX::YAW);
   const double yaw_bias = ekf_.getXelement(IDX::YAWB);
@@ -222,7 +222,11 @@ void EKFLocalizer::timerCallback()
 
   const double z = z_filter_.get_x();
   const double val_sin = -std::sin(pitch_from_ndt_);
+<<<<<<< HEAD
   const double z_addition = val_sin * vx * dt * cntTimerCallback_;
+=======
+  const double z_addition = val_sin * vx * dt *cnt_timer_callback_;
+>>>>>>> 17f7946b (change name of function)
   const double new_z = z + z_addition;
 
   current_ekf_pose_.header.frame_id = params_.pose_frame_id;
@@ -350,12 +354,7 @@ void EKFLocalizer::callbackPoseWithCovariance(
   if (!is_activated_) {
     return;
   }
-  cntTimerCallback_ = 0;
-  // /* Considering change of z value due to NDT delay*/
-  // const rclcpp::Time t_curr = this->now();
-  // const double delay_time = (t_curr - msg->header.stamp).seconds();
-  // const double dz_delay = updateZConsideringDelay(current_ekf_twist_, delay_time);
-  // msg->pose.pose.position.z += dz_delay;
+  cnt_timer_callback_ = 0;
   pose_queue_.push(msg);
 }
 
@@ -631,7 +630,7 @@ void EKFLocalizer::updateSimple1DFilters(
   /* Considering change of z value due to NDT delay*/
   const rclcpp::Time t_curr = this->now();
   const double delay_time = (t_curr - pose.header.stamp).seconds();
-  const double dz_delay = updateZConsideringDelay(current_ekf_twist_, delay_time);
+  const double dz_delay = calculateDeltaZFromPitch(current_ekf_twist_, delay_time);
   z += dz_delay;
 
   z_filter_.update(z, z_dev, pose.header.stamp);
@@ -654,7 +653,7 @@ void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovaria
   roll_filter_.init(rpy.x, roll_dev, pose.header.stamp);
   pitch_filter_.init(rpy.y, pitch_dev, pose.header.stamp);
 }
-double EKFLocalizer::updateZConsideringDelay(
+double EKFLocalizer::calculateDeltaZFromPitch(
   const geometry_msgs::msg::TwistStamped & twist, const double delay_time)
 {
   const double vx = twist.twist.linear.x;
