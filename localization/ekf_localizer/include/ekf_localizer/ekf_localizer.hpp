@@ -279,7 +279,8 @@ private:
   /**
    * @brief update z value by considering ndt delay
    */
-  double updateZConsideringDelay(const geometry_msgs::msg::TwistStamped & twist, const double delay_time);
+  double updateZConsideringDelay(
+    const geometry_msgs::msg::TwistStamped & twist, const double delay_time);
   /**
    * @brief trigger node
    */
