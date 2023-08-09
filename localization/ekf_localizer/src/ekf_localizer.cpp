@@ -205,21 +205,19 @@ void EKFLocalizer::timerCallback()
     DEBUG_INFO(get_logger(), "------------------------- end Twist -------------------------\n");
   }
 
+  /* Extract the results */
   const double x = ekf_.getXelement(IDX::X);
   const double y = ekf_.getXelement(IDX::Y);
-
-  const double current_pitch = pitch_filter_.get_x();
-  const double new_pitch = current_pitch + pitch_rate_ * dt * cnt_timer_callback_;
-  cnt_timer_callback_++;
-
+  const double z = z_filter_.get_x();
   const double biased_yaw = ekf_.getXelement(IDX::YAW);
   const double yaw_bias = ekf_.getXelement(IDX::YAWB);
-
   const double roll = roll_filter_.get_x();
+  const double pitch = pitch_filter_.get_x();
   const double yaw = biased_yaw + yaw_bias;
   const double vx = ekf_.getXelement(IDX::VX);
   const double wz = ekf_.getXelement(IDX::WZ);
 
+<<<<<<< HEAD
   const double z = z_filter_.get_x();
   const double val_sin = -std::sin(pitch_from_ndt_);
 <<<<<<< HEAD
@@ -227,6 +225,14 @@ void EKFLocalizer::timerCallback()
 =======
   const double z_addition = val_sin * vx * dt * cnt_timer_callback_;
 >>>>>>> 17f7946b (change name of function)
+=======
+  /* z and pitch update for slopes */
+  // UPDATE Z AND PITCH HERE
+  const double new_pitch = pitch + pitch_rate_ * dt * cnt_timer_callback_;
+  cnt_timer_callback_++;
+  const double val_sin = -std::sin(new_pitch);
+  const double z_addition = val_sin * vx * dt * cnt_timer_callback_;
+>>>>>>> 14743072 (add explanation in timerCallback() to make it easier to understand)
   const double new_z = z + z_addition;
 
   current_ekf_pose_.header.frame_id = params_.pose_frame_id;
