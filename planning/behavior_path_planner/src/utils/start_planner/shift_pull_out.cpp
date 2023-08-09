@@ -54,7 +54,7 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
 
   const auto road_lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_path_length, std::numeric_limits<double>::max(),
-    /*until_goal_lane*/ true);
+    /*forward_only_in_route*/ true);
   // find candidate paths
   auto pull_out_paths = calcPullOutPaths(
     *route_handler, road_lanes, start_pose, goal_pose, common_parameters, parameters_);
@@ -62,9 +62,11 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
     return boost::none;
   }
 
-  // extract objects in shoulder lane for collision check
+  // extract stop objects in pull out lane for collision check
   const auto [pull_out_lane_objects, others] =
     utils::separateObjectsByLanelets(*dynamic_objects, pull_out_lanes);
+  const auto pull_out_lane_stop_objects =
+    utils::filterObjectsByVelocity(pull_out_lane_objects, parameters_.th_moving_object_velocity);
 
   // get safe path
   for (auto & pull_out_path : pull_out_paths) {
@@ -109,7 +111,7 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
 
     // check collision
     if (utils::checkCollisionBetweenPathFootprintsAndObjects(
-          vehicle_footprint_, path_start_to_end, pull_out_lane_objects,
+          vehicle_footprint_, path_start_to_end, pull_out_lane_stop_objects,
           parameters_.collision_check_margin)) {
       continue;
     }
