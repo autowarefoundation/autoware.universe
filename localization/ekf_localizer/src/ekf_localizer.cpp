@@ -218,11 +218,11 @@ void EKFLocalizer::timerCallback()
   const double wz = ekf_.getXelement(IDX::WZ);
 
   /* z and pitch update for slopes */
-  // UPDATE Z AND PITCH HERE
-  const double new_pitch = pitch + pitch_rate_ * dt * cnt_timer_callback_;
-  cnt_timer_callback_++;
+  const rclcpp::Time t_curr = this->now();
+  double time_from_ndt = (t_curr - t_receive_pose).seconds();
+  const double new_pitch = pitch + pitch_rate_ * time_from_ndt;
   const double val_sin = -std::sin(new_pitch);
-  const double z_addition = val_sin * vx * dt * cnt_timer_callback_;
+  const double z_addition = val_sin * vx * time_from_ndt;
   const double new_z = z + z_addition;
 
   current_ekf_pose_.header.frame_id = params_.pose_frame_id;
@@ -350,7 +350,7 @@ void EKFLocalizer::callbackPoseWithCovariance(
   if (!is_activated_) {
     return;
   }
-  cnt_timer_callback_ = 0;
+  t_receive_pose = this->now();
   pose_queue_.push(msg);
 }
 
@@ -453,7 +453,14 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
     poseMeasurementCovariance(pose.pose.covariance, params_.pose_smoothing_steps);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
-  updateSimple1DFilters(pose, params_.pose_smoothing_steps);
+
+  /* Considering change of z value due to NDT delay*/
+  const double dz_delay = calculateDeltaZFromPitch(current_ekf_twist_, delay_time);
+  geometry_msgs::msg::PoseWithCovarianceStamped pose_with_z_delay;
+  pose_with_z_delay = pose;
+  pose_with_z_delay.pose.pose.position.z += dz_delay;
+
+  updateSimple1DFilters(pose_with_z_delay, params_.pose_smoothing_steps);
 
   // debug
   const Eigen::MatrixXd X_result = ekf_.getLatestX();
@@ -623,12 +630,6 @@ void EKFLocalizer::updateSimple1DFilters(
   double pitch_dev =
     pose.pose.covariance[COV_IDX::PITCH_PITCH] * static_cast<double>(smoothing_step);
 
-  /* Considering change of z value due to NDT delay*/
-  const rclcpp::Time t_curr = this->now();
-  const double delay_time = (t_curr - pose.header.stamp).seconds();
-  const double dz_delay = calculateDeltaZFromPitch(current_ekf_twist_, delay_time);
-  z += dz_delay;
-
   z_filter_.update(z, z_dev, pose.header.stamp);
   roll_filter_.update(rpy.x, roll_dev, pose.header.stamp);
   pitch_filter_.update(rpy.y, pitch_dev, pose.header.stamp);
@@ -653,8 +654,7 @@ double EKFLocalizer::calculateDeltaZFromPitch(
   const geometry_msgs::msg::TwistStamped & twist, const double delay_time)
 {
   const double vx = twist.twist.linear.x;
-  const double pitch_rad = pitch_from_ndt_;
-  const double val_sin = std::sin(-pitch_rad);
+  const double val_sin = std::sin(-pitch_from_ndt_);
   const double dz = val_sin * vx * delay_time;
   return dz;
 }

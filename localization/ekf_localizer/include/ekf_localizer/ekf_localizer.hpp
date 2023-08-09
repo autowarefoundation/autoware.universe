@@ -156,7 +156,7 @@ private:
   double ekf_dt_;
   double pitch_from_ndt_;
   double pitch_rate_;
-  int cnt_timer_callback_;
+  rclcpp::Time t_receive_pose;
 
   /* parameters */
 
