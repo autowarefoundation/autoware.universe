@@ -222,7 +222,7 @@ void EKFLocalizer::timerCallback()
 
   const double z = z_filter_.get_x();
   const double val_sin = -std::sin(pitch_from_ndt_);
-  const double z_addition = val_sin * vx * dt *cntTimerCallback_;
+  const double z_addition = val_sin * vx * dt * cntTimerCallback_;
   const double new_z = z + z_addition;
 
   current_ekf_pose_.header.frame_id = params_.pose_frame_id;
