@@ -110,7 +110,7 @@ class TestLoadMGRSFromYaml(unittest.TestCase):
         # Create subscription to map_projector_info topic
         subscription = self.test_node.create_subscription(
             MapProjectorInfo,
-            "/map_projection_loader/map_projector_info",
+            "/map/map_projector_type",
             self.callback,
             custom_qos_profile,
         )
