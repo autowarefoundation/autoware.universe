@@ -3,7 +3,6 @@
     dynamic_avoidance:
       common:
         enable_debug_info: true
-        use_hatched_road_markings: true
 
       # avoidance is performed for the object type with true
       target_object:
@@ -44,8 +43,6 @@
       drivable_area_generation:
         lat_offset_from_obstacle: 0.8 # [m]
         max_lat_offset_to_avoid: 0.5 # [m]
-        max_time_for_object_lat_shift: 2.0 # [s]
-        lpf_gain_for_lat_avoid_to_offset: 0.9 # [-]
 
         # for same directional object
         overtaking_object:
@@ -56,6 +53,6 @@
 
         # for opposite directional object
         oncoming_object:
-          max_time_to_collision: 40.0 # [s] This value should be the same as overtaking_object's one to suppress chattering of this value for parked vehicles
+          max_time_to_collision: 15.0 # [s]
           start_duration_to_avoid: 12.0  # [s]
           end_duration_to_avoid: 0.0  # [s]
