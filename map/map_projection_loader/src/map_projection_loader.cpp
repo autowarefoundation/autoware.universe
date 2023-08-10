@@ -16,8 +16,9 @@
 
 #include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 
-#include <yaml-cpp/yaml.h>
+#include <tier4_map_msgs/msg/map_projector_info.hpp>
 
+#include <yaml-cpp/yaml.h>
 #include <fstream>
 
 tier4_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string & filename)
@@ -64,7 +65,7 @@ MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
   }
 
   // Publish the message
-  publisher_ = this->create_publisher<tier4_map_msgs::msg::MapProjectorInfo>(
-    "~/map_projector_info", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local());
+  const auto node = component_interface_utils::NodeAdaptor(this);
+  node.init_pub(publisher_);
   publisher_->publish(msg);
 }
