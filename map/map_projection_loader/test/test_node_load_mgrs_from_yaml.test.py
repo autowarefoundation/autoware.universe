@@ -125,7 +125,7 @@ class TestLoadMGRSFromYaml(unittest.TestCase):
             get_package_share_directory("map_projection_loader"), YAML_FILE_PATH
         )
         with open(map_projection_info_path) as f:
-            yaml_data = yaml.load(f)
+            yaml_data = yaml.load(f, Loader=yaml.FullLoader)
 
         # Test if message received
         self.assertIsNotNone(
