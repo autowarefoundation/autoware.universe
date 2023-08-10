@@ -15,12 +15,12 @@
 #ifndef MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
 #define MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
 
+#include <component_interface_specs/map.hpp>
+#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <tier4_map_msgs/msg/map_projector_info.hpp>
-#include <component_interface_specs/map.hpp>
-#include <component_interface_utils/rclcpp.hpp>
 
 #include <lanelet2_projection/UTM.h>
 

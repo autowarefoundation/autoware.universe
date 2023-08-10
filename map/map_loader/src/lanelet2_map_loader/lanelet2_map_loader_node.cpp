@@ -54,10 +54,13 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
 
   // subscription
-  adaptor.init_sub(sub_map_projector_type_, [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { on_map_projector_info(msg); });
+  adaptor.init_sub(
+    sub_map_projector_type_,
+    [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { on_map_projector_info(msg); });
 }
 
-void Lanelet2MapLoaderNode::on_map_projector_info(const MapProjectorInfo::Message::ConstSharedPtr msg)
+void Lanelet2MapLoaderNode::on_map_projector_info(
+  const MapProjectorInfo::Message::ConstSharedPtr msg)
 {
   const auto lanelet2_filename = declare_parameter("lanelet2_map_path", "");
   const auto center_line_resolution = declare_parameter("center_line_resolution", 5.0);

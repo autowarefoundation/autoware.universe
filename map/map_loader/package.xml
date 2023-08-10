@@ -16,6 +16,8 @@
 
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_map_msgs</depend>
+  <depend>component_interface_specs</depend>
+  <depend>component_interface_utils</depend>
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
@@ -31,8 +33,6 @@
   <depend>tier4_map_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>yaml-cpp</depend>
-  <depend>component_interface_specs</depend>
-  <depend>component_interface_utils</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
