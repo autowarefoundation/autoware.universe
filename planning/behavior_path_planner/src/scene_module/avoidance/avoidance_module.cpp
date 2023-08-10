@@ -2165,8 +2165,6 @@ BehaviorModuleOutput AvoidanceModule::plan()
   generateExtendedDrivableArea(output);
   setDrivableLanes(output.drivable_area_info.drivable_lanes);
 
-  // updateRegisteredRTCStatus(spline_shift_path.path);
-
   return output;
 }
 
@@ -2504,8 +2502,6 @@ void AvoidanceModule::initVariables()
 
 void AvoidanceModule::initRTCStatus()
 {
-  removeRTCStatus();
-  clearWaitingApproval();
   left_shift_array_.clear();
   right_shift_array_.clear();
   uuid_map_.at("left") = generateUUID();

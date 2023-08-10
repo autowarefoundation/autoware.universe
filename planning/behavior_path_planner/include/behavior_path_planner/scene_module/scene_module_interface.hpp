@@ -161,6 +161,7 @@ public:
 
     clearWaitingApproval();
     removeRTCStatus();
+    publishRTCStatus();
     unlockNewModuleLaunch();
     unlockOutputPath();
     steering_factor_interface_ptr_->clearSteeringFactors();
