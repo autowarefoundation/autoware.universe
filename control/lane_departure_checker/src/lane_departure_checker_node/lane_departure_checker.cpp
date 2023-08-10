@@ -141,7 +141,8 @@ Output LaneDepartureChecker::update(const Input & input)
   output.is_out_of_lane = isOutOfLane(output.candidate_lanelets, output.vehicle_footprints.front());
   output.processing_time_map["isOutOfLane"] = stop_watch.toc(true);
 
-  output.will_cross_road_boundary = willCrossRoadBoundary(output.candidate_lanelets, output.vehicle_footprints);
+  output.will_cross_road_boundary =
+    willCrossRoadBoundary(output.candidate_lanelets, output.vehicle_footprints);
 
   return output;
 }
@@ -306,12 +307,17 @@ bool LaneDepartureChecker::willCrossRoadBorder(
   const std::vector<LinearRing2d> & vehicle_footprints)
 {
   for (const auto & candidate_lanelet : candidate_lanelets) {
-    candidate_lanelet->rightBound().attribute
-    if (isCrossingRoadBorder(candidate_lanelets, vehicle_footprint)) {
-      return true;
+    if (candidate_lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "road_border")){
+      if (isCrossingRoadBorder(candidate_lanelet, candidate_lanelet.rightBound())) {
+        return true;
+      }
+    }
+    if (candidate_lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "road_border")){
+      if (isCrossingRoadBorder(candidate_lanelet, candidate_lanelet.leftBound())) {
+        return true;
+      }
     }
   }
-
   return false;
 }
 
