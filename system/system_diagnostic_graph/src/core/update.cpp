@@ -42,27 +42,26 @@ void DiagGraph::create(const std::string & file)
     unit->create(graph_, config);
   }
 
-  /*
   // Sort unit nodes in topological order for update dependencies.
-  topological_nodes_ = topological_sort(data_);
+  graph_.topological_sort();
 
   // Set the link index for the ros message.
-  for (size_t i = 0; i < topological_nodes_.size(); ++i) {
-    topological_nodes_[i]->set_index(i);
+  const auto & nodes = graph_.nodes();
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    nodes[i]->set_index(i);
   }
-  */
 }
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
 {
   DiagnosticGraph message;
   message.stamp = stamp;
-  message.nodes.reserve(topological_nodes_.size());
+  message.nodes.reserve(graph_.nodes().size());
 
-  for (const auto & node : topological_nodes_) {
+  for (const auto & node : graph_.nodes()) {
     node->update();
   }
-  for (const auto & node : topological_nodes_) {
+  for (const auto & node : graph_.nodes()) {
     message.nodes.push_back(node->report());
   }
   return message;
@@ -78,59 +77,6 @@ void DiagGraph::callback(const DiagnosticArray & array)
       // TODO(Takagi, Isamu): handle unknown diagnostics
     }
   }
-}
-
-std::vector<BaseNode *> DiagGraph::topological_sort(const DiagGraph & data)
-{
-  (void)data;
-  return {};
-  /*
-  std::unordered_map<BaseNode *, int> degrees;
-  std::deque<BaseNode *> nodes;
-  std::deque<BaseNode *> result;
-  std::deque<BaseNode *> buffer;
-
-  // Create a list of unit nodes and leaf nodes.
-  for (const auto & unit : data.unit_list) {
-    nodes.push_back(unit.get());
-  }
-  for (const auto & leaf : data.leaf_list) {
-    nodes.push_back(leaf.get());
-  }
-
-  // Count degrees of each node.
-  for (const auto & node : nodes) {
-    for (const auto & link : node->links()) {
-      ++degrees[link];
-    }
-  }
-
-  // Find initial nodes that are zero degrees.
-  for (const auto & node : nodes) {
-    if (degrees[node] == 0) {
-      buffer.push_back(node);
-    }
-  }
-
-  // Sort by topological order.
-  while (!buffer.empty()) {
-    const auto node = buffer.front();
-    buffer.pop_front();
-    for (const auto & link : node->links()) {
-      if (--degrees[link] == 0) {
-        buffer.push_back(link);
-      }
-    }
-    result.push_back(node);
-  }
-
-  // Detect circulation because the result does not include the nodes on the loop.
-  if (result.size() != nodes.size()) {
-    throw ConfigError("detect graph circulation");
-  }
-
-  return std::vector<BaseNode *>(result.rbegin(), result.rend());
-  */
 }
 
 }  // namespace system_diagnostic_graph

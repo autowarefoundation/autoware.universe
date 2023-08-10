@@ -16,6 +16,7 @@
 
 #include "config.hpp"
 #include "graph.hpp"
+#include "node.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -66,9 +67,19 @@ std::unique_ptr<BaseExpr> BaseExpr::create(Graph & graph, YAML::Node yaml)
   throw ConfigError("unknown expr type: " + type);
 }
 
+ConstExpr::ConstExpr(const DiagnosticLevel level)
+{
+  level_ = level;
+}
+
 DiagnosticLevel ConstExpr::eval() const
 {
   return level_;
+}
+
+std::vector<BaseNode *> ConstExpr::get_dependency() const
+{
+  return {};
 }
 
 UnitExpr::UnitExpr(Graph & graph, YAML::Node yaml)
@@ -88,13 +99,18 @@ DiagnosticLevel UnitExpr::eval() const
   return DiagnosticStatus::OK;
 }
 
+std::vector<BaseNode *> UnitExpr::get_dependency() const
+{
+  return {node_};
+}
+
 DiagExpr::DiagExpr(Graph & graph, YAML::Node yaml)
 {
   if (!yaml["name"]) {
     throw ConfigError("diag object has no 'name' field");
   }
   const auto name = yaml["name"].as<std::string>();
-  const auto hardware = yaml["hardware"].as<std::string>();
+  const auto hardware = yaml["hardware"].as<std::string>("");
   node_ = graph.find_diag(name, hardware);
   if (!node_) {
     node_ = graph.make_diag(name, hardware);
@@ -104,6 +120,11 @@ DiagExpr::DiagExpr(Graph & graph, YAML::Node yaml)
 DiagnosticLevel DiagExpr::eval() const
 {
   return DiagnosticStatus::OK;
+}
+
+std::vector<BaseNode *> DiagExpr::get_dependency() const
+{
+  return {node_};
 }
 
 AndExpr::AndExpr(Graph & graph, YAML::Node yaml)
@@ -130,6 +151,16 @@ DiagnosticLevel AndExpr::eval() const
   return std::min(level, DiagnosticStatus::ERROR);
 }
 
+std::vector<BaseNode *> AndExpr::get_dependency() const
+{
+  std::vector<BaseNode *> depends;
+  for (const auto & expr : list_) {
+    const auto nodes = expr->get_dependency();
+    depends.insert(depends.end(), nodes.begin(), nodes.end());
+  }
+  return depends;
+}
+
 OrExpr::OrExpr(Graph & graph, YAML::Node yaml)
 {
   if (!yaml["list"]) {
@@ -152,6 +183,16 @@ DiagnosticLevel OrExpr::eval() const
   }
   const auto level = *std::min_element(levels.begin(), levels.end());
   return std::min(level, DiagnosticStatus::ERROR);
+}
+
+std::vector<BaseNode *> OrExpr::get_dependency() const
+{
+  std::vector<BaseNode *> depends;
+  for (const auto & expr : list_) {
+    const auto nodes = expr->get_dependency();
+    depends.insert(depends.end(), nodes.begin(), nodes.end());
+  }
+  return depends;
 }
 
 }  // namespace system_diagnostic_graph

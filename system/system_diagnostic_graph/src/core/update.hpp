@@ -37,9 +37,7 @@ public:
   void debug();
 
 private:
-  static std::vector<BaseNode *> topological_sort(const DiagGraph & data);
   Graph graph_;
-  std::vector<BaseNode *> topological_nodes_;
 };
 
 }  // namespace system_diagnostic_graph

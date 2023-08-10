@@ -35,7 +35,7 @@ const std::unordered_map<DiagnosticLevel, std::string> level_names = {
 void DiagGraph::debug()
 {
   std::vector<DiagDebugData> lines;
-  for (const auto & node : topological_nodes_) {
+  for (const auto & node : graph_.nodes()) {
     lines.push_back(node->debug());
   }
 

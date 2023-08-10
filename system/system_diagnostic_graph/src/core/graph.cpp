@@ -16,8 +16,13 @@
 
 #include "node.hpp"
 
+#include <deque>
+#include <map>
 #include <memory>
 #include <utility>
+
+//
+#include <iostream>
 
 namespace system_diagnostic_graph
 {
@@ -50,6 +55,64 @@ DiagNode * Graph::find_diag(const std::string & name, const std::string & hardwa
 {
   const auto key = std::make_pair(name, hardware);
   return diags_.count(key) ? diags_.at(key) : nullptr;
+}
+
+void Graph::topological_sort()
+{
+  std::map<BaseNode *, int> degrees;
+  std::deque<BaseNode *> nodes;
+  std::deque<BaseNode *> result;
+  std::deque<BaseNode *> buffer;
+
+  // Create a list of raw pointer nodes.
+  for (const auto & node : nodes_) {
+    nodes.push_back(node.get());
+  }
+
+  // Count degrees of each node.
+  for (const auto & node : nodes) {
+    for (const auto & link : node->links()) {
+      ++degrees[link];
+    }
+  }
+
+  // Find initial nodes that are zero degrees.
+  for (const auto & node : nodes) {
+    if (degrees[node] == 0) {
+      buffer.push_back(node);
+    }
+  }
+
+  // Sort by topological order.
+  while (!buffer.empty()) {
+    const auto node = buffer.front();
+    buffer.pop_front();
+    for (const auto & link : node->links()) {
+      if (--degrees[link] == 0) {
+        buffer.push_back(link);
+      }
+    }
+    result.push_back(node);
+  }
+
+  // Detect circulation because the result does not include the nodes on the loop.
+  if (result.size() != nodes.size()) {
+    throw ConfigError("detect graph circulation");
+  }
+
+  // Reverse the result to process from leaf node.
+  result = std::deque<BaseNode *>(result.rbegin(), result.rend());
+
+  // Replace node order.
+  std::map<BaseNode *, size_t> indices;
+  for (size_t i = 0; i < result.size(); ++i) {
+    indices[result[i]] = i;
+  }
+  std::vector<std::unique_ptr<BaseNode>> temp(nodes_.size());
+  for (auto & node : nodes_) {
+    temp[indices[node.get()]] = std::move(node);
+  }
+  nodes_ = std::move(temp);
 }
 
 }  // namespace system_diagnostic_graph

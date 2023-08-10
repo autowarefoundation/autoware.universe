@@ -57,12 +57,11 @@ public:
   void update() override;
   void create(Graph & graph, const NodeConfig & config);
 
-  std::vector<BaseNode *> links() const override { return links_; }
+  std::vector<BaseNode *> links() const override;
   std::string name() const override { return name_; }
 
 private:
   const std::string name_;
-  std::vector<BaseNode *> links_;
   std::unique_ptr<BaseExpr> expr_;
 };
 

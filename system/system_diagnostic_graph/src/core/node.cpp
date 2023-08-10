@@ -60,6 +60,11 @@ void UnitNode::create(Graph & graph, const NodeConfig & config)
   }
 }
 
+std::vector<BaseNode *> UnitNode::links() const
+{
+  return expr_->get_dependency();
+}
+
 DiagNode::DiagNode(const std::string & name, const std::string & hardware)
 : name_(name), hardware_(hardware)
 {
