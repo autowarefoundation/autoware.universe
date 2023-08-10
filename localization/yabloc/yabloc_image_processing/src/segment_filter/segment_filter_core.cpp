@@ -25,12 +25,6 @@ namespace yabloc::segment_filter
 {
 SegmentFilter::SegmentFilter()
 : Node("segment_filter"),
-  image_size_(declare_parameter<int>("image_size")),
-  max_range_(declare_parameter<float>("max_range")),
-  min_segment_length_(declare_parameter<float>("min_segment_length")),
-  max_segment_distance_(declare_parameter<float>("max_segment_distance")),
-  max_lateral_distance_(declare_parameter<float>("max_lateral_distance")),
-  info_(this),
   synchro_subscriber_(this, "~/input/line_segments_cloud", "~/input/graph_segmented"),
   tf_subscriber_(this->get_clock())
 {
@@ -39,59 +33,11 @@ SegmentFilter::SegmentFilter()
   auto cb = std::bind(&SegmentFilter::execute, this, _1, _2);
   synchro_subscriber_.set_callback(std::move(cb));
 
-  pub_projected_cloud_ =
-    create_publisher<PointCloud2>("~/output/projected_line_segments_cloud", 10);
-  pub_debug_cloud_ = create_publisher<PointCloud2>("~/debug/debug_line_segments", 10);
-  pub_image_ = create_publisher<Image>("~/debug/projected_image", 10);
-}
-
-cv::Point2i SegmentFilter::to_cv_point(const Eigen::Vector3f & v) const
-{
-  cv::Point pt;
-  pt.x = -v.y() / max_range_ * image_size_ * 0.5f + image_size_ / 2;
-  pt.y = -v.x() / max_range_ * image_size_ * 0.5f + image_size_;
-  return pt;
-}
-
-bool SegmentFilter::define_project_func()
-{
-  if (project_func_) return true;
-
-  if (info_.is_camera_info_nullopt()) return false;
-  Eigen::Matrix3f intrinsic_inv = info_.intrinsic().inverse();
-
-  std::optional<Eigen::Affine3f> camera_extrinsic =
-    tf_subscriber_(info_.get_frame_id(), "base_link");
-  if (!camera_extrinsic.has_value()) return false;
-
-  const Eigen::Vector3f t = camera_extrinsic->translation();
-  const Eigen::Quaternionf q(camera_extrinsic->rotation());
-
-  // TODO(KYabuuchi) This will take into account ground tilt and camera vibration someday.
-  project_func_ = [intrinsic_inv, q,
-                   t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
-    Eigen::Vector3f u3(u.x(), u.y(), 1);
-    Eigen::Vector3f u_bearing = (q * intrinsic_inv * u3).normalized();
-    if (u_bearing.z() > -0.01) return std::nullopt;
-    float u_distance = -t.z() / u_bearing.z();
-    Eigen::Vector3f v;
-    v.x() = t.x() + u_bearing.x() * u_distance;
-    v.y() = t.y() + u_bearing.y() * u_distance;
-    v.z() = 0;
-    return v;
-  };
-  return true;
+  pub_classified_cloud_ = create_publisher<PointCloud2>("~/output/classified_line_segments", 10);
 }
 
 void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image & segment_msg)
 {
-  if (!define_project_func()) {
-    using namespace std::literals::chrono_literals;
-    RCLCPP_INFO_STREAM_THROTTLE(
-      get_logger(), *get_clock(), (1000ms).count(), "project_func cannot be defined");
-    return;
-  }
-
   const rclcpp::Time stamp = line_segments_msg.header.stamp;
 
   pcl::PointCloud<pcl::PointNormal>::Ptr line_segments_cloud{
@@ -101,85 +47,20 @@ void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image &
 
   const std::set<int> indices = filter_by_mask(mask_image, *line_segments_cloud);
 
-  pcl::PointCloud<pcl::PointNormal> valid_edges = project_lines(*line_segments_cloud, indices);
-  pcl::PointCloud<pcl::PointNormal> invalid_edges =
-    project_lines(*line_segments_cloud, indices, true);
-
-  // Projected line segments
-  {
-    pcl::PointCloud<pcl::PointXYZLNormal> combined_edges;
-    for (const auto & pn : valid_edges) {
-      pcl::PointXYZLNormal pln;
-      pln.getVector3fMap() = pn.getVector3fMap();
-      pln.getNormalVector3fMap() = pn.getNormalVector3fMap();
+  pcl::PointCloud<pcl::PointXYZLNormal> combined_edges;
+  for (int index = 0; index < line_segments_cloud->size(); ++index) {
+    const cl::PointNormal & pn = line_segments_cloud->at(index);
+    pcl::PointXYZLNormal pln;
+    pln.getVector3fMap() = pn.getVector3fMap();
+    pln.getNormalVector3fMap() = pn.getNormalVector3fMap();
+    if (indices.count(index) > 0) {
       pln.label = 255;
-      combined_edges.push_back(pln);
-    }
-    for (const auto & pn : invalid_edges) {
-      pcl::PointXYZLNormal pln;
-      pln.getVector3fMap() = pn.getVector3fMap();
-      pln.getNormalVector3fMap() = pn.getNormalVector3fMap();
+    } else {
       pln.label = 0;
-      combined_edges.push_back(pln);
     }
-    common::publish_cloud(*pub_projected_cloud_, combined_edges, stamp);
+    combined_edges.push_back(pln);
   }
-
-  // Image
-  {
-    cv::Mat projected_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
-    for (auto & pn : valid_edges) {
-      cv::Point2i p1 = to_cv_point(pn.getVector3fMap());
-      cv::Point2i p2 = to_cv_point(pn.getNormalVector3fMap());
-      cv::line(projected_image, p1, p2, cv::Scalar(100, 100, 255), 4, cv::LineTypes::LINE_8);
-    }
-    for (auto & pn : invalid_edges) {
-      cv::Point2i p1 = to_cv_point(pn.getVector3fMap());
-      cv::Point2i p2 = to_cv_point(pn.getNormalVector3fMap());
-      cv::line(projected_image, p1, p2, cv::Scalar(200, 200, 200), 3, cv::LineTypes::LINE_8);
-    }
-    common::publish_image(*pub_image_, projected_image, stamp);
-  }
-
-  // Line segments for debug
-  {
-    pcl::PointCloud<pcl::PointXYZLNormal> combined_debug_edges;
-    for (size_t index = 0; index < line_segments_cloud->size(); ++index) {
-      const pcl::PointNormal & pn = line_segments_cloud->at(index);
-      pcl::PointXYZLNormal pln;
-      pln.getVector3fMap() = pn.getVector3fMap();
-      pln.getNormalVector3fMap() = pn.getNormalVector3fMap();
-      if (indices.count(index) > 0)
-        pln.label = 255;
-      else
-        pln.label = 0;
-      combined_debug_edges.push_back(pln);
-    }
-    common::publish_cloud(*pub_debug_cloud_, combined_debug_edges, stamp);
-  }
-}
-
-bool SegmentFilter::is_near_element(
-  const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const
-{
-  float min_distance = std::min(pn.x, pn.normal_x);
-  float max_distance = std::max(pn.x, pn.normal_x);
-  if (min_distance > max_segment_distance_) return false;
-  if (max_distance < max_segment_distance_) {
-    truncated_pn = pn;
-    return true;
-  }
-
-  truncated_pn = pn;
-  Eigen::Vector3f t = pn.getVector3fMap() - pn.getNormalVector3fMap();
-  float not_zero_tx = t.x() > 0 ? std::max(t.x(), 1e-3f) : std::min(t.x(), -1e-3f);
-  float lambda = (max_segment_distance_ - pn.x) / not_zero_tx;
-  Eigen::Vector3f m = pn.getVector3fMap() + lambda * t;
-  if (pn.x > pn.normal_x)
-    truncated_pn.getVector3fMap() = m;
-  else
-    truncated_pn.getNormalVector3fMap() = m;
-  return true;
+  common::publish_cloud(*pub_projected_cloud_, combined_edges, stamp);
 }
 
 std::set<ushort> get_unique_pixel_value(cv::Mat & image)
@@ -195,54 +76,6 @@ std::set<ushort> get_unique_pixel_value(cv::Mat & image)
   std::sort(begin, last);
   last = std::unique(begin, last);
   return std::set<ushort>(begin, last);
-}
-
-pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
-  const pcl::PointCloud<pcl::PointNormal> & points, const std::set<int> & indices,
-  bool negative) const
-{
-  pcl::PointCloud<pcl::PointNormal> projected_points;
-  for (size_t index = 0; index < points.size(); ++index) {
-    if (negative) {
-      if (indices.count(index) > 0) continue;
-    } else {
-      if (indices.count(index) == 0) continue;
-    }
-
-    pcl::PointNormal truncated_pn = points.at(index);
-
-    std::optional<Eigen::Vector3f> opt1 = project_func_(truncated_pn.getVector3fMap());
-    std::optional<Eigen::Vector3f> opt2 = project_func_(truncated_pn.getNormalVector3fMap());
-    if (!opt1.has_value()) continue;
-    if (!opt2.has_value()) continue;
-
-    // If line segment has shorter length than config, it is excluded
-    if (min_segment_length_ > 0) {
-      float length = (opt1.value() - opt2.value()).norm();
-      if (length < min_segment_length_) continue;
-    }
-    if (max_lateral_distance_ > 0) {
-      float abs_lateral1 = std::abs(opt1.value().y());
-      float abs_lateral2 = std::abs(opt2.value().y());
-      if (std::min(abs_lateral1, abs_lateral2) > max_lateral_distance_) continue;
-    }
-
-    pcl::PointNormal xyz;
-    xyz.x = opt1->x();
-    xyz.y = opt1->y();
-    xyz.z = opt1->z();
-    xyz.normal_x = opt2->x();
-    xyz.normal_y = opt2->y();
-    xyz.normal_z = opt2->z();
-
-    //
-    pcl::PointNormal truncated_xyz = xyz;
-    if (max_segment_distance_ > 0)
-      if (!is_near_element(xyz, truncated_xyz)) continue;
-
-    projected_points.push_back(truncated_xyz);
-  }
-  return projected_points;
 }
 
 std::set<int> SegmentFilter::filter_by_mask(
