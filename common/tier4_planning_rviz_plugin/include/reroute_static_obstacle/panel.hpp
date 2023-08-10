@@ -45,32 +45,30 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TOOLS__REROUTE_STATIC_OBSTACLE_PANEL_HPP_
-#define TOOLS__REROUTE_STATIC_OBSTACLE_PANEL_HPP_
-
-#include "rviz_default_plugins/tools/point/point_tool.hpp"
-
-#include <sstream>
-
-#include <OgreVector.h>
-#include <OgreVector3.h>
+#ifndef REROUTE_STATIC_OBSTACLE__PANEL_HPP_
+#define REROUTE_STATIC_OBSTACLE__PANEL_HPP_
 
 #include "rclcpp/qos.hpp"
-
-#include <rviz_common/display_context.hpp>
 #include "rviz_common/interaction/view_picker_iface.hpp"
 #include "rviz_common/load_resource.hpp"
 #include "rviz_common/msg_conversions.hpp"
 #include "rviz_common/properties/bool_property.hpp"
-#include "rviz_common/properties/string_property.hpp"
 #include "rviz_common/properties/qos_profile_property.hpp"
+#include "rviz_common/properties/string_property.hpp"
 #include "rviz_common/render_panel.hpp"
-#include "rviz_common/viewport_mouse_event.hpp"
 #include "rviz_common/view_controller.hpp"
+#include "rviz_common/viewport_mouse_event.hpp"
+#include "rviz_default_plugins/tools/point/point_tool.hpp"
 
-#include <optional>
+#include <rviz_common/display_context.hpp>
+
+#include <OgreVector.h>
+#include <OgreVector3.h>
+
 #include <algorithm>
 #include <memory>
+#include <optional>
+#include <sstream>
 #include <vector>
 
 namespace rviz_plugins
@@ -78,36 +76,36 @@ namespace rviz_plugins
 
 class RerouteStaticObstacleTool : public rviz_default_plugins::tools::PointTool
 {
-
 public:
   RerouteStaticObstacleTool();
   void onInitialize() override;
-  
+
   void activate() override;
   void deactivate() override;
 
   int processMouseEvent(rviz_common::ViewportMouseEvent & event) override;
 
-  public Q_SLOTS:
-  void updateTopic() ;
-  void updateAutoDeactivate() ;
+public Q_SLOTS:
+  void updateTopic();
+  void updateAutoDeactivate();
+
 protected:
-  void publishPosition(const Ogre::Vector3 & position) const ;
+  void publishPosition(const Ogre::Vector3 & position) const;
   void setStatusForPosition(const Ogre::Vector3 & position);
 
-//   QCursor std_cursor_;
-//   QCursor hit_cursor_;
-//   rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr publisher_;
-//   rclcpp::Clock::SharedPtr clock_;
+  //   QCursor std_cursor_;
+  //   QCursor hit_cursor_;
+  //   rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr publisher_;
+  //   rclcpp::Clock::SharedPtr clock_;
 
-//   rviz_common::properties::StringProperty * topic_property_;
-//   rviz_common::properties::BoolProperty * auto_deactivate_property_;
-//   rviz_common::properties::QosProfileProperty * qos_profile_property_;
-
+  //   rviz_common::properties::StringProperty * topic_property_;
+  //   rviz_common::properties::BoolProperty * auto_deactivate_property_;
+  //   rviz_common::properties::QosProfileProperty * qos_profile_property_;
 
   rclcpp::QoS qos_profile_;
-  private:
+
+private:
   std::optional<Ogre::Vector3> get_point_from_mouse(rviz_common::ViewportMouseEvent & event);
 };
 }  // namespace rviz_plugins
-#endif  // TOOLS__REROUTE_STATIC_OBSTACLE_PANEL_HPP_
+#endif  // REROUTE_STATIC_OBSTACLE__PANEL_HPP_

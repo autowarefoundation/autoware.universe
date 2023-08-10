@@ -41,7 +41,8 @@ ReroutingStaticObstacle::ReroutingStaticObstacle(const rclcpp::NodeOptions & nod
     std::bind(&ReroutingStaticObstacle::map_callback, this, std::placeholders::_1));
 
   sub_trigger_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
-    "/simulation/planning/reroute_static_obstacle_point_publisher/point", rclcpp::QoS(1), std::bind(&ReroutingStaticObstacle::onTrigger, this, _1));
+    "/simulation/planning/reroute_static_obstacle_point_publisher/point", rclcpp::QoS(1),
+    std::bind(&ReroutingStaticObstacle::onTrigger, this, _1));
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_cli(cli_change_route_);
