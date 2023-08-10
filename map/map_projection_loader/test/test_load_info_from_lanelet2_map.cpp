@@ -62,10 +62,14 @@ void save_dummy_local_lanelet2_map(const std::string & output_path)
   // <?xml version="1.0"?>
   // <osm version="0.6" generator="lanelet2">
   //   <node id="1" lat="" lon=""/>
-  // </osm>⏎
+  //   <node id="2" lat="" lon=""/>
+  //   <node id="3" lat="" lon=""/>
+  // </osm>⏎               
   file << "<?xml version=\"1.0\"?>\n";
   file << "<osm version=\"0.6\" generator=\"lanelet2\">\n";
   file << "  <node id=\"1\" lat=\"\" lon=\"\"/>\n";
+  file << "  <node id=\"2\" lat=\"\" lon=\"\"/>\n";
+  file << "  <node id=\"3\" lat=\"\" lon=\"\"/>\n";
   file << "</osm>";
 
   file.close();
