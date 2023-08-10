@@ -75,7 +75,7 @@ void save_dummy_local_lanelet2_map(const std::string & output_path)
   file.close();
 }
 
-TEST(TestLoadFromMGRSLanelet2Map, LoadMGRSGrid)
+TEST(TestLoadFromLanelet2Map, LoadMGRSGrid)
 {
   // Save dummy lanelet2 map
   const std::string mgrs_grid = "54SUE";
@@ -91,7 +91,7 @@ TEST(TestLoadFromMGRSLanelet2Map, LoadMGRSGrid)
   EXPECT_EQ(projector_info.mgrs_grid, mgrs_grid);
 }
 
-TEST(TestLoadFromLocalLanelet2Map, LoadMGRSGrid)
+TEST(TestLoadFromLanelet2Map, LoadLocalGrid)
 {
   // Save dummy lanelet2 map
   const std::string output_path = "/tmp/test_load_info_from_lanelet2_map.osm";
