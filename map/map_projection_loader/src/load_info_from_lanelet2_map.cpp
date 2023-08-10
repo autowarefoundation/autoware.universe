@@ -32,8 +32,22 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::str
     throw std::runtime_error("Error occurred while loading lanelet2 map");
   }
 
+  // Check if the map (lat, lon) is zero
+  bool is_local = true;
+  for (const auto & point : map->pointLayer) {
+    const auto gps_point = projector.reverse(point);
+    if (gps_point.lat != 0.0 || gps_point.lon != 0.0) {
+      is_local = false;
+      break;
+    }
+  }
+
   tier4_map_msgs::msg::MapProjectorInfo msg;
-  msg.type = "MGRS";
-  msg.mgrs_grid = projector.getProjectedMGRSGrid();
+  if (is_local) {
+    msg.type = "local";
+  } else {
+    msg.type = "MGRS";
+    msg.mgrs_grid = projector.getProjectedMGRSGrid();
+  }
   return msg;
 }

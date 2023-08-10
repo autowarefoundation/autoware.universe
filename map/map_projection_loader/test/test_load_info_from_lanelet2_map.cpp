@@ -21,7 +21,7 @@
 
 #include <fstream>
 
-void save_dummy_lanelet2_map(const std::string & mgrs_coord, const std::string & output_path)
+void save_dummy_mgrs_lanelet2_map(const std::string & mgrs_coord, const std::string & output_path)
 {
   int zone = std::stoi(mgrs_coord.substr(0, 2));
   bool is_north = false;
@@ -39,6 +39,10 @@ void save_dummy_lanelet2_map(const std::string & mgrs_coord, const std::string &
     return;
   }
 
+  // <?xml version="1.0"?>
+  // <osm version="0.6" generator="lanelet2">
+  //   <node id="1" lat="LATITUDE" lon="LONGITUDE"/>
+  // </osm>⏎               
   file << "<?xml version=\"1.0\"?>\n";
   file << "<osm version=\"0.6\" generator=\"lanelet2\">\n";
   file << "  <node id=\"1\" lat=\"" << lat << "\" lon=\"" << lon << "\"/>\n";
@@ -47,13 +51,33 @@ void save_dummy_lanelet2_map(const std::string & mgrs_coord, const std::string &
   file.close();
 }
 
-TEST(TestLoadFromLanelet2Map, LoadMGRSGrid)
+void save_dummy_local_lanelet2_map(const std::string & output_path)
+{
+  std::ofstream file(output_path);
+  if (!file) {
+    std::cerr << "Unable to open file.\n";
+    return;
+  }
+
+  // <?xml version="1.0"?>
+  // <osm version="0.6" generator="lanelet2">
+  //   <node id="1" lat="" lon=""/>
+  // </osm>⏎               
+  file << "<?xml version=\"1.0\"?>\n";
+  file << "<osm version=\"0.6\" generator=\"lanelet2\">\n";
+  file << "  <node id=\"1\" lat=\"\" lon=\"\"/>\n";
+  file << "</osm>";
+
+  file.close();
+}
+
+TEST(TestLoadFromMGRSLanelet2Map, LoadMGRSGrid)
 {
   // Save dummy lanelet2 map
   const std::string mgrs_grid = "54SUE";
   const std::string mgrs_coord = mgrs_grid + "1000010000";
   const std::string output_path = "/tmp/test_load_info_from_lanelet2_map.osm";
-  save_dummy_lanelet2_map(mgrs_coord, output_path);
+  save_dummy_mgrs_lanelet2_map(mgrs_coord, output_path);
 
   // Test the function
   const auto projector_info = load_info_from_lanelet2_map(output_path);
@@ -61,6 +85,19 @@ TEST(TestLoadFromLanelet2Map, LoadMGRSGrid)
   // Check the result
   EXPECT_EQ(projector_info.type, "MGRS");
   EXPECT_EQ(projector_info.mgrs_grid, mgrs_grid);
+}
+
+TEST(TestLoadFromLocalLanelet2Map, LoadMGRSGrid)
+{
+  // Save dummy lanelet2 map
+  const std::string output_path = "/tmp/test_load_info_from_lanelet2_map.osm";
+  save_dummy_local_lanelet2_map(output_path);
+
+  // Test the function
+  const auto projector_info = load_info_from_lanelet2_map(output_path);
+
+  // Check the result
+  EXPECT_EQ(projector_info.type, "local");
 }
 
 int main(int argc, char ** argv)
