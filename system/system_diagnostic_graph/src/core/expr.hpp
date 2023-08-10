@@ -31,29 +31,57 @@ class BaseExpr
 public:
   static std::unique_ptr<BaseExpr> create(Graph & graph, YAML::Node yaml);
   virtual ~BaseExpr() = default;
-  virtual DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const = 0;
+  virtual DiagnosticLevel eval() const = 0;
 };
 
 class ConstExpr : public BaseExpr
 {
 public:
   explicit ConstExpr(const DiagnosticLevel level) : level_(level) {}
-  DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const override;
+  DiagnosticLevel eval() const override;
 
 private:
   DiagnosticLevel level_;
 };
 
-class AllExpr : public BaseExpr
+class UnitExpr : public BaseExpr
 {
 public:
-  DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const override;
+  UnitExpr(Graph & graph, YAML::Node yaml);
+  DiagnosticLevel eval() const override;
+
+private:
+  UnitNode * node_;
 };
 
-class AnyExpr : public BaseExpr
+class DiagExpr : public BaseExpr
 {
 public:
-  DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const override;
+  DiagExpr(Graph & graph, YAML::Node yaml);
+  DiagnosticLevel eval() const override;
+
+private:
+  DiagNode * node_;
+};
+
+class AndExpr : public BaseExpr
+{
+public:
+  AndExpr(Graph & graph, YAML::Node yaml);
+  DiagnosticLevel eval() const override;
+
+private:
+  std::vector<std::unique_ptr<BaseExpr>> list_;
+};
+
+class OrExpr : public BaseExpr
+{
+public:
+  OrExpr(Graph & graph, YAML::Node yaml);
+  DiagnosticLevel eval() const override;
+
+private:
+  std::vector<std::unique_ptr<BaseExpr>> list_;
 };
 
 }  // namespace system_diagnostic_graph

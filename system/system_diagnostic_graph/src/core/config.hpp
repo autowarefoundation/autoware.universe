@@ -44,6 +44,14 @@ struct FileConfig_
   std::vector<std::shared_ptr<NodeConfig_>> nodes;
 };
 
+template <class T>
+T take(YAML::Node yaml, const std::string & field)
+{
+  const auto result = yaml[field].as<T>();
+  yaml.remove(field);
+  return result;
+}
+
 using NodeConfig = std::shared_ptr<NodeConfig_>;
 using FileConfig = std::shared_ptr<FileConfig_>;
 ConfigError create_error(const FileConfig & config, const std::string & message);

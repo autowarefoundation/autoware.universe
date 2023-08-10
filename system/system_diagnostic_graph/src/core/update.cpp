@@ -28,22 +28,21 @@ namespace system_diagnostic_graph
 
 void DiagGraph::create(const std::string & file)
 {
-  const auto config = load_config_file(file);
+  const auto configs = load_config_file(file);
 
-  /*
-  // Create nodes first because it is necessary for the link.
-  std::vector<std::pair<UnitConfig, UnitNode *>> units;
+  // Create unit nodes first because it is necessary for the link.
+  std::vector<std::pair<NodeConfig, UnitNode *>> units;
   for (const auto & config : configs) {
-    UnitNode * unit = data_.make_unit(config.name);
+    UnitNode * unit = graph_.make_unit(config->name);
     units.push_back(std::make_pair(config, unit));
   }
 
-  // Reflect the config after creating all the nodes,
-  Graph graph(data_);
+  // Reflect the config after creating all the unit nodes,
   for (auto & [config, unit] : units) {
-    unit->create(graph, config);
+    unit->create(graph_, config);
   }
 
+  /*
   // Sort unit nodes in topological order for update dependencies.
   topological_nodes_ = topological_sort(data_);
 

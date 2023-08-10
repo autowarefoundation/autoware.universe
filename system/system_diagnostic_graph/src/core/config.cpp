@@ -32,7 +32,7 @@ ConfigError create_error(const FileConfig & config, const std::string & message)
 
 ConfigError create_error(const NodeConfig & config, const std::string & message)
 {
-  const std::string marker = config ? "File:" + config->path : "Parameter";
+  const std::string marker = "File:" + config->path + ", Node:" + config->name;
   return ConfigError(message + " (" + marker + ")");
 }
 
@@ -47,7 +47,7 @@ NodeConfig parse_config_node(YAML::Node yaml, const FileConfig & scope)
 
   const auto config = std::make_shared<NodeConfig_>();
   config->path = scope->path;
-  config->name = yaml["name"].as<std::string>();
+  config->name = take<std::string>(yaml, "name");
   config->yaml = yaml;
   return config;
 }

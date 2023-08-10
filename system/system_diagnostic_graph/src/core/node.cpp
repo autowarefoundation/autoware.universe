@@ -48,18 +48,16 @@ DiagnosticNode UnitNode::report() const
 
 void UnitNode::update()
 {
-  std::vector<DiagnosticLevel> levels;
-  if (!links_.empty()) {
-    const auto get_level = [](const auto * link) { return link->level(); };
-    levels.resize(links_.size());
-    std::transform(links_.begin(), links_.end(), levels.begin(), get_level);
-  }
-  level_ = expr_->exec(levels);
+  level_ = expr_->eval();
 }
 
 void UnitNode::create(Graph & graph, const NodeConfig & config)
 {
-  expr_ = BaseExpr::create(graph, config->yaml);
+  try {
+    expr_ = BaseExpr::create(graph, config->yaml);
+  } catch (const ConfigError & error) {
+    throw create_error(config, error.what());
+  }
 }
 
 DiagNode::DiagNode(const std::string & name, const std::string & hardware)
