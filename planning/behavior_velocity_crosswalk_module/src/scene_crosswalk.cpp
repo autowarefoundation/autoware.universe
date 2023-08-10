@@ -252,6 +252,10 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   // Set safe or unsafe
   setSafe(!nearest_stop_factor);
 
+  // Set distance
+  // NOTE: If no stop point is inserted, distance to the virtual stop line has to be calculated.
+  setDistanceToStop(*path, default_stop_pose, nearest_stop_factor);
+
   // plan Go/Stop
   if (isActivated()) {
     planGo(*path, nearest_stop_factor);
@@ -402,7 +406,7 @@ std::pair<double, double> CrosswalkModule::getAttentionRange(
 
 void CrosswalkModule::insertDecelPointWithDebugInfo(
   const geometry_msgs::msg::Point & stop_point, const float target_velocity,
-  PathWithLaneId & output)
+  PathWithLaneId & output) const
 {
   const auto stop_pose = planning_utils::insertDecelPoint(stop_point, output, target_velocity);
   if (!stop_pose) {
@@ -1007,25 +1011,34 @@ geometry_msgs::msg::Polygon CrosswalkModule::createVehiclePolygon(
   return polygon;
 }
 
-void CrosswalkModule::planGo(
-  PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor)
+void CrosswalkModule::setDistanceToStop(
+  const PathWithLaneId & ego_path,
+  const std::optional<geometry_msgs::msg::Pose> & default_stop_pose,
+  const std::optional<StopFactor> & stop_factor)
 {
-  if (!stop_factor) {
-    setDistance(std::numeric_limits<double>::lowest());
-    return;
-  }
+  // calculate stop position
+  const auto stop_pos = [&]() -> std::optional<geometry_msgs::msg::Point> {
+    if (stop_factor) return stop_factor->stop_pose.position;
+    if (default_stop_pose) return default_stop_pose->position;
+    return std::nullopt;
+  }();
 
+  // Set distance
+  if (stop_pos) {
+    const auto & ego_pos = planner_data_->current_odometry->pose.position;
+    const double dist_ego2stop = calcSignedArcLength(ego_path.points, ego_pos, *stop_pos);
+    setDistance(dist_ego2stop);
+  }
+}
+
+void CrosswalkModule::planGo(
+  PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const
+{
   // Plan slow down
   const auto target_velocity = calcTargetVelocity(stop_factor->stop_pose.position, ego_path);
   insertDecelPointWithDebugInfo(
     stop_factor->stop_pose.position,
     std::max(planner_param_.min_slow_down_velocity, target_velocity), ego_path);
-
-  // Set distance
-  const auto & ego_pos = planner_data_->current_odometry->pose.position;
-  const double dist_ego2stop =
-    calcSignedArcLength(ego_path.points, ego_pos, stop_factor->stop_pose.position);
-  setDistance(dist_ego2stop);
 }
 
 void CrosswalkModule::planStop(
@@ -1039,7 +1052,7 @@ void CrosswalkModule::planStop(
   }();
 
   if (!stop_factor) {
-    setDistance(std::numeric_limits<double>::lowest());
+    RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 5000, "stop_factor is null");
     return;
   }
 
@@ -1049,11 +1062,5 @@ void CrosswalkModule::planStop(
   velocity_factor_.set(
     ego_path.points, planner_data_->current_odometry->pose, stop_factor->stop_pose,
     VelocityFactor::UNKNOWN);
-
-  // set distance
-  const auto & ego_pos = planner_data_->current_odometry->pose.position;
-  const double dist_ego2stop =
-    calcSignedArcLength(ego_path.points, ego_pos, stop_factor->stop_pose.position);
-  setDistance(dist_ego2stop);
 }
 }  // namespace behavior_velocity_planner
