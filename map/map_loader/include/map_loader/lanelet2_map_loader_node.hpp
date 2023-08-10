@@ -43,7 +43,7 @@ public:
 private:
   void on_map_projector_info(const MapProjectorInfo::ConstSharedPtr msg);
 
-  rclcpp::Subscription<MapProjectorInfo>::SharedPtr sub_map_projector_type_;
+  rclcpp::Subscription<MapProjectorInfo>::SharedPtr sub_map_projector_info_;
   rclcpp::Publisher<HADMapBin>::SharedPtr pub_map_bin_;
 };
 
