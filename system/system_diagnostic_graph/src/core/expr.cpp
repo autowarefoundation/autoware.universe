@@ -24,8 +24,11 @@
 namespace system_diagnostic_graph
 {
 
-std::unique_ptr<BaseExpr> BaseExpr::create(const std::string & type)
+std::unique_ptr<BaseExpr> BaseExpr::create(Graph & graph, YAML::Node yaml)
 {
+  const auto type = yaml["type"].as<std::string>();
+  (void)graph;
+
   if (type == "and") {
     return std::make_unique<AllExpr>();
   }

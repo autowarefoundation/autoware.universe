@@ -12,34 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CORE__GRAPH_HPP_
-#define CORE__GRAPH_HPP_
+#ifndef CORE__UPDATE_HPP_
+#define CORE__UPDATE_HPP_
 
+#include "graph.hpp"
+#include "node.hpp"
 #include "types.hpp"
 
-#include <map>
-#include <memory>
+#include <rclcpp/rclcpp.hpp>
+
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace system_diagnostic_graph
 {
 
-class Graph
+class DiagGraph
 {
 public:
-  UnitNode * make_unit(const std::string & name);
-  UnitNode * find_unit(const std::string & name);
-  DiagNode * make_diag(const std::string & name, const std::string & hardware);
-  DiagNode * find_diag(const std::string & name, const std::string & hardware);
+  void create(const std::string & file);
+  void callback(const DiagnosticArray & array);
+  DiagnosticGraph report(const rclcpp::Time & stamp);
+
+  void debug();
 
 private:
-  std::vector<std::unique_ptr<BaseNode>> nodes_;
-  std::map<std::string, UnitNode *> units_;
-  std::map<std::pair<std::string, std::string>, DiagNode *> diags_;
+  static std::vector<BaseNode *> topological_sort(const DiagGraph & data);
+  Graph graph_;
+  std::vector<BaseNode *> topological_nodes_;
 };
 
 }  // namespace system_diagnostic_graph
 
-#endif  // CORE__GRAPH_HPP_
+#endif  // CORE__UPDATE_HPP_

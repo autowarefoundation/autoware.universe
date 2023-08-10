@@ -11,6 +11,7 @@ ament_auto_add_executable(aggregator
   src/core/graph.cpp
   src/core/node.cpp
   src/core/expr.cpp
+  src/core/update.cpp
 )
 
 ament_auto_add_executable(converter

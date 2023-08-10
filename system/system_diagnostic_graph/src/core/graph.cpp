@@ -14,121 +14,42 @@
 
 #include "graph.hpp"
 
-#include "config.hpp"
+#include "node.hpp"
 
-#include <deque>
 #include <memory>
-#include <string>
-#include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace system_diagnostic_graph
 {
 
-void DiagGraph::create(const std::string & file)
+UnitNode * Graph::make_unit(const std::string & name)
 {
-  const auto config = load_config_file(file);
-  data_ = DiagGraphData();
-
-  /*
-  // Create nodes first because it is necessary for the link.
-  std::vector<std::pair<UnitConfig, UnitNode *>> units;
-  for (const auto & config : configs) {
-    UnitNode * unit = data_.make_unit(config.name);
-    units.push_back(std::make_pair(config, unit));
-  }
-
-  // Reflect the config after creating all the nodes,
-  DiagGraphInit graph(data_);
-  for (auto & [config, unit] : units) {
-    unit->create(graph, config);
-  }
-
-  // Sort unit nodes in topological order for update dependencies.
-  topological_nodes_ = topological_sort(data_);
-
-  // Set the link index for the ros message.
-  for (size_t i = 0; i < topological_nodes_.size(); ++i) {
-    topological_nodes_[i]->set_index(i);
-  }
-  */
+  const auto key = name;
+  auto unit = std::make_unique<UnitNode>(key);
+  units_[key] = unit.get();
+  nodes_.emplace_back(std::move(unit));
+  return units_[key];
 }
 
-DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
+UnitNode * Graph::find_unit(const std::string & name)
 {
-  DiagnosticGraph message;
-  message.stamp = stamp;
-  message.nodes.reserve(topological_nodes_.size());
-
-  for (const auto & node : topological_nodes_) {
-    node->update();
-  }
-  for (const auto & node : topological_nodes_) {
-    message.nodes.push_back(node->report());
-  }
-  return message;
+  const auto key = name;
+  return units_.count(key) ? units_.at(key) : nullptr;
 }
 
-void DiagGraph::callback(const DiagnosticArray & array)
+DiagNode * Graph::make_diag(const std::string & name, const std::string & hardware)
 {
-  for (const auto & status : array.status) {
-    auto leaf = data_.find_leaf(status.name, status.hardware_id);
-    if (leaf) {
-      leaf->callback(status);
-    } else {
-      // TODO(Takagi, Isamu): handle unknown diagnostics
-    }
-  }
+  const auto key = std::make_pair(name, hardware);
+  auto diag = std::make_unique<DiagNode>(name, hardware);
+  diags_[key] = diag.get();
+  nodes_.emplace_back(std::move(diag));
+  return diags_[key];
 }
 
-std::vector<BaseNode *> DiagGraph::topological_sort(const DiagGraphData & data)
+DiagNode * Graph::find_diag(const std::string & name, const std::string & hardware)
 {
-  std::unordered_map<BaseNode *, int> degrees;
-  std::deque<BaseNode *> nodes;
-  std::deque<BaseNode *> result;
-  std::deque<BaseNode *> buffer;
-
-  // Create a list of unit nodes and leaf nodes.
-  for (const auto & unit : data.unit_list) {
-    nodes.push_back(unit.get());
-  }
-  for (const auto & leaf : data.leaf_list) {
-    nodes.push_back(leaf.get());
-  }
-
-  // Count degrees of each node.
-  for (const auto & node : nodes) {
-    for (const auto & link : node->links()) {
-      ++degrees[link];
-    }
-  }
-
-  // Find initial nodes that are zero degrees.
-  for (const auto & node : nodes) {
-    if (degrees[node] == 0) {
-      buffer.push_back(node);
-    }
-  }
-
-  // Sort by topological order.
-  while (!buffer.empty()) {
-    const auto node = buffer.front();
-    buffer.pop_front();
-    for (const auto & link : node->links()) {
-      if (--degrees[link] == 0) {
-        buffer.push_back(link);
-      }
-    }
-    result.push_back(node);
-  }
-
-  // Detect circulation because the result does not include the nodes on the loop.
-  if (result.size() != nodes.size()) {
-    throw ConfigError("detect graph circulation");
-  }
-
-  return std::vector<BaseNode *>(result.rbegin(), result.rend());
+  const auto key = std::make_pair(name, hardware);
+  return diags_.count(key) ? diags_.at(key) : nullptr;
 }
 
 }  // namespace system_diagnostic_graph

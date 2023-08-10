@@ -14,6 +14,8 @@
 
 #include "node.hpp"
 
+#include "expr.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <algorithm>
@@ -22,16 +24,21 @@
 namespace system_diagnostic_graph
 {
 
-UnitNode::UnitNode(const KeyType & key) : key_(key)
+UnitNode::UnitNode(const std::string & name) : name_(name)
 {
   level_ = DiagnosticStatus::STALE;
+}
+
+UnitNode::~UnitNode()
+{
+  // for unique_ptr
 }
 
 DiagnosticNode UnitNode::report() const
 {
   DiagnosticStatus status;
   status.level = level_;
-  status.name = key_;
+  status.name = name_;
   status.hardware_id = "";
 
   DiagnosticNode message;
@@ -50,19 +57,13 @@ void UnitNode::update()
   level_ = expr_->exec(levels);
 }
 
-void UnitNode::create(DiagGraphInit & graph, const NodeConfig & config)
+void UnitNode::create(Graph & graph, const NodeConfig & config)
 {
-  for (const auto & link : config.expr.list) {
-    BaseNode * node = graph.get(link);
-    if (!node) {
-      throw ConfigError("unknown unit name: " + config.hint);
-    }
-    links_.push_back(node);
-  }
-  expr_ = BaseExpr::create(config.expr.type);
+  expr_ = BaseExpr::create(graph, config->yaml);
 }
 
-DiagNode::DiagNode(const KeyType & key) : key_(key)
+DiagNode::DiagNode(const std::string & name, const std::string & hardware)
+: name_(name), hardware_(hardware)
 {
   level_ = DiagnosticStatus::STALE;
 }
@@ -71,8 +72,8 @@ DiagnosticNode DiagNode::report() const
 {
   DiagnosticStatus status = status_;
   status.level = level_;
-  status.name = key_.first;
-  status.hardware_id = key_.second;
+  status.name = name_;
+  status.hardware_id = hardware_;
 
   DiagnosticNode message;
   message.status = status;
@@ -89,46 +90,6 @@ void DiagNode::callback(const DiagnosticStatus & status)
 {
   level_ = status.level;
   status_ = status;
-}
-
-UnitNode * DiagGraphData::make_unit(const std::string & name)
-{
-  const auto key = name;
-  auto unit = unit_list.emplace_back(std::make_unique<UnitNode>(key)).get();
-  unit_dict[key] = unit;
-  return unit;
-}
-
-UnitNode * DiagGraphData::find_unit(const std::string & name)
-{
-  const auto key = name;
-  return unit_dict.count(key) ? unit_dict.at(key) : nullptr;
-}
-
-DiagNode * DiagGraphData::make_leaf(const std::string & name, const std::string & hardware)
-{
-  const auto key = std::make_pair(name, hardware);
-  auto leaf = leaf_list.emplace_back(std::make_unique<DiagNode>(key)).get();
-  leaf_dict[key] = leaf;
-  return leaf;
-}
-
-DiagNode * DiagGraphData::find_leaf(const std::string & name, const std::string & hardware)
-{
-  const auto key = std::make_pair(name, hardware);
-  return leaf_dict.count(key) ? leaf_dict.at(key) : nullptr;
-}
-
-BaseNode * DiagGraphInit::get(const LinkConfig & link)
-{
-  // For link to unit type.
-  if (link.is_unit_type) {
-    return data_.find_unit(link.name);
-  }
-  // For link to diag type.
-  auto * leaf = data_.find_leaf(link.name, link.hardware);
-  if (leaf) return leaf;
-  return data_.make_leaf(link.name, link.hardware);
 }
 
 }  // namespace system_diagnostic_graph

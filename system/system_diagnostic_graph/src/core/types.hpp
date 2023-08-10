@@ -30,6 +30,12 @@ using tier4_system_msgs::msg::DiagnosticNode;
 
 using DiagnosticLevel = DiagnosticStatus::_level_type;
 
+class Graph;
+class BaseNode;
+class UnitNode;
+class DiagNode;
+class BaseExpr;
+
 }  // namespace system_diagnostic_graph
 
 #endif  // CORE__TYPES_HPP_

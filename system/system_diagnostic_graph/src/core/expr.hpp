@@ -17,6 +17,8 @@
 
 #include "types.hpp"
 
+#include <yaml-cpp/yaml.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -27,7 +29,7 @@ namespace system_diagnostic_graph
 class BaseExpr
 {
 public:
-  static std::unique_ptr<BaseExpr> create(const std::string & type);
+  static std::unique_ptr<BaseExpr> create(Graph & graph, YAML::Node yaml);
   virtual ~BaseExpr() = default;
   virtual DiagnosticLevel exec(const std::vector<DiagnosticLevel> & levels) const = 0;
 };

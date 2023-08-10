@@ -14,9 +14,9 @@
 
 #include "debug.hpp"
 
-#include "graph.hpp"
 #include "node.hpp"
 #include "types.hpp"
+#include "update.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -59,13 +59,12 @@ void DiagGraph::debug()
 
 DiagDebugData UnitNode::debug() const
 {
-  return DiagDebugData{std::to_string(index()), "unit", key_, "-----", level_names.at(level_)};
+  return DiagDebugData{std::to_string(index()), "unit", name_, "-----", level_names.at(level_)};
 }
 
 DiagDebugData DiagNode::debug() const
 {
-  return DiagDebugData{
-    std::to_string(index()), "diag", key_.first, key_.second, level_names.at(level_)};
+  return DiagDebugData{std::to_string(index()), "diag", name_, hardware_, level_names.at(level_)};
 }
 
 }  // namespace system_diagnostic_graph

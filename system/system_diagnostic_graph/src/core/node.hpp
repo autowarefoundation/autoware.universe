@@ -17,10 +17,8 @@
 
 #include "config.hpp"
 #include "debug.hpp"
-#include "expr.hpp"
 #include "types.hpp"
 
-#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -28,8 +26,6 @@
 
 namespace system_diagnostic_graph
 {
-
-class GraphData;
 
 class BaseNode
 {
@@ -53,19 +49,19 @@ protected:
 class UnitNode : public BaseNode
 {
 public:
-  using KeyType = std::string;
-  explicit UnitNode(const KeyType & key);
+  explicit UnitNode(const std::string & name);
+  ~UnitNode() override;
 
   DiagnosticNode report() const override;
   DiagDebugData debug() const override;
   void update() override;
-  void create(GraphData & graph, const NodeConfig & config);
+  void create(Graph & graph, const NodeConfig & config);
 
   std::vector<BaseNode *> links() const override { return links_; }
-  std::string name() const override { return key_; }
+  std::string name() const override { return name_; }
 
 private:
-  const KeyType key_;
+  const std::string name_;
   std::vector<BaseNode *> links_;
   std::unique_ptr<BaseExpr> expr_;
 };
@@ -73,8 +69,7 @@ private:
 class DiagNode : public BaseNode
 {
 public:
-  using KeyType = std::pair<std::string, std::string>;
-  explicit DiagNode(const KeyType & key);
+  explicit DiagNode(const std::string & name, const std::string & hardware);
 
   DiagnosticNode report() const override;
   DiagDebugData debug() const override;
@@ -82,18 +77,12 @@ public:
   void callback(const DiagnosticStatus & status);
 
   std::vector<BaseNode *> links() const override { return {}; }
-  std::string name() const override { return key_.first; }
+  std::string name() const override { return name_; }
 
 private:
-  const KeyType key_;
+  const std::string name_;
+  const std::string hardware_;
   DiagnosticStatus status_;
-};
-
-struct GraphData
-{
-  std::vector<std::unique_ptr<BaseNode>> nodes;
-  std::map<UnitNode::KeyType, UnitNode *> units;
-  std::map<DiagNode::KeyType, DiagNode *> diags;
 };
 
 }  // namespace system_diagnostic_graph
