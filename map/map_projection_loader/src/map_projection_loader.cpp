@@ -65,7 +65,7 @@ MapProjectionLoader::MapProjectionLoader() : Node("map_projection_loader")
   }
 
   // Publish the message
-  const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_pub(publisher_);
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  adaptor.init_pub(publisher_);
   publisher_->publish(msg);
 }

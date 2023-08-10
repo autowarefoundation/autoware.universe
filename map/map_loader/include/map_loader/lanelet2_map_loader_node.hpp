@@ -19,6 +19,8 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <tier4_map_msgs/msg/map_projector_info.hpp>
+#include <component_interface_specs/map.hpp>
+#include <component_interface_utils/rclcpp.hpp>
 
 #include <lanelet2_projection/UTM.h>
 
@@ -41,9 +43,11 @@ public:
     const rclcpp::Time & now);
 
 private:
-  void on_map_projector_info(const MapProjectorInfo::ConstSharedPtr msg);
+  using MapProjectorInfo = map_interface::MapProjectorInfo;
 
-  rclcpp::Subscription<MapProjectorInfo>::SharedPtr sub_map_projector_type_;
+  void on_map_projector_info(const MapProjectorInfo::Message::ConstSharedPtr msg);
+
+  component_interface_utils::Subscription<MapProjectorInfo>::SharedPtr sub_map_projector_type_;
   rclcpp::Publisher<HADMapBin>::SharedPtr pub_map_bin_;
 };
 
