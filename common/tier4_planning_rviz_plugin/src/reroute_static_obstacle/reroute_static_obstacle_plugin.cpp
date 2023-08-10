@@ -1,3 +1,16 @@
+// Copyright 2023 TIER IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 /*
  * Copyright (c) 2013, Willow Garage, Inc.
  * Copyright (c) 2018, Bosch Software Innovations GmbH.
@@ -27,7 +40,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <reroute_static_obstacle/panel.hpp>
+#include <reroute_static_obstacle/reroute_static_obstacle_plugin.hpp>
 #include <rviz_common/render_panel.hpp>
 #include <rviz_rendering/render_window.hpp>
 
@@ -38,52 +51,47 @@
 namespace rviz_plugins
 {
 
-RerouteStaticObstacleTool::RerouteStaticObstacleTool() : qos_profile_(5)
+RerouteStaticObstaclePointPublish::RerouteStaticObstaclePointPublish() : qos_profile_(5)
 {
-  shortcut_key_ = 'u';
-
   topic_property_ = new rviz_common::properties::StringProperty(
     "Topic", "/simulation/planning/reroute_static_obstacle_point_publisher/point",
     "The topic on which to publish points.", getPropertyContainer(), SLOT(updateTopic()), this);
 
   auto_deactivate_property_ = new rviz_common::properties::BoolProperty(
-    "Interfactive", false, "Switch away from this tool after one click.", getPropertyContainer(),
+    "Single click", true, "Switch away from this tool after one click.", getPropertyContainer(),
     SLOT(updateAutoDeactivate()), this);
 
   qos_profile_property_ =
     new rviz_common::properties::QosProfileProperty(topic_property_, qos_profile_);
 }
 
-void RerouteStaticObstacleTool::onInitialize()
+void RerouteStaticObstaclePointPublish::onInitialize()
 {
-  hit_cursor_ = cursor_;
-  std_cursor_ = rviz_common::getDefaultCursor();
   qos_profile_property_->initialize([this](rclcpp::QoS profile) { this->qos_profile_ = profile; });
   updateTopic();
 }
 
-void RerouteStaticObstacleTool::activate()
+void RerouteStaticObstaclePointPublish::activate()
 {
 }
 
-void RerouteStaticObstacleTool::deactivate()
+void RerouteStaticObstaclePointPublish::deactivate()
 {
 }
 
-void RerouteStaticObstacleTool::updateTopic()
+void RerouteStaticObstaclePointPublish::updateTopic()
 {
   rclcpp::Node::SharedPtr raw_node = context_->getRosNodeAbstraction().lock()->get_raw_node();
-  // TODO(anhosi, wjwwood): replace with abstraction for publishers once available
   publisher_ = raw_node->template create_publisher<geometry_msgs::msg::PointStamped>(
     topic_property_->getStdString(), qos_profile_);
   clock_ = raw_node->get_clock();
 }
 
-void RerouteStaticObstacleTool::updateAutoDeactivate()
+void RerouteStaticObstaclePointPublish::updateAutoDeactivate()
 {
 }
 
-int RerouteStaticObstacleTool::processMouseEvent(rviz_common::ViewportMouseEvent & event)
+int RerouteStaticObstaclePointPublish::processMouseEvent(rviz_common::ViewportMouseEvent & event)
 {
   int flags = 0;
   if (event.leftUp()) {
@@ -97,28 +105,10 @@ int RerouteStaticObstacleTool::processMouseEvent(rviz_common::ViewportMouseEvent
     }
   }
 
-  //   Ogre::Vector3 position;
-  //   bool success = context_->getViewPicker()->get3DPoint(event.panel, event.x, event.y,
-  //   position); setCursor(success ? hit_cursor_ : std_cursor_);
-
-  //   if (success) {
-  //     setStatusForPosition(position);
-
-  //     if (event.leftUp()) {
-  //       publishPosition(position);
-
-  //       if (auto_deactivate_property_->getBool()) {
-  //         flags |= Finished;
-  //       }
-  //     }
-  //   } else {
-  //     setStatus("Move over an object to select the target point.");
-  //   }
-
   return flags;
 }
 
-void RerouteStaticObstacleTool::setStatusForPosition(const Ogre::Vector3 & position)
+void RerouteStaticObstaclePointPublish::setStatusForPosition(const Ogre::Vector3 & position)
 {
   std::ostringstream s;
   s << "<b>Left-Click:</b> Select this point.";
@@ -127,7 +117,7 @@ void RerouteStaticObstacleTool::setStatusForPosition(const Ogre::Vector3 & posit
   setStatus(s.str().c_str());
 }
 
-void RerouteStaticObstacleTool::publishPosition(const Ogre::Vector3 & position) const
+void RerouteStaticObstaclePointPublish::publishPosition(const Ogre::Vector3 & position) const
 {
   auto point = rviz_common::pointOgreToMsg(position);
   geometry_msgs::msg::PointStamped point_stamped;
@@ -137,7 +127,7 @@ void RerouteStaticObstacleTool::publishPosition(const Ogre::Vector3 & position) 
   publisher_->publish(point_stamped);
 }
 
-std::optional<Ogre::Vector3> RerouteStaticObstacleTool::get_point_from_mouse(
+std::optional<Ogre::Vector3> RerouteStaticObstaclePointPublish::get_point_from_mouse(
   rviz_common::ViewportMouseEvent & event)
 {
   using rviz_rendering::RenderWindowOgreAdapter;
@@ -156,5 +146,4 @@ std::optional<Ogre::Vector3> RerouteStaticObstacleTool::get_point_from_mouse(
 }  // namespace rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>  // NOLINT
-// PLUGINLIB_EXPORT_CLASS(rviz_default_plugins::tools::PointTool, rviz_common::Tool)
-PLUGINLIB_EXPORT_CLASS(rviz_plugins::RerouteStaticObstacleTool, rviz_common::Tool)
+PLUGINLIB_EXPORT_CLASS(rviz_plugins::RerouteStaticObstaclePointPublish, rviz_common::Tool)

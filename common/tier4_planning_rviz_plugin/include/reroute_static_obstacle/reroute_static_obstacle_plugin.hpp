@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef REROUTE_STATIC_OBSTACLE__PANEL_HPP_
-#define REROUTE_STATIC_OBSTACLE__PANEL_HPP_
+#ifndef REROUTE_STATIC_OBSTACLE__REROUTE_STATIC_OBSTACLE_PLUGIN_HPP_
+#define REROUTE_STATIC_OBSTACLE__REROUTE_STATIC_OBSTACLE_PLUGIN_HPP_
 
 #include "rclcpp/qos.hpp"
 #include "rviz_common/interaction/view_picker_iface.hpp"
@@ -74,10 +74,10 @@
 namespace rviz_plugins
 {
 
-class RerouteStaticObstacleTool : public rviz_default_plugins::tools::PointTool
+class RerouteStaticObstaclePointPublish : public rviz_default_plugins::tools::PointTool
 {
 public:
-  RerouteStaticObstacleTool();
+  RerouteStaticObstaclePointPublish();
   void onInitialize() override;
 
   void activate() override;
@@ -93,19 +93,10 @@ protected:
   void publishPosition(const Ogre::Vector3 & position) const;
   void setStatusForPosition(const Ogre::Vector3 & position);
 
-  //   QCursor std_cursor_;
-  //   QCursor hit_cursor_;
-  //   rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr publisher_;
-  //   rclcpp::Clock::SharedPtr clock_;
-
-  //   rviz_common::properties::StringProperty * topic_property_;
-  //   rviz_common::properties::BoolProperty * auto_deactivate_property_;
-  //   rviz_common::properties::QosProfileProperty * qos_profile_property_;
-
   rclcpp::QoS qos_profile_;
 
 private:
   std::optional<Ogre::Vector3> get_point_from_mouse(rviz_common::ViewportMouseEvent & event);
 };
 }  // namespace rviz_plugins
-#endif  // REROUTE_STATIC_OBSTACLE__PANEL_HPP_
+#endif  // REROUTE_STATIC_OBSTACLE__REROUTE_STATIC_OBSTACLE_PLUGIN_HPP_
