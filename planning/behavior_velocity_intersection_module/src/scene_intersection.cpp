@@ -884,6 +884,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   // check safety
   const bool ext_occlusion_requested = (is_occlusion_cleared && !occlusion_activated_);
   if (!is_occlusion_cleared || ext_occlusion_requested) {
+    is_peeking_finished_ = false;
     const double dist_stopline = motion_utils::calcSignedArcLength(
       path->points, path->points.at(closest_idx).point.pose.position,
       path->points.at(default_stop_line_idx).point.pose.position);
@@ -916,15 +917,23 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         default_stop_line_idx, occlusion_peeking_stop_line_idx, is_occlusion_cleared,
         intersection_stop_lines};
     }
-  } else if (has_collision_with_margin) {
-    const bool is_over_default_stopLine =
-      util::isOverTargetIndex(*path, closest_idx, current_pose, default_stop_line_idx);
-    const auto stop_line_idx = is_over_default_stopLine ? closest_idx : default_stop_line_idx;
-    is_peeking_ = false;
-    return IntersectionModule::NonOccludedCollisionStop{stop_line_idx, intersection_stop_lines};
+  }
+
+  // previously occluded, but now not occluded
+  if (is_peeking_) {
+    is_peeking_finished_ = true;
   }
 
   is_peeking_ = false;
+
+  if (has_collision_with_margin) {
+    const bool is_over_default_stopLine =
+      util::isOverTargetIndex(*path, closest_idx, current_pose, default_stop_line_idx);
+    // when not occluded from the beginning, always set the stop line at default position
+    const auto stop_line_idx =
+      (is_peeking_finished_ && is_over_default_stopLine) ? closest_idx : default_stop_line_idx;
+    return IntersectionModule::NonOccludedCollisionStop{stop_line_idx, intersection_stop_lines};
+  }
   return IntersectionModule::Safe{intersection_stop_lines};
 }
 

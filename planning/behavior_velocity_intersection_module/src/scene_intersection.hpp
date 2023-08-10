@@ -211,6 +211,7 @@ private:
   bool is_go_out_ = false;
   bool is_permanent_go_ = false;
   bool is_peeking_ = false;
+  bool is_peeking_finished_ = false;
   // Parameter
   PlannerParam planner_param_;
   std::optional<util::IntersectionLanelets> intersection_lanelets_;
