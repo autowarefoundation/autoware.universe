@@ -57,6 +57,25 @@ bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2
   return false;
 }
 
+bool isCrossingWithRoadBorder(
+  const lanelet::ConstLineString3d & road_border, const std::vector<LinearRing2d> & footprints)
+{
+  for (const auto & footprint : footprints) {
+    for (size_t i = 0; i < footprint.size() - 1; ++i) {
+      auto & footprint1 = footprint.at(i);
+      auto & footprint2 = footprint.at(i + 1);
+      for (const auto & r : road_border) {
+        if (tier4_autoware_utils::intersect(
+              tier4_autoware_utils::toMsg(footprint1), tier4_autoware_utils::toMsg(footprint2),
+              r.x(), r.y())) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprints)
 {
   MultiPoint2d combined;
@@ -307,13 +326,15 @@ bool LaneDepartureChecker::willCrossRoadBorder(
   const std::vector<LinearRing2d> & vehicle_footprints)
 {
   for (const auto & candidate_lanelet : candidate_lanelets) {
-    if (candidate_lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "road_border")){
-      if (isCrossingRoadBorder(candidate_lanelet, candidate_lanelet.rightBound())) {
+    if (candidate_lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "road_border")) {
+      if (isCrossingWithRoadBorder(
+            candidate_lanelet.rightBound().basicLineString(), vehicle_footprints)) {
         return true;
       }
     }
-    if (candidate_lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "road_border")){
-      if (isCrossingRoadBorder(candidate_lanelet, candidate_lanelet.leftBound())) {
+    if (candidate_lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "road_border")) {
+      if (isCrossingWithRoadBorder(
+            candidate_lanelet.leftBound().basicLineString(), vehicle_footprints)) {
         return true;
       }
     }
