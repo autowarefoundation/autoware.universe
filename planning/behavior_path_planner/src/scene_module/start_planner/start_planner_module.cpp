@@ -145,7 +145,6 @@ bool StartPlannerModule::isExecutionReady() const
   }
 
   if (status_.is_safe) {
-    // TODO(Sugahara): safety check for dynamic objects
     return isSafeConsideringDynamicObjects();
   }
   return true;
@@ -899,6 +898,8 @@ bool StartPlannerModule::isSafeConsideringDynamicObjects() const
     pull_out_path.points, current_velocity, target_velocity,
     parameters_->acceleration_to_target_velocity, current_pose,
     parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
+
+  const auto safety_checke_target_objects = getSafetyCheckTargetObjects(current_velocity, target_velocity);
 
   // return utils::safety_check::isSafeInLaneletCollisionCheck(
   //   pull_out_path, interpolated_ego, current_twist, check_durations,
