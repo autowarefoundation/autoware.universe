@@ -194,61 +194,32 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
   AvoidancePlanningData data;
 
   // reference pose
-  const auto reference_pose =
+  data.reference_pose =
     utils::getUnshiftedEgoPose(getEgoPose(), helper_.getPreviousSplineShiftPath());
-  data.reference_pose = reference_pose;
-
-  // special for avoidance: take behind distance upt ot shift-start-point if it exist.
-  const auto longest_dist_to_shift_line = [&]() {
-    double max_dist = 0.0;
-    for (const auto & pnt : path_shifter_.getShiftLines()) {
-      max_dist = std::max(max_dist, calcDistance2d(getEgoPose(), pnt.start));
-    }
-    for (const auto & sl : registered_raw_shift_lines_) {
-      max_dist = std::max(max_dist, calcDistance2d(getEgoPose(), sl.start));
-    }
-    return max_dist;
-  }();
-
-  // center line path (output of this function must have size > 1)
-  const auto center_path = utils::calcCenterLinePath(
-    planner_data_, reference_pose, longest_dist_to_shift_line,
-    *getPreviousModuleOutput().reference_path);
-
-  debug.center_line = center_path;
-  if (center_path.points.size() < 2) {
-    RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 5000, "calcCenterLinePath() must return path which size > 1");
-    return data;
-  }
-
-  // reference path
-  data.reference_path_rough = extendBackwardLength(*getPreviousModuleOutput().path);
-
-  data.reference_path = utils::resamplePathWithSpline(
-    data.reference_path_rough, parameters_->resample_interval_for_planning);
-
-  if (data.reference_path.points.size() < 2) {
-    // if the resampled path has only 1 point, use original path.
-    data.reference_path = center_path;
-  }
-
-  const size_t nearest_segment_index =
-    findNearestSegmentIndex(data.reference_path.points, data.reference_pose.position);
-  data.ego_closest_path_index =
-    std::min(nearest_segment_index + 1, data.reference_path.points.size() - 1);
-
-  // arclength from ego pose (used in many functions)
-  data.arclength_from_ego = utils::calcPathArcLengthArray(
-    data.reference_path, 0, data.reference_path.points.size(),
-    calcSignedArcLength(data.reference_path.points, getEgoPosition(), 0));
 
   // lanelet info
   data.current_lanelets = utils::avoidance::getCurrentLanesFromPath(
     *getPreviousModuleOutput().reference_path, planner_data_);
 
-  // keep avoidance state
-  data.state = avoidance_data_.state;
+  // reference path
+  if (isDrivingSameLane(helper_.getPreviousDrivingLanes(), data.current_lanelets)) {
+    data.reference_path_rough = extendBackwardLength(*getPreviousModuleOutput().path);
+  } else {
+    data.reference_path_rough = *getPreviousModuleOutput().path;
+    RCLCPP_WARN(getLogger(), "Previous module lane is updated. Don't use latest reference path.");
+  }
+
+  // resampled reference path
+  data.reference_path = utils::resamplePathWithSpline(
+    data.reference_path_rough, parameters_->resample_interval_for_planning);
+
+  // closest index
+  data.ego_closest_path_index = planner_data_->findEgoIndex(data.reference_path.points);
+
+  // arclength from ego pose (used in many functions)
+  data.arclength_from_ego = utils::calcPathArcLengthArray(
+    data.reference_path, 0, data.reference_path.points.size(),
+    calcSignedArcLength(data.reference_path.points, getEgoPosition(), 0));
 
   // target objects for avoidance
   fillAvoidanceTargetObjects(data, debug);
@@ -2157,7 +2128,13 @@ BehaviorModuleOutput AvoidanceModule::plan()
     updateDebugMarker(avoidance_data_, path_shifter_, debug_data_);
   }
 
-  output.path = std::make_shared<PathWithLaneId>(spline_shift_path.path);
+  if (isDrivingSameLane(helper_.getPreviousDrivingLanes(), data.current_lanelets)) {
+    output.path = std::make_shared<PathWithLaneId>(spline_shift_path.path);
+  } else {
+    output.path = getPreviousModuleOutput().path;
+    RCLCPP_WARN(getLogger(), "Previous module lane is updated. Do nothing.");
+  }
+
   output.reference_path = getPreviousModuleOutput().reference_path;
   path_reference_ = getPreviousModuleOutput().reference_path;
 
