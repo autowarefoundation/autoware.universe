@@ -141,7 +141,6 @@ TEST(TestLoadFromLanelet2Map, LoadNoLocalGrid)
   EXPECT_EQ(projector_info.type, "MGRS");
 }
 
-
 int main(int argc, char ** argv)
 {
   ::testing::InitGoogleMock(&argc, argv);

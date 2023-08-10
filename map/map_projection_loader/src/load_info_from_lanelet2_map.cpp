@@ -32,7 +32,7 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::str
     throw std::runtime_error("Error occurred while loading lanelet2 map");
   }
 
-  // If the lat & lon values in all the points of lanelet2 map, 
+  // If the lat & lon values in all the points of lanelet2 map,
   // it will be interpreted as a local map.
   // If any single point exists with non-zero lat or lon values, it will be interpreted as MGRS.
   bool is_local = true;
