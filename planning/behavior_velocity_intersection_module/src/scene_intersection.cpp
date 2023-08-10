@@ -768,7 +768,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     const bool approached_stop_line =
       (std::fabs(dist_stopline) < planner_param_.common.stop_overshoot_margin);
     const bool is_stopped = planner_data_->isVehicleStopped();
-    // TODO(Mamoru Sobue): fix isVehicleStopped()
     if (is_stopped && approached_stop_line) {
       stuck_private_area_timeout_.setStateWithMarginTime(
         StateMachine::State::GO, logger_.get_child("stuck_private_area_timeout"), *clock_);
@@ -891,8 +890,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     const bool approached_stop_line =
       (std::fabs(dist_stopline) < planner_param_.common.stop_overshoot_margin);
     const bool over_stop_line = (dist_stopline < 0.0);
-    const double vel = std::fabs(planner_data_->current_velocity->twist.linear.x);
-    const bool is_stopped = (vel < planner_param_.common.stop_velocity_threshold);
+    const bool is_stopped =
+      planner_data_->isVehicleStopped(planner_param_.occlusion.before_creep_stop_time);
     if (over_stop_line) {
       before_creep_state_machine_.setState(StateMachine::State::GO);
     }
@@ -910,8 +909,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     } else {
       if (is_stopped && approached_stop_line) {
         // start waiting at the first stop line
-        before_creep_state_machine_.setStateWithMarginTime(
-          StateMachine::State::GO, logger_.get_child("occlusion state_machine"), *clock_);
+        before_creep_state_machine_.setState(StateMachine::State::GO);
       }
       is_peeking_ = true;
       return IntersectionModule::FirstWaitBeforeOcclusion{

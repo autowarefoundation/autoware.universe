@@ -60,7 +60,6 @@ public:
       bool use_intersection_area;
       bool consider_wrong_direction_vehicle;
       double path_interpolation_ds;
-      double stop_velocity_threshold;
     } common;
     struct StuckVehicle
     {

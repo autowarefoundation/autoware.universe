@@ -60,8 +60,6 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".common.path_interpolation_ds");
   ip.common.consider_wrong_direction_vehicle =
     node.declare_parameter<bool>(ns + ".common.consider_wrong_direction_vehicle");
-  ip.common.stop_velocity_threshold =
-    node.declare_parameter<double>(ns + ".common.stop_velocity_threshold");
 
   ip.stuck_vehicle.use_stuck_stopline =
     node.declare_parameter<bool>(ns + ".stuck_vehicle.use_stuck_stopline");
