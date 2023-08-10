@@ -298,12 +298,12 @@ TEST(DrivableAreaExpansion, calculateDistanceLimit)
 {
   using drivable_area_expansion::calculateDistanceLimit;
   using drivable_area_expansion::linestring_t;
-  using drivable_area_expansion::multilinestring_t;
+  using drivable_area_expansion::multi_linestring_t;
   using drivable_area_expansion::polygon_t;
 
   {
     const linestring_t base_ls = {{0.0, 0.0}, {10.0, 0.0}};
-    const multilinestring_t uncrossable_lines = {};
+    const multi_linestring_t uncrossable_lines = {};
     const polygon_t expansion_polygon = {
       {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {10.0, -4.0}}, {}};
     const auto limit_distance =
@@ -321,7 +321,7 @@ TEST(DrivableAreaExpansion, calculateDistanceLimit)
   }
   {
     const linestring_t base_ls = {{0.0, 0.0}, {10.0, 0.0}};
-    const multilinestring_t uncrossable_lines = {
+    const multi_linestring_t uncrossable_lines = {
       {{0.0, 2.0}, {10.0, 2.0}}, {{0.0, 1.5}, {10.0, 1.0}}};
     const polygon_t expansion_polygon = {
       {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {10.0, -4.0}}, {}};

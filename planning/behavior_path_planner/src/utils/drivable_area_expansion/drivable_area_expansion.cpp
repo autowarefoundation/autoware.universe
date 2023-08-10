@@ -35,7 +35,7 @@ void expandDrivableArea(
 {
   const auto uncrossable_lines =
     extractUncrossableLines(*route_handler.getLaneletMapPtr(), params.avoid_linestring_types);
-  multilinestring_t uncrossable_lines_in_range;
+  multi_linestring_t uncrossable_lines_in_range;
   const auto & p = path.points.front().point.pose.position;
   for (const auto & line : uncrossable_lines)
     if (boost::geometry::distance(line, point_t{p.x, p.y}) < params.max_path_arc_length)
@@ -63,7 +63,7 @@ Point convert_point(const point_t & p)
 }
 
 polygon_t createExpandedDrivableAreaPolygon(
-  const PathWithLaneId & path, const multipolygon_t & expansion_polygons)
+  const PathWithLaneId & path, const multi_polygon_t & expansion_polygons)
 {
   polygon_t original_da_poly;
   original_da_poly.outer().reserve(path.left_bound.size() + path.right_bound.size() + 1);
@@ -72,7 +72,7 @@ polygon_t createExpandedDrivableAreaPolygon(
     original_da_poly.outer().push_back(convert_point(*it));
   original_da_poly.outer().push_back(original_da_poly.outer().front());
 
-  multipolygon_t unions;
+  multi_polygon_t unions;
   auto expanded_da_poly = original_da_poly;
   for (const auto & p : expansion_polygons) {
     unions.clear();
