@@ -60,6 +60,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<double>(ns + ".common.path_interpolation_ds");
   ip.common.consider_wrong_direction_vehicle =
     node.declare_parameter<bool>(ns + ".common.consider_wrong_direction_vehicle");
+  ip.common.stop_velocity_threshold =
+    node.declare_parameter<double>(ns + ".common.stop_velocity_threshold");
 
   ip.stuck_vehicle.use_stuck_stopline =
     node.declare_parameter<bool>(ns + ".stuck_vehicle.use_stuck_stopline");
@@ -117,8 +119,6 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<std::vector<double>>(ns + ".occlusion.possible_object_bbox");
   ip.occlusion.ignore_parked_vehicle_speed_threshold =
     node.declare_parameter<double>(ns + ".occlusion.ignore_parked_vehicle_speed_threshold");
-  ip.occlusion.first_stop_velocity_threshold =
-    node.declare_parameter<double>(ns + ".occlusion.first_stop_velocity_threshold");
 }
 
 void IntersectionModuleManager::launchNewModules(

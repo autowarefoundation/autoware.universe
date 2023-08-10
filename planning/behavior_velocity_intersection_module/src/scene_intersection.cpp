@@ -768,6 +768,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     const bool approached_stop_line =
       (std::fabs(dist_stopline) < planner_param_.common.stop_overshoot_margin);
     const bool is_stopped = planner_data_->isVehicleStopped();
+    // TODO(Mamoru Sobue): fix isVehicleStopped()
     if (is_stopped && approached_stop_line) {
       stuck_private_area_timeout_.setStateWithMarginTime(
         StateMachine::State::GO, logger_.get_child("stuck_private_area_timeout"), *clock_);
@@ -891,7 +892,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       (std::fabs(dist_stopline) < planner_param_.common.stop_overshoot_margin);
     const bool over_stop_line = (dist_stopline < 0.0);
     const double vel = std::fabs(planner_data_->current_velocity->twist.linear.x);
-    const bool is_stopped = (vel < planner_param_.occlusion.first_stop_vel_thr);
+    const bool is_stopped = (vel < planner_param_.common.stop_velocity_threshold);
     if (over_stop_line) {
       before_creep_state_machine_.setState(StateMachine::State::GO);
     }
