@@ -28,4 +28,8 @@
     type="rviz_plugins::MissionCheckpointTool"
     base_class_type="rviz_common::Tool">
   </class>
+  <class name="rviz_plugins/RerouteStaticObstacleTool"
+    type="rviz_plugins::RerouteStaticObstacleTool"
+    base_class_type="rviz_common::Tool">
+  </class>
 </library>

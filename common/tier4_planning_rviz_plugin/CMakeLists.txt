@@ -8,7 +8,7 @@ find_package(Qt5 REQUIRED Core Widgets)
 set(QT_LIBRARIES Qt5::Widgets)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-add_definitions(-DQT_NO_KEYWORDS)
+#add_definitions(-DQT_NO_KEYWORDS)
 find_package(Eigen3 REQUIRED)
 
 include_directories(
@@ -28,6 +28,9 @@ ament_auto_add_library(tier4_planning_rviz_plugin SHARED
   src/mission_checkpoint/mission_checkpoint.cpp
   src/tools/jsk_overlay_utils.cpp
   src/tools/max_velocity.cpp
+  # reroute static obstacle
+  include/reroute_static_obstacle/panel.hpp
+  src/reroute_static_obstacle/panel.cpp
 )
 
 target_link_libraries(tier4_planning_rviz_plugin
