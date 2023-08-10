@@ -39,10 +39,6 @@ void save_dummy_mgrs_lanelet2_map(const std::string & mgrs_coord, const std::str
     return;
   }
 
-  // <?xml version="1.0"?>
-  // <osm version="0.6" generator="lanelet2">
-  //   <node id="1" lat="LATITUDE" lon="LONGITUDE"/>
-  // </osm>⏎
   file << "<?xml version=\"1.0\"?>\n";
   file << "<osm version=\"0.6\" generator=\"lanelet2\">\n";
   file << "  <node id=\"1\" lat=\"" << lat << "\" lon=\"" << lon << "\"/>\n";
@@ -59,12 +55,6 @@ void save_dummy_local_lanelet2_map(const std::string & output_path)
     return;
   }
 
-  // <?xml version="1.0"?>
-  // <osm version="0.6" generator="lanelet2">
-  //   <node id="1" lat="" lon=""/>
-  //   <node id="2" lat="" lon=""/>
-  //   <node id="3" lat="" lon=""/>
-  // </osm>⏎
   file << "<?xml version=\"1.0\"?>\n";
   file << "<osm version=\"0.6\" generator=\"lanelet2\">\n";
   file << "  <node id=\"1\" lat=\"\" lon=\"\"/>\n";
@@ -83,12 +73,6 @@ void save_dummy_mgrs_lanelet2_map_with_one_zero_point(const std::string & output
     return;
   }
 
-  // <?xml version="1.0"?>
-  // <osm version="0.6" generator="lanelet2">
-  //   <node id="1" lat="0.0" lon="0.0"/>
-  //   <node id="2" lat="0.0" lon=""/>
-  //   <node id="3" lat="0.0" lon=""/>
-  // </osm>⏎
   file << "<?xml version=\"1.0\"?>\n";
   file << "<osm version=\"0.6\" generator=\"lanelet2\">\n";
   file << "  <node id=\"1\" lat=\"0.0\" lon=\"0.0\"/>\n";
