@@ -262,9 +262,7 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
 
     constexpr double stop_velocity_threshold = 0.1;
     if (dist_to_front_point < search_distance) {
-      if (
-        lane_attribute == "right" || lane_attribute == "left" ||
-        (lane_attribute == "straight" && current_vel < stop_velocity_threshold)) {
+      if (lane_attribute == "right" || lane_attribute == "left") {
         // update map if necessary
         if (desired_start_point_map_.find(lane_id) == desired_start_point_map_.end()) {
           desired_start_point_map_.emplace(lane_id, current_pose);
@@ -274,6 +272,20 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
         turn_signal_info.desired_start_point = desired_start_point_map_.at(lane_id);
         turn_signal_info.required_start_point = lane_front_pose;
         turn_signal_info.required_end_point = get_required_end_point(combined_lane.centerline3d());
+        turn_signal_info.desired_end_point = lane_back_pose;
+        turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
+        signal_queue.push(turn_signal_info);
+      } else if (lane_attribute == "straight" && current_vel < stop_velocity_threshold) {
+        // update map if necessary
+        if (desired_start_point_map_.find(lane_id) == desired_start_point_map_.end()) {
+          desired_start_point_map_.emplace(lane_id, current_pose);
+        }
+
+        TurnSignalInfo turn_signal_info{};
+        turn_signal_info.desired_start_point = desired_start_point_map_.at(lane_id);
+        turn_signal_info.required_start_point = lane_front_pose;
+        turn_signal_info.required_end_point =
+          get_straight_lane_required_end_point(combined_lane.centerline3d());
         turn_signal_info.desired_end_point = lane_back_pose;
         turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
         signal_queue.push(turn_signal_info);
@@ -554,6 +566,46 @@ geometry_msgs::msg::Pose TurnSignalDecider::get_required_end_point(
     const double yaw = tf2::getYaw(resampled_centerline.at(i).orientation);
     const double yaw_diff = tier4_autoware_utils::normalizeRadian(yaw - terminal_yaw);
     if (std::fabs(yaw_diff) < tier4_autoware_utils::deg2rad(intersection_angle_threshold_deg_)) {
+      return resampled_centerline.at(i);
+    }
+  }
+
+  return resampled_centerline.back();
+}
+
+geometry_msgs::msg::Pose TurnSignalDecider::get_straight_lane_required_end_point(
+  const lanelet::ConstLineString3d & centerline)
+{
+  std::vector<geometry_msgs::msg::Pose> converted_centerline(centerline.size());
+  for (size_t i = 0; i < centerline.size(); ++i) {
+    converted_centerline.at(i).position = lanelet::utils::conversion::toGeomMsgPt(centerline[i]);
+  }
+  motion_utils::insertOrientation(converted_centerline, true);
+
+  const double length = motion_utils::calcArcLength(converted_centerline);
+
+  // Create resampling intervals
+  const double resampling_interval = 1.0;
+  std::vector<double> resampling_arclength;
+  for (double s = 0.0; s < length; s += resampling_interval) {
+    resampling_arclength.push_back(s);
+  }
+
+  // Insert terminal point
+  if (length - resampling_arclength.back() < motion_utils::overlap_threshold) {
+    resampling_arclength.back() = length;
+  } else {
+    resampling_arclength.push_back(length);
+  }
+
+  const auto resampled_centerline =
+    motion_utils::resamplePoseVector(converted_centerline, resampling_arclength);
+
+  double accumulated_length = 0.0;
+  for (size_t i = 0; i < resampled_centerline.size() - 1; ++i) {
+    accumulated_length += tier4_autoware_utils::calcDistance2d(
+      resampled_centerline.at(i), resampled_centerline.at(i + 1));
+    if (accumulated_length > length / 2.0) {
       return resampled_centerline.at(i);
     }
   }
