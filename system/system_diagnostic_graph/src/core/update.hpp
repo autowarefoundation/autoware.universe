@@ -27,17 +27,30 @@
 namespace system_diagnostic_graph
 {
 
+struct Summary
+{
+  UnitNode * stop_mode;
+  UnitNode * autonomous_mode;
+  UnitNode * local_mode;
+  UnitNode * remote_mode;
+  UnitNode * emergency_stop_mrm;
+  UnitNode * comfortable_stop_mrm;
+  UnitNode * pull_over_mrm;
+};
+
 class DiagGraph
 {
 public:
   void create(const std::string & file);
   void callback(const DiagnosticArray & array);
   DiagnosticGraph report(const rclcpp::Time & stamp);
+  DiagnosticSummary summary(const rclcpp::Time & stamp);
 
   void debug();
 
 private:
   Graph graph_;
+  Summary summary_;
 };
 
 }  // namespace system_diagnostic_graph

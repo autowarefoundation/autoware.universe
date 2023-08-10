@@ -26,6 +26,15 @@
 namespace system_diagnostic_graph
 {
 
+UnitNode * find_node(Graph & graph, const std::string & name)
+{
+  const auto node = graph.find_unit(name);
+  if (!node) {
+    throw ConfigError("summary node '" + name + "' does node exist");
+  }
+  return node;
+};
+
 void DiagGraph::create(const std::string & file)
 {
   const auto configs = load_config_file(file);
@@ -50,6 +59,15 @@ void DiagGraph::create(const std::string & file)
   for (size_t i = 0; i < nodes.size(); ++i) {
     nodes[i]->set_index(i);
   }
+
+  // Get reserved unit node for summary.
+  summary_.stop_mode = find_node(graph_, "/autoware/operation/stop");
+  summary_.autonomous_mode = find_node(graph_, "/autoware/operation/autonomous");
+  summary_.local_mode = find_node(graph_, "/autoware/operation/local");
+  summary_.remote_mode = find_node(graph_, "/autoware/operation/remote");
+  summary_.emergency_stop_mrm = find_node(graph_, "/autoware/operation/emergency-stop");
+  summary_.comfortable_stop_mrm = find_node(graph_, "/autoware/operation/comfortable-stop");
+  summary_.pull_over_mrm = find_node(graph_, "/autoware/operation/pull-over");
 }
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
@@ -64,6 +82,20 @@ DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
   for (const auto & node : graph_.nodes()) {
     message.nodes.push_back(node->report());
   }
+  return message;
+}
+
+DiagnosticSummary DiagGraph::summary(const rclcpp::Time & stamp)
+{
+  DiagnosticSummary message;
+  message.stamp = stamp;
+  message.stop = summary_.stop_mode->level();
+  message.autonomous = summary_.autonomous_mode->level();
+  message.local = summary_.local_mode->level();
+  message.remote = summary_.remote_mode->level();
+  message.emergency_stop = summary_.emergency_stop_mrm->level();
+  message.comfortable_stop = summary_.comfortable_stop_mrm->level();
+  message.pull_over = summary_.pull_over_mrm->level();
   return message;
 }
 

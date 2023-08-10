@@ -96,7 +96,7 @@ UnitExpr::UnitExpr(Graph & graph, YAML::Node yaml)
 
 DiagnosticLevel UnitExpr::eval() const
 {
-  return DiagnosticStatus::OK;
+  return node_->level();
 }
 
 std::vector<BaseNode *> UnitExpr::get_dependency() const
@@ -119,7 +119,7 @@ DiagExpr::DiagExpr(Graph & graph, YAML::Node yaml)
 
 DiagnosticLevel DiagExpr::eval() const
 {
-  return DiagnosticStatus::OK;
+  return node_->level();
 }
 
 std::vector<BaseNode *> DiagExpr::get_dependency() const
