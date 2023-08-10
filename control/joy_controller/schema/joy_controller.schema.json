@@ -42,13 +42,15 @@
           "type": "number",
           "description": "Sensitivity to calculate acceleration for external API (commanded acceleration is pow(operation, 1 / sensitivity))",
           "default": 1.0,
-          "exclusive": 0
+          "maximum": 1.0
+          "exclusiveMinimum": 0.0
         },
         "brake_sensitivity": {
           "type": "number",
           "description": "Sensitivity to calculate deceleration for external API (commanded acceleration is pow(operation, 1 / sensitivity))",
           "default": 1.0,
-          "exclusive": 0
+          "maximum": 1.0
+          "exclusiveMinimum": 0.0
         },
         "control_command": {
           "type": "object",
@@ -68,7 +70,7 @@
               "type": "number",
               "description": "Absolute max velocity to go backward",
               "default": 3.0,
-              "exclusiveMinimum": 0
+              "minimum": 0
             },
             "backward_accel_ratio": {
               "type": "number",
