@@ -42,6 +42,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   p.collision_check_margin = node->declare_parameter<double>(ns + "collision_check_margin");
   p.collision_check_distance_from_end =
     node->declare_parameter<double>(ns + "collision_check_distance_from_end");
+  p.th_moving_object_velocity = node->declare_parameter<double>(ns + "th_moving_object_velocity");
   // shift pull out
   p.enable_shift_pull_out = node->declare_parameter<bool>(ns + "enable_shift_pull_out");
   p.check_shift_path_lane_departure =
@@ -99,12 +100,17 @@ void StartPlannerModuleManager::updateModuleParams(
 
   [[maybe_unused]] std::string ns = name_ + ".";
 
-  std::for_each(registered_modules_.begin(), registered_modules_.end(), [&](const auto & m) {
-    m->updateModuleParams(p);
-    m->setInitialIsSimultaneousExecutableAsApprovedModule(
-      enable_simultaneous_execution_as_approved_module_);
-    m->setInitialIsSimultaneousExecutableAsCandidateModule(
-      enable_simultaneous_execution_as_candidate_module_);
+  std::for_each(observers_.begin(), observers_.end(), [&](const auto & observer) {
+    if (!observer.expired()) {
+      const auto start_planner_ptr = std::dynamic_pointer_cast<StartPlannerModule>(observer.lock());
+      if (start_planner_ptr) {
+        start_planner_ptr->updateModuleParams(p);
+        start_planner_ptr->setInitialIsSimultaneousExecutableAsApprovedModule(
+          enable_simultaneous_execution_as_approved_module_);
+        start_planner_ptr->setInitialIsSimultaneousExecutableAsCandidateModule(
+          enable_simultaneous_execution_as_candidate_module_);
+      }
+    }
   });
 }
 }  // namespace behavior_path_planner
