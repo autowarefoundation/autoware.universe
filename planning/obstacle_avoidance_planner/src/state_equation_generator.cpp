@@ -60,13 +60,8 @@ StateEquationGenerator::Matrix StateEquationGenerator::calcMatrix(
     W.segment(i * D_x, D_x) = W;
   }
 
-  Matrix mat;
-  mat.A = A;
-  mat.B = B;
-  mat.W = W;
-
   time_keeper_ptr_->toc(__func__, "        ");
-  return mat;
+  return Matrix{A, B, W};
 }
 
 Eigen::VectorXd StateEquationGenerator::predict(
