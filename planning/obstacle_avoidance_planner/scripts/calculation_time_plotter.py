@@ -99,7 +99,7 @@ if __name__ == "__main__":
         "-f",
         "--functions",
         type=str,
-        default="onPath, getModelPredictiveTrajectory, getEBTrajectory",
+        default="onPath, calcOptimizedSteerAngles",
     )
     args = parser.parse_args()
 

@@ -16,7 +16,7 @@
 
 #include "qp_interface/osqp_csc_matrix_conv.hpp"
 
-#include <rclcpp/rclcpp.hpp>
+#include <iostream>
 
 namespace qp
 {
@@ -250,25 +250,9 @@ bool OSQPInterface::setDualVariables(const std::vector<double> & dual_variables)
   return true;
 }
 
-void OSQPInterface::logUnsolvedStatus(const std::string & prefix_message) const
+bool OSQPInterface::isSolved() const
 {
-  const int status = getStatus();
-  if (status == 1) {
-    // No need to log since optimization was solved.
-    return;
-  }
-
-  // create message
-  std::string output_message = "";
-  if (prefix_message != "") {
-    output_message = prefix_message + " ";
-  }
-
-  const auto status_message = getStatusMessage();
-  output_message += "Optimization failed due to " + status_message;
-
-  // log with warning
-  RCLCPP_WARN(rclcpp::get_logger("osqp_interface"), output_message.c_str());
+  return static_cast<int>(m_latest_work_info.status_val) == OSQP_SOLVED;
 }
 
 void OSQPInterface::updateP(const Eigen::MatrixXd & P_new)
@@ -378,10 +362,12 @@ std::vector<double> OSQPInterface::optimizeImpl()
 
   m_latest_work_info = *(m_work->info);
 
+  /*
   if (!m_enable_warm_start) {
     m_work.reset();
     m_work_initialized = false;
   }
+  */
 
   return sol_primal;
 }
@@ -390,7 +376,11 @@ std::vector<double> OSQPInterface::optimize(
   CSC_Matrix P, CSC_Matrix A, const std::vector<double> & q, const std::vector<double> & l,
   const std::vector<double> & u)
 {
-  initializeCSCProblemImpl(P, A, q, l, u);
+  updateCscP(P);
+  updateQ(q);
+  updateCscA(A);
+  updateL(l);
+  updateU(u);
   const auto result = optimizeImpl();
 
   return result;

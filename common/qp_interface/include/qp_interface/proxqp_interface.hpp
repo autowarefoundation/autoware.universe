@@ -22,6 +22,7 @@
 
 #include <limits>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace qp
@@ -39,6 +40,9 @@ public:
   void updateEpsAbs(const double eps_abs) override;
   void updateEpsRel(const double eps_rel) override;
   void updateVerbose(const bool verbose) override;
+
+  bool isSolved() const override;
+  std::string getStatusMessage() const override;
 
 private:
   proxsuite::proxqp::Settings<double> m_settings;
