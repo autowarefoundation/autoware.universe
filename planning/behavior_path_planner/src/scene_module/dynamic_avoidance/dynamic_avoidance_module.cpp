@@ -195,6 +195,14 @@ std::optional<T> getObstacleFromUuid(
   }
   return *itr;
 }
+
+std::optional<double> calcOverlappingMaxValue(const double min_value1, const double max_value1, const double min_value2, const double max_value2)
+{
+  if (min_value1 < max_value2 && min_value2 < max_value1) {
+    return std::min(max_value1, max_value2);
+  }
+  return std::nullopt;
+}
 }  // namespace
 
 DynamicAvoidanceModule::DynamicAvoidanceModule(
@@ -244,13 +252,56 @@ void DynamicAvoidanceModule::updateData()
   // calculate target objects
   updateTargetObjects();
 
+  // extract objects to avoid
   const auto target_objects_candidate = target_objects_manager_.getValidObjects();
-  target_objects_.clear();
+  std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> target_objects;
   for (const auto & target_object_candidate : target_objects_candidate) {
     if (target_object_candidate.should_be_avoided) {
-      target_objects_.push_back(target_object_candidate);
+      target_objects.push_back(target_object_candidate);
     }
   }
+
+  // loose lateral offset to avoid for complicated scenes
+  for (size_t i = 0; i < target_objects.size(); ++i) { // for soft_offset
+    assert(target_objects.at(i).lon_offset_to_avoid);
+    for (size_t j = 0; j < target_objects.size(); ++j) { // for hard_offset
+      assert(target_objects.at(j).lon_offset_to_avoid);
+
+      if (i == j) {
+        continue;
+      }
+      auto & soft_object_lon_offset = *target_objects.at(i).lon_offset_to_avoid;
+      const auto & soft_object_lat_offset = *target_objects.at(i).lat_offset_to_avoid;
+      const auto & hard_object_lon_offset = *target_objects.at(j).lon_offset_to_avoid;
+      const auto & hard_object_lat_offset = *target_objects.at(j).lat_offset_to_avoid;
+
+      // Check if soft_offset and hard_offset are overlapped.
+      if (hard_object_lon_offset.hard_offset.max_value < soft_object_lon_offset.soft_offset.min_value ||
+          soft_object_lon_offset.soft_offset.max_value < hard_object_lon_offset.hard_offset.min_value) {
+        continue;
+      }
+      // Check if lateral space between two objects is small enough.
+      if (std::abs(soft_object_lat_offset.min_value - hard_object_lat_offset.min_value) < planner_data_->parameters.vehicle_width + 0.0) { // TODO(murooka) use rosparam
+        continue;
+      }
+      std::cerr << std::abs(soft_object_lat_offset.min_value - hard_object_lat_offset.min_value) << std::endl;
+
+      // Cut soft_offset.min_value
+      const auto cropped_soft_min_value = calcOverlappingMaxValue(soft_object_lon_offset.soft_offset.min_value, soft_object_lon_offset.hard_offset.min_value, hard_object_lon_offset.hard_offset.min_value, hard_object_lon_offset.hard_offset.max_value);
+      if (cropped_soft_min_value) {
+        soft_object_lon_offset.soft_offset.min_value = *cropped_soft_min_value;
+      }
+
+      // Cut soft_offset.max_value
+      const auto cropped_soft_max_value = calcOverlappingMaxValue(soft_object_lon_offset.hard_offset.max_value, soft_object_lon_offset.soft_offset.max_value, hard_object_lon_offset.hard_offset.min_value, hard_object_lon_offset.hard_offset.max_value);
+      if (cropped_soft_max_value) {
+        soft_object_lon_offset.soft_offset.max_value = *cropped_soft_max_value;
+      }
+    }
+  }
+
+  // update target_objects_ variable
+  target_objects_ = target_objects;
 }
 
 ModuleStatus DynamicAvoidanceModule::updateState()
@@ -735,7 +786,7 @@ DynamicAvoidanceModule::LatLonOffset DynamicAvoidanceModule::getLateralLongitudi
     obj_lon_min_max_offset.max_value, obj_lon_min_max_offset.min_value};
 }
 
-MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
+LongitudinalAvoidanceOffset DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
   const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
   const geometry_msgs::msg::Pose & obj_pose, const Polygon2d & obj_points, const double obj_vel,
   const double time_to_collision) const
@@ -777,9 +828,12 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
     std::abs(obj_vel) * (is_object_overtaking ? parameters_->end_duration_to_avoid_overtaking_object
                                               : parameters_->end_duration_to_avoid_oncoming_object);
 
-  return MinMaxValue{
-    obj_lon_offset.min_value - start_length_to_avoid,
-    obj_lon_offset.max_value + end_length_to_avoid};
+  return LongitudinalAvoidanceOffset{
+    MinMaxValue{
+      obj_lon_offset.min_value, obj_lon_offset.max_value},
+    MinMaxValue{
+      obj_lon_offset.min_value - start_length_to_avoid,
+      obj_lon_offset.max_value + end_length_to_avoid}};
 }
 
 MinMaxValue DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoid(
@@ -839,9 +893,7 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoid(
 std::optional<tier4_autoware_utils::Polygon2d> DynamicAvoidanceModule::calcDynamicObstaclePolygon(
   const DynamicAvoidanceObject & object) const
 {
-  if (!object.lon_offset_to_avoid || !object.lat_offset_to_avoid) {
-    return std::nullopt;
-  }
+  assert(object.lon_offset_to_avoid || object.lat_offset_to_avoid);
 
   auto path_points_for_object_polygon = getPreviousModuleOutput().reference_path->points;
 
@@ -850,12 +902,12 @@ std::optional<tier4_autoware_utils::Polygon2d> DynamicAvoidanceModule::calcDynam
   const auto obj_points = tier4_autoware_utils::toPolygon2d(object.pose, object.shape);
 
   const auto lon_bound_start_idx_opt = motion_utils::insertTargetPoint(
-    obj_seg_idx, object.lon_offset_to_avoid->min_value, path_points_for_object_polygon);
+    obj_seg_idx, object.lon_offset_to_avoid->soft_offset.min_value, path_points_for_object_polygon);
   const size_t updated_obj_seg_idx =
     (lon_bound_start_idx_opt && lon_bound_start_idx_opt.value() <= obj_seg_idx) ? obj_seg_idx + 1
                                                                                 : obj_seg_idx;
   const auto lon_bound_end_idx_opt = motion_utils::insertTargetPoint(
-    updated_obj_seg_idx, object.lon_offset_to_avoid->max_value, path_points_for_object_polygon);
+    updated_obj_seg_idx, object.lon_offset_to_avoid->soft_offset.max_value, path_points_for_object_polygon);
 
   if (!lon_bound_start_idx_opt && !lon_bound_end_idx_opt) {
     // NOTE: The obstacle is longitudinally out of the ego's trajectory.

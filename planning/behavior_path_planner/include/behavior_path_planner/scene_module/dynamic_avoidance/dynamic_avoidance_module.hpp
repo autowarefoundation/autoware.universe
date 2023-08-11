@@ -41,6 +41,12 @@ struct MinMaxValue
   double max_value;
 };
 
+struct LongitudinalAvoidanceOffset
+{
+  MinMaxValue hard_offset;
+  MinMaxValue soft_offset;
+};
+
 struct DynamicAvoidanceParameters
 {
   // common
@@ -122,13 +128,13 @@ public:
 
     // NOTE: Previous values of the following are used for low-pass filtering.
     //       Therefore, they has to be initialized as nullopt.
-    std::optional<MinMaxValue> lon_offset_to_avoid{std::nullopt};
+    std::optional<LongitudinalAvoidanceOffset> lon_offset_to_avoid{std::nullopt};
     std::optional<MinMaxValue> lat_offset_to_avoid{std::nullopt};
     bool is_collision_left;
     bool should_be_avoided{false};
 
     void update(
-      const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid,
+      const LongitudinalAvoidanceOffset & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid,
       const bool arg_is_collision_left, const bool arg_should_be_avoided)
     {
       lon_offset_to_avoid = arg_lon_offset_to_avoid;
@@ -226,7 +232,7 @@ public:
       return object_map_.at(uuid);
     }
     void updateObject(
-      const std::string & uuid, const MinMaxValue & lon_offset_to_avoid,
+      const std::string & uuid, const LongitudinalAvoidanceOffset & lon_offset_to_avoid,
       const MinMaxValue & lat_offset_to_avoid, const bool is_collision_left,
       const bool should_be_avoided)
     {
@@ -324,7 +330,7 @@ private:
   LatLonOffset getLateralLongitudinalOffset(
     const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
     const autoware_auto_perception_msgs::msg::Shape & obj_shape) const;
-  MinMaxValue calcMinMaxLongitudinalOffsetToAvoid(
+  LongitudinalAvoidanceOffset calcMinMaxLongitudinalOffsetToAvoid(
     const std::vector<PathPointWithLaneId> & path_points_for_object_polygon,
     const geometry_msgs::msg::Pose & obj_pose, const Polygon2d & obj_points, const double obj_vel,
     const double time_to_collision) const;
