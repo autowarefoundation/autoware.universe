@@ -295,7 +295,7 @@ private:
     const std::vector<ReferencePoint> & ref_points) const;
 
   std::optional<std::vector<TrajectoryPoint>> calcMPTPoints(
-    std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & U,
+    std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & optimized_variables,
     const StateEquationGenerator::Matrix & mpt_matrix) const;
 
   void publishDebugTrajectories(
