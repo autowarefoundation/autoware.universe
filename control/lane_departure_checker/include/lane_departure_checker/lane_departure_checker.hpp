@@ -136,8 +136,12 @@ private:
     const lanelet::ConstLanelets & candidate_lanelets,
     const std::vector<LinearRing2d> & vehicle_footprints);
 
-  static bool isCrossingWithRoadBorder(
-    const lanelet::ConstLineString3d & road_border, const std::vector<LinearRing2d> & footprints);
+  static bool willCrossRoadBorder(
+    const lanelet::ConstLanelets & candidate_lanelets,
+    const std::vector<LinearRing2d> & vehicle_footprints);
+
+  static bool isCrossingRoadBorder(
+    const lanelet::BasicLineString2d  & road_border, std::vector<LinearRing2d> & footprints);
 };
 }  // namespace lane_departure_checker
 

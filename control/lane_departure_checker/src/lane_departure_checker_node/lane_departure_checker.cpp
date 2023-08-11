@@ -39,6 +39,16 @@ namespace
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using geometry_msgs::msg::Point;
+
+Point fromVector2dToMsg(const Eigen::Vector3d& point)
+{
+  Point msg;
+  msg.x = point.x();
+  msg.y = point.y();
+  msg.z = 0.0;
+  return msg;
+}
 
 double calcBrakingDistance(
   const double abs_velocity, const double max_deceleration, const double delay_time)
@@ -58,16 +68,19 @@ bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2
 }
 
 bool isCrossingWithRoadBorder(
-  const lanelet::ConstLineString3d & road_border, const std::vector<LinearRing2d> & footprints)
+  lanelet::BasicLineString2d & road_border, std::vector<LinearRing2d> & footprints)
 {
-  for (const auto & footprint : footprints) {
+  for (auto & footprint : footprints) {
     for (size_t i = 0; i < footprint.size() - 1; ++i) {
-      auto & footprint1 = footprint.at(i);
-      auto & footprint2 = footprint.at(i + 1);
-      for (const auto & r : road_border) {
+      auto footprint1 = footprint.at(i).to_3d();
+      auto footprint2 = footprint.at(i + 1).to_3d();
+      for (size_t i = 0; i < road_border.size() - 1; ++i) {
+        auto road_border1 = road_border.at(i);
+        auto road_border2 = road_border.at(i + 1);
         if (tier4_autoware_utils::intersect(
               tier4_autoware_utils::toMsg(footprint1), tier4_autoware_utils::toMsg(footprint2),
-              r.x(), r.y())) {
+              fromVector2dToMsg(road_border1),
+              fromVector2dToMsg(road_border2))) {
           return true;
         }
       }
@@ -161,7 +174,7 @@ Output LaneDepartureChecker::update(const Input & input)
   output.processing_time_map["isOutOfLane"] = stop_watch.toc(true);
 
   output.will_cross_road_boundary =
-    willCrossRoadBoundary(output.candidate_lanelets, output.vehicle_footprints);
+    willCrossRoadBorder(output.candidate_lanelets, output.vehicle_footprints);
 
   return output;
 }
@@ -328,13 +341,13 @@ bool LaneDepartureChecker::willCrossRoadBorder(
   for (const auto & candidate_lanelet : candidate_lanelets) {
     if (candidate_lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "road_border")) {
       if (isCrossingWithRoadBorder(
-            candidate_lanelet.rightBound().basicLineString(), vehicle_footprints)) {
+            candidate_lanelet.rightBound2d().basicLineString(), vehicle_footprints)) {
         return true;
       }
     }
     if (candidate_lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "road_border")) {
       if (isCrossingWithRoadBorder(
-            candidate_lanelet.leftBound().basicLineString(), vehicle_footprints)) {
+            candidate_lanelet.rightBound2d().basicLineString(), vehicle_footprints)) {
         return true;
       }
     }
