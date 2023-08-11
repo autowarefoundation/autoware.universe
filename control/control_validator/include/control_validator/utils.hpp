@@ -15,8 +15,9 @@
 #ifndef CONTROL_VALIDATOR__UTILS_HPP_
 #define CONTROL_VALIDATOR__UTILS_HPP_
 
-#include <rclcpp/rclcpp.hpp>
 #include <motion_utils/trajectory/tmp_conversion.hpp>
+#include <rclcpp/rclcpp.hpp>
+
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 
 #include <string>
