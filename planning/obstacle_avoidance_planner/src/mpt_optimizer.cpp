@@ -1168,7 +1168,6 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
   const bool is_goal_contained = geometry_utils::isSamePoint(ref_points.back(), traj_points.back());
 
   // update Q
-  Eigen::SparseMatrix<double> Q_sparse_mat(N_x, N_x);
   std::vector<Eigen::Triplet<double>> Q_triplet_vec;
   for (size_t i = 0; i < N_ref; ++i) {
     const auto adaptive_error_weight = [&]() -> std::array<double, 2> {
@@ -1200,10 +1199,10 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
     Q_triplet_vec.push_back(
       Eigen::Triplet<double>(i * D_x + 1, i * D_x + 1, adaptive_yaw_error_weight));
   }
+  Eigen::SparseMatrix<double> Q_sparse_mat(N_x, N_x);
   Q_sparse_mat.setFromTriplets(Q_triplet_vec.begin(), Q_triplet_vec.end());
 
   // update R
-  Eigen::SparseMatrix<double> R_sparse_mat(N_u, N_u);
   std::vector<Eigen::Triplet<double>> R_triplet_vec;
   for (size_t i = 0; i < N_ref - 1; ++i) {
     const double adaptive_steer_weight = interpolation::lerp(
@@ -1211,16 +1210,13 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
       ref_points.at(i).normalized_avoidance_cost);
     R_triplet_vec.push_back(Eigen::Triplet<double>(D_u * i, D_u * i, adaptive_steer_weight));
   }
+  Eigen::SparseMatrix<double> R_sparse_mat(N_u, N_u);
   addSteerWeightR(R_triplet_vec, ref_points);
 
   R_sparse_mat.setFromTriplets(R_triplet_vec.begin(), R_triplet_vec.end());
 
-  ValueMatrix m;
-  m.Q = Q_sparse_mat;
-  m.R = R_sparse_mat;
-
   time_keeper_ptr_->toc(__func__, "        ");
-  return m;
+  return ValueMatrix{Q_sparse_mat, R_sparse_mat};
 }
 
 MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
@@ -1238,6 +1234,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   const size_t N_x = N_ref * D_x;
   const size_t N_u = (N_ref - 1) * D_u;
   const size_t N_s = N_ref * N_slack;
+
   const size_t N_v = N_x + N_u + N_s;
 
   // generate T matrix and vector to shift optimization center
@@ -1259,6 +1256,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   sparse_T_mat.setFromTriplets(triplet_T_vec.begin(), triplet_T_vec.end());
 
   // NOTE: min J(v) = min (v'Hv + v'g)
+  // TODO(murooka) chech H_x and g_x formulation
   Eigen::MatrixXd H_x = Eigen::MatrixXd::Zero(N_x, N_x);
   H_x.triangularView<Eigen::Upper>() =
     Eigen::MatrixXd(sparse_T_mat.transpose() * val_mat.Q * sparse_T_mat);
@@ -1680,7 +1678,7 @@ std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::calcMPTPoints(
     if (i == N_ref - 1) {
       ref_point.optimized_input = 0.0;
     } else {
-      ref_point.optimized_input = steer_angles(D_x + i * D_u);
+      ref_point.optimized_input = steer_angles(i * D_u);
     }
 
     std::vector<double> tmp_slack_variables;
