@@ -262,12 +262,9 @@ bool VehicleCmdGate::isDataReady()
 // for auto
 void VehicleCmdGate::onAutoCtrlCmd(AckermannControlCommand::ConstSharedPtr msg)
 {
-  std::cerr << "File: " << __FILE__ << ", Line: " << __LINE__ << "on auto cmd " << std::endl;
   auto_commands_.control = *msg;
 
   if (current_gate_mode_.data == GateMode::AUTO) {
-    std::cerr << "File: " << __FILE__ << ", Line: " << __LINE__ << "auto mode. publish call"
-              << std::endl;
     publishControlCommands(auto_commands_);
   }
 }
@@ -376,19 +373,16 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
 {
   // Check system emergency
   if (use_emergency_handling_ && is_emergency_state_heartbeat_timeout_) {
-    std::cerr << "File: " << __FILE__ << ", Line: " << __LINE__ << "return---" << std::endl;
     return;
   }
 
   // Check external emergency stop
   if (is_external_emergency_stop_) {
-    std::cerr << "File: " << __FILE__ << ", Line: " << __LINE__ << "return---" << std::endl;
     return;
   }
 
   // Check initialization is done
   if (!isDataReady()) {
-    std::cerr << "File: " << __FILE__ << ", Line: " << __LINE__ << "return---" << std::endl;
     return;
   }
 
@@ -441,7 +435,6 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
 
   // Save ControlCmd to steering angle when disengaged
   prev_control_cmd_ = filtered_commands.control;
-  std::cerr << "File: " << __FILE__ << ", Line: " << __LINE__ << "publish" << std::endl;
 }
 
 void VehicleCmdGate::publishEmergencyStopControlCommands()
