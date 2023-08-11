@@ -51,7 +51,7 @@ public:
   void onReferenceTrajectory(const Trajectory::ConstSharedPtr msg);
   void onPredictedTrajectory(const Trajectory::ConstSharedPtr msg);
 
-  bool checkValidMaxDistanceDeviation(const Trajectory & trajectory);
+  bool checkValidMaxDistanceDeviation(const Trajectory & predicted_trajectory);
 
 private:
   void setupDiag();
@@ -91,6 +91,12 @@ private:
   ValidationParams validation_params_;  // for thresholds
 
   vehicle_info_util::VehicleInfo vehicle_info_;
+
+  Trajectory alignTrajectoryWithReferenceTrajectory(
+    const Trajectory & trajectory, const Trajectory & predicted_trajectory) const;
+
+  double calcMaxLateralDistance(
+    const Trajectory & trajectory, const Trajectory & predicted_trajectory) const;
 
   bool isAllValid(const ControlValidatorStatus & status);
 
