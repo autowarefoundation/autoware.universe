@@ -22,16 +22,18 @@
 namespace vehicle_cmd_gate
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using LimitArray = std::vector<double>;
 
 struct VehicleCmdFilterParam
 {
   double wheel_base;
   double vel_lim;
-  double lon_acc_lim;
-  double lon_jerk_lim;
-  double lat_acc_lim;
-  double lat_jerk_lim;
-  double actual_steer_diff_lim;
+  LimitArray reference_speed_points;
+  LimitArray lon_acc_lim;
+  LimitArray lon_jerk_lim;
+  LimitArray lat_acc_lim;
+  LimitArray lat_jerk_lim;
+  LimitArray actual_steer_diff_lim;
 };
 class VehicleCmdFilter
 {
@@ -41,12 +43,13 @@ public:
 
   void setWheelBase(double v) { param_.wheel_base = v; }
   void setVelLim(double v) { param_.vel_lim = v; }
-  void setLonAccLim(double v) { param_.lon_acc_lim = v; }
-  void setLonJerkLim(double v) { param_.lon_jerk_lim = v; }
-  void setLatAccLim(double v) { param_.lat_acc_lim = v; }
-  void setLatJerkLim(double v) { param_.lat_jerk_lim = v; }
-  void setActualSteerDiffLim(double v) { param_.actual_steer_diff_lim = v; }
-  void setParam(const VehicleCmdFilterParam & p) { param_ = p; }
+  void setLonAccLim(LimitArray v);
+  void setLonJerkLim(LimitArray v);
+  void setLatAccLim(LimitArray v);
+  void setLatJerkLim(LimitArray v);
+  void setActualSteerDiffLim(LimitArray v);
+  void setCurrentSpeed(double v) { current_speed_ = v; }
+  void setParam(const VehicleCmdFilterParam & p);
   void setPrevCmd(const AckermannControlCommand & v) { prev_cmd_ = v; }
 
   void limitLongitudinalWithVel(AckermannControlCommand & input) const;
@@ -64,10 +67,20 @@ public:
 private:
   VehicleCmdFilterParam param_;
   AckermannControlCommand prev_cmd_;
+  double current_speed_ = 0.0;
+
+  bool setParameterWithValidation(const VehicleCmdFilterParam & p);
 
   double calcLatAcc(const AckermannControlCommand & cmd) const;
   double calcSteerFromLatacc(const double v, const double latacc) const;
   double limitDiff(const double curr, const double prev, const double diff_lim) const;
+
+  double interpolateFromSpeed(const LimitArray & limits) const;
+  double getLonAccLim() const;
+  double getLonJerkLim() const;
+  double getLatAccLim() const;
+  double getLatJerkLim() const;
+  double getSteerDiffLim() const;
 };
 }  // namespace vehicle_cmd_gate
 

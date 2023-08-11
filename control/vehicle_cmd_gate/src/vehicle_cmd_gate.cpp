@@ -157,11 +157,13 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     VehicleCmdFilterParam p;
     p.wheel_base = vehicle_info.wheel_base_m;
     p.vel_lim = declare_parameter<double>("nominal.vel_lim");
-    p.lon_acc_lim = declare_parameter<double>("nominal.lon_acc_lim");
-    p.lon_jerk_lim = declare_parameter<double>("nominal.lon_jerk_lim");
-    p.lat_acc_lim = declare_parameter<double>("nominal.lat_acc_lim");
-    p.lat_jerk_lim = declare_parameter<double>("nominal.lat_jerk_lim");
-    p.actual_steer_diff_lim = declare_parameter<double>("nominal.actual_steer_diff_lim");
+    p.reference_speed_points = declare_parameter<std::vector<double>>("nominal.reference_speed_points");
+    p.lon_acc_lim = declare_parameter<std::vector<double>>("nominal.lon_acc_lim");
+    p.lon_jerk_lim = declare_parameter<std::vector<double>>("nominal.lon_jerk_lim");
+    p.lat_acc_lim = declare_parameter<std::vector<double>>("nominal.lat_acc_lim");
+    p.lat_jerk_lim = declare_parameter<std::vector<double>>("nominal.lat_jerk_lim");
+    p.actual_steer_diff_lim =
+      declare_parameter<std::vector<double>>("nominal.actual_steer_diff_lim");
     filter_.setParam(p);
   }
 
@@ -169,11 +171,13 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     VehicleCmdFilterParam p;
     p.wheel_base = vehicle_info.wheel_base_m;
     p.vel_lim = declare_parameter<double>("on_transition.vel_lim");
-    p.lon_acc_lim = declare_parameter<double>("on_transition.lon_acc_lim");
-    p.lon_jerk_lim = declare_parameter<double>("on_transition.lon_jerk_lim");
-    p.lat_acc_lim = declare_parameter<double>("on_transition.lat_acc_lim");
-    p.lat_jerk_lim = declare_parameter<double>("on_transition.lat_jerk_lim");
-    p.actual_steer_diff_lim = declare_parameter<double>("on_transition.actual_steer_diff_lim");
+    p.reference_speed_points = declare_parameter<std::vector<double>>("on_transition.reference_speed_points");
+    p.lon_acc_lim = declare_parameter<std::vector<double>>("on_transition.lon_acc_lim");
+    p.lon_jerk_lim = declare_parameter<std::vector<double>>("on_transition.lon_jerk_lim");
+    p.lat_acc_lim = declare_parameter<std::vector<double>>("on_transition.lat_acc_lim");
+    p.lat_jerk_lim = declare_parameter<std::vector<double>>("on_transition.lat_jerk_lim");
+    p.actual_steer_diff_lim =
+      declare_parameter<std::vector<double>>("on_transition.actual_steer_diff_lim");
     filter_on_transition_.setParam(p);
   }
 
@@ -499,6 +503,9 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   const auto current_status_cmd = getActualStatusAsCommand();
   const auto ego_is_stopped = vehicle_stop_checker_->isVehicleStopped(stop_check_duration_);
   const auto input_cmd_is_stopping = in.longitudinal.acceleration < 0.0;
+
+  filter_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
+  filter_on_transition_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
 
   // Apply transition_filter when transiting from MANUAL to AUTO.
   if (mode.is_in_transition) {

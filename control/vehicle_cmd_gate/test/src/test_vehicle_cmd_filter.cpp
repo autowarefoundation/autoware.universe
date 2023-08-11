@@ -25,19 +25,26 @@
 #define ASSERT_GT_NEAR(x, y) ASSERT_GT(x, y - THRESHOLD)
 
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using vehicle_cmd_gate::LimitArray;
 
 constexpr double NOMINAL_INTERVAL = 1.0;
 
 void setFilterParams(
-  vehicle_cmd_gate::VehicleCmdFilter & f, double v, double a, double j, double lat_a, double lat_j,
-  double wheelbase)
+  vehicle_cmd_gate::VehicleCmdFilter & f, double v, LimitArray speed_points,
+  LimitArray a, LimitArray j, LimitArray lat_a, LimitArray lat_j, LimitArray steer_diff,
+  const double wheelbase)
 {
-  f.setVelLim(v);
-  f.setLonAccLim(a);
-  f.setLonJerkLim(j);
-  f.setLatAccLim(lat_a);
-  f.setLatJerkLim(lat_j);
-  f.setWheelBase(wheelbase);
+  vehicle_cmd_gate::VehicleCmdFilterParam p;
+  p.vel_lim = v;
+  p.wheel_base = wheelbase;
+  p.reference_speed_points = speed_points;
+  p.lat_acc_lim = lat_a;
+  p.lat_jerk_lim = lat_j;
+  p.lon_acc_lim = a;
+  p.lon_jerk_lim = j;
+  p.actual_steer_diff_lim = steer_diff;
+ 
+  f.setParam(p);
 }
 
 AckermannControlCommand genCmd(double s, double sr, double v, double a)
@@ -56,15 +63,15 @@ double calcLatAcc(const AckermannControlCommand & cmd, const double wheelbase)
   return v * v * std::tan(cmd.lateral.steering_tire_angle) / wheelbase;
 }
 
-void test_all(
-  double V_LIM, double A_LIM, double J_LIM, double LAT_A_LIM, double LAT_J_LIM,
+void test_1d_limit(
+  double V_LIM, double A_LIM, double J_LIM, double LAT_A_LIM, double LAT_J_LIM, double STEER_DIFF,
   const AckermannControlCommand & prev_cmd, const AckermannControlCommand & raw_cmd)
 {
   const double WHEELBASE = 3.0;
   const double DT = 0.1;  // [s]
 
   vehicle_cmd_gate::VehicleCmdFilter filter;
-  setFilterParams(filter, V_LIM, A_LIM, J_LIM, LAT_A_LIM, LAT_J_LIM, WHEELBASE);
+  setFilterParams(filter, V_LIM, {0.0}, {A_LIM}, {J_LIM}, {LAT_A_LIM}, {LAT_J_LIM}, {STEER_DIFF}, WHEELBASE);
   filter.setPrevCmd(prev_cmd);
 
   // velocity filter
@@ -173,6 +180,7 @@ TEST(VehicleCmdFilter, VehicleCmdFilter)
   const std::vector<double> j_arr = {0.0, 0.1, 1.0};
   const std::vector<double> lat_a_arr = {0.01, 1.0, 100.0};
   const std::vector<double> lat_j_arr = {0.01, 1.0, 100.0};
+  const std::vector<double> steer_diff_arr = {0.01, 1.0, 100.0};
 
   const std::vector<AckermannControlCommand> prev_cmd_arr = {
     genCmd(0.0, 0.0, 0.0, 0.0), genCmd(1.0, 1.0, 1.0, 1.0)};
@@ -187,7 +195,9 @@ TEST(VehicleCmdFilter, VehicleCmdFilter)
           for (const auto & lj : lat_j_arr) {
             for (const auto & prev_cmd : prev_cmd_arr) {
               for (const auto & raw_cmd : raw_cmd_arr) {
-                test_all(v, a, j, la, lj, prev_cmd, raw_cmd);
+                for (const auto & steer_diff : steer_diff_arr) {
+                  test_1d_limit(v, a, j, la, lj, steer_diff, prev_cmd, raw_cmd);
+                }
               }
             }
           }
