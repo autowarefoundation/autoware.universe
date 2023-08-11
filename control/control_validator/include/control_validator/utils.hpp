@@ -16,54 +16,39 @@
 #define CONTROL_VALIDATOR__UTILS_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-
+#include <motion_utils/trajectory/tmp_conversion.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 
 #include <string>
 #include <utility>
 #include <vector>
 
-namespace control_validator
+namespace control_validator::utils
 {
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using geometry_msgs::msg::Pose;
+using motion_utils::convertToTrajectoryPointArray;
+// using motion_utils::
+using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
-std::pair<double, size_t> getMaxValAndIdx(const std::vector<double> & v);
+void insertPointInPredictedTrajectory(
+  TrajectoryPoints & modified_trajectory, const geometry_msgs::msg::Pose & reference_pose,
+  const TrajectoryPoints & predicted_trajectory);
 
-std::pair<double, size_t> getMinValAndIdx(const std::vector<double> & v);
+Trajectory alignTrajectoryWithReferenceTrajectory(
+  const Trajectory & trajectory, const Trajectory & predicted_trajectory);
 
-std::pair<double, size_t> getAbsMaxValAndIdx(const std::vector<double> & v);
+TrajectoryPoints reverseTrajectoryPoints(const TrajectoryPoints & trajectory);
 
-Trajectory resampleTrajectory(const Trajectory & trajectory, const double min_interval);
+bool removeFrontTrajectoryPoint(
+  const TrajectoryPoints & trajectory_points, TrajectoryPoints & modified_trajectory_points,
+  const TrajectoryPoints & predicted_trajectory_points);
 
-void calcCurvature(const Trajectory & trajectory, std::vector<double> & curvatures);
+double calcMaxLateralDistance(
+  const Trajectory & reference_trajectory, const Trajectory & predicted_trajectory);
 
-// cspell: ignore steerings
-void calcSteeringAngles(
-  const Trajectory & trajectory, const double wheelbase, std::vector<double> & steerings);
-
-std::pair<double, size_t> calcMaxCurvature(const Trajectory & trajectory);
-
-std::pair<double, size_t> calcMaxIntervalDistance(const Trajectory & trajectory);
-
-std::pair<double, size_t> calcMaxLateralAcceleration(const Trajectory & trajectory);
-
-std::pair<double, size_t> getMaxLongitudinalAcc(const Trajectory & trajectory);
-
-std::pair<double, size_t> getMinLongitudinalAcc(const Trajectory & trajectory);
-
-std::pair<double, size_t> calcMaxRelativeAngles(const Trajectory & trajectory);
-
-std::pair<double, size_t> calcMaxSteeringAngles(
-  const Trajectory & trajectory, const double wheelbase);
-
-std::pair<double, size_t> calcMaxSteeringRates(
-  const Trajectory & trajectory, const double wheelbase);
-
-bool checkFinite(const TrajectoryPoint & point);
-
-void shiftPose(geometry_msgs::msg::Pose & pose, double longitudinal);
-
-}  // namespace control_validator
+void shiftPose(Pose & pose, double longitudinal);
+}  // namespace control_validator::utils
 
 #endif  // CONTROL_VALIDATOR__UTILS_HPP_

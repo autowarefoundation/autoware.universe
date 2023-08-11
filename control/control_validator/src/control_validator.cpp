@@ -17,7 +17,6 @@
 #include "control_validator/utils.hpp"
 
 #include <motion_utils/motion_utils.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <memory>
@@ -27,7 +26,6 @@
 namespace control_validator
 {
 using diagnostic_msgs::msg::DiagnosticStatus;
-using geometry_msgs::msg::Pose;
 
 ControlValidator::ControlValidator(const rclcpp::NodeOptions & options)
 : Node("control_validator", options)
@@ -217,9 +215,10 @@ void ControlValidator::publishDebugInfo()
 
   if (!isAllValid(validation_status_)) {
     geometry_msgs::msg::Pose front_pose = current_kinematics_->pose.pose;
-    shiftPose(front_pose, vehicle_info_.front_overhang_m + vehicle_info_.wheel_base_m);
+    control_validator::utils::shiftPose(
+      front_pose, vehicle_info_.front_overhang_m + vehicle_info_.wheel_base_m);
     debug_pose_publisher_->pushVirtualWall(front_pose);
-    debug_pose_publisher_->pushWarningMsg(front_pose, "INVALID PLANNING");
+    debug_pose_publisher_->pushWarningMsg(front_pose, "INVALID CONTROL");
   }
   debug_pose_publisher_->publish();
 }
@@ -240,135 +239,16 @@ void ControlValidator::validate(const Trajectory & predicted_trajectory)
 
 bool ControlValidator::checkValidMaxDistanceDeviation(const Trajectory & predicted_trajectory)
 {
-  const auto alined_predicted_trajectory =
-    alignTrajectoryWithReferenceTrajectory(*current_reference_trajectory_, predicted_trajectory);
+  validation_status_.max_distance_deviation = control_validator::utils::calcMaxLateralDistance(
+    *current_reference_trajectory_, predicted_trajectory);
 
-  validation_status_.max_distance_deviation =
-    calcMaxLateralDistance(*current_reference_trajectory_, alined_predicted_trajectory);
-
+  std::cerr << validation_status_.max_distance_deviation << std::endl;
   if (
     validation_status_.max_distance_deviation >
     validation_params_.max_distance_deviation_threshold) {
     return false;
   }
   return true;
-}
-
-Trajectory ControlValidator::alignTrajectoryWithReferenceTrajectory(
-  const Trajectory & trajectory, const Trajectory & predicted_trajectory) const
-{
-  auto update_trajectory_point = [](
-                                   bool condition, Trajectory & modified_trajectory,
-                                   const Pose & reference_pose, bool is_front,
-                                   const Trajectory & predicted_trajectory) {
-    if (condition) {
-      const auto point_to_interpolate =
-        motion_utils::calcInterpolatedPoint(predicted_trajectory, reference_pose);
-
-      if (is_front) {
-        // Replace the front point with the new point
-        modified_trajectory.points.front() = point_to_interpolate;
-      } else {
-        // Replace the back point with the new point
-        modified_trajectory.points.back() = point_to_interpolate;
-      }
-    }
-  };
-
-  const auto last_seg_length = motion_utils::calcSignedArcLength(
-    trajectory.points, trajectory.points.size() - 2, trajectory.points.size() - 1);
-
-  // If no overlapping between trajectory and predicted_trajectory, return empty trajectory
-  // predicted_trajectory:   p1------------------pN
-  // trajectory:                                     t1------------------tN
-  //     OR
-  // predicted_trajectory:                           p1------------------pN
-  // trajectory:             t1------------------tN
-  const bool & is_pN_before_t1 =
-    motion_utils::calcLongitudinalOffsetToSegment(
-      trajectory.points, 0, predicted_trajectory.points.back().pose.position) < 0.0;
-  const bool & is_p1_behind_tN = motion_utils::calcLongitudinalOffsetToSegment(
-                                   trajectory.points, trajectory.points.size() - 2,
-                                   predicted_trajectory.points.front().pose.position) -
-                                   last_seg_length >
-                                 0.0;
-  const bool is_no_overlapping = (is_pN_before_t1 || is_p1_behind_tN);
-
-  if (is_no_overlapping) {
-    return Trajectory();
-  }
-
-  Trajectory modified_predicted_trajectory = predicted_trajectory;
-
-  // If first point of predicted_trajectory is in front of start of trajectory, erase points which
-  // are in front of trajectory start point and insert pNew along the predicted_trajectory
-  // predicted_trajectory:   　　　　p1-----p2-----p3----//------pN
-  // trajectory:                               t1--------//------tN
-  // ↓
-  // predicted_trajectory:   　　　　        tNew--p3----//------pN
-  // trajectory:                               t1--------//------tN
-
-  bool is_predicted_trajectory_first_point_front = false;
-  for (auto it = predicted_trajectory.points.begin(); it != predicted_trajectory.points.end();
-       ++it) {
-    if (
-      motion_utils::calcLongitudinalOffsetToSegment(trajectory.points, 0, it->pose.position) <
-      0.0) {
-      modified_predicted_trajectory.points.erase(modified_predicted_trajectory.points.begin());
-    } else {
-      break;
-    }
-    is_predicted_trajectory_first_point_front = true;
-  }
-
-  update_trajectory_point(
-    is_predicted_trajectory_first_point_front, modified_predicted_trajectory,
-    trajectory.points.front().pose, true, predicted_trajectory);
-
-  // If last point of predicted_trajectory is behind of end of trajectory, erase points which are
-  // behind trajectory last point and insert pNew along the predicted_trajectory
-  // predicted_trajectory:   　　　　p1-----//------pN-2-----pN-1-----pN
-  // trajectory:                     t1-----//-----tN-1--tN
-  // ↓
-  // predicted_trajectory:           p1-----//------pN-2-pNew
-  // trajectory:                     t1-----//-----tN-1--tN
-  bool is_predicted_trajectory_last_point_behind = false;
-  for (auto it = predicted_trajectory.points.rbegin(); it != predicted_trajectory.points.rend();
-       ++it) {
-    if (
-      motion_utils::calcLongitudinalOffsetToSegment(
-        trajectory.points, trajectory.points.size() - 2, it->pose.position) -
-        last_seg_length >
-      0.0) {
-      modified_predicted_trajectory.points.pop_back();
-    } else {
-      break;
-    }
-    is_predicted_trajectory_last_point_behind = true;
-  }
-  update_trajectory_point(
-    is_predicted_trajectory_last_point_behind, modified_predicted_trajectory,
-    trajectory.points.back().pose, false, predicted_trajectory);
-
-  return modified_predicted_trajectory;
-}
-
-double calcMaxLateralDistance(
-  const Trajectory & reference_trajectory, const Trajectory & predicted_trajectory)
-{
-  double max_dist = 0;
-  for (const auto & point : predicted_trajectory.points) {
-    const auto p0 = tier4_autoware_utils::getPoint(point);
-    // find nearest segment
-    const size_t nearest_segment_idx =
-      motion_utils::findNearestSegmentIndex(reference_trajectory.points, p0);
-    double temp_dist =
-      motion_utils::calcLateralOffset(reference_trajectory.points, p0, nearest_segment_idx);
-    if (max_dist > temp_dist) {
-      max_dist = temp_dist;
-    }
-  }
-  return max_dist;
 }
 
 bool ControlValidator::isAllValid(const ControlValidatorStatus & s)
