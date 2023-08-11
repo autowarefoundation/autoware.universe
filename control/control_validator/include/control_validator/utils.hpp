@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_VALIDATOR__UTILS_HPP_
-#define PLANNING_VALIDATOR__UTILS_HPP_
+#ifndef CONTROL_VALIDATOR__UTILS_HPP_
+#define CONTROL_VALIDATOR__UTILS_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -66,4 +66,4 @@ void shiftPose(geometry_msgs::msg::Pose & pose, double longitudinal);
 
 }  // namespace control_validator
 
-#endif  // PLANNING_VALIDATOR__UTILS_HPP_
+#endif  // CONTROL_VALIDATOR__UTILS_HPP_

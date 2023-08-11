@@ -20,7 +20,6 @@ Other features are to be implemented.
 
 The `control_validator` takes in the following inputs:
 
-
 ### Outputs
 
 It outputs the following:
@@ -37,11 +36,11 @@ The following parameters can be set for the `control_validator`:
 
 ### System parameters
 
-| Name                               | Type | Description                                                                                                                                                                                                                                | Default value |
-| :--------------------------------- | :--- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `publish_diag`                     | bool | if true, diagnostics msg is published. | true          |
-| `diag_error_count_threshold`       | int  | the Diag will be set to ERROR when the number of consecutive invalid trajectory exceeds this threshold. (For example, threshold = 1 means, even if the trajectory is invalid, the Diag will not be ERROR if the next trajectory is valid.) | true          |
-| `display_on_terminal`              | bool | show error msg on terminal                                                                                                                                                                                                                 | true          |
+| Name                         | Type | Description                                                                                                                                                                                                                                | Default value |
+| :--------------------------- | :--- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `publish_diag`               | bool | if true, diagnostics msg is published.                                                                                                                                                                                                     | true          |
+| `diag_error_count_threshold` | int  | the Diag will be set to ERROR when the number of consecutive invalid trajectory exceeds this threshold. (For example, threshold = 1 means, even if the trajectory is invalid, the Diag will not be ERROR if the next trajectory is valid.) | true          |
+| `display_on_terminal`        | bool | show error msg on terminal                                                                                                                                                                                                                 | true          |
 
 ### Algorithm parameters
 

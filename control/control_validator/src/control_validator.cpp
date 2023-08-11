@@ -236,9 +236,9 @@ void ControlValidator::validate(const Trajectory & predicted_trajectory)
   s.invalid_count = isAllValid(s) ? 0 : s.invalid_count + 1;
 }
 
-bool ControlValidator::checkValidMaxDistanceDeviation([[maybe_unused]]const Trajectory & trajectory)
+bool ControlValidator::checkValidMaxDistanceDeviation(
+  [[maybe_unused]] const Trajectory & trajectory)
 {
-
   // TODO(horibe): implement max deviation from reference trajectory
   // const auto idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
   //   trajectory.points, current_kinematics_->pose.pose);

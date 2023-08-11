@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_VALIDATOR__PLANNING_VALIDATOR_HPP_
-#define PLANNING_VALIDATOR__PLANNING_VALIDATOR_HPP_
+#ifndef CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
+#define CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
 
 #include "control_validator/debug_marker.hpp"
 #include "control_validator/msg/control_validator_status.hpp"
@@ -33,10 +33,10 @@ namespace control_validator
 {
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using control_validator::msg::ControlValidatorStatus;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 using nav_msgs::msg::Odometry;
-using control_validator::msg::ControlValidatorStatus;
 
 struct ValidationParams
 {
@@ -104,4 +104,4 @@ private:
 };
 }  // namespace control_validator
 
-#endif  // PLANNING_VALIDATOR__PLANNING_VALIDATOR_HPP_
+#endif  // CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
