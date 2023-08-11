@@ -30,9 +30,8 @@ using vehicle_cmd_gate::LimitArray;
 constexpr double NOMINAL_INTERVAL = 1.0;
 
 void setFilterParams(
-  vehicle_cmd_gate::VehicleCmdFilter & f, double v, LimitArray speed_points,
-  LimitArray a, LimitArray j, LimitArray lat_a, LimitArray lat_j, LimitArray steer_diff,
-  const double wheelbase)
+  vehicle_cmd_gate::VehicleCmdFilter & f, double v, LimitArray speed_points, LimitArray a,
+  LimitArray j, LimitArray lat_a, LimitArray lat_j, LimitArray steer_diff, const double wheelbase)
 {
   vehicle_cmd_gate::VehicleCmdFilterParam p;
   p.vel_lim = v;
@@ -43,7 +42,7 @@ void setFilterParams(
   p.lon_acc_lim = a;
   p.lon_jerk_lim = j;
   p.actual_steer_diff_lim = steer_diff;
- 
+
   f.setParam(p);
 }
 
@@ -71,7 +70,8 @@ void test_1d_limit(
   const double DT = 0.1;  // [s]
 
   vehicle_cmd_gate::VehicleCmdFilter filter;
-  setFilterParams(filter, V_LIM, {0.0}, {A_LIM}, {J_LIM}, {LAT_A_LIM}, {LAT_J_LIM}, {STEER_DIFF}, WHEELBASE);
+  setFilterParams(
+    filter, V_LIM, {0.0}, {A_LIM}, {J_LIM}, {LAT_A_LIM}, {LAT_J_LIM}, {STEER_DIFF}, WHEELBASE);
   filter.setPrevCmd(prev_cmd);
 
   // velocity filter
@@ -167,6 +167,23 @@ void test_1d_limit(
     // check if the undesired filter is not applied.
     const double raw_lateral_jerk = (raw_lat_acc - prev_lat_acc) / DT;
     if (std::abs(raw_lateral_jerk) < LAT_J_LIM) {
+      ASSERT_NEAR(
+        filtered_cmd.lateral.steering_tire_angle, raw_cmd.lateral.steering_tire_angle, THRESHOLD);
+    }
+  }
+
+  // steer diff
+  {
+    const auto current_steering = 0.1;
+    auto filtered_cmd = raw_cmd;
+    filter.limitActualSteerDiff(current_steering, filtered_cmd);
+    const auto filtered_steer_diff = filtered_cmd.lateral.steering_tire_angle - current_steering;
+    const auto raw_steer_diff = raw_cmd.lateral.steering_tire_angle - current_steering;
+    // check if the filtered value does not exceed the limit.
+    ASSERT_LT_NEAR(std::abs(filtered_steer_diff), STEER_DIFF);
+
+    // check if the undesired filter is not applied.
+    if (std::abs(raw_steer_diff) < STEER_DIFF) {
       ASSERT_NEAR(
         filtered_cmd.lateral.steering_tire_angle, raw_cmd.lateral.steering_tire_angle, THRESHOLD);
     }

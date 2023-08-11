@@ -19,6 +19,8 @@
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
+#include <vector>
+
 namespace vehicle_cmd_gate
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;

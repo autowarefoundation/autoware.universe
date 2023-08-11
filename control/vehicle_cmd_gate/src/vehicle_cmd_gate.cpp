@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace vehicle_cmd_gate
 {
@@ -157,7 +158,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     VehicleCmdFilterParam p;
     p.wheel_base = vehicle_info.wheel_base_m;
     p.vel_lim = declare_parameter<double>("nominal.vel_lim");
-    p.reference_speed_points = declare_parameter<std::vector<double>>("nominal.reference_speed_points");
+    p.reference_speed_points =
+      declare_parameter<std::vector<double>>("nominal.reference_speed_points");
     p.lon_acc_lim = declare_parameter<std::vector<double>>("nominal.lon_acc_lim");
     p.lon_jerk_lim = declare_parameter<std::vector<double>>("nominal.lon_jerk_lim");
     p.lat_acc_lim = declare_parameter<std::vector<double>>("nominal.lat_acc_lim");
@@ -171,7 +173,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     VehicleCmdFilterParam p;
     p.wheel_base = vehicle_info.wheel_base_m;
     p.vel_lim = declare_parameter<double>("on_transition.vel_lim");
-    p.reference_speed_points = declare_parameter<std::vector<double>>("on_transition.reference_speed_points");
+    p.reference_speed_points =
+      declare_parameter<std::vector<double>>("on_transition.reference_speed_points");
     p.lon_acc_lim = declare_parameter<std::vector<double>>("on_transition.lon_acc_lim");
     p.lon_jerk_lim = declare_parameter<std::vector<double>>("on_transition.lon_jerk_lim");
     p.lat_acc_lim = declare_parameter<std::vector<double>>("on_transition.lat_acc_lim");
