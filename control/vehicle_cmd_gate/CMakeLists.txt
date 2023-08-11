@@ -20,6 +20,7 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_vehicle_cmd_gate
     test/src/test_main.cpp
     test/src/test_vehicle_cmd_filter.cpp
+    test/src/test_filter_in_vehicle_cmd_gate_node.cpp
   )
   ament_target_dependencies(test_vehicle_cmd_gate
     rclcpp
