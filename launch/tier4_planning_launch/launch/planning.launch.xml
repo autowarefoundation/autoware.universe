@@ -50,7 +50,6 @@
   <!-- control validator -->
   <arg name="control_validator_param_path"/>
 
-
   <group>
     <push-ros-namespace namespace="planning"/>
     <!-- mission planning module -->
@@ -91,7 +90,6 @@
         <arg name="control_validator_param_path" value="$(var control_validator_param_path)"/>
       </include>
     </group>
-
 
     <!-- planning evaluator -->
     <group>
