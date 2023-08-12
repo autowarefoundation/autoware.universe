@@ -144,9 +144,20 @@ void VehicleCmdFilter::limitActualSteerDiff(
   input.lateral.steering_tire_angle = current_steer_angle + ds;
 }
 
+void VehicleCmdFilter::limitLateralSteer(AckermannControlCommand & input) const
+{
+  // TODO(Horibe): parametrize the max steering angle.
+  // TODO(Horibe): support steering greater than PI/2. Now the lateral acceleration
+  // calculation does not support bigger steering value than PI/2 due to tan/atan calculation.
+  constexpr float steer_limit = M_PI_2;
+  input.lateral.steering_tire_angle =
+    std::clamp(input.lateral.steering_tire_angle, -steer_limit, steer_limit);
+}
+
 void VehicleCmdFilter::filterAll(
   const double dt, const double current_steer_angle, AckermannControlCommand & cmd) const
 {
+  limitLateralSteer(cmd);
   limitLongitudinalWithJerk(dt, cmd);
   limitLongitudinalWithAcc(dt, cmd);
   limitLongitudinalWithVel(cmd);

@@ -61,6 +61,7 @@ public:
   void limitLateralWithLatJerk(const double dt, AckermannControlCommand & input) const;
   void limitActualSteerDiff(
     const double current_steer_angle, AckermannControlCommand & input) const;
+  void limitLateralSteer(AckermannControlCommand & input) const;
   void filterAll(
     const double dt, const double current_steer_angle, AckermannControlCommand & input) const;
 

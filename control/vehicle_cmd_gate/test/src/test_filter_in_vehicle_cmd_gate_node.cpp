@@ -23,7 +23,25 @@
 #include <string>
 #include <vector>
 
-#define PRINT_LINE() std::cout << "File: " << __FILE__ << ", Line: " << __LINE__ << std::endl;
+#define ASSERT_LT_NEAR(x, y, alpha) ASSERT_LT(x, y * alpha)
+#define ASSERT_GT_NEAR(x, y, alpha) ASSERT_GT(x, y * alpha)
+
+#define PRINT_VALUES(...) print_values(0, #__VA_ARGS__, __VA_ARGS__)
+template <typename T>
+void print_values([[maybe_unused]] int i, [[maybe_unused]] T name)
+{
+  std::cerr << std::endl;
+}
+template <typename T1, typename T2, typename... T3>
+void print_values(int i, const T1 & name, const T2 & a, const T3 &... b)
+{
+  for (; name[i] != ',' && name[i] != '\0'; i++) std::cerr << name[i];
+
+  std::ostringstream oss;
+  oss << std::setprecision(4) << std::setw(9) << a;
+  std::cerr << ":" << oss.str() << " ";
+  print_values(i + 1, name, b...);
+}
 
 // global params
 const std::vector<double> reference_speed_points = {5., 10., 15., 20.};
@@ -60,6 +78,7 @@ public:
       [this](const AckermannControlCommand::ConstSharedPtr msg) {
         cmd_history_.push_back(msg);
         cmd_received_times_.push_back(now());
+        checkFilter();
       });
 
     rclcpp::QoS qos{1};
@@ -100,10 +119,11 @@ public:
   rclcpp::Publisher<GearCommand>::SharedPtr pub_auto_gear_cmd_;
 
   std::vector<AckermannControlCommand::ConstSharedPtr> cmd_history_;
+  std::vector<AckermannControlCommand::ConstSharedPtr> raw_cmd_history_;
   std::vector<rclcpp::Time> cmd_received_times_;
 
   // publish except for the control_cmd
-  void publishDefaultTopicsNoSpin(const AckermannControlCommand & control_cmd)
+  void publishDefaultTopicsNoSpin()
   {
     {
       Heartbeat msg;
@@ -126,26 +146,40 @@ public:
       msg.header.frame_id = "baselink";
       msg.header.stamp = now();
       msg.pose.pose.orientation.w = 1.0;
-      msg.twist.twist.linear.x = control_cmd.longitudinal.speed;  // ego moves as commanded.
+      msg.twist.twist.linear.x = 0.0;
+      if (!cmd_history_.empty()) {  // ego moves as commanded.
+        msg.twist.twist.linear.x =
+          cmd_history_.back()->longitudinal.speed;  // ego moves as commanded.
+        std::cerr << "kinematic state vx = " << msg.twist.twist.linear.x << std::endl;
+      } else {
+        std::cerr << "kinematic state vx = 0 (cmd_history_ is empty)" << std::endl;
+      }
       pub_odom_->publish(msg);
     }
     {
       AccelWithCovarianceStamped msg;
       msg.header.frame_id = "baselink";
       msg.header.stamp = now();
-      msg.accel.accel.linear.x = control_cmd.longitudinal.acceleration;  // ego moves as commanded.
+      msg.accel.accel.linear.x = 0.0;
+      if (!cmd_history_.empty()) {  // ego moves as commanded.
+        msg.accel.accel.linear.x = cmd_history_.back()->longitudinal.acceleration;
+      }
       pub_acc_->publish(msg);
     }
     {
       SteeringReport msg;
       msg.stamp = now();
-      msg.steering_tire_angle = control_cmd.lateral.steering_tire_angle;  // ego moves as commanded.
+      msg.steering_tire_angle = 0.0;
+      if (!cmd_history_.empty()) {  // ego moves as commanded.
+        msg.steering_tire_angle = cmd_history_.back()->lateral.steering_tire_angle;
+      }
       pub_steer_->publish(msg);
     }
     {
       OperationModeState msg;
       msg.stamp = now();
       msg.mode = OperationModeState::AUTONOMOUS;
+      msg.is_autoware_control_enabled = true;
       pub_operation_mode_->publish(msg);
     }
     {
@@ -179,6 +213,53 @@ public:
   {
     msg.stamp = now();
     pub_auto_control_cmd_->publish(msg);
+    raw_cmd_history_.push_back(std::make_shared<AckermannControlCommand>(msg));
+  }
+
+  void checkFilter()
+  {
+    if (cmd_history_.size() != cmd_received_times_.size()) {
+      throw std::logic_error("cmd history and received times must have same size. Check code.");
+    }
+
+    if (cmd_history_.size() == 1) return;
+
+    const size_t i_curr = cmd_history_.size() - 1;
+    const size_t i_prev = cmd_history_.size() - 2;
+    const auto cmd_curr = cmd_history_.at(i_curr);
+    const auto cmd_prev = cmd_history_.at(i_prev);
+
+    const auto max_lon_acc_lim = *std::max_element(lon_acc_lim.begin(), lon_acc_lim.end());
+    const auto max_lon_jerk_lim = *std::max_element(lon_jerk_lim.begin(), lon_jerk_lim.end());
+    const auto max_lat_acc_lim = *std::max_element(lat_acc_lim.begin(), lat_acc_lim.end());
+    const auto max_lat_jerk_lim = *std::max_element(lat_jerk_lim.begin(), lat_jerk_lim.end());
+
+    const auto dt = (cmd_received_times_.at(i_curr) - cmd_received_times_.at(i_prev)).seconds();
+    const auto lon_vel = cmd_curr->longitudinal.speed;
+    const auto lon_acc = cmd_curr->longitudinal.acceleration;
+    const auto lon_jerk = (lon_acc - cmd_prev->longitudinal.acceleration) / dt;
+    const auto lat_acc =
+      lon_vel * lon_vel * std::tan(cmd_curr->lateral.steering_tire_angle) / wheelbase;
+    const auto prev_lon_vel = cmd_prev->longitudinal.speed;
+    const auto prev_lat_acc =
+      prev_lon_vel * prev_lon_vel * std::tan(cmd_prev->lateral.steering_tire_angle) / wheelbase;
+    const auto lat_jerk = (lat_acc - prev_lat_acc) / dt;
+
+    /* debug print */
+    // const auto steer = cmd_curr->lateral.steering_tire_angle;
+    // PRINT_VALUES(
+    //   dt, lon_vel, lon_acc, lon_jerk, lat_acc, lat_jerk, steer, max_lon_acc_lim,
+    //   max_lon_jerk_lim, max_lat_acc_lim, max_lat_jerk_lim);
+
+    // Output command must be smaller than maximum limit.
+    // TODO(Horibe): check for each velocity range.
+    constexpr auto threshold_scale = 1.1;
+    if (std::abs(lon_vel) > 0.01) {
+      ASSERT_LT_NEAR(std::abs(lon_acc), max_lon_acc_lim, threshold_scale);
+      ASSERT_LT_NEAR(std::abs(lon_jerk), max_lon_jerk_lim, threshold_scale);
+      ASSERT_LT_NEAR(std::abs(lat_acc), max_lat_acc_lim, threshold_scale);
+      ASSERT_LT_NEAR(std::abs(lat_jerk), max_lat_jerk_lim, threshold_scale);
+    }
   }
 };
 
@@ -203,10 +284,7 @@ struct CmdParams
 class ControlCmdGenerator
 {
 public:
-  ControlCmdGenerator() {}
-
-  // used for sin wave command generation
-  CmdParams p_;
+  CmdParams p_;  // used for sin wave command generation
 
   using Clock = std::chrono::high_resolution_clock;
   std::chrono::time_point<Clock> start_time_{Clock::now()};
@@ -229,7 +307,8 @@ public:
 
     AckermannControlCommand cmd;
     cmd.lateral.steering_tire_angle = sinWave(p_.steering.max, p_.steering.freq, p_.steering.bias);
-    cmd.longitudinal.speed = sinWave(p_.velocity.max, p_.velocity.freq, p_.velocity.bias);
+    cmd.longitudinal.speed =
+      sinWave(p_.velocity.max, p_.velocity.freq, p_.velocity.bias) + p_.velocity.max;
     cmd.longitudinal.acceleration =
       sinWave(p_.acceleration.max, p_.acceleration.freq, p_.acceleration.bias);
 
@@ -266,54 +345,11 @@ std::shared_ptr<VehicleCmdGate> generateNode()
   return std::make_shared<VehicleCmdGate>(node_options);
 }
 
-void checkFilter(
-  const std::vector<AckermannControlCommand::ConstSharedPtr> & cmd_history,
-  const std::vector<rclcpp::Time> & received_times)
-{
-  if (cmd_history.size() != received_times.size()) {
-    throw std::logic_error("cmd history and received times must have same size. Check code.");
-  }
-
-  const auto max_lon_acc_lim = *std::max_element(lon_acc_lim.begin(), lon_acc_lim.end());
-  const auto max_lon_jerk_lim = *std::max_element(lon_jerk_lim.begin(), lon_jerk_lim.end());
-  const auto max_lat_acc_lim = *std::max_element(lat_acc_lim.begin(), lat_acc_lim.end());
-  const auto max_lat_jerk_lim = *std::max_element(lat_jerk_lim.begin(), lat_jerk_lim.end());
-
-  const auto v0 = cmd_history.front()->longitudinal.speed;
-  auto prev_lat_acc =
-    v0 * v0 * std::tan(cmd_history.front()->lateral.steering_tire_angle) / wheelbase;
-  for (size_t i = 1; i < cmd_history.size(); ++i) {
-    const auto dt = (received_times.at(i) - received_times.at(i - 1)).seconds();
-    const auto lon_vel = cmd_history.at(i)->longitudinal.speed;
-    const auto lon_acc = cmd_history.at(i)->longitudinal.acceleration;
-    const auto lon_jerk = (lon_acc - cmd_history.at(i - 1)->longitudinal.acceleration) / dt;
-    const auto lat_acc =
-      lon_vel * lon_vel * std::tan(cmd_history.at(i)->lateral.steering_tire_angle) / wheelbase;
-    const auto lat_jerk = (lat_acc - prev_lat_acc) / dt;
-
-    // output command must be smaller than maximum limit.
-    // TODO(Horibe): check for each velocity range.
-    if (std::abs(lon_vel) > 0.01) {
-      EXPECT_LT(lon_acc, max_lon_acc_lim);
-      EXPECT_LT(lon_jerk, max_lon_jerk_lim)
-        << "curr_acc = " << lon_acc
-        << ", prev_acc = " << cmd_history.at(i - 1)->longitudinal.acceleration << ", dt = " << dt;
-      EXPECT_LT(lat_acc, max_lat_acc_lim)
-        << "lon_vel = " << lon_vel
-        << ", steer_angle = " << cmd_history.at(i)->lateral.steering_tire_angle
-        << ", wheelbase = " << wheelbase;
-      EXPECT_LT(lat_jerk, max_lat_jerk_lim)
-        << "lat_acc = " << lat_acc << ", prev_lat_acc = " << prev_lat_acc << ", dt = " << dt;
-    }
-    prev_lat_acc = lat_acc;
-  }
-}
 class TestFixture : public ::testing::TestWithParam<CmdParams>
 {
 protected:
   void SetUp() override
   {
-    // rclcpp::init(0, nullptr);
     vehicle_cmd_gate_node_ = generateNode();
     cmd_generator_.p_ = GetParam();
   }
@@ -338,19 +374,29 @@ TEST_P(TestFixture, CheckFilterForSinCmd)
     const bool reset_clock = (i == 0);
     const auto cmd = cmd_generator_.calcSinWaveCommand(reset_clock);
     pub_sub_node_.publishControlCommand(cmd);
-    pub_sub_node_.publishDefaultTopicsNoSpin(cmd);
+    pub_sub_node_.publishDefaultTopicsNoSpin();
     for (int i = 0; i < 20; ++i) {
       rclcpp::spin_some(pub_sub_node_.get_node_base_interface());
       rclcpp::spin_some(vehicle_cmd_gate_node_->get_node_base_interface());
-      std::this_thread::sleep_for(std::chrono::milliseconds{1LL});
     }
     std::this_thread::sleep_for(std::chrono::milliseconds{10LL});
   }
 
-  std::cerr << "cmd_received_times_.size() = " << pub_sub_node_.cmd_received_times_.size()
-            << std::endl;
-  checkFilter(pub_sub_node_.cmd_history_, pub_sub_node_.cmd_received_times_);
+  std::cerr << "received cmd num = " << pub_sub_node_.cmd_received_times_.size() << std::endl;
 };
 
-CmdParams p1 = {/*steer*/ {10, 1, 0}, /*velocity*/ {10, 1.2, 1}, /*acc*/ {5, 1.5, 2}};
+// High frequency, large value
+CmdParams p1 = {/*steer*/ {10, 1, 0}, /*velocity*/ {10, 1.2, 0}, /*acc*/ {5, 1.5, 2}};
 INSTANTIATE_TEST_SUITE_P(TestParam1, TestFixture, ::testing::Values(p1));
+
+// High frequency, normal value
+CmdParams p2 = {/*steer*/ {1.5, 2, 1}, /*velocity*/ {5, 1.0, 0}, /*acc*/ {2.0, 3.0, 2}};
+INSTANTIATE_TEST_SUITE_P(TestParam2, TestFixture, ::testing::Values(p2));
+
+// High frequency, small value
+CmdParams p3 = {/*steer*/ {1.5, 3, 2}, /*velocity*/ {2, 3, 0}, /*acc*/ {0.5, 3, 2}};
+INSTANTIATE_TEST_SUITE_P(TestParam3, TestFixture, ::testing::Values(p3));
+
+// Low frequency
+CmdParams p4 = {/*steer*/ {10, 0.1, 0.5}, /*velocity*/ {10, 0.2, 0}, /*acc*/ {5, 0.1, 2}};
+INSTANTIATE_TEST_SUITE_P(TestParam4, TestFixture, ::testing::Values(p4));
