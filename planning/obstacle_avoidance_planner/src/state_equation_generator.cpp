@@ -57,7 +57,7 @@ StateEquationGenerator::Matrix StateEquationGenerator::calcMatrix(
 
     A.block(i * D_x, (i - 1) * D_x, D_x, D_x) = Ad;
     B.block(i * D_x, (i - 1) * D_u, D_x, D_u) = Bd;
-    W.segment(i * D_x, D_x) = W;
+    W.segment(i * D_x, D_x) = Wd;
   }
 
   time_keeper_ptr_->toc(__func__, "        ");

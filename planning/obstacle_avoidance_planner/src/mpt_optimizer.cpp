@@ -1265,7 +1265,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   H.block(0, 0, N_x, N_x) = H_x;
   H.block(N_x, N_x, N_u, N_u) = val_mat.R;
 
-  Eigen::VectorXd g = Eigen::VectorXd::Zero(N_v, N_v);
+  Eigen::VectorXd g = Eigen::VectorXd::Zero(N_v);
   g.segment(0, N_x) = T_vec.transpose() * val_mat.Q * sparse_T_mat;
   g.segment(N_x + N_u, N_s) = mpt_param_.soft_collision_free_weight * Eigen::VectorXd::Ones(N_s);
 
