@@ -20,15 +20,20 @@ Other features are to be implemented.
 
 The `control_validator` takes in the following inputs:
 
+| Name                           | Type                                  | Description                                                                    |
+| ------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------ |
+| `~/input/kinematics`           | nav_msgs/Odometry                     | ego pose and twist                                                             |
+| `~/input/reference_trajectory` | autoware_auto_control_msgs/Trajectory | reference trajectory which is outputted from planning module to to be followed |
+| `~/input/predicted_trajectory` | autoware_auto_control_msgs/Trajectory | predicted trajectory which is outputted from control module                    |
+
 ### Outputs
 
 It outputs the following:
 
-| Name                            | Type                                     | Description                                                               |
-| ------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
-| `~/output/predicted_trajectory` | autoware_auto_control_msgs/Trajectory    | validated trajectory                                                      |
-| `~/output/validation_status`    | control_validator/ControlValidatorStatus | validator status to inform the reason why the trajectory is valid/invalid |
-| `/diagnostics`                  | diagnostic_msgs/DiagnosticStatus         | diagnostics to report errors                                              |
+| Name                         | Type                                     | Description                                                               |
+| ---------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
+| `~/output/validation_status` | control_validator/ControlValidatorStatus | validator status to inform the reason why the trajectory is valid/invalid |
+| `/diagnostics`               | diagnostic_msgs/DiagnosticStatus         | diagnostics to report errors                                              |
 
 ## Parameters
 
