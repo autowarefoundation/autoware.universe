@@ -1330,7 +1330,6 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   }
 
   // NOTE: The following takes 1 [ms]
-  //       Eigen::MatrixXd A = Eigen::MatrixXd::Zero(A_rows, N_v);
   Eigen::MatrixXd A = Eigen::MatrixXd::Zero(A_rows, N_v);
   Eigen::VectorXd lb = Eigen::VectorXd::Constant(A_rows, -autoware::common::osqp::INF);
   Eigen::VectorXd ub = Eigen::VectorXd::Constant(A_rows, autoware::common::osqp::INF);
