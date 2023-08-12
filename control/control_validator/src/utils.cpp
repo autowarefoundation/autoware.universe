@@ -44,7 +44,7 @@ void insertPointInPredictedTrajectory(
 
 TrajectoryPoints reverseTrajectoryPoints(const TrajectoryPoints & trajectory_points)
 {
-  TrajectoryPoints reversed_trajectory_points;
+  TrajectoryPoints reversed_trajectory_points(trajectory_points.size());
   std::reverse_copy(
     trajectory_points.begin(), trajectory_points.end(),
     std::back_inserter(reversed_trajectory_points));
@@ -83,15 +83,15 @@ Trajectory alignTrajectoryWithReferenceTrajectory(
   //     OR
   // predicted_trajectory:                           p1------------------pN
   // trajectory:             t1------------------tN
-  const bool & is_pN_before_t1 =
+  const bool & is_p_n_before_t1 =
     motion_utils::calcLongitudinalOffsetToSegment(
       trajectory.points, 0, predicted_trajectory.points.back().pose.position) < 0.0;
-  const bool & is_p1_behind_tN = motion_utils::calcLongitudinalOffsetToSegment(
-                                   trajectory.points, trajectory.points.size() - 2,
-                                   predicted_trajectory.points.front().pose.position) -
-                                   last_seg_length >
-                                 0.0;
-  const bool is_no_overlapping = (is_pN_before_t1 || is_p1_behind_tN);
+  const bool & is_p1_behind_t_n = motion_utils::calcLongitudinalOffsetToSegment(
+                                    trajectory.points, trajectory.points.size() - 2,
+                                    predicted_trajectory.points.front().pose.position) -
+                                    last_seg_length >
+                                  0.0;
+  const bool is_no_overlapping = (is_p_n_before_t1 || is_p1_behind_t_n);
 
   if (is_no_overlapping) {
     return Trajectory();
@@ -108,7 +108,7 @@ Trajectory alignTrajectoryWithReferenceTrajectory(
   // ↓
   // predicted_trajectory:   　　　　        tNew--p3----//------pN
   // trajectory:                               t1--------//------tN
-  bool predicted_trajectory_point_removed = removeFrontTrajectoryPoint(
+  auto predicted_trajectory_point_removed = removeFrontTrajectoryPoint(
     trajectory_points, modified_trajectory_points, predicted_trajectory_points);
 
   if (predicted_trajectory_point_removed) {
@@ -128,7 +128,7 @@ Trajectory alignTrajectoryWithReferenceTrajectory(
   auto reversed_trajectory_points = reverseTrajectoryPoints(trajectory_points);
   auto reversed_modified_trajectory_points = reverseTrajectoryPoints(modified_trajectory_points);
 
-  bool reversed_predicted_trajectory_point_removed = removeFrontTrajectoryPoint(
+  auto reversed_predicted_trajectory_point_removed = removeFrontTrajectoryPoint(
     reversed_trajectory_points, reversed_modified_trajectory_points,
     reversed_predicted_trajectory_points);
 
