@@ -219,7 +219,8 @@ void PlanningEvaluatorNode::onPredictedTrajectory(
   }
   if (!metrics_msg.status.empty()) {
     look_ahead_predicted_trajectory_pub_->publish(
-      metrics_calculator_.modifyPredictedTrajectory(*traj_ptr_, *predicted_trajectory_msg));
+      metrics_calculator_.alignPredictedTrajectoryWithTrajectory(
+        *traj_ptr_, *predicted_trajectory_msg));
     look_ahead_motion_velocity_smoother_trajectory_pub_->publish(*traj_ptr_);
     metrics_pub_->publish(metrics_msg);
   }

@@ -47,8 +47,6 @@
   <arg name="velocity_smoother_type_param_path"/>
   <!-- planning validator -->
   <arg name="planning_validator_param_path"/>
-  <!-- control validator -->
-  <arg name="control_validator_param_path"/>
 
   <group>
     <push-ros-namespace namespace="planning"/>
@@ -79,15 +77,6 @@
         <arg name="input_trajectory" value="/planning/scenario_planning/motion_velocity_smoother/trajectory"/>
         <arg name="output_trajectory" value="/planning/scenario_planning/trajectory"/>
         <arg name="planning_validator_param_path" value="$(var planning_validator_param_path)"/>
-      </include>
-    </group>
-
-    <!-- control validator -->
-    <group>
-      <include file="$(find-pkg-share control_validator)/launch/control_validator.launch.xml">
-        <arg name="input_reference_trajectory" value="/planning/scenario_planning/trajectory"/>
-        <arg name="input_predicted_trajectory" value="/control/trajectory_follower/lateral/predicted_trajectory"/>
-        <arg name="control_validator_param_path" value="$(var control_validator_param_path)"/>
       </include>
     </group>
 

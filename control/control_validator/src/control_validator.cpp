@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ ControlValidator::ControlValidator(const rclcpp::NodeOptions & options)
     "~/input/predicted_trajectory", 1,
     std::bind(&ControlValidator::onPredictedTrajectory, this, _1));
 
-  pub_traj_ = create_publisher<Trajectory>("~/output/predicted_trajectory", 1);
   pub_status_ = create_publisher<ControlValidatorStatus>("~/output/validation_status", 1);
   pub_markers_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/output/markers", 1);
 
@@ -57,20 +56,6 @@ ControlValidator::ControlValidator(const rclcpp::NodeOptions & options)
 
 void ControlValidator::setupParameters()
 {
-  const auto type = declare_parameter<int>("invalid_trajectory_handling_type");
-  if (type == 0) {
-    invalid_predicted_trajectory_handling_type_ =
-      InvalidPredictedTrajectoryHandlingType::PUBLISH_AS_IT_IS;
-  } else if (type == 1) {
-    invalid_predicted_trajectory_handling_type_ =
-      InvalidPredictedTrajectoryHandlingType::STOP_PUBLISHING;
-  } else if (type == 2) {
-    invalid_predicted_trajectory_handling_type_ =
-      InvalidPredictedTrajectoryHandlingType::USE_PREVIOUS_RESULT;
-  } else {
-    throw std::invalid_argument{
-      "unsupported invalid_trajectory_handling_type (" + std::to_string(type) + ")"};
-  }
   publish_diag_ = declare_parameter<bool>("publish_diag");
   diag_error_count_threshold_ = declare_parameter<int>("diag_error_count_threshold");
   display_on_terminal_ = declare_parameter<bool>("display_on_terminal");
@@ -156,56 +141,9 @@ void ControlValidator::onPredictedTrajectory(const Trajectory::ConstSharedPtr ms
 
   diag_updater_.force_update();
 
-  publishPredictedTrajectory();
-
   // for debug
   publishDebugInfo();
   displayStatus();
-}
-
-void ControlValidator::publishPredictedTrajectory()
-{
-  // Validation check is all green. Publish the trajectory.
-  if (isAllValid(validation_status_)) {
-    pub_traj_->publish(*current_predicted_trajectory_);
-    previous_published_predicted_trajectory_ = current_predicted_trajectory_;
-    return;
-  }
-
-  //  ----- invalid factor is found. Publish previous trajectory. -----
-
-  if (
-    invalid_predicted_trajectory_handling_type_ ==
-    InvalidPredictedTrajectoryHandlingType::PUBLISH_AS_IT_IS) {
-    pub_traj_->publish(*current_reference_trajectory_);
-    RCLCPP_ERROR(get_logger(), "Caution! Invalid Trajectory published.");
-    return;
-  }
-
-  if (
-    invalid_predicted_trajectory_handling_type_ ==
-    InvalidPredictedTrajectoryHandlingType::STOP_PUBLISHING) {
-    RCLCPP_ERROR(get_logger(), "Invalid Trajectory detected. Trajectory is not published.");
-    return;
-  }
-
-  if (
-    invalid_predicted_trajectory_handling_type_ ==
-    InvalidPredictedTrajectoryHandlingType::USE_PREVIOUS_RESULT) {
-    if (previous_published_predicted_trajectory_) {
-      pub_traj_->publish(*previous_published_predicted_trajectory_);
-      RCLCPP_ERROR(get_logger(), "Invalid Trajectory detected. Use previous trajectory.");
-      return;
-    }
-  }
-
-  // predicted_trajectory is not published.
-  RCLCPP_ERROR(
-    get_logger(),
-    "Invalid Predicted_Trajectory detected, no valid trajectory found in the past. Trajectory is "
-    "not "
-    "published.");
-  return;
 }
 
 void ControlValidator::publishDebugInfo()
@@ -215,8 +153,7 @@ void ControlValidator::publishDebugInfo()
 
   if (!isAllValid(validation_status_)) {
     geometry_msgs::msg::Pose front_pose = current_kinematics_->pose.pose;
-    control_validator::utils::shiftPose(
-      front_pose, vehicle_info_.front_overhang_m + vehicle_info_.wheel_base_m);
+    shiftPose(front_pose, vehicle_info_.front_overhang_m + vehicle_info_.wheel_base_m);
     debug_pose_publisher_->pushVirtualWall(front_pose);
     debug_pose_publisher_->pushWarningMsg(front_pose, "INVALID CONTROL");
   }
@@ -239,10 +176,8 @@ void ControlValidator::validate(const Trajectory & predicted_trajectory)
 
 bool ControlValidator::checkValidMaxDistanceDeviation(const Trajectory & predicted_trajectory)
 {
-  validation_status_.max_distance_deviation = control_validator::utils::calcMaxLateralDistance(
-    *current_reference_trajectory_, predicted_trajectory);
-
-  std::cerr << validation_status_.max_distance_deviation << std::endl;
+  validation_status_.max_distance_deviation =
+    calcMaxLateralDistance(*current_reference_trajectory_, predicted_trajectory);
   if (
     validation_status_.max_distance_deviation >
     validation_params_.max_distance_deviation_threshold) {

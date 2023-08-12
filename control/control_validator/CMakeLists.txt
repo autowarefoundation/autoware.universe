@@ -4,6 +4,8 @@ project(control_validator)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+include_directories(~/workspace/debug)
+
 ament_auto_add_library(control_validator_helpers SHARED
   src/utils.cpp
   src/debug_marker.cpp

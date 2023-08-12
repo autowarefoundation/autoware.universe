@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,16 +71,10 @@ private:
   rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_reference_traj_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_traj_;
-  rclcpp::Publisher<Trajectory>::SharedPtr pub_traj_;
   rclcpp::Publisher<ControlValidatorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
 
   // system parameters
-  enum class InvalidPredictedTrajectoryHandlingType {
-    PUBLISH_AS_IT_IS,
-    STOP_PUBLISHING,
-    USE_PREVIOUS_RESULT,
-  } invalid_predicted_trajectory_handling_type_;
   bool publish_diag_ = true;
   int diag_error_count_threshold_ = 0;
   bool display_on_terminal_ = true;
@@ -92,17 +86,10 @@ private:
 
   vehicle_info_util::VehicleInfo vehicle_info_;
 
-  Trajectory alignTrajectoryWithReferenceTrajectory(
-    const Trajectory & trajectory, const Trajectory & predicted_trajectory) const;
-
-  double calcMaxLateralDistance(
-    const Trajectory & trajectory, const Trajectory & predicted_trajectory) const;
-
   bool isAllValid(const ControlValidatorStatus & status);
 
   Trajectory::ConstSharedPtr current_reference_trajectory_;
   Trajectory::ConstSharedPtr current_predicted_trajectory_;
-  Trajectory::ConstSharedPtr previous_published_predicted_trajectory_;
 
   Odometry::ConstSharedPtr current_kinematics_;
 

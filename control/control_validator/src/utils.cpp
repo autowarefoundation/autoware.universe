@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-namespace control_validator::utils
+namespace control_validator
 {
 
 void shiftPose(Pose & pose, double longitudinal)
@@ -34,12 +34,12 @@ void shiftPose(Pose & pose, double longitudinal)
 }
 
 void insertPointInPredictedTrajectory(
-  Trajectory & modified_trajectory, const Pose & reference_pose,
-  const Trajectory & predicted_trajectory)
+  TrajectoryPoints & modified_trajectory, const Pose & reference_pose,
+  const TrajectoryPoints & predicted_trajectory)
 {
   const auto point_to_interpolate =
-    motion_utils::calcInterpolatedPoint(predicted_trajectory, reference_pose);
-  modified_trajectory.points.front() = point_to_interpolate;
+    motion_utils::calcInterpolatedPoint(convertToTrajectory(predicted_trajectory), reference_pose);
+  modified_trajectory.insert(modified_trajectory.begin(), point_to_interpolate);
 }
 
 TrajectoryPoints reverseTrajectoryPoints(const TrajectoryPoints & trajectory_points)
@@ -56,12 +56,12 @@ bool removeFrontTrajectoryPoint(
   const TrajectoryPoints & predicted_trajectory_points)
 {
   bool predicted_trajectory_point_removed = false;
-
   for (const auto & point : predicted_trajectory_points) {
     if (
       motion_utils::calcLongitudinalOffsetToSegment(trajectory_points, 0, point.pose.position) <
       0.0) {
       modified_trajectory_points.erase(modified_trajectory_points.begin());
+
       predicted_trajectory_point_removed = true;
     } else {
       break;
@@ -108,9 +108,8 @@ Trajectory alignTrajectoryWithReferenceTrajectory(
   // ↓
   // predicted_trajectory:   　　　　        tNew--p3----//------pN
   // trajectory:                               t1--------//------tN
-
   bool predicted_trajectory_point_removed = removeFrontTrajectoryPoint(
-    predicted_trajectory_points, modified_trajectory_points, trajectory_points);
+    trajectory_points, modified_trajectory_points, predicted_trajectory_points);
 
   if (predicted_trajectory_point_removed) {
     insertPointInPredictedTrajectory(
@@ -139,8 +138,7 @@ Trajectory alignTrajectoryWithReferenceTrajectory(
       reversed_predicted_trajectory_points);
   }
 
-  return motion_utils::convertToTrajectory(
-    reverseTrajectoryPoints(reversed_modified_trajectory_points));
+  return convertToTrajectory(reverseTrajectoryPoints(reversed_modified_trajectory_points));
 }
 
 double calcMaxLateralDistance(
@@ -156,11 +154,11 @@ double calcMaxLateralDistance(
       motion_utils::findNearestSegmentIndex(reference_trajectory.points, p0);
     double temp_dist =
       motion_utils::calcLateralOffset(reference_trajectory.points, p0, nearest_segment_idx);
-    if (max_dist > temp_dist) {
+    if (temp_dist > max_dist) {
       max_dist = temp_dist;
     }
   }
   return max_dist;
 }
 
-}  // namespace control_validator::utils
+}  // namespace control_validator
