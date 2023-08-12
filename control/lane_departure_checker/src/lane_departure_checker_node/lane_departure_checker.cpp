@@ -43,7 +43,7 @@ using geometry_msgs::msg::Point;
 
 Point fromVector2dToMsg(const Eigen::Vector2d & point)
 {
-  Point msg;
+  Point msg{};
   msg.x = point.x();
   msg.y = point.y();
   msg.z = 0.0;
