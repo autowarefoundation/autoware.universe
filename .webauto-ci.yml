@@ -110,3 +110,4 @@ scenario_parameter_groups:
       obstacle_stop_line_distance: 5.0
       crosswalk_stop_line_distance: 3.5
       intersection_stop_line_distance: 3.0
+      traffic_light_stop_line_distance: 0.0
