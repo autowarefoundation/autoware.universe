@@ -41,7 +41,7 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using geometry_msgs::msg::Point;
 
-Point fromVector2dToMsg(const Eigen::Vector3d& point)
+Point fromVector2dToMsg(const Eigen::Vector2d & point)
 {
   Point msg;
   msg.x = point.x();
@@ -68,7 +68,7 @@ bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2
 }
 
 bool isCrossingWithRoadBorder(
-  lanelet::BasicLineString2d & road_border, std::vector<LinearRing2d> & footprints)
+  const lanelet::BasicLineString2d & road_border, const std::vector<LinearRing2d> & footprints)
 {
   for (auto & footprint : footprints) {
     for (size_t i = 0; i < footprint.size() - 1; ++i) {
@@ -79,8 +79,7 @@ bool isCrossingWithRoadBorder(
         auto road_border2 = road_border.at(i + 1);
         if (tier4_autoware_utils::intersect(
               tier4_autoware_utils::toMsg(footprint1), tier4_autoware_utils::toMsg(footprint2),
-              fromVector2dToMsg(road_border1),
-              fromVector2dToMsg(road_border2))) {
+              fromVector2dToMsg(road_border1), fromVector2dToMsg(road_border2))) {
           return true;
         }
       }
@@ -173,8 +172,9 @@ Output LaneDepartureChecker::update(const Input & input)
   output.is_out_of_lane = isOutOfLane(output.candidate_lanelets, output.vehicle_footprints.front());
   output.processing_time_map["isOutOfLane"] = stop_watch.toc(true);
 
-  output.will_cross_road_boundary =
+  output.will_cross_road_border =
     willCrossRoadBorder(output.candidate_lanelets, output.vehicle_footprints);
+  output.processing_time_map["willCrossRoadBorder"] = stop_watch.toc(true);
 
   return output;
 }
