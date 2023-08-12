@@ -122,7 +122,10 @@ def launch_setup(context, *args, **kwargs):
         remappings=[
             ("~/input/kinematics", "/localization/kinematic_state"),
             ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
-            ("~/input/predicted_trajectory", "/control/trajectory_follower/lateral/predicted_trajectory"),
+            (
+                "~/input/predicted_trajectory",
+                "/control/trajectory_follower/lateral/predicted_trajectory",
+            ),
             ("~/output/validation_status", "~/validation_status"),
         ],
         parameters=[control_validator_param],
