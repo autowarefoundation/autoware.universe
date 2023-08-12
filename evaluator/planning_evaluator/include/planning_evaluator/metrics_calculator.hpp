@@ -50,9 +50,6 @@ public:
   std::optional<Stat<double>> calculate(const Metric metric, const Trajectory & traj) const;
   std::optional<Stat<double>> calculate(
     const Metric metric, const Pose & base_pose, const Pose & target_pose) const;
-  std::optional<Stat<double>> calculate(
-    const Metric metric, const Trajectory & predicted_trajectory,
-    const Trajectory & trajectory) const;
 
   /**
    * @brief set the reference trajectory used to calculate the deviation metrics
@@ -84,6 +81,7 @@ public:
    */
   Pose getEgoPose();
 
+private:
   /**
    * @brief trim a trajectory from the current ego pose to some fixed time or distance
    * @param [in] traj input trajectory to trim
@@ -95,10 +93,6 @@ public:
   Trajectory getLookaheadTrajectory(
     const Trajectory & traj, const double max_dist_m, const double max_time_s) const;
 
-  Trajectory alignPredictedTrajectoryWithTrajectory(
-    const Trajectory & trajectory, const Trajectory & predicted_trajectory) const;
-
-private:
   Trajectory reference_trajectory_;
   Trajectory reference_trajectory_lookahead_;
   Trajectory previous_trajectory_;

@@ -188,7 +188,6 @@ bool ControlValidator::checkValidMaxDistanceDeviation(const Trajectory & predict
 
 bool ControlValidator::isAllValid(const ControlValidatorStatus & s)
 {
-  // TODO(Suagahara): add more control validation
   return s.is_valid_max_distance_deviation;
 }
 

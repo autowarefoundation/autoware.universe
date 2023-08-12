@@ -60,7 +60,7 @@ Stat<double> calcFrechetDistance(const Trajectory & traj1, const Trajectory & tr
 Stat<double> calcLateralDistance(const Trajectory & traj1, const Trajectory & traj2)
 {
   Stat<double> stat;
-  if (traj1.points.empty() || traj2.points.empty()) {
+  if (traj1.points.empty()) {
     return stat;
   }
   for (const auto & point : traj2.points) {

@@ -47,10 +47,6 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
   odom_sub_ = create_subscription<Odometry>(
     "~/input/odometry", 1, std::bind(&PlanningEvaluatorNode::onOdometry, this, _1));
 
-  predicted_trajectory_sub_ = create_subscription<Trajectory>(
-    "~/input/predicted_trajectory", 1,
-    std::bind(&PlanningEvaluatorNode::onPredictedTrajectory, this, _1));
-
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
@@ -74,11 +70,6 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
     Metric metric = str_to_metric.at(selected_metric);
     metrics_.push_back(metric);
   }
-
-  look_ahead_predicted_trajectory_pub_ =
-    create_publisher<Trajectory>("~/debug/modified_predicted_trajectory", 1);
-  look_ahead_motion_velocity_smoother_trajectory_pub_ =
-    create_publisher<Trajectory>("~/debug/motion_velocity_smoother_trajectory", 1);
 }
 
 PlanningEvaluatorNode::~PlanningEvaluatorNode()
@@ -130,14 +121,6 @@ DiagnosticStatus PlanningEvaluatorNode::generateDiagnosticStatus(
   key_value.key = "mean";
   key_value.value = boost::lexical_cast<decltype(key_value.value)>(metric_stat.mean());
   status.values.push_back(key_value);
-  switch (metric) {
-    case Metric::predicted_path_deviation_from_trajectory:
-      std::cerr << "Max predicted path deviation from trajectory: " << metric_stat.max()
-                << std::endl;
-      break;
-    default:
-      break;
-  }
   return status;
 }
 
@@ -146,7 +129,6 @@ void PlanningEvaluatorNode::onTrajectory(const Trajectory::ConstSharedPtr traj_m
   if (!ego_state_ptr_) {
     return;
   }
-  traj_ptr_ = traj_msg;
 
   auto start = now();
   if (!output_file_str_.empty()) {
@@ -194,40 +176,6 @@ void PlanningEvaluatorNode::onOdometry(const Odometry::ConstSharedPtr odometry_m
   if (modified_goal_ptr_) {
     publishModifiedGoalDeviationMetrics();
   }
-}
-
-void PlanningEvaluatorNode::onPredictedTrajectory(
-  const Trajectory::ConstSharedPtr predicted_trajectory_msg)
-{
-  if (!traj_ptr_) {
-    return;
-  }
-  auto start = now();
-
-  DiagnosticArray metrics_msg;
-  metrics_msg.header.stamp = now();
-  for (Metric metric : metrics_) {
-    const auto metric_stat =
-      metrics_calculator_.calculate(Metric(metric), *traj_ptr_, *predicted_trajectory_msg);
-    if (!metric_stat) {
-      continue;
-    }
-    metric_stats_[static_cast<size_t>(metric)].push_back(*metric_stat);
-    if (metric_stat->count() > 0) {
-      metrics_msg.status.push_back(generateDiagnosticStatus(metric, *metric_stat));
-    }
-  }
-  if (!metrics_msg.status.empty()) {
-    look_ahead_predicted_trajectory_pub_->publish(
-      metrics_calculator_.alignPredictedTrajectoryWithTrajectory(
-        *traj_ptr_, *predicted_trajectory_msg));
-    look_ahead_motion_velocity_smoother_trajectory_pub_->publish(*traj_ptr_);
-    metrics_pub_->publish(metrics_msg);
-  }
-  auto runtime = (now() - start).seconds();
-  RCLCPP_DEBUG(
-    get_logger(), "Planning evaluation modified goal deviation calculation time: %2.2f ms",
-    runtime * 1e3);
 }
 
 void PlanningEvaluatorNode::publishModifiedGoalDeviationMetrics()
