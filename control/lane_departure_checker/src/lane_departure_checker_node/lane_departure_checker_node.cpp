@@ -420,7 +420,7 @@ void LaneDepartureCheckerNode::checkLaneDeparture(
   }
 
   if (output_.will_cross_road_border && node_param_.road_border_departure_checker) {
-    level = DiagStatus::WARN;
+    level = DiagStatus::ERROR;
     msg = "vehicle will cross road border";
   }
 
