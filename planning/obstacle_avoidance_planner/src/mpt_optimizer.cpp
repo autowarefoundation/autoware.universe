@@ -1256,7 +1256,6 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   sparse_T_mat.setFromTriplets(triplet_T_vec.begin(), triplet_T_vec.end());
 
   // NOTE: min J(v) = min (v'Hv + v'g)
-  // TODO(murooka) chech H_x and g_x formulation
   Eigen::MatrixXd H_x = Eigen::MatrixXd::Zero(N_x, N_x);
   H_x.triangularView<Eigen::Upper>() =
     Eigen::MatrixXd(sparse_T_mat.transpose() * val_mat.Q * sparse_T_mat);
@@ -1299,7 +1298,6 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   const size_t N_slack = getNumberOfSlackVariables();
 
   const size_t N_v = N_x + N_u + (mpt_param_.soft_constraint ? N_ref * N_slack : 0);
-  // const size_t D_v = D_x + N_u;
 
   const size_t N_collision_check = vehicle_circle_longitudinal_offsets_.size();
 
@@ -1358,10 +1356,6 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
     }
     C_sparse_mat.setFromTriplets(C_triplet_vec.begin(), C_triplet_vec.end());
 
-    // calculate CB, and CW
-    // const Eigen::MatrixXd CB = C_sparse_mat * mpt_mat.B;
-    // const Eigen::VectorXd CW = C_sparse_mat * mpt_mat.W + C_vec;
-
     // calculate bounds
     const double bounds_offset =
       vehicle_info_.vehicle_width_m / 2.0 - vehicle_circle_radiuses_.at(l_idx);
@@ -1385,8 +1379,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
       A_blk.block(2 * N_ref, local_A_offset_cols, N_ref, N_ref) =
         Eigen::MatrixXd::Identity(N_ref, N_ref);
 
-      // lb := [lower_bound
-      //        -upper_bound
+      // lb := [lower_bound - C
+      //        C - upper_bound
       //               O        ]
       Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(A_blk_rows);
       lb_blk.segment(0, N_ref) = -C_vec + part_lb;
@@ -1398,19 +1392,19 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
       A_rows_end += A_blk_rows;
     }
 
-    // // hard constraints
-    // if (mpt_param_.hard_constraint) {
-    //   const size_t A_blk_rows = N_ref;
-    //
-    //   Eigen::MatrixXd A_blk = Eigen::MatrixXd::Zero(A_blk_rows, N_v);
-    //   A_blk.block(0, 0, N_ref, N_ref) = CB;
-    //
-    //   A.block(A_rows_end, 0, A_blk_rows, N_v) = A_blk;
-    //   lb.segment(A_rows_end, A_blk_rows) = part_lb - C_vec;
-    //   ub.segment(A_rows_end, A_blk_rows) = part_ub - C_vec;
-    //
-    //   A_rows_end += A_blk_rows;
-    // }
+    // hard constraints
+    if (mpt_param_.hard_constraint) {
+      const size_t A_blk_rows = N_ref;
+
+      Eigen::MatrixXd A_blk = Eigen::MatrixXd::Zero(A_blk_rows, N_v);
+      A_blk.block(0, 0, N_ref, N_ref) = C_sparse_mat;
+
+      A.block(A_rows_end, 0, A_blk_rows, N_v) = A_blk;
+      lb.segment(A_rows_end, A_blk_rows) = part_lb - C_vec;
+      ub.segment(A_rows_end, A_blk_rows) = part_ub - C_vec;
+
+      A_rows_end += A_blk_rows;
+    }
   }
 
   // 3. fixed points constraint
@@ -1485,7 +1479,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const size_t N_slack = getNumberOfSlackVariables();
   const size_t N_v = N_x + N_u + N_ref * N_slack;
 
-  // // for manual warm start, calculate initial solution
+  // for manual warm start, calculate initial solution
   const auto u0 = [&]() -> std::optional<Eigen::VectorXd> {
     if (mpt_param_.enable_manual_warm_start) {
       if (prev_ref_points_ptr_ && 1 < prev_ref_points_ptr_->size()) {
@@ -1512,7 +1506,9 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const autoware::common::osqp::CSC_Matrix P_csc =
     autoware::common::osqp::calCSCMatrixTrapezoidal(H);
   const autoware::common::osqp::CSC_Matrix A_csc = autoware::common::osqp::calCSCMatrix(A);
-  if (mpt_param_.enable_warm_start && prev_mat_n_ == H.rows() && prev_mat_m_ == A.rows()) {
+  if (
+    prev_solution_status_ == 1 && mpt_param_.enable_warm_start && prev_mat_n_ == H.rows() &&
+    prev_mat_m_ == A.rows()) {
     RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "warm start");
     osqp_solver_ptr_->updateCscP(P_csc);
     osqp_solver_ptr_->updateQ(f);
@@ -1536,6 +1532,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
 
   // check solution status
   const int solution_status = std::get<3>(result);
+  prev_solution_status_ = solution_status;
   if (solution_status != 1) {
     osqp_solver_ptr_->logUnsolvedStatus("[MPT]");
     return std::nullopt;
