@@ -20,6 +20,10 @@
 #include <algorithm>
 #include <limits>
 
+#define PRINT_MAT(m) std::cerr << "\n" <<  #m << ": \n" << m << std::endl;
+#define MAT_SIZE(m) std::cerr << #m << ": (" << m.rows() << ", " << m.cols() << ")" << std::endl;
+#define VEC_SIZE(v) std::cerr << #v << ": " << v.size() << std::endl;
+
 namespace autoware::motion::control::mpc_lateral_controller
 {
 using tier4_autoware_utils::calcDistance2d;
@@ -413,7 +417,7 @@ MPCTrajectory MPC::applyVelocityDynamicsFilter(
  * cost function: J = Xex' * Qex * Xex + (Uex - Uref)' * R1ex * (Uex - Uref_ex) + Uex' * R2ex * Uex
  * Qex = diag([Q,Q,...]), R1ex = diag([R,R,...])
  */
-MPCMatrix MPC::generateMPCMatrix(
+MPCMatrix MPC::generateMPCMatrixOld(
   const MPCTrajectory & reference_trajectory, const double prediction_dt)
 {
   const int N = m_param.prediction_horizon;
@@ -521,6 +525,154 @@ MPCMatrix MPC::generateMPCMatrix(
   return m;
 }
 
+MPCMatrix MPC::generateMPCMatrix(
+  const MPCTrajectory & reference_trajectory, const double prediction_dt)
+{
+  const int N = m_param.prediction_horizon;
+  const double DT = prediction_dt;
+  const int DIM_X = m_vehicle_model_ptr->getDimX();
+  const int DIM_U = m_vehicle_model_ptr->getDimU();
+  const int DIM_Y = m_vehicle_model_ptr->getDimY();
+
+  MPCMatrix m;
+  m.Aex = MatrixXd::Zero(DIM_X * N, DIM_X);
+  m.Bex = MatrixXd::Zero(DIM_X * N, DIM_U * N);
+  m.Wex = MatrixXd::Zero(DIM_X * N, 1);
+  m.Cex = MatrixXd::Zero(DIM_Y * N, DIM_X * N);
+#if 0   
+  m.Qex = MatrixXd::Zero(DIM_X * N, DIM_X * N);
+#else
+  m.Qex = MatrixXd::Zero(DIM_X * N, DIM_X * N);
+#endif
+  m.R1ex = MatrixXd::Zero(DIM_U * N, DIM_U * N);
+  m.R2ex = MatrixXd::Zero(DIM_U * N, DIM_U * N);
+  m.Uref_ex = MatrixXd::Zero(DIM_U * N, 1);
+
+  // weight matrix depends on the vehicle model
+  
+#if 0   
+  MatrixXd Q = MatrixXd::Zero(DIM_Y, DIM_Y);
+  MatrixXd Q_adaptive = MatrixXd::Zero(DIM_Y, DIM_Y);
+#else
+  MatrixXd Q = MatrixXd::Zero(DIM_X, DIM_X);
+  MatrixXd Q_adaptive = MatrixXd::Zero(DIM_X, DIM_X);
+#endif
+  MatrixXd R = MatrixXd::Zero(DIM_U, DIM_U);
+  MatrixXd R_adaptive = MatrixXd::Zero(DIM_U, DIM_U);
+
+  MatrixXd Ad(DIM_X, DIM_X);
+  MatrixXd Bd(DIM_X, DIM_U);
+  MatrixXd Wd(DIM_X, 1);
+  MatrixXd Cd(DIM_Y, DIM_X);
+  MatrixXd Uref(DIM_U, 1);
+
+  m.G0_eq = MatrixXd::Zero(N * DIM_X, N * (DIM_X + DIM_U));
+  m.E0_eq = MatrixXd::Zero(N * DIM_X, DIM_X);
+  m.W0_eq = MatrixXd::Zero(N * DIM_X, 1);
+
+  const double sign_vx = m_is_forward_shift ? 1 : -1;
+
+  // predict dynamics for N times
+  for (int i = 0; i < N; ++i) {
+    const double ref_vx = reference_trajectory.vx.at(i);
+    const double ref_vx_squared = ref_vx * ref_vx;
+
+    const double ref_k = reference_trajectory.k.at(i) * sign_vx;
+    const double ref_smooth_k = reference_trajectory.smooth_k.at(i) * sign_vx;
+
+    // get discrete state matrix A, B, C, W
+    m_vehicle_model_ptr->setVelocity(ref_vx);
+    m_vehicle_model_ptr->setCurvature(ref_k);
+    m_vehicle_model_ptr->calculateDiscreteMatrix(Ad, Bd, Cd, Wd, DT);
+
+#if 0   
+    Q = MatrixXd::Zero(DIM_Y, DIM_Y);
+#else
+    Q = MatrixXd::Zero(DIM_X, DIM_X);
+#endif
+    R = MatrixXd::Zero(DIM_U, DIM_U);
+    const auto mpc_weight = getWeight(ref_k);
+    Q(0, 0) = mpc_weight.lat_error;
+    Q(1, 1) = mpc_weight.heading_error;
+    R(0, 0) = mpc_weight.steering_input;
+
+    Q_adaptive = Q;
+    R_adaptive = R;
+    if (i == N - 1) {
+      Q_adaptive(0, 0) = m_param.nominal_weight.terminal_lat_error;
+      Q_adaptive(1, 1) = m_param.nominal_weight.terminal_heading_error;
+    }
+    Q_adaptive(1, 1) += ref_vx_squared * mpc_weight.heading_error_squared_vel;
+    R_adaptive(0, 0) += ref_vx_squared * mpc_weight.steering_input_squared_vel;
+
+    // update mpc matrix
+    int idx_x_i = i * DIM_X;
+    int idx_x_i_prev = (i - 1) * DIM_X;
+    int idx_u_i = i * DIM_U;
+    // int idx_y_i = i * DIM_Y;
+    int idx_x_N = N * DIM_X;
+#if 0    
+    if (i == 0) {
+      m.Aex.block(0, 0, DIM_X, DIM_X) = Ad;
+      m.Bex.block(0, 0, DIM_X, DIM_U) = Bd;
+      m.Wex.block(0, 0, DIM_X, 1) = Wd;
+    } else {
+      m.Aex.block(idx_x_i, 0, DIM_X, DIM_X) = Ad * m.Aex.block(idx_x_i_prev, 0, DIM_X, DIM_X);
+      for (int j = 0; j < i; ++j) {
+        int idx_u_j = j * DIM_U;
+        m.Bex.block(idx_x_i, idx_u_j, DIM_X, DIM_U) =
+          Ad * m.Bex.block(idx_x_i_prev, idx_u_j, DIM_X, DIM_U);
+      }
+      m.Wex.block(idx_x_i, 0, DIM_X, 1) = Ad * m.Wex.block(idx_x_i_prev, 0, DIM_X, 1) + Wd;
+    }
+    m.Bex.block(idx_x_i, idx_u_i, DIM_X, DIM_U) = Bd;
+
+    m.Cex.block(idx_y_i, idx_x_i, DIM_Y, DIM_X) = Cd;
+    m.Qex.block(idx_y_i, idx_y_i, DIM_Y, DIM_Y) = Q_adaptive;
+#else
+    // G0_eq
+    if (i != 0) {
+        m.G0_eq.block(idx_x_i, idx_x_i_prev, DIM_X, DIM_X) = -Ad;
+    }
+    m.G0_eq.block(idx_x_i, idx_x_i, DIM_X, DIM_X) = Eigen::MatrixXd::Identity(DIM_X, DIM_X);
+    m.G0_eq.block(idx_x_i, idx_x_N + idx_u_i, DIM_X, DIM_U) = -Bd;
+
+    // E0_eq
+    if (i == 0) {
+        m.E0_eq.block(0, 0, DIM_X, DIM_X) = Ad;
+    }
+
+    // W0_eq
+    m.W0_eq.block(idx_x_i, 0, DIM_X, 1) = -Wd;
+
+    m.Qex.block(idx_x_i, idx_x_i, DIM_X, DIM_X) = Q_adaptive;
+#endif
+
+    m.R1ex.block(idx_u_i, idx_u_i, DIM_U, DIM_U) = R_adaptive;
+
+    // get reference input (feed-forward)
+    m_vehicle_model_ptr->setCurvature(ref_smooth_k);
+    m_vehicle_model_ptr->calculateReferenceInput(Uref);
+    if (std::fabs(Uref(0, 0)) < tier4_autoware_utils::deg2rad(m_param.zero_ff_steer_deg)) {
+      Uref(0, 0) = 0.0;  // ignore curvature noise
+    }
+    m.Uref_ex.block(i * DIM_U, 0, DIM_U, 1) = Uref;
+  }
+
+  // add lateral jerk : weight for (v * {u(i) - u(i-1)} )^2
+  for (int i = 0; i < N - 1; ++i) {
+    const double ref_vx = reference_trajectory.vx.at(i);
+    const double ref_k = reference_trajectory.k.at(i) * sign_vx;
+    const double j = ref_vx * ref_vx * getWeight(ref_k).lat_jerk / (DT * DT);
+    const Eigen::Matrix2d J = (Eigen::Matrix2d() << j, -j, -j, j).finished();
+    m.R2ex.block(i, i, 2, 2) += J;
+  }
+
+  addSteerWeightR(prediction_dt, m.R1ex);
+
+  return m;
+}
+
 /*
  * solve quadratic optimization.
  * cost function: J = Xex' * Qex * Xex + (Uex - Uref)' * R1ex * (Uex - Uref_ex) + Uex' * R2ex * Uex
@@ -544,6 +696,203 @@ MPCMatrix MPC::generateMPCMatrix(
  * [    -au_lim * dt    ] < [uN-uN-1] < [     au_lim * dt    ] (*N... DIM_U)
  */
 std::pair<bool, VectorXd> MPC::executeOptimization(
+  const MPCMatrix & m, const VectorXd & x0, const double prediction_dt, const MPCTrajectory & traj,
+  const double current_velocity)
+{
+
+  if (!isValid(m)) {
+    warn_throttle("model matrix is invalid. stop MPC.");
+    return {false, {}};
+  }
+
+  const int DIM_U_N = m_param.prediction_horizon * m_vehicle_model_ptr->getDimU();
+
+  // cost function: 1/2 * Uex' * H * Uex + q' * Uex,  H = B' * C' * Q * C * B + R
+  const auto N = m_param.prediction_horizon;
+  const auto DIM_X = m_vehicle_model_ptr->getDimX();
+  const auto DIM_U = m_vehicle_model_ptr->getDimU();
+  const auto N_DIM_X = N * DIM_X;
+  const auto N_DIM_U = N * DIM_U;
+  const auto N_DIM_Z = N * (DIM_X + DIM_U);
+
+  MatrixXd H = Eigen::MatrixXd::Zero(N_DIM_Z, N_DIM_Z);
+  H.block(0, 0, N_DIM_X, N_DIM_X) = m.Qex;
+  H.block(N_DIM_X, N_DIM_X, N_DIM_U, N_DIM_U) = m.R1ex + m.R2ex;
+
+  MatrixXd q_T = Eigen::MatrixXd::Zero(1, N_DIM_Z);
+  q_T.block(0, N * DIM_X, 1, N * DIM_U) = -m.Uref_ex.transpose() * m.R1ex;
+
+  // TODO(Horibe): consider steering weight
+  // addSteerWeightF(prediction_dt, f);
+
+
+  MatrixXd A = MatrixXd::Identity(DIM_U_N, DIM_U_N);
+  for (int i = 1; i < DIM_U_N; i++) {
+    A(i, i - 1) = -1.0;
+  }
+
+  const bool is_vehicle_stopped = std::fabs(current_velocity) < 0.01;
+  const auto get_adaptive_steer_rate_lim = [&](const double curvature, const double velocity) {
+    if (is_vehicle_stopped) {
+      // return std::numeric_limits<double>::max();
+      return 100.0;
+    }
+
+    double steer_rate_lim_by_curvature = m_steer_rate_lim_map_by_curvature.back().second;
+    for (const auto & steer_rate_lim_info : m_steer_rate_lim_map_by_curvature) {
+      if (std::abs(curvature) <= steer_rate_lim_info.first) {
+        steer_rate_lim_by_curvature = steer_rate_lim_info.second;
+        break;
+      }
+    }
+
+    double steer_rate_lim_by_velocity = m_steer_rate_lim_map_by_velocity.back().second;
+    for (const auto & steer_rate_lim_info : m_steer_rate_lim_map_by_velocity) {
+      if (std::abs(velocity) <= steer_rate_lim_info.first) {
+        steer_rate_lim_by_velocity = steer_rate_lim_info.second;
+        break;
+      }
+    }
+
+    return std::min(steer_rate_lim_by_curvature, steer_rate_lim_by_velocity);
+  };
+
+  // lb < [x; u] < ub
+  VectorXd lb = VectorXd::Zero(N_DIM_Z);
+  VectorXd ub = VectorXd::Zero(N_DIM_Z);
+  lb.segment(N_DIM_X, DIM_U_N) = VectorXd::Constant(DIM_U_N, -m_steer_lim);  // min steering angle
+  ub.segment(N_DIM_X, DIM_U_N) = VectorXd::Constant(DIM_U_N, m_steer_lim);   // max steering angle
+
+  //  lbA < Az * [x; u] < ubA
+  // --------------------------
+  // 1. E0_eq * x0 + W < G0_eq * [x; u] < E0_eq * x0 + W (state equation constraint)
+  // 2. lbA_u < A * u < ubA_u (steering rate limit)
+  //    -> [0; lbA_u] < [0, A] * [x; u] < [0; ubA_u]
+  //---------------------------
+  //  [E0_eq * x0; lbA_u] < [G0_eq; [0, A]] * [x; u] < [E0_eq * x0; ubA_u]
+  VectorXd lbA_u(DIM_U_N);
+  VectorXd ubA_u(DIM_U_N);
+  for (int i = 0; i < DIM_U_N; ++i) {
+    const double adaptive_steer_rate_lim =
+      get_adaptive_steer_rate_lim(traj.smooth_k.at(i), traj.vx.at(i));
+    const double adaptive_delta_steer_lim = adaptive_steer_rate_lim * prediction_dt;
+    std::cerr << "i = " << i <<  ", adaptive_steer_rate_lim = " << adaptive_steer_rate_lim << ", prediction_dt = " << prediction_dt << std::endl;
+    lbA_u(i) = -adaptive_delta_steer_lim;
+    ubA_u(i) = adaptive_delta_steer_lim;
+  }
+PRINT_MAT(lbA_u);
+  const double adaptive_steer_rate_lim =
+    get_adaptive_steer_rate_lim(traj.smooth_k.at(0), traj.vx.at(0));
+  lbA_u(0) = m_raw_steer_cmd_prev - adaptive_steer_rate_lim * m_ctrl_period;
+  lbA_u(0) = m_raw_steer_cmd_prev + adaptive_steer_rate_lim * m_ctrl_period;
+PRINT_MAT(lbA_u);
+
+  MAT_SIZE(m.E0_eq);
+  VEC_SIZE(x0);
+
+  MatrixXd Az = MatrixXd::Zero(m.G0_eq.rows() + A.rows(), N_DIM_Z);
+  MAT_SIZE(Az);
+  Az.block(0, 0, m.G0_eq.rows(), m.G0_eq.cols()) = m.G0_eq;
+  Az.block(m.G0_eq.rows(), N_DIM_X, A.rows(), A.cols()) = A;
+
+  // state equation constraint: x = Ax + Bu + w
+  const VectorXd E0_eq_x0_w = m.E0_eq * x0 + m.W0_eq;
+
+  VEC_SIZE(E0_eq_x0_w);
+
+  const size_t eq_size = E0_eq_x0_w.size() + lbA_u.size();
+  VectorXd lbA(eq_size);
+  lbA.segment(0, E0_eq_x0_w.size()) = E0_eq_x0_w;
+  lbA.segment(E0_eq_x0_w.size(), lbA_u.size()) = lbA_u;
+
+  VectorXd ubA(eq_size);
+  ubA.segment(0, E0_eq_x0_w.size()) = E0_eq_x0_w;
+  ubA.segment(E0_eq_x0_w.size(), lbA_u.size()) = ubA_u;
+
+  VEC_SIZE(lbA_u);
+  VEC_SIZE(lbA_u);
+  VEC_SIZE(lbA);
+  VEC_SIZE(ubA);
+
+
+PRINT_MAT(H);
+PRINT_MAT(q_T);
+PRINT_MAT(Az);
+PRINT_MAT(lb);
+PRINT_MAT(ub);
+PRINT_MAT(lbA);
+PRINT_MAT(ubA);
+PRINT_MAT(m.G0_eq);
+PRINT_MAT(m.E0_eq);
+PRINT_MAT(m.W0_eq);
+
+  auto t_start = std::chrono::system_clock::now();
+  VectorXd z;  // [x', u']
+  bool solve_result = m_qpsolver_ptr->solve(H, q_T, Az, lb, ub, lbA, ubA, z);
+  auto t_end = std::chrono::system_clock::now();
+  if (!solve_result) {
+    warn_throttle("qp solver error");
+    return {false, {}};
+  }
+
+  {
+    auto t = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count();
+    RCLCPP_DEBUG(m_logger, "qp solver calculation time = %ld [ms]", t);
+  }
+
+  if (z.array().isNaN().any()) {
+    warn_throttle("model Uex includes NaN, stop MPC.");
+    return {false, {}};
+  }
+
+  const VectorXd U_opt = z.segment(N_DIM_X, DIM_U_N);
+  return {true, U_opt};
+}
+
+void MPC::addSteerWeightR(const double prediction_dt, MatrixXd & R) const
+{
+  const int N = m_param.prediction_horizon;
+  const double DT = prediction_dt;
+
+  // add steering rate : weight for (u(i) - u(i-1) / dt )^2
+  {
+    const double steer_rate_r = m_param.nominal_weight.steer_rate / (DT * DT);
+    const Eigen::Matrix2d D = steer_rate_r * (Eigen::Matrix2d() << 1.0, -1.0, -1.0, 1.0).finished();
+    for (int i = 0; i < N - 1; ++i) {
+      R.block(i, i, 2, 2) += D;
+    }
+    if (N > 1) {
+      // steer rate i = 0
+      R(0, 0) += m_param.nominal_weight.steer_rate / (m_ctrl_period * m_ctrl_period);
+    }
+  }
+
+  // add steering acceleration : weight for { (u(i+1) - 2*u(i) + u(i-1)) / dt^2 }^2
+  {
+    const double w = m_param.nominal_weight.steer_acc;
+    const double steer_acc_r = w / std::pow(DT, 4);
+    const double steer_acc_r_cp1 = w / (std::pow(DT, 3) * m_ctrl_period);
+    const double steer_acc_r_cp2 = w / (std::pow(DT, 2) * std::pow(m_ctrl_period, 2));
+    const double steer_acc_r_cp4 = w / std::pow(m_ctrl_period, 4);
+    const Eigen::Matrix3d D =
+      steer_acc_r *
+      (Eigen::Matrix3d() << 1.0, -2.0, 1.0, -2.0, 4.0, -2.0, 1.0, -2.0, 1.0).finished();
+    for (int i = 1; i < N - 1; ++i) {
+      R.block(i - 1, i - 1, 3, 3) += D;
+    }
+    if (N > 1) {
+      // steer acc i = 1
+      R(0, 0) += steer_acc_r * 1.0 + steer_acc_r_cp2 * 1.0 + steer_acc_r_cp1 * 2.0;
+      R(1, 0) += steer_acc_r * -1.0 + steer_acc_r_cp1 * -1.0;
+      R(0, 1) += steer_acc_r * -1.0 + steer_acc_r_cp1 * -1.0;
+      R(1, 1) += steer_acc_r * 1.0;
+      // steer acc i = 0
+      R(0, 0) += steer_acc_r_cp4 * 1.0;
+    }
+  }
+}
+
+std::pair<bool, VectorXd> MPC::executeOptimizationOld(
   const MPCMatrix & m, const VectorXd & x0, const double prediction_dt, const MPCTrajectory & traj,
   const double current_velocity)
 {
@@ -633,49 +982,6 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
     return {false, {}};
   }
   return {true, Uex};
-}
-
-void MPC::addSteerWeightR(const double prediction_dt, MatrixXd & R) const
-{
-  const int N = m_param.prediction_horizon;
-  const double DT = prediction_dt;
-
-  // add steering rate : weight for (u(i) - u(i-1) / dt )^2
-  {
-    const double steer_rate_r = m_param.nominal_weight.steer_rate / (DT * DT);
-    const Eigen::Matrix2d D = steer_rate_r * (Eigen::Matrix2d() << 1.0, -1.0, -1.0, 1.0).finished();
-    for (int i = 0; i < N - 1; ++i) {
-      R.block(i, i, 2, 2) += D;
-    }
-    if (N > 1) {
-      // steer rate i = 0
-      R(0, 0) += m_param.nominal_weight.steer_rate / (m_ctrl_period * m_ctrl_period);
-    }
-  }
-
-  // add steering acceleration : weight for { (u(i+1) - 2*u(i) + u(i-1)) / dt^2 }^2
-  {
-    const double w = m_param.nominal_weight.steer_acc;
-    const double steer_acc_r = w / std::pow(DT, 4);
-    const double steer_acc_r_cp1 = w / (std::pow(DT, 3) * m_ctrl_period);
-    const double steer_acc_r_cp2 = w / (std::pow(DT, 2) * std::pow(m_ctrl_period, 2));
-    const double steer_acc_r_cp4 = w / std::pow(m_ctrl_period, 4);
-    const Eigen::Matrix3d D =
-      steer_acc_r *
-      (Eigen::Matrix3d() << 1.0, -2.0, 1.0, -2.0, 4.0, -2.0, 1.0, -2.0, 1.0).finished();
-    for (int i = 1; i < N - 1; ++i) {
-      R.block(i - 1, i - 1, 3, 3) += D;
-    }
-    if (N > 1) {
-      // steer acc i = 1
-      R(0, 0) += steer_acc_r * 1.0 + steer_acc_r_cp2 * 1.0 + steer_acc_r_cp1 * 2.0;
-      R(1, 0) += steer_acc_r * -1.0 + steer_acc_r_cp1 * -1.0;
-      R(0, 1) += steer_acc_r * -1.0 + steer_acc_r_cp1 * -1.0;
-      R(1, 1) += steer_acc_r * 1.0;
-      // steer acc i = 0
-      R(0, 0) += steer_acc_r_cp4 * 1.0;
-    }
-  }
 }
 
 void MPC::addSteerWeightF(const double prediction_dt, MatrixXd & f) const

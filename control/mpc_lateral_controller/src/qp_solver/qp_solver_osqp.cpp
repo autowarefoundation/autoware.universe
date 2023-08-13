@@ -38,18 +38,19 @@ bool QPSolverOSQP::solve(
   std::vector<double> lower_bound;
   std::vector<double> upper_bound;
 
-  for (int i = 0; i < dim_u; ++i) {
+  for (int i = 0; i < lb.size(); ++i) {
     lower_bound.push_back(lb(i));
     upper_bound.push_back(ub(i));
   }
 
-  for (int i = 0; i < col_a; ++i) {
+  for (int i = 0; i < lb_a.size(); ++i) {
     lower_bound.push_back(lb_a(i));
     upper_bound.push_back(ub_a(i));
   }
 
   Eigen::MatrixXd osqpA = Eigen::MatrixXd(dim_u + col_a, raw_a);
-  osqpA << Identity, a;
+  osqpA.block(0, 0, dim_u, raw_a) = Identity;
+  osqpA.block(dim_u, 0, col_a, raw_a) = a;
 
   /* execute optimization */
   auto result = osqpsolver_.optimize(h_mat, osqpA, f, lower_bound, upper_bound);

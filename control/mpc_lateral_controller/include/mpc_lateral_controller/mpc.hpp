@@ -186,6 +186,12 @@ struct MPCMatrix
   MatrixXd R2ex;
   MatrixXd Uref_ex;
 
+  MatrixXd G0_eq;
+  MatrixXd E0_eq;
+  MatrixXd W0_eq;
+
+  // MatrixXd H;  // should be used in the generateMatrix()
+
   MPCMatrix() = default;
 };
 
@@ -255,9 +261,10 @@ private:
    * @param prediction_dt The prediction time step.
    * @return The generated MPC matrix.
    */
+  MPCMatrix generateMPCMatrixOld(
+    const MPCTrajectory & reference_trajectory, const double prediction_dt);
   MPCMatrix generateMPCMatrix(
     const MPCTrajectory & reference_trajectory, const double prediction_dt);
-
   /**
    * @brief Execute the optimization using the provided MPC matrix, initial state, and prediction
    * time step.
@@ -268,6 +275,9 @@ private:
    * @param [in] current_velocity current ego velocity
    * @return A pair of a boolean flag indicating success and the optimized input vector.
    */
+  std::pair<bool, VectorXd> executeOptimizationOld(
+    const MPCMatrix & mpc_matrix, const VectorXd & x0, const double prediction_dt,
+    const MPCTrajectory & trajectory, const double current_velocity);
   std::pair<bool, VectorXd> executeOptimization(
     const MPCMatrix & mpc_matrix, const VectorXd & x0, const double prediction_dt,
     const MPCTrajectory & trajectory, const double current_velocity);
