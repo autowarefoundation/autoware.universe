@@ -60,3 +60,10 @@ ament_auto_package(
     launch
     config
 )
+
+# test
+if(BUILD_TESTING)
+  # launch_testing
+  find_package(launch_testing_ament_cmake REQUIRED)
+  add_launch_test(test/test_pointcloud_based_method.py)
+endif()
