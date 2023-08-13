@@ -395,7 +395,7 @@ void ObstacleAvoidancePlanner::applyInputVelocity(
     forward_cropped_input_traj_points, output_traj_points.front().pose, ego_nearest_param_);
   for (size_t i = 0; i < output_traj_points.size(); i++) {
     // NOTE: input_traj_start/end_idx is calculated for efficient index calculation
-    const int input_traj_end_idx = [&]() {
+    const size_t input_traj_end_idx = [&]() {
       double sum_segment_length = 0.0;
       for (size_t j = input_traj_start_idx + 1; j < segment_length_vec.size(); ++j) {
         sum_segment_length += segment_length_vec.at(j);
