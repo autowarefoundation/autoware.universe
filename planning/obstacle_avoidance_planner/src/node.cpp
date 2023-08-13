@@ -378,9 +378,14 @@ void ObstacleAvoidancePlanner::applyInputVelocity(
 
     const size_t ego_seg_idx =
       trajectory_utils::findEgoSegmentIndex(input_traj_points, ego_pose, ego_nearest_param_);
-    return motion_utils::cropForwardPoints(
+    const auto cropped_points = motion_utils::cropForwardPoints(
       input_traj_points, ego_pose.position, ego_seg_idx,
       optimized_traj_length + margin_traj_length);
+
+    if (cropped_points.size() < 2) {
+      return input_traj_points;
+    }
+    return cropped_points;
   }();
 
   // update velocity
@@ -401,18 +406,27 @@ void ObstacleAvoidancePlanner::applyInputVelocity(
       return forward_cropped_input_traj_points.size() - 1;
     }();
 
-    // crop backward for efficient calculation
-    const auto cropped_input_traj_points = std::vector<TrajectoryPoint>{
-      forward_cropped_input_traj_points.begin() + input_traj_start_idx,
-      forward_cropped_input_traj_points.begin() + input_traj_end_idx};
+    const auto nearest_traj_point = [&]() {
+      if (input_traj_start_idx == input_traj_end_idx) {
+        return forward_cropped_input_traj_points.at(input_traj_start_idx);
+      }
 
-    const size_t nearest_seg_idx = trajectory_utils::findEgoSegmentIndex(
-      cropped_input_traj_points, output_traj_points.at(i).pose, ego_nearest_param_);
-    input_traj_start_idx += nearest_seg_idx;
+      // crop forward and backward for efficient calculation
+      const auto cropped_input_traj_points = std::vector<TrajectoryPoint>{
+        forward_cropped_input_traj_points.begin() + input_traj_start_idx,
+        forward_cropped_input_traj_points.begin() + input_traj_end_idx + 1};
+      assert(2 <= cropped_input_traj_points.size());
+
+      const size_t nearest_seg_idx = trajectory_utils::findEgoSegmentIndex(
+        cropped_input_traj_points, output_traj_points.at(i).pose, ego_nearest_param_);
+      input_traj_start_idx += nearest_seg_idx;
+
+      return cropped_input_traj_points.at(nearest_seg_idx);
+    }();
 
     // calculate velocity with zero order hold
-    const double velocity = cropped_input_traj_points.at(nearest_seg_idx).longitudinal_velocity_mps;
-    output_traj_points.at(i).longitudinal_velocity_mps = velocity;
+    output_traj_points.at(i).longitudinal_velocity_mps =
+      nearest_traj_point.longitudinal_velocity_mps;
   }
 
   // insert stop point explicitly
