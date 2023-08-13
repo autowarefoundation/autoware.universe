@@ -565,8 +565,22 @@ lanelet::ConstLanelets StartPlannerModule::getPathRoadLanes(const PathWithLaneId
 std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
   const PathWithLaneId & path) const
 {
-  return utils::generateDrivableLanesWithShoulderLanes(
-    getPathRoadLanes(path), status_.pull_out_lanes);
+  const auto path_road_lanes = getPathRoadLanes(path);
+
+  if (!path_road_lanes.empty()) {
+    return utils::generateDrivableLanesWithShoulderLanes(
+      getPathRoadLanes(path), status_.pull_out_lanes);
+  }
+
+  // if path_road_lanes is empty, use only pull_out_lanes as drivable lanes
+  std::vector<DrivableLanes> drivable_lanes;
+  for (const auto & lane : status_.pull_out_lanes) {
+    DrivableLanes drivable_lane;
+    drivable_lane.right_lane = lane;
+    drivable_lane.left_lane = lane;
+    drivable_lanes.push_back(drivable_lane);
+  }
+  return drivable_lanes;
 }
 
 void StartPlannerModule::updatePullOutStatus()
