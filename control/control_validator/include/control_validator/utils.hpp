@@ -31,7 +31,6 @@ using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using geometry_msgs::msg::Pose;
 using motion_utils::convertToTrajectory;
 using motion_utils::convertToTrajectoryPointArray;
-// using motion_utils::
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
 void shiftPose(Pose & pose, double longitudinal);
