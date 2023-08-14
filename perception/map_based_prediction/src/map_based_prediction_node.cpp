@@ -596,6 +596,7 @@ StringStamped createStringStamped(const rclcpp::Time & now, const double data)
   return msg;
 }
 
+// NOTE: These two functions are copied from the route_handler package.
 lanelet::Lanelets getRightOppositeLanelets(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
   const lanelet::ConstLanelet & lanelet)
