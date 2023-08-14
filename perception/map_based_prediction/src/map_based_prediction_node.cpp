@@ -1104,9 +1104,7 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
 
     // Memorize closest lanelet
     // NOTE: The object may be outside the lanelet.
-    if (
-      lanelet.first < dist_threshold_for_searching_lanelet_ &&
-      (!closest_lanelet || lanelet.first < closest_lanelet->first)) {
+    if (!closest_lanelet || lanelet.first < closest_lanelet->first) {
       closest_lanelet = lanelet;
     }
 
