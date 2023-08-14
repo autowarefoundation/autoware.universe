@@ -1096,9 +1096,7 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
   for (const auto & lanelet : surrounding_lanelets) {
     // Check if the close lanelets meet the necessary condition for start lanelets and
     // Check if similar lanelet is inside the object lanelet
-    if (
-      !checkCloseLaneletCondition(lanelet, object, search_point) ||
-      isDuplicated(lanelet, object_lanelets)) {
+    if (!checkCloseLaneletCondition(lanelet, object) || isDuplicated(lanelet, object_lanelets)) {
       continue;
     }
 
@@ -1128,8 +1126,7 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
 }
 
 bool MapBasedPredictionNode::checkCloseLaneletCondition(
-  const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
-  const lanelet::BasicPoint2d & search_point)
+  const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object)
 {
   // Step1. If we only have one point in the centerline, we will ignore the lanelet
   if (lanelet.second.centerline().size() <= 1) {
