@@ -428,9 +428,7 @@ public:
   double ego_nearest_yaw_threshold = M_PI_2;  // Threshold for nearest index search based on yaw.
 
   //!< Constructor.
-  explicit MPC(rclcpp::Node * node) { 
-    node_ = node;
-   };
+  explicit MPC(rclcpp::Node * node) { node_ = node; };
 
   /**
    * @brief Calculate control command using the MPC algorithm.

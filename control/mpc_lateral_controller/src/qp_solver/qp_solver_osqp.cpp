@@ -41,7 +41,6 @@ bool QPSolverOSQP::solve(
   upper_bound.segment(0, ub.size()) = ub;
   upper_bound.segment(ub.size(), ub_a.size()) = ub_a;
 
-
   Eigen::MatrixXd osqpA = Eigen::MatrixXd(dim_u + raw_a, col_a);
   osqpA.block(0, 0, dim_u, col_a) = Identity;
   osqpA.block(dim_u, 0, raw_a, col_a) = a;
