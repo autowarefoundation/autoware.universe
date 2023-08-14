@@ -9,8 +9,9 @@
 
 ## Input topics
 
-For every camera, the following three topics are subscribed:  
-| Name | Type | |
+For every camera, the following three topics are subscribed:
+
+| Name | Type | Description |
 | ---------------------------------------| -------------------------------------------------------|----------------------------------------------------|
 | `~/<camera_namespace>/camera_info` | sensor_msgs::CameraInfo |camera info from traffic_light_map_based_detector |
 | `~/<camera_namespace>/rois` | tier4_perception_msgs::TrafficLightRoiArray |detection roi from traffic_light_fine_detector |
