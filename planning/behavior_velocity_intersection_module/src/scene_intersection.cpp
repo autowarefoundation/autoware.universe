@@ -12,26 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <grid_map_cv/grid_map_cv.hpp>
-#include <grid_map_ros/grid_map_ros.hpp>
-#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-
-#if __has_include(<cv_bridge/cv_bridge.hpp>)
-#include <cv_bridge/cv_bridge.hpp>
-#else
-#include <cv_bridge/cv_bridge.h>
-#endif
-// #include <sensor_msgs/image_encodings.h>
-// #include <opencv2/highgui/highgui.hpp>
 #include "scene_intersection.hpp"
+
 #include "util.hpp"
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -93,10 +84,6 @@ IntersectionModule::IntersectionModule(
     planner_param_.collision_detection.state_transit_margin_time);
   before_creep_state_machine_.setMarginTime(planner_param_.occlusion.before_creep_stop_time);
   before_creep_state_machine_.setState(StateMachine::State::STOP);
-  if (enable_occlusion_detection) {
-    occlusion_grid_pub_ = node_.create_publisher<grid_map_msgs::msg::GridMap>(
-      "~/debug/intersection/occlusion_grid", rclcpp::QoS(1).transient_local());
-  }
   stuck_private_area_timeout_.setMarginTime(planner_param_.stuck_vehicle.timeout_private_area);
   stuck_private_area_timeout_.setState(StateMachine::State::STOP);
   decision_state_pub_ =
@@ -843,9 +830,10 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
                               ? 0.0
                               : (planner_param_.collision_detection.state_transit_margin_time -
                                  collision_state_machine_.getDuration());
+  const auto target_objects =
+    filterTargetObjects(attention_lanelets, adjacent_lanelets, intersection_area);
   const bool has_collision = checkCollision(
-    *path, attention_lanelets, adjacent_lanelets, intersection_area, ego_lane_with_next_lane,
-    closest_idx, time_delay, tl_arrow_solid_on);
+    *path, target_objects, ego_lane_with_next_lane, closest_idx, time_delay, tl_arrow_solid_on);
   collision_state_machine_.setStateWithMarginTime(
     has_collision ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("collision state_machine"), *clock_);
@@ -866,12 +854,19 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const double occlusion_dist_thr = std::fabs(
     std::pow(planner_param_.occlusion.max_vehicle_velocity_for_rss, 2) /
     (2 * planner_param_.occlusion.min_vehicle_brake_for_rss));
+  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> parked_attention_objects;
+  std::copy_if(
+    target_objects.objects.begin(), target_objects.objects.end(),
+    std::back_inserter(parked_attention_objects),
+    [thresh = planner_param_.occlusion.ignore_parked_vehicle_speed_threshold](const auto & object) {
+      return std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x) <= thresh;
+    });
   const bool is_occlusion_cleared =
     (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty() && !tl_arrow_solid_on)
       ? isOcclusionCleared(
           *planner_data_->occupancy_grid, occlusion_attention_area, adjacent_lanelets,
           first_attention_area.value(), interpolated_path_info,
-          occlusion_attention_divisions_.value(), occlusion_dist_thr)
+          occlusion_attention_divisions_.value(), parked_attention_objects, occlusion_dist_thr)
       : true;
 
   // check safety
@@ -953,13 +948,10 @@ bool IntersectionModule::checkStuckVehicle(
   return is_stuck;
 }
 
-bool IntersectionModule::checkCollision(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+autoware_auto_perception_msgs::msg::PredictedObjects IntersectionModule::filterTargetObjects(
   const lanelet::ConstLanelets & attention_area_lanelets,
   const lanelet::ConstLanelets & adjacent_lanelets,
-  const std::optional<Polygon2d> & intersection_area,
-  const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
-  const double time_delay, const bool tl_arrow_solid_on)
+  const std::optional<Polygon2d> & intersection_area) const
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;
@@ -1006,6 +998,17 @@ bool IntersectionModule::checkCollision(
       target_objects.objects.push_back(object);
     }
   }
+  return target_objects;
+}
+
+bool IntersectionModule::checkCollision(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
+  const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
+  const double time_delay, const bool tl_arrow_solid_on)
+{
+  using lanelet::utils::getArcCoordinates;
+  using lanelet::utils::getPolygonFromArcLength;
 
   // check collision between target_objects predicted path and ego lane
   // cut the predicted path at passing_time
@@ -1014,6 +1017,7 @@ bool IntersectionModule::checkCollision(
     planner_param_.common.intersection_velocity,
     planner_param_.collision_detection.minimum_ego_predicted_velocity);
   const double passing_time = time_distance_array.back().first;
+  auto target_objects = objects;
   util::cutPredictPathWithDuration(&target_objects, clock_, passing_time);
 
   const auto closest_arc_coords = getArcCoordinates(
@@ -1141,7 +1145,9 @@ bool IntersectionModule::isOcclusionCleared(
   const lanelet::ConstLanelets & adjacent_lanelets,
   const lanelet::CompoundPolygon3d & first_attention_area,
   const util::InterpolatedPathInfo & interpolated_path_info,
-  const std::vector<util::DescritizedLane> & lane_divisions, const double occlusion_dist_thr)
+  const std::vector<util::DescritizedLane> & lane_divisions,
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & parked_attention_objects,
+  const double occlusion_dist_thr)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto & lane_interval_ip = interpolated_path_info.lane_id_interval.value();
@@ -1169,6 +1175,8 @@ bool IntersectionModule::isOcclusionCleared(
   cv::Mat unknown_mask(width, height, CV_8UC1, cv::Scalar(0));
 
   // (1) prepare detection area mask
+  // attention: 255
+  // non-attention: 0
   Polygon2d grid_poly;
   grid_poly.outer().emplace_back(origin.x, origin.y);
   grid_poly.outer().emplace_back(origin.x + (width - 1) * resolution, origin.y);
@@ -1207,7 +1215,7 @@ bool IntersectionModule::isOcclusionCleared(
     }
   }
   for (const auto & poly : attention_area_cv_polygons) {
-    cv::fillPoly(attention_mask, poly, cv::Scalar(255), cv::LINE_AA);
+    cv::fillPoly(attention_mask, poly, cv::Scalar(255), cv::LINE_4);
   }
   // (1.1)
   // reset adjacent_lanelets area to 0 on attention_mask
@@ -1274,7 +1282,6 @@ bool IntersectionModule::isOcclusionCleared(
   const double distance_min = -distance_max;
   const int undef_pixel = 255;
   const int max_cost_pixel = 254;
-
   auto dist2pixel = [=](const double dist) {
     return std::min(
       max_cost_pixel,
@@ -1283,8 +1290,8 @@ bool IntersectionModule::isOcclusionCleared(
   auto pixel2dist = [=](const int pixel) {
     return pixel * 1.0 / max_cost_pixel * (distance_max - distance_min) + distance_min;
   };
-
   const int zero_dist_pixel = dist2pixel(0.0);
+  const int parked_vehicle_pixel = zero_dist_pixel - 1;  // magic
 
   auto coord2index = [&](const double x, const double y) {
     const int idx_x = (x - origin.x) / resolution;
@@ -1297,6 +1304,7 @@ bool IntersectionModule::isOcclusionCleared(
   cv::Mat distance_grid(width, height, CV_8UC1, cv::Scalar(undef_pixel));
   cv::Mat projection_ind_grid(width, height, CV_32S, cv::Scalar(-1));
 
+  // (4.1) fill zero_dist_pixel on the path
   const auto [lane_start, lane_end] = lane_attention_interval_ip;
   for (int i = static_cast<int>(lane_end); i >= static_cast<int>(lane_start); i--) {
     const auto & path_pos = path_ip.points.at(i).point.pose.position;
@@ -1308,6 +1316,31 @@ bool IntersectionModule::isOcclusionCleared(
     projection_ind_grid.at<int>(height - 1 - idx_y, idx_x) = i;
   }
 
+  // (4.2) fill parked_vehicle_pixel to parked_vehicles (both positive and negative)
+  for (const auto & parked_attention_object : parked_attention_objects) {
+    const auto obj_poly = tier4_autoware_utils::toPolygon2d(parked_attention_object);
+    std::vector<Polygon2d> common_areas;
+    bg::intersection(obj_poly, grid_poly, common_areas);
+    if (common_areas.empty()) continue;
+    for (size_t i = 0; i < common_areas.size(); ++i) {
+      common_areas[i].outer().push_back(common_areas[i].outer().front());
+      bg::correct(common_areas[i]);
+    }
+    std::vector<std::vector<cv::Point>> parked_attention_object_area_cv_polygons;
+    for (const auto & common_area : common_areas) {
+      std::vector<cv::Point> parked_attention_object_area_cv_polygon;
+      for (const auto & p : common_area.outer()) {
+        const int idx_x = static_cast<int>((p.x() - origin.x) / resolution);
+        const int idx_y = static_cast<int>((p.y() - origin.y) / resolution);
+        parked_attention_object_area_cv_polygon.emplace_back(idx_x, height - 1 - idx_y);
+      }
+      parked_attention_object_area_cv_polygons.push_back(parked_attention_object_area_cv_polygon);
+    }
+    for (const auto & poly : parked_attention_object_area_cv_polygons) {
+      cv::fillPoly(distance_grid, poly, cv::Scalar(parked_vehicle_pixel), cv::LINE_AA);
+    }
+  }
+
   for (const auto & lane_division : lane_divisions) {
     const auto & divisions = lane_division.divisions;
     for (const auto & division : divisions) {
@@ -1316,8 +1349,9 @@ bool IntersectionModule::isOcclusionCleared(
       int projection_ind = -1;
       std::optional<std::tuple<double, double, double, int>> cost_prev_checkpoint =
         std::nullopt;  // cost, x, y, projection_ind
-      for (const auto & point : division) {
-        const auto [valid, idx_x, idx_y] = coord2index(point.x(), point.y());
+      for (auto point = division.begin(); point != division.end(); point++) {
+        const double x = point->x(), y = point->y();
+        const auto [valid, idx_x, idx_y] = coord2index(x, y);
         // exited grid just now
         if (is_in_grid && !valid) break;
 
@@ -1340,16 +1374,27 @@ bool IntersectionModule::isOcclusionCleared(
           zero_dist_cell_found = true;
           projection_ind = projection_ind_grid.at<int>(height - 1 - idx_y, idx_x);
           assert(projection_ind >= 0);
-          cost_prev_checkpoint = std::make_optional<std::tuple<double, double, double, int>>(
-            0.0, point.x(), point.y(), projection_ind);
+          cost_prev_checkpoint =
+            std::make_optional<std::tuple<double, double, double, int>>(0.0, x, y, projection_ind);
           continue;
+        }
+
+        // hit positive parked vehicle
+        if (zero_dist_cell_found && pixel == parked_vehicle_pixel) {
+          while (point != division.end()) {
+            const double x = point->x(), y = point->y();
+            const auto [valid, idx_x, idx_y] = coord2index(x, y);
+            if (valid) occlusion_mask.at<unsigned char>(height - 1 - idx_y, idx_x) = 0;
+            point++;
+          }
+          break;
         }
 
         if (zero_dist_cell_found) {
           // finally traversed to defined cell (first half)
           const auto [prev_cost, prev_checkpoint_x, prev_checkpoint_y, prev_projection_ind] =
             cost_prev_checkpoint.value();
-          const double dy = point.y() - prev_checkpoint_y, dx = point.x() - prev_checkpoint_x;
+          const double dy = y - prev_checkpoint_y, dx = x - prev_checkpoint_x;
           double new_dist = prev_cost + std::hypot(dy, dx);
           const int new_projection_ind = projection_ind_grid.at<int>(height - 1 - idx_y, idx_x);
           const double cur_dist = pixel2dist(pixel);
@@ -1362,65 +1407,83 @@ bool IntersectionModule::isOcclusionCleared(
           projection_ind_grid.at<int>(height - 1 - idx_y, idx_x) = projection_ind;
           distance_grid.at<unsigned char>(height - 1 - idx_y, idx_x) = dist2pixel(new_dist);
           cost_prev_checkpoint = std::make_optional<std::tuple<double, double, double, int>>(
-            new_dist, point.x(), point.y(), projection_ind);
+            new_dist, x, y, projection_ind);
         }
       }
     }
   }
 
-  // clean-up and find nearest risk
-  const int min_cost_thr = dist2pixel(occlusion_dist_thr);
-  int min_cost = undef_pixel - 1;
-  int max_cost = 0;
-  std::optional<int> min_cost_projection_ind = std::nullopt;
-  geometry_msgs::msg::Point nearest_occlusion_point;
-  for (int i = 0; i < width; ++i) {
-    for (int j = 0; j < height; ++j) {
-      const int pixel = static_cast<int>(distance_grid.at<unsigned char>(height - 1 - j, i));
-      const bool occluded = (occlusion_mask.at<unsigned char>(height - 1 - j, i) == 255);
-      if (pixel == undef_pixel || !occluded) {
-        // ignore outside of cropped
-        // some cell maybe undef still
-        distance_grid.at<unsigned char>(height - 1 - j, i) = 0;
+  const auto & possible_object_bbox = planner_param_.occlusion.possible_object_bbox;
+  const double possible_object_bbox_x = possible_object_bbox.at(0) / resolution;
+  const double possible_object_bbox_y = possible_object_bbox.at(1) / resolution;
+  const double possible_object_area = possible_object_bbox_x * possible_object_bbox_y;
+  std::vector<std::vector<cv::Point>> contours;
+  cv::findContours(occlusion_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+  std::vector<std::vector<cv::Point>> valid_contours;
+  for (const auto & contour : contours) {
+    std::vector<cv::Point> valid_contour;
+    for (const auto & p : contour) {
+      if (distance_grid.at<unsigned char>(p.y, p.x) == undef_pixel) {
         continue;
       }
-      if (max_cost < pixel) {
-        max_cost = pixel;
+      valid_contour.push_back(p);
+    }
+    if (valid_contour.size() <= 2) {
+      continue;
+    }
+    std::vector<cv::Point> approx_contour;
+    cv::approxPolyDP(
+      valid_contour, approx_contour,
+      std::round(std::min(possible_object_bbox_x, possible_object_bbox_y) / std::sqrt(2.0)), true);
+    if (approx_contour.size() <= 2) continue;
+    // check area
+    const double poly_area = cv::contourArea(approx_contour);
+    if (poly_area < possible_object_area) continue;
+    // check bounding box size
+    const auto bbox = cv::minAreaRect(approx_contour);
+    if (const auto size = bbox.size; std::min(size.height, size.width) <
+                                       std::min(possible_object_bbox_x, possible_object_bbox_y) ||
+                                     std::max(size.height, size.width) <
+                                       std::max(possible_object_bbox_x, possible_object_bbox_y)) {
+      continue;
+    }
+    valid_contours.push_back(approx_contour);
+    geometry_msgs::msg::Polygon polygon_msg;
+    geometry_msgs::msg::Point32 point_msg;
+    for (const auto & p : approx_contour) {
+      const double glob_x = (p.x + 0.5) * resolution + origin.x;
+      const double glob_y = (height - 0.5 - p.y) * resolution + origin.y;
+      point_msg.x = glob_x;
+      point_msg.y = glob_y;
+      point_msg.z = origin.z;
+      polygon_msg.points.push_back(point_msg);
+    }
+    debug_data_.occlusion_polygons.push_back(polygon_msg);
+  }
+
+  const int min_cost_thr = dist2pixel(occlusion_dist_thr);
+  int min_cost = undef_pixel - 1;
+  geometry_msgs::msg::Point nearest_occlusion_point;
+  for (const auto & occlusion_contour : valid_contours) {
+    for (const auto & p : occlusion_contour) {
+      const int pixel = static_cast<int>(distance_grid.at<unsigned char>(p.y, p.x));
+      const bool occluded = (occlusion_mask.at<unsigned char>(p.y, p.x) == 255);
+      if (pixel == undef_pixel || !occluded) {
+        continue;
       }
-      const int projection_ind = projection_ind_grid.at<int>(height - 1 - j, i);
       if (pixel < min_cost) {
-        assert(projection_ind >= 0);
         min_cost = pixel;
-        min_cost_projection_ind = projection_ind;
-        nearest_occlusion_point.x = origin.x + i * resolution;
-        nearest_occlusion_point.y = origin.y + j * resolution;
-        nearest_occlusion_point.z = origin.z + distance_max * pixel / max_cost_pixel;
+        nearest_occlusion_point.x = origin.x + p.x * resolution;
+        nearest_occlusion_point.y = origin.y + (height - 1 - p.y) * resolution;
+        nearest_occlusion_point.z = origin.z;
       }
     }
   }
-  debug_data_.nearest_occlusion_point = nearest_occlusion_point;
 
-  if (planner_param_.occlusion.pub_debug_grid) {
-    cv::Mat distance_grid_heatmap;
-    cv::applyColorMap(distance_grid, distance_grid_heatmap, cv::COLORMAP_JET);
-    grid_map::GridMap occlusion_grid({"elevation"});
-    occlusion_grid.setFrameId("map");
-    occlusion_grid.setGeometry(
-      grid_map::Length(width * resolution, height * resolution), resolution,
-      grid_map::Position(origin.x + width * resolution / 2, origin.y + height * resolution / 2));
-    cv::rotate(distance_grid, distance_grid, cv::ROTATE_90_COUNTERCLOCKWISE);
-    cv::rotate(distance_grid_heatmap, distance_grid_heatmap, cv::ROTATE_90_COUNTERCLOCKWISE);
-    grid_map::GridMapCvConverter::addLayerFromImage<unsigned char, 1>(
-      distance_grid, "elevation", occlusion_grid, origin.z /* elevation for 0 */,
-      origin.z + distance_max /* elevation for 255 */);
-    grid_map::GridMapCvConverter::addColorLayerFromImage<unsigned char, 3>(
-      distance_grid_heatmap, "color", occlusion_grid);
-    occlusion_grid_pub_->publish(grid_map::GridMapRosConverter::toMessage(occlusion_grid));
-  }
-
-  if (min_cost > min_cost_thr || !min_cost_projection_ind.has_value()) {
+  if (min_cost > min_cost_thr) {
     return true;
   } else {
+    debug_data_.nearest_occlusion_point = nearest_occlusion_point;
     return false;
   }
 }
@@ -1449,9 +1512,8 @@ bool IntersectionModule::checkFrontVehicleDeceleration(
   // get the nearest centerpoint to object
   std::vector<double> dist_obj_center_points;
   for (const auto & p : center_points)
-    dist_obj_center_points.push_back(tier4_autoware_utils::calcDistance2d(object_pose.position, p));
-  const int obj_closest_centerpoint_idx = std::distance(
-    dist_obj_center_points.begin(),
+    dist_obj_center_points.push_back(tier4_autoware_utils::calcDistance2d(object_pose.position,
+p)); const int obj_closest_centerpoint_idx = std::distance( dist_obj_center_points.begin(),
     std::min_element(dist_obj_center_points.begin(), dist_obj_center_points.end()));
   // find two center_points whose distances from `closest_centerpoint` cross stopping_distance
   double acc_dist_prev = 0.0, acc_dist = 0.0;

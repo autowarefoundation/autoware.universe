@@ -20,7 +20,6 @@
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
-#include <grid_map_core/grid_map_core.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -108,7 +107,8 @@ public:
       double min_vehicle_brake_for_rss;
       double max_vehicle_velocity_for_rss;
       double denoise_kernel;
-      bool pub_debug_grid;
+      std::vector<double> possible_object_bbox;
+      double ignore_parked_vehicle_speed_threshold;
     } occlusion;
   };
 
@@ -249,11 +249,14 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
     const util::IntersectionStopLines & intersection_stop_lines);
 
-  bool checkCollision(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  autoware_auto_perception_msgs::msg::PredictedObjects filterTargetObjects(
     const lanelet::ConstLanelets & attention_area_lanelets,
     const lanelet::ConstLanelets & adjacent_lanelets,
-    const std::optional<Polygon2d> & intersection_area,
+    const std::optional<Polygon2d> & intersection_area) const;
+
+  bool checkCollision(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const autoware_auto_perception_msgs::msg::PredictedObjects & target_objects,
     const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
     const double time_delay, const bool tl_arrow_solid_on);
 
@@ -263,7 +266,10 @@ private:
     const lanelet::ConstLanelets & adjacent_lanelets,
     const lanelet::CompoundPolygon3d & first_attention_area,
     const util::InterpolatedPathInfo & interpolated_path_info,
-    const std::vector<util::DescritizedLane> & lane_divisions, const double occlusion_dist_thr);
+    const std::vector<util::DescritizedLane> & lane_divisions,
+    const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> &
+      parked_attention_objects,
+    const double occlusion_dist_thr);
 
   /*
   bool IntersectionModule::checkFrontVehicleDeceleration(

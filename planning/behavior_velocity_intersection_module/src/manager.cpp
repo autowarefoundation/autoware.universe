@@ -113,7 +113,10 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.occlusion.max_vehicle_velocity_for_rss =
     node.declare_parameter<double>(ns + ".occlusion.max_vehicle_velocity_for_rss");
   ip.occlusion.denoise_kernel = node.declare_parameter<double>(ns + ".occlusion.denoise_kernel");
-  ip.occlusion.pub_debug_grid = node.declare_parameter<bool>(ns + ".occlusion.pub_debug_grid");
+  ip.occlusion.possible_object_bbox =
+    node.declare_parameter<std::vector<double>>(ns + ".occlusion.possible_object_bbox");
+  ip.occlusion.ignore_parked_vehicle_speed_threshold =
+    node.declare_parameter<double>(ns + ".occlusion.ignore_parked_vehicle_speed_threshold");
 }
 
 void IntersectionModuleManager::launchNewModules(
