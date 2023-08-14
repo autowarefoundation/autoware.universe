@@ -58,7 +58,7 @@ class PathGenerator
 public:
   PathGenerator(
     const double time_horizon, const double sampling_time_interval,
-    const double min_crosswalk_user_velocity);
+    const double min_crosswalk_user_velocity, const double max_lane_user_lateral_accel);
 
   PredictedPath generatePathForNonVehicleObject(const TrackedObject & object);
 
@@ -80,11 +80,15 @@ private:
   double time_horizon_;
   double sampling_time_interval_;
   double min_crosswalk_user_velocity_;
+  double max_lane_user_lateral_accel_;
 
   // Member functions
   PredictedPath generateStraightPath(const TrackedObject & object) const;
 
-  PredictedPath generatePolynomialPath(const TrackedObject & object, const PosePath & ref_path);
+  PredictedPath generateMinimumJerkPolynomialPath(
+    const TrackedObject & object, const PosePath & ref_path);
+  PredictedPath generateConstantAccPolynomialPath(
+    const TrackedObject & object, const PosePath & ref_path);
 
   FrenetPath generateFrenetPath(
     const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length);

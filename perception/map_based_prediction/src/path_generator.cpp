@@ -24,10 +24,11 @@ namespace map_based_prediction
 {
 PathGenerator::PathGenerator(
   const double time_horizon, const double sampling_time_interval,
-  const double min_crosswalk_user_velocity)
+  const double min_crosswalk_user_velocity, const double max_lane_user_lateral_accel)
 : time_horizon_(time_horizon),
   sampling_time_interval_(sampling_time_interval),
-  min_crosswalk_user_velocity_(min_crosswalk_user_velocity)
+  min_crosswalk_user_velocity_(min_crosswalk_user_velocity),
+  max_lane_user_lateral_accel_(max_lane_user_lateral_accel)
 {
 }
 
@@ -153,7 +154,8 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
     return generateStraightPath(object);
   }
 
-  return generatePolynomialPath(object, ref_paths);
+  // return generateMinimumJerkPolynomialPath(object, ref_paths);
+  return generateConstantAccPolynomialPath(object, ref_paths);
 }
 
 PredictedPath PathGenerator::generateStraightPath(const TrackedObject & object) const
@@ -175,7 +177,88 @@ PredictedPath PathGenerator::generateStraightPath(const TrackedObject & object) 
   return path;
 }
 
-PredictedPath PathGenerator::generatePolynomialPath(
+PredictedPath PathGenerator::generateConstantAccPolynomialPath(
+  const TrackedObject & object, const PosePath & ref_path)
+{
+  const double object_vel = object.kinematics.twist_with_covariance.twist.linear.x;
+  const double max_ref_path_length = motion_utils::calcArcLength(ref_path);
+  const auto current_point = getFrenetPoint(object, ref_path);
+
+  // Step1. Calculate boundary constraints
+  const auto move_forward = [&](const double d0, const double v0, const double a0, const double t) {
+    const double v = v0 + a0 * t;
+    const double d = d0 + v0 * t + 0.5 * a0 * std::pow(t, 2);
+    return std::make_tuple(d, v);
+  };
+
+  const double d0 = current_point.d;
+  const double v0 = current_point.d_vel;
+  const double a0 = max_lane_user_lateral_accel_ * (0 < d0 ? -1.0 : 1.0);
+
+  const double t1 = 0 < d0 * v0 ? std::abs(v0 / a0) : 0.0;
+  const auto [d1, v1] = move_forward(d0, v0, a0, t1);
+  const double a1 = max_lane_user_lateral_accel_ * (0 < d0 ? -1.0 : 1.0);
+
+  const double t2 = [&]() {
+    const double discriminant = 2 * std::pow(v1, 2) - 4 * a1 * d1;
+    if (discriminant < 0) {
+      return 0.0;
+    }
+    return (-2 * v1 + std::sqrt(discriminant)) / (2 * a1);
+  }();
+  const auto [d2, v2] = move_forward(d1, v1, a1, t2 - t1);
+  const double a2 = max_lane_user_lateral_accel_ * (0 < d0 ? 1.0 : -1.0);
+
+  const double t3 = t1 + 2 * (t2 - t1) + v0 / a2;
+
+  // Step2. Generate Predicted Path on a Frenet coordinate
+  std::cerr << "====" << std::endl;
+  FrenetPath frenet_predicted_path;
+  frenet_predicted_path.reserve(static_cast<size_t>(time_horizon_ / sampling_time_interval_));
+  double s = current_point.s;
+  for (double t = 0.0; t <= time_horizon_; t += sampling_time_interval_) {
+    const auto [d, v] = [&]() {
+      if (t < t1) {
+        std::cerr << "1" << std::endl;
+        return move_forward(d0, v0, a0, t);
+      } else if (t < t2) {
+        std::cerr << "2" << std::endl;
+        return move_forward(d1, v1, a1, t - t1);
+      } else if (t < t3) {
+        std::cerr << "3" << std::endl;
+        return move_forward(d2, v2, a2, t - t2);
+      }
+      return std::make_tuple(0.0, 0.0);
+    }();
+
+    s += object_vel * sampling_time_interval_;
+    if (s > max_ref_path_length) {
+      break;
+    }
+
+    FrenetPoint point;
+    point.s = s;
+    point.s_vel = object_vel;  // not used
+    point.s_acc = 0.0;         // not used
+    point.d = d;
+    point.d_vel = v;  // not used
+    point.d_acc = 0;  // not used
+    std::cerr << d << std::endl;
+    frenet_predicted_path.push_back(point);
+  }
+
+  // Step3. Interpolate Reference Path for converting predicted path coordinate
+  const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);
+
+  if (frenet_predicted_path.size() < 2 || interpolated_ref_path.size() < 2) {
+    return generateStraightPath(object);
+  }
+
+  // Step4. Convert predicted trajectory from Frenet to Cartesian coordinate
+  return convertToPredictedPath(object, frenet_predicted_path, interpolated_ref_path);
+}
+
+PredictedPath PathGenerator::generateMinimumJerkPolynomialPath(
   const TrackedObject & object, const PosePath & ref_path)
 {
   // Get current Frenet Point
