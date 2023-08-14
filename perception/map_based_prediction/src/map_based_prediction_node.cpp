@@ -40,6 +40,8 @@
 namespace map_based_prediction
 {
 
+namespace
+{
 /**
  * @brief First order Low pass filtering
  *
@@ -586,6 +588,15 @@ ObjectClassification::_label_type changeLabelForPrediction(
   }
 }
 
+StringStamped createStringStamped(const rclcpp::Time & now, const double data)
+{
+  StringStamped msg;
+  msg.stamp = now;
+  msg.data = std::to_string(data);
+  return msg;
+}
+}  // namespace
+
 MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_options)
 : Node("map_based_prediction", node_options), debug_accumulated_time_(0.0)
 {
@@ -649,6 +660,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   pub_objects_ = this->create_publisher<PredictedObjects>("objects", rclcpp::QoS{1});
   pub_debug_markers_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
+  pub_calculation_time_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
 }
 
 PredictedObjectKinematics MapBasedPredictionNode::convertToPredictedKinematics(
@@ -691,6 +703,7 @@ void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
 
 void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPtr in_objects)
 {
+  stop_watch_.tic();
   // Guard for map pointer and frame transformation
   if (!lanelet_map_ptr_) {
     return;
@@ -869,6 +882,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   // Publish Results
   pub_objects_->publish(output);
   pub_debug_markers_->publish(debug_markers);
+  const auto calculation_time_msg = createStringStamped(now(), stop_watch_.toc());
+  pub_calculation_time_->publish(calculation_time_msg);
 }
 
 PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
