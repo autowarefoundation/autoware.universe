@@ -1324,7 +1324,7 @@ geometry_msgs::msg::Point calcLongitudinalOffsetGoalPoint(
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
-  const double vehicle_length, const std::shared_ptr<const PlannerData> planner_data,
+  const double vehicle_length, const std::shared_ptr<PlannerData> planner_data,
   const bool is_driving_forward)
 {
   // extract data
@@ -1497,9 +1497,7 @@ void generateDrivableArea(
   }
   const auto & expansion_params = planner_data->drivable_area_expansion_parameters;
   if (expansion_params.enabled) {
-    drivable_area_expansion::expandDrivableArea(
-      path, expansion_params, *planner_data->dynamic_object, *planner_data->route_handler,
-      transformed_lanes);
+    drivable_area_expansion::expandDrivableArea(path, planner_data, transformed_lanes);
   }
 
   // make bound longitudinally monotonic
