@@ -173,6 +173,10 @@ bool RouteHandler::isRouteLooped(const RouteSections & route_sections)
 void RouteHandler::setRoute(const LaneletRoute & route_msg)
 {
   if (!isRouteLooped(route_msg.segments)) {
+    // if get not modified route but new route, reset original start pose
+    if (!route_ptr_ || route_ptr_->uuid != route_msg.uuid) {
+      original_start_pose_ = route_msg.start_pose;
+    }
     route_ptr_ = std::make_shared<LaneletRoute>(route_msg);
     is_handler_ready_ = false;
     setLaneletsFromRouteMsg();
@@ -363,7 +367,7 @@ UUID RouteHandler::getRouteUuid() const
 {
   if (!route_ptr_) {
     RCLCPP_WARN(logger_, "[Route Handler] getRouteUuid: Route has not been set yet");
-    UUID();
+    return UUID();
   }
   return route_ptr_->uuid;
 }
@@ -416,6 +420,20 @@ std::vector<lanelet::ConstLanelet> RouteHandler::getLanesAfterGoal(
 lanelet::ConstLanelets RouteHandler::getRouteLanelets() const
 {
   return route_lanelets_;
+}
+
+Pose RouteHandler::getStartPose() const
+{
+  if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getStartPose: Route has not been set yet");
+    Pose();
+  }
+  return route_ptr_->start_pose;
+}
+
+Pose RouteHandler::getOriginalStartPose() const
+{
+  return original_start_pose_;
 }
 
 Pose RouteHandler::getGoalPose() const
@@ -777,6 +795,13 @@ bool RouteHandler::getClosestLaneletWithinRoute(
   const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const
 {
   return lanelet::utils::query::getClosestLanelet(route_lanelets_, search_pose, closest_lanelet);
+}
+
+bool RouteHandler::getClosestPreferredLaneletWithinRoute(
+  const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const
+{
+  return lanelet::utils::query::getClosestLanelet(
+    preferred_lanelets_, search_pose, closest_lanelet);
 }
 
 bool RouteHandler::getClosestLaneletWithConstrainsWithinRoute(
@@ -1800,6 +1825,11 @@ bool RouteHandler::isShoulderLanelet(const lanelet::ConstLanelet & lanelet) cons
   return lanelet::utils::contains(shoulder_lanelets_, lanelet);
 }
 
+bool RouteHandler::isRouteLanelet(const lanelet::ConstLanelet & lanelet) const
+{
+  return lanelet::utils::contains(route_lanelets_, lanelet);
+}
+
 lanelet::ConstLanelets RouteHandler::getPreviousLaneletSequence(
   const lanelet::ConstLanelets & lanelet_sequence) const
 {
@@ -1969,37 +1999,94 @@ lanelet::ConstLanelets RouteHandler::getNextLaneSequence(
 
 bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   const Pose & start_checkpoint, const Pose & goal_checkpoint,
-  lanelet::ConstLanelets * path_lanelets) const
+  lanelet::ConstLanelets * path_lanelets, const bool consider_no_drivable_lanes) const
 {
-  lanelet::Lanelet start_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, start_checkpoint, &start_lanelet)) {
-    return false;
+  // Find lanelets for start point. First, find all lanelets containing the start point to calculate
+  // all possible route later. It fails when the point is not located on any road_lanelet (e.g. the
+  // start point is located out of any lanelets or road_shoulder lanelet which is not contained in
+  // road_lanelet). In that case, find the closest lanelet instead.
+  lanelet::ConstLanelet start_lanelet;
+  lanelet::ConstLanelets start_lanelets;
+  if (!lanelet::utils::query::getCurrentLanelets(
+        road_lanelets_, start_checkpoint, &start_lanelets)) {
+    if (!lanelet::utils::query::getClosestLanelet(
+          road_lanelets_, start_checkpoint, &start_lanelet)) {
+      RCLCPP_WARN_STREAM(
+        logger_, "Failed to find current lanelet."
+                   << std::endl
+                   << " - start checkpoint: " << toString(start_checkpoint) << std::endl
+                   << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
+      return false;
+    }
+    start_lanelets = {start_lanelet};
   }
-  lanelet::Lanelet goal_lanelet;
+
+  // Find lanelets for goal point.
+  lanelet::ConstLanelet goal_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_checkpoint, &goal_lanelet)) {
-    return false;
-  }
-
-  // get all possible lanes that can be used to reach goal (including all possible lane change)
-  const lanelet::Optional<lanelet::routing::Route> optional_route =
-    routing_graph_ptr_->getRoute(start_lanelet, goal_lanelet, 0);
-  if (!optional_route) {
-    RCLCPP_ERROR_STREAM(
-      logger_, "Failed to find a proper path!"
+    RCLCPP_WARN_STREAM(
+      logger_, "Failed to find closest lanelet."
                  << std::endl
-                 << "start checkpoint: " << toString(start_checkpoint) << std::endl
-                 << "goal checkpoint: " << toString(goal_checkpoint) << std::endl
-                 << "start lane id: " << start_lanelet.id() << std::endl
-                 << "goal lane id: " << goal_lanelet.id() << std::endl);
+                 << " - start checkpoint: " << toString(start_checkpoint) << std::endl
+                 << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
     return false;
   }
 
-  const auto shortest_path = optional_route->shortestPath();
-  path_lanelets->reserve(shortest_path.size());
-  for (const auto & llt : shortest_path) {
-    path_lanelets->push_back(llt);
+  lanelet::Optional<lanelet::routing::Route> optional_route;
+  std::vector<lanelet::ConstLanelets> candidate_paths;
+  lanelet::routing::LaneletPath shortest_path;
+  bool is_route_found = false;
+
+  lanelet::routing::LaneletPath drivable_lane_path;
+  bool drivable_lane_path_found = false;
+  double shortest_path_length2d = std::numeric_limits<double>::max();
+
+  for (const auto & st_llt : start_lanelets) {
+    optional_route = routing_graph_ptr_->getRoute(st_llt, goal_lanelet, 0);
+    if (!optional_route) {
+      RCLCPP_ERROR_STREAM(
+        logger_, "Failed to find a proper path!"
+                   << std::endl
+                   << " - start checkpoint: " << toString(start_checkpoint) << std::endl
+                   << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl
+                   << " - start lane id: " << st_llt.id() << std::endl
+                   << " - goal lane id: " << goal_lanelet.id() << std::endl);
+    } else {
+      is_route_found = true;
+
+      if (optional_route->length2d() < shortest_path_length2d) {
+        shortest_path_length2d = optional_route->length2d();
+        shortest_path = optional_route->shortestPath();
+        start_lanelet = st_llt;
+      }
+    }
   }
-  return true;
+
+  if (is_route_found) {
+    lanelet::routing::LaneletPath path;
+    if (consider_no_drivable_lanes) {
+      bool shortest_path_has_no_drivable_lane = hasNoDrivableLaneInPath(shortest_path);
+      if (shortest_path_has_no_drivable_lane) {
+        drivable_lane_path_found =
+          findDrivableLanePath(start_lanelet, goal_lanelet, drivable_lane_path);
+      }
+
+      if (drivable_lane_path_found) {
+        path = drivable_lane_path;
+      } else {
+        path = shortest_path;
+      }
+    } else {
+      path = shortest_path;
+    }
+
+    path_lanelets->reserve(path.size());
+    for (const auto & llt : path) {
+      path_lanelets->push_back(llt);
+    }
+  }
+
+  return is_route_found;
 }
 
 std::vector<LaneletSegment> RouteHandler::createMapSegments(
@@ -2040,6 +2127,44 @@ lanelet::ConstLanelets RouteHandler::getMainLanelets(
     lanelet_sequence = getPreviousLaneletSequence(lanelet_sequence);
   }
   return main_lanelets;
+}
+
+bool RouteHandler::hasNoDrivableLaneInPath(const lanelet::routing::LaneletPath & path) const
+{
+  for (const auto & llt : path) {
+    const std::string no_drivable_lane_attribute = llt.attributeOr("no_drivable_lane", "no");
+    if (no_drivable_lane_attribute == "yes") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool RouteHandler::findDrivableLanePath(
+  const lanelet::ConstLanelet & start_lanelet, const lanelet::ConstLanelet & goal_lanelet,
+  lanelet::routing::LaneletPath & drivable_lane_path) const
+{
+  double drivable_lane_path_length2d = std::numeric_limits<double>::max();
+  bool drivable_lane_path_found = false;
+
+  for (const auto & llt : road_lanelets_) {
+    lanelet::ConstLanelets via_lanelet;
+    via_lanelet.push_back(llt);
+    const lanelet::Optional<lanelet::routing::Route> optional_route =
+      routing_graph_ptr_->getRouteVia(start_lanelet, via_lanelet, goal_lanelet, 0);
+
+    if ((optional_route) && (!hasNoDrivableLaneInPath(optional_route->shortestPath()))) {
+      if (optional_route->length2d() < drivable_lane_path_length2d) {
+        drivable_lane_path_length2d = optional_route->length2d();
+        drivable_lane_path = optional_route->shortestPath();
+        drivable_lane_path_found = true;
+      }
+    }
+    via_lanelet.clear();
+  }
+
+  return drivable_lane_path_found;
 }
 
 }  // namespace route_handler

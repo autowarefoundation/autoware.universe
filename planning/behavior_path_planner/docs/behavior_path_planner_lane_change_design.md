@@ -157,6 +157,12 @@ stop
 
 See [safety check utils explanation](../docs/behavior_path_planner_safety_check.md)
 
+#### Objects selection and classification
+
+First, we divide the target objects into obstacles in the target lane, obstacles in the current lane, and obstacles in other lanes. Target lane indicates the lane that the ego vehicle is going to reach after the lane change and current lane mean the current lane where the ego vehicle is following before the lane change. Other lanes are lanes that do not belong to the target and current lanes. The following picture describes objects on each lane. Note that users can remove objects either on current and other lanes from safety check by changing the flag, which are `check_objects_on_current_lanes` and `check_objects_on_other_lanes`.
+
+![object lanes](../image/lane_change/lane_objects.drawio.svg)
+
 ##### Collision check in prepare phase
 
 The ego vehicle may need to secure ample inter-vehicle distance ahead of the target vehicle before attempting a lane change. The flag `enable_collision_check_at_prepare_phase` can be enabled to gain this behavior. The following image illustrates the differences between the `false` and `true` cases.
@@ -240,7 +246,7 @@ detach
 
 Suppose the lane change trajectory is evaluated as unsafe. In that case, if the ego vehicle has not departed from the current lane yet, the trajectory will be reset, and the ego vehicle will resume the lane following the maneuver.
 
-The function can be enabled by setting `enable_cancel_lane_change` to `true`.
+The function can be enabled by setting `enable_on_prepare_phase` to `true`.
 
 The following image illustrates the cancel process.
 
@@ -248,7 +254,7 @@ The following image illustrates the cancel process.
 
 #### Abort
 
-Assume the ego vehicle has already departed from the current lane. In that case, it is dangerous to cancel the path, and it will cause the ego vehicle to change the heading direction abruptly. In this case, planning a trajectory that allows the ego vehicle to return to the current path while minimizing the heading changes is necessary. In this case, the lane change module will generate an abort path. The following images show an example of the abort path. Do note that the function DOESN'T GUARANTEE a safe abort process, as it didn't check the presence of the surrounding objects and/or their reactions. The function can be enable manually by setting both `enable_cancel_lane_change` and `enable_abort_lane_change` to `true`. The parameter `abort_max_lateral_jerk` need to be set to a high value in order for it to work.
+Assume the ego vehicle has already departed from the current lane. In that case, it is dangerous to cancel the path, and it will cause the ego vehicle to change the heading direction abruptly. In this case, planning a trajectory that allows the ego vehicle to return to the current path while minimizing the heading changes is necessary. In this case, the lane change module will generate an abort path. The following images show an example of the abort path. Do note that the function DOESN'T GUARANTEE a safe abort process, as it didn't check the presence of the surrounding objects and/or their reactions. The function can be enable manually by setting both `enable_on_prepare_phase` and `enable_on_lane_changing_phase` to `true`. The parameter `max_lateral_jerk` need to be set to a high value in order for it to work.
 
 ![abort](../image/lane_change/cancel_and_abort/lane_change-abort.png)
 
@@ -292,7 +298,8 @@ The following parameters are configurable in `behavior_path_planner.param.yaml`.
 | `rear_vehicle_safety_time_margin`          | [s]     | double  | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 2.0           |
 | `enable_collision_check_at_prepare_phase`  | [-]     | boolean | Perform collision check starting from prepare phase. If `false`, collision check only evaluated for lane changing phase.                                       | true          |
 | `prepare_phase_ignore_target_speed_thresh` | [m/s]   | double  | Ignore collision check in prepare phase of object speed that is lesser that the configured value. `enable_collision_check_at_prepare_phase` must be `true`     | 0.1           |
-| `use_predicted_path_outside_lanelet`       | [-]     | boolean | If true, include collision check for predicted path that is out of lanelet (freespace).                                                                        | false         |
+| `check_objects_on_current_lanes`           | [-]     | boolean | If true, the lane change module include objects on current lanes.                                                                                              | true          |
+| `check_objects_on_other_lanes`             | [-]     | boolean | If true, the lane change module include objects on other lanes.                                                                                                | true          |
 | `use_all_predicted_path`                   | [-]     | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                         | true          |
 
 (\*1) the value must be negative.
@@ -301,12 +308,14 @@ The following parameters are configurable in `behavior_path_planner.param.yaml`.
 
 The following parameters are configurable in `lane_change.param.yaml`.
 
-| Name                        | Unit | Type    | Description                             | Default value |
-| :-------------------------- | ---- | ------- | --------------------------------------- | ------------- |
-| `enable_cancel_lane_change` | [-]  | boolean | Enable cancel lane change               | true          |
-| `enable_abort_lane_change`  | [-]  | boolean | Enable abort lane change.               | false         |
-| `abort_delta_time`          | [s]  | double  | The time taken to start aborting.       | 3.0           |
-| `abort_max_lateral_jerk`    | [s]  | double  | The maximum lateral jerk for abort path | 1000.0        |
+| Name                                   | Unit    | Type    | Description                                                                                                      | Default value |
+| :------------------------------------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------- | ------------- |
+| `cancel.enable_on_prepare_phase`       | [-]     | boolean | Enable cancel lane change                                                                                        | true          |
+| `cancel.enable_on_lane_changing_phase` | [-]     | boolean | Enable abort lane change.                                                                                        | false         |
+| `cancel.delta_time`                    | [s]     | double  | The time taken to start steering to return to the center line.                                                   | 3.0           |
+| `cancel.duration`                      | [s]     | double  | The time taken to complete returning to the center line.                                                         | 3.0           |
+| `cancel.max_lateral_jerk`              | [m/sss] | double  | The maximum lateral jerk for abort path                                                                          | 1000.0        |
+| `cancel.overhang_tolerance`            | [m]     | double  | Lane change cancel is prohibited if the vehicle head exceeds the lane boundary more than this tolerance distance | 0.0           |
 
 ### Debug
 
@@ -318,6 +327,33 @@ The following parameters are configurable in `lane_change.param.yaml`.
 
 ## Debug Marker & Visualization
 
-To enable the debug marker, execute `ros2 param set /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner lane_change.publish_debug_marker true` (no restart is needed) or simply set the `publish_debug_marker` to `true` in the `lane_change.param.yaml` for permanent effect (restart is needed). Then add the marker `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/lanechange` in `rviz2`.
+To enable the debug marker, execute (no restart is needed)
 
-![debug](../image/lane_change/lane_change-debug.png)
+```shell
+ros2 param set /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner lane_change.publish_debug_marker true
+
+```
+
+or simply set the `publish_debug_marker` to `true` in the `lane_change.param.yaml` for permanent effect (restart is needed).
+
+Then add the marker
+
+```shell
+/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/lane_change_left
+```
+
+in `rviz2`.
+
+![debug](../image/lane_change/lane_change-debug-1.png)
+
+![debug2](../image/lane_change/lane_change-debug-2.png)
+
+![debug3](../image/lane_change/lane_change-debug-3.png)
+
+Available information
+
+1. Ego to object relation, plus safety check information
+2. Ego vehicle interpolated pose up to the latest safety check position.
+3. Object is safe or not, shown by the color of the polygon (Green = Safe, Red = unsafe)
+4. Valid candidate paths.
+5. Position when lane changing start and end.

@@ -42,15 +42,13 @@
           "type": "number",
           "description": "Sensitivity to calculate acceleration for external API (commanded acceleration is pow(operation, 1 / sensitivity))",
           "default": 1.0,
-          "maximum": 1.0,
-          "exclusiveMinimum": 0.0
+          "maximum": 1.0
         },
         "brake_sensitivity": {
           "type": "number",
           "description": "Sensitivity to calculate deceleration for external API (commanded acceleration is pow(operation, 1 / sensitivity))",
           "default": 1.0,
-          "maximum": 1.0,
-          "exclusiveMinimum": 0.0
+          "maximum": 1.0
         },
         "control_command": {
           "type": "object",

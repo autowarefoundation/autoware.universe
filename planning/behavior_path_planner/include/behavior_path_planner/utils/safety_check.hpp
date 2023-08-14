@@ -16,8 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__SAFETY_CHECK_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_util/debug_utilities.hpp"
-#include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
@@ -48,13 +47,54 @@ using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
+using vehicle_info_util::VehicleInfo;
+
+struct PoseWithVelocity
+{
+  Pose pose;
+  double velocity{0.0};
+
+  PoseWithVelocity(const Pose & pose, const double velocity) : pose(pose), velocity(velocity) {}
+};
+
+struct PoseWithVelocityStamped : public PoseWithVelocity
+{
+  double time{0.0};
+
+  PoseWithVelocityStamped(const double time, const Pose & pose, const double velocity)
+  : PoseWithVelocity(pose, velocity), time(time)
+  {
+  }
+};
+
+struct PoseWithVelocityAndPolygonStamped : public PoseWithVelocityStamped
+{
+  Polygon2d poly;
+
+  PoseWithVelocityAndPolygonStamped(
+    const double time, const Pose & pose, const double velocity, const Polygon2d & poly)
+  : PoseWithVelocityStamped(time, pose, velocity), poly(poly)
+  {
+  }
+};
+
+struct PredictedPathWithPolygon
+{
+  float confidence{0.0};
+  std::vector<PoseWithVelocityAndPolygonStamped> path;
+};
+
+struct ExtendedPredictedObject
+{
+  unique_identifier_msgs::msg::UUID uuid;
+  geometry_msgs::msg::PoseWithCovariance initial_pose;
+  geometry_msgs::msg::TwistWithCovariance initial_twist;
+  geometry_msgs::msg::AccelWithCovariance initial_acceleration;
+  autoware_auto_perception_msgs::msg::Shape shape;
+  std::vector<PredictedPathWithPolygon> predicted_paths;
+};
 
 namespace bg = boost::geometry;
-struct ProjectedDistancePoint
-{
-  Point2d projected_point;
-  double distance{0.0};
-};
 
 bool isTargetObjectFront(
   const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
@@ -62,9 +102,10 @@ bool isTargetObjectFront(
 
 Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const double lon_length, const double lat_margin);
+  const double lon_length, const double lat_margin, CollisionCheckDebug & debug);
 Polygon2d createExtendedPolygon(
-  const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin);
+  const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin,
+  CollisionCheckDebug & debug);
 
 double calcRssDistance(
   const double front_object_velocity, const double rear_object_velocity,
@@ -75,47 +116,33 @@ double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
   const BehaviorPathPlannerParameters & params);
 
+boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
+  const std::vector<PoseWithVelocityStamped> & path, const double relative_time);
+
+boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
+  const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
+  const VehicleInfo & ego_info);
+
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
  * @param planned_path The predicted path of the ego vehicle.
- * @param interpolated_ego A vector of pairs of ego vehicle's pose and its polygon at each moment in
- * the future.
+ * @param predicted_ego_path Ego vehicle's predicted path
  * @param ego_current_velocity Current velocity of the ego vehicle.
- * @param check_duration The vector of times in the future at which safety check is
- * performed.(relative time in sec from the current time)
  * @param target_object The predicted object to check collision with.
  * @param target_object_path The predicted path of the target object.
  * @param common_parameters The common parameters used in behavior path planner.
  * @param front_object_deceleration The deceleration of the object in the front.(used in RSS)
  * @param rear_object_deceleration The deceleration of the object in the rear.(used in RSS)
  * @param debug The debug information for collision checking.
- * @param prepare_duration The duration to prepare before shifting lane.
- * @param velocity_threshold_for_prepare_duration The threshold for the target velocity to
- * ignore during preparation phase.
  * @return true if distance is safe.
  */
-bool isSafeInLaneletCollisionCheck(
+bool checkCollision(
   const PathWithLaneId & planned_path,
-  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & predicted_ego_poses,
-  const double ego_current_velocity, const std::vector<double> & check_duration,
-  const PredictedObject & target_object, const PredictedPath & target_object_path,
+  const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
+  const ExtendedPredictedObject & target_object,
+  const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
-  const double rear_object_deceleration, CollisionCheckDebug & debug,
-  const double prepare_duration = 0.0, const double velocity_threshold_for_prepare_duration = 0.0);
-
-/**
- * @brief Iterate the points in the ego and target's predicted path and
- *        perform safety check for each of the iterated points.
- * @return true if distance is safe.
- */
-bool isSafeInFreeSpaceCollisionCheck(
-  const PathWithLaneId & path,
-  const std::vector<std::pair<Pose, tier4_autoware_utils::Polygon2d>> & interpolated_ego,
-  const Twist & ego_current_twist, const std::vector<double> & check_duration,
-  const double prepare_duration, const PredictedObject & target_object,
-  const BehaviorPathPlannerParameters & common_parameters,
-  const double prepare_phase_ignore_target_velocity_thresh, const double front_object_deceleration,
   const double rear_object_deceleration, CollisionCheckDebug & debug);
 
 }  // namespace behavior_path_planner::utils::safety_check
