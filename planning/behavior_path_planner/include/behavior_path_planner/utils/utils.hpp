@@ -106,12 +106,16 @@ struct PolygonPoint
   };
 };
 
-struct target_object_types
+struct ObjectTypesToCheck
 {
-  bool is_vehicle;
-  bool is_pedestrian;
-  bool is_bicycle;
-  bool is_unknown;
+  bool check_car{true};
+  bool check_truck{true};
+  bool check_bus{true};
+  bool check_trailer{true};
+  bool check_unknown{true};
+  bool check_bicycle{true};
+  bool check_motorcycle{true};
+  bool check_pedestrian{true};
 };
 
 struct ObjectLaneConfiguration
@@ -124,11 +128,11 @@ struct ObjectLaneConfiguration
 };
 struct TargetObjectsOnLane
 {
-  std::vector<utils::safety_check::ExtendedPredictedObject> current_lane{};
-  std::vector<utils::safety_check::ExtendedPredictedObject> right_lane{};
-  std::vector<utils::safety_check::ExtendedPredictedObject> left_lane{};
-  std::vector<utils::safety_check::ExtendedPredictedObject> shoulder_lane{};
-  std::vector<utils::safety_check::ExtendedPredictedObject> other_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> on_current_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> on_right_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> on_left_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> on_shoulder_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> on_other_lane{};
 };
 
 struct FrenetPoint
@@ -428,8 +432,8 @@ bool isCentroidWithinLanelets(
   const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets);
 
 ExtendedPredictedObject transform(
-  const PredictedObject & object, const double & safety_check_time_horizon,
-  const double & safety_check_time_resolution);
+  const PredictedObject & object, const double safety_check_time_horizon,
+  const double safety_check_time_resolution);
 
 std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   const std::shared_ptr<const PlannerData> & planner_data,

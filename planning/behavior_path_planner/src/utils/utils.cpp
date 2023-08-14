@@ -3124,8 +3124,8 @@ bool isCentroidWithinLanelets(
 }
 
 ExtendedPredictedObject transform(
-  const PredictedObject & object, const double & safety_check_time_horizon,
-  const double & safety_check_time_resolution)
+  const PredictedObject & object, const double safety_check_time_horizon,
+  const double safety_check_time_resolution)
 {
   ExtendedPredictedObject extended_object;
   extended_object.uuid = object.object_id;
@@ -3134,21 +3134,19 @@ ExtendedPredictedObject transform(
   extended_object.initial_acceleration = object.kinematics.initial_acceleration_with_covariance;
   extended_object.shape = object.shape;
 
-  const auto & obj_velocity = extended_object.initial_twist.twist.linear.x;
-  const auto & time_horizon = safety_check_time_horizon;
-  const auto & time_resolution = safety_check_time_resolution;
+  const auto obj_velocity = extended_object.initial_twist.twist.linear.x;
 
   extended_object.predicted_paths.resize(object.kinematics.predicted_paths.size());
   for (size_t i = 0; i < object.kinematics.predicted_paths.size(); ++i) {
-    const auto & path = object.kinematics.predicted_paths.at(i);
-    extended_object.predicted_paths.at(i).confidence = path.confidence;
+    const auto & path = object.kinematics.predicted_paths[i];
+    extended_object.predicted_paths[i].confidence = path.confidence;
 
-    // create path
-    for (double t = 0.0; t < time_horizon + 1e-3; t += time_resolution) {
+    // Create path based on time horizon and resolution
+    for (double t = 0.0; t < safety_check_time_horizon + 1e-3; t += safety_check_time_resolution) {
       const auto obj_pose = object_recognition_utils::calcInterpolatedPose(path, t);
       if (obj_pose) {
         const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, object.shape);
-        extended_object.predicted_paths.at(i).path.emplace_back(
+        extended_object.predicted_paths[i].path.emplace_back(
           t, *obj_pose, obj_velocity, obj_polygon);
       }
     }
@@ -3159,48 +3157,68 @@ ExtendedPredictedObject transform(
 
 TargetObjectsOnLane createTargetObjectsOnLane(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<const PredictedObjects> & filtered_objects,
+  const PredictedObjects & filtered_objects,
   const ObjectLaneConfiguration & object_lane_configuration)
 {
   const auto & current_lanes = planner_data->current_lanes;
   const auto & route_handler = planner_data->route_handler;
 
   // TODO(Sugahara): add them in parameter
-  const bool & include_opposite = true;
-  const bool & invert_opposite = true;
-  const double & safety_check_time_horizon = 2.0;
-  const double & safety_check_time_resolution = 5.0;
+  const bool include_opposite = true;
+  const bool invert_opposite = true;
+  const double safety_check_time_horizon = 2.0;
+  const double safety_check_time_resolution = 5.0;
+
+  lanelet::ConstLanelets all_left_lanelets;
+  lanelet::ConstLanelets all_right_lanelets;
+
+  // Define lambda functions to update left and right lanelets
+  const auto update_left_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
+    const auto left_lanelets = route_handler->getAllLeftSharedLinestringLanelets(
+      target_lane, include_opposite, invert_opposite);
+    all_left_lanelets.insert(all_left_lanelets.end(), left_lanelets.begin(), left_lanelets.end());
+  };
+
+  const auto update_right_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
+    const auto right_lanelets = route_handler->getAllRightSharedLinestringLanelets(
+      target_lane, include_opposite, invert_opposite);
+    all_right_lanelets.insert(
+      all_right_lanelets.end(), right_lanelets.begin(), right_lanelets.end());
+  };
+
+  // Update left and right lanelets for each current lane
+  for (const auto & current_lane : current_lanes) {
+    update_left_lanelets(current_lane);
+    update_right_lanelets(current_lane);
+  }
 
   TargetObjectsOnLane target_objects_on_lane{};
-
   const auto append_objects_on_lane = [&](auto & lane_objects, const auto & check_lanes) {
-    std::for_each(filtered_objects->begin(), filtered_objects->end(), [&](const auto & object) {
-      if (isCentroidWithinLanelets(object.object, check_lanes)) {
-        lane_objects.push_back(
-          transform(object.object, safety_check_time_horizon, safety_check_time_resolution));
-      }
-    });
+    std::for_each(
+      filtered_objects.objects.begin(), filtered_objects.objects.end(), [&](const auto & object) {
+        if (isCentroidWithinLanelets(object, check_lanes)) {
+          lane_objects.push_back(
+            transform(object, safety_check_time_horizon, safety_check_time_resolution));
+        }
+      });
   };
 
   // TODO(Sugahara): Consider shoulder and other lane objects
   if (object_lane_configuration.check_current_lane) {
-    append_objects_on_lane(target_objects_on_lane.current_lane, current_lanes);
+    append_objects_on_lane(target_objects_on_lane.on_current_lane, current_lanes);
   }
   if (object_lane_configuration.check_left_lane) {
-    const auto & left_lanes = route_handler->getAllLeftSharedLinestringLanelets(
-      current_lanes, include_opposite, invert_opposite);
-    append_objects_on_lane(target_objects_on_lane.left_lanes, left_lanes);
+    append_objects_on_lane(target_objects_on_lane.on_left_lane, all_left_lanelets);
   }
   if (object_lane_configuration.check_right_lane) {
-    const auto & right_lanes = route_handler->getAllRightSharedLinestringLanelets(
-      current_lanes, include_opposite, invert_opposite);
-    append_objects_on_lane(target_objects_on_lane.right_lanes, right_lanes);
+    append_objects_on_lane(target_objects_on_lane.on_right_lane, all_right_lanelets);
   }
 
   return target_objects_on_lane;
 }
 
-bool isTargetObjectType(const PredictedObject & object, const bool & target_object_types)
+bool isTargetObjectType(
+  const PredictedObject & object, const ObjectTypesToCheck & target_object_types)
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   const auto t = utils::getHighestProbLabel(object.classification);
@@ -3216,43 +3234,41 @@ bool isTargetObjectType(const PredictedObject & object, const bool & target_obje
   return is_object_type;
 }
 
-PredictedObjects filterObject(
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const ObjectLaneCheckConfiguration & check_lane_type)
+PredictedObjects filterObject(const std::shared_ptr<const PlannerData> & planner_data)
 {
-  const auto & objects = planner_data->dynamic_objects;
+  const auto & objects = planner_data->dynamic_object;
+
   // Guard
-  if (dynamic_objects.objects.empty()) {
-    return {};
+  if (objects->objects.empty()) {
+    return PredictedObjects();
   }
 
   const auto & route_handler = planner_data->route_handler;
   const auto & current_lanes = planner_data->current_lanes;
-  const auto & objects = planner_data->dynamic_object;
+  const auto & current_pose = planner_data->self_odometry->pose.pose;
 
   // TODO(Sugahara): add in parameter
   const double ignore_object_velocity_threshold = 1.0;
+  const ObjectTypesToCheck & target_object_types{};
 
   // Get path
   const auto path =
-    route_handler.getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+    route_handler->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
 
-  PredictedObjects & filtered_objects;
-  for (size_t i = 0; i < objects.objects.size(); ++i) {
-    const auto & object = objects.objects.at(i);
+  PredictedObjects filtered_objects;
+  for (const auto & object : objects->objects) {
     const auto & obj_velocity = object.kinematics.initial_twist_with_covariance.twist.linear.x;
 
-    // ignore specific object types
+    // Check if the object is of a target type
     if (!isTargetObjectType(object, target_object_types)) {
       continue;
     }
 
-    // create current position's polygon
+    // Create current position's polygon
     const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
 
-    // if negative, the object is behind of the ego
+    // Calculate distance from the current ego position
     double max_dist_ego_to_obj = std::numeric_limits<double>::lowest();
-    // calc distance from the current ego position
     for (const auto & polygon_p : obj_polygon.outer()) {
       const auto obj_p = tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
       const double dist_ego_to_obj =
@@ -3267,7 +3283,7 @@ PredictedObjects filterObject(
     filtered_objects.objects.push_back(object);
   }
 
-  return filtered_obj_indices;
+  return filtered_objects;
 }
 
 TargetObjectsOnLane getSafetyCheckTargetObjects(
@@ -3286,14 +3302,15 @@ TargetObjectsOnLane getSafetyCheckTargetObjects(
   // const double & object_check_forward_distance = 2.0;
   // const double & safety_check_backward_distance = 5.0;
 
-  const ObjectLaneCheckConfiguration & check_lane_type{};
+  // const ObjectTypesToCheck & check_lane_type{};
+  const ObjectLaneConfiguration & object_lane_configuration{};
 
   // filter objects with velocity, position and type
-  const auto & filtered_objects = filterObject(planner_data, check_lane_type);
+  const auto & filtered_objects = filterObject(planner_data);
 
   TargetObjectsOnLane target_objects_on_lane{};
   target_objects_on_lane =
-    createTargetObjectsOnLane(planner_data, filtered_objects, check_lane_type);
+    createTargetObjectsOnLane(planner_data, filtered_objects, object_lane_configuration);
 
   return target_objects_on_lane;
 }
