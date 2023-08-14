@@ -1091,23 +1091,42 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
     return {};
   }
 
-  LaneletsData closest_lanelets;
+  LaneletsData object_lanelets;
+  std::optional<std::pair<double, lanelet::Lanelet>> closest_lanelet{std::nullopt};
   for (const auto & lanelet : surrounding_lanelets) {
     // Check if the close lanelets meet the necessary condition for start lanelets and
-    // Check if similar lanelet is inside the closest lanelet
+    // Check if similar lanelet is inside the object lanelet
     if (
       !checkCloseLaneletCondition(lanelet, object, search_point) ||
-      isDuplicated(lanelet, closest_lanelets)) {
+      isDuplicated(lanelet, object_lanelets)) {
       continue;
     }
 
-    LaneletData closest_lanelet;
-    closest_lanelet.lanelet = lanelet.second;
-    closest_lanelet.probability = calculateLocalLikelihood(lanelet.second, object);
-    closest_lanelets.push_back(closest_lanelet);
+    // Memorize closest lanelet
+    // NOTE: The object may be outside the lanelet.
+    if (
+      lanelet.first < dist_threshold_for_searching_lanelet_ &&
+      (!closest_lanelet || lanelet.first < closest_lanelet->first)) {
+      closest_lanelet = lanelet;
+    }
+
+    // Check if the obstacle is inside of this lanelet
+    constexpr double epsilon = 1e-3;
+    if (lanelet.first < epsilon) {
+      const auto object_lanelet =
+        LaneletData{lanelet.second, calculateLocalLikelihood(lanelet.second, object)};
+      object_lanelets.push_back(object_lanelet);
+    }
   }
 
-  return closest_lanelets;
+  if (!object_lanelets.empty()) {
+    return object_lanelets;
+  }
+  if (closest_lanelet) {
+    return LaneletsData{LaneletData{
+      closest_lanelet->second, calculateLocalLikelihood(closest_lanelet->second, object)}};
+  }
+  return LaneletsData{};
 }
 
 bool MapBasedPredictionNode::checkCloseLaneletCondition(
@@ -1116,11 +1135,6 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
 {
   // Step1. If we only have one point in the centerline, we will ignore the lanelet
   if (lanelet.second.centerline().size() <= 1) {
-    return false;
-  }
-
-  // Step2. Check if the obstacle is inside of this lanelet
-  if (!lanelet::geometry::inside(lanelet.second, search_point)) {
     return false;
   }
 
@@ -1139,7 +1153,7 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
     }
   }
 
-  // Step3. Calculate the angle difference between the lane angle and obstacle angle
+  // Step2. Calculate the angle difference between the lane angle and obstacle angle
   const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
   const double lane_yaw = lanelet::utils::getLaneletAngle(
     lanelet.second, object.kinematics.pose_with_covariance.pose.position);
@@ -1147,7 +1161,7 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
   const double normalized_delta_yaw = tier4_autoware_utils::normalizeRadian(delta_yaw);
   const double abs_norm_delta = std::fabs(normalized_delta_yaw);
 
-  // Step4. Check if the closest lanelet is valid, and add all
+  // Step3. Check if the closest lanelet is valid, and add all
   // of the lanelets that are below max_dist and max_delta_yaw
   const double object_vel = object.kinematics.twist_with_covariance.twist.linear.x;
   const bool is_yaw_reversed =
