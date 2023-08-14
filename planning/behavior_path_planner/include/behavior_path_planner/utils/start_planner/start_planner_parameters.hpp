@@ -38,6 +38,7 @@ struct StartPlannerParameters
   bool enable_shift_pull_out;
   bool check_shift_path_lane_departure;
   double minimum_shift_pull_out_distance;
+  double shift_pull_out_velocity;
   int lateral_acceleration_sampling_num;
   double lateral_jerk;
   double maximum_lateral_acc;
@@ -62,6 +63,7 @@ struct StartPlannerParameters
   double acceleration_to_target_velocity;  // acceleration to target velocity which is used to
                                            // create ego's predicted path
   double prediction_time_resolution;       // resolution of predicted path
+  bool enable_safety_check;                // flag to enable safety check
 };
 
 }  // namespace behavior_path_planner

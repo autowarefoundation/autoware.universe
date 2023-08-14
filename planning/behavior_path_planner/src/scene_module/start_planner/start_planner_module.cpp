@@ -145,7 +145,7 @@ bool StartPlannerModule::isExecutionReady() const
   }
 
   if (status_.is_safe) {
-    return isSafeConsideringDynamicObjects();
+    return isSafePath();
   }
   return true;
 }
@@ -900,8 +900,12 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   return turn_signal;
 }
 
-bool StartPlannerModule::isSafeConsideringDynamicObjects() const
+bool StartPlannerModule::isSafePath() const
 {
+  if (!parameters_->enable_safety_check) {
+    return true;  // if safety check is disabled, it always return safe.
+  }
+
   // TODO(Sugahara): should safety check for backward path later
   const auto & pull_out_path = status_.pull_out_path.partial_paths.back();
   const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
@@ -923,7 +927,8 @@ bool StartPlannerModule::isSafeConsideringDynamicObjects() const
     parameters_->acceleration_to_target_velocity, current_pose,
     parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
 
-  const auto safety_checke_target_objects = getSafetyCheckTargetObjects(current_velocity, target_velocity);
+  // const auto safety_check_target_objects =
+  //   behavior_path_planner::utils::getSafetyCheckTargetObjects(planner_data_,);
 
   // return utils::safety_check::isSafeInLaneletCollisionCheck(
   //   pull_out_path, interpolated_ego, current_twist, check_durations,
@@ -931,6 +936,8 @@ bool StartPlannerModule::isSafeConsideringDynamicObjects() const
   //   lane_change_parameter.prepare_segment_ignore_object_velocity_thresh, front_decel, rear_decel,
   //   current_debug_data.second);
   return true;
+}
+
 bool StartPlannerModule::IsGoalBehindOfEgoInSameRouteSegment() const
 {
   const auto & rh = planner_data_->route_handler;

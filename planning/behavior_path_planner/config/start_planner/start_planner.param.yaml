@@ -36,6 +36,7 @@
       stop_time_before_departure: 1.0 # stop time before departure which is used to create ego's predicted path
       acceleration_to_target_velocity: 1.0 # acceleration to target velocity which is used to create ego's predicted path
       prediction_time_resolution: 0.5 # resolution of predicted path
+      shift_pull_out_velocity: 1.0 # velocity of shift pull out
       # turns signal
       th_turn_signal_on_lateral_offset: 1.0
       intersection_search_length: 30.0

@@ -3065,6 +3065,237 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
 
   return obj.predicted_paths;
 }
+lanelet::ConstLanelets getAdjacentLane(
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const double & object_check_forward_distance, const double & safety_check_backward_distance)
+{
+  const auto & rh = planner_data->route_handler;
+  const auto & vehicle_pose = planner_data->self_odometry->pose.pose;
+
+  lanelet::ConstLanelet current_lane;
+  if (!rh->getClosestLaneletWithinRoute(vehicle_pose, &current_lane)) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
+      "failed to find closest lanelet within route!!!");
+    return {};
+  }
+
+  const auto ego_succeeding_lanes = rh->getLaneletSequence(
+    current_lane, vehicle_pose, object_check_forward_distance, safety_check_backward_distance);
+
+  lanelet::ConstLanelets lanes{};
+  for (const auto & lane : ego_succeeding_lanes) {
+    const auto opt_left_lane = rh->getLeftLanelet(lane);
+    if (!is_shifting_to_right && opt_left_lane) {
+      lanes.push_back(opt_left_lane.get());
+    }
+
+    const auto opt_right_lane = rh->getRightLanelet(lane);
+    if (is_shifting_to_right && opt_right_lane) {
+      lanes.push_back(opt_right_lane.get());
+    }
+
+    const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
+    if (is_shifting_to_right && !right_opposite_lanes.empty()) {
+      lanes.push_back(right_opposite_lanes.front());
+    }
+  }
+
+  return lanes;
+}
+
+bool isCentroidWithinLanelets(
+  const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets)
+{
+  if (target_lanelets.empty()) {
+    return false;
+  }
+
+  const auto & object_pos = object.kinematics.initial_pose_with_covariance.pose.position;
+  lanelet::BasicPoint2d object_centroid(object_pos.x, object_pos.y);
+
+  for (const auto & llt : target_lanelets) {
+    if (boost::geometry::within(object_centroid, llt.polygon2d().basicPolygon())) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+ExtendedPredictedObject transform(
+  const PredictedObject & object, const double & safety_check_time_horizon,
+  const double & safety_check_time_resolution)
+{
+  ExtendedPredictedObject extended_object;
+  extended_object.uuid = object.object_id;
+  extended_object.initial_pose = object.kinematics.initial_pose_with_covariance;
+  extended_object.initial_twist = object.kinematics.initial_twist_with_covariance;
+  extended_object.initial_acceleration = object.kinematics.initial_acceleration_with_covariance;
+  extended_object.shape = object.shape;
+
+  const auto & obj_velocity = extended_object.initial_twist.twist.linear.x;
+  const auto & time_horizon = safety_check_time_horizon;
+  const auto & time_resolution = safety_check_time_resolution;
+
+  extended_object.predicted_paths.resize(object.kinematics.predicted_paths.size());
+  for (size_t i = 0; i < object.kinematics.predicted_paths.size(); ++i) {
+    const auto & path = object.kinematics.predicted_paths.at(i);
+    extended_object.predicted_paths.at(i).confidence = path.confidence;
+
+    // create path
+    for (double t = 0.0; t < time_horizon + 1e-3; t += time_resolution) {
+      const auto obj_pose = object_recognition_utils::calcInterpolatedPose(path, t);
+      if (obj_pose) {
+        const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, object.shape);
+        extended_object.predicted_paths.at(i).path.emplace_back(
+          t, *obj_pose, obj_velocity, obj_polygon);
+      }
+    }
+  }
+
+  return extended_object;
+}
+
+TargetObjectsOnLane createTargetObjectsOnLane(
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const ObjectLaneConfiguration & object_lane_configuration)
+{
+  TargetObjectsOnLane target_objects_on_lane{};
+  const auto & current_lanes = planner_data->current_lanes;
+  const auto & route_handler = planner_data->route_handler;
+  const auto & objects = planner_data->dynamic_objects;
+
+  // TODO(Sugahara): add them in parameter
+  const bool & include_opposite = true;
+  const bool & invert_opposite = true;
+  const double & safety_check_time_horizon = 2.0;
+  const double & safety_check_time_resolution = 5.0;
+
+  const auto append_target_objects = [&](const auto & check_lanes, const auto & objects) {
+    std::for_each(objects.begin(), objects.end(), [&](const auto & object) {
+      if (isCentroidWithinLanelets(object.object, check_lanes)) {
+        target_objects.push_back(
+          transform(object.object, safety_check_time_horizon, safety_check_time_resolution));
+      }
+    });
+  };
+
+  // TODO(Sugahara): Consider shoulder and other lane objects
+  if (object_lane_configuration.check_current_lane) {
+    append_target_objects(current_lanes, target_objects_on_lane.current_lane);
+  }
+  if (object_lane_configuration.check_left_lane) {
+    const auto & left_lanes = route_handler->getAllLeftSharedLinestringLanelets(
+      current_lanes, include_opposite, invert_opposite);
+    append_target_objects(left_lanes, target_objects_on_lane.right_lane);
+  }
+  if (object_lane_configuration.check_left_lane) {
+    const auto & left_lanes = route_handler->getAllLeftSharedLinestringLanelets(
+      current_lanes, include_opposite, invert_opposite);
+    append_target_objects(left_lanes, target_objects_on_lane.left_lane);
+  }
+
+  return target_objects_on_lane;
+}
+
+bool isTargetObjectType(const PredictedObject & object, const bool & target_object_types)
+{
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  const auto t = utils::getHighestProbLabel(object.classification);
+  const auto is_object_type =
+    ((t == ObjectClassification::CAR && target_object_types.check_car) ||
+     (t == ObjectClassification::TRUCK && target_object_types.check_truck) ||
+     (t == ObjectClassification::BUS && target_object_types.check_bus) ||
+     (t == ObjectClassification::TRAILER && target_object_types.check_trailer) ||
+     (t == ObjectClassification::UNKNOWN && target_object_types.check_unknown) ||
+     (t == ObjectClassification::BICYCLE && target_object_types.check_bicycle) ||
+     (t == ObjectClassification::MOTORCYCLE && target_object_types.check_motorcycle) ||
+     (t == ObjectClassification::PEDESTRIAN && target_object_types.check_pedestrian));
+  return is_object_type;
+}
+
+PredictedObjects filterObject(
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<const PredictedObjects> & dynamic_objects,
+  const ObjectLaneCheckConfiguration & check_lane_type)
+{
+  const auto & objects = planner_data->dynamic_objects;
+  // Guard
+  if (dynamic_objects.objects.empty()) {
+    return {};
+  }
+
+  const auto & route_handler = planner_data->route_handler;
+  const auto & current_lanes = planner_data->current_lanes;
+  const auto & objects = planner_data->dynamic_object;
+
+  // TODO(Sugahara): add in parameter
+  const double ignore_object_velocity_threshold = 1.0;
+
+  // Get path
+  const auto path =
+    route_handler.getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+
+  PredictedObjects & filtered_objects;
+  for (size_t i = 0; i < objects.objects.size(); ++i) {
+    const auto & object = objects.objects.at(i);
+    const auto & obj_velocity = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+
+    // ignore specific object types
+    if (!isTargetObjectType(object, target_object_types)) {
+      continue;
+    }
+
+    // create current position's polygon
+    const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
+
+    // if negative, the object is behind of the ego
+    double max_dist_ego_to_obj = std::numeric_limits<double>::lowest();
+    // calc distance from the current ego position
+    for (const auto & polygon_p : obj_polygon.outer()) {
+      const auto obj_p = tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
+      const double dist_ego_to_obj =
+        motion_utils::calcSignedArcLength(path.points, current_pose.position, obj_p);
+      max_dist_ego_to_obj = std::max(dist_ego_to_obj, max_dist_ego_to_obj);
+    }
+
+    // ignore static object that are behind the ego vehicle
+    if (obj_velocity < ignore_object_velocity_threshold && max_dist_ego_to_obj < 0.0) {
+      continue;
+    }
+    filtered_objects.objects.push_back(object);
+  }
+
+  return filtered_obj_indices;
+}
+
+TargetObjectsOnLane getSafetyCheckTargetObjects(
+  const std::shared_ptr<const PlannerData> & planner_data)
+{
+  // params needs to be added
+  //  - safety_check_time_horizon
+  //  - safety_check_time_resolution
+  //  - object_check_forward_distance
+  //  - safety_check_backward_distance
+  //  - check_lane_type
+
+  // const double & safety_check_time_horizon = 2.0;
+  // const double & safety_check_time_resolution = 5.0;
+
+  // const double & object_check_forward_distance = 2.0;
+  // const double & safety_check_backward_distance = 5.0;
+
+  const ObjectLaneCheckConfiguration & check_lane_type{};
+
+  // filter objects with velocity, position and type
+  const auto & fileterd_objects = filterObject(planner_data, check_lane_type);
+
+  TargetObjectsOnLane target_objects_on_lane{};
+  target_objects_on_lane = createTargetObjectsOnLane(planner_data, check_lane_type);
+
+  return target_objects_on_lane;
+}
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold)
 {

@@ -36,7 +36,6 @@ namespace behavior_path_planner::start_planner_utils
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using behavior_path_planner::utils::safety_check::ExtendedPredictedObject;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using route_handler::RouteHandler;
@@ -49,9 +48,6 @@ lanelet::ConstLanelets getPullOutLanes(
   const std::shared_ptr<const PlannerData> & planner_data, const double backward_length);
 Pose getBackedPose(
   const Pose & current_pose, const double & yaw_shoulder_lane, const double & back_distance);
-std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
-  const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_shifting_to_right = true);
 }  // namespace behavior_path_planner::start_planner_utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__UTIL_HPP_

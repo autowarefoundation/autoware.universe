@@ -106,6 +106,31 @@ struct PolygonPoint
   };
 };
 
+struct target_object_types
+{
+  bool is_vehicle;
+  bool is_pedestrian;
+  bool is_bicycle;
+  bool is_unknown;
+};
+
+struct ObjectLaneConfiguration
+{
+  bool check_current_lane{};
+  bool check_right_lane{};
+  bool check_left_lane{};
+  bool check_shoulder_lane{};
+  bool check_other_lane{};
+};
+struct TargetObjectsOnLane
+{
+  std::vector<utils::safety_check::ExtendedPredictedObject> current_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> right_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> left_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> shoulder_lane{};
+  std::vector<utils::safety_check::ExtendedPredictedObject> other_lane{};
+};
+
 struct FrenetPoint
 {
   double length{0.0};    // longitudinal
@@ -393,6 +418,23 @@ lanelet::ConstLanelets calcLaneAroundPose(
 
 std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
   const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
+
+lanelet::ConstLanelets getAdjacentLane(
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const double & object_check_forward_distance, const double & safety_check_backward_distance,
+  const bool is_shifting_to_right);
+
+bool isCentroidWithinLanelets(
+  const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets);
+
+ExtendedPredictedObject transform(
+  const PredictedObject & object, const double & safety_check_time_horizon,
+  const double & safety_check_time_resolution);
+
+std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<const PredictedObjects> & dynamic_objects,
+  const bool is_shifting_to_right = true);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 

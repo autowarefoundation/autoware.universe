@@ -153,7 +153,7 @@ private:
   void checkBackFinished();
   bool isStopped();
   bool hasFinishedCurrentPath();
-  bool isSafeConsideringDynamicObjects() const;
+  bool isSafePath() const;
 
   // check if the goal is located behind the ego in the same route segment.
   bool IsGoalBehindOfEgoInSameRouteSegment() const;
