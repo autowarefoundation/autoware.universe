@@ -643,7 +643,7 @@ MPCMatrix MPC::generateMPCMatrix(
     }
 
     // W0_eq
-    m.W0_eq.block(idx_x_i, 0, DIM_X, 1) = -Wd;
+    m.W0_eq.block(idx_x_i, 0, DIM_X, 1) = Wd;
 
     m.Qex.block(idx_x_i, idx_x_i, DIM_X, DIM_X) = Q_adaptive;
 #endif
@@ -758,10 +758,10 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
   };
 
   // lb < [x; u] < ub
-  VectorXd lb = VectorXd::Zero(N_DIM_Z);
-  VectorXd ub = VectorXd::Zero(N_DIM_Z);
-  lb.segment(N_DIM_X, DIM_U_N) = VectorXd::Constant(DIM_U_N, -m_steer_lim);  // min steering angle
-  ub.segment(N_DIM_X, DIM_U_N) = VectorXd::Constant(DIM_U_N, m_steer_lim);   // max steering angle
+  // VectorXd lb = VectorXd::Zero(N_DIM_Z);
+  // VectorXd ub = VectorXd::Zero(N_DIM_Z);
+  // lb.segment(N_DIM_X, DIM_U_N) = VectorXd::Constant(DIM_U_N, -m_steer_lim);  // min steering angle
+  // ub.segment(N_DIM_X, DIM_U_N) = VectorXd::Constant(DIM_U_N, m_steer_lim);   // max steering angle
 
   //  lbA < Az * [x; u] < ubA
   // --------------------------
@@ -776,20 +776,24 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
     const double adaptive_steer_rate_lim =
       get_adaptive_steer_rate_lim(traj.smooth_k.at(i), traj.vx.at(i));
     const double adaptive_delta_steer_lim = adaptive_steer_rate_lim * prediction_dt;
-    std::cerr << "i = " << i <<  ", adaptive_steer_rate_lim = " << adaptive_steer_rate_lim << ", prediction_dt = " << prediction_dt << std::endl;
+    // std::cerr << "i = " << i <<  ", adaptive_steer_rate_lim = " << adaptive_steer_rate_lim << ", prediction_dt = " << prediction_dt << std::endl;
     lbA_u(i) = -adaptive_delta_steer_lim;
     ubA_u(i) = adaptive_delta_steer_lim;
   }
-PRINT_MAT(lbA_u);
+// PRINT_MAT(lbA_u.transpose());
+// PRINT_MAT(ubA_u.transpose());
   const double adaptive_steer_rate_lim =
     get_adaptive_steer_rate_lim(traj.smooth_k.at(0), traj.vx.at(0));
   lbA_u(0) = m_raw_steer_cmd_prev - adaptive_steer_rate_lim * m_ctrl_period;
-  lbA_u(0) = m_raw_steer_cmd_prev + adaptive_steer_rate_lim * m_ctrl_period;
-PRINT_MAT(lbA_u);
+  ubA_u(0) = m_raw_steer_cmd_prev + adaptive_steer_rate_lim * m_ctrl_period;
+  // std::cerr << "m_raw_steer_cmd_prev = " << m_raw_steer_cmd_prev << ", adaptive_steer_rate_lim = " << adaptive_steer_rate_lim  << ", m_ctrl_period = " << m_ctrl_period << std::endl;
+// PRINT_MAT(lbA_u.transpose());
+// PRINT_MAT(ubA_u.transpose());
 
-  MAT_SIZE(m.E0_eq);
-  VEC_SIZE(x0);
+  // MAT_SIZE(m.E0_eq);
+  // VEC_SIZE(x0);
 
+#if 0
   MatrixXd Az = MatrixXd::Zero(m.G0_eq.rows() + A.rows(), N_DIM_Z);
   MAT_SIZE(Az);
   Az.block(0, 0, m.G0_eq.rows(), m.G0_eq.cols()) = m.G0_eq;
@@ -808,27 +812,55 @@ PRINT_MAT(lbA_u);
   VectorXd ubA(eq_size);
   ubA.segment(0, E0_eq_x0_w.size()) = E0_eq_x0_w;
   ubA.segment(E0_eq_x0_w.size(), lbA_u.size()) = ubA_u;
+#else
+  const VectorXd E0_eq_x0_w = m.E0_eq * x0 + m.W0_eq;
+  // VEC_SIZE(E0_eq_x0_w);
 
-  VEC_SIZE(lbA_u);
-  VEC_SIZE(lbA_u);
-  VEC_SIZE(lbA);
-  VEC_SIZE(ubA);
+  const size_t eq_size = E0_eq_x0_w.size() + DIM_U_N + DIM_U_N;
+  VectorXd lbA(eq_size);
+  VectorXd ubA(eq_size);
+  MatrixXd Az = MatrixXd::Zero(eq_size, N_DIM_Z);
+  // MAT_SIZE(Az);
+
+  // state equation constraint: x = Ax + Bu + w
+  Az.block(0, 0, m.G0_eq.rows(), m.G0_eq.cols()) = m.G0_eq;
+  lbA.segment(0, E0_eq_x0_w.size()) = E0_eq_x0_w;
+  ubA.segment(0, E0_eq_x0_w.size()) = E0_eq_x0_w;
+
+  // steer limit
+  Az.block(m.G0_eq.rows(), N_DIM_X, DIM_U_N, DIM_U_N) = Eigen::MatrixXd::Identity(DIM_U_N, DIM_U_N);
+  lbA.segment(E0_eq_x0_w.size(), DIM_U_N) = VectorXd::Constant(DIM_U_N, -m_steer_lim);
+  ubA.segment(E0_eq_x0_w.size(), DIM_U_N) = VectorXd::Constant(DIM_U_N, m_steer_lim);
+
+  // steer rate limit
+  Az.block(m.G0_eq.rows() + DIM_U_N, N_DIM_X, DIM_U_N, DIM_U_N) = A;
+  lbA.segment(E0_eq_x0_w.size() + DIM_U_N, DIM_U_N) = lbA_u;
+  ubA.segment(E0_eq_x0_w.size() + DIM_U_N, DIM_U_N) = ubA_u;
 
 
-PRINT_MAT(H);
-PRINT_MAT(q_T);
-PRINT_MAT(Az);
-PRINT_MAT(lb);
-PRINT_MAT(ub);
-PRINT_MAT(lbA);
-PRINT_MAT(ubA);
-PRINT_MAT(m.G0_eq);
-PRINT_MAT(m.E0_eq);
-PRINT_MAT(m.W0_eq);
+#endif
+
+  // VEC_SIZE(lbA_u);
+  // VEC_SIZE(ubA_u);
+  // VEC_SIZE(lbA);
+  // VEC_SIZE(ubA);
+
+
+  // PRINT_MAT(H);
+  // PRINT_MAT(q_T);
+  // PRINT_MAT(Az);
+  // PRINT_MAT(lbA.transpose());
+  // PRINT_MAT(ubA.transpose());
+  // PRINT_MAT(m.G0_eq);
+  // PRINT_MAT(m.E0_eq);
+  // PRINT_MAT(m.W0_eq);
 
   auto t_start = std::chrono::system_clock::now();
   VectorXd z;  // [x', u']
-  bool solve_result = m_qpsolver_ptr->solve(H, q_T, Az, lb, ub, lbA, ubA, z);
+  // const VectorXd zero_v = Eigen::VectorXd(0);
+  // VEC_SIZE(zero_v);
+  // bool solve_result = m_qpsolver_ptr->solve(H, q_T, Az, zero_v, zero_v, lbA, ubA, z);
+  bool solve_result = m_qpsolver_ptr->solve(H, q_T, Az, lbA, ubA, z);
   auto t_end = std::chrono::system_clock::now();
   if (!solve_result) {
     warn_throttle("qp solver error");
@@ -836,8 +868,15 @@ PRINT_MAT(m.W0_eq);
   }
 
   {
-    auto t = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count();
-    RCLCPP_DEBUG(m_logger, "qp solver calculation time = %ld [ms]", t);
+    auto t = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
+    const auto t_ms = t * 1.0e-3;
+    RCLCPP_INFO(m_logger, "qp solver calculation time = %f [ms]", t_ms);
+    static rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub =
+      node_->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("mpc_optimization_time", 1);
+    tier4_debug_msgs::msg::Float64Stamped time_msg;
+    time_msg.stamp = node_->now();
+    time_msg.data = t_ms;
+    pub->publish(time_msg);
   }
 
   if (z.array().isNaN().any()) {
@@ -846,6 +885,7 @@ PRINT_MAT(m.W0_eq);
   }
 
   const VectorXd U_opt = z.segment(N_DIM_X, DIM_U_N);
+// PRINT_MAT(U_opt);
   return {true, U_opt};
 }
 
@@ -915,7 +955,7 @@ std::pair<bool, VectorXd> MPC::executeOptimizationOld(
   H.triangularView<Eigen::Upper>() += m.R1ex + m.R2ex;
   H.triangularView<Eigen::Lower>() = H.transpose();
   MatrixXd f = (m.Cex * (m.Aex * x0 + m.Wex)).transpose() * QCB - m.Uref_ex.transpose() * m.R1ex;
-  addSteerWeightF(prediction_dt, f);
+  // addSteerWeightF(prediction_dt, f);
 
   MatrixXd A = MatrixXd::Identity(DIM_U_N, DIM_U_N);
   for (int i = 1; i < DIM_U_N; i++) {
@@ -973,8 +1013,15 @@ std::pair<bool, VectorXd> MPC::executeOptimizationOld(
   }
 
   {
-    auto t = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count();
-    RCLCPP_DEBUG(m_logger, "qp solver calculation time = %ld [ms]", t);
+    auto t = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
+    auto t_ms = t * 1.0e-3;
+    RCLCPP_INFO(m_logger, "qp solver calculation time = %f [ms]", t_ms);
+    static rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub =
+      node_->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("mpc_optimization_time", 1);
+    tier4_debug_msgs::msg::Float64Stamped time_msg;
+    time_msg.stamp = node_->now();
+    time_msg.data = t_ms;
+    pub->publish(time_msg);
   }
 
   if (Uex.array().isNaN().any()) {

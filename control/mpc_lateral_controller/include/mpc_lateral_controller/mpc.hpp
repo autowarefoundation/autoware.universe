@@ -202,6 +202,7 @@ struct MPCMatrix
 class MPC
 {
 private:
+  rclcpp::Node * node_;
   rclcpp::Logger m_logger = rclcpp::get_logger("mpc_logger");  // ROS logger used for debug logging.
   rclcpp::Clock::SharedPtr m_clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);  // ROS clock.
 
@@ -427,7 +428,9 @@ public:
   double ego_nearest_yaw_threshold = M_PI_2;  // Threshold for nearest index search based on yaw.
 
   //!< Constructor.
-  MPC() = default;
+  explicit MPC(rclcpp::Node * node) { 
+    node_ = node;
+   };
 
   /**
    * @brief Calculate control command using the MPC algorithm.

@@ -35,8 +35,9 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 
-MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
+MpcLateralController::MpcLateralController(rclcpp::Node * node) : m_mpc(node)
 {
+  node_ = node;
   const auto dp_int = [&](const std::string & s) { return node_->declare_parameter<int>(s); };
   const auto dp_bool = [&](const std::string & s) { return node_->declare_parameter<bool>(s); };
   const auto dp_double = [&](const std::string & s) { return node_->declare_parameter<double>(s); };

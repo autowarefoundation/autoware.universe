@@ -32,28 +32,39 @@ bool QPSolverOSQP::solve(
   const Eigen::Index dim_u = ub.size();
   Eigen::MatrixXd Identity = Eigen::MatrixXd::Identity(dim_u, dim_u);
 
+  Eigen::VectorXd lower_bound = Eigen::VectorXd::Zero(lb.size() + lb_a.size());
+  Eigen::VectorXd upper_bound = Eigen::VectorXd::Zero(lb.size() + lb_a.size());
+
+  lower_bound.segment(0, lb.size()) = lb;
+  lower_bound.segment(lb.size(), lb_a.size()) = lb_a;
+
+  upper_bound.segment(0, ub.size()) = ub;
+  upper_bound.segment(ub.size(), ub_a.size()) = ub_a;
+
+
+  Eigen::MatrixXd osqpA = Eigen::MatrixXd(dim_u + raw_a, col_a);
+  osqpA.block(0, 0, dim_u, col_a) = Identity;
+  osqpA.block(dim_u, 0, raw_a, col_a) = a;
+
+  return solve(h_mat, f_vec, osqpA, lower_bound, upper_bound, u);
+}
+
+bool QPSolverOSQP::solve(
+  const Eigen::MatrixXd & h_mat, const Eigen::MatrixXd & f_vec, const Eigen::MatrixXd & a,
+  const Eigen::VectorXd & lb_a, const Eigen::VectorXd & ub_a, Eigen::VectorXd & u)
+{
   // convert matrix to vector for osqpsolver
   std::vector<double> f(&f_vec(0), f_vec.data() + f_vec.cols() * f_vec.rows());
 
   std::vector<double> lower_bound;
   std::vector<double> upper_bound;
-
-  for (int i = 0; i < lb.size(); ++i) {
-    lower_bound.push_back(lb(i));
-    upper_bound.push_back(ub(i));
-  }
-
   for (int i = 0; i < lb_a.size(); ++i) {
     lower_bound.push_back(lb_a(i));
     upper_bound.push_back(ub_a(i));
   }
 
-  Eigen::MatrixXd osqpA = Eigen::MatrixXd(dim_u + col_a, raw_a);
-  osqpA.block(0, 0, dim_u, raw_a) = Identity;
-  osqpA.block(dim_u, 0, col_a, raw_a) = a;
-
   /* execute optimization */
-  auto result = osqpsolver_.optimize(h_mat, osqpA, f, lower_bound, upper_bound);
+  auto result = osqpsolver_.optimize(h_mat, a, f, lower_bound, upper_bound);
 
   std::vector<double> U_osqp = std::get<0>(result);
   u = Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, 1>>(

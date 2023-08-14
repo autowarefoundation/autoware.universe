@@ -45,6 +45,19 @@ public:
     const Eigen::MatrixXd & h_mat, const Eigen::MatrixXd & f_vec, const Eigen::MatrixXd & a,
     const Eigen::VectorXd & lb, const Eigen::VectorXd & ub, const Eigen::VectorXd & lb_a,
     const Eigen::VectorXd & ub_a, Eigen::VectorXd & u) = 0;
+
+  virtual bool solve(
+    const Eigen::MatrixXd & h_mat, const Eigen::MatrixXd & f_vec, const Eigen::MatrixXd & a,
+    const Eigen::VectorXd & lb_a, const Eigen::VectorXd & ub_a, Eigen::VectorXd & u)
+  {
+    (void)h_mat;
+    (void)f_vec;
+    (void)a;
+    (void)lb_a;
+    (void)ub_a;
+    (void)u;
+    return false;
+  };
 };
 }  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_INTERFACE_HPP_

@@ -52,7 +52,7 @@ using tier4_debug_msgs::msg::Float32Stamped;
 class MpcLateralController : public trajectory_follower::LateralControllerBase
 {
 public:
-  explicit MpcLateralController(rclcpp::Node & node);
+  explicit MpcLateralController(rclcpp::Node * node);
   virtual ~MpcLateralController();
 
 private:
