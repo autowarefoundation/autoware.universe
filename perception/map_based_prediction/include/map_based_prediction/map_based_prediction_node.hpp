@@ -147,7 +147,6 @@ private:
   double prediction_sampling_time_interval_;
   double min_velocity_for_map_based_prediction_;
   double min_crosswalk_user_velocity_;
-  double max_lane_user_lateral_accel_;
   double debug_accumulated_time_;
   double dist_threshold_for_searching_lanelet_;
   double delta_yaw_threshold_for_searching_lanelet_;
@@ -155,6 +154,8 @@ private:
   double sigma_yaw_angle_deg_;
   double object_buffer_time_length_;
   double history_time_length_;
+  std::string on_lane_path_generation_method_;
+  double max_lane_user_lateral_accel_;
   std::string lane_change_detection_method_;
   double dist_threshold_to_bound_;
   double time_threshold_to_bound_;

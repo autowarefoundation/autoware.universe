@@ -25,6 +25,7 @@
 #include <geometry_msgs/msg/twist.hpp>
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -58,7 +59,8 @@ class PathGenerator
 public:
   PathGenerator(
     const double time_horizon, const double sampling_time_interval,
-    const double min_crosswalk_user_velocity, const double max_lane_user_lateral_accel);
+    const double min_crosswalk_user_velocity, const std::string & on_lane_path_generation_method,
+    const double max_lane_user_lateral_accel);
 
   PredictedPath generatePathForNonVehicleObject(const TrackedObject & object);
 
@@ -80,6 +82,7 @@ private:
   double time_horizon_;
   double sampling_time_interval_;
   double min_crosswalk_user_velocity_;
+  std::string on_lane_path_generation_method_;
   double max_lane_user_lateral_accel_;
 
   // Member functions

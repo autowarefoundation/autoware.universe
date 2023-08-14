@@ -24,10 +24,12 @@ namespace map_based_prediction
 {
 PathGenerator::PathGenerator(
   const double time_horizon, const double sampling_time_interval,
-  const double min_crosswalk_user_velocity, const double max_lane_user_lateral_accel)
+  const double min_crosswalk_user_velocity, const std::string & on_lane_path_generation_method,
+  const double max_lane_user_lateral_accel)
 : time_horizon_(time_horizon),
   sampling_time_interval_(sampling_time_interval),
   min_crosswalk_user_velocity_(min_crosswalk_user_velocity),
+  on_lane_path_generation_method_(on_lane_path_generation_method),
   max_lane_user_lateral_accel_(max_lane_user_lateral_accel)
 {
 }
@@ -154,8 +156,12 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
     return generateStraightPath(object);
   }
 
-  // return generateMinimumJerkPolynomialPath(object, ref_paths);
-  return generateConstantAccPolynomialPath(object, ref_paths);
+  if (on_lane_path_generation_method_ == "minimum_jerk") {
+    return generateMinimumJerkPolynomialPath(object, ref_paths);
+  } else if (on_lane_path_generation_method_ == "constant_acc") {
+    return generateConstantAccPolynomialPath(object, ref_paths);
+  }
+  throw std::logic_error("On-lane path generation method is invalid.");
 }
 
 PredictedPath PathGenerator::generateStraightPath(const TrackedObject & object) const

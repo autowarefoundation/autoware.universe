@@ -645,7 +645,6 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   min_velocity_for_map_based_prediction_ =
     declare_parameter("min_velocity_for_map_based_prediction", 1.0);
   min_crosswalk_user_velocity_ = declare_parameter("min_crosswalk_user_velocity", 1.0);
-  max_lane_user_lateral_accel_ = declare_parameter("max_lane_user_lateral_accel", 1.0);
   dist_threshold_for_searching_lanelet_ =
     declare_parameter("dist_threshold_for_searching_lanelet", 3.0);
   delta_yaw_threshold_for_searching_lanelet_ =
@@ -654,6 +653,14 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sigma_yaw_angle_deg_ = declare_parameter("sigma_yaw_angle_deg", 5.0);
   object_buffer_time_length_ = declare_parameter("object_buffer_time_length", 2.0);
   history_time_length_ = declare_parameter("history_time_length", 1.0);
+
+  {  // on lane path generation
+    on_lane_path_generation_method_ =
+      declare_parameter<std::string>("on_lane_path_generation.method");
+    max_lane_user_lateral_accel_ =
+      declare_parameter<double>("on_lane_path_generation.constant_acc.max_lateral_accel");
+  }
+
   {  // lane change detection
     lane_change_detection_method_ = declare_parameter<std::string>("lane_change_detection.method");
 
@@ -689,7 +696,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
 
   path_generator_ = std::make_shared<PathGenerator>(
     prediction_time_horizon_, prediction_sampling_time_interval_, min_crosswalk_user_velocity_,
-    max_lane_user_lateral_accel_);
+    on_lane_path_generation_method_, max_lane_user_lateral_accel_);
 
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "/perception/object_recognition/tracking/objects", 1,
