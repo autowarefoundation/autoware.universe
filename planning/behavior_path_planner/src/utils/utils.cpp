@@ -3065,44 +3065,44 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
 
   return obj.predicted_paths;
 }
-lanelet::ConstLanelets getAdjacentLane(
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const double & object_check_forward_distance, const double & safety_check_backward_distance)
-{
-  const auto & rh = planner_data->route_handler;
-  const auto & vehicle_pose = planner_data->self_odometry->pose.pose;
+// lanelet::ConstLanelets getAdjacentLane(
+//   const std::shared_ptr<const PlannerData> & planner_data,
+//   const double & object_check_forward_distance, const double & safety_check_backward_distance)
+// {
+//   const auto & rh = planner_data->route_handler;
+//   const auto & vehicle_pose = planner_data->self_odometry->pose.pose;
 
-  lanelet::ConstLanelet current_lane;
-  if (!rh->getClosestLaneletWithinRoute(vehicle_pose, &current_lane)) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
-      "failed to find closest lanelet within route!!!");
-    return {};
-  }
+//   lanelet::ConstLanelet current_lane;
+//   if (!rh->getClosestLaneletWithinRoute(vehicle_pose, &current_lane)) {
+//     RCLCPP_ERROR(
+//       rclcpp::get_logger("behavior_path_planner").get_child("utils"),
+//       "failed to find closest lanelet within route!!!");
+//     return {};
+//   }
 
-  const auto ego_succeeding_lanes = rh->getLaneletSequence(
-    current_lane, vehicle_pose, object_check_forward_distance, safety_check_backward_distance);
+//   const auto ego_succeeding_lanes = rh->getLaneletSequence(
+//     current_lane, vehicle_pose, object_check_forward_distance, safety_check_backward_distance);
 
-  lanelet::ConstLanelets lanes{};
-  for (const auto & lane : ego_succeeding_lanes) {
-    const auto opt_left_lane = rh->getLeftLanelet(lane);
-    if (!is_shifting_to_right && opt_left_lane) {
-      lanes.push_back(opt_left_lane.get());
-    }
+//   lanelet::ConstLanelets lanes{};
+//   for (const auto & lane : ego_succeeding_lanes) {
+//     const auto opt_left_lane = rh->getLeftLanelet(lane);
+//     if (!is_shifting_to_right && opt_left_lane) {
+//       lanes.push_back(opt_left_lane.get());
+//     }
 
-    const auto opt_right_lane = rh->getRightLanelet(lane);
-    if (is_shifting_to_right && opt_right_lane) {
-      lanes.push_back(opt_right_lane.get());
-    }
+//     const auto opt_right_lane = rh->getRightLanelet(lane);
+//     if (is_shifting_to_right && opt_right_lane) {
+//       lanes.push_back(opt_right_lane.get());
+//     }
 
-    const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
-    if (is_shifting_to_right && !right_opposite_lanes.empty()) {
-      lanes.push_back(right_opposite_lanes.front());
-    }
-  }
+//     const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
+//     if (is_shifting_to_right && !right_opposite_lanes.empty()) {
+//       lanes.push_back(right_opposite_lanes.front());
+//     }
+//   }
 
-  return lanes;
-}
+//   return lanes;
+// }
 
 bool isCentroidWithinLanelets(
   const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets)
@@ -3159,12 +3159,11 @@ ExtendedPredictedObject transform(
 
 TargetObjectsOnLane createTargetObjectsOnLane(
   const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<const PredictedObjects> & filtered_objects,
   const ObjectLaneConfiguration & object_lane_configuration)
 {
-  TargetObjectsOnLane target_objects_on_lane{};
   const auto & current_lanes = planner_data->current_lanes;
   const auto & route_handler = planner_data->route_handler;
-  const auto & objects = planner_data->dynamic_objects;
 
   // TODO(Sugahara): add them in parameter
   const bool & include_opposite = true;
@@ -3172,10 +3171,12 @@ TargetObjectsOnLane createTargetObjectsOnLane(
   const double & safety_check_time_horizon = 2.0;
   const double & safety_check_time_resolution = 5.0;
 
-  const auto append_target_objects = [&](const auto & check_lanes, const auto & objects) {
-    std::for_each(objects.begin(), objects.end(), [&](const auto & object) {
+  TargetObjectsOnLane target_objects_on_lane{};
+
+  const auto append_objects_on_lane = [&](auto & lane_objects, const auto & check_lanes) {
+    std::for_each(filtered_objects->begin(), filtered_objects->end(), [&](const auto & object) {
       if (isCentroidWithinLanelets(object.object, check_lanes)) {
-        target_objects.push_back(
+        lane_objects.push_back(
           transform(object.object, safety_check_time_horizon, safety_check_time_resolution));
       }
     });
@@ -3183,17 +3184,17 @@ TargetObjectsOnLane createTargetObjectsOnLane(
 
   // TODO(Sugahara): Consider shoulder and other lane objects
   if (object_lane_configuration.check_current_lane) {
-    append_target_objects(current_lanes, target_objects_on_lane.current_lane);
+    append_objects_on_lane(target_objects_on_lane.current_lane, current_lanes);
   }
   if (object_lane_configuration.check_left_lane) {
     const auto & left_lanes = route_handler->getAllLeftSharedLinestringLanelets(
       current_lanes, include_opposite, invert_opposite);
-    append_target_objects(left_lanes, target_objects_on_lane.right_lane);
+    append_objects_on_lane(target_objects_on_lane.left_lanes, left_lanes);
   }
-  if (object_lane_configuration.check_left_lane) {
-    const auto & left_lanes = route_handler->getAllLeftSharedLinestringLanelets(
+  if (object_lane_configuration.check_right_lane) {
+    const auto & right_lanes = route_handler->getAllRightSharedLinestringLanelets(
       current_lanes, include_opposite, invert_opposite);
-    append_target_objects(left_lanes, target_objects_on_lane.left_lane);
+    append_objects_on_lane(target_objects_on_lane.right_lanes, right_lanes);
   }
 
   return target_objects_on_lane;
@@ -3217,7 +3218,6 @@ bool isTargetObjectType(const PredictedObject & object, const bool & target_obje
 
 PredictedObjects filterObject(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<const PredictedObjects> & dynamic_objects,
   const ObjectLaneCheckConfiguration & check_lane_type)
 {
   const auto & objects = planner_data->dynamic_objects;
@@ -3289,10 +3289,11 @@ TargetObjectsOnLane getSafetyCheckTargetObjects(
   const ObjectLaneCheckConfiguration & check_lane_type{};
 
   // filter objects with velocity, position and type
-  const auto & fileterd_objects = filterObject(planner_data, check_lane_type);
+  const auto & filtered_objects = filterObject(planner_data, check_lane_type);
 
   TargetObjectsOnLane target_objects_on_lane{};
-  target_objects_on_lane = createTargetObjectsOnLane(planner_data, check_lane_type);
+  target_objects_on_lane =
+    createTargetObjectsOnLane(planner_data, filtered_objects, check_lane_type);
 
   return target_objects_on_lane;
 }
