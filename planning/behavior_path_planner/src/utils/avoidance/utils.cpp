@@ -725,7 +725,7 @@ void fillObjectStoppableJudge(
   ObjectData & object_data, const ObjectDataArray & registered_objects,
   const double feasible_stop_distance, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  if (!parameters->use_constraints_for_decel) {
+  if (parameters->policy_deceleration == "reliable") {
     object_data.is_stoppable = true;
     return;
   }
@@ -854,6 +854,10 @@ void filterTargetObjects(
   using lanelet::geometry::distance2d;
   using lanelet::geometry::toArcCoordinates;
   using lanelet::utils::to2D;
+
+  if (data.current_lanelets.empty()) {
+    return;
+  }
 
   const auto & rh = planner_data->route_handler;
   const auto & path_points = data.reference_path_rough.points;
