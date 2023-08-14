@@ -435,10 +435,18 @@ ExtendedPredictedObject transform(
   const PredictedObject & object, const double safety_check_time_horizon,
   const double safety_check_time_resolution);
 
-std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
+TargetObjectsOnLane createTargetObjectsOnLane(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<const PredictedObjects> & dynamic_objects,
-  const bool is_shifting_to_right = true);
+  const PredictedObjects & filtered_objects,
+  const ObjectLaneConfiguration & object_lane_configuration);
+
+bool isTargetObjectType(
+  const PredictedObject & object, const ObjectTypesToCheck & target_object_types);
+
+PredictedObjects filterObject(const std::shared_ptr<const PlannerData> & planner_data);
+
+TargetObjectsOnLane getSafetyCheckTargetObjects(
+  const std::shared_ptr<const PlannerData> & planner_data);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 

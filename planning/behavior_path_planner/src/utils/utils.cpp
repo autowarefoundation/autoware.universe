@@ -3065,44 +3065,6 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
 
   return obj.predicted_paths;
 }
-// lanelet::ConstLanelets getAdjacentLane(
-//   const std::shared_ptr<const PlannerData> & planner_data,
-//   const double & object_check_forward_distance, const double & safety_check_backward_distance)
-// {
-//   const auto & rh = planner_data->route_handler;
-//   const auto & vehicle_pose = planner_data->self_odometry->pose.pose;
-
-//   lanelet::ConstLanelet current_lane;
-//   if (!rh->getClosestLaneletWithinRoute(vehicle_pose, &current_lane)) {
-//     RCLCPP_ERROR(
-//       rclcpp::get_logger("behavior_path_planner").get_child("utils"),
-//       "failed to find closest lanelet within route!!!");
-//     return {};
-//   }
-
-//   const auto ego_succeeding_lanes = rh->getLaneletSequence(
-//     current_lane, vehicle_pose, object_check_forward_distance, safety_check_backward_distance);
-
-//   lanelet::ConstLanelets lanes{};
-//   for (const auto & lane : ego_succeeding_lanes) {
-//     const auto opt_left_lane = rh->getLeftLanelet(lane);
-//     if (!is_shifting_to_right && opt_left_lane) {
-//       lanes.push_back(opt_left_lane.get());
-//     }
-
-//     const auto opt_right_lane = rh->getRightLanelet(lane);
-//     if (is_shifting_to_right && opt_right_lane) {
-//       lanes.push_back(opt_right_lane.get());
-//     }
-
-//     const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
-//     if (is_shifting_to_right && !right_opposite_lanes.empty()) {
-//       lanes.push_back(right_opposite_lanes.front());
-//     }
-//   }
-
-//   return lanes;
-// }
 
 bool isCentroidWithinLanelets(
   const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets)

@@ -927,8 +927,8 @@ bool StartPlannerModule::isSafePath() const
     parameters_->acceleration_to_target_velocity, current_pose,
     parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
 
-  // const auto safety_check_target_objects =
-  //   behavior_path_planner::utils::getSafetyCheckTargetObjects(planner_data_,);
+  const auto & safety_check_target_objects =
+    behavior_path_planner::utils::getSafetyCheckTargetObjects(planner_data_);
 
   // return utils::safety_check::isSafeInLaneletCollisionCheck(
   //   pull_out_path, interpolated_ego, current_twist, check_durations,
