@@ -344,8 +344,8 @@ bool LaneDepartureChecker::willCrossRoadBorder(
     if (r_type == "road_border") {
       if (isCrossingWithRoadBorder(
             candidate_lanelet.rightBound2d().basicLineString(), vehicle_footprints)) {
-        std::cerr << "The crossed road_border's line string id: "
-                  << candidate_lanelet.rightBound().id() << std::endl;
+        // std::cerr << "The crossed road_border's line string id: "
+        //           << candidate_lanelet.rightBound().id() << std::endl;
         return true;
       }
     }
@@ -354,8 +354,8 @@ bool LaneDepartureChecker::willCrossRoadBorder(
     if (l_type == "road_border") {
       if (isCrossingWithRoadBorder(
             candidate_lanelet.leftBound2d().basicLineString(), vehicle_footprints)) {
-        std::cerr << "The crossed road_border's line string id: "
-                  << candidate_lanelet.leftBound().id() << std::endl;
+        // std::cerr << "The crossed road_border's line string id: "
+        //           << candidate_lanelet.leftBound().id() << std::endl;
         return true;
       }
     }
