@@ -339,15 +339,23 @@ bool LaneDepartureChecker::willCrossRoadBorder(
   const std::vector<LinearRing2d> & vehicle_footprints)
 {
   for (const auto & candidate_lanelet : candidate_lanelets) {
-    if (candidate_lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "road_border")) {
+    const std::string r_type =
+      candidate_lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
+    if (r_type == "road_border") {
       if (isCrossingWithRoadBorder(
             candidate_lanelet.rightBound2d().basicLineString(), vehicle_footprints)) {
+        std::cerr << "The crossed road_border's line string id: "
+                  << candidate_lanelet.rightBound().id() << std::endl;
         return true;
       }
     }
-    if (candidate_lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "road_border")) {
+    const std::string l_type =
+      candidate_lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
+    if (l_type == "road_border") {
       if (isCrossingWithRoadBorder(
-            candidate_lanelet.rightBound2d().basicLineString(), vehicle_footprints)) {
+            candidate_lanelet.leftBound2d().basicLineString(), vehicle_footprints)) {
+        std::cerr << "The crossed road_border's line string id: "
+                  << candidate_lanelet.leftBound().id() << std::endl;
         return true;
       }
     }
