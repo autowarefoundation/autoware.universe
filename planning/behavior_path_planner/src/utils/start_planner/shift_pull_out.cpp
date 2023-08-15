@@ -150,13 +150,22 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   // generate road lane reference path
   const auto arc_position_start = getArcCoordinates(road_lanes, start_pose);
   const double s_start = std::max(arc_position_start.length - backward_path_length, 0.0);
-  const auto arc_position_goal = getArcCoordinates(road_lanes, goal_pose);
-
-  // if goal is behind start pose, use path with forward_path_length
-  const bool goal_is_behind = arc_position_goal.length < s_start;
-  const double s_forward_length = s_start + forward_path_length;
-  const double s_end =
-    goal_is_behind ? s_forward_length : std::min(arc_position_goal.length, s_forward_length);
+  const auto path_end_info = std::invoke([&]() -> std::pair<double, bool> {
+    const double s_forward_length = s_start + forward_path_length;
+    if (utils::isInLanelets(goal_pose, road_lanes)) {
+      const auto s_goal = getArcCoordinates(road_lanes, goal_pose).length;
+      if (s_goal < s_start) {
+        // goal is behind ego
+        return {s_forward_length, false};
+      } else if (s_goal < s_forward_length) {
+        // path end is goal
+        return {s_goal, true};
+      }
+    }
+    return {s_forward_length, false};
+  });
+  const double s_end = path_end_info.first;
+  const bool path_terminal_is_goal = path_end_info.second;
 
   constexpr double RESAMPLE_INTERVAL = 1.0;
   PathWithLaneId road_lane_reference_path = utils::resamplePathWithSpline(
@@ -276,7 +285,7 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       }
     }
     // if the end point is the goal, set the velocity to 0
-    if (!goal_is_behind) {
+    if (path_terminal_is_goal) {
       shifted_path.path.points.back().point.longitudinal_velocity_mps = 0.0;
     }
 
