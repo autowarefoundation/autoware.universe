@@ -39,29 +39,30 @@ std::vector<PathPointWithLaneId> crop_and_resample(
   const auto base_lon_dist_offset = motion_utils::calcLongitudinalOffsetToSegment(
     points, 0, points[ego_seg_idx].point.pose.position);
   // reuse or update the previous crop point
-  if (planner_data->drivable_area_expansion_prev_crop_point) {
-    const auto prev_crop_point = *planner_data->drivable_area_expansion_prev_crop_point;
-    lon_dist_offset = motion_utils::calcLongitudinalOffsetToSegment(points, 0, prev_crop_point);
-    const auto is_too_far = motion_utils::calcLateralOffset(points, prev_crop_point) > 1.0 ||
-                            std::abs(lon_dist_offset - base_lon_dist_offset) > 10.0;
+  if (planner_data->drivable_area_expansion_prev_crop_pose) {
+    const auto prev_crop_pose = *planner_data->drivable_area_expansion_prev_crop_pose;
+    lon_dist_offset =
+      motion_utils::calcLongitudinalOffsetToSegment(points, 0, prev_crop_pose.position);
+    const auto is_too_far =
+      motion_utils::calcLateralOffset(points, prev_crop_pose.position) > 1.0 ||
+      std::abs(lon_dist_offset - base_lon_dist_offset) > 10.0;
     const auto is_behind = lon_dist_offset < 0.0;
-    if (is_behind || is_too_far) planner_data->drivable_area_expansion_prev_crop_point.reset();
+    if (is_behind || is_too_far) planner_data->drivable_area_expansion_prev_crop_pose.reset();
   }
-  const auto crop_point = planner_data->drivable_area_expansion_prev_crop_point.value_or(
+  const auto crop_pose = planner_data->drivable_area_expansion_prev_crop_pose.value_or(
     motion_utils::calcInterpolatedPose(
-      points, base_lon_dist_offset + resample_interval - lon_dist_offset)
-      .position);
+      points, base_lon_dist_offset + resample_interval - lon_dist_offset));
   // crop
-  const auto crop_seg_idx = motion_utils::findNearestSegmentIndex(points, crop_point);
+  const auto crop_seg_idx = motion_utils::findNearestSegmentIndex(points, crop_pose.position);
   const auto cropped_points = motion_utils::cropPoints(
-    points, crop_point, crop_seg_idx + 1,
+    points, crop_pose.position, crop_seg_idx + 1,
     planner_data->drivable_area_expansion_parameters.max_path_arc_length, 0.0);
-  planner_data->drivable_area_expansion_prev_crop_point = crop_point;
+  planner_data->drivable_area_expansion_prev_crop_pose = crop_pose;
   // resample
   PathWithLaneId cropped_path;
-  if (tier4_autoware_utils::calcDistance2d(crop_point, cropped_points.front()) > 1e-3) {
+  if (tier4_autoware_utils::calcDistance2d(crop_pose, cropped_points.front()) > 1e-3) {
     PathPointWithLaneId crop_path_point;
-    crop_path_point.point.pose.position = crop_point;
+    crop_path_point.point.pose = crop_pose;
     cropped_path.points.push_back(crop_path_point);
   }
   cropped_path.points.insert(
