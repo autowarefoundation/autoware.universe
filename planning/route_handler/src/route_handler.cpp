@@ -173,6 +173,10 @@ bool RouteHandler::isRouteLooped(const RouteSections & route_sections)
 void RouteHandler::setRoute(const LaneletRoute & route_msg)
 {
   if (!isRouteLooped(route_msg.segments)) {
+    // if get not modified route but new route, reset original start pose
+    if (!route_ptr_ || route_ptr_->uuid != route_msg.uuid) {
+      original_start_pose_ = route_msg.start_pose;
+    }
     route_ptr_ = std::make_shared<LaneletRoute>(route_msg);
     is_handler_ready_ = false;
     setLaneletsFromRouteMsg();
@@ -363,7 +367,7 @@ UUID RouteHandler::getRouteUuid() const
 {
   if (!route_ptr_) {
     RCLCPP_WARN(logger_, "[Route Handler] getRouteUuid: Route has not been set yet");
-    UUID();
+    return UUID();
   }
   return route_ptr_->uuid;
 }
@@ -416,6 +420,20 @@ std::vector<lanelet::ConstLanelet> RouteHandler::getLanesAfterGoal(
 lanelet::ConstLanelets RouteHandler::getRouteLanelets() const
 {
   return route_lanelets_;
+}
+
+Pose RouteHandler::getStartPose() const
+{
+  if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getStartPose: Route has not been set yet");
+    Pose();
+  }
+  return route_ptr_->start_pose;
+}
+
+Pose RouteHandler::getOriginalStartPose() const
+{
+  return original_start_pose_;
 }
 
 Pose RouteHandler::getGoalPose() const
@@ -917,6 +935,16 @@ bool RouteHandler::isBijectiveConnection(
 boost::optional<lanelet::ConstLanelet> RouteHandler::getRightLanelet(
   const lanelet::ConstLanelet & lanelet, const bool enable_same_root) const
 {
+  // right road lanelet of shoulder lanelet
+  if (isShoulderLanelet(lanelet)) {
+    for (const auto & road_lanelet : road_lanelets_) {
+      if (lanelet::geometry::rightOf(road_lanelet, lanelet)) {
+        return road_lanelet;
+      }
+    }
+    return boost::none;
+  }
+
   // routable lane
   const auto & right_lane = routing_graph_ptr_->right(lanelet);
   if (right_lane) {
@@ -974,6 +1002,16 @@ bool RouteHandler::getLeftLaneletWithinRoute(
 boost::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
   const lanelet::ConstLanelet & lanelet, const bool enable_same_root) const
 {
+  // left road lanelet of shoulder lanelet
+  if (isShoulderLanelet(lanelet)) {
+    for (const auto & road_lanelet : road_lanelets_) {
+      if (lanelet::geometry::leftOf(road_lanelet, lanelet)) {
+        return road_lanelet;
+      }
+    }
+    return boost::none;
+  }
+
   // routable lane
   const auto & left_lane = routing_graph_ptr_->left(lanelet);
   if (left_lane) {

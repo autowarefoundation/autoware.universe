@@ -83,6 +83,18 @@ struct PUllOverStatus
   bool is_ready{false};
 };
 
+struct FreespacePlannerDebugData
+{
+  bool is_planning{false};
+  size_t current_goal_idx{0};
+  size_t num_goal_candidates{0};
+};
+
+struct GoalPlannerDebugData
+{
+  FreespacePlannerDebugData freespace_planner{};
+};
+
 class GoalPlannerModule : public SceneModuleInterface
 {
 public:
@@ -169,6 +181,9 @@ private:
   rclcpp::TimerBase::SharedPtr freespace_parking_timer_;
   rclcpp::CallbackGroup::SharedPtr freespace_parking_timer_cb_group_;
 
+  // debug
+  mutable GoalPlannerDebugData debug_data_;
+
   // collision check
   void initializeOccupancyGridMap();
   void updateOccupancyGrid();
@@ -194,7 +209,7 @@ private:
     std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer, const double time);
   bool hasFinishedCurrentPath();
   bool hasFinishedGoalPlanner();
-  bool isOnGoal() const;
+  bool isOnModifiedGoal() const;
   double calcModuleRequestLength() const;
   void resetStatus();
   bool needPathUpdate(const double path_update_duration) const;
