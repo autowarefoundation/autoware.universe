@@ -124,17 +124,20 @@ std::pair<double, bool> calcEndArcLength(
   const Pose & goal_pose)
 {
   const double s_forward_length = s_start + forward_path_length;
-  if (utils::isInLanelets(goal_pose, road_lanes)) {
-    const double s_goal = lanelet::utils::getArcCoordinates(road_lanes, goal_pose).length;
-    if (s_goal < s_start) {
-      // goal is behind ego
-      return {s_forward_length, false};
-    } else if (s_goal < s_forward_length) {
-      // path end is goal
-      return {s_goal, true};
-    }
+  // early return if the goal pose is not in the lanelets
+  if (!utils::isInLanelets(goal_pose, road_lanes)) {
+    return {s_forward_length, false};
   }
-  return {s_forward_length, false};
+
+  const double s_goal = lanelet::utils::getArcCoordinates(road_lanes, goal_pose).length;
+
+  // If the goal is behind ego or beyond the forward length, return early
+  if (s_goal < s_start || s_goal >= s_forward_length) {
+    return {s_forward_length, false};
+  }
+
+  // path end is goal ..?
+  return {s_goal, true};
 }
 
 }  // namespace behavior_path_planner::start_planner_utils
