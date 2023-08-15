@@ -191,6 +191,21 @@ This interface for the MRM that pulls over the road shoulder. It has to be stopp
 This is a goal change to pull over, avoid parked vehicles, and so on by a planning component. If the modified goal is outside the calculated route, a reroute is required. This goal modification is executed by checking the local environment and path safety as the vehicle actually approaches the destination. And this modification is allowed for both normal_route and mrm_route.
 The new route generated here is sent to the AD API so that it can also be referenced by the application. Note, however, that the specifications here are subject to change in the future.
 
+#### Rerouting Static Obstacle
+`Rerouting Static Obstacle` is a node under `Mission Planner` that aims to change the planned route of the current already set route by finding an alternative route to the shortest planned one. 
+The `Rerouting Static Obstacle` use-cases can be rerouting for a vehicle that is blocking the road, road construction that blocks some lanes, or any other similar scenarios of dynamic map information.
+
+The way that `Rerouting Static Obstacle` node is working currently is that, when the human driver/operator notices a blockage during the planned route of the mission, s/he points in the map (using a dedicated plugin in rviz) when the blockage is. Then `Rerouting Static Obstacle` searches for alternative routes and if succesffuly found it calls `change_route` API.
+
+The following diagram shows how `Rerouting static obstacle` node works in high level : 
+
+<p align="center">
+  <img src=./media/rerouting-static-obstacle_flowchart.svg />
+</p>
+
+
+Reference implementation for `Rerouting Static Obstacle` node is under `src/rerouting_static_obstacle`
+
 #### Rerouting Limitations
 
 - The safety judgment of rerouting is not guaranteed to the level of trajectory or control. Therefore, the distance to the reroute change must be large for the safety.
