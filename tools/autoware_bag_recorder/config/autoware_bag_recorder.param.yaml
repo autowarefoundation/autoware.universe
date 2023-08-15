@@ -17,4 +17,3 @@
       - /sensing/lidar/left/pointcloud_raw
       - /sensing/lidar/top/pointcloud_raw
       - /sensing/lidar/right/pointcloud_raw
-

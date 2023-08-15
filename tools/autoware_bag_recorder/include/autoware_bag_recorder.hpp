@@ -1,34 +1,34 @@
-#ifndef AUTOWARE_BAG_RECORDER_HPP
-#define AUTOWARE_BAG_RECORDER_HPP
-
-
-#include <iostream>
-#include <memory>
-#include <chrono>
+#ifndef AUTOWARE_BAG_RECORDER_HPP_
+#define AUTOWARE_BAG_RECORDER_HPP_
 
 #include "rclcpp/rclcpp.hpp"
-
-#include <filesystem>
-#include <string>
-#include <vector>
 #include "rosbag2_cpp/converter_options.hpp"
 #include "rosbag2_cpp/reader.hpp"
 #include "rosbag2_cpp/typesupport_helpers.hpp"
+#include "rosbag2_cpp/writer.hpp"
+
+#include <rosbag2_storage/rosbag2_storage/storage_options.hpp>
 
 #include <sys/statfs.h>
 
-#include "rosbag2_cpp/writer.hpp"
-#include <rosbag2_storage/rosbag2_storage/storage_options.hpp>
+#include <chrono>
+#include <filesystem>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
+namespace autoware_bag_recorder
+{
 
-namespace autoware_bag_recorder {
-
-struct TopicInfo{
+struct TopicInfo
+{
   std::string topic_name;
   std::string topic_type;
 };
 
-struct ModuleSection{
+struct ModuleSection
+{
   std::string folder_path;
   std::vector<TopicInfo> topic_info;
   std::unique_ptr<rosbag2_cpp::Writer> bag_writer;
@@ -39,19 +39,19 @@ class AutowareBagRecorderNode : public rclcpp::Node
 {
 public:
   AutowareBagRecorderNode(const std::string & node_name, const rclcpp::NodeOptions & options);
+
 private:
   void run();
 
   std::string get_timestamp();
   rclcpp::QoS get_qos_profile_of_topic(const std::string & topic_name);
   void search_topic(ModuleSection & section);
-  void create_bag_file(std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string &bag_path);
+  void create_bag_file(std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
   void add_topics_to_writer(
-      std::unique_ptr<rosbag2_cpp::Writer> & writer_, std::string topic_name, std::string topic_type);
+    std::unique_ptr<rosbag2_cpp::Writer> & writer_, std::string topic_name, std::string topic_type);
   void generic_subscription_callback(
-      const std::shared_ptr<rclcpp::SerializedMessage const> msg,
-      const std::string& topic_name, rcutils_allocator_t allocator,
-      autoware_bag_recorder::ModuleSection & section);
+    const std::shared_ptr<rclcpp::SerializedMessage const> msg, const std::string & topic_name,
+    rcutils_allocator_t allocator, autoware_bag_recorder::ModuleSection & section);
   void section_factory(std::vector<std::string> topics, std::string path);
   int get_root_disk_space();
 
@@ -77,5 +77,5 @@ private:
   std::mutex writer_mutex_;
 };
 
-}
-#endif // AUTOWARE_BAG_RECORDER_HPP
+}  // namespace autoware_bag_recorder
+#endif  // AUTOWARE_BAG_RECORDER_HPP_

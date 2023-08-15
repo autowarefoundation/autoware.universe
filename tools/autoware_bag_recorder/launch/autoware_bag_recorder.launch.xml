@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <node pkg="autoware_bag_recorder" exec="autoware_bag_recorder" name="autoware_bag_recorder" output="screen">
-        <param from="$(find-pkg-share autoware_bag_recorder)/config/autoware_bag_recorder.param.yaml"/>
-    </node>
+  <node pkg="autoware_bag_recorder" exec="autoware_bag_recorder" name="autoware_bag_recorder" output="screen">
+    <param from="$(find-pkg-share autoware_bag_recorder)/config/autoware_bag_recorder.param.yaml"/>
+  </node>
 </launch>

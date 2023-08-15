@@ -18,12 +18,10 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions node_options;
-  auto node =
-      std::make_shared<autoware_bag_recorder::AutowareBagRecorderNode>(
-          "autoware_bag_recorder", node_options);
+  auto node = std::make_shared<autoware_bag_recorder::AutowareBagRecorderNode>(
+    "autoware_bag_recorder", node_options);
 
   rclcpp::spin(node);
 
   return 0;
 }
-
