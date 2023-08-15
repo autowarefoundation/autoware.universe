@@ -1,0 +1,20 @@
+/**:
+  ros__parameters:
+    common:
+      maximum_time: 1000
+      path: "src/autoware_bag_recorder/bags/test" # Path to bag file for saving
+      check_disk_space_threshold: 50 # GB
+    planning_modules:
+      record_planning: true
+      planning_topics:
+      - /planning/scenario_planning/lane_driving/behavior_planning/path
+      - /planning/scenario_planning/lane_driving/trajectory
+      - /planning/path_candidate/start_planner
+    sensing_modules:
+      record_sensing: true
+      sensing_topics:
+      - /sensing/lidar/concatenated/pointcloud
+      - /sensing/lidar/left/pointcloud_raw
+      - /sensing/lidar/top/pointcloud_raw
+      - /sensing/lidar/right/pointcloud_raw
+
