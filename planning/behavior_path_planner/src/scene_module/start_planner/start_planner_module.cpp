@@ -907,7 +907,7 @@ bool StartPlannerModule::isSafePath() const
   //   default:
   //     break;
   // }
-  [[maybe_unused]]const auto safety_check_param = createSafetyCheckParams();
+  const auto safety_check_params = createSafetyCheckParams();
   // const Pose current_pose = planner_data_->self_odometry->pose.pose;
   // create ego predicted path
   // const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
@@ -915,15 +915,11 @@ bool StartPlannerModule::isSafePath() const
   //   parameters_->acceleration_to_target_velocity, current_pose,
   //   parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
 
-  // TODO(Sugahara): add in parameter
-  const bool check_all_predicted_path = true;
-  const double min_slow_down_speed = 0.0;
-
   const auto & ego_predicted_path = behavior_path_planner::utils::convertToPredictedPath(
-    pull_out_path, planner_data_, min_slow_down_speed);
+    pull_out_path, planner_data_, safety_check_params);
 
   const auto & safety_check_target_objects =
-    behavior_path_planner::utils::getSafetyCheckTargetObjects(planner_data_);
+    behavior_path_planner::utils::getSafetyCheckTargetObjects(planner_data_, safety_check_params);
 
   const auto & target_objects_current_lane = safety_check_target_objects.on_current_lane;
 
@@ -931,7 +927,7 @@ bool StartPlannerModule::isSafePath() const
 
   for (const auto & object : target_objects_current_lane) {
     const auto obj_predicted_paths =
-      utils::getPredictedPathFromObj(object, check_all_predicted_path);
+      utils::getPredictedPathFromObj(object, safety_check_params.check_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
       CollisionCheckDebug collision{};
       if (!utils::safety_check::checkCollision(
@@ -1002,9 +998,51 @@ BehaviorModuleOutput StartPlannerModule::generateStopOutput()
 
 SafetyCheckParams StartPlannerModule::createSafetyCheckParams() const
 {
-  SafetyCheckParams p;
-  p.acceleration = 1.0;
-  return p;
+  SafetyCheckParams params;
+  params.acceleration = 0.0;
+  params.time_horizon = 0.0;
+  params.time_resolution = 0.0;
+  params.min_slow_speed = 0.0;
+  params.delay_until_departure = 0.0;
+  params.target_velocity = 0.0;
+  params.safety_check_time_horizon = 0.0;
+  params.safety_check_time_resolution = 0.0;
+  params.object_check_forward_distance = 0.0;
+  params.object_check_backward_distance = 0.0;
+  params.ignore_object_velocity_threshold = 0.0;
+
+  params.object_types_to_check.check_car = true;
+  params.object_types_to_check.check_truck = true;
+  params.object_types_to_check.check_bus = true;
+  params.object_types_to_check.check_trailer = true;
+  params.object_types_to_check.check_unknown = true;
+  params.object_types_to_check.check_bicycle = true;
+  params.object_types_to_check.check_motorcycle = true;
+  params.object_types_to_check.check_pedestrian = true;
+
+  params.object_lane_configuration.check_current_lane = false;
+  params.object_lane_configuration.check_right_lane = false;
+  params.object_lane_configuration.check_left_lane = false;
+  params.object_lane_configuration.check_shoulder_lane = false;
+  params.object_lane_configuration.check_other_lane = false;
+
+  params.include_opposite_lane = false;
+  params.invert_opposite_lane = false;
+  params.check_all_predicted_path = false;
+  params.use_all_predicted_path = false;
+  params.use_predicted_path_outside_lanelet = false;
+  params.backward_lane_length = 200.0;
+  params.prediction_time_resolution = 0.5;
+  params.forward_path_length = 300.0;
+
+  params.rss_params.rear_vehicle_reaction_time = 0.0;
+  params.rss_params.rear_vehicle_safety_time_margin = 0.0;
+  params.rss_params.lateral_distance_max_threshold = 0.0;
+  params.rss_params.longitudinal_distance_min_threshold = 0.0;
+  params.rss_params.longitudinal_velocity_delta_time = 0.0;
+
+  params.publish_debug_marker = false;
+  return params;
 }
 
 void StartPlannerModule::setDebugData() const

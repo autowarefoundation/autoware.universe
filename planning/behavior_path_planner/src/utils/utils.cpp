@@ -3090,7 +3090,7 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
-  const double min_slow_down_speed)
+  const SafetyCheckParams & safety_check_params)
 {
   if (path.points.empty()) {
     return {};
@@ -3099,9 +3099,10 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const auto & vehicle_pose = planner_data->self_odometry->pose.pose;
   const double initial_velocity = std::abs(planner_data->self_odometry->twist.twist.linear.x);
 
-  const double acceleration = 1.0;
-  const double time_horizon = 3.0;
-  const double time_resolution = 5.0;
+  const double min_slow_down_speed = safety_check_params.min_slow_speed;
+  const double acceleration = safety_check_params.acceleration;
+  const double time_horizon = safety_check_params.time_horizon;
+  const double time_resolution = safety_check_params.time_resolution;
 
   const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(path.points);
   std::vector<PoseWithVelocityStamped> predicted_path;
@@ -3172,17 +3173,16 @@ ExtendedPredictedObject transform(
 
 TargetObjectsOnLane createTargetObjectsOnLane(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const PredictedObjects & filtered_objects,
-  const ObjectLaneConfiguration & object_lane_configuration)
+  const PredictedObjects & filtered_objects, const SafetyCheckParams & params)
 {
   const auto & current_lanes = planner_data->current_lanes;
   const auto & route_handler = planner_data->route_handler;
 
-  // TODO(Sugahara): add them in parameter
-  const bool include_opposite = true;
-  const bool invert_opposite = true;
-  const double safety_check_time_horizon = 2.0;
-  const double safety_check_time_resolution = 5.0;
+  const auto & object_lane_configuration = params.object_lane_configuration;
+  const bool include_opposite = params.include_opposite_lane;
+  const bool invert_opposite = params.invert_opposite_lane;
+  const double safety_check_time_horizon = params.safety_check_time_horizon;
+  const double safety_check_time_resolution = params.safety_check_time_resolution;
 
   lanelet::ConstLanelets all_left_lanelets;
   lanelet::ConstLanelets all_right_lanelets;
@@ -3249,7 +3249,8 @@ bool isTargetObjectType(
   return is_object_type;
 }
 
-PredictedObjects filterObject(const std::shared_ptr<const PlannerData> & planner_data)
+PredictedObjects filterObject(
+  const std::shared_ptr<const PlannerData> & planner_data, const SafetyCheckParams & params)
 {
   const auto & objects = planner_data->dynamic_object;
 
@@ -3258,11 +3259,10 @@ PredictedObjects filterObject(const std::shared_ptr<const PlannerData> & planner
     return PredictedObjects();
   }
 
-  // TODO(Sugahara): add in parameter
-  const double ignore_object_velocity_threshold = 1.0;
-  const double object_check_forward_distance = 3.0;
-  const double object_check_backward_distance = 2.0;
-  const ObjectTypesToCheck & target_object_types{};
+  const double ignore_object_velocity_threshold = params.ignore_object_velocity_threshold;
+  const double object_check_forward_distance = params.object_check_forward_distance;
+  const double object_check_backward_distance = params.object_check_backward_distance;
+  const ObjectTypesToCheck & target_object_types = params.object_types_to_check;
 
   const auto & route_handler = planner_data->route_handler;
   const auto & current_lanes = planner_data->current_lanes;
@@ -3277,7 +3277,6 @@ PredictedObjects filterObject(const std::shared_ptr<const PlannerData> & planner
 
   filtered_objects = filterObjectsByVelocity(*objects, ignore_object_velocity_threshold);
 
-  // Get path
   const auto path = route_handler->getCenterLinePath(
     current_lanes, object_check_backward_distance, object_check_forward_distance);
 
@@ -3289,19 +3288,13 @@ PredictedObjects filterObject(const std::shared_ptr<const PlannerData> & planner
 }
 
 TargetObjectsOnLane getSafetyCheckTargetObjects(
-  const std::shared_ptr<const PlannerData> & planner_data)
+  const std::shared_ptr<const PlannerData> & planner_data, const SafetyCheckParams & params)
 {
-  // TODO(Sugahara): add in parameter
-  const ObjectLaneConfiguration & object_lane_configuration{};
+  // filter objects with velocity, position and classification
+  auto filtered_objects = filterObject(planner_data, params);
 
-  // filter objects with velocity, position and type
-  const auto & filtered_objects = filterObject(planner_data);
-
-  TargetObjectsOnLane target_objects_on_lane{};
-  target_objects_on_lane =
-    createTargetObjectsOnLane(planner_data, filtered_objects, object_lane_configuration);
-
-  return target_objects_on_lane;
+  // get target objects on lane and return them directly
+  return createTargetObjectsOnLane(planner_data, std::move(filtered_objects), params);
 }
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold)

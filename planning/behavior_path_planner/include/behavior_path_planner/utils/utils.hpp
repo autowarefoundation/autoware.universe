@@ -159,10 +159,12 @@ struct SafetyCheckParams
   double safety_check_time_horizon;
   double safety_check_time_resolution;
   double object_check_forward_distance;
-  double safety_check_backward_distance;
+  double object_check_backward_distance;
   double ignore_object_velocity_threshold;
+  ObjectTypesToCheck object_types_to_check;
+  ObjectLaneConfiguration object_lane_configuration;
   bool include_opposite_lane;
-  bool invert_opposite;
+  bool invert_opposite_lane;
   bool check_all_predicted_path;
   bool use_all_predicted_path;
   bool use_predicted_path_outside_lanelet;
@@ -177,7 +179,6 @@ struct SafetyCheckParams
   // Debug marker publishing option
   bool publish_debug_marker{false};
 };
-
 
 struct FrenetPoint
 {
@@ -294,8 +295,7 @@ PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, double min_v, double max_v);
 
 PredictedObjects filterObjectsByPosition(
-  const PredictedObjects & objects,
-  const std::vector<PathPointWithLaneId> & path_points,
+  const PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance);
 
@@ -475,7 +475,7 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
-  const double min_slow_down_speed);
+  const SafetyCheckParams & safety_check_params);
 
 bool isCentroidWithinLanelets(
   const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets);
@@ -486,16 +486,18 @@ ExtendedPredictedObject transform(
 
 TargetObjectsOnLane createTargetObjectsOnLane(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const PredictedObjects & filtered_objects,
-  const ObjectLaneConfiguration & object_lane_configuration);
+  const PredictedObjects & filtered_objects, const SafetyCheckParams & safety_check_params);
 
 bool isTargetObjectType(
   const PredictedObject & object, const ObjectTypesToCheck & target_object_types);
 
-PredictedObjects filterObject(const std::shared_ptr<const PlannerData> & planner_data);
+PredictedObjects filterObject(
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const SafetyCheckParams & safety_check_params);
 
 TargetObjectsOnLane getSafetyCheckTargetObjects(
-  const std::shared_ptr<const PlannerData> & planner_data);
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const SafetyCheckParams & safety_check_params);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 
