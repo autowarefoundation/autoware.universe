@@ -23,8 +23,8 @@ NoDrivableLaneModuleManager::NoDrivableLaneModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   const std::string ns(getModuleName());
-  planner_param_.stop_margin = node.declare_parameter(ns + ".stop_margin");
-  planner_param_.print_debug_info = node.declare_parameter(ns + ".print_debug_info");
+  planner_param_.stop_margin = node.declare_parameter<double>(ns + ".stop_margin");
+  planner_param_.print_debug_info = node.declare_parameter<bool>(ns + ".print_debug_info");
 }
 
 void NoDrivableLaneModuleManager::launchNewModules(
