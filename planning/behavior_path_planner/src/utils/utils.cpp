@@ -3066,6 +3066,39 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
   return obj.predicted_paths;
 }
 
+std::vector<PoseWithVelocityStamped> convertToPredictedPath(
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const double min_slow_down_speed)
+{
+  if (path.points.empty()) {
+    return {};
+  }
+
+  const auto & vehicle_pose = planner_data->self_odometry->pose.pose;
+  const double initial_velocity = std::abs(planner_data->self_odometry->twist.twist.linear.x);
+
+  const double acceleration = 1.0;
+  const double time_horizon = 3.0;
+  const double time_resolution = 5.0;
+
+  const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(path.points);
+  std::vector<PoseWithVelocityStamped> predicted_path;
+  const auto vehicle_pose_frenet =
+    convertToFrenetPoint(path.points, vehicle_pose.position, ego_seg_idx);
+
+  for (double t = 0.0; t < time_horizon + 1e-3; t += time_resolution) {
+    const double velocity = std::max(initial_velocity + acceleration * t, min_slow_down_speed);
+    const double length = initial_velocity * t + 0.5 * acceleration * t * t;
+    const auto pose =
+      motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length);
+    predicted_path.emplace_back(t, pose, velocity);
+  }
+
+  return predicted_path;
+}
+
+
+
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold)
 {
   // We need at least three points to compute relative angle

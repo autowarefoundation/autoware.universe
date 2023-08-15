@@ -394,6 +394,10 @@ lanelet::ConstLanelets calcLaneAroundPose(
 std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
   const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
 
+std::vector<PoseWithVelocityStamped> convertToPredictedPath(
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const double min_slow_down_speed);
+
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 
 double calcMinimumLaneChangeLength(
