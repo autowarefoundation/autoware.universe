@@ -132,13 +132,14 @@ Pose calcPoseAfterTimeDelay(
   const Pose & current_pose, const double delay_time, const double current_vel,
   const double current_acc)
 {
-  if (delay_time <= 0.0 || current_vel <= 0.0) {
+  if (delay_time <= 0.0) {
     return current_pose;
   }
+
   // simple linear prediction
   const double yaw = tf2::getYaw(current_pose.orientation);
   const double running_distance =
-    delay_time * current_vel + 0.5 * current_acc * delay_time * delay_time;
+    abs(delay_time * current_vel + 0.5 * current_acc * delay_time * delay_time);
   const double dx = running_distance * std::cos(yaw);
   const double dy = running_distance * std::sin(yaw);
 
