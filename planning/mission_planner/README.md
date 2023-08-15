@@ -192,17 +192,17 @@ This is a goal change to pull over, avoid parked vehicles, and so on by a planni
 The new route generated here is sent to the AD API so that it can also be referenced by the application. Note, however, that the specifications here are subject to change in the future.
 
 #### Rerouting Static Obstacle
-`Rerouting Static Obstacle` is a node under `Mission Planner` that aims to change the planned route of the current already set route by finding an alternative route to the shortest planned one. 
+
+`Rerouting Static Obstacle` is a node under `Mission Planner` that aims to change the planned route of the current already set route by finding an alternative route to the shortest planned one.
 The `Rerouting Static Obstacle` use-cases can be rerouting for a vehicle that is blocking the road, road construction that blocks some lanes, or any other similar scenarios of dynamic map information.
 
 The way that `Rerouting Static Obstacle` node is working currently is that, when the human driver/operator notices a blockage during the planned route of the mission, s/he points in the map (using a dedicated plugin in rviz) when the blockage is. Then `Rerouting Static Obstacle` searches for alternative routes and if succesffuly found it calls `change_route` API.
 
-The following diagram shows how `Rerouting static obstacle` node works in high level : 
+The following diagram shows how `Rerouting static obstacle` node works in high level :
 
 <p align="center">
   <img src=./media/rerouting-static-obstacle_flowchart.svg />
 </p>
-
 
 Reference implementation for `Rerouting Static Obstacle` node is under `src/rerouting_static_obstacle`
 
