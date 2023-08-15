@@ -4,6 +4,8 @@ project(traffic_light_ssd_fine_detector)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+add_compile_options(-Wno-deprecated-declarations)
+
 option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
 
 find_package(OpenCV REQUIRED)

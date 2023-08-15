@@ -1,8 +1,18 @@
-# Autoware F1tenth Recordreplay Demo
+# Autoware Installation on Jetson Xavier NX and F1tenth Recordreplay Demo
 
 This tutorial uses ros galactic due to the fact the Nvidia Jetson only supports Ubuntu 20.04 or below. To natively build and run autoware without using docker, galactic instead of humble is used to increase system compatibility.
 
-## How to set up autoware development environment
+
+
+## Flash Jetpack 5.1.1 to Jetson Xavier NX
+
+1. Follow [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511) to flash Jetpack 5.1.1 onto the Jetson NX. You may install via the `SD Card Image Method` or the [NVIDIA SDK Manager Method](https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html) described in the documentation. 
+
+2. If you'd like to directly flash the OS onto the `NVMe SSD drive` instead of the `SD card`, and you have an x86 host machine running `Ubuntu 20.04` or `Ubuntu 18.04`, it is the recommended that you use the NVIDIA SDK Manager as it allows you to directly flash to the NVMe SSD drive. If you have trouble flashing the Jetpack, you can put the Jetson into `Force Recovery Mode` by using a jumper to connect PINs #9 and #10 of the connector J50 before powering up the Jetson.
+
+3. Once the Jetpack is successfully installed, bootup the system and the Ubuntu desktop environment should launch
+
+## Set up Autoware development environment
 
 1. Clone `autowarefoundation/autoware` and move to the directory.
 
@@ -11,15 +21,18 @@ This tutorial uses ros galactic due to the fact the Nvidia Jetson only supports 
    cd autoware
    ```
 
-2. If you are installing autoware for the first time, you can automatically install the dependencies by using the provided Ansible script. Be careful this script will change some of your drivers and system settings. If you are not sure about this, you can install the dependencies manually. Check the [autoware installtion](https://autowarefoundation.github.io/autoware-documentation/galactic/installation/autoware/source-installation/) page for more details.
+2. If you are installing Autoware for the first time, you can automatically install the dependencies by using the provided Ansible script. 
 
    ```bash
    ./setup-dev-env.sh
    ```
 
-3. Go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth_galactic`
+   IMPORTANT: During installation, when asked whether to `Install Cuda Driver?`, enter `N` as the cuda driver is already installed with the Jetpack. If force the cuda driver installation here, it can mess up the kernal and cause error at bootup. You will need to reflash the Jetpack
 
-## How to set up autoware workspace
+3. Under the `autoware` folder, go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth_galactic`
+
+
+## Set up Autoware workspace
 
 1. Create the `src` directory and clone repositories into it.
 
@@ -35,10 +48,41 @@ This tutorial uses ros galactic due to the fact the Nvidia Jetson only supports 
 
    ```bash
    source /opt/ros/galactic/setup.bash
-   rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
+   rosdep update --include-eol-distros
+   rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO -r
    ```
 
-3. Build the workspace.
+   Ignore the `Invalid version` errors during rosdep installation
+
+3. Create swapfile.
+
+   Building Autoware requires a lot of memory. Jetson NX can crash during a build because of insufficient memory. To avoid this problem, 16-32GB of swap should be configured.
+
+   Optional: Check the current swapfile
+   ```bash
+   free -h
+   ```
+
+   Remove the current swapfile
+   ```bash
+   sudo swapoff /swapfile
+   sudo rm /swapfile`
+   ```
+   
+   Create a new swapfile
+   ```bash
+   sudo fallocate -l 32G /swapfile
+   sudo chmod 600 /swapfile
+   sudo mkswap /swapfile
+   sudo swapon /swapfile
+   ```
+
+   Optional: Check if the change is reflected
+   ```bash
+   free -h
+   ```
+
+4. Build the workspace.
 
    autoware uses [colcon](https://github.com/colcon) to build workspaces.
    For more advanced options, refer to the [documentation](https://colcon.readthedocs.io/).
@@ -46,7 +90,10 @@ This tutorial uses ros galactic due to the fact the Nvidia Jetson only supports 
    ```bash
    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
    ```
+
+   Ignore the `stderr` warnings during the build. It will take 5-6 hours to build the workspace on the Jetson NX
    
+
 ## Install f1tenth_gym simulator dependencies
 The f1tenth_gym_ros simulator is used in this case, click [here](https://github.com/f1tenth/f1tenth_gym_ros) for details.
 

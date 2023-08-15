@@ -4,6 +4,8 @@ project(tensorrt_common)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+add_compile_options(-Wno-deprecated-declarations)
+
 find_package(CUDA)
 find_package(CUDNN)
 find_package(TENSORRT)
