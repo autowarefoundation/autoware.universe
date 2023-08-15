@@ -3,7 +3,6 @@ project(tier4_planning_rviz_plugin)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
-
 find_package(Qt5 REQUIRED Core Widgets)
 set(QT_LIBRARIES Qt5::Widgets)
 set(CMAKE_AUTOMOC ON)

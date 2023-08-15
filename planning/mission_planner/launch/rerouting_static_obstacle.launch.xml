@@ -1,7 +1,13 @@
 <launch>
-  <!-- <arg name="route_topic_name" default="/planning/mission_planning/route"/> -->
+  <arg name="odometry_topic_name" default="/localization/kinematic_state"/>
+  <arg name="route_topic_name" default="/planning/mission_planning/route"/>
+  <arg name="map_topic_name" default="/map/vector_map"/>
+  <arg name="reroute_point_topic_name" default="/simulation/planning/reroute_static_obstacle_point_publisher/point"/>
 
   <node pkg="mission_planner" exec="rerouting_static_obstacle" name="rerouting_static_obstacle" output="screen">
-    <!-- <remap from="input/route" to="$(var route_topic_name)"/> -->
+    <remap from="input/odometry" to="$(var odometry_topic_name)"/>
+    <remap from="input/route" to="$(var route_topic_name)"/>
+    <remap from="input/vector_map" to="$(var map_topic_name)"/>
+    <remap from="input/reroute_point" to="$(var reroute_point_topic_name)"/>
   </node>
 </launch>

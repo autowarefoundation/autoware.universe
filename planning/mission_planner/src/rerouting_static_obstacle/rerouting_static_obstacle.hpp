@@ -52,27 +52,27 @@ private:
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   lanelet::ConstLanelets road_lanelets_;
   route_handler::RouteHandler route_handler_;
-  geometry_msgs::msg::Pose current_pose;
-  geometry_msgs::msg::Pose goal_pose;
+  geometry_msgs::msg::Pose current_pose_;
+  geometry_msgs::msg::Pose goal_pose_;
 
-  void onOdom(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void on_odom(const nav_msgs::msg::Odometry::SharedPtr msg);
   void route_callback(const autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr msg);
   void map_callback(const HADMapBin::ConstSharedPtr msg);
-  void onTrigger(const geometry_msgs::msg::PointStamped::SharedPtr msg);
-  bool getSelectedPointLanelet(
+  void on_trigger(const geometry_msgs::msg::PointStamped::SharedPtr msg);
+  bool get_selected_point_lanelet(
     const geometry_msgs::msg::Pose & selected_point,
     lanelet::ConstLanelet & selected_point_lanelet) const;
-  bool getRemainingRouteLanelets(lanelet::ConstLanelets & remaining_route_lanelets) const;
-  bool isSelectedPointInRoute(
+  bool get_remaining_route_lanelets(lanelet::ConstLanelets & remaining_route_lanelets) const;
+  bool is_selected_point_in_route(
     const lanelet::ConstLanelet & selected_point_lanelet,
     const lanelet::ConstLanelets & remaining_route_lanelets) const;
-  bool searchAlternativeRoute(
+  bool search_alternative_route(
     const lanelet::ConstLanelet & selected_point_lanelet,
     lanelet::routing::LaneletPath & alternative_route_lanelets) const;
 
-  void changeRoute(const lanelet::routing::LaneletPath & lanelet_path);
+  void change_route(const lanelet::routing::LaneletPath & lanelet_path);
 
-  void convertLaneletPathToRouteSegments(
+  void convert_lanelet_path_to_route_segments(
     const lanelet::routing::LaneletPath & lanelet_path,
     std::vector<autoware_adapi_v1_msgs::msg::RouteSegment> & route_segments) const;
 };

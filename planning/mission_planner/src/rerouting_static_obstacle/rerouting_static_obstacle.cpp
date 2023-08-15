@@ -29,34 +29,34 @@ ReroutingStaticObstacle::ReroutingStaticObstacle(const rclcpp::NodeOptions & nod
   using std::placeholders::_1;
 
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "/localization/kinematic_state", rclcpp::QoS(1),
-    std::bind(&ReroutingStaticObstacle::onOdom, this, _1));
+    "input/odometry", rclcpp::QoS(1),
+    std::bind(&ReroutingStaticObstacle::on_odom, this, _1));
 
   sub_route_ = create_subscription<autoware_planning_msgs::msg::LaneletRoute>(
-    "/planning/mission_planning/route", rclcpp::QoS{1}.transient_local(),
+    "input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&ReroutingStaticObstacle::route_callback, this, std::placeholders::_1));
 
   map_subscriber_ = create_subscription<HADMapBin>(
-    "/map/vector_map", rclcpp::QoS{10}.transient_local(),
+    "input/vector_map", rclcpp::QoS{10}.transient_local(),
     std::bind(&ReroutingStaticObstacle::map_callback, this, std::placeholders::_1));
 
   sub_trigger_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
-    "/simulation/planning/reroute_static_obstacle_point_publisher/point", rclcpp::QoS(1),
-    std::bind(&ReroutingStaticObstacle::onTrigger, this, _1));
+    "input/reroute_point", rclcpp::QoS(1),
+    std::bind(&ReroutingStaticObstacle::on_trigger, this, _1));
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_cli(cli_change_route_);
 }
 
-void ReroutingStaticObstacle::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg)
+void ReroutingStaticObstacle::on_odom(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-  current_pose = msg->pose.pose;
+  current_pose_ = msg->pose.pose;
 }
 
 void ReroutingStaticObstacle::route_callback(
   const autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr msg)
 {
-  goal_pose = msg->goal_pose;
+  goal_pose_ = msg->goal_pose;
 }
 
 void ReroutingStaticObstacle::map_callback(const HADMapBin::ConstSharedPtr msg)
@@ -69,23 +69,23 @@ void ReroutingStaticObstacle::map_callback(const HADMapBin::ConstSharedPtr msg)
   road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
 }
 
-void ReroutingStaticObstacle::onTrigger(const geometry_msgs::msg::PointStamped::SharedPtr msg)
+void ReroutingStaticObstacle::on_trigger(const geometry_msgs::msg::PointStamped::SharedPtr msg)
 {
   geometry_msgs::msg::Pose selected_point;
   selected_point.position = msg->point;
 
   lanelet::ConstLanelet selected_point_lanelet;
   bool selected_point_lanelet_found{false};
-  selected_point_lanelet_found = getSelectedPointLanelet(selected_point, selected_point_lanelet);
+  selected_point_lanelet_found = get_selected_point_lanelet(selected_point, selected_point_lanelet);
 
   lanelet::ConstLanelets remaining_route_lanelets;
   bool remaining_route_lanelets_found{false};
-  remaining_route_lanelets_found = getRemainingRouteLanelets(remaining_route_lanelets);
+  remaining_route_lanelets_found = get_remaining_route_lanelets(remaining_route_lanelets);
 
   bool selected_point_in_route{false};
   if (selected_point_lanelet_found && remaining_route_lanelets_found) {
     selected_point_in_route =
-      isSelectedPointInRoute(selected_point_lanelet, remaining_route_lanelets);
+      is_selected_point_in_route(selected_point_lanelet, remaining_route_lanelets);
   } else {
     return;
   }
@@ -94,15 +94,15 @@ void ReroutingStaticObstacle::onTrigger(const geometry_msgs::msg::PointStamped::
     lanelet::routing::LaneletPath alternative_route_lanelets;
     bool alternative_route_found{false};
     alternative_route_found =
-      searchAlternativeRoute(selected_point_lanelet, alternative_route_lanelets);
+      search_alternative_route(selected_point_lanelet, alternative_route_lanelets);
 
     if (alternative_route_found) {
-      changeRoute(alternative_route_lanelets);
+      change_route(alternative_route_lanelets);
     }
   }
 }
 
-bool ReroutingStaticObstacle::getSelectedPointLanelet(
+bool ReroutingStaticObstacle::get_selected_point_lanelet(
   const geometry_msgs::msg::Pose & selected_point,
   lanelet::ConstLanelet & selected_point_lanelet) const
 {
@@ -129,14 +129,14 @@ bool ReroutingStaticObstacle::getSelectedPointLanelet(
   return true;
 }
 
-bool ReroutingStaticObstacle::getRemainingRouteLanelets(
+bool ReroutingStaticObstacle::get_remaining_route_lanelets(
   lanelet::ConstLanelets & remaining_route_lanelets) const
 {
   return route_handler_.planPathLaneletsBetweenCheckpoints(
-    current_pose, goal_pose, &remaining_route_lanelets);
+    current_pose_, goal_pose_, &remaining_route_lanelets);
 }
 
-bool ReroutingStaticObstacle::isSelectedPointInRoute(
+bool ReroutingStaticObstacle::is_selected_point_in_route(
   const lanelet::ConstLanelet & selected_point_lanelet,
   const lanelet::ConstLanelets & remaining_route_lanelets) const
 {
@@ -149,7 +149,7 @@ bool ReroutingStaticObstacle::isSelectedPointInRoute(
   return false;
 }
 
-bool ReroutingStaticObstacle::searchAlternativeRoute(
+bool ReroutingStaticObstacle::search_alternative_route(
   const lanelet::ConstLanelet & selected_point_lanelet,
   lanelet::routing::LaneletPath & alternative_route_lanelets) const
 {
@@ -159,13 +159,13 @@ bool ReroutingStaticObstacle::searchAlternativeRoute(
 
   lanelet::ConstLanelet current_lanelet;
   double alternative_route_length2d = std::numeric_limits<double>::max();
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, current_pose, &current_lanelet)) {
+  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, current_pose_, &current_lanelet)) {
     RCLCPP_WARN_STREAM(this->get_logger(), "Failed to find current_lanelet.");
     return false;
   }
 
   lanelet::ConstLanelet goal_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose, &goal_lanelet)) {
+  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose_, &goal_lanelet)) {
     RCLCPP_WARN_STREAM(this->get_logger(), "Failed to find goal_lanelet.");
     return false;
   }
@@ -187,17 +187,17 @@ bool ReroutingStaticObstacle::searchAlternativeRoute(
   return alternative_route_found;
 }
 
-void ReroutingStaticObstacle::changeRoute(const lanelet::routing::LaneletPath & lanelet_path)
+void ReroutingStaticObstacle::change_route(const lanelet::routing::LaneletPath & lanelet_path)
 {
   const auto req = std::make_shared<ChangeRoute::Service::Request>();
   req->header.frame_id = "map";
   req->header.stamp = this->get_clock()->now();
-  req->goal = goal_pose;
-  convertLaneletPathToRouteSegments(lanelet_path, req->segments);
+  req->goal = goal_pose_;
+  convert_lanelet_path_to_route_segments(lanelet_path, req->segments);
   cli_change_route_->async_send_request(req);
 }
 
-void ReroutingStaticObstacle::convertLaneletPathToRouteSegments(
+void ReroutingStaticObstacle::convert_lanelet_path_to_route_segments(
   const lanelet::routing::LaneletPath & lanelet_path,
   std::vector<autoware_adapi_v1_msgs::msg::RouteSegment> & route_segments) const
 {
