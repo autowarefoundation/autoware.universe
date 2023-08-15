@@ -103,7 +103,7 @@ void Graph::topological_sort()
   // Reverse the result to process from leaf node.
   result = std::deque<BaseNode *>(result.rbegin(), result.rend());
 
-  // Replace node order.
+  // Replace node vector.
   std::map<BaseNode *, size_t> indices;
   for (size_t i = 0; i < result.size(); ++i) {
     indices[result[i]] = i;

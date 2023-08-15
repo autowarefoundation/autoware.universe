@@ -21,17 +21,24 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace system_diagnostic_graph
 {
+
+struct ExprStatus
+{
+  DiagnosticLevel level;
+  std::vector<std::pair<BaseNode *, bool>> links;
+};
 
 class BaseExpr
 {
 public:
   static std::unique_ptr<BaseExpr> create(Graph & graph, YAML::Node yaml);
   virtual ~BaseExpr() = default;
-  virtual DiagnosticLevel eval() const = 0;
+  virtual ExprStatus eval() const = 0;
   virtual std::vector<BaseNode *> get_dependency() const = 0;
 };
 
@@ -39,7 +46,7 @@ class ConstExpr : public BaseExpr
 {
 public:
   explicit ConstExpr(const DiagnosticLevel level);
-  DiagnosticLevel eval() const override;
+  ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
 private:
@@ -50,7 +57,7 @@ class UnitExpr : public BaseExpr
 {
 public:
   UnitExpr(Graph & graph, YAML::Node yaml);
-  DiagnosticLevel eval() const override;
+  ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
 private:
@@ -61,7 +68,7 @@ class DiagExpr : public BaseExpr
 {
 public:
   DiagExpr(Graph & graph, YAML::Node yaml);
-  DiagnosticLevel eval() const override;
+  ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
 private:
@@ -72,7 +79,7 @@ class AndExpr : public BaseExpr
 {
 public:
   AndExpr(Graph & graph, YAML::Node yaml);
-  DiagnosticLevel eval() const override;
+  ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
 private:
@@ -83,7 +90,7 @@ class OrExpr : public BaseExpr
 {
 public:
   OrExpr(Graph & graph, YAML::Node yaml);
-  DiagnosticLevel eval() const override;
+  ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
 private:

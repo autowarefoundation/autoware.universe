@@ -48,7 +48,8 @@ DiagnosticNode UnitNode::report() const
 
 void UnitNode::update()
 {
-  level_ = expr_->eval();
+  const auto result = expr_->eval();
+  level_ = result.level;
 }
 
 void UnitNode::create(Graph & graph, const NodeConfig & config)

@@ -72,9 +72,11 @@ ConstExpr::ConstExpr(const DiagnosticLevel level)
   level_ = level;
 }
 
-DiagnosticLevel ConstExpr::eval() const
+ExprStatus ConstExpr::eval() const
 {
-  return level_;
+  ExprStatus status;
+  status.level = level_;
+  return status;
 }
 
 std::vector<BaseNode *> ConstExpr::get_dependency() const
@@ -94,9 +96,11 @@ UnitExpr::UnitExpr(Graph & graph, YAML::Node yaml)
   }
 }
 
-DiagnosticLevel UnitExpr::eval() const
+ExprStatus UnitExpr::eval() const
 {
-  return node_->level();
+  ExprStatus status;
+  status.level = node_->level();
+  return status;
 }
 
 std::vector<BaseNode *> UnitExpr::get_dependency() const
@@ -117,9 +121,11 @@ DiagExpr::DiagExpr(Graph & graph, YAML::Node yaml)
   }
 }
 
-DiagnosticLevel DiagExpr::eval() const
+ExprStatus DiagExpr::eval() const
 {
-  return node_->level();
+  ExprStatus status;
+  status.level = node_->level();
+  return status;
 }
 
 std::vector<BaseNode *> DiagExpr::get_dependency() const
@@ -141,14 +147,20 @@ AndExpr::AndExpr(Graph & graph, YAML::Node yaml)
   }
 }
 
-DiagnosticLevel AndExpr::eval() const
+ExprStatus AndExpr::eval() const
 {
-  std::vector<DiagnosticLevel> levels;
+  std::vector<ExprStatus> results;
   for (const auto & expr : list_) {
-    levels.push_back(expr->eval());
+    results.push_back(expr->eval());
+  }
+  std::vector<DiagnosticLevel> levels;
+  for (const auto & result : results) {
+    levels.push_back(result.level);
   }
   const auto level = *std::max_element(levels.begin(), levels.end());
-  return std::min(level, DiagnosticStatus::ERROR);
+  ExprStatus status;
+  status.level = std::min(level, DiagnosticStatus::ERROR);
+  return status;
 }
 
 std::vector<BaseNode *> AndExpr::get_dependency() const
@@ -175,14 +187,20 @@ OrExpr::OrExpr(Graph & graph, YAML::Node yaml)
   }
 }
 
-DiagnosticLevel OrExpr::eval() const
+ExprStatus OrExpr::eval() const
 {
-  std::vector<DiagnosticLevel> levels;
+  std::vector<ExprStatus> results;
   for (const auto & expr : list_) {
-    levels.push_back(expr->eval());
+    results.push_back(expr->eval());
+  }
+  std::vector<DiagnosticLevel> levels;
+  for (const auto & result : results) {
+    levels.push_back(result.level);
   }
   const auto level = *std::min_element(levels.begin(), levels.end());
-  return std::min(level, DiagnosticStatus::ERROR);
+  ExprStatus status;
+  status.level = std::min(level, DiagnosticStatus::ERROR);
+  return status;
 }
 
 std::vector<BaseNode *> OrExpr::get_dependency() const
