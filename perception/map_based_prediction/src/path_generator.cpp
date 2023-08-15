@@ -210,17 +210,22 @@ PredictedPath PathGenerator::generateConstantAccPolynomialPath(
     if (discriminant < 0) {
       return 0.0;
     }
-    return (-2 * v1 + std::sqrt(discriminant)) / (2 * a1);
+    const double t2_first = (-2 * v1 - std::sqrt(discriminant)) / (2 * a1);
+    const double t2_second = (-2 * v1 + std::sqrt(discriminant)) / (2 * a1);
+    if (0 <= t2_first) {
+      return t1 + t2_first;
+    }
+    return t1 + t2_second;
   }();
   const auto [d2, v2] = move_forward(d1, v1, a1, t2 - t1);
   const double a2 = max_lane_user_lateral_accel_ * (0 < d0 ? 1.0 : -1.0);
 
-  const double t3 = t1 + 2 * (t2 - t1) + v0 / a2;
+  const double t3 = t1 + 2 * (t2 - t1) + v1 / a1;
+  std::cerr << t1 << " " << t2 << " " << t3 << std::endl;
 
   // Step2. Generate Predicted Path on a Frenet coordinate
   std::cerr << "====" << std::endl;
   FrenetPath frenet_predicted_path;
-  frenet_predicted_path.reserve(static_cast<size_t>(time_horizon_ / sampling_time_interval_));
   double s = current_point.s;
   for (double t = 0.0; t <= time_horizon_; t += sampling_time_interval_) {
     const auto [d, v] = [&]() {
