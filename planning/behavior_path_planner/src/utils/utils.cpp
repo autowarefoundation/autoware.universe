@@ -3097,8 +3097,6 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   return predicted_path;
 }
 
-
-
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold)
 {
   // We need at least three points to compute relative angle
