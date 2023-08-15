@@ -1008,7 +1008,7 @@ void filterTargetObjects(
 
       // Step2. check if it should expand road shoulder margin.
       if (soft_lateral_distance_limit < min_avoid_margin) {
-        return std::min(hard_lateral_distance_limit, min_avoid_margin);
+        return min_avoid_margin;
       }
 
       // Step3. nominal case. avoid margin is limited by soft constraint.
