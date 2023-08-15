@@ -37,7 +37,7 @@ public:
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config,
     const Direction direction, const LaneChangeModuleType type);
 
-  std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
+  std::vector<std::unique_ptr<SceneModuleInterface>> createNewSceneModuleInstance() override;
 
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
 
@@ -55,7 +55,7 @@ public:
   AvoidanceByLaneChangeModuleManager(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config);
 
-  std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
+  std::vector<std::unique_ptr<SceneModuleInterface>> createNewSceneModuleInstance() override;
 
   // void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
 
