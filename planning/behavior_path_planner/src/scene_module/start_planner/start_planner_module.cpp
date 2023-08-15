@@ -922,13 +922,37 @@ bool StartPlannerModule::isSafePath() const
   }
   const Pose current_pose = planner_data_->self_odometry->pose.pose;
   // create ego predicted path
-  const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
-    pull_out_path.points, current_velocity, target_velocity,
-    parameters_->acceleration_to_target_velocity, current_pose,
-    parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
+  // const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
+  //   pull_out_path.points, current_velocity, target_velocity,
+  //   parameters_->acceleration_to_target_velocity, current_pose,
+  //   parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
+  const auto & ego_predicted_path =
+    behavior_path_planner::utils::createPredictedPathFromTargetVelocity(
+      pull_out_path.points, current_velocity, target_velocity,
+      parameters_->acceleration_to_target_velocity, current_pose,
+      parameters_->prediction_time_resolution, 0.0);
 
   const auto & safety_check_target_objects =
     behavior_path_planner::utils::getSafetyCheckTargetObjects(planner_data_);
+
+  const auto & target_objects_current_lane = safety_check_target_objects.on_current_lane;
+
+  // TODO(Sugahara): add in parameter
+  const bool check_all_predicted_path = true;
+  marker_utils::CollisionCheckDebug collision{};
+
+  for (const auto & object : target_objects_current_lane) {
+    const auto obj_predicted_paths =
+      utils::getPredictedPathFromObj(object, check_all_predicted_path);
+    for (const auto & obj_path : obj_predicted_paths) {
+      CollisionCheckDebug collision{};
+      if (!utils::safety_check::checkCollision(
+            shifted_path.path, ego_predicted_path, object, obj_path, p,
+            p.expected_front_deceleration, p.expected_rear_deceleration, collision)) {
+        return false;
+      }
+    }
+  }
 
   // return utils::safety_check::isSafeInLaneletCollisionCheck(
   //   pull_out_path, interpolated_ego, current_twist, check_durations,
