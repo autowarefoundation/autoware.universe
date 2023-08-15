@@ -131,7 +131,7 @@ std::pair<double, bool> calcEndArcLength(
 
   const double s_goal = lanelet::utils::getArcCoordinates(road_lanes, goal_pose).length;
 
-  // If the goal is behind ego or beyond the forward length, return early
+  // If the goal is behind the start or beyond the forward length, use forward length.
   if (s_goal < s_start || s_goal >= s_forward_length) {
     return {s_forward_length, false};
   }
