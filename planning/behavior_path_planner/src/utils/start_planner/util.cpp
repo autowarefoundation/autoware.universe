@@ -124,7 +124,7 @@ std::pair<double, bool> calcEndArcLength(
   const Pose & goal_pose)
 {
   const double s_forward_length = s_start + forward_path_length;
-  // early return if the goal pose is not in the lanelets
+  // use forward length if the goal pose is not in the lanelets
   if (!utils::isInLanelets(goal_pose, road_lanes)) {
     return {s_forward_length, false};
   }
