@@ -187,6 +187,8 @@ PredictedPath PathGenerator::generateConstantAccPolynomialPath(
   const TrackedObject & object, const PosePath & ref_path)
 {
   const double object_vel = object.kinematics.twist_with_covariance.twist.linear.x;
+
+  // Get current Frenet Point
   const double max_ref_path_length = motion_utils::calcArcLength(ref_path);
   const auto current_point = getFrenetPoint(object, ref_path);
 
@@ -221,28 +223,22 @@ PredictedPath PathGenerator::generateConstantAccPolynomialPath(
   const double a2 = max_lane_user_lateral_accel_ * (0 < d0 ? 1.0 : -1.0);
 
   const double t3 = t1 + 2 * (t2 - t1) + v1 / a1;
-  std::cerr << t1 << " " << t2 << " " << t3 << std::endl;
 
   // Step2. Generate Predicted Path on a Frenet coordinate
-  std::cerr << "====" << std::endl;
   FrenetPath frenet_predicted_path;
-  double s = current_point.s;
   for (double t = 0.0; t <= time_horizon_; t += sampling_time_interval_) {
     const auto [d, v] = [&]() {
       if (t < t1) {
-        std::cerr << "1" << std::endl;
         return move_forward(d0, v0, a0, t);
       } else if (t < t2) {
-        std::cerr << "2" << std::endl;
         return move_forward(d1, v1, a1, t - t1);
       } else if (t < t3) {
-        std::cerr << "3" << std::endl;
         return move_forward(d2, v2, a2, t - t2);
       }
       return std::make_tuple(0.0, 0.0);
     }();
 
-    s += object_vel * sampling_time_interval_;
+    const double s = current_point.s + object_vel * t;
     if (s > max_ref_path_length) {
       break;
     }
@@ -254,7 +250,6 @@ PredictedPath PathGenerator::generateConstantAccPolynomialPath(
     point.d = d;
     point.d_vel = v;  // not used
     point.d_acc = 0;  // not used
-    std::cerr << d << std::endl;
     frenet_predicted_path.push_back(point);
   }
 
