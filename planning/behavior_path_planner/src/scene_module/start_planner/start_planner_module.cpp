@@ -17,7 +17,6 @@
 #include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
@@ -908,6 +907,7 @@ bool StartPlannerModule::isSafePath() const
   //   default:
   //     break;
   // }
+  [[maybe_unused]]const auto safety_check_param = createSafetyCheckParams();
   // const Pose current_pose = planner_data_->self_odometry->pose.pose;
   // create ego predicted path
   // const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
@@ -998,6 +998,13 @@ BehaviorModuleOutput StartPlannerModule::generateStopOutput()
   path_reference_ = getPreviousModuleOutput().reference_path;
 
   return output;
+}
+
+SafetyCheckParams StartPlannerModule::createSafetyCheckParams() const
+{
+  SafetyCheckParams p;
+  p.acceleration = 1.0;
+  return p;
 }
 
 void StartPlannerModule::setDebugData() const

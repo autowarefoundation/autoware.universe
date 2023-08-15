@@ -164,16 +164,13 @@ struct SafetyCheckParams
   bool include_opposite_lane;
   bool invert_opposite;
   bool check_all_predicted_path;
+  bool use_all_predicted_path;
   bool use_predicted_path_outside_lanelet;
 
   // Trajectory generation parameters
   double backward_lane_length{200.0};
   double prediction_time_resolution{0.5};
   double forward_path_length{300.0};
-
-  // Prediction options
-  bool use_predicted_path_outside_lanelet{false};
-  bool use_all_predicted_path{false};
 
   RSSparams rss_params{};
 

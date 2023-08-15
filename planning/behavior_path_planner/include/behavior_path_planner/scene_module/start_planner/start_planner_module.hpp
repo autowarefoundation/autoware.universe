@@ -22,6 +22,7 @@
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/start_planner/shift_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/start_planner_parameters.hpp"
+#include "behavior_path_planner/utils/utils.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -44,6 +45,7 @@ namespace behavior_path_planner
 {
 using geometry_msgs::msg::PoseArray;
 using lane_departure_checker::LaneDepartureChecker;
+using behavior_path_planner::utils::SafetyCheckParams;
 
 struct PullOutStatus
 {
@@ -150,6 +152,7 @@ private:
   // generate BehaviorPathOutput with stopping path and update status
   BehaviorModuleOutput generateStopOutput();
 
+  SafetyCheckParams createSafetyCheckParams() const;
   void setDebugData() const;
 };
 }  // namespace behavior_path_planner
