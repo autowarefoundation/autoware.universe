@@ -917,8 +917,8 @@ bool StartPlannerModule::isSafePath() const
 
   // TODO(Sugahara): add in parameter
   const bool check_all_predicted_path = true;
-  marker_utils::CollisionCheckDebug collision{};
   const double min_slow_down_speed = 0.0;
+
   const auto & ego_predicted_path = behavior_path_planner::utils::convertToPredictedPath(
     pull_out_path, planner_data_, min_slow_down_speed);
 

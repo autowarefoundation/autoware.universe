@@ -106,6 +106,7 @@ struct PolygonPoint
   };
 };
 
+// will be moved to safety_check class
 struct ObjectTypesToCheck
 {
   bool check_car{true};
@@ -134,6 +135,52 @@ struct TargetObjectsOnLane
   std::vector<utils::safety_check::ExtendedPredictedObject> on_shoulder_lane{};
   std::vector<utils::safety_check::ExtendedPredictedObject> on_other_lane{};
 };
+
+struct RSSparams
+{
+  double rear_vehicle_reaction_time{0.0};
+  double rear_vehicle_safety_time_margin{0.0};
+  double lateral_distance_max_threshold{0.0};
+  double longitudinal_distance_min_threshold{0.0};
+  double longitudinal_velocity_delta_time{0.0};
+};
+
+struct SafetyCheckParams
+{
+  // for ego predicted path generation
+  double acceleration;
+  double time_horizon;
+  double time_resolution;
+  double min_slow_speed;
+  double delay_until_departure;
+  double target_velocity;
+
+  // for dynamic objects to check
+  double safety_check_time_horizon;
+  double safety_check_time_resolution;
+  double object_check_forward_distance;
+  double safety_check_backward_distance;
+  double ignore_object_velocity_threshold;
+  bool include_opposite_lane;
+  bool invert_opposite;
+  bool check_all_predicted_path;
+  bool use_predicted_path_outside_lanelet;
+
+  // Trajectory generation parameters
+  double backward_lane_length{200.0};
+  double prediction_time_resolution{0.5};
+  double forward_path_length{300.0};
+
+  // Prediction options
+  bool use_predicted_path_outside_lanelet{false};
+  bool use_all_predicted_path{false};
+
+  RSSparams rss_params{};
+
+  // Debug marker publishing option
+  bool publish_debug_marker{false};
+};
+
 
 struct FrenetPoint
 {
