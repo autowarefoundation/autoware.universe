@@ -17,7 +17,10 @@
           "default": false
         }
       },
-      "required": ["publish_amplitude_pointcloud", "publish_doppler_pointcloud"]
+      "required": [
+        "publish_amplitude_pointcloud",
+        "publish_doppler_pointcloud"
+      ]
     }
   },
   "properties": {
@@ -28,8 +31,12 @@
           "$ref": "#/definitions/radar_scan_to_pointcloud2"
         }
       },
-      "required": ["ros__parameters"]
+      "required": [
+        "ros__parameters"
+      ]
     }
   },
-  "required": ["/**"]
+  "required": [
+    "/**"
+  ]
 }
