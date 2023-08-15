@@ -154,7 +154,6 @@ private:
 
   double ekf_rate_;
   double ekf_dt_;
-  double pitch_from_ndt_;
   double pitch_rate_;
   rclcpp::Time t_receive_pose_;
 
@@ -267,7 +266,7 @@ private:
    * @brief update z value by considering ndt delay
    */
   double calculateDeltaZFromPitch(
-    const geometry_msgs::msg::TwistStamped & twist, const double delay_time);
+    const geometry_msgs::msg::TwistStamped & twist, const double delay_time, const double pitch_from_ndt);
   /**
    * @brief trigger node
    */
