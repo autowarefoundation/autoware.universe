@@ -18,9 +18,7 @@ This package includes the following features:
 - **Automatic estimation of yaw bias** prevents modeling errors caused by sensor mounting angle errors, which can improve estimation accuracy.
 - **Mahalanobis distance gate** enables probabilistic outlier detection to determine which inputs should be used or ignored.
 - **Smooth update**, the Kalman Filter measurement update is typically performed when a measurement is obtained, but it can cause large changes in the estimated value, especially for low-frequency measurements. Since the algorithm can consider the measurement time, the measurement data can be divided into multiple pieces and integrated smoothly while maintaining consistency (see the following figure).
-
-- **Calculation delta from pitch** leads to better localization, even on slopes. It's because the current EKF considers only 3DoF(x,y,yaw), the results of localization become unstable on slopes when the convergence of NDT scan matching is slow. So, we added a vertical update function at 50Hz as an auxiliary function to the the current EKF.
-  In addition, since the pose output from NDT scan matching is also compensated for the delay in 3DoF, a new correction amount is added only in the vertical direction (see the following figure).
+- **Calculation delta from pitch** leads to better localization, even on slopes. It's because the EKF considers only 3DoF(x,y,yaw), the results of localization become unstable on slopes. So, we added a vertical update function at 50Hz as an auxiliary function to the EKF (see the following figure)..
 
 <p align="center">
 <img src="./media/ekf_delay_comp.png" width="800">

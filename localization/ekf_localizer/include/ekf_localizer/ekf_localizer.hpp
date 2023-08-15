@@ -154,11 +154,8 @@ private:
 
   double ekf_rate_;
   double ekf_dt_;
-  double pitch_rate_;
-  rclcpp::Time t_receive_pose_;
 
   /* parameters */
-
   int dim_x_;  //!< @brief  dimension of EKF state
 
   /* process noise variance for discrete model */
