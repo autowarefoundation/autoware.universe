@@ -1421,12 +1421,19 @@ void AvoidanceModule::trimSmallShiftLine(AvoidLineArray & shift_lines, const dou
   AvoidLineArray input = shift_lines;
   shift_lines.clear();
 
-  for (const auto & s : input) {
-    if (s.getRelativeLongitudinal() < threshold) {
+  for (size_t i = 0; i < input.size(); ++i) {
+    if (input.at(i).getRelativeLongitudinal() > threshold) {
+      shift_lines.push_back(input.at(i));
       continue;
     }
 
-    shift_lines.push_back(s);
+    if (shift_lines.empty()) {
+      continue;
+    }
+
+    utils::avoidance::setEndData(
+      shift_lines.back(), input.at(i).end_shift_length, input.at(i).end, input.at(i).end_idx,
+      input.at(i).end_longitudinal);
   }
 }
 
@@ -2347,10 +2354,14 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
           std::abs(candidates.at(i).getRelativeLength()) >
           parameters_->lateral_small_shift_threshold) {
           if (has_large_shift) {
-            break;
+            return;
           }
 
           has_large_shift = true;
+        }
+
+        if (!isComfortable(AvoidLineArray{candidates.at(i)})) {
+          return;
         }
 
         subsequent.push_back(candidates.at(i));
@@ -2361,7 +2372,15 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
   const auto get_subsequent_shift = [&, this](size_t i) {
     AvoidLineArray subsequent{candidates.at(i)};
 
+    if (!isComfortable(subsequent)) {
+      return subsequent;
+    }
+
     if (candidates.size() == i + 1) {
+      return subsequent;
+    }
+
+    if (!isComfortable(AvoidLineArray{candidates.at(i + 1)})) {
       return subsequent;
     }
 
