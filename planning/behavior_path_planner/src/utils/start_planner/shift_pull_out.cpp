@@ -150,20 +150,8 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   // generate road lane reference path
   const auto arc_position_start = getArcCoordinates(road_lanes, start_pose);
   const double s_start = std::max(arc_position_start.length - backward_path_length, 0.0);
-  const auto path_end_info = std::invoke([&]() -> std::pair<double, bool> {
-    const double s_forward_length = s_start + forward_path_length;
-    if (utils::isInLanelets(goal_pose, road_lanes)) {
-      const auto s_goal = getArcCoordinates(road_lanes, goal_pose).length;
-      if (s_goal < s_start) {
-        // goal is behind ego
-        return {s_forward_length, false};
-      } else if (s_goal < s_forward_length) {
-        // path end is goal
-        return {s_goal, true};
-      }
-    }
-    return {s_forward_length, false};
-  });
+  const auto path_end_info =
+    start_planner_utils::calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
   const double s_end = path_end_info.first;
   const bool path_terminal_is_goal = path_end_info.second;
 

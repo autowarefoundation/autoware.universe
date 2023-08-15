@@ -272,20 +272,8 @@ bool GeometricParallelParking::planPullOut(
 
     // get road center line path from pull_out end to goal, and combine after the second arc path
     const double s_start = getArcCoordinates(road_lanes, *end_pose).length;
-    const auto path_end_info = std::invoke([&]() -> std::pair<double, bool> {
-      const double s_forward_length = s_start + planner_data_->parameters.forward_path_length;
-      if (utils::isInLanelets(goal_pose, road_lanes)) {
-        const auto s_goal = lanelet::utils::getArcCoordinates(road_lanes, goal_pose).length;
-        if (s_goal < s_start) {
-          // goal is behind ego
-          return {s_forward_length, false};
-        } else if (s_goal < s_forward_length) {
-          // path end is goal
-          return {s_goal, true};
-        }
-      }
-      return {s_forward_length, false};
-    });
+    const auto path_end_info = start_planner_utils::calcEndArcLength(
+      s_start, planner_data_->parameters.forward_path_length, road_lanes, goal_pose);
     const double s_end = path_end_info.first;
     const bool path_terminal_is_goal = path_end_info.second;
     PathWithLaneId road_center_line_path =

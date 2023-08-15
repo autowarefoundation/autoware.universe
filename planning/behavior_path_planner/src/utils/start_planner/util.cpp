@@ -118,4 +118,23 @@ lanelet::ConstLanelets getPullOutLanes(
     /*forward_length*/ std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
 }
+
+std::pair<double, bool> calcEndArcLength(
+  const double s_start, const double forward_path_length, const lanelet::ConstLanelets & road_lanes,
+  const Pose & goal_pose)
+{
+  const double s_forward_length = s_start + forward_path_length;
+  if (utils::isInLanelets(goal_pose, road_lanes)) {
+    const double s_goal = lanelet::utils::getArcCoordinates(road_lanes, goal_pose).length;
+    if (s_goal < s_start) {
+      // goal is behind ego
+      return {s_forward_length, false};
+    } else if (s_goal < s_forward_length) {
+      // path end is goal
+      return {s_goal, true};
+    }
+  }
+  return {s_forward_length, false};
+}
+
 }  // namespace behavior_path_planner::start_planner_utils
