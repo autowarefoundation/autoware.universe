@@ -109,5 +109,6 @@ scenario_parameter_groups:
       max_steer_angle: 0.70 # [rad]
       obstacle_stop_line_distance: 5.0
       crosswalk_stop_line_distance: 3.5
+      walkway_stop_line_distance: 3.5
       intersection_stop_line_distance: 3.0
       traffic_light_stop_line_distance: 0.0
