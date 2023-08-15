@@ -73,18 +73,20 @@ void ReroutingStaticObstacle::on_trigger(const geometry_msgs::msg::PointStamped:
   geometry_msgs::msg::Pose selected_point;
   selected_point.position = msg->point;
 
-  lanelet::ConstLanelet selected_point_lanelet;
+  lanelet::ConstLanelets selected_point_lanelets;
   bool selected_point_lanelet_found{false};
-  selected_point_lanelet_found = get_selected_point_lanelet(selected_point, selected_point_lanelet);
+  selected_point_lanelet_found =
+    get_selected_point_lanelets(selected_point, selected_point_lanelets);
 
   lanelet::ConstLanelets remaining_route_lanelets;
   bool remaining_route_lanelets_found{false};
   remaining_route_lanelets_found = get_remaining_route_lanelets(remaining_route_lanelets);
 
+  lanelet::ConstLanelet selected_point_lanelet;
   bool selected_point_in_route{false};
   if (selected_point_lanelet_found && remaining_route_lanelets_found) {
-    selected_point_in_route =
-      is_selected_point_in_route(selected_point_lanelet, remaining_route_lanelets);
+    selected_point_in_route = is_selected_point_in_route(
+      selected_point_lanelets, remaining_route_lanelets, selected_point_lanelet);
   } else {
     return;
   }
@@ -101,28 +103,14 @@ void ReroutingStaticObstacle::on_trigger(const geometry_msgs::msg::PointStamped:
   }
 }
 
-bool ReroutingStaticObstacle::get_selected_point_lanelet(
+bool ReroutingStaticObstacle::get_selected_point_lanelets(
   const geometry_msgs::msg::Pose & selected_point,
-  lanelet::ConstLanelet & selected_point_lanelet) const
+  lanelet::ConstLanelets & selected_point_lanelets) const
 {
-  lanelet::ConstLanelets selected_point_lanelets;
   if (!lanelet::utils::query::getCurrentLanelets(
         road_lanelets_, selected_point, &selected_point_lanelets)) {
     RCLCPP_WARN_STREAM(this->get_logger(), "Failed to find selected_point current lanelet.");
     return false;
-  }
-
-  if (selected_point_lanelets.size() > 1) {  // This will happen only if we have co-located lanes at
-                                             // the point the user selects
-    // TODO(AhmedEbrahim) find a way to deduce the selected point orientation
-    if (!lanelet::utils::query::getClosestLanelet(
-          road_lanelets_, selected_point, &selected_point_lanelet)) {
-      RCLCPP_WARN_STREAM(this->get_logger(), "Failed to find selected_point closest lanelet.");
-      return false;
-    }
-
-  } else {
-    selected_point_lanelet = selected_point_lanelets.at(0);
   }
 
   return true;
@@ -136,12 +124,16 @@ bool ReroutingStaticObstacle::get_remaining_route_lanelets(
 }
 
 bool ReroutingStaticObstacle::is_selected_point_in_route(
-  const lanelet::ConstLanelet & selected_point_lanelet,
-  const lanelet::ConstLanelets & remaining_route_lanelets) const
+  const lanelet::ConstLanelets & selected_point_lanelets,
+  const lanelet::ConstLanelets & remaining_route_lanelets,
+  lanelet::ConstLanelet & selected_point_lanelet) const
 {
-  for (const auto & llt : remaining_route_lanelets) {
-    if (llt.id() == selected_point_lanelet.id()) {
-      return true;
+  for (const auto & slc_pnt_llt : selected_point_lanelets) {
+    for (const auto & rmn_rt_llt : remaining_route_lanelets) {
+      if (slc_pnt_llt.id() == rmn_rt_llt.id()) {
+        selected_point_lanelet = slc_pnt_llt;
+        return true;
+      }
     }
   }
 

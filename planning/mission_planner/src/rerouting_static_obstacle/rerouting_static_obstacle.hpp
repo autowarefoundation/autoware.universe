@@ -59,13 +59,14 @@ private:
   void route_callback(const autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr msg);
   void map_callback(const HADMapBin::ConstSharedPtr msg);
   void on_trigger(const geometry_msgs::msg::PointStamped::SharedPtr msg);
-  bool get_selected_point_lanelet(
+  bool get_selected_point_lanelets(
     const geometry_msgs::msg::Pose & selected_point,
-    lanelet::ConstLanelet & selected_point_lanelet) const;
+    lanelet::ConstLanelets & selected_point_lanelets) const;
   bool get_remaining_route_lanelets(lanelet::ConstLanelets & remaining_route_lanelets) const;
   bool is_selected_point_in_route(
-    const lanelet::ConstLanelet & selected_point_lanelet,
-    const lanelet::ConstLanelets & remaining_route_lanelets) const;
+    const lanelet::ConstLanelets & selected_point_lanelets,
+    const lanelet::ConstLanelets & remaining_route_lanelets,
+    lanelet::ConstLanelet & selected_point_lanelet) const;
   bool search_alternative_route(
     const lanelet::ConstLanelet & selected_point_lanelet,
     lanelet::routing::LaneletPath & alternative_route_lanelets) const;
