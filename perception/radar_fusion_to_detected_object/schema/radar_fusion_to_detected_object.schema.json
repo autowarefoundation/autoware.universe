@@ -16,9 +16,7 @@
               "minimum": 0.0
             }
           },
-          "required": [
-            "update_rate_hz"
-          ]
+          "required": ["update_rate_hz"]
         },
         "core_params": {
           "type": "object",
@@ -98,10 +96,7 @@
           ]
         }
       },
-      "required": [
-        "node_params",
-        "core_params"
-      ]
+      "required": ["node_params", "core_params"]
     }
   },
   "properties": {
