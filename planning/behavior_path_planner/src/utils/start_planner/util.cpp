@@ -136,7 +136,7 @@ std::pair<double, bool> calcEndArcLength(
     return {s_forward_length, false};
   }
 
-  // path end is goal ..?
+  // path end is goal
   return {s_goal, true};
 }
 
