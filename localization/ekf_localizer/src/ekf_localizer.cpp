@@ -354,7 +354,7 @@ void EKFLocalizer::callbackPoseWithCovariance(
   if (!is_activated_) {
     return;
   }
-  t_receive_pose_= msg->header.stamp;
+  t_receive_pose_ = msg->header.stamp;
   pose_queue_.push(msg);
 }
 
