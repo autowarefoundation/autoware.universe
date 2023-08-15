@@ -654,7 +654,8 @@ void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovaria
   pitch_filter_.init(rpy.y, pitch_dev, pose.header.stamp);
 }
 double EKFLocalizer::calculateDeltaZFromPitch(
-  const geometry_msgs::msg::TwistStamped & twist, const double delay_time, const double pitch_from_ndt)
+  const geometry_msgs::msg::TwistStamped & twist, const double delay_time,
+  const double pitch_from_ndt)
 {
   const double vx = twist.twist.linear.x;
   const double val_sin = std::sin(-pitch_from_ndt);

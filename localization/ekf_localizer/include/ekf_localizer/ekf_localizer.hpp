@@ -266,7 +266,8 @@ private:
    * @brief update z value by considering ndt delay
    */
   double calculateDeltaZFromPitch(
-    const geometry_msgs::msg::TwistStamped & twist, const double delay_time, const double pitch_from_ndt);
+    const geometry_msgs::msg::TwistStamped & twist, const double delay_time,
+    const double pitch_from_ndt);
   /**
    * @brief trigger node
    */
