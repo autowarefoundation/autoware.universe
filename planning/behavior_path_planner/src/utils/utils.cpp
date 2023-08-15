@@ -2680,6 +2680,28 @@ PredictedObjects filterObjectsByVelocity(
   return filtered;
 }
 
+PredictedObjects filterObjectsByPosition(
+  const PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
+  const geometry_msgs::msg::Point & current_pose, const double forward_distance,
+  const double backward_distance)
+{
+  PredictedObjects filtered;
+  filtered.header = objects.header;
+
+  // Reserve space in the vector to avoid reallocations
+  filtered.objects.reserve(objects.objects.size());
+
+  for (const auto & obj : objects.objects) {
+    const double dist_ego_to_obj = motion_utils::calcSignedArcLength(
+      path_points, current_pose, obj.kinematics.initial_pose_with_covariance.pose.position);
+
+    if (-backward_distance < dist_ego_to_obj && dist_ego_to_obj < forward_distance) {
+      filtered.objects.push_back(obj);
+    }
+  }
+  return filtered;
+}
+
 PathWithLaneId getCenterLinePathFromRootLanelet(
   const lanelet::ConstLanelet & root_lanelet,
   const std::shared_ptr<const PlannerData> & planner_data)
@@ -3236,45 +3258,32 @@ PredictedObjects filterObject(const std::shared_ptr<const PlannerData> & planner
     return PredictedObjects();
   }
 
-  const auto & route_handler = planner_data->route_handler;
-  const auto & current_lanes = planner_data->current_lanes;
-  const auto & current_pose = planner_data->self_odometry->pose.pose;
-
   // TODO(Sugahara): add in parameter
   const double ignore_object_velocity_threshold = 1.0;
+  const double object_check_forward_distance = 3.0;
+  const double object_check_backward_distance = 2.0;
   const ObjectTypesToCheck & target_object_types{};
 
-  // Get path
-  const auto path =
-    route_handler->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
-
+  const auto & route_handler = planner_data->route_handler;
+  const auto & current_lanes = planner_data->current_lanes;
+  const auto & current_pose = planner_data->self_odometry->pose.pose.position;
   PredictedObjects filtered_objects;
-  for (const auto & object : objects->objects) {
-    const auto & obj_velocity = object.kinematics.initial_twist_with_covariance.twist.linear.x;
 
-    // Check if the object is of a target type
-    if (!isTargetObjectType(object, target_object_types)) {
-      continue;
-    }
+  std::copy_if(
+    objects->objects.begin(), objects->objects.end(), std::back_inserter(filtered_objects.objects),
+    [target_object_types](const auto & obj) {
+      return isTargetObjectType(obj, target_object_types);
+    });
 
-    // Create current position's polygon
-    const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
+  filtered_objects = filterObjectsByVelocity(*objects, ignore_object_velocity_threshold);
 
-    // Calculate distance from the current ego position
-    double max_dist_ego_to_obj = std::numeric_limits<double>::lowest();
-    for (const auto & polygon_p : obj_polygon.outer()) {
-      const auto obj_p = tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
-      const double dist_ego_to_obj =
-        motion_utils::calcSignedArcLength(path.points, current_pose.position, obj_p);
-      max_dist_ego_to_obj = std::max(dist_ego_to_obj, max_dist_ego_to_obj);
-    }
+  // Get path
+  const auto path = route_handler->getCenterLinePath(
+    current_lanes, object_check_backward_distance, object_check_forward_distance);
 
-    // ignore static object that are behind the ego vehicle
-    if (obj_velocity < ignore_object_velocity_threshold && max_dist_ego_to_obj < 0.0) {
-      continue;
-    }
-    filtered_objects.objects.push_back(object);
-  }
+  filtered_objects = filterObjectsByPosition(
+    filtered_objects, path.points, current_pose, object_check_forward_distance,
+    object_check_backward_distance);
 
   return filtered_objects;
 }
@@ -3282,20 +3291,7 @@ PredictedObjects filterObject(const std::shared_ptr<const PlannerData> & planner
 TargetObjectsOnLane getSafetyCheckTargetObjects(
   const std::shared_ptr<const PlannerData> & planner_data)
 {
-  // params needs to be added
-  //  - safety_check_time_horizon
-  //  - safety_check_time_resolution
-  //  - object_check_forward_distance
-  //  - safety_check_backward_distance
-  //  - check_lane_type
-
-  // const double & safety_check_time_horizon = 2.0;
-  // const double & safety_check_time_resolution = 5.0;
-
-  // const double & object_check_forward_distance = 2.0;
-  // const double & safety_check_backward_distance = 5.0;
-
-  // const ObjectTypesToCheck & check_lane_type{};
+  // TODO(Sugahara): add in parameter
   const ObjectLaneConfiguration & object_lane_configuration{};
 
   // filter objects with velocity, position and type

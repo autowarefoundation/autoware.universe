@@ -249,6 +249,12 @@ PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, doubl
 PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, double min_v, double max_v);
 
+PredictedObjects filterObjectsByPosition(
+  const PredictedObjects & objects,
+  const std::vector<PathPointWithLaneId> & path_points,
+  const geometry_msgs::msg::Point & current_pose, const double forward_distance,
+  const double backward_distance);
+
 // drivable area generation
 lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes);
 lanelet::ConstLanelets transformToLanelets(const std::vector<DrivableLanes> & drivable_lanes);
