@@ -15,7 +15,10 @@
               "default": 10.0,
               "minimum": 0.0
             }
-          }
+          },
+          "required": [
+            "update_rate_hz"
+          ]
         },
         "core_params": {
           "type": "object",
@@ -34,7 +37,7 @@
             },
             "threshold_yaw_diff": {
               "type": "number",
-              "description": "The yaw orientation threshold. If $ \\vert \\theta {ob} - \\theta {ra} \\vert < thresholdyaw_diff $ attached to radar information include estimated velocity, where $ \\theta{ob} $ is yaw angle from 3d detected object, $ \\theta_ {ra} $ is yaw angle from radar object. [rad]",
+              "description": "The yaw orientation threshold. If $ \\vert \\theta {ob} - \\theta {ra} \\vert < threshold yaw_diff $ attached to radar information include estimated velocity, where $ \\theta{ob} $ is yaw angle from 3d detected object, $ \\theta_ {ra} $ is yaw angle from radar object. [rad]",
               "default": 0.35
             },
             "velocity_weight_min_distance": {
@@ -79,22 +82,25 @@
               "description": "If this parameter is true, compensate probability of objects to threshold probability.",
               "default": false
             }
-          }
+          },
+          "required": [
+            "bounding_box_margin",
+            "split_threshold_velocity",
+            "threshold_yaw_diff",
+            "velocity_weight_min_distance",
+            "velocity_weight_average",
+            "velocity_weight_median",
+            "velocity_weight_target_value_average",
+            "velocity_weight_target_value_top",
+            "convert_doppler_to_twist",
+            "threshold_probability",
+            "compensate_probability"
+          ]
         }
       },
       "required": [
-        "update_rate_hz",
-        "bounding_box_margin",
-        "split_threshold_velocity",
-        "threshold_yaw_diff",
-        "velocity_weight_min_distance",
-        "velocity_weight_average",
-        "velocity_weight_median",
-        "velocity_weight_target_value_average",
-        "velocity_weight_target_value_top",
-        "convert_doppler_to_twist",
-        "threshold_probability",
-        "compensate_probability"
+        "node_params",
+        "core_params"
       ]
     }
   },
