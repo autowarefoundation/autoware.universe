@@ -25,6 +25,15 @@
 
 #include <boost/geometry.hpp>
 
+// for writing the svg file
+#include <iostream>
+#include <fstream>
+// for the geometry types
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+// for the svg mapper
+#include <boost/geometry/io/svg/svg_mapper.hpp>
+#include <boost/geometry/io/svg/write.hpp>
+
 namespace drivable_area_expansion
 {
 
@@ -49,7 +58,27 @@ void expandDrivableArea(
       : createExpansionPolygons(
           path, path_footprints, predicted_paths, uncrossable_lines_in_range, params);
   const auto expanded_drivable_area = createExpandedDrivableAreaPolygon(path, expansion_polygons);
+
+  // Declare a stream and an SVG mapper
+  std::ofstream svg("/home/mclement/Pictures/debug.svg");
+  boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
+  linestring_t path_ls;
+  for(const auto & p : path.points) path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
+  mapper.add(path_ls);
+  mapper.add(expanded_drivable_area);
+  mapper.add(path_footprints);
+  mapper.map(path_footprints, "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2");
+  mapper.map(path_ls, "fill-opacity:0.3;fill:black;stroke:black;stroke-width:2");
+  mapper.map(expanded_drivable_area, "fill-opacity:0.3;fill:blue;stroke:blue;stroke-width:2");
+  mapper.map(expansion_polygons, "fill-opacity:0.3;fill:black;stroke:black;stroke-width:2");
+  std::cout << "EXPANSION" << std::endl;
   updateDrivableAreaBounds(path, expanded_drivable_area);
+  linestring_t left_ls;
+  linestring_t right_ls;
+  for(const auto & p : path.left_bound) left_ls.emplace_back(p.x, p.y);
+  for(const auto & p : path.right_bound) right_ls.emplace_back(p.x, p.y);
+  mapper.map(left_ls, "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2");
+  mapper.map(right_ls, "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2");
 }
 
 point_t convert_point(const Point & p)
