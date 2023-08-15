@@ -3067,7 +3067,8 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
 }
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
-  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data)
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const double min_slow_down_speed)
 {
   if (path.points.empty()) {
     return {};
@@ -3086,8 +3087,7 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
     convertToFrenetPoint(path.points, vehicle_pose.position, ego_seg_idx);
 
   for (double t = 0.0; t < time_horizon + 1e-3; t += time_resolution) {
-    const double velocity =
-      std::max(initial_velocity + acceleration * t, parameters->min_slow_down_speed);
+    const double velocity = std::max(initial_velocity + acceleration * t, min_slow_down_speed);
     const double length = initial_velocity * t + 0.5 * acceleration * t * t;
     const auto pose =
       motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length);
