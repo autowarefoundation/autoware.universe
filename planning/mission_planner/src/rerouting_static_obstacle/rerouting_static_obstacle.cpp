@@ -29,8 +29,7 @@ ReroutingStaticObstacle::ReroutingStaticObstacle(const rclcpp::NodeOptions & nod
   using std::placeholders::_1;
 
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "input/odometry", rclcpp::QoS(1),
-    std::bind(&ReroutingStaticObstacle::on_odom, this, _1));
+    "input/odometry", rclcpp::QoS(1), std::bind(&ReroutingStaticObstacle::on_odom, this, _1));
 
   sub_route_ = create_subscription<autoware_planning_msgs::msg::LaneletRoute>(
     "input/route", rclcpp::QoS{1}.transient_local(),
