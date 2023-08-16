@@ -72,14 +72,17 @@ public:
     parameters_ = std::any_cast<std::shared_ptr<StartPlannerParameters>>(parameters);
   }
 
-  BehaviorModuleOutput run() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] BehaviorModuleOutput run() override;
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  ModuleStatus updateState() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] ModuleStatus updateState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
+
   void processOnExit() override;
 
   void setParameters(const std::shared_ptr<StartPlannerParameters> & parameters)
@@ -93,20 +96,15 @@ public:
   {
   }
 
-  // set is_simultaneously_executable_ as false when backward driving.
-  // keep initial value to return it after finishing backward driving.
-  bool initial_value_simultaneously_executable_as_approved_module_;
-  bool initial_value_simultaneously_executable_as_candidate_module_;
-  void setInitialIsSimultaneousExecutableAsApprovedModule(const bool is_simultaneously_executable)
-  {
-    initial_value_simultaneously_executable_as_approved_module_ = is_simultaneously_executable;
-  };
-  void setInitialIsSimultaneousExecutableAsCandidateModule(const bool is_simultaneously_executable)
-  {
-    initial_value_simultaneously_executable_as_candidate_module_ = is_simultaneously_executable;
-  };
+  bool isBackFinished() const { return status_.back_finished; }
 
 private:
+  bool canTransitSuccessState() override { return false; }
+
+  bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override { return false; }
+
   std::shared_ptr<StartPlannerParameters> parameters_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
@@ -134,7 +132,7 @@ private:
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
     const std::string search_priority);
   PathWithLaneId generateStopPath() const;
-  lanelet::ConstLanelets getPathLanes(const PathWithLaneId & path) const;
+  lanelet::ConstLanelets getPathRoadLanes(const PathWithLaneId & path) const;
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   static bool isOverlappedWithLane(

@@ -154,7 +154,7 @@ void GoalPlannerModule::onTimer()
   const auto current_lanes = utils::getExtendedCurrentLanes(
     planner_data_, parameters_->backward_goal_search_length,
     parameters_->forward_goal_search_length,
-    /*until_goal_lane*/ false);
+    /*forward_only_in_route*/ false);
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
   double min_start_arc_length = std::numeric_limits<double>::max();
@@ -310,7 +310,9 @@ bool GoalPlannerModule::isExecutionRequested() const
   const double self_to_goal_arc_length =
     utils::getSignedDistance(current_pose, goal_pose, current_lanes);
   const double request_length =
-    allow_goal_modification_ ? calcModuleRequestLength() : parameters_->minimum_request_length;
+    goal_planner_utils::isAllowedGoalModification(route_handler, left_side_parking_)
+      ? calcModuleRequestLength()
+      : parameters_->minimum_request_length;
   if (self_to_goal_arc_length < 0.0 || self_to_goal_arc_length > request_length) {
     // if current position is far from goal or behind goal, do not execute goal_planner
     return false;
@@ -319,7 +321,7 @@ bool GoalPlannerModule::isExecutionRequested() const
   // if goal modification is not allowed
   // 1) goal_pose is in current_lanes, plan path to the original fixed goal
   // 2) goal_pose is NOT in current_lanes, do not execute goal_planner
-  if (!allow_goal_modification_) {
+  if (!goal_planner_utils::isAllowedGoalModification(route_handler, left_side_parking_)) {
     return goal_is_in_current_lanes;
   }
 
@@ -405,7 +407,10 @@ Pose GoalPlannerModule::calcRefinedGoal(const Pose & goal_pose) const
 ModuleStatus GoalPlannerModule::updateState()
 {
   // finish module only when the goal is fixed
-  if (!allow_goal_modification_ && hasFinishedGoalPlanner()) {
+  if (
+    !goal_planner_utils::isAllowedGoalModification(
+      planner_data_->route_handler, left_side_parking_) &&
+    hasFinishedGoalPlanner()) {
     return ModuleStatus::SUCCESS;
   }
 
@@ -419,9 +424,16 @@ bool GoalPlannerModule::planFreespacePath()
   mutex_.lock();
   goal_searcher_->update(goal_candidates_);
   const auto goal_candidates = goal_candidates_;
+  debug_data_.freespace_planner.num_goal_candidates = goal_candidates.size();
+  debug_data_.freespace_planner.is_planning = true;
   mutex_.unlock();
 
-  for (const auto & goal_candidate : goal_candidates) {
+  for (size_t i = 0; i < goal_candidates.size(); i++) {
+    const auto goal_candidate = goal_candidates.at(i);
+    mutex_.lock();
+    debug_data_.freespace_planner.current_goal_idx = i;
+    mutex_.unlock();
+
     if (!goal_candidate.is_safe) {
       continue;
     }
@@ -437,9 +449,12 @@ bool GoalPlannerModule::planFreespacePath()
     status_.is_safe = true;
     modified_goal_pose_ = goal_candidate;
     last_path_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+    debug_data_.freespace_planner.is_planning = false;
     mutex_.unlock();
     return true;
   }
+
+  debug_data_.freespace_planner.is_planning = false;
   return false;
 }
 
@@ -492,7 +507,7 @@ void GoalPlannerModule::generateGoalCandidates()
   // calculate goal candidates
   const Pose goal_pose = route_handler->getGoalPose();
   refined_goal_pose_ = calcRefinedGoal(goal_pose);
-  if (allow_goal_modification_) {
+  if (goal_planner_utils::isAllowedGoalModification(route_handler, left_side_parking_)) {
     goal_searcher_->setPlannerData(planner_data_);
     goal_candidates_ = goal_searcher_->search(refined_goal_pose_);
   } else {
@@ -507,13 +522,10 @@ BehaviorModuleOutput GoalPlannerModule::plan()
 {
   generateGoalCandidates();
 
-  if (allow_goal_modification_) {
+  if (goal_planner_utils::isAllowedGoalModification(
+        planner_data_->route_handler, left_side_parking_)) {
     return planWithGoalModification();
   } else {
-    // for fixed goals, only minor path refinements are made,
-    // so other modules are always allowed to run.
-    setIsSimultaneousExecutableAsApprovedModule(true);
-    setIsSimultaneousExecutableAsCandidateModule(true);
     fixed_goal_planner_->setPreviousModuleOutput(getPreviousModuleOutput());
     return fixed_goal_planner_->plan(planner_data_);
   }
@@ -592,7 +604,7 @@ void GoalPlannerModule::setLanes()
   status_.current_lanes = utils::getExtendedCurrentLanes(
     planner_data_, parameters_->backward_goal_search_length,
     parameters_->forward_goal_search_length,
-    /*until_goal_lane*/ false);
+    /*forward_only_in_route*/ false);
   status_.pull_over_lanes =
     goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
   status_.lanes =
@@ -826,13 +838,10 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
 
 BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
 {
-  if (allow_goal_modification_) {
+  if (goal_planner_utils::isAllowedGoalModification(
+        planner_data_->route_handler, left_side_parking_)) {
     return planWaitingApprovalWithGoalModification();
   } else {
-    // for fixed goals, only minor path refinements are made,
-    // so other modules are always allowed to run.
-    setIsSimultaneousExecutableAsApprovedModule(true);
-    setIsSimultaneousExecutableAsCandidateModule(true);
     fixed_goal_planner_->setPreviousModuleOutput(getPreviousModuleOutput());
     return fixed_goal_planner_->plan(planner_data_);
   }
@@ -1076,11 +1085,22 @@ bool GoalPlannerModule::isStopped()
 
 bool GoalPlannerModule::isStuck()
 {
+  constexpr double stuck_time = 5.0;
+  if (!isStopped(odometry_buffer_stuck_, stuck_time)) {
+    return false;
+  }
+
+  // not found safe path
+  if (!status_.is_safe) {
+    return true;
+  }
+
+  // any path has never been found
   if (!status_.pull_over_path) {
     return false;
   }
-  constexpr double stuck_time = 5.0;
-  return isStopped(odometry_buffer_stuck_, stuck_time) && checkCollision(getCurrentPath());
+
+  return checkCollision(getCurrentPath());
 }
 
 bool GoalPlannerModule::hasFinishedCurrentPath()
@@ -1425,11 +1445,15 @@ void GoalPlannerModule::setDebugData()
 
   const auto header = planner_data_->route_handler->getRouteHeader();
 
-  const auto add = [this](const MarkerArray & added) {
+  const auto add = [this](MarkerArray added) {
+    for (auto & marker : added.markers) {
+      marker.lifetime = rclcpp::Duration::from_seconds(1.5);
+    }
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
-  if (allow_goal_modification_) {
+  if (goal_planner_utils::isAllowedGoalModification(
+        planner_data_->route_handler, left_side_parking_)) {
     // Visualize pull over areas
     const auto color = status_.has_decided_path ? createMarkerColor(1.0, 1.0, 0.0, 0.999)  // yellow
                                                 : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
@@ -1467,7 +1491,8 @@ void GoalPlannerModule::setDebugData()
     auto marker = createDefaultMarker(
       header.frame_id, header.stamp, "planner_type", 0,
       visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0), color);
-    marker.pose = modified_goal_pose_->goal_pose;
+    marker.pose = modified_goal_pose_ ? modified_goal_pose_->goal_pose
+                                      : planner_data_->self_odometry->pose.pose;
     marker.text = magic_enum::enum_name(status_.pull_over_path->type);
     marker.text += " " + std::to_string(status_.current_path_idx) + "/" +
                    std::to_string(status_.pull_over_path->partial_paths.size() - 1);
@@ -1475,6 +1500,12 @@ void GoalPlannerModule::setDebugData()
       marker.text += " stuck";
     } else if (isStopped()) {
       marker.text += " stopped";
+    }
+
+    if (debug_data_.freespace_planner.is_planning) {
+      marker.text +=
+        " freespace: " + std::to_string(debug_data_.freespace_planner.current_goal_idx) + "/" +
+        std::to_string(debug_data_.freespace_planner.num_goal_candidates);
     }
 
     planner_type_marker_array.markers.push_back(marker);

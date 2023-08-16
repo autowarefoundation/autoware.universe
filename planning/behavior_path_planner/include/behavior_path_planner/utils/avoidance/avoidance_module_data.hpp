@@ -92,8 +92,8 @@ struct AvoidanceParameters
   // to use this, enable_avoidance_over_same_direction need to be set to true.
   bool use_opposite_lane{true};
 
-  // enable update path when if detected objects on planner data is gone.
-  bool enable_update_path_when_object_is_gone{false};
+  // if this param is true, it reverts avoidance path when the path is no longer needed.
+  bool enable_cancel_maneuver{false};
 
   // enable avoidance for all parking vehicle
   bool enable_force_avoidance_for_stopped_vehicle{false};
@@ -113,8 +113,11 @@ struct AvoidanceParameters
   // use intersection area for avoidance
   bool use_intersection_areas{false};
 
-  // constrains
-  bool use_constraints_for_decel{false};
+  // // constrains
+  // bool use_constraints_for_decel{false};
+
+  // // policy
+  // bool use_relaxed_margin_immediately{false};
 
   // max deceleration for
   double max_deceleration;
@@ -198,9 +201,6 @@ struct AvoidanceParameters
   // transit hysteresis (unsafe to safe)
   double safety_check_hysteresis_factor;
 
-  // don't output new candidate path if the offset between ego and path is larger than this.
-  double safety_check_ego_offset;
-
   // keep target velocity in yield maneuver
   double yield_velocity;
 
@@ -230,7 +230,11 @@ struct AvoidanceParameters
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double road_shoulder_safety_margin{1.0};
+  double soft_road_shoulder_margin{1.0};
+
+  // The margin is configured so that the generated avoidance trajectory does not come near to the
+  // road shoulder.
+  double hard_road_shoulder_margin{1.0};
 
   // Even if the obstacle is very large, it will not avoid more than this length for right direction
   double max_right_shift_length;
@@ -273,6 +277,15 @@ struct AvoidanceParameters
 
   // For shift line generation process. Remove sharp(=jerky) shift line.
   double sharp_shift_filter_threshold;
+
+  // policy
+  bool use_shorten_margin_immediately{false};
+
+  // policy
+  std::string policy_deceleration{"best_effort"};
+
+  // policy
+  std::string policy_lateral_margin{"best_effort"};
 
   // target velocity matrix
   std::vector<double> velocity_map;
@@ -464,6 +477,8 @@ struct AvoidancePlanningData
   AvoidLineArray safe_new_sl{};
 
   bool safe{false};
+
+  bool comfortable{false};
 
   bool avoid_required{false};
 

@@ -83,6 +83,18 @@ struct PUllOverStatus
   bool is_ready{false};
 };
 
+struct FreespacePlannerDebugData
+{
+  bool is_planning{false};
+  size_t current_goal_idx{0};
+  size_t num_goal_candidates{0};
+};
+
+struct GoalPlannerDebugData
+{
+  FreespacePlannerDebugData freespace_planner{};
+};
+
 class GoalPlannerModule : public SceneModuleInterface
 {
 public:
@@ -96,10 +108,12 @@ public:
     parameters_ = std::any_cast<std::shared_ptr<GoalPlannerParameters>>(parameters);
   }
 
-  BehaviorModuleOutput run() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] BehaviorModuleOutput run() override;
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  ModuleStatus updateState() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] ModuleStatus updateState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   void processOnEntry() override;
@@ -114,6 +128,12 @@ public:
   CandidateOutput planCandidate() const override { return CandidateOutput{}; };
 
 private:
+  bool canTransitSuccessState() override { return false; }
+
+  bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override { return false; }
+
   PUllOverStatus status_;
 
   std::shared_ptr<GoalPlannerParameters> parameters_;
@@ -167,6 +187,9 @@ private:
   // generate freespace parking paths in a separate thread
   rclcpp::TimerBase::SharedPtr freespace_parking_timer_;
   rclcpp::CallbackGroup::SharedPtr freespace_parking_timer_cb_group_;
+
+  // debug
+  mutable GoalPlannerDebugData debug_data_;
 
   // collision check
   void initializeOccupancyGridMap();

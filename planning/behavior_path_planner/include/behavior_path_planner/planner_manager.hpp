@@ -126,10 +126,10 @@ public:
    */
   void reset()
   {
+    std::for_each(manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->reset(); });
     approved_module_ptrs_.clear();
     candidate_module_ptrs_.clear();
     root_lanelet_ = boost::none;
-    std::for_each(manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->reset(); });
     resetProcessingTime();
   }
 
@@ -213,6 +213,16 @@ public:
 
     return stop_reason_array;
   }
+
+  /**
+   * @brief check if there are approved modules.
+   */
+  bool hasApprovedModules() const { return !approved_module_ptrs_.empty(); }
+
+  /**
+   * @brief check if there are candidate modules.
+   */
+  bool hasCandidateModules() const { return !candidate_module_ptrs_.empty(); }
 
   /**
    * @brief reset root lanelet. if there are approved modules, don't reset root lanelet.
