@@ -8,7 +8,8 @@ This repo also includes a F1tenth Recordreplay demo. This demo allows the user t
 
 There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1. Future JetPack versions may also work but not tested.
 
-- NVIDIA SDK Manager Method (requires a Linux host computer running Ubuntu Linux x64 version 20.04 or 18.04)
+NVIDIA SDK Manager Method:
+(requires a Linux host computer running Ubuntu Linux x64 version 20.04 or 18.04)
 
 This method you will first install NVIDIA SDK Manager on your host machine, connect the host machine to the Jetson Xavier NX via a micro-USB cable, download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson Xavier NX. This method allows you to directly flash the JetPack to the `SD Card` or to the `NVME SSD drive` on the race car Jetson. You may need to create an NVIDIA account to download the NVIDIA SDK manager.
 
@@ -19,7 +20,8 @@ This method you will first install NVIDIA SDK Manager on your host machine, conn
 3. If you have trouble flashing the Jetpack, you can put the Jetson into `Force Recovery Mode` by using a jumper to connect PINs #9 and #10 of the connector J50 before powering up the Jetson.
 
 
-- SD Card Image Method (requires a computer with Internet connection and the ability to read and write SD cards)
+SD Card Image Method:
+(requires a computer with Internet connection and the ability to read and write SD cards)
 
 1. Download [JetPack 5.1.1](https://developer.nvidia.com/downloads/embedded/l4t/r35_release_v3.1/sd_card_b49/jp511-xnx-sd-card-image.zip/)
 
