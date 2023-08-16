@@ -53,6 +53,10 @@ public:
   enum class PriorityMode : int { Object0 = 0, Object1 = 1, Confidence = 2 };
 
 private:
+  void set3dDataAssociation(
+    const std::string & prefix,
+    std::unordered_map<std::string, std::unique_ptr<DataAssociation>> & data_association_map);
+
   void mainObjectsCallback(
     const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
   void subObjectsCallback(
@@ -87,7 +91,7 @@ private:
   std::unordered_map<MEASUREMENT_STATE, std::function<void(TrackedObject &, const TrackedObject &)>>
     input_merger_map_;
   std::vector<TrackerState> inner_tracker_objects_;
-  std::unique_ptr<DataAssociation> data_association_;
+  std::unordered_map<std::string, std::unique_ptr<DataAssociation>> data_association_map_;
   std::string target_frame_;
   std::string base_link_frame_id_;
   // buffer to save the sub objects
