@@ -1036,10 +1036,6 @@ SafetyCheckParams StartPlannerModule::createSafetyCheckParams() const
 
   params.ignore_object_velocity_threshold = parameters_->th_moving_object_velocity;
 
-
-
-
-
   params.publish_debug_marker = parameters_->publish_debug_marker;
   return params;
 }
