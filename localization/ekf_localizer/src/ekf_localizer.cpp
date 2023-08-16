@@ -211,7 +211,7 @@ void EKFLocalizer::timerCallback()
 
   const double biased_yaw = ekf_.getXelement(IDX::YAW);
   const double yaw_bias = ekf_.getXelement(IDX::YAWB);
-  
+
   const double roll = roll_filter_.get_x();
   const double pitch = pitch_filter_.get_x();
   const double yaw = biased_yaw + yaw_bias;
