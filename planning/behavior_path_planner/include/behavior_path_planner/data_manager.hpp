@@ -148,8 +148,8 @@ struct PlannerData
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
   BehaviorPathPlannerParameters parameters{};
   drivable_area_expansion::DrivableAreaExpansionParameters drivable_area_expansion_parameters{};
-  std::optional<geometry_msgs::msg::Pose> drivable_area_expansion_prev_crop_pose;
 
+  mutable std::optional<geometry_msgs::msg::Pose> drivable_area_expansion_prev_crop_pose;
   mutable TurnSignalDecider turn_signal_decider;
 
   TurnIndicatorsCommand getTurnSignal(

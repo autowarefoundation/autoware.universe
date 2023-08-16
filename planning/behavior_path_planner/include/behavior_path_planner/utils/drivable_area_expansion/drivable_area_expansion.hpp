@@ -32,7 +32,8 @@ namespace drivable_area_expansion
 /// @param[inout] planner_data planning data (params, dynamic objects, route handler, ...)
 /// @param[in] path_lanes lanelets of the path
 void expandDrivableArea(
-  PathWithLaneId & path, const std::shared_ptr<behavior_path_planner::PlannerData> planner_data,
+  PathWithLaneId & path,
+  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data,
   const lanelet::ConstLanelets & path_lanes);
 
 /// @brief Create a polygon combining the drivable area of a path and some expansion polygons

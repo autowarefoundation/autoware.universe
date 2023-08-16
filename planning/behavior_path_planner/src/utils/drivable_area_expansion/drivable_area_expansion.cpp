@@ -31,7 +31,7 @@ namespace drivable_area_expansion
 
 std::vector<PathPointWithLaneId> crop_and_resample(
   const std::vector<PathPointWithLaneId> & points,
-  const std::shared_ptr<behavior_path_planner::PlannerData> planner_data)
+  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data)
 {
   constexpr auto resample_interval = 2.0;  // TODO(Maxime): param
   auto lon_offset = 0.0;
@@ -76,7 +76,8 @@ std::vector<PathPointWithLaneId> crop_and_resample(
 }
 
 void expandDrivableArea(
-  PathWithLaneId & path, const std::shared_ptr<behavior_path_planner::PlannerData> planner_data,
+  PathWithLaneId & path,
+  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data,
   const lanelet::ConstLanelets & path_lanes)
 {
   const auto & params = planner_data->drivable_area_expansion_parameters;
