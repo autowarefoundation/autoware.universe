@@ -42,29 +42,16 @@ public:
   AutowareBagRecorderNode(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
-  void run();
-
-  std::string get_timestamp();
-  rclcpp::QoS get_qos_profile_of_topic(const std::string & topic_name);
-  void search_topic(ModuleSection & section);
-  void create_bag_file(std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
-  void add_topics_to_writer(
-    std::unique_ptr<rosbag2_cpp::Writer> & writer_, std::string topic_name, std::string topic_type);
-  void generic_subscription_callback(
-    const std::shared_ptr<rclcpp::SerializedMessage const> msg, const std::string & topic_name,
-    autoware_bag_recorder::ModuleSection & section);
-  void section_factory(std::vector<std::string> topics, std::string path);
-  int get_root_disk_space();
-
   int maximum_record_time_;
   int bag_time_;
-
   std::string bag_path_;
+  int disk_space_threshold_;
+  int number_of_maximum_bags_;
+
   bool record_planning_topics_;
   bool record_sensing_topics_;
 
   int remaining_topic_num_;
-  int disk_space_threshold_;
 
   std::vector<std::string> planning_topics_;
   std::vector<std::string> sensing_topics_;
@@ -78,6 +65,20 @@ private:
   std::shared_ptr<rclcpp::SerializedMessage> serialized_msg_ptr_;
 
   std::mutex writer_mutex_;
+
+  std::string get_timestamp();
+  rclcpp::QoS get_qos_profile_of_topic(const std::string & topic_name);
+  void search_topic(ModuleSection & section);
+  void create_bag_file(std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
+  void add_topics_to_writer(
+    std::unique_ptr<rosbag2_cpp::Writer> & writer_, std::string topic_name, std::string topic_type);
+  void generic_subscription_callback(
+    const std::shared_ptr<rclcpp::SerializedMessage const> msg, const std::string & topic_name,
+    autoware_bag_recorder::ModuleSection & section);
+  void section_factory(std::vector<std::string> topics, std::string path);
+  int get_root_disk_space();
+  void check_number_of_bags_in_folder(autoware_bag_recorder::ModuleSection & section);
+  void run();
 };
 
 }  // namespace autoware_bag_recorder

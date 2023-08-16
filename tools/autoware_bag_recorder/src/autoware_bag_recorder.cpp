@@ -21,22 +21,24 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
   const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options), node_(this)
 {
+  // common params declarations
   bag_path_ = declare_parameter<std::string>("common.path");
   disk_space_threshold_ = declare_parameter<int>("common.check_disk_space_threshold");
   maximum_record_time_ = declare_parameter<int>("common.maximum_record_time");
   bag_time_ = declare_parameter<int>("common.bag_time");
+  number_of_maximum_bags_ = declare_parameter<int>("common.number_of_maximum_bags");
 
   record_planning_topics_ = declare_parameter<bool>("planning_modules.record_planning");
   if (record_planning_topics_) {
     planning_topics_ =
       declare_parameter<std::vector<std::string>>("planning_modules.planning_topics");
-    section_factory(planning_topics_, bag_path_ + "/planning");
+    section_factory(planning_topics_, bag_path_ + "planning");
   }
 
   record_sensing_topics_ = declare_parameter<bool>("sensing_modules.record_sensing");
   if (record_sensing_topics_) {
     sensing_topics_ = declare_parameter<std::vector<std::string>>("sensing_modules.sensing_topics");
-    section_factory(sensing_topics_, bag_path_ + "/sensing");
+    section_factory(sensing_topics_, bag_path_ + "sensing");
   }
 
   remaining_topic_num_ = 0;
@@ -161,7 +163,28 @@ int AutowareBagRecorderNode::get_root_disk_space()
 {
   std::filesystem::space_info root = std::filesystem::space("/");
 
-  return (root.available / pow(1024, 3));  // Convert to GB
+  return (root.available / pow(1024.0, 3.0));  // Convert to GB
+}
+
+void AutowareBagRecorderNode::check_number_of_bags_in_folder(autoware_bag_recorder::ModuleSection & section)
+{
+  std::vector<std::string> directories;
+  for(const auto & path : std::filesystem::recursive_directory_iterator(section.folder_path))
+  {
+    if (path.is_directory())
+    {
+      directories.push_back(path.path().string());
+    }
+  }
+
+  std::sort(directories.begin(), directories.end(),
+          [](const std::string & a, const std::string & b) -> bool {return a < b;});
+
+  while (directories.size() > static_cast<std::vector<int>::size_type>(number_of_maximum_bags_))
+  {
+    std::filesystem::remove_all(directories[0]);
+    directories.erase(directories.begin());
+  }
 }
 
 void AutowareBagRecorderNode::run()
@@ -210,6 +233,7 @@ void AutowareBagRecorderNode::run()
         start_bag_time = std::chrono::system_clock::now();
 
         for (auto & section : module_sections_) {
+          check_number_of_bags_in_folder(section);
           std::lock_guard<std::mutex> lock(writer_mutex_);
           create_bag_file(section.bag_writer, section.folder_path + "/rosbag2_" + get_timestamp());
           for (auto & topic_info : section.topic_info) {
