@@ -1454,19 +1454,12 @@ void AvoidanceModule::trimSmallShiftLine(AvoidLineArray & shift_lines, const dou
   AvoidLineArray input = shift_lines;
   shift_lines.clear();
 
-  for (size_t i = 0; i < input.size(); ++i) {
-    if (input.at(i).getRelativeLongitudinal() > threshold) {
-      shift_lines.push_back(input.at(i));
+  for (const auto & s : input) {
+    if (s.getRelativeLongitudinal() < threshold) {
       continue;
     }
 
-    if (shift_lines.empty()) {
-      continue;
-    }
-
-    utils::avoidance::setEndData(
-      shift_lines.back(), input.at(i).end_shift_length, input.at(i).end, input.at(i).end_idx,
-      input.at(i).end_longitudinal);
+    shift_lines.push_back(s);
   }
 }
 
