@@ -19,8 +19,8 @@
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "motion_utils/motion_utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
@@ -66,10 +66,13 @@ using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using behavior_path_planner::utils::safety_check::ExtendedPredictedObject;
-using behavior_path_planner::utils::safety_check::PoseWithVelocityAndPolygonStamped;
-using behavior_path_planner::utils::safety_check::PoseWithVelocityStamped;
-using behavior_path_planner::utils::safety_check::PredictedPathWithPolygon;
+using path_safety_checker::ExtendedPredictedObject;
+using path_safety_checker::PoseWithVelocityAndPolygonStamped;
+using path_safety_checker::PoseWithVelocityStamped;
+using path_safety_checker::PredictedPathWithPolygon;
+using path_safety_checker::ObjectTypesToCheck;
+using path_safety_checker::SafetyCheckParams;
+using path_safety_checker::TargetObjectsOnLane;
 using drivable_area_expansion::DrivableAreaExpansionParameters;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -104,79 +107,6 @@ struct PolygonPoint
     }
     return 0.0 < lat_dist_to_bound;
   };
-};
-
-// will be moved to check_objects_creator class and safety_check class
-struct ObjectTypesToCheck
-{
-  bool check_car{true};
-  bool check_truck{true};
-  bool check_bus{true};
-  bool check_trailer{true};
-  bool check_unknown{true};
-  bool check_bicycle{true};
-  bool check_motorcycle{true};
-  bool check_pedestrian{true};
-};
-
-struct ObjectLaneConfiguration
-{
-  bool check_current_lane{};
-  bool check_right_lane{};
-  bool check_left_lane{};
-  bool check_shoulder_lane{};
-  bool check_other_lane{};
-};
-struct TargetObjectsOnLane
-{
-  std::vector<utils::safety_check::ExtendedPredictedObject> on_current_lane{};
-  std::vector<utils::safety_check::ExtendedPredictedObject> on_right_lane{};
-  std::vector<utils::safety_check::ExtendedPredictedObject> on_left_lane{};
-  std::vector<utils::safety_check::ExtendedPredictedObject> on_shoulder_lane{};
-  std::vector<utils::safety_check::ExtendedPredictedObject> on_other_lane{};
-};
-
-struct RSSparams
-{
-  double rear_vehicle_reaction_time{0.0};
-  double rear_vehicle_safety_time_margin{0.0};
-  double lateral_distance_max_threshold{0.0};
-  double longitudinal_distance_min_threshold{0.0};
-  double longitudinal_velocity_delta_time{0.0};
-};
-
-struct SafetyCheckParams
-{
-  // for ego predicted path generation
-  double acceleration;
-  double time_horizon;
-  double time_resolution;
-  double min_slow_speed;
-  double delay_until_departure;
-  double target_velocity;
-
-  // for dynamic objects to check
-  double safety_check_time_horizon;
-  double safety_check_time_resolution;
-  double object_check_forward_distance;
-  double object_check_backward_distance;
-  double ignore_object_velocity_threshold;
-  ObjectTypesToCheck object_types_to_check;
-  ObjectLaneConfiguration object_lane_configuration;
-  bool include_opposite_lane;
-  bool invert_opposite_lane;
-  bool check_all_predicted_path;
-  bool use_all_predicted_path;
-  bool use_predicted_path_outside_lanelet;
-
-  // Trajectory generation parameters
-  double backward_lane_length;
-  double forward_path_length;
-
-  RSSparams rss_params{};
-
-  // Debug marker publishing option
-  bool publish_debug_marker{false};
 };
 
 struct FrenetPoint

@@ -1375,14 +1375,14 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     const auto obj_predicted_paths =
       utils::getPredictedPathFromObj(obj, lane_change_parameters_->use_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
-      if (!utils::safety_check::checkCollision(
+      if (!utils::path_safety_checker::checkCollision(
             path, ego_predicted_path, obj, obj_path, common_parameters, front_decel, rear_decel,
             current_debug_data.second)) {
         path_safety_status.is_safe = false;
         updateDebugInfo(current_debug_data, path_safety_status.is_safe);
         const auto & obj_pose = obj.initial_pose.pose;
         const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj_pose, obj.shape);
-        path_safety_status.is_object_coming_from_rear |= !utils::safety_check::isTargetObjectFront(
+        path_safety_status.is_object_coming_from_rear |= !utils::path_safety_checker::isTargetObjectFront(
           path, current_pose, common_parameters.vehicle_info, obj_polygon);
       }
     }

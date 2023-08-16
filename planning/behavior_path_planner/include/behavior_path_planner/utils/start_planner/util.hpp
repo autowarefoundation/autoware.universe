@@ -16,7 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__UTIL_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/utils/safety_check.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 
 #include <route_handler/route_handler.hpp>
 

@@ -924,7 +924,7 @@ bool StartPlannerModule::isSafePath() const
       utils::getPredictedPathFromObj(object, safety_check_params.check_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
       CollisionCheckDebug collision{};
-      if (!utils::safety_check::checkCollision(
+      if (!utils::path_safety_checker::checkCollision(
             pull_out_path, ego_predicted_path, object, obj_path, common_param,
             common_param.expected_front_deceleration, common_param.expected_rear_deceleration,
             collision)) {
@@ -1016,7 +1016,7 @@ SafetyCheckParams StartPlannerModule::createSafetyCheckParams() const
   params.object_types_to_check.check_unknown =
     parameters_->target_filtering.object_types_to_check.check_unknown;
 
-  params.object_lane_configuration = parameters_->target_filtering.object_lane_configuration;
+  // params.object_lane_configuration = parameters_->target_filtering.object_lane_configuration;
 
   params.include_opposite_lane = parameters_->target_filtering.include_opposite_lane;
   params.invert_opposite_lane = parameters_->target_filtering.invert_opposite_lane;
@@ -1057,19 +1057,19 @@ void StartPlannerModule::setDebugData() const
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
-  const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
-  double target_velocity = 0.0;
-  switch (status_.planner_type) {
-    case PlannerType::SHIFT:
-      target_velocity = parameters_->shift_pull_out_velocity;
-      break;
-    case PlannerType::GEOMETRIC:
-      target_velocity = parameters_->parallel_parking_parameters.pull_out_velocity;
-      break;
-    default:
-      break;
-  }
-  const Pose current_pose = planner_data_->self_odometry->pose.pose;
+  // const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
+  // double target_velocity = 0.0;
+  // switch (status_.planner_type) {
+  //   case PlannerType::SHIFT:
+  //     target_velocity = parameters_->shift_pull_out_velocity;
+  //     break;
+  //   case PlannerType::GEOMETRIC:
+  //     target_velocity = parameters_->parallel_parking_parameters.pull_out_velocity;
+  //     break;
+  //   default:
+  //     break;
+  // }
+  // const Pose current_pose = planner_data_->self_odometry->pose.pose;
 
   // const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
   //   status_.pull_out_path.partial_paths.back().points, current_velocity, target_velocity,
