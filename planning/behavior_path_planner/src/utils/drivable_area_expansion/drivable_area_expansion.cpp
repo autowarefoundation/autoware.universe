@@ -26,8 +26,8 @@
 #include <boost/geometry.hpp>
 
 // for writing the svg file
-#include <iostream>
 #include <fstream>
+#include <iostream>
 // for the geometry types
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 // for the svg mapper
@@ -63,7 +63,8 @@ void expandDrivableArea(
   std::ofstream svg("/home/mclement/Pictures/debug.svg");
   boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
   linestring_t path_ls;
-  for(const auto & p : path.points) path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
+  for (const auto & p : path.points)
+    path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
   mapper.add(path_ls);
   mapper.add(expanded_drivable_area);
   mapper.add(path_footprints);
@@ -75,8 +76,8 @@ void expandDrivableArea(
   updateDrivableAreaBounds(path, expanded_drivable_area);
   linestring_t left_ls;
   linestring_t right_ls;
-  for(const auto & p : path.left_bound) left_ls.emplace_back(p.x, p.y);
-  for(const auto & p : path.right_bound) right_ls.emplace_back(p.x, p.y);
+  for (const auto & p : path.left_bound) left_ls.emplace_back(p.x, p.y);
+  for (const auto & p : path.right_bound) right_ls.emplace_back(p.x, p.y);
   mapper.map(left_ls, "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2");
   mapper.map(right_ls, "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2");
 }
@@ -187,6 +188,7 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
       distance = dist;
     }
   };
+
   Intersection start_left(da.end());
   Intersection end_left(da.end());
   Intersection start_right(da.end());
@@ -229,11 +231,39 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
         end_right.update(*inter_end, it, dist);
     }
   }
-  if (  // ill-formed expanded drivable area -> keep the original bounds
-    start_left.segment_it == da.end() || start_right.segment_it == da.end() ||
-    end_left.segment_it == da.end() || end_right.segment_it == da.end()) {
-    return;
+  if (start_left.segment_it == da.end()) {
+    const auto closest_it =
+      std::min_element(da.begin(), da.end(), [&](const auto & a, const auto & b) {
+        return boost::geometry::distance(a, start_segment.first) <
+               boost::geometry::distance(b, start_segment.first);
+      });
+    start_left.update(*closest_it, closest_it, 0.0);
   }
+  if (start_right.segment_it == da.end()) {
+    const auto closest_it =
+      std::min_element(da.begin(), da.end(), [&](const auto & a, const auto & b) {
+        return boost::geometry::distance(a, start_segment.second) <
+               boost::geometry::distance(b, start_segment.second);
+      });
+    start_right.update(*closest_it, closest_it, 0.0);
+  }
+  if (end_left.segment_it == da.end()) {
+    const auto closest_it =
+      std::min_element(da.begin(), da.end(), [&](const auto & a, const auto & b) {
+        return boost::geometry::distance(a, end_segment.first) <
+               boost::geometry::distance(b, end_segment.first);
+      });
+    end_left.update(*closest_it, closest_it, 0.0);
+  }
+  if (end_right.segment_it == da.end()) {
+    const auto closest_it =
+      std::min_element(da.begin(), da.end(), [&](const auto & a, const auto & b) {
+        return boost::geometry::distance(a, end_segment.second) <
+               boost::geometry::distance(b, end_segment.second);
+      });
+    end_right.update(*closest_it, closest_it, 0.0);
+  }
+
   // extract the expanded left and right bound from the expanded drivable area
   path.left_bound.clear();
   path.right_bound.clear();
