@@ -211,7 +211,7 @@ Reference implementation for `Rerouting Static Obstacle` node is under `src/rero
 2. Make the plugin visible for ease of use
 3. Select a point through the route of the vehicle (where you see a blockage for example)
 4. If an alternative route can be found, the vehicle will to change route and will not go through the selected point.
-
+> Make sure that you select the point for rerouting with enough distance ahead the vehicle, otherwise the rerouting will be considered unsafe. For more information, please check the rerouting limitation below and `mission_planner.param.yaml` config file.
 
 #### Rerouting Limitations
 
