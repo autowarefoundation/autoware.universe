@@ -414,7 +414,7 @@ bool AdaptiveCruiseController::estimatePointVelocityFromObject(
 
   /* get object velocity, and current yaw */
   bool get_obj = false;
-  double obj_vel;
+  double obj_vel_norm;
   double obj_vel_yaw;
   const Point collision_point_2d = convertPointRosToBoost(nearest_collision_p_ros);
   for (const auto & obj : object_ptr->objects) {
@@ -422,7 +422,7 @@ bool AdaptiveCruiseController::estimatePointVelocityFromObject(
       obj.kinematics.initial_pose_with_covariance.pose, obj.shape.dimensions, 0.0,
       param_.object_polygon_length_margin, param_.object_polygon_width_margin);
     if (boost::geometry::distance(obj_poly, collision_point_2d) <= 0) {
-      obj_vel = std::hypot(
+      obj_vel_norm = std::hypot(
         obj.kinematics.initial_twist_with_covariance.twist.linear.x,
         obj.kinematics.initial_twist_with_covariance.twist.linear.y);
       obj_vel_yaw = std::atan2(
@@ -434,7 +434,7 @@ bool AdaptiveCruiseController::estimatePointVelocityFromObject(
   }
 
   if (get_obj) {
-    *velocity = obj_vel * std::cos(obj_vel_yaw - traj_yaw);
+    *velocity = obj_vel_norm * std::cos(obj_vel_yaw - traj_yaw);
     debug_values_.data.at(DBGVAL::ESTIMATED_VEL_OBJ) = *velocity;
     return true;
   } else {
@@ -446,14 +446,15 @@ void AdaptiveCruiseController::calculateProjectedVelocityFromObject(
   const PredictedObject & object, const double traj_yaw, double * velocity)
 {
   /* get object velocity, and current yaw */
-  double obj_vel = std::hypot(
+  double obj_vel_norm = std::hypot(
     object.kinematics.initial_twist_with_covariance.twist.linear.x,
     object.kinematics.initial_twist_with_covariance.twist.linear.y);
   double obj_vel_yaw = std::atan2(
     object.kinematics.initial_twist_with_covariance.twist.linear.y,
     object.kinematics.initial_twist_with_covariance.twist.linear.x);
 
-  *velocity = obj_vel * std::cos(tier4_autoware_utils::normalizeRadian(obj_vel_yaw - traj_yaw));
+  *velocity =
+    obj_vel_norm * std::cos(tier4_autoware_utils::normalizeRadian(obj_vel_yaw - traj_yaw));
   debug_values_.data.at(DBGVAL::ESTIMATED_VEL_OBJ) = *velocity;
 }
 
