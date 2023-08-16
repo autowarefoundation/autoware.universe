@@ -12,12 +12,12 @@
 #include <sys/statfs.h>
 
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
-#include <cmath>
 
 namespace autoware_bag_recorder
 {

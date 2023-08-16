@@ -26,7 +26,6 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
   maximum_record_time_ = declare_parameter<int>("common.maximum_record_time");
   bag_time_ = declare_parameter<int>("common.bag_time");
 
-
   record_planning_topics_ = declare_parameter<bool>("planning_modules.record_planning");
   if (record_planning_topics_) {
     planning_topics_ =
@@ -49,7 +48,8 @@ std::string AutowareBagRecorderNode::get_timestamp()
 {
   char timestamp_str[100];
   std::time_t now_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  std::strftime(timestamp_str, sizeof(timestamp_str), "%Y-%m-%d-%H-%M-%S", std::localtime(&now_time_t));
+  std::strftime(
+    timestamp_str, sizeof(timestamp_str), "%Y-%m-%d-%H-%M-%S", std::localtime(&now_time_t));
   return timestamp_str;
 }
 
@@ -142,8 +142,7 @@ void AutowareBagRecorderNode::search_topic(autoware_bag_recorder::ModuleSection 
 
     auto subscription = rclcpp::create_generic_subscription(
       topics_interface, topic_name, topic_type, get_qos_profile_of_topic(topic_name),
-      [this, topic_name,&section]
-      (const std::shared_ptr<rclcpp::SerializedMessage const> msg) {
+      [this, topic_name, &section](const std::shared_ptr<rclcpp::SerializedMessage const> msg) {
         generic_subscription_callback(msg, topic_name, section);
       });
 
@@ -193,30 +192,27 @@ void AutowareBagRecorderNode::run()
       // check available disk space, if current disk space is smaller than threshold,
       // then shutdown node
       if (get_root_disk_space() < disk_space_threshold_) {
-        RCLCPP_WARN(this->get_logger(),
-                    "Available Disk Space is: %d under the threshold.", get_root_disk_space());
+        RCLCPP_WARN(
+          this->get_logger(), "Available Disk Space is: %d under the threshold.",
+          get_root_disk_space());
         rclcpp::shutdown();
       }
 
       // check record time, if record time is exceeded then shutdown node
-      if ((std::chrono::system_clock::now() - start_record_time) >
-          std::chrono::seconds(maximum_record_time_))
-      {
+      if (
+        (std::chrono::system_clock::now() - start_record_time) >
+        std::chrono::seconds(maximum_record_time_)) {
         RCLCPP_WARN(this->get_logger(), "The maximum record time is reached.");
         rclcpp::shutdown();
       }
 
-      if ((std::chrono::system_clock::now() - start_bag_time) >=
-          std::chrono::seconds(bag_time_))
-      {
+      if ((std::chrono::system_clock::now() - start_bag_time) >= std::chrono::seconds(bag_time_)) {
         start_bag_time = std::chrono::system_clock::now();
 
-        for(auto & section : module_sections_)
-        {
+        for (auto & section : module_sections_) {
           std::lock_guard<std::mutex> lock(writer_mutex_);
           create_bag_file(section.bag_writer, section.folder_path + "/rosbag2_" + get_timestamp());
-          for(auto &topic_info : section.topic_info)
-          {
+          for (auto & topic_info : section.topic_info) {
             add_topics_to_writer(section.bag_writer, topic_info.topic_name, topic_info.topic_type);
           }
         }
