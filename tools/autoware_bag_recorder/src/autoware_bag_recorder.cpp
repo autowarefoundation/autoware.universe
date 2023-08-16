@@ -31,8 +31,7 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
   // api
   record_api_topics_ = declare_parameter<bool>("api_modules.record_api");
   if (record_api_topics_) {
-    api_topics_ =
-      declare_parameter<std::vector<std::string>>("api_modules.api_topics");
+    api_topics_ = declare_parameter<std::vector<std::string>>("api_modules.api_topics");
     section_factory(api_topics_, bag_path_ + "api");
   }
 
@@ -47,8 +46,7 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
   // control
   record_control_topics_ = declare_parameter<bool>("control_modules.record_control");
   if (record_control_topics_) {
-    control_topics_ =
-      declare_parameter<std::vector<std::string>>("control_modules.control_topics");
+    control_topics_ = declare_parameter<std::vector<std::string>>("control_modules.control_topics");
     section_factory(control_topics_, bag_path_ + "control");
   }
 
@@ -71,8 +69,7 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
   // map
   record_map_topics_ = declare_parameter<bool>("map_modules.record_map");
   if (record_map_topics_) {
-    map_topics_ =
-      declare_parameter<std::vector<std::string>>("map_modules.map_topics");
+    map_topics_ = declare_parameter<std::vector<std::string>>("map_modules.map_topics");
     section_factory(map_topics_, bag_path_ + "map");
   }
 
