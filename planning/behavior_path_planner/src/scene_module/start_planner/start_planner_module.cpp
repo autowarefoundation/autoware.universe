@@ -993,49 +993,54 @@ BehaviorModuleOutput StartPlannerModule::generateStopOutput()
 SafetyCheckParams StartPlannerModule::createSafetyCheckParams() const
 {
   SafetyCheckParams params;
-  params.acceleration = 0.0;
-  params.time_horizon = 0.0;
-  params.time_resolution = 0.0;
-  params.min_slow_speed = 0.0;
-  params.delay_until_departure = 0.0;
-  params.target_velocity = 0.0;
-  params.safety_check_time_horizon = 0.0;
-  params.safety_check_time_resolution = 0.0;
-  params.object_check_forward_distance = 0.0;
-  params.object_check_backward_distance = 0.0;
-  params.ignore_object_velocity_threshold = 0.0;
+  BehaviorPathPlannerParameters common_params = planner_data_->parameters;
+  params.object_check_forward_distance =
+    parameters_->target_filtering.object_check_forward_distance;
+  params.object_check_backward_distance =
+    parameters_->target_filtering.object_check_backward_distance;
 
-  params.object_types_to_check.check_car = true;
-  params.object_types_to_check.check_truck = true;
-  params.object_types_to_check.check_bus = true;
-  params.object_types_to_check.check_trailer = true;
-  params.object_types_to_check.check_unknown = true;
-  params.object_types_to_check.check_bicycle = true;
-  params.object_types_to_check.check_motorcycle = true;
-  params.object_types_to_check.check_pedestrian = true;
+  params.object_types_to_check.check_car = parameters_->target_filtering.check_car;
+  params.object_types_to_check.check_truck = parameters_->target_filtering.check_truck;
+  params.object_types_to_check.check_bus = parameters_->target_filtering.check_bus;
+  params.object_types_to_check.check_trailer = parameters_->target_filtering.check_trailer;
+  params.object_types_to_check.check_bicycle = parameters_->target_filtering.check_bicycle;
+  params.object_types_to_check.check_motorcycle = parameters_->target_filtering.check_motorcycle;
+  params.object_types_to_check.check_pedestrian = parameters_->target_filtering.check_pedestrian;
+  params.object_types_to_check.check_unknown = parameters_->target_filtering.check_unknown;
 
-  params.object_lane_configuration.check_current_lane = false;
-  params.object_lane_configuration.check_right_lane = false;
-  params.object_lane_configuration.check_left_lane = false;
-  params.object_lane_configuration.check_shoulder_lane = false;
-  params.object_lane_configuration.check_other_lane = false;
+  params.object_lane_configuration = parameters_->target_filtering.object_types_to_check;
 
-  params.include_opposite_lane = false;
-  params.invert_opposite_lane = false;
-  params.check_all_predicted_path = false;
-  params.use_all_predicted_path = false;
-  params.use_predicted_path_outside_lanelet = false;
-  params.backward_lane_length = 200.0;
-  params.prediction_time_resolution = 0.5;
-  params.forward_path_length = 300.0;
+  params.include_opposite_lane = parameters_->target_filtering.include_opposite_lane;
+  params.invert_opposite_lane = parameters_->target_filtering.invert_opposite_lane;
+  params.check_all_predicted_path = parameters_->target_filtering.check_all_predicted_path;
+  params.use_all_predicted_path = parameters_->target_filtering.use_all_predicted_path;
+  params.use_predicted_path_outside_lanelet =
+    parameters_->target_filtering.use_predicted_path_outside_lanelet;
 
-  params.rss_params.rear_vehicle_reaction_time = 0.0;
-  params.rss_params.rear_vehicle_safety_time_margin = 0.0;
-  params.rss_params.lateral_distance_max_threshold = 0.0;
-  params.rss_params.longitudinal_distance_min_threshold = 0.0;
-  params.rss_params.longitudinal_velocity_delta_time = 0.0;
+  params.target_velocity = parameters_->shift_pull_out_velocity;
+  params.acceleration = parameters_->acceleration_to_target_velocity;
+  params.time_horizon = parameters_->prediction_time_horizon;
+  params.time_resolution = parameters_->prediction_time_resolution;
+  // params.min_slow_speed = 1.0;
+  params.delay_until_departure = parameters_->safety_check.stop_time_before_departure;
+  params.safety_check_time_horizon = parameters_->safety_check.prediction_time_horizon;
+  params.safety_check_time_resolution = parameters_->safety_check.prediction_time_resolution;
 
-  params.publish_debug_marker = false;
+  params.ignore_object_velocity_threshold = parameters_->th_moving_object_velocity;
+
+  params.backward_lane_length = common_params.backward_path_length;
+  params.forward_path_length = common_params.forward_path_length;
+
+  // from common parameters
+  params.rss_params.rear_vehicle_reaction_time = common_params.rear_vehicle_reaction_time;
+  params.rss_params.rear_vehicle_safety_time_margin = common_params.rear_vehicle_safety_time_margin;
+  params.rss_params.lateral_distance_max_threshold = common_params.lateral_distance_max_threshold;
+  params.rss_params.longitudinal_distance_min_threshold =
+    common_params.longitudinal_distance_min_threshold;
+  params.rss_params.longitudinal_velocity_delta_time =
+    common_params.longitudinal_velocity_delta_time;
+
+  params.publish_debug_marker = parameters_.publish_debug_marker;
   return params;
 }
 

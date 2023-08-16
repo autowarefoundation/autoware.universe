@@ -106,7 +106,7 @@ struct PolygonPoint
   };
 };
 
-// will be moved to safety_check class
+// will be moved to check_objects_creator class and safety_check class
 struct ObjectTypesToCheck
 {
   bool check_car{true};
@@ -170,9 +170,8 @@ struct SafetyCheckParams
   bool use_predicted_path_outside_lanelet;
 
   // Trajectory generation parameters
-  double backward_lane_length{200.0};
-  double prediction_time_resolution{0.5};
-  double forward_path_length{300.0};
+  double backward_lane_length;
+  double forward_path_length;
 
   RSSparams rss_params{};
 
