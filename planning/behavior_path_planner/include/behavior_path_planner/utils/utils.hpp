@@ -19,8 +19,8 @@
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
-#include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "motion_utils/motion_utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
@@ -66,19 +66,19 @@ using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using path_safety_checker::ExtendedPredictedObject;
-using path_safety_checker::PoseWithVelocityAndPolygonStamped;
-using path_safety_checker::PoseWithVelocityStamped;
-using path_safety_checker::PredictedPathWithPolygon;
-using path_safety_checker::ObjectTypesToCheck;
-using path_safety_checker::SafetyCheckParams;
-using path_safety_checker::TargetObjectsOnLane;
 using drivable_area_expansion::DrivableAreaExpansionParameters;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Twist;
 using geometry_msgs::msg::Vector3;
+using path_safety_checker::ExtendedPredictedObject;
+using path_safety_checker::ObjectTypesToCheck;
+using path_safety_checker::PoseWithVelocityAndPolygonStamped;
+using path_safety_checker::PoseWithVelocityStamped;
+using path_safety_checker::PredictedPathWithPolygon;
+using path_safety_checker::SafetyCheckParams;
+using path_safety_checker::TargetObjectsOnLane;
 using route_handler::RouteHandler;
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::LineString2d;

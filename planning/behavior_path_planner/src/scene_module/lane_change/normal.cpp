@@ -1382,8 +1382,9 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
         updateDebugInfo(current_debug_data, path_safety_status.is_safe);
         const auto & obj_pose = obj.initial_pose.pose;
         const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj_pose, obj.shape);
-        path_safety_status.is_object_coming_from_rear |= !utils::path_safety_checker::isTargetObjectFront(
-          path, current_pose, common_parameters.vehicle_info, obj_polygon);
+        path_safety_status.is_object_coming_from_rear |=
+          !utils::path_safety_checker::isTargetObjectFront(
+            path, current_pose, common_parameters.vehicle_info, obj_polygon);
       }
     }
     updateDebugInfo(current_debug_data, path_safety_status.is_safe);

@@ -15,10 +15,12 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__PATH_SAFETY_CHECKER__PATH_SAFETY_CHECKER_PARAMETERS_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__PATH_SAFETY_CHECKER__PATH_SAFETY_CHECKER_PARAMETERS_HPP_
 
-#include <vector>
-#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+
+#include <vector>
 
 namespace behavior_path_planner::utils::path_safety_checker
 {
