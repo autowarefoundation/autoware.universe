@@ -1,16 +1,41 @@
 # Autoware Installation on Jetson Xavier NX and F1tenth Recordreplay Demo
 
-This tutorial uses ros galactic due to the fact the Nvidia Jetson only supports Ubuntu 20.04 or below. To natively build and run autoware without using docker, galactic instead of humble is used to increase system compatibility.
+This tutorial provides step-by-step instructions for installing and setting up the Autoware development environment on the F1tenth race car. The Autoware installation process in this branch is modified from the main one to adapt to the Jetson Xavier NX hardware and software systems. One major difference of this Autoware environment is that it runs on `ROS2 galactic` in stead of `ROS2 humble` due to the fact the NVIDIA Jetson currently only supports Ubuntu 20.04 or below. To natively build and run autoware without using docker, galactic is used to increase system compatibility.
+
+This repo also includes a F1tenth Recordreplay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth race car, and then perform trajectory following in both `real-world`(testing in progress) and in the `F1tenth gym simulator` running the Autoware framework. Instructions for installing the F1tenth gym simulator is provided.
+
+## Flash JetPack 5.1.1 to Jetson Xavier NX
+
+There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1. Future JetPack versions may also work but not tested.
+
+- NVIDIA SDK Manager Method (requires a Linux host computer running Ubuntu Linux x64 version 20.04 or 18.04)
+
+This method you will first install NVIDIA SDK Manager on your host machine, connect the host machine to the Jetson Xavier NX via a micro-USB cable, download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson Xavier NX. This method allows you to directly flash the JetPack to the `SD Card` or to the `NVME SSD drive` on the race car Jetson. You may need to create an NVIDIA account to download the NVIDIA SDK manager.
+
+1. Download and install [SDK Manager](https://developer.nvidia.com/sdk-manager) on your host machine.
+
+2. Follow the steps at [Install Jetson Software with SDK Manager](https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html). The target hardware will be the Jetson Xavier NX.
+
+3. If you have trouble flashing the Jetpack, you can put the Jetson into `Force Recovery Mode` by using a jumper to connect PINs #9 and #10 of the connector J50 before powering up the Jetson.
 
 
+- SD Card Image Method (requires a computer with Internet connection and the ability to read and write SD cards)
 
-## Flash Jetpack 5.1.1 to Jetson Xavier NX
+1. Download [JetPack 5.1.1](https://developer.nvidia.com/downloads/embedded/l4t/r35_release_v3.1/sd_card_b49/jp511-xnx-sd-card-image.zip/)
 
-1. Follow [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511) to flash Jetpack 5.1.1 onto the Jetson NX. You may install via the `SD Card Image Method` or the [NVIDIA SDK Manager Method](https://docs.nvidia.com/sdk-manager/install-with-sdkm-jetson/index.html) described in the documentation. 
+2. If you have not previously run a JetPack 5.x release on your Jetson Xavier NX Developer kit, you must first update its QSPI before using this JetPack 5.x SD Card image. See the [SD Card Image Method](https://developer.nvidia.com/embedded/jetpack-sdk-511) section for more infomation.
 
-2. If you'd like to directly flash the OS onto the `NVMe SSD drive` instead of the `SD card`, and you have an x86 host machine running `Ubuntu 20.04` or `Ubuntu 18.04`, it is recommended that you use the NVIDIA SDK Manager as it allows you to directly flash to the NVMe SSD drive. If you have trouble flashing the Jetpack, you can put the Jetson into `Force Recovery Mode` by using a jumper to connect PINs #9 and #10 of the connector J50 before powering up the Jetson.
+2. Follow the steps at [Jetson Xavier NX Developer Kit - Get Started](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare) to write the Jetpack to the microSD card.
 
-3. Once the Jetpack is successfully installed, bootup the system and the Ubuntu desktop environment should launch
+3. Insert your microSD card to the Jetson.
+
+Once the Jetpack is successfully flashed to the Jetson NX, bootup the system and the Ubuntu desktop environment should launch
+
+
+## Install ROS2 galactic
+
+1. Follow the [ROS2 instructions](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html) to install ROS2 galactic
+
 
 ## Set up Autoware development environment
 
@@ -27,9 +52,9 @@ This tutorial uses ros galactic due to the fact the Nvidia Jetson only supports 
    ./setup-dev-env.sh
    ```
 
-   IMPORTANT: During installation, when asked whether to `Install Cuda Driver?`, enter `N` as the cuda driver is already installed with the Jetpack. If force the cuda driver installation here, it can mess up the kernal and cause error at bootup. You will need to reflash the Jetpack
+   `IMPORTANT`: During installation, when prompted whether to `Install Cuda Driver?`, enter `N` as the cuda driver is already installed with the JetPack. If you force the cuda driver installation here, it can mess up the kernal and cause error at bootup. You will need to reflash the JetPack if this happens
 
-3. Under the `autoware` folder, go to the auto.repos file and change the version of `universe/autoware.universe` from `main` to `f1tenth_galactic`
+3. Under the `autoware` folder, go to the `auto.repos` file and change the version of `universe/autoware.universe` from `main` to `f1tenth_galactic`
 
 
 ## Set up Autoware workspace
