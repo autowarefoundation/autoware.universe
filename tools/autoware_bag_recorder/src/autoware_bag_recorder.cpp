@@ -23,11 +23,68 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
 {
   // common params declarations
   bag_path_ = declare_parameter<std::string>("common.path");
-  disk_space_threshold_ = declare_parameter<int>("common.check_disk_space_threshold");
+  disk_space_threshold_ = node_->declare_parameter<int>("common.check_disk_space_threshold");
   maximum_record_time_ = declare_parameter<int>("common.maximum_record_time");
   bag_time_ = declare_parameter<int>("common.bag_time");
   number_of_maximum_bags_ = declare_parameter<int>("common.number_of_maximum_bags");
 
+  // api
+  record_api_topics_ = declare_parameter<bool>("api_modules.record_api");
+  if (record_api_topics_) {
+    api_topics_ =
+      declare_parameter<std::vector<std::string>>("api_modules.api_topics");
+    section_factory(api_topics_, bag_path_ + "api");
+  }
+
+  // autoware
+  record_autoware_topics_ = declare_parameter<bool>("autoware_modules.record_autoware");
+  if (record_autoware_topics_) {
+    autoware_topics_ =
+      declare_parameter<std::vector<std::string>>("autoware_modules.autoware_topics");
+    section_factory(autoware_topics_, bag_path_ + "autoware");
+  }
+
+  // control
+  record_control_topics_ = declare_parameter<bool>("control_modules.record_control");
+  if (record_control_topics_) {
+    control_topics_ =
+      declare_parameter<std::vector<std::string>>("control_modules.control_topics");
+    section_factory(control_topics_, bag_path_ + "control");
+  }
+
+  // external
+  record_external_topics_ = declare_parameter<bool>("external_modules.record_external");
+  if (record_external_topics_) {
+    external_topics_ =
+      declare_parameter<std::vector<std::string>>("external_modules.external_topics");
+    section_factory(external_topics_, bag_path_ + "external");
+  }
+
+  // localization
+  record_localization_topics_ = declare_parameter<bool>("localization_modules.record_localization");
+  if (record_localization_topics_) {
+    localization_topics_ =
+      declare_parameter<std::vector<std::string>>("localization_modules.localization_topics");
+    section_factory(localization_topics_, bag_path_ + "localization");
+  }
+
+  // map
+  record_map_topics_ = declare_parameter<bool>("map_modules.record_map");
+  if (record_map_topics_) {
+    map_topics_ =
+      declare_parameter<std::vector<std::string>>("map_modules.map_topics");
+    section_factory(map_topics_, bag_path_ + "map");
+  }
+
+  // perception
+  record_perception_topics_ = declare_parameter<bool>("perception_modules.record_perception");
+  if (record_perception_topics_) {
+    perception_topics_ =
+      declare_parameter<std::vector<std::string>>("perception_modules.perception_topics");
+    section_factory(perception_topics_, bag_path_ + "perception");
+  }
+
+  // planning
   record_planning_topics_ = declare_parameter<bool>("planning_modules.record_planning");
   if (record_planning_topics_) {
     planning_topics_ =
@@ -35,10 +92,25 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
     section_factory(planning_topics_, bag_path_ + "planning");
   }
 
+  // sensing
   record_sensing_topics_ = declare_parameter<bool>("sensing_modules.record_sensing");
   if (record_sensing_topics_) {
     sensing_topics_ = declare_parameter<std::vector<std::string>>("sensing_modules.sensing_topics");
     section_factory(sensing_topics_, bag_path_ + "sensing");
+  }
+
+  // system
+  record_system_topics_ = declare_parameter<bool>("system_modules.record_system");
+  if (record_system_topics_) {
+    system_topics_ = declare_parameter<std::vector<std::string>>("system_modules.system_topics");
+    section_factory(system_topics_, bag_path_ + "system");
+  }
+
+  // vehicle
+  record_vehicle_topics_ = declare_parameter<bool>("vehicle_modules.record_vehicle");
+  if (record_vehicle_topics_) {
+    vehicle_topics_ = declare_parameter<std::vector<std::string>>("vehicle_modules.vehicle_topics");
+    section_factory(vehicle_topics_, bag_path_ + "vehicle");
   }
 
   remaining_topic_num_ = 0;
@@ -180,7 +252,7 @@ void AutowareBagRecorderNode::check_number_of_bags_in_folder(
     directories.begin(), directories.end(),
     [](const std::string & a, const std::string & b) -> bool { return a < b; });
 
-  while (directories.size() > static_cast<std::vector<int>::size_type>(number_of_maximum_bags_)) {
+  while (directories.size() >= static_cast<std::vector<int>::size_type>(number_of_maximum_bags_)) {
     std::filesystem::remove_all(directories[0]);
     directories.erase(directories.begin());
   }

@@ -48,15 +48,32 @@ private:
   int disk_space_threshold_;
   int number_of_maximum_bags_;
 
+  bool record_api_topics_;
+  bool record_autoware_topics_;
+  bool record_control_topics_;
+  bool record_external_topics_;
+  bool record_localization_topics_;
+  bool record_map_topics_;
+  bool record_perception_topics_;
   bool record_planning_topics_;
   bool record_sensing_topics_;
+  bool record_system_topics_;
+  bool record_vehicle_topics_;
 
   int remaining_topic_num_;
 
+  std::vector<std::string> api_topics_;
+  std::vector<std::string> autoware_topics_;
+  std::vector<std::string> control_topics_;
+  std::vector<std::string> external_topics_;
+  std::vector<std::string> localization_topics_;
+  std::vector<std::string> map_topics_;
+  std::vector<std::string> perception_topics_;
   std::vector<std::string> planning_topics_;
   std::vector<std::string> sensing_topics_;
+  std::vector<std::string> system_topics_;
+  std::vector<std::string> vehicle_topics_;
 
-  std::vector<std::vector<std::string>> topics_of_each_module_;
   std::vector<ModuleSection> module_sections_;
 
   std::vector<rclcpp::SubscriptionBase::SharedPtr> subscriptions_;
