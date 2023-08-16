@@ -908,15 +908,10 @@ bool StartPlannerModule::isSafePath() const
   //     break;
   // }
   const auto safety_check_params = createSafetyCheckParams();
-  // const Pose current_pose = planner_data_->self_odometry->pose.pose;
-  // create ego predicted path
-  // const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
-  //   pull_out_path.points, current_velocity, target_velocity,
-  //   parameters_->acceleration_to_target_velocity, current_pose,
-  //   parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
+
 
   const auto & ego_predicted_path = behavior_path_planner::utils::convertToPredictedPath(
-    pull_out_path, planner_data_, safety_check_params);
+    pull_out_path.points, planner_data_, safety_check_params);
 
   const auto & safety_check_target_objects =
     behavior_path_planner::utils::getSafetyCheckTargetObjects(planner_data_, safety_check_params);

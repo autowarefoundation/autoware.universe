@@ -294,10 +294,13 @@ PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, doubl
 PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, double min_v, double max_v);
 
-PredictedObjects filterObjectsByPosition(
+void filterObjectsByPosition(
   const PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance);
+
+void filterObjectsByClass(
+  PredictedObjects & objects, const ObjectTypesToCheck & target_object_types);
 
 // drivable area generation
 lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes);
@@ -474,7 +477,7 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
   const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
-  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const std::vector<PathPointWithLaneId> & path_points, const std::shared_ptr<const PlannerData> & planner_data,
   const SafetyCheckParams & safety_check_params);
 
 bool isCentroidWithinLanelets(
@@ -487,9 +490,6 @@ ExtendedPredictedObject transform(
 TargetObjectsOnLane createTargetObjectsOnLane(
   const std::shared_ptr<const PlannerData> & planner_data,
   const PredictedObjects & filtered_objects, const SafetyCheckParams & safety_check_params);
-
-bool isTargetObjectType(
-  const PredictedObject & object, const ObjectTypesToCheck & target_object_types);
 
 PredictedObjects filterObject(
   const std::shared_ptr<const PlannerData> & planner_data,
