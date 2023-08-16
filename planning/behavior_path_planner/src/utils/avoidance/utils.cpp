@@ -693,8 +693,8 @@ void fillObjectMovingTime(
   const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
   const auto object_parameter = parameters->object_parameters.at(object_type);
 
-  const auto & object_vel =
-    object_data.object.kinematics.initial_twist_with_covariance.twist.linear.x;
+  const auto & object_twist = object_data.object.kinematics.initial_twist_with_covariance.twist;
+  const auto object_vel = std::hypot(object_twist.linear.x, object_twist.linear.y);
   const auto is_faster_than_threshold = object_vel > object_parameter.moving_speed_threshold;
 
   const auto id = object_data.object.object_id;
@@ -1475,7 +1475,8 @@ ExtendedPredictedObject transform(
   extended_object.initial_acceleration = object.kinematics.initial_acceleration_with_covariance;
   extended_object.shape = object.shape;
 
-  const auto & obj_velocity = extended_object.initial_twist.twist.linear.x;
+  const auto & obj_velocity = std::hypot(
+    extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
   const auto & time_horizon = parameters->safety_check_time_horizon;
   const auto & time_resolution = parameters->safety_check_time_resolution;
 

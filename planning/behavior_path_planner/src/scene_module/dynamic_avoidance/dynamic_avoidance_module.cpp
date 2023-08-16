@@ -101,7 +101,9 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
   const std::vector<PathPointWithLaneId> & path_points, const PredictedObject & object)
 {
   const auto & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
-  const double obj_vel = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+  const double obj_vel = std::hypot(
+    object.kinematics.initial_twist_with_covariance.twist.linear.x,
+    object.kinematics.initial_twist_with_covariance.twist.linear.y);
 
   const size_t obj_idx = motion_utils::findNearestIndex(path_points, obj_pose.position);
 
@@ -365,7 +367,9 @@ void DynamicAvoidanceModule::updateTargetObjects()
   for (const auto & predicted_object : predicted_objects) {
     const auto obj_uuid = tier4_autoware_utils::toHexString(predicted_object.object_id);
     const auto & obj_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
-    const double obj_vel = predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
+    const double obj_vel = std::hypot(
+      predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x,
+      predicted_object.kinematics.initial_twist_with_covariance.twist.linear.y);
     const auto prev_object = getObstacleFromUuid(prev_objects, obj_uuid);
 
     // 1.a. check label

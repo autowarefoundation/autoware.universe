@@ -855,7 +855,9 @@ bool isParkedObject(
   using lanelet::geometry::distance2d;
   using lanelet::geometry::toArcCoordinates;
 
-  if (object.initial_twist.twist.linear.x > static_object_velocity_threshold) {
+  const double object_vel =
+    std::hypot(object.initial_twist.twist.linear.x, object.initial_twist.twist.linear.y);
+  if (object_vel > static_object_velocity_threshold) {
     return false;
   }
 
@@ -1034,7 +1036,9 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
 
     // ignore non-static object
     // TODO(shimizu): parametrize threshold
-    if (obj.initial_twist.twist.linear.x > 1.0) {
+    const double obj_vel =
+      std::hypot(obj.initial_twist.twist.linear.x, obj.initial_twist.twist.linear.y);
+    if (obj_vel > 1.0) {
       continue;
     }
 
@@ -1095,9 +1099,9 @@ ExtendedPredictedObject transform(
   const auto & prepare_duration = common_parameters.lane_change_prepare_duration;
   const auto & velocity_threshold =
     lane_change_parameters.prepare_segment_ignore_object_velocity_thresh;
-  const auto & obj_vel = extended_object.initial_twist.twist.linear.x;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
-  const double obj_velocity = extended_object.initial_twist.twist.linear.x;
+  const double obj_vel = std::hypot(
+    extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
 
   extended_object.predicted_paths.resize(object.kinematics.predicted_paths.size());
   for (size_t i = 0; i < object.kinematics.predicted_paths.size(); ++i) {
@@ -1115,8 +1119,7 @@ ExtendedPredictedObject transform(
       const auto obj_pose = object_recognition_utils::calcInterpolatedPose(path, t);
       if (obj_pose) {
         const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, object.shape);
-        extended_object.predicted_paths.at(i).path.emplace_back(
-          t, *obj_pose, obj_velocity, obj_polygon);
+        extended_object.predicted_paths.at(i).path.emplace_back(t, *obj_pose, obj_vel, obj_polygon);
       }
     }
   }

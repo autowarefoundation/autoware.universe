@@ -677,7 +677,9 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
   LaneChangeTargetObjectIndices filtered_obj_indices;
   for (size_t i = 0; i < objects.objects.size(); ++i) {
     const auto & object = objects.objects.at(i);
-    const auto & obj_velocity = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+    const auto & obj_velocity = std::hypot(
+      object.kinematics.initial_twist_with_covariance.twist.linear.x,
+      object.kinematics.initial_twist_with_covariance.twist.linear.y);
     const auto extended_object =
       utils::lane_change::transform(object, common_parameters, *lane_change_parameters_);
 
