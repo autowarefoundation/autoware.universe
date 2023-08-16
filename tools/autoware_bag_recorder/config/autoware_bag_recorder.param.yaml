@@ -1,8 +1,10 @@
 /**:
   ros__parameters:
     common:
-      maximum_time: 1000
-      path: "src/autoware_bag_recorder/bags/test" # Path to bag file for saving
+      maximum_record_time: 1800 # seconds
+      bag_time: 600 # seconds
+      number_of_maximum_bags: 5
+      path: "src/universe/autoware.universe/tools/autoware_bag_recorder/bags/" # Path to bag file for saving
       check_disk_space_threshold: 50 # GB
     planning_modules:
       record_planning: true

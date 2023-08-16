@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cmath>
 
 namespace autoware_bag_recorder
 {
@@ -51,11 +52,13 @@ private:
     std::unique_ptr<rosbag2_cpp::Writer> & writer_, std::string topic_name, std::string topic_type);
   void generic_subscription_callback(
     const std::shared_ptr<rclcpp::SerializedMessage const> msg, const std::string & topic_name,
-    rcutils_allocator_t allocator, autoware_bag_recorder::ModuleSection & section);
+    autoware_bag_recorder::ModuleSection & section);
   void section_factory(std::vector<std::string> topics, std::string path);
   int get_root_disk_space();
 
-  int maximum_time_;
+  int maximum_record_time_;
+  int bag_time_;
+
   std::string bag_path_;
   bool record_planning_topics_;
   bool record_sensing_topics_;
