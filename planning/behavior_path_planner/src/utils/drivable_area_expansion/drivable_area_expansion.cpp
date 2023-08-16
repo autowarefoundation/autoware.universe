@@ -33,25 +33,27 @@ std::vector<PathPointWithLaneId> crop_and_resample(
   const std::vector<PathPointWithLaneId> & points,
   const std::shared_ptr<behavior_path_planner::PlannerData> planner_data)
 {
-  constexpr auto resample_interval = 1.0;  // TODO(Maxime): param
-  auto lon_dist_offset = 0.0;
-  const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(points);
-  const auto base_lon_dist_offset = motion_utils::calcLongitudinalOffsetToSegment(
-    points, 0, points[ego_seg_idx].point.pose.position);
+  constexpr auto resample_interval = 2.0;  // TODO(Maxime): param
+  auto lon_offset = 0.0;
+  auto crop_pose = *planner_data->drivable_area_expansion_prev_crop_pose;
   // reuse or update the previous crop point
   if (planner_data->drivable_area_expansion_prev_crop_pose) {
-    const auto prev_crop_pose = *planner_data->drivable_area_expansion_prev_crop_pose;
-    lon_dist_offset =
-      motion_utils::calcLongitudinalOffsetToSegment(points, 0, prev_crop_pose.position);
-    const auto is_too_far =
-      motion_utils::calcLateralOffset(points, prev_crop_pose.position) > 1.0 ||
-      std::abs(lon_dist_offset - base_lon_dist_offset) > 10.0;
-    const auto is_behind = lon_dist_offset < 0.0;
-    if (is_behind || is_too_far) planner_data->drivable_area_expansion_prev_crop_pose.reset();
+    const auto lon_offset = motion_utils::calcSignedArcLength(
+      points, points.front().point.pose.position, crop_pose.position);
+    if (lon_offset < 0.0) {
+      planner_data->drivable_area_expansion_prev_crop_pose.reset();
+    } else {
+      const auto is_behind_ego = motion_utils::calcSignedArcLength(
+        points, crop_pose.position, planner_data->self_odometry->pose.pose.position);
+      const auto is_too_far = motion_utils::calcLateralOffset(points, crop_pose.position) > 0.1;
+      if (!is_behind_ego || is_too_far)
+        planner_data->drivable_area_expansion_prev_crop_pose.reset();
+    }
   }
-  const auto crop_pose = planner_data->drivable_area_expansion_prev_crop_pose.value_or(
-    motion_utils::calcInterpolatedPose(
-      points, base_lon_dist_offset + resample_interval - lon_dist_offset));
+  if (!planner_data->drivable_area_expansion_prev_crop_pose) {
+    crop_pose = planner_data->drivable_area_expansion_prev_crop_pose.value_or(
+      motion_utils::calcInterpolatedPose(points, resample_interval - lon_offset));
+  }
   // crop
   const auto crop_seg_idx = motion_utils::findNearestSegmentIndex(points, crop_pose.position);
   const auto cropped_points = motion_utils::cropPoints(
