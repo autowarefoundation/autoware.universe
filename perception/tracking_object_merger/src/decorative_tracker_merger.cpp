@@ -42,6 +42,45 @@ double getUnixTime(const std_msgs::msg::Header & header)
   return header.stamp.sec + header.stamp.nanosec * 1e-9;
 }
 
+// calc association score matrix
+Eigen::MatrixXd calcScoreMatrixForAssociation(
+  const MEASUREMENT_STATE measurement_state,
+  const autoware_auto_perception_msgs::msg::TrackedObjects & objects0,
+  const std::vector<TrackerState> & trackers,
+  const std::unordered_map<std::string, std::unique_ptr<DataAssociation>> & data_association_map
+  // const bool debug_log, const std::string & file_name // do not logging for now
+)
+{
+  // get current time
+  const rclcpp::Time current_time = rclcpp::Time(objects0.header.stamp);
+
+  // calc score matrix
+  Eigen::MatrixXd score_matrix = Eigen::MatrixXd::Zero(trackers.size(), objects0.objects.size());
+  for (size_t trackers_idx = 0; trackers_idx < trackers.size(); ++trackers_idx) {
+    const auto & tracker_obj = trackers.at(trackers_idx);
+    const auto & object1 = tracker_obj.getObject();
+    const auto & tracker_state = tracker_obj.getCurrentMeasurementState(current_time);
+
+    for (size_t objects0_idx = 0; objects0_idx < objects0.objects.size(); ++objects0_idx) {
+      const auto & object0 = objects0.objects.at(objects0_idx);
+      // switch calc score function by input and trackers measurement state
+      // we assume that lidar and radar are exclusive
+      double score;
+      const auto input_has_lidar = measurement_state & MEASUREMENT_STATE::LIDAR;
+      const auto tracker_has_lidar = tracker_state & MEASUREMENT_STATE::LIDAR;
+      if (input_has_lidar && tracker_has_lidar) {
+        score = data_association_map.at("lidar-lidar")->calcScoreBetweenObjects(object0, object1);
+      } else if (!input_has_lidar && !tracker_has_lidar) {
+        score = data_association_map.at("radar-radar")->calcScoreBetweenObjects(object0, object1);
+      } else {
+        score = data_association_map.at("lidar-radar")->calcScoreBetweenObjects(object0, object1);
+      }
+      score_matrix(trackers_idx, objects0_idx) = score;
+    }
+  }
+  return score_matrix;
+}
+
 DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("decorative_object_merger_node", node_options),
   tf_buffer_(get_clock()),
@@ -75,12 +114,29 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   // input_merger_map_[1] = merger_utils::updateOnlyObjectVelocity;
 
   // init association
-  const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");
+
+  // lidar-lidar association matrix
+  set3dDataAssociation("lidar-lidar", data_association_map_);
+  // lidar-radar association matrix
+  set3dDataAssociation("lidar-radar", data_association_map_);
+  // radar-radar association matrix
+  set3dDataAssociation("radar-radar", data_association_map_);
+}
+
+void DecorativeTrackerMergerNode::set3dDataAssociation(
+  const std::string & prefix,
+  std::unordered_map<std::string, std::unique_ptr<DataAssociation>> & data_association_map)
+{
+  const auto tmp = this->declare_parameter<std::vector<int64_t>>(prefix + ".can_assign_matrix");
   const std::vector<int> can_assign_matrix(tmp.begin(), tmp.end());
-  const auto max_dist_matrix = this->declare_parameter<std::vector<double>>("max_dist_matrix");
-  const auto max_rad_matrix = this->declare_parameter<std::vector<double>>("max_rad_matrix");
-  const auto min_iou_matrix = this->declare_parameter<std::vector<double>>("min_iou_matrix");
-  data_association_ = std::make_unique<DataAssociation>(
+  const auto max_dist_matrix =
+    this->declare_parameter<std::vector<double>>(prefix + ".max_dist_matrix");
+  const auto max_rad_matrix =
+    this->declare_parameter<std::vector<double>>(prefix + ".max_rad_matrix");
+  const auto min_iou_matrix =
+    this->declare_parameter<std::vector<double>>(prefix + ".min_iou_matrix");
+
+  data_association_map[prefix] = std::make_unique<DataAssociation>(
     can_assign_matrix, max_dist_matrix, max_rad_matrix, min_iou_matrix);
 }
 
@@ -125,6 +181,7 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
 
     // break if closest_time_sub_objects is not found
     if (!closest_time_sub_objects) {
+      std::cout << "closest_time_sub_objects is not found" << std::endl;
       // show buffer size
       std::cout << "sub_objects_buffer_.size(): " << sub_objects_buffer_.size() << std::endl;
       if (sub_objects_buffer_.size() > 0) {
@@ -133,12 +190,6 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
         std::cout << "current stamp: " << getUnixTime(main_objects->header) << std::endl;
       }
     } else {
-      // show fo sub objects
-      // for (const auto & sub_obj : closest_time_sub_objects->objects) {
-      //   std::cout << "sub_objects(x,y): " <<
-      //   sub_obj.kinematics.pose_with_covariance.pose.position.x
-      //             << ", " << sub_obj.kinematics.pose_with_covariance.pose.position.y <<
-      //             std::endl;
     }
     // update with old sub objects
     this->decorativeMerger(MEASUREMENT_STATE::RADAR, closest_time_sub_objects);
@@ -180,7 +231,7 @@ void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::Const
  *       3. merge objects
  */
 bool DecorativeTrackerMergerNode::decorativeMerger(
-  const MEASUREMENT_STATE input_index, const TrackedObjects::ConstSharedPtr & input_objects_msg)
+  const MEASUREMENT_STATE input_sensor, const TrackedObjects::ConstSharedPtr & input_objects_msg)
 {
   // get current time
   const auto current_time = rclcpp::Time(input_objects_msg->header.stamp);
@@ -189,7 +240,7 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
   }
   if (inner_tracker_objects_.empty()) {
     for (const auto & object : input_objects_msg->objects) {
-      inner_tracker_objects_.push_back(createNewTracker(input_index, current_time, object));
+      inner_tracker_objects_.push_back(createNewTracker(input_sensor, current_time, object));
     }
   }
 
@@ -204,9 +255,10 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
   /* global nearest neighbor */
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
   const auto & objects1 = input_objects_msg->objects;
-  Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
-    *input_objects_msg, inner_tracker_objects_, logging_.enable, logging_.path);
-  data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
+  Eigen::MatrixXd score_matrix = calcScoreMatrixForAssociation(
+    input_sensor, *input_objects_msg, inner_tracker_objects_, data_association_map_);
+  data_association_map_.at("lidar-lidar")
+    ->assign(score_matrix, direct_assignment, reverse_assignment);
 
   // look for tracker
   for (size_t tracker_idx = 0; tracker_idx < inner_tracker_objects_.size(); ++tracker_idx) {
@@ -214,7 +266,7 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found and merge
       const auto & object1 = objects1.at(direct_assignment.at(tracker_idx));
       // merge object1 into object0_state
-      object0_state.updateState(input_index, current_time, object1);
+      object0_state.updateState(input_sensor, current_time, object1);
     } else {  // not found
       // decrease existence probability
       object0_state.updateWithoutSensor(current_time);
@@ -225,7 +277,7 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
     const auto & object1 = objects1.at(object1_idx);
     if (reverse_assignment.find(object1_idx) != reverse_assignment.end()) {  // found
     } else {                                                                 // not found
-      inner_tracker_objects_.push_back(createNewTracker(input_index, current_time, object1));
+      inner_tracker_objects_.push_back(createNewTracker(input_sensor, current_time, object1));
     }
   }
   return true;
