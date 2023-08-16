@@ -800,10 +800,11 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     util::isOverTargetIndex(*path, closest_idx, current_pose, pass_judge_line_idx);
   const bool is_over_default_stop_line =
     util::isOverTargetIndex(*path, closest_idx, current_pose, default_stop_line_idx);
-  const double vel = std::hypot(
+  const double vel_norm = std::hypot(
     planner_data_->current_velocity->twist.linear.x,
     planner_data_->current_velocity->twist.linear.y);
-  const bool keep_detection = (vel < planner_param_.collision_detection.keep_detection_vel_thr);
+  const bool keep_detection =
+    (vel_norm < planner_param_.collision_detection.keep_detection_vel_thr);
   // if ego is over the pass judge line and not stopped
   if (is_peeking_) {
     // do nothing
