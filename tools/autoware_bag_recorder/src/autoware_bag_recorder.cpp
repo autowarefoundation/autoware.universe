@@ -166,22 +166,21 @@ int AutowareBagRecorderNode::get_root_disk_space()
   return (root.available / pow(1024.0, 3.0));  // Convert to GB
 }
 
-void AutowareBagRecorderNode::check_number_of_bags_in_folder(autoware_bag_recorder::ModuleSection & section)
+void AutowareBagRecorderNode::check_number_of_bags_in_folder(
+  autoware_bag_recorder::ModuleSection & section)
 {
   std::vector<std::string> directories;
-  for(const auto & path : std::filesystem::recursive_directory_iterator(section.folder_path))
-  {
-    if (path.is_directory())
-    {
+  for (const auto & path : std::filesystem::recursive_directory_iterator(section.folder_path)) {
+    if (path.is_directory()) {
       directories.push_back(path.path().string());
     }
   }
 
-  std::sort(directories.begin(), directories.end(),
-          [](const std::string & a, const std::string & b) -> bool {return a < b;});
+  std::sort(
+    directories.begin(), directories.end(),
+    [](const std::string & a, const std::string & b) -> bool { return a < b; });
 
-  while (directories.size() > static_cast<std::vector<int>::size_type>(number_of_maximum_bags_))
-  {
+  while (directories.size() > static_cast<std::vector<int>::size_type>(number_of_maximum_bags_)) {
     std::filesystem::remove_all(directories[0]);
     directories.erase(directories.begin());
   }
