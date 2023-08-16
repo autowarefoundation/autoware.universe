@@ -38,7 +38,6 @@ struct StartPlannerParameters
   bool enable_shift_pull_out;
   bool check_shift_path_lane_departure;
   double minimum_shift_pull_out_distance;
-  double shift_pull_out_velocity;
   int lateral_acceleration_sampling_num;
   double lateral_jerk;
   double maximum_lateral_acc;
@@ -99,9 +98,8 @@ struct StartPlannerParameters
     double stop_time_before_departure;
     double prediction_time_horizon;
     double prediction_time_resolution;
+    bool enable_safety_check;
   } safety_check;
-
-  double th_moving_object_velocity;
 
   // Common parameters
   double backward_path_length;

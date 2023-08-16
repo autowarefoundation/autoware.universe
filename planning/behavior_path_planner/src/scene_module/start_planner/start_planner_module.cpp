@@ -889,7 +889,7 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
 
 bool StartPlannerModule::isSafePath() const
 {
-  if (!parameters_->enable_safety_check) {
+  if (!parameters_->safety_check.enable_safety_check) {
     return true;  // if safety check is disabled, it always return safe.
   }
 
@@ -999,16 +999,24 @@ SafetyCheckParams StartPlannerModule::createSafetyCheckParams() const
   params.object_check_backward_distance =
     parameters_->target_filtering.object_check_backward_distance;
 
-  params.object_types_to_check.check_car = parameters_->target_filtering.check_car;
-  params.object_types_to_check.check_truck = parameters_->target_filtering.check_truck;
-  params.object_types_to_check.check_bus = parameters_->target_filtering.check_bus;
-  params.object_types_to_check.check_trailer = parameters_->target_filtering.check_trailer;
-  params.object_types_to_check.check_bicycle = parameters_->target_filtering.check_bicycle;
-  params.object_types_to_check.check_motorcycle = parameters_->target_filtering.check_motorcycle;
-  params.object_types_to_check.check_pedestrian = parameters_->target_filtering.check_pedestrian;
-  params.object_types_to_check.check_unknown = parameters_->target_filtering.check_unknown;
+  params.object_types_to_check.check_car =
+    parameters_->target_filtering.object_types_to_check.check_car;
+  params.object_types_to_check.check_truck =
+    parameters_->target_filtering.object_types_to_check.check_truck;
+  params.object_types_to_check.check_bus =
+    parameters_->target_filtering.object_types_to_check.check_bus;
+  params.object_types_to_check.check_trailer =
+    parameters_->target_filtering.object_types_to_check.check_trailer;
+  params.object_types_to_check.check_bicycle =
+    parameters_->target_filtering.object_types_to_check.check_bicycle;
+  params.object_types_to_check.check_motorcycle =
+    parameters_->target_filtering.object_types_to_check.check_motorcycle;
+  params.object_types_to_check.check_pedestrian =
+    parameters_->target_filtering.object_types_to_check.check_pedestrian;
+  params.object_types_to_check.check_unknown =
+    parameters_->target_filtering.object_types_to_check.check_unknown;
 
-  params.object_lane_configuration = parameters_->target_filtering.object_types_to_check;
+  params.object_lane_configuration = parameters_->target_filtering.object_lane_configuration;
 
   params.include_opposite_lane = parameters_->target_filtering.include_opposite_lane;
   params.invert_opposite_lane = parameters_->target_filtering.invert_opposite_lane;
@@ -1028,19 +1036,11 @@ SafetyCheckParams StartPlannerModule::createSafetyCheckParams() const
 
   params.ignore_object_velocity_threshold = parameters_->th_moving_object_velocity;
 
-  params.backward_lane_length = common_params.backward_path_length;
-  params.forward_path_length = common_params.forward_path_length;
 
-  // from common parameters
-  params.rss_params.rear_vehicle_reaction_time = common_params.rear_vehicle_reaction_time;
-  params.rss_params.rear_vehicle_safety_time_margin = common_params.rear_vehicle_safety_time_margin;
-  params.rss_params.lateral_distance_max_threshold = common_params.lateral_distance_max_threshold;
-  params.rss_params.longitudinal_distance_min_threshold =
-    common_params.longitudinal_distance_min_threshold;
-  params.rss_params.longitudinal_velocity_delta_time =
-    common_params.longitudinal_velocity_delta_time;
 
-  params.publish_debug_marker = parameters_.publish_debug_marker;
+
+
+  params.publish_debug_marker = parameters_->publish_debug_marker;
   return params;
 }
 
@@ -1075,14 +1075,14 @@ void StartPlannerModule::setDebugData() const
   }
   const Pose current_pose = planner_data_->self_odometry->pose.pose;
 
-  const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
-    status_.pull_out_path.partial_paths.back().points, current_velocity, target_velocity,
-    parameters_->acceleration_to_target_velocity, current_pose,
-    parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
+  // const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
+  //   status_.pull_out_path.partial_paths.back().points, current_velocity, target_velocity,
+  //   parameters_->acceleration_to_target_velocity, current_pose,
+  //   parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
 
   debug_marker_.markers.clear();
-  add(createPredictedPathMarkerArray(
-    ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.9, 0.3, 0.3));
+  // add(createPredictedPathMarkerArray(
+  //   ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
