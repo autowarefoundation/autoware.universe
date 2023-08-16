@@ -18,7 +18,7 @@ This package includes the following features:
 - **Automatic estimation of yaw bias** prevents modeling errors caused by sensor mounting angle errors, which can improve estimation accuracy.
 - **Mahalanobis distance gate** enables probabilistic outlier detection to determine which inputs should be used or ignored.
 - **Smooth update**, the Kalman Filter measurement update is typically performed when a measurement is obtained, but it can cause large changes in the estimated value, especially for low-frequency measurements. Since the algorithm can consider the measurement time, the measurement data can be divided into multiple pieces and integrated smoothly while maintaining consistency (see the following figure).
-- **Calculation of vertical correction amount from pitch** mitigates localization instability on slopes. This is because it also considers z, whereas EKF only considers 3DoF(x,y,yaw) (see the following figure).
+- **Calculation of vertical correction amount from pitch** mitigates localization instability on slopes. This is because it also considers z, whereas EKF only considers 3DoF(x,y,yaw). For example, when going uphill, it behaves as if it is buried in the ground as shown in the left side of the figure. Therefore, correct the z-coordinate according to the formula shown on the right side of the figure (see the following figure).
 
 <p align="center">
 <img src="./media/ekf_delay_comp.png" width="800">
