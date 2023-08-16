@@ -100,12 +100,12 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
 {
   const size_t object_idx = motion_utils::findNearestIndex(traj_points, obstacle.pose.position);
 
-  const double object_yaw = tf2::getYaw(obstacle.pose.orientation);
+  const double object_vel = std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y);
+  const double object_yaw = std::atan2(obstacle.twist.linear.y, obstacle.twist.linear.x);
   const double traj_yaw = tf2::getYaw(traj_points.at(object_idx).pose.orientation);
 
   return std::make_pair(
-    obstacle.twist.linear.x * std::cos(object_yaw - traj_yaw),
-    obstacle.twist.linear.x * std::sin(object_yaw - traj_yaw));
+    object_vel * std::cos(object_yaw - traj_yaw), object_vel * std::sin(object_yaw - traj_yaw));
 }
 
 double calcObstacleMaxLength(const Shape & shape)
@@ -818,7 +818,9 @@ ObstacleCruisePlannerNode::createCollisionPointsForOutsideCruiseObstacle(
     return std::nullopt;
   }
 
-  if (std::abs(obstacle.twist.linear.x) < p.outside_obstacle_min_velocity_threshold) {
+  if (
+    std::abs(std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y)) <
+    p.outside_obstacle_min_velocity_threshold) {
     RCLCPP_INFO_EXPRESSION(
       get_logger(), enable_debug_info_,
       "[Cruise] Ignore outside obstacle (%s) since the obstacle velocity is low.",
@@ -920,7 +922,8 @@ ObstacleCruisePlannerNode::createCollisionPointForStopObstacle(
   //       and the collision between ego and obstacles are within the margin threshold.
   const bool is_obstacle_crossing = isObstacleCrossing(traj_points, obstacle);
   const double has_high_speed =
-    p.crossing_obstacle_velocity_threshold < std::abs(obstacle.twist.linear.x);
+    p.crossing_obstacle_velocity_threshold <
+    std::abs(std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y));
   if (is_obstacle_crossing && has_high_speed) {
     // Get highest confidence predicted path
     const auto resampled_predicted_path = resampleHighestConfidencePredictedPath(
@@ -1141,8 +1144,10 @@ void ObstacleCruisePlannerNode::checkConsistency(
   } else {
     // prev obstacle is not in the target obstacles, but in the perception list
     const double elapsed_time = (current_time - prev_closest_stop_obstacle_ptr_->stamp).seconds();
+    const auto & object_twist =
+      predicted_object_itr->kinematics.initial_twist_with_covariance.twist;
     if (
-      predicted_object_itr->kinematics.initial_twist_with_covariance.twist.linear.x <
+      std::hypot(object_twist.linear.x, object_twist.linear.y) <
         behavior_determination_param_.obstacle_velocity_threshold_from_stop_to_cruise &&
       elapsed_time < behavior_determination_param_.stop_obstacle_hold_time_threshold) {
       stop_obstacles.push_back(*prev_closest_stop_obstacle_ptr_);
