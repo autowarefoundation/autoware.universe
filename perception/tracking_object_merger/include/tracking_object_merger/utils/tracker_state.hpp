@@ -94,7 +94,7 @@ public:
 public:
   bool predict(const rclcpp::Time & time);
   bool predict(const double dt, std::function<TrackedObject(const TrackedObject &, double)> func);
-  MEASUREMENT_STATE getCurrentMeasurementState(const rclcpp::Time & current_time);
+  MEASUREMENT_STATE getCurrentMeasurementState(const rclcpp::Time & current_time) const;
   bool updateState(
     const MEASUREMENT_STATE input, const rclcpp::Time & current_time,
     const TrackedObject & tracked_object);

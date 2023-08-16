@@ -68,6 +68,9 @@ public:
     const autoware_auto_perception_msgs::msg::TrackedObject & object0,
     const autoware_auto_perception_msgs::msg::TrackedObject & object1,
     nlohmann::json & pair_log_data);
+  double calcScoreBetweenObjects(
+    const autoware_auto_perception_msgs::msg::TrackedObject & object0,
+    const autoware_auto_perception_msgs::msg::TrackedObject & object1) const;
   virtual ~DataAssociation() {}
 };
 

@@ -91,7 +91,7 @@ bool TrackerState::predict(
 }
 
 // get current measurement state
-MEASUREMENT_STATE TrackerState::getCurrentMeasurementState(const rclcpp::Time & current_time)
+MEASUREMENT_STATE TrackerState::getCurrentMeasurementState(const rclcpp::Time & current_time) const
 {
   MEASUREMENT_STATE measurement_state = MEASUREMENT_STATE::NONE;
   // check LIDAR
