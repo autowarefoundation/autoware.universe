@@ -198,13 +198,20 @@ The `Rerouting Static Obstacle` use-cases can be rerouting for a vehicle that is
 
 The way that `Rerouting Static Obstacle` node is working currently is that, when the human driver/operator notices a blockage during the planned route of the mission, s/he points in the map (using a dedicated plugin in rviz) when the blockage is. Then `Rerouting Static Obstacle` searches for alternative routes and if successfully found it calls `change_route` API.
 
-The following diagram shows how `Rerouting static obstacle` node works in high level :
+The following diagram shows how `Rerouting Static Obstacle` node works in high level :
 
 <p align="center">
   <img src=./media/rerouting-static-obstacle_flowchart.svg />
 </p>
 
 Reference implementation for `Rerouting Static Obstacle` node is under `src/rerouting_static_obstacle`
+
+##### How to enable rerouting static obstacle plugin ?
+1. In rviz using the add plugin sign, then under `tier4_planning_rviz_plugin`, add the `RerouteStaticObstaclePointPublish` plugin
+2. Make the plugin visible for ease of use
+3. Select a point through the route of the vehicle (where you see a blockage for example)
+4. If an alternative route can be found, the vehicle will to change route and will not go through the selected point.
+
 
 #### Rerouting Limitations
 
