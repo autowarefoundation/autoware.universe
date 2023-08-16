@@ -3125,7 +3125,8 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
 
 // TODO(Sugahara): should consider delay before departure
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
-  const std::vector<PathPointWithLaneId> & path_points, const std::shared_ptr<const PlannerData> & planner_data,
+  const std::vector<PathPointWithLaneId> & path_points,
+  const std::shared_ptr<const PlannerData> & planner_data,
   const SafetyCheckParams & safety_check_params)
 {
   if (path_points.empty()) {
@@ -3289,8 +3290,8 @@ PredictedObjects filterObject(
   PredictedObjects filtered_objects;
 
   // std::copy_if(
-  //   objects->objects.begin(), objects->objects.end(), std::back_inserter(filtered_objects.objects),
-  //   [target_object_types](const auto & obj) {
+  //   objects->objects.begin(), objects->objects.end(),
+  //   std::back_inserter(filtered_objects.objects), [target_object_types](const auto & obj) {
   //     return isTargetObjectType(obj, target_object_types);
   //   });
 

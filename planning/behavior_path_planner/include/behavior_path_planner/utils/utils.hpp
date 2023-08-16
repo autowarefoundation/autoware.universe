@@ -477,7 +477,8 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
   const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
-  const std::vector<PathPointWithLaneId> & path_points, const std::shared_ptr<const PlannerData> & planner_data,
+  const std::vector<PathPointWithLaneId> & path_points,
+  const std::shared_ptr<const PlannerData> & planner_data,
   const SafetyCheckParams & safety_check_params);
 
 bool isCentroidWithinLanelets(

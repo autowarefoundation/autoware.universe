@@ -909,7 +909,6 @@ bool StartPlannerModule::isSafePath() const
   // }
   const auto safety_check_params = createSafetyCheckParams();
 
-
   const auto & ego_predicted_path = behavior_path_planner::utils::convertToPredictedPath(
     pull_out_path.points, planner_data_, safety_check_params);
 

@@ -43,9 +43,9 @@
 
 namespace behavior_path_planner
 {
+using behavior_path_planner::utils::SafetyCheckParams;
 using geometry_msgs::msg::PoseArray;
 using lane_departure_checker::LaneDepartureChecker;
-using behavior_path_planner::utils::SafetyCheckParams;
 
 struct PullOutStatus
 {
