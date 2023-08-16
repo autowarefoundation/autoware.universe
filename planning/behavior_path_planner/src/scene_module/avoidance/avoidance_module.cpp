@@ -480,18 +480,14 @@ void AvoidanceModule::fillEgoStatus(
 
   const auto can_yield_maneuver = canYieldManeuver(data);
 
-  const size_t ego_seg_idx =
-    planner_data_->findEgoSegmentIndex(helper_.getPreviousSplineShiftPath().path.points);
-  const auto offset = std::abs(motion_utils::calcLateralOffset(
-    helper_.getPreviousSplineShiftPath().path.points, getEgoPosition(), ego_seg_idx));
-
-  // don't output new candidate path if the offset between the ego and previous output path is
-  // larger than threshold.
-  // TODO(Satoshi OTA): remove this workaround
-  if (offset > parameters_->safety_check_ego_offset) {
+  /**
+   * If the output path is locked by outside of this module, don't update output path.
+   */
+  if (isOutputPathLocked()) {
     data.safe_new_sl.clear();
     data.candidate_path = helper_.getPreviousSplineShiftPath();
-    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "unsafe. canceling candidate path...");
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 500, "this module is locked now. keep current path.");
     return;
   }
 
@@ -1094,7 +1090,10 @@ void AvoidanceModule::generateTotalShiftLine(
 
   // overwrite shift with current_ego_shift until ego pose.
   const auto current_shift = helper_.getEgoLinearShift();
-  for (size_t i = 0; i <= avoidance_data_.ego_closest_path_index; ++i) {
+  for (size_t i = 0; i < sl.shift_line.size(); ++i) {
+    if (avoidance_data_.ego_closest_path_index < i) {
+      break;
+    }
     sl.shift_line.at(i) = current_shift;
     sl.shift_line_grad.at(i) = 0.0;
   }
@@ -2169,8 +2168,6 @@ BehaviorModuleOutput AvoidanceModule::plan()
   generateExtendedDrivableArea(output);
   setDrivableLanes(output.drivable_area_info.drivable_lanes);
 
-  // updateRegisteredRTCStatus(spline_shift_path.path);
-
   return output;
 }
 
@@ -2457,6 +2454,10 @@ void AvoidanceModule::updateData()
 
   debug_data_ = DebugData();
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
+  if (avoidance_data_.reference_path.points.empty()) {
+    // an empty path will kill further processing
+    return;
+  }
 
   utils::avoidance::updateRegisteredObject(
     registered_objects_, avoidance_data_.target_objects, parameters_);
@@ -2508,8 +2509,6 @@ void AvoidanceModule::initVariables()
 
 void AvoidanceModule::initRTCStatus()
 {
-  removeRTCStatus();
-  clearWaitingApproval();
   left_shift_array_.clear();
   right_shift_array_.clear();
   uuid_map_.at("left") = generateUUID();

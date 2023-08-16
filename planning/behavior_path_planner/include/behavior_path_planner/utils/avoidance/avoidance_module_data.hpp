@@ -201,9 +201,6 @@ struct AvoidanceParameters
   // transit hysteresis (unsafe to safe)
   double safety_check_hysteresis_factor;
 
-  // don't output new candidate path if the offset between ego and path is larger than this.
-  double safety_check_ego_offset;
-
   // keep target velocity in yield maneuver
   double yield_velocity;
 
@@ -233,7 +230,11 @@ struct AvoidanceParameters
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double road_shoulder_safety_margin{1.0};
+  double soft_road_shoulder_margin{1.0};
+
+  // The margin is configured so that the generated avoidance trajectory does not come near to the
+  // road shoulder.
+  double hard_road_shoulder_margin{1.0};
 
   // Even if the obstacle is very large, it will not avoid more than this length for right direction
   double max_right_shift_length;
