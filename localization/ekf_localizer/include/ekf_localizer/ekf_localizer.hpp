@@ -156,6 +156,7 @@ private:
   double ekf_dt_;
 
   /* parameters */
+
   int dim_x_;  //!< @brief  dimension of EKF state
 
   /* process noise variance for discrete model */
@@ -255,16 +256,19 @@ private:
    */
   void updateSimple1DFilters(
     const geometry_msgs::msg::PoseWithCovarianceStamped & pose, const size_t smoothing_step);
+
   /**
    * @brief initialize simple1DFilter
    */
   void initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
+
   /**
    * @brief update z value by considering ndt delay
    */
   double calculateDeltaZFromPitch(
     const geometry_msgs::msg::TwistStamped & twist, const double delay_time,
     const double pitch_from_ndt);
+    
   /**
    * @brief trigger node
    */
