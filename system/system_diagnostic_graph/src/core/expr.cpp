@@ -29,6 +29,13 @@
 namespace system_diagnostic_graph
 {
 
+using LinkStatus = std::vector<std::pair<BaseNode *, bool>>;
+
+void extend(LinkStatus & a, const LinkStatus & b)
+{
+  a.insert(a.end(), b.begin(), b.end());
+}
+
 std::unique_ptr<BaseExpr> BaseExpr::create(Graph & graph, YAML::Node yaml)
 {
   if (!yaml.IsMap()) {
@@ -100,6 +107,7 @@ ExprStatus UnitExpr::eval() const
 {
   ExprStatus status;
   status.level = node_->level();
+  status.links.push_back(std::make_pair(node_, true));
   return status;
 }
 
@@ -125,6 +133,7 @@ ExprStatus DiagExpr::eval() const
 {
   ExprStatus status;
   status.level = node_->level();
+  status.links.push_back(std::make_pair(node_, true));
   return status;
 }
 
@@ -157,8 +166,11 @@ ExprStatus AndExpr::eval() const
   for (const auto & result : results) {
     levels.push_back(result.level);
   }
-  const auto level = *std::max_element(levels.begin(), levels.end());
   ExprStatus status;
+  for (const auto & result : results) {
+    extend(status.links, result.links);
+  }
+  const auto level = *std::max_element(levels.begin(), levels.end());
   status.level = std::min(level, DiagnosticStatus::ERROR);
   return status;
 }
@@ -197,8 +209,11 @@ ExprStatus OrExpr::eval() const
   for (const auto & result : results) {
     levels.push_back(result.level);
   }
-  const auto level = *std::min_element(levels.begin(), levels.end());
   ExprStatus status;
+  for (const auto & result : results) {
+    extend(status.links, result.links);
+  }
+  const auto level = *std::min_element(levels.begin(), levels.end());
   status.level = std::min(level, DiagnosticStatus::ERROR);
   return status;
 }

@@ -59,12 +59,17 @@ void DiagGraph::debug()
 
 DiagDebugData UnitNode::debug() const
 {
-  return DiagDebugData{std::to_string(index()), "unit", name_, "-----", level_names.at(level_)};
+  const auto & level = node_.status.level;
+  const auto & name = node_.status.name;
+  return DiagDebugData{std::to_string(index()), "unit", name, "-----", level_names.at(level)};
 }
 
 DiagDebugData DiagNode::debug() const
 {
-  return DiagDebugData{std::to_string(index()), "diag", name_, hardware_, level_names.at(level_)};
+  const auto & level = node_.status.level;
+  const auto & name = node_.status.name;
+  const auto & hardware = node_.status.hardware_id;
+  return DiagDebugData{std::to_string(index()), "diag", name, hardware, level_names.at(level)};
 }
 
 }  // namespace system_diagnostic_graph

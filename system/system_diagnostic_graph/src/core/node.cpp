@@ -24,9 +24,11 @@
 namespace system_diagnostic_graph
 {
 
-UnitNode::UnitNode(const std::string & name) : name_(name)
+UnitNode::UnitNode(const std::string & name)
 {
-  level_ = DiagnosticStatus::STALE;
+  node_.status.level = DiagnosticStatus::STALE;
+  node_.status.name = name;
+  node_.status.hardware_id = "";
 }
 
 UnitNode::~UnitNode()
@@ -36,20 +38,20 @@ UnitNode::~UnitNode()
 
 DiagnosticNode UnitNode::report() const
 {
-  DiagnosticStatus status;
-  status.level = level_;
-  status.name = name_;
-  status.hardware_id = "";
-
-  DiagnosticNode message;
-  message.status = status;
-  return message;
+  return node_;
 }
 
 void UnitNode::update()
 {
   const auto result = expr_->eval();
-  level_ = result.level;
+  node_.status.level = result.level;
+  node_.links.clear();
+  for (const auto & [node, used] : result.links) {
+    DiagnosticLink link;
+    link.index = node->index();
+    link.used = used;
+    node_.links.push_back(link);
+  }
 }
 
 void UnitNode::create(Graph & graph, const NodeConfig & config)
@@ -67,21 +69,15 @@ std::vector<BaseNode *> UnitNode::links() const
 }
 
 DiagNode::DiagNode(const std::string & name, const std::string & hardware)
-: name_(name), hardware_(hardware)
 {
-  level_ = DiagnosticStatus::STALE;
+  node_.status.level = DiagnosticStatus::STALE;
+  node_.status.name = name;
+  node_.status.hardware_id = hardware;
 }
 
 DiagnosticNode DiagNode::report() const
 {
-  DiagnosticStatus status = status_;
-  status.level = level_;
-  status.name = name_;
-  status.hardware_id = hardware_;
-
-  DiagnosticNode message;
-  message.status = status;
-  return message;
+  return node_;
 }
 
 void DiagNode::update()
@@ -92,8 +88,7 @@ void DiagNode::update()
 
 void DiagNode::callback(const DiagnosticStatus & status)
 {
-  level_ = status.level;
-  status_ = status;
+  node_.status = status;
 }
 
 }  // namespace system_diagnostic_graph

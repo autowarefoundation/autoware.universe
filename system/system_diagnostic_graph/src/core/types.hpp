@@ -18,6 +18,7 @@
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <tier4_system_msgs/msg/diagnostic_graph.hpp>
+#include <tier4_system_msgs/msg/diagnostic_link.hpp>
 #include <tier4_system_msgs/msg/diagnostic_node.hpp>
 #include <tier4_system_msgs/msg/diagnostic_summary.hpp>
 
@@ -27,6 +28,7 @@ namespace system_diagnostic_graph
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using tier4_system_msgs::msg::DiagnosticGraph;
+using tier4_system_msgs::msg::DiagnosticLink;
 using tier4_system_msgs::msg::DiagnosticNode;
 using tier4_system_msgs::msg::DiagnosticSummary;
 

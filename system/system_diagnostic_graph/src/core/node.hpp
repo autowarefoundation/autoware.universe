@@ -35,15 +35,16 @@ public:
   virtual DiagnosticNode report() const = 0;
   virtual DiagDebugData debug() const = 0;
   virtual std::vector<BaseNode *> links() const = 0;
-  virtual std::string name() const = 0;
 
-  DiagnosticLevel level() const { return level_; }
+  DiagnosticLevel level() const { return node_.status.level; }
+  std::string name() const { return node_.status.name; }
+
   size_t index() const { return index_; }
   void set_index(const size_t index) { index_ = index; }
 
 protected:
   size_t index_ = 0;
-  DiagnosticLevel level_;
+  DiagnosticNode node_;
 };
 
 class UnitNode : public BaseNode
@@ -58,10 +59,8 @@ public:
   void create(Graph & graph, const NodeConfig & config);
 
   std::vector<BaseNode *> links() const override;
-  std::string name() const override { return name_; }
 
 private:
-  const std::string name_;
   std::unique_ptr<BaseExpr> expr_;
 };
 
@@ -76,12 +75,8 @@ public:
   void callback(const DiagnosticStatus & status);
 
   std::vector<BaseNode *> links() const override { return {}; }
-  std::string name() const override { return name_; }
 
 private:
-  const std::string name_;
-  const std::string hardware_;
-  DiagnosticStatus status_;
 };
 
 }  // namespace system_diagnostic_graph
