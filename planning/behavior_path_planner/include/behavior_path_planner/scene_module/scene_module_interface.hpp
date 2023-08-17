@@ -353,26 +353,6 @@ public:
 
   rclcpp::Logger getLogger() const { return logger_; }
 
-  void setIsSimultaneousExecutableAsApprovedModule(const bool enable)
-  {
-    is_simultaneously_executable_as_approved_module_ = enable;
-  }
-
-  bool isSimultaneousExecutableAsApprovedModule() const
-  {
-    return is_simultaneously_executable_as_approved_module_;
-  }
-
-  void setIsSimultaneousExecutableAsCandidateModule(const bool enable)
-  {
-    is_simultaneously_executable_as_candidate_module_ = enable;
-  }
-
-  bool isSimultaneousExecutableAsCandidateModule() const
-  {
-    return is_simultaneously_executable_as_candidate_module_;
-  }
-
 private:
   std::string name_;
 

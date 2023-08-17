@@ -97,10 +97,6 @@ public:
   void registerNewModule(
     const SceneModulePtr & module_ptr, const BehaviorModuleOutput & previous_module_output)
   {
-    module_ptr->setIsSimultaneousExecutableAsApprovedModule(
-      enable_simultaneous_execution_as_approved_module_);
-    module_ptr->setIsSimultaneousExecutableAsCandidateModule(
-      enable_simultaneous_execution_as_candidate_module_);
     module_ptr->setData(planner_data_);
     module_ptr->setPreviousModuleOutput(previous_module_output);
     module_ptr->onEntry();
@@ -214,28 +210,14 @@ public:
 
   bool canLaunchNewModule() const { return registered_modules_.size() < max_module_num_; }
 
-  bool isSimultaneousExecutableAsApprovedModule() const
+  virtual bool isSimultaneousExecutableAsApprovedModule() const
   {
-    if (registered_modules_.empty()) {
-      return enable_simultaneous_execution_as_approved_module_;
-    }
-
-    return std::all_of(
-      registered_modules_.begin(), registered_modules_.end(), [](const SceneModulePtr & module) {
-        return module->isSimultaneousExecutableAsApprovedModule();
-      });
+    return enable_simultaneous_execution_as_approved_module_;
   }
 
-  bool isSimultaneousExecutableAsCandidateModule() const
+  virtual bool isSimultaneousExecutableAsCandidateModule() const
   {
-    if (registered_modules_.empty()) {
-      return enable_simultaneous_execution_as_candidate_module_;
-    }
-
-    return std::all_of(
-      registered_modules_.begin(), registered_modules_.end(), [](const SceneModulePtr & module) {
-        return module->isSimultaneousExecutableAsCandidateModule();
-      });
+    return enable_simultaneous_execution_as_candidate_module_;
   }
 
   void setData(const std::shared_ptr<PlannerData> & planner_data) { planner_data_ = planner_data; }

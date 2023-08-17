@@ -102,10 +102,32 @@ void StartPlannerModuleManager::updateModuleParams(
 
   std::for_each(registered_modules_.begin(), registered_modules_.end(), [&](const auto & m) {
     m->updateModuleParams(p);
-    m->setInitialIsSimultaneousExecutableAsApprovedModule(
-      enable_simultaneous_execution_as_approved_module_);
-    m->setInitialIsSimultaneousExecutableAsCandidateModule(
-      enable_simultaneous_execution_as_candidate_module_);
   });
+}
+
+bool StartPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
+{
+  const auto checker = [this](const auto & module) {
+    // Currently simultaneous execution with other modules is not supported while backward driving
+    if (!module->isBackFinished()) {
+      return false;
+    }
+    return enable_simultaneous_execution_as_candidate_module_;
+  };
+
+  return std::all_of(registered_modules_.begin(), registered_modules_.end(), checker);
+}
+
+bool StartPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
+{
+  const auto checker = [this](const auto & module) {
+    // Currently simultaneous execution with other modules is not supported while backward driving
+    if (!module->isBackFinished()) {
+      return false;
+    }
+    return enable_simultaneous_execution_as_candidate_module_;
+  };
+
+  return std::all_of(registered_modules_.begin(), registered_modules_.end(), checker);
 }
 }  // namespace behavior_path_planner
