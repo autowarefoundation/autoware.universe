@@ -3,12 +3,13 @@
     common:
       maximum_record_time: 1800 # seconds
       bag_time: 100 # seconds
-      record_all_topic_in_a_bag: false
+      record_all_topic_in_a_bag: true
       number_of_maximum_bags: 5
       path: "bags/" # Path to bag file for saving
       check_disk_space_threshold: 50 # GB
+      disk_space_threshold_action: "shutdown" # [remove, shutdown] remove files or shutdown node
     api_modules:
-      record_api: true
+      record_api: false
       api_topics:
         - /api/autoware/get/emergency
         - /api/autoware/get/engage
@@ -35,13 +36,13 @@
         - /api/vehicle/kinematics
         - /api/vehicle/status
     autoware_modules:
-      record_autoware: true
+      record_autoware: false
       autoware_topics:
         - /autoware/engage
         - /autoware/state
         - /autoware_orientation
     control_modules:
-      record_control: true
+      record_control: false
       control_topics:
         - /control/command/control_cmd
         - /control/command/emergency_cmd
@@ -70,7 +71,7 @@
         - /control/vehicle_cmd_gate/is_stopped
         - /control/vehicle_cmd_gate/operation_mode
     external_modules:
-      record_external: true
+      record_external: false
       external_topics:
         - /external/selected/control_cmd
         - /external/selected/external_control_cmd
@@ -79,7 +80,7 @@
         - /external/selected/heartbeat
         - /external/selected/turn_indicators_cmd
     localization_modules:
-      record_localization: true
+      record_localization: false
       localization_topics:
         - /initialpose
         - /initialpose3d
@@ -126,14 +127,14 @@
         - /localization/util/measurement_range/pointcloud
         - /localization/util/voxel_grid_downsample/pointcloud
     map_modules:
-      record_map: true
+      record_map: false
       map_topics:
         - /map/map_projector_type
         - /map/pointcloud_map
         - /map/vector_map
         - /map/vector_map_marker
     perception_modules:
-      record_perception: true
+      record_perception: false
       perception_topics:
         - /perception/object_recognition/detection/centerpoint/lidar_centerpoint/debug/cyclic_time_ms
         - /perception/object_recognition/detection/centerpoint/lidar_centerpoint/debug/processing_time_ms
@@ -196,7 +197,7 @@
         - /perception/traffic_light_recognition/traffic_signals
         - /perception/traffic_light_recognition/traffic_signals/markers
     planning_modules:
-      record_planning: true
+      record_planning: false
       planning_topics:
         - /planning/cooperate_status/avoidance_by_lane_change_left
         - /planning/cooperate_status/avoidance_by_lane_change_right
@@ -419,7 +420,7 @@
         - /planning/velocity_factors/virtual_traffic_light
         - /planning/velocity_factors/walkway
     sensing_modules:
-      record_sensing: true
+      record_sensing: false
       sensing_topics:
         - /sensing/camera/camera6/camera_info
         - /sensing/camera/camera6/image_raw
@@ -498,7 +499,7 @@
         # /sensing/lidar/top/velodyne_packets
         - /sensing/vehicle_velocity_converter/twist_with_covariance
     system_modules:
-      record_system: true
+      record_system: false
       system_topics:
         - /system/component_state_monitor/component/autonomous/control
         - /system/component_state_monitor/component/autonomous/localization
@@ -526,7 +527,7 @@
         - /system/mrm/emergency_stop/status
         - /system/operation_mode/state
     vehicle_modules:
-      record_vehicle: true
+      record_vehicle: false
       vehicle_topics:
         - /joint_states
         - /robot_description

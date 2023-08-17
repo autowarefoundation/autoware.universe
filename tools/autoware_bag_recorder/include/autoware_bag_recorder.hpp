@@ -47,6 +47,7 @@ private:
   std::string bag_path_;
   int disk_space_threshold_;
   int number_of_maximum_bags_;
+  std::string disk_space_action_mode_;
 
   bool record_all_topic_in_a_bag_;
 
@@ -96,7 +97,10 @@ private:
     autoware_bag_recorder::ModuleSection & section);
   void section_factory(std::vector<std::string> topics, std::string path);
   int get_root_disk_space();
-  void check_number_of_bags_in_folder(autoware_bag_recorder::ModuleSection & section);
+  void remove_remainder_bags_in_folder(autoware_bag_recorder::ModuleSection & section);
+  void free_disk_space_for_continue(autoware_bag_recorder::ModuleSection & section);
+  void check_files_in_folder(
+    autoware_bag_recorder::ModuleSection & section,std::vector<std::string> & directories);
   void run();
 };
 

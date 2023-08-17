@@ -28,7 +28,7 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
   bag_time_ = declare_parameter<int>("common.bag_time");
   number_of_maximum_bags_ = declare_parameter<int>("common.number_of_maximum_bags");
   record_all_topic_in_a_bag_ = declare_parameter<bool>("common.record_all_topic_in_a_bag");
-
+  disk_space_action_mode_ = declare_parameter<std::string>("common.disk_space_threshold_action");
   // api
   record_api_topics_ = declare_parameter<bool>("api_modules.record_api");
   if (record_api_topics_ || record_all_topic_in_a_bag_) {
@@ -121,6 +121,10 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
     }
     module_sections_ = std::vector<ModuleSection>();
     section_factory(all_topic_names, bag_path_ + "all");
+  }
+
+  for (auto & section : module_sections_) {
+    remove_remainder_bags_in_folder(section);
   }
 
   remaining_topic_num_ = 0;
@@ -259,10 +263,9 @@ int AutowareBagRecorderNode::get_root_disk_space()
   return (root.available / pow(1024.0, 3.0));  // Convert to GB
 }
 
-void AutowareBagRecorderNode::check_number_of_bags_in_folder(
-  autoware_bag_recorder::ModuleSection & section)
+void AutowareBagRecorderNode::check_files_in_folder(
+  autoware_bag_recorder::ModuleSection & section,std::vector<std::string> & directories)
 {
-  std::vector<std::string> directories;
   for (const auto & path : std::filesystem::recursive_directory_iterator(section.folder_path)) {
     if (path.is_directory()) {
       directories.push_back(path.path().string());
@@ -272,8 +275,27 @@ void AutowareBagRecorderNode::check_number_of_bags_in_folder(
   std::sort(
     directories.begin(), directories.end(),
     [](const std::string & a, const std::string & b) -> bool { return a < b; });
+}
+
+void AutowareBagRecorderNode::remove_remainder_bags_in_folder(
+  autoware_bag_recorder::ModuleSection & section)
+{
+  std::vector<std::string> directories;
+  check_files_in_folder(section, directories);
 
   while (directories.size() >= static_cast<std::vector<int>::size_type>(number_of_maximum_bags_)) {
+    std::filesystem::remove_all(directories[0]);
+    directories.erase(directories.begin());
+  }
+}
+
+void AutowareBagRecorderNode::free_disk_space_for_continue(
+  autoware_bag_recorder::ModuleSection & section)
+{
+  std::vector<std::string> directories;
+  check_files_in_folder(section, directories);
+
+  while (get_root_disk_space() < disk_space_threshold_) {
     std::filesystem::remove_all(directories[0]);
     directories.erase(directories.begin());
   }
@@ -310,6 +332,13 @@ void AutowareBagRecorderNode::run()
         RCLCPP_WARN(
           this->get_logger(), "Available Disk Space is: %d under the threshold.",
           get_root_disk_space());
+        if (disk_space_action_mode_ == "remove")
+        {
+          for (auto & section : module_sections_)
+          {
+            free_disk_space_for_continue(section);
+          }
+        }
         rclcpp::shutdown();
       }
 
@@ -325,7 +354,7 @@ void AutowareBagRecorderNode::run()
         start_bag_time = std::chrono::system_clock::now();
 
         for (auto & section : module_sections_) {
-          check_number_of_bags_in_folder(section);
+          remove_remainder_bags_in_folder(section);
           std::lock_guard<std::mutex> lock(writer_mutex_);
           create_bag_file(section.bag_writer, section.folder_path + "/rosbag2_" + get_timestamp());
           for (auto & topic_info : section.topic_info) {
