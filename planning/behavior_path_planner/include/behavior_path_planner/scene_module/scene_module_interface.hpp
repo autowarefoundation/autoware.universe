@@ -34,7 +34,6 @@
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
-#include <utility>
 #include <visualization_msgs/msg/detail/marker_array__struct.hpp>
 
 #include <algorithm>
@@ -76,7 +75,7 @@ class SceneModuleInterface
 public:
   SceneModuleInterface(
     const std::string & name, rclcpp::Node & node,
-    std::unordered_map<std::string, std::shared_ptr<RTCInterface>>  rtc_interface_ptr_map)
+    std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map)
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
