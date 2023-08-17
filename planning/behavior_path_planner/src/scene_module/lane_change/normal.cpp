@@ -31,6 +31,8 @@
 
 namespace behavior_path_planner
 {
+const double MAX_VELOCITY = tier4_autoware_utils::kmph2mps(40.0);
+
 NormalLaneChange::NormalLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters, LaneChangeModuleType type,
   Direction direction)
@@ -527,7 +529,8 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   const auto min_acc = utils::lane_change::calcMinimumAcceleration(
     current_velocity, vehicle_min_acc, common_parameters);
   const auto max_acc = utils::lane_change::calcMaximumAcceleration(
-    current_velocity, max_path_velocity, vehicle_max_acc, common_parameters);
+    current_velocity, std::min(max_path_velocity, MAX_VELOCITY), vehicle_max_acc,
+    common_parameters);
 
   // if max acc is not positive, then we do the normal sampling
   if (max_acc <= 0.0) {
@@ -809,7 +812,8 @@ bool NormalLaneChange::getLaneChangePaths(
       lanelet::utils::getLateralDistanceToClosestLanelet(target_lanes, lane_changing_start_pose);
 
     const auto initial_lane_changing_velocity = prepare_velocity;
-    const auto & max_path_velocity = prepare_segment.points.back().point.longitudinal_velocity_mps;
+    const double & max_path_velocity =
+      prepare_segment.points.back().point.longitudinal_velocity_mps;
 
     // get lateral acceleration range
     const auto [min_lateral_acc, max_lateral_acc] =
@@ -824,8 +828,8 @@ bool NormalLaneChange::getLaneChangePaths(
         shift_length, common_parameters.lane_changing_lateral_jerk, lateral_acc);
       const double longitudinal_acc_on_lane_changing =
         utils::lane_change::calcLaneChangingAcceleration(
-          initial_lane_changing_velocity, max_path_velocity, lane_changing_time,
-          sampled_longitudinal_acc);
+          initial_lane_changing_velocity, std::min(max_path_velocity, MAX_VELOCITY),
+          lane_changing_time, sampled_longitudinal_acc);
       const auto lane_changing_length =
         initial_lane_changing_velocity * lane_changing_time +
         0.5 * longitudinal_acc_on_lane_changing * lane_changing_time * lane_changing_time;
