@@ -13,7 +13,7 @@ def format_param_range(param):
     list_of_range = []
     if "enum" in param.keys():
         list_of_range.append(param["enum"])
-    if "mininmum" in param.keys():
+    if "minimum" in param.keys():
         list_of_range.append(">=" + str(param["minimum"]))
     if "exclusiveMinimum" in param.keys():
         list_of_range.append(">" + str(param["exclusiveMinimum"]))
