@@ -2,6 +2,8 @@ import json
 
 from tabulate import tabulate
 
+# This file is for defining macros for mkdocs-macros plugin
+# Check https://mkdocs-macros-plugin.readthedocs.io/en/latest/macros/ for the details
 
 def format_param_type(param_type):
     if param_type == "number":
@@ -54,8 +56,8 @@ def extract_parameter_info(parameters, namespace=""):
 
 def format_json(json_data):
     parameters = list(json_data["definitions"].values())[0]["properties"]
+    # cspell: ignore tablefmt
     markdown_table = tabulate(extract_parameter_info(parameters), headers="keys", tablefmt="github")
-    print(markdown_table)
     return markdown_table
 
 
