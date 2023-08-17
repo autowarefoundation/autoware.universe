@@ -1,12 +1,12 @@
 # Autoware Installation on Jetson Xavier NX and F1tenth Recordreplay Demo
 
-This tutorial provides step-by-step instructions for installing and setting up the Autoware development environment on the F1tenth race car. The Autoware installation process in this branch is modified from the main one to adapt to the Jetson Xavier NX hardware and software systems. One major difference of this Autoware environment is that it runs on `ROS2 galactic` in stead of `ROS2 humble` due to the fact the NVIDIA Jetson currently only supports Ubuntu 20.04 or below. To natively build and run autoware without using docker, galactic is used to increase system compatibility. The original [Autoware installation documentation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/) from main branch, and the [F1tenth build documentation](https://f1tenth.readthedocs.io/en/foxy_test/index.html)(running ROS2 foxy) are here for your reference.
+This tutorial provides step-by-step instructions for installing and setting up the Autoware development environment on the F1tenth race car. The Autoware installation process in this branch is modified from the main one to adapt to the Jetson Xavier NX hardware and software systems. One major difference of this Autoware environment is that it runs on `ROS2 galactic` instead of `ROS2 humble` due to the fact that the NVIDIA Jetson currently only supports Ubuntu 20.04 or below. To natively build and run autoware without using docker, galactic is used to increase system compatibility. The original [Autoware installation documentation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/) from main branch, and the [F1tenth build documentation](https://f1tenth.readthedocs.io/en/foxy_test/index.html)(running ROS2 foxy) are here for your reference.
 
-This repo also includes a F1tenth Recordreplay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth race car, and then perform trajectory following in both `real-world`(testing in progress) and in the `F1tenth gym simulator` running the Autoware framework. Instructions for installing the F1tenth gym simulator is provided.
+This repo also includes a F1tenth Recordreplay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth race car, and then perform trajectory following in both `real-world`(testing in progress) and in the `F1tenth gym simulator` running the Autoware framework. Instructions for installing the F1tenth gym simulator are provided.
 
 ## Flash JetPack 5.1.1 to Jetson Xavier NX (Approximate Time Investment: 1-1.5 hours)
 
-There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1. Other JetPack versions may also work but not yet tested.
+There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1. Other JetPack versions may also work but have not yet been tested.
 
 ### NVIDIA SDK Manager Method:
 (requires a Linux host computer running Ubuntu Linux x64 version 20.04 or 18.04 with ~25GB(for target components)+15GB(for host components, optional) of space)
@@ -25,13 +25,13 @@ This method you will first install NVIDIA SDK Manager on your host machine, conn
 
 1. Download [JetPack 5.1.1](https://developer.nvidia.com/downloads/embedded/l4t/r35_release_v3.1/sd_card_b49/jp511-xnx-sd-card-image.zip/)
 
-2. If you have not previously run a JetPack 5.x release on your Jetson Xavier NX Developer kit, you must first update its QSPI before using this JetPack 5.x SD Card image. See the [SD Card Image Method](https://developer.nvidia.com/embedded/jetpack-sdk-511) section for more infomation.
+2. If you have not previously run a JetPack 5.x release on your Jetson Xavier NX Developer kit, you must first update its QSPI before using this JetPack 5.x SD Card image. See the [SD Card Image Method](https://developer.nvidia.com/embedded/jetpack-sdk-511) section for more information.
 
 2. Follow the steps at [Jetson Xavier NX Developer Kit - Get Started](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare) to write the Jetpack to the microSD card.
 
 3. Insert your microSD card to the Jetson.
 
-Once the JetPack is successfully flashed to the Jetson NX, bootup the system and the Ubuntu desktop environment should launch
+Once the JetPack is successfully flashed to the Jetson NX, boot the system and the Ubuntu desktop environment should launch
 
 
 ## Install ROS2 galactic (Approximate Time Investment: 15 minutes)
@@ -54,7 +54,7 @@ Once the JetPack is successfully flashed to the Jetson NX, bootup the system and
    ./setup-dev-env.sh --no-nvidia --no-cuda-drivers
    ```
 
-   The NVIDIA library and cuda driver installation are disabled as they are already installed with the JetPack. If you force the cuda driver installation here, it can mess up the kernel and cause error at bootup. You will need to reflash the JetPack if this happens
+   The NVIDIA library and cuda driver installation are disabled as they are already installed with the JetPack. If you force the cuda driver installation here, it can mess up the kernel and cause errors at bootup. You will need to reflash the JetPack if this happens
 
 3. Under the `autoware` folder, go to the `autoware.repos` file and change the version of `universe/autoware.universe` from `galactic` to `f1tenth_galactic`
 
@@ -158,7 +158,7 @@ cd autoware && . install/setup.bash
 ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/autoware/src/universe/autoware.universe/f1tenth/f1tenth_system/f1tenth_stack/config/f1tenth_online_async.yaml
 ```
 
-Launch rviz2, Add __/map__ by topic. Add __/graph_visualization__ by topic. On top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you ran slam_toolbox.
+Launch rviz2, Add __/map__ by topic. Add __/graph_visualization__ by topic. On the top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you run slam_toolbox.
 
 ### Create a map without an f1tenth car
 
