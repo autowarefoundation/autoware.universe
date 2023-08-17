@@ -11,7 +11,7 @@
           "properties": {
             "update_rate_hz": {
               "type": "number",
-              "description": "INSERT_DESCRIPTION",
+              "description": "Update rate for parameters. [hz]",
               "default": 10.0,
               "minimum": 0.0
             }
@@ -37,7 +37,7 @@
             },
             "threshold_yaw_diff": {
               "type": "number",
-              "description": "The yaw orientation threshold. If $ \\vert \\theta {ob} - \\theta {ra} \\vert < threshold yaw_diff $ attached to radar information include estimated velocity, where $ \\theta{ob} $ is yaw angle from 3d detected object, $ \\theta_ {ra} $ is yaw angle from radar object. [rad]",
+              "description": "The yaw orientation threshold. If ∣θob−θra∣<threshold×yaw_diff attached to radar information include estimated velocity, where `θob` is yaw angle from 3d detected object, `θra` is yaw angle from radar object. [rad]",
               "default": 0.35
             },
             "velocity_weight_min_distance": {
