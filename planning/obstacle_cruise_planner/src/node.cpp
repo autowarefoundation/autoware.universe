@@ -998,7 +998,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
       }
       return true;
     }
-    // check if entrying slow down
+    // check if entering slow down
     if (is_lat_dist_low) {
       const int count = slow_down_condition_counter_.increaseCounter(obstacle.uuid);
       if (p.successive_num_to_entry_slow_down_condition <= count) {
@@ -1019,7 +1019,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   const auto obstacle_poly = obstacle.toPolygon();
 
   // calculate collision points with trajectory with lateral stop margin
-  // NOTE: For additional margin, hysteresis is not devided by two.
+  // NOTE: For additional margin, hysteresis is not divided by two.
   const auto traj_polys_with_lat_margin = polygon_utils::createOneStepPolygons(
     traj_points, vehicle_info_,
     p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down);
