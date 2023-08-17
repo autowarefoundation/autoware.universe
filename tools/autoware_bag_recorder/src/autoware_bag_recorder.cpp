@@ -23,21 +23,22 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
 {
   // common params declarations
   bag_path_ = declare_parameter<std::string>("common.path");
-  disk_space_threshold_ = node_->declare_parameter<int>("common.check_disk_space_threshold");
+  disk_space_threshold_ = declare_parameter<int>("common.check_disk_space_threshold");
   maximum_record_time_ = declare_parameter<int>("common.maximum_record_time");
   bag_time_ = declare_parameter<int>("common.bag_time");
   number_of_maximum_bags_ = declare_parameter<int>("common.number_of_maximum_bags");
+  record_all_topic_in_a_bag_ = declare_parameter<bool>("common.record_all_topic_in_a_bag");
 
   // api
   record_api_topics_ = declare_parameter<bool>("api_modules.record_api");
-  if (record_api_topics_) {
+  if (record_api_topics_ || record_all_topic_in_a_bag_) {
     api_topics_ = declare_parameter<std::vector<std::string>>("api_modules.api_topics");
     section_factory(api_topics_, bag_path_ + "api");
   }
 
   // autoware
   record_autoware_topics_ = declare_parameter<bool>("autoware_modules.record_autoware");
-  if (record_autoware_topics_) {
+  if (record_autoware_topics_ || record_all_topic_in_a_bag_) {
     autoware_topics_ =
       declare_parameter<std::vector<std::string>>("autoware_modules.autoware_topics");
     section_factory(autoware_topics_, bag_path_ + "autoware");
@@ -45,14 +46,14 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
 
   // control
   record_control_topics_ = declare_parameter<bool>("control_modules.record_control");
-  if (record_control_topics_) {
+  if (record_control_topics_ || record_all_topic_in_a_bag_) {
     control_topics_ = declare_parameter<std::vector<std::string>>("control_modules.control_topics");
     section_factory(control_topics_, bag_path_ + "control");
   }
 
   // external
   record_external_topics_ = declare_parameter<bool>("external_modules.record_external");
-  if (record_external_topics_) {
+  if (record_external_topics_ || record_all_topic_in_a_bag_) {
     external_topics_ =
       declare_parameter<std::vector<std::string>>("external_modules.external_topics");
     section_factory(external_topics_, bag_path_ + "external");
@@ -60,7 +61,7 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
 
   // localization
   record_localization_topics_ = declare_parameter<bool>("localization_modules.record_localization");
-  if (record_localization_topics_) {
+  if (record_localization_topics_ || record_all_topic_in_a_bag_) {
     localization_topics_ =
       declare_parameter<std::vector<std::string>>("localization_modules.localization_topics");
     section_factory(localization_topics_, bag_path_ + "localization");
@@ -68,14 +69,14 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
 
   // map
   record_map_topics_ = declare_parameter<bool>("map_modules.record_map");
-  if (record_map_topics_) {
+  if (record_map_topics_ || record_all_topic_in_a_bag_) {
     map_topics_ = declare_parameter<std::vector<std::string>>("map_modules.map_topics");
     section_factory(map_topics_, bag_path_ + "map");
   }
 
   // perception
   record_perception_topics_ = declare_parameter<bool>("perception_modules.record_perception");
-  if (record_perception_topics_) {
+  if (record_perception_topics_ || record_all_topic_in_a_bag_) {
     perception_topics_ =
       declare_parameter<std::vector<std::string>>("perception_modules.perception_topics");
     section_factory(perception_topics_, bag_path_ + "perception");
@@ -83,7 +84,7 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
 
   // planning
   record_planning_topics_ = declare_parameter<bool>("planning_modules.record_planning");
-  if (record_planning_topics_) {
+  if (record_planning_topics_ || record_all_topic_in_a_bag_) {
     planning_topics_ =
       declare_parameter<std::vector<std::string>>("planning_modules.planning_topics");
     section_factory(planning_topics_, bag_path_ + "planning");
@@ -91,23 +92,35 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
 
   // sensing
   record_sensing_topics_ = declare_parameter<bool>("sensing_modules.record_sensing");
-  if (record_sensing_topics_) {
+  if (record_sensing_topics_ || record_all_topic_in_a_bag_) {
     sensing_topics_ = declare_parameter<std::vector<std::string>>("sensing_modules.sensing_topics");
     section_factory(sensing_topics_, bag_path_ + "sensing");
   }
 
   // system
   record_system_topics_ = declare_parameter<bool>("system_modules.record_system");
-  if (record_system_topics_) {
+  if (record_system_topics_ || record_all_topic_in_a_bag_) {
     system_topics_ = declare_parameter<std::vector<std::string>>("system_modules.system_topics");
     section_factory(system_topics_, bag_path_ + "system");
   }
 
   // vehicle
   record_vehicle_topics_ = declare_parameter<bool>("vehicle_modules.record_vehicle");
-  if (record_vehicle_topics_) {
+  if (record_vehicle_topics_ || record_all_topic_in_a_bag_) {
     vehicle_topics_ = declare_parameter<std::vector<std::string>>("vehicle_modules.vehicle_topics");
     section_factory(vehicle_topics_, bag_path_ + "vehicle");
+  }
+
+  if (record_all_topic_in_a_bag_) {
+    ModuleSection all_topics;
+    std::vector<std::string> all_topic_names;
+    for (const auto & section : module_sections_) {
+      for (const auto & topic : section.topic_names) {
+        all_topic_names.push_back(topic);
+      }
+    }
+    module_sections_ = std::vector<ModuleSection>();
+    section_factory(all_topic_names, bag_path_ + "all");
   }
 
   remaining_topic_num_ = 0;
@@ -170,7 +183,12 @@ void AutowareBagRecorderNode::add_topics_to_writer(
 rclcpp::QoS AutowareBagRecorderNode::get_qos_profile_of_topic(const std::string & topic_name)
 {
   auto publisher_info = this->get_publishers_info_by_topic(topic_name);
-  return publisher_info[0].qos_profile();
+  auto subscriber_info = this->get_subscriptions_info_by_topic(topic_name);
+  if (publisher_info.size() > 0) {
+    return publisher_info[0].qos_profile();
+  } else {
+    return subscriber_info[0].qos_profile();
+  }
 }
 
 void AutowareBagRecorderNode::generic_subscription_callback(
@@ -187,7 +205,6 @@ void AutowareBagRecorderNode::generic_subscription_callback(
   serialized_bag_msg->serialized_data->buffer_capacity =
     msg->get_rcl_serialized_message().buffer_capacity;
   serialized_bag_msg->serialized_data->allocator = msg->get_rcl_serialized_message().allocator;
-  // serialized_bag_msg->serialized_data->allocator = allocator;
 
   std::lock_guard<std::mutex> lock(writer_mutex_);
   section.bag_writer->write(serialized_bag_msg);
@@ -197,11 +214,10 @@ void AutowareBagRecorderNode::search_topic(autoware_bag_recorder::ModuleSection 
 {
   std::string topic_name = section.topic_names.front();
   auto topic_info_map = node_->get_topic_names_and_types();
-
   std::string topic_type;
   for (const auto & topic_info : topic_info_map) {
     if (topic_info.first == topic_name) {
-      topic_type = topic_info.second.front();
+      topic_type = topic_info.second[0];
       break;
     }
   }
@@ -210,7 +226,8 @@ void AutowareBagRecorderNode::search_topic(autoware_bag_recorder::ModuleSection 
     add_topics_to_writer(section.bag_writer, topic_name, topic_type);
 
     auto topics_interface = node_->get_node_topics_interface();
-
+    RCLCPP_INFO(
+      get_logger(), "Subscribed topic %s of type %s", topic_name.c_str(), topic_type.c_str());
     auto subscription = rclcpp::create_generic_subscription(
       topics_interface, topic_name, topic_type, get_qos_profile_of_topic(topic_name),
       [this, topic_name, &section](const std::shared_ptr<rclcpp::SerializedMessage const> msg) {
@@ -222,9 +239,16 @@ void AutowareBagRecorderNode::search_topic(autoware_bag_recorder::ModuleSection 
     remaining_topic_num_ = remaining_topic_num_ - 1;
 
     for (auto & topic_info : section.topic_info) {
-      if (topic_info.topic_name == topic_name) topic_info.topic_type = topic_type;
+      if (topic_info.topic_name == topic_name) {
+        topic_info.topic_type = topic_type;
+      }
     }
     section.topic_names.erase(section.topic_names.begin());
+  } else {
+    if (!section.topic_names.empty()) {
+      std::rotate(
+        section.topic_names.rbegin(), section.topic_names.rbegin() + 1, section.topic_names.rend());
+    }
   }
 }
 
@@ -263,7 +287,7 @@ void AutowareBagRecorderNode::run()
   }
 
   std::thread([this]() {
-    rclcpp::Rate rate(10);
+    rclcpp::Rate rate(100);
     // if all topics are not subscribed, then continue checking
     while (remaining_topic_num_ > 0) {
       for (auto & section : module_sections_) {
@@ -309,7 +333,6 @@ void AutowareBagRecorderNode::run()
           }
         }
       }
-
       rate.sleep();
     }
   }).detach();

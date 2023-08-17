@@ -2,9 +2,10 @@
   ros__parameters:
     common:
       maximum_record_time: 1800 # seconds
-      bag_time: 10 # seconds
+      bag_time: 100 # seconds
+      record_all_topic_in_a_bag: false
       number_of_maximum_bags: 5
-      path: "src/universe/autoware.universe/tools/autoware_bag_recorder/bags/" # Path to bag file for saving
+      path: "bags/" # Path to bag file for saving
       check_disk_space_threshold: 50 # GB
     api_modules:
       record_api: true
@@ -38,6 +39,7 @@
       autoware_topics:
         - /autoware/engage
         - /autoware/state
+        - /autoware_orientation
     control_modules:
       record_control: true
       control_topics:
@@ -46,6 +48,10 @@
         - /control/command/gear_cmd
         - /control/command/hazard_lights_cmd
         - /control/command/turn_indicators_cmd
+        - /control/control_validator/debug/marker
+        - /control/control_validator/output/markers
+        - /control/control_validator/validation_status
+        - /control/control_validator/virtual_wall
         - /control/current_gate_mode
         - /control/external_cmd_selector/current_selector_mode
         - /control/gate_mode_cmd
@@ -54,10 +60,6 @@
         - /control/trajectory_follower/control_cmd
         - /control/trajectory_follower/controller_node_exe/output/debug_marker
         - /control/trajectory_follower/controller_node_exe/output/estimated_steer_offset
-        - /control/trajectory_follower/lane_departure_checker_node/debug/deviation/lateral
-        - /control/trajectory_follower/lane_departure_checker_node/debug/deviation/yaw
-        - /control/trajectory_follower/lane_departure_checker_node/debug/deviation/yaw_deg
-        - /control/trajectory_follower/lane_departure_checker_node/debug/marker_array
         - /control/trajectory_follower/lane_departure_checker_node/debug/processing_time_ms
         - /control/trajectory_follower/lateral/diagnostic
         - /control/trajectory_follower/lateral/predicted_trajectory
@@ -81,11 +83,11 @@
       localization_topics:
         - /initialpose
         - /initialpose3d
-        - /interface/status/llc_status
         - /localization/acceleration
         - /localization/debug/ellipse_marker
         - /localization/initialization_state
         - /localization/kinematic_state
+        - /localization/pose_estimator/debug/loaded_pointcloud_map
         - /localization/pose_estimator/exe_time_ms
         - /localization/pose_estimator/initial_pose_with_covariance
         - /localization/pose_estimator/initial_to_result_distance
@@ -136,24 +138,10 @@
         - /perception/object_recognition/detection/centerpoint/lidar_centerpoint/debug/cyclic_time_ms
         - /perception/object_recognition/detection/centerpoint/lidar_centerpoint/debug/processing_time_ms
         - /perception/object_recognition/detection/centerpoint/objects
-        - /perception/object_recognition/detection/centerpoint/roi_fusion/objects
         - /perception/object_recognition/detection/centerpoint/validation/objects
-        - /perception/object_recognition/detection/centerpoint_roi_cluster_fusion/objects
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/clusters
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/image_projection_based_fusion/debug/cyclic_time_ms
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/image_projection_based_fusion/debug/processing_time_ms
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/image_projection_based_fusion/debug/roi0/timestamp_interval_ms
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/image_projection_based_fusion/debug/roi0/timestamp_interval_offset_ms
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/image_projection_based_fusion/debug/roi1/timestamp_interval_ms
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/image_projection_based_fusion/debug/roi1/timestamp_interval_offset_ms
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/image_projection_based_fusion/debug/roi2/timestamp_interval_ms
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/image_projection_based_fusion/debug/roi2/timestamp_interval_offset_ms
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/image_projection_based_fusion/debug/roi3/timestamp_interval_ms
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/image_projection_based_fusion/debug/roi3/timestamp_interval_offset_ms
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/objects
-        - /perception/object_recognition/detection/clustering/camera_lidar_fusion/objects_with_feature
         - /perception/object_recognition/detection/clustering/clusters
         - /perception/object_recognition/detection/clustering/debug/clusters
+        - /perception/object_recognition/detection/clustering/objects
         - /perception/object_recognition/detection/clustering/objects_with_feature
         - /perception/object_recognition/detection/debug/downsampled_map/pointcloud
         - /perception/object_recognition/detection/detection_by_tracker/debug/divided_objects
@@ -161,36 +149,15 @@
         - /perception/object_recognition/detection/detection_by_tracker/debug/merged_objects
         - /perception/object_recognition/detection/detection_by_tracker/debug/tracked_objects
         - /perception/object_recognition/detection/detection_by_tracker/objects
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/cyclic_time_ms
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/fused_objects
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/ignored_objects
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/processing_time_ms
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/roi0/timestamp_interval_ms
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/roi0/timestamp_interval_offset_ms
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/roi1/timestamp_interval_ms
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/roi1/timestamp_interval_offset_ms
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/roi2/timestamp_interval_ms
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/roi2/timestamp_interval_offset_ms
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/roi3/timestamp_interval_ms
-        - /perception/object_recognition/detection/image_projection_based_fusion/debug/roi3/timestamp_interval_offset_ms
         - /perception/object_recognition/detection/objects
         - /perception/object_recognition/detection/objects_before_filter
-        - /perception/object_recognition/detection/out/image/compressed
-        - /perception/object_recognition/detection/out/image/compressedDepth
-        - /perception/object_recognition/detection/out/image/theora
         - /perception/object_recognition/detection/pointcloud_map_filtered/pointcloud
-        - /perception/object_recognition/detection/rois0
-        - /perception/object_recognition/detection/rois0/debug/image
-        - /perception/object_recognition/detection/rois1
-        - /perception/object_recognition/detection/rois1/debug/image
-        - /perception/object_recognition/detection/rois2
-        - /perception/object_recognition/detection/rois2/debug/image
-        - /perception/object_recognition/detection/rois3
-        - /perception/object_recognition/detection/rois3/debug/image
+        - /perception/object_recognition/detection/temporary_merged_objects
         - /perception/object_recognition/detection/voxel_based_compare_map_filter/debug/cyclic_time_ms
         - /perception/object_recognition/detection/voxel_based_compare_map_filter/debug/processing_time_ms
         - /perception/object_recognition/objects
         - /perception/object_recognition/prediction/maneuver
+        - /perception/object_recognition/prediction/map_based_prediction/debug/calculation_time
         - /perception/object_recognition/tracking/objects
         - /perception/obstacle_segmentation/crop_box_filter/crop_box_polygon
         - /perception/obstacle_segmentation/crop_box_filter/debug/cyclic_time_ms
@@ -203,8 +170,10 @@
         - /perception/obstacle_segmentation/scan_ground_filter/debug/processing_time_ms
         - /perception/obstacle_segmentation/single_frame/pointcloud_raw
         - /perception/occupancy_grid_map/map
+        - /perception/occupancy_grid_map/map_updates
         - /perception/occupancy_grid_map/pointcloud_based_occupancy_grid_map/debug/cyclic_time_ms
         - /perception/occupancy_grid_map/pointcloud_based_occupancy_grid_map/debug/processing_time_ms
+        - /perception/traffic_light_recognition/camera6/camera_info
         - /perception/traffic_light_recognition/camera6/classification/classified/traffic_signals
         - /perception/traffic_light_recognition/camera6/classification/estimated/traffic_signals
         - /perception/traffic_light_recognition/camera6/classification/traffic_light_classifier/output/debug/image
@@ -223,6 +192,7 @@
         - /perception/traffic_light_recognition/camera6/detection/traffic_light_map_based_detector/debug/markers
         - /perception/traffic_light_recognition/external/traffic_signals
         - /perception/traffic_light_recognition/internal/traffic_signals
+        - /perception/traffic_light_recognition/traffic_light_map_based_detector/debug/markers
         - /perception/traffic_light_recognition/traffic_signals
         - /perception/traffic_light_recognition/traffic_signals/markers
     planning_modules:
@@ -265,7 +235,15 @@
         - /planning/path_candidate/lane_change
         - /planning/path_candidate/lane_change_left
         - /planning/path_candidate/lane_change_right
+        - /planning/path_candidate/side_shift
         - /planning/path_candidate/start_planner
+        - /planning/path_reference/avoidance
+        - /planning/path_reference/avoidance_by_lane_change
+        - /planning/path_reference/goal_planner
+        - /planning/path_reference/lane_change_left
+        - /planning/path_reference/lane_change_right
+        - /planning/path_reference/side_shift
+        - /planning/path_reference/start_planner
         - /planning/planning_validator/debug/marker
         - /planning/planning_validator/output/markers
         - /planning/planning_validator/validation_status
@@ -273,6 +251,33 @@
         - /planning/scenario_planning/clear_velocity_limit
         - /planning/scenario_planning/current_max_velocity
         - /planning/scenario_planning/external_velocity_limit_selector/debug
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/avoidance
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/avoidance_by_lane_change
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/avoidance_debug_message_array
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/bound
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/goal_planner
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/lane_change_debug_message_array
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/lane_change_left
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/lane_change_right
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/side_shift
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/start_planner
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/turn_signal_info
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_lanes/avoidance
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_lanes/avoidance_by_lane_change
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_lanes/goal_planner
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_lanes/lane_change_left
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_lanes/lane_change_right
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_lanes/side_shift
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_lanes/start_planner
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/info/avoidance
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/info/avoidance_by_lane_change
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/info/goal_planner
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/info/lane_change_left
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/info/lane_change_right
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/info/side_shift
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/info/start_planner
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/input/lateral_offset
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/maximum_drivable_area
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/output/is_reroute_available
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/virtual_wall/avoidance
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/virtual_wall/avoidance_by_lane_change
@@ -281,8 +286,29 @@
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/virtual_wall/goal_planner
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/virtual_wall/lane_change_left
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/virtual_wall/lane_change_right
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/virtual_wall/side_shift
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/virtual_wall/start_planner
-        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/run_out
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/blind_spot
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/blind_spot/processing_time_ms
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/crosswalk
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/crosswalk/processing_time_ms
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/detection_area
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/detection_area/processing_time_ms
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection/processing_time_ms
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/merge_from_private
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/merge_from_private/processing_time_ms
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/no_stopping_area
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/no_stopping_area/processing_time_ms
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/out_of_lane
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/out_of_lane/processing_time_ms
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/stop_line
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/stop_line/processing_time_ms
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/traffic_light
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/walkway
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/walkway/processing_time_ms
+        - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/output/stop_reason
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/virtual_wall/blind_spot
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/virtual_wall/crosswalk
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/virtual_wall/detection_area
@@ -298,8 +324,10 @@
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/virtual_wall/traffic_light
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/virtual_wall/virtual_traffic_light
         - /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/virtual_wall/walkway
+        - /planning/scenario_planning/lane_driving/behavior_planning/debug/traffic_signal
         - /planning/scenario_planning/lane_driving/behavior_planning/output/auto_mode_statuses
         - /planning/scenario_planning/lane_driving/behavior_planning/path
+        - /planning/scenario_planning/lane_driving/behavior_planning/path_with_lane_id
         - /planning/scenario_planning/lane_driving/motion_planning/debug_markers
         - /planning/scenario_planning/lane_driving/motion_planning/elastic_band_smoother/debug/calculation_time
         - /planning/scenario_planning/lane_driving/motion_planning/elastic_band_smoother/debug/eb_fixed_traj
@@ -325,6 +353,10 @@
         - /planning/scenario_planning/lane_driving/motion_planning/obstacle_velocity_limiter/output/runtime_microseconds
         - /planning/scenario_planning/lane_driving/motion_planning/obstacle_velocity_limiter/trajectory
         - /planning/scenario_planning/lane_driving/motion_planning/path_smoother/path
+        - /planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/debug/footprint
+        - /planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/debug/footprint_offset
+        - /planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/debug/footprint_recover_offset
+        - /planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/debug/marker
         - /planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/virtual_wall
         - /planning/scenario_planning/lane_driving/trajectory
         - /planning/scenario_planning/max_velocity
@@ -356,13 +388,19 @@
         - /planning/scenario_planning/parking/trajectory
         - /planning/scenario_planning/scenario
         - /planning/scenario_planning/scenario_selector/trajectory
+        - /planning/scenario_planning/status/infrastructure_commands
+        - /planning/scenario_planning/status/no_start_reason
         - /planning/scenario_planning/status/stop_reason
         - /planning/scenario_planning/status/stop_reasons
         - /planning/scenario_planning/trajectory
         - /planning/steering_factor/avoidance
+        - /planning/steering_factor/avoidance_by_lane_change
         - /planning/steering_factor/goal_planner
         - /planning/steering_factor/intersection
         - /planning/steering_factor/lane_change
+        - /planning/steering_factor/lane_change_left
+        - /planning/steering_factor/lane_change_right
+        - /planning/steering_factor/side_shift
         - /planning/steering_factor/start_planner
         - /planning/turn_indicators_cmd
         - /planning/velocity_factors/blind_spot
@@ -374,6 +412,7 @@
         - /planning/velocity_factors/obstacle_cruise
         - /planning/velocity_factors/obstacle_stop
         - /planning/velocity_factors/occlusion_spot
+        - /planning/velocity_factors/out_of_lane
         - /planning/velocity_factors/stop_line
         - /planning/velocity_factors/surround_obstacle
         - /planning/velocity_factors/traffic_light
@@ -382,91 +421,81 @@
     sensing_modules:
       record_sensing: true
       sensing_topics:
-        - /sensing/camera/camera0/camera_info
-        - /sensing/camera/camera0/image_raw
-        - /sensing/camera/camera0/image_raw/compressed
-        - /sensing/camera/camera0/image_raw/compressedDepth
-        - /sensing/camera/camera0/image_raw/theora
-        - /sensing/camera/camera0/image_rect
-        - /sensing/camera/camera1/camera_info
-        - /sensing/camera/camera1/image_raw
-        - /sensing/camera/camera1/image_raw/compressed
-        - /sensing/camera/camera1/image_raw/compressedDepth
-        - /sensing/camera/camera1/image_raw/theora
-        - /sensing/camera/camera1/image_rect
-        - /sensing/camera/camera2/camera_info
-        - /sensing/camera/camera2/image_raw
-        - /sensing/camera/camera2/image_raw/compressed
-        - /sensing/camera/camera2/image_raw/compressedDepth
-        - /sensing/camera/camera2/image_raw/theora
-        - /sensing/camera/camera2/image_rect
-        - /sensing/camera/camera3/camera_info
-        - /sensing/camera/camera3/image_raw
-        - /sensing/camera/camera3/image_raw/compressed
-        - /sensing/camera/camera3/image_raw/compressedDepth
-        - /sensing/camera/camera3/image_raw/theora
-        - /sensing/camera/camera3/image_rect
+        - /sensing/camera/camera6/camera_info
         - /sensing/camera/camera6/image_raw
-        - /sensing/gnss/clap/autoware_orientation
-        - /sensing/gnss/clap/ros/gps_nav_sat_fix
-        - /sensing/gnss/clap/ros/imu
-        - /sensing/gnss/clap/ros/temperature
-        - /sensing/gnss/clap/ros/twist_with_covariance_stamped
-        - /sensing/gnss/eagleye/ecef_twist
-        - /sensing/gnss/eagleye/nav_sat_fix
+        - /sensing/camera/camera6/image_raw/compressed
         - /sensing/gnss/fixed
-        - /sensing/gnss/ntrip/rtcm
         - /sensing/gnss/pose
         - /sensing/gnss/pose_with_covariance
+        - /sensing/gnss/ublox/fix_velocity
+        - /sensing/gnss/ublox/nav_sat_fix
+        - /sensing/gnss/ublox/navpvt
         - /sensing/imu/imu_data
-        - /sensing/lidar/concatenate_data/input/twist
+        - /sensing/imu/tamagawa/imu_raw
         - /sensing/lidar/concatenate_data_synchronizer/debug/cyclic_time_ms
         - /sensing/lidar/concatenate_data_synchronizer/debug/processing_time_ms
         - /sensing/lidar/concatenated/pointcloud
-        - /sensing/lidar/front/livox_points
-        - /sensing/lidar/front/livox_points_filtered/pointcloud
-        - /sensing/lidar/left/crop_box_filter/debug/cyclic_time_ms
-        - /sensing/lidar/left/crop_box_filter/debug/processing_time_ms
-        - /sensing/lidar/left/crop_box_filter_mirror/crop_box_polygon
-        - /sensing/lidar/left/crop_box_filter_self/crop_box_polygon
-        - /sensing/lidar/left/distortion_corrector/debug/cyclic_time_ms
-        - /sensing/lidar/left/distortion_corrector/debug/processing_time_ms
-        - /sensing/lidar/left/mirror_cropped/pointcloud_ex
-        - /sensing/lidar/left/outlier_filtered/pointcloud
-        - /sensing/lidar/left/outlier_filtered/pointcloud_synchronized
-        - /sensing/lidar/left/pointcloud_raw
-        - /sensing/lidar/left/rectified/pointcloud_ex
-        - /sensing/lidar/left/ring_outlier_filter/debug/cyclic_time_ms
-        - /sensing/lidar/left/ring_outlier_filter/debug/processing_time_ms
-        - /sensing/lidar/left/self_cropped/pointcloud_ex
-        - /sensing/lidar/right/crop_box_filter/debug/cyclic_time_ms
-        - /sensing/lidar/right/crop_box_filter/debug/processing_time_ms
-        - /sensing/lidar/right/crop_box_filter_mirror/crop_box_polygon
-        - /sensing/lidar/right/crop_box_filter_self/crop_box_polygon
-        - /sensing/lidar/right/distortion_corrector/debug/cyclic_time_ms
-        - /sensing/lidar/right/distortion_corrector/debug/processing_time_ms
-        - /sensing/lidar/right/mirror_cropped/pointcloud_ex
-        - /sensing/lidar/right/outlier_filtered/pointcloud
-        - /sensing/lidar/right/outlier_filtered/pointcloud_synchronized
-        - /sensing/lidar/right/pointcloud_raw
-        - /sensing/lidar/right/rectified/pointcloud_ex
-        - /sensing/lidar/right/ring_outlier_filter/debug/cyclic_time_ms
-        - /sensing/lidar/right/ring_outlier_filter/debug/processing_time_ms
-        - /sensing/lidar/right/self_cropped/pointcloud_ex
-        - /sensing/lidar/top/crop_box_filter/debug/cyclic_time_ms
-        - /sensing/lidar/top/crop_box_filter/debug/processing_time_ms
-        - /sensing/lidar/top/crop_box_filter_mirror/crop_box_polygon
-        - /sensing/lidar/top/crop_box_filter_self/crop_box_polygon
-        - /sensing/lidar/top/distortion_corrector/debug/cyclic_time_ms
-        - /sensing/lidar/top/distortion_corrector/debug/processing_time_ms
-        - /sensing/lidar/top/mirror_cropped/pointcloud_ex
-        - /sensing/lidar/top/outlier_filtered/pointcloud
-        - /sensing/lidar/top/outlier_filtered/pointcloud_synchronized
-        - /sensing/lidar/top/pointcloud_raw
-        - /sensing/lidar/top/rectified/pointcloud_ex
-        - /sensing/lidar/top/ring_outlier_filter/debug/cyclic_time_ms
-        - /sensing/lidar/top/ring_outlier_filter/debug/processing_time_ms
-        - /sensing/lidar/top/self_cropped/pointcloud_ex
+        # /sensing/lidar/left/crop_box_filter/debug/cyclic_time_ms
+        # /sensing/lidar/left/crop_box_filter/debug/processing_time_ms
+        # /sensing/lidar/left/crop_box_filter_mirror/crop_box_polygon
+        # /sensing/lidar/left/crop_box_filter_self/crop_box_polygon
+        # /sensing/lidar/left/distortion_corrector/debug/cyclic_time_ms
+        # /sensing/lidar/left/distortion_corrector/debug/processing_time_ms
+        # /sensing/lidar/left/mirror_cropped/pointcloud_ex
+        # /sensing/lidar/left/outlier_filtered/pointcloud
+        # /sensing/lidar/left/outlier_filtered/pointcloud_synchronized
+        # /sensing/lidar/left/pointcloud_raw
+        # /sensing/lidar/left/pointcloud_raw_ex
+        # /sensing/lidar/left/rectified/pointcloud_ex
+        # /sensing/lidar/left/ring_outlier_filter/debug/cyclic_time_ms
+        # /sensing/lidar/left/ring_outlier_filter/debug/processing_time_ms
+        # /sensing/lidar/left/self_cropped/pointcloud_ex
+        # /sensing/lidar/left/velodyne_model_marker
+        # /sensing/lidar/left/velodyne_packets
+        # /sensing/lidar/rear/crop_box_filter_mirror/crop_box_polygon
+        # /sensing/lidar/rear/crop_box_filter_self/crop_box_polygon
+        # /sensing/lidar/rear/mirror_cropped/pointcloud_ex
+        # /sensing/lidar/rear/outlier_filtered/pointcloud
+        # /sensing/lidar/rear/pointcloud_raw
+        # /sensing/lidar/rear/pointcloud_raw_ex
+        # /sensing/lidar/rear/rectified/pointcloud_ex
+        # /sensing/lidar/rear/self_cropped/pointcloud_ex
+        # /sensing/lidar/rear/velodyne_model_marker
+        # /sensing/lidar/rear/velodyne_packets
+        # /sensing/lidar/right/crop_box_filter/debug/cyclic_time_ms
+        # /sensing/lidar/right/crop_box_filter/debug/processing_time_ms
+        # /sensing/lidar/right/crop_box_filter_mirror/crop_box_polygon
+        # /sensing/lidar/right/crop_box_filter_self/crop_box_polygon
+        # /sensing/lidar/right/distortion_corrector/debug/cyclic_time_ms
+        # /sensing/lidar/right/distortion_corrector/debug/processing_time_ms
+        # /sensing/lidar/right/mirror_cropped/pointcloud_ex
+        # /sensing/lidar/right/outlier_filtered/pointcloud
+        # /sensing/lidar/right/outlier_filtered/pointcloud_synchronized
+        # /sensing/lidar/right/pointcloud_raw
+        # /sensing/lidar/right/pointcloud_raw_ex
+        # /sensing/lidar/right/rectified/pointcloud_ex
+        # /sensing/lidar/right/ring_outlier_filter/debug/cyclic_time_ms
+        # /sensing/lidar/right/ring_outlier_filter/debug/processing_time_ms
+        # /sensing/lidar/right/self_cropped/pointcloud_ex
+        # /sensing/lidar/right/velodyne_model_marker
+        # /sensing/lidar/right/velodyne_packets
+        # /sensing/lidar/top/crop_box_filter/debug/cyclic_time_ms
+        # /sensing/lidar/top/crop_box_filter/debug/processing_time_ms
+        # /sensing/lidar/top/crop_box_filter_mirror/crop_box_polygon
+        # /sensing/lidar/top/crop_box_filter_self/crop_box_polygon
+        # /sensing/lidar/top/distortion_corrector/debug/cyclic_time_ms
+        # /sensing/lidar/top/distortion_corrector/debug/processing_time_ms
+        # /sensing/lidar/top/mirror_cropped/pointcloud_ex
+        # /sensing/lidar/top/outlier_filtered/pointcloud
+        # /sensing/lidar/top/outlier_filtered/pointcloud_synchronized
+        # /sensing/lidar/top/pointcloud_raw
+        # /sensing/lidar/top/pointcloud_raw_ex
+        # /sensing/lidar/top/rectified/pointcloud_ex
+        # /sensing/lidar/top/ring_outlier_filter/debug/cyclic_time_ms
+        # /sensing/lidar/top/ring_outlier_filter/debug/processing_time_ms
+        # /sensing/lidar/top/self_cropped/pointcloud_ex
+        # /sensing/lidar/top/velodyne_model_marker
+        # /sensing/lidar/top/velodyne_packets
         - /sensing/vehicle_velocity_converter/twist_with_covariance
     system_modules:
       record_system: true
@@ -488,7 +517,6 @@
         - /system/component_state_monitor/component/launch/system
         - /system/component_state_monitor/component/launch/vehicle
         - /system/emergency/control_cmd
-        - /system/emergency/emergency_state
         - /system/emergency/gear_cmd
         - /system/emergency/hazard_lights_cmd
         - /system/emergency/hazard_status
@@ -497,7 +525,6 @@
         - /system/mrm/comfortable_stop/status
         - /system/mrm/emergency_stop/status
         - /system/operation_mode/state
-        - /system/system_monitor/cpu_monitor/cpu_usage
     vehicle_modules:
       record_vehicle: true
       vehicle_topics:
@@ -510,6 +537,5 @@
         - /vehicle/status/gear_status
         - /vehicle/status/hazard_lights_status
         - /vehicle/status/steering_status
-        - /vehicle/status/steering_wheel_status
         - /vehicle/status/turn_indicators_status
         - /vehicle/status/velocity_status

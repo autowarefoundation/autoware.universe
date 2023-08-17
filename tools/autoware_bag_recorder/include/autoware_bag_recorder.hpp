@@ -48,6 +48,8 @@ private:
   int disk_space_threshold_;
   int number_of_maximum_bags_;
 
+  bool record_all_topic_in_a_bag_;
+
   bool record_api_topics_;
   bool record_autoware_topics_;
   bool record_control_topics_;
