@@ -133,14 +133,14 @@ LaneChangeModuleManager::LaneChangeModuleManager(
   parameters_ = std::make_shared<LaneChangeParameters>(p);
 }
 
-std::shared_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneModuleInstance()
+std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneModuleInstance()
 {
   if (type_ == LaneChangeModuleType::NORMAL) {
-    return std::make_shared<LaneChangeInterface>(
+    return std::make_unique<LaneChangeInterface>(
       name_, *node_, parameters_, rtc_interface_ptr_map_,
       std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
   }
-  return std::make_shared<LaneChangeInterface>(
+  return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
     std::make_unique<ExternalRequestLaneChange>(parameters_, direction_));
 }
@@ -155,8 +155,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
   updateParam<double>(
     parameters, ns + "finish_judge_lateral_threshold", p->finish_judge_lateral_threshold);
 
-  std::for_each(registered_modules_.begin(), registered_modules_.end(), [&p](const auto & m) {
-    m->updateModuleParams(p);
+  std::for_each(observers_.begin(), observers_.end(), [&p](const auto & observer) {
+    if (!observer.expired()) observer.lock()->updateModuleParams(p);
   });
 }
 
@@ -193,12 +193,6 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
       get_parameter<double>(node, ns + "resample_interval_for_planning");
     p.resample_interval_for_output =
       get_parameter<double>(node, ns + "resample_interval_for_output");
-    p.detection_area_right_expand_dist =
-      get_parameter<double>(node, ns + "detection_area_right_expand_dist");
-    p.detection_area_left_expand_dist =
-      get_parameter<double>(node, ns + "detection_area_left_expand_dist");
-    p.enable_update_path_when_object_is_gone =
-      get_parameter<bool>(node, ns + "enable_update_path_when_object_is_gone");
     p.enable_force_avoidance_for_stopped_vehicle =
       get_parameter<bool>(node, ns + "enable_force_avoidance_for_stopped_vehicle");
   }
@@ -271,10 +265,10 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
   avoidance_parameters_ = std::make_shared<AvoidanceByLCParameters>(p);
 }
 
-std::shared_ptr<SceneModuleInterface>
+std::unique_ptr<SceneModuleInterface>
 AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
-  return std::make_shared<AvoidanceByLaneChangeInterface>(
+  return std::make_unique<AvoidanceByLaneChangeInterface>(
     name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_);
 }
 

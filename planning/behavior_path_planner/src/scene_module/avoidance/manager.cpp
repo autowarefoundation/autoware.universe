@@ -50,13 +50,8 @@ AvoidanceModuleManager::AvoidanceModuleManager(
       get_parameter<double>(node, ns + "resample_interval_for_planning");
     p.resample_interval_for_output =
       get_parameter<double>(node, ns + "resample_interval_for_output");
-    p.detection_area_right_expand_dist =
-      get_parameter<double>(node, ns + "detection_area_right_expand_dist");
-    p.detection_area_left_expand_dist =
-      get_parameter<double>(node, ns + "detection_area_left_expand_dist");
     p.enable_bound_clipping = get_parameter<bool>(node, ns + "enable_bound_clipping");
-    p.enable_update_path_when_object_is_gone =
-      get_parameter<bool>(node, ns + "enable_update_path_when_object_is_gone");
+    p.enable_cancel_maneuver = get_parameter<bool>(node, ns + "enable_cancel_maneuver");
     p.enable_force_avoidance_for_stopped_vehicle =
       get_parameter<bool>(node, ns + "enable_force_avoidance_for_stopped_vehicle");
     p.enable_yield_maneuver = get_parameter<bool>(node, ns + "enable_yield_maneuver");
@@ -152,13 +147,13 @@ AvoidanceModuleManager::AvoidanceModuleManager(
       get_parameter<double>(node, ns + "safety_check_backward_distance");
     p.safety_check_hysteresis_factor =
       get_parameter<double>(node, ns + "safety_check_hysteresis_factor");
-    p.safety_check_ego_offset = get_parameter<double>(node, ns + "safety_check_ego_offset");
   }
 
   // avoidance maneuver (lateral)
   {
     std::string ns = "avoidance.avoidance.lateral.";
-    p.road_shoulder_safety_margin = get_parameter<double>(node, ns + "road_shoulder_safety_margin");
+    p.soft_road_shoulder_margin = get_parameter<double>(node, ns + "soft_road_shoulder_margin");
+    p.hard_road_shoulder_margin = get_parameter<double>(node, ns + "hard_road_shoulder_margin");
     p.lateral_execution_threshold = get_parameter<double>(node, ns + "lateral_execution_threshold");
     p.lateral_small_shift_threshold =
       get_parameter<double>(node, ns + "lateral_small_shift_threshold");
@@ -173,6 +168,7 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     std::string ns = "avoidance.avoidance.longitudinal.";
     p.prepare_time = get_parameter<double>(node, ns + "prepare_time");
     p.min_prepare_distance = get_parameter<double>(node, ns + "min_prepare_distance");
+    p.remain_buffer_distance = get_parameter<double>(node, ns + "remain_buffer_distance");
     p.min_slow_down_speed = get_parameter<double>(node, ns + "min_slow_down_speed");
     p.buf_slow_down_speed = get_parameter<double>(node, ns + "buf_slow_down_speed");
     p.nominal_avoidance_speed = get_parameter<double>(node, ns + "nominal_avoidance_speed");
@@ -191,10 +187,21 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     p.stop_buffer = get_parameter<double>(node, ns + "stop_buffer");
   }
 
-  // constraints
+  // policy
   {
-    std::string ns = "avoidance.constraints.";
-    p.use_constraints_for_decel = get_parameter<bool>(node, ns + "use_constraints_for_decel");
+    std::string ns = "avoidance.policy.";
+    p.policy_deceleration = get_parameter<std::string>(node, ns + "deceleration");
+    p.policy_lateral_margin = get_parameter<std::string>(node, ns + "lateral_margin");
+    p.use_shorten_margin_immediately =
+      get_parameter<bool>(node, ns + "use_shorten_margin_immediately");
+
+    if (p.policy_deceleration != "best_effort" && p.policy_deceleration != "reliable") {
+      throw std::domain_error("invalid policy. please select 'best_effort' or 'reliable'.");
+    }
+
+    if (p.policy_lateral_margin != "best_effort" && p.policy_lateral_margin != "reliable") {
+      throw std::domain_error("invalid policy. please select 'best_effort' or 'reliable'.");
+    }
   }
 
   // constraints (longitudinal)
@@ -305,8 +312,8 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
       parameters, ns + "lateral_small_shift_threshold", p->lateral_small_shift_threshold);
     updateParam<double>(
       parameters, ns + "lateral_avoid_check_threshold", p->lateral_avoid_check_threshold);
-    updateParam<double>(
-      parameters, ns + "road_shoulder_safety_margin", p->road_shoulder_safety_margin);
+    updateParam<double>(parameters, ns + "soft_road_shoulder_margin", p->soft_road_shoulder_margin);
+    updateParam<double>(parameters, ns + "hard_road_shoulder_margin", p->hard_road_shoulder_margin);
   }
 
   {
@@ -365,8 +372,8 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
       parameters, ns + "trim.sharp_shift_filter_threshold", p->sharp_shift_filter_threshold);
   }
 
-  std::for_each(registered_modules_.begin(), registered_modules_.end(), [&p](const auto & m) {
-    m->updateModuleParams(p);
+  std::for_each(observers_.begin(), observers_.end(), [&p](const auto & observer) {
+    if (!observer.expired()) observer.lock()->updateModuleParams(p);
   });
 }
 }  // namespace behavior_path_planner

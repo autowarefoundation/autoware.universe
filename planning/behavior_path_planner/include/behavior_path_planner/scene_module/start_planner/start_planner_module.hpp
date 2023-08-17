@@ -51,11 +51,7 @@ struct PullOutStatus
   size_t current_path_idx{0};
   PlannerType planner_type{PlannerType::NONE};
   PathWithLaneId backward_path{};
-  lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_out_lanes{};
-  std::vector<DrivableLanes> lanes{};
-  std::vector<uint64_t> lane_follow_lane_ids{};
-  std::vector<uint64_t> pull_out_lane_ids{};
   bool is_safe{false};
   bool back_finished{false};
   Pose pull_out_start_pose{};
@@ -71,19 +67,22 @@ public:
     const std::shared_ptr<StartPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
-  void updateModuleParams(const std::shared_ptr<StartPlannerParameters> & parameters)
+  void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = parameters;
+    parameters_ = std::any_cast<std::shared_ptr<StartPlannerParameters>>(parameters);
   }
 
-  BehaviorModuleOutput run() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] BehaviorModuleOutput run() override;
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  ModuleStatus updateState() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] ModuleStatus updateState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
+
   void processOnExit() override;
 
   void setParameters(const std::shared_ptr<StartPlannerParameters> & parameters)
@@ -97,20 +96,15 @@ public:
   {
   }
 
-  // set is_simultaneously_executable_ as false when backward driving.
-  // keep initial value to return it after finishing backward driving.
-  bool initial_value_simultaneously_executable_as_approved_module_;
-  bool initial_value_simultaneously_executable_as_candidate_module_;
-  void setInitialIsSimultaneousExecutableAsApprovedModule(const bool is_simultaneously_executable)
-  {
-    initial_value_simultaneously_executable_as_approved_module_ = is_simultaneously_executable;
-  };
-  void setInitialIsSimultaneousExecutableAsCandidateModule(const bool is_simultaneously_executable)
-  {
-    initial_value_simultaneously_executable_as_candidate_module_ = is_simultaneously_executable;
-  };
+  bool isBackFinished() const { return status_.back_finished; }
 
 private:
+  bool canTransitSuccessState() override { return false; }
+
+  bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override { return false; }
+
   std::shared_ptr<StartPlannerParameters> parameters_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
@@ -122,7 +116,6 @@ private:
   std::unique_ptr<rclcpp::Time> last_route_received_time_;
   std::unique_ptr<rclcpp::Time> last_pull_out_start_update_time_;
   std::unique_ptr<Pose> last_approved_pose_;
-  mutable bool has_received_new_route_{false};
 
   std::shared_ptr<PullOutPlannerBase> getCurrentPlanner() const;
   PathWithLaneId getFullPath() const;
@@ -139,6 +132,8 @@ private:
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
     const std::string search_priority);
   PathWithLaneId generateStopPath() const;
+  lanelet::ConstLanelets getPathRoadLanes(const PathWithLaneId & path) const;
+  std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,

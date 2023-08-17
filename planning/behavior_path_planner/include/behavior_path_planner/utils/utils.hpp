@@ -19,7 +19,7 @@
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
-#include "behavior_path_planner/utils/safety_check.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "motion_utils/motion_utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
@@ -383,7 +383,7 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 
 lanelet::ConstLanelets getExtendedCurrentLanes(
   const std::shared_ptr<const PlannerData> & planner_data, const double backward_length,
-  const double forward_length);
+  const double forward_length, const bool forward_only_in_route);
 
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<RouteHandler> route_handler, const geometry_msgs::msg::Pose & pose,
