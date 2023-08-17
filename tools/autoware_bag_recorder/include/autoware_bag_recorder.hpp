@@ -100,7 +100,7 @@ private:
   void remove_remainder_bags_in_folder(autoware_bag_recorder::ModuleSection & section);
   void free_disk_space_for_continue(autoware_bag_recorder::ModuleSection & section);
   void check_files_in_folder(
-    autoware_bag_recorder::ModuleSection & section,std::vector<std::string> & directories);
+    autoware_bag_recorder::ModuleSection & section, std::vector<std::string> & directories);
   void run();
 };
 

@@ -264,7 +264,7 @@ int AutowareBagRecorderNode::get_root_disk_space()
 }
 
 void AutowareBagRecorderNode::check_files_in_folder(
-  autoware_bag_recorder::ModuleSection & section,std::vector<std::string> & directories)
+  autoware_bag_recorder::ModuleSection & section, std::vector<std::string> & directories)
 {
   for (const auto & path : std::filesystem::recursive_directory_iterator(section.folder_path)) {
     if (path.is_directory()) {
@@ -332,10 +332,8 @@ void AutowareBagRecorderNode::run()
         RCLCPP_WARN(
           this->get_logger(), "Available Disk Space is: %d under the threshold.",
           get_root_disk_space());
-        if (disk_space_action_mode_ == "remove")
-        {
-          for (auto & section : module_sections_)
-          {
+        if (disk_space_action_mode_ == "remove") {
+          for (auto & section : module_sections_) {
             free_disk_space_for_continue(section);
           }
         }
