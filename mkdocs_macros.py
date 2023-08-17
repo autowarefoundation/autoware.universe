@@ -5,6 +5,7 @@ from tabulate import tabulate
 # This file is for defining macros for mkdocs-macros plugin
 # Check https://mkdocs-macros-plugin.readthedocs.io/en/latest/macros/ for the details
 
+
 def format_param_type(param_type):
     if param_type == "number":
         return "float"
