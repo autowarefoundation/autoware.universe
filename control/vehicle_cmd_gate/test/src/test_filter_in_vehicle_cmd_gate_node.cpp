@@ -150,9 +150,7 @@ public:
       if (!cmd_history_.empty()) {  // ego moves as commanded.
         msg.twist.twist.linear.x =
           cmd_history_.back()->longitudinal.speed;  // ego moves as commanded.
-        std::cerr << "kinematic state vx = " << msg.twist.twist.linear.x << std::endl;
       } else {
-        std::cerr << "kinematic state vx = 0 (cmd_history_ is empty)" << std::endl;
       }
       pub_odom_->publish(msg);
     }
