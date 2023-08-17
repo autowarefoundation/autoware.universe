@@ -155,8 +155,10 @@ void VehicleCmdFilter::limitLateralSteer(AckermannControlCommand & input) const
 }
 
 void VehicleCmdFilter::filterAll(
-  const double dt, const double current_steer_angle, AckermannControlCommand & cmd) const
+  const double dt, const double current_steer_angle, AckermannControlCommand & cmd,
+  bool & is_activated) const
 {
+  const auto cmd_orig = cmd;
   limitLateralSteer(cmd);
   limitLongitudinalWithJerk(dt, cmd);
   limitLongitudinalWithAcc(dt, cmd);
@@ -164,7 +166,25 @@ void VehicleCmdFilter::filterAll(
   limitLateralWithLatJerk(dt, cmd);
   limitLateralWithLatAcc(dt, cmd);
   limitActualSteerDiff(current_steer_angle, cmd);
+
+  is_activated = !hasSameValues(cmd, cmd_orig);
   return;
+}
+
+bool VehicleCmdFilter::hasSameValues(
+  const AckermannControlCommand & c1, const AckermannControlCommand & c2, const double tol)
+{
+  if (
+    std::abs(c1.lateral.steering_tire_angle - c2.lateral.steering_tire_angle) > tol ||
+    std::abs(c1.lateral.steering_tire_rotation_rate - c2.lateral.steering_tire_rotation_rate) >
+      tol ||
+    std::abs(c1.longitudinal.speed - c2.longitudinal.speed) > tol ||
+    std::abs(c1.longitudinal.acceleration - c2.longitudinal.acceleration) > tol ||
+    std::abs(c1.longitudinal.jerk - c2.longitudinal.jerk) > tol) {
+    return false;
+  }
+
+  return true;
 }
 
 double VehicleCmdFilter::calcSteerFromLatacc(const double v, const double latacc) const

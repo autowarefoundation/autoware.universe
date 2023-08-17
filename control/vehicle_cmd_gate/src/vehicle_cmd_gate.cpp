@@ -71,6 +71,9 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   pub_external_emergency_ = create_publisher<Emergency>("output/external_emergency", durable_qos);
   operation_mode_pub_ = create_publisher<OperationModeState>("output/operation_mode", durable_qos);
 
+  is_filter_activated_pub_ =
+    create_publisher<IsFilterActivated>("~/is_filter_activated", durable_qos);
+
   // Subscriber
   external_emergency_stop_heartbeat_sub_ = create_subscription<Heartbeat>(
     "input/external_emergency_stop_heartbeat", 1,
@@ -511,9 +514,11 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   filter_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
   filter_on_transition_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
 
+  bool is_filter_activated = false;
+
   // Apply transition_filter when transiting from MANUAL to AUTO.
   if (mode.is_in_transition) {
-    filter_on_transition_.filterAll(dt, current_steer_, out);
+    filter_on_transition_.filterAll(dt, current_steer_, out, is_filter_activated);
   } else {
     // When ego is stopped and the input command is not stopping,
     // use the higher of actual vehicle longitudinal state
@@ -532,7 +537,7 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
           : current_status_cmd.longitudinal.speed;
       filter_.setPrevCmd(prev_cmd);
     }
-    filter_.filterAll(dt, current_steer_, out);
+    filter_.filterAll(dt, current_steer_, out, is_filter_activated);
   }
 
   // set prev value for both to keep consistency over switching:
@@ -554,6 +559,13 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
 
   filter_.setPrevCmd(prev_values);
   filter_on_transition_.setPrevCmd(prev_values);
+
+  {
+    IsFilterActivated msg;
+    msg.stamp = now();
+    msg.is_activated = is_filter_activated;
+    is_filter_activated_pub_->publish(msg);
+  }
 
   return out;
 }

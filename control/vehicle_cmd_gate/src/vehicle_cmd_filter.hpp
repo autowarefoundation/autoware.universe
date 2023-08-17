@@ -63,7 +63,11 @@ public:
     const double current_steer_angle, AckermannControlCommand & input) const;
   void limitLateralSteer(AckermannControlCommand & input) const;
   void filterAll(
-    const double dt, const double current_steer_angle, AckermannControlCommand & input) const;
+    const double dt, const double current_steer_angle, AckermannControlCommand & input,
+    bool & is_activated) const;
+  static bool hasSameValues(
+    const AckermannControlCommand & c1, const AckermannControlCommand & c2,
+    const double tol = 1.0e-3);
 
   AckermannControlCommand getPrevCmd() { return prev_cmd_; }
 
