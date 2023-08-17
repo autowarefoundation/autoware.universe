@@ -3353,7 +3353,7 @@ lanelet::ConstLanelets combineLanelets(
 {
   lanelet::ConstLanelets combined_lanes = base_lanes;
   for (const auto & added_lane : added_lanes) {
-    auto it = std::find_if(
+    const auto it = std::find_if(
       combined_lanes.begin(), combined_lanes.end(),
       [&added_lane](const lanelet::ConstLanelet & lane) { return lane.id() == added_lane.id(); });
     if (it == combined_lanes.end()) {
