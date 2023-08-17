@@ -111,7 +111,7 @@ struct RSSparams
   double longitudinal_velocity_delta_time{0.0};
 };
 
-struct SafetyCheckParams
+struct EgoPredictedPath
 {
   // for ego predicted path generation
   double acceleration;
@@ -120,8 +120,11 @@ struct SafetyCheckParams
   double min_slow_speed;
   double delay_until_departure;
   double target_velocity;
+};
 
-  // for dynamic objects to check
+struct ObjectFilteringParams
+{
+  // for filtering dynamic objects to check
   double safety_check_time_horizon;
   double safety_check_time_resolution;
   double object_check_forward_distance;
@@ -134,7 +137,11 @@ struct SafetyCheckParams
   bool check_all_predicted_path;
   bool use_all_predicted_path;
   bool use_predicted_path_outside_lanelet;
+};
 
+struct SafetyCheckParams
+{
+  bool enable_safety_check;
   // Trajectory generation parameters
   double backward_lane_length;
   double forward_path_length;
