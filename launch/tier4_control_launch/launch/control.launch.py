@@ -223,7 +223,6 @@ def launch_setup(context, *args, **kwargs):
                 "check_external_emergency_heartbeat": LaunchConfiguration(
                     "check_external_emergency_heartbeat"
                 ),
-                "enable_cmd_limit_filter": LaunchConfiguration("enable_cmd_limit_filter"),
             },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -351,7 +350,6 @@ def generate_launch_description():
     add_launch_arg("enable_obstacle_collision_checker")
     add_launch_arg("lateral_controller_mode")
     add_launch_arg("longitudinal_controller_mode")
-    add_launch_arg("enable_cmd_limit_filter")
     # common param path
     add_launch_arg("nearest_search_param_path")
     # package param path
