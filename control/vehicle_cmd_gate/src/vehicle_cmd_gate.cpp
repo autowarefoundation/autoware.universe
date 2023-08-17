@@ -514,7 +514,7 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   filter_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
   filter_on_transition_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
 
-  bool is_filter_activated = false;
+  IsFilterActivated is_filter_activated;
 
   // Apply transition_filter when transiting from MANUAL to AUTO.
   if (mode.is_in_transition) {
@@ -560,12 +560,8 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   filter_.setPrevCmd(prev_values);
   filter_on_transition_.setPrevCmd(prev_values);
 
-  {
-    IsFilterActivated msg;
-    msg.stamp = now();
-    msg.is_activated = is_filter_activated;
-    is_filter_activated_pub_->publish(msg);
-  }
+  is_filter_activated.stamp = now();
+  is_filter_activated_pub_->publish(is_filter_activated);
 
   return out;
 }

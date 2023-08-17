@@ -156,7 +156,7 @@ void VehicleCmdFilter::limitLateralSteer(AckermannControlCommand & input) const
 
 void VehicleCmdFilter::filterAll(
   const double dt, const double current_steer_angle, AckermannControlCommand & cmd,
-  bool & is_activated) const
+  IsFilterActivated & is_activated) const
 {
   const auto cmd_orig = cmd;
   limitLateralSteer(cmd);
@@ -167,24 +167,28 @@ void VehicleCmdFilter::filterAll(
   limitLateralWithLatAcc(dt, cmd);
   limitActualSteerDiff(current_steer_angle, cmd);
 
-  is_activated = !hasSameValues(cmd, cmd_orig);
+  is_activated = checkIsActivated(cmd, cmd_orig);
   return;
 }
 
-bool VehicleCmdFilter::hasSameValues(
+IsFilterActivated VehicleCmdFilter::checkIsActivated(
   const AckermannControlCommand & c1, const AckermannControlCommand & c2, const double tol)
 {
-  if (
-    std::abs(c1.lateral.steering_tire_angle - c2.lateral.steering_tire_angle) > tol ||
-    std::abs(c1.lateral.steering_tire_rotation_rate - c2.lateral.steering_tire_rotation_rate) >
-      tol ||
-    std::abs(c1.longitudinal.speed - c2.longitudinal.speed) > tol ||
-    std::abs(c1.longitudinal.acceleration - c2.longitudinal.acceleration) > tol ||
-    std::abs(c1.longitudinal.jerk - c2.longitudinal.jerk) > tol) {
-    return false;
-  }
+  IsFilterActivated msg;
+  msg.is_activated_on_steering =
+    std::abs(c1.lateral.steering_tire_angle - c2.lateral.steering_tire_angle) > tol;
+  msg.is_activated_on_steering_rate =
+    std::abs(c1.lateral.steering_tire_rotation_rate - c2.lateral.steering_tire_rotation_rate) > tol;
+  msg.is_activated_on_speed = std::abs(c1.longitudinal.speed - c2.longitudinal.speed) > tol;
+  msg.is_activated_on_acceleration =
+    std::abs(c1.longitudinal.acceleration - c2.longitudinal.acceleration) > tol;
+  msg.is_activated_on_jerk = std::abs(c1.longitudinal.jerk - c2.longitudinal.jerk) > tol;
 
-  return true;
+  msg.is_activated =
+    (msg.is_activated_on_steering || msg.is_activated_on_steering_rate ||
+     msg.is_activated_on_speed || msg.is_activated_on_acceleration || msg.is_activated_on_jerk);
+
+  return msg;
 }
 
 double VehicleCmdFilter::calcSteerFromLatacc(const double v, const double latacc) const

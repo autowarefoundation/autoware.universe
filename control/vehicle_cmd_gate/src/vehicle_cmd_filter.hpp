@@ -16,6 +16,7 @@
 #define VEHICLE_CMD_FILTER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+#include <vehicle_cmd_gate/msg/is_filter_activated.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
@@ -24,6 +25,7 @@
 namespace vehicle_cmd_gate
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using vehicle_cmd_gate::msg::IsFilterActivated;
 using LimitArray = std::vector<double>;
 
 struct VehicleCmdFilterParam
@@ -64,8 +66,8 @@ public:
   void limitLateralSteer(AckermannControlCommand & input) const;
   void filterAll(
     const double dt, const double current_steer_angle, AckermannControlCommand & input,
-    bool & is_activated) const;
-  static bool hasSameValues(
+    IsFilterActivated & is_activated) const;
+  static IsFilterActivated checkIsActivated(
     const AckermannControlCommand & c1, const AckermannControlCommand & c2,
     const double tol = 1.0e-3);
 
