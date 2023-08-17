@@ -9,6 +9,7 @@ def format_param_type(param_type):
     else:
         return param_type
 
+
 def format_param_range(param):
     list_of_range = []
     if "enum" in param.keys():
@@ -34,6 +35,7 @@ def format_param_range(param):
             range_in_text += str(item)
         return range_in_text
 
+
 def extract_parameter_info(parameters, namespace=""):
     params = []
     for k, v in parameters.items():
@@ -45,7 +47,7 @@ def extract_parameter_info(parameters, namespace=""):
             param["default"] = v["default"]
             param["range"] = format_param_range(v)
             params.append(param)
-        else: # if the object is namespace, then dive deeper in to json value
+        else:  # if the object is namespace, then dive deeper in to json value
             params.extend(extract_parameter_info(v["properties"], k + "."))
     return params
 
