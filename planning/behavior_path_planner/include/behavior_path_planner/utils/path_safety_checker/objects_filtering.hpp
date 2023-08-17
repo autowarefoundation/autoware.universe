@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// #ifndef BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__UTIL_HPP_
-// #define BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__UTIL_HPP_
-
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__PATH_SAFETY_CHECKER__OBJECTS_FILTERING_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__PATH_SAFETY_CHECKER__OBJECTS_FILTERING_HPP_
 
