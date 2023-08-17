@@ -897,18 +897,6 @@ bool StartPlannerModule::isSafePath() const
 
   // TODO(Sugahara): should safety check for backward path later
   const auto & pull_out_path = status_.pull_out_path.partial_paths.back();
-  // const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
-  // double target_velocity = 0.0;
-  // switch (status_.planner_type) {
-  //   case PlannerType::SHIFT:
-  //     target_velocity = parameters_->shift_pull_out_velocity;
-  //     break;
-  //   case PlannerType::GEOMETRIC:
-  //     target_velocity = parameters_->parallel_parking_parameters.pull_out_velocity;
-  //     break;
-  //   default:
-  //     break;
-  // }
 
   const auto & ego_predicted_path =
     behavior_path_planner::utils::path_safety_checker::convertToPredictedPath(
@@ -997,7 +985,6 @@ void StartPlannerModule::setDebugData() const
 {
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
-  using marker_utils::createPredictedPathMarkerArray;
   using tier4_autoware_utils::createDefaultMarker;
   using tier4_autoware_utils::createMarkerColor;
   using tier4_autoware_utils::createMarkerScale;
@@ -1010,28 +997,7 @@ void StartPlannerModule::setDebugData() const
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
-  // const double current_velocity = planner_data_->self_odometry->twist.twist.linear.x;
-  // double target_velocity = 0.0;
-  // switch (status_.planner_type) {
-  //   case PlannerType::SHIFT:
-  //     target_velocity = parameters_->shift_pull_out_velocity;
-  //     break;
-  //   case PlannerType::GEOMETRIC:
-  //     target_velocity = parameters_->parallel_parking_parameters.pull_out_velocity;
-  //     break;
-  //   default:
-  //     break;
-  // }
-  // const Pose current_pose = planner_data_->self_odometry->pose.pose;
-
-  // const auto & ego_predicted_path = utils::createPredictedPathFromTargetVelocity(
-  //   status_.pull_out_path.partial_paths.back().points, current_velocity, target_velocity,
-  //   parameters_->acceleration_to_target_velocity, current_pose,
-  //   parameters_->prediction_time_resolution, parameters_->stop_time_before_departure);
-
   debug_marker_.markers.clear();
-  // add(createPredictedPathMarkerArray(
-  //   ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_start_pose, "back_end_pose", 0, 0.9, 0.3, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
