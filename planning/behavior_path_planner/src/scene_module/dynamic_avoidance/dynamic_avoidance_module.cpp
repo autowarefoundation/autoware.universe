@@ -108,8 +108,8 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
   const size_t obj_idx = motion_utils::findNearestIndex(path_points, obj_pose.position);
 
   const double obj_vel_yaw = std::atan2(
-    object.kinematics.initial_twist_with_covariance.twist.linear.x,
-    object.kinematics.initial_twist_with_covariance.twist.linear.y);
+    object.kinematics.initial_twist_with_covariance.twist.linear.y,
+    object.kinematics.initial_twist_with_covariance.twist.linear.x);
   const double path_yaw = tf2::getYaw(path_points.at(obj_idx).point.pose.orientation);
 
   return std::make_pair(
