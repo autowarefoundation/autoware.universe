@@ -105,7 +105,7 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const std::vector<PathPointWithLaneId> & path_points,
   const std::shared_ptr<const PlannerData> & planner_data,
-  const SafetyCheckParams & safety_check_params)
+  const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params)
 {
   if (path_points.empty()) {
     return {};
@@ -114,10 +114,10 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const auto & vehicle_pose = planner_data->self_odometry->pose.pose;
   const double initial_velocity = std::abs(planner_data->self_odometry->twist.twist.linear.x);
 
-  const double min_slow_down_speed = safety_check_params.min_slow_speed;
-  const double acceleration = safety_check_params.acceleration;
-  const double time_horizon = safety_check_params.time_horizon;
-  const double time_resolution = safety_check_params.time_resolution;
+  const double min_slow_down_speed = ego_predicted_path_params->min_slow_speed;
+  const double acceleration = ego_predicted_path_params->acceleration;
+  const double time_horizon = ego_predicted_path_params->time_horizon;
+  const double time_resolution = ego_predicted_path_params->time_resolution;
 
   const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(path_points);
   std::vector<PoseWithVelocityStamped> predicted_path;
@@ -264,16 +264,16 @@ ExtendedPredictedObject transform(
 
 TargetObjectsOnLane createTargetObjectsOnLane(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const PredictedObjects & filtered_objects, const SafetyCheckParams & params)
+  const PredictedObjects & filtered_objects, const std::shared_ptr<ObjectsFilteringParams> & params)
 {
   const auto & current_lanes = planner_data->current_lanes;
   const auto & route_handler = planner_data->route_handler;
 
-  const auto & object_lane_configuration = params.object_lane_configuration;
-  const bool include_opposite = params.include_opposite_lane;
-  const bool invert_opposite = params.invert_opposite_lane;
-  const double safety_check_time_horizon = params.safety_check_time_horizon;
-  const double safety_check_time_resolution = params.safety_check_time_resolution;
+  const auto & object_lane_configuration = params->object_lane_configuration;
+  const bool include_opposite = params->include_opposite_lane;
+  const bool invert_opposite = params->invert_opposite_lane;
+  const double safety_check_time_horizon = params->safety_check_time_horizon;
+  const double safety_check_time_resolution = params->safety_check_time_resolution;
 
   lanelet::ConstLanelets all_left_lanelets;
   lanelet::ConstLanelets all_right_lanelets;
@@ -324,7 +324,8 @@ TargetObjectsOnLane createTargetObjectsOnLane(
 }
 
 PredictedObjects filterObject(
-  const std::shared_ptr<const PlannerData> & planner_data, const SafetyCheckParams & params)
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<ObjectsFilteringParams> & params)
 {
   const auto & objects = planner_data->dynamic_object;
 
@@ -333,21 +334,15 @@ PredictedObjects filterObject(
     return PredictedObjects();
   }
 
-  const double ignore_object_velocity_threshold = params.ignore_object_velocity_threshold;
-  const double object_check_forward_distance = params.object_check_forward_distance;
-  const double object_check_backward_distance = params.object_check_backward_distance;
-  const ObjectTypesToCheck & target_object_types = params.object_types_to_check;
+  const double ignore_object_velocity_threshold = params->ignore_object_velocity_threshold;
+  const double object_check_forward_distance = params->object_check_forward_distance;
+  const double object_check_backward_distance = params->object_check_backward_distance;
+  const ObjectTypesToCheck & target_object_types = params->object_types_to_check;
 
   const auto & route_handler = planner_data->route_handler;
   const auto & current_lanes = planner_data->current_lanes;
   const auto & current_pose = planner_data->self_odometry->pose.pose.position;
   PredictedObjects filtered_objects;
-
-  // std::copy_if(
-  //   objects->objects.begin(), objects->objects.end(),
-  //   std::back_inserter(filtered_objects.objects), [target_object_types](const auto & obj) {
-  //     return isTargetObjectType(obj, target_object_types);
-  //   });
 
   filtered_objects = filterObjectsByVelocity(*objects, ignore_object_velocity_threshold);
 
@@ -364,7 +359,8 @@ PredictedObjects filterObject(
 }
 
 TargetObjectsOnLane getSafetyCheckTargetObjects(
-  const std::shared_ptr<const PlannerData> & planner_data, const SafetyCheckParams & params)
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<ObjectsFilteringParams> & params)
 {
   // filter objects with velocity, position and classification
   auto filtered_objects = filterObject(planner_data, params);

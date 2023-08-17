@@ -891,7 +891,7 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
 
 bool StartPlannerModule::isSafePath() const
 {
-  if (!parameters_->safety_check.enable_safety_check) {
+  if (!safety_check_params_->enable_safety_check) {
     return true;  // if safety check is disabled, it always return safe.
   }
 
@@ -909,15 +909,14 @@ bool StartPlannerModule::isSafePath() const
   //   default:
   //     break;
   // }
-  const auto safety_check_params = createSafetyCheckParams();
 
   const auto & ego_predicted_path =
     behavior_path_planner::utils::path_safety_checker::convertToPredictedPath(
-      pull_out_path.points, planner_data_, safety_check_params);
+      pull_out_path.points, planner_data_, ego_created_path_params_);
 
   const auto & safety_check_target_objects =
     behavior_path_planner::utils::path_safety_checker::getSafetyCheckTargetObjects(
-      planner_data_, safety_check_params);
+      planner_data_, objects_filtering_params_);
 
   const auto & target_objects_current_lane = safety_check_target_objects.on_current_lane;
 
@@ -925,7 +924,7 @@ bool StartPlannerModule::isSafePath() const
 
   for (const auto & object : target_objects_current_lane) {
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
-      object, safety_check_params.check_all_predicted_path);
+      object, objects_filtering_params_->check_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
       CollisionCheckDebug collision{};
       if (!utils::path_safety_checker::checkCollision(
@@ -992,56 +991,6 @@ BehaviorModuleOutput StartPlannerModule::generateStopOutput()
   path_reference_ = getPreviousModuleOutput().reference_path;
 
   return output;
-}
-
-SafetyCheckParams StartPlannerModule::createSafetyCheckParams() const
-{
-  SafetyCheckParams params;
-  BehaviorPathPlannerParameters common_params = planner_data_->parameters;
-  params.object_check_forward_distance =
-    parameters_->target_filtering.object_check_forward_distance;
-  params.object_check_backward_distance =
-    parameters_->target_filtering.object_check_backward_distance;
-
-  params.object_types_to_check.check_car =
-    parameters_->target_filtering.object_types_to_check.check_car;
-  params.object_types_to_check.check_truck =
-    parameters_->target_filtering.object_types_to_check.check_truck;
-  params.object_types_to_check.check_bus =
-    parameters_->target_filtering.object_types_to_check.check_bus;
-  params.object_types_to_check.check_trailer =
-    parameters_->target_filtering.object_types_to_check.check_trailer;
-  params.object_types_to_check.check_bicycle =
-    parameters_->target_filtering.object_types_to_check.check_bicycle;
-  params.object_types_to_check.check_motorcycle =
-    parameters_->target_filtering.object_types_to_check.check_motorcycle;
-  params.object_types_to_check.check_pedestrian =
-    parameters_->target_filtering.object_types_to_check.check_pedestrian;
-  params.object_types_to_check.check_unknown =
-    parameters_->target_filtering.object_types_to_check.check_unknown;
-
-  // params.object_lane_configuration = parameters_->target_filtering.object_lane_configuration;
-
-  params.include_opposite_lane = parameters_->target_filtering.include_opposite_lane;
-  params.invert_opposite_lane = parameters_->target_filtering.invert_opposite_lane;
-  params.check_all_predicted_path = parameters_->target_filtering.check_all_predicted_path;
-  params.use_all_predicted_path = parameters_->target_filtering.use_all_predicted_path;
-  params.use_predicted_path_outside_lanelet =
-    parameters_->target_filtering.use_predicted_path_outside_lanelet;
-
-  params.target_velocity = parameters_->shift_pull_out_velocity;
-  params.acceleration = parameters_->acceleration_to_target_velocity;
-  params.time_horizon = parameters_->prediction_time_horizon;
-  params.time_resolution = parameters_->prediction_time_resolution;
-  // params.min_slow_speed = 1.0;
-  params.delay_until_departure = parameters_->safety_check.stop_time_before_departure;
-  params.safety_check_time_horizon = parameters_->safety_check.prediction_time_horizon;
-  params.safety_check_time_resolution = parameters_->safety_check.prediction_time_resolution;
-
-  params.ignore_object_velocity_threshold = parameters_->th_moving_object_velocity;
-
-  params.publish_debug_marker = parameters_->publish_debug_marker;
-  return params;
 }
 
 void StartPlannerModule::setDebugData() const

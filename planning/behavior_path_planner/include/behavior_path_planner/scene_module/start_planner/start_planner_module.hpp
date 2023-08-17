@@ -17,6 +17,7 @@
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/utils/start_planner/geometric_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
@@ -43,7 +44,9 @@
 
 namespace behavior_path_planner
 {
-using behavior_path_planner::utils::SafetyCheckParams;
+using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
+using behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
+using behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
 using geometry_msgs::msg::PoseArray;
 using lane_departure_checker::LaneDepartureChecker;
 
@@ -90,6 +93,13 @@ public:
   void setParameters(const std::shared_ptr<StartPlannerParameters> & parameters)
   {
     parameters_ = parameters;
+    if (parameters->safety_check_params.enable_safety_check) {
+      ego_created_path_params_ =
+        std::make_shared<EgoPredictedPathParams>(parameters_->ego_predicted_path_params);
+      objects_filtering_params_ =
+        std::make_shared<ObjectsFilteringParams>(parameters_->objects_filtering_params);
+      safety_check_params_ = std::make_shared<SafetyCheckParams>(parameters_->safety_check_params);
+    }
   }
   void resetStatus();
 
@@ -108,6 +118,9 @@ private:
   bool canTransitIdleToRunningState() override { return false; }
 
   std::shared_ptr<StartPlannerParameters> parameters_;
+  std::shared_ptr<EgoPredictedPathParams> ego_created_path_params_;
+  std::shared_ptr<ObjectsFilteringParams> objects_filtering_params_;
+  std::shared_ptr<SafetyCheckParams> safety_check_params_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
   std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;

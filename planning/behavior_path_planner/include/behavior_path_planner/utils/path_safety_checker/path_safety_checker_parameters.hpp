@@ -111,7 +111,7 @@ struct RSSparams
   double longitudinal_velocity_delta_time{0.0};
 };
 
-struct EgoPredictedPath
+struct EgoPredictedPathParams
 {
   // for ego predicted path generation
   double acceleration;
@@ -122,7 +122,7 @@ struct EgoPredictedPath
   double target_velocity;
 };
 
-struct ObjectFilteringParams
+struct ObjectsFilteringParams
 {
   // for filtering dynamic objects to check
   double safety_check_time_horizon;

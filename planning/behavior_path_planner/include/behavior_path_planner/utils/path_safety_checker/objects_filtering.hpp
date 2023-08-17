@@ -63,7 +63,7 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const std::vector<PathPointWithLaneId> & path_points,
   const std::shared_ptr<const PlannerData> & planner_data,
-  const SafetyCheckParams & safety_check_params);
+  const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params);
 
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v);
 
@@ -87,15 +87,16 @@ ExtendedPredictedObject transform(
 
 TargetObjectsOnLane createTargetObjectsOnLane(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const PredictedObjects & filtered_objects, const SafetyCheckParams & safety_check_params);
+  const PredictedObjects & filtered_objects,
+  const std::shared_ptr<ObjectsFilteringParams> & params);
 
 PredictedObjects filterObject(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const SafetyCheckParams & safety_check_params);
+  const std::shared_ptr<ObjectsFilteringParams> & params);
 
 TargetObjectsOnLane getSafetyCheckTargetObjects(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const SafetyCheckParams & safety_check_params);
+  const std::shared_ptr<ObjectsFilteringParams> & params);
 
 }  // namespace behavior_path_planner::utils::path_safety_checker
 

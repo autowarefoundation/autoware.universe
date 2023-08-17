@@ -68,8 +68,6 @@
           check_left_side_lane: true
           check_shoulder_side_lane: true
           check_other_lane: false
-        check_unavoidable_object: false
-        check_other_object: true
         include_opposite_lane: false
         invert_opposite_lane: false
         check_all_predicted_path: true
