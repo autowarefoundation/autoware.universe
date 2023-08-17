@@ -119,3 +119,8 @@ repositories:
     type: git
     url: https://github.com/MapIV/llh_converter.git
     version: ros2
+  rclcpp: # for temporally fix https://github.com/ros2/rclcpp/issues/2163
+    type: git
+    url: https://github.com/tier4/rclcpp.git
+    # This old version is not directly related to the issue, but it is stable.
+    version: humble-with-fix-service-connection-patch
