@@ -897,18 +897,26 @@ bool StartPlannerModule::isSafePath() const
 
   // TODO(Sugahara): should safety check for backward path later
   const auto & pull_out_path = status_.pull_out_path.partial_paths.back();
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
+  const auto & current_velocity = std::hypot(
+    planner_data_->self_odometry->twist.twist.linear.x,
+    planner_data_->self_odometry->twist.twist.linear.y);
+  const auto & dynamic_object = planner_data_->dynamic_object;
+  const auto & route_handler = planner_data_->route_handler;
+  const auto & current_lanes = planner_data_->current_lanes;
+  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_out_path.points);
 
   const auto & ego_predicted_path =
-    behavior_path_planner::utils::path_safety_checker::convertToPredictedPath(
-      pull_out_path.points, planner_data_, ego_created_path_params_);
+    behavior_path_planner::utils::path_safety_checker::createPredictedPath(
+      ego_created_path_params_, pull_out_path.points, current_pose, current_velocity, ego_seg_idx);
 
   const auto & common_param = planner_data_->parameters;
 
-  const auto & filtered_objects =
-    utils::path_safety_checker::filterObject(planner_data_, objects_filtering_params_);
+  const auto & filtered_objects = utils::path_safety_checker::filterObjects(
+    dynamic_object, route_handler, current_lanes, current_pose.position, objects_filtering_params_);
 
   const auto & target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
-    planner_data_, filtered_objects, objects_filtering_params_);
+    current_lanes, route_handler, filtered_objects, objects_filtering_params_);
 
   for (const auto & object : target_objects_on_lane.on_current_lane) {
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(

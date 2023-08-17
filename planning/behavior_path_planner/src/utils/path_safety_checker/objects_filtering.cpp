@@ -19,6 +19,116 @@
 namespace behavior_path_planner::utils::path_safety_checker
 {
 
+PredictedObjects filterObjects(
+  const std::shared_ptr<const PredictedObjects> & objects,
+  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelets & current_lanes,
+  const geometry_msgs::msg::Point & current_pose,
+  const std::shared_ptr<ObjectsFilteringParams> & params)
+{
+  // Guard
+  if (objects->objects.empty()) {
+    return PredictedObjects();
+  }
+
+  const double ignore_object_velocity_threshold = params->ignore_object_velocity_threshold;
+  const double object_check_forward_distance = params->object_check_forward_distance;
+  const double object_check_backward_distance = params->object_check_backward_distance;
+  const ObjectTypesToCheck & target_object_types = params->object_types_to_check;
+
+  PredictedObjects filtered_objects;
+
+  filtered_objects = filterObjectsByVelocity(*objects, ignore_object_velocity_threshold);
+
+  filterObjectsByClass(filtered_objects, target_object_types);
+
+  const auto path = route_handler->getCenterLinePath(
+    current_lanes, object_check_backward_distance, object_check_forward_distance);
+
+  filterObjectsByPosition(
+    filtered_objects, path.points, current_pose, object_check_forward_distance,
+    object_check_backward_distance);
+
+  return filtered_objects;
+}
+
+PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)
+{
+  return filterObjectsByVelocity(objects, -lim_v, lim_v);
+}
+
+PredictedObjects filterObjectsByVelocity(
+  const PredictedObjects & objects, double min_v, double max_v)
+{
+  PredictedObjects filtered;
+  filtered.header = objects.header;
+  for (const auto & obj : objects.objects) {
+    const auto v_norm = std::hypot(
+      obj.kinematics.initial_twist_with_covariance.twist.linear.x,
+      obj.kinematics.initial_twist_with_covariance.twist.linear.y);
+    if (min_v < v_norm && v_norm < max_v) {
+      filtered.objects.push_back(obj);
+    }
+  }
+  return filtered;
+}
+
+void filterObjectsByPosition(
+  PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
+  const geometry_msgs::msg::Point & current_pose, const double forward_distance,
+  const double backward_distance)
+{
+  // Create a new container to hold the filtered objects
+  PredictedObjects filtered;
+  filtered.header = objects.header;
+
+  // Reserve space in the vector to avoid reallocations
+  filtered.objects.reserve(objects.objects.size());
+
+  for (const auto & obj : objects.objects) {
+    const double dist_ego_to_obj = motion_utils::calcSignedArcLength(
+      path_points, current_pose, obj.kinematics.initial_pose_with_covariance.pose.position);
+
+    if (-backward_distance < dist_ego_to_obj && dist_ego_to_obj < forward_distance) {
+      filtered.objects.push_back(obj);
+    }
+  }
+
+  // Replace the original objects with the filtered list
+  objects.objects = std::move(filtered.objects);
+  return;
+}
+
+void filterObjectsByClass(
+  PredictedObjects & objects, const ObjectTypesToCheck & target_object_types)
+{
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+
+  PredictedObjects filtered_objects;
+
+  for (auto & object : objects.objects) {
+    const auto t = utils::getHighestProbLabel(object.classification);
+    const auto is_object_type =
+      ((t == ObjectClassification::CAR && target_object_types.check_car) ||
+       (t == ObjectClassification::TRUCK && target_object_types.check_truck) ||
+       (t == ObjectClassification::BUS && target_object_types.check_bus) ||
+       (t == ObjectClassification::TRAILER && target_object_types.check_trailer) ||
+       (t == ObjectClassification::UNKNOWN && target_object_types.check_unknown) ||
+       (t == ObjectClassification::BICYCLE && target_object_types.check_bicycle) ||
+       (t == ObjectClassification::MOTORCYCLE && target_object_types.check_motorcycle) ||
+       (t == ObjectClassification::PEDESTRIAN && target_object_types.check_pedestrian));
+
+    // If the object type matches any of the target types, add it to the filtered list
+    if (is_object_type) {
+      filtered_objects.objects.push_back(object);
+    }
+  }
+
+  // Replace the original objects with the filtered list
+  objects = std::move(filtered_objects);
+
+  return;
+}
+
 std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets)
 {
@@ -102,113 +212,33 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
 }
 
 // TODO(Sugahara): should consider delay before departure
-std::vector<PoseWithVelocityStamped> convertToPredictedPath(
+std::vector<PoseWithVelocityStamped> createPredictedPath(
+  const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::vector<PathPointWithLaneId> & path_points,
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params)
+  const geometry_msgs::msg::Pose & vehicle_pose, const double current_velocity, size_t ego_seg_idx)
 {
   if (path_points.empty()) {
     return {};
   }
-
-  const auto & vehicle_pose = planner_data->self_odometry->pose.pose;
-  const double initial_velocity = std::abs(planner_data->self_odometry->twist.twist.linear.x);
 
   const double min_slow_down_speed = ego_predicted_path_params->min_slow_speed;
   const double acceleration = ego_predicted_path_params->acceleration;
   const double time_horizon = ego_predicted_path_params->time_horizon;
   const double time_resolution = ego_predicted_path_params->time_resolution;
 
-  const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(path_points);
   std::vector<PoseWithVelocityStamped> predicted_path;
   const auto vehicle_pose_frenet =
     convertToFrenetPoint(path_points, vehicle_pose.position, ego_seg_idx);
 
   for (double t = 0.0; t < time_horizon + 1e-3; t += time_resolution) {
-    const double velocity = std::max(initial_velocity + acceleration * t, min_slow_down_speed);
-    const double length = initial_velocity * t + 0.5 * acceleration * t * t;
+    const double velocity = std::max(current_velocity + acceleration * t, min_slow_down_speed);
+    const double length = current_velocity * t + 0.5 * acceleration * t * t;
     const auto pose =
       motion_utils::calcInterpolatedPose(path_points, vehicle_pose_frenet.length + length);
     predicted_path.emplace_back(t, pose, velocity);
   }
 
   return predicted_path;
-}
-
-PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)
-{
-  return filterObjectsByVelocity(objects, -lim_v, lim_v);
-}
-
-PredictedObjects filterObjectsByVelocity(
-  const PredictedObjects & objects, double min_v, double max_v)
-{
-  PredictedObjects filtered;
-  filtered.header = objects.header;
-  for (const auto & obj : objects.objects) {
-    const auto v = std::abs(obj.kinematics.initial_twist_with_covariance.twist.linear.x);
-    if (min_v < v && v < max_v) {
-      filtered.objects.push_back(obj);
-    }
-  }
-  return filtered;
-}
-
-void filterObjectsByPosition(
-  PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
-  const geometry_msgs::msg::Point & current_pose, const double forward_distance,
-  const double backward_distance)
-{
-  // Create a new container to hold the filtered objects
-  PredictedObjects filtered;
-  filtered.header = objects.header;
-
-  // Reserve space in the vector to avoid reallocations
-  filtered.objects.reserve(objects.objects.size());
-
-  for (const auto & obj : objects.objects) {
-    const double dist_ego_to_obj = motion_utils::calcSignedArcLength(
-      path_points, current_pose, obj.kinematics.initial_pose_with_covariance.pose.position);
-
-    if (-backward_distance < dist_ego_to_obj && dist_ego_to_obj < forward_distance) {
-      filtered.objects.push_back(obj);
-    }
-  }
-
-  // Replace the original objects with the filtered list
-  objects.objects = std::move(filtered.objects);
-  return;
-}
-
-void filterObjectsByClass(
-  PredictedObjects & objects, const ObjectTypesToCheck & target_object_types)
-{
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
-
-  PredictedObjects filtered_objects;
-
-  for (auto & object : objects.objects) {
-    const auto t = utils::getHighestProbLabel(object.classification);
-    const auto is_object_type =
-      ((t == ObjectClassification::CAR && target_object_types.check_car) ||
-       (t == ObjectClassification::TRUCK && target_object_types.check_truck) ||
-       (t == ObjectClassification::BUS && target_object_types.check_bus) ||
-       (t == ObjectClassification::TRAILER && target_object_types.check_trailer) ||
-       (t == ObjectClassification::UNKNOWN && target_object_types.check_unknown) ||
-       (t == ObjectClassification::BICYCLE && target_object_types.check_bicycle) ||
-       (t == ObjectClassification::MOTORCYCLE && target_object_types.check_motorcycle) ||
-       (t == ObjectClassification::PEDESTRIAN && target_object_types.check_pedestrian));
-
-    // If the object type matches any of the target types, add it to the filtered list
-    if (is_object_type) {
-      filtered_objects.objects.push_back(object);
-    }
-  }
-
-  // Replace the original objects with the filtered list
-  objects = std::move(filtered_objects);
-
-  return;
 }
 
 bool isCentroidWithinLanelets(
@@ -263,12 +293,9 @@ ExtendedPredictedObject transform(
 }
 
 TargetObjectsOnLane createTargetObjectsOnLane(
-  const std::shared_ptr<const PlannerData> & planner_data,
+  const lanelet::ConstLanelets & current_lanes, const std::shared_ptr<RouteHandler> & route_handler,
   const PredictedObjects & filtered_objects, const std::shared_ptr<ObjectsFilteringParams> & params)
 {
-  const auto & current_lanes = planner_data->current_lanes;
-  const auto & route_handler = planner_data->route_handler;
-
   const auto & object_lane_configuration = params->object_lane_configuration;
   const bool include_opposite = params->include_opposite_lane;
   const bool invert_opposite = params->invert_opposite_lane;
@@ -321,41 +348,6 @@ TargetObjectsOnLane createTargetObjectsOnLane(
   }
 
   return target_objects_on_lane;
-}
-
-PredictedObjects filterObject(
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<ObjectsFilteringParams> & params)
-{
-  const auto & objects = planner_data->dynamic_object;
-
-  // Guard
-  if (objects->objects.empty()) {
-    return PredictedObjects();
-  }
-
-  const double ignore_object_velocity_threshold = params->ignore_object_velocity_threshold;
-  const double object_check_forward_distance = params->object_check_forward_distance;
-  const double object_check_backward_distance = params->object_check_backward_distance;
-  const ObjectTypesToCheck & target_object_types = params->object_types_to_check;
-
-  const auto & route_handler = planner_data->route_handler;
-  const auto & current_lanes = planner_data->current_lanes;
-  const auto & current_pose = planner_data->self_odometry->pose.pose.position;
-  PredictedObjects filtered_objects;
-
-  filtered_objects = filterObjectsByVelocity(*objects, ignore_object_velocity_threshold);
-
-  filterObjectsByClass(filtered_objects, target_object_types);
-
-  const auto path = route_handler->getCenterLinePath(
-    current_lanes, object_check_backward_distance, object_check_forward_distance);
-
-  filterObjectsByPosition(
-    filtered_objects, path.points, current_pose, object_check_forward_distance,
-    object_check_backward_distance);
-
-  return filtered_objects;
 }
 
 }  // namespace behavior_path_planner::utils::path_safety_checker

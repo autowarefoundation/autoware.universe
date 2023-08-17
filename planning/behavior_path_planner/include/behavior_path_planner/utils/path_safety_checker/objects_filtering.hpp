@@ -42,6 +42,64 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 
 /**
+ * @brief Filters objects based on various criteria.
+ *
+ * @param objects The predicted objects to filter.
+ * @param route_handler
+ * @param current_lanes
+ * @param current_pose The current pose of ego vehicle.
+ * @param params The filtering parameters.
+ * @return PredictedObjects The filtered objects.
+ */
+PredictedObjects filterObjects(
+  const std::shared_ptr<const PredictedObjects> & objects,
+  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelets & current_lanes,
+  const geometry_msgs::msg::Point & current_pose,
+  const std::shared_ptr<ObjectsFilteringParams> & params);
+
+/**
+ * @brief Filter objects based on their velocity.
+ *
+ * @param objects The predicted objects to filter.
+ * @param lim_v Velocity limit for filtering.
+ * @return PredictedObjects The filtered objects.
+ */
+PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v);
+
+/**
+ * @brief Filter objects based on a velocity range.
+ *
+ * @param objects The predicted objects to filter.
+ * @param min_v Minimum velocity for filtering.
+ * @param max_v Maximum velocity for filtering.
+ * @return PredictedObjects The filtered objects.
+ */
+PredictedObjects filterObjectsByVelocity(
+  const PredictedObjects & objects, double min_v, double max_v);
+
+/**
+ * @brief Filter objects based on their position relative to a current_pose.
+ *
+ * @param objects The predicted objects to filter.
+ * @param path_points Points on the path.
+ * @param current_pose Current pose of the reference (e.g., ego vehicle).
+ * @param forward_distance Maximum forward distance for filtering.
+ * @param backward_distance Maximum backward distance for filtering.
+ */
+void filterObjectsByPosition(
+  PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
+  const geometry_msgs::msg::Point & current_pose, const double forward_distance,
+  const double backward_distance);
+/**
+ * @brief Filters the provided objects based on their classification.
+ *
+ * @param objects The predicted objects to be filtered.
+ * @param target_object_types The types of objects to retain after filtering.
+ */
+void filterObjectsByClass(
+  PredictedObjects & objects, const ObjectTypesToCheck & target_object_types);
+
+/**
  * @brief Separate index of the obstacles into two part based on whether the object is within
  * lanelet.
  * @return Indices of objects pair. first objects are in the lanelet, and second others are out of
@@ -57,41 +115,66 @@ std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanel
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
 
+/**
+ * @brief Get the predicted path from an object.
+ *
+ * @param obj The extended predicted object.
+ * @param is_use_all_predicted_path Flag to determine whether to use all predicted paths or just the
+ * one with maximum confidence.
+ * @return std::vector<PredictedPathWithPolygon> The predicted path(s) from the object.
+ */
 std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
   const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
 
-std::vector<PoseWithVelocityStamped> convertToPredictedPath(
+/**
+ * @brief Create a predicted path based on ego vehicle parameters.
+ *
+ * @param ego_predicted_path_params Parameters for ego's predicted path.
+ * @param path_points Points on the path.
+ * @param vehicle_pose Current pose of the ego-vehicle.
+ * @param current_velocity Current velocity of the vehicle.
+ * @param ego_seg_idx Index of the ego segment.
+ * @return std::vector<PoseWithVelocityStamped> The predicted path.
+ */
+std::vector<PoseWithVelocityStamped> createPredictedPath(
+  const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::vector<PathPointWithLaneId> & path_points,
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params);
+  const geometry_msgs::msg::Pose & vehicle_pose, const double current_velocity, size_t ego_seg_idx);
 
-PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v);
-
-PredictedObjects filterObjectsByVelocity(
-  const PredictedObjects & objects, double min_v, double max_v);
-
-void filterObjectsByPosition(
-  const PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
-  const geometry_msgs::msg::Point & current_pose, const double forward_distance,
-  const double backward_distance);
-
-void filterObjectsByClass(
-  PredictedObjects & objects, const ObjectTypesToCheck & target_object_types);
-
+/**
+ * @brief Checks if the centroid of a given object is within the provided lanelets.
+ *
+ * @param object The predicted object to check.
+ * @param target_lanelets The lanelets to check against.
+ * @return bool True if the object's centroid is within the lanelets, otherwise false.
+ */
 bool isCentroidWithinLanelets(
   const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets);
 
+/**
+ * @brief Transforms a given object into an extended predicted object.
+ *
+ * @param object The predicted object to transform.
+ * @param safety_check_time_horizon The time horizon for safety checks.
+ * @param safety_check_time_resolution The time resolution for safety checks.
+ * @return ExtendedPredictedObject The transformed object.
+ */
 ExtendedPredictedObject transform(
   const PredictedObject & object, const double safety_check_time_horizon,
   const double safety_check_time_resolution);
 
+/**
+ * @brief Creates target objects on a lane based on provided parameters.
+ *
+ * @param current_lanes
+ * @param route_handler
+ * @param filtered_objects The filtered objects.
+ * @param params The filtering parameters.
+ * @return TargetObjectsOnLane The target objects on the lane.
+ */
 TargetObjectsOnLane createTargetObjectsOnLane(
-  const std::shared_ptr<const PlannerData> & planner_data,
+  const lanelet::ConstLanelets & current_lanes, const std::shared_ptr<RouteHandler> & route_handler,
   const PredictedObjects & filtered_objects,
-  const std::shared_ptr<ObjectsFilteringParams> & params);
-
-PredictedObjects filterObject(
-  const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<ObjectsFilteringParams> & params);
 
 }  // namespace behavior_path_planner::utils::path_safety_checker
