@@ -202,35 +202,6 @@ double calcLongitudinalDistanceFromEgoToObjects(
   const Pose & ego_pose, double base_link2front, double base_link2rear,
   const PredictedObjects & dynamic_objects);
 
-/**
- * @brief Separate index of the obstacles into two part based on whether the object is within
- * lanelet.
- * @return Indices of objects pair. first objects are in the lanelet, and second others are out of
- * lanelet.
- */
-std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
-
-/**
- * @brief Separate the objects into two part based on whether the object is within lanelet.
- * @return Objects pair. first objects are in the lanelet, and second others are out of lanelet.
- */
-std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
-
-PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v);
-
-PredictedObjects filterObjectsByVelocity(
-  const PredictedObjects & objects, double min_v, double max_v);
-
-void filterObjectsByPosition(
-  const PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
-  const geometry_msgs::msg::Point & current_pose, const double forward_distance,
-  const double backward_distance);
-
-void filterObjectsByClass(
-  PredictedObjects & objects, const ObjectTypesToCheck & target_object_types);
-
 // drivable area generation
 lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes);
 lanelet::ConstLanelets transformToLanelets(const std::vector<DrivableLanes> & drivable_lanes);
@@ -401,33 +372,6 @@ lanelet::ConstLanelets calcLaneAroundPose(
   const double forward_length, const double backward_length,
   const double dist_threshold = std::numeric_limits<double>::max(),
   const double yaw_threshold = std::numeric_limits<double>::max());
-
-std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
-  const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
-
-std::vector<PoseWithVelocityStamped> convertToPredictedPath(
-  const std::vector<PathPointWithLaneId> & path_points,
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const SafetyCheckParams & safety_check_params);
-
-bool isCentroidWithinLanelets(
-  const PredictedObject & object, const lanelet::ConstLanelets & target_lanelets);
-
-ExtendedPredictedObject transform(
-  const PredictedObject & object, const double safety_check_time_horizon,
-  const double safety_check_time_resolution);
-
-TargetObjectsOnLane createTargetObjectsOnLane(
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const PredictedObjects & filtered_objects, const SafetyCheckParams & safety_check_params);
-
-PredictedObjects filterObject(
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const SafetyCheckParams & safety_check_params);
-
-TargetObjectsOnLane getSafetyCheckTargetObjects(
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const SafetyCheckParams & safety_check_params);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 

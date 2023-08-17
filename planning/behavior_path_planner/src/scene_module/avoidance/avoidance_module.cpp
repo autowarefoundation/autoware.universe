@@ -17,6 +17,7 @@
 #include "behavior_path_planner/marker_utils/avoidance/debug.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/avoidance/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -271,7 +272,8 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     parameters_->detection_area_right_expand_dist * (-1.0));
 
   const auto [object_within_target_lane, object_outside_target_lane] =
-    utils::separateObjectsByLanelets(*planner_data_->dynamic_object, expanded_lanelets);
+    utils::path_safety_checker::separateObjectsByLanelets(
+      *planner_data_->dynamic_object, expanded_lanelets);
 
   for (const auto & object : object_outside_target_lane.objects) {
     ObjectData other_object;
@@ -1866,8 +1868,8 @@ bool AvoidanceModule::isSafePath(
     avoidance_data_, planner_data_, parameters_, is_right_shift.value());
 
   for (const auto & object : safety_check_target_objects) {
-    const auto obj_predicted_paths =
-      utils::getPredictedPathFromObj(object, parameters_->check_all_predicted_path);
+    const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
+      object, parameters_->check_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
       CollisionCheckDebug collision{};
       if (!utils::path_safety_checker::checkCollision(

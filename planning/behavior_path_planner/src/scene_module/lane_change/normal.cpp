@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -1372,8 +1373,8 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
   for (const auto & obj : collision_check_objects) {
     auto current_debug_data = assignDebugData(obj);
     current_debug_data.second.ego_predicted_path.push_back(debug_predicted_path);
-    const auto obj_predicted_paths =
-      utils::getPredictedPathFromObj(obj, lane_change_parameters_->use_all_predicted_path);
+    const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
+      obj, lane_change_parameters_->use_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
       if (!utils::path_safety_checker::checkCollision(
             path, ego_predicted_path, obj, obj_path, common_parameters, front_decel, rear_decel,
