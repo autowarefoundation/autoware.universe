@@ -902,15 +902,15 @@ bool StartPlannerModule::isSafePath() const
     behavior_path_planner::utils::path_safety_checker::convertToPredictedPath(
       pull_out_path.points, planner_data_, ego_created_path_params_);
 
-  const auto & safety_check_target_objects =
-    behavior_path_planner::utils::path_safety_checker::getSafetyCheckTargetObjects(
-      planner_data_, objects_filtering_params_);
-
-  const auto & target_objects_current_lane = safety_check_target_objects.on_current_lane;
-
   const auto & common_param = planner_data_->parameters;
 
-  for (const auto & object : target_objects_current_lane) {
+  const auto & filtered_objects =
+    utils::path_safety_checker::filterObject(planner_data_, objects_filtering_params_);
+
+  const auto & target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
+    planner_data_, filtered_objects, objects_filtering_params_);
+
+  for (const auto & object : target_objects_on_lane.on_current_lane) {
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
       object, objects_filtering_params_->check_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {

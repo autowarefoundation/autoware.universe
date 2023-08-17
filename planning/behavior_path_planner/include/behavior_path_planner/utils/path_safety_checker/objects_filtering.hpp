@@ -94,10 +94,6 @@ PredictedObjects filterObject(
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<ObjectsFilteringParams> & params);
 
-TargetObjectsOnLane getSafetyCheckTargetObjects(
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<ObjectsFilteringParams> & params);
-
 }  // namespace behavior_path_planner::utils::path_safety_checker
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__PATH_SAFETY_CHECKER__OBJECTS_FILTERING_HPP_

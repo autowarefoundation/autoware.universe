@@ -358,15 +358,4 @@ PredictedObjects filterObject(
   return filtered_objects;
 }
 
-TargetObjectsOnLane getSafetyCheckTargetObjects(
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<ObjectsFilteringParams> & params)
-{
-  // filter objects with velocity, position and classification
-  auto filtered_objects = filterObject(planner_data, params);
-
-  // get target objects on lane and return them directly
-  return createTargetObjectsOnLane(planner_data, std::move(filtered_objects), params);
-}
-
 }  // namespace behavior_path_planner::utils::path_safety_checker
