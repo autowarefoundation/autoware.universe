@@ -267,13 +267,9 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   using utils::avoidance::getTargetLanelets;
 
   // Separate dynamic objects based on whether they are inside or outside of the expanded lanelets.
-  const auto expanded_lanelets = getTargetLanelets(
-    planner_data_, data.current_lanelets, parameters_->detection_area_left_expand_dist,
-    parameters_->detection_area_right_expand_dist * (-1.0));
-
   const auto [object_within_target_lane, object_outside_target_lane] =
-    utils::path_safety_checker::separateObjectsByLanelets(
-      *planner_data_->dynamic_object, expanded_lanelets);
+    utils::avoidance::separateObjectsByPath(
+      helper_.getPreviousSplineShiftPath().path, planner_data_, data, parameters_, debug);
 
   for (const auto & object : object_outside_target_lane.objects) {
     ObjectData other_object;
@@ -300,7 +296,6 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   // debug
   {
     debug.current_lanelets = std::make_shared<lanelet::ConstLanelets>(data.current_lanelets);
-    debug.expanded_lanelets = std::make_shared<lanelet::ConstLanelets>(expanded_lanelets);
 
     std::vector<AvoidanceDebugMsg> debug_info_array;
     const auto append = [&](const auto & o) {
@@ -706,6 +701,8 @@ void AvoidanceModule::updateRegisteredRawShiftLines()
 AvoidLineArray AvoidanceModule::applyPreProcessToRawShiftLines(
   AvoidLineArray & raw_shift_lines, DebugData & debug) const
 {
+  const auto fill_gap_shift_lines = getFillGapShiftLines(raw_shift_lines);
+
   /**
    * Use all registered points. For the current points, if the similar one of the current
    * points are already registered, will not use it.
@@ -735,6 +732,8 @@ AvoidLineArray AvoidanceModule::applyPreProcessToRawShiftLines(
    * Add gap filled shift lines so that merged shift lines connect smoothly.
    */
   fillShiftLineGap(raw_shift_lines);
+  raw_shift_lines.insert(
+    raw_shift_lines.end(), fill_gap_shift_lines.begin(), fill_gap_shift_lines.end());
   debug.gap_filled = raw_shift_lines;
 
   /**
@@ -980,10 +979,6 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
       al_avoid.end_longitudinal = o.longitudinal - offset;
       al_avoid.id = getOriginalShiftLineUniqueId();
       al_avoid.object = o;
-
-      if (is_valid_shift_line(al_avoid)) {
-        avoid_lines.push_back(al_avoid);
-      }
     }
 
     AvoidLine al_return;
@@ -1003,10 +998,11 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
         o.longitudinal + offset + std::min(feasible_return_distance, return_remaining_distance);
       al_return.id = getOriginalShiftLineUniqueId();
       al_return.object = o;
+    }
 
-      if (is_valid_shift_line(al_return)) {
-        avoid_lines.push_back(al_return);
-      }
+    if (is_valid_shift_line(al_avoid) && is_valid_shift_line(al_return)) {
+      avoid_lines.push_back(al_avoid);
+      avoid_lines.push_back(al_return);
     }
 
     o.is_avoidable = true;
@@ -1220,6 +1216,38 @@ AvoidLineArray AvoidanceModule::extractShiftLinesFromLine(ShiftLineData & shift_
   }
 
   return merged_avoid_lines;
+}
+
+AvoidLineArray AvoidanceModule::getFillGapShiftLines(const AvoidLineArray & shift_lines) const
+{
+  AvoidLineArray ret{};
+
+  if (shift_lines.empty()) {
+    return ret;
+  }
+
+  const auto calc_gap_shift_line = [&](const auto & line1, const auto & line2) {
+    AvoidLine gap_filled_line{};
+    gap_filled_line.start_shift_length = line1.end_shift_length;
+    gap_filled_line.start_longitudinal = line1.end_longitudinal;
+    gap_filled_line.end_shift_length = line2.start_shift_length;
+    gap_filled_line.end_longitudinal = line2.start_longitudinal;
+    gap_filled_line.id = getOriginalShiftLineUniqueId();
+
+    return gap_filled_line;
+  };
+
+  // fill gap among shift lines.
+  for (size_t i = 0; i < shift_lines.size() - 1; i += 2) {
+    if (shift_lines.at(i).end_longitudinal > shift_lines.at(i + 1).start_longitudinal) {
+      continue;
+    }
+    ret.push_back(calc_gap_shift_line(shift_lines.at(i), shift_lines.at(i + 1)));
+  }
+
+  utils::avoidance::fillAdditionalInfoFromLongitudinal(avoidance_data_, ret);
+
+  return ret;
 }
 
 void AvoidanceModule::fillShiftLineGap(AvoidLineArray & shift_lines) const
@@ -2349,10 +2377,14 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
           std::abs(candidates.at(i).getRelativeLength()) >
           parameters_->lateral_small_shift_threshold) {
           if (has_large_shift) {
-            break;
+            return;
           }
 
           has_large_shift = true;
+        }
+
+        if (!isComfortable(AvoidLineArray{candidates.at(i)})) {
+          return;
         }
 
         subsequent.push_back(candidates.at(i));
@@ -2363,7 +2395,15 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
   const auto get_subsequent_shift = [&, this](size_t i) {
     AvoidLineArray subsequent{candidates.at(i)};
 
+    if (!isComfortable(subsequent)) {
+      return subsequent;
+    }
+
     if (candidates.size() == i + 1) {
+      return subsequent;
+    }
+
+    if (!isComfortable(AvoidLineArray{candidates.at(i + 1)})) {
       return subsequent;
     }
 
@@ -2656,6 +2696,7 @@ void AvoidanceModule::updateDebugMarker(
   using marker_utils::createLaneletsAreaMarkerArray;
   using marker_utils::createObjectsMarkerArray;
   using marker_utils::createPathMarkerArray;
+  using marker_utils::createPolygonMarkerArray;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createShiftGradMarkerArray;
   using marker_utils::createShiftLengthMarkerArray;
@@ -2665,7 +2706,6 @@ void AvoidanceModule::updateDebugMarker(
   using marker_utils::avoidance_marker::createOtherObjectsMarkerArray;
   using marker_utils::avoidance_marker::createOverhangFurthestLineStringMarkerArray;
   using marker_utils::avoidance_marker::createPredictedVehiclePositions;
-  using marker_utils::avoidance_marker::createSafetyCheckMarkerArray;
   using marker_utils::avoidance_marker::createUnsafeObjectsMarkerArray;
   using marker_utils::avoidance_marker::makeOverhangToRoadShoulderMarkerArray;
   using tier4_autoware_utils::appendMarkerArray;
@@ -2701,10 +2741,8 @@ void AvoidanceModule::updateDebugMarker(
     helper_.getPreviousLinearShiftPath().path, "prev_linear_shift", 0, 0.5, 0.4, 0.6));
   add(createPoseMarkerArray(data.reference_pose, "reference_pose", 0, 0.9, 0.3, 0.3));
 
-  add(createSafetyCheckMarkerArray(data.state, getEgoPose(), debug));
-
   add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
-  add(createLaneletsAreaMarkerArray(*debug.expanded_lanelets, "expanded_lanelet", 0.8, 0.8, 0.0));
+  add(createPolygonMarkerArray(debug.detection_area, "detection_area", 0L, 0.16, 1.0, 0.69, 0.1));
 
   add(createOtherObjectsMarkerArray(
     data.other_objects, AvoidanceDebugFactor::OBJECT_IS_BEHIND_THRESHOLD));
