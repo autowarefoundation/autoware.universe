@@ -19,7 +19,8 @@
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
-#include "behavior_path_planner/utils/safety_check.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "motion_utils/motion_utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
@@ -70,11 +71,19 @@ using behavior_path_planner::utils::safety_check::ExtendedPredictedObject;
 using behavior_path_planner::utils::safety_check::PoseWithVelocityAndPolygonStamped;
 using behavior_path_planner::utils::safety_check::PoseWithVelocityStamped;
 using behavior_path_planner::utils::safety_check::PredictedPathWithPolygon;
+using drivable_area_expansion::DrivableAreaExpansionParameters;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Twist;
 using geometry_msgs::msg::Vector3;
+using path_safety_checker::ExtendedPredictedObject;
+using path_safety_checker::ObjectTypesToCheck;
+using path_safety_checker::PoseWithVelocityAndPolygonStamped;
+using path_safety_checker::PoseWithVelocityStamped;
+using path_safety_checker::PredictedPathWithPolygon;
+using path_safety_checker::SafetyCheckParams;
+using path_safety_checker::TargetObjectsOnLane;
 using route_handler::RouteHandler;
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::LineString2d;
@@ -197,27 +206,6 @@ double calcLongitudinalDistanceFromEgoToObject(
 double calcLongitudinalDistanceFromEgoToObjects(
   const Pose & ego_pose, double base_link2front, double base_link2rear,
   const PredictedObjects & dynamic_objects);
-
-/**
- * @brief Separate index of the obstacles into two part based on whether the object is within
- * lanelet.
- * @return Indices of objects pair. first objects are in the lanelet, and second others are out of
- * lanelet.
- */
-std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
-
-/**
- * @brief Separate the objects into two part based on whether the object is within lanelet.
- * @return Objects pair. first objects are in the lanelet, and second others are out of lanelet.
- */
-std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
-
-PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v);
-
-PredictedObjects filterObjectsByVelocity(
-  const PredictedObjects & objects, double min_v, double max_v);
 
 // drivable area generation
 lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes);
@@ -386,9 +374,6 @@ lanelet::ConstLanelets calcLaneAroundPose(
   const double forward_length, const double backward_length,
   const double dist_threshold = std::numeric_limits<double>::max(),
   const double yaw_threshold = std::numeric_limits<double>::max());
-
-std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
-  const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 
