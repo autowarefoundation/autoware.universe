@@ -80,7 +80,8 @@ bool LineSegmentsProjector::define_project_func()
   return true;
 }
 
-void LineSegmentsProjector::on_classified_line_segments(const PointCloud2::ConstSharedPtr & line_segments_msg)
+void LineSegmentsProjector::on_classified_line_segments(
+  const PointCloud2::ConstSharedPtr & line_segments_msg)
 {
   if (!define_project_func()) {
     using namespace std::literals::chrono_literals;
@@ -217,4 +218,4 @@ pcl::PointCloud<pcl::PointXYZLNormal> LineSegmentsProjector::project_lines(
   return projected_points;
 }
 
-}  // namespace yabloc::segment_filter
+}  // namespace yabloc::line_segments_projector
