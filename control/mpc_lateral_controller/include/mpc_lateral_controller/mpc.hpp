@@ -380,9 +380,11 @@ private:
     const Odometry & current_kinematics) const;
 
   /**
-   *
+   * @brief calculate steering rate limit along with the target trajectory
+   * @param reference_trajectory The reference trajectory.
+   * @param current_velocity current velocity of ego.
    */
-  VectorXd calcSteerDiffLimitOnTrajectory(
+  VectorXd calcSteerRateLimitOnTrajectory(
     const MPCTrajectory & trajectory, const double current_velocity) const;
 
   //!< @brief logging with warn and return false

@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <limits>
 
+// #define PRINT_MAT(m) std::cerr << #m << ": \n" << m << std::endl
+
 namespace autoware::motion::control::mpc_lateral_controller
 {
 using tier4_autoware_utils::calcDistance2d;
@@ -578,11 +580,11 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
   VectorXd ub = VectorXd::Constant(DIM_U_N, m_steer_lim);   // max steering angle
 
   // steering angle rate limit
-  VectorXd steer_rate_limits = calcSteerDiffLimitOnTrajectory(traj, current_velocity);
-  VectorXd lbA = steer_rate_limits * prediction_dt;
-  VectorXd ubA = -steer_rate_limits * prediction_dt;
-  lbA(0) = m_raw_steer_cmd_prev - steer_rate_limits(0) * m_ctrl_period;
+  VectorXd steer_rate_limits = calcSteerRatefLimitOnTrajectory(traj, current_velocity);
+  VectorXd ubA = steer_rate_limits * prediction_dt;
+  VectorXd lbA = -steer_rate_limits * prediction_dt;
   ubA(0) = m_raw_steer_cmd_prev + steer_rate_limits(0) * m_ctrl_period;
+  lbA(0) = m_raw_steer_cmd_prev - steer_rate_limits(0) * m_ctrl_period;
 
   auto t_start = std::chrono::system_clock::now();
   bool solve_result = m_qpsolver_ptr->solve(H, f.transpose(), A, lb, ub, lbA, ubA, Uex);
@@ -730,7 +732,7 @@ double MPC::calcDesiredSteeringRate(
   return steer_rate;
 }
 
-VectorXd MPC::calcSteerDiffLimitOnTrajectory(
+VectorXd MPC::calcSteerRateLimitOnTrajectory(
   const MPCTrajectory & trajectory, const double current_velocity) const
 {
   const auto interp = [&](const auto & steer_rate_limit_map, const auto & current) {
