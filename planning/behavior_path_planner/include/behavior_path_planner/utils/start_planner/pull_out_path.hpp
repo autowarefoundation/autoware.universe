@@ -29,6 +29,9 @@ struct PullOutPath
   std::vector<PathWithLaneId> partial_paths{};
   Pose start_pose{};
   Pose end_pose{};
+  // accelerate with constant acceleration to the target velocity
+  double acceleration{};
+  double terminal_velocity{};
 };
 }  // namespace behavior_path_planner
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__PULL_OUT_PATH_HPP_
