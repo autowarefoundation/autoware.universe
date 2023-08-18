@@ -57,7 +57,9 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
 
   // Subscribe to map_projector_info topic
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
-  adaptor.init_sub(sub_map_projector_info_, [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { callbackMapProjectorInfo(msg); });
+  adaptor.init_sub(
+    sub_map_projector_info_,
+    [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { callbackMapProjectorInfo(msg); });
 
   nav_sat_fix_origin_.altitude = declare_parameter("altitude", 0.0);
 
