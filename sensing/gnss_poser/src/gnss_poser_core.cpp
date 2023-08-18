@@ -27,26 +27,25 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("gnss_poser", node_options),
   tf2_listener_(tf2_buffer_),
   tf2_broadcaster_(*this),
-  base_frame_(declare_parameter("base_frame", "base_link")),
-  gnss_frame_(declare_parameter("gnss_frame", "gnss")),
-  gnss_base_frame_(declare_parameter("gnss_base_frame", "gnss_base_link")),
-  map_frame_(declare_parameter("map_frame", "map")),
-  use_gnss_ins_orientation_(declare_parameter("use_gnss_ins_orientation", true)),
-  plane_zone_(declare_parameter<int>("plane_zone", 9)),
+  base_frame_(declare_parameter<std::string>("base_frame")),
+  gnss_frame_(declare_parameter<std::string>("gnss_frame")),
+  gnss_base_frame_(declare_parameter<std::string>("gnss_base_frame")),
+  map_frame_(declare_parameter<std::string>("map_frame")),
+  use_gnss_ins_orientation_(declare_parameter<bool>("use_gnss_ins_orientation")),
+  plane_zone_(declare_parameter<int>("plane_zone")),
   msg_gnss_ins_orientation_stamped_(
     std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>()),
-  height_system_(declare_parameter<int>("height_system", 1)),
-  gnss_pose_pub_method(declare_parameter<int>("gnss_pose_pub_method", 0))
+  height_system_(declare_parameter<int>("height_system")),
+  gnss_pose_pub_method(declare_parameter<int>("gnss_pose_pub_method"))
 {
-  int coordinate_system =
-    declare_parameter("coordinate_system", static_cast<int>(CoordinateSystem::MGRS));
+  int coordinate_system = declare_parameter<int>("coordinate_system");
   coordinate_system_ = static_cast<CoordinateSystem>(coordinate_system);
 
-  nav_sat_fix_origin_.latitude = declare_parameter("latitude", 0.0);
-  nav_sat_fix_origin_.longitude = declare_parameter("longitude", 0.0);
-  nav_sat_fix_origin_.altitude = declare_parameter("altitude", 0.0);
+  nav_sat_fix_origin_.latitude = declare_parameter<double>("latitude");
+  nav_sat_fix_origin_.longitude = declare_parameter<double>("longitude");
+  nav_sat_fix_origin_.altitude = declare_parameter<double>("altitude");
 
-  int buff_epoch = declare_parameter("buff_epoch", 1);
+  int buff_epoch = declare_parameter<int>("buff_epoch");
   position_buffer_.set_capacity(buff_epoch);
 
   nav_sat_fix_sub_ = create_subscription<sensor_msgs::msg::NavSatFix>(

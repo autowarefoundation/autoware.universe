@@ -1,0 +1,15 @@
+/**:
+  ros__parameters:
+    base_frame: "base_link"
+    gnss_frame: "gnss"
+    gnss_base_frame: "gnss_base_link"
+    map_frame: "map"
+    use_gnss_ins_orientation: true
+    coordinate_system: 4
+    plane_zone: 9
+    height_system: 1
+    gnss_pose_pub_method: 0
+    latitude: 40.81187906
+    longitude: 29.35810110
+    altitude: 47.62
+    buff_epoch: 1
