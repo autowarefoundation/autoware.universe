@@ -25,7 +25,9 @@ namespace behavior_path_planner
 FreespacePullOver::FreespacePullOver(
   rclcpp::Node & node, const GoalPlannerParameters & parameters,
   const vehicle_info_util::VehicleInfo & vehicle_info)
-: PullOverPlannerBase{node, parameters}, velocity_{parameters.freespace_parking_velocity}
+: PullOverPlannerBase{node, parameters},
+  velocity_{parameters.freespace_parking_velocity},
+  left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
   freespace_planning_algorithms::VehicleShape vehicle_shape(
     vehicle_info, parameters.vehicle_shape_margin);
@@ -53,60 +55,72 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
   const Pose end_pose =
     use_back_ ? goal_pose
               : tier4_autoware_utils::calcOffsetPose(goal_pose, -straight_distance, 0.0, 0.0);
-  const bool found_path = planner_->makePlan(current_pose, end_pose);
-  if (!found_path) {
+  if (!planner_->makePlan(current_pose, end_pose)) {
     return {};
   }
 
+  const auto road_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_.backward_goal_search_length, parameters_.forward_goal_search_length,
+    /*forward_only_in_route*/ false);
+  const auto pull_over_lanes =
+    goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
+  if (road_lanes.empty() || pull_over_lanes.empty()) {
+    return {};
+  }
+  const auto lanes = utils::combineLanelets(road_lanes, pull_over_lanes);
+
   PathWithLaneId path =
-    utils::convertWayPointsToPathWithLaneId(planner_->getWaypoints(), velocity_);
+    utils::convertWayPointsToPathWithLaneId(planner_->getWaypoints(), velocity_, lanes);
   const auto reverse_indices = utils::getReversingIndices(path);
   std::vector<PathWithLaneId> partial_paths = utils::dividePath(path, reverse_indices);
 
   // remove points which are near the goal
   PathWithLaneId & last_path = partial_paths.back();
+  // todo: define as parameter
   const double th_goal_distance = 1.0;
+
+  // Remove points close to the goal in the last path.
   for (auto it = last_path.points.begin(); it != last_path.points.end(); ++it) {
-    size_t index = std::distance(last_path.points.begin(), it);
-    if (index == 0) continue;
-    const double distance =
-      tier4_autoware_utils::calcDistance2d(end_pose.position, it->point.pose.position);
-    if (distance < th_goal_distance) {
+    // Skip the first point.
+    if (it == last_path.points.begin()) continue;
+
+    // If a point is within the threshold distance to the goal, remove all following points.
+    if (
+      tier4_autoware_utils::calcDistance2d(end_pose.position, it->point.pose.position) <
+      th_goal_distance) {
       last_path.points.erase(it, last_path.points.end());
       break;
     }
   }
-
-  // add PathPointWithLaneId to last path
-  auto addPose = [&last_path](const Pose & pose) {
+  // If use_back_ is true, add end_pose to the last path
+  if (use_back_) {
     PathPointWithLaneId p = last_path.points.back();
-    p.point.pose = pose;
+    p.point.pose = end_pose;
+    last_path.points.push_back(p);
+    return;
+  }
+
+  // If use_back_ is false, interpolate and add poses to the last path
+  constexpr double interval = 0.5;
+  auto addInterpolatedPosesAndEnd = [&](const Pose & pose1, const Pose & pose2) {
+    for (const auto & pose : utils::interpolatePose(pose1, pose2, interval)) {
+      PathPointWithLaneId p = last_path.points.back();
+      p.point.pose = pose;
+      last_path.points.push_back(p);
+    }
+    PathPointWithLaneId p = last_path.points.back();
+    p.point.pose = pose2;
     last_path.points.push_back(p);
   };
 
-  if (use_back_) {
-    addPose(end_pose);
-  } else {
-    // add interpolated poses
-    auto addInterpolatedPoses = [&addPose](const Pose & pose1, const Pose & pose2) {
-      constexpr double interval = 0.5;
-      std::vector<Pose> interpolated_poses = utils::interpolatePose(pose1, pose2, interval);
-      for (const auto & pose : interpolated_poses) {
-        addPose(pose);
-      }
-    };
-    addInterpolatedPoses(last_path.points.back().point.pose, end_pose);
-    addPose(end_pose);
-    addInterpolatedPoses(end_pose, goal_pose);
-    addPose(goal_pose);
-  }
+  addInterpolatedPosesd(last_path.points.back().point.pose, end_pose);
+  addInterpolatedPosesAndEnd(end_pose, goal_pose);
 
   utils::correctDividedPathVelocity(partial_paths);
 
+  // Check if driving forward for each path, return empty if not
   for (auto & path : partial_paths) {
-    const auto is_driving_forward = motion_utils::isDrivingForward(path.points);
-    if (!is_driving_forward) {
-      // path points is less than 2
+    if (!motion_utils::isDrivingForward(path.points)) {
       return {};
     }
   }
