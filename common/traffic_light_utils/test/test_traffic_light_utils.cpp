@@ -67,8 +67,10 @@ TEST(setSignalUnknown, set_signal_element)
   EXPECT_EQ(test_signal.elements[0].color, tier4_perception_msgs::msg::TrafficLightElement::RED);
   EXPECT_EQ(test_signal.elements[0].shape, tier4_perception_msgs::msg::TrafficLightElement::CROSS);
   setSignalUnknown(test_signal, 1.23f);
-  EXPECT_EQ(test_signal.elements[0].color, tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN);
-  EXPECT_EQ(test_signal.elements[0].shape, tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN);
+  EXPECT_EQ(
+    test_signal.elements[0].color, tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN);
+  EXPECT_EQ(
+    test_signal.elements[0].shape, tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN);
   EXPECT_FLOAT_EQ(test_signal.elements[0].confidence, (float)1.23);
 }
 
