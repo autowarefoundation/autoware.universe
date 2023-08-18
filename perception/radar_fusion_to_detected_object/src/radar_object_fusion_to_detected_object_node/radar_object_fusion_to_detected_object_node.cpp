@@ -80,7 +80,8 @@ RadarObjectFusionToDetectedObjectNode::RadarObjectFusionToDetectedObjectNode(
     declare_parameter<double>("core_params.velocity_weight_target_value_top");
   core_param_.convert_doppler_to_twist =
     declare_parameter<bool>("core_params.convert_doppler_to_twist");
-  core_param_.threshold_probability = declare_parameter<double>("core_params.threshold_probability");
+  core_param_.threshold_probability =
+    declare_parameter<double>("core_params.threshold_probability");
   core_param_.compensate_probability =
     declare_parameter<bool>("core_params.compensate_probability");
 
