@@ -86,7 +86,8 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
   if (parameters_.divide_pull_out_path) {
     output.partial_paths = planner_.getPaths();
     // insert stop velocity to first arc path end
-    const double arc_length_on_path = motion_utils::calcArcLength(output.partial_paths.front().points);
+    const double arc_length_on_path =
+      motion_utils::calcArcLength(output.partial_paths.front().points);
     output.partial_paths.front().points.back().point.longitudinal_velocity_mps = 0.0;
     output.terminal_velocity = velocity;
     output.acceleration = velocity * velocity / (2 * arc_length_on_path);
