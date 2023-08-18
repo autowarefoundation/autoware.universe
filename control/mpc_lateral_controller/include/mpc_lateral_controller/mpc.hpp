@@ -379,6 +379,12 @@ private:
     const MPCMatrix & mpc_matrix, const AckermannLateralCommand & ctrl_cmd, const VectorXd & Uex,
     const Odometry & current_kinematics) const;
 
+  /**
+   *
+   */
+  VectorXd calcSteerDiffLimitOnTrajectory(
+    const MPCTrajectory & trajectory, const double current_velocity) const;
+
   //!< @brief logging with warn and return false
   template <typename... Args>
   inline bool fail_warn_throttle(Args &&... args) const
