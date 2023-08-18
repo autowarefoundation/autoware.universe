@@ -906,7 +906,6 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   return turn_signal;
 }
 
-
 bool StartPlannerModule::isSafePath() const
 {
   // TODO(Sugahara): should safety check for backward path later
