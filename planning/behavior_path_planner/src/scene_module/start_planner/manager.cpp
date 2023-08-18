@@ -88,40 +88,40 @@ StartPlannerModuleManager::StartPlannerModuleManager(
     node->declare_parameter<double>(ns + "path_safety_check.ego_predicted_path.time_resolution");
   p.ego_predicted_path_params.min_slow_speed =
     node->declare_parameter<double>(ns + "path_safety_check.ego_predicted_path.min_slow_speed");
-  p.ego_predicted_path_params.delay_until_departure =
-    node->declare_parameter<double>(ns + "path_safety_check.ego_predicted_path.delay_until_departure");
+  p.ego_predicted_path_params.delay_until_departure = node->declare_parameter<double>(
+    ns + "path_safety_check.ego_predicted_path.delay_until_departure");
   p.ego_predicted_path_params.target_velocity =
     node->declare_parameter<double>(ns + "path_safety_check.ego_predicted_path.target_velocity");
 
   // ObjectFilteringParams
-  p.objects_filtering_params.safety_check_time_horizon =
-    node->declare_parameter<double>(ns + "path_safety_check.object_filtering_params.safety_check_time_horizon");
-  p.objects_filtering_params.safety_check_time_resolution =
-    node->declare_parameter<double>(ns + "path_safety_check.object_filtering_params.safety_check_time_resolution");
-  p.objects_filtering_params.object_check_forward_distance =
-    node->declare_parameter<double>(ns + "path_safety_check.object_filtering_params.object_check_forward_distance");
-  p.objects_filtering_params.object_check_backward_distance =
-    node->declare_parameter<double>(ns + "path_safety_check.object_filtering_params.object_check_backward_distance");
+  p.objects_filtering_params.safety_check_time_horizon = node->declare_parameter<double>(
+    ns + "path_safety_check.object_filtering_params.safety_check_time_horizon");
+  p.objects_filtering_params.safety_check_time_resolution = node->declare_parameter<double>(
+    ns + "path_safety_check.object_filtering_params.safety_check_time_resolution");
+  p.objects_filtering_params.object_check_forward_distance = node->declare_parameter<double>(
+    ns + "path_safety_check.object_filtering_params.object_check_forward_distance");
+  p.objects_filtering_params.object_check_backward_distance = node->declare_parameter<double>(
+    ns + "path_safety_check.object_filtering_params.object_check_backward_distance");
   p.objects_filtering_params.ignore_object_velocity_threshold = node->declare_parameter<double>(
     ns + "path_safety_check.object_filtering_params.ignore_object_velocity_threshold");
-  p.objects_filtering_params.include_opposite_lane =
-    node->declare_parameter<bool>(ns + "path_safety_check.object_filtering_params.include_opposite_lane");
-  p.objects_filtering_params.invert_opposite_lane =
-    node->declare_parameter<bool>(ns + "path_safety_check.object_filtering_params.invert_opposite_lane");
-  p.objects_filtering_params.check_all_predicted_path =
-    node->declare_parameter<bool>(ns + "path_safety_check.object_filtering_params.check_all_predicted_path");
-  p.objects_filtering_params.use_all_predicted_path =
-    node->declare_parameter<bool>(ns + "path_safety_check.object_filtering_params.use_all_predicted_path");
+  p.objects_filtering_params.include_opposite_lane = node->declare_parameter<bool>(
+    ns + "path_safety_check.object_filtering_params.include_opposite_lane");
+  p.objects_filtering_params.invert_opposite_lane = node->declare_parameter<bool>(
+    ns + "path_safety_check.object_filtering_params.invert_opposite_lane");
+  p.objects_filtering_params.check_all_predicted_path = node->declare_parameter<bool>(
+    ns + "path_safety_check.object_filtering_params.check_all_predicted_path");
+  p.objects_filtering_params.use_all_predicted_path = node->declare_parameter<bool>(
+    ns + "path_safety_check.object_filtering_params.use_all_predicted_path");
   p.objects_filtering_params.use_predicted_path_outside_lanelet = node->declare_parameter<bool>(
     ns + "path_safety_check.object_filtering_params.use_predicted_path_outside_lanelet");
 
   // ObjectTypesToCheck
-  p.objects_filtering_params.object_types_to_check.check_car =
-    node->declare_parameter<bool>(ns + "path_safety_check.object_filtering_params.object_types_to_check.check_car");
-  p.objects_filtering_params.object_types_to_check.check_truck =
-    node->declare_parameter<bool>(ns + "path_safety_check.object_filtering_params.object_types_to_check.check_truck");
-  p.objects_filtering_params.object_types_to_check.check_bus =
-    node->declare_parameter<bool>(ns + "path_safety_check.object_filtering_params.object_types_to_check.check_bus");
+  p.objects_filtering_params.object_types_to_check.check_car = node->declare_parameter<bool>(
+    ns + "path_safety_check.object_filtering_params.object_types_to_check.check_car");
+  p.objects_filtering_params.object_types_to_check.check_truck = node->declare_parameter<bool>(
+    ns + "path_safety_check.object_filtering_params.object_types_to_check.check_truck");
+  p.objects_filtering_params.object_types_to_check.check_bus = node->declare_parameter<bool>(
+    ns + "path_safety_check.object_filtering_params.object_types_to_check.check_bus");
   p.objects_filtering_params.object_types_to_check.check_trailer = node->declare_parameter<bool>(
     ns + "path_safety_check.object_filtering_params.object_types_to_check.check_trailer");
   p.objects_filtering_params.object_types_to_check.check_unknown = node->declare_parameter<bool>(
@@ -136,7 +136,8 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   // ObjectLaneConfiguration
   p.objects_filtering_params.object_lane_configuration.check_current_lane =
     node->declare_parameter<bool>(
-      ns + "path_safety_check.object_filtering_params.object_lane_configuration.check_current_lane");
+      ns +
+      "path_safety_check.object_filtering_params.object_lane_configuration.check_current_lane");
   p.objects_filtering_params.object_lane_configuration.check_right_lane =
     node->declare_parameter<bool>(
       ns + "path_safety_check.object_filtering_params.object_lane_configuration.check_right_lane");
@@ -145,7 +146,8 @@ StartPlannerModuleManager::StartPlannerModuleManager(
       ns + "path_safety_check.object_filtering_params.object_lane_configuration.check_left_lane");
   p.objects_filtering_params.object_lane_configuration.check_shoulder_lane =
     node->declare_parameter<bool>(
-      ns + "path_safety_check.object_filtering_params.object_lane_configuration.check_shoulder_lane");
+      ns +
+      "path_safety_check.object_filtering_params.object_lane_configuration.check_shoulder_lane");
   p.objects_filtering_params.object_lane_configuration.check_other_lane =
     node->declare_parameter<bool>(
       ns + "path_safety_check.object_filtering_params.object_lane_configuration.check_other_lane");
@@ -153,10 +155,10 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   // SafetyCheckParams
   p.safety_check_params.enable_safety_check =
     node->declare_parameter<bool>(ns + "path_safety_check.safety_check_params.enable_safety_check");
-  p.safety_check_params.backward_lane_length =
-    node->declare_parameter<double>(ns + "path_safety_check.safety_check_params.backward_lane_length");
-  p.safety_check_params.forward_path_length =
-    node->declare_parameter<double>(ns + "path_safety_check.safety_check_params.forward_path_length");
+  p.safety_check_params.backward_lane_length = node->declare_parameter<double>(
+    ns + "path_safety_check.safety_check_params.backward_lane_length");
+  p.safety_check_params.forward_path_length = node->declare_parameter<double>(
+    ns + "path_safety_check.safety_check_params.forward_path_length");
   // RSSparams
   p.safety_check_params.rss_params.rear_vehicle_reaction_time = node->declare_parameter<double>(
     ns + "path_safety_check.safety_check_params.rss_params.rear_vehicle_reaction_time");
@@ -171,8 +173,8 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   p.safety_check_params.rss_params.longitudinal_velocity_delta_time =
     node->declare_parameter<double>(
       ns + "path_safety_check.safety_check_params.rss_params.longitudinal_velocity_delta_time");
-  p.safety_check_params.publish_debug_marker =
-    node->declare_parameter<bool>(ns + "path_safety_check.safety_check_params.publish_debug_marker");
+  p.safety_check_params.publish_debug_marker = node->declare_parameter<bool>(
+    ns + "path_safety_check.safety_check_params.publish_debug_marker");
 
   // validation of parameters
   if (p.lateral_acceleration_sampling_num < 1) {

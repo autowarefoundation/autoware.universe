@@ -230,7 +230,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
     return SteeringFactor::STRAIGHT;
   });
 
-
   // if(!isSafePath()){
   //   if(checkWhetherStoppable())
   //   {
