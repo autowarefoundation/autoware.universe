@@ -144,7 +144,7 @@ bool StartPlannerModule::isExecutionReady() const
     return true;
   }
 
-  if (status_.is_safe) {
+  if (status_.is_safe_static_objects && safety_check_params_->enable_safety_check) {
     return isSafePath();
   }
   return true;
@@ -188,7 +188,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
   }
 
   BehaviorModuleOutput output;
-  if (!status_.is_safe) {
+  if (!status_.is_safe_static_objects) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
     const auto output = generateStopOutput();
@@ -324,7 +324,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   }
 
   BehaviorModuleOutput output;
-  if (!status_.is_safe) {
+  if (!status_.is_safe_static_objects) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
     clearWaitingApproval();
@@ -422,7 +422,7 @@ void StartPlannerModule::planWithPriority(
   const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
   const std::string search_priority)
 {
-  status_.is_safe = false;
+  status_.is_safe_static_objects = false;
   status_.planner_type = PlannerType::NONE;
 
   // check if start pose candidates are valid
@@ -445,7 +445,7 @@ void StartPlannerModule::planWithPriority(
     }
     // use current path if back is not needed
     if (status_.back_finished) {
-      status_.is_safe = true;
+      status_.is_safe_static_objects = true;
       status_.pull_out_path = *pull_out_path;
       status_.pull_out_start_pose = pull_out_start_pose;
       status_.planner_type = planner->getPlannerType();
@@ -464,7 +464,7 @@ void StartPlannerModule::planWithPriority(
     }
 
     // Update status variables with the next path information
-    status_.is_safe = true;
+    status_.is_safe_static_objects = true;
     status_.pull_out_path = *pull_out_path_next;
     status_.pull_out_start_pose = pull_out_start_pose_next;
     status_.planner_type = planner->getPlannerType();
@@ -720,7 +720,7 @@ bool StartPlannerModule::isOverlappedWithLane(
 
 bool StartPlannerModule::hasFinishedPullOut() const
 {
-  if (!status_.back_finished || !status_.is_safe) {
+  if (!status_.back_finished || !status_.is_safe_static_objects) {
     return false;
   }
 
@@ -906,16 +906,13 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   return turn_signal;
 }
 
+
 bool StartPlannerModule::isSafePath() const
 {
-  if (!safety_check_params_->enable_safety_check) {
-    return true;  // if safety check is disabled, it always return safe.
-  }
-
   // TODO(Sugahara): should safety check for backward path later
   // get current pathでもってこれる
   // back_finishedでtrueなら前進、falseなら後退中
-  const auto & pull_out_path = status_.pull_out_path.partial_paths.back();
+  const auto & pull_out_path = getCurrentPath();
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & current_velocity = std::hypot(
     planner_data_->self_odometry->twist.twist.linear.x,
@@ -1034,8 +1031,8 @@ void StartPlannerModule::setDebugData() const
   const auto header = planner_data_->route_handler->getRouteHeader();
   {
     visualization_msgs::msg::MarkerArray planner_type_marker_array{};
-    const auto color = status_.is_safe ? createMarkerColor(1.0, 1.0, 1.0, 0.99)
-                                       : createMarkerColor(1.0, 0.0, 0.0, 0.99);
+    const auto color = status_.is_safe_static_objects ? createMarkerColor(1.0, 1.0, 1.0, 0.99)
+                                                      : createMarkerColor(1.0, 0.0, 0.0, 0.99);
     auto marker = createDefaultMarker(
       header.frame_id, header.stamp, "planner_type", 0,
       visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0), color);
