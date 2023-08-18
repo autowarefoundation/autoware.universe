@@ -230,6 +230,17 @@ BehaviorModuleOutput StartPlannerModule::plan()
     return SteeringFactor::STRAIGHT;
   });
 
+
+  // if(!isSafePath()){
+  //   if(checkWhetherStoppable())
+  //   {
+  //     //generateFeasibleStopてきなのがgoal_plannerにある
+  //     insertStopPoint();
+  //   }
+  // }
+
+  // この前に安全確認する
+
   if (status_.back_finished) {
     const double start_distance = motion_utils::calcSignedArcLength(
       path.points, planner_data_->self_odometry->pose.pose.position,
@@ -903,6 +914,8 @@ bool StartPlannerModule::isSafePath() const
   }
 
   // TODO(Sugahara): should safety check for backward path later
+  // get current pathでもってこれる
+  // back_finishedでtrueなら前進、falseなら後退中
   const auto & pull_out_path = status_.pull_out_path.partial_paths.back();
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & current_velocity = std::hypot(

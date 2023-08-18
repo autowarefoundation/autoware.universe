@@ -155,17 +155,26 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     start_planner_utils::calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
   const double s_end = path_end_info.first;
   const bool path_terminal_is_goal = path_end_info.second;
-
   constexpr double RESAMPLE_INTERVAL = 1.0;
   PathWithLaneId road_lane_reference_path = utils::resamplePathWithSpline(
     route_handler.getCenterLinePath(road_lanes, s_start, s_end), RESAMPLE_INTERVAL);
+  const double shift_distance = s_end - s_start;
+  const size_t shift_end_idx =
+    findNearestIndex(road_lane_reference_path.points, goal_pose.position);
 
   // non_shifted_path for when shift length or pull out distance is too short
   const PullOutPath non_shifted_path = std::invoke([&]() {
     PullOutPath non_shifted_path{};
+    // The assumption for this calculation of velocity and acceleration is to accelerate with
+    // constant acceleration until the road velocity limit is reached at the shift end point.
+    const double terminal_velocity =
+      road_lane_reference_path.points.at(shift_end_idx).point.longitudinal_velocity_mps;
+    const double time_to_end_pose = shift_distance / terminal_velocity;
     non_shifted_path.partial_paths.push_back(road_lane_reference_path);
     non_shifted_path.start_pose = start_pose;
     non_shifted_path.end_pose = start_pose;
+    non_shifted_path.acceleration = 2 * shift_distance / std::pow(time_to_end_pose, 2);
+    non_shifted_path.terminal_velocity = terminal_velocity;
     return non_shifted_path;
   });
 
@@ -283,6 +292,8 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     candidate_path.partial_paths.push_back(shifted_path.path);
     candidate_path.start_pose = shift_line.start;
     candidate_path.end_pose = shift_line.end;
+    candidate_path.acceleration = longitudinal_acc;
+    candidate_path.terminal_velocity = terminal_velocity;
     candidate_paths.push_back(candidate_path);
   }
 

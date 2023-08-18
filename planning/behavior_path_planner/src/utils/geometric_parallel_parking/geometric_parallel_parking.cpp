@@ -182,6 +182,7 @@ bool GeometricParallelParking::planPullOver(
   if (is_forward) {
     // When turning forward to the right, the front left goes out,
     // so reduce the steer angle at that time for seach no lane departure path.
+    // TODO(Sugahara): define in the config
     constexpr double start_pose_offset = 0.0;
     constexpr double min_steer_rad = 0.05;
     constexpr double steer_interval = 0.1;
