@@ -97,7 +97,7 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
     PathPointWithLaneId p = last_path.points.back();
     p.point.pose = end_pose;
     last_path.points.push_back(p);
-    return;
+    return boost::none;
   }
 
   // If use_back_ is false, interpolate and add poses to the last path
@@ -113,7 +113,7 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
     last_path.points.push_back(p);
   };
 
-  addInterpolatedPosesd(last_path.points.back().point.pose, end_pose);
+  addInterpolatedPosesAndEnd(last_path.points.back().point.pose, end_pose);
   addInterpolatedPosesAndEnd(end_pose, goal_pose);
 
   utils::correctDividedPathVelocity(partial_paths);
