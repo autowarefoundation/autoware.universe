@@ -23,6 +23,20 @@
 
 namespace gnss_poser
 {
+CoordinateSystem convert_to_coordinate_systems(const std::string & type)
+{
+  if (type == "MGRS") {
+    return CoordinateSystem::MGRS;
+  } else if (type == "UTM") {
+    return CoordinateSystem::UTM;
+  } else if (type == "local") {
+    return CoordinateSystem::PLANE;
+  } else if (type == "local_cartesian_wgs84") {
+    return CoordinateSystem::LOCAL_CARTESIAN_WGS84;
+  }
+  return CoordinateSystem::PLANE;
+}
+
 GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("gnss_poser", node_options),
   tf2_listener_(tf2_buffer_),
@@ -38,12 +52,13 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   height_system_(declare_parameter<int>("height_system", 1)),
   gnss_pose_pub_method(declare_parameter<int>("gnss_pose_pub_method", 0))
 {
-  int coordinate_system =
-    declare_parameter("coordinate_system", static_cast<int>(CoordinateSystem::MGRS));
-  coordinate_system_ = static_cast<CoordinateSystem>(coordinate_system);
+  auto qos = rclcpp::QoS(rclcpp::KeepLast(10));
+  qos.transient_local();  // Set Durability QoS policy to transient local.
 
-  nav_sat_fix_origin_.latitude = declare_parameter("latitude", 0.0);
-  nav_sat_fix_origin_.longitude = declare_parameter("longitude", 0.0);
+  // Subscribe to map_projector_info topic
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  adaptor.init_sub(sub_map_projector_info_, [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { callbackMapProjectorInfo(msg); });
+
   nav_sat_fix_origin_.altitude = declare_parameter("altitude", 0.0);
 
   int buff_epoch = declare_parameter("buff_epoch", 1);
@@ -62,9 +77,25 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   fixed_pub_ = create_publisher<tier4_debug_msgs::msg::BoolStamped>("gnss_fixed", rclcpp::QoS{1});
 }
 
+void GNSSPoser::callbackMapProjectorInfo(const MapProjectorInfo::Message::ConstSharedPtr msg)
+{
+  coordinate_system_ = convert_to_coordinate_systems(msg->type);
+  this->nav_sat_fix_origin_.latitude = msg->map_origin.latitude;
+  this->nav_sat_fix_origin_.longitude = msg->map_origin.longitude;
+  received_map_projector_info_ = true;
+}
+
 void GNSSPoser::callbackNavSatFix(
   const sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr)
 {
+  // Return immediately if map_projector_info has not been received yet.
+  if (!received_map_projector_info_) {
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "map_projector_info has not been received yet. Skipping Calculate.");
+    return;
+  }
+
   // check fixed topic
   const bool is_fixed = isFixed(nav_sat_fix_msg_ptr->status);
 
