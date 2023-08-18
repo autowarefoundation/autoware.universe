@@ -49,11 +49,11 @@ TEST(isSignalUnknown, signal_element)
 {
   tier4_perception_msgs::msg::TrafficSignal test_signal;
   tier4_perception_msgs::msg::TrafficLightElement element;
-  element.color = 18;
-  element.shape = 18;
+  element.color = tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
+  element.shape = tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN;
   test_signal.elements.push_back(element);
   EXPECT_TRUE(isSignalUnknown(test_signal));
-  test_signal.elements[0].color = 1;
+  test_signal.elements[0].color = tier4_perception_msgs::msg::TrafficLightElement::RED;
   EXPECT_FALSE(isSignalUnknown(test_signal));
 }
 
@@ -61,14 +61,14 @@ TEST(setSignalUnknown, set_signal_element)
 {
   tier4_perception_msgs::msg::TrafficSignal test_signal;
   tier4_perception_msgs::msg::TrafficLightElement element;
-  element.color = 1;
-  element.shape = 2;
+  element.color = tier4_perception_msgs::msg::TrafficLightElement::RED;
+  element.shape = tier4_perception_msgs::msg::TrafficLightElement::CROSS;
   test_signal.elements.push_back(element);
-  EXPECT_EQ(test_signal.elements[0].color, (uint8_t)1);
-  EXPECT_EQ(test_signal.elements[0].shape, (uint8_t)2);
+  EXPECT_EQ(test_signal.elements[0].color, tier4_perception_msgs::msg::TrafficLightElement::RED);
+  EXPECT_EQ(test_signal.elements[0].shape, tier4_perception_msgs::msg::TrafficLightElement::CROSS);
   setSignalUnknown(test_signal, 1.23f);
-  EXPECT_EQ(test_signal.elements[0].color, (uint8_t)18);
-  EXPECT_EQ(test_signal.elements[0].shape, (uint8_t)18);
+  EXPECT_EQ(test_signal.elements[0].color, tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN);
+  EXPECT_EQ(test_signal.elements[0].shape, tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN);
   EXPECT_FLOAT_EQ(test_signal.elements[0].confidence, (float)1.23);
 }
 
