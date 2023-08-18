@@ -25,8 +25,7 @@ namespace yabloc::segment_filter
 {
 SegmentFilter::SegmentFilter()
 : Node("segment_filter"),
-  synchro_subscriber_(this, "~/input/line_segments_cloud", "~/input/graph_segmented"),
-  tf_subscriber_(this->get_clock())
+  synchro_subscriber_(this, "~/input/line_segments_cloud", "~/input/graph_segmented")
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -48,8 +47,8 @@ void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image &
   const std::set<int> indices = filter_by_mask(mask_image, *line_segments_cloud);
 
   pcl::PointCloud<pcl::PointXYZLNormal> combined_edges;
-  for (int index = 0; index < line_segments_cloud->size(); ++index) {
-    const cl::PointNormal & pn = line_segments_cloud->at(index);
+  for (size_t index = 0; index < line_segments_cloud->size(); ++index) {
+    const pcl::PointNormal & pn = line_segments_cloud->at(index);
     pcl::PointXYZLNormal pln;
     pln.getVector3fMap() = pn.getVector3fMap();
     pln.getNormalVector3fMap() = pn.getNormalVector3fMap();
@@ -60,7 +59,7 @@ void SegmentFilter::execute(const PointCloud2 & line_segments_msg, const Image &
     }
     combined_edges.push_back(pln);
   }
-  common::publish_cloud(*pub_projected_cloud_, combined_edges, stamp);
+  common::publish_cloud(*pub_classified_cloud_, combined_edges, stamp);
 }
 
 std::set<ushort> get_unique_pixel_value(cv::Mat & image)

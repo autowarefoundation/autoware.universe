@@ -42,8 +42,6 @@ public:
   SegmentFilter();
 
 private:
-  const int image_size_;
-
   common::SynchroSubscriber<PointCloud2, Image> synchro_subscriber_;
 
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_classified_cloud_;

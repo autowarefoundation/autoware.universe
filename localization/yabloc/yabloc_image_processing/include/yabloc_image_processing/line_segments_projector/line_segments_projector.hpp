@@ -39,7 +39,7 @@ public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using Image = sensor_msgs::msg::Image;
 
-  SegmentFilter();
+  LineSegmentsProjector();
 
 private:
   using ProjectFunc = std::function<std::optional<Eigen::Vector3f>(const Eigen::Vector3f &)>;
@@ -50,11 +50,10 @@ private:
   const float max_lateral_distance_;
 
   common::CameraInfoSubscriber info_;
-  common::SynchroSubscriber<PointCloud2, Image> synchro_subscriber_;
   common::StaticTfSubscriber tf_subscriber_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_classified_line_segments_;
 
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_projected_cloud_;
-  rclcpp::Publisher<PointCloud2>::SharedPtr pub_debug_cloud_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
 
   ProjectFunc project_func_ = nullptr;
@@ -62,17 +61,13 @@ private:
   // Return true if success to define or already defined
   bool define_project_func();
 
-  pcl::PointCloud<pcl::PointNormal> project_lines(
-    const pcl::PointCloud<pcl::PointNormal> & lines, const std::set<int> & indices,
-    bool negative = false) const;
-
-  std::set<int> filter_by_mask(
-    const cv::Mat & mask, const pcl::PointCloud<pcl::PointNormal> & edges);
+  pcl::PointCloud<pcl::PointXYZLNormal> project_lines(
+    const pcl::PointCloud<pcl::PointXYZLNormal> & lines) const;
 
   cv::Point2i to_cv_point(const Eigen::Vector3f & v) const;
-  void execute(const PointCloud2 & msg1, const Image & msg2);
+  void on_classified_line_segments(const PointCloud2::ConstSharedPtr & line_segments_msg);
 
-  bool is_near_element(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
+  bool is_near_element(const pcl::PointXYZLNormal & pn, pcl::PointXYZLNormal & truncated_pn) const;
 };
 }  // namespace yabloc::line_segments_projector
 

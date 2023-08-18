@@ -25,6 +25,14 @@ target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(${TARGET} ${OpenCV_LIBS})
 
+# line segments projector
+set(TARGET line_segments_projector_node)
+ament_auto_add_executable(${TARGET}
+  src/line_segments_projector/line_segments_projector_node.cpp
+  src/line_segments_projector/line_segments_projector_core.cpp)
+target_include_directories(${TARGET} PUBLIC include ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+target_link_libraries(${TARGET} ${PCL_LIBRARIES} ${OpenCV_LIBS})
+
 # graph based segmentation
 set(TARGET graph_segment_node)
 ament_auto_add_executable(${TARGET}
