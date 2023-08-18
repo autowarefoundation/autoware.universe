@@ -266,8 +266,11 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
   const auto point_cmp = [](const auto & p1, const auto & p2) {
     return p1.x == p2.x && p1.y == p2.y;
   };
-  std::unique(path.left_bound.begin(), path.left_bound.end(), point_cmp);
-  std::unique(path.right_bound.begin(), path.right_bound.end(), point_cmp);
+  path.left_bound.erase(
+    std::unique(path.left_bound.begin(), path.left_bound.end(), point_cmp), path.left_bound.end());
+  path.right_bound.erase(
+    std::unique(path.right_bound.begin(), path.right_bound.end(), point_cmp),
+    path.right_bound.end());
   copy_z_over_arc_length(original_left_bound, path.left_bound);
   copy_z_over_arc_length(original_right_bound, path.right_bound);
 }
