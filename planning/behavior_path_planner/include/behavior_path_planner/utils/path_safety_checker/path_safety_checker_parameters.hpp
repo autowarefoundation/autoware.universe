@@ -73,83 +73,100 @@ struct ExtendedPredictedObject
   std::vector<PredictedPathWithPolygon> predicted_paths;
 };
 
+/**
+ * @brief Specifies which object class should be checked.
+ */
 struct ObjectTypesToCheck
 {
-  bool check_car{true};
-  bool check_truck{true};
-  bool check_bus{true};
-  bool check_trailer{true};
-  bool check_unknown{true};
-  bool check_bicycle{true};
-  bool check_motorcycle{true};
-  bool check_pedestrian{true};
+  bool check_car{true};         ///< Check for cars.
+  bool check_truck{true};       ///< Check for trucks.
+  bool check_bus{true};         ///< Check for buses.
+  bool check_trailer{true};     ///< Check for trailers.
+  bool check_unknown{true};     ///< Check for unknown object types.
+  bool check_bicycle{true};     ///< Check for bicycles.
+  bool check_motorcycle{true};  ///< Check for motorcycles.
+  bool check_pedestrian{true};  ///< Check for pedestrians.
 };
 
+/**
+ * @brief Configuration for which lanes should be checked for objects.
+ */
 struct ObjectLaneConfiguration
 {
-  bool check_current_lane{};
-  bool check_right_lane{};
-  bool check_left_lane{};
-  bool check_shoulder_lane{};
-  bool check_other_lane{};
+  bool check_current_lane{};   ///< Check the current lane.
+  bool check_right_lane{};     ///< Check the right lane.
+  bool check_left_lane{};      ///< Check the left lane.
+  bool check_shoulder_lane{};  ///< Check the shoulder lane.
+  bool check_other_lane{};     ///< Check other lanes.
 };
+
+/**
+ * @brief Contains objects on lanes type.
+ */
 struct TargetObjectsOnLane
 {
-  std::vector<ExtendedPredictedObject> on_current_lane{};
-  std::vector<ExtendedPredictedObject> on_right_lane{};
-  std::vector<ExtendedPredictedObject> on_left_lane{};
-  std::vector<ExtendedPredictedObject> on_shoulder_lane{};
-  std::vector<ExtendedPredictedObject> on_other_lane{};
+  std::vector<ExtendedPredictedObject> on_current_lane{};   ///< Objects on the current lane.
+  std::vector<ExtendedPredictedObject> on_right_lane{};     ///< Objects on the right lane.
+  std::vector<ExtendedPredictedObject> on_left_lane{};      ///< Objects on the left lane.
+  std::vector<ExtendedPredictedObject> on_shoulder_lane{};  ///< Objects on the shoulder lane.
+  std::vector<ExtendedPredictedObject> on_other_lane{};     ///< Objects on other lanes.
 };
 
+/**
+ * @brief Parameters related to the RSS (Responsibility-Sensitive Safety) model.
+ */
 struct RSSparams
 {
-  double rear_vehicle_reaction_time{0.0};
-  double rear_vehicle_safety_time_margin{0.0};
-  double lateral_distance_max_threshold{0.0};
-  double longitudinal_distance_min_threshold{0.0};
-  double longitudinal_velocity_delta_time{0.0};
+  double rear_vehicle_reaction_time{0.0};       ///< Reaction time of the rear vehicle.
+  double rear_vehicle_safety_time_margin{0.0};  ///< Safety time margin for the rear vehicle.
+  double lateral_distance_max_threshold{0.0};   ///< Maximum threshold for lateral distance.
+  double longitudinal_distance_min_threshold{
+    0.0};                                        ///< Minimum threshold for longitudinal distance.
+  double longitudinal_velocity_delta_time{0.0};  ///< Delta time for longitudinal velocity.
 };
 
+/**
+ * @brief Parameters for generating the ego vehicle's predicted path.
+ */
 struct EgoPredictedPathParams
 {
-  // for ego predicted path generation
-  double acceleration;
-  double time_horizon;
-  double time_resolution;
-  double min_slow_speed;
-  double delay_until_departure;
-  double target_velocity;
+  double acceleration;           ///< Acceleration value.
+  double time_horizon;           ///< Time horizon for prediction.
+  double time_resolution;        ///< Time resolution for prediction.
+  double min_slow_speed;         ///< Minimum slow speed.
+  double delay_until_departure;  ///< Delay before departure.
+  double target_velocity;        ///< Target velocity.
 };
 
+/**
+ * @brief Parameters for filtering objects.
+ */
 struct ObjectsFilteringParams
 {
-  // for filtering dynamic objects to check
-  double safety_check_time_horizon;
-  double safety_check_time_resolution;
-  double object_check_forward_distance;
-  double object_check_backward_distance;
-  double ignore_object_velocity_threshold;
-  ObjectTypesToCheck object_types_to_check;
-  ObjectLaneConfiguration object_lane_configuration;
-  bool include_opposite_lane;
-  bool invert_opposite_lane;
-  bool check_all_predicted_path;
-  bool use_all_predicted_path;
-  bool use_predicted_path_outside_lanelet;
+  double safety_check_time_horizon;                   ///< Time horizon for object's prediction.
+  double safety_check_time_resolution;                ///< Time resolution for object's prediction.
+  double object_check_forward_distance;               ///< Forward distance for object checks.
+  double object_check_backward_distance;              ///< Backward distance for object checks.
+  double ignore_object_velocity_threshold;            ///< Velocity threshold for ignoring objects.
+  ObjectTypesToCheck object_types_to_check;           ///< Specifies which object types to check.
+  ObjectLaneConfiguration object_lane_configuration;  ///< Configuration for which lanes to check.
+  bool include_opposite_lane;                         ///< Include the opposite lane in checks.
+  bool invert_opposite_lane;                          ///< Invert the opposite lane in checks.
+  bool check_all_predicted_path;                      ///< Check all predicted paths.
+  bool use_all_predicted_path;                        ///< Use all predicted paths.
+  bool use_predicted_path_outside_lanelet;            ///< Use predicted paths outside of lanelets.
 };
 
+/**
+ * @brief Parameters for safety checks.
+ */
 struct SafetyCheckParams
 {
-  bool enable_safety_check;
-  // Trajectory generation parameters
-  double backward_lane_length;
-  double forward_path_length;
-
-  RSSparams rss_params{};
-
-  // Debug marker publishing option
-  bool publish_debug_marker{false};
+  bool enable_safety_check;          ///< Enable safety checks.
+  double backward_lane_length;       ///< Length of the backward lane for path generation.
+  double forward_path_length;        ///< Length of the forward path lane for path generation.
+  RSSparams rss_params;              ///< Parameters related to the RSS model.
+  bool publish_debug_marker{false};  ///< Option to publish debug markers.
 };
 
 }  // namespace behavior_path_planner::utils::path_safety_checker
