@@ -9,12 +9,12 @@
         "publish_amplitude_pointcloud": {
           "type": "boolean",
           "description": "Whether publish radar pointcloud whose intensity is amplitude.",
-          "default": true
+          "default": "true"
         },
         "publish_doppler_pointcloud": {
           "type": "boolean",
           "description": "Whether publish radar pointcloud whose intensity is doppler velocity.",
-          "default": false
+          "default": "false"
         }
       },
       "required": ["publish_amplitude_pointcloud", "publish_doppler_pointcloud"]
