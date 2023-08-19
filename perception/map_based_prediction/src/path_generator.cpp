@@ -201,9 +201,18 @@ PredictedPath PathGenerator::generateConstantAccPolynomialPath(
 
   const double d0 = current_point.d;
   const double v0 = current_point.d_vel;
-  const double a0 = max_lane_user_lateral_accel_ * (0 < d0 ? -1.0 : 1.0);
+  const double a0 = max_lane_user_lateral_accel_ * (0 < v0 ? -1.0 : 1.0);
 
-  const double t1 = 0 < d0 * v0 ? std::abs(v0 / a0) : 0.0;
+  const double t1 = [&]() {
+    const double t_zero_vel = std::abs(v0 / a0);
+    if (0 < d0 * v0) {
+      return t_zero_vel;
+    }
+    if (std::abs(d0) < 0.5 * std::abs(v0 * t_zero_vel)) {
+      return t_zero_vel;
+    }
+    return 0.0;
+  }();
   const auto [d1, v1] = move_forward(d0, v0, a0, t1);
   const double a1 = max_lane_user_lateral_accel_ * (0 < d0 ? -1.0 : 1.0);
 
