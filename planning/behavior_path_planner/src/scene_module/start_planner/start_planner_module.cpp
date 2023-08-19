@@ -418,6 +418,14 @@ PathWithLaneId StartPlannerModule::getCurrentPath() const
   return status_.pull_out_path.partial_paths.at(status_.current_path_idx);
 }
 
+std::pair<double, double> StartPlannerModule::getPairsTerminalVelocityAndAccel() const
+{
+  if (status_.pull_out_path.pairs_terminal_velocity_and_accel.size() <= status_.current_path_idx) {
+    return std::make_pair(0.0, 0.0);
+  }
+  return status_.pull_out_path.pairs_terminal_velocity_and_accel.at(status_.current_path_idx);
+}
+
 void StartPlannerModule::planWithPriority(
   const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
   const std::string search_priority)
@@ -919,6 +927,9 @@ bool StartPlannerModule::isSafePath() const
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_lanes = planner_data_->current_lanes;
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_out_path.points);
+
+  start_planner_utils::updateEgoPredictedPathParams(
+    ego_created_path_params_, getPairsTerminalVelocityAndAccel());
 
   const auto & ego_predicted_path =
     behavior_path_planner::utils::path_safety_checker::createPredictedPath(
