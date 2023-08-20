@@ -62,6 +62,17 @@ double calcLatAcc(const AckermannControlCommand & cmd, const double wheelbase)
   return v * v * std::tan(cmd.lateral.steering_tire_angle) / wheelbase;
 }
 
+double calcLatJerk(const AckermannControlCommand & cmd, const AckermannControlCommand & prev_cmd, const double wheelbase, const double dt)
+{
+  const auto prev_v = prev_cmd.longitudinal.speed;
+  const auto prev =  prev_v * prev_v * std::tan(prev_cmd.lateral.steering_tire_angle) / wheelbase;
+
+  const auto curr_v = cmd.longitudinal.speed;
+  const auto curr =  curr_v * curr_v * std::tan(cmd.lateral.steering_tire_angle) / wheelbase;
+
+  return (curr - prev) / dt;
+}
+
 void test_1d_limit(
   double V_LIM, double A_LIM, double J_LIM, double LAT_A_LIM, double LAT_J_LIM, double STEER_DIFF,
   const AckermannControlCommand & prev_cmd, const AckermannControlCommand & raw_cmd)
@@ -221,5 +232,234 @@ TEST(VehicleCmdFilter, VehicleCmdFilter)
         }
       }
     }
+  }
+}
+
+
+TEST(VehicleCmdFilter, VehicleCmdFilterInterpolate)
+{
+  constexpr double WHEELBASE = 2.8;
+  vehicle_cmd_gate::VehicleCmdFilter filter;
+
+  vehicle_cmd_gate::VehicleCmdFilterParam p;
+  p.wheel_base = WHEELBASE;
+  p.vel_lim = 20.0;
+  p.reference_speed_points = std::vector<double>{2.0, 4.0, 10.0};
+  p.lon_acc_lim = std::vector<double>{0.3, 0.4, 0.5};
+  p.lon_jerk_lim = std::vector<double>{0.4, 0.4, 0.7};
+  p.lat_acc_lim = std::vector<double>{0.1, 0.2, 0.3};
+  p.lat_jerk_lim = std::vector<double>{0.9, 0.7, 0.1};
+  p.actual_steer_diff_lim = std::vector<double>{0.1, 0.3, 0.2};
+  filter.setParam(p);
+
+  const auto DT = 0.033;
+
+  const auto orig_cmd = []() {
+    AckermannControlCommand cmd;
+    cmd.lateral.steering_tire_angle = 0.5;
+    cmd.lateral.steering_tire_rotation_rate = 0.5;
+    cmd.longitudinal.speed = 30.0;
+    cmd.longitudinal.acceleration = 10.0;
+    cmd.longitudinal.jerk = 10.0;
+    return cmd;
+  }();
+
+  const auto set_speed_and_reset_prev = [&](const auto & current_vel) {
+    filter.setCurrentSpeed(current_vel);
+  };
+
+  const auto _limitLongitudinalWithVel = [&](const auto & in) {
+    auto out = in;
+    filter.limitLongitudinalWithVel(out);
+    return out;
+  };
+  const auto _limitLongitudinalWithAcc = [&](const auto & in) {
+    auto out = in;
+    filter.limitLongitudinalWithAcc(DT, out);
+    return out;
+  };
+  const auto _limitLongitudinalWithJerk = [&](const auto & in) {
+    auto out = in;
+    filter.limitLongitudinalWithJerk(DT, out);
+    return out;
+  };
+  const auto _limitLateralWithLatAcc = [&](const auto & in) {
+    auto out = in;
+    filter.limitLateralWithLatAcc(DT, out);
+    return out;
+  };
+  const auto _limitLateralWithLatJerk = [&](const auto & in) {
+    auto out = in;
+    filter.limitLateralWithLatJerk(DT, out);
+    return out;
+  };
+  const auto _limitActualSteerDiff = [&](const auto & in) {
+    auto out = in;
+    const auto prev_steering = 0.0;
+    filter.limitActualSteerDiff(prev_steering, out);
+    return out;
+  };
+
+  constexpr double ep = 1.0e-5;
+
+  // vel lim
+  {
+    set_speed_and_reset_prev(0.0);
+    EXPECT_NEAR(_limitLongitudinalWithVel(orig_cmd).longitudinal.speed, 20.0, ep);
+  }
+
+  // longitudinal acc lim
+  {
+    set_speed_and_reset_prev(0.0);
+    EXPECT_NEAR(_limitLongitudinalWithAcc(orig_cmd).longitudinal.acceleration, 0.3, ep);
+
+    set_speed_and_reset_prev(2.0);
+    EXPECT_NEAR(_limitLongitudinalWithAcc(orig_cmd).longitudinal.acceleration, 0.3, ep);
+
+    set_speed_and_reset_prev(3.0);
+    EXPECT_NEAR(_limitLongitudinalWithAcc(orig_cmd).longitudinal.acceleration, 0.35, ep);
+
+    set_speed_and_reset_prev(5.0);
+    EXPECT_NEAR(_limitLongitudinalWithAcc(orig_cmd).longitudinal.acceleration, 0.4 + 0.1 / 6.0, ep);
+
+    set_speed_and_reset_prev(8.0);
+    EXPECT_NEAR(_limitLongitudinalWithAcc(orig_cmd).longitudinal.acceleration, 0.4 + 0.4 / 6.0, ep);
+
+    set_speed_and_reset_prev(10.0);
+    EXPECT_NEAR(_limitLongitudinalWithAcc(orig_cmd).longitudinal.acceleration, 0.5, ep);
+
+    set_speed_and_reset_prev(15.0);
+    EXPECT_NEAR(_limitLongitudinalWithAcc(orig_cmd).longitudinal.acceleration, 0.5, ep);
+  }
+
+  // longitudinal jerk lim
+  // p.reference_speed_points = std::vector<double>{2.0, 4.0, 10.0};
+  // p.lon_jerk_lim = std::vector<double>{0.4, 0.4, 0.7};
+  {
+    set_speed_and_reset_prev(0.0);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.jerk, 0.4, ep);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.acceleration, DT * 0.4, ep);
+
+    set_speed_and_reset_prev(2.0);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.jerk, 0.4, ep);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.acceleration, DT * 0.4, ep);
+
+    set_speed_and_reset_prev(3.0);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.jerk, 0.4, ep);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.acceleration, DT * 0.4, ep);
+
+    set_speed_and_reset_prev(5.0);
+    const auto expect_v5 = 0.4 + 0.3 / 6.0;
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.jerk, expect_v5, ep);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.acceleration, DT * expect_v5, ep);
+
+    set_speed_and_reset_prev(8.0);
+    const auto expect_v8 = 0.4 + 1.2 / 6.0;
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.jerk, expect_v8, ep);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.acceleration, DT * expect_v8, ep);
+
+    set_speed_and_reset_prev(10.0);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.jerk, 0.7, ep);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.acceleration, DT * 0.7, ep);
+
+    set_speed_and_reset_prev(15.0);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.jerk, 0.7, ep);
+    EXPECT_NEAR(_limitLongitudinalWithJerk(orig_cmd).longitudinal.acceleration, DT * 0.7, ep);
+  }
+
+  // lateral acc lim
+  // p.reference_speed_points = std::vector<double>{2.0, 4.0, 10.0};
+  // p.lat_acc_lim = std::vector<double>{0.1, 0.2, 0.3};
+  const auto _calcLatAcc = [&](const auto & cmd){
+    return calcLatAcc(cmd, WHEELBASE);
+  };
+  {
+    set_speed_and_reset_prev(0.0);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatAcc(orig_cmd)), 0.1, ep);
+
+    set_speed_and_reset_prev(2.0);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatAcc(orig_cmd)), 0.1, ep);
+
+    set_speed_and_reset_prev(3.0);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatAcc(orig_cmd)), 0.15, ep);
+
+    set_speed_and_reset_prev(5.0);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatAcc(orig_cmd)), 0.2 + 0.1 / 6.0, ep);
+
+    set_speed_and_reset_prev(8.0);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatAcc(orig_cmd)), 0.2 + 0.4 / 6.0, ep);
+
+    set_speed_and_reset_prev(10.0);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatAcc(orig_cmd)), 0.3, ep);
+
+    set_speed_and_reset_prev(15.0);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatAcc(orig_cmd)), 0.3, ep);
+  }
+
+  // lateral jerk lim
+  // p.reference_speed_points = std::vector<double>{2.0, 4.0, 10.0};
+  // p.lat_jerk_lim = std::vector<double>{0.9, 0.7, 0.1};
+  const auto _calcLatJerk = [&](const auto & cmd){
+    return calcLatJerk(cmd, AckermannControlCommand{}, WHEELBASE, DT);
+  };
+  {
+    set_speed_and_reset_prev(0.0);
+    EXPECT_NEAR(_calcLatJerk(_limitLateralWithLatJerk(orig_cmd)), 0.9, ep);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatJerk(orig_cmd)), DT * 0.9, ep);
+
+    set_speed_and_reset_prev(2.0);
+    EXPECT_NEAR(_calcLatJerk(_limitLateralWithLatJerk(orig_cmd)), 0.9, ep);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatJerk(orig_cmd)), DT * 0.9, ep);
+
+    set_speed_and_reset_prev(3.0);
+    EXPECT_NEAR(_calcLatJerk(_limitLateralWithLatJerk(orig_cmd)), 0.8, ep);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatJerk(orig_cmd)), DT * 0.8, ep);
+
+    set_speed_and_reset_prev(5.0);
+    const auto expect_v5 = 0.7 - 0.6 * (1.0 / 6.0);
+    EXPECT_NEAR(_calcLatJerk(_limitLateralWithLatJerk(orig_cmd)), expect_v5, ep);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatJerk(orig_cmd)), DT * expect_v5, ep);
+
+    set_speed_and_reset_prev(8.0);
+    const auto expect_v8 = 0.7 - 0.6 * (4.0 / 6.0);
+    EXPECT_NEAR(_calcLatJerk(_limitLateralWithLatJerk(orig_cmd)), expect_v8, ep);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatJerk(orig_cmd)), DT * expect_v8, ep);
+
+    set_speed_and_reset_prev(10.0);
+    EXPECT_NEAR(_calcLatJerk(_limitLateralWithLatJerk(orig_cmd)), 0.1, ep);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatJerk(orig_cmd)), DT * 0.1, ep);
+
+    set_speed_and_reset_prev(15.0);
+    EXPECT_NEAR(_calcLatJerk(_limitLateralWithLatJerk(orig_cmd)), 0.1, ep);
+    EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatJerk(orig_cmd)), DT * 0.1, ep);
+  }
+
+
+  // steering diff lim
+  // p.reference_speed_points = std::vector<double>{2.0, 4.0, 10.0};
+  // p.actual_steer_diff_lim = std::vector<double>{0.1, 0.3, 0.2};
+  {
+    set_speed_and_reset_prev(0.0);
+    EXPECT_NEAR((_limitActualSteerDiff(orig_cmd).lateral.steering_tire_angle), 0.1, ep);
+
+    set_speed_and_reset_prev(2.0);
+    EXPECT_NEAR((_limitActualSteerDiff(orig_cmd).lateral.steering_tire_angle), 0.1, ep);
+
+    set_speed_and_reset_prev(3.0);
+    EXPECT_NEAR((_limitActualSteerDiff(orig_cmd).lateral.steering_tire_angle), 0.2, ep);
+
+    set_speed_and_reset_prev(5.0);
+    const auto expect_v5 = 0.3 - 0.1 / 6.0;
+    EXPECT_NEAR((_limitActualSteerDiff(orig_cmd).lateral.steering_tire_angle), expect_v5, ep);
+
+    set_speed_and_reset_prev(8.0);
+    const auto expect_v8 = 0.3 - 0.4 / 6.0;
+    EXPECT_NEAR((_limitActualSteerDiff(orig_cmd).lateral.steering_tire_angle), expect_v8, ep);
+
+    set_speed_and_reset_prev(10.0);
+    EXPECT_NEAR((_limitActualSteerDiff(orig_cmd).lateral.steering_tire_angle), 0.2, ep);
+
+    set_speed_and_reset_prev(15.0);
+    EXPECT_NEAR((_limitActualSteerDiff(orig_cmd).lateral.steering_tire_angle), 0.2, ep);
   }
 }

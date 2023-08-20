@@ -100,6 +100,8 @@ void VehicleCmdFilter::VehicleCmdFilter::limitLongitudinalWithJerk(
   const auto lon_jerk_lim = getLonJerkLim();
   input.longitudinal.acceleration = limitDiff(
     input.longitudinal.acceleration, prev_cmd_.longitudinal.acceleration, lon_jerk_lim * dt);
+  input.longitudinal.jerk =
+    std::clamp(static_cast<double>(input.longitudinal.jerk), -lon_jerk_lim, lon_jerk_lim);
 }
 
 void VehicleCmdFilter::limitLateralWithLatAcc(
