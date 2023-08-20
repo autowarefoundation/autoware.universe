@@ -62,13 +62,15 @@ double calcLatAcc(const AckermannControlCommand & cmd, const double wheelbase)
   return v * v * std::tan(cmd.lateral.steering_tire_angle) / wheelbase;
 }
 
-double calcLatJerk(const AckermannControlCommand & cmd, const AckermannControlCommand & prev_cmd, const double wheelbase, const double dt)
+double calcLatJerk(
+  const AckermannControlCommand & cmd, const AckermannControlCommand & prev_cmd,
+  const double wheelbase, const double dt)
 {
   const auto prev_v = prev_cmd.longitudinal.speed;
-  const auto prev =  prev_v * prev_v * std::tan(prev_cmd.lateral.steering_tire_angle) / wheelbase;
+  const auto prev = prev_v * prev_v * std::tan(prev_cmd.lateral.steering_tire_angle) / wheelbase;
 
   const auto curr_v = cmd.longitudinal.speed;
-  const auto curr =  curr_v * curr_v * std::tan(cmd.lateral.steering_tire_angle) / wheelbase;
+  const auto curr = curr_v * curr_v * std::tan(cmd.lateral.steering_tire_angle) / wheelbase;
 
   return (curr - prev) / dt;
 }
@@ -235,7 +237,6 @@ TEST(VehicleCmdFilter, VehicleCmdFilter)
   }
 }
 
-
 TEST(VehicleCmdFilter, VehicleCmdFilterInterpolate)
 {
   constexpr double WHEELBASE = 2.8;
@@ -370,9 +371,7 @@ TEST(VehicleCmdFilter, VehicleCmdFilterInterpolate)
   // lateral acc lim
   // p.reference_speed_points = std::vector<double>{2.0, 4.0, 10.0};
   // p.lat_acc_lim = std::vector<double>{0.1, 0.2, 0.3};
-  const auto _calcLatAcc = [&](const auto & cmd){
-    return calcLatAcc(cmd, WHEELBASE);
-  };
+  const auto _calcLatAcc = [&](const auto & cmd) { return calcLatAcc(cmd, WHEELBASE); };
   {
     set_speed_and_reset_prev(0.0);
     EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatAcc(orig_cmd)), 0.1, ep);
@@ -399,7 +398,7 @@ TEST(VehicleCmdFilter, VehicleCmdFilterInterpolate)
   // lateral jerk lim
   // p.reference_speed_points = std::vector<double>{2.0, 4.0, 10.0};
   // p.lat_jerk_lim = std::vector<double>{0.9, 0.7, 0.1};
-  const auto _calcLatJerk = [&](const auto & cmd){
+  const auto _calcLatJerk = [&](const auto & cmd) {
     return calcLatJerk(cmd, AckermannControlCommand{}, WHEELBASE, DT);
   };
   {
@@ -433,7 +432,6 @@ TEST(VehicleCmdFilter, VehicleCmdFilterInterpolate)
     EXPECT_NEAR(_calcLatJerk(_limitLateralWithLatJerk(orig_cmd)), 0.1, ep);
     EXPECT_NEAR(_calcLatAcc(_limitLateralWithLatJerk(orig_cmd)), DT * 0.1, ep);
   }
-
 
   // steering diff lim
   // p.reference_speed_points = std::vector<double>{2.0, 4.0, 10.0};
