@@ -20,8 +20,6 @@
 #include <algorithm>
 #include <limits>
 
-// #define PRINT_MAT(m) std::cerr << #m << ": \n" << m << std::endl
-
 namespace autoware::motion::control::mpc_lateral_controller
 {
 using tier4_autoware_utils::calcDistance2d;
@@ -361,9 +359,6 @@ std::pair<bool, VectorXd> MPC::updateStateForDelayCompensation(
 
   MatrixXd x_curr = x0_orig;
   double mpc_curr_time = start_time;
-  // for (const auto & tt : traj.relative_time) {
-  //   std::cerr << "traj.relative_time = " << tt << std::endl;
-  // }
   for (size_t i = 0; i < m_input_buffer.size(); ++i) {
     double k, v = 0.0;
     try {
