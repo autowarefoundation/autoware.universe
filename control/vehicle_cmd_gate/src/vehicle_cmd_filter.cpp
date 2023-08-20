@@ -229,7 +229,7 @@ double VehicleCmdFilter::interpolateFromSpeed(const LimitArray & limits) const
     if (reference.at(i) <= current && current <= reference.at(i + 1)) {
       auto ratio =
         (current - reference.at(i)) / std::max(reference.at(i + 1) - reference.at(i), 1.0e-5);
-      ratio = std::clamp(0.0, 1.0, ratio);
+      ratio = std::clamp(ratio, 0.0, 1.0);
       const auto interp = limits.at(i) + ratio * (limits.at(i + 1) - limits.at(i));
       return interp;
     }
