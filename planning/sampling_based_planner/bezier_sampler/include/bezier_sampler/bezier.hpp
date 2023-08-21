@@ -65,7 +65,7 @@ public:
   [[nodiscard]] Eigen::Vector2d velocity(const double t) const;
   /// @brief calculate the acceleration (2nd derivative) for the given parameter t
   [[nodiscard]] Eigen::Vector2d acceleration(const double t) const;
-  /// @breif return the heading (in radians) of the tangent for the given parameter t
+  /// @brief return the heading (in radians) of the tangent for the given parameter t
   [[nodiscard]] double heading(const double t) const;
   /// @brief calculate the curvature for the given parameter t
   [[nodiscard]] double curvature(const double t) const;
