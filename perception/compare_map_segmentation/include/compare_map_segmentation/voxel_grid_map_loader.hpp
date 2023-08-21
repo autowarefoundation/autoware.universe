@@ -264,7 +264,7 @@ public:
         continue;
       }
 
-      // TODO: check if index is valid
+      // TODO(1222-takeshi): check if index is valid
       if (index >= 0 && index < current_voxel_grid_array_.size()) {
         current_voxel_grid_array_.at(index) = std::make_shared<MapGridVoxelInfo>(kv.second);
       } else {
