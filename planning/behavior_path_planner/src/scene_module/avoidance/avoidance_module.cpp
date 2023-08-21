@@ -290,7 +290,8 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     parameters_->detection_area_right_expand_dist * (-1.0));
 
   const auto [object_within_target_lane, object_outside_target_lane] =
-    utils::separateObjectsByLanelets(*planner_data_->dynamic_object, expanded_lanelets);
+    utils::path_safety_checker::separateObjectsByLanelets(
+      *planner_data_->dynamic_object, expanded_lanelets);
 
   for (const auto & object : object_outside_target_lane.objects) {
     ObjectData other_object;
