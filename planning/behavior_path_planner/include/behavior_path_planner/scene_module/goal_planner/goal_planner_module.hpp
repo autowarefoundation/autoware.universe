@@ -80,8 +80,19 @@ struct PUllOverStatus
   bool prev_is_safe{false};
   bool has_decided_velocity{false};
   bool has_requested_approval{false};
-  std::optional<Pose> stop_pose{};
   bool is_ready{false};
+};
+
+struct FreespacePlannerDebugData
+{
+  bool is_planning{false};
+  size_t current_goal_idx{0};
+  size_t num_goal_candidates{0};
+};
+
+struct GoalPlannerDebugData
+{
+  FreespacePlannerDebugData freespace_planner{};
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -92,16 +103,17 @@ public:
     const std::shared_ptr<GoalPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
-  void updateModuleParams(const std::shared_ptr<GoalPlannerParameters> & parameters)
+  void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = parameters;
+    parameters_ = std::any_cast<std::shared_ptr<GoalPlannerParameters>>(parameters);
   }
 
-  BehaviorModuleOutput run() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] BehaviorModuleOutput run() override;
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  ModuleStatus updateState() override;
-  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] ModuleStatus updateState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   void processOnEntry() override;
@@ -116,6 +128,12 @@ public:
   CandidateOutput planCandidate() const override { return CandidateOutput{}; };
 
 private:
+  bool canTransitSuccessState() override { return false; }
+
+  bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override { return false; }
+
   PUllOverStatus status_;
 
   std::shared_ptr<GoalPlannerParameters> parameters_;
@@ -128,7 +146,6 @@ private:
   // goal searcher
   std::shared_ptr<GoalSearcherBase> goal_searcher_;
   std::optional<GoalCandidate> modified_goal_pose_;
-  std::optional<size_t> prev_goal_id_;
   Pose refined_goal_pose_;
   GoalCandidates goal_candidates_;
 
@@ -171,6 +188,9 @@ private:
   rclcpp::TimerBase::SharedPtr freespace_parking_timer_;
   rclcpp::CallbackGroup::SharedPtr freespace_parking_timer_cb_group_;
 
+  // debug
+  mutable GoalPlannerDebugData debug_data_;
+
   // collision check
   void initializeOccupancyGridMap();
   void updateOccupancyGrid();
@@ -196,7 +216,7 @@ private:
     std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer, const double time);
   bool hasFinishedCurrentPath();
   bool hasFinishedGoalPlanner();
-  bool isOnGoal() const;
+  bool isOnModifiedGoal() const;
   double calcModuleRequestLength() const;
   void resetStatus();
   bool needPathUpdate(const double path_update_duration) const;

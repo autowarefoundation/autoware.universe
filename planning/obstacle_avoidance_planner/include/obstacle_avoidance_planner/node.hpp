@@ -61,6 +61,7 @@ protected:  // for the static_centerline_optimizer package
 
   // flags for some functions
   bool enable_pub_debug_marker_;
+  bool enable_pub_extra_debug_marker_;
   bool enable_debug_info_;
   bool enable_outside_drivable_area_stop_;
   bool enable_skip_optimization_;
@@ -76,10 +77,7 @@ protected:  // for the static_centerline_optimizer package
   EgoNearestParam ego_nearest_param_{};
 
   // variables for subscribers
-  Odometry::SharedPtr ego_state_ptr_;
-
-  // variables for previous information
-  std::shared_ptr<std::vector<TrajectoryPoint>> prev_optimized_traj_points_ptr_;
+  Odometry::ConstSharedPtr ego_state_ptr_;
 
   // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
@@ -100,7 +98,7 @@ protected:  // for the static_centerline_optimizer package
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
   // subscriber callback function
-  void onPath(const Path::SharedPtr);
+  void onPath(const Path::ConstSharedPtr path_ptr);
 
   // reset functions
   void initializePlanning();
@@ -127,6 +125,9 @@ protected:  // for the static_centerline_optimizer package
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points) const;
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
   void publishDebugMarkerOfOptimization(const std::vector<TrajectoryPoint> & traj_points) const;
+
+private:
+  double vehicle_stop_margin_outside_drivable_area_;
 };
 }  // namespace obstacle_avoidance_planner
 

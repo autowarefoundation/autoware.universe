@@ -14,6 +14,7 @@
 
 #include "behavior_path_planner/utils/start_planner/geometric_pull_out.hpp"
 
+#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -39,31 +40,44 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
 {
   PullOutPath output;
 
-  // combine road lane and shoulder lane
+  // combine road lane and pull out lane
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_.max_back_distance;
-  const auto road_lanes =
-    utils::getCurrentLanes(planner_data_, backward_path_length, std::numeric_limits<double>::max());
-
-  const auto shoulder_lanes = getPullOutLanes(planner_data_);
+  const auto road_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, backward_path_length, std::numeric_limits<double>::max(),
+    /*forward_only_in_route*/ true);
+  const auto pull_out_lanes = getPullOutLanes(planner_data_, backward_path_length);
   auto lanes = road_lanes;
-  lanes.insert(lanes.end(), shoulder_lanes.begin(), shoulder_lanes.end());
+  for (const auto & pull_out_lane : pull_out_lanes) {
+    auto it = std::find_if(
+      lanes.begin(), lanes.end(), [&pull_out_lane](const lanelet::ConstLanelet & lane) {
+        return lane.id() == pull_out_lane.id();
+      });
+    if (it == lanes.end()) {
+      lanes.push_back(pull_out_lane);
+    }
+  }
 
   planner_.setTurningRadius(
     planner_data_->parameters, parallel_parking_parameters_.pull_out_max_steer_angle);
   planner_.setPlannerData(planner_data_);
   const bool found_valid_path =
-    planner_.planPullOut(start_pose, goal_pose, road_lanes, shoulder_lanes);
+    planner_.planPullOut(start_pose, goal_pose, road_lanes, pull_out_lanes);
   if (!found_valid_path) {
     return {};
   }
 
-  // collision check with objects in shoulder lanes
+  // collision check with stop objects in pull out lanes
   const auto arc_path = planner_.getArcPath();
-  const auto [shoulder_lane_objects, others] =
-    utils::separateObjectsByLanelets(*(planner_data_->dynamic_object), shoulder_lanes);
+  const auto [pull_out_lane_objects, others] =
+    utils::path_safety_checker::separateObjectsByLanelets(
+      *(planner_data_->dynamic_object), pull_out_lanes);
+  const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+    pull_out_lane_objects, parameters_.th_moving_object_velocity);
+
   if (utils::checkCollisionBetweenPathFootprintsAndObjects(
-        vehicle_footprint_, arc_path, shoulder_lane_objects, parameters_.collision_check_margin)) {
+        vehicle_footprint_, arc_path, pull_out_lane_stop_objects,
+        parameters_.collision_check_margin)) {
     return {};
   }
 
@@ -76,7 +90,7 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
     const auto combined_path = combineReferencePath(partial_paths.at(0), partial_paths.at(1));
     output.partial_paths.push_back(combined_path);
   }
-  output.start_pose = planner_.getArcPaths().at(0).points.back().point.pose;
+  output.start_pose = planner_.getArcPaths().at(0).points.front().point.pose;
   output.end_pose = planner_.getArcPaths().at(1).points.back().point.pose;
 
   return output;
