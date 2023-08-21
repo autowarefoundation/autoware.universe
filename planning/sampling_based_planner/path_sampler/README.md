@@ -65,7 +65,7 @@ Each soft constraint is associated with a weight to allow tuning of the preferen
 ## Limitations
 
 The quality of the candidates generated with polynomials in frenet frame greatly depend on the reference path.
-If the reference path is not smooth, the resulting candidates will probably be undrivable.
+If the reference path is not smooth, the resulting candidates will probably be undriveable.
 
 Failure to find a valid trajectory current results in a suddenly stopping trajectory.
 
