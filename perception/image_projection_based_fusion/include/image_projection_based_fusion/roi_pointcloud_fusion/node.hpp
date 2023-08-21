@@ -25,7 +25,7 @@ class RoiPointCloudFusionNode : public FusionNode<sensor_msgs::msg::PointCloud2,
 {
 private:
   int min_cluster_size_{1};
-  bool fuse_unknown_only_;
+  bool fuse_unknown_only_{true};
   double cluster_2d_tolerance_;
 
   rclcpp::Publisher<DetectedObjects>::SharedPtr pub_objects_ptr_;
