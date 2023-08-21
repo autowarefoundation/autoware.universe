@@ -87,7 +87,6 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   if (output_objs.empty()) {
     return;
   }
-  // TODO(badai-nguyen): add making sure input_pointcloud_msg's frame_id is base_link
   Eigen::Matrix4d projection;
   projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2), camera_info.p.at(3),
     camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6), camera_info.p.at(7),
@@ -138,13 +137,31 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
     }
   }
 
+  // transform camera origin
+  Eigen::Vector3d orig_camera_frame, orig_point_frame;
+  Eigen::Affine3d camera2lidar_affine;
+  orig_camera_frame << 0.0, 0.0, 0.0;
+  {
+    const auto transform_stamped_optional = getTransformStamped(
+      tf_buffer_, input_pointcloud_msg.header.frame_id, input_roi_msg.header.frame_id,
+      input_roi_msg.header.stamp);
+    if (!transform_stamped_optional) {
+      return;
+    }
+    camera2lidar_affine = transformToEigen(transform_stamped_optional.value().transform);
+  }
+  orig_point_frame = camera2lidar_affine * orig_camera_frame;
+  pcl::PointXYZ camera_orig_point_frame =
+    pcl::PointXYZ(orig_camera_frame.x(), orig_camera_frame.y(), orig_camera_frame.z());
+
   for (std::size_t i = 0; i < clusters.size(); ++i) {
     auto & cluster = clusters.at(i);
     auto & feature_obj = output_objs.at(i);
     if (cluster.points.size() < std::size_t(min_cluster_size_)) {
       continue;
     }
-    auto refine_cluster = closest_cluster(cluster, cluster_2d_tolerance_, min_cluster_size_);
+    auto refine_cluster =
+      closest_cluster(cluster, cluster_2d_tolerance_, min_cluster_size_, camera_orig_point_frame);
     if (refine_cluster.points.size() < std::size_t(min_cluster_size_)) {
       continue;
     }

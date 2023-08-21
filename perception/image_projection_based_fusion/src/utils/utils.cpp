@@ -39,14 +39,14 @@ Eigen::Affine3d transformToEigen(const geometry_msgs::msg::Transform & t)
 }
 
 PointCloud closest_cluster(
-  PointCloud & cluster, const double cluster_2d_tolerance, const int min_cluster_size)
+  PointCloud & cluster, const double cluster_2d_tolerance, const int min_cluster_size,
+  const pcl::PointXYZ & center)
 {
-  // suppose cluster's frame_id is base_link
+  // sort point by distance to camera origin
 
-  // sort pointcloud by distance
-  auto func = [](const pcl::PointXYZ & p1, const pcl::PointXYZ & p2) {
-    return tier4_autoware_utils::calcDistance2d(pcl::PointXYZ(0.0, 0.0, 0.0), p1) <
-           tier4_autoware_utils::calcDistance2d(pcl::PointXYZ(0.0, 0.0, 0.0), p2);
+  auto func = [center](const pcl::PointXYZ & p1, const pcl::PointXYZ & p2) {
+    return tier4_autoware_utils::calcDistance2d(center, p1) <
+           tier4_autoware_utils::calcDistance2d(center, p2);
   };
   std::sort(cluster.begin(), cluster.end(), func);
   PointCloud out_cluster;

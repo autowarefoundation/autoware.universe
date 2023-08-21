@@ -60,7 +60,8 @@ std::optional<geometry_msgs::msg::TransformStamped> getTransformStamped(
 Eigen::Affine3d transformToEigen(const geometry_msgs::msg::Transform & t);
 
 PointCloud closest_cluster(
-  PointCloud & cluster, const double cluster_2d_tolerance, const int min_cluster_size);
+  PointCloud & cluster, const double cluster_2d_tolerance, const int min_cluster_size,
+  const pcl::PointXYZ & center);
 geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & pointcloud);
 
 pcl::PointXYZ getClosestPoint(const pcl::PointCloud<pcl::PointXYZ> & cluster);
