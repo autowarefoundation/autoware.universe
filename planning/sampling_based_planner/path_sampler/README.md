@@ -33,7 +33,7 @@ Note that the velocity is just taken over from the input path.
 
 ## Algorithm
 
-Sampling based planning is decomposed into 3 successives steps:
+Sampling based planning is decomposed into 3 successive steps:
 
 1. Sampling: candidate trajectories are generated.
 2. Pruning: invalid candidates are discarded.
