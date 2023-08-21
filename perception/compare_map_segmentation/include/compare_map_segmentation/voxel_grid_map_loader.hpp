@@ -260,16 +260,11 @@ public:
       int index = static_cast<int>(
         std::floor((kv.second.min_b_x - origin_x_) / map_grid_size_x_) +
         map_grids_x_ * std::floor((kv.second.min_b_y - origin_y_) / map_grid_size_y_));
-      if (index >= map_grids_x_ * map_grids_y_) {
+      // TODO(1222-takeshi): check if index is valid
+      if (index >= map_grids_x_ * map_grids_y_ && index < 0) {
         continue;
       }
-
-      // TODO(1222-takeshi): check if index is valid
-      if (index >= 0 && index < current_voxel_grid_array_.size()) {
-        current_voxel_grid_array_.at(index) = std::make_shared<MapGridVoxelInfo>(kv.second);
-      } else {
-        std::cerr << "invalid index: " << index << std::endl;
-      }
+      current_voxel_grid_array_.at(index) = std::make_shared<MapGridVoxelInfo>(kv.second);
     }
     (*mutex_ptr_).unlock();
   }
