@@ -107,19 +107,19 @@ std::vector<frenet_planner::Path> generateFrenetPaths(
   // Calculate Velocity and acceleration parametrized over arc length
   // From appendix I of Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame
   const auto frenet_yaw = initial_state.heading - path_spline.yaw(s);
-  const auto path_curv = path_spline.curvature(s);
+  const auto path_curvature = path_spline.curvature(s);
   const auto delta_s = 0.001;
-  initial_frenet_state.lateral_velocity = (1 - path_curv * d) * std::tan(frenet_yaw);
-  const auto path_curv_deriv = (path_spline.curvature(s + delta_s) - path_curv) / delta_s;
+  initial_frenet_state.lateral_velocity = (1 - path_curvature * d) * std::tan(frenet_yaw);
+  const auto path_curvature_deriv = (path_spline.curvature(s + delta_s) - path_curvature) / delta_s;
   const auto cos_yaw = std::cos(frenet_yaw);
   if (cos_yaw == 0.0) {
     initial_frenet_state.lateral_acceleration = 0.0;
   } else {
     initial_frenet_state.lateral_acceleration =
-      -(path_curv_deriv * d + path_curv * initial_frenet_state.lateral_velocity) *
+      -(path_curvature_deriv * d + path_curvature * initial_frenet_state.lateral_velocity) *
         std::tan(frenet_yaw) +
-      ((1 - path_curv * d) / (cos_yaw * cos_yaw)) *
-        (initial_state.curvature * ((1 - path_curv * d) / cos_yaw) - path_curv);
+      ((1 - path_curvature * d) / (cos_yaw * cos_yaw)) *
+        (initial_state.curvature * ((1 - path_curvature * d) / cos_yaw) - path_curvature);
   }
   return frenet_planner::generatePaths(path_spline, initial_frenet_state, sampling_parameters);
 }
