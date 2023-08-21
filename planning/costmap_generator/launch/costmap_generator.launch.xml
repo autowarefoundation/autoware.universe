@@ -10,7 +10,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-
 <launch>
   <arg name="input_objects" default="~/input/objects"/>
   <arg name="input_points_no_ground" default="~/input/points_no_ground"/>
