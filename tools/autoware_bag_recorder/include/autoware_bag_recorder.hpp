@@ -58,8 +58,24 @@ public:
   AutowareBagRecorderNode(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
+  void initialize_parameters();
+  void setup_module_sections();
+  void setup_single_module(
+    const std::string & module_param, std::vector<std::string> & topics,
+    const std::string & section_name);
+  void record_all_topics_in_a_bag();
+  void check_and_remove_files_at_init();
+  void initialize_bag_files_for_topics();
+  void start_topic_search();
+  void start_status_control();
+  void check_disk_space();
+  void check_record_time(
+    const std::chrono::time_point<std::chrono::system_clock> & start_record_time);
+  void check_bag_time(std::chrono::time_point<std::chrono::system_clock> & start_bag_time);
+  void check_auto_mode();
   static std::string get_timestamp();
   rclcpp::QoS get_qos_profile_of_topic(const std::string & topic_name);
+  void rotate_topic_names(autoware_bag_recorder::ModuleSection & section);
   void search_topic(ModuleSection & section);
   static void create_bag_file(
     std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
@@ -122,7 +138,7 @@ private:
   rclcpp::Node::SharedPtr node_;
 
   std::shared_ptr<rclcpp::SerializedMessage> serialized_msg_ptr_;
-  tier4_control_msgs::msg::GateMode::ConstSharedPtr gate_mode_cmd_ptr;
+  tier4_control_msgs::msg::GateMode::ConstSharedPtr gate_mode_msg_ptr;
 
   std::mutex writer_mutex_;
 };
