@@ -3,6 +3,7 @@
     common:
       maximum_record_time: 1800 # seconds
       bag_time: 100 # seconds
+      enable_only_auto_mode_recording: true
       record_all_topic_in_a_bag: true
       number_of_maximum_bags: 5
       path: "bags/" # Path to bag file for saving

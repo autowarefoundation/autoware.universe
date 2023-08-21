@@ -23,12 +23,17 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
 {
   // common params declarations
   bag_path_ = declare_parameter<std::string>("common.path");
-  disk_space_threshold_ = declare_parameter<int>("common.check_disk_space_threshold");
-  maximum_record_time_ = declare_parameter<int>("common.maximum_record_time");
-  bag_time_ = declare_parameter<int>("common.bag_time");
-  number_of_maximum_bags_ = declare_parameter<int>("common.number_of_maximum_bags");
+  disk_space_threshold_ = static_cast<int>(declare_parameter<int>("common.check_disk_space_threshold"));
+  maximum_record_time_ = static_cast<int>(declare_parameter<int>("common.maximum_record_time"));
+  bag_time_ = static_cast<int>(declare_parameter<int>("common.bag_time"));
+  number_of_maximum_bags_ = static_cast<int>(declare_parameter<int>("common.number_of_maximum_bags"));
   record_all_topic_in_a_bag_ = declare_parameter<bool>("common.record_all_topic_in_a_bag");
+  enable_only_auto_mode_recording_ = declare_parameter<bool>("common.enable_only_auto_mode_recording");
   disk_space_action_mode_ = declare_parameter<std::string>("common.disk_space_threshold_action");
+
+  is_writing_ = false;
+  remaining_topic_num_ = 0;
+
   // api
   record_api_topics_ = declare_parameter<bool>("api_modules.record_api");
   if (record_api_topics_ || record_all_topic_in_a_bag_) {
@@ -111,6 +116,9 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
     section_factory(vehicle_topics_, bag_path_ + "vehicle");
   }
 
+  gate_mode_sub_ = create_subscription<tier4_control_msgs::msg::GateMode>(
+    "/control/current_gate_mode", 1, std::bind(&AutowareBagRecorderNode::gate_mode_cmd_callback, this, std::placeholders::_1));
+
   if (record_all_topic_in_a_bag_) {
     ModuleSection all_topics;
     std::vector<std::string> all_topic_names;
@@ -127,8 +135,6 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
     remove_remainder_bags_in_folder(section);
   }
 
-  remaining_topic_num_ = 0;
-
   run();
 }
 
@@ -144,6 +150,10 @@ std::string AutowareBagRecorderNode::get_timestamp()
 void AutowareBagRecorderNode::create_bag_file(
   std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path)
 {
+  if (std::filesystem::exists(bag_path))
+  {
+    return;
+  }
   writer = std::make_unique<rosbag2_cpp::Writer>();
 
   rosbag2_storage::StorageOptions storage_options_new;
@@ -152,13 +162,25 @@ void AutowareBagRecorderNode::create_bag_file(
   writer->open(storage_options_new);
 }
 
-void AutowareBagRecorderNode::section_factory(std::vector<std::string> topics, std::string path)
+void AutowareBagRecorderNode::bag_file_handler()
+{
+  for (auto & section : module_sections_) {
+    remove_remainder_bags_in_folder(section);
+    std::lock_guard<std::mutex> lock(writer_mutex_);
+    create_bag_file(section.bag_writer, section.folder_path + "/rosbag2_" + get_timestamp());
+    for (auto & topic_info : section.topic_info) {
+      add_topics_to_writer(section.bag_writer, topic_info.topic_name, topic_info.topic_type);
+    }
+  }
+}
+
+void AutowareBagRecorderNode::section_factory(const std::vector<std::string> & topics, const std::string & path)
 {
   ModuleSection section;
-  for (size_t i = 0; i < topics.size(); ++i) {
-    TopicInfo topic_info = {topics[i], ""};
+  for (const auto & topic: topics) {
+    TopicInfo topic_info = {topic, ""};
     section.topic_info.push_back(topic_info);
-    section.topic_names.push_back(topics[i]);
+    section.topic_names.push_back(topic);
   }
 
   if (!section.topic_names.empty()) {
@@ -176,9 +198,9 @@ void AutowareBagRecorderNode::add_topics_to_writer(
   std::unique_ptr<rosbag2_cpp::Writer> & writer_, std::string topic_name, std::string topic_type)
 {
   rosbag2_storage::TopicMetadata topic_metadata;
-  topic_metadata.name = topic_name;
+  topic_metadata.name = std::move(topic_name);
 
-  topic_metadata.type = topic_type;
+  topic_metadata.type = std::move(topic_type);
   topic_metadata.serialization_format = "cdr";
 
   writer_->create_topic(topic_metadata);
@@ -188,30 +210,36 @@ rclcpp::QoS AutowareBagRecorderNode::get_qos_profile_of_topic(const std::string 
 {
   auto publisher_info = this->get_publishers_info_by_topic(topic_name);
   auto subscriber_info = this->get_subscriptions_info_by_topic(topic_name);
-  if (publisher_info.size() > 0) {
+  if (!publisher_info.empty()) {
     return publisher_info[0].qos_profile();
-  } else {
-    return subscriber_info[0].qos_profile();
   }
+  return subscriber_info[0].qos_profile();
 }
 
 void AutowareBagRecorderNode::generic_subscription_callback(
-  const std::shared_ptr<rclcpp::SerializedMessage const> msg, const std::string & topic_name,
+  const std::shared_ptr<rclcpp::SerializedMessage const> & msg, const std::string & topic_name,
   autoware_bag_recorder::ModuleSection & section)
 {
-  auto serialized_bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-  serialized_bag_msg->serialized_data = std::make_shared<rcutils_uint8_array_t>();
-  serialized_bag_msg->topic_name = topic_name;
-  serialized_bag_msg->time_stamp = node_->now().nanoseconds();
-  serialized_bag_msg->serialized_data->buffer = msg->get_rcl_serialized_message().buffer;
-  serialized_bag_msg->serialized_data->buffer_length =
-    msg->get_rcl_serialized_message().buffer_length;
-  serialized_bag_msg->serialized_data->buffer_capacity =
-    msg->get_rcl_serialized_message().buffer_capacity;
-  serialized_bag_msg->serialized_data->allocator = msg->get_rcl_serialized_message().allocator;
+  if(gate_mode_cmd_ptr)
+  {
+    if (!enable_only_auto_mode_recording_ ||
+        (gate_mode_cmd_ptr->data == tier4_control_msgs::msg::GateMode::AUTO && is_writing_))
+    {
+      auto serialized_bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+      serialized_bag_msg->serialized_data = std::make_shared<rcutils_uint8_array_t>();
+      serialized_bag_msg->topic_name = topic_name;
+      serialized_bag_msg->time_stamp = node_->now().nanoseconds();
+      serialized_bag_msg->serialized_data->buffer = msg->get_rcl_serialized_message().buffer;
+      serialized_bag_msg->serialized_data->buffer_length =
+        msg->get_rcl_serialized_message().buffer_length;
+      serialized_bag_msg->serialized_data->buffer_capacity =
+        msg->get_rcl_serialized_message().buffer_capacity;
+      serialized_bag_msg->serialized_data->allocator = msg->get_rcl_serialized_message().allocator;
 
-  std::lock_guard<std::mutex> lock(writer_mutex_);
-  section.bag_writer->write(serialized_bag_msg);
+      std::lock_guard<std::mutex> lock(writer_mutex_);
+      section.bag_writer->write(serialized_bag_msg);
+    }
+  }
 }
 
 void AutowareBagRecorderNode::search_topic(autoware_bag_recorder::ModuleSection & section)
@@ -234,7 +262,7 @@ void AutowareBagRecorderNode::search_topic(autoware_bag_recorder::ModuleSection 
       get_logger(), "Subscribed topic %s of type %s", topic_name.c_str(), topic_type.c_str());
     auto subscription = rclcpp::create_generic_subscription(
       topics_interface, topic_name, topic_type, get_qos_profile_of_topic(topic_name),
-      [this, topic_name, &section](const std::shared_ptr<rclcpp::SerializedMessage const> msg) {
+      [this, topic_name, &section](const std::shared_ptr<rclcpp::SerializedMessage const> & msg) {
         generic_subscription_callback(msg, topic_name, section);
       });
 
@@ -256,11 +284,11 @@ void AutowareBagRecorderNode::search_topic(autoware_bag_recorder::ModuleSection 
   }
 }
 
-int AutowareBagRecorderNode::get_root_disk_space()
+double AutowareBagRecorderNode::get_root_disk_space()
 {
   std::filesystem::space_info root = std::filesystem::space("/");
 
-  return (root.available / pow(1024.0, 3.0));  // Convert to GB
+  return static_cast<double>(root.available) / pow(1024.0, 3.0);  // Convert to GB
 }
 
 void AutowareBagRecorderNode::check_files_in_folder(
@@ -278,7 +306,7 @@ void AutowareBagRecorderNode::check_files_in_folder(
 }
 
 void AutowareBagRecorderNode::remove_remainder_bags_in_folder(
-  autoware_bag_recorder::ModuleSection & section)
+  autoware_bag_recorder::ModuleSection & section) const
 {
   std::vector<std::string> directories;
   check_files_in_folder(section, directories);
@@ -290,7 +318,7 @@ void AutowareBagRecorderNode::remove_remainder_bags_in_folder(
 }
 
 void AutowareBagRecorderNode::free_disk_space_for_continue(
-  autoware_bag_recorder::ModuleSection & section)
+  autoware_bag_recorder::ModuleSection & section) const
 {
   std::vector<std::string> directories;
   check_files_in_folder(section, directories);
@@ -301,11 +329,19 @@ void AutowareBagRecorderNode::free_disk_space_for_continue(
   }
 }
 
+void AutowareBagRecorderNode::gate_mode_cmd_callback(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
+{
+  gate_mode_cmd_ptr = msg; // AUTO = 1, EXTERNAL = 0
+  if (gate_mode_cmd_ptr->data != tier4_control_msgs::msg::GateMode::AUTO) {
+    is_writing_ = false;
+  }
+}
+
 void AutowareBagRecorderNode::run()
 {
   for (auto & section : module_sections_) {
     create_bag_file(section.bag_writer, section.folder_path + "/rosbag2_" + get_timestamp());
-    remaining_topic_num_ = remaining_topic_num_ + section.topic_names.size();
+    remaining_topic_num_ = remaining_topic_num_ + static_cast<int>(section.topic_names.size());
   }
 
   std::thread([this]() {
@@ -328,9 +364,9 @@ void AutowareBagRecorderNode::run()
     while (rclcpp::ok()) {
       // check available disk space, if current disk space is smaller than threshold,
       // then shutdown node
-      if (get_root_disk_space() < disk_space_threshold_) {
+      if (static_cast<int>(get_root_disk_space()) < disk_space_threshold_) {
         RCLCPP_WARN(
-          this->get_logger(), "Available Disk Space is: %d under the threshold.",
+          this->get_logger(), "Available Disk Space is: %lf under the threshold.",
           get_root_disk_space());
         if (disk_space_action_mode_ == "remove") {
           for (auto & section : module_sections_) {
@@ -348,18 +384,23 @@ void AutowareBagRecorderNode::run()
         rclcpp::shutdown();
       }
 
-      if ((std::chrono::system_clock::now() - start_bag_time) >= std::chrono::seconds(bag_time_)) {
+      if (((std::chrono::system_clock::now() - start_bag_time) >= std::chrono::seconds(bag_time_))
+          && !enable_only_auto_mode_recording_) {
         start_bag_time = std::chrono::system_clock::now();
-
-        for (auto & section : module_sections_) {
-          remove_remainder_bags_in_folder(section);
-          std::lock_guard<std::mutex> lock(writer_mutex_);
-          create_bag_file(section.bag_writer, section.folder_path + "/rosbag2_" + get_timestamp());
-          for (auto & topic_info : section.topic_info) {
-            add_topics_to_writer(section.bag_writer, topic_info.topic_name, topic_info.topic_type);
-          }
-        }
+        bag_file_handler();
       }
+
+      if(gate_mode_cmd_ptr) {
+        if (
+          enable_only_auto_mode_recording_ && !is_writing_ &&
+          gate_mode_cmd_ptr->data == tier4_control_msgs::msg::GateMode::AUTO) {
+          is_writing_ = true;
+          bag_file_handler();
+        }
+      } else {
+        RCLCPP_WARN(get_logger(), "The current gate mode not received!");
+      }
+
       rate.sleep();
     }
   }).detach();
