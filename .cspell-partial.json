@@ -3,7 +3,6 @@
     "**/perception/**",
     "**/planning/**",
     "**/sensing/**",
-    "**/*.svg",
     "perception/bytetrack/lib/**"
   ],
   "ignoreRegExpList": [],
