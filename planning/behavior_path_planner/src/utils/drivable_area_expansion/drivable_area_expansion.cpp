@@ -43,8 +43,9 @@ std::vector<PathPointWithLaneId> crop_and_resample(
     if (lon_offset < 0.0) {
       planner_data->drivable_area_expansion_prev_crop_pose.reset();
     } else {
-      const auto is_behind_ego = motion_utils::calcSignedArcLength(
-        points, crop_pose.position, planner_data->self_odometry->pose.pose.position);
+      const auto is_behind_ego =
+        motion_utils::calcSignedArcLength(
+          points, crop_pose.position, planner_data->self_odometry->pose.pose.position) > 0.0;
       const auto is_too_far = motion_utils::calcLateralOffset(points, crop_pose.position) > 0.1;
       if (!is_behind_ego || is_too_far)
         planner_data->drivable_area_expansion_prev_crop_pose.reset();
