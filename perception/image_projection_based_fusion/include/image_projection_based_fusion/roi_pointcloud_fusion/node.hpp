@@ -18,6 +18,7 @@
 #include "image_projection_based_fusion/fusion_node.hpp"
 
 #include <string>
+#include <vector>
 namespace image_projection_based_fusion
 {
 class RoiPointCloudFusionNode : public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>
@@ -25,8 +26,7 @@ class RoiPointCloudFusionNode : public FusionNode<sensor_msgs::msg::PointCloud2,
 private:
   int min_cluster_size_{1};
   bool fuse_unknown_only_;
-  double cluster_threshold_radius_;
-  double cluster_threshold_distance_;
+  double cluster_2d_tolerance_;
 
   rclcpp::Publisher<DetectedObjects>::SharedPtr pub_objects_ptr_;
   std::vector<DetectedObject> output_fused_objects_;

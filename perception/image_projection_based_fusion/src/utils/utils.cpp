@@ -39,8 +39,7 @@ Eigen::Affine3d transformToEigen(const geometry_msgs::msg::Transform & t)
 }
 
 PointCloud closest_cluster(
-  PointCloud & cluster, const double cluster_threshold_radius,
-  [[maybe_unused]] const double cluster_threshold_distance, const int min_cluster_size)
+  PointCloud & cluster, const double cluster_2d_tolerance, const int min_cluster_size)
 {
   // suppose cluster's frame_id is base_link
 
@@ -56,8 +55,7 @@ PointCloud closest_cluster(
       out_cluster.push_back(point);
       continue;
     }
-    if (
-      tier4_autoware_utils::calcDistance2d(out_cluster.back(), point) < cluster_threshold_radius) {
+    if (tier4_autoware_utils::calcDistance2d(out_cluster.back(), point) < cluster_2d_tolerance) {
       out_cluster.push_back(point);
       continue;
     }
@@ -157,7 +155,6 @@ geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & poin
   return centroid;
 }
 
-// TODO : change to template
 pcl::PointXYZ getClosestPoint(const pcl::PointCloud<pcl::PointXYZ> & cluster)
 {
   pcl::PointXYZ closest_point;
