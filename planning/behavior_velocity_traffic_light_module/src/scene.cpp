@@ -370,6 +370,9 @@ bool TrafficLightModule::findValidTrafficSignal(TrafficSignal & valid_traffic_si
   if (is_traffic_signal_timeout) {
     RCLCPP_WARN_THROTTLE(
       logger_, *clock_, 5000 /* ms */, "the received traffic signal data is outdated");
+    RCLCPP_WARN_STREAM_THROTTLE(
+      logger_, *clock_, 5000 /* ms */,
+      "time diff: " << (clock_->now() - traffic_signal_stamped->stamp).seconds());
     return false;
   }
 
