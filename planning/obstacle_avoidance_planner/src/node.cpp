@@ -59,6 +59,17 @@ bool hasZeroVelocity(const TrajectoryPoint & traj_point)
   constexpr double zero_vel = 0.0001;
   return std::abs(traj_point.longitudinal_velocity_mps) < zero_vel;
 }
+
+std::vector<double> calcSegmentLengthVector(const std::vector<TrajectoryPoint> & points)
+{
+  std::vector<double> segment_length_vector;
+  for (size_t i = 0; i < points.size() - 1; ++i) {
+    const double segment_length =
+      tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i + 1));
+    segment_length_vector.push_back(segment_length);
+  }
+  return segment_length_vector;
+}
 }  // namespace
 
 ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options)
@@ -75,7 +86,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   path_sub_ = create_subscription<Path>(
     "~/input/path", 1, std::bind(&ObstacleAvoidancePlanner::onPath, this, std::placeholders::_1));
   odom_sub_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, [this](const Odometry::SharedPtr msg) { ego_state_ptr_ = msg; });
+    "~/input/odometry", 1, [this](const Odometry::ConstSharedPtr msg) { ego_state_ptr_ = msg; });
 
   // debug publisher
   debug_extended_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_traj", 1);
@@ -94,6 +105,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
 
     // parameter for debug marker
     enable_pub_debug_marker_ = declare_parameter<bool>("option.debug.enable_pub_debug_marker");
+    enable_pub_extra_debug_marker_ =
+      declare_parameter<bool>("option.debug.enable_pub_extra_debug_marker");
 
     // parameter for debug info
     enable_debug_info_ = declare_parameter<bool>("option.debug.enable_debug_info");
@@ -145,6 +158,8 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
 
   // parameters for debug marker
   updateParam<bool>(parameters, "option.debug.enable_pub_debug_marker", enable_pub_debug_marker_);
+  updateParam<bool>(
+    parameters, "option.debug.enable_pub_extra_debug_marker", enable_pub_extra_debug_marker_);
 
   // parameters for debug info
   updateParam<bool>(parameters, "option.debug.enable_debug_info", enable_debug_info_);
@@ -187,11 +202,9 @@ void ObstacleAvoidancePlanner::initializePlanning()
 void ObstacleAvoidancePlanner::resetPreviousData()
 {
   mpt_optimizer_ptr_->resetPreviousData();
-
-  prev_optimized_traj_points_ptr_ = nullptr;
 }
 
-void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
+void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
 {
   time_keeper_ptr_->init();
   time_keeper_ptr_->tic(__func__);
@@ -335,26 +348,19 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::optimizeTrajectory(
 
   // 2. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
   //    with model predictive trajectory
-  const auto mpt_traj =
-    mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, p.traj_points);
-  if (!mpt_traj) {
-    return getPrevOptimizedTrajectory(p.traj_points);
-  }
-
-  // 3. make prev trajectories
-  prev_optimized_traj_points_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(*mpt_traj);
+  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data, p.traj_points);
 
   time_keeper_ptr_->toc(__func__, "    ");
-  return *mpt_traj;
+  return mpt_traj;
 }
 
 std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::getPrevOptimizedTrajectory(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  if (prev_optimized_traj_points_ptr_) {
-    return *prev_optimized_traj_points_ptr_;
+  const auto prev_optimized_traj_points = mpt_optimizer_ptr_->getPrevOptimizedTrajectoryPoints();
+  if (prev_optimized_traj_points) {
+    return *prev_optimized_traj_points;
   }
-
   return traj_points;
 }
 
@@ -372,37 +378,73 @@ void ObstacleAvoidancePlanner::applyInputVelocity(
 
     const size_t ego_seg_idx =
       trajectory_utils::findEgoSegmentIndex(input_traj_points, ego_pose, ego_nearest_param_);
-    return motion_utils::cropForwardPoints(
+    const auto cropped_points = motion_utils::cropForwardPoints(
       input_traj_points, ego_pose.position, ego_seg_idx,
       optimized_traj_length + margin_traj_length);
+
+    if (cropped_points.size() < 2) {
+      return input_traj_points;
+    }
+    return cropped_points;
   }();
 
   // update velocity
-  size_t input_traj_start_idx = 0;
+  const auto segment_length_vec = calcSegmentLengthVector(forward_cropped_input_traj_points);
+  const double mpt_delta_arc_length = mpt_optimizer_ptr_->getDeltaArcLength();
+  size_t input_traj_start_idx = trajectory_utils::findEgoSegmentIndex(
+    forward_cropped_input_traj_points, output_traj_points.front().pose, ego_nearest_param_);
   for (size_t i = 0; i < output_traj_points.size(); i++) {
-    // crop backward for efficient calculation
-    const auto cropped_input_traj_points = std::vector<TrajectoryPoint>{
-      forward_cropped_input_traj_points.begin() + input_traj_start_idx,
-      forward_cropped_input_traj_points.end()};
+    // NOTE: input_traj_start/end_idx is calculated for efficient index calculation
+    const size_t input_traj_end_idx = [&]() {
+      double sum_segment_length = 0.0;
+      for (size_t j = input_traj_start_idx + 1; j < segment_length_vec.size(); ++j) {
+        sum_segment_length += segment_length_vec.at(j);
+        if (mpt_delta_arc_length < sum_segment_length) {
+          return j + 1;
+        }
+      }
+      return forward_cropped_input_traj_points.size() - 1;
+    }();
 
-    const size_t nearest_seg_idx = trajectory_utils::findEgoSegmentIndex(
-      cropped_input_traj_points, output_traj_points.at(i).pose, ego_nearest_param_);
-    input_traj_start_idx = nearest_seg_idx;
+    const auto nearest_traj_point = [&]() {
+      if (input_traj_start_idx == input_traj_end_idx) {
+        return forward_cropped_input_traj_points.at(input_traj_start_idx);
+      }
+
+      // crop forward and backward for efficient calculation
+      const auto cropped_input_traj_points = std::vector<TrajectoryPoint>{
+        forward_cropped_input_traj_points.begin() + input_traj_start_idx,
+        forward_cropped_input_traj_points.begin() + input_traj_end_idx + 1};
+      assert(2 <= cropped_input_traj_points.size());
+
+      const size_t nearest_seg_idx = trajectory_utils::findEgoSegmentIndex(
+        cropped_input_traj_points, output_traj_points.at(i).pose, ego_nearest_param_);
+      input_traj_start_idx += nearest_seg_idx;
+
+      return cropped_input_traj_points.at(nearest_seg_idx);
+    }();
 
     // calculate velocity with zero order hold
-    const double velocity = cropped_input_traj_points.at(nearest_seg_idx).longitudinal_velocity_mps;
-    output_traj_points.at(i).longitudinal_velocity_mps = velocity;
+    output_traj_points.at(i).longitudinal_velocity_mps =
+      nearest_traj_point.longitudinal_velocity_mps;
   }
 
   // insert stop point explicitly
   const auto stop_idx = motion_utils::searchZeroVelocityIndex(forward_cropped_input_traj_points);
   if (stop_idx) {
-    const auto input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.get()).pose;
-    const size_t stop_seg_idx = trajectory_utils::findEgoSegmentIndex(
-      output_traj_points, input_stop_pose, ego_nearest_param_);
+    const auto & input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.get()).pose;
+    // NOTE: motion_utils::findNearestSegmentIndex is used instead of
+    // trajectory_utils::findEgoSegmentIndex
+    //       for the case where input_traj_points is much longer than output_traj_points, and the
+    //       former has a stop point but the latter will not have.
+    const auto stop_seg_idx = motion_utils::findNearestSegmentIndex(
+      output_traj_points, input_stop_pose, ego_nearest_param_.dist_threshold,
+      ego_nearest_param_.yaw_threshold);
 
     // calculate and insert stop pose on output trajectory
-    trajectory_utils::insertStopPoint(output_traj_points, input_stop_pose, stop_seg_idx);
+    if (stop_seg_idx) {
+      trajectory_utils::insertStopPoint(output_traj_points, input_stop_pose, *stop_seg_idx);
+    }
   }
 
   time_keeper_ptr_->toc(__func__, "    ");
@@ -448,12 +490,13 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
   }();
 
   if (first_outside_idx) {
+    debug_data_ptr_->stop_pose_by_drivable_area = optimized_traj_points.at(*first_outside_idx).pose;
     const auto stop_idx = [&]() {
-      const auto dist = tier4_autoware_utils::calcDistance2d(
-        optimized_traj_points.at(0), optimized_traj_points.at(*first_outside_idx));
+      const auto dist =
+        motion_utils::calcSignedArcLength(optimized_traj_points, 0, *first_outside_idx);
       const auto dist_with_margin = dist - vehicle_stop_margin_outside_drivable_area_;
       const auto first_outside_idx_with_margin =
-        motion_utils::insertStopPoint(dist_with_margin, optimized_traj_points);
+        motion_utils::insertTargetPoint(0, dist_with_margin, optimized_traj_points);
       if (first_outside_idx_with_margin) {
         return *first_outside_idx_with_margin;
       }
@@ -467,6 +510,8 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
         optimized_traj_points.at(i).longitudinal_velocity_mps = 0.0;
       }
     }
+  } else {
+    debug_data_ptr_->stop_pose_by_drivable_area = std::nullopt;
   }
 
   time_keeper_ptr_->toc(__func__, "    ");
@@ -498,7 +543,8 @@ void ObstacleAvoidancePlanner::publishDebugMarkerOfOptimization(
 
   // debug marker
   time_keeper_ptr_->tic("getDebugMarker");
-  const auto debug_marker = getDebugMarker(*debug_data_ptr_, traj_points, vehicle_info_);
+  const auto debug_marker =
+    getDebugMarker(*debug_data_ptr_, traj_points, vehicle_info_, enable_pub_extra_debug_marker_);
   time_keeper_ptr_->toc("getDebugMarker", "      ");
 
   time_keeper_ptr_->tic("publishDebugMarker");

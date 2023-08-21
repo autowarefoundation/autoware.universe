@@ -40,16 +40,38 @@ double time_along_path(const EgoData & ego_data, const size_t target_idx)
   return dist / v;
 }
 
+bool object_is_incoming(
+  const lanelet::BasicPoint2d & object_position,
+  const std::shared_ptr<route_handler::RouteHandler> route_handler,
+  const lanelet::ConstLanelet & lane)
+{
+  const auto lanelets = route_handler->getPrecedingLaneletSequence(lane, 50.0);
+  if (boost::geometry::within(object_position, lane.polygon2d().basicPolygon())) return true;
+  for (const auto & lls : lanelets)
+    for (const auto & ll : lls)
+      if (boost::geometry::within(object_position, ll.polygon2d().basicPolygon())) return true;
+  return false;
+}
+
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
+  const std::shared_ptr<route_handler::RouteHandler> route_handler, const double min_confidence,
   const rclcpp::Logger & logger)
 {
+  // skip the dynamic object if it is not in a lane preceding the overlapped lane
+  // lane changes are intentionally not considered
+  const auto object_point = lanelet::BasicPoint2d(
+    object.kinematics.initial_pose_with_covariance.pose.position.x,
+    object.kinematics.initial_pose_with_covariance.pose.position.y);
+  if (!object_is_incoming(object_point, route_handler, range.lane)) return {};
+
   const auto max_deviation = object.shape.dimensions.y * 2.0;
 
   auto worst_enter_time = std::optional<double>();
   auto worst_exit_time = std::optional<double>();
 
   for (const auto & predicted_path : object.kinematics.predicted_paths) {
+    if (predicted_path.confidence < min_confidence) continue;
     const auto time_step = rclcpp::Duration(predicted_path.time_step).seconds();
     const auto enter_point =
       geometry_msgs::msg::Point().set__x(range.entering_point.x()).set__y(range.entering_point.y());
@@ -243,7 +265,7 @@ bool ttc_condition(
   return collision_during_overlap || ttc_is_bellow_threshold;
 }
 
-bool object_is_incoming(
+bool will_collide_on_range(
   const RangeTimes & range_times, const PlannerParam & params, const rclcpp::Logger & logger)
 {
   RCLCPP_DEBUG(
@@ -274,9 +296,11 @@ bool should_not_enter(
       continue;  // skip objects with velocity bellow a threshold
     }
     // skip objects that are already on the interval
-    const auto enter_exit_time = params.objects_use_predicted_paths
-                                   ? object_time_to_range(object, range, logger)
-                                   : object_time_to_range(object, range, inputs, logger);
+    const auto enter_exit_time =
+      params.objects_use_predicted_paths
+        ? object_time_to_range(
+            object, range, inputs.route_handler, params.objects_min_confidence, logger)
+        : object_time_to_range(object, range, inputs, logger);
     if (!enter_exit_time) {
       RCLCPP_DEBUG(logger, " SKIP (no enter/exit times found)\n");
       continue;  // skip objects that are not driving towards the overlapping range
@@ -284,7 +308,7 @@ bool should_not_enter(
 
     range_times.object.enter_time = enter_exit_time->first;
     range_times.object.exit_time = enter_exit_time->second;
-    if (object_is_incoming(range_times, params, logger)) return true;
+    if (will_collide_on_range(range_times, params, logger)) return true;
   }
   return false;
 }

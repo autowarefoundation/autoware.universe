@@ -15,6 +15,7 @@
 #include "behavior_path_planner/utils/goal_planner/goal_searcher.hpp"
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 
@@ -26,6 +27,7 @@
 namespace behavior_path_planner
 {
 using lane_departure_checker::LaneDepartureChecker;
+using lanelet::autoware::NoParkingArea;
 using lanelet::autoware::NoStoppingArea;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::inverseTransformPose;
@@ -54,7 +56,9 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
 
   const auto pull_over_lanes =
     goal_planner_utils::getPullOverLanes(*route_handler, left_side_parking_);
-  auto lanes = utils::getExtendedCurrentLanes(planner_data_, backward_length, forward_length);
+  auto lanes = utils::getExtendedCurrentLanes(
+    planner_data_, backward_length, forward_length,
+    /*forward_only_in_route*/ false);
   lanes.insert(lanes.end(), pull_over_lanes.begin(), pull_over_lanes.end());
 
   const auto goal_arc_coords =
@@ -66,7 +70,8 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
     parameters_.goal_search_interval);
 
   const auto [shoulder_lane_objects, others] =
-    utils::separateObjectsByLanelets(*(planner_data_->dynamic_object), pull_over_lanes);
+    utils::path_safety_checker::separateObjectsByLanelets(
+      *(planner_data_->dynamic_object), pull_over_lanes);
 
   std::vector<Pose> original_search_poses{};  // for search area visualizing
   size_t goal_id = 0;
@@ -101,6 +106,10 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
 
       const auto transformed_vehicle_footprint =
         transformVector(vehicle_footprint_, tier4_autoware_utils::pose2transform(search_pose));
+
+      if (isInAreas(transformed_vehicle_footprint, getNoParkingAreaPolygons(pull_over_lanes))) {
+        continue;
+      }
 
       if (isInAreas(transformed_vehicle_footprint, getNoStoppingAreaPolygons(pull_over_lanes))) {
         continue;
@@ -144,7 +153,8 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
     const auto pull_over_lanes =
       goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
     const auto [shoulder_lane_objects, others] =
-      utils::separateObjectsByLanelets(*(planner_data_->dynamic_object), pull_over_lanes);
+      utils::path_safety_checker::separateObjectsByLanelets(
+        *(planner_data_->dynamic_object), pull_over_lanes);
     constexpr bool filter_inside = true;
     const auto target_objects = goal_planner_utils::filterObjectsByLateralDistance(
       goal_pose, planner_data_->parameters.vehicle_width, shoulder_lane_objects,
@@ -272,6 +282,20 @@ void GoalSearcher::createAreaPolygons(std::vector<Pose> original_search_poses)
     boost::geometry::union_(footprint, area_polygons_, current_result);
     area_polygons_ = current_result;
   }
+}
+
+BasicPolygons2d GoalSearcher::getNoParkingAreaPolygons(const lanelet::ConstLanelets & lanes) const
+{
+  BasicPolygons2d area_polygons{};
+  for (const auto & ll : lanes) {
+    for (const auto & reg_elem : ll.regulatoryElementsAs<NoParkingArea>()) {
+      for (const auto & area : reg_elem->noParkingAreas()) {
+        const auto & area_poly = lanelet::utils::to2D(area).basicPolygon();
+        area_polygons.push_back(area_poly);
+      }
+    }
+  }
+  return area_polygons;
 }
 
 BasicPolygons2d GoalSearcher::getNoStoppingAreaPolygons(const lanelet::ConstLanelets & lanes) const
