@@ -106,7 +106,6 @@
           "default": 9,
           "description": "The kernel size for blurring effect on object's costmap."
         }
-
       },
       "required": [
         "costmap_frame",
