@@ -61,7 +61,8 @@ private:
   static std::string get_timestamp();
   rclcpp::QoS get_qos_profile_of_topic(const std::string & topic_name);
   void search_topic(ModuleSection & section);
-  static void create_bag_file(std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
+  static void create_bag_file(
+    std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
   void bag_file_handler();
   static void add_topics_to_writer(
     std::unique_ptr<rosbag2_cpp::Writer> & writer_, std::string topic_name, std::string topic_type);

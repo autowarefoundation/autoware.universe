@@ -23,12 +23,15 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
 {
   // common params declarations
   bag_path_ = declare_parameter<std::string>("common.path");
-  disk_space_threshold_ = static_cast<int>(declare_parameter<int>("common.check_disk_space_threshold"));
+  disk_space_threshold_ =
+    static_cast<int>(declare_parameter<int>("common.check_disk_space_threshold"));
   maximum_record_time_ = static_cast<int>(declare_parameter<int>("common.maximum_record_time"));
   bag_time_ = static_cast<int>(declare_parameter<int>("common.bag_time"));
-  number_of_maximum_bags_ = static_cast<int>(declare_parameter<int>("common.number_of_maximum_bags"));
+  number_of_maximum_bags_ =
+    static_cast<int>(declare_parameter<int>("common.number_of_maximum_bags"));
   record_all_topic_in_a_bag_ = declare_parameter<bool>("common.record_all_topic_in_a_bag");
-  enable_only_auto_mode_recording_ = declare_parameter<bool>("common.enable_only_auto_mode_recording");
+  enable_only_auto_mode_recording_ =
+    declare_parameter<bool>("common.enable_only_auto_mode_recording");
   disk_space_action_mode_ = declare_parameter<std::string>("common.disk_space_threshold_action");
 
   is_writing_ = false;
@@ -117,7 +120,8 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
   }
 
   gate_mode_sub_ = create_subscription<tier4_control_msgs::msg::GateMode>(
-    "/control/current_gate_mode", 1, std::bind(&AutowareBagRecorderNode::gate_mode_cmd_callback, this, std::placeholders::_1));
+    "/control/current_gate_mode", 1,
+    std::bind(&AutowareBagRecorderNode::gate_mode_cmd_callback, this, std::placeholders::_1));
 
   if (record_all_topic_in_a_bag_) {
     ModuleSection all_topics;
@@ -150,8 +154,7 @@ std::string AutowareBagRecorderNode::get_timestamp()
 void AutowareBagRecorderNode::create_bag_file(
   std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path)
 {
-  if (std::filesystem::exists(bag_path))
-  {
+  if (std::filesystem::exists(bag_path)) {
     return;
   }
   writer = std::make_unique<rosbag2_cpp::Writer>();
@@ -174,10 +177,11 @@ void AutowareBagRecorderNode::bag_file_handler()
   }
 }
 
-void AutowareBagRecorderNode::section_factory(const std::vector<std::string> & topics, const std::string & path)
+void AutowareBagRecorderNode::section_factory(
+  const std::vector<std::string> & topics, const std::string & path)
 {
   ModuleSection section;
-  for (const auto & topic: topics) {
+  for (const auto & topic : topics) {
     TopicInfo topic_info = {topic, ""};
     section.topic_info.push_back(topic_info);
     section.topic_names.push_back(topic);
@@ -220,11 +224,10 @@ void AutowareBagRecorderNode::generic_subscription_callback(
   const std::shared_ptr<rclcpp::SerializedMessage const> & msg, const std::string & topic_name,
   autoware_bag_recorder::ModuleSection & section)
 {
-  if(gate_mode_cmd_ptr)
-  {
-    if (!enable_only_auto_mode_recording_ ||
-        (gate_mode_cmd_ptr->data == tier4_control_msgs::msg::GateMode::AUTO && is_writing_))
-    {
+  if (gate_mode_cmd_ptr) {
+    if (
+      !enable_only_auto_mode_recording_ ||
+      (gate_mode_cmd_ptr->data == tier4_control_msgs::msg::GateMode::AUTO && is_writing_)) {
       auto serialized_bag_msg = std::make_shared<rosbag2_storage::SerializedBagMessage>();
       serialized_bag_msg->serialized_data = std::make_shared<rcutils_uint8_array_t>();
       serialized_bag_msg->topic_name = topic_name;
@@ -329,9 +332,10 @@ void AutowareBagRecorderNode::free_disk_space_for_continue(
   }
 }
 
-void AutowareBagRecorderNode::gate_mode_cmd_callback(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
+void AutowareBagRecorderNode::gate_mode_cmd_callback(
+  const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
 {
-  gate_mode_cmd_ptr = msg; // AUTO = 1, EXTERNAL = 0
+  gate_mode_cmd_ptr = msg;  // AUTO = 1, EXTERNAL = 0
   if (gate_mode_cmd_ptr->data != tier4_control_msgs::msg::GateMode::AUTO) {
     is_writing_ = false;
   }
@@ -384,13 +388,14 @@ void AutowareBagRecorderNode::run()
         rclcpp::shutdown();
       }
 
-      if (((std::chrono::system_clock::now() - start_bag_time) >= std::chrono::seconds(bag_time_))
-          && !enable_only_auto_mode_recording_) {
+      if (
+        ((std::chrono::system_clock::now() - start_bag_time) >= std::chrono::seconds(bag_time_)) &&
+        !enable_only_auto_mode_recording_) {
         start_bag_time = std::chrono::system_clock::now();
         bag_file_handler();
       }
 
-      if(gate_mode_cmd_ptr) {
+      if (gate_mode_cmd_ptr) {
         if (
           enable_only_auto_mode_recording_ && !is_writing_ &&
           gate_mode_cmd_ptr->data == tier4_control_msgs::msg::GateMode::AUTO) {
