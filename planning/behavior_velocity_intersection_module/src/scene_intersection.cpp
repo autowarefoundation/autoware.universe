@@ -895,7 +895,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     const bool approached_stop_line =
       (std::fabs(dist_stopline) < planner_param_.common.stop_overshoot_margin);
     const bool over_stop_line = (dist_stopline < 0.0);
-    const bool is_stopped = planner_data_->isVehicleStopped();
+    const bool is_stopped =
+      planner_data_->isVehicleStopped(planner_param_.occlusion.before_creep_stop_time);
     if (over_stop_line) {
       before_creep_state_machine_.setState(StateMachine::State::GO);
     }
@@ -913,8 +914,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     } else {
       if (is_stopped && approached_stop_line) {
         // start waiting at the first stop line
-        before_creep_state_machine_.setStateWithMarginTime(
-          StateMachine::State::GO, logger_.get_child("occlusion state_machine"), *clock_);
+        before_creep_state_machine_.setState(StateMachine::State::GO);
       }
       is_peeking_ = true;
       return IntersectionModule::FirstWaitBeforeOcclusion{
@@ -1129,6 +1129,10 @@ bool IntersectionModule::checkCollision(
         }
         const auto trimmed_ego_polygon =
           getPolygonFromArcLength(ego_lane_with_next_lanes, start_arc_length, end_arc_length);
+
+        if (trimmed_ego_polygon.empty()) {
+          continue;
+        }
 
         Polygon2d polygon{};
         for (const auto & p : trimmed_ego_polygon) {
