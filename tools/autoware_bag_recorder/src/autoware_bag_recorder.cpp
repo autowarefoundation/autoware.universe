@@ -212,7 +212,6 @@ void AutowareBagRecorderNode::generic_subscription_callback(
     std::lock_guard<std::mutex> lock(writer_mutex_);
     section.bag_writer->write(serialized_bag_msg);
   }
-
 }
 
 void AutowareBagRecorderNode::rotate_topic_names(autoware_bag_recorder::ModuleSection & section)
@@ -391,8 +390,9 @@ void AutowareBagRecorderNode::check_auto_mode()
     return;
   }
 
-  if (enable_only_auto_mode_recording_ && !is_writing_ &&
-      gate_mode_msg_ptr->data == tier4_control_msgs::msg::GateMode::AUTO) {
+  if (
+    enable_only_auto_mode_recording_ && !is_writing_ &&
+    gate_mode_msg_ptr->data == tier4_control_msgs::msg::GateMode::AUTO) {
     is_writing_ = true;
     bag_file_handler();
   }
