@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This package implements a node that uses sampling based planning to generate a drivable trajectry.
+This package implements a node that uses sampling based planning to generate a drivable trajectory.
 
 ## Feature
 
