@@ -263,7 +263,13 @@ public:
       if (index >= map_grids_x_ * map_grids_y_) {
         continue;
       }
-      current_voxel_grid_array_.at(index) = std::make_shared<MapGridVoxelInfo>(kv.second);
+
+      // TODO: check if index is valid
+      if (index >= 0 && index < current_voxel_grid_array_.size()) {
+        current_voxel_grid_array_.at(index) = std::make_shared<MapGridVoxelInfo>(kv.second);
+      } else {
+          std::cerr << "invalid index: " << index << std::endl;
+      }
     }
     (*mutex_ptr_).unlock();
   }
