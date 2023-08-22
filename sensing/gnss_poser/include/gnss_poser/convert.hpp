@@ -183,20 +183,6 @@ GNSSStat NavSatFix2MGRS(
   return mgrs;
 }
 
-GNSSStat NavSatFix2PLANE(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const int & plane_zone,
-  const rclcpp::Logger & logger)
-{
-  GNSSStat plane;
-  plane.coordinate_system = CoordinateSystem::PLANE;
-  geo_pos_conv geo;
-  geo.set_plane(plane_zone);
-  geo.llh_to_xyz(nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, nav_sat_fix_msg.altitude);
-  plane.x = geo.y();
-  plane.y = geo.x();
-  plane.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
-  return plane;
-}
 }  // namespace gnss_poser
 
 #endif  // GNSS_POSER__CONVERT_HPP_
