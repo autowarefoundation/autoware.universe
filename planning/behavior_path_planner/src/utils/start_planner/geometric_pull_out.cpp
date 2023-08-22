@@ -80,7 +80,6 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
         parameters_.collision_check_margin)) {
     return {};
   }
-
   const double velocity = parallel_parking_parameters_.forward_parking_velocity;
 
   if (parameters_.divide_pull_out_path) {
@@ -106,7 +105,6 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
     output.pairs_terminal_velocity_and_accel.push_back(
       std::make_pair(average_velocity, average_acceleration));
   }
-
   output.start_pose = planner_.getArcPaths().at(0).points.front().point.pose;
   output.end_pose = planner_.getArcPaths().at(1).points.back().point.pose;
 

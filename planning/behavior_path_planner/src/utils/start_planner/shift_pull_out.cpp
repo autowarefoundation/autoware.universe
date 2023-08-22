@@ -155,12 +155,10 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     start_planner_utils::calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
   const double s_end = path_end_info.first;
   const bool path_terminal_is_goal = path_end_info.second;
+
   constexpr double RESAMPLE_INTERVAL = 1.0;
   PathWithLaneId road_lane_reference_path = utils::resamplePathWithSpline(
     route_handler.getCenterLinePath(road_lanes, s_start, s_end), RESAMPLE_INTERVAL);
-  const double shift_distance = s_end - s_start;
-  const size_t shift_end_idx =
-    findNearestIndex(road_lane_reference_path.points, goal_pose.position);
 
   // non_shifted_path for when shift length or pull out distance is too short
   const PullOutPath non_shifted_path = std::invoke([&]() {
