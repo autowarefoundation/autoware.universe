@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(trajectory_follower_f1tenth)
 
 find_package(autoware_cmake REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(ackermann_msgs REQUIRED)
 autoware_package()
 
@@ -17,21 +18,21 @@ rclcpp_components_register_node(${CONTROLLER_NODE}
   EXECUTABLE ${CONTROLLER_NODE}_exe
 )
 
-# simple trajectory follower
-set(SIMPLE_TRAJECTORY_FOLLOWER_NODE simple_trajectory_follower)
-ament_auto_add_library(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} SHARED
-  include/trajectory_follower_nodes/simple_trajectory_follower.hpp
-  src/simple_trajectory_follower.cpp
+# f1tenth trajectory follower
+set(F1TENTH_TRAJECTORY_FOLLOWER_NODE f1tenth_trajectory_follower)
+ament_auto_add_library(${F1TENTH_TRAJECTORY_FOLLOWER_NODE} SHARED
+  include/trajectory_follower_nodes/f1tenth_trajectory_follower.hpp
+  src/f1tenth_trajectory_follower.cpp
 )
 
-ament_target_dependencies(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} ackermann_msgs)
+ament_target_dependencies(${F1TENTH_TRAJECTORY_FOLLOWER_NODE} ackermann_msgs)
 
-# TODO(simple_trajectory_follower) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
-# TODO(simple_trajectory_follower) : Temporary workaround until this is fixed.
-target_compile_options(${SIMPLE_TRAJECTORY_FOLLOWER_NODE} PRIVATE -Wno-error=old-style-cast)
-rclcpp_components_register_node(${SIMPLE_TRAJECTORY_FOLLOWER_NODE}
-  PLUGIN "simple_trajectory_follower::SimpleTrajectoryFollower"
-  EXECUTABLE ${SIMPLE_TRAJECTORY_FOLLOWER_NODE}_exe
+# TODO(f1tenth_trajectory_follower) : RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
+# TODO(f1tenth_trajectory_follower) : Temporary workaround until this is fixed.
+target_compile_options(${F1TENTH_TRAJECTORY_FOLLOWER_NODE} PRIVATE -Wno-error=old-style-cast)
+rclcpp_components_register_node(${F1TENTH_TRAJECTORY_FOLLOWER_NODE}
+  PLUGIN "f1tenth_trajectory_follower::F1tenthTrajectoryFollower"
+  EXECUTABLE ${F1TENTH_TRAJECTORY_FOLLOWER_NODE}_exe
 )
 
 if(BUILD_TESTING)

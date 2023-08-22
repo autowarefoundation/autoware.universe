@@ -29,7 +29,7 @@
 
 #include <memory>
 
-namespace simple_trajectory_follower
+namespace f1tenth_trajectory_follower
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_planning_msgs::msg::Trajectory;
@@ -43,11 +43,11 @@ using geometry_msgs::msg::Vector3;
 using std_msgs::msg::Header;
 using geometry_msgs::msg::Point;
 
-class SimpleTrajectoryFollower : public rclcpp::Node
+class F1tenthTrajectoryFollower : public rclcpp::Node
 {
 public:
-  explicit SimpleTrajectoryFollower(const rclcpp::NodeOptions & options);
-  ~SimpleTrajectoryFollower() = default;
+  explicit F1tenthTrajectoryFollower(const rclcpp::NodeOptions & options);
+  ~F1tenthTrajectoryFollower() = default;
 
 private:
   rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
@@ -81,6 +81,6 @@ private:
   void createTrajectoryMarker();
 };
 
-}  // namespace simple_trajectory_follower
+}  // namespace f1tenth_trajectory_follower
 
 #endif  // TRAJECTORY_FOLLOWER_NODES__SIMPLE_TRAJECTORY_FOLLOWER_HPP_

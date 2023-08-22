@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include "trajectory_follower_nodes/simple_trajectory_follower.hpp"
+#include "trajectory_follower_nodes/f1tenth_trajectory_follower.hpp"
 #include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -20,15 +20,15 @@
 
 using namespace std;
 
-namespace simple_trajectory_follower
+namespace f1tenth_trajectory_follower
 {
 
 using motion_utils::findNearestIndex;
 using tier4_autoware_utils::calcLateralDeviation;
 using tier4_autoware_utils::calcYawDeviation;
 
-SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & options)
-: Node("simple_trajectory_follower", options)
+F1tenthTrajectoryFollower::F1tenthTrajectoryFollower(const rclcpp::NodeOptions & options)
+: Node("f1tenth_trajectory_follower", options)
 {
   drive_cmd_ = create_publisher<AckermannDriveStamped>("/drive", 1);
   traj_marker_pub_ = create_publisher<Marker>("/wp_marker", 10);
@@ -45,10 +45,10 @@ SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & o
 
   using namespace std::literals::chrono_literals;
   timer_ = rclcpp::create_timer(
-    this, get_clock(), 30ms, std::bind(&SimpleTrajectoryFollower::onTimer, this));
+    this, get_clock(), 30ms, std::bind(&F1tenthTrajectoryFollower::onTimer, this));
 }
 
-void SimpleTrajectoryFollower::createTrajectoryMarker(){
+void F1tenthTrajectoryFollower::createTrajectoryMarker(){
     scale.x = 0.1;
     scale.y = 0.1;
     scale.z = 0.1;
@@ -100,7 +100,7 @@ void SimpleTrajectoryFollower::createTrajectoryMarker(){
     goal_marker_pub_->publish(goal_marker);
 }
 
-void SimpleTrajectoryFollower::onTimer()
+void F1tenthTrajectoryFollower::onTimer()
 {
   if (!checkData()) {
     // RCLCPP_INFO(get_logger(), "data not ready!!");
@@ -125,13 +125,13 @@ void SimpleTrajectoryFollower::onTimer()
   cout << "velocity: " << ackermann_msg.drive.speed << "m/s"<< endl;
 }
 
-void SimpleTrajectoryFollower::updateClosest()
+void F1tenthTrajectoryFollower::updateClosest()
 {
   const auto closest = findNearestIndex(trajectory_->points, odometry_->pose.pose.position);
   closest_traj_point_ = trajectory_->points.at(closest);
 }
 
-double SimpleTrajectoryFollower::calcSteerCmd()
+double F1tenthTrajectoryFollower::calcSteerCmd()
 {
   const auto lat_err =
     calcLateralDeviation(closest_traj_point_.pose, odometry_->pose.pose.position) -
@@ -153,7 +153,7 @@ double SimpleTrajectoryFollower::calcSteerCmd()
   return steer;
 }
 
-double SimpleTrajectoryFollower::calcAccCmd()
+double F1tenthTrajectoryFollower::calcAccCmd()
 {
   const auto traj_vel = static_cast<double>(closest_traj_point_.longitudinal_velocity_mps);
   const auto ego_vel = odometry_->twist.twist.linear.x;
@@ -169,9 +169,9 @@ double SimpleTrajectoryFollower::calcAccCmd()
   return acc;
 }
 
-bool SimpleTrajectoryFollower::checkData() { return (trajectory_ && odometry_); }
+bool F1tenthTrajectoryFollower::checkData() { return (trajectory_ && odometry_); }
 
-}  // namespace simple_trajectory_follower
+}  // namespace f1tenth_trajectory_follower
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(simple_trajectory_follower::SimpleTrajectoryFollower)
+RCLCPP_COMPONENTS_REGISTER_NODE(f1tenth_trajectory_follower::F1tenthTrajectoryFollower)

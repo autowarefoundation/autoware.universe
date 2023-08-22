@@ -190,7 +190,7 @@ cd autoware && . install/setup.bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-Record a trajectory and save at your preferred path. To stop recording, Ctrl + C and your path will be automatically saved.
+Record a trajectory and save at your preferred path. To stop recording, Ctrl + C and your path will be automatically saved. The default replay_path is at "/tmp/path". The recording will be automatically erased after reboot. 
 
 ```(bash)
 # Terminal 3
