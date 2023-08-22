@@ -31,9 +31,9 @@ namespace drivable_area_expansion
 
 std::vector<PathPointWithLaneId> crop_and_resample(
   const std::vector<PathPointWithLaneId> & points,
-  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data)
+  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data,
+  const double resample_interval)
 {
-  constexpr auto resample_interval = 2.0;  // TODO(Maxime): param
   auto lon_offset = 0.0;
   auto crop_pose = *planner_data->drivable_area_expansion_prev_crop_pose;
   // reuse or update the previous crop point
@@ -91,7 +91,7 @@ void expandDrivableArea(
   for (const auto & line : uncrossable_lines)
     if (boost::geometry::distance(line, point_t{p.x, p.y}) < params.max_path_arc_length)
       uncrossable_lines_in_range.push_back(line);
-  const auto points = crop_and_resample(path.points, planner_data);
+  const auto points = crop_and_resample(path.points, planner_data, params.resample_interval);
   const auto path_footprints = createPathFootprints(points, params);
   const auto predicted_paths = createObjectFootprints(dynamic_objects, params);
   const auto expansion_polygons =

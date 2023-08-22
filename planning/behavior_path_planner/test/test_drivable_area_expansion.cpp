@@ -258,6 +258,7 @@ TEST(DrivableAreaExpansionProjection, expandDrivableArea)
     params.compensate_extra_dist = false;
     params.max_expansion_distance = 0.0;  // means no limit
     params.max_path_arc_length = 0.0;     // means no limit
+    params.resample_interval = 1.0;
     params.extra_arc_length = 1.0;
     params.expansion_method = "polygon";
     // 2m x 4m ego footprint
