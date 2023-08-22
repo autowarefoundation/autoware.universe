@@ -106,7 +106,10 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     if (errors.empty()) {
       return map;
     }
-  } else if (lanelet2_map_projector_type == "local" || lanelet2_map_projector_type == "local_cartesian_utm" || lanelet2_map_projector_type == "local_cartesian_wgs84") {
+  } else if (
+    lanelet2_map_projector_type == "local" ||
+    lanelet2_map_projector_type == "local_cartesian_utm" ||
+    lanelet2_map_projector_type == "local_cartesian_wgs84") {
     // Use MGRSProjector as parser
     lanelet::projection::MGRSProjector projector{};
     const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
