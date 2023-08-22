@@ -9,13 +9,13 @@
 
   <author email="takamasa.horibe@tier4.jp">Takamasa Horibe</author>
 
-  <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <depend>libgoogle-glog-dev</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>libgoogle-glog-dev</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GLOG_COMPONENT_GLOG_COMPONENT_HPP_
-#define GLOG_COMPONENT_GLOG_COMPONENT_HPP_
+#ifndef GLOG_COMPONENT__GLOG_COMPONENT_HPP_
+#define GLOG_COMPONENT__GLOG_COMPONENT_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+
 #include <glog/logging.h>
 
 class GlogComponent : public rclcpp::Node
@@ -24,4 +25,4 @@ public:
   explicit GlogComponent(const rclcpp::NodeOptions & node_options);
 };
 
-#endif  // GLOG_COMPONENT_GLOG_COMPONENT_HPP_
+#endif  // GLOG_COMPONENT__GLOG_COMPONENT_HPP_

@@ -9,7 +9,6 @@ ament_auto_add_library(glog_component SHARED
   src/glog_component.cpp
 )
 target_link_libraries(glog_component glog)
-target_include_directories(glog_component SYSTEM PUBLIC)
 
 rclcpp_components_register_node(glog_component
   PLUGIN "GlogComponent"
