@@ -42,7 +42,7 @@
           "type": "integer",
           "default": "9",
           "exclusiveMinimum": 0,
-          "description": "identification number of the plane rectangular coordinate systems."
+          "description": "Identification number of the plane rectangular coordinate systems."
         },
         "height_system": {
           "type": "integer",
