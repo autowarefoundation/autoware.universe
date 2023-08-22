@@ -64,6 +64,13 @@ def launch_setup(context, *args, **kwargs):
     with open(LaunchConfiguration("behavior_path_planner_param_path").perform(context), "r") as f:
         behavior_path_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    glog_component = ComposableNode(
+        package="glog_component",
+        plugin="glog_component::GlogComponent",
+        name="glog_component",
+        extra_arguments=[{"use_intra_process_comms": True}],
+    )
+
     behavior_path_planner_component = ComposableNode(
         package="behavior_path_planner",
         plugin="behavior_path_planner::BehaviorPathPlannerNode",
@@ -211,6 +218,7 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[
             behavior_path_planner_component,
             behavior_velocity_planner_component,
+            glog_component,
         ],
         output="screen",
     )

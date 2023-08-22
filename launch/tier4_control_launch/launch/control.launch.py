@@ -306,6 +306,13 @@ def launch_setup(context, *args, **kwargs):
         target_container="/control/control_container",
     )
 
+    glog_component = ComposableNode(
+        package="glog_component",
+        plugin="glog_component::GlogComponent",
+        name="glog_component",
+        extra_arguments=[{"use_intra_process_comms": True}],
+    )
+
     # set container to run all required components in the same process
     container = ComposableNodeContainer(
         name="control_container",
@@ -319,6 +326,7 @@ def launch_setup(context, *args, **kwargs):
             shift_decider_component,
             vehicle_cmd_gate_component,
             operation_mode_transition_manager_component,
+            glog_component,
         ],
     )
 
