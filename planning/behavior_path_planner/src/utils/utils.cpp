@@ -1282,36 +1282,49 @@ std::vector<DrivableLanes> cutOverlappedLanes(
       [&has_same_id_lane, &p](const auto & lanelet) { return has_same_id_lane(lanelet, p); });
   };
 
-  bool found_first_point = false;
-  size_t start_idx = 0;
+  // Step1. find first path point within drivable lanes
+  size_t start_point_idx = std::numeric_limits<size_t>::max();
   for (const auto & lanes : shorten_lanes) {
-    for (size_t i = start_idx; i < original_points.size(); ++i) {
+    for (size_t i = 0; i < original_points.size(); ++i) {
+      // check right lane
+      if (has_same_id_lane(lanes.right_lane, original_points.at(i))) {
+        start_point_idx = std::min(start_point_idx, i);
+      }
+
+      // check left lane
+      if (has_same_id_lane(lanes.left_lane, original_points.at(i))) {
+        start_point_idx = std::min(start_point_idx, i);
+      }
+
+      // check middle lanes
+      if (has_same_id_lanes(lanes.middle_lanes, original_points.at(i))) {
+        start_point_idx = std::min(start_point_idx, i);
+      }
+    }
+  }
+
+  // Step2. pick up only path points within drivable lanes
+  for (const auto & lanes : shorten_lanes) {
+    for (size_t i = start_point_idx; i < original_points.size(); ++i) {
       // check right lane
       if (has_same_id_lane(lanes.right_lane, original_points.at(i))) {
         path.points.push_back(original_points.at(i));
-        found_first_point = true;
         continue;
       }
 
       // check left lane
       if (has_same_id_lane(lanes.left_lane, original_points.at(i))) {
         path.points.push_back(original_points.at(i));
-        found_first_point = true;
         continue;
       }
 
       // check middle lanes
       if (has_same_id_lanes(lanes.middle_lanes, original_points.at(i))) {
         path.points.push_back(original_points.at(i));
-        found_first_point = true;
         continue;
       }
 
-      if (!found_first_point) {
-        continue;
-      }
-
-      start_idx = i++;
+      start_point_idx = i;
       break;
     }
   }
