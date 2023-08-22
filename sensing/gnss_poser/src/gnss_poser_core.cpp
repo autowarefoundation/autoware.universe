@@ -91,7 +91,8 @@ void GNSSPoser::callbackNavSatFix(
   if (!received_map_projector_info_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "map_projector_info has not been received yet. Check if the map_projection_loader is successfully launched.");
+      "map_projector_info has not been received yet. Check if the map_projection_loader is "
+      "successfully launched.");
     return;
   }
 
