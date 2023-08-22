@@ -97,6 +97,18 @@ private:
   std::vector<std::unique_ptr<BaseExpr>> list_;
 };
 
+class PrecondExpr : public BaseExpr
+{
+public:
+  PrecondExpr(Graph & graph, YAML::Node yaml);
+  ExprStatus eval() const override;
+  std::vector<BaseNode *> get_dependency() const override;
+
+private:
+  std::unique_ptr<BaseExpr> cond_;
+  std::unique_ptr<BaseExpr> data_;
+};
+
 }  // namespace system_diagnostic_graph
 
 #endif  // CORE__EXPR_HPP_

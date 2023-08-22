@@ -15,9 +15,25 @@
 #include "tool.hpp"
 
 #include <memory>
+#include <string>
 
 namespace system_diagnostic_graph
 {
+
+std::string level_to_string(DiagnosticLevel level)
+{
+  switch (level) {
+    case DiagnosticStatus::OK:
+      return "OK";
+    case DiagnosticStatus::WARN:
+      return "WARN";
+    case DiagnosticStatus::ERROR:
+      return "ERROR";
+    case DiagnosticStatus::STALE:
+      return "STALE";
+  }
+  return "UNKNOWN";
+}
 
 ToolNode::ToolNode() : Node("system_diagnostic_graph_converter")
 {
@@ -37,6 +53,16 @@ void ToolNode::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
   message.status.reserve(msg->nodes.size());
   for (const auto & node : msg->nodes) {
     message.status.push_back(node.status);
+    for (const auto & link : node.links) {
+      diagnostic_msgs::msg::KeyValue kv;
+      const auto & status = msg->nodes[link.index].status;
+      kv.key = status.name;
+      kv.value = level_to_string(status.level);
+      if (!link.used) {
+        kv.value += " (IGNORED)";
+      }
+      message.status.back().values.push_back(kv);
+    }
   }
   pub_array_->publish(message);
 }
