@@ -80,7 +80,6 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
         parameters_.collision_check_margin)) {
     return {};
   }
-
   const double velocity = parallel_parking_parameters_.forward_parking_velocity;
 
   if (parameters_.divide_pull_out_path) {
