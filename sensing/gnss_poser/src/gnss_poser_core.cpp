@@ -31,6 +31,8 @@ CoordinateSystem convert_to_coordinate_systems(const std::string & type)
     return CoordinateSystem::UTM;
   } else if (type == "local") {
     return CoordinateSystem::PLANE;
+  } else if (type == "local_cartesian_utm") {
+    return CoordinateSystem::LOCAL_CARTESIAN_UTM;
   } else if (type == "local_cartesian_wgs84") {
     return CoordinateSystem::LOCAL_CARTESIAN_WGS84;
   }
@@ -224,14 +226,14 @@ GNSSStat GNSSPoser::convert(
   GNSSStat gnss_stat;
   if (coordinate_system == CoordinateSystem::UTM) {
     gnss_stat = NavSatFix2UTM(nav_sat_fix_msg, this->get_logger(), height_system);
-  } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_UTM) {
-    gnss_stat = NavSatFix2LocalCartesianUTM(
-      nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(), height_system);
   } else if (coordinate_system == CoordinateSystem::MGRS) {
     gnss_stat = NavSatFix2MGRS(
       nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(), height_system);
   } else if (coordinate_system == CoordinateSystem::PLANE) {
     gnss_stat = NavSatFix2PLANE(nav_sat_fix_msg, plane_zone_, this->get_logger());
+  } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_UTM) {
+    gnss_stat = NavSatFix2LocalCartesianUTM(
+      nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(), height_system);
   } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_WGS84) {
     gnss_stat =
       NavSatFix2LocalCartesianWGS84(nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger());
