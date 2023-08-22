@@ -174,7 +174,7 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   }
 
   // ObjectFilteringParams
-  std::string obj_filter_ns = base_ns + "object_filtering_params.";
+  std::string obj_filter_ns = base_ns + "target_filtering.";
   {
     p.objects_filtering_params.safety_check_time_horizon =
       node->declare_parameter<double>(obj_filter_ns + "safety_check_time_horizon");
@@ -225,9 +225,9 @@ StartPlannerModuleManager::StartPlannerModuleManager(
     p.objects_filtering_params.object_lane_configuration.check_current_lane =
       node->declare_parameter<bool>(obj_lane_ns + "check_current_lane");
     p.objects_filtering_params.object_lane_configuration.check_right_lane =
-      node->declare_parameter<bool>(obj_lane_ns + "check_right_lane");
+      node->declare_parameter<bool>(obj_lane_ns + "check_right_side_lane");
     p.objects_filtering_params.object_lane_configuration.check_left_lane =
-      node->declare_parameter<bool>(obj_lane_ns + "check_left_lane");
+      node->declare_parameter<bool>(obj_lane_ns + "check_left_side_lane");
     p.objects_filtering_params.object_lane_configuration.check_shoulder_lane =
       node->declare_parameter<bool>(obj_lane_ns + "check_shoulder_lane");
     p.objects_filtering_params.object_lane_configuration.check_other_lane =
