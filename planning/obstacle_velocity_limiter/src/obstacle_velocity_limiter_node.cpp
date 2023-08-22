@@ -151,7 +151,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleVelocityLimiterNode::onParamete
         result.reason = "Unknown forward projection model";
       }
     } else if (parameter.get_name() == ProjectionParameters::NB_POINTS_PARAM) {
-      if (!projection_params_.updateNB_POINTS(*this, static_cast<int>(parameter.as_int()))) {
+      if (!projection_params_.updateNbPoints(*this, static_cast<int>(parameter.as_int()))) {
         result.successful = false;
         result.reason = "number of points for projections must be at least 2";
       }

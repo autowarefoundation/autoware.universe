@@ -133,7 +133,7 @@ struct ProjectionParameters
   {
     updateModel(node, node.declare_parameter<std::string>(MODEL_PARAM));
     updateDistanceMethod(node, node.declare_parameter<std::string>(DISTANCE_METHOD_PARAM));
-    updateNB_POINTS(node, node.declare_parameter<int>(NB_POINTS_PARAM));
+    updateNbPoints(node, node.declare_parameter<int>(NB_POINTS_PARAM));
     steering_angle_offset = node.declare_parameter<double>(STEER_OFFSET_PARAM);
     duration = node.declare_parameter<double>(DURATION_PARAM);
   }
@@ -168,7 +168,7 @@ struct ProjectionParameters
     return true;
   }
 
-  bool updateNB_POINTS(rclcpp::Node & node, const int nb_points)
+  bool updateNbPoints(rclcpp::Node & node, const int nb_points)
   {
     if (nb_points < 2) {
       RCLCPP_WARN(
