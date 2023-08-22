@@ -11,7 +11,7 @@
   limitations under the License.
 -->
 
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <launch>
   <arg name="crosswalk_traffic_light_estimator_param_file" default="$(find-pkg-share crosswalk_traffic_light_estimator)/config/crosswalk_traffic_light_estimator.param.yaml"/>
 
