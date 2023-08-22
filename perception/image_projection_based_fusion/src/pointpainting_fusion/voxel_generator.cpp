@@ -60,7 +60,8 @@ std::size_t VoxelGenerator::pointsToVoxels(
       point[2] = point_current.z();
       point[3] = time_lag;
       for (std::size_t i = 1; i <= config_.class_size_; i++) {
-        point[3 + i] = (*class_iter == i) ? 1 : 0;
+        auto decode = std::bitset<8>(*class_iter).to_string();
+        point[3 + i] = decode[-i] == 1 ? 1 : 0;
       }
 
       out_of_range = false;
