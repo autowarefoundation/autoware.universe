@@ -150,11 +150,12 @@ StartPlannerModuleManager::StartPlannerModuleManager(
 
   // stop condition
   {
-    p.maximum_deceleration = node->declare_parameter<double>(ns + "maximum_deceleration");
-    p.maximum_jerk = node->declare_parameter<double>(ns + "maximum_jerk");
+    p.maximum_deceleration =
+      node->declare_parameter<double>(ns + "stop_condition.maximum_deceleration");
+    p.maximum_jerk = node->declare_parameter<double>(ns + "stop_condition.maximum_jerk");
   }
 
-  std::string base_ns = "path_safety_check.";
+  std::string base_ns = "start_planner.path_safety_check.";
 
   // EgoPredictedPath
   std::string ego_path_ns = base_ns + "ego_predicted_path.";
@@ -239,10 +240,12 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   {
     p.safety_check_params.enable_safety_check =
       node->declare_parameter<bool>(safety_check_ns + "enable_safety_check");
-    p.safety_check_params.backward_lane_length =
-      node->declare_parameter<double>(safety_check_ns + "backward_lane_length");
+    p.safety_check_params.backward_path_length =
+      node->declare_parameter<double>(safety_check_ns + "backward_path_length");
     p.safety_check_params.forward_path_length =
       node->declare_parameter<double>(safety_check_ns + "forward_path_length");
+    p.safety_check_params.publish_debug_marker =
+      node->declare_parameter<bool>(safety_check_ns + "publish_debug_marker");
   }
 
   // RSSparams
@@ -258,8 +261,6 @@ StartPlannerModuleManager::StartPlannerModuleManager(
       node->declare_parameter<double>(rss_ns + "longitudinal_distance_min_threshold");
     p.safety_check_params.rss_params.longitudinal_velocity_delta_time =
       node->declare_parameter<double>(rss_ns + "longitudinal_velocity_delta_time");
-    p.safety_check_params.publish_debug_marker =
-      node->declare_parameter<bool>(safety_check_ns + "publish_debug_marker");
   }
 
   // validation of parameters
