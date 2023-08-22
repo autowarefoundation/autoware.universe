@@ -1184,7 +1184,7 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
     const double base_link2front = common_parameters.base_link2front;
     const double base_link2rear = common_parameters.base_link2rear;
     const double vehicle_width = common_parameters.vehicle_width;
-    if (utils::checkCollisionWithExtraStoppingMargin(
+    if (utils::path_safety_checker::checkCollisionWithExtraStoppingMargin(
           path, *(planner_data_->dynamic_object), base_link2front, base_link2rear, vehicle_width,
           parameters_->maximum_deceleration, parameters_->object_recognition_collision_check_margin,
           parameters_->object_recognition_collision_check_extra_max_stopping_margin)) {
