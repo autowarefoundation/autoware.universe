@@ -449,7 +449,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
 
   // Considering change of z value due to measurement pose delay
   const auto rpy = tier4_autoware_utils::getRPY(pose.pose.pose.orientation);
-  const double dz_delay = calculateDeltaZFromPitch(current_ekf_twist_, delay_time, rpy.y);
+  const double dz_delay = current_ekf_twist_.twist.linear.x * delay_time * std::sin(-rpy.y);
   geometry_msgs::msg::PoseWithCovarianceStamped pose_with_z_delay;
   pose_with_z_delay = pose;
   pose_with_z_delay.pose.pose.position.z += dz_delay;
@@ -641,13 +641,6 @@ void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovaria
   pitch_filter_.init(rpy.y, pitch_dev, pose.header.stamp);
 }
 
-double EKFLocalizer::calculateDeltaZFromPitch(
-  const geometry_msgs::msg::TwistStamped & twist, const double delay_time, const double pitch)
-{
-  const double vx = twist.twist.linear.x;
-  const double dz = vx * delay_time * std::sin(-pitch);
-  return dz;
-}
 /**
  * @brief trigger node
  */

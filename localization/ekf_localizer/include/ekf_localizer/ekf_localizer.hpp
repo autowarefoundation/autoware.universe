@@ -263,12 +263,6 @@ private:
   void initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
   /**
-   * @brief update z value by considering measurement pose delay
-   */
-  double calculateDeltaZFromPitch(
-    const geometry_msgs::msg::TwistStamped & twist, const double delay_time, const double pitch);
-
-  /**
    * @brief trigger node
    */
   void serviceTriggerNode(
