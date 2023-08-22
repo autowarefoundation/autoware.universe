@@ -17,7 +17,9 @@
 #include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
@@ -253,13 +255,20 @@ BehaviorModuleOutput StartPlannerModule::plan()
     return SteeringFactor::STRAIGHT;
   });
 
-  // if(!isSafePath()){
-  //   if(checkWhetherStoppable())
-  //   {
-  //     //generateFeasibleStopてきなのがgoal_plannerにある
-  //     insertStopPoint();
-  //   }
-  // }
+  if (!isSafePath()) {
+    const auto distance_to_stop_point = utils::start_goal_planner_common::calcFeasibleDecelDistance(
+      planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0);
+    if (distance_to_stop_point) {
+      auto pull_out_path = getCurrentPath();
+      motion_utils::insertStopPoint(*distance_to_stop_point, pull_out_path.points);
+      RCLCPP_ERROR_THROTTLE(
+        getLogger(), *clock_, 5000, "stop point is inserted into pull out path.");
+    } else if (!distance_to_stop_point) {
+      RCLCPP_ERROR_THROTTLE(
+        getLogger(), *clock_, 5000,
+        "Failed to generate feasible stop point. So don't stop but path is not safe.");
+    }
+  }
 
   // この前に安全確認する
 

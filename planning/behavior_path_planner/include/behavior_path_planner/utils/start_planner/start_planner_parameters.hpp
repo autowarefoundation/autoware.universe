@@ -79,6 +79,10 @@ struct StartPlannerParameters
   AstarParam astar_parameters;
   RRTStarParam rrt_star_parameters;
 
+  // stop condition
+  double maximum_deceleration;
+  double maximum_jerk;
+
   // path safety checker
   utils::path_safety_checker::EgoPredictedPathParams ego_predicted_path_params;
   utils::path_safety_checker::ObjectsFilteringParams objects_filtering_params;

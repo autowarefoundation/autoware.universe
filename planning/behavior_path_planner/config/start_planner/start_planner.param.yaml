@@ -72,6 +72,9 @@
           max_planning_time: 150.0
           neighbor_radius: 8.0
           margin: 1.0
+      stop_condition:
+        maximum_deceleration: 1.0
+        maximum_jerk: 1.0
       path_safety_check:
         # EgoPredictedPath
         ego_predicted_path:
