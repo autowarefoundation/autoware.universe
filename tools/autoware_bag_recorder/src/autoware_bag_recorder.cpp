@@ -21,31 +21,8 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
   const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options), node_(this)
 {
-  // create gate mode subscription
-  gate_mode_sub_ = create_subscription<tier4_control_msgs::msg::GateMode>(
-    "/control/current_gate_mode", 1,
-    std::bind(&AutowareBagRecorderNode::gate_mode_cmd_callback, this, std::placeholders::_1));
-
-  // initialize common parameters
-  initialize_parameters();
-
-  // initialize module sections
-  setup_module_sections();
-
-  // Check the files at initialization
-  check_and_remove_files_at_init();
-
-  // check recording all topics in a single bag file is enabled
-  if (record_all_topic_in_a_bag_) {
-    record_all_topics_in_a_bag();
-  }
-
-  run();
-}
-
-void AutowareBagRecorderNode::initialize_parameters()
-{
   // common params declarations
+  database_storage_ = declare_parameter<std::string>("common.database_storage");
   bag_path_ = declare_parameter<std::string>("common.path");
   disk_space_threshold_ =
     static_cast<int>(declare_parameter<int>("common.check_disk_space_threshold"));
@@ -60,6 +37,24 @@ void AutowareBagRecorderNode::initialize_parameters()
 
   is_writing_ = false;
   remaining_topic_num_ = 0;
+
+  // create gate mode subscription
+  gate_mode_sub_ = create_subscription<tier4_control_msgs::msg::GateMode>(
+    "/control/current_gate_mode", 1,
+    std::bind(&AutowareBagRecorderNode::gate_mode_cmd_callback, this, std::placeholders::_1));
+
+  // initialize module sections
+  setup_module_sections();
+
+  // Check the files at initialization
+  check_and_remove_files_at_init();
+
+  // check recording all topics in a single bag file is enabled
+  if (record_all_topic_in_a_bag_) {
+    record_all_topics_in_a_bag();
+  }
+
+  run();
 }
 
 void AutowareBagRecorderNode::setup_module_sections()
@@ -128,7 +123,7 @@ void AutowareBagRecorderNode::create_bag_file(
 
   rosbag2_storage::StorageOptions storage_options_new;
   storage_options_new.uri = bag_path;
-  storage_options_new.storage_id = "sqlite3";
+  storage_options_new.storage_id = database_storage_;
   writer->open(storage_options_new);
 }
 
@@ -266,9 +261,9 @@ void AutowareBagRecorderNode::search_topic(autoware_bag_recorder::ModuleSection 
   }
 }
 
-double AutowareBagRecorderNode::get_root_disk_space()
+double AutowareBagRecorderNode::get_root_disk_space() const
 {
-  std::filesystem::space_info root = std::filesystem::space("/");
+  std::filesystem::space_info root = std::filesystem::space(bag_path_);
 
   return static_cast<double>(root.available) / pow(1024.0, 3.0);  // Convert to GB
 }
@@ -386,7 +381,7 @@ void AutowareBagRecorderNode::check_bag_time(
 void AutowareBagRecorderNode::check_auto_mode()
 {
   if (!gate_mode_msg_ptr) {
-    RCLCPP_WARN(get_logger(), "The current gate mode not received!");
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000,"The current gate mode not received!");
     return;
   }
 
@@ -423,6 +418,7 @@ void AutowareBagRecorderNode::start_status_control()
     }
   }).detach();
 }
+
 void AutowareBagRecorderNode::run()
 {
   // initialize bag files and topics according to the parameters

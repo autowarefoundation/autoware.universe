@@ -58,7 +58,6 @@ public:
   AutowareBagRecorderNode(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
-  void initialize_parameters();
   void setup_module_sections();
   void setup_single_module(
     const std::string & module_param, std::vector<std::string> & topics,
@@ -75,9 +74,9 @@ private:
   void check_auto_mode();
   static std::string get_timestamp();
   rclcpp::QoS get_qos_profile_of_topic(const std::string & topic_name);
-  void rotate_topic_names(autoware_bag_recorder::ModuleSection & section);
+  static void rotate_topic_names(autoware_bag_recorder::ModuleSection & section);
   void search_topic(ModuleSection & section);
-  static void create_bag_file(
+  void create_bag_file(
     std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
   void bag_file_handler();
   static void add_topics_to_writer(
@@ -86,7 +85,7 @@ private:
     const std::shared_ptr<rclcpp::SerializedMessage const> & msg, const std::string & topic_name,
     autoware_bag_recorder::ModuleSection & section);
   void section_factory(const std::vector<std::string> & topics, const std::string & path);
-  static double get_root_disk_space();
+  double get_root_disk_space() const;
   void remove_remainder_bags_in_folder(autoware_bag_recorder::ModuleSection & section) const;
   void free_disk_space_for_continue(autoware_bag_recorder::ModuleSection & section) const;
   static void check_files_in_folder(
@@ -97,6 +96,7 @@ private:
   // parameters
   int maximum_record_time_;
   int bag_time_;
+  std::string database_storage_;
   std::string bag_path_;
   int disk_space_threshold_;
   int number_of_maximum_bags_;
@@ -105,17 +105,6 @@ private:
   bool record_all_topic_in_a_bag_;
   bool enable_only_auto_mode_recording_;
   bool is_writing_;
-  bool record_api_topics_;
-  bool record_autoware_topics_;
-  bool record_control_topics_;
-  bool record_external_topics_;
-  bool record_localization_topics_;
-  bool record_map_topics_;
-  bool record_perception_topics_;
-  bool record_planning_topics_;
-  bool record_sensing_topics_;
-  bool record_system_topics_;
-  bool record_vehicle_topics_;
 
   int remaining_topic_num_;
 

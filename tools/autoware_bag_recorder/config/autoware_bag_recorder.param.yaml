@@ -1,14 +1,15 @@
 /**:
   ros__parameters:
     common:
-      maximum_record_time: 1800 # seconds
-      bag_time: 100 # seconds
-      enable_only_auto_mode_recording: false
-      record_all_topic_in_a_bag: true
-      number_of_maximum_bags: 5
-      path: "bags/" # Path to bag file for saving
-      check_disk_space_threshold: 50 # GB
-      disk_space_threshold_action: "shutdown" # [remove, shutdown] remove files or shutdown node
+      database_storage: "sqlite3"                 # sqlite3 or mcap
+      maximum_record_time: 1800                   # seconds
+      bag_time: 100                               # seconds
+      enable_only_auto_mode_recording: false      # if enabled, recording occurs only "AUTO" mode
+      record_all_topic_in_a_bag: true             # creates single bag file with all sections
+      number_of_maximum_bags: 5                   # limit of stored bag file size
+      path: "bags/"                               # Path to bag file for saving
+      check_disk_space_threshold: 50              # GB
+      disk_space_threshold_action: "shutdown"     # [remove, shutdown] remove files or shutdown node
     api_modules:
       record_api: false
       api_topics:
