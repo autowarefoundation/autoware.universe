@@ -6,7 +6,11 @@ The node `roi_pointcloud_fusion` is designed mainly to detected less LiDAR-point
 
 ## Inner-workings / Algorithms
 
-The pointclouds are projected onto image planes and extracted if they are inside the ROIs. Since ROIs is not fitted with small objects boundary, the cluster of UNKNOWN labeled object pointclouds will be refined.
+- The pointclouds are projected onto image planes and extracted if they are inside the unknown labeled ROIs.
+- Unrelated pointcloud are filtered by distance to origin of camera.
+- Filtered pointcloud are used to estimate the kinematic and polygon shape of unknown objects.
+
+![roi_pointcloud_fusion_image](./images/roi_pointcloud_fusion.png)
 
 ## Inputs / Outputs
 
