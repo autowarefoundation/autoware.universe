@@ -25,7 +25,21 @@ sample-map-rosbag
 
 ```yaml
 # map_projector_info.yaml
-type: "Local"
+type: "local"
+```
+
+### Using local cartesian UTM coordinate
+
+```yaml
+# map_projector_info.yaml
+type: "local_cartesian_utm"
+```
+
+### Using local cartesian WGS84 coordinate
+
+```yaml
+# map_projector_info.yaml
+type: "local_cartesian_wgs84"
 ```
 
 ### Using MGRS
@@ -60,3 +74,10 @@ map_origin:
 | :---------------------- | :---------- | :------------------------------------------------------------------------------- |
 | map_projector_info_path | std::string | A path to map_projector_info.yaml (used by default)                              |
 | lanelet2_map_path       | std::string | A path to lanelet2 map (used only when `map_projector_info_path` does not exist) |
+
+## How to add a new map projection type
+
+Please be aware that when you add a new map projection type, you need to modify the packages that are related to map_projector_info as well. The packages are as follows as of 2023/08/22:
+- map_loader
+- default_ad_api
+- gnss_poser
