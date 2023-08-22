@@ -144,7 +144,7 @@ TEST(TestForwardProjection, generateFootprint)
   EXPECT_TRUE(point_in_polygon(-1.5, 6.0, footprint));
 }
 
-TEST(TestForwardProjection, generateFootprintmulti_linestrings)
+TEST(TestForwardProjection, generateFootprintMultiLinestrings)
 {
   using obstacle_velocity_limiter::generateFootprint;
   using obstacle_velocity_limiter::linestring_t;
