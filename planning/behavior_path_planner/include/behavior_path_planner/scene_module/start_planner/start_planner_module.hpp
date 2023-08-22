@@ -53,7 +53,9 @@ struct PullOutStatus
   PlannerType planner_type{PlannerType::NONE};
   PathWithLaneId backward_path{};
   lanelet::ConstLanelets pull_out_lanes{};
-  bool is_safe{false};
+  bool is_safe_static_objects{false};   // current path is safe against static objects
+  bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
+  // how about is_driving_backward?
   bool back_finished{false};
   Pose pull_out_start_pose{};
 

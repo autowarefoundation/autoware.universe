@@ -65,6 +65,7 @@ struct StartPlannerParameters
   double backward_search_resolution;
   double backward_path_update_duration;
   double ignore_distance_from_lane_end;
+
   // freespace planner
   bool enable_freespace_planner;
   std::string freespace_planner_algorithm;
