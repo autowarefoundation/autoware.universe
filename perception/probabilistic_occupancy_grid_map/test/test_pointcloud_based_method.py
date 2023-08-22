@@ -261,6 +261,7 @@ class TestNodeIO(unittest.TestCase):
         self.assertIn("occupancy_grid_map_node", nodes)
         self.assertEqual(len(self.msg_buffer), 0)
 
+
 @launch_testing.post_shutdown_test()
 class TestProcessOutput(unittest.TestCase):
     def test_exit_code(self, proc_info):
