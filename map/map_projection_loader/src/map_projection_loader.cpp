@@ -35,6 +35,12 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string & fi
     msg.map_origin.longitude = data["map_origin"]["longitude"].as<double>();
   } else if (msg.type == "local") {
     ;  // do nothing
+  } else if (msg.type == "local_cartesian_utm") {
+    msg.map_origin.latitude = data["map_origin"]["latitude"].as<double>();
+    msg.map_origin.longitude = data["map_origin"]["longitude"].as<double>();
+  } else if (msg.type == "local_cartesian_wgs84") {
+    msg.map_origin.latitude = data["map_origin"]["latitude"].as<double>();
+    msg.map_origin.longitude = data["map_origin"]["longitude"].as<double>();
   } else {
     throw std::runtime_error(
       "Invalid map projector type. Currently supported types: MGRS, UTM, and local");
