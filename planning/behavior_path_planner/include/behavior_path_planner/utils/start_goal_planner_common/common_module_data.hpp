@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__START_PLANNER_MODULE_DATA_HPP_
-#define BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__START_PLANNER_MODULE_DATA_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__COMMON_MODULE_DATA_HPP_
+#define BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__COMMON_MODULE_DATA_HPP_
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
@@ -28,9 +28,9 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
 
 /*
- * Common data for start_planner module
+ * Common data for start/goal_planner module
  */
-struct StartPlannerData
+struct StartGoalPlannerData
 {
   // filtered objects
   PredictedObjects filtered_objects;
@@ -39,4 +39,4 @@ struct StartPlannerData
 
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__START_PLANNER_MODULE_DATA_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__COMMON_MODULE_DATA_HPP_

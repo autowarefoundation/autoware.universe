@@ -19,11 +19,11 @@
 #include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/utils/start_goal_planner_common/common_module_data.hpp"
 #include "behavior_path_planner/utils/start_planner/freespace_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/geometric_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/start_planner/shift_pull_out.hpp"
-#include "behavior_path_planner/utils/start_planner/start_planner_module_data.hpp"
 #include "behavior_path_planner/utils/start_planner/start_planner_parameters.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -131,7 +131,7 @@ private:
 
   std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;
   PullOutStatus status_;
-  mutable StartPlannerData start_planner_data_;
+  mutable StartGoalPlannerData start_planner_data_;
 
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
 
