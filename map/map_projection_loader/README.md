@@ -78,6 +78,7 @@ map_origin:
 ## How to add a new map projection type
 
 Please be aware that when you add a new map projection type, you need to modify the packages that are related to map_projector_info as well. The packages are as follows as of 2023/08/22:
+
 - map_loader
 - default_ad_api
 - gnss_poser
