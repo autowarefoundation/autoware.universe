@@ -173,8 +173,8 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     non_shifted_path.partial_paths.push_back(road_lane_reference_path);
     non_shifted_path.start_pose = start_pose;
     non_shifted_path.end_pose = start_pose;
-    non_shifted_path.acceleration = 2 * shift_distance / std::pow(time_to_end_pose, 2);
-    non_shifted_path.terminal_velocity = terminal_velocity;
+    non_shifted_path.pairs_terminal_velocity_and_accel.push_back(
+      std::make_pair(terminal_velocity, 2 * shift_distance / std::pow(time_to_end_pose, 2)));
     return non_shifted_path;
   });
 
@@ -292,8 +292,8 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     candidate_path.partial_paths.push_back(shifted_path.path);
     candidate_path.start_pose = shift_line.start;
     candidate_path.end_pose = shift_line.end;
-    candidate_path.acceleration = longitudinal_acc;
-    candidate_path.terminal_velocity = terminal_velocity;
+    candidate_path.pairs_terminal_velocity_and_accel.push_back(
+      std::make_pair(terminal_velocity, longitudinal_acc));
     candidate_paths.push_back(candidate_path);
   }
 

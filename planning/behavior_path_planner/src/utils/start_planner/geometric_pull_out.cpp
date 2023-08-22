@@ -89,8 +89,8 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
     const double arc_length_on_path =
       motion_utils::calcArcLength(output.partial_paths.front().points);
     output.partial_paths.front().points.back().point.longitudinal_velocity_mps = 0.0;
-    output.terminal_velocity = velocity;
-    output.acceleration = velocity * velocity / (2 * arc_length_on_path);
+    output.pairs_terminal_velocity_and_accel.push_back(
+      std::make_pair(velocity, velocity * velocity / (2 * arc_length_on_path)));
   } else {
     const auto partial_paths = planner_.getPaths();
     const auto combined_path = combineReferencePath(partial_paths.at(0), partial_paths.at(1));
@@ -103,8 +103,8 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
     const double time_to_center = velocity / acceleration;
     const double average_velocity = arc_length_on_path / (time_to_center * 2);
     const double average_acceleration = average_velocity / (time_to_center * 2);
-    output.terminal_velocity = average_velocity;
-    output.acceleration = average_acceleration;
+    output.pairs_terminal_velocity_and_accel.push_back(
+      std::make_pair(average_velocity, average_acceleration));
   }
 
   output.start_pose = planner_.getArcPaths().at(0).points.front().point.pose;
