@@ -17,10 +17,7 @@
           "description": "The time threshold to hold for last detect color."
         }
       },
-      "required": [
-        "use_last_detect_color",
-        "last_detect_color_hold_time"
-      ]
+      "required": ["use_last_detect_color", "last_detect_color_hold_time"]
     }
   },
   "properties": {
