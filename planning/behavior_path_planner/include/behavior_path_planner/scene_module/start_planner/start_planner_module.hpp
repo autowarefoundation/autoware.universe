@@ -22,6 +22,7 @@
 #include "behavior_path_planner/utils/start_planner/geometric_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/start_planner/shift_pull_out.hpp"
+#include "behavior_path_planner/utils/start_planner/start_planner_module_data.hpp"
 #include "behavior_path_planner/utils/start_planner/start_planner_parameters.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -47,6 +48,7 @@ namespace behavior_path_planner
 using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
 using behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
+using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
 using geometry_msgs::msg::PoseArray;
 using lane_departure_checker::LaneDepartureChecker;
 
@@ -127,6 +129,7 @@ private:
 
   std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;
   PullOutStatus status_;
+  mutable StartPlannerData start_planner_data_;
 
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
 
@@ -160,6 +163,9 @@ private:
   void checkBackFinished();
   bool isStopped();
   bool hasFinishedCurrentPath();
+  void updateSafetyCheckTargetObjectsData(
+    const PredictedObjects & filtered_objects,
+    const TargetObjectsOnLane & target_objects_on_lane) const;
   bool isSafePath() const;
 
   // check if the goal is located behind the ego in the same route segment.

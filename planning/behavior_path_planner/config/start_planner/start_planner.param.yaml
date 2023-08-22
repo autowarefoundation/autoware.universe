@@ -42,7 +42,7 @@
           acceleration: 1.0
           time_horizon: 10.0
           time_resolution: 0.5
-          min_slow_speed: 1.0
+          min_slow_speed: 0.0
           delay_until_departure: 1.0
           target_velocity: 1.0
         # For target object filtering
