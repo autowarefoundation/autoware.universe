@@ -52,9 +52,6 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   height_system_(declare_parameter<int>("height_system", 1)),
   gnss_pose_pub_method(declare_parameter<int>("gnss_pose_pub_method", 0))
 {
-  auto qos = rclcpp::QoS(rclcpp::KeepLast(10));
-  qos.transient_local();  // Set Durability QoS policy to transient local.
-
   // Subscribe to map_projector_info topic
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_sub(
@@ -94,7 +91,7 @@ void GNSSPoser::callbackNavSatFix(
   if (!received_map_projector_info_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "map_projector_info has not been received yet. Skipping Calculate.");
+      "map_projector_info has not been received yet. Skipping calculation.");
     return;
   }
 
