@@ -1187,7 +1187,7 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
     if (utils::path_safety_checker::checkCollisionWithExtraStoppingMargin(
           path, *(planner_data_->dynamic_object), base_link2front, base_link2rear, vehicle_width,
           parameters_->maximum_deceleration, parameters_->object_recognition_collision_check_margin,
-          parameters_->object_recognition_collision_check_extra_max_stopping_margin)) {
+          parameters_->object_recognition_collision_check_max_extra_stopping_margin)) {
       return true;
     }
   }
