@@ -70,7 +70,7 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
 
   // load map from file
   const auto map =
-    load_map(lanelet2_filename, msg->type, msg->map_origin.latitude, msg->map_origin.longitude);
+    load_map(lanelet2_filename, msg->projector_type, msg->map_origin.latitude, msg->map_origin.longitude);
   if (!map) {
     return;
   }
