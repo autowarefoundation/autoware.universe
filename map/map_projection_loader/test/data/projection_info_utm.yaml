@@ -1,4 +1,5 @@
-type: UTM
+projector_type: LocalCartesianUTM
+vertical_datum: WGS84
 map_origin:
   latitude: 35.6762
   longitude: 139.6503
