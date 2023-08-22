@@ -14,6 +14,7 @@
 
 #include "behavior_path_planner/utils/start_planner/shift_pull_out.hpp"
 
+#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
@@ -64,9 +65,9 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
 
   // extract stop objects in pull out lane for collision check
   const auto [pull_out_lane_objects, others] =
-    utils::separateObjectsByLanelets(*dynamic_objects, pull_out_lanes);
-  const auto pull_out_lane_stop_objects =
-    utils::filterObjectsByVelocity(pull_out_lane_objects, parameters_.th_moving_object_velocity);
+    utils::path_safety_checker::separateObjectsByLanelets(*dynamic_objects, pull_out_lanes);
+  const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+    pull_out_lane_objects, parameters_.th_moving_object_velocity);
 
   // get safe path
   for (auto & pull_out_path : pull_out_paths) {
@@ -150,13 +151,10 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   // generate road lane reference path
   const auto arc_position_start = getArcCoordinates(road_lanes, start_pose);
   const double s_start = std::max(arc_position_start.length - backward_path_length, 0.0);
-  const auto arc_position_goal = getArcCoordinates(road_lanes, goal_pose);
-
-  // if goal is behind start pose, use path with forward_path_length
-  const bool goal_is_behind = arc_position_goal.length < s_start;
-  const double s_forward_length = s_start + forward_path_length;
-  const double s_end =
-    goal_is_behind ? s_forward_length : std::min(arc_position_goal.length, s_forward_length);
+  const auto path_end_info =
+    start_planner_utils::calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
+  const double s_end = path_end_info.first;
+  const bool path_terminal_is_goal = path_end_info.second;
 
   constexpr double RESAMPLE_INTERVAL = 1.0;
   PathWithLaneId road_lane_reference_path = utils::resamplePathWithSpline(
@@ -276,7 +274,7 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       }
     }
     // if the end point is the goal, set the velocity to 0
-    if (!goal_is_behind) {
+    if (path_terminal_is_goal) {
       shifted_path.path.points.back().point.longitudinal_velocity_mps = 0.0;
     }
 
