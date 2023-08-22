@@ -255,7 +255,10 @@ BehaviorModuleOutput StartPlannerModule::plan()
     return SteeringFactor::STRAIGHT;
   });
 
-  if (!isSafePath()) {
+  status_.is_safe_dynamic_objects = isSafePath();
+
+  if (!status_.is_safe_dynamic_objects) {
+    status_.is_safe_dynamic_objects = false;
     const auto distance_to_stop_point = utils::start_goal_planner_common::calcFeasibleDecelDistance(
       planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0);
     if (distance_to_stop_point) {
@@ -263,14 +266,12 @@ BehaviorModuleOutput StartPlannerModule::plan()
       motion_utils::insertStopPoint(*distance_to_stop_point, pull_out_path.points);
       RCLCPP_ERROR_THROTTLE(
         getLogger(), *clock_, 5000, "stop point is inserted into pull out path.");
-    } else if (!distance_to_stop_point) {
+    } else {
       RCLCPP_ERROR_THROTTLE(
         getLogger(), *clock_, 5000,
         "Failed to generate feasible stop point. So don't stop but path is not safe.");
     }
   }
-
-  // この前に安全確認する
 
   if (status_.back_finished) {
     const double start_distance = motion_utils::calcSignedArcLength(
