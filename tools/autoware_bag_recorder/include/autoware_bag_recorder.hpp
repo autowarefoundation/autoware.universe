@@ -76,8 +76,7 @@ private:
   rclcpp::QoS get_qos_profile_of_topic(const std::string & topic_name);
   static void rotate_topic_names(autoware_bag_recorder::ModuleSection & section);
   void search_topic(ModuleSection & section);
-  void create_bag_file(
-    std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
+  void create_bag_file(std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
   void bag_file_handler();
   static void add_topics_to_writer(
     std::unique_ptr<rosbag2_cpp::Writer> & writer_, std::string topic_name, std::string topic_type);

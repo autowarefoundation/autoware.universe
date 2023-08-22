@@ -381,7 +381,7 @@ void AutowareBagRecorderNode::check_bag_time(
 void AutowareBagRecorderNode::check_auto_mode()
 {
   if (!gate_mode_msg_ptr) {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000,"The current gate mode not received!");
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "The current gate mode not received!");
     return;
   }
 
