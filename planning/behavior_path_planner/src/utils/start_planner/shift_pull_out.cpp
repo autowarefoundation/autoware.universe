@@ -165,16 +165,12 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   // non_shifted_path for when shift length or pull out distance is too short
   const PullOutPath non_shifted_path = std::invoke([&]() {
     PullOutPath non_shifted_path{};
-    // The assumption for this calculation of velocity and acceleration is to accelerate with
-    // constant acceleration until the road velocity limit is reached at the shift end point.
-    const double terminal_velocity =
-      road_lane_reference_path.points.at(shift_end_idx).point.longitudinal_velocity_mps;
-    const double time_to_end_pose = shift_distance / terminal_velocity;
+    // In non_shifted_path, to minimize safety checks, 0 is assigned to prevent the predicted_path
+    // of the ego vehicle from becoming too large.
     non_shifted_path.partial_paths.push_back(road_lane_reference_path);
     non_shifted_path.start_pose = start_pose;
     non_shifted_path.end_pose = start_pose;
-    non_shifted_path.pairs_terminal_velocity_and_accel.push_back(
-      std::make_pair(terminal_velocity, 2 * shift_distance / std::pow(time_to_end_pose, 2)));
+    non_shifted_path.pairs_terminal_velocity_and_accel.push_back(std::make_pair(0, 0));
     return non_shifted_path;
   });
 
