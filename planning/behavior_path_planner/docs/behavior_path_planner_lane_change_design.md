@@ -286,7 +286,7 @@ The following parameters are configurable in `lane_change.param.yaml`.
 | `object_shiftable_ratio_threshold`       | [-]    | double  | Vehicles around the center line within this distance ratio will be excluded from parking objects     | 0.6                |
 | `max_longitudinal_acc`                   | [-]    | double  | maximum longitudinal acceleration for lane change                                                    | 1.0                |
 | `min_longitudinal_acc`                   | [-]    | double  | maximum longitudinal deceleration for lane change                                                    | -1.0               |
-| `lateral_acceleration.velocity`          | [m/s]  | double  | Refelence velocity for lateral acceleration calculation (look up table)                              | [0.0, 4.0, 10.0]   |
+| `lateral_acceleration.velocity`          | [m/s]  | double  | Reference velocity for lateral acceleration calculation (look up table)                              | [0.0, 4.0, 10.0]   |
 | `lateral_acceleration.min_values`        | [m/ss] | double  | Min lateral acceleration values corresponding to velocity (look up table)                            | [0.15, 0.15, 0.15] |
 | `lateral_acceleration.max_values`        | [m/ss] | double  | Max lateral acceleration values corresponding to velocity (look up table)                            | [0.5, 0.5, 0.5]    |
 | `target_object.car`                      | [-]    | boolean | Include car objects for safety check                                                                 | true               |
