@@ -23,6 +23,8 @@
 
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_control_msgs</depend>
+  <depend>autoware_auto_mapping_msgs</depend>
+  <depend>autoware_map_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
 

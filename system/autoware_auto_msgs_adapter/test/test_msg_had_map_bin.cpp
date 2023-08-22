@@ -18,34 +18,28 @@
 
 #include <random>
 
-autoware_control_msgs::msg::Control generate_control_msg()
+autoware_map_msgs::msg::LaneletMapBin generate_map_msg()
 {
-  // generate deterministic random float
-  std::mt19937 gen(0);
-  std::uniform_real_distribution<> dis(-100.0, 100.0);
-  auto rand_float = [&dis, &gen]() { return static_cast<float>(dis(gen)); };
-
   // generate deterministic random int
+  std::mt19937 gen(0);
   std::uniform_int_distribution<> dis_int(0, 1000000);
   auto rand_int = [&dis_int, &gen]() { return dis_int(gen); };
 
-  autoware_control_msgs::msg::Control msg_control;
-  msg_control.stamp = rclcpp::Time(rand_int());
+  autoware_map_msgs::msg::LaneletMapBin msg_map;
+  msg_map.header.stamp = rclcpp::Time(rand_int());
+  msg_map.header.frame_id = "test_frame";
 
-  msg_control.lateral.stamp = rclcpp::Time(rand_int());
-  msg_control.lateral.steering_tire_angle = rand_float();
-  msg_control.lateral.steering_tire_rotation_rate = rand_float();
+  msg_map.version_map_format = "1.1.1";
+  msg_map.version_map = "1.0.0";
+  msg_map.name_map = "florence-prato-city-center";
+  msg_map.data.push_back(rand_int());
 
-  msg_control.longitudinal.stamp = rclcpp::Time(rand_int());
-  msg_control.longitudinal.velocity = rand_float();
-  msg_control.longitudinal.jerk = rand_float();
-  msg_control.longitudinal.acceleration = rand_float();
-  return msg_control;
+  return msg_map;
 }
 
-TEST(AutowareAutoMsgsAdapter, TestMsgAckermannControlCommand)  // NOLINT for gtest
+TEST(AutowareAutoMsgsAdapter, TestHADMapBin)  // NOLINT for gtest
 {
-  const std::string msg_type_target = "autoware_auto_control_msgs/msg/AckermannControlCommand";
+  const std::string msg_type_target = "autoware_auto_mapping_msgs/msg/HADMapBin";
   const std::string topic_name_source = "topic_name_source";
   const std::string topic_name_target = "topic_name_target";
 
@@ -66,33 +60,29 @@ TEST(AutowareAutoMsgsAdapter, TestMsgAckermannControlCommand)  // NOLINT for gte
 
   bool test_completed = false;
 
-  const auto msg_control = generate_control_msg();
+  const auto msg_map = generate_map_msg();
   auto sub =
-    node_subscriber->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+    node_subscriber->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
       topic_name_target, rclcpp::QoS{1},
-      [&msg_control, &test_completed](
-        const autoware_auto_control_msgs::msg::AckermannControlCommand::SharedPtr msg) {
-        EXPECT_EQ(msg->stamp, msg_control.stamp);
+      [&msg_map, &test_completed](
+        const autoware_auto_mapping_msgs::msg::HADMapBin::SharedPtr msg) {
+        EXPECT_EQ(msg->header.stamp, msg_map.header.stamp);
+        EXPECT_EQ(msg->header.frame_id, msg_map.header.frame_id);
 
-        EXPECT_EQ(msg->lateral.stamp, msg_control.lateral.stamp);
-        EXPECT_FLOAT_EQ(msg->lateral.steering_tire_angle, msg_control.lateral.steering_tire_angle);
-        EXPECT_FLOAT_EQ(
-          msg->lateral.steering_tire_rotation_rate,
-          msg_control.lateral.steering_tire_rotation_rate);
+        //EXPECT_EQ(msg->map_format, msg_map.name_map);//
+        EXPECT_EQ(msg->format_version, msg_map.version_map_format);
+        EXPECT_EQ(msg->map_version, msg_map.version_map);
+        EXPECT_EQ(msg->data[0], msg_map.data[0]);
 
-        EXPECT_EQ(msg->longitudinal.stamp, msg_control.longitudinal.stamp);
-        EXPECT_FLOAT_EQ(msg->longitudinal.speed, msg_control.longitudinal.velocity);
-        EXPECT_FLOAT_EQ(msg->longitudinal.acceleration, msg_control.longitudinal.acceleration);
-        EXPECT_FLOAT_EQ(msg->longitudinal.jerk, msg_control.longitudinal.jerk);
         test_completed = true;
       });
 
   std::cout << "Creating the publisher node..." << std::endl;
 
   auto node_publisher = std::make_shared<rclcpp::Node>("node_publisher", rclcpp::NodeOptions{});
-  auto pub = node_publisher->create_publisher<autoware_control_msgs::msg::Control>(
+  auto pub = node_publisher->create_publisher<autoware_map_msgs::msg::LaneletMapBin>(
     topic_name_source, rclcpp::QoS{1});
-  pub->publish(msg_control);
+  pub->publish(msg_map);
 
   auto start_time = std::chrono::system_clock::now();
   auto max_test_dur = std::chrono::seconds(5);
@@ -112,5 +102,5 @@ TEST(AutowareAutoMsgsAdapter, TestMsgAckermannControlCommand)  // NOLINT for gte
   EXPECT_TRUE(test_completed);
   EXPECT_FALSE(timed_out);
 
-  // rclcpp::shutdown();
+  rclcpp::shutdown();
 }
