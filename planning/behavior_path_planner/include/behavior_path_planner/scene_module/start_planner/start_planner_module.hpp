@@ -98,7 +98,7 @@ public:
   {
     parameters_ = parameters;
     if (parameters->safety_check_params.enable_safety_check) {
-      ego_created_path_params_ =
+      ego_predicted_path_params_ =
         std::make_shared<EgoPredictedPathParams>(parameters_->ego_predicted_path_params);
       objects_filtering_params_ =
         std::make_shared<ObjectsFilteringParams>(parameters_->objects_filtering_params);
@@ -124,7 +124,7 @@ private:
   bool canTransitIdleToRunningState() override { return false; }
 
   std::shared_ptr<StartPlannerParameters> parameters_;
-  std::shared_ptr<EgoPredictedPathParams> ego_created_path_params_;
+  std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;
   std::shared_ptr<ObjectsFilteringParams> objects_filtering_params_;
   std::shared_ptr<SafetyCheckParams> safety_check_params_;
   vehicle_info_util::VehicleInfo vehicle_info_;

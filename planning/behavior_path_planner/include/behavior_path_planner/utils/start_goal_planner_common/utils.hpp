@@ -28,6 +28,10 @@ boost::optional<double> calcFeasibleDecelDistance(
   std::shared_ptr<const PlannerData> planner_data, const double acc_lim, const double jerk_lim,
   const double target_velocity);
 
+void updateEgoPredictedPathParams(
+  std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
+  std::shared_ptr<StartPlannerParameters> & pairs_terminal_velocity_and_accel);
+
 }  // namespace behavior_path_planner::utils::start_goal_planner_common
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__UTILS_HPP_
