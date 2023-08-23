@@ -176,6 +176,9 @@ bool StartPlannerModule::isExecutionReady() const
   }
 
   if (status_.is_safe_static_objects && parameters_->safety_check_params.enable_safety_check) {
+    utils::start_goal_planner_common::updateEgoPredictedPathParams(ego_predicted_path_params_,parameters_);
+    utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_,parameters_);
+    utils::start_goal_planner_common::updateObjectsFilteringParams(objects_filtering_params_,parameters_);
     return isSafePath();
   }
   return true;
@@ -983,12 +986,12 @@ bool StartPlannerModule::isSafePath() const
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_out_path.points);
   const auto & common_param = planner_data_->parameters;
 
-  start_planner_utils::updateEgoPredictedPathParams(
-    ego_created_path_params_, getPairsTerminalVelocityAndAccel());
+  // start_planner_utils::updateEgoPredictedPathParams(
+  //   ego_predicted_path_params_, parameters_);
 
   const auto & ego_predicted_path =
     behavior_path_planner::utils::path_safety_checker::createPredictedPath(
-      ego_created_path_params_, pull_out_path.points, current_pose, current_velocity, ego_seg_idx);
+      ego_predicted_path_params_, pull_out_path.points, current_pose, current_velocity, ego_seg_idx);
 
   const auto & filtered_objects = utils::path_safety_checker::filterObjects(
     dynamic_object, route_handler, current_lanes, current_pose.position, objects_filtering_params_);

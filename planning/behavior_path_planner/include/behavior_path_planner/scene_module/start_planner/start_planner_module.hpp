@@ -124,9 +124,9 @@ private:
   bool canTransitIdleToRunningState() override { return false; }
 
   std::shared_ptr<StartPlannerParameters> parameters_;
-  std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;
-  std::shared_ptr<ObjectsFilteringParams> objects_filtering_params_;
-  std::shared_ptr<SafetyCheckParams> safety_check_params_;
+  mutable std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;
+  mutable std::shared_ptr<ObjectsFilteringParams> objects_filtering_params_;
+  mutable std::shared_ptr<SafetyCheckParams> safety_check_params_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
   std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;

@@ -26,13 +26,26 @@
 namespace behavior_path_planner::utils::start_goal_planner_common
 {
 
+using behavior_path_planner::StartPlannerParameters;
+using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
+using behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
+using behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
+
 boost::optional<double> calcFeasibleDecelDistance(
   std::shared_ptr<const PlannerData> planner_data, const double acc_lim, const double jerk_lim,
   const double target_velocity);
 
 void updateEgoPredictedPathParams(
   std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-  std::shared_ptr<StartPlannerParameters> & start_planner_params);
+  const std::shared_ptr<StartPlannerParameters> & start_planner_params);
+
+void updateSafetyCheckParams(
+  std::shared_ptr<SafetyCheckParams> & safety_check_params,
+  const std::shared_ptr<StartPlannerParameters> & start_planner_params);
+
+void updateObjectsFilteringParams(
+  std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
+  const std::shared_ptr<StartPlannerParameters> & start_planner_params);
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common
 
