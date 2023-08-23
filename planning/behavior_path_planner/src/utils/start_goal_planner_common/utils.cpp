@@ -46,21 +46,24 @@ void updateEgoPredictedPathParams(
   std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::shared_ptr<StartPlannerParameters> & start_planner_params)
 {
-  ego_predicted_path_params = std::make_shared<EgoPredictedPathParams>(start_planner_params->ego_predicted_path_params);
+  ego_predicted_path_params =
+    std::make_shared<EgoPredictedPathParams>(start_planner_params->ego_predicted_path_params);
 }
 
 void updateSafetyCheckParams(
   std::shared_ptr<SafetyCheckParams> & safety_check_params,
   const std::shared_ptr<StartPlannerParameters> & start_planner_params)
 {
-  safety_check_params = std::make_shared<SafetyCheckParams>(start_planner_params->safety_check_params);
+  safety_check_params =
+    std::make_shared<SafetyCheckParams>(start_planner_params->safety_check_params);
 }
 
 void updateObjectsFilteringParams(
   std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
   const std::shared_ptr<StartPlannerParameters> & start_planner_params)
 {
-  objects_filtering_params = std::make_shared<ObjectsFilteringParams>(start_planner_params->objects_filtering_params);
+  objects_filtering_params =
+    std::make_shared<ObjectsFilteringParams>(start_planner_params->objects_filtering_params);
 }
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common
