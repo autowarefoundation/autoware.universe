@@ -778,15 +778,15 @@ std::vector<DiscretizedLane> generateDetectionLaneDivisions(
     auto & branch = branches[(ind2id[src])];
     int node_iter = ind2id[src];
     while (true) {
-      const auto & dsts = adjacency[(id2ind[node_iter])];
+      const auto & destinations = adjacency[(id2ind[node_iter])];
       // NOTE: assuming detection lanelets have only one previous lanelet
-      const auto next = std::find(dsts.begin(), dsts.end(), true);
-      if (next == dsts.end()) {
+      const auto next = std::find(destinations.begin(), destinations.end(), true);
+      if (next == destinations.end()) {
         branch.push_back(node_iter);
         break;
       }
       branch.push_back(node_iter);
-      node_iter = ind2id[std::distance(dsts.begin(), next)];
+      node_iter = ind2id[std::distance(destinations.begin(), next)];
     }
   }
   for (decltype(branches)::iterator it = branches.begin(); it != branches.end(); it++) {
