@@ -61,7 +61,7 @@ PredictedObjects filterObjects(
  * @param lim_v Velocity limit for filtering.
  * @return PredictedObjects The filtered objects.
  */
-PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v);
+PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, const double lim_v, const bool filter_dynamic_objects = true);
 
 /**
  * @brief Filter objects based on a velocity range.

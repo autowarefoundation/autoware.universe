@@ -181,7 +181,10 @@ bool StartPlannerModule::isExecutionReady() const
     utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
     utils::start_goal_planner_common::updateObjectsFilteringParams(
       objects_filtering_params_, parameters_);
-    return isSafePath();
+    if (!isSafePath()) {
+      RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
+      return false;
+    }
   }
   return true;
 }
@@ -965,6 +968,14 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   return turn_signal;
 }
 
+// void StartPlannerModule::updateEgoPredictedPathParams(
+//   std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
+//   std::shared_ptr<StartPlannerParameters> & pairs_terminal_velocity_and_accel)
+// {
+//   ego_predicted_path_params.terminal_velocity = pairs_terminal_velocity_and_accel.first;
+//   ego_predicted_path_params.terminal_acceleration = pairs_terminal_velocity_and_accel.second;
+// }
+
 void StartPlannerModule::updateSafetyCheckTargetObjectsData(
   const PredictedObjects & filtered_objects,
   const TargetObjectsOnLane & target_objects_on_lane) const
@@ -977,6 +988,7 @@ bool StartPlannerModule::isSafePath() const
 {
   // TODO(Sugahara): should safety check for backward path later
   // back_finishedでtrueなら前進、falseなら後退中
+
   const auto & pull_out_path = getCurrentPath();
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & current_velocity = std::hypot(
@@ -987,10 +999,6 @@ bool StartPlannerModule::isSafePath() const
   const auto & current_lanes = planner_data_->current_lanes;
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_out_path.points);
   const auto & common_param = planner_data_->parameters;
-
-  // start_planner_utils::updateEgoPredictedPathParams(
-  //   ego_predicted_path_params_, parameters_);
-
   const auto & ego_predicted_path =
     behavior_path_planner::utils::path_safety_checker::createPredictedPath(
       ego_predicted_path_params_, pull_out_path.points, current_pose, current_velocity,
