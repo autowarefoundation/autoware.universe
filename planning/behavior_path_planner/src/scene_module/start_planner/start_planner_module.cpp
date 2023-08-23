@@ -263,23 +263,24 @@ BehaviorModuleOutput StartPlannerModule::plan()
     return SteeringFactor::STRAIGHT;
   });
 
-  status_.is_safe_dynamic_objects = isSafePath();
+  // status_.is_safe_dynamic_objects = isSafePath();
 
-  if (!status_.is_safe_dynamic_objects) {
-    status_.is_safe_dynamic_objects = false;
-    const auto distance_to_stop_point = utils::start_goal_planner_common::calcFeasibleDecelDistance(
-      planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0);
-    if (distance_to_stop_point) {
-      auto pull_out_path = getCurrentPath();
-      motion_utils::insertStopPoint(*distance_to_stop_point, pull_out_path.points);
-      RCLCPP_ERROR_THROTTLE(
-        getLogger(), *clock_, 5000, "stop point is inserted into pull out path.");
-    } else {
-      RCLCPP_ERROR_THROTTLE(
-        getLogger(), *clock_, 5000,
-        "Failed to generate feasible stop point. So don't stop but path is not safe.");
-    }
-  }
+  // if (!status_.is_safe_dynamic_objects) {
+  //   status_.is_safe_dynamic_objects = false;
+  //   const auto distance_to_stop_point =
+  //   utils::start_goal_planner_common::calcFeasibleDecelDistance(
+  //     planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0);
+  //   if (distance_to_stop_point) {
+  //     auto pull_out_path = getCurrentPath();
+  //     motion_utils::insertStopPoint(*distance_to_stop_point, pull_out_path.points);
+  //     RCLCPP_ERROR_THROTTLE(
+  //       getLogger(), *clock_, 5000, "stop point is inserted into pull out path.");
+  //   } else {
+  //     RCLCPP_ERROR_THROTTLE(
+  //       getLogger(), *clock_, 5000,
+  //       "Failed to generate feasible stop point. So don't stop but path is not safe.");
+  //   }
+  // }
 
   if (status_.back_finished) {
     const double start_distance = motion_utils::calcSignedArcLength(
@@ -996,7 +997,11 @@ bool StartPlannerModule::isSafePath() const
     planner_data_->self_odometry->twist.twist.linear.y);
   const auto & dynamic_object = planner_data_->dynamic_object;
   const auto & route_handler = planner_data_->route_handler;
-  const auto & current_lanes = planner_data_->current_lanes;
+  const double backward_path_length =
+    planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
+  const auto current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, backward_path_length, std::numeric_limits<double>::max(),
+    /*forward_only_in_route*/ true);
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_out_path.points);
   const auto & common_param = planner_data_->parameters;
   const auto & ego_predicted_path =
