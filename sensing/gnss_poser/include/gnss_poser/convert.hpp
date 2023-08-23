@@ -20,7 +20,6 @@
 #include <GeographicLib/LocalCartesian.hpp>
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
-#include <geo_pos_conv/geo_pos_conv.hpp>
 #include <rclcpp/logging.hpp>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
