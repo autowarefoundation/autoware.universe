@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -676,7 +677,9 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
   LaneChangeTargetObjectIndices filtered_obj_indices;
   for (size_t i = 0; i < objects.objects.size(); ++i) {
     const auto & object = objects.objects.at(i);
-    const auto & obj_velocity = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+    const auto & obj_velocity_norm = std::hypot(
+      object.kinematics.initial_twist_with_covariance.twist.linear.x,
+      object.kinematics.initial_twist_with_covariance.twist.linear.y);
     const auto extended_object =
       utils::lane_change::transform(object, common_parameters, *lane_change_parameters_);
 
@@ -699,7 +702,7 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     }
 
     // ignore static object that are behind the ego vehicle
-    if (obj_velocity < 1.0 && max_dist_ego_to_obj < 0.0) {
+    if (obj_velocity_norm < 1.0 && max_dist_ego_to_obj < 0.0) {
       continue;
     }
 
@@ -971,7 +974,16 @@ bool NormalLaneChange::getLaneChangePaths(
       const lanelet::BasicPoint2d lc_start_point(
         prepare_segment.points.back().point.pose.position.x,
         prepare_segment.points.back().point.pose.position.y);
-      if (!boost::geometry::covered_by(lc_start_point, target_neighbor_preferred_lane_poly_2d)) {
+
+      const auto target_lane_polygon = lanelet::utils::getPolygonFromArcLength(
+        target_lanes, 0, std::numeric_limits<double>::max());
+      const auto target_lane_poly_2d = lanelet::utils::to2D(target_lane_polygon).basicPolygon();
+
+      const auto is_valid_start_point =
+        boost::geometry::covered_by(lc_start_point, target_neighbor_preferred_lane_poly_2d) ||
+        boost::geometry::covered_by(lc_start_point, target_lane_poly_2d);
+
+      if (!is_valid_start_point) {
         // lane changing points are not inside of the target preferred lanes or its neighbors
         continue;
       }
@@ -1372,18 +1384,19 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
   for (const auto & obj : collision_check_objects) {
     auto current_debug_data = assignDebugData(obj);
     current_debug_data.second.ego_predicted_path.push_back(debug_predicted_path);
-    const auto obj_predicted_paths =
-      utils::getPredictedPathFromObj(obj, lane_change_parameters_->use_all_predicted_path);
+    const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
+      obj, lane_change_parameters_->use_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
-      if (!utils::safety_check::checkCollision(
+      if (!utils::path_safety_checker::checkCollision(
             path, ego_predicted_path, obj, obj_path, common_parameters, front_decel, rear_decel,
             current_debug_data.second)) {
         path_safety_status.is_safe = false;
         updateDebugInfo(current_debug_data, path_safety_status.is_safe);
         const auto & obj_pose = obj.initial_pose.pose;
         const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj_pose, obj.shape);
-        path_safety_status.is_object_coming_from_rear |= !utils::safety_check::isTargetObjectFront(
-          path, current_pose, common_parameters.vehicle_info, obj_polygon);
+        path_safety_status.is_object_coming_from_rear |=
+          !utils::path_safety_checker::isTargetObjectFront(
+            path, current_pose, common_parameters.vehicle_info, obj_polygon);
       }
     }
     updateDebugInfo(current_debug_data, path_safety_status.is_safe);

@@ -4,8 +4,6 @@
     avoidance:
       resample_interval_for_planning: 0.3               # [m]
       resample_interval_for_output: 4.0                 # [m]
-      detection_area_right_expand_dist: 0.0             # [m]
-      detection_area_left_expand_dist: 1.0              # [m]
       drivable_area_right_bound_offset: 0.0             # [m]
       drivable_area_left_bound_offset: 0.0              # [m]
 
@@ -145,7 +143,6 @@
         time_horizon: 10.0                               # [s]
         safety_check_backward_distance: 100.0            # [m]
         safety_check_hysteresis_factor: 2.0              # [-]
-        safety_check_ego_offset: 1.0                     # [m]
 
       # For avoidance maneuver
       avoidance:
