@@ -677,7 +677,9 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
   LaneChangeTargetObjectIndices filtered_obj_indices;
   for (size_t i = 0; i < objects.objects.size(); ++i) {
     const auto & object = objects.objects.at(i);
-    const auto & obj_velocity = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+    const auto & obj_velocity_norm = std::hypot(
+      object.kinematics.initial_twist_with_covariance.twist.linear.x,
+      object.kinematics.initial_twist_with_covariance.twist.linear.y);
     const auto extended_object =
       utils::lane_change::transform(object, common_parameters, *lane_change_parameters_);
 
@@ -700,7 +702,7 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     }
 
     // ignore static object that are behind the ego vehicle
-    if (obj_velocity < 1.0 && max_dist_ego_to_obj < 0.0) {
+    if (obj_velocity_norm < 1.0 && max_dist_ego_to_obj < 0.0) {
       continue;
     }
 
@@ -972,7 +974,16 @@ bool NormalLaneChange::getLaneChangePaths(
       const lanelet::BasicPoint2d lc_start_point(
         prepare_segment.points.back().point.pose.position.x,
         prepare_segment.points.back().point.pose.position.y);
-      if (!boost::geometry::covered_by(lc_start_point, target_neighbor_preferred_lane_poly_2d)) {
+
+      const auto target_lane_polygon = lanelet::utils::getPolygonFromArcLength(
+        target_lanes, 0, std::numeric_limits<double>::max());
+      const auto target_lane_poly_2d = lanelet::utils::to2D(target_lane_polygon).basicPolygon();
+
+      const auto is_valid_start_point =
+        boost::geometry::covered_by(lc_start_point, target_neighbor_preferred_lane_poly_2d) ||
+        boost::geometry::covered_by(lc_start_point, target_lane_poly_2d);
+
+      if (!is_valid_start_point) {
         // lane changing points are not inside of the target preferred lanes or its neighbors
         continue;
       }
