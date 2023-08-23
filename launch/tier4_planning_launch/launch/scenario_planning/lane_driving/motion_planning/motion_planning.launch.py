@@ -311,7 +311,7 @@ def launch_setup(context, *args, **kwargs):
 
     glog_component = ComposableNode(
         package="glog_component",
-        plugin="glog_component::GlogComponent",
+        plugin="GlogComponent",
         name="glog_component",
         extra_arguments=[{"use_intra_process_comms": True}],
     )
