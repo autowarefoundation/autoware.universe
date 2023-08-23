@@ -66,8 +66,8 @@ std::unique_ptr<BaseExpr> BaseExpr::create(Graph & graph, YAML::Node yaml)
   if (type == "or") {
     return std::make_unique<OrExpr>(graph, yaml);
   }
-  if (type == "pre") {
-    return std::make_unique<PrecondExpr>(graph, yaml);
+  if (type == "if") {
+    return std::make_unique<IfExpr>(graph, yaml);
   }
   if (type == "debug-ok") {
     return std::make_unique<ConstExpr>(DiagnosticStatus::OK);
@@ -238,36 +238,36 @@ std::vector<BaseNode *> OrExpr::get_dependency() const
   return depends;
 }
 
-PrecondExpr::PrecondExpr(Graph & graph, YAML::Node yaml)
+IfExpr::IfExpr(Graph & graph, YAML::Node yaml)
 {
   if (!yaml["cond"]) {
     throw ConfigError("expr object has no 'cond' field");
   }
-  if (!yaml["data"]) {
-    throw ConfigError("expr object has no 'data' field");
+  if (!yaml["then"]) {
+    throw ConfigError("expr object has no 'then' field");
   }
   cond_ = BaseExpr::create(graph, yaml["cond"]);
-  data_ = BaseExpr::create(graph, yaml["data"]);
+  then_ = BaseExpr::create(graph, yaml["then"]);
 }
 
-ExprStatus PrecondExpr::eval() const
+ExprStatus IfExpr::eval() const
 {
   const auto cond = cond_->eval();
-  const auto data = data_->eval();
+  const auto then = then_->eval();
   ExprStatus status;
   if (cond.level == DiagnosticStatus::OK) {
-    status.level = std::min(data.level, DiagnosticStatus::ERROR);
+    status.level = std::min(then.level, DiagnosticStatus::ERROR);
     extend(status.links, cond.links);
-    extend(status.links, data.links);
+    extend(status.links, then.links);
   } else {
     status.level = std::min(cond.level, DiagnosticStatus::ERROR);
     extend(status.links, cond.links);
-    extend_false(status.links, data.links);
+    extend_false(status.links, then.links);
   }
   return status;
 }
 
-std::vector<BaseNode *> PrecondExpr::get_dependency() const
+std::vector<BaseNode *> IfExpr::get_dependency() const
 {
   std::vector<BaseNode *> depends;
   {
@@ -275,7 +275,7 @@ std::vector<BaseNode *> PrecondExpr::get_dependency() const
     depends.insert(depends.end(), nodes.begin(), nodes.end());
   }
   {
-    const auto nodes = data_->get_dependency();
+    const auto nodes = then_->get_dependency();
     depends.insert(depends.end(), nodes.begin(), nodes.end());
   }
   return depends;

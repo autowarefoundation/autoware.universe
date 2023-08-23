@@ -58,10 +58,9 @@ void ToolNode::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
       const auto & status = msg->nodes[link.index].status;
       kv.key = status.name;
       kv.value = level_to_string(status.level);
-      if (!link.used) {
-        kv.value += " (IGNORED)";
+      if (link.used) {
+        message.status.back().values.push_back(kv);
       }
-      message.status.back().values.push_back(kv);
     }
   }
   pub_array_->publish(message);

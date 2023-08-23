@@ -1,10 +1,10 @@
 nodes:
   - name: /autoware/planning
-    type: pre
+    type: if
     cond:
       type: diag
       name: "component_state_diagnostics: route_state"
-    data:
+    then:
       type: and
       list:
         - type: diag
