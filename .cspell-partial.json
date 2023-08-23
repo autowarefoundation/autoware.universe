@@ -1,7 +1,6 @@
 {
   "ignorePaths": [
     "**/perception/**",
-    "**/planning/**",
     "**/sensing/**",
     "perception/bytetrack/lib/**"
   ],
