@@ -15,4 +15,4 @@ rclcpp_components_register_node(glog_component
   EXECUTABLE glog_component_node
 )
 
-ament_auto_package(INSTALL_TO_SHARE)
+ament_auto_package()
