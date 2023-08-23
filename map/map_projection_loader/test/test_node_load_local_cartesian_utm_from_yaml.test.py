@@ -33,7 +33,7 @@ import yaml
 
 logger = get_logger(__name__)
 
-YAML_FILE_PATH = "test/data/projection_info_utm.yaml"
+YAML_FILE_PATH = "test/data/projection_info_local_cartesian_utm.yaml"
 
 
 @pytest.mark.launch_test
@@ -110,7 +110,7 @@ class TestLoadUTMFromYaml(unittest.TestCase):
         # Create subscription to map_projector_info topic
         subscription = self.test_node.create_subscription(
             MapProjectorInfo,
-            "/map/map_projector_type",
+            "/map/map_projector_info",
             self.callback,
             custom_qos_profile,
         )

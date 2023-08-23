@@ -55,7 +55,7 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
 
   // subscription
   adaptor.init_sub(
-    sub_map_projector_type_,
+    sub_map_projector_info_,
     [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { on_map_projector_info(msg); });
 
   declare_parameter("lanelet2_map_path", "");
@@ -98,7 +98,7 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     if (errors.empty()) {
       return map;
     }
-  } else if (lanelet2_map_projector_type == "UTM") {
+  } else if (lanelet2_map_projector_type == "LocalCartesianUTM") {
     lanelet::GPSPoint position{map_origin_lat, map_origin_lon};
     lanelet::Origin origin{position};
     lanelet::projection::UtmProjector projector{origin};
