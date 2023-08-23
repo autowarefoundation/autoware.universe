@@ -74,13 +74,12 @@ void ReroutingStaticObstacle::on_trigger(const geometry_msgs::msg::PointStamped:
   selected_point.position = msg->point;
 
   lanelet::ConstLanelets selected_point_lanelets;
-  bool selected_point_lanelet_found{false};
-  selected_point_lanelet_found =
+
+  auto selected_point_lanelet_found =
     get_selected_point_lanelets(selected_point, selected_point_lanelets);
 
   lanelet::ConstLanelets remaining_route_lanelets;
-  bool remaining_route_lanelets_found{false};
-  remaining_route_lanelets_found = get_remaining_route_lanelets(remaining_route_lanelets);
+  auto remaining_route_lanelets_found = get_remaining_route_lanelets(remaining_route_lanelets);
 
   lanelet::ConstLanelet selected_point_lanelet;
   bool selected_point_in_route{false};
@@ -93,8 +92,7 @@ void ReroutingStaticObstacle::on_trigger(const geometry_msgs::msg::PointStamped:
 
   if (selected_point_in_route) {
     lanelet::routing::LaneletPath alternative_route_lanelets;
-    bool alternative_route_found{false};
-    alternative_route_found =
+    auto alternative_route_found =
       search_alternative_route(selected_point_lanelet, alternative_route_lanelets);
 
     if (alternative_route_found) {

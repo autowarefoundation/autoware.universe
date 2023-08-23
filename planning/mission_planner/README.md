@@ -196,7 +196,7 @@ The new route generated here is sent to the AD API so that it can also be refere
 `Rerouting Static Obstacle` is a node under `Mission Planner` that aims to change the planned route of the current already set route by finding an alternative route to the shortest planned one.
 The `Rerouting Static Obstacle` use-cases can be rerouting for a vehicle that is blocking the road, road construction that blocks some lanes, or any other similar scenarios of dynamic map information.
 
-The way that `Rerouting Static Obstacle` node is working currently is that, when the human driver/operator notices a blockage during the planned route of the mission, s/he points in the map (using a dedicated plugin in rviz) when the blockage is. Then `Rerouting Static Obstacle` searches for alternative routes and if successfully found it calls `change_route` API.
+The way that `Rerouting Static Obstacle` node is working currently is that, when the human driver/operator notices a blockage during the planned route of the mission, s/he points in the map (using a dedicated plugin in rviz) where the blockage is. Then `Rerouting Static Obstacle` searches for alternative routes and if successfully found it calls `change_route` API.
 
 The following diagram shows how `Rerouting Static Obstacle` node works in high level :
 
@@ -213,7 +213,7 @@ Reference implementation for `Rerouting Static Obstacle` node is under `src/rero
 3. Select a point through the route of the vehicle (where you see a blockage for example)
 4. If an alternative route can be found, the vehicle will to change route and will not go through the selected point.
 
-> Make sure that you select the point for rerouting with enough distance ahead the vehicle, otherwise the rerouting will be considered unsafe. For more information, please check the rerouting limitation below and `mission_planner.param.yaml` config file.
+> Make sure that you select the point for rerouting with enough distance ahead the vehicle, otherwise the rerouting will be considered unsafe. For more information, please check the Rerouting Limitations section below and `mission_planner.param.yaml` config file.
 
 #### Rerouting Limitations
 
