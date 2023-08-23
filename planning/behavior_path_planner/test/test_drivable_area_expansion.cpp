@@ -18,6 +18,7 @@
 #include "behavior_path_planner/utils/drivable_area_expansion/types.hpp"
 #include "lanelet2_extension/utility/message_conversion.hpp"
 
+#include <gtest/gtest-spi.h>
 #include <gtest/gtest.h>
 
 using drivable_area_expansion::linestring_t;
@@ -304,7 +305,7 @@ TEST(DrivableAreaExpansion, calculateDistanceLimit)
     const linestring_t base_ls = {{0.0, 0.0}, {10.0, 0.0}};
     const multi_linestring_t uncrossable_lines = {};
     const polygon_t expansion_polygon = {
-      {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {10.0, -4.0}}, {}};
+      {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {0.0, -4.0}}, {}};
     const auto limit_distance =
       calculateDistanceLimit(base_ls, expansion_polygon, uncrossable_lines);
     EXPECT_NEAR(limit_distance, std::numeric_limits<double>::max(), 1e-9);
@@ -313,7 +314,7 @@ TEST(DrivableAreaExpansion, calculateDistanceLimit)
     const linestring_t base_ls = {{0.0, 0.0}, {10.0, 0.0}};
     const linestring_t uncrossable_line = {{0.0, 2.0}, {10.0, 2.0}};
     const polygon_t expansion_polygon = {
-      {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {10.0, -4.0}}, {}};
+      {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {0.0, -4.0}}, {}};
     const auto limit_distance =
       calculateDistanceLimit(base_ls, expansion_polygon, {uncrossable_line});
     EXPECT_NEAR(limit_distance, 2.0, 1e-9);
@@ -323,9 +324,55 @@ TEST(DrivableAreaExpansion, calculateDistanceLimit)
     const multi_linestring_t uncrossable_lines = {
       {{0.0, 2.0}, {10.0, 2.0}}, {{0.0, 1.5}, {10.0, 1.0}}};
     const polygon_t expansion_polygon = {
-      {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {10.0, -4.0}}, {}};
+      {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {0.0, -4.0}}, {}};
     const auto limit_distance =
       calculateDistanceLimit(base_ls, expansion_polygon, uncrossable_lines);
     EXPECT_NEAR(limit_distance, 1.0, 1e-9);
+  }
+}
+
+TEST(DrivableAreaExpansion, calculateDistanceLimitEdgeCases)
+{
+  using drivable_area_expansion::calculateDistanceLimit;
+  using drivable_area_expansion::linestring_t;
+  using drivable_area_expansion::polygon_t;
+
+  const linestring_t base_ls = {{0.0, 0.0}, {10.0, 0.0}};
+  const polygon_t expansion_polygon = {
+    {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {10.0, -4.0}}, {}};
+  {  // intersection points further than the line point inside the expansion polygon
+    const linestring_t uncrossable_lines = {{4.0, 5.0}, {6.0, 3.0}};
+    const auto limit_distance =
+      calculateDistanceLimit(base_ls, expansion_polygon, {uncrossable_lines});
+    EXPECT_NEAR(limit_distance, 3.0, 1e-9);
+  }
+  {  // intersection points further than the line point inside the expansion polygon
+    const linestring_t uncrossable_lines = {{4.0, 5.0}, {5.0, 2.0}, {6.0, 4.5}};
+    const auto limit_distance =
+      calculateDistanceLimit(base_ls, expansion_polygon, {uncrossable_lines});
+    EXPECT_NEAR(limit_distance, 2.0, 1e-9);
+  }
+}
+
+TEST(DrivableAreaExpansion, DISABLED_calculateDistanceLimitEdgeCases)
+{
+  using drivable_area_expansion::calculateDistanceLimit;
+  using drivable_area_expansion::linestring_t;
+  using drivable_area_expansion::polygon_t;
+
+  const linestring_t base_ls = {{0.0, 0.0}, {10.0, 0.0}};
+  const polygon_t expansion_polygon = {
+    {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {10.0, -4.0}}, {}};
+  {  // line completely inside the expansion polygon
+    const linestring_t uncrossable_lines = {{4.0, 2.0}, {6.0, 3.0}};
+    const auto limit_distance =
+      calculateDistanceLimit(base_ls, expansion_polygon, {uncrossable_lines});
+    EXPECT_NEAR(limit_distance, 2.0, 1e-9);
+  }
+  {  // line completely inside the expansion polygon
+    const linestring_t uncrossable_lines = {{4.0, 3.5}, {6.0, 3.0}};
+    const auto limit_distance =
+      calculateDistanceLimit(base_ls, expansion_polygon, {uncrossable_lines});
+    EXPECT_NEAR(limit_distance, 3.0, 1e-9);
   }
 }
