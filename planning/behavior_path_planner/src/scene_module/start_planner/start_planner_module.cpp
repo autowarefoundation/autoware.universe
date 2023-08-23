@@ -175,7 +175,7 @@ bool StartPlannerModule::isExecutionReady() const
     return true;
   }
 
-  if (status_.is_safe_static_objects && safety_check_params_->enable_safety_check) {
+  if (status_.is_safe_static_objects && parameters_->safety_check_params.enable_safety_check) {
     return isSafePath();
   }
   return true;
