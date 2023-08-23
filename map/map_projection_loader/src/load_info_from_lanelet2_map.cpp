@@ -46,9 +46,9 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::str
 
   tier4_map_msgs::msg::MapProjectorInfo msg;
   if (is_local) {
-    msg.type = "local";
+    msg.projector_type = "local";
   } else {
-    msg.type = "MGRS";
+    msg.projector_type = "MGRS";
     msg.mgrs_grid = projector.getProjectedMGRSGrid();
   }
   return msg;
