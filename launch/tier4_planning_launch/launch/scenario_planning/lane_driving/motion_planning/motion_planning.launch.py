@@ -313,7 +313,6 @@ def launch_setup(context, *args, **kwargs):
         package="glog_component",
         plugin="GlogComponent",
         name="glog_component",
-        extra_arguments=[{"use_intra_process_comms": True}],
     )
     glog_component_loader = LoadComposableNodes(
         composable_node_descriptions=[glog_component],
