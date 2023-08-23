@@ -1,6 +1,6 @@
 # Unit
 
-Diag is a node that refers to a functonal unit.
+Diag is a node that refers to a functional unit.
 
 ## Format
 
