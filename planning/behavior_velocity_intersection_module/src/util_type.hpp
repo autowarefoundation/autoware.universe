@@ -135,7 +135,7 @@ struct IntersectionStopLines
 struct PathLanelets
 {
   lanelet::ConstLanelets prev;
-  // lanelet::Constlanelet entry2ego; this is included in `all` if exists
+  // lanelet::ConstLanelet entry2ego; this is included in `all` if exists
   lanelet::ConstLanelet
     ego_or_entry2exit;  // this is `assigned lane` part of the path(not from
                         // ego) if ego is before the intersection, otherwise from ego to exit
