@@ -68,7 +68,6 @@ def launch_setup(context, *args, **kwargs):
         package="glog_component",
         plugin="GlogComponent",
         name="glog_component",
-        extra_arguments=[{"use_intra_process_comms": True}],
     )
 
     behavior_path_planner_component = ComposableNode(
