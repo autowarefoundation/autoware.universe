@@ -1019,8 +1019,7 @@ bool StartPlannerModule::isSafePath() const
       CollisionCheckDebug collision{};
       if (!utils::path_safety_checker::checkCollision(
             pull_out_path, ego_predicted_path, object, obj_path, common_param,
-            common_param.expected_front_deceleration, common_param.expected_rear_deceleration,
-            collision)) {
+            safety_check_params_->rss_params, collision)) {
         return false;
       }
     }
