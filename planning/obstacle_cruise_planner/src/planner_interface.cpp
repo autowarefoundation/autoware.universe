@@ -301,19 +301,22 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
   }();
 
   const auto [stop_margin_from_obstacle, will_collide_with_obstacle] = [&]() {
-    if (suppress_sudden_obstacle_stop_ && closest_obstacle_stop_dist < feasible_stop_dist) {
+    // Check feasibility to stop
+    if (suppress_sudden_obstacle_stop_) {
+      const double closest_obstacle_stop_dist =
+        closest_obstacle_dist - margin_from_obstacle - abs_ego_offset;
+
       // Calculate feasible stop margin (Check the feasibility)
       const double feasible_stop_dist = calcMinimumDistanceToStop(
                                           planner_data.ego_vel, longitudinal_info_.limit_max_accel,
                                           longitudinal_info_.limit_min_accel) +
                                         dist_to_ego;
 
-      const double closest_obstacle_stop_dist =
-        closest_obstacle_dist - margin_from_obstacle - abs_ego_offset;
-
-      const auto feasible_margin_from_obstacle =
-        margin_from_obstacle - (feasible_stop_dist - closest_obstacle_stop_dist);
-      return std::make_pair(feasible_margin_from_obstacle, tru);
+      if (closest_obstacle_stop_dist < feasible_stop_dist) {
+        const auto feasible_margin_from_obstacle =
+          margin_from_obstacle - (feasible_stop_dist - closest_obstacle_stop_dist);
+        return std::make_pair(feasible_margin_from_obstacle, true);
+      }
     }
     return std::make_pair(margin_from_obstacle, false);
   }();
