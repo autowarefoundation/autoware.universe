@@ -709,7 +709,7 @@ bool isTrafficLightArrowActivated(
   return false;
 }
 
-std::vector<DescritizedLane> generateDetectionLaneDivisions(
+std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets_all,
   [[maybe_unused]] const lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const double resolution)
@@ -818,9 +818,9 @@ std::vector<DescritizedLane> generateDetectionLaneDivisions(
   }
 
   // (3) discretize each merged lanelet
-  std::vector<DescritizedLane> detection_divisions;
+  std::vector<DiscretizedLane> detection_divisions;
   for (const auto & [last_lane_id, branch] : merged_branches) {
-    DescritizedLane detection_division;
+    DiscretizedLane detection_division;
     detection_division.lane_id = last_lane_id;
     const auto detection_lanelet = branch.first;
     const double area = branch.second;

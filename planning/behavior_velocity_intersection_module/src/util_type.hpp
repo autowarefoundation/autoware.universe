@@ -115,7 +115,7 @@ public:
   std::optional<lanelet::CompoundPolygon3d> first_attention_area_ = std::nullopt;
 };
 
-struct DescritizedLane
+struct DiscretizedLane
 {
   int lane_id;
   // discrete fine lines from left to right
