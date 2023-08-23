@@ -44,10 +44,8 @@ boost::optional<double> calcFeasibleDecelDistance(
 
 void updateEgoPredictedPathParams(
   std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-  std::shared_ptr<StartPlannerParameters> & pairs_terminal_velocity_and_accel)
+  std::shared_ptr<StartPlannerParameters> & start_planner_params)
 {
-  ego_predicted_path_params.terminal_velocity = pairs_terminal_velocity_and_accel.first;
-  ego_predicted_path_params.terminal_acceleration = pairs_terminal_velocity_and_accel.second;
 }
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common

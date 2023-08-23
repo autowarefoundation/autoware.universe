@@ -16,6 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__UTILS_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/start_planner/start_planner_parameters.hpp"
 
 #include <motion_utils/distance/distance.hpp>
 
@@ -30,7 +32,7 @@ boost::optional<double> calcFeasibleDecelDistance(
 
 void updateEgoPredictedPathParams(
   std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-  std::shared_ptr<StartPlannerParameters> & pairs_terminal_velocity_and_accel);
+  std::shared_ptr<StartPlannerParameters> & start_planner_params);
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common
 
