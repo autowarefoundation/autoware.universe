@@ -1118,14 +1118,14 @@ void IntersectionLanelets::update(
 static lanelet::ConstLanelets getPrevLanelets(
   const lanelet::ConstLanelets & lanelets_on_path, const std::set<int> & associative_ids)
 {
-  lanelet::ConstLanelets prevs;
+  lanelet::ConstLanelets previous_lanelets;
   for (const auto & ll : lanelets_on_path) {
     if (associative_ids.find(ll.id()) != associative_ids.end()) {
-      return prevs;
+      return previous_lanelets;
     }
-    prevs.push_back(ll);
+    previous_lanelets.push_back(ll);
   }
-  return prevs;
+  return previous_lanelets;
 }
 
 std::optional<PathLanelets> generatePathLanelets(
