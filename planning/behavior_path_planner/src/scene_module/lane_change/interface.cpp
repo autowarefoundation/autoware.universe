@@ -326,22 +326,41 @@ void LaneChangeInterface::setObjectDebugVisualization() const
 
 std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeInterface::get_debug_msg_array() const
 {
-  const auto debug_data = module_type_->getDebugData();
+  const auto debug_before_approval = module_type_->getDebugData();
+  const auto debug_after_approval = module_type_->getAfterApprovalDebugData();
   LaneChangeDebugMsgArray debug_msg_array;
-  debug_msg_array.lane_change_info.reserve(debug_data.size());
-  for (const auto & [uuid, debug_data] : debug_data) {
-    LaneChangeDebugMsg debug_msg;
-    debug_msg.object_id = uuid;
-    debug_msg.allow_lane_change = debug_data.allow_lane_change;
-    debug_msg.is_front = debug_data.is_front;
-    debug_msg.relative_distance = debug_data.relative_to_ego;
-    debug_msg.failed_reason = debug_data.failed_reason;
-    debug_msg.velocity = debug_data.object_twist.linear.x;
-    debug_msg_array.lane_change_info.push_back(debug_msg);
-  }
-  lane_change_debug_msg_array_ = debug_msg_array;
+  debug_msg_array.lane_change_info.reserve(
+    debug_before_approval.size() + debug_after_approval.size());
 
+  // Helper function to avoid redundancy
+  const auto populate_msg = [](const auto & uuid, const auto & info, bool is_approved) {
+    LaneChangeDebugMsg msg;
+
+    msg.object_uuid = uuid;
+    msg.is_lane_change_approved = is_approved;
+    msg.unsafe_reason = info.failed_reason;
+    msg.is_safe = info.allow_lane_change;
+    // msg.is_object_coming_from_rear = info.;
+    msg.object_final_position = info.is_front;
+    msg.stop_distance_from_front_obj = info.rss_longitudinal;
+    msg.vehicle_gap = info.ego_to_obj_margin;
+    msg.lateral_offset = info.lateral_offset;
+    msg.longitudinal_offset = info.longitudinal_offset;
+
+    return msg;
+  };
+
+  for (const auto & [uuid, info] : debug_before_approval) {
+    debug_msg_array.lane_change_info.push_back(populate_msg(uuid, info, false));
+  }
+
+  for (const auto & [uuid, info] : debug_after_approval) {
+    debug_msg_array.lane_change_info.push_back(populate_msg(uuid, info, true));
+  }
+
+  lane_change_debug_msg_array_ = debug_msg_array;
   lane_change_debug_msg_array_.header.stamp = clock_->now();
+
   return std::make_shared<LaneChangeDebugMsgArray>(lane_change_debug_msg_array_);
 }
 

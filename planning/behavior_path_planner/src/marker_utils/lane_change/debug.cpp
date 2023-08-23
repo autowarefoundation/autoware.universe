@@ -60,7 +60,7 @@ MarkerArray showObjectInfo(
        << "\nRSS dist: " << std::setprecision(4) << info.rss_longitudinal
        << "\nEgo to obj: " << info.ego_to_obj_margin << "\nLateral offset: " << info.lateral_offset
        << "\nLongitudinal offset: " << info.longitudinal_offset
-       << "\nPosition: " << (info.is_front ? "front" : "back")
+       << "\nObject final position: " << (info.is_front ? "front" : "back")
        << "\nSafe: " << (info.allow_lane_change ? "Yes" : "No");
 
     obj_marker.text = ss.str();
