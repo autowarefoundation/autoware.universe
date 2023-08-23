@@ -109,7 +109,7 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
     output.pairs_terminal_velocity_and_accel.push_back(
       std::make_pair(average_velocity, average_acceleration));
     const double arc_length_on_second_arc_path =
-      motion_utils::calcArcLength(std::next(output.partial_paths.begin(), 1)->points);
+      motion_utils::calcArcLength(planner_.getArcPaths().at(1).points);
     output.pairs_terminal_velocity_and_accel.push_back(
       std::make_pair(velocity, velocity * velocity / (2 * arc_length_on_second_arc_path)));
   } else {
