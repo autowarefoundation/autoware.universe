@@ -754,19 +754,19 @@ MarkerArray VehicleCmdGate::createMarkerArray(const IsFilterActivated & filter_a
     first_msg = false;
   }
   if (filter_activated.is_activated_on_jerk) {
-    reason += first_msg ? " jerk" : " ,jerk";
+    reason += first_msg ? " jerk" : ", jerk";
     first_msg = false;
   }
   if (filter_activated.is_activated_on_speed) {
-    reason += first_msg ? " speed" : " ,speed";
+    reason += first_msg ? " speed" : ", speed";
     first_msg = false;
   }
   if (filter_activated.is_activated_on_steering) {
-    reason += first_msg ? " steer" : " ,steer";
+    reason += first_msg ? " steer" : ", steer";
     first_msg = false;
   }
   if (filter_activated.is_activated_on_steering_rate) {
-    reason += first_msg ? " steer_rate" : " ,steer_rate";
+    reason += first_msg ? " steer_rate" : ", steer_rate";
     first_msg = false;
   }
 
