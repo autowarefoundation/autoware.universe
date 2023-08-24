@@ -1,4 +1,4 @@
-// Copyright 2021 - 2022 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
+// Copyright 2021-2023 UCI SORA Lab, Tier IV, Inc., Leo Drive Teknoloji A.Ş.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
   // Node Parameters.
   param_.curvature_interval_length_ = declare_parameter<double>("curvature_interval_length");
   param_.prevent_zero_division_value_ = declare_parameter<double>("prevent_zero_division_value");
-  param_.odom_interval_ = declare_parameter<int>("odom_interval");
+  param_.odom_interval_ = declare_parameter<int64_t>("odom_interval");
   param_.acceptable_max_distance_to_waypoint_ =
     declare_parameter<double>("acceptable_max_distance_to_waypoint");
   param_.acceptable_max_yaw_difference_rad_ =
