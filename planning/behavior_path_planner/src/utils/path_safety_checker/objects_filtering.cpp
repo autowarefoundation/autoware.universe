@@ -37,7 +37,7 @@ PredictedObjects filterObjects(
 
   PredictedObjects filtered_objects;
 
-  filtered_objects = filterObjectsByVelocity(*objects, ignore_object_velocity_threshold);
+  filtered_objects = filterObjectsByVelocity(*objects, ignore_object_velocity_threshold, false);
 
   filterObjectsByClass(filtered_objects, target_object_types);
 
@@ -51,9 +51,14 @@ PredictedObjects filterObjects(
   return filtered_objects;
 }
 
-PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)
+PredictedObjects filterObjectsByVelocity(
+  const PredictedObjects & objects, double lim_v, const bool filter_dynamic_objects)
 {
-  return filterObjectsByVelocity(objects, -lim_v, lim_v);
+  if (filter_dynamic_objects) {
+    return filterObjectsByVelocity(objects, -lim_v, lim_v);
+  } else {
+    return filterObjectsByVelocity(objects, lim_v, std::numeric_limits<double>::max());
+  }
 }
 
 PredictedObjects filterObjectsByVelocity(
