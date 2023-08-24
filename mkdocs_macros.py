@@ -18,11 +18,11 @@ def format_param_range(param):
     if "enum" in param.keys():
         list_of_range.append(param["enum"])
     if "minimum" in param.keys():
-        list_of_range.append(">=" + str(param["minimum"]))
+        list_of_range.append("≥" + str(param["minimum"]))
     if "exclusiveMinimum" in param.keys():
         list_of_range.append(">" + str(param["exclusiveMinimum"]))
     if "maximum" in param.keys():
-        list_of_range.append("<=" + str(param["maximum"]))
+        list_of_range.append("≤" + str(param["maximum"]))
     if "exclusiveMaximum" in param.keys():
         list_of_range.append("<" + str(param["exclusiveMaximum"]))
     if "exclusive" in param.keys():
