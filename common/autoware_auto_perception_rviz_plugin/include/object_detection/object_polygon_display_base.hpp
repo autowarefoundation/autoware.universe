@@ -348,7 +348,7 @@ protected:
     sample_color.r = 1.0;
     sample_color.g = 0.65;
     sample_color.b = 0.0;
-    colors.push_back(sample_color);  // orange;
+    colors.push_back(sample_color);  // orange
     sample_color.r = 1.0;
     sample_color.g = 1.0;
     sample_color.b = 0.0;
@@ -376,7 +376,7 @@ protected:
     sample_color.r = 1.0;
     sample_color.g = 0.41;
     sample_color.b = 0.71;
-    colors.push_back(sample_color);  // hotpink
+    colors.push_back(sample_color);  // hot pink
   }
 
   double get_line_width() { return m_line_width_property.getFloat(); }
