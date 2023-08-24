@@ -70,21 +70,10 @@ inline std_msgs::msg::ColorRGBA createMarkerColor(float r, float g, float b, flo
   return color;
 }
 
-inline visualization_msgs::msg::Marker createStringMarker(
+inline visualization_msgs::msg::Marker createMarker(
   const std::string & frame_id, const std::string & ns, const int32_t id, const int32_t type,
-  geometry_msgs::msg::Point point, const std_msgs::msg::ColorRGBA & color, const std::string text)
-{
-  visualization_msgs::msg::Marker marker;
-
-  marker = createDefaultMarker(frame_id, ns, id, type, point, color);
-  marker.text = text;
-
-  return marker;
-}
-
-inline visualization_msgs::msg::Marker createDefaultMarker(
-  const std::string & frame_id, const std::string & ns, const int32_t id, const int32_t type,
-  geometry_msgs::msg::Point point, const std_msgs::msg::ColorRGBA & color)
+  geometry_msgs::msg::Point point, geometry_msgs::msg::Vector3 scale,
+  const std_msgs::msg::ColorRGBA & color)
 {
   visualization_msgs::msg::Marker marker;
 
@@ -94,14 +83,25 @@ inline visualization_msgs::msg::Marker createDefaultMarker(
   marker.id = id;
   marker.type = type;
   marker.action = visualization_msgs::msg::Marker::ADD;
-  marker.lifetime = rclcpp::Duration::from_seconds(0);
-
+  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
   marker.pose.position = point;
   marker.pose.orientation = createMarkerOrientation(0.0, 0.0, 0.0, 1.0);
-  marker.scale = createMarkerScale(0.0, 0.0, 1.0);
+  marker.scale = scale;
   marker.color = color;
+  marker.frame_locked = false;
+
+  return marker;
+}
+
+inline visualization_msgs::msg::Marker createStringMarker(
+  const std::string & frame_id, const std::string & ns, const int32_t id, const int32_t type,
+  geometry_msgs::msg::Point point, geometry_msgs::msg::Vector3 scale,
+  const std_msgs::msg::ColorRGBA & color, const std::string text)
+{
+  visualization_msgs::msg::Marker marker;
+
+  marker = createMarker(frame_id, ns, id, type, point, scale, color);
   marker.text = text;
-  marker.frame_locked = true;
 
   return marker;
 }

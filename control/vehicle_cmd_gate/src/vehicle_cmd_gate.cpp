@@ -745,8 +745,9 @@ MarkerArray VehicleCmdGate::createMarkerArray(const IsFilterActivated & filter_a
     return msg;
   }
 
+  /* add string marker */
   bool first_msg = true;
-  std::string reason = "filter activated on ";
+  std::string reason = "filter activated on";
 
   if (filter_activated.is_activated_on_acceleration) {
     reason += " lon_acc";
@@ -762,7 +763,6 @@ MarkerArray VehicleCmdGate::createMarkerArray(const IsFilterActivated & filter_a
   }
   if (filter_activated.is_activated_on_steering) {
     reason += first_msg ? " steer" : " ,steer";
-
     first_msg = false;
   }
   if (filter_activated.is_activated_on_steering_rate) {
@@ -772,7 +772,14 @@ MarkerArray VehicleCmdGate::createMarkerArray(const IsFilterActivated & filter_a
 
   msg.markers.emplace_back(createStringMarker(
     "base_link", "msg", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-    createMarkerPosition(0.0, 0.0, 1.0), createMarkerColor(1.0, 0.0, 0.0, 1.0), reason));
+    createMarkerPosition(0.0, 0.0, 1.0), createMarkerScale(0.0, 0.0, 1.0),
+    createMarkerColor(1.0, 0.0, 0.0, 1.0), reason));
+
+  /* add sphere marker */
+  msg.markers.emplace_back(createMarker(
+    "base_link", "sphere", 0, visualization_msgs::msg::Marker::SPHERE,
+    createMarkerPosition(0.0, 0.0, 0.0), createMarkerScale(3.0, 3.0, 3.0),
+    createMarkerColor(1.0, 0.0, 0.0, 0.3)));
 
   return msg;
 }
