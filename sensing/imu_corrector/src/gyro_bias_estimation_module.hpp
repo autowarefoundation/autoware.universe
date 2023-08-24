@@ -16,7 +16,7 @@
 
 #include <geometry_msgs/msg/vector3.hpp>
 
-#include <vector>
+#include <deque>
 
 namespace imu_corrector
 {
@@ -35,7 +35,7 @@ private:
   const double timestamp_threshold_;
   const size_t data_num_threshold_;
   bool is_stopped_;
-  std::vector<geometry_msgs::msg::Vector3> gyro_buffer_;
+  std::deque<geometry_msgs::msg::Vector3> gyro_buffer_;
 
   double last_velocity_time_;
 };

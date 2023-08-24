@@ -22,8 +22,7 @@ GyroBiasEstimationModule::GyroBiasEstimationModule(
 : velocity_threshold_(velocity_threshold),
   timestamp_threshold_(timestamp_threshold),
   data_num_threshold_(data_num_threshold),
-  is_stopped_(false),
-  gyro_buffer_(std::vector<geometry_msgs::msg::Vector3>(0))
+  is_stopped_(false)
 {
 }
 
@@ -37,6 +36,9 @@ void GyroBiasEstimationModule::update_gyro(
     return;
   }
   gyro_buffer_.push_back(gyro);
+  if (gyro_buffer_.size() > data_num_threshold_) {
+    gyro_buffer_.pop_front();
+  }
 }
 
 void GyroBiasEstimationModule::update_velocity(const double time, const double velocity)
