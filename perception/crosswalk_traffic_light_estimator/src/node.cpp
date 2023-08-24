@@ -160,7 +160,7 @@ void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
 
   TrafficLightIdMap traffic_light_id_map;
   for (const auto & traffic_signal : msg->signals) {
-    traffic_light_id_map[traffic_signal.traffic_light_id] =
+    traffic_light_id_map[traffic_signal.traffic_signal_id] =
       std::pair<TrafficSignal, rclcpp::Time>(traffic_signal, get_clock()->now());
   }
 
@@ -195,7 +195,7 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignal(
       continue;
     }
 
-    const auto & id = input_traffic_signal.second.first.traffic_light_id;
+    const auto & id = input_traffic_signal.second.first.traffic_signal_id;
 
     if (last_detect_color_.count(id) == 0) {
       last_detect_color_.insert(std::make_pair(id, input_traffic_signal.second));
@@ -207,7 +207,7 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignal(
 
   std::vector<int32_t> erase_id_list;
   for (auto & last_traffic_signal : last_detect_color_) {
-    const auto & id = last_traffic_signal.second.first.traffic_light_id;
+    const auto & id = last_traffic_signal.second.first.traffic_signal_id;
 
     if (traffic_light_id_map.count(id) == 0) {
       // hold signal recognition results for [last_detect_color_hold_time_] seconds.
@@ -237,7 +237,7 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
       output_traffic_light.color = color;
       output_traffic_light.confidence = 1.0;
       output_traffic_signal.elements.push_back(output_traffic_light);
-      output_traffic_signal.traffic_light_id = ll_traffic_light.id();
+      output_traffic_signal.traffic_signal_id = ll_traffic_light.id();
       msg.signals.push_back(output_traffic_signal);
     }
   }
