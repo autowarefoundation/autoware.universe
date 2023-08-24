@@ -78,9 +78,10 @@ void GyroBiasValidator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
     gyro_bias_pub_->publish(gyro_bias_msg);
 
     // Validation
-    const bool is_bias_small_enough = std::abs(gyro_bias_.value().x - angular_velocity_offset_x_) < gyro_bias_threshold_ &&
-                                      std::abs(gyro_bias_.value().y - angular_velocity_offset_y_) < gyro_bias_threshold_ &&
-                                      std::abs(gyro_bias_.value().z - angular_velocity_offset_z_) < gyro_bias_threshold_;
+    const bool is_bias_small_enough =
+      std::abs(gyro_bias_.value().x - angular_velocity_offset_x_) < gyro_bias_threshold_ &&
+      std::abs(gyro_bias_.value().y - angular_velocity_offset_y_) < gyro_bias_threshold_ &&
+      std::abs(gyro_bias_.value().z - angular_velocity_offset_z_) < gyro_bias_threshold_;
 
     // Update diagnostics
     if (is_bias_small_enough) {

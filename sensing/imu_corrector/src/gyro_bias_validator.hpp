@@ -24,8 +24,8 @@
 #include <sensor_msgs/msg/imu.hpp>
 
 #include <memory>
-#include <string>
 #include <optional>
+#include <string>
 
 namespace imu_corrector
 {
