@@ -1689,7 +1689,7 @@ geometry_msgs::msg::Pose MapBasedPredictionNode::compensateTimeDelay(
    */
 
   const double vx = twist.linear.x;
-  const double vy = twist.linear.y; 
+  const double vy = twist.linear.y;
   const double wz = twist.angular.z;
   const double prev_yaw = tf2::getYaw(delayed_pose.orientation);
   const double prev_x = delayed_pose.position.x;
