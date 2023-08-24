@@ -163,6 +163,8 @@ First, we divide the target objects into obstacles in the target lane, obstacles
 
 ![object lanes](../image/lane_change/lane_objects.drawio.svg)
 
+Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light.
+
 ##### Collision check in prepare phase
 
 The ego vehicle may need to secure ample inter-vehicle distance ahead of the target vehicle before attempting a lane change. The flag `enable_collision_check_at_prepare_phase` can be enabled to gain this behavior. The following image illustrates the differences between the `false` and `true` cases.
@@ -177,20 +179,12 @@ When driving on the public road with other vehicles, there exist scenarios where
 
 ```C++
 lane_changing_time = f(shift_length, lat_acceleration, lat_jerk)
-minimum_lane_change_distance = minimum_prepare_length + minimum_lane_changing_velocity * lane_changing_time + backward_length_buffer_for_end_of_lane
+minimum_lane_change_distance = minimum_prepare_length + minimum_lane_changing_velocity * lane_changing_time + lane_change_finish_judge_buffer
 ```
 
 The following figure illustrates when the lane is blocked in multiple lane changes cases.
 
 ![multiple-lane-changes](../image/lane_change/lane_change-when_cannot_change_lanes.png)
-
-#### Intersection
-
-Lane change in the intersection is prohibited following traffic regulation. Therefore, if the goal is place close passed the intersection, the lane change needs to be completed before ego vehicle enters the intersection region. Similar to the lane blocked case, in case of the path is unsafe, ego vehicle will stop and waits for the dynamic object to pass by.
-
-The following figure illustrate the intersection case.
-
-![intersection](../image/lane_change/lane_change-intersection_case.png)
 
 ### Aborting lane change
 
@@ -215,11 +209,11 @@ while(Lane Following)
           if (Is Abort Condition Satisfied) then (**NO**)
           else (**YES**)
             if (Is Enough margin to retry lane change) then (**YES**)
-              if (Ego not depart from current lane yet) then (**YES**)
+              if (Ego is on lane change prepare phase) then (**YES**)
               :Cancel lane change;
               break
               else (**NO**)
-              if (Can perform abort maneuver) then (**YES**)
+              if (Will the overhang to target lane be less than threshold?) then (**YES**)
               :Perform abort maneuver;
               break
               else (NO)
