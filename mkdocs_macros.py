@@ -44,11 +44,11 @@ def extract_parameter_info(parameters, namespace=""):
     for k, v in parameters.items():
         if v["type"] != "object":
             param = {}
-            param["name"] = namespace + k
-            param["type"] = format_param_type(v["type"])
-            param["description"] = v["description"]
-            param["default"] = v["default"]
-            param["range"] = format_param_range(v)
+            param["Name"] = namespace + k
+            param["Type"] = format_param_type(v["type"])
+            param["Description"] = v["description"]
+            param["Default"] = v["default"]
+            param["Range"] = format_param_range(v)
             params.append(param)
         else:  # if the object is namespace, then dive deeper in to json value
             params.extend(extract_parameter_info(v["properties"], k + "."))
