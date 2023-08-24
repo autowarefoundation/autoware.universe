@@ -91,7 +91,7 @@ void GyroBiasEstimator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
       stat.add(
         "gyro_bias",
         "Gyro bias may be incorrect. Please calibrate IMU and reflect the result in "
-        "imu_corrector.");
+        "imu_corrector. You may also use the output of gyro_bias_estimator.");
       stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "NG");
     }
   }
