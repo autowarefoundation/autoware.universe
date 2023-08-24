@@ -19,7 +19,11 @@ namespace imu_corrector
 GyroBiasValidator::GyroBiasValidator(const rclcpp::NodeOptions & node_options)
 : Node("gyro_bias_validator", node_options),
   gyro_bias_threshold_(declare_parameter<double>("gyro_bias_threshold")),
-  updater_(this)
+  angular_velocity_offset_x_(declare_parameter<double>("angular_velocity_offset_x")),
+  angular_velocity_offset_y_(declare_parameter<double>("angular_velocity_offset_y")),
+  angular_velocity_offset_z_(declare_parameter<double>("angular_velocity_offset_z")),
+  updater_(this),
+  gyro_bias_(std::nullopt)
 {
   updater_.setHardwareID(get_name());
   updater_.add("gyro_bias_validator", this, &GyroBiasValidator::update_diagnostics);
@@ -32,7 +36,7 @@ GyroBiasValidator::GyroBiasValidator(const rclcpp::NodeOptions & node_options)
     velocity_threshold, timestamp_threshold, data_num_threshold);
 
   imu_sub_ = create_subscription<Imu>(
-    "~/input/imu", rclcpp::SensorDataQoS(),
+    "~/input/imu_raw", rclcpp::SensorDataQoS(),
     [this](const Imu::ConstSharedPtr msg) { callback_imu(msg); });
   twist_sub_ = create_subscription<TwistWithCovarianceStamped>(
     "~/input/twist", rclcpp::SensorDataQoS(),
@@ -46,6 +50,7 @@ void GyroBiasValidator::callback_imu(const Imu::ConstSharedPtr imu_msg_ptr)
   try {
     gyro_bias_estimation_module_->update_gyro(
       rclcpp::Time(imu_msg_ptr->header.stamp).seconds(), imu_msg_ptr->angular_velocity);
+    gyro_bias_ = gyro_bias_estimation_module_->get_bias();
   } catch (const std::runtime_error & e) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *(this->get_clock()), 1000, e.what());
   }
@@ -62,20 +67,20 @@ void GyroBiasValidator::callback_twist(
 
 void GyroBiasValidator::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  try {
-    // Get bias
-    const auto gyro_bias = gyro_bias_estimation_module_->get_bias();
-
+  if (gyro_bias_ == std::nullopt) {
+    stat.add("gyro_bias", "Bias estimation is not yet ready because of insufficient data.");
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Not initialized");
+  } else {
     // Publish results for debugging
     Vector3Stamped gyro_bias_msg;
     gyro_bias_msg.header.stamp = this->now();
-    gyro_bias_msg.vector = gyro_bias;
+    gyro_bias_msg.vector = gyro_bias_.value();
     gyro_bias_pub_->publish(gyro_bias_msg);
 
     // Validation
-    const bool is_bias_small_enough = std::abs(gyro_bias.x) < gyro_bias_threshold_ &&
-                                      std::abs(gyro_bias.y) < gyro_bias_threshold_ &&
-                                      std::abs(gyro_bias.z) < gyro_bias_threshold_;
+    const bool is_bias_small_enough = std::abs(gyro_bias_.value().x - angular_velocity_offset_x_) < gyro_bias_threshold_ &&
+                                      std::abs(gyro_bias_.value().y - angular_velocity_offset_y_) < gyro_bias_threshold_ &&
+                                      std::abs(gyro_bias_.value().z - angular_velocity_offset_z_) < gyro_bias_threshold_;
 
     // Update diagnostics
     if (is_bias_small_enough) {
@@ -88,9 +93,6 @@ void GyroBiasValidator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
         "imu_corrector.");
       stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "NG");
     }
-  } catch (const std::runtime_error & e) {
-    stat.add("gyro_bias", e.what());
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Not initialized");
   }
 }
 

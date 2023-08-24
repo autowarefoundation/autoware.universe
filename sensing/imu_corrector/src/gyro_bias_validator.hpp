@@ -25,6 +25,7 @@
 
 #include <memory>
 #include <string>
+#include <optional>
 
 namespace imu_corrector
 {
@@ -34,6 +35,7 @@ private:
   using Imu = sensor_msgs::msg::Imu;
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
   using Vector3Stamped = geometry_msgs::msg::Vector3Stamped;
+  using Vector3 = geometry_msgs::msg::Vector3;
 
 public:
   explicit GyroBiasValidator(const rclcpp::NodeOptions & node_options);
@@ -51,7 +53,13 @@ private:
   std::unique_ptr<GyroBiasEstimationModule> gyro_bias_estimation_module_;
 
   const double gyro_bias_threshold_;
+  const double angular_velocity_offset_x_;
+  const double angular_velocity_offset_y_;
+  const double angular_velocity_offset_z_;
+
   diagnostic_updater::Updater updater_;
+
+  std::optional<Vector3> gyro_bias_;
 };
 }  // namespace imu_corrector
 
