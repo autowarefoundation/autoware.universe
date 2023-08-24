@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gyro_bias_validator.hpp"
+#include "gyro_bias_estimator.hpp"
 
 namespace imu_corrector
 {
-GyroBiasValidator::GyroBiasValidator(const rclcpp::NodeOptions & node_options)
+GyroBiasEstimator::GyroBiasEstimator(const rclcpp::NodeOptions & node_options)
 : Node("gyro_bias_validator", node_options),
   gyro_bias_threshold_(declare_parameter<double>("gyro_bias_threshold")),
   angular_velocity_offset_x_(declare_parameter<double>("angular_velocity_offset_x")),
@@ -26,7 +26,7 @@ GyroBiasValidator::GyroBiasValidator(const rclcpp::NodeOptions & node_options)
   gyro_bias_(std::nullopt)
 {
   updater_.setHardwareID(get_name());
-  updater_.add("gyro_bias_validator", this, &GyroBiasValidator::update_diagnostics);
+  updater_.add("gyro_bias_validator", this, &GyroBiasEstimator::update_diagnostics);
 
   const double velocity_threshold = declare_parameter<double>("velocity_threshold");
   const double timestamp_threshold = declare_parameter<double>("timestamp_threshold");
@@ -45,7 +45,7 @@ GyroBiasValidator::GyroBiasValidator(const rclcpp::NodeOptions & node_options)
   gyro_bias_pub_ = create_publisher<Vector3Stamped>("~/debug/gyro_bias", rclcpp::SensorDataQoS());
 }
 
-void GyroBiasValidator::callback_imu(const Imu::ConstSharedPtr imu_msg_ptr)
+void GyroBiasEstimator::callback_imu(const Imu::ConstSharedPtr imu_msg_ptr)
 {
   try {
     gyro_bias_estimation_module_->update_gyro(
@@ -58,14 +58,14 @@ void GyroBiasValidator::callback_imu(const Imu::ConstSharedPtr imu_msg_ptr)
   updater_.force_update();
 }
 
-void GyroBiasValidator::callback_twist(
+void GyroBiasEstimator::callback_twist(
   const TwistWithCovarianceStamped::ConstSharedPtr twist_msg_ptr)
 {
   gyro_bias_estimation_module_->update_velocity(
     rclcpp::Time(twist_msg_ptr->header.stamp).seconds(), twist_msg_ptr->twist.twist.linear.x);
 }
 
-void GyroBiasValidator::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void GyroBiasEstimator::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   if (gyro_bias_ == std::nullopt) {
     stat.add("gyro_bias", "Bias estimation is not yet ready because of insufficient data.");
@@ -100,4 +100,4 @@ void GyroBiasValidator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
 }  // namespace imu_corrector
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(imu_corrector::GyroBiasValidator)
+RCLCPP_COMPONENTS_REGISTER_NODE(imu_corrector::GyroBiasEstimator)

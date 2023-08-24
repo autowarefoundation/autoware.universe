@@ -12,27 +12,27 @@ ament_auto_add_library(imu_corrector_node SHARED
   src/imu_corrector_core.cpp
 )
 
-ament_auto_add_library(gyro_bias_validator_node SHARED
+ament_auto_add_library(gyro_bias_estimator_node SHARED
   src/gyro_bias_validator.cpp
 )
 
-target_link_libraries(gyro_bias_validator_node gyro_bias_estimation_module)
+target_link_libraries(gyro_bias_estimator_node gyro_bias_estimation_module)
 
 rclcpp_components_register_node(imu_corrector_node
   PLUGIN "imu_corrector::ImuCorrector"
   EXECUTABLE imu_corrector
 )
 
-rclcpp_components_register_node(gyro_bias_validator_node
-  PLUGIN "imu_corrector::GyroBiasValidator"
-  EXECUTABLE gyro_bias_validator
+rclcpp_components_register_node(gyro_bias_estimator_node
+  PLUGIN "imu_corrector::GyroBiasEstimator"
+  EXECUTABLE gyro_bias_estimator
 )
 
 function(add_testcase filepath)
   get_filename_component(filename ${filepath} NAME)
   string(REGEX REPLACE ".cpp" "" test_name ${filename})
   ament_add_gmock(${test_name} ${filepath})
-  target_link_libraries("${test_name}" gyro_bias_estimation_module imu_corrector_node gyro_bias_validator_node)
+  target_link_libraries("${test_name}" gyro_bias_estimation_module imu_corrector_node gyro_bias_estimator_node)
   ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
 endfunction()
 

@@ -2,10 +2,10 @@
 <launch>
   <arg name="input_imu_raw" default="imu_raw"/>
   <arg name="input_twist" default="twist"/>
-  <arg name="param_file" default="$(find-pkg-share imu_corrector)/config/gyro_bias_validator.param.yaml"/>
+  <arg name="param_file" default="$(find-pkg-share imu_corrector)/config/gyro_bias_estimator.param.yaml"/>
   <arg name="imu_corrector_param_file" default="$(find-pkg-share imu_corrector)/config/imu_corrector.param.yaml"/>
 
-  <node pkg="imu_corrector" exec="gyro_bias_validator" name="gyro_bias_validator" output="screen">
+  <node pkg="imu_corrector" exec="gyro_bias_estimator" name="gyro_bias_estimator" output="screen">
     <remap from="~/input/imu_raw" to="$(var input_imu_raw)"/>
     <remap from="~/input/twist" to="$(var input_twist)"/>
     <param from="$(var param_file)"/>

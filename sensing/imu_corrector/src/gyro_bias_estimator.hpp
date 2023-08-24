@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef GYRO_BIAS_VALIDATOR_HPP_
-#define GYRO_BIAS_VALIDATOR_HPP_
+#ifndef GYRO_BIAS_ESTIMATOR_HPP_
+#define GYRO_BIAS_ESTIMATOR_HPP_
 
 #include "gyro_bias_estimation_module.hpp"
 
@@ -29,7 +29,7 @@
 
 namespace imu_corrector
 {
-class GyroBiasValidator : public rclcpp::Node
+class GyroBiasEstimator : public rclcpp::Node
 {
 private:
   using Imu = sensor_msgs::msg::Imu;
@@ -38,7 +38,7 @@ private:
   using Vector3 = geometry_msgs::msg::Vector3;
 
 public:
-  explicit GyroBiasValidator(const rclcpp::NodeOptions & node_options);
+  explicit GyroBiasEstimator(const rclcpp::NodeOptions & node_options);
 
 private:
   void update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
@@ -63,4 +63,4 @@ private:
 };
 }  // namespace imu_corrector
 
-#endif  // GYRO_BIAS_VALIDATOR_HPP_
+#endif  // GYRO_BIAS_ESTIMATOR_HPP_
