@@ -1682,22 +1682,22 @@ geometry_msgs::msg::Pose MapBasedPredictionNode::compensateTimeDelay(
 
   /*  == Nonlinear model ==
    *
-   * x_{k+1}   = x_k + vx_k * cos(yaw_k) * dt
-   * y_{k+1}   = y_k + vx_k * sin(yaw_k) * dt
+   * x_{k+1}   = x_k + vx_k * cos(yaw_k) * dt - vy_k * sin(yaw_k) * dt
+   * y_{k+1}   = y_k + vx_k * sin(yaw_k) * dt + vy_k * cos(yaw_k) * dt
    * yaw_{k+1} = yaw_k + (wz_k) * dt
    *
    */
 
   const double vx = twist.linear.x;
-  // const double vy = twist.linear.y; // currently not used
+  const double vy = twist.linear.y; 
   const double wz = twist.angular.z;
   const double prev_yaw = tf2::getYaw(delayed_pose.orientation);
   const double prev_x = delayed_pose.position.x;
   const double prev_y = delayed_pose.position.y;
   const double prev_z = delayed_pose.position.z;
 
-  const double curr_x = prev_x + vx * std::cos(prev_yaw) * dt;  // - vy * std::sin(prev_yaw) * dt;
-  const double curr_y = prev_y + vx * std::sin(prev_yaw) * dt;  // + vy * std::cos(prev_yaw) * dt;
+  const double curr_x = prev_x + vx * std::cos(prev_yaw) * dt - vy * std::sin(prev_yaw) * dt;
+  const double curr_y = prev_y + vx * std::sin(prev_yaw) * dt + vy * std::cos(prev_yaw) * dt;
   const double curr_z = prev_z;
   const double curr_yaw = prev_yaw + wz * dt;
 
