@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="input_imu" default="imu_raw"/>
+  <arg name="input_twist" default="twist"/>
+  <arg name="param_file" default="$(find-pkg-share imu_corrector)/config/gyro_bias_validator.param.yaml"/>
+
+  <node pkg="imu_corrector" exec="gyro_bias_validator" name="gyro_bias_validator" output="screen">
+    <remap from="~/input/imu" to="$(var input_imu)"/>
+    <remap from="~/input/twist" to="$(var input_twist)"/>
+    <param from="$(var param_file)"/>
+  </node>
+</launch>

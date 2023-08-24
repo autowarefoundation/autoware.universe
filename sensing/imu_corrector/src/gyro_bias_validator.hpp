@@ -1,0 +1,48 @@
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+#ifndef IMU_CORRECTOR__GYRO_BIAS_VALIDATOR_HPP_
+#define IMU_CORRECTOR__GYRO_BIAS_VALIDATOR_HPP_
+
+#include "gyro_bias_estimation_module.hpp"
+#include <rclcpp/rclcpp.hpp>
+
+#include <sensor_msgs/msg/imu.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <memory>
+#include <string>
+
+namespace imu_corrector
+{
+class GyroBiasValidator : public rclcpp::Node
+{
+private:
+  using Imu = sensor_msgs::msg::Imu;
+  using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
+public:
+  explicit GyroBiasValidator(const rclcpp::NodeOptions & node_options);
+
+private:
+  void callback_imu(const Imu::ConstSharedPtr imu_msg_ptr);
+  void callback_twist(const TwistWithCovarianceStamped::ConstSharedPtr twist_msg_ptr);
+
+  rclcpp::Subscription<Imu>::SharedPtr imu_sub_;
+  rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_sub_;
+
+  std::unique_ptr<GyroBiasEstimationModule> gyro_bias_estimation_module_;
+
+  const double gyro_bias_threshold_;
+};
+}  // namespace imu_corrector
+
+#endif  // IMU_CORRECTOR__GYRO_BIAS_VALIDATOR_HPP_

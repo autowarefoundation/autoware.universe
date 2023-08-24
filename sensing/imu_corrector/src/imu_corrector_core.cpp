@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "imu_corrector/imu_corrector_core.hpp"
+#include "imu_corrector_core.hpp"
 
 std::array<double, 9> transformCovariance(const std::array<double, 9> & cov)
 {
