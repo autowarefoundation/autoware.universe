@@ -52,6 +52,13 @@ struct GridAndStride
   int stride;
 };
 
+typedef struct Colormap_
+{
+  int id;
+  std::string name;
+  std::vector<unsigned char> color;
+} Colormap;
+  
 /**
  * @class TrtYoloX
  * @brief TensorRT YOLOX for faster inference
@@ -130,6 +137,19 @@ public:
    */
   void printProfiling(void);
 
+  /**
+   * @brief get num for multitask heads
+   */  
+  int getMultitaskNum(void);
+
+  /**
+   * @brief get colorlized masks from index using specifief colormap
+   * @param[out] cmask colorlized mask
+   * @param[in] index multitask index
+   * @param[in] colormap colormap for masks
+   */  
+  cv::Mat getColorizedMask(int index, std::vector<Colormap> & colormap);  
+  
 private:
   /**
    * @brief run preprocess including resizing, letterbox, NHWC2NCHW and toFloat on CPU
@@ -206,6 +226,26 @@ private:
   void nmsSortedBboxes(
     const ObjectArray & face_objects, std::vector<int> & picked, float nms_threshold) const;
 
+  /**
+   * @brief get a mask image for a segmentation head
+   * @param[out] argmax argmax results
+   * @param[in] prob probmap
+   * @param[in] dims dimension for probmap
+   * @param[in] out_w mask width excluding letterbox
+   * @param[in] out_h mask height excluding letterbox
+   */  
+  cv::Mat getMaskImage(float *prob, nvinfer1::Dims dims, int out_w, int out_h);
+
+  /**
+   * @brief get a mask image on GPUs for a segmentation head
+   * @param[out] mask image
+   * @param[in] prob probablity map on device
+   * @param[in] out_w mask width excluding letterbox
+   * @param[in] out_h mask height excluding letterbox
+   * @param[in] b current batch
+   */  
+  cv::Mat getMaskImageGpu(float *d_prob, nvinfer1::Dims dims, int out_w, int out_h, int b);      
+  
   std::unique_ptr<tensorrt_common::TrtCommon> trt_common_;
 
   std::vector<float> input_h_;
@@ -249,6 +289,19 @@ private:
   CudaUniquePtrHost<Roi[]> roi_h_;
   // device pointer for ROI
   CudaUniquePtr<Roi[]> roi_d_;
+
+  // flag whether model has multitasks
+  int multitask_;
+  // buff size for segmentation heads
+  CudaUniquePtr<float[]> segmentation_out_prob_d_;
+  CudaUniquePtrHost<float[]> segmentation_out_prob_h_;
+  size_t segmentation_out_elem_num_;
+  size_t segmentation_out_elem_num_per_batch_;
+  std::vector<cv::Mat> segmentation_masks_;
+  // host buffer for argmax postprocessing on GPU
+  CudaUniquePtrHost<unsigned char[]> argmax_buf_h_;
+  // device buffer for argmax postprocessing  on GPU
+  CudaUniquePtr<unsigned char[]> argmax_buf_d_;  
 };
 
 }  // namespace tensorrt_yolox
