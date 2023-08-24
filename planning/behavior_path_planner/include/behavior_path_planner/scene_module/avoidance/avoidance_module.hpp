@@ -556,6 +556,8 @@ private:
 
   bool arrived_path_end_{false};
 
+  bool safe_{true};
+
   std::shared_ptr<AvoidanceParameters> parameters_;
 
   helper::avoidance::AvoidanceHelper helper_;

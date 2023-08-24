@@ -1869,6 +1869,8 @@ bool AvoidanceModule::isSafePath(
     return true;
   }
 
+  const auto hysteresis_factor = safe_ ? 1.0 : parameters_->safety_check_hysteresis_factor;
+
   const auto safety_check_target_objects = utils::avoidance::getSafetyCheckTargetObjects(
     avoid_data_, planner_data_, parameters_, is_right_shift.value());
 
@@ -1879,7 +1881,7 @@ bool AvoidanceModule::isSafePath(
       CollisionCheckDebug collision{};
       if (!utils::path_safety_checker::checkCollision(
             shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
-            collision)) {
+            hysteresis_factor, collision)) {
         return false;
       }
     }
@@ -2505,6 +2507,8 @@ void AvoidanceModule::updateData()
 
   // update rtc status.
   updateRTCData();
+
+  safe_ = avoid_data_.safe;
 }
 
 void AvoidanceModule::processOnEntry()
