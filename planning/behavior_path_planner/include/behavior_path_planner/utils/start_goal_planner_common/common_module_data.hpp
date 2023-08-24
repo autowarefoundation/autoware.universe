@@ -22,11 +22,13 @@
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 
+#include <vector>
+
 namespace behavior_path_planner
 {
 using autoware_auto_perception_msgs::msg::PredictedObjects;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
-
 /*
  * Common data for start/goal_planner module
  */
@@ -35,6 +37,7 @@ struct StartGoalPlannerData
   // filtered objects
   PredictedObjects filtered_objects;
   TargetObjectsOnLane target_objects_on_lane;
+  std::vector<PoseWithVelocityStamped> ego_predicted_path;
 };
 
 }  // namespace behavior_path_planner

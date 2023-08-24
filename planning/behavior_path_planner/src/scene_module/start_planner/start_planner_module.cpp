@@ -978,11 +978,12 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
 // }
 
 void StartPlannerModule::updateSafetyCheckTargetObjectsData(
-  const PredictedObjects & filtered_objects,
-  const TargetObjectsOnLane & target_objects_on_lane) const
+  const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
+  const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const
 {
   start_planner_data_.filtered_objects = filtered_objects;
   start_planner_data_.target_objects_on_lane = target_objects_on_lane;
+  start_planner_data_.ego_predicted_path = ego_predicted_path;
 }
 
 bool StartPlannerModule::isSafePath() const
@@ -1020,7 +1021,7 @@ bool StartPlannerModule::isSafePath() const
   const auto & target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
     current_lanes, route_handler, filtered_objects, objects_filtering_params_);
 
-  updateSafetyCheckTargetObjectsData(filtered_objects, target_objects_on_lane);
+  updateSafetyCheckTargetObjectsData(filtered_objects, target_objects_on_lane, ego_predicted_path);
 
   for (const auto & object : target_objects_on_lane.on_current_lane) {
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
@@ -1159,6 +1160,7 @@ void StartPlannerModule::setDebugData() const
   using marker_utils::createObjectsMarkerArray;
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
+  using marker_utils::createPredictedPathMarkerArray;
   using tier4_autoware_utils::createDefaultMarker;
   using tier4_autoware_utils::createMarkerColor;
   using tier4_autoware_utils::createMarkerScale;
@@ -1176,6 +1178,13 @@ void StartPlannerModule::setDebugData() const
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
   add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
+  if (start_planner_data_.ego_predicted_path.size() > 0) {
+    const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
+      start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
+    add(createPredictedPathMarkerArray(
+      ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
+  }
+
   if (start_planner_data_.filtered_objects.objects.size() > 0) {
     add(createObjectsMarkerArray(
       start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));

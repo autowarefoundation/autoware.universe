@@ -48,6 +48,7 @@ namespace behavior_path_planner
 {
 using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
 using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
 using geometry_msgs::msg::PoseArray;
@@ -175,8 +176,8 @@ private:
   bool isStuck();
   bool hasFinishedCurrentPath();
   void updateSafetyCheckTargetObjectsData(
-    const PredictedObjects & filtered_objects,
-    const TargetObjectsOnLane & target_objects_on_lane) const;
+    const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
+    const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
   bool isSafePath() const;
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
 
