@@ -278,8 +278,8 @@ The following parameters are configurable in `lane_change.param.yaml`.
 | `lateral_acceleration_sampling_num`         | [-]    | int     | Number of possible lane-changing trajectories that are being influenced by lateral acceleration                 | 3                  |
 | `object_check_min_road_shoulder_width`      | [m]    | double  | Vehicles around the center line within this distance will be excluded from parking objects                      | 0.5                |
 | `object_shiftable_ratio_threshold`          | [-]    | double  | Vehicles around the center line within this distance ratio will be excluded from parking objects                | 0.6                |
-| `min_length_for_turn_signal_activation`     | [m]    | double  | Turn signal will be acitvated if the ego vehicle approaches to this length from minimum lane change length      | 10.0               |
-| `length_ratio_for_turn_signal_deactivation` | [-]    | double  | Turn signal will be deacitvated if the ego vehicle approaches to this length ratio for lane change finish point | 0.8                |
+| `min_length_for_turn_signal_activation`     | [m]    | double  | Turn signal will be activated if the ego vehicle approaches to this length from minimum lane change length      | 10.0               |
+| `length_ratio_for_turn_signal_deactivation` | [-]    | double  | Turn signal will be deactivated if the ego vehicle approaches to this length ratio for lane change finish point | 0.8                |
 | `object_shiftable_ratio_threshold`          | [-]    | double  | Vehicles around the center line within this distance ratio will be excluded from parking objects                | 0.6                |
 | `max_longitudinal_acc`                      | [-]    | double  | maximum longitudinal acceleration for lane change                                                               | 1.0                |
 | `min_longitudinal_acc`                      | [-]    | double  | maximum longitudinal deceleration for lane change                                                               | -1.0               |
