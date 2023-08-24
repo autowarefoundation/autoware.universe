@@ -17,11 +17,13 @@
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/start_planner/start_planner_parameters.hpp"
 
 #include <motion_utils/distance/distance.hpp>
 
 #include <memory>
+#include <utility>
 
 namespace behavior_path_planner::utils::start_goal_planner_common
 {
@@ -46,6 +48,13 @@ void updateSafetyCheckParams(
 void updateObjectsFilteringParams(
   std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
   const std::shared_ptr<StartPlannerParameters> & start_planner_params);
+
+void updatePathProperty(
+  std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
+  const std::pair<double, double> & pairs_terminal_velocity_and_accel);
+
+std::pair<double, double> getPairsTerminalVelocityAndAccel(
+  const PullOutPath & pull_out_path, const size_t current_path_idx);
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common
 

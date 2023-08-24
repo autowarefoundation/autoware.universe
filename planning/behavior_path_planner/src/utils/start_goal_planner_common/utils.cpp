@@ -66,4 +66,22 @@ void updateObjectsFilteringParams(
     std::make_shared<ObjectsFilteringParams>(start_planner_params->objects_filtering_params);
 }
 
+void updatePathProperty(
+  std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
+  const std::pair<double, double> & pairs_terminal_velocity_and_accel)
+{
+  ego_predicted_path_params->target_velocity = pairs_terminal_velocity_and_accel.first;
+  ego_predicted_path_params->acceleration = pairs_terminal_velocity_and_accel.second;
+}
+
+std::pair<double, double> getPairsTerminalVelocityAndAccel(
+  const PullOutPath & pull_out_path, const size_t current_path_idx)
+{
+  if (pull_out_path.pairs_terminal_velocity_and_accel.size() <= current_path_idx) {
+    std::cerr << "pair_terminal_velocity_and_accel is not given" << std::endl;
+    return std::make_pair(0.0, 0.0);
+  }
+  return pull_out_path.pairs_terminal_velocity_and_accel.at(current_path_idx);
+}
+
 }  // namespace behavior_path_planner::utils::start_goal_planner_common
