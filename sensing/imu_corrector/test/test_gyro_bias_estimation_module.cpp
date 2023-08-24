@@ -16,8 +16,6 @@
 
 #include <gtest/gtest.h>
 
-#include <cmath>
-
 namespace imu_corrector
 {
 class GyroBiasEstimationModuleTest : public ::testing::Test

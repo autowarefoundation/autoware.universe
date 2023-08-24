@@ -16,6 +16,8 @@
 
 #include "gyro_bias_estimation_module.hpp"
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
@@ -38,6 +40,7 @@ public:
   explicit GyroBiasValidator(const rclcpp::NodeOptions & node_options);
 
 private:
+  void update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
   void callback_imu(const Imu::ConstSharedPtr imu_msg_ptr);
   void callback_twist(const TwistWithCovarianceStamped::ConstSharedPtr twist_msg_ptr);
 
@@ -49,6 +52,7 @@ private:
   std::unique_ptr<GyroBiasEstimationModule> gyro_bias_estimation_module_;
 
   const double gyro_bias_threshold_;
+  diagnostic_updater::Updater updater_;
 };
 }  // namespace imu_corrector
 
