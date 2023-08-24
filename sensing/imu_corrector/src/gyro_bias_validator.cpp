@@ -32,8 +32,8 @@ GyroBiasValidator::GyroBiasValidator(const rclcpp::NodeOptions & node_options)
   twist_sub_ = create_subscription<TwistWithCovarianceStamped>(
     "~/input/twist", rclcpp::SensorDataQoS(),
     [this](const TwistWithCovarianceStamped::ConstSharedPtr msg) { callback_twist(msg); });
-
-  gyro_bias_pub_ = create_publisher<Vector3Stamped>("~/output/gyro_bias", rclcpp::SensorDataQoS());
+  
+  gyro_bias_pub_ = create_publisher<Vector3Stamped>("~/debug/gyro_bias", rclcpp::SensorDataQoS());
 }
 
 void GyroBiasValidator::callback_imu(const Imu::ConstSharedPtr imu_msg_ptr)
@@ -56,12 +56,11 @@ void GyroBiasValidator::callback_imu(const Imu::ConstSharedPtr imu_msg_ptr)
         std::to_string(gyro_bias.y) + ", " + std::to_string(gyro_bias.z) +
         ". You may need to update the calibration file in imu_corrector.";
       RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *(this->get_clock()), 1000, warn_msg);
-
-      Vector3Stamped gyro_bias_msg;
-      gyro_bias_msg.header = imu_msg_ptr->header;
-      gyro_bias_msg.vector = gyro_bias;
-      gyro_bias_pub_->publish(gyro_bias_msg);
     }
+    Vector3Stamped gyro_bias_msg;
+    gyro_bias_msg.header = imu_msg_ptr->header;
+    gyro_bias_msg.vector = gyro_bias;
+    gyro_bias_pub_->publish(gyro_bias_msg);
   } catch (const std::runtime_error & e) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *(this->get_clock()), 1000, e.what());
   }
