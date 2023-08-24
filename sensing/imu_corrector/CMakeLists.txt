@@ -28,6 +28,20 @@ rclcpp_components_register_node(gyro_bias_validator_node
   EXECUTABLE gyro_bias_validator
 )
 
+function(add_testcase filepath)
+  get_filename_component(filename ${filepath} NAME)
+  string(REGEX REPLACE ".cpp" "" test_name ${filename})
+  ament_add_gmock(${test_name} ${filepath})
+  target_link_libraries("${test_name}" gyro_bias_estimation_module imu_corrector_node gyro_bias_validator_node)
+  ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
+endfunction()
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+  add_testcase(test/test_gyro_bias_estimation_module.cpp)
+endif()
+
 ament_auto_package(INSTALL_TO_SHARE
   launch
   config
