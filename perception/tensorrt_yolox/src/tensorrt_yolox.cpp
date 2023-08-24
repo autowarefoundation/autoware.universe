@@ -112,6 +112,7 @@ TrtYoloX::TrtYoloX(
   src_height_ = -1;
   norm_factor_ = norm_factor;
   batch_size_ = batch_config[2];
+  multitask_ = 0;
   if (precision == "int8") {
     if (build_config.clip_value <= 0.0) {
       if (calibration_image_list_path.empty()) {
@@ -196,9 +197,18 @@ TrtYoloX::TrtYoloX(
       needs_output_decode_ = false;
       break;
     default:
+      needs_output_decode_ = true;
+      // The following three values are considered only if the specified model is plain one
+      num_class_ = num_class;
+      score_threshold_ = score_threshold;
+      nms_threshold_ = nms_threshold;
+      // Todo : Support multiple segmentation heads
+      multitask_++;
+      /*
       std::stringstream s;
       s << "\"" << model_path << "\" is unsupported format";
       throw std::runtime_error{s.str()};
+      */
   }
 
   // GPU memory allocation
@@ -234,10 +244,31 @@ TrtYoloX::TrtYoloX(
     out_scores_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * max_detections_);
     out_classes_d_ = cuda_utils::make_unique<int32_t[]>(batch_config[2] * max_detections_);
   }
+  if (multitask_) {
+    // Allocate buffer for segmentations
+    segmentation_out_elem_num_ = 0;
+    for (int m = 0; m < multitask_; m++) {
+      const auto output_dims =
+        trt_common_->getBindingDimensions(m + 2);  // 0 : input, 1 : output for detections
+      size_t out_elem_num = std::accumulate(
+        output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
+      out_elem_num = out_elem_num * batch_config[2];
+      segmentation_out_elem_num_ += out_elem_num;
+    }
+    segmentation_out_elem_num_per_batch_ =
+      static_cast<int>(segmentation_out_elem_num_ / batch_config[2]);
+    segmentation_out_prob_d_ = cuda_utils::make_unique<float[]>(segmentation_out_elem_num_);
+    segmentation_out_prob_h_ =
+      cuda_utils::make_unique_host<float[]>(segmentation_out_elem_num_, cudaHostAllocPortable);
+  }
   if (use_gpu_preprocess) {
     use_gpu_preprocess_ = true;
     image_buf_h_ = nullptr;
     image_buf_d_ = nullptr;
+    if (multitask_) {
+      argmax_buf_h_ = nullptr;
+      argmax_buf_d_ = nullptr;
+    }
   } else {
     use_gpu_preprocess_ = false;
   }
@@ -251,6 +282,9 @@ TrtYoloX::~TrtYoloX()
     }
     if (image_buf_d_) {
       image_buf_d_.reset();
+    }
+    if (argmax_buf_d_) {
+      argmax_buf_d_.reset();
     }
   }
 }
@@ -294,6 +328,25 @@ void TrtYoloX::initPreprocessBuffer(int width, int height)
         width * height * 3 * batch_size_, cudaHostAllocWriteCombined);
       image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(width * height * 3 * batch_size_);
     }
+    if (multitask_) {
+      size_t argmax_out_elem_num_ = 0;
+      for (int m = 0; m < multitask_; m++) {
+        const auto output_dims =
+          trt_common_->getBindingDimensions(m + 2);  // 0 : input, 1 : output for detections
+        const float scale =
+          std::min(output_dims.d[3] / float(width), output_dims.d[2] / float(height));
+        int out_w = (int)(width * scale);
+        int out_h = (int)(height * scale);
+        //	size_t out_elem_num = std::accumulate(
+        // output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
+        //	out_elem_num = out_elem_num * batch_size_;
+        size_t out_elem_num = out_w * out_h * batch_size_;
+        argmax_out_elem_num_ += out_elem_num;
+      }
+      argmax_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
+        argmax_out_elem_num_, cudaHostAllocWriteCombined);
+      argmax_buf_d_ = cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num_);
+    }
   }
 }
 
@@ -320,6 +373,12 @@ void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
         }
         if (image_buf_d_) {
           image_buf_d_.reset();
+        }
+        if (argmax_buf_h_) {
+          argmax_buf_h_.reset();
+        }
+        if (argmax_buf_d_) {
+          argmax_buf_d_.reset();
         }
       }
     }
@@ -750,7 +809,9 @@ bool TrtYoloX::feedforward(const std::vector<cv::Mat> & images, ObjectArrays & o
 bool TrtYoloX::feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectArrays & objects)
 {
   std::vector<void *> buffers = {input_d_.get(), out_prob_d_.get()};
-
+  if (multitask_) {
+    buffers = {input_d_.get(), out_prob_d_.get(), segmentation_out_prob_d_.get()};
+  }
   trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
 
   const auto batch_size = images.size();
@@ -758,6 +819,11 @@ bool TrtYoloX::feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectA
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     out_prob_h_.get(), out_prob_d_.get(), sizeof(float) * out_elem_num_, cudaMemcpyDeviceToHost,
     *stream_));
+  if (multitask_) {
+    CHECK_CUDA_ERROR(cudaMemcpyAsync(
+      segmentation_out_prob_h_.get(), segmentation_out_prob_d_.get(),
+      sizeof(float) * segmentation_out_elem_num_, cudaMemcpyDeviceToHost, *stream_));
+  }
   cudaStreamSynchronize(*stream_);
   objects.clear();
 
@@ -767,6 +833,34 @@ bool TrtYoloX::feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectA
     ObjectArray object_array;
     decodeOutputs(batch_prob, object_array, scales_[i], image_size);
     objects.emplace_back(object_array);
+    if (multitask_) {
+      segmentation_masks_.clear();
+      float * segmentation_results =
+        segmentation_out_prob_h_.get() + (i * segmentation_out_elem_num_per_batch_);
+      size_t counter = 0;
+      int batch = (int)(segmentation_out_elem_num_ / segmentation_out_elem_num_per_batch_);
+      for (int m = 0; m < multitask_; m++) {
+        const auto output_dims =
+          trt_common_->getBindingDimensions(m + 2);  // 0 : input, 1 : output for detections
+        size_t out_elem_num = std::accumulate(
+          output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
+        out_elem_num = out_elem_num * batch;
+        const float scale = std::min(
+          output_dims.d[3] / float(image_size.width), output_dims.d[2] / float(image_size.height));
+        int out_w = (int)(image_size.width * scale);
+        int out_h = (int)(image_size.height * scale);
+        cv::Mat mask;
+        if (use_gpu_preprocess_) {
+          float * d_segmentation_results =
+            segmentation_out_prob_d_.get() + (i * segmentation_out_elem_num_per_batch_);
+          mask = getMaskImageGpu(&(d_segmentation_results[counter]), output_dims, out_w, out_h, i);
+        } else {
+          mask = getMaskImage(&(segmentation_results[counter]), output_dims, out_w, out_h);
+        }
+        segmentation_masks_.push_back(mask);
+        counter += out_elem_num;
+      }
+    }
   }
   return true;
 }
@@ -1034,6 +1128,74 @@ void TrtYoloX::nmsSortedBboxes(
       picked.push_back(i);
     }
   }
+}
+
+cv::Mat TrtYoloX::getMaskImageGpu(float * d_prob, nvinfer1::Dims dims, int out_w, int out_h, int b)
+{
+  // NCHW
+  int classes = dims.d[1];
+  int height = dims.d[2];
+  int width = dims.d[3];
+  cv::Mat mask = cv::Mat::zeros(out_h, out_w, CV_8UC1);
+  int index = b * out_w * out_h;
+  argmax_gpu(
+    (unsigned char *)argmax_buf_d_.get() + index, d_prob, out_w, out_h, width, height, classes, 1,
+    *stream_);
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    argmax_buf_h_.get(), argmax_buf_d_.get(), sizeof(unsigned char) * 1 * out_w * out_h,
+    cudaMemcpyDeviceToHost, *stream_));
+  cudaStreamSynchronize(*stream_);
+  std::memcpy(mask.data, argmax_buf_h_.get() + index, sizeof(unsigned char) * 1 * out_w * out_h);
+  return mask;
+}
+
+cv::Mat TrtYoloX::getMaskImage(float * prob, nvinfer1::Dims dims, int out_w, int out_h)
+{
+  // NCHW
+  int classes = dims.d[1];
+  int height = dims.d[2];
+  int width = dims.d[3];
+  cv::Mat mask = cv::Mat::zeros(out_h, out_w, CV_8UC1);
+  // argmax
+  // #pragma omp parallel for
+  for (int y = 0; y < out_h; y++) {
+    for (int x = 0; x < out_w; x++) {
+      float max = 0.0;
+      int index = 0;
+      for (int c = 0; c < classes; c++) {
+        float value = prob[c * height * width + y * width + x];
+        if (max < value) {
+          max = value;
+          index = c;
+        }
+      }
+      mask.at<unsigned char>(y, x) = index;
+    }
+  }
+  return mask;
+}
+
+int TrtYoloX::getMultitaskNum(void)
+{
+  return multitask_;
+}
+
+cv::Mat TrtYoloX::getColorizedMask(int index, std::vector<Colormap> & colormap)
+{
+  cv::Mat mask;
+  mask = segmentation_masks_[index];
+  int width = mask.cols;
+  int height = mask.rows;
+  cv::Mat cmask = cv::Mat::zeros(height, width, CV_8UC3);
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      unsigned char id = mask.at<unsigned char>(y, x);
+      cmask.at<cv::Vec3b>(y, x)[0] = colormap[id].color[2];
+      cmask.at<cv::Vec3b>(y, x)[1] = colormap[id].color[1];
+      cmask.at<cv::Vec3b>(y, x)[2] = colormap[id].color[0];
+    }
+  }
+  return cmask;
 }
 
 }  // namespace tensorrt_yolox
