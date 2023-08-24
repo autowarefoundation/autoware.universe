@@ -26,7 +26,8 @@ GyroBiasValidator::GyroBiasValidator(const rclcpp::NodeOptions & node_options)
 
   const double velocity_threshold = declare_parameter<double>("velocity_threshold");
   const double timestamp_threshold = declare_parameter<double>("timestamp_threshold");
-  const size_t data_num_threshold = static_cast<size_t>(declare_parameter<int>("data_num_threshold"));
+  const size_t data_num_threshold =
+    static_cast<size_t>(declare_parameter<int>("data_num_threshold"));
   gyro_bias_estimation_module_ = std::make_unique<GyroBiasEstimationModule>(
     velocity_threshold, timestamp_threshold, data_num_threshold);
 
@@ -72,17 +73,19 @@ void GyroBiasValidator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
     gyro_bias_pub_->publish(gyro_bias_msg);
 
     // Validation
-    const bool is_bias_small_enough = 
-      std::abs(gyro_bias.x) < gyro_bias_threshold_ &&
-      std::abs(gyro_bias.y) < gyro_bias_threshold_ &&
-      std::abs(gyro_bias.z) < gyro_bias_threshold_;
+    const bool is_bias_small_enough = std::abs(gyro_bias.x) < gyro_bias_threshold_ &&
+                                      std::abs(gyro_bias.y) < gyro_bias_threshold_ &&
+                                      std::abs(gyro_bias.z) < gyro_bias_threshold_;
 
     // Update diagnostics
     if (is_bias_small_enough) {
       stat.add("gyro_bias", "OK");
       stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "OK");
     } else {
-      stat.add("gyro_bias", "Gyro bias may be incorrect. Please calibrate IMU and reflect the result in imu_corrector.");
+      stat.add(
+        "gyro_bias",
+        "Gyro bias may be incorrect. Please calibrate IMU and reflect the result in "
+        "imu_corrector.");
       stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "NG");
     }
   } catch (const std::runtime_error & e) {
