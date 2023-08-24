@@ -156,7 +156,7 @@ void SteeringAngleDisplay::update(float wall_dt, float ros_dt)
   if (last_msg_ptr_) {
     steering_angle_ss << std::fixed << std::setprecision(1) << steering * 180.0 / M_PI << "deg";
   } else {
-    steering_angle_ss << "no received";
+    steering_angle_ss << "Not received";
   }
   painter.drawText(
     0, std::min(property_value_height_offset_->getInt(), h - 1), w,
