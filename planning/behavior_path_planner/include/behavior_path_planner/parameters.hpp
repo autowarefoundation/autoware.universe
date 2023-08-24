@@ -100,7 +100,6 @@ struct BehaviorPathPlannerParameters
 
   // lane change parameters
   double lane_changing_lateral_jerk{0.5};
-  double lateral_acc_switching_velocity{0.4};
   double minimum_lane_changing_velocity{5.6};
   double lane_change_prepare_duration{4.0};
   double lane_change_finish_judge_buffer{3.0};
@@ -142,20 +141,6 @@ struct BehaviorPathPlannerParameters
 
   // maximum drivable area visualization
   bool visualize_maximum_drivable_area;
-
-  // collision check
-  double lateral_distance_max_threshold;
-  double longitudinal_distance_min_threshold;
-  double longitudinal_velocity_delta_time;
-
-  double expected_front_deceleration;  // brake parameter under normal lane change
-  double expected_rear_deceleration;   // brake parameter under normal lane change
-
-  double expected_front_deceleration_for_abort;  // hard brake parameter for abort
-  double expected_rear_deceleration_for_abort;   // hard brake parameter for abort
-
-  double rear_vehicle_reaction_time;
-  double rear_vehicle_safety_time_margin;
 };
 
 #endif  // BEHAVIOR_PATH_PLANNER__PARAMETERS_HPP_

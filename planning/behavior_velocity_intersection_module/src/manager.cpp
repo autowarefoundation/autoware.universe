@@ -115,6 +115,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.occlusion.denoise_kernel = node.declare_parameter<double>(ns + ".occlusion.denoise_kernel");
   ip.occlusion.possible_object_bbox =
     node.declare_parameter<std::vector<double>>(ns + ".occlusion.possible_object_bbox");
+  ip.occlusion.ignore_parked_vehicle_speed_threshold =
+    node.declare_parameter<double>(ns + ".occlusion.ignore_parked_vehicle_speed_threshold");
 }
 
 void IntersectionModuleManager::launchNewModules(
@@ -264,7 +266,7 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
   mp.stop_duration_sec = node.declare_parameter<double>(ns + ".stop_duration_sec");
   mp.attention_area_length =
     node.get_parameter("intersection.common.attention_area_length").as_double();
-  mp.stop_line_margin = node.get_parameter("intersection.common.stop_line_margin").as_double();
+  mp.stop_line_margin = node.declare_parameter<double>(ns + ".stop_line_margin");
   mp.path_interpolation_ds =
     node.get_parameter("intersection.common.path_interpolation_ds").as_double();
 }
