@@ -59,24 +59,24 @@ Note that the node calculates bias from the gyroscope data by averaging the data
 
 ### Input
 
-| Name     | Type                    | Description  |
-| -------- | ----------------------- | ------------ |
-| `~/input/imu` | `sensor_msgs::msg::Imu` | **corrected** imu data |
-| `~/input/twist` | `geometry_msgs::msg::TwistWithCovarianceStamped` | vehicle velocity |
+| Name            | Type                                             | Description            |
+| --------------- | ------------------------------------------------ | ---------------------- |
+| `~/input/imu`   | `sensor_msgs::msg::Imu`                          | **corrected** imu data |
+| `~/input/twist` | `geometry_msgs::msg::TwistWithCovarianceStamped` | vehicle velocity       |
 
 ### Output
 
-| Name      | Type                    | Description        |
-| --------- | ----------------------- | ------------------ |
+| Name                | Type                                 | Description                   |
+| ------------------- | ------------------------------------ | ----------------------------- |
 | `~/debug/gyro_bias` | `geometry_msgs::msg::Vector3Stamped` | bias of the gyroscope [rad/s] |
 
 ## Parameters
 
 ### Core Parameters
 
-| Name                         | Type   | Description                                      |
-| ---------------------------- | ------ | ------------------------------------------------ |
-| `gyro_bias_threshold`  | double | threshold of the bias of the gyroscope [rad/s]             |
-| `velocity_threshold` | double | threshold of the vehicle velocity to determine if the vehicle is stopped[m/s]               |
-| `timestamp_threshold` | double | threshold of the timestamp diff between IMU and twist [s]                 |
-| `data_num_threshold` | int | minimum number of data to calculate bias required |
+| Name                  | Type   | Description                                                                   |
+| --------------------- | ------ | ----------------------------------------------------------------------------- |
+| `gyro_bias_threshold` | double | threshold of the bias of the gyroscope [rad/s]                                |
+| `velocity_threshold`  | double | threshold of the vehicle velocity to determine if the vehicle is stopped[m/s] |
+| `timestamp_threshold` | double | threshold of the timestamp diff between IMU and twist [s]                     |
+| `data_num_threshold`  | int    | minimum number of data to calculate bias required                             |
