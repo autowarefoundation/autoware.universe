@@ -32,7 +32,7 @@ GyroBiasValidator::GyroBiasValidator(const rclcpp::NodeOptions & node_options)
   twist_sub_ = create_subscription<TwistWithCovarianceStamped>(
     "~/input/twist", rclcpp::SensorDataQoS(),
     [this](const TwistWithCovarianceStamped::ConstSharedPtr msg) { callback_twist(msg); });
-  
+
   gyro_bias_pub_ = create_publisher<Vector3Stamped>("~/debug/gyro_bias", rclcpp::SensorDataQoS());
 }
 
