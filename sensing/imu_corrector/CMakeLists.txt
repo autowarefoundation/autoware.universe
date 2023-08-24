@@ -13,7 +13,7 @@ ament_auto_add_library(imu_corrector_node SHARED
 )
 
 ament_auto_add_library(gyro_bias_estimator_node SHARED
-  src/gyro_bias_validator.cpp
+  src/gyro_bias_estimator.cpp
 )
 
 target_link_libraries(gyro_bias_estimator_node gyro_bias_estimation_module)
