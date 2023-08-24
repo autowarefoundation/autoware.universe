@@ -465,7 +465,8 @@ void TrtYoloX::preprocess(const std::vector<cv::Mat> & images)
   // No Need for Sync
 }
 
-bool TrtYoloX::doInference(const std::vector<cv::Mat> & images, ObjectArrays & objects)
+bool TrtYoloX::doInference(
+  const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask)
 {
   if (!trt_common_->isInitialized()) {
     return false;
@@ -478,7 +479,7 @@ bool TrtYoloX::doInference(const std::vector<cv::Mat> & images, ObjectArrays & o
   }
 
   if (needs_output_decode_) {
-    return feedforwardAndDecode(images, objects);
+    return feedforwardAndDecode(images, objects, mask);
   } else {
     return feedforward(images, objects);
   }
@@ -718,6 +719,7 @@ void TrtYoloX::multiScalePreprocess(const cv::Mat & image, const std::vector<cv:
 bool TrtYoloX::doInferenceWithRoi(
   const std::vector<cv::Mat> & images, ObjectArrays & objects, const std::vector<cv::Rect> & rois)
 {
+  cv::Mat mask;
   if (!trt_common_->isInitialized()) {
     return false;
   }
@@ -728,7 +730,7 @@ bool TrtYoloX::doInferenceWithRoi(
   }
 
   if (needs_output_decode_) {
-    return feedforwardAndDecode(images, objects);
+    return feedforwardAndDecode(images, objects, mask);
   } else {
     return feedforward(images, objects);
   }
@@ -806,7 +808,8 @@ bool TrtYoloX::feedforward(const std::vector<cv::Mat> & images, ObjectArrays & o
   return true;
 }
 
-bool TrtYoloX::feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectArrays & objects)
+bool TrtYoloX::feedforwardAndDecode(
+  const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask)
 {
   std::vector<void *> buffers = {input_d_.get(), out_prob_d_.get()};
   if (multitask_) {
@@ -860,6 +863,7 @@ bool TrtYoloX::feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectA
         segmentation_masks_.push_back(mask);
         counter += out_elem_num;
       }
+      mask = segmentation_masks_.at(0);
     }
   }
   return true;

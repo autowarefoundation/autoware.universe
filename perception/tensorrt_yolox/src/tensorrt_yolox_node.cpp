@@ -107,6 +107,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
 
   objects_pub_ = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
     "~/out/objects", 1);
+  mask_pub_ = image_transport::create_publisher(this, "~/out/mask");
   image_pub_ = image_transport::create_publisher(this, "~/out/image");
 
   if (declare_parameter("build_only", false)) {
@@ -145,7 +146,9 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
   const auto height = in_image_ptr->image.rows;
 
   tensorrt_yolox::ObjectArrays objects;
-  if (!trt_yolox_->doInference({in_image_ptr->image}, objects)) {
+  cv::Mat mask(cv::Size(height, width), CV_8UC1, cv::Scalar(0));
+
+  if (!trt_yolox_->doInference({in_image_ptr->image}, objects, mask)) {
     RCLCPP_WARN(this->get_logger(), "Fail to inference");
     return;
   }
@@ -169,6 +172,26 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       in_image_ptr->image, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
       8, 0);
   }
+
+  sensor_msgs::msg::Image::SharedPtr out_mask_msg =
+    cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::MONO8, mask)
+      .toImageMsg();
+  out_mask_msg->header = msg->header;
+  mask_pub_.publish(out_mask_msg);
+
+  // cv_bridge::CvImage cv_mat;
+  // cv_mat.encoding = sensor_msgs::image_encodings::MONO8;
+  // cv_mat.image = mask;
+  // sensor_msgs::msg::Image::SharedPtr out_mask_msg;
+  // out_mask_msg = cv_mat.toImageMsg();
+  // out_mask_msg->header = msg->header;
+  // mask_pub_.publish(out_mask_msg);
+
+  // sensor_msgs::msg::Image::SharedPtr out_mask_msg =
+  //     cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", mask).toImageMsg();
+  // out_mask_msg->header = msg->header;
+  // mask_pub_.publish(out_mask_msg);
+
   image_pub_.publish(in_image_ptr->toImageMsg());
 
   out_objects.header = msg->header;

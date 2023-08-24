@@ -53,6 +53,8 @@ private:
   void replaceLabelMap();
 
   image_transport::Publisher image_pub_;
+  image_transport::Publisher mask_pub_;
+
   rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr objects_pub_;
 
   image_transport::Subscriber image_sub_;
