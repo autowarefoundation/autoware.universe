@@ -47,7 +47,8 @@ public:
     auto trt_yolox = std::make_unique<tensorrt_yolox::TrtYoloX>(model_path, precision);
     auto image = cv::imread(image_path);
     tensorrt_yolox::ObjectArrays objects;
-    trt_yolox->doInference({image}, objects);
+    cv::Mat mask;
+    trt_yolox->doInference({image}, objects, mask);
     for (const auto & object : objects[0]) {
       const auto left = object.x_offset;
       const auto top = object.y_offset;

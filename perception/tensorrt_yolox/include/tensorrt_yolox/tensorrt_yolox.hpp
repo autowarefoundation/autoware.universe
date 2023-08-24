@@ -58,7 +58,7 @@ typedef struct Colormap_
   std::string name;
   std::vector<unsigned char> color;
 } Colormap;
-  
+
 /**
  * @class TrtYoloX
  * @brief TensorRT YOLOX for faster inference
@@ -103,7 +103,7 @@ public:
    * @param[out] objects results for object detection
    * @param[in] images batched images
    */
-  bool doInference(const std::vector<cv::Mat> & images, ObjectArrays & objects);
+  bool doInference(const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask);
 
   /**
    * @brief run inference including pre-process and post-process
@@ -139,7 +139,7 @@ public:
 
   /**
    * @brief get num for multitask heads
-   */  
+   */
   int getMultitaskNum(void);
 
   /**
@@ -147,9 +147,9 @@ public:
    * @param[out] cmask colorlized mask
    * @param[in] index multitask index
    * @param[in] colormap colormap for masks
-   */  
-  cv::Mat getColorizedMask(int index, std::vector<Colormap> & colormap);  
-  
+   */
+  cv::Mat getColorizedMask(int index, std::vector<Colormap> & colormap);
+
 private:
   /**
    * @brief run preprocess including resizing, letterbox, NHWC2NCHW and toFloat on CPU
@@ -197,7 +197,8 @@ private:
     const cv::Mat & images, int batch_size, ObjectArrays & objects);
 
   bool feedforward(const std::vector<cv::Mat> & images, ObjectArrays & objects);
-  bool feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectArrays & objects);
+  bool feedforwardAndDecode(
+    const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask);
   void decodeOutputs(float * prob, ObjectArray & objects, float scale, cv::Size & img_size) const;
   void generateGridsAndStride(
     const int target_w, const int target_h, const std::vector<int> & strides,
@@ -233,8 +234,8 @@ private:
    * @param[in] dims dimension for probmap
    * @param[in] out_w mask width excluding letterbox
    * @param[in] out_h mask height excluding letterbox
-   */  
-  cv::Mat getMaskImage(float *prob, nvinfer1::Dims dims, int out_w, int out_h);
+   */
+  cv::Mat getMaskImage(float * prob, nvinfer1::Dims dims, int out_w, int out_h);
 
   /**
    * @brief get a mask image on GPUs for a segmentation head
@@ -243,9 +244,9 @@ private:
    * @param[in] out_w mask width excluding letterbox
    * @param[in] out_h mask height excluding letterbox
    * @param[in] b current batch
-   */  
-  cv::Mat getMaskImageGpu(float *d_prob, nvinfer1::Dims dims, int out_w, int out_h, int b);      
-  
+   */
+  cv::Mat getMaskImageGpu(float * d_prob, nvinfer1::Dims dims, int out_w, int out_h, int b);
+
   std::unique_ptr<tensorrt_common::TrtCommon> trt_common_;
 
   std::vector<float> input_h_;
@@ -301,7 +302,7 @@ private:
   // host buffer for argmax postprocessing on GPU
   CudaUniquePtrHost<unsigned char[]> argmax_buf_h_;
   // device buffer for argmax postprocessing  on GPU
-  CudaUniquePtr<unsigned char[]> argmax_buf_d_;  
+  CudaUniquePtr<unsigned char[]> argmax_buf_d_;
 };
 
 }  // namespace tensorrt_yolox
