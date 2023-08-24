@@ -47,12 +47,36 @@ We also assume that $n\sim\mathcal{N}(0, \sigma^2)$.
 | `angular_velocity_stddev_zz` | double | yaw rate standard deviation imu_link [rad/s]     |
 | `acceleration_stddev`        | double | acceleration standard deviation imu_link [m/s^2] |
 
-## Assumptions / Known limits
+# gyro_bias_validator
 
-## (Optional) Error detection and handling
+## Purpose
 
-## (Optional) Performance characterization
+`gyro_bias_validator` is a node that validates the bias of the gyroscope. It subscribes to the `sensor_msgs::msg::Imu` topic and validate if the bias of the gyroscope is within the specified range.
 
-## (Optional) References/External links
+Note that the node calculates bias from the gyroscope data by averaging the data only when the vehicle is stopped.
 
-## (Optional) Future extensions / Unimplemented parts
+## Inputs / Outputs
+
+### Input
+
+| Name     | Type                    | Description  |
+| -------- | ----------------------- | ------------ |
+| `~/input/imu` | `sensor_msgs::msg::Imu` | **corrected** imu data |
+| `~/input/twist` | `geometry_msgs::msg::TwistWithCovarianceStamped` | vehicle velocity |
+
+### Output
+
+| Name      | Type                    | Description        |
+| --------- | ----------------------- | ------------------ |
+| `~/debug/gyro_bias` | `geometry_msgs::msg::Vector3Stamped` | bias of the gyroscope [rad/s] |
+
+## Parameters
+
+### Core Parameters
+
+| Name                         | Type   | Description                                      |
+| ---------------------------- | ------ | ------------------------------------------------ |
+| `gyro_bias_threshold`  | double | threshold of the bias of the gyroscope [rad/s]             |
+| `velocity_threshold` | double | threshold of the vehicle velocity to determine if the vehicle is stopped[m/s]               |
+| `timestamp_threshold` | double | threshold of the timestamp diff between IMU and twist [s]                 |
+| `data_num_threshold` | int | minimum number of data to calculate bias required |
