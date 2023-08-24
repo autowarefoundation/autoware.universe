@@ -19,6 +19,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 
 #include <memory>
@@ -31,6 +32,7 @@ class GyroBiasValidator : public rclcpp::Node
 private:
   using Imu = sensor_msgs::msg::Imu;
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
+  using Vector3Stamped = geometry_msgs::msg::Vector3Stamped;
 
 public:
   explicit GyroBiasValidator(const rclcpp::NodeOptions & node_options);
@@ -41,6 +43,8 @@ private:
 
   rclcpp::Subscription<Imu>::SharedPtr imu_sub_;
   rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_sub_;
+
+  rclcpp::Publisher<Vector3Stamped>::SharedPtr gyro_bias_pub_;
 
   std::unique_ptr<GyroBiasEstimationModule> gyro_bias_estimation_module_;
 
