@@ -24,18 +24,14 @@ GyroBiasValidator::GyroBiasValidator(const rclcpp::NodeOptions & node_options)
   const double timestamp_threshold = declare_parameter<double>("timestamp_threshold");
   const int data_num_threshold = declare_parameter<int>("data_num_threshold");
   gyro_bias_estimation_module_ = std::make_unique<GyroBiasEstimationModule>(
-    velocity_threshold,
-    timestamp_threshold,
-    static_cast<size_t>(data_num_threshold));
+    velocity_threshold, timestamp_threshold, static_cast<size_t>(data_num_threshold));
 
   imu_sub_ = create_subscription<Imu>(
-    "~/input/imu", rclcpp::SensorDataQoS(), [this](const Imu::ConstSharedPtr msg) {
-      callback_imu(msg);
-    });
+    "~/input/imu", rclcpp::SensorDataQoS(),
+    [this](const Imu::ConstSharedPtr msg) { callback_imu(msg); });
   twist_sub_ = create_subscription<TwistWithCovarianceStamped>(
-    "~/input/twist", rclcpp::SensorDataQoS(), [this](const TwistWithCovarianceStamped::ConstSharedPtr msg) {
-      callback_twist(msg);
-    });
+    "~/input/twist", rclcpp::SensorDataQoS(),
+    [this](const TwistWithCovarianceStamped::ConstSharedPtr msg) { callback_twist(msg); });
 }
 
 void GyroBiasValidator::callback_imu(const Imu::ConstSharedPtr imu_msg_ptr)
@@ -49,14 +45,13 @@ void GyroBiasValidator::callback_imu(const Imu::ConstSharedPtr imu_msg_ptr)
 
   try {
     const auto gyro_bias = gyro_bias_estimation_module_->get_bias();
-    if (std::abs(gyro_bias.x) > gyro_bias_threshold_ ||
+    if (
+      std::abs(gyro_bias.x) > gyro_bias_threshold_ ||
       std::abs(gyro_bias.y) > gyro_bias_threshold_ ||
-      std::abs(gyro_bias.z) > gyro_bias_threshold_)
-    {
-      const std::string warn_msg = "Gyro bias is too large: " +
-        std::to_string(gyro_bias.x) + ", " +
-        std::to_string(gyro_bias.y) + ", " +
-        std::to_string(gyro_bias.z) +
+      std::abs(gyro_bias.z) > gyro_bias_threshold_) {
+      const std::string warn_msg =
+        "Gyro bias is too large: " + std::to_string(gyro_bias.x) + ", " +
+        std::to_string(gyro_bias.y) + ", " + std::to_string(gyro_bias.z) +
         ". You may need to update the calibration file in imu_corrector.";
       RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *(this->get_clock()), 1000, warn_msg);
     }

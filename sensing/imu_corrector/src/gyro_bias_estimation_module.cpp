@@ -17,8 +17,7 @@
 namespace imu_corrector
 {
 GyroBiasEstimationModule::GyroBiasEstimationModule(
-  const double velocity_threshold,
-  const double timestamp_threshold,
+  const double velocity_threshold, const double timestamp_threshold,
   const size_t data_num_threshold)
 : velocity_threshold_(velocity_threshold),
   timestamp_threshold_(timestamp_threshold),
@@ -28,7 +27,8 @@ GyroBiasEstimationModule::GyroBiasEstimationModule(
 {
 }
 
-void GyroBiasEstimationModule::update_gyro(const double time, const geometry_msgs::msg::Vector3 & gyro)
+void GyroBiasEstimationModule::update_gyro(
+  const double time, const geometry_msgs::msg::Vector3 & gyro)
 {
   if (time - last_velocity_time_ > timestamp_threshold_) {
     throw std::runtime_error("Last velocity is too old. Velocity may be missing?");

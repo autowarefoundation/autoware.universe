@@ -11,14 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef IMU_CORRECTOR__GYRO_BIAS_VALIDATOR_HPP_
-#define IMU_CORRECTOR__GYRO_BIAS_VALIDATOR_HPP_
+#ifndef GYRO_BIAS_VALIDATOR_HPP_
+#define GYRO_BIAS_VALIDATOR_HPP_
 
 #include "gyro_bias_estimation_module.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
-#include <sensor_msgs/msg/imu.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+
 #include <memory>
 #include <string>
 
@@ -29,6 +31,7 @@ class GyroBiasValidator : public rclcpp::Node
 private:
   using Imu = sensor_msgs::msg::Imu;
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
+
 public:
   explicit GyroBiasValidator(const rclcpp::NodeOptions & node_options);
 
@@ -45,4 +48,4 @@ private:
 };
 }  // namespace imu_corrector
 
-#endif  // IMU_CORRECTOR__GYRO_BIAS_VALIDATOR_HPP_
+#endif  // GYRO_BIAS_VALIDATOR_HPP_

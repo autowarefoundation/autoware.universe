@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef IMU_CORRECTOR__GYRO_BIAS_ESTIMATION_MODULE_HPP_
-#define IMU_CORRECTOR__GYRO_BIAS_ESTIMATION_MODULE_HPP_
+#ifndef GYRO_BIAS_ESTIMATION_MODULE_HPP_
+#define GYRO_BIAS_ESTIMATION_MODULE_HPP_
 
 #include <geometry_msgs/msg/vector3.hpp>
 
@@ -23,7 +23,9 @@ namespace imu_corrector
 class GyroBiasEstimationModule
 {
 public:
-  GyroBiasEstimationModule(const double velocity_threshold, const double timestamp_threshold, const size_t data_num_threshold);
+  GyroBiasEstimationModule(
+    const double velocity_threshold, const double timestamp_threshold,
+    const size_t data_num_threshold);
   geometry_msgs::msg::Vector3 get_bias() const;
   void update_gyro(const double time, const geometry_msgs::msg::Vector3 & gyro);
   void update_velocity(const double time, const double velocity);
@@ -39,4 +41,4 @@ private:
 };
 }  // namespace imu_corrector
 
-#endif  // IMU_CORRECTOR__GYRO_BIAS_ESTIMATION_MODULE_HPP_
+#endif  // GYRO_BIAS_ESTIMATION_MODULE_HPP_
