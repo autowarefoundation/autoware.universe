@@ -324,7 +324,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
   // Generate Output Trajectory
   const double zero_vel_dist = [&]() {
     const double current_zero_vel_dist =
-      std::max(0.0, closest_obstacle_dist - abs_ego_offset - feasible_margin_from_obstacle);
+      std::max(0.0, closest_obstacle_dist - abs_ego_offset - stop_margin_from_obstacle);
 
     // Hold previous stop distance if necessary
     if (
