@@ -17,7 +17,9 @@
 #include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
@@ -169,6 +171,21 @@ bool StartPlannerModule::isExecutionRequested() const
 
 bool StartPlannerModule::isExecutionReady() const
 {
+  if (status_.pull_out_path.partial_paths.empty()) {
+    return true;
+  }
+
+  if (status_.is_safe_static_objects && parameters_->safety_check_params.enable_safety_check) {
+    utils::start_goal_planner_common::updateEgoPredictedPathParams(
+      ego_predicted_path_params_, parameters_);
+    utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
+    utils::start_goal_planner_common::updateObjectsFilteringParams(
+      objects_filtering_params_, parameters_);
+    if (!isSafePath()) {
+      RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
+      return false;
+    }
+  }
   return true;
 }
 
@@ -404,6 +421,14 @@ PathWithLaneId StartPlannerModule::getCurrentPath() const
     return PathWithLaneId{};
   }
   return status_.pull_out_path.partial_paths.at(status_.current_path_idx);
+}
+
+std::pair<double, double> StartPlannerModule::getPairsTerminalVelocityAndAccel() const
+{
+  if (status_.pull_out_path.pairs_terminal_velocity_and_accel.size() <= status_.current_path_idx) {
+    return std::make_pair(0.0, 0.0);
+  }
+  return status_.pull_out_path.pairs_terminal_velocity_and_accel.at(status_.current_path_idx);
 }
 
 void StartPlannerModule::planWithPriority(
@@ -922,6 +947,65 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   return turn_signal;
 }
 
+void StartPlannerModule::updateSafetyCheckTargetObjectsData(
+  const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
+  const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const
+{
+  start_planner_data_.filtered_objects = filtered_objects;
+  start_planner_data_.target_objects_on_lane = target_objects_on_lane;
+  start_planner_data_.ego_predicted_path = ego_predicted_path;
+}
+
+bool StartPlannerModule::isSafePath() const
+{
+  const auto & pull_out_path = getCurrentPath();
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
+  const auto & current_velocity = std::hypot(
+    planner_data_->self_odometry->twist.twist.linear.x,
+    planner_data_->self_odometry->twist.twist.linear.y);
+  const auto & dynamic_object = planner_data_->dynamic_object;
+  const auto & route_handler = planner_data_->route_handler;
+  const double backward_path_length =
+    planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
+  const auto current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, backward_path_length, std::numeric_limits<double>::max(),
+    /*forward_only_in_route*/ true);
+  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_out_path.points);
+  const auto & common_param = planner_data_->parameters;
+  const std::pair<double, double> terminal_velocity_and_accl =
+    utils::start_goal_planner_common::getPairsTerminalVelocityAndAccel(
+      status_.pull_out_path, status_.current_path_idx);
+  utils::start_goal_planner_common::updatePathProperty(
+    ego_predicted_path_params_, terminal_velocity_and_accl);
+  const auto & ego_predicted_path =
+    behavior_path_planner::utils::path_safety_checker::createPredictedPath(
+      ego_predicted_path_params_, pull_out_path.points, current_pose, current_velocity,
+      ego_seg_idx);
+
+  const auto & filtered_objects = utils::path_safety_checker::filterObjects(
+    dynamic_object, route_handler, current_lanes, current_pose.position, objects_filtering_params_);
+
+  const auto & target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
+    current_lanes, route_handler, filtered_objects, objects_filtering_params_);
+
+  updateSafetyCheckTargetObjectsData(filtered_objects, target_objects_on_lane, ego_predicted_path);
+
+  for (const auto & object : target_objects_on_lane.on_current_lane) {
+    const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
+      object, objects_filtering_params_->check_all_predicted_path);
+    for (const auto & obj_path : obj_predicted_paths) {
+      CollisionCheckDebug collision{};
+      if (!utils::path_safety_checker::checkCollision(
+            pull_out_path, ego_predicted_path, object, obj_path, common_param,
+            safety_check_params_->rss_params, collision)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 bool StartPlannerModule::IsGoalBehindOfEgoInSameRouteSegment() const
 {
   const auto & rh = planner_data_->route_handler;
@@ -1040,8 +1124,10 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
 
 void StartPlannerModule::setDebugData() const
 {
+  using marker_utils::createObjectsMarkerArray;
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
+  using marker_utils::createPredictedPathMarkerArray;
   using tier4_autoware_utils::createDefaultMarker;
   using tier4_autoware_utils::createMarkerColor;
   using tier4_autoware_utils::createMarkerScale;
@@ -1059,6 +1145,17 @@ void StartPlannerModule::setDebugData() const
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
   add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
+  if (start_planner_data_.ego_predicted_path.size() > 0) {
+    const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
+      start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
+    add(createPredictedPathMarkerArray(
+      ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
+  }
+
+  if (start_planner_data_.filtered_objects.objects.size() > 0) {
+    add(createObjectsMarkerArray(
+      start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
+  }
 
   // Visualize planner type text
   const auto header = planner_data_->route_handler->getRouteHeader();

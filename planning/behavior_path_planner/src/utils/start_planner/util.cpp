@@ -140,4 +140,12 @@ std::pair<double, bool> calcEndArcLength(
   return {s_goal, true};
 }
 
+void updateEgoPredictedPathParams(
+  const std::shared_ptr<EgoPredictedPathParams> & params,
+  const std::pair<double, double> & terminal_velocity_and_accel)
+{
+  params->target_velocity = terminal_velocity_and_accel.first;
+  params->acceleration = terminal_velocity_and_accel.second;
+}
+
 }  // namespace behavior_path_planner::start_planner_utils
