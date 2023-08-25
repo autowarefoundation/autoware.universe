@@ -51,5 +51,10 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::str
     msg.projector_type = "MGRS";
     msg.mgrs_grid = projector.getProjectedMGRSGrid();
   }
+
+  // We assume that the vertical datum of the map is WGS84 when using lanelet2 map.
+  // However, do note that this is not always true, and may cause problems in the future.
+  // Thus, please consider using the map_projector_info.yaml instead of this deprecated function.
+  msg.vertical_datum = "WGS84";
   return msg;
 }
