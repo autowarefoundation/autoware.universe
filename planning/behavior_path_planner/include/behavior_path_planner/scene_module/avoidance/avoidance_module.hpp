@@ -578,6 +578,8 @@ private:
 
   ObjectDataArray registered_objects_;
 
+  mutable size_t safe_count_{0};
+
   mutable ObjectDataArray ego_stopped_objects_;
 
   mutable ObjectDataArray stopped_objects_;
