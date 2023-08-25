@@ -1,6 +1,6 @@
 # imu_corrector
 
-## Purpose
+## imu_corrector
 
 `imu_corrector_node` is a node that correct imu data.
 
@@ -19,8 +19,6 @@ We also assume that $n\sim\mathcal{N}(0, \sigma^2)$.
 <!-- TODO(TIER IV): Make this repository public or change the link. -->
 <!-- Use the value estimated by [deviation_estimator](https://github.com/tier4/calibration_tools/tree/main/localization/deviation_estimation_tools) as the parameters for this node. -->
 
-## Inputs / Outputs
-
 ### Input
 
 | Name     | Type                    | Description  |
@@ -33,9 +31,7 @@ We also assume that $n\sim\mathcal{N}(0, \sigma^2)$.
 | --------- | ----------------------- | ------------------ |
 | `~output` | `sensor_msgs::msg::Imu` | corrected imu data |
 
-## Parameters
-
-### Core Parameters
+### Parameters
 
 | Name                         | Type   | Description                                      |
 | ---------------------------- | ------ | ------------------------------------------------ |
@@ -47,15 +43,11 @@ We also assume that $n\sim\mathcal{N}(0, \sigma^2)$.
 | `angular_velocity_stddev_zz` | double | yaw rate standard deviation imu_link [rad/s]     |
 | `acceleration_stddev`        | double | acceleration standard deviation imu_link [m/s^2] |
 
-# gyro_bias_estimator
-
-## Purpose
+## gyro_bias_estimator
 
 `gyro_bias_validator` is a node that validates the bias of the gyroscope. It subscribes to the `sensor_msgs::msg::Imu` topic and validate if the bias of the gyroscope is within the specified range.
 
 Note that the node calculates bias from the gyroscope data by averaging the data only when the vehicle is stopped.
-
-## Inputs / Outputs
 
 ### Input
 
@@ -70,9 +62,7 @@ Note that the node calculates bias from the gyroscope data by averaging the data
 | -------------------- | ------------------------------------ | ----------------------------- |
 | `~/output/gyro_bias` | `geometry_msgs::msg::Vector3Stamped` | bias of the gyroscope [rad/s] |
 
-## Parameters
-
-### Core Parameters
+### Parameters
 
 | Name                        | Type   | Description                                                                   |
 | --------------------------- | ------ | ----------------------------------------------------------------------------- |
