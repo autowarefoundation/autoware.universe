@@ -543,7 +543,8 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // 2.h. calculate longitudinal and lateral offset to avoid
+    // 2.h. calculate longitudinal and lateral offset to avoid to generate object polygon by
+    // "object_path_base"
     const auto obj_points = tier4_autoware_utils::toPolygon2d(object.pose, object.shape);
     const auto lon_offset_to_avoid = calcMinMaxLongitudinalOffsetToAvoid(
       path_points_for_object_polygon, object.pose, obj_points, object.vel, time_to_collision);
