@@ -56,5 +56,6 @@
     <param name="preprocess_on_gpu" value="$(var preprocess_on_gpu)"/>
     <param name="calibration_image_list_path" value="$(var calibration_image_list_path)"/>
     <param name="build_only" value="$(var build_only)"/>
+    <param name="color_map_path" value="$(var model_path)/bdd100k_semseg.csv"/>
   </node>
 </launch>
