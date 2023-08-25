@@ -524,6 +524,32 @@ void DynamicAvoidanceModule::updateTargetObjects()
     const auto lat_offset_to_avoid = calcMinMaxLateralOffsetToAvoid(
       path_points_for_object_polygon, obj_points, is_collision_left, object.lat_vel, prev_object);
 
+    // 2.h. check if the ego is not ahead of the object.
+    const double signed_dist_ego_to_obj = [&]() {
+      const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(path_points_for_object_polygon);
+      const size_t obj_seg_idx =
+        motion_utils::findNearestSegmentIndex(path_points_for_object_polygon, object.pose.position);
+      const double lon_offset_ego_to_obj = motion_utils::calcSignedArcLength(
+        path_points_for_object_polygon, getEgoPose().position, ego_seg_idx, object.pose.position,
+        obj_seg_idx);
+      if (0 < lon_offset_ego_to_obj) {
+        return std::max(
+          0.0, lon_offset_ego_to_obj - planner_data_->parameters.front_overhang +
+                 lon_offset_to_avoid.min_value);
+      }
+      return std::min(
+        0.0, lon_offset_ego_to_obj + planner_data_->parameters.rear_overhang +
+               lon_offset_to_avoid.max_value);
+    }();
+    if (signed_dist_ego_to_obj < 0) {
+      RCLCPP_INFO_EXPRESSION(
+        getLogger(), parameters_->enable_debug_info,
+        "[DynamicAvoidance] Ignore obstacle (%s) since distance from ego to object (%f) is less "
+        "than 0.",
+        obj_uuid.c_str(), signed_dist_ego_to_obj);
+      continue;
+    }
+
     const bool should_be_avoided = true;
     target_objects_manager_.updateObject(
       obj_uuid, lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided);
