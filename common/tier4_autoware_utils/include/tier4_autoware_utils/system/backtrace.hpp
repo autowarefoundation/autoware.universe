@@ -36,16 +36,16 @@ inline void print_backtrace()
     return;
   }
 
-  char ** symbollist = backtrace_symbols(addrlist, addrlen);
+  char ** symbol_list = backtrace_symbols(addrlist, addrlen);
 
   std::stringstream ss;
-  ss << "  -- backtrace --" << std::endl;
+  ss << "  ********** back trace **********" << std::endl;
   for (int i = 1; i < addrlen; i++) {
-    ss << "   @   " << symbollist[i] << std::endl;
+    ss << "   @   " << symbol_list[i] << std::endl;
   }
   std::cerr << ss.str() << std::endl;
 
-  free(symbollist);
+  free(symbol_list);
 }
 
 }  // namespace tier4_autoware_utils
