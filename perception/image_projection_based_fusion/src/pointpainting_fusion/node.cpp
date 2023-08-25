@@ -93,7 +93,8 @@ inline bool isUnknown(int label2d)
 }
 
 PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>("pointpainting_fusion", options)
+: FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects, DetectedObjectsWithFeature>(
+    "pointpainting_fusion", options)
 {
   omp_num_threads_ = this->declare_parameter<int>("omp_num_threads", 1);
   const float score_threshold =
