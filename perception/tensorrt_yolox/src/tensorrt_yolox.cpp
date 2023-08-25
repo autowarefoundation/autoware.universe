@@ -15,12 +15,18 @@
 #include "cuda_utils/cuda_check_error.hpp"
 #include "cuda_utils/cuda_unique_ptr.hpp"
 
+#include <experimental/filesystem>
 #include <tensorrt_yolox/calibrator.hpp>
 #include <tensorrt_yolox/preprocess.hpp>
 #include <tensorrt_yolox/tensorrt_yolox.hpp>
 
+#include <assert.h>
+
 #include <algorithm>
+#include <fstream>
 #include <functional>
+#include <iomanip>
+#include <iostream>
 #include <memory>
 #include <numeric>
 #include <stdexcept>
@@ -97,14 +103,62 @@ std::vector<std::string> loadImageList(const std::string & filename, const std::
   }
   return fileList;
 }
+
+std::vector<tensorrt_yolox::Colormap> get_seg_colormap(const std::string & filename)
+{
+  std::vector<tensorrt_yolox::Colormap> seg_cmap;
+  if (filename != "not-specified") {
+    std::vector<std::string> color_list = loadListFromTextFile(filename);
+    for (int i = 0; i < (int)color_list.size(); i++) {
+      if (i == 0) {
+        // Skip header
+        continue;
+      }
+      std::string colormapString = color_list[i];
+      tensorrt_yolox::Colormap cmap;
+      std::vector<int> rgb;
+      size_t npos = colormapString.find_first_of(',');
+      assert(npos != std::string::npos);
+      std::string substr = colormapString.substr(0, npos);
+      int id = (int)std::stoi(trim(substr));
+      colormapString.erase(0, npos + 1);
+
+      npos = colormapString.find_first_of(',');
+      assert(npos != std::string::npos);
+      substr = colormapString.substr(0, npos);
+      std::string name = (trim(substr));
+      cmap.id = id;
+      cmap.name = name;
+      colormapString.erase(0, npos + 1);
+      while (!colormapString.empty()) {
+        size_t npos = colormapString.find_first_of(',');
+        if (npos != std::string::npos) {
+          substr = colormapString.substr(0, npos);
+          unsigned char c = (unsigned char)std::stoi(trim(substr));
+          cmap.color.push_back(c);
+          colormapString.erase(0, npos + 1);
+        } else {
+          unsigned char c = (unsigned char)std::stoi(trim(colormapString));
+          cmap.color.push_back(c);
+          break;
+        }
+      }
+
+      seg_cmap.push_back(cmap);
+    }
+  }
+  return seg_cmap;
+}
+
 }  // anonymous namespace
 
 namespace tensorrt_yolox
 {
 TrtYoloX::TrtYoloX(
-  const std::string & model_path, const std::string & precision, const int num_class,
-  const float score_threshold, const float nms_threshold, tensorrt_common::BuildConfig build_config,
-  const bool use_gpu_preprocess, std::string calibration_image_list_path, const double norm_factor,
+  const std::string & model_path, const std::string & precision, const std::string & color_map_path,
+  const int num_class, const float score_threshold, const float nms_threshold,
+  tensorrt_common::BuildConfig build_config, const bool use_gpu_preprocess,
+  std::string calibration_image_list_path, const double norm_factor,
   [[maybe_unused]] const std::string & cache_dir, const tensorrt_common::BatchConfig & batch_config,
   const size_t max_workspace_size)
 {
@@ -113,6 +167,7 @@ TrtYoloX::TrtYoloX(
   norm_factor_ = norm_factor;
   batch_size_ = batch_config[2];
   multitask_ = 0;
+  color_map_ = get_seg_colormap(color_map_path);
   if (precision == "int8") {
     if (build_config.clip_value <= 0.0) {
       if (calibration_image_list_path.empty()) {
@@ -466,7 +521,8 @@ void TrtYoloX::preprocess(const std::vector<cv::Mat> & images)
 }
 
 bool TrtYoloX::doInference(
-  const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask)
+  const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask,
+  [[maybe_unused]] cv::Mat & color_mask)
 {
   if (!trt_common_->isInitialized()) {
     return false;
@@ -479,7 +535,7 @@ bool TrtYoloX::doInference(
   }
 
   if (needs_output_decode_) {
-    return feedforwardAndDecode(images, objects, mask);
+    return feedforwardAndDecode(images, objects, mask, color_mask);
   } else {
     return feedforward(images, objects);
   }
@@ -720,6 +776,7 @@ bool TrtYoloX::doInferenceWithRoi(
   const std::vector<cv::Mat> & images, ObjectArrays & objects, const std::vector<cv::Rect> & rois)
 {
   cv::Mat mask;
+  cv::Mat color_mask;
   if (!trt_common_->isInitialized()) {
     return false;
   }
@@ -730,7 +787,7 @@ bool TrtYoloX::doInferenceWithRoi(
   }
 
   if (needs_output_decode_) {
-    return feedforwardAndDecode(images, objects, mask);
+    return feedforwardAndDecode(images, objects, mask, color_mask);
   } else {
     return feedforward(images, objects);
   }
@@ -809,7 +866,8 @@ bool TrtYoloX::feedforward(const std::vector<cv::Mat> & images, ObjectArrays & o
 }
 
 bool TrtYoloX::feedforwardAndDecode(
-  const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask)
+  const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask,
+  [[maybe_unused]] cv::Mat & color_mask)
 {
   std::vector<void *> buffers = {input_d_.get(), out_prob_d_.get()};
   if (multitask_) {
@@ -864,6 +922,7 @@ bool TrtYoloX::feedforwardAndDecode(
         counter += out_elem_num;
       }
       mask = segmentation_masks_.at(0);
+      color_mask = getColorizedMask(i, color_map_);
     }
   }
   return true;

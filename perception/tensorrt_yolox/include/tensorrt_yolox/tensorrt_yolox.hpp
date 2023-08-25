@@ -86,8 +86,9 @@ public:
    * @param[in] max_workspace_size maximum workspace for building TensorRT engine
    */
   TrtYoloX(
-    const std::string & model_path, const std::string & precision, const int num_class = 8,
-    const float score_threshold = 0.3, const float nms_threshold = 0.7,
+    const std::string & model_path, const std::string & precision,
+    const std::string & color_map_path, const int num_class = 8, const float score_threshold = 0.3,
+    const float nms_threshold = 0.7,
     const tensorrt_common::BuildConfig build_config = tensorrt_common::BuildConfig(),
     const bool use_gpu_preprocess = false, std::string calibration_image_list_file = std::string(),
     const double norm_factor = 1.0, [[maybe_unused]] const std::string & cache_dir = "",
@@ -103,7 +104,9 @@ public:
    * @param[out] objects results for object detection
    * @param[in] images batched images
    */
-  bool doInference(const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask);
+  bool doInference(
+    const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask,
+    cv::Mat & color_mask);
 
   /**
    * @brief run inference including pre-process and post-process
@@ -198,7 +201,8 @@ private:
 
   bool feedforward(const std::vector<cv::Mat> & images, ObjectArrays & objects);
   bool feedforwardAndDecode(
-    const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask);
+    const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask,
+    cv::Mat & color_mask);
   void decodeOutputs(float * prob, ObjectArray & objects, float scale, cv::Size & img_size) const;
   void generateGridsAndStride(
     const int target_w, const int target_h, const std::vector<int> & strides,
@@ -303,6 +307,7 @@ private:
   CudaUniquePtrHost<unsigned char[]> argmax_buf_h_;
   // device buffer for argmax postprocessing  on GPU
   CudaUniquePtr<unsigned char[]> argmax_buf_d_;
+  std::vector<tensorrt_yolox::Colormap> color_map_;
 };
 
 }  // namespace tensorrt_yolox

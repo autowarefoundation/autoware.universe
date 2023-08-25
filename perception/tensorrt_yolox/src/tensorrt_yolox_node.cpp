@@ -88,6 +88,8 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
     ("Path to a file which contains path to images."
      "Those images will be used for int8 quantization."));
 
+  std::string color_map_path = declare_parameter_with_description(
+    "color_map_path", "", ("Path to a file which contains path to color map."));
   if (!readLabelFile(label_path)) {
     RCLCPP_ERROR(this->get_logger(), "Could not find label file");
     rclcpp::shutdown();
@@ -99,8 +101,8 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
     profile_per_layer, clip_value);
 
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
-    model_path, precision, label_map_.size(), score_threshold, nms_threshold, build_config,
-    preprocess_on_gpu, calibration_image_list_path);
+    model_path, precision, color_map_path, label_map_.size(), score_threshold, nms_threshold,
+    build_config, preprocess_on_gpu, calibration_image_list_path);
 
   timer_ =
     rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&TrtYoloXNode::onConnect, this));
@@ -108,6 +110,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   objects_pub_ = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
     "~/out/objects", 1);
   mask_pub_ = image_transport::create_publisher(this, "~/out/mask");
+  color_mask_pub_ = image_transport::create_publisher(this, "~/out/color_mask");
   image_pub_ = image_transport::create_publisher(this, "~/out/image");
 
   if (declare_parameter("build_only", false)) {
@@ -147,8 +150,9 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 
   tensorrt_yolox::ObjectArrays objects;
   cv::Mat mask(cv::Size(height, width), CV_8UC1, cv::Scalar(0));
+  cv::Mat color_mask(cv::Size(height, width), CV_8UC3, cv::Scalar(0, 0, 0));
 
-  if (!trt_yolox_->doInference({in_image_ptr->image}, objects, mask)) {
+  if (!trt_yolox_->doInference({in_image_ptr->image}, objects, mask, color_mask)) {
     RCLCPP_WARN(this->get_logger(), "Fail to inference");
     return;
   }
@@ -179,18 +183,11 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
   out_mask_msg->header = msg->header;
   mask_pub_.publish(out_mask_msg);
 
-  // cv_bridge::CvImage cv_mat;
-  // cv_mat.encoding = sensor_msgs::image_encodings::MONO8;
-  // cv_mat.image = mask;
-  // sensor_msgs::msg::Image::SharedPtr out_mask_msg;
-  // out_mask_msg = cv_mat.toImageMsg();
-  // out_mask_msg->header = msg->header;
-  // mask_pub_.publish(out_mask_msg);
-
-  // sensor_msgs::msg::Image::SharedPtr out_mask_msg =
-  //     cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", mask).toImageMsg();
-  // out_mask_msg->header = msg->header;
-  // mask_pub_.publish(out_mask_msg);
+  sensor_msgs::msg::Image::SharedPtr output_color_mask_msg =
+    cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::BGR8, color_mask)
+      .toImageMsg();
+  output_color_mask_msg->header = msg->header;
+  color_mask_pub_.publish(output_color_mask_msg);
 
   image_pub_.publish(in_image_ptr->toImageMsg());
 

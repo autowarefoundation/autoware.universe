@@ -44,5 +44,6 @@
     <remap from="~/out/mask" to="$(var output/mask)"/>
     <param from="$(var yolox_param_path)" allow_substs="true"/>
     <param name="build_only" value="$(var build_only)"/>
+    <param name="color_map_path" value="$(var model_path)/bdd100k_semseg.csv"/>
   </node>
 </launch>
