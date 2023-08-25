@@ -30,7 +30,7 @@ void GyroBiasEstimationModule::update_gyro(
   const double time, const geometry_msgs::msg::Vector3 & gyro)
 {
   if (time - last_velocity_time_ > timestamp_threshold_) {
-    throw std::runtime_error("Last velocity is too old. Velocity may be missing?");
+    return;
   }
   if (!is_stopped_) {
     return;

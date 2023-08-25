@@ -42,19 +42,31 @@ GyroBiasEstimator::GyroBiasEstimator(const rclcpp::NodeOptions & node_options)
     "~/input/twist", rclcpp::SensorDataQoS(),
     [this](const TwistWithCovarianceStamped::ConstSharedPtr msg) { callback_twist(msg); });
 
-  gyro_bias_pub_ = create_publisher<Vector3Stamped>("~/debug/gyro_bias", rclcpp::SensorDataQoS());
+  gyro_bias_pub_ = create_publisher<Vector3Stamped>("~/output/gyro_bias", rclcpp::SensorDataQoS());
 }
 
 void GyroBiasEstimator::callback_imu(const Imu::ConstSharedPtr imu_msg_ptr)
 {
+  // Update gyro data
+  gyro_bias_estimation_module_->update_gyro(
+    rclcpp::Time(imu_msg_ptr->header.stamp).seconds(), imu_msg_ptr->angular_velocity);
+
+  // Estimate gyro bias
   try {
-    gyro_bias_estimation_module_->update_gyro(
-      rclcpp::Time(imu_msg_ptr->header.stamp).seconds(), imu_msg_ptr->angular_velocity);
     gyro_bias_ = gyro_bias_estimation_module_->get_bias();
   } catch (const std::runtime_error & e) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *(this->get_clock()), 1000, e.what());
   }
 
+  // Publish results for debugging
+  if (gyro_bias_ != std::nullopt) {
+    Vector3Stamped gyro_bias_msg;
+    gyro_bias_msg.header.stamp = this->now();
+    gyro_bias_msg.vector = gyro_bias_.value();
+    gyro_bias_pub_->publish(gyro_bias_msg);
+  }
+
+  // Update diagnostics
   updater_.force_update();
 }
 
@@ -71,12 +83,6 @@ void GyroBiasEstimator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
     stat.add("gyro_bias", "Bias estimation is not yet ready because of insufficient data.");
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Not initialized");
   } else {
-    // Publish results for debugging
-    Vector3Stamped gyro_bias_msg;
-    gyro_bias_msg.header.stamp = this->now();
-    gyro_bias_msg.vector = gyro_bias_.value();
-    gyro_bias_pub_->publish(gyro_bias_msg);
-
     // Validation
     const bool is_bias_small_enough =
       std::abs(gyro_bias_.value().x - angular_velocity_offset_x_) < gyro_bias_threshold_ &&
