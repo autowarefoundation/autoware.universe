@@ -58,7 +58,7 @@ MarkerArray showObjectInfo(
 
     ss << "Idx: " << ++idx << "\nReason: " << info.unsafe_reason
        << "\nRSS dist: " << std::setprecision(4) << info.rss_longitudinal
-       << "\nEgo to obj: " << info.intervehicle_distance
+       << "\nEgo to obj: " << info.inter_vehicle_distance
        << "\nExtended polygon lateral offset: " << info.extended_polygon_lat_offset
        << "\nExtended polygon longitudinal offset: " << info.extended_polygon_lon_offset
        << "\nPosition: " << (info.is_front ? "front" : "back")

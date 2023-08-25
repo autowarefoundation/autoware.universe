@@ -58,7 +58,7 @@ struct CollisionCheckDebug
   Pose expected_ego_pose{};                 ///< Predicted future pose of ego vehicle.
   Pose expected_obj_pose{};                 ///< Predicted future pose of object.
   double rss_longitudinal{0.0};             ///< Longitudinal RSS measure.
-  double intervehicle_distance{0.0};        ///< Distance between ego vehicle and object.
+  double inter_vehicle_distance{0.0};       ///< Distance between ego vehicle and object.
   double extended_polygon_lon_offset{0.0};  ///< Longitudinal offset for extended polygon.
   double extended_polygon_lat_offset{0.0};  ///< Lateral offset for extended polygon.
   bool is_front{false};                     ///< True if object is in front of ego vehicle.
