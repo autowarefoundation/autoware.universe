@@ -123,7 +123,6 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
     output.pairs_terminal_velocity_and_accel.push_back(
       std::make_pair(velocity, velocity * velocity / 2 * arc_length_on_path));
   }
-
   output.start_pose = planner_.getArcPaths().at(0).points.front().point.pose;
   output.end_pose = planner_.getArcPaths().at(1).points.back().point.pose;
 

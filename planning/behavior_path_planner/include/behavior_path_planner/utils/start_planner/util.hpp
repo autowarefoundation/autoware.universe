@@ -60,6 +60,16 @@ std::pair<double, bool> calcEndArcLength(
   const double s_start, const double forward_path_length, const lanelet::ConstLanelets & road_lanes,
   const Pose & goal_pose);
 
+/**
+ * @brief Update the parameters for the predicted path of the ego vehicle.
+ *
+ * This function updates the target velocity and acceleration of the predicted path
+ * for the ego vehicle based on the given terminal velocity and acceleration.
+ *
+ * @param params A shared pointer to the EgoPredictedPathParams struct.
+ * @param terminal_velocity_and_accel A pair of doubles representing the terminal velocity
+ *                                     and acceleration of the ego vehicle.
+ */
 void updateEgoPredictedPathParams(
   const std::shared_ptr<EgoPredictedPathParams> & params,
   const std::pair<double, double> & pairs_terminal_velocity_and_accel);
