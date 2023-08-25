@@ -68,7 +68,7 @@ Note that the node calculates bias from the gyroscope data by averaging the data
 
 | Name                | Type                                 | Description                   |
 | ------------------- | ------------------------------------ | ----------------------------- |
-| `~/debug/gyro_bias` | `geometry_msgs::msg::Vector3Stamped` | bias of the gyroscope [rad/s] |
+| `~/output/gyro_bias` | `geometry_msgs::msg::Vector3Stamped` | bias of the gyroscope [rad/s] |
 
 ## Parameters
 
