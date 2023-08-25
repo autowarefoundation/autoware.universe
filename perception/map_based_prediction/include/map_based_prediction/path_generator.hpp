@@ -47,18 +47,32 @@ struct FrenetPoint
   float d_vel;
   float s_acc;
   float d_acc;
-};
+};  // struct FrenetPoint
+
+struct FrenetPath
+{
+  std::vector<FrenetPoint> path;
+  double cost;
+
+  size_t size() const { return path.size(); }
+  FrenetPoint at(const size_t idx) const { return path.at(idx); }
+};  // struct FrenetPath
 
 using EntryPoint = std::pair<Eigen::Vector2d /*in*/, Eigen::Vector2d /*out*/>;
-using FrenetPath = std::vector<FrenetPoint>;
 using PosePath = std::vector<geometry_msgs::msg::Pose>;
 
 class PathGenerator
 {
 public:
+  struct CostParams
+  {
+    double KJ, KT, KD, K_LAT, K_LON;
+  };  // struct CostParams
+
   PathGenerator(
     const double time_horizon, const double sampling_time_interval,
-    const double min_crosswalk_user_velocity);
+    const double min_crosswalk_user_velocity, const int num_sampling_path,
+    const CostParams & cost_params);
 
   PredictedPath generatePathForNonVehicleObject(const TrackedObject & object);
 
@@ -67,7 +81,7 @@ public:
   PredictedPath generatePathForOffLaneVehicle(const TrackedObject & object);
 
   PredictedPath generatePathForOnLaneVehicle(
-    const TrackedObject & object, const PosePath & ref_paths);
+    const TrackedObject & object, const PosePath & ref_path, const double lane_width);
 
   PredictedPath generatePathForCrosswalkUser(
     const TrackedObject & object, const EntryPoint & reachable_crosswalk) const;
@@ -80,11 +94,14 @@ private:
   double time_horizon_;
   double sampling_time_interval_;
   double min_crosswalk_user_velocity_;
+  int num_sampling_path_;
+  CostParams cost_params_;
 
   // Member functions
   PredictedPath generateStraightPath(const TrackedObject & object) const;
 
-  PredictedPath generatePolynomialPath(const TrackedObject & object, const PosePath & ref_path);
+  PredictedPath generatePolynomialPath(
+    const TrackedObject & object, const PosePath & ref_path, const double lane_width);
 
   FrenetPath generateFrenetPath(
     const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length);
@@ -101,6 +118,11 @@ private:
     const PosePath & ref_path);
 
   FrenetPoint getFrenetPoint(const TrackedObject & object, const PosePath & ref_path);
+
+  // TODO(ktro2828): add support of max curvature threshold and collision
+  const FrenetPath & get_best_path(
+    std::vector<FrenetPath> & frenet_paths, const double max_velocity,
+    const double max_acceleration) const;
 };
 }  // namespace map_based_prediction
 

@@ -19,15 +19,19 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
+#include <limits>
 
 namespace map_based_prediction
 {
 PathGenerator::PathGenerator(
   const double time_horizon, const double sampling_time_interval,
-  const double min_crosswalk_user_velocity)
+  const double min_crosswalk_user_velocity, const int num_sampling_path,
+  const CostParams & cost_params)
 : time_horizon_(time_horizon),
   sampling_time_interval_(sampling_time_interval),
-  min_crosswalk_user_velocity_(min_crosswalk_user_velocity)
+  min_crosswalk_user_velocity_(min_crosswalk_user_velocity),
+  num_sampling_path_(num_sampling_path),
+  cost_params_(cost_params)
 {
 }
 
@@ -147,13 +151,13 @@ PredictedPath PathGenerator::generatePathForOffLaneVehicle(const TrackedObject &
 }
 
 PredictedPath PathGenerator::generatePathForOnLaneVehicle(
-  const TrackedObject & object, const PosePath & ref_paths)
+  const TrackedObject & object, const PosePath & ref_path, const double lane_width)
 {
-  if (ref_paths.size() < 2) {
+  if (ref_path.size() < 2) {
     return generateStraightPath(object);
   }
 
-  return generatePolynomialPath(object, ref_paths);
+  return generatePolynomialPath(object, ref_path, lane_width);
 }
 
 PredictedPath PathGenerator::generateStraightPath(const TrackedObject & object) const
@@ -176,25 +180,34 @@ PredictedPath PathGenerator::generateStraightPath(const TrackedObject & object) 
 }
 
 PredictedPath PathGenerator::generatePolynomialPath(
-  const TrackedObject & object, const PosePath & ref_path)
+  const TrackedObject & object, const PosePath & ref_path, const double lane_width)
 {
   // Get current Frenet Point
   const double ref_path_len = motion_utils::calcArcLength(ref_path);
   const auto current_point = getFrenetPoint(object, ref_path);
 
-  // Step1. Set Target Frenet Point
-  // Note that we do not set position s,
-  // since we don't know the target longitudinal position
-  FrenetPoint terminal_point;
-  terminal_point.s_vel = current_point.s_vel;
-  terminal_point.s_acc = 0.0;
-  terminal_point.d = 0.0;
-  terminal_point.d_vel = 0.0;
-  terminal_point.d_acc = 0.0;
+  std::vector<FrenetPath> frenet_paths;
+  for (int n = -num_sampling_path_ / 2; n < num_sampling_path_ / 2 + 1; ++n) {
+    const double terminal_d = n * lane_width / num_sampling_path_;
+    // Step1. Set Target Frenet Point
+    // Note that we do not set position s,
+    // since we don't know the target longitudinal position
+    FrenetPoint terminal_point;
+    terminal_point.s_vel = current_point.s_vel;
+    terminal_point.s_acc = 0.0;
+    terminal_point.d = terminal_d;
+    terminal_point.d_vel = 0.0;
+    terminal_point.d_acc = 0.0;
 
-  // Step2. Generate Predicted Path on a Frenet coordinate
-  const auto frenet_predicted_path =
-    generateFrenetPath(current_point, terminal_point, ref_path_len);
+    // Step2. Generate Predicted Path on a Frenet coordinate
+    const auto frenet_path = generateFrenetPath(current_point, terminal_point, ref_path_len);
+    frenet_paths.emplace_back(frenet_path);
+  }
+
+  // TODO(ktro2828): check whether path is valid (collision, speed, acceleration, curvature)
+  const double max_acceleration = current_point.s_acc;
+  const double max_velocity = current_point.s_vel + max_acceleration * time_horizon_;
+  const auto & frenet_predicted_path = get_best_path(frenet_paths, max_velocity, max_acceleration);
 
   // Step3. Interpolate Reference Path for converting predicted path coordinate
   const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);
@@ -210,7 +223,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
 FrenetPath PathGenerator::generateFrenetPath(
   const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length)
 {
-  FrenetPath path;
+  std::vector<FrenetPoint> path;
   const double duration = time_horizon_;
 
   // Compute Lateral and Longitudinal Coefficients to generate the trajectory
@@ -218,6 +231,7 @@ FrenetPath PathGenerator::generateFrenetPath(
   const Eigen::Vector2d lon_coeff = calcLonCoefficients(current_point, target_point, duration);
 
   path.reserve(static_cast<size_t>(duration / sampling_time_interval_));
+  double sum_d_jerk = 0.0, sum_s_jerk = 0.0;
   for (double t = 0.0; t <= duration; t += sampling_time_interval_) {
     const double d_next = current_point.d + current_point.d_vel * t + 0 * 2 * std::pow(t, 2) +
                           lat_coeff(0) * std::pow(t, 3) + lat_coeff(1) * std::pow(t, 4) +
@@ -227,19 +241,41 @@ FrenetPath PathGenerator::generateFrenetPath(
     if (s_next > max_length) {
       break;
     }
+    const double d_vel_next = current_point.d_vel + 2 * current_point.d_acc * t +
+                              3 * lat_coeff(0) * std::pow(t, 2) +
+                              4 * lat_coeff(1) * std::pow(t, 3) * 5 * lat_coeff(2) * std::pow(t, 4);
+    const double d_acc_next = 2 * current_point.d_acc + 6 * lat_coeff(0) * t +
+                              12 * lat_coeff(1) * std::pow(t, 2) +
+                              20 * lat_coeff(2) * std::pow(t, 3);
+    const double s_vel_next = current_point.s_vel + 2 * current_point.s_acc * t +
+                              3 * lon_coeff(0) * std::pow(t, 2) + 4 * lon_coeff(1) * std::pow(t, 3);
+    const double s_acc_next =
+      2 * current_point.s_acc + 6 * lon_coeff(0) * t + 12 * lon_coeff(1) * std::pow(t, 2);
 
-    // We assume the object is traveling at a constant speed along s direction
+    // square of jerk
+    sum_d_jerk +=
+      std::pow(6 * lat_coeff(0) + 24 + lat_coeff(1) * t + 60 * lat_coeff(2) * std::pow(t, 2), 2);
+    sum_s_jerk += std::pow(6 * lon_coeff(0) + 24 * lon_coeff(1) * t, 2);
+
     FrenetPoint point;
     point.s = std::max(s_next, 0.0);
-    point.s_vel = current_point.s_vel;
-    point.s_acc = current_point.s_acc;
+    point.s_vel = s_vel_next;
+    point.s_acc = s_acc_next;
     point.d = d_next;
-    point.d_vel = current_point.d_vel;
-    point.d_acc = current_point.d_acc;
-    path.push_back(point);
+    point.d_vel = d_vel_next;
+    point.d_acc = d_acc_next;
+    path.emplace_back(point);
   }
 
-  return path;
+  const double last_d_cost = path.empty() ? 0.0 : std::pow(path.back().d, 2);
+  const double last_s_cost =
+    path.empty() ? 0.0 : std::pow(current_point.s_vel - path.back().s_vel, 2);
+  const double cost_d =
+    cost_params_.KJ * sum_d_jerk + cost_params_.KT * duration + cost_params_.KD * last_d_cost;
+  const double cost_s =
+    cost_params_.KJ * sum_s_jerk + cost_params_.KT * duration + cost_params_.KD * last_s_cost;
+  const double cost = cost_params_.K_LAT * cost_d + cost_params_.K_LON * cost_s;
+  return {path, cost};
 }
 
 Eigen::Vector3d PathGenerator::calcLatCoefficients(
@@ -261,9 +297,10 @@ Eigen::Vector3d PathGenerator::calcLatCoefficients(
     7 / std::pow(T, 3), -1 / std::pow(T, 2), 6 / std::pow(T, 5), -3 / std::pow(T, 4),
     1 / (2 * std::pow(T, 3));
   Eigen::Vector3d b_lat;
-  b_lat[0] = target_point.d - current_point.d - current_point.d_vel * T;
-  b_lat[1] = target_point.d_vel - current_point.d_vel;
-  b_lat[2] = target_point.d_acc;
+  b_lat[0] = target_point.d - current_point.d - current_point.d_vel * T -
+             current_point.d_acc * std::pow(T, 2);
+  b_lat[1] = target_point.d_vel - current_point.d_vel - current_point.d_acc * T;
+  b_lat[2] = target_point.d_acc - current_point.d_acc;
 
   return A_lat_inv * b_lat;
 }
@@ -273,16 +310,18 @@ Eigen::Vector2d PathGenerator::calcLonCoefficients(
 {
   // Longitudinal Path Calculation
   // Quadric polynomial
+  // A = np.array([[3 * T ** 2, 4 * T ** 3],
+  //               [6 * T, 12 * T ** 2]])
   // A_inv = np.matrix([[1/(T**2), -1/(3*T)],
-  //                         [-1/(2*T**3), 1/(4*T**2)]])
+  //                    [-1/(2*T**3), 1/(4*T**2)]])
   // b = np.matrix([[vxe - self.a1 - 2 * self.a2 * T],
   //               [axe - 2 * self.a2]])
   Eigen::Matrix2d A_lon_inv;
   A_lon_inv << 1 / std::pow(T, 2), -1 / (3 * T), -1 / (2 * std::pow(T, 3)),
     1 / (4 * std::pow(T, 2));
   Eigen::Vector2d b_lon;
-  b_lon[0] = target_point.s_vel - current_point.s_vel;
-  b_lon[1] = 0.0;
+  b_lon[0] = target_point.s_vel - current_point.s_vel - current_point.s_acc * T;
+  b_lon[1] = target_point.s_acc - current_point.s_acc;
   return A_lon_inv * b_lon;
 }
 
@@ -385,6 +424,10 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
     motion_utils::calcLongitudinalOffsetToSegment(ref_path, nearest_segment_idx, obj_point);
   const float vx = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.x);
   const float vy = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.y);
+  const float ax =
+    static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.x);
+  const float ay =
+    static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.y);
   const float obj_yaw =
     static_cast<float>(tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
   const float lane_yaw =
@@ -395,9 +438,29 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
   frenet_point.d = motion_utils::calcLateralOffset(ref_path, obj_point);
   frenet_point.s_vel = vx * std::cos(delta_yaw) - vy * std::sin(delta_yaw);
   frenet_point.d_vel = vx * std::sin(delta_yaw) + vy * std::cos(delta_yaw);
-  frenet_point.s_acc = 0.0;
-  frenet_point.d_acc = 0.0;
+  frenet_point.s_acc = ax * std::cos(delta_yaw) - ay * std::sin(delta_yaw);
+  frenet_point.d_acc = ax * std::sin(delta_yaw) + ay * std::cos(delta_yaw);
 
   return frenet_point;
+}
+
+const FrenetPath & PathGenerator::get_best_path(
+  std::vector<FrenetPath> & frenet_paths, const double max_velocity,
+  const double max_acceleration) const
+{
+  std::sort(frenet_paths.begin(), frenet_paths.end(), [](const auto & p1, const auto p2) {
+    return p1.cost < p2.cost;
+  });
+
+  for (auto & frenet_path : frenet_paths) {
+    const bool is_invalid =
+      std::any_of(frenet_path.path.cbegin(), frenet_path.path.cend(), [&](const auto & point) {
+        return max_velocity < point.s_vel || max_acceleration < std::abs(point.s_acc);
+      });
+    if (!is_invalid) {
+      return frenet_path;
+    }
+  }
+  return frenet_paths.at(0);
 }
 }  // namespace map_based_prediction
