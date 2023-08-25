@@ -72,4 +72,4 @@ Note that the node calculates bias from the gyroscope data by averaging the data
 | `gyro_bias_threshold`       | double | threshold of the bias of the gyroscope [rad/s]                                |
 | `velocity_threshold`        | double | threshold of the vehicle velocity to determine if the vehicle is stopped[m/s] |
 | `timestamp_threshold`       | double | threshold of the timestamp diff between IMU and twist [s]                     |
-| `data_num_threshold`        | int    | number of data used to calculate bias                             |
+| `data_num_threshold`        | int    | number of data used to calculate bias                                         |
