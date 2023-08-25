@@ -107,14 +107,15 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
 
   const size_t obj_idx = motion_utils::findNearestIndex(path_points, obj_pose.position);
 
-  const double obj_vel_yaw = std::atan2(
-    object.kinematics.initial_twist_with_covariance.twist.linear.y,
-    object.kinematics.initial_twist_with_covariance.twist.linear.x);
+  const double obj_yaw = tf2::getYaw(obj_pose.orientation);
+  const double obj_vel_yaw =
+    obj_yaw + std::atan2(
+                object.kinematics.initial_twist_with_covariance.twist.linear.y,
+                object.kinematics.initial_twist_with_covariance.twist.linear.x);
   const double path_yaw = tf2::getYaw(path_points.at(obj_idx).point.pose.orientation);
 
-  return std::make_pair(
-    obj_vel_norm * std::cos(obj_vel_yaw - path_yaw),
-    obj_vel_norm * std::sin(obj_vel_yaw - path_yaw));
+  const double diff_yaw = tier4_autoware_utils::normalizeRadian(obj_vel_yaw - path_yaw);
+  return std::make_pair(obj_vel_norm * std::cos(diff_yaw), obj_vel_norm * std::sin(diff_yaw));
 }
 
 double calcObstacleMaxLength(const autoware_auto_perception_msgs::msg::Shape & shape)
@@ -517,29 +518,21 @@ void DynamicAvoidanceModule::updateTargetObjects()
                                      ? isLeft(prev_module_path->points, future_obj_pose->position)
                                      : is_object_left;
 
-    // 2.g. calculate longitudinal and lateral offset to avoid
-    const auto obj_points = tier4_autoware_utils::toPolygon2d(object.pose, object.shape);
-    const auto lon_offset_to_avoid = calcMinMaxLongitudinalOffsetToAvoid(
-      path_points_for_object_polygon, object.pose, obj_points, object.vel, time_to_collision);
-    const auto lat_offset_to_avoid = calcMinMaxLateralOffsetToAvoid(
-      path_points_for_object_polygon, obj_points, is_collision_left, object.lat_vel, prev_object);
-
-    // 2.h. check if the ego is not ahead of the object.
+    // 2.g. check if the ego is not ahead of the object.
     const double signed_dist_ego_to_obj = [&]() {
-      const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(path_points_for_object_polygon);
+      const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(prev_module_path->points);
       const size_t obj_seg_idx =
-        motion_utils::findNearestSegmentIndex(path_points_for_object_polygon, object.pose.position);
+        motion_utils::findNearestSegmentIndex(prev_module_path->points, object.pose.position);
       const double lon_offset_ego_to_obj = motion_utils::calcSignedArcLength(
-        path_points_for_object_polygon, getEgoPose().position, ego_seg_idx, object.pose.position,
-        obj_seg_idx);
+        prev_module_path->points, getEgoPose().position, ego_seg_idx, lat_lon_offset.nearest_idx);
       if (0 < lon_offset_ego_to_obj) {
         return std::max(
           0.0, lon_offset_ego_to_obj - planner_data_->parameters.front_overhang +
-                 lon_offset_to_avoid.min_value);
+                 lat_lon_offset.min_lon_offset);
       }
       return std::min(
         0.0, lon_offset_ego_to_obj + planner_data_->parameters.rear_overhang +
-               lon_offset_to_avoid.max_value);
+               lat_lon_offset.max_lon_offset);
     }();
     if (signed_dist_ego_to_obj < 0) {
       RCLCPP_INFO_EXPRESSION(
@@ -549,6 +542,13 @@ void DynamicAvoidanceModule::updateTargetObjects()
         obj_uuid.c_str(), signed_dist_ego_to_obj);
       continue;
     }
+
+    // 2.h. calculate longitudinal and lateral offset to avoid
+    const auto obj_points = tier4_autoware_utils::toPolygon2d(object.pose, object.shape);
+    const auto lon_offset_to_avoid = calcMinMaxLongitudinalOffsetToAvoid(
+      path_points_for_object_polygon, object.pose, obj_points, object.vel, time_to_collision);
+    const auto lat_offset_to_avoid = calcMinMaxLateralOffsetToAvoid(
+      path_points_for_object_polygon, obj_points, is_collision_left, object.lat_vel, prev_object);
 
     const bool should_be_avoided = true;
     target_objects_manager_.updateObject(
