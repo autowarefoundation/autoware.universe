@@ -441,7 +441,7 @@ MarkerArray createPredictedPathMarkerArray(
       tier4_autoware_utils::calcOffsetPose(predicted_path_pose, base_to_front, -half_width, 0.0)
         .position);
     marker.points.push_back(
-      tier4_autoware_utils::calcOffsetPose(predicted_path_pose, base_to_rear, half_width, 0.0)
+      tier4_autoware_utils::calcOffsetPose(predicted_path_pose, base_to_front, half_width, 0.0)
         .position);
     marker.points.push_back(
       tier4_autoware_utils::calcOffsetPose(predicted_path_pose, -base_to_rear, half_width, 0.0)
