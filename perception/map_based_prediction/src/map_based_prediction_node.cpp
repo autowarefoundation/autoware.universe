@@ -662,7 +662,8 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     time_threshold_to_bound_ = declare_parameter<double>(
       "lane_change_detection.time_to_change_lane.time_threshold_for_lane_change_detection");
     cutoff_freq_of_velocity_lpf_ = declare_parameter<double>(
-      "lane_change_detection.time_to_change_lane.cutoff_freq_of_velocity_for_lane_change_detection"); 
+      "lane_change_detection.time_to_change_lane.cutoff_freq_of_velocity_for_lane_change_"
+      "detection");
 
     // lane change detection by lat_diff_distance
     dist_ratio_threshold_to_left_bound_ = declare_parameter<double>(
