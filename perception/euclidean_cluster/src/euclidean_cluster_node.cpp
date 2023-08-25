@@ -40,7 +40,7 @@ EuclideanClusterNode::EuclideanClusterNode(const rclcpp::NodeOptions & options)
   debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
   stop_watch_ptr_ = std::make_unique<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>>();
   debug_publisher_ =
-    std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "eculidean_cluster");
+    std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "euclidean_cluster");
   stop_watch_ptr_->tic("cyclic_time");
   stop_watch_ptr_->tic("processing_time");
 }
