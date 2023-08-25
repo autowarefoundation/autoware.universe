@@ -521,8 +521,6 @@ void DynamicAvoidanceModule::updateTargetObjects()
     // 2.g. check if the ego is not ahead of the object.
     const double signed_dist_ego_to_obj = [&]() {
       const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(prev_module_path->points);
-      const size_t obj_seg_idx =
-        motion_utils::findNearestSegmentIndex(prev_module_path->points, object.pose.position);
       const double lon_offset_ego_to_obj = motion_utils::calcSignedArcLength(
         prev_module_path->points, getEgoPose().position, ego_seg_idx, lat_lon_offset.nearest_idx);
       if (0 < lon_offset_ego_to_obj) {
