@@ -15,7 +15,6 @@
 #ifndef IMAGE_PROJECTION_BASED_FUSION__SEGMENTATION_POINTCLOUD_FUSION__NODE_HPP_
 #define IMAGE_PROJECTION_BASED_FUSION__SEGMENTATION_POINTCLOUD_FUSION__NODE_HPP_
 
-
 #include "image_projection_based_fusion/fusion_node.hpp"
 
 #include <string>
@@ -26,7 +25,6 @@
 #else
 #include <cv_bridge/cv_bridge.h>
 #endif
-
 
 namespace image_projection_based_fusion
 {
@@ -48,8 +46,7 @@ protected:
   void postprocess(PointCloud2 & pointcloud_msg) override;
 
   void fuseOnSingleImage(
-    const PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
-    const Image & input_mask,
+    const PointCloud2 & input_pointcloud_msg, const std::size_t image_id, const Image & input_mask,
     const CameraInfo & camera_info, PointCloud2 & output_pointcloud_msg) override;
 
   bool out_of_scope(const PointCloud2 & filtered_cloud);

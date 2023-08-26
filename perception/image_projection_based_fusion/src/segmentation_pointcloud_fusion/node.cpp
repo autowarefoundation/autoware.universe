@@ -36,20 +36,17 @@ SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptio
   pub_pointcloud_ptr_ = this->create_publisher<PointCloud2>("output_objects", rclcpp::QoS{1});
 }
 
-void SegmentPointCloudFusionNode::preprocess(__attribute__((unused))
-                                         PointCloud2 & pointcloud_msg)
+void SegmentPointCloudFusionNode::preprocess(__attribute__((unused)) PointCloud2 & pointcloud_msg)
 {
   return;
 }
 
-void SegmentPointCloudFusionNode::postprocess(__attribute__((unused))
-                                          PointCloud2 & pointcloud_msg)
+void SegmentPointCloudFusionNode::postprocess(__attribute__((unused)) PointCloud2 & pointcloud_msg)
 {
   return;
 }
 void SegmentPointCloudFusionNode::fuseOnSingleImage(
-  const PointCloud2 & input_pointcloud_msg,
-  __attribute__((unused)) const std::size_t image_id,
+  const PointCloud2 & input_pointcloud_msg, __attribute__((unused)) const std::size_t image_id,
   __attribute__((unused)) const Image & input_mask,
   __attribute__((unused)) const CameraInfo & camera_info,
   __attribute__((unused)) PointCloud2 & output_pointcloud_msg)
@@ -58,16 +55,13 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
     return;
   }
   cv_bridge::CvImagePtr in_image_ptr;
-  try
-  {
-    in_image_ptr = cv_bridge::toCvCopy(input_mask,sensor_msgs::image_encodings::MONO8);
-  }
-  catch(const std::exception& e)
-  {
-    RCLCPP_ERROR(this->get_logger(),"cv_bridge exception:%s", e.what());
+  try {
+    in_image_ptr = cv_bridge::toCvCopy(input_mask, sensor_msgs::image_encodings::MONO8);
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(this->get_logger(), "cv_bridge exception:%s", e.what());
     return;
   }
-  
+
   cv::Mat mask = in_image_ptr->image;
 
   Eigen::Matrix4d projection;
@@ -88,7 +82,7 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
 
   PointCloud2 transformed_cloud;
   tf2::doTransform(input_pointcloud_msg, transformed_cloud, transform_stamped);
-  
+
   PointCloud output_cloud;
 
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cloud, "x"),
@@ -103,19 +97,30 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
     Eigen::Vector4d projected_point = projection * Eigen::Vector4d(*iter_x, *iter_y, *iter_z, 1.0);
     Eigen::Vector2d normalized_projected_point = Eigen::Vector2d(
       projected_point.x() / projected_point.z(), projected_point.y() / projected_point.z());
-    
-    if(mask.at<uint8_t>(static_cast<int>(normalized_projected_point.x()), static_cast<int>(normalized_projected_point.y())) >0){
-      output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y,*iter_orig_z));
+
+    bool is_inside_image =
+      normalized_projected_point.x() >= 0 && normalized_projected_point.x() < camera_info.width &&
+      normalized_projected_point.y() >= 0 && normalized_projected_point.y() < camera_info.height;
+    // if (!is_inside_image) {
+    //   output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
+    // }
+    // TODO(badai-nguyen): replace single road class to a list of outlier classes
+    bool is_keep_class = mask.at<uint8_t>(
+                           static_cast<int>(normalized_projected_point.x()),
+                           static_cast<int>(normalized_projected_point.y())) > 10;
+
+    if (is_inside_image && is_keep_class) {
+      output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
     }
   }
 
   // TODO : popup point which is matched with vegetation and road
-  pcl::toROSMsg(output_cloud,output_pointcloud_msg);
+  pcl::toROSMsg(output_cloud, output_pointcloud_msg);
   output_pointcloud_msg.header = input_pointcloud_msg.header;
-  
 }
 
-bool SegmentPointCloudFusionNode::out_of_scope(__attribute__((unused)) const PointCloud2 & filtered_cloud)
+bool SegmentPointCloudFusionNode::out_of_scope(__attribute__((unused))
+                                               const PointCloud2 & filtered_cloud)
 {
   return false;
 }
