@@ -1917,6 +1917,8 @@ bool AvoidanceModule::isSafePath(
     return true;
   }
 
+  const auto hysteresis_factor = safe_ ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+
   const auto safety_check_target_objects = utils::avoidance::getSafetyCheckTargetObjects(
     avoidance_data_, planner_data_, parameters_, is_right_shift.value());
 
@@ -1937,13 +1939,16 @@ bool AvoidanceModule::isSafePath(
       CollisionCheckDebug collision{};
       if (!utils::path_safety_checker::checkCollision(
             shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
-            collision)) {
+            hysteresis_factor, collision)) {
+        safe_count_ = 0;
         return false;
       }
     }
   }
 
-  return true;
+  safe_count_++;
+
+  return safe_ || safe_count_ > parameters_->hysteresis_factor_safe_count;
 }
 
 void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output) const
@@ -2589,6 +2594,8 @@ void AvoidanceModule::updateData()
   fillShiftLine(avoidance_data_, debug_data_);
   fillEgoStatus(avoidance_data_, debug_data_);
   fillDebugData(avoidance_data_, debug_data_);
+
+  safe_ = avoidance_data_.safe;
 }
 
 void AvoidanceModule::processOnEntry()

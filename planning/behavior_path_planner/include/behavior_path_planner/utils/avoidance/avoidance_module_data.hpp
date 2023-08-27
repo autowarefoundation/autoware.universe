@@ -201,7 +201,8 @@ struct AvoidanceParameters
   double safety_check_backward_distance;
 
   // transit hysteresis (unsafe to safe)
-  double safety_check_hysteresis_factor;
+  size_t hysteresis_factor_safe_count;
+  double hysteresis_factor_expand_rate;
 
   // don't output new candidate path if the offset between ego and path is larger than this.
   double safety_check_ego_offset;

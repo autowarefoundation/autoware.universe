@@ -555,6 +555,8 @@ private:
 
   bool arrived_path_end_{false};
 
+  bool safe_{true};
+
   std::shared_ptr<AvoidanceParameters> parameters_;
 
   helper::avoidance::AvoidanceHelper helper_;
@@ -574,6 +576,8 @@ private:
   UUID candidate_uuid_;
 
   ObjectDataArray registered_objects_;
+
+  mutable size_t safe_count_{0};
 
   mutable ObjectDataArray ego_stopped_objects_;
 
