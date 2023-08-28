@@ -191,7 +191,7 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignal(
       continue;
     }
 
-    if (elements.front().color == TrafficLightElement::UNKNOWN) {
+    if (elements.front().color == TrafficSignalElement::UNKNOWN) {
       continue;
     }
 
@@ -266,12 +266,12 @@ lanelet::ConstLanelets CrosswalkTrafficLightEstimatorNode::getNonRedLanelets(
     }
 
     const auto current_is_not_red =
-      current_detected_signal ? current_detected_signal.get() == TrafficLightElement::GREEN ||
-                                  current_detected_signal.get() == TrafficLightElement::AMBER
+      current_detected_signal ? current_detected_signal.get() == TrafficSignalElement::GREEN ||
+                                  current_detected_signal.get() == TrafficSignalElement::AMBER
                               : true;
 
     const auto current_is_unknown_or_none =
-      current_detected_signal ? current_detected_signal.get() == TrafficLightElement::UNKNOWN
+      current_detected_signal ? current_detected_signal.get() == TrafficSignalElement::UNKNOWN
                               : true;
 
     const auto last_detected_signal =
@@ -282,8 +282,8 @@ lanelet::ConstLanelets CrosswalkTrafficLightEstimatorNode::getNonRedLanelets(
     }
 
     const auto was_not_red = current_is_unknown_or_none &&
-                             (last_detected_signal.get() == TrafficLightElement::GREEN ||
-                              last_detected_signal.get() == TrafficLightElement::AMBER) &&
+                             (last_detected_signal.get() == TrafficSignalElement::GREEN ||
+                              last_detected_signal.get() == TrafficSignalElement::AMBER) &&
                              use_last_detect_color_;
 
     if (!current_is_not_red && !was_not_red) {
@@ -324,13 +324,13 @@ uint8_t CrosswalkTrafficLightEstimatorNode::estimateCrosswalkTrafficSignal(
   }
 
   if (has_straight_non_red_lane || has_related_non_red_tl) {
-    return TrafficLightElement::RED;
+    return TrafficSignalElement::RED;
   }
 
   const auto has_merge_lane = hasMergeLane(non_red_lanelets, routing_graph_ptr_);
   return !has_merge_lane && has_left_non_red_lane && has_right_non_red_lane
-           ? TrafficLightElement::RED
-           : TrafficLightElement::UNKNOWN;
+           ? TrafficSignalElement::RED
+           : TrafficSignalElement::UNKNOWN;
 }
 
 boost::optional<uint8_t> CrosswalkTrafficLightEstimatorNode::getHighestConfidenceTrafficSignal(

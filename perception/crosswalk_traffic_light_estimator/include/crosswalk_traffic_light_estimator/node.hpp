@@ -50,7 +50,7 @@ using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::Float64Stamped;
 using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
 using TrafficSignalArray = autoware_perception_msgs::msg::TrafficSignalArray;
-using TrafficLightElement = autoware_perception_msgs::msg::TrafficSignalElement;
+using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
 using TrafficSignalAndTime = std::pair<TrafficSignal, rclcpp::Time>;
 using TrafficLightIdMap = std::unordered_map<lanelet::Id, TrafficSignalAndTime>;
 
