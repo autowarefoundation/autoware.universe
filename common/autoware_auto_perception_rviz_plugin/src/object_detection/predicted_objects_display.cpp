@@ -15,6 +15,7 @@
 #include <object_detection/predicted_objects_display.hpp>
 
 #include <memory>
+#include <set>
 
 namespace autoware
 {
