@@ -236,8 +236,6 @@ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/act
 
 ## How to record a trajectory (real car)
 
-[![YouTube Demo](https://img.youtube.com/vi/91juU3qQ08M/0.jpg)](https://www.youtube.com/watch?v=91juU3qQ08M)
-
 1. Use the `realcar_launch` launch file to launch the `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
 ```(bash)
