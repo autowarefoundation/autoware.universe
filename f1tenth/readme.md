@@ -4,7 +4,8 @@ This tutorial provides step-by-step instructions for installing and setting up t
 
 This repo also includes a F1tenth Recordreplay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth race car, and then perform trajectory following in both `real-world`(testing in progress) and in the `F1tenth gym simulator` running the Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investment is based on running Jetson Xavier NX on 20W 6core power mode.
 
-## Flash JetPack 5.1.1 (rev. 1) to Jetson Xavier NX (Approximate Time Investment: 1-1.5 hours)
+## Flash JetPack 5.1.1 (rev. 1) to Jetson Xavier NX
+(Approximate Time Investment: 1-1.5 hours)
 
 There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1. Other JetPack versions may also work but have not yet been tested.
 
@@ -34,12 +35,14 @@ This method you will first install `NVIDIA SDK Manager` on your host machine, co
 Once the JetPack is successfully flashed to the Jetson NX, boot the system and the Ubuntu desktop environment should launch
 
 
-## Install ROS2 galactic (Approximate Time Investment: 0.5 hour)
+## Install ROS2 galactic 
+(Approximate Time Investment: 0.5 hour)
 
 1. Follow the [ROS2 instructions](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html) to install ROS2 galactic
 
 
-## Set up Autoware development environment (Approximate Time Investment: 0.5 hour)
+## Set up Autoware development environment 
+(Approximate Time Investment: 0.5 hour)
 
 1. Clone the `galactic` branch of `autowarefoundation/autoware` and move to the directory.
 
@@ -59,7 +62,8 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
 3. Under the `autoware` folder, go to the `autoware.repos` file and change the version of `universe/autoware.universe` from `galactic` to `f1tenth_galactic`
 
 
-## Set up Autoware workspace (Approximate Time Investment: 6-7 hours)
+## Set up Autoware workspace 
+(Approximate Time Investment: 6-7 hours)
 
 1. Create the `src` directory and clone repositories into it.
 
@@ -122,6 +126,8 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
    
 
 ## Install f1tenth_gym simulator dependencies
+(Approximate Time Investment: 10 minutes)
+
 Install `onnx` and roll back `setuptools` to version 65.5.0
    ```bash
    pip3 install onnx setuptools==65.5.0
@@ -136,7 +142,6 @@ The f1tenth_gym_ros simulator is used in this case, click [here](https://github.
 # F1tenth Recordreplay Demo
 
 ## How to create a map
-[![YouTube Demo](https://img.youtube.com/vi/wANpcMwWCrg/0.jpg)](https://www.youtube.com/watch?v=wANpcMwWCrg)
 
 This part assumes that you have a fully built and properly tuned f1tenth car. For instructions on how to configure an f1tenth car, see [f1tenth_system](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/f1tenth_system).
 
@@ -164,7 +169,7 @@ cd autoware && . install/setup.bash
 ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/autoware/src/universe/autoware.universe/f1tenth/f1tenth_system/f1tenth_stack/config/f1tenth_online_async.yaml
 ```
 
-3. Launch rviz2, Add __/map__ by topic. Add __/graph_visualization__ by topic. On the top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you run slam_toolbox.
+3. Launch RViz2, Add __/map__ by topic. Add __/graph_visualization__ by topic. On the top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you run slam_toolbox.
 
 ### Create a map without an f1tenth race car
 
@@ -172,15 +177,16 @@ If you do not have an f1tenth car, You can draw your own map and save as .png fi
 
 ### Change map in the f1tenth simulator
 
-Navigate to /home/autoware-f1/autoware/install/f1tenth_gym_ros/share/f1tenth_gym_ros/config. In sim.yaml, update the map file path.
+Navigate to /home/autoware-f1/autoware/install/f1tenth_gym_ros/share/f1tenth_gym_ros/config. In `sim.yaml`, update the map file path.
 
 ## How to record a trajectory (simulation)
 
 1. Use the `demo_launch` launch file to launch the `gym_bridge`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes. 
 Rviz2 should launch automatically with the target map loaded (black markers). After a short peroid of time the simulated Lidar data (markers with color) should be overlaid on top of the map indicating the simulation is running correctly. It can take up to 5 minutes for the Lidar data to show up if the simulator is launched for the first time. You may adjust the camera angle using your mouse's left and right buttons and scroll wheel.
 
+Terminal 1:
 ```(bash)
-# Terminal 1
+
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
@@ -189,8 +195,8 @@ ros2 launch launch_autoware_f1tenth demo_launch.py
 
 2. Launch the `teleop_twist_keyboard` node for keyboard tele-operation. Focus on (select) this terminal and use `U`, `I`, `O` keys to manually control the f1tenth car in the simulation.  Use `Q` and `Z` keys to increase and decrease the speed.
 
+Terminal 2:
 ```(bash)
-# Terminal 2
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
@@ -199,8 +205,8 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 3. Record a trajectory and save at your preferred path. To stop recording, `Ctrl + C` and your path will be automatically saved. 
 The default path for the recording is at `"/tmp/path"`. This recording will be automatically erased after system reboot. 
 
+Terminal 3:
 ```(bash)
-# Terminal 3
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
@@ -210,8 +216,8 @@ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/act
 
 1. Use the `demo_launch` launch file to launch the `gym_bridge`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes if they are not currently running.
 
+Terminal 1:
 ```(bash)
-# Terminal 1
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
@@ -219,8 +225,8 @@ ros2 launch launch_autoware_f1tenth demo_launch.py
 
 2. Replay a trajectory from your previously saved file. You can use the `2D Pose Estimate` tool in RViz2 anytime to reset the car's pose.
 
+Terminal 2:
 ```(bash)
-# Terminal 2
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/tmp/path"}" --feedback
@@ -232,8 +238,8 @@ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/act
 
 1. Use the `realcar_launch` launch file to launch the `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
+Terminal 1:
 ```(bash)
-# Terminal 1
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth realcar_launch.py
@@ -241,8 +247,8 @@ ros2 launch launch_autoware_f1tenth realcar_launch.py
 
 2. Launch the `particle_filter` node for localization. You need the library range_libc to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
 
+Terminal 2:
 ```(bash)
-# Terminal 2
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch particle_filter localize_launch.py
@@ -251,8 +257,8 @@ ros2 launch particle_filter localize_launch.py
 3. Record a trajectory and save at your preferred path. To stop recording, `Ctrl + C` and your path will be automatically saved. 
 The default path for the recording is at `"/tmp/path"`. This recording will be automatically erased after system reboot.
 
+Terminal 3:
 ```(bash)
-# Terminal 3
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
@@ -262,8 +268,8 @@ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/act
 
 1. Use the `realcar_launch` launch file to launch the `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
+Terminal 1:
 ```(bash)
-# Terminal 1
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth realcar_launch.py
@@ -271,8 +277,8 @@ ros2 launch launch_autoware_f1tenth realcar_launch.py
 
 2. Launch the `particle_filter` node for localization. You need the library range_libc to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
 
+Terminal 2:
 ```(bash)
-# Terminal 2
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch particle_filter localize_launch.py
@@ -280,8 +286,8 @@ ros2 launch particle_filter localize_launch.py
 
 3. Replay a trajectory from your previously saved file
 
+Terminal 3:
 ```(bash)
-# Terminal 3
 source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/tmp/path"}" --feedback
