@@ -68,39 +68,32 @@ std::vector<geometry_msgs::msg::Point> toGeometryPointVector(
   return points;
 }
 
-Polygon2d createOneStepPolygon(
-  const geometry_msgs::msg::Pose & p_front, const geometry_msgs::msg::Pose & p_back,
-  const geometry_msgs::msg::Polygon & base_polygon)
+void offsetPolygon2d(
+  const geometry_msgs::msg::Pose & origin_point, const geometry_msgs::msg::Polygon & polygon,
+  Polygon2d & offset_polygon)
 {
-  Polygon2d one_step_polygon{};
+  for (const auto & polygon_point : polygon.points) {
+    const auto offset_pos =
+      tier4_autoware_utils::calcOffsetPose(origin_point, polygon_point.x, polygon_point.y, 0.0)
+        .position;
+    offset_polygon.outer().push_back(Point2d(offset_pos.x, offset_pos.y));
+  }
+}
 
-  {
-    geometry_msgs::msg::Polygon out_polygon{};
-    geometry_msgs::msg::TransformStamped geometry_tf{};
-    geometry_tf.transform = pose2transform(p_front);
-    tf2::doTransform(base_polygon, out_polygon, geometry_tf);
-
-    for (const auto & p : out_polygon.points) {
-      one_step_polygon.outer().push_back(Point2d(p.x, p.y));
-    }
+template <typename... Args>
+Polygon2d createMultiStepPolygon(const geometry_msgs::msg::Polygon & polygon, Args... origin_points)
+{
+  Polygon2d multi_step_polygon{};
+  for (const auto & origin_point :
+       std::initializer_list<geometry_msgs::msg::Pose>{origin_points...}) {
+    offsetPolygon2d(origin_point, polygon, multi_step_polygon);
   }
 
-  {
-    geometry_msgs::msg::Polygon out_polygon{};
-    geometry_msgs::msg::TransformStamped geometry_tf{};
-    geometry_tf.transform = pose2transform(p_back);
-    tf2::doTransform(base_polygon, out_polygon, geometry_tf);
+  Polygon2d hull_multi_step_polygon{};
+  bg::convex_hull(multi_step_polygon, hull_multi_step_polygon);
+  bg::correct(hull_multi_step_polygon);
 
-    for (const auto & p : out_polygon.points) {
-      one_step_polygon.outer().push_back(Point2d(p.x, p.y));
-    }
-  }
-
-  Polygon2d hull_polygon{};
-  bg::convex_hull(one_step_polygon, hull_polygon);
-  bg::correct(hull_polygon);
-
-  return hull_polygon;
+  return hull_multi_step_polygon;
 }
 
 void sortCrosswalksByDistance(
@@ -602,21 +595,31 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
   double minimum_stop_dist = std::numeric_limits<double>::max();
   std::optional<CollisionPoint> nearest_collision_point{std::nullopt};
   for (const auto & obj_path : object.kinematics.predicted_paths) {
-    for (size_t i = 0; i < obj_path.path.size() - 1; ++i) {
-      const auto & p_obj_front = obj_path.path.at(i);
-      const auto & p_obj_back = obj_path.path.at(i + 1);
-      const auto obj_one_step_polygon = createOneStepPolygon(p_obj_front, p_obj_back, obj_polygon);
+    for (size_t i = 0; i < obj_path.path.size(); ++i) {
+      const auto & p_obj_first = obj_path.path.at(i);
+      const auto & p_obj_second = obj_path.path.at(i < obj_path.path.size() - 1 ? i + 1 : i);
+      const auto & p_obj_third = obj_path.path.at(i < obj_path.path.size() - 2 ? i + 2 : i);
 
       // Calculate intersection points between object and attention area
-      const auto tmp_intersection = calcOverlappingPoints(obj_one_step_polygon, attention_area);
-      if (tmp_intersection.empty()) {
+      const auto obj_one_step_polygon = createMultiStepPolygon(obj_polygon, p_obj_first);
+      const auto one_step_intersection =
+        calcOverlappingPoints(obj_one_step_polygon, attention_area);
+      if (one_step_intersection.empty()) {
+        continue;
+      }
+
+      const auto obj_multi_step_polygon =
+        createMultiStepPolygon(obj_polygon, p_obj_first, p_obj_second, p_obj_third);
+      const auto multi_step_intersection =
+        calcOverlappingPoints(obj_multi_step_polygon, attention_area);
+      if (multi_step_intersection.empty()) {
         continue;
       }
 
       // Calculate nearest collision point among collisions with a predicted path
       double local_minimum_stop_dist = std::numeric_limits<double>::max();
       geometry_msgs::msg::Point local_nearest_collision_point{};
-      for (const auto & p : tmp_intersection) {
+      for (const auto & p : multi_step_intersection) {
         const auto cp = createPoint(p.x(), p.y(), ego_pos.z);
         const auto dist_ego2cp = calcSignedArcLength(ego_path.points, ego_pos, cp);
 
@@ -645,7 +648,8 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
         minimum_stop_dist = dist_ego2cp;
         nearest_collision_point = createCollisionPoint(
           local_nearest_collision_point, dist_ego2cp, dist_obj2cp, ego_vel, obj_vel);
-        debug_data_.obj_polygons.push_back(toGeometryPointVector(obj_one_step_polygon, ego_pos.z));
+        debug_data_.obj_polygons.push_back(
+          toGeometryPointVector(obj_multi_step_polygon, ego_pos.z));
       }
 
       break;
@@ -753,7 +757,7 @@ Polygon2d CrosswalkModule::getAttentionArea(
       break;
     }
 
-    const auto ego_one_step_polygon = createOneStepPolygon(p_ego_front, p_ego_back, ego_polygon);
+    const auto ego_one_step_polygon = createMultiStepPolygon(ego_polygon, p_ego_front, p_ego_back);
 
     debug_data_.ego_polygons.push_back(toGeometryPointVector(ego_one_step_polygon, ego_pos.z));
 
