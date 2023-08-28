@@ -59,6 +59,7 @@ std::size_t VoxelGenerator::pointsToVoxels(
       point[1] = point_current.y();
       point[2] = point_current.z();
       point[3] = time_lag;
+      // decode the class value back to one-hot binary and assign it to point
       for (std::size_t i = 1; i <= config_.class_size_; i++) {
         auto decode = std::bitset<8>(*class_iter).to_string();
         point[3 + i] = decode[-i] == 1 ? 1 : 0;
