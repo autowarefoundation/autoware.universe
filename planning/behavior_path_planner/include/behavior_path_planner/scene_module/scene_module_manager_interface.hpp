@@ -215,6 +215,17 @@ public:
 
   bool canLaunchNewModule() const { return observers_.size() < max_module_num_; }
 
+  /**
+   * Determine if the module is always executable, regardless of the state of other modules.
+   *
+   * When this returns true:
+   * - The module can be executed even if other modules are not marked as 'simultaneously
+   * executable'.
+   * - Conversely, the presence of this module will not prevent other modules
+   *   from executing, even if they are not marked as 'simultaneously executable'.
+   */
+  virtual bool isAlwaysExecutableModule() const { return false; }
+
   virtual bool isSimultaneousExecutableAsApprovedModule() const
   {
     return enable_simultaneous_execution_as_approved_module_;
