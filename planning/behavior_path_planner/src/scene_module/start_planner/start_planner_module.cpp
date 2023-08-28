@@ -1021,6 +1021,9 @@ bool StartPlannerModule::isSafePath() const
   const auto & target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
     current_lanes, route_handler, filtered_objects, objects_filtering_params_);
 
+  const double hysteresis_factor =
+    status_.is_safe_dynamic_objects ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+
   updateSafetyCheckTargetObjectsData(filtered_objects, target_objects_on_lane, ego_predicted_path);
 
   for (const auto & object : target_objects_on_lane.on_current_lane) {
@@ -1030,7 +1033,7 @@ bool StartPlannerModule::isSafePath() const
       CollisionCheckDebug collision{};
       if (!utils::path_safety_checker::checkCollision(
             pull_out_path, ego_predicted_path, object, obj_path, common_param,
-            safety_check_params_->rss_params, collision)) {
+            safety_check_params_->rss_params, hysteresis_factor, collision)) {
         return false;
       }
     }

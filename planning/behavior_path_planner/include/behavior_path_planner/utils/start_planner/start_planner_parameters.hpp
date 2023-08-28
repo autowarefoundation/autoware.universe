@@ -82,6 +82,9 @@ struct StartPlannerParameters
   double maximum_deceleration;
   double maximum_jerk;
 
+  // hysterisis parameter
+  double hysteresis_factor_expand_rate;
+
   // path safety checker
   utils::path_safety_checker::EgoPredictedPathParams ego_predicted_path_params;
   utils::path_safety_checker::ObjectsFilteringParams objects_filtering_params;
