@@ -1361,17 +1361,17 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     return std::make_pair(tier4_autoware_utils::toHexString(obj.uuid), debug);
   };
 
-  const auto updateDebugInfo =
-    [&debug_data](std::pair<std::string, CollisionCheckDebug> & obj, bool is_allowed) {
-      const auto & key = obj.first;
-      auto & element = obj.second;
-      element.allow_lane_change = is_allowed;
-      if (debug_data.find(key) != debug_data.end()) {
-        debug_data[key] = element;
-      } else {
-        debug_data.insert(obj);
-      }
-    };
+  const auto updateDebugInfo = [&debug_data](
+                                 std::pair<std::string, CollisionCheckDebug> & obj, bool is_safe) {
+    const auto & key = obj.first;
+    auto & element = obj.second;
+    element.is_safe = is_safe;
+    if (debug_data.find(key) != debug_data.end()) {
+      debug_data[key] = element;
+    } else {
+      debug_data.insert(obj);
+    }
+  };
 
   for (const auto & obj : collision_check_objects) {
     auto current_debug_data = assignDebugData(obj);
@@ -1380,7 +1380,7 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
       obj, lane_change_parameters_->use_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
       if (!utils::path_safety_checker::checkCollision(
-            path, ego_predicted_path, obj, obj_path, common_parameters, rss_params,
+            path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
             current_debug_data.second)) {
         path_safety_status.is_safe = false;
         updateDebugInfo(current_debug_data, path_safety_status.is_safe);

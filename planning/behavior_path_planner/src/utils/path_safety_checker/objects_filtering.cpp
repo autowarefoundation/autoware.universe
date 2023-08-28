@@ -55,7 +55,7 @@ PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, const double velocity_threshold,
   const bool remove_above_threshold)
 {
-  if (filter_dynamic_objects) {
+  if (remove_above_threshold) {
     return filterObjectsByVelocity(objects, -velocity_threshold, velocity_threshold);
   } else {
     return filterObjectsByVelocity(objects, velocity_threshold, std::numeric_limits<double>::max());
