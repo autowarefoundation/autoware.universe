@@ -461,7 +461,7 @@ void AvoidanceModule::fillEgoStatus(
   if (isOutputPathLocked()) {
     data.safe_new_sl.clear();
     data.candidate_path = helper_.getPreviousSplineShiftPath();
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_DEBUG_THROTTLE(
       getLogger(), *clock_, 500, "this module is locked now. keep current path.");
     return;
   }
@@ -1869,6 +1869,8 @@ bool AvoidanceModule::isSafePath(
     return true;
   }
 
+  const auto hysteresis_factor = safe_ ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+
   const auto safety_check_target_objects = utils::avoidance::getSafetyCheckTargetObjects(
     avoid_data_, planner_data_, parameters_, is_right_shift.value());
 
@@ -1879,13 +1881,16 @@ bool AvoidanceModule::isSafePath(
       CollisionCheckDebug collision{};
       if (!utils::path_safety_checker::checkCollision(
             shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
-            collision)) {
+            hysteresis_factor, collision)) {
+        safe_count_ = 0;
         return false;
       }
     }
   }
 
-  return true;
+  safe_count_++;
+
+  return safe_ || safe_count_ > parameters_->hysteresis_factor_safe_count;
 }
 
 void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output) const
@@ -2455,7 +2460,7 @@ bool AvoidanceModule::isValidShiftLine(
     constexpr double THRESHOLD = 0.1;
     const auto offset = std::abs(new_shift_length - helper_.getEgoShift());
     if (offset > THRESHOLD) {
-      RCLCPP_WARN_THROTTLE(
+      RCLCPP_DEBUG_THROTTLE(
         getLogger(), *clock_, 1000, "new shift line is invalid. [HUGE OFFSET (%.2f)]", offset);
       return false;
     }
@@ -2505,6 +2510,8 @@ void AvoidanceModule::updateData()
 
   // update rtc status.
   updateRTCData();
+
+  safe_ = avoid_data_.safe;
 }
 
 void AvoidanceModule::processOnEntry()
