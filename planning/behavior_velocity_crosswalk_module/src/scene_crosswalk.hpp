@@ -321,9 +321,11 @@ private:
     const double far_attention_range);
 
   CollisionPoint createCollisionPoint(
-    const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
-    const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
+    const PathWithLaneId & ego_path, const geometry_msgs::msg::Point & nearest_collision_point,
+    const double dist_ego2cp, const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
     const geometry_msgs::msg::Vector3 & obj_vel) const;
+
+  double calcTimeToStop(const PathWithLaneId & input_path, const double dist_to_stop) const;
 
   float calcTargetVelocity(
     const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;

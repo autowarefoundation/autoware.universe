@@ -16,6 +16,7 @@
 
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/distance/distance.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -661,7 +662,7 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
       if (dist_ego2cp < minimum_stop_dist) {
         minimum_stop_dist = dist_ego2cp;
         nearest_collision_point = createCollisionPoint(
-          local_nearest_collision_point, dist_ego2cp, dist_obj2cp, ego_vel, obj_vel);
+          ego_path, local_nearest_collision_point, dist_ego2cp, dist_obj2cp, ego_vel, obj_vel);
         debug_data_.obj_polygons.push_back(
           toGeometryPointVector(obj_multi_step_polygon, ego_pos.z));
       }
@@ -678,25 +679,76 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
 }
 
 CollisionPoint CrosswalkModule::createCollisionPoint(
-  const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
-  const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
+  const PathWithLaneId & ego_path, const geometry_msgs::msg::Point & nearest_collision_point,
+  const double dist_ego2cp, const double dist_obj2cp,
+  [[maybe_unused]] const geometry_msgs::msg::Vector3 & ego_vel,
   const geometry_msgs::msg::Vector3 & obj_vel) const
 {
-  constexpr double min_ego_velocity = 1.38;  // [m/s]
-
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  const auto estimated_velocity = std::hypot(obj_vel.x, obj_vel.y);
-  const auto velocity = std::max(planner_param_.min_object_velocity, estimated_velocity);
+  const auto estimated_obj_velocity = std::hypot(obj_vel.x, obj_vel.y);
+  const auto obj_velocity = std::max(planner_param_.min_object_velocity, estimated_obj_velocity);
+
+  const double dist_to_ego_stop =
+    std::max(0.0, dist_ego2cp - planner_param_.stop_distance_from_object - base_link2front);
 
   CollisionPoint collision_point{};
   collision_point.collision_point = nearest_collision_point;
-  collision_point.time_to_collision =
-    std::max(0.0, dist_ego2cp - planner_param_.stop_distance_from_object - base_link2front) /
-    std::max(ego_vel.x, min_ego_velocity);
-  collision_point.time_to_vehicle = std::max(0.0, dist_obj2cp) / velocity;
+  collision_point.time_to_collision = calcTimeToStop(ego_path, dist_to_ego_stop);
+  collision_point.time_to_vehicle = std::max(0.0, dist_obj2cp) / obj_velocity;
+
+  std::cerr << dist_ego2cp << " " << dist_obj2cp << std::endl;
 
   return collision_point;
+}
+
+double CrosswalkModule::calcTimeToStop(
+  const PathWithLaneId & ref_path, const double dist_to_stop) const
+{
+  constexpr double min_ego_velocity = 1.0;  // [m/s]
+
+  auto input_path_points = ref_path.points;
+  const size_t ego_seg_idx = findEgoSegmentIndex(input_path_points);
+  const double dist_to_ego = motion_utils::calcSignedArcLength(
+    input_path_points, 0, planner_data_->current_odometry->pose.position, ego_seg_idx);
+  const auto ego_idx = motion_utils::insertStopPoint(dist_to_ego, input_path_points);
+  const auto stop_idx =
+    motion_utils::insertStopPoint(dist_to_ego + dist_to_stop, input_path_points);
+  if (!ego_idx || !stop_idx || stop_idx <= ego_idx) {
+    return dist_to_stop /
+           std::max(min_ego_velocity, planner_data_->current_velocity->twist.linear.x);  // TODO
+  }
+
+  // crop input path at stop point
+  PathWithLaneId cropped_input_path;
+  cropped_input_path.points = std::vector<PathPointWithLaneId>(
+    input_path_points.begin() + *ego_idx, input_path_points.begin() + *stop_idx + 1);
+
+  PathWithLaneId smoothed_path;
+  const bool smooth_result = smoothPath(cropped_input_path, smoothed_path, planner_data_);
+  if (!smooth_result) {
+    return 0.0;  // TODO
+  }
+
+  // calculate when ego is going to reach the stop point.
+  double dist_sum = 0.0;
+  double passing_time = 0.0;
+  for (size_t i = 0; i < smoothed_path.points.size() - 1; ++i) {
+    const auto & p1 = smoothed_path.points.at(i).point;
+    const auto & p2 = smoothed_path.points.at(i + 1).point;
+
+    const double dist = tier4_autoware_utils::calcDistance2d(p1, p2);
+    dist_sum += dist;
+
+    const double average_velocity =
+      (p1.longitudinal_velocity_mps + p2.longitudinal_velocity_mps) / 2.0;
+    passing_time +=
+      (dist / std::max<double>(
+                min_ego_velocity,
+                average_velocity));  // to avoid zero-division
+  }
+
+  return passing_time;
 }
 
 void CrosswalkModule::applySafetySlowDownSpeed(
