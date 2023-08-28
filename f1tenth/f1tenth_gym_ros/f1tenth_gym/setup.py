@@ -1,13 +1,11 @@
 from setuptools import setup
-
 setup(name='f110_gym',
       version='0.2.1',
       author='Hongrui Zheng',
       author_email='billyzheng.bz@gmail.com',
       url='https://f1tenth.org',
       package_dir={'': 'gym'},
-      install_requires=['setuptools==65.5.0',
-                        'gym==0.19.0',
+      install_requires=['gym==0.19.0',
 		        'numpy<=1.22.0,>=1.18.0',
                         'Pillow>=9.0.1',
                         'scipy>=1.7.3',
