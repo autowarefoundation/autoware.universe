@@ -45,6 +45,7 @@ struct DynamicAvoidanceParameters
 {
   // common
   bool enable_debug_info{true};
+  bool use_hatched_road_markings{true};
 
   // obstacle types to avoid
   bool avoid_car{true};
@@ -73,8 +74,11 @@ struct DynamicAvoidanceParameters
   double max_oncoming_crossing_object_angle{0.0};
 
   // drivable area generation
+  std::string polygon_generation_method{};
   double lat_offset_from_obstacle{0.0};
   double max_lat_offset_to_avoid{0.0};
+  double max_time_for_lat_shift{0.0};
+  double lpf_gain_for_lat_avoid_to_offset{0.0};
 
   double max_time_to_collision_overtaking_object{0.0};
   double start_duration_to_avoid_overtaking_object{0.0};
@@ -117,8 +121,10 @@ public:
     std::optional<rclcpp::Time> latest_time_inside_ego_path{std::nullopt};
     std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths{};
 
-    MinMaxValue lon_offset_to_avoid;
-    MinMaxValue lat_offset_to_avoid;
+    // NOTE: Previous values of the following are used for low-pass filtering.
+    //       Therefore, they has to be initialized as nullopt.
+    std::optional<MinMaxValue> lon_offset_to_avoid{std::nullopt};
+    std::optional<MinMaxValue> lat_offset_to_avoid{std::nullopt};
     bool is_collision_left;
     bool should_be_avoided{false};
 
@@ -303,7 +309,6 @@ private:
 
   bool isLabelTargetObstacle(const uint8_t label) const;
   void updateTargetObjects();
-  std::optional<std::vector<PathPointWithLaneId>> calcPathForObjectPolygon() const;
   bool willObjectCutIn(
     const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & predicted_path,
     const double obj_tangent_vel, const LatLonOffset & lat_lon_offset) const;
@@ -331,7 +336,9 @@ private:
 
   std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> getAdjacentLanes(
     const double forward_distance, const double backward_distance) const;
-  std::optional<tier4_autoware_utils::Polygon2d> calcDynamicObstaclePolygon(
+  std::optional<tier4_autoware_utils::Polygon2d> calcEgoPathBasedDynamicObstaclePolygon(
+    const DynamicAvoidanceObject & object) const;
+  std::optional<tier4_autoware_utils::Polygon2d> calcObjectPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
 
   void printIgnoreReason(const std::string & obj_uuid, const std::string & reason)

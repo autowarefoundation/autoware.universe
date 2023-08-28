@@ -100,12 +100,13 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
 {
   const size_t object_idx = motion_utils::findNearestIndex(traj_points, obstacle.pose.position);
 
-  const double object_yaw = tf2::getYaw(obstacle.pose.orientation);
+  const double object_vel_norm = std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y);
+  const double object_vel_yaw = std::atan2(obstacle.twist.linear.y, obstacle.twist.linear.x);
   const double traj_yaw = tf2::getYaw(traj_points.at(object_idx).pose.orientation);
 
   return std::make_pair(
-    obstacle.twist.linear.x * std::cos(object_yaw - traj_yaw),
-    obstacle.twist.linear.x * std::sin(object_yaw - traj_yaw));
+    object_vel_norm * std::cos(object_vel_yaw - traj_yaw),
+    object_vel_norm * std::sin(object_vel_yaw - traj_yaw));
 }
 
 double calcObstacleMaxLength(const Shape & shape)
@@ -396,8 +397,11 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     }
 
     min_behavior_stop_margin_ = declare_parameter<double>("common.min_behavior_stop_margin");
+    suppress_sudden_obstacle_stop_ =
+      declare_parameter<bool>("common.suppress_sudden_obstacle_stop");
     planner_ptr_->setParam(
-      enable_debug_info_, enable_calculation_time_info_, min_behavior_stop_margin_);
+      enable_debug_info_, enable_calculation_time_info_, min_behavior_stop_margin_,
+      suppress_sudden_obstacle_stop_);
   }
 
   {  // stop/cruise/slow down obstacle type
@@ -435,7 +439,8 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
   tier4_autoware_utils::updateParam<bool>(
     parameters, "common.enable_calculation_time_info", enable_calculation_time_info_);
   planner_ptr_->setParam(
-    enable_debug_info_, enable_calculation_time_info_, min_behavior_stop_margin_);
+    enable_debug_info_, enable_calculation_time_info_, min_behavior_stop_margin_,
+    suppress_sudden_obstacle_stop_);
 
   tier4_autoware_utils::updateParam<bool>(
     parameters, "common.enable_slow_down_planning", enable_slow_down_planning_);
@@ -818,7 +823,9 @@ ObstacleCruisePlannerNode::createCollisionPointsForOutsideCruiseObstacle(
     return std::nullopt;
   }
 
-  if (std::abs(obstacle.twist.linear.x) < p.outside_obstacle_min_velocity_threshold) {
+  if (
+    std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y) <
+    p.outside_obstacle_min_velocity_threshold) {
     RCLCPP_INFO_EXPRESSION(
       get_logger(), enable_debug_info_,
       "[Cruise] Ignore outside obstacle (%s) since the obstacle velocity is low.",
@@ -919,8 +926,8 @@ ObstacleCruisePlannerNode::createCollisionPointForStopObstacle(
   // NOTE: Dynamic obstacles for stop are crossing ego's trajectory with high speed,
   //       and the collision between ego and obstacles are within the margin threshold.
   const bool is_obstacle_crossing = isObstacleCrossing(traj_points, obstacle);
-  const double has_high_speed =
-    p.crossing_obstacle_velocity_threshold < std::abs(obstacle.twist.linear.x);
+  const double has_high_speed = p.crossing_obstacle_velocity_threshold <
+                                std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y);
   if (is_obstacle_crossing && has_high_speed) {
     // Get highest confidence predicted path
     const auto resampled_predicted_path = resampleHighestConfidencePredictedPath(
@@ -995,7 +1002,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
       }
       return true;
     }
-    // check if entrying slow down
+    // check if entering slow down
     if (is_lat_dist_low) {
       const int count = slow_down_condition_counter_.increaseCounter(obstacle.uuid);
       if (p.successive_num_to_entry_slow_down_condition <= count) {
@@ -1016,7 +1023,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   const auto obstacle_poly = obstacle.toPolygon();
 
   // calculate collision points with trajectory with lateral stop margin
-  // NOTE: For additional margin, hysteresis is not devided by two.
+  // NOTE: For additional margin, hysteresis is not divided by two.
   const auto traj_polys_with_lat_margin = polygon_utils::createOneStepPolygons(
     traj_points, vehicle_info_,
     p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down);

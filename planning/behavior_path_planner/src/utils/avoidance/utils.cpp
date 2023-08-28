@@ -142,6 +142,59 @@ double calcSignedArcLengthToFirstNearestPoint(
 
   return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
 }
+
+geometry_msgs::msg::Polygon createVehiclePolygon(
+  const vehicle_info_util::VehicleInfo & vehicle_info, const double offset)
+{
+  const auto & i = vehicle_info;
+  const auto & front_m = i.max_longitudinal_offset_m;
+  const auto & width_m = i.vehicle_width_m / 2.0 + offset;
+  const auto & back_m = i.rear_overhang_m;
+
+  geometry_msgs::msg::Polygon polygon{};
+
+  polygon.points.push_back(createPoint32(front_m, -width_m, 0.0));
+  polygon.points.push_back(createPoint32(front_m, width_m, 0.0));
+  polygon.points.push_back(createPoint32(-back_m, width_m, 0.0));
+  polygon.points.push_back(createPoint32(-back_m, -width_m, 0.0));
+
+  return polygon;
+}
+
+Polygon2d createOneStepPolygon(
+  const geometry_msgs::msg::Pose & p_front, const geometry_msgs::msg::Pose & p_back,
+  const geometry_msgs::msg::Polygon & base_polygon)
+{
+  Polygon2d one_step_polygon{};
+
+  {
+    geometry_msgs::msg::Polygon out_polygon{};
+    geometry_msgs::msg::TransformStamped geometry_tf{};
+    geometry_tf.transform = pose2transform(p_front);
+    tf2::doTransform(base_polygon, out_polygon, geometry_tf);
+
+    for (const auto & p : out_polygon.points) {
+      one_step_polygon.outer().push_back(Point2d(p.x, p.y));
+    }
+  }
+
+  {
+    geometry_msgs::msg::Polygon out_polygon{};
+    geometry_msgs::msg::TransformStamped geometry_tf{};
+    geometry_tf.transform = pose2transform(p_back);
+    tf2::doTransform(base_polygon, out_polygon, geometry_tf);
+
+    for (const auto & p : out_polygon.points) {
+      one_step_polygon.outer().push_back(Point2d(p.x, p.y));
+    }
+  }
+
+  Polygon2d hull_polygon{};
+  boost::geometry::convex_hull(one_step_polygon, hull_polygon);
+  boost::geometry::correct(hull_polygon);
+
+  return hull_polygon;
+}
 }  // namespace
 
 bool isOnRight(const ObjectData & obj)
@@ -640,9 +693,9 @@ void fillObjectMovingTime(
   const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
   const auto object_parameter = parameters->object_parameters.at(object_type);
 
-  const auto & object_vel =
-    object_data.object.kinematics.initial_twist_with_covariance.twist.linear.x;
-  const auto is_faster_than_threshold = object_vel > object_parameter.moving_speed_threshold;
+  const auto & object_twist = object_data.object.kinematics.initial_twist_with_covariance.twist;
+  const auto object_vel_norm = std::hypot(object_twist.linear.x, object_twist.linear.y);
+  const auto is_faster_than_threshold = object_vel_norm > object_parameter.moving_speed_threshold;
 
   const auto id = object_data.object.object_id;
   const auto same_id_obj = std::find_if(
@@ -718,14 +771,14 @@ void fillAvoidanceNecessity(
   }
 
   // TRUE -> ? (check with hysteresis factor)
-  object_data.avoid_required = check_necessity(parameters->safety_check_hysteresis_factor);
+  object_data.avoid_required = check_necessity(parameters->hysteresis_factor_expand_rate);
 }
 
 void fillObjectStoppableJudge(
   ObjectData & object_data, const ObjectDataArray & registered_objects,
   const double feasible_stop_distance, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  if (!parameters->use_constraints_for_decel) {
+  if (parameters->policy_deceleration == "reliable") {
     object_data.is_stoppable = true;
     return;
   }
@@ -854,6 +907,10 @@ void filterTargetObjects(
   using lanelet::geometry::distance2d;
   using lanelet::geometry::toArcCoordinates;
   using lanelet::utils::to2D;
+
+  if (data.current_lanelets.empty()) {
+    return;
+  }
 
   const auto & rh = planner_data->route_handler;
   const auto & path_points = data.reference_path_rough.points;
@@ -988,18 +1045,27 @@ void filterTargetObjects(
 
     // calculate avoid_margin dynamically
     // NOTE: This calculation must be after calculating to_road_shoulder_distance.
-    const double max_avoid_margin = object_parameter.safety_buffer_lateral * o.distance_factor +
-                                    object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
-    const double min_safety_lateral_distance =
-      object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
-    const auto max_allowable_lateral_distance =
-      o.to_road_shoulder_distance - parameters->road_shoulder_safety_margin - 0.5 * vehicle_width;
+    const auto max_avoid_margin = object_parameter.safety_buffer_lateral * o.distance_factor +
+                                  object_parameter.avoid_margin_lateral + 0.5 * vehicle_width;
+    const auto min_avoid_margin = object_parameter.safety_buffer_lateral + 0.5 * vehicle_width;
+    const auto soft_lateral_distance_limit =
+      o.to_road_shoulder_distance - parameters->soft_road_shoulder_margin - 0.5 * vehicle_width;
+    const auto hard_lateral_distance_limit =
+      o.to_road_shoulder_distance - parameters->hard_road_shoulder_margin - 0.5 * vehicle_width;
 
     const auto avoid_margin = [&]() -> boost::optional<double> {
-      if (max_allowable_lateral_distance < min_safety_lateral_distance) {
+      // Step1. check avoidable or not.
+      if (hard_lateral_distance_limit < min_avoid_margin) {
         return boost::none;
       }
-      return std::min(max_allowable_lateral_distance, max_avoid_margin);
+
+      // Step2. check if it should expand road shoulder margin.
+      if (soft_lateral_distance_limit < min_avoid_margin) {
+        return min_avoid_margin;
+      }
+
+      // Step3. nominal case. avoid margin is limited by soft constraint.
+      return std::min(soft_lateral_distance_limit, max_avoid_margin);
     }();
 
     if (!!avoid_margin) {
@@ -1409,7 +1475,8 @@ ExtendedPredictedObject transform(
   extended_object.initial_acceleration = object.kinematics.initial_acceleration_with_covariance;
   extended_object.shape = object.shape;
 
-  const auto & obj_velocity = extended_object.initial_twist.twist.linear.x;
+  const auto & obj_velocity_norm = std::hypot(
+    extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
   const auto & time_horizon = parameters->safety_check_time_horizon;
   const auto & time_resolution = parameters->safety_check_time_resolution;
 
@@ -1424,7 +1491,7 @@ ExtendedPredictedObject transform(
       if (obj_pose) {
         const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, object.shape);
         extended_object.predicted_paths.at(i).path.emplace_back(
-          t, *obj_pose, obj_velocity, obj_polygon);
+          t, *obj_pose, obj_velocity_norm, obj_polygon);
       }
     }
   }
@@ -1543,5 +1610,60 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   }
 
   return target_objects;
+}
+
+std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
+  DebugData & debug)
+{
+  PredictedObjects target_objects;
+  PredictedObjects other_objects;
+
+  double max_offset = 0.0;
+  for (const auto & object_parameter : parameters->object_parameters) {
+    const auto p = object_parameter.second;
+    const auto offset =
+      2.0 * p.envelope_buffer_margin + p.safety_buffer_lateral + p.avoid_margin_lateral;
+    max_offset = std::max(max_offset, offset);
+  }
+
+  const auto detection_area =
+    createVehiclePolygon(planner_data->parameters.vehicle_info, max_offset);
+  const auto ego_idx = planner_data->findEgoIndex(path.points);
+
+  Polygon2d attention_area;
+  for (size_t i = 0; i < path.points.size() - 1; ++i) {
+    const auto & p_ego_front = path.points.at(i).point.pose;
+    const auto & p_ego_back = path.points.at(i + 1).point.pose;
+
+    const auto distance_from_ego = calcSignedArcLength(path.points, ego_idx, i);
+    if (distance_from_ego > parameters->object_check_forward_distance) {
+      break;
+    }
+
+    const auto ego_one_step_polygon = createOneStepPolygon(p_ego_front, p_ego_back, detection_area);
+
+    std::vector<Polygon2d> unions;
+    boost::geometry::union_(attention_area, ego_one_step_polygon, unions);
+    if (!unions.empty()) {
+      attention_area = unions.front();
+      boost::geometry::correct(attention_area);
+    }
+  }
+
+  debug.detection_area = toMsg(attention_area, data.reference_pose.position.z);
+
+  const auto objects = planner_data->dynamic_object->objects;
+  std::for_each(objects.begin(), objects.end(), [&](const auto & object) {
+    const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
+    if (boost::geometry::disjoint(obj_polygon, attention_area)) {
+      other_objects.objects.push_back(object);
+    } else {
+      target_objects.objects.push_back(object);
+    }
+  });
+
+  return std::make_pair(target_objects, other_objects);
 }
 }  // namespace behavior_path_planner::utils::avoidance

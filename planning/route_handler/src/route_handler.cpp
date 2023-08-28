@@ -367,7 +367,7 @@ UUID RouteHandler::getRouteUuid() const
 {
   if (!route_ptr_) {
     RCLCPP_WARN(logger_, "[Route Handler] getRouteUuid: Route has not been set yet");
-    UUID();
+    return UUID();
   }
   return route_ptr_->uuid;
 }
@@ -942,6 +942,16 @@ bool RouteHandler::isBijectiveConnection(
 boost::optional<lanelet::ConstLanelet> RouteHandler::getRightLanelet(
   const lanelet::ConstLanelet & lanelet, const bool enable_same_root) const
 {
+  // right road lanelet of shoulder lanelet
+  if (isShoulderLanelet(lanelet)) {
+    for (const auto & road_lanelet : road_lanelets_) {
+      if (lanelet::geometry::rightOf(road_lanelet, lanelet)) {
+        return road_lanelet;
+      }
+    }
+    return boost::none;
+  }
+
   // routable lane
   const auto & right_lane = routing_graph_ptr_->right(lanelet);
   if (right_lane) {
@@ -959,13 +969,18 @@ boost::optional<lanelet::ConstLanelet> RouteHandler::getRightLanelet(
     return adjacent_right_lane;
   }
 
-  lanelet::ConstLanelet next_lanelet;
-  if (!getNextLaneletWithinRoute(lanelet, &next_lanelet)) {
+  lanelet::ConstLanelets prev_lanelet;
+  if (!getPreviousLaneletsWithinRoute(lanelet, &prev_lanelet)) {
     return adjacent_right_lane;
   }
 
-  lanelet::ConstLanelets prev_lanelet;
-  if (!getPreviousLaneletsWithinRoute(lanelet, &prev_lanelet)) {
+  lanelet::ConstLanelet next_lanelet;
+  if (!getNextLaneletWithinRoute(lanelet, &next_lanelet)) {
+    for (const auto & lane : getNextLanelets(prev_lanelet.front())) {
+      if (lanelet.rightBound().back().id() == lane.leftBound().back().id()) {
+        return lane;
+      }
+    }
     return adjacent_right_lane;
   }
 
@@ -999,6 +1014,16 @@ bool RouteHandler::getLeftLaneletWithinRoute(
 boost::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
   const lanelet::ConstLanelet & lanelet, const bool enable_same_root) const
 {
+  // left road lanelet of shoulder lanelet
+  if (isShoulderLanelet(lanelet)) {
+    for (const auto & road_lanelet : road_lanelets_) {
+      if (lanelet::geometry::leftOf(road_lanelet, lanelet)) {
+        return road_lanelet;
+      }
+    }
+    return boost::none;
+  }
+
   // routable lane
   const auto & left_lane = routing_graph_ptr_->left(lanelet);
   if (left_lane) {
@@ -1016,13 +1041,18 @@ boost::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
     return adjacent_left_lane;
   }
 
-  lanelet::ConstLanelet next_lanelet;
-  if (!getNextLaneletWithinRoute(lanelet, &next_lanelet)) {
+  lanelet::ConstLanelets prev_lanelet;
+  if (!getPreviousLaneletsWithinRoute(lanelet, &prev_lanelet)) {
     return adjacent_left_lane;
   }
 
-  lanelet::ConstLanelets prev_lanelet;
-  if (!getPreviousLaneletsWithinRoute(lanelet, &prev_lanelet)) {
+  lanelet::ConstLanelet next_lanelet;
+  if (!getNextLaneletWithinRoute(lanelet, &next_lanelet)) {
+    for (const auto & lane : getNextLanelets(prev_lanelet.front())) {
+      if (lanelet.leftBound().back().id() == lane.rightBound().back().id()) {
+        return lane;
+      }
+    }
     return adjacent_left_lane;
   }
 
