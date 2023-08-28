@@ -80,13 +80,15 @@ void offsetPolygon2d(
   }
 }
 
-template <typename... Args>
-Polygon2d createMultiStepPolygon(const geometry_msgs::msg::Polygon & polygon, Args... origin_points)
+template <class T>
+Polygon2d createMultiStepPolygon(
+  const T & obj_path_points, const geometry_msgs::msg::Polygon & polygon, const size_t start_idx,
+  const size_t end_idx)
 {
   Polygon2d multi_step_polygon{};
-  for (const auto & origin_point :
-       std::initializer_list<geometry_msgs::msg::Pose>{origin_points...}) {
-    offsetPolygon2d(origin_point, polygon, multi_step_polygon);
+  for (size_t i = start_idx; i <= end_idx; ++i) {
+    offsetPolygon2d(
+      tier4_autoware_utils::getPose(obj_path_points.at(i)), polygon, multi_step_polygon);
   }
 
   Polygon2d hull_multi_step_polygon{};
@@ -595,21 +597,33 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
   double minimum_stop_dist = std::numeric_limits<double>::max();
   std::optional<CollisionPoint> nearest_collision_point{std::nullopt};
   for (const auto & obj_path : object.kinematics.predicted_paths) {
+    std::optional<size_t> start_idx{std::nullopt};
     for (size_t i = 0; i < obj_path.path.size(); ++i) {
-      const auto & p_obj_first = obj_path.path.at(i);
-      const auto & p_obj_second = obj_path.path.at(i < obj_path.path.size() - 1 ? i + 1 : i);
-      const auto & p_obj_third = obj_path.path.at(i < obj_path.path.size() - 2 ? i + 2 : i);
+      const auto & p_obj = obj_path.path.at(i);
 
-      // Calculate intersection points between object and attention area
-      const auto obj_one_step_polygon = createMultiStepPolygon(obj_polygon, p_obj_first);
-      const auto one_step_intersection =
-        calcOverlappingPoints(obj_one_step_polygon, attention_area);
-      if (one_step_intersection.empty()) {
-        continue;
+      if (bg::within(Point2d(p_obj.position.x, p_obj.position.y), attention_area)) {
+        if (!start_idx) {
+          start_idx = i;
+        }
+        if (i != obj_path.path.size() - 1) {
+          // NOTE: Even if the object path does not fully cross the ego path, the path should be
+          // considered.
+          continue;
+        }
+      } else {
+        if (!start_idx) {
+          continue;
+        }
       }
 
-      const auto obj_multi_step_polygon =
-        createMultiStepPolygon(obj_polygon, p_obj_first, p_obj_second, p_obj_third);
+      // Calculate multi-step object polygon, and reset start_idx
+      const size_t start_idx_with_margin = std::max(static_cast<int>(start_idx.value()) - 1, 0);
+      const size_t end_idx_with_margin = std::min(i + 1, obj_path.path.size() - 1);
+      const auto obj_multi_step_polygon = createMultiStepPolygon(
+        obj_path.path, obj_polygon, start_idx_with_margin, end_idx_with_margin);
+      start_idx = std::nullopt;
+
+      // Calculate intersection points between object and attention area
       const auto multi_step_intersection =
         calcOverlappingPoints(obj_multi_step_polygon, attention_area);
       if (multi_step_intersection.empty()) {
@@ -757,7 +771,8 @@ Polygon2d CrosswalkModule::getAttentionArea(
       break;
     }
 
-    const auto ego_one_step_polygon = createMultiStepPolygon(ego_polygon, p_ego_front, p_ego_back);
+    const auto ego_one_step_polygon =
+      createMultiStepPolygon(sparse_resample_path.points, ego_polygon, j, j + 1);
 
     debug_data_.ego_polygons.push_back(toGeometryPointVector(ego_one_step_polygon, ego_pos.z));
 
