@@ -54,7 +54,7 @@ BigVehicleTracker::BigVehicleTracker(
   float q_stddev_y = 1.5;                                     // [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
   float q_stddev_vx = tier4_autoware_utils::kmph2mps(10);     // [m/(s*s)]
-  float q_stddev_slip = tier4_autoware_utils::deg2rad(20);    // [rad/(s*s)]
+  float q_stddev_slip = tier4_autoware_utils::deg2rad(5);     // [rad/(s*s)]
   float r_stddev_x = 1.5;                                     // [m]
   float r_stddev_y = 0.5;                                     // [m]
   float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);     // [rad]
@@ -150,7 +150,7 @@ BigVehicleTracker::BigVehicleTracker(
   setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 
   // Set lf, lr
-  double point_ratio = 0.1;  // under steered if smaller than 0.5
+  double point_ratio = 0.2;  // under steered if smaller than 0.5
   lf_ = bounding_box_.length * point_ratio;
   lr_ = bounding_box_.length * (1.0 - point_ratio);
 }
@@ -478,7 +478,8 @@ bool BigVehicleTracker::getTrackedObject(
   pose_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
 
   // twist
-  twist_with_cov.twist.linear.x = X_t(IDX::VX);
+  twist_with_cov.twist.linear.x = X_t(IDX::VX) * std::cos(X_t(IDX::SLIP));
+  twist_with_cov.twist.linear.y = X_t(IDX::VX) * std::sin(X_t(IDX::SLIP));
   twist_with_cov.twist.angular.z =
     X_t(IDX::VX) / lr_ * std::sin(X_t(IDX::SLIP));  // yaw_rate = vx_k / l_r * sin(slip_k)
   // twist covariance

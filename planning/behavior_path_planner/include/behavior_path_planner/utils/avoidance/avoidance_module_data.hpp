@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -78,12 +79,6 @@ struct AvoidanceParameters
   // path resample interval for output path. Too short interval increases
   // computational cost for latter modules.
   double resample_interval_for_output = 3.0;
-
-  // lanelet expand length for right side to find avoidance target vehicles
-  double detection_area_right_expand_dist = 0.0;
-
-  // lanelet expand length for left side to find avoidance target vehicles
-  double detection_area_left_expand_dist = 1.0;
 
   // enable avoidance to be perform only in lane with same direction
   bool use_adjacent_lane{true};
@@ -199,10 +194,8 @@ struct AvoidanceParameters
   double safety_check_backward_distance;
 
   // transit hysteresis (unsafe to safe)
-  double safety_check_hysteresis_factor;
-
-  // don't output new candidate path if the offset between ego and path is larger than this.
-  double safety_check_ego_offset;
+  size_t hysteresis_factor_safe_count;
+  double hysteresis_factor_expand_rate;
 
   // keep target velocity in yield maneuver
   double yield_velocity;
@@ -233,7 +226,11 @@ struct AvoidanceParameters
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double road_shoulder_safety_margin{1.0};
+  double soft_road_shoulder_margin{1.0};
+
+  // The margin is configured so that the generated avoidance trajectory does not come near to the
+  // road shoulder.
+  double hard_road_shoulder_margin{1.0};
 
   // Even if the obstacle is very large, it will not avoid more than this length for right direction
   double max_right_shift_length;
@@ -300,6 +297,9 @@ struct AvoidanceParameters
 
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
+
+  // rss parameters
+  utils::path_safety_checker::RSSparams rss_params;
 
   // clip left and right bounds for objects
   bool enable_bound_clipping{false};
@@ -513,33 +513,13 @@ struct ShiftLineData
 };
 
 /*
- * Data struct for longitudinal margin
- */
-struct MarginData
-{
-  Pose pose{};
-
-  bool enough_lateral_margin{true};
-
-  double longitudinal_distance{std::numeric_limits<double>::max()};
-
-  double longitudinal_margin{std::numeric_limits<double>::lowest()};
-
-  double vehicle_width;
-
-  double base_link2front;
-
-  double base_link2rear;
-};
-using MarginDataArray = std::vector<MarginData>;
-
-/*
  * Debug information for marker array
  */
 struct DebugData
 {
-  std::shared_ptr<lanelet::ConstLanelets> expanded_lanelets;
   std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
+
+  geometry_msgs::msg::Polygon detection_area;
 
   lanelet::ConstLineStrings3d bounds;
 
@@ -575,13 +555,8 @@ struct DebugData
   // shift path
   std::vector<double> proposed_spline_shift;
 
-  bool exist_adjacent_objects{false};
-
   // future pose
   PathWithLaneId path_with_planned_velocity;
-
-  // margin
-  MarginDataArray margin_data_array;
 
   // avoidance require objects
   ObjectDataArray unavoidable_objects;
