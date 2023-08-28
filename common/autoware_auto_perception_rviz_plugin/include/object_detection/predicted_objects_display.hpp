@@ -24,10 +24,10 @@
 
 #include <condition_variable>
 #include <list>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <set>
 
 namespace autoware
 {
