@@ -16,9 +16,9 @@
 
 #include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 
-#include <tier4_map_msgs/msg/map_projector_info.hpp>
 #include "tier4_map_msgs/msg/map_projector_type.hpp"
 #include "tier4_map_msgs/msg/vertical_datum.hpp"
+#include <tier4_map_msgs/msg/map_projector_info.hpp>
 
 #include <yaml-cpp/yaml.h>
 

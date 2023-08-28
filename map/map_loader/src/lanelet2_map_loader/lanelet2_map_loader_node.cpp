@@ -41,12 +41,12 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <tier4_map_msgs/msg/map_projector_type.hpp>
+
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
-
-#include <tier4_map_msgs/msg/map_projector_type.hpp>
 
 #include <string>
 
@@ -100,7 +100,8 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     if (errors.empty()) {
       return map;
     }
-  } else if (lanelet2_map_projector_type == tier4_map_msgs::msg::MapProjectorType::LOCAL_CARTESIAN_UTM) {
+  } else if (
+    lanelet2_map_projector_type == tier4_map_msgs::msg::MapProjectorType::LOCAL_CARTESIAN_UTM) {
     lanelet::GPSPoint position{map_origin_lat, map_origin_lon};
     lanelet::Origin origin{position};
     lanelet::projection::UtmProjector projector{origin};
