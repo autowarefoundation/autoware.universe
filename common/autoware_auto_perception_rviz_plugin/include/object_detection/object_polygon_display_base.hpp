@@ -146,7 +146,10 @@ public:
     m_marker_common.addMessage(markers_ptr);
   }
 
-  void deleteMarker(rviz_default_plugins::displays::MarkerID marker_id){m_marker_common.deleteMarker(marker_id);}
+  void deleteMarker(rviz_default_plugins::displays::MarkerID marker_id)
+  {
+    m_marker_common.deleteMarker(marker_id);
+  }
 
 protected:
   /// \brief Convert given shape msg into a Marker

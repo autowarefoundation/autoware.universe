@@ -197,14 +197,13 @@ void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
   if (!markers.empty()) {
     std::set new_marker_ids = std::set<rviz_default_plugins::displays::MarkerID>();
     for (const auto & marker : markers) {
-      rviz_default_plugins::displays::MarkerID marker_id = rviz_default_plugins::displays::MarkerID(marker->ns, marker->id);
+      rviz_default_plugins::displays::MarkerID marker_id =
+        rviz_default_plugins::displays::MarkerID(marker->ns, marker->id);
       add_marker(marker);
       new_marker_ids.insert(marker_id);
     }
-    for (auto itr = existing_marker_ids.begin(); itr != existing_marker_ids.end(); itr++)
-    {
-      if (new_marker_ids.find(*itr) == new_marker_ids.end())
-      {
+    for (auto itr = existing_marker_ids.begin(); itr != existing_marker_ids.end(); itr++) {
+      if (new_marker_ids.find(*itr) == new_marker_ids.end()) {
         deleteMarker(*itr);
       }
     }
