@@ -49,12 +49,8 @@ protected:
     msg_auto.header = msg_source.header;
     msg_auto.format_version = msg_source.version_map_format;
     msg_auto.map_version = msg_source.version_map;
-    //msg_auto.map_format = msg_source.name_map;//string->int ?
     msg_auto.map_format = 0;
-     
-    for(size_t i = 0; i < msg_source.data.size(); i++){
-      msg_auto.data.push_back(msg_source.data[i]);
-    }
+    msg_auto.data = msg_source.data;
     
     return msg_auto;
   }

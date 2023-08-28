@@ -69,10 +69,10 @@ TEST(AutowareAutoMsgsAdapter, TestHADMapBin)  // NOLINT for gtest
         EXPECT_EQ(msg->header.stamp, msg_map.header.stamp);
         EXPECT_EQ(msg->header.frame_id, msg_map.header.frame_id);
 
-        //EXPECT_EQ(msg->map_format, msg_map.name_map);//
+        EXPECT_EQ(msg->map_format, 0);
         EXPECT_EQ(msg->format_version, msg_map.version_map_format);
         EXPECT_EQ(msg->map_version, msg_map.version_map);
-        EXPECT_EQ(msg->data[0], msg_map.data[0]);
+        EXPECT_EQ(msg->data, msg_map.data);
 
         test_completed = true;
       });
