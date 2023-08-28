@@ -19,9 +19,10 @@ Example:
 
 #### Input Types
 
-| Name | Type                                                  | Description            |
-| ---- | ----------------------------------------------------- | ---------------------- |
-|      | `autoware_auto_perception_msgs::msg::DetectedObjects` | detection result array |
+| Name | Type                                                  | Description               |
+| ---- | ----------------------------------------------------- | ------------------------- |
+|      | `autoware_auto_perception_msgs::msg::DetectedObjects` | detection result array    |
+|      | `sensor_msgs::msg::PointCloud2`                       | point cloud for filtering |
 
 #### Visualization Result
 
@@ -31,9 +32,10 @@ Example:
 
 #### Input Types
 
-| Name | Type                                                 | Description           |
-| ---- | ---------------------------------------------------- | --------------------- |
-|      | `autoware_auto_perception_msgs::msg::TrackedObjects` | tracking result array |
+| Name | Type                                                 | Description               |
+| ---- | ---------------------------------------------------- | ------------------------- |
+|      | `autoware_auto_perception_msgs::msg::TrackedObjects` | tracking result array     |
+|      | `sensor_msgs::msg::PointCloud2`                      | point cloud for filtering |
 
 #### Visualization Result
 
@@ -45,15 +47,22 @@ Overwrite tracking results with detection results.
 
 #### Input Types
 
-| Name | Type                                                   | Description             |
-| ---- | ------------------------------------------------------ | ----------------------- |
-|      | `autoware_auto_perception_msgs::msg::PredictedObjects` | prediction result array |
+| Name | Type                                                   | Description              |
+| ---- | ------------------------------------------------------ | ------------------------ |
+|      | `autoware_auto_perception_msgs::msg::PredictedObjects` | prediction result array  |
+|      | `sensor_msgs::msg::PointCloud2`                        | pointcloud for filtering |
 
 #### Visualization Result
 
 Overwrite prediction results with tracking results.
 
 ![predicted-object-visualization-description](./images/predicted-object-visualization-description.jpg)
+
+### Visualization with active point cloud publishing
+
+Publishing colored point clouds. With colors according to different classes of detected objects, same as polygons.
+
+![visualization-with-pointcloud](./images/3d_pointcloud.png)
 
 ## References/External links
 

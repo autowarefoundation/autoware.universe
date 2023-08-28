@@ -6,6 +6,8 @@ autoware_package()
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
+find_package(PCL REQUIRED)
+
 set(OD_PLUGIN_LIB_SRC
   src/object_detection/detected_objects_display.cpp
   src/object_detection/tracked_objects_display.cpp
@@ -46,8 +48,13 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 target_link_libraries(${PROJECT_NAME}
   rviz_common::rviz_common
   Qt5::Widgets
+  ${PCL_LIBRARIES}
 )
 target_include_directories(${PROJECT_NAME} PRIVATE include)
+
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+"${PCL_INCLUDE_DIRS}"
+)
 
 # Settings to improve the build as suggested on https://github.com/ros2/rviz/blob/ros2/docs/plugin_development.md
 target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
