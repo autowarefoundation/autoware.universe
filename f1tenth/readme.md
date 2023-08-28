@@ -191,7 +191,7 @@ cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
 
-Rviz2 should launch automatically with the target map loaded (black markers). After a short peroid of time the simulated Lidar data (markers with color) should be overlaid on top of the map indicating the simulation is running correctly. It can take up to `5 minutes` for the Lidar data to show up if the simulator is launched for the first time. You may adjust the camera angle using your mouse's left and right buttons and scroll wheel.
+Rviz2 should launch automatically with the target map loaded (black markers). After a short peroid of time the simulated Lidar data (colored markers) should be overlaid on top of the map indicating the simulation is running correctly. It can take up to `5 minutes` for the Lidar data to show up if the simulator is launched for the first time. You may adjust the camera angle using your mouse's left and right buttons and scroll wheel.
 
 ![RViz image](f1tenth_sim.jpg)
 
