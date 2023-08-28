@@ -176,8 +176,6 @@ Navigate to /home/autoware-f1/autoware/install/f1tenth_gym_ros/share/f1tenth_gym
 
 ## How to record a trajectory (simulation)
 
-[![YouTube Demo](https://img.youtube.com/vi/iQ3Bsct1q-g/0.jpg)](https://www.youtube.com/watch?v=iQ3Bsct1q-g)
-
 1. Use the `demo_launch` launch file to launch the `gym_bridge`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes. 
 Rviz2 should launch automatically with the target map loaded (black markers). After a short peroid of time the simulated Lidar data (markers with color) should be overlaid on top of the map indicating the simulation is running correctly. It can take up to 5 minutes for the Lidar data to show up if the simulator is launched for the first time. You may adjust the camera angle using your mouse's left and right buttons and scroll wheel.
 
@@ -261,8 +259,6 @@ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/act
 ```
 
 ## How to replay a trajectory (real car)
-
-[![YouTube Demo](https://img.youtube.com/vi/VPEcjZRnqL8/0.jpg)](https://www.youtube.com/watch?v=VPEcjZRnqL8)
 
 1. Use the `realcar_launch` launch file to launch the `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
