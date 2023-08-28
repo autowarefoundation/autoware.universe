@@ -28,14 +28,7 @@ T getOrDeclareParameter(rclcpp::Node & node, const std::string & name)
     return node.get_parameter(name).get_value<T>();
   }
 
-  try {
-    return node.declare_parameter<T>(name);
-  } catch (const rclcpp::ParameterTypeException & ex) {
-    RCLCPP_ERROR(
-      node.get_logger(), "Failed to get parameter `%s`, please set it when you launch the node.",
-      name.c_str());
-    throw(ex);
-  }
+  return node.declare_parameter<T>(name);
 }
 }  // namespace tier4_autoware_utils
 
