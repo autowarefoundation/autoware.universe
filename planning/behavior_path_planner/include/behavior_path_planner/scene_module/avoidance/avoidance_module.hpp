@@ -19,6 +19,7 @@
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utils/avoidance/helper.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -48,10 +49,8 @@ class AvoidanceModule : public SceneModuleInterface
 public:
   AvoidanceModule(
     const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
-    const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map);
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
-  ModuleStatus updateState() override;
-  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
   CandidateOutput planCandidate() const override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
@@ -62,13 +61,19 @@ public:
   void updateData() override;
   void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
 
-  void updateModuleParams(const std::shared_ptr<AvoidanceParameters> & parameters)
+  void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = parameters;
+    parameters_ = std::any_cast<std::shared_ptr<AvoidanceParameters>>(parameters);
   }
   std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
 private:
+  bool canTransitSuccessState() override;
+
+  bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override { return true; }
+
   /**
    * @brief update RTC status for candidate shift line.
    * @param candidate path.
@@ -177,6 +182,11 @@ private:
    */
   void initRTCStatus();
 
+  /**
+   * @brief update RTC status.
+   */
+  void updateRTCData();
+
   // ego state check
 
   /**
@@ -184,19 +194,6 @@ private:
    * @param ego status. (NOT_AVOID, AVOID, YIELD, AVOID_EXECUTE, AVOID_PATH_NOT_READY)
    */
   AvoidanceState updateEgoState(const AvoidancePlanningData & data) const;
-
-  /**
-   * @brief check whether the ego is shifted based on shift line.
-   * @return result.
-   */
-  bool isAvoidanceManeuverRunning();
-
-  /**
-   * @brief check whether the ego is in avoidance maneuver based on shift line and target object
-   * existence.
-   * @return result.
-   */
-  bool isAvoidancePlanRunning() const;
 
   // ego behavior update
 
@@ -245,9 +242,8 @@ private:
 
   /**
    * @brief update main avoidance data for avoidance path generation based on latest planner data.
-   * @return avoidance data.
    */
-  AvoidancePlanningData calcAvoidancePlanningData(DebugData & debug) const;
+  void fillFundamentalData(AvoidancePlanningData & data, DebugData & debug);
 
   /**
    * @brief fill additional data so that the module judges target objects.
@@ -255,12 +251,6 @@ private:
    */
   ObjectData createObjectData(
     const AvoidancePlanningData & data, const PredictedObject & object) const;
-
-  /**
-   * @brief get objects that are driving on adjacent lanes.
-   * @param left or right lanelets.
-   */
-  ObjectDataArray getAdjacentLaneObjects(const lanelet::ConstLanelets & adjacent_lanes) const;
 
   /**
    * @brief fill additional data so that the module judges target objects.
@@ -337,6 +327,8 @@ private:
    */
   AvoidLineArray applyPreProcessToRawShiftLines(
     AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
+
+  AvoidLineArray getFillGapShiftLines(const AvoidLineArray & shift_lines) const;
 
   /*
    * @brief merge negative & positive shift lines.
@@ -431,7 +423,7 @@ private:
    * @brief add new shift line to path shifter if the RTC status is activated.
    * @param new shift lines.
    */
-  void addShiftLineIfApproved(const AvoidLineArray & point);
+  void updatePathShifter(const AvoidLineArray & point);
 
   /**
    * @brief add new shift line to path shifter.
@@ -482,64 +474,21 @@ private:
   // safety check
 
   /**
-   * @brief get shift side adjacent lanes.
-   * @param path shifter.
-   * @param forward distance to get.
-   * @param backward distance to get.
-   * @return adjacent lanes.
-   */
-  lanelet::ConstLanelets getAdjacentLane(
-    const PathShifter & path_shifter, const double forward_distance,
-    const double backward_distance) const;
-
-  /**
-   * @brief calculate lateral margin from avoidance velocity for safety check.
-   * @param target velocity.
-   */
-  double getLateralMarginFromVelocity(const double velocity) const;
-
-  /**
-   * @brief calculate rss longitudinal distance for safety check.
-   * @param ego velocity.
-   * @param object velocity.
-   * @param option for rss calculation.
-   * @return rss longitudinal distance.
-   */
-  double getRSSLongitudinalDistance(
-    const double v_ego, const double v_obj, const bool is_front_object) const;
-
-  /**
    * @brief check avoidance path safety for surround moving objects.
-   * @param path shifter.
    * @param avoidance path.
    * @param debug data.
    * @return result.
    */
-  bool isSafePath(
-    const PathShifter & path_shifter, ShiftedPath & shifted_path, DebugData & debug) const;
+  bool isSafePath(ShiftedPath & shifted_path, DebugData & debug) const;
 
-  /**
-   * @brief check avoidance path safety for surround moving objects.
-   * @param avoidance path.
-   * @param shift side lanes.
-   * @param debug data.
-   * @return result.
-   */
-  bool isSafePath(
-    const PathWithLaneId & path, const lanelet::ConstLanelets & check_lanes,
-    DebugData & debug) const;
-
-  /**
-   * @brief check predicted points safety.
-   * @param predicted points.
-   * @param future time.
-   * @param object data.
-   * @param margin data for debug.
-   * @return result.
-   */
-  bool isEnoughMargin(
-    const PathPointWithLaneId & p_ego, const double t, const ObjectData & object,
-    MarginData & margin_data) const;
+  bool isComfortable(const AvoidLineArray & shift_lines) const
+  {
+    return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
+      return PathShifter::calcJerkFromLatLonDistance(
+               line.getRelativeLength(), line.getRelativeLongitudinal(),
+               helper_.getAvoidanceEgoSpeed()) < helper_.getLateralMaxJerkLimit();
+    });
+  }
 
   // post process
 
@@ -563,6 +512,12 @@ private:
     }
 
     unlockNewModuleLaunch();
+
+    if (!path_shifter_.getShiftLines().empty()) {
+      left_shift_array_.clear();
+      right_shift_array_.clear();
+      removeRTCStatus();
+    }
 
     current_raw_shift_lines_.clear();
     registered_raw_shift_lines_.clear();
@@ -601,11 +556,13 @@ private:
 
   bool arrived_path_end_{false};
 
+  bool safe_{true};
+
   std::shared_ptr<AvoidanceParameters> parameters_;
 
   helper::avoidance::AvoidanceHelper helper_;
 
-  AvoidancePlanningData avoidance_data_;
+  AvoidancePlanningData avoid_data_;
 
   PathShifter path_shifter_;
 
@@ -620,6 +577,8 @@ private:
   UUID candidate_uuid_;
 
   ObjectDataArray registered_objects_;
+
+  mutable size_t safe_count_{0};
 
   mutable ObjectDataArray ego_stopped_objects_;
 

@@ -166,8 +166,8 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
   if (sub_std_pair_.second != nullptr) {
     stop_watch_ptr_->toc("processing_time", true);
     timer_->cancel();
-    publish(*(sub_std_pair_.second));
     postprocess(*(sub_std_pair_.second));
+    publish(*(sub_std_pair_.second));
     sub_std_pair_.second = nullptr;
     std::fill(is_fused_.begin(), is_fused_.end(), false);
 
@@ -205,7 +205,8 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
   // if matching rois exist, fuseOnSingle
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     if (camera_info_map_.find(roi_i) == camera_info_map_.end()) {
-      RCLCPP_WARN(this->get_logger(), "no camera info. id is %zu", roi_i);
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 5000, "no camera info. id is %zu", roi_i);
       continue;
     }
 
@@ -260,8 +261,8 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
   // Msg
   if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
     timer_->cancel();
-    publish(*output_msg);
     postprocess(*output_msg);
+    publish(*output_msg);
     std::fill(is_fused_.begin(), is_fused_.end(), false);
     sub_std_pair_.second = nullptr;
 
@@ -298,7 +299,8 @@ void FusionNode<Msg, Obj>::roiCallback(
 
     if (interval < match_threshold_ms_ * (int64_t)1e6 && is_fused_.at(roi_i) == false) {
       if (camera_info_map_.find(roi_i) == camera_info_map_.end()) {
-        RCLCPP_WARN(this->get_logger(), "no camera info. id is %zu", roi_i);
+        RCLCPP_WARN_THROTTLE(
+          this->get_logger(), *this->get_clock(), 5000, "no camera info. id is %zu", roi_i);
         (roi_stdmap_.at(roi_i))[timestamp_nsec] = input_roi_msg;
         return;
       }
@@ -322,8 +324,8 @@ void FusionNode<Msg, Obj>::roiCallback(
 
       if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
         timer_->cancel();
-        publish(*(sub_std_pair_.second));
         postprocess(*(sub_std_pair_.second));
+        publish(*(sub_std_pair_.second));
         std::fill(is_fused_.begin(), is_fused_.end(), false);
         sub_std_pair_.second = nullptr;
 
@@ -362,8 +364,8 @@ void FusionNode<Msg, Obj>::timer_callback()
     if (sub_std_pair_.second != nullptr) {
       stop_watch_ptr_->toc("processing_time", true);
 
-      publish(*(sub_std_pair_.second));
       postprocess(*(sub_std_pair_.second));
+      publish(*(sub_std_pair_.second));
 
       // add processing time for debug
       if (debug_publisher_) {

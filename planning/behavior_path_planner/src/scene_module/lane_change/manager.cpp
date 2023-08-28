@@ -85,6 +85,36 @@ LaneChangeModuleManager::LaneChangeModuleManager(
     get_parameter<bool>(node, parameter("check_objects_on_other_lanes"));
   p.use_all_predicted_path = get_parameter<bool>(node, parameter("use_all_predicted_path"));
 
+  p.rss_params.longitudinal_distance_min_threshold =
+    get_parameter<double>(node, parameter("safety_check.longitudinal_distance_min_threshold"));
+  p.rss_params.longitudinal_velocity_delta_time =
+    get_parameter<double>(node, parameter("safety_check.longitudinal_velocity_delta_time"));
+  p.rss_params.front_vehicle_deceleration =
+    get_parameter<double>(node, parameter("safety_check.expected_front_deceleration"));
+  p.rss_params.rear_vehicle_deceleration =
+    get_parameter<double>(node, parameter("safety_check.expected_rear_deceleration"));
+  p.rss_params.rear_vehicle_reaction_time =
+    get_parameter<double>(node, parameter("safety_check.rear_vehicle_reaction_time"));
+  p.rss_params.rear_vehicle_safety_time_margin =
+    get_parameter<double>(node, parameter("safety_check.rear_vehicle_safety_time_margin"));
+  p.rss_params.lateral_distance_max_threshold =
+    get_parameter<double>(node, parameter("safety_check.lateral_distance_max_threshold"));
+
+  p.rss_params_for_abort.longitudinal_distance_min_threshold =
+    get_parameter<double>(node, parameter("safety_check.longitudinal_distance_min_threshold"));
+  p.rss_params_for_abort.longitudinal_velocity_delta_time =
+    get_parameter<double>(node, parameter("safety_check.longitudinal_velocity_delta_time"));
+  p.rss_params_for_abort.front_vehicle_deceleration =
+    get_parameter<double>(node, parameter("safety_check.expected_front_deceleration_for_abort"));
+  p.rss_params_for_abort.rear_vehicle_deceleration =
+    get_parameter<double>(node, parameter("safety_check.expected_rear_deceleration_for_abort"));
+  p.rss_params_for_abort.rear_vehicle_reaction_time =
+    get_parameter<double>(node, parameter("safety_check.rear_vehicle_reaction_time"));
+  p.rss_params_for_abort.rear_vehicle_safety_time_margin =
+    get_parameter<double>(node, parameter("safety_check.rear_vehicle_safety_time_margin"));
+  p.rss_params_for_abort.lateral_distance_max_threshold =
+    get_parameter<double>(node, parameter("safety_check.lateral_distance_max_threshold"));
+
   // target object
   {
     std::string ns = "lane_change.target_object.";
@@ -133,14 +163,14 @@ LaneChangeModuleManager::LaneChangeModuleManager(
   parameters_ = std::make_shared<LaneChangeParameters>(p);
 }
 
-std::shared_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneModuleInstance()
+std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneModuleInstance()
 {
   if (type_ == LaneChangeModuleType::NORMAL) {
-    return std::make_shared<LaneChangeInterface>(
+    return std::make_unique<LaneChangeInterface>(
       name_, *node_, parameters_, rtc_interface_ptr_map_,
       std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
   }
-  return std::make_shared<LaneChangeInterface>(
+  return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
     std::make_unique<ExternalRequestLaneChange>(parameters_, direction_));
 }
@@ -155,8 +185,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
   updateParam<double>(
     parameters, ns + "finish_judge_lateral_threshold", p->finish_judge_lateral_threshold);
 
-  std::for_each(registered_modules_.begin(), registered_modules_.end(), [&p](const auto & m) {
-    m->updateModuleParams(p);
+  std::for_each(observers_.begin(), observers_.end(), [&p](const auto & observer) {
+    if (!observer.expired()) observer.lock()->updateModuleParams(p);
   });
 }
 
@@ -193,12 +223,6 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
       get_parameter<double>(node, ns + "resample_interval_for_planning");
     p.resample_interval_for_output =
       get_parameter<double>(node, ns + "resample_interval_for_output");
-    p.detection_area_right_expand_dist =
-      get_parameter<double>(node, ns + "detection_area_right_expand_dist");
-    p.detection_area_left_expand_dist =
-      get_parameter<double>(node, ns + "detection_area_left_expand_dist");
-    p.enable_update_path_when_object_is_gone =
-      get_parameter<bool>(node, ns + "enable_update_path_when_object_is_gone");
     p.enable_force_avoidance_for_stopped_vehicle =
       get_parameter<bool>(node, ns + "enable_force_avoidance_for_stopped_vehicle");
   }
@@ -264,17 +288,17 @@ AvoidanceByLaneChangeModuleManager::AvoidanceByLaneChangeModuleManager(
   // safety check
   {
     std::string ns = "avoidance.safety_check.";
-    p.safety_check_hysteresis_factor =
-      get_parameter<double>(node, ns + "safety_check_hysteresis_factor");
+    p.hysteresis_factor_expand_rate =
+      get_parameter<double>(node, ns + "hysteresis_factor_expand_rate");
   }
 
   avoidance_parameters_ = std::make_shared<AvoidanceByLCParameters>(p);
 }
 
-std::shared_ptr<SceneModuleInterface>
+std::unique_ptr<SceneModuleInterface>
 AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
-  return std::make_shared<AvoidanceByLaneChangeInterface>(
+  return std::make_unique<AvoidanceByLaneChangeInterface>(
     name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_);
 }
 

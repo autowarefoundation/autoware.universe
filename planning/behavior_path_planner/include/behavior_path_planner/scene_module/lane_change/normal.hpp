@@ -26,10 +26,10 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using behavior_path_planner::utils::safety_check::ExtendedPredictedObject;
-using behavior_path_planner::utils::safety_check::PoseWithVelocityAndPolygonStamped;
-using behavior_path_planner::utils::safety_check::PoseWithVelocityStamped;
-using behavior_path_planner::utils::safety_check::PredictedPathWithPolygon;
+using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityAndPolygonStamped;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
+using behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
@@ -62,7 +62,7 @@ public:
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) override;
 
-  void insertStopPoint(PathWithLaneId & path) override;
+  void insertStopPoint(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path) override;
 
   PathWithLaneId getReferencePath() const override;
 
@@ -104,6 +104,10 @@ protected:
 
   int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
 
+  std::vector<double> sampleLongitudinalAccValues(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
+
   double calcPrepareDuration(
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
@@ -136,8 +140,12 @@ protected:
 
   PathSafetyStatus isLaneChangePathSafe(
     const LaneChangePath & lane_change_path, const LaneChangeTargetObjects & target_objects,
-    const double front_decel, const double rear_decel,
+    const utils::path_safety_checker::RSSparams & rss_params,
     std::unordered_map<std::string, CollisionCheckDebug> & debug_data) const;
+
+  LaneChangeTargetObjectIndices filterObject(
+    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+    const lanelet::ConstLanelets & target_backward_lanes) const;
 
   rclcpp::Logger logger_ = rclcpp::get_logger("lane_change").get_child(getModuleTypeStr());
 };
