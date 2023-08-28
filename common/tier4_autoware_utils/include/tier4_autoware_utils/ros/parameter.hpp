@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,40 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef GNSS_POSER__GNSS_STAT_HPP_
-#define GNSS_POSER__GNSS_STAT_HPP_
+
+#ifndef TIER4_AUTOWARE_UTILS__ROS__PARAMETER_HPP_
+#define TIER4_AUTOWARE_UTILS__ROS__PARAMETER_HPP_
+
+#include <rclcpp/rclcpp.hpp>
 
 #include <string>
 
-namespace gnss_poser
+namespace tier4_autoware_utils
 {
-enum class CoordinateSystem { MGRS = 1, LOCAL_CARTESIAN_UTM = 4 };
-
-struct GNSSStat
+template <class T>
+T getOrDeclareParameter(rclcpp::Node & node, const std::string & name)
 {
-  GNSSStat()
-  : east_north_up(true),
-    zone(0),
-    mgrs_zone(""),
-    x(0),
-    y(0),
-    z(0),
-    latitude(0),
-    longitude(0),
-    altitude(0)
-  {
+  if (node.has_parameter(name)) {
+    return node.get_parameter(name).get_value<T>();
   }
 
-  bool east_north_up;
-  int zone;
-  std::string mgrs_zone;
-  double x;
-  double y;
-  double z;
-  double latitude;
-  double longitude;
-  double altitude;
-};
-}  // namespace gnss_poser
+  return node.declare_parameter<T>(name);
+}
+}  // namespace tier4_autoware_utils
 
-#endif  // GNSS_POSER__GNSS_STAT_HPP_
+#endif  // TIER4_AUTOWARE_UTILS__ROS__PARAMETER_HPP_
