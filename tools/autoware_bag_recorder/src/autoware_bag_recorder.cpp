@@ -223,6 +223,42 @@ void AutowareBagRecorderNode::rotate_topic_names(autoware_bag_recorder::ModuleSe
   }
 }
 
+
+void AutowareBagRecorderNode::update_topic_info(
+  autoware_bag_recorder::ModuleSection & section,
+  const std::string & topic_name,
+  const std::string & topic_type)
+{
+  for (auto & topic_info : section.topic_info) {
+    if (topic_info.topic_name == topic_name) {
+      topic_info.topic_type = topic_type;
+    }
+  }
+}
+
+void AutowareBagRecorderNode::handle_valid_topic(
+  autoware_bag_recorder::ModuleSection & section,
+  const std::string & topic_name,
+  const std::string & topic_type)
+{
+  add_topics_to_writer(section.bag_writer, topic_name, topic_type);
+  auto topics_interface = node_->get_node_topics_interface();
+  RCLCPP_INFO(
+    get_logger(), "Subscribed topic %s of type %s", topic_name.c_str(), topic_type.c_str());
+
+  auto subscription = rclcpp::create_generic_subscription(
+    topics_interface, topic_name, topic_type, get_qos_profile_of_topic(topic_name),
+    [this, topic_name, &section](const std::shared_ptr<rclcpp::SerializedMessage const> & msg) {
+      generic_subscription_callback(msg, topic_name, section);
+    });
+
+  subscriptions_.push_back(subscription);
+  remaining_topic_num_ = remaining_topic_num_ - 1;
+
+  update_topic_info(section, topic_name, topic_type);
+  section.topic_names.erase(section.topic_names.begin());
+}
+
 void AutowareBagRecorderNode::search_topic(autoware_bag_recorder::ModuleSection & section)
 {
   if (section.topic_names.empty()) {
@@ -241,27 +277,7 @@ void AutowareBagRecorderNode::search_topic(autoware_bag_recorder::ModuleSection 
   }
 
   if (!topic_type.empty()) {
-    add_topics_to_writer(section.bag_writer, topic_name, topic_type);
-    auto topics_interface = node_->get_node_topics_interface();
-    RCLCPP_INFO(
-      get_logger(), "Subscribed topic %s of type %s", topic_name.c_str(), topic_type.c_str());
-
-    auto subscription = rclcpp::create_generic_subscription(
-      topics_interface, topic_name, topic_type, get_qos_profile_of_topic(topic_name),
-      [this, topic_name, &section](const std::shared_ptr<rclcpp::SerializedMessage const> & msg) {
-        generic_subscription_callback(msg, topic_name, section);
-      });
-
-    subscriptions_.push_back(subscription);
-    remaining_topic_num_ = remaining_topic_num_ - 1;
-
-    for (auto & topic_info : section.topic_info) {
-      if (topic_info.topic_name == topic_name) {
-        topic_info.topic_type = topic_type;
-      }
-    }
-
-    section.topic_names.erase(section.topic_names.begin());
+    handle_valid_topic(section, topic_name, topic_type);
   } else {
     rotate_topic_names(section);
   }
@@ -417,9 +433,10 @@ void AutowareBagRecorderNode::check_auto_mode()
     return;
   }
 
-  if (
-    enable_only_auto_mode_recording_ && !is_writing_ &&
-    gate_mode_msg_ptr->data == tier4_control_msgs::msg::GateMode::AUTO) {
+  const bool is_auto_mode = gate_mode_msg_ptr->data == tier4_control_msgs::msg::GateMode::AUTO;
+  const bool should_write = enable_only_auto_mode_recording_ && !is_writing_;
+
+  if (is_auto_mode && should_write) {
     is_writing_ = true;
     for (auto & section : module_sections_) {
       bag_file_handler(section);

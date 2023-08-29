@@ -77,6 +77,12 @@ private:
   static std::string get_timestamp();
   rclcpp::QoS get_qos_profile_of_topic(const std::string & topic_name);
   static void rotate_topic_names(autoware_bag_recorder::ModuleSection & section);
+  void update_topic_info(
+    autoware_bag_recorder::ModuleSection & section, const std::string & topic_name,
+    const std::string & topic_type);
+  void handle_valid_topic(
+    autoware_bag_recorder::ModuleSection & section, const std::string & topic_name,
+    const std::string & topic_type);
   void search_topic(ModuleSection & section);
   void create_bag_file(std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
   void bag_file_handler(ModuleSection & section);
