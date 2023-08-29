@@ -81,7 +81,8 @@ GNSSStat NavSatFix2UTM(
 }
 GNSSStat NavSatFix2LocalCartesianUTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
-  sensor_msgs::msg::NavSatFix nav_sat_fix_origin, const rclcpp::Logger & logger, const std::string & vertical_datum)
+  sensor_msgs::msg::NavSatFix nav_sat_fix_origin, const rclcpp::Logger & logger,
+  const std::string & vertical_datum)
 {
   GNSSStat utm_local;
   try {

@@ -95,7 +95,8 @@ void GNSSPoser::callbackNavSatFix(
   }
 
   // get position
-  const auto gnss_stat = convert(*nav_sat_fix_msg_ptr, projector_info_.projector_type, projector_info_.vertical_datum);
+  const auto gnss_stat =
+    convert(*nav_sat_fix_msg_ptr, projector_info_.projector_type, projector_info_.vertical_datum);
   const auto position = getPosition(gnss_stat);
 
   geometry_msgs::msg::Pose gnss_antenna_pose{};
