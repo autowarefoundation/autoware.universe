@@ -268,7 +268,6 @@ private:
   void transitionToNextPathIfFinishingCurrentPath();
   std::pair<double, double> getPairsTerminalVelocityAndAccel() const;
 
-
   // lanes and drivable area
   void setLanes();
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;

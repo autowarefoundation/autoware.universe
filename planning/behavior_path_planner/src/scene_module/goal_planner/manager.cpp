@@ -218,7 +218,6 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
     p.rrt_star_parameters.margin = node->declare_parameter<double>(ns + "margin");
   }
 
-
   // stop condition
   {
     p.maximum_deceleration =
@@ -333,7 +332,6 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
     p.safety_check_params.rss_params.longitudinal_velocity_delta_time =
       node->declare_parameter<double>(rss_ns + "longitudinal_velocity_delta_time");
   }
-
 
   // debug
   {
