@@ -154,8 +154,7 @@ void VehicleNode::publish_kinematics()
     vehicle_kinematics.geographic_pose.position.latitude = projected_gps_point.lat;
     vehicle_kinematics.geographic_pose.position.longitude = projected_gps_point.lon;
     vehicle_kinematics.geographic_pose.position.altitude = projected_gps_point.ele;
-  } else if (
-    map_projector_info_->projector_type == MapProjectorInfo::LOCAL_CARTESIAN_UTM) {
+  } else if (map_projector_info_->projector_type == MapProjectorInfo::LOCAL_CARTESIAN_UTM) {
     lanelet::GPSPoint position{
       map_projector_info_->map_origin.latitude, map_projector_info_->map_origin.longitude};
     lanelet::Origin origin{position};
