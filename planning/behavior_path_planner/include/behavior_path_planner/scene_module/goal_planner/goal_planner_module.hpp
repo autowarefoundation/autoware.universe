@@ -71,7 +71,7 @@ enum class PathType {
   FREESPACE,
 };
 
-struct PUllOverStatus
+struct PullOverStatus
 {
   std::shared_ptr<PullOverPath> pull_over_path{};
   std::shared_ptr<PullOverPath> lane_parking_pull_over_path{};
@@ -113,7 +113,7 @@ public:
   void updateModuleParams(const std::any & parameters) override
   {
     parameters_ = std::any_cast<std::shared_ptr<GoalPlannerParameters>>(parameters);
-    if (parameters->safety_check_params.enable_safety_check) {
+    if (parameters_->safety_check_params.enable_safety_check) {
       ego_predicted_path_params_ =
         std::make_shared<EgoPredictedPathParams>(parameters_->ego_predicted_path_params);
       objects_filtering_params_ =
@@ -148,7 +148,7 @@ private:
 
   bool canTransitIdleToRunningState() override { return false; }
 
-  PUllOverStatus status_;
+  PullOverStatus status_;
 
   mutable StartGoalPlannerData goal_planner_data_;
 
@@ -157,6 +157,8 @@ private:
   mutable std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;
   mutable std::shared_ptr<ObjectsFilteringParams> objects_filtering_params_;
   mutable std::shared_ptr<SafetyCheckParams> safety_check_params_;
+
+  vehicle_info_util::VehicleInfo vehicle_info_;
 
   // planner
   std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;

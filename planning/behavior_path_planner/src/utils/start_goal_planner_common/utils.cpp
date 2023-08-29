@@ -49,6 +49,13 @@ void updateEgoPredictedPathParams(
   ego_predicted_path_params =
     std::make_shared<EgoPredictedPathParams>(start_planner_params->ego_predicted_path_params);
 }
+void updateEgoPredictedPathParams(
+  std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
+  const std::shared_ptr<GoalPlannerParameters> & start_planner_params)
+{
+  ego_predicted_path_params =
+    std::make_shared<EgoPredictedPathParams>(start_planner_params->ego_predicted_path_params);
+}
 
 void updateSafetyCheckParams(
   std::shared_ptr<SafetyCheckParams> & safety_check_params,
@@ -58,9 +65,25 @@ void updateSafetyCheckParams(
     std::make_shared<SafetyCheckParams>(start_planner_params->safety_check_params);
 }
 
+void updateSafetyCheckParams(
+  std::shared_ptr<SafetyCheckParams> & safety_check_params,
+  const std::shared_ptr<GoalPlannerParameters> & start_planner_params)
+{
+  safety_check_params =
+    std::make_shared<SafetyCheckParams>(start_planner_params->safety_check_params);
+}
+
 void updateObjectsFilteringParams(
   std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
   const std::shared_ptr<StartPlannerParameters> & start_planner_params)
+{
+  objects_filtering_params =
+    std::make_shared<ObjectsFilteringParams>(start_planner_params->objects_filtering_params);
+}
+
+void updateObjectsFilteringParams(
+  std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
+  const std::shared_ptr<GoalPlannerParameters> & start_planner_params)
 {
   objects_filtering_params =
     std::make_shared<ObjectsFilteringParams>(start_planner_params->objects_filtering_params);
@@ -75,13 +98,14 @@ void updatePathProperty(
 }
 
 std::pair<double, double> getPairsTerminalVelocityAndAccel(
-  const PullOutPath & pull_out_path, const size_t current_path_idx)
+  const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel,
+  const size_t current_path_idx)
 {
-  if (pull_out_path.pairs_terminal_velocity_and_accel.size() <= current_path_idx) {
+  if (pairs_terminal_velocity_and_accel.size() <= current_path_idx) {
     std::cerr << "pair_terminal_velocity_and_accel is not given" << std::endl;
     return std::make_pair(0.0, 0.0);
   }
-  return pull_out_path.pairs_terminal_velocity_and_accel.at(current_path_idx);
+  return pairs_terminal_velocity_and_accel.at(current_path_idx);
 }
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common

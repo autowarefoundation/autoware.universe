@@ -163,6 +163,7 @@ void GeometricParallelParking::clearPaths()
   current_path_idx_ = 0;
   arc_paths_.clear();
   paths_.clear();
+  pairs_terminal_velocity_and_accel_.clear();
 }
 
 bool GeometricParallelParking::planPullOver(
@@ -481,6 +482,19 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   // generate arc path vector
   paths_.push_back(path_turn_left);
   paths_.push_back(path_turn_right);
+
+  // set terminal velocity and acceleration(temporary implementation)
+  if (is_forward) {
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.forward_parking_velocity, 0.0));
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.forward_parking_velocity, 0.0));
+  } else {
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.backward_parking_velocity, 0.0));
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.backward_parking_velocity, 0.0));
+  }
 
   // set pull_over start and end pose
   // todo: make start and end pose for pull_out
