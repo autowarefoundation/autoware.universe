@@ -23,6 +23,7 @@
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -31,6 +32,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <tier4_debug_msgs/msg/string_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -106,6 +108,7 @@ using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjectKinematics;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
 using tier4_autoware_utils::StopWatch;
+using tier4_debug_msgs::msg::StringStamped;
 
 class MapBasedPredictionNode : public rclcpp::Node
 {
@@ -116,6 +119,7 @@ private:
   // ROS Publisher and Subscriber
   rclcpp::Publisher<PredictedObjects>::SharedPtr pub_objects_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_markers_;
+  rclcpp::Publisher<StringStamped>::SharedPtr pub_calculation_time_;
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
 
@@ -139,6 +143,7 @@ private:
   // Parameters
   bool enable_delay_compensation_;
   double prediction_time_horizon_;
+  double prediction_time_horizon_rate_for_validate_lane_length_;
   double prediction_sampling_time_interval_;
   double min_velocity_for_map_based_prediction_;
   double min_crosswalk_user_velocity_;
@@ -179,7 +184,7 @@ private:
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
     const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
-    const lanelet::BasicPoint2d & search_point);
+    const bool check_distance = true);
   float calculateLocalLikelihood(
     const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const;
   void updateObjectData(TrackedObject & object);

@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/marker_util/debug_utilities.hpp"
-#include "behavior_path_planner/utils/safety_check.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -35,7 +36,7 @@ using tier4_autoware_utils::Polygon2d;
 
 TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
 {
-  using behavior_path_planner::utils::safety_check::createExtendedPolygon;
+  using behavior_path_planner::utils::path_safety_checker::createExtendedPolygon;
 
   vehicle_info_util::VehicleInfo vehicle_info;
   vehicle_info.max_longitudinal_offset_m = 4.0;
@@ -128,7 +129,7 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
 
 TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedObjPolygon)
 {
-  using behavior_path_planner::utils::safety_check::createExtendedPolygon;
+  using behavior_path_planner::utils::path_safety_checker::createExtendedPolygon;
   using tier4_autoware_utils::createPoint;
   using tier4_autoware_utils::createQuaternionFromYaw;
 
@@ -176,19 +177,21 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedObjPolygon)
 
 TEST(BehaviorPathPlanningSafetyUtilsTest, calcRssDistance)
 {
-  using behavior_path_planner::utils::safety_check::calcRssDistance;
+  using behavior_path_planner::utils::path_safety_checker::calcRssDistance;
+  using behavior_path_planner::utils::path_safety_checker::RSSparams;
 
   {
     const double front_vel = 5.0;
     const double front_decel = -2.0;
     const double rear_vel = 10.0;
     const double rear_decel = -1.0;
-    BehaviorPathPlannerParameters params;
+    RSSparams params;
     params.rear_vehicle_reaction_time = 1.0;
     params.rear_vehicle_safety_time_margin = 1.0;
     params.longitudinal_distance_min_threshold = 3.0;
+    params.rear_vehicle_deceleration = rear_decel;
+    params.front_vehicle_deceleration = front_decel;
 
-    EXPECT_NEAR(
-      calcRssDistance(front_vel, rear_vel, front_decel, rear_decel, params), 63.75, epsilon);
+    EXPECT_NEAR(calcRssDistance(front_vel, rear_vel, params), 63.75, epsilon);
   }
 }

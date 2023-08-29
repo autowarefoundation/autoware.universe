@@ -17,11 +17,13 @@
 #include <rclcpp/logging.hpp>
 #include <tier4_api_utils/tier4_api_utils.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace vehicle_cmd_gate
 {
@@ -69,6 +71,9 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   pub_external_emergency_ = create_publisher<Emergency>("output/external_emergency", durable_qos);
   operation_mode_pub_ = create_publisher<OperationModeState>("output/operation_mode", durable_qos);
 
+  is_filter_activated_pub_ =
+    create_publisher<IsFilterActivated>("~/is_filter_activated", durable_qos);
+
   // Subscriber
   external_emergency_stop_heartbeat_sub_ = create_subscription<Heartbeat>(
     "input/external_emergency_stop_heartbeat", 1,
@@ -78,7 +83,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   engage_sub_ = create_subscription<EngageMsg>(
     "input/engage", 1, std::bind(&VehicleCmdGate::onEngage, this, _1));
   kinematics_sub_ = create_subscription<Odometry>(
-    "input/kinematics", 1, [this](Odometry::SharedPtr msg) { current_kinematics_ = *msg; });
+    "/localization/kinematic_state", 1,
+    [this](Odometry::SharedPtr msg) { current_kinematics_ = *msg; });
   acc_sub_ = create_subscription<AccelWithCovarianceStamped>(
     "input/acceleration", 1, [this](AccelWithCovarianceStamped::SharedPtr msg) {
       current_acceleration_ = msg->accel.accel.linear.x;
@@ -149,6 +155,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   moderate_stop_service_acceleration_ =
     declare_parameter<double>("moderate_stop_service_acceleration");
   stop_check_duration_ = declare_parameter<double>("stop_check_duration");
+  enable_cmd_limit_filter_ = declare_parameter<bool>("enable_cmd_limit_filter");
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -156,11 +163,14 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     VehicleCmdFilterParam p;
     p.wheel_base = vehicle_info.wheel_base_m;
     p.vel_lim = declare_parameter<double>("nominal.vel_lim");
-    p.lon_acc_lim = declare_parameter<double>("nominal.lon_acc_lim");
-    p.lon_jerk_lim = declare_parameter<double>("nominal.lon_jerk_lim");
-    p.lat_acc_lim = declare_parameter<double>("nominal.lat_acc_lim");
-    p.lat_jerk_lim = declare_parameter<double>("nominal.lat_jerk_lim");
-    p.actual_steer_diff_lim = declare_parameter<double>("nominal.actual_steer_diff_lim");
+    p.reference_speed_points =
+      declare_parameter<std::vector<double>>("nominal.reference_speed_points");
+    p.lon_acc_lim = declare_parameter<std::vector<double>>("nominal.lon_acc_lim");
+    p.lon_jerk_lim = declare_parameter<std::vector<double>>("nominal.lon_jerk_lim");
+    p.lat_acc_lim = declare_parameter<std::vector<double>>("nominal.lat_acc_lim");
+    p.lat_jerk_lim = declare_parameter<std::vector<double>>("nominal.lat_jerk_lim");
+    p.actual_steer_diff_lim =
+      declare_parameter<std::vector<double>>("nominal.actual_steer_diff_lim");
     filter_.setParam(p);
   }
 
@@ -168,11 +178,14 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     VehicleCmdFilterParam p;
     p.wheel_base = vehicle_info.wheel_base_m;
     p.vel_lim = declare_parameter<double>("on_transition.vel_lim");
-    p.lon_acc_lim = declare_parameter<double>("on_transition.lon_acc_lim");
-    p.lon_jerk_lim = declare_parameter<double>("on_transition.lon_jerk_lim");
-    p.lat_acc_lim = declare_parameter<double>("on_transition.lat_acc_lim");
-    p.lat_jerk_lim = declare_parameter<double>("on_transition.lat_jerk_lim");
-    p.actual_steer_diff_lim = declare_parameter<double>("on_transition.actual_steer_diff_lim");
+    p.reference_speed_points =
+      declare_parameter<std::vector<double>>("on_transition.reference_speed_points");
+    p.lon_acc_lim = declare_parameter<std::vector<double>>("on_transition.lon_acc_lim");
+    p.lon_jerk_lim = declare_parameter<std::vector<double>>("on_transition.lon_jerk_lim");
+    p.lat_acc_lim = declare_parameter<std::vector<double>>("on_transition.lat_acc_lim");
+    p.lat_jerk_lim = declare_parameter<std::vector<double>>("on_transition.lat_jerk_lim");
+    p.actual_steer_diff_lim =
+      declare_parameter<std::vector<double>>("on_transition.actual_steer_diff_lim");
     filter_on_transition_.setParam(p);
   }
 
@@ -409,9 +422,11 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
     filtered_commands.control = createStopControlCmd();
   }
 
-  // Apply limit filtering
-  filtered_commands.control = filterControlCommand(filtered_commands.control);
-
+  // Check if command filtering option is enable
+  if (enable_cmd_limit_filter_) {
+    // Apply limit filtering
+    filtered_commands.control = filterControlCommand(filtered_commands.control);
+  }
   // tmp: Publish vehicle emergency status
   VehicleEmergencyStamped vehicle_cmd_emergency;
   vehicle_cmd_emergency.emergency = (use_emergency_handling_ && is_system_emergency_);
@@ -498,38 +513,57 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   const auto ego_is_stopped = vehicle_stop_checker_->isVehicleStopped(stop_check_duration_);
   const auto input_cmd_is_stopping = in.longitudinal.acceleration < 0.0;
 
+  filter_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
+  filter_on_transition_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
+
+  IsFilterActivated is_filter_activated;
+
   // Apply transition_filter when transiting from MANUAL to AUTO.
   if (mode.is_in_transition) {
-    filter_on_transition_.filterAll(dt, current_steer_, out);
+    filter_on_transition_.filterAll(dt, current_steer_, out, is_filter_activated);
   } else {
-    filter_.filterAll(dt, current_steer_, out);
+    // When ego is stopped and the input command is not stopping,
+    // use the higher of actual vehicle longitudinal state
+    // and previous longitudinal command for the filtering
+    // this is to prevent the jerk limits being applied and causing
+    // a delay when restarting the vehicle.
+
+    if (ego_is_stopped && !input_cmd_is_stopping) {
+      auto prev_cmd = filter_.getPrevCmd();
+      prev_cmd.longitudinal.acceleration =
+        std::max(prev_cmd.longitudinal.acceleration, current_status_cmd.longitudinal.acceleration);
+      // consider reverse driving
+      prev_cmd.longitudinal.speed =
+        std::fabs(prev_cmd.longitudinal.speed) > std::fabs(current_status_cmd.longitudinal.speed)
+          ? prev_cmd.longitudinal.speed
+          : current_status_cmd.longitudinal.speed;
+      filter_.setPrevCmd(prev_cmd);
+    }
+    filter_.filterAll(dt, current_steer_, out, is_filter_activated);
   }
 
   // set prev value for both to keep consistency over switching:
   // Actual steer, vel, acc should be considered in manual mode to prevent sudden motion when
   // switching from manual to autonomous
-  auto prev_values = (mode.mode == OperationModeState::AUTONOMOUS) ? out : current_status_cmd;
+  const auto in_autonomous =
+    (mode.mode == OperationModeState::AUTONOMOUS && mode.is_autoware_control_enabled);
+  auto prev_values = in_autonomous ? out : current_status_cmd;
+
+  if (ego_is_stopped) {
+    prev_values.longitudinal = out.longitudinal;
+  }
 
   // TODO(Horibe): To prevent sudden acceleration/deceleration when switching from manual to
   // autonomous, the filter should be applied for actual speed and acceleration during manual
   // driving. However, this means that the output command from Gate will always be close to the
-  // driving state during manual driving. Since the Gate's output is checked by various modules as
-  // the intended value of Autoware, it should be closed to planned values. Conversely, it is
-  // undesirable for the target vehicle speed to be non-zero in a situation where the vehicle is
-  // supposed to stop. Until the appropriate handling will be done, previous value is used for the
-  // filter in manual mode.
-  prev_values.longitudinal = out.longitudinal;  // TODO(Horibe): to be removed
-
-  // When ego is stopped and the input command is stopping,
-  // use the actual vehicle longitudinal state for the next filtering
-  // this is to prevent the jerk limits being applied on the "stop acceleration"
-  // which may be negative and cause delays when restarting the vehicle.
-  if (ego_is_stopped && input_cmd_is_stopping) {
-    prev_values.longitudinal = current_status_cmd.longitudinal;
-  }
+  // driving state during manual driving. Here, let autoware publish the stop command when the ego
+  // is stopped to intend the autoware is trying to keep stopping.
 
   filter_.setPrevCmd(prev_values);
   filter_on_transition_.setPrevCmd(prev_values);
+
+  is_filter_activated.stamp = now();
+  is_filter_activated_pub_->publish(is_filter_activated);
 
   return out;
 }

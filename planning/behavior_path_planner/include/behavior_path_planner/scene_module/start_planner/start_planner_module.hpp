@@ -18,6 +18,7 @@
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/utils/start_planner/freespace_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/geometric_pull_out.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/start_planner/shift_pull_out.hpp"
@@ -51,12 +52,9 @@ struct PullOutStatus
   size_t current_path_idx{0};
   PlannerType planner_type{PlannerType::NONE};
   PathWithLaneId backward_path{};
-  lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_out_lanes{};
-  std::vector<DrivableLanes> lanes{};
-  std::vector<uint64_t> lane_follow_lane_ids{};
-  std::vector<uint64_t> pull_out_lane_ids{};
-  bool is_safe{false};
+  bool is_safe_static_objects{false};   // current path is safe against static objects
+  bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
   bool back_finished{false};
   Pose pull_out_start_pose{};
 
@@ -66,31 +64,27 @@ struct PullOutStatus
 class StartPlannerModule : public SceneModuleInterface
 {
 public:
-#ifdef USE_OLD_ARCHITECTURE
-  StartPlannerModule(
-    const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<StartPlannerParameters> & parameters);
-#else
   StartPlannerModule(
     const std::string & name, rclcpp::Node & node,
     const std::shared_ptr<StartPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
-  void updateModuleParams(const std::shared_ptr<StartPlannerParameters> & parameters)
+  void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = parameters;
+    parameters_ = std::any_cast<std::shared_ptr<StartPlannerParameters>>(parameters);
   }
-#endif
 
-  BehaviorModuleOutput run() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] BehaviorModuleOutput run() override;
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  ModuleStatus updateState() override;
-  ModuleStatus getNodeStatusWhileWaitingApproval() const override { return ModuleStatus::SUCCESS; }
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] ModuleStatus updateState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
+
   void processOnExit() override;
 
   void setParameters(const std::shared_ptr<StartPlannerParameters> & parameters)
@@ -104,24 +98,21 @@ public:
   {
   }
 
-  // set is_simultaneously_executable_ as false when backward driving.
-  // keep initial value to return it after finishing backward driving.
-  bool initial_value_simultaneously_executable_as_approved_module_;
-  bool initial_value_simultaneously_executable_as_candidate_module_;
-  void setInitialIsSimultaneousExecutableAsApprovedModule(const bool is_simultaneously_executable)
-  {
-    initial_value_simultaneously_executable_as_approved_module_ = is_simultaneously_executable;
-  };
-  void setInitialIsSimultaneousExecutableAsCandidateModule(const bool is_simultaneously_executable)
-  {
-    initial_value_simultaneously_executable_as_candidate_module_ = is_simultaneously_executable;
-  };
+  // Condition to disable simultaneous execution
+  bool isBackFinished() const { return status_.back_finished; }
+  bool isFreespacePlanning() const { return status_.planner_type == PlannerType::FREESPACE; }
 
 private:
+  bool canTransitSuccessState() override { return false; }
+
+  bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override { return false; }
+
   std::shared_ptr<StartPlannerParameters> parameters_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
-  std::vector<std::shared_ptr<PullOutPlannerBase>> start_planner_planners_;
+  std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;
   PullOutStatus status_;
 
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
@@ -129,9 +120,16 @@ private:
   std::unique_ptr<rclcpp::Time> last_route_received_time_;
   std::unique_ptr<rclcpp::Time> last_pull_out_start_update_time_;
   std::unique_ptr<Pose> last_approved_pose_;
-  mutable bool has_received_new_route_{false};
 
-  std::shared_ptr<PullOutPlannerBase> getCurrentPlanner() const;
+  // generate freespace pull out paths in a separate thread
+  std::unique_ptr<PullOutPlannerBase> freespace_planner_;
+  rclcpp::TimerBase::SharedPtr freespace_planner_timer_;
+  rclcpp::CallbackGroup::SharedPtr freespace_planner_timer_cb_group_;
+  // TODO(kosuke55)
+  // Currently, we only do lock when updating a member of status_.
+  // However, we need to ensure that the value does not change when referring to it.
+  std::mutex mutex_;
+
   PathWithLaneId getFullPath() const;
   std::vector<Pose> searchPullOutStartPoses();
 
@@ -146,6 +144,8 @@ private:
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
     const std::string search_priority);
   PathWithLaneId generateStopPath() const;
+  lanelet::ConstLanelets getPathRoadLanes(const PathWithLaneId & path) const;
+  std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,
@@ -153,14 +153,21 @@ private:
   bool hasFinishedPullOut() const;
   void checkBackFinished();
   bool isStopped();
+  bool isStuck();
   bool hasFinishedCurrentPath();
+  void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
+
+  // check if the goal is located behind the ego in the same route segment.
+  bool IsGoalBehindOfEgoInSameRouteSegment() const;
+
+  // generate BehaviorPathOutput with stopping path and update status
+  BehaviorModuleOutput generateStopOutput();
+
+  // freespace planner
+  void onFreespacePlannerTimer();
+  bool planFreespacePath();
 
   void setDebugData() const;
-
-// temporary for old architecture
-#ifdef USE_OLD_ARCHITECTURE
-  mutable bool is_executed_{false};
-#endif
 };
 }  // namespace behavior_path_planner
 

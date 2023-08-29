@@ -56,9 +56,8 @@ std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
 IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path,
-  const std::set<int> & associative_ids, const InterpolatedPathInfo & interpolated_path_info,
-  const double detection_area_length, const double occlusion_detection_area_length,
-  const bool tl_arrow_solid_on = false);
+  const std::set<int> & associative_ids, const double detection_area_length,
+  const double occlusion_detection_area_length, const bool consider_wrong_direction_vehicle);
 
 /**
  * @brief Generate a stop line for stuck vehicle
@@ -115,7 +114,7 @@ bool isTrafficLightArrowActivated(
   lanelet::ConstLanelet lane,
   const std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> & tl_infos);
 
-std::vector<DescritizedLane> generateDetectionLaneDivisions(
+std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution);
 
@@ -126,10 +125,6 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
 
 geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state);
-
-lanelet::ConstLanelets getEgoLaneWithNextLane(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::set<int> & associative_ids, const double width);
 
 bool checkStuckVehicleInIntersection(
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
@@ -144,7 +139,8 @@ Polygon2d generateStuckVehicleDetectAreaPolygon(
 
 bool checkAngleForTargetLanelets(
   const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
-  const double detection_area_angle_thr, const double margin = 0.0);
+  const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle,
+  const double margin = 0.0);
 
 void cutPredictPathWithDuration(
   autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
@@ -159,6 +155,11 @@ TimeDistanceArray calcIntersectionPassingTime(
 double calcDistanceUntilIntersectionLanelet(
   const lanelet::ConstLanelet & assigned_lanelet,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx);
+
+std::optional<PathLanelets> generatePathLanelets(
+  const lanelet::ConstLanelets & lanelets_on_path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const std::set<int> & associative_ids, const size_t closest_idx, const double width);
 
 }  // namespace util
 }  // namespace behavior_velocity_planner

@@ -15,6 +15,8 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
+#include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -46,9 +48,13 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 
+using marker_utils::CollisionCheckDebug;
+
 struct ObjectParameter
 {
   bool is_target{false};
+
+  size_t execute_num{1};
 
   double moving_speed_threshold{0.0};
 
@@ -74,27 +80,18 @@ struct AvoidanceParameters
   // computational cost for latter modules.
   double resample_interval_for_output = 3.0;
 
-  // lanelet expand length for right side to find avoidance target vehicles
-  double detection_area_right_expand_dist = 0.0;
-
-  // lanelet expand length for left side to find avoidance target vehicles
-  double detection_area_left_expand_dist = 1.0;
-
   // enable avoidance to be perform only in lane with same direction
-  bool enable_avoidance_over_same_direction{true};
+  bool use_adjacent_lane{true};
 
   // enable avoidance to be perform in opposite lane direction
   // to use this, enable_avoidance_over_same_direction need to be set to true.
-  bool enable_avoidance_over_opposite_direction{true};
+  bool use_opposite_lane{true};
 
-  // enable update path when if detected objects on planner data is gone.
-  bool enable_update_path_when_object_is_gone{false};
+  // if this param is true, it reverts avoidance path when the path is no longer needed.
+  bool enable_cancel_maneuver{false};
 
   // enable avoidance for all parking vehicle
   bool enable_force_avoidance_for_stopped_vehicle{false};
-
-  // enable safety check. if avoidance path is NOT safe, the ego will execute yield maneuver
-  bool enable_safety_check{false};
 
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
@@ -108,8 +105,14 @@ struct AvoidanceParameters
   // use hatched road markings for avoidance
   bool use_hatched_road_markings{false};
 
-  // constrains
-  bool use_constraints_for_decel{false};
+  // use intersection area for avoidance
+  bool use_intersection_areas{false};
+
+  // // constrains
+  // bool use_constraints_for_decel{false};
+
+  // // policy
+  // bool use_relaxed_margin_immediately{false};
 
   // max deceleration for
   double max_deceleration;
@@ -122,6 +125,9 @@ struct AvoidanceParameters
 
   // comfortable jerk
   double nominal_jerk;
+
+  // To prevent large acceleration while avoidance.
+  double max_acceleration;
 
   // upper distance for envelope polygon expansion.
   double upper_distance_for_polygon_expansion;
@@ -169,32 +175,37 @@ struct AvoidanceParameters
   // for longitudinal direction
   double longitudinal_collision_margin_time;
 
+  // parameters for safety check area
+  bool enable_safety_check{false};
+  bool check_current_lane{false};
+  bool check_shift_side_lane{false};
+  bool check_other_side_lane{false};
+
+  // parameters for safety check target.
+  bool check_unavoidable_object{false};
+  bool check_other_object{false};
+
+  // parameters for collision check.
+  bool check_all_predicted_path{false};
+  double time_horizon_for_front_object{0.0};
+  double time_horizon_for_rear_object{0.0};
+  double safety_check_time_resolution{0.0};
+
   // find adjacent lane vehicles
   double safety_check_backward_distance;
 
-  // minimum longitudinal margin for vehicles in adjacent lane
-  double safety_check_min_longitudinal_margin;
-
-  // safety check time horizon
-  double safety_check_time_horizon;
-
-  // use in RSS calculation
-  double safety_check_idling_time;
-
-  // use in RSS calculation
-  double safety_check_accel_for_rss;
-
   // transit hysteresis (unsafe to safe)
-  double safety_check_hysteresis_factor;
+  size_t hysteresis_factor_safe_count;
+  double hysteresis_factor_expand_rate;
 
   // keep target velocity in yield maneuver
   double yield_velocity;
 
-  // minimum stop distance
-  double stop_min_distance;
-
   // maximum stop distance
   double stop_max_distance;
+
+  // stop buffer
+  double stop_buffer;
 
   // start avoidance after this time to avoid sudden path change
   double prepare_time;
@@ -202,23 +213,25 @@ struct AvoidanceParameters
   // Even if the vehicle speed is zero, avoidance will start after a distance of this much.
   double min_prepare_distance;
 
-  // minimum distance while avoiding TODO(Horibe): will be changed to jerk constraint later
-  double min_avoidance_distance;
+  // minimum slow down speed
+  double min_slow_down_speed;
 
-  // minimum speed for jerk calculation in a nominal situation, i.e. there is an enough
-  // distance for avoidance, and the object is very far from ego. In that case, the
-  // vehicle speed is unknown passing along the object. Then use this speed as a minimum.
-  // Note: This parameter is needed because we have to plan an avoidance path in advance
-  //       without knowing the speed of the distant path.
-  double min_nominal_avoidance_speed;
+  // slow down speed buffer
+  double buf_slow_down_speed;
 
-  // minimum speed for jerk calculation in a tight situation, i.e. there is NOT an enough
-  // distance for avoidance. Need a sharp avoidance path to avoid the object.
-  double min_sharp_avoidance_speed;
+  // nominal avoidance sped
+  double nominal_avoidance_speed;
+
+  // module try to return original path to keep this distance from edge point of the path.
+  double remain_buffer_distance;
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double road_shoulder_safety_margin{1.0};
+  double soft_road_shoulder_margin{1.0};
+
+  // The margin is configured so that the generated avoidance trajectory does not come near to the
+  // road shoulder.
+  double hard_road_shoulder_margin{1.0};
 
   // Even if the obstacle is very large, it will not avoid more than this length for right direction
   double max_right_shift_length;
@@ -226,25 +239,13 @@ struct AvoidanceParameters
   // Even if the obstacle is very large, it will not avoid more than this length for left direction
   double max_left_shift_length;
 
-  // Avoidance path is generated with this jerk.
-  // If there is no margin, the jerk increases up to max lateral jerk.
-  double nominal_lateral_jerk;
-
-  // if the avoidance path exceeds this lateral jerk, it will be not used anymore.
-  double max_lateral_jerk;
+  // To prevent large acceleration while avoidance.
+  double max_lateral_acceleration;
 
   // For the compensation of the detection lost. Once an object is observed, it is registered and
   // will be used for planning from the next time. If the object is not observed, it counts up the
   // lost_count and the registered object will be removed when the count exceeds this max count.
   double object_last_seen_threshold;
-
-  // For velocity planning to avoid acceleration during avoidance.
-  // Speeds smaller than this are not inserted.
-  double min_avoidance_speed_for_acc_prevention;
-
-  // To prevent large acceleration while avoidance. The max velocity is limited with this
-  // acceleration.
-  double max_avoidance_acceleration;
 
   // The avoidance path generation is performed when the shift distance of the
   // avoidance points is greater than this threshold.
@@ -255,6 +256,9 @@ struct AvoidanceParameters
   // shift lines whose shift length is less than threshold is added a request with other large shift
   // line.
   double lateral_small_shift_threshold;
+
+  // use for judge if the ego is shifting or not.
+  double lateral_avoid_check_threshold;
 
   // For shift line generation process. The continuous shift length is quantized by this value.
   double quantize_filter_threshold;
@@ -271,14 +275,32 @@ struct AvoidanceParameters
   // For shift line generation process. Remove sharp(=jerky) shift line.
   double sharp_shift_filter_threshold;
 
-  // target velocity matrix
-  std::vector<double> target_velocity_matrix;
+  // policy
+  bool use_shorten_margin_immediately{false};
 
-  // matrix col size
-  size_t col_size;
+  // policy
+  std::string policy_deceleration{"best_effort"};
+
+  // policy
+  std::string policy_lateral_margin{"best_effort"};
+
+  // target velocity matrix
+  std::vector<double> velocity_map;
+
+  // Minimum lateral jerk limitation map.
+  std::vector<double> lateral_min_jerk_map;
+
+  // Maximum lateral jerk limitation map.
+  std::vector<double> lateral_max_jerk_map;
+
+  // Maximum lateral acceleration limitation map.
+  std::vector<double> lateral_max_accel_map;
 
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
+
+  // rss parameters
+  utils::path_safety_checker::RSSparams rss_params;
 
   // clip left and right bounds for objects
   bool enable_bound_clipping{false};
@@ -456,7 +478,7 @@ struct AvoidancePlanningData
 
   bool safe{false};
 
-  bool avoiding_now{false};
+  bool comfortable{false};
 
   bool avoid_required{false};
 
@@ -492,33 +514,13 @@ struct ShiftLineData
 };
 
 /*
- * Data struct for longitudinal margin
- */
-struct MarginData
-{
-  Pose pose{};
-
-  bool enough_lateral_margin{true};
-
-  double longitudinal_distance{std::numeric_limits<double>::max()};
-
-  double longitudinal_margin{std::numeric_limits<double>::lowest()};
-
-  double vehicle_width;
-
-  double base_link2front;
-
-  double base_link2rear;
-};
-using MarginDataArray = std::vector<MarginData>;
-
-/*
  * Debug information for marker array
  */
 struct DebugData
 {
-  std::shared_ptr<lanelet::ConstLanelets> expanded_lanelets;
   std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
+
+  geometry_msgs::msg::Polygon detection_area;
 
   lanelet::ConstLineStrings3d bounds;
 
@@ -554,13 +556,8 @@ struct DebugData
   // shift path
   std::vector<double> proposed_spline_shift;
 
-  bool exist_adjacent_objects{false};
-
   // future pose
   PathWithLaneId path_with_planned_velocity;
-
-  // margin
-  MarginDataArray margin_data_array;
 
   // avoidance require objects
   ObjectDataArray unavoidable_objects;

@@ -7,6 +7,7 @@
   <maintainer email="ryohsuke.mitsudome@tier4.jp">Ryohsuke Mitsudome</maintainer>
   <maintainer email="ryu.yamamoto@tier4.jp">Ryu Yamamoto</maintainer>
   <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
+  <maintainer email="masahiro.sakamoto@tier4.jp">Masahiro Sakamoto</maintainer>
 
   <license>Apache License 2.0</license>
 
@@ -15,6 +16,8 @@
 
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_map_msgs</depend>
+  <depend>component_interface_specs</depend>
+  <depend>component_interface_utils</depend>
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>

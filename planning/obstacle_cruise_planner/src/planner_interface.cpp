@@ -228,6 +228,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
       motion_utils::createDeletedStopVirtualWallMarker(planner_data.current_time, 0);
     tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->stop_wall_marker);
 
+    prev_stop_distance_info_ = std::nullopt;
     return planner_data.traj_points;
   }
 
@@ -244,6 +245,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
       motion_utils::createDeletedStopVirtualWallMarker(planner_data.current_time, 0);
     tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->stop_wall_marker);
 
+    prev_stop_distance_info_ = std::nullopt;
     return planner_data.traj_points;
   }
 
@@ -298,26 +300,58 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     return longitudinal_info_.safe_distance_margin;
   }();
 
-  // Calculate feasible stop margin (Check the feasibility)
-  const double feasible_stop_dist = calcMinimumDistanceToStop(
-                                      planner_data.ego_vel, longitudinal_info_.limit_max_accel,
-                                      longitudinal_info_.limit_min_accel) +
-                                    dist_to_ego;
-  const double closest_obstacle_stop_dist =
-    closest_obstacle_dist - margin_from_obstacle - abs_ego_offset;
+  const auto [stop_margin_from_obstacle, will_collide_with_obstacle] = [&]() {
+    // Check feasibility to stop
+    if (suppress_sudden_obstacle_stop_) {
+      const double closest_obstacle_stop_dist =
+        closest_obstacle_dist - margin_from_obstacle - abs_ego_offset;
 
-  bool will_collide_with_obstacle = false;
-  double feasible_margin_from_obstacle = margin_from_obstacle;
-  if (closest_obstacle_stop_dist < feasible_stop_dist) {
-    feasible_margin_from_obstacle =
-      margin_from_obstacle - (feasible_stop_dist - closest_obstacle_stop_dist);
-    will_collide_with_obstacle = true;
-  }
+      // Calculate feasible stop margin (Check the feasibility)
+      const double feasible_stop_dist = calcMinimumDistanceToStop(
+                                          planner_data.ego_vel, longitudinal_info_.limit_max_accel,
+                                          longitudinal_info_.limit_min_accel) +
+                                        dist_to_ego;
+
+      if (closest_obstacle_stop_dist < feasible_stop_dist) {
+        const auto feasible_margin_from_obstacle =
+          margin_from_obstacle - (feasible_stop_dist - closest_obstacle_stop_dist);
+        return std::make_pair(feasible_margin_from_obstacle, true);
+      }
+    }
+    return std::make_pair(margin_from_obstacle, false);
+  }();
 
   // Generate Output Trajectory
+  const double zero_vel_dist = [&]() {
+    const double current_zero_vel_dist =
+      std::max(0.0, closest_obstacle_dist - abs_ego_offset - stop_margin_from_obstacle);
+
+    // Hold previous stop distance if necessary
+    if (
+      std::abs(planner_data.ego_vel) < longitudinal_info_.hold_stop_velocity_threshold &&
+      prev_stop_distance_info_) {
+      // NOTE: We assume that the current trajectory's front point is ahead of the previous
+      // trajectory's front point.
+      const size_t traj_front_point_prev_seg_idx =
+        motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+          prev_stop_distance_info_->first, planner_data.traj_points.front().pose);
+      const double diff_dist_front_points = motion_utils::calcSignedArcLength(
+        prev_stop_distance_info_->first, 0, planner_data.traj_points.front().pose.position,
+        traj_front_point_prev_seg_idx);
+
+      const double prev_zero_vel_dist = prev_stop_distance_info_->second - diff_dist_front_points;
+      if (
+        std::abs(prev_zero_vel_dist - current_zero_vel_dist) <
+        longitudinal_info_.hold_stop_distance_threshold) {
+        return prev_zero_vel_dist;
+      }
+    }
+
+    return current_zero_vel_dist;
+  }();
+
+  // Insert stop point
   auto output_traj_points = planner_data.traj_points;
-  const double zero_vel_dist =
-    std::max(0.0, closest_obstacle_dist - abs_ego_offset - feasible_margin_from_obstacle);
   const auto zero_vel_idx = motion_utils::insertStopPoint(0, zero_vel_dist, output_traj_points);
   if (zero_vel_idx) {
     // virtual wall marker for stop obstacle
@@ -338,6 +372,8 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     const auto stop_speed_exceeded_msg =
       createStopSpeedExceededMsg(planner_data.current_time, will_collide_with_obstacle);
     stop_speed_exceeded_pub_->publish(stop_speed_exceeded_msg);
+
+    prev_stop_distance_info_ = std::make_pair(output_traj_points, zero_vel_dist);
   }
 
   stop_planning_debug_info_.set(
@@ -347,7 +383,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     StopPlanningDebugInfo::TYPE::STOP_CURRENT_OBSTACLE_VELOCITY, closest_stop_obstacle->velocity);
 
   stop_planning_debug_info_.set(
-    StopPlanningDebugInfo::TYPE::STOP_TARGET_OBSTACLE_DISTANCE, feasible_margin_from_obstacle);
+    StopPlanningDebugInfo::TYPE::STOP_TARGET_OBSTACLE_DISTANCE, stop_margin_from_obstacle);
   stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_VELOCITY, 0.0);
   stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_ACCELERATION, 0.0);
 
@@ -411,17 +447,6 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     }
     return std::nullopt;
   };
-  const auto add_slow_down_marker =
-    [&](const size_t obstacle_idx, const auto slow_down_traj_idx, const bool is_start) {
-      if (!slow_down_traj_idx) return;
-
-      const int id = obstacle_idx * 2 + (is_start ? 0 : 1);
-      const auto text = is_start ? "obstacle slow down start" : "obstacle slow down end";
-      const auto pose = slow_down_traj_points.at(*slow_down_traj_idx).pose;
-      const auto markers = motion_utils::createSlowDownVirtualWallMarker(
-        pose, text, planner_data.current_time, id, abs_ego_offset);
-      tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
-    };
 
   std::vector<SlowDownOutput> new_prev_slow_down_output;
   for (size_t i = 0; i < obstacles.size(); ++i) {
@@ -433,7 +458,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
       planner_data, slow_down_traj_points, obstacle, prev_output, dist_to_ego);
     if (!dist_vec_to_slow_down) {
       RCLCPP_INFO_EXPRESSION(
-        rclcpp::get_logger("ObstacleCruisePlanner::Plannerinterface"), enable_debug_info_,
+        rclcpp::get_logger("ObstacleCruisePlanner::PlannerInterface"), enable_debug_info_,
         "[SlowDown] Ignore obstacle (%s) since distance to slow down is not valid",
         obstacle.uuid.c_str());
       continue;
@@ -469,7 +494,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
         std::min(traj_point.longitudinal_velocity_mps, static_cast<float>(stable_slow_down_vel));
     }
 
-    // add debug data and virtual wall
+    // add debug data
     slow_down_debug_multi_array_.data.push_back(obstacle.precise_lat_dist);
     slow_down_debug_multi_array_.data.push_back(dist_to_slow_down_start);
     slow_down_debug_multi_array_.data.push_back(dist_to_slow_down_end);
@@ -477,11 +502,37 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     slow_down_debug_multi_array_.data.push_back(stable_slow_down_vel);
     slow_down_debug_multi_array_.data.push_back(slow_down_start_idx ? *slow_down_start_idx : -1.0);
     slow_down_debug_multi_array_.data.push_back(slow_down_end_idx ? *slow_down_end_idx : -1.0);
+
+    // add virtual wall
+    if (slow_down_start_idx && slow_down_end_idx) {
+      const size_t ego_idx =
+        ego_nearest_param_.findIndex(slow_down_traj_points, planner_data.ego_pose);
+      const size_t slow_down_wall_idx = [&]() {
+        if (ego_idx < *slow_down_start_idx) return *slow_down_start_idx;
+        if (ego_idx < *slow_down_end_idx) return ego_idx;
+        return *slow_down_end_idx;
+      }();
+
+      const auto markers = motion_utils::createSlowDownVirtualWallMarker(
+        slow_down_traj_points.at(slow_down_wall_idx).pose, "obstacle slow down",
+        planner_data.current_time, i, abs_ego_offset);
+      tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
+    }
+
+    // add debug virtual wall
     if (slow_down_start_idx) {
-      add_slow_down_marker(i, slow_down_start_idx, true);
+      const auto markers = motion_utils::createSlowDownVirtualWallMarker(
+        slow_down_traj_points.at(*slow_down_start_idx).pose, "obstacle slow down start",
+        planner_data.current_time, i * 2, abs_ego_offset);
+      tier4_autoware_utils::appendMarkerArray(
+        markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
     if (slow_down_end_idx) {
-      add_slow_down_marker(i, slow_down_end_idx, false);
+      const auto markers = motion_utils::createSlowDownVirtualWallMarker(
+        slow_down_traj_points.at(*slow_down_end_idx).pose, "obstacle slow down end",
+        planner_data.current_time, i * 2 + 1, abs_ego_offset);
+      tier4_autoware_utils::appendMarkerArray(
+        markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
 
     debug_data_ptr_->obstacles_to_slow_down.push_back(obstacle);

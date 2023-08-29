@@ -25,7 +25,9 @@ namespace behavior_path_planner
 FreespacePullOver::FreespacePullOver(
   rclcpp::Node & node, const GoalPlannerParameters & parameters,
   const vehicle_info_util::VehicleInfo & vehicle_info)
-: PullOverPlannerBase{node, parameters}, velocity_{parameters.freespace_parking_velocity}
+: PullOverPlannerBase{node, parameters},
+  velocity_{parameters.freespace_parking_velocity},
+  left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
   freespace_planning_algorithms::VehicleShape vehicle_shape(
     vehicle_info, parameters.vehicle_shape_margin);
@@ -58,8 +60,18 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
     return {};
   }
 
+  const auto road_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_.backward_goal_search_length, parameters_.forward_goal_search_length,
+    /*forward_only_in_route*/ false);
+  const auto pull_over_lanes =
+    goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
+  if (road_lanes.empty() || pull_over_lanes.empty()) {
+    return {};
+  }
+  const auto lanes = utils::combineLanelets(road_lanes, pull_over_lanes);
+
   PathWithLaneId path =
-    utils::convertWayPointsToPathWithLaneId(planner_->getWaypoints(), velocity_);
+    utils::convertWayPointsToPathWithLaneId(planner_->getWaypoints(), velocity_, lanes);
   const auto reverse_indices = utils::getReversingIndices(path);
   std::vector<PathWithLaneId> partial_paths = utils::dividePath(path, reverse_indices);
 
@@ -103,19 +115,12 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
 
   utils::correctDividedPathVelocity(partial_paths);
 
-  const double drivable_area_margin = planner_data_->parameters.vehicle_width;
   for (auto & path : partial_paths) {
     const auto is_driving_forward = motion_utils::isDrivingForward(path.points);
     if (!is_driving_forward) {
       // path points is less than 2
       return {};
     }
-
-    // for old architecture
-    // NOTE: drivable_area_info is assigned outside this function.
-    const double offset = planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
-    utils::generateDrivableArea(
-      path, planner_data_->parameters.vehicle_length, offset, *is_driving_forward);
   }
 
   PullOverPath pull_over_path{};

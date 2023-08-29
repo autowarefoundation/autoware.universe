@@ -165,6 +165,11 @@ struct LongitudinalInfo
     safe_distance_margin = node.declare_parameter<double>("common.safe_distance_margin");
     terminal_safe_distance_margin =
       node.declare_parameter<double>("common.terminal_safe_distance_margin");
+
+    hold_stop_velocity_threshold =
+      node.declare_parameter<double>("common.hold_stop_velocity_threshold");
+    hold_stop_distance_threshold =
+      node.declare_parameter<double>("common.hold_stop_distance_threshold");
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -188,6 +193,11 @@ struct LongitudinalInfo
       parameters, "common.safe_distance_margin", safe_distance_margin);
     tier4_autoware_utils::updateParam<double>(
       parameters, "common.terminal_safe_distance_margin", terminal_safe_distance_margin);
+
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "common.hold_stop_velocity_threshold", hold_stop_velocity_threshold);
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "common.hold_stop_distance_threshold", hold_stop_distance_threshold);
   }
 
   // common parameter
@@ -208,6 +218,10 @@ struct LongitudinalInfo
   // distance margin
   double safe_distance_margin;
   double terminal_safe_distance_margin;
+
+  // hold stop
+  double hold_stop_velocity_threshold;
+  double hold_stop_distance_threshold;
 };
 
 struct DebugData
@@ -217,6 +231,7 @@ struct DebugData
   std::vector<StopObstacle> obstacles_to_stop;
   std::vector<CruiseObstacle> obstacles_to_cruise;
   std::vector<SlowDownObstacle> obstacles_to_slow_down;
+  MarkerArray slow_down_debug_wall_marker;
   MarkerArray stop_wall_marker;
   MarkerArray cruise_wall_marker;
   MarkerArray slow_down_wall_marker;

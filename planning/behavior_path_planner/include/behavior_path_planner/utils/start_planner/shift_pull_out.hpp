@@ -41,18 +41,21 @@ public:
 
   std::vector<PullOutPath> calcPullOutPaths(
     const RouteHandler & route_handler, const lanelet::ConstLanelets & road_lanes,
-    const lanelet::ConstLanelets & shoulder_lanes, const Pose & start_pose, const Pose & goal_pose,
+    const Pose & start_pose, const Pose & goal_pose,
     const BehaviorPathPlannerParameters & common_parameter,
     const behavior_path_planner::StartPlannerParameters & parameter);
-
-  bool hasEnoughDistance(
-    const double pull_out_total_distance, const lanelet::ConstLanelets & current_lanes,
-    const Pose & current_pose, const bool isInGoalRouteSection, const Pose & goal_pose);
 
   double calcBeforeShiftedArcLength(
     const PathWithLaneId & path, const double target_after_arc_length, const double dr);
 
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
+
+private:
+  // Calculate longitudinal distance based on the acceleration limit, curvature limit, and the
+  // minimum distance requirement.
+  double calcPullOutLongitudinalDistance(
+    const double lon_acc, const double shift_time, const double shift_length,
+    const double max_curvature, const double min_distance) const;
 };
 }  // namespace behavior_path_planner
 
