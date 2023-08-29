@@ -22,7 +22,7 @@
 #include <rclcpp/logging.hpp>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <tier4_map_msgs/msg/map_projector_info.hpp>
+#include <component_interface_specs/map.hpp>
 
 #include <string>
 
@@ -44,12 +44,12 @@ double convertHeight2EGM2008(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const std::string & vertical_datum)
 {
   double height{0.0};
-  if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::WGS84) {
+  if (vertical_datum == map_interface::MapProjectorInfo::Message::WGS84) {
     GeographicLib::Geoid egm2008("egm2008-1");
     height = egm2008.ConvertHeight(
       nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, nav_sat_fix_msg.altitude,
       GeographicLib::Geoid::ELLIPSOIDTOGEOID);
-  } else if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::EGM2008) {
+  } else if (vertical_datum == map_interface::MapProjectorInfo::Message::EGM2008) {
     height = nav_sat_fix_msg.altitude;
   } else {
     throw std::runtime_error("Invalid vertical datum type: " + vertical_datum);
