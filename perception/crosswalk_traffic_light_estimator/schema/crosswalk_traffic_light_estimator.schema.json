@@ -14,6 +14,7 @@
         "last_detect_color_hold_time": {
           "type": "number",
           "default": 2.0,
+          "exclusiveMinimum": 0.0,
           "description": "The time threshold to hold for last detect color."
         }
       },
