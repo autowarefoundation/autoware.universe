@@ -645,10 +645,6 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
   const auto & route_handler = *getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
   const auto & objects = *planner_data_->dynamic_object;
-  const auto & object_check_min_road_shoulder_width =
-    lane_change_parameters_->object_check_min_road_shoulder_width;
-  const auto & object_shiftable_ratio_threshold =
-    lane_change_parameters_->object_shiftable_ratio_threshold;
 
   // Guard
   if (objects.objects.empty()) {
@@ -677,7 +673,9 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
   LaneChangeTargetObjectIndices filtered_obj_indices;
   for (size_t i = 0; i < objects.objects.size(); ++i) {
     const auto & object = objects.objects.at(i);
-    const auto & obj_velocity = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+    const auto & obj_velocity_norm = std::hypot(
+      object.kinematics.initial_twist_with_covariance.twist.linear.x,
+      object.kinematics.initial_twist_with_covariance.twist.linear.y);
     const auto extended_object =
       utils::lane_change::transform(object, common_parameters, *lane_change_parameters_);
 
@@ -700,16 +698,15 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     }
 
     // ignore static object that are behind the ego vehicle
-    if (obj_velocity < 1.0 && max_dist_ego_to_obj < 0.0) {
+    if (obj_velocity_norm < 1.0 && max_dist_ego_to_obj < 0.0) {
       continue;
     }
 
     // check if the object intersects with target lanes
     if (target_polygon && boost::geometry::intersects(target_polygon.value(), obj_polygon)) {
       // ignore static parked object that are in front of the ego vehicle in target lanes
-      bool is_parked_object = utils::lane_change::isParkedObject(
-        target_path, route_handler, extended_object, object_check_min_road_shoulder_width,
-        object_shiftable_ratio_threshold);
+      bool is_parked_object =
+        utils::lane_change::isParkedObject(target_path, route_handler, extended_object, 0.0, 0.0);
       if (is_parked_object && min_dist_ego_to_obj > min_dist_to_lane_changing_start) {
         continue;
       }
@@ -972,7 +969,16 @@ bool NormalLaneChange::getLaneChangePaths(
       const lanelet::BasicPoint2d lc_start_point(
         prepare_segment.points.back().point.pose.position.x,
         prepare_segment.points.back().point.pose.position.y);
-      if (!boost::geometry::covered_by(lc_start_point, target_neighbor_preferred_lane_poly_2d)) {
+
+      const auto target_lane_polygon = lanelet::utils::getPolygonFromArcLength(
+        target_lanes, 0, std::numeric_limits<double>::max());
+      const auto target_lane_poly_2d = lanelet::utils::to2D(target_lane_polygon).basicPolygon();
+
+      const auto is_valid_start_point =
+        boost::geometry::covered_by(lc_start_point, target_neighbor_preferred_lane_poly_2d) ||
+        boost::geometry::covered_by(lc_start_point, target_lane_poly_2d);
+
+      if (!is_valid_start_point) {
         // lane changing points are not inside of the target preferred lanes or its neighbors
         continue;
       }
@@ -1034,8 +1040,7 @@ bool NormalLaneChange::getLaneChangePaths(
       }
 
       const auto [is_safe, is_object_coming_from_rear] = isLaneChangePathSafe(
-        *candidate_path, target_objects, common_parameters.expected_front_deceleration,
-        common_parameters.expected_rear_deceleration, object_debug_);
+        *candidate_path, target_objects, lane_change_parameters_->rss_params, object_debug_);
 
       if (is_safe) {
         return true;
@@ -1048,7 +1053,6 @@ bool NormalLaneChange::getLaneChangePaths(
 
 PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
 {
-  const auto & common_parameters = getCommonParam();
   const auto & path = status_.lane_change_path;
   const auto & current_lanes = status_.current_lanes;
   const auto & target_lanes = status_.target_lanes;
@@ -1057,8 +1061,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
 
   CollisionCheckDebugMap debug_data;
   const auto safety_status = isLaneChangePathSafe(
-    path, target_objects, common_parameters.expected_front_deceleration_for_abort,
-    common_parameters.expected_rear_deceleration_for_abort, debug_data);
+    path, target_objects, lane_change_parameters_->rss_params_for_abort, debug_data);
   {
     // only for debug purpose
     object_debug_.clear();
@@ -1315,7 +1318,7 @@ bool NormalLaneChange::getAbortPath()
 
 PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
   const LaneChangePath & lane_change_path, const LaneChangeTargetObjects & target_objects,
-  const double front_decel, const double rear_decel,
+  const utils::path_safety_checker::RSSparams & rss_params,
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data) const
 {
   PathSafetyStatus path_safety_status;
@@ -1358,17 +1361,17 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     return std::make_pair(tier4_autoware_utils::toHexString(obj.uuid), debug);
   };
 
-  const auto updateDebugInfo =
-    [&debug_data](std::pair<std::string, CollisionCheckDebug> & obj, bool is_allowed) {
-      const auto & key = obj.first;
-      auto & element = obj.second;
-      element.allow_lane_change = is_allowed;
-      if (debug_data.find(key) != debug_data.end()) {
-        debug_data[key] = element;
-      } else {
-        debug_data.insert(obj);
-      }
-    };
+  const auto updateDebugInfo = [&debug_data](
+                                 std::pair<std::string, CollisionCheckDebug> & obj, bool is_safe) {
+    const auto & key = obj.first;
+    auto & element = obj.second;
+    element.is_safe = is_safe;
+    if (debug_data.find(key) != debug_data.end()) {
+      debug_data[key] = element;
+    } else {
+      debug_data.insert(obj);
+    }
+  };
 
   for (const auto & obj : collision_check_objects) {
     auto current_debug_data = assignDebugData(obj);
@@ -1377,7 +1380,7 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
       obj, lane_change_parameters_->use_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
       if (!utils::path_safety_checker::checkCollision(
-            path, ego_predicted_path, obj, obj_path, common_parameters, front_decel, rear_decel,
+            path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
             current_debug_data.second)) {
         path_safety_status.is_safe = false;
         updateDebugInfo(current_debug_data, path_safety_status.is_safe);

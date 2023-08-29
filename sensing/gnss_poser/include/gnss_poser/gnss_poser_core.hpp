@@ -44,8 +44,6 @@
 
 namespace gnss_poser
 {
-CoordinateSystem convert_to_coordinate_systems(const std::string & type);
-
 class GNSSPoser : public rclcpp::Node
 {
 public:
@@ -62,8 +60,8 @@ private:
   bool isFixed(const sensor_msgs::msg::NavSatStatus & nav_sat_status_msg);
   bool canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg);
   GNSSStat convert(
-    const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, CoordinateSystem coordinate_system,
-    int height_system);
+    const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const std::string & projector_type,
+    const std::string & vertical_datum);
   geometry_msgs::msg::Point getPosition(const GNSSStat & gnss_stat);
   geometry_msgs::msg::Point getMedianPosition(
     const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer);
@@ -97,7 +95,7 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_cov_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::BoolStamped>::SharedPtr fixed_pub_;
 
-  CoordinateSystem coordinate_system_;
+  MapProjectorInfo::Message projector_info_;
   std::string base_frame_;
   std::string gnss_frame_;
   std::string gnss_base_frame_;
@@ -109,11 +107,8 @@ private:
 
   boost::circular_buffer<geometry_msgs::msg::Point> position_buffer_;
 
-  int plane_zone_;
-
   autoware_sensing_msgs::msg::GnssInsOrientationStamped::SharedPtr
     msg_gnss_ins_orientation_stamped_;
-  int height_system_;
   int gnss_pose_pub_method;
 };
 }  // namespace gnss_poser

@@ -69,8 +69,8 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
   const auto center_line_resolution = get_parameter("center_line_resolution").as_double();
 
   // load map from file
-  const auto map =
-    load_map(lanelet2_filename, msg->type, msg->map_origin.latitude, msg->map_origin.longitude);
+  const auto map = load_map(
+    lanelet2_filename, msg->projector_type, msg->map_origin.latitude, msg->map_origin.longitude);
   if (!map) {
     return;
   }
@@ -98,7 +98,7 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     if (errors.empty()) {
       return map;
     }
-  } else if (lanelet2_map_projector_type == "UTM") {
+  } else if (lanelet2_map_projector_type == "LocalCartesianUTM") {
     lanelet::GPSPoint position{map_origin_lat, map_origin_lon};
     lanelet::Origin origin{position};
     lanelet::projection::UtmProjector projector{origin};

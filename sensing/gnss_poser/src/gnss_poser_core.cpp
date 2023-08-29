@@ -23,22 +23,6 @@
 
 namespace gnss_poser
 {
-CoordinateSystem convert_to_coordinate_systems(const std::string & type)
-{
-  if (type == "MGRS") {
-    return CoordinateSystem::MGRS;
-  } else if (type == "UTM") {
-    return CoordinateSystem::UTM;
-  } else if (type == "local") {
-    return CoordinateSystem::PLANE;
-  } else if (type == "local_cartesian_utm") {
-    return CoordinateSystem::LOCAL_CARTESIAN_UTM;
-  } else if (type == "local_cartesian_wgs84") {
-    return CoordinateSystem::LOCAL_CARTESIAN_WGS84;
-  }
-  return CoordinateSystem::PLANE;
-}
-
 GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("gnss_poser", node_options),
   tf2_listener_(tf2_buffer_),
@@ -48,10 +32,8 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   gnss_base_frame_(declare_parameter("gnss_base_frame", "gnss_base_link")),
   map_frame_(declare_parameter("map_frame", "map")),
   use_gnss_ins_orientation_(declare_parameter("use_gnss_ins_orientation", true)),
-  plane_zone_(declare_parameter<int>("plane_zone", 9)),
   msg_gnss_ins_orientation_stamped_(
     std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>()),
-  height_system_(declare_parameter<int>("height_system", 1)),
   gnss_pose_pub_method(declare_parameter<int>("gnss_pose_pub_method", 0))
 {
   // Subscribe to map_projector_info topic
@@ -80,9 +62,7 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
 
 void GNSSPoser::callbackMapProjectorInfo(const MapProjectorInfo::Message::ConstSharedPtr msg)
 {
-  coordinate_system_ = convert_to_coordinate_systems(msg->type);
-  this->nav_sat_fix_origin_.latitude = msg->map_origin.latitude;
-  this->nav_sat_fix_origin_.longitude = msg->map_origin.longitude;
+  projector_info_ = *msg;
   received_map_projector_info_ = true;
 }
 
@@ -114,8 +94,8 @@ void GNSSPoser::callbackNavSatFix(
     return;
   }
 
-  // get position in coordinate_system
-  const auto gnss_stat = convert(*nav_sat_fix_msg_ptr, coordinate_system_, height_system_);
+  // get position
+  const auto gnss_stat = convert(*nav_sat_fix_msg_ptr, projector_info_.projector_type, projector_info_.vertical_datum);
   const auto position = getPosition(gnss_stat);
 
   geometry_msgs::msg::Pose gnss_antenna_pose{};
@@ -220,27 +200,20 @@ bool GNSSPoser::canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix
 }
 
 GNSSStat GNSSPoser::convert(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, CoordinateSystem coordinate_system,
-  int height_system)
+  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const std::string & projector_type,
+  const std::string & vertical_datum)
 {
   GNSSStat gnss_stat;
-  if (coordinate_system == CoordinateSystem::UTM) {
-    gnss_stat = NavSatFix2UTM(nav_sat_fix_msg, this->get_logger(), height_system);
-  } else if (coordinate_system == CoordinateSystem::MGRS) {
-    gnss_stat = NavSatFix2MGRS(
-      nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(), height_system);
-  } else if (coordinate_system == CoordinateSystem::PLANE) {
-    gnss_stat = NavSatFix2PLANE(nav_sat_fix_msg, plane_zone_, this->get_logger());
-  } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_UTM) {
+  if (projector_type == MapProjectorInfo::Message::LOCAL_CARTESIAN_UTM) {
     gnss_stat = NavSatFix2LocalCartesianUTM(
-      nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(), height_system);
-  } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_WGS84) {
-    gnss_stat =
-      NavSatFix2LocalCartesianWGS84(nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger());
+      nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(), vertical_datum);
+  } else if (projector_type == MapProjectorInfo::Message::MGRS) {
+    gnss_stat = NavSatFix2MGRS(
+      nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(), vertical_datum);
   } else {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "Unknown Coordinate System");
+      "Unknown Projector type");
   }
   return gnss_stat;
 }

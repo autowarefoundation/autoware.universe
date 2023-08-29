@@ -461,7 +461,7 @@ void AvoidanceModule::fillEgoStatus(
   if (isOutputPathLocked()) {
     data.safe_new_sl.clear();
     data.candidate_path = helper_.getPreviousSplineShiftPath();
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_DEBUG_THROTTLE(
       getLogger(), *clock_, 500, "this module is locked now. keep current path.");
     return;
   }
@@ -602,7 +602,6 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
     case AvoidanceState::YIELD: {
       insertYieldVelocity(path);
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
-      removeRegisteredShiftLines();
       break;
     }
     case AvoidanceState::AVOID_PATH_NOT_READY: {
@@ -1870,6 +1869,8 @@ bool AvoidanceModule::isSafePath(
     return true;
   }
 
+  const auto hysteresis_factor = safe_ ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+
   const auto safety_check_target_objects = utils::avoidance::getSafetyCheckTargetObjects(
     avoid_data_, planner_data_, parameters_, is_right_shift.value());
 
@@ -1879,14 +1880,17 @@ bool AvoidanceModule::isSafePath(
     for (const auto & obj_path : obj_predicted_paths) {
       CollisionCheckDebug collision{};
       if (!utils::path_safety_checker::checkCollision(
-            shifted_path.path, ego_predicted_path, object, obj_path, p,
-            p.expected_front_deceleration, p.expected_rear_deceleration, collision)) {
+            shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
+            hysteresis_factor, collision)) {
+        safe_count_ = 0;
         return false;
       }
     }
   }
 
-  return true;
+  safe_count_++;
+
+  return safe_ || safe_count_ > parameters_->hysteresis_factor_safe_count;
 }
 
 void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output) const
@@ -2114,6 +2118,10 @@ BehaviorModuleOutput AvoidanceModule::plan()
   resetPathReference();
 
   updatePathShifter(data.safe_new_sl);
+
+  if (data.yield_required) {
+    removeRegisteredShiftLines();
+  }
 
   // generate path with shift points that have been inserted.
   ShiftedPath linear_shift_path = utils::avoidance::toShiftedPath(data.reference_path);
@@ -2452,7 +2460,7 @@ bool AvoidanceModule::isValidShiftLine(
     constexpr double THRESHOLD = 0.1;
     const auto offset = std::abs(new_shift_length - helper_.getEgoShift());
     if (offset > THRESHOLD) {
-      RCLCPP_WARN_THROTTLE(
+      RCLCPP_DEBUG_THROTTLE(
         getLogger(), *clock_, 1000, "new shift line is invalid. [HUGE OFFSET (%.2f)]", offset);
       return false;
     }
@@ -2502,6 +2510,8 @@ void AvoidanceModule::updateData()
 
   // update rtc status.
   updateRTCData();
+
+  safe_ = avoid_data_.safe;
 }
 
 void AvoidanceModule::processOnEntry()
@@ -2546,12 +2556,14 @@ void AvoidanceModule::updateRTCData()
 
   updateRegisteredRTCStatus(helper_.getPreviousSplineShiftPath().path);
 
-  if (data.safe_new_sl.empty()) {
+  const auto candidates = data.safe ? data.safe_new_sl : data.unapproved_new_sl;
+
+  if (candidates.empty()) {
     removeCandidateRTCStatus();
     return;
   }
 
-  const auto shift_line = helper_.getMainShiftLine(data.safe_new_sl);
+  const auto shift_line = helper_.getMainShiftLine(candidates);
   if (helper_.getRelativeShiftToPath(shift_line) > 0.0) {
     removePreviousRTCStatusRight();
   } else if (helper_.getRelativeShiftToPath(shift_line) < 0.0) {
@@ -2562,8 +2574,8 @@ void AvoidanceModule::updateRTCData()
 
   CandidateOutput output;
 
-  const auto sl_front = data.safe_new_sl.front();
-  const auto sl_back = data.safe_new_sl.back();
+  const auto sl_front = candidates.front();
+  const auto sl_back = candidates.back();
 
   output.path_candidate = data.candidate_path.path;
   output.lateral_shift = helper_.getRelativeShiftToPath(shift_line);

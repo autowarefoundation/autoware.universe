@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -193,7 +194,8 @@ struct AvoidanceParameters
   double safety_check_backward_distance;
 
   // transit hysteresis (unsafe to safe)
-  double safety_check_hysteresis_factor;
+  size_t hysteresis_factor_safe_count;
+  double hysteresis_factor_expand_rate;
 
   // keep target velocity in yield maneuver
   double yield_velocity;
@@ -295,6 +297,9 @@ struct AvoidanceParameters
 
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
+
+  // rss parameters
+  utils::path_safety_checker::RSSparams rss_params;
 
   // clip left and right bounds for objects
   bool enable_bound_clipping{false};
