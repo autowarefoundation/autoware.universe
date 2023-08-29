@@ -73,8 +73,6 @@ GNSSStat NavSatFix2UTM(
     utm.altitude = nav_sat_fix_msg.altitude;
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(logger, "Failed to convert from LLH to UTM" << err.what());
-  } catch (const std::runtime_error & err) {
-    RCLCPP_ERROR_STREAM(logger, "Failed to convert height. " << err.what());
   }
   return utm;
 }
@@ -108,8 +106,6 @@ GNSSStat NavSatFix2LocalCartesianUTM(
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(
       logger, "Failed to convert from LLH to UTM in local coordinates" << err.what());
-  } catch (const std::runtime_error & err) {
-    RCLCPP_ERROR_STREAM(logger, "Failed to convert height. " << err.what());
   }
   return utm_local;
 }
