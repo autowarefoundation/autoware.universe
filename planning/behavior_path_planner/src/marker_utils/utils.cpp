@@ -534,7 +534,7 @@ MarkerArray showPolygon(const CollisionCheckDebugMap & obj_debug_vec, std::strin
       polygon_marker = default_line_marker(color);
       polygon_marker.points.reserve(polygon.outer().size());
       for (const auto & p : polygon.outer()) {
-        polygon_marker.points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), poly_z));
+        polygon_marker.points.push_back(createPoint(p.x(), p.y(), poly_z));
       }
     };
 
