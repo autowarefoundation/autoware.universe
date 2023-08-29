@@ -223,10 +223,8 @@ void AutowareBagRecorderNode::rotate_topic_names(autoware_bag_recorder::ModuleSe
   }
 }
 
-
 void AutowareBagRecorderNode::update_topic_info(
-  autoware_bag_recorder::ModuleSection & section,
-  const std::string & topic_name,
+  autoware_bag_recorder::ModuleSection & section, const std::string & topic_name,
   const std::string & topic_type)
 {
   for (auto & topic_info : section.topic_info) {
@@ -237,8 +235,7 @@ void AutowareBagRecorderNode::update_topic_info(
 }
 
 void AutowareBagRecorderNode::handle_valid_topic(
-  autoware_bag_recorder::ModuleSection & section,
-  const std::string & topic_name,
+  autoware_bag_recorder::ModuleSection & section, const std::string & topic_name,
   const std::string & topic_type)
 {
   add_topics_to_writer(section.bag_writer, topic_name, topic_type);
