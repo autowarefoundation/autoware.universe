@@ -597,31 +597,35 @@ std::optional<CollisionPoint> CrosswalkModule::getCollisionPoint(
   double minimum_stop_dist = std::numeric_limits<double>::max();
   std::optional<CollisionPoint> nearest_collision_point{std::nullopt};
   for (const auto & obj_path : object.kinematics.predicted_paths) {
-    std::optional<size_t> start_idx{std::nullopt};
+    size_t start_idx{0};
+    bool is_start_idx_initialized{false};
     for (size_t i = 0; i < obj_path.path.size(); ++i) {
-      const auto & p_obj = obj_path.path.at(i);
-
-      if (bg::within(Point2d(p_obj.position.x, p_obj.position.y), attention_area)) {
-        if (!start_idx) {
+      // For effective computation, the point and polygon intersection is calculated first.
+      const auto obj_one_step_polygon = createMultiStepPolygon(obj_path.path, obj_polygon, i, i);
+      const auto one_step_intersection =
+        calcOverlappingPoints(obj_one_step_polygon, attention_area);
+      if (!one_step_intersection.empty()) {
+        if (!is_start_idx_initialized) {
           start_idx = i;
+          is_start_idx_initialized = true;
         }
         if (i != obj_path.path.size() - 1) {
           // NOTE: Even if the object path does not fully cross the ego path, the path should be
           // considered.
           continue;
         }
-      } else {
-        if (!start_idx) {
-          continue;
-        }
+      }
+
+      if (!is_start_idx_initialized) {
+        continue;
       }
 
       // Calculate multi-step object polygon, and reset start_idx
-      const size_t start_idx_with_margin = std::max(static_cast<int>(start_idx.value()) - 1, 0);
+      const size_t start_idx_with_margin = std::max(static_cast<int>(start_idx) - 1, 0);
       const size_t end_idx_with_margin = std::min(i + 1, obj_path.path.size() - 1);
       const auto obj_multi_step_polygon = createMultiStepPolygon(
         obj_path.path, obj_polygon, start_idx_with_margin, end_idx_with_margin);
-      start_idx = std::nullopt;
+      is_start_idx_initialized = false;
 
       // Calculate intersection points between object and attention area
       const auto multi_step_intersection =
