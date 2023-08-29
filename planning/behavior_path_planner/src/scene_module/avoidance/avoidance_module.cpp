@@ -247,7 +247,9 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   // Separate dynamic objects based on whether they are inside or outside of the expanded lanelets.
   const auto [object_within_target_lane, object_outside_target_lane] =
     utils::avoidance::separateObjectsByPath(
-      helper_.getPreviousSplineShiftPath().path, planner_data_, data, parameters_, debug);
+      utils::resamplePathWithSpline(
+        helper_.getPreviousSplineShiftPath().path, parameters_->resample_interval_for_output),
+      planner_data_, data, parameters_, debug);
 
   for (const auto & object : object_outside_target_lane.objects) {
     ObjectData other_object;
@@ -461,7 +463,7 @@ void AvoidanceModule::fillEgoStatus(
   if (isOutputPathLocked()) {
     data.safe_new_sl.clear();
     data.candidate_path = helper_.getPreviousSplineShiftPath();
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_DEBUG_THROTTLE(
       getLogger(), *clock_, 500, "this module is locked now. keep current path.");
     return;
   }
@@ -602,7 +604,6 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
     case AvoidanceState::YIELD: {
       insertYieldVelocity(path);
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
-      removeRegisteredShiftLines();
       break;
     }
     case AvoidanceState::AVOID_PATH_NOT_READY: {
@@ -1304,33 +1305,6 @@ AvoidLineArray AvoidanceModule::mergeShiftLines(
     debug.total_backward_grad = shift_line_data.backward_grad;
   }
 
-  // debug print
-  {
-    const auto & arc = avoid_data_.arclength_from_ego;
-    const auto & closest = avoid_data_.ego_closest_path_index;
-    const auto & sl = shift_line_data.shift_line;
-    const auto & sg = shift_line_data.shift_line_grad;
-    const auto & fg = shift_line_data.forward_grad;
-    const auto & bg = shift_line_data.backward_grad;
-    using std::setw;
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(3);
-    ss << "\n[idx, arc, shift (for each shift points, filtered | total), grad (ideal, bwd, fwd)]: "
-          "closest = "
-       << closest << ", raw_shift_lines size = " << raw_shift_lines.size() << std::endl;
-    for (size_t i = 0; i < arc.size(); ++i) {
-      ss << "i = " << i << " | arc: " << arc.at(i) << " | shift: (";
-      for (const auto & p : shift_line_data.shift_line_history) {
-        ss << setw(5) << p.at(i) << ", ";
-      }
-      ss << "| total: " << setw(5) << sl.at(i) << ") | grad: (" << sg.at(i) << ", " << fg.at(i)
-         << ", " << bg.at(i) << ")" << std::endl;
-    }
-    DEBUG_PRINT("%s", ss.str().c_str());
-  }
-
-  printShiftLines(merged_shift_lines, "merged_shift_lines");
-
   return merged_shift_lines;
 }
 
@@ -1846,8 +1820,10 @@ bool AvoidanceModule::isSafePath(
     return true;  // if safety check is disabled, it always return safe.
   }
 
-  const auto ego_predicted_path =
-    utils::avoidance::convertToPredictedPath(shifted_path.path, planner_data_, parameters_);
+  const auto ego_predicted_path_for_front_object =
+    utils::avoidance::convertToPredictedPath(shifted_path.path, planner_data_, true, parameters_);
+  const auto ego_predicted_path_for_rear_object =
+    utils::avoidance::convertToPredictedPath(shifted_path.path, planner_data_, false, parameters_);
 
   const auto ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
   const auto is_right_shift = [&]() -> std::optional<bool> {
@@ -1870,23 +1846,38 @@ bool AvoidanceModule::isSafePath(
     return true;
   }
 
+  const auto hysteresis_factor = safe_ ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+
   const auto safety_check_target_objects = utils::avoidance::getSafetyCheckTargetObjects(
     avoid_data_, planner_data_, parameters_, is_right_shift.value());
 
   for (const auto & object : safety_check_target_objects) {
+    const auto obj_polygon =
+      tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape);
+
+    const auto is_object_front =
+      utils::path_safety_checker::isTargetObjectFront(getEgoPose(), obj_polygon, p.vehicle_info);
+
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
       object, parameters_->check_all_predicted_path);
+
+    const auto & ego_predicted_path =
+      is_object_front ? ego_predicted_path_for_front_object : ego_predicted_path_for_rear_object;
+
     for (const auto & obj_path : obj_predicted_paths) {
       CollisionCheckDebug collision{};
       if (!utils::path_safety_checker::checkCollision(
-            shifted_path.path, ego_predicted_path, object, obj_path, p,
-            p.expected_front_deceleration, p.expected_rear_deceleration, collision)) {
+            shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
+            hysteresis_factor, collision)) {
+        safe_count_ = 0;
         return false;
       }
     }
   }
 
-  return true;
+  safe_count_++;
+
+  return safe_ || safe_count_ > parameters_->hysteresis_factor_safe_count;
 }
 
 void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output) const
@@ -2114,6 +2105,10 @@ BehaviorModuleOutput AvoidanceModule::plan()
   resetPathReference();
 
   updatePathShifter(data.safe_new_sl);
+
+  if (data.yield_required) {
+    removeRegisteredShiftLines();
+  }
 
   // generate path with shift points that have been inserted.
   ShiftedPath linear_shift_path = utils::avoidance::toShiftedPath(data.reference_path);
@@ -2452,7 +2447,7 @@ bool AvoidanceModule::isValidShiftLine(
     constexpr double THRESHOLD = 0.1;
     const auto offset = std::abs(new_shift_length - helper_.getEgoShift());
     if (offset > THRESHOLD) {
-      RCLCPP_WARN_THROTTLE(
+      RCLCPP_DEBUG_THROTTLE(
         getLogger(), *clock_, 1000, "new shift line is invalid. [HUGE OFFSET (%.2f)]", offset);
       return false;
     }
@@ -2502,6 +2497,8 @@ void AvoidanceModule::updateData()
 
   // update rtc status.
   updateRTCData();
+
+  safe_ = avoid_data_.safe;
 }
 
 void AvoidanceModule::processOnEntry()
@@ -2546,12 +2543,14 @@ void AvoidanceModule::updateRTCData()
 
   updateRegisteredRTCStatus(helper_.getPreviousSplineShiftPath().path);
 
-  if (data.safe_new_sl.empty()) {
+  const auto candidates = data.safe ? data.safe_new_sl : data.unapproved_new_sl;
+
+  if (candidates.empty()) {
     removeCandidateRTCStatus();
     return;
   }
 
-  const auto shift_line = helper_.getMainShiftLine(data.safe_new_sl);
+  const auto shift_line = helper_.getMainShiftLine(candidates);
   if (helper_.getRelativeShiftToPath(shift_line) > 0.0) {
     removePreviousRTCStatusRight();
   } else if (helper_.getRelativeShiftToPath(shift_line) < 0.0) {
@@ -2562,8 +2561,8 @@ void AvoidanceModule::updateRTCData()
 
   CandidateOutput output;
 
-  const auto sl_front = data.safe_new_sl.front();
-  const auto sl_back = data.safe_new_sl.back();
+  const auto sl_front = candidates.front();
+  const auto sl_back = candidates.back();
 
   output.path_candidate = data.candidate_path.path;
   output.lateral_shift = helper_.getRelativeShiftToPath(shift_line);

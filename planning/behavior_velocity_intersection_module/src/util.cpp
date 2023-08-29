@@ -709,7 +709,7 @@ bool isTrafficLightArrowActivated(
   return false;
 }
 
-std::vector<DescritizedLane> generateDetectionLaneDivisions(
+std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets_all,
   [[maybe_unused]] const lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const double resolution)
@@ -778,15 +778,15 @@ std::vector<DescritizedLane> generateDetectionLaneDivisions(
     auto & branch = branches[(ind2id[src])];
     int node_iter = ind2id[src];
     while (true) {
-      const auto & dsts = adjacency[(id2ind[node_iter])];
+      const auto & destinations = adjacency[(id2ind[node_iter])];
       // NOTE: assuming detection lanelets have only one previous lanelet
-      const auto next = std::find(dsts.begin(), dsts.end(), true);
-      if (next == dsts.end()) {
+      const auto next = std::find(destinations.begin(), destinations.end(), true);
+      if (next == destinations.end()) {
         branch.push_back(node_iter);
         break;
       }
       branch.push_back(node_iter);
-      node_iter = ind2id[std::distance(dsts.begin(), next)];
+      node_iter = ind2id[std::distance(destinations.begin(), next)];
     }
   }
   for (decltype(branches)::iterator it = branches.begin(); it != branches.end(); it++) {
@@ -818,9 +818,9 @@ std::vector<DescritizedLane> generateDetectionLaneDivisions(
   }
 
   // (3) discretize each merged lanelet
-  std::vector<DescritizedLane> detection_divisions;
+  std::vector<DiscretizedLane> detection_divisions;
   for (const auto & [last_lane_id, branch] : merged_branches) {
-    DescritizedLane detection_division;
+    DiscretizedLane detection_division;
     detection_division.lane_id = last_lane_id;
     const auto detection_lanelet = branch.first;
     const double area = branch.second;
@@ -870,29 +870,6 @@ geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
   inv_q.setRPY(roll, pitch, yaw + M_PI);
   obj_pose.orientation = tf2::toMsg(inv_q);
   return obj_pose;
-}
-
-lanelet::ConstLanelets getEgoLaneWithNextLane(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::set<int> & associative_ids, const double width)
-{
-  // NOTE: findLaneIdsInterval returns (start, end) of associative_ids
-  const auto ego_lane_interval_opt = findLaneIdsInterval(path, associative_ids);
-  if (!ego_lane_interval_opt) {
-    return lanelet::ConstLanelets({});
-  }
-  const auto [ego_start, ego_end] = ego_lane_interval_opt.value();
-  if (ego_end < path.points.size() - 1) {
-    const int next_id = path.points.at(ego_end).lane_ids.at(0);
-    const auto next_lane_interval_opt = findLaneIdsInterval(path, {next_id});
-    if (next_lane_interval_opt) {
-      const auto [next_start, next_end] = next_lane_interval_opt.value();
-      return {
-        planning_utils::generatePathLanelet(path, ego_start, next_start + 1, width),
-        planning_utils::generatePathLanelet(path, next_start + 1, next_end, width)};
-    }
-  }
-  return {planning_utils::generatePathLanelet(path, ego_start, ego_end, width)};
 }
 
 static bool isTargetStuckVehicleType(
@@ -1136,6 +1113,62 @@ void IntersectionLanelets::update(
       first_attention_area_ = first.value().second;
     }
   }
+}
+
+static lanelet::ConstLanelets getPrevLanelets(
+  const lanelet::ConstLanelets & lanelets_on_path, const std::set<int> & associative_ids)
+{
+  lanelet::ConstLanelets previous_lanelets;
+  for (const auto & ll : lanelets_on_path) {
+    if (associative_ids.find(ll.id()) != associative_ids.end()) {
+      return previous_lanelets;
+    }
+    previous_lanelets.push_back(ll);
+  }
+  return previous_lanelets;
+}
+
+std::optional<PathLanelets> generatePathLanelets(
+  const lanelet::ConstLanelets & lanelets_on_path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const std::set<int> & associative_ids, const size_t closest_idx, const double width)
+{
+  const auto assigned_lane_interval_opt = findLaneIdsInterval(path, associative_ids);
+  if (!assigned_lane_interval_opt) {
+    return std::nullopt;
+  }
+
+  PathLanelets path_lanelets;
+  // prev
+  path_lanelets.prev = getPrevLanelets(lanelets_on_path, associative_ids);
+  path_lanelets.all = path_lanelets.prev;
+
+  // entry2ego if exist
+  const auto [assigned_lane_start, assigned_lane_end] = assigned_lane_interval_opt.value();
+  if (closest_idx > assigned_lane_start) {
+    path_lanelets.all.push_back(
+      planning_utils::generatePathLanelet(path, assigned_lane_start, closest_idx, width));
+  }
+
+  // ego_or_entry2exit
+  const auto ego_or_entry_start = std::max(closest_idx, assigned_lane_start);
+  path_lanelets.ego_or_entry2exit =
+    planning_utils::generatePathLanelet(path, ego_or_entry_start, assigned_lane_end, width);
+  path_lanelets.all.push_back(path_lanelets.ego_or_entry2exit);
+
+  // next
+  if (assigned_lane_end < path.points.size() - 1) {
+    const int next_id = path.points.at(assigned_lane_end).lane_ids.at(0);
+    const auto next_lane_interval_opt = findLaneIdsInterval(path, {next_id});
+    if (next_lane_interval_opt) {
+      const auto [next_start, next_end] = next_lane_interval_opt.value();
+      path_lanelets.next =
+        planning_utils::generatePathLanelet(path, next_start + 1, next_end, width);
+      path_lanelets.all.push_back(path_lanelets.next.value());
+    }
+  }
+
+  return path_lanelets;
 }
 
 }  // namespace util

@@ -32,7 +32,6 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   gnss_base_frame_(declare_parameter("gnss_base_frame", "gnss_base_link")),
   map_frame_(declare_parameter("map_frame", "map")),
   use_gnss_ins_orientation_(declare_parameter("use_gnss_ins_orientation", true)),
-  plane_zone_(declare_parameter<int>("plane_zone", 9)),
   msg_gnss_ins_orientation_stamped_(
     std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>()),
   height_system_(declare_parameter<int>("height_system", 1)),
@@ -191,19 +190,12 @@ GNSSStat GNSSPoser::convert(
   int height_system)
 {
   GNSSStat gnss_stat;
-  if (coordinate_system == CoordinateSystem::UTM) {
-    gnss_stat = NavSatFix2UTM(nav_sat_fix_msg, this->get_logger(), height_system);
-  } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_UTM) {
+  if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_UTM) {
     gnss_stat = NavSatFix2LocalCartesianUTM(
       nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(), height_system);
   } else if (coordinate_system == CoordinateSystem::MGRS) {
     gnss_stat = NavSatFix2MGRS(
       nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(), height_system);
-  } else if (coordinate_system == CoordinateSystem::PLANE) {
-    gnss_stat = NavSatFix2PLANE(nav_sat_fix_msg, plane_zone_, this->get_logger());
-  } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_WGS84) {
-    gnss_stat =
-      NavSatFix2LocalCartesianWGS84(nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger());
   } else {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
