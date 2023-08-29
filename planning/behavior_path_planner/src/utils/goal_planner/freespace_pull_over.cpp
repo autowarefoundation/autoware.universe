@@ -55,8 +55,7 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
   const Pose end_pose =
     use_back_ ? goal_pose
               : tier4_autoware_utils::calcOffsetPose(goal_pose, -straight_distance, 0.0, 0.0);
-  const bool found_path = planner_->makePlan(current_pose, end_pose);
-  if (!found_path) {
+  if (!planner_->makePlan(current_pose, end_pose)) {
     return {};
   }
 
@@ -77,54 +76,61 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
 
   // remove points which are near the goal
   PathWithLaneId & last_path = partial_paths.back();
+  // todo: define as parameter
   const double th_goal_distance = 1.0;
+
+  // Remove points close to the goal in the last path.
   for (auto it = last_path.points.begin(); it != last_path.points.end(); ++it) {
-    size_t index = std::distance(last_path.points.begin(), it);
-    if (index == 0) continue;
-    const double distance =
-      tier4_autoware_utils::calcDistance2d(end_pose.position, it->point.pose.position);
-    if (distance < th_goal_distance) {
+    // Skip the first point.
+    if (it == last_path.points.begin()) continue;
+
+    // If a point is within the threshold distance to the goal, remove all following points.
+    if (
+      tier4_autoware_utils::calcDistance2d(end_pose.position, it->point.pose.position) <
+      th_goal_distance) {
       last_path.points.erase(it, last_path.points.end());
       break;
     }
   }
-
-  // add PathPointWithLaneId to last path
-  auto addPose = [&last_path](const Pose & pose) {
+  // If use_back_ is true, add end_pose to the last path
+  if (use_back_) {
     PathPointWithLaneId p = last_path.points.back();
-    p.point.pose = pose;
+    p.point.pose = end_pose;
+    last_path.points.push_back(p);
+    return boost::none;
+  }
+
+  // If use_back_ is false, interpolate and add poses to the last path
+  constexpr double interval = 0.5;
+  auto addInterpolatedPosesAndEnd = [&](const Pose & pose1, const Pose & pose2) {
+    for (const auto & pose : utils::interpolatePose(pose1, pose2, interval)) {
+      PathPointWithLaneId p = last_path.points.back();
+      p.point.pose = pose;
+      last_path.points.push_back(p);
+    }
+    PathPointWithLaneId p = last_path.points.back();
+    p.point.pose = pose2;
     last_path.points.push_back(p);
   };
 
-  if (use_back_) {
-    addPose(end_pose);
-  } else {
-    // add interpolated poses
-    auto addInterpolatedPoses = [&addPose](const Pose & pose1, const Pose & pose2) {
-      constexpr double interval = 0.5;
-      std::vector<Pose> interpolated_poses = utils::interpolatePose(pose1, pose2, interval);
-      for (const auto & pose : interpolated_poses) {
-        addPose(pose);
-      }
-    };
-    addInterpolatedPoses(last_path.points.back().point.pose, end_pose);
-    addPose(end_pose);
-    addInterpolatedPoses(end_pose, goal_pose);
-    addPose(goal_pose);
-  }
+  addInterpolatedPosesAndEnd(last_path.points.back().point.pose, end_pose);
+  addInterpolatedPosesAndEnd(end_pose, goal_pose);
 
   utils::correctDividedPathVelocity(partial_paths);
+  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel{};
+  pairs_terminal_velocity_and_accel.push_back(std::make_pair(velocity_, 0));
+  pairs_terminal_velocity_and_accel.push_back(std::make_pair(-velocity_, 0));
 
+  // Check if driving forward for each path, return empty if not
   for (auto & path : partial_paths) {
-    const auto is_driving_forward = motion_utils::isDrivingForward(path.points);
-    if (!is_driving_forward) {
-      // path points is less than 2
+    if (!motion_utils::isDrivingForward(path.points)) {
       return {};
     }
   }
 
   PullOverPath pull_over_path{};
   pull_over_path.partial_paths = partial_paths;
+  pull_over_path.pairs_terminal_velocity_and_accel = pairs_terminal_velocity_and_accel;
   pull_over_path.start_pose = current_pose;
   pull_over_path.end_pose = goal_pose;
   pull_over_path.type = getPlannerType();

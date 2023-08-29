@@ -117,7 +117,7 @@ GoalPlannerModule::GoalPlannerModule(
 
 void GoalPlannerModule::resetStatus()
 {
-  PUllOverStatus initial_status{};
+  PullOverStatus initial_status{};
   status_ = initial_status;
   pull_over_path_candidates_.clear();
   closest_start_pose_.reset();
@@ -446,7 +446,7 @@ bool GoalPlannerModule::planFreespacePath()
     mutex_.lock();
     status_.pull_over_path = std::make_shared<PullOverPath>(*freespace_path);
     status_.current_path_idx = 0;
-    status_.is_safe = true;
+    status_.is_safe_static_objects = true;
     modified_goal_pose_ = goal_candidate;
     last_path_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
     debug_data_.freespace_planner.is_planning = false;
@@ -483,7 +483,7 @@ void GoalPlannerModule::returnToLaneParking()
   }
 
   mutex_.lock();
-  status_.is_safe = true;
+  status_.is_safe_static_objects = true;
   status_.has_decided_path = false;
   status_.pull_over_path = status_.lane_parking_pull_over_path;
   status_.current_path_idx = 0;
@@ -540,7 +540,7 @@ void GoalPlannerModule::selectSafePullOverPath()
   const auto pull_over_path_candidates = pull_over_path_candidates_;
   const auto goal_candidates = goal_candidates_;
   mutex_.unlock();
-  status_.is_safe = false;
+  status_.is_safe_static_objects = false;
   for (const auto & pull_over_path : pull_over_path_candidates) {
     // check if goal is safe
     const auto goal_candidate_it = std::find_if(
@@ -559,7 +559,7 @@ void GoalPlannerModule::selectSafePullOverPath()
       continue;
     }
 
-    status_.is_safe = true;
+    status_.is_safe_static_objects = true;
     mutex_.lock();
     status_.pull_over_path = std::make_shared<PullOverPath>(pull_over_path);
     status_.current_path_idx = 0;
@@ -571,7 +571,7 @@ void GoalPlannerModule::selectSafePullOverPath()
   }
 
   // decelerate before the search area start
-  if (status_.is_safe) {
+  if (status_.is_safe_static_objects) {
     const auto search_start_offset_pose = calcLongitudinalOffsetPose(
       status_.pull_over_path->getFullPath().points, refined_goal_pose_.position,
       -parameters_->backward_goal_search_length - planner_data_->parameters.base_link2front -
@@ -615,7 +615,7 @@ void GoalPlannerModule::setLanes()
 
 void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
 {
-  if (status_.is_safe) {
+  if (status_.is_safe_static_objects) {
     // clear stop pose when the path is safe and activated
     if (isActivated()) {
       resetWallPoses();
@@ -644,7 +644,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
 
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
-  status_.prev_is_safe = status_.is_safe;
+  status_.prev_is_safe = status_.is_safe_static_objects;
 }
 
 void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
@@ -693,7 +693,7 @@ void GoalPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
 void GoalPlannerModule::setModifiedGoal(BehaviorModuleOutput & output) const
 {
   const auto & route_handler = planner_data_->route_handler;
-  if (status_.is_safe) {
+  if (status_.is_safe_static_objects) {
     PoseWithUuidStamped modified_goal{};
     modified_goal.uuid = route_handler->getRouteUuid();
     modified_goal.pose = modified_goal_pose_->goal_pose;
@@ -741,7 +741,7 @@ bool GoalPlannerModule::hasDecidedPath() const
   }
 
   // if path is not safe, not decided
-  if (!status_.is_safe) {
+  if (!status_.is_safe_static_objects) {
     return false;
   }
 
@@ -858,7 +858,7 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification(
   out.modified_goal = plan().modified_goal;  // update status_
   out.path = std::make_shared<PathWithLaneId>(generateStopPath());
   out.reference_path = getPreviousModuleOutput().reference_path;
-  path_candidate_ = status_.is_safe
+  path_candidate_ = status_.is_safe_static_objects
                       ? std::make_shared<PathWithLaneId>(status_.pull_over_path->getFullPath())
                       : out.path;
   path_reference_ = getPreviousModuleOutput().reference_path;
@@ -953,13 +953,14 @@ PathWithLaneId GoalPlannerModule::generateStopPath()
     reference_path.points, refined_goal_pose_.position,
     -parameters_->backward_goal_search_length - common_parameters.base_link2front -
       approximate_pull_over_distance_);
-  if (!status_.is_safe && !closest_start_pose_ && !search_start_offset_pose) {
+  if (!status_.is_safe_static_objects && !closest_start_pose_ && !search_start_offset_pose) {
     return generateFeasibleStopPath();
   }
 
-  const Pose stop_pose = status_.is_safe ? status_.pull_over_path->start_pose
-                                         : (closest_start_pose_ ? closest_start_pose_.value()
-                                                                : *search_start_offset_pose);
+  const Pose stop_pose =
+    status_.is_safe_static_objects
+      ? status_.pull_over_path->start_pose
+      : (closest_start_pose_ ? closest_start_pose_.value() : *search_start_offset_pose);
 
   // if stop pose is closer than min_stop_distance, stop as soon as possible
   const double ego_to_stop_distance = calcSignedArcLengthFromEgo(reference_path, stop_pose);
@@ -1093,7 +1094,7 @@ bool GoalPlannerModule::isStuck()
   }
 
   // not found safe path
-  if (!status_.is_safe) {
+  if (!status_.is_safe_static_objects) {
     return true;
   }
 
@@ -1473,7 +1474,7 @@ void GoalPlannerModule::setDebugData()
   }
 
   // Visualize path and related pose
-  if (status_.is_safe) {
+  if (status_.is_safe_static_objects) {
     add(createPoseMarkerArray(
       status_.pull_over_path->start_pose, "pull_over_start_pose", 0, 0.3, 0.3, 0.9));
     add(createPoseMarkerArray(
@@ -1493,8 +1494,8 @@ void GoalPlannerModule::setDebugData()
   // Visualize planner type text
   {
     visualization_msgs::msg::MarkerArray planner_type_marker_array{};
-    const auto color = status_.is_safe ? createMarkerColor(1.0, 1.0, 1.0, 0.99)
-                                       : createMarkerColor(1.0, 0.0, 0.0, 0.99);
+    const auto color = status_.is_safe_static_objects ? createMarkerColor(1.0, 1.0, 1.0, 0.99)
+                                                      : createMarkerColor(1.0, 0.0, 0.0, 0.99);
     auto marker = createDefaultMarker(
       header.frame_id, header.stamp, "planner_type", 0,
       visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0), color);

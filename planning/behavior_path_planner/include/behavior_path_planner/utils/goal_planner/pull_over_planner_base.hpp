@@ -46,6 +46,8 @@ struct PullOverPath
 {
   PullOverPlannerType type{PullOverPlannerType::NONE};
   std::vector<PathWithLaneId> partial_paths{};
+  // accelerate with constant acceleration to the target velocity
+  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel{};
   Pose start_pose{};
   Pose end_pose{};
   std::vector<Pose> debug_poses{};
