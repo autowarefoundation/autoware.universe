@@ -17,7 +17,7 @@
           "description": "Value to avoid zero division.."
         },
         "odom_interval": {
-          "type": "number",
+          "type": "integer",
           "default": 0,
           "description": "Interval between odom messages, increase it for smoother curve."
         },
