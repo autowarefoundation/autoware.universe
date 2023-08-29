@@ -27,7 +27,7 @@ NoDrivableLaneModuleManager::NoDrivableLaneModuleManager(rclcpp::Node & node)
 {
   const std::string ns(getModuleName());
   planner_param_.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin", 1.5);
-  planner_param_.print_debug_info = getOrDeclareParameter<bool>(node, ns + ".print_debug_info, false");
+  planner_param_.print_debug_info = getOrDeclareParameter<bool>(node, ns + ".print_debug_info", false);
 }
 
 void NoDrivableLaneModuleManager::launchNewModules(
