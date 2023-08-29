@@ -109,7 +109,7 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
     // TODO(badai-nguyen): replace single road class to a list of outlier classes
     bool is_keep_class = mask.at<uint8_t>(
                            static_cast<uint16_t>(normalized_projected_point.y()),
-                           static_cast<uint16_t>(normalized_projected_point.x())) > 2;
+                           static_cast<uint16_t>(normalized_projected_point.x())) > 10;
 
     if (is_keep_class) {
       output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
