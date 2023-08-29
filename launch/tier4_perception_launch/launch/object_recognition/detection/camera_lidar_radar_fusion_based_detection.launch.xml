@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
   <!-- Interface param -->
-
+  <arg name="output/objects" default="objects"/>
+  
   <!-- LiDAR param -->
   <arg name="input/pointcloud"/>
   <arg name="input/obstacle_segmentation/pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
