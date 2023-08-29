@@ -38,7 +38,7 @@
         }
       },
       "required": [
-        "curvature_interval_length", 
+        "curvature_interval_length",
         "prevent_zero_division_value",
         "odom_interval",
         "acceptable_max_distance_to_waypoint",
