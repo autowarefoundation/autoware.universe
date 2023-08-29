@@ -14,6 +14,8 @@
 
 #include "vehicle_cmd_gate.hpp"
 
+#include "marker_helper.hpp"
+
 #include <rclcpp/logging.hpp>
 #include <tier4_api_utils/tier4_api_utils.hpp>
 
@@ -73,6 +75,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   is_filter_activated_pub_ =
     create_publisher<IsFilterActivated>("~/is_filter_activated", durable_qos);
+  filter_activated_marker_pub_ =
+    create_publisher<MarkerArray>("~/is_filter_activated/marker", durable_qos);
 
   // Subscriber
   external_emergency_stop_heartbeat_sub_ = create_subscription<Heartbeat>(
@@ -419,8 +423,7 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   // Check pause. Place this check after all other checks as it needs the final output.
   adapi_pause_->update(filtered_commands.control);
   if (adapi_pause_->is_paused()) {
-    filtered_commands.control.longitudinal.speed = 0.0;
-    filtered_commands.control.longitudinal.acceleration = stop_hold_acceleration_;
+    filtered_commands.control = createStopControlCmd();
   }
 
   // Check if command filtering option is enable
@@ -565,6 +568,7 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
 
   is_filter_activated.stamp = now();
   is_filter_activated_pub_->publish(is_filter_activated);
+  filter_activated_marker_pub_->publish(createMarkerArray(is_filter_activated));
 
   return out;
 }
@@ -730,6 +734,53 @@ void VehicleCmdGate::checkExternalEmergencyStop(diagnostic_updater::DiagnosticSt
   }
 
   stat.summary(status.level, status.message);
+}
+
+MarkerArray VehicleCmdGate::createMarkerArray(const IsFilterActivated & filter_activated)
+{
+  MarkerArray msg;
+
+  if (!filter_activated.is_activated) {
+    return msg;
+  }
+
+  /* add string marker */
+  bool first_msg = true;
+  std::string reason = "filter activated on";
+
+  if (filter_activated.is_activated_on_acceleration) {
+    reason += " lon_acc";
+    first_msg = false;
+  }
+  if (filter_activated.is_activated_on_jerk) {
+    reason += first_msg ? " jerk" : ", jerk";
+    first_msg = false;
+  }
+  if (filter_activated.is_activated_on_speed) {
+    reason += first_msg ? " speed" : ", speed";
+    first_msg = false;
+  }
+  if (filter_activated.is_activated_on_steering) {
+    reason += first_msg ? " steer" : ", steer";
+    first_msg = false;
+  }
+  if (filter_activated.is_activated_on_steering_rate) {
+    reason += first_msg ? " steer_rate" : ", steer_rate";
+    first_msg = false;
+  }
+
+  msg.markers.emplace_back(createStringMarker(
+    "base_link", "msg", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+    createMarkerPosition(0.0, 0.0, 1.0), createMarkerScale(0.0, 0.0, 1.0),
+    createMarkerColor(1.0, 0.0, 0.0, 1.0), reason));
+
+  /* add sphere marker */
+  msg.markers.emplace_back(createMarker(
+    "base_link", "sphere", 0, visualization_msgs::msg::Marker::SPHERE,
+    createMarkerPosition(0.0, 0.0, 0.0), createMarkerScale(3.0, 3.0, 3.0),
+    createMarkerColor(1.0, 0.0, 0.0, 0.3)));
+
+  return msg;
 }
 
 }  // namespace vehicle_cmd_gate
