@@ -442,21 +442,19 @@ PathWithLaneId StartPlannerModule::getCurrentPath() const
   return status_.pull_out_path.partial_paths.at(status_.current_path_idx);
 }
 
-std::pair<double, double> StartPlannerModule::getPairsTerminalVelocityAndAccel() const
-{
-  if (status_.pull_out_path.pairs_terminal_velocity_and_accel.size() <= status_.current_path_idx) {
-    return std::make_pair(0.0, 0.0);
-  }
-  return status_.pull_out_path.pairs_terminal_velocity_and_accel.at(status_.current_path_idx);
-}
+// std::pair<double, double> StartPlannerModule::getPairsTerminalVelocityAndAccel() const
+// {
+//   if (status_.pull_out_path.pairs_terminal_velocity_and_accel.size() <= status_.current_path_idx)
+//   {
+//     return std::make_pair(0.0, 0.0);
+//   }
+//   return status_.pull_out_path.pairs_terminal_velocity_and_accel.at(status_.current_path_idx);
+// }
 
 void StartPlannerModule::planWithPriority(
   const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
   const std::string search_priority)
 {
-  status_.is_safe_static_objects = false;
-  status_.planner_type = PlannerType::NONE;
-
   // check if start pose candidates are valid
   if (start_pose_candidates.empty()) {
     return;

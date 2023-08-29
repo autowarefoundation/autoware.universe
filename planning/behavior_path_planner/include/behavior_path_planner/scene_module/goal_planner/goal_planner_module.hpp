@@ -57,6 +57,12 @@ using freespace_planning_algorithms::PlannerCommonParam;
 using freespace_planning_algorithms::RRTStar;
 using freespace_planning_algorithms::RRTStarParam;
 
+using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
+using behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
+using behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
+using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
+
 enum class PathType {
   NONE = 0,
   SHIFT,
@@ -76,7 +82,8 @@ struct PUllOverStatus
   lanelet::ConstLanelets pull_over_lanes{};
   std::vector<DrivableLanes> lanes{};  // current + pull_over
   bool has_decided_path{false};
-  bool is_safe{false};
+  bool is_safe_static_objects{false};
+  bool is_safe_dynamic_objects{false};
   bool prev_is_safe{false};
   bool has_decided_velocity{false};
   bool has_requested_approval{false};
@@ -106,6 +113,13 @@ public:
   void updateModuleParams(const std::any & parameters) override
   {
     parameters_ = std::any_cast<std::shared_ptr<GoalPlannerParameters>>(parameters);
+    if (parameters->safety_check_params.enable_safety_check) {
+      ego_predicted_path_params_ =
+        std::make_shared<EgoPredictedPathParams>(parameters_->ego_predicted_path_params);
+      objects_filtering_params_ =
+        std::make_shared<ObjectsFilteringParams>(parameters_->objects_filtering_params);
+      safety_check_params_ = std::make_shared<SafetyCheckParams>(parameters_->safety_check_params);
+    }
   }
 
   // TODO(someone): remove this, and use base class function
@@ -136,7 +150,13 @@ private:
 
   PUllOverStatus status_;
 
+  mutable StartGoalPlannerData goal_planner_data_;
+
   std::shared_ptr<GoalPlannerParameters> parameters_;
+
+  mutable std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;
+  mutable std::shared_ptr<ObjectsFilteringParams> objects_filtering_params_;
+  mutable std::shared_ptr<SafetyCheckParams> safety_check_params_;
 
   // planner
   std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
@@ -246,6 +266,8 @@ private:
   PathWithLaneId getCurrentPath() const;
   bool incrementPathIndex();
   void transitionToNextPathIfFinishingCurrentPath();
+  std::pair<double, double> getPairsTerminalVelocityAndAccel() const;
+
 
   // lanes and drivable area
   void setLanes();
@@ -274,6 +296,13 @@ private:
 
   // rtc
   std::pair<double, double> calcDistanceToPathChange() const;
+
+  // safety check
+  SafetyCheckParams createSafetyCheckParams() const;
+  void updateSafetyCheckTargetObjectsData(
+    const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
+    const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
+  bool isSafePath() const;
 
   // debug
   void setDebugData();

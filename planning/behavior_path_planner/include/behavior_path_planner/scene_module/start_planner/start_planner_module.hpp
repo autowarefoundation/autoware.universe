@@ -159,7 +159,7 @@ private:
 
   void incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
-  std::pair<double, double> getPairsTerminalVelocityAndAccel() const;
+  // std::pair<double, double> getPairsTerminalVelocityAndAccel() const;
   void planWithPriority(
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose,
     const std::string search_priority);
