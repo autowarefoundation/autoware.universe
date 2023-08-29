@@ -247,7 +247,9 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   // Separate dynamic objects based on whether they are inside or outside of the expanded lanelets.
   const auto [object_within_target_lane, object_outside_target_lane] =
     utils::avoidance::separateObjectsByPath(
-      helper_.getPreviousSplineShiftPath().path, planner_data_, data, parameters_, debug);
+      utils::resamplePathWithSpline(
+        helper_.getPreviousSplineShiftPath().path, parameters_->resample_interval_for_output),
+      planner_data_, data, parameters_, debug);
 
   for (const auto & object : object_outside_target_lane.objects) {
     ObjectData other_object;
