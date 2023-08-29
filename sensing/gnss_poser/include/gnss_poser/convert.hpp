@@ -39,23 +39,24 @@ enum class MGRSPrecision {
   _1_MIllI_METER = 8,
   _100MICRO_METER = 9,
 };
-// EllipsoidHeight:height above ellipsoid
-// OrthometricHeight:height above geoid
-double EllipsoidHeight2OrthometricHeight(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const rclcpp::Logger & logger)
+
+double convertHeight2EGM2008(
+  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const std::string & vertical_datum)
 {
-  double OrthometricHeight{0.0};
-  try {
+  double height{0.0};
+  if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::WGS84) {
     GeographicLib::Geoid egm2008("egm2008-1");
-    OrthometricHeight = egm2008.ConvertHeight(
+    height = egm2008.ConvertHeight(
       nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, nav_sat_fix_msg.altitude,
       GeographicLib::Geoid::ELLIPSOIDTOGEOID);
-  } catch (const GeographicLib::GeographicErr & err) {
-    RCLCPP_ERROR_STREAM(
-      logger, "Failed to convert Height from Ellipsoid to Orthometric" << err.what());
+  } else if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::EGM2008) {
+    height = nav_sat_fix_msg.altitude;
+  } else {
+    throw std::runtime_error("Invalid vertical datum type: " + vertical_datum);
   }
-  return OrthometricHeight;
+  return height;
 }
+
 GNSSStat NavSatFix2UTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const rclcpp::Logger & logger,
   const std::string & vertical_datum)
@@ -66,18 +67,14 @@ GNSSStat NavSatFix2UTM(
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm.zone, utm.east_north_up, utm.x,
       utm.y);
-    if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::WGS84) {
-      utm.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
-    } else if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::EGM2008) {
-      utm.z = nav_sat_fix_msg.altitude;
-    } else {
-      RCLCPP_ERROR_STREAM(logger, "Invalid vertical datum type: " << vertical_datum.c_str());
-    }
+    utm.z = convertHeight2EGM2008(nav_sat_fix_msg, vertical_datum);
     utm.latitude = nav_sat_fix_msg.latitude;
     utm.longitude = nav_sat_fix_msg.longitude;
     utm.altitude = nav_sat_fix_msg.altitude;
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(logger, "Failed to convert from LLH to UTM" << err.what());
+  } catch (const std::runtime_error & err) {
+    RCLCPP_ERROR_STREAM(logger, "Failed to convert height. " << err.what());
   }
   return utm;
 }
@@ -93,13 +90,7 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, utm_origin.zone,
       utm_origin.east_north_up, utm_origin.x, utm_origin.y);
-    if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::WGS84) {
-      utm_origin.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_origin, logger);
-    } else if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::EGM2008) {
-      utm_origin.z = nav_sat_fix_origin.altitude;
-    } else {
-      RCLCPP_ERROR_STREAM(logger, "Invalid vertical datum type: " << vertical_datum.c_str());
-    }
+    utm_origin.z = convertHeight2EGM2008(nav_sat_fix_origin, vertical_datum);
 
     // individual coordinates of global coordinate system
     double global_x = 0.0;
@@ -113,16 +104,12 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     // individual coordinates of local coordinate system
     utm_local.x = global_x - utm_origin.x;
     utm_local.y = global_y - utm_origin.y;
-    if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::WGS84) {
-      utm_local.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger) - utm_origin.z;
-    } else if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::EGM2008) {
-      utm_local.z = nav_sat_fix_msg.altitude - utm_origin.z;
-    } else {
-      RCLCPP_ERROR_STREAM(logger, "Invalid vertical datum type: " << vertical_datum.c_str());
-    }
+    utm_local.z = convertHeight2EGM2008(nav_sat_fix_msg, vertical_datum) - utm_origin.z;
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(
       logger, "Failed to convert from LLH to UTM in local coordinates" << err.what());
+  } catch (const std::runtime_error & err) {
+    RCLCPP_ERROR_STREAM(logger, "Failed to convert height. " << err.what());
   }
   return utm_local;
 }
