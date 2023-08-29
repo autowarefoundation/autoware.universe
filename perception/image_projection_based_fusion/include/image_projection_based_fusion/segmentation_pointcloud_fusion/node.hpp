@@ -31,10 +31,6 @@ namespace image_projection_based_fusion
 class SegmentPointCloudFusionNode : public FusionNode<PointCloud2, PointCloud2, Image>
 {
 private:
-  int min_cluster_size_{1};
-  bool fuse_unknown_only_{true};
-  double cluster_2d_tolerance_;
-
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_pointcloud_ptr_;
   /* data */
 public:
