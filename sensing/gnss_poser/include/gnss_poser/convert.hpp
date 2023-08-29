@@ -68,8 +68,10 @@ GNSSStat NavSatFix2UTM(
       utm.y);
     if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::WGS84) {
       utm.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
-    } else {
+    } else if (vertical_datum == tier4_map_msgs::msg::MapProjectorInfo::EGM2008) {
       utm.z = nav_sat_fix_msg.altitude;
+    } else {
+      RCLCPP_ERROR_STREAM(logger, "Invalid vertical datum type: " << vertical_datum.c_str());
     }
     utm.latitude = nav_sat_fix_msg.latitude;
     utm.longitude = nav_sat_fix_msg.longitude;
