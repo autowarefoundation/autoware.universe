@@ -1305,33 +1305,6 @@ AvoidLineArray AvoidanceModule::mergeShiftLines(
     debug.total_backward_grad = shift_line_data.backward_grad;
   }
 
-  // debug print
-  {
-    const auto & arc = avoid_data_.arclength_from_ego;
-    const auto & closest = avoid_data_.ego_closest_path_index;
-    const auto & sl = shift_line_data.shift_line;
-    const auto & sg = shift_line_data.shift_line_grad;
-    const auto & fg = shift_line_data.forward_grad;
-    const auto & bg = shift_line_data.backward_grad;
-    using std::setw;
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(3);
-    ss << "\n[idx, arc, shift (for each shift points, filtered | total), grad (ideal, bwd, fwd)]: "
-          "closest = "
-       << closest << ", raw_shift_lines size = " << raw_shift_lines.size() << std::endl;
-    for (size_t i = 0; i < arc.size(); ++i) {
-      ss << "i = " << i << " | arc: " << arc.at(i) << " | shift: (";
-      for (const auto & p : shift_line_data.shift_line_history) {
-        ss << setw(5) << p.at(i) << ", ";
-      }
-      ss << "| total: " << setw(5) << sl.at(i) << ") | grad: (" << sg.at(i) << ", " << fg.at(i)
-         << ", " << bg.at(i) << ")" << std::endl;
-    }
-    DEBUG_PRINT("%s", ss.str().c_str());
-  }
-
-  printShiftLines(merged_shift_lines, "merged_shift_lines");
-
   return merged_shift_lines;
 }
 
