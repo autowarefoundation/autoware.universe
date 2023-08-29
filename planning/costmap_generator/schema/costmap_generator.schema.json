@@ -24,6 +24,7 @@
         "update_rate": {
           "type": "number",
           "default": 10.0,
+          "exclusiveMinimum": 0,
           "description": "Timer's update rate ."
         },
         "activate_by_scenario": {
@@ -102,7 +103,7 @@
           "description": "Expand object's rectangle with this value."
         },
         "size_of_expansion_kernel": {
-          "type": "number",
+          "type": "integer",
           "default": 9,
           "description": "The kernel size for blurring effect on object's costmap."
         }
