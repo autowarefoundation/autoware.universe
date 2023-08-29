@@ -77,7 +77,7 @@ private:
   static std::string get_timestamp();
   rclcpp::QoS get_qos_profile_of_topic(const std::string & topic_name);
   static void rotate_topic_names(autoware_bag_recorder::ModuleSection & section);
-  void update_topic_info(
+  static void update_topic_info(
     autoware_bag_recorder::ModuleSection & section, const std::string & topic_name,
     const std::string & topic_type);
   void handle_valid_topic(
