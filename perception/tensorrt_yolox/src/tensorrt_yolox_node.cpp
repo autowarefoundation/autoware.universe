@@ -176,13 +176,18 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       in_image_ptr->image, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
       8, 0);
   }
-
+  cv::resize(
+    mask, mask, cv::Size(in_image_ptr->image.cols, in_image_ptr->image.rows), 0, 0,
+    cv::INTER_NEAREST);
   sensor_msgs::msg::Image::SharedPtr out_mask_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::MONO8, mask)
       .toImageMsg();
   out_mask_msg->header = msg->header;
   mask_pub_.publish(out_mask_msg);
 
+  cv::resize(
+    color_mask, color_mask, cv::Size(in_image_ptr->image.cols, in_image_ptr->image.rows), 0, 0,
+    cv::INTER_NEAREST);
   sensor_msgs::msg::Image::SharedPtr output_color_mask_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::BGR8, color_mask)
       .toImageMsg();

@@ -866,7 +866,7 @@ bool TrtYoloX::feedforward(const std::vector<cv::Mat> & images, ObjectArrays & o
 }
 
 bool TrtYoloX::feedforwardAndDecode(
-  const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask,
+  const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & out_mask,
   [[maybe_unused]] cv::Mat & color_mask)
 {
   std::vector<void *> buffers = {input_d_.get(), out_prob_d_.get()};
@@ -921,8 +921,8 @@ bool TrtYoloX::feedforwardAndDecode(
         segmentation_masks_.push_back(mask);
         counter += out_elem_num;
       }
-      mask = segmentation_masks_.at(0);
-      color_mask = getColorizedMask(i, color_map_);
+      out_mask = segmentation_masks_.at(0);
+      color_mask = getColorizedMask(0, color_map_);
     }
   }
   return true;
