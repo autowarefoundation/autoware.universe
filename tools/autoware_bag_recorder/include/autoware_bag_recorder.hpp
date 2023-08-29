@@ -47,6 +47,7 @@ struct TopicInfo
 struct ModuleSection
 {
   std::string folder_path;
+  std::string current_bag_name;
   std::vector<TopicInfo> topic_info;
   std::unique_ptr<rosbag2_cpp::Writer> bag_writer;
   std::vector<std::string> topic_names;
@@ -67,17 +68,18 @@ private:
   void initialize_bag_files_for_topics();
   void start_topic_search();
   void start_status_control();
+  void disk_space_handler();
   void check_disk_space();
   void check_record_time(
     const std::chrono::time_point<std::chrono::system_clock> & start_record_time);
-  void check_bag_time(std::chrono::time_point<std::chrono::system_clock> & start_bag_time);
+  void check_bag_size();
   void check_auto_mode();
   static std::string get_timestamp();
   rclcpp::QoS get_qos_profile_of_topic(const std::string & topic_name);
   static void rotate_topic_names(autoware_bag_recorder::ModuleSection & section);
   void search_topic(ModuleSection & section);
   void create_bag_file(std::unique_ptr<rosbag2_cpp::Writer> & writer, const std::string & bag_path);
-  void bag_file_handler();
+  void bag_file_handler(ModuleSection & section);
   static void add_topics_to_writer(
     std::unique_ptr<rosbag2_cpp::Writer> & writer_, std::string topic_name, std::string topic_type);
   void generic_subscription_callback(
@@ -85,6 +87,7 @@ private:
     autoware_bag_recorder::ModuleSection & section);
   void section_factory(const std::vector<std::string> & topics, const std::string & path);
   double get_root_disk_space() const;
+  static double get_bag_path_directory_size(const std::filesystem::path & directory);
   void remove_remainder_bags_in_folder(autoware_bag_recorder::ModuleSection & section) const;
   void free_disk_space_for_continue(autoware_bag_recorder::ModuleSection & section) const;
   static void check_files_in_folder(
@@ -94,10 +97,11 @@ private:
 
   // parameters
   int maximum_record_time_;
-  int bag_time_;
+  double maximum_bag_file_size_;
+  double maximum_allowed_bag_storage_size_;
   std::string database_storage_;
   std::string bag_path_;
-  int disk_space_threshold_;
+  int minimum_acceptable_disk_space_;
   int number_of_maximum_bags_;
   std::string disk_space_action_mode_;
 
