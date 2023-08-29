@@ -19,10 +19,10 @@
 #include <GeographicLib/Geoid.hpp>
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
+#include <component_interface_specs/map.hpp>
 #include <rclcpp/logging.hpp>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <component_interface_specs/map.hpp>
 
 #include <string>
 
