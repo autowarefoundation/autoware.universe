@@ -15,10 +15,9 @@
 #ifndef GYRO_ODOMETER__GYRO_ODOMETER_CORE_HPP_
 #define GYRO_ODOMETER__GYRO_ODOMETER_CORE_HPP_
 
-#include <tier4_autoware_utils/ros/transform_listener.hpp>
-#include <tier4_autoware_utils/ros/msg_covariance.hpp>
-
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/msg_covariance.hpp>
+#include <tier4_autoware_utils/ros/transform_listener.hpp>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
