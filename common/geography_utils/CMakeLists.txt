@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(tier4_geography_utils)
+project(geography_utils)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -12,11 +12,11 @@ find_path(GeographicLib_INCLUDE_DIR GeographicLib/Config.h
 set(GeographicLib_INCLUDE_DIRS ${GeographicLib_INCLUDE_DIR})
 find_library(GeographicLib_LIBRARIES NAMES Geographic)
 
-ament_auto_add_library(tier4_geography_utils SHARED
+ament_auto_add_library(geography_utils SHARED
   src/height.cpp
 )
 
-target_link_libraries(tier4_geography_utils
+target_link_libraries(geography_utils
   ${GeographicLib_LIBRARIES}
 )
 
@@ -25,10 +25,10 @@ if(BUILD_TESTING)
 
   file(GLOB_RECURSE test_files test/*.cpp)
 
-  ament_add_ros_isolated_gtest(test_tier4_geography_utils ${test_files})
+  ament_add_ros_isolated_gtest(test_geography_utils ${test_files})
 
-  target_link_libraries(test_tier4_geography_utils
-    tier4_geography_utils
+  target_link_libraries(test_geography_utils
+  geography_utils
   )
 endif()
 

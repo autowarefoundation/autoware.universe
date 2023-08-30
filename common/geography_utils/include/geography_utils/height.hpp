@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TIER4_GEOGRAPHY_UTILS__HEIGHT_HPP_
-#define TIER4_GEOGRAPHY_UTILS__HEIGHT_HPP_
+#ifndef GEOGRAPHY_UTILS__HEIGHT_HPP_
+#define GEOGRAPHY_UTILS__HEIGHT_HPP_
 
 #include <map>
 #include <stdexcept>
@@ -33,4 +33,4 @@ double convert_height(
 
 }  // namespace tier4_geography_utils
 
-#endif  // TIER4_GEOGRAPHY_UTILS__HEIGHT_HPP_
+#endif  // GEOGRAPHY_UTILS__HEIGHT_HPP_
