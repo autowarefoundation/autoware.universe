@@ -153,10 +153,10 @@ double calcDiffAngleAgainstPath(
 }
 
 double calcDiffAngleBetweenPaths(
-  const std::vector<PathPointWithLaneId> & path_points,
-  const PredictedPath & predicted_path)
+  const std::vector<PathPointWithLaneId> & path_points, const PredictedPath & predicted_path)
 {
-  const size_t nearest_idx = motion_utils::findNearestSegmentIndex(path_points, predicted_path.path.front().position);
+  const size_t nearest_idx =
+    motion_utils::findNearestSegmentIndex(path_points, predicted_path.path.front().position);
   const double ego_yaw = tf2::getYaw(path_points.at(nearest_idx).point.pose.orientation);
 
   constexpr size_t max_predicted_path_size = 5;
@@ -396,7 +396,8 @@ void DynamicAvoidanceModule::updateTargetObjects()
       predicted_object.kinematics.initial_twist_with_covariance.twist.linear.y);
     const auto prev_object = getObstacleFromUuid(prev_objects, obj_uuid);
     const auto obj_path = *std::max_element(
-      predicted_object.kinematics.predicted_paths.begin(), predicted_object.kinematics.predicted_paths.end(),
+      predicted_object.kinematics.predicted_paths.begin(),
+      predicted_object.kinematics.predicted_paths.end(),
       [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
 
     // 1.a. check label
@@ -496,8 +497,8 @@ void DynamicAvoidanceModule::updateTargetObjects()
       getLateralLongitudinalOffset(prev_module_path->points, object.pose, object.shape);
 
     // 2.c. check if object will not cut in
-    const bool will_object_cut_in =
-      willObjectCutIn(prev_module_path->points, obj_path, object.vel, lat_lon_offset, polygon_generation_method);
+    const bool will_object_cut_in = willObjectCutIn(
+      prev_module_path->points, obj_path, object.vel, lat_lon_offset, polygon_generation_method);
     if (will_object_cut_in) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
@@ -575,7 +576,8 @@ void DynamicAvoidanceModule::updateTargetObjects()
 
     const bool should_be_avoided = true;
     target_objects_manager_.updateObject(
-      obj_uuid, lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided, polygon_generation_method);
+      obj_uuid, lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided,
+      polygon_generation_method);
   }
 }
 
@@ -651,7 +653,8 @@ bool DynamicAvoidanceModule::isObjectFarFromPath(
 
 bool DynamicAvoidanceModule::willObjectCutIn(
   const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & predicted_path,
-  const double obj_tangent_vel, const LatLonOffset & lat_lon_offset, PolygonGenerationMethod & polygon_generation_method) const
+  const double obj_tangent_vel, const LatLonOffset & lat_lon_offset,
+  PolygonGenerationMethod & polygon_generation_method) const
 {
   // Check if ego's path and object's path are close.
   const bool will_object_cut_in = [&]() {
@@ -674,12 +677,12 @@ bool DynamicAvoidanceModule::willObjectCutIn(
   const double relative_velocity = getEgoSpeed() - obj_tangent_vel;
   const double lon_offset_ego_to_obj =
     motion_utils::calcSignedArcLength(
-                                      ego_path, getEgoPose().position, ego_seg_idx, lat_lon_offset.nearest_idx) +
+      ego_path, getEgoPose().position, ego_seg_idx, lat_lon_offset.nearest_idx) +
     lat_lon_offset.min_lon_offset;
   if (
-      lon_offset_ego_to_obj < std::max(
-                                       parameters_->min_lon_offset_ego_to_cut_in_object,
-                                       relative_velocity * parameters_->min_time_to_start_cut_in)) {
+    lon_offset_ego_to_obj < std::max(
+                              parameters_->min_lon_offset_ego_to_cut_in_object,
+                              relative_velocity * parameters_->min_time_to_start_cut_in)) {
     polygon_generation_method = PolygonGenerationMethod::EGO_PATH_BASE;
     return false;
   }
