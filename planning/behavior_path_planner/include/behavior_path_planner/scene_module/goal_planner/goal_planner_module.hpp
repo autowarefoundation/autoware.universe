@@ -24,6 +24,9 @@
 #include "behavior_path_planner/utils/goal_planner/goal_searcher.hpp"
 #include "behavior_path_planner/utils/goal_planner/shift_pull_over.hpp"
 #include "behavior_path_planner/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/start_goal_planner_common/common_module_data.hpp"
+#include "behavior_path_planner/utils/utils.hpp"
 
 #include <freespace_planning_algorithms/astar_search.hpp>
 #include <freespace_planning_algorithms/rrtstar.hpp>
@@ -82,8 +85,8 @@ struct PullOverStatus
   lanelet::ConstLanelets pull_over_lanes{};
   std::vector<DrivableLanes> lanes{};  // current + pull_over
   bool has_decided_path{false};
-  bool is_safe_static_objects{false};
-  bool is_safe_dynamic_objects{false};
+  bool is_safe_static_objects{false};   // current path is safe against static objects
+  bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
   bool prev_is_safe{false};
   bool has_decided_velocity{false};
   bool has_requested_approval{false};

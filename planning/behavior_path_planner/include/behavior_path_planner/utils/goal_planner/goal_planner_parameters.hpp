@@ -18,7 +18,6 @@
 
 #include "behavior_path_planner/utils/geometric_parallel_parking/geometric_parallel_parking.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner/utils/start_goal_planner_common/common_module_data.hpp"
 
 #include <freespace_planning_algorithms/abstract_algorithm.hpp>
 #include <freespace_planning_algorithms/astar_search.hpp>
@@ -105,7 +104,7 @@ struct GoalPlannerParameters
   double maximum_deceleration_for_stop;
   double maximum_jerk_for_stop;
 
-  // hysterisis parameter
+  // hysteresis parameter
   double hysteresis_factor_expand_rate;
 
   // path safety checker

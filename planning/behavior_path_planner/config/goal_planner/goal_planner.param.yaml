@@ -105,8 +105,8 @@
             margin: 1.0
 
       stop_condition:
-        maximum_deceleration: 1.0
-        maximum_jerk: 1.0
+        maximum_deceleration_for_stop: 1.0
+        maximum_jerk_for_stop: 1.0
       path_safety_check:
         # EgoPredictedPath
         ego_predicted_path:

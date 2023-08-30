@@ -220,9 +220,10 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   // stop condition
   {
-    p.maximum_deceleration =
-      node->declare_parameter<double>(base_ns + "stop_condition.maximum_deceleration");
-    p.maximum_jerk = node->declare_parameter<double>(base_ns + "stop_condition.maximum_jerk");
+    p.maximum_deceleration_for_stop =
+      node->declare_parameter<double>(base_ns + "stop_condition.maximum_deceleration_for_stop");
+    p.maximum_jerk_for_stop =
+      node->declare_parameter<double>(base_ns + "stop_condition.maximum_jerk_for_stop");
   }
 
   std::string path_safety_check_ns = "goal_planner.path_safety_check.";

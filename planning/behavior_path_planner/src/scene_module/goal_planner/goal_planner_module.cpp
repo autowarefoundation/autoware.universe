@@ -1491,6 +1491,8 @@ bool GoalPlannerModule::isSafePath() const
   const auto current_lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_path_length, std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
+  const auto & pull_over_lanes =
+    goal_planner_utils::getPullOverLanes(*(route_handler), left_side_parking_);
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_over_path.points);
   const auto & common_param = planner_data_->parameters;
   const std::pair<double, double> terminal_velocity_and_accl =
@@ -1504,10 +1506,11 @@ bool GoalPlannerModule::isSafePath() const
       ego_seg_idx);
 
   const auto & filtered_objects = utils::path_safety_checker::filterObjects(
-    dynamic_object, route_handler, current_lanes, current_pose.position, objects_filtering_params_);
+    dynamic_object, route_handler, pull_over_lanes, current_pose.position,
+    objects_filtering_params_);
 
   const auto & target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
-    current_lanes, route_handler, filtered_objects, objects_filtering_params_);
+    pull_over_lanes, route_handler, filtered_objects, objects_filtering_params_);
 
   const double hysteresis_factor =
     status_.is_safe_dynamic_objects ? 1.0 : parameters_->hysteresis_factor_expand_rate;
