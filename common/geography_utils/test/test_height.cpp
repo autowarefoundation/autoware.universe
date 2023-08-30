@@ -36,11 +36,11 @@ TEST(Tier4GeographyUtils, SameSourceTargetDatum)
 // Test case to verify valid source and target datums
 TEST(Tier4GeographyUtils, ValidSourceTargetDatum)
 {
+  // Calculated with https://www.unavco.org/software/geodetic-utilities/geoid-height-calculator/geoid-height-calculator.html
   const double height = 162.510695809;
-  const double latitude = 35.0;
-  const double longitude = 139.0;
-
-  const double target_height = -35;
+  const double latitude = 34.408092589;
+  const double longitude = -119.371255098;
+  const double target_height = 197.51;
 
   double converted_height =
     tier4_geography_utils::convert_height(height, latitude, longitude, "WGS84", "EGM2008");
@@ -57,6 +57,30 @@ TEST(Tier4GeographyUtils, InvalidSourceTargetDatum)
 
   EXPECT_THROW(
     tier4_geography_utils::convert_height(height, latitude, longitude, "INVALID1", "INVALID2"),
+    std::invalid_argument);
+}
+
+// Test case to verify invalid source datums
+TEST(Tier4GeographyUtils, InvalidSourceDatum)
+{
+  const double height = 10.0;
+  const double latitude = 35.0;
+  const double longitude = 139.0;
+
+  EXPECT_THROW(
+    tier4_geography_utils::convert_height(height, latitude, longitude, "INVALID1", "WGS84"),
+    std::invalid_argument);
+}
+
+// Test case to verify invalid target datums
+TEST(Tier4GeographyUtils, InvalidTargetDatum)
+{
+  const double height = 10.0;
+  const double latitude = 35.0;
+  const double longitude = 139.0;
+
+  EXPECT_THROW(
+    tier4_geography_utils::convert_height(height, latitude, longitude, "WGS84", "INVALID2"),
     std::invalid_argument);
 }
 
