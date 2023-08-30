@@ -274,7 +274,7 @@ void NDTScanMatcher::timer_diagnostic()
     }
     if (
       state_ptr_->count("lidar_topic_delay_time_sec") &&
-      std::stoi((*state_ptr_)["lidar_topic_delay_time_sec"]) >= lidar_topic_timeout_sec_) {
+      std::stod((*state_ptr_)["lidar_topic_delay_time_sec"]) > lidar_topic_timeout_sec_) {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       diag_status_msg.message += "lidar_topic_delay_time_sec exceed limit. ";
     }
