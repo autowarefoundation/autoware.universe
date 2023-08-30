@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gnss_poser/gnss_stat.hpp"
 #include "gnss_poser/convert.hpp"
+
+#include "gnss_poser/gnss_stat.hpp"
 
 #include <GeographicLib/Geoid.hpp>
 #include <GeographicLib/MGRS.hpp>

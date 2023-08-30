@@ -55,10 +55,9 @@ double convert_height(
   if (conversion_map.find(key) != conversion_map.end()) {
     return conversion_map[key](height, latitude, longitude);
   } else {
-    std::string error_message = "Invalid conversion types: " + 
-                                std::string(source_vertical_datum.c_str()) + 
-                                " to " + 
-                                std::string(target_vertical_datum.c_str());
+    std::string error_message =
+      "Invalid conversion types: " + std::string(source_vertical_datum.c_str()) + " to " +
+      std::string(target_vertical_datum.c_str());
 
     throw std::invalid_argument(error_message);
   }

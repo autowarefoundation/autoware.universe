@@ -15,9 +15,9 @@
 #define GNSS_POSER__CONVERT_HPP_
 
 #include "gnss_poser/gnss_stat.hpp"
+#include "tier4_geography_utils/height.hpp"
 
 #include <rclcpp/logging.hpp>
-#include "tier4_geography_utils/height.hpp"
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
