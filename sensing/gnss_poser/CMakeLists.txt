@@ -23,7 +23,6 @@ set(GNSS_POSER_HEADERS
 
 ament_auto_add_library(gnss_poser_node SHARED
   src/gnss_poser_core.cpp
-  src/convert.cpp
   ${GNSS_POSER_HEADERS}
 )
 
