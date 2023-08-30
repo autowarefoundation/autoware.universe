@@ -113,6 +113,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<std::vector<double>>(ns + ".occlusion.possible_object_bbox");
   ip.occlusion.ignore_parked_vehicle_speed_threshold =
     node.declare_parameter<double>(ns + ".occlusion.ignore_parked_vehicle_speed_threshold");
+  ip.occlusion.stop_release_margin_time =
+    node.declare_parameter<double>(ns + ".occlusion.stop_release_margin_time");
 }
 
 void IntersectionModuleManager::launchNewModules(
