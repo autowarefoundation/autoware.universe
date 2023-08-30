@@ -43,7 +43,7 @@ enum class MGRSPrecision {
 
 GNSSStat NavSatFix2UTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const rclcpp::Logger & logger,
-  const std::string & vertical_datum)
+  const std::string & target_vertical_datum)
 {
   GNSSStat utm;
 
@@ -51,15 +51,9 @@ GNSSStat NavSatFix2UTM(
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm.zone, utm.east_north_up, utm.x,
       utm.y);
-    std::string target_height_system;
-    if (height_system == 0) {
-      target_height_system = "EGM2008";
-    } else {
-      target_height_system = "WGS84";
-    }
     utm.z = geography_utils::convert_height(
       nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, "WGS84",
-      target_height_system);
+      target_vertical_datum);
     utm.latitude = nav_sat_fix_msg.latitude;
     utm.longitude = nav_sat_fix_msg.longitude;
     utm.altitude = nav_sat_fix_msg.altitude;
@@ -72,7 +66,7 @@ GNSSStat NavSatFix2UTM(
 GNSSStat NavSatFix2LocalCartesianUTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
   sensor_msgs::msg::NavSatFix nav_sat_fix_origin, const rclcpp::Logger & logger,
-  const std::string & vertical_datum)
+  const std::string & target_vertical_datum)
 {
   GNSSStat utm_local;
   try {
@@ -82,15 +76,9 @@ GNSSStat NavSatFix2LocalCartesianUTM(
       nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, utm_origin.zone,
       utm_origin.east_north_up, utm_origin.x, utm_origin.y);
 
-    std::string target_height_system;
-    if (height_system == 0) {
-      target_height_system = "EGM2008";
-    } else {
-      target_height_system = "WGS84";
-    }
     utm_origin.z = geography_utils::convert_height(
       nav_sat_fix_origin.altitude, nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude,
-      "WGS84", target_height_system);
+      "WGS84", target_vertical_datum);
 
     // individual coordinates of global coordinate system
     double global_x = 0.0;
@@ -106,7 +94,7 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     utm_local.y = global_y - utm_origin.y;
     utm_local.z = geography_utils::convert_height(
                     nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude,
-                    "WGS84", target_height_system) -
+                    "WGS84", target_vertical_datum) -
                   utm_origin.z;
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(
