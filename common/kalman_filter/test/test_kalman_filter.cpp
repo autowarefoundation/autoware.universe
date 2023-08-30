@@ -16,7 +16,6 @@
 
 #include <gtest/gtest.h>
 
-
 TEST(kalman_filter, kf)
 {
   KalmanFilter kf_;
@@ -52,12 +51,13 @@ TEST(kalman_filter, kf)
 
   // check
   Eigen::MatrixXd x_predict_expected = A_t * x_t + B_t * u_t;
+  Eigen::MatrixXd P_predict_expected = A_t * P_t * A_t.transpose() + Q_t;
 
   Eigen::MatrixXd x_predict;
   kf_.getX(x_predict);
 
-  EXPECT_NEAR(x_predict(0, 0), x_predict_expected(0, 0), 1e-3);
-  EXPECT_NEAR(x_predict(1, 0), x_predict_expected(1, 0), 1e-3);
+  EXPECT_NEAR(x_predict(0, 0), x_predict_expected(0, 0), 1e-5);
+  EXPECT_NEAR(x_predict(1, 0), x_predict_expected(1, 0), 1e-5);
 
   // update
   Eigen::MatrixXd y_t(2, 1);
@@ -65,7 +65,7 @@ TEST(kalman_filter, kf)
   EXPECT_TRUE(kf_.update(y_t));
 
   // check
-  const Eigen::MatrixXd PCT_t = P_t * C_t.transpose();
+  const Eigen::MatrixXd PCT_t = P_predict_expected * C_t.transpose();
   const Eigen::MatrixXd K_t = PCT_t * ((R_t + C_t * PCT_t).inverse());
   const Eigen::MatrixXd y_pred = C_t * x_predict_expected;
   Eigen::MatrixXd x_update_expected = x_predict_expected + K_t * (y_t - y_pred);
@@ -73,8 +73,8 @@ TEST(kalman_filter, kf)
   Eigen::MatrixXd x_update;
   kf_.getX(x_update);
 
-  EXPECT_NEAR(x_update(0, 0), x_update_expected(0, 0), 1e-3); 
-  EXPECT_NEAR(x_update(1, 0), x_update_expected(1, 0), 1e-3);
+  EXPECT_NEAR(x_update(0, 0), x_update_expected(0, 0), 1e-5); 
+  EXPECT_NEAR(x_update(1, 0), x_update_expected(1, 0), 1e-5);
 
 }
 
