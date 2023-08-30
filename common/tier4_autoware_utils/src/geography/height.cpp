@@ -14,6 +14,9 @@
 
 #include "tier4_autoware_utils/geography/height.hpp"
 
+#include <GeographicLib/Geoid.hpp>
+
+#include <string>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -26,22 +29,26 @@ double convert_wgs84_to_egm2008(
   const double height, [[maybe_unused]] const double latitude,
   [[maybe_unused]] const double longitude)
 {
-  return height;
+  double converted_height{0.0};
+  GeographicLib::Geoid egm2008("egm2008-1");
+  converted_height = egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::ELLIPSOIDTOGEOID);
+  return converted_height;
 }
 
 double convert_egm2008_to_wgs84(
   const double height, [[maybe_unused]] const double latitude,
   [[maybe_unused]] const double longitude)
 {
-  return height;
+  double converted_height{0.0};
+  GeographicLib::Geoid egm2008("egm2008-1");
+  converted_height = egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::GEOIDTOELLIPSOID);
+  return converted_height;
 }
 
 double convert_height(
   const double height, const double latitude, const double longitude,
   const std::string & source_vertical_datum, const std::string & target_vertical_datum)
 {
-  // (void)latitude; (void)longitude; (void)source_vertical_datum; (void)target_vertical_datum;
-  // (void)height; return 0;
   if (source_vertical_datum == target_vertical_datum) {
     return height;
   }
