@@ -20,9 +20,9 @@
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 #include <rclcpp/logging.hpp>
+#include <tier4_autoware_utils/geography/height.hpp>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <tier4_autoware_utils/geography/height.hpp>
 
 #include <string>
 
@@ -50,14 +50,16 @@ GNSSStat NavSatFix2UTM(
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm.zone, utm.east_north_up, utm.x,
       utm.y);
-    
+
     std::string target_height_system;
     if (height_system == 0) {
       target_height_system = "EGM2008";
     } else {
       target_height_system = "WGS84";
     }
-    utm.z = tier4_autoware_utils::convert_height(nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, "WGS84", target_height_system);
+    utm.z = tier4_autoware_utils::convert_height(
+      nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, "WGS84",
+      target_height_system);
     utm.latitude = nav_sat_fix_msg.latitude;
     utm.longitude = nav_sat_fix_msg.longitude;
     utm.altitude = nav_sat_fix_msg.altitude;
@@ -83,7 +85,9 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     } else {
       target_height_system = "WGS84";
     }
-    utm_origin.z = tier4_autoware_utils::convert_height(nav_sat_fix_origin.altitude, nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, "WGS84", target_height_system);
+    utm_origin.z = tier4_autoware_utils::convert_height(
+      nav_sat_fix_origin.altitude, nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude,
+      "WGS84", target_height_system);
 
     // individual coordinates of global coordinate system
     double global_x = 0.0;
@@ -97,7 +101,10 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     // individual coordinates of local coordinate system
     utm_local.x = global_x - utm_origin.x;
     utm_local.y = global_y - utm_origin.y;
-    utm_local.z = tier4_autoware_utils::convert_height(nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, "WGS84", target_height_system) - utm_origin.z;
+    utm_local.z = tier4_autoware_utils::convert_height(
+                    nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude,
+                    "WGS84", target_height_system) -
+                  utm_origin.z;
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(
       logger, "Failed to convert from LLH to UTM in local coordinates" << err.what());

@@ -12,21 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TIER4_AUTOWARE_UTILS__GROGRAPHY__HEIGHT_HPP_
+#ifndef TIER4_AUTOWARE_UTILS__GEOGRAPHY__HEIGHT_HPP_
 #define TIER4_AUTOWARE_UTILS__GEOGRAPHY__HEIGHT_HPP_
 
-#include <string>
 #include <map>
-#include <utility>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace tier4_autoware_utils
 {
 
-typedef double (*HeightConversionFunction)(const double height, [[maybe_unused]] const double latitude, [[maybe_unused]] const double longitude);
-double convert_wgs84_to_egm2008(const double height, [[maybe_unused]] const double latitude, [[maybe_unused]] const double longitude);
-double convert_egm2008_to_wgs84(const double height, [[maybe_unused]] const double latitude, [[maybe_unused]] const double longitude);
-double convert_height(const double height, const double latitude, const double longitude, const std::string & source_vertical_datum, const std::string & target_vertical_datum);
+typedef double (*HeightConversionFunction)(
+  const double height, [[maybe_unused]] const double latitude,
+  [[maybe_unused]] const double longitude);
+double convert_wgs84_to_egm2008(
+  const double height, [[maybe_unused]] const double latitude,
+  [[maybe_unused]] const double longitude);
+double convert_egm2008_to_wgs84(
+  const double height, [[maybe_unused]] const double latitude,
+  [[maybe_unused]] const double longitude);
+double convert_height(
+  const double height, const double latitude, const double longitude,
+  const std::string & source_vertical_datum, const std::string & target_vertical_datum);
 
 }  // namespace tier4_autoware_utils
 

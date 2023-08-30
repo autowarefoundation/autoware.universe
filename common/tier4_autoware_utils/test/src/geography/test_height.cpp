@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "tier4_autoware_utils/geography/height.hpp"
+
 #include <gtest/gtest.h>
 
 #include <string>
