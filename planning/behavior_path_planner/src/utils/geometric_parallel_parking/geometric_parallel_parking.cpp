@@ -96,6 +96,12 @@ PathWithLaneId GeometricParallelParking::getArcPath() const
   return path;
 }
 
+std::vector<std::pair<double, double>> GeometricParallelParking::getPairsTerminalVelocityAndAccel()
+  const
+{
+  return pairs_terminal_velocity_and_accel_;
+}
+
 bool GeometricParallelParking::isParking() const
 {
   return current_path_idx_ > 0;
@@ -163,6 +169,7 @@ void GeometricParallelParking::clearPaths()
   current_path_idx_ = 0;
   arc_paths_.clear();
   paths_.clear();
+  pairs_terminal_velocity_and_accel_.clear();
 }
 
 bool GeometricParallelParking::planPullOver(
@@ -182,6 +189,7 @@ bool GeometricParallelParking::planPullOver(
   if (is_forward) {
     // When turning forward to the right, the front left goes out,
     // so reduce the steer angle at that time for seach no lane departure path.
+    // TODO(Sugahara): define in the config
     constexpr double start_pose_offset = 0.0;
     constexpr double min_steer_rad = 0.05;
     constexpr double steer_interval = 0.1;
@@ -480,6 +488,19 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   // generate arc path vector
   paths_.push_back(path_turn_left);
   paths_.push_back(path_turn_right);
+
+  // set terminal velocity and acceleration(temporary implementation)
+  if (is_forward) {
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.forward_parking_velocity, 0.0));
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.forward_parking_velocity, 0.0));
+  } else {
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.backward_parking_velocity, 0.0));
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.backward_parking_velocity, 0.0));
+  }
 
   // set pull_over start and end pose
   // todo: make start and end pose for pull_out

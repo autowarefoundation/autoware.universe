@@ -55,8 +55,7 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
   const Pose end_pose =
     use_back_ ? goal_pose
               : tier4_autoware_utils::calcOffsetPose(goal_pose, -straight_distance, 0.0, 0.0);
-  const bool found_path = planner_->makePlan(current_pose, end_pose);
-  if (!found_path) {
+  if (!planner_->makePlan(current_pose, end_pose)) {
     return {};
   }
 
@@ -77,6 +76,7 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
 
   // remove points which are near the goal
   PathWithLaneId & last_path = partial_paths.back();
+  // todo: define as parameter
   const double th_goal_distance = 1.0;
   for (auto it = last_path.points.begin(); it != last_path.points.end(); ++it) {
     size_t index = std::distance(last_path.points.begin(), it);
@@ -114,17 +114,20 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
   }
 
   utils::correctDividedPathVelocity(partial_paths);
+  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel{};
+  pairs_terminal_velocity_and_accel.push_back(std::make_pair(velocity_, 0));
+  pairs_terminal_velocity_and_accel.push_back(std::make_pair(-velocity_, 0));
 
+  // Check if driving forward for each path, return empty if not
   for (auto & path : partial_paths) {
-    const auto is_driving_forward = motion_utils::isDrivingForward(path.points);
-    if (!is_driving_forward) {
-      // path points is less than 2
+    if (!motion_utils::isDrivingForward(path.points)) {
       return {};
     }
   }
 
   PullOverPath pull_over_path{};
   pull_over_path.partial_paths = partial_paths;
+  pull_over_path.pairs_terminal_velocity_and_accel = pairs_terminal_velocity_and_accel;
   pull_over_path.start_pose = current_pose;
   pull_over_path.end_pose = goal_pose;
   pull_over_path.type = getPlannerType();
