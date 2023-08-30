@@ -82,7 +82,7 @@ struct StartPlannerParameters
   double maximum_deceleration_for_stop;
   double maximum_jerk_for_stop;
 
-  // hysterisis parameter
+  // hysteresis parameter
   double hysteresis_factor_expand_rate;
 
   // path safety checker
