@@ -20,6 +20,7 @@
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 #include <component_interface_specs/map.hpp>
+#include <geography_utils/height.hpp>
 #include <rclcpp/logging.hpp>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
@@ -40,23 +41,6 @@ enum class MGRSPrecision {
   _100MICRO_METER = 9,
 };
 
-double convertHeight2EGM2008(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const std::string & vertical_datum)
-{
-  double height{0.0};
-  if (vertical_datum == map_interface::MapProjectorInfo::Message::WGS84) {
-    GeographicLib::Geoid egm2008("egm2008-1");
-    height = egm2008.ConvertHeight(
-      nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, nav_sat_fix_msg.altitude,
-      GeographicLib::Geoid::ELLIPSOIDTOGEOID);
-  } else if (vertical_datum == map_interface::MapProjectorInfo::Message::EGM2008) {
-    height = nav_sat_fix_msg.altitude;
-  } else {
-    throw std::runtime_error("Invalid vertical datum type: " + vertical_datum);
-  }
-  return height;
-}
-
 GNSSStat NavSatFix2UTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const rclcpp::Logger & logger,
   const std::string & vertical_datum)
@@ -67,7 +51,15 @@ GNSSStat NavSatFix2UTM(
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm.zone, utm.east_north_up, utm.x,
       utm.y);
-    utm.z = convertHeight2EGM2008(nav_sat_fix_msg, vertical_datum);
+    std::string target_height_system;
+    if (height_system == 0) {
+      target_height_system = "EGM2008";
+    } else {
+      target_height_system = "WGS84";
+    }
+    utm.z = geography_utils::convert_height(
+      nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, "WGS84",
+      target_height_system);
     utm.latitude = nav_sat_fix_msg.latitude;
     utm.longitude = nav_sat_fix_msg.longitude;
     utm.altitude = nav_sat_fix_msg.altitude;
@@ -76,6 +68,7 @@ GNSSStat NavSatFix2UTM(
   }
   return utm;
 }
+
 GNSSStat NavSatFix2LocalCartesianUTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
   sensor_msgs::msg::NavSatFix nav_sat_fix_origin, const rclcpp::Logger & logger,
@@ -88,7 +81,16 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, utm_origin.zone,
       utm_origin.east_north_up, utm_origin.x, utm_origin.y);
-    utm_origin.z = convertHeight2EGM2008(nav_sat_fix_origin, vertical_datum);
+
+    std::string target_height_system;
+    if (height_system == 0) {
+      target_height_system = "EGM2008";
+    } else {
+      target_height_system = "WGS84";
+    }
+    utm_origin.z = geography_utils::convert_height(
+      nav_sat_fix_origin.altitude, nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude,
+      "WGS84", target_height_system);
 
     // individual coordinates of global coordinate system
     double global_x = 0.0;
@@ -102,13 +104,17 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     // individual coordinates of local coordinate system
     utm_local.x = global_x - utm_origin.x;
     utm_local.y = global_y - utm_origin.y;
-    utm_local.z = convertHeight2EGM2008(nav_sat_fix_msg, vertical_datum) - utm_origin.z;
+    utm_local.z = geography_utils::convert_height(
+                    nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude,
+                    "WGS84", target_height_system) -
+                  utm_origin.z;
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(
       logger, "Failed to convert from LLH to UTM in local coordinates" << err.what());
   }
   return utm_local;
 }
+
 GNSSStat UTM2MGRS(
   const GNSSStat & utm, const MGRSPrecision & precision, const rclcpp::Logger & logger)
 {

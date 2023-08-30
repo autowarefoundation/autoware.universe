@@ -17,6 +17,7 @@
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
   <depend>geographiclib</depend>
+  <depend>geography_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
