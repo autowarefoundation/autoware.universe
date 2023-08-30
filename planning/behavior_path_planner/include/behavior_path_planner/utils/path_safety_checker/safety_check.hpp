@@ -43,15 +43,18 @@ namespace behavior_path_planner::utils::path_safety_checker
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_perception_msgs::msg::Shape;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using marker_utils::CollisionCheckDebug;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using vehicle_info_util::VehicleInfo;
 
 namespace bg = boost::geometry;
 
+bool isTargetObjectFront(
+  const geometry_msgs::msg::Pose & ego_pose, const Polygon2d & obj_polygon,
+  const vehicle_info_util::VehicleInfo & vehicle_info);
 bool isTargetObjectFront(
   const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
   const vehicle_info_util::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon);
@@ -63,10 +66,12 @@ Polygon2d createExtendedPolygon(
   const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin,
   CollisionCheckDebug & debug);
 
+PredictedPath convertToPredictedPath(
+  const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);
+
 double calcRssDistance(
   const double front_object_velocity, const double rear_object_velocity,
-  const double front_object_deceleration, const double rear_object_deceleration,
-  const BehaviorPathPlannerParameters & params);
+  const RSSparams & rss_params);
 
 double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
@@ -98,8 +103,8 @@ bool checkCollision(
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
-  const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
-  const double rear_object_deceleration, CollisionCheckDebug & debug);
+  const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
+  const double hysteresis_factor, CollisionCheckDebug & debug);
 
 /**
  * @brief Check collision between ego path footprints with extra longitudinal stopping margin and
