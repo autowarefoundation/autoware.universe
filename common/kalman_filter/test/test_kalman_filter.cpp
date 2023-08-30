@@ -41,15 +41,15 @@ TEST(kalman_filter, kf)
   Eigen::MatrixXd B_t(2, 2);
   B_t << 1, 0, 0, 1;
 
-  // init
+  // Initialize the filter and check if initialization was successful
   EXPECT_TRUE(kf_.init(x_t, A_t, B_t, C_t, Q_t, R_t, P_t));
 
-  // predict
+  // Perform prediction
   Eigen::MatrixXd u_t(2, 1); 
   u_t << 0.1, 0.1;
   EXPECT_TRUE(kf_.predict(u_t));
 
-  // check
+  // Check the updated state
   Eigen::MatrixXd x_predict_expected = A_t * x_t + B_t * u_t;
   Eigen::MatrixXd P_predict_expected = A_t * P_t * A_t.transpose() + Q_t;
 
@@ -59,12 +59,12 @@ TEST(kalman_filter, kf)
   EXPECT_NEAR(x_predict(0, 0), x_predict_expected(0, 0), 1e-5);
   EXPECT_NEAR(x_predict(1, 0), x_predict_expected(1, 0), 1e-5);
 
-  // update
+  // Perform update
   Eigen::MatrixXd y_t(2, 1);
   y_t << 1.05, 2.05;
   EXPECT_TRUE(kf_.update(y_t));
 
-  // check
+  // Check the updated state
   const Eigen::MatrixXd PCT_t = P_predict_expected * C_t.transpose();
   const Eigen::MatrixXd K_t = PCT_t * ((R_t + C_t * PCT_t).inverse());
   const Eigen::MatrixXd y_pred = C_t * x_predict_expected;
