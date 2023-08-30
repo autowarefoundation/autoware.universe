@@ -406,13 +406,14 @@ void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
 }
 
 double calcEnvelopeOverhangDistance(
-  const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose)
+  const ObjectData & object_data, const PathWithLaneId & path, Point & overhang_pose)
 {
   double largest_overhang = isOnRight(object_data) ? -100.0 : 100.0;  // large number
 
   for (const auto & p : object_data.envelope_poly.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    const auto lateral = tier4_autoware_utils::calcLateralDeviation(base_pose, point);
+    const auto idx = findFirstNearestIndex(path.points, point);
+    const auto lateral = calcLateralDeviation(getPose(path.points.at(idx)), point);
 
     const auto & overhang_pose_on_right = [&overhang_pose, &largest_overhang, &point, &lateral]() {
       if (lateral > largest_overhang) {
