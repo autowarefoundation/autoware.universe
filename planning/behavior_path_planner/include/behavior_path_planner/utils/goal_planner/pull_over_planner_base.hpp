@@ -26,6 +26,7 @@
 #include <boost/optional.hpp>
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
