@@ -16,7 +16,6 @@
 
 #include <GeographicLib/Geoid.hpp>
 
-#include <string>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -31,7 +30,8 @@ double convert_wgs84_to_egm2008(
 {
   double converted_height{0.0};
   GeographicLib::Geoid egm2008("egm2008-1");
-  converted_height = egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::ELLIPSOIDTOGEOID);
+  converted_height =
+    egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::ELLIPSOIDTOGEOID);
   return converted_height;
 }
 
@@ -41,7 +41,8 @@ double convert_egm2008_to_wgs84(
 {
   double converted_height{0.0};
   GeographicLib::Geoid egm2008("egm2008-1");
-  converted_height = egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::GEOIDTOELLIPSOID);
+  converted_height =
+    egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::GEOIDTOELLIPSOID);
   return converted_height;
 }
 
