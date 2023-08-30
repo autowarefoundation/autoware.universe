@@ -164,10 +164,6 @@ std::vector<PathWithLaneId> GeometricParallelParking::generatePullOverPaths(
   return paths;
 }
 
-void GeometricParallelParking::getPairsTerminalVelocityAndAccel()
-{
-}
-
 void GeometricParallelParking::clearPaths()
 {
   current_path_idx_ = 0;
