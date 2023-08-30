@@ -26,9 +26,10 @@ TEST(Tier4GeographyUtils, SameSourceTargetDatum)
   const double latitude = 35.0;
   const double longitude = 139.0;
   const std::string datum = "WGS84";
-  
-  double converted_height = tier4_geography_utils::convert_height(height, latitude, longitude, datum, datum);
-  
+
+  double converted_height =
+    tier4_geography_utils::convert_height(height, latitude, longitude, datum, datum);
+
   EXPECT_DOUBLE_EQ(height, converted_height);
 }
 
@@ -38,9 +39,10 @@ TEST(Tier4GeographyUtils, ValidSourceTargetDatum)
   const double height = 10.0;
   const double latitude = 35.0;
   const double longitude = 139.0;
-  
-  double converted_height = tier4_geography_utils::convert_height(height, latitude, longitude, "WGS84", "EGM2008");
-  
+
+  double converted_height =
+    tier4_geography_utils::convert_height(height, latitude, longitude, "WGS84", "EGM2008");
+
   // As this is a conversion, just verify that it does not return the original height
   // For precise testing, you'll need the exact expected values
   EXPECT_NE(height, converted_height);
@@ -52,14 +54,13 @@ TEST(Tier4GeographyUtils, InvalidSourceTargetDatum)
   const double height = 10.0;
   const double latitude = 35.0;
   const double longitude = 139.0;
-  
+
   EXPECT_THROW(
     tier4_geography_utils::convert_height(height, latitude, longitude, "INVALID1", "INVALID2"),
-    std::invalid_argument
-  );
+    std::invalid_argument);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
