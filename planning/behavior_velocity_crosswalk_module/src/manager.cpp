@@ -83,8 +83,14 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     node.declare_parameter<std::vector<double>>(ns + ".pass_judge.ego_pass_later_margin_y");
   cp.ego_pass_later_additional_margin =
     node.declare_parameter<double>(ns + ".pass_judge.ego_pass_later_additional_margin");
-  cp.max_offset_to_crosswalk_for_yield =
-    node.declare_parameter<double>(ns + ".pass_judge.max_offset_to_crosswalk_for_yield");
+  cp.max_offset_to_crosswalk_for_yield = node.declare_parameter<double>(
+    ns + ".pass_judge.no_stop_decision.max_offset_to_crosswalk_for_yield");
+  cp.min_acc_for_no_stop_decision =
+    node.declare_parameter<double>(ns + ".pass_judge.no_stop_decision.min_acc");
+  cp.max_jerk_for_no_stop_decision =
+    node.declare_parameter<double>(ns + ".pass_judge.no_stop_decision.max_jerk");
+  cp.min_jerk_for_no_stop_decision =
+    node.declare_parameter<double>(ns + ".pass_judge.no_stop_decision.min_jerk");
   cp.stop_object_velocity =
     node.declare_parameter<double>(ns + ".pass_judge.stop_object_velocity_threshold");
   cp.min_object_velocity = node.declare_parameter<double>(ns + ".pass_judge.min_object_velocity");
