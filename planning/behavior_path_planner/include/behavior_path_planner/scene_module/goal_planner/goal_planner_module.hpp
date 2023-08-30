@@ -137,7 +137,6 @@ private:
 
   PullOverStatus status_;
 
-
   std::shared_ptr<GoalPlannerParameters> parameters_;
 
   // planner
