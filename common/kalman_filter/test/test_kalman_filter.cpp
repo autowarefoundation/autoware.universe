@@ -45,7 +45,7 @@ TEST(kalman_filter, kf)
   EXPECT_TRUE(kf_.init(x_t, A_t, B_t, C_t, Q_t, R_t, P_t));
 
   // Perform prediction
-  Eigen::MatrixXd u_t(2, 1); 
+  Eigen::MatrixXd u_t(2, 1);
   u_t << 0.1, 0.1;
   EXPECT_TRUE(kf_.predict(u_t));
 
@@ -56,7 +56,7 @@ TEST(kalman_filter, kf)
   Eigen::MatrixXd x_predict;
   kf_.getX(x_predict);
   Eigen::MatrixXd P_predict;
-  kf_.getP(P_predict); 
+  kf_.getP(P_predict);
 
   EXPECT_NEAR(x_predict(0, 0), x_predict_expected(0, 0), 1e-5);
   EXPECT_NEAR(x_predict(1, 0), x_predict_expected(1, 0), 1e-5);
@@ -80,17 +80,15 @@ TEST(kalman_filter, kf)
   Eigen::MatrixXd P_update;
   kf_.getP(P_update);
 
-  EXPECT_NEAR(x_update(0, 0), x_update_expected(0, 0), 1e-5); 
+  EXPECT_NEAR(x_update(0, 0), x_update_expected(0, 0), 1e-5);
   EXPECT_NEAR(x_update(1, 0), x_update_expected(1, 0), 1e-5);
-  EXPECT_NEAR(P_update(0, 0), P_update_expected(0, 0), 1e-5); 
+  EXPECT_NEAR(P_update(0, 0), P_update_expected(0, 0), 1e-5);
   EXPECT_NEAR(P_update(1, 1), P_update_expected(1, 1), 1e-5);
-
 }
 
-int main(int argc, char * argv[]) 
+int main(int argc, char * argv[])
 {
   testing::InitGoogleTest(&argc, argv);
   bool result = RUN_ALL_TESTS();
   return result;
-  
 }
