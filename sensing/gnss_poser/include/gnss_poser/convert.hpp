@@ -19,7 +19,6 @@
 #include <GeographicLib/Geoid.hpp>
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
-#include <component_interface_specs/map.hpp>
 #include <geography_utils/height.hpp>
 #include <rclcpp/logging.hpp>
 
