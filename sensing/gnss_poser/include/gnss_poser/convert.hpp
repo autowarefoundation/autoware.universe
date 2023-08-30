@@ -19,8 +19,8 @@
 #include <GeographicLib/Geoid.hpp>
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
-#include <rclcpp/logging.hpp>
 #include <geography_utils/height.hpp>
+#include <rclcpp/logging.hpp>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
