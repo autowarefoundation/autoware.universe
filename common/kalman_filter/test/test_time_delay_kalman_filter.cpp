@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
 #include "kalman_filter/time_delay_kalman_filter.hpp"
 
-//TODO (cynthia): Stuff.
+#include <gtest/gtest.h>
+
+// TODO (cynthia): Stuff.

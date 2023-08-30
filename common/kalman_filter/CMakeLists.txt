@@ -22,7 +22,7 @@ ament_auto_add_library(kalman_filter SHARED
 if(BUILD_TESTING)
   file(GLOB_RECURSE test_files test/*.cpp)
   ament_add_ros_isolated_gtest(test_kalman_filter ${test_files})
-  
+
   target_link_libraries(test_kalman_filter kalman_filter)
 endif()
 
