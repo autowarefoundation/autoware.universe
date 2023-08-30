@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TIER4_AUTOWARE_UTILS__GEOGRAPHY__HEIGHT_HPP_
+#ifndef TIER4_AUTOWARE_UTILS__GROGRAPHY__HEIGHT_HPP_
 #define TIER4_AUTOWARE_UTILS__GEOGRAPHY__HEIGHT_HPP_
 
 #include <string>
@@ -24,33 +24,9 @@ namespace tier4_autoware_utils
 {
 
 typedef double (*HeightConversionFunction)(const double height, [[maybe_unused]] const double latitude, [[maybe_unused]] const double longitude);
-
-double convert_wgs84_to_egm2008(const double height, [[maybe_unused]] const double latitude, [[maybe_unused]] const double longitude)
-{
-  return height;
-}
-
-double convert_egm2008_to_wgs84(const double height, [[maybe_unused]] const double latitude, [[maybe_unused]] const double longitude)
-{
-  return height;
-}
-
-double convert_height(const double height, const double latitude, const double longitude, const std::string & source_vertical_datum, const std::string & target_vertical_datum)
-{
-  if (source_vertical_datum == target_vertical_datum) {
-    return height;
-  }
-  std::map<std::pair<std::string, std::string>, HeightConversionFunction> conversion_map;
-  conversion_map[{"WGS84", "EGM2008"}] = convert_wgs84_to_egm2008;
-  conversion_map[{"EGM2008", "WGS84"}] = convert_egm2008_to_wgs84;
-
-  auto key = std::make_pair(source_vertical_datum, target_vertical_datum);
-  if (conversion_map.find(key) != conversion_map.end()) {
-    return conversion_map[key](height, latitude, longitude);
-  } else {
-    throw std::invalid_argument("Invalid conversion types");
-  }
-}
+double convert_wgs84_to_egm2008(const double height, [[maybe_unused]] const double latitude, [[maybe_unused]] const double longitude);
+double convert_egm2008_to_wgs84(const double height, [[maybe_unused]] const double latitude, [[maybe_unused]] const double longitude);
+double convert_height(const double height, const double latitude, const double longitude, const std::string & source_vertical_datum, const std::string & target_vertical_datum);
 
 }  // namespace tier4_autoware_utils
 
