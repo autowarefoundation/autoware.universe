@@ -1014,7 +1014,7 @@ void filterTargetObjects(
         const auto lines =
           rh->getFurthestLinestring(target_lanelet, get_right, get_left, get_opposite, true);
         const auto & line = isOnRight(o) ? lines.back() : lines.front();
-        const auto d = distance2d(to2D(overhang_basic_pose), to2D(line.basicLineString()));
+        const auto d = boost::geometry::distance(o.envelope_poly, to2D(line.basicLineString()));
         if (d < o.to_road_shoulder_distance) {
           o.to_road_shoulder_distance = d;
           target_line = line;
