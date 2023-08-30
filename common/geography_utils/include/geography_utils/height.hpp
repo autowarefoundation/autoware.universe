@@ -20,17 +20,22 @@
 #include <string>
 #include <utility>
 
-namespace tier4_geography_utils
+namespace geography_utils
 {
 
 typedef double (*HeightConversionFunction)(
-  const double height, const double latitude, const double longitude);
-double convert_wgs84_to_egm2008(const double height, const double latitude, const double longitude);
-double convert_egm2008_to_wgs84(const double height, const double latitude, const double longitude);
+  const double height, const double latitude,
+  const double longitude);
+double convert_wgs84_to_egm2008(
+  const double height, const double latitude,
+  const double longitude);
+double convert_egm2008_to_wgs84(
+  const double height, const double latitude,
+  const double longitude);
 double convert_height(
   const double height, const double latitude, const double longitude,
   const std::string & source_vertical_datum, const std::string & target_vertical_datum);
 
-}  // namespace tier4_geography_utils
+}  // namespace geography_utils
 
 #endif  // GEOGRAPHY_UTILS__HEIGHT_HPP_
