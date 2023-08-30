@@ -98,6 +98,7 @@ public:
   PathWithLaneId getCurrentPath() const;
   PathWithLaneId getFullPath() const;
   PathWithLaneId getArcPath() const;
+  std::vector<std::pair<double, double>> getPairsTerminalVelocityAndAccel() const;
   Pose getCr() const { return Cr_; }
   Pose getCl() const { return Cl_; }
   Pose getStartPose() const { return start_pose_; }
