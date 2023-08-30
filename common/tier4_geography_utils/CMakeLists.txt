@@ -4,8 +4,6 @@ project(tier4_geography_utils)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(Boost REQUIRED)
-
 # GeographicLib
 find_package(PkgConfig)
 find_path(GeographicLib_INCLUDE_DIR GeographicLib/Config.h
