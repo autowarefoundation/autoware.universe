@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__UTIL_HPP_
-#define BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__UTIL_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__UTILS_HPP_
+#define BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__UTILS_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/goal_planner/goal_planner_parameters.hpp"
@@ -73,4 +73,4 @@ std::pair<double, double> getPairsTerminalVelocityAndAccel(
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common
 
-#endif  // BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__UTIL_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__UTILS_HPP_
