@@ -96,6 +96,12 @@ PathWithLaneId GeometricParallelParking::getArcPath() const
   return path;
 }
 
+std::vector<std::pair<double, double>> GeometricParallelParking::getPairsTerminalVelocityAndAccel()
+  const
+{
+  return pairs_terminal_velocity_and_accel_;
+}
+
 bool GeometricParallelParking::isParking() const
 {
   return current_path_idx_ > 0;
