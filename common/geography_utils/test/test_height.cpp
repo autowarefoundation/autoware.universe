@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "geography_utils/height.hpp"
+#include <geography_utils/height.hpp>
 
 #include <gtest/gtest.h>
 
