@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TIER4_AUTOWARE_UTILS__GEOGRAPHY__HEIGHT_HPP_
-#define TIER4_AUTOWARE_UTILS__GEOGRAPHY__HEIGHT_HPP_
+#ifndef TIER4_GEOGRAPHY_UTILS__HEIGHT_HPP_
+#define TIER4_GEOGRAPHY_UTILS__HEIGHT_HPP_
 
 #include <map>
 #include <stdexcept>
 #include <string>
 #include <utility>
 
-namespace tier4_autoware_utils
+namespace tier4_geography_utils
 {
 
 typedef double (*HeightConversionFunction)(
@@ -36,6 +36,6 @@ double convert_height(
   const double height, const double latitude, const double longitude,
   const std::string & source_vertical_datum, const std::string & target_vertical_datum);
 
-}  // namespace tier4_autoware_utils
+}  // namespace tier4_geography_utils
 
-#endif  // TIER4_AUTOWARE_UTILS__GEOGRAPHY__HEIGHT_HPP_
+#endif  // TIER4_GEOGRAPHY_UTILS__HEIGHT_HPP_

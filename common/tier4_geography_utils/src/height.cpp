@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tier4_autoware_utils/geography/height.hpp"
+#include "tier4_geography_utils/height.hpp"
 
 #include <GeographicLib/Geoid.hpp>
 
@@ -21,29 +21,23 @@
 #include <string>
 #include <utility>
 
-namespace tier4_autoware_utils
+namespace tier4_geography_utils
 {
 
 double convert_wgs84_to_egm2008(
   const double height, [[maybe_unused]] const double latitude,
   [[maybe_unused]] const double longitude)
 {
-  double converted_height{0.0};
   GeographicLib::Geoid egm2008("egm2008-1");
-  converted_height =
-    egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::ELLIPSOIDTOGEOID);
-  return converted_height;
+  return egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::ELLIPSOIDTOGEOID);
 }
 
 double convert_egm2008_to_wgs84(
   const double height, [[maybe_unused]] const double latitude,
   [[maybe_unused]] const double longitude)
 {
-  double converted_height{0.0};
   GeographicLib::Geoid egm2008("egm2008-1");
-  converted_height =
-    egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::GEOIDTOELLIPSOID);
-  return converted_height;
+  return egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::GEOIDTOELLIPSOID);
 }
 
 double convert_height(
@@ -61,8 +55,13 @@ double convert_height(
   if (conversion_map.find(key) != conversion_map.end()) {
     return conversion_map[key](height, latitude, longitude);
   } else {
-    throw std::invalid_argument("Invalid conversion types");
+    std::string error_message = "Invalid conversion types: " + 
+                                std::string(source_vertical_datum.c_str()) + 
+                                " to " + 
+                                std::string(target_vertical_datum.c_str());
+
+    throw std::invalid_argument(error_message);
   }
 }
 
-}  // namespace tier4_autoware_utils
+}  // namespace tier4_geography_utils

@@ -15,7 +15,6 @@
 #ifndef TIER4_AUTOWARE_UTILS__TIER4_AUTOWARE_UTILS_HPP_
 #define TIER4_AUTOWARE_UTILS__TIER4_AUTOWARE_UTILS_HPP_
 
-#include "tier4_autoware_utils/geography/height.hpp"
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
