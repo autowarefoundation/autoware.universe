@@ -36,7 +36,8 @@ TEST(Tier4GeographyUtils, SameSourceTargetDatum)
 // Test case to verify valid source and target datums
 TEST(Tier4GeographyUtils, ValidSourceTargetDatum)
 {
-  // Calculated with https://www.unavco.org/software/geodetic-utilities/geoid-height-calculator/geoid-height-calculator.html
+  // Calculated with
+  // https://www.unavco.org/software/geodetic-utilities/geoid-height-calculator/geoid-height-calculator.html
   const double height = 162.510695809;
   const double latitude = 34.408092589;
   const double longitude = -119.371255098;
