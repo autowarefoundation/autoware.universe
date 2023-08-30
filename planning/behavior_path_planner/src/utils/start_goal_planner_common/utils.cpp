@@ -54,7 +54,7 @@ void updateEgoPredictedPathParams(
   const std::shared_ptr<GoalPlannerParameters> & goal_planner_params)
 {
   ego_predicted_path_params =
-    std::make_shared<EgoPredictedPathParams>(start_planner_params->ego_predicted_path_params);
+    std::make_shared<EgoPredictedPathParams>(goal_planner_params->ego_predicted_path_params);
 }
 
 void updateSafetyCheckParams(
@@ -67,10 +67,10 @@ void updateSafetyCheckParams(
 
 void updateSafetyCheckParams(
   std::shared_ptr<SafetyCheckParams> & safety_check_params,
-  const std::shared_ptr<GoalPlannerParameters> & start_planner_params)
+  const std::shared_ptr<GoalPlannerParameters> & goal_planner_params)
 {
   safety_check_params =
-    std::make_shared<SafetyCheckParams>(start_planner_params->safety_check_params);
+    std::make_shared<SafetyCheckParams>(goal_planner_params->safety_check_params);
 }
 
 void updateObjectsFilteringParams(
@@ -83,10 +83,10 @@ void updateObjectsFilteringParams(
 
 void updateObjectsFilteringParams(
   std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
-  const std::shared_ptr<GoalPlannerParameters> & start_planner_params)
+  const std::shared_ptr<GoalPlannerParameters> & goal_planner_params)
 {
   objects_filtering_params =
-    std::make_shared<ObjectsFilteringParams>(start_planner_params->objects_filtering_params);
+    std::make_shared<ObjectsFilteringParams>(goal_planner_params->objects_filtering_params);
 }
 
 void updatePathProperty(
