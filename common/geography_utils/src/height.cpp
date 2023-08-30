@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <geography_utils/height.hpp>
-
 #include <GeographicLib/Geoid.hpp>
+#include <geography_utils/height.hpp>
 
 #include <map>
 #include <stdexcept>
