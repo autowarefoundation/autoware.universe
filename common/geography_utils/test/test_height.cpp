@@ -38,10 +38,10 @@ TEST(Tier4GeographyUtils, ValidSourceTargetDatum)
 {
   // Calculated with
   // https://www.unavco.org/software/geodetic-utilities/geoid-height-calculator/geoid-height-calculator.html
-  const double height = 162.510695809;
-  const double latitude = 34.408092589;
-  const double longitude = -119.371255098;
-  const double target_height = 197.51;
+  const double height = 10.0;
+  const double latitude = 35.0;
+  const double longitude = 139.0;
+  const double target_height = -30.18;
 
   double converted_height =
     tier4_geography_utils::convert_height(height, latitude, longitude, "WGS84", "EGM2008");
