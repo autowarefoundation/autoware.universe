@@ -43,8 +43,8 @@ TEST(Tier4GeographyUtils, ValidSourceTargetDatum)
   double converted_height =
     tier4_geography_utils::convert_height(height, latitude, longitude, "WGS84", "EGM2008");
 
+  // This is not a precise conversion
   // As this is a conversion, just verify that it does not return the original height
-  // For precise testing, you'll need the exact expected values
   EXPECT_NE(height, converted_height);
 }
 
