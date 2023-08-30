@@ -29,6 +29,7 @@ double convert_wgs84_to_egm2008(
   [[maybe_unused]] const double longitude)
 {
   GeographicLib::Geoid egm2008("egm2008-1");
+  // cSpell: ignore ELLIPSOIDTOGEOID
   return egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::ELLIPSOIDTOGEOID);
 }
 
@@ -37,6 +38,7 @@ double convert_egm2008_to_wgs84(
   [[maybe_unused]] const double longitude)
 {
   GeographicLib::Geoid egm2008("egm2008-1");
+  // cSpell: ignore GEOIDTOELLIPSOID
   return egm2008.ConvertHeight(latitude, longitude, height, GeographicLib::Geoid::GEOIDTOELLIPSOID);
 }
 
