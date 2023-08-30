@@ -361,7 +361,11 @@ void NDTScanMatcher::callback_sensor_points(
   (*state_ptr_)["lidar_topic_delay_time_sec"] = std::to_string(lidar_topic_delay_time_sec);
 
   if (lidar_topic_delay_time_sec > lidar_topic_timeout_sec_) {
-    RCLCPP_WARN(this->get_logger(), "The LiDAR topic is experiencing latency. The delay time is %lf[sec] (the tolerance is %lf[sec])", lidar_topic_delay_time_sec, lidar_topic_timeout_sec_);
+    RCLCPP_WARN(
+      this->get_logger(),
+      "The LiDAR topic is experiencing latency. The delay time is %lf[sec] (the tolerance is "
+      "%lf[sec])",
+      lidar_topic_delay_time_sec, lidar_topic_timeout_sec_);
 
     // If the delay time of the LiDAR topic exceeds the delay compensation time of ekf_localizer,
     // even if further processing continues, the estimated result will be rejected by ekf_localizer.
