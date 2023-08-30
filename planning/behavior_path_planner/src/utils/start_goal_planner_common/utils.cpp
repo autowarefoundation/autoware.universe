@@ -51,7 +51,7 @@ void updateEgoPredictedPathParams(
 }
 void updateEgoPredictedPathParams(
   std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-  const std::shared_ptr<GoalPlannerParameters> & start_planner_params)
+  const std::shared_ptr<GoalPlannerParameters> & goal_planner_params)
 {
   ego_predicted_path_params =
     std::make_shared<EgoPredictedPathParams>(start_planner_params->ego_predicted_path_params);
