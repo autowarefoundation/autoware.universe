@@ -203,6 +203,7 @@ void LaneChangeInterface::updateData()
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
   module_type_->updateSpecialData();
+  module_type_->resetStopPose();
 }
 
 BehaviorModuleOutput LaneChangeInterface::plan()
@@ -220,6 +221,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   path_reference_ = output.reference_path;
   *prev_approved_path_ = *getPreviousModuleOutput().path;
   module_type_->insertStopPoint(module_type_->getLaneChangeStatus().target_lanes, *output.path);
+
+  stop_pose_ = module_type_->getStopPose();
 
   updateSteeringFactorPtr(output);
   clearWaitingApproval();
@@ -248,6 +251,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   out.turn_signal_info = getCurrentTurnSignalInfo(*out.path, out.turn_signal_info);
 
   path_reference_ = getPreviousModuleOutput().reference_path;
+
+  stop_pose_ = module_type_->getStopPose();
 
   if (!module_type_->isValidPath()) {
     removeRTCStatus();
@@ -286,6 +291,7 @@ void LaneChangeInterface::updateModuleParams(const std::any & parameters)
 
 void LaneChangeInterface::setData(const std::shared_ptr<const PlannerData> & data)
 {
+  planner_data_ = data;
   module_type_->setData(data);
 }
 
