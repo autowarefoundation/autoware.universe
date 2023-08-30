@@ -19,8 +19,8 @@
 #include <GeographicLib/Geoid.hpp>
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
-#include <geography_utils/height.hpp>
 #include <rclcpp/logging.hpp>
+#include <geography_utils/height.hpp>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
@@ -57,7 +57,7 @@ GNSSStat NavSatFix2UTM(
     } else {
       target_height_system = "WGS84";
     }
-    utm.z = tier4_geography_utils::convert_height(
+    utm.z = geography_utils::convert_height(
       nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, "WGS84",
       target_height_system);
     utm.latitude = nav_sat_fix_msg.latitude;
@@ -86,7 +86,7 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     } else {
       target_height_system = "WGS84";
     }
-    utm_origin.z = tier4_geography_utils::convert_height(
+    utm_origin.z = geography_utils::convert_height(
       nav_sat_fix_origin.altitude, nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude,
       "WGS84", target_height_system);
 
@@ -102,7 +102,7 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     // individual coordinates of local coordinate system
     utm_local.x = global_x - utm_origin.x;
     utm_local.y = global_y - utm_origin.y;
-    utm_local.z = tier4_geography_utils::convert_height(
+    utm_local.z = geography_utils::convert_height(
                     nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude,
                     "WGS84", target_height_system) -
                   utm_origin.z;

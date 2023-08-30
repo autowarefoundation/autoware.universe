@@ -28,7 +28,7 @@ TEST(Tier4GeographyUtils, SameSourceTargetDatum)
   const std::string datum = "WGS84";
 
   double converted_height =
-    tier4_geography_utils::convert_height(height, latitude, longitude, datum, datum);
+    geography_utils::convert_height(height, latitude, longitude, datum, datum);
 
   EXPECT_DOUBLE_EQ(height, converted_height);
 }
@@ -44,7 +44,7 @@ TEST(Tier4GeographyUtils, ValidSourceTargetDatum)
   const double target_height = -30.18;
 
   double converted_height =
-    tier4_geography_utils::convert_height(height, latitude, longitude, "WGS84", "EGM2008");
+    geography_utils::convert_height(height, latitude, longitude, "WGS84", "EGM2008");
 
   EXPECT_NEAR(target_height, converted_height, 0.1);
 }
@@ -57,7 +57,7 @@ TEST(Tier4GeographyUtils, InvalidSourceTargetDatum)
   const double longitude = 139.0;
 
   EXPECT_THROW(
-    tier4_geography_utils::convert_height(height, latitude, longitude, "INVALID1", "INVALID2"),
+    geography_utils::convert_height(height, latitude, longitude, "INVALID1", "INVALID2"),
     std::invalid_argument);
 }
 
@@ -69,7 +69,7 @@ TEST(Tier4GeographyUtils, InvalidSourceDatum)
   const double longitude = 139.0;
 
   EXPECT_THROW(
-    tier4_geography_utils::convert_height(height, latitude, longitude, "INVALID1", "WGS84"),
+    geography_utils::convert_height(height, latitude, longitude, "INVALID1", "WGS84"),
     std::invalid_argument);
 }
 
@@ -81,7 +81,7 @@ TEST(Tier4GeographyUtils, InvalidTargetDatum)
   const double longitude = 139.0;
 
   EXPECT_THROW(
-    tier4_geography_utils::convert_height(height, latitude, longitude, "WGS84", "INVALID2"),
+    geography_utils::convert_height(height, latitude, longitude, "WGS84", "INVALID2"),
     std::invalid_argument);
 }
 
