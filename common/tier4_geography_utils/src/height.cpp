@@ -25,8 +25,7 @@ namespace tier4_geography_utils
 {
 
 double convert_wgs84_to_egm2008(
-  const double height, [[maybe_unused]] const double latitude,
-  [[maybe_unused]] const double longitude)
+  const double height, const double latitude, const double longitude)
 {
   GeographicLib::Geoid egm2008("egm2008-1");
   // cSpell: ignore ELLIPSOIDTOGEOID
@@ -34,8 +33,7 @@ double convert_wgs84_to_egm2008(
 }
 
 double convert_egm2008_to_wgs84(
-  const double height, [[maybe_unused]] const double latitude,
-  [[maybe_unused]] const double longitude)
+  const double height, const double latitude, const double longitude)
 {
   GeographicLib::Geoid egm2008("egm2008-1");
   // cSpell: ignore GEOIDTOELLIPSOID
