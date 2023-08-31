@@ -50,9 +50,7 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
   setup_module_sections();
 
   // check recording all topics in a single bag file is enabled
-  if (record_all_topic_in_a_bag_) {
-    record_all_topics_in_a_bag();
-  }
+  setup_all_module_topics();
 
   // Check the files at initialization
   check_and_remove_files_at_init();
@@ -79,25 +77,27 @@ void AutowareBagRecorderNode::setup_single_module(
   const std::string & module_param, std::vector<std::string> & topics,
   const std::string & section_name)
 {
+  const auto topics_parameter_name = module_param + "." + section_name + "_topics";
   bool record_module_topics = declare_parameter<bool>(module_param + ".record_" + section_name);
-  if (record_module_topics || record_all_topic_in_a_bag_) {
+  if (record_module_topics) {
     topics =
-      declare_parameter<std::vector<std::string>>(module_param + "." + section_name + "_topics");
+      declare_parameter<std::vector<std::string>>(topics_parameter_name);
     section_factory(topics, bag_path_ + section_name);
+    all_topics_.insert(all_topics_.end(), topics.begin(), topics.end());
+  }
+
+  if (record_all_topic_in_a_bag_ && !has_parameter(topics_parameter_name)) {
+    const auto section_topics
+      = declare_parameter<std::vector<std::string>>(topics_parameter_name);
+    all_topics_.insert(all_topics_.end(), section_topics.begin(), section_topics.end());
   }
 }
 
-void AutowareBagRecorderNode::record_all_topics_in_a_bag()
+void AutowareBagRecorderNode::setup_all_module_topics()
 {
-  ModuleSection all_topics;
-  std::vector<std::string> all_topic_names;
-  for (const auto & section : module_sections_) {
-    for (const auto & topic : section.topic_names) {
-      all_topic_names.push_back(topic);
-    }
+  if (record_all_topic_in_a_bag_) {
+    section_factory(all_topics_, bag_path_ + "all");
   }
-  module_sections_ = std::vector<ModuleSection>();
-  section_factory(all_topic_names, bag_path_ + "all");
 }
 
 void AutowareBagRecorderNode::check_and_remove_files_at_init()
@@ -112,7 +112,7 @@ std::string AutowareBagRecorderNode::get_timestamp()
   char timestamp_str[100];
   std::time_t now_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   std::strftime(
-    timestamp_str, sizeof(timestamp_str), "%Y-%m-%d-%H-%M-%S", std::localtime(&now_time_t));
+    timestamp_str, sizeof(timestamp_str), "%Y_%m_%d-%H_%M_%S", std::localtime(&now_time_t));
   return timestamp_str;
 }
 
@@ -396,7 +396,7 @@ void AutowareBagRecorderNode::check_disk_space()
   }
 
   if (
-    get_bag_path_directory_size(std::filesystem::u8path(bag_path_)) <
+    get_bag_path_directory_size(std::filesystem::u8path(bag_path_)) >
     maximum_allowed_bag_storage_size_ * 1024) {
     disk_space_handler();
   }
