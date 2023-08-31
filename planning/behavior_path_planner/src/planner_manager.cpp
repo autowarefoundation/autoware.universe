@@ -400,7 +400,7 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
     // executable.
     const auto find_non_always_simultaneous_module = [this](const auto & m) {
       return !getManager(m)->isAlwaysExecutableModule() &&
-             getManager(m)->isSimultaneousExecutableAsApprovedModule();
+             getManager(m)->isSimultaneousExecutableAsCandidateModule();
     };
     const auto itr_non_always_simultaneous = std::find_if(
       executable_modules.begin(), executable_modules.end(), find_non_always_simultaneous_module);
