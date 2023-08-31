@@ -25,6 +25,8 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
+#include "euclidean_cluster/utils.hpp"
+
 namespace image_projection_based_fusion
 {
 RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & options)
@@ -34,7 +36,8 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
   min_cluster_size_ = static_cast<int>(declare_parameter("min_cluster_size", 2));
   cluster_2d_tolerance_ = declare_parameter<double>("cluster_2d_tolerance", 0.5);
   pub_objects_ptr_ =
-    this->create_publisher<DetectedObjectsWithFeature>("output_objects", rclcpp::QoS{1});
+    this->create_publisher<DetectedObjectsWithFeature>("output_clusters", rclcpp::QoS{1});
+  cluster_debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
 void RoiPointCloudFusionNode::preprocess(__attribute__((unused))
@@ -60,7 +63,12 @@ void RoiPointCloudFusionNode::postprocess(__attribute__((unused))
     pub_objects_ptr_->publish(output_msg);
   }
   output_fused_objects_.clear();
-  // return;
+  // publish debug cluster
+  if (cluster_debug_pub_->get_subscription_count() > 0) {
+    sensor_msgs::msg::PointCloud2 debug_cluster_msg;
+    euclidean_cluster::convertObjectMsg2SensorMsg(output_msg, debug_cluster_msg);
+    cluster_debug_pub_->publish(debug_cluster_msg);
+  }
 }
 void RoiPointCloudFusionNode::fuseOnSingleImage(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
@@ -171,6 +179,9 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
       continue;
     }
 
+    refine_cluster.width = refine_cluster.points.size();
+    refine_cluster.height = 1;
+    refine_cluster.is_dense = false;
     // convert cluster to object
     convertCluster2FeatureObject(input_pointcloud_msg.header, refine_cluster, feature_obj);
     output_fused_objects_.push_back(feature_obj);

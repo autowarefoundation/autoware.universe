@@ -31,6 +31,7 @@ private:
 
   rclcpp::Publisher<DetectedObjectsWithFeature>::SharedPtr pub_objects_ptr_;
   std::vector<DetectedObjectWithFeature> output_fused_objects_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cluster_debug_pub_;
 
   /* data */
 public:
