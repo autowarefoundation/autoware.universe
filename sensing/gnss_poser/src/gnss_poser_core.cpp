@@ -198,15 +198,18 @@ bool GNSSPoser::canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix
 }
 
 GNSSStat GNSSPoser::convert(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const MapProjectorInfo::Message & map_projector_info)
+  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
+  const MapProjectorInfo::Message & map_projector_info)
 {
   GNSSStat gnss_stat;
   if (map_projector_info.projector_type == MapProjectorInfo::Message::LOCAL_CARTESIAN_UTM) {
     gnss_stat = NavSatFix2LocalCartesianUTM(
-      nav_sat_fix_msg, map_projector_info.map_origin, this->get_logger(), map_projector_info.vertical_datum);
+      nav_sat_fix_msg, map_projector_info.map_origin, this->get_logger(),
+      map_projector_info.vertical_datum);
   } else if (map_projector_info.projector_type == MapProjectorInfo::Message::MGRS) {
     gnss_stat = NavSatFix2MGRS(
-      nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(), map_projector_info.vertical_datum);
+      nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(),
+      map_projector_info.vertical_datum);
   } else {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),

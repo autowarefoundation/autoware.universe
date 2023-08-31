@@ -22,8 +22,8 @@
 #include <geography_utils/height.hpp>
 #include <rclcpp/logging.hpp>
 
-#include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <geographic_msgs/msg/geo_point.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 #include <string>
 
@@ -77,8 +77,8 @@ GNSSStat NavSatFix2LocalCartesianUTM(
       utm_origin.east_north_up, utm_origin.x, utm_origin.y);
 
     utm_origin.z = geography_utils::convert_height(
-      geo_point_origin.altitude, geo_point_origin.latitude, geo_point_origin.longitude,
-      "WGS84", target_vertical_datum);
+      geo_point_origin.altitude, geo_point_origin.latitude, geo_point_origin.longitude, "WGS84",
+      target_vertical_datum);
 
     // individual coordinates of global coordinate system
     double global_x = 0.0;
