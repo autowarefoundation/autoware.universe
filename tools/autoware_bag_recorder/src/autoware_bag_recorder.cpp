@@ -80,15 +80,13 @@ void AutowareBagRecorderNode::setup_single_module(
   const auto topics_parameter_name = module_param + "." + section_name + "_topics";
   bool record_module_topics = declare_parameter<bool>(module_param + ".record_" + section_name);
   if (record_module_topics) {
-    topics =
-      declare_parameter<std::vector<std::string>>(topics_parameter_name);
+    topics = declare_parameter<std::vector<std::string>>(topics_parameter_name);
     section_factory(topics, bag_path_ + section_name);
     all_topics_.insert(all_topics_.end(), topics.begin(), topics.end());
   }
 
   if (record_all_topic_in_a_bag_ && !has_parameter(topics_parameter_name)) {
-    const auto section_topics
-      = declare_parameter<std::vector<std::string>>(topics_parameter_name);
+    const auto section_topics = declare_parameter<std::vector<std::string>>(topics_parameter_name);
     all_topics_.insert(all_topics_.end(), section_topics.begin(), section_topics.end());
   }
 }

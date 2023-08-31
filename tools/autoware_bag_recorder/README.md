@@ -40,5 +40,4 @@ Here are the core parameters that can be configured for the `autoware_bag_record
 
 ## Assumptions / Known Limits
 
-
 ## References/External Links
