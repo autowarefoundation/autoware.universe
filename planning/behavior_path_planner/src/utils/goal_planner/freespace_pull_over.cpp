@@ -131,6 +131,7 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
   PullOverPath pull_over_path{};
   pull_over_path.partial_paths = partial_paths;
   pull_over_path.pairs_terminal_velocity_and_accel = pairs_terminal_velocity_and_accel;
+  pull_over_path.start_pose = current_pose;
   pull_over_path.end_pose = goal_pose;
   pull_over_path.type = getPlannerType();
 
