@@ -2,7 +2,7 @@
 
 This tutorial provides step-by-step instructions for installing and setting up the Autoware development environment on the F1tenth car. The Autoware installation process in this branch is modified from the main one to adapt to the Jetson Xavier NX hardware and software systems. One major difference of this Autoware environment is that it runs on `ROS2 galactic` instead of `ROS2 humble` due to the fact that the NVIDIA Jetson currently only supports Ubuntu 20.04 or below. To natively build and run autoware without using docker, galactic is used to increase system compatibility. The original [Autoware installation documentation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/) from main branch, and the [F1tenth build documentation](https://f1tenth.readthedocs.io/en/foxy_test/index.html)(running ROS2 foxy) are here for your reference.
 
-This repo also includes a F1tenth Record-Replay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in either the `F1tenth gym simulator` and in `real-world` running the Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investments listed are based on running Jetson Xavier NX on `20W 6core` power mode.
+This repo also includes a F1tenth Record-Replay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in the `F1tenth gym simulator` or in `real-world` running Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investments listed are based on running Jetson Xavier NX on `20W 6core` power mode.
 
 ## Flash JetPack 5.1.1 (rev. 1) to Jetson Xavier NX
 (Approximate Time Investment: 1-1.5 hours)
@@ -140,7 +140,7 @@ The f1tenth_gym_ros simulator is used in this case, click [here](https://github.
    ```
 
 # F1tenth Record-Replay Demo
-This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in either the `F1tenth gym simulator` and in `real-world` running the Autoware framework.
+This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in the `F1tenth gym simulator` or in `real-world` running Autoware framework.
 
 ## How to create a map
 
