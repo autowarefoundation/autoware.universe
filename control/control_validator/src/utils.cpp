@@ -44,7 +44,7 @@ void insertPointInPredictedTrajectory(
 
 TrajectoryPoints reverseTrajectoryPoints(const TrajectoryPoints & trajectory_points)
 {
-  TrajectoryPoints reversed_trajectory_points(trajectory_points.size());
+  TrajectoryPoints reversed_trajectory_points(0);
   std::reverse_copy(
     trajectory_points.begin(), trajectory_points.end(),
     std::back_inserter(reversed_trajectory_points));
@@ -96,17 +96,20 @@ Trajectory alignTrajectoryWithReferenceTrajectory(
   if (is_no_overlapping) {
     return Trajectory();
   }
-
+  
   auto modified_trajectory_points = convertToTrajectoryPointArray(predicted_trajectory);
   auto predicted_trajectory_points = convertToTrajectoryPointArray(predicted_trajectory);
   auto trajectory_points = convertToTrajectoryPointArray(trajectory);
+
+  //debug
+  //RCLCPP_INFO(rclcpp::get_logger("control_validator"),"modified_trajectory_size_before: %ld", modified_trajectory_points.size());
 
   // If first point of predicted_trajectory is in front of start of trajectory, erase points which
   // are in front of trajectory start point and insert pNew along the predicted_trajectory
   // predicted_trajectory:   　　　　p1-----p2-----p3----//------pN
   // trajectory:                               t1--------//------tN
   // ↓
-  // predicted_trajectory:   　　　　        tNew--p3----//------pN
+  // predicted_trajectory:   　　　　        pNew--p3----//------pN
   // trajectory:                               t1--------//------tN
   auto predicted_trajectory_point_removed = removeFrontTrajectoryPoint(
     trajectory_points, modified_trajectory_points, predicted_trajectory_points);
