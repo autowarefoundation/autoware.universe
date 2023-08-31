@@ -40,24 +40,25 @@ LocalPoint project_forward(const GeoPoint geo_point, const MapProjectorInfo & pr
 {
   LocalPoint local_point;
   if (projector_info.projector_type == MapProjectorInfo::LOCAL_CARTESIAN_UTM) {
-    lanelet::GPSPoint position{geo_point.latitude, geo_point.longitude, 0.0};
+    lanelet::GPSPoint position{geo_point.latitude, geo_point.longitude, geo_point.altitude};
     lanelet::Origin origin{position};
     lanelet::projection::UtmProjector projector{origin};
     lanelet::BasicPoint3d projected_local_point = projector.forward(position);
     local_point.x = projected_local_point.x();
     local_point.y = projected_local_point.y();
-    local_point.z = std::numeric_limits<double>::quiet_NaN();
+    local_point.z = projected_local_point.z();
   } else if (projector_info.projector_type == MapProjectorInfo::MGRS) {
     const int mgrs_precision = 9; // set precision as 100 micro meter
     lanelet::projection::MGRSProjector projector{};
-    lanelet::GPSPoint position{geo_point.latitude, geo_point.longitude, 0.0};
+    lanelet::GPSPoint position{geo_point.latitude, geo_point.longitude, geo_point.altitude};
     lanelet::BasicPoint3d projected_local_point = projector.forward(position, mgrs_precision);
     local_point.x = projected_local_point.x();
     local_point.y = projected_local_point.y();
-    local_point.z = std::numeric_limits<double>::quiet_NaN();
+    local_point.z = projected_local_point.z();
   } else {
-    throw std::runtime_error(
-      "Invalid map projector type. Currently supported types: MGRS, and LocalCartesianUTM");
+    const std::string error_msg = "Invalid map projector type: " + projector_info.projector_type +
+      ". Currently supported types: MGRS, and LocalCartesianUTM";
+    throw std::runtime_error(error_msg);
   }
   return local_point;
 }
@@ -67,25 +68,24 @@ GeoPoint project_reverse(const LocalPoint local_point, const MapProjectorInfo & 
   GeoPoint geo_point;
   if (projector_info.projector_type == MapProjectorInfo::LOCAL_CARTESIAN_UTM) {
     lanelet::GPSPoint position{
-      projector_info.map_origin.latitude, projector_info.map_origin.longitude};
+      projector_info.map_origin.latitude, projector_info.map_origin.longitude, projector_info.map_origin.altitude};
     lanelet::Origin origin{position};
     lanelet::projection::UtmProjector projector{origin};
     lanelet::GPSPoint projected_gps_point =
       projector.reverse(to_basic_point_3d_pt(local_point));
     geo_point.latitude = projected_gps_point.lat;
     geo_point.longitude = projected_gps_point.lon;
-    geo_point.altitude = std::numeric_limits<double>::quiet_NaN();
-
+    geo_point.altitude = projected_gps_point.ele;
   } else if (projector_info.projector_type == MapProjectorInfo::MGRS) {
     lanelet::GPSPoint projected_gps_point = lanelet::projection::MGRSProjector::reverse(
       to_basic_point_3d_pt(local_point), projector_info.mgrs_grid);
     geo_point.latitude = projected_gps_point.lat;
     geo_point.longitude = projected_gps_point.lon;
-    geo_point.altitude = std::numeric_limits<double>::quiet_NaN();
-
+    geo_point.altitude = projected_gps_point.ele;
   } else {
-    throw std::runtime_error(
-      "Invalid map projector type. Currently supported types: MGRS, and LocalCartesianUTM");
+    const std::string error_msg = "Invalid map projector type: " + projector_info.projector_type +
+      ". Currently supported types: MGRS, and LocalCartesianUTM";
+    throw std::runtime_error(error_msg);
   }
   return geo_point;
 }
