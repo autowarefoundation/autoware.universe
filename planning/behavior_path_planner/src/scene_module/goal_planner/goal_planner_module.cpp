@@ -1491,11 +1491,15 @@ bool GoalPlannerModule::isSafePath() const
     goal_planner_utils::getPullOverLanes(*(route_handler), left_side_parking_);
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_over_path.points);
   const auto & common_param = planner_data_->parameters;
-  const std::pair<double, double> terminal_velocity_and_accl =
+  const std::pair<double, double> terminal_velocity_and_accel =
     utils::start_goal_planner_common::getPairsTerminalVelocityAndAccel(
       status_.pull_over_path->pairs_terminal_velocity_and_accel, status_.current_path_idx);
+  RCLCPP_DEBUG(
+    getLogger(), "pairs_terminal_velocity_and_accel: %f, %f", terminal_velocity_and_accel.first,
+    terminal_velocity_and_accel.second);
+  RCLCPP_DEBUG(getLogger(), "current_path_idx %d", status_.current_path_idx);
   utils::start_goal_planner_common::updatePathProperty(
-    ego_predicted_path_params_, terminal_velocity_and_accl);
+    ego_predicted_path_params_, terminal_velocity_and_accel);
   const auto & ego_predicted_path =
     behavior_path_planner::utils::path_safety_checker::createPredictedPath(
       ego_predicted_path_params_, pull_over_path.points, current_pose, current_velocity,
