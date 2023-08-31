@@ -65,8 +65,6 @@ public:
     {
       bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
       double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
-      double stuck_vehicle_ignore_dist;  //! distance from intersection start to start stuck vehicle
-                                         //! check
       double stuck_vehicle_vel_thr;      //! Threshold of the speed to be recognized as stopped
       /*
       double
@@ -109,6 +107,7 @@ public:
       double denoise_kernel;
       std::vector<double> possible_object_bbox;
       double ignore_parked_vehicle_speed_threshold;
+      double stop_release_margin_time;
     } occlusion;
   };
 
@@ -223,6 +222,7 @@ private:
   // OcclusionState prev_occlusion_state_ = OcclusionState::NONE;
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop
+  StateMachine occlusion_stop_state_machine_;
   // NOTE: uuid_ is base member
 
   // for stuck vehicle detection
@@ -246,8 +246,8 @@ private:
 
   bool checkStuckVehicle(
     const std::shared_ptr<const PlannerData> & planner_data,
-    const lanelet::ConstLanelets & ego_lane_with_next_lane,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
+    const util::PathLanelets & path_lanelets,
+    const util::InterpolatedPathInfo & interpolated_path_info,
     const util::IntersectionStopLines & intersection_stop_lines);
 
   autoware_auto_perception_msgs::msg::PredictedObjects filterTargetObjects(
