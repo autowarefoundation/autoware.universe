@@ -96,13 +96,9 @@ Trajectory alignTrajectoryWithReferenceTrajectory(
   if (is_no_overlapping) {
     return Trajectory();
   }
-  
   auto modified_trajectory_points = convertToTrajectoryPointArray(predicted_trajectory);
   auto predicted_trajectory_points = convertToTrajectoryPointArray(predicted_trajectory);
   auto trajectory_points = convertToTrajectoryPointArray(trajectory);
-
-  //debug
-  //RCLCPP_INFO(rclcpp::get_logger("control_validator"),"modified_trajectory_size_before: %ld", modified_trajectory_points.size());
 
   // If first point of predicted_trajectory is in front of start of trajectory, erase points which
   // are in front of trajectory start point and insert pNew along the predicted_trajectory
