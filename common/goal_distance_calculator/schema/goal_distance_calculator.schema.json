@@ -18,10 +18,7 @@
           "description": "Publish deviations just once or repeatedly."
         }
       },
-      "required": [
-        "update_rate",
-        "oneshot"
-      ]
+      "required": ["update_rate", "oneshot"]
     }
   },
   "properties": {
