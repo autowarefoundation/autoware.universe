@@ -59,6 +59,9 @@ std::optional<geometry_msgs::msg::TransformStamped> getTransformStamped(
 
 Eigen::Affine3d transformToEigen(const geometry_msgs::msg::Transform & t);
 
+void convertCluster2FeatureObject(
+  const std_msgs::msg::Header & header, const PointCloud & cluster,
+  DetectedObjectWithFeature & feature_obj);
 PointCloud closest_cluster(
   PointCloud & cluster, const double cluster_2d_tolerance, const int min_cluster_size,
   const pcl::PointXYZ & center);

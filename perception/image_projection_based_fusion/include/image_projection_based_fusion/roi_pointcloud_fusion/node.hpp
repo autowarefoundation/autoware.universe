@@ -21,15 +21,17 @@
 #include <vector>
 namespace image_projection_based_fusion
 {
-class RoiPointCloudFusionNode : public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>
+class RoiPointCloudFusionNode
+: public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjectWithFeature>
 {
 private:
   int min_cluster_size_{1};
   bool fuse_unknown_only_{true};
   double cluster_2d_tolerance_;
 
-  rclcpp::Publisher<DetectedObjects>::SharedPtr pub_objects_ptr_;
-  std::vector<DetectedObject> output_fused_objects_;
+  rclcpp::Publisher<DetectedObjectsWithFeature>::SharedPtr pub_objects_ptr_;
+  std::vector<DetectedObjectWithFeature> output_fused_objects_;
+
   /* data */
 public:
   explicit RoiPointCloudFusionNode(const rclcpp::NodeOptions & options);
@@ -43,7 +45,7 @@ protected:
     const PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
     const DetectedObjectsWithFeature & input_roi_msg,
     const sensor_msgs::msg::CameraInfo & camera_info, PointCloud2 & output_pointcloud_msg) override;
-  bool out_of_scope(const DetectedObjects & obj);
+  bool out_of_scope(const DetectedObjectWithFeature & obj);
 };
 
 }  // namespace image_projection_based_fusion

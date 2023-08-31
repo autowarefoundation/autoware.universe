@@ -28,12 +28,13 @@
 namespace image_projection_based_fusion
 {
 RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<PointCloud2, DetectedObjects>("roi_pointcloud_fusion", options)
+: FusionNode<PointCloud2, DetectedObjectWithFeature>("roi_pointcloud_fusion", options)
 {
   fuse_unknown_only_ = static_cast<bool>(declare_parameter("fuse_unknown_only", true));
   min_cluster_size_ = static_cast<int>(declare_parameter("min_cluster_size", 2));
   cluster_2d_tolerance_ = declare_parameter<double>("cluster_2d_tolerance", 0.5);
-  pub_objects_ptr_ = this->create_publisher<DetectedObjects>("output_objects", rclcpp::QoS{1});
+  pub_objects_ptr_ =
+    this->create_publisher<DetectedObjectsWithFeature>("output_objects", rclcpp::QoS{1});
 }
 
 void RoiPointCloudFusionNode::preprocess(__attribute__((unused))
@@ -51,9 +52,9 @@ void RoiPointCloudFusionNode::postprocess(__attribute__((unused))
     return;
   }
 
-  DetectedObjects output_msg;
+  DetectedObjectsWithFeature output_msg;
   output_msg.header = pointcloud_msg.header;
-  output_msg.objects = output_fused_objects_;
+  output_msg.feature_objects = output_fused_objects_;
 
   if (objects_sub_count > 0) {
     pub_objects_ptr_->publish(output_msg);
@@ -81,6 +82,7 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
         output_objs.push_back(feature_obj);
       }
     } else {
+      // TODO (badai-nguyen): selected class from a list
       output_objs.push_back(feature_obj);
     }
   }
@@ -160,17 +162,23 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
     if (cluster.points.size() < std::size_t(min_cluster_size_)) {
       continue;
     }
+
+    // TODO(badai-nguyen): change to interface to select refine criteria like closest, largest
+    //  to output refine cluster and centroid
     auto refine_cluster =
       closest_cluster(cluster, cluster_2d_tolerance_, min_cluster_size_, camera_orig_point_frame);
     if (refine_cluster.points.size() < std::size_t(min_cluster_size_)) {
       continue;
     }
-    addShapeAndKinematic(refine_cluster, feature_obj);
-    output_fused_objects_.push_back(feature_obj.object);
+
+    // convert cluster to object
+    convertCluster2FeatureObject(input_pointcloud_msg.header, refine_cluster, feature_obj);
+    output_fused_objects_.push_back(feature_obj);
   }
 }
 
-bool RoiPointCloudFusionNode::out_of_scope(__attribute__((unused)) const DetectedObjects & obj)
+bool RoiPointCloudFusionNode::out_of_scope(__attribute__((unused))
+                                           const DetectedObjectWithFeature & obj)
 {
   return false;
 }

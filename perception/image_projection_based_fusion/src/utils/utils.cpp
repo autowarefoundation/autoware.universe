@@ -38,6 +38,18 @@ Eigen::Affine3d transformToEigen(const geometry_msgs::msg::Transform & t)
   return a;
 }
 
+void convertCluster2FeatureObject(
+  const std_msgs::msg::Header & header, const PointCloud & cluster,
+  DetectedObjectWithFeature & feature_obj)
+{
+  PointCloud2 ros_cluster;
+  pcl::toROSMsg(cluster, ros_cluster);
+  ros_cluster.header = header;
+  feature_obj.feature.cluster = ros_cluster;
+  feature_obj.object.kinematics.pose_with_covariance.pose.position = getCentroid(ros_cluster);
+  feature_obj.object.existence_probability = 1.0f;
+}
+
 PointCloud closest_cluster(
   PointCloud & cluster, const double cluster_2d_tolerance, const int min_cluster_size,
   const pcl::PointXYZ & center)
