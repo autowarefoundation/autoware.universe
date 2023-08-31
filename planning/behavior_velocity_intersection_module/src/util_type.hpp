@@ -115,7 +115,7 @@ public:
   std::optional<lanelet::CompoundPolygon3d> first_attention_area_ = std::nullopt;
 };
 
-struct DescritizedLane
+struct DiscretizedLane
 {
   int lane_id;
   // discrete fine lines from left to right
@@ -130,6 +130,21 @@ struct IntersectionStopLines
   size_t default_stop_line;
   size_t occlusion_peeking_stop_line;
   size_t pass_judge_line;
+};
+
+struct PathLanelets
+{
+  lanelet::ConstLanelets prev;
+  // lanelet::ConstLanelet entry2ego; this is included in `all` if exists
+  lanelet::ConstLanelet
+    ego_or_entry2exit;  // this is `assigned lane` part of the path(not from
+                        // ego) if ego is before the intersection, otherwise from ego to exit
+  std::optional<lanelet::ConstLanelet> next =
+    std::nullopt;  // this is nullopt is the goal is inside intersection
+  lanelet::ConstLanelets all;
+  lanelet::ConstLanelets
+    conflicting_interval_and_remaining;  // the left/right-most interval of path conflicting with
+                                         // conflicting lanelets plus the next lane part of the path
 };
 
 }  // namespace behavior_velocity_planner::util

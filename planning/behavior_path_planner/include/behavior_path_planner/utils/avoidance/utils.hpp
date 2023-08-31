@@ -17,20 +17,22 @@
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/utils/safety_check.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::utils::avoidance
 {
 using behavior_path_planner::PlannerData;
-using behavior_path_planner::utils::safety_check::ExtendedPredictedObject;
-using behavior_path_planner::utils::safety_check::PoseWithVelocityAndPolygonStamped;
-using behavior_path_planner::utils::safety_check::PoseWithVelocityStamped;
-using behavior_path_planner::utils::safety_check::PredictedPathWithPolygon;
+using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityAndPolygonStamped;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
+using behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 
 bool isOnRight(const ObjectData & obj);
 
@@ -87,7 +89,7 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters);
+  const bool is_object_front, const std::shared_ptr<AvoidanceParameters> & parameters);
 
 double getLongitudinalVelocity(const Pose & p_ref, const Pose & p_target, const double v);
 
@@ -160,6 +162,11 @@ ExtendedPredictedObject transform(
 std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
   const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift);
+
+std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
+  const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
+  DebugData & debug);
 }  // namespace behavior_path_planner::utils::avoidance
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__UTILS_HPP_

@@ -15,6 +15,7 @@
 #include "behavior_path_planner/utils/goal_planner/goal_searcher.hpp"
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 
@@ -57,7 +58,7 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
     goal_planner_utils::getPullOverLanes(*route_handler, left_side_parking_);
   auto lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_length, forward_length,
-    /*until_goal_lane*/ false);
+    /*forward_only_in_route*/ false);
   lanes.insert(lanes.end(), pull_over_lanes.begin(), pull_over_lanes.end());
 
   const auto goal_arc_coords =
@@ -69,7 +70,8 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
     parameters_.goal_search_interval);
 
   const auto [shoulder_lane_objects, others] =
-    utils::separateObjectsByLanelets(*(planner_data_->dynamic_object), pull_over_lanes);
+    utils::path_safety_checker::separateObjectsByLanelets(
+      *(planner_data_->dynamic_object), pull_over_lanes);
 
   std::vector<Pose> original_search_poses{};  // for search area visualizing
   size_t goal_id = 0;
@@ -151,7 +153,8 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
     const auto pull_over_lanes =
       goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
     const auto [shoulder_lane_objects, others] =
-      utils::separateObjectsByLanelets(*(planner_data_->dynamic_object), pull_over_lanes);
+      utils::path_safety_checker::separateObjectsByLanelets(
+        *(planner_data_->dynamic_object), pull_over_lanes);
     constexpr bool filter_inside = true;
     const auto target_objects = goal_planner_utils::filterObjectsByLateralDistance(
       goal_pose, planner_data_->parameters.vehicle_width, shoulder_lane_objects,

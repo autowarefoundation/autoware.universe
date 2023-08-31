@@ -19,7 +19,7 @@
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utils/avoidance/helper.hpp"
-#include "behavior_path_planner/utils/safety_check.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -51,7 +51,6 @@ public:
     const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
-  ModuleStatus updateState() override;
   CandidateOutput planCandidate() const override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
@@ -69,6 +68,12 @@ public:
   std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
 private:
+  bool canTransitSuccessState() override;
+
+  bool canTransitFailureState() override { return false; }
+
+  bool canTransitIdleToRunningState() override { return true; }
+
   /**
    * @brief update RTC status for candidate shift line.
    * @param candidate path.
@@ -177,6 +182,11 @@ private:
    */
   void initRTCStatus();
 
+  /**
+   * @brief update RTC status.
+   */
+  void updateRTCData();
+
   // ego state check
 
   /**
@@ -184,19 +194,6 @@ private:
    * @param ego status. (NOT_AVOID, AVOID, YIELD, AVOID_EXECUTE, AVOID_PATH_NOT_READY)
    */
   AvoidanceState updateEgoState(const AvoidancePlanningData & data) const;
-
-  /**
-   * @brief check whether the ego is shifted based on shift line.
-   * @return result.
-   */
-  bool isAvoidanceManeuverRunning();
-
-  /**
-   * @brief check whether the ego is in avoidance maneuver based on shift line and target object
-   * existence.
-   * @return result.
-   */
-  bool isAvoidancePlanRunning() const;
 
   // ego behavior update
 
@@ -245,9 +242,8 @@ private:
 
   /**
    * @brief update main avoidance data for avoidance path generation based on latest planner data.
-   * @return avoidance data.
    */
-  AvoidancePlanningData calcAvoidancePlanningData(DebugData & debug) const;
+  void fillFundamentalData(AvoidancePlanningData & data, DebugData & debug);
 
   /**
    * @brief fill additional data so that the module judges target objects.
@@ -331,6 +327,8 @@ private:
    */
   AvoidLineArray applyPreProcessToRawShiftLines(
     AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
+
+  AvoidLineArray getFillGapShiftLines(const AvoidLineArray & shift_lines) const;
 
   /*
    * @brief merge negative & positive shift lines.
@@ -425,7 +423,7 @@ private:
    * @brief add new shift line to path shifter if the RTC status is activated.
    * @param new shift lines.
    */
-  void addShiftLineIfApproved(const AvoidLineArray & point);
+  void updatePathShifter(const AvoidLineArray & point);
 
   /**
    * @brief add new shift line to path shifter.
@@ -483,6 +481,15 @@ private:
    */
   bool isSafePath(ShiftedPath & shifted_path, DebugData & debug) const;
 
+  bool isComfortable(const AvoidLineArray & shift_lines) const
+  {
+    return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
+      return PathShifter::calcJerkFromLatLonDistance(
+               line.getRelativeLength(), line.getRelativeLongitudinal(),
+               helper_.getAvoidanceEgoSpeed()) < helper_.getLateralMaxJerkLimit();
+    });
+  }
+
   // post process
 
   /**
@@ -505,6 +512,12 @@ private:
     }
 
     unlockNewModuleLaunch();
+
+    if (!path_shifter_.getShiftLines().empty()) {
+      left_shift_array_.clear();
+      right_shift_array_.clear();
+      removeRTCStatus();
+    }
 
     current_raw_shift_lines_.clear();
     registered_raw_shift_lines_.clear();
@@ -543,11 +556,13 @@ private:
 
   bool arrived_path_end_{false};
 
+  bool safe_{true};
+
   std::shared_ptr<AvoidanceParameters> parameters_;
 
   helper::avoidance::AvoidanceHelper helper_;
 
-  AvoidancePlanningData avoidance_data_;
+  AvoidancePlanningData avoid_data_;
 
   PathShifter path_shifter_;
 
@@ -562,6 +577,8 @@ private:
   UUID candidate_uuid_;
 
   ObjectDataArray registered_objects_;
+
+  mutable size_t safe_count_{0};
 
   mutable ObjectDataArray ego_stopped_objects_;
 
