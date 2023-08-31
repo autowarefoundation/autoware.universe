@@ -90,6 +90,8 @@ private:
   /* handle objects */
   std::unordered_map<MEASUREMENT_STATE, std::function<void(TrackedObject &, const TrackedObject &)>>
     input_merger_map_;
+  MEASUREMENT_STATE main_sensor_type_;
+  MEASUREMENT_STATE sub_sensor_type_;
   std::vector<TrackerState> inner_tracker_objects_;
   std::unordered_map<std::string, std::unique_ptr<DataAssociation>> data_association_map_;
   std::string target_frame_;
