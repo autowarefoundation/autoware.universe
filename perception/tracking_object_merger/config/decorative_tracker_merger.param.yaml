@@ -18,4 +18,4 @@
       default_radar_existence_probability: 0.5
       default_camera_existence_probability: 0.6
       decay_rate: 0.1
-      max_dt: 0.2
+      max_dt: 1.0

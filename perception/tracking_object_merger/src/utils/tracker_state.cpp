@@ -210,7 +210,10 @@ bool TrackerState::updateWithFunction(
 {
   // put input uuid and last update time
   if (current_time > last_update_time_) {
-    predict(current_time);
+    const auto predict_successful = predict(current_time);
+    if (!predict_successful) {
+      return false;
+    }
   }
 
   // update with measurement state
@@ -237,7 +240,10 @@ void TrackerState::updateWithoutSensor(const rclcpp::Time & current_time)
 
   // predict
   if (dt > 0.0) {
-    this->predict(dt, utils::predictPastOrFutureTrackedObject);
+    const auto predict_successful = this->predict(dt, utils::predictPastOrFutureTrackedObject);
+    if (!predict_successful) {
+      existence_probability_ = 0.0;  // remove object
+    }
   }
 
   // reduce probability
