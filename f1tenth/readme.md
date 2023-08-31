@@ -2,17 +2,17 @@
 
 This tutorial provides step-by-step instructions for installing and setting up the Autoware development environment on the F1tenth car. The Autoware installation process in this branch is modified from the main one to adapt to the Jetson Xavier NX hardware and software systems. One major difference of this Autoware environment is that it runs on `ROS2 galactic` instead of `ROS2 humble` due to the fact that the NVIDIA Jetson currently only supports Ubuntu 20.04 or below. To natively build and run autoware without using docker, galactic is used to increase system compatibility. The original [Autoware installation documentation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/) from main branch, and the [F1tenth build documentation](https://f1tenth.readthedocs.io/en/foxy_test/index.html)(running ROS2 foxy) are here for your reference.
 
-This repo also includes a F1tenth Record-Replay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in both the `F1tenth gym simulator` and in `real-world`(testing in progress) running the Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investment is based on running Jetson Xavier NX on 20W 6core power mode.
+This repo also includes a F1tenth Record-Replay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in either the `F1tenth gym simulator` and in `real-world` running the Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investments listed are based on running Jetson Xavier NX on `20W 6core` power mode.
 
 ## Flash JetPack 5.1.1 (rev. 1) to Jetson Xavier NX
 (Approximate Time Investment: 1-1.5 hours)
 
-There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1. Other JetPack versions may also work but have not yet been tested.
+There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1 (rev. 1). Other JetPack versions may also work but have not yet been tested.
 
 ### NVIDIA SDK Manager Method:
 This method requires a Linux host computer running Ubuntu Linux x64 version `18.04` or `20.04` with `~40GB` of disk space
 
-This method you will first install `NVIDIA SDK Manager` on your host machine, connect the host machine to the Jetson Xavier NX via a micro-USB cable, download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson Xavier NX. This method allows you to directly flash the JetPack to the `SD Card` or to the `NVME SSD drive` on the F1tenth car's Jetson. You may need to create an NVIDIA account to download the NVIDIA SDK manager.
+This method you will first install `NVIDIA SDK Manager` on your host machine, connect the host machine to the Jetson Xavier NX via a `micro-USB` cable, download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson Xavier NX. This method allows you to directly flash the JetPack to the `SD Card` or to the `NVME SSD drive` on the F1tenth car's Jetson. You may need to create an NVIDIA account to download the NVIDIA SDK manager.
 
 1. Download and install [SDK Manager](https://developer.nvidia.com/sdk-manager) on your host machine.
 
@@ -140,7 +140,7 @@ The f1tenth_gym_ros simulator is used in this case, click [here](https://github.
    ```
 
 # F1tenth Record-Replay Demo
-This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in both the `F1tenth gym simulator` and in `real-world`(testing in progress) running the Autoware framework.
+This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in either the `F1tenth gym simulator` and in `real-world` running the Autoware framework.
 
 ## How to create a map
 
@@ -161,7 +161,7 @@ cd autoware && . install/setup.bash
 ros2 launch f1tenth_stack bringup_launch.py
 ```
 
-2. Start the slamtoolbox, update the parameter `slam_params_file` path with the absolute path including your system username
+2. Start the slam_toolbox with parameter `slam_params_file` that includes your system username in the path.
 
 ```(bash)
 # Terminal 2
@@ -170,7 +170,7 @@ cd autoware && . install/setup.bash
 ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/<username>/autoware/src/universe/autoware.universe/f1tenth/f1tenth_system/f1tenth_stack/config/f1tenth_online_async.yaml
 ```
 
-3. Launch rviz2. Add __/map__ by topic. Add __/graph_visualization__ by topic. On the top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you run slam_toolbox.
+3. Launch rviz2. Add `/map` by topic. Add `/graph_visualization` by topic. On the top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you run slam_toolbox.
 
 ### Create a map without an F1tenth car
 
@@ -182,7 +182,7 @@ Navigate to /home/autoware/install/f1tenth_gym_ros/share/f1tenth_gym_ros/config.
 
 ## How to record a trajectory (simulation)
 
-1. Use the `demo_launch` launch file to launch `gym_bridge`, `Recordreplay_planner`, and `trajectory_follower_f1tenth` nodes. 
+1. Use the `demo_launch` launch file to launch `gym_bridge`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes. 
 
 ```(bash)
 # Terminal 1
@@ -193,9 +193,9 @@ ros2 launch launch_autoware_f1tenth demo_launch.py
 
 rviz2 should launch automatically with the target map loaded (black markers). After a short peroid of time the simulated Lidar data (colored markers) and the car model should be overlaid on top of the map indicating the simulator is running correctly. It can take up to `5 minutes` for the Lidar data to show up if the simulator is launched the first time. You may use your mouse's left/right buttons and scroll wheel in rviz2 to adjust the camera position and angle for better map view.
 
-![RViz image](./images/simulator_rviz.jpg)
+![rviz image](./images/simulator_rviz.jpg)
 
-2. Launch the `teleop_twist_keyboard` node for keyboard tele-operation. Focus on (select) this terminal and use `U`, `I`, `O` keys to manually control the F1tenth car in the simulation.  Use `Q` and `Z` keys to increase and decrease the speed.
+2. Launch the `teleop_twist_keyboard` node for keyboard tele-operation. Focus on this terminal and use `U`, `I`, `O` keys to manually control the F1tenth car in the simulation.  Use `Q` and `Z` keys to increase/decrease the speed.
 
 ```(bash)
 # Terminal 2
@@ -216,7 +216,7 @@ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/act
 
 ## How to replay a trajectory (simulation)
 
-1. Use the `demo_launch` launch file to launch `gym_bridge`, `Recordreplay_planner`, and `trajectory_follower_f1tenth` nodes if they are not currently running.
+1. Use the `demo_launch` launch file to launch `gym_bridge`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes if they are not currently running.
 
 ```(bash)
 # Terminal 1
@@ -236,7 +236,7 @@ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/act
 
 ## How to record a trajectory (real car)
 
-1. Use the `realcar_launch` launch file to launch the `f1tenth_stack`, `Recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
+1. Use the `realcar_launch` launch file to launch the `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
 ```(bash)
 # Terminal 1
@@ -245,7 +245,7 @@ cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth realcar_launch.py
 ```
 
-2. Launch the `particle_filter` node for localization. You need the library range_libc to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
+2. Launch the `particle_filter` node for localization. You need the library `range_libc` to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
 
 ```(bash)
 # Terminal 2
@@ -266,7 +266,7 @@ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/act
 
 ## How to replay a trajectory (real car)
 
-1. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `Recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
+1. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
 ```(bash)
 # Terminal 1
@@ -295,6 +295,6 @@ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/act
 
 # Troubleshooting/Tips
 
-1. If editing files (including config files) doesn't seem to take affect, delete the respective package files in the `install` and `build` folders under `autoware` and rebuild the respective package using  --packages-select again.
+1. If editing files (including config files) doesn't seem to take affect, delete the respective package files in the `install` and `build` folders under `autoware` and rebuild the respective package using  `--packages-select` again.
 
-2. You may need to insert a hdmi emulator to the Jetson to use `NoMachine` for remote desktop when running on a real F1tenth car. Sometimes you will need to put the emulator in and out a few time for `NoMachine` to start working
+2. You may need to insert a `hdmi emulator` to your Jetson for `NoMachine` to initiate remote desktop when running on a real F1tenth car. Sometimes you will need to put the emulator in and out a few times for `NoMachine` to start working.
