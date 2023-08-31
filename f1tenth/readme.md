@@ -195,7 +195,7 @@ rviz2 should launch automatically with the target map loaded (black markers). Af
 
 ![rviz image](./images/simulator_rviz.jpg)
 
-2. Launch the `teleop_twist_keyboard` node for keyboard tele-operation. Focus on this terminal and use `U`, `I`, `O` keys to manually control the F1tenth car in the simulation.  Use `Q` and `Z` keys to increase/decrease the speed.
+2. Launch the `teleop_twist_keyboard` node for keyboard tele-operation. Focus on this window and use `U`, `I`, `O` keys to manually control the F1tenth car in the simulation.  Use `Q` and `Z` keys to increase/decrease the speed.
 
 ```(bash)
 # Terminal 2
@@ -236,7 +236,7 @@ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/act
 
 ## How to record a trajectory (real car)
 
-1. Use the `realcar_launch` launch file to launch the `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
+1. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
 ```(bash)
 # Terminal 1
@@ -295,6 +295,6 @@ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/act
 
 # Troubleshooting/Tips
 
-1. If editing files (including config files) doesn't seem to take affect, delete the respective package files in the `install` and `build` folders under `autoware` and rebuild the respective package using  `--packages-select` again.
+1. If editing files doesn't seem to change anything, delete the respective package files in the `install` and `build` folders under `autoware` and rebuild the respective package using  `--packages-select` again.
 
-2. You may need to insert a `hdmi emulator` to your Jetson for `NoMachine` to initiate remote desktop when running on a real F1tenth car. Sometimes you will need to put the emulator in and out a few times for `NoMachine` to start working.
+2. You may need to insert a `hdmi emulator` to the Jetson for `NoMachine` to initiate remote desktop when running on a real F1tenth car. Sometimes you will need to put the emulator in and out a few times for `NoMachine` to start remote desktop.
