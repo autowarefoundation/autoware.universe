@@ -194,27 +194,6 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
 
   std::vector<SceneModulePtr> request_modules{};
 
-  /**
-   * check whether it is possible to push back more modules to approved modules.
-   */
-  {
-    const auto find_block_module = [this](const auto & m) {
-      return !getManager(m)->isSimultaneousExecutableAsApprovedModule();
-    };
-
-    const auto itr =
-      std::find_if(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), find_block_module);
-
-    if (itr != approved_module_ptrs_.end()) {
-      const bool has_always_executable_approved_module = std::any_of(
-        approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
-        [this](const auto & m) { return getManager(m)->isAlwaysExecutableModule(); });
-      if (!has_always_executable_approved_module) {
-        return {};
-      }
-    }
-  }
-
   const auto toc = [this](const auto & name) {
     processing_time_.at(name) += stop_watch_.toc(name, true);
   };
@@ -223,22 +202,45 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
     stop_watch_.tic(manager_ptr->name());
 
     /**
-     * don't launch candidate module if there are already approved modules
-     * that are NOT marked as "always executable."
+     * determine the execution capability of modules based on existing approved modules.
      */
-    const bool has_non_always_executable_approved_module = std::any_of(
+    const bool has_non_always_executable_module = std::any_of(
       approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
       [this](const auto & m) { return !getManager(m)->isAlwaysExecutableModule(); });
-    if (has_non_always_executable_approved_module) {
-      // skip if this manager's module cannot execute simultaneously with
-      // approved modules and it is not an "always executable" module.
+    if (has_non_always_executable_module) {
+      // Condition 1: do not add modules that are neither always nor simultaneous executable
+      // if there exists at least one approved module that is simultaneous but not always
+      // executable. (only modules that are either always executable or simultaneous executable can
+      // be added)
+      const auto find_non_always_simultaneous = [this](const auto & m) {
+        return !getManager(m)->isAlwaysExecutableModule() &&
+               getManager(m)->isSimultaneousExecutableAsApprovedModule();
+      };
+      const auto itr = std::find_if(
+        approved_module_ptrs_.begin(), approved_module_ptrs_.end(), find_non_always_simultaneous);
       if (
-        !manager_ptr->isSimultaneousExecutableAsApprovedModule() &&
-        !manager_ptr->isAlwaysExecutableModule()) {
+        itr != approved_module_ptrs_.end() && !manager_ptr->isAlwaysExecutableModule() &&
+        !manager_ptr->isSimultaneousExecutableAsApprovedModule()) {
+        toc(manager_ptr->name());
+        continue;
+      }
+
+      // Condition 2: do not add modules that are not always executable if there exists
+      // at least one approved module that is neither always nor simultaneous executable.
+      // (only modules that are always executable can be added)
+      const auto find_block_module = [this](const auto & m) {
+        return !getManager(m)->isAlwaysExecutableModule() &&
+               !getManager(m)->isSimultaneousExecutableAsApprovedModule();
+      };
+      const auto itr_block =
+        std::find_if(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), find_block_module);
+      if (itr_block != approved_module_ptrs_.end() && !manager_ptr->isAlwaysExecutableModule()) {
         toc(manager_ptr->name());
         continue;
       }
     }
+    // Condition 3: if none of the above conditions are met, any module can be added.
+    // (when the approved modules are either empty or consist only of always-executable modules.)
 
     /**
      * launch new candidate module.
@@ -366,21 +368,46 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
       continue;
     }
 
-    if (!getManager(module_ptr)->isSimultaneousExecutableAsCandidateModule()) {
-      if (executable_modules.empty()) {
-        executable_modules.push_back(module_ptr);
-        break;
-      }
+    // Condition 3: If the executable modules are either empty or consist only of always-executable
+    // modules, any module can be added.
+    const bool has_non_always_executable_module = std::any_of(
+      executable_modules.begin(), executable_modules.end(),
+      [this](const auto & m) { return !getManager(m)->isAlwaysExecutableModule(); });
+    if (!has_non_always_executable_module) {
+      executable_modules.push_back(module_ptr);
+      continue;
     }
 
-    const auto itr =
-      std::find_if(executable_modules.begin(), executable_modules.end(), [this](const auto & m) {
-        return !getManager(m)->isSimultaneousExecutableAsCandidateModule() &&
-               !getManager(m)->isAlwaysExecutableModule();
-      });
-
-    if (itr == executable_modules.end()) {
+    // Condition 2: Only modules that are always executable can be added
+    // if there exists at least one executable module that is neither always nor simultaneous
+    // executable.
+    const auto find_block_module = [this](const auto & m) {
+      return !getManager(m)->isAlwaysExecutableModule() &&
+             !getManager(m)->isSimultaneousExecutableAsApprovedModule();
+    };
+    const auto itr_block =
+      std::find_if(executable_modules.begin(), executable_modules.end(), find_block_module);
+    if (
+      itr_block != executable_modules.end() && getManager(module_ptr)->isAlwaysExecutableModule()) {
       executable_modules.push_back(module_ptr);
+      continue;
+    }
+
+    // Condition 1: Only modules that are either always executable or simultaneous executable can be
+    // added if there exists at least one executable module that is simultaneous but not always
+    // executable.
+    const auto find_non_always_simultaneous = [this](const auto & m) {
+      return !getManager(m)->isAlwaysExecutableModule() &&
+             getManager(m)->isSimultaneousExecutableAsApprovedModule();
+    };
+    const auto itr = std::find_if(
+      executable_modules.begin(), executable_modules.end(), find_non_always_simultaneous);
+    if (
+      itr != executable_modules.end() &&
+      (getManager(module_ptr)->isAlwaysExecutableModule() ||
+       getManager(module_ptr)->isSimultaneousExecutableAsApprovedModule())) {
+      executable_modules.push_back(module_ptr);
+      continue;
     }
   }
 
