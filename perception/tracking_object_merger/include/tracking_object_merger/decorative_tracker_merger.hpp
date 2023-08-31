@@ -102,6 +102,10 @@ private:
   double sub_object_timeout_sec_;
   double time_sync_threshold_;
 
+  // tracker default settings
+  TrackerStateParameter tracker_state_parameter_;
+
+  // merge policy (currently not used)
   struct
   {
     std::string kinematics_to_be_merged;
