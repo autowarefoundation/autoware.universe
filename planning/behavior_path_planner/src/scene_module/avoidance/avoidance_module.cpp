@@ -983,6 +983,9 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(
     if (is_valid_shift_line(al_avoid) && is_valid_shift_line(al_return)) {
       avoid_lines.push_back(al_avoid);
       avoid_lines.push_back(al_return);
+    } else {
+      o.reason = "InvalidShiftLine";
+      continue;
     }
 
     o.is_avoidable = true;
