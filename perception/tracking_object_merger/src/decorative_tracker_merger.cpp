@@ -103,18 +103,26 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
     declare_parameter<std::string>("logging_file_path", "~/.ros/association_log.json");
 
   // Parameters
-  base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
-  time_sync_threshold_ = declare_parameter<double>("time_sync_threshold", 0.05);
-  sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec", 0.5);
+  base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id");
+  time_sync_threshold_ = declare_parameter<double>("time_sync_threshold");
+  sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec");
 
-  // // merger function map
-  // // main merger
-  // input_merger_map_[0] = merger_utils::updateWholeTrackedObject;
-  // // sub merger
-  // input_merger_map_[1] = merger_utils::updateOnlyObjectVelocity;
+  const std::string main_sensor_type = declare_parameter<std::string>("main_sensor_type");
+  const std::string sub_sensor_type = declare_parameter<std::string>("sub_sensor_type");
+  // str to MEASUREMENT_STATE
+  auto str2measurement_state = [](const std::string & str) {
+    if (str == "lidar") {
+      return MEASUREMENT_STATE::LIDAR;
+    } else if (str == "radar") {
+      return MEASUREMENT_STATE::RADAR;
+    } else {
+      throw std::runtime_error("invalid sensor type");
+    }
+  };
+  main_sensor_type_ = str2measurement_state(main_sensor_type);
+  sub_sensor_type_ = str2measurement_state(sub_sensor_type);
 
-  // init association
-
+  /* init association **/
   // lidar-lidar association matrix
   set3dDataAssociation("lidar-lidar", data_association_map_);
   // lidar-radar association matrix
@@ -192,11 +200,11 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
     } else {
     }
     // update with old sub objects
-    this->decorativeMerger(MEASUREMENT_STATE::RADAR, closest_time_sub_objects);
+    this->decorativeMerger(sub_sensor_type_, closest_time_sub_objects);
   }
 
   // try to merge main object
-  this->decorativeMerger(MEASUREMENT_STATE::LIDAR, main_objects);
+  this->decorativeMerger(main_sensor_type_, main_objects);
 
   merged_object_pub_->publish(getTrackedObjects(main_objects->header));
 }
