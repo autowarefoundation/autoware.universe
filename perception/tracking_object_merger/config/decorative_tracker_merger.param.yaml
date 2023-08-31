@@ -1,0 +1,11 @@
+# Node parameters
+/**:
+  ros__parameters:
+    base_link_frame_id: "base_link"
+    time_sync_threshold: 0.05
+    sub_object_timeout_sec: 0.5
+
+    # choose the input sensor type for each object type
+    # "lidar", "radar", "camera" are available
+    main_sensor_type: "lidar"
+    sub_sensor_type: "radar"
