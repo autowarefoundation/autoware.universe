@@ -127,7 +127,6 @@ void AutowareBagRecorderNode::create_bag_file(
   storage_options_new.uri = bag_path;
   storage_options_new.storage_id = database_storage_;
   writer->open(storage_options_new);
-
 }
 
 void AutowareBagRecorderNode::bag_file_handler(ModuleSection & section)
@@ -377,8 +376,9 @@ bool AutowareBagRecorderNode::is_acceptable_disk_limit_reached()
 
 bool AutowareBagRecorderNode::is_bag_folder_limit_reached()
 {
-  return (get_bag_path_directory_size(std::filesystem::u8path(bag_path_)) >
-          maximum_allowed_bag_storage_size_ * 1024);
+  return (
+    get_bag_path_directory_size(std::filesystem::u8path(bag_path_)) >
+    maximum_allowed_bag_storage_size_ * 1024);
 }
 
 void AutowareBagRecorderNode::disk_space_handler()
