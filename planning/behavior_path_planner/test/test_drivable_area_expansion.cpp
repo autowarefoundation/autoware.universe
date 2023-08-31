@@ -18,7 +18,6 @@
 #include "behavior_path_planner/utils/drivable_area_expansion/types.hpp"
 #include "lanelet2_extension/utility/message_conversion.hpp"
 
-#include <gtest/gtest-spi.h>
 #include <gtest/gtest.h>
 
 using drivable_area_expansion::linestring_t;
