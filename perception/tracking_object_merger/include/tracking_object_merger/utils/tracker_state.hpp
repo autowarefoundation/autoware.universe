@@ -62,6 +62,18 @@ inline bool operator&(MEASUREMENT_STATE combined, MEASUREMENT_STATE target)
   return (static_cast<int>(combined) & static_cast<int>(target)) != 0;
 }
 
+// Struct to handle tracker state public parameter
+struct TrackerStateParameter
+{
+  double publish_probability_threshold = 0.5;
+  double remove_probability_threshold = 0.3;
+  double default_lidar_existence_probability = 0.8;
+  double default_radar_existence_probability = 0.7;
+  double default_camera_existence_probability = 0.6;
+  double decay_rate = 0.1;
+  double max_dt = 2.0;
+};
+
 // Class to handle tracker state
 class TrackerState
 {
@@ -71,10 +83,6 @@ private:
   rclcpp::Time last_update_time_;
   // Eigen::MatrixXf state_matrix_;
   // Eigen::MatrixXf covariance_matrix_;
-
-  // handle existence probability
-  double can_publish_threshold_ = 0.5;
-  double remove_threshold_ = 0.3;
 
   // timer handle
   std::unordered_map<MEASUREMENT_STATE, rclcpp::Time> last_updated_time_map_;
@@ -92,6 +100,7 @@ public:
   ~TrackerState();
 
 public:
+  void setParameter(const TrackerStateParameter & parameter);
   bool predict(const rclcpp::Time & time);
   bool predict(const double dt, std::function<TrackedObject(const TrackedObject &, double)> func);
   MEASUREMENT_STATE getCurrentMeasurementState(const rclcpp::Time & current_time) const;
@@ -121,6 +130,7 @@ public:
     input_uuid_map_;
   MEASUREMENT_STATE measurement_state_;
 
+  // following lifecycle control parameter is overwritten by TrackerStateParameter
   std::unordered_map<MEASUREMENT_STATE, double> default_existence_probability_map_ = {
     {MEASUREMENT_STATE::LIDAR, 0.8},
     {MEASUREMENT_STATE::RADAR, 0.7},
@@ -129,6 +139,7 @@ public:
   double existence_probability_ = 0.0;
   double publish_probability_threshold_ = 0.5;
   double remove_probability_threshold_ = 0.3;
+  double decay_rate_ = 0.1;
 };
 
 TrackedObjects getTrackedObjectsFromTrackerStates(

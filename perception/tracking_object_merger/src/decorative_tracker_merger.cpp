@@ -106,6 +106,20 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id");
   time_sync_threshold_ = declare_parameter<double>("time_sync_threshold");
   sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec");
+  // default setting parameter for tracker
+  tracker_state_parameter_.remove_probability_threshold =
+    declare_parameter<double>("tracker_state_parameter.remove_probability_threshold");
+  tracker_state_parameter_.publish_probability_threshold =
+    declare_parameter<double>("tracker_state_parameter.publish_probability_threshold");
+  tracker_state_parameter_.default_lidar_existence_probability =
+    declare_parameter<double>("tracker_state_parameter.default_lidar_existence_probability");
+  tracker_state_parameter_.default_radar_existence_probability =
+    declare_parameter<double>("tracker_state_parameter.default_radar_existence_probability");
+  tracker_state_parameter_.default_camera_existence_probability =
+    declare_parameter<double>("tracker_state_parameter.default_camera_existence_probability");
+  tracker_state_parameter_.decay_rate =
+    declare_parameter<double>("tracker_state_parameter.decay_rate");
+  tracker_state_parameter_.max_dt = declare_parameter<double>("tracker_state_parameter.max_dt");
 
   const std::string main_sensor_type = declare_parameter<std::string>("main_sensor_type");
   const std::string sub_sensor_type = declare_parameter<std::string>("sub_sensor_type");
@@ -378,11 +392,15 @@ TrackerState DecorativeTrackerMergerNode::createNewTracker(
       std::mt19937 gen(std::random_device{}());
       std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
       std::generate(uuid.uuid.begin(), uuid.uuid.end(), bit_eng);
-      return TrackerState(input_index, current_time, input_object, uuid);
+      auto new_tracker = TrackerState(input_index, current_time, input_object, uuid);
+      new_tracker.setParameter(tracker_state_parameter_);
+      return new_tracker;
     }
   }
   // if not found, just create new tracker
-  return TrackerState(input_index, current_time, input_object);
+  auto new_tracker = TrackerState(input_index, current_time, input_object);
+  new_tracker.setParameter(tracker_state_parameter_);
+  return new_tracker;
 }
 
 }  // namespace tracking_object_merger
