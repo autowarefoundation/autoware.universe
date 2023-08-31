@@ -59,7 +59,7 @@ polygon_t createExpansionPolygon(
   boost::geometry::buffer(
     base_ls, polygons, distance_strategy, strategy::side_straight(), strategy::join_miter(),
     strategy::end_flat(), strategy::point_square());
-  return polygons.empty() ? polyton_t{} : polygons.front();
+  return polygons.empty() ? polygon_t{} : polygons.front();
 }
 
 std::array<double, 3> calculate_arc_length_range_and_distance(
