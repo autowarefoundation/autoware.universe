@@ -47,6 +47,7 @@ struct TopicInfo
 struct ModuleSection
 {
   std::string folder_path;
+  std::string prefix;
   std::string current_bag_name;
   std::vector<TopicInfo> topic_info;
   std::unique_ptr<rosbag2_cpp::Writer> bag_writer;
@@ -93,7 +94,8 @@ private:
   void generic_subscription_callback(
     const std::shared_ptr<rclcpp::SerializedMessage const> & msg, const std::string & topic_name,
     autoware_bag_recorder::ModuleSection & section);
-  void section_factory(const std::vector<std::string> & topics, const std::string & path);
+  void section_factory(
+    const std::vector<std::string> & topics, const std::string & path, const std::string & prefix);
   double get_root_disk_space() const;
   static double get_bag_path_directory_size(const std::filesystem::path & directory);
   void remove_remainder_bags_in_folder(autoware_bag_recorder::ModuleSection & section) const;
@@ -119,17 +121,8 @@ private:
 
   int remaining_topic_num_;
 
-  std::vector<std::string> api_topics_;
-  std::vector<std::string> autoware_topics_;
-  std::vector<std::string> control_topics_;
-  std::vector<std::string> external_topics_;
-  std::vector<std::string> localization_topics_;
-  std::vector<std::string> map_topics_;
-  std::vector<std::string> perception_topics_;
-  std::vector<std::string> planning_topics_;
-  std::vector<std::string> sensing_topics_;
-  std::vector<std::string> system_topics_;
-  std::vector<std::string> vehicle_topics_;
+  std::vector<std::string> raw_input_topics_;
+  std::vector<std::string> other_topics_;
   std::vector<std::string> all_topics_;
 
   std::vector<ModuleSection> module_sections_;
