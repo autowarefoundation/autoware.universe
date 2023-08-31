@@ -53,6 +53,20 @@ TrackerState::TrackerState(
   existence_probability_ = default_existence_probability_map_[input_source];
 }
 
+void TrackerState::setParameter(const TrackerStateParameter & parameter)
+{
+  max_dt_ = parameter.max_dt;
+  publish_probability_threshold_ = parameter.publish_probability_threshold;
+  remove_probability_threshold_ = parameter.remove_probability_threshold;
+  default_existence_probability_map_.at(MEASUREMENT_STATE::LIDAR) =
+    parameter.default_lidar_existence_probability;
+  default_existence_probability_map_.at(MEASUREMENT_STATE::RADAR) =
+    parameter.default_radar_existence_probability;
+  default_existence_probability_map_.at(MEASUREMENT_STATE::CAMERA) =
+    parameter.default_camera_existence_probability;
+  decay_rate_ = parameter.decay_rate;
+}
+
 /**
  * @brief Predict state to current time
  *
@@ -227,7 +241,7 @@ void TrackerState::updateWithoutSensor(const rclcpp::Time & current_time)
   }
 
   // reduce probability
-  existence_probability_ -= 0.1;
+  existence_probability_ -= decay_rate_;
   if (existence_probability_ < 0.0) {
     existence_probability_ = 0.0;
   }
