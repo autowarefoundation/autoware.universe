@@ -105,7 +105,7 @@ autoware_perception_msgs::msg::PredictedObjects generate_perception_msg()
   return msg_perception;
 }
 
-TEST(AutowareAutoMsgsAdapter, TestPredectedObjecst)  // NOLINT for gtest
+TEST(AutowareAutoMsgsAdapter, TestPredictedObjects)  // NOLINT for gtest
 {
   const std::string msg_type_target = "autoware_auto_perception_msgs/msg/PredictedObjects";
   const std::string topic_name_source = "topic_name_source";

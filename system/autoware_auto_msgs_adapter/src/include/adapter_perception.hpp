@@ -86,7 +86,7 @@ protected:
       object_auto.shape.footprint = msg_source.objects[it_of_objects].shape.footprint;
       object_auto.shape.dimensions = msg_source.objects[it_of_objects].shape.dimensions;
 
-      // add to objests list
+      // add to objects list
       msg_auto.objects.push_back(object_auto);
     }
     return msg_auto;
