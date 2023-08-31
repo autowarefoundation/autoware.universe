@@ -212,9 +212,9 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
         std::cout << "current stamp: " << getUnixTime(main_objects->header) << std::endl;
       }
     } else {
+      // update with old sub objects
+      this->decorativeMerger(sub_sensor_type_, closest_time_sub_objects);
     }
-    // update with old sub objects
-    this->decorativeMerger(sub_sensor_type_, closest_time_sub_objects);
   }
 
   // try to merge main object
