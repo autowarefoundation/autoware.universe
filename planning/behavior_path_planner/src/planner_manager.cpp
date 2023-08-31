@@ -407,7 +407,7 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
     if (
       itr_non_always_simultaneous != executable_modules.end() &&
       (getManager(module_ptr)->isAlwaysExecutableModule() ||
-       getManager(module_ptr)->isSimultaneousExecutableAsApprovedModule())) {
+       getManager(module_ptr)->isSimultaneousExecutableAsCandidateModule())) {
       executable_modules.push_back(module_ptr);
       continue;
     }
