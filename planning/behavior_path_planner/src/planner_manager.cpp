@@ -385,7 +385,7 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
     // executable.
     const auto find_block_module = [this](const auto & m) {
       return !getManager(m)->isAlwaysExecutableModule() &&
-             !getManager(m)->isSimultaneousExecutableAsApprovedModule();
+             !getManager(m)->isSimultaneousExecutableAsCandidateModule();
     };
     const auto itr_block =
       std::find_if(executable_modules.begin(), executable_modules.end(), find_block_module);
