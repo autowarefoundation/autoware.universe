@@ -5,7 +5,7 @@ This tutorial provides step-by-step instructions for installing and setting up t
 This repo also includes a F1tenth Record-Replay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in the `F1tenth gym simulator` or in `real-world` running Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investments listed are based on running Jetson Xavier NX on `20W 6core` power mode.
 
 ## Flash JetPack 5.1.1 (rev. 1) to Jetson Xavier NX
-(Approximate Time Investment: 1-1.5 hours)
+(Approximate time investment: 1-1.5 hours)
 
 There are multiple ways to install JetPack on a Jetson as described in [Jetpack 5.1.1 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-511). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 5.1.1 (rev. 1). Other JetPack versions may also work but have not yet been tested.
 
@@ -36,13 +36,13 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
 
 
 ## Install ROS2 galactic 
-(Approximate Time Investment: 0.5 hour)
+(Approximate time investment: 0.5 hour)
 
 1. Follow the [ROS2 instructions](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html) to install ROS2 galactic
 
 
 ## Set up Autoware development environment 
-(Approximate Time Investment: 0.5 hour)
+(Approximate time investment: 0.5 hour)
 
 1. Clone the `galactic` branch of `autowarefoundation/autoware` and move to the directory.
 
@@ -59,11 +59,11 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
 
    The NVIDIA library and cuda driver installation are disabled as they are already installed with the JetPack. If you force the cuda driver installation here, it can mess up the kernel and cause errors at bootup. You will need to reflash the JetPack if this happens.
 
-3. Under the `autoware` folder, go to the `autoware.repos` file and change the version of `universe/autoware.universe` from `galactic` to `f1tenth_galactic`
+3. Under the `autoware` folder, go to the `autoware.repos` file and change the version of `universe/autoware.universe` from `galactic` to `f1tenth_galactic` and save.
 
 
 ## Set up Autoware workspace 
-(Approximate Time Investment: 6-7 hours)
+(Approximate time investment: 6-7 hours)
 
 1. Create the `src` directory and clone repositories into it.
 
@@ -126,7 +126,7 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
    
 
 ## Install f1tenth_gym simulator dependencies
-(Approximate Time Investment: 10 minutes)
+(Approximate time investment: 10 minutes)
 
 Install `onnx` and roll back `setuptools` to version 65.5.0
    ```bash
