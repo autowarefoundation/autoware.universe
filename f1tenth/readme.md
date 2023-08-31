@@ -128,11 +128,12 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
 ## Install f1tenth_gym simulator dependencies
 (Approximate time investment: 10 minutes)
 
-Install `onnx` and roll back `setuptools` to version 65.5.0
+1. Install `onnx` and roll back `setuptools` to version 65.5.0
    ```bash
    pip3 install onnx setuptools==65.5.0
    ```
-The f1tenth_gym_ros simulator is used in this case, click [here](https://github.com/f1tenth/f1tenth_gym_ros) for details.
+   
+2. The f1tenth_gym_ros simulator is used in this case, click [here](https://github.com/f1tenth/f1tenth_gym_ros) for details.
 
    ```bash
    cd autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ros/f1tenth_gym
@@ -146,7 +147,7 @@ This demo allows the user to first build a map, record a trajectory by manually 
 
 This part assumes that you have a fully built and properly tuned F1tenth car. For instructions on how to configure an F1tenth car, see [f1tenth_system](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/f1tenth_system).
 
-On your F1tenth car, install the slamtoolbox 
+Install `slam_toolbox`
 
    ```bash
    sudo apt install ros-galactic-slam-toolbox
