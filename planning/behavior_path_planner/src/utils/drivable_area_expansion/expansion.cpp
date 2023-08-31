@@ -30,8 +30,8 @@ double calculateDistanceLimit(
     boost::geometry::intersection(expansion_polygon, limit_lines, intersections);
     for (const auto & p : intersections)
       dist_limit = std::min(dist_limit, boost::geometry::distance(p, base_ls));
-    if (!intersections.empty())
-      for (const auto & p : line)
+    for (const auto & p : line)
+      if (boost::geometry::within(p, expansion_polygon))
         dist_limit = std::min(dist_limit, boost::geometry::distance(p, base_ls));
   }
   return dist_limit;

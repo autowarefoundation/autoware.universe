@@ -338,7 +338,7 @@ TEST(DrivableAreaExpansion, calculateDistanceLimitEdgeCases)
 
   const linestring_t base_ls = {{0.0, 0.0}, {10.0, 0.0}};
   const polygon_t expansion_polygon = {
-    {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {10.0, -4.0}}, {}};
+    {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {0.0, -4.0}}, {}};
   {  // intersection points further than the line point inside the expansion polygon
     const linestring_t uncrossable_lines = {{4.0, 5.0}, {6.0, 3.0}};
     const auto limit_distance =
@@ -351,17 +351,6 @@ TEST(DrivableAreaExpansion, calculateDistanceLimitEdgeCases)
       calculateDistanceLimit(base_ls, expansion_polygon, {uncrossable_lines});
     EXPECT_NEAR(limit_distance, 2.0, 1e-9);
   }
-}
-
-TEST(DrivableAreaExpansion, DISABLED_calculateDistanceLimitEdgeCases)
-{
-  using drivable_area_expansion::calculateDistanceLimit;
-  using drivable_area_expansion::linestring_t;
-  using drivable_area_expansion::polygon_t;
-
-  const linestring_t base_ls = {{0.0, 0.0}, {10.0, 0.0}};
-  const polygon_t expansion_polygon = {
-    {{0.0, -4.0}, {0.0, 4.0}, {10.0, 4.0}, {10.0, -4.0}, {10.0, -4.0}}, {}};
   {  // line completely inside the expansion polygon
     const linestring_t uncrossable_lines = {{4.0, 2.0}, {6.0, 3.0}};
     const auto limit_distance =
