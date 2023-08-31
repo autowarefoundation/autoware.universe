@@ -367,7 +367,7 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
     // if this module is always executable, add it to the list immediately.
     if (getManager(module_ptr)->isAlwaysExecutableModule()) {
       executable_modules.push_back(module_ptr);
-      break;
+      continue;
     }
 
     // Condition 3: If the executable modules are either empty or consist only of always-executable
@@ -377,7 +377,7 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
       [this](const auto & m) { return !getManager(m)->isAlwaysExecutableModule(); });
     if (!has_non_always_executable_module) {
       executable_modules.push_back(module_ptr);
-      break;
+      continue;
     }
 
     // Condition 2: Only modules that are always executable can be added
@@ -392,7 +392,7 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
     if (
       itr_block != executable_modules.end() && getManager(module_ptr)->isAlwaysExecutableModule()) {
       executable_modules.push_back(module_ptr);
-      break;
+      continue;
     }
 
     // Condition 1: Only modules that are either always executable or simultaneous executable can be
@@ -409,6 +409,7 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
       (getManager(module_ptr)->isAlwaysExecutableModule() ||
        getManager(module_ptr)->isSimultaneousExecutableAsCandidateModule())) {
       executable_modules.push_back(module_ptr);
+      continue;
     }
   }
 
