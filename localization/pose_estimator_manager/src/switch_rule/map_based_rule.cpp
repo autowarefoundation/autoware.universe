@@ -14,7 +14,10 @@ std::vector<PoseEstimatorName> MapBasedRule::supporting_pose_estimators()
 MapBasedRule::MapBasedRule(
   rclcpp::Node & node, const std::unordered_set<PoseEstimatorName> & running_estimator_list)
 : BaseSwitchRule(node),
-  pcd_density_threshold_(node.declare_parameter<int>("pcd_occupancy_rule/pcd_density_threshold")),
+  pcd_density_upper_threshold_(
+    node.declare_parameter<int>("pcd_occupancy_rule/pcd_density_upper_threshold")),
+  pcd_density_lower_threshold_(
+    node.declare_parameter<int>("pcd_occupancy_rule/pcd_density_lower_threshold")),
   running_estimator_list_(running_estimator_list)
 {
   RCLCPP_INFO_STREAM(get_logger(), "MapBasedRule is initialized");
@@ -138,20 +141,28 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
   const int count = kdtree_->radiusSearch(query, 50, indices, distances, 0);
 
   std::stringstream ss;
-  const bool is_ndt_mode = count > pcd_density_threshold_;
   std::unordered_map<PoseEstimatorName, bool> toggle_list;
+
+  static bool last_is_ndt_mode = true;
+  const bool is_ndt_mode = (last_is_ndt_mode) ? (count > pcd_density_lower_threshold_)
+                                              : (count > pcd_density_upper_threshold_);
+  last_is_ndt_mode = is_ndt_mode;
+
   if (is_ndt_mode) {
     toggle_list[PoseEstimatorName::NDT] = true;
     toggle_list[PoseEstimatorName::YABLOC] = false;
     toggle_list[PoseEstimatorName::EAGLEYE] = false;
     ss << "enable NDT";
+    RCLCPP_WARN_STREAM(get_logger(), "Enable NDT");
   } else {
     toggle_list[PoseEstimatorName::NDT] = false;
     toggle_list[PoseEstimatorName::YABLOC] = true;
     toggle_list[PoseEstimatorName::EAGLEYE] = false;
     ss << "enable YabLoc";
+    RCLCPP_WARN_STREAM(get_logger(), "Enable YabLoc");
   }
-  ss << "\npcd occupancy: " << count << " > " << pcd_density_threshold_;
+  ss << "\npcd occupancy: " << count << " > "
+     << (last_is_ndt_mode ? pcd_density_lower_threshold_ : pcd_density_upper_threshold_);
   debug_string_msg_ = ss.str();
   return toggle_list;
 }

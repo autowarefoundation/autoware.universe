@@ -36,7 +36,8 @@ public:
   MarkerArray debug_marker_array() override;
 
 protected:
-  const int pcd_density_threshold_;
+  const int pcd_density_upper_threshold_;
+  const int pcd_density_lower_threshold_;
   const std::unordered_set<PoseEstimatorName> running_estimator_list_;
 
   std::string debug_string_msg_;

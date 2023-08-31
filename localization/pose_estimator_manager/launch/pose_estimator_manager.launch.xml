@@ -5,7 +5,8 @@
   <arg name="pose_sources" default="" description=""/>
 
   <node pkg="pose_estimator_manager" exec="pose_estimator_manager" name="pose_estimator_manager" output="screen" args="--ros-args --log-level info">
-    <param name="pcd_occupancy_rule/pcd_density_threshold" value="30"/>
+    <param name="pcd_occupancy_rule/pcd_density_upper_threshold" value="25"/>
+    <param name="pcd_occupancy_rule/pcd_density_lower_threshold" value="20"/>
     <param name="pose_sources" value="$(var pose_sources)"/>
 
     <!-- yabloc -->
