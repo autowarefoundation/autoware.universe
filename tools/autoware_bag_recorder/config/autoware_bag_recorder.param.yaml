@@ -2,7 +2,7 @@
   ros__parameters:
     common:
       database_storage: "sqlite3"                 # sqlite3 or mcap
-      maximum_record_time: 1800                   # seconds
+      maximum_record_time: 36000                  # seconds
       maximum_allowed_bag_storage_size: 500.0     # GB
       maximum_bag_file_size: 20.0                 # GB
       enable_only_auto_mode_recording: false      # if enabled, recording occurs only "AUTO" mode

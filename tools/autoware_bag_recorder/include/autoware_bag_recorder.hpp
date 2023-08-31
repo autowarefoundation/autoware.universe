@@ -69,6 +69,8 @@ private:
   void start_topic_search();
   void start_status_control();
   void disk_space_handler();
+  bool is_bag_folder_limit_reached();
+  bool is_acceptable_disk_limit_reached();
   void check_disk_space();
   void check_record_time(
     const std::chrono::time_point<std::chrono::system_clock> & start_record_time);

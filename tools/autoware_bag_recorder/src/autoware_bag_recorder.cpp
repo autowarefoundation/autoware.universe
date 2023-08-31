@@ -120,12 +120,14 @@ void AutowareBagRecorderNode::create_bag_file(
   if (std::filesystem::exists(bag_path)) {
     return;
   }
+
   writer = std::make_unique<rosbag2_cpp::Writer>();
 
   rosbag2_storage::StorageOptions storage_options_new;
   storage_options_new.uri = bag_path;
   storage_options_new.storage_id = database_storage_;
   writer->open(storage_options_new);
+
 }
 
 void AutowareBagRecorderNode::bag_file_handler(ModuleSection & section)
@@ -302,7 +304,6 @@ double AutowareBagRecorderNode::get_bag_path_directory_size(const std::filesyste
 void AutowareBagRecorderNode::check_files_in_folder(
   autoware_bag_recorder::ModuleSection & section, std::vector<std::string> & directories)
 {
-  std::cout << section.folder_path << std::endl;
   for (const auto & path : std::filesystem::recursive_directory_iterator(section.folder_path)) {
     if (path.is_directory()) {
       directories.push_back(path.path().string());
@@ -332,10 +333,8 @@ void AutowareBagRecorderNode::free_disk_space_for_continue(
   std::vector<std::string> directories;
   check_files_in_folder(section, directories);
 
-  while (get_root_disk_space() < minimum_acceptable_disk_space_) {
-    std::filesystem::remove_all(directories[0]);
-    directories.erase(directories.begin());
-  }
+  std::filesystem::remove_all(directories[0]);
+  directories.erase(directories.begin());
 }
 
 void AutowareBagRecorderNode::gate_mode_cmd_callback(
@@ -371,11 +370,24 @@ void AutowareBagRecorderNode::start_topic_search()
   }).detach();
 }
 
+bool AutowareBagRecorderNode::is_acceptable_disk_limit_reached()
+{
+  return get_root_disk_space() < minimum_acceptable_disk_space_;
+}
+
+bool AutowareBagRecorderNode::is_bag_folder_limit_reached()
+{
+  return (get_bag_path_directory_size(std::filesystem::u8path(bag_path_)) >
+          maximum_allowed_bag_storage_size_ * 1024);
+}
+
 void AutowareBagRecorderNode::disk_space_handler()
 {
   if (disk_space_action_mode_ == "remove") {
-    for (auto & section : module_sections_) {
-      free_disk_space_for_continue(section);
+    while (is_acceptable_disk_limit_reached() || is_bag_folder_limit_reached()) {
+      for (auto & section : module_sections_) {
+        free_disk_space_for_continue(section);
+      }
     }
   } else {
     rclcpp::shutdown();
