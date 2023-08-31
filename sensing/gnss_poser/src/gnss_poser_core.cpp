@@ -42,8 +42,6 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
     sub_map_projector_info_,
     [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { callbackMapProjectorInfo(msg); });
 
-  nav_sat_fix_origin_.altitude = declare_parameter("altitude", 0.0);
-
   int buff_epoch = declare_parameter("buff_epoch", 1);
   position_buffer_.set_capacity(buff_epoch);
 
@@ -95,8 +93,7 @@ void GNSSPoser::callbackNavSatFix(
   }
 
   // get position
-  const auto gnss_stat =
-    convert(*nav_sat_fix_msg_ptr, projector_info_.projector_type, projector_info_.vertical_datum);
+  const auto gnss_stat = convert(*nav_sat_fix_msg_ptr, projector_info_);
   const auto position = getPosition(gnss_stat);
 
   geometry_msgs::msg::Pose gnss_antenna_pose{};
@@ -201,16 +198,15 @@ bool GNSSPoser::canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix
 }
 
 GNSSStat GNSSPoser::convert(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const std::string & projector_type,
-  const std::string & vertical_datum)
+  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const MapProjectorInfo::Message & map_projector_info)
 {
   GNSSStat gnss_stat;
-  if (projector_type == MapProjectorInfo::Message::LOCAL_CARTESIAN_UTM) {
+  if (map_projector_info.projector_type == MapProjectorInfo::Message::LOCAL_CARTESIAN_UTM) {
     gnss_stat = NavSatFix2LocalCartesianUTM(
-      nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(), vertical_datum);
-  } else if (projector_type == MapProjectorInfo::Message::MGRS) {
+      nav_sat_fix_msg, map_projector_info.map_origin, this->get_logger(), map_projector_info.vertical_datum);
+  } else if (map_projector_info.projector_type == MapProjectorInfo::Message::MGRS) {
     gnss_stat = NavSatFix2MGRS(
-      nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(), vertical_datum);
+      nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(), map_projector_info.vertical_datum);
   } else {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
