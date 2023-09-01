@@ -96,6 +96,7 @@ Trajectory alignTrajectoryWithReferenceTrajectory(
   if (is_no_overlapping) {
     return Trajectory();
   }
+  
   auto modified_trajectory_points = convertToTrajectoryPointArray(predicted_trajectory);
   auto predicted_trajectory_points = convertToTrajectoryPointArray(predicted_trajectory);
   auto trajectory_points = convertToTrajectoryPointArray(trajectory);
