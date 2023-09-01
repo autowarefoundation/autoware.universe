@@ -63,10 +63,8 @@ private:
   // GNSSStat convert(
   //   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
   //   const MapProjectorInfo::Message & projector_info);
-  Point getMedianPosition(
-    const boost::circular_buffer<Point> & position_buffer);
-  Point getAveragePosition(
-    const boost::circular_buffer<Point> & position_buffer);
+  Point getMedianPosition(const boost::circular_buffer<Point> & position_buffer);
+  Point getAveragePosition(const boost::circular_buffer<Point> & position_buffer);
   geometry_msgs::msg::Quaternion getQuaternionByHeading(const int heading);
   geometry_msgs::msg::Quaternion getQuaternionByPositionDifference(
     const Point & point, const Point & prev_point);

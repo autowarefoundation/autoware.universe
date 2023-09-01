@@ -14,9 +14,11 @@
 
 #include "gnss_poser/gnss_poser_core.hpp"
 
-#include <autoware_sensing_msgs/msg/gnss_ins_orientation_stamped.hpp>
-#include <geography_utils/projection.hpp>
 #include <geography_utils/height.hpp>
+#include <geography_utils/projection.hpp>
+
+#include <autoware_sensing_msgs/msg/gnss_ins_orientation_stamped.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -100,8 +102,8 @@ void GNSSPoser::callbackNavSatFix(
   gps_point.altitude = nav_sat_fix_msg_ptr->altitude;
   Point position = geography_utils::project_forward(gps_point, projector_info_);
   position.z = geography_utils::convert_height(
-    gps_point.altitude, gps_point.latitude, gps_point.longitude,
-    "WGS84", projector_info_.vertical_datum);
+    gps_point.altitude, gps_point.latitude, gps_point.longitude, "WGS84",
+    projector_info_.vertical_datum);
 
   geometry_msgs::msg::Pose gnss_antenna_pose{};
 
@@ -209,7 +211,7 @@ bool GNSSPoser::canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix
 //   const MapProjectorInfo::Message & map_projector_info)
 // {
 //   GNSSStat gnss_stat;
-  
+
 //   if (map_projector_info.projector_type == MapProjectorInfo::Message::LOCAL_CARTESIAN_UTM) {
 //     gnss_stat = NavSatFix2LocalCartesianUTM(
 //       nav_sat_fix_msg, map_projector_info.map_origin, this->get_logger(),
