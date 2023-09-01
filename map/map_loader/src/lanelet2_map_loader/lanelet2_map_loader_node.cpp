@@ -124,7 +124,6 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
     }
 
     return map;
-
   }
 
   for (const auto & error : errors) {
