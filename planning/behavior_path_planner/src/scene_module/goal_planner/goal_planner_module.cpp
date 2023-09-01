@@ -34,6 +34,7 @@
 #include <utility>
 #include <vector>
 
+using behavior_path_planner::utils::start_goal_planner_common::calcFeasibleDecelDistance;
 using motion_utils::calcDecelDistWithJerkAndAccConstraints;
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
@@ -44,7 +45,6 @@ using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::inverseTransformPose;
-using behavior_path_planner::utils::start_goal_planner_common::calcFeasibleDecelDistance;
 
 namespace behavior_path_planner
 {

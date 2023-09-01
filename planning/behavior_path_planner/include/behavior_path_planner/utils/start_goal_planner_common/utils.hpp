@@ -47,7 +47,7 @@ boost::optional<double> calcFeasibleDecelDistance(
  * velocity and acceleration for each path.
  *
  * @param paths A vector of paths with lane IDs to be updated.
- * @param terminal_vel_acc_pairs A vector of pairs, where each pair contains the terminal 
+ * @param terminal_vel_acc_pairs A vector of pairs, where each pair contains the terminal
  *                               velocity and acceleration for a corresponding path.
  * @param target_velocity The target velocity for ego vehicle predicted path.
  * @param acceleration The acceleration for ego vehicle predicted path.
