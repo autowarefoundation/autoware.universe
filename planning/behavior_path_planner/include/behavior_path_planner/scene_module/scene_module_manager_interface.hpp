@@ -228,11 +228,19 @@ public:
 
   virtual bool isSimultaneousExecutableAsApprovedModule() const
   {
+    if (isAlwaysExecutableModule()) {
+      return true;
+    }
+
     return enable_simultaneous_execution_as_approved_module_;
   }
 
   virtual bool isSimultaneousExecutableAsCandidateModule() const
   {
+    if (isAlwaysExecutableModule()) {
+      return true;
+    }
+
     return enable_simultaneous_execution_as_candidate_module_;
   }
 

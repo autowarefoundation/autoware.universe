@@ -273,6 +273,10 @@ bool GoalPlannerModuleManager::isAlwaysExecutableModule() const
 
 bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 {
+  if (isAlwaysExecutableModule()) {
+    return true;
+  }
+
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
   if (!goal_planner_utils::isAllowedGoalModification(
@@ -285,6 +289,10 @@ bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 
 bool GoalPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
 {
+  if (isAlwaysExecutableModule()) {
+    return true;
+  }
+
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
   if (!goal_planner_utils::isAllowedGoalModification(
