@@ -131,8 +131,9 @@ void PredictedObjectsDisplay::push_tmp_markers(
   pthread_mutex_unlock(&tmp_marker_mutex);
 }
 
-std::vector<visualization_msgs::msg::Marker::SharedPtr>  PredictedObjectsDisplay::tackle_one_object(
-  PredictedObjects::ConstSharedPtr _msg, int index, std::vector<visualization_msgs::msg::Marker::SharedPtr> _markers)
+std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay::tackle_one_object(
+  PredictedObjects::ConstSharedPtr _msg, int index,
+  std::vector<visualization_msgs::msg::Marker::SharedPtr> _markers)
 {
   auto object = _msg->objects[index];
   // Get marker for shape
@@ -164,8 +165,7 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr>  PredictedObjectsDisplay
   uuid_vis_position.y = object.kinematics.initial_pose_with_covariance.pose.position.y;
   uuid_vis_position.z = object.kinematics.initial_pose_with_covariance.pose.position.z - 0.5;
 
-  auto id_marker =
-    get_uuid_marker_ptr(object.object_id, uuid_vis_position, object.classification);
+  auto id_marker = get_uuid_marker_ptr(object.object_id, uuid_vis_position, object.classification);
   if (id_marker) {
     auto id_marker_ptr = id_marker.value();
     id_marker_ptr->header = _msg->header;
@@ -188,8 +188,7 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr>  PredictedObjectsDisplay
   vel_vis_position.y = uuid_vis_position.y;
   vel_vis_position.z = uuid_vis_position.z - 0.5;
   auto velocity_text_marker = get_velocity_text_marker_ptr(
-    object.kinematics.initial_twist_with_covariance.twist, vel_vis_position,
-    object.classification);
+    object.kinematics.initial_twist_with_covariance.twist, vel_vis_position, object.classification);
   if (velocity_text_marker) {
     auto velocity_text_marker_ptr = velocity_text_marker.value();
     velocity_text_marker_ptr->header = _msg->header;
@@ -244,8 +243,7 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr>  PredictedObjectsDisplay
     if (predicted_path.path.empty()) {
       continue;
     }
-    auto path_confidence_marker =
-      get_path_confidence_marker_ptr(object.object_id, predicted_path);
+    auto path_confidence_marker = get_path_confidence_marker_ptr(object.object_id, predicted_path);
     if (path_confidence_marker) {
       auto path_confidence_marker_ptr = path_confidence_marker.value();
       path_confidence_marker_ptr->header = _msg->header;
