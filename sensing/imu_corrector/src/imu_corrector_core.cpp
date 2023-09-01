@@ -14,9 +14,9 @@
 
 #include "imu_corrector_core.hpp"
 
-#include <algorithm>
-
 #include <geometry_msgs/msg/vector3_stamped.hpp>
+
+#include <algorithm>
 
 std::array<double, 9> transformCovariance(const std::array<double, 9> & cov)
 {
