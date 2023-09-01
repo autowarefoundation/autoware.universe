@@ -14,9 +14,6 @@
 #ifndef GNSS_POSER__GNSS_POSER_CORE_HPP_
 #define GNSS_POSER__GNSS_POSER_CORE_HPP_
 
-// #include "gnss_poser/convert.hpp"
-// #include "gnss_poser/gnss_stat.hpp"
-
 #include <component_interface_specs/map.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -60,9 +57,6 @@ private:
 
   bool isFixed(const sensor_msgs::msg::NavSatStatus & nav_sat_status_msg);
   bool canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg);
-  // GNSSStat convert(
-  //   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
-  //   const MapProjectorInfo::Message & projector_info);
   Point getMedianPosition(const boost::circular_buffer<Point> & position_buffer);
   Point getAveragePosition(const boost::circular_buffer<Point> & position_buffer);
   geometry_msgs::msg::Quaternion getQuaternionByHeading(const int heading);
