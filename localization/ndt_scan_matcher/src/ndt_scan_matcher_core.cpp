@@ -281,6 +281,22 @@ void NDTScanMatcher::timer_diagnostic()
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
       diag_status_msg.message += "skipping_publish_num exceed limit. ";
     }
+    if(state_ptr_->count("nearest_voxel_transformation_likelihood") &&
+      std::stoi((*state_ptr_)["nearest_voxel_transformation_likelihood"]) < 2.3) {
+      diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+      diag_status_msg.message += "NDT score is unreliably low. ";
+    }
+    if(state_ptr_->count("exe_time") &&
+      std::stof((*state_ptr_)["exe_time"]) > 13 &&
+      std::stof((*state_ptr_)["exe_time"]) < 24) {
+      diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+      diag_status_msg.message += "NDT exe time is increasing. ";
+    }
+    if(state_ptr_->count("exe_time") &&
+       std::stof((*state_ptr_)["exe_time"]) >= 24) {
+      diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+      diag_status_msg.message += "NDT exe time is too long. ";
+    }
     // Ignore local optimal solution
     if (
       state_ptr_->count("is_local_optimal_solution_oscillation") &&
@@ -499,6 +515,7 @@ void NDTScanMatcher::callback_sensor_points(
   } else {
     (*state_ptr_)["is_local_optimal_solution_oscillation"] = "0";
   }
+  (*state_ptr_)["exe_time"] = std::to_string(exe_time);
 }
 
 void NDTScanMatcher::transform_sensor_measurement(
