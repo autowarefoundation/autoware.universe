@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <rclcpp/rclcpp.hpp>
 #include "imu_corrector_core.hpp"
+
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char * argv[])
 {
