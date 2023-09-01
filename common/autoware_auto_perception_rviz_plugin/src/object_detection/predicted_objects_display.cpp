@@ -40,7 +40,7 @@ public:
   {
     pthread_create(&mThreadID, 0, PredictedObjectPThread::threadMethod, this);
     pthread_detach(
-      mThreadID);  // keep pthread alive; avoid repeatly creating and destroying pthreads
+      mThreadID);  // keep pthread alive; avoid repeatedly creating and destroying pthreads
   };
   static void * threadMethod(void * arg)
   {
