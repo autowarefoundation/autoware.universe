@@ -259,7 +259,8 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
 void PredictedObjectsDisplay::pThreadJob(int rank)
 {
   int length = tmp_msg->objects.size();
-  int num_object_per_thread = static_cast<int>(ceil(length / float(num_threads)));
+  int num_object_per_thread = static_cast<int>(
+      ceil(length / static_cast<float>(num_threads)));
 
   int first_object_index = rank * num_object_per_thread;
   int last_object_index = first_object_index + num_object_per_thread;
