@@ -93,8 +93,7 @@ private:
   void generic_subscription_callback(
     const std::shared_ptr<rclcpp::SerializedMessage const> & msg, const std::string & topic_name,
     autoware_bag_recorder::ModuleSection & section);
-  void section_factory(
-    const std::vector<std::string> & topics, const std::string & path);
+  void section_factory(const std::vector<std::string> & topics, const std::string & path);
   double get_root_disk_space() const;
   static double get_bag_path_directory_size(const std::filesystem::path & directory);
   void remove_remainder_bags_in_folder(autoware_bag_recorder::ModuleSection & section) const;
