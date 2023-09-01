@@ -24,6 +24,7 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
   // common params declarations
   database_storage_ = declare_parameter<std::string>("common.database_storage");
   bag_path_ = declare_parameter<std::string>("common.path");
+  prefix_ = declare_parameter<std::string>("common.prefix");
   minimum_acceptable_disk_space_ =
     static_cast<int>(declare_parameter<int>("common.minimum_acceptable_disk_space"));
   maximum_record_time_ = static_cast<int>(declare_parameter<int>("common.maximum_record_time"));
@@ -33,7 +34,6 @@ AutowareBagRecorderNode::AutowareBagRecorderNode(
     static_cast<double>(declare_parameter<double>("common.maximum_allowed_bag_storage_size"));
   number_of_maximum_bags_ =
     static_cast<int>(declare_parameter<int>("common.number_of_maximum_bags"));
-  record_all_topic_in_a_bag_ = declare_parameter<bool>("common.record_all_topic_in_a_bag");
   enable_only_auto_mode_recording_ =
     declare_parameter<bool>("common.enable_only_auto_mode_recording");
   disk_space_action_mode_ = declare_parameter<std::string>("common.disk_space_threshold_action");
@@ -69,25 +69,16 @@ void AutowareBagRecorderNode::setup_single_module(
   const std::string & section_name)
 {
   const auto topics_parameter_name = module_param + "." + section_name + "_topics";
-  const auto section_prefix = declare_parameter<std::string>(module_param + ".bag_file_prefix");
   bool record_module_topics = declare_parameter<bool>(module_param + ".record_" + section_name);
   if (record_module_topics) {
     topics = declare_parameter<std::vector<std::string>>(topics_parameter_name);
-    section_factory(topics, bag_path_, section_prefix);
     all_topics_.insert(all_topics_.end(), topics.begin(), topics.end());
-  }
-
-  if (record_all_topic_in_a_bag_ && !has_parameter(topics_parameter_name)) {
-    const auto section_topics = declare_parameter<std::vector<std::string>>(topics_parameter_name);
-    all_topics_.insert(all_topics_.end(), section_topics.begin(), section_topics.end());
   }
 }
 
 void AutowareBagRecorderNode::setup_all_module_topics()
 {
-  if (record_all_topic_in_a_bag_) {
-    section_factory(all_topics_, bag_path_, "unified");
-  }
+  section_factory(all_topics_, bag_path_);
 }
 
 void AutowareBagRecorderNode::check_and_remove_files_at_init()
@@ -125,7 +116,7 @@ void AutowareBagRecorderNode::bag_file_handler(ModuleSection & section)
 {
   remove_remainder_bags_in_folder(section);
   std::lock_guard<std::mutex> lock(writer_mutex_);
-  const auto bag_file_path = section.folder_path + "/" + section.prefix + "_" + get_timestamp();
+  const auto bag_file_path = section.folder_path + prefix_ + "_" + get_timestamp();
   create_bag_file(section.bag_writer, bag_file_path);
   section.current_bag_name = bag_file_path;
   // section.bag_names.push_back(bag_file_path);
@@ -135,7 +126,7 @@ void AutowareBagRecorderNode::bag_file_handler(ModuleSection & section)
 }
 
 void AutowareBagRecorderNode::section_factory(
-  const std::vector<std::string> & topics, const std::string & path, const std::string & prefix)
+  const std::vector<std::string> & topics, const std::string & path)
 {
   ModuleSection section;
   for (const auto & topic : topics) {
@@ -146,7 +137,6 @@ void AutowareBagRecorderNode::section_factory(
 
   if (!section.topic_names.empty()) {
     section.folder_path = path;
-    section.prefix = prefix;
     section.bag_writer = std::make_unique<rosbag2_cpp::Writer>();
 
     if (!std::filesystem::exists(path)) {
@@ -341,7 +331,7 @@ void AutowareBagRecorderNode::gate_mode_cmd_callback(
 void AutowareBagRecorderNode::initialize_bag_files_for_topics()
 {
   for (auto & section : module_sections_) {
-    const auto bag_file_path = section.folder_path + "/" + section.prefix + "_" + get_timestamp();
+    const auto bag_file_path = section.folder_path + prefix_ + "_" + get_timestamp();
     create_bag_file(section.bag_writer, bag_file_path);
     section.current_bag_name = bag_file_path;
     remaining_topic_num_ = remaining_topic_num_ + static_cast<int>(section.topic_names.size());

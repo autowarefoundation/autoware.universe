@@ -47,7 +47,6 @@ struct TopicInfo
 struct ModuleSection
 {
   std::string folder_path;
-  std::string prefix;
   std::string current_bag_name;
   std::vector<TopicInfo> topic_info;
   std::unique_ptr<rosbag2_cpp::Writer> bag_writer;
@@ -95,7 +94,7 @@ private:
     const std::shared_ptr<rclcpp::SerializedMessage const> & msg, const std::string & topic_name,
     autoware_bag_recorder::ModuleSection & section);
   void section_factory(
-    const std::vector<std::string> & topics, const std::string & path, const std::string & prefix);
+    const std::vector<std::string> & topics, const std::string & path);
   double get_root_disk_space() const;
   static double get_bag_path_directory_size(const std::filesystem::path & directory);
   void remove_remainder_bags_in_folder(autoware_bag_recorder::ModuleSection & section) const;
@@ -114,8 +113,8 @@ private:
   int minimum_acceptable_disk_space_;
   int number_of_maximum_bags_;
   std::string disk_space_action_mode_;
+  std::string prefix_;
 
-  bool record_all_topic_in_a_bag_;
   bool enable_only_auto_mode_recording_;
   bool is_writing_;
 

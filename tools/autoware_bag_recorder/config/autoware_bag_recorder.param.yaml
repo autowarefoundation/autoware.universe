@@ -4,16 +4,16 @@
       database_storage: "mcap"                     # sqlite3 or mcap
       maximum_record_time: 36000                   # seconds
       maximum_allowed_bag_storage_size: 500.0      # GB
-      maximum_bag_file_size: 0.1                   # GB
+      maximum_bag_file_size: 20.0                  # GB
       enable_only_auto_mode_recording: false       # if enabled, recording occurs only "AUTO" mode
-      record_all_topic_in_a_bag: false             # creates single bag file with input and other topics
+      record_all_topic_in_a_bag: true              # creates single bag file with input and other topics
       number_of_maximum_bags: 1000                 # limit of stored bag file count
       path: "bags/"                                # Path to bag file for saving
+      prefix: "logging_ros2bag_"
       minimum_acceptable_disk_space: 50            # GB
       disk_space_threshold_action: "shutdown"      # [remove, shutdown] remove files or shutdown node
     raw_input_topics:                              # for rosbag-replay (logging) simulation
       record_raw_input: true
-      bag_file_prefix: "raw_input_rosbag2"
       raw_input_topics:
         - /sensing/gnss/ublox/fix_velocity
         - /sensing/gnss/ublox/nav_sat_fix
@@ -26,8 +26,7 @@
         - /vehicle/status/steering_status
         - /vehicle/status/velocity_status
     other_topics:                                  # all other topics
-      record_other: true
-      bag_file_prefix: "other_topics_rosbag2"
+      record_other: false
       other_topics:
         - /perception/obstacle_segmentation/pointcloud
         - /perception/object_recognition/objects
