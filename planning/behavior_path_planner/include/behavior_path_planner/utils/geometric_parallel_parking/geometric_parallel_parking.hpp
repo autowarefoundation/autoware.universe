@@ -78,10 +78,10 @@ public:
   bool isParking() const;
   bool planPullOver(
     const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-    const lanelet::ConstLanelets & shoulder_lanes, const bool is_forward);
+    const lanelet::ConstLanelets & shoulder_lanes, const bool is_forward, const bool left_side_parking);
   bool planPullOut(
     const Pose & start_pose, const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-    const lanelet::ConstLanelets & shoulder_lanes);
+    const lanelet::ConstLanelets & shoulder_lanes, const bool left_side_start);
   void setParameters(const ParallelParkingParameters & parameters) { parameters_ = parameters; }
   void setPlannerData(const std::shared_ptr<const PlannerData> & planner_data)
   {
@@ -121,9 +121,9 @@ private:
 
   void clearPaths();
   std::vector<PathWithLaneId> planOneTrial(
-    const Pose & start_pose, const Pose & goal_pose, const double R_E_r,
+    const Pose & start_pose, const Pose & goal_pose, const double R_E_far,
     const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
-    bool is_forward, const double end_pose_offset, const double lane_departure_margin,
+    bool is_forward, bool left_side_parking, const double end_pose_offset, const double lane_departure_margin,
     const double arc_path_interval);
   PathWithLaneId generateArcPath(
     const Pose & center, const double radius, const double start_yaw, double end_yaw,
@@ -133,11 +133,11 @@ private:
     const bool is_forward);
   boost::optional<Pose> calcStartPose(
     const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-    const double start_pose_offset, const double R_E_r, const bool is_forward);
+    const double start_pose_offset, const double R_E_far, const bool is_forward, const bool left_side_parking);
   std::vector<PathWithLaneId> generatePullOverPaths(
-    const Pose & start_pose, const Pose & goal_pose, const double R_E_r,
+    const Pose & start_pose, const Pose & goal_pose, const double R_E_far,
     const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
-    const bool is_forward, const double end_pose_offset, const double velocity);
+    const bool is_forward, const bool left_side_parking, const double end_pose_offset, const double velocity);
   PathWithLaneId generateStraightPath(
     const Pose & start_pose, const lanelet::ConstLanelets & road_lanes);
   void setVelocityToArcPaths(
