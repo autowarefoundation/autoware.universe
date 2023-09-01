@@ -70,8 +70,7 @@ void ReroutingStaticObstacle::map_callback(const HADMapBin::ConstSharedPtr msg)
 
 void ReroutingStaticObstacle::on_trigger(const geometry_msgs::msg::PointStamped::SharedPtr msg)
 {
-  geometry_msgs::msg::Pose selected_point;
-  selected_point.position = msg->point;
+  geometry_msgs::msg::Point selected_point{msg->point};
 
   lanelet::ConstLanelets selected_point_lanelets;
 
@@ -102,7 +101,7 @@ void ReroutingStaticObstacle::on_trigger(const geometry_msgs::msg::PointStamped:
 }
 
 bool ReroutingStaticObstacle::get_selected_point_lanelets(
-  const geometry_msgs::msg::Pose & selected_point,
+  const geometry_msgs::msg::Point & selected_point,
   lanelet::ConstLanelets & selected_point_lanelets) const
 {
   if (!lanelet::utils::query::getCurrentLanelets(

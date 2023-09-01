@@ -60,7 +60,7 @@ private:
   void map_callback(const HADMapBin::ConstSharedPtr msg);
   void on_trigger(const geometry_msgs::msg::PointStamped::SharedPtr msg);
   bool get_selected_point_lanelets(
-    const geometry_msgs::msg::Pose & selected_point,
+    const geometry_msgs::msg::Point & selected_point,
     lanelet::ConstLanelets & selected_point_lanelets) const;
   bool get_remaining_route_lanelets(lanelet::ConstLanelets & remaining_route_lanelets) const;
   bool is_selected_point_in_route(
