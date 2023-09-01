@@ -116,6 +116,9 @@ private:
 
   void update(float wall_dt, float ros_dt) override;
 
+  std::vector<visualization_msgs::msg::Marker::SharedPtr> tackle_one_object(
+  PredictedObjects::ConstSharedPtr _msg, int index, std::vector<visualization_msgs::msg::Marker::SharedPtr> _markers);
+
   // For pthreads to push to the same "tmp_maker" vector
   void push_tmp_markers(std::vector<visualization_msgs::msg::Marker::SharedPtr> marker_ptrs);
 

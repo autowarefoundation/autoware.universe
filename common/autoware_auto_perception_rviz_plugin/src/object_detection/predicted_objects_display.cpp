@@ -75,8 +75,8 @@ void PredictedObjectsDisplay::workerThread()
   // PThread Initialization
   std::vector<PredictedObjectPThread *> thread_handles;
 
-  starting_semaphores = (sem_t *)malloc(max_num_threads * sizeof(sem_t));
-  ending_semaphores = (sem_t *)malloc(max_num_threads * sizeof(sem_t));
+  starting_semaphores = reinterpret_cast<sem_t *>(malloc(max_num_threads * sizeof(sem_t)));
+  ending_semaphores = reinterpret_cast<sem_t *>(malloc(max_num_threads * sizeof(sem_t)));
   pthread_mutex_init(&tmp_marker_mutex, NULL);
   for (int rank = 0; rank < max_num_threads; rank++) {
     PredictedObjectPThread * pthread_object = new PredictedObjectPThread(this, rank);
@@ -96,6 +96,7 @@ void PredictedObjectsDisplay::workerThread()
 
     lock.unlock();
     int N = tmp_msg->objects.size();
+    update_id_map(tmp_msg);
 
     // max_num_threads : Hard-coded for now. Define the pool of all threads.
     // num_threads: dynamically change the number of threads based on the number of objects.
@@ -104,7 +105,6 @@ void PredictedObjectsDisplay::workerThread()
     num_threads = std::max(1, num_threads);
 
     if (num_threads > 1) {
-      update_id_map(tmp_msg);
       tmp_markers.clear();
       for (int rank = 0; rank < num_threads; rank++) {
         sem_post(&starting_semaphores[rank]);
@@ -131,10 +131,137 @@ void PredictedObjectsDisplay::push_tmp_markers(
   pthread_mutex_unlock(&tmp_marker_mutex);
 }
 
+std::vector<visualization_msgs::msg::Marker::SharedPtr>  PredictedObjectsDisplay::tackle_one_object(
+  PredictedObjects::ConstSharedPtr _msg, int index, std::vector<visualization_msgs::msg::Marker::SharedPtr> _markers)
+{
+  auto object = _msg->objects[index];
+  // Get marker for shape
+  auto shape_marker = get_shape_marker_ptr(
+    object.shape, object.kinematics.initial_pose_with_covariance.pose.position,
+    object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification,
+    get_line_width());
+  if (shape_marker) {
+    auto shape_marker_ptr = shape_marker.value();
+    shape_marker_ptr->header = _msg->header;
+    shape_marker_ptr->id = uuid_to_marker_id(object.object_id);
+    _markers.push_back(shape_marker_ptr);
+  }
+
+  // Get marker for label
+  auto label_marker = get_label_marker_ptr(
+    object.kinematics.initial_pose_with_covariance.pose.position,
+    object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification);
+  if (label_marker) {
+    auto label_marker_ptr = label_marker.value();
+    label_marker_ptr->header = _msg->header;
+    label_marker_ptr->id = uuid_to_marker_id(object.object_id);
+    _markers.push_back(label_marker_ptr);
+  }
+
+  // Get marker for id
+  geometry_msgs::msg::Point uuid_vis_position;
+  uuid_vis_position.x = object.kinematics.initial_pose_with_covariance.pose.position.x - 0.5;
+  uuid_vis_position.y = object.kinematics.initial_pose_with_covariance.pose.position.y;
+  uuid_vis_position.z = object.kinematics.initial_pose_with_covariance.pose.position.z - 0.5;
+
+  auto id_marker =
+    get_uuid_marker_ptr(object.object_id, uuid_vis_position, object.classification);
+  if (id_marker) {
+    auto id_marker_ptr = id_marker.value();
+    id_marker_ptr->header = _msg->header;
+    id_marker_ptr->id = uuid_to_marker_id(object.object_id);
+    _markers.push_back(id_marker_ptr);
+  }
+
+  // Get marker for pose with covariance
+  auto pose_with_covariance_marker =
+    get_pose_with_covariance_marker_ptr(object.kinematics.initial_pose_with_covariance);
+  if (pose_with_covariance_marker) {
+    auto pose_with_covariance_marker_ptr = pose_with_covariance_marker.value();
+    pose_with_covariance_marker_ptr->header = _msg->header;
+    pose_with_covariance_marker_ptr->id = uuid_to_marker_id(object.object_id);
+    _markers.push_back(pose_with_covariance_marker_ptr);
+  }
+  // Get marker for velocity text
+  geometry_msgs::msg::Point vel_vis_position;
+  vel_vis_position.x = uuid_vis_position.x - 0.5;
+  vel_vis_position.y = uuid_vis_position.y;
+  vel_vis_position.z = uuid_vis_position.z - 0.5;
+  auto velocity_text_marker = get_velocity_text_marker_ptr(
+    object.kinematics.initial_twist_with_covariance.twist, vel_vis_position,
+    object.classification);
+  if (velocity_text_marker) {
+    auto velocity_text_marker_ptr = velocity_text_marker.value();
+    velocity_text_marker_ptr->header = _msg->header;
+    velocity_text_marker_ptr->id = uuid_to_marker_id(object.object_id);
+    _markers.push_back(velocity_text_marker_ptr);
+  }
+
+  // Get marker for acceleration text
+  geometry_msgs::msg::Point acc_vis_position;
+  acc_vis_position.x = uuid_vis_position.x - 1.0;
+  acc_vis_position.y = uuid_vis_position.y;
+  acc_vis_position.z = uuid_vis_position.z - 1.0;
+  auto acceleration_text_marker = get_acceleration_text_marker_ptr(
+    object.kinematics.initial_acceleration_with_covariance.accel, acc_vis_position,
+    object.classification);
+  if (acceleration_text_marker) {
+    auto acceleration_text_marker_ptr = acceleration_text_marker.value();
+    acceleration_text_marker_ptr->header = _msg->header;
+    acceleration_text_marker_ptr->id = uuid_to_marker_id(object.object_id);
+    _markers.push_back(acceleration_text_marker_ptr);
+  }
+
+  // Get marker for twist
+  auto twist_marker = get_twist_marker_ptr(
+    object.kinematics.initial_pose_with_covariance,
+    object.kinematics.initial_twist_with_covariance);
+  if (twist_marker) {
+    auto twist_marker_ptr = twist_marker.value();
+    twist_marker_ptr->header = _msg->header;
+    twist_marker_ptr->id = uuid_to_marker_id(object.object_id);
+    _markers.push_back(twist_marker_ptr);
+  }
+
+  // Add marker for each candidate path
+  int32_t path_count = 0;
+  for (const auto & predicted_path : object.kinematics.predicted_paths) {
+    // Get marker for predicted path
+    auto predicted_path_marker =
+      get_predicted_path_marker_ptr(object.object_id, object.shape, predicted_path);
+    if (predicted_path_marker) {
+      auto predicted_path_marker_ptr = predicted_path_marker.value();
+      predicted_path_marker_ptr->header = _msg->header;
+      predicted_path_marker_ptr->id =
+        uuid_to_marker_id(object.object_id) + path_count * PATH_ID_CONSTANT;
+      path_count++;
+      _markers.push_back(predicted_path_marker_ptr);
+    }
+  }
+  // Add confidence text marker for each candidate path
+  path_count = 0;
+  for (const auto & predicted_path : object.kinematics.predicted_paths) {
+    if (predicted_path.path.empty()) {
+      continue;
+    }
+    auto path_confidence_marker =
+      get_path_confidence_marker_ptr(object.object_id, predicted_path);
+    if (path_confidence_marker) {
+      auto path_confidence_marker_ptr = path_confidence_marker.value();
+      path_confidence_marker_ptr->header = _msg->header;
+      path_confidence_marker_ptr->id =
+        uuid_to_marker_id(object.object_id) + path_count * PATH_ID_CONSTANT;
+      path_count++;
+      _markers.push_back(path_confidence_marker_ptr);
+    }
+  }
+  return _markers;
+}
+
 void PredictedObjectsDisplay::pThreadJob(int rank)
 {
   int length = tmp_msg->objects.size();
-  int num_object_per_thread = int(ceil(length / float(num_threads)));
+  int num_object_per_thread = static_cast<int>(ceil(length / float(num_threads)));
 
   int first_object_index = rank * num_object_per_thread;
   int last_object_index = first_object_index + num_object_per_thread;
@@ -143,128 +270,7 @@ void PredictedObjectsDisplay::pThreadJob(int rank)
   }
   std::vector<visualization_msgs::msg::Marker::SharedPtr> Thread_Markers;
   for (int i = first_object_index; i < last_object_index; i++) {
-    auto object = tmp_msg->objects[i];
-    // Get marker for shape
-    auto shape_marker = get_shape_marker_ptr(
-      object.shape, object.kinematics.initial_pose_with_covariance.pose.position,
-      object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification,
-      get_line_width());
-    if (shape_marker) {
-      auto shape_marker_ptr = shape_marker.value();
-      shape_marker_ptr->header = tmp_msg->header;
-      shape_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      Thread_Markers.push_back(shape_marker_ptr);
-    }
-
-    // Get marker for label
-    auto label_marker = get_label_marker_ptr(
-      object.kinematics.initial_pose_with_covariance.pose.position,
-      object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification);
-    if (label_marker) {
-      auto label_marker_ptr = label_marker.value();
-      label_marker_ptr->header = tmp_msg->header;
-      label_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      Thread_Markers.push_back(label_marker_ptr);
-    }
-
-    // Get marker for id
-    geometry_msgs::msg::Point uuid_vis_position;
-    uuid_vis_position.x = object.kinematics.initial_pose_with_covariance.pose.position.x - 0.5;
-    uuid_vis_position.y = object.kinematics.initial_pose_with_covariance.pose.position.y;
-    uuid_vis_position.z = object.kinematics.initial_pose_with_covariance.pose.position.z - 0.5;
-
-    auto id_marker =
-      get_uuid_marker_ptr(object.object_id, uuid_vis_position, object.classification);
-    if (id_marker) {
-      auto id_marker_ptr = id_marker.value();
-      id_marker_ptr->header = tmp_msg->header;
-      id_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      Thread_Markers.push_back(id_marker_ptr);
-    }
-
-    // Get marker for pose with covariance
-    auto pose_with_covariance_marker =
-      get_pose_with_covariance_marker_ptr(object.kinematics.initial_pose_with_covariance);
-    if (pose_with_covariance_marker) {
-      auto pose_with_covariance_marker_ptr = pose_with_covariance_marker.value();
-      pose_with_covariance_marker_ptr->header = tmp_msg->header;
-      pose_with_covariance_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      Thread_Markers.push_back(pose_with_covariance_marker_ptr);
-    }
-    // Get marker for velocity text
-    geometry_msgs::msg::Point vel_vis_position;
-    vel_vis_position.x = uuid_vis_position.x - 0.5;
-    vel_vis_position.y = uuid_vis_position.y;
-    vel_vis_position.z = uuid_vis_position.z - 0.5;
-    auto velocity_text_marker = get_velocity_text_marker_ptr(
-      object.kinematics.initial_twist_with_covariance.twist, vel_vis_position,
-      object.classification);
-    if (velocity_text_marker) {
-      auto velocity_text_marker_ptr = velocity_text_marker.value();
-      velocity_text_marker_ptr->header = tmp_msg->header;
-      velocity_text_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      Thread_Markers.push_back(velocity_text_marker_ptr);
-    }
-
-    // Get marker for acceleration text
-    geometry_msgs::msg::Point acc_vis_position;
-    acc_vis_position.x = uuid_vis_position.x - 1.0;
-    acc_vis_position.y = uuid_vis_position.y;
-    acc_vis_position.z = uuid_vis_position.z - 1.0;
-    auto acceleration_text_marker = get_acceleration_text_marker_ptr(
-      object.kinematics.initial_acceleration_with_covariance.accel, acc_vis_position,
-      object.classification);
-    if (acceleration_text_marker) {
-      auto acceleration_text_marker_ptr = acceleration_text_marker.value();
-      acceleration_text_marker_ptr->header = tmp_msg->header;
-      acceleration_text_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      Thread_Markers.push_back(acceleration_text_marker_ptr);
-    }
-
-    // Get marker for twist
-    auto twist_marker = get_twist_marker_ptr(
-      object.kinematics.initial_pose_with_covariance,
-      object.kinematics.initial_twist_with_covariance);
-    if (twist_marker) {
-      auto twist_marker_ptr = twist_marker.value();
-      twist_marker_ptr->header = tmp_msg->header;
-      twist_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      Thread_Markers.push_back(twist_marker_ptr);
-    }
-
-    // Add marker for each candidate path
-    int32_t path_count = 0;
-    for (const auto & predicted_path : object.kinematics.predicted_paths) {
-      // Get marker for predicted path
-      auto predicted_path_marker =
-        get_predicted_path_marker_ptr(object.object_id, object.shape, predicted_path);
-      if (predicted_path_marker) {
-        auto predicted_path_marker_ptr = predicted_path_marker.value();
-        predicted_path_marker_ptr->header = tmp_msg->header;
-        predicted_path_marker_ptr->id =
-          uuid_to_marker_id(object.object_id) + path_count * PATH_ID_CONSTANT;
-        path_count++;
-        Thread_Markers.push_back(predicted_path_marker_ptr);
-      }
-    }
-
-    // Add confidence text marker for each candidate path
-    path_count = 0;
-    for (const auto & predicted_path : object.kinematics.predicted_paths) {
-      if (predicted_path.path.empty()) {
-        continue;
-      }
-      auto path_confidence_marker =
-        get_path_confidence_marker_ptr(object.object_id, predicted_path);
-      if (path_confidence_marker) {
-        auto path_confidence_marker_ptr = path_confidence_marker.value();
-        path_confidence_marker_ptr->header = tmp_msg->header;
-        path_confidence_marker_ptr->id =
-          uuid_to_marker_id(object.object_id) + path_count * PATH_ID_CONSTANT;
-        path_count++;
-        Thread_Markers.push_back(path_confidence_marker_ptr);
-      }
-    }
+    Thread_Markers = tackle_one_object(tmp_msg, i, Thread_Markers);
   }
   push_tmp_markers(Thread_Markers);
 }
@@ -272,135 +278,12 @@ void PredictedObjectsDisplay::pThreadJob(int rank)
 std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay::createMarkers(
   PredictedObjects::ConstSharedPtr msg)
 {
-  update_id_map(msg);
-
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
 
-  for (const auto & object : msg->objects) {
-    // Get marker for shape
-    auto shape_marker = get_shape_marker_ptr(
-      object.shape, object.kinematics.initial_pose_with_covariance.pose.position,
-      object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification,
-      get_line_width());
-    if (shape_marker) {
-      auto shape_marker_ptr = shape_marker.value();
-      shape_marker_ptr->header = msg->header;
-      shape_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(shape_marker_ptr);
-    }
-
-    // Get marker for label
-    auto label_marker = get_label_marker_ptr(
-      object.kinematics.initial_pose_with_covariance.pose.position,
-      object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification);
-    if (label_marker) {
-      auto label_marker_ptr = label_marker.value();
-      label_marker_ptr->header = msg->header;
-      label_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(label_marker_ptr);
-    }
-
-    // Get marker for id
-    geometry_msgs::msg::Point uuid_vis_position;
-    uuid_vis_position.x = object.kinematics.initial_pose_with_covariance.pose.position.x - 0.5;
-    uuid_vis_position.y = object.kinematics.initial_pose_with_covariance.pose.position.y;
-    uuid_vis_position.z = object.kinematics.initial_pose_with_covariance.pose.position.z - 0.5;
-
-    auto id_marker =
-      get_uuid_marker_ptr(object.object_id, uuid_vis_position, object.classification);
-    if (id_marker) {
-      auto id_marker_ptr = id_marker.value();
-      id_marker_ptr->header = msg->header;
-      id_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(id_marker_ptr);
-    }
-
-    // Get marker for pose with covariance
-    auto pose_with_covariance_marker =
-      get_pose_with_covariance_marker_ptr(object.kinematics.initial_pose_with_covariance);
-    if (pose_with_covariance_marker) {
-      auto pose_with_covariance_marker_ptr = pose_with_covariance_marker.value();
-      pose_with_covariance_marker_ptr->header = msg->header;
-      pose_with_covariance_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(pose_with_covariance_marker_ptr);
-    }
-
-    // Get marker for velocity text
-    geometry_msgs::msg::Point vel_vis_position;
-    vel_vis_position.x = uuid_vis_position.x - 0.5;
-    vel_vis_position.y = uuid_vis_position.y;
-    vel_vis_position.z = uuid_vis_position.z - 0.5;
-    auto velocity_text_marker = get_velocity_text_marker_ptr(
-      object.kinematics.initial_twist_with_covariance.twist, vel_vis_position,
-      object.classification);
-    if (velocity_text_marker) {
-      auto velocity_text_marker_ptr = velocity_text_marker.value();
-      velocity_text_marker_ptr->header = msg->header;
-      velocity_text_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(velocity_text_marker_ptr);
-    }
-
-    // Get marker for acceleration text
-    geometry_msgs::msg::Point acc_vis_position;
-    acc_vis_position.x = uuid_vis_position.x - 1.0;
-    acc_vis_position.y = uuid_vis_position.y;
-    acc_vis_position.z = uuid_vis_position.z - 1.0;
-    auto acceleration_text_marker = get_acceleration_text_marker_ptr(
-      object.kinematics.initial_acceleration_with_covariance.accel, acc_vis_position,
-      object.classification);
-    if (acceleration_text_marker) {
-      auto acceleration_text_marker_ptr = acceleration_text_marker.value();
-      acceleration_text_marker_ptr->header = msg->header;
-      acceleration_text_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(acceleration_text_marker_ptr);
-    }
-
-    // Get marker for twist
-    auto twist_marker = get_twist_marker_ptr(
-      object.kinematics.initial_pose_with_covariance,
-      object.kinematics.initial_twist_with_covariance);
-    if (twist_marker) {
-      auto twist_marker_ptr = twist_marker.value();
-      twist_marker_ptr->header = msg->header;
-      twist_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(twist_marker_ptr);
-    }
-
-    // Add marker for each candidate path
-    int32_t path_count = 0;
-    for (const auto & predicted_path : object.kinematics.predicted_paths) {
-      // Get marker for predicted path
-      auto predicted_path_marker =
-        get_predicted_path_marker_ptr(object.object_id, object.shape, predicted_path);
-      if (predicted_path_marker) {
-        auto predicted_path_marker_ptr = predicted_path_marker.value();
-        predicted_path_marker_ptr->header = msg->header;
-        predicted_path_marker_ptr->id =
-          uuid_to_marker_id(object.object_id) + path_count * PATH_ID_CONSTANT;
-        path_count++;
-        markers.push_back(predicted_path_marker_ptr);
-      }
-    }
-
-    // Add confidence text marker for each candidate path
-    path_count = 0;
-    for (const auto & predicted_path : object.kinematics.predicted_paths) {
-      if (predicted_path.path.empty()) {
-        continue;
-      }
-      auto path_confidence_marker =
-        get_path_confidence_marker_ptr(object.object_id, predicted_path);
-      if (path_confidence_marker) {
-        auto path_confidence_marker_ptr = path_confidence_marker.value();
-        path_confidence_marker_ptr->header = msg->header;
-        path_confidence_marker_ptr->id =
-          uuid_to_marker_id(object.object_id) + path_count * PATH_ID_CONSTANT;
-        path_count++;
-        markers.push_back(path_confidence_marker_ptr);
-      }
-    }
+  int length = msg->objects.size();
+  for (int i = 0; i < length; i++) {
+    markers = tackle_one_object(msg, i, markers);
   }
-
   return markers;
 }
 
