@@ -53,7 +53,7 @@ public:
   // "workingThread"
   void pThreadJob(int rank);
 
-  // semaphores to control the starting and finishing of phthread tasks
+  // semaphores to control the starting and finishing of pthread tasks
   sem_t * starting_semaphores;
   sem_t * ending_semaphores;
 
