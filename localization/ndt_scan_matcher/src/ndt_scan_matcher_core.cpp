@@ -283,17 +283,17 @@ void NDTScanMatcher::timer_diagnostic()
     }
     if (
       state_ptr_->count("nearest_voxel_transformation_likelihood") &&
-      std::stoi((*state_ptr_)["nearest_voxel_transformation_likelihood"]) < 2.3) {
+      std::stod((*state_ptr_)["nearest_voxel_transformation_likelihood"]) < 2.3) {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       diag_status_msg.message += "NDT score is unreliably low. ";
     }
     if (
-      state_ptr_->count("exe_time") && std::stof((*state_ptr_)["exe_time"]) > 13 &&
-      std::stof((*state_ptr_)["exe_time"]) < 24) {
+      state_ptr_->count("exe_time") && std::stod((*state_ptr_)["exe_time"]) > 13 &&
+      std::stod((*state_ptr_)["exe_time"]) < 24) {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       diag_status_msg.message += "NDT exe time is increasing. ";
     }
-    if (state_ptr_->count("exe_time") && std::stof((*state_ptr_)["exe_time"]) >= 24) {
+    if (state_ptr_->count("exe_time") && std::stod((*state_ptr_)["exe_time"]) >= 24) {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
       diag_status_msg.message += "NDT exe time is too long. ";
     }
