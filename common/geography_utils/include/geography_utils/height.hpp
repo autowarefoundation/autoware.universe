@@ -15,10 +15,7 @@
 #ifndef GEOGRAPHY_UTILS__HEIGHT_HPP_
 #define GEOGRAPHY_UTILS__HEIGHT_HPP_
 
-#include <map>
-#include <stdexcept>
 #include <string>
-#include <utility>
 
 namespace geography_utils
 {

@@ -17,11 +17,6 @@
 #include <geography_utils/projection.hpp>
 #include <lanelet2_extension/projection/mgrs_projector.hpp>
 
-#include <map>
-#include <stdexcept>
-#include <string>
-#include <utility>
-
 namespace geography_utils
 {
 
