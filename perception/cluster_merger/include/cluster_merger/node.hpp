@@ -37,6 +37,7 @@ class ClusterMergerNode : public rclcpp::Node
 {
 public:
   explicit ClusterMergerNode(const rclcpp::NodeOptions & node_options);
+
 private:
   // Subscriber
   message_filters::Subscriber<DetectedObjectsWithFeature> objects0_sub_;
