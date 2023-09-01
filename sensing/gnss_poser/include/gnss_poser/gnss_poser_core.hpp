@@ -48,7 +48,6 @@ public:
 
 private:
   using MapProjectorInfo = map_interface::MapProjectorInfo;
-  using Point = geometry_msgs::msg::Point;
 
   void callbackMapProjectorInfo(const MapProjectorInfo::Message::ConstSharedPtr msg);
   void callbackNavSatFix(const sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr);
@@ -57,11 +56,11 @@ private:
 
   bool isFixed(const sensor_msgs::msg::NavSatStatus & nav_sat_status_msg);
   bool canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg);
-  Point getMedianPosition(const boost::circular_buffer<Point> & position_buffer);
-  Point getAveragePosition(const boost::circular_buffer<Point> & position_buffer);
+  geometry_msgs::msg::Point getMedianPosition(const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer);
+  geometry_msgs::msg::Point getAveragePosition(const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer);
   geometry_msgs::msg::Quaternion getQuaternionByHeading(const int heading);
   geometry_msgs::msg::Quaternion getQuaternionByPositionDifference(
-    const Point & point, const Point & prev_point);
+    const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & prev_point);
 
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
