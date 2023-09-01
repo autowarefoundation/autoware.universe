@@ -56,7 +56,6 @@ class PredictedObjectPThread{
 
 PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks")
 {
-  std::cout.rdbuf(out_file.rdbuf());
   num_threads_property = new rviz_common::properties::IntProperty(
     "Num Threads", 4, "Num of Threads to use", this); // by default, use 4 threads
   max_num_threads = 8; // hard code the number of threads to be created
