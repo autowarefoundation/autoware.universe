@@ -22,14 +22,15 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 
+#include <pthread.h>
+#include <semaphore.h>
+
 #include <condition_variable>
 #include <list>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <semaphore.h> 
-#include <pthread.h>
 
 namespace autoware
 {
@@ -48,12 +49,13 @@ public:
 
   PredictedObjectsDisplay();
 
-  // public methods for calling from detached pthreads. pthreads are detached from the "workingThread"
+  // public methods for calling from detached pthreads. pthreads are detached from the
+  // "workingThread"
   void pThreadJob(int rank);
 
   // semaphores to control the starting and finishing of phthread tasks
-  sem_t* starting_semaphores;
-  sem_t* ending_semaphores;
+  sem_t * starting_semaphores;
+  sem_t * ending_semaphores;
 
 private:
   void processMessage(PredictedObjects::ConstSharedPtr msg) override;
@@ -105,7 +107,8 @@ private:
     return id_map.at(uuid);
   }
 
-  // createMarkers: create markers from the message with the single working process; activated when num_threads<=1;
+  // createMarkers: create markers from the message with the single working process; activated when
+  // num_threads<=1;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> createMarkers(
     PredictedObjects::ConstSharedPtr msg);
   // Working thread is detached from the main to control the flow of messages
@@ -122,14 +125,15 @@ private:
   int32_t marker_id = 0;
   const int32_t PATH_ID_CONSTANT = 1e3;
 
-  // msg: latest message, passed from the main callback to workThread; 
+  // msg: latest message, passed from the main callback to workThread;
   PredictedObjects::ConstSharedPtr msg;
 
   // tmp_msg: latest message, maintained inside working threads and consumed by pthreads
   PredictedObjects::ConstSharedPtr tmp_msg;
   bool consumed{false};
 
-  // mutex: mutex for accessing this->msg, handle conflicts between main process and the working thread;
+  // mutex: mutex for accessing this->msg, handle conflicts between main process and the working
+  // thread;
   std::mutex mutex;
 
   // tmp_mutex: mutex for accessing this->tmp_markers, handle conflicts between pthreads;
@@ -141,9 +145,11 @@ private:
   int max_num_threads;
   // condition: condition variable for working thread to wait for main callback to get this->msg;
   std::condition_variable condition;
-  // marker: markers to be published, created by working thread and consumed by the "update" of main process; 
+  // marker: markers to be published, created by working thread and consumed by the "update" of main
+  // process;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
-  // tmp_markers: marker vectors being created by the pthreads, will be passed to marker when finished.
+  // tmp_markers: marker vectors being created by the pthreads, will be passed to marker when
+  // finished.
   std::vector<visualization_msgs::msg::Marker::SharedPtr> tmp_markers;
   // existing_marker_ids: marker ids that were maintained in the last frame.
   std::set<rviz_default_plugins::displays::MarkerID> existing_marker_ids;

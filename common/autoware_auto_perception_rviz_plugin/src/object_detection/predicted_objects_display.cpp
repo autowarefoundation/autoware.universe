@@ -14,10 +14,12 @@
 
 #include <object_detection/predicted_objects_display.hpp>
 #include <rviz_common/properties/int_property.hpp>
+
+#include <pthread.h>
+#include <semaphore.h>
+
 #include <memory>
 #include <set>
-#include <pthread.h>
-#include <semaphore.h> 
 
 namespace autoware
 {
@@ -26,40 +28,44 @@ namespace rviz_plugins
 namespace object_detection
 {
 // PredictedObjectPThread: manager classes for pthreads
-class PredictedObjectPThread{
-  public:
-  PredictedObjectPThread(PredictedObjectsDisplay *_display,
-                         int _rank){
-    display = _display; // store the pointer of the main plugin class;
+class PredictedObjectPThread
+{
+public:
+  PredictedObjectPThread(PredictedObjectsDisplay * _display, int _rank)
+  {
+    display = _display;  // store the pointer of the main plugin class;
     rank = _rank;
   }
-  void start() {
+  void start()
+  {
     pthread_create(&mThreadID, 0, PredictedObjectPThread::threadMethod, this);
-    pthread_detach(mThreadID); // keep pthread alive; avoid repeatly creating and destroying pthreads
+    pthread_detach(
+      mThreadID);  // keep pthread alive; avoid repeatly creating and destroying pthreads
   };
-  static void *threadMethod(void *arg){
-    PredictedObjectPThread *_this = static_cast<PredictedObjectPThread *>(arg);
+  static void * threadMethod(void * arg)
+  {
+    PredictedObjectPThread * _this = static_cast<PredictedObjectPThread *>(arg);
     int rank = _this->rank;
-    sem_t* starting_semaphores = _this->display->starting_semaphores;
-    sem_t* ending_semaphores   = _this->display->ending_semaphores;
-    while (true){ // keep the pthread alive
-      sem_wait(&starting_semaphores[rank]); // wait for the signal to start
+    sem_t * starting_semaphores = _this->display->starting_semaphores;
+    sem_t * ending_semaphores = _this->display->ending_semaphores;
+    while (true) {                           // keep the pthread alive
+      sem_wait(&starting_semaphores[rank]);  // wait for the signal to start
       _this->display->pThreadJob(rank);
-      sem_post(&ending_semaphores[rank]); // signal the end of the job
+      sem_post(&ending_semaphores[rank]);  // signal the end of the job
     }
-    return nullptr;    
+    return nullptr;
   };
   pthread_t mThreadID;
   int rank;
-  PredictedObjectsDisplay *display;
+  PredictedObjectsDisplay * display;
 };
 
 PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks")
 {
   num_threads_property = new rviz_common::properties::IntProperty(
-    "Num Threads", 4, "Num of Threads to use", this); // by default, use 4 threads
-  max_num_threads = 8; // hard code the number of threads to be created
-  num_threads = max_num_threads; // this will be soon modified in the workerThread
+    "Num Threads", 4, "Num of Threads to use", this);  // by default, use 4 threads
+  max_num_threads = 8;            // hard code the number of threads to be created
+  num_threads = max_num_threads;  // this will be soon modified in the workerThread
   std::thread worker(&PredictedObjectsDisplay::workerThread, this);
   worker.detach();
 }
@@ -67,19 +73,19 @@ PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("t
 void PredictedObjectsDisplay::workerThread()
 {
   // PThread Initialization
-  std::vector<PredictedObjectPThread*> thread_handles;
+  std::vector<PredictedObjectPThread *> thread_handles;
 
-  starting_semaphores = (sem_t*)malloc(max_num_threads*sizeof(sem_t));
-  ending_semaphores   = (sem_t*)malloc(max_num_threads*sizeof(sem_t));
+  starting_semaphores = (sem_t *)malloc(max_num_threads * sizeof(sem_t));
+  ending_semaphores = (sem_t *)malloc(max_num_threads * sizeof(sem_t));
   pthread_mutex_init(&tmp_marker_mutex, NULL);
-  for (int rank=0; rank < max_num_threads; rank++){
-    PredictedObjectPThread* pthread_object = new PredictedObjectPThread(this, rank);
+  for (int rank = 0; rank < max_num_threads; rank++) {
+    PredictedObjectPThread * pthread_object = new PredictedObjectPThread(this, rank);
     thread_handles.push_back(pthread_object);
-    sem_init(&starting_semaphores[rank], 0, 0);  
-    sem_init(&ending_semaphores[rank], 0, 0);  
+    sem_init(&starting_semaphores[rank], 0, 0);
+    sem_init(&ending_semaphores[rank], 0, 0);
     thread_handles[rank]->start();
   }
-  
+
   while (true) {
     std::unique_lock<std::mutex> lock(mutex);
     // waiting for the main process to get the message
@@ -93,23 +99,20 @@ void PredictedObjectsDisplay::workerThread()
 
     // max_num_threads : Hard-coded for now. Define the pool of all threads.
     // num_threads: dynamically change the number of threads based on the number of objects.
-    num_threads = std::min(max_num_threads, N/2);
+    num_threads = std::min(max_num_threads, N / 2);
     num_threads = std::min(num_threads_property->getInt(), num_threads);
     num_threads = std::max(1, num_threads);
 
     if (num_threads > 1) {
       update_id_map(tmp_msg);
       tmp_markers.clear();
-      for (int rank=0; rank < num_threads; rank ++)
-      {
+      for (int rank = 0; rank < num_threads; rank++) {
         sem_post(&starting_semaphores[rank]);
       }
-      for (int rank=0; rank < num_threads; rank++)
-      {
+      for (int rank = 0; rank < num_threads; rank++) {
         sem_wait(&ending_semaphores[rank]);
       }
-    }
-    else {
+    } else {
       tmp_markers = createMarkers(tmp_msg);
     }
 
@@ -120,11 +123,11 @@ void PredictedObjectsDisplay::workerThread()
   }
 }
 
-void PredictedObjectsDisplay::push_tmp_markers(std::vector<visualization_msgs::msg::Marker::SharedPtr> marker_ptrs)
+void PredictedObjectsDisplay::push_tmp_markers(
+  std::vector<visualization_msgs::msg::Marker::SharedPtr> marker_ptrs)
 {
   pthread_mutex_lock(&tmp_marker_mutex);
-  for (auto marker_ptr : marker_ptrs)
-    tmp_markers.push_back(marker_ptr);
+  for (auto marker_ptr : marker_ptrs) tmp_markers.push_back(marker_ptr);
   pthread_mutex_unlock(&tmp_marker_mutex);
 }
 
@@ -135,9 +138,11 @@ void PredictedObjectsDisplay::pThreadJob(int rank)
 
   int first_object_index = rank * num_object_per_thread;
   int last_object_index = first_object_index + num_object_per_thread;
-  if (last_object_index > length) {last_object_index =length;}
+  if (last_object_index > length) {
+    last_object_index = length;
+  }
   std::vector<visualization_msgs::msg::Marker::SharedPtr> Thread_Markers;
-  for (int i = first_object_index; i < last_object_index; i++){
+  for (int i = first_object_index; i < last_object_index; i++) {
     auto object = tmp_msg->objects[i];
     // Get marker for shape
     auto shape_marker = get_shape_marker_ptr(
