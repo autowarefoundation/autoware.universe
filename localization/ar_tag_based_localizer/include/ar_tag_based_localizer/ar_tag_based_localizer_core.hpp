@@ -87,7 +87,7 @@ private:
   std::unique_ptr<image_transport::ImageTransport> it_;
 
   // Subscribers
-  image_transport::Subscriber image_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr cam_info_sub_;
 
   // Publishers

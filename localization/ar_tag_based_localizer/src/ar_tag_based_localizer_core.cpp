@@ -109,20 +109,22 @@ bool ArTagBasedLocalizer::setup()
   /*
     Subscribers
   */
-  image_sub_ = it_->subscribe("~/input/image", 1, &ArTagBasedLocalizer::image_callback, this);
+  rclcpp::QoS qos_sub(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
+  qos_sub.best_effort();
+  image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
+    "~/input/image", qos_sub,
+    std::bind(&ArTagBasedLocalizer::image_callback, this, std::placeholders::_1));
   cam_info_sub_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
-    "~/input/camera_info", 1,
+    "~/input/camera_info", qos_sub,
     std::bind(&ArTagBasedLocalizer::cam_info_callback, this, std::placeholders::_1));
 
   /*
     Publishers
   */
-  auto qos = rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
-  qos.reliable();
-  qos.transient_local();
+  rclcpp::QoS qos_pub(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
   image_pub_ = it_->advertise("~/debug/result", 1);
   pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "~/output/pose_with_covariance", qos);
+    "~/output/pose_with_covariance", qos_pub);
 
   RCLCPP_INFO(this->get_logger(), "Setup of ar_tag_based_localizer node is successful!");
   return true;
