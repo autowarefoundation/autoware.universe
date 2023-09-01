@@ -39,6 +39,24 @@ boost::optional<double> calcFeasibleDecelDistance(
   std::shared_ptr<const PlannerData> planner_data, const double acc_lim, const double jerk_lim,
   const double target_velocity);
 
+/**
+ * @brief Update path velocities based on driving direction.
+ *
+ * This function updates the longitudinal velocity of each point in the provided paths,
+ * based on whether the vehicle is driving forward or backward. It also sets the terminal
+ * velocity and acceleration for each path.
+ *
+ * @param paths A vector of paths with lane IDs to be updated.
+ * @param terminal_vel_acc_pairs A vector of pairs, where each pair contains the terminal
+ *                               velocity and acceleration for a corresponding path.
+ * @param target_velocity The target velocity for ego vehicle predicted path.
+ * @param acceleration The acceleration for ego vehicle predicted path.
+ */
+void modifyVelocityByDirection(
+  std::vector<PathWithLaneId> & paths,
+  std::vector<std::pair<double, double>> & terminal_vel_acc_pairs, const double target_velocity,
+  const double acceleration);
+
 void updateEgoPredictedPathParams(
   std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::shared_ptr<StartPlannerParameters> & start_planner_params);
