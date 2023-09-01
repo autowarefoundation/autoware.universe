@@ -71,9 +71,21 @@
     </include>
   </group>
 
-  <!-- roi_pointcloud_fusion to detect small unknown objects -->
+  <!-- Clustering -->
   <group>
-    <push-ros-namespace namespace="roi_pointcloud_fusion"/>
+    <push-ros-namespace namespace="clustering"/>
+    <group>
+      <let name="clustering/input/pointcloud" value="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud" if="$(var use_pointcloud_map)"/>
+      <let name="clustering/input/pointcloud" value="$(var input/obstacle_segmentation/pointcloud)" unless="$(var use_pointcloud_map)"/>
+      <include file="$(find-pkg-share euclidean_cluster)/launch/voxel_grid_based_euclidean_cluster.launch.xml">
+        <arg name="input_pointcloud" value="$(var clustering/input/pointcloud)"/>
+        <arg name="output_clusters" value="euclidean_cluster/clusters"/>
+        <arg name="use_pointcloud_map" value="false"/>
+        <arg name="use_downsample_pointcloud" value="$(var use_downsample_pointcloud)"/>
+      </include>
+    </group>
+
+    <!-- roi based clustering -->
     <group>
       <include file="$(find-pkg-share image_projection_based_fusion)/launch/roi_pointcloud_fusion.launch.xml">
         <arg name="input/camera_info0" value="$(var camera_info0)"/>
@@ -102,22 +114,16 @@
         <arg name="input/image6" value="$(var image_raw6)"/>
         <arg name="input/image7" value="$(var image_raw7)"/>
         <arg name="input/pointcloud" value="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud"/>
-        <arg name="output/pointcloud" value="output/pointcloud"/>
-        <arg name="output/objects" value="objects"/>
+        <arg name="output_clusters" value="roi_cluster/clusters"/>
       </include>
     </group>
-  </group>
-  <!-- Clustering -->
-  <group>
-    <push-ros-namespace namespace="clustering"/>
+
+    <!-- simple_cluster_merger -->
     <group>
-      <let name="clustering/input/pointcloud" value="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud" if="$(var use_pointcloud_map)"/>
-      <let name="clustering/input/pointcloud" value="$(var input/obstacle_segmentation/pointcloud)" unless="$(var use_pointcloud_map)"/>
-      <include file="$(find-pkg-share euclidean_cluster)/launch/voxel_grid_based_euclidean_cluster.launch.xml">
-        <arg name="input_pointcloud" value="$(var clustering/input/pointcloud)"/>
-        <arg name="output_clusters" value="clusters"/>
-        <arg name="use_pointcloud_map" value="false"/>
-        <arg name="use_downsample_pointcloud" value="$(var use_downsample_pointcloud)"/>
+      <include file="$(find-pkg-share cluster_merger)/launch/cluster_merger.launch.xml">
+        <arg name="input/object0" value="euclidean_cluster/clusters"/>
+        <arg name="input/object1" value="roi_cluster/clusters"/>
+        <arg name="output/objects" value="clusters"/>
       </include>
     </group>
 
@@ -132,6 +138,8 @@
       <let name="input/clustering" value="/perception/object_recognition/detection/clustering/clusters"/>
       <push-ros-namespace namespace="camera_lidar_fusion"/>
       <!-- Fusion camera-lidar to classify -->
+
+      <!-- euclidean clustering -->
       <group>
         <include file="$(find-pkg-share image_projection_based_fusion)/launch/roi_cluster_fusion.launch.xml">
           <arg name="input/camera_info0" value="$(var camera_info0)"/>
