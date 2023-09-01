@@ -2,7 +2,6 @@
 <launch>
   <arg name="input_topic_fix" default="/fix"/>
   <arg name="input_topic_orientation" default="/autoware_orientation"/>
-  <arg name="param_file" default="$(find-pkg-share gnss_poser)/config/set_local_origin.param.yaml"/>
 
   <arg name="output_topic_gnss_pose" default="gnss_pose"/>
   <arg name="output_topic_gnss_pose_cov" default="gnss_pose_cov"/>
@@ -31,7 +30,6 @@
 
     <param name="buff_epoch" value="$(var buff_epoch)"/>
     <param name="use_gnss_ins_orientation" value="$(var use_gnss_ins_orientation)"/>
-    <param from="$(var param_file)"/>
     <param name="gnss_pose_pub_method" value="$(var gnss_pose_pub_method)"/>
   </node>
 </launch>

@@ -22,6 +22,7 @@
 #include <geography_utils/height.hpp>
 #include <rclcpp/logging.hpp>
 
+#include <geographic_msgs/msg/geo_point.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 #include <string>
@@ -64,7 +65,7 @@ GNSSStat NavSatFix2UTM(
 
 GNSSStat NavSatFix2LocalCartesianUTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
-  sensor_msgs::msg::NavSatFix nav_sat_fix_origin, const rclcpp::Logger & logger,
+  const geographic_msgs::msg::GeoPoint geo_point_origin, const rclcpp::Logger & logger,
   const std::string & target_vertical_datum)
 {
   GNSSStat utm_local;
@@ -72,12 +73,12 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     // origin of the local coordinate system in global frame
     GNSSStat utm_origin;
     GeographicLib::UTMUPS::Forward(
-      nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, utm_origin.zone,
+      geo_point_origin.latitude, geo_point_origin.longitude, utm_origin.zone,
       utm_origin.east_north_up, utm_origin.x, utm_origin.y);
 
     utm_origin.z = geography_utils::convert_height(
-      nav_sat_fix_origin.altitude, nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude,
-      "WGS84", target_vertical_datum);
+      geo_point_origin.altitude, geo_point_origin.latitude, geo_point_origin.longitude, "WGS84",
+      target_vertical_datum);
 
     // individual coordinates of global coordinate system
     double global_x = 0.0;
