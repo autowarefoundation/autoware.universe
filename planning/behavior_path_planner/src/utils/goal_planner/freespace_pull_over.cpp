@@ -113,10 +113,10 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
     addPose(goal_pose);
   }
 
-  utils::correctDividedPathVelocity(partial_paths);
   std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel{};
-  pairs_terminal_velocity_and_accel.push_back(std::make_pair(velocity_, 0));
-  pairs_terminal_velocity_and_accel.push_back(std::make_pair(-velocity_, 0));
+  pairs_terminal_velocity_and_accel.resize(partial_paths.size());
+  utils::start_goal_planner_common::modifyVelocityByDirection(
+    partial_paths, pairs_terminal_velocity_and_accel, velocity_, 0);
 
   // Check if driving forward for each path, return empty if not
   for (auto & path : partial_paths) {
