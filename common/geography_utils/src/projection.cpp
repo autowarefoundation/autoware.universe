@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include <GeographicLib/Geoid.hpp>
-#include <geography_utils/projection.hpp>
 #include <geography_utils/lanelet2_projector.hpp>
+#include <geography_utils/projection.hpp>
 #include <lanelet2_extension/projection/mgrs_projector.hpp>
 // #include <lanelet2_core/primitives/Lanelet.h>
 // #include <lanelet2_projection/UTM.h>
@@ -65,7 +65,8 @@ GeoPoint project_reverse(const LocalPoint local_point, const MapProjectorInfo & 
   lanelet::GPSPoint projected_gps_point;
   if (projector_info.projector_type == MapProjectorInfo::MGRS) {
     const auto mgrs_projector = dynamic_cast<lanelet::projection::MGRSProjector *>(projector.get());
-    projected_gps_point = mgrs_projector->reverse(to_basic_point_3d_pt(local_point), projector_info.mgrs_grid);
+    projected_gps_point =
+      mgrs_projector->reverse(to_basic_point_3d_pt(local_point), projector_info.mgrs_grid);
   } else {
     projected_gps_point = projector->reverse(to_basic_point_3d_pt(local_point));
   }

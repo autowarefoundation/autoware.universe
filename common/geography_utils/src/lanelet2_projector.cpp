@@ -14,8 +14,8 @@
 
 #include <GeographicLib/Geoid.hpp>
 #include <geography_utils/lanelet2_projector.hpp>
-
 #include <lanelet2_extension/projection/mgrs_projector.hpp>
+
 #include <lanelet2_projection/UTM.h>
 
 namespace geography_utils
@@ -24,8 +24,9 @@ namespace geography_utils
 std::unique_ptr<lanelet::Projector> get_lanelet2_projector(const MapProjectorInfo & projector_info)
 {
   if (projector_info.projector_type == MapProjectorInfo::LOCAL_CARTESIAN_UTM) {
-    lanelet::GPSPoint position{projector_info.map_origin.latitude, projector_info.map_origin.longitude,
-                               projector_info.map_origin.altitude};
+    lanelet::GPSPoint position{
+      projector_info.map_origin.latitude, projector_info.map_origin.longitude,
+      projector_info.map_origin.altitude};
     lanelet::Origin origin{position};
     lanelet::projection::UtmProjector projector{origin};
     return std::make_unique<lanelet::projection::UtmProjector>(projector);
@@ -39,4 +40,4 @@ std::unique_ptr<lanelet::Projector> get_lanelet2_projector(const MapProjectorInf
   }
 }
 
-} // namespace geography_utils
+}  // namespace geography_utils

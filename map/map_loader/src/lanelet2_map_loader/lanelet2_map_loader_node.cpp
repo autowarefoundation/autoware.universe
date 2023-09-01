@@ -33,8 +33,8 @@
 
 #include "map_loader/lanelet2_map_loader_node.hpp"
 
-#include <geography_utils/lanelet2_projector.hpp>
 #include <ament_index_cpp/get_package_prefix.hpp>
+#include <geography_utils/lanelet2_projector.hpp>
 #include <lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <lanelet2_extension/projection/mgrs_projector.hpp>
 #include <lanelet2_extension/projection/transverse_mercator_projector.hpp>
@@ -88,11 +88,13 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
 }
 
 lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
-  const std::string & lanelet2_filename, const tier4_map_msgs::msg::MapProjectorInfo & projector_info)
+  const std::string & lanelet2_filename,
+  const tier4_map_msgs::msg::MapProjectorInfo & projector_info)
 {
   lanelet::ErrorMessages errors{};
   if (projector_info.projector_type != tier4_map_msgs::msg::MapProjectorInfo::LOCAL) {
-    std::unique_ptr<lanelet::Projector> projector = geography_utils::get_lanelet2_projector(projector_info);
+    std::unique_ptr<lanelet::Projector> projector =
+      geography_utils::get_lanelet2_projector(projector_info);
     const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, *projector, &errors);
     if (errors.empty()) {
       return map;
