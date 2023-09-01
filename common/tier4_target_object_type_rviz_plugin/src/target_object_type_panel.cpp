@@ -166,14 +166,24 @@ void TargetObjectTypePanel::setParamName()
     param_name.name.emplace("bicycle", "bicycle");
     param_name.name.emplace("motorcycle", "motorcycle");
     param_name.name.emplace("pedestrian", "pedestrian");
-    param_names_.emplace("obstacle_stop", param_name);
+    param_names_.emplace("obstacle_slowdown", param_name);
   }
 }
 
 void TargetObjectTypePanel::updateMatrix()
 {
-  constexpr QColor GreenYellow(173, 255, 47);
+  // constexpr QColor GreenYellow(173, 255, 47);
   // constexpr QColor FireBrick(178,34,34);
+  const QColor color_in_use("#6eb6cc");
+  const QColor color_no_use("#1d3e48");
+  const QColor color_undefined("#c6c6c5");
+
+  const auto set_undefined = [&](const auto i, const auto j){
+      QTableWidgetItem * item = new QTableWidgetItem("N/A");
+      item->setForeground(QBrush(Qt::black));  // set the text color to black
+      item->setBackground(color_undefined);
+      matrix_widget_->setItem(i, j, item);
+  };
 
   for (size_t i = 0; i < modules_.size(); i++) {
     const auto & module = modules_[i];
@@ -191,6 +201,9 @@ void TargetObjectTypePanel::updateMatrix()
       RCLCPP_ERROR(
         node_->get_logger(), "Failed to find parameter service for node: %s",
         module_params.node.c_str());
+      for (size_t j = 0; j < targets_.size(); j++) {
+        set_undefined(i, j);
+      }
       continue;
     }
 
@@ -209,21 +222,15 @@ void TargetObjectTypePanel::updateMatrix()
       if (!parameter_result.empty()) {
         bool value = parameter_result[0].as_bool();
         QTableWidgetItem * item = new QTableWidgetItem(value ? "O" : "X");
-        item->setForeground(QBrush(Qt::black));  // set the text color to black
-        item->setBackground(QBrush(
-          value ? GreenYellow
-                : Qt::lightGray));  // set the background color to either yellow or gray
+        item->setForeground(QBrush(value ? Qt::black : Qt::black));  // set the text color to black
+        item->setBackground(QBrush(value ? color_in_use : color_no_use));
         matrix_widget_->setItem(i, j, item);
         std::cerr << "Find parameter " << module_params.node << " " << param_name << " = " << value
                   << std::endl;
       } else {
         std::cerr << "Failed to get parameter " << module_params.node << " " << param_name
                   << std::endl;
-        QTableWidgetItem * item = new QTableWidgetItem("n/a");
-        item->setForeground(QBrush(Qt::black));  // set the text color to black
-        item->setBackground(
-          QBrush(Qt::darkGray));  // set the background color to either yellow or gray
-        matrix_widget_->setItem(i, j, item);
+        set_undefined(i, j);
       }
     }
   }
