@@ -28,6 +28,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <semaphore.h> 
+#include <pthread.h>
 
 namespace autoware
 {
@@ -45,6 +47,13 @@ public:
   using PredictedObjects = autoware_auto_perception_msgs::msg::PredictedObjects;
 
   PredictedObjectsDisplay();
+
+  // public methods for calling from detached pthreads. pthreads are detached from the "workingThread"
+  void pThreadJob(int rank);
+
+  // semaphores to control the starting and finishing of phthread tasks
+  sem_t* starting_semaphores;
+  sem_t* ending_semaphores;
 
 private:
   void processMessage(PredictedObjects::ConstSharedPtr msg) override;
@@ -96,11 +105,16 @@ private:
     return id_map.at(uuid);
   }
 
+  // createMarkers: create markers from the message with the single working process; activated when num_threads<=1;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> createMarkers(
     PredictedObjects::ConstSharedPtr msg);
+  // Working thread is detached from the main to control the flow of messages
   void workerThread();
 
   void update(float wall_dt, float ros_dt) override;
+
+  // For pthreads to push to the same "tmp_maker" vector
+  void push_tmp_markers(std::vector<visualization_msgs::msg::Marker::SharedPtr> marker_ptrs);
 
   std::unordered_map<boost::uuids::uuid, int32_t, boost::hash<boost::uuids::uuid>> id_map;
   // std::unordered_map<boost::uuids::uuid, int32_t> id_map;
@@ -108,12 +122,33 @@ private:
   int32_t marker_id = 0;
   const int32_t PATH_ID_CONSTANT = 1e3;
 
+  // msg: latest message, passed from the main callback to workThread; 
   PredictedObjects::ConstSharedPtr msg;
+
+  // tmp_msg: latest message, maintained inside working threads and consumed by pthreads
+  PredictedObjects::ConstSharedPtr tmp_msg;
   bool consumed{false};
+
+  // mutex: mutex for accessing this->msg, handle conflicts between main process and the working thread;
   std::mutex mutex;
+
+  // tmp_mutex: mutex for accessing this->tmp_markers, handle conflicts between pthreads;
+  pthread_mutex_t tmp_marker_mutex;
+
+  // num_threads: number of threads going to be used, can be modifed on the fly in RVIZ parameters;
+  int num_threads;
+  // max_num_threads: number of threads to be created, hard-coded to be 8;
+  int max_num_threads;
+  // condition: condition variable for working thread to wait for main callback to get this->msg;
   std::condition_variable condition;
+  // marker: markers to be published, created by working thread and consumed by the "update" of main process; 
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
+  // tmp_markers: marker vectors being created by the pthreads, will be passed to marker when finished.
+  std::vector<visualization_msgs::msg::Marker::SharedPtr> tmp_markers;
+  // existing_marker_ids: marker ids that were maintained in the last frame.
   std::set<rviz_default_plugins::displays::MarkerID> existing_marker_ids;
+
+  rviz_common::properties::IntProperty * num_threads_property;
 };
 
 }  // namespace object_detection
