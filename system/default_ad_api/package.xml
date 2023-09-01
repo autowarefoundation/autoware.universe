@@ -25,7 +25,6 @@
   <depend>component_interface_utils</depend>
   <depend>geographic_msgs</depend>
   <depend>geography_utils</depend>
-  <depend>lanelet2_extension</depend>
   <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>

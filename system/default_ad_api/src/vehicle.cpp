@@ -94,15 +94,6 @@ void VehicleNode::kinematic_state(
   kinematic_state_msgs_ = msg_ptr;
 }
 
-Eigen::Vector3d VehicleNode::toBasicPoint3dPt(const geometry_msgs::msg::Point src)
-{
-  Eigen::Vector3d dst;
-  dst.x() = src.x;
-  dst.y() = src.y;
-  dst.z() = src.z;
-  return dst;
-}
-
 void VehicleNode::acceleration_status(
   const localization_interface::Acceleration::Message::ConstSharedPtr msg_ptr)
 {
