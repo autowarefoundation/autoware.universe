@@ -1,0 +1,13 @@
+<launch>
+  <!-- Output -->
+  <arg name="output/objects" default="output/objects"/>
+  <arg name="input/object0" default="input/object0"/>
+  <arg name="input/object1" default="input/object1"/>
+
+  <!-- Node -->
+  <node pkg="cluster_merger" exec="cluster_merger_node" name="cluster_merger" output="screen">
+    <remap from="~/output/objects" to="$(var output/objects)"/>
+    <remap from="input/object0" to="$(var input/object0)"/>
+    <remap from="input/object1" to="$(var input/object1)"/>
+  </node>
+</launch>
