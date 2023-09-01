@@ -140,7 +140,6 @@ std::pair<double, double> getPairsTerminalVelocityAndAccel(
   const size_t current_path_idx)
 {
   if (pairs_terminal_velocity_and_accel.size() <= current_path_idx) {
-    std::cerr << "pair_terminal_velocity_and_accel is not given" << std::endl;
     return std::make_pair(0.0, 0.0);
   }
   return pairs_terminal_velocity_and_accel.at(current_path_idx);

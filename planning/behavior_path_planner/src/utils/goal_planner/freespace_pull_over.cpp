@@ -76,7 +76,6 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
 
   // remove points which are near the goal
   PathWithLaneId & last_path = partial_paths.back();
-  // todo: define as parameter
   const double th_goal_distance = 1.0;
   for (auto it = last_path.points.begin(); it != last_path.points.end(); ++it) {
     size_t index = std::distance(last_path.points.begin(), it);
