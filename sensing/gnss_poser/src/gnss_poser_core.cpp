@@ -15,7 +15,8 @@
 #include "gnss_poser/gnss_poser_core.hpp"
 
 #include <autoware_sensing_msgs/msg/gnss_ins_orientation_stamped.hpp>
-
+#include <geography_utils/projection.hpp>
+#include <geography_utils/height.hpp>
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -93,8 +94,14 @@ void GNSSPoser::callbackNavSatFix(
   }
 
   // get position
-  const auto gnss_stat = convert(*nav_sat_fix_msg_ptr, projector_info_);
-  const auto position = getPosition(gnss_stat);
+  geographic_msgs::msg::GeoPoint gps_point;
+  gps_point.latitude = nav_sat_fix_msg_ptr->latitude;
+  gps_point.longitude = nav_sat_fix_msg_ptr->longitude;
+  gps_point.altitude = nav_sat_fix_msg_ptr->altitude;
+  Point position = geography_utils::project_forward(gps_point, projector_info_);
+  position.z = geography_utils::convert_height(
+    gps_point.altitude, gps_point.latitude, gps_point.longitude,
+    "WGS84", projector_info_.vertical_datum);
 
   geometry_msgs::msg::Pose gnss_antenna_pose{};
 
@@ -197,35 +204,36 @@ bool GNSSPoser::canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix
          sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
 }
 
-GNSSStat GNSSPoser::convert(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
-  const MapProjectorInfo::Message & map_projector_info)
-{
-  GNSSStat gnss_stat;
-  if (map_projector_info.projector_type == MapProjectorInfo::Message::LOCAL_CARTESIAN_UTM) {
-    gnss_stat = NavSatFix2LocalCartesianUTM(
-      nav_sat_fix_msg, map_projector_info.map_origin, this->get_logger(),
-      map_projector_info.vertical_datum);
-  } else if (map_projector_info.projector_type == MapProjectorInfo::Message::MGRS) {
-    gnss_stat = NavSatFix2MGRS(
-      nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(),
-      map_projector_info.vertical_datum);
-  } else {
-    RCLCPP_ERROR_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "Unknown Projector type");
-  }
-  return gnss_stat;
-}
+// GNSSStat GNSSPoser::convert(
+//   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
+//   const MapProjectorInfo::Message & map_projector_info)
+// {
+//   GNSSStat gnss_stat;
+  
+//   if (map_projector_info.projector_type == MapProjectorInfo::Message::LOCAL_CARTESIAN_UTM) {
+//     gnss_stat = NavSatFix2LocalCartesianUTM(
+//       nav_sat_fix_msg, map_projector_info.map_origin, this->get_logger(),
+//       map_projector_info.vertical_datum);
+//   } else if (map_projector_info.projector_type == MapProjectorInfo::Message::MGRS) {
+//     gnss_stat = NavSatFix2MGRS(
+//       nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(),
+//       map_projector_info.vertical_datum);
+//   } else {
+//     RCLCPP_ERROR_STREAM_THROTTLE(
+//       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+//       "Unknown Projector type");
+//   }
+//   return gnss_stat;
+// }
 
-geometry_msgs::msg::Point GNSSPoser::getPosition(const GNSSStat & gnss_stat)
-{
-  geometry_msgs::msg::Point point;
-  point.x = gnss_stat.x;
-  point.y = gnss_stat.y;
-  point.z = gnss_stat.z;
-  return point;
-}
+// geometry_msgs::msg::Point GNSSPoser::getPosition(const GNSSStat & gnss_stat)
+// {
+//   geometry_msgs::msg::Point point;
+//   point.x = gnss_stat.x;
+//   point.y = gnss_stat.y;
+//   point.z = gnss_stat.z;
+//   return point;
+// }
 
 geometry_msgs::msg::Point GNSSPoser::getMedianPosition(
   const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer)
