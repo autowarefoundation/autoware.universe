@@ -206,7 +206,6 @@ private:
     const Pose & search_start_offset_pose, PathWithLaneId & path) const;
   PathWithLaneId generateStopPath();
   PathWithLaneId generateFeasibleStopPath();
-  boost::optional<double> calcFeasibleDecelDistance(const double target_velocity) const;
   void keepStoppedWithCurrentPath(PathWithLaneId & path);
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
 
