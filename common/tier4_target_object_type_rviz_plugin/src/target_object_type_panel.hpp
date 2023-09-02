@@ -1,11 +1,29 @@
+//  Copyright 2023 Tier IV, Inc. All rights reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 #ifndef TARGET_OBJECT_TYPE_PANEL_HPP_
 #define TARGET_OBJECT_TYPE_PANEL_HPP_
 
+#include <QPushButton>
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 class TargetObjectTypePanel : public rviz_common::Panel
@@ -13,21 +31,13 @@ class TargetObjectTypePanel : public rviz_common::Panel
   Q_OBJECT
 
 public:
-  TargetObjectTypePanel(QWidget * parent = 0);
+  explicit TargetObjectTypePanel(QWidget * parent = 0);
 
 protected:
   QTableWidget * matrix_widget_;
   std::shared_ptr<rclcpp::Node> node_;
-  std::vector<std::string> modules_ = {
-    "avoidance",
-    "avoidance_by_lane_change",
-    "lane_change",
-    "obstacle_cruise (inside)",
-    "obstacle_cruise (outside)",
-    "obstacle_stop",
-    "obstacle_slowdown"};
-  std::vector<std::string> targets_ = {"car",     "truck",   "bus",        "trailer",
-                                       "unknown", "bicycle", "motorcycle", "pedestrian"};
+  std::vector<std::string> modules_;
+  std::vector<std::string> targets_;
 
   struct ParamNameEnableObject
   {
@@ -37,9 +47,14 @@ protected:
   };
   std::unordered_map<std::string, ParamNameEnableObject> param_names_;
 
+private slots:
+  void onReloadButtonClicked();
+
 private:
+  QPushButton * reload_button_;
+
   void updateMatrix();
-  void setParamName();
+  void setParameters();
 };
 
 #endif  // TARGET_OBJECT_TYPE_PANEL_HPP_
