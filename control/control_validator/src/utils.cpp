@@ -44,7 +44,8 @@ void insertPointInPredictedTrajectory(
 
 TrajectoryPoints reverseTrajectoryPoints(const TrajectoryPoints & trajectory_points)
 {
-  TrajectoryPoints reversed_trajectory_points(0);
+  TrajectoryPoints reversed_trajectory_points;
+  reversed_trajectory_points.reserve(trajectory_points.size());
   std::reverse_copy(
     trajectory_points.begin(), trajectory_points.end(),
     std::back_inserter(reversed_trajectory_points));
