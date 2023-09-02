@@ -21,7 +21,9 @@
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
+#include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/overlaps.hpp>
+#include <boost/geometry/strategies/strategies.hpp>
 
 namespace behavior_path_planner::utils::path_safety_checker
 {
