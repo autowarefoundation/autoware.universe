@@ -76,8 +76,8 @@ struct PullOverStatus
   lanelet::ConstLanelets pull_over_lanes{};
   std::vector<DrivableLanes> lanes{};  // current + pull_over
   bool has_decided_path{false};
-  bool is_safe_static_objects{false};
-  bool is_safe_dynamic_objects{false};
+  bool is_safe_static_objects{false};   // current path is safe against static objects
+  bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
   bool prev_is_safe{false};
   bool has_decided_velocity{false};
   bool has_requested_approval{false};
