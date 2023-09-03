@@ -66,7 +66,6 @@ IntersectionModule::IntersectionModule(
   const bool is_private_area, const bool enable_occlusion_detection, rclcpp::Node & node,
   const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
-  node_(node),
   lane_id_(lane_id),
   associative_ids_(associative_ids),
   enable_occlusion_detection_(enable_occlusion_detection),
@@ -91,12 +90,16 @@ IntersectionModule::IntersectionModule(
     occlusion_stop_state_machine_.setState(StateMachine::State::GO);
   }
   {
+    before_entry_attention_area_state_machine_.setMarginTime(
+      planner_param_.occlusion.before_creep_stop_time);
+    before_entry_attention_area_state_machine_.setState(StateMachine::State::STOP);
+  }
+  {
     stuck_private_area_timeout_.setMarginTime(planner_param_.stuck_vehicle.timeout_private_area);
     stuck_private_area_timeout_.setState(StateMachine::State::STOP);
   }
-
   decision_state_pub_ =
-    node_.create_publisher<std_msgs::msg::String>("~/debug/intersection/decision_state", 1);
+    node.create_publisher<std_msgs::msg::String>("~/debug/intersection/decision_state", 1);
 }
 
 void IntersectionModule::initializeRTCStatus()
@@ -106,7 +109,6 @@ void IntersectionModule::initializeRTCStatus()
   // occlusion
   occlusion_safety_ = true;
   occlusion_stop_distance_ = std::numeric_limits<double>::lowest();
-  occlusion_first_stop_required_ = false;
   // activated_ and occlusion_activated_ must be set from manager's RTC callback
 }
 
@@ -124,7 +126,7 @@ template <typename T>
 void prepareRTCByDecisionResult(
   const T & result, const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   bool * default_safety, double * default_distance, bool * occlusion_safety,
-  double * occlusion_distance, bool * occlusion_first_stop_required)
+  double * occlusion_distance)
 {
   static_assert("Unsupported type passed to prepareRTCByDecisionResult");
   return;
@@ -135,8 +137,7 @@ void prepareRTCByDecisionResult(
   [[maybe_unused]] const IntersectionModule::Indecisive & result,
   [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
-  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance,
-  [[maybe_unused]] bool * occlusion_first_stop_required)
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance)
 {
   return;
 }
@@ -145,12 +146,13 @@ template <>
 void prepareRTCByDecisionResult(
   const IntersectionModule::StuckStop & result,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
-  double * default_distance, bool * occlusion_safety, double * occlusion_distance,
-  [[maybe_unused]] bool * occlusion_first_stop_required)
+  double * default_distance, bool * occlusion_safety, double * occlusion_distance)
 {
   RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "StuckStop");
   const auto closest_idx = result.stop_lines.closest_idx;
-  const auto stop_line_idx = result.stop_line_idx;
+  // NOTE: stop at the stuck stop line
+  // TOOD(Mamoru Sobue): consider stopping distance
+  const auto stop_line_idx = result.stop_lines.stuck_stop_line;
   *default_safety = false;
   *default_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
   *occlusion_safety = true;
@@ -166,15 +168,16 @@ template <>
 void prepareRTCByDecisionResult(
   const IntersectionModule::NonOccludedCollisionStop & result,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
-  double * default_distance, bool * occlusion_safety, double * occlusion_distance,
-  [[maybe_unused]] bool * occlusion_first_stop_required)
+  double * default_distance, bool * occlusion_safety, double * occlusion_distance)
 {
   RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "NonOccludedCollisionStop");
   const auto closest_idx = result.stop_lines.closest_idx;
-  const auto stop_line_idx = result.stop_line_idx;
+  const auto peeking_finished = result.first_peeking_finished || result.second_peeking_finished;
+  const auto stop_line_idx =
+    peeking_finished ? result.stop_lines.closest_idx : result.stop_lines.default_stop_line;
+  const auto occlusion_stop_line = result.stop_lines.occlusion_peeking_stop_line;
   *default_safety = false;
   *default_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
-  const auto occlusion_stop_line = result.stop_lines.occlusion_peeking_stop_line;
   *occlusion_safety = true;
   *occlusion_distance =
     motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line);
@@ -185,20 +188,18 @@ template <>
 void prepareRTCByDecisionResult(
   const IntersectionModule::FirstWaitBeforeOcclusion & result,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
-  double * default_distance, bool * occlusion_safety, double * occlusion_distance,
-  bool * occlusion_first_stop_required)
+  double * default_distance, bool * occlusion_safety, double * occlusion_distance)
 {
   RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "FirstWaitBeforeOcclusion");
   const auto closest_idx = result.stop_lines.closest_idx;
-  const auto first_stop_line_idx = result.first_stop_line_idx;
-  const auto occlusion_stop_line_idx = result.occlusion_stop_line_idx;
+  const auto first_stop_line_idx = result.stop_lines.default_stop_line;
+  const auto occlusion_stop_line_idx = result.stop_lines.attention_entry_stop_line;
   *default_safety = false;
   *default_distance =
     motion_utils::calcSignedArcLength(path.points, closest_idx, first_stop_line_idx);
   *occlusion_safety = result.is_actually_occlusion_cleared;
   *occlusion_distance =
     motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
-  *occlusion_first_stop_required = true;
   return;
 }
 
@@ -206,18 +207,19 @@ template <>
 void prepareRTCByDecisionResult(
   const IntersectionModule::PeekingTowardOcclusion & result,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
-  double * default_distance, bool * occlusion_safety, double * occlusion_distance,
-  [[maybe_unused]] bool * occlusion_first_stop_required)
+  double * default_distance, bool * occlusion_safety, double * occlusion_distance)
 {
   RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "PeekingTowardOcclusion");
   const auto closest_idx = result.stop_lines.closest_idx;
-  const auto stop_line_idx = result.stop_line_idx;
+  const auto occlusion_stop_line_idx = result.is_aggressive_peeking
+                                         ? result.stop_lines.occlusion_peeking_stop_line
+                                         : result.stop_lines.attention_entry_stop_line;
   *occlusion_safety = result.is_actually_occlusion_cleared;
-  *occlusion_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
-  const auto default_stop_line_idx = result.stop_lines.default_stop_line;
+  *occlusion_distance =
+    motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
+  // NOTE: if collision is detected the appears in front of ego. So default_distance = 0.0
   *default_safety = true;
-  *default_distance =
-    motion_utils::calcSignedArcLength(path.points, closest_idx, default_stop_line_idx);
+  *default_distance = 0.0;
   return;
 }
 
@@ -225,36 +227,16 @@ template <>
 void prepareRTCByDecisionResult(
   const IntersectionModule::OccludedCollisionStop & result,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
-  double * default_distance, bool * occlusion_safety, double * occlusion_distance,
-  [[maybe_unused]] bool * occlusion_first_stop_required)
+  double * default_distance, bool * occlusion_safety, double * occlusion_distance)
 {
   RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "OccludedCollisionStop");
   const auto closest_idx = result.stop_lines.closest_idx;
-  const auto stop_line_idx = result.stop_line_idx;
-  const auto occlusion_stop_line_idx = result.occlusion_stop_line_idx;
+  const auto occlusion_stop_line_idx = result.is_peeking_aggressive
+                                         ? result.stop_lines.occlusion_peeking_stop_line
+                                         : result.stop_lines.attention_entry_stop_line;
   *default_safety = false;
-  *default_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
+  *default_distance = 0.0;
   *occlusion_safety = result.is_actually_occlusion_cleared;
-  *occlusion_distance =
-    motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
-  return;
-}
-
-template <>
-void prepareRTCByDecisionResult(
-  const IntersectionModule::Safe & result,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
-  double * default_distance, bool * occlusion_safety, double * occlusion_distance,
-  [[maybe_unused]] bool * occlusion_first_stop_required)
-{
-  RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "Safe");
-  const auto closest_idx = result.stop_lines.closest_idx;
-  const auto default_stop_line_idx = result.stop_lines.default_stop_line;
-  const auto occlusion_stop_line_idx = result.stop_lines.occlusion_peeking_stop_line;
-  *default_safety = true;
-  *default_distance =
-    motion_utils::calcSignedArcLength(path.points, closest_idx, default_stop_line_idx);
-  *occlusion_safety = true;
   *occlusion_distance =
     motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
   return;
@@ -264,16 +246,42 @@ template <>
 void prepareRTCByDecisionResult(
   const IntersectionModule::TrafficLightArrowSolidOn & result,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
-  double * default_distance, bool * occlusion_safety, double * occlusion_distance,
-  [[maybe_unused]] bool * occlusion_first_stop_required)
+  double * default_distance, bool * occlusion_safety, double * occlusion_distance)
 {
   RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "TrafficLightArrowSolidOn");
   const auto closest_idx = result.stop_lines.closest_idx;
-  const auto default_stop_line_idx = result.stop_lines.default_stop_line;
-  const auto occlusion_stop_line_idx = result.stop_lines.occlusion_peeking_stop_line;
+  const bool peeking_finished = result.first_peeking_finished || result.second_peeking_finished;
+  const auto stop_line_idx =
+    peeking_finished ? result.stop_lines.closest_idx : result.stop_lines.default_stop_line;
+  const auto occlusion_stop_line_idx = result.second_peeking_finished
+                                         ? result.stop_lines.occlusion_peeking_stop_line
+                                         : result.stop_lines.attention_entry_stop_line;
+  ;
   *default_safety = !result.collision_detected;
-  *default_distance =
-    motion_utils::calcSignedArcLength(path.points, closest_idx, default_stop_line_idx);
+  *default_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
+  *occlusion_safety = true;
+  *occlusion_distance =
+    motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
+  return;
+}
+
+template <>
+void prepareRTCByDecisionResult(
+  const IntersectionModule::Safe & result,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
+  double * default_distance, bool * occlusion_safety, double * occlusion_distance)
+{
+  RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "Safe");
+  // TODO(Mamoru Sobue): use different stop line for calculation depending on the .position field
+  const auto closest_idx = result.stop_lines.closest_idx;
+  const bool peeking_finished = result.first_peeking_finished || result.second_peeking_finished;
+  const auto stop_line_idx =
+    peeking_finished ? result.stop_lines.closest_idx : result.stop_lines.default_stop_line;
+  const auto occlusion_stop_line_idx = result.second_peeking_finished
+                                         ? result.stop_lines.occlusion_peeking_stop_line
+                                         : result.stop_lines.attention_entry_stop_line;
+  *default_safety = true;
+  *default_distance = motion_utils::calcSignedArcLength(path.points, closest_idx, stop_line_idx);
   *occlusion_safety = true;
   *occlusion_distance =
     motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stop_line_idx);
@@ -281,8 +289,7 @@ void prepareRTCByDecisionResult(
 }
 
 void IntersectionModule::prepareRTCStatus(
-  const DecisionResult & decision_result,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const DecisionResult & result, const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   bool default_safety = true;
   double default_distance = std::numeric_limits<double>::lowest();
@@ -290,9 +297,9 @@ void IntersectionModule::prepareRTCStatus(
     VisitorSwitch{[&](const auto & decision) {
       prepareRTCByDecisionResult(
         decision, path, &default_safety, &default_distance, &occlusion_safety_,
-        &occlusion_stop_distance_, &occlusion_first_stop_required_);
+        &occlusion_stop_distance_);
     }},
-    decision_result);
+    result);
   setSafe(default_safety);
   setDistance(default_distance);
 }
@@ -326,7 +333,7 @@ void reactRTCApprovalByDecisionResult(
 template <>
 void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved,
-  const IntersectionModule::StuckStop & decision_result,
+  const IntersectionModule::StuckStop & result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   StopReason * stop_reason, VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
@@ -335,15 +342,15 @@ void reactRTCApprovalByDecisionResult(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
     "StuckStop, approval = (default: %d, occlusion: %d)", rtc_default_approved,
     rtc_occlusion_approved);
-  const auto closest_idx = decision_result.stop_lines.closest_idx;
+  const auto closest_idx = result.stop_lines.closest_idx;
   if (!rtc_default_approved) {
     // use default_rtc uuid for stuck vehicle detection
-    auto stop_line_idx = decision_result.stop_line_idx;
+    auto stop_line_idx = result.stop_lines.stuck_stop_line;
     if (
-      !decision_result.is_detection_area_empty &&
+      !result.is_detection_area_empty &&
       motion_utils::calcSignedArcLength(path->points, stop_line_idx, closest_idx) >
         planner_param.common.stop_overshoot_margin) {
-      stop_line_idx = decision_result.stop_lines.default_stop_line;
+      stop_line_idx = result.stop_lines.default_stop_line;
     }
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
@@ -359,9 +366,8 @@ void reactRTCApprovalByDecisionResult(
     }
   }
   if (
-    !rtc_occlusion_approved && !decision_result.is_detection_area_empty &&
-    planner_param.occlusion.enable) {
-    const auto occlusion_stop_line_idx = decision_result.stop_lines.occlusion_peeking_stop_line;
+    !rtc_occlusion_approved && !result.is_detection_area_empty && planner_param.occlusion.enable) {
+    const auto occlusion_stop_line_idx = result.stop_lines.attention_entry_stop_line;
     planning_utils::setVelocityFromIndex(occlusion_stop_line_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(occlusion_stop_line_idx, baselink2front, *path);
@@ -380,7 +386,7 @@ void reactRTCApprovalByDecisionResult(
 template <>
 void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved,
-  const IntersectionModule::NonOccludedCollisionStop & decision_result,
+  const IntersectionModule::NonOccludedCollisionStop & result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   StopReason * stop_reason, VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
@@ -389,8 +395,11 @@ void reactRTCApprovalByDecisionResult(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
     "NonOccludedCollisionStop, approval = (default: %d, occlusion: %d)", rtc_default_approved,
     rtc_occlusion_approved);
+  const auto closest_idx = result.stop_lines.closest_idx;
   if (!rtc_default_approved) {
-    const auto stop_line_idx = decision_result.stop_line_idx;
+    const bool peeking_finished = result.first_peeking_finished || result.second_peeking_finished;
+    const auto stop_line_idx =
+      peeking_finished ? result.stop_lines.closest_idx : result.stop_lines.default_stop_line;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
@@ -399,12 +408,14 @@ void reactRTCApprovalByDecisionResult(
       stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
+        path->points, path->points.at(closest_idx).point.pose,
         path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
     }
   }
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
-    const auto stop_line_idx = decision_result.stop_lines.occlusion_peeking_stop_line;
+    const auto stop_line_idx = result.second_peeking_finished
+                                 ? result.stop_lines.occlusion_peeking_stop_line
+                                 : result.stop_lines.attention_entry_stop_line;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
@@ -413,7 +424,7 @@ void reactRTCApprovalByDecisionResult(
       stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
+        path->points, path->points.at(closest_idx).point.pose,
         path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
     }
   }
@@ -423,7 +434,7 @@ void reactRTCApprovalByDecisionResult(
 template <>
 void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved,
-  const IntersectionModule::FirstWaitBeforeOcclusion & decision_result,
+  const IntersectionModule::FirstWaitBeforeOcclusion & result,
   const IntersectionModule::PlannerParam & planner_param, const double baselink2front,
   autoware_auto_planning_msgs::msg::PathWithLaneId * path, StopReason * stop_reason,
   VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
@@ -432,8 +443,9 @@ void reactRTCApprovalByDecisionResult(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
     "FirstWaitBeforeOcclusion, approval = (default: %d, occlusion: %d)", rtc_default_approved,
     rtc_occlusion_approved);
+  const auto closest_idx = result.stop_lines.closest_idx;
   if (!rtc_default_approved) {
-    const auto stop_line_idx = decision_result.first_stop_line_idx;
+    const auto stop_line_idx = result.stop_lines.default_stop_line;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->occlusion_first_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
@@ -442,20 +454,19 @@ void reactRTCApprovalByDecisionResult(
       stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
+        path->points, path->points.at(closest_idx).point.pose,
         path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
     }
   }
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
     if (planner_param.occlusion.enable_creeping) {
-      const size_t occlusion_peeking_stop_line = decision_result.occlusion_stop_line_idx;
-      const size_t closest_idx = decision_result.stop_lines.closest_idx;
+      const size_t occlusion_peeking_stop_line = result.stop_lines.attention_entry_stop_line;
       for (size_t i = closest_idx; i < occlusion_peeking_stop_line; i++) {
         planning_utils::setVelocityFromIndex(
           i, planner_param.occlusion.occlusion_creep_velocity, path);
       }
     }
-    const auto stop_line_idx = decision_result.occlusion_stop_line_idx;
+    const auto stop_line_idx = result.stop_lines.attention_entry_stop_line;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
@@ -464,7 +475,7 @@ void reactRTCApprovalByDecisionResult(
       stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
+        path->points, path->points.at(closest_idx).point.pose,
         path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
     }
   }
@@ -474,7 +485,7 @@ void reactRTCApprovalByDecisionResult(
 template <>
 void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved,
-  const IntersectionModule::PeekingTowardOcclusion & decision_result,
+  const IntersectionModule::PeekingTowardOcclusion & result,
   const IntersectionModule::PlannerParam & planner_param, const double baselink2front,
   autoware_auto_planning_msgs::msg::PathWithLaneId * path, StopReason * stop_reason,
   VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
@@ -485,11 +496,12 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   // NOTE: creep_velocity should be inserted first at closest_idx if !rtc_default_approved
 
+  const auto closest_idx = result.stop_lines.closest_idx;
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
-    const size_t occlusion_peeking_stop_line =
-      decision_result.stop_lines.occlusion_peeking_stop_line;
+    const size_t occlusion_peeking_stop_line = result.is_aggressive_peeking
+                                                 ? result.stop_lines.occlusion_peeking_stop_line
+                                                 : result.stop_lines.attention_entry_stop_line;
     if (planner_param.occlusion.enable_creeping) {
-      const size_t closest_idx = decision_result.stop_lines.closest_idx;
       for (size_t i = closest_idx; i < occlusion_peeking_stop_line; i++) {
         planning_utils::setVelocityFromIndex(
           i, planner_param.occlusion.occlusion_creep_velocity, path);
@@ -503,12 +515,12 @@ void reactRTCApprovalByDecisionResult(
       stop_factor.stop_pose = path->points.at(occlusion_peeking_stop_line).point.pose;
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
+        path->points, path->points.at(closest_idx).point.pose,
         path->points.at(occlusion_peeking_stop_line).point.pose, VelocityFactor::INTERSECTION);
     }
   }
-  if (!rtc_default_approved && planner_param.occlusion.enable) {
-    const auto stop_line_idx = decision_result.stop_lines.default_stop_line;
+  if (!rtc_default_approved) {
+    const auto stop_line_idx = result.stop_lines.closest_idx;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
@@ -517,7 +529,7 @@ void reactRTCApprovalByDecisionResult(
       stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
+        path->points, path->points.at(closest_idx).point.pose,
         path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
     }
   }
@@ -527,7 +539,7 @@ void reactRTCApprovalByDecisionResult(
 template <>
 void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved,
-  const IntersectionModule::OccludedCollisionStop & decision_result,
+  const IntersectionModule::OccludedCollisionStop & result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   StopReason * stop_reason, VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
@@ -536,8 +548,9 @@ void reactRTCApprovalByDecisionResult(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
     "OccludedCollisionStop, approval = (default: %d, occlusion: %d)", rtc_default_approved,
     rtc_occlusion_approved);
+  const auto closest_idx = result.stop_lines.closest_idx;
   if (!rtc_default_approved) {
-    const auto stop_line_idx = decision_result.stop_line_idx;
+    const auto stop_line_idx = result.stop_lines.closest_idx;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
@@ -546,12 +559,14 @@ void reactRTCApprovalByDecisionResult(
       stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
+        path->points, path->points.at(closest_idx).point.pose,
         path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
     }
   }
   if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
-    const auto stop_line_idx = decision_result.occlusion_stop_line_idx;
+    const auto stop_line_idx = result.is_peeking_aggressive
+                                 ? result.stop_lines.occlusion_peeking_stop_line
+                                 : result.stop_lines.attention_entry_stop_line;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
@@ -560,7 +575,7 @@ void reactRTCApprovalByDecisionResult(
       stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
+        path->points, path->points.at(closest_idx).point.pose,
         path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
     }
   }
@@ -570,49 +585,7 @@ void reactRTCApprovalByDecisionResult(
 template <>
 void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved,
-  const IntersectionModule::Safe & decision_result,
-  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
-  const double baselink2front, autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  StopReason * stop_reason, VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
-{
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
-    "Safe, approval = (default: %d, occlusion: %d)", rtc_default_approved, rtc_occlusion_approved);
-  if (!rtc_default_approved) {
-    const auto stop_line_idx = decision_result.stop_lines.default_stop_line;
-    planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
-    debug_data->collision_stop_wall_pose =
-      planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
-    {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
-      velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
-        path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
-    }
-  }
-  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
-    const auto stop_line_idx = decision_result.stop_lines.occlusion_peeking_stop_line;
-    planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
-    debug_data->occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
-    {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
-      velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
-        path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
-    }
-  }
-  return;
-}
-
-template <>
-void reactRTCApprovalByDecisionResult(
-  const bool rtc_default_approved, const bool rtc_occlusion_approved,
-  const IntersectionModule::TrafficLightArrowSolidOn & decision_result,
+  const IntersectionModule::TrafficLightArrowSolidOn & result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   StopReason * stop_reason, VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
@@ -621,8 +594,11 @@ void reactRTCApprovalByDecisionResult(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
     "TrafficLightArrowSolidOn, approval = (default: %d, occlusion: %d)", rtc_default_approved,
     rtc_occlusion_approved);
+  const auto closest_idx = result.stop_lines.closest_idx;
   if (!rtc_default_approved) {
-    const auto stop_line_idx = decision_result.stop_lines.default_stop_line;
+    const bool peeking_finished = result.first_peeking_finished || result.second_peeking_finished;
+    const auto stop_line_idx =
+      peeking_finished ? result.stop_lines.closest_idx : result.stop_lines.default_stop_line;
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
@@ -631,7 +607,70 @@ void reactRTCApprovalByDecisionResult(
       stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
       planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
-        path->points, path->points.at(decision_result.stop_lines.closest_idx).point.pose,
+        path->points, path->points.at(closest_idx).point.pose,
+        path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
+    }
+  }
+  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+    const auto stop_line_idx = closest_idx <= result.stop_lines.attention_entry_stop_line
+                                 ? result.stop_lines.attention_entry_stop_line
+                                 : result.stop_lines.occlusion_peeking_stop_line;
+    planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
+    debug_data->occlusion_stop_wall_pose =
+      planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
+    {
+      tier4_planning_msgs::msg::StopFactor stop_factor;
+      stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
+      planning_utils::appendStopReason(stop_factor, stop_reason);
+      velocity_factor->set(
+        path->points, path->points.at(closest_idx).point.pose,
+        path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
+    }
+  }
+  return;
+}
+
+template <>
+void reactRTCApprovalByDecisionResult(
+  const bool rtc_default_approved, const bool rtc_occlusion_approved,
+  const IntersectionModule::Safe & result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  const double baselink2front, autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  StopReason * stop_reason, VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
+{
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
+    "Safe, approval = (default: %d, occlusion: %d)", rtc_default_approved, rtc_occlusion_approved);
+  const auto closest_idx = result.stop_lines.closest_idx;
+  if (!rtc_default_approved) {
+    const bool peeking_finished = result.first_peeking_finished || result.second_peeking_finished;
+    const auto stop_line_idx =
+      peeking_finished ? result.stop_lines.closest_idx : result.stop_lines.default_stop_line;
+    planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
+    debug_data->collision_stop_wall_pose =
+      planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
+    {
+      tier4_planning_msgs::msg::StopFactor stop_factor;
+      stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
+      planning_utils::appendStopReason(stop_factor, stop_reason);
+      velocity_factor->set(
+        path->points, path->points.at(closest_idx).point.pose,
+        path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
+    }
+  }
+  if (!rtc_occlusion_approved && planner_param.occlusion.enable) {
+    const auto stop_line_idx = result.second_peeking_finished
+                                 ? result.stop_lines.occlusion_peeking_stop_line
+                                 : result.stop_lines.attention_entry_stop_line;
+    planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
+    debug_data->occlusion_stop_wall_pose =
+      planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
+    {
+      tier4_planning_msgs::msg::StopFactor stop_factor;
+      stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
+      planning_utils::appendStopReason(stop_factor, stop_reason);
+      velocity_factor->set(
+        path->points, path->points.at(closest_idx).point.pose,
         path->points.at(stop_line_idx).point.pose, VelocityFactor::INTERSECTION);
     }
   }
@@ -640,7 +679,7 @@ void reactRTCApprovalByDecisionResult(
 
 void reactRTCApproval(
   const bool rtc_default_approval, const bool rtc_occlusion_approval,
-  const IntersectionModule::DecisionResult & decision_result,
+  const IntersectionModule::DecisionResult & result,
   const IntersectionModule::PlannerParam & planner_param, const double baselink2front,
   autoware_auto_planning_msgs::msg::PathWithLaneId * path, StopReason * stop_reason,
   VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
@@ -651,7 +690,7 @@ void reactRTCApproval(
         rtc_default_approval, rtc_occlusion_approval, decision, planner_param, baselink2front, path,
         stop_reason, velocity_factor, debug_data);
     }},
-    decision_result);
+    result);
   return;
 }
 
@@ -775,8 +814,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
   const auto & intersection_stop_lines = intersection_stop_lines_opt.value();
   const auto
-    [closest_idx, stuck_stop_line_idx, default_stop_line_idx, occlusion_peeking_stop_line_idx,
-     pass_judge_line_idx] = intersection_stop_lines;
+    [closest_idx, stuck_stop_line_idx, default_stop_line_idx, attention_entry_stop_line_idx,
+     occlusion_peeking_stop_line_idx, pass_judge_line_idx] = intersection_stop_lines;
 
   const auto & conflicting_area = intersection_lanelets_.value().conflicting_area();
   const auto path_lanelets_opt = util::generatePathLanelets(
@@ -787,15 +826,14 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     RCLCPP_DEBUG(logger_, "failed to generate PathLanelets");
     return IntersectionModule::Indecisive{};
   }
-  const auto path_lanelets = path_lanelets_opt.value();
+  const auto & path_lanelets = path_lanelets_opt.value();
 
   const bool stuck_detected = checkStuckVehicle(
     planner_data_, path_lanelets, interpolated_path_info, intersection_stop_lines);
 
   if (stuck_detected) {
-    const double dist_stopline = motion_utils::calcSignedArcLength(
-      path->points, path->points.at(closest_idx).point.pose.position,
-      path->points.at(stuck_stop_line_idx).point.pose.position);
+    const double dist_stopline =
+      motion_utils::calcSignedArcLength(path->points, closest_idx, stuck_stop_line_idx);
     const bool approached_stop_line =
       (std::fabs(dist_stopline) < planner_param_.common.stop_overshoot_margin);
     const bool is_stopped = planner_data_->isVehicleStopped();
@@ -808,7 +846,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     if (!timeout) {
       is_peeking_ = false;
       return IntersectionModule::StuckStop{
-        stuck_stop_line_idx, !first_attention_area.has_value(), intersection_stop_lines};
+        !first_attention_area.has_value(), intersection_stop_lines};
     }
   }
 
@@ -888,7 +926,10 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 
   if (tl_arrow_solid_on) {
     is_peeking_ = false;
-    return TrafficLightArrowSolidOn{has_collision, intersection_stop_lines};
+    return TrafficLightArrowSolidOn{
+      before_creep_state_machine_.getState() == StateMachine::State::GO,
+      before_entry_attention_area_state_machine_.getState() == StateMachine::State::GO,
+      has_collision, intersection_stop_lines};
   }
 
   // check occlusion on detection lane
@@ -920,54 +961,73 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   occlusion_stop_state_machine_.setStateWithMarginTime(
     is_occlusion_cleared ? StateMachine::State::GO : StateMachine::STOP,
     logger_.get_child("occlusion_stop"), *clock_);
+  const bool is_occlusion_cleared_with_margin =
+    (occlusion_stop_state_machine_.getState() == StateMachine::State::GO);
 
   // check safety
-  const bool ext_occlusion_requested = (is_occlusion_cleared && !occlusion_activated_);
-  if (
-    occlusion_stop_state_machine_.getState() == StateMachine::State::STOP ||
-    ext_occlusion_requested) {
-    const double dist_stopline = motion_utils::calcSignedArcLength(
-      path->points, path->points.at(closest_idx).point.pose.position,
-      path->points.at(default_stop_line_idx).point.pose.position);
-    const bool approached_stop_line =
-      (std::fabs(dist_stopline) < planner_param_.common.stop_overshoot_margin);
-    const bool over_stop_line = (dist_stopline < 0.0);
-    const bool is_stopped =
+  const bool ext_occlusion_requested = (is_occlusion_cleared_with_margin && !occlusion_activated_);
+  if (!is_occlusion_cleared_with_margin || ext_occlusion_requested) {
+    const double dist_default_stop_line =
+      motion_utils::calcSignedArcLength(path->points, closest_idx, default_stop_line_idx);
+    const bool approached_default_stop_line =
+      (std::fabs(dist_default_stop_line) < planner_param_.common.stop_overshoot_margin);
+    const bool over_default_stop_line = (dist_default_stop_line < 0.0);
+    const bool is_stopped_at_default_stop_line =
       planner_data_->isVehicleStopped(planner_param_.occlusion.before_creep_stop_time);
-    if (over_stop_line) {
+    if (over_default_stop_line) {
       before_creep_state_machine_.setState(StateMachine::State::GO);
     }
     if (before_creep_state_machine_.getState() == StateMachine::State::GO) {
       if (has_collision) {
         is_peeking_ = true;
         return IntersectionModule::OccludedCollisionStop{
-          default_stop_line_idx, occlusion_peeking_stop_line_idx, is_occlusion_cleared,
+          is_occlusion_cleared,
+          before_entry_attention_area_state_machine_.getState() == StateMachine::State::GO,
           intersection_stop_lines};
       } else {
+        const double dist_attention_entry_stop_line = motion_utils::calcSignedArcLength(
+          path->points, closest_idx, attention_entry_stop_line_idx);
+        const bool approached_attention_entry_stop_line =
+          (std::fabs(dist_attention_entry_stop_line) < planner_param_.common.stop_overshoot_margin);
+        const bool over_attention_entry_stop_line = (dist_attention_entry_stop_line < 0.0);
+        const bool is_stopped_at_attention_entry_stop_line =
+          planner_data_->isVehicleStopped(planner_param_.occlusion.stop_release_margin_time);
         is_peeking_ = true;
+        if (over_attention_entry_stop_line) {
+          before_entry_attention_area_state_machine_.setState(StateMachine::State::GO);
+        }
+        if (before_entry_attention_area_state_machine_.getState() == StateMachine::State::GO) {
+          return IntersectionModule::PeekingTowardOcclusion{
+            is_occlusion_cleared, true, intersection_stop_lines};
+        }
+        if (is_stopped_at_attention_entry_stop_line && approached_attention_entry_stop_line) {
+          before_entry_attention_area_state_machine_.setState(StateMachine::State::GO);
+        }
         return IntersectionModule::PeekingTowardOcclusion{
-          occlusion_peeking_stop_line_idx, is_occlusion_cleared, intersection_stop_lines};
+          is_occlusion_cleared, false, intersection_stop_lines};
       }
     } else {
-      if (is_stopped && approached_stop_line) {
+      if (is_stopped_at_default_stop_line && approached_default_stop_line) {
         // start waiting at the first stop line
         before_creep_state_machine_.setState(StateMachine::State::GO);
       }
       is_peeking_ = true;
       return IntersectionModule::FirstWaitBeforeOcclusion{
-        default_stop_line_idx, occlusion_peeking_stop_line_idx, is_occlusion_cleared,
-        intersection_stop_lines};
+        is_occlusion_cleared, intersection_stop_lines};
     }
   } else if (has_collision_with_margin) {
-    const bool is_over_default_stopLine =
-      util::isOverTargetIndex(*path, closest_idx, current_pose, default_stop_line_idx);
-    const auto stop_line_idx = is_over_default_stopLine ? closest_idx : default_stop_line_idx;
     is_peeking_ = false;
-    return IntersectionModule::NonOccludedCollisionStop{stop_line_idx, intersection_stop_lines};
+    return IntersectionModule::NonOccludedCollisionStop{
+      before_creep_state_machine_.getState() == StateMachine::State::GO,
+      before_entry_attention_area_state_machine_.getState() == StateMachine::State::GO,
+      intersection_stop_lines};
   }
 
   is_peeking_ = false;
-  return IntersectionModule::Safe{intersection_stop_lines};
+  return IntersectionModule::Safe{
+    before_creep_state_machine_.getState() == StateMachine::State::GO,
+    before_entry_attention_area_state_machine_.getState() == StateMachine::State::GO,
+    intersection_stop_lines};
 }
 
 bool IntersectionModule::checkStuckVehicle(
@@ -986,9 +1046,8 @@ bool IntersectionModule::checkStuckVehicle(
     path_lanelets, planner_param_.stuck_vehicle.stuck_vehicle_detect_dist);
   debug_data_.stuck_vehicle_detect_area = toGeomPoly(stuck_vehicle_detect_area);
 
-  const double dist_stuck_stopline = motion_utils::calcSignedArcLength(
-    path.points, path.points.at(stuck_line_idx).point.pose.position,
-    path.points.at(closest_idx).point.pose.position);
+  const double dist_stuck_stopline =
+    motion_utils::calcSignedArcLength(path.points, stuck_line_idx, closest_idx);
   const bool is_over_stuck_stopline =
     util::isOverTargetIndex(path, closest_idx, current_pose, stuck_line_idx) &&
     (dist_stuck_stopline > planner_param_.common.stop_overshoot_margin);

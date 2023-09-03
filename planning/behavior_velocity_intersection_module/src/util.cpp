@@ -260,6 +260,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
       break;
     }
   }
+  const size_t attention_entry_stop_line_ip_int = static_cast<size_t>(std::clamp<int>(
+    occlusion_peeking_line_ip_int - 1, 0, static_cast<int>(path_ip.points.size()) - 1));
   occlusion_peeking_line_ip_int += std::ceil(peeking_offset / ds);
   const auto occlusion_peeking_line_ip = static_cast<size_t>(
     std::clamp<int>(occlusion_peeking_line_ip_int, 0, static_cast<int>(path_ip.points.size()) - 1));
@@ -297,6 +299,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     {&closest_idx_ip, &intersection_stop_lines.closest_idx},
     {&stuck_stop_line_ip, &intersection_stop_lines.stuck_stop_line},
     {&default_stop_line_ip, &intersection_stop_lines.default_stop_line},
+    {&attention_entry_stop_line_ip_int, &intersection_stop_lines.attention_entry_stop_line},
     {&occlusion_peeking_line_ip, &intersection_stop_lines.occlusion_peeking_stop_line},
     {&pass_judge_line_ip, &intersection_stop_lines.pass_judge_line},
   };

@@ -111,62 +111,49 @@ public:
     } occlusion;
   };
 
-  /*
-  enum OcclusionState {
-    NONE,
-    BEFORE_FIRST_STOP_LINE,
-    WAIT_FIRST_STOP_LINE,
-    CREEP_SECOND_STOP_LINE,
-    COLLISION_DETECTED,
-  };
-  */
-
   using Indecisive = std::monostate;
   struct StuckStop
   {
-    size_t stop_line_idx;
-    // NOTE: this is optional because stuck vehicle detection is possible
-    // even if the detection area is empty.
-    // Still this may be required for RTC's default stop line
-    bool is_detection_area_empty;
-    util::IntersectionStopLines stop_lines;
+    const bool is_detection_area_empty;
+    const util::IntersectionStopLines stop_lines;
   };
   struct NonOccludedCollisionStop
   {
-    size_t stop_line_idx;
-    util::IntersectionStopLines stop_lines;
+    const bool first_peeking_finished;
+    const bool second_peeking_finished;
+    const util::IntersectionStopLines stop_lines;
   };
   struct FirstWaitBeforeOcclusion
   {
-    size_t first_stop_line_idx;
-    size_t occlusion_stop_line_idx;
-    bool is_actually_occlusion_cleared;
-    util::IntersectionStopLines stop_lines;
+    const bool is_actually_occlusion_cleared;
+    const util::IntersectionStopLines stop_lines;
   };
   struct PeekingTowardOcclusion
   {
-    size_t stop_line_idx;
     // NOTE: if intersection_occlusion is disapproved externally through RTC,
     // it indicates "is_forcefully_occluded"
-    bool is_actually_occlusion_cleared;
-    util::IntersectionStopLines stop_lines;
+    const bool is_actually_occlusion_cleared;
+    const bool is_aggressive_peeking;
+    const util::IntersectionStopLines stop_lines;
   };
   struct OccludedCollisionStop
   {
-    size_t stop_line_idx;
-    size_t occlusion_stop_line_idx;
-    bool is_actually_occlusion_cleared;
-    util::IntersectionStopLines stop_lines;
-  };
-  struct Safe
-  {
-    // NOTE: if RTC is disapproved status, default stop lines are still needed.
-    util::IntersectionStopLines stop_lines;
+    const bool is_actually_occlusion_cleared;
+    const bool is_peeking_aggressive;
+    const util::IntersectionStopLines stop_lines;
   };
   struct TrafficLightArrowSolidOn
   {
-    bool collision_detected;
-    util::IntersectionStopLines stop_lines;
+    const bool first_peeking_finished;
+    const bool second_peeking_finished;
+    const bool collision_detected;
+    const util::IntersectionStopLines stop_lines;
+  };
+  struct Safe
+  {
+    const bool first_peeking_finished;
+    const bool second_peeking_finished;
+    const util::IntersectionStopLines stop_lines;
   };
   using DecisionResult = std::variant<
     Indecisive,                // internal process error, or over the pass judge line
@@ -175,8 +162,8 @@ public:
     FirstWaitBeforeOcclusion,  // stop for a while before peeking to occlusion
     PeekingTowardOcclusion,    // peeking into occlusion while collision is not detected
     OccludedCollisionStop,     // occlusion and collision are both detected
-    Safe,                      // judge as safe
-    TrafficLightArrowSolidOn   // only detect vehicles violating traffic rules
+    TrafficLightArrowSolidOn,  // only detect vehicles violating traffic rules
+    Safe                       // judge as safe
     >;
 
   IntersectionModule(
@@ -200,19 +187,17 @@ public:
   bool getOcclusionSafety() const { return occlusion_safety_; }
   double getOcclusionDistance() const { return occlusion_stop_distance_; }
   void setOcclusionActivation(const bool activation) { occlusion_activated_ = activation; }
-  bool isOcclusionFirstStopRequired() { return occlusion_first_stop_required_; }
 
 private:
-  rclcpp::Node & node_;
   const int64_t lane_id_;
   const std::set<int> associative_ids_;
   std::string turn_direction_;
-  bool is_go_out_ = false;
-  bool is_permanent_go_ = false;
-  bool is_peeking_ = false;
+  bool is_go_out_{false};
+  bool is_permanent_go_{false};
+  bool is_peeking_{false};
   // Parameter
   PlannerParam planner_param_;
-  std::optional<util::IntersectionLanelets> intersection_lanelets_;
+  std::optional<util::IntersectionLanelets> intersection_lanelets_{std::nullopt};
   // for an intersection lane, its associative lanes are those that share same parent lanelet and
   // have same turn_direction
 
@@ -220,9 +205,11 @@ private:
   const bool enable_occlusion_detection_;
   std::optional<std::vector<util::DiscretizedLane>> occlusion_attention_divisions_;
   // OcclusionState prev_occlusion_state_ = OcclusionState::NONE;
-  StateMachine collision_state_machine_;     //! for stable collision checking
-  StateMachine before_creep_state_machine_;  //! for two phase stop
-  StateMachine occlusion_stop_state_machine_;
+  StateMachine collision_state_machine_;                    //! for stable collision checking
+  StateMachine before_creep_state_machine_;                 //! for two phase stop
+  StateMachine occlusion_stop_state_machine_;               //! for stable occlusion detection
+  StateMachine before_entry_attention_area_state_machine_;  //! ensure temporal stop before entering
+                                                            //! attention area when occlusion
   // NOTE: uuid_ is base member
 
   // for stuck vehicle detection
@@ -231,12 +218,9 @@ private:
 
   // for RTC
   const UUID occlusion_uuid_;
-  bool occlusion_safety_ = true;
-  double occlusion_stop_distance_;
-  bool occlusion_activated_ = true;
-  // for first stop in two-phase stop
-  const UUID occlusion_first_stop_uuid_;
-  bool occlusion_first_stop_required_ = false;
+  bool occlusion_safety_{true};
+  double occlusion_stop_distance_{0.0};
+  bool occlusion_activated_{true};
 
   void initializeRTCStatus();
   void prepareRTCStatus(
