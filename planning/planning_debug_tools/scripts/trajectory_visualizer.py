@@ -17,8 +17,11 @@
 import argparse
 
 from autoware_auto_planning_msgs.msg import Path
+from autoware_auto_planning_msgs.msg import PathPoint
+from autoware_auto_planning_msgs.msg import PathPointWithLaneId
 from autoware_auto_planning_msgs.msg import PathWithLaneId
 from autoware_auto_planning_msgs.msg import Trajectory
+from autoware_auto_planning_msgs.msg import TrajectoryPoint
 from autoware_auto_vehicle_msgs.msg import VelocityReport
 from geometry_msgs.msg import Pose
 from matplotlib import animation
@@ -190,18 +193,21 @@ class TrajectoryVisualizer(Node):
         return
 
     def CallbackLocalizationTwist(self, cmd):
+        self.get_logger().info("CallbackLocalizationTwist called")
         self.localization_vx = cmd.twist.twist.linear.x
         self.self_pose = cmd.pose.pose
         self.self_pose_received = True
 
     def CallbackVehicleTwist(self, cmd):
+        self.get_logger().info("CallbackVehicleTwist called")
         self.vehicle_vx = cmd.longitudinal_velocity
 
     def CallbackVelocityLimit(self, cmd):
+        self.get_logger().info("CallbackVelocityLimit called")
         self.velocity_limit = cmd.max_velocity
 
     def CallbackMotionVelOptTraj(self, cmd1, cmd2, cmd3, cmd4, cmd5):
-        print("CallbackMotionVelOptTraj called")
+        self.get_logger().info("CallbackMotionVelOptTraj called")
         self.CallBackTrajExVelLim(cmd1)
         self.CallBackTrajLatAccFiltered(cmd2)
         self.CallBackTrajRaw(cmd3)
@@ -233,7 +239,7 @@ class TrajectoryVisualizer(Node):
         self.update_traj_final = True
 
     def CallBackLaneDrivingTraj(self, cmd5, cmd6, cmd7, cmd8, cmd9):
-        print("CallBackLaneDrivingTraj called")
+        self.get_logger().info("CallBackLaneDrivingTraj called")
         self.CallBackTrajFinal(cmd5)
         self.CallBackLBehaviorPathPlannerPath(cmd6)
         self.CallBackBehaviorVelocityPlannerPath(cmd7)
@@ -306,9 +312,8 @@ class TrajectoryVisualizer(Node):
         )
 
     def plotTrajectoryVelocity(self, data):
-        # self.updatePose(PATH_ORIGIN_FRAME, SELF_POSE_FRAME)
         if self.self_pose_received is False:
-            print("plot start but self pose is not received")
+            self.get_logger().info("plot start but self pose is not received")
             return (
                 self.im1,
                 self.im2,
@@ -324,7 +329,7 @@ class TrajectoryVisualizer(Node):
                 self.im11,
                 self.im12,
             )
-        print("plot start")
+        self.get_logger().info("plot start")
 
         # copy
         behavior_path_planner_path = self.behavior_path_planner_path
@@ -339,16 +344,14 @@ class TrajectoryVisualizer(Node):
         trajectory_final = self.trajectory_final
 
         if self.update_behavior_path_planner_path:
-            x = self.CalcArcLengthPathWLid(behavior_path_planner_path)
-            y = self.ToVelListPathWLid(behavior_path_planner_path)
+            x = self.CalcArcLength(behavior_path_planner_path)
+            y = self.ToVelList(behavior_path_planner_path)
             self.im1.set_data(x, y)
             self.update_behavior_path_planner_path = False
-            if len(y) != 0:
-                self.max_vel = max(10.0, np.max(y))
 
         if self.update_behavior_velocity_planner_path:
-            x = self.CalcArcLengthPath(behavior_velocity_planner_path)
-            y = self.ToVelListPath(behavior_velocity_planner_path)
+            x = self.CalcArcLength(behavior_velocity_planner_path)
+            y = self.ToVelList(behavior_velocity_planner_path)
             self.im2.set_data(x, y)
             self.update_behavior_velocity_planner_path = False
 
@@ -427,107 +430,43 @@ class TrajectoryVisualizer(Node):
             self.im12,
         )
 
+    def getPoint(self, path_point):
+        if isinstance(path_point, (TrajectoryPoint, PathPoint)):
+            return path_point
+        elif isinstance(path_point, PathPointWithLaneId):
+            return path_point.point
+        else:
+            raise TypeError("invalid path_point argument type")
+
     def CalcArcLength(self, traj):
         if len(traj.points) == 0:
             return
 
         s_arr = []
-        ds = 0.0
         s_sum = 0.0
 
-        closest_id = self.calcClosestTrajectory(traj)
+        closest_id = self.calcClosestIndex(traj)
         for i in range(1, closest_id):
-            p0 = traj.points[i - 1]
-            p1 = traj.points[i]
-            dx = p1.pose.position.x - p0.pose.position.x
-            dy = p1.pose.position.y - p0.pose.position.y
+            p0 = self.getPoint(traj.points[i - 1]).pose.position
+            p1 = self.getPoint(traj.points[i]).pose.position
+            dx = p1.x - p0.x
+            dy = p1.y - p0.y
             ds = np.sqrt(dx**2 + dy**2)
             s_sum -= ds
 
         s_arr.append(s_sum)
         for i in range(1, len(traj.points)):
-            p0 = traj.points[i - 1]
-            p1 = traj.points[i]
-            dx = p1.pose.position.x - p0.pose.position.x
-            dy = p1.pose.position.y - p0.pose.position.y
-            ds = np.sqrt(dx**2 + dy**2)
-            s_sum += ds
-            s_arr.append(s_sum)
-        return s_arr
-
-    def CalcArcLengthPathWLid(self, traj):
-        if len(traj.points) == 0:
-            return
-
-        s_arr = []
-        ds = 0.0
-        s_sum = 0.0
-
-        closest_id = self.calcClosestPathWLid(traj)
-        for i in range(1, closest_id):
-            p0 = traj.points[i - 1].point
-            p1 = traj.points[i].point
-            dx = p1.pose.position.x - p0.pose.position.x
-            dy = p1.pose.position.y - p0.pose.position.y
-            ds = np.sqrt(dx**2 + dy**2)
-            s_sum -= ds
-
-        s_arr.append(s_sum)
-        for i in range(1, len(traj.points)):
-            p0 = traj.points[i - 1].point
-            p1 = traj.points[i].point
-            dx = p1.pose.position.x - p0.pose.position.x
-            dy = p1.pose.position.y - p0.pose.position.y
-            ds = np.sqrt(dx**2 + dy**2)
-            s_sum += ds
-            s_arr.append(s_sum)
-        return s_arr
-
-    def CalcArcLengthPath(self, traj):
-        if len(traj.points) == 0:
-            return
-
-        s_arr = []
-        ds = 0.0
-        s_sum = 0.0
-
-        closest_id = self.calcClosestPath(traj)
-        for i in range(1, closest_id):
-            p0 = traj.points[i - 1]
-            p1 = traj.points[i]
-            dx = p1.pose.position.x - p0.pose.position.x
-            dy = p1.pose.position.y - p0.pose.position.y
-            ds = np.sqrt(dx**2 + dy**2)
-            s_sum -= ds
-
-        s_arr.append(s_sum)
-        for i in range(1, len(traj.points)):
-            p0 = traj.points[i - 1]
-            p1 = traj.points[i]
-            dx = p1.pose.position.x - p0.pose.position.x
-            dy = p1.pose.position.y - p0.pose.position.y
+            p0 = self.getPoint(traj.points[i - 1]).pose.position
+            p1 = self.getPoint(traj.points[i]).pose.position
+            dx = p1.x - p0.x
+            dy = p1.y - p0.y
             ds = np.sqrt(dx**2 + dy**2)
             s_sum += ds
             s_arr.append(s_sum)
         return s_arr
 
     def ToVelList(self, traj):
-        v_list = []
-        for p in traj.points:
-            v_list.append(p.longitudinal_velocity_mps)
-        return v_list
-
-    def ToVelListPathWLid(self, traj):
-        v_list = []
-        for p in traj.points:
-            v_list.append(p.point.longitudinal_velocity_mps)
-        return v_list
-
-    def ToVelListPath(self, traj):
-        v_list = []
-        for p in traj.points:
-            v_list.append(p.longitudinal_velocity_mps)
-        return v_list
+        return [self.getPoint(p).longitudinal_velocity_mps for p in traj.points]
 
     def CalcAcceleration(self, traj):
         a_arr = []
@@ -606,8 +545,7 @@ class TrajectoryVisualizer(Node):
         return self.im0, self.im1, self.im2, self.im3, self.im4
 
     def plotTrajectory(self, data):
-        print("plot called")
-        # self.updatePose(PATH_ORIGIN_FRAME, SELF_POSE_FRAME)
+        self.get_logger().info("plot called")
 
         # copy
         trajectory_raw = self.trajectory_raw
@@ -663,40 +601,16 @@ class TrajectoryVisualizer(Node):
 
         return self.im0, self.im1, self.im2, self.im3, self.im4
 
-    def calcClosestPath(self, path):
-        closest = -1
-        min_dist_squared = 1.0e10
-        for i in range(0, len(path.points)):
-            dist_sq = self.calcSquaredDist2d(self.self_pose, path.points[i].pose)
-            if dist_sq < min_dist_squared:
-                min_dist_squared = dist_sq
-                closest = i
-        return closest
-
-    def calcClosestPathWLid(self, path):
-        closest = -1
-        min_dist_squared = 1.0e10
-        for i in range(0, len(path.points)):
-            dist_sq = self.calcSquaredDist2d(self.self_pose, path.points[i].point.pose)
-            if dist_sq < min_dist_squared:
-                min_dist_squared = dist_sq
-                closest = i
-        return closest
-
-    def calcClosestTrajectory(self, path):
-        closest = -1
-        min_dist_squared = 1.0e10
-        for i in range(0, len(path.points)):
-            dist_sq = self.calcSquaredDist2d(self.self_pose, path.points[i].pose)
-            if dist_sq < min_dist_squared:
-                min_dist_squared = dist_sq
-                closest = i
-        return closest
-
-    def calcSquaredDist2d(self, p1, p2):
-        dx = p1.position.x - p2.position.x
-        dy = p1.position.y - p2.position.y
-        return dx * dx + dy * dy
+    def calcClosestIndex(self, path):
+        points = np.array(
+            [
+                [self.getPoint(p).pose.position.x, self.getPoint(p).pose.position.y]
+                for p in path.points
+            ]
+        )
+        self_pose = np.array([self.self_pose.position.x, self.self_pose.position.y])
+        dists_squared = np.sum((points - self_pose) ** 2, axis=1)
+        return np.argmin(dists_squared)
 
     def closeFigure(self):
         plt.close(self.fig)
