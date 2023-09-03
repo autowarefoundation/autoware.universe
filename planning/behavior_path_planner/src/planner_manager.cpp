@@ -236,6 +236,7 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
          },
          [&]() { return false; }});
 
+      bool skip_module = false;
       for (const auto & condition : conditions) {
         const auto & find_block_module = condition.first;
         const auto & is_executable = condition.second;
@@ -245,8 +246,12 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
 
         if (itr != approved_module_ptrs_.end() && !is_executable()) {
           toc(manager_ptr->name());
+          skip_module = true;
           continue;
         }
+      }
+      if (skip_module) {
+        continue;
       }
     }
     // else{
