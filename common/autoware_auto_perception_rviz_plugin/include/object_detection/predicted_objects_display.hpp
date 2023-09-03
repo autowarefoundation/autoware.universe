@@ -132,7 +132,8 @@ private:
   // thread;
   std::mutex mutex;
 
-  // tmp_mutex: mutex for accessing this->tmp_markers, handle conflicts between parallelized workers;
+  // tmp_mutex: mutex for accessing this->tmp_markers, handle conflicts between parallelized
+  // workers;
   std::mutex tmp_marker_mutex;
 
   // num_threads: number of threads going to be used, can be modifed on the fly in RVIZ parameters;
@@ -148,8 +149,8 @@ private:
   // marker: markers to be published, created by working thread and consumed by the "update" of main
   // process;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
-  // tmp_markers: marker vectors being created by the parallelized workers, will be passed to marker when
-  // finished.
+  // tmp_markers: marker vectors being created by the parallelized workers, will be passed to marker
+  // when finished.
   std::vector<visualization_msgs::msg::Marker::SharedPtr> tmp_markers;
   // existing_marker_ids: marker ids that were maintained in the last frame.
   std::set<rviz_default_plugins::displays::MarkerID> existing_marker_ids;

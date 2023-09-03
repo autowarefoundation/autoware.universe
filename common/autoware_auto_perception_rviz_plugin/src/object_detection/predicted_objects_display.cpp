@@ -28,26 +28,26 @@ namespace object_detection
 {
 void PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread(int rank)
 {
-    while (true) {                           // keep the thread alive
-      sem_wait(&starting_semaphores[rank]);  // wait for the signal to start
+  while (true) {                           // keep the thread alive
+    sem_wait(&starting_semaphores[rank]);  // wait for the signal to start
 
-      // Determine the number of objects to be processed by this thread
-      int length = tmp_msg->objects.size();
-      int num_object_per_thread = static_cast<int>(ceil(length / static_cast<float>(num_threads)));
+    // Determine the number of objects to be processed by this thread
+    int length = tmp_msg->objects.size();
+    int num_object_per_thread = static_cast<int>(ceil(length / static_cast<float>(num_threads)));
 
-      int first_object_index = rank * num_object_per_thread;
-      int last_object_index = first_object_index + num_object_per_thread;
-      if (last_object_index > length) {
-        last_object_index = length;
-      }
-      std::vector<visualization_msgs::msg::Marker::SharedPtr> Thread_Markers;
-      for (int i = first_object_index; i < last_object_index; i++) {
-        Thread_Markers = tackle_one_object(tmp_msg, i, Thread_Markers);
-      }
-      push_tmp_markers(Thread_Markers);
-      
-      sem_post(&ending_semaphores[rank]);  // signal the end of the job
+    int first_object_index = rank * num_object_per_thread;
+    int last_object_index = first_object_index + num_object_per_thread;
+    if (last_object_index > length) {
+      last_object_index = length;
     }
+    std::vector<visualization_msgs::msg::Marker::SharedPtr> Thread_Markers;
+    for (int i = first_object_index; i < last_object_index; i++) {
+      Thread_Markers = tackle_one_object(tmp_msg, i, Thread_Markers);
+    }
+    push_tmp_markers(Thread_Markers);
+
+    sem_post(&ending_semaphores[rank]);  // signal the end of the job
+  }
 }
 
 PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks")
@@ -59,7 +59,6 @@ PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("t
   std::thread worker(&PredictedObjectsDisplay::workerThread, this);
   worker.detach();
 }
-
 
 void PredictedObjectsDisplay::workerThread()
 {
@@ -86,7 +85,7 @@ void PredictedObjectsDisplay::workerThread()
 
     lock.unlock();
     int N = tmp_msg->objects.size();
-    
+
     update_id_map(tmp_msg);
 
     // max_num_threads : Hard-coded for now. Define the pool of all threads.
