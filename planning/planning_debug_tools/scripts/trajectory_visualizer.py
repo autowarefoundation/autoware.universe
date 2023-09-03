@@ -357,7 +357,7 @@ class TrajectoryVisualizer(Node):
             (self.trajectory_lateral_acc_filtered, self.update_lat_acc_fil, self.im7),
             (self.trajectory_steer_rate_filtered, self.update_steer_rate_fil, self.im71),
             (self.trajectory_time_resampled, self.update_traj_resample, self.im8),
-            (self.trajectory_final, self.update_traj_final, self.im9)
+            (self.trajectory_final, self.update_traj_final, self.im9),
         ]
 
         # update all trajectory plots
@@ -392,6 +392,13 @@ class TrajectoryVisualizer(Node):
         else:
             raise TypeError("invalid path_point argument type")
 
+    def CalcDistance(self, point0, point1):
+        p0 = self.getPoint(point0).pose.position
+        p1 = self.getPoint(point1).pose.position
+        dx = p1.x - p0.x
+        dy = p1.y - p0.y
+        return np.sqrt(dx**2 + dy**2)
+
     def CalcArcLength(self, traj):
         if len(traj.points) == 0:
             return
@@ -401,21 +408,14 @@ class TrajectoryVisualizer(Node):
 
         closest_id = self.calcClosestIndex(traj)
         for i in range(1, closest_id):
-            p0 = self.getPoint(traj.points[i - 1]).pose.position
-            p1 = self.getPoint(traj.points[i]).pose.position
-            dx = p1.x - p0.x
-            dy = p1.y - p0.y
-            ds = np.sqrt(dx**2 + dy**2)
-            s_sum -= ds
-
+            s_sum -= self.CalcDistance(
+                self.getPoint(traj.points[i - 1]), self.getPoint(traj.points[i])
+            )
         s_arr.append(s_sum)
         for i in range(1, len(traj.points)):
-            p0 = self.getPoint(traj.points[i - 1]).pose.position
-            p1 = self.getPoint(traj.points[i]).pose.position
-            dx = p1.x - p0.x
-            dy = p1.y - p0.y
-            ds = np.sqrt(dx**2 + dy**2)
-            s_sum += ds
+            s_sum += self.CalcDistance(
+                self.getPoint(traj.points[i - 1]), self.getPoint(traj.points[i])
+            )
             s_arr.append(s_sum)
         return s_arr
 
