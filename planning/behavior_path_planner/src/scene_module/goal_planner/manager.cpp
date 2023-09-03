@@ -241,8 +241,6 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
   }
 
   parameters_ = std::make_shared<GoalPlannerParameters>(p);
-
-  left_side_parking_ = parameters_->parking_policy == ParkingPolicy::LEFT_SIDE;
 }
 
 void GoalPlannerModuleManager::updateModuleParams(
@@ -279,8 +277,7 @@ bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
-  if (!goal_planner_utils::isAllowedGoalModification(
-        planner_data_->route_handler, left_side_parking_)) {
+  if (!goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return true;
   }
 
@@ -295,8 +292,7 @@ bool GoalPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
 
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
-  if (!goal_planner_utils::isAllowedGoalModification(
-        planner_data_->route_handler, left_side_parking_)) {
+  if (!goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return true;
   }
 
