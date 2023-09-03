@@ -340,8 +340,8 @@ class TrajectoryVisualizer(Node):
                 y = [self.velocity_limit, self.velocity_limit]
                 self.im12.set_data(x, y)
 
-            if len(y) != 0:
-                self.min_vel = np.min(y)
+                if len(y) != 0:
+                    self.min_vel = np.min(y)
 
         trajectory_data = [
             (self.behavior_path_planner_path, self.update_behavior_path_planner_path, self.im1),
@@ -356,9 +356,8 @@ class TrajectoryVisualizer(Node):
             (self.trajectory_external_velocity_limited, self.update_ex_vel_lim, self.im6),
             (self.trajectory_lateral_acc_filtered, self.update_lat_acc_fil, self.im7),
             (self.trajectory_steer_rate_filtered, self.update_steer_rate_fil, self.im71),
-            (self.trajectory_time_resampled, self.update_traj_resample, self.im8)(
-                self.trajectory_final, self.update_traj_final, self.im9
-            ),
+            (self.trajectory_time_resampled, self.update_traj_resample, self.im8),
+            (self.trajectory_final, self.update_traj_final, self.im9)
         ]
 
         # update all trajectory plots
