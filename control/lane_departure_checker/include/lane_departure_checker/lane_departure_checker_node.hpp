@@ -37,8 +37,8 @@
 
 #include <map>
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace lane_departure_checker
 {

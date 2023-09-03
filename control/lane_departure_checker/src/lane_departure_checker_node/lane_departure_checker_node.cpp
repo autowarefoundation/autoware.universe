@@ -126,12 +126,9 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   using std::placeholders::_1;
 
   // Enable feature
-  node_param_.will_out_of_lane_checker =
-    declare_parameter<bool>("will_out_of_lane_checker");
-  node_param_.out_of_lane_checker =
-    declare_parameter<bool>("out_of_lane_checker");
-  node_param_.boundary_departure_checker =
-    declare_parameter<bool>("boundary_departure_checker");
+  node_param_.will_out_of_lane_checker = declare_parameter<bool>("will_out_of_lane_checker");
+  node_param_.out_of_lane_checker = declare_parameter<bool>("out_of_lane_checker");
+  node_param_.boundary_departure_checker = declare_parameter<bool>("boundary_departure_checker");
 
   // Node Parameter
   node_param_.update_rate = declare_parameter<double>("update_rate");
@@ -389,10 +386,9 @@ rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(
 
   try {
     // Enable feature
-    update_param(parameters, "will_out_of_lane_checker" , node_param_.will_out_of_lane_checker);
-    update_param(parameters, "out_of_lane_checker" , node_param_.out_of_lane_checker);
+    update_param(parameters, "will_out_of_lane_checker", node_param_.will_out_of_lane_checker);
+    update_param(parameters, "out_of_lane_checker", node_param_.out_of_lane_checker);
     update_param(parameters, "boundary_departure_checker", node_param_.boundary_departure_checker);
-
 
     // Node
     update_param(parameters, "visualize_lanelet", node_param_.visualize_lanelet);
@@ -401,8 +397,7 @@ rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(
     update_param(parameters, "include_opposite_lanes", node_param_.include_opposite_lanes);
     update_param(parameters, "include_conflicting_lanes", node_param_.include_conflicting_lanes);
     update_param(parameters, "boundary_departure_checker", node_param_.boundary_departure_checker);
-    update_param(
-      parameters, "boundary_types_to_detect", node_param_.boundary_types_to_detect);
+    update_param(parameters, "boundary_types_to_detect", node_param_.boundary_types_to_detect);
 
     // Core
     update_param(parameters, "footprint_margin_scale", param_.footprint_margin_scale);
