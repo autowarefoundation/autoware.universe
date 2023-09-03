@@ -15,7 +15,6 @@
 #include <object_detection/predicted_objects_display.hpp>
 #include <rviz_common/properties/int_property.hpp>
 
-#include <pthread.h>
 #include <semaphore.h>
 
 #include <memory>
@@ -27,38 +26,29 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
-// PredictedObjectPThread: manager classes for pthreads
-class PredictedObjectPThread
+void PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread(int rank)
 {
-public:
-  PredictedObjectPThread(PredictedObjectsDisplay * _display, int _rank)
-  {
-    display = _display;  // store the pointer of the main plugin class;
-    rank = _rank;
-  }
-  void start()
-  {
-    pthread_create(&mThreadID, 0, PredictedObjectPThread::threadMethod, this);
-    pthread_detach(
-      mThreadID);  // keep pthread alive; avoid repeatedly creating and destroying pthreads
-  };
-  static void * threadMethod(void * arg)
-  {
-    PredictedObjectPThread * _this = static_cast<PredictedObjectPThread *>(arg);
-    int rank = _this->rank;
-    sem_t * starting_semaphores = _this->display->starting_semaphores;
-    sem_t * ending_semaphores = _this->display->ending_semaphores;
-    while (true) {                           // keep the pthread alive
+    while (true) {                           // keep the thread alive
       sem_wait(&starting_semaphores[rank]);  // wait for the signal to start
-      _this->display->pThreadJob(rank);
+
+      // Determine the number of objects to be processed by this thread
+      int length = tmp_msg->objects.size();
+      int num_object_per_thread = static_cast<int>(ceil(length / static_cast<float>(num_threads)));
+
+      int first_object_index = rank * num_object_per_thread;
+      int last_object_index = first_object_index + num_object_per_thread;
+      if (last_object_index > length) {
+        last_object_index = length;
+      }
+      std::vector<visualization_msgs::msg::Marker::SharedPtr> Thread_Markers;
+      for (int i = first_object_index; i < last_object_index; i++) {
+        Thread_Markers = tackle_one_object(tmp_msg, i, Thread_Markers);
+      }
+      push_tmp_markers(Thread_Markers);
+      
       sem_post(&ending_semaphores[rank]);  // signal the end of the job
     }
-    return nullptr;
-  };
-  pthread_t mThreadID;
-  int rank;
-  PredictedObjectsDisplay * display;
-};
+}
 
 PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks")
 {
@@ -70,20 +60,20 @@ PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("t
   worker.detach();
 }
 
+
 void PredictedObjectsDisplay::workerThread()
 {
-  // PThread Initialization
-  std::vector<PredictedObjectPThread *> thread_handles;
-
+  // ParallelizedThread Initialization
+  std::vector<std::thread> thread_vector;
   starting_semaphores = reinterpret_cast<sem_t *>(malloc(max_num_threads * sizeof(sem_t)));
   ending_semaphores = reinterpret_cast<sem_t *>(malloc(max_num_threads * sizeof(sem_t)));
-  pthread_mutex_init(&tmp_marker_mutex, NULL);
+
   for (int rank = 0; rank < max_num_threads; rank++) {
-    PredictedObjectPThread * pthread_object = new PredictedObjectPThread(this, rank);
-    thread_handles.push_back(pthread_object);
     sem_init(&starting_semaphores[rank], 0, 0);
     sem_init(&ending_semaphores[rank], 0, 0);
-    thread_handles[rank]->start();
+    thread_vector.push_back(
+      std::thread(&PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread, this, rank));
+    thread_vector[rank].detach();
   }
 
   while (true) {
@@ -96,6 +86,7 @@ void PredictedObjectsDisplay::workerThread()
 
     lock.unlock();
     int N = tmp_msg->objects.size();
+    
     update_id_map(tmp_msg);
 
     // max_num_threads : Hard-coded for now. Define the pool of all threads.
@@ -126,9 +117,9 @@ void PredictedObjectsDisplay::workerThread()
 void PredictedObjectsDisplay::push_tmp_markers(
   std::vector<visualization_msgs::msg::Marker::SharedPtr> marker_ptrs)
 {
-  pthread_mutex_lock(&tmp_marker_mutex);
+  tmp_marker_mutex.lock();
   for (auto marker_ptr : marker_ptrs) tmp_markers.push_back(marker_ptr);
-  pthread_mutex_unlock(&tmp_marker_mutex);
+  tmp_marker_mutex.unlock();
 }
 
 std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay::tackle_one_object(
@@ -254,23 +245,6 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     }
   }
   return _markers;
-}
-
-void PredictedObjectsDisplay::pThreadJob(int rank)
-{
-  int length = tmp_msg->objects.size();
-  int num_object_per_thread = static_cast<int>(ceil(length / static_cast<float>(num_threads)));
-
-  int first_object_index = rank * num_object_per_thread;
-  int last_object_index = first_object_index + num_object_per_thread;
-  if (last_object_index > length) {
-    last_object_index = length;
-  }
-  std::vector<visualization_msgs::msg::Marker::SharedPtr> Thread_Markers;
-  for (int i = first_object_index; i < last_object_index; i++) {
-    Thread_Markers = tackle_one_object(tmp_msg, i, Thread_Markers);
-  }
-  push_tmp_markers(Thread_Markers);
 }
 
 std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay::createMarkers(
