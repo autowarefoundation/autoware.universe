@@ -331,78 +331,7 @@ class TrajectoryVisualizer(Node):
             )
         self.get_logger().info("plot start")
 
-        # copy
-        behavior_path_planner_path = self.behavior_path_planner_path
-        behavior_velocity_planner_path = self.behavior_velocity_planner_path
-        obstacle_avoid_traj = self.obstacle_avoid_traj
-        obstacle_stop_traj = self.obstacle_stop_traj
-        trajectory_raw = self.trajectory_raw
-        trajectory_external_velocity_limited = self.trajectory_external_velocity_limited
-        trajectory_lateral_acc_filtered = self.trajectory_lateral_acc_filtered
-        trajectory_steer_rate_filtered = self.trajectory_steer_rate_filtered
-        trajectory_time_resampled = self.trajectory_time_resampled
-        trajectory_final = self.trajectory_final
-
-        if self.update_behavior_path_planner_path:
-            x = self.CalcArcLength(behavior_path_planner_path)
-            y = self.ToVelList(behavior_path_planner_path)
-            self.im1.set_data(x, y)
-            self.update_behavior_path_planner_path = False
-
-        if self.update_behavior_velocity_planner_path:
-            x = self.CalcArcLength(behavior_velocity_planner_path)
-            y = self.ToVelList(behavior_velocity_planner_path)
-            self.im2.set_data(x, y)
-            self.update_behavior_velocity_planner_path = False
-
-        if self.update_traj_ob_avoid:
-            x = self.CalcArcLength(obstacle_avoid_traj)
-            y = self.ToVelList(obstacle_avoid_traj)
-            self.im3.set_data(x, y)
-            self.update_traj_ob_avoid = False
-
-        if self.update_traj_ob_stop:
-            x = self.CalcArcLength(obstacle_stop_traj)
-            y = self.ToVelList(obstacle_stop_traj)
-            self.im4.set_data(x, y)
-            self.update_traj_ob_stop = False
-
-        if self.update_traj_raw:
-            x = self.CalcArcLength(trajectory_raw)
-            y = self.ToVelList(trajectory_raw)
-            self.im5.set_data(x, y)
-            self.update_traj_raw = False
-
-        if self.update_ex_vel_lim:
-            x = self.CalcArcLength(trajectory_external_velocity_limited)
-            y = self.ToVelList(trajectory_external_velocity_limited)
-            self.im6.set_data(x, y)
-            self.update_ex_vel_lim = False
-
-        if self.update_lat_acc_fil:
-            x = self.CalcArcLength(trajectory_lateral_acc_filtered)
-            y = self.ToVelList(trajectory_lateral_acc_filtered)
-            self.im7.set_data(x, y)
-            self.update_lat_acc_fil = False
-
-        if self.update_steer_rate_fil:
-            x = self.CalcArcLength(trajectory_steer_rate_filtered)
-            y = self.ToVelList(trajectory_steer_rate_filtered)
-            self.im71.set_data(x, y)
-            self.update_steer_rate_fil = False
-
-        if self.update_traj_resample:
-            x = self.CalcArcLength(trajectory_time_resampled)
-            y = self.ToVelList(trajectory_time_resampled)
-            self.im8.set_data(x, y)
-            self.update_traj_resample = False
-
         if self.update_traj_final:
-            x = self.CalcArcLength(trajectory_final)
-            y = self.ToVelList(trajectory_final)
-            self.im9.set_data(x, y)
-            self.update_traj_final = False
-
             self.im10.set_data(0, self.localization_vx)
             self.im11.set_data(0, self.vehicle_vx)
 
@@ -413,6 +342,32 @@ class TrajectoryVisualizer(Node):
 
             if len(y) != 0:
                 self.min_vel = np.min(y)
+
+        trajectory_data = [
+            (self.behavior_path_planner_path, self.update_behavior_path_planner_path, self.im1),
+            (
+                self.behavior_velocity_planner_path,
+                self.update_behavior_velocity_planner_path,
+                self.im2,
+            ),
+            (self.obstacle_avoid_traj, self.update_traj_ob_avoid, self.im3),
+            (self.obstacle_stop_traj, self.update_traj_ob_stop, self.im4),
+            (self.trajectory_raw, self.update_traj_raw, self.im5),
+            (self.trajectory_external_velocity_limited, self.update_ex_vel_lim, self.im6),
+            (self.trajectory_lateral_acc_filtered, self.update_lat_acc_fil, self.im7),
+            (self.trajectory_steer_rate_filtered, self.update_steer_rate_fil, self.im71),
+            (self.trajectory_time_resampled, self.update_traj_resample, self.im8)(
+                self.trajectory_final, self.update_traj_final, self.im9
+            ),
+        ]
+
+        # update all trajectory plots
+        for traj, update_flag, image in trajectory_data:
+            if update_flag:
+                x = self.CalcArcLength(traj)
+                y = self.ToVelList(traj)
+                image.set_data(x, y)
+                update_flag = False
 
         return (
             self.im1,
