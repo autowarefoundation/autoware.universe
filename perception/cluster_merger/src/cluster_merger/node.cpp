@@ -14,6 +14,8 @@
 
 #include "cluster_merger/node.hpp"
 
+#include "object_recognition_utils/object_recognition_utils.hpp"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,11 +23,14 @@ namespace cluster_merger
 {
 
 ClusterMergerNode::ClusterMergerNode(const rclcpp::NodeOptions & node_options)
-: Node("cluster_merger_node", node_options),
+: rclcpp::Node("cluster_merger_node", node_options),
+  tf_buffer_(get_clock()),
+  tf_listener_(tf_buffer_),
   objects0_sub_(this, "input/object0", rclcpp::QoS{1}.get_rmw_qos_profile()),
   objects1_sub_(this, "input/object1", rclcpp::QoS{1}.get_rmw_qos_profile()),
   sync_(SyncPolicy(10), objects0_sub_, objects1_sub_)
 {
+  output_frame_id_ = declare_parameter<std::string>("output_frame_id");
   using std::placeholders::_1;
   using std::placeholders::_2;
   sync_.registerCallback(std::bind(&ClusterMergerNode::objectsCallback, this, _1, _2));
@@ -42,15 +47,26 @@ void ClusterMergerNode::objectsCallback(
     return;
   }
   // TODO(badai-nguyen): transform input topics to desired frame before concatenating
+  /* transform to the same with object0 frame id*/
+  DetectedObjectsWithFeature transformed_objects0;
+  DetectedObjectsWithFeature transformed_objects1;
+  if (
+    !object_recognition_utils::transformObjectsWithFeature(
+      *input_objects0_msg, output_frame_id_, tf_buffer_, transformed_objects0) ||
+    !object_recognition_utils::transformObjectsWithFeature(
+      *input_objects1_msg, output_frame_id_, tf_buffer_, transformed_objects1)) {
+    RCLCPP_WARN(
+      this->get_logger(), "Failure to transform object0/1 to %s", output_frame_id_.c_str());
+    return;
+  }
 
   DetectedObjectsWithFeature output_objects;
   output_objects.header = input_objects0_msg->header;
   // add check frame id and transform if they are different
-  output_objects.feature_objects = input_objects0_msg->feature_objects;
+  output_objects.feature_objects = transformed_objects0.feature_objects;
   output_objects.feature_objects.insert(
-    output_objects.feature_objects.end(), input_objects1_msg->feature_objects.begin(),
-    input_objects1_msg->feature_objects.end());
-
+    output_objects.feature_objects.end(), transformed_objects1.feature_objects.begin(),
+    transformed_objects1.feature_objects.end());
   pub_objects_->publish(output_objects);
 }
 }  // namespace cluster_merger
