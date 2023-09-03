@@ -193,17 +193,14 @@ class TrajectoryVisualizer(Node):
         return
 
     def CallbackLocalizationTwist(self, cmd):
-        self.get_logger().info("CallbackLocalizationTwist called")
         self.localization_vx = cmd.twist.twist.linear.x
         self.self_pose = cmd.pose.pose
         self.self_pose_received = True
 
     def CallbackVehicleTwist(self, cmd):
-        self.get_logger().info("CallbackVehicleTwist called")
         self.vehicle_vx = cmd.longitudinal_velocity
 
     def CallbackVelocityLimit(self, cmd):
-        self.get_logger().info("CallbackVelocityLimit called")
         self.velocity_limit = cmd.max_velocity
 
     def CallbackMotionVelOptTraj(self, cmd1, cmd2, cmd3, cmd4, cmd5):
