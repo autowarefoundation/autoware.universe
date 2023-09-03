@@ -296,6 +296,30 @@ MarkerArray createAvoidLineMarkerArray(
       msg.markers.push_back(m);
     }
 
+    // parent ids text
+    {
+      auto m = marker;
+      std::ostringstream string_stream;
+      string_stream << "ID:" << s.id << "PARENTS:";
+      std::for_each(s.parent_ids.begin(), s.parent_ids.end(), [&string_stream](const auto id) {
+        string_stream << id << ",";
+      });
+      m.id = marker_id++;
+      m.type = Marker::TEXT_VIEW_FACING;
+      m.scale = createMarkerScale(0.5, 0.5, 0.5);
+      m.pose.position.x =
+        0.5 * (calcOffsetPose(s.start, 0.0, s.start_shift_length, 0.0).position.x +
+               calcOffsetPose(s.end, 0.0, s.end_shift_length, 0.0).position.x);
+      m.pose.position.y =
+        0.5 * (calcOffsetPose(s.start, 0.0, s.start_shift_length, 0.0).position.y +
+               calcOffsetPose(s.end, 0.0, s.end_shift_length, 0.0).position.y);
+      m.pose.position.z =
+        0.5 * (calcOffsetPose(s.start, 0.0, s.start_shift_length, 0.0).position.z +
+               calcOffsetPose(s.end, 0.0, s.end_shift_length, 0.0).position.z);
+      m.text = string_stream.str();
+      msg.markers.push_back(m);
+    }
+
     shift_line_id++;
   }
 

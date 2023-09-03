@@ -311,7 +311,7 @@ private:
    * @param debug data.
    * @return processed shift lines.
    */
-  AvoidLineArray calcRawShiftLinesFromObjects(
+  AvoidLineOutlines calcRawShiftLinesFromObjects(
     AvoidancePlanningData & data, DebugData & debug) const;
 
   /**
@@ -325,10 +325,7 @@ private:
    * 3. merge raw shirt lines.
    * 4. trim unnecessary shift lines.
    */
-  AvoidLineArray applyPreProcessToRawShiftLines(
-    AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
-
-  AvoidLineArray getFillGapShiftLines(const AvoidLineArray & shift_lines) const;
+  AvoidLineArray applyPreProcess(const AvoidLineOutlines & outlines, DebugData & debug) const;
 
   /*
    * @brief merge negative & positive shift lines.
@@ -336,14 +333,47 @@ private:
    * @param debug data.
    * @return processed shift lines.
    */
-  AvoidLineArray mergeShiftLines(const AvoidLineArray & raw_shift_lines, DebugData & debug) const;
+  AvoidLineOutlines applyMergeProcess(const AvoidLineOutlines & outlines, DebugData & debug) const;
 
   /*
-   * @brief extract shift lines from total shift lines based on their gradient.
-   * @param shift length data.
-   * @return extracted shift lines.
+   * @brief fill gap between two shift lines.
+   * @param original shift lines.
+   * @param debug data.
+   * @return processed shift lines.
    */
-  AvoidLineArray extractShiftLinesFromLine(ShiftLineData & shift_line_data) const;
+  AvoidLineOutlines applyFillGapProcess(
+    const AvoidLineOutlines & outlines, DebugData & debug) const;
+
+  /*
+   * @brief add return shift line from ego position.
+   * @param shift lines which the return shift is added.
+   * @param debug data.
+   */
+  AvoidLineArray applyCombineProcess(
+    const AvoidLineArray & shift_lines, const AvoidLineArray & registered_lines,
+    [[maybe_unused]] DebugData & debug) const;
+
+  /*
+   * @brief add return shift line from ego position.
+   * @param shift lines which the return shift is added.
+   * @param debug data.
+   */
+  AvoidLineArray addReturnShiftLine(const AvoidLineArray & shift_lines, DebugData & debug) const;
+
+  /*
+   * @brief fill gap between two shift lines.
+   * @param original shift lines.
+   * @param debug data.
+   * @return processed shift lines.
+   */
+  AvoidLineArray applyFillGapProcess(const AvoidLineArray & shift_lines, DebugData & debug) const;
+
+  /*
+   * @brief merge negative & positive shift lines.
+   * @param original shift lines.
+   * @return processed shift lines.
+   */
+  AvoidLineArray applyMergeProcess(const AvoidLineArray & shift_lines, DebugData & debug) const;
 
   /*
    * @brief remove unnecessary avoid points
@@ -356,7 +386,14 @@ private:
    * - Change the shift length to the previous one if the deviation is small.
    * - Remove unnecessary return shift (back to the center line).
    */
-  AvoidLineArray trimShiftLine(const AvoidLineArray & shift_lines, DebugData & debug) const;
+  AvoidLineArray applyTrimProcess(const AvoidLineArray & shift_lines, DebugData & debug) const;
+
+  /*
+   * @brief extract shift lines from total shift lines based on their gradient.
+   * @param shift length data.
+   * @return extracted shift lines.
+   */
+  AvoidLineArray extractShiftLinesFromLine(ShiftLineData & shift_line_data) const;
 
   /*
    * @brief extract new shift lines based on current shifted path. the module makes a RTC request
@@ -366,22 +403,26 @@ private:
    */
   AvoidLineArray findNewShiftLine(const AvoidLineArray & shift_lines) const;
 
-  /*
-   * @brief add return shift line from ego position.
-   * @param shift lines which the return shift is added.
-   * Pick up the last shift point, which is the most farthest from ego, from the current candidate
-   * avoidance points and registered points in the shifter. If the last shift length of the point is
-   * non-zero, add a return-shift to center line from the point. If there is no shift point in
-   * candidate avoidance points nor registered points, and base_shift > 0, add a return-shift to
-   * center line from ego.
-   */
-  void addReturnShiftLineFromEgo(AvoidLineArray & shift_lines) const;
+  // /*
+  //  * @brief add return shift line from ego position.
+  //  * @param shift lines which the return shift is added.
+  //  * @param debug data.
+  //  * Pick up the last shift point, which is the most farthest from ego, from the current
+  //  candidate
+  //  * avoidance points and registered points in the shifter. If the last shift length of the point
+  //  is
+  //  * non-zero, add a return-shift to center line from the point. If there is no shift point in
+  //  * candidate avoidance points nor registered points, and base_shift > 0, add a return-shift to
+  //  * center line from ego.
+  //  */
+  // void addReturnShiftLineFromEgo(AvoidLineArray & shift_lines, DebugData & debug) const;
 
   /*
    * @brief fill gap between two shift lines.
    * @param original shift lines.
+   * @param debug data.
    */
-  void fillShiftLineGap(AvoidLineArray & shift_lines) const;
+  // void fillShiftLineGap(AvoidLineArray & shift_lines, DebugData & debug) const;
 
   /*
    * @brief generate total shift line. total shift line has shift length and gradient array.
