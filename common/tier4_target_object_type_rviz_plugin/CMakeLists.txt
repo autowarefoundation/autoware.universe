@@ -9,10 +9,6 @@ set(QT_LIBRARIES Qt5::Widgets)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# include_directories(
-#   ${OpenCV_INCLUDE_DIRS}
-# )
-
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/target_object_type_panel.hpp
   src/target_object_type_panel.cpp
