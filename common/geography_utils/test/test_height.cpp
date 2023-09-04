@@ -84,9 +84,3 @@ TEST(Tier4GeographyUtils, InvalidTargetDatum)
     geography_utils::convert_height(height, latitude, longitude, "WGS84", "INVALID2"),
     std::invalid_argument);
 }
-
-int main(int argc, char ** argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
