@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/drivable_area_expansion.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/expansion.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/path_projection.hpp"
@@ -257,6 +258,7 @@ TEST(DrivableAreaExpansionProjection, expandDrivableArea)
     params.compensate_extra_dist = false;
     params.max_expansion_distance = 0.0;  // means no limit
     params.max_path_arc_length = 0.0;     // means no limit
+    params.resample_interval = 1.0;
     params.extra_arc_length = 1.0;
     params.expansion_method = "polygon";
     // 2m x 4m ego footprint
@@ -265,9 +267,15 @@ TEST(DrivableAreaExpansionProjection, expandDrivableArea)
     params.ego_left_offset = 2.0;
     params.ego_right_offset = -2.0;
   }
+  behavior_path_planner::PlannerData planner_data;
+  planner_data.drivable_area_expansion_parameters = params;
+  planner_data.reference_path = std::make_shared<drivable_area_expansion::PathWithLaneId>(path);
+  planner_data.dynamic_object =
+    std::make_shared<drivable_area_expansion::PredictedObjects>(dynamic_objects);
+  planner_data.route_handler = std::make_shared<route_handler::RouteHandler>(route_handler);
   // we expect the drivable area to be expanded by 1m on each side
   drivable_area_expansion::expandDrivableArea(
-    path, params, dynamic_objects, route_handler, path_lanes);
+    path, std::make_shared<behavior_path_planner::PlannerData>(planner_data), path_lanes);
   // unchanged path points
   ASSERT_EQ(path.points.size(), 3ul);
   for (auto i = 0.0; i < path.points.size(); ++i) {
@@ -276,13 +284,15 @@ TEST(DrivableAreaExpansionProjection, expandDrivableArea)
   }
 
   // expanded left bound
-  ASSERT_EQ(path.left_bound.size(), 3ul);
+  ASSERT_EQ(path.left_bound.size(), 4ul);
   EXPECT_NEAR(path.left_bound[0].x, 0.0, eps);
   EXPECT_NEAR(path.left_bound[0].y, 1.0, eps);
   EXPECT_NEAR(path.left_bound[1].x, 0.0, eps);
   EXPECT_NEAR(path.left_bound[1].y, 2.0, eps);
   EXPECT_NEAR(path.left_bound[2].x, 2.0, eps);
   EXPECT_NEAR(path.left_bound[2].y, 2.0, eps);
+  EXPECT_NEAR(path.left_bound[3].x, 2.0, eps);
+  EXPECT_NEAR(path.left_bound[3].y, 1.0, eps);
   // expanded right bound
   ASSERT_EQ(path.right_bound.size(), 3ul);
   EXPECT_NEAR(path.right_bound[0].x, 0.0, eps);
