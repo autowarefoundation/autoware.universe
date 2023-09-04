@@ -96,6 +96,9 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
 
   // merged object publisher
   merged_object_pub_ = create_publisher<TrackedObjects>("output/object", rclcpp::QoS{1});
+  // debug object publisher
+  debug_object_pub_ =
+    create_publisher<TrackedObjects>("debug/interpolated_sub_object", rclcpp::QoS{1});
 
   // logging
   logging_.enable = declare_parameter<bool>("enable_logging", false);
@@ -103,6 +106,7 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
     declare_parameter<std::string>("logging_file_path", "~/.ros/association_log.json");
 
   // Parameters
+  publish_interpolated_sub_objects_ = declare_parameter<bool>("publish_interpolated_sub_objects");
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id");
   time_sync_threshold_ = declare_parameter<double>("time_sync_threshold");
   sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec");
@@ -192,8 +196,9 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
     const auto interpolated_sub_objects = interpolateObjectState(
       closest_time_sub_objects, closest_time_sub_objects_later, main_objects->header);
     if (interpolated_sub_objects.has_value()) {
-      // show interpolated sub objects
+      // Merge sub objects
       const auto interp_sub_objs = interpolated_sub_objects.value();
+      debug_object_pub_->publish(interp_sub_objs);
       this->decorativeMerger(
         sub_sensor_type_, std::make_shared<TrackedObjects>(interpolated_sub_objects.value()));
     }
@@ -222,6 +227,11 @@ void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::Const
       return (now - rclcpp::Time(sub_object->header.stamp)).seconds() > sub_object_timeout_sec_;
     });
   sub_objects_buffer_.erase(remove_itr, sub_objects_buffer_.end());
+
+  // print sub objects buffer size
+  RCLCPP_DEBUG(
+    this->get_logger(), "sub objects buffer size: %d",
+    static_cast<int>(sub_objects_buffer_.size()));
 }
 
 /**
