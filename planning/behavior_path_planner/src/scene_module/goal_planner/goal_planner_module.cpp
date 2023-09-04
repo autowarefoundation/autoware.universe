@@ -342,7 +342,7 @@ bool GoalPlannerModule::isExecutionRequested() const
 
 bool GoalPlannerModule::isExecutionReady() const
 {
-  if (status_.pull_over_path->partial_paths.empty()) {
+  if (status_.pull_over_path == nullptr) {
     return true;
   }
 
