@@ -189,33 +189,13 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
       }
     }
     // get delay compensated sub objects
-    // const auto interpolated_sub_objects = interpolateObjectState(
-    //   closest_time_sub_objects, closest_time_sub_objects_later, main_objects->header);
-    // if (interpolated_sub_objects.has_value()) {
-    //   // show interpolated sub objects
-    //   const auto interp_sub_objs = interpolated_sub_objects.value();
-    //   for (const auto & interp_sub_obj : interp_sub_objs.objects) {
-    //     std::cout << "interpolated_sub_objects(x,y): " <<
-    //     interp_sub_obj.kinematics.pose_with_covariance.pose.position.x <<
-    //     interp_sub_obj.kinematics.pose_with_covariance.pose.position.y <<std::endl;
-    //   }
-    //   this->decorativeMerger(MEASUREMENT_STATE::RADAR,
-    //   std::make_shared<TrackedObjects>(interpolated_sub_objects.value()));
-    // }
-
-    // break if closest_time_sub_objects is not found
-    if (!closest_time_sub_objects) {
-      std::cout << "closest_time_sub_objects is not found" << std::endl;
-      // show buffer size
-      std::cout << "sub_objects_buffer_.size(): " << sub_objects_buffer_.size() << std::endl;
-      if (sub_objects_buffer_.size() > 0) {
-        std::cout << "oldest stamp: " << getUnixTime(sub_objects_buffer_.front()->header)
-                  << std::endl;
-        std::cout << "current stamp: " << getUnixTime(main_objects->header) << std::endl;
-      }
-    } else {
-      // update with old sub objects
-      this->decorativeMerger(sub_sensor_type_, closest_time_sub_objects);
+    const auto interpolated_sub_objects = interpolateObjectState(
+      closest_time_sub_objects, closest_time_sub_objects_later, main_objects->header);
+    if (interpolated_sub_objects.has_value()) {
+      // show interpolated sub objects
+      const auto interp_sub_objs = interpolated_sub_objects.value();
+      this->decorativeMerger(
+        sub_sensor_type_, std::make_shared<TrackedObjects>(interpolated_sub_objects.value()));
     }
   }
 
