@@ -90,7 +90,7 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
         output_objs.push_back(feature_obj);
       }
     } else {
-      // TODO (badai-nguyen): selected class from a list
+      // TODO(badai-nguyen): selected class from a list
       output_objs.push_back(feature_obj);
     }
   }

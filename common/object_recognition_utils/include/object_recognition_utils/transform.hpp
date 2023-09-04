@@ -122,8 +122,7 @@ bool transformObjectsWithFeature(
     const auto tf_matrix = detail::getTransformMatrix(target_frame_id, input_msg.header, tf_buffer);
     if (!tf_matrix) {
       RCLCPP_WARN(
-        rclcpp::get_logger("object_recognition_utils:"),
-        "failed to get transformed matrix");
+        rclcpp::get_logger("object_recognition_utils:"), "failed to get transformed matrix");
       return false;
     }
     for (auto & feature_object : output_msg.feature_objects) {

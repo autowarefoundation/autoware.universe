@@ -26,8 +26,8 @@ ClusterMergerNode::ClusterMergerNode(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("cluster_merger_node", node_options),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
-  objects0_sub_(this, "input/object0", rclcpp::QoS{1}.get_rmw_qos_profile()),
-  objects1_sub_(this, "input/object1", rclcpp::QoS{1}.get_rmw_qos_profile()),
+  objects0_sub_(this, "input/cluster0", rclcpp::QoS{1}.get_rmw_qos_profile()),
+  objects1_sub_(this, "input/cluster1", rclcpp::QoS{1}.get_rmw_qos_profile()),
   sync_(SyncPolicy(10), objects0_sub_, objects1_sub_)
 {
   output_frame_id_ = declare_parameter<std::string>("output_frame_id");
@@ -36,7 +36,7 @@ ClusterMergerNode::ClusterMergerNode(const rclcpp::NodeOptions & node_options)
   sync_.registerCallback(std::bind(&ClusterMergerNode::objectsCallback, this, _1, _2));
 
   // Publisher
-  pub_objects_ = create_publisher<DetectedObjectsWithFeature>("~/output/objects", rclcpp::QoS{1});
+  pub_objects_ = create_publisher<DetectedObjectsWithFeature>("~/output/clusters", rclcpp::QoS{1});
 }
 
 void ClusterMergerNode::objectsCallback(
@@ -47,7 +47,7 @@ void ClusterMergerNode::objectsCallback(
     return;
   }
   // TODO(badai-nguyen): transform input topics to desired frame before concatenating
-  /* transform to the same with object0 frame id*/
+  /* transform to the same with cluster0 frame id*/
   DetectedObjectsWithFeature transformed_objects0;
   DetectedObjectsWithFeature transformed_objects1;
   if (
@@ -55,8 +55,6 @@ void ClusterMergerNode::objectsCallback(
       *input_objects0_msg, output_frame_id_, tf_buffer_, transformed_objects0) ||
     !object_recognition_utils::transformObjectsWithFeature(
       *input_objects1_msg, output_frame_id_, tf_buffer_, transformed_objects1)) {
-    RCLCPP_WARN(
-      this->get_logger(), "Failure to transform object0/1 to %s", output_frame_id_.c_str());
     return;
   }
 
