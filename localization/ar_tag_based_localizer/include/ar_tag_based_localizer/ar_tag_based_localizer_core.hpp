@@ -69,14 +69,14 @@ public:
 private:
   void image_callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg);
   void cam_info_callback(const sensor_msgs::msg::CameraInfo & msg);
-  void publish_pose_as_base_link(const geometry_msgs::msg::PoseStamped & msg);
+  void publish_pose_as_base_link(
+    const geometry_msgs::msg::PoseStamped & msg, const std::string & camera_frame_id);
 
   // Parameters
   float marker_size_{};
   std::vector<std::string> target_tag_ids_;
   std::vector<double> covariance_;
   double distance_threshold_squared_{};
-  std::string camera_frame_;
 
   // tf
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;

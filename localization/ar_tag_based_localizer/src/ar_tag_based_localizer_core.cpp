@@ -71,7 +71,6 @@ bool ArTagBasedLocalizer::setup()
   target_tag_ids_ = this->declare_parameter<std::vector<std::string>>("target_tag_ids");
   covariance_ = this->declare_parameter<std::vector<double>>("covariance");
   distance_threshold_squared_ = std::pow(this->declare_parameter<double>("distance_threshold"), 2);
-  camera_frame_ = this->declare_parameter<std::string>("camera_frame");
   std::string detection_mode = this->declare_parameter<std::string>("detection_mode");
   float min_marker_size = static_cast<float>(this->declare_parameter<double>("min_marker_size"));
   if (detection_mode == "DM_NORMAL") {
@@ -143,7 +142,6 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
   }
 
   builtin_interfaces::msg::Time curr_stamp = msg->header.stamp;
-  camera_frame_ = msg->header.frame_id;
   cv_bridge::CvImagePtr cv_ptr;
   try {
     cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
@@ -167,7 +165,7 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
     geometry_msgs::msg::TransformStamped tf_cam_to_marker_stamped;
     tf2::toMsg(tf_cam_to_marker, tf_cam_to_marker_stamped.transform);
     tf_cam_to_marker_stamped.header.stamp = curr_stamp;
-    tf_cam_to_marker_stamped.header.frame_id = camera_frame_;
+    tf_cam_to_marker_stamped.header.frame_id = msg->header.frame_id;
     tf_cam_to_marker_stamped.child_frame_id = "detected_marker_" + std::to_string(marker.id);
     tf_broadcaster_->sendTransform(tf_cam_to_marker_stamped);
 
@@ -175,7 +173,7 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
     tf2::toMsg(tf_cam_to_marker, pose_cam_to_marker.pose);
     pose_cam_to_marker.header.stamp = curr_stamp;
     pose_cam_to_marker.header.frame_id = std::to_string(marker.id);
-    publish_pose_as_base_link(pose_cam_to_marker);
+    publish_pose_as_base_link(pose_cam_to_marker, msg->header.frame_id);
 
     // drawing the detected markers
     marker.draw(in_image, cv::Scalar(0, 0, 255), 2);
@@ -209,7 +207,8 @@ void ArTagBasedLocalizer::cam_info_callback(const sensor_msgs::msg::CameraInfo &
   cam_info_received_ = true;
 }
 
-void ArTagBasedLocalizer::publish_pose_as_base_link(const geometry_msgs::msg::PoseStamped & msg)
+void ArTagBasedLocalizer::publish_pose_as_base_link(
+  const geometry_msgs::msg::PoseStamped & msg, const std::string & camera_frame_id)
 {
   // Check if frame_id is in target_tag_ids
   if (
@@ -244,7 +243,7 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(const geometry_msgs::msg::Po
   geometry_msgs::msg::TransformStamped camera_to_base_link_tf;
   try {
     camera_to_base_link_tf =
-      tf_buffer_->lookupTransform(camera_frame_, "base_link", tf2::TimePointZero);
+      tf_buffer_->lookupTransform(camera_frame_id, "base_link", tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(), "Could not transform base_link to camera: %s", ex.what());
     return;
