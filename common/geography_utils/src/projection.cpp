@@ -44,6 +44,7 @@ LocalPoint project_forward(const GeoPoint geo_point, const MapProjectorInfo & pr
     projected_local_point = mgrs_projector->forward(position, mgrs_precision);
   } else {
     // project x and y using projector
+    // note that the original projector such as UTM projector does not compensate for the altitude offset
     projected_local_point = projector->forward(position);
 
     // correct z based on the map origin
@@ -72,6 +73,7 @@ GeoPoint project_reverse(const LocalPoint local_point, const MapProjectorInfo & 
       mgrs_projector->reverse(to_basic_point_3d_pt(local_point), projector_info.mgrs_grid);
   } else {
     // project latitude and longitude using projector
+    // note that the original projector such as UTM projector does not compensate for the altitude offset
     projected_gps_point = projector->reverse(to_basic_point_3d_pt(local_point));
 
     // correct altitude based on the map origin
