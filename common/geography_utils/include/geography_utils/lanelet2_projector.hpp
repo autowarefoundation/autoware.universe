@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "kinematic_evaluator/metrics/kinematic_metrics.hpp"
+#ifndef GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_
+#define GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_
 
-namespace kinematic_diagnostics
-{
-namespace metrics
-{
+#include <tier4_map_msgs/msg/map_projector_info.hpp>
 
-Stat<double> updateVelocityStats(const double & value, const Stat<double> stat_prev)
-{
-  Stat<double> stat(stat_prev);
-  stat.add(value);
-  return stat;
-}
+#include <lanelet2_io/Projection.h>
 
-}  // namespace metrics
-}  // namespace kinematic_diagnostics
+#include <memory>
+
+namespace geography_utils
+{
+using MapProjectorInfo = tier4_map_msgs::msg::MapProjectorInfo;
+
+std::unique_ptr<lanelet::Projector> get_lanelet2_projector(const MapProjectorInfo & projector_info);
+
+}  // namespace geography_utils
+
+#endif  // GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_

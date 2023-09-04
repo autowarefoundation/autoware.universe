@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "kinematic_evaluator/metrics/kinematic_metrics.hpp"
+#include "imu_corrector_core.hpp"
 
-namespace kinematic_diagnostics
-{
-namespace metrics
-{
+#include <rclcpp/rclcpp.hpp>
 
-Stat<double> updateVelocityStats(const double & value, const Stat<double> stat_prev)
+int main(int argc, char * argv[])
 {
-  Stat<double> stat(stat_prev);
-  stat.add(value);
-  return stat;
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<imu_corrector::ImuCorrector>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
+  return 0;
 }
-
-}  // namespace metrics
-}  // namespace kinematic_diagnostics
