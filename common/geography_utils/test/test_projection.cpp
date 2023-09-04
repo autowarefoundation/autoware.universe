@@ -19,7 +19,7 @@
 #include <stdexcept>
 #include <string>
 
-TEST(Tier4GeographyUtilsProjection, ProjectForwardToMGRS)
+TEST(GeographyUtilsProjection, ProjectForwardToMGRS)
 {
   // source point
   geographic_msgs::msg::GeoPoint geo_point;
@@ -48,7 +48,7 @@ TEST(Tier4GeographyUtilsProjection, ProjectForwardToMGRS)
   EXPECT_NEAR(converted_point.z, local_point.z, 1.0);
 }
 
-TEST(Tier4GeographyUtilsProjection, ProjectReverseFromMGRS)
+TEST(GeographyUtilsProjection, ProjectReverseFromMGRS)
 {
   // source point
   geometry_msgs::msg::Point local_point;
@@ -77,7 +77,7 @@ TEST(Tier4GeographyUtilsProjection, ProjectReverseFromMGRS)
   EXPECT_NEAR(converted_point.altitude, geo_point.altitude, 0.0001);
 }
 
-TEST(Tier4GeographyUtilsProjection, ProjectForwardAndReverseMGRS)
+TEST(GeographyUtilsProjection, ProjectForwardAndReverseMGRS)
 {
   // source point
   geographic_msgs::msg::GeoPoint geo_point;
@@ -102,7 +102,7 @@ TEST(Tier4GeographyUtilsProjection, ProjectForwardAndReverseMGRS)
   EXPECT_NEAR(converted_geo_point.altitude, geo_point.altitude, 0.0001);
 }
 
-TEST(Tier4GeographyUtilsProjection, ProjectForwardToLocalCartesianUTMOrigin)
+TEST(GeographyUtilsProjection, ProjectForwardToLocalCartesianUTMOrigin)
 {
   // source point
   geographic_msgs::msg::GeoPoint geo_point;
@@ -133,7 +133,7 @@ TEST(Tier4GeographyUtilsProjection, ProjectForwardToLocalCartesianUTMOrigin)
   EXPECT_NEAR(converted_point.z, local_point.z, 1.0);
 }
 
-TEST(Tier4GeographyUtilsProjection, ProjectForwardAndReverseLocalCartesianUTMOrigin)
+TEST(GeographyUtilsProjection, ProjectForwardAndReverseLocalCartesianUTMOrigin)
 {
   // source point
   geographic_msgs::msg::GeoPoint geo_point;
