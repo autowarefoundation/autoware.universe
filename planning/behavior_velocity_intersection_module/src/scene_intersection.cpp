@@ -774,7 +774,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto & conflicting_area = intersection_lanelets_.value().conflicting_area();
   const auto path_lanelets_opt = util::generatePathLanelets(
     lanelets_on_path, interpolated_path_info, associative_ids_, first_conflicting_area.value(),
-    conflicting_area, closest_idx, planner_data_->vehicle_info_.vehicle_width_m);
+    conflicting_area, first_attention_area, intersection_lanelets_.value().attention_area(),
+    closest_idx, planner_data_->vehicle_info_.vehicle_width_m);
   if (!path_lanelets_opt.has_value()) {
     RCLCPP_DEBUG(logger_, "failed to generate PathLanelets");
     return IntersectionModule::Indecisive{};
