@@ -1,0 +1,15 @@
+# general parameters for radar_object_tracker node
+/**:
+  ros__parameters:
+    # basic settings
+    world_frame_id: "world"
+    # if empty, use default config declared in this package
+    tracking_config_directory: ""
+
+    # delay compensate parameters
+    publish_rate: 10.0
+    enable_delay_compensation: false
+
+    # logging
+    enable_logging: false
+    logging_file_path: "/tmp/association_log.json"
