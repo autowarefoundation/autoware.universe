@@ -214,7 +214,6 @@ RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_
   logging_.path = declare_parameter<std::string>("logging_file_path");
 
   // noise filter
-  use_distance_based_noise_filtering_ =
     declare_parameter<bool>("use_distance_based_noise_filtering");
   use_map_based_noise_filtering_ = declare_parameter<bool>("use_map_based_noise_filtering");
   minimum_range_threshold_ = declare_parameter<double>("minimum_range_threshold");
@@ -222,8 +221,6 @@ RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_
   max_angle_diff_from_lane_ = declare_parameter<double>("max_angle_diff_from_lane");
   max_lateral_velocity_ = declare_parameter<double>("max_lateral_velocity");
 
-  // Load tracking config file
-  if (tracker_config_directory_.empty()) {
     tracker_config_directory_ =
       ament_index_cpp::get_package_share_directory("radar_object_tracker") + "/config/tracking/";
   }
