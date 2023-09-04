@@ -45,6 +45,7 @@ private:
   Eigen::MatrixXd max_dist_matrix_;
   Eigen::MatrixXd max_rad_matrix_;
   Eigen::MatrixXd min_iou_matrix_;
+  Eigen::MatrixXd max_velocity_diff_matrix_;
   const double score_threshold_;
   std::unique_ptr<gnn_solver::GnnSolverInterface> gnn_solver_ptr_;
 
@@ -52,7 +53,8 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   DataAssociation(
     std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
-    std::vector<double> max_rad_vector, std::vector<double> min_iou_vector);
+    std::vector<double> max_rad_vector, std::vector<double> min_iou_vector,
+    std::vector<double> max_velocity_diff_vector);
   void assign(
     const Eigen::MatrixXd & src, std::unordered_map<int, int> & direct_assignment,
     std::unordered_map<int, int> & reverse_assignment);

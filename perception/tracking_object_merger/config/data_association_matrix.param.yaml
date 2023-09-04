@@ -34,6 +34,17 @@
         3.150,   3.150, 3.150, 3.150,  3.150,  3.150,     3.150,   3.150,      #BICYCLE
         3.150,   3.150, 3.150, 3.150,  3.150,  3.150,     3.150,   3.150]      #PEDESTRIAN
 
+      max_velocity_diff_matrix: # Ignored when value is larger than 100.0
+        #UNKNOWN, CAR, TRUCK, BUS,  TRAILER, MOTORBIKE, BICYCLE, PEDESTRIAN
+        [100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0,     #UNKNOWN
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #CAR
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #TRUCK
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #BUS
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #TRAILER
+        100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0,     #MOTORBIKE
+        100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0,     #BICYCLE
+        100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0]     #PEDESTRIAN
+
       min_iou_matrix: # If value is negative, it will be ignored.
         #UNKNOWN, CAR,   TRUCK, BUS,    TRAILER,  MOTORBIKE, BICYCLE, PEDESTRIAN
         [0.1,     0.1,   0.1,   0.1,    0.1,      0.1,       0.1,     0.1,       #UNKNOWN
@@ -79,6 +90,17 @@
         3.150,   3.150, 3.150, 3.150,  3.150,  3.150,     3.150,   3.150,      #BICYCLE
         3.150,   3.150, 3.150, 3.150,  3.150,  3.150,     3.150,   3.150]      #PEDESTRIAN
 
+      max_velocity_diff_matrix: # Ignored when value is larger than 100.0
+        #UNKNOWN, CAR, TRUCK, BUS,  TRAILER, MOTORBIKE, BICYCLE, PEDESTRIAN
+        [100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0,     #UNKNOWN
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #CAR
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #TRUCK
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #BUS
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #TRAILER
+        100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0,     #MOTORBIKE
+        100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0,     #BICYCLE
+        100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0]     #PEDESTRIAN
+
       min_iou_matrix: # set all value to 0.0 to disable this constraint
         #UNKNOWN, CAR,   TRUCK, BUS,    TRAILER,  MOTORBIKE, BICYCLE, PEDESTRIAN
         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, #UNKNOWN
@@ -122,6 +144,17 @@
         3.150,   3.150, 3.150, 3.150,  3.150,  3.150,     3.150,   3.150,      #MOTORBIKE
         3.150,   3.150, 3.150, 3.150,  3.150,  3.150,     3.150,   3.150,      #BICYCLE
         3.150,   3.150, 3.150, 3.150,  3.150,  3.150,     3.150,   3.150]      #PEDESTRIAN
+
+      max_velocity_diff_matrix: # Ignored when value is larger than 100.0
+        #UNKNOWN, CAR, TRUCK, BUS,  TRAILER, MOTORBIKE, BICYCLE, PEDESTRIAN
+        [100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0,     #UNKNOWN
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #CAR
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #TRUCK
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #BUS
+        100.0,   8.0,    8.0,  8.0,  8.0,   100.0,     100.0,   100.0,     #TRAILER
+        100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0,     #MOTORBIKE
+        100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0,     #BICYCLE
+        100.0,   100.0,100.0,100.0,100.0,   100.0,     100.0,   100.0]     #PEDESTRIAN
 
       min_iou_matrix: # set all value to 0.0 to disable this constraint
         #UNKNOWN, CAR,   TRUCK, BUS,    TRAILER,  MOTORBIKE, BICYCLE, PEDESTRIAN
