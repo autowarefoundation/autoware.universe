@@ -183,7 +183,7 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
     }
 
     // Other modules are not needed when freespace planning
-    if (start_planner_ptr->isFreespacePlanning()) {
+    if (module->isFreespacePlanning()) {
       return false;
     }
 
@@ -202,7 +202,7 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() cons
     }
 
     // Other modules are not needed when freespace planning
-    if (start_planner_ptr->isFreespacePlanning()) {
+    if (module->isFreespacePlanning()) {
       return false;
     }
 
