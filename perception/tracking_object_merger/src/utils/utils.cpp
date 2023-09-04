@@ -42,6 +42,13 @@ TrackedObject linearInterpolationForTrackedObject(
   // interpolate obj1 and obj2 with weight: obj1 * (1 - weight) + obj2 * weight
   // weight = 0: obj1, weight = 1: obj2
 
+  // weight check (0 <= weight <= 1)
+  if (weight < 0 || weight > 1) {
+    std::cerr << "weight must be 0 <= weight <= 1 in linearInterpolationForTrackedObject function."
+              << std::endl;
+    return obj1;
+  }
+
   // output object
   TrackedObject output;
   // copy input object at first
@@ -128,14 +135,15 @@ TrackedObject predictPastOrFutureTrackedObject(const TrackedObject & obj, const 
 
   // get yaw
   const auto yaw = tf2::getYaw(pose.orientation);
-  const auto v = twist.linear.x;
+  const auto vx = twist.linear.x;
+  const auto vy = twist.linear.y;
 
-  // prediction equation:
-  // x = x + v * cos(yaw) * dt
-  // y = y + v * sin(yaw) * dt
+  // linear prediction equation:
+  // x = x0 + vx * cos(yaw) * dt - vy * sin(yaw) * dt
+  // y = y0 + vx * sin(yaw) * dt + vy * cos(yaw) * dt
   auto & output_pose = output.kinematics.pose_with_covariance.pose;
-  output_pose.position.x += v * std::cos(yaw) * dt;
-  output_pose.position.y += v * std::sin(yaw) * dt;
+  output_pose.position.x += vx * std::cos(yaw) * dt - vy * std::sin(yaw) * dt;
+  output_pose.position.y += vx * std::sin(yaw) * dt + vy * std::cos(yaw) * dt;
 
   // (TODO) covariance prediction
 
@@ -202,11 +210,11 @@ TrackedObjects interpolateTrackedObjects(
         selected_objects1[i] = true;
         break;
       }
-      if (selected_objects1[i] == false) {
-        // if obj1 is not selected, predict future
-        const auto pred_objects = predictPastOrFutureTrackedObject(objects1.objects[i], dt1);
-        output_objects.objects.push_back(pred_objects);
-      }
+    }
+    if (selected_objects1[i] == false) {
+      // if obj1 is not selected, predict future
+      const auto pred_objects = predictPastOrFutureTrackedObject(objects1.objects[i], dt1);
+      output_objects.objects.push_back(pred_objects);
     }
   }
 
