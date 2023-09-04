@@ -29,7 +29,7 @@ Eigen::Vector3d to_basic_point_3d_pt(const LocalPoint src)
   return dst;
 }
 
-LocalPoint project_forward(const GeoPoint geo_point, const MapProjectorInfo & projector_info)
+LocalPoint project_forward(const GeoPoint & geo_point, const MapProjectorInfo & projector_info)
 {
   std::unique_ptr<lanelet::Projector> projector = get_lanelet2_projector(projector_info);
   lanelet::GPSPoint position{geo_point.latitude, geo_point.longitude, geo_point.altitude};
@@ -62,7 +62,7 @@ LocalPoint project_forward(const GeoPoint geo_point, const MapProjectorInfo & pr
   return local_point;
 }
 
-GeoPoint project_reverse(const LocalPoint local_point, const MapProjectorInfo & projector_info)
+GeoPoint project_reverse(const LocalPoint & local_point, const MapProjectorInfo & projector_info)
 {
   std::unique_ptr<lanelet::Projector> projector = get_lanelet2_projector(projector_info);
 
