@@ -24,9 +24,10 @@
 #include "static_centerline_optimizer/type_alias.hpp"
 #include "static_centerline_optimizer/utils.hpp"
 
-#include <tier4_map_msgs/msg/map_projector_info.hpp>
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
+
+#include <tier4_map_msgs/msg/map_projector_info.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_io/Io.h>
