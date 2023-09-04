@@ -1532,9 +1532,7 @@ void generateDrivableArea(
   }
   const auto & expansion_params = planner_data->drivable_area_expansion_parameters;
   if (expansion_params.enabled) {
-    drivable_area_expansion::expandDrivableArea(
-      path, expansion_params, *planner_data->dynamic_object, *planner_data->route_handler,
-      transformed_lanes);
+    drivable_area_expansion::expandDrivableArea(path, planner_data, transformed_lanes);
   }
 
   // make bound longitudinally monotonic
@@ -1795,8 +1793,22 @@ void makeBoundLongitudinallyMonotonic(
         continue;
       }
 
-      for (size_t j = intersect_idx.get() + 1; j < bound_with_pose.size(); j++) {
-        set_orientation(ret, j, getPose(path_points.at(i)).orientation);
+      if (i + 1 == path_points.size()) {
+        for (size_t j = intersect_idx.get(); j < bound_with_pose.size(); j++) {
+          if (j + 1 == bound_with_pose.size()) {
+            const auto yaw =
+              calcAzimuthAngle(bound_with_pose.at(j - 1).position, bound_with_pose.at(j).position);
+            set_orientation(ret, j, createQuaternionFromRPY(0.0, 0.0, yaw));
+          } else {
+            const auto yaw =
+              calcAzimuthAngle(bound_with_pose.at(j).position, bound_with_pose.at(j + 1).position);
+            set_orientation(ret, j, createQuaternionFromRPY(0.0, 0.0, yaw));
+          }
+        }
+      } else {
+        for (size_t j = intersect_idx.get() + 1; j < bound_with_pose.size(); j++) {
+          set_orientation(ret, j, getPose(path_points.at(i)).orientation);
+        }
       }
 
       constexpr size_t OVERLAP_CHECK_NUM = 3;
@@ -1855,6 +1867,7 @@ void makeBoundLongitudinallyMonotonic(
         if (intersect_point) {
           Pose pose;
           pose.position = *intersect_point;
+          pose.position.z = bound_with_pose.at(i).position.z;
           const auto yaw = calcAzimuthAngle(*intersect_point, bound_with_pose.at(i + 1).position);
           pose.orientation = createQuaternionFromRPY(0.0, 0.0, yaw);
           monotonic_bound.push_back(pose);
@@ -1888,18 +1901,18 @@ void makeBoundLongitudinallyMonotonic(
 
     std::vector<Point> ret;
 
-    ret.push_back(bound.front());
+    for (size_t i = 0; i < bound.size(); i++) {
+      const auto & p_new = bound.at(i);
+      const auto duplicated_points_itr = std::find_if(
+        ret.begin(), ret.end(),
+        [&p_new](const auto & p) { return calcDistance2d(p, p_new) < 0.1; });
 
-    for (size_t i = 0; i < bound.size() - 2; i++) {
-      try {
-        motion_utils::validateNonSharpAngle(bound.at(i), bound.at(i + 1), bound.at(i + 2));
-        ret.push_back(bound.at(i + 1));
-      } catch (const std::exception & e) {
-        continue;
+      if (duplicated_points_itr != ret.end() && std::next(duplicated_points_itr, 2) == ret.end()) {
+        ret.erase(duplicated_points_itr, ret.end());
       }
-    }
 
-    ret.push_back(bound.back());
+      ret.push_back(p_new);
+    }
 
     return ret;
   };

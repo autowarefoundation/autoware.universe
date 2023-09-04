@@ -11,11 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef IMU_CORRECTOR__IMU_CORRECTOR_CORE_HPP_
-#define IMU_CORRECTOR__IMU_CORRECTOR_CORE_HPP_
+#ifndef IMU_CORRECTOR_CORE_HPP_
+#define IMU_CORRECTOR_CORE_HPP_
 
+#include "tier4_autoware_utils/ros/msg_covariance.hpp"
 #include "tier4_autoware_utils/ros/transform_listener.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -34,7 +34,7 @@ class ImuCorrector : public rclcpp::Node
   using COV_IDX = tier4_autoware_utils::xyz_covariance_index::XYZ_COV_IDX;
 
 public:
-  explicit ImuCorrector(const rclcpp::NodeOptions & node_options);
+  ImuCorrector();
 
 private:
   void callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr);
@@ -59,4 +59,4 @@ private:
 };
 }  // namespace imu_corrector
 
-#endif  // IMU_CORRECTOR__IMU_CORRECTOR_CORE_HPP_
+#endif  // IMU_CORRECTOR_CORE_HPP_
