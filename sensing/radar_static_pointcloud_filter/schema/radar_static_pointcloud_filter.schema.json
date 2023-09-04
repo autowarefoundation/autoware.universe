@@ -13,9 +13,7 @@
           "description": "Standard deviation for radar doppler velocity. [m/s]"
         }
       },
-      "required": [
-        "doppler_velocity_sd"
-      ]
+      "required": ["doppler_velocity_sd"]
     }
   },
   "properties": {
