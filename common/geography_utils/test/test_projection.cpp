@@ -15,6 +15,7 @@
 #include <geography_utils/projection.hpp>
 
 #include <gtest/gtest.h>
+
 #include <stdexcept>
 #include <string>
 
@@ -39,7 +40,8 @@ TEST(Tier4GeographyUtilsProjection, ProjectForwardToMGRS)
   projector_info.vertical_datum = tier4_map_msgs::msg::MapProjectorInfo::WGS84;
 
   // conversion
-  const geometry_msgs::msg::Point converted_point = geography_utils::project_forward(geo_point, projector_info);
+  const geometry_msgs::msg::Point converted_point =
+    geography_utils::project_forward(geo_point, projector_info);
 
   EXPECT_NEAR(converted_point.x, local_point.x, 1.0);
   EXPECT_NEAR(converted_point.y, local_point.y, 1.0);
@@ -67,7 +69,8 @@ TEST(Tier4GeographyUtilsProjection, ProjectReverseFromMGRS)
   projector_info.vertical_datum = tier4_map_msgs::msg::MapProjectorInfo::WGS84;
 
   // conversion
-  const geographic_msgs::msg::GeoPoint converted_point = geography_utils::project_reverse(local_point, projector_info);
+  const geographic_msgs::msg::GeoPoint converted_point =
+    geography_utils::project_reverse(local_point, projector_info);
 
   EXPECT_NEAR(converted_point.latitude, geo_point.latitude, 0.0001);
   EXPECT_NEAR(converted_point.longitude, geo_point.longitude, 0.0001);
@@ -89,8 +92,10 @@ TEST(Tier4GeographyUtilsProjection, ProjectForwardAndReverseMGRS)
   projector_info.vertical_datum = tier4_map_msgs::msg::MapProjectorInfo::WGS84;
 
   // conversion
-  const geometry_msgs::msg::Point converted_local_point = geography_utils::project_forward(geo_point, projector_info);
-  const geographic_msgs::msg::GeoPoint converted_geo_point = geography_utils::project_reverse(converted_local_point, projector_info);
+  const geometry_msgs::msg::Point converted_local_point =
+    geography_utils::project_forward(geo_point, projector_info);
+  const geographic_msgs::msg::GeoPoint converted_geo_point =
+    geography_utils::project_reverse(converted_local_point, projector_info);
 
   EXPECT_NEAR(converted_geo_point.latitude, geo_point.latitude, 0.0001);
   EXPECT_NEAR(converted_geo_point.longitude, geo_point.longitude, 0.0001);
@@ -120,7 +125,8 @@ TEST(Tier4GeographyUtilsProjection, ProjectForwardToLocalCartesianUTMOrigin)
   projector_info.map_origin.altitude = -10.0;
 
   // conversion
-  const geometry_msgs::msg::Point converted_point = geography_utils::project_forward(geo_point, projector_info);
+  const geometry_msgs::msg::Point converted_point =
+    geography_utils::project_forward(geo_point, projector_info);
 
   EXPECT_NEAR(converted_point.x, local_point.x, 1.0);
   EXPECT_NEAR(converted_point.y, local_point.y, 1.0);
@@ -144,8 +150,10 @@ TEST(Tier4GeographyUtilsProjection, ProjectForwardAndReverseLocalCartesianUTMOri
   projector_info.map_origin.altitude = 0.0;
 
   // conversion
-  const geometry_msgs::msg::Point converted_local_point = geography_utils::project_forward(geo_point, projector_info);
-  const geographic_msgs::msg::GeoPoint converted_geo_point = geography_utils::project_reverse(converted_local_point, projector_info);
+  const geometry_msgs::msg::Point converted_local_point =
+    geography_utils::project_forward(geo_point, projector_info);
+  const geographic_msgs::msg::GeoPoint converted_geo_point =
+    geography_utils::project_reverse(converted_local_point, projector_info);
 
   EXPECT_NEAR(converted_geo_point.latitude, geo_point.latitude, 0.0001);
   EXPECT_NEAR(converted_geo_point.longitude, geo_point.longitude, 0.0001);

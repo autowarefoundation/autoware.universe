@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "geography_utils/height.hpp"
-#include "geography_utils/projection.hpp"
 #include "geography_utils/lanelet2_projector.hpp"
+#include "geography_utils/projection.hpp"
 
 #include <gtest/gtest.h>
 
