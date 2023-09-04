@@ -201,6 +201,8 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
       debug_object_pub_->publish(interp_sub_objs);
       this->decorativeMerger(
         sub_sensor_type_, std::make_shared<TrackedObjects>(interpolated_sub_objects.value()));
+    } else {
+      RCLCPP_DEBUG(this->get_logger(), "interpolated_sub_objects is null");
     }
   }
 
@@ -229,9 +231,9 @@ void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::Const
   sub_objects_buffer_.erase(remove_itr, sub_objects_buffer_.end());
 
   // print sub objects buffer size
-  RCLCPP_DEBUG(
-    this->get_logger(), "sub objects buffer size: %d",
-    static_cast<int>(sub_objects_buffer_.size()));
+  // RCLCPP_DEBUG(
+  //   this->get_logger(), "sub objects buffer size: %d",
+  //   static_cast<int>(sub_objects_buffer_.size()));
 }
 
 /**
@@ -324,16 +326,20 @@ std::optional<TrackedObjects> DecorativeTrackerMergerNode::interpolateObjectStat
   // 1. both msg is nullptr
   if (former_msg == nullptr && latter_msg == nullptr) {
     // return null optional
+    RCLCPP_DEBUG(this->get_logger(), "interpolation err: both msg is nullptr");
     return std::nullopt;
   }
 
   // 2. former_msg is nullptr
   if (former_msg == nullptr) {
+    // std::cout << "interpolation: 2. former_msg is nullptr" << std::endl;
     // depends on header stamp difference
     if (
       (rclcpp::Time(latter_msg->header.stamp) - rclcpp::Time(output_header.stamp)).seconds() >
       time_sync_threshold_) {
       // do nothing
+      RCLCPP_DEBUG(
+        this->get_logger(), "interpolation err: latter msg is too different from output msg");
       return std::nullopt;
     } else {  // else, return latter_msg
       return *latter_msg;
@@ -341,21 +347,23 @@ std::optional<TrackedObjects> DecorativeTrackerMergerNode::interpolateObjectStat
 
     // 3. latter_msg is nullptr
   } else if (latter_msg == nullptr) {
+    // std::cout << "interpolation: 3. latter_msg is nullptr" << std::endl;
     // depends on header stamp difference
-    if (
-      (rclcpp::Time(output_header.stamp) - rclcpp::Time(former_msg->header.stamp)).seconds() >
-      time_sync_threshold_) {
+    const auto dt =
+      (rclcpp::Time(output_header.stamp) - rclcpp::Time(former_msg->header.stamp)).seconds();
+    if (dt > time_sync_threshold_) {
       // do nothing
+      RCLCPP_DEBUG(this->get_logger(), "interpolation err: former msg is too old");
       return std::nullopt;
     } else {
       // else, return former_msg
-      return *former_msg;
-      // (TODO) do prediction in here
+      return utils::predictPastOrFutureTrackedObjects(*former_msg, output_header);
     }
 
     // 4. both msg is not nullptr
   } else {
     // do the interpolation
+    // std::cout << "interpolation: 4. both msg is not nullptr" << std::endl;
     TrackedObjects interpolated_msg =
       utils::interpolateTrackedObjects(*former_msg, *latter_msg, output_header);
     return interpolated_msg;
