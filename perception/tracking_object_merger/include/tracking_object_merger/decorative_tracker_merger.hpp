@@ -86,6 +86,10 @@ private:
     sub_main_objects_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
     sub_sub_objects_;
+  // debug object publisher
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
+    debug_object_pub_;
+  bool publish_interpolated_sub_objects_;
 
   /* handle objects */
   std::unordered_map<MEASUREMENT_STATE, std::function<void(TrackedObject &, const TrackedObject &)>>
