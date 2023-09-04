@@ -25,6 +25,8 @@ Here show the processing pipeline.
 
 Sub object(Radar or Camera) often has higher frequency than dominant object(LiDAR). So we need to sync the time of sub object to dominant object.
 
+![time sync](image/time_sync.drawio.svg)
+
 #### data association
 
 In the data association, we use the following rules to determine whether two tracking objects are the same object.
@@ -96,6 +98,16 @@ Default parameters are set in [config/decorative_tracker_merger.param.yaml](./co
 | `tracker_state_parameter` | tracker state parameter. This is used to manage the tracklet.                                                                                                    |               |
 
 - the detail of `tracker_state_parameter` is described in [tracklet management](#tracklet-management)
+
+#### tuning
+
+As explained in [tracklet management](#tracklet-management), this tracker merger tend to maintain the both input tracking objects.
+
+If there are many false positive tracking objects,
+
+- decrease `default_<sensor>_existence_probability` of that sensor
+- increase `decay_rate`
+- increase `publish_probability_threshold` to publish only reliable tracking objects
 
 ### equivalent_tracker_merger
 
