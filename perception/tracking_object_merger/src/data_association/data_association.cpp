@@ -49,7 +49,8 @@ double getFormedYawAngle(
 
 DataAssociation::DataAssociation(
   std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
-  std::vector<double> max_rad_vector, std::vector<double> min_iou_vector)
+  std::vector<double> max_rad_vector, std::vector<double> min_iou_vector,
+  std::vector<double> max_velocity_diff_vector)
 : score_threshold_(0.01)
 {
   {
@@ -75,6 +76,13 @@ DataAssociation::DataAssociation(
     Eigen::Map<Eigen::MatrixXd> min_iou_matrix_tmp(
       min_iou_vector.data(), min_iou_label_num, min_iou_label_num);
     min_iou_matrix_ = min_iou_matrix_tmp.transpose();
+  }
+  {
+    const int max_velocity_diff_label_num =
+      static_cast<int>(std::sqrt(max_velocity_diff_vector.size()));
+    Eigen::Map<Eigen::MatrixXd> max_velocity_diff_matrix_tmp(
+      max_velocity_diff_vector.data(), max_velocity_diff_label_num, max_velocity_diff_label_num);
+    max_velocity_diff_matrix_ = max_velocity_diff_matrix_tmp.transpose();
   }
 
   gnn_solver_ptr_ = std::make_unique<gnn_solver::MuSSP>();
@@ -282,6 +290,19 @@ double DataAssociation::calcScoreBetweenObjects(
       pair_log_data["gate_value"] = iou;
       pair_log_data["gate_threshold"] = min_iou;
     }
+    // max velocity diff gate
+    if (passed_gate) {
+      const double max_velocity_diff = max_velocity_diff_matrix_(object1_label, object0_label);
+      // calc absolute velocity diff (only thinking about speed)
+      const auto speed0 = std::hypot(
+        object0.kinematics.twist_with_covariance.twist.linear.x,
+        object0.kinematics.twist_with_covariance.twist.linear.y);
+      const auto speed1 = std::hypot(
+        object1.kinematics.twist_with_covariance.twist.linear.x,
+        object1.kinematics.twist_with_covariance.twist.linear.y);
+      const double velocity_diff = std::fabs(speed0 - speed1);
+      if (max_velocity_diff < velocity_diff) passed_gate = false;
+    }
 
     // all gate is passed
     if (passed_gate) {
@@ -336,6 +357,19 @@ double DataAssociation::calcScoreBetweenObjects(
       const double min_union_iou_area = 1e-2;
       const double iou = object_recognition_utils::get2dIoU(object0, object1, min_union_iou_area);
       if (iou < min_iou) passed_gate = false;
+    }
+    // max velocity diff gate
+    if (passed_gate) {
+      const double max_velocity_diff = max_velocity_diff_matrix_(object1_label, object0_label);
+      // calc absolute velocity diff (only thinking about speed)
+      const auto speed0 = std::hypot(
+        object0.kinematics.twist_with_covariance.twist.linear.x,
+        object0.kinematics.twist_with_covariance.twist.linear.y);
+      const auto speed1 = std::hypot(
+        object1.kinematics.twist_with_covariance.twist.linear.x,
+        object1.kinematics.twist_with_covariance.twist.linear.y);
+      const double velocity_diff = std::fabs(speed0 - speed1);
+      if (max_velocity_diff < velocity_diff) passed_gate = false;
     }
 
     // all gate is passed

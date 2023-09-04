@@ -157,9 +157,11 @@ void DecorativeTrackerMergerNode::set3dDataAssociation(
     this->declare_parameter<std::vector<double>>(prefix + ".max_rad_matrix");
   const auto min_iou_matrix =
     this->declare_parameter<std::vector<double>>(prefix + ".min_iou_matrix");
+  const auto max_velocity_diff_matrix =
+    this->declare_parameter<std::vector<double>>(prefix + ".max_velocity_diff_matrix");
 
   data_association_map[prefix] = std::make_unique<DataAssociation>(
-    can_assign_matrix, max_dist_matrix, max_rad_matrix, min_iou_matrix);
+    can_assign_matrix, max_dist_matrix, max_rad_matrix, min_iou_matrix, max_velocity_diff_matrix);
 }
 
 /**
