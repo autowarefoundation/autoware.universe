@@ -65,7 +65,7 @@ enum class PathType {
   FREESPACE,
 };
 
-struct PUllOverStatus
+struct PullOverStatus
 {
   std::shared_ptr<PullOverPath> pull_over_path{};
   std::shared_ptr<PullOverPath> lane_parking_pull_over_path{};
@@ -76,11 +76,24 @@ struct PUllOverStatus
   lanelet::ConstLanelets pull_over_lanes{};
   std::vector<DrivableLanes> lanes{};  // current + pull_over
   bool has_decided_path{false};
-  bool is_safe{false};
+  bool is_safe_static_objects{false};   // current path is safe against static objects
+  bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
   bool prev_is_safe{false};
   bool has_decided_velocity{false};
   bool has_requested_approval{false};
   bool is_ready{false};
+};
+
+struct FreespacePlannerDebugData
+{
+  bool is_planning{false};
+  size_t current_goal_idx{0};
+  size_t num_goal_candidates{0};
+};
+
+struct GoalPlannerDebugData
+{
+  FreespacePlannerDebugData freespace_planner{};
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -122,9 +135,11 @@ private:
 
   bool canTransitIdleToRunningState() override { return false; }
 
-  PUllOverStatus status_;
+  PullOverStatus status_;
 
   std::shared_ptr<GoalPlannerParameters> parameters_;
+
+  vehicle_info_util::VehicleInfo vehicle_info_;
 
   // planner
   std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
@@ -165,7 +180,6 @@ private:
 
   // for parking policy
   bool left_side_parking_{true};
-  mutable bool allow_goal_modification_{false};  // need to be set in isExecutionRequested
 
   // pre-generate lane parking paths in a separate thread
   rclcpp::TimerBase::SharedPtr lane_parking_timer_;
@@ -175,6 +189,9 @@ private:
   // generate freespace parking paths in a separate thread
   rclcpp::TimerBase::SharedPtr freespace_parking_timer_;
   rclcpp::CallbackGroup::SharedPtr freespace_parking_timer_cb_group_;
+
+  // debug
+  mutable GoalPlannerDebugData debug_data_;
 
   // collision check
   void initializeOccupancyGridMap();
@@ -191,7 +208,6 @@ private:
     const Pose & search_start_offset_pose, PathWithLaneId & path) const;
   PathWithLaneId generateStopPath();
   PathWithLaneId generateFeasibleStopPath();
-  boost::optional<double> calcFeasibleDecelDistance(const double target_velocity) const;
   void keepStoppedWithCurrentPath(PathWithLaneId & path);
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
 

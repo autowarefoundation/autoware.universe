@@ -17,12 +17,12 @@
 #include "gnss_poser/gnss_stat.hpp"
 
 #include <GeographicLib/Geoid.hpp>
-#include <GeographicLib/LocalCartesian.hpp>
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
-#include <geo_pos_conv/geo_pos_conv.hpp>
+#include <geography_utils/height.hpp>
 #include <rclcpp/logging.hpp>
 
+#include <geographic_msgs/msg/geo_point.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 #include <string>
@@ -40,61 +40,20 @@ enum class MGRSPrecision {
   _1_MIllI_METER = 8,
   _100MICRO_METER = 9,
 };
-// EllipsoidHeight:height above ellipsoid
-// OrthometricHeight:height above geoid
-double EllipsoidHeight2OrthometricHeight(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const rclcpp::Logger & logger)
-{
-  double OrthometricHeight{0.0};
-  try {
-    GeographicLib::Geoid egm2008("egm2008-1");
-    OrthometricHeight = egm2008.ConvertHeight(
-      nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, nav_sat_fix_msg.altitude,
-      GeographicLib::Geoid::ELLIPSOIDTOGEOID);
-  } catch (const GeographicLib::GeographicErr & err) {
-    RCLCPP_ERROR_STREAM(
-      logger, "Failed to convert Height from Ellipsoid to Orthometric" << err.what());
-  }
-  return OrthometricHeight;
-}
-GNSSStat NavSatFix2LocalCartesianWGS84(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
-  sensor_msgs::msg::NavSatFix nav_sat_fix_origin_, const rclcpp::Logger & logger)
-{
-  GNSSStat local_cartesian;
-  local_cartesian.coordinate_system = CoordinateSystem::LOCAL_CARTESIAN_WGS84;
 
-  try {
-    GeographicLib::LocalCartesian localCartesian_origin(
-      nav_sat_fix_origin_.latitude, nav_sat_fix_origin_.longitude, nav_sat_fix_origin_.altitude);
-    localCartesian_origin.Forward(
-      nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, nav_sat_fix_msg.altitude,
-      local_cartesian.x, local_cartesian.y, local_cartesian.z);
-
-    local_cartesian.latitude = nav_sat_fix_msg.latitude;
-    local_cartesian.longitude = nav_sat_fix_msg.longitude;
-    local_cartesian.altitude = nav_sat_fix_msg.altitude;
-  } catch (const GeographicLib::GeographicErr & err) {
-    RCLCPP_ERROR_STREAM(logger, "Failed to convert NavSatFix to LocalCartesian" << err.what());
-  }
-  return local_cartesian;
-}
 GNSSStat NavSatFix2UTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const rclcpp::Logger & logger,
-  int height_system)
+  const std::string & target_vertical_datum)
 {
   GNSSStat utm;
-  utm.coordinate_system = CoordinateSystem::UTM;
 
   try {
     GeographicLib::UTMUPS::Forward(
       nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, utm.zone, utm.east_north_up, utm.x,
       utm.y);
-    if (height_system == 0) {
-      utm.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
-    } else {
-      utm.z = nav_sat_fix_msg.altitude;
-    }
+    utm.z = geography_utils::convert_height(
+      nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, "WGS84",
+      target_vertical_datum);
     utm.latitude = nav_sat_fix_msg.latitude;
     utm.longitude = nav_sat_fix_msg.longitude;
     utm.altitude = nav_sat_fix_msg.altitude;
@@ -103,24 +62,23 @@ GNSSStat NavSatFix2UTM(
   }
   return utm;
 }
+
 GNSSStat NavSatFix2LocalCartesianUTM(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg,
-  sensor_msgs::msg::NavSatFix nav_sat_fix_origin, const rclcpp::Logger & logger, int height_system)
+  const geographic_msgs::msg::GeoPoint geo_point_origin, const rclcpp::Logger & logger,
+  const std::string & target_vertical_datum)
 {
   GNSSStat utm_local;
-  utm_local.coordinate_system = CoordinateSystem::UTM;
   try {
     // origin of the local coordinate system in global frame
     GNSSStat utm_origin;
-    utm_origin.coordinate_system = CoordinateSystem::UTM;
     GeographicLib::UTMUPS::Forward(
-      nav_sat_fix_origin.latitude, nav_sat_fix_origin.longitude, utm_origin.zone,
+      geo_point_origin.latitude, geo_point_origin.longitude, utm_origin.zone,
       utm_origin.east_north_up, utm_origin.x, utm_origin.y);
-    if (height_system == 0) {
-      utm_origin.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_origin, logger);
-    } else {
-      utm_origin.z = nav_sat_fix_origin.altitude;
-    }
+
+    utm_origin.z = geography_utils::convert_height(
+      geo_point_origin.altitude, geo_point_origin.latitude, geo_point_origin.longitude, "WGS84",
+      target_vertical_datum);
 
     // individual coordinates of global coordinate system
     double global_x = 0.0;
@@ -134,24 +92,23 @@ GNSSStat NavSatFix2LocalCartesianUTM(
     // individual coordinates of local coordinate system
     utm_local.x = global_x - utm_origin.x;
     utm_local.y = global_y - utm_origin.y;
-    if (height_system == 0) {
-      utm_local.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger) - utm_origin.z;
-    } else {
-      utm_local.z = nav_sat_fix_msg.altitude - utm_origin.z;
-    }
+    utm_local.z = geography_utils::convert_height(
+                    nav_sat_fix_msg.altitude, nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude,
+                    "WGS84", target_vertical_datum) -
+                  utm_origin.z;
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(
       logger, "Failed to convert from LLH to UTM in local coordinates" << err.what());
   }
   return utm_local;
 }
+
 GNSSStat UTM2MGRS(
   const GNSSStat & utm, const MGRSPrecision & precision, const rclcpp::Logger & logger)
 {
   constexpr int GZD_ID_size = 5;  // size of header like "53SPU"
 
   GNSSStat mgrs = utm;
-  mgrs.coordinate_system = CoordinateSystem::MGRS;
   try {
     std::string mgrs_code;
     GeographicLib::MGRS::Forward(
@@ -176,27 +133,13 @@ GNSSStat UTM2MGRS(
 
 GNSSStat NavSatFix2MGRS(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const MGRSPrecision & precision,
-  const rclcpp::Logger & logger, int height_system)
+  const rclcpp::Logger & logger, const std::string & vertical_datum)
 {
-  const auto utm = NavSatFix2UTM(nav_sat_fix_msg, logger, height_system);
+  const auto utm = NavSatFix2UTM(nav_sat_fix_msg, logger, vertical_datum);
   const auto mgrs = UTM2MGRS(utm, precision, logger);
   return mgrs;
 }
 
-GNSSStat NavSatFix2PLANE(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const int & plane_zone,
-  const rclcpp::Logger & logger)
-{
-  GNSSStat plane;
-  plane.coordinate_system = CoordinateSystem::PLANE;
-  geo_pos_conv geo;
-  geo.set_plane(plane_zone);
-  geo.llh_to_xyz(nav_sat_fix_msg.latitude, nav_sat_fix_msg.longitude, nav_sat_fix_msg.altitude);
-  plane.x = geo.y();
-  plane.y = geo.x();
-  plane.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
-  return plane;
-}
 }  // namespace gnss_poser
 
 #endif  // GNSS_POSER__CONVERT_HPP_
