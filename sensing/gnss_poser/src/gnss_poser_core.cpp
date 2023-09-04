@@ -102,7 +102,7 @@ void GNSSPoser::callbackNavSatFix(
   gps_point.altitude = nav_sat_fix_msg_ptr->altitude;
   geometry_msgs::msg::Point position = geography_utils::project_forward(gps_point, projector_info_);
   position.z = geography_utils::convert_height(
-    gps_point.altitude, gps_point.latitude, gps_point.longitude, "WGS84",
+    gps_point.altitude, gps_point.latitude, gps_point.longitude, MapProjectorInfo::Message::WGS84,
     projector_info_.vertical_datum);
 
   geometry_msgs::msg::Pose gnss_antenna_pose{};

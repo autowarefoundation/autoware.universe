@@ -151,7 +151,7 @@ void VehicleNode::publish_kinematics()
     vehicle_kinematics.geographic_pose.position.longitude = projected_gps_point.longitude;
     vehicle_kinematics.geographic_pose.position.altitude = geography_utils::convert_height(
       projected_gps_point.altitude, projected_gps_point.latitude, projected_gps_point.longitude,
-      map_projector_info_->vertical_datum, "WGS84");
+      map_projector_info_->vertical_datum, MapProjectorInfo::WGS84);
   } else {
     vehicle_kinematics.geographic_pose.position.latitude = std::numeric_limits<double>::quiet_NaN();
     vehicle_kinematics.geographic_pose.position.longitude =
