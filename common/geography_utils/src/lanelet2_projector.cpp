@@ -48,7 +48,6 @@ std::unique_ptr<lanelet::Projector> get_lanelet2_projector(const MapProjectorInf
     const std::string error_msg = "Invalid map projector type: " + projector_info.projector_type +
                                   ". Currently supported types: MGRS, and LocalCartesianUTM";
     throw std::invalid_argument(error_msg);
-
   }
 }
 

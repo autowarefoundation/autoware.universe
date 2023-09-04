@@ -49,7 +49,8 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string & fi
 
   } else {
     throw std::runtime_error(
-      "Invalid map projector type. Currently supported types: MGRS, LocalCartesianUTM, TransverseMercator, and local");
+      "Invalid map projector type. Currently supported types: MGRS, LocalCartesianUTM, "
+      "TransverseMercator, and local");
   }
   return msg;
 }
