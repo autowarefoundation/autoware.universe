@@ -14,6 +14,7 @@
 
 #include "imu_corrector_core.hpp"
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <algorithm>
 
 std::array<double, 9> transformCovariance(const std::array<double, 9> & cov)
