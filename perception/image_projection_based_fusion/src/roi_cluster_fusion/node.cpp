@@ -172,7 +172,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     int index = 0;
     double max_iou = 0.0;
     bool is_roi_label_known =
-      feature_obj.object.classification.front().label == ObjectClassification::UNKNOWN;
+      feature_obj.object.classification.front().label != ObjectClassification::UNKNOWN;
     for (const auto & cluster_map : m_cluster_roi) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
       if (use_iou_) {
