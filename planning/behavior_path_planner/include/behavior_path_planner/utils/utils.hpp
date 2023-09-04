@@ -165,6 +165,16 @@ double getDistanceBetweenPredictedPathAndObject(
   const double end_time, const double resolution);
 
 /**
+ * @brief Check collision between ego path footprints with extra longitudinal stopping margin and
+ * objects.
+ * @return Has collision or not
+ */
+bool checkCollisionWithExtraStoppingMargin(
+  const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects,
+  const double base_to_front, const double base_to_rear, const double width,
+  const double maximum_deceleration, const double margin, const double max_stopping_margin);
+
+/**
  * @brief Check collision between ego path footprints and objects.
  * @return Has collision or not
  */
@@ -399,6 +409,9 @@ void makeBoundLongitudinallyMonotonic(
 std::optional<lanelet::Polygon3d> getPolygonByPoint(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstPoint3d & point,
   const std::string & polygon_name);
+
+lanelet::ConstLanelets combineLanelets(
+  const lanelet::ConstLanelets & base_lanes, const lanelet::ConstLanelets & added_lanes);
 }  // namespace behavior_path_planner::utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_

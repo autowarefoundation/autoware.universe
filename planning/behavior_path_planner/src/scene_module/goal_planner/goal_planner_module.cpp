@@ -273,10 +273,6 @@ bool GoalPlannerModule::isExecutionRequested() const
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
   const Pose & goal_pose = route_handler->getGoalPose();
 
-  // if goal is shoulder lane, allow goal modification
-  allow_goal_modification_ =
-    route_handler->isAllowedGoalModification() || checkOriginalGoalIsInShoulder();
-
   // check if goal_pose is in current_lanes.
   lanelet::ConstLanelet current_lane{};
   const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
@@ -553,7 +549,9 @@ void GoalPlannerModule::selectSafePullOverPath()
     }
 
     // check if path is valid and safe
-    if (!hasEnoughDistance(pull_over_path) || checkCollision(pull_over_path.getParkingPath())) {
+    if (
+      !hasEnoughDistance(pull_over_path) ||
+      checkCollision(utils::resamplePathWithSpline(pull_over_path.getParkingPath(), 0.5))) {
       continue;
     }
 
@@ -1169,9 +1167,14 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
   }
 
   if (parameters_->use_object_recognition) {
-    if (utils::checkCollisionBetweenPathFootprintsAndObjects(
-          vehicle_footprint_, path, *(planner_data_->dynamic_object),
-          parameters_->object_recognition_collision_check_margin)) {
+    const auto common_parameters = planner_data_->parameters;
+    const double base_link2front = common_parameters.base_link2front;
+    const double base_link2rear = common_parameters.base_link2rear;
+    const double vehicle_width = common_parameters.vehicle_width;
+    if (utils::path_safety_checker::checkCollisionWithExtraStoppingMargin(
+          path, *(planner_data_->dynamic_object), base_link2front, base_link2rear, vehicle_width,
+          parameters_->maximum_deceleration, parameters_->object_recognition_collision_check_margin,
+          parameters_->object_recognition_collision_check_max_extra_stopping_margin)) {
       return true;
     }
   }
