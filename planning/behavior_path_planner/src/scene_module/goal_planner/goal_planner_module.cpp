@@ -1490,8 +1490,9 @@ bool GoalPlannerModule::isSafePath() const
   const auto current_lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_path_length, std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
-  const auto pull_over_lanes =
-    goal_planner_utils::getPullOverLanes(*(route_handler), left_side_parking_);
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    *route_handler, left_side_parking_, parameters_->backward_goal_search_length,
+    parameters_->forward_goal_search_length);
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_over_path.points);
   const auto & common_param = planner_data_->parameters;
   const std::pair<double, double> terminal_velocity_and_accel =
