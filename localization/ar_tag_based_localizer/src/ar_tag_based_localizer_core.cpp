@@ -69,7 +69,7 @@ bool ArTagBasedLocalizer::setup()
   */
   marker_size_ = static_cast<float>(this->declare_parameter<double>("marker_size"));
   target_tag_ids_ = this->declare_parameter<std::vector<std::string>>("target_tag_ids");
-  covariance_ = this->declare_parameter<std::vector<double>>("covariance");
+  base_covariance_ = this->declare_parameter<std::vector<double>>("base_covariance");
   distance_threshold_squared_ = std::pow(this->declare_parameter<double>("distance_threshold"), 2);
   std::string detection_mode = this->declare_parameter<std::string>("detection_mode");
   float min_marker_size = static_cast<float>(this->declare_parameter<double>("min_marker_size"));
@@ -274,7 +274,7 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
   const double scale = distance / 5;
   const double coeff = std::max(1.0, std::pow(scale, 3));
   for (int i = 0; i < 36; i++) {
-    pose_with_covariance_stamped.pose.covariance[i] = coeff * covariance_[i];
+    pose_with_covariance_stamped.pose.covariance[i] = coeff * base_covariance_[i];
   }
 
   pose_pub_->publish(pose_with_covariance_stamped);

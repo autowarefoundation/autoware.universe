@@ -75,7 +75,7 @@ private:
   // Parameters
   float marker_size_{};
   std::vector<std::string> target_tag_ids_;
-  std::vector<double> covariance_;
+  std::vector<double> base_covariance_;
   double distance_threshold_squared_{};
 
   // tf
