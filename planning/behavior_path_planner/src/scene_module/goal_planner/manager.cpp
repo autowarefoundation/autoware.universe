@@ -32,7 +32,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 {
   GoalPlannerParameters p;
 
-  std::string base_ns = "goal_planner.";
+  const std::string base_ns = "goal_planner.";
   // general params
   {
     p.minimum_request_length = node->declare_parameter<double>(base_ns + "minimum_request_length");
@@ -43,7 +43,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   // goal search
   {
-    std::string ns = base_ns + "goal_search.";
+    const std::string ns = base_ns + "goal_search.";
     p.search_priority = node->declare_parameter<std::string>(ns + "search_priority");
     p.forward_goal_search_length =
       node->declare_parameter<double>(ns + "forward_goal_search_length");
@@ -72,7 +72,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   // occupancy grid map
   {
-    std::string ns = base_ns + "occupancy_grid.";
+    const std::string ns = base_ns + "occupancy_grid.";
     p.use_occupancy_grid = node->declare_parameter<bool>(ns + "use_occupancy_grid");
     p.use_occupancy_grid_for_longitudinal_margin =
       node->declare_parameter<bool>(ns + "use_occupancy_grid_for_longitudinal_margin");
@@ -84,7 +84,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   // object recognition
   {
-    std::string ns = base_ns + "object_recognition.";
+    const std::string ns = base_ns + "object_recognition.";
     p.use_object_recognition = node->declare_parameter<bool>(ns + "use_object_recognition");
     p.object_recognition_collision_check_margin =
       node->declare_parameter<double>(ns + "object_recognition_collision_check_margin");
@@ -95,7 +95,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   // pull over general params
   {
-    std::string ns = base_ns + "pull_over.";
+    const std::string ns = base_ns + "pull_over.";
     p.pull_over_velocity = node->declare_parameter<double>(ns + "pull_over_velocity");
     p.pull_over_minimum_velocity =
       node->declare_parameter<double>(ns + "pull_over_minimum_velocity");
@@ -106,7 +106,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   // shift parking
   {
-    std::string ns = base_ns + "pull_over.shift_parking.";
+    const std::string ns = base_ns + "pull_over.shift_parking.";
     p.enable_shift_parking = node->declare_parameter<bool>(ns + "enable_shift_parking");
     p.shift_sampling_num = node->declare_parameter<int>(ns + "shift_sampling_num");
     p.maximum_lateral_jerk = node->declare_parameter<double>(ns + "maximum_lateral_jerk");
@@ -118,7 +118,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   // forward parallel parking forward
   {
-    std::string ns = base_ns + "pull_over.parallel_parking.forward.";
+    const std::string ns = base_ns + "pull_over.parallel_parking.forward.";
     p.enable_arc_forward_parking = node->declare_parameter<bool>(ns + "enable_arc_forward_parking");
     p.parallel_parking_parameters.after_forward_parking_straight_distance =
       node->declare_parameter<double>(ns + "after_forward_parking_straight_distance");
@@ -134,7 +134,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   // forward parallel parking backward
   {
-    std::string ns = base_ns + "pull_over.parallel_parking.backward.";
+    const std::string ns = base_ns + "pull_over.parallel_parking.backward.";
     p.enable_arc_backward_parking =
       node->declare_parameter<bool>(ns + "enable_arc_backward_parking");
     p.parallel_parking_parameters.after_backward_parking_straight_distance =
@@ -151,7 +151,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   // freespace parking general params
   {
-    std::string ns = base_ns + "pull_over.freespace_parking.";
+    const std::string ns = base_ns + "pull_over.freespace_parking.";
     p.enable_freespace_parking = node->declare_parameter<bool>(ns + "enable_freespace_parking");
     p.freespace_parking_algorithm =
       node->declare_parameter<std::string>(ns + "freespace_parking_algorithm");
@@ -174,7 +174,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   //  freespace parking search config
   {
-    std::string ns = base_ns + "pull_over.freespace_parking.search_configs.";
+    const std::string ns = base_ns + "pull_over.freespace_parking.search_configs.";
     p.freespace_parking_common_parameters.theta_size =
       node->declare_parameter<int>(ns + "theta_size");
     p.freespace_parking_common_parameters.angle_goal_range =
@@ -191,14 +191,14 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   //  freespace parking costmap configs
   {
-    std::string ns = base_ns + "pull_over.freespace_parking.costmap_configs.";
+    const std::string ns = base_ns + "pull_over.freespace_parking.costmap_configs.";
     p.freespace_parking_common_parameters.obstacle_threshold =
       node->declare_parameter<int>(ns + "obstacle_threshold");
   }
 
   //  freespace parking astar
   {
-    std::string ns = base_ns + "pull_over.freespace_parking.astar.";
+    const std::string ns = base_ns + "pull_over.freespace_parking.astar.";
     p.astar_parameters.only_behind_solutions =
       node->declare_parameter<bool>(ns + "only_behind_solutions");
     p.astar_parameters.use_back = node->declare_parameter<bool>(ns + "use_back");
@@ -208,7 +208,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   //   freespace parking rrtstar
   {
-    std::string ns = base_ns + "pull_over.freespace_parking.rrtstar.";
+    const std::string ns = base_ns + "pull_over.freespace_parking.rrtstar.";
     p.rrt_star_parameters.enable_update = node->declare_parameter<bool>(ns + "enable_update");
     p.rrt_star_parameters.use_informed_sampling =
       node->declare_parameter<bool>(ns + "use_informed_sampling");
@@ -336,7 +336,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
 
   // debug
   {
-    std::string ns = base_ns + "debug.";
+    const std::string ns = base_ns + "debug.";
     p.print_debug_info = node->declare_parameter<bool>(ns + "print_debug_info");
   }
 
