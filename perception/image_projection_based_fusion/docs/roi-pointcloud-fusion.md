@@ -2,13 +2,12 @@
 
 ## Purpose
 
-The node `roi_pointcloud_fusion` is designed mainly to detected less LiDAR-points small objects by fusing pointcloud with UNKNOWN labeled of Region Of Interests (ROIs) detected by a 2D object detector.
+The node `roi_pointcloud_fusion` is to cluster the pointcloud based on Region Of Interests (ROIs) detected by a 2D object detector, specific for unknown labeled ROI.
 
 ## Inner-workings / Algorithms
 
-- The pointclouds are projected onto image planes and extracted if they are inside the unknown labeled ROIs.
-- Unrelated pointcloud are filtered by distance to origin of camera.
-- Filtered pointcloud are used to estimate the kinematic and polygon shape of unknown objects.
+- The pointclouds are projected onto image planes and extracted as cluster if they are inside the unknown labeled ROIs.
+- Since the cluster might contain unrelated points from background, then a refinement step is added to filter the background pointcloud by distance to camera.
 
 ![roi_pointcloud_fusion_image](./images/roi_pointcloud_fusion.png)
 
@@ -25,11 +24,11 @@ The node `roi_pointcloud_fusion` is designed mainly to detected less LiDAR-point
 
 ### Output
 
-| Name                     | Type                                                  | Description                |
-| ------------------------ | ----------------------------------------------------- | -------------------------- |
-| `output`                 | `sensor_msgs::msg::PointCloud2`                       | labeled cluster pointcloud |
-| `output_objects`         | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects           |
-| `~/debug/image_raw[0-7]` | `sensor_msgs::msg::Image`                             | images for visualization   |
+| Name                     | Type                                                     | Description                               |
+| ------------------------ | -------------------------------------------------------- | ----------------------------------------- |
+| `output`                 | `sensor_msgs::msg::PointCloud2`                          | output pointcloud as default of interface |
+| `output_clusters`        | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | output clusters                           |
+| `~/debug/image_raw[0-7]` | `sensor_msgs::msg::Image`                                | images for visualization                  |
 
 ## Parameters
 
@@ -43,15 +42,14 @@ The node `roi_pointcloud_fusion` is designed mainly to detected less LiDAR-point
 
 ## Assumptions / Known limits
 
+- Currently, the refinement is only based on distance to camera, the roi based clustering is supposed to work well with small object ROIs. Others criteria for refinement might needed in the future.
+
 <!-- Write assumptions and limitations of your implementation.
 
 Example:
   This algorithm assumes obstacles are not moving, so if they rapidly move after the vehicle started to avoid them, it might collide with them.
   Also, this algorithm doesn't care about blind spots. In general, since too close obstacles aren't visible due to the sensing performance limit, please take enough margin to obstacles.
 -->
-
-- This node current only focus on small UNKNOWN fusion such as traffic cones and supposes to fit output objects shape to POLYGON only.
-- Error detection might be happened if noise points cloud appeared before the objects and inside the ROIs.
 
 ## (Optional) Error detection and handling
 
