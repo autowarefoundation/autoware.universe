@@ -341,6 +341,7 @@ bool GoalPlannerModule::isExecutionRequested() const
 
 bool GoalPlannerModule::isExecutionReady() const
 {
+  // TODO(Sugahara): should check safe or not but in the current flow, it is not possible.
   if (status_.pull_over_path->partial_paths.empty()) {
     return true;
   }

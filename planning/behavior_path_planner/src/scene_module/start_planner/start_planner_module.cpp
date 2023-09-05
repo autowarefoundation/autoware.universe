@@ -951,8 +951,7 @@ void StartPlannerModule::updateSafetyCheckTargetObjectsData(
 
 bool StartPlannerModule::isSafePath() const
 {
-  // TODO(Sugahara): should safety check for backward path later
-  // back_finishedでtrueなら前進、falseなら後退中
+  // TODO(Sugahara): should safety check for backward path
 
   const auto & pull_out_path = getCurrentPath();
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
