@@ -267,8 +267,15 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
   pose_with_covariance_stamped.header.stamp = msg.header.stamp;
   pose_with_covariance_stamped.header.frame_id = "map";
   pose_with_covariance_stamped.pose.pose = tf2::toMsg(map_to_base_link);
-  std::copy(
-    covariance_.begin(), covariance_.end(), pose_with_covariance_stamped.pose.covariance.begin());
+
+  // ~5[m]: base_covariance
+  // 5~[m]: scaling base_covariance by std::pow(distance/5, 3)
+  const double distance = std::sqrt(distance_squared);
+  const double scale = distance / 5;
+  const double coeff = std::max(1.0, std::pow(scale, 3));
+  for (int i = 0; i < 36; i++) {
+    pose_with_covariance_stamped.pose.covariance[i] = coeff * covariance_[i];
+  }
 
   pose_pub_->publish(pose_with_covariance_stamped);
 }
