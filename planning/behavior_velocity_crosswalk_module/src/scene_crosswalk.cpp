@@ -747,6 +747,8 @@ Polygon2d CrosswalkModule::getAttentionArea(
       break;
     }
 
+    const auto & p_ego_front = sparse_resample_path.points.at(j).point.pose;
+    const auto & p_ego_back = sparse_resample_path.points.at(j + 1).point.pose;
     const auto ego_one_step_polygon = createOneStepPolygon(p_ego_front, p_ego_back, ego_polygon);
 
     debug_data_.ego_polygons.push_back(toGeometryPointVector(ego_one_step_polygon, ego_pos.z));
