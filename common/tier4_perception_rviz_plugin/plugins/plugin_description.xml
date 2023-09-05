@@ -23,4 +23,8 @@
          type="rviz_plugins::DeleteAllObjectsTool"
          base_class_type="rviz_common::Tool">
   </class>
+  <class name="rviz_plugins/cycleInitialPoseTool"
+         type="rviz_plugins::cycleInitialPoseTool"
+         base_class_type="rviz_common::Tool">
+  </class>
 </library>
