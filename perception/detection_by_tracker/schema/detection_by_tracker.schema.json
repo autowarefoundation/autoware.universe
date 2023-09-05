@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Detection by Tracker Node",
+  "type": "object",
+  "definitions": {
+    "detection_by_tracker": {
+      "type": "object",
+      "properties": {
+        "ignore_unknown_tracker": {
+          "type": "boolean",
+          "description": "Indicates whether to ignore tracked UNKNOWN objects.",
+          "default": true
+        }
+      },
+      "required": ["ignore_unknown_tracker"]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/detection_by_tracker"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
