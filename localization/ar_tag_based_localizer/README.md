@@ -59,7 +59,7 @@ ros2 launch autoware_launch ... \
 
 #### [Sample rosbag and map (AWSIM data)](https://drive.google.com/file/d/1uMVwQQFcfs8JOqfoA1FqfH_fLPwQ71jK/view)
 
-This data is simulated data created by [AWSIM](https://tier4.github.io/AWSIM/). AR tags are placed in a city that mimics Nishi-Shinjuku in Japan.
+This data is simulated data created by [AWSIM](https://tier4.github.io/AWSIM/).
 Essentially, AR tag-based self-localization is not intended for such public road driving, but for driving in a smaller area, so the max driving speed is set at 15 km/h.
 
 It is a known problem that the timing of when each AR tag begins to be detected can cause significant changes in estimation.
