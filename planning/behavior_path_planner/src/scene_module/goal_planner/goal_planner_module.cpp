@@ -53,10 +53,12 @@ GoalPlannerModule::GoalPlannerModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<GoalPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{parameters}
+: SceneModuleInterface{name, node, rtc_interface_ptr_map},
+  parameters_{parameters},
+  vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
   LaneDepartureChecker lane_departure_checker{};
-  lane_departure_checker.setVehicleInfo(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
+  lane_departure_checker.setVehicleInfo(vehicle_info_);
 
   occupancy_grid_map_ = std::make_shared<OccupancyGridBasedCollisionDetector>();
 
@@ -307,10 +309,9 @@ bool GoalPlannerModule::isExecutionRequested() const
   // if goal arc coordinates can be calculated, check if goal is in request_length
   const double self_to_goal_arc_length =
     utils::getSignedDistance(current_pose, goal_pose, current_lanes);
-  const double request_length =
-    goal_planner_utils::isAllowedGoalModification(route_handler, left_side_parking_)
-      ? calcModuleRequestLength()
-      : parameters_->minimum_request_length;
+  const double request_length = goal_planner_utils::isAllowedGoalModification(route_handler)
+                                  ? calcModuleRequestLength()
+                                  : parameters_->minimum_request_length;
   if (self_to_goal_arc_length < 0.0 || self_to_goal_arc_length > request_length) {
     // if current position is far from goal or behind goal, do not execute goal_planner
     return false;
@@ -319,7 +320,7 @@ bool GoalPlannerModule::isExecutionRequested() const
   // if goal modification is not allowed
   // 1) goal_pose is in current_lanes, plan path to the original fixed goal
   // 2) goal_pose is NOT in current_lanes, do not execute goal_planner
-  if (!goal_planner_utils::isAllowedGoalModification(route_handler, left_side_parking_)) {
+  if (!goal_planner_utils::isAllowedGoalModification(route_handler)) {
     return goal_is_in_current_lanes;
   }
 
@@ -358,6 +359,10 @@ double GoalPlannerModule::calcModuleRequestLength() const
 
 Pose GoalPlannerModule::calcRefinedGoal(const Pose & goal_pose) const
 {
+  const double vehicle_width = planner_data_->parameters.vehicle_width;
+  const double base_link2front = planner_data_->parameters.base_link2front;
+  const double base_link2rear = planner_data_->parameters.base_link2rear;
+
   const lanelet::ConstLanelets pull_over_lanes =
     goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
 
@@ -389,15 +394,18 @@ Pose GoalPlannerModule::calcRefinedGoal(const Pose & goal_pose) const
     center_pose.orientation = tf2::toMsg(tf_quat);
   }
 
-  const auto distance_from_left_bound = utils::getSignedDistanceFromBoundary(
-    pull_over_lanes, vehicle_footprint_, center_pose, left_side_parking_);
-  if (!distance_from_left_bound) {
+  const auto distance_from_bound = utils::getSignedDistanceFromBoundary(
+    pull_over_lanes, vehicle_width, base_link2front, base_link2rear, center_pose,
+    left_side_parking_);
+  if (!distance_from_bound) {
     RCLCPP_ERROR(getLogger(), "fail to calculate refined goal");
     return goal_pose;
   }
 
+  const double sign = left_side_parking_ ? -1.0 : 1.0;
   const double offset_from_center_line =
-    distance_from_left_bound.value() + parameters_->margin_from_boundary;
+    sign * (distance_from_bound.value() + parameters_->margin_from_boundary);
+
   const auto refined_goal_pose = calcOffsetPose(center_pose, 0, -offset_from_center_line, 0);
 
   return refined_goal_pose;
@@ -407,8 +415,7 @@ ModuleStatus GoalPlannerModule::updateState()
 {
   // finish module only when the goal is fixed
   if (
-    !goal_planner_utils::isAllowedGoalModification(
-      planner_data_->route_handler, left_side_parking_) &&
+    !goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler) &&
     hasFinishedGoalPlanner()) {
     return ModuleStatus::SUCCESS;
   }
@@ -506,7 +513,7 @@ void GoalPlannerModule::generateGoalCandidates()
   // calculate goal candidates
   const Pose goal_pose = route_handler->getGoalPose();
   refined_goal_pose_ = calcRefinedGoal(goal_pose);
-  if (goal_planner_utils::isAllowedGoalModification(route_handler, left_side_parking_)) {
+  if (goal_planner_utils::isAllowedGoalModification(route_handler)) {
     goal_searcher_->setPlannerData(planner_data_);
     goal_candidates_ = goal_searcher_->search(refined_goal_pose_);
   } else {
@@ -526,8 +533,7 @@ BehaviorModuleOutput GoalPlannerModule::plan()
 
   path_reference_ = getPreviousModuleOutput().reference_path;
 
-  if (goal_planner_utils::isAllowedGoalModification(
-        planner_data_->route_handler, left_side_parking_)) {
+  if (goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return planWithGoalModification();
   } else {
     fixed_goal_planner_->setPreviousModuleOutput(getPreviousModuleOutput());
@@ -851,8 +857,7 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
 
   path_reference_ = getPreviousModuleOutput().reference_path;
 
-  if (goal_planner_utils::isAllowedGoalModification(
-        planner_data_->route_handler, left_side_parking_)) {
+  if (goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return planWaitingApprovalWithGoalModification();
   } else {
     fixed_goal_planner_->setPreviousModuleOutput(getPreviousModuleOutput());
@@ -1455,9 +1460,7 @@ void GoalPlannerModule::setDebugData()
     }
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
-
-  if (goal_planner_utils::isAllowedGoalModification(
-        planner_data_->route_handler, left_side_parking_)) {
+  if (goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
     // Visualize pull over areas
     const auto color = status_.has_decided_path ? createMarkerColor(1.0, 1.0, 0.0, 0.999)  // yellow
                                                 : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
