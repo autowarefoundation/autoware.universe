@@ -1,5 +1,5 @@
-#ifndef TOOLS__CYCLE_POSE_HPP_
-#define TOOLS__CYCLE_POSE_HPP_
+#ifndef TOOLS__CYCLE_HPP_
+#define TOOLS__CYCLE_HPP_
 
 #include "interactive_object.hpp"
 
@@ -20,4 +20,4 @@ public:
 
 }  // namespace rviz_plugins
 
-#endif  
+#endif  // TOOLS__CYCLE_HPP_
