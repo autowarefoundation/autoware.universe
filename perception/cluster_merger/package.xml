@@ -3,7 +3,7 @@
 <package format="3">
   <name>cluster_merger</name>
   <version>0.1.0</version>
-  <description>The ROS2 cluster merger package</description>
+  <description>The ROS 2 cluster merger package</description>
   <maintainer email="dai.nguyen@tier4.jp">autoware</maintainer>
   <license>Apache License 2.0</license>
 
