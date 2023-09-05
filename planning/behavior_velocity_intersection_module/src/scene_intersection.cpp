@@ -1013,7 +1013,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       }
       is_peeking_ = true;
       return IntersectionModule::FirstWaitBeforeOcclusion{
-        is_occlusion_cleared, intersection_stop_lines};
+        is_occlusion_cleared_with_margin, intersection_stop_lines};
     }
   } else if (has_collision_with_margin) {
     is_peeking_ = false;
