@@ -62,6 +62,7 @@ lanelet::ConstLanelets getPullOverLanes(
   const Pose goal_pose = route_handler.getOriginalGoalPose();
 
   // Buffer to get enough lanes in front of the goal, need much longer than the pull over distance.
+  // In the case of loop lanes, it may not be possible to extend the lane forward.
   // todo(kosuek55): automatically calculates this distance.
   const double backward_distance_with_buffer = backward_distance + 100;
 
