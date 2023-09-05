@@ -1004,7 +1004,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
           before_entry_attention_area_state_machine_.setState(StateMachine::State::GO);
         }
         return IntersectionModule::PeekingTowardOcclusion{
-          is_occlusion_cleared, false, intersection_stop_lines};
+          is_occlusion_cleared_with_margin, false, intersection_stop_lines};
       }
     } else {
       if (is_stopped_at_default_stop_line && approached_default_stop_line) {
