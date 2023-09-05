@@ -194,22 +194,6 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
 
   std::vector<SceneModulePtr> request_modules{};
 
-  /**
-   * check whether it is possible to push back more modules to approved modules.
-   */
-  {
-    const auto find_block_module = [this](const auto & m) {
-      return !getManager(m)->isSimultaneousExecutableAsApprovedModule();
-    };
-
-    const auto itr =
-      std::find_if(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), find_block_module);
-
-    if (itr != approved_module_ptrs_.end()) {
-      return {};
-    }
-  }
-
   const auto toc = [this](const auto & name) {
     processing_time_.at(name) += stop_watch_.toc(name, true);
   };
@@ -218,14 +202,62 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
     stop_watch_.tic(manager_ptr->name());
 
     /**
-     * don't launch candidate module if approved modules already exist.
+     * determine the execution capability of modules based on existing approved modules.
      */
-    if (!approved_module_ptrs_.empty()) {
-      if (!manager_ptr->isSimultaneousExecutableAsApprovedModule()) {
-        toc(manager_ptr->name());
+    // Condition 1: always executable module can be added regardless of the existence of other
+    // modules, so skip checking the existence of other modules.
+    // in other cases, need to check the existence of other modules and which module can be added.
+    const bool has_non_always_executable_module = std::any_of(
+      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
+      [this](const auto & m) { return !getManager(m)->isAlwaysExecutableModule(); });
+    if (!manager_ptr->isAlwaysExecutableModule() && has_non_always_executable_module) {
+      // pairs of find_block_module and is_executable
+      std::vector<std::pair<std::function<bool(const SceneModulePtr &)>, std::function<bool()>>>
+        conditions;
+
+      // Condition 2: do not add modules that are neither always nor simultaneous executable
+      // if there exists at least one approved module that is simultaneous but not always
+      // executable. (only modules that are either always executable or simultaneous executable can
+      // be added)
+      conditions.push_back(
+        {[&](const SceneModulePtr & m) {
+           return !getManager(m)->isAlwaysExecutableModule() &&
+                  getManager(m)->isSimultaneousExecutableAsApprovedModule();
+         },
+         [&]() { return manager_ptr->isSimultaneousExecutableAsApprovedModule(); }});
+
+      // Condition 3: do not add modules that are not always executable if there exists
+      // at least one approved module that is neither always nor simultaneous executable.
+      // (only modules that are always executable can be added)
+      conditions.push_back(
+        {[&](const SceneModulePtr & m) {
+           return !getManager(m)->isAlwaysExecutableModule() &&
+                  !getManager(m)->isSimultaneousExecutableAsApprovedModule();
+         },
+         [&]() { return false; }});
+
+      bool skip_module = false;
+      for (const auto & condition : conditions) {
+        const auto & find_block_module = condition.first;
+        const auto & is_executable = condition.second;
+
+        const auto itr = std::find_if(
+          approved_module_ptrs_.begin(), approved_module_ptrs_.end(), find_block_module);
+
+        if (itr != approved_module_ptrs_.end() && !is_executable()) {
+          toc(manager_ptr->name());
+          skip_module = true;
+          continue;
+        }
+      }
+      if (skip_module) {
         continue;
       }
     }
+    // else{
+    //   Condition 4: if none of the above conditions are met, any module can be added.
+    //   (when the approved modules are either empty or consist only of always executable modules.)
+    // }
 
     /**
      * launch new candidate module.
@@ -347,20 +379,58 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
    * remove non-executable modules.
    */
   for (const auto & module_ptr : sorted_request_modules) {
-    if (!getManager(module_ptr)->isSimultaneousExecutableAsCandidateModule()) {
-      if (executable_modules.empty()) {
+    // Condition 1: always executable module can be added regardless of the existence of other
+    // modules.
+    if (getManager(module_ptr)->isAlwaysExecutableModule()) {
+      executable_modules.push_back(module_ptr);
+      continue;
+    }
+
+    // Condition 4: If the executable modules are either empty or consist only of always executable
+    // modules, any module can be added.
+    const bool has_non_always_executable_module = std::any_of(
+      executable_modules.begin(), executable_modules.end(),
+      [this](const auto & m) { return !getManager(m)->isAlwaysExecutableModule(); });
+    if (!has_non_always_executable_module) {
+      executable_modules.push_back(module_ptr);
+      continue;
+    }
+
+    // pairs of find_block_module and is_executable
+    std::vector<std::pair<std::function<bool(const SceneModulePtr &)>, std::function<bool()>>>
+      conditions;
+
+    // Condition 3: Only modules that are always executable can be added
+    // if there exists at least one executable module that is neither always nor simultaneous
+    // executable.
+    conditions.push_back(
+      {[this](const SceneModulePtr & m) {
+         return !getManager(m)->isAlwaysExecutableModule() &&
+                !getManager(m)->isSimultaneousExecutableAsCandidateModule();
+       },
+       [&]() { return false; }});
+
+    // Condition 2: Only modules that are either always executable or simultaneous executable can be
+    // added if there exists at least one executable module that is simultaneous but not always
+    // executable.
+    conditions.push_back(
+      {[this](const SceneModulePtr & m) {
+         return !getManager(m)->isAlwaysExecutableModule() &&
+                getManager(m)->isSimultaneousExecutableAsCandidateModule();
+       },
+       [&]() { return getManager(module_ptr)->isSimultaneousExecutableAsCandidateModule(); }});
+
+    for (const auto & condition : conditions) {
+      const auto & find_block_module = condition.first;
+      const auto & is_executable = condition.second;
+
+      const auto itr =
+        std::find_if(executable_modules.begin(), executable_modules.end(), find_block_module);
+
+      if (itr != executable_modules.end() && is_executable()) {
         executable_modules.push_back(module_ptr);
         break;
       }
-    }
-
-    const auto itr =
-      std::find_if(executable_modules.begin(), executable_modules.end(), [this](const auto & m) {
-        return !getManager(m)->isSimultaneousExecutableAsCandidateModule();
-      });
-
-    if (itr == executable_modules.end()) {
-      executable_modules.push_back(module_ptr);
     }
   }
 
@@ -456,11 +526,32 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
     return output;
   }
 
+  const auto move_to_end = [](auto & modules, const auto & cond) {
+    auto itr = modules.begin();
+    while (itr != modules.end()) {
+      const auto satisfied_exit_cond =
+        std::all_of(itr, modules.end(), [&cond](const auto & m) { return cond(m); });
+
+      if (satisfied_exit_cond) {
+        return;
+      }
+
+      if (cond(*itr)) {
+        auto tmp = std::move(*itr);
+        itr = modules.erase(itr);
+        modules.insert(modules.end(), std::move(tmp));
+      } else {
+        itr++;
+      }
+    }
+  };
+
   // move modules whose keep last flag is true to end of the approved_module_ptrs_.
   {
-    std::sort(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [this](auto a, auto b) {
-      return !getManager(a)->isKeepLast() && getManager(b)->isKeepLast();
-    });
+    const auto keep_last_module_cond = [this](const auto & m) {
+      return getManager(m)->isKeepLast();
+    };
+    move_to_end(approved_module_ptrs_, keep_last_module_cond);
   }
 
   // lock approved modules besides last one
@@ -571,24 +662,28 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
    * remove success module immediately. if lane change module has succeeded, update root lanelet.
    */
   {
-    const auto success_module_itr = std::partition(
-      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
-      [](const auto & m) { return m->getCurrentStatus() != ModuleStatus::SUCCESS; });
+    const auto success_module_cond = [](const auto & m) {
+      return m->getCurrentStatus() == ModuleStatus::SUCCESS;
+    };
+    move_to_end(approved_module_ptrs_, success_module_cond);
+
+    const auto itr =
+      std::find_if(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), success_module_cond);
 
     const auto success_lane_change = std::any_of(
-      success_module_itr, approved_module_ptrs_.end(),
+      itr, approved_module_ptrs_.end(),
       [](const auto & m) { return m->name().find("lane_change") != std::string::npos; });
 
     if (success_lane_change) {
       root_lanelet_ = updateRootLanelet(data);
     }
 
-    std::for_each(success_module_itr, approved_module_ptrs_.end(), [&](auto & m) {
+    std::for_each(itr, approved_module_ptrs_.end(), [&](auto & m) {
       debug_info_.emplace_back(m, Action::DELETE, "From Approved");
       deleteExpiredModules(m);
     });
 
-    approved_module_ptrs_.erase(success_module_itr, approved_module_ptrs_.end());
+    approved_module_ptrs_.erase(itr, approved_module_ptrs_.end());
 
     std::for_each(
       manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->updateObserver(); });

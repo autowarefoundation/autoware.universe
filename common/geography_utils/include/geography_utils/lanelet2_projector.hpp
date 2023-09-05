@@ -12,22 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GEOGRAPHY_UTILS__HEIGHT_HPP_
-#define GEOGRAPHY_UTILS__HEIGHT_HPP_
+#ifndef GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_
+#define GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_
 
-#include <string>
+#include <tier4_map_msgs/msg/map_projector_info.hpp>
+
+#include <lanelet2_io/Projection.h>
+
+#include <memory>
 
 namespace geography_utils
 {
+using MapProjectorInfo = tier4_map_msgs::msg::MapProjectorInfo;
 
-typedef double (*HeightConversionFunction)(
-  const double height, const double latitude, const double longitude);
-double convert_wgs84_to_egm2008(const double height, const double latitude, const double longitude);
-double convert_egm2008_to_wgs84(const double height, const double latitude, const double longitude);
-double convert_height(
-  const double height, const double latitude, const double longitude,
-  const std::string & source_vertical_datum, const std::string & target_vertical_datum);
+std::unique_ptr<lanelet::Projector> get_lanelet2_projector(const MapProjectorInfo & projector_info);
 
 }  // namespace geography_utils
 
-#endif  // GEOGRAPHY_UTILS__HEIGHT_HPP_
+#endif  // GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_
