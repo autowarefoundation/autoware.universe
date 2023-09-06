@@ -15,10 +15,6 @@ find_package(PCL REQUIRED COMPONENTS common kdtree)
 find_package(Sophus REQUIRED)
 
 # ===================================================
-# Download DNN model
-include(download.cmake)
-
-# ===================================================
 # Clear ${PYTHON_EXECUTABLE} defined by mrt_cmake_module so that rosidl_generate_interfaces can look for it properly
 unset(PYTHON_EXECUTABLE)
 message(STATUS "PYTHON_EXECUTABLE: ${PYTHON_EXECUTABLE}")
@@ -62,4 +58,4 @@ install(PROGRAMS
 )
 
 # ===================================================
-ament_auto_package(INSTALL_TO_SHARE config data launch)
+ament_auto_package(INSTALL_TO_SHARE config launch)
