@@ -49,16 +49,16 @@ boost::optional<PullOverPath> ShiftPullOver::plan(const Pose & goal_pose)
   const auto road_lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_search_length, forward_search_length,
     /*forward_only_in_route*/ false);
-  const auto shoulder_lanes =
-    goal_planner_utils::getPullOverLanes(*route_handler, left_side_parking_);
-  if (road_lanes.empty() || shoulder_lanes.empty()) {
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    *route_handler, left_side_parking_, backward_search_length, forward_search_length);
+  if (road_lanes.empty() || pull_over_lanes.empty()) {
     return {};
   }
 
   // find safe one from paths with different jerk
   for (double lateral_jerk = min_jerk; lateral_jerk <= max_jerk; lateral_jerk += jerk_resolution) {
     const auto pull_over_path =
-      generatePullOverPath(road_lanes, shoulder_lanes, goal_pose, lateral_jerk);
+      generatePullOverPath(road_lanes, pull_over_lanes, goal_pose, lateral_jerk);
     if (!pull_over_path) continue;
     return *pull_over_path;
   }
@@ -204,6 +204,7 @@ boost::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   PullOverPath pull_over_path{};
   pull_over_path.type = getPlannerType();
   pull_over_path.partial_paths.push_back(shifted_path.path);
+  pull_over_path.pairs_terminal_velocity_and_accel.push_back(std::make_pair(pull_over_velocity, 0));
   pull_over_path.start_pose = path_shifter.getShiftLines().front().start;
   pull_over_path.end_pose = path_shifter.getShiftLines().front().end;
   pull_over_path.debug_poses.push_back(shift_end_pose_road_lane);

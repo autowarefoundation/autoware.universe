@@ -19,13 +19,18 @@
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 
+#include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::utils::path_safety_checker
 {
 
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::Twist;
 using tier4_autoware_utils::Polygon2d;
 
 struct PoseWithVelocity
@@ -123,6 +128,8 @@ struct RSSparams
   double longitudinal_distance_min_threshold{
     0.0};                                        ///< Minimum threshold for longitudinal distance.
   double longitudinal_velocity_delta_time{0.0};  ///< Delta time for longitudinal velocity.
+  double front_vehicle_deceleration;             ///< brake parameter
+  double rear_vehicle_deceleration;              ///< brake parameter
 };
 
 /**
@@ -163,11 +170,34 @@ struct ObjectsFilteringParams
 struct SafetyCheckParams
 {
   bool enable_safety_check;          ///< Enable safety checks.
-  double backward_lane_length;       ///< Length of the backward lane for path generation.
+  double backward_path_length;       ///< Length of the backward lane for path generation.
   double forward_path_length;        ///< Length of the forward path lane for path generation.
   RSSparams rss_params;              ///< Parameters related to the RSS model.
   bool publish_debug_marker{false};  ///< Option to publish debug markers.
 };
+
+struct CollisionCheckDebug
+{
+  std::string unsafe_reason;                ///< Reason indicating unsafe situation.
+  Twist current_twist{};                    ///< Ego vehicle's current velocity and rotation.
+  Pose expected_ego_pose{};                 ///< Predicted future pose of ego vehicle.
+  Pose current_obj_pose{};                  ///< Detected object's current pose.
+  Twist object_twist{};                     ///< Detected object's velocity and rotation.
+  Pose expected_obj_pose{};                 ///< Predicted future pose of object.
+  double rss_longitudinal{0.0};             ///< Longitudinal RSS measure.
+  double inter_vehicle_distance{0.0};       ///< Distance between ego vehicle and object.
+  double extended_polygon_lon_offset{0.0};  ///< Longitudinal offset for extended polygon.
+  double extended_polygon_lat_offset{0.0};  ///< Lateral offset for extended polygon.
+  bool is_front{false};                     ///< True if object is in front of ego vehicle.
+  bool is_safe{false};                      ///< True if situation is deemed safe.
+  std::vector<PoseWithVelocityStamped> ego_predicted_path;  ///< ego vehicle's predicted path.
+  std::vector<PoseWithVelocityAndPolygonStamped> obj_predicted_path;  ///< object's predicted path.
+  Polygon2d extended_ego_polygon{};  ///< Ego vehicle's extended collision polygon.
+  Polygon2d extended_obj_polygon{};  ///< Detected object's extended collision polygon.
+};
+using CollisionCheckDebugPair = std::pair<std::string, CollisionCheckDebug>;
+using CollisionCheckDebugMap =
+  std::unordered_map<CollisionCheckDebugPair::first_type, CollisionCheckDebugPair::second_type>;
 
 }  // namespace behavior_path_planner::utils::path_safety_checker
 

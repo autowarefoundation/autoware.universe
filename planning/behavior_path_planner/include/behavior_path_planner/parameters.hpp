@@ -28,6 +28,7 @@ struct ModuleConfigParameters
   bool enable_rtc{false};
   bool enable_simultaneous_execution_as_approved_module{false};
   bool enable_simultaneous_execution_as_candidate_module{false};
+  bool keep_last{false};
   uint8_t priority{0};
   uint8_t max_module_size{0};
 };
@@ -141,20 +142,6 @@ struct BehaviorPathPlannerParameters
 
   // maximum drivable area visualization
   bool visualize_maximum_drivable_area;
-
-  // collision check
-  double lateral_distance_max_threshold;
-  double longitudinal_distance_min_threshold;
-  double longitudinal_velocity_delta_time;
-
-  double expected_front_deceleration;  // brake parameter under normal lane change
-  double expected_rear_deceleration;   // brake parameter under normal lane change
-
-  double expected_front_deceleration_for_abort;  // hard brake parameter for abort
-  double expected_rear_deceleration_for_abort;   // hard brake parameter for abort
-
-  double rear_vehicle_reaction_time;
-  double rear_vehicle_safety_time_margin;
 };
 
 #endif  // BEHAVIOR_PATH_PLANNER__PARAMETERS_HPP_

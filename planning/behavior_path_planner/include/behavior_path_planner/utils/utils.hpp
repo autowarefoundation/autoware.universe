@@ -165,6 +165,16 @@ double getDistanceBetweenPredictedPathAndObject(
   const double end_time, const double resolution);
 
 /**
+ * @brief Check collision between ego path footprints with extra longitudinal stopping margin and
+ * objects.
+ * @return Has collision or not
+ */
+bool checkCollisionWithExtraStoppingMargin(
+  const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects,
+  const double base_to_front, const double base_to_rear, const double width,
+  const double maximum_deceleration, const double margin, const double max_stopping_margin);
+
+/**
  * @brief Check collision between ego path footprints and objects.
  * @return Has collision or not
  */
@@ -313,8 +323,8 @@ PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path);
 double getSignedDistanceFromBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose, const bool left_side);
 std::optional<double> getSignedDistanceFromBoundary(
-  const lanelet::ConstLanelets & shoulder_lanelets, const LinearRing2d & footprint,
-  const Pose & vehicle_pose, const bool left_side);
+  const lanelet::ConstLanelets & lanelets, const double vehicle_width, const double base_link2front,
+  const double base_link2rear, const Pose & vehicle_pose, const bool left_side);
 
 // misc
 

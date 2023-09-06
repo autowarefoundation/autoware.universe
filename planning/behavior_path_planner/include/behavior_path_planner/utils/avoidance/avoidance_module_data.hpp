@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -47,7 +48,7 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 
-using marker_utils::CollisionCheckDebug;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 
 struct ObjectParameter
 {
@@ -186,14 +187,16 @@ struct AvoidanceParameters
 
   // parameters for collision check.
   bool check_all_predicted_path{false};
-  double safety_check_time_horizon{0.0};
+  double time_horizon_for_front_object{0.0};
+  double time_horizon_for_rear_object{0.0};
   double safety_check_time_resolution{0.0};
 
   // find adjacent lane vehicles
   double safety_check_backward_distance;
 
   // transit hysteresis (unsafe to safe)
-  double safety_check_hysteresis_factor;
+  size_t hysteresis_factor_safe_count;
+  double hysteresis_factor_expand_rate;
 
   // keep target velocity in yield maneuver
   double yield_velocity;
@@ -295,6 +298,9 @@ struct AvoidanceParameters
 
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
+
+  // rss parameters
+  utils::path_safety_checker::RSSparams rss_params;
 
   // clip left and right bounds for objects
   bool enable_bound_clipping{false};
@@ -550,9 +556,6 @@ struct DebugData
   // shift path
   std::vector<double> proposed_spline_shift;
 
-  // future pose
-  PathWithLaneId path_with_planned_velocity;
-
   // avoidance require objects
   ObjectDataArray unavoidable_objects;
 
@@ -562,6 +565,10 @@ struct DebugData
   // tmp for plot
   PathWithLaneId center_line;
 
+  // collision check debug map
+  utils::path_safety_checker::CollisionCheckDebugMap collision_check;
+
+  // debug msg array
   AvoidanceDebugMsgArray avoidance_debug_msg_array;
 };
 

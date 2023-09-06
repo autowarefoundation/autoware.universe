@@ -24,6 +24,9 @@
 #include "behavior_path_planner/utils/goal_planner/goal_searcher.hpp"
 #include "behavior_path_planner/utils/goal_planner/shift_pull_over.hpp"
 #include "behavior_path_planner/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/start_goal_planner_common/common_module_data.hpp"
+#include "behavior_path_planner/utils/utils.hpp"
 
 #include <freespace_planning_algorithms/astar_search.hpp>
 #include <freespace_planning_algorithms/rrtstar.hpp>
@@ -57,6 +60,12 @@ using freespace_planning_algorithms::PlannerCommonParam;
 using freespace_planning_algorithms::RRTStar;
 using freespace_planning_algorithms::RRTStarParam;
 
+using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
+using behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
+using behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
+using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
+
 enum class PathType {
   NONE = 0,
   SHIFT,
@@ -65,7 +74,7 @@ enum class PathType {
   FREESPACE,
 };
 
-struct PUllOverStatus
+struct PullOverStatus
 {
   std::shared_ptr<PullOverPath> pull_over_path{};
   std::shared_ptr<PullOverPath> lane_parking_pull_over_path{};
@@ -76,7 +85,8 @@ struct PUllOverStatus
   lanelet::ConstLanelets pull_over_lanes{};
   std::vector<DrivableLanes> lanes{};  // current + pull_over
   bool has_decided_path{false};
-  bool is_safe{false};
+  bool is_safe_static_objects{false};   // current path is safe against static objects
+  bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
   bool prev_is_safe{false};
   bool has_decided_velocity{false};
   bool has_requested_approval{false};
@@ -106,6 +116,13 @@ public:
   void updateModuleParams(const std::any & parameters) override
   {
     parameters_ = std::any_cast<std::shared_ptr<GoalPlannerParameters>>(parameters);
+    if (parameters_->safety_check_params.enable_safety_check) {
+      ego_predicted_path_params_ =
+        std::make_shared<EgoPredictedPathParams>(parameters_->ego_predicted_path_params);
+      objects_filtering_params_ =
+        std::make_shared<ObjectsFilteringParams>(parameters_->objects_filtering_params);
+      safety_check_params_ = std::make_shared<SafetyCheckParams>(parameters_->safety_check_params);
+    }
   }
 
   // TODO(someone): remove this, and use base class function
@@ -134,9 +151,17 @@ private:
 
   bool canTransitIdleToRunningState() override { return false; }
 
-  PUllOverStatus status_;
+  PullOverStatus status_;
+
+  mutable StartGoalPlannerData goal_planner_data_;
 
   std::shared_ptr<GoalPlannerParameters> parameters_;
+
+  mutable std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;
+  mutable std::shared_ptr<ObjectsFilteringParams> objects_filtering_params_;
+  mutable std::shared_ptr<SafetyCheckParams> safety_check_params_;
+
+  vehicle_info_util::VehicleInfo vehicle_info_;
 
   // planner
   std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
@@ -177,7 +202,6 @@ private:
 
   // for parking policy
   bool left_side_parking_{true};
-  mutable bool allow_goal_modification_{false};  // need to be set in isExecutionRequested
 
   // pre-generate lane parking paths in a separate thread
   rclcpp::TimerBase::SharedPtr lane_parking_timer_;
@@ -206,7 +230,6 @@ private:
     const Pose & search_start_offset_pose, PathWithLaneId & path) const;
   PathWithLaneId generateStopPath();
   PathWithLaneId generateFeasibleStopPath();
-  boost::optional<double> calcFeasibleDecelDistance(const double target_velocity) const;
   void keepStoppedWithCurrentPath(PathWithLaneId & path);
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
 
@@ -274,6 +297,13 @@ private:
 
   // rtc
   std::pair<double, double> calcDistanceToPathChange() const;
+
+  // safety check
+  SafetyCheckParams createSafetyCheckParams() const;
+  void updateSafetyCheckTargetObjectsData(
+    const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
+    const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
+  bool isSafePath() const;
 
   // debug
   void setDebugData();
