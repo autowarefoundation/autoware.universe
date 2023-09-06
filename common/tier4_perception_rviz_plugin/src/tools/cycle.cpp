@@ -64,7 +64,7 @@ cycleInitialPoseTool::cycleInitialPoseTool()
 void cycleInitialPoseTool::onInitialize()
 {
   rviz_plugins::InteractiveObjectTool::onInitialize();
-  setName("2D Dummy Bicycle");
+  setName("2D Dummy Cycle");
   updateTopic();
 }
 
