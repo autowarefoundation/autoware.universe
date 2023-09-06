@@ -15,6 +15,7 @@
 #include <baidu_cnn/inference_engine_tvm_config.hpp>
 #include <lidar_apollo_segmentation_tvm/feature_map.hpp>
 #include <lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
+#include <tier4_autoware_utils/transform/transforms.hpp>
 #include <tvm_utility/pipeline.hpp>
 
 #include <memory>
@@ -37,8 +38,8 @@ ApolloLidarSegmentationPreProcessor::ApolloLidarSegmentationPreProcessor(
   input_height(config.network_inputs[0].node_shape[3]),
   input_datatype_bytes(config.network_inputs[0].tvm_dtype_bits / 8),
   feature_generator(std::make_shared<FeatureGenerator>(
-    input_width, input_height, range, use_intensity_feature, use_constant_feature, min_height,
-    max_height))
+      input_width, input_height, range, use_intensity_feature, use_constant_feature, min_height,
+      max_height))
 {
   // Allocate input variable
   std::vector<int64_t> shape_x{1, input_channels, input_width, input_height};
@@ -115,11 +116,11 @@ ApolloLidarSegmentation::ApolloLidarSegmentation(
   height_thresh_(height_thresh),
   pcl_pointcloud_ptr_(new pcl::PointCloud<pcl::PointXYZI>),
   PreP(std::make_shared<PrePT>(
-    config, range, use_intensity_feature, use_constant_feature, min_height, max_height)),
+      config, range, use_intensity_feature, use_constant_feature, min_height, max_height)),
   IE(std::make_shared<IET>(config, "lidar_apollo_segmentation_tvm")),
   PostP(std::make_shared<PostPT>(
-    config, pcl_pointcloud_ptr_, range, objectness_thresh, score_threshold, height_thresh,
-    min_pts_num)),
+      config, pcl_pointcloud_ptr_, range, objectness_thresh, score_threshold, height_thresh,
+      min_pts_num)),
   pipeline(
     std::make_shared<tvm_utility::pipeline::Pipeline<PrePT, IET, PostPT>>(*PreP, *IE, *PostP))
 {
