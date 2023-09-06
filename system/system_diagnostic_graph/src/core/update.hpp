@@ -44,7 +44,7 @@ public:
   void create(const std::string & file);
   void callback(const DiagnosticArray & array);
   DiagnosticGraph report(const rclcpp::Time & stamp);
-  DiagnosticSummary summary(const rclcpp::Time & stamp);
+  OperationModeAvailability summary(const rclcpp::Time & stamp);
 
   void debug();
 

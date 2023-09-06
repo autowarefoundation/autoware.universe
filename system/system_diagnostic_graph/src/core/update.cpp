@@ -85,9 +85,9 @@ DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
   return message;
 }
 
-DiagnosticSummary DiagGraph::summary(const rclcpp::Time & stamp)
+OperationModeAvailability DiagGraph::summary(const rclcpp::Time & stamp)
 {
-  DiagnosticSummary message;
+  OperationModeAvailability message;
   message.stamp = stamp;
   message.stop = summary_.stop_mode->level();
   message.autonomous = summary_.autonomous_mode->level();

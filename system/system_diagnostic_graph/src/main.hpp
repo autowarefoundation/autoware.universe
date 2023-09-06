@@ -33,7 +33,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<DiagnosticArray>::SharedPtr sub_input_;
   rclcpp::Publisher<DiagnosticGraph>::SharedPtr pub_graph_;
-  rclcpp::Publisher<DiagnosticSummary>::SharedPtr pub_summary_;
+  rclcpp::Publisher<OperationModeAvailability>::SharedPtr pub_modes_;
   void on_timer();
   void on_diag(const DiagnosticArray::ConstSharedPtr msg);
 };
