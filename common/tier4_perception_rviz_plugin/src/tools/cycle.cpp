@@ -51,7 +51,7 @@ cycleInitialPoseTool::cycleInitialPoseTool()
     "Max velocity", 33.3, "Max velocity [m/s]", getPropertyContainer());
   min_velocity_ = new rviz_common::properties::FloatProperty(
     "Min velocity", -33.3, "Min velocity [m/s]", getPropertyContainer());
-  
+
   std_dev_x_->setMin(0);
   std_dev_y_->setMin(0);
   std_dev_z_->setMin(0);
@@ -59,7 +59,6 @@ cycleInitialPoseTool::cycleInitialPoseTool()
   width_->setMin(0);
   length_->setMin(0);
   height_->setMin(0);
-  
 }
 
 void cycleInitialPoseTool::onInitialize()
