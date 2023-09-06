@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2022-2023 Foxconn, TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -76,9 +76,9 @@ RadarTracksMsgsConverterNode::RadarTracksMsgsConverterNode(const rclcpp::NodeOpt
     std::bind(&RadarTracksMsgsConverterNode::onSetParam, this, _1));
 
   // Node Parameter
-  node_param_.update_rate_hz = declare_parameter<double>("update_rate_hz", 20.0);
-  node_param_.new_frame_id = declare_parameter<std::string>("new_frame_id", "base_link");
-  node_param_.use_twist_compensation = declare_parameter<bool>("use_twist_compensation", false);
+  node_param_.update_rate_hz = declare_parameter<double>("update_rate_hz");
+  node_param_.new_frame_id = declare_parameter<std::string>("new_frame_id");
+  node_param_.use_twist_compensation = declare_parameter<bool>("use_twist_compensation");
 
   // Subscriber
   sub_radar_ = create_subscription<RadarTracks>(
