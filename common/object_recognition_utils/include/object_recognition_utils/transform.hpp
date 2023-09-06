@@ -53,21 +53,21 @@ namespace detail
   }
 }
 
-[[maybe_unused]] boost::optional<Eigen::Matrix4f> getTransformMatrix(
+[[maybe_unused]] inline boost::optional<Eigen::Matrix4f> getTransformMatrix(
   const std::string & in_target_frame, const std_msgs::msg::Header & in_cloud_header,
   const tf2_ros::Buffer & tf_buffer)
 {
-  geometry_msgs::msg::TransformStamped transform_stamped;
   try {
+    geometry_msgs::msg::TransformStamped transform_stamped;
     transform_stamped = tf_buffer.lookupTransform(
       in_target_frame, in_cloud_header.frame_id, in_cloud_header.stamp,
       rclcpp::Duration::from_seconds(1.0));
+    Eigen::Matrix4f mat = tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
+    return mat;
   } catch (tf2::TransformException & e) {
     RCLCPP_WARN_STREAM(rclcpp::get_logger("detail::getTransformMatrix"), e.what());
     return boost::none;
   }
-  Eigen::Matrix4f mat = tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
-  return mat;
 }
 }  // namespace detail
 
