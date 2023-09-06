@@ -56,7 +56,7 @@ class PerceptionReproducer(PerceptionReplayerCommon):
         # extract message by the nearest ego odom timestamp
         msgs = copy.deepcopy(self.find_topics_by_timestamp(pose_timestamp))
         objects_msg = msgs[0]
-        traffic_signals_msg = msgs[1]
+        # traffic_signals_msg = msgs[1]
 
         # objects
         if objects_msg:
