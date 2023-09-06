@@ -73,7 +73,7 @@ class PerceptionReplayer(PerceptionReplayerCommon):
         # extract message by the timestamp
         msgs = copy.deepcopy(self.find_topics_by_timestamp(self.bag_timestamp))
         objects_msg = msgs[0]
-        # traffic_signals_msg = msgs[1]
+        traffic_signals_msg = msgs[1]
 
         # objects
         if objects_msg:
