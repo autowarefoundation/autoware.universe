@@ -52,7 +52,7 @@ cycleInitialPoseTool::cycleInitialPoseTool()
   min_velocity_ = new rviz_common::properties::FloatProperty(
     "Min velocity", -33.3, "Min velocity [m/s]", getPropertyContainer());
   label_ = new rviz_common::properties::EnumProperty(
-    "Type", "BICYCLE", "BICYCLE or MOTORCYCLE", getPropertyContainer());
+    "Type", "BICYCLE", "BICYCLE", getPropertyContainer());
   std_dev_x_->setMin(0);
   std_dev_y_->setMin(0);
   std_dev_z_->setMin(0);
