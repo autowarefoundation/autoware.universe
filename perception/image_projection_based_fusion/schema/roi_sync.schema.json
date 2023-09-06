@@ -25,8 +25,7 @@
           "minimum": 0.0,
           "maximum": 100.0
         }
-      },
-      "required": ["input_offset_ms", "timeout_ms", "match_threshold_ms"]
+      }
     }
   },
   "properties": {

@@ -13,12 +13,12 @@
         },
         "trust_distances": {
           "type": "array",
-          "description": "An array of object distances thresholds. The objects that are closer than their respective thresholds kept.",
+          "description": "An array of object distances thresholds. Any objects that is farther than this value will be skipped in the clustering process, but will still be published.",
           "default": [50.0, 100.0, 100.0, 100.0, 100.0, 50.0, 50.0, 50.0]
         },
         "min_iou_threshold": {
           "type": "number",
-          "description": "An Iou threshold",
+          "description": "An Iou score threshold.",
           "default": 0.5,
           "minimum": 0.0,
           "maximum": 1.0

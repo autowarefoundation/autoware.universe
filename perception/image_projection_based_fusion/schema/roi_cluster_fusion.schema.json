@@ -6,20 +6,29 @@
     "roi_cluster_fusion": {
       "type": "object",
       "properties": {
-        "use_iou": {
-          "type": "boolean",
-          "description": "If this parameter is true, calculate the common IoU score.",
-          "default": false
+        "fusion_distance": {
+          "type": "number",
+          "description": "If the detected object's distance is less than its value, the fusion will be processed.",
+          "default": 100.0,
+          "minimum": 0.0
         },
-        "use_iou_x": {
-          "type": "boolean",
-          "description": "If this parameter is true, compute the IoU score in the x-direction",
-          "default": true
+        "trust_object_distance": {
+          "type": "number",
+          "description": "If the detected object's distance is less than its value, IoU method specified in `trust_object_iou_mode` is used, otherwise `non_trust_object_iou_mode` is used.",
+          "default": 100.0,
+          "minimum": 0.0
         },
-        "use_iou_y": {
-          "type": "boolean",
-          "description": "If this parameter is true, calculate the IoU score in the y-direction.",
-          "default": false
+        "trust_object_iou_mode": {
+          "type": "string",
+          "description": "Name of IoU method applied to the objects in range of [0.0, `trust_distance`].",
+          "default": "iou",
+          "enum": ["iou", "iou_x", "iou_y"]
+        },
+        "non_trust_object_iou_mode": {
+          "type": "string",
+          "description": "Name of IoU method applied to the objects in range of [`trust_distance`, `fusion_distance`], if `trust_distance` < `fusion_distance`.",
+          "default": "iou_x",
+          "enum": ["iou", "iou_x", "iou_y"]
         },
         "use_cluster_semantic_type": {
           "type": "boolean",
@@ -41,8 +50,9 @@
         "iou_threshold": {
           "type": "number",
           "description": "An IoU score threshold. Note that the total IoU score is the sum of the IoU scores that are set to true in use_iou, use_iou_x and use_iou_y.",
-          "default": 0.3,
-          "minimum": 0.0
+          "default": 0.65,
+          "minimum": 0.0,
+          "maximum": 1.0
         },
         "unknown_iou_threshold": {
           "type": "number",
@@ -55,25 +65,19 @@
           "type": "boolean",
           "description": "If this parameter is true, all of objects labeled UNKNOWN will be removed in post-process.",
           "default": false
-        },
-        "trust_distance": {
-          "type": "number",
-          "description": "A distance value to filtering out objects with its distance.",
-          "default": 100.0,
-          "minimum": 0.0
         }
       },
       "required": [
-        "use_iou",
-        "use_iou_x",
-        "use_iou_y",
+        "fusion_distance",
+        "trust_object_distance",
+        "trust_object_iou_mode",
+        "non_trust_object_iou_mode",
         "use_cluster_semantic_type",
         "only_allow_inside_cluster",
         "roi_scale_factor",
         "iou_threshold",
         "unknown_iou_threshold",
-        "remove_unknown",
-        "trust_distance"
+        "remove_unknown"
       ]
     }
   },
