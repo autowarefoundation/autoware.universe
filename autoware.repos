@@ -124,3 +124,14 @@ repositories:
     url: https://github.com/tier4/rclcpp.git
     # This old version is not directly related to the issue, but it is stable.
     version: humble-with-fix-service-connection-patch
+
+  # awsim
+  awsim/awsim_sensor_kit_launch: # TODO: Integrate into sample_sensor_kit_launch
+    type: git
+    url: https://github.com/RobotecAI/awsim_sensor_kit_launch.git
+    version: main
+  # vehicle
+  awsim/sample_vehicle_launch:
+    type: git
+    url: https://github.com/autowarefoundation/sample_vehicle_launch.git
+    version: main
