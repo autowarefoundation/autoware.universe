@@ -27,4 +27,8 @@
          type="rviz_plugins::cycleInitialPoseTool"
          base_class_type="rviz_common::Tool">
   </class>
+  <class name="rviz_plugins/TruckInitialPoseTool"
+         type="rviz_plugins::TruckInitialPoseTool"
+         base_class_type="rviz_common::Tool">
+  </class>
 </library>
