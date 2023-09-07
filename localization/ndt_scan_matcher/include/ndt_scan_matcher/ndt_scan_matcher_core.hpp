@@ -210,7 +210,7 @@ private:
   bool use_dynamic_map_loading_;
 
   // The execution time which means probably NDT cannot matches scans properly
-  int critical_upperbound_exe_time_;
+  int critical_upper_bound_exe_time_ms_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
