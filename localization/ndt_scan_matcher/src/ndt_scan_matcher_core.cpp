@@ -90,7 +90,6 @@ NDTScanMatcher::NDTScanMatcher()
   converged_param_type_(ConvergedParamType::TRANSFORM_PROBABILITY),
   converged_param_transform_probability_(4.5),
   converged_param_nearest_voxel_transformation_likelihood_(2.3),
-  critical_upperbound_exe_time_(24),
   initial_estimate_particles_num_(100),
   lidar_topic_timeout_sec_(1.0),
   initial_pose_timeout_sec_(1.0),
@@ -100,8 +99,9 @@ NDTScanMatcher::NDTScanMatcher()
   output_pose_covariance_(),
   regularization_enabled_(declare_parameter<bool>("regularization_enabled")),
   estimate_scores_for_degrounded_scan_(
-    declare_parameter<bool>("estimate_scores_for_degrounded_scan")),
-  z_margin_for_ground_removal_(declare_parameter<double>("z_margin_for_ground_removal"))
+    declare_parameter("estimate_scores_for_degrounded_scan", false)),
+  z_margin_for_ground_removal_(declare_parameter("z_margin_for_ground_removal", 0.8)),
+  critical_upperbound_exe_time_(24)
 {
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
