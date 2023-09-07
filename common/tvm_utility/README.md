@@ -77,13 +77,11 @@ Dependent packages can use the cmake `add_dependencies` function with the name p
 
 The other `deploy_*` files are installed to "models/${MODEL_NAME}/" under the `share` directory of the package.
 
-
 #### Inputs / Outputs
-
 
 Outputs:
 
-- `get_neural_network` cmake function; create proper external dependency for a package with use of the model provided by the user. 
+- `get_neural_network` cmake function; create proper external dependency for a package with use of the model provided by the user.
 
 In/Out:
 
