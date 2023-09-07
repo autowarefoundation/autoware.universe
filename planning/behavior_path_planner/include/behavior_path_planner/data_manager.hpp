@@ -18,6 +18,7 @@
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
+#include "behavior_path_planner/utils/drivable_area_expansion/replan_checker.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
@@ -150,6 +151,7 @@ struct PlannerData
   drivable_area_expansion::DrivableAreaExpansionParameters drivable_area_expansion_parameters{};
 
   mutable std::optional<geometry_msgs::msg::Pose> drivable_area_expansion_prev_crop_pose;
+  mutable drivable_area_expansion::ReplanChecker drivable_area_expansion_replan_checker{};
   mutable TurnSignalDecider turn_signal_decider;
 
   TurnIndicatorsCommand getTurnSignal(

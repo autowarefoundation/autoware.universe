@@ -37,3 +37,7 @@
         compensate:
           enable: true  # if true, when the drivable area cannot be expanded in one direction to completely include the ego footprint, it is expanded in the opposite direction
           extra_distance: 3.0 # [m] extra distance to add to the compensation
+      replan_checker:
+        enable: true  # if true, only recalculate the expanded drivable area when the path or its original drivable area change significantly
+                      # not compatible with dynamic_objects.avoid
+        max_deviation: 0.5  # [m] full replan is only done if the path or its original drivable area change by more than this distance

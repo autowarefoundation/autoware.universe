@@ -47,20 +47,18 @@ multi_polygon_t createObjectFootprints(
   const DrivableAreaExpansionParameters & params)
 {
   multi_polygon_t footprints;
-  if (params.avoid_dynamic_objects) {
-    for (const auto & object : objects.objects) {
-      const auto front = object.shape.dimensions.x / 2 + params.dynamic_objects_extra_front_offset;
-      const auto rear = -object.shape.dimensions.x / 2 - params.dynamic_objects_extra_rear_offset;
-      const auto left = object.shape.dimensions.y / 2 + params.dynamic_objects_extra_left_offset;
-      const auto right = -object.shape.dimensions.y / 2 - params.dynamic_objects_extra_right_offset;
-      polygon_t base_footprint;
-      base_footprint.outer() = {
-        point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left},
-        point_t{front, left}};
-      for (const auto & path : object.kinematics.predicted_paths)
-        for (const auto & pose : path.path)
-          footprints.push_back(createFootprint(pose, base_footprint));
-    }
+  for (const auto & object : objects.objects) {
+    const auto front = object.shape.dimensions.x / 2 + params.dynamic_objects_extra_front_offset;
+    const auto rear = -object.shape.dimensions.x / 2 - params.dynamic_objects_extra_rear_offset;
+    const auto left = object.shape.dimensions.y / 2 + params.dynamic_objects_extra_left_offset;
+    const auto right = -object.shape.dimensions.y / 2 - params.dynamic_objects_extra_right_offset;
+    polygon_t base_footprint;
+    base_footprint.outer() = {
+      point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left},
+      point_t{front, left}};
+    for (const auto & path : object.kinematics.predicted_paths)
+      for (const auto & pose : path.path)
+        footprints.push_back(createFootprint(pose, base_footprint));
   }
   return footprints;
 }
