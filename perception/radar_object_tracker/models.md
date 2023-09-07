@@ -74,3 +74,21 @@ v_{k+1} &= v_k \\
 \omega_{k+1} &= \omega_k
 \end{align}
 $$
+
+## Noise filtering
+
+Radar sensors often have noisy measurement. So we use the following filter to reduce the false positive objects.
+
+### minimum range filter
+
+In most cases, Radar sensors are used with other sensors such as LiDAR and Camera, and Radar sensors are used to detect objects far away. So we can filter out objects that are too close to the sensor.
+
+### lanelet based filter
+
+With lanelet map information, We can filter out false positive objects that are not likely important obstacles.
+
+We fukter out objects that satisfy the following conditions:
+
+- too large lateral distance from lane
+- velocity direction is too different from lane direction
+- too large lateral velocity
