@@ -103,17 +103,47 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   tf_br_ = std::make_shared<tf2_ros::TransformBroadcaster>(
     std::shared_ptr<rclcpp::Node>(this, [](auto) {}));
 
-  diag_process_activated_.reset(new diagnostic_updater::FunctionDiagnosticTask("process activated", std::bind(&checkProcessActivated, std::placeholders::_1, &is_activated_)));
-  diag_pose_updated_.reset(new diagnostic_updater::FunctionDiagnosticTask("pose updated", std::bind(&checkMeasurementUpdated, std::placeholders::_1, "pose", &pose_no_update_count_, &(params_.pose_no_update_count_threshold_warn), &(params_.pose_no_update_count_threshold_error))));
-  diag_pose_queue_size_.reset(new diagnostic_updater::FunctionDiagnosticTask("pose queue size", std::bind(&checkMeasurementQueueSize, std::placeholders::_1, "pose", &pose_queue_size_)));
-  diag_pose_delay_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask("pose delay gate", std::bind(&checkMeasurementDelayGate, std::placeholders::_1, "pose", &pose_is_passed_delay_gate_, &pose_delay_time_, &pose_delay_time_threshold_)));
-  diag_pose_mahalanobis_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask("pose mahalanobis gate", std::bind(&checkMeasurementMahalanobisGate, std::placeholders::_1, "pose", &pose_is_passed_mahalabobis_gate_, &pose_mahalabobis_distance_, &(params_.pose_gate_dist))));
-  diag_twist_updated_.reset(new diagnostic_updater::FunctionDiagnosticTask("twist updated", std::bind(&checkMeasurementUpdated, std::placeholders::_1, "twist", &twist_no_update_count_, &(params_.twist_no_update_count_threshold_warn), &(params_.twist_no_update_count_threshold_error))));
-  diag_twist_queue_size_.reset(new diagnostic_updater::FunctionDiagnosticTask("twist queue size", std::bind(&checkMeasurementQueueSize, std::placeholders::_1, "twist", &twist_queue_size_)));
-  diag_twist_delay_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask("twist delay gate", std::bind(&checkMeasurementDelayGate, std::placeholders::_1, "twist", &twist_is_passed_delay_gate_, &twist_delay_time_, &twist_delay_time_threshold_)));
-  diag_twist_mahalanobis_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask("twist mahalanobis gate", std::bind(&checkMeasurementMahalanobisGate, std::placeholders::_1, "twist", &twist_is_passed_mahalabobis_gate_, &twist_mahalabobis_distance_, &(params_.twist_gate_dist))));
+  diag_process_activated_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    "process activated", std::bind(&checkProcessActivated, std::placeholders::_1, &is_activated_)));
+  diag_pose_updated_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    "pose updated", std::bind(
+                      &checkMeasurementUpdated, std::placeholders::_1, "pose",
+                      &pose_no_update_count_, &(params_.pose_no_update_count_threshold_warn),
+                      &(params_.pose_no_update_count_threshold_error))));
+  diag_pose_queue_size_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    "pose queue size",
+    std::bind(&checkMeasurementQueueSize, std::placeholders::_1, "pose", &pose_queue_size_)));
+  diag_pose_delay_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    "pose delay gate",
+    std::bind(
+      &checkMeasurementDelayGate, std::placeholders::_1, "pose", &pose_is_passed_delay_gate_,
+      &pose_delay_time_, &pose_delay_time_threshold_)));
+  diag_pose_mahalanobis_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    "pose mahalanobis gate",
+    std::bind(
+      &checkMeasurementMahalanobisGate, std::placeholders::_1, "pose",
+      &pose_is_passed_mahalabobis_gate_, &pose_mahalabobis_distance_, &(params_.pose_gate_dist))));
+  diag_twist_updated_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    "twist updated", std::bind(
+                       &checkMeasurementUpdated, std::placeholders::_1, "twist",
+                       &twist_no_update_count_, &(params_.twist_no_update_count_threshold_warn),
+                       &(params_.twist_no_update_count_threshold_error))));
+  diag_twist_queue_size_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    "twist queue size",
+    std::bind(&checkMeasurementQueueSize, std::placeholders::_1, "twist", &twist_queue_size_)));
+  diag_twist_delay_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    "twist delay gate",
+    std::bind(
+      &checkMeasurementDelayGate, std::placeholders::_1, "twist", &twist_is_passed_delay_gate_,
+      &twist_delay_time_, &twist_delay_time_threshold_)));
+  diag_twist_mahalanobis_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    "twist mahalanobis gate", std::bind(
+                                &checkMeasurementMahalanobisGate, std::placeholders::_1, "twist",
+                                &twist_is_passed_mahalabobis_gate_, &twist_mahalabobis_distance_,
+                                &(params_.twist_gate_dist))));
 
-  diag_composite_task_.reset(new diagnostic_updater::CompositeDiagnosticTask("ekf_localizer_status"));
+  diag_composite_task_.reset(
+    new diagnostic_updater::CompositeDiagnosticTask("ekf_localizer_status"));
   diag_composite_task_->addTask(diag_process_activated_.get());
   diag_composite_task_->addTask(diag_pose_updated_.get());
   diag_composite_task_->addTask(diag_pose_queue_size_.get());
@@ -139,7 +169,6 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   pub_debug_ = create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>("debug", 1);
   pub_measured_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("debug/measured_pose", 1);
 }
-
 
 /*
  * updatePredictFrequency

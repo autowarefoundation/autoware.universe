@@ -41,10 +41,14 @@ public:
     proc_stddev_wz_c(node->declare_parameter("proc_stddev_wz_c", 1.0)),
     proc_stddev_yaw_c(node->declare_parameter("proc_stddev_yaw_c", 0.005)),
     diagnostics_update_rate(node->declare_parameter("diagnostics_update_rate", 10)),
-    pose_no_update_count_threshold_warn(node->declare_parameter("pose_no_update_count_threshold_warn", 50)),
-    pose_no_update_count_threshold_error(node->declare_parameter("pose_no_update_count_threshold_error", 250)),
-    twist_no_update_count_threshold_warn(node->declare_parameter("twist_no_update_count_threshold_warn", 50)),
-    twist_no_update_count_threshold_error(node->declare_parameter("twist_no_update_count_threshold_error", 250))
+    pose_no_update_count_threshold_warn(
+      node->declare_parameter("pose_no_update_count_threshold_warn", 50)),
+    pose_no_update_count_threshold_error(
+      node->declare_parameter("pose_no_update_count_threshold_error", 250)),
+    twist_no_update_count_threshold_warn(
+      node->declare_parameter("twist_no_update_count_threshold_warn", 50)),
+    twist_no_update_count_threshold_error(
+      node->declare_parameter("twist_no_update_count_threshold_error", 250))
   {
   }
 

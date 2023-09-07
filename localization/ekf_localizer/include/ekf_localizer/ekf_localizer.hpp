@@ -19,12 +19,14 @@
 #include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/warning.hpp"
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <kalman_filter/kalman_filter.hpp>
 #include <kalman_filter/time_delay_kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -40,9 +42,6 @@
 #include <tf2/utils.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
-
-#include <diagnostic_updater/diagnostic_updater.hpp>
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -186,20 +185,19 @@ private:
 
   size_t pose_no_update_count_;
   size_t pose_queue_size_;
-  bool   pose_is_passed_delay_gate_;
+  bool pose_is_passed_delay_gate_;
   double pose_delay_time_;
   double pose_delay_time_threshold_;
-  bool   pose_is_passed_mahalabobis_gate_;
+  bool pose_is_passed_mahalabobis_gate_;
   double pose_mahalabobis_distance_;
 
   size_t twist_no_update_count_;
   size_t twist_queue_size_;
-  bool   twist_is_passed_delay_gate_;
+  bool twist_is_passed_delay_gate_;
   double twist_delay_time_;
   double twist_delay_time_threshold_;
-  bool   twist_is_passed_mahalabobis_gate_;
+  bool twist_is_passed_mahalabobis_gate_;
   double twist_mahalabobis_distance_;
-
 
   AgedObjectQueue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr> pose_queue_;
   AgedObjectQueue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> twist_queue_;
