@@ -162,7 +162,7 @@ cd autoware && . install/setup.bash
 ros2 launch f1tenth_stack bringup_launch.py
 ```
 
-2. Start the slam_toolbox with parameter `slam_params_file` that includes your system username in the path.
+2. Start the slam_toolbox with an `absulote path` for parameter `slam_params_file`. Update `<username>` based on your system.
 
 ```(bash)
 # Terminal 2
@@ -173,13 +173,15 @@ ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/<usernam
 
 3. Launch rviz2. Add `/map` by topic. Add `/graph_visualization` by topic. On the top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you run slam_toolbox.
 
+[![SLAM demo](https://img.youtube.com/vi/bgrxjXlJbhI/maxresdefault.jpg)](https://youtu.be/bgrxjXlJbhI)
+
 ### Create a map without an F1tenth car
 
 If you do not have an F1tenth car, You can draw your own map and save as .png files. Make sure you set the corresponding .yaml file correctly. You can also use the map provided in the f1tenth simulation folder under /map directory.
 
 ### Change map in the F1tenth simulator
 
-Navigate to /home/autoware/install/f1tenth_gym_ros/share/f1tenth_gym_ros/config. In `sim.yaml`, update the map file path and save.
+Navigate to /home/autoware/install/f1tenth_gym_ros/share/f1tenth_gym_ros/config. In `sim.yaml`, update the map file path (absulote path) and save.
 
 ## How to record a trajectory (simulation)
 
@@ -215,6 +217,8 @@ cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
 ```
 
+[![record trajectory sim demo](https://img.youtube.com/vi/gJ8JWyzbRf8/maxresdefault.jpg)](https://www.youtube.com/watch?v=gJ8JWyzbRf8)
+
 ## How to replay a trajectory (simulation)
 
 1. Use the `demo_launch` launch file to launch `gym_bridge`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes if they are not currently running.
@@ -234,6 +238,8 @@ source /opt/ros/galactic/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/tmp/path"}" --feedback
 ```
+
+[![replay trajectory sim demo](https://img.youtube.com/vi/fxg8eQYiIrw/maxresdefault.jpg)](https://youtu.be/fxg8eQYiIrw)
 
 ## How to record a trajectory (real car)
 
@@ -298,4 +304,7 @@ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/act
 
 1. If editing files doesn't seem to change anything, delete the respective package files in the `install` and `build` folders under `autoware` and rebuild the respective package using  `--packages-select` again.
 
-2. You may need to insert a `hdmi emulator` to the Jetson for `NoMachine` to initiate remote desktop when running on a real F1tenth car. Sometimes you will need to put the emulator in and out a few times for `NoMachine` to start remote desktop.
+2. Use `absolute path` (ex. /home/<username>/autoware/src/universe/autoware.universe/f1tenth/) in config file or parameter when there's an issue loading the file.
+
+3. You may need to insert a `hdmi emulator` to the Jetson for `NoMachine` to initiate remote desktop when running on a real F1tenth car. Sometimes you will need to put the emulator in and out a few times for `NoMachine` to start remote desktop.
+
