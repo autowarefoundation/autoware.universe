@@ -1494,7 +1494,6 @@ bool GoalPlannerModule::isSafePath() const
     *route_handler, left_side_parking_, parameters_->backward_goal_search_length,
     parameters_->forward_goal_search_length);
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_over_path.points);
-  const auto & common_param = ;
   const std::pair<double, double> terminal_velocity_and_accel =
     utils::start_goal_planner_common::getPairsTerminalVelocityAndAccel(
       status_.pull_over_path->pairs_terminal_velocity_and_accel, status_.current_path_idx);
@@ -1529,7 +1528,7 @@ bool GoalPlannerModule::isSafePath() const
   bool is_safe_dynamic_objects = true;
   // Check for collisions with each predicted path of the object
   for (const auto & object : target_objects_on_lane.on_current_lane) {
-    const auto current_debug_data = marker_utils::createObjectDebug(object);
+    auto current_debug_data = marker_utils::createObjectDebug(object);
 
     bool is_safe_dynamic_object = true;
 
@@ -1540,7 +1539,7 @@ bool GoalPlannerModule::isSafePath() const
     for (const auto & obj_path : obj_predicted_paths) {
       if (!utils::path_safety_checker::checkCollision(
             pull_over_path, ego_predicted_path, object, obj_path, planner_data_->parameters,
-            safety_check_params_->rss_params, hysteresis_factor, collision)) {
+            safety_check_params_->rss_params, hysteresis_factor, current_debug_data.second)) {
         marker_utils::updateCollisionCheckDebugMap(
           goal_planner_data_.collision_check, current_debug_data, false);
         is_safe_dynamic_objects = false;
