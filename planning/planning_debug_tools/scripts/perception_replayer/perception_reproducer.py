@@ -67,11 +67,11 @@ class PerceptionReproducer(PerceptionReplayerCommon):
 
         # traffic signals
         if traffic_signals_msg:
-            traffic_signals_msg.header.stamp = timestamp
+            traffic_signals_msg.stamp = timestamp
             self.traffic_signals_pub.publish(traffic_signals_msg)
             self.prev_traffic_signals_msg = traffic_signals_msg
         elif self.prev_traffic_signals_msg:
-            self.prev_traffic_signals_msg.header.stamp = timestamp
+            self.prev_traffic_signals_msg.stamp = timestamp
             self.traffic_signals_pub.publish(self.prev_traffic_signals_msg)
 
     def find_nearest_ego_odom_by_observation(self, ego_pose):
