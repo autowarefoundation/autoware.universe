@@ -40,11 +40,11 @@ void PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread(int rank)
     if (last_object_index > length) {
       last_object_index = length;
     }
-    std::vector<visualization_msgs::msg::Marker::SharedPtr> Thread_Markers;
+    std::vector<visualization_msgs::msg::Marker::SharedPtr> thread_makers;
     for (int i = first_object_index; i < last_object_index; i++) {
-      Thread_Markers = tackle_one_object(tmp_msg, i, Thread_Markers);
+      thread_makers = tackle_one_object(tmp_msg, i, thread_makers);
     }
-    push_tmp_markers(Thread_Markers);
+    push_tmp_markers(thread_makers);
 
     sem_post(&ending_semaphores[rank]);  // signal the end of the job
   }
