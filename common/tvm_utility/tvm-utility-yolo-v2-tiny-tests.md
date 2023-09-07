@@ -15,10 +15,10 @@ curl https://raw.githubusercontent.com/pjreddie/darknet/master/data/dog.jpg \
   > artifacts/yolo_v2_tiny/test_image_0.jpg
 ```
 
-1. Build and test with the `DOWNLOAD_ARTIFACTS` flag set.
+1. Build and test.
 
 ```sh
-colcon build --packages-up-to tvm_utility --cmake-args -DDOWNLOAD_ARTIFACTS=ON
+colcon build --packages-up-to tvm_utility
 colcon test --packages-select tvm_utility
 ```
 
@@ -28,5 +28,5 @@ Vulkan is supported by default by the tvm_vendor package.
 It can be selected by setting the `tvm_utility_BACKEND` variable:
 
 ```sh
-colcon build --packages-up-to tvm_utility --cmake-args -DDOWNLOAD_ARTIFACTS=ON -Dtvm_utility_BACKEND=vulkan
+colcon build --packages-up-to tvm_utility -Dtvm_utility_BACKEND=vulkan
 ```
