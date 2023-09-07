@@ -136,7 +136,7 @@ private:
   // workers;
   std::mutex tmp_marker_mutex;
 
-  // num_threads: number of threads going to be used, can be modifed on the fly in RVIZ parameters;
+  // num_threads: number of threads going to be used, can be modifed on the fly in RViz parameters;
   int num_threads;
   // max_num_threads: number of threads to be created, hard-coded to be 8;
   int max_num_threads;
