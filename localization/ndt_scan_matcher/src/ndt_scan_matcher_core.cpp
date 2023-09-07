@@ -90,6 +90,7 @@ NDTScanMatcher::NDTScanMatcher()
   converged_param_type_(ConvergedParamType::TRANSFORM_PROBABILITY),
   converged_param_transform_probability_(4.5),
   converged_param_nearest_voxel_transformation_likelihood_(2.3),
+  critical_upperbound_exe_time_(24),
   initial_estimate_particles_num_(100),
   lidar_topic_timeout_sec_(1.0),
   initial_pose_timeout_sec_(1.0),
@@ -140,6 +141,10 @@ NDTScanMatcher::NDTScanMatcher()
     this->declare_parameter<double>("converged_param_nearest_voxel_transformation_likelihood");
 
   lidar_topic_timeout_sec_ = this->declare_parameter<double>("lidar_topic_timeout_sec");
+  critical_upperbound_exe_time_ = this->declare_parameter("critical_upperbound_exe_time",critical_upperbound_exe_time_);
+
+  initial_pose_timeout_sec_ =
+    this->declare_parameter("initial_pose_timeout_sec", initial_pose_timeout_sec_);
 
   initial_pose_timeout_sec_ = this->declare_parameter<double>("initial_pose_timeout_sec");
 
@@ -291,6 +296,10 @@ void NDTScanMatcher::timer_diagnostic()
         converged_param_nearest_voxel_transformation_likelihood_) {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       diag_status_msg.message += "NDT score is unreliably low. ";
+    }
+    if (state_ptr_->count("exe_time") && std::stod((*state_ptr_)["exe_time"]) >= critical_upperbound_exe_time_) {
+      diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+      diag_status_msg.message += "NDT exe time is too long. ";
     }
     // Ignore local optimal solution
     if (
@@ -528,6 +537,7 @@ void NDTScanMatcher::callback_sensor_points(
   } else {
     (*state_ptr_)["is_local_optimal_solution_oscillation"] = "0";
   }
+  (*state_ptr_)["exe_time"] = std::to_string(exe_time);
 }
 
 void NDTScanMatcher::transform_sensor_measurement(

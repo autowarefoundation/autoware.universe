@@ -208,6 +208,9 @@ private:
   double z_margin_for_ground_removal_;
 
   bool use_dynamic_map_loading_;
+
+  // The execution time which means probably NDT cannot matches scans properly
+  int critical_upperbound_exe_time_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
