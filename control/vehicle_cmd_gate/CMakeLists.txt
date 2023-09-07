@@ -18,7 +18,8 @@ rclcpp_components_register_node(vehicle_cmd_gate_node
 
 rosidl_generate_interfaces(
   ${PROJECT_NAME}
-  "msg/IsFilterActivated.msg"
+  "msg/FilterValues.msg"
+  "msg/GateFilterInfo.msg"
   DEPENDENCIES builtin_interfaces
 )
 

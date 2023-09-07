@@ -8,3 +8,12 @@ bool is_activated_on_steering_rate
 bool is_activated_on_speed
 bool is_activated_on_acceleration
 bool is_activated_on_jerk
+
+# limits applied in the filtering
+FilterValues limit
+
+# values before filtering
+FilterValues raw
+
+# values after filtering
+FilterValues filtered
