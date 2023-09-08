@@ -99,7 +99,7 @@ private:
   }
 
   // createMarkers: create markers from the message with the single working process; activated when
-  // num_threads<=1;
+  // num_threads=1;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> createMarkers(
     PredictedObjects::ConstSharedPtr msg);
   // Working thread is detached from the main to control the flow of messages
@@ -110,8 +110,8 @@ private:
   void update(float wall_dt, float ros_dt) override;
 
   std::vector<visualization_msgs::msg::Marker::SharedPtr> tackle_one_object(
-    PredictedObjects::ConstSharedPtr _msg, int index,
-    std::vector<visualization_msgs::msg::Marker::SharedPtr> _markers);
+    PredictedObjects::ConstSharedPtr msg, int index,
+    std::vector<visualization_msgs::msg::Marker::SharedPtr> markers);
 
   void push_tmp_markers(std::vector<visualization_msgs::msg::Marker::SharedPtr> marker_ptrs);
 
@@ -132,7 +132,7 @@ private:
   // thread;
   std::mutex mutex;
 
-  // tmp_mutex: mutex for accessing this->tmp_markers, handle conflicts between parallelized
+  // tmp_marker_mutex: mutex for accessing this->tmp_markers, handle conflicts between parallelized
   // workers;
   std::mutex tmp_marker_mutex;
 
@@ -146,7 +146,7 @@ private:
 
   // condition: condition variable for working thread to wait for main callback to get this->msg;
   std::condition_variable condition;
-  // marker: markers to be published, created by working thread and consumed by the "update" of main
+  // markers: markers to be published, created by working thread and consumed by the "update" of main
   // process;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
   // tmp_markers: marker vectors being created by the parallelized workers, will be passed to marker
