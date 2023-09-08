@@ -542,9 +542,6 @@ struct DebugData
 
   lanelet::ConstLineStrings3d bounds;
 
-  // processed shift lines
-  AvoidLineArray new_shift_lines;
-
   // combine process
   AvoidLineArray step1_registered_shift_line;
   AvoidLineArray step1_current_raw_shift_line;
@@ -567,6 +564,7 @@ struct DebugData
 
   // registered process
   ShiftLineArray step4_validation_shift_line;
+  AvoidLineArray step4_new_shift_line;
 
   // shift length
   std::vector<double> pos_shift;

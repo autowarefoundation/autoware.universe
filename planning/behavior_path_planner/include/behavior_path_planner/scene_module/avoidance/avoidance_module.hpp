@@ -311,8 +311,7 @@ private:
    * @param debug data.
    * @return processed shift lines.
    */
-  AvoidLineOutlines calcRawShiftLinesFromObjects(
-    AvoidancePlanningData & data, DebugData & debug) const;
+  AvoidLineOutlines generateAvoidLineOutline(AvoidancePlanningData & data, DebugData & debug) const;
 
   /**
    * @brief clean up raw shift lines.
@@ -389,6 +388,14 @@ private:
   AvoidLineArray applyTrimProcess(const AvoidLineArray & shift_lines, DebugData & debug) const;
 
   /*
+   * @brief add return shift line from ego position.
+   * @param shift lines which the return shift is added.
+   * @param debug data.
+   */
+  AvoidLineArray generateCandidateShiftLine(
+    const AvoidLineArray & shift_lines, const PathShifter & path_shifter, DebugData & debug) const;
+
+  /*
    * @brief extract shift lines from total shift lines based on their gradient.
    * @param shift length data.
    * @return extracted shift lines.
@@ -402,27 +409,6 @@ private:
    * @return new shift lines.
    */
   AvoidLineArray findNewShiftLine(const AvoidLineArray & shift_lines) const;
-
-  // /*
-  //  * @brief add return shift line from ego position.
-  //  * @param shift lines which the return shift is added.
-  //  * @param debug data.
-  //  * Pick up the last shift point, which is the most farthest from ego, from the current
-  //  candidate
-  //  * avoidance points and registered points in the shifter. If the last shift length of the point
-  //  is
-  //  * non-zero, add a return-shift to center line from the point. If there is no shift point in
-  //  * candidate avoidance points nor registered points, and base_shift > 0, add a return-shift to
-  //  * center line from ego.
-  //  */
-  // void addReturnShiftLineFromEgo(AvoidLineArray & shift_lines, DebugData & debug) const;
-
-  /*
-   * @brief fill gap between two shift lines.
-   * @param original shift lines.
-   * @param debug data.
-   */
-  // void fillShiftLineGap(AvoidLineArray & shift_lines, DebugData & debug) const;
 
   /*
    * @brief generate total shift line. total shift line has shift length and gradient array.
