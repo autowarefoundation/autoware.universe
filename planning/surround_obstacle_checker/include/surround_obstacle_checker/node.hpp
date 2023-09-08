@@ -82,6 +82,8 @@ private:
   rcl_interfaces::msg::SetParametersResult onParam(
     const std::vector<rclcpp::Parameter> & parameters);
 
+  std::array<double, 3> getCheckDistances(const std::string & str_label) const;
+
   void onTimer();
 
   void onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);

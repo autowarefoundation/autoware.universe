@@ -141,16 +141,6 @@ Polygon2d createSelfPolygon(
 
   return ego_polygon;
 }
-
-int convertLabelToInt(const std::string & str_label)
-{
-  std::unordered_map<std::string, int> label_map{
-    {"unknown", ObjectClassification::UNKNOWN}, {"car", ObjectClassification::CAR},
-    {"truck", ObjectClassification::TRUCK},     {"bus", ObjectClassification::BUS},
-    {"trailer", ObjectClassification::TRAILER}, {"motorcycle", ObjectClassification::MOTORCYCLE},
-    {"bicycle", ObjectClassification::BICYCLE}, {"pedestrian", ObjectClassification::PEDESTRIAN}};
-  return label_map.at(str_label);
-}
 }  // namespace
 
 SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options)
@@ -186,6 +176,8 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
       this->declare_parameter<double>("pointcloud.surround_check_front_distance");
     p.pointcloud_surround_check_side_distance =
       this->declare_parameter<double>("pointcloud.surround_check_side_distance");
+    p.pointcloud_surround_check_back_distance =
+      this->declare_parameter<double>("pointcloud.surround_check_back_distance");
 
     p.surround_check_hysteresis_distance =
       this->declare_parameter<double>("surround_check_hysteresis_distance");
@@ -230,14 +222,35 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
   // Debug
   odometry_ptr_ = std::make_shared<nav_msgs::msg::Odometry>();
 
-  const int int_label = convertLabelToInt(node_param_.debug_footprint_label);
+  const auto check_distances = getCheckDistances(node_param_.debug_footprint_label);
   debug_ptr_ = std::make_shared<SurroundObstacleCheckerDebugNode>(
     vehicle_info_, vehicle_info_.max_longitudinal_offset_m, node_param_.debug_footprint_label,
-    node_param_.surround_check_front_distance_map.at(int_label),
-    node_param_.surround_check_side_distance_map.at(int_label),
-    node_param_.surround_check_back_distance_map.at(int_label),
+    check_distances.at(0), check_distances.at(1), check_distances.at(2),
     node_param_.surround_check_hysteresis_distance, odometry_ptr_->pose.pose, this->get_clock(),
     *this);
+}
+
+std::array<double, 3> SurroundObstacleCheckerNode::getCheckDistances(
+  const std::string & str_label) const
+{
+  if (str_label == "pointcloud") {
+    return {
+      node_param_.pointcloud_surround_check_front_distance,
+      node_param_.pointcloud_surround_check_side_distance,
+      node_param_.pointcloud_surround_check_back_distance};
+  }
+
+  std::unordered_map<std::string, int> label_map{
+    {"unknown", ObjectClassification::UNKNOWN}, {"car", ObjectClassification::CAR},
+    {"truck", ObjectClassification::TRUCK},     {"bus", ObjectClassification::BUS},
+    {"trailer", ObjectClassification::TRAILER}, {"motorcycle", ObjectClassification::MOTORCYCLE},
+    {"bicycle", ObjectClassification::BICYCLE}, {"pedestrian", ObjectClassification::PEDESTRIAN}};
+
+  const int int_label = label_map.at(str_label);
+  return {
+    node_param_.surround_check_front_distance_map.at(int_label),
+    node_param_.surround_check_side_distance_map.at(int_label),
+    node_param_.surround_check_back_distance_map.at(int_label)};
 }
 
 rcl_interfaces::msg::SetParametersResult SurroundObstacleCheckerNode::onParam(
@@ -245,19 +258,10 @@ rcl_interfaces::msg::SetParametersResult SurroundObstacleCheckerNode::onParam(
 {
   tier4_autoware_utils::updateParam<std::string>(
     parameters, "debug_footprint_label", node_param_.debug_footprint_label);
-  if (node_param_.debug_footprint_label == "pointcloud") {
-    debug_ptr_->updateFootprintMargin(
-      node_param_.debug_footprint_label, node_param_.pointcloud_surround_check_front_distance,
-      node_param_.pointcloud_surround_check_side_distance,
-      node_param_.pointcloud_surround_check_back_distance);
-  } else {
-    const int int_label = convertLabelToInt(node_param_.debug_footprint_label);
-    debug_ptr_->updateFootprintMargin(
-      node_param_.debug_footprint_label,
-      node_param_.surround_check_front_distance_map.at(int_label),
-      node_param_.surround_check_side_distance_map.at(int_label),
-      node_param_.surround_check_back_distance_map.at(int_label));
-  }
+  const auto check_distances = getCheckDistances(node_param_.debug_footprint_label);
+  debug_ptr_->updateFootprintMargin(
+    node_param_.debug_footprint_label, check_distances.at(0), check_distances.at(1),
+    check_distances.at(2));
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
