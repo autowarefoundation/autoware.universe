@@ -299,6 +299,7 @@ private:
   std::pair<double, double> calcDistanceToPathChange() const;
 
   // safety check
+  void initializeSafetyCheckParameters();
   SafetyCheckParams createSafetyCheckParams() const;
   void updateSafetyCheckTargetObjectsData(
     const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,

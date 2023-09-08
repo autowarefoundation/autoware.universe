@@ -253,11 +253,24 @@ void GoalPlannerModule::initializeOccupancyGridMap()
   occupancy_grid_map_->setParam(occupancy_grid_map_param);
 }
 
+void GoalPlannerModule::initializeSafetyCheckParameters()
+{
+  utils::start_goal_planner_common::updateEgoPredictedPathParams(
+    ego_predicted_path_params_, parameters_);
+  utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
+  utils::start_goal_planner_common::updateObjectsFilteringParams(
+    objects_filtering_params_, parameters_);
+}
+
 void GoalPlannerModule::processOnEntry()
 {
   // Initialize occupancy grid map
   if (parameters_->use_occupancy_grid) {
     initializeOccupancyGridMap();
+  }
+  // Initialize safety checker
+  if (parameters_->safety_check_params.enable_safety_check) {
+    initializeSafetyCheckParameters();
   }
 }
 
@@ -355,15 +368,11 @@ bool GoalPlannerModule::isExecutionReady() const
   }
 
   if (status_.is_safe_static_objects && parameters_->safety_check_params.enable_safety_check) {
-    utils::start_goal_planner_common::updateEgoPredictedPathParams(
-      ego_predicted_path_params_, parameters_);
-    utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
-    utils::start_goal_planner_common::updateObjectsFilteringParams(
-      objects_filtering_params_, parameters_);
     if (!isSafePath()) {
       RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
       return false;
     }
+    std::cerr << "path is safe against dynamic objects" << std::endl;
   }
   return true;
 }
@@ -1098,6 +1107,10 @@ bool GoalPlannerModule::incrementPathIndex()
 
 PathWithLaneId GoalPlannerModule::getCurrentPath() const
 {
+  if (status_.pull_over_path == nullptr) {
+    return PathWithLaneId{};
+  }
+
   if (status_.pull_over_path->partial_paths.size() <= status_.current_path_idx) {
     return PathWithLaneId{};
   }

@@ -188,23 +188,22 @@ BehaviorModuleOutput StartPlannerModule::plan()
     return output;
   }
 
-  status_.is_safe_dynamic_objects = isSafePath();
-
-  if (status_.is_safe_dynamic_objects) {
-    const auto distance_to_stop_point = utils::start_goal_planner_common::calcFeasibleDecelDistance(
-      planner_data_, parameters_->maximum_deceleration_for_stop, parameters_->maximum_jerk_for_stop,
-      0);
-    if (distance_to_stop_point) {
-      const auto output = generateStopOutput();
-      RCLCPP_ERROR_THROTTLE(
-        getLogger(), *clock_, 5000, "dangerous against dynamic object. publish stop path");
-      return output;
-    } else {
-      RCLCPP_WARN_THROTTLE(
-        getLogger(), *clock_, 5000,
-        "Failed to generate feasible stop point. So don't stop but path is not safe.");
-    }
-  }
+  // if (!isSafePath()) {
+  //   const auto distance_to_stop_point =
+  //   utils::start_goal_planner_common::calcFeasibleDecelDistance(
+  //     planner_data_, parameters_->maximum_deceleration_for_stop,
+  //     parameters_->maximum_jerk_for_stop, 0.0);
+  //   if (distance_to_stop_point) {
+  //     const auto output = generateStopOutput();
+  //     RCLCPP_ERROR_THROTTLE(
+  //       getLogger(), *clock_, 5000, "dangerous against dynamic object. publish stop path");
+  //     return output;
+  //   } else {
+  //     RCLCPP_WARN_THROTTLE(
+  //       getLogger(), *clock_, 5000,
+  //       "Failed to generate feasible stop point. So don't stop but path is not safe.");
+  //   }
+  // }
 
   if (isWaitingApproval()) {
     clearWaitingApproval();
