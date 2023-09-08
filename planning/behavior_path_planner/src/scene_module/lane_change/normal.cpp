@@ -694,6 +694,12 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
       min_dist_ego_to_obj = std::min(dist_ego_to_obj, min_dist_ego_to_obj);
     }
 
+    const auto is_lateral_far = [&]() {
+      const auto lateral = tier4_autoware_utils::calcLateralDeviation(
+        current_pose, object.kinematics.initial_pose_with_covariance.pose.position);
+      return std::abs(lateral) > common_parameters.vehicle_width;
+    };
+
     // ignore static object that are behind the ego vehicle
     if (obj_velocity_norm < 1.0 && max_dist_ego_to_obj < 0.0) {
       continue;
@@ -704,8 +710,10 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
       // TODO(watanabe): ignore static parked object that are in front of the ego vehicle in target
       // lanes
 
-      filtered_obj_indices.target_lane.push_back(i);
-      continue;
+      if (is_lateral_far()) {
+        filtered_obj_indices.target_lane.push_back(i);
+        continue;
+      }
     }
 
     // check if the object intersects with target backward lanes
