@@ -675,7 +675,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
 
       output.path = std::make_shared<PathWithLaneId>(current_path);
       output.reference_path = getPreviousModuleOutput().reference_path;
-    } else {
+    } else if (status_.has_decided_path && isActivated()) {
       // situation : not safe against dynamic objects after approval
       // insert stop point in current path if ego is able to stop with acceleration and jerk
       // constraints
@@ -733,7 +733,6 @@ void GoalPlannerModule::setStopPathInCurrentPath(BehaviorModuleOutput & output)
   if (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr) {
     // safe -> not_safe or no prev_stop_path: generate new stop_path
     output.path = std::make_shared<PathWithLaneId>(generateStopInsertedCurrentPath());
-    output.reference_path = getPreviousModuleOutput().reference_path;
     status_.prev_stop_path_after_approval = output.path;
     // set stop path as pull over path
     {
@@ -743,8 +742,8 @@ void GoalPlannerModule::setStopPathInCurrentPath(BehaviorModuleOutput & output)
   } else {
     // not_safe -> not_safe: use previous stop path
     output.path = status_.prev_stop_path_after_approval;
-    output.reference_path = getPreviousModuleOutput().reference_path;
   }
+  output.reference_path = getPreviousModuleOutput().reference_path;
   RCLCPP_WARN_THROTTLE(
     getLogger(), *clock_, 5000, "Found approved pull_over path is not safe, generate stop path");
 }
@@ -1111,13 +1110,11 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
 PathWithLaneId GoalPlannerModule::generateStopPointInCurrentPath()
 {
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
+  auto current_path = getCurrentPath();
 
-  if (status_.current_lanes.empty()) {
+  if (status_.current_lanes.empty() || current_path.points.empty()) {
     return PathWithLaneId{};
   }
-
-  // get current path
-  auto current_path = getCurrentPath();
 
   // try to insert stop point in current_path after approval
   // but if can't stop with constraints(maximum deceleration, maximum jerk), don't insert stop point
