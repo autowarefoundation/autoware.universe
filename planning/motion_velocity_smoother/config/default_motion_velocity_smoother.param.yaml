@@ -13,6 +13,7 @@
     decel_distance_before_curve: 3.5   # slow speed distance before a curve for lateral acceleration limit
     decel_distance_after_curve: 2.0    # slow speed distance after a curve for lateral acceleration limit
     min_decel_for_lateral_acc_lim_filter: -2.5  # deceleration limit applied in the lateral acceleration filter to avoid sudden braking [m/ss]
+    curvature_calculation_distance: 5.0         # distance of points while curvature is calculating for the steer rate and lateral acceleration limit [m]
 
     # engage & replan parameters
     replan_vel_deviation: 5.53         # velocity deviation to replan initial velocity [m/s]
@@ -52,7 +53,6 @@
     max_steering_angle_rate: 40.0            # maximum steering angle rate [degree/s]
     resample_ds: 0.1                         # distance between trajectory points [m]
     curvature_threshold: 0.02                # if curvature > curvature_threshold, steeringRateLimit is triggered [1/m]
-    curvature_calculation_distance: 1.0      # distance of points while curvature is calculating [m]
 
     # system
     over_stop_velocity_warn_thr: 1.389  # used to check if the optimization exceeds the input velocity on the stop point
