@@ -58,11 +58,11 @@ void checkMeasurementUpdated(
   std::string diag_message;
   if (*no_update_count_ptr >= *no_update_count_threshold_warn_ptr) {
     diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "[WARN]" + measurement_type + "_queue is empty";
+    diag_message = "[WARN]" + measurement_type + " is not updated";
   }
   if (*no_update_count_ptr >= *no_update_count_threshold_error_ptr) {
     diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-    diag_message = "[ERROR]" + measurement_type + "_queue is empty";
+    diag_message = "[ERROR]" + measurement_type + " is not updated";
   }
 
   stat.summary(diag_level, diag_message);
