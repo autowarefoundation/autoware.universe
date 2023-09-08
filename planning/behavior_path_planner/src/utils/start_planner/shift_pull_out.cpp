@@ -282,6 +282,27 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       shifted_path.path.points.back().point.longitudinal_velocity_mps = 0.0;
     }
 
+    // crop backward path
+    // removes points up to the start pose and other points in close proximity and
+    // inserts the accurate start pose.
+    // this ensures that the backward_path stays within the drivable area when starting from a
+    // narrow place.
+    const auto start_segment_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+      shifted_path.path.points, start_pose, common_parameter.ego_nearest_dist_threshold,
+      common_parameter.ego_nearest_yaw_threshold);
+    PathPointWithLaneId start_path_point = shifted_path.path.points.at(start_segment_idx);
+    start_path_point.point.pose = start_pose;
+    shifted_path.path.points.erase(
+      shifted_path.path.points.begin(), shifted_path.path.points.begin() + start_segment_idx + 1);
+    for (auto it = shifted_path.path.points.begin(); it != shifted_path.path.points.end();) {
+      if (calcDistance2d(it->point.pose, start_pose) <= 0.5 /*close_distance_threshold*/) {
+        it = shifted_path.path.points.erase(it);
+      } else {
+        ++it;
+      }
+    }
+    shifted_path.path.points.insert(shifted_path.path.points.begin(), start_path_point);
+
     // add shifted path to candidates
     PullOutPath candidate_path;
     candidate_path.partial_paths.push_back(shifted_path.path);
