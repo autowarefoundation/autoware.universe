@@ -1063,6 +1063,9 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::REPLAN_MAX_DEVIATION_PARAM,
       planner_data_->drivable_area_expansion_parameters.replan_max_deviation);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::DEBUG_PRINT_PARAM,
+      planner_data_->drivable_area_expansion_parameters.debug_print);
     if (updated) planner_data_->drivable_area_expansion_replan_checker.reset();
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;

@@ -62,6 +62,7 @@ struct DrivableAreaExpansionParameters
   static constexpr auto REPLAN_ENABLE_PARAM = "dynamic_expansion.replan_checker.enable";
   static constexpr auto REPLAN_MAX_DEVIATION_PARAM =
     "dynamic_expansion.replan_checker.max_deviation";
+  static constexpr auto DEBUG_PRINT_PARAM = "dynamic_expansion.debug_print";
 
   double drivable_area_right_bound_offset;
   double drivable_area_left_bound_offset;
@@ -91,6 +92,7 @@ struct DrivableAreaExpansionParameters
   double compensate_extra_dist{};
   bool replan_enable{};
   double replan_max_deviation{};
+  bool debug_print{};
 
   DrivableAreaExpansionParameters() = default;
   explicit DrivableAreaExpansionParameters(rclcpp::Node & node) { init(node); }
@@ -129,6 +131,7 @@ struct DrivableAreaExpansionParameters
     expansion_method = node.declare_parameter<std::string>(EXPANSION_METHOD_PARAM);
     replan_enable = node.declare_parameter<bool>(REPLAN_ENABLE_PARAM);
     replan_max_deviation = node.declare_parameter<double>(REPLAN_MAX_DEVIATION_PARAM);
+    debug_print = node.declare_parameter<bool>(DEBUG_PRINT_PARAM);
 
     const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
     ego_left_offset = vehicle_info.max_lateral_offset_m;

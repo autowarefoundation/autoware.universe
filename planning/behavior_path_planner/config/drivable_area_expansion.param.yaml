@@ -8,6 +8,7 @@
     # Dynamic expansion by projecting the ego footprint along the path
     dynamic_expansion:
       enabled: false
+      debug_print: false  # if true, print some debug runtime measurements
       ego:
         extra_footprint_offset:
           front: 0.5 # [m] extra length to add to the front of the ego footprint
@@ -15,7 +16,7 @@
           left: 0.5 # [m] extra length to add to the left of the ego footprint
           right: 0.5 # [m] extra length to add to the rear of the ego footprint
       dynamic_objects:
-        avoid: true # if true, the drivable area is not expanded in the predicted path of dynamic objects
+        avoid: false # if true, the drivable area is not expanded in the predicted path of dynamic objects
         extra_footprint_offset:
           front: 0.5 # [m] extra length to add to the front of the dynamic object footprint
           rear: 0.5 # [m] extra length to add to the rear of the dynamic object footprint
@@ -40,4 +41,4 @@
       replan_checker:
         enable: true  # if true, only recalculate the expanded drivable area when the path or its original drivable area change significantly
                       # not compatible with dynamic_objects.avoid
-        max_deviation: 0.5  # [m] full replan is only done if the path or its original drivable area change by more than this distance
+        max_deviation: 0.5  # [m] full replan is only done if the path changes by more than this distance

@@ -81,7 +81,6 @@ public:
       const auto & point = path_ls[i];
       const auto deviation_distance = boost::geometry::distance(point, prev_path_ls_);
       if (deviation_distance > max_deviation) {
-        std::printf("[ REPLAN ] dev_dist = %2.2f, idx = %ld\n", deviation_distance, i);
         return i;
       }
     }

@@ -115,17 +115,17 @@ void expandDrivableArea(
   const auto update_duration = stopwatch.toc("update");
   planner_data->drivable_area_expansion_replan_checker.set_previous(path);
 
-  std::printf("Dynamic drivable area expansion runtime: %2.2fms\n", stopwatch.toc());
-  std::printf("\tcalc_replan: %2.2fms\n", calc_replan_duration);
-  std::printf("\textract_lines: %2.2fms\n", extra_uncrossable_lines_duration);
-  std::printf("\tcrop: %2.2fms\n", crop_duration);
-  std::printf("\tfootprints: %2.2fms\n", footprints_duration);
-  std::printf("\texp_polys: %2.2fms\n", exp_polygons_duration);
-  std::printf("\texp_da: %2.2fms\n", exp_da_duration);
-  std::printf("\tupdate: %2.2fms\n", update_duration);
-  std::printf(
-    "\t [REPLAN] replan index: %ld %s", replan_index, is_replanning ? " [IS REPLANNING]" : "");
-  std::cout << std::endl;
+  if (params.debug_print) {
+    std::printf("Dynamic drivable area expansion runtime: %2.2fms\n", stopwatch.toc());
+    std::printf("\tcalc_replan: %2.2fms\n", calc_replan_duration);
+    std::printf("\textract_lines: %2.2fms\n", extra_uncrossable_lines_duration);
+    std::printf("\tcrop: %2.2fms\n", crop_duration);
+    std::printf("\tfootprints: %2.2fms\n", footprints_duration);
+    std::printf("\texp_polys: %2.2fms\n", exp_polygons_duration);
+    std::printf("\texp_da: %2.2fms\n", exp_da_duration);
+    std::printf("\tupdate: %2.2fms\n", update_duration);
+    std::cout << std::endl;
+  }
 }
 
 point_t convert_point(const Point & p)
