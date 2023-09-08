@@ -706,7 +706,7 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
 {
   if (status_.prev_is_safe || status_.prev_stop_path == nullptr) {
     // safe -> not_safe or no prev_stop_path: generate new stop_path
-    output.path = std::make_shared<PathWithLaneId>(generateStopPath());
+    output.path = std::make_shared<PathWithLaneId>(generateStopInsertedCurrentPath());
     output.reference_path = getPreviousModuleOutput().reference_path;
     status_.prev_stop_path = output.path;
     // set stop path as pull over path
@@ -732,22 +732,21 @@ void GoalPlannerModule::setStopPathInCurrentPath(BehaviorModuleOutput & output)
 {
   if (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr) {
     // safe -> not_safe or no prev_stop_path: generate new stop_path
-    output.path = std::make_shared<PathWithLaneId>(generateStopPointInCurrentPath());
+    output.path = std::make_shared<PathWithLaneId>(generateStopInsertedCurrentPath());
     output.reference_path = getPreviousModuleOutput().reference_path;
     status_.prev_stop_path_after_approval = output.path;
     // set stop path as pull over path
-    mutex_.lock();
-    last_path_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
-    mutex_.unlock();
-    RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 5000, "Found approved pull_over path is not safe, generate stop path");
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      last_path_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+    }
   } else {
     // not_safe -> not_safe: use previous stop path
     output.path = status_.prev_stop_path_after_approval;
     output.reference_path = getPreviousModuleOutput().reference_path;
-    RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 5000, "Found approved pull_over path is not safe, generate stop path");
   }
+  RCLCPP_WARN_THROTTLE(
+    getLogger(), *clock_, 5000, "Found approved pull_over path is not safe, generate stop path");
 }
 
 void GoalPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const

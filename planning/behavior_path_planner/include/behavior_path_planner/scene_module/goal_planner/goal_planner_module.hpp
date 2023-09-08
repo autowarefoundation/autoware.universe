@@ -243,7 +243,7 @@ private:
    * @return PathWithLaneId The modified path with the stop point inserted. If no stop point is
    * inserted, returns the original path.
    */
-  PathWithLaneId generateStopPointInCurrentPath();
+  PathWithLaneId generateStopInsertedCurrentPath();
   void keepStoppedWithCurrentPath(PathWithLaneId & path);
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
 
