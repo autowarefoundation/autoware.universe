@@ -26,6 +26,15 @@
 
 #include <boost/geometry.hpp>
 
+// for writing the svg file
+#include <fstream>
+#include <iostream>
+// for the geometry types
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+// for the svg mapper
+#include <boost/geometry/io/svg/svg_mapper.hpp>
+#include <boost/geometry/io/svg/write.hpp>
+
 namespace drivable_area_expansion
 {
 
@@ -56,19 +65,27 @@ void expandDrivableArea(
   const lanelet::ConstLanelets & path_lanes)
 {
   if (path.points.empty() || path.left_bound.empty() || path.right_bound.empty()) return;
+  // Declare a stream and an SVG mapper
+  std::ofstream svg("/home/mclement/Pictures/debug.svg");  // /!\ CHANGE PATH
+  boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
 
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
   const auto & params = planner_data->drivable_area_expansion_parameters;
   const auto & dynamic_objects = *planner_data->dynamic_object;
   const auto & route_handler = *planner_data->route_handler;
 
+  stopwatch.tic("calc_replan");
   auto & replan_checker = planner_data->drivable_area_expansion_replan_checker;
   const auto replan_index =
     params.replan_enable ? replan_checker.calculate_replan_index(path, params.replan_max_deviation)
                          : 0;
   const auto & prev_expanded_drivable_area = replan_checker.get_previous_expanded_drivable_area();
-  const auto is_replanning = params.expansion_method == "polygon" &&
-                             !prev_expanded_drivable_area.outer().empty() && replan_index > 0;
+  const auto is_replanning =
+    params.expansion_method == "polygon" && !params.avoid_dynamic_objects &&
+    !boost::geometry::is_empty(prev_expanded_drivable_area) && replan_index > 0;
+  const auto calc_replan_duration = stopwatch.toc("calc_replan");
 
+  stopwatch.tic("extract_uncrossable_lines");
   const auto uncrossable_lines =
     extractUncrossableLines(*route_handler.getLaneletMapPtr(), params.avoid_linestring_types);
   multi_linestring_t uncrossable_lines_in_range;
@@ -76,11 +93,18 @@ void expandDrivableArea(
   for (const auto & line : uncrossable_lines)
     if (boost::geometry::distance(line, point_t{p.x, p.y}) < params.max_path_arc_length)
       uncrossable_lines_in_range.push_back(line);
+  const auto extra_uncrossable_lines_duration = stopwatch.toc("extract_uncrossable_lines");
+
+  stopwatch.tic("crop");
   const auto points = crop_and_resample(path.points, params, replan_index);
+  const auto crop_duration = stopwatch.toc("crop");
+  stopwatch.tic("footprints");
   const auto path_footprints = createPathFootprints(points, params);
+  const auto footprints_duration = stopwatch.toc("footprints");
   const auto predicted_paths = params.avoid_dynamic_objects
                                  ? createObjectFootprints(dynamic_objects, params)
                                  : multi_polygon_t{};
+  stopwatch.tic("exp_polys");
   auto expansion_polygons =
     params.expansion_method == "lanelet"
       ? createExpansionLaneletPolygons(
@@ -88,9 +112,49 @@ void expandDrivableArea(
       : createExpansionPolygons(
           path, path_footprints, predicted_paths, uncrossable_lines_in_range, params);
   if (is_replanning) expansion_polygons.push_back(prev_expanded_drivable_area);
+  const auto exp_polygons_duration = stopwatch.toc("exp_polys");
+  stopwatch.tic("exp_da");
   const auto expanded_drivable_area = createExpandedDrivableAreaPolygon(path, expansion_polygons);
+  const auto exp_da_duration = stopwatch.toc("exp_da");
   planner_data->drivable_area_expansion_replan_checker.set_previous(path, expanded_drivable_area);
+
+  linestring_t path_ls;
+  for (const auto & p : path.points)
+    path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
+
+  stopwatch.tic("update");
   updateDrivableAreaBounds(path, expanded_drivable_area);
+  const auto update_duration = stopwatch.toc("update");
+
+  std::printf("Dynamic drivable area expansion runtime: %2.2fms\n", stopwatch.toc());
+  std::printf("\tcalc_replan: %2.2fms\n", calc_replan_duration);
+  std::printf("\textract_lines: %2.2fms\n", extra_uncrossable_lines_duration);
+  std::printf("\tcrop: %2.2fms\n", crop_duration);
+  std::printf("\tfootprints: %2.2fms\n", footprints_duration);
+  std::printf("\texp_polys: %2.2fms\n", exp_polygons_duration);
+  std::printf("\texp_da: %2.2fms\n", exp_da_duration);
+  std::printf("\tupdate: %2.2fms\n", update_duration);
+  std::printf(
+    "\t [REPLAN] replan index: %ld %s", replan_index, is_replanning ? " [IS REPLANNING]" : "");
+  std::cout << std::endl;
+
+  mapper.add(prev_expanded_drivable_area);
+  mapper.add(expanded_drivable_area);
+  mapper.add(replan_checker.prev_path_ls_);
+  mapper.add(path_ls);
+  mapper.map(
+    prev_expanded_drivable_area,
+    "opacity:0.2;fill-opacity:0.3;fill:blue;stroke:none;stroke-width:2");
+  mapper.map(
+    replan_checker.prev_path_ls_,
+    "opacity:0.3;fill-opacity:0.3;fill:blue;stroke:blue;stroke-width:2");
+  mapper.map(path_ls, "opacity:0.3;fill-opacity:0.3;fill:red;stroke:red;stroke-width:2");
+  if (replan_index < path_ls.size())
+    mapper.map(
+      path_ls[replan_index], "opacity:0.3;fill-opacity:0.3;fill:pink;stroke:pink;stroke-width:2",
+      2);
+  mapper.map(
+    expanded_drivable_area, "opacity:0.2;fill-opacity:0.3;fill:red;stroke:none;stroke-width:2");
 }
 
 point_t convert_point(const Point & p)

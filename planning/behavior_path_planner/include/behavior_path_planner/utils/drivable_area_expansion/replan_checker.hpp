@@ -33,13 +33,6 @@ linestring_t to_linestring(const PathWithLaneId & path)
     ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
   return ls;
 }
-linestring_t to_linestring(const std::vector<Point> & points)
-{
-  linestring_t ls;
-  ls.reserve(points.size());
-  for (const auto & p : points) ls.emplace_back(p.x, p.y);
-  return ls;
-}
 size_t first_deviating_index(
   const linestring_t & ls, const linestring_t & prev_ls, const double max_deviation)
 {
@@ -55,44 +48,49 @@ size_t first_deviating_index(
 
 class ReplanChecker
 {
-private:
+public:  // TODO(Maxime): set to private
   linestring_t prev_path_ls_{};
-  linestring_t prev_left_bound_ls_{};
-  linestring_t prev_right_bound_ls_{};
   polygon_t prev_expanded_drivable_area_{};
 
 public:
+  /// @brief set the previous path and expanded drivable area
+  /// @param path previous path
+  /// @param prev_expanded_drivable_area previous expanded drivable area
   void set_previous(const PathWithLaneId & path, const polygon_t & prev_expanded_drivable_area)
   {
     prev_path_ls_.clear();
-    prev_left_bound_ls_.clear();
-    prev_right_bound_ls_.clear();
     for (const auto & p : path.points)
       prev_path_ls_.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
-    for (const auto & p : path.left_bound) prev_left_bound_ls_.emplace_back(p.x, p.y);
-    for (const auto & p : path.right_bound) prev_right_bound_ls_.emplace_back(p.x, p.y);
     prev_expanded_drivable_area_ = prev_expanded_drivable_area;
   }
 
+  /// @brief get the previous expanded drivable area
+  /// @return the previous expanded drivable area
   polygon_t get_previous_expanded_drivable_area() { return prev_expanded_drivable_area_; }
 
+  /// @brief reset the previous path and expanded drivable area
   void reset()
   {
     boost::geometry::clear(prev_path_ls_);
-    boost::geometry::clear(prev_left_bound_ls_);
-    boost::geometry::clear(prev_right_bound_ls_);
     boost::geometry::clear(prev_expanded_drivable_area_);
   }
 
+  /// @brief calculate the index of the input path from which replanning is necessary
+  /// @param [in] path input path
+  /// @param [in] max_deviation [m] replan index will be the first path point that deviates by more
+  /// than this distance
+  /// @return path index from which to replan
   size_t calculate_replan_index(const PathWithLaneId & path, const double max_deviation) const
   {
     const auto path_ls = to_linestring(path);
-    const auto left_bound_ls = to_linestring(path.left_bound);
-    const auto right_bound_ls = to_linestring(path.right_bound);
-    return std::min(
-      {first_deviating_index(path_ls, prev_path_ls_, max_deviation),
-       first_deviating_index(left_bound_ls, prev_left_bound_ls_, max_deviation),
-       first_deviating_index(right_bound_ls, prev_right_bound_ls_, max_deviation)});
+    // reset if the end of the previous path does not match with the new path
+    if (
+      !prev_path_ls_.empty() &&
+      boost::geometry::distance(prev_path_ls_.back(), path_ls) > max_deviation)
+      return 0;
+
+    auto path_dev_idx = first_deviating_index(path_ls, prev_path_ls_, max_deviation);
+    return path_dev_idx;
   }
 };
 }  // namespace drivable_area_expansion
