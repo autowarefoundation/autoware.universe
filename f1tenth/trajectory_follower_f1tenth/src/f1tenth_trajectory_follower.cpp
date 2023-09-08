@@ -31,8 +31,8 @@ F1tenthTrajectoryFollower::F1tenthTrajectoryFollower(const rclcpp::NodeOptions &
 : Node("f1tenth_trajectory_follower", options)
 {
   drive_cmd_ = create_publisher<AckermannDriveStamped>("/drive", 1);
-  traj_marker_pub_ = create_publisher<Marker>("/wp_marker", 10);
-  goal_marker_pub_ = create_publisher<Marker>("/goal_marker", 10);
+  traj_marker_pub_ = create_publisher<Marker>("/wp_marker", 1);
+  goal_marker_pub_ = create_publisher<Marker>("/goal_marker", 1);
 
   sub_kinematics_ = create_subscription<Odometry>(
     "input/kinematics", 1, [this](const Odometry::SharedPtr msg) { odometry_ = msg; });
@@ -59,14 +59,13 @@ void F1tenthTrajectoryFollower::createTrajectoryMarker(){
     marker.pose = pose;
     marker.scale = scale;
     marker.header = header;
+    marker.points.clear();
+    marker.lifetime = rclcpp::Duration::from_nanoseconds(0.03 * 1e9);
 
     for(int i = 0; i < (int)trajectory_->points.size(); i++){
-      TrajectoryPoint trajectory_point_ = trajectory_->points[i];
-
-      point.x = trajectory_point_.pose.position.x;
-      point.y = trajectory_point_.pose.position.y;
+      point.x = trajectory_->points[i].pose.position.x;
+      point.y = trajectory_->points[i].pose.position.y;
       point.z = 0.0;
-      
       marker.points.push_back(point);
     }
 
@@ -74,7 +73,6 @@ void F1tenthTrajectoryFollower::createTrajectoryMarker(){
     marker.color.g = 0.0;
     marker.color.b = 0.0;
     marker.color.a = 1.0;
-
     traj_marker_pub_->publish(marker);
 
     scale.x = 0.2;
@@ -85,11 +83,13 @@ void F1tenthTrajectoryFollower::createTrajectoryMarker(){
     goal_marker.pose = pose;
     goal_marker.scale = scale;
     goal_marker.header = header;
+    goal_marker.lifetime = rclcpp::Duration::from_nanoseconds(0.03 * 1e9);
 
     point.x = closest_traj_point_.pose.position.x;
     point.y = closest_traj_point_.pose.position.y;
     point.z = 0.0;
-      
+    
+    goal_marker.points.clear();
     goal_marker.points.push_back(point);
 
     goal_marker.color.r = 0.0;
