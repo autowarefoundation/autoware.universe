@@ -33,7 +33,8 @@ geometry_msgs::msg::Point calcOffsetPosition(
 
 Polygon2d createOneStepPolygon(
   const geometry_msgs::msg::Pose & base_step_pose, const geometry_msgs::msg::Pose & next_step_pose,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin,
+  const double lat_err = 0.0)
 {
   Polygon2d polygon;
 
@@ -52,6 +53,29 @@ Polygon2d createOneStepPolygon(
   appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, base_to_front, -width));
   appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, -base_to_rear, -width));
   appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, -base_to_rear, width));
+
+  const bool is_enable_current_pose_consideration = true;  // sould be set as a new global param
+  if (is_enable_current_pose_consideration) {
+    // base step
+    appendPointToPolygon(
+      polygon, calcOffsetPosition(base_step_pose, base_to_front, width + lat_err));
+    appendPointToPolygon(
+      polygon, calcOffsetPosition(base_step_pose, base_to_front, -width + lat_err));
+    appendPointToPolygon(
+      polygon, calcOffsetPosition(base_step_pose, -base_to_rear, -width + lat_err));
+    appendPointToPolygon(
+      polygon, calcOffsetPosition(base_step_pose, -base_to_rear, width + lat_err));
+
+    // next step
+    appendPointToPolygon(
+      polygon, calcOffsetPosition(next_step_pose, base_to_front, width + lat_err));
+    appendPointToPolygon(
+      polygon, calcOffsetPosition(next_step_pose, base_to_front, -width + lat_err));
+    appendPointToPolygon(
+      polygon, calcOffsetPosition(next_step_pose, -base_to_rear, -width + lat_err));
+    appendPointToPolygon(
+      polygon, calcOffsetPosition(next_step_pose, -base_to_rear, width + lat_err));
+  }
 
   bg::correct(polygon);
 
@@ -186,18 +210,39 @@ std::vector<PointWithStamp> getCollisionPoints(
 
 std::vector<Polygon2d> createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin)
+  const vehicle_info_util::VehicleInfo & vehicle_info,
+  const geometry_msgs::msg::Point & ego_position, const double lat_margin)
 {
   std::vector<Polygon2d> polygons;
 
-  for (size_t i = 0; i < traj_points.size(); ++i) {
-    const auto polygon = [&]() {
-      if (i == 0) {
-        return createOneStepPolygon(
-          traj_points.at(i).pose, traj_points.at(i).pose, vehicle_info, lat_margin);
+  const double current_ego_lat_error = motion_utils::calcLateralOffset(traj_points, ego_position);
+  // const double current_ego_lat_error = -3.0;  // for debug visualization
+
+  const double step_length =
+    2.0;  // sould be replaced by a global param
+          // "behavior_determination_param_.decimate_trajectory_step_length"
+  const double time_to_convergence = 1.5;  // global param. DO NOT SET IT TO ZERO nor negative value
+
+  polygons.push_back(createOneStepPolygon(
+    traj_points.at(0).pose, traj_points.at(0).pose, vehicle_info, lat_margin,
+    current_ego_lat_error));
+
+  double time_elapsed = 0.0;
+  for (size_t i = 1; i < traj_points.size(); ++i) {
+    // estimate the future lateral error by first-order decrement against the time
+    double lat_err = 0.0;
+    if (time_elapsed < time_to_convergence) {
+      lat_err = current_ego_lat_error * (time_to_convergence - time_elapsed) / time_to_convergence;
+      if (traj_points.at(i).longitudinal_velocity_mps != 0.0) {
+        time_elapsed += step_length / traj_points.at(i).longitudinal_velocity_mps;
+      } else {
+        time_elapsed = std::numeric_limits<double>::max();
       }
+    }
+
+    const auto polygon = [&]() {
       return createOneStepPolygon(
-        traj_points.at(i - 1).pose, traj_points.at(i).pose, vehicle_info, lat_margin);
+        traj_points.at(i - 1).pose, traj_points.at(i).pose, vehicle_info, lat_margin, lat_err);
     }();
 
     polygons.push_back(polygon);

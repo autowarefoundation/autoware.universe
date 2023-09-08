@@ -47,7 +47,8 @@ std::vector<PointWithStamp> getCollisionPoints(
 
 std::vector<Polygon2d> createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin = 0.0);
+  const vehicle_info_util::VehicleInfo & vehicle_info, const geometry_msgs::msg::Point & ego_position,
+  const double lat_margin = 0.0);
 }  // namespace polygon_utils
 
 #endif  // OBSTACLE_CRUISE_PLANNER__POLYGON_UTILS_HPP_

@@ -648,8 +648,8 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
 
   // calculated decimated trajectory points and trajectory polygon
   const auto decimated_traj_points = decimateTrajectoryPoints(traj_points);
-  const auto decimated_traj_polys =
-    polygon_utils::createOneStepPolygons(decimated_traj_points, vehicle_info_);
+  const auto decimated_traj_polys = polygon_utils::createOneStepPolygons(
+    decimated_traj_points, vehicle_info_, ego_odom_ptr_->pose.pose.position);
   debug_data_ptr_->detection_polygons = decimated_traj_polys;
 
   // determine ego's behavior from stop, cruise and slow down
@@ -981,8 +981,8 @@ ObstacleCruisePlannerNode::createCollisionPointForStopObstacle(
   }
 
   // calculate collision points with trajectory with lateral stop margin
-  const auto traj_polys_with_lat_margin =
-    polygon_utils::createOneStepPolygons(traj_points, vehicle_info_, p.max_lat_margin_for_stop);
+  const auto traj_polys_with_lat_margin = polygon_utils::createOneStepPolygons(
+    traj_points, vehicle_info_, ego_odom_ptr_->pose.pose.position, p.max_lat_margin_for_stop);
   const auto collision_point = polygon_utils::getCollisionPoint(
     traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_);
   return collision_point;
@@ -1044,7 +1044,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   // calculate collision points with trajectory with lateral stop margin
   // NOTE: For additional margin, hysteresis is not divided by two.
   const auto traj_polys_with_lat_margin = polygon_utils::createOneStepPolygons(
-    traj_points, vehicle_info_,
+    traj_points, vehicle_info_, ego_odom_ptr_->pose.pose.position,
     p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down);
 
   std::vector<Polygon2d> front_collision_polygons;
