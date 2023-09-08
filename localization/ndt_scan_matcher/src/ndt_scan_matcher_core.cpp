@@ -537,7 +537,7 @@ void NDTScanMatcher::callback_sensor_points(
   } else {
     (*state_ptr_)["is_local_optimal_solution_oscillation"] = "0";
   }
-  (*state_ptr_)["exe_time"] = std::to_string(exe_time);
+  (*state_ptr_)["execution_time"] = std::to_string(exe_time);
 }
 
 void NDTScanMatcher::transform_sensor_measurement(
