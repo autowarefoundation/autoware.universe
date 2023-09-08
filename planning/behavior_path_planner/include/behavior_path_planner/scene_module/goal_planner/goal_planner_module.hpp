@@ -81,6 +81,7 @@ struct PullOverStatus
   size_t current_path_idx{0};
   bool require_increment_{true};  // if false, keep current path idx.
   std::shared_ptr<PathWithLaneId> prev_stop_path{nullptr};
+  std::shared_ptr<PathWithLaneId> prev_stop_path_after_approval{nullptr};
   lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_over_lanes{};
   std::vector<DrivableLanes> lanes{};  // current + pull_over
@@ -88,6 +89,7 @@ struct PullOverStatus
   bool is_safe_static_objects{false};   // current path is safe against static objects
   bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
   bool prev_is_safe{false};
+  bool prev_is_safe_dynamic_objects{false};
   bool has_decided_velocity{false};
   bool has_requested_approval{false};
   bool is_ready{false};
@@ -230,6 +232,7 @@ private:
     const Pose & search_start_offset_pose, PathWithLaneId & path) const;
   PathWithLaneId generateStopPath();
   PathWithLaneId generateFeasibleStopPath();
+  PathWithLaneId insertStopPointInCurrentPath();
   void keepStoppedWithCurrentPath(PathWithLaneId & path);
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
 
@@ -277,6 +280,7 @@ private:
   // output setter
   void setOutput(BehaviorModuleOutput & output);
   void setStopPath(BehaviorModuleOutput & output);
+  void setStopPathInCurrentPath(BehaviorModuleOutput & output);
   void setModifiedGoal(BehaviorModuleOutput & output) const;
   void setTurnSignalInfo(BehaviorModuleOutput & output) const;
 

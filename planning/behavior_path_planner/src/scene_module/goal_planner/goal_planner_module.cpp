@@ -664,18 +664,24 @@ void GoalPlannerModule::setLanes()
 void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
 {
   if (status_.is_safe_static_objects) {
-    // clear stop pose when the path is safe and activated
-    if (isActivated()) {
-      resetWallPoses();
+    if (isSafePath()) {
+      // clear stop pose when the path is safe against static objects and activated
+      if (isActivated()) {
+        resetWallPoses();
+      }
+      // keep stop if not enough time passed,
+      // because it takes time for the trajectory to be reflected
+      auto current_path = getCurrentPath();
+      keepStoppedWithCurrentPath(current_path);
+
+      output.path = std::make_shared<PathWithLaneId>(current_path);
+      output.reference_path = getPreviousModuleOutput().reference_path;
+    } else {
+      // situation : not safe against dynamic objects after approval
+      // insert stop point in original path
+      setStopPathInCurrentPath(output);
     }
 
-    // keep stop if not enough time passed,
-    // because it takes time for the trajectory to be reflected
-    auto current_path = getCurrentPath();
-    keepStoppedWithCurrentPath(current_path);
-
-    output.path = std::make_shared<PathWithLaneId>(current_path);
-    output.reference_path = getPreviousModuleOutput().reference_path;
   } else {
     // not safe: use stop_path
     setStopPath(output);
@@ -693,6 +699,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
   status_.prev_is_safe = status_.is_safe_static_objects;
+  status_.prev_is_safe_dynamic_objects = status_.is_safe_dynamic_objects;
 }
 
 void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
@@ -718,6 +725,29 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
     output.reference_path = getPreviousModuleOutput().reference_path;
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path, use previous stop path");
+  }
+}
+
+void GoalPlannerModule::setStopPathInCurrentPath(BehaviorModuleOutput & output)
+{
+  if (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr) {
+    // safe -> not_safe or no prev_stop_path: generate new stop_path
+    // generate 感だす。
+    output.path = std::make_shared<PathWithLaneId>(insertStopPointInCurrentPath());
+    output.reference_path = getPreviousModuleOutput().reference_path;
+    status_.prev_stop_path_after_approval = output.path;
+    // set stop path as pull over path
+    mutex_.lock();
+    last_path_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+    mutex_.unlock();
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Found approved pull_over path is not safe, generate stop path");
+  } else {
+    // not_safe -> not_safe: use previous stop path
+    output.path = status_.prev_stop_path_after_approval;
+    output.reference_path = getPreviousModuleOutput().reference_path;
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Found approved pull_over path is not safe, generate stop path");
   }
 }
 
@@ -1078,6 +1108,36 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
   }
 
   return stop_path;
+}
+
+PathWithLaneId GoalPlannerModule::insertStopPointInCurrentPath()
+{
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
+
+  if (status_.current_lanes.empty()) {
+    return PathWithLaneId{};
+  }
+
+  // get current path
+  auto current_path = getCurrentPath();
+
+  // try to insert stop point in current_path after approval
+  // but if can't stop with constraints(maximum deceleration, maximum jerk), don't insert stop point
+  const auto min_stop_distance = calcFeasibleDecelDistance(
+    planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0.0);
+  if (!min_stop_distance) {
+    return current_path;
+  }
+
+  // set stop point
+  const auto stop_idx =
+    motion_utils::insertStopPoint(current_pose, *min_stop_distance, current_path.points);
+
+  if (stop_idx) {
+    stop_pose_ = current_path.points.at(*stop_idx).point.pose;
+  }
+
+  return current_path;
 }
 
 void GoalPlannerModule::transitionToNextPathIfFinishingCurrentPath()
