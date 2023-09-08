@@ -146,8 +146,8 @@ private:
 
   // condition: condition variable for working thread to wait for main callback to get this->msg;
   std::condition_variable condition;
-  // markers: markers to be published, created by working thread and consumed by the "update" of main
-  // process;
+  // markers: markers to be published, created by working thread and consumed by the "update" of
+  // main process;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
   // tmp_markers: marker vectors being created by the parallelized workers, will be passed to marker
   // when finished.
