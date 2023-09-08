@@ -372,7 +372,6 @@ bool GoalPlannerModule::isExecutionReady() const
       RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
       return false;
     }
-    std::cerr << "path is safe against dynamic objects" << std::endl;
   }
   return true;
 }
@@ -665,7 +664,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
 {
   if (status_.is_safe_static_objects) {
     if (isSafePath()) {
-      // clear stop pose when the path is safe against static objects and activated
+      // clear stop pose when the path is safe against static/dynamic objects and activated
       if (isActivated()) {
         resetWallPoses();
       }
@@ -678,7 +677,8 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
       output.reference_path = getPreviousModuleOutput().reference_path;
     } else {
       // situation : not safe against dynamic objects after approval
-      // insert stop point in original path
+      // insert stop point in current path if ego is able to stop with acceleration and jerk
+      // constraints
       setStopPathInCurrentPath(output);
     }
 
@@ -732,8 +732,7 @@ void GoalPlannerModule::setStopPathInCurrentPath(BehaviorModuleOutput & output)
 {
   if (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr) {
     // safe -> not_safe or no prev_stop_path: generate new stop_path
-    // generate 感だす。
-    output.path = std::make_shared<PathWithLaneId>(insertStopPointInCurrentPath());
+    output.path = std::make_shared<PathWithLaneId>(generateStopPointInCurrentPath());
     output.reference_path = getPreviousModuleOutput().reference_path;
     status_.prev_stop_path_after_approval = output.path;
     // set stop path as pull over path
@@ -1110,7 +1109,7 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
   return stop_path;
 }
 
-PathWithLaneId GoalPlannerModule::insertStopPointInCurrentPath()
+PathWithLaneId GoalPlannerModule::generateStopPointInCurrentPath()
 {
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
 

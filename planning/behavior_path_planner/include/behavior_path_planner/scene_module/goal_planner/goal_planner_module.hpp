@@ -232,7 +232,18 @@ private:
     const Pose & search_start_offset_pose, PathWithLaneId & path) const;
   PathWithLaneId generateStopPath();
   PathWithLaneId generateFeasibleStopPath();
-  PathWithLaneId insertStopPointInCurrentPath();
+
+  /**
+   * @brief Generate a stop point in the current path based on the vehicle's pose and constraints.
+   *
+   * This function generates a stop point in the current path. If no lanes are available or if
+   * stopping is not feasible due to constraints (maximum deceleration, maximum jerk), no stop point
+   * is inserted into the path.
+   *
+   * @return PathWithLaneId The modified path with the stop point inserted. If no stop point is
+   * inserted, returns the original path.
+   */
+  PathWithLaneId generateStopPointInCurrentPath();
   void keepStoppedWithCurrentPath(PathWithLaneId & path);
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
 
@@ -280,6 +291,16 @@ private:
   // output setter
   void setOutput(BehaviorModuleOutput & output);
   void setStopPath(BehaviorModuleOutput & output);
+
+  /**
+   * @brief Sets a stop path in the current path based on safety conditions and previous paths.
+   *
+   * This function sets a stop path in the current path. Depending on whether the previous safety
+   * judgement against dynamic objects were safe or if a previous stop path existed, it either
+   * generates a new stop path or uses the previous stop path.
+   *
+   * @param output BehaviorModuleOutput
+   */
   void setStopPathInCurrentPath(BehaviorModuleOutput & output);
   void setModifiedGoal(BehaviorModuleOutput & output) const;
   void setTurnSignalInfo(BehaviorModuleOutput & output) const;
