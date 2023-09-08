@@ -97,17 +97,49 @@ boost::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const P
         shift_path.points.begin() + collision_check_end_idx + 1);
     }
 
-    // check lane departure
+    // extract shoulder lanes from pull out lanes
+    lanelet::ConstLanelets shoulder_lanes;
+    std::copy_if(
+      pull_out_lanes.begin(), pull_out_lanes.end(), std::back_inserter(shoulder_lanes),
+      [&route_handler](const auto & pull_out_lane) {
+        return route_handler->isShoulderLanelet(pull_out_lane);
+      });
     const auto drivable_lanes =
-      utils::generateDrivableLanesWithShoulderLanes(road_lanes, pull_out_lanes);
+      utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
     const auto & dp = planner_data_->drivable_area_expansion_parameters;
     const auto expanded_lanes = utils::expandLanelets(
       drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
       dp.drivable_area_types_to_skip);
+    const auto lanes = utils::transformToLanelets(expanded_lanes);
+
+    // crop backward path
+    // removes points which are out of lanes up to the start pose.
+    // this ensures that the backward_path stays within the drivable area when starting from a
+    // narrow place.
+    const size_t start_segment_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+      shift_path.points, start_pose, common_parameters.ego_nearest_dist_threshold,
+      common_parameters.ego_nearest_yaw_threshold);
+    PathWithLaneId cropped_path{};
+    for (size_t i = 0; i < shift_path.points.size(); ++i) {
+      const Pose pose = shift_path.points.at(i).point.pose;
+      const auto transformed_vehicle_footprint =
+        transformVector(vehicle_footprint_, tier4_autoware_utils::pose2transform(pose));
+      const bool is_out_of_lane =
+        LaneDepartureChecker::isOutOfLane(lanes, transformed_vehicle_footprint);
+      if (i <= start_segment_idx) {
+        if (!is_out_of_lane) {
+          cropped_path.points.push_back(shift_path.points.at(i));
+        }
+      } else {
+        cropped_path.points.push_back(shift_path.points.at(i));
+      }
+    }
+    shift_path.points = cropped_path.points;
+
+    // check lane departure
     if (
       parameters_.check_shift_path_lane_departure &&
-      lane_departure_checker_->checkPathWillLeaveLane(
-        utils::transformToLanelets(expanded_lanes), path_start_to_end)) {
+      lane_departure_checker_->checkPathWillLeaveLane(lanes, path_start_to_end)) {
       continue;
     }
 
@@ -281,27 +313,6 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     if (path_terminal_is_goal) {
       shifted_path.path.points.back().point.longitudinal_velocity_mps = 0.0;
     }
-
-    // crop backward path
-    // removes points up to the start pose and other points in close proximity and
-    // inserts the accurate start pose.
-    // this ensures that the backward_path stays within the drivable area when starting from a
-    // narrow place.
-    const auto start_segment_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-      shifted_path.path.points, start_pose, common_parameter.ego_nearest_dist_threshold,
-      common_parameter.ego_nearest_yaw_threshold);
-    PathPointWithLaneId start_path_point = shifted_path.path.points.at(start_segment_idx);
-    start_path_point.point.pose = start_pose;
-    shifted_path.path.points.erase(
-      shifted_path.path.points.begin(), shifted_path.path.points.begin() + start_segment_idx + 1);
-    for (auto it = shifted_path.path.points.begin(); it != shifted_path.path.points.end();) {
-      if (calcDistance2d(it->point.pose, start_pose) <= 0.5 /*close_distance_threshold*/) {
-        it = shifted_path.path.points.erase(it);
-      } else {
-        ++it;
-      }
-    }
-    shifted_path.path.points.insert(shifted_path.path.points.begin(), start_path_point);
 
     // add shifted path to candidates
     PullOutPath candidate_path;
