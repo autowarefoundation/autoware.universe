@@ -49,7 +49,10 @@ function(get_neural_network MODEL_NAME MODEL_BACKEND DEPENDENCY)
     set(SOURCE_DIR "${DATA_PATH}/user/${MODEL_NAME}")
     set(INSTALL_DIRECTORY "${DATA_PATH}/user/${MODEL_NAME}")
   else()
-    message(WARNING "NO ${MODEL_NAME} model provided by user, for more info check https://autowarefoundation.github.io/autoware.universe/main/common/tvm_utility/")
+    message(WARNING "\
+    NO ${MODEL_NAME} model provided by user,\
+     for more info check \
+     https://autowarefoundation.github.io/autoware.universe/main/common/tvm_utility/")
     set(${DEPENDENCY} "" PARENT_SCOPE)
     return()
 
