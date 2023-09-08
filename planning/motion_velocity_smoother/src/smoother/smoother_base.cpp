@@ -103,7 +103,6 @@ TrajectoryPoints SmootherBase::applyLateralAccelerationFilter(
     return input;  // cannot calculate lateral acc. do nothing.
   }
 
-
   // Interpolate with constant interval distance for lateral acceleration calculation.
   TrajectoryPoints output;
   const double points_interval =
