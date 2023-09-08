@@ -55,6 +55,10 @@ Overwrite prediction results with tracking results.
 
 ![predicted-object-visualization-description](./images/predicted-object-visualization-description.jpg)
 
+The configuration method for multithreading marker creation on the RViz plugin is presented in the **Num Threads** box as in following image:
+
+![predicted-object-select-threads](./images/predicted-object-select-threads.png)
+
 ## References/External links
 
 [1] <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/tree/master/src/tools/visualization/autoware_rviz_plugins>
