@@ -14,13 +14,13 @@ nodes:
     list:
       - { type: diag, hardware: test, name: /planning/route }
 
-  - name: /autoware/percepiton
+  - name: /autoware/perception
     type: and
     list:
       - { type: unit, name: /autoware/perception/front-obstacle-detection }
       - { type: unit, name: /autoware/perception/front-obstacle-prediction }
 
-  - name: /autoware/percepiton/front-obstacle-detection
+  - name: /autoware/perception/front-obstacle-detection
     type: or
     list:
       - { type: diag, hardware: test, name: /sensing/lidars/front }

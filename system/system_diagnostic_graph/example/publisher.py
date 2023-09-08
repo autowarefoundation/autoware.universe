@@ -63,14 +63,14 @@ if __name__ == "__main__":
             ("/sensing/lidars/front", DiagnosticStatus.OK),
             ("/sensing/radars/front", DiagnosticStatus.ERROR),
             ("/planning/route", DiagnosticStatus.OK),
-            ("/external/reotme_command", DiagnosticStatus.OK),
+            ("/external/remote_command", DiagnosticStatus.OK),
         ],
         "front": [
             ("/sensing/lidars/top", DiagnosticStatus.OK),
             ("/sensing/lidars/front", DiagnosticStatus.ERROR),
             ("/sensing/radars/front", DiagnosticStatus.ERROR),
             ("/planning/route", DiagnosticStatus.OK),
-            ("/external/reotme_command", DiagnosticStatus.OK),
+            ("/external/remote_command", DiagnosticStatus.OK),
         ],
     }
 
