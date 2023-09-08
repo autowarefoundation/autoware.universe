@@ -16,6 +16,8 @@
 
 #include <Eigen/Dense>
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+
 #include <tf2/utils.h>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -31,7 +33,7 @@
 #include <utility>
 
 LocalizationErrorMonitor::LocalizationErrorMonitor()
-: Node("localization_error_monitor"), updater_(this)
+: Node("localization_error_monitor")//, updater_(this)
 {
   scale_ = this->declare_parameter("scale", 3.0);
   error_ellipse_size_ = this->declare_parameter("error_ellipse_size", 1.0);
@@ -51,55 +53,98 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
   ellipse_marker_pub_ =
     this->create_publisher<visualization_msgs::msg::Marker>("debug/ellipse_marker", durable_qos);
 
-  updater_.setHardwareID("localization_error_monitor");
-  updater_.add("localization_accuracy", this, &LocalizationErrorMonitor::checkLocalizationAccuracy);
-  updater_.add(
-    "localization_accuracy_lateral_direction", this,
-    &LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection);
+  diag_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
+  // updater_.setHardwareID("localization_error_monitor");
+  // updater_.add("localization_accuracy", this, &LocalizationErrorMonitor::checkLocalizationAccuracy);
+  // updater_.add(
+  //   "localization_accuracy_lateral_direction", this,
+  //   &LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection);
 
   // Set timer
-  using std::chrono_literals::operator""ms;
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), 100ms, std::bind(&LocalizationErrorMonitor::onTimer, this));
+  // using std::chrono_literals::operator""ms;
+  // timer_ = rclcpp::create_timer(
+  //   this, get_clock(), 100ms, std::bind(&LocalizationErrorMonitor::onTimer, this));
 }
 
-void LocalizationErrorMonitor::onTimer()
+// void LocalizationErrorMonitor::onTimer()
+// {
+//   updater_.force_update();
+// }
+
+
+
+
+diagnostic_msgs::msg::DiagnosticStatus checkLocalizationAccuracy(
+  const double ellipse_size, const double warn_ellipse_size, const double error_ellipse_size)
 {
-  updater_.force_update();
+  diagnostic_msgs::msg::DiagnosticStatus stat;
+
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "localization_accuracy";
+  key_value.value = std::to_string(ellipse_size);
+  stat.values.push_back(key_value);
+
+  stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  stat.message = "ellipse size is within the expected range";
+  if (ellipse_size >= warn_ellipse_size) {
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    stat.message = "ellipse size is too large";
+  }
+  if (ellipse_size >= error_ellipse_size) {
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    stat.message = "ellipse size is over the expected range";
+  }
+
+  return stat;
 }
 
-void LocalizationErrorMonitor::checkLocalizationAccuracy(
-  diagnostic_updater::DiagnosticStatusWrapper & stat)
+diagnostic_msgs::msg::DiagnosticStatus checkLocalizationAccuracyLateralDirection(
+  const double ellipse_size, const double warn_ellipse_size, const double error_ellipse_size)
 {
-  stat.add("localization_accuracy", ellipse_.long_radius);
-  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  std::string diag_message = "ellipse size is within the expected range";
-  if (warn_ellipse_size_ <= ellipse_.long_radius) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "ellipse size is too large";
+  diagnostic_msgs::msg::DiagnosticStatus stat;
+
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "localization_accuracy_lateral_direction";
+  key_value.value = std::to_string(ellipse_size);
+  stat.values.push_back(key_value);
+
+  stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  stat.message = "ellipse size along lateral direction is within the expected range";
+  if (ellipse_size >= warn_ellipse_size) {
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    stat.message = "ellipse size along lateral direction is too large";
   }
-  if (error_ellipse_size_ <= ellipse_.long_radius) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-    diag_message = "ellipse size is over the expected range";
+  if (ellipse_size >= error_ellipse_size) {
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    stat.message = "ellipse size along lateral direction is over the expected range";
   }
-  stat.summary(diag_level, diag_message);
+
+  return stat;
 }
 
-void LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection(
-  diagnostic_updater::DiagnosticStatusWrapper & stat)
+diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
+  const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & stat_array)
 {
-  stat.add("localization_accuracy_lateral_direction", ellipse_.size_lateral_direction);
-  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  std::string diag_message = "ellipse size along lateral direction is within the expected range";
-  if (warn_ellipse_size_lateral_direction_ <= ellipse_.size_lateral_direction) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "ellipse size along lateral direction is too large";
+  diagnostic_msgs::msg::DiagnosticStatus merged_stat;
+
+  for (const auto & stat : stat_array) {
+    if ((stat.level > 0) && (merged_stat.level > 0)) {
+      if (!merged_stat.message.empty()) {
+        merged_stat.message += "; ";
+        merged_stat.message += stat.message;
+      }
+    } else if (stat.level > merged_stat.level) {
+      merged_stat.message  = stat.message;
+    }
+    if (stat.level  > merged_stat.level) {
+      merged_stat.level = stat.level ;
+    }
+    for (const auto & value : stat.values) {
+      merged_stat.values.push_back(value);
+    }
   }
-  if (error_ellipse_size_lateral_direction_ <= ellipse_.size_lateral_direction) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-    diag_message = "ellipse size along lateral direction is over the expected range";
-  }
-  stat.summary(diag_level, diag_message);
+
+  return merged_stat;
 }
 
 visualization_msgs::msg::Marker LocalizationErrorMonitor::createEllipseMarker(
@@ -158,6 +203,27 @@ void LocalizationErrorMonitor::onOdom(nav_msgs::msg::Odometry::ConstSharedPtr in
 
   const auto ellipse_marker = createEllipseMarker(ellipse_, input_msg);
   ellipse_marker_pub_->publish(ellipse_marker);
+
+
+  // diagnostics
+  std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_stat_array;
+  diag_stat_array.push_back(checkLocalizationAccuracy(ellipse_.long_radius, warn_ellipse_size_, error_ellipse_size_));
+  diag_stat_array.push_back(checkLocalizationAccuracyLateralDirection(ellipse_.size_lateral_direction, warn_ellipse_size_lateral_direction_, error_ellipse_size_lateral_direction_));
+
+  diagnostic_msgs::msg::DiagnosticStatus diag_merged_stat;
+  diag_merged_stat = mergeDiagnosticStatus(diag_stat_array);
+  diag_merged_stat.name = "localization_accuracy";
+  diag_merged_stat.hardware_id = "localization_error_monitor";
+
+  std::vector<diagnostic_msgs::msg::DiagnosticStatus> status_vec;
+  status_vec.push_back(diag_merged_stat);
+
+  diagnostic_msgs::msg::DiagnosticArray diag_msg;
+  diag_msg.header.stamp = this->now();
+  diag_msg.status = status_vec
+
+  diag_pub_->publish(diag_msg);
+
 }
 
 double LocalizationErrorMonitor::measureSizeEllipseAlongBodyFrame(
