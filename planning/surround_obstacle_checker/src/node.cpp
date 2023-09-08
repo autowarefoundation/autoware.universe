@@ -287,7 +287,16 @@ void SurroundObstacleCheckerNode::onTimer()
     return;
   }
 
-  if (!object_ptr_) {
+  const bool use_dynamic_object =
+    node_param_.enable_check_map.at(ObjectClassification::UNKNOWN) ||
+    node_param_.enable_check_map.at(ObjectClassification::CAR) ||
+    node_param_.enable_check_map.at(ObjectClassification::TRUCK) ||
+    node_param_.enable_check_map.at(ObjectClassification::BUS) ||
+    node_param_.enable_check_map.at(ObjectClassification::TRAILER) ||
+    node_param_.enable_check_map.at(ObjectClassification::MOTORCYCLE) ||
+    node_param_.enable_check_map.at(ObjectClassification::BICYCLE) ||
+    node_param_.enable_check_map.at(ObjectClassification::PEDESTRIAN);
+  if (use_dynamic_object && !object_ptr_) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for dynamic object info...");
     return;
