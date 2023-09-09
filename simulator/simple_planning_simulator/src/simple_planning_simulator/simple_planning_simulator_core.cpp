@@ -102,6 +102,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   origin_frame_id_ = declare_parameter("origin_frame_id", "odom");
   add_measurement_noise_ = declare_parameter("add_measurement_noise", false);
   simulate_motion_ = declare_parameter<bool>("initial_engage_state");
+  consider_ego_pitch_angle_ = declare_parameter("consider_ego_pitch_angle", false);
 
   using rclcpp::QoS;
   using std::placeholders::_1;
@@ -289,7 +290,8 @@ double SimplePlanningSimulator::calculate_ego_pitch() const
 
   // calculate prev/next point of lanelet centerline nearest to ego pose.
   lanelet::Lanelet ego_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, ego_pose, &ego_lanelet)) {
+  if (!lanelet::utils::query::getClosestLaneletWithConstrains(
+        road_lanelets_, ego_pose, &ego_lanelet, 2.0, std::numeric_limits<double>::max())) {
     return 0.0;
   }
   const auto centerline_points = convert_centerline_to_points(ego_lanelet);
@@ -307,7 +309,9 @@ double SimplePlanningSimulator::calculate_ego_pitch() const
   const double diff_z = next_point.z - prev_point.z;
   const double diff_xy = std::hypot(next_point.x - prev_point.x, next_point.y - prev_point.y) /
                          std::cos(ego_yaw_against_lanelet);
-  const double ego_pitch_angle = std::atan2(diff_z, diff_xy);
+  const bool reverse_sign = std::cos(ego_yaw_against_lanelet) < 0.0;
+  const double ego_pitch_angle =
+    reverse_sign ? std::atan2(-diff_z, -diff_xy) : std::atan2(diff_z, diff_xy);
   return ego_pitch_angle;
 }
 
@@ -320,8 +324,7 @@ void SimplePlanningSimulator::on_timer()
 
   // calculate longitudinal acceleration by slope
   const double ego_pitch_angle = calculate_ego_pitch();
-  const double acc_by_slope = false ? 0.0 : -9.81 * std::sin(ego_pitch_angle);
-  std::cerr << ego_pitch_angle << std::endl;
+  const double acc_by_slope = consider_ego_pitch_angle_ ? -9.81 * std::sin(ego_pitch_angle) : 0.0;
 
   // update vehicle dynamics
   {
