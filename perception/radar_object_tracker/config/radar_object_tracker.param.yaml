@@ -3,6 +3,7 @@
   ros__parameters:
     # basic settings
     world_frame_id: "map"
+    tracker_lifetime: 1.0  # [sec]
     # if empty, use default config declared in this package
     tracking_config_directory: ""
 
