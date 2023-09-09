@@ -1112,7 +1112,8 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
 
 std::optional<PathWithLaneId> GoalPlannerModule::generateStopInsertedCurrentPath()
 {
-  if (getCurrentPath().points.empty()) {
+  auto current_path = getCurrentPath();
+  if (current_path.points.empty()) {
     return {};
   }
 
