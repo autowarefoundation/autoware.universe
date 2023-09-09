@@ -706,8 +706,7 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
 {
   if (status_.prev_is_safe || status_.prev_stop_path == nullptr) {
     // safe -> not_safe or no prev_stop_path: generate new stop_path
-    output.path = std::make_shared<PathWithLaneId>(generateStopInsertedCurrentPath());
-    output.reference_path = getPreviousModuleOutput().reference_path;
+    output.path = std::make_shared<PathWithLaneId>(generateStopPath());
     status_.prev_stop_path = output.path;
     // set stop path as pull over path
     mutex_.lock();
@@ -722,30 +721,34 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
   } else {
     // not_safe -> not_safe: use previous stop path
     output.path = status_.prev_stop_path;
-    output.reference_path = getPreviousModuleOutput().reference_path;
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path, use previous stop path");
   }
+  output.reference_path = getPreviousModuleOutput().reference_path;
 }
 
 void GoalPlannerModule::setStopPathInCurrentPath(BehaviorModuleOutput & output)
 {
+  // safe or not safe(no feasible stop_path found) -> not_safe: try to find new feasible stop_path
   if (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr) {
-    // safe -> not_safe or no prev_stop_path: generate new stop_path
-    output.path = std::make_shared<PathWithLaneId>(generateStopInsertedCurrentPath());
-    status_.prev_stop_path_after_approval = output.path;
-    // set stop path as pull over path
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      last_path_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+    if (const auto stop_inserted_path = generateStopInsertedCurrentPath()) {
+      output.path = std::make_shared<PathWithLaneId>(*stop_inserted_path);
+      status_.prev_stop_path_after_approval = output.path;
+      RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, generate stop path");
+    } else {
+      output.path = std::make_shared<PathWithLaneId>(getCurrentPath());
+      RCLCPP_WARN_THROTTLE(
+        getLogger(), *clock_, 5000,
+        "Collision detected, no feasible stop path found, cannot stop.");
     }
+    std::lock_guard<std::mutex> lock(mutex_);
+    last_path_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
   } else {
-    // not_safe -> not_safe: use previous stop path
+    // not_safe safe(no feasible stop path found) -> not_safe: use previous stop path
     output.path = status_.prev_stop_path_after_approval;
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, use previous stop path");
   }
   output.reference_path = getPreviousModuleOutput().reference_path;
-  RCLCPP_WARN_THROTTLE(
-    getLogger(), *clock_, 5000, "Found approved pull_over path is not safe, generate stop path");
 }
 
 void GoalPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
@@ -1107,13 +1110,10 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
   return stop_path;
 }
 
-PathWithLaneId GoalPlannerModule::generateStopPointInCurrentPath()
+std::optional<PathWithLaneId> GoalPlannerModule::generateStopInsertedCurrentPath()
 {
-  const auto & current_pose = planner_data_->self_odometry->pose.pose;
-  auto current_path = getCurrentPath();
-
-  if (status_.current_lanes.empty() || current_path.points.empty()) {
-    return PathWithLaneId{};
+  if (getCurrentPath().points.empty()) {
+    return {};
   }
 
   // try to insert stop point in current_path after approval
@@ -1121,14 +1121,16 @@ PathWithLaneId GoalPlannerModule::generateStopPointInCurrentPath()
   const auto min_stop_distance = calcFeasibleDecelDistance(
     planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0.0);
   if (!min_stop_distance) {
-    return current_path;
+    return {};
   }
 
   // set stop point
-  const auto stop_idx =
-    motion_utils::insertStopPoint(current_pose, *min_stop_distance, current_path.points);
+  const auto stop_idx = motion_utils::insertStopPoint(
+    planner_data_->self_odometry->pose.pose, *min_stop_distance, current_path.points);
 
-  if (stop_idx) {
+  if (!stop_idx) {
+    return {};
+  } else {
     stop_pose_ = current_path.points.at(*stop_idx).point.pose;
   }
 
