@@ -20,7 +20,6 @@
 #include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
-#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 
