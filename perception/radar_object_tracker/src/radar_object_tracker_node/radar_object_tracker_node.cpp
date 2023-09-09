@@ -205,6 +205,7 @@ RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_
     std::bind(&RadarObjectTrackerNode::onMap, this, std::placeholders::_1));
 
   // Parameters
+  tracker_lifetime_ = declare_parameter<double>("tracker_lifetime");
   double publish_rate = declare_parameter<double>("publish_rate");
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
@@ -403,12 +404,9 @@ void RadarObjectTrackerNode::checkTrackerLifeCycle(
   std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time,
   [[maybe_unused]] const geometry_msgs::msg::Transform & self_transform)
 {
-  /* params */
-  constexpr float max_elapsed_time = 1.0;
-
   /* delete tracker */
   for (auto itr = list_tracker.begin(); itr != list_tracker.end(); ++itr) {
-    const bool is_old = max_elapsed_time < (*itr)->getElapsedTimeFromLastUpdate(time);
+    const bool is_old = tracker_lifetime_ < (*itr)->getElapsedTimeFromLastUpdate(time);
     if (is_old) {
       auto erase_itr = itr;
       --itr;
