@@ -17,6 +17,7 @@
 
 #include "route_handler/route_handler.hpp"
 
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_velocity_smoother/smoother/smoother_base.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 

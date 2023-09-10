@@ -24,8 +24,6 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -79,7 +77,9 @@ struct TrafficSignalStamped
   autoware_perception_msgs::msg::TrafficSignal signal;
 };
 
-using geometry_msgs::msg::Pose;
+using Point2d = tier4_autoware_utils::Point2d;
+using LineString2d = tier4_autoware_utils::LineString2d;
+using Polygon2d = tier4_autoware_utils::Polygon2d;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 using Polygons2d = std::vector<Polygon2d>;
 using autoware_auto_perception_msgs::msg::PredictedObject;
