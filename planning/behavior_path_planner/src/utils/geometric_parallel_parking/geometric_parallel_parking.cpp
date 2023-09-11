@@ -378,13 +378,13 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   const double psi = normalizeRadian(self_yaw - goal_yaw);
 
   const Pose Cfar = left_side_parking ? calcOffsetPose(arc_end_pose, 0, -R_E_far, 0)
-                            : calcOffsetPose(arc_end_pose, 0, R_E_far, 0);
+                                      : calcOffsetPose(arc_end_pose, 0, R_E_far, 0);
   const double d_Cfar_Einit = calcDistance2d(Cfar, start_pose);
 
   const Point Cfar_goal_coords = inverseTransformPoint(Cfar.position, arc_end_pose);
   const Point self_point_goal_coords = inverseTransformPoint(start_pose.position, arc_end_pose);
 
-  const double alpha = left_side_parking 
+  const double alpha = left_side_parking
                          ? M_PI_2 - psi + std::asin((self_point_goal_coords.y - Cfar_goal_coords.y) / d_Cfar_Einit)
                          : M_PI_2 + psi - std::asin((self_point_goal_coords.y - Cfar_goal_coords.y) / d_Cfar_Einit);
 
@@ -460,7 +460,7 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
       is_forward);
     path_turn_second.header = route_handler->getRouteHeader();
   }
-  
+
   // Need to add straight path to last right_turning for parking in parallel
   if (std::abs(end_pose_offset) > 0) {
     PathPointWithLaneId straight_point{};

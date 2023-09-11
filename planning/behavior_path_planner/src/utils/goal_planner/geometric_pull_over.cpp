@@ -38,7 +38,6 @@ GeometricPullOver::GeometricPullOver(
   left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
   planner_.setParameters(parallel_parking_parameters_);
-  std::cerr << "\n\n=======left_side_parking=======\n\n" << left_side_parking_;
 }
 
 boost::optional<PullOverPath> GeometricPullOver::plan(const Pose & goal_pose)

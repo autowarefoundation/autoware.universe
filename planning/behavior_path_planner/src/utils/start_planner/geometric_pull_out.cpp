@@ -60,7 +60,6 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
 
   // check if the sholder is left side or not
   const bool left_side_start = 0 < getArcCoordinates(road_lanes, start_pose).distance;
-  std::cerr << "\n\n========left_side_start========\n\n" << left_side_start;
 
   planner_.setTurningRadius(
     planner_data_->parameters, parallel_parking_parameters_.pull_out_max_steer_angle);
