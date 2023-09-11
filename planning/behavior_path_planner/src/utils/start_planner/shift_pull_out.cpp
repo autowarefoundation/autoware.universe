@@ -18,6 +18,7 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 
@@ -40,7 +41,7 @@ ShiftPullOut::ShiftPullOut(
 {
 }
 
-boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
+boost::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pose & goal_pose)
 {
   const auto & route_handler = planner_data_->route_handler;
   const auto & common_parameters = planner_data_->parameters;

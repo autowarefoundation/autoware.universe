@@ -112,8 +112,7 @@ std::optional<Polygon2d> getIntersectionArea(
 
 bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane);
 bool isTrafficLightArrowActivated(
-  lanelet::ConstLanelet lane,
-  const std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> & tl_infos);
+  lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos);
 
 std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets,
@@ -158,7 +157,9 @@ std::optional<PathLanelets> generatePathLanelets(
   const lanelet::ConstLanelets & lanelets_on_path,
   const util::InterpolatedPathInfo & interpolated_path_info, const std::set<int> & associative_ids,
   const lanelet::CompoundPolygon3d & first_conflicting_area,
-  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas, const size_t closest_idx,
+  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+  const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
+  const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx,
   const double width);
 
 }  // namespace util
