@@ -127,18 +127,17 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
   (void)ros_dt;
 
   // MRM summary
-  // const std::vector<std::string> mrm_summary_list = {"test1", "test2", "test3"};
   std::vector<std::string> mrm_summary_list;
   {
     std::lock_guard<std::mutex> message_lock(mutex_);
     if (last_msg_ptr_) {
-      for (const auto & diag_status : last_msg_ptr_->status.diag_latent_fault) {
-        if (diag_status.hardware_id == "system_error_monitor") {
+      for (const auto & diag_status: last_msg_ptr_->status.diag_latent_fault) {
+        if (diag_status.hardware_id == "" || diag_status.hardware_id == "system_error_monitor") {
           mrm_summary_list.push_back(diag_status.name);
         }
       }
-      for (const auto & diag_status : last_msg_ptr_->status.diag_single_point_fault) {
-        if (diag_status.hardware_id == "system_error_monitor") {
+      for (const auto & diag_status: last_msg_ptr_->status.diag_single_point_fault) {
+        if (diag_status.hardware_id == "" || diag_status.hardware_id == "system_error_monitor") {
           mrm_summary_list.push_back(diag_status.name);
         }
       }
