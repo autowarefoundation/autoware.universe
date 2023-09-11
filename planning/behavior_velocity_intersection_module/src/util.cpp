@@ -227,7 +227,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const auto first_inside_detection_ip = first_inside_detection_idx_ip_opt.value();
 
   // (1) default stop line position on interpolated path
-  bool default_stop_line_valid = false;
+  bool default_stop_line_valid = true;
   int stop_idx_ip_int = 0;
   if (const auto map_stop_idx_ip =
         getStopLineIndexFromMap(interpolated_path_info, planner_data, 10.0);
