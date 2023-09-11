@@ -87,12 +87,20 @@ The figure below shows the current noise filtering process.
 
 In most cases, Radar sensors are used with other sensors such as LiDAR and Camera, and Radar sensors are used to detect objects far away. So we can filter out objects that are too close to the sensor.
 
+`use_distance_based_noise_filtering` parameter is used to enable/disable this filter, and `minimum_range_threshold` parameter is used to set the threshold.
+
 ### lanelet based filter
 
 With lanelet map information, We can filter out false positive objects that are not likely important obstacles.
 
-We fukter out objects that satisfy the following conditions:
+We filter out objects that satisfy the following conditions:
 
 - too large lateral distance from lane
 - velocity direction is too different from lane direction
 - too large lateral velocity
+
+Each condition can be set by the following parameters:
+
+- `max_distance_from_lane`
+- `max_angle_diff_from_lane`
+- `max_lateral_velocity`
