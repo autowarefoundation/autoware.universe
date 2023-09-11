@@ -1929,11 +1929,15 @@ bool AvoidanceModule::isSafePath(
     const auto is_object_front =
       utils::path_safety_checker::isTargetObjectFront(getEgoPose(), obj_polygon, p.vehicle_info);
 
+    const auto is_object_incoming =
+      std::abs(calcYawDeviation(getEgoPose(), object.initial_pose.pose)) > M_PI_2;
+
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
       object, parameters_->check_all_predicted_path);
 
-    const auto & ego_predicted_path =
-      is_object_front ? ego_predicted_path_for_front_object : ego_predicted_path_for_rear_object;
+    const auto & ego_predicted_path = is_object_front && !is_object_incoming
+                                        ? ego_predicted_path_for_front_object
+                                        : ego_predicted_path_for_rear_object;
 
     for (const auto & obj_path : obj_predicted_paths) {
       CollisionCheckDebug collision{};

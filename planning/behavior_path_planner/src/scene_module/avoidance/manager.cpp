@@ -143,11 +143,9 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     p.check_current_lane = get_parameter<bool>(node, ns + "check_current_lane");
     p.check_shift_side_lane = get_parameter<bool>(node, ns + "check_shift_side_lane");
     p.check_other_side_lane = get_parameter<bool>(node, ns + "check_other_side_lane");
-    p.check_unavoidable_object =
-      get_parameter<bool>(node, ns + "check_unavoidable_object");
+    p.check_unavoidable_object = get_parameter<bool>(node, ns + "check_unavoidable_object");
     p.check_other_object = get_parameter<bool>(node, ns + "check_other_object");
-    p.check_all_predicted_path =
-      get_parameter<bool>(node, ns + "check_all_predicted_path");
+    p.check_all_predicted_path = get_parameter<bool>(node, ns + "check_all_predicted_path");
     p.time_horizon_for_front_object =
       get_parameter<double>(node, ns + "time_horizon_for_front_object");
     p.time_horizon_for_rear_object =
