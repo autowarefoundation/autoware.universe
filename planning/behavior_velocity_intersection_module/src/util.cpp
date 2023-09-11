@@ -704,9 +704,10 @@ bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane)
 }
 
 bool isTrafficLightArrowActivated(
-  lanelet::ConstLanelet lane,
-  const std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> & tl_infos)
+  lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos)
 {
+  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
+
   const auto & turn_direction = lane.attributeOr("turn_direction", "else");
   std::optional<int> tl_id = std::nullopt;
   for (auto && tl_reg_elem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
@@ -723,16 +724,13 @@ bool isTrafficLightArrowActivated(
     return false;
   }
   const auto & tl_info = tl_info_it->second;
-  for (auto && tl_light : tl_info.signal.lights) {
-    if (tl_light.color != autoware_auto_perception_msgs::msg::TrafficLight::GREEN) continue;
-    if (tl_light.status != autoware_auto_perception_msgs::msg::TrafficLight::SOLID_ON) continue;
-    if (
-      turn_direction == std::string("left") &&
-      tl_light.shape == autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW)
+  for (auto && tl_light : tl_info.signal.elements) {
+    if (tl_light.color != TrafficSignalElement::GREEN) continue;
+    if (tl_light.status != TrafficSignalElement::SOLID_ON) continue;
+    if (turn_direction == std::string("left") && tl_light.shape == TrafficSignalElement::LEFT_ARROW)
       return true;
     if (
-      turn_direction == std::string("right") &&
-      tl_light.shape == autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW)
+      turn_direction == std::string("right") && tl_light.shape == TrafficSignalElement::RIGHT_ARROW)
       return true;
   }
   return false;
@@ -1155,7 +1153,9 @@ std::optional<PathLanelets> generatePathLanelets(
   const lanelet::ConstLanelets & lanelets_on_path,
   const util::InterpolatedPathInfo & interpolated_path_info, const std::set<int> & associative_ids,
   const lanelet::CompoundPolygon3d & first_conflicting_area,
-  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas, const size_t closest_idx,
+  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+  const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
+  const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx,
   const double width)
 {
   const auto & assigned_lane_interval_opt = interpolated_path_info.lane_id_interval;
@@ -1195,9 +1195,13 @@ std::optional<PathLanelets> generatePathLanelets(
   }
 
   const auto first_inside_conflicting_idx_opt =
-    getFirstPointInsidePolygon(path, assigned_lane_interval, first_conflicting_area);
+    first_attention_area.has_value()
+      ? getFirstPointInsidePolygon(path, assigned_lane_interval, first_attention_area.value())
+      : getFirstPointInsidePolygon(path, assigned_lane_interval, first_conflicting_area);
   const auto last_inside_conflicting_idx_opt =
-    getFirstPointInsidePolygons(path, assigned_lane_interval, conflicting_areas, false);
+    first_attention_area.has_value()
+      ? getFirstPointInsidePolygons(path, assigned_lane_interval, attention_areas, false)
+      : getFirstPointInsidePolygons(path, assigned_lane_interval, conflicting_areas, false);
   if (first_inside_conflicting_idx_opt && last_inside_conflicting_idx_opt) {
     const auto first_inside_conflicting_idx = first_inside_conflicting_idx_opt.value();
     const auto last_inside_conflicting_idx = last_inside_conflicting_idx_opt.value().first;

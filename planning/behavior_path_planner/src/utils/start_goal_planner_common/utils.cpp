@@ -14,6 +14,8 @@
 
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 
+#include <tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp>
+
 namespace behavior_path_planner::utils::start_goal_planner_common
 {
 
@@ -140,6 +142,21 @@ void updatePathProperty(
 
   ego_predicted_path_params->target_velocity = pairs_terminal_velocity_and_accel.first;
   ego_predicted_path_params->acceleration = acceleration;
+}
+
+void initializeCollisionCheckDebugMap(CollisionCheckDebugMap & collision_check_debug_map)
+{
+  collision_check_debug_map.clear();
+}
+
+void updateSafetyCheckTargetObjectsData(
+  StartGoalPlannerData & data, const PredictedObjects & filtered_objects,
+  const TargetObjectsOnLane & target_objects_on_lane,
+  const std::vector<PoseWithVelocityStamped> & ego_predicted_path)
+{
+  data.filtered_objects = filtered_objects;
+  data.target_objects_on_lane = target_objects_on_lane;
+  data.ego_predicted_path = ego_predicted_path;
 }
 
 std::pair<double, double> getPairsTerminalVelocityAndAccel(
