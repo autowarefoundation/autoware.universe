@@ -56,7 +56,7 @@ class PerceptionReproducer(PerceptionReplayerCommon):
         # extract message by the nearest ego odom timestamp
         msgs = copy.deepcopy(self.find_topics_by_timestamp(pose_timestamp))
         objects_msg = msgs[0]
-        # traffic_signals_msg = msgs[1]
+        traffic_signals_msg = msgs[1]
 
         # objects
         if objects_msg:
@@ -66,13 +66,22 @@ class PerceptionReproducer(PerceptionReplayerCommon):
             self.objects_pub.publish(objects_msg)
 
         # traffic signals
-        # if traffic_signals_msg:
-        #     traffic_signals_msg.header.stamp = timestamp
-        #     self.traffic_signals_pub.publish(traffic_signals_msg)
-        #     self.prev_traffic_signals_msg = traffic_signals_msg
-        # elif self.prev_traffic_signals_msg:
-        #     self.prev_traffic_signals_msg.header.stamp = timestamp
-        #     self.traffic_signals_pub.publish(self.prev_traffic_signals_msg)
+        # temporary support old auto msgs
+        if traffic_signals_msg:
+            if self.is_auto_traffic_signals:
+                traffic_signals_msg.header.stamp = timestamp
+                self.auto_traffic_signals_pub.publish(traffic_signals_msg)
+            else:
+                traffic_signals_msg.stamp = timestamp
+                self.traffic_signals_pub.publish(traffic_signals_msg)
+            self.prev_traffic_signals_msg = traffic_signals_msg
+        elif self.prev_traffic_signals_msg:
+            if self.is_auto_traffic_signals:
+                self.prev_traffic_signals_msg.header.stamp = timestamp
+                self.auto_traffic_signals_pub.publish(self.prev_traffic_signals_msg)
+            else:
+                self.prev_traffic_signals_msg.stamp = timestamp
+                self.traffic_signals_pub.publish(self.prev_traffic_signals_msg)
 
     def find_nearest_ego_odom_by_observation(self, ego_pose):
         if self.ego_pose_idx:
