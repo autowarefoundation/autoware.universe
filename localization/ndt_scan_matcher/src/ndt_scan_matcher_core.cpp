@@ -101,7 +101,7 @@ NDTScanMatcher::NDTScanMatcher()
   estimate_scores_for_degrounded_scan_(
     declare_parameter("estimate_scores_for_degrounded_scan", false)),
   z_margin_for_ground_removal_(declare_parameter("z_margin_for_ground_removal", 0.8)),
-  critical_upper_bound_exe_time_ms_(24)
+  critical_upper_bound_exe_time_ms_(100)
 {
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
