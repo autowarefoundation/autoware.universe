@@ -45,8 +45,8 @@
 // POSSIBILITY OF SUCH DAMAGE.S SOFTWARE, EVEN IF ADVISED OF THE
 //  POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef TOOLS__JSK_OVERLAY_UTILS_HPP_
-#define TOOLS__JSK_OVERLAY_UTILS_HPP_
+#ifndef JSK_OVERLAY_UTILS_HPP_
+#define JSK_OVERLAY_UTILS_HPP_
 
 #include <OgreHardwarePixelBuffer.h>
 #include <OgreMaterialManager.h>
@@ -135,4 +135,4 @@ private:
 // Ogre::MaterialPtr createOverlayMaterial(Ogre::Overlay* overlay);
 }  // namespace jsk_rviz_plugins
 
-#endif  // TOOLS__JSK_OVERLAY_UTILS_HPP_
+#endif  // JSK_OVERLAY_UTILS_HPP_

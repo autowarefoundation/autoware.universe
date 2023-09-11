@@ -121,7 +121,6 @@ void MrmSummaryOverlayDisplay::onDisable()
   overlay_->hide();
 }
 
-
 void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
 {
   (void)wall_dt;
@@ -133,12 +132,12 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
   {
     std::lock_guard<std::mutex> message_lock(mutex_);
     if (last_msg_ptr_) {
-      for (const auto & diag_status: last_msg_ptr_->status.diag_latent_fault) {
+      for (const auto & diag_status : last_msg_ptr_->status.diag_latent_fault) {
         if (diag_status.hardware_id == "system_error_monitor") {
           mrm_summary_list.push_back(diag_status.name);
         }
       }
-      for (const auto & diag_status: last_msg_ptr_->status.diag_single_point_fault) {
+      for (const auto & diag_status : last_msg_ptr_->status.diag_single_point_fault) {
         if (diag_status.hardware_id == "system_error_monitor") {
           mrm_summary_list.push_back(diag_status.name);
         }
@@ -170,7 +169,7 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
   painter.setFont(font);
   std::ostringstream output_text;
   output_text << std::fixed << "MRM Summary: " << int(mrm_summary_list.size()) << std::endl;
-  for (const auto & mrm_element: mrm_summary_list) {
+  for (const auto & mrm_element : mrm_summary_list) {
     output_text << mrm_element << std::endl;
   }
 
