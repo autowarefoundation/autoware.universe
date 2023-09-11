@@ -4,7 +4,10 @@
   <name>tier4_system_rviz_plugin</name>
   <version>0.1.0</version>
   <description>The tier4_vehicle_rviz_plugin package</description>
-  <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
+  <author email="koji.minoda@tier4.jp">Koji Minoda</author>
+  <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
+  <maintainer email="isamu.takagi@tier4.jp">Isamu Takagi</maintainer>
+  <maintainer email="fumihito.ito@tier4.jp">Fumihito Ito</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
