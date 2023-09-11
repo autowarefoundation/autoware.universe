@@ -185,7 +185,7 @@ private:
   Trajectory::ConstSharedPtr current_trajectory_ptr_;
   bool simulate_motion_;  //!< stop vehicle motion simulation if false
   ControlModeReport current_control_mode_;
-  bool consider_ego_pitch_angle_;
+  bool enable_road_slope_simulation_;
 
   /* frame_id */
   std::string simulated_frame_id_;  //!< @brief simulated vehicle frame id

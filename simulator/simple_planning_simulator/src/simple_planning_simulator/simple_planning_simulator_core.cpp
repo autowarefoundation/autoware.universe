@@ -102,7 +102,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   origin_frame_id_ = declare_parameter("origin_frame_id", "odom");
   add_measurement_noise_ = declare_parameter("add_measurement_noise", false);
   simulate_motion_ = declare_parameter<bool>("initial_engage_state");
-  consider_ego_pitch_angle_ = declare_parameter("consider_ego_pitch_angle", false);
+  enable_road_slope_simulation_ = declare_parameter("enable_road_slope_simulation", false);
 
   using rclcpp::QoS;
   using std::placeholders::_1;
@@ -324,7 +324,8 @@ void SimplePlanningSimulator::on_timer()
 
   // calculate longitudinal acceleration by slope
   const double ego_pitch_angle = calculate_ego_pitch();
-  const double acc_by_slope = consider_ego_pitch_angle_ ? -9.81 * std::sin(ego_pitch_angle) : 0.0;
+  const double acc_by_slope =
+    enable_road_slope_simulation_ ? -9.81 * std::sin(ego_pitch_angle) : 0.0;
 
   // update vehicle dynamics
   {
