@@ -73,7 +73,7 @@ GoalPlannerModule::GoalPlannerModule(
       node, *parameters, lane_departure_checker, occupancy_grid_map_));
   }
 
-  //set geometric pull over
+  // set geometric pull over
   if (parameters_->enable_arc_forward_parking) {
     constexpr bool is_forward = true;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
