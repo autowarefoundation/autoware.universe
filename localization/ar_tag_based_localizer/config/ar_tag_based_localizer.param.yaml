@@ -22,3 +22,8 @@
     # See https://github.com/pal-robotics/aruco_ros/blob/7787a6794d30c248bc546d1582e65dd47bc40c12/aruco/include/aruco/markerdetector.h#L106-L126
     detection_mode: "DM_NORMAL"  # select from [DM_NORMAL, DM_FAST, DM_VIDEO_FAST]
     min_marker_size: 0.02
+
+    # Parameters for comparison with EKF Pose
+    # If the difference between the EKF pose and the current pose is within the range of values set below, the current pose is published.
+    ekf_time_tolerance: 5.0 # [s]
+    ekf_position_tolerance: 10.0 # [m]
