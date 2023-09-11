@@ -17,12 +17,13 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
@@ -163,6 +164,7 @@ void GeometricParallelParking::clearPaths()
   current_path_idx_ = 0;
   arc_paths_.clear();
   paths_.clear();
+  pairs_terminal_velocity_and_accel_.clear();
 }
 
 bool GeometricParallelParking::planPullOver(
@@ -182,6 +184,7 @@ bool GeometricParallelParking::planPullOver(
   if (is_forward) {
     // When turning forward to the right, the front left goes out,
     // so reduce the steer angle at that time for seach no lane departure path.
+    // TODO(Sugahara): define in the config
     constexpr double start_pose_offset = 0.0;
     constexpr double min_steer_rad = 0.05;
     constexpr double steer_interval = 0.1;
@@ -445,7 +448,6 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   if (std::abs(end_pose_offset) > 0) {
     PathPointWithLaneId straight_point{};
     straight_point.point.pose = goal_pose;
-    // setLaneIds(straight_point);
     path_turn_right.points.push_back(straight_point);
   }
 
@@ -480,6 +482,19 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   // generate arc path vector
   paths_.push_back(path_turn_left);
   paths_.push_back(path_turn_right);
+
+  // set terminal velocity and acceleration(temporary implementation)
+  if (is_forward) {
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.forward_parking_velocity, 0.0));
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.forward_parking_velocity, 0.0));
+  } else {
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.backward_parking_velocity, 0.0));
+    pairs_terminal_velocity_and_accel_.push_back(
+      std::make_pair(parameters_.backward_parking_velocity, 0.0));
+  }
 
   // set pull_over start and end pose
   // todo: make start and end pose for pull_out

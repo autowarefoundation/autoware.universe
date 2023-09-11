@@ -19,6 +19,7 @@
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -364,16 +365,10 @@ private:
    * @param planner data.
    * @return root lanelet.
    */
-  lanelet::ConstLanelet updateRootLanelet(
-    const std::shared_ptr<PlannerData> & data, bool success_lane_change = false) const
+  lanelet::ConstLanelet updateRootLanelet(const std::shared_ptr<PlannerData> & data) const
   {
     lanelet::ConstLanelet ret{};
-    if (success_lane_change) {
-      data->route_handler->getClosestPreferredLaneletWithinRoute(
-        data->self_odometry->pose.pose, &ret);
-    } else {
-      data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
-    }
+    data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
     RCLCPP_DEBUG(logger_, "update start lanelet. id:%ld", ret.id());
     return ret;
   }

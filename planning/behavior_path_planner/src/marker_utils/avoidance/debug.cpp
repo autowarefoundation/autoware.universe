@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <magic_enum.hpp>
 
@@ -414,12 +415,6 @@ MarkerArray createOtherObjectsMarkerArray(const ObjectDataArray & objects, const
     &msg);
 
   return msg;
-}
-
-MarkerArray createUnsafeObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns)
-{
-  return createObjectsCubeMarkerArray(
-    objects, ns + "_cube", createMarkerScale(3.2, 1.7, 2.0), createMarkerColor(0.0, 0.0, 1.0, 0.8));
 }
 
 MarkerArray makeOverhangToRoadShoulderMarkerArray(

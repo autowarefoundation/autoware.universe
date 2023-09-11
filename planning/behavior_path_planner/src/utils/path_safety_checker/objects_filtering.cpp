@@ -16,6 +16,10 @@
 
 #include "behavior_path_planner/utils/utils.hpp"
 
+#include <motion_utils/trajectory/interpolation.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp>
+
 namespace behavior_path_planner::utils::path_safety_checker
 {
 
@@ -37,7 +41,7 @@ PredictedObjects filterObjects(
 
   PredictedObjects filtered_objects;
 
-  filtered_objects = filterObjectsByVelocity(*objects, ignore_object_velocity_threshold);
+  filtered_objects = filterObjectsByVelocity(*objects, ignore_object_velocity_threshold, false);
 
   filterObjectsByClass(filtered_objects, target_object_types);
 
@@ -51,13 +55,19 @@ PredictedObjects filterObjects(
   return filtered_objects;
 }
 
-PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)
+PredictedObjects filterObjectsByVelocity(
+  const PredictedObjects & objects, const double velocity_threshold,
+  const bool remove_above_threshold)
 {
-  return filterObjectsByVelocity(objects, -lim_v, lim_v);
+  if (remove_above_threshold) {
+    return filterObjectsByVelocity(objects, -velocity_threshold, velocity_threshold);
+  } else {
+    return filterObjectsByVelocity(objects, velocity_threshold, std::numeric_limits<double>::max());
+  }
 }
 
 PredictedObjects filterObjectsByVelocity(
-  const PredictedObjects & objects, double min_v, double max_v)
+  const PredictedObjects & objects, double velocity_threshold, double max_velocity)
 {
   PredictedObjects filtered;
   filtered.header = objects.header;
@@ -65,7 +75,7 @@ PredictedObjects filterObjectsByVelocity(
     const auto v_norm = std::hypot(
       obj.kinematics.initial_twist_with_covariance.twist.linear.x,
       obj.kinematics.initial_twist_with_covariance.twist.linear.y);
-    if (min_v < v_norm && v_norm < max_v) {
+    if (velocity_threshold < v_norm && v_norm < max_velocity) {
       filtered.objects.push_back(obj);
     }
   }
@@ -337,13 +347,13 @@ TargetObjectsOnLane createTargetObjectsOnLane(
   };
 
   // TODO(Sugahara): Consider shoulder and other lane objects
-  if (object_lane_configuration.check_current_lane) {
+  if (object_lane_configuration.check_current_lane && !current_lanes.empty()) {
     append_objects_on_lane(target_objects_on_lane.on_current_lane, current_lanes);
   }
-  if (object_lane_configuration.check_left_lane) {
+  if (object_lane_configuration.check_left_lane && !all_left_lanelets.empty()) {
     append_objects_on_lane(target_objects_on_lane.on_left_lane, all_left_lanelets);
   }
-  if (object_lane_configuration.check_right_lane) {
+  if (object_lane_configuration.check_right_lane && !all_right_lanelets.empty()) {
     append_objects_on_lane(target_objects_on_lane.on_right_lane, all_right_lanelets);
   }
 

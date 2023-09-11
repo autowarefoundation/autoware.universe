@@ -17,10 +17,14 @@
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utils/avoidance/utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/interpolation.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
 
@@ -396,7 +400,8 @@ void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   double max_distance = std::numeric_limits<double>::lowest();
   for (const auto & p : obj.envelope_poly.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    const double arc_length = calcSignedArcLengthToFirstNearestPoint(path.points, ego_pos, point);
+    // TODO(someone): search around first position where the ego should avoid the object.
+    const double arc_length = calcSignedArcLength(path.points, ego_pos, point);
     min_distance = std::min(min_distance, arc_length);
     max_distance = std::max(max_distance, arc_length);
   }
@@ -406,13 +411,15 @@ void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
 }
 
 double calcEnvelopeOverhangDistance(
-  const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose)
+  const ObjectData & object_data, const PathWithLaneId & path, Point & overhang_pose)
 {
   double largest_overhang = isOnRight(object_data) ? -100.0 : 100.0;  // large number
 
   for (const auto & p : object_data.envelope_poly.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    const auto lateral = tier4_autoware_utils::calcLateralDeviation(base_pose, point);
+    // TODO(someone): search around first position where the ego should avoid the object.
+    const auto idx = findNearestIndex(path.points, point);
+    const auto lateral = calcLateralDeviation(getPose(path.points.at(idx)), point);
 
     const auto & overhang_pose_on_right = [&overhang_pose, &largest_overhang, &point, &lateral]() {
       if (lateral > largest_overhang) {
@@ -693,9 +700,9 @@ void fillObjectMovingTime(
   const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
   const auto object_parameter = parameters->object_parameters.at(object_type);
 
-  const auto & object_vel =
-    object_data.object.kinematics.initial_twist_with_covariance.twist.linear.x;
-  const auto is_faster_than_threshold = object_vel > object_parameter.moving_speed_threshold;
+  const auto & object_twist = object_data.object.kinematics.initial_twist_with_covariance.twist;
+  const auto object_vel_norm = std::hypot(object_twist.linear.x, object_twist.linear.y);
+  const auto is_faster_than_threshold = object_vel_norm > object_parameter.moving_speed_threshold;
 
   const auto id = object_data.object.object_id;
   const auto same_id_obj = std::find_if(
@@ -771,7 +778,7 @@ void fillAvoidanceNecessity(
   }
 
   // TRUE -> ? (check with hysteresis factor)
-  object_data.avoid_required = check_necessity(parameters->safety_check_hysteresis_factor);
+  object_data.avoid_required = check_necessity(parameters->hysteresis_factor_expand_rate);
 }
 
 void fillObjectStoppableJudge(
@@ -1014,7 +1021,7 @@ void filterTargetObjects(
         const auto lines =
           rh->getFurthestLinestring(target_lanelet, get_right, get_left, get_opposite, true);
         const auto & line = isOnRight(o) ? lines.back() : lines.front();
-        const auto d = distance2d(to2D(overhang_basic_pose), to2D(line.basicLineString()));
+        const auto d = boost::geometry::distance(o.envelope_poly, to2D(line.basicLineString()));
         if (d < o.to_road_shoulder_distance) {
           o.to_road_shoulder_distance = d;
           target_line = line;
@@ -1436,7 +1443,7 @@ AvoidLineArray combineRawShiftLinesWithUniqueCheck(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters)
+  const bool is_object_front, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   if (path.points.empty()) {
     return {};
@@ -1445,7 +1452,8 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const auto & acceleration = parameters->max_acceleration;
   const auto & vehicle_pose = planner_data->self_odometry->pose.pose;
   const auto & initial_velocity = std::abs(planner_data->self_odometry->twist.twist.linear.x);
-  const auto & time_horizon = parameters->safety_check_time_horizon;
+  const auto & time_horizon = is_object_front ? parameters->time_horizon_for_front_object
+                                              : parameters->time_horizon_for_rear_object;
   const auto & time_resolution = parameters->safety_check_time_resolution;
 
   const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(path.points);
@@ -1475,8 +1483,10 @@ ExtendedPredictedObject transform(
   extended_object.initial_acceleration = object.kinematics.initial_acceleration_with_covariance;
   extended_object.shape = object.shape;
 
-  const auto & obj_velocity = extended_object.initial_twist.twist.linear.x;
-  const auto & time_horizon = parameters->safety_check_time_horizon;
+  const auto & obj_velocity_norm = std::hypot(
+    extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
+  const auto & time_horizon =
+    std::max(parameters->time_horizon_for_front_object, parameters->time_horizon_for_rear_object);
   const auto & time_resolution = parameters->safety_check_time_resolution;
 
   extended_object.predicted_paths.resize(object.kinematics.predicted_paths.size());
@@ -1490,7 +1500,7 @@ ExtendedPredictedObject transform(
       if (obj_pose) {
         const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, object.shape);
         extended_object.predicted_paths.at(i).path.emplace_back(
-          t, *obj_pose, obj_velocity, obj_polygon);
+          t, *obj_pose, obj_velocity_norm, obj_polygon);
       }
     }
   }
@@ -1622,7 +1632,8 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   double max_offset = 0.0;
   for (const auto & object_parameter : parameters->object_parameters) {
     const auto p = object_parameter.second;
-    const auto offset = p.envelope_buffer_margin + p.safety_buffer_lateral + p.avoid_margin_lateral;
+    const auto offset =
+      2.0 * p.envelope_buffer_margin + p.safety_buffer_lateral + p.avoid_margin_lateral;
     max_offset = std::max(max_offset, offset);
   }
 

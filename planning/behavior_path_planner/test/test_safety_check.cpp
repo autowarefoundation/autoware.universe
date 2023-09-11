@@ -15,7 +15,8 @@
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 
@@ -27,10 +28,10 @@
 constexpr double epsilon = 1e-6;
 
 using autoware_auto_perception_msgs::msg::Shape;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using marker_utils::CollisionCheckDebug;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 
@@ -178,18 +179,20 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedObjPolygon)
 TEST(BehaviorPathPlanningSafetyUtilsTest, calcRssDistance)
 {
   using behavior_path_planner::utils::path_safety_checker::calcRssDistance;
+  using behavior_path_planner::utils::path_safety_checker::RSSparams;
 
   {
     const double front_vel = 5.0;
     const double front_decel = -2.0;
     const double rear_vel = 10.0;
     const double rear_decel = -1.0;
-    BehaviorPathPlannerParameters params;
+    RSSparams params;
     params.rear_vehicle_reaction_time = 1.0;
     params.rear_vehicle_safety_time_margin = 1.0;
     params.longitudinal_distance_min_threshold = 3.0;
+    params.rear_vehicle_deceleration = rear_decel;
+    params.front_vehicle_deceleration = front_decel;
 
-    EXPECT_NEAR(
-      calcRssDistance(front_vel, rear_vel, front_decel, rear_decel, params), 63.75, epsilon);
+    EXPECT_NEAR(calcRssDistance(front_vel, rear_vel, params), 63.75, epsilon);
   }
 }

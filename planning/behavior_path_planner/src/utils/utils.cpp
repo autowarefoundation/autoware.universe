@@ -20,6 +20,9 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/resample/resample.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_auto_perception_msgs/msg/predicted_path.hpp"
@@ -1223,6 +1226,7 @@ boost::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> 
         boost::geometry::intersection(
           lanelet.polygon2d().basicPolygon(), target_lanelet.polygon2d().basicPolygon(),
           intersections);
+
         // if only one point intersects, it is assumed not to be overlapped
         if (intersections.size() > 1) {
           return true;
@@ -1265,35 +1269,69 @@ std::vector<DrivableLanes> cutOverlappedLanes(
   std::vector<DrivableLanes> shorten_lanes{lanes.begin(), lanes.begin() + *overlapped_lanelet_idx};
   const auto shorten_lanelets = utils::transformToLanelets(shorten_lanes);
 
-  // create removed lanelets
-  std::vector<int64_t> removed_lane_ids;
-  for (size_t i = *overlapped_lanelet_idx; i < lanes.size(); ++i) {
-    const auto target_lanelets = utils::transformToLanelets(lanes.at(i));
-    for (const auto & target_lanelet : target_lanelets) {
-      // if target lane is inside of the shorten lanelets, we do not remove it
-      if (checkHasSameLane(shorten_lanelets, target_lanelet)) {
-        continue;
+  const auto original_points = path.points;
+
+  path.points.clear();
+
+  const auto has_same_id_lane = [](const auto & lanelet, const auto & p) {
+    return std::any_of(p.lane_ids.begin(), p.lane_ids.end(), [&lanelet](const auto id) {
+      return lanelet.id() == id;
+    });
+  };
+
+  const auto has_same_id_lanes = [&has_same_id_lane](const auto & lanelets, const auto & p) {
+    return std::any_of(
+      lanelets.begin(), lanelets.end(),
+      [&has_same_id_lane, &p](const auto & lanelet) { return has_same_id_lane(lanelet, p); });
+  };
+
+  // Step1. find first path point within drivable lanes
+  size_t start_point_idx = std::numeric_limits<size_t>::max();
+  for (const auto & lanes : shorten_lanes) {
+    for (size_t i = 0; i < original_points.size(); ++i) {
+      // check right lane
+      if (has_same_id_lane(lanes.right_lane, original_points.at(i))) {
+        start_point_idx = std::min(start_point_idx, i);
       }
-      removed_lane_ids.push_back(target_lanelet.id());
+
+      // check left lane
+      if (has_same_id_lane(lanes.left_lane, original_points.at(i))) {
+        start_point_idx = std::min(start_point_idx, i);
+      }
+
+      // check middle lanes
+      if (has_same_id_lanes(lanes.middle_lanes, original_points.at(i))) {
+        start_point_idx = std::min(start_point_idx, i);
+      }
     }
   }
 
-  const auto is_same_lane_id = [&removed_lane_ids](const auto & point) {
-    const auto & lane_ids = point.lane_ids;
-    for (const auto & lane_id : lane_ids) {
-      const auto is_same_id = [&lane_id](const auto id) { return lane_id == id; };
-
-      if (std::any_of(removed_lane_ids.begin(), removed_lane_ids.end(), is_same_id)) {
-        return true;
+  // Step2. pick up only path points within drivable lanes
+  for (const auto & lanes : shorten_lanes) {
+    for (size_t i = start_point_idx; i < original_points.size(); ++i) {
+      // check right lane
+      if (has_same_id_lane(lanes.right_lane, original_points.at(i))) {
+        path.points.push_back(original_points.at(i));
+        continue;
       }
+
+      // check left lane
+      if (has_same_id_lane(lanes.left_lane, original_points.at(i))) {
+        path.points.push_back(original_points.at(i));
+        continue;
+      }
+
+      // check middle lanes
+      if (has_same_id_lanes(lanes.middle_lanes, original_points.at(i))) {
+        path.points.push_back(original_points.at(i));
+        continue;
+      }
+
+      start_point_idx = i;
+      break;
     }
-    return false;
-  };
+  }
 
-  const auto points_with_overlapped_id =
-    std::remove_if(path.points.begin(), path.points.end(), is_same_lane_id);
-
-  path.points.erase(points_with_overlapped_id, path.points.end());
   return shorten_lanes;
 }
 
@@ -1497,9 +1535,7 @@ void generateDrivableArea(
   }
   const auto & expansion_params = planner_data->drivable_area_expansion_parameters;
   if (expansion_params.enabled) {
-    drivable_area_expansion::expandDrivableArea(
-      path, expansion_params, *planner_data->dynamic_object, *planner_data->route_handler,
-      transformed_lanes);
+    drivable_area_expansion::expandDrivableArea(path, planner_data, transformed_lanes);
   }
 
   // make bound longitudinally monotonic
@@ -1606,6 +1642,10 @@ std::vector<geometry_msgs::msg::Point> calcBound(
       const auto polygon =
         route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(id.c_str()));
 
+      const auto is_clockwise_polygon =
+        boost::geometry::is_valid(lanelet::utils::to2D(polygon.basicPolygon()));
+      const auto is_clockwise_iteration = is_clockwise_polygon ? is_left : !is_left;
+
       const auto start_itr = std::find_if(polygon.begin(), polygon.end(), [&bound](const auto & p) {
         return p.id() == bound.front().id();
       });
@@ -1621,7 +1661,8 @@ std::vector<geometry_msgs::msg::Point> calcBound(
       // extract line strings between start_idx and end_idx.
       const size_t start_idx = std::distance(polygon.begin(), start_itr);
       const size_t end_idx = std::distance(polygon.begin(), end_itr);
-      for (const auto & point : extract_bound_from_polygon(polygon, start_idx, end_idx, is_left)) {
+      for (const auto & point :
+           extract_bound_from_polygon(polygon, start_idx, end_idx, is_clockwise_iteration)) {
         output_points.push_back(point);
       }
 
@@ -1755,8 +1796,22 @@ void makeBoundLongitudinallyMonotonic(
         continue;
       }
 
-      for (size_t j = intersect_idx.get() + 1; j < bound_with_pose.size(); j++) {
-        set_orientation(ret, j, getPose(path_points.at(i)).orientation);
+      if (i + 1 == path_points.size()) {
+        for (size_t j = intersect_idx.get(); j < bound_with_pose.size(); j++) {
+          if (j + 1 == bound_with_pose.size()) {
+            const auto yaw =
+              calcAzimuthAngle(bound_with_pose.at(j - 1).position, bound_with_pose.at(j).position);
+            set_orientation(ret, j, createQuaternionFromRPY(0.0, 0.0, yaw));
+          } else {
+            const auto yaw =
+              calcAzimuthAngle(bound_with_pose.at(j).position, bound_with_pose.at(j + 1).position);
+            set_orientation(ret, j, createQuaternionFromRPY(0.0, 0.0, yaw));
+          }
+        }
+      } else {
+        for (size_t j = intersect_idx.get() + 1; j < bound_with_pose.size(); j++) {
+          set_orientation(ret, j, getPose(path_points.at(i)).orientation);
+        }
       }
 
       constexpr size_t OVERLAP_CHECK_NUM = 3;
@@ -1815,6 +1870,7 @@ void makeBoundLongitudinallyMonotonic(
         if (intersect_point) {
           Pose pose;
           pose.position = *intersect_point;
+          pose.position.z = bound_with_pose.at(i).position.z;
           const auto yaw = calcAzimuthAngle(*intersect_point, bound_with_pose.at(i + 1).position);
           pose.orientation = createQuaternionFromRPY(0.0, 0.0, yaw);
           monotonic_bound.push_back(pose);
@@ -1848,18 +1904,18 @@ void makeBoundLongitudinallyMonotonic(
 
     std::vector<Point> ret;
 
-    ret.push_back(bound.front());
+    for (size_t i = 0; i < bound.size(); i++) {
+      const auto & p_new = bound.at(i);
+      const auto duplicated_points_itr = std::find_if(
+        ret.begin(), ret.end(),
+        [&p_new](const auto & p) { return calcDistance2d(p, p_new) < 0.1; });
 
-    for (size_t i = 0; i < bound.size() - 2; i++) {
-      try {
-        motion_utils::validateNonSharpAngle(bound.at(i), bound.at(i + 1), bound.at(i + 2));
-        ret.push_back(bound.at(i + 1));
-      } catch (const std::exception & e) {
-        continue;
+      if (duplicated_points_itr != ret.end() && std::next(duplicated_points_itr, 2) == ret.end()) {
+        ret.erase(duplicated_points_itr, ret.end());
       }
-    }
 
-    ret.push_back(bound.back());
+      ret.push_back(p_new);
+    }
 
     return ret;
   };
@@ -2352,64 +2408,126 @@ double getSignedDistanceFromBoundary(
 }
 
 std::optional<double> getSignedDistanceFromBoundary(
-  const lanelet::ConstLanelets & lanelets, const LinearRing2d & footprint,
-  const Pose & vehicle_pose, const bool left_side)
+  const lanelet::ConstLanelets & lanelets, const double vehicle_width, const double base_link2front,
+  const double base_link2rear, const Pose & vehicle_pose, const bool left_side)
 {
-  double min_distance = std::numeric_limits<double>::max();
+  // Depending on which side is selected, calculate the transformed coordinates of the front and
+  // rear vehicle corners
+  Point rear_corner_point, front_corner_point;
+  if (left_side) {
+    Point front_left, rear_left;
+    rear_left.x = -base_link2rear;
+    rear_left.y = vehicle_width / 2;
+    front_left.x = base_link2front;
+    front_left.y = vehicle_width / 2;
+    rear_corner_point = tier4_autoware_utils::transformPoint(rear_left, vehicle_pose);
+    front_corner_point = tier4_autoware_utils::transformPoint(front_left, vehicle_pose);
+  } else {
+    Point front_right, rear_right;
+    rear_right.x = -base_link2rear;
+    rear_right.y = -vehicle_width / 2;
+    front_right.x = base_link2front;
+    front_right.y = -vehicle_width / 2;
+    rear_corner_point = tier4_autoware_utils::transformPoint(rear_right, vehicle_pose);
+    front_corner_point = tier4_autoware_utils::transformPoint(front_right, vehicle_pose);
+  }
 
-  const auto transformed_footprint =
-    transformVector(footprint, tier4_autoware_utils::pose2transform(vehicle_pose));
-  bool found_neighbor_bound = false;
-  for (const auto & vehicle_corner_point : transformed_footprint) {
-    // convert point of footprint to pose
+  const auto combined_lane = lanelet::utils::combineLaneletsShape(lanelets);
+  const auto & bound_line_2d = left_side ? lanelet::utils::to2D(combined_lane.leftBound3d())
+                                         : lanelet::utils::to2D(combined_lane.rightBound3d());
+
+  // Initialize the lateral distance to the maximum (for left side) or the minimum (for right side)
+  // possible value.
+  double lateral_distance =
+    left_side ? -std::numeric_limits<double>::max() : std::numeric_limits<double>::max();
+
+  // Find the closest bound segment that contains the corner point in the X-direction
+  // and calculate the lateral distance from that segment.
+  const auto calcLateralDistanceFromBound = [&](
+                                              const Point & vehicle_corner_point,
+                                              boost::optional<double> & lateral_distance,
+                                              boost::optional<size_t> & segment_idx) {
     Pose vehicle_corner_pose{};
-    vehicle_corner_pose.position = tier4_autoware_utils::toMsg(vehicle_corner_point.to_3d());
+    vehicle_corner_pose.position = vehicle_corner_point;
     vehicle_corner_pose.orientation = vehicle_pose.orientation;
 
-    // calculate distance to the bound directly next to footprint points
-    lanelet::ConstLanelet closest_lanelet{};
-    if (lanelet::utils::query::getClosestLanelet(lanelets, vehicle_corner_pose, &closest_lanelet)) {
-      const auto & bound_line_2d = left_side ? lanelet::utils::to2D(closest_lanelet.leftBound3d())
-                                             : lanelet::utils::to2D(closest_lanelet.rightBound3d());
+    // Euclidean distance to find the closest segment containing the corner point.
+    double min_distance = std::numeric_limits<double>::max();
 
-      for (size_t i = 1; i < bound_line_2d.size(); ++i) {
-        const Point p_front = lanelet::utils::conversion::toGeomMsgPt(bound_line_2d[i - 1]);
-        const Point p_back = lanelet::utils::conversion::toGeomMsgPt(bound_line_2d[i]);
+    for (size_t i = 0; i < bound_line_2d.size() - 1; i++) {
+      const Point p1 = lanelet::utils::conversion::toGeomMsgPt(bound_line_2d[i]);
+      const Point p2 = lanelet::utils::conversion::toGeomMsgPt(bound_line_2d[i + 1]);
 
-        const Point inverse_p_front =
-          tier4_autoware_utils::inverseTransformPoint(p_front, vehicle_corner_pose);
-        const Point inverse_p_back =
-          tier4_autoware_utils::inverseTransformPoint(p_back, vehicle_corner_pose);
+      const Point inverse_p1 = tier4_autoware_utils::inverseTransformPoint(p1, vehicle_corner_pose);
+      const Point inverse_p2 = tier4_autoware_utils::inverseTransformPoint(p2, vehicle_corner_pose);
+      const double dx_p1 = inverse_p1.x;
+      const double dx_p2 = inverse_p2.x;
+      const double dy_p1 = inverse_p1.y;
+      const double dy_p2 = inverse_p2.y;
 
-        const double dy_front = inverse_p_front.y;
-        const double dy_back = inverse_p_back.y;
-        const double dx_front = inverse_p_front.x;
-        const double dx_back = inverse_p_back.x;
-        // is in segment
-        if (dx_front < 0 && dx_back > 0) {
-          const double lateral_distance_from_pose_to_segment =
-            (dy_front * dx_back + dy_back * -dx_front) / (dx_back - dx_front);
+      // Calculate the Euclidean distances between vehicle's corner and the current and next points.
+      const double distance1 = tier4_autoware_utils::calcDistance2d(p1, vehicle_corner_point);
+      const double distance2 = tier4_autoware_utils::calcDistance2d(p2, vehicle_corner_point);
 
-          if (std::abs(lateral_distance_from_pose_to_segment) < std::abs(min_distance)) {
-            min_distance = lateral_distance_from_pose_to_segment;
-          }
-
-          found_neighbor_bound = true;
-          break;
-        }
+      // If one of the bound points is behind and the other is in front of the vehicle corner point
+      // and any of these points is closer than the current minimum distance,
+      // then update minimum distance, lateral distance and the segment index.
+      if (dx_p1 < 0 && dx_p2 > 0 && (distance1 < min_distance || distance2 < min_distance)) {
+        min_distance = std::min(distance1, distance2);
+        // Update lateral distance using the formula derived from similar triangles in the lateral
+        // cross-section view.
+        lateral_distance = -1.0 * (dy_p1 * dx_p2 + dy_p2 * -dx_p1) / (dx_p2 - dx_p1);
+        segment_idx = i;
       }
     }
-  }
+  };
 
-  if (!found_neighbor_bound) {
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
-      "neighbor shoulder bound to footprint is not found.");
+  // Calculate the lateral distance for both the rear and front corners of the vehicle.
+  boost::optional<size_t> rear_segment_idx{};
+  boost::optional<double> rear_lateral_distance{};
+  calcLateralDistanceFromBound(rear_corner_point, rear_lateral_distance, rear_segment_idx);
+  boost::optional<size_t> front_segment_idx{};
+  boost::optional<double> front_lateral_distance{};
+  calcLateralDistanceFromBound(front_corner_point, front_lateral_distance, front_segment_idx);
+
+  // If no closest bound segment was found for both corners, return an empty optional.
+  if (!rear_lateral_distance && !front_lateral_distance) {
     return {};
   }
+  // If only one of them found the closest bound, return the found lateral distance.
+  if (!rear_lateral_distance) {
+    return *front_lateral_distance;
+  } else if (!front_lateral_distance) {
+    return *rear_lateral_distance;
+  }
+  // If both corners found their closest bound, return the maximum (for left side) or the minimum
+  // (for right side) lateral distance.
+  lateral_distance = left_side ? std::max(*rear_lateral_distance, *front_lateral_distance)
+                               : std::min(*rear_lateral_distance, *front_lateral_distance);
 
-  // min_distance is the distance from corner_pose to bound, so reverse this value
-  return -min_distance;
+  // Iterate through all segments between the segments closest to the rear and front corners.
+  // Update the lateral distance in case any of these inner segments are closer to the vehicle.
+  for (size_t i = *rear_segment_idx + 1; i < *front_segment_idx; i++) {
+    Pose bound_pose;
+    bound_pose.position = lanelet::utils::conversion::toGeomMsgPt(bound_line_2d[i]);
+    bound_pose.orientation = vehicle_pose.orientation;
+
+    const Point inverse_rear_point =
+      tier4_autoware_utils::inverseTransformPoint(rear_corner_point, bound_pose);
+    const Point inverse_front_point =
+      tier4_autoware_utils::inverseTransformPoint(front_corner_point, bound_pose);
+    const double dx_rear = inverse_rear_point.x;
+    const double dx_front = inverse_front_point.x;
+    const double dy_rear = inverse_rear_point.y;
+    const double dy_front = inverse_front_point.y;
+
+    const double current_lateral_distance =
+      (dy_rear * dx_front + dy_front * -dx_rear) / (dx_front - dx_rear);
+    lateral_distance = left_side ? std::max(lateral_distance, current_lateral_distance)
+                                 : std::min(lateral_distance, current_lateral_distance);
+  }
+
+  return lateral_distance;
 }
 
 double getArcLengthToTargetLanelet(

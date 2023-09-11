@@ -22,11 +22,11 @@
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <route_handler/route_handler.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
@@ -163,6 +163,16 @@ double getDistanceBetweenPredictedPaths(
 double getDistanceBetweenPredictedPathAndObject(
   const PredictedObject & object, const PredictedPath & path, const double start_time,
   const double end_time, const double resolution);
+
+/**
+ * @brief Check collision between ego path footprints with extra longitudinal stopping margin and
+ * objects.
+ * @return Has collision or not
+ */
+bool checkCollisionWithExtraStoppingMargin(
+  const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects,
+  const double base_to_front, const double base_to_rear, const double width,
+  const double maximum_deceleration, const double margin, const double max_stopping_margin);
 
 /**
  * @brief Check collision between ego path footprints and objects.
@@ -313,8 +323,8 @@ PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path);
 double getSignedDistanceFromBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose, const bool left_side);
 std::optional<double> getSignedDistanceFromBoundary(
-  const lanelet::ConstLanelets & shoulder_lanelets, const LinearRing2d & footprint,
-  const Pose & vehicle_pose, const bool left_side);
+  const lanelet::ConstLanelets & lanelets, const double vehicle_width, const double base_link2front,
+  const double base_link2rear, const Pose & vehicle_pose, const bool left_side);
 
 // misc
 

@@ -20,11 +20,9 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -147,6 +145,7 @@ private:
   double prediction_sampling_time_interval_;
   double min_velocity_for_map_based_prediction_;
   double min_crosswalk_user_velocity_;
+  double max_crosswalk_user_delta_yaw_threshold_for_lanelet_;
   double debug_accumulated_time_;
   double dist_threshold_for_searching_lanelet_;
   double delta_yaw_threshold_for_searching_lanelet_;

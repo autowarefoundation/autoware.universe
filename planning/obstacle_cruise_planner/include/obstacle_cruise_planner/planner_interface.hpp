@@ -15,12 +15,13 @@
 #ifndef OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 #define OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_cruise_planner/common_structs.hpp"
 #include "obstacle_cruise_planner/stop_planning_debug_info.hpp"
 #include "obstacle_cruise_planner/type_alias.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <memory>
 #include <optional>
@@ -53,11 +54,12 @@ public:
 
   void setParam(
     const bool enable_debug_info, const bool enable_calculation_time_info,
-    const double min_behavior_stop_margin)
+    const double min_behavior_stop_margin, const bool suppress_sudden_obstacle_stop)
   {
     enable_debug_info_ = enable_debug_info;
     enable_calculation_time_info_ = enable_calculation_time_info;
     min_behavior_stop_margin_ = min_behavior_stop_margin;
+    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
   }
 
   std::vector<TrajectoryPoint> generateStopTrajectory(
@@ -101,6 +103,7 @@ protected:
   bool enable_calculation_time_info_{false};
   LongitudinalInfo longitudinal_info_;
   double min_behavior_stop_margin_;
+  bool suppress_sudden_obstacle_stop_;
 
   // stop watch
   tier4_autoware_utils::StopWatch<
@@ -254,6 +257,11 @@ private:
   SlowDownParam slow_down_param_;
 
   std::vector<SlowDownOutput> prev_slow_down_output_;
+  // previous trajectory and distance to stop
+  // NOTE: Previous trajectory is memorized to deal with nearest index search for overlapping or
+  // crossing lanes.
+  std::optional<std::pair<std::vector<TrajectoryPoint>, double>> prev_stop_distance_info_{
+    std::nullopt};
 };
 
 #endif  // OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
