@@ -17,6 +17,7 @@
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
+#include "tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp"
 
 #include <memory>
 #include <vector>
@@ -63,8 +64,9 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
   const auto road_lanes = utils::getExtendedCurrentLanes(
     planner_data_, parameters_.backward_goal_search_length, parameters_.forward_goal_search_length,
     /*forward_only_in_route*/ false);
-  const auto pull_over_lanes =
-    goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
+    parameters_.forward_goal_search_length);
   if (road_lanes.empty() || pull_over_lanes.empty()) {
     return {};
   }

@@ -18,7 +18,9 @@
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
+#include <boost/geometry/algorithms/union.hpp>
 #include <boost/optional.hpp>
 
 #include <memory>
@@ -57,8 +59,9 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
   const double base_link2front = planner_data_->parameters.base_link2front;
   const double base_link2rear = planner_data_->parameters.base_link2rear;
 
-  const auto pull_over_lanes =
-    goal_planner_utils::getPullOverLanes(*route_handler, left_side_parking_);
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    *route_handler, left_side_parking_, parameters_.backward_goal_search_length,
+    parameters_.forward_goal_search_length);
   auto lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_length, forward_length,
     /*forward_only_in_route*/ false);
@@ -157,8 +160,9 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
     }
 
     // check margin with pull over lane objects
-    const auto pull_over_lanes =
-      goal_planner_utils::getPullOverLanes(*(planner_data_->route_handler), left_side_parking_);
+    const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+      *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
+      parameters_.forward_goal_search_length);
     const auto [shoulder_lane_objects, others] =
       utils::path_safety_checker::separateObjectsByLanelets(
         *(planner_data_->dynamic_object), pull_over_lanes);
