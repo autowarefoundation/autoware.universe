@@ -551,7 +551,6 @@ struct DebugData
   AvoidLineArray step1_combined_shift_line;
   AvoidLineArray step1_return_shift_line;
   AvoidLineArray step1_front_shift_line;
-  AvoidLineArray step1_shift_line;
 
   // create outline process
   AvoidLineArray step2_merged_shift_line;
@@ -565,7 +564,6 @@ struct DebugData
 
   // registered process
   AvoidLineArray step4_new_shift_line;
-  AvoidLineArray step4_valid_shift_line;
 
   // shift length
   std::vector<double> pos_shift;
