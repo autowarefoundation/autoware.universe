@@ -666,6 +666,8 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     utils::lane_change::createPolygon(target_lanes, 0.0, std::numeric_limits<double>::max());
   const auto target_backward_polygon = utils::lane_change::createPolygon(
     target_backward_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto dist_ego_to_current_lanes_center =
+    lanelet::utils::getLateralDistanceToClosestLanelet(current_lanes, current_pose);
 
   LaneChangeTargetObjectIndices filtered_obj_indices;
   for (size_t i = 0; i < objects.objects.size(); ++i) {
@@ -695,9 +697,11 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     }
 
     const auto is_lateral_far = [&]() {
-      const auto lateral = tier4_autoware_utils::calcLateralDeviation(
-        current_pose, object.kinematics.initial_pose_with_covariance.pose.position);
-      return std::abs(lateral) > common_parameters.vehicle_width;
+      const auto dist_object_to_current_lanes_center =
+        lanelet::utils::getLateralDistanceToClosestLanelet(
+          current_lanes, object.kinematics.initial_pose_with_covariance.pose);
+      const auto lateral = dist_object_to_current_lanes_center - dist_ego_to_current_lanes_center;
+      return std::abs(lateral) > (common_parameters.vehicle_width / 2);
     };
 
     // ignore static object that are behind the ego vehicle
@@ -710,7 +714,7 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
       // TODO(watanabe): ignore static parked object that are in front of the ego vehicle in target
       // lanes
 
-      if (is_lateral_far()) {
+      if (max_dist_ego_to_obj >= 0 || is_lateral_far()) {
         filtered_obj_indices.target_lane.push_back(i);
         continue;
       }
