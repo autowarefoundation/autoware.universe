@@ -228,12 +228,13 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
 
   // (1) default stop line position on interpolated path
   bool default_stop_line_valid = true;
-  int stop_idx_ip_int = 0;
+  int stop_idx_ip_int = -1;
   if (const auto map_stop_idx_ip =
         getStopLineIndexFromMap(interpolated_path_info, planner_data, 10.0);
       map_stop_idx_ip) {
     stop_idx_ip_int = static_cast<int>(map_stop_idx_ip.value()) - base2front_idx_dist;
-  } else {
+  }
+  if (stop_idx_ip_int < 0) {
     stop_idx_ip_int = static_cast<size_t>(first_inside_detection_ip) - stop_line_margin_idx_dist -
                       base2front_idx_dist;
   }
