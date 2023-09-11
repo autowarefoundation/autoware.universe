@@ -105,6 +105,56 @@ bool isBestEffort(const std::string & policy)
 {
   return policy == "best_effort";
 }
+
+AvoidLine merge(const AvoidLine & line1, const AvoidLine & line2, const uint64_t id)
+{
+  AvoidLine ret{};
+
+  ret.start_idx = line1.start_idx;
+  ret.start_shift_length = line1.start_shift_length;
+  ret.start_longitudinal = line1.start_longitudinal;
+
+  ret.end_idx = line2.end_idx;
+  ret.end_shift_length = line2.end_shift_length;
+  ret.end_longitudinal = line2.end_longitudinal;
+
+  ret.id = id;
+  ret.object = line1.object;
+
+  return ret;
+}
+
+AvoidLine fill(const AvoidLine & line1, const AvoidLine & line2, const uint64_t id)
+{
+  AvoidLine ret{};
+
+  ret.start_idx = line1.end_idx;
+  ret.start_shift_length = line1.end_shift_length;
+  ret.start_longitudinal = line1.end_longitudinal;
+
+  ret.end_idx = line2.start_idx;
+  ret.end_shift_length = line2.start_shift_length;
+  ret.end_longitudinal = line2.start_longitudinal;
+
+  ret.id = id;
+  ret.object = line1.object;
+
+  return ret;
+}
+
+AvoidLineArray toArray(const AvoidOutlines & outlines)
+{
+  AvoidLineArray ret{};
+  for (const auto & outline : outlines) {
+    ret.push_back(outline.avoid_line);
+    ret.push_back(outline.return_line);
+
+    std::for_each(
+      outline.middle_lines.begin(), outline.middle_lines.end(),
+      [&ret](const auto & line) { ret.push_back(line); });
+  }
+  return ret;
+}
 }  // namespace
 
 AvoidanceModule::AvoidanceModule(
