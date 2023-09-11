@@ -116,9 +116,8 @@ void PredictedObjectsDisplay::workerThread()
 void PredictedObjectsDisplay::push_tmp_markers(
   std::vector<visualization_msgs::msg::Marker::SharedPtr> marker_ptrs)
 {
-  tmp_marker_mutex.lock();
+  std::lock_guard<std::mutex> _local_lock_guard(tmp_marker_mutex);
   for (auto marker_ptr : marker_ptrs) tmp_markers.push_back(marker_ptr);
-  tmp_marker_mutex.unlock();
 }
 
 std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay::tackle_one_object(
