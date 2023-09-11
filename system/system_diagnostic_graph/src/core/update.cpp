@@ -87,15 +87,17 @@ DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
 
 OperationModeAvailability DiagGraph::summary(const rclcpp::Time & stamp)
 {
+  const auto is_ok = [](const UnitNode * node) { return node->level() == DiagnosticStatus::OK; };
+
   OperationModeAvailability message;
   message.stamp = stamp;
-  message.stop = summary_.stop_mode->level();
-  message.autonomous = summary_.autonomous_mode->level();
-  message.local = summary_.local_mode->level();
-  message.remote = summary_.remote_mode->level();
-  message.emergency_stop = summary_.emergency_stop_mrm->level();
-  message.comfortable_stop = summary_.comfortable_stop_mrm->level();
-  message.pull_over = summary_.pull_over_mrm->level();
+  message.stop = is_ok(summary_.stop_mode);
+  message.autonomous = is_ok(summary_.autonomous_mode);
+  message.local = is_ok(summary_.local_mode);
+  message.remote = is_ok(summary_.remote_mode);
+  message.emergency_stop = is_ok(summary_.emergency_stop_mrm);
+  message.comfortable_stop = is_ok(summary_.comfortable_stop_mrm);
+  message.pull_over = is_ok(summary_.pull_over_mrm);
   return message;
 }
 
