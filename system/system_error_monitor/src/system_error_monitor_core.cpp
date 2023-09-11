@@ -554,7 +554,10 @@ autoware_auto_system_msgs::msg::HazardStatus AutowareErrorMonitor::judgeHazardSt
 
     // diag level high
     {
-      appendHazardDiag(required_module, latest_diag->status, &hazard_status);
+      DiagnosticStatus diag;
+      diag = latest_diag->status;
+      diag.hardware_id = "system_error_monitor";
+      appendHazardDiag(required_module, diag, &hazard_status);
     }
 
     // diag timeout
