@@ -24,6 +24,42 @@
           "default": 50.0,
           "minimum": 0.0,
           "maximum": 100.0
+        },
+        "image_buffer_size": {
+          "type": "integer",
+          "description": "The number of image buffer size for debug.",
+          "default": 15,
+          "minimum": 1
+        },
+        "filter_scope_minx": {
+          "type": "number",
+          "description": "Minimum x position to be considered for debug [m].",
+          "default": -100.0
+        },
+        "filter_scope_miny": {
+          "type": "number",
+          "description": "Minimum y position to be considered for debug [m].",
+          "default": -100.0
+        },
+        "filter_scope_minz": {
+          "type": "number",
+          "description": "Minimum z position to be considered for debug [m].",
+          "default": -100.0
+        },
+        "filter_scope_maxx": {
+          "type": "number",
+          "description": "Maximum x position to be considered for debug [m].",
+          "default": 100.0
+        },
+        "filter_scope_maxy": {
+          "type": "number",
+          "description": "Maximum y position to be considered for debug [m].",
+          "default": 100.0
+        },
+        "filter_scope_maxz": {
+          "type": "number",
+          "description": "Maximum z position [m].",
+          "default": 100.0
         }
       }
     }
