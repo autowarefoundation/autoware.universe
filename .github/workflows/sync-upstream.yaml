@@ -1,9 +1,12 @@
 name: sync-upstream
 
 on:
-  schedule:
-    - cron: 0 1 * * 1-5
   workflow_dispatch:
+    inputs:
+      target_branch:
+        description: Target branch
+        required: true
+        type: string
 
 jobs:
   sync-upstream:
@@ -28,12 +31,17 @@ jobs:
           script: |
             const holiday_jp = require(`${process.env.GITHUB_WORKSPACE}/node_modules/@holiday-jp/holiday_jp`)
             core.setOutput('holiday', holiday_jp.isHoliday(new Date()));
+      - name: Print warning for invalid branch name
+        if: ${{ inputs.target_branch  == 'tier4/main' }}
+        run: |
+          echo This action cannot be performed on 'tier4/main' branch
+
       - name: Run sync-branches
+        if: ${{ inputs.target_branch  != 'tier4/main' }}
         uses: autowarefoundation/autoware-github-actions/sync-branches@v1
-        if: ${{ steps.is-holiday.outputs.holiday != 'true' || github.event_name == 'workflow_dispatch' }}
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          base-branch: tier4/main
+          base-branch: ${{ inputs.target_branch }}
           sync-pr-branch: sync-upstream
           sync-target-repository: https://github.com/autowarefoundation/autoware.universe.git
           sync-target-branch: main
