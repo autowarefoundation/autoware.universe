@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "localization_error_monitor/node.hpp"
+#include "localization_error_monitor/diagnostics.hpp"
 
 #include <Eigen/Dense>
 
@@ -71,81 +72,6 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
 //   updater_.force_update();
 // }
 
-
-
-
-diagnostic_msgs::msg::DiagnosticStatus checkLocalizationAccuracy(
-  const double ellipse_size, const double warn_ellipse_size, const double error_ellipse_size)
-{
-  diagnostic_msgs::msg::DiagnosticStatus stat;
-
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "localization_accuracy";
-  key_value.value = std::to_string(ellipse_size);
-  stat.values.push_back(key_value);
-
-  stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "ellipse size is within the expected range";
-  if (ellipse_size >= warn_ellipse_size) {
-    stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    stat.message = "ellipse size is too large";
-  }
-  if (ellipse_size >= error_ellipse_size) {
-    stat.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-    stat.message = "ellipse size is over the expected range";
-  }
-
-  return stat;
-}
-
-diagnostic_msgs::msg::DiagnosticStatus checkLocalizationAccuracyLateralDirection(
-  const double ellipse_size, const double warn_ellipse_size, const double error_ellipse_size)
-{
-  diagnostic_msgs::msg::DiagnosticStatus stat;
-
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "localization_accuracy_lateral_direction";
-  key_value.value = std::to_string(ellipse_size);
-  stat.values.push_back(key_value);
-
-  stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "ellipse size along lateral direction is within the expected range";
-  if (ellipse_size >= warn_ellipse_size) {
-    stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    stat.message = "ellipse size along lateral direction is too large";
-  }
-  if (ellipse_size >= error_ellipse_size) {
-    stat.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-    stat.message = "ellipse size along lateral direction is over the expected range";
-  }
-
-  return stat;
-}
-
-diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
-  const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & stat_array)
-{
-  diagnostic_msgs::msg::DiagnosticStatus merged_stat;
-
-  for (const auto & stat : stat_array) {
-    if ((stat.level > 0) && (merged_stat.level > 0)) {
-      if (!merged_stat.message.empty()) {
-        merged_stat.message += "; ";
-        merged_stat.message += stat.message;
-      }
-    } else if (stat.level > merged_stat.level) {
-      merged_stat.message  = stat.message;
-    }
-    if (stat.level  > merged_stat.level) {
-      merged_stat.level = stat.level ;
-    }
-    for (const auto & value : stat.values) {
-      merged_stat.values.push_back(value);
-    }
-  }
-
-  return merged_stat;
-}
 
 visualization_msgs::msg::Marker LocalizationErrorMonitor::createEllipseMarker(
   const Ellipse & ellipse, nav_msgs::msg::Odometry::ConstSharedPtr odom)

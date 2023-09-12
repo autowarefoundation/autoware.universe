@@ -7,6 +7,7 @@ autoware_package()
 ament_auto_add_executable(localization_error_monitor
   src/main.cpp
   src/node.cpp
+  src/diagnostics.cpp
 )
 
 ament_auto_package(INSTALL_TO_SHARE
