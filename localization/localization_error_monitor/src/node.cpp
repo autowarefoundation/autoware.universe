@@ -17,8 +17,6 @@
 
 #include <Eigen/Dense>
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
-
 #include <tf2/utils.h>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -55,23 +53,7 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
     this->create_publisher<visualization_msgs::msg::Marker>("debug/ellipse_marker", durable_qos);
 
   diag_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
-  // updater_.setHardwareID("localization_error_monitor");
-  // updater_.add("localization_accuracy", this, &LocalizationErrorMonitor::checkLocalizationAccuracy);
-  // updater_.add(
-  //   "localization_accuracy_lateral_direction", this,
-  //   &LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection);
-
-  // Set timer
-  // using std::chrono_literals::operator""ms;
-  // timer_ = rclcpp::create_timer(
-  //   this, get_clock(), 100ms, std::bind(&LocalizationErrorMonitor::onTimer, this));
 }
-
-// void LocalizationErrorMonitor::onTimer()
-// {
-//   updater_.force_update();
-// }
-
 
 visualization_msgs::msg::Marker LocalizationErrorMonitor::createEllipseMarker(
   const Ellipse & ellipse, nav_msgs::msg::Odometry::ConstSharedPtr odom)

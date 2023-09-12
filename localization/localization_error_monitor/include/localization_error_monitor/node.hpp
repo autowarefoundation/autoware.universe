@@ -45,16 +45,11 @@ private:
   double error_ellipse_size_lateral_direction_;
   double warn_ellipse_size_lateral_direction_;
   Ellipse ellipse_;
-  // diagnostic_updater::Updater updater_;
 
-  // void checkLocalizationAccuracy(diagnostic_updater::DiagnosticStatusWrapper & stat);
-  // void checkLocalizationAccuracyLateralDirection(
-  //   diagnostic_updater::DiagnosticStatusWrapper & stat);
   void onOdom(nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
   visualization_msgs::msg::Marker createEllipseMarker(
     const Ellipse & ellipse, nav_msgs::msg::Odometry::ConstSharedPtr odom);
   double measureSizeEllipseAlongBodyFrame(const Eigen::Matrix2d & Pinv, double theta);
-  // void onTimer();
 
 public:
   LocalizationErrorMonitor();
