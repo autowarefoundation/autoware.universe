@@ -24,7 +24,6 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -141,6 +140,10 @@ bool StartPlannerModule::isExecutionRequested() const
 
 bool StartPlannerModule::isExecutionReady() const
 {
+  if (!status_.is_safe_static_objects) {
+    return false;
+  }
+
   if (status_.pull_out_path.partial_paths.empty()) {
     return true;
   }
@@ -185,6 +188,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
       getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
+    updateRTCStatus(0, 0);
     return output;
   }
 
@@ -202,6 +206,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
+    updateRTCStatus(0, 0);
     return output;
   }
 
@@ -298,6 +303,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     clearWaitingApproval();
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
+    updateRTCStatus(0, 0);
     return output;
   }
 
@@ -308,6 +314,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     clearWaitingApproval();
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
+    updateRTCStatus(0, 0);
     return output;
   }
 
