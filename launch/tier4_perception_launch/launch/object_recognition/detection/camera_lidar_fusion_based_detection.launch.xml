@@ -121,9 +121,9 @@
     <!-- simple_cluster_merger -->
     <group>
       <include file="$(find-pkg-share cluster_merger)/launch/cluster_merger.launch.xml">
-        <arg name="input/object0" value="euclidean_cluster/clusters"/>
-        <arg name="input/object1" value="roi_cluster/clusters"/>
-        <arg name="output/objects" value="clusters"/>
+        <arg name="input/cluster0" value="euclidean_cluster/clusters"/>
+        <arg name="input/cluster1" value="roi_cluster/clusters"/>
+        <arg name="output/clusters" value="clusters"/>
       </include>
     </group>
 

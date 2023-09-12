@@ -4,6 +4,8 @@
   <name>cluster_merger</name>
   <version>0.1.0</version>
   <description>The ROS 2 cluster merger package</description>
+  <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
+  <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <maintainer email="dai.nguyen@tier4.jp">autoware</maintainer>
   <license>Apache License 2.0</license>
 
