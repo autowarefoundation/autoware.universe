@@ -58,7 +58,7 @@
 #endif
 
 ArTagBasedLocalizer::ArTagBasedLocalizer()
-: Node("ar_tag_based_localizer"), cam_info_received_(false), latest_ekf_pose_()
+: Node("ar_tag_based_localizer"), cam_info_received_(false)
 {
 }
 

@@ -102,7 +102,7 @@ private:
   aruco::MarkerDetector detector_;
   aruco::CameraParameters cam_param_;
   bool cam_info_received_;
-  geometry_msgs::msg::PoseWithCovarianceStamped latest_ekf_pose_;
+  geometry_msgs::msg::PoseWithCovarianceStamped latest_ekf_pose_{};
 };
 
 #endif  // AR_TAG_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_
