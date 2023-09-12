@@ -206,24 +206,19 @@ void LocalizationErrorMonitor::onOdom(nav_msgs::msg::Odometry::ConstSharedPtr in
 
 
   // diagnostics
-  std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_stat_array;
-  diag_stat_array.push_back(checkLocalizationAccuracy(ellipse_.long_radius, warn_ellipse_size_, error_ellipse_size_));
-  diag_stat_array.push_back(checkLocalizationAccuracyLateralDirection(ellipse_.size_lateral_direction, warn_ellipse_size_lateral_direction_, error_ellipse_size_lateral_direction_));
+  std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_status_array;
+  diag_status_array.push_back(checkLocalizationAccuracy(ellipse_.long_radius, warn_ellipse_size_, error_ellipse_size_));
+  diag_status_array.push_back(checkLocalizationAccuracyLateralDirection(ellipse_.size_lateral_direction, warn_ellipse_size_lateral_direction_, error_ellipse_size_lateral_direction_));
 
-  diagnostic_msgs::msg::DiagnosticStatus diag_merged_stat;
-  diag_merged_stat = mergeDiagnosticStatus(diag_stat_array);
-  diag_merged_stat.name = "localization_accuracy";
-  diag_merged_stat.hardware_id = "localization_error_monitor";
-
-  std::vector<diagnostic_msgs::msg::DiagnosticStatus> status_vec;
-  status_vec.push_back(diag_merged_stat);
+  diagnostic_msgs::msg::DiagnosticStatus diag_merged_status;
+  diag_merged_status = mergeDiagnosticStatus(diag_status_array);
+  diag_merged_status.name = "localization_accuracy";
+  diag_merged_status.hardware_id = "localization_error_monitor";
 
   diagnostic_msgs::msg::DiagnosticArray diag_msg;
   diag_msg.header.stamp = this->now();
-  diag_msg.status = status_vec
-
+  diag_msg.status.push_back(diag_merged_status);
   diag_pub_->publish(diag_msg);
-
 }
 
 double LocalizationErrorMonitor::measureSizeEllipseAlongBodyFrame(
