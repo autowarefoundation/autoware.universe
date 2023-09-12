@@ -32,12 +32,12 @@ This feature breaks the generality of the graph and may be changed to a plugin o
 
 ## Parameters
 
-| Parameter Name     | Data Type | Description                                |
-| ------------------ | --------- | ------------------------------------------ |
-| `graph_file`       | `string`  | Path of the config file.                   |
-| `rate`             | `double`  | Rate of aggregation and topic publication. |
-| `status_qos_depth` | `uint`    | QoS depth of status topic.                 |
-| `source_qos_depth` | `uint`    | QoS depth of source topic.                 |
+| Parameter Name    | Data Type | Description                                |
+| ----------------- | --------- | ------------------------------------------ |
+| `graph_file`      | `string`  | Path of the config file.                   |
+| `rate`            | `double`  | Rate of aggregation and topic publication. |
+| `input_qos_depth` | `uint`    | QoS depth of input array topic.            |
+| `graph_qos_depth` | `uint`    | QoS depth of output graph topic.           |
 
 ## Graph file format
 
