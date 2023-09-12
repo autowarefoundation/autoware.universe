@@ -80,6 +80,54 @@ PointCloud closest_cluster(
   return out_cluster;
 }
 
+void updateOutputFusedObjects(
+  std::vector<DetectedObjectWithFeature> & output_objs, const std::vector<PointCloud> & clusters,
+  const std_msgs::msg::Header & in_cloud_header, const std_msgs::msg::Header & in_roi_header,
+  const tf2_ros::Buffer & tf_buffer, const int min_cluster_size, const float cluster_2d_tolerance,
+  std::vector<DetectedObjectWithFeature> & output_fused_objects)
+{
+  if (output_objs.size() != clusters.size()) {
+    return;
+  }
+  Eigen::Vector3d orig_camera_frame, orig_point_frame;
+  Eigen::Affine3d camera2lidar_affine;
+  orig_camera_frame << 0.0, 0.0, 0.0;
+  {
+    const auto transform_stamped_optional = getTransformStamped(
+      tf_buffer, in_cloud_header.frame_id, in_roi_header.frame_id, in_roi_header.stamp);
+    if (!transform_stamped_optional) {
+      return;
+    }
+    camera2lidar_affine = transformToEigen(transform_stamped_optional.value().transform);
+  }
+  orig_point_frame = camera2lidar_affine * orig_camera_frame;
+  pcl::PointXYZ camera_orig_point_frame =
+    pcl::PointXYZ(orig_point_frame.x(), orig_point_frame.y(), orig_point_frame.z());
+
+  for (std::size_t i = 0; i < output_objs.size(); ++i) {
+    PointCloud cluster = clusters.at(i);
+    auto & feature_obj = output_objs.at(i);
+    if (cluster.points.size() < std::size_t(min_cluster_size)) {
+      continue;
+    }
+
+    // TODO(badai-nguyen): change to interface to select refine criteria like closest, largest
+    //  to output refine cluster and centroid
+    auto refine_cluster =
+      closest_cluster(cluster, cluster_2d_tolerance, min_cluster_size, camera_orig_point_frame);
+    if (refine_cluster.points.size() < std::size_t(min_cluster_size)) {
+      continue;
+    }
+
+    refine_cluster.width = refine_cluster.points.size();
+    refine_cluster.height = 1;
+    refine_cluster.is_dense = false;
+    // convert cluster to object
+    convertCluster2FeatureObject(in_cloud_header, refine_cluster, feature_obj);
+    output_fused_objects.push_back(feature_obj);
+  }
+}
+
 void addShapeAndKinematic(
   const pcl::PointCloud<pcl::PointXYZ> & cluster,
   tier4_perception_msgs::msg::DetectedObjectWithFeature & feature_obj)
