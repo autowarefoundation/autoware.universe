@@ -270,6 +270,8 @@ void GoalPlannerModule::processOnEntry()
   // Initialize safety checker
   if (parameters_->safety_check_params.enable_safety_check) {
     initializeSafetyCheckParameters();
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      goal_planner_data_.collision_check);
   }
 }
 
@@ -1592,8 +1594,6 @@ bool GoalPlannerModule::isSafePath() const
 
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     goal_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
-  utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
-    goal_planner_data_.collision_check);
 
   bool is_safe_dynamic_objects = true;
   // Check for collisions with each predicted path of the object
