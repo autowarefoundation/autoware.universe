@@ -28,7 +28,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkLocalizationAccuracy(
   stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "ellipse size is within the expected range";
+  stat.message = "";
   if (ellipse_size >= warn_ellipse_size) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     stat.message = "ellipse size is too large";
@@ -52,7 +52,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkLocalizationAccuracyLateralDirection
   stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "ellipse size along lateral direction is within the expected range";
+  stat.message = "";
   if (ellipse_size >= warn_ellipse_size) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     stat.message = "ellipse size along lateral direction is too large";
