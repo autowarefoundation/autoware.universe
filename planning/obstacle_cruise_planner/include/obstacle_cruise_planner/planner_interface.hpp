@@ -204,8 +204,7 @@ private:
     std::optional<geometry_msgs::msg::Pose> end_point{std::nullopt};
   };
   double calculateMarginFromObstacleOnCurve(
-    const PlannerData & planner_data, const StopObstacle & stop_obstacle, const double dist_to_ego,
-    const double closest_obstacle_dist) const;
+    const PlannerData & planner_data, const StopObstacle & stop_obstacle) const;
   double calculateSlowDownVelocity(
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output) const;
   std::optional<std::tuple<double, double, double>> calculateDistanceToSlowDownWithConstraints(

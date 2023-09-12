@@ -277,8 +277,8 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     planner_data.traj_points, planner_data.ego_pose.position, ego_segment_idx, 0);
   const double dist_to_ego = -negative_dist_to_ego;
 
-  const double margin_from_obstacle = calculateMarginFromObstacleOnCurve(
-    planner_data, *closest_stop_obstacle, dist_to_ego, closest_obstacle_dist);
+  const double margin_from_obstacle =
+    calculateMarginFromObstacleOnCurve(planner_data, *closest_stop_obstacle);
 
   // If behavior stop point is ahead of the closest_obstacle_stop point within a certain margin
   // we set closest_obstacle_stop_distance to closest_behavior_stop_distance
@@ -417,8 +417,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
 }
 
 double PlannerInterface::calculateMarginFromObstacleOnCurve(
-  const PlannerData & planner_data, const StopObstacle & stop_obstacle, const double dist_to_ego,
-  const double closest_obstacle_dist) const
+  const PlannerData & planner_data, const StopObstacle & stop_obstacle) const
 {
   if (!enable_approaching_on_curve_) {
     return longitudinal_info_.safe_distance_margin;
@@ -428,24 +427,24 @@ double PlannerInterface::calculateMarginFromObstacleOnCurve(
                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
 
-  // calculdate short trajectory points from ego
-  const auto ego_segment_idx =
-    ego_nearest_param_.findSegmentIndex(planner_data.traj_points, planner_data.ego_pose);
-  std::vector<TrajectoryPoint> short_traj_points_from_ego{
-    planner_data.traj_points.at(ego_segment_idx)};
+  // calculate short trajectory points towards obstacle
+  const size_t obj_segment_idx =
+    motion_utils::findNearestSegmentIndex(planner_data.traj_points, stop_obstacle.collision_point);
+  std::vector<TrajectoryPoint> short_traj_points{planner_data.traj_points.at(obj_segment_idx + 1)};
   double sum_short_traj_length{0.0};
-  for (size_t i = ego_segment_idx + 1; i < planner_data.traj_points.size(); ++i) {
-    short_traj_points_from_ego.push_back(planner_data.traj_points.at(i));
+  for (int i = obj_segment_idx; 0 <= i; --i) {
+    short_traj_points.push_back(planner_data.traj_points.at(i));
 
-    sum_short_traj_length += tier4_autoware_utils::calcDistance2d(
-      planner_data.traj_points.at(i - 1), planner_data.traj_points.at(i));
     if (
-      1 < short_traj_points_from_ego.size() &&
-      longitudinal_info_.safe_distance_margin < sum_short_traj_length) {
+      1 < short_traj_points.size() &&
+      longitudinal_info_.safe_distance_margin + abs_ego_offset < sum_short_traj_length) {
       break;
     }
+    sum_short_traj_length += tier4_autoware_utils::calcDistance2d(
+      planner_data.traj_points.at(i), planner_data.traj_points.at(i + 1));
   }
-  if (short_traj_points_from_ego.size() < 2) {
+  std::reverse(short_traj_points.begin(), short_traj_points.end());
+  if (short_traj_points.size() < 2) {
     return longitudinal_info_.safe_distance_margin;
   }
 
@@ -458,14 +457,13 @@ double PlannerInterface::calculateMarginFromObstacleOnCurve(
         convertPoint(ego_pose.position), convertPoint(forward_ego_pose.position)};
       return boost::geometry::distance(ego_straight_segment, object_polygon);
     };
-  const auto resampled_short_traj_points_from_ego =
-    resampleTrajectoryPoints(short_traj_points_from_ego, 0.5);
+  const auto resampled_short_traj_points = resampleTrajectoryPoints(short_traj_points, 0.5);
   const auto object_polygon =
     tier4_autoware_utils::toPolygon2d(stop_obstacle.pose, stop_obstacle.shape);
   const auto collision_idx = [&]() -> std::optional<size_t> {
-    for (size_t i = 0; i < resampled_short_traj_points_from_ego.size(); ++i) {
+    for (size_t i = 0; i < resampled_short_traj_points.size(); ++i) {
       const double dist_to_obj = calculate_distance_from_straight_ego_path(
-        resampled_short_traj_points_from_ego.at(i).pose, object_polygon);
+        resampled_short_traj_points.at(i).pose, object_polygon);
       if (dist_to_obj < vehicle_info_.vehicle_width_m / 2.0) {
         return i;
       }
@@ -480,23 +478,23 @@ double PlannerInterface::calculateMarginFromObstacleOnCurve(
   }
 
   // calculate margin from obstacle
-  const double collision_segment_length = tier4_autoware_utils::calcDistance2d(
-    resampled_short_traj_points_from_ego.at(*collision_idx - 1),
-    resampled_short_traj_points_from_ego.at(*collision_idx));
-  const double prev_dist = calculate_distance_from_straight_ego_path(
-    resampled_short_traj_points_from_ego.at(*collision_idx - 1).pose, object_polygon);
-  const double next_dist = calculate_distance_from_straight_ego_path(
-    resampled_short_traj_points_from_ego.at(*collision_idx).pose, object_polygon);
-
-  const double dist_from_ego_to_stop_point =
-    motion_utils::calcSignedArcLength(
-      resampled_short_traj_points_from_ego, planner_data.ego_pose.position, 0, *collision_idx - 1) +
-    (vehicle_info_.vehicle_width_m / 2.0 - prev_dist) / (next_dist - prev_dist) *
-      collision_segment_length -
-    additional_safe_distance_margin_on_curve_;
+  const double partial_segment_length = [&]() {
+    const double collision_segment_length = tier4_autoware_utils::calcDistance2d(
+      resampled_short_traj_points.at(*collision_idx - 1),
+      resampled_short_traj_points.at(*collision_idx));
+    const double prev_dist = calculate_distance_from_straight_ego_path(
+      resampled_short_traj_points.at(*collision_idx - 1).pose, object_polygon);
+    const double next_dist = calculate_distance_from_straight_ego_path(
+      resampled_short_traj_points.at(*collision_idx).pose, object_polygon);
+    return (next_dist - vehicle_info_.vehicle_width_m / 2.0) / (next_dist - prev_dist) *
+           collision_segment_length;
+  }();
 
   const double short_margin_from_obstacle =
-    closest_obstacle_dist - dist_to_ego - dist_from_ego_to_stop_point - abs_ego_offset;
+    partial_segment_length +
+    motion_utils::calcSignedArcLength(
+      resampled_short_traj_points, *collision_idx, stop_obstacle.collision_point) -
+    abs_ego_offset + additional_safe_distance_margin_on_curve_;
 
   return std::min(
     longitudinal_info_.safe_distance_margin,
