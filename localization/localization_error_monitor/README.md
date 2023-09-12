@@ -2,6 +2,10 @@
 
 ## Purpose
 
+<p align="center">
+<img src="./media/diagnostics.png" width="400">
+</p>
+
 localization_error_monitor is a package for diagnosing localization errors by monitoring uncertainty of the localization results.
 The package monitors the following two values:
 
