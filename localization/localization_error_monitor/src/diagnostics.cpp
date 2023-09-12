@@ -77,10 +77,10 @@ diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
         merged_stat.message += stat.message;
       }
     } else if (stat.level > merged_stat.level) {
-      merged_stat.message  = stat.message;
+      merged_stat.message = stat.message;
     }
-    if (stat.level  > merged_stat.level) {
-      merged_stat.level = stat.level ;
+    if (stat.level > merged_stat.level) {
+      merged_stat.level = stat.level;
     }
     for (const auto & value : stat.values) {
       merged_stat.values.push_back(value);

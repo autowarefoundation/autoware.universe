@@ -52,23 +52,28 @@ TEST(TestLocalizationErrorMonitorDiagnostics, CheckLocalizationAccuracyLateralDi
   const double error_ellipse_size = 0.3;
 
   double ellipse_size = 0.0;
-  stat = checkLocalizationAccuracyLateralDirection(ellipse_size, warn_ellipse_size, error_ellipse_size);
+  stat =
+    checkLocalizationAccuracyLateralDirection(ellipse_size, warn_ellipse_size, error_ellipse_size);
   EXPECT_EQ(stat.level, diagnostic_msgs::msg::DiagnosticStatus::OK);
 
   ellipse_size = 0.1;
-  stat = checkLocalizationAccuracyLateralDirection(ellipse_size, warn_ellipse_size, error_ellipse_size);
+  stat =
+    checkLocalizationAccuracyLateralDirection(ellipse_size, warn_ellipse_size, error_ellipse_size);
   EXPECT_EQ(stat.level, diagnostic_msgs::msg::DiagnosticStatus::OK);
 
   ellipse_size = 0.2;
-  stat = checkLocalizationAccuracyLateralDirection(ellipse_size, warn_ellipse_size, error_ellipse_size);
+  stat =
+    checkLocalizationAccuracyLateralDirection(ellipse_size, warn_ellipse_size, error_ellipse_size);
   EXPECT_EQ(stat.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
 
   ellipse_size = 0.25;
-  stat = checkLocalizationAccuracyLateralDirection(ellipse_size, warn_ellipse_size, error_ellipse_size);
+  stat =
+    checkLocalizationAccuracyLateralDirection(ellipse_size, warn_ellipse_size, error_ellipse_size);
   EXPECT_EQ(stat.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
 
   ellipse_size = 0.3;
-  stat = checkLocalizationAccuracyLateralDirection(ellipse_size, warn_ellipse_size, error_ellipse_size);
+  stat =
+    checkLocalizationAccuracyLateralDirection(ellipse_size, warn_ellipse_size, error_ellipse_size);
   EXPECT_EQ(stat.level, diagnostic_msgs::msg::DiagnosticStatus::ERROR);
 }
 

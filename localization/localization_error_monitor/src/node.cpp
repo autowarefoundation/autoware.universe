@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "localization_error_monitor/node.hpp"
+
 #include "localization_error_monitor/diagnostics.hpp"
 
 #include <Eigen/Dense>
@@ -31,8 +32,7 @@
 #include <string>
 #include <utility>
 
-LocalizationErrorMonitor::LocalizationErrorMonitor()
-: Node("localization_error_monitor")
+LocalizationErrorMonitor::LocalizationErrorMonitor() : Node("localization_error_monitor")
 {
   scale_ = this->declare_parameter("scale", 3.0);
   error_ellipse_size_ = this->declare_parameter("error_ellipse_size", 1.0);
@@ -112,11 +112,13 @@ void LocalizationErrorMonitor::onOdom(nav_msgs::msg::Odometry::ConstSharedPtr in
   const auto ellipse_marker = createEllipseMarker(ellipse_, input_msg);
   ellipse_marker_pub_->publish(ellipse_marker);
 
-
   // diagnostics
   std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_status_array;
-  diag_status_array.push_back(checkLocalizationAccuracy(ellipse_.long_radius, warn_ellipse_size_, error_ellipse_size_));
-  diag_status_array.push_back(checkLocalizationAccuracyLateralDirection(ellipse_.size_lateral_direction, warn_ellipse_size_lateral_direction_, error_ellipse_size_lateral_direction_));
+  diag_status_array.push_back(
+    checkLocalizationAccuracy(ellipse_.long_radius, warn_ellipse_size_, error_ellipse_size_));
+  diag_status_array.push_back(checkLocalizationAccuracyLateralDirection(
+    ellipse_.size_lateral_direction, warn_ellipse_size_lateral_direction_,
+    error_ellipse_size_lateral_direction_));
 
   diagnostic_msgs::msg::DiagnosticStatus diag_merged_status;
   diag_merged_status = mergeDiagnosticStatus(diag_status_array);
