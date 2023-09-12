@@ -2514,6 +2514,7 @@ void AvoidanceModule::updateData()
 void AvoidanceModule::processOnEntry()
 {
   initVariables();
+  removeRTCStatus();
 }
 
 void AvoidanceModule::processOnExit()
