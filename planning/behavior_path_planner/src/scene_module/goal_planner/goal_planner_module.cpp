@@ -678,7 +678,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
       // situation : not safe against dynamic objects after approval
       // insert stop point in current path if ego is able to stop with acceleration and jerk
       // constraints
-      setStopPathInCurrentPath(output);
+      setStopPathFromCurrentPath(output);
     }
 
   } else {
@@ -726,7 +726,7 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
   output.reference_path = getPreviousModuleOutput().reference_path;
 }
 
-void GoalPlannerModule::setStopPathInCurrentPath(BehaviorModuleOutput & output)
+void GoalPlannerModule::setStopPathFromCurrentPath(BehaviorModuleOutput & output)
 {
   // safe or not safe(no feasible stop_path found) -> not_safe: try to find new feasible stop_path
   if (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr) {

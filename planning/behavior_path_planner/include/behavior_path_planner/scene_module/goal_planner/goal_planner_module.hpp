@@ -302,7 +302,7 @@ private:
    *
    * @param output BehaviorModuleOutput
    */
-  void setStopPathInCurrentPath(BehaviorModuleOutput & output);
+  void setStopPathFromCurrentPath(BehaviorModuleOutput & output);
   void setModifiedGoal(BehaviorModuleOutput & output) const;
   void setTurnSignalInfo(BehaviorModuleOutput & output) const;
 
