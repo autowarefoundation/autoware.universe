@@ -19,7 +19,10 @@
 #include "debug.hpp"
 #include "types.hpp"
 
+#include <rclcpp/time.hpp>
+
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -31,7 +34,7 @@ class BaseNode
 {
 public:
   virtual ~BaseNode() = default;
-  virtual void update() = 0;
+  virtual void update(const rclcpp::Time & stamp) = 0;
   virtual DiagnosticNode report() const = 0;
   virtual DiagDebugData debug() const = 0;
   virtual std::vector<BaseNode *> links() const = 0;
@@ -55,7 +58,7 @@ public:
 
   DiagnosticNode report() const override;
   DiagDebugData debug() const override;
-  void update() override;
+  void update(const rclcpp::Time & stamp) override;
   void create(Graph & graph, const NodeConfig & config);
 
   std::vector<BaseNode *> links() const override;
@@ -71,12 +74,13 @@ public:
 
   DiagnosticNode report() const override;
   DiagDebugData debug() const override;
-  void update() override;
-  void callback(const DiagnosticStatus & status);
+  void update(const rclcpp::Time & stamp) override;
+  void callback(const DiagnosticStatus & status, const rclcpp::Time & stamp);
 
   std::vector<BaseNode *> links() const override { return {}; }
 
 private:
+  std::optional<rclcpp::Time> time_;
 };
 
 }  // namespace system_diagnostic_graph

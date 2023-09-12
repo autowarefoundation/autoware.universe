@@ -77,7 +77,7 @@ DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
   message.nodes.reserve(graph_.nodes().size());
 
   for (const auto & node : graph_.nodes()) {
-    node->update();
+    node->update(stamp);
   }
   for (const auto & node : graph_.nodes()) {
     message.nodes.push_back(node->report());
@@ -101,12 +101,12 @@ OperationModeAvailability DiagGraph::summary(const rclcpp::Time & stamp)
   return message;
 }
 
-void DiagGraph::callback(const DiagnosticArray & array)
+void DiagGraph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
 {
   for (const auto & status : array.status) {
     auto diag = graph_.find_diag(status.name, status.hardware_id);
     if (diag) {
-      diag->callback(status);
+      diag->callback(status, stamp);
     } else {
       // TODO(Takagi, Isamu): handle unknown diagnostics
     }

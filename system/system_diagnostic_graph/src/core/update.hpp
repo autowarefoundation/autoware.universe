@@ -42,7 +42,7 @@ class DiagGraph
 {
 public:
   void create(const std::string & file);
-  void callback(const DiagnosticArray & array);
+  void callback(const DiagnosticArray & array, const rclcpp::Time & stamp);
   DiagnosticGraph report(const rclcpp::Time & stamp);
   OperationModeAvailability summary(const rclcpp::Time & stamp);
 

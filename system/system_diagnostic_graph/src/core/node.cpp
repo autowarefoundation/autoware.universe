@@ -41,7 +41,7 @@ DiagnosticNode UnitNode::report() const
   return node_;
 }
 
-void UnitNode::update()
+void UnitNode::update(const rclcpp::Time &)
 {
   const auto result = expr_->eval();
   node_.status.level = result.level;
@@ -80,15 +80,27 @@ DiagnosticNode DiagNode::report() const
   return node_;
 }
 
-void DiagNode::update()
+void DiagNode::update(const rclcpp::Time & stamp)
 {
-  // TODO(Takagi, Isamu): timeout, error hold
-  // constexpr double timeout = 1.0; // TODO(Takagi, Isamu): parameterize
+  constexpr double timeout = 3.0;  // TODO(Takagi, Isamu): parameterize
+  if (time_) {
+    const auto elapsed = (stamp - time_.value()).seconds();
+    if (timeout < elapsed) {
+      const auto name = node_.status.name;
+      const auto hardware = node_.status.hardware_id;
+      node_.status = DiagnosticStatus();
+      node_.status.level = DiagnosticStatus::STALE;
+      node_.status.name = name;
+      node_.status.hardware_id = hardware;
+      time_ = std::nullopt;
+    }
+  }
 }
 
-void DiagNode::callback(const DiagnosticStatus & status)
+void DiagNode::callback(const DiagnosticStatus & status, const rclcpp::Time & stamp)
 {
   node_.status = status;
+  time_ = stamp;
 }
 
 }  // namespace system_diagnostic_graph
