@@ -281,7 +281,10 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
 
   // If latest_ekf_pose_ is older than <ekf_time_tolerance_> seconds compared to current frame, it
   // will not be published.
-  if (latest_ekf_pose_.header.stamp.sec + ekf_time_tolerance_ < msg.header.stamp.sec) {
+  const double curr_sec = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9;
+  const double ekf_sec =
+    latest_ekf_pose_.header.stamp.sec + latest_ekf_pose_.header.stamp.nanosec * 1e-9;
+  if (ekf_sec + ekf_time_tolerance_ < curr_sec) {
     RCLCPP_INFO(
       this->get_logger(),
       "latest_ekf_pose_ is older than %f seconds compared to current frame. "
