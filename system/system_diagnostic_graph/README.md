@@ -2,11 +2,25 @@
 
 ## Overview
 
-The system diagnostic graph node subscribes to diagnostic status and publishes aggregated diagnostic status.
+The system diagnostic graph node subscribes to diagnostic array and publishes aggregated diagnostic graph.
 As shown in the diagram below, this node introduces extra diagnostic status for intermediate functional unit.
 Diagnostic status dependencies will be directed acyclic graph (DAG).
 
 ![overview](./doc/overview.drawio.svg)
+
+## Operation mode availability
+
+For MRM, this node publishes the status of the top-level functional units in the dedicated message.
+Therefore, the diagnostic graph must contain functional units with the following names.
+This feature breaks the generality of the graph and may be changed to a plugin or another node in the future.
+
+- /autoware/operation/stop
+- /autoware/operation/autonomous
+- /autoware/operation/local
+- /autoware/operation/remote
+- /autoware/operation/emergency-stop
+- /autoware/operation/comfortable-stop
+- /autoware/operation/pull-over
 
 ## Interface
 
