@@ -692,6 +692,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
 
   const double s_current =
     lanelet::utils::getArcCoordinates(status_.pull_out_lanes, current_pose).length;
+// Set the maximum backward distance less than the distance from the vehicle's base_link to the lane's rearmost point to prevent lane departure.
   const double max_back_distance = std::clamp(
     s_current - planner_data_->parameters.base_link2rear, 0.0, parameters_->max_back_distance);
 
