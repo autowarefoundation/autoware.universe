@@ -62,11 +62,12 @@ function(download SUB_DIR FILE_NAME FILE_HASH)
   endif()
 endfunction()
 
+set(V1_PATH models/object_detection_yolox_s/v1)
 download(models yolox-tiny.onnx 97028baf73ce55e115599c9c60651b08)
 download(models yolox-sPlus-opt.onnx bf3b0155351f90fcdca2626acbfd3bcf)
 download(models yolox-sPlus-opt.EntropyV2-calibration.table c6e6f1999d5724a017516a956096701f)
-download(models/object_detection_yolox_s/v1 yolox-sPlus-T4-960x960-pseudo-finetune.onnx 37165a7e67bdaf6acff93925c628f2b2)
-download(models/object_detection_yolox_s/v1 yolox-sPlus-T4-960x960-pseudo-finetune.EntropyV2-calibration.table d266ea9846b10e4dab53572152c6fd8f)
+download(${V1_PATH} yolox-sPlus-T4-960x960-pseudo-finetune.onnx 37165a7e67bdaf6acff93925c628f2b2)
+download(${V1_PATH} yolox-sPlus-T4-960x960-pseudo-finetune.EntropyV2-calibration.table d266ea9846b10e4dab53572152c6fd8f)
 download(models label.txt 9ceadca8b72b6169ee6aabb861fe3e1e)
 
 ##########
