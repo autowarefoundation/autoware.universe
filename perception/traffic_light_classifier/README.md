@@ -92,16 +92,18 @@ These colors and shapes are assigned to the message as follows:
 | `red_max_s`    | int  | the maximum saturation of red color            |
 | `red_max_v`    | int  | the maximum value (brightness) of red color    |
 
-
 ## Training Traffic Light Classifier Model
 
 ### Overview
-This guide provides detailed instructions on training a traffic light classifier model using the **[mmlab/mmpretrain](https://github.com/open-mmlab/mmpretrain)** repository 
-and deploying it using **[mmlab/mmdeploy](https://github.com/open-mmlab/mmdeploy)**. 
+
+This guide provides detailed instructions on training a traffic light classifier model using the **[mmlab/mmpretrain](https://github.com/open-mmlab/mmpretrain)** repository
+and deploying it using **[mmlab/mmdeploy](https://github.com/open-mmlab/mmdeploy)**.
 If you wish to create a custom traffic light classifier model with your own dataset, please follow the steps outlined below.
 
 ### Data Preparation
+
 #### Use Sample Dataset
+
 Autoware offers a sample dataset that illustrates the training procedures for
 traffic light classification. This dataset comprises 1045 images categorized
 into red, green, and yellow labels. To utilize this sample dataset,
@@ -111,14 +113,15 @@ please download it from **[link](https://xxxxx.com)** and extract it to a design
 
 To train a traffic light classifier, adopt a structured subfolder format where each
 subfolder represents a distinct class. Below is an illustrative dataset structure example;
+
 ```
 DATASET_ROOT
-    ├── TRAIN                  
+    ├── TRAIN
     │    ├── RED
     │    │   ├── 001.png
     │    │   ├── 002.png
     │    │   └── ...
-    │    │      
+    │    │
     │    ├── GREEN
     │    │    ├── 001.png
     │    │    ├── 002.png
@@ -136,29 +139,35 @@ DATASET_ROOT
     │
     └── TEST
            └── ...
-    
-      
+
+
 ```
 
 ### Installation
 
 #### Prerequisites
-**Step 1.**  Download and install Miniconda from the [offical website](https://mmpretrain.readthedocs.io/en/latest/get_started.html).
+
+**Step 1.** Download and install Miniconda from the [offical website](https://mmpretrain.readthedocs.io/en/latest/get_started.html).
 
 **Step 2.** Create a conda virtual environment and activate it
+
 ```bash
 conda create --name openmmlab python=3.8 -y
 conda activate tl-classifier
 ```
 
-**Step 3.** Install PyTorch 
+**Step 3.** Install PyTorch
 
 Please ensure you have PyTorch installed, compatible with CUDA 11.6, as it is a requirement for current Autoware
+
 ```bash
 conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.6 -c pytorch
 ```
+
 #### Install mmlab/mmpretrain
-**Step 1.**  Install mmpretrain from source
+
+**Step 1.** Install mmpretrain from source
+
 ```bash
 cd ~/
 git clone https://github.com/open-mmlab/mmpretrain.git
@@ -167,23 +176,26 @@ pip install -U openmim && mim install -e .
 ```
 
 ### Training
+
 MMPretrain offers a training script that is controlled through a configuration file.
 Leveraging an inheritance design pattern, you can effortlessly tailor the training script
-using Python files as configuration files. 
+using Python files as configuration files.
 
 In the example, we demonstrate the training steps on the MobileNetV2 model,
 but you have the flexibility to employ alternative classification models such as
 EfficientNetV2, EfficientNetV3, ResNet, and more.
 
 #### Create a config file
+
 Generate a configuration file for your preferred model within the `configs` folder
+
 ```bash
 touch ~/mmpretrain/configs/mobilenet_v2/mobilenet-v2_8xb32_custom.py
 ```
 
-Open the configuration file in your preferred text editor and make a copy of 
-the provided content. Adjust the **data_root** variable to match the path of your dataset. 
-You are welcome to customize the configuration parameters for the model, dataset, and scheduler to 
+Open the configuration file in your preferred text editor and make a copy of
+the provided content. Adjust the **data_root** variable to match the path of your dataset.
+You are welcome to customize the configuration parameters for the model, dataset, and scheduler to
 suit your preferences
 
 ```python
@@ -274,6 +286,7 @@ test_evaluator = val_evaluator
 ```
 
 #### Start training
+
 ```bash
 cd ~/mmpretrain
 python tools/train.py configs/mobilenet_v2/v2_8xb32_custom.py
@@ -282,13 +295,12 @@ python tools/train.py configs/mobilenet_v2/v2_8xb32_custom.py
 Training logs will be saved in the `work_dirs` folder.
 Weights will be saved in the `v2_8xb32_custom` folder.
 
-
 ### Convert PyTorh model to ONNX model
+
 #### Install mmdeploy
 
 The 'mmdeploy' toolset is designed for deploying your trained model onto various target devices.
 With its capabilities, you can seamlessly convert PyTorch models into the ONNX format.
-
 
 ```bash
 # Activate your conda environment
@@ -312,6 +324,7 @@ git clone -b main https://github.com/open-mmlab/mmdeploy.git
 ```
 
 #### Convert PyTorch model to ONNX model
+
 ```bash
 cd ~/mmdeploy
 
@@ -323,16 +336,13 @@ python tools/deploy.py \
 ~/mmpretrain/configs/mobilenet_v2/train_mobilenet_v2.py \
 ~/mmpretrain/work_dirs/train_mobilenet_v2/epoch_300.pth \
 /SAMPLE/IAMGE/DIRECTORY \
---work-dir mmdeploy_model/mobilenet_v2 
+--work-dir mmdeploy_model/mobilenet_v2
 ```
 
 Converted ONNX model will be saved in the `mmpretrain/work_dirs/v2_8xb32_custom/onnx` folder.
 
 After obtaining your onnx model, update parameters defined in the launch file (e.g. `model_file_path`, `label_file_path`, `input_h`, `input_w`...).
 Note that, we only support labels defined in [tier4_perception_msgs::msg::TrafficLightElement](https://github.com/tier4/tier4_autoware_msgs/blob/tier4/universe/tier4_perception_msgs/msg/traffic_light/TrafficLightElement.msg).
-
-
-
 
 ## Assumptions / Known limits
 
