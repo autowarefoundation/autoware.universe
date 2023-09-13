@@ -40,7 +40,6 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 {
   const std::string ns(getModuleName());
   auto & ip = intersection_param_;
-  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
   ip.common.attention_area_margin =
     node.declare_parameter<double>(ns + ".common.attention_area_margin");
   ip.common.attention_area_length =
@@ -65,9 +64,6 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<bool>(ns + ".stuck_vehicle.use_stuck_stopline");
   ip.stuck_vehicle.stuck_vehicle_detect_dist =
     node.declare_parameter<double>(ns + ".stuck_vehicle.stuck_vehicle_detect_dist");
-  ip.stuck_vehicle.stuck_vehicle_ignore_dist =
-    node.declare_parameter<double>(ns + ".stuck_vehicle.stuck_vehicle_ignore_dist") +
-    vehicle_info.max_longitudinal_offset_m;
   ip.stuck_vehicle.stuck_vehicle_vel_thr =
     node.declare_parameter<double>(ns + ".stuck_vehicle.stuck_vehicle_vel_thr");
   /*
@@ -117,6 +113,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node.declare_parameter<std::vector<double>>(ns + ".occlusion.possible_object_bbox");
   ip.occlusion.ignore_parked_vehicle_speed_threshold =
     node.declare_parameter<double>(ns + ".occlusion.ignore_parked_vehicle_speed_threshold");
+  ip.occlusion.stop_release_margin_time =
+    node.declare_parameter<double>(ns + ".occlusion.stop_release_margin_time");
 }
 
 void IntersectionModuleManager::launchNewModules(
