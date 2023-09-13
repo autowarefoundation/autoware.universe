@@ -41,7 +41,7 @@ LocalizationErrorMonitor::LocalizationErrorMonitor() : Node("localization_error_
   error_ellipse_size_lateral_direction_ =
     this->declare_parameter("error_ellipse_size_lateral_direction", 0.3);
   warn_ellipse_size_lateral_direction_ =
-    this->declare_parameter("warn_ellipse_size_lateral_direction", 0.2);
+    this->declare_parameter("warn_ellipse_size_lateral_direction", 0.25);
 
   odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "input/odom", 1, std::bind(&LocalizationErrorMonitor::onOdom, this, std::placeholders::_1));
