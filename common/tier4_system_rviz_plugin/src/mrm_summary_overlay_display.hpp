@@ -61,6 +61,7 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
+
 #endif
 
 namespace rviz_plugins
@@ -90,9 +91,10 @@ protected:
   rviz_common::properties::ColorProperty * property_text_color_;
   rviz_common::properties::IntProperty * property_left_;
   rviz_common::properties::IntProperty * property_top_;
-  rviz_common::properties::IntProperty * property_length_;
   rviz_common::properties::IntProperty * property_value_height_offset_;
   rviz_common::properties::FloatProperty * property_value_scale_;
+  rviz_common::properties::IntProperty * property_font_size_;
+  rviz_common::properties::IntProperty * property_max_letter_num_;
   // QImage hud_;
 
 private:
@@ -104,4 +106,4 @@ private:
 };
 }  // namespace rviz_plugins
 
-#endif  // MRM_SUMMARY_OVERLAY_DISPLAY_HPP_
+#endif  // STRING_OVERLAY_DISPLAY_HPP_

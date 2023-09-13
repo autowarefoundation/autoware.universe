@@ -49,13 +49,40 @@
 
 #include <QPainter>
 #include <rviz_common/uniform_string_stream.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
 #include <X11/Xlib.h>
 
 #include <algorithm>
+#include <optional>
 
 namespace rviz_plugins
 {
+void insertNewlines(std::string& str, const size_t max_line_length) {
+  size_t index = max_line_length;
+
+  while (index < str.size()) {
+    str.insert(index, "\n");
+    index = index + max_line_length + 1;
+  }
+}
+
+std::optional<std::string> generateMrmMessage(diagnostic_msgs::msg::DiagnosticStatus diag_status)
+{
+  if (diag_status.hardware_id == "" || diag_status.hardware_id == "system_error_monitor") {
+    return std::nullopt;
+  } else if (diag_status.level == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
+    std::string msg = "- ERROR: " + diag_status.name + " (" + diag_status.message + ")";
+    insertNewlines(msg, 100);
+    return msg;
+  } else if (diag_status.level == diagnostic_msgs::msg::DiagnosticStatus::WARN) {
+    std::string msg = "- WARN: " + diag_status.name + " (" + diag_status.message + ")";
+    insertNewlines(msg, 100);
+    return msg;
+  }
+  return std::nullopt;
+}
+
 MrmSummaryOverlayDisplay::MrmSummaryOverlayDisplay()
 {
   const Screen * screen_info = DefaultScreenOfDisplay(XOpenDisplay(NULL));
@@ -64,7 +91,6 @@ MrmSummaryOverlayDisplay::MrmSummaryOverlayDisplay()
   const float scale = static_cast<float>(screen_info->height) / hight_4k;
   const auto left = static_cast<int>(std::round(1024 * scale));
   const auto top = static_cast<int>(std::round(128 * scale));
-  const auto length = static_cast<int>(std::round(1024 * scale));
 
   property_text_color_ = new rviz_common::properties::ColorProperty(
     "Text Color", QColor(25, 255, 240), "text color", this, SLOT(updateVisualization()), this);
@@ -75,15 +101,15 @@ MrmSummaryOverlayDisplay::MrmSummaryOverlayDisplay()
     "Top", top, "Top of the plotter window", this, SLOT(updateVisualization()));
   property_top_->setMin(0);
 
-  property_length_ = new rviz_common::properties::IntProperty(
-    "Length", length, "Length of the plotter window", this, SLOT(updateVisualization()), this);
-  property_length_->setMin(10);
   property_value_height_offset_ = new rviz_common::properties::IntProperty(
     "Value height offset", 0, "Height offset of the plotter window", this,
     SLOT(updateVisualization()));
-  property_value_scale_ = new rviz_common::properties::FloatProperty(
-    "Value Scale", 1.0 / 50.0, "Value scale", this, SLOT(updateVisualization()), this);
-  property_value_scale_->setMin(0.01);
+  property_font_size_ = new rviz_common::properties::IntProperty(
+    "Font Size", 10, "Font Size", this, SLOT(updateVisualization()), this);
+  property_font_size_->setMin(1);
+  property_max_letter_num_ = new rviz_common::properties::IntProperty(
+    "Max Letter Num", 100, "Max Letter Num", this, SLOT(updateVisualization()), this);
+  property_max_letter_num_->setMin(10);
 }
 
 MrmSummaryOverlayDisplay::~MrmSummaryOverlayDisplay()
@@ -103,7 +129,8 @@ void MrmSummaryOverlayDisplay::onInitialize()
 
   overlay_->show();
 
-  overlay_->updateTextureSize(property_length_->getInt(), property_length_->getInt());
+  const int texture_size = property_font_size_->getInt() * property_max_letter_num_->getInt();
+  overlay_->updateTextureSize(texture_size, texture_size);
   overlay_->setPosition(property_left_->getInt(), property_top_->getInt());
   overlay_->setDimensions(overlay_->getTextureWidth(), overlay_->getTextureHeight());
 }
@@ -127,18 +154,21 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
   (void)ros_dt;
 
   // MRM summary
-  std::vector<std::string> mrm_summary_list;
+  std::vector<std::string> mrm_comfortable_stop_summary_list = {};
+  std::vector<std::string> mrm_emergency_stop_summary_list = {};
   {
     std::lock_guard<std::mutex> message_lock(mutex_);
     if (last_msg_ptr_) {
       for (const auto & diag_status : last_msg_ptr_->status.diag_latent_fault) {
-        if (diag_status.hardware_id == "" || diag_status.hardware_id == "system_error_monitor") {
-          mrm_summary_list.push_back(diag_status.name);
+        const std::optional<std::string> msg = generateMrmMessage(diag_status);
+        if (msg != std::nullopt) {
+          mrm_comfortable_stop_summary_list.push_back(msg.value());
         }
       }
       for (const auto & diag_status : last_msg_ptr_->status.diag_single_point_fault) {
-        if (diag_status.hardware_id == "" || diag_status.hardware_id == "system_error_monitor") {
-          mrm_summary_list.push_back(diag_status.name);
+        const std::optional<std::string> msg = generateMrmMessage(diag_status);
+        if (msg != std::nullopt) {
+          mrm_emergency_stop_summary_list.push_back(msg.value());
         }
       }
     }
@@ -162,13 +192,17 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
   text_color.setAlpha(255);
   painter.setPen(QPen(text_color, static_cast<int>(2), Qt::SolidLine));
   QFont font = painter.font();
-  font.setPixelSize(
-    std::max(static_cast<int>(static_cast<double>(w) * property_value_scale_->getFloat()), 1));
+  font.setPixelSize(property_font_size_->getInt());
   font.setBold(true);
   painter.setFont(font);
+
   std::ostringstream output_text;
-  output_text << std::fixed << "MRM Summary: " << int(mrm_summary_list.size()) << std::endl;
-  for (const auto & mrm_element : mrm_summary_list) {
+  output_text << std::fixed << "Comfortable Stop MRM Summary: " << int(mrm_comfortable_stop_summary_list.size()) << std::endl;
+  for (const auto & mrm_element : mrm_comfortable_stop_summary_list) {
+    output_text << mrm_element << std::endl;
+  }
+  output_text << "Emergency Stop MRM Summary: " << int(mrm_emergency_stop_summary_list.size()) << std::endl;
+  for (const auto & mrm_element : mrm_emergency_stop_summary_list) {
     output_text << mrm_element << std::endl;
   }
 
@@ -198,7 +232,8 @@ void MrmSummaryOverlayDisplay::processMessage(
 
 void MrmSummaryOverlayDisplay::updateVisualization()
 {
-  overlay_->updateTextureSize(property_length_->getInt(), property_length_->getInt());
+  const int texture_size = property_font_size_->getInt() * property_max_letter_num_->getInt();
+  overlay_->updateTextureSize(texture_size, texture_size);
   overlay_->setPosition(property_left_->getInt(), property_top_->getInt());
   overlay_->setDimensions(overlay_->getTextureWidth(), overlay_->getTextureHeight());
 }
