@@ -107,7 +107,7 @@ If you wish to create a custom traffic light classifier model with your own data
 Autoware offers a sample dataset that illustrates the training procedures for
 traffic light classification. This dataset comprises 1045 images categorized
 into red, green, and yellow labels. To utilize this sample dataset,
-please download it from **[link](https://xxxxx.com)** and extract it to a designated folder of your choice.
+please download it from **[link](https://autoware-files.s3.us-west-2.amazonaws.com/dataset/traffic_light_sample_dataset.tar.gz)** and extract it to a designated folder of your choice.
 
 #### Use Your Custom Dataset
 
@@ -152,7 +152,7 @@ DATASET_ROOT
 **Step 2.** Create a conda virtual environment and activate it
 
 ```bash
-conda create --name openmmlab python=3.8 -y
+conda create --name tl-classifier python=3.8 -y
 conda activate tl-classifier
 ```
 
@@ -161,7 +161,7 @@ conda activate tl-classifier
 Please ensure you have PyTorch installed, compatible with CUDA 11.6, as it is a requirement for current Autoware
 
 ```bash
-conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.6 -c pytorch
+conda install pytorch==1.13.1 torchvision==0.14.1 pytorch-cuda=11.6 -c pytorch -c nvidia
 ```
 
 #### Install mmlab/mmpretrain
@@ -289,11 +289,10 @@ test_evaluator = val_evaluator
 
 ```bash
 cd ~/mmpretrain
-python tools/train.py configs/mobilenet_v2/v2_8xb32_custom.py
+python tools/train.py configs/mobilenet_v2/mobilenet-v2_8xb32_custom.py
 ```
 
-Training logs will be saved in the `work_dirs` folder.
-Weights will be saved in the `v2_8xb32_custom` folder.
+Training logs and weights will be saved in the `work_dirs/mobilenet-v2_8xb32_custom` folder.
 
 ### Convert PyTorh model to ONNX model
 
@@ -339,7 +338,7 @@ python tools/deploy.py \
 --work-dir mmdeploy_model/mobilenet_v2
 ```
 
-Converted ONNX model will be saved in the `mmpretrain/work_dirs/v2_8xb32_custom/onnx` folder.
+Converted ONNX model will be saved in the `mmdeploy/mmdeploy_model/mobilenet_v2` folder.
 
 After obtaining your onnx model, update parameters defined in the launch file (e.g. `model_file_path`, `label_file_path`, `input_h`, `input_w`...).
 Note that, we only support labels defined in [tier4_perception_msgs::msg::TrafficLightElement](https://github.com/tier4/tier4_autoware_msgs/blob/tier4/universe/tier4_perception_msgs/msg/traffic_light/TrafficLightElement.msg).
