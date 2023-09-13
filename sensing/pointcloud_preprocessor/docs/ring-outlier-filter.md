@@ -27,7 +27,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `distance_ratio`          | double  | 1.03          |             |
 | `object_length_threshold` | double  | 0.1           |             |
 | `num_points_threshold`    | int     | 4             |             |
-| `max_rings_num`           | uint_16 | 128           |             |
+| `max_ring_index`          | uint_16 | 128           |             |
 
 ## Assumptions / Known limits
 

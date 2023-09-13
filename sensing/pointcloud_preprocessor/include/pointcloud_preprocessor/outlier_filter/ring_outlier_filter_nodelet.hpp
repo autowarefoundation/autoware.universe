@@ -45,7 +45,7 @@ private:
   double distance_ratio_;
   double object_length_threshold_;
   int num_points_threshold_;
-  uint16_t max_rings_num_;
+  uint16_t max_ring_index_;
 
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;

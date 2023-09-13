@@ -47,7 +47,7 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     object_length_threshold_ =
       static_cast<double>(declare_parameter("object_length_threshold", 0.1));
     num_points_threshold_ = static_cast<int>(declare_parameter("num_points_threshold", 4));
-    max_rings_num_ = static_cast<uint16_t>(declare_parameter("max_rings_num", 128));
+    max_ring_index_ = static_cast<uint16_t>(declare_parameter("max_ring_index", 128));
   }
 
   using std::placeholders::_1;
@@ -173,11 +173,11 @@ void RingOutlierFilterComponent::faster_filter(
   size_t latest_walk_id = -1UL;  // ID given to the latest walk created
 
   // initialize each ring with two empty walks (first and current walk)
-  rings.resize(max_rings_num_, RingWalkInfo{{-1UL, 0, 0, 0, 0, 0}, {-1UL, 0, 0, 0, 0, 0}});
+  rings.resize(max_ring_index_ + 1, RingWalkInfo{{-1UL, 0, 0, 0, 0, 0}, {-1UL, 0, 0, 0, 0, 0}});
   // points are initially associated to no walk (-1UL)
   points_walk_id.resize(input->width * input->height, -1UL);
   walks_cluster_status.reserve(
-    max_rings_num_ * 2);  // In the worst case, this could grow to the number of input points
+    (max_ring_index_ + 1) * 2);  // In the worst case, this could grow to the number of input points
 
   int invalid_ring_count = 0;
 
@@ -191,8 +191,8 @@ void RingOutlierFilterComponent::faster_filter(
     std::memcpy(&curr_azimuth, &raw_p.data()[azimuth_offset], sizeof(curr_azimuth));
     std::memcpy(&curr_distance, &raw_p.data()[distance_offset], sizeof(curr_distance));
 
-    if (ring_idx >= max_rings_num_) {
-      // Either the data is corrupted or max_rings_num_ is not set correctly
+    if (ring_idx > max_ring_index_) {
+      // Either the data is corrupted or max_ring_index_ is not set correctly
       // Note: point_walk_id == -1 so the point will be filtered out
       ++invalid_ring_count;
       continue;
@@ -334,8 +334,8 @@ void RingOutlierFilterComponent::faster_filter(
 
   if (invalid_ring_count > 0) {
     RCLCPP_WARN(
-      get_logger(), "%d points had ring index over max_rings_num (%d) and have been ignored.",
-      invalid_ring_count, max_rings_num_);
+      get_logger(), "%d points had ring index over max_ring_index (%d) and have been ignored.",
+      invalid_ring_count, max_ring_index_);
   }
 
   // add processing time for debug
