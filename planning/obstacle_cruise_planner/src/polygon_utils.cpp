@@ -32,9 +32,9 @@ geometry_msgs::msg::Point calcOffsetPosition(
 }
 
 Polygon2d createOneStepPolygon(
-  const geometry_msgs::msg::Pose & base_step_pose, const geometry_msgs::msg::Pose & next_step_pose,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin,
-  const double lat_err = 0.0)
+  const std::vector<geometry_msgs::msg::Pose> & last_poses,
+  const std::vector<geometry_msgs::msg::Pose> & current_poses,
+  const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin)
 {
   Polygon2d polygon;
 
@@ -42,39 +42,17 @@ Polygon2d createOneStepPolygon(
   const double width = vehicle_info.vehicle_width_m / 2.0 + lat_margin;
   const double base_to_rear = vehicle_info.rear_overhang_m;
 
-  // base step
-  appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, base_to_front, width));
-  appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, base_to_front, -width));
-  appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, -base_to_rear, -width));
-  appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, -base_to_rear, width));
-
-  // next step
-  appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, base_to_front, width));
-  appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, base_to_front, -width));
-  appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, -base_to_rear, -width));
-  appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose, -base_to_rear, width));
-
-  const bool is_enable_current_pose_consideration = true;  // sould be set as a new global param
-  if (is_enable_current_pose_consideration) {
-    // base step
-    appendPointToPolygon(
-      polygon, calcOffsetPosition(base_step_pose, base_to_front, width + lat_err));
-    appendPointToPolygon(
-      polygon, calcOffsetPosition(base_step_pose, base_to_front, -width + lat_err));
-    appendPointToPolygon(
-      polygon, calcOffsetPosition(base_step_pose, -base_to_rear, -width + lat_err));
-    appendPointToPolygon(
-      polygon, calcOffsetPosition(base_step_pose, -base_to_rear, width + lat_err));
-
-    // next step
-    appendPointToPolygon(
-      polygon, calcOffsetPosition(next_step_pose, base_to_front, width + lat_err));
-    appendPointToPolygon(
-      polygon, calcOffsetPosition(next_step_pose, base_to_front, -width + lat_err));
-    appendPointToPolygon(
-      polygon, calcOffsetPosition(next_step_pose, -base_to_rear, -width + lat_err));
-    appendPointToPolygon(
-      polygon, calcOffsetPosition(next_step_pose, -base_to_rear, width + lat_err));
+  for (auto & pose : last_poses) {
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, -width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, -width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, width));
+  }
+  for (auto & pose : current_poses) {
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, base_to_front, -width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, -width));
+    appendPointToPolygon(polygon, calcOffsetPosition(pose, -base_to_rear, width));
   }
 
   bg::correct(polygon);
@@ -84,6 +62,61 @@ Polygon2d createOneStepPolygon(
 
   return hull_polygon;
 }
+
+// Polygon2d createOneStepPolygon(
+//   const geometry_msgs::msg::Pose & base_step_pose, const geometry_msgs::msg::Pose &
+//   next_step_pose, const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin,
+//   const double lat_err = 0.0)
+// {
+//   Polygon2d polygon;
+
+//   const double base_to_front = vehicle_info.max_longitudinal_offset_m;
+//   const double width = vehicle_info.vehicle_width_m / 2.0 + lat_margin;
+//   const double base_to_rear = vehicle_info.rear_overhang_m;
+
+//   // base step
+//   appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, base_to_front, width));
+//   appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, base_to_front, -width));
+//   appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, -base_to_rear, -width));
+//   appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, -base_to_rear, width));
+
+//   // next step
+//   appendPointToPolygon(polygon, calcOffsetPosition(next_step_posWno-unused-parametere,
+//   base_to_front, width)); appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose,
+//   base_to_front, -width)); appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose,
+//   -base_to_rear, -width)); appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose,
+//   -base_to_rear, width));
+
+//   const bool is_enable_current_pose _consideration = true;  // sould be set as a new global param
+//   if (is_enable_current_pose_consideration) {
+//     // base step
+//     appendPointToPolygon(
+//       polygon, calcOffsetPosition(base_step_pose, base_to_front, width + lat_err));
+//     appendPointToPolygon(
+//       polygon, calcOffsetPosition(base_step_pose, base_to_front, -width + lat_err));
+//     appendPointToPolygon(
+//       polygon, calcOffsetPosition(base_step_pose, -base_to_rear, -width + lat_err));
+//     appendPointToPolygon(
+//       polygon, calcOffsetPosition(base_step_pose, -base_to_rear, width + lat_err));
+
+//     // next step
+//     appendPointToPolygon(
+//       polygon, calcOffsetPosition(next_step_pose, base_to_front, width + lat_err));
+//     appendPointToPolygon(
+//       polygon, calcOffsetPosition(next_step_pose, base_to_front, -width + lat_err));
+//     appendPointToPolygon(
+//       polygon, calcOffsetPosition(next_step_pose, -base_to_rear, -width + lat_err));
+//     appendPointToPolygon(
+//       polygon, calcOffsetPosition(next_step_pose, -base_to_rear, width + lat_err));
+//   }
+
+//   bg::correct(polygon);
+
+//   Polygon2d hull_polygon;
+//   bg::convex_hull(polygon, hull_polygon);
+
+//   return hull_polygon;
+// }
 
 PointWithStamp calcNearestCollisionPoint(
   const size_t first_within_idx, const std::vector<PointWithStamp> & collision_points,
@@ -211,41 +244,51 @@ std::vector<PointWithStamp> getCollisionPoints(
 std::vector<Polygon2d> createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,
   const vehicle_info_util::VehicleInfo & vehicle_info,
-  const geometry_msgs::msg::Point & ego_position, const double lat_margin)
+  const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin)
 {
-  std::vector<Polygon2d> polygons;
-
-  const double current_ego_lat_error = motion_utils::calcLateralOffset(traj_points, ego_position);
-  // const double current_ego_lat_error = -3.0;  // for debug visualization
-
+  const bool is_enable_current_pose_consideration = true;  // sould be set as a new global param
   const double step_length =
     2.0;  // sould be replaced by a global param
           // "behavior_determination_param_.decimate_trajectory_step_length"
-  const double time_to_convergence = 1.5;  // global param. DO NOT SET IT TO ZERO nor negative value
 
-  polygons.push_back(createOneStepPolygon(
-    traj_points.at(0).pose, traj_points.at(0).pose, vehicle_info, lat_margin,
-    current_ego_lat_error));
+  const double time_to_convergence =
+    1.5;  // 1.5 recomend // global param. DO NOT SET IT TO ZERO nor negative value
+
+  std::vector<Polygon2d> polygons;
+  const double current_ego_lat_error =
+    motion_utils::calcLateralOffset(traj_points, current_ego_pose.position);
+  const double current_ego_yaw_error =
+    motion_utils::calcYawDeviation(traj_points, current_ego_pose);
 
   double time_elapsed = 0.0;
-  for (size_t i = 1; i < traj_points.size(); ++i) {
+
+  std::vector<geometry_msgs::msg::Pose> last_poses = {traj_points.at(0).pose};
+  if (is_enable_current_pose_consideration) {
+    last_poses.push_back(current_ego_pose);
+  }
+
+  for (size_t i = 0; i < traj_points.size(); ++i) {
     // estimate the future lateral error by first-order decrement against the time
-    double lat_err = 0.0;
-    if (time_elapsed < time_to_convergence) {
-      lat_err = current_ego_lat_error * (time_to_convergence - time_elapsed) / time_to_convergence;
+    std::vector<geometry_msgs::msg::Pose> current_poses = {traj_points.at(i).pose};
+    if (is_enable_current_pose_consideration && time_elapsed < time_to_convergence) {
+      double rem_ratio = (time_to_convergence - time_elapsed) / time_to_convergence;
+      geometry_msgs::msg::Pose indexed_pose_err;
+      indexed_pose_err.set__orientation(
+        tier4_autoware_utils::createQuaternionFromYaw(current_ego_yaw_error * rem_ratio));
+      indexed_pose_err.set__position(
+        tier4_autoware_utils::createPoint(0.0, current_ego_lat_error * rem_ratio, 0.0));
+
+      current_poses.push_back(
+        tier4_autoware_utils::transformPose(indexed_pose_err, traj_points.at(i).pose));
+
       if (traj_points.at(i).longitudinal_velocity_mps != 0.0) {
         time_elapsed += step_length / traj_points.at(i).longitudinal_velocity_mps;
       } else {
         time_elapsed = std::numeric_limits<double>::max();
       }
     }
-
-    const auto polygon = [&]() {
-      return createOneStepPolygon(
-        traj_points.at(i - 1).pose, traj_points.at(i).pose, vehicle_info, lat_margin, lat_err);
-    }();
-
-    polygons.push_back(polygon);
+    polygons.push_back(createOneStepPolygon(last_poses, current_poses, vehicle_info, lat_margin));
+    last_poses = current_poses;
   }
   return polygons;
 }
