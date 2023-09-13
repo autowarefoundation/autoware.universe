@@ -49,6 +49,7 @@
 
 #include <QPainter>
 #include <rviz_common/uniform_string_stream.hpp>
+
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
 #include <X11/Xlib.h>
@@ -58,7 +59,8 @@
 
 namespace rviz_plugins
 {
-void insertNewlines(std::string& str, const size_t max_line_length) {
+void insertNewlines(std::string & str, const size_t max_line_length)
+{
   size_t index = max_line_length;
 
   while (index < str.size()) {
@@ -197,11 +199,14 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
   painter.setFont(font);
 
   std::ostringstream output_text;
-  output_text << std::fixed << "Comfortable Stop MRM Summary: " << int(mrm_comfortable_stop_summary_list.size()) << std::endl;
+  output_text << std::fixed
+              << "Comfortable Stop MRM Summary: " << int(mrm_comfortable_stop_summary_list.size())
+              << std::endl;
   for (const auto & mrm_element : mrm_comfortable_stop_summary_list) {
     output_text << mrm_element << std::endl;
   }
-  output_text << "Emergency Stop MRM Summary: " << int(mrm_emergency_stop_summary_list.size()) << std::endl;
+  output_text << "Emergency Stop MRM Summary: " << int(mrm_emergency_stop_summary_list.size())
+              << std::endl;
   for (const auto & mrm_element : mrm_emergency_stop_summary_list) {
     output_text << mrm_element << std::endl;
   }

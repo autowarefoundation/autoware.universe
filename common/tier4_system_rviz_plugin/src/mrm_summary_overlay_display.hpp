@@ -106,4 +106,4 @@ private:
 };
 }  // namespace rviz_plugins
 
-#endif  // STRING_OVERLAY_DISPLAY_HPP_
+#endif  // MRM_SUMMARY_OVERLAY_DISPLAY_HPP_
