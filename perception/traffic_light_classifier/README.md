@@ -114,7 +114,7 @@ please download it from **[link](https://autoware-files.s3.us-west-2.amazonaws.c
 To train a traffic light classifier, adopt a structured subfolder format where each
 subfolder represents a distinct class. Below is an illustrative dataset structure example;
 
-```
+```python
 DATASET_ROOT
     ├── TRAIN
     │    ├── RED
