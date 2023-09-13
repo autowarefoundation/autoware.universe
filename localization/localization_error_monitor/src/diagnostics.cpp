@@ -65,6 +65,8 @@ diagnostic_msgs::msg::DiagnosticStatus checkLocalizationAccuracyLateralDirection
   return stat;
 }
 
+// The highest level within the stat_array will be reflected in the merged_stat.
+// When all stat_array entries are 'OK,' the message of merged_stat will be empty
 diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
   const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & stat_array)
 {
