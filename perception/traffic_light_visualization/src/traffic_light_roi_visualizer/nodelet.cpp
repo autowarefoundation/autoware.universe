@@ -127,7 +127,8 @@ void TrafficLightRoiVisualizerNodelet::imageRoiCallback(
 {
   cv_bridge::CvImagePtr cv_ptr;
   try {
-    // try to convert to RGB8 from any input encoding, since createRect() only supports RGB8 based bbox drawing
+    // try to convert to RGB8 from any input encoding, since createRect() only supports RGB8 based
+    // bbox drawing
     cv_ptr = cv_bridge::toCvCopy(input_image_msg, sensor_msgs::image_encodings::RGB8);
     for (auto tl_roi : input_tl_roi_msg->rois) {
       ClassificationResult result;
@@ -193,7 +194,8 @@ void TrafficLightRoiVisualizerNodelet::imageRoughRoiCallback(
 {
   cv_bridge::CvImagePtr cv_ptr;
   try {
-    // try to convert to RGB8 from any input encoding, since createRect() only supports RGB8 based bbox drawing
+    // try to convert to RGB8 from any input encoding, since createRect() only supports RGB8 based
+    // bbox drawing
     cv_ptr = cv_bridge::toCvCopy(input_image_msg, sensor_msgs::image_encodings::RGB8);
     for (auto tl_rough_roi : input_tl_rough_roi_msg->rois) {
       // visualize rough roi
