@@ -29,7 +29,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkProcessActivated(const bool is_activ
   stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "";
+  stat.message = "OK";
   if (!is_activated) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     stat.message = "[WARN]process is not activated";
@@ -56,7 +56,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementUpdated(
   stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "";
+  stat.message = "OK";
   if (no_update_count >= no_update_count_threshold_warn) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     stat.message = "[WARN]" + measurement_type + " is not updated";
@@ -80,7 +80,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementQueueSize(
   stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "";
+  stat.message = "OK";
 
   return stat;
 }
@@ -103,7 +103,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementDelayGate(
   stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "";
+  stat.message = "OK";
   if (!is_passed_delay_gate) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     stat.message = "[WARN]" + measurement_type + " topic is delay";
@@ -130,7 +130,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementMahalanobisGate(
   stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "";
+  stat.message = "OK";
   if (!is_passed_mahalabobis_gate) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     stat.message = "[WARN]mahalabobis distance of " + measurement_type + " topic is large";
@@ -159,6 +159,10 @@ diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
     for (const auto & value : stat.values) {
       merged_stat.values.push_back(value);
     }
+  }
+
+  if (merged_stat.level == diagnostic_msgs::msg::DiagnosticStatus::OK) {
+    merged_stat.message = "OK";
   }
 
   return merged_stat;
