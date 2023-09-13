@@ -4,7 +4,6 @@
   <name>tier4_system_rviz_plugin</name>
   <version>0.1.0</version>
   <description>The tier4_vehicle_rviz_plugin package</description>
-  <author email="koji.minoda@tier4.jp">Koji Minoda</author>
   <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
   <license>Apache License 2.0</license>
 
