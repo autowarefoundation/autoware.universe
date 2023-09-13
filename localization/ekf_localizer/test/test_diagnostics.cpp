@@ -113,19 +113,19 @@ TEST(TestEkfDiagnostics, CheckMeasurementMahalanobisGate)
   diagnostic_msgs::msg::DiagnosticStatus stat;
 
   const std::string measurement_type = "pose";        // not effect for stat.level
-  const double mahalabobis_distance = 0.1;            // not effect for stat.level
-  const double mahalabobis_distance_threshold = 1.0;  // not effect for stat.level
+  const double mahalanobis_distance = 0.1;            // not effect for stat.level
+  const double mahalanobis_distance_threshold = 1.0;  // not effect for stat.level
 
-  bool is_passed_mahalabobis_gate = true;
+  bool is_passed_mahalanobis_gate = true;
   stat = checkMeasurementMahalanobisGate(
-    measurement_type, is_passed_mahalabobis_gate, mahalabobis_distance,
-    mahalabobis_distance_threshold);
+    measurement_type, is_passed_mahalanobis_gate, mahalanobis_distance,
+    mahalanobis_distance_threshold);
   EXPECT_EQ(stat.level, diagnostic_msgs::msg::DiagnosticStatus::OK);
 
-  is_passed_mahalabobis_gate = false;
+  is_passed_mahalanobis_gate = false;
   stat = checkMeasurementMahalanobisGate(
-    measurement_type, is_passed_mahalabobis_gate, mahalabobis_distance,
-    mahalabobis_distance_threshold);
+    measurement_type, is_passed_mahalanobis_gate, mahalanobis_distance,
+    mahalanobis_distance_threshold);
   EXPECT_EQ(stat.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
 }
 

@@ -113,27 +113,27 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementDelayGate(
 }
 
 diagnostic_msgs::msg::DiagnosticStatus checkMeasurementMahalanobisGate(
-  const std::string & measurement_type, const bool is_passed_mahalabobis_gate,
-  const double mahalabobis_distance, const double mahalabobis_distance_threshold)
+  const std::string & measurement_type, const bool is_passed_mahalanobis_gate,
+  const double mahalanobis_distance, const double mahalanobis_distance_threshold)
 {
   diagnostic_msgs::msg::DiagnosticStatus stat;
 
   diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = measurement_type + "_is_passed_mahalabobis_gate";
-  key_value.value = is_passed_mahalabobis_gate ? "True" : "False";
+  key_value.key = measurement_type + "_is_passed_mahalanobis_gate";
+  key_value.value = is_passed_mahalanobis_gate ? "True" : "False";
   stat.values.push_back(key_value);
-  key_value.key = measurement_type + "_mahalabobis_distance";
-  key_value.value = std::to_string(mahalabobis_distance);
+  key_value.key = measurement_type + "_mahalanobis_distance";
+  key_value.value = std::to_string(mahalanobis_distance);
   stat.values.push_back(key_value);
-  key_value.key = measurement_type + "_mahalabobis_distance_threshold";
-  key_value.value = std::to_string(mahalabobis_distance_threshold);
+  key_value.key = measurement_type + "_mahalanobis_distance_threshold";
+  key_value.value = std::to_string(mahalanobis_distance_threshold);
   stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   stat.message = "OK";
-  if (!is_passed_mahalabobis_gate) {
+  if (!is_passed_mahalanobis_gate) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    stat.message = "[WARN]mahalabobis distance of " + measurement_type + " topic is large";
+    stat.message = "[WARN]mahalanobis distance of " + measurement_type + " topic is large";
   }
 
   return stat;

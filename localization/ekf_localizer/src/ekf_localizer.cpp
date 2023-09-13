@@ -184,8 +184,8 @@ void EKFLocalizer::timerCallback()
   pose_is_passed_delay_gate_ = true;
   pose_delay_time_ = 0.0;
   pose_delay_time_threshold_ = 0.0;
-  pose_is_passed_mahalabobis_gate_ = true;
-  pose_mahalabobis_distance_ = 0.0;
+  pose_is_passed_mahalanobis_gate_ = true;
+  pose_mahalanobis_distance_ = 0.0;
 
   bool pose_is_updated = false;
 
@@ -213,8 +213,8 @@ void EKFLocalizer::timerCallback()
   twist_is_passed_delay_gate_ = true;
   twist_delay_time_ = 0.0;
   twist_delay_time_threshold_ = 0.0;
-  twist_is_passed_mahalabobis_gate_ = true;
-  twist_mahalabobis_distance_ = 0.0;
+  twist_is_passed_mahalanobis_gate_ = true;
+  twist_mahalanobis_distance_ = 0.0;
 
   bool twist_is_updated = false;
 
@@ -467,9 +467,9 @@ bool EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   const Eigen::MatrixXd P_y = P_curr.block(0, 0, dim_y, dim_y);
 
   const double distance = mahalanobis(y_ekf, y, P_y);
-  pose_mahalabobis_distance_ = std::max(distance, pose_mahalabobis_distance_);
+  pose_mahalanobis_distance_ = std::max(distance, pose_mahalanobis_distance_);
   if (distance > params_.pose_gate_dist) {
-    pose_is_passed_mahalabobis_gate_ = false;
+    pose_is_passed_mahalanobis_gate_ = false;
     warning_.warnThrottle(mahalanobisWarningMessage(distance, params_.pose_gate_dist), 2000);
     warning_.warnThrottle("Ignore the measurement data.", 2000);
     return false;
@@ -556,9 +556,9 @@ bool EKFLocalizer::measurementUpdateTwist(
   const Eigen::MatrixXd P_y = P_curr.block(4, 4, dim_y, dim_y);
 
   const double distance = mahalanobis(y_ekf, y, P_y);
-  twist_mahalabobis_distance_ = std::max(distance, twist_mahalabobis_distance_);
+  twist_mahalanobis_distance_ = std::max(distance, twist_mahalanobis_distance_);
   if (distance > params_.twist_gate_dist) {
-    twist_is_passed_mahalabobis_gate_ = false;
+    twist_is_passed_mahalanobis_gate_ = false;
     warning_.warnThrottle(mahalanobisWarningMessage(distance, params_.twist_gate_dist), 2000);
     warning_.warnThrottle("Ignore the measurement data.", 2000);
     return false;
@@ -669,7 +669,7 @@ void EKFLocalizer::publishDiagnostics()
     diag_status_array.push_back(checkMeasurementDelayGate(
       "pose", pose_is_passed_delay_gate_, pose_delay_time_, pose_delay_time_threshold_));
     diag_status_array.push_back(checkMeasurementMahalanobisGate(
-      "pose", pose_is_passed_mahalabobis_gate_, pose_mahalabobis_distance_,
+      "pose", pose_is_passed_mahalanobis_gate_, pose_mahalanobis_distance_,
       params_.pose_gate_dist));
 
     diag_status_array.push_back(checkMeasurementUpdated(
@@ -679,7 +679,7 @@ void EKFLocalizer::publishDiagnostics()
     diag_status_array.push_back(checkMeasurementDelayGate(
       "twist", twist_is_passed_delay_gate_, twist_delay_time_, twist_delay_time_threshold_));
     diag_status_array.push_back(checkMeasurementMahalanobisGate(
-      "twist", twist_is_passed_mahalabobis_gate_, twist_mahalabobis_distance_,
+      "twist", twist_is_passed_mahalanobis_gate_, twist_mahalanobis_distance_,
       params_.twist_gate_dist));
   }
 
