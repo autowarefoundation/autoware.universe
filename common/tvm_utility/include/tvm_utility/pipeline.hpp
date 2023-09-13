@@ -224,7 +224,80 @@ typedef struct
 class InferenceEngineTVM : public InferenceEngine
 {
 public:
-  explicit InferenceEngineTVM(const InferenceEngineTVMConfig & config, const std::string & pkg_name)
+  explicit InferenceEngineTVM(
+    const InferenceEngineTVMConfig & config, 
+    const std::string & pkg_name,
+    const std::string & autoware_data_path)
+  : config_(config)
+  {
+    // Get full network path
+    std::string network_prefix = autoware_data_path + pkg_name +
+                                 "/models/" + config.network_name + "/";
+    std::string network_module_path = network_prefix + config.network_module_path;
+    std::string network_graph_path = network_prefix + config.network_graph_path;
+    std::string network_params_path = network_prefix + config.network_params_path;
+
+    // Load compiled functions
+    std::ifstream module(network_module_path);
+    if (!module.good()) {
+      throw std::runtime_error(
+        "File " + network_module_path + " specified in inference_engine_tvm_config.hpp not found");
+    }
+    module.close();
+    tvm::runtime::Module mod = tvm::runtime::Module::LoadFromFile(network_module_path);
+
+    // Load json graph
+    std::ifstream json_in(network_graph_path, std::ios::in);
+    if (!json_in.good()) {
+      throw std::runtime_error(
+        "File " + network_graph_path + " specified in inference_engine_tvm_config.hpp not found");
+    }
+    std::string json_data(
+      (std::istreambuf_iterator<char>(json_in)), std::istreambuf_iterator<char>());
+    json_in.close();
+
+    // Load parameters from binary file
+    std::ifstream params_in(network_params_path, std::ios::binary);
+    if (!params_in.good()) {
+      throw std::runtime_error(
+        "File " + network_params_path + " specified in inference_engine_tvm_config.hpp not found");
+    }
+    std::string params_data(
+      (std::istreambuf_iterator<char>(params_in)), std::istreambuf_iterator<char>());
+    params_in.close();
+
+    // Parameters need to be in TVMByteArray format
+    TVMByteArray params_arr;
+    params_arr.data = params_data.c_str();
+    params_arr.size = params_data.length();
+
+    // Create tvm runtime module
+    tvm::runtime::Module runtime_mod = (*tvm::runtime::Registry::Get("tvm.graph_executor.create"))(
+      json_data, mod, static_cast<uint32_t>(config.tvm_device_type), config.tvm_device_id);
+
+    // Load parameters
+    auto load_params = runtime_mod.GetFunction("load_params");
+    load_params(params_arr);
+
+    // Get set_input function
+    set_input = runtime_mod.GetFunction("set_input");
+
+    // Get the function which executes the network
+    execute = runtime_mod.GetFunction("run");
+
+    // Get the function to get output data
+    get_output = runtime_mod.GetFunction("get_output");
+
+    for (auto & output_config : config.network_outputs) {
+      output_.push_back(TVMArrayContainer(
+        output_config.node_shape, output_config.tvm_dtype_code, output_config.tvm_dtype_bits,
+        output_config.tvm_dtype_lanes, config.tvm_device_type, config.tvm_device_id));
+    }
+  }
+
+    explicit InferenceEngineTVM(
+    const InferenceEngineTVMConfig & config, 
+    const std::string & pkg_name)
   : config_(config)
   {
     // Get full network path

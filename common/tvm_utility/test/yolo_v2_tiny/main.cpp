@@ -247,7 +247,9 @@ TEST(PipelineExamples, SimplePipeline)
   using PostPT = PostProcessorYoloV2Tiny;
 
   PrePT PreP{config};
-  IET IE{config, "tvm_utility"};
+  std::string home_dir = getenv("HOME");
+  std::string autoware_data = "/autoware_data/";
+  IET IE{config, "tvm_utility", home_dir + autoware_data};
   PostPT PostP{config};
 
   tvm_utility::pipeline::Pipeline<PrePT, IET, PostPT> pipeline(PreP, IE, PostP);
