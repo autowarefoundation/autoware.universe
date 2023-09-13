@@ -136,7 +136,7 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     p.object_last_seen_threshold = get_parameter<double>(node, ns + "object_last_seen_threshold");
   }
 
-  // safety check
+  // safety check general params
   {
     std::string ns = "avoidance.safety_check.";
     p.enable_safety_check = get_parameter<bool>(node, ns + "enable");
@@ -146,13 +146,36 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     p.check_unavoidable_object = get_parameter<bool>(node, ns + "check_unavoidable_object");
     p.check_other_object = get_parameter<bool>(node, ns + "check_other_object");
     p.check_all_predicted_path = get_parameter<bool>(node, ns + "check_all_predicted_path");
-    p.safety_check_time_horizon = get_parameter<double>(node, ns + "time_horizon");
+    p.time_horizon_for_front_object =
+      get_parameter<double>(node, ns + "time_horizon_for_front_object");
+    p.time_horizon_for_rear_object =
+      get_parameter<double>(node, ns + "time_horizon_for_rear_object");
     p.safety_check_time_resolution = get_parameter<double>(node, ns + "time_resolution");
     p.safety_check_backward_distance =
       get_parameter<double>(node, ns + "safety_check_backward_distance");
-    p.safety_check_hysteresis_factor =
-      get_parameter<double>(node, ns + "safety_check_hysteresis_factor");
     p.safety_check_ego_offset = get_parameter<double>(node, ns + "safety_check_ego_offset");
+    p.hysteresis_factor_expand_rate =
+      get_parameter<double>(node, ns + "hysteresis_factor_expand_rate");
+    p.hysteresis_factor_safe_count = get_parameter<int>(node, ns + "hysteresis_factor_safe_count");
+  }
+
+  // safety check rss params
+  {
+    std::string ns = "avoidance.safety_check.";
+    p.rss_params.longitudinal_distance_min_threshold =
+      get_parameter<double>(node, ns + "longitudinal_distance_min_threshold");
+    p.rss_params.longitudinal_velocity_delta_time =
+      get_parameter<double>(node, ns + "longitudinal_velocity_delta_time");
+    p.rss_params.front_vehicle_deceleration =
+      get_parameter<double>(node, ns + "expected_front_deceleration");
+    p.rss_params.rear_vehicle_deceleration =
+      get_parameter<double>(node, ns + "expected_rear_deceleration");
+    p.rss_params.rear_vehicle_reaction_time =
+      get_parameter<double>(node, ns + "rear_vehicle_reaction_time");
+    p.rss_params.rear_vehicle_safety_time_margin =
+      get_parameter<double>(node, ns + "rear_vehicle_safety_time_margin");
+    p.rss_params.lateral_distance_max_threshold =
+      get_parameter<double>(node, ns + "lateral_distance_max_threshold");
   }
 
   // avoidance maneuver (lateral)

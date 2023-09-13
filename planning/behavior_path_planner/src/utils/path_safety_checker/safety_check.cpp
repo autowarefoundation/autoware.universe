@@ -31,6 +31,25 @@ void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point &
 }
 
 bool isTargetObjectFront(
+  const geometry_msgs::msg::Pose & ego_pose, const Polygon2d & obj_polygon,
+  const vehicle_info_util::VehicleInfo & vehicle_info)
+{
+  const double base_to_front = vehicle_info.max_longitudinal_offset_m;
+  const auto ego_offset_pose =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, base_to_front, 0.0, 0.0);
+
+  // check all edges in the polygon
+  for (const auto & obj_edge : obj_polygon.outer()) {
+    const auto obj_point = tier4_autoware_utils::createPoint(obj_edge.x(), obj_edge.y(), 0.0);
+    if (tier4_autoware_utils::calcLongitudinalDeviation(ego_offset_pose, obj_point) > 0.0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool isTargetObjectFront(
   const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
   const vehicle_info_util::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon)
 {
@@ -135,8 +154,7 @@ Polygon2d createExtendedPolygon(
 
 double calcRssDistance(
   const double front_object_velocity, const double rear_object_velocity,
-  const double front_object_deceleration, const double rear_object_deceleration,
-  const BehaviorPathPlannerParameters & params)
+  const RSSparams & rss_params)
 {
   const auto stoppingDistance = [](const auto vehicle_velocity, const auto vehicle_accel) {
     // compensate if user accidentally set the deceleration to some positive value
@@ -145,23 +163,23 @@ double calcRssDistance(
   };
 
   const double & reaction_time =
-    params.rear_vehicle_reaction_time + params.rear_vehicle_safety_time_margin;
+    rss_params.rear_vehicle_reaction_time + rss_params.rear_vehicle_safety_time_margin;
 
   const double front_object_stop_length =
-    stoppingDistance(front_object_velocity, front_object_deceleration);
+    stoppingDistance(front_object_velocity, rss_params.front_vehicle_deceleration);
   const double rear_object_stop_length =
     rear_object_velocity * reaction_time +
-    stoppingDistance(rear_object_velocity, rear_object_deceleration);
+    stoppingDistance(rear_object_velocity, rss_params.rear_vehicle_deceleration);
   return rear_object_stop_length - front_object_stop_length;
 }
 
 double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
-  const BehaviorPathPlannerParameters & params)
+  const RSSparams & rss_params)
 {
-  const double & lon_threshold = params.longitudinal_distance_min_threshold;
+  const double & lon_threshold = rss_params.longitudinal_distance_min_threshold;
   const auto max_vel = std::max(front_object_velocity, rear_object_velocity);
-  return params.longitudinal_velocity_delta_time * std::abs(max_vel) + lon_threshold;
+  return rss_params.longitudinal_velocity_delta_time * std::abs(max_vel) + lon_threshold;
 }
 
 boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
@@ -215,12 +233,12 @@ boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVeloci
 }
 
 bool checkCollision(
-  const PathWithLaneId & planned_path,
+  [[maybe_unused]] const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
-  const BehaviorPathPlannerParameters & common_parameters, const double front_object_deceleration,
-  const double rear_object_deceleration, CollisionCheckDebug & debug)
+  const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
+  double hysteresis_factor, CollisionCheckDebug & debug)
 {
   debug.lerped_path.reserve(target_object_path.path.size());
 
@@ -260,23 +278,21 @@ bool checkCollision(
     }
 
     // compute which one is at the front of the other
-    const bool is_object_front =
-      isTargetObjectFront(planned_path, ego_pose, ego_vehicle_info, obj_polygon);
+    const bool is_object_front = isTargetObjectFront(ego_pose, obj_polygon, ego_vehicle_info);
     const auto & [front_object_velocity, rear_object_velocity] =
       is_object_front ? std::make_pair(object_velocity, ego_velocity)
                       : std::make_pair(ego_velocity, object_velocity);
 
     // compute rss dist
-    const auto rss_dist = calcRssDistance(
-      front_object_velocity, rear_object_velocity, front_object_deceleration,
-      rear_object_deceleration, common_parameters);
+    const auto rss_dist =
+      calcRssDistance(front_object_velocity, rear_object_velocity, rss_parameters);
 
     // minimum longitudinal length
     const auto min_lon_length =
-      calcMinimumLongitudinalLength(front_object_velocity, rear_object_velocity, common_parameters);
+      calcMinimumLongitudinalLength(front_object_velocity, rear_object_velocity, rss_parameters);
 
-    const auto & lon_offset = std::max(rss_dist, min_lon_length);
-    const auto & lat_margin = common_parameters.lateral_distance_max_threshold;
+    const auto & lon_offset = std::max(rss_dist, min_lon_length) * hysteresis_factor;
+    const auto & lat_margin = rss_parameters.lateral_distance_max_threshold * hysteresis_factor;
     const auto & extended_ego_polygon =
       is_object_front
         ? createExtendedPolygon(ego_pose, ego_vehicle_info, lon_offset, lat_margin, debug)

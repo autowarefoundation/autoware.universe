@@ -1891,8 +1891,10 @@ bool AvoidanceModule::isSafePath(
     return true;  // if safety check is disabled, it always return safe.
   }
 
-  const auto ego_predicted_path =
-    utils::avoidance::convertToPredictedPath(shifted_path.path, planner_data_, parameters_);
+  const auto ego_predicted_path_for_front_object =
+    utils::avoidance::convertToPredictedPath(shifted_path.path, planner_data_, true, parameters_);
+  const auto ego_predicted_path_for_rear_object =
+    utils::avoidance::convertToPredictedPath(shifted_path.path, planner_data_, false, parameters_);
 
   const auto ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
   const auto is_right_shift = [&]() -> std::optional<bool> {
@@ -1915,23 +1917,42 @@ bool AvoidanceModule::isSafePath(
     return true;
   }
 
+  const auto hysteresis_factor = safe_ ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+
   const auto safety_check_target_objects = utils::avoidance::getSafetyCheckTargetObjects(
     avoidance_data_, planner_data_, parameters_, is_right_shift.value());
 
   for (const auto & object : safety_check_target_objects) {
+    const auto obj_polygon =
+      tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape);
+
+    const auto is_object_front =
+      utils::path_safety_checker::isTargetObjectFront(getEgoPose(), obj_polygon, p.vehicle_info);
+
+    const auto is_object_incoming =
+      std::abs(calcYawDeviation(getEgoPose(), object.initial_pose.pose)) > M_PI_2;
+
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
       object, parameters_->check_all_predicted_path);
+
+    const auto & ego_predicted_path = is_object_front && !is_object_incoming
+                                        ? ego_predicted_path_for_front_object
+                                        : ego_predicted_path_for_rear_object;
+
     for (const auto & obj_path : obj_predicted_paths) {
       CollisionCheckDebug collision{};
       if (!utils::path_safety_checker::checkCollision(
-            shifted_path.path, ego_predicted_path, object, obj_path, p,
-            p.expected_front_deceleration, p.expected_rear_deceleration, collision)) {
+            shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
+            hysteresis_factor, collision)) {
+        safe_count_ = 0;
         return false;
       }
     }
   }
 
-  return true;
+  safe_count_++;
+
+  return safe_ || safe_count_ > parameters_->hysteresis_factor_safe_count;
 }
 
 void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output) const
@@ -2577,6 +2598,8 @@ void AvoidanceModule::updateData()
   fillShiftLine(avoidance_data_, debug_data_);
   fillEgoStatus(avoidance_data_, debug_data_);
   fillDebugData(avoidance_data_, debug_data_);
+
+  safe_ = avoidance_data_.safe;
 }
 
 void AvoidanceModule::processOnEntry()
