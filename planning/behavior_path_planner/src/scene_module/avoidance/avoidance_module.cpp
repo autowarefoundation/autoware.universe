@@ -23,7 +23,10 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
@@ -1901,10 +1904,9 @@ bool AvoidanceModule::isSafePath(
 
         safe_count_ = 0;
         return false;
-      } else {
-        marker_utils::updateCollisionCheckDebugMap(debug.collision_check, current_debug_data, true);
       }
     }
+    marker_utils::updateCollisionCheckDebugMap(debug.collision_check, current_debug_data, true);
   }
 
   safe_count_++;
@@ -2536,6 +2538,7 @@ void AvoidanceModule::updateData()
 void AvoidanceModule::processOnEntry()
 {
   initVariables();
+  removeRTCStatus();
 }
 
 void AvoidanceModule::processOnExit()

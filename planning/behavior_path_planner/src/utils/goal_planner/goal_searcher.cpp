@@ -18,7 +18,9 @@
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
+#include <boost/geometry/algorithms/union.hpp>
 #include <boost/optional.hpp>
 
 #include <memory>
@@ -72,10 +74,6 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
   auto center_line_path = utils::resamplePathWithSpline(
     route_handler->getCenterLinePath(pull_over_lanes, s_start, s_end),
     parameters_.goal_search_interval);
-
-  const auto [shoulder_lane_objects, others] =
-    utils::path_safety_checker::separateObjectsByLanelets(
-      *(planner_data_->dynamic_object), pull_over_lanes);
 
   std::vector<Pose> original_search_poses{};  // for search area visualizing
   size_t goal_id = 0;
@@ -157,16 +155,18 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
       continue;
     }
 
-    // check margin with pull over lane objects
+    // check longitudinal margin with pull over lane objects
     const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
       *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
       parameters_.forward_goal_search_length);
-    const auto [shoulder_lane_objects, others] =
+    const auto [pull_over_lane_objects, others] =
       utils::path_safety_checker::separateObjectsByLanelets(
         *(planner_data_->dynamic_object), pull_over_lanes);
+    const auto pull_over_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+      pull_over_lane_objects, parameters_.th_moving_object_velocity);
     constexpr bool filter_inside = true;
     const auto target_objects = goal_planner_utils::filterObjectsByLateralDistance(
-      goal_pose, planner_data_->parameters.vehicle_width, shoulder_lane_objects,
+      goal_pose, planner_data_->parameters.vehicle_width, pull_over_lane_stop_objects,
       parameters_.object_recognition_collision_check_margin, filter_inside);
     if (checkCollisionWithLongitudinalDistance(goal_pose, target_objects)) {
       goal_candidate.is_safe = false;
@@ -190,8 +190,16 @@ bool GoalSearcher::checkCollision(const Pose & pose) const
   }
 
   if (parameters_.use_object_recognition) {
+    const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+      *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
+      parameters_.forward_goal_search_length);
+    const auto [pull_over_lane_objects, others] =
+      utils::path_safety_checker::separateObjectsByLanelets(
+        *(planner_data_->dynamic_object), pull_over_lanes);
+    const auto pull_over_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+      pull_over_lane_objects, parameters_.th_moving_object_velocity);
     if (utils::checkCollisionBetweenFootprintAndObjects(
-          vehicle_footprint_, pose, *(planner_data_->dynamic_object),
+          vehicle_footprint_, pose, pull_over_lane_stop_objects,
           parameters_.object_recognition_collision_check_margin)) {
       return true;
     }

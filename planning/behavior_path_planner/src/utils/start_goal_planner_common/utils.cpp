@@ -14,6 +14,8 @@
 
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 
+#include <tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp>
+
 namespace behavior_path_planner::utils::start_goal_planner_common
 {
 
@@ -142,6 +144,21 @@ void updatePathProperty(
   ego_predicted_path_params->acceleration = acceleration;
 }
 
+void initializeCollisionCheckDebugMap(CollisionCheckDebugMap & collision_check_debug_map)
+{
+  collision_check_debug_map.clear();
+}
+
+void updateSafetyCheckTargetObjectsData(
+  StartGoalPlannerData & data, const PredictedObjects & filtered_objects,
+  const TargetObjectsOnLane & target_objects_on_lane,
+  const std::vector<PoseWithVelocityStamped> & ego_predicted_path)
+{
+  data.filtered_objects = filtered_objects;
+  data.target_objects_on_lane = target_objects_on_lane;
+  data.ego_predicted_path = ego_predicted_path;
+}
+
 std::pair<double, double> getPairsTerminalVelocityAndAccel(
   const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel,
   const size_t current_path_idx)
@@ -150,6 +167,21 @@ std::pair<double, double> getPairsTerminalVelocityAndAccel(
     return std::make_pair(0.0, 0.0);
   }
   return pairs_terminal_velocity_and_accel.at(current_path_idx);
+}
+
+PathWithLaneId removeInverseOrderPathPoints(const PathWithLaneId & path)
+{
+  PathWithLaneId fixed_path;
+  fixed_path.header = path.header;
+  fixed_path.points.push_back(path.points.at(0));
+  for (size_t i = 1; i < path.points.size(); i++) {
+    const auto p1 = path.points.at(i - 1).point.pose;
+    const auto p2 = path.points.at(i).point.pose;
+    if (tier4_autoware_utils::isDrivingForward(p1, p2)) {
+      fixed_path.points.push_back(path.points.at(i));
+    }
+  }
+  return fixed_path;
 }
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common
