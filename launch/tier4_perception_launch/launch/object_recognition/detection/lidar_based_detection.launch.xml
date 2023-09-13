@@ -11,6 +11,13 @@
   <arg name="container_name" default="pointcloud_container"/>
   <arg name="use_validator" default="true" description="use obstacle_pointcloud based validator"/>
   <arg name="score_threshold" default="0.35"/>
+  <arg name="centerpoint_model_name" default="centerpoint_tiny"/>
+  <arg name="centerpoint_model_path" default="$(find-pkg-share lidar_centerpoint)/data"/>
+  <arg name="lidar_model_param_path" default="$(find-pkg-share lidar_centerpoint)/config"/>
+  <arg name="objects_validation_method" default="obstacle_pointcloud"/>
+  <arg name="objects_filter_method" default="lanelet_filter"/>
+  <arg name="object_recognition_detection_object_merger_data_association_matrix_param_path" default="$(find-pkg-share object_merger)/config/data_association_matrix.param.yaml"/>
+  <arg name="object_recognition_detection_object_merger_distance_threshold_list_path" default="$(find-pkg-share object_merger)/config/overlapped_judge.param.yaml"/>
 
   <!-- Pointcloud map filter -->
   <group>
@@ -105,12 +112,19 @@
   </group>
 
   <!-- Validator -->
-  <group>
+  <group if="$(eval &quot;'$(var objects_validation_method)'=='obstacle_pointcloud'&quot;)">
     <let name="validator/input/obstacle_pointcloud" value="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud" if="$(var use_pointcloud_map)"/>
     <let name="validator/input/obstacle_pointcloud" value="$(var input/obstacle_segmentation/pointcloud)" unless="$(var use_pointcloud_map)"/>
     <include file="$(find-pkg-share detected_object_validation)/launch/obstacle_pointcloud_based_validator.launch.xml" if="$(var use_validator)">
       <arg name="input/detected_objects" value="$(var lidar_detection_model)/objects"/>
       <arg name="input/obstacle_pointcloud" value="$(var validator/input/obstacle_pointcloud)"/>
+      <arg name="output/objects" value="$(var lidar_detection_model)/validation/objects"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var objects_validation_method)'=='occupancy_grid'&quot;)">
+    <include file="$(find-pkg-share detected_object_validation)/launch/occupancy_grid_based_validator.launch.xml" if="$(var use_validator)">
+      <arg name="input/detected_objects" value="$(var lidar_detection_model)/objects"/>
       <arg name="output/objects" value="$(var lidar_detection_model)/validation/objects"/>
     </include>
   </group>
@@ -134,6 +148,7 @@
     <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
       <arg name="input/object0" value="temporary_merged_objects"/>
       <arg name="input/object1" value="detection_by_tracker/objects"/>
+      <arg name="priority_mode" value="0"/>
       <arg name="output/object" value="$(var merger/output/objects)"/>
       <arg name="data_association_matrix_path" value="$(var object_recognition_detection_object_merger_data_association_matrix_param_path)"/>
       <arg name="distance_threshold_list_path" value="$(var object_recognition_detection_object_merger_distance_threshold_list_path)"/>
@@ -141,11 +156,19 @@
   </group>
 
   <!-- Filter -->
-  <group>
+  <group if="$(eval &quot;'$(var objects_filter_method)'=='lanelet_filter'&quot;)">
     <include file="$(find-pkg-share detected_object_validation)/launch/object_lanelet_filter.launch.xml" if="$(var use_object_filter)">
       <arg name="input/object" value="objects_before_filter"/>
       <arg name="output/object" value="$(var output/objects)"/>
       <arg name="filtering_range_param" value="$(var object_recognition_detection_object_lanelet_filter_param_path)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var objects_filter_method)'=='position_filter'&quot;)">
+    <include file="$(find-pkg-share detected_object_validation)/launch/object_position_filter.launch.xml" if="$(var use_object_filter)">
+      <arg name="input/object" value="objects_before_filter"/>
+      <arg name="output/object" value="$(var output/objects)"/>
+      <arg name="filtering_range_param" value="$(var object_recognition_detection_object_position_filter_param_path)"/>
     </include>
   </group>
 </launch>

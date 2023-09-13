@@ -16,13 +16,15 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
@@ -47,7 +49,7 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 
-using marker_utils::CollisionCheckDebug;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 
 struct ObjectParameter
 {
@@ -79,12 +81,6 @@ struct AvoidanceParameters
   // computational cost for latter modules.
   double resample_interval_for_output = 3.0;
 
-  // lanelet expand length for right side to find avoidance target vehicles
-  double detection_area_right_expand_dist = 0.0;
-
-  // lanelet expand length for left side to find avoidance target vehicles
-  double detection_area_left_expand_dist = 1.0;
-
   // enable avoidance to be perform only in lane with same direction
   bool use_adjacent_lane{true};
 
@@ -92,8 +88,8 @@ struct AvoidanceParameters
   // to use this, enable_avoidance_over_same_direction need to be set to true.
   bool use_opposite_lane{true};
 
-  // enable update path when if detected objects on planner data is gone.
-  bool enable_update_path_when_object_is_gone{false};
+  // if this param is true, it reverts avoidance path when the path is no longer needed.
+  bool enable_cancel_maneuver{false};
 
   // enable avoidance for all parking vehicle
   bool enable_force_avoidance_for_stopped_vehicle{false};
@@ -113,8 +109,11 @@ struct AvoidanceParameters
   // use intersection area for avoidance
   bool use_intersection_areas{false};
 
-  // constrains
-  bool use_constraints_for_decel{false};
+  // // constrains
+  // bool use_constraints_for_decel{false};
+
+  // // policy
+  // bool use_relaxed_margin_immediately{false};
 
   // max deceleration for
   double max_deceleration;
@@ -189,17 +188,16 @@ struct AvoidanceParameters
 
   // parameters for collision check.
   bool check_all_predicted_path{false};
-  double safety_check_time_horizon{0.0};
+  double time_horizon_for_front_object{0.0};
+  double time_horizon_for_rear_object{0.0};
   double safety_check_time_resolution{0.0};
 
   // find adjacent lane vehicles
   double safety_check_backward_distance;
 
   // transit hysteresis (unsafe to safe)
-  double safety_check_hysteresis_factor;
-
-  // don't output new candidate path if the offset between ego and path is larger than this.
-  double safety_check_ego_offset;
+  size_t hysteresis_factor_safe_count;
+  double hysteresis_factor_expand_rate;
 
   // keep target velocity in yield maneuver
   double yield_velocity;
@@ -230,7 +228,11 @@ struct AvoidanceParameters
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double road_shoulder_safety_margin{1.0};
+  double soft_road_shoulder_margin{1.0};
+
+  // The margin is configured so that the generated avoidance trajectory does not come near to the
+  // road shoulder.
+  double hard_road_shoulder_margin{1.0};
 
   // Even if the obstacle is very large, it will not avoid more than this length for right direction
   double max_right_shift_length;
@@ -274,6 +276,15 @@ struct AvoidanceParameters
   // For shift line generation process. Remove sharp(=jerky) shift line.
   double sharp_shift_filter_threshold;
 
+  // policy
+  bool use_shorten_margin_immediately{false};
+
+  // policy
+  std::string policy_deceleration{"best_effort"};
+
+  // policy
+  std::string policy_lateral_margin{"best_effort"};
+
   // target velocity matrix
   std::vector<double> velocity_map;
 
@@ -288,6 +299,9 @@ struct AvoidanceParameters
 
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
+
+  // rss parameters
+  utils::path_safety_checker::RSSparams rss_params;
 
   // clip left and right bounds for objects
   bool enable_bound_clipping{false};
@@ -465,6 +479,8 @@ struct AvoidancePlanningData
 
   bool safe{false};
 
+  bool comfortable{false};
+
   bool avoid_required{false};
 
   bool yield_required{false};
@@ -499,33 +515,13 @@ struct ShiftLineData
 };
 
 /*
- * Data struct for longitudinal margin
- */
-struct MarginData
-{
-  Pose pose{};
-
-  bool enough_lateral_margin{true};
-
-  double longitudinal_distance{std::numeric_limits<double>::max()};
-
-  double longitudinal_margin{std::numeric_limits<double>::lowest()};
-
-  double vehicle_width;
-
-  double base_link2front;
-
-  double base_link2rear;
-};
-using MarginDataArray = std::vector<MarginData>;
-
-/*
  * Debug information for marker array
  */
 struct DebugData
 {
-  std::shared_ptr<lanelet::ConstLanelets> expanded_lanelets;
   std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
+
+  geometry_msgs::msg::Polygon detection_area;
 
   lanelet::ConstLineStrings3d bounds;
 
@@ -561,14 +557,6 @@ struct DebugData
   // shift path
   std::vector<double> proposed_spline_shift;
 
-  bool exist_adjacent_objects{false};
-
-  // future pose
-  PathWithLaneId path_with_planned_velocity;
-
-  // margin
-  MarginDataArray margin_data_array;
-
   // avoidance require objects
   ObjectDataArray unavoidable_objects;
 
@@ -578,6 +566,10 @@ struct DebugData
   // tmp for plot
   PathWithLaneId center_line;
 
+  // collision check debug map
+  utils::path_safety_checker::CollisionCheckDebugMap collision_check;
+
+  // debug msg array
   AvoidanceDebugMsgArray avoidance_debug_msg_array;
 };
 

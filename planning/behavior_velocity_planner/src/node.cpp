@@ -16,7 +16,10 @@
 
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
+#include <motion_utils/trajectory/path_with_lane_id.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/ros/wait_for_param.hpp>
+#include <tier4_autoware_utils/transform/transforms.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -99,7 +102,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1),
     createSubscriptionOptions(this));
   sub_traffic_signals_ =
-    this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
+    this->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
       "~/input/traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
@@ -287,15 +290,15 @@ void BehaviorVelocityPlannerNode::onLaneletMap(
 }
 
 void BehaviorVelocityPlannerNode::onTrafficSignals(
-  const autoware_auto_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
+  const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
   for (const auto & signal : msg->signals) {
-    autoware_auto_perception_msgs::msg::TrafficSignalStamped traffic_signal;
-    traffic_signal.header = msg->header;
+    TrafficSignalStamped traffic_signal;
+    traffic_signal.stamp = msg->stamp;
     traffic_signal.signal = signal;
-    planner_data_.traffic_light_id_map[signal.map_primitive_id] = traffic_signal;
+    planner_data_.traffic_light_id_map[signal.traffic_signal_id] = traffic_signal;
   }
 }
 

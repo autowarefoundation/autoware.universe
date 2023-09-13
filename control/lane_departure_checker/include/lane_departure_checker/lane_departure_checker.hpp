@@ -18,7 +18,6 @@
 #include <rosidl_runtime_cpp/message_initialization.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/pose_deviation.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -73,6 +72,7 @@ struct Input
   lanelet::ConstLanelets shoulder_lanelets{};
   Trajectory::ConstSharedPtr reference_trajectory{};
   Trajectory::ConstSharedPtr predicted_trajectory{};
+  std::vector<std::string> boundary_types_to_detect{};
 };
 
 struct Output
@@ -80,6 +80,7 @@ struct Output
   std::map<std::string, double> processing_time_map{};
   bool will_leave_lane{};
   bool is_out_of_lane{};
+  bool will_cross_boundary{};
   PoseDeviation trajectory_deviation{};
   lanelet::ConstLanelets candidate_lanelets{};
   TrajectoryPoints resampled_trajectory{};
@@ -135,6 +136,14 @@ private:
   static bool willLeaveLane(
     const lanelet::ConstLanelets & candidate_lanelets,
     const std::vector<LinearRing2d> & vehicle_footprints);
+
+  static bool willCrossBoundary(
+    const lanelet::ConstLanelets & candidate_lanelets,
+    const std::vector<LinearRing2d> & vehicle_footprints,
+    const std::vector<std::string> & boundary_types_to_detects);
+
+  static bool isCrossingRoadBorder(
+    const lanelet::BasicLineString2d & road_border, const std::vector<LinearRing2d> & footprints);
 };
 }  // namespace lane_departure_checker
 

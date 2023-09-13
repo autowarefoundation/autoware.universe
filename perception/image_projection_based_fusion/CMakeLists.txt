@@ -22,6 +22,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/utils/utils.cpp
   src/roi_cluster_fusion/node.cpp
   src/roi_detected_object_fusion/node.cpp
+  src/roi_pointcloud_fusion/node.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -37,6 +38,11 @@ rclcpp_components_register_node(${PROJECT_NAME}
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "image_projection_based_fusion::RoiClusterFusionNode"
   EXECUTABLE roi_cluster_fusion_node
+)
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "image_projection_based_fusion::RoiPointCloudFusionNode"
+  EXECUTABLE roi_pointcloud_fusion_node
 )
 
 set(CUDA_VERBOSE OFF)
@@ -124,7 +130,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
       else()
         message(STATUS "diff ${FILE_NAME}")
         message(STATUS "File hash changes. Downloading now ...")
-        file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/pointpainting/v3/${FILE_NAME}
+        file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/pointpainting/v4/${FILE_NAME}
                       ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
         list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
         list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
@@ -132,7 +138,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     else()
       message(STATUS "not found ${FILE_NAME}")
       message(STATUS "File doesn't exists. Downloading now ...")
-      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/pointpainting/v3/${FILE_NAME}
+      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/pointpainting/v4/${FILE_NAME}
                     ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
       list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
       list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
@@ -145,8 +151,8 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   endfunction()
 
   # default model
-  download(pts_voxel_encoder_pointpainting.onnx e674271096f6fbbe0f808eef87f5a5ab)
-  download(pts_backbone_neck_head_pointpainting.onnx d4527a4da08959c2bf9c997112a1de35)
+  download(pts_voxel_encoder_pointpainting.onnx 25c70f76a45a64944ccd19f604c99410)
+  download(pts_backbone_neck_head_pointpainting.onnx 2c7108245240fbd7bf0104dd68225868)
   find_package(OpenCV REQUIRED)
   find_package(Eigen3 REQUIRED)
 

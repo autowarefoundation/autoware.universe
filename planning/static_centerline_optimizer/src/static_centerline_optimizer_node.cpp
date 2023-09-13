@@ -18,14 +18,20 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "map_loader/lanelet2_map_loader_node.hpp"
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/tmp_conversion.hpp"
 #include "static_centerline_optimizer/msg/points_with_lane_id.hpp"
 #include "static_centerline_optimizer/successive_trajectory_optimizer_node.hpp"
 #include "static_centerline_optimizer/type_alias.hpp"
 #include "static_centerline_optimizer/utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
+
+#include <tier4_map_msgs/msg/map_projector_info.hpp>
+
+#include <boost/geometry/algorithms/correct.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_io/Io.h>
@@ -242,7 +248,9 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
   map_bin_ptr_ = [&]() -> HADMapBin::ConstSharedPtr {
     // load map
     lanelet::LaneletMapPtr map_ptr;
-    map_ptr = Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, "MGRS");
+    tier4_map_msgs::msg::MapProjectorInfo map_projector_info;
+    map_projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
+    map_ptr = Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
     if (!map_ptr) {
       return nullptr;
     }

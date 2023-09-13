@@ -43,11 +43,11 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using marker_utils::CollisionCheckDebugMap;
 using route_handler::Direction;
 using tier4_autoware_utils::StopWatch;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
@@ -209,6 +209,10 @@ public:
     return direction_;
   }
 
+  boost::optional<Pose> getStopPose() const { return lane_change_stop_pose_; }
+
+  void resetStopPose() { lane_change_stop_pose_ = boost::none; }
+
 protected:
   virtual lanelet::ConstLanelets getCurrentLanes() const = 0;
 
@@ -244,6 +248,7 @@ protected:
   PathWithLaneId prev_module_path_{};
   DrivableAreaInfo prev_drivable_area_info_{};
   TurnSignalInfo prev_turn_signal_info_{};
+  boost::optional<Pose> lane_change_stop_pose_{boost::none};
 
   PathWithLaneId prev_approved_path_{};
 

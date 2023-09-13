@@ -15,9 +15,13 @@
 #ifndef OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 #define OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/interpolation.hpp"
+#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_cruise_planner/type_alias.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
+#include "tier4_autoware_utils/ros/uuid_helper.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -104,12 +108,15 @@ struct StopObstacle : public TargetObstacleInterface
 {
   StopObstacle(
     const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const geometry_msgs::msg::Pose & arg_pose, const double arg_lon_velocity,
-    const double arg_lat_velocity, const geometry_msgs::msg::Point arg_collision_point)
+    const geometry_msgs::msg::Pose & arg_pose, const Shape & arg_shape,
+    const double arg_lon_velocity, const double arg_lat_velocity,
+    const geometry_msgs::msg::Point arg_collision_point)
   : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_lon_velocity, arg_lat_velocity),
+    shape(arg_shape),
     collision_point(arg_collision_point)
   {
   }
+  Shape shape;
   geometry_msgs::msg::Point collision_point;
 };
 
@@ -165,6 +172,11 @@ struct LongitudinalInfo
     safe_distance_margin = node.declare_parameter<double>("common.safe_distance_margin");
     terminal_safe_distance_margin =
       node.declare_parameter<double>("common.terminal_safe_distance_margin");
+
+    hold_stop_velocity_threshold =
+      node.declare_parameter<double>("common.hold_stop_velocity_threshold");
+    hold_stop_distance_threshold =
+      node.declare_parameter<double>("common.hold_stop_distance_threshold");
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -188,6 +200,11 @@ struct LongitudinalInfo
       parameters, "common.safe_distance_margin", safe_distance_margin);
     tier4_autoware_utils::updateParam<double>(
       parameters, "common.terminal_safe_distance_margin", terminal_safe_distance_margin);
+
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "common.hold_stop_velocity_threshold", hold_stop_velocity_threshold);
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "common.hold_stop_distance_threshold", hold_stop_distance_threshold);
   }
 
   // common parameter
@@ -208,6 +225,10 @@ struct LongitudinalInfo
   // distance margin
   double safe_distance_margin;
   double terminal_safe_distance_margin;
+
+  // hold stop
+  double hold_stop_velocity_threshold;
+  double hold_stop_distance_threshold;
 };
 
 struct DebugData

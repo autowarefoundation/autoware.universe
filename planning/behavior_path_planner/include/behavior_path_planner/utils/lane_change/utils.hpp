@@ -19,7 +19,8 @@
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
-#include "behavior_path_planner/utils/safety_check.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <route_handler/route_handler.hpp>
@@ -43,10 +44,10 @@ using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using behavior_path_planner::utils::safety_check::ExtendedPredictedObject;
-using behavior_path_planner::utils::safety_check::PoseWithVelocityAndPolygonStamped;
-using behavior_path_planner::utils::safety_check::PoseWithVelocityStamped;
-using behavior_path_planner::utils::safety_check::PredictedPathWithPolygon;
+using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityAndPolygonStamped;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
+using behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -185,12 +186,6 @@ boost::optional<size_t> getLeadingStaticObjectIdx(
 
 std::optional<lanelet::BasicPolygon2d> createPolygon(
   const lanelet::ConstLanelets & lanes, const double start_dist, const double end_dist);
-
-LaneChangeTargetObjectIndices filterObject(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const lanelet::ConstLanelets & target_backward_lanes,
-  const Pose & current_pose, const RouteHandler & route_handler,
-  const LaneChangeParameters & lane_change_parameters);
 
 ExtendedPredictedObject transform(
   const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,

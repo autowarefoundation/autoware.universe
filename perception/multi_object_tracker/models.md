@@ -35,7 +35,7 @@ $$
 Kinematic bicycle model uses slip angle $\beta$ and velocity $v$ to calculate yaw update.
 The merit of using this model is that it can prevent unintended yaw rotation when the vehicle is stopped.
 
-![kbmodel](image/kinematic_bicycle_model.png)
+![kinematic_bicycle_model](image/kinematic_bicycle_model.png)
 
 - **state variable**
   - pose( $x,y$ ), velocity( $v$ ), yaw( $\psi$ ), and slip angle ( $\beta$ )
@@ -63,6 +63,18 @@ $$
 0 & 0 & 0 & 1 & 0 \\
 0 & 0 & 0 & 0 & 1
 \end{array}\right]
+$$
+
+#### remarks on the output twist
+
+Remarks that the velocity $v_{k}$ is the norm of velocity of vehicle, not the longitudinal velocity.
+So the output twist in the object coordinate $(x,y)$ is calculated as follows.
+
+$$
+\begin{aligned}
+v_{x} &= v_{k} \cos \left(\beta_{k}\right) \\
+v_{y} &= v_{k} \sin \left(\beta_{k}\right)
+\end{aligned}
 $$
 
 ## Anchor point based estimation

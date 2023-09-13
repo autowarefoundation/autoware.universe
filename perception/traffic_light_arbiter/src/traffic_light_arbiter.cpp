@@ -16,6 +16,7 @@
 #include <rclcpp/time.hpp>
 #include <traffic_light_arbiter/traffic_light_arbiter.hpp>
 
+#include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <map>
@@ -111,7 +112,8 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
   std::unordered_map<lanelet::Id, std::vector<ElementAndPriority>> regulatory_element_signals_map;
 
   if (map_regulatory_elements_set_ == nullptr) {
-    RCLCPP_WARN(get_logger(), "Received traffic signal messages before a map");
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Received traffic signal messages before a map");
     return;
   }
 
@@ -126,8 +128,9 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
   auto add_signal_function = [&](const auto & signal, bool priority) {
     const auto id = signal.traffic_signal_id;
     if (!map_regulatory_elements_set_->count(id)) {
-      RCLCPP_WARN(
-        get_logger(), "Received a traffic signal not present in the current map (%lu)", id);
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 5000,
+        "Received a traffic signal not present in the current map (%lu)", id);
       return;
     }
 
@@ -147,14 +150,14 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
 
   const auto get_highest_confidence_elements =
     [](const std::vector<ElementAndPriority> & elements_and_priority_vector) {
-      using Key = std::tuple<Element::_color_type, Element::_shape_type>;
+      using Key = Element::_shape_type;
       std::map<Key, ElementAndPriority> highest_score_element_and_priority_map;
       std::vector<Element> highest_score_elements_vector;
 
       for (const auto & elements_and_priority : elements_and_priority_vector) {
         const auto & element = elements_and_priority.first;
         const auto & element_priority = elements_and_priority.second;
-        const auto key = std::make_tuple(element.color, element.shape);
+        const auto key = element.shape;
         auto [iter, success] =
           highest_score_element_and_priority_map.try_emplace(key, elements_and_priority);
         const auto & iter_element = iter->second.first;

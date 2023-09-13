@@ -17,8 +17,8 @@
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <lanelet2_extension/utility/query.hpp>
-#include <motion_utils/motion_utils.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -27,6 +27,7 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
+#include <autoware_perception_msgs/msg/traffic_signal.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
@@ -76,6 +77,12 @@ struct PointWithSearchRangeIndex
 {
   geometry_msgs::msg::Point point;
   SearchRangeIndex index;
+};
+
+struct TrafficSignalStamped
+{
+  builtin_interfaces::msg::Time stamp;
+  autoware_perception_msgs::msg::TrafficSignal signal;
 };
 
 using geometry_msgs::msg::Pose;

@@ -16,9 +16,7 @@
 #define ROUTE_HANDLER__ROUTE_HANDLER_HPP_
 
 #include <lanelet2_extension/utility/query.hpp>
-#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -89,7 +87,7 @@ public:
   // for routing
   bool planPathLaneletsBetweenCheckpoints(
     const Pose & start_checkpoint, const Pose & goal_checkpoint,
-    lanelet::ConstLanelets * path_lanelets) const;
+    lanelet::ConstLanelets * path_lanelets, const bool consider_no_drivable_lanes = false) const;
   std::vector<LaneletSegment> createMapSegments(const lanelet::ConstLanelets & path_lanelets) const;
   static bool isRouteLooped(const RouteSections & route_sections);
 
@@ -97,6 +95,8 @@ public:
   bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
   Pose getGoalPose() const;
   Pose getStartPose() const;
+  Pose getOriginalStartPose() const;
+  Pose getOriginalGoalPose() const;
   lanelet::Id getGoalLaneId() const;
   bool getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const;
   std::vector<lanelet::ConstLanelet> getLanesBeforePose(
@@ -120,7 +120,8 @@ public:
    * @return vector of lanelet having same direction if true
    */
   boost::optional<lanelet::ConstLanelet> getRightLanelet(
-    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false,
+    const bool get_shoulder_lane = false) const;
 
   /**
    * @brief Check if same-direction lane is available at the left side of the lanelet
@@ -130,7 +131,8 @@ public:
    * @return vector of lanelet having same direction if true
    */
   boost::optional<lanelet::ConstLanelet> getLeftLanelet(
-    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false,
+    const bool get_shoulder_lane = false) const;
   lanelet::ConstLanelets getNextLanelets(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getPreviousLanelets(const lanelet::ConstLanelet & lanelet) const;
 
@@ -193,7 +195,8 @@ public:
    * @return vector of lanelet having same direction if true
    */
   lanelet::ConstLanelet getMostRightLanelet(
-    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false,
+    const bool get_shoulder_lane = false) const;
 
   /**
    * @brief Check if same-direction lane is available at the left side of the lanelet
@@ -203,7 +206,8 @@ public:
    * @return vector of lanelet having same direction if true
    */
   lanelet::ConstLanelet getMostLeftLanelet(
-    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false) const;
+    const lanelet::ConstLanelet & lanelet, const bool enable_same_root = false,
+    const bool get_shoulder_lane = false) const;
 
   /**
    * @brief Searches the furthest linestring to the right side of the lanelet
@@ -374,6 +378,10 @@ private:
 
   bool is_map_msg_ready_{false};
   bool is_handler_ready_{false};
+
+  // save original(not modified) route start pose for start planer execution
+  Pose original_start_pose_;
+  Pose original_goal_pose_;
 
   // non-const methods
   void setLaneletsFromRouteMsg();
