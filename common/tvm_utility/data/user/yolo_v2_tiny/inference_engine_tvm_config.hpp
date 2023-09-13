@@ -14,8 +14,8 @@
 
 #include "tvm_utility/pipeline.hpp"
 
-#ifndef YOLO_V2_TINY_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
-#define YOLO_V2_TINY_INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#ifndef COMMON__TVM_UTILITY__DATA__USER__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#define COMMON__TVM_UTILITY__DATA__USER__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_
 
 namespace model_zoo
 {
@@ -28,30 +28,22 @@ namespace yolo_v2_tiny
 namespace tensorflow_fp32_coco
 {
 
-static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
-  {
-    3,
-    0,
-    0
-  },  // modelzoo_version
+static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
+  {3, 0, 0},  // modelzoo_version
 
   "yolo_v2_tiny",  // network_name
-  "llvm",  // network_backend
+  "llvm",          // network_backend
 
-  "deploy_lib.so",  //network_module_path
-  "deploy_graph.json",  // network_graph_path
+  "deploy_lib.so",        // network_module_path
+  "deploy_graph.json",    // network_graph_path
   "deploy_param.params",  // network_params_path
 
   kDLCPU,  // tvm_device_type
-  0,  // tvm_device_id
+  0,       // tvm_device_id
 
-  {
-    {"input", kDLFloat, 32, 1, {-1, 416, 416, 3}}
-  },  // network_inputs
+  {{"input", kDLFloat, 32, 1, {-1, 416, 416, 3}}},  // network_inputs
 
-  {
-    {"output", kDLFloat, 32, 1, {1, 13, 13, 425}}
-  }  // network_outputs
+  {{"output", kDLFloat, 32, 1, {1, 13, 13, 425}}}  // network_outputs
 };
 
 }  // namespace tensorflow_fp32_coco
@@ -59,4 +51,5 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
 }  // namespace camera_obstacle_detection
 }  // namespace perception
 }  // namespace model_zoo
-#endif  // YOLO_V2_TINY_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#endif  // COMMON__TVM_UTILITY__DATA__USER__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_  //
+        // NOLINT

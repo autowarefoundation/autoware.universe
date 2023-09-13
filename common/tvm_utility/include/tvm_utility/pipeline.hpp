@@ -225,14 +225,13 @@ class InferenceEngineTVM : public InferenceEngine
 {
 public:
   explicit InferenceEngineTVM(
-    const InferenceEngineTVMConfig & config, 
-    const std::string & pkg_name,
+    const InferenceEngineTVMConfig & config, const std::string & pkg_name,
     const std::string & autoware_data_path)
   : config_(config)
   {
     // Get full network path
-    std::string network_prefix = autoware_data_path + pkg_name +
-                                 "/models/" + config.network_name + "/";
+    std::string network_prefix =
+      autoware_data_path + pkg_name + "/models/" + config.network_name + "/";
     std::string network_module_path = network_prefix + config.network_module_path;
     std::string network_graph_path = network_prefix + config.network_graph_path;
     std::string network_params_path = network_prefix + config.network_params_path;
@@ -295,9 +294,7 @@ public:
     }
   }
 
-    explicit InferenceEngineTVM(
-    const InferenceEngineTVMConfig & config, 
-    const std::string & pkg_name)
+  explicit InferenceEngineTVM(const InferenceEngineTVMConfig & config, const std::string & pkg_name)
   : config_(config)
   {
     // Get full network path
