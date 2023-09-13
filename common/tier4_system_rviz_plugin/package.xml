@@ -6,8 +6,6 @@
   <description>The tier4_vehicle_rviz_plugin package</description>
   <author email="koji.minoda@tier4.jp">Koji Minoda</author>
   <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
-  <maintainer email="isamu.takagi@tier4.jp">Isamu Takagi</maintainer>
-  <maintainer email="fumihito.ito@tier4.jp">Fumihito Ito</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
