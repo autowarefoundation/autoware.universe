@@ -446,12 +446,6 @@ private:
    */
   void applySimilarGradFilter(AvoidLineArray & shift_lines, const double threshold) const;
 
-  /*
-   * @brief trim invalid shift lines whose gradient it too large to follow.
-   * @param target shift lines.
-   */
-  void applySharpShiftFilter(AvoidLineArray & shift_lines, const double threshold) const;
-
   /**
    * @brief add new shift line to path shifter if the RTC status is activated.
    * @param new shift lines.

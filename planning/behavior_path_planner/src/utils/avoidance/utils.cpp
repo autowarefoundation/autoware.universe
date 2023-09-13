@@ -363,20 +363,7 @@ std::vector<size_t> calcParentIds(const AvoidLineArray & lines1, const AvoidLine
       continue;
     }
 
-    // Id the shift is overlapped, insert the shift point. Additionally, the shift which refers
-    // to the same object id (created by the same object) will be set.
-    //
-    // Why? : think that there are two shifts, avoiding and .
-    // If you register only the avoiding shift, the return-to-center shift will not be generated
-    // when you get too close to or over the obstacle. The return-shift can be handled with
-    // addReturnShift(), but it maybe reasonable to register the return-to-center shift for the
-    // object at the same time as registering the avoidance shift to remove the complexity of the
-    // addReturnShift().
-    for (const auto & al_local : lines1) {
-      if (al_local.object.object.object_id == al.object.object.object_id) {
-        ids.insert(al_local.id);
-      }
-    }
+    ids.insert(al.id);
   }
   return std::vector<size_t>(ids.begin(), ids.end());
 }
