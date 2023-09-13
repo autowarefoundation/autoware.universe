@@ -110,12 +110,6 @@ struct AvoidanceParameters
   // use intersection area for avoidance
   bool use_intersection_areas{false};
 
-  // // constrains
-  // bool use_constraints_for_decel{false};
-
-  // // policy
-  // bool use_relaxed_margin_immediately{false};
-
   // max deceleration for
   double max_deceleration{0.0};
 
@@ -488,13 +482,13 @@ struct AvoidancePlanningData
   boost::optional<ObjectData> stop_target_object{boost::none};
 
   // raw shift point
-  AvoidLineArray unapproved_raw_sl{};
+  AvoidLineArray raw_shift_line{};
 
   // new shift point
-  AvoidLineArray unapproved_new_sl{};
+  AvoidLineArray new_shift_line{};
 
   // safe shift point
-  AvoidLineArray safe_new_sl{};
+  AvoidLineArray safe_shift_line{};
 
   bool safe{false};
 
