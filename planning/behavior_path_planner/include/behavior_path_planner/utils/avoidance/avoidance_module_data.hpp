@@ -546,7 +546,7 @@ struct DebugData
 
   // combine process
   AvoidLineArray step1_registered_shift_line;
-  AvoidLineArray step1_current_raw_shift_line;
+  AvoidLineArray step1_current_shift_line;
   AvoidLineArray step1_filled_shift_line;
   AvoidLineArray step1_merged_shift_line;
   AvoidLineArray step1_combined_shift_line;
@@ -557,11 +557,11 @@ struct DebugData
   AvoidLineArray step2_merged_shift_line;
 
   // trimming process
-  AvoidLineArray step3_quantized_shift_line;
-  AvoidLineArray step3_noise_removed;
-  AvoidLineArray step3_grad_filtered_first;
-  AvoidLineArray step3_grad_filtered_second;
-  AvoidLineArray step3_grad_filtered_third;
+  AvoidLineArray step3_quantize_filtered;
+  AvoidLineArray step3_noise_filtered;
+  AvoidLineArray step3_grad_filtered_1st;
+  AvoidLineArray step3_grad_filtered_2nd;
+  AvoidLineArray step3_grad_filtered_3rd;
 
   // registered process
   AvoidLineArray step4_new_shift_line;

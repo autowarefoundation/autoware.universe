@@ -1080,7 +1080,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
 
   utils::avoidance::fillAdditionalInfoFromLongitudinal(data, outlines);
 
-  debug.step1_current_raw_shift_line = toArray(outlines);
+  debug.step1_current_shift_line = toArray(outlines);
 
   return outlines;
 }
@@ -1488,7 +1488,7 @@ AvoidLineArray AvoidanceModule::applyTrimProcess(
   {
     const auto THRESHOLD = parameters_->same_grad_filter_1_threshold;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
-    debug.step3_grad_filtered_first = sl_array_trimmed;
+    debug.step3_grad_filtered_1st = sl_array_trimmed;
   }
 
   // - Quantize the shift length to reduce the shift point noise
@@ -1496,28 +1496,28 @@ AvoidLineArray AvoidanceModule::applyTrimProcess(
   {
     const auto THRESHOLD = parameters_->quantize_filter_threshold;
     applyQuantizeProcess(sl_array_trimmed, THRESHOLD);
-    debug.step3_quantized_shift_line = sl_array_trimmed;
+    debug.step3_quantize_filtered = sl_array_trimmed;
   }
 
   // - Change the shift length to the previous one if the deviation is small.
   {
     constexpr double SHIFT_DIFF_THRES = 1.0;
     applySmallShiftFilter(sl_array_trimmed, SHIFT_DIFF_THRES);
-    debug.step3_noise_removed = sl_array_trimmed;
+    debug.step3_noise_filtered = sl_array_trimmed;
   }
 
   // - Combine avoid points that have almost same gradient (again)
   {
     const auto THRESHOLD = parameters_->same_grad_filter_2_threshold;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
-    debug.step3_grad_filtered_second = sl_array_trimmed;
+    debug.step3_grad_filtered_2nd = sl_array_trimmed;
   }
 
   // - Combine avoid points that have almost same gradient (again)
   {
     const auto THRESHOLD = parameters_->same_grad_filter_3_threshold;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
-    debug.step3_grad_filtered_third = sl_array_trimmed;
+    debug.step3_grad_filtered_3rd = sl_array_trimmed;
   }
 
   return sl_array_trimmed;
@@ -2636,24 +2636,23 @@ void AvoidanceModule::updateDebugMarker(
 
   // shift line pre-process
   {
-    addAvoidLine(debug.step1_registered_shift_line, "step1_registered_shift_line", 1.0, 1.0, 1.0);
-    addAvoidLine(debug.step1_current_raw_shift_line, "step1_current_raw_shift_line", 0.9, 1.0, 1.0);
-    addAvoidLine(debug.step1_return_shift_line, "step1_return_shift_line", 0.8, 1.0, 1.0);
-    addAvoidLine(debug.step1_filled_shift_line, "step1_filled_shift_line", 0.7, 1.0, 1.0);
+    addAvoidLine(debug.step1_registered_shift_line, "step1_registered_shift_line", 0.2, 0.2, 1.0);
+    addAvoidLine(debug.step1_current_shift_line, "step1_current_shift_line", 0.2, 0.4, 0.8, 0.3);
+    addAvoidLine(debug.step1_merged_shift_line, "step1_merged_shift_line", 0.2, 0.6, 0.6, 0.3);
+    addAvoidLine(debug.step1_filled_shift_line, "step1_filled_shift_line", 0.2, 0.8, 0.4, 0.3);
+    addAvoidLine(debug.step1_return_shift_line, "step1_return_shift_line", 0.2, 1.0, 0.2, 0.3);
   }
 
   // merge process
   {
-    addAvoidLine(debug.step2_merged_shift_line, "step2_merged_shift_line", 0.0, 1.0, 1.0);
+    addAvoidLine(debug.step2_merged_shift_line, "step2_merged_shift_line", 0.2, 1.0, 0.0, 0.3);
   }
 
   // trimming process
   {
-    addAvoidLine(debug.step3_grad_filtered_first, "step3_grad_filtered_first", 0.0, 0.0, 1.0);
-    addAvoidLine(debug.step3_grad_filtered_second, "step3_grad_filtered_second", 0.0, 0.1, 1.0);
-    addAvoidLine(debug.step3_grad_filtered_third, "step3_grad_filtered_third", 0.0, 0.2, 1.0);
-    addAvoidLine(debug.step3_quantized_shift_line, "step3_quantized_shift_line", 0.0, 0.3, 1.0);
-    addAvoidLine(debug.step3_noise_removed, "step3_noise_removed", 0.0, 0.4, 1.0);
+    addAvoidLine(debug.step3_grad_filtered_1st, "step3_grad_filtered_1st", 0.2, 0.8, 0.0, 0.3);
+    addAvoidLine(debug.step3_grad_filtered_2nd, "step3_grad_filtered_2nd", 0.4, 0.6, 0.0, 0.3);
+    addAvoidLine(debug.step3_grad_filtered_3rd, "step3_grad_filtered_3rd", 0.6, 0.4, 0.0, 0.3);
   }
 
   // registering process
