@@ -49,7 +49,7 @@ PUBLIC
 target_link_libraries(dynamic_object_removal ${PCL_LIBRARIES})
 
 # Install the executable to the "lib" folder of your package
-install(TARGETS 
+install(TARGETS
 dynamic_object_removal
 DESTINATION install/${PROJECT_NAME}
 )
