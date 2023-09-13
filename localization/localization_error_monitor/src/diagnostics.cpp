@@ -71,13 +71,11 @@ diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
   diagnostic_msgs::msg::DiagnosticStatus merged_stat;
 
   for (const auto & stat : stat_array) {
-    if ((stat.level > 0) && (merged_stat.level > 0)) {
+    if ((stat.level > diagnostic_msgs::msg::DiagnosticStatus::OK)) {
       if (!merged_stat.message.empty()) {
         merged_stat.message += "; ";
-        merged_stat.message += stat.message;
       }
-    } else if (stat.level > merged_stat.level) {
-      merged_stat.message = stat.message;
+      merged_stat.message += stat.message;
     }
     if (stat.level > merged_stat.level) {
       merged_stat.level = stat.level;
