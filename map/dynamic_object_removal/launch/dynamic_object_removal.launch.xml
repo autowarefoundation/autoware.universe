@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="demo" default="false" />
+
+  <arg name="input/pointcloud" default="/kitti/point_cloud" description="input point cloud topic"/>
+  <arg name="input/objects" default="/objects" description="input objects topic"/>
+
+  <arg name="output/pointcloud" default="/dynamic_object_removal/output" description="output: cleared point cloud topic"/>
+
+  <node pkg="dynamic_object_removal" exec="dynamic_object_removal" name="dynamic_object_removal" output="screen">
+    <remap from="input/pointcloud" to="$(var input/pointcloud)" />
+    <remap from="input/objects" to="$(var input/objects)" />
+    <remap from="output/pointcloud" to="$(var output/pointcloud)" />
+  </node>
+
+  <group if="$(var demo)">
+    <node pkg="rviz2" exec="rviz2" name="rviz2_dynamic_object_removal" output="screen" args="-d $(find-pkg-share dynamic_object_removal)/launch/dor_demo.rviz"/>
+  </group>
+</launch>
