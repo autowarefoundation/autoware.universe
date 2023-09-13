@@ -41,16 +41,18 @@ struct Modes
 class DiagGraph
 {
 public:
-  void create(const std::string & file);
+  void init(const std::string & file);
   void callback(const DiagnosticArray & array, const rclcpp::Time & stamp);
-  DiagnosticGraph report(const rclcpp::Time & stamp);
-  OperationModeAvailability summary(const rclcpp::Time & stamp);
+  void update(const rclcpp::Time & stamp);
+  DiagnosticGraph create_graph_message() const;
+  OperationModeAvailability create_modes_message() const;
 
   void debug();
 
 private:
   Graph graph_;
   Modes modes_;
+  rclcpp::Time stamp_;
 };
 
 }  // namespace system_diagnostic_graph

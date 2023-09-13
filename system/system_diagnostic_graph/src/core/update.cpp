@@ -35,7 +35,7 @@ UnitNode * find_node(Graph & graph, const std::string & name)
   return node;
 };
 
-void DiagGraph::create(const std::string & file)
+void DiagGraph::init(const std::string & file)
 {
   const auto configs = load_config_file(file);
 
@@ -70,37 +70,6 @@ void DiagGraph::create(const std::string & file)
   modes_.pull_over_mrm = find_node(graph_, "/autoware/operation/pull-over");
 }
 
-DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
-{
-  DiagnosticGraph message;
-  message.stamp = stamp;
-  message.nodes.reserve(graph_.nodes().size());
-
-  for (const auto & node : graph_.nodes()) {
-    node->update(stamp);
-  }
-  for (const auto & node : graph_.nodes()) {
-    message.nodes.push_back(node->report());
-  }
-  return message;
-}
-
-OperationModeAvailability DiagGraph::summary(const rclcpp::Time & stamp)
-{
-  const auto is_ok = [](const UnitNode * node) { return node->level() == DiagnosticStatus::OK; };
-
-  OperationModeAvailability message;
-  message.stamp = stamp;
-  message.stop = is_ok(modes_.stop_mode);
-  message.autonomous = is_ok(modes_.autonomous_mode);
-  message.local = is_ok(modes_.local_mode);
-  message.remote = is_ok(modes_.remote_mode);
-  message.emergency_stop = is_ok(modes_.emergency_stop_mrm);
-  message.comfortable_stop = is_ok(modes_.comfortable_stop_mrm);
-  message.pull_over = is_ok(modes_.pull_over_mrm);
-  return message;
-}
-
 void DiagGraph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
 {
   for (const auto & status : array.status) {
@@ -111,6 +80,41 @@ void DiagGraph::callback(const DiagnosticArray & array, const rclcpp::Time & sta
       // TODO(Takagi, Isamu): handle unknown diagnostics
     }
   }
+}
+
+void DiagGraph::update(const rclcpp::Time & stamp)
+{
+  for (const auto & node : graph_.nodes()) {
+    node->update(stamp);
+  }
+  stamp_ = stamp;
+}
+
+DiagnosticGraph DiagGraph::create_graph_message() const
+{
+  DiagnosticGraph message;
+  message.stamp = stamp_;
+  message.nodes.reserve(graph_.nodes().size());
+  for (const auto & node : graph_.nodes()) {
+    message.nodes.push_back(node->report());
+  }
+  return message;
+}
+
+OperationModeAvailability DiagGraph::create_modes_message() const
+{
+  const auto is_ok = [](const UnitNode * node) { return node->level() == DiagnosticStatus::OK; };
+
+  OperationModeAvailability message;
+  message.stamp = stamp_;
+  message.stop = is_ok(modes_.stop_mode);
+  message.autonomous = is_ok(modes_.autonomous_mode);
+  message.local = is_ok(modes_.local_mode);
+  message.remote = is_ok(modes_.remote_mode);
+  message.emergency_stop = is_ok(modes_.emergency_stop_mrm);
+  message.comfortable_stop = is_ok(modes_.comfortable_stop_mrm);
+  message.pull_over = is_ok(modes_.pull_over_mrm);
+  return message;
 }
 
 }  // namespace system_diagnostic_graph

@@ -34,7 +34,7 @@ public:
   DiagNode * make_diag(const std::string & name, const std::string & hardware);
   DiagNode * find_diag(const std::string & name, const std::string & hardware);
   void topological_sort();
-  const std::vector<std::unique_ptr<BaseNode>> & nodes() { return nodes_; }
+  const std::vector<std::unique_ptr<BaseNode>> & nodes() const { return nodes_; }
 
 private:
   std::vector<std::unique_ptr<BaseNode>> nodes_;
