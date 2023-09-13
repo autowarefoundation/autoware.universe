@@ -661,16 +661,26 @@ void EKFLocalizer::publishDiagnostics()
 
   diag_status_array.push_back(checkProcessActivated(is_activated_));
 
-  if(is_activated_) {
-    diag_status_array.push_back(checkMeasurementUpdated("pose", pose_no_update_count_, params_.pose_no_update_count_threshold_warn, params_.pose_no_update_count_threshold_error));
+  if (is_activated_) {
+    diag_status_array.push_back(checkMeasurementUpdated(
+      "pose", pose_no_update_count_, params_.pose_no_update_count_threshold_warn,
+      params_.pose_no_update_count_threshold_error));
     diag_status_array.push_back(checkMeasurementQueueSize("pose", pose_queue_size_));
-    diag_status_array.push_back(checkMeasurementDelayGate("pose", pose_is_passed_delay_gate_, pose_delay_time_, pose_delay_time_threshold_));
-    diag_status_array.push_back(checkMeasurementMahalanobisGate("pose", pose_is_passed_mahalabobis_gate_, pose_mahalabobis_distance_, params_.pose_gate_dist));
+    diag_status_array.push_back(checkMeasurementDelayGate(
+      "pose", pose_is_passed_delay_gate_, pose_delay_time_, pose_delay_time_threshold_));
+    diag_status_array.push_back(checkMeasurementMahalanobisGate(
+      "pose", pose_is_passed_mahalabobis_gate_, pose_mahalabobis_distance_,
+      params_.pose_gate_dist));
 
-    diag_status_array.push_back(checkMeasurementUpdated("twist", twist_no_update_count_, params_.twist_no_update_count_threshold_warn, params_.twist_no_update_count_threshold_error));
+    diag_status_array.push_back(checkMeasurementUpdated(
+      "twist", twist_no_update_count_, params_.twist_no_update_count_threshold_warn,
+      params_.twist_no_update_count_threshold_error));
     diag_status_array.push_back(checkMeasurementQueueSize("twist", twist_queue_size_));
-    diag_status_array.push_back(checkMeasurementDelayGate("twist", twist_is_passed_delay_gate_, twist_delay_time_, twist_delay_time_threshold_));
-    diag_status_array.push_back(checkMeasurementMahalanobisGate("twist", twist_is_passed_mahalabobis_gate_, twist_mahalabobis_distance_, params_.twist_gate_dist));
+    diag_status_array.push_back(checkMeasurementDelayGate(
+      "twist", twist_is_passed_delay_gate_, twist_delay_time_, twist_delay_time_threshold_));
+    diag_status_array.push_back(checkMeasurementMahalanobisGate(
+      "twist", twist_is_passed_mahalabobis_gate_, twist_mahalabobis_distance_,
+      params_.twist_gate_dist));
   }
 
   diagnostic_msgs::msg::DiagnosticStatus diag_merged_status;

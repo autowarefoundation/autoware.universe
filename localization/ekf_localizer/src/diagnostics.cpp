@@ -19,8 +19,7 @@
 #include <string>
 #include <vector>
 
-diagnostic_msgs::msg::DiagnosticStatus checkProcessActivated(
-    const bool is_activated)
+diagnostic_msgs::msg::DiagnosticStatus checkProcessActivated(const bool is_activated)
 {
   diagnostic_msgs::msg::DiagnosticStatus stat;
 
@@ -40,10 +39,8 @@ diagnostic_msgs::msg::DiagnosticStatus checkProcessActivated(
 }
 
 diagnostic_msgs::msg::DiagnosticStatus checkMeasurementUpdated(
-  const std::string & measurement_type,
-  const size_t no_update_count,
-  const size_t no_update_count_threshold_warn,
-  const size_t no_update_count_threshold_error)
+  const std::string & measurement_type, const size_t no_update_count,
+  const size_t no_update_count_threshold_warn, const size_t no_update_count_threshold_error)
 {
   diagnostic_msgs::msg::DiagnosticStatus stat;
 
@@ -73,8 +70,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementUpdated(
 }
 
 diagnostic_msgs::msg::DiagnosticStatus checkMeasurementQueueSize(
-  const std::string & measurement_type,
-  const size_t queue_size)
+  const std::string & measurement_type, const size_t queue_size)
 {
   diagnostic_msgs::msg::DiagnosticStatus stat;
 
@@ -90,9 +86,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementQueueSize(
 }
 
 diagnostic_msgs::msg::DiagnosticStatus checkMeasurementDelayGate(
-  const std::string & measurement_type,
-  const bool is_passed_delay_gate,
-  const double delay_time,
+  const std::string & measurement_type, const bool is_passed_delay_gate, const double delay_time,
   const double delay_time_threshold)
 {
   diagnostic_msgs::msg::DiagnosticStatus stat;
@@ -119,10 +113,8 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementDelayGate(
 }
 
 diagnostic_msgs::msg::DiagnosticStatus checkMeasurementMahalanobisGate(
-  const std::string & measurement_type,
-  const bool is_passed_mahalabobis_gate,
-  const double mahalabobis_distance,
-  const double mahalabobis_distance_threshold)
+  const std::string & measurement_type, const bool is_passed_mahalabobis_gate,
+  const double mahalabobis_distance, const double mahalabobis_distance_threshold)
 {
   diagnostic_msgs::msg::DiagnosticStatus stat;
 
