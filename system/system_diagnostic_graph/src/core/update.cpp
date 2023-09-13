@@ -61,13 +61,13 @@ void DiagGraph::create(const std::string & file)
   }
 
   // Get reserved unit node for summary.
-  summary_.stop_mode = find_node(graph_, "/autoware/operation/stop");
-  summary_.autonomous_mode = find_node(graph_, "/autoware/operation/autonomous");
-  summary_.local_mode = find_node(graph_, "/autoware/operation/local");
-  summary_.remote_mode = find_node(graph_, "/autoware/operation/remote");
-  summary_.emergency_stop_mrm = find_node(graph_, "/autoware/operation/emergency-stop");
-  summary_.comfortable_stop_mrm = find_node(graph_, "/autoware/operation/comfortable-stop");
-  summary_.pull_over_mrm = find_node(graph_, "/autoware/operation/pull-over");
+  modes_.stop_mode = find_node(graph_, "/autoware/operation/stop");
+  modes_.autonomous_mode = find_node(graph_, "/autoware/operation/autonomous");
+  modes_.local_mode = find_node(graph_, "/autoware/operation/local");
+  modes_.remote_mode = find_node(graph_, "/autoware/operation/remote");
+  modes_.emergency_stop_mrm = find_node(graph_, "/autoware/operation/emergency-stop");
+  modes_.comfortable_stop_mrm = find_node(graph_, "/autoware/operation/comfortable-stop");
+  modes_.pull_over_mrm = find_node(graph_, "/autoware/operation/pull-over");
 }
 
 DiagnosticGraph DiagGraph::report(const rclcpp::Time & stamp)
@@ -91,13 +91,13 @@ OperationModeAvailability DiagGraph::summary(const rclcpp::Time & stamp)
 
   OperationModeAvailability message;
   message.stamp = stamp;
-  message.stop = is_ok(summary_.stop_mode);
-  message.autonomous = is_ok(summary_.autonomous_mode);
-  message.local = is_ok(summary_.local_mode);
-  message.remote = is_ok(summary_.remote_mode);
-  message.emergency_stop = is_ok(summary_.emergency_stop_mrm);
-  message.comfortable_stop = is_ok(summary_.comfortable_stop_mrm);
-  message.pull_over = is_ok(summary_.pull_over_mrm);
+  message.stop = is_ok(modes_.stop_mode);
+  message.autonomous = is_ok(modes_.autonomous_mode);
+  message.local = is_ok(modes_.local_mode);
+  message.remote = is_ok(modes_.remote_mode);
+  message.emergency_stop = is_ok(modes_.emergency_stop_mrm);
+  message.comfortable_stop = is_ok(modes_.comfortable_stop_mrm);
+  message.pull_over = is_ok(modes_.pull_over_mrm);
   return message;
 }
 

@@ -27,7 +27,7 @@
 namespace system_diagnostic_graph
 {
 
-struct Summary
+struct Modes
 {
   UnitNode * stop_mode;
   UnitNode * autonomous_mode;
@@ -50,7 +50,7 @@ public:
 
 private:
   Graph graph_;
-  Summary summary_;
+  Modes modes_;
 };
 
 }  // namespace system_diagnostic_graph
