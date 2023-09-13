@@ -88,6 +88,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   pub_biased_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("ekf_biased_pose", 1);
   pub_biased_pose_cov_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "ekf_biased_pose_with_covariance", 1);
+  pub_diag_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
   sub_initialpose_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 1, std::bind(&EKFLocalizer::callbackInitialPose, this, _1));
   sub_pose_with_cov_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -102,62 +103,6 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 
   tf_br_ = std::make_shared<tf2_ros::TransformBroadcaster>(
     std::shared_ptr<rclcpp::Node>(this, [](auto) {}));
-
-  diag_process_activated_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    "process activated", std::bind(&checkProcessActivated, std::placeholders::_1, &is_activated_)));
-  diag_pose_updated_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    "pose updated", std::bind(
-                      &checkMeasurementUpdated, std::placeholders::_1, "pose",
-                      &pose_no_update_count_, &(params_.pose_no_update_count_threshold_warn),
-                      &(params_.pose_no_update_count_threshold_error))));
-  diag_pose_queue_size_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    "pose queue size",
-    std::bind(&checkMeasurementQueueSize, std::placeholders::_1, "pose", &pose_queue_size_)));
-  diag_pose_delay_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    "pose delay gate",
-    std::bind(
-      &checkMeasurementDelayGate, std::placeholders::_1, "pose", &pose_is_passed_delay_gate_,
-      &pose_delay_time_, &pose_delay_time_threshold_)));
-  diag_pose_mahalanobis_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    "pose mahalanobis gate",
-    std::bind(
-      &checkMeasurementMahalanobisGate, std::placeholders::_1, "pose",
-      &pose_is_passed_mahalabobis_gate_, &pose_mahalabobis_distance_, &(params_.pose_gate_dist))));
-  diag_twist_updated_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    "twist updated", std::bind(
-                       &checkMeasurementUpdated, std::placeholders::_1, "twist",
-                       &twist_no_update_count_, &(params_.twist_no_update_count_threshold_warn),
-                       &(params_.twist_no_update_count_threshold_error))));
-  diag_twist_queue_size_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    "twist queue size",
-    std::bind(&checkMeasurementQueueSize, std::placeholders::_1, "twist", &twist_queue_size_)));
-  diag_twist_delay_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    "twist delay gate",
-    std::bind(
-      &checkMeasurementDelayGate, std::placeholders::_1, "twist", &twist_is_passed_delay_gate_,
-      &twist_delay_time_, &twist_delay_time_threshold_)));
-  diag_twist_mahalanobis_gate_.reset(new diagnostic_updater::FunctionDiagnosticTask(
-    "twist mahalanobis gate", std::bind(
-                                &checkMeasurementMahalanobisGate, std::placeholders::_1, "twist",
-                                &twist_is_passed_mahalabobis_gate_, &twist_mahalabobis_distance_,
-                                &(params_.twist_gate_dist))));
-
-  diag_composite_task_.reset(
-    new diagnostic_updater::CompositeDiagnosticTask("ekf_localizer_status"));
-  diag_composite_task_->addTask(diag_process_activated_.get());
-  diag_composite_task_->addTask(diag_pose_updated_.get());
-  diag_composite_task_->addTask(diag_pose_queue_size_.get());
-  diag_composite_task_->addTask(diag_pose_delay_gate_.get());
-  diag_composite_task_->addTask(diag_pose_mahalanobis_gate_.get());
-  diag_composite_task_->addTask(diag_twist_updated_.get());
-  diag_composite_task_->addTask(diag_twist_queue_size_.get());
-  diag_composite_task_->addTask(diag_twist_delay_gate_.get());
-  diag_composite_task_->addTask(diag_twist_mahalanobis_gate_.get());
-
-  const double diagnostics_update_period = 1.0 / params_.diagnostics_update_rate;
-  diag_updater_.reset(new diagnostic_updater::Updater(this, diagnostics_update_period));
-  diag_updater_->setHardwareID("ekf_localizer");
-  diag_updater_->add(*diag_composite_task_);
 
   initEKF();
 
@@ -200,6 +145,7 @@ void EKFLocalizer::timerCallback()
   if (!is_activated_) {
     warning_.warnThrottle(
       "The node is not activated. Provide initial pose to pose_initializer", 2000);
+    publishDiagnostics();
     return;
   }
 
@@ -320,6 +266,7 @@ void EKFLocalizer::timerCallback()
 
   /* publish ekf result */
   publishEstimateResult();
+  publishDiagnostics();
 }
 
 void EKFLocalizer::showCurrentX()
@@ -706,6 +653,35 @@ void EKFLocalizer::publishEstimateResult()
   msg.data.push_back(tier4_autoware_utils::rad2deg(pose_yaw));      // [1] measurement yaw angle
   msg.data.push_back(tier4_autoware_utils::rad2deg(X(IDX::YAWB)));  // [2] yaw bias
   pub_debug_->publish(msg);
+}
+
+void EKFLocalizer::publishDiagnostics()
+{
+  std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_status_array;
+
+  diag_status_array.push_back(checkProcessActivated(is_activated_));
+
+  if(is_activated_) {
+    diag_status_array.push_back(checkMeasurementUpdated("pose", pose_no_update_count_, params_.pose_no_update_count_threshold_warn, params_.pose_no_update_count_threshold_error));
+    diag_status_array.push_back(checkMeasurementQueueSize("pose", pose_queue_size_));
+    diag_status_array.push_back(checkMeasurementDelayGate("pose", pose_is_passed_delay_gate_, pose_delay_time_, pose_delay_time_threshold_));
+    diag_status_array.push_back(checkMeasurementMahalanobisGate("pose", pose_is_passed_mahalabobis_gate_, pose_mahalabobis_distance_, params_.pose_gate_dist));
+
+    diag_status_array.push_back(checkMeasurementUpdated("twist", twist_no_update_count_, params_.twist_no_update_count_threshold_warn, params_.twist_no_update_count_threshold_error));
+    diag_status_array.push_back(checkMeasurementQueueSize("twist", twist_queue_size_));
+    diag_status_array.push_back(checkMeasurementDelayGate("twist", twist_is_passed_delay_gate_, twist_delay_time_, twist_delay_time_threshold_));
+    diag_status_array.push_back(checkMeasurementMahalanobisGate("twist", twist_is_passed_mahalabobis_gate_, twist_mahalabobis_distance_, params_.twist_gate_dist));
+  }
+
+  diagnostic_msgs::msg::DiagnosticStatus diag_merged_status;
+  diag_merged_status = mergeDiagnosticStatus(diag_status_array);
+  diag_merged_status.name = "localization: " + std::string(this->get_name());
+  diag_merged_status.hardware_id = this->get_name();
+
+  diagnostic_msgs::msg::DiagnosticArray diag_msg;
+  diag_msg.header.stamp = this->now();
+  diag_msg.status.push_back(diag_merged_status);
+  pub_diag_->publish(diag_msg);
 }
 
 void EKFLocalizer::updateSimple1DFilters(

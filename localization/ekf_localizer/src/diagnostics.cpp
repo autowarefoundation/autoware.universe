@@ -14,123 +14,160 @@
 
 #include "ekf_localizer/diagnostics.hpp"
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
 #include <string>
+#include <vector>
 
-void checkProcessActivated(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, const bool * const is_activated_ptr)
+diagnostic_msgs::msg::DiagnosticStatus checkProcessActivated(
+    const bool is_activated)
 {
-  if (is_activated_ptr == nullptr) {
-    return;
+  diagnostic_msgs::msg::DiagnosticStatus stat;
+
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "is_activated";
+  key_value.value = is_activated ? "True" : "False";
+  stat.values.push_back(key_value);
+
+  stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  stat.message = "";
+  if (!is_activated) {
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    stat.message = "[WARN]process is not activated";
   }
 
-  stat.add("is_activated", (*is_activated_ptr));
-
-  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  std::string diag_message;
-  if (!(*is_activated_ptr)) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "[WARN]process is not activated";
-  }
-
-  stat.summary(diag_level, diag_message);
+  return stat;
 }
 
-void checkMeasurementUpdated(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & measurement_type,
-  const size_t * const no_update_count_ptr, const size_t * const no_update_count_threshold_warn_ptr,
-  const size_t * const no_update_count_threshold_error_ptr)
+diagnostic_msgs::msg::DiagnosticStatus checkMeasurementUpdated(
+  const std::string & measurement_type,
+  const size_t no_update_count,
+  const size_t no_update_count_threshold_warn,
+  const size_t no_update_count_threshold_error)
 {
-  if (
-    no_update_count_ptr == nullptr || no_update_count_threshold_warn_ptr == nullptr ||
-    no_update_count_threshold_error_ptr == nullptr) {
-    return;
+  diagnostic_msgs::msg::DiagnosticStatus stat;
+
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = measurement_type + "_no_update_count";
+  key_value.value = std::to_string(no_update_count);
+  stat.values.push_back(key_value);
+  key_value.key = measurement_type + "_no_update_count_threshold_warn";
+  key_value.value = std::to_string(no_update_count_threshold_warn);
+  stat.values.push_back(key_value);
+  key_value.key = measurement_type + "_no_update_count_threshold_error";
+  key_value.value = std::to_string(no_update_count_threshold_error);
+  stat.values.push_back(key_value);
+
+  stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  stat.message = "";
+  if (no_update_count >= no_update_count_threshold_warn) {
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    stat.message = "[WARN]" + measurement_type + " is not updated";
+  }
+  if (no_update_count >= no_update_count_threshold_error) {
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    stat.message = "[ERROR]" + measurement_type + " is not updated";
   }
 
-  stat.add(measurement_type + "_no_update_count", *no_update_count_ptr);
-  stat.add(
-    measurement_type + "_no_update_count_threshold_warn", *no_update_count_threshold_warn_ptr);
-  stat.add(
-    measurement_type + "_no_update_count_threshold_error", *no_update_count_threshold_error_ptr);
-
-  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  std::string diag_message;
-  if (*no_update_count_ptr >= *no_update_count_threshold_warn_ptr) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "[WARN]" + measurement_type + " is not updated";
-  }
-  if (*no_update_count_ptr >= *no_update_count_threshold_error_ptr) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-    diag_message = "[ERROR]" + measurement_type + " is not updated";
-  }
-
-  stat.summary(diag_level, diag_message);
+  return stat;
 }
 
-void checkMeasurementQueueSize(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & measurement_type,
-  const size_t * const queue_size_ptr)
+diagnostic_msgs::msg::DiagnosticStatus checkMeasurementQueueSize(
+  const std::string & measurement_type,
+  const size_t queue_size)
 {
-  if (queue_size_ptr == nullptr) {
-    return;
-  }
+  diagnostic_msgs::msg::DiagnosticStatus stat;
 
-  stat.add(measurement_type + "_queue_size", *queue_size_ptr);
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = measurement_type + "_queue_size";
+  key_value.value = std::to_string(queue_size);
+  stat.values.push_back(key_value);
 
-  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  std::string diag_message;
+  stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  stat.message = "";
 
-  stat.summary(diag_level, diag_message);
+  return stat;
 }
 
-void checkMeasurementDelayGate(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & measurement_type,
-  const bool * const is_passed_delay_gate_ptr, const double * const delay_time_ptr,
-  const double * const delay_time_threshold_ptr)
+diagnostic_msgs::msg::DiagnosticStatus checkMeasurementDelayGate(
+  const std::string & measurement_type,
+  const bool is_passed_delay_gate,
+  const double delay_time,
+  const double delay_time_threshold)
 {
-  if (
-    is_passed_delay_gate_ptr == nullptr || delay_time_ptr == nullptr ||
-    delay_time_threshold_ptr == nullptr) {
-    return;
+  diagnostic_msgs::msg::DiagnosticStatus stat;
+
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = measurement_type + "_is_passed_delay_gate";
+  key_value.value = is_passed_delay_gate ? "True" : "False";
+  stat.values.push_back(key_value);
+  key_value.key = measurement_type + "_delay_time";
+  key_value.value = std::to_string(delay_time);
+  stat.values.push_back(key_value);
+  key_value.key = measurement_type + "_delay_time_threshold";
+  key_value.value = std::to_string(delay_time_threshold);
+  stat.values.push_back(key_value);
+
+  stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  stat.message = "";
+  if (!is_passed_delay_gate) {
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    stat.message = "[WARN]" + measurement_type + " topic is delay";
   }
 
-  stat.add(measurement_type + "_is_passed_delay_gate", *is_passed_delay_gate_ptr);
-  stat.add(measurement_type + "_delay_time", *delay_time_ptr);
-  stat.add(measurement_type + "_delay_time_threshold", *delay_time_threshold_ptr);
-
-  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  std::string diag_message;
-  if (!(*is_passed_delay_gate_ptr)) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "[WARN]" + measurement_type + " topic is delay";
-  }
-
-  stat.summary(diag_level, diag_message);
+  return stat;
 }
 
-void checkMeasurementMahalanobisGate(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & measurement_type,
-  const bool * const is_passed_mahalabobis_gate_ptr, const double * const mahalabobis_distance_ptr,
-  const double * const mahalabobis_distance_threshold_ptr)
+diagnostic_msgs::msg::DiagnosticStatus checkMeasurementMahalanobisGate(
+  const std::string & measurement_type,
+  const bool is_passed_mahalabobis_gate,
+  const double mahalabobis_distance,
+  const double mahalabobis_distance_threshold)
 {
-  if (
-    is_passed_mahalabobis_gate_ptr == nullptr || mahalabobis_distance_ptr == nullptr ||
-    mahalabobis_distance_threshold_ptr == nullptr) {
-    return;
+  diagnostic_msgs::msg::DiagnosticStatus stat;
+
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = measurement_type + "_is_passed_mahalabobis_gate";
+  key_value.value = is_passed_mahalabobis_gate ? "True" : "False";
+  stat.values.push_back(key_value);
+  key_value.key = measurement_type + "_mahalabobis_distance";
+  key_value.value = std::to_string(mahalabobis_distance);
+  stat.values.push_back(key_value);
+  key_value.key = measurement_type + "_mahalabobis_distance_threshold";
+  key_value.value = std::to_string(mahalabobis_distance_threshold);
+  stat.values.push_back(key_value);
+
+  stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  stat.message = "";
+  if (!is_passed_mahalabobis_gate) {
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    stat.message = "[WARN]mahalabobis distance of " + measurement_type + " topic is large";
   }
 
-  stat.add(measurement_type + "_is_passed_mahalabobis_gate", *is_passed_mahalabobis_gate_ptr);
-  stat.add(measurement_type + "_mahalabobis_distance", *mahalabobis_distance_ptr);
-  stat.add(
-    measurement_type + "_mahalabobis_distance_threshold", *mahalabobis_distance_threshold_ptr);
+  return stat;
+}
 
-  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  std::string diag_message;
-  if (!(*is_passed_mahalabobis_gate_ptr)) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "[WARN]mahalabobis distance of " + measurement_type + " topic is large";
+// The highest level within the stat_array will be reflected in the merged_stat.
+// When all stat_array entries are 'OK,' the message of merged_stat will be empty
+diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
+  const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & stat_array)
+{
+  diagnostic_msgs::msg::DiagnosticStatus merged_stat;
+
+  for (const auto & stat : stat_array) {
+    if ((stat.level > diagnostic_msgs::msg::DiagnosticStatus::OK)) {
+      if (!merged_stat.message.empty()) {
+        merged_stat.message += "; ";
+      }
+      merged_stat.message += stat.message;
+    }
+    if (stat.level > merged_stat.level) {
+      merged_stat.level = stat.level;
+    }
+    for (const auto & value : stat.values) {
+      merged_stat.values.push_back(value);
+    }
   }
 
-  stat.summary(diag_level, diag_message);
+  return merged_stat;
 }

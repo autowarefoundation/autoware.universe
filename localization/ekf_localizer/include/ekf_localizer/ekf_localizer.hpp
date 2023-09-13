@@ -19,7 +19,6 @@
 #include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/warning.hpp"
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <kalman_filter/kalman_filter.hpp>
 #include <kalman_filter/time_delay_kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -128,6 +127,8 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_biased_pose_;
   //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_biased_pose_cov_;
+  //!< @brief diagnostics publisher
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_diag_;
   //!< @brief initial pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
   //!< @brief measurement pose with covariance subscriber
@@ -146,19 +147,6 @@ private:
   rclcpp::TimerBase::SharedPtr timer_tf_;
   //!< @brief tf broadcaster
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;
-
-  //!< @brief diagnostic updater
-  std::shared_ptr<diagnostic_updater::Updater> diag_updater_;
-  std::shared_ptr<diagnostic_updater::CompositeDiagnosticTask> diag_composite_task_;
-  std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask> diag_process_activated_;
-  std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask> diag_pose_updated_;
-  std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask> diag_pose_queue_size_;
-  std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask> diag_pose_delay_gate_;
-  std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask> diag_pose_mahalanobis_gate_;
-  std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask> diag_twist_updated_;
-  std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask> diag_twist_queue_size_;
-  std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask> diag_twist_delay_gate_;
-  std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask> diag_twist_mahalanobis_gate_;
 
   //!< @brief  extended kalman filter instance.
   TimeDelayKalmanFilter ekf_;
@@ -277,6 +265,11 @@ private:
    * @brief publish current EKF estimation result
    */
   void publishEstimateResult();
+
+  /**
+   * @brief publish diagnostics message
+   */
+  void publishDiagnostics();
 
   /**
    * @brief for debug

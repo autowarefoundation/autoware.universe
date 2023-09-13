@@ -156,7 +156,6 @@ note: process noise for positions x & y are calculated automatically from nonlin
 
 | Name                                  | Type   | Description                                                                                                                                | Default value |
 | :------------------------------------ | :----- | :----------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| diagnostics_update_rate               | double | Frequency for diagnostics broadcasting [Hz]                                                                                                | 10.0          |
 | pose_no_update_count_threshold_warn   | size_t | The threshold at which a WARN state is triggered due to the Pose Topic update not happening continuously for a certain number of times.    | 50            |
 | pose_no_update_count_threshold_error  | size_t | The threshold at which an ERROR state is triggered due to the Pose Topic update not happening continuously for a certain number of times.  | 250           |
 | twist_no_update_count_threshold_warn  | size_t | The threshold at which a WARN state is triggered due to the Twist Topic update not happening continuously for a certain number of times.   | 50            |
