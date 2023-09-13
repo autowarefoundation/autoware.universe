@@ -56,8 +56,8 @@
 
 #include <algorithm>
 #include <optional>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace rviz_plugins
 {
