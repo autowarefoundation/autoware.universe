@@ -41,22 +41,22 @@ MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
   // Init diagnostics graph.
   {
     const auto file = declare_parameter<std::string>("graph_file");
-    graph_.init(file);
-    graph_.debug();
+    manager_.init(file);
+    manager_.debug();
   }
 }
 
 void MainNode::on_timer()
 {
-  graph_.update(now());
-  graph_.debug();
-  pub_graph_->publish(graph_.create_graph_message());
-  pub_modes_->publish(graph_.create_modes_message());
+  manager_.update(now());
+  manager_.debug();
+  pub_graph_->publish(manager_.create_graph_message());
+  pub_modes_->publish(manager_.create_modes_message());
 }
 
 void MainNode::on_diag(const DiagnosticArray::ConstSharedPtr msg)
 {
-  graph_.callback(*msg, now());
+  manager_.callback(*msg, now());
 }
 
 }  // namespace system_diagnostic_graph

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "update.hpp"
+#include "manager.hpp"
 
 #include "config.hpp"
 
@@ -35,7 +35,7 @@ UnitNode * find_node(Graph & graph, const std::string & name)
   return node;
 };
 
-void DiagGraph::init(const std::string & file)
+void GraphManager::init(const std::string & file)
 {
   const auto configs = load_config_file(file);
 
@@ -70,7 +70,7 @@ void DiagGraph::init(const std::string & file)
   modes_.pull_over_mrm = find_node(graph_, "/autoware/operation/pull-over");
 }
 
-void DiagGraph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
+void GraphManager::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
 {
   for (const auto & status : array.status) {
     auto diag = graph_.find_diag(status.name, status.hardware_id);
@@ -82,7 +82,7 @@ void DiagGraph::callback(const DiagnosticArray & array, const rclcpp::Time & sta
   }
 }
 
-void DiagGraph::update(const rclcpp::Time & stamp)
+void GraphManager::update(const rclcpp::Time & stamp)
 {
   for (const auto & node : graph_.nodes()) {
     node->update(stamp);
@@ -90,7 +90,7 @@ void DiagGraph::update(const rclcpp::Time & stamp)
   stamp_ = stamp;
 }
 
-DiagnosticGraph DiagGraph::create_graph_message() const
+DiagnosticGraph GraphManager::create_graph_message() const
 {
   DiagnosticGraph message;
   message.stamp = stamp_;
@@ -101,7 +101,7 @@ DiagnosticGraph DiagGraph::create_graph_message() const
   return message;
 }
 
-OperationModeAvailability DiagGraph::create_modes_message() const
+OperationModeAvailability GraphManager::create_modes_message() const
 {
   const auto is_ok = [](const UnitNode * node) { return node->level() == DiagnosticStatus::OK; };
 

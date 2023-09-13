@@ -15,8 +15,8 @@
 #ifndef MAIN_HPP_
 #define MAIN_HPP_
 
+#include "core/manager.hpp"
 #include "core/types.hpp"
-#include "core/update.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -29,7 +29,7 @@ public:
   MainNode();
 
 private:
-  DiagGraph graph_;
+  GraphManager manager_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<DiagnosticArray>::SharedPtr sub_input_;
   rclcpp::Publisher<DiagnosticGraph>::SharedPtr pub_graph_;

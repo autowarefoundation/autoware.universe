@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CORE__UPDATE_HPP_
-#define CORE__UPDATE_HPP_
+#ifndef CORE__MANAGER_HPP_
+#define CORE__MANAGER_HPP_
 
 #include "graph.hpp"
 #include "node.hpp"
@@ -38,7 +38,7 @@ struct Modes
   UnitNode * pull_over_mrm;
 };
 
-class DiagGraph
+class GraphManager
 {
 public:
   void init(const std::string & file);
@@ -57,4 +57,4 @@ private:
 
 }  // namespace system_diagnostic_graph
 
-#endif  // CORE__UPDATE_HPP_
+#endif  // CORE__MANAGER_HPP_

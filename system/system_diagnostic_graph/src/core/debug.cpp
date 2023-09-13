@@ -14,9 +14,9 @@
 
 #include "debug.hpp"
 
+#include "manager.hpp"
 #include "node.hpp"
 #include "types.hpp"
-#include "update.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -32,7 +32,7 @@ const std::unordered_map<DiagnosticLevel, std::string> level_names = {
   {DiagnosticStatus::ERROR, "ERROR"},
   {DiagnosticStatus::STALE, "STALE"}};
 
-void DiagGraph::debug()
+void GraphManager::debug()
 {
   std::vector<DiagDebugData> lines;
   for (const auto & node : graph_.nodes()) {
