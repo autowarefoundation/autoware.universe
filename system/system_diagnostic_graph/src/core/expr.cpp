@@ -61,13 +61,13 @@ std::unique_ptr<BaseExpr> BaseExpr::create(Graph & graph, YAML::Node yaml)
     return std::make_unique<DiagExpr>(graph, yaml);
   }
   if (type == "and") {
-    return std::make_unique<AndExpr>(graph, yaml);
+    return std::make_unique<AndExpr>(graph, yaml, false);
+  }
+  if (type == "short-circuit-and") {
+    return std::make_unique<AndExpr>(graph, yaml, true);
   }
   if (type == "or") {
     return std::make_unique<OrExpr>(graph, yaml);
-  }
-  if (type == "if") {
-    return std::make_unique<IfExpr>(graph, yaml);
   }
   if (type == "debug-ok") {
     return std::make_unique<ConstExpr>(DiagnosticStatus::OK);
@@ -152,8 +152,10 @@ std::vector<BaseNode *> DiagExpr::get_dependency() const
   return {node_};
 }
 
-AndExpr::AndExpr(Graph & graph, YAML::Node yaml)
+AndExpr::AndExpr(Graph & graph, YAML::Node yaml, bool short_circuit)
 {
+  short_circuit_ = short_circuit;
+
   if (!yaml["list"]) {
     throw ConfigError("expr object has no 'list' field");
   }
@@ -168,20 +170,23 @@ AndExpr::AndExpr(Graph & graph, YAML::Node yaml)
 
 ExprStatus AndExpr::eval() const
 {
-  std::vector<ExprStatus> results;
-  for (const auto & expr : list_) {
-    results.push_back(expr->eval());
+  if (list_.empty()) {
+    ExprStatus status;
+    status.level = DiagnosticStatus::OK;
+    return status;
   }
-  std::vector<DiagnosticLevel> levels;
-  for (const auto & result : results) {
-    levels.push_back(result.level);
-  }
+
   ExprStatus status;
-  for (const auto & result : results) {
+  status.level = DiagnosticStatus::OK;
+  for (const auto & expr : list_) {
+    const auto result = expr->eval();
+    status.level = std::max(status.level, result.level);
     extend(status.links, result.links);
+    if (short_circuit_ && status.level != DiagnosticStatus::OK) {
+      break;
+    }
   }
-  const auto level = *std::max_element(levels.begin(), levels.end());
-  status.level = std::min(level, DiagnosticStatus::ERROR);
+  status.level = std::min(status.level, DiagnosticStatus::ERROR);  // STALE to ERROR
   return status;
 }
 
@@ -233,49 +238,6 @@ std::vector<BaseNode *> OrExpr::get_dependency() const
   std::vector<BaseNode *> depends;
   for (const auto & expr : list_) {
     const auto nodes = expr->get_dependency();
-    depends.insert(depends.end(), nodes.begin(), nodes.end());
-  }
-  return depends;
-}
-
-IfExpr::IfExpr(Graph & graph, YAML::Node yaml)
-{
-  if (!yaml["cond"]) {
-    throw ConfigError("expr object has no 'cond' field");
-  }
-  if (!yaml["then"]) {
-    throw ConfigError("expr object has no 'then' field");
-  }
-  cond_ = BaseExpr::create(graph, yaml["cond"]);
-  then_ = BaseExpr::create(graph, yaml["then"]);
-}
-
-ExprStatus IfExpr::eval() const
-{
-  const auto cond = cond_->eval();
-  const auto then = then_->eval();
-  ExprStatus status;
-  if (cond.level == DiagnosticStatus::OK) {
-    status.level = std::min(then.level, DiagnosticStatus::ERROR);
-    extend(status.links, cond.links);
-    extend(status.links, then.links);
-  } else {
-    status.level = std::min(cond.level, DiagnosticStatus::ERROR);
-    extend(status.links, cond.links);
-    extend_false(status.links, then.links);
-  }
-  return status;
-}
-
-std::vector<BaseNode *> IfExpr::get_dependency() const
-{
-  std::vector<BaseNode *> depends;
-  {
-    const auto nodes = cond_->get_dependency();
-    depends.insert(depends.end(), nodes.begin(), nodes.end());
-  }
-  {
-    const auto nodes = then_->get_dependency();
     depends.insert(depends.end(), nodes.begin(), nodes.end());
   }
   return depends;

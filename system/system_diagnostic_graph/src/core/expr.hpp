@@ -78,11 +78,12 @@ private:
 class AndExpr : public BaseExpr
 {
 public:
-  AndExpr(Graph & graph, YAML::Node yaml);
+  AndExpr(Graph & graph, YAML::Node yaml, bool short_circuit);
   ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
 private:
+  bool short_circuit_;
   std::vector<std::unique_ptr<BaseExpr>> list_;
 };
 
@@ -95,18 +96,6 @@ public:
 
 private:
   std::vector<std::unique_ptr<BaseExpr>> list_;
-};
-
-class IfExpr : public BaseExpr
-{
-public:
-  IfExpr(Graph & graph, YAML::Node yaml);
-  ExprStatus eval() const override;
-  std::vector<BaseNode *> get_dependency() const override;
-
-private:
-  std::unique_ptr<BaseExpr> cond_;
-  std::unique_ptr<BaseExpr> then_;
 };
 
 }  // namespace system_diagnostic_graph
