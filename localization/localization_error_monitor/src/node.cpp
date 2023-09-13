@@ -122,8 +122,8 @@ void LocalizationErrorMonitor::onOdom(nav_msgs::msg::Odometry::ConstSharedPtr in
 
   diagnostic_msgs::msg::DiagnosticStatus diag_merged_status;
   diag_merged_status = mergeDiagnosticStatus(diag_status_array);
-  diag_merged_status.name = "localization: localization_error_monitor";
-  diag_merged_status.hardware_id = "localization_error_monitor";
+  diag_merged_status.name = "localization: " + std::string(this->get_name());
+  diag_merged_status.hardware_id = this->get_name();
 
   diagnostic_msgs::msg::DiagnosticArray diag_msg;
   diag_msg.header.stamp = this->now();
