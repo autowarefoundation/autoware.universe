@@ -21,13 +21,12 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
-#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -253,11 +252,26 @@ void GoalPlannerModule::initializeOccupancyGridMap()
   occupancy_grid_map_->setParam(occupancy_grid_map_param);
 }
 
+void GoalPlannerModule::initializeSafetyCheckParameters()
+{
+  utils::start_goal_planner_common::updateEgoPredictedPathParams(
+    ego_predicted_path_params_, parameters_);
+  utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
+  utils::start_goal_planner_common::updateObjectsFilteringParams(
+    objects_filtering_params_, parameters_);
+}
+
 void GoalPlannerModule::processOnEntry()
 {
   // Initialize occupancy grid map
   if (parameters_->use_occupancy_grid) {
     initializeOccupancyGridMap();
+  }
+  // Initialize safety checker
+  if (parameters_->safety_check_params.enable_safety_check) {
+    initializeSafetyCheckParameters();
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      goal_planner_data_.collision_check);
   }
 }
 
@@ -355,11 +369,6 @@ bool GoalPlannerModule::isExecutionReady() const
   }
 
   if (status_.is_safe_static_objects && parameters_->safety_check_params.enable_safety_check) {
-    utils::start_goal_planner_common::updateEgoPredictedPathParams(
-      ego_predicted_path_params_, parameters_);
-    utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
-    utils::start_goal_planner_common::updateObjectsFilteringParams(
-      objects_filtering_params_, parameters_);
     if (!isSafePath()) {
       RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
       return false;
@@ -655,18 +664,25 @@ void GoalPlannerModule::setLanes()
 void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
 {
   if (status_.is_safe_static_objects) {
-    // clear stop pose when the path is safe and activated
-    if (isActivated()) {
-      resetWallPoses();
+    if (isSafePath()) {
+      // clear stop pose when the path is safe against static/dynamic objects and activated
+      if (isActivated()) {
+        resetWallPoses();
+      }
+      // keep stop if not enough time passed,
+      // because it takes time for the trajectory to be reflected
+      auto current_path = getCurrentPath();
+      keepStoppedWithCurrentPath(current_path);
+
+      output.path = std::make_shared<PathWithLaneId>(current_path);
+      output.reference_path = getPreviousModuleOutput().reference_path;
+    } else if (status_.has_decided_path && isActivated()) {
+      // situation : not safe against dynamic objects after approval
+      // insert stop point in current path if ego is able to stop with acceleration and jerk
+      // constraints
+      setStopPathFromCurrentPath(output);
     }
 
-    // keep stop if not enough time passed,
-    // because it takes time for the trajectory to be reflected
-    auto current_path = getCurrentPath();
-    keepStoppedWithCurrentPath(current_path);
-
-    output.path = std::make_shared<PathWithLaneId>(current_path);
-    output.reference_path = getPreviousModuleOutput().reference_path;
   } else {
     // not safe: use stop_path
     setStopPath(output);
@@ -684,6 +700,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
   status_.prev_is_safe = status_.is_safe_static_objects;
+  status_.prev_is_safe_dynamic_objects = status_.is_safe_dynamic_objects;
 }
 
 void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
@@ -691,7 +708,6 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
   if (status_.prev_is_safe || status_.prev_stop_path == nullptr) {
     // safe -> not_safe or no prev_stop_path: generate new stop_path
     output.path = std::make_shared<PathWithLaneId>(generateStopPath());
-    output.reference_path = getPreviousModuleOutput().reference_path;
     status_.prev_stop_path = output.path;
     // set stop path as pull over path
     mutex_.lock();
@@ -706,10 +722,34 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
   } else {
     // not_safe -> not_safe: use previous stop path
     output.path = status_.prev_stop_path;
-    output.reference_path = getPreviousModuleOutput().reference_path;
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path, use previous stop path");
   }
+  output.reference_path = getPreviousModuleOutput().reference_path;
+}
+
+void GoalPlannerModule::setStopPathFromCurrentPath(BehaviorModuleOutput & output)
+{
+  // safe or not safe(no feasible stop_path found) -> not_safe: try to find new feasible stop_path
+  if (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr) {
+    if (const auto stop_inserted_path = generateStopInsertedCurrentPath()) {
+      output.path = std::make_shared<PathWithLaneId>(*stop_inserted_path);
+      status_.prev_stop_path_after_approval = output.path;
+      RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, generate stop path");
+    } else {
+      output.path = std::make_shared<PathWithLaneId>(getCurrentPath());
+      RCLCPP_WARN_THROTTLE(
+        getLogger(), *clock_, 5000,
+        "Collision detected, no feasible stop path found, cannot stop.");
+    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    last_path_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+  } else {
+    // not_safe safe(no feasible stop path found) -> not_safe: use previous stop path
+    output.path = status_.prev_stop_path_after_approval;
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, use previous stop path");
+  }
+  output.reference_path = getPreviousModuleOutput().reference_path;
 }
 
 void GoalPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
@@ -1071,6 +1111,34 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
   return stop_path;
 }
 
+std::optional<PathWithLaneId> GoalPlannerModule::generateStopInsertedCurrentPath()
+{
+  auto current_path = getCurrentPath();
+  if (current_path.points.empty()) {
+    return {};
+  }
+
+  // try to insert stop point in current_path after approval
+  // but if can't stop with constraints(maximum deceleration, maximum jerk), don't insert stop point
+  const auto min_stop_distance = calcFeasibleDecelDistance(
+    planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0.0);
+  if (!min_stop_distance) {
+    return {};
+  }
+
+  // set stop point
+  const auto stop_idx = motion_utils::insertStopPoint(
+    planner_data_->self_odometry->pose.pose, *min_stop_distance, current_path.points);
+
+  if (!stop_idx) {
+    return {};
+  } else {
+    stop_pose_ = current_path.points.at(*stop_idx).point.pose;
+  }
+
+  return current_path;
+}
+
 void GoalPlannerModule::transitionToNextPathIfFinishingCurrentPath()
 {
   if (isActivated() && last_approved_time_ != nullptr) {
@@ -1098,6 +1166,10 @@ bool GoalPlannerModule::incrementPathIndex()
 
 PathWithLaneId GoalPlannerModule::getCurrentPath() const
 {
+  if (status_.pull_over_path == nullptr) {
+    return PathWithLaneId{};
+  }
+
   if (status_.pull_over_path->partial_paths.size() <= status_.current_path_idx) {
     return PathWithLaneId{};
   }
@@ -1220,7 +1292,7 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo() const
 
 bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
 {
-  if (parameters_->use_occupancy_grid || !occupancy_grid_map_) {
+  if (parameters_->use_occupancy_grid && occupancy_grid_map_) {
     const bool check_out_of_range = false;
     if (occupancy_grid_map_->hasObstacleOnPath(path, check_out_of_range)) {
       return true;
@@ -1228,12 +1300,20 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
   }
 
   if (parameters_->use_object_recognition) {
+    const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+      *(planner_data_->route_handler), left_side_parking_, parameters_->backward_goal_search_length,
+      parameters_->forward_goal_search_length);
+    const auto [pull_over_lane_objects, others] =
+      utils::path_safety_checker::separateObjectsByLanelets(
+        *(planner_data_->dynamic_object), pull_over_lanes);
+    const auto pull_over_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+      pull_over_lane_objects, parameters_->th_moving_object_velocity);
     const auto common_parameters = planner_data_->parameters;
     const double base_link2front = common_parameters.base_link2front;
     const double base_link2rear = common_parameters.base_link2rear;
     const double vehicle_width = common_parameters.vehicle_width;
     if (utils::path_safety_checker::checkCollisionWithExtraStoppingMargin(
-          path, *(planner_data_->dynamic_object), base_link2front, base_link2rear, vehicle_width,
+          path, pull_over_lane_stop_objects, base_link2front, base_link2rear, vehicle_width,
           parameters_->maximum_deceleration, parameters_->object_recognition_collision_check_margin,
           parameters_->object_recognition_collision_check_max_extra_stopping_margin)) {
       return true;
@@ -1522,8 +1602,6 @@ bool GoalPlannerModule::isSafePath() const
 
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     goal_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
-  utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
-    goal_planner_data_.collision_check);
 
   bool is_safe_dynamic_objects = true;
   // Check for collisions with each predicted path of the object
