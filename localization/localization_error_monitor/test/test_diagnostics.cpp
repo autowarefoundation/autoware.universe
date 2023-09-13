@@ -83,23 +83,23 @@ TEST(TestLocalizationErrorMonitorDiagnostics, MergeDiagnosticStatus)
   std::vector<diagnostic_msgs::msg::DiagnosticStatus> stat_array(2);
 
   stat_array.at(0).level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat_array.at(0).message = "";
+  stat_array.at(0).message = "OK";
   stat_array.at(1).level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat_array.at(1).message = "";
+  stat_array.at(1).message = "OK";
   merged_stat = mergeDiagnosticStatus(stat_array);
   EXPECT_EQ(merged_stat.level, diagnostic_msgs::msg::DiagnosticStatus::OK);
-  EXPECT_EQ(merged_stat.message, "");
+  EXPECT_EQ(merged_stat.message, "OK");
 
   stat_array.at(0).level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
   stat_array.at(0).message = "WARN0";
   stat_array.at(1).level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat_array.at(1).message = "";
+  stat_array.at(1).message = "OK";
   merged_stat = mergeDiagnosticStatus(stat_array);
   EXPECT_EQ(merged_stat.level, diagnostic_msgs::msg::DiagnosticStatus::WARN);
   EXPECT_EQ(merged_stat.message, "WARN0");
 
   stat_array.at(0).level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat_array.at(0).message = "";
+  stat_array.at(0).message = "OK";
   stat_array.at(1).level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
   stat_array.at(1).message = "WARN1";
   merged_stat = mergeDiagnosticStatus(stat_array);
@@ -115,7 +115,7 @@ TEST(TestLocalizationErrorMonitorDiagnostics, MergeDiagnosticStatus)
   EXPECT_EQ(merged_stat.message, "WARN0; WARN1");
 
   stat_array.at(0).level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat_array.at(0).message = "";
+  stat_array.at(0).message = "OK";
   stat_array.at(1).level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
   stat_array.at(1).message = "ERROR1";
   merged_stat = mergeDiagnosticStatus(stat_array);

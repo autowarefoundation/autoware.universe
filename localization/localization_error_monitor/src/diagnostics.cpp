@@ -28,7 +28,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkLocalizationAccuracy(
   stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "";
+  stat.message = "OK";
   if (ellipse_size >= warn_ellipse_size) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     stat.message = "ellipse size is too large";
@@ -52,7 +52,7 @@ diagnostic_msgs::msg::DiagnosticStatus checkLocalizationAccuracyLateralDirection
   stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stat.message = "";
+  stat.message = "OK";
   if (ellipse_size >= warn_ellipse_size) {
     stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
     stat.message = "ellipse size along lateral direction is too large";
@@ -66,7 +66,6 @@ diagnostic_msgs::msg::DiagnosticStatus checkLocalizationAccuracyLateralDirection
 }
 
 // The highest level within the stat_array will be reflected in the merged_stat.
-// When all stat_array entries are 'OK,' the message of merged_stat will be empty
 diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
   const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & stat_array)
 {
@@ -85,6 +84,10 @@ diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
     for (const auto & value : stat.values) {
       merged_stat.values.push_back(value);
     }
+  }
+
+  if (merged_stat.level == diagnostic_msgs::msg::DiagnosticStatus::OK) {
+    merged_stat.message = "OK";
   }
 
   return merged_stat;
