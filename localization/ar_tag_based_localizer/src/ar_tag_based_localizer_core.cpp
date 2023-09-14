@@ -283,7 +283,7 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
   // will not be published.
   const rclcpp::Duration tolerance{
     static_cast<int32_t>(ekf_time_tolerance_),
-    static_cast<uint32_t>(ekf_time_tolerance_ - std::floor(ekf_time_tolerance_))};
+    static_cast<uint32_t>((ekf_time_tolerance_ - std::floor(ekf_time_tolerance_)) * 1e9)};
   if (rclcpp::Time(latest_ekf_pose_.header.stamp) + tolerance < rclcpp::Time(msg.header.stamp)) {
     RCLCPP_INFO(
       this->get_logger(),
