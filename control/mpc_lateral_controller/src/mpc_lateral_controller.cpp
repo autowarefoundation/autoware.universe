@@ -227,7 +227,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   trajectory_follower::InputData const & input_data)
 {
   // set input data
-  setTrajectory(input_data.current_trajectory);
+  setTrajectory(input_data.current_trajectory, input_data.current_odometry);
 
   m_current_kinematic_state = input_data.current_odometry;
   m_current_steering = input_data.current_steering;
@@ -271,6 +271,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   const auto createLateralOutput = [this](const auto & cmd, const bool is_mpc_solved) {
     trajectory_follower::LateralOutput output;
     output.control_cmd = createCtrlCmdMsg(cmd);
+    std::cerr << output.control_cmd.steering_tire_angle << std::endl;
     // To be sure current steering of the vehicle is desired steering angle, we need to check
     // following conditions.
     // 1. At the last loop, mpc should be solved because command should be optimized output.
@@ -319,7 +320,7 @@ bool MpcLateralController::isSteerConverged(const AckermannLateralCommand & cmd)
 
 bool MpcLateralController::isReady(const trajectory_follower::InputData & input_data)
 {
-  setTrajectory(input_data.current_trajectory);
+  setTrajectory(input_data.current_trajectory, input_data.current_odometry);
   m_current_kinematic_state = input_data.current_odometry;
   m_current_steering = input_data.current_steering;
 
@@ -339,7 +340,8 @@ bool MpcLateralController::isReady(const trajectory_follower::InputData & input_
   return true;
 }
 
-void MpcLateralController::setTrajectory(const Trajectory & msg)
+void MpcLateralController::setTrajectory(
+  const Trajectory & msg, const Odometry & current_kinematics)
 {
   m_current_trajectory = msg;
 
@@ -353,7 +355,7 @@ void MpcLateralController::setTrajectory(const Trajectory & msg)
     return;
   }
 
-  m_mpc.setReferenceTrajectory(msg, m_trajectory_filtering_param);
+  m_mpc.setReferenceTrajectory(msg, m_trajectory_filtering_param, current_kinematics);
 
   // update trajectory buffer to check the trajectory shape change.
   m_trajectory_buffer.push_back(m_current_trajectory);

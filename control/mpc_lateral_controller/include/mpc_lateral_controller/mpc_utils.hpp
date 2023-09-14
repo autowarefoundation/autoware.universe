@@ -99,7 +99,8 @@ void calcMPCTrajectoryArcLength(const MPCTrajectory & trajectory, std::vector<do
  * @return The pair contains the successful flag and the resultant resampled trajectory
  */
 std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
-  const MPCTrajectory & input, const double resample_interval_dist);
+  const MPCTrajectory & input, const double resample_interval_dist, const size_t nearest_seg_idx,
+  const double ego_offset_to_segment);
 
 /**
  * @brief linearly interpolate the given trajectory assuming a base indexing and a new desired
