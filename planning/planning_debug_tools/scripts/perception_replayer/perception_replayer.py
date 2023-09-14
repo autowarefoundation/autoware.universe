@@ -20,6 +20,7 @@ import functools
 import sys
 
 from PyQt5.QtWidgets import QApplication
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from perception_replayer_common import PerceptionReplayerCommon
 import rclpy
 from time_manager_widget import TimeManagerWidget
@@ -34,6 +35,7 @@ class PerceptionReplayer(PerceptionReplayerCommon):
         self.bag_timestamp = self.rosbag_objects_data[0][0]
         self.is_pause = False
         self.rate = 1.0
+        self.prev_traffic_signals_msg = None
 
         # initialize widget
         self.widget = TimeManagerWidget(
@@ -43,6 +45,7 @@ class PerceptionReplayer(PerceptionReplayerCommon):
         self.widget.button.clicked.connect(self.onPushed)
         for button in self.widget.rate_button:
             button.clicked.connect(functools.partial(self.onSetRate, button))
+        self.widget.pub_recorded_ego_pose_button.clicked.connect(self.publish_recorded_ego_pose)
 
         # start timer callback
         self.delta_time = 0.1
@@ -92,13 +95,22 @@ class PerceptionReplayer(PerceptionReplayerCommon):
             self.objects_pub.publish(objects_msg)
 
         # traffic signals
+        # temporary support old auto msgs
         if traffic_signals_msg:
-            traffic_signals_msg.header.stamp = timestamp
-            self.traffic_signals_pub.publish(traffic_signals_msg)
+            if self.is_auto_traffic_signals:
+                traffic_signals_msg.header.stamp = timestamp
+                self.auto_traffic_signals_pub.publish(traffic_signals_msg)
+            else:
+                traffic_signals_msg.stamp = timestamp
+                self.traffic_signals_pub.publish(traffic_signals_msg)
             self.prev_traffic_signals_msg = traffic_signals_msg
         elif self.prev_traffic_signals_msg:
-            self.prev_traffic_signals_msg.header.stamp = timestamp
-            self.traffic_signals_pub.publish(self.prev_traffic_signals_msg)
+            if self.is_auto_traffic_signals:
+                self.prev_traffic_signals_msg.header.stamp = timestamp
+                self.auto_traffic_signals_pub.publish(self.prev_traffic_signals_msg)
+            else:
+                self.prev_traffic_signals_msg.stamp = timestamp
+                self.traffic_signals_pub.publish(self.prev_traffic_signals_msg)
 
     def onPushed(self, event):
         if self.widget.button.isChecked():
@@ -108,6 +120,57 @@ class PerceptionReplayer(PerceptionReplayerCommon):
 
     def onSetRate(self, button):
         self.rate = float(button.text())
+
+    def publish_recorded_ego_pose(self):
+        ego_odom = self.find_ego_odom_by_timestamp(self.bag_timestamp)
+        if not ego_odom:
+            return
+
+        recorded_ego_pose = PoseWithCovarianceStamped()
+        recorded_ego_pose.header.stamp = self.get_clock().now().to_msg()
+        recorded_ego_pose.header.frame_id = "map"
+        recorded_ego_pose.pose.pose = ego_odom.pose.pose
+        recorded_ego_pose.pose.covariance = [
+            0.25,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.25,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.06853892326654787,
+        ]
+
+        self.recorded_ego_pub.publish(recorded_ego_pose)
+        print("Published recorded ego pose as /initialpose")
 
 
 if __name__ == "__main__":
