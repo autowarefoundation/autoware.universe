@@ -98,6 +98,16 @@ BehaviorModuleOutput StartPlannerModule::run()
   return plan();
 }
 
+void StartPlannerModule::processOnEntry()
+{
+  // Initialize safety checker
+  if (parameters_->safety_check_params.enable_safety_check) {
+    initializeSafetyCheckParameters();
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      start_planner_data_.collision_check);
+  }
+}
+
 void StartPlannerModule::processOnExit()
 {
   resetPathCandidate();
@@ -149,11 +159,6 @@ bool StartPlannerModule::isExecutionReady() const
   }
 
   if (status_.is_safe_static_objects && parameters_->safety_check_params.enable_safety_check) {
-    utils::start_goal_planner_common::updateEgoPredictedPathParams(
-      ego_predicted_path_params_, parameters_);
-    utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
-    utils::start_goal_planner_common::updateObjectsFilteringParams(
-      objects_filtering_params_, parameters_);
     if (!isSafePath()) {
       RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
       return false;
@@ -270,6 +275,15 @@ BehaviorModuleOutput StartPlannerModule::plan()
 CandidateOutput StartPlannerModule::planCandidate() const
 {
   return CandidateOutput{};
+}
+
+void StartPlannerModule::initializeSafetyCheckParameters()
+{
+  utils::start_goal_planner_common::updateEgoPredictedPathParams(
+    ego_predicted_path_params_, parameters_);
+  utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
+  utils::start_goal_planner_common::updateObjectsFilteringParams(
+    objects_filtering_params_, parameters_);
 }
 
 PathWithLaneId StartPlannerModule::getFullPath() const
@@ -568,7 +582,7 @@ std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
       std::back_inserter(shoulder_lanes),
       [&rh](const auto & pull_out_lane) { return rh->isShoulderLanelet(pull_out_lane); });
 
-    return utils::generateDrivableLanesWithShoulderLanes(getPathRoadLanes(path), shoulder_lanes);
+    return utils::generateDrivableLanesWithShoulderLanes(path_road_lanes, shoulder_lanes);
   }
 
   // if path_road_lanes is empty, use only pull_out_lanes as drivable lanes
@@ -599,7 +613,7 @@ void StartPlannerModule::updatePullOutStatus()
 
   // skip updating if enough time has not passed for preventing chattering between back and
   // start_planner
-  if (!has_received_new_route && !last_pull_out_start_update_time_ && !status_.back_finished) {
+  if (!has_received_new_route) {
     if (!last_pull_out_start_update_time_) {
       last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
     }
@@ -676,9 +690,16 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
   const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     pull_out_lane_objects, parameters_->th_moving_object_velocity);
 
+  // Set the maximum backward distance less than the distance from the vehicle's base_link to the
+  // lane's rearmost point to prevent lane departure.
+  const double s_current =
+    lanelet::utils::getArcCoordinates(status_.pull_out_lanes, current_pose).length;
+  const double max_back_distance = std::clamp(
+    s_current - planner_data_->parameters.base_link2rear, 0.0, parameters_->max_back_distance);
+
   // check collision between footprint and object at the backed pose
   const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
-  for (double back_distance = 0.0; back_distance <= parameters_->max_back_distance;
+  for (double back_distance = 0.0; back_distance <= max_back_distance;
        back_distance += parameters_->backward_search_resolution) {
     const auto backed_pose = calcLongitudinalOffsetPose(
       start_pose_candidates.points, current_pose.position, -back_distance);
@@ -982,8 +1003,6 @@ bool StartPlannerModule::isSafePath() const
 
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     start_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
-  utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
-    start_planner_data_.collision_check);
 
   bool is_safe_dynamic_objects = true;
   // Check for collisions with each predicted path of the object
