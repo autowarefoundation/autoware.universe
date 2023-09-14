@@ -809,6 +809,20 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
       particle, i);
     ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
 
+    const geometry_msgs::msg::Pose pose = matrix4f_to_pose(ndt_result.pose);
+    geometry_msgs::msg::Vector3 rpy = get_rpy(pose);
+    rpy.x = rpy.x * 180.0 / M_PI;
+    rpy.y = rpy.y * 180.0 / M_PI;
+    rpy.z = rpy.z * 180.0 / M_PI;
+
+    RCLCPP_INFO_STREAM(
+      get_logger(), std::fixed << i << "," << pose.position.x << "," << pose.position.y << ","
+                               << pose.position.z << "," << pose.orientation.x << ","
+                               << pose.orientation.y << "," << pose.orientation.z << ","
+                               << pose.orientation.w << "," << rpy.x << "," << rpy.y << "," << rpy.z
+                               << "," << ndt_result.transform_probability << ","
+                               << ndt_result.nearest_voxel_transformation_likelihood);
+
     auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     tier4_autoware_utils::transformPointCloud(
       *ndt_ptr->getInputSource(), *sensor_points_in_map_ptr, ndt_result.pose);
