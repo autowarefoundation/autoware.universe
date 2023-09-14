@@ -48,6 +48,8 @@
 #include <OgreRay.h>
 #include <OgreViewport.h>
 
+#include <geometry_msgs/msg/point_stamped.hpp>
+
 namespace rviz_plugins
 {
 
