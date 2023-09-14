@@ -20,6 +20,9 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/resample/resample.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_auto_perception_msgs/msg/predicted_path.hpp"
@@ -2848,7 +2851,7 @@ BehaviorModuleOutput getReferencePath(
   // clip backward length
   // NOTE: In order to keep backward_path_length at least, resampling interval is added to the
   // backward.
-  const size_t current_seg_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     reference_path.points, no_shift_pose, p.ego_nearest_dist_threshold,
     p.ego_nearest_yaw_threshold);
   reference_path.points = motion_utils::cropPoints(
