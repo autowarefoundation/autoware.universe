@@ -745,6 +745,8 @@ void NDTScanMatcher::service_ndt_align(
   tf2_listener_module_->get_transform(
     get_clock()->now(), map_frame_, req->pose_with_covariance.header.frame_id, tf_pose_to_map_ptr);
 
+  output_pose_with_cov_to_log(get_logger(), "service_ndt_align_input", req->pose_with_covariance);
+
   // transform pose_frame to map_frame
   const auto initial_pose_msg_in_map_frame =
     transform(req->pose_with_covariance, *tf_pose_to_map_ptr);
@@ -783,6 +785,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     return geometry_msgs::msg::PoseWithCovarianceStamped();
   }
 
+  output_pose_with_cov_to_log(get_logger(), "align_using_monte_carlo_input", initial_pose_with_cov);
+
   // generateParticle
   const auto initial_poses =
     create_random_pose_array(initial_pose_with_cov, initial_estimate_particles_num_);
@@ -819,6 +823,10 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
   result_pose_with_cov_msg.header.stamp = initial_pose_with_cov.header.stamp;
   result_pose_with_cov_msg.header.frame_id = map_frame_;
   result_pose_with_cov_msg.pose.pose = best_particle_ptr->result_pose;
+
+  output_pose_with_cov_to_log(
+    get_logger(), "align_using_monte_carlo_output", result_pose_with_cov_msg);
+  RCLCPP_INFO_STREAM(get_logger(), "best_score," << best_particle_ptr->score);
 
   return result_pose_with_cov_msg;
 }
