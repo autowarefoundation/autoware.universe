@@ -83,7 +83,7 @@ struct StartPlannerParameters
   double maximum_jerk_for_stop;
 
   // hysteresis parameter
-  double hysteresis_factor_expand_rate;
+  double hysteresis_factor_expand_rate = 0.0;
 
   // path safety checker
   utils::path_safety_checker::EgoPredictedPathParams ego_predicted_path_params;
