@@ -297,11 +297,10 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   if (!parameters_->publish_debug_marker) {
     return;
   }
+  using marker_utils::showPolygon;
+  using marker_utils::showPredictedPath;
+  using marker_utils::showSafetyCheckInfo;
   using marker_utils::lane_change_markers::showAllValidLaneChangePath;
-  using marker_utils::lane_change_markers::showLerpedPose;
-  using marker_utils::lane_change_markers::showObjectInfo;
-  using marker_utils::lane_change_markers::showPolygon;
-  using marker_utils::lane_change_markers::showPolygonPose;
 
   const auto debug_data = module_type_->getDebugData();
   const auto debug_after_approval = module_type_->getAfterApprovalDebugData();
@@ -314,14 +313,14 @@ void LaneChangeInterface::setObjectDebugVisualization() const
 
   add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
   if (!debug_data.empty()) {
-    add(showObjectInfo(debug_data, "object_debug_info"));
-    add(showLerpedPose(debug_data, "ego_predicted_path"));
+    add(showSafetyCheckInfo(debug_data, "object_debug_info"));
+    add(showPredictedPath(debug_data, "ego_predicted_path"));
     add(showPolygon(debug_data, "ego_and_target_polygon_relation"));
   }
 
   if (!debug_after_approval.empty()) {
-    add(showObjectInfo(debug_after_approval, "object_debug_info_after_approval"));
-    add(showLerpedPose(debug_after_approval, "ego_predicted_path_after_approval"));
+    add(showSafetyCheckInfo(debug_after_approval, "object_debug_info_after_approval"));
+    add(showPredictedPath(debug_after_approval, "ego_predicted_path_after_approval"));
     add(showPolygon(debug_after_approval, "ego_and_target_polygon_relation_after_approval"));
   }
 }
@@ -334,11 +333,11 @@ std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeInterface::get_debug_msg_arra
   for (const auto & [uuid, debug_data] : debug_data) {
     LaneChangeDebugMsg debug_msg;
     debug_msg.object_id = uuid;
-    debug_msg.allow_lane_change = debug_data.allow_lane_change;
+    debug_msg.allow_lane_change = debug_data.is_safe;
     debug_msg.is_front = debug_data.is_front;
-    debug_msg.relative_distance = debug_data.relative_to_ego;
-    debug_msg.failed_reason = debug_data.failed_reason;
-    debug_msg.velocity = debug_data.object_twist.linear.x;
+    debug_msg.failed_reason = debug_data.unsafe_reason;
+    debug_msg.velocity =
+      std::hypot(debug_data.object_twist.linear.x, debug_data.object_twist.linear.y);
     debug_msg_array.lane_change_info.push_back(debug_msg);
   }
   lane_change_debug_msg_array_ = debug_msg_array;
