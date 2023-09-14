@@ -231,6 +231,9 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
       node->declare_parameter<double>(base_ns + "stop_condition.maximum_jerk_for_stop");
   }
 
+  p.hysteresis_factor_expand_rate =
+    node->declare_parameter<double>(base_ns + "hysteresis_factor_expand_rate");
+
   std::string path_safety_check_ns = "goal_planner.path_safety_check.";
 
   // EgoPredictedPath

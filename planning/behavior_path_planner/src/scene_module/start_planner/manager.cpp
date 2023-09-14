@@ -158,6 +158,9 @@ StartPlannerModuleManager::StartPlannerModuleManager(
       node->declare_parameter<double>(ns + "stop_condition.maximum_jerk_for_stop");
   }
 
+  p.hysteresis_factor_expand_rate =
+    node->declare_parameter<double>(ns + "hysteresis_factor_expand_rate");
+
   std::string base_ns = "start_planner.path_safety_check.";
 
   // EgoPredictedPath

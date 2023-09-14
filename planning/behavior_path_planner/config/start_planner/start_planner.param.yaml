@@ -76,6 +76,9 @@
       stop_condition:
         maximum_deceleration_for_stop: 1.0
         maximum_jerk_for_stop: 1.0
+
+      hysteresis_factor_expand_rate: 1.0
+
       path_safety_check:
         # EgoPredictedPath
         ego_predicted_path:
