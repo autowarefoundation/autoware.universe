@@ -28,14 +28,8 @@ using tier4_autoware_utils::createPoint;
 using geometry_msgs::msg::Point32;
 
 TemplateModule::TemplateModule(
-  const int64_t module_id, const int64_t lane_id,
-  const lanelet::autoware::SpeedBump & speed_bump_reg_elem, const PlannerParam & planner_param,
-  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
-  module_id_(module_id),
-  lane_id_(lane_id),
-  speed_bump_reg_elem_(std::move(speed_bump_reg_elem)),
-  planner_param_(planner_param)
+  const int64_t module_id, const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
+: SceneModuleInterface(module_id, logger, clock)
 {
 }
 
