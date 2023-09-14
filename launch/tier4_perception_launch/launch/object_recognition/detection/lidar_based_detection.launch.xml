@@ -17,7 +17,7 @@
   <arg name="object_recognition_detection_object_merger_data_association_matrix_param_path" default="$(find-pkg-share object_merger)/config/data_association_matrix.param.yaml"/>
   <arg name="object_recognition_detection_object_merger_distance_threshold_list_path" default="$(find-pkg-share object_merger)/config/overlapped_judge.param.yaml"/>
 
-  <!-- Pointcloud map filter -->
+  <!-- Pointcloud filter -->
   <group>
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/pointcloud_map_filter.launch.py">
       <arg name="input_topic" value="$(var input/obstacle_segmentation/pointcloud)"/>
