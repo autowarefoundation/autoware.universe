@@ -29,15 +29,15 @@
 
 namespace behavior_velocity_planner
 {
-class SpeedBumpModuleManager : public SceneModuleManagerInterface
+class TemplateModuleManager : public SceneModuleManagerInterface
 {
 public:
-  explicit SpeedBumpModuleManager(rclcpp::Node & node);
+  explicit TemplateModuleManager(rclcpp::Node & node);
 
   const char * getModuleName() override { return "speed_bump"; }
 
 private:
-  SpeedBumpModule::PlannerParam planner_param_;
+  TemplateModule::PlannerParam planner_param_;
 
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
@@ -45,7 +45,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
-class SpeedBumpModulePlugin : public PluginWrapper<SpeedBumpModuleManager>
+class TemplateModulePlugin : public PluginWrapper<TemplateModuleManager>
 {
 };
 

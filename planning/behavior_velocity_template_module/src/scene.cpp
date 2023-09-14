@@ -27,7 +27,7 @@ using tier4_autoware_utils::createPoint;
 
 using geometry_msgs::msg::Point32;
 
-SpeedBumpModule::SpeedBumpModule(
+TemplateModule::TemplateModule(
   const int64_t module_id, const int64_t lane_id,
   const lanelet::autoware::SpeedBump & speed_bump_reg_elem, const PlannerParam & planner_param,
   const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
@@ -69,34 +69,27 @@ SpeedBumpModule::SpeedBumpModule(
   }
 }
 
-bool SpeedBumpModule::modifyPathVelocity(
+bool TemplateModule::modifyPathVelocity(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
   if (path->points.empty()) {
     return false;
   }
 
-  debug_data_ = DebugData();
-  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
+  std::cout << "----------------------------\n";
 
-  const auto & ego_pos = planner_data_->current_odometry->pose.position;
-  const auto & speed_bump = speed_bump_reg_elem_.speedBump();
-  const auto & speed_bump_polygon = lanelet::utils::to2D(speed_bump).basicPolygon();
-
-  const auto & ego_path = *path;
-  const auto & path_polygon_intersection_status =
-    getPathPolygonIntersectionStatus(ego_path, speed_bump_polygon, ego_pos, 2);
-
-  debug_data_.path_polygon_intersection_status = path_polygon_intersection_status;
-
-  for (const auto & p : speed_bump_reg_elem_.speedBump().basicPolygon()) {
-    debug_data_.speed_bump_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));
+  int idx = 0;
+  for (const auto & point : path->points) {
+    auto longitudinal_velocity_ = point.point.longitudinal_velocity_mps;
+    std::cout << "Point ID:" << idx++ << "\n";
+    std::cout << "Longitudinal Velocity " << longitudinal_velocity_ << "\n";
   }
+  std::cout << "----------------------------\n";
 
-  return applySlowDownSpeed(*path, speed_bump_slow_down_speed_, path_polygon_intersection_status);
+  return false;
 }
 
-bool SpeedBumpModule::applySlowDownSpeed(
+bool TemplateModule::applySlowDownSpeed(
   PathWithLaneId & output, const float speed_bump_speed,
   const PathPolygonIntersectionStatus & path_polygon_intersection_status)
 {

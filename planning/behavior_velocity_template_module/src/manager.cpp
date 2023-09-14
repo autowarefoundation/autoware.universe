@@ -31,7 +31,7 @@ namespace behavior_velocity_planner
 using lanelet::autoware::SpeedBump;
 using tier4_autoware_utils::getOrDeclareParameter;
 
-SpeedBumpModuleManager::SpeedBumpModuleManager(rclcpp::Node & node)
+TemplateModuleManager::TemplateModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   std::string ns(getModuleName());
@@ -51,7 +51,7 @@ SpeedBumpModuleManager::SpeedBumpModuleManager(rclcpp::Node & node)
     static_cast<float>(getOrDeclareParameter<double>(node, ns + ".max_speed"));
 }
 
-void SpeedBumpModuleManager::launchNewModules(
+void TemplateModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & speed_bump_with_lane_id : planning_utils::getRegElemMapOnPath<SpeedBump>(
@@ -60,7 +60,7 @@ void SpeedBumpModuleManager::launchNewModules(
     const auto lane_id = speed_bump_with_lane_id.second.id();
     const auto module_id = speed_bump_with_lane_id.first->id();
     if (!isModuleRegistered(module_id)) {
-      registerModule(std::make_shared<SpeedBumpModule>(
+      registerModule(std::make_shared<TemplateModule>(
         module_id, lane_id, *speed_bump_with_lane_id.first, planner_param_,
         logger_.get_child("speed_bump_module"), clock_));
     }
@@ -68,7 +68,7 @@ void SpeedBumpModuleManager::launchNewModules(
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-SpeedBumpModuleManager::getModuleExpiredFunction(
+TemplateModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto speed_bump_id_set = planning_utils::getRegElemIdSetOnPath<SpeedBump>(
@@ -83,4 +83,4 @@ SpeedBumpModuleManager::getModuleExpiredFunction(
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::SpeedBumpModulePlugin, behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::TemplateModulePlugin, behavior_velocity_planner::PluginInterface)

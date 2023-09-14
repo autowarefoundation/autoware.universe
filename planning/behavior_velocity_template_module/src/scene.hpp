@@ -27,7 +27,7 @@ namespace behavior_velocity_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
-class SpeedBumpModule : public SceneModuleInterface
+class TemplateModule : public SceneModuleInterface
 {
 public:
   struct DebugData
@@ -50,7 +50,7 @@ public:
     float speed_calculation_max_speed;
   };
 
-  SpeedBumpModule(
+  TemplateModule(
     const int64_t module_id, const int64_t lane_id,
     const lanelet::autoware::SpeedBump & speed_bump_reg_elem, const PlannerParam & planner_param,
     const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);

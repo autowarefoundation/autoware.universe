@@ -34,7 +34,7 @@ using visualization_msgs::msg::Marker;
 namespace
 {
 visualization_msgs::msg::MarkerArray createSpeedBumpMarkers(
-  const SpeedBumpModule::DebugData & debug_data, const rclcpp::Time & now, const int64_t module_id)
+  const TemplateModule::DebugData & debug_data, const rclcpp::Time & now, const int64_t module_id)
 {
   visualization_msgs::msg::MarkerArray msg;
   const int32_t uid = planning_utils::bitShift(module_id);
@@ -93,7 +93,7 @@ visualization_msgs::msg::MarkerArray createSpeedBumpMarkers(
 }
 }  // namespace
 
-motion_utils::VirtualWalls SpeedBumpModule::createVirtualWalls()
+motion_utils::VirtualWalls TemplateModule::createVirtualWalls()
 {
   motion_utils::VirtualWalls virtual_walls;
   motion_utils::VirtualWall wall;
@@ -107,7 +107,7 @@ motion_utils::VirtualWalls SpeedBumpModule::createVirtualWalls()
   return virtual_walls;
 }
 
-visualization_msgs::msg::MarkerArray SpeedBumpModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray TemplateModule::createDebugMarkerArray()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
