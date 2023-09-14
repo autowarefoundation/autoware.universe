@@ -157,7 +157,7 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
   objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output", rclcpp::QoS{1});
 
-  ignore_unknown_tracker_ = declare_parameter<bool>("ignore_unknown_tracker", true);
+  ignore_unknown_tracker_ = declare_parameter<bool>("ignore_unknown_tracker");
 
   // set maximum search setting for merger/divider
   setMaxSearchRange();

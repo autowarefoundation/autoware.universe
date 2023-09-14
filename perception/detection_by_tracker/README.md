@@ -46,6 +46,10 @@ Simply looking at the overlap between the unknown object and the tracker does no
 
 ## Parameters
 
+| Name       | Type                                                  | Description | Default value |
+| ---------- | ----------------------------------------------------- | ----------- | ------------- |
+| `ignore_unknown_tracker` | `bool` | If true, the node will ignore the tracker if its label is unknown.     |         `true`      |
+
 ## Assumptions / Known limits
 
 ## (Optional) Error detection and handling
