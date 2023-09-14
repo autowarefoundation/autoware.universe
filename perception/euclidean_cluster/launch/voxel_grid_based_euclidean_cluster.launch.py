@@ -122,19 +122,6 @@ def launch_setup(context, *args, **kwargs):
         ],
     )
 
-    # set voxel grid filter as a component
-    voxel_grid_filter_component = ComposableNode(
-        package="pointcloud_preprocessor",
-        namespace=ns,
-        plugin="pointcloud_preprocessor::ApproximateDownsampleFilterComponent",
-        name=AnonName("voxel_grid_filter"),
-        remappings=[
-            ("input", "short_range/pointcloud"),
-            ("output", "downsampled/short_range/pointcloud"),
-        ],
-        parameters=[load_composable_node_param("voxel_grid_param_path")],
-    )
-
     # set outlier filter as a component
     outlier_filter_component = ComposableNode(
         package="pointcloud_preprocessor",
@@ -142,7 +129,7 @@ def launch_setup(context, *args, **kwargs):
         plugin="pointcloud_preprocessor::VoxelGridOutlierFilterComponent",
         name="outlier_filter",
         remappings=[
-            ("input", "downsampled/short_range/pointcloud"),
+            ("input", "short_range/pointcloud"),
             ("output", "outlier_filter/pointcloud"),
         ],
         parameters=[load_composable_node_param("outlier_param_path")],
@@ -214,7 +201,6 @@ def launch_setup(context, *args, **kwargs):
             compare_map_filter_component,
             use_map_short_range_crop_box_filter_component,
             use_map_long_range_crop_box_filter_component,
-            voxel_grid_filter_component,
             outlier_filter_component,
             downsample_concat_component,
             use_downsample_euclidean_cluster_component,
@@ -232,7 +218,6 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[
             disuse_map_short_range_crop_box_filter_component,
             disuse_map_long_range_crop_box_filter_component,
-            voxel_grid_filter_component,
             outlier_filter_component,
             downsample_concat_component,
             use_downsample_euclidean_cluster_component,
