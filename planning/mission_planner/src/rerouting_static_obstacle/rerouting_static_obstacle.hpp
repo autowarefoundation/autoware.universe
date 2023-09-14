@@ -22,8 +22,8 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
-#include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/point_stamped.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <lanelet2_routing/RoutingGraph.h>
