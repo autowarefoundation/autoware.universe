@@ -18,6 +18,7 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/goal_planner/goal_planner_parameters.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/start_goal_planner_common/common_module_data.hpp"
 #include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "behavior_path_planner/utils/start_planner/start_planner_parameters.hpp"
 
@@ -31,6 +32,7 @@ namespace behavior_path_planner::utils::start_goal_planner_common
 {
 
 using behavior_path_planner::StartPlannerParameters;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
 using behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
@@ -85,9 +87,31 @@ void updatePathProperty(
   std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::pair<double, double> & pairs_terminal_velocity_and_accel);
 
+void initializeCollisionCheckDebugMap(CollisionCheckDebugMap & collision_check_debug_map);
+
+void updateSafetyCheckTargetObjectsData(
+  StartGoalPlannerData & data, const PredictedObjects & filtered_objects,
+  const TargetObjectsOnLane & target_objects_on_lane,
+  const std::vector<PoseWithVelocityStamped> & ego_predicted_path);
+
 std::pair<double, double> getPairsTerminalVelocityAndAccel(
   const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel,
   const size_t current_path_idx);
+
+/**
+ * @brief removeInverseOrderPathPoints function
+ *
+ * This function is designed to handle a situation that can arise when shifting paths on a curve,
+ * where the positions of the path points may become inverted (i.e., a point further along the path
+ * comes to be located before an earlier point). It corrects for this by using the function
+ * tier4_autoware_utils::isDrivingForward(p1, p2) to check if each pair of adjacent points is in
+ * the correct order (with the second point being 'forward' of the first). Any points which fail
+ * this test are omitted from the returned PathWithLaneId.
+ *
+ * @param path A path with points possibly in incorrect order.
+ * @return Returns a new PathWithLaneId that has all points in the correct order.
+ */
+PathWithLaneId removeInverseOrderPathPoints(const PathWithLaneId & path);
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common
 
