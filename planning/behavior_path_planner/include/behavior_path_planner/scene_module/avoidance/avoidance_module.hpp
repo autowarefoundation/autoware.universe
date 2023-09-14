@@ -438,7 +438,8 @@ private:
   void addNewShiftLines(PathShifter & path_shifter, const AvoidLineArray & shift_lines) const;
 
   /**
-   * @brief validate shift lines.
+   * @brief once generate avoidance path from new shift lines, and calculate lateral offset between
+   * ego and the path.
    * @param new shift lines.
    * @param path shifter.
    * @return result. if there is huge gap between the ego position and candidate path, return false.
