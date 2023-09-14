@@ -297,16 +297,16 @@ bool calcMPCTrajectoryTime(MPCTrajectory & traj)
 }
 
 void dynamicSmoothingVelocity(
-  const size_t start_idx, const double start_vel, const double acc_lim, const double tau,
+  const size_t start_seg_idx, const double start_vel, const double acc_lim, const double tau,
   MPCTrajectory & traj)
 {
   double curr_v = start_vel;
-  traj.vx.at(start_idx) = start_vel;
+  traj.vx.at(start_seg_idx) = start_vel;
   if (1 < traj.vx.size()) {
-    traj.vx.at(start_idx + 1) = start_vel;
+    traj.vx.at(start_seg_idx + 1) = start_vel;
   }
 
-  for (size_t i = start_idx + 2; i < traj.size(); ++i) {
+  for (size_t i = start_seg_idx + 2; i < traj.size(); ++i) {
     const double ds = calcDistance2d(traj, i, i - 1);
     const double dt = ds / std::max(std::fabs(curr_v), std::numeric_limits<double>::epsilon());
     const double a = tau / std::max(tau + dt, std::numeric_limits<double>::epsilon());

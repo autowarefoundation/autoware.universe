@@ -271,7 +271,6 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   const auto createLateralOutput = [this](const auto & cmd, const bool is_mpc_solved) {
     trajectory_follower::LateralOutput output;
     output.control_cmd = createCtrlCmdMsg(cmd);
-    std::cerr << output.control_cmd.steering_tire_angle << std::endl;
     // To be sure current steering of the vehicle is desired steering angle, we need to check
     // following conditions.
     // 1. At the last loop, mpc should be solved because command should be optimized output.

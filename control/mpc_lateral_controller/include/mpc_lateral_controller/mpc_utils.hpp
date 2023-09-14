@@ -123,14 +123,14 @@ bool calcMPCTrajectoryTime(MPCTrajectory & traj);
 
 /**
  * @brief recalculate the velocity field (vx) of the MPCTrajectory with dynamic smoothing
- * @param [in] start_idx index of the trajectory point from which to start smoothing
- * @param [in] start_vel initial velocity to set at the start_idx
+ * @param [in] start_seg_idx segment index of the trajectory point from which to start smoothing
+ * @param [in] start_vel initial velocity to set at the start_seg_idx
  * @param [in] acc_lim limit on the acceleration
  * @param [in] tau constant to control the smoothing (high-value = very smooth)
  * @param [inout] traj MPCTrajectory for which to calculate the smoothed velocity
  */
 void dynamicSmoothingVelocity(
-  const size_t start_idx, const double start_vel, const double acc_lim, const double tau,
+  const size_t start_seg_idx, const double start_vel, const double acc_lim, const double tau,
   MPCTrajectory & traj);
 
 /**
