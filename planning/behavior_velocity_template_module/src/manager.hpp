@@ -34,11 +34,9 @@ class TemplateModuleManager : public SceneModuleManagerInterface
 public:
   explicit TemplateModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "speed_bump"; }
+  const char * getModuleName() override { return "template_module"; }
 
 private:
-  TemplateModule::PlannerParam planner_param_;
-
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
