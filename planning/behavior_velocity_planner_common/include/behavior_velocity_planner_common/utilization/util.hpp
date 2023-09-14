@@ -77,6 +77,7 @@ struct TrafficSignalStamped
   autoware_perception_msgs::msg::TrafficSignal signal;
 };
 
+using Pose = geometry_msgs::msg::Pose;
 using Point2d = tier4_autoware_utils::Point2d;
 using LineString2d = tier4_autoware_utils::LineString2d;
 using Polygon2d = tier4_autoware_utils::Polygon2d;
