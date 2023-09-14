@@ -59,6 +59,7 @@
   <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
   <arg name="use_low_range_cropbox" default="false" description="use low range crop filter in clustering"/>
   <arg name="use_object_filter" default="true" description="use object filter"/>
+  <arg name="use_roi_based_cluster" default="true" description="use roi_based_cluster in clustering"/>
   <arg
     name="use_empty_dynamic_object_publisher"
     default="false"
@@ -164,6 +165,7 @@
           <arg name="container_name" value="$(var pointcloud_container_name)"/>
           <arg name="remove_unknown" value="$(var remove_unknown)"/>
           <arg name="trust_distance" value="$(var trust_distance)"/>
+          <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
         </include>
       </group>
 
