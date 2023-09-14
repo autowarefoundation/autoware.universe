@@ -555,7 +555,6 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
     motion_utils::calcLateralOffset(traj_points, current_ego_pose.position);
   const double current_ego_yaw_error =
     motion_utils::calcYawDeviation(traj_points, current_ego_pose);
-
   double time_elapsed = 0.0;
 
   std::vector<geometry_msgs::msg::Pose> last_poses = {traj_points.at(0).pose};
@@ -564,8 +563,10 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
   }
 
   for (size_t i = 0; i < traj_points.size(); ++i) {
-    // estimate the future lateral error by first-order decrement against the time
     std::vector<geometry_msgs::msg::Pose> current_poses = {traj_points.at(i).pose};
+
+    // estimate the future ego pose with assuming that the pose error against the reference path will
+    // decrease to zero by the time_to_convergence
     if (is_enable_current_pose_consideration && time_elapsed < time_to_convergence) {
       double rem_ratio = (time_to_convergence - time_elapsed) / time_to_convergence;
       geometry_msgs::msg::Pose indexed_pose_err;

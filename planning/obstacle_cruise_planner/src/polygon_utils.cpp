@@ -31,55 +31,6 @@ geometry_msgs::msg::Point calcOffsetPosition(
   return tier4_autoware_utils::calcOffsetPose(pose, offset_x, offset_y, 0.0).position;
 }
 
-// Polygon2d createOneStepPolygon(
-//   const geometry_msgs::msg::Pose & base_step_pose, const geometry_msgs::msg::Pose &
-//   next_step_pose, const vehicle_info_util::VehicleInfo & vehicle_info, const double lat_margin,
-//   const double lat_err = 0.0)
-// {
-//   Polygon2d polygon;
-
-//   const double base_to_front = vehicle_info.max_longitudinal_offset_m;
-//   const double width = vehicle_info.vehicle_width_m / 2.0 + lat_margin;
-//   const double base_to_rear = vehicle_info.rear_overhang_m;
-
-//   // base step
-//   appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, base_to_front, width));
-//   appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, base_to_front, -width));
-//   appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, -base_to_rear, -width));
-//   appendPointToPolygon(polygon, calcOffsetPosition(base_step_pose, -base_to_rear, width));
-
-//   // next step
-//   appendPointToPolygon(polygon, calcOffsetPosition(next_step_posWno-unused-parametere,
-//   base_to_front, width)); appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose,
-//   base_to_front, -width)); appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose,
-//   -base_to_rear, -width)); appendPointToPolygon(polygon, calcOffsetPosition(next_step_pose,
-//   -base_to_rear, width));
-
-//   const bool is_enable_current_pose _consideration = true;  // sould be set as a new global param
-//   if (is_enable_current_pose_consideration) {
-//     // base step
-//     appendPointToPolygon(
-//       polygon, calcOffsetPosition(base_step_pose, base_to_front, width + lat_err));
-//     appendPointToPolygon(
-//       polygon, calcOffsetPosition(base_step_pose, base_to_front, -width + lat_err));
-//     appendPointToPolygon(
-//       polygon, calcOffsetPosition(base_step_pose, -base_to_rear, -width + lat_err));
-//     appendPocreateOneStepPolygonintToPolygon(
-//       polygon, calcOffsetPosition(next_step_pose, base_to_front, -width + lat_err));
-//     appendPointToPolygon(
-//       polygon, calcOffsetPosition(next_step_pose, -base_to_rear, -width + lat_err));
-//     appendPointToPolygon(
-//       polygon, calcOffsetPosition(next_step_pose, -base_to_rear, width + lat_err));
-//   }
-
-//   bg::correct(polygon);
-
-//   Polygon2d hull_polygon;
-//   bg::convex_hull(polygon, hull_polygon);
-
-//   return hull_polygon;
-// }
-
 PointWithStamp calcNearestCollisionPoint(
   const size_t first_within_idx, const std::vector<PointWithStamp> & collision_points,
   const std::vector<TrajectoryPoint> & decimated_traj_points, const bool is_driving_forward)

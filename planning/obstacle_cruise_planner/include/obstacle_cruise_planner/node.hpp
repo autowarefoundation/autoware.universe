@@ -197,7 +197,7 @@ private:
     double lat_hysteresis_margin_for_slow_down;
     int successive_num_to_entry_slow_down_condition;
     int successive_num_to_exit_slow_down_condition;
-    //consider the current ego pose
+    //consideration for the current ego pose
     bool enable_to_consider_current_pose;
     double time_to_convergence;
   };
