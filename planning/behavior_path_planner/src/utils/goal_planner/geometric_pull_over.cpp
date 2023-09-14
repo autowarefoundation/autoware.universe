@@ -64,7 +64,7 @@ boost::optional<PullOverPath> GeometricPullOver::plan(const Pose & goal_pose)
   planner_.setPlannerData(planner_data_);
 
   const bool found_valid_path =
-    planner_.planPullOver(goal_pose, road_lanes, shoulder_lanes, is_forward_, left_side_parking_);
+    planner_.planPullOver(goal_pose, road_lanes, pull_over_lanes, is_forward_, left_side_parking_);
   if (!found_valid_path) {
     return {};
   }
