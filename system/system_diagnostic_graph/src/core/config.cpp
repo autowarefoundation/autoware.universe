@@ -24,6 +24,21 @@
 namespace system_diagnostic_graph
 {
 
+template <class T>
+T take(YAML::Node yaml, const std::string & field)
+{
+  const auto result = yaml[field].as<T>();
+  yaml.remove(field);
+  return result;
+}
+
+YAML::Node take(ConfigDict & dict, const std::string & field)
+{
+  const auto result = dict.at(field);
+  dict.erase(field);
+  return result;
+}
+
 ConfigError create_error(const FileConfig & config, const std::string & message)
 {
   const std::string marker = config ? "File:" + config->path : "Parameter";
@@ -117,6 +132,57 @@ std::vector<NodeConfig> load_config_file(const std::string & path)
   std::vector<NodeConfig> nodes;
   walk_config_tree(parse_config_path(path, nullptr), nodes);
   return nodes;
+}
+
+ExprConfig parse_expr_object(YAML::Node yaml)
+{
+  if (!yaml.IsMap()) {
+    throw ConfigError("expr object is not a dict");
+  }
+  if (!yaml["type"]) {
+    throw ConfigError("expr object has no 'type' field");
+  }
+
+  ExprConfig config;
+  config.type = take<std::string>(yaml, "type");
+  for (const auto & kv : yaml) {
+    config.dict[kv.first.as<std::string>()] = kv.second;
+  }
+  return config;
+}
+
+std::string take_expr_text(ConfigDict & dict, const std::string & name)
+{
+  if (!dict.count("name")) {
+    throw ConfigError("expr object has no '" + name + "' field");
+  }
+  return take(dict, name).as<std::string>();
+}
+
+std::string take_expr_text(ConfigDict & dict, const std::string & name, const std::string & fail)
+{
+  if (!dict.count("name")) {
+    return fail;
+  }
+  return take(dict, name).as<std::string>();
+}
+
+std::vector<YAML::Node> take_expr_list(ConfigDict & dict, const std::string & name)
+{
+  if (!dict["list"]) {
+    throw ConfigError("expr object has no '" + name + "' field");
+  }
+
+  const auto list = take(dict, name);
+  if (!list.IsSequence()) {
+    throw ConfigError("expr object " + name + " field is not a list");
+  }
+
+  std::vector<YAML::Node> result;
+  for (const auto & node : list) {
+    result.push_back(node);
+  }
+  return result;
 }
 
 }  // namespace system_diagnostic_graph

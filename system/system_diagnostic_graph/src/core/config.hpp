@@ -20,6 +20,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace system_diagnostic_graph
@@ -44,24 +45,29 @@ struct FileConfig_
   std::vector<std::shared_ptr<NodeConfig_>> nodes;
 };
 
-template <class T>
-T take(YAML::Node yaml, const std::string & field)
-{
-  const auto result = yaml[field].as<T>();
-  yaml.remove(field);
-  return result;
-}
-
 using NodeConfig = std::shared_ptr<NodeConfig_>;
 using FileConfig = std::shared_ptr<FileConfig_>;
+using ConfigDict = std::unordered_map<std::string, YAML::Node>;
+
+struct ExprConfig
+{
+  std::string type;
+  ConfigDict dict;
+};
+
 ConfigError create_error(const FileConfig & config, const std::string & message);
 ConfigError create_error(const NodeConfig & config, const std::string & message);
 std::vector<NodeConfig> load_config_file(const std::string & path);
 
-NodeConfig parse_config_node(YAML::Node yaml, const FileConfig & scope);
-FileConfig parse_config_path(YAML::Node yaml, const FileConfig & scope);
-FileConfig parse_config_path(const std::string & path, const FileConfig & scope);
 FileConfig parse_config_file(const std::string & path);
+FileConfig parse_config_path(const std::string & path, const FileConfig & scope);
+FileConfig parse_config_path(YAML::Node yaml, const FileConfig & scope);
+NodeConfig parse_config_node(YAML::Node yaml, const FileConfig & scope);
+ExprConfig parse_expr_object(YAML::Node yaml);
+
+std::string take_expr_text(ConfigDict & dict, const std::string & name);
+std::string take_expr_text(ConfigDict & dict, const std::string & name, const std::string & fail);
+std::vector<YAML::Node> take_expr_list(ConfigDict & dict, const std::string & name);
 
 }  // namespace system_diagnostic_graph
 

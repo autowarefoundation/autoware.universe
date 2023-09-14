@@ -14,7 +14,6 @@
 
 #include "expr.hpp"
 
-#include "config.hpp"
 #include "graph.hpp"
 #include "node.hpp"
 
@@ -45,43 +44,37 @@ void extend_false(LinkStatus & a, const LinkStatus & b)
 
 std::unique_ptr<BaseExpr> BaseExpr::create(Graph & graph, YAML::Node yaml)
 {
-  if (!yaml.IsMap()) {
-    throw ConfigError("expr object is not a dict");
-  }
-  if (!yaml["type"]) {
-    throw ConfigError("expr object has no 'type' field");
-  }
+  const auto object = parse_expr_object(yaml);
 
-  const auto type = take<std::string>(yaml, "type");
-
-  if (type == "unit") {
-    return std::make_unique<UnitExpr>(graph, yaml);
+  if (object.type == "unit") {
+    return std::make_unique<UnitExpr>(graph, object.dict);
   }
-  if (type == "diag") {
-    return std::make_unique<DiagExpr>(graph, yaml);
+  if (object.type == "diag") {
+    return std::make_unique<DiagExpr>(graph, object.dict);
   }
-  if (type == "and") {
-    return std::make_unique<AndExpr>(graph, yaml, false);
+  if (object.type == "and") {
+    return std::make_unique<AndExpr>(graph, object.dict, false);
   }
-  if (type == "short-circuit-and") {
-    return std::make_unique<AndExpr>(graph, yaml, true);
+  if (object.type == "short-circuit-and") {
+    return std::make_unique<AndExpr>(graph, object.dict, true);
   }
-  if (type == "or") {
-    return std::make_unique<OrExpr>(graph, yaml);
+  if (object.type == "or") {
+    return std::make_unique<OrExpr>(graph, object.dict);
   }
-  if (type == "debug-ok") {
+  if (object.type == "debug-ok") {
     return std::make_unique<ConstExpr>(DiagnosticStatus::OK);
   }
-  if (type == "debug-warn") {
+  if (object.type == "debug-warn") {
     return std::make_unique<ConstExpr>(DiagnosticStatus::WARN);
   }
-  if (type == "debug-error") {
+  if (object.type == "debug-error") {
     return std::make_unique<ConstExpr>(DiagnosticStatus::ERROR);
   }
-  if (type == "debug-stale") {
+  if (object.type == "debug-stale") {
     return std::make_unique<ConstExpr>(DiagnosticStatus::STALE);
   }
-  throw ConfigError("unknown expr type: " + type);
+
+  throw ConfigError("unknown expr type: " + object.type);
 }
 
 ConstExpr::ConstExpr(const DiagnosticLevel level)
@@ -101,12 +94,9 @@ std::vector<BaseNode *> ConstExpr::get_dependency() const
   return {};
 }
 
-UnitExpr::UnitExpr(Graph & graph, YAML::Node yaml)
+UnitExpr::UnitExpr(Graph & graph, ConfigDict dict)
 {
-  if (!yaml["name"]) {
-    throw ConfigError("unit object has no 'name' field");
-  }
-  const auto name = take<std::string>(yaml, "name");
+  const auto name = take_expr_text(dict, "name");
   node_ = graph.find_unit(name);
   if (!node_) {
     throw ConfigError("unit node '" + name + "' does not exist");
@@ -126,13 +116,10 @@ std::vector<BaseNode *> UnitExpr::get_dependency() const
   return {node_};
 }
 
-DiagExpr::DiagExpr(Graph & graph, YAML::Node yaml)
+DiagExpr::DiagExpr(Graph & graph, ConfigDict dict)
 {
-  if (!yaml["name"]) {
-    throw ConfigError("diag object has no 'name' field");
-  }
-  const auto name = yaml["name"].as<std::string>();
-  const auto hardware = yaml["hardware"].as<std::string>("");
+  const auto name = take_expr_text(dict, "name");
+  const auto hardware = take_expr_text(dict, "hardware", "");
   node_ = graph.find_diag(name, hardware);
   if (!node_) {
     node_ = graph.make_diag(name, hardware);
@@ -152,18 +139,11 @@ std::vector<BaseNode *> DiagExpr::get_dependency() const
   return {node_};
 }
 
-AndExpr::AndExpr(Graph & graph, YAML::Node yaml, bool short_circuit)
+AndExpr::AndExpr(Graph & graph, ConfigDict dict, bool short_circuit)
 {
   short_circuit_ = short_circuit;
 
-  if (!yaml["list"]) {
-    throw ConfigError("expr object has no 'list' field");
-  }
-  if (!yaml["list"].IsSequence()) {
-    throw ConfigError("list field is not a list");
-  }
-
-  for (const auto & node : yaml["list"]) {
+  for (const auto & node : take_expr_list(dict, "list")) {
     list_.push_back(BaseExpr::create(graph, node));
   }
 }
@@ -186,7 +166,7 @@ ExprStatus AndExpr::eval() const
       break;
     }
   }
-  status.level = std::min(status.level, DiagnosticStatus::ERROR);  // STALE to ERROR
+  status.level = std::min(status.level, DiagnosticStatus::ERROR);
   return status;
 }
 
@@ -200,36 +180,29 @@ std::vector<BaseNode *> AndExpr::get_dependency() const
   return depends;
 }
 
-OrExpr::OrExpr(Graph & graph, YAML::Node yaml)
+OrExpr::OrExpr(Graph & graph, ConfigDict dict)
 {
-  if (!yaml["list"]) {
-    throw ConfigError("expr object has no 'list' field");
-  }
-  if (!yaml["list"].IsSequence()) {
-    throw ConfigError("list field is not a list");
-  }
-
-  for (const auto & node : yaml["list"]) {
+  for (const auto & node : take_expr_list(dict, "list")) {
     list_.push_back(BaseExpr::create(graph, node));
   }
 }
 
 ExprStatus OrExpr::eval() const
 {
-  std::vector<ExprStatus> results;
-  for (const auto & expr : list_) {
-    results.push_back(expr->eval());
+  if (list_.empty()) {
+    ExprStatus status;
+    status.level = DiagnosticStatus::OK;
+    return status;
   }
-  std::vector<DiagnosticLevel> levels;
-  for (const auto & result : results) {
-    levels.push_back(result.level);
-  }
+
   ExprStatus status;
-  for (const auto & result : results) {
+  status.level = DiagnosticStatus::ERROR;
+  for (const auto & expr : list_) {
+    const auto result = expr->eval();
+    status.level = std::min(status.level, result.level);
     extend(status.links, result.links);
   }
-  const auto level = *std::min_element(levels.begin(), levels.end());
-  status.level = std::min(level, DiagnosticStatus::ERROR);
+  status.level = std::min(status.level, DiagnosticStatus::ERROR);
   return status;
 }
 

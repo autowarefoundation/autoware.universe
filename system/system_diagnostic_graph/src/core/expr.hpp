@@ -15,9 +15,8 @@
 #ifndef CORE__EXPR_HPP_
 #define CORE__EXPR_HPP_
 
+#include "config.hpp"
 #include "types.hpp"
-
-#include <yaml-cpp/yaml.h>
 
 #include <memory>
 #include <string>
@@ -56,7 +55,7 @@ private:
 class UnitExpr : public BaseExpr
 {
 public:
-  UnitExpr(Graph & graph, YAML::Node yaml);
+  UnitExpr(Graph & graph, ConfigDict dict);
   ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
@@ -67,7 +66,7 @@ private:
 class DiagExpr : public BaseExpr
 {
 public:
-  DiagExpr(Graph & graph, YAML::Node yaml);
+  DiagExpr(Graph & graph, ConfigDict dict);
   ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
@@ -78,7 +77,7 @@ private:
 class AndExpr : public BaseExpr
 {
 public:
-  AndExpr(Graph & graph, YAML::Node yaml, bool short_circuit);
+  AndExpr(Graph & graph, ConfigDict dict, bool short_circuit);
   ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
@@ -90,7 +89,7 @@ private:
 class OrExpr : public BaseExpr
 {
 public:
-  OrExpr(Graph & graph, YAML::Node yaml);
+  OrExpr(Graph & graph, ConfigDict dict);
   ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
