@@ -49,7 +49,7 @@ boost::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, con
     /*forward_only_in_route*/ true);
   const auto pull_out_lanes = getPullOutLanes(planner_data_, backward_path_length);
 
-  // check if the sholder is left side or not
+  // check if the ego is at left or right side of road lane center
   const bool left_side_start = 0 < getArcCoordinates(road_lanes, start_pose).distance;
 
   planner_.setTurningRadius(
