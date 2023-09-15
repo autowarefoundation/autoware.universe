@@ -1,4 +1,4 @@
-// Copyright 2021-2023 UCI SORA Lab, Tier IV, Inc., Leo Drive Teknoloji A.Ş.
+// Copyright 2021 - 2022 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
