@@ -81,6 +81,7 @@
         <arg name="input_pointcloud" value="$(var clustering/input/pointcloud)"/>
         <arg name="output_clusters" value="euclidean_cluster/clusters"/>
         <arg name="use_pointcloud_map" value="false"/>
+        <arg name="use_downsample_pointcloud" value="$(var use_downsample_pointcloud)"/>
       </include>
     </group>
 
