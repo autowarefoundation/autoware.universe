@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    distance_threshold: 0.5
+    use_dynamic_map_loading: true
+    downsize_ratio_z_axis: 0.5

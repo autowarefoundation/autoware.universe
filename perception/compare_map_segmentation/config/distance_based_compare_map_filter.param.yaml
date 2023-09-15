@@ -1,0 +1,4 @@
+/**:
+  ros__parameters:
+    distance_threshold: 0.5
+    use_dynamic_map_loading: true
