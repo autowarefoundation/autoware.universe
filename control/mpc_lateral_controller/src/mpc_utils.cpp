@@ -303,6 +303,7 @@ void dynamicSmoothingVelocity(
   MPCTrajectory & traj)
 {
   double curr_v = start_vel;
+  // set current velocity in both start and end point of the segment
   traj.vx.at(start_seg_idx) = start_vel;
   if (1 < traj.vx.size()) {
     traj.vx.at(start_seg_idx + 1) = start_vel;
