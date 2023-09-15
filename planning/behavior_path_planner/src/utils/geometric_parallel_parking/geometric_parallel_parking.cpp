@@ -470,7 +470,6 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   if (std::abs(end_pose_offset) > 0) {
     PathPointWithLaneId straight_point{};
     straight_point.point.pose = goal_pose;
-    // setLaneIds(straight_point);
     path_turn_second.points.push_back(straight_point);
   }
 
