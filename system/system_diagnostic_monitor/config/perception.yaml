@@ -1,5 +1,5 @@
 nodes:
-  - name: /autoware/perception
+  - path: /autoware/perception
     type: and
     list:
       - type: diag

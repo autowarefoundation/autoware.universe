@@ -1,5 +1,5 @@
 nodes:
-  - name: /autoware/control
+  - path: /autoware/control
     type: and
     list:
       - type: diag

@@ -1,5 +1,6 @@
 nodes:
-  - name: /autoware/localization
+  - path: /autoware/localization
     type: and
     list:
-      - { type: diag, name: "component_state_diagnostics: localization_state" }
+      - type: diag
+        name: "component_state_diagnostics: localization_state"

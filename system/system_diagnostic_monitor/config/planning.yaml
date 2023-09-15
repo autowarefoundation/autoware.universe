@@ -1,5 +1,5 @@
 nodes:
-  - name: /autoware/planning
+  - path: /autoware/planning
     type: short-circuit-and
     list:
       - type: diag

@@ -1,5 +1,5 @@
 nodes:
-  - name: /autoware/system
+  - path: /autoware/system
     type: and
     list:
       - type: diag
