@@ -74,7 +74,7 @@
     </g>
     <rect x="320" y="89.5" width="150" height="50" fill="#cce5ff" stroke="#6c8ebf" pointer-events="all"/>
     <g fill="#000000" font-family="Helvetica" text-anchor="middle" font-size="12px">
-      <text x="394.5" y="119">/tag_tf_caster</text>
+      <text x="394.5" y="119">/landmark_tf_caster</text>
     </g>
     <path d="M 270 115.13 L 313.63 114.91" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
     <path d="M 318.88 114.88 L 311.9 118.42 L 313.63 114.91 L 311.86 111.42 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>

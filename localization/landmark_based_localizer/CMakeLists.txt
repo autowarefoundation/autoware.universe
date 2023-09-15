@@ -28,13 +28,13 @@ target_include_directories(ar_tag_based_localizer
 target_link_libraries(ar_tag_based_localizer ${OpenCV_LIBRARIES})
 
 #
-# tag_tf_caster
+# landmark_tf_caster
 #
-ament_auto_add_executable(tag_tf_caster
-  src/tag_tf_caster_node.cpp
-  src/tag_tf_caster_core.cpp
+ament_auto_add_executable(landmark_tf_caster
+  src/landmark_tf_caster_node.cpp
+  src/landmark_tf_caster_core.cpp
 )
-target_include_directories(tag_tf_caster
+target_include_directories(landmark_tf_caster
   SYSTEM PUBLIC
   ${OpenCV_INCLUDE_DIRS}
 )

@@ -19,11 +19,11 @@ This back-calculated pose is passed to EKF, where it is fused with twist informa
 
 ![node diagram](./doc_image/node_diagram.drawio.svg)
 
-### `tag_tf_caster` node
+### `landmark_tf_caster` node
 
 The definitions of the tags written to the map are introduced in the next section. See `Map Specifications`.
 
-The `tag_tf_caster` node publishes the TF from the map to the tag.
+The `landmark_tf_caster` node publishes the TF from the map to the tag.
 
 * Translation : The center of the four vertices of the tag
 * Rotation : Let the vertex numbers be 1, 2, 3, 4 counterclockwise as shown in the next section. Direction is defined as the cross product of the vector from 1 to 2 and the vector from 2 to 3.
@@ -38,7 +38,7 @@ So, if the 4 vertices are considered as forming a tetrahedron and its volume exc
 
 ## Inputs / Outputs
 
-### `tag_tf_caster` node
+### `landmark_tf_caster` node
 
 #### Input
 

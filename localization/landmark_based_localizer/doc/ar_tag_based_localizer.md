@@ -10,7 +10,7 @@ The positions and orientations of the AR-Tags are assumed to be written in the L
 This package includes two nodes.
 
 - `ar_tag_based_localizer` : A node that detects AR-Tags from camera images and publishes the pose of the ego vehicle.
-- `tag_tf_caster` : A node that publishes the pose of the AR-Tags applied in Lanelet2 as `tf_static`.
+- `landmark_tf_caster` : A node that publishes the pose of the AR-Tags applied in Lanelet2 as `tf_static`.
 
 ## Inputs / Outputs
 
@@ -32,7 +32,7 @@ This package includes two nodes.
 | `~/debug/result`                | `sensor_msgs::msg::Image`                       | [debug topic] Image in which marker detection results are superimposed on the input image |
 | `tf`                            | `geometry_msgs::msg::TransformStamped`          | [debug topic] TF from camera to detected tag                                              |
 
-### `tag_tf_caster` node
+### `landmark_tf_caster` node
 
 #### Input
 
@@ -97,11 +97,11 @@ The pull request video below should also be helpful.
 
 ![principle](./doc_image/principle.png)
 
-### `tag_tf_caster` node
+### `landmark_tf_caster` node
 
 The definitions of the tags written to the map are introduced in the next section. See `Map Specifications`.
 
-The `tag_tf_caster` node publishes the TF from the map to the tag.
+The `landmark_tf_caster` node publishes the TF from the map to the tag.
 
 - Translation : The center of the four vertices of the tag
 - Rotation : Let the vertex numbers be 1, 2, 3, 4 counterclockwise as shown in the next section. Direction is defined as the cross product of the vector from 1 to 2 and the vector from 2 to 3.
