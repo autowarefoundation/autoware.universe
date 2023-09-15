@@ -46,6 +46,16 @@ target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 target_link_libraries(${TARGET} ${PCL_LIBRARIES} Sophus::Sophus)
 
+
+# semantic segmenttion server
+set(TARGET semantic_segmentation_server)
+ament_auto_add_executable(${TARGET}
+  src/semantic_segmentation/semantic_segmentation_core.cpp
+  src/semantic_segmentation/semantic_segmentation_server.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+target_link_libraries(${TARGET} ${PCL_LIBRARIES} Sophus::Sophus)
+
 # ros2idl typesupport
 if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
   rosidl_target_interfaces(${TARGET} ${PROJECT_NAME} "rosidl_typesupport_cpp")
@@ -53,6 +63,7 @@ else()
   rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
   target_link_libraries(${TARGET} "${cpp_typesupport_target}")
 endif()
+
 
 # Semantic segmentation
 install(PROGRAMS
