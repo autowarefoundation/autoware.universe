@@ -673,7 +673,6 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
     // insert stop point in current path if ego is able to stop with acceleration and jerk
     // constraints
     setStopPathFromCurrentPath(output);
-    status_.is_safe_dynamic_objects = true;
   } else {
     // situation : (safe against static and dynamic objects) or (safe against static objects and
     // before approval) don't stop
@@ -701,7 +700,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
   status_.prev_is_safe = status_.is_safe_static_objects;
-  status_.prev_is_safe_dynamic_objects = status_.is_safe_dynamic_objects;
+  status_.prev_is_safe_dynamic_objects = isSafePath();
 }
 
 void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
@@ -1599,7 +1598,7 @@ bool GoalPlannerModule::isSafePath() const
     pull_over_lanes, route_handler, filtered_objects, objects_filtering_params_);
 
   const double hysteresis_factor =
-    status_.is_safe_dynamic_objects ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+    status_.prev_is_safe_dynamic_objects ? 1.0 : parameters_->hysteresis_factor_expand_rate;
 
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     goal_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
