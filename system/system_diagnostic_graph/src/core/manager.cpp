@@ -42,7 +42,7 @@ void GraphManager::init(const std::string & file)
   // Create unit nodes first because it is necessary for the link.
   std::vector<std::pair<NodeConfig, UnitNode *>> units;
   for (const auto & config : configs) {
-    UnitNode * unit = graph_.make_unit(config->name);
+    UnitNode * unit = graph_.make_unit(config->path);
     units.push_back(std::make_pair(config, unit));
   }
 

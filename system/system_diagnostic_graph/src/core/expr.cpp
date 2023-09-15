@@ -96,10 +96,10 @@ std::vector<BaseNode *> ConstExpr::get_dependency() const
 
 UnitExpr::UnitExpr(Graph & graph, ConfigDict dict)
 {
-  const auto name = take_expr_text(dict, "name");
-  node_ = graph.find_unit(name);
+  const auto path = take_expr_text(dict, "path");
+  node_ = graph.find_unit(path);
   if (!node_) {
-    throw ConfigError("unit node '" + name + "' does not exist");
+    throw ConfigError("unit node '" + path + "' does not exist");
   }
 }
 

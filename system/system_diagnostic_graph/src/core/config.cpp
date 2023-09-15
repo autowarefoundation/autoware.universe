@@ -47,7 +47,7 @@ ConfigError create_error(const FileConfig & config, const std::string & message)
 
 ConfigError create_error(const NodeConfig & config, const std::string & message)
 {
-  const std::string marker = "File:" + config->path + ", Node:" + config->name;
+  const std::string marker = "File:" + config->file + ", Node:" + config->path;
   return ConfigError(message + " (" + marker + ")");
 }
 
@@ -56,13 +56,13 @@ NodeConfig parse_config_node(YAML::Node yaml, const FileConfig & scope)
   if (!yaml.IsMap()) {
     throw create_error(scope, "node object is not a dict");
   }
-  if (!yaml["name"]) {
+  if (!yaml["path"]) {
     throw create_error(scope, "node object has no 'name' field");
   }
 
   const auto config = std::make_shared<NodeConfig_>();
-  config->path = scope->path;
-  config->name = take<std::string>(yaml, "name");
+  config->file = scope->path;
+  config->path = take<std::string>(yaml, "path");
   config->yaml = yaml;
   return config;
 }

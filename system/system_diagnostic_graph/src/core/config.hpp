@@ -33,8 +33,8 @@ struct ConfigError : public std::runtime_error
 
 struct NodeConfig_
 {
+  std::string file;
   std::string path;
-  std::string name;
   YAML::Node yaml;
 };
 
