@@ -153,7 +153,7 @@ ExprConfig parse_expr_object(YAML::Node yaml)
 
 std::string take_expr_text(ConfigDict & dict, const std::string & name)
 {
-  if (!dict.count("name")) {
+  if (!dict.count(name)) {
     throw ConfigError("expr object has no '" + name + "' field");
   }
   return take(dict, name).as<std::string>();
@@ -161,7 +161,7 @@ std::string take_expr_text(ConfigDict & dict, const std::string & name)
 
 std::string take_expr_text(ConfigDict & dict, const std::string & name, const std::string & fail)
 {
-  if (!dict.count("name")) {
+  if (!dict.count(name)) {
     return fail;
   }
   return take(dict, name).as<std::string>();
