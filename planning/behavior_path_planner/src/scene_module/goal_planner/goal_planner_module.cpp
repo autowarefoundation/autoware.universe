@@ -673,6 +673,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
     // insert stop point in current path if ego is able to stop with acceleration and jerk
     // constraints
     setStopPathFromCurrentPath(output);
+    status_.is_safe_dynamic_objects = true;
   } else {
     // situation : (safe against static and dynamic objects) or (safe against static objects and
     // before approval) don't stop
