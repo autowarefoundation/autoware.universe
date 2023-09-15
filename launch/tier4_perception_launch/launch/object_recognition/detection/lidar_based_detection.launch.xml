@@ -37,7 +37,7 @@
       <include file="$(find-pkg-share euclidean_cluster)/launch/voxel_grid_based_euclidean_cluster.launch.xml">
         <arg name="input_pointcloud" value="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud"/>
         <arg name="output_clusters" value="clusters"/>
-        <arg name="use_low_range_cropbox" value="$(var use_low_range_cropbox)"/>
+        <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       </include>
     </group>
 

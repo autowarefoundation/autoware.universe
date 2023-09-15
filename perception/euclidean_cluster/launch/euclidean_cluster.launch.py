@@ -35,30 +35,30 @@ def launch_setup(context, *args, **kwargs):
     ns = ""
     pkg = "euclidean_cluster"
 
-    low_range_cropbox_filter_component = ComposableNode(
+    low_height_cropbox_filter_component = ComposableNode(
         package="pointcloud_preprocessor",
         namespace=ns,
         plugin="pointcloud_preprocessor::CropBoxFilterComponent",
-        name="low_range_crop_box_filter",
+        name="low_height_crop_box_filter",
         remappings=[
             ("input", LaunchConfiguration("input_pointcloud")),
-            ("output", "low_range/pointcloud"),
+            ("output", "low_height/pointcloud"),
         ],
         parameters=[load_composable_node_param("voxel_grid_based_euclidean_param_path")],
     )
 
-    use_low_range_euclidean_component = ComposableNode(
+    use_low_height_euclidean_component = ComposableNode(
         package=pkg,
         plugin="euclidean_cluster::EuclideanClusterNode",
         name=AnonName("euclidean_cluster"),
         remappings=[
-            ("input", "low_range/pointcloud"),
+            ("input", "low_height/pointcloud"),
             ("output", LaunchConfiguration("output_clusters")),
         ],
         parameters=[load_composable_node_param("euclidean_param_path")],
     )
 
-    disuse_low_range_euclidean_component = ComposableNode(
+    disuse_low_height_euclidean_component = ComposableNode(
         package=pkg,
         plugin="euclidean_cluster::EuclideanClusterNode",
         name=AnonName("euclidean_cluster"),
@@ -78,22 +78,22 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    use_low_range_pointcloud_loader = LoadComposableNodes(
+    use_low_height_pointcloud_loader = LoadComposableNodes(
         composable_node_descriptions=[
-            low_range_cropbox_filter_component,
-            use_low_range_euclidean_component,
+            low_height_cropbox_filter_component,
+            use_low_height_euclidean_component,
         ],
         target_container=container,
-        condition=IfCondition(LaunchConfiguration("use_low_range_cropbox")),
+        condition=IfCondition(LaunchConfiguration("use_low_height_cropbox")),
     )
 
-    disuse_low_range_pointcloud_loader = LoadComposableNodes(
-        composable_node_descriptions=[disuse_low_range_euclidean_component],
+    disuse_low_height_pointcloud_loader = LoadComposableNodes(
+        composable_node_descriptions=[disuse_low_height_euclidean_component],
         target_container=container,
-        condition=UnlessCondition(LaunchConfiguration("use_low_range_cropbox")),
+        condition=UnlessCondition(LaunchConfiguration("use_low_height_cropbox")),
     )
 
-    return [container, use_low_range_pointcloud_loader, disuse_low_range_pointcloud_loader]
+    return [container, use_low_height_pointcloud_loader, disuse_low_height_pointcloud_loader]
 
 
 def generate_launch_description():
@@ -105,7 +105,7 @@ def generate_launch_description():
             add_launch_arg("input_pointcloud", "/perception/obstacle_segmentation/pointcloud"),
             add_launch_arg("input_map", "/map/pointcloud_map"),
             add_launch_arg("output_clusters", "clusters"),
-            add_launch_arg("use_pointcloud_map", "false"),
+            add_launch_arg("use_low_height_cropbox", "false"),
             add_launch_arg(
                 "euclidean_param_path",
                 [
