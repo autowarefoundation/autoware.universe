@@ -20,7 +20,6 @@ find_package(OpenCV REQUIRED)
 ament_auto_add_executable(ar_tag_based_localizer
   src/ar_tag_based_localizer_node.cpp
   src/ar_tag_based_localizer_core.cpp
-  src/utils.cpp
 )
 target_include_directories(ar_tag_based_localizer
   SYSTEM PUBLIC

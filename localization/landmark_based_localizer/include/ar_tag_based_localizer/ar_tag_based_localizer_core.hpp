@@ -72,6 +72,7 @@ private:
   void ekf_pose_callback(const geometry_msgs::msg::PoseWithCovarianceStamped & msg);
   void publish_pose_as_base_link(
     const geometry_msgs::msg::PoseStamped & msg, const std::string & camera_frame_id);
+  static tf2::Transform aruco_marker_to_tf2(const aruco::Marker & marker);
 
   // Parameters
   float marker_size_{};
