@@ -609,9 +609,7 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
     route_handler, target_lanes, current_pose, backward_length);
 
   // filter objects to get target object index
-  const auto target_obj_index = utils::lane_change::filterObject(
-    objects, current_lanes, target_lanes, target_backward_lanes, current_pose, route_handler,
-    *lane_change_parameters_);
+  const auto target_obj_index = filterObject(current_lanes, target_lanes, target_backward_lanes);
 
   LaneChangeTargetObjects target_objects;
   target_objects.current_lane.reserve(target_obj_index.current_lane.size());
@@ -640,6 +638,113 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
   }
 
   return target_objects;
+}
+
+LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+  const lanelet::ConstLanelets & target_backward_lanes) const
+{
+  const auto current_pose = getEgoPose();
+  const auto & route_handler = *getRouteHandler();
+  const auto & common_parameters = planner_data_->parameters;
+  const auto & objects = *planner_data_->dynamic_object;
+
+  // Guard
+  if (objects.objects.empty()) {
+    return {};
+  }
+
+  // Get path
+  const auto path =
+    route_handler.getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto target_path =
+    route_handler.getCenterLinePath(target_lanes, 0.0, std::numeric_limits<double>::max());
+
+  const auto current_polygon =
+    utils::lane_change::createPolygon(current_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto target_polygon =
+    utils::lane_change::createPolygon(target_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto target_backward_polygon = utils::lane_change::createPolygon(
+    target_backward_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto dist_ego_to_current_lanes_center =
+    lanelet::utils::getLateralDistanceToClosestLanelet(current_lanes, current_pose);
+
+  LaneChangeTargetObjectIndices filtered_obj_indices;
+  for (size_t i = 0; i < objects.objects.size(); ++i) {
+    const auto & object = objects.objects.at(i);
+    const auto & obj_velocity = object.kinematics.initial_twist_with_covariance.twist.linear.x;
+    const auto extended_object =
+      utils::lane_change::transform(object, common_parameters, *lane_change_parameters_);
+
+    // ignore specific object types
+    if (!utils::lane_change::isTargetObjectType(object, *lane_change_parameters_)) {
+      continue;
+    }
+
+    const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
+
+    // calc distance from the current ego position
+    double max_dist_ego_to_obj = std::numeric_limits<double>::lowest();
+    double min_dist_ego_to_obj = std::numeric_limits<double>::max();
+    for (const auto & polygon_p : obj_polygon.outer()) {
+      const auto obj_p = tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
+      const double dist_ego_to_obj =
+        motion_utils::calcSignedArcLength(path.points, current_pose.position, obj_p);
+      max_dist_ego_to_obj = std::max(dist_ego_to_obj, max_dist_ego_to_obj);
+      min_dist_ego_to_obj = std::min(dist_ego_to_obj, min_dist_ego_to_obj);
+    }
+
+    const auto is_lateral_far = [&]() {
+      const auto dist_object_to_current_lanes_center =
+        lanelet::utils::getLateralDistanceToClosestLanelet(
+          current_lanes, object.kinematics.initial_pose_with_covariance.pose);
+      const auto lateral = dist_object_to_current_lanes_center - dist_ego_to_current_lanes_center;
+      return std::abs(lateral) > (common_parameters.vehicle_width / 2);
+    };
+
+    // ignore static object that are behind the ego vehicle
+    if (obj_velocity < 1.0 && max_dist_ego_to_obj < 0.0) {
+      continue;
+    }
+
+    // check if the object intersects with target lanes
+    if (target_polygon && boost::geometry::intersects(target_polygon.value(), obj_polygon)) {
+      // TODO(watanabe): ignore static parked object that are in front of the ego vehicle in target
+      // lanes
+
+      if (max_dist_ego_to_obj >= 0 || is_lateral_far()) {
+        filtered_obj_indices.target_lane.push_back(i);
+        continue;
+      }
+    }
+
+    // check if the object intersects with target backward lanes
+    if (
+      target_backward_polygon &&
+      boost::geometry::intersects(target_backward_polygon.value(), obj_polygon)) {
+      filtered_obj_indices.target_lane.push_back(i);
+      continue;
+    }
+
+    // check if the object intersects with current lanes
+    if (
+      current_polygon && boost::geometry::intersects(current_polygon.value(), obj_polygon) &&
+      max_dist_ego_to_obj >= 0.0) {
+      // check only the objects that are in front of the ego vehicle
+      filtered_obj_indices.current_lane.push_back(i);
+      continue;
+    }
+
+    // ignore all objects that are behind the ego vehicle and not on the current and target
+    // lanes
+    if (max_dist_ego_to_obj < 0.0) {
+      continue;
+    }
+
+    filtered_obj_indices.other_lane.push_back(i);
+  }
+
+  return filtered_obj_indices;
 }
 
 PathWithLaneId NormalLaneChange::getTargetSegment(
