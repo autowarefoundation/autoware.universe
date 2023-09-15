@@ -800,6 +800,7 @@ bool NormalLaneChange::hasEnoughLength(
 {
   const auto current_pose = getEgoPose();
   const auto & route_handler = *getRouteHandler();
+  const auto overall_graphs_ptr = route_handler.getOverallGraphPtr();
   const auto & common_parameters = planner_data_->parameters;
   const double lane_change_length = path.info.length.sum();
   const auto shift_intervals =
@@ -828,6 +829,29 @@ bool NormalLaneChange::hasEnoughLength(
     lane_change_length + minimum_lane_change_length_to_preferred_lane >
     utils::getDistanceToEndOfLane(current_pose, target_lanes)) {
     return false;
+  }
+
+  const bool is_enable_lane_change_on_crosswalk = false;
+  if (!is_enable_lane_change_on_crosswalk) {
+    const double dist_to_crosswalk_from_lane_change_start_pose =
+      utils::getDistanceToCrosswalk(current_pose, current_lanes, *overall_graphs_ptr) -
+      path.info.length.prepare;
+    if (
+      dist_to_crosswalk_from_lane_change_start_pose > 0.0 &&
+      dist_to_crosswalk_from_lane_change_start_pose < path.info.length.lane_changing) {
+      return false;
+    }
+  }
+
+  const bool is_enable_lane_change_on_intersection = false;
+  if (!is_enable_lane_change_on_intersection) {
+    const double dist_to_intersection_from_lane_change_start_pose =
+      utils::getDistanceToNextIntersection(current_pose, current_lanes) - path.info.length.prepare;
+    if (
+      dist_to_intersection_from_lane_change_start_pose > 0.0 &&
+      dist_to_intersection_from_lane_change_start_pose < path.info.length.lane_changing) {
+      return false;
+    }
   }
 
   return true;
