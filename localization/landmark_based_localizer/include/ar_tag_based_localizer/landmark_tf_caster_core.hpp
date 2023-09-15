@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LANDMARK_BASED_LOCALIZER__LANDMARK_TF_CASTER_CORE_HPP_
-#define LANDMARK_BASED_LOCALIZER__LANDMARK_TF_CASTER_CORE_HPP_
+#ifndef AR_TAG_BASED_LOCALIZER__LANDMARK_TF_CASTER_CORE_HPP_
+#define AR_TAG_BASED_LOCALIZER__LANDMARK_TF_CASTER_CORE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -46,4 +46,4 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_bin_sub_;
 };
 
-#endif  // LANDMARK_BASED_LOCALIZER__LANDMARK_TF_CASTER_CORE_HPP_
+#endif  // AR_TAG_BASED_LOCALIZER__LANDMARK_TF_CASTER_CORE_HPP_

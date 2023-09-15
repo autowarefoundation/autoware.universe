@@ -42,8 +42,8 @@
  or implied, of Rafael Muñoz Salinas.
  ********************************/
 
-#ifndef LANDMARK_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_
-#define LANDMARK_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_
+#ifndef AR_TAG_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_
+#define AR_TAG_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_
 
 #include <image_transport/image_transport.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -106,4 +106,4 @@ private:
   geometry_msgs::msg::PoseWithCovarianceStamped latest_ekf_pose_{};
 };
 
-#endif  // LANDMARK_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_
+#endif  // AR_TAG_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_

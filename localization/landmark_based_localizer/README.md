@@ -4,8 +4,8 @@
 
 Landmarks are, for example
 
-* AR tags detected by camera
-* Boards characterized by intensity detected by LiDAR
+- AR tags detected by camera
+- Boards characterized by intensity detected by LiDAR
 
 etc.
 
@@ -29,8 +29,8 @@ The definitions of the landmarks written to the map are introduced in the next s
 
 The `landmark_tf_caster` node publishes the TF from the map to the landmark.
 
-* Translation : The center of the four vertices of the landmark
-* Rotation : Let the vertex numbers be 1, 2, 3, 4 counterclockwise as shown in the next section. Direction is defined as the cross product of the vector from 1 to 2 and the vector from 2 to 3.
+- Translation : The center of the four vertices of the landmark
+- Rotation : Let the vertex numbers be 1, 2, 3, 4 counterclockwise as shown in the next section. Direction is defined as the cross product of the vector from 1 to 2 and the vector from 2 to 3.
 
 Users can define landmarks as Lanelet2 4-vertex polygons.
 In this case, it is possible to define an arrangement in which the four vertices cannot be considered to be on the same plane. The direction of the landmark in that case is difficult to calculate.
@@ -38,8 +38,8 @@ So, if the 4 vertices are considered as forming a tetrahedron and its volume exc
 
 ### Landmark detection nodes
 
-* [ar_tag_based_localizer](./doc/ar_tag_based_localizer.md)
-* etc.
+- [ar_tag_based_localizer](./doc/ar_tag_based_localizer.md)
+- etc.
 
 ## Inputs / Outputs
 
@@ -65,8 +65,8 @@ The four vertices of a landmark are defined counterclockwise.
 
 The order of the four vertices is defined as follows. In the coordinate system of a landmark,
 
-* the x-axis is parallel to the vector from the first vertex to the second vertex
-* the y-axis is parallel to the vector from the second vertex to the third vertex
+- the x-axis is parallel to the vector from the first vertex to the second vertex
+- the y-axis is parallel to the vector from the second vertex to the third vertex
 
 ![lanelet2 data structure](./doc_image/lanelet2_data_structure.drawio.svg)
 
