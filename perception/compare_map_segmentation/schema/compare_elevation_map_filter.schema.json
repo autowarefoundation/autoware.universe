@@ -22,11 +22,7 @@
           "description": "frame_id of the map that is temporarily used before elevation_map is subscribed"
         }
       },
-      "required": [
-        "map_layer_name",
-        "height_diff_thresh",
-        "map_frame"
-      ],
+      "required": ["map_layer_name", "height_diff_thresh", "map_frame"],
       "additionalProperties": false
     }
   },

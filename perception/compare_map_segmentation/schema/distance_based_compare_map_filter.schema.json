@@ -17,10 +17,7 @@
           "description": "map loading mode selection, true for dynamic map loading, false for static map loading, recommended for no-split map pointcloud"
         }
       },
-      "required": [
-        "distance_threshold",
-        "use_dynamic_map_loading"
-      ],
+      "required": ["distance_threshold", "use_dynamic_map_loading"],
       "additionalProperties": false
     }
   },
