@@ -106,6 +106,8 @@ std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
   }
 
   std::vector<double> output_arclength;
+  // To accurately sample the ego point, resample separately in the forward direction and the
+  // backward direction from the current position.
   for (double s = std::clamp(
          input_arclength.at(nearest_seg_idx) + ego_offset_to_segment, 0.0,
          input_arclength.back() - 1e-6);
