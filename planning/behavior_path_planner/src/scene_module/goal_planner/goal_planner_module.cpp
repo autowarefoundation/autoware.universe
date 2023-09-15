@@ -665,29 +665,27 @@ void GoalPlannerModule::setLanes()
 
 void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
 {
-  if (status_.is_safe_static_objects) {
-    if (isSafePath()) {
-      // clear stop pose when the path is safe against static/dynamic objects and activated
-      if (isActivated()) {
-        resetWallPoses();
-      }
-      // keep stop if not enough time passed,
-      // because it takes time for the trajectory to be reflected
-      auto current_path = getCurrentPath();
-      keepStoppedWithCurrentPath(current_path);
-
-      output.path = std::make_shared<PathWithLaneId>(current_path);
-      output.reference_path = getPreviousModuleOutput().reference_path;
-    } else if (status_.has_decided_path && isActivated()) {
-      // situation : not safe against dynamic objects after approval
-      // insert stop point in current path if ego is able to stop with acceleration and jerk
-      // constraints
-      setStopPathFromCurrentPath(output);
-    }
-
-  } else {
-    // not safe: use stop_path
+  if (!status_.is_safe_static_objects) {
+    // situation : not safe against static objects use stop_path
     setStopPath(output);
+  } else if (!isSafePath() && status_.has_decided_path && isActivated()) {
+    // situation : not safe against dynamic objects after approval
+    // insert stop point in current path if ego is able to stop with acceleration and jerk
+    // constraints
+    setStopPathFromCurrentPath(output);
+  } else {
+    // situation : (safe against static and dynamic objects) or (safe against static objects and
+    // before approval) don't stop
+    if (isActivated()) {
+      resetWallPoses();
+    }
+    // keep stop if not enough time passed,
+    // because it takes time for the trajectory to be reflected
+    auto current_path = getCurrentPath();
+    keepStoppedWithCurrentPath(current_path);
+
+    output.path = std::make_shared<PathWithLaneId>(current_path);
+    output.reference_path = getPreviousModuleOutput().reference_path;
   }
 
   setDrivableAreaInfo(output);
