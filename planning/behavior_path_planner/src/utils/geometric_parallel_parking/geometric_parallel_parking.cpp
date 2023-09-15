@@ -437,34 +437,36 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   // Generate arc path(first turn -> second turn)
   const Pose C_near = left_side_parking ? calcOffsetPose(start_pose, 0, R_E_near, 0)
                                         : calcOffsetPose(start_pose, 0, -R_E_near, 0);
-  double theta_near = std::acos(
-    (std::pow(R_E_near, 2) + std::pow(R_E_near + R_E_far, 2) - std::pow(d_C_far_Einit, 2)) /
-    (2 * R_E_near * (R_E_near + R_E_far)));
-  theta_near = (is_forward == left_side_parking) ? theta_near : -theta_near;
+  const double theta_near =
+    std::acos(
+      (std::pow(R_E_near, 2) + std::pow(R_E_near + R_E_far, 2) - std::pow(d_C_far_Einit, 2)) /
+      (2 * R_E_near * (R_E_near + R_E_far))) *
+    (is_forward == left_side_parking ? 1 : -1);
 
-  PathWithLaneId path_turn_first;
-  PathWithLaneId path_turn_second;
-  if (left_side_parking) {
-    path_turn_first = generateArcPath(
-      C_near, R_E_near, -M_PI_2, normalizeRadian(-M_PI_2 + theta_near), arc_path_interval,
-      is_forward, is_forward);
-    path_turn_first.header = route_handler->getRouteHeader();
+  const auto generateArcPathWithHeader =
+    [&](
+      const auto & C, const auto & R_E, const auto & start_angle, const auto & end_angle,
+      bool is_forward_first, bool is_forward_second) -> PathWithLaneId {
+    auto path = generateArcPath(
+      C, R_E, start_angle, end_angle, arc_path_interval, is_forward_first, is_forward_second);
+    path.header = route_handler->getRouteHeader();
+    return path;
+  };
 
-    path_turn_second = generateArcPath(
-      C_far, R_E_far, normalizeRadian(psi + M_PI_2 + theta_near), M_PI_2, arc_path_interval,
-      !is_forward, is_forward);
-    path_turn_second.header = route_handler->getRouteHeader();
-  } else {
-    path_turn_first = generateArcPath(
-      C_near, R_E_near, M_PI_2, normalizeRadian(M_PI_2 + theta_near), arc_path_interval,
-      !is_forward, is_forward);
-    path_turn_first.header = route_handler->getRouteHeader();
+  PathWithLaneId path_turn_first =
+    left_side_parking
+      ? generateArcPathWithHeader(
+          C_near, R_E_near, -M_PI_2, normalizeRadian(-M_PI_2 + theta_near), is_forward, is_forward)
+      : generateArcPathWithHeader(
+          C_near, R_E_near, M_PI_2, normalizeRadian(M_PI_2 + theta_near), !is_forward, is_forward);
 
-    path_turn_second = generateArcPath(
-      C_far, R_E_far, normalizeRadian(psi - M_PI_2 + theta_near), -M_PI_2, arc_path_interval,
-      is_forward, is_forward);
-    path_turn_second.header = route_handler->getRouteHeader();
-  }
+  PathWithLaneId path_turn_second =
+    left_side_parking ? generateArcPathWithHeader(
+                          C_far, R_E_far, normalizeRadian(psi + M_PI_2 + theta_near), M_PI_2,
+                          !is_forward, is_forward)
+                      : generateArcPathWithHeader(
+                          C_far, R_E_far, normalizeRadian(psi - M_PI_2 + theta_near), -M_PI_2,
+                          is_forward, is_forward);
 
   // Need to add straight path to last right_turning for parking in parallel
   if (std::abs(end_pose_offset) > 0) {
