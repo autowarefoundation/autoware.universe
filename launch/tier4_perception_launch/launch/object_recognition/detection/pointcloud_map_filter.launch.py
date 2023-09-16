@@ -45,9 +45,10 @@ class PointcloudMapFilterPipeline:
         ]
         self.map_loader_radius = self.pointcloud_map_filter_param["map_loader_radius"]
         self.publish_debug_pcd = self.pointcloud_map_filter_param["publish_debug_pcd"]
+        self.use_pointcloud_map = LaunchConfiguration("use_pointcloud_map").perform(context)
 
     def create_pipeline(self):
-        if LaunchConfiguration("use_pointcloud_map"):
+        if self.use_pointcloud_map == "true":
             return self.create_compare_map_pipeline()
         else:
             return self.create_no_compare_map_pipeline()
