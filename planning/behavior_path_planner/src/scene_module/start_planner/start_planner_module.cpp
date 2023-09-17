@@ -164,6 +164,7 @@ bool StartPlannerModule::isExecutionReady() const
   }
 
   if (status_.is_safe_static_objects && parameters_->safety_check_params.enable_safety_check) {
+    // TODO(Sugahara): Don't check safety if the vehicle is in backward driving
     if (!isSafePath()) {
       RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
       return false;
@@ -226,7 +227,20 @@ BehaviorModuleOutput StartPlannerModule::plan()
       RCLCPP_INFO(getLogger(), "Increment path index");
       incrementPathIndex();
     }
-    path = getCurrentPath();
+    const bool is_safe_dynamic_objects = isSafePath();
+    if (
+      !is_safe_dynamic_objects && isActivated() &&
+      (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr)) {
+      const auto stop_path = generateFeasibleStopPath();
+      status_.prev_stop_path_after_approval =
+        stop_path ? std::make_shared<PathWithLaneId>(*stop_path) : nullptr;
+      path = stop_path ? *status_.prev_stop_path_after_approval : getCurrentPath();
+    } else {
+      path = getCurrentPath();
+    }
+
+    status_.prev_is_safe_dynamic_objects = is_safe_dynamic_objects;
+
   } else {
     path = status_.backward_path;
   }
@@ -1138,6 +1152,37 @@ bool StartPlannerModule::planFreespacePath()
   return false;
 }
 
+// TODO(Sugahara): commonize with goal_planner
+std::optional<PathWithLaneId> StartPlannerModule::generateFeasibleStopPath()
+{
+  auto current_path = getCurrentPath();
+  if (current_path.points.empty()) {
+    return {};
+  }
+
+  // try to insert stop point in current_path after approval
+  // but if can't stop with constraints(maximum deceleration, maximum jerk), don't insert stop point
+  const auto min_stop_distance =
+    behavior_path_planner::utils::start_goal_planner_common::calcFeasibleDecelDistance(
+      planner_data_, parameters_->maximum_deceleration_for_stop, parameters_->maximum_jerk_for_stop,
+      0.0);
+  if (!min_stop_distance) {
+    return {};
+  }
+
+  // set stop point
+  const auto stop_idx = motion_utils::insertStopPoint(
+    planner_data_->self_odometry->pose.pose, *min_stop_distance, current_path.points);
+
+  if (!stop_idx) {
+    return {};
+  } else {
+    stop_pose_ = current_path.points.at(*stop_idx).point.pose;
+  }
+
+  return current_path;
+}
+
 void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
 {
   if (status_.planner_type == PlannerType::FREESPACE) {
@@ -1196,21 +1241,23 @@ void StartPlannerModule::setDebugData() const
 
   // safety check
   {
+    if (start_planner_data_.ego_predicted_path.size() > 0) {
+      const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
+        start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
+      add(createPredictedPathMarkerArray(
+        ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
+    }
+
+    if (start_planner_data_.filtered_objects.objects.size() > 0) {
+      add(createObjectsMarkerArray(
+        start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
+    }
+
     add(showSafetyCheckInfo(start_planner_data_.collision_check, "object_debug_info"));
     add(showPredictedPath(start_planner_data_.collision_check, "ego_predicted_path"));
     add(showPolygon(start_planner_data_.collision_check, "ego_and_target_polygon_relation"));
-  }
-
-  if (start_planner_data_.ego_predicted_path.size() > 0) {
-    const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
-      start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
-    add(createPredictedPathMarkerArray(
-      ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
-  }
-
-  if (start_planner_data_.filtered_objects.objects.size() > 0) {
-    add(createObjectsMarkerArray(
-      start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      start_planner_data_.collision_check);
   }
 
   // Visualize planner type text

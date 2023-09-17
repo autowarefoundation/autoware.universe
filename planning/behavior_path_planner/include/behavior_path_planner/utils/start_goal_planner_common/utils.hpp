@@ -24,6 +24,8 @@
 
 #include <motion_utils/distance/distance.hpp>
 
+#include <lanelet2_core/Forward.h>
+
 #include <memory>
 #include <utility>
 #include <vector>
@@ -58,6 +60,10 @@ void modifyVelocityByDirection(
   std::vector<PathWithLaneId> & paths,
   std::vector<std::pair<double, double>> & terminal_vel_acc_pairs, const double target_velocity,
   const double acceleration);
+
+PathWithLaneId generateStopPointInCurrentPath(
+  const PathWithLaneId & current_path, const lanelet::ConstLanelets & current_lanes,
+  const Pose & current_pose, Pose & stop_pose);
 
 void updateEgoPredictedPathParams(
   std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,

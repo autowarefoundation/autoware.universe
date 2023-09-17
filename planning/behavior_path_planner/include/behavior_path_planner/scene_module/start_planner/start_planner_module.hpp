@@ -64,6 +64,8 @@ struct PullOutStatus
   bool back_finished{false};  // if backward driving is not required, this is also set to true
                               // todo: rename to clear variable name.
   Pose pull_out_start_pose{};
+  bool prev_is_safe_dynamic_objects{false};
+  std::shared_ptr<PathWithLaneId> prev_stop_path_after_approval{nullptr};
 
   PullOutStatus() {}
 };
@@ -192,6 +194,10 @@ private:
   // freespace planner
   void onFreespacePlannerTimer();
   bool planFreespacePath();
+  std::optional<PathWithLaneId> generateFeasibleStopPath();
+
+  // output setter
+  void setOutput(BehaviorModuleOutput & output);
 
   void setDebugData() const;
 };

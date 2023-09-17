@@ -82,6 +82,37 @@ void modifyVelocityByDirection(
   }
 }
 
+// PathWithLaneId generateStopPointInCurrentPath(
+//   const PlannerData & planner_data, PathWithLaneId & current_path,
+//   const lanelet::ConstLanelets & current_lanes, Pose & stop_pose)
+// {
+//   if (current_lanes.empty()) {
+//     return PathWithLaneId{};
+//   }
+//   const Pose & current_pose = planner_data.self_odometry->pose.pose;
+//   const double v_now = planner_data.self_odometry->twist.twist.linear.x;
+//   const double a_now = planner_data.self_acceleration->accel.accel.linear.x;
+
+//   // try to insert stop point in current_path after approval
+//   // but if can't stop with constraints(maximum deceleration, maximum jerk), don't insert stop
+//   point const auto min_stop_distance = calcFeasibleDecelDistance(
+//     planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0.0);
+//   calcDecelDistWithJerkAndAccConstraints(v_now, 0, a_now, -acc_lim, jerk_lim, -1.0 * jerk_lim);
+//   if (!min_stop_distance) {
+//     return current_path;
+//   }
+
+//   // set stop point
+//   const auto stop_idx =
+//     motion_utils::insertStopPoint(current_pose, *min_stop_distance, current_path.points);
+
+//   if (stop_idx) {
+//     stop_pose = current_path.points.at(*stop_idx).point.pose;
+//   }
+
+//   return current_path;
+// }
+
 void updateEgoPredictedPathParams(
   std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::shared_ptr<StartPlannerParameters> & start_planner_params)
