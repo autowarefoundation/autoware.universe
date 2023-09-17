@@ -37,6 +37,7 @@ using motion_utils::calcLateralOffset;
 using motion_utils::calcLongitudinalOffsetPoint;
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
+using motion_utils::calcSignedArcLengthPartialSum;
 using motion_utils::findNearestSegmentIndex;
 using motion_utils::insertTargetPoint;
 using motion_utils::resamplePath;
@@ -231,9 +232,12 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   // Calculate stop point with margin
   const auto p_stop_line = getStopPointWithMargin(*path, path_intersects);
-  // TODO(murooka) add a guard of p_stop_line
-  const auto default_stop_pose = toStdOptional(
-    calcLongitudinalOffsetPose(path->points, p_stop_line->first, p_stop_line->second));
+
+  std::optional<geometry_msgs::msg::Pose> default_stop_pose = std::nullopt;
+  if (p_stop_line.has_value()) {
+    default_stop_pose = toStdOptional(
+      calcLongitudinalOffsetPose(path->points, p_stop_line->first, p_stop_line->second));
+  }
 
   // Resample path sparsely for less computation cost
   constexpr double resample_interval = 4.0;
@@ -748,15 +752,15 @@ Polygon2d CrosswalkModule::getAttentionArea(
 {
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
   const auto ego_polygon = createVehiclePolygon(planner_data_->vehicle_info_);
+  const auto backward_path_length =
+    calcSignedArcLength(sparse_resample_path.points, size_t(0), ego_pos);
+  const auto length_sum = calcSignedArcLengthPartialSum(
+    sparse_resample_path.points, size_t(0), sparse_resample_path.points.size());
 
   Polygon2d attention_area;
   for (size_t j = 0; j < sparse_resample_path.points.size() - 1; ++j) {
-    const auto & p_ego_front = sparse_resample_path.points.at(j).point.pose;
-    const auto & p_ego_back = sparse_resample_path.points.at(j + 1).point.pose;
-    const auto front_length =
-      calcSignedArcLength(sparse_resample_path.points, ego_pos, p_ego_front.position);
-    const auto back_length =
-      calcSignedArcLength(sparse_resample_path.points, ego_pos, p_ego_back.position);
+    const auto front_length = length_sum.at(j) - backward_path_length;
+    const auto back_length = length_sum.at(j + 1) - backward_path_length;
 
     if (back_length < crosswalk_attention_range.first) {
       continue;
@@ -934,28 +938,25 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
     crosswalk_.regulatoryElementsAs<const lanelet::TrafficLight>();
 
   for (const auto & traffic_lights_reg_elem : traffic_lights_reg_elems) {
-    lanelet::ConstLineStringsOrPolygons3d traffic_lights = traffic_lights_reg_elem->trafficLights();
-    for (const auto & traffic_light : traffic_lights) {
-      const auto ll_traffic_light = static_cast<lanelet::ConstLineString3d>(traffic_light);
-      const auto traffic_signal_stamped = planner_data_->getTrafficSignal(ll_traffic_light.id());
-      if (!traffic_signal_stamped) {
-        continue;
-      }
+    const auto traffic_signal_stamped =
+      planner_data_->getTrafficSignal(traffic_lights_reg_elem->id());
+    if (!traffic_signal_stamped) {
+      continue;
+    }
 
-      if (
-        planner_param_.traffic_light_state_timeout <
-        (clock_->now() - traffic_signal_stamped->header.stamp).seconds()) {
-        continue;
-      }
+    if (
+      planner_param_.traffic_light_state_timeout <
+      (clock_->now() - traffic_signal_stamped->stamp).seconds()) {
+      continue;
+    }
 
-      const auto & lights = traffic_signal_stamped->signal.lights;
-      if (lights.empty()) {
-        continue;
-      }
+    const auto & lights = traffic_signal_stamped->signal.elements;
+    if (lights.empty()) {
+      continue;
+    }
 
-      if (lights.front().color == TrafficLight::RED) {
-        return true;
-      }
+    if (lights.front().color == TrafficSignalElement::RED) {
+      return true;
     }
   }
 
@@ -1068,6 +1069,8 @@ void CrosswalkModule::setDistanceToStop(
     const auto & ego_pos = planner_data_->current_odometry->pose.position;
     const double dist_ego2stop = calcSignedArcLength(ego_path.points, ego_pos, *stop_pos);
     setDistance(dist_ego2stop);
+  } else {
+    setDistance(std::numeric_limits<double>::lowest());
   }
 }
 
