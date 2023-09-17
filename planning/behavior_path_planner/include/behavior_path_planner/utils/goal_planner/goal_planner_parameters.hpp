@@ -40,7 +40,6 @@ enum class ParkingPolicy {
 struct GoalPlannerParameters
 {
   // general  params
-  double minimum_request_length;
   double th_arrived_distance;
   double th_stopped_velocity;
   double th_stopped_time;
@@ -71,6 +70,7 @@ struct GoalPlannerParameters
   double object_recognition_collision_check_max_extra_stopping_margin;
 
   // pull over general params
+  double pull_over_minimum_request_length;
   double pull_over_velocity;
   double pull_over_minimum_velocity;
   double decide_path_distance;
