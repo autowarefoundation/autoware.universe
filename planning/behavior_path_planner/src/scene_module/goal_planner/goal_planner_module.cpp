@@ -24,6 +24,7 @@
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -72,19 +73,19 @@ GoalPlannerModule::GoalPlannerModule(
     pull_over_planners_.push_back(std::make_shared<ShiftPullOver>(
       node, *parameters, lane_departure_checker, occupancy_grid_map_));
   }
-  // currently only support geometric_parallel_parking for left side parking
-  if (left_side_parking_) {
-    if (parameters_->enable_arc_forward_parking) {
-      constexpr bool is_forward = true;
-      pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-        node, *parameters, lane_departure_checker, occupancy_grid_map_, is_forward));
-    }
-    if (parameters_->enable_arc_backward_parking) {
-      constexpr bool is_forward = false;
-      pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-        node, *parameters, lane_departure_checker, occupancy_grid_map_, is_forward));
-    }
+
+  // set geometric pull over
+  if (parameters_->enable_arc_forward_parking) {
+    constexpr bool is_forward = true;
+    pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
+      node, *parameters, lane_departure_checker, occupancy_grid_map_, is_forward));
   }
+  if (parameters_->enable_arc_backward_parking) {
+    constexpr bool is_forward = false;
+    pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
+      node, *parameters, lane_departure_checker, occupancy_grid_map_, is_forward));
+  }
+
   if (pull_over_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");
   }
@@ -264,7 +265,9 @@ void GoalPlannerModule::initializeSafetyCheckParameters()
 void GoalPlannerModule::processOnEntry()
 {
   // Initialize occupancy grid map
-  if (parameters_->use_occupancy_grid) {
+  if (
+    parameters_->use_occupancy_grid_for_goal_search ||
+    parameters_->use_occupancy_grid_for_path_collision_check) {
     initializeOccupancyGridMap();
   }
   // Initialize safety checker
@@ -663,29 +666,29 @@ void GoalPlannerModule::setLanes()
 
 void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
 {
-  if (status_.is_safe_static_objects) {
-    if (isSafePath()) {
-      // clear stop pose when the path is safe against static/dynamic objects and activated
-      if (isActivated()) {
-        resetWallPoses();
-      }
-      // keep stop if not enough time passed,
-      // because it takes time for the trajectory to be reflected
-      auto current_path = getCurrentPath();
-      keepStoppedWithCurrentPath(current_path);
-
-      output.path = std::make_shared<PathWithLaneId>(current_path);
-      output.reference_path = getPreviousModuleOutput().reference_path;
-    } else if (status_.has_decided_path && isActivated()) {
-      // situation : not safe against dynamic objects after approval
-      // insert stop point in current path if ego is able to stop with acceleration and jerk
-      // constraints
-      setStopPathFromCurrentPath(output);
-    }
-
-  } else {
-    // not safe: use stop_path
+  if (!status_.is_safe_static_objects) {
+    // situation : not safe against static objects use stop_path
     setStopPath(output);
+  } else if (
+    parameters_->safety_check_params.enable_safety_check && !isSafePath() &&
+    status_.has_decided_path && isActivated()) {
+    // situation : not safe against dynamic objects after approval
+    // insert stop point in current path if ego is able to stop with acceleration and jerk
+    // constraints
+    setStopPathFromCurrentPath(output);
+  } else {
+    // situation : (safe against static and dynamic objects) or (safe against static objects and
+    // before approval) don't stop
+    if (isActivated()) {
+      resetWallPoses();
+    }
+    // keep stop if not enough time passed,
+    // because it takes time for the trajectory to be reflected
+    auto current_path = getCurrentPath();
+    keepStoppedWithCurrentPath(current_path);
+
+    output.path = std::make_shared<PathWithLaneId>(current_path);
+    output.reference_path = getPreviousModuleOutput().reference_path;
   }
 
   setDrivableAreaInfo(output);
@@ -700,7 +703,8 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
   status_.prev_is_safe = status_.is_safe_static_objects;
-  status_.prev_is_safe_dynamic_objects = status_.is_safe_dynamic_objects;
+  status_.prev_is_safe_dynamic_objects =
+    parameters_->safety_check_params.enable_safety_check ? isSafePath() : true;
 }
 
 void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
@@ -1292,7 +1296,7 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo() const
 
 bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
 {
-  if (parameters_->use_occupancy_grid && occupancy_grid_map_) {
+  if (parameters_->use_occupancy_grid_for_path_collision_check && occupancy_grid_map_) {
     const bool check_out_of_range = false;
     if (occupancy_grid_map_->hasObstacleOnPath(path, check_out_of_range)) {
       return true;
@@ -1583,10 +1587,13 @@ bool GoalPlannerModule::isSafePath() const
   RCLCPP_DEBUG(getLogger(), "current_path_idx %ld", status_.current_path_idx);
   utils::start_goal_planner_common::updatePathProperty(
     ego_predicted_path_params_, terminal_velocity_and_accel);
+  // TODO(Sugahara): shoule judge is_object_front properly
+  const bool is_object_front = true;
+  const bool limit_to_max_velocity = true;
   const auto ego_predicted_path =
     behavior_path_planner::utils::path_safety_checker::createPredictedPath(
       ego_predicted_path_params_, pull_over_path.points, current_pose, current_velocity,
-      ego_seg_idx);
+      ego_seg_idx, is_object_front, limit_to_max_velocity);
 
   // filtering objects with velocity, position and class
   const auto & filtered_objects = utils::path_safety_checker::filterObjects(
@@ -1598,7 +1605,7 @@ bool GoalPlannerModule::isSafePath() const
     pull_over_lanes, route_handler, filtered_objects, objects_filtering_params_);
 
   const double hysteresis_factor =
-    status_.is_safe_dynamic_objects ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+    status_.prev_is_safe_dynamic_objects ? 1.0 : parameters_->hysteresis_factor_expand_rate;
 
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     goal_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
