@@ -3,7 +3,7 @@
   <!-- Interface parameters -->
   <arg name="mode" default="lidar" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
 
-  <!-- LiDAR paramters -->
+  <!-- LiDAR parameters -->
   <arg name="input/pointcloud"/>
   <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
   <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
@@ -11,7 +11,7 @@
   <arg name="use_pointcloud_container" default="false" description="use pointcloud container for detection preprocessor"/>
   <arg name="container_name" default="pointcloud_container"/>
 
-  <!-- Camera paramters -->
+  <!-- Camera parameters -->
   <arg name="image_raw0" default="/image_raw" description="image raw topic name"/>
   <arg name="camera_info0" default="/camera_info" description="camera info topic name"/>
   <arg name="image_raw1" default=""/>
@@ -30,7 +30,7 @@
   <arg name="camera_info7" default=""/>
   <arg name="image_number" default="1" description="choose image raw number(1-8)"/>
 
-  <!-- Radar paramters -->
+  <!-- Radar parameters -->
   <arg name="input/radar" default="/sensing/radar/detected_objects"/>
   <arg name="radar_lanelet_filtering_range_param" default="$(find-pkg-share detected_object_validation)/config/object_position_filter.param.yaml"/>
 
