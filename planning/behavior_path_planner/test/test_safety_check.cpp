@@ -15,7 +15,8 @@
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 
@@ -27,10 +28,10 @@
 constexpr double epsilon = 1e-6;
 
 using autoware_auto_perception_msgs::msg::Shape;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using marker_utils::CollisionCheckDebug;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 

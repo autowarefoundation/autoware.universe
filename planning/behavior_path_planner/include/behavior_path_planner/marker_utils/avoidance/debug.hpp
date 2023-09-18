@@ -25,8 +25,7 @@
 #include <geometry_msgs/msg/polygon.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_core/Forward.h>
 
 #include <string>
 #include <vector>
@@ -58,8 +57,6 @@ MarkerArray createPredictedVehiclePositions(const PathWithLaneId & path, std::st
 MarkerArray createTargetObjectsMarkerArray(const ObjectDataArray & objects, const std::string & ns);
 
 MarkerArray createOtherObjectsMarkerArray(const ObjectDataArray & objects, const std::string & ns);
-
-MarkerArray createUnsafeObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns);
 
 MarkerArray makeOverhangToRoadShoulderMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects, std::string && ns);

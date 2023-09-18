@@ -14,6 +14,9 @@
 
 #include "gnss_poser/gnss_poser_core.hpp"
 
+#include <geography_utils/height.hpp>
+#include <geography_utils/projection.hpp>
+
 #include <autoware_sensing_msgs/msg/gnss_ins_orientation_stamped.hpp>
 
 #include <algorithm>
@@ -34,16 +37,13 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   use_gnss_ins_orientation_(declare_parameter("use_gnss_ins_orientation", true)),
   msg_gnss_ins_orientation_stamped_(
     std::make_shared<autoware_sensing_msgs::msg::GnssInsOrientationStamped>()),
-  height_system_(declare_parameter<int>("height_system", 1)),
   gnss_pose_pub_method(declare_parameter<int>("gnss_pose_pub_method", 0))
 {
-  int coordinate_system =
-    declare_parameter("coordinate_system", static_cast<int>(CoordinateSystem::MGRS));
-  coordinate_system_ = static_cast<CoordinateSystem>(coordinate_system);
-
-  nav_sat_fix_origin_.latitude = declare_parameter("latitude", 0.0);
-  nav_sat_fix_origin_.longitude = declare_parameter("longitude", 0.0);
-  nav_sat_fix_origin_.altitude = declare_parameter("altitude", 0.0);
+  // Subscribe to map_projector_info topic
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  adaptor.init_sub(
+    sub_map_projector_info_,
+    [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { callbackMapProjectorInfo(msg); });
 
   int buff_epoch = declare_parameter("buff_epoch", 1);
   position_buffer_.set_capacity(buff_epoch);
@@ -61,9 +61,24 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   fixed_pub_ = create_publisher<tier4_debug_msgs::msg::BoolStamped>("gnss_fixed", rclcpp::QoS{1});
 }
 
+void GNSSPoser::callbackMapProjectorInfo(const MapProjectorInfo::Message::ConstSharedPtr msg)
+{
+  projector_info_ = *msg;
+  received_map_projector_info_ = true;
+}
+
 void GNSSPoser::callbackNavSatFix(
   const sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr)
 {
+  // Return immediately if map_projector_info has not been received yet.
+  if (!received_map_projector_info_) {
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "map_projector_info has not been received yet. Check if the map_projection_loader is "
+      "successfully launched.");
+    return;
+  }
+
   // check fixed topic
   const bool is_fixed = isFixed(nav_sat_fix_msg_ptr->status);
 
@@ -80,9 +95,15 @@ void GNSSPoser::callbackNavSatFix(
     return;
   }
 
-  // get position in coordinate_system
-  const auto gnss_stat = convert(*nav_sat_fix_msg_ptr, coordinate_system_, height_system_);
-  const auto position = getPosition(gnss_stat);
+  // get position
+  geographic_msgs::msg::GeoPoint gps_point;
+  gps_point.latitude = nav_sat_fix_msg_ptr->latitude;
+  gps_point.longitude = nav_sat_fix_msg_ptr->longitude;
+  gps_point.altitude = nav_sat_fix_msg_ptr->altitude;
+  geometry_msgs::msg::Point position = geography_utils::project_forward(gps_point, projector_info_);
+  position.z = geography_utils::convert_height(
+    position.z, gps_point.latitude, gps_point.longitude, MapProjectorInfo::Message::WGS84,
+    projector_info_.vertical_datum);
 
   geometry_msgs::msg::Pose gnss_antenna_pose{};
 
@@ -183,34 +204,6 @@ bool GNSSPoser::canGetCovariance(const sensor_msgs::msg::NavSatFix & nav_sat_fix
 {
   return nav_sat_fix_msg.position_covariance_type >
          sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
-}
-
-GNSSStat GNSSPoser::convert(
-  const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, CoordinateSystem coordinate_system,
-  int height_system)
-{
-  GNSSStat gnss_stat;
-  if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_UTM) {
-    gnss_stat = NavSatFix2LocalCartesianUTM(
-      nav_sat_fix_msg, nav_sat_fix_origin_, this->get_logger(), height_system);
-  } else if (coordinate_system == CoordinateSystem::MGRS) {
-    gnss_stat = NavSatFix2MGRS(
-      nav_sat_fix_msg, MGRSPrecision::_100MICRO_METER, this->get_logger(), height_system);
-  } else {
-    RCLCPP_ERROR_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "Unknown Coordinate System");
-  }
-  return gnss_stat;
-}
-
-geometry_msgs::msg::Point GNSSPoser::getPosition(const GNSSStat & gnss_stat)
-{
-  geometry_msgs::msg::Point point;
-  point.x = gnss_stat.x;
-  point.y = gnss_stat.y;
-  point.z = gnss_stat.z;
-  return point;
 }
 
 geometry_msgs::msg::Point GNSSPoser::getMedianPosition(

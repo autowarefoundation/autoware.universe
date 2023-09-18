@@ -16,8 +16,10 @@
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "interpolation/linear_interpolation.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 namespace behavior_path_planner::utils::path_safety_checker
 {
@@ -28,6 +30,12 @@ void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point &
   point.y() = geom_point.y;
 
   bg::append(polygon.outer(), point);
+}
+
+bool isTargetObjectOncoming(
+  const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose)
+{
+  return std::abs(calcYawDeviation(vehicle_pose, object_pose)) > M_PI_2;
 }
 
 bool isTargetObjectFront(
@@ -253,7 +261,11 @@ bool checkCollision(
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
   double hysteresis_factor, CollisionCheckDebug & debug)
 {
-  debug.lerped_path.reserve(target_object_path.path.size());
+  {
+    debug.ego_predicted_path = predicted_ego_path;
+    debug.obj_predicted_path = target_object_path.path;
+    debug.current_obj_pose = target_object.initial_pose.pose;
+  }
 
   for (const auto & obj_pose_with_poly : target_object_path.path) {
     const auto & current_time = obj_pose_with_poly.time;
@@ -277,7 +289,6 @@ bool checkCollision(
     const auto & ego_velocity = interpolated_data->velocity;
 
     {
-      debug.lerped_path.push_back(ego_pose);
       debug.expected_ego_pose = ego_pose;
       debug.expected_obj_pose = obj_pose;
       debug.extended_ego_polygon = ego_polygon;

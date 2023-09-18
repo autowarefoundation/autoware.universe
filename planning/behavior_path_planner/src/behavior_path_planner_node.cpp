@@ -19,7 +19,7 @@
 #include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/ros/update_param.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <tier4_planning_msgs/msg/path_change_module_id.hpp>
@@ -284,6 +284,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
       declare_parameter<bool>(ns + "enable_simultaneous_execution_as_approved_module");
     config.enable_simultaneous_execution_as_candidate_module =
       declare_parameter<bool>(ns + "enable_simultaneous_execution_as_candidate_module");
+    config.keep_last = declare_parameter<bool>(ns + "keep_last");
     config.priority = declare_parameter<int>(ns + "priority");
     config.max_module_size = declare_parameter<int>(ns + "max_module_size");
     return config;
@@ -1043,6 +1044,9 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     updateParam(
       parameters, DrivableAreaExpansionParameters::MAX_PATH_ARC_LENGTH_PARAM,
       planner_data_->drivable_area_expansion_parameters.max_path_arc_length);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::RESAMPLE_INTERVAL_PARAM,
+      planner_data_->drivable_area_expansion_parameters.resample_interval);
     updateParam(
       parameters, DrivableAreaExpansionParameters::EXTRA_ARC_LENGTH_PARAM,
       planner_data_->drivable_area_expansion_parameters.extra_arc_length);

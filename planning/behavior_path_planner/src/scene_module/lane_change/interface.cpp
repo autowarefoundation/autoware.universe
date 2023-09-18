@@ -31,6 +31,7 @@
 
 namespace behavior_path_planner
 {
+using tier4_autoware_utils::appendMarkerArray;
 using utils::lane_change::assignToCandidate;
 
 LaneChangeInterface::LaneChangeInterface(
@@ -87,14 +88,11 @@ ModuleStatus LaneChangeInterface::updateState()
   }
 
   if (!module_type_->isValidPath()) {
-    return ModuleStatus::RUNNING;
+    return ModuleStatus::SUCCESS;
   }
 
   if (module_type_->isAbortState()) {
-    if (module_type_->hasFinishedAbort()) {
-      resetLaneChangeModule();
-    }
-    return ModuleStatus::RUNNING;
+    return module_type_->hasFinishedAbort() ? ModuleStatus::SUCCESS : ModuleStatus::RUNNING;
   }
 
   if (module_type_->hasFinishedLaneChange()) {
@@ -153,10 +151,7 @@ ModuleStatus LaneChangeInterface::updateState()
       getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
       "Lane change path is unsafe. Cancel lane change.");
     module_type_->toCancelState();
-    if (!isWaitingApproval()) {
-      resetLaneChangeModule();
-    }
-    return ModuleStatus::RUNNING;
+    return isWaitingApproval() ? ModuleStatus::RUNNING : ModuleStatus::SUCCESS;
   }
 
   if (!module_type_->isAbortEnabled()) {
@@ -191,18 +186,12 @@ ModuleStatus LaneChangeInterface::updateState()
   return ModuleStatus::RUNNING;
 }
 
-void LaneChangeInterface::resetLaneChangeModule()
-{
-  processOnExit();
-  removeRTCStatus();
-  processOnEntry();
-}
-
 void LaneChangeInterface::updateData()
 {
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
   module_type_->updateSpecialData();
+  module_type_->resetStopPose();
 }
 
 BehaviorModuleOutput LaneChangeInterface::plan()
@@ -220,6 +209,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   path_reference_ = output.reference_path;
   *prev_approved_path_ = *getPreviousModuleOutput().path;
   module_type_->insertStopPoint(module_type_->getLaneChangeStatus().target_lanes, *output.path);
+
+  stop_pose_ = module_type_->getStopPose();
 
   updateSteeringFactorPtr(output);
   clearWaitingApproval();
@@ -248,6 +239,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   out.turn_signal_info = getCurrentTurnSignalInfo(*out.path, out.turn_signal_info);
 
   path_reference_ = getPreviousModuleOutput().reference_path;
+
+  stop_pose_ = module_type_->getStopPose();
 
   if (!module_type_->isValidPath()) {
     removeRTCStatus();
@@ -286,6 +279,7 @@ void LaneChangeInterface::updateModuleParams(const std::any & parameters)
 
 void LaneChangeInterface::setData(const std::shared_ptr<const PlannerData> & data)
 {
+  planner_data_ = data;
   module_type_->setData(data);
 }
 
@@ -295,11 +289,10 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   if (!parameters_->publish_debug_marker) {
     return;
   }
+  using marker_utils::showPolygon;
+  using marker_utils::showPredictedPath;
+  using marker_utils::showSafetyCheckInfo;
   using marker_utils::lane_change_markers::showAllValidLaneChangePath;
-  using marker_utils::lane_change_markers::showLerpedPose;
-  using marker_utils::lane_change_markers::showObjectInfo;
-  using marker_utils::lane_change_markers::showPolygon;
-  using marker_utils::lane_change_markers::showPolygonPose;
 
   const auto debug_data = module_type_->getDebugData();
   const auto debug_after_approval = module_type_->getAfterApprovalDebugData();
@@ -312,14 +305,14 @@ void LaneChangeInterface::setObjectDebugVisualization() const
 
   add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
   if (!debug_data.empty()) {
-    add(showObjectInfo(debug_data, "object_debug_info"));
-    add(showLerpedPose(debug_data, "ego_predicted_path"));
+    add(showSafetyCheckInfo(debug_data, "object_debug_info"));
+    add(showPredictedPath(debug_data, "ego_predicted_path"));
     add(showPolygon(debug_data, "ego_and_target_polygon_relation"));
   }
 
   if (!debug_after_approval.empty()) {
-    add(showObjectInfo(debug_after_approval, "object_debug_info_after_approval"));
-    add(showLerpedPose(debug_after_approval, "ego_predicted_path_after_approval"));
+    add(showSafetyCheckInfo(debug_after_approval, "object_debug_info_after_approval"));
+    add(showPredictedPath(debug_after_approval, "ego_predicted_path_after_approval"));
     add(showPolygon(debug_after_approval, "ego_and_target_polygon_relation_after_approval"));
   }
 }
