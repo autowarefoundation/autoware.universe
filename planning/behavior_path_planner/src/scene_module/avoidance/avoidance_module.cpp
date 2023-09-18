@@ -32,6 +32,9 @@
 #include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
+#include <boost/geometry/algorithms/centroid.hpp>
+#include <boost/geometry/strategies/cartesian/centroid_bashein_detmer.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -1839,10 +1842,11 @@ bool AvoidanceModule::isSafePath(
     return true;  // if safety check is disabled, it always return safe.
   }
 
-  const auto ego_predicted_path_for_front_object =
-    utils::avoidance::convertToPredictedPath(shifted_path.path, planner_data_, true, parameters_);
-  const auto ego_predicted_path_for_rear_object =
-    utils::avoidance::convertToPredictedPath(shifted_path.path, planner_data_, false, parameters_);
+  const bool limit_to_max_velocity = false;
+  const auto ego_predicted_path_for_front_object = utils::avoidance::convertToPredictedPath(
+    shifted_path.path, planner_data_, true, limit_to_max_velocity, parameters_);
+  const auto ego_predicted_path_for_rear_object = utils::avoidance::convertToPredictedPath(
+    shifted_path.path, planner_data_, false, limit_to_max_velocity, parameters_);
 
   const auto ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
   const auto is_right_shift = [&]() -> std::optional<bool> {
@@ -1879,13 +1883,13 @@ bool AvoidanceModule::isSafePath(
     const auto is_object_front =
       utils::path_safety_checker::isTargetObjectFront(getEgoPose(), obj_polygon, p.vehicle_info);
 
-    const auto is_object_incoming =
-      std::abs(calcYawDeviation(getEgoPose(), object.initial_pose.pose)) > M_PI_2;
+    const auto is_object_oncoming =
+      utils::path_safety_checker::isTargetObjectOncoming(getEgoPose(), object.initial_pose.pose);
 
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
       object, parameters_->check_all_predicted_path);
 
-    const auto & ego_predicted_path = is_object_front && !is_object_incoming
+    const auto & ego_predicted_path = is_object_front && !is_object_oncoming
                                         ? ego_predicted_path_for_front_object
                                         : ego_predicted_path_for_rear_object;
 
