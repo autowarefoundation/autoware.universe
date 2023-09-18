@@ -13,31 +13,32 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
+
 #include <cstdlib>
 #include <iostream>
 #include <string>
 
 TEST(TestLaunchFile, test_launch_file)
 {
-    // Define the path of Python launch file
-    std::string global_params_launch_path = "global_params.launch.py";
+  // Define the path of Python launch file
+  std::string global_params_launch_path = "global_params.launch.py";
 
-    // Define the parameters you want to pass to the launch file
-    std::string use_sim_time_param = "false"; 
-    std::string vehicle_model_param = "sample_vehicle"; 
-    // Construct the command to run the Python launch script with parameters
-    std::string command = "ros2 launch global_parameter_loader " + global_params_launch_path +
-                          " use_sim_time:=" + use_sim_time_param +
-                          " vehicle_model:=" + vehicle_model_param;
+  // Define the parameters you want to pass to the launch file
+  std::string use_sim_time_param = "false";
+  std::string vehicle_model_param = "sample_vehicle";
+  // Construct the command to run the Python launch script with parameters
+  std::string command = "ros2 launch global_parameter_loader " + global_params_launch_path +
+                        " use_sim_time:=" + use_sim_time_param +
+                        " vehicle_model:=" + vehicle_model_param;
 
-    // Use the system() function to execute the command
-    int result = std::system(command.c_str());
-    // Check the result of running the launch file
-    EXPECT_EQ(result, 0);
+  // Use the system() function to execute the command
+  int result = std::system(command.c_str());
+  // Check the result of running the launch file
+  EXPECT_EQ(result, 0);
 }
 
 int main(int argc, char * argv[])
 {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
