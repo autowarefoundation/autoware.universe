@@ -121,7 +121,28 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_clear_mrm_route_, this, &MissionPlanner::on_clear_mrm_route);
   adaptor.init_sub(sub_modified_goal_, this, &MissionPlanner::on_modified_goal);
 
+  // Route state will be published when the node gets ready for route api after initialization,
+  // otherwise the mission planner rejects the request for the API.
+  data_check_timer_ = create_wall_timer(
+    std::chrono::milliseconds(100), std::bind(&MissionPlanner::checkInitialization, this));
+}
+
+void MissionPlanner::checkInitialization()
+{
+  if (!planner_->ready()) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 5000, "waiting lanelet map... Route API is not ready.");
+    return;
+  }
+  if (!odometry_) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 5000, "waiting odometry... Route API is not ready.");
+    return;
+  }
+
+  // All data is ready. Now API is available.
   change_state(RouteState::Message::UNSET);
+  data_check_timer_->cancel();  // stop timer callback
 }
 
 void MissionPlanner::on_odometry(const Odometry::ConstSharedPtr msg)
