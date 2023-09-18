@@ -227,7 +227,8 @@ BehaviorModuleOutput StartPlannerModule::plan()
       RCLCPP_INFO(getLogger(), "Increment path index");
       incrementPathIndex();
     }
-    const bool is_safe_dynamic_objects = isSafePath();
+    const bool is_safe_dynamic_objects =
+      parameters_->safety_check_params.enable_safety_check ? isSafePath() : true;
     if (
       !is_safe_dynamic_objects && isActivated() &&
       (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr)) {
