@@ -1152,7 +1152,7 @@ bool StartPlannerModule::planFreespacePath()
   return false;
 }
 
-// TODO(Sugahara): commonize with goal_planner
+// TODO(Sugahara): generalize with goal_planner
 std::optional<PathWithLaneId> StartPlannerModule::generateFeasibleStopPath()
 {
   auto current_path = getCurrentPath();
