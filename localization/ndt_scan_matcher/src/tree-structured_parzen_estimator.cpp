@@ -22,7 +22,6 @@ TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
   const double x_stddev, const double y_stddev, const double z_stddev, const double roll_stddev,
   const double pitch_stddev)
 : good_num_(0),
-  stddev_coeff_(1.0),
   x_stddev_(x_stddev),
   y_stddev_(y_stddev),
   z_stddev_(z_stddev),
@@ -41,10 +40,6 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
     return trial.score > good_threshold_;
   });
   good_num_ = std::min(good_num_, static_cast<int64_t>(trials_.size() * kMaxGoodRate));
-
-  // ceil
-  const int64_t n = (trials_.size() + 5) / 6;
-  stddev_coeff_ = kBaseStddevCoeff / std::sqrt(n);
 }
 
 TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input()
@@ -78,7 +73,8 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
   double best_score = -1e9;
   for (int64_t i = 0; i < 100; i++) {
     Input input{};
-    if (good_num_ == 0) {
+    const int64_t index = engine() % (good_num_ + 1);
+    if (index == good_num_) {
       // Only for yaw, use uniform distribution instead of normal distribution
       input.x = dist_norm(engine) * x_stddev_;
       input.y = dist_norm(engine) * y_stddev_;
@@ -91,14 +87,16 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
       input.roll = fix_angle(input.roll);
       input.pitch = fix_angle(input.pitch);
     } else {
-      const int64_t index = engine() % good_num_;
       const Input & base = trials_[index].input;
-      input.x = base.x + dist_norm(engine) * stddev_coeff_ * x_stddev_;
-      input.y = base.y + dist_norm(engine) * stddev_coeff_ * y_stddev_;
-      input.z = base.z + dist_norm(engine) * stddev_coeff_ * z_stddev_;
-      input.roll = base.roll + dist_norm(engine) * stddev_coeff_ * roll_stddev_;
-      input.pitch = base.pitch + dist_norm(engine) * stddev_coeff_ * pitch_stddev_;
-      input.yaw = base.yaw + dist_norm(engine) * stddev_coeff_ * yaw_stddev_;
+
+      // Scott's rule
+      const double coeff = kBaseStddevCoeff * std::pow(good_num_, -1.0 / 10);
+      input.x = base.x + dist_norm(engine) * coeff * x_stddev_;
+      input.y = base.y + dist_norm(engine) * coeff * y_stddev_;
+      input.z = base.z + dist_norm(engine) * coeff * z_stddev_;
+      input.roll = base.roll + dist_norm(engine) * coeff * roll_stddev_;
+      input.pitch = base.pitch + dist_norm(engine) * coeff * pitch_stddev_;
+      input.yaw = base.yaw + dist_norm(engine) * coeff * yaw_stddev_;
 
       // fixed angle
       input.roll = fix_angle(input.roll);
@@ -134,26 +132,32 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   // acquisition function.
   double upper = 0.0;
   double lower = 0.0;
-  const Input sigma{stddev_coeff_ * x_stddev_,     stddev_coeff_ * y_stddev_,
-                    stddev_coeff_ * z_stddev_,     stddev_coeff_ * roll_stddev_,
-                    stddev_coeff_ * pitch_stddev_, stddev_coeff_ * yaw_stddev_};
+
+  // Scott's rule
+  const double coeff_upper = kBaseStddevCoeff * std::pow(good_num_, -1.0 / 10);
+  const double coeff_lower = kBaseStddevCoeff * std::pow(n - good_num_, -1.0 / 10);
+  const Input sigma_upper{coeff_upper * x_stddev_,     coeff_upper * y_stddev_,
+                          coeff_upper * z_stddev_,     coeff_upper * roll_stddev_,
+                          coeff_upper * pitch_stddev_, coeff_upper * yaw_stddev_};
+  const Input sigma_lower{coeff_lower * x_stddev_,     coeff_lower * y_stddev_,
+                          coeff_lower * z_stddev_,     coeff_lower * roll_stddev_,
+                          coeff_lower * pitch_stddev_, coeff_lower * yaw_stddev_};
   for (int64_t i = 0; i < n; i++) {
-    const double p = gauss(input, trials_[i].input, sigma);
     if (i < good_num_) {
+      const double p = gauss(input, trials_[i].input, sigma_upper);
       const double v = trials_[i].score - good_threshold_;
       const double w = v * v;
       upper += w * p;
     } else {
+      const double p = gauss(input, trials_[i].input, sigma_lower);
       lower += p;
     }
   }
 
-  if (good_num_ == 0) {
-    // upper is given a quantity calculated from the initial distribution
-    const Input zeros{};
-    const Input sigma{x_stddev_, y_stddev_, z_stddev_, roll_stddev_, pitch_stddev_, 10.0};
-    upper = gauss(input, zeros, sigma);
-  }
+  const Input zeros{};
+  const Input sigma{x_stddev_, y_stddev_, z_stddev_, roll_stddev_, pitch_stddev_, 10.0};
+  upper += gauss(input, zeros, sigma);
+  lower += gauss(input, zeros, sigma);
 
   const double r = upper / lower;
   return r;

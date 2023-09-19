@@ -50,7 +50,7 @@ public:
 
 private:
   static constexpr double kMaxGoodRate = 0.10;
-  static constexpr double kBaseStddevCoeff = 2.0;
+  static constexpr double kBaseStddevCoeff = 0.25;
 
   double acquisition_function(const Input & input);
   double gauss(const Input & input, const Input & mu, const Input & sigma);
@@ -59,14 +59,13 @@ private:
   std::vector<Trial> trials_;
   int64_t good_num_;
   const double good_threshold_ = 2.0;
-  double stddev_coeff_;
   const double x_stddev_;
   const double y_stddev_;
   const double z_stddev_;
   const double roll_stddev_;
   const double pitch_stddev_;
   // Only for yaw, use uniform distribution instead of normal distribution
-  const double yaw_stddev_ = 0.5;
+  const double yaw_stddev_ = 1.0;
 };
 
 #endif  // NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP
