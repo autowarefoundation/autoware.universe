@@ -17,6 +17,7 @@
 #include "ndt_scan_matcher/matrix_type.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/pose_array_interpolator.hpp"
+#include "ndt_scan_matcher/tree-structured_parzen_estimator.hpp"
 #include "ndt_scan_matcher/util_func.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -787,15 +788,39 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
   output_pose_with_cov_to_log(get_logger(), "align_using_monte_carlo_input", initial_pose_with_cov);
 
-  // generateParticle
-  const auto initial_poses =
-    create_random_pose_array(initial_pose_with_cov, initial_estimate_particles_num_);
+  // (x, y, z, roll, pitch, yaw) : 6 dim
+  TreeStructuredParzenEstimator tpe(6, initial_estimate_particles_num_);
+
+  const auto base_rpy = get_rpy(initial_pose_with_cov);
+  const Eigen::Map<const RowMatrixXd> covariance = {
+    initial_pose_with_cov.pose.covariance.data(), 6, 6};
+
+  // 3 sigma range (approx. 99.7%) as the survey area
+  const double x_range = std::sqrt(covariance(0, 0)) * 3;
+  const double y_range = std::sqrt(covariance(1, 1)) * 3;
+  const double z_range = std::sqrt(covariance(2, 2)) * 3;
+  const double roll_range = std::sqrt(covariance(3, 3)) * 3;
+  const double pitch_range = std::sqrt(covariance(4, 4)) * 3;
+  const double yaw_range = M_PI;  // only yaw is not limited
 
   std::vector<Particle> particle_array;
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
 
-  for (unsigned int i = 0; i < initial_poses.size(); i++) {
-    const auto & initial_pose = initial_poses[i];
+  for (int i = 0; i < initial_estimate_particles_num_; i++) {
+    const TreeStructuredParzenEstimator::Input input = tpe.get_next_input();
+
+    geometry_msgs::msg::Pose initial_pose;
+    initial_pose.position.x = initial_pose_with_cov.pose.pose.position.x + input[0] * x_range;
+    initial_pose.position.y = initial_pose_with_cov.pose.pose.position.y + input[1] * y_range;
+    initial_pose.position.z = initial_pose_with_cov.pose.pose.position.z + input[2] * z_range;
+    geometry_msgs::msg::Vector3 init_rpy;
+    init_rpy.x = base_rpy.x + input[3] * roll_range;
+    init_rpy.y = base_rpy.y + input[4] * pitch_range;
+    init_rpy.z = base_rpy.z + input[5] * yaw_range;
+    tf2::Quaternion tf_quaternion;
+    tf_quaternion.setRPY(init_rpy.x, init_rpy.y, init_rpy.z);
+    initial_pose.orientation = tf2::toMsg(tf_quaternion);
+
     const Eigen::Matrix4f initial_pose_matrix = pose_to_matrix4f(initial_pose);
     ndt_ptr->align(*output_cloud, initial_pose_matrix);
     const pclomp::NdtResult ndt_result = ndt_ptr->getResult();
@@ -822,6 +847,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
                                << pose.orientation.w << "," << rpy.x << "," << rpy.y << "," << rpy.z
                                << "," << ndt_result.transform_probability << ","
                                << ndt_result.nearest_voxel_transformation_likelihood);
+
+    tpe.add_trial(TreeStructuredParzenEstimator::Trial{input, ndt_result.transform_probability, i});
 
     auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     tier4_autoware_utils::transformPointCloud(

@@ -28,7 +28,7 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
 {
   trials_.push_back(trial);
   std::sort(trials_.begin(), trials_.end(), [](const Trial & lhs, const Trial & rhs) {
-    return lhs.score < rhs.score;
+    return lhs.score > rhs.score;
   });
 }
 
@@ -70,9 +70,9 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
 TreeStructuredParzenEstimator::Trial TreeStructuredParzenEstimator::get_best_trial() const
 {
   Trial best_trial;
-  best_trial.score = 1e9;
+  best_trial.score = -1e9;
   for (const Trial & trial : trials_) {
-    if (trial.score < best_trial.score) {
+    if (trial.score > best_trial.score) {
       best_trial = trial;
     }
   }
