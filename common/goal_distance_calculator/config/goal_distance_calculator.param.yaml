@@ -1,4 +1,4 @@
 /**:
   ros__parameters:
     update_rate: 10.0
-    oneshot: true
+    oneshot: false

@@ -14,7 +14,7 @@
         },
         "oneshot": {
           "type": "boolean",
-          "default": "true",
+          "default": "false",
           "description": "Publish deviations just once or repeatedly."
         }
       },
