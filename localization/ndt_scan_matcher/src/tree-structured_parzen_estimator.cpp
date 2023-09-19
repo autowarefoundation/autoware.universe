@@ -33,12 +33,13 @@ TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
 void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
 {
   trials_.push_back(trial);
-  if (trial.score > good_threshold_) {
-    good_num_++;
-  }
   std::sort(trials_.begin(), trials_.end(), [](const Trial & lhs, const Trial & rhs) {
     return lhs.score > rhs.score;
   });
+  good_num_ = std::count_if(trials_.begin(), trials_.end(), [this](const Trial & trial) {
+    return trial.score > good_threshold_;
+  });
+  good_num_ = std::min(good_num_, static_cast<int64_t>(trials_.size() * kMaxGoodRate));
 }
 
 TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input()

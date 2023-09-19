@@ -50,7 +50,7 @@ public:
 
 private:
   static constexpr double kEpsilon = 1e-8;
-  static constexpr double kMaxGoodRate = 0.25;
+  static constexpr double kMaxGoodRate = 0.20;
   static constexpr double kCov = 1.0;
 
   double acquisition_function(const Input & input);
