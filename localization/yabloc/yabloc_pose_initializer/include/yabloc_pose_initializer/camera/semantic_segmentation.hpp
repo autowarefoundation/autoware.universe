@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef YABLOC_POSE_INITIALIZER__CAMERA__SEMANTIC_SEGMENTATION_HPP_
+#define YABLOC_POSE_INITIALIZER__CAMERA__SEMANTIC_SEGMENTATION_HPP_
 #include <opencv2/core.hpp>
 #include <rclcpp/logger.hpp>
 
@@ -40,3 +42,5 @@ private:
   struct Impl;
   std::shared_ptr<Impl> impl_{nullptr};
 };
+
+#endif  // YABLOC_POSE_INITIALIZER__CAMERA__SEMANTIC_SEGMENTATION_HPP_
