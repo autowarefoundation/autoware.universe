@@ -669,7 +669,9 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
   if (!status_.is_safe_static_objects) {
     // situation : not safe against static objects use stop_path
     setStopPath(output);
-  } else if (!isSafePath() && status_.has_decided_path && isActivated()) {
+  } else if (
+    parameters_->safety_check_params.enable_safety_check && !isSafePath() &&
+    status_.has_decided_path && isActivated()) {
     // situation : not safe against dynamic objects after approval
     // insert stop point in current path if ego is able to stop with acceleration and jerk
     // constraints
@@ -701,7 +703,8 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
   status_.prev_is_safe = status_.is_safe_static_objects;
-  status_.prev_is_safe_dynamic_objects = isSafePath();
+  status_.prev_is_safe_dynamic_objects =
+    parameters_->safety_check_params.enable_safety_check ? isSafePath() : true;
 }
 
 void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
@@ -1584,10 +1587,13 @@ bool GoalPlannerModule::isSafePath() const
   RCLCPP_DEBUG(getLogger(), "current_path_idx %ld", status_.current_path_idx);
   utils::start_goal_planner_common::updatePathProperty(
     ego_predicted_path_params_, terminal_velocity_and_accel);
+  // TODO(Sugahara): shoule judge is_object_front properly
+  const bool is_object_front = true;
+  const bool limit_to_max_velocity = true;
   const auto ego_predicted_path =
     behavior_path_planner::utils::path_safety_checker::createPredictedPath(
       ego_predicted_path_params_, pull_over_path.points, current_pose, current_velocity,
-      ego_seg_idx);
+      ego_seg_idx, is_object_front, limit_to_max_velocity);
 
   // filtering objects with velocity, position and class
   const auto & filtered_objects = utils::path_safety_checker::filterObjects(
