@@ -245,7 +245,7 @@ std::vector<PoseWithVelocityStamped> createPredictedPath(
   const auto vehicle_pose_frenet =
     convertToFrenetPoint(path_points, vehicle_pose.position, ego_seg_idx);
 
-  for (double t = 0.0; t < delay_until_departure + time_horizon + 1e-3; t += time_resolution) {
+  for (double t = 0.0; t < time_horizon; t += time_resolution) {
     double velocity;
     double length;
 
