@@ -1704,13 +1704,6 @@ DrivableLanes generateExpandDrivableLanes(
     return current_drivable_lanes;
   }
 
-  const auto has_same_lane =
-    [](const lanelet::ConstLanelets lanes, const lanelet::ConstLanelet & lane) {
-      if (lanes.empty()) return false;
-      const auto has_same = [&](const auto & ll) { return ll.id() == lane.id(); };
-      return std::find_if(lanes.begin(), lanes.end(), has_same) != lanes.end();
-    };
-
   // 1. get left/right side lanes
   const auto update_left_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
     const auto all_left_lanelets = route_handler->getAllLeftSharedLinestringLanelets(
@@ -1781,7 +1774,12 @@ DrivableLanes generateExpandDrivableLanes(
           current_drivable_lanes.right_lane = next_lane;
         }
 
-        if (!has_same_lane(current_drivable_lanes.middle_lanes, edge_lane)) {
+        const auto & middle_lanes = current_drivable_lanes.middle_lanes;
+        const auto has_same_lane = std::any_of(
+          middle_lanes.begin(), middle_lanes.end(),
+          [&edge_lane](const auto & lane) { return lane.id() == edge_lane.id(); });
+
+        if (!has_same_lane) {
           if (is_left) {
             if (current_drivable_lanes.right_lane.id() != edge_lane.id()) {
               current_drivable_lanes.middle_lanes.push_back(edge_lane);
