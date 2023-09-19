@@ -9,7 +9,7 @@
   <arg name="clustering/angle_threshold" default="0.349"/>
   <arg name="clustering/distance_threshold" default="10.0"/>
   <arg name="clustering/velocity_threshold" default="5.0"/>
-  <arg name="radar_lanelet_filtering_range_param" default="$(find-pkg-share detected_object_validation)/config/object_position_filter.param.yaml"/>
+  <arg name="radar_lanelet_filtering_range_param" default="$(find-pkg-share detected_object_validation)/config/object_lanelet_filter.param.yaml"/>
 
   <!-- Detection for far dynamic objects -->
   <include file="$(find-pkg-share radar_crossing_objects_noise_filter)/launch/radar_crossing_objects_noise_filter.launch.xml">
