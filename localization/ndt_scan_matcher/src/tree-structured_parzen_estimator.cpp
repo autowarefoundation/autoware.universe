@@ -134,7 +134,7 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
     if (i < good_num_) {
       const double p = gauss(input, trials_[i].input, sigma_upper);
       const double v = trials_[i].score - good_threshold_;
-      const double w = v * v;
+      const double w = std::abs(v);
       upper += w * p;
     } else {
       const double p = gauss(input, trials_[i].input, sigma_lower);
