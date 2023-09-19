@@ -27,7 +27,10 @@ Search num_variables double variables in (-1, 1)
 class TreeStructuredParzenEstimator
 {
 public:
-  using Input = std::vector<double>;
+  struct Input
+  {
+    double x, y, z, roll, pitch, yaw;
+  };
   using Score = double;
   struct Trial
   {
@@ -37,7 +40,9 @@ public:
   };
 
   TreeStructuredParzenEstimator() = delete;
-  TreeStructuredParzenEstimator(int64_t num_variables, int64_t num_samples);
+  TreeStructuredParzenEstimator(
+    const double x_stddev, const double y_stddev, const double z_stddev, const double roll_stddev,
+    const double pitch_stddev);
   void add_trial(const Trial & trial);
   Input get_next_input();
   Trial get_best_trial() const;
@@ -50,10 +55,15 @@ private:
 
   double acquisition_function(const Input & input);
   double gauss(const Input & input, const Input & mu, const Input & sigma);
+  double fix_angle(const double angle);
 
-  int64_t num_variables_;
-  int64_t num_samples_;
   std::vector<Trial> trials_;
+  const double x_stddev_;
+  const double y_stddev_;
+  const double z_stddev_;
+  const double roll_stddev_;
+  const double pitch_stddev_;
+  // Only for yaw, use uniform distribution instead of normal distribution
 };
 
 #endif  // NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP

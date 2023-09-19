@@ -788,20 +788,17 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
   output_pose_with_cov_to_log(get_logger(), "align_using_monte_carlo_input", initial_pose_with_cov);
 
-  // (x, y, z, roll, pitch, yaw) : 6 dim
-  TreeStructuredParzenEstimator tpe(6, initial_estimate_particles_num_);
-
   const auto base_rpy = get_rpy(initial_pose_with_cov);
   const Eigen::Map<const RowMatrixXd> covariance = {
     initial_pose_with_cov.pose.covariance.data(), 6, 6};
 
-  // 3 sigma range (approx. 99.7%) as the survey area
-  const double x_range = std::sqrt(covariance(0, 0)) * 3;
-  const double y_range = std::sqrt(covariance(1, 1)) * 3;
-  const double z_range = std::sqrt(covariance(2, 2)) * 3;
-  const double roll_range = std::sqrt(covariance(3, 3)) * 3;
-  const double pitch_range = std::sqrt(covariance(4, 4)) * 3;
-  const double yaw_range = M_PI;  // only yaw is not limited
+  // (x, y, z, roll, pitch, yaw) : 6 dim
+  // Only for yaw, use uniform distribution instead of normal distribution
+  // so, 5 dim is normal distribution, 1 dim is uniform distribution
+  // set 5 stddev
+  TreeStructuredParzenEstimator tpe(
+    std::sqrt(covariance(0, 0)), std::sqrt(covariance(1, 1)), std::sqrt(covariance(2, 2)),
+    std::sqrt(covariance(3, 3)), std::sqrt(covariance(4, 4)));
 
   std::vector<Particle> particle_array;
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
@@ -810,13 +807,13 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     const TreeStructuredParzenEstimator::Input input = tpe.get_next_input();
 
     geometry_msgs::msg::Pose initial_pose;
-    initial_pose.position.x = initial_pose_with_cov.pose.pose.position.x + input[0] * x_range;
-    initial_pose.position.y = initial_pose_with_cov.pose.pose.position.y + input[1] * y_range;
-    initial_pose.position.z = initial_pose_with_cov.pose.pose.position.z + input[2] * z_range;
+    initial_pose.position.x = initial_pose_with_cov.pose.pose.position.x + input.x;
+    initial_pose.position.y = initial_pose_with_cov.pose.pose.position.y + input.y;
+    initial_pose.position.z = initial_pose_with_cov.pose.pose.position.z + input.z;
     geometry_msgs::msg::Vector3 init_rpy;
-    init_rpy.x = base_rpy.x + input[3] * roll_range;
-    init_rpy.y = base_rpy.y + input[4] * pitch_range;
-    init_rpy.z = base_rpy.z + input[5] * yaw_range;
+    init_rpy.x = base_rpy.x + input.roll;
+    init_rpy.y = base_rpy.y + input.pitch;
+    init_rpy.z = base_rpy.z + input.yaw;
     tf2::Quaternion tf_quaternion;
     tf_quaternion.setRPY(init_rpy.x, init_rpy.y, init_rpy.z);
     initial_pose.orientation = tf2::toMsg(tf_quaternion);
