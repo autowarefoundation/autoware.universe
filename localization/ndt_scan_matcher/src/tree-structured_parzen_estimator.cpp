@@ -44,7 +44,7 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
 
 TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input()
 {
-  static std::mt19937 engine(std::random_device{}());
+  static std::mt19937_64 engine(std::random_device{}());
   static std::uniform_real_distribution<double> dist_uni(-M_PI, M_PI);
   static std::normal_distribution<double> dist_norm(0.0, 1.0);
 
@@ -131,14 +131,14 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
                           coeff_lower * z_stddev_,     coeff_lower * roll_stddev_,
                           coeff_lower * pitch_stddev_, coeff_lower * yaw_stddev_};
   for (int64_t i = 0; i < n; i++) {
+    const double v = trials_[i].score - good_threshold_;
+    const double w = std::min(std::abs(v), 1.0);
     if (i < good_num_) {
       const double p = gauss(input, trials_[i].input, sigma_upper);
-      const double v = trials_[i].score - good_threshold_;
-      const double w = std::abs(v);
       upper += w * p;
     } else {
       const double p = gauss(input, trials_[i].input, sigma_lower);
-      lower += p;
+      lower += w * p;
     }
   }
 
