@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for ndt_scan_matcher node",
+  "type": "object",
+  "definitions": {
+    "ndt_scan_matcher": {
+      "type": "object",
+      "properties": {
+        "use_dynamic_map_loading": {
+          "type": "boolean",
+          "description": "Use dynamic map loading",
+          "default": true
+        },
+        "base_frame": {
+          "type": "string",
+          "description": "Vehicle reference frame",
+          "default": "base_link"
+        },
+        "input_sensor_points_queue_size": {
+          "type": "integer",
+          "description": "Subscriber queue size",
+          "default": 1
+        },
+        "trans_epsilon": {
+          "type": "number",
+          "description": "The maximum difference between two consecutive transformations in order to consider convergence",
+          "default": 0.01
+        },
+        "step_size": {
+          "type": "number",
+          "description": "The newton line search maximum step length",
+          "default": 0.1
+        },
+        "resolution": {
+          "type": "number",
+          "description": "The ND voxel grid resolution",
+          "default": 2.0
+        },
+        "max_iterations": {
+          "type": "integer",
+          "description": "The number of iterations required to calculate alignment",
+          "default": 30
+        },
+        "converged_param_type": {
+          "type": "integer",
+          "description": "Converged param type",
+          "enum": [0, 1],
+          "default": 1
+        },
+        "converged_param_transform_probability": {
+          "type": "number",
+          "description": "Threshold for deciding whether to trust the estimation result (If converged_param_type is 0)",
+          "default": 3.0
+        },
+        "converged_param_nearest_voxel_transformation_likelihood": {
+          "type": "number",
+          "description": "Threshold for deciding whether to trust the estimation result (If converged_param_type is 1)",
+          "default": 2.3
+        },
+        "initial_estimate_particles_num": {
+          "type": "integer",
+          "description": "The number of particles to estimate initial pose",
+          "default": 100
+        },
+        "lidar_topic_timeout_sec": {
+          "type": "number",
+          "description": "Tolerance of timestamp difference between current time and sensor pointcloud. [sec]",
+          "default": 1.0
+        },
+        "initial_pose_timeout_sec": {
+          "type": "number",
+          "description": "Tolerance of timestamp difference between initial_pose and sensor pointcloud. [sec]",
+          "default": 1.0
+        },
+        "initial_pose_distance_tolerance_m": {
+          "type": "number",
+          "description": "Tolerance of distance difference between two initial poses used for linear interpolation. [m]",
+          "default": 10.0
+        },
+        "neighborhood_search_method": {
+          "type": "integer",
+          "description": "Neighborhood search method",
+          "enum": [0, 1, 2, 3],
+          "default": 0
+        },
+        "num_threads": {
+          "type": "integer",
+          "description": "Number of threads used for parallel computing",
+          "default": 4
+        },
+        "output_pose_covariance": {
+          "type": "array",
+          "description": "The covariance of output pose",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 36,
+          "maxItems": 36,
+          "default": [
+            0.0225, 0.0,   0.0,   0.0,      0.0,      0.0,
+            0.0,   0.0225, 0.0,   0.0,      0.0,      0.0,
+            0.0,   0.0,   0.0225, 0.0,      0.0,      0.0,
+            0.0,   0.0,   0.0,   0.000625, 0.0,      0.0,
+            0.0,   0.0,   0.0,   0.0,      0.000625, 0.0,
+            0.0,   0.0,   0.0,   0.0,      0.0,      0.000625
+          ]
+        },
+        "regularization_enabled": {
+          "type": "boolean",
+          "description": "Regularization switch",
+          "default": false
+        },
+        "regularization_scale_factor": {
+          "type": "number",
+          "description": "Regularization scale factor",
+          "default": 0.01
+        },
+        "dynamic_map_loading_update_distance": {
+          "type": "number",
+          "description": "Dynamic map loading distance",
+          "default": 20.0
+        },
+        "dynamic_map_loading_map_radius": {
+          "type": "number",
+          "description": "Dynamic map loading loading radius",
+          "default": 150.0
+        },
+        "lidar_radius": {
+          "type": "number",
+          "description": "Radius of input LiDAR range (used for diagnostics of dynamic map loading)",
+          "default": 100.0
+        },
+        "estimate_scores_for_degrounded_scan": {
+          "type": "boolean",
+          "description": "A flag for using scan matching score based on de-grounded LiDAR scan",
+          "default": false
+        },
+        "z_margin_for_ground_removal": {
+          "type": "number",
+          "description": "If lidar_point.z - base_link.z <= this threshold , the point will be removed",
+          "default": 0.8
+        }
+      },
+      "required": [
+        "use_dynamic_map_loading",
+        "base_frame",
+        "input_sensor_points_queue_size",
+        "trans_epsilon",
+        "step_size",
+        "resolution",
+        "max_iterations",
+        "converged_param_type",
+        "converged_param_transform_probability",
+        "converged_param_nearest_voxel_transformation_likelihood",
+        "initial_estimate_particles_num",
+        "lidar_topic_timeout_sec",
+        "initial_pose_timeout_sec",
+        "initial_pose_distance_tolerance_m",
+        "neighborhood_search_method",
+        "num_threads",
+        "output_pose_covariance",
+        "regularization_enabled",
+        "regularization_scale_factor",
+        "dynamic_map_loading_update_distance",
+        "dynamic_map_loading_map_radius",
+        "lidar_radius",
+        "estimate_scores_for_degrounded_scan",
+        "z_margin_for_ground_removal"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/ndt_scan_matcher"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
