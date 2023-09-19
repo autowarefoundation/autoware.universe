@@ -30,7 +30,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
-#include <lanelet2_core/primitives/Primitive.h>
+#include <lanelet2_core/Forward.h>
 
 #include <memory>
 #include <string>
@@ -159,9 +159,6 @@ boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & pose,
   const BehaviorPathPlannerParameters & common_parameters, const double resolution);
-
-PredictedPath convertToPredictedPath(
-  const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);
 
 bool isParkedObject(
   const PathWithLaneId & path, const RouteHandler & route_handler,
