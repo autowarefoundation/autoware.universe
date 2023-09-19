@@ -565,8 +565,8 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
   for (size_t i = 0; i < traj_points.size(); ++i) {
     std::vector<geometry_msgs::msg::Pose> current_poses = {traj_points.at(i).pose};
 
-    // estimate the future ego pose with assuming that the pose error against the reference path will
-    // decrease to zero by the time_to_convergence
+    // estimate the future ego pose with assuming that the pose error against the reference path
+    // will decrease to zero by the time_to_convergence
     if (is_enable_current_pose_consideration && time_elapsed < time_to_convergence) {
       double rem_ratio = (time_to_convergence - time_elapsed) / time_to_convergence;
       geometry_msgs::msg::Pose indexed_pose_err;
