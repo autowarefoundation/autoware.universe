@@ -403,8 +403,8 @@ bool LinearMotionTracker::measureWithPose(
     if (!object.kinematics.has_twist_covariance) {
       R_v_xy_local << ekf_params_.r_cov_vx, 0, 0, ekf_params_.r_cov_vy;
     } else {
-      R_v_xy_local << object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X], 0,
-        0, object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
+      R_v_xy_local << object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X],
+        0, 0, object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
     }
     Eigen::MatrixXd R_v_xy = Eigen::MatrixXd::Zero(2, 2);
     R_v_xy = RotationYaw * R_v_xy_local * RotationYaw.transpose();
