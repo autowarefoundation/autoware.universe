@@ -34,6 +34,10 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
 
 TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input()
 {
+  if (trials_.empty()) {
+    // return all 0
+    return Input(num_variables_, 0.0);
+  }
   static std::mt19937 engine(std::random_device{}());
 
   constexpr double kMin = -1.0 + kEpsilon;
