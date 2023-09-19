@@ -49,9 +49,8 @@ public:
   std::vector<Trial> get_trials() const { return trials_; }
 
 private:
-  static constexpr double kEpsilon = 1e-8;
-  static constexpr double kMaxGoodRate = 0.20;
-  static constexpr double kBaseStddevCoeff = 1.0;
+  static constexpr double kMaxGoodRate = 0.10;
+  static constexpr double kBaseStddevCoeff = 2.0;
 
   double acquisition_function(const Input & input);
   double gauss(const Input & input, const Input & mu, const Input & sigma);
