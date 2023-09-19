@@ -334,11 +334,10 @@ private:
   /*
    * @brief generate candidate shift lines.
    * @param one-shot shift lines.
-   * @param path shifter.
    * @param debug data.
    */
   AvoidLineArray generateCandidateShiftLine(
-    const AvoidLineArray & shift_lines, const PathShifter & path_shifter, DebugData & debug) const;
+    const AvoidLineArray & shift_lines, DebugData & debug) const;
 
   /**
    * @brief clean up raw shift lines.
