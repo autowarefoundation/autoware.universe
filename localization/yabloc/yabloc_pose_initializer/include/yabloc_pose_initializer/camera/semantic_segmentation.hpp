@@ -16,11 +16,13 @@
 #include <rclcpp/logger.hpp>
 
 #include <iostream>
+#include <memory>
+#include <string>
 
 class SemanticSegmentation
 {
 public:
-  SemanticSegmentation(const std::string & model_path);
+  explicit SemanticSegmentation(const std::string & model_path);
 
   cv::Mat inference(const cv::Mat & image, double score_threshold = 0.5);
 
