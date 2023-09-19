@@ -105,8 +105,7 @@ NDTScanMatcher::NDTScanMatcher()
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
 
-  int points_queue_size =
-    static_cast<int>(this->declare_parameter<int>("input_sensor_points_queue_size"));
+  int points_queue_size = this->declare_parameter<int>("input_sensor_points_queue_size");
   points_queue_size = std::max(points_queue_size, 0);
   RCLCPP_INFO(get_logger(), "points_queue_size: %d", points_queue_size);
 
@@ -122,8 +121,8 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_params.trans_epsilon = this->declare_parameter<double>("trans_epsilon");
   ndt_params.step_size = this->declare_parameter<double>("step_size");
   ndt_params.resolution = this->declare_parameter<double>("resolution");
-  ndt_params.max_iterations = static_cast<int>(this->declare_parameter<int>("max_iterations"));
-  ndt_params.num_threads = static_cast<int>(this->declare_parameter<int>("num_threads"));
+  ndt_params.max_iterations = this->declare_parameter<int>("max_iterations");
+  ndt_params.num_threads = this->declare_parameter<int>("num_threads");
   ndt_params.num_threads = std::max(ndt_params.num_threads, 1);
   ndt_params.regularization_scale_factor =
     static_cast<float>(this->declare_parameter<float>("regularization_scale_factor"));
@@ -134,8 +133,7 @@ NDTScanMatcher::NDTScanMatcher()
     ndt_params.trans_epsilon, ndt_params.step_size, ndt_params.resolution,
     ndt_params.max_iterations);
 
-  int converged_param_type_tmp =
-    static_cast<int>(this->declare_parameter<int>("converged_param_type"));
+  int converged_param_type_tmp = this->declare_parameter<int>("converged_param_type");
   converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
 
   converged_param_transform_probability_ = this->declare_parameter<double>(
@@ -157,8 +155,7 @@ NDTScanMatcher::NDTScanMatcher()
     output_pose_covariance_[i] = output_pose_covariance[i];
   }
 
-  initial_estimate_particles_num_ = static_cast<int>(
-    this->declare_parameter<int>("initial_estimate_particles_num"));
+  initial_estimate_particles_num_ = this->declare_parameter<int>("initial_estimate_particles_num");
 
   rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group;
   initial_pose_callback_group =
