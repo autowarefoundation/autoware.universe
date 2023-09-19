@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "motion_utils/motion_utils.hpp"
+
 #include <gtest/gtest.h>
 
 int main(int argc, char * argv[])
