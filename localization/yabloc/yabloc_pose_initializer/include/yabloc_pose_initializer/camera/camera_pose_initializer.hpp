@@ -22,7 +22,6 @@
 
 #include <opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <yabloc_pose_initializer/srv/semantic_segmentation.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
