@@ -51,7 +51,7 @@ public:
 private:
   static constexpr double kEpsilon = 1e-8;
   static constexpr double kMaxGoodRate = 0.20;
-  static constexpr double kCov = 1.0;
+  static constexpr double kBaseStddevCoeff = 1.0;
 
   double acquisition_function(const Input & input);
   double gauss(const Input & input, const Input & mu, const Input & sigma);
@@ -60,6 +60,7 @@ private:
   std::vector<Trial> trials_;
   int64_t good_num_;
   const double good_threshold_ = 2.0;
+  double stddev_coeff_;
   const double x_stddev_;
   const double y_stddev_;
   const double z_stddev_;

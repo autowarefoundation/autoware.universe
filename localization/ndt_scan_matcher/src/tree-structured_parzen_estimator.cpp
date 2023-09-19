@@ -22,6 +22,7 @@ TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
   const double x_stddev, const double y_stddev, const double z_stddev, const double roll_stddev,
   const double pitch_stddev)
 : good_num_(0),
+  stddev_coeff_(1.0),
   x_stddev_(x_stddev),
   y_stddev_(y_stddev),
   z_stddev_(z_stddev),
@@ -40,6 +41,10 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
     return trial.score > good_threshold_;
   });
   good_num_ = std::min(good_num_, static_cast<int64_t>(trials_.size() * kMaxGoodRate));
+
+  // ceil
+  const int64_t n = (trials_.size() + 5) / 6;
+  stddev_coeff_ = kBaseStddevCoeff / std::sqrt(n);
 }
 
 TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input()
@@ -88,12 +93,12 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
     } else {
       const int64_t index = engine() % good_num_;
       const Input & base = trials_[index].input;
-      input.x = base.x + dist_norm(engine) * kCov * x_stddev_;
-      input.y = base.y + dist_norm(engine) * kCov * y_stddev_;
-      input.z = base.z + dist_norm(engine) * kCov * z_stddev_;
-      input.roll = base.roll + dist_norm(engine) * kCov * roll_stddev_;
-      input.pitch = base.pitch + dist_norm(engine) * kCov * pitch_stddev_;
-      input.yaw = base.yaw + dist_norm(engine) * kCov * yaw_stddev_;
+      input.x = base.x + dist_norm(engine) * stddev_coeff_ * x_stddev_;
+      input.y = base.y + dist_norm(engine) * stddev_coeff_ * y_stddev_;
+      input.z = base.z + dist_norm(engine) * stddev_coeff_ * z_stddev_;
+      input.roll = base.roll + dist_norm(engine) * stddev_coeff_ * roll_stddev_;
+      input.pitch = base.pitch + dist_norm(engine) * stddev_coeff_ * pitch_stddev_;
+      input.yaw = base.yaw + dist_norm(engine) * stddev_coeff_ * yaw_stddev_;
 
       // fixed angle
       input.roll = fix_angle(input.roll);
@@ -129,8 +134,9 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   // acquisition function.
   double upper = 0.0;
   double lower = 0.0;
-  const Input sigma{kCov * x_stddev_,    kCov * y_stddev_,     kCov * z_stddev_,
-                    kCov * roll_stddev_, kCov * pitch_stddev_, kCov * yaw_stddev_};
+  const Input sigma{stddev_coeff_ * x_stddev_,     stddev_coeff_ * y_stddev_,
+                    stddev_coeff_ * z_stddev_,     stddev_coeff_ * roll_stddev_,
+                    stddev_coeff_ * pitch_stddev_, stddev_coeff_ * yaw_stddev_};
   for (int64_t i = 0; i < n; i++) {
     const double p = gauss(input, trials_[i].input, sigma);
     if (i < good_num_) {
