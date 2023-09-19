@@ -112,18 +112,6 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
   return best_input;
 }
 
-TreeStructuredParzenEstimator::Trial TreeStructuredParzenEstimator::get_best_trial() const
-{
-  Trial best_trial;
-  best_trial.score = -1e9;
-  for (const Trial & trial : trials_) {
-    if (trial.score > best_trial.score) {
-      best_trial = trial;
-    }
-  }
-  return best_trial;
-}
-
 double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
 {
   const int64_t n = trials_.size();

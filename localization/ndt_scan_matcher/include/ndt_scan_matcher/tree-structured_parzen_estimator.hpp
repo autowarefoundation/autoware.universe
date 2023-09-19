@@ -45,8 +45,6 @@ public:
     const double pitch_stddev);
   void add_trial(const Trial & trial);
   Input get_next_input();
-  Trial get_best_trial() const;
-  std::vector<Trial> get_trials() const { return trials_; }
 
 private:
   static constexpr double kMaxGoodRate = 0.10;
