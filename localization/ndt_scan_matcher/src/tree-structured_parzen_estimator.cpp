@@ -33,7 +33,7 @@ TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
 void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
 {
   trials_.push_back(trial);
-  if (trial.score > 5.0) {
+  if (trial.score > 4.0) {
     good_num_++;
   }
   std::sort(trials_.begin(), trials_.end(), [](const Trial & lhs, const Trial & rhs) {
@@ -71,12 +71,12 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
     } else {
       const int64_t index = engine() % good_num_;
       const Input & base = trials_[index].input;
-      input.x = base.x + dist_norm(engine) * kCov;
-      input.y = base.y + dist_norm(engine) * kCov;
-      input.z = base.z + dist_norm(engine) * kCov;
-      input.roll = base.roll + dist_norm(engine) * kCov;
-      input.pitch = base.pitch + dist_norm(engine) * kCov;
-      input.yaw = base.yaw + dist_uni(engine) * kCov;
+      input.x = base.x + dist_norm(engine) * kCov * x_stddev_;
+      input.y = base.y + dist_norm(engine) * kCov * y_stddev_;
+      input.z = base.z + dist_norm(engine) * kCov * z_stddev_;
+      input.roll = base.roll + dist_norm(engine) * kCov * roll_stddev_;
+      input.pitch = base.pitch + dist_norm(engine) * kCov * pitch_stddev_;
+      input.yaw = base.yaw + dist_uni(engine) * kCov * yaw_stddev_;
 
       // fixed angle
       input.roll = fix_angle(input.roll);
@@ -118,7 +118,8 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   // acquisition function.
   double upper = 0.0;
   double lower = 0.0;
-  const Input sigma{kCov, kCov, kCov, kCov, kCov, kCov};
+  const Input sigma{kCov * x_stddev_,    kCov * y_stddev_,     kCov * z_stddev_,
+                    kCov * roll_stddev_, kCov * pitch_stddev_, kCov * yaw_stddev_};
   for (int64_t i = 0; i < n; i++) {
     const double p = gauss(input, trials_[i].input, sigma);
     if (i < good_num_) {

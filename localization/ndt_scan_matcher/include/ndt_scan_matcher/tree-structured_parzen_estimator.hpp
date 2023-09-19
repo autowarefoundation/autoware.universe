@@ -51,7 +51,7 @@ public:
 private:
   static constexpr double kEpsilon = 1e-8;
   static constexpr double kRate = 0.25;
-  static constexpr double kCov = 0.25;
+  static constexpr double kCov = 1.0;
 
   double acquisition_function(const Input & input);
   double gauss(const Input & input, const Input & mu, const Input & sigma);
@@ -65,6 +65,7 @@ private:
   const double roll_stddev_;
   const double pitch_stddev_;
   // Only for yaw, use uniform distribution instead of normal distribution
+  const double yaw_stddev_ = 1.0;
 };
 
 #endif  // NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP
