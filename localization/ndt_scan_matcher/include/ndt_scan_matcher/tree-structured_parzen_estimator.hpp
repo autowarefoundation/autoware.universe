@@ -63,7 +63,7 @@ private:
   const double roll_stddev_;
   const double pitch_stddev_;
   // Only for yaw, use uniform distribution instead of normal distribution
-  const double yaw_stddev_ = 1.0;
+  const double yaw_stddev_ = 0.5;
 };
 
 #endif  // NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP
