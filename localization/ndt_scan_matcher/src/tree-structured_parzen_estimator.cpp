@@ -33,7 +33,7 @@ TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
 void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
 {
   trials_.push_back(trial);
-  if (trial.score > 4.0) {
+  if (trial.score > 3.0) {
     good_num_++;
   }
   std::sort(trials_.begin(), trials_.end(), [](const Trial & lhs, const Trial & rhs) {
@@ -76,7 +76,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
       input.z = base.z + dist_norm(engine) * kCov * z_stddev_;
       input.roll = base.roll + dist_norm(engine) * kCov * roll_stddev_;
       input.pitch = base.pitch + dist_norm(engine) * kCov * pitch_stddev_;
-      input.yaw = base.yaw + dist_uni(engine) * kCov * yaw_stddev_;
+      input.yaw = base.yaw + dist_norm(engine) * kCov * yaw_stddev_;
 
       // fixed angle
       input.roll = fix_angle(input.roll);
