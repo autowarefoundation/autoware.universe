@@ -14,9 +14,7 @@
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
-#include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp>
 
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
 #include <geometry_msgs/msg/twist.hpp>

@@ -7,7 +7,6 @@ autoware_package()
 find_package(Boost REQUIRED)
 
 ament_auto_add_library(motion_utils SHARED
-  src/motion_utils.cpp
   src/distance/distance.cpp
   src/marker/marker_helper.cpp
   src/marker/virtual_wall_marker_creator.cpp
