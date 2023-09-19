@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ar_tag_based_localizer/landmark_tf_caster_core.hpp"
+#include "landmark_based_localizer/landmark_tf_caster_core.hpp"
 
 int main(int argc, char ** argv)
 {
