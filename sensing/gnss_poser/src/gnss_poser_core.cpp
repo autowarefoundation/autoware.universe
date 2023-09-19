@@ -143,7 +143,7 @@ void GNSSPoser::callbackNavSatFix(
   auto tf_gnss_antenna2base_link_msg_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
 
   getStaticTransform(
-    gnss_frame_, base_frame_, tf_gnss_antenna2base_link_msg_ptr, nav_sat_fix_msg_ptr->header.stamp);
+          base_frame_,  gnss_frame_, tf_gnss_antenna2base_link_msg_ptr, nav_sat_fix_msg_ptr->header.stamp);
   tf2::Transform tf_gnss_antenna2base_link{};
   tf2::fromMsg(tf_gnss_antenna2base_link_msg_ptr->transform, tf_gnss_antenna2base_link);
 
