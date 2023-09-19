@@ -67,6 +67,8 @@
       <arg name="trust_distance" value="$(var trust_distance)"/>
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
+      <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
+      <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
       <arg name="input/radar" value="$(var input/radar)"/>
       <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
     </include>
@@ -114,10 +116,14 @@
       <arg name="container_name" value="$(var container_name)"/>
       <arg name="input/radar" value="$(var input/radar)"/>
 <<<<<<< HEAD
+<<<<<<< HEAD
       <arg name="radar_lanelet_filtering_range_param" value="$(var radar_lanelet_filtering_range_param)"/>
 =======
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
 >>>>>>> 8eeb11dff (refactor(perception): rearrange clustering pipeline (#4999))
+=======
+      <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
+>>>>>>> main
     </include>
   </group>
 
