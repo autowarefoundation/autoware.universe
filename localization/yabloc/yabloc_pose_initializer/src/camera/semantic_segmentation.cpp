@@ -1,3 +1,17 @@
+// Copyright 2023 TIER IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "yabloc_pose_initializer/camera/semantic_segmentation.hpp"
 
 #include <opencv2/dnn.hpp>
@@ -21,7 +35,7 @@ SemanticSegmentation::SemanticSegmentation(const std::string & model_path)
   impl_->net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
 }
 
-cv::Mat SemanticSegmentation::makeBlob(const cv::Mat & image)
+cv::Mat SemanticSegmentation::make_blob(const cv::Mat & image)
 {
   double scale = 1.0;
   cv::Size size = cv::Size(896, 512);
@@ -55,7 +69,7 @@ cv::Mat SemanticSegmentation::convert_blob_to_image(const cv::Mat & blob)
 
 cv::Mat SemanticSegmentation::inference(const cv::Mat & image, double score_threshold)
 {
-  cv::Mat blob = makeBlob(image);
+  cv::Mat blob = make_blob(image);
   impl_->net.setInput(blob);
   std::vector<std::string> output_layers = impl_->net.getUnconnectedOutLayersNames();
   std::vector<cv::Mat> masks;
@@ -87,7 +101,7 @@ cv::Mat SemanticSegmentation::normalize(const cv::Mat & mask, double score_thres
   return result;
 }
 
-cv::Mat SemanticSegmentation::drawOverlay(const cv::Mat & image, const cv::Mat & segmentation)
+cv::Mat SemanticSegmentation::draw_overlay(const cv::Mat & image, const cv::Mat & segmentation)
 {
   cv::Mat overlay_image = image.clone();
   return overlay_image * 0.5 + segmentation * 0.5;
