@@ -50,10 +50,10 @@ CameraPoseInitializer::CameraPoseInitializer()
   const std::string model_path = declare_parameter<std::string>("model_path");
   RCLCPP_INFO_STREAM(get_logger(), "segmentation model path: " + model_path);
   if (std::filesystem::exists(model_path)) {
-    dnn_ = std::make_unique<SemanticSegmentationCore>(model_path);
+    semantic_segmentation_ = std::make_unique<SemanticSegmentation>(model_path);
   } else {
-    dnn_ = nullptr;
-    SemanticSegmentationCore::print_error_message(get_logger());
+    semantic_segmentation_ = nullptr;
+    SemanticSegmentation::print_error_message(get_logger());
   }
 }
 
@@ -103,10 +103,10 @@ std::optional<double> CameraPoseInitializer::estimate_pose(
 
   cv::Mat segmented_image;
   {
-    if (dnn_) {
+    if (semantic_segmentation_) {
       const cv::Mat src_image =
         cv_bridge::toCvCopy(*latest_image_msg_.value(), sensor_msgs::image_encodings::BGR8)->image;
-      segmented_image = dnn_->inference(src_image);
+      segmented_image = semantic_segmentation_->inference(src_image);
     } else {
       RCLCPP_WARN_STREAM(get_logger(), "segmentation service failed unexpectedly");
       // NOTE: Even if the segmentation service fails, the function will still return the

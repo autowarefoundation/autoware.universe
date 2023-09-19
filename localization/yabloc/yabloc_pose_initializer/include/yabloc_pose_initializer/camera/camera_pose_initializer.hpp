@@ -18,7 +18,7 @@
 #include "yabloc_pose_initializer/camera/lane_image.hpp"
 #include "yabloc_pose_initializer/camera/marker_module.hpp"
 #include "yabloc_pose_initializer/camera/projector_module.hpp"
-#include "yabloc_pose_initializer/camera/semantic_segmentation_core.hpp"
+#include "yabloc_pose_initializer/camera/semantic_segmentation.hpp"
 
 #include <opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -62,7 +62,7 @@ private:
   std::optional<Image::ConstSharedPtr> latest_image_msg_{std::nullopt};
   lanelet::ConstLanelets const_lanelets_;
 
-  std::unique_ptr<SemanticSegmentationCore> dnn_{nullptr};
+  std::unique_ptr<SemanticSegmentation> semantic_segmentation_{nullptr};
 
   void on_map(const HADMapBin & msg);
   void on_service(
