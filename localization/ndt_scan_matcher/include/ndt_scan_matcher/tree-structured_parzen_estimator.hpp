@@ -58,6 +58,7 @@ private:
   double fix_angle(const double angle);
 
   std::vector<Trial> trials_;
+  int64_t good_num_;
   const double x_stddev_;
   const double y_stddev_;
   const double z_stddev_;

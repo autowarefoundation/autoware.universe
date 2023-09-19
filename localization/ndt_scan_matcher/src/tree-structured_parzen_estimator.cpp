@@ -21,7 +21,8 @@
 TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
   const double x_stddev, const double y_stddev, const double z_stddev, const double roll_stddev,
   const double pitch_stddev)
-: x_stddev_(x_stddev),
+: good_num_(0),
+  x_stddev_(x_stddev),
   y_stddev_(y_stddev),
   z_stddev_(z_stddev),
   roll_stddev_(roll_stddev),
@@ -32,6 +33,9 @@ TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
 void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
 {
   trials_.push_back(trial);
+  if (trial.score > 5.0) {
+    good_num_++;
+  }
   std::sort(trials_.begin(), trials_.end(), [](const Trial & lhs, const Trial & rhs) {
     return lhs.score > rhs.score;
   });
@@ -52,7 +56,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
   double best_score = -1e9;
   for (int64_t i = 0; i < 10; i++) {
     Input input{};
-    if (trials_.size() < 10) {
+    if (good_num_ == 0) {
       // Only for yaw, use uniform distribution instead of normal distribution
       input.x = dist_norm(engine) * x_stddev_;
       input.y = dist_norm(engine) * y_stddev_;
@@ -65,9 +69,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
       input.roll = fix_angle(input.roll);
       input.pitch = fix_angle(input.pitch);
     } else {
-      const int64_t n = trials_.size();
-      const int64_t good_num = kRate * n;
-      const int64_t index = engine() % good_num;
+      const int64_t index = engine() % good_num_;
       const Input & base = trials_[index].input;
       input.x = base.x + dist_norm(engine) * kCov;
       input.y = base.y + dist_norm(engine) * kCov;
@@ -111,7 +113,6 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
 
   // The upper kRate is good, the rest is bad.
   const int64_t n = trials_.size();
-  const int64_t good_num = kRate * n;
 
   // The upper KDE and the lower KDE are calculated respectively, and the ratio is the score of the
   // acquisition function.
@@ -120,7 +121,7 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   const Input sigma{kCov, kCov, kCov, kCov, kCov, kCov};
   for (int64_t i = 0; i < n; i++) {
     const double p = gauss(input, trials_[i].input, sigma);
-    if (i < good_num) {
+    if (i < good_num_) {
       upper += p;
     } else {
       lower += p;
