@@ -54,7 +54,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
 
   Input best_input;
   double best_score = -1e9;
-  for (int64_t i = 0; i < 10; i++) {
+  for (int64_t i = 0; i < 100; i++) {
     Input input{};
     if (good_num_ == 0) {
       // Only for yaw, use uniform distribution instead of normal distribution
@@ -126,6 +126,13 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
     } else {
       lower += p;
     }
+  }
+
+  if (good_num_ == 0) {
+    // upper is given a quantity calculated from the initial distribution
+    const Input zeros{};
+    const Input sigma{x_stddev_, y_stddev_, z_stddev_, roll_stddev_, pitch_stddev_, 10.0};
+    upper = gauss(input, zeros, sigma);
   }
 
   const double r = upper / lower;
