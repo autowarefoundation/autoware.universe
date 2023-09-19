@@ -43,14 +43,30 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
 
 TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input()
 {
+  static std::mt19937 engine(std::random_device{}());
+  static std::uniform_real_distribution<double> dist_uni(-M_PI, M_PI);
+  static std::normal_distribution<double> dist_norm(0.0, 1.0);
+
   if (trials_.empty()) {
     // return all 0
     return Input{};
-  }
-  static std::mt19937 engine(std::random_device{}());
+  } else if (trials_.size() < 10) {
+    // return random
 
-  std::uniform_real_distribution<double> dist_uni(-M_PI, M_PI);
-  std::normal_distribution<double> dist_norm(0.0, 1.0);
+    Input input{};
+    // Only for yaw, use uniform distribution instead of normal distribution
+    input.x = dist_norm(engine) * x_stddev_;
+    input.y = dist_norm(engine) * y_stddev_;
+    input.z = dist_norm(engine) * z_stddev_;
+    input.roll = dist_norm(engine) * roll_stddev_;
+    input.pitch = dist_norm(engine) * pitch_stddev_;
+    input.yaw = dist_uni(engine);
+
+    // fixed roll and pitch in [-pi, pi]
+    input.roll = fix_angle(input.roll);
+    input.pitch = fix_angle(input.pitch);
+    return input;
+  }
 
   Input best_input;
   double best_score = -1e9;
@@ -106,11 +122,6 @@ TreeStructuredParzenEstimator::Trial TreeStructuredParzenEstimator::get_best_tri
 
 double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
 {
-  // Until a certain number of trials are accumulated, random
-  if (trials_.size() < 10) {
-    return 1.0;
-  }
-
   // The upper kRate is good, the rest is bad.
   const int64_t n = trials_.size();
 
