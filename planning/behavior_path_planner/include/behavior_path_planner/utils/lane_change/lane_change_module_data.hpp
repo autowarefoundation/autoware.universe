@@ -21,6 +21,8 @@
 
 #include "autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp"
 
+#include <lanelet2_core/primitives/Lanelet.h>
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -77,11 +79,11 @@ struct LaneChangeParameters
   bool check_pedestrian{true};  // check object pedestrian
 
   // safety check
-  utils::path_safety_checker::RSSparams rss_params;
-  utils::path_safety_checker::RSSparams rss_params_for_abort;
+  utils::path_safety_checker::RSSparams rss_params{};
+  utils::path_safety_checker::RSSparams rss_params_for_abort{};
 
   // abort
-  LaneChangeCancelParameters cancel;
+  LaneChangeCancelParameters cancel{};
 
   double finish_judge_lateral_threshold{0.2};
 
