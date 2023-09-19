@@ -833,6 +833,17 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
     const geometry_msgs::msg::Pose pose = matrix4f_to_pose(ndt_result.pose);
     geometry_msgs::msg::Vector3 rpy = get_rpy(pose);
+
+    TreeStructuredParzenEstimator::Input result;
+    result.x = pose.position.x - initial_pose_with_cov.pose.pose.position.x;
+    result.y = pose.position.y - initial_pose_with_cov.pose.pose.position.y;
+    result.z = pose.position.z - initial_pose_with_cov.pose.pose.position.z;
+    result.roll = rpy.x - base_rpy.x;
+    result.pitch = rpy.y - base_rpy.y;
+    result.yaw = rpy.z - base_rpy.z;
+    tpe.add_trial(
+      TreeStructuredParzenEstimator::Trial{result, ndt_result.transform_probability, i});
+
     rpy.x = rpy.x * 180.0 / M_PI;
     rpy.y = rpy.y * 180.0 / M_PI;
     rpy.z = rpy.z * 180.0 / M_PI;
@@ -844,8 +855,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
                                << pose.orientation.w << "," << rpy.x << "," << rpy.y << "," << rpy.z
                                << "," << ndt_result.transform_probability << ","
                                << ndt_result.nearest_voxel_transformation_likelihood);
-
-    tpe.add_trial(TreeStructuredParzenEstimator::Trial{input, ndt_result.transform_probability, i});
 
     auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     tier4_autoware_utils::transformPointCloud(
