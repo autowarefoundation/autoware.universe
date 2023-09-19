@@ -33,7 +33,7 @@ TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
 void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
 {
   trials_.push_back(trial);
-  if (trial.score > 3.0) {
+  if (trial.score > good_threshold_) {
     good_num_++;
   }
   std::sort(trials_.begin(), trials_.end(), [](const Trial & lhs, const Trial & rhs) {
@@ -122,7 +122,6 @@ TreeStructuredParzenEstimator::Trial TreeStructuredParzenEstimator::get_best_tri
 
 double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
 {
-  // The upper kRate is good, the rest is bad.
   const int64_t n = trials_.size();
 
   // The upper KDE and the lower KDE are calculated respectively, and the ratio is the score of the
@@ -134,7 +133,9 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   for (int64_t i = 0; i < n; i++) {
     const double p = gauss(input, trials_[i].input, sigma);
     if (i < good_num_) {
-      upper += p;
+      const double v = trials_[i].score - good_threshold_;
+      const double w = v * v;
+      upper += w * p;
     } else {
       lower += p;
     }
