@@ -14,8 +14,10 @@
 
 #include "mpc_lateral_controller/mpc.hpp"
 
-#include "motion_utils/motion_utils.hpp"
+#include "interpolation/linear_interpolation.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "mpc_lateral_controller/mpc_utils.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <algorithm>
 #include <limits>

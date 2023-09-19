@@ -70,7 +70,7 @@ void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   const PathWithLaneId & path, const Point & ego_pos, ObjectData & obj);
 
 double calcEnvelopeOverhangDistance(
-  const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose);
+  const ObjectData & object_data, const PathWithLaneId & path, Point & overhang_pose);
 
 void setEndData(
   AvoidLine & al, const double length, const geometry_msgs::msg::Pose & end, const size_t end_idx,
@@ -89,6 +89,7 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
+  const bool is_object_front, const bool limit_to_max_velocity,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 
 double getLongitudinalVelocity(const Pose & p_ref, const Pose & p_target, const double v);
@@ -167,6 +168,10 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
   const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
   DebugData & debug);
+
+DrivableLanes generateExpandDrivableLanes(
+  const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
 }  // namespace behavior_path_planner::utils::avoidance
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__UTILS_HPP_

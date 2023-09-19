@@ -22,13 +22,18 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/interpolation.hpp>
+#include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_core/geometry/Polygon.h>
 #include <tf2/utils.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -821,19 +826,6 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
     predicted_path.emplace_back(t, pose, velocity);
   }
 
-  return predicted_path;
-}
-
-PredictedPath convertToPredictedPath(
-  const std::vector<PoseWithVelocityStamped> & path, const double time_resolution)
-{
-  PredictedPath predicted_path;
-  predicted_path.time_step = rclcpp::Duration::from_seconds(time_resolution);
-  predicted_path.path.resize(path.size());
-
-  for (size_t i = 0; i < path.size(); ++i) {
-    predicted_path.path.at(i) = path.at(i).pose;
-  }
   return predicted_path;
 }
 
