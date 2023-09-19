@@ -2,8 +2,12 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/logger.hpp>
+#include <rclcpp/logging.hpp>
 
 #include <boost/geometry/geometry.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
 
 namespace multi_pose_estimator
 {
