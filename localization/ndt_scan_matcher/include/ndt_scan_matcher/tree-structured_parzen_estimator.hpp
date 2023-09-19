@@ -1,0 +1,59 @@
+// Copyright 2023 Autoware Foundation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP
+#define NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP
+
+/*
+A implementation of tree-structured parzen estimator
+Search num_variables double variables in (-1, 1)
+*/
+
+#include <cstdint>
+#include <random>
+#include <vector>
+
+class TreeStructuredParzenEstimator
+{
+public:
+  using Input = std::vector<double>;
+  using Score = double;
+  struct Trial
+  {
+    Input input;
+    Score score;
+    int64_t id;
+  };
+
+  TreeStructuredParzenEstimator() = delete;
+  TreeStructuredParzenEstimator(int64_t num_variables, int64_t num_samples);
+  void add_trial(const Trial & trial);
+  Input get_next_input();
+  Trial get_best_trial() const;
+  std::vector<Trial> get_trials() const { return trials_; }
+
+private:
+  static constexpr double kEpsilon = 1e-8;
+  static constexpr double kRate = 0.25;
+  static constexpr double kCov = 0.25;
+
+  double acquisition_function(const Input & input);
+  double gauss(const Input & input, const Input & mu, const Input & sigma);
+
+  int64_t num_variables_;
+  int64_t num_samples_;
+  std::vector<Trial> trials_;
+};
+
+#endif  // NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP
