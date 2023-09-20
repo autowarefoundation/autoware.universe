@@ -50,6 +50,7 @@ public:
 private:
   static constexpr double kMaxGoodRate = 0.10;
   static constexpr double kBaseStddevCoeff = 0.25;
+  static constexpr double kTargetScore = 6.0;
 
   double acquisition_function(const Input & input);
   double gauss(const Input & input, const Input & mu, const Input & sigma);

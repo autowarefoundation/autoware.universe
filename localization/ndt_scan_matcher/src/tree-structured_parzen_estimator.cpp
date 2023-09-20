@@ -91,8 +91,11 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
     } else {
       const Input & base = trials_[index].input;
 
-      // Scott's rule
-      const double coeff = kBaseStddevCoeff * std::pow(good_num_, -1.0 / 10);
+      // Linear interpolation so that it becomes 1.0 or more at kTargetScore and 4.0 at
+      // good_score_threshold_.
+      const double score_diff = std::max(kTargetScore - trials_[index].score, 0.0);
+      const double linear = 1.0 + (score_diff / (kTargetScore - good_score_threshold_)) * 3.0;
+      const double coeff = kBaseStddevCoeff * linear;
       input.x = base.x + dist_norm(engine) * coeff * x_stddev_;
       input.y = base.y + dist_norm(engine) * coeff * y_stddev_;
       input.z = base.z + dist_norm(engine) * coeff * z_stddev_;
