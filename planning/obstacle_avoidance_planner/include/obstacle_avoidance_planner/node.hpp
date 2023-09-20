@@ -15,13 +15,12 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_avoidance_planner/common_structs.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/replan_checker.hpp"
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <algorithm>
@@ -61,6 +60,7 @@ protected:  // for the static_centerline_optimizer package
 
   // flags for some functions
   bool enable_pub_debug_marker_;
+  bool enable_pub_extra_debug_marker_;
   bool enable_debug_info_;
   bool enable_outside_drivable_area_stop_;
   bool enable_skip_optimization_;

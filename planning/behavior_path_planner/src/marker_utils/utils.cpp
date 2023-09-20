@@ -14,15 +14,23 @@
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
 
+#include "behavior_path_planner/marker_utils/colors.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
+
+#include <lanelet2_core/primitives/CompoundPolygon.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/primitives/LineString.h>
 
 namespace marker_utils
 {
 using behavior_path_planner::ShiftLine;
 using behavior_path_planner::utils::calcPathArcLengthArray;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 using std_msgs::msg::ColorRGBA;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::createDefaultMarker;
@@ -31,6 +39,27 @@ using tier4_autoware_utils::createMarkerOrientation;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
 using visualization_msgs::msg::Marker;
+
+CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj)
+{
+  CollisionCheckDebug debug;
+  debug.current_obj_pose = obj.initial_pose.pose;
+  debug.current_twist = obj.initial_twist.twist;
+  return {tier4_autoware_utils::toHexString(obj.uuid), debug};
+}
+
+void updateCollisionCheckDebugMap(
+  CollisionCheckDebugMap & debug_map, CollisionCheckDebugPair & object_debug, bool is_safe)
+{
+  auto & [key, element] = object_debug;
+  element.is_safe = is_safe;
+  if (debug_map.find(key) != debug_map.end()) {
+    debug_map[key] = element;
+    return;
+  }
+
+  debug_map.insert(object_debug);
+}
 
 MarkerArray createPoseMarkerArray(
   const Pose & pose, std::string && ns, const int32_t & id, const float & r, const float & g,
@@ -314,11 +343,11 @@ MarkerArray createFurthestLineStringMarkerArray(const lanelet::ConstLineStrings3
 
 MarkerArray createPolygonMarkerArray(
   const Polygon & polygon, std::string && ns, const int64_t & lane_id, const float & r,
-  const float & g, const float & b)
+  const float & g, const float & b, const float & w)
 {
   Marker marker = createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, static_cast<int32_t>(lane_id), Marker::LINE_STRIP,
-    createMarkerScale(0.3, 0.0, 0.0), createMarkerColor(r, g, b, 0.8));
+    createMarkerScale(w, 0.0, 0.0), createMarkerColor(r, g, b, 0.8));
 
   marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
 
@@ -408,4 +437,217 @@ MarkerArray createDrivableLanesMarkerArray(
 
   return msg;
 }
+MarkerArray createPredictedPathMarkerArray(
+  const PredictedPath & predicted_path, const vehicle_info_util::VehicleInfo & vehicle_info,
+  std::string && ns, const int32_t & id, const float & r, const float & g, const float & b)
+{
+  if (predicted_path.path.empty()) {
+    return MarkerArray{};
+  }
+
+  const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
+  MarkerArray msg;
+
+  const auto & path = predicted_path.path;
+
+  Marker marker = createDefaultMarker(
+    "map", current_time, ns, id, Marker::LINE_STRIP, createMarkerScale(0.1, 0.1, 0.1),
+
+    createMarkerColor(r, g, b, 0.999));
+  marker.lifetime = rclcpp::Duration::from_seconds(1.5);
+
+  MarkerArray marker_array;
+  for (size_t i = 0; i < path.size(); ++i) {
+    marker.id = i + id;
+    marker.points.clear();
+
+    const auto & predicted_path_pose = path.at(i);
+    const double half_width = vehicle_info.vehicle_width_m / 2.0;
+    const double base_to_front = vehicle_info.vehicle_length_m - vehicle_info.rear_overhang_m;
+    const double base_to_rear = vehicle_info.rear_overhang_m;
+
+    marker.points.push_back(
+      tier4_autoware_utils::calcOffsetPose(predicted_path_pose, base_to_front, -half_width, 0.0)
+        .position);
+    marker.points.push_back(
+      tier4_autoware_utils::calcOffsetPose(predicted_path_pose, base_to_front, half_width, 0.0)
+        .position);
+    marker.points.push_back(
+      tier4_autoware_utils::calcOffsetPose(predicted_path_pose, -base_to_rear, half_width, 0.0)
+        .position);
+    marker.points.push_back(
+      tier4_autoware_utils::calcOffsetPose(predicted_path_pose, -base_to_rear, -half_width, 0.0)
+        .position);
+    marker.points.push_back(marker.points.front());
+
+    marker_array.markers.push_back(marker);
+  }
+  return marker_array;
+
+  marker.points.reserve(path.size());
+  for (const auto & point : path) {
+    marker.points.push_back(point.position);
+  }
+  msg.markers.push_back(marker);
+  return msg;
+}
+
+MarkerArray showPolygon(const CollisionCheckDebugMap & obj_debug_vec, std::string && ns)
+{
+  if (obj_debug_vec.empty()) {
+    return MarkerArray{};
+  }
+
+  int32_t id{0};
+  const auto now = rclcpp::Clock{RCL_ROS_TIME}.now();
+
+  constexpr float line_scale_val{0.2};
+  const auto line_marker_scale = createMarkerScale(line_scale_val, line_scale_val, line_scale_val);
+
+  auto default_line_marker = [&](const auto & color = colors::green()) {
+    return createDefaultMarker("map", now, ns, ++id, Marker::LINE_STRIP, line_marker_scale, color);
+  };
+
+  constexpr float text_scale_val{1.5};
+  const auto text_marker_scale = createMarkerScale(text_scale_val, text_scale_val, text_scale_val);
+
+  auto default_text_marker = [&]() {
+    return createDefaultMarker(
+      "map", now, ns + "_text", ++id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+      text_marker_scale, colors::white());
+  };
+
+  auto default_cube_marker =
+    [&](const auto & width, const auto & depth, const auto & color = colors::green()) {
+      return createDefaultMarker(
+        "map", now, ns + "_cube", ++id, visualization_msgs::msg::Marker::CUBE,
+        createMarkerScale(width, depth, 1.0), color);
+    };
+
+  MarkerArray marker_array;
+  marker_array.markers.reserve(
+    obj_debug_vec.size() * 5);  // poly ego, text ego, poly obj, text obj, cube obj
+
+  int32_t idx = {0};
+  for (const auto & [uuid, info] : obj_debug_vec) {
+    const auto color = info.is_safe ? colors::green() : colors::red();
+    const auto poly_z = info.current_obj_pose.position.z;  // temporally
+
+    const auto insert_polygon_marker = [&](const auto & polygon) {
+      marker_array.markers.emplace_back();
+      auto & polygon_marker = marker_array.markers.back();
+      polygon_marker = default_line_marker(color);
+      polygon_marker.points.reserve(polygon.outer().size());
+      for (const auto & p : polygon.outer()) {
+        polygon_marker.points.push_back(createPoint(p.x(), p.y(), poly_z));
+      }
+    };
+
+    insert_polygon_marker(info.extended_ego_polygon);
+    insert_polygon_marker(info.extended_obj_polygon);
+
+    const auto str_idx = std::to_string(++idx);
+    const auto insert_text_marker = [&](const auto & pose) {
+      marker_array.markers.emplace_back();
+      auto & text_marker = marker_array.markers.back();
+      text_marker = default_text_marker();
+      text_marker.text = str_idx;
+      text_marker.pose = pose;
+    };
+
+    insert_text_marker(info.expected_ego_pose);
+    insert_text_marker(info.expected_obj_pose);
+
+    const auto insert_cube_marker = [&](const auto & pose) {
+      marker_array.markers.emplace_back();
+      auto & cube_marker = marker_array.markers.back();
+      cube_marker = default_cube_marker(1.0, 1.0, color);
+      cube_marker.pose = pose;
+    };
+    insert_cube_marker(info.current_obj_pose);
+  }
+  return marker_array;
+}
+
+MarkerArray showPredictedPath(const CollisionCheckDebugMap & obj_debug_vec, std::string && ns)
+{
+  int32_t id{0};
+  const auto current_time{rclcpp::Clock{RCL_ROS_TIME}.now()};
+  const auto arrow_marker_scale = createMarkerScale(1.0, 0.3, 0.3);
+  const auto default_arrow_marker = [&](const auto & color) {
+    return createDefaultMarker(
+      "map", current_time, ns, ++id, Marker::ARROW, arrow_marker_scale, color);
+  };
+
+  MarkerArray marker_array;
+  marker_array.markers.reserve(std::accumulate(
+    obj_debug_vec.cbegin(), obj_debug_vec.cend(), 0UL,
+    [&](const auto current_sum, const auto & obj_debug) {
+      const auto & [uuid, info] = obj_debug;
+      return current_sum + info.ego_predicted_path.size() + info.obj_predicted_path.size() + 2;
+    }));
+
+  for (const auto & [uuid, info] : obj_debug_vec) {
+    const auto insert_marker = [&](const auto & path, const auto & color) {
+      for (const auto & pose : path) {
+        marker_array.markers.emplace_back();
+        auto & marker = marker_array.markers.back();
+        marker = default_arrow_marker(color);
+        marker.pose = pose.pose;
+      }
+    };
+
+    insert_marker(info.ego_predicted_path, colors::aqua());
+    insert_marker(info.obj_predicted_path, colors::yellow());
+    const auto insert_expected_pose_marker = [&](const auto & pose, const auto & color) {
+      // instead of checking for distance, inserting a new marker might be more efficient
+      marker_array.markers.emplace_back();
+      auto & marker = marker_array.markers.back();
+      marker = default_arrow_marker(color);
+      marker.pose = pose;
+      marker.pose.position.z += 0.05;
+    };
+
+    insert_expected_pose_marker(info.expected_ego_pose, colors::red());
+    insert_expected_pose_marker(info.expected_obj_pose, colors::red());
+  }
+  return marker_array;
+}
+
+MarkerArray showSafetyCheckInfo(const CollisionCheckDebugMap & obj_debug_vec, std::string && ns)
+{
+  int32_t id{0};
+  auto default_text_marker = [&]() {
+    return createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, ++id, Marker::TEXT_VIEW_FACING,
+      createMarkerScale(0.5, 0.5, 0.5), colors::aqua());
+  };
+
+  MarkerArray marker_array;
+
+  marker_array.markers.reserve(obj_debug_vec.size());
+
+  int idx{0};
+
+  for (const auto & [uuid, info] : obj_debug_vec) {
+    auto safety_check_info_text = default_text_marker();
+    safety_check_info_text.pose = info.current_obj_pose;
+
+    std::ostringstream ss;
+
+    ss << "Idx: " << ++idx << "\nUnsafe reason: " << info.unsafe_reason
+       << "\nRSS dist: " << std::setprecision(4) << info.rss_longitudinal
+       << "\nEgo to obj: " << info.inter_vehicle_distance
+       << "\nExtended polygon: " << (info.is_front ? "ego" : "object")
+       << "\nExtended polygon lateral offset: " << info.extended_polygon_lat_offset
+       << "\nExtended polygon longitudinal offset: " << info.extended_polygon_lon_offset
+       << "\nLast checked position: " << (info.is_front ? "obj in front ego" : "obj at back ego")
+       << "\nSafe: " << (info.is_safe ? "Yes" : "No");
+
+    safety_check_info_text.text = ss.str();
+    marker_array.markers.push_back(safety_check_info_text);
+  }
+  return marker_array;
+}
+
 }  // namespace marker_utils

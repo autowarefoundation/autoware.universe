@@ -20,7 +20,9 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <interpolation/spline_interpolation.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
 
 #include <deque>
@@ -186,15 +188,19 @@ bool isVehicle(const PredictedObject & obj)
 bool isStuckVehicle(const PredictedObject & obj, const double min_vel)
 {
   if (!isVehicle(obj)) return false;
-  const auto & obj_vel = obj.kinematics.initial_twist_with_covariance.twist.linear.x;
-  return std::abs(obj_vel) <= min_vel;
+  const auto & obj_vel_norm = std::hypot(
+    obj.kinematics.initial_twist_with_covariance.twist.linear.x,
+    obj.kinematics.initial_twist_with_covariance.twist.linear.y);
+  return obj_vel_norm <= min_vel;
 }
 
 bool isMovingVehicle(const PredictedObject & obj, const double min_vel)
 {
   if (!isVehicle(obj)) return false;
-  const auto & obj_vel = obj.kinematics.initial_twist_with_covariance.twist.linear.x;
-  return std::abs(obj_vel) > min_vel;
+  const auto & obj_vel_norm = std::hypot(
+    obj.kinematics.initial_twist_with_covariance.twist.linear.x,
+    obj.kinematics.initial_twist_with_covariance.twist.linear.y);
+  return obj_vel_norm > min_vel;
 }
 
 std::vector<PredictedObject> extractVehicles(

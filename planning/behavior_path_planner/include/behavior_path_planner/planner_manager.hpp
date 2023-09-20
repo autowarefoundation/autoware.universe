@@ -19,12 +19,14 @@
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
+
+#include <lanelet2_core/primitives/Lanelet.h>
 
 #include <algorithm>
 #include <limits>
@@ -126,10 +128,10 @@ public:
    */
   void reset()
   {
+    std::for_each(manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->reset(); });
     approved_module_ptrs_.clear();
     candidate_module_ptrs_.clear();
     root_lanelet_ = boost::none;
-    std::for_each(manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->reset(); });
     resetProcessingTime();
   }
 
@@ -215,6 +217,16 @@ public:
   }
 
   /**
+   * @brief check if there are approved modules.
+   */
+  bool hasApprovedModules() const { return !approved_module_ptrs_.empty(); }
+
+  /**
+   * @brief check if there are candidate modules.
+   */
+  bool hasCandidateModules() const { return !candidate_module_ptrs_.empty(); }
+
+  /**
    * @brief reset root lanelet. if there are approved modules, don't reset root lanelet.
    * @param planner data.
    * @details this function is called only when it is in disengage and drive by manual.
@@ -268,32 +280,7 @@ private:
    * @param planner data.
    * @return reference path.
    */
-  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data) const
-  {
-    const auto & route_handler = data->route_handler;
-    const auto & pose = data->self_odometry->pose.pose;
-    const auto p = data->parameters;
-
-    constexpr double extra_margin = 10.0;
-    const auto backward_length =
-      std::max(p.backward_path_length, p.backward_path_length + extra_margin);
-
-    const auto lanelet_sequence = route_handler->getLaneletSequence(
-      root_lanelet_.get(), pose, backward_length, std::numeric_limits<double>::max());
-
-    lanelet::ConstLanelet closest_lane{};
-    if (lanelet::utils::query::getClosestLaneletWithConstrains(
-          lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
-          p.ego_nearest_yaw_threshold)) {
-      return utils::getReferencePath(closest_lane, data);
-    }
-
-    if (lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane)) {
-      return utils::getReferencePath(closest_lane, data);
-    }
-
-    return {};  // something wrong.
-  }
+  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data) const;
 
   /**
    * @brief stop and unregister the module from manager.
@@ -354,16 +341,10 @@ private:
    * @param planner data.
    * @return root lanelet.
    */
-  lanelet::ConstLanelet updateRootLanelet(
-    const std::shared_ptr<PlannerData> & data, bool success_lane_change = false) const
+  lanelet::ConstLanelet updateRootLanelet(const std::shared_ptr<PlannerData> & data) const
   {
     lanelet::ConstLanelet ret{};
-    if (success_lane_change) {
-      data->route_handler->getClosestPreferredLaneletWithinRoute(
-        data->self_odometry->pose.pose, &ret);
-    } else {
-      data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
-    }
+    data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
     RCLCPP_DEBUG(logger_, "update start lanelet. id:%ld", ret.id());
     return ret;
   }

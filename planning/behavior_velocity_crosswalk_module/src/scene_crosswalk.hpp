@@ -19,20 +19,19 @@
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/regulatory_elements/crosswalk.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_debug_msgs/msg/string_stamped.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_routing/RoutingGraphContainer.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/primitives/LineString.h>
 #include <pcl/common/distances.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -49,8 +48,8 @@ namespace behavior_velocity_planner
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_perception_msgs::msg::TrafficLight;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_perception_msgs::msg::TrafficSignalElement;
 using lanelet::autoware::Crosswalk;
 using tier4_api_msgs::msg::CrosswalkStatus;
 using tier4_autoware_utils::Polygon2d;
@@ -105,6 +104,9 @@ public:
     std::vector<double> ego_pass_later_margin_y;
     double ego_pass_later_additional_margin;
     double max_offset_to_crosswalk_for_yield;
+    double min_acc_for_no_stop_decision;
+    double max_jerk_for_no_stop_decision;
+    double min_jerk_for_no_stop_decision;
     double stop_object_velocity;
     double min_object_velocity;
     bool disable_stop_for_yield_cancel;
@@ -257,7 +259,7 @@ public:
   };
 
   CrosswalkModule(
-    const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
+    rclcpp::Node & node, const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
     const PlannerParam & planner_param, const bool use_regulatory_element,
     const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);
 
@@ -295,7 +297,12 @@ private:
     const std::optional<StopFactor> & stop_factor_for_crosswalk_users,
     const std::optional<StopFactor> & stop_factor_for_stuck_vehicles);
 
-  void planGo(PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor);
+  void setDistanceToStop(
+    const PathWithLaneId & ego_path,
+    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose,
+    const std::optional<StopFactor> & stop_factor);
+
+  void planGo(PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const;
 
   void planStop(
     PathWithLaneId & ego_path, const std::optional<StopFactor> & nearest_stop_factor,
@@ -308,7 +315,7 @@ private:
 
   void insertDecelPointWithDebugInfo(
     const geometry_msgs::msg::Point & stop_point, const float target_velocity,
-    PathWithLaneId & output);
+    PathWithLaneId & output) const;
 
   std::pair<double, double> clampAttentionRangeByNeighborCrosswalks(
     const PathWithLaneId & ego_path, const double near_attention_range,
@@ -354,6 +361,8 @@ private:
   }
 
   const int64_t module_id_;
+
+  rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr collision_info_pub_;
 
   lanelet::ConstLanelet crosswalk_;
 

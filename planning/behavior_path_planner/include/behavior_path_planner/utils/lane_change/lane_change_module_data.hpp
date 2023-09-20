@@ -15,10 +15,13 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
 
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/utils/safety_check.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "lanelet2_core/geometry/Lanelet.h"
 
 #include "autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp"
+
+#include <lanelet2_core/primitives/Lanelet.h>
 
 #include <memory>
 #include <string>
@@ -65,18 +68,15 @@ struct LaneChangeParameters
   bool check_objects_on_other_lanes{true};
   bool use_all_predicted_path{false};
 
-  // true by default
-  bool check_car{true};         // check object car
-  bool check_truck{true};       // check object truck
-  bool check_bus{true};         // check object bus
-  bool check_trailer{true};     // check object trailer
-  bool check_unknown{true};     // check object unknown
-  bool check_bicycle{true};     // check object bicycle
-  bool check_motorcycle{true};  // check object motorbike
-  bool check_pedestrian{true};  // check object pedestrian
+  // true by default for all objects
+  utils::path_safety_checker::ObjectTypesToCheck object_types_to_check;
+
+  // safety check
+  utils::path_safety_checker::RSSparams rss_params{};
+  utils::path_safety_checker::RSSparams rss_params_for_abort{};
 
   // abort
-  LaneChangeCancelParameters cancel;
+  LaneChangeCancelParameters cancel{};
 
   double finish_judge_lateral_threshold{0.2};
 
@@ -132,9 +132,9 @@ struct LaneChangeTargetObjectIndices
 
 struct LaneChangeTargetObjects
 {
-  std::vector<utils::safety_check::ExtendedPredictedObject> current_lane{};
-  std::vector<utils::safety_check::ExtendedPredictedObject> target_lane{};
-  std::vector<utils::safety_check::ExtendedPredictedObject> other_lane{};
+  std::vector<utils::path_safety_checker::ExtendedPredictedObject> current_lane{};
+  std::vector<utils::path_safety_checker::ExtendedPredictedObject> target_lane{};
+  std::vector<utils::path_safety_checker::ExtendedPredictedObject> other_lane{};
 };
 
 enum class LaneChangeModuleType {

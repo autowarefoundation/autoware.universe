@@ -16,6 +16,7 @@
 
 #include "debug.hpp"
 #include "decisions.hpp"
+#include "filter_predicted_objects.hpp"
 #include "footprint.hpp"
 #include "lanelets_selection.hpp"
 #include "overlapping_range.hpp"
@@ -25,6 +26,8 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <lanelet2_core/geometry/LaneletMap.h>
@@ -103,7 +106,7 @@ bool OutOfLaneModule::modifyPathVelocity(
   DecisionInputs inputs;
   inputs.ranges = ranges;
   inputs.ego_data = ego_data;
-  inputs.objects = *planner_data_->predicted_objects;
+  inputs.objects = filter_predicted_objects(*planner_data_->predicted_objects, ego_data, params_);
   inputs.route_handler = planner_data_->route_handler_;
   inputs.lanelets = other_lanelets;
   auto decisions = calculate_decisions(inputs, params_, logger_);
