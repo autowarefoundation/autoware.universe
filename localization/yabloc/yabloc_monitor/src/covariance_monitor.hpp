@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AVAILABILITY_MODULE_HPP_
-#define AVAILABILITY_MODULE_HPP_
+#ifndef COVARIANCE_MONITOR_HPP_
+#define COVARIANCE_MONITOR_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -40,4 +40,4 @@ private:
   const double timestamp_threshold_;
 };
 
-#endif  // AVAILABILITY_MODULE_HPP_
+#endif  // COVARIANCE_MONITOR_HPP_
