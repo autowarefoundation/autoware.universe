@@ -39,7 +39,9 @@ public:
     twist_smoothing_steps(node->declare_parameter("twist_smoothing_steps", 2)),
     proc_stddev_vx_c(node->declare_parameter("proc_stddev_vx_c", 5.0)),
     proc_stddev_wz_c(node->declare_parameter("proc_stddev_wz_c", 1.0)),
-    proc_stddev_yaw_c(node->declare_parameter("proc_stddev_yaw_c", 0.005))
+    proc_stddev_yaw_c(node->declare_parameter("proc_stddev_yaw_c", 0.005)),
+    threshold_observable_velocity_mps(
+      node->declare_parameter("threshold_observable_velocity_mps", 0.5))
   {
   }
 
@@ -59,6 +61,7 @@ public:
   const double proc_stddev_vx_c;   //!< @brief  vx process noise
   const double proc_stddev_wz_c;   //!< @brief  wz process noise
   const double proc_stddev_yaw_c;  //!< @brief  yaw process noise
+  const double threshold_observable_velocity_mps;
 };
 
 #endif  // EKF_LOCALIZER__HYPER_PARAMETERS_HPP_
