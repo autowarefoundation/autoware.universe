@@ -91,7 +91,8 @@ protected:
   virtual void postprocess(Msg & output_msg);
 
   virtual void publish(const Msg & output_msg);
-  void publishDiagnostics(const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
+  void publishDiagnostics(
+    const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
     const std::size_t camera_id) const;
 
   void timer_callback();
