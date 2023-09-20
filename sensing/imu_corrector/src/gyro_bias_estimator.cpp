@@ -83,6 +83,10 @@ void GyroBiasEstimator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
     stat.add("gyro_bias", "Bias estimation is not yet ready because of insufficient data.");
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Not initialized");
   } else {
+    stat.add("gyro_bias_x", gyro_bias_.value().x);
+    stat.add("gyro_bias_y", gyro_bias_.value().y);
+    stat.add("gyro_bias_z", gyro_bias_.value().z);
+
     // Validation
     const bool is_bias_small_enough =
       std::abs(gyro_bias_.value().x - angular_velocity_offset_x_) < gyro_bias_threshold_ &&
