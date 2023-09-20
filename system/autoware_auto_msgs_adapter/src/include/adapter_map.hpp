@@ -28,8 +28,7 @@ namespace autoware_auto_msgs_adapter
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_map_msgs::msg::LaneletMapBin;
 
-class AdapterMap
-: public autoware_auto_msgs_adapter::AdapterBase<LaneletMapBin, HADMapBin>
+class AdapterMap : public autoware_auto_msgs_adapter::AdapterBase<LaneletMapBin, HADMapBin>
 {
 public:
   AdapterMap(
@@ -51,7 +50,7 @@ protected:
     msg_auto.map_version = msg_source.version_map;
     msg_auto.map_format = 0;
     msg_auto.data = msg_source.data;
-    
+
     return msg_auto;
   }
 };

@@ -61,21 +61,19 @@ TEST(AutowareAutoMsgsAdapter, TestHADMapBin)  // NOLINT for gtest
   bool test_completed = false;
 
   const auto msg_map = generate_map_msg();
-  auto sub =
-    node_subscriber->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
-      topic_name_target, rclcpp::QoS{1},
-      [&msg_map, &test_completed](
-        const autoware_auto_mapping_msgs::msg::HADMapBin::SharedPtr msg) {
-        EXPECT_EQ(msg->header.stamp, msg_map.header.stamp);
-        EXPECT_EQ(msg->header.frame_id, msg_map.header.frame_id);
+  auto sub = node_subscriber->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+    topic_name_target, rclcpp::QoS{1},
+    [&msg_map, &test_completed](const autoware_auto_mapping_msgs::msg::HADMapBin::SharedPtr msg) {
+      EXPECT_EQ(msg->header.stamp, msg_map.header.stamp);
+      EXPECT_EQ(msg->header.frame_id, msg_map.header.frame_id);
 
-        EXPECT_EQ(msg->map_format, 0);
-        EXPECT_EQ(msg->format_version, msg_map.version_map_format);
-        EXPECT_EQ(msg->map_version, msg_map.version_map);
-        EXPECT_EQ(msg->data, msg_map.data);
+      EXPECT_EQ(msg->map_format, 0);
+      EXPECT_EQ(msg->format_version, msg_map.version_map_format);
+      EXPECT_EQ(msg->map_version, msg_map.version_map);
+      EXPECT_EQ(msg->data, msg_map.data);
 
-        test_completed = true;
-      });
+      test_completed = true;
+    });
 
   std::cout << "Creating the publisher node..." << std::endl;
 
