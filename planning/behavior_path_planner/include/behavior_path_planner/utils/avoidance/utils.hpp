@@ -89,7 +89,8 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
-  const bool is_object_front, const std::shared_ptr<AvoidanceParameters> & parameters);
+  const bool is_object_front, const bool limit_to_max_velocity,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
 
 double getLongitudinalVelocity(const Pose & p_ref, const Pose & p_target, const double v);
 
@@ -149,6 +150,11 @@ double extendToRoadShoulderDistanceWithPolygon(
 
 void fillAdditionalInfoFromPoint(const AvoidancePlanningData & data, AvoidLineArray & lines);
 
+void fillAdditionalInfoFromLongitudinal(const AvoidancePlanningData & data, AvoidLine & line);
+
+void fillAdditionalInfoFromLongitudinal(
+  const AvoidancePlanningData & data, AvoidOutlines & outlines);
+
 void fillAdditionalInfoFromLongitudinal(const AvoidancePlanningData & data, AvoidLineArray & lines);
 
 AvoidLine fillAdditionalInfo(const AvoidancePlanningData & data, const AvoidLine & line);
@@ -167,6 +173,10 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
   const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
   DebugData & debug);
+
+DrivableLanes generateExpandDrivableLanes(
+  const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
 }  // namespace behavior_path_planner::utils::avoidance
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__UTILS_HPP_
