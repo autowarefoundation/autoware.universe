@@ -54,8 +54,8 @@ TemplateModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   return [&path](const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {
-    auto random_var = path.points.size() * scene_module->getDistance();
-    return random_var;
+    auto random_var = path.points.size() * std::abs(scene_module->getDistance());
+    return random_var >= 0;
   };
 }
 
