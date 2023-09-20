@@ -17,9 +17,6 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
@@ -27,7 +24,7 @@
 #include <geometry_msgs/msg/polygon.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/Forward.h>
 
 #include <string>
 #include <vector>

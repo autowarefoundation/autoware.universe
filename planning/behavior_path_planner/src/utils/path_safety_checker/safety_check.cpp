@@ -16,8 +16,14 @@
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "interpolation/linear_interpolation.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/algorithms/overlaps.hpp>
+#include <boost/geometry/strategies/strategies.hpp>
 
 namespace behavior_path_planner::utils::path_safety_checker
 {
@@ -28,6 +34,12 @@ void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point &
   point.y() = geom_point.y;
 
   bg::append(polygon.outer(), point);
+}
+
+bool isTargetObjectOncoming(
+  const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose)
+{
+  return std::abs(calcYawDeviation(vehicle_pose, object_pose)) > M_PI_2;
 }
 
 bool isTargetObjectFront(

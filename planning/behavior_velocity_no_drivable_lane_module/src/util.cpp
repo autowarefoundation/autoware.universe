@@ -14,9 +14,12 @@
 
 #include "util.hpp"
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
+
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <algorithm>
 

@@ -36,16 +36,16 @@ namespace image_projection_based_fusion
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>("roi_cluster_fusion", options)
 {
-  use_iou_x_ = declare_parameter("use_iou_x", true);
-  use_iou_y_ = declare_parameter("use_iou_y", false);
-  use_iou_ = declare_parameter("use_iou", false);
-  use_cluster_semantic_type_ = declare_parameter("use_cluster_semantic_type", false);
-  only_allow_inside_cluster_ = declare_parameter("only_allow_inside_cluster_", true);
-  roi_scale_factor_ = declare_parameter("roi_scale_factor", 1.1);
-  iou_threshold_ = declare_parameter("iou_threshold", 0.1);
-  unknown_iou_threshold_ = declare_parameter("unknown_iou_threshold", 0.1);
-  remove_unknown_ = declare_parameter("remove_unknown", false);
-  trust_distance_ = declare_parameter("trust_distance", 100.0);
+  use_iou_x_ = declare_parameter<bool>("use_iou_x");
+  use_iou_y_ = declare_parameter<bool>("use_iou_y");
+  use_iou_ = declare_parameter<bool>("use_iou");
+  use_cluster_semantic_type_ = declare_parameter<bool>("use_cluster_semantic_type");
+  only_allow_inside_cluster_ = declare_parameter<bool>("only_allow_inside_cluster");
+  roi_scale_factor_ = declare_parameter<double>("roi_scale_factor");
+  iou_threshold_ = declare_parameter<double>("iou_threshold");
+  unknown_iou_threshold_ = declare_parameter<double>("unknown_iou_threshold");
+  remove_unknown_ = declare_parameter<bool>("remove_unknown");
+  trust_distance_ = declare_parameter<double>("trust_distance");
 }
 
 void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluster_msg)
@@ -171,12 +171,16 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   for (const auto & feature_obj : input_roi_msg.feature_objects) {
     int index = 0;
     double max_iou = 0.0;
+    bool is_roi_label_known =
+      feature_obj.object.classification.front().label != ObjectClassification::UNKNOWN;
     for (const auto & cluster_map : m_cluster_roi) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
       if (use_iou_) {
         iou = calcIoU(cluster_map.second, feature_obj.feature.roi);
       }
-      if (use_iou_x_) {
+      // use for unknown roi to improve small objects like traffic cone detect
+      // TODO(badai-nguyen): add option to disable roi_cluster mode
+      if (use_iou_x_ || !is_roi_label_known) {
         iou_x = calcIoUX(cluster_map.second, feature_obj.feature.roi);
       }
       if (use_iou_y_) {
@@ -192,8 +196,6 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       }
     }
     if (!output_cluster_msg.feature_objects.empty()) {
-      bool is_roi_label_known = feature_obj.object.classification.front().label !=
-                                autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
       bool is_roi_existence_prob_higher =
         output_cluster_msg.feature_objects.at(index).object.existence_probability <=
         feature_obj.object.existence_probability;

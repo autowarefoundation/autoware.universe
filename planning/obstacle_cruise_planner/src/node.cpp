@@ -20,6 +20,7 @@
 #include "obstacle_cruise_planner/polygon_utils.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
 #include <boost/format.hpp>
@@ -130,11 +131,11 @@ double calcObstacleMaxLength(const Shape & shape)
 }
 
 TrajectoryPoint getExtendTrajectoryPoint(
-  const double extend_distance, const TrajectoryPoint & goal_point)
+  const double extend_distance, const TrajectoryPoint & goal_point, const bool is_driving_forward)
 {
   TrajectoryPoint extend_trajectory_point;
-  extend_trajectory_point.pose =
-    tier4_autoware_utils::calcOffsetPose(goal_point.pose, extend_distance, 0.0, 0.0);
+  extend_trajectory_point.pose = tier4_autoware_utils::calcOffsetPose(
+    goal_point.pose, extend_distance * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
   extend_trajectory_point.longitudinal_velocity_mps = goal_point.longitudinal_velocity_mps;
   extend_trajectory_point.lateral_velocity_mps = goal_point.lateral_velocity_mps;
   extend_trajectory_point.acceleration_mps2 = goal_point.acceleration_mps2;
@@ -146,6 +147,8 @@ std::vector<TrajectoryPoint> extendTrajectoryPoints(
   const double step_length)
 {
   auto output_points = input_points;
+  const auto is_driving_forward_opt = motion_utils::isDrivingForwardWithTwist(input_points);
+  const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
 
   if (extend_distance < std::numeric_limits<double>::epsilon()) {
     return output_points;
@@ -155,11 +158,13 @@ std::vector<TrajectoryPoint> extendTrajectoryPoints(
 
   double extend_sum = 0.0;
   while (extend_sum <= (extend_distance - step_length)) {
-    const auto extend_trajectory_point = getExtendTrajectoryPoint(extend_sum, goal_point);
+    const auto extend_trajectory_point =
+      getExtendTrajectoryPoint(extend_sum, goal_point, is_driving_forward);
     output_points.push_back(extend_trajectory_point);
     extend_sum += step_length;
   }
-  const auto extend_trajectory_point = getExtendTrajectoryPoint(extend_distance, goal_point);
+  const auto extend_trajectory_point =
+    getExtendTrajectoryPoint(extend_distance, goal_point, is_driving_forward);
   output_points.push_back(extend_trajectory_point);
 
   return output_points;
@@ -397,11 +402,18 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     }
 
     min_behavior_stop_margin_ = declare_parameter<double>("common.min_behavior_stop_margin");
+    additional_safe_distance_margin_on_curve_ =
+      declare_parameter<double>("common.stop_on_curve.additional_safe_distance_margin");
+    enable_approaching_on_curve_ =
+      declare_parameter<bool>("common.stop_on_curve.enable_approaching");
+    min_safe_distance_margin_on_curve_ =
+      declare_parameter<double>("common.stop_on_curve.min_safe_distance_margin");
     suppress_sudden_obstacle_stop_ =
       declare_parameter<bool>("common.suppress_sudden_obstacle_stop");
     planner_ptr_->setParam(
       enable_debug_info_, enable_calculation_time_info_, min_behavior_stop_margin_,
-      suppress_sudden_obstacle_stop_);
+      enable_approaching_on_curve_, additional_safe_distance_margin_on_curve_,
+      min_safe_distance_margin_on_curve_, suppress_sudden_obstacle_stop_);
   }
 
   {  // stop/cruise/slow down obstacle type
@@ -438,9 +450,20 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
     parameters, "common.enable_debug_info", enable_debug_info_);
   tier4_autoware_utils::updateParam<bool>(
     parameters, "common.enable_calculation_time_info", enable_calculation_time_info_);
+
+  tier4_autoware_utils::updateParam<bool>(
+    parameters, "common.stop_on_curve.enable_approaching", enable_approaching_on_curve_);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "common.stop_on_curve.additional_safe_distance_margin",
+    additional_safe_distance_margin_on_curve_);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "common.stop_on_curve.min_safe_distance_margin",
+    min_safe_distance_margin_on_curve_);
+
   planner_ptr_->setParam(
     enable_debug_info_, enable_calculation_time_info_, min_behavior_stop_margin_,
-    suppress_sudden_obstacle_stop_);
+    enable_approaching_on_curve_, additional_safe_distance_margin_on_curve_,
+    min_safe_distance_margin_on_curve_, suppress_sudden_obstacle_stop_);
 
   tier4_autoware_utils::updateParam<bool>(
     parameters, "common.enable_slow_down_planning", enable_slow_down_planning_);
@@ -911,7 +934,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
   }
 
   const auto [tangent_vel, normal_vel] = projectObstacleVelocityToTrajectory(traj_points, obstacle);
-  return StopObstacle{obstacle.uuid, obstacle.stamp, obstacle.pose,
+  return StopObstacle{obstacle.uuid, obstacle.stamp, obstacle.pose,   obstacle.shape,
                       tangent_vel,   normal_vel,     *collision_point};
 }
 
