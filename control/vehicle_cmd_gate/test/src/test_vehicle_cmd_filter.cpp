@@ -373,7 +373,7 @@ TEST(VehicleCmdFilter, VehicleCmdFilterInterpolate)
     EXPECT_NEAR(_limitSteer(orig_cmd).lateral.steering_tire_angle, 0.2 + 0.1 / 6.0, ep);
 
     set_speed_and_reset_prev(8.0);
-    EXPECT_NEAR(_limitSteer(orig_cmd).lateral.steering_tire_angle, 0.2 + 0.1 / 6.0, ep);
+    EXPECT_NEAR(_limitSteer(orig_cmd).lateral.steering_tire_angle, 0.2 + 0.1 * 4.0 / 6.0, ep);
 
     set_speed_and_reset_prev(10.0);
     EXPECT_NEAR(_limitSteer(orig_cmd).lateral.steering_tire_angle, 0.3, ep);
@@ -387,7 +387,7 @@ TEST(VehicleCmdFilter, VehicleCmdFilterInterpolate)
   // p.steer_rate_lim = std::vector<double>{0.2, 0.1, 0.05};
   {
     const auto calcSteerRateFromAngle = [&](const auto & cmd) {
-      return (cmd.steering_tire_angle - orig_cmd.lateral.steering_tire_angle) / DT;
+      return (cmd.steering_tire_angle - 0.0) / DT;
     };
     autoware_auto_control_msgs::msg::AckermannLateralCommand filtered;
 

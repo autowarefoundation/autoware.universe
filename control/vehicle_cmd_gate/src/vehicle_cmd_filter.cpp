@@ -182,10 +182,16 @@ void VehicleCmdFilter::limitLateralSteer(AckermannControlCommand & input) const
 
 void VehicleCmdFilter::limitLateralSteerRate(const double dt, AckermannControlCommand & input) const
 {
-  const auto steer_rate_limit = getSteerRateLim();
+  const float steer_rate_limit = getSteerRateLim();
 
-  double ds = input.lateral.steering_tire_angle - prev_cmd_.lateral.steering_tire_angle;
-  ds = std::clamp(ds, -steer_rate_limit * dt, steer_rate_limit * dt);
+  // for steering angle rate
+  input.lateral.steering_tire_rotation_rate =
+    std::clamp(input.lateral.steering_tire_rotation_rate, -steer_rate_limit, steer_rate_limit);
+
+  // for steering angle
+  const float steer_diff_limit = steer_rate_limit * dt;
+  float ds = input.lateral.steering_tire_angle - prev_cmd_.lateral.steering_tire_angle;
+  ds = std::clamp(ds, -steer_diff_limit, steer_diff_limit);
   input.lateral.steering_tire_angle = prev_cmd_.lateral.steering_tire_angle + ds;
 }
 
