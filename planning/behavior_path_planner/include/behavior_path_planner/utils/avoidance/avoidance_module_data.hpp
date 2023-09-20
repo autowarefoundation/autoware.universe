@@ -110,12 +110,6 @@ struct AvoidanceParameters
   // use intersection area for avoidance
   bool use_intersection_areas{false};
 
-  // // constrains
-  // bool use_constraints_for_decel{false};
-
-  // // policy
-  // bool use_relaxed_margin_immediately{false};
-
   // max deceleration for
   double max_deceleration{0.0};
 
@@ -396,6 +390,9 @@ using ObjectDataArray = std::vector<ObjectData>;
  */
 struct AvoidLine : public ShiftLine
 {
+  // object side
+  bool object_on_right = true;
+
   // Distance from ego to start point in Frenet
   double start_longitudinal = 0.0;
 
@@ -418,6 +415,21 @@ struct AvoidLine : public ShiftLine
   double getGradient() const { return getRelativeLength() / getRelativeLongitudinal(); }
 };
 using AvoidLineArray = std::vector<AvoidLine>;
+
+struct AvoidOutline
+{
+  AvoidOutline(const AvoidLine & avoid_line, const AvoidLine & return_line)
+  : avoid_line{avoid_line}, return_line{return_line}
+  {
+  }
+
+  AvoidLine avoid_line{};
+
+  AvoidLine return_line{};
+
+  AvoidLineArray middle_lines{};
+};
+using AvoidOutlines = std::vector<AvoidOutline>;
 
 /*
  * avoidance state
@@ -470,13 +482,13 @@ struct AvoidancePlanningData
   boost::optional<ObjectData> stop_target_object{boost::none};
 
   // raw shift point
-  AvoidLineArray unapproved_raw_sl{};
+  AvoidLineArray raw_shift_line{};
 
   // new shift point
-  AvoidLineArray unapproved_new_sl{};
+  AvoidLineArray new_shift_line{};
 
   // safe shift point
-  AvoidLineArray safe_new_sl{};
+  AvoidLineArray safe_shift_line{};
 
   bool safe{false};
 
@@ -528,27 +540,25 @@ struct DebugData
 
   // combine process
   AvoidLineArray step1_registered_shift_line;
-  AvoidLineArray step1_current_raw_shift_line;
+  AvoidLineArray step1_current_shift_line;
   AvoidLineArray step1_filled_shift_line;
   AvoidLineArray step1_merged_shift_line;
   AvoidLineArray step1_combined_shift_line;
   AvoidLineArray step1_return_shift_line;
   AvoidLineArray step1_front_shift_line;
-  AvoidLineArray step1_shift_line;
 
   // create outline process
   AvoidLineArray step2_merged_shift_line;
 
   // trimming process
-  AvoidLineArray step3_quantized_shift_line;
-  AvoidLineArray step3_noise_removed;
-  AvoidLineArray step3_grad_filtered_first;
-  AvoidLineArray step3_grad_filtered_second;
-  AvoidLineArray step3_grad_filtered_third;
+  AvoidLineArray step3_quantize_filtered;
+  AvoidLineArray step3_noise_filtered;
+  AvoidLineArray step3_grad_filtered_1st;
+  AvoidLineArray step3_grad_filtered_2nd;
+  AvoidLineArray step3_grad_filtered_3rd;
 
   // registered process
   AvoidLineArray step4_new_shift_line;
-  AvoidLineArray step4_valid_shift_line;
 
   // shift length
   std::vector<double> pos_shift;

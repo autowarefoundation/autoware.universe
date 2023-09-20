@@ -18,7 +18,8 @@
 
 #include <motion_utils/trajectory/interpolation.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp>
+
+#include <boost/geometry/algorithms/distance.hpp>
 
 namespace behavior_path_planner::utils::path_safety_checker
 {
@@ -111,21 +112,10 @@ void filterObjectsByPosition(
 void filterObjectsByClass(
   PredictedObjects & objects, const ObjectTypesToCheck & target_object_types)
 {
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
-
   PredictedObjects filtered_objects;
 
   for (auto & object : objects.objects) {
-    const auto t = utils::getHighestProbLabel(object.classification);
-    const auto is_object_type =
-      ((t == ObjectClassification::CAR && target_object_types.check_car) ||
-       (t == ObjectClassification::TRUCK && target_object_types.check_truck) ||
-       (t == ObjectClassification::BUS && target_object_types.check_bus) ||
-       (t == ObjectClassification::TRAILER && target_object_types.check_trailer) ||
-       (t == ObjectClassification::UNKNOWN && target_object_types.check_unknown) ||
-       (t == ObjectClassification::BICYCLE && target_object_types.check_bicycle) ||
-       (t == ObjectClassification::MOTORCYCLE && target_object_types.check_motorcycle) ||
-       (t == ObjectClassification::PEDESTRIAN && target_object_types.check_pedestrian));
+    const auto is_object_type = isTargetObjectType(object, target_object_types);
 
     // If the object type matches any of the target types, add it to the filtered list
     if (is_object_type) {
@@ -135,8 +125,6 @@ void filterObjectsByClass(
 
   // Replace the original objects with the filtered list
   objects = std::move(filtered_objects);
-
-  return;
 }
 
 std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
@@ -221,7 +209,6 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
   return obj.predicted_paths;
 }
 
-// TODO(Sugahara): should consider delay before departure
 std::vector<PoseWithVelocityStamped> createPredictedPath(
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::vector<PathPointWithLaneId> & path_points,
@@ -240,15 +227,28 @@ std::vector<PoseWithVelocityStamped> createPredictedPath(
                                 ? ego_predicted_path_params->time_horizon_for_front_object
                                 : ego_predicted_path_params->time_horizon_for_rear_object;
   const double time_resolution = ego_predicted_path_params->time_resolution;
+  const double delay_until_departure = ego_predicted_path_params->delay_until_departure;
 
   std::vector<PoseWithVelocityStamped> predicted_path;
   const auto vehicle_pose_frenet =
     convertToFrenetPoint(path_points, vehicle_pose.position, ego_seg_idx);
 
-  for (double t = 0.0; t < time_horizon + 1e-3; t += time_resolution) {
-    const double velocity =
-      std::clamp(current_velocity + acceleration * t, min_velocity, max_velocity);
-    const double length = current_velocity * t + 0.5 * acceleration * t * t;
+  for (double t = 0.0; t < time_horizon; t += time_resolution) {
+    double velocity;
+    double length;
+
+    if (t < delay_until_departure) {
+      // Before the departure, the velocity is 0 and there's no change in position.
+      velocity = 0.0;
+      length = 0.0;
+    } else {
+      // Adjust time to consider the delay.
+      double t_with_delay = t - delay_until_departure;
+      velocity =
+        std::clamp(current_velocity + acceleration * t_with_delay, min_velocity, max_velocity);
+      length = current_velocity * t_with_delay + 0.5 * acceleration * t_with_delay * t_with_delay;
+    }
+
     const auto pose =
       motion_utils::calcInterpolatedPose(path_points, vehicle_pose_frenet.length + length);
     predicted_path.emplace_back(t, pose, velocity);
@@ -366,4 +366,19 @@ TargetObjectsOnLane createTargetObjectsOnLane(
   return target_objects_on_lane;
 }
 
+bool isTargetObjectType(
+  const PredictedObject & object, const ObjectTypesToCheck & target_object_types)
+{
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  const auto t = utils::getHighestProbLabel(object.classification);
+  return (
+    (t == ObjectClassification::CAR && target_object_types.check_car) ||
+    (t == ObjectClassification::TRUCK && target_object_types.check_truck) ||
+    (t == ObjectClassification::BUS && target_object_types.check_bus) ||
+    (t == ObjectClassification::TRAILER && target_object_types.check_trailer) ||
+    (t == ObjectClassification::UNKNOWN && target_object_types.check_unknown) ||
+    (t == ObjectClassification::BICYCLE && target_object_types.check_bicycle) ||
+    (t == ObjectClassification::MOTORCYCLE && target_object_types.check_motorcycle) ||
+    (t == ObjectClassification::PEDESTRIAN && target_object_types.check_pedestrian));
+}
 }  // namespace behavior_path_planner::utils::path_safety_checker
