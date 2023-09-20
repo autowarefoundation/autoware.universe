@@ -1,15 +1,15 @@
-# AR Tag Based Localizer
+# AR Tag Detector
 
-**ArTagBasedLocalizer** is a vision-based localization node.
+**ArTagDetector** is a vision-based localization node.
 
-<img src="../doc_image/ar_tag_image.png" width="320px">
+<img src="./doc_image/ar_tag_image.png" width="320px">
 
 This node uses [the ArUco library](https://index.ros.org/p/aruco/) to detect AR-Tags from camera images and calculates and publishes the pose of the ego vehicle based on these detections.
 The positions and orientations of the AR-Tags are assumed to be written in the Lanelet2 format.
 
 ## Inputs / Outputs
 
-### `ar_tag_based_localizer` node
+### `ar_tag_detector` node
 
 #### Input
 
@@ -46,14 +46,14 @@ Essentially, AR tag-based self-localization is not intended for such public road
 
 It is a known problem that the timing of when each AR tag begins to be detected can cause significant changes in estimation.
 
-![sample_result_in_awsim](../doc_image/sample_result_in_awsim.png)
+![sample_result_in_awsim](./doc_image/sample_result_in_awsim.png)
 
 #### [Sample rosbag and map (Real world data)](https://drive.google.com/file/d/1wiCQjyjRnYbb0dg8G6mRecdSGh8tv3zR/view)
 
 Please remap the topic names and play it.
 
 ```bash
-ros2 bag play /path/to/ar_tag_based_localizer_sample_bag/ -r 0.5 -s sqlite3 \
+ros2 bag play /path/to/ar_tag_detector_sample_bag/ -r 0.5 -s sqlite3 \
      --remap /sensing/camera/front/image:=/sensing/camera/traffic_light/image_raw \
              /sensing/camera/front/image/info:=/sensing/camera/traffic_light/camera_info
 ```
@@ -62,7 +62,7 @@ This dataset contains issues such as missing IMU data, and overall the accuracy 
 
 The image below shows the trajectory when the sample is executed and plotted.
 
-![sample_result](../doc_image/sample_result.png)
+![sample_result](./doc_image/sample_result.png)
 
 The pull request video below should also be helpful.
 
@@ -70,4 +70,4 @@ The pull request video below should also be helpful.
 
 ## Principle
 
-![principle](../doc_image/principle.png)
+![principle](../../doc_image/principle.png)

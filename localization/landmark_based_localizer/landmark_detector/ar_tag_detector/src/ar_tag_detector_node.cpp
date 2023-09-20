@@ -42,12 +42,12 @@
  or implied, of Rafael Muñoz Salinas.
  ********************************/
 
-#include "landmark_based_localizer/ar_tag_based_localizer_core.hpp"
+#include "ar_tag_detector/ar_tag_detector_core.hpp"
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  std::shared_ptr<ArTagBasedLocalizer> ptr = std::make_shared<ArTagBasedLocalizer>();
+  std::shared_ptr<ArTagDetector> ptr = std::make_shared<ArTagDetector>();
   ptr->setup();
   rclcpp::spin(ptr);
   rclcpp::shutdown();

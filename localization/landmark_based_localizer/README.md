@@ -1,6 +1,6 @@
 # Landmark Based Localizer
 
-**LandmarkBasedLocalizer** is a package for landmark-based localization.
+This directory contains packages for landmark-based localization.
 
 Landmarks are, for example
 
@@ -13,13 +13,13 @@ Since these landmarks are easy to detect and estimate pose, the ego pose can be 
 
 Currently, landmarks are assumed to be flat.
 
-The following figure shows the principle of localization in the case of `ar_tag_based_localizer`.
+The following figure shows the principle of localization in the case of `ar_tag_detector`.
 
 ![principle](./doc_image/principle.png)
 
 This calculated ego pose is passed to the EKF, where it is fused with the twist information and used to estimate a more accurate ego pose.
 
-## Nodes included in this package
+## Node diagram
 
 ![node diagram](./doc_image/node_diagram.drawio.svg)
 
@@ -36,9 +36,9 @@ Users can define landmarks as Lanelet2 4-vertex polygons.
 In this case, it is possible to define an arrangement in which the four vertices cannot be considered to be on the same plane. The direction of the landmark in that case is difficult to calculate.
 So, if the 4 vertices are considered as forming a tetrahedron and its volume exceeds the `volume_threshold` parameter, the landmark will not publish tf_static.
 
-### Landmark detection nodes
+### Landmark detector nodes
 
-- [ar_tag_based_localizer](./doc/ar_tag_based_localizer.md)
+- [ar_tag_detector](./doc/ar_tag_detector.md)
 - etc.
 
 ## Inputs / Outputs
