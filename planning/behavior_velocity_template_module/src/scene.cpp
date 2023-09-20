@@ -34,6 +34,18 @@ TemplateModule::TemplateModule(
 {
 }
 
+visualization_msgs::msg::MarkerArray TemplateModule::createDebugMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray ma;
+  return ma;
+};
+
+motion_utils::VirtualWalls TemplateModule::createVirtualWalls()
+{
+  motion_utils::VirtualWalls vw;
+  return vw;
+}
+
 bool TemplateModule::modifyPathVelocity(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
