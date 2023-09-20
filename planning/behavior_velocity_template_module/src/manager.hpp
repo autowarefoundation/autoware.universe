@@ -34,7 +34,7 @@ class TemplateModuleManager : public SceneModuleManagerInterface
 public:
   explicit TemplateModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "template_module"; }
+  const char * getModuleName() override { return "template"; }
 
 private:
   double dummy_parameter{0.0};

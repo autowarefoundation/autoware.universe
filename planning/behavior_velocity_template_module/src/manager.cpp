@@ -35,12 +35,14 @@ TemplateModuleManager::TemplateModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   std::string ns(getModuleName());
-  dummy_parameter = getOrDeclareParameter<double>(node, ns + "template.dummy");
+  dummy_parameter = getOrDeclareParameter<double>(node, ns + ".dummy");
 }
 
 void TemplateModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
+  // RCLCPP_INFO(logger_, "---Launching template module!---");
+
   auto n_points = path.points.size();
   int64_t module_id = 0 + n_points;
   if (!isModuleRegistered(module_id)) {

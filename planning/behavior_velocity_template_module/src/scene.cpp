@@ -19,6 +19,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <string>
+
 namespace behavior_velocity_planner
 {
 using motion_utils::calcSignedArcLength;
@@ -35,18 +37,18 @@ TemplateModule::TemplateModule(
 bool TemplateModule::modifyPathVelocity(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
-  if (path->points.empty()) {
-    return false;
-  }
+  std::stringstream ss;
 
-  std::cout << "----------------------------\n";
+  ss << "----------------------------\n";
   int idx = 0;
   for (const auto & point : path->points) {
     auto longitudinal_velocity_ = point.point.longitudinal_velocity_mps;
-    std::cout << "Point ID:" << idx++ << "\n";
-    std::cout << "Longitudinal Velocity " << longitudinal_velocity_ << "\n";
+    ss << "Point ID:" << idx++ << "\n";
+    ss << "Longitudinal Velocity " << longitudinal_velocity_ << "\n";
   }
-  std::cout << "----------------------------\n";
+  ss << "----------------------------\n";
+
+  RCLCPP_INFO(logger_, ss.str().c_str());
 
   return false;
 }
