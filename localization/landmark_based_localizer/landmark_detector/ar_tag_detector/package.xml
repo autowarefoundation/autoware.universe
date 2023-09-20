@@ -12,11 +12,9 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>aruco</depend>
-  <depend>autoware_auto_mapping_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>geometry_msgs</depend>
   <depend>image_transport</depend>
-  <depend>lanelet2_extension</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2_eigen</depend>
