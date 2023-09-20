@@ -19,6 +19,22 @@ target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${PCL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} switch_rule)
 
+# ==============================
+function(add_testcase filepath)
+  get_filename_component(filename ${filepath} NAME)
+  string(REGEX REPLACE ".cpp" "" test_name ${filename})
+
+  ament_add_gtest(${test_name} ${filepath})
+  target_link_libraries("${test_name}" switch_rule)
+  target_include_directories(${test_name} PUBLIC include)
+  ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
+endfunction()
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  add_testcase(test/map_based_rule.cpp)
+endif()
+
 ament_auto_package(INSTALL_TO_SHARE
   launch
 )

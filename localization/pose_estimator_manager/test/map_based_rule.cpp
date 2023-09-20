@@ -1,27 +1,65 @@
+#include "pose_estimator_manager/switch_rule/map_based_rule.hpp"
+
+#include "pose_estimator_manager/switch_rule/eagleye_area.hpp"
+#include "pose_estimator_manager/switch_rule/grid_info.hpp"
+
+#include <lanelet2_extension/utility/message_conversion.hpp>
+
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+
 #include <boost/geometry/geometry.hpp>
 
 #include <gtest/gtest.h>
-using BoostPoint = boost::geometry::model::d2::point_xy<double>;
-using BoostPolygon = boost::geometry::model::polygon<BoostPoint>;
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/primitives/Polygon.h>
 
-TEST(MapBasedRule, eagleyMap)
+#include <unordered_set>
+
+lanelet::Polygon3d create_polygon3d()
 {
-  const BoostPoint boost_point(88735, 43149);
-  std::vector<BoostPolygon> bounding_boxes;
-  // 88898.4,42673.4
-  // 88861.1,42637.8
-  // 88679.3,42957.2
-  // 88707.8,42975.6
+  lanelet::Polygon3d polygon;
+  lanelet::Attribute attribute("eagleye_area");
+  polygon.setAttribute(lanelet::AttributeName::Type, attribute);
+  lanelet::Id index = 0;
+  polygon.push_back(lanelet::Point3d(index++, 0, 0));
+  polygon.push_back(lanelet::Point3d(index++, 10, 0));
+  polygon.push_back(lanelet::Point3d(index++, 10, 10));
+  polygon.push_back(lanelet::Point3d(index++, 0, 10));
+  return polygon;
+}
 
-  BoostPolygon box;
-  box.outer().push_back(BoostPoint(88898.4, 42673.4));
-  box.outer().push_back(BoostPoint(88861.1, 42637.8));
-  box.outer().push_back(BoostPoint(88679.3, 42957.2));
-  box.outer().push_back(BoostPoint(88707.8, 42975.6));
+TEST(MapBasedRule, eagleyeArea)
+{
+  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
 
-  // NOTE: this check is failed due to not-closed BoostPolygon
-  // EXPECT_FALSE(boost::geometry::within(boost_point, box));
+  lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
+  lanelet_map->add(create_polygon3d());
 
-  box.outer().push_back(BoostPoint(88898.4, 42673.4));
-  EXPECT_FALSE(boost::geometry::within(boost_point, box));
+  HADMapBin msg;
+  lanelet::utils::conversion::toBinMsg(lanelet_map, &msg);
+
+  using Point = geometry_msgs::msg::Point;
+
+  multi_pose_estimator::EagleyeArea eagleye_area;
+  eagleye_area.init(std::make_shared<HADMapBin>(msg));
+
+  EXPECT_TRUE(eagleye_area.within(Point().set__x(5).set__y(5).set__z(0)));
+  EXPECT_FALSE(eagleye_area.within(Point().set__x(-5).set__y(-5).set__z(0)));
+  EXPECT_EQ(eagleye_area.debug_string(), "0,0 10,0 10,10 0,10 0,0 \n");
+}
+
+TEST(MapBasedRule, gridInfo)
+{
+  using multi_pose_estimator::GridInfo;
+  EXPECT_TRUE(GridInfo(10., -5.) == GridInfo(10., -10.));
+  EXPECT_TRUE(GridInfo(10., -5.) != GridInfo(10., -15.));
+
+  EXPECT_TRUE(GridInfo(10., -5.).get_center_point().x == 15.f);
+  EXPECT_TRUE(GridInfo(10., -5.).get_center_point().y == -5.f);
+  EXPECT_TRUE(GridInfo(10., -5.).get_center_point().z == 0.f);
+
+  std::unordered_set<GridInfo> set;
+  set.emplace(10., -5.);
+  EXPECT_EQ(set.count(GridInfo(10., -5.)), 1ul);
+  EXPECT_EQ(set.count(GridInfo(10., -15.)), 0ul);
 }
