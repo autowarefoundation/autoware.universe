@@ -14,6 +14,8 @@
 
 #include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
 
+#include "tier4_autoware_utils/ros/update_param.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -81,6 +83,8 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
 
   {  // drivable_area_generation
     std::string ns = "dynamic_avoidance.drivable_area_generation.";
+    p.min_obj_path_based_lon_polygon_margin =
+      node->declare_parameter<double>(ns + "object_path_base.min_longitudinal_polygon_margin");
     p.lat_offset_from_obstacle = node->declare_parameter<double>(ns + "lat_offset_from_obstacle");
     p.max_lat_offset_to_avoid = node->declare_parameter<double>(ns + "max_lat_offset_to_avoid");
     p.max_time_for_lat_shift =
@@ -177,7 +181,9 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
 
   {  // drivable_area_generation
     const std::string ns = "dynamic_avoidance.drivable_area_generation.";
-
+    updateParam<double>(
+      parameters, ns + "object_path_base.min_longitudinal_polygon_margin",
+      p->min_obj_path_based_lon_polygon_margin);
     updateParam<double>(parameters, ns + "lat_offset_from_obstacle", p->lat_offset_from_obstacle);
     updateParam<double>(parameters, ns + "max_lat_offset_to_avoid", p->max_lat_offset_to_avoid);
     updateParam<double>(

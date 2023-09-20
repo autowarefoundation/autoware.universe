@@ -22,7 +22,7 @@
 #include "obstacle_avoidance_planner/state_equation_generator.hpp"
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "osqp_interface/osqp_interface.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <Eigen/Core>
@@ -118,6 +118,7 @@ public:
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
   double getTrajectoryLength() const;
+  double getDeltaArcLength() const;
   int getNumberOfPoints() const;
 
 private:
@@ -237,6 +238,7 @@ private:
   // previous data
   int prev_mat_n_ = 0;
   int prev_mat_m_ = 0;
+  int prev_solution_status_ = 0;
   std::shared_ptr<std::vector<ReferencePoint>> prev_ref_points_ptr_{nullptr};
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_optimized_traj_points_ptr_{nullptr};
 
@@ -295,7 +297,7 @@ private:
     const std::vector<ReferencePoint> & ref_points) const;
 
   std::optional<std::vector<TrajectoryPoint>> calcMPTPoints(
-    std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & U,
+    std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & optimized_variables,
     const StateEquationGenerator::Matrix & mpt_matrix) const;
 
   void publishDebugTrajectories(

@@ -32,8 +32,29 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::str
     throw std::runtime_error("Error occurred while loading lanelet2 map");
   }
 
+  // If the lat & lon values in all the points of lanelet2 map are all zeros,
+  // it will be interpreted as a local map.
+  // If any single point exists with non-zero lat or lon values, it will be interpreted as MGRS.
+  bool is_local = true;
+  for (const auto & point : map->pointLayer) {
+    const auto gps_point = projector.reverse(point);
+    if (gps_point.lat != 0.0 || gps_point.lon != 0.0) {
+      is_local = false;
+      break;
+    }
+  }
+
   tier4_map_msgs::msg::MapProjectorInfo msg;
-  msg.type = "MGRS";
-  msg.mgrs_grid = projector.getProjectedMGRSGrid();
+  if (is_local) {
+    msg.projector_type = tier4_map_msgs::msg::MapProjectorInfo::LOCAL;
+  } else {
+    msg.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
+    msg.mgrs_grid = projector.getProjectedMGRSGrid();
+  }
+
+  // We assume that the vertical datum of the map is WGS84 when using lanelet2 map.
+  // However, do note that this is not always true, and may cause problems in the future.
+  // Thus, please consider using the map_projector_info.yaml instead of this deprecated function.
+  msg.vertical_datum = tier4_map_msgs::msg::MapProjectorInfo::WGS84;
   return msg;
 }

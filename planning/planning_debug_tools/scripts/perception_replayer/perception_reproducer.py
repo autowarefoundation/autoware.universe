@@ -32,7 +32,7 @@ class PerceptionReproducer(PerceptionReplayerCommon):
         self.prev_traffic_signals_msg = None
 
         # start timer callback
-        self.timer = self.create_timer(0.01, self.on_timer)
+        self.timer = self.create_timer(0.1, self.on_timer)
         print("Start timer callback")
 
     def on_timer(self):
@@ -66,13 +66,22 @@ class PerceptionReproducer(PerceptionReplayerCommon):
             self.objects_pub.publish(objects_msg)
 
         # traffic signals
+        # temporary support old auto msgs
         if traffic_signals_msg:
-            traffic_signals_msg.header.stamp = timestamp
-            self.traffic_signals_pub.publish(traffic_signals_msg)
+            if self.is_auto_traffic_signals:
+                traffic_signals_msg.header.stamp = timestamp
+                self.auto_traffic_signals_pub.publish(traffic_signals_msg)
+            else:
+                traffic_signals_msg.stamp = timestamp
+                self.traffic_signals_pub.publish(traffic_signals_msg)
             self.prev_traffic_signals_msg = traffic_signals_msg
         elif self.prev_traffic_signals_msg:
-            self.prev_traffic_signals_msg.header.stamp = timestamp
-            self.traffic_signals_pub.publish(self.prev_traffic_signals_msg)
+            if self.is_auto_traffic_signals:
+                self.prev_traffic_signals_msg.header.stamp = timestamp
+                self.auto_traffic_signals_pub.publish(self.prev_traffic_signals_msg)
+            else:
+                self.prev_traffic_signals_msg.stamp = timestamp
+                self.traffic_signals_pub.publish(self.prev_traffic_signals_msg)
 
     def find_nearest_ego_odom_by_observation(self, ego_pose):
         if self.ego_pose_idx:
@@ -102,6 +111,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-t", "--tracked-object", help="publish tracked object", action="store_true"
+    )
+    parser.add_argument(
+        "-f", "--rosbag-format", help="rosbag data format (default is db3)", default="db3"
     )
     args = parser.parse_args()
 

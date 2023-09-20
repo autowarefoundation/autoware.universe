@@ -19,10 +19,17 @@
 #include <lanelet2_extension/utility/route_checker.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
+
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/primitives/LaneletSequence.h>
+#include <lanelet2_routing/Route.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_routing/RoutingGraphContainer.h>
 #include <tf2/utils.h>
 
 #include <algorithm>
@@ -35,6 +42,7 @@
 namespace
 {
 using autoware_auto_planning_msgs::msg::Path;
+using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using geometry_msgs::msg::Pose;
@@ -176,6 +184,7 @@ void RouteHandler::setRoute(const LaneletRoute & route_msg)
     // if get not modified route but new route, reset original start pose
     if (!route_ptr_ || route_ptr_->uuid != route_msg.uuid) {
       original_start_pose_ = route_msg.start_pose;
+      original_goal_pose_ = route_msg.goal_pose;
     }
     route_ptr_ = std::make_shared<LaneletRoute>(route_msg);
     is_handler_ready_ = false;
@@ -426,13 +435,17 @@ Pose RouteHandler::getStartPose() const
 {
   if (!route_ptr_) {
     RCLCPP_WARN(logger_, "[Route Handler] getStartPose: Route has not been set yet");
-    Pose();
+    return Pose();
   }
   return route_ptr_->start_pose;
 }
 
 Pose RouteHandler::getOriginalStartPose() const
 {
+  if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getOriginalStartPose: Route has not been set yet");
+    return Pose();
+  }
   return original_start_pose_;
 }
 
@@ -440,9 +453,18 @@ Pose RouteHandler::getGoalPose() const
 {
   if (!route_ptr_) {
     RCLCPP_WARN(logger_, "[Route Handler] getGoalPose: Route has not been set yet");
-    Pose();
+    return Pose();
   }
   return route_ptr_->goal_pose;
+}
+
+Pose RouteHandler::getOriginalGoalPose() const
+{
+  if (!route_ptr_) {
+    RCLCPP_WARN(logger_, "[Route Handler] getOriginalGoalPose: Route has not been set yet");
+    return Pose();
+  }
+  return original_goal_pose_;
 }
 
 lanelet::Id RouteHandler::getGoalLaneId() const
@@ -514,7 +536,14 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceAfter(
   while (rclcpp::ok() && length < min_length) {
     lanelet::ConstLanelet next_lanelet;
     if (!getNextLaneletWithinRoute(current_lanelet, &next_lanelet)) {
-      break;
+      if (only_route_lanes) {
+        break;
+      }
+      const auto next_lanes = getNextLanelets(current_lanelet);
+      if (next_lanes.empty()) {
+        break;
+      }
+      next_lanelet = next_lanes.front();
     }
     // loop check
     if (lanelet.id() == next_lanelet.id()) {
@@ -542,7 +571,14 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
   while (rclcpp::ok() && length < min_length) {
     lanelet::ConstLanelets candidate_lanelets;
     if (!getPreviousLaneletsWithinRoute(current_lanelet, &candidate_lanelets)) {
-      break;
+      if (only_route_lanes) {
+        break;
+      }
+      const auto prev_lanes = getPreviousLanelets(current_lanelet);
+      if (prev_lanes.empty()) {
+        break;
+      }
+      candidate_lanelets = prev_lanes;
     }
     // loop check
     if (std::any_of(
@@ -940,8 +976,27 @@ bool RouteHandler::isBijectiveConnection(
 }
 
 boost::optional<lanelet::ConstLanelet> RouteHandler::getRightLanelet(
-  const lanelet::ConstLanelet & lanelet, const bool enable_same_root) const
+  const lanelet::ConstLanelet & lanelet, const bool enable_same_root,
+  const bool get_shoulder_lane) const
 {
+  // right road lanelet of shoulder lanelet
+  if (isShoulderLanelet(lanelet)) {
+    for (const auto & road_lanelet : road_lanelets_) {
+      if (lanelet::geometry::rightOf(road_lanelet, lanelet)) {
+        return road_lanelet;
+      }
+    }
+    return boost::none;
+  }
+
+  // right shoulder lanelet
+  if (get_shoulder_lane) {
+    lanelet::ConstLanelet right_shoulder_lanelet;
+    if (getRightShoulderLanelet(lanelet, &right_shoulder_lanelet)) {
+      return right_shoulder_lanelet;
+    }
+  }
+
   // routable lane
   const auto & right_lane = routing_graph_ptr_->right(lanelet);
   if (right_lane) {
@@ -959,13 +1014,18 @@ boost::optional<lanelet::ConstLanelet> RouteHandler::getRightLanelet(
     return adjacent_right_lane;
   }
 
-  lanelet::ConstLanelet next_lanelet;
-  if (!getNextLaneletWithinRoute(lanelet, &next_lanelet)) {
+  lanelet::ConstLanelets prev_lanelet;
+  if (!getPreviousLaneletsWithinRoute(lanelet, &prev_lanelet)) {
     return adjacent_right_lane;
   }
 
-  lanelet::ConstLanelets prev_lanelet;
-  if (!getPreviousLaneletsWithinRoute(lanelet, &prev_lanelet)) {
+  lanelet::ConstLanelet next_lanelet;
+  if (!getNextLaneletWithinRoute(lanelet, &next_lanelet)) {
+    for (const auto & lane : getNextLanelets(prev_lanelet.front())) {
+      if (lanelet.rightBound().back().id() == lane.leftBound().back().id()) {
+        return lane;
+      }
+    }
     return adjacent_right_lane;
   }
 
@@ -997,8 +1057,27 @@ bool RouteHandler::getLeftLaneletWithinRoute(
 }
 
 boost::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
-  const lanelet::ConstLanelet & lanelet, const bool enable_same_root) const
+  const lanelet::ConstLanelet & lanelet, const bool enable_same_root,
+  const bool get_shoulder_lane) const
 {
+  // left road lanelet of shoulder lanelet
+  if (isShoulderLanelet(lanelet)) {
+    for (const auto & road_lanelet : road_lanelets_) {
+      if (lanelet::geometry::leftOf(road_lanelet, lanelet)) {
+        return road_lanelet;
+      }
+    }
+    return boost::none;
+  }
+
+  // left shoulder lanelet
+  if (get_shoulder_lane) {
+    lanelet::ConstLanelet left_shoulder_lanelet;
+    if (getLeftShoulderLanelet(lanelet, &left_shoulder_lanelet)) {
+      return left_shoulder_lanelet;
+    }
+  }
+
   // routable lane
   const auto & left_lane = routing_graph_ptr_->left(lanelet);
   if (left_lane) {
@@ -1016,13 +1095,18 @@ boost::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
     return adjacent_left_lane;
   }
 
-  lanelet::ConstLanelet next_lanelet;
-  if (!getNextLaneletWithinRoute(lanelet, &next_lanelet)) {
+  lanelet::ConstLanelets prev_lanelet;
+  if (!getPreviousLaneletsWithinRoute(lanelet, &prev_lanelet)) {
     return adjacent_left_lane;
   }
 
-  lanelet::ConstLanelets prev_lanelet;
-  if (!getPreviousLaneletsWithinRoute(lanelet, &prev_lanelet)) {
+  lanelet::ConstLanelet next_lanelet;
+  if (!getNextLaneletWithinRoute(lanelet, &next_lanelet)) {
+    for (const auto & lane : getNextLanelets(prev_lanelet.front())) {
+      if (lanelet.leftBound().back().id() == lane.rightBound().back().id()) {
+        return lane;
+      }
+    }
     return adjacent_left_lane;
   }
 
@@ -1169,26 +1253,28 @@ lanelet::Lanelets RouteHandler::getLeftOppositeLanelets(const lanelet::ConstLane
 }
 
 lanelet::ConstLanelet RouteHandler::getMostRightLanelet(
-  const lanelet::ConstLanelet & lanelet, const bool enable_same_root) const
+  const lanelet::ConstLanelet & lanelet, const bool enable_same_root,
+  const bool get_shoulder_lane) const
 {
   // recursively compute the width of the lanes
-  const auto & same = getRightLanelet(lanelet, enable_same_root);
+  const auto & same = getRightLanelet(lanelet, enable_same_root, get_shoulder_lane);
 
   if (same) {
-    return getMostRightLanelet(same.get(), enable_same_root);
+    return getMostRightLanelet(same.get(), enable_same_root, get_shoulder_lane);
   }
 
   return lanelet;
 }
 
 lanelet::ConstLanelet RouteHandler::getMostLeftLanelet(
-  const lanelet::ConstLanelet & lanelet, const bool enable_same_root) const
+  const lanelet::ConstLanelet & lanelet, const bool enable_same_root,
+  const bool get_shoulder_lane) const
 {
   // recursively compute the width of the lanes
-  const auto & same = getLeftLanelet(lanelet, enable_same_root);
+  const auto & same = getLeftLanelet(lanelet, enable_same_root, get_shoulder_lane);
 
   if (same) {
-    return getMostLeftLanelet(same.get(), enable_same_root);
+    return getMostLeftLanelet(same.get(), enable_same_root, get_shoulder_lane);
   }
 
   return lanelet;
