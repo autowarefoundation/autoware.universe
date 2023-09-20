@@ -1,4 +1,4 @@
 /**:
   ros__parameters:
-    speed_bump:
+    template:
       dummy: 1.2

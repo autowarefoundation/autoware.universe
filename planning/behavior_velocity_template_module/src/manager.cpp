@@ -35,7 +35,7 @@ TemplateModuleManager::TemplateModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   std::string ns(getModuleName());
-  auto dummy_parameter = getOrDeclareParameter<double>(node, ns + ".dummy");
+  auto dummy_parameter = getOrDeclareParameter<double>(node, ns + "template.dummy");
 }
 
 void TemplateModuleManager::launchNewModules(
