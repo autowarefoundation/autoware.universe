@@ -428,9 +428,9 @@ void FusionNode<Msg, Obj>::publishDiagnostics(
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
   const std::size_t camera_id) const
 {
-  const double time_difference_sec =
-    rclcpp::Time(input_camera_info_msg->header.stamp) - rclcpp::Time(this->now());
-
+  const double time_difference_sec = (rclcpp::Time(input_camera_info_msg->header.stamp) -
+    rclcpp::Time(this->now())).seconds();
+  
   std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_status_array;
 
   diagnostic_msgs::msg::DiagnosticStatus status;
@@ -439,8 +439,7 @@ void FusionNode<Msg, Obj>::publishDiagnostics(
 
   if (time_difference_sec > time_sync_tolerance_sec_) {
     status.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    status.message =
-      "Camera timestamp is in the future: " + std::to_string(time_difference_sec) + " sec";
+    status.message = "Camera timestamp is in the future: " + std::to_string(time_difference_sec) + " sec";
   } else if (time_difference_sec > -time_sync_tolerance_sec_) {
     status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     status.message = "Camera timestamp is valid: " + std::to_string(time_difference_sec) + " sec";
