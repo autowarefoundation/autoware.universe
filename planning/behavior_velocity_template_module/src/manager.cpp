@@ -35,13 +35,14 @@ TemplateModuleManager::TemplateModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   std::string ns(getModuleName());
-  auto dummy_parameter = getOrDeclareParameter<double>(node, ns + "template.dummy");
+  dummy_parameter = getOrDeclareParameter<double>(node, ns + "template.dummy");
 }
 
 void TemplateModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  int64_t module_id = 0;
+  auto n_points = path.points.size();
+  int64_t module_id = 0 + n_points;
   if (!isModuleRegistered(module_id)) {
     registerModule(
       std::make_shared<TemplateModule>(module_id, logger_.get_child("template_module"), clock_));
@@ -52,7 +53,10 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 TemplateModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  return [](const std::shared_ptr<SceneModuleInterface> & scene_module) { return true; };
+  return [&path](const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {
+    auto random_var = path.points.size() * scene_module->getDistance();
+    return random_var;
+  };
 }
 
 }  // namespace behavior_velocity_planner

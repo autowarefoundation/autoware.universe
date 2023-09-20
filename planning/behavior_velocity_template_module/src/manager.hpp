@@ -37,6 +37,8 @@ public:
   const char * getModuleName() override { return "template_module"; }
 
 private:
+  double dummy_parameter{0.0};
+
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
