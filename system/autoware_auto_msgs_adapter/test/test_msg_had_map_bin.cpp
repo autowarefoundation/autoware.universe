@@ -102,5 +102,5 @@ TEST(AutowareAutoMsgsAdapter, TestHADMapBin)  // NOLINT for gtest
   EXPECT_TRUE(test_completed);
   EXPECT_FALSE(timed_out);
 
-  rclcpp::shutdown();
+  // rclcpp::shutdown();
 }
