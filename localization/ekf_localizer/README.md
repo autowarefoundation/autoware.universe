@@ -148,6 +148,12 @@ The parameters are set in `launch/ekf_localizer.launch` .
 
 note: process noise for positions x & y are calculated automatically from nonlinear dynamics.
 
+### Misc
+
+| Name                   | Type   | Description                                                                                                      | Default value |
+| :--------------------- | :----- | :--------------------------------------------------------------------------------------------------------------- | :------------ |
+| threshold_observable_velocity_mps       | double | Minimum value for velocity that will be used for EKF. Mainly used for dead zone in velocity sensor  | 0.0  (disabled)     |
+
 ## How to tune EKF parameters
 
 ### 0. Preliminaries
