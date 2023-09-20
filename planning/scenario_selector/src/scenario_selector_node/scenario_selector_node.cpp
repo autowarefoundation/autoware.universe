@@ -54,7 +54,7 @@ std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
   }
 }
 
-bool isInLane(
+bool isInRoadLane(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
   const geometry_msgs::msg::Point & current_pos)
 {
@@ -151,8 +151,8 @@ ScenarioSelectorNode::getScenarioTrajectory(const std::string & scenario)
 
 std::string ScenarioSelectorNode::selectScenarioByPosition()
 {
-  const auto is_in_lane = isInLane(lanelet_map_ptr_, current_pose_->pose.pose.position);
-  const auto is_goal_in_lane = isInLane(lanelet_map_ptr_, route_->goal_pose.position);
+  const auto is_in_lane = isInRoadLane(lanelet_map_ptr_, current_pose_->pose.pose.position);
+  const auto is_goal_in_lane = isInRoadLane(lanelet_map_ptr_, route_->goal_pose.position);
   const auto is_in_parking_lot = isInParkingLot(lanelet_map_ptr_, current_pose_->pose.pose);
 
   if (current_scenario_ == tier4_planning_msgs::msg::Scenario::EMPTY) {
