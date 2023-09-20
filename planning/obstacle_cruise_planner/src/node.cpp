@@ -568,7 +568,7 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
     // estimate the future ego pose with assuming that the pose error against the reference path
     // will decrease to zero by the time_to_convergence
     if (is_enable_current_pose_consideration && time_elapsed < time_to_convergence) {
-      double rem_ratio = (time_to_convergence - time_elapsed) / time_to_convergence;
+      const double rem_ratio = (time_to_convergence - time_elapsed) / time_to_convergence;
       geometry_msgs::msg::Pose indexed_pose_err;
       indexed_pose_err.set__orientation(
         tier4_autoware_utils::createQuaternionFromYaw(current_ego_yaw_error * rem_ratio));
