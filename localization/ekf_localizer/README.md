@@ -150,9 +150,9 @@ note: process noise for positions x & y are calculated automatically from nonlin
 
 ### Misc
 
-| Name                   | Type   | Description                                                                                                      | Default value |
-| :--------------------- | :----- | :--------------------------------------------------------------------------------------------------------------- | :------------ |
-| threshold_observable_velocity_mps       | double | Minimum value for velocity that will be used for EKF. Mainly used for dead zone in velocity sensor  | 0.0  (disabled)     |
+| Name                              | Type   | Description                                                                                        | Default value  |
+| :-------------------------------- | :----- | :------------------------------------------------------------------------------------------------- | :------------- |
+| threshold_observable_velocity_mps | double | Minimum value for velocity that will be used for EKF. Mainly used for dead zone in velocity sensor | 0.0 (disabled) |
 
 ## How to tune EKF parameters
 
