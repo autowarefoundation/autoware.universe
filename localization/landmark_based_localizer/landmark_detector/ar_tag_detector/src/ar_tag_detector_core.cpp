@@ -57,8 +57,7 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
-ArTagDetector::ArTagDetector()
-: Node("ar_tag_detector"), cam_info_received_(false)
+ArTagDetector::ArTagDetector() : Node("ar_tag_detector"), cam_info_received_(false)
 {
 }
 
@@ -235,8 +234,7 @@ void ArTagDetector::cam_info_callback(const sensor_msgs::msg::CameraInfo & msg)
   cam_info_received_ = true;
 }
 
-void ArTagDetector::ekf_pose_callback(
-  const geometry_msgs::msg::PoseWithCovarianceStamped & msg)
+void ArTagDetector::ekf_pose_callback(const geometry_msgs::msg::PoseWithCovarianceStamped & msg)
 {
   latest_ekf_pose_ = msg;
 }
