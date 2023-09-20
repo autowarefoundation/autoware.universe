@@ -21,6 +21,7 @@
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
