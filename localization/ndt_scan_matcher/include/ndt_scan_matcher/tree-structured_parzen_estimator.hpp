@@ -41,7 +41,8 @@ public:
 
   TreeStructuredParzenEstimator() = delete;
   TreeStructuredParzenEstimator(
-    const double x_stddev, const double y_stddev, const double z_stddev, const double roll_stddev,
+    const int64_t n_startup_trials, const double good_score_threshold, const double x_stddev,
+    const double y_stddev, const double z_stddev, const double roll_stddev,
     const double pitch_stddev);
   void add_trial(const Trial & trial);
   Input get_next_input();
@@ -56,14 +57,19 @@ private:
 
   std::vector<Trial> trials_;
   int64_t good_num_;
-  const double good_threshold_ = 2.0;
+  const int64_t n_startup_trials_;
+  const double good_score_threshold_;
   const double x_stddev_;
   const double y_stddev_;
   const double z_stddev_;
   const double roll_stddev_;
   const double pitch_stddev_;
-  // Only for yaw, use uniform distribution instead of normal distribution
-  const double yaw_stddev_ = 0.5;
+
+  // Only for yaw, uniform distribution instead of normal distribution is used as initial
+  // distribution. So yaw_stddev value is not set from the constructor. However, the basic
+  // stddev is needed for kernel density estimation, so it is given as a fixed value.
+  // The value is determined empirically to 30 degrees.
+  const double yaw_stddev_ = M_PI / 6.0;
 };
 
 #endif  // NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP

@@ -796,9 +796,12 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
   // Only for yaw, use uniform distribution instead of normal distribution
   // so, 5 dim is normal distribution, 1 dim is uniform distribution
   // set 5 stddev
+  const int64_t n_startup_trials = 10;
+  const double good_score_threshold = 2.0;
   TreeStructuredParzenEstimator tpe(
-    std::sqrt(covariance(0, 0)), std::sqrt(covariance(1, 1)), std::sqrt(covariance(2, 2)),
-    std::sqrt(covariance(3, 3)), std::sqrt(covariance(4, 4)));
+    n_startup_trials, good_score_threshold, std::sqrt(covariance(0, 0)),
+    std::sqrt(covariance(1, 1)), std::sqrt(covariance(2, 2)), std::sqrt(covariance(3, 3)),
+    std::sqrt(covariance(4, 4)));
 
   std::vector<Particle> particle_array;
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();

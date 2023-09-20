@@ -19,9 +19,11 @@
 #include <stdexcept>
 
 TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
-  const double x_stddev, const double y_stddev, const double z_stddev, const double roll_stddev,
-  const double pitch_stddev)
+  const int64_t n_startup_trials, const double good_score_threshold, const double x_stddev,
+  const double y_stddev, const double z_stddev, const double roll_stddev, const double pitch_stddev)
 : good_num_(0),
+  n_startup_trials_(n_startup_trials),
+  good_score_threshold_(good_score_threshold),
   x_stddev_(x_stddev),
   y_stddev_(y_stddev),
   z_stddev_(z_stddev),
@@ -37,7 +39,7 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
     return lhs.score > rhs.score;
   });
   good_num_ = std::count_if(trials_.begin(), trials_.end(), [this](const Trial & trial) {
-    return trial.score > good_threshold_;
+    return trial.score > good_score_threshold_;
   });
   good_num_ = std::min(good_num_, static_cast<int64_t>(trials_.size() * kMaxGoodRate));
 }
@@ -131,7 +133,7 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
                           coeff_lower * z_stddev_,     coeff_lower * roll_stddev_,
                           coeff_lower * pitch_stddev_, coeff_lower * yaw_stddev_};
   for (int64_t i = 0; i < n; i++) {
-    const double v = trials_[i].score - good_threshold_;
+    const double v = trials_[i].score - good_score_threshold_;
     const double w = std::min(std::abs(v), 1.0);
     if (i < good_num_) {
       const double p = gauss(input, trials_[i].input, sigma_upper);
