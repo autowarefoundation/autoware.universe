@@ -53,7 +53,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
   if (trials_.empty()) {
     // return all 0
     return Input{};
-  } else if (trials_.size() < 10) {
+  } else if (static_cast<int64_t>(trials_.size()) < n_startup_trials_) {
     // return random
 
     Input input{};
