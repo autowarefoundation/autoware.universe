@@ -90,6 +90,8 @@ protected:
   virtual void postprocess(Msg & output_msg);
 
   virtual void publish(const Msg & output_msg);
+  void publishDiagnostics(const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
+    const std::size_t camera_id) const;
 
   void timer_callback();
   void setPeriod(const int64_t new_period);
@@ -105,6 +107,7 @@ protected:
   rclcpp::TimerBase::SharedPtr timer_;
   double timeout_ms_{};
   double match_threshold_ms_{};
+  double time_sync_tolerance_sec_{};
   std::vector<std::string> input_rois_topics_;
   std::vector<std::string> input_camera_info_topics_;
   std::vector<std::string> input_camera_topics_;
@@ -124,6 +127,7 @@ protected:
 
   // output publisher
   typename rclcpp::Publisher<Msg>::SharedPtr pub_ptr_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_diag_;
 
   // debugger
   std::shared_ptr<Debugger> debugger_;

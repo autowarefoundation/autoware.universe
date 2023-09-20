@@ -113,6 +113,9 @@ FusionNode<Msg, ObjType>::FusionNode(
   // publisher
   pub_ptr_ = this->create_publisher<Msg>("output", rclcpp::QoS{1});
 
+  // publisher for diagnostics
+  pub_diag_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
+
   // Set timer
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double, std::milli>(timeout_ms_));
@@ -151,6 +154,7 @@ void FusionNode<Msg, Obj>::cameraInfoCallback(
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
   const std::size_t camera_id)
 {
+  publishDiagnostics(input_camera_info_msg, camera_id);
   camera_info_map_[camera_id] = *input_camera_info_msg;
 }
 
@@ -417,6 +421,37 @@ void FusionNode<Msg, Obj>::publish(const Msg & output_msg)
     return;
   }
   pub_ptr_->publish(output_msg);
+}
+
+template <class Msg, class Obj>
+void FusionNode<Msg, Obj>::publishDiagnostics(
+  const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
+  const std::size_t camera_id) const
+{
+  const double time_difference_sec = rclcpp::Time(input_camera_info_msg->header.stamp) -
+    rclcpp::Time(this->now());
+  
+  std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_status_array;
+
+  diagnostic_msgs::msg::DiagnosticStatus status;
+  status.name = "image_projection_based_fusion";
+  status.hardware_id = "camera" + std::to_string(camera_id);
+
+  if (time_difference_sec > time_sync_tolerance_sec_) {
+    status.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    status.message = "Camera timestamp is too old: " + std::to_string(time_difference_sec) + " sec";
+  } else if (time_difference_sec > -time_sync_tolerance_sec_) {
+    status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+    status.message = "Camera timestamp is valid: " + std::to_string(time_difference_sec) + " sec";
+  } else {
+    status.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    status.message = "Camera timestamp is in the future: " + std::to_string(time_difference_sec) +
+      " sec";
+  }
+  diagnostic_msgs::msg::DiagnosticArray diag;
+  diag.header.stamp = this->now();
+  diag.status.push_back(status);
+  pub_diag_->publish(diag);
 }
 
 template class FusionNode<DetectedObjects, DetectedObject>;
