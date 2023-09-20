@@ -33,6 +33,7 @@
 #include <cmath>
 #include <deque>
 #include <random>
+#include <string>
 #include <vector>
 
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
