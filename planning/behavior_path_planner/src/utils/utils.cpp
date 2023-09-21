@@ -3147,9 +3147,7 @@ double calcMinimumLaneChangeLength(
   const double & max_lateral_acc = lat_acc.second;
   const double & lateral_jerk = common_param.lane_changing_lateral_jerk;
   const double & finish_judge_buffer = common_param.lane_change_finish_judge_buffer;
-  const auto prepare_length = 0.5 * common_param.max_acc *
-                              common_param.lane_change_prepare_duration *
-                              common_param.lane_change_prepare_duration;
+  const auto prepare_length = 0.0;
 
   double accumulated_length = length_to_intersection;
   for (const auto & shift_interval : shift_intervals) {
