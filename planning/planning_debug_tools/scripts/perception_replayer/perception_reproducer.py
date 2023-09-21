@@ -32,14 +32,14 @@ class PerceptionReproducer(PerceptionReplayerCommon):
         self.prev_traffic_signals_msg = None
         self.stopwatch = StopWatch(self.args.verbose)  # for debug
 
+        # to make some data to accelerate computation
+        self.preprocess_data()
+
         # start main timer callback
         self.timer = self.create_timer(0.1, self.on_timer)
 
         # kill perception process to avoid a conflict of the perception topics
         self.timer_check_perception_process = self.create_timer(3.0, self.on_timer_kill_perception)
-
-        # to make some data to accelerate computation
-        self.preprocess_data()
 
         print("Start timer callback")
 
