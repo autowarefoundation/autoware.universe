@@ -674,10 +674,14 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     utils::lane_change::createPolygon(current_lanes, 0.0, std::numeric_limits<double>::max());
   const auto target_polygon =
     utils::lane_change::createPolygon(target_lanes, 0.0, std::numeric_limits<double>::max());
-  const auto target_backward_polygon = utils::lane_change::createPolygon(
-    target_backward_lanes, 0.0, std::numeric_limits<double>::max());
   const auto dist_ego_to_current_lanes_center =
     lanelet::utils::getLateralDistanceToClosestLanelet(current_lanes, current_pose);
+  std::vector<std::optional<lanelet::BasicPolygon2d>> target_backward_polygons;
+  for (const auto & target_backward_lane : target_backward_lanes) {
+    lanelet::ConstLanelets lanelet{target_backward_lane};
+    auto lane_polygon =
+      utils::lane_change::createPolygon(lanelet, 0.0, std::numeric_limits<double>::max());
+  }
 
   auto filtered_objects = objects;
 
@@ -730,10 +734,22 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
       }
     }
 
+    const auto check_backward_polygon = [&](const auto & target_backward_polygon) {
+      if (
+        target_backward_polygon &&
+        boost::geometry::intersects(target_backward_polygon.value(), obj_polygon)) {
+        const auto lateral = tier4_autoware_utils::calcLateralDeviation(
+          current_pose, object.kinematics.initial_pose_with_covariance.pose.position);
+        return (std::abs(lateral) > common_parameters.vehicle_width);
+      }
+      return false;
+    };
+
     // check if the object intersects with target backward lanes
     if (
-      target_backward_polygon &&
-      boost::geometry::intersects(target_backward_polygon.value(), obj_polygon)) {
+      !target_backward_polygons.empty() &&
+      std::any_of(
+        target_backward_polygons.begin(), target_backward_polygons.end(), check_backward_polygon)) {
       filtered_obj_indices.target_lane.push_back(i);
       continue;
     }
