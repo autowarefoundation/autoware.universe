@@ -951,8 +951,7 @@ bool NormalLaneChange::getLaneChangePaths(
         lanelet::utils::getLateralDistanceToClosestLanelet(target_lanes, lane_changing_start_pose);
 
       const auto initial_lane_changing_velocity = prepare_velocity;
-      const auto max_path_velocity =
-        prepare_segment.points.back().point.longitudinal_velocity_mps;
+      const auto max_path_velocity = prepare_segment.points.back().point.longitudinal_velocity_mps;
 
       // get lateral acceleration range
       const auto [min_lateral_acc, max_lateral_acc] =
