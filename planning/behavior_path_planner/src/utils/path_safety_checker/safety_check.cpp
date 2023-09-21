@@ -370,13 +370,32 @@ bool checkCollisionWithExtraStoppingMargin(
   const double maximum_deceleration, const double collision_check_margin,
   const double max_extra_stopping_margin)
 {
-  for (const auto & p : ego_path.points) {
+  for (size_t i = 0; i < ego_path.points.size(); ++i) {
+    const auto p = ego_path.points.at(i);
+
+    const double curvature = [&]() {
+      if (i == 0 || i == ego_path.points.size() - 1) {
+        return 0.0;
+      }
+      return tier4_autoware_utils::calcCurvature(
+        ego_path.points.at(i - 1).point.pose.position,
+        ego_path.points.at(i + 0).point.pose.position,
+        ego_path.points.at(i + 1).point.pose.position);
+    }();
+
     const double extra_stopping_margin = std::min(
       std::pow(p.point.longitudinal_velocity_mps, 2) * 0.5 / maximum_deceleration,
       max_extra_stopping_margin);
 
+    double extra_lateral_margin = (-1) * curvature * std::pow(p.point.longitudinal_velocity_mps, 2);
+    extra_lateral_margin =
+      std::clamp(extra_lateral_margin, -extra_stopping_margin, extra_stopping_margin);
+
+    const auto temp_pose =
+      tier4_autoware_utils::calcOffsetPose(p.point.pose, 0.0, extra_lateral_margin / 2.0, 0.0);
     const auto ego_polygon = tier4_autoware_utils::toFootprint(
-      p.point.pose, base_to_front + extra_stopping_margin, base_to_rear, width);
+      temp_pose, base_to_front + extra_stopping_margin, base_to_rear,
+      width + std::abs(extra_lateral_margin));
 
     for (const auto & object : dynamic_objects.objects) {
       const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
