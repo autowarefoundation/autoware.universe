@@ -142,7 +142,11 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
  *
  * The function predicts the path based on the current vehicle pose, its current velocity,
  * and certain parameters related to the vehicle's behavior and environment. The prediction
- * considers acceleration and maximum velocity constraints.
+ * considers acceleration, delay before departure, and maximum velocity constraints.
+ *
+ * During the delay before departure, the vehicle's velocity is assumed to be zero, and it does
+ * not move. After the delay, the vehicle starts to accelerate as per the provided parameters
+ * until it reaches the maximum allowable velocity or the specified time horizon.
  *
  * @param ego_predicted_path_params Parameters associated with the ego's predicted path behavior.
  * @param path_points Path points to be followed by the vehicle.
@@ -195,6 +199,20 @@ TargetObjectsOnLane createTargetObjectsOnLane(
   const lanelet::ConstLanelets & current_lanes, const std::shared_ptr<RouteHandler> & route_handler,
   const PredictedObjects & filtered_objects,
   const std::shared_ptr<ObjectsFilteringParams> & params);
+
+/**
+ * @brief Determines whether the predicted object type matches any of the target object types
+ * specified by the user.
+ *
+ * @param object The predicted object whose type is to be checked.
+ * @param target_object_types A structure containing boolean flags for each object type that the
+ * user is interested in checking.
+ *
+ * @return Returns true if the predicted object's highest probability label matches any of the
+ * specified target object types.
+ */
+bool isTargetObjectType(
+  const PredictedObject & object, const ObjectTypesToCheck & target_object_types);
 
 }  // namespace behavior_path_planner::utils::path_safety_checker
 
