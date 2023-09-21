@@ -147,7 +147,7 @@ DATASET_ROOT
 
 #### Prerequisites
 
-**Step 1.** Download and install Miniconda from the [offical website](https://mmpretrain.readthedocs.io/en/latest/get_started.html).
+**Step 1.** Download and install Miniconda from the [official website](https://mmpretrain.readthedocs.io/en/latest/get_started.html).
 
 **Step 2.** Create a conda virtual environment and activate it
 
