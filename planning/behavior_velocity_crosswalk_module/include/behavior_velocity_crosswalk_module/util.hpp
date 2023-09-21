@@ -35,9 +35,6 @@
 #include <Eigen/Geometry>
 #include <behavior_velocity_planner_common/planner_data.hpp>
 
-// TODO(Mamoru Sobue): keep this temporarily
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_factor.hpp>
 
@@ -46,8 +43,6 @@ namespace behavior_velocity_planner
 
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::Point2d;
 using tier4_planning_msgs::msg::StopFactor;
 
 enum class CollisionState { YIELD, EGO_PASS_FIRST, EGO_PASS_LATER, IGNORE };
