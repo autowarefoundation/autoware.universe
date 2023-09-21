@@ -7,6 +7,7 @@
       collision_check_margin: 1.0
       collision_check_distance_from_end: 1.0
       th_moving_object_velocity: 1.0
+      th_distance_to_middle_of_the_road: 0.1
       # shift pull out
       enable_shift_pull_out: true
       check_shift_path_lane_departure: false
@@ -79,12 +80,13 @@
       path_safety_check:
         # EgoPredictedPath
         ego_predicted_path:
+          min_velocity: 0.0
           acceleration: 1.0
-          time_horizon: 10.0
+          max_velocity: 1.0
+          time_horizon_for_front_object: 10.0
+          time_horizon_for_rear_object: 10.0
           time_resolution: 0.5
-          min_slow_speed: 0.0
           delay_until_departure: 1.0
-          target_velocity: 1.0
         # For target object filtering
         target_filtering:
           safety_check_time_horizon: 5.0
@@ -129,6 +131,8 @@
             lateral_distance_max_threshold: 1.0
             longitudinal_distance_min_threshold: 1.0
             longitudinal_velocity_delta_time: 1.0
+          # hysteresis factor to expand/shrink polygon
+          hysteresis_factor_expand_rate: 1.0
           # temporary
           backward_path_length: 30.0
           forward_path_length: 100.0

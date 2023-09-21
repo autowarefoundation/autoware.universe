@@ -38,6 +38,8 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   p.th_stopped_time = node->declare_parameter<double>(ns + "th_stopped_time");
   p.th_turn_signal_on_lateral_offset =
     node->declare_parameter<double>(ns + "th_turn_signal_on_lateral_offset");
+  p.th_distance_to_middle_of_the_road =
+    node->declare_parameter<double>(ns + "th_distance_to_middle_of_the_road");
   p.intersection_search_length = node->declare_parameter<double>(ns + "intersection_search_length");
   p.length_ratio_for_turn_signal_deactivation_near_intersection = node->declare_parameter<double>(
     ns + "length_ratio_for_turn_signal_deactivation_near_intersection");
@@ -163,18 +165,20 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   // EgoPredictedPath
   std::string ego_path_ns = base_ns + "ego_predicted_path.";
   {
+    p.ego_predicted_path_params.min_velocity =
+      node->declare_parameter<double>(ego_path_ns + "min_velocity");
     p.ego_predicted_path_params.acceleration =
       node->declare_parameter<double>(ego_path_ns + "acceleration");
-    p.ego_predicted_path_params.time_horizon =
-      node->declare_parameter<double>(ego_path_ns + "time_horizon");
+    p.ego_predicted_path_params.max_velocity =
+      node->declare_parameter<double>(ego_path_ns + "max_velocity");
+    p.ego_predicted_path_params.time_horizon_for_front_object =
+      node->declare_parameter<double>(ego_path_ns + "time_horizon_for_front_object");
+    p.ego_predicted_path_params.time_horizon_for_rear_object =
+      node->declare_parameter<double>(ego_path_ns + "time_horizon_for_rear_object");
     p.ego_predicted_path_params.time_resolution =
       node->declare_parameter<double>(ego_path_ns + "time_resolution");
-    p.ego_predicted_path_params.min_slow_speed =
-      node->declare_parameter<double>(ego_path_ns + "min_slow_speed");
     p.ego_predicted_path_params.delay_until_departure =
       node->declare_parameter<double>(ego_path_ns + "delay_until_departure");
-    p.ego_predicted_path_params.target_velocity =
-      node->declare_parameter<double>(ego_path_ns + "target_velocity");
   }
 
   // ObjectFilteringParams
@@ -243,6 +247,8 @@ StartPlannerModuleManager::StartPlannerModuleManager(
   {
     p.safety_check_params.enable_safety_check =
       node->declare_parameter<bool>(safety_check_ns + "enable_safety_check");
+    p.safety_check_params.hysteresis_factor_expand_rate =
+      node->declare_parameter<double>(safety_check_ns + "hysteresis_factor_expand_rate");
     p.safety_check_params.backward_path_length =
       node->declare_parameter<double>(safety_check_ns + "backward_path_length");
     p.safety_check_params.forward_path_length =
