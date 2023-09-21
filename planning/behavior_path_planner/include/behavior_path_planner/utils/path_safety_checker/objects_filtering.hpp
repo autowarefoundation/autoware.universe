@@ -78,15 +78,14 @@ PredictedObjects filterObjects(
  * velocities above the given threshold or only keeps those objects. It uses the helper function
  * filterObjectsByVelocity() to do the actual filtering.
  *
- * @param objects The objects to be filtered.
+ * @param objects [in, out] The objects to be filtered.
  * @param velocity_threshold The velocity threshold for the filtering.
  * @param remove_above_threshold If true, objects with velocities above the threshold are removed.
  *                               If false, only objects with velocities above the threshold are
  * kept.
- * @return A new collection of objects that have been filtered according to the rules.
  */
-PredictedObjects filterObjectsByVelocity(
-  const PredictedObjects & objects, const double velocity_threshold,
+void filterObjectsByVelocity(
+  PredictedObjects & objects, const double velocity_threshold,
   const bool remove_above_threshold = true);
 
 /**
@@ -96,18 +95,17 @@ PredictedObjects filterObjectsByVelocity(
  * is within the velocity_threshold and max_velocity range, the object is added to a new collection.
  * This new collection is then returned.
  *
- * @param objects The objects to be filtered.
+ * @param objects [in, out] The objects to be filtered.
  * @param velocity_threshold The minimum velocity for an object to be included in the output.
  * @param max_velocity The maximum velocity for an object to be included in the output.
- * @return A new collection of objects that have been filtered according to the rules.
  */
-PredictedObjects filterObjectsByVelocity(
-  const PredictedObjects & objects, double velocity_threshold, double max_velocity);
+void filterObjectsByVelocity(
+  PredictedObjects & objects, double velocity_threshold, double max_velocity);
 
 /**
  * @brief Filter objects based on their position relative to a current_pose.
  *
- * @param objects The predicted objects to filter.
+ * @param objects [in, out] The predicted objects to filter.
  * @param path_points Points on the path.
  * @param current_pose Current pose of the reference (e.g., ego vehicle).
  * @param forward_distance Maximum forward distance for filtering.
@@ -121,7 +119,7 @@ void filterObjectsByPosition(
 /**
  * @brief Filters the provided objects based on their classification.
  *
- * @param objects The predicted objects to be filtered.
+ * @param objects [in, out] The predicted objects to be filtered.
  * @param target_object_types The types of objects to retain after filtering.
  */
 void filterObjectsByClass(
@@ -232,6 +230,43 @@ TargetObjectsOnLane createTargetObjectsOnLane(
  */
 bool isTargetObjectType(
   const PredictedObject & object, const ObjectTypesToCheck & target_object_types);
+
+/**
+ * @brief Filters objects in the 'selected' container based on the provided filter function.
+ *
+ * This function partitions the 'selected' container based on the 'filter' function
+ * and moves objects that satisfy the filter condition to the 'removed' container.
+ *
+ * @tparam Func The type of the filter function.
+ * @param selected [in,out] The container of objects to be filtered.
+ * @param removed [out] The container where objects not satisfying the filter condition are moved.
+ * @param filter The filter function that determines whether an object should be removed.
+ */
+template <typename Func>
+void filterObjects(PredictedObjects & selected, PredictedObjects & removed, Func filter)
+{
+  auto partitioned = std::partition(selected.objects.begin(), selected.objects.end(), filter);
+  removed.objects.insert(removed.objects.end(), partitioned, selected.objects.end());
+  selected.objects.erase(partitioned, selected.objects.end());
+}
+
+/**
+ * @brief Filters objects in the 'objects' container based on the provided filter function.
+ *
+ * This function is an overload that simplifies filtering when you don't need to specify a separate
+ * 'removed' container. It internally creates a 'removed_objects' container and calls the main
+ * 'filterObjects' function.
+ *
+ * @tparam Func The type of the filter function.
+ * @param objects [in,out] The container of objects to be filtered.
+ * @param filter The filter function that determines whether an object should be removed.
+ */
+template <typename Func>
+void filterObjects(PredictedObjects & objects, Func filter)
+{
+  [[maybe_unused]] PredictedObjects removed_objects{};
+  filterObjects(objects, removed_objects, filter);
+}
 
 }  // namespace behavior_path_planner::utils::path_safety_checker
 

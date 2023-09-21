@@ -1356,8 +1356,9 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
     utils::path_safety_checker::separateObjectsByLanelets(
       *(planner_data_->dynamic_object), pull_over_lanes,
       utils::path_safety_checker::isPolygonOverlapLanelet);
-  const auto pull_over_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    pull_over_lane_objects, parameters_->th_moving_object_velocity);
+  auto pull_over_lane_stop_objects = pull_over_lane_objects;
+  utils::path_safety_checker::filterObjectsByVelocity(
+    pull_over_lane_stop_objects, parameters_->th_moving_object_velocity);
   std::vector<Polygon2d> obj_polygons;
   for (const auto & object : pull_over_lane_stop_objects.objects) {
     obj_polygons.push_back(tier4_autoware_utils::toPolygon2d(object));

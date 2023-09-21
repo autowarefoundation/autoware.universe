@@ -798,8 +798,10 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
     utils::path_safety_checker::separateObjectsByLanelets(
       *planner_data_->dynamic_object, pull_out_lanes,
       utils::path_safety_checker::isPolygonOverlapLanelet);
-  const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    pull_out_lane_objects, parameters_->th_moving_object_velocity);
+
+  auto pull_out_lane_stop_objects = pull_out_lane_objects;
+  utils::path_safety_checker::filterObjectsByVelocity(
+    pull_out_lane_stop_objects, parameters_->th_moving_object_velocity);
 
   // Set the maximum backward distance less than the distance from the vehicle's base_link to the
   // lane's rearmost point to prevent lane departure.

@@ -68,8 +68,9 @@ boost::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const P
   const auto [pull_out_lane_objects, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
       *dynamic_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
-  const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    pull_out_lane_objects, parameters_.th_moving_object_velocity);
+  auto pull_out_lane_stop_objects = pull_out_lane_objects;
+  utils::path_safety_checker::filterObjectsByVelocity(
+    pull_out_lane_stop_objects, parameters_.th_moving_object_velocity);
 
   // get safe path
   for (auto & pull_out_path : pull_out_paths) {

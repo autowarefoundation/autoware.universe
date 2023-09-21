@@ -24,7 +24,6 @@
 
 namespace behavior_path_planner::utils::path_safety_checker
 {
-
 bool isCentroidWithinLanelet(const PredictedObject & object, const lanelet::ConstLanelet & lanelet)
 {
   const auto & object_pos = object.kinematics.initial_pose_with_covariance.pose.position;
@@ -46,7 +45,7 @@ PredictedObjects filterObjects(
   const std::shared_ptr<ObjectsFilteringParams> & params)
 {
   // Guard
-  if (objects->objects.empty()) {
+  if (!objects || objects->objects.empty()) {
     return PredictedObjects();
   }
 
@@ -55,9 +54,9 @@ PredictedObjects filterObjects(
   const double object_check_backward_distance = params->object_check_backward_distance;
   const ObjectTypesToCheck & target_object_types = params->object_types_to_check;
 
-  PredictedObjects filtered_objects;
+  auto filtered_objects = *objects;
 
-  filtered_objects = filterObjectsByVelocity(*objects, ignore_object_velocity_threshold, false);
+  filterObjectsByVelocity(filtered_objects, ignore_object_velocity_threshold, false);
 
   filterObjectsByClass(filtered_objects, target_object_types);
 
@@ -71,31 +70,26 @@ PredictedObjects filterObjects(
   return filtered_objects;
 }
 
-PredictedObjects filterObjectsByVelocity(
-  const PredictedObjects & objects, const double velocity_threshold,
-  const bool remove_above_threshold)
+void filterObjectsByVelocity(
+  PredictedObjects & objects, const double velocity_threshold, const bool remove_above_threshold)
 {
   if (remove_above_threshold) {
-    return filterObjectsByVelocity(objects, -velocity_threshold, velocity_threshold);
-  } else {
-    return filterObjectsByVelocity(objects, velocity_threshold, std::numeric_limits<double>::max());
+    filterObjectsByVelocity(objects, -velocity_threshold, velocity_threshold);
   }
+
+  filterObjectsByVelocity(objects, velocity_threshold, std::numeric_limits<double>::max());
 }
 
-PredictedObjects filterObjectsByVelocity(
-  const PredictedObjects & objects, double velocity_threshold, double max_velocity)
+void filterObjectsByVelocity(
+  PredictedObjects & objects, double velocity_threshold, double max_velocity)
 {
-  PredictedObjects filtered;
-  filtered.header = objects.header;
-  for (const auto & obj : objects.objects) {
+  const auto velocity_filter = [velocity_threshold, max_velocity](const auto & obj) {
     const auto v_norm = std::hypot(
       obj.kinematics.initial_twist_with_covariance.twist.linear.x,
       obj.kinematics.initial_twist_with_covariance.twist.linear.y);
-    if (velocity_threshold < v_norm && v_norm < max_velocity) {
-      filtered.objects.push_back(obj);
-    }
-  }
-  return filtered;
+    return velocity_threshold < v_norm && v_norm < max_velocity;
+  };
+  filterObjects(objects, velocity_filter);
 }
 
 void filterObjectsByPosition(
@@ -103,43 +97,26 @@ void filterObjectsByPosition(
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance)
 {
-  // Create a new container to hold the filtered objects
-  PredictedObjects filtered;
-  filtered.header = objects.header;
-
-  // Reserve space in the vector to avoid reallocations
-  filtered.objects.reserve(objects.objects.size());
-
-  for (const auto & obj : objects.objects) {
+  auto position_filter = [&path_points, &current_pose, forward_distance,
+                          backward_distance](const auto & obj) {
     const double dist_ego_to_obj = motion_utils::calcSignedArcLength(
       path_points, current_pose, obj.kinematics.initial_pose_with_covariance.pose.position);
+    return (-backward_distance < dist_ego_to_obj && dist_ego_to_obj < forward_distance);
+  };
 
-    if (-backward_distance < dist_ego_to_obj && dist_ego_to_obj < forward_distance) {
-      filtered.objects.push_back(obj);
-    }
-  }
-
-  // Replace the original objects with the filtered list
-  objects.objects = std::move(filtered.objects);
-  return;
+  // Erase objects based on filtered list
+  filterObjects(objects, position_filter);
 }
 
 void filterObjectsByClass(
   PredictedObjects & objects, const ObjectTypesToCheck & target_object_types)
 {
-  PredictedObjects filtered_objects;
+  const auto object_class_filter = [&target_object_types](const auto & object) {
+    return isTargetObjectType(object, target_object_types);
+  };
 
-  for (auto & object : objects.objects) {
-    const auto is_object_type = isTargetObjectType(object, target_object_types);
-
-    // If the object type matches any of the target types, add it to the filtered list
-    if (is_object_type) {
-      filtered_objects.objects.push_back(object);
-    }
-  }
-
-  // Replace the original objects with the filtered list
-  objects = std::move(filtered_objects);
+  // Erase objects based on filtered list
+  filterObjects(objects, object_class_filter);
 }
 
 std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(

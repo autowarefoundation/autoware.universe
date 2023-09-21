@@ -264,8 +264,9 @@ void GoalSearcher::countObjectsToAvoid(
 
 void GoalSearcher::update(GoalCandidates & goal_candidates) const
 {
-  const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    *(planner_data_->dynamic_object), parameters_.th_moving_object_velocity);
+  auto stop_objects = *(planner_data_->dynamic_object);
+  utils::path_safety_checker::filterObjectsByVelocity(
+    stop_objects, parameters_.th_moving_object_velocity);
   const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
     *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
     parameters_.forward_goal_search_length);
