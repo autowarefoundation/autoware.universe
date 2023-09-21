@@ -15,13 +15,11 @@
 #ifndef MOTION_UTILS__MARKER__MARKER_HELPER_HPP_
 #define MOTION_UTILS__MARKER__MARKER_HELPER_HPP_
 
-#include "motion_utils/resample/resample_utils.hpp"
+#include <rclcpp/time.hpp>
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <functional>
 #include <string>
-#include <vector>
 
 namespace motion_utils
 {
@@ -29,15 +27,18 @@ using geometry_msgs::msg::Pose;
 
 visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
   const Pose & pose, const std::string & module_name, const rclcpp::Time & now, const int32_t id,
-  const double longitudinal_offset = 0.0, const std::string & ns_prefix = "");
+  const double longitudinal_offset = 0.0, const std::string & ns_prefix = "",
+  const bool is_driving_forward = true);
 
 visualization_msgs::msg::MarkerArray createSlowDownVirtualWallMarker(
   const Pose & pose, const std::string & module_name, const rclcpp::Time & now, const int32_t id,
-  const double longitudinal_offset = 0.0, const std::string & ns_prefix = "");
+  const double longitudinal_offset = 0.0, const std::string & ns_prefix = "",
+  const bool is_driving_forward = true);
 
 visualization_msgs::msg::MarkerArray createDeadLineVirtualWallMarker(
   const Pose & pose, const std::string & module_name, const rclcpp::Time & now, const int32_t id,
-  const double longitudinal_offset = 0.0, const std::string & ns_prefix = "");
+  const double longitudinal_offset = 0.0, const std::string & ns_prefix = "",
+  const bool is_driving_forward = true);
 
 visualization_msgs::msg::MarkerArray createDeletedStopVirtualWallMarker(
   const rclcpp::Time & now, const int32_t id);
