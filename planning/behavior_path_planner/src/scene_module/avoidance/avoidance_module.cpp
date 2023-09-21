@@ -1939,7 +1939,6 @@ PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & orig
 {
   const auto previous_path = helper_.getPreviousReferencePath();
 
-  // special for avoidance: take behind distance upt ot shift-start-point if it exist.
   const auto longest_dist_to_shift_point = [&]() {
     double max_dist = 0.0;
     for (const auto & pnt : path_shifter_.getShiftLines()) {
