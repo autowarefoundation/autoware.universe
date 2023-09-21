@@ -42,7 +42,7 @@
  or implied, of Rafael Muñoz Salinas.
  ********************************/
 
-#include "ar_tag_detector/ar_tag_detector_core.hpp"
+#include "ar_tag_based_localizer/ar_tag_based_localizer_core.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -57,7 +57,7 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
-ArTagDetector::ArTagDetector() : Node("ar_tag_detector"), cam_info_received_(false)
+ArTagDetector::ArTagDetector() : Node("ar_tag_based_localizer"), cam_info_received_(false)
 {
 }
 
@@ -129,7 +129,7 @@ bool ArTagDetector::setup()
   pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "~/output/pose_with_covariance", qos_pub);
 
-  RCLCPP_INFO(this->get_logger(), "Setup of ar_tag_detector node is successful!");
+  RCLCPP_INFO(this->get_logger(), "Setup of ar_tag_based_localizer node is successful!");
   return true;
 }
 

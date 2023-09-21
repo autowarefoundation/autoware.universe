@@ -42,7 +42,7 @@
  or implied, of Rafael Muñoz Salinas.
  ********************************/
 
-#include "ar_tag_detector/ar_tag_detector_core.hpp"
+#include "ar_tag_based_localizer/ar_tag_based_localizer_core.hpp"
 
 int main(int argc, char ** argv)
 {

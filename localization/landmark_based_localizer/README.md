@@ -13,7 +13,7 @@ Since these landmarks are easy to detect and estimate pose, the ego pose can be 
 
 Currently, landmarks are assumed to be flat.
 
-The following figure shows the principle of localization in the case of `ar_tag_detector`.
+The following figure shows the principle of localization in the case of `ar_tag_based_localizer`.
 
 ![principle](./doc_image/principle.png)
 
@@ -36,9 +36,9 @@ Users can define landmarks as Lanelet2 4-vertex polygons.
 In this case, it is possible to define an arrangement in which the four vertices cannot be considered to be on the same plane. The direction of the landmark in that case is difficult to calculate.
 So, if the 4 vertices are considered as forming a tetrahedron and its volume exceeds the `volume_threshold` parameter, the landmark will not publish tf_static.
 
-### Landmark detector nodes
+### Landmark based localizer packages
 
-- [ar_tag_detector](./doc/ar_tag_detector.md)
+- ar_tag_based_localizer
 - etc.
 
 ## Inputs / Outputs

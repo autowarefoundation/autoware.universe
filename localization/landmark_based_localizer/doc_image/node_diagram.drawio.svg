@@ -41,7 +41,7 @@
     </g>
     <rect x="320" y="190" width="150" height="50" fill="#cce5ff" stroke="#666666" pointer-events="all"/>
     <g fill="#000000" font-family="Helvetica" text-anchor="middle" font-size="12px">
-      <text x="394.5" y="219.5">/ar_tag_detector</text>
+      <text x="394.5" y="219.5">/ar_tag_based_localizer</text>
     </g>
     <rect x="570" y="280" width="150" height="50" fill="#ccffcc" stroke="#666666" pointer-events="all"/>
     <g fill="#000000" font-family="Helvetica" text-anchor="middle" font-size="12px">

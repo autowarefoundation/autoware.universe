@@ -9,7 +9,7 @@ The positions and orientations of the AR-Tags are assumed to be written in the L
 
 ## Inputs / Outputs
 
-### `ar_tag_detector` node
+### `ar_tag_based_localizer` node
 
 #### Input
 
@@ -53,7 +53,7 @@ It is a known problem that the timing of when each AR tag begins to be detected 
 Please remap the topic names and play it.
 
 ```bash
-ros2 bag play /path/to/ar_tag_detector_sample_bag/ -r 0.5 -s sqlite3 \
+ros2 bag play /path/to/ar_tag_based_localizer_sample_bag/ -r 0.5 -s sqlite3 \
      --remap /sensing/camera/front/image:=/sensing/camera/traffic_light/image_raw \
              /sensing/camera/front/image/info:=/sensing/camera/traffic_light/camera_info
 ```
@@ -70,4 +70,4 @@ The pull request video below should also be helpful.
 
 ## Principle
 
-![principle](../../doc_image/principle.png)
+![principle](../doc_image/principle.png)
