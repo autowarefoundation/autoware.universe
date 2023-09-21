@@ -25,6 +25,9 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
+#include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_core/geometry/Polygon.h>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -669,19 +672,19 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
   const auto dist_ego_to_current_lanes_center =
     lanelet::utils::getLateralDistanceToClosestLanelet(current_lanes, current_pose);
 
+  auto filtered_objects = objects;
+
+  utils::path_safety_checker::filterObjectsByClass(
+    filtered_objects, lane_change_parameters_->object_types_to_check);
+
   LaneChangeTargetObjectIndices filtered_obj_indices;
-  for (size_t i = 0; i < objects.objects.size(); ++i) {
-    const auto & object = objects.objects.at(i);
+  for (size_t i = 0; i < filtered_objects.objects.size(); ++i) {
+    const auto & object = filtered_objects.objects.at(i);
     const auto & obj_velocity_norm = std::hypot(
       object.kinematics.initial_twist_with_covariance.twist.linear.x,
       object.kinematics.initial_twist_with_covariance.twist.linear.y);
     const auto extended_object =
       utils::lane_change::transform(object, common_parameters, *lane_change_parameters_);
-
-    // ignore specific object types
-    if (!utils::lane_change::isTargetObjectType(object, *lane_change_parameters_)) {
-      continue;
-    }
 
     const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
 
@@ -1343,7 +1346,7 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
   const auto ego_predicted_path = utils::lane_change::convertToPredictedPath(
     lane_change_path, current_twist, current_pose, common_parameters, time_resolution);
   const auto debug_predicted_path =
-    utils::lane_change::convertToPredictedPath(ego_predicted_path, time_resolution);
+    utils::path_safety_checker::convertToPredictedPath(ego_predicted_path, time_resolution);
 
   auto collision_check_objects = target_objects.target_lane;
 
