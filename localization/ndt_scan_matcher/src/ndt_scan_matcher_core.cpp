@@ -112,7 +112,7 @@ NDTScanMatcher::NDTScanMatcher()
   base_frame_ = this->declare_parameter<std::string>("base_frame");
   RCLCPP_INFO(get_logger(), "base_frame_id: %s", base_frame_.c_str());
 
-  if(this->has_parameter("ndt_base_frame")){
+  if (this->has_parameter("ndt_base_frame")) {
     ndt_base_frame_ = this->declare_parameter<std::string>("ndt_base_frame");
   }
   RCLCPP_INFO(get_logger(), "ndt_base_frame_id: %s", ndt_base_frame_.c_str());
@@ -136,18 +136,17 @@ NDTScanMatcher::NDTScanMatcher()
   int converged_param_type_tmp = this->declare_parameter<int>("converged_param_type");
   converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
 
-  converged_param_transform_probability_ = this->declare_parameter<double>(
-    "converged_param_transform_probability");
-  converged_param_nearest_voxel_transformation_likelihood_ = this->declare_parameter<double>(
-    "converged_param_nearest_voxel_transformation_likelihood");
+  converged_param_transform_probability_ =
+    this->declare_parameter<double>("converged_param_transform_probability");
+  converged_param_nearest_voxel_transformation_likelihood_ =
+    this->declare_parameter<double>("converged_param_nearest_voxel_transformation_likelihood");
 
-  lidar_topic_timeout_sec_ =
-    this->declare_parameter<double>("lidar_topic_timeout_sec");
+  lidar_topic_timeout_sec_ = this->declare_parameter<double>("lidar_topic_timeout_sec");
 
-  initial_pose_timeout_sec_ =
-    this->declare_parameter<double>("initial_pose_timeout_sec");
+  initial_pose_timeout_sec_ = this->declare_parameter<double>("initial_pose_timeout_sec");
 
-  initial_pose_distance_tolerance_m_ = this->declare_parameter<double>("initial_pose_distance_tolerance_m");
+  initial_pose_distance_tolerance_m_ =
+    this->declare_parameter<double>("initial_pose_distance_tolerance_m");
 
   std::vector<double> output_pose_covariance =
     this->declare_parameter<std::vector<double>>("output_pose_covariance");
