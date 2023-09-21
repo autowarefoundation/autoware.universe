@@ -207,9 +207,9 @@ std::optional<PathWithLaneId> generateFeasibleStopPath(
 
   if (!stop_idx) {
     return {};
-  } else {
-    stop_pose = current_path.points.at(*stop_idx).point.pose;
   }
+  
+  stop_pose = current_path.points.at(*stop_idx).point.pose;
 
   return current_path;
 }
