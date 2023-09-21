@@ -166,7 +166,7 @@ bool AvoidanceModule::isExecutionRequested() const
     return true;
   }
 
-  if (avoid_data_.unapproved_new_sl.empty()) {
+  if (avoid_data_.new_shift_line.empty()) {
     return false;
   }
 
@@ -207,7 +207,10 @@ bool AvoidanceModule::canTransitSuccessState()
     }
   }
 
-  const bool has_avoidance_target = !data.target_objects.empty();
+  const bool has_avoidance_target =
+    std::any_of(data.target_objects.begin(), data.target_objects.end(), [](const auto & o) {
+      return o.is_avoidable || o.reason == AvoidanceDebugFactor::TOO_LARGE_JERK;
+    });
   const bool has_shift_point = !path_shifter_.getShiftLines().empty();
   const bool has_base_offset =
     std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_avoid_check_threshold;
@@ -430,14 +433,14 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
   /**
    * STEP2: Create rough shift lines.
    */
-  data.unapproved_raw_sl = applyPreProcess(outlines, debug);
+  data.raw_shift_line = applyPreProcess(outlines, debug);
 
   /**
    * STEP3: Create candidate shift lines.
    * Merge rough shift lines, and extract new shift lines.
    */
-  data.unapproved_new_sl = generateCandidateShiftLine(data.unapproved_raw_sl, path_shifter, debug);
-  const auto found_new_sl = data.unapproved_new_sl.size() > 0;
+  data.new_shift_line = generateCandidateShiftLine(data.raw_shift_line, path_shifter, debug);
+  const auto found_new_sl = data.new_shift_line.size() > 0;
   const auto registered = path_shifter.getShiftLines().size() > 0;
   data.found_avoidance_path = found_new_sl || registered;
 
@@ -446,8 +449,8 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * If there are new shift points, these shift points are registered in path_shifter in order to
    * generate candidate avoidance path.
    */
-  if (!data.unapproved_new_sl.empty()) {
-    addNewShiftLines(path_shifter, data.unapproved_new_sl);
+  if (!data.new_shift_line.empty()) {
+    addNewShiftLines(path_shifter, data.new_shift_line);
   }
 
   /**
@@ -465,7 +468,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * For each target objects and the objects in adjacent lanes,
    * check that there is a certain amount of margin in the lateral and longitudinal direction.
    */
-  data.comfortable = isComfortable(data.unapproved_new_sl);
+  data.comfortable = isComfortable(data.new_shift_line);
   data.safe = isSafePath(data.candidate_path, debug);
 }
 
@@ -496,7 +499,7 @@ void AvoidanceModule::fillEgoStatus(
    * If the output path is locked by outside of this module, don't update output path.
    */
   if (isOutputPathLocked()) {
-    data.safe_new_sl.clear();
+    data.safe_shift_line.clear();
     data.candidate_path = helper_.getPreviousSplineShiftPath();
     RCLCPP_DEBUG_THROTTLE(
       getLogger(), *clock_, 500, "this module is locked now. keep current path.");
@@ -508,7 +511,7 @@ void AvoidanceModule::fillEgoStatus(
    */
   if (data.safe) {
     data.yield_required = false;
-    data.safe_new_sl = data.unapproved_new_sl;
+    data.safe_shift_line = data.new_shift_line;
     return;
   }
 
@@ -518,7 +521,7 @@ void AvoidanceModule::fillEgoStatus(
    */
   if (!parameters_->enable_yield_maneuver) {
     data.yield_required = false;
-    data.safe_new_sl = data.unapproved_new_sl;
+    data.safe_shift_line = data.new_shift_line;
     return;
   }
 
@@ -530,7 +533,7 @@ void AvoidanceModule::fillEgoStatus(
   if (!can_yield_maneuver) {
     data.safe = true;  // overwrite safety judge.
     data.yield_required = false;
-    data.safe_new_sl = data.unapproved_new_sl;
+    data.safe_shift_line = data.new_shift_line;
     RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "unsafe. but could not transit yield status.");
     return;
   }
@@ -540,7 +543,7 @@ void AvoidanceModule::fillEgoStatus(
    */
   {
     data.yield_required = true;
-    data.safe_new_sl = data.unapproved_new_sl;
+    data.safe_shift_line = data.new_shift_line;
   }
 
   /**
@@ -573,7 +576,7 @@ void AvoidanceModule::fillDebugData(
     return;
   }
 
-  if (data.unapproved_new_sl.empty()) {
+  if (data.new_shift_line.empty()) {
     return;
   }
 
@@ -653,6 +656,8 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
     default:
       throw std::domain_error("invalid behavior");
   }
+
+  insertReturnDeadLine(isBestEffort(parameters_->policy_deceleration), path);
 
   setStopReason(StopReason::AVOIDANCE, path.path);
 }
@@ -1080,7 +1085,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
 
   utils::avoidance::fillAdditionalInfoFromLongitudinal(data, outlines);
 
-  debug.step1_current_raw_shift_line = toArray(outlines);
+  debug.step1_current_shift_line = toArray(outlines);
 
   return outlines;
 }
@@ -1427,8 +1432,9 @@ AvoidLineArray AvoidanceModule::applyFillGapProcess(
 
 AvoidLineArray AvoidanceModule::applyCombineProcess(
   const AvoidLineArray & shift_lines, const AvoidLineArray & registered_lines,
-  [[maybe_unused]] DebugData & debug) const
+  DebugData & debug) const
 {
+  debug.step1_registered_shift_line = registered_lines;
   return utils::avoidance::combineRawShiftLinesWithUniqueCheck(registered_lines, shift_lines);
 }
 
@@ -1488,7 +1494,7 @@ AvoidLineArray AvoidanceModule::applyTrimProcess(
   {
     const auto THRESHOLD = parameters_->same_grad_filter_1_threshold;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
-    debug.step3_grad_filtered_first = sl_array_trimmed;
+    debug.step3_grad_filtered_1st = sl_array_trimmed;
   }
 
   // - Quantize the shift length to reduce the shift point noise
@@ -1496,28 +1502,28 @@ AvoidLineArray AvoidanceModule::applyTrimProcess(
   {
     const auto THRESHOLD = parameters_->quantize_filter_threshold;
     applyQuantizeProcess(sl_array_trimmed, THRESHOLD);
-    debug.step3_quantized_shift_line = sl_array_trimmed;
+    debug.step3_quantize_filtered = sl_array_trimmed;
   }
 
   // - Change the shift length to the previous one if the deviation is small.
   {
     constexpr double SHIFT_DIFF_THRES = 1.0;
     applySmallShiftFilter(sl_array_trimmed, SHIFT_DIFF_THRES);
-    debug.step3_noise_removed = sl_array_trimmed;
+    debug.step3_noise_filtered = sl_array_trimmed;
   }
 
   // - Combine avoid points that have almost same gradient (again)
   {
     const auto THRESHOLD = parameters_->same_grad_filter_2_threshold;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
-    debug.step3_grad_filtered_second = sl_array_trimmed;
+    debug.step3_grad_filtered_2nd = sl_array_trimmed;
   }
 
   // - Combine avoid points that have almost same gradient (again)
   {
     const auto THRESHOLD = parameters_->same_grad_filter_3_threshold;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
-    debug.step3_grad_filtered_third = sl_array_trimmed;
+    debug.step3_grad_filtered_3rd = sl_array_trimmed;
   }
 
   return sl_array_trimmed;
@@ -1931,14 +1937,17 @@ void AvoidanceModule::generateExpandDrivableLanes(BehaviorModuleOutput & output)
 
 PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & original_path) const
 {
-  // special for avoidance: take behind distance upt ot shift-start-point if it exist.
+  const auto previous_path = helper_.getPreviousReferencePath();
+
   const auto longest_dist_to_shift_point = [&]() {
     double max_dist = 0.0;
     for (const auto & pnt : path_shifter_.getShiftLines()) {
-      max_dist = std::max(max_dist, calcDistance2d(getEgoPose(), pnt.start));
+      max_dist = std::max(
+        max_dist, calcSignedArcLength(previous_path.points, pnt.start.position, getEgoPosition()));
     }
     for (const auto & sp : registered_raw_shift_lines_) {
-      max_dist = std::max(max_dist, calcDistance2d(getEgoPose(), sp.start));
+      max_dist = std::max(
+        max_dist, calcSignedArcLength(previous_path.points, sp.start.position, getEgoPosition()));
     }
     return max_dist;
   }();
@@ -1946,11 +1955,11 @@ PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & orig
   const auto extra_margin = 10.0;  // Since distance does not consider arclength, but just line.
   const auto backward_length = std::max(
     planner_data_->parameters.backward_path_length, longest_dist_to_shift_point + extra_margin);
-  const auto previous_path = helper_.getPreviousReferencePath();
 
   const size_t orig_ego_idx = planner_data_->findEgoIndex(original_path.points);
-  const size_t prev_ego_idx =
-    findNearestSegmentIndex(previous_path.points, getPoint(original_path.points.at(orig_ego_idx)));
+  const size_t prev_ego_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    previous_path.points, getPose(original_path.points.at(orig_ego_idx)),
+    std::numeric_limits<double>::max(), planner_data_->parameters.ego_nearest_yaw_threshold);
 
   size_t clip_idx = 0;
   for (size_t i = 0; i < prev_ego_idx; ++i) {
@@ -1989,7 +1998,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
   resetPathCandidate();
   resetPathReference();
 
-  updatePathShifter(data.safe_new_sl);
+  updatePathShifter(data.safe_shift_line);
 
   if (data.yield_required) {
     removeRegisteredShiftLines();
@@ -2073,37 +2082,35 @@ CandidateOutput AvoidanceModule::planCandidate() const
 
   auto shifted_path = data.candidate_path;
 
-  if (!data.safe_new_sl.empty()) {  // clip from shift start index for visualize
-    utils::clipPathLength(
-      shifted_path.path, data.safe_new_sl.front().start_idx, std::numeric_limits<double>::max(),
-      0.0);
+  if (data.safe_shift_line.empty()) {
+    const size_t ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
+    utils::clipPathLength(shifted_path.path, ego_idx, planner_data_->parameters);
 
-    const auto sl = helper_.getMainShiftLine(data.safe_new_sl);
-    const auto sl_front = data.safe_new_sl.front();
-    const auto sl_back = data.safe_new_sl.back();
-
-    output.lateral_shift = helper_.getRelativeShiftToPath(sl);
-    output.start_distance_to_path_change = sl_front.start_longitudinal;
-    output.finish_distance_to_path_change = sl_back.end_longitudinal;
-
-    const uint16_t steering_factor_direction = std::invoke([&output]() {
-      if (output.lateral_shift > 0.0) {
-        return SteeringFactor::LEFT;
-      }
-      return SteeringFactor::RIGHT;
-    });
-    steering_factor_interface_ptr_->updateSteeringFactor(
-      {sl_front.start, sl_back.end},
-      {output.start_distance_to_path_change, output.finish_distance_to_path_change},
-      SteeringFactor::AVOIDANCE_PATH_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING,
-      "");
+    output.path_candidate = shifted_path.path;
+    return output;
   }
 
-  const size_t ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
-  utils::clipPathLength(shifted_path.path, ego_idx, planner_data_->parameters);
+  const auto sl = helper_.getMainShiftLine(data.safe_shift_line);
+  const auto sl_front = data.safe_shift_line.front();
+  const auto sl_back = data.safe_shift_line.back();
+
+  utils::clipPathLength(
+    shifted_path.path, sl_front.start_idx, std::numeric_limits<double>::max(), 0.0);
+
+  output.lateral_shift = helper_.getRelativeShiftToPath(sl);
+  output.start_distance_to_path_change = sl_front.start_longitudinal;
+  output.finish_distance_to_path_change = sl_back.end_longitudinal;
+
+  const uint16_t steering_factor_direction = std::invoke([&output]() {
+    return output.lateral_shift > 0.0 ? SteeringFactor::LEFT : SteeringFactor::RIGHT;
+  });
+  steering_factor_interface_ptr_->updateSteeringFactor(
+    {sl_front.start, sl_back.end},
+    {output.start_distance_to_path_change, output.finish_distance_to_path_change},
+    SteeringFactor::AVOIDANCE_PATH_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING,
+    "");
 
   output.path_candidate = shifted_path.path;
-
   return output;
 }
 
@@ -2137,7 +2144,7 @@ void AvoidanceModule::updatePathShifter(const AvoidLineArray & shift_lines)
 
   addNewShiftLines(path_shifter_, shift_lines);
 
-  current_raw_shift_lines_ = avoid_data_.unapproved_raw_sl;
+  current_raw_shift_lines_ = avoid_data_.raw_shift_line;
 
   registerRawShiftLines(shift_lines);
 
@@ -2432,7 +2439,7 @@ void AvoidanceModule::updateRTCData()
 
   updateRegisteredRTCStatus(helper_.getPreviousSplineShiftPath().path);
 
-  const auto candidates = data.safe ? data.safe_new_sl : data.unapproved_new_sl;
+  const auto candidates = data.safe ? data.safe_shift_line : data.new_shift_line;
 
   if (candidates.empty()) {
     removeCandidateRTCStatus();
@@ -2636,31 +2643,30 @@ void AvoidanceModule::updateDebugMarker(
 
   // shift line pre-process
   {
-    addAvoidLine(debug.step1_registered_shift_line, "step1_registered_shift_line", 1.0, 1.0, 1.0);
-    addAvoidLine(debug.step1_current_raw_shift_line, "step1_current_raw_shift_line", 0.9, 1.0, 1.0);
-    addAvoidLine(debug.step1_return_shift_line, "step1_return_shift_line", 0.8, 1.0, 1.0);
-    addAvoidLine(debug.step1_filled_shift_line, "step1_filled_shift_line", 0.7, 1.0, 1.0);
+    addAvoidLine(debug.step1_registered_shift_line, "step1_registered_shift_line", 0.2, 0.2, 1.0);
+    addAvoidLine(debug.step1_current_shift_line, "step1_current_shift_line", 0.2, 0.4, 0.8, 0.3);
+    addAvoidLine(debug.step1_merged_shift_line, "step1_merged_shift_line", 0.2, 0.6, 0.6, 0.3);
+    addAvoidLine(debug.step1_filled_shift_line, "step1_filled_shift_line", 0.2, 0.8, 0.4, 0.3);
+    addAvoidLine(debug.step1_return_shift_line, "step1_return_shift_line", 0.2, 1.0, 0.2, 0.3);
   }
 
   // merge process
   {
-    addAvoidLine(debug.step2_merged_shift_line, "step2_merged_shift_line", 0.0, 1.0, 1.0);
+    addAvoidLine(debug.step2_merged_shift_line, "step2_merged_shift_line", 0.2, 1.0, 0.0, 0.3);
   }
 
   // trimming process
   {
-    addAvoidLine(debug.step3_grad_filtered_first, "step3_grad_filtered_first", 0.0, 0.0, 1.0);
-    addAvoidLine(debug.step3_grad_filtered_second, "step3_grad_filtered_second", 0.0, 0.1, 1.0);
-    addAvoidLine(debug.step3_grad_filtered_third, "step3_grad_filtered_third", 0.0, 0.2, 1.0);
-    addAvoidLine(debug.step3_quantized_shift_line, "step3_quantized_shift_line", 0.0, 0.3, 1.0);
-    addAvoidLine(debug.step3_noise_removed, "step3_noise_removed", 0.0, 0.4, 1.0);
+    addAvoidLine(debug.step3_grad_filtered_1st, "step3_grad_filtered_1st", 0.2, 0.8, 0.0, 0.3);
+    addAvoidLine(debug.step3_grad_filtered_2nd, "step3_grad_filtered_2nd", 0.4, 0.6, 0.0, 0.3);
+    addAvoidLine(debug.step3_grad_filtered_3rd, "step3_grad_filtered_3rd", 0.6, 0.4, 0.0, 0.3);
   }
 
   // registering process
   {
     addShiftLine(shifter.getShiftLines(), "step4_old_shift_line", 1.0, 1.0, 0.0, 0.3);
-    addAvoidLine(debug.step4_new_shift_line, "step4_new_shift_line", 1.0, 0.0, 0.0, 0.3);
-    addAvoidLine(data.unapproved_new_sl, "step4_valid_shift_line", 1.0, 0.0, 0.0, 0.3);
+    addAvoidLine(data.raw_shift_line, "step4_raw_shift_line", 1.0, 0.0, 0.0, 0.3);
+    addAvoidLine(data.new_shift_line, "step4_new_shift_line", 1.0, 0.0, 0.0, 0.3);
   }
 
   // safety check
@@ -2745,6 +2751,77 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
                         base_link2front + p->stop_buffer;
 
   return object.longitudinal - std::min(variable + constant, p->stop_max_distance);
+}
+
+void AvoidanceModule::insertReturnDeadLine(
+  const bool use_constraints_for_decel, ShiftedPath & shifted_path) const
+{
+  const auto & data = avoid_data_;
+
+  if (!planner_data_->route_handler->isInGoalRouteSection(data.current_lanelets.back())) {
+    RCLCPP_DEBUG(getLogger(), "goal is far enough.");
+    return;
+  }
+
+  const auto shift_length = path_shifter_.getLastShiftLength();
+
+  if (std::abs(shift_length) < 1e-3) {
+    RCLCPP_DEBUG(getLogger(), "don't have to consider return shift.");
+    return;
+  }
+
+  const auto min_return_distance = helper_.getMinAvoidanceDistance(shift_length);
+
+  const auto to_goal = calcSignedArcLength(
+    shifted_path.path.points, getEgoPosition(), shifted_path.path.points.size() - 1);
+  const auto to_stop_line = to_goal - min_return_distance - parameters_->remain_buffer_distance;
+
+  // If we don't need to consider deceleration constraints, insert a deceleration point
+  // and return immediately
+  if (!use_constraints_for_decel) {
+    utils::avoidance::insertDecelPoint(
+      getEgoPosition(), to_stop_line - parameters_->stop_buffer, 0.0, shifted_path.path,
+      stop_pose_);
+    return;
+  }
+
+  // If the stop distance is not enough for comfortable stop, don't insert wait point.
+  const auto is_comfortable_stop = helper_.getFeasibleDecelDistance(0.0) < to_stop_line;
+  if (!is_comfortable_stop) {
+    RCLCPP_DEBUG(getLogger(), "stop distance is not enough.");
+    return;
+  }
+
+  utils::avoidance::insertDecelPoint(
+    getEgoPosition(), to_stop_line - parameters_->stop_buffer, 0.0, shifted_path.path, stop_pose_);
+
+  // insert slow down speed.
+  const double current_target_velocity = PathShifter::calcFeasibleVelocityFromJerk(
+    shift_length, helper_.getLateralMinJerkLimit(), to_stop_line);
+  if (current_target_velocity < getEgoSpeed()) {
+    RCLCPP_DEBUG(getLogger(), "current velocity exceeds target slow down speed.");
+    return;
+  }
+
+  const auto start_idx = planner_data_->findEgoIndex(shifted_path.path.points);
+  for (size_t i = start_idx; i < shifted_path.path.points.size(); ++i) {
+    const auto distance_from_ego = calcSignedArcLength(shifted_path.path.points, start_idx, i);
+
+    // slow down speed is inserted only in front of the object.
+    const auto shift_longitudinal_distance = to_stop_line - distance_from_ego;
+    if (shift_longitudinal_distance < 0.0) {
+      break;
+    }
+
+    // target speed with nominal jerk limits.
+    const double v_target = PathShifter::calcFeasibleVelocityFromJerk(
+      shift_length, helper_.getLateralMinJerkLimit(), shift_longitudinal_distance);
+    const double v_original = shifted_path.path.points.at(i).point.longitudinal_velocity_mps;
+    const double v_insert =
+      std::max(v_target - parameters_->buf_slow_down_speed, parameters_->min_slow_down_speed);
+
+    shifted_path.path.points.at(i).point.longitudinal_velocity_mps = std::min(v_original, v_insert);
+  }
 }
 
 void AvoidanceModule::insertWaitPoint(
@@ -2876,6 +2953,12 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
   }
 
   const auto object = data.target_objects.front();
+
+  const auto enough_space =
+    object.is_avoidable || object.reason == AvoidanceDebugFactor::TOO_LARGE_JERK;
+  if (!enough_space) {
+    return;
+  }
 
   // calculate shift length for front object.
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
