@@ -112,9 +112,7 @@ NDTScanMatcher::NDTScanMatcher()
   base_frame_ = this->declare_parameter<std::string>("base_frame");
   RCLCPP_INFO(get_logger(), "base_frame_id: %s", base_frame_.c_str());
 
-  if (this->has_parameter("ndt_base_frame")) {
-    ndt_base_frame_ = this->declare_parameter<std::string>("ndt_base_frame");
-  }
+  ndt_base_frame_ = this->declare_parameter<std::string>("ndt_base_frame");
   RCLCPP_INFO(get_logger(), "ndt_base_frame_id: %s", ndt_base_frame_.c_str());
 
   pclomp::NdtParams ndt_params{};
