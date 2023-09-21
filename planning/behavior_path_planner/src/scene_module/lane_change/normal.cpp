@@ -907,7 +907,8 @@ bool NormalLaneChange::getLaneChangePaths(
 
   const auto target_objects = getTargetObjects(current_lanes, target_lanes);
 
-  candidate_paths->reserve(longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num * prepare_durations.size());
+  candidate_paths->reserve(
+    longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num * prepare_durations.size());
 
   const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
 
