@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="estimator_switch_plugin" default="multi_pose_estimator::PcdOccupancyRule" description=""/>
   <arg name="pose_sources" default="" description=""/>
 
   <node pkg="pose_estimator_manager" exec="pose_estimator_manager" name="pose_estimator_manager" output="screen" args="--ros-args --log-level info">

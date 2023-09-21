@@ -133,7 +133,18 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
     };
   }
 
-  // (6) If PCD density is enough,
+  // (6) If PCD is not subscribed yet
+  if (!kdtree_) {
+    debug_string_msg_ = "enable YabLoc\npcd is not subscribed yet";
+    RCLCPP_WARN_STREAM(get_logger(), "Enable YABLOC");
+    return {
+      {PoseEstimatorName::NDT, false},
+      {PoseEstimatorName::YABLOC, true},
+      {PoseEstimatorName::EAGLEYE, false},
+    };
+  }
+
+  // (7) If PCD density is enough,
   const auto position = latest_pose_->pose.pose.position;
   const pcl::PointXYZ query(position.x, position.y, position.z);
   std::vector<int> indices;

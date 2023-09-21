@@ -33,8 +33,14 @@ endfunction()
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   add_testcase(test/map_based_rule.cpp)
+
+  add_ros_test(
+    test/pose_estimator_manager.test.py
+    TIMEOUT "30"
+  )
 endif()
 
+# ==============================
 ament_auto_package(INSTALL_TO_SHARE
   launch
 )
