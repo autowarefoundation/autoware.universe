@@ -61,7 +61,7 @@ void BehaviorVelocityPlannerManager::launchScenePlugin(
     const auto plugin = plugin_loader_.createSharedInstance(name);
     plugin->init(node);
 
-    // Check if the plugin is already registered. 
+    // Check if the plugin is already registered.
     for (const auto & running_plugin : scene_manager_plugins_) {
       if (plugin->getModuleName() == running_plugin->getModuleName()) {
         RCLCPP_WARN_STREAM(node.get_logger(), "The plugin '" << name << "' is already loaded.");
