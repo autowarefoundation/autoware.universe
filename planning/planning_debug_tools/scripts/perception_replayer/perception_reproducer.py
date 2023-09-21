@@ -15,7 +15,7 @@
 # limitations under the License.
 
 import argparse
-import copy
+import pickle
 
 from perception_replayer_common import PerceptionReplayerCommon
 import rclpy
@@ -31,14 +31,25 @@ class PerceptionReproducer(PerceptionReplayerCommon):
         self.ego_pose_idx = None
         self.prev_traffic_signals_msg = None
 
-        # start timer callback
+        # start main timer callback
         self.timer = self.create_timer(0.1, self.on_timer)
+
+        # kill perception process to avoid a conflict of the perception topics
+        self.timer_check_perception_process = self.create_timer(3.0, self.on_timer_kill_perception)
+
+        # To ensure the search doesn't get stuck in a local solution, it periodically resets the search results.
+        self.timer_reset_ego_idx = self.create_timer(3.0, self.on_timer_reset_ego_idx)
+
         print("Start timer callback")
+
+    def on_timer_kill_perception(self):
+        self.kill_online_perception_node()
+
+    def on_timer_reset_ego_idx(self):
+        self.ego_pose_idx = None
 
     def on_timer(self):
         timestamp = self.get_clock().now().to_msg()
-
-        self.kill_online_perception_node()
 
         if self.args.detected_object:
             pointcloud_msg = create_empty_pointcloud(timestamp)
@@ -54,7 +65,9 @@ class PerceptionReproducer(PerceptionReplayerCommon):
         log_ego_pose = ego_odom[1].pose.pose
 
         # extract message by the nearest ego odom timestamp
-        msgs = copy.deepcopy(self.find_topics_by_timestamp(pose_timestamp))
+        msgs_orig = self.find_topics_by_timestamp(pose_timestamp)
+        msgs = pickle.loads(pickle.dumps(msgs_orig))  # this is x5 faster than deepcopy
+
         objects_msg = msgs[0]
         traffic_signals_msg = msgs[1]
 
@@ -85,8 +98,9 @@ class PerceptionReproducer(PerceptionReplayerCommon):
 
     def find_nearest_ego_odom_by_observation(self, ego_pose):
         if self.ego_pose_idx:
-            start_idx = self.ego_pose_idx - 10
-            end_idx = self.ego_pose_idx + 10
+            search_range = int(len(self.rosbag_ego_odom_data) / 20)
+            start_idx = max(self.ego_pose_idx - search_range, 0)
+            end_idx = min(self.ego_pose_idx + search_range, len(self.rosbag_ego_odom_data) - 1)
         else:
             start_idx = 0
             end_idx = len(self.rosbag_ego_odom_data) - 1
@@ -99,6 +113,7 @@ class PerceptionReproducer(PerceptionReplayerCommon):
             if dist < nearest_dist:
                 nearest_dist = dist
                 nearest_idx = idx
+        self.ego_pose_idx = nearest_idx
 
         return self.rosbag_ego_odom_data[nearest_idx]
 

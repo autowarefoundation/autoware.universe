@@ -146,19 +146,26 @@ class PerceptionReplayerCommon(Node):
             except CalledProcessError:
                 pass
 
+    def binary_search(self, data, timestamp):
+        low, high = 0, len(data) - 1
+
+        while low <= high:
+            mid = (low + high) // 2
+            if data[mid][0] < timestamp:
+                low = mid + 1
+            elif data[mid][0] > timestamp:
+                high = mid - 1
+            else:
+                return data[mid][1]
+
+        # Return the next timestamp's data if available
+        if low < len(data):
+            return data[low][1]
+        return None
+
     def find_topics_by_timestamp(self, timestamp):
-        objects_data = None
-        for data in self.rosbag_objects_data:
-            if timestamp < data[0]:
-                objects_data = data[1]
-                break
-
-        traffic_signals_data = None
-        for data in self.rosbag_traffic_signals_data:
-            if timestamp < data[0]:
-                traffic_signals_data = data[1]
-                break
-
+        objects_data = self.binary_search(self.rosbag_objects_data, timestamp)
+        traffic_signals_data = self.binary_search(self.rosbag_traffic_signals_data, timestamp)
         return objects_data, traffic_signals_data
 
     def find_ego_odom_by_timestamp(self, timestamp):
