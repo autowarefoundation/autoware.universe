@@ -1221,13 +1221,11 @@ bool IntersectionModule::isOcclusionCleared(
   const double resolution = occ_grid.info.resolution;
   const auto & origin = occ_grid.info.origin.position;
 
-  // NOTE: interesting area is set to 0 for later masking
+  // NOTE: interesting area is set to 255 for later masking
   cv::Mat attention_mask(width, height, CV_8UC1, cv::Scalar(0));
+  cv::Mat unknown_mask_raw(width, height, CV_8UC1, cv::Scalar(0));
   cv::Mat unknown_mask(width, height, CV_8UC1, cv::Scalar(0));
 
-  // (1) prepare detection area mask
-  // attention: 255
-  // non-attention: 0
   Polygon2d grid_poly;
   grid_poly.outer().emplace_back(origin.x, origin.y);
   grid_poly.outer().emplace_back(origin.x + (width - 1) * resolution, origin.y);
@@ -1237,10 +1235,9 @@ bool IntersectionModule::isOcclusionCleared(
   grid_poly.outer().emplace_back(origin.x, origin.y);
   bg::correct(grid_poly);
 
-  std::vector<std::vector<cv::Point>> attention_area_cv_polygons;
-  for (const auto & attention_area : attention_areas) {
-    const auto area2d = lanelet::utils::to2D(attention_area);
-    Polygon2d area2d_poly;
+  auto findCommonCvPolygons =
+    [&](const auto & area2d, std::vector<std::vector<cv::Point>> & cv_polygons) -> void {
+    tier4_autoware_utils::Polygon2d area2d_poly;
     for (const auto & p : area2d) {
       area2d_poly.outer().emplace_back(p.x(), p.y());
     }
@@ -1249,21 +1246,30 @@ bool IntersectionModule::isOcclusionCleared(
     std::vector<Polygon2d> common_areas;
     bg::intersection(area2d_poly, grid_poly, common_areas);
     if (common_areas.empty()) {
-      continue;
+      return;
     }
     for (size_t i = 0; i < common_areas.size(); ++i) {
       common_areas[i].outer().push_back(common_areas[i].outer().front());
       bg::correct(common_areas[i]);
     }
     for (const auto & common_area : common_areas) {
-      std::vector<cv::Point> attention_area_cv_polygon;
+      std::vector<cv::Point> cv_polygon;
       for (const auto & p : common_area.outer()) {
         const int idx_x = static_cast<int>((p.x() - origin.x) / resolution);
         const int idx_y = static_cast<int>((p.y() - origin.y) / resolution);
-        attention_area_cv_polygon.emplace_back(idx_x, height - 1 - idx_y);
+        cv_polygon.emplace_back(idx_x, height - 1 - idx_y);
       }
-      attention_area_cv_polygons.push_back(attention_area_cv_polygon);
+      cv_polygons.push_back(cv_polygon);
     }
+  };
+
+  // (1) prepare detection area mask
+  // attention: 255
+  // non-attention: 0
+  std::vector<std::vector<cv::Point>> attention_area_cv_polygons;
+  for (const auto & attention_area : attention_areas) {
+    const auto area2d = lanelet::utils::to2D(attention_area);
+    findCommonCvPolygons(area2d, attention_area_cv_polygons);
   }
   for (const auto & poly : attention_area_cv_polygons) {
     cv::fillPoly(attention_mask, poly, cv::Scalar(255), cv::LINE_AA);
@@ -1273,30 +1279,7 @@ bool IntersectionModule::isOcclusionCleared(
   std::vector<std::vector<cv::Point>> adjacent_lane_cv_polygons;
   for (const auto & adjacent_lanelet : adjacent_lanelets) {
     const auto area2d = adjacent_lanelet.polygon2d().basicPolygon();
-    Polygon2d area2d_poly;
-    for (const auto & p : area2d) {
-      area2d_poly.outer().emplace_back(p.x(), p.y());
-    }
-    area2d_poly.outer().push_back(area2d_poly.outer().front());
-    bg::correct(area2d_poly);
-    std::vector<Polygon2d> common_areas;
-    bg::intersection(area2d_poly, grid_poly, common_areas);
-    if (common_areas.empty()) {
-      continue;
-    }
-    for (size_t i = 0; i < common_areas.size(); ++i) {
-      common_areas[i].outer().push_back(common_areas[i].outer().front());
-      bg::correct(common_areas[i]);
-    }
-    for (const auto & common_area : common_areas) {
-      std::vector<cv::Point> adjacent_lane_cv_polygon;
-      for (const auto & p : common_area.outer()) {
-        const int idx_x = std::floor<int>((p.x() - origin.x) / resolution);
-        const int idx_y = std::floor<int>((p.y() - origin.y) / resolution);
-        adjacent_lane_cv_polygon.emplace_back(idx_x, height - 1 - idx_y);
-      }
-      adjacent_lane_cv_polygons.push_back(adjacent_lane_cv_polygon);
-    }
+    findCommonCvPolygons(area2d, adjacent_lane_cv_polygons);
   }
   for (const auto & poly : adjacent_lane_cv_polygons) {
     cv::fillPoly(attention_mask, poly, cv::Scalar(0), cv::LINE_AA);
@@ -1304,6 +1287,8 @@ bool IntersectionModule::isOcclusionCleared(
 
   // (2) prepare unknown mask
   // In OpenCV the pixel at (X=x, Y=y) (with left-upper origin) is accessed by img[y, x]
+  // unknown: 255
+  // not-unknown: 0
   for (int x = 0; x < width; x++) {
     for (int y = 0; y < height; y++) {
       const int idx = y * width + x;
@@ -1311,20 +1296,19 @@ bool IntersectionModule::isOcclusionCleared(
       if (
         planner_param_.occlusion.free_space_max <= intensity &&
         intensity < planner_param_.occlusion.occupied_min) {
-        unknown_mask.at<unsigned char>(height - 1 - y, x) = 255;
+        unknown_mask_raw.at<unsigned char>(height - 1 - y, x) = 255;
       }
     }
   }
-
-  // (3) occlusion mask
-  cv::Mat occlusion_mask_raw(width, height, CV_8UC1, cv::Scalar(0));
-  cv::bitwise_and(attention_mask, unknown_mask, occlusion_mask_raw);
-  // (3.1) apply morphologyEx
-  cv::Mat occlusion_mask;
+  // (2.1) apply morphologyEx
   const int morph_size = static_cast<int>(planner_param_.occlusion.denoise_kernel / resolution);
   cv::morphologyEx(
-    occlusion_mask_raw, occlusion_mask, cv::MORPH_OPEN,
+    unknown_mask_raw, unknown_mask, cv::MORPH_OPEN,
     cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morph_size, morph_size)));
+
+  // (3) occlusion mask
+  cv::Mat occlusion_mask(width, height, CV_8UC1, cv::Scalar(0));
+  cv::bitwise_and(attention_mask, unknown_mask, occlusion_mask);
 
   // (4) create distance grid
   // value: 0 - 254: signed distance representing [distance_min, distance_max]
