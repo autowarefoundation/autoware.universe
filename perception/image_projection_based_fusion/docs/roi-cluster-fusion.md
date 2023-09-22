@@ -30,10 +30,10 @@ The clusters are projected onto image planes, and then if the ROIs of clusters a
 
 ## Parameters
 
-The following figure is an inner pipeline of RoI cluster fusion node.
-Please refer to it when you want to optimize parameters.
+The following figure is an inner pipeline overview of RoI cluster fusion node.
+Please refer to it for your parameter settings.
 
-![roi_cluster_fusion_params](./images/roi_cluster_fusion_params.svg)
+![roi_cluster_fusion_pipeline](./images/roi_cluster_fusion_pipeline.svg)
 
 ### Core Parameters
 
