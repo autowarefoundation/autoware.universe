@@ -784,10 +784,10 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
   const Eigen::Map<const RowMatrixXd> covariance = {
     initial_pose_with_cov.pose.covariance.data(), 6, 6};
 
-  // (x, y, z, roll, pitch, yaw) : 6 dim
-  // Only for yaw, use uniform distribution instead of normal distribution
-  // so, 5 dim is normal distribution, 1 dim is uniform distribution
-  // set 5 stddev
+  // Optimizing (x, y, z, roll, pitch, yaw) 6 dimensions.
+  // For the yaw, a uniform distribution is used.
+  // For the remaining 5 dimensions (x, y, z, roll, pitch), a normal distribution is applied.
+  // The standard deviation is set to 5 for these dimensions.
   const int64_t n_startup_trials = 50;
   TreeStructuredParzenEstimator tpe(
     n_startup_trials, std::sqrt(covariance(0, 0)), std::sqrt(covariance(1, 1)),
