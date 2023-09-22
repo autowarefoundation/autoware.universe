@@ -26,15 +26,13 @@ MapUpdateModule::MapUpdateModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
-  rclcpp::CallbackGroup::SharedPtr main_callback_group,
-  std::shared_ptr<std::map<std::string, std::string>> state_ptr)
+  rclcpp::CallbackGroup::SharedPtr main_callback_group)
 : ndt_ptr_(std::move(ndt_ptr)),
   ndt_ptr_mutex_(ndt_ptr_mutex),
   map_frame_(std::move(map_frame)),
   logger_(node->get_logger()),
   clock_(node->get_clock()),
   tf2_listener_module_(std::move(tf2_listener_module)),
-  state_ptr_(std::move(state_ptr)),
   dynamic_map_loading_update_distance_(
     node->declare_parameter<double>("dynamic_map_loading_update_distance")),
   dynamic_map_loading_map_radius_(
@@ -68,49 +66,66 @@ MapUpdateModule::MapUpdateModule(
   map_update_timer_ = rclcpp::create_timer(
     node, clock_, period_ns, std::bind(&MapUpdateModule::map_update_timer_callback, this),
     map_callback_group_);
+
+  diagnostics_module_ = std::make_unique<DiagnosticsModule>(node, "localization", "map_update_module");
+  initialize_diagnostics_key_value();
 }
 
 void MapUpdateModule::callback_ekf_odom(nav_msgs::msg::Odometry::ConstSharedPtr odom_ptr)
 {
+  diagnostics_module_->clearLevelAndMessage();
+
   current_position_ = odom_ptr->pose.pose.position;
 
-  if (last_update_position_ == std::nullopt) {
-    return;
+  bool is_set_current_position = (current_position_ != std::nullopt);
+  bool is_set_last_update_position = (last_update_position_ != std::nullopt);
+
+  validate_is_set_current_position(is_set_current_position);
+  diagnostics_module_->addKeyValue("is_set_last_update_position", is_set_last_update_position);
+
+  if (is_set_current_position && is_set_last_update_position) {
+    double distance = norm_xy(current_position_.value(), last_update_position_.value());
+    diagnostics_module_->addKeyValue("distance_last_updete_position_to_current_position", distance);
+    validate_map_is_in_lidar_range(distance + lidar_radius_, dynamic_map_loading_map_radius_);
   }
-  double distance = norm_xy(current_position_.value(), last_update_position_.value());
-  if (distance + lidar_radius_ > dynamic_map_loading_map_radius_) {
-    RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1, "Dynamic map loading is not keeping up.");
-  }
+
+  diagnostics_module_->publish();
 }
 
 void MapUpdateModule::map_update_timer_callback()
 {
-  if (current_position_ == std::nullopt) {
-    RCLCPP_ERROR_STREAM_THROTTLE(
-      logger_, *clock_, 1,
-      "Cannot find the reference position for map update. Please check if the EKF odometry is "
-      "provided to NDT.");
-    return;
-  }
-  if (last_update_position_ == std::nullopt) return;
+  diagnostics_module_->clearLevelAndMessage();
 
-  // continue only if we should update the map
-  if (should_update_map(current_position_.value())) {
-    RCLCPP_INFO(logger_, "Start updating NDT map (timer_callback)");
-    update_map(current_position_.value());
-    last_update_position_ = current_position_;
+  bool is_set_current_position = (current_position_ != std::nullopt);
+  bool is_set_last_update_position = (last_update_position_ != std::nullopt);
+
+  validate_is_set_current_position(is_set_current_position);
+  diagnostics_module_->addKeyValue("is_set_last_update_position", is_set_last_update_position);
+
+  if (is_set_current_position && is_set_last_update_position) {
+    // continue only if we should update the map
+    if (should_update_map(current_position_.value())) {
+      RCLCPP_INFO(logger_, "Start updating NDT map (timer_callback)");
+      update_map(current_position_.value());
+      last_update_position_ = current_position_;
+    }
   }
+
+  diagnostics_module_->publish();
 }
 
 bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & position) const
 {
   if (last_update_position_ == std::nullopt) return false;
   double distance = norm_xy(position, last_update_position_.value());
+  diagnostics_module_->addKeyValue("distance_last_updete_position_to_current_position", distance);
   return distance > dynamic_map_loading_update_distance_;
 }
 
 void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
 {
+  diagnostics_module_->addKeyValue("is_running_update_map", true);
+
   auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
   request->area.center_x = static_cast<float>(position.x);
   request->area.center_y = static_cast<float>(position.y);
@@ -132,6 +147,8 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
   }
   update_ndt(result.get()->new_pointcloud_with_ids, result.get()->ids_to_remove);
   last_update_position_ = position;
+
+  diagnostics_module_->addKeyValue("is_running_update_map", false);
 }
 
 void MapUpdateModule::update_ndt(
@@ -167,6 +184,7 @@ void MapUpdateModule::update_ndt(
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
   const auto exe_time = static_cast<double>(duration_micro_sec) / 1000.0;
   RCLCPP_INFO(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
+  diagnostics_module_->addKeyValue("latest_update_execution_time", exe_time);
 
   // swap
   (*ndt_ptr_mutex_).lock();
@@ -175,6 +193,7 @@ void MapUpdateModule::update_ndt(
   // than using pointer of pointer.
   *ndt_ptr_ = backup_ndt;
   (*ndt_ptr_mutex_).unlock();
+  diagnostics_module_->addKeyValue("is_set_map_points", true);
 
   publish_partial_pcd_map();
 }
