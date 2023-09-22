@@ -68,7 +68,13 @@ class PerceptionReplayerCommon(Node):
         self.pointcloud_pub = self.create_publisher(
             PointCloud2, "/perception/obstacle_segmentation/pointcloud", 1
         )
-        self.recorded_ego_pub = self.create_publisher(PoseWithCovarianceStamped, "/initialpose", 1)
+        self.recorded_ego_pub_as_initialpose = self.create_publisher(
+            PoseWithCovarianceStamped, "/initialpose", 1
+        )
+
+        self.recorded_ego_pub = self.create_publisher(
+            Odometry, "/perception_reproducer/rosbag_ego_odom", 1
+        )
 
         # load rosbag
         print("Stared loading rosbag")

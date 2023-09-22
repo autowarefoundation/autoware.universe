@@ -97,6 +97,9 @@ class PerceptionReproducer(PerceptionReplayerCommon):
                 translate_objects_coordinate(self.ego_pose, log_ego_pose, objects_msg)
             self.objects_pub.publish(objects_msg)
 
+        # ego odom
+        self.recorded_ego_pub.publish(ego_odom[1])
+
         # traffic signals
         # temporary support old auto msgs
         if traffic_signals_msg:
