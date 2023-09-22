@@ -19,6 +19,10 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+
+#include <boost/geometry/algorithms/centroid.hpp>
+#include <boost/geometry/strategies/cartesian/centroid_bashein_detmer.hpp>
 
 #include <utility>
 
@@ -216,7 +220,7 @@ ObjectData AvoidanceByLaneChange::createObjectData(
 
   // Find the footprint point closest to the path, set to object_data.overhang_distance.
   object_data.overhang_dist = utils::avoidance::calcEnvelopeOverhangDistance(
-    object_data, object_closest_pose, object_data.overhang_pose.position);
+    object_data, data.reference_path, object_data.overhang_pose.position);
 
   // Check whether the the ego should avoid the object.
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;

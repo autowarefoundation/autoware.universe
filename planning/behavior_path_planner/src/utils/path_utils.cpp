@@ -15,12 +15,15 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include "behavior_path_planner/utils/utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/resample/resample.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/interpolation.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
+// #include <lanelet2_core/geometry/Lanelet.h>
 #include <tf2/utils.h>
 
 #include <algorithm>
@@ -418,6 +421,7 @@ void correctDividedPathVelocity(std::vector<PathWithLaneId> & divided_paths)
 {
   for (auto & path : divided_paths) {
     const auto is_driving_forward = motion_utils::isDrivingForward(path.points);
+    // If the number of points in the path is less than 2, don't correct the velocity
     if (!is_driving_forward) {
       continue;
     }

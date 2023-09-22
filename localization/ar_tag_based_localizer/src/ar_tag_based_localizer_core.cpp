@@ -69,9 +69,10 @@ bool ArTagBasedLocalizer::setup()
   */
   marker_size_ = static_cast<float>(this->declare_parameter<double>("marker_size"));
   target_tag_ids_ = this->declare_parameter<std::vector<std::string>>("target_tag_ids");
-  covariance_ = this->declare_parameter<std::vector<double>>("covariance");
+  base_covariance_ = this->declare_parameter<std::vector<double>>("base_covariance");
   distance_threshold_squared_ = std::pow(this->declare_parameter<double>("distance_threshold"), 2);
-  camera_frame_ = this->declare_parameter<std::string>("camera_frame");
+  ekf_time_tolerance_ = this->declare_parameter<double>("ekf_time_tolerance");
+  ekf_position_tolerance_ = this->declare_parameter<double>("ekf_position_tolerance");
   std::string detection_mode = this->declare_parameter<std::string>("detection_mode");
   float min_marker_size = static_cast<float>(this->declare_parameter<double>("min_marker_size"));
   if (detection_mode == "DM_NORMAL") {
@@ -109,20 +110,25 @@ bool ArTagBasedLocalizer::setup()
   /*
     Subscribers
   */
-  image_sub_ = it_->subscribe("~/input/image", 1, &ArTagBasedLocalizer::image_callback, this);
+  rclcpp::QoS qos_sub(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
+  qos_sub.best_effort();
+  image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
+    "~/input/image", qos_sub,
+    std::bind(&ArTagBasedLocalizer::image_callback, this, std::placeholders::_1));
   cam_info_sub_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
-    "~/input/camera_info", 1,
+    "~/input/camera_info", qos_sub,
     std::bind(&ArTagBasedLocalizer::cam_info_callback, this, std::placeholders::_1));
+  ekf_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    "~/input/ekf_pose", qos_sub,
+    std::bind(&ArTagBasedLocalizer::ekf_pose_callback, this, std::placeholders::_1));
 
   /*
     Publishers
   */
-  auto qos = rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
-  qos.reliable();
-  qos.transient_local();
+  rclcpp::QoS qos_pub(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
   image_pub_ = it_->advertise("~/debug/result", 1);
   pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "~/output/pose_with_covariance", qos);
+    "~/output/pose_with_covariance", qos_pub);
 
   RCLCPP_INFO(this->get_logger(), "Setup of ar_tag_based_localizer node is successful!");
   return true;
@@ -164,7 +170,7 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
     geometry_msgs::msg::TransformStamped tf_cam_to_marker_stamped;
     tf2::toMsg(tf_cam_to_marker, tf_cam_to_marker_stamped.transform);
     tf_cam_to_marker_stamped.header.stamp = curr_stamp;
-    tf_cam_to_marker_stamped.header.frame_id = camera_frame_;
+    tf_cam_to_marker_stamped.header.frame_id = msg->header.frame_id;
     tf_cam_to_marker_stamped.child_frame_id = "detected_marker_" + std::to_string(marker.id);
     tf_broadcaster_->sendTransform(tf_cam_to_marker_stamped);
 
@@ -172,7 +178,7 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
     tf2::toMsg(tf_cam_to_marker, pose_cam_to_marker.pose);
     pose_cam_to_marker.header.stamp = curr_stamp;
     pose_cam_to_marker.header.frame_id = std::to_string(marker.id);
-    publish_pose_as_base_link(pose_cam_to_marker);
+    publish_pose_as_base_link(pose_cam_to_marker, msg->header.frame_id);
 
     // drawing the detected markers
     marker.draw(in_image, cv::Scalar(0, 0, 255), 2);
@@ -206,7 +212,14 @@ void ArTagBasedLocalizer::cam_info_callback(const sensor_msgs::msg::CameraInfo &
   cam_info_received_ = true;
 }
 
-void ArTagBasedLocalizer::publish_pose_as_base_link(const geometry_msgs::msg::PoseStamped & msg)
+void ArTagBasedLocalizer::ekf_pose_callback(
+  const geometry_msgs::msg::PoseWithCovarianceStamped & msg)
+{
+  latest_ekf_pose_ = msg;
+}
+
+void ArTagBasedLocalizer::publish_pose_as_base_link(
+  const geometry_msgs::msg::PoseStamped & msg, const std::string & camera_frame_id)
 {
   // Check if frame_id is in target_tag_ids
   if (
@@ -241,7 +254,7 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(const geometry_msgs::msg::Po
   geometry_msgs::msg::TransformStamped camera_to_base_link_tf;
   try {
     camera_to_base_link_tf =
-      tf_buffer_->lookupTransform(camera_frame_, "base_link", tf2::TimePointZero);
+      tf_buffer_->lookupTransform(camera_frame_id, "base_link", tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(), "Could not transform base_link to camera: %s", ex.what());
     return;
@@ -265,8 +278,49 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(const geometry_msgs::msg::Po
   pose_with_covariance_stamped.header.stamp = msg.header.stamp;
   pose_with_covariance_stamped.header.frame_id = "map";
   pose_with_covariance_stamped.pose.pose = tf2::toMsg(map_to_base_link);
-  std::copy(
-    covariance_.begin(), covariance_.end(), pose_with_covariance_stamped.pose.covariance.begin());
+
+  // If latest_ekf_pose_ is older than <ekf_time_tolerance_> seconds compared to current frame, it
+  // will not be published.
+  const rclcpp::Duration tolerance{
+    static_cast<int32_t>(ekf_time_tolerance_),
+    static_cast<uint32_t>((ekf_time_tolerance_ - std::floor(ekf_time_tolerance_)) * 1e9)};
+  if (rclcpp::Time(latest_ekf_pose_.header.stamp) + tolerance < rclcpp::Time(msg.header.stamp)) {
+    RCLCPP_INFO(
+      this->get_logger(),
+      "latest_ekf_pose_ is older than %f seconds compared to current frame. "
+      "latest_ekf_pose_.header.stamp: %d.%d, msg.header.stamp: %d.%d",
+      ekf_time_tolerance_, latest_ekf_pose_.header.stamp.sec, latest_ekf_pose_.header.stamp.nanosec,
+      msg.header.stamp.sec, msg.header.stamp.nanosec);
+    return;
+  }
+
+  // If curr_pose differs from latest_ekf_pose_ by more than <ekf_position_tolerance_>, it will not
+  // be published.
+  const geometry_msgs::msg::Pose curr_pose = pose_with_covariance_stamped.pose.pose;
+  const geometry_msgs::msg::Pose latest_ekf_pose = latest_ekf_pose_.pose.pose;
+  const double diff_x = curr_pose.position.x - latest_ekf_pose.position.x;
+  const double diff_y = curr_pose.position.y - latest_ekf_pose.position.y;
+  const double diff_z = curr_pose.position.z - latest_ekf_pose.position.z;
+  const double diff_distance_squared = diff_x * diff_x + diff_y * diff_y + diff_z * diff_z;
+  const double threshold = ekf_position_tolerance_ * ekf_position_tolerance_;
+  if (threshold < diff_distance_squared) {
+    RCLCPP_INFO(
+      this->get_logger(),
+      "curr_pose differs from latest_ekf_pose_ by more than %f m. "
+      "curr_pose: (%f, %f, %f), latest_ekf_pose: (%f, %f, %f)",
+      ekf_position_tolerance_, curr_pose.position.x, curr_pose.position.y, curr_pose.position.z,
+      latest_ekf_pose.position.x, latest_ekf_pose.position.y, latest_ekf_pose.position.z);
+    return;
+  }
+
+  // ~5[m]: base_covariance
+  // 5~[m]: scaling base_covariance by std::pow(distance/5, 3)
+  const double distance = std::sqrt(distance_squared);
+  const double scale = distance / 5;
+  const double coeff = std::max(1.0, std::pow(scale, 3));
+  for (int i = 0; i < 36; i++) {
+    pose_with_covariance_stamped.pose.covariance[i] = coeff * base_covariance_[i];
+  }
 
   pose_pub_->publish(pose_with_covariance_stamped);
 }

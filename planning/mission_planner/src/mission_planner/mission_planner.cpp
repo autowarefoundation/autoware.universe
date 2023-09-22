@@ -24,6 +24,8 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
+#include <lanelet2_core/geometry/LineString.h>
+
 #include <algorithm>
 #include <array>
 #include <random>
@@ -97,12 +99,14 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
     rclcpp::QoS(1),
     std::bind(&MissionPlanner::on_reroute_availability, this, std::placeholders::_1));
 
-  auto qos_transient_local = rclcpp::QoS{1}.transient_local();
-  sub_vector_map_ = create_subscription<HADMapBin>(
-    "input/vector_map", qos_transient_local,
-    std::bind(&MissionPlanner::on_map, this, std::placeholders::_1));
-
   const auto durable_qos = rclcpp::QoS(1).transient_local();
+  sub_vector_map_ = create_subscription<HADMapBin>(
+    "input/vector_map", durable_qos,
+    std::bind(&MissionPlanner::on_map, this, std::placeholders::_1));
+  sub_modified_goal_ = create_subscription<PoseWithUuidStamped>(
+    "input/modified_goal", durable_qos,
+    std::bind(&MissionPlanner::on_modified_goal, this, std::placeholders::_1));
+
   pub_marker_ = create_publisher<MarkerArray>("debug/route_marker", durable_qos);
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
@@ -117,9 +121,30 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_change_route_points_, this, &MissionPlanner::on_change_route_points);
   adaptor.init_srv(srv_set_mrm_route_, this, &MissionPlanner::on_set_mrm_route);
   adaptor.init_srv(srv_clear_mrm_route_, this, &MissionPlanner::on_clear_mrm_route);
-  adaptor.init_sub(sub_modified_goal_, this, &MissionPlanner::on_modified_goal);
 
+  // Route state will be published when the node gets ready for route api after initialization,
+  // otherwise the mission planner rejects the request for the API.
+  data_check_timer_ = create_wall_timer(
+    std::chrono::milliseconds(100), std::bind(&MissionPlanner::checkInitialization, this));
+}
+
+void MissionPlanner::checkInitialization()
+{
+  if (!planner_->ready()) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 5000, "waiting lanelet map... Route API is not ready.");
+    return;
+  }
+  if (!odometry_) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 5000, "waiting odometry... Route API is not ready.");
+    return;
+  }
+
+  // All data is ready. Now API is available.
+  RCLCPP_INFO(get_logger(), "Route API is ready.");
   change_state(RouteState::Message::UNSET);
+  data_check_timer_->cancel();  // stop timer callback
 }
 
 void MissionPlanner::on_odometry(const Odometry::ConstSharedPtr msg)

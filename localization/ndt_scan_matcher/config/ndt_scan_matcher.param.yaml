@@ -6,6 +6,9 @@
     # Vehicle reference frame
     base_frame: "base_link"
 
+    # NDT reference frame
+    ndt_base_frame: "ndt_base_link"
+
     # Subscriber queue size
     input_sensor_points_queue_size: 1
 
@@ -36,6 +39,9 @@
 
     # The number of particles to estimate initial pose
     initial_estimate_particles_num: 100
+
+    # Tolerance of timestamp difference between current time and sensor pointcloud. [sec]
+    lidar_topic_timeout_sec: 1.0
 
     # Tolerance of timestamp difference between initial_pose and sensor pointcloud. [sec]
     initial_pose_timeout_sec: 1.0

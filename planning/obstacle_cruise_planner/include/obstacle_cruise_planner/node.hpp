@@ -100,6 +100,10 @@ private:
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
   double min_behavior_stop_margin_;
+  bool enable_approaching_on_curve_;
+  double additional_safe_distance_margin_on_curve_;
+  double min_safe_distance_margin_on_curve_;
+  bool suppress_sudden_obstacle_stop_;
 
   std::vector<int> stop_obstacle_types_;
   std::vector<int> inside_cruise_obstacle_types_;
@@ -235,7 +239,7 @@ private:
     }
     void reset(const std::string & uuid) { counter_.emplace(uuid, 0); }
 
-    // NOTE: positive is for meeting entrying condition, and negative is for exiting.
+    // NOTE: positive is for meeting entering condition, and negative is for exiting.
     std::unordered_map<std::string, int> counter_;
     std::vector<std::string> current_uuids_;
   };

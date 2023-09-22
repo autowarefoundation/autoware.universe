@@ -16,8 +16,10 @@
 
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 
@@ -40,7 +42,7 @@ ShiftPullOut::ShiftPullOut(
 {
 }
 
-boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
+boost::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pose & goal_pose)
 {
   const auto & route_handler = planner_data_->route_handler;
   const auto & common_parameters = planner_data_->parameters;
@@ -96,17 +98,48 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
         shift_path.points.begin() + collision_check_end_idx + 1);
     }
 
-    // check lane departure
+    // extract shoulder lanes from pull out lanes
+    lanelet::ConstLanelets shoulder_lanes;
+    std::copy_if(
+      pull_out_lanes.begin(), pull_out_lanes.end(), std::back_inserter(shoulder_lanes),
+      [&route_handler](const auto & pull_out_lane) {
+        return route_handler->isShoulderLanelet(pull_out_lane);
+      });
     const auto drivable_lanes =
-      utils::generateDrivableLanesWithShoulderLanes(road_lanes, pull_out_lanes);
+      utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
     const auto & dp = planner_data_->drivable_area_expansion_parameters;
-    const auto expanded_lanes = utils::expandLanelets(
+    const auto expanded_lanes = utils::transformToLanelets(utils::expandLanelets(
       drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
-      dp.drivable_area_types_to_skip);
+      dp.drivable_area_types_to_skip));
+
+    // crop backward path
+    // removes points which are out of lanes up to the start pose.
+    // this ensures that the backward_path stays within the drivable area when starting from a
+    // narrow place.
+    const size_t start_segment_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+      shift_path.points, start_pose, common_parameters.ego_nearest_dist_threshold,
+      common_parameters.ego_nearest_yaw_threshold);
+    PathWithLaneId cropped_path{};
+    for (size_t i = 0; i < shift_path.points.size(); ++i) {
+      const Pose pose = shift_path.points.at(i).point.pose;
+      const auto transformed_vehicle_footprint =
+        transformVector(vehicle_footprint_, tier4_autoware_utils::pose2transform(pose));
+      const bool is_out_of_lane =
+        LaneDepartureChecker::isOutOfLane(expanded_lanes, transformed_vehicle_footprint);
+      if (i <= start_segment_idx) {
+        if (!is_out_of_lane) {
+          cropped_path.points.push_back(shift_path.points.at(i));
+        }
+      } else {
+        cropped_path.points.push_back(shift_path.points.at(i));
+      }
+    }
+    shift_path.points = cropped_path.points;
+
+    // check lane departure
     if (
       parameters_.check_shift_path_lane_departure &&
-      lane_departure_checker_->checkPathWillLeaveLane(
-        utils::transformToLanelets(expanded_lanes), path_start_to_end)) {
+      lane_departure_checker_->checkPathWillLeaveLane(expanded_lanes, path_start_to_end)) {
       continue;
     }
 
@@ -163,9 +196,12 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   // non_shifted_path for when shift length or pull out distance is too short
   const PullOutPath non_shifted_path = std::invoke([&]() {
     PullOutPath non_shifted_path{};
+    // In non_shifted_path, to minimize safety checks, 0 is assigned to prevent the predicted_path
+    // of the ego vehicle from becoming too large.
     non_shifted_path.partial_paths.push_back(road_lane_reference_path);
     non_shifted_path.start_pose = start_pose;
     non_shifted_path.end_pose = start_pose;
+    non_shifted_path.pairs_terminal_velocity_and_accel.push_back(std::make_pair(0, 0));
     return non_shifted_path;
   });
 
@@ -263,6 +299,9 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       continue;
     }
 
+    shifted_path.path =
+      utils::start_goal_planner_common::removeInverseOrderPathPoints(shifted_path.path);
+
     // set velocity
     const size_t pull_out_end_idx =
       findNearestIndex(shifted_path.path.points, shift_end_pose_ptr->position);
@@ -283,6 +322,8 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     candidate_path.partial_paths.push_back(shifted_path.path);
     candidate_path.start_pose = shift_line.start;
     candidate_path.end_pose = shift_line.end;
+    candidate_path.pairs_terminal_velocity_and_accel.push_back(
+      std::make_pair(terminal_velocity, longitudinal_acc));
     candidate_paths.push_back(candidate_path);
   }
 

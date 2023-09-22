@@ -55,24 +55,37 @@ PredictedObjects filterObjects(
   const std::shared_ptr<ObjectsFilteringParams> & params);
 
 /**
- * @brief Filter objects based on their velocity.
+ * @brief Filters objects based on their velocity.
  *
- * @param objects The predicted objects to filter.
- * @param lim_v Velocity limit for filtering.
- * @return PredictedObjects The filtered objects.
- */
-PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v);
-
-/**
- * @brief Filter objects based on a velocity range.
+ * Depending on the remove_above_threshold parameter, this function either removes objects with
+ * velocities above the given threshold or only keeps those objects. It uses the helper function
+ * filterObjectsByVelocity() to do the actual filtering.
  *
- * @param objects The predicted objects to filter.
- * @param min_v Minimum velocity for filtering.
- * @param max_v Maximum velocity for filtering.
- * @return PredictedObjects The filtered objects.
+ * @param objects The objects to be filtered.
+ * @param velocity_threshold The velocity threshold for the filtering.
+ * @param remove_above_threshold If true, objects with velocities above the threshold are removed.
+ *                               If false, only objects with velocities above the threshold are
+ * kept.
+ * @return A new collection of objects that have been filtered according to the rules.
  */
 PredictedObjects filterObjectsByVelocity(
-  const PredictedObjects & objects, double min_v, double max_v);
+  const PredictedObjects & objects, const double velocity_threshold,
+  const bool remove_above_threshold = true);
+
+/**
+ * @brief Helper function to filter objects based on their velocity.
+ *
+ * This function iterates over all objects and calculates their velocity norm. If the velocity norm
+ * is within the velocity_threshold and max_velocity range, the object is added to a new collection.
+ * This new collection is then returned.
+ *
+ * @param objects The objects to be filtered.
+ * @param velocity_threshold The minimum velocity for an object to be included in the output.
+ * @param max_velocity The maximum velocity for an object to be included in the output.
+ * @return A new collection of objects that have been filtered according to the rules.
+ */
+PredictedObjects filterObjectsByVelocity(
+  const PredictedObjects & objects, double velocity_threshold, double max_velocity);
 
 /**
  * @brief Filter objects based on their position relative to a current_pose.
@@ -87,6 +100,7 @@ void filterObjectsByPosition(
   PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance);
+
 /**
  * @brief Filters the provided objects based on their classification.
  *
@@ -124,19 +138,31 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
   const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
 
 /**
- * @brief Create a predicted path based on ego vehicle parameters.
+ * @brief Create a predicted path using the provided parameters.
  *
- * @param ego_predicted_path_params Parameters for ego's predicted path.
- * @param path_points Points on the path.
- * @param vehicle_pose Current pose of the ego-vehicle.
+ * The function predicts the path based on the current vehicle pose, its current velocity,
+ * and certain parameters related to the vehicle's behavior and environment. The prediction
+ * considers acceleration, delay before departure, and maximum velocity constraints.
+ *
+ * During the delay before departure, the vehicle's velocity is assumed to be zero, and it does
+ * not move. After the delay, the vehicle starts to accelerate as per the provided parameters
+ * until it reaches the maximum allowable velocity or the specified time horizon.
+ *
+ * @param ego_predicted_path_params Parameters associated with the ego's predicted path behavior.
+ * @param path_points Path points to be followed by the vehicle.
+ * @param vehicle_pose Current pose of the vehicle.
  * @param current_velocity Current velocity of the vehicle.
- * @param ego_seg_idx Index of the ego segment.
- * @return std::vector<PoseWithVelocityStamped> The predicted path.
+ * @param ego_seg_idx Segment index where the ego vehicle is currently located on the path.
+ * @param is_object_front Flag indicating if there is an object in front of the ego vehicle.
+ * @param limit_to_max_velocity Flag indicating if the predicted path should consider the
+ *                              maximum allowable velocity.
+ * @return std::vector<PoseWithVelocityStamped> Predicted path based on the input parameters.
  */
 std::vector<PoseWithVelocityStamped> createPredictedPath(
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::vector<PathPointWithLaneId> & path_points,
-  const geometry_msgs::msg::Pose & vehicle_pose, const double current_velocity, size_t ego_seg_idx);
+  const geometry_msgs::msg::Pose & vehicle_pose, const double current_velocity,
+  const size_t ego_seg_idx, const bool is_object_front, const bool limit_to_max_velocity);
 
 /**
  * @brief Checks if the centroid of a given object is within the provided lanelets.
@@ -173,6 +199,20 @@ TargetObjectsOnLane createTargetObjectsOnLane(
   const lanelet::ConstLanelets & current_lanes, const std::shared_ptr<RouteHandler> & route_handler,
   const PredictedObjects & filtered_objects,
   const std::shared_ptr<ObjectsFilteringParams> & params);
+
+/**
+ * @brief Determines whether the predicted object type matches any of the target object types
+ * specified by the user.
+ *
+ * @param object The predicted object whose type is to be checked.
+ * @param target_object_types A structure containing boolean flags for each object type that the
+ * user is interested in checking.
+ *
+ * @return Returns true if the predicted object's highest probability label matches any of the
+ * specified target object types.
+ */
+bool isTargetObjectType(
+  const PredictedObject & object, const ObjectTypesToCheck & target_object_types);
 
 }  // namespace behavior_path_planner::utils::path_safety_checker
 

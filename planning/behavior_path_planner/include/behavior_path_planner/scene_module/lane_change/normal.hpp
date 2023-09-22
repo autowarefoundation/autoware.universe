@@ -26,6 +26,8 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityAndPolygonStamped;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
@@ -33,8 +35,6 @@ using behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygo
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using marker_utils::CollisionCheckDebug;
-using marker_utils::CollisionCheckDebugMap;
 using route_handler::Direction;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
@@ -140,12 +140,14 @@ protected:
 
   PathSafetyStatus isLaneChangePathSafe(
     const LaneChangePath & lane_change_path, const LaneChangeTargetObjects & target_objects,
-    const double front_decel, const double rear_decel,
-    std::unordered_map<std::string, CollisionCheckDebug> & debug_data) const;
+    const utils::path_safety_checker::RSSparams & rss_params,
+    CollisionCheckDebugMap & debug_data) const;
 
   LaneChangeTargetObjectIndices filterObject(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
     const lanelet::ConstLanelets & target_backward_lanes) const;
+
+  void setStopPose(const Pose & stop_pose);
 
   rclcpp::Logger logger_ = rclcpp::get_logger("lane_change").get_child(getModuleTypeStr());
 };
