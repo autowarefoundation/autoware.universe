@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
+#include "behavior_path_planner/scene_module/template/template_module.hpp"
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/side_shift/util.hpp"
+#include "behavior_path_planner/utils/template/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -479,7 +479,7 @@ void SideShiftModule::setDebugMarkersVisualization() const
   };
 
   if (debug_data_.path_shifter) {
-    add_shift_line_marker("side_shift_shift_points", 0.7, 0.7, 0.7, 0.4);
+    add_shift_line_marker("template_shift_points", 0.7, 0.7, 0.7, 0.4);
   }
 }
 }  // namespace behavior_path_planner
