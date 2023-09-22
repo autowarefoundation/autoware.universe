@@ -154,13 +154,13 @@ void BlockageDiagComponent::filter(
   std::scoped_lock lock(mutex_);
   int vertical_bins = vertical_bins_;
   int ideal_horizontal_bins;
-  float distance_coeffients = 327.67f;
+  float distance_coefficient = 327.67f;
   float horizontal_resolution_ = 0.4f;
   if (lidar_model_ == "Pandar40P") {
-    distance_coeffients = 327.67f;
+    distance_coefficient = 327.67f;
     horizontal_resolution_ = 0.4f;
   } else if (lidar_model_ == "PandarQT") {
-    distance_coeffients = 3276.75f;
+    distance_coefficient = 3276.75f;
     horizontal_resolution_ = 0.6f;
   }
   ideal_horizontal_bins =
@@ -201,10 +201,10 @@ void BlockageDiagComponent::filter(
            (horizontal_bin_reference.at(horizontal_bin) + horizontal_resolution_ / 2))) {
           if (lidar_model_ == "Pandar40P") {
             full_size_depth_map.at<uint16_t>(p.ring, horizontal_bin) =
-              UINT16_MAX - distance_coeffients * p.distance;
+              UINT16_MAX - distance_coefficient * p.distance;
           } else if (lidar_model_ == "PandarQT") {
             full_size_depth_map.at<uint16_t>(vertical_bins - p.ring - 1, horizontal_bin) =
-              UINT16_MAX - distance_coeffients * p.distance;
+              UINT16_MAX - distance_coefficient * p.distance;
           }
         }
       }
@@ -301,12 +301,12 @@ void BlockageDiagComponent::filter(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   cv::Mat multi_frame_dust_mask(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
-  cv::Mat multi_frame_gronud_dust_result(
+  cv::Mat multi_frame_ground_dust_result(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   dust_buffering_frame_counter_++;
 
   if (dust_buffering_interval_ == 0) {
-    single_dust_img.copyTo(multi_frame_gronud_dust_result);
+    single_dust_img.copyTo(multi_frame_ground_dust_result);
     dust_buffering_frame_counter_ = 0;
   } else {
     binarized_dust_mask_ = single_dust_img / 255;
@@ -319,7 +319,7 @@ void BlockageDiagComponent::filter(
     }
     cv::inRange(
       multi_frame_dust_mask, dust_mask_buffer.size() - 1, dust_mask_buffer.size(),
-      multi_frame_gronud_dust_result);
+      multi_frame_ground_dust_result);
   }
   cv::Mat single_frame_ground_dust_colorized(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0, 0, 0));
@@ -332,7 +332,7 @@ void BlockageDiagComponent::filter(
   blockage_dust_merged_img.setTo(
     cv::Vec3b(0, 0, 255), time_series_blockage_result);  // red:blockage
   blockage_dust_merged_img.setTo(
-    cv::Vec3b(0, 255, 255), multi_frame_gronud_dust_result);  // yellow:dust
+    cv::Vec3b(0, 255, 255), multi_frame_ground_dust_result);  // yellow:dust
   sensor_msgs::msg::Image::SharedPtr single_frame_dust_mask_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", single_frame_ground_dust_colorized)
       .toImageMsg();
