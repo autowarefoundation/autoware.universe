@@ -45,8 +45,7 @@ motion_utils::VirtualWalls TemplateModule::createVirtualWalls()
 bool TemplateModule::modifyPathVelocity(
   [[maybe_unused]] PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
-  RCLCPP_INFO(logger_, "Template Module execution");
-
+  RCLCPP_INFO_ONCE(logger_, "Template Module is executing!");
   return false;
 }
 
