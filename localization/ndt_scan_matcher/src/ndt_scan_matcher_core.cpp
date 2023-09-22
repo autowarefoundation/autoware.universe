@@ -92,6 +92,7 @@ NDTScanMatcher::NDTScanMatcher()
   converged_param_transform_probability_(4.5),
   converged_param_nearest_voxel_transformation_likelihood_(2.3),
   initial_estimate_particles_num_(100),
+  n_startup_trials_(50),
   lidar_topic_timeout_sec_(1.0),
   initial_pose_timeout_sec_(1.0),
   initial_pose_distance_tolerance_m_(10.0),
@@ -154,6 +155,7 @@ NDTScanMatcher::NDTScanMatcher()
   }
 
   initial_estimate_particles_num_ = this->declare_parameter<int>("initial_estimate_particles_num");
+  n_startup_trials_ = this->declare_parameter<int>("n_startup_trials");
 
   rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group;
   initial_pose_callback_group =
@@ -788,9 +790,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
   // For the yaw, a uniform distribution is used.
   // For the remaining 5 dimensions (x, y, z, roll, pitch), a normal distribution is applied.
   // The standard deviation is set to 5 for these dimensions.
-  const int64_t n_startup_trials = 50;
   TreeStructuredParzenEstimator tpe(
-    n_startup_trials, std::sqrt(covariance(0, 0)), std::sqrt(covariance(1, 1)),
+    n_startup_trials_, std::sqrt(covariance(0, 0)), std::sqrt(covariance(1, 1)),
     std::sqrt(covariance(2, 2)), std::sqrt(covariance(3, 3)), std::sqrt(covariance(4, 4)));
 
   std::vector<Particle> particle_array;
