@@ -31,6 +31,7 @@
   <depend>pcl_msgs</depend>
   <depend>pcl_ros</depend>
   <depend>point_cloud_msg_wrapper</depend>
+  <depend>range-v3</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
@@ -45,6 +46,7 @@
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
+  <test_depend>ros_testing</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

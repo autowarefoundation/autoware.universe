@@ -14,20 +14,27 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_
 
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/lane_change/base_class.hpp"
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
+using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityAndPolygonStamped;
+using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
+using behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using marker_utils::CollisionCheckDebugMap;
 using route_handler::Direction;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
@@ -55,6 +62,8 @@ public:
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) override;
 
+  void insertStopPoint(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path) override;
+
   PathWithLaneId getReferencePath() const override;
 
   std::optional<PathWithLaneId> extendPath() override;
@@ -69,7 +78,9 @@ public:
 
   bool isRequiredStop(const bool is_object_coming_from_rear) const override;
 
-  bool isNearEndOfLane() const override;
+  bool isNearEndOfCurrentLanes(
+    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+    const double threshold) const override;
 
   bool hasFinishedLaneChange() const override;
 
@@ -83,6 +94,8 @@ public:
 
   bool isAbortState() const override;
 
+  bool isLaneChangeRequired() const override;
+
 protected:
   lanelet::ConstLanelets getCurrentLanes() const override;
 
@@ -91,47 +104,52 @@ protected:
 
   int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
 
+  std::vector<double> sampleLongitudinalAccValues(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
+
+  double calcPrepareDuration(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
+
+  LaneChangeTargetObjects getTargetObjects(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
+
   PathWithLaneId getPrepareSegment(
-    const lanelet::ConstLanelets & current_lanes, const double arc_length_from_current,
-    const double backward_path_length, const double prepare_length) const override;
+    const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
+    const double prepare_length) const override;
+
+  PathWithLaneId getTargetSegment(
+    const lanelet::ConstLanelets & target_lanes, const Pose & lane_changing_start_pose,
+    const double target_lane_length, const double lane_changing_length,
+    const double lane_changing_velocity, const double buffer_for_next_lane_change) const;
+
+  bool hasEnoughLength(
+    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes, const Direction direction = Direction::NONE) const;
 
   bool getLaneChangePaths(
-    const lanelet::ConstLanelets & original_lanelets,
-    const lanelet::ConstLanelets & target_lanelets, Direction direction,
-    LaneChangePaths * candidate_paths) const override;
-
-  std::vector<DrivableLanes> getDrivableLanes() const override;
+    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+    Direction direction, LaneChangePaths * candidate_paths,
+    const bool check_safety = true) const override;
 
   TurnSignalInfo calcTurnSignalInfo() override;
 
   bool isValidPath(const PathWithLaneId & path) const override;
-};
 
-class NormalLaneChangeBT : public NormalLaneChange
-{
-public:
-  NormalLaneChangeBT(
-    const std::shared_ptr<LaneChangeParameters> & parameters, LaneChangeModuleType type,
-    Direction direction);
+  PathSafetyStatus isLaneChangePathSafe(
+    const LaneChangePath & lane_change_path, const LaneChangeTargetObjects & target_objects,
+    const utils::path_safety_checker::RSSparams & rss_params,
+    CollisionCheckDebugMap & debug_data) const;
 
-  NormalLaneChangeBT(const NormalLaneChangeBT &) = delete;
-  NormalLaneChangeBT(NormalLaneChangeBT &&) = delete;
-  NormalLaneChangeBT & operator=(const NormalLaneChangeBT &) = delete;
-  NormalLaneChangeBT & operator=(NormalLaneChangeBT &&) = delete;
-  ~NormalLaneChangeBT() override = default;
+  LaneChangeTargetObjectIndices filterObject(
+    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+    const lanelet::ConstLanelets & target_backward_lanes) const;
 
-  PathWithLaneId getReferencePath() const override;
+  void setStopPose(const Pose & stop_pose);
 
-protected:
-  lanelet::ConstLanelets getCurrentLanes() const override;
-
-  int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
-
-  PathWithLaneId getPrepareSegment(
-    const lanelet::ConstLanelets & current_lanes, const double arc_length_from_current,
-    const double backward_path_length, const double prepare_length) const override;
-
-  std::vector<DrivableLanes> getDrivableLanes() const override;
+  rclcpp::Logger logger_ = rclcpp::get_logger("lane_change").get_child(getModuleTypeStr());
 };
 }  // namespace behavior_path_planner
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_

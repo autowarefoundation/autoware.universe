@@ -15,16 +15,20 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
+#include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/primitives/LineString.h>
 
 #include <limits>
 #include <memory>
@@ -46,9 +50,13 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
+
 struct ObjectParameter
 {
-  bool enable{false};
+  bool is_target{false};
+
+  size_t execute_num{1};
 
   double moving_speed_threshold{0.0};
 
@@ -57,6 +65,8 @@ struct ObjectParameter
   double max_expand_ratio{0.0};
 
   double envelope_buffer_margin{0.0};
+
+  double avoid_margin_lateral{1.0};
 
   double safety_buffer_lateral{1.0};
 
@@ -72,27 +82,18 @@ struct AvoidanceParameters
   // computational cost for latter modules.
   double resample_interval_for_output = 3.0;
 
-  // lanelet expand length for right side to find avoidance target vehicles
-  double detection_area_right_expand_dist = 0.0;
-
-  // lanelet expand length for left side to find avoidance target vehicles
-  double detection_area_left_expand_dist = 1.0;
-
   // enable avoidance to be perform only in lane with same direction
-  bool enable_avoidance_over_same_direction{true};
+  bool use_adjacent_lane{true};
 
   // enable avoidance to be perform in opposite lane direction
   // to use this, enable_avoidance_over_same_direction need to be set to true.
-  bool enable_avoidance_over_opposite_direction{true};
+  bool use_opposite_lane{true};
 
-  // enable update path when if detected objects on planner data is gone.
-  bool enable_update_path_when_object_is_gone{false};
+  // if this param is true, it reverts avoidance path when the path is no longer needed.
+  bool enable_cancel_maneuver{false};
 
   // enable avoidance for all parking vehicle
   bool enable_force_avoidance_for_stopped_vehicle{false};
-
-  // enable safety check. if avoidance path is NOT safe, the ego will execute yield maneuver
-  bool enable_safety_check{false};
 
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
@@ -106,180 +107,196 @@ struct AvoidanceParameters
   // use hatched road markings for avoidance
   bool use_hatched_road_markings{false};
 
-  // constrains
-  bool use_constraints_for_decel{false};
+  // use intersection area for avoidance
+  bool use_intersection_areas{false};
 
   // max deceleration for
-  double max_deceleration;
+  double max_deceleration{0.0};
 
   // max jerk
-  double max_jerk;
+  double max_jerk{0.0};
 
   // comfortable deceleration
-  double nominal_deceleration;
+  double nominal_deceleration{0.0};
 
   // comfortable jerk
-  double nominal_jerk;
+  double nominal_jerk{0.0};
+
+  // To prevent large acceleration while avoidance.
+  double max_acceleration{0.0};
 
   // upper distance for envelope polygon expansion.
-  double upper_distance_for_polygon_expansion;
+  double upper_distance_for_polygon_expansion{0.0};
 
   // lower distance for envelope polygon expansion.
-  double lower_distance_for_polygon_expansion;
+  double lower_distance_for_polygon_expansion{0.0};
 
   // Vehicles whose distance to the center of the path is
   // less than this will not be considered for avoidance.
-  double threshold_distance_object_is_on_center;
+  double threshold_distance_object_is_on_center{0.0};
 
   // execute only when there is no intersection behind of the stopped vehicle.
-  double object_ignore_distance_traffic_light;
+  double object_ignore_section_traffic_light_in_front_distance{0.0};
 
   // execute only when there is no crosswalk near the stopped vehicle.
-  double object_ignore_distance_crosswalk_forward;
+  double object_ignore_section_crosswalk_in_front_distance{0.0};
 
   // execute only when there is no crosswalk near the stopped vehicle.
-  double object_ignore_distance_crosswalk_backward;
+  double object_ignore_section_crosswalk_behind_distance{0.0};
 
   // distance to avoid object detection
-  double object_check_forward_distance;
+  double object_check_forward_distance{0.0};
 
   // continue to detect backward vehicles as avoidance targets until they are this distance away
-  double object_check_backward_distance;
+  double object_check_backward_distance{0.0};
 
   // if the distance between object and goal position is less than this parameter, the module ignore
   // the object.
-  double object_check_goal_distance;
+  double object_check_goal_distance{0.0};
 
   // use in judge whether the vehicle is parking object on road shoulder
-  double object_check_shiftable_ratio;
+  double object_check_shiftable_ratio{0.0};
 
   // minimum road shoulder width. maybe 0.5 [m]
-  double object_check_min_road_shoulder_width;
+  double object_check_min_road_shoulder_width{0.0};
 
   // force avoidance
-  double threshold_time_force_avoidance_for_stopped_vehicle;
-
-  // we want to keep this lateral margin when avoiding
-  double lateral_collision_margin;
+  double threshold_time_force_avoidance_for_stopped_vehicle{0.0};
 
   // when complete avoidance motion, there is a distance margin with the object
   // for longitudinal direction
-  double longitudinal_collision_margin_min_distance;
+  double longitudinal_collision_margin_min_distance{0.0};
 
   // when complete avoidance motion, there is a time margin with the object
   // for longitudinal direction
-  double longitudinal_collision_margin_time;
+  double longitudinal_collision_margin_time{0.0};
+
+  // parameters for safety check area
+  bool enable_safety_check{false};
+  bool check_current_lane{false};
+  bool check_shift_side_lane{false};
+  bool check_other_side_lane{false};
+
+  // parameters for safety check target.
+  bool check_unavoidable_object{false};
+  bool check_other_object{false};
+
+  // parameters for collision check.
+  bool check_all_predicted_path{false};
+  double time_horizon_for_front_object{0.0};
+  double time_horizon_for_rear_object{0.0};
+  double safety_check_time_resolution{0.0};
 
   // find adjacent lane vehicles
-  double safety_check_backward_distance;
-
-  // minimum longitudinal margin for vehicles in adjacent lane
-  double safety_check_min_longitudinal_margin;
-
-  // safety check time horizon
-  double safety_check_time_horizon;
-
-  // use in RSS calculation
-  double safety_check_idling_time;
-
-  // use in RSS calculation
-  double safety_check_accel_for_rss;
+  double safety_check_backward_distance{0.0};
 
   // transit hysteresis (unsafe to safe)
-  double safety_check_hysteresis_factor;
+  size_t hysteresis_factor_safe_count;
+  double hysteresis_factor_expand_rate{0.0};
 
   // keep target velocity in yield maneuver
-  double yield_velocity;
-
-  // minimum stop distance
-  double stop_min_distance;
+  double yield_velocity{0.0};
 
   // maximum stop distance
-  double stop_max_distance;
+  double stop_max_distance{0.0};
+
+  // stop buffer
+  double stop_buffer{0.0};
 
   // start avoidance after this time to avoid sudden path change
-  double prepare_time;
+  double prepare_time{0.0};
 
   // Even if the vehicle speed is zero, avoidance will start after a distance of this much.
-  double min_prepare_distance;
+  double min_prepare_distance{0.0};
 
-  // minimum distance while avoiding TODO(Horibe): will be changed to jerk constraint later
-  double min_avoidance_distance;
+  // minimum slow down speed
+  double min_slow_down_speed{0.0};
 
-  // minimum speed for jerk calculation in a nominal situation, i.e. there is an enough
-  // distance for avoidance, and the object is very far from ego. In that case, the
-  // vehicle speed is unknown passing along the object. Then use this speed as a minimum.
-  // Note: This parameter is needed because we have to plan an avoidance path in advance
-  //       without knowing the speed of the distant path.
-  double min_nominal_avoidance_speed;
+  // slow down speed buffer
+  double buf_slow_down_speed{0.0};
 
-  // minimum speed for jerk calculation in a tight situation, i.e. there is NOT an enough
-  // distance for avoidance. Need a sharp avoidance path to avoid the object.
-  double min_sharp_avoidance_speed;
+  // nominal avoidance sped
+  double nominal_avoidance_speed{0.0};
+
+  // module try to return original path to keep this distance from edge point of the path.
+  double remain_buffer_distance{0.0};
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double road_shoulder_safety_margin{1.0};
+  double soft_road_shoulder_margin{1.0};
+
+  // The margin is configured so that the generated avoidance trajectory does not come near to the
+  // road shoulder.
+  double hard_road_shoulder_margin{1.0};
 
   // Even if the obstacle is very large, it will not avoid more than this length for right direction
-  double max_right_shift_length;
+  double max_right_shift_length{0.0};
 
   // Even if the obstacle is very large, it will not avoid more than this length for left direction
-  double max_left_shift_length;
+  double max_left_shift_length{0.0};
 
-  // Avoidance path is generated with this jerk.
-  // If there is no margin, the jerk increases up to max lateral jerk.
-  double nominal_lateral_jerk;
-
-  // if the avoidance path exceeds this lateral jerk, it will be not used anymore.
-  double max_lateral_jerk;
+  // To prevent large acceleration while avoidance.
+  double max_lateral_acceleration{0.0};
 
   // For the compensation of the detection lost. Once an object is observed, it is registered and
   // will be used for planning from the next time. If the object is not observed, it counts up the
   // lost_count and the registered object will be removed when the count exceeds this max count.
-  double object_last_seen_threshold;
-
-  // For velocity planning to avoid acceleration during avoidance.
-  // Speeds smaller than this are not inserted.
-  double min_avoidance_speed_for_acc_prevention;
-
-  // To prevent large acceleration while avoidance. The max velocity is limited with this
-  // acceleration.
-  double max_avoidance_acceleration;
+  double object_last_seen_threshold{0.0};
 
   // The avoidance path generation is performed when the shift distance of the
   // avoidance points is greater than this threshold.
   // In multiple targets case: if there are multiple vehicles in a row to be avoided, no new
   // avoidance path will be generated unless their lateral margin difference exceeds this value.
-  double lateral_execution_threshold;
+  double lateral_execution_threshold{0.0};
 
   // shift lines whose shift length is less than threshold is added a request with other large shift
   // line.
-  double lateral_small_shift_threshold;
+  double lateral_small_shift_threshold{0.0};
+
+  // use for judge if the ego is shifting or not.
+  double lateral_avoid_check_threshold{0.0};
 
   // For shift line generation process. The continuous shift length is quantized by this value.
-  double quantize_filter_threshold;
+  double quantize_filter_threshold{0.0};
 
   // For shift line generation process. Merge small shift lines. (First step)
-  double same_grad_filter_1_threshold;
+  double same_grad_filter_1_threshold{0.0};
 
   // For shift line generation process. Merge small shift lines. (Second step)
-  double same_grad_filter_2_threshold;
+  double same_grad_filter_2_threshold{0.0};
 
   // For shift line generation process. Merge small shift lines. (Third step)
-  double same_grad_filter_3_threshold;
+  double same_grad_filter_3_threshold{0.0};
 
   // For shift line generation process. Remove sharp(=jerky) shift line.
-  double sharp_shift_filter_threshold;
+  double sharp_shift_filter_threshold{0.0};
+
+  // policy
+  bool use_shorten_margin_immediately{false};
+
+  // policy
+  std::string policy_deceleration{"best_effort"};
+
+  // policy
+  std::string policy_lateral_margin{"best_effort"};
 
   // target velocity matrix
-  std::vector<double> target_velocity_matrix;
+  std::vector<double> velocity_map;
 
-  // matrix col size
-  size_t col_size;
+  // Minimum lateral jerk limitation map.
+  std::vector<double> lateral_min_jerk_map;
+
+  // Maximum lateral jerk limitation map.
+  std::vector<double> lateral_max_jerk_map;
+
+  // Maximum lateral acceleration limitation map.
+  std::vector<double> lateral_max_accel_map;
 
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
+
+  // rss parameters
+  utils::path_safety_checker::RSSparams rss_params{};
 
   // clip left and right bounds for objects
   bool enable_bound_clipping{false};
@@ -373,6 +390,9 @@ using ObjectDataArray = std::vector<ObjectData>;
  */
 struct AvoidLine : public ShiftLine
 {
+  // object side
+  bool object_on_right = true;
+
   // Distance from ego to start point in Frenet
   double start_longitudinal = 0.0;
 
@@ -395,6 +415,21 @@ struct AvoidLine : public ShiftLine
   double getGradient() const { return getRelativeLength() / getRelativeLongitudinal(); }
 };
 using AvoidLineArray = std::vector<AvoidLine>;
+
+struct AvoidOutline
+{
+  AvoidOutline(const AvoidLine & avoid_line, const AvoidLine & return_line)
+  : avoid_line{avoid_line}, return_line{return_line}
+  {
+  }
+
+  AvoidLine avoid_line{};
+
+  AvoidLine return_line{};
+
+  AvoidLineArray middle_lines{};
+};
+using AvoidOutlines = std::vector<AvoidOutline>;
 
 /*
  * avoidance state
@@ -447,17 +482,17 @@ struct AvoidancePlanningData
   boost::optional<ObjectData> stop_target_object{boost::none};
 
   // raw shift point
-  AvoidLineArray unapproved_raw_sl{};
+  AvoidLineArray raw_shift_line{};
 
   // new shift point
-  AvoidLineArray unapproved_new_sl{};
+  AvoidLineArray new_shift_line{};
 
   // safe shift point
-  AvoidLineArray safe_new_sl{};
+  AvoidLineArray safe_shift_line{};
 
   bool safe{false};
 
-  bool avoiding_now{false};
+  bool comfortable{false};
 
   bool avoid_required{false};
 
@@ -493,52 +528,37 @@ struct ShiftLineData
 };
 
 /*
- * Data struct for longitudinal margin
- */
-struct MarginData
-{
-  Pose pose{};
-
-  bool enough_lateral_margin{true};
-
-  double longitudinal_distance{std::numeric_limits<double>::max()};
-
-  double longitudinal_margin{std::numeric_limits<double>::lowest()};
-
-  double vehicle_width;
-
-  double base_link2front;
-
-  double base_link2rear;
-};
-using MarginDataArray = std::vector<MarginData>;
-
-/*
  * Debug information for marker array
  */
 struct DebugData
 {
-  std::shared_ptr<lanelet::ConstLanelets> expanded_lanelets;
   std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
+
+  geometry_msgs::msg::Polygon detection_area;
 
   lanelet::ConstLineStrings3d bounds;
 
-  AvoidLineArray current_shift_lines;  // in path shifter
-  AvoidLineArray new_shift_lines;      // in path shifter
+  // combine process
+  AvoidLineArray step1_registered_shift_line;
+  AvoidLineArray step1_current_shift_line;
+  AvoidLineArray step1_filled_shift_line;
+  AvoidLineArray step1_merged_shift_line;
+  AvoidLineArray step1_combined_shift_line;
+  AvoidLineArray step1_return_shift_line;
+  AvoidLineArray step1_front_shift_line;
 
-  AvoidLineArray registered_raw_shift;
-  AvoidLineArray current_raw_shift;
-  AvoidLineArray extra_return_shift;
+  // create outline process
+  AvoidLineArray step2_merged_shift_line;
 
-  AvoidLineArray merged;
-  AvoidLineArray gap_filled;
-  AvoidLineArray trim_similar_grad_shift;
-  AvoidLineArray quantized;
-  AvoidLineArray trim_small_shift;
-  AvoidLineArray trim_similar_grad_shift_second;
-  AvoidLineArray trim_similar_grad_shift_third;
-  AvoidLineArray trim_momentary_return;
-  AvoidLineArray trim_too_sharp_shift;
+  // trimming process
+  AvoidLineArray step3_quantize_filtered;
+  AvoidLineArray step3_noise_filtered;
+  AvoidLineArray step3_grad_filtered_1st;
+  AvoidLineArray step3_grad_filtered_2nd;
+  AvoidLineArray step3_grad_filtered_3rd;
+
+  // registered process
+  AvoidLineArray step4_new_shift_line;
 
   // shift length
   std::vector<double> pos_shift;
@@ -555,14 +575,6 @@ struct DebugData
   // shift path
   std::vector<double> proposed_spline_shift;
 
-  bool exist_adjacent_objects{false};
-
-  // future pose
-  PathWithLaneId path_with_planned_velocity;
-
-  // margin
-  MarginDataArray margin_data_array;
-
   // avoidance require objects
   ObjectDataArray unavoidable_objects;
 
@@ -572,6 +584,10 @@ struct DebugData
   // tmp for plot
   PathWithLaneId center_line;
 
+  // collision check debug map
+  utils::path_safety_checker::CollisionCheckDebugMap collision_check;
+
+  // debug msg array
   AvoidanceDebugMsgArray avoidance_debug_msg_array;
 };
 

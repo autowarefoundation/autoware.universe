@@ -49,50 +49,106 @@ struct DebugData
   autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
   std::optional<geometry_msgs::msg::Point> nearest_occlusion_point = std::nullopt;
   std::optional<geometry_msgs::msg::Point> nearest_occlusion_projection_point = std::nullopt;
-};
-
-struct IntersectionLanelets
-{
-  bool tl_arrow_solid_on;
-  lanelet::ConstLanelets attention;
-  lanelet::ConstLanelets conflicting;
-  lanelet::ConstLanelets adjacent;
-  lanelet::ConstLanelets occlusion_attention;  // for occlusion detection
-  std::vector<lanelet::CompoundPolygon3d> attention_area;
-  std::vector<lanelet::CompoundPolygon3d> conflicting_area;
-  std::vector<lanelet::CompoundPolygon3d> adjacent_area;
-  std::vector<lanelet::CompoundPolygon3d> occlusion_attention_area;
-  // the first area intersecting with the path
-  // even if lane change/re-routing happened on the intersection, these areas area are supposed to
-  // be invariant under the 'associative' lanes.
-  std::optional<lanelet::CompoundPolygon3d> first_conflicting_area;
-  std::optional<lanelet::CompoundPolygon3d> first_attention_area;
-};
-
-struct DescritizedLane
-{
-  int lane_id;
-  // discrete fine lines from left to right
-  std::vector<lanelet::ConstLineString2d> divisions;
+  std::vector<geometry_msgs::msg::Polygon> occlusion_polygons;
 };
 
 struct InterpolatedPathInfo
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId path;
-  double ds;
-  int lane_id;
-  std::set<int> associative_lane_ids;
-  std::optional<std::pair<size_t, size_t>> lane_id_interval;
+  double ds{0.0};
+  int lane_id{0};
+  std::set<int> associative_lane_ids{};
+  std::optional<std::pair<size_t, size_t>> lane_id_interval{std::nullopt};
+};
+
+struct IntersectionLanelets
+{
+public:
+  void update(const bool tl_arrow_solid_on, const InterpolatedPathInfo & interpolated_path_info);
+  const lanelet::ConstLanelets & attention() const
+  {
+    return tl_arrow_solid_on_ ? attention_non_preceding_ : attention_;
+  }
+  const lanelet::ConstLanelets & conflicting() const { return conflicting_; }
+  const lanelet::ConstLanelets & adjacent() const { return adjacent_; }
+  const lanelet::ConstLanelets & occlusion_attention() const
+  {
+    return tl_arrow_solid_on_ ? attention_non_preceding_ : occlusion_attention_;
+  }
+  const std::vector<lanelet::CompoundPolygon3d> & attention_area() const
+  {
+    return tl_arrow_solid_on_ ? attention_non_preceding_area_ : attention_area_;
+  }
+  const std::vector<lanelet::CompoundPolygon3d> & conflicting_area() const
+  {
+    return conflicting_area_;
+  }
+  const std::vector<lanelet::CompoundPolygon3d> & adjacent_area() const { return adjacent_area_; }
+  const std::vector<lanelet::CompoundPolygon3d> & occlusion_attention_area() const
+  {
+    return occlusion_attention_area_;
+  }
+  const std::optional<lanelet::CompoundPolygon3d> & first_conflicting_area() const
+  {
+    return first_conflicting_area_;
+  }
+  const std::optional<lanelet::CompoundPolygon3d> & first_attention_area() const
+  {
+    return first_attention_area_;
+  }
+
+  lanelet::ConstLanelets attention_;
+  lanelet::ConstLanelets attention_non_preceding_;
+  lanelet::ConstLanelets conflicting_;
+  lanelet::ConstLanelets adjacent_;
+  lanelet::ConstLanelets occlusion_attention_;  // for occlusion detection
+  std::vector<lanelet::CompoundPolygon3d> attention_area_;
+  std::vector<lanelet::CompoundPolygon3d> attention_non_preceding_area_;
+  std::vector<lanelet::CompoundPolygon3d> conflicting_area_;
+  std::vector<lanelet::CompoundPolygon3d> adjacent_area_;
+  std::vector<lanelet::CompoundPolygon3d> occlusion_attention_area_;
+  // the first area intersecting with the path
+  // even if lane change/re-routing happened on the intersection, these areas area are supposed to
+  // be invariant under the 'associative' lanes.
+  bool tl_arrow_solid_on_ = false;
+  std::optional<lanelet::CompoundPolygon3d> first_conflicting_area_ = std::nullopt;
+  std::optional<lanelet::CompoundPolygon3d> first_attention_area_ = std::nullopt;
+};
+
+struct DiscretizedLane
+{
+  int lane_id{0};
+  // discrete fine lines from left to right
+  std::vector<lanelet::ConstLineString2d> divisions{};
 };
 
 struct IntersectionStopLines
 {
   // NOTE: for baselink
-  size_t closest_idx;
-  size_t stuck_stop_line;
-  size_t default_stop_line;
-  size_t occlusion_peeking_stop_line;
-  size_t pass_judge_line;
+  size_t closest_idx{0};
+  // NOTE: null if path does not conflict with first_conflicting_area
+  std::optional<size_t> stuck_stop_line{std::nullopt};
+  // NOTE: null if path is over map stop_line OR its value is calculated negative area
+  std::optional<size_t> default_stop_line{std::nullopt};
+  // NOTE: null if footprints do not change from outside to inside of detection area
+  std::optional<size_t> occlusion_peeking_stop_line{std::nullopt};
+  // if the value is calculated negative, its value is 0
+  size_t pass_judge_line{0};
+};
+
+struct PathLanelets
+{
+  lanelet::ConstLanelets prev;
+  // lanelet::ConstLanelet entry2ego; this is included in `all` if exists
+  lanelet::ConstLanelet
+    ego_or_entry2exit;  // this is `assigned lane` part of the path(not from
+                        // ego) if ego is before the intersection, otherwise from ego to exit
+  std::optional<lanelet::ConstLanelet> next =
+    std::nullopt;  // this is nullopt is the goal is inside intersection
+  lanelet::ConstLanelets all;
+  lanelet::ConstLanelets
+    conflicting_interval_and_remaining;  // the left/right-most interval of path conflicting with
+                                         // conflicting lanelets plus the next lane part of the path
 };
 
 }  // namespace behavior_velocity_planner::util

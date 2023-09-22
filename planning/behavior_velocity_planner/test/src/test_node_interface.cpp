@@ -69,6 +69,7 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
      behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml",
      get_behavior_velocity_module_config("blind_spot"),
      get_behavior_velocity_module_config("crosswalk"),
+     get_behavior_velocity_module_config("walkway"),
      get_behavior_velocity_module_config("detection_area"),
      get_behavior_velocity_module_config("intersection"),
      get_behavior_velocity_module_config("no_stopping_area"),
@@ -78,7 +79,8 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
      get_behavior_velocity_module_config("stop_line"),
      get_behavior_velocity_module_config("traffic_light"),
      get_behavior_velocity_module_config("virtual_traffic_light"),
-     get_behavior_velocity_module_config("out_of_lane")});
+     get_behavior_velocity_module_config("out_of_lane"),
+     get_behavior_velocity_module_config("no_drivable_lane")});
 
   // TODO(Takagi, Isamu): set launch_modules
   // TODO(Kyoichi Sugahara) set to true launch_virtual_traffic_light

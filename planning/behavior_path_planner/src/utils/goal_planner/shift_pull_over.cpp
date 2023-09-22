@@ -16,6 +16,8 @@
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -40,21 +42,25 @@ boost::optional<PullOverPath> ShiftPullOver::plan(const Pose & goal_pose)
   const auto & route_handler = planner_data_->route_handler;
   const double min_jerk = parameters_.minimum_lateral_jerk;
   const double max_jerk = parameters_.maximum_lateral_jerk;
+  const double backward_search_length = parameters_.backward_goal_search_length;
+  const double forward_search_length = parameters_.forward_goal_search_length;
   const int shift_sampling_num = parameters_.shift_sampling_num;
   const double jerk_resolution = std::abs(max_jerk - min_jerk) / shift_sampling_num;
 
   // get road and shoulder lanes
-  const auto road_lanes = utils::getExtendedCurrentLanes(planner_data_);
-  const auto shoulder_lanes =
-    goal_planner_utils::getPullOverLanes(*route_handler, left_side_parking_);
-  if (road_lanes.empty() || shoulder_lanes.empty()) {
+  const auto road_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, backward_search_length, forward_search_length,
+    /*forward_only_in_route*/ false);
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    *route_handler, left_side_parking_, backward_search_length, forward_search_length);
+  if (road_lanes.empty() || pull_over_lanes.empty()) {
     return {};
   }
 
   // find safe one from paths with different jerk
   for (double lateral_jerk = min_jerk; lateral_jerk <= max_jerk; lateral_jerk += jerk_resolution) {
     const auto pull_over_path =
-      generatePullOverPath(road_lanes, shoulder_lanes, goal_pose, lateral_jerk);
+      generatePullOverPath(road_lanes, pull_over_lanes, goal_pose, lateral_jerk);
     if (!pull_over_path) continue;
     return *pull_over_path;
   }
@@ -166,6 +172,9 @@ boost::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
     shifted_path.path.points.push_back(p);
   }
 
+  shifted_path.path =
+    utils::start_goal_planner_common::removeInverseOrderPathPoints(shifted_path.path);
+
   // set the same z as the goal
   for (auto & p : shifted_path.path.points) {
     p.point.pose.position.z = goal_pose.position.z;
@@ -200,6 +209,7 @@ boost::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   PullOverPath pull_over_path{};
   pull_over_path.type = getPlannerType();
   pull_over_path.partial_paths.push_back(shifted_path.path);
+  pull_over_path.pairs_terminal_velocity_and_accel.push_back(std::make_pair(pull_over_velocity, 0));
   pull_over_path.start_pose = path_shifter.getShiftLines().front().start;
   pull_over_path.end_pose = path_shifter.getShiftLines().front().end;
   pull_over_path.debug_poses.push_back(shift_end_pose_road_lane);

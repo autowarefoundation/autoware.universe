@@ -16,6 +16,9 @@
 
 #include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
 
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <boost/assign.hpp>
@@ -39,11 +42,11 @@ polygon_t createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t
   return translatePolygon(rotatePolygon(base_footprint, angle), pose.position.x, pose.position.y);
 }
 
-multipolygon_t createObjectFootprints(
+multi_polygon_t createObjectFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const DrivableAreaExpansionParameters & params)
 {
-  multipolygon_t footprints;
+  multi_polygon_t footprints;
   if (params.avoid_dynamic_objects) {
     for (const auto & object : objects.objects) {
       const auto front = object.shape.dimensions.x / 2 + params.dynamic_objects_extra_front_offset;
@@ -62,8 +65,8 @@ multipolygon_t createObjectFootprints(
   return footprints;
 }
 
-multipolygon_t createPathFootprints(
-  const PathWithLaneId & path, const DrivableAreaExpansionParameters & params)
+multi_polygon_t createPathFootprints(
+  const std::vector<PathPointWithLaneId> & points, const DrivableAreaExpansionParameters & params)
 {
   const auto left = params.ego_left_offset + params.ego_extra_left_offset;
   const auto right = params.ego_right_offset - params.ego_extra_right_offset;
@@ -73,11 +76,11 @@ multipolygon_t createPathFootprints(
   base_footprint.outer() = {
     point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left},
     point_t{front, left}};
-  multipolygon_t footprints;
+  multi_polygon_t footprints;
   // skip the last footprint as its orientation is usually wrong
-  footprints.reserve(path.points.size() - 1);
+  footprints.reserve(points.size() - 1);
   double arc_length = 0.0;
-  for (auto it = path.points.begin(); std::next(it) != path.points.end(); ++it) {
+  for (auto it = points.begin(); std::next(it) != points.end(); ++it) {
     footprints.push_back(createFootprint(it->point.pose, base_footprint));
     if (params.max_path_arc_length > 0.0) {
       arc_length += tier4_autoware_utils::calcDistance2d(it->point.pose, std::next(it)->point.pose);

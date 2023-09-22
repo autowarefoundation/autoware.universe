@@ -55,12 +55,12 @@ where `common_param` is vehicle common parameter, which defines vehicle common m
 The `longitudinal_acceleration_resolution` is determine by the following
 
 ```C++
-longitudinal_acceleration_resolution = (maximum_longitudinal_acceleration - minimum_longitudinal_deceleration) / longitudinal_acceleration_sampling_num
+longitudinal_acceleration_resolution = (maximum_longitudinal_acceleration - minimum_longitudinal_acceleration) / longitudinal_acceleration_sampling_num
 ```
 
 Note that when the `current_velocity` is lower than `minimum_lane_changing_velocity`, the vehicle needs to accelerate its velocity to `minimum_lane_changing_velocity`. Therefore, longitudinal acceleration becomes positive value (not decelerate).
 
-The following figure illustrates when `lane_change_sampling_num = 4`. Assuming that `maximum_deceleration = 1.0` then `a0 == 0.0 == no deceleration`, `a1 == 0.25`, `a2 == 0.5`, `a3 == 0.75` and `a4 == 1.0 == maximum_deceleration`. `a0` is the expected lane change trajectories should ego vehicle do not decelerate, and `a1`'s path is the expected lane change trajectories should ego vehicle decelerate at `0.25 m/s^2`.
+The following figure illustrates when `longitudinal_acceleration_sampling_num = 4`. Assuming that `maximum_deceleration = 1.0` then `a0 == 0.0 == no deceleration`, `a1 == 0.25`, `a2 == 0.5`, `a3 == 0.75` and `a4 == 1.0 == maximum_deceleration`. `a0` is the expected lane change trajectories should ego vehicle do not decelerate, and `a1`'s path is the expected lane change trajectories should ego vehicle decelerate at `0.25 m/s^2`.
 
 ![path_samples](../image/lane_change/lane_change-candidate_path_samples.png)
 
@@ -79,12 +79,12 @@ The maximum and minimum lateral accelerations are defined in the lane change par
 | 4.0          | 0.3                          | 0.4                          |
 | 6.0          | 0.3                          | 0.5                          |
 
-In this case, when the current velocity of the ego vehicle is 3.0, the minimum and maximum lateral accelerations are 0.2 and 0.35 respectively. These values are obtained by linearly interpolating the second and third rows of the map, which provide the minimum and maximum lateral acceleration values.
+In this case, when the current velocity of the ego vehicle is 3.0, the minimum and maximum lateral accelerations are 0.25 and 0.4 respectively. These values are obtained by linearly interpolating the second and third rows of the map, which provide the minimum and maximum lateral acceleration values.
 
 Within this range, we sample the lateral acceleration for the ego vehicle. Similar to the method used for sampling longitudinal acceleration, the resolution of lateral acceleration (lateral_acceleration_resolution) is determined by the following:
 
 ```C++
-lateral_acceleration_resolution = (maximum_lateral_acceleration - minimum_lateral_deceleration) / lateral_acceleration_sampling_num
+lateral_acceleration_resolution = (maximum_lateral_acceleration - minimum_lateral_acceleration) / lateral_acceleration_sampling_num
 ```
 
 #### Candidate Path's validity check
@@ -157,6 +157,14 @@ stop
 
 See [safety check utils explanation](../docs/behavior_path_planner_safety_check.md)
 
+#### Objects selection and classification
+
+First, we divide the target objects into obstacles in the target lane, obstacles in the current lane, and obstacles in other lanes. Target lane indicates the lane that the ego vehicle is going to reach after the lane change and current lane mean the current lane where the ego vehicle is following before the lane change. Other lanes are lanes that do not belong to the target and current lanes. The following picture describes objects on each lane. Note that users can remove objects either on current and other lanes from safety check by changing the flag, which are `check_objects_on_current_lanes` and `check_objects_on_other_lanes`.
+
+![object lanes](../image/lane_change/lane_objects.drawio.svg)
+
+Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light.　The explanation for parked car detection is written in [documentation for avoidance module](../docs/behavior_path_planner_avoidance_design.md).
+
 ##### Collision check in prepare phase
 
 The ego vehicle may need to secure ample inter-vehicle distance ahead of the target vehicle before attempting a lane change. The flag `enable_collision_check_at_prepare_phase` can be enabled to gain this behavior. The following image illustrates the differences between the `false` and `true` cases.
@@ -171,20 +179,12 @@ When driving on the public road with other vehicles, there exist scenarios where
 
 ```C++
 lane_changing_time = f(shift_length, lat_acceleration, lat_jerk)
-minimum_lane_change_distance = minimum_prepare_length + minimum_lane_changing_velocity * lane_changing_time + backward_length_buffer_for_end_of_lane
+minimum_lane_change_distance = minimum_prepare_length + minimum_lane_changing_velocity * lane_changing_time + lane_change_finish_judge_buffer
 ```
 
 The following figure illustrates when the lane is blocked in multiple lane changes cases.
 
 ![multiple-lane-changes](../image/lane_change/lane_change-when_cannot_change_lanes.png)
-
-#### Intersection
-
-Lane change in the intersection is prohibited following traffic regulation. Therefore, if the goal is place close passed the intersection, the lane change needs to be completed before ego vehicle enters the intersection region. Similar to the lane blocked case, in case of the path is unsafe, ego vehicle will stop and waits for the dynamic object to pass by.
-
-The following figure illustrate the intersection case.
-
-![intersection](../image/lane_change/lane_change-intersection_case.png)
 
 ### Aborting lane change
 
@@ -209,11 +209,11 @@ while(Lane Following)
           if (Is Abort Condition Satisfied) then (**NO**)
           else (**YES**)
             if (Is Enough margin to retry lane change) then (**YES**)
-              if (Ego not depart from current lane yet) then (**YES**)
+              if (Ego is on lane change prepare phase) then (**YES**)
               :Cancel lane change;
               break
               else (**NO**)
-              if (Can perform abort maneuver) then (**YES**)
+              if (Will the overhang to target lane be less than threshold?) then (**YES**)
               :Perform abort maneuver;
               break
               else (NO)
@@ -240,7 +240,7 @@ detach
 
 Suppose the lane change trajectory is evaluated as unsafe. In that case, if the ego vehicle has not departed from the current lane yet, the trajectory will be reset, and the ego vehicle will resume the lane following the maneuver.
 
-The function can be enabled by setting `enable_cancel_lane_change` to `true`.
+The function can be enabled by setting `enable_on_prepare_phase` to `true`.
 
 The following image illustrates the cancel process.
 
@@ -248,7 +248,7 @@ The following image illustrates the cancel process.
 
 #### Abort
 
-Assume the ego vehicle has already departed from the current lane. In that case, it is dangerous to cancel the path, and it will cause the ego vehicle to change the heading direction abruptly. In this case, planning a trajectory that allows the ego vehicle to return to the current path while minimizing the heading changes is necessary. In this case, the lane change module will generate an abort path. The following images show an example of the abort path. Do note that the function DOESN'T GUARANTEE a safe abort process, as it didn't check the presence of the surrounding objects and/or their reactions. The function can be enable manually by setting both `enable_cancel_lane_change` and `enable_abort_lane_change` to `true`. The parameter `abort_max_lateral_jerk` need to be set to a high value in order for it to work.
+Assume the ego vehicle has already departed from the current lane. In that case, it is dangerous to cancel the path, and it will cause the ego vehicle to change the heading direction abruptly. In this case, planning a trajectory that allows the ego vehicle to return to the current path while minimizing the heading changes is necessary. In this case, the lane change module will generate an abort path. The following images show an example of the abort path. Do note that the function DOESN'T GUARANTEE a safe abort process, as it didn't check the presence of the surrounding objects and/or their reactions. The function can be enable manually by setting both `enable_on_prepare_phase` and `enable_on_lane_changing_phase` to `true`. The parameter `max_lateral_jerk` need to be set to a high value in order for it to work.
 
 ![abort](../image/lane_change/cancel_and_abort/lane_change-abort.png)
 
@@ -264,23 +264,39 @@ The last behavior will also occur if the ego vehicle has departed from the curre
 
 The following parameters are configurable in `lane_change.param.yaml`.
 
-| Name                                     | Unit   | Type   | Description                                                                                          | Default value |
-| :--------------------------------------- | ------ | ------ | ---------------------------------------------------------------------------------------------------- | ------------- |
-| `prepare_duration`                       | [m]    | double | The preparation time for the ego vehicle to be ready to perform lane change.                         | 4.0           |
-| `lane_changing_safety_check_duration`    | [m]    | double | The total time that is taken to complete the lane-changing task.                                     | 8.0           |
-| `backward_length_buffer_for_end_of_lane` | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change                | 2.0           |
-| `lane_change_finish_judge_buffer`        | [m]    | double | The additional buffer used to confirm lane change process completion                                 | 3.0           |
-| `lane_changing_lateral_jerk`             | [m/s3] | double | Lateral jerk value for lane change path generation                                                   | 0.5           |
-| `minimum_lane_changing_velocity`         | [m/s]  | double | Minimum speed during lane changing process.                                                          | 2.78          |
-| `prediction_time_resolution`             | [s]    | double | Time resolution for object's path interpolation and collision check.                                 | 0.5           |
-| `longitudinal_acceleration_sampling_num` | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by longitudinal acceleration | 5             |
-| `lateral_acceleration_sampling_num`      | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by lateral acceleration      | 3             |
-| `max_longitudinal_acc`                   | [-]    | double | maximum longitudinal acceleration for lane change                                                    | 1.0           |
-| `min_longitudinal_acc`                   | [-]    | double | maximum longitudinal deceleration for lane change                                                    | -1.0          |
+| Name                                        | Unit   | Type    | Description                                                                                                     | Default value      |
+| :------------------------------------------ | ------ | ------- | --------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `backward_lane_length`                      | [m]    | double  | The backward length to check incoming objects in lane change target lane.                                       | 200.0              |
+| `prepare_duration`                          | [m]    | double  | The preparation time for the ego vehicle to be ready to perform lane change.                                    | 4.0                |
+| `backward_length_buffer_for_end_of_lane`    | [m]    | double  | The end of lane buffer to ensure ego vehicle has enough distance to start lane change                           | 2.0                |
+| `lane_change_finish_judge_buffer`           | [m]    | double  | The additional buffer used to confirm lane change process completion                                            | 3.0                |
+| `finish_judge_lateral_threshold`            | [m]    | double  | Lateral distance threshold to confirm lane change process completion                                            | 0.2                |
+| `lane_changing_lateral_jerk`                | [m/s3] | double  | Lateral jerk value for lane change path generation                                                              | 0.5                |
+| `minimum_lane_changing_velocity`            | [m/s]  | double  | Minimum speed during lane changing process.                                                                     | 2.78               |
+| `prediction_time_resolution`                | [s]    | double  | Time resolution for object's path interpolation and collision check.                                            | 0.5                |
+| `longitudinal_acceleration_sampling_num`    | [-]    | int     | Number of possible lane-changing trajectories that are being influenced by longitudinal acceleration            | 5                  |
+| `lateral_acceleration_sampling_num`         | [-]    | int     | Number of possible lane-changing trajectories that are being influenced by lateral acceleration                 | 3                  |
+| `object_check_min_road_shoulder_width`      | [m]    | double  | Width considered as a road shoulder if the lane does not have a road shoulder                                   | 0.5                |
+| `object_shiftable_ratio_threshold`          | [-]    | double  | Vehicles around the center line within this distance ratio will be excluded from parking objects                | 0.6                |
+| `min_length_for_turn_signal_activation`     | [m]    | double  | Turn signal will be activated if the ego vehicle approaches to this length from minimum lane change length      | 10.0               |
+| `length_ratio_for_turn_signal_deactivation` | [-]    | double  | Turn signal will be deactivated if the ego vehicle approaches to this length ratio for lane change finish point | 0.8                |
+| `max_longitudinal_acc`                      | [-]    | double  | maximum longitudinal acceleration for lane change                                                               | 1.0                |
+| `min_longitudinal_acc`                      | [-]    | double  | maximum longitudinal deceleration for lane change                                                               | -1.0               |
+| `lateral_acceleration.velocity`             | [m/s]  | double  | Reference velocity for lateral acceleration calculation (look up table)                                         | [0.0, 4.0, 10.0]   |
+| `lateral_acceleration.min_values`           | [m/ss] | double  | Min lateral acceleration values corresponding to velocity (look up table)                                       | [0.15, 0.15, 0.15] |
+| `lateral_acceleration.max_values`           | [m/ss] | double  | Max lateral acceleration values corresponding to velocity (look up table)                                       | [0.5, 0.5, 0.5]    |
+| `target_object.car`                         | [-]    | boolean | Include car objects for safety check                                                                            | true               |
+| `target_object.truck`                       | [-]    | boolean | Include truck objects for safety check                                                                          | true               |
+| `target_object.bus`                         | [-]    | boolean | Include bus objects for safety check                                                                            | true               |
+| `target_object.trailer`                     | [-]    | boolean | Include trailer objects for safety check                                                                        | true               |
+| `target_object.unknown`                     | [-]    | boolean | Include unknown objects for safety check                                                                        | true               |
+| `target_object.bicycle`                     | [-]    | boolean | Include bicycle objects for safety check                                                                        | true               |
+| `target_object.motorcycle`                  | [-]    | boolean | Include motorcycle objects for safety check                                                                     | true               |
+| `target_object.pedestrian`                  | [-]    | boolean | Include pedestrian objects for safety check                                                                     | true               |
 
 ### Collision checks during lane change
 
-The following parameters are configurable in `behavior_path_planner.param.yaml`.
+The following parameters are configurable in `behavior_path_planner.param.yaml` and `lane_change.param.yaml`.
 
 | Name                                       | Unit    | Type    | Description                                                                                                                                                    | Default value |
 | :----------------------------------------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -292,7 +308,8 @@ The following parameters are configurable in `behavior_path_planner.param.yaml`.
 | `rear_vehicle_safety_time_margin`          | [s]     | double  | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 2.0           |
 | `enable_collision_check_at_prepare_phase`  | [-]     | boolean | Perform collision check starting from prepare phase. If `false`, collision check only evaluated for lane changing phase.                                       | true          |
 | `prepare_phase_ignore_target_speed_thresh` | [m/s]   | double  | Ignore collision check in prepare phase of object speed that is lesser that the configured value. `enable_collision_check_at_prepare_phase` must be `true`     | 0.1           |
-| `use_predicted_path_outside_lanelet`       | [-]     | boolean | If true, include collision check for predicted path that is out of lanelet (freespace).                                                                        | false         |
+| `check_objects_on_current_lanes`           | [-]     | boolean | If true, the lane change module include objects on current lanes.                                                                                              | true          |
+| `check_objects_on_other_lanes`             | [-]     | boolean | If true, the lane change module include objects on other lanes.                                                                                                | true          |
 | `use_all_predicted_path`                   | [-]     | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                         | true          |
 
 (\*1) the value must be negative.
@@ -301,12 +318,14 @@ The following parameters are configurable in `behavior_path_planner.param.yaml`.
 
 The following parameters are configurable in `lane_change.param.yaml`.
 
-| Name                        | Unit | Type    | Description                             | Default value |
-| :-------------------------- | ---- | ------- | --------------------------------------- | ------------- |
-| `enable_cancel_lane_change` | [-]  | boolean | Enable cancel lane change               | true          |
-| `enable_abort_lane_change`  | [-]  | boolean | Enable abort lane change.               | false         |
-| `abort_delta_time`          | [s]  | double  | The time taken to start aborting.       | 3.0           |
-| `abort_max_lateral_jerk`    | [s]  | double  | The maximum lateral jerk for abort path | 1000.0        |
+| Name                                   | Unit    | Type    | Description                                                                                                      | Default value |
+| :------------------------------------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------- | ------------- |
+| `cancel.enable_on_prepare_phase`       | [-]     | boolean | Enable cancel lane change                                                                                        | true          |
+| `cancel.enable_on_lane_changing_phase` | [-]     | boolean | Enable abort lane change.                                                                                        | false         |
+| `cancel.delta_time`                    | [s]     | double  | The time taken to start steering to return to the center line.                                                   | 3.0           |
+| `cancel.duration`                      | [s]     | double  | The time taken to complete returning to the center line.                                                         | 3.0           |
+| `cancel.max_lateral_jerk`              | [m/sss] | double  | The maximum lateral jerk for abort path                                                                          | 1000.0        |
+| `cancel.overhang_tolerance`            | [m]     | double  | Lane change cancel is prohibited if the vehicle head exceeds the lane boundary more than this tolerance distance | 0.0           |
 
 ### Debug
 
@@ -318,6 +337,33 @@ The following parameters are configurable in `lane_change.param.yaml`.
 
 ## Debug Marker & Visualization
 
-To enable the debug marker, execute `ros2 param set /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner lane_change.publish_debug_marker true` (no restart is needed) or simply set the `publish_debug_marker` to `true` in the `lane_change.param.yaml` for permanent effect (restart is needed). Then add the marker `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/lanechange` in `rviz2`.
+To enable the debug marker, execute (no restart is needed)
 
-![debug](../image/lane_change/lane_change-debug.png)
+```shell
+ros2 param set /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner lane_change.publish_debug_marker true
+
+```
+
+or simply set the `publish_debug_marker` to `true` in the `lane_change.param.yaml` for permanent effect (restart is needed).
+
+Then add the marker
+
+```shell
+/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/lane_change_left
+```
+
+in `rviz2`.
+
+![debug](../image/lane_change/lane_change-debug-1.png)
+
+![debug2](../image/lane_change/lane_change-debug-2.png)
+
+![debug3](../image/lane_change/lane_change-debug-3.png)
+
+Available information
+
+1. Ego to object relation, plus safety check information
+2. Ego vehicle interpolated pose up to the latest safety check position.
+3. Object is safe or not, shown by the color of the polygon (Green = Safe, Red = unsafe)
+4. Valid candidate paths.
+5. Position when lane changing start and end.

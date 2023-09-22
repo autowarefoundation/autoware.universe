@@ -28,19 +28,19 @@ std_msgs::msg::ColorRGBA exchange_color_crc(double x)
 
   if (x <= 0.25) {
     color.b = 1.0;
-    color.g = std::sin(x * 2.0 * M_PI);
+    color.g = static_cast<float>(std::sin(x * 2.0 * M_PI));
     color.r = 0;
   } else if (x > 0.25 && x <= 0.5) {
-    color.b = std::sin(x * 2 * M_PI);
+    color.b = static_cast<float>(std::sin(x * 2 * M_PI));
     color.g = 1.0;
     color.r = 0;
   } else if (x > 0.5 && x <= 0.75) {
     color.b = 0;
     color.g = 1.0;
-    color.r = -std::sin(x * 2.0 * M_PI);
+    color.r = static_cast<float>(-std::sin(x * 2.0 * M_PI));
   } else {
     color.b = 0;
-    color.g = -std::sin(x * 2.0 * M_PI);
+    color.g = static_cast<float>(-std::sin(x * 2.0 * M_PI));
     color.r = 1.0;
   }
   color.a = 0.999;
@@ -58,9 +58,9 @@ double calc_diff_for_radian(const double lhs_rad, const double rhs_rad)
   return diff_rad;
 }
 
-Eigen::Map<const RowMatrixXd> makeEigenCovariance(const std::array<double, 36> & covariance)
+Eigen::Map<const RowMatrixXd> make_eigen_covariance(const std::array<double, 36> & covariance)
 {
-  return Eigen::Map<const RowMatrixXd>(covariance.data(), 6, 6);
+  return {covariance.data(), 6, 6};
 }
 
 // x: roll, y: pitch, z: yaw
@@ -242,7 +242,7 @@ std::vector<geometry_msgs::msg::Pose> create_random_pose_array(
 {
   std::default_random_engine engine(seed_gen());
   const Eigen::Map<const RowMatrixXd> covariance =
-    makeEigenCovariance(base_pose_with_cov.pose.covariance);
+    make_eigen_covariance(base_pose_with_cov.pose.covariance);
 
   std::normal_distribution<> x_distribution(0.0, std::sqrt(covariance(0, 0)));
   std::normal_distribution<> y_distribution(0.0, std::sqrt(covariance(1, 1)));
@@ -286,4 +286,25 @@ double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Poin
   const double dy = p1.y - p2.y;
   const double dz = p1.z - p2.z;
   return std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+void output_pose_with_cov_to_log(
+  const rclcpp::Logger logger, const std::string & prefix,
+  const geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov)
+{
+  const Eigen::Map<const RowMatrixXd> covariance =
+    make_eigen_covariance(pose_with_cov.pose.covariance);
+  const geometry_msgs::msg::Pose pose = pose_with_cov.pose.pose;
+  geometry_msgs::msg::Vector3 rpy = get_rpy(pose);
+  rpy.x = rpy.x * 180.0 / M_PI;
+  rpy.y = rpy.y * 180.0 / M_PI;
+  rpy.z = rpy.z * 180.0 / M_PI;
+
+  RCLCPP_INFO_STREAM(
+    logger, std::fixed << prefix << "," << pose.position.x << "," << pose.position.y << ","
+                       << pose.position.z << "," << pose.orientation.x << "," << pose.orientation.y
+                       << "," << pose.orientation.z << "," << pose.orientation.w << "," << rpy.x
+                       << "," << rpy.y << "," << rpy.z << "," << covariance(0, 0) << ","
+                       << covariance(1, 1) << "," << covariance(2, 2) << "," << covariance(3, 3)
+                       << "," << covariance(4, 4) << "," << covariance(5, 5));
 }

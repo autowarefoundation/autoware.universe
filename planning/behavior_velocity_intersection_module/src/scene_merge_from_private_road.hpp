@@ -21,7 +21,6 @@
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -60,6 +59,8 @@ public:
     double stop_line_margin;
     double stop_duration_sec;
     double path_interpolation_ds;
+    double occlusion_attention_area_length;
+    bool consider_wrong_direction_vehicle;
   };
 
   MergeFromPrivateRoadModule(

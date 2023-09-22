@@ -18,11 +18,11 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_perception_msgs/msg/traffic_light_array.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 
 #include <lanelet2_core/Forward.h>
 
+#include <memory>
 #include <unordered_set>
 
 class TrafficLightArbiter : public rclcpp::Node
@@ -31,7 +31,7 @@ public:
   explicit TrafficLightArbiter(const rclcpp::NodeOptions & options);
 
 private:
-  using Element = autoware_perception_msgs::msg::TrafficLightElement;
+  using Element = autoware_perception_msgs::msg::TrafficSignalElement;
   using LaneletMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using TrafficSignalArray = autoware_perception_msgs::msg::TrafficSignalArray;
   using TrafficSignal = autoware_perception_msgs::msg::TrafficSignal;
@@ -46,7 +46,7 @@ private:
   void onExternalMsg(const TrafficSignalArray::ConstSharedPtr msg);
   void arbitrateAndPublish(const builtin_interfaces::msg::Time & stamp);
 
-  std::unordered_set<lanelet::Id> map_regulatory_elements_set_;
+  std::unique_ptr<std::unordered_set<lanelet::Id>> map_regulatory_elements_set_;
 
   double external_time_tolerance_;
   double perception_time_tolerance_;

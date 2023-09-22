@@ -15,8 +15,9 @@
 #include "scene.hpp"
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <motion_utils/motion_utils.hpp>
-
+#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -87,7 +88,7 @@ visualization_msgs::msg::MarkerArray createStopLineCollisionCheck(
 visualization_msgs::msg::MarkerArray StopLineModule::createDebugMarkerArray()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
-  if (planner_param_.show_stopline_collision_check) {
+  if (planner_param_.show_stop_line_collision_check) {
     appendMarkerArray(
       createStopLineCollisionCheck(debug_data_, module_id_), &debug_marker_array,
       this->clock_->now());

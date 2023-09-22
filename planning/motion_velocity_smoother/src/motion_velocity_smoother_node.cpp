@@ -39,7 +39,7 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   using std::placeholders::_1;
 
   // set common params
-  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   wheelbase_ = vehicle_info.wheel_base_m;
   initCommonParam();
   over_stop_velocity_warn_thr_ = declare_parameter<double>("over_stop_velocity_warn_thr");
@@ -62,11 +62,12 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
     "~/input/external_velocity_limit_mps", 1,
     std::bind(&MotionVelocitySmootherNode::onExternalVelocityLimit, this, _1));
   sub_current_acceleration_ = create_subscription<AccelWithCovarianceStamped>(
-    "~/input/acceleration", 1,
-    [this](const AccelWithCovarianceStamped::SharedPtr msg) { current_acceleration_ptr_ = msg; });
+    "~/input/acceleration", 1, [this](const AccelWithCovarianceStamped::ConstSharedPtr msg) {
+      current_acceleration_ptr_ = msg;
+    });
   sub_operation_mode_ = create_subscription<OperationModeState>(
     "~/input/operation_mode_state", 1,
-    [this](const OperationModeState::SharedPtr msg) { operation_mode_ = *msg; });
+    [this](const OperationModeState::ConstSharedPtr msg) { operation_mode_ = *msg; });
 
   // parameter update
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -786,8 +787,10 @@ MotionVelocitySmootherNode::calcInitialMotion(
       // We should plan from the current vehicle speed, but if the initial value is greater than the
       // velocity limit, the current planning algorithm decelerates with a very high deceleration.
       // To avoid this, we set the initial value of the vehicle speed to be below the speed limit.
+      const auto p = smoother_->getBaseParam();
       const auto v0 = std::min(target_vel, vehicle_speed);
-      const Motion initial_motion = {v0, vehicle_acceleration};
+      const auto a0 = std::clamp(vehicle_acceleration, p.min_decel, p.max_accel);
+      const Motion initial_motion = {v0, a0};
       return {initial_motion, InitializeType::EGO_VELOCITY};
     }
   }

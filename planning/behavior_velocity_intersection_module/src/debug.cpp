@@ -17,7 +17,16 @@
 
 #include <behavior_velocity_planner_common/utilization/debug.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <motion_utils/motion_utils.hpp>
+#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
+
+#include <tf2/utils.h>
+
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <string>
 #include <vector>
@@ -218,6 +227,14 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       createPoseMarkerArray(
         debug_data_.pass_judge_wall_pose.value(), "pass_judge_wall_pose", module_id_, 0.7, 0.85,
         0.9),
+      &debug_marker_array, now);
+  }
+
+  for (size_t j = 0; j < debug_data_.occlusion_polygons.size(); ++j) {
+    const auto & p = debug_data_.occlusion_polygons.at(j);
+    appendMarkerArray(
+      debug::createPolygonMarkerArray(
+        p, "occlusion_polygons", lane_id_ + j, now, 0.3, 0.0, 0.0, 1.0, 0.0, 0.0),
       &debug_marker_array, now);
   }
 

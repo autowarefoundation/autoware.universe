@@ -16,8 +16,11 @@
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
 
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Lanelet.h>
 namespace static_centerline_optimizer
 {
 namespace
@@ -91,7 +94,7 @@ PathWithLaneId get_path_with_lane_id(
   constexpr double vehicle_length = 0.0;
   const auto drivable_lanes = behavior_path_planner::utils::generateDrivableLanes(lanelets);
   behavior_path_planner::utils::generateDrivableArea(
-    path_with_lane_id, drivable_lanes, false, vehicle_length, planner_data);
+    path_with_lane_id, drivable_lanes, false, false, vehicle_length, planner_data);
 
   return path_with_lane_id;
 }
