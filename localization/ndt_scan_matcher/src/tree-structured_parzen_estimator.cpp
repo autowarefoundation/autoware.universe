@@ -19,11 +19,10 @@
 #include <stdexcept>
 
 TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
-  const int64_t n_startup_trials, const double good_score_threshold, const double x_stddev,
-  const double y_stddev, const double z_stddev, const double roll_stddev, const double pitch_stddev)
+  const int64_t n_startup_trials, const double x_stddev, const double y_stddev,
+  const double z_stddev, const double roll_stddev, const double pitch_stddev)
 : good_num_(0),
   n_startup_trials_(n_startup_trials),
-  good_score_threshold_(good_score_threshold),
   x_stddev_(x_stddev),
   y_stddev_(y_stddev),
   z_stddev_(z_stddev),
@@ -39,9 +38,9 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
     return lhs.score > rhs.score;
   });
   good_num_ = std::count_if(trials_.begin(), trials_.end(), [this](const Trial & trial) {
-    return trial.score > good_score_threshold_;
+    return trial.score > MIN_GOOD_SCORE;
   });
-  good_num_ = std::min(good_num_, static_cast<int64_t>(trials_.size() * kMaxGoodRate));
+  good_num_ = std::min(good_num_, static_cast<int64_t>(trials_.size() * MAX_GOOD_RATE));
 }
 
 TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input()
@@ -73,7 +72,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
 
   Input best_input;
   double best_score = -1e9;
-  for (int64_t i = 0; i < 100; i++) {
+  for (int64_t i = 0; i < N_EI_CANDIDATES; i++) {
     Input input{};
     const int64_t index = engine() % (good_num_ + 1);
     if (index == good_num_) {
@@ -91,11 +90,11 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
     } else {
       const Input & base = trials_[index].input;
 
-      // Linear interpolation so that it becomes 1.0 or more at kTargetScore and 4.0 at
-      // good_score_threshold_.
-      const double score_diff = std::max(kTargetScore - trials_[index].score, 0.0);
-      const double linear = 1.0 + (score_diff / (kTargetScore - good_score_threshold_)) * 3.0;
-      const double coeff = kBaseStddevCoeff * linear;
+      // Linear interpolation so that it becomes 1.0 or more at TARGET_SCORE and 4.0 at
+      // MIN_GOOD_SCORE.
+      const double score_diff = std::max(TARGET_SCORE - trials_[index].score, 0.0);
+      const double linear = 1.0 + (score_diff / (TARGET_SCORE - MIN_GOOD_SCORE)) * 3.0;
+      const double coeff = BASE_STDDEV_COEFF * linear;
       input.x = base.x + dist_norm(engine) * coeff * x_stddev_;
       input.y = base.y + dist_norm(engine) * coeff * y_stddev_;
       input.z = base.z + dist_norm(engine) * coeff * z_stddev_;
@@ -127,8 +126,8 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   double lower = 0.0;
 
   // Scott's rule
-  const double coeff_upper = kBaseStddevCoeff * std::pow(good_num_, -1.0 / 10);
-  const double coeff_lower = kBaseStddevCoeff * std::pow(n - good_num_, -1.0 / 10);
+  const double coeff_upper = BASE_STDDEV_COEFF * std::pow(good_num_, -1.0 / 10);
+  const double coeff_lower = BASE_STDDEV_COEFF * std::pow(n - good_num_, -1.0 / 10);
   const Input sigma_upper{coeff_upper * x_stddev_,     coeff_upper * y_stddev_,
                           coeff_upper * z_stddev_,     coeff_upper * roll_stddev_,
                           coeff_upper * pitch_stddev_, coeff_upper * yaw_stddev_};
@@ -136,7 +135,7 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
                           coeff_lower * z_stddev_,     coeff_lower * roll_stddev_,
                           coeff_lower * pitch_stddev_, coeff_lower * yaw_stddev_};
   for (int64_t i = 0; i < n; i++) {
-    const double v = trials_[i].score - good_score_threshold_;
+    const double v = trials_[i].score - MIN_GOOD_SCORE;
     const double w = std::min(std::abs(v), 1.0);
     if (i < good_num_) {
       const double p = gauss(input, trials_[i].input, sigma_upper);

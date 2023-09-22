@@ -41,16 +41,17 @@ public:
 
   TreeStructuredParzenEstimator() = delete;
   TreeStructuredParzenEstimator(
-    const int64_t n_startup_trials, const double good_score_threshold, const double x_stddev,
-    const double y_stddev, const double z_stddev, const double roll_stddev,
-    const double pitch_stddev);
+    const int64_t n_startup_trials, const double x_stddev, const double y_stddev,
+    const double z_stddev, const double roll_stddev, const double pitch_stddev);
   void add_trial(const Trial & trial);
   Input get_next_input();
 
 private:
-  static constexpr double kMaxGoodRate = 0.10;
-  static constexpr double kBaseStddevCoeff = 0.25;
-  static constexpr double kTargetScore = 6.0;
+  static constexpr double MAX_GOOD_RATE = 0.10;
+  static constexpr double BASE_STDDEV_COEFF = 0.25;
+  static constexpr double TARGET_SCORE = 6.0;
+  static constexpr double MIN_GOOD_SCORE = 1.8;
+  static constexpr int64_t N_EI_CANDIDATES = 100;
 
   double acquisition_function(const Input & input);
   double gauss(const Input & input, const Input & mu, const Input & sigma);
@@ -59,7 +60,6 @@ private:
   std::vector<Trial> trials_;
   int64_t good_num_;
   const int64_t n_startup_trials_;
-  const double good_score_threshold_;
   const double x_stddev_;
   const double y_stddev_;
   const double z_stddev_;
