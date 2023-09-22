@@ -21,9 +21,14 @@
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
+#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include <boost/geometry/algorithms/within.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
 
 #include <algorithm>
 #include <memory>
@@ -117,10 +122,16 @@ void StartPlannerModule::processOnExit()
 
 bool StartPlannerModule::isExecutionRequested() const
 {
-  // TODO(Sugahara): if required lateral shift distance is small, don't engage this module.
-  // Execute when current pose is near route start pose
-  const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
+  const double lateral_distance_to_center_lane =
+    lanelet::utils::getArcCoordinates(current_lanes, current_pose).distance;
+
+  if (std::abs(lateral_distance_to_center_lane) < parameters_->th_distance_to_middle_of_the_road) {
+    return false;
+  }
+
+  const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
   if (
     tier4_autoware_utils::calcDistance2d(start_pose.position, current_pose.position) >
     parameters_->th_arrived_distance) {
@@ -985,10 +996,13 @@ bool StartPlannerModule::isSafePath() const
   RCLCPP_DEBUG(getLogger(), "current_path_idx %ld", status_.current_path_idx);
   utils::start_goal_planner_common::updatePathProperty(
     ego_predicted_path_params_, terminal_velocity_and_accel);
+  // TODO(Sugahara): shoule judge is_object_front properly
+  const bool is_object_front = true;
+  const bool limit_to_max_velocity = true;
   const auto ego_predicted_path =
     behavior_path_planner::utils::path_safety_checker::createPredictedPath(
-      ego_predicted_path_params_, pull_out_path.points, current_pose, current_velocity,
-      ego_seg_idx);
+      ego_predicted_path_params_, pull_out_path.points, current_pose, current_velocity, ego_seg_idx,
+      is_object_front, limit_to_max_velocity);
 
   // filtering objects with velocity, position and class
   const auto & filtered_objects = utils::path_safety_checker::filterObjects(
@@ -999,7 +1013,7 @@ bool StartPlannerModule::isSafePath() const
     current_lanes, route_handler, filtered_objects, objects_filtering_params_);
 
   const double hysteresis_factor =
-    status_.is_safe_dynamic_objects ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+    status_.is_safe_dynamic_objects ? 1.0 : safety_check_params_->hysteresis_factor_expand_rate;
 
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     start_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
@@ -1177,35 +1191,26 @@ void StartPlannerModule::setDebugData() const
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
   add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
-  if (start_planner_data_.ego_predicted_path.size() > 0) {
-    const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
-      start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
-    add(createPredictedPathMarkerArray(
-      ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
-  }
-
-  if (start_planner_data_.filtered_objects.objects.size() > 0) {
-    add(createObjectsMarkerArray(
-      start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
-  }
 
   // safety check
-  {
+  if (parameters_->safety_check_params.enable_safety_check) {
+    if (start_planner_data_.ego_predicted_path.size() > 0) {
+      const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
+        start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
+      add(createPredictedPathMarkerArray(
+        ego_predicted_path, vehicle_info_, "ego_predicted_path_start_planner", 0, 0.0, 0.5, 0.9));
+    }
+
+    if (start_planner_data_.filtered_objects.objects.size() > 0) {
+      add(createObjectsMarkerArray(
+        start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
+    }
+
     add(showSafetyCheckInfo(start_planner_data_.collision_check, "object_debug_info"));
     add(showPredictedPath(start_planner_data_.collision_check, "ego_predicted_path"));
     add(showPolygon(start_planner_data_.collision_check, "ego_and_target_polygon_relation"));
-  }
-
-  if (start_planner_data_.ego_predicted_path.size() > 0) {
-    const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
-      start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
-    add(createPredictedPathMarkerArray(
-      ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
-  }
-
-  if (start_planner_data_.filtered_objects.objects.size() > 0) {
-    add(createObjectsMarkerArray(
-      start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      start_planner_data_.collision_check);
   }
 
   // Visualize planner type text

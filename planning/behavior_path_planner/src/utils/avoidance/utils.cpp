@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utils/avoidance/utils.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
@@ -27,6 +28,13 @@
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+
+#include <boost/geometry/algorithms/convex_hull.hpp>
+#include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/algorithms/union.hpp>
+#include <boost/geometry/strategies/convex_hull.hpp>
+
+#include <lanelet2_routing/RoutingGraphContainer.h>
 
 #include <algorithm>
 #include <limits>
@@ -199,6 +207,22 @@ Polygon2d createOneStepPolygon(
 
   return hull_polygon;
 }
+
+bool isEndPointsConnected(
+  const lanelet::ConstLanelet & left_lane, const lanelet::ConstLanelet & right_lane)
+{
+  const auto & left_back_point_2d = right_lane.leftBound2d().back().basicPoint();
+  const auto & right_back_point_2d = left_lane.rightBound2d().back().basicPoint();
+
+  constexpr double epsilon = 1e-5;
+  return (right_back_point_2d - left_back_point_2d).norm() < epsilon;
+}
+
+template <typename T>
+void pushUniqueVector(T & base_vector, const T & additional_vector)
+{
+  base_vector.insert(base_vector.end(), additional_vector.begin(), additional_vector.end());
+}
 }  // namespace
 
 bool isOnRight(const ObjectData & obj)
@@ -363,20 +387,7 @@ std::vector<size_t> calcParentIds(const AvoidLineArray & lines1, const AvoidLine
       continue;
     }
 
-    // Id the shift is overlapped, insert the shift point. Additionally, the shift which refers
-    // to the same object id (created by the same object) will be set.
-    //
-    // Why? : think that there are two shifts, avoiding and .
-    // If you register only the avoiding shift, the return-to-center shift will not be generated
-    // when you get too close to or over the obstacle. The return-shift can be handled with
-    // addReturnShift(), but it maybe reasonable to register the return-to-center shift for the
-    // object at the same time as registering the avoidance shift to remove the complexity of the
-    // addReturnShift().
-    for (const auto & al_local : lines1) {
-      if (al_local.object.object.object_id == al.object.object.object_id) {
-        ids.insert(al_local.id);
-      }
-    }
+    ids.insert(al.id);
   }
   return std::vector<size_t>(ids.begin(), ids.end());
 }
@@ -1389,6 +1400,30 @@ void fillAdditionalInfoFromPoint(const AvoidancePlanningData & data, AvoidLineAr
   }
 }
 
+void fillAdditionalInfoFromLongitudinal(const AvoidancePlanningData & data, AvoidLine & line)
+{
+  const auto & path = data.reference_path;
+  const auto & arc = data.arclength_from_ego;
+
+  line.start_idx = findPathIndexFromArclength(arc, line.start_longitudinal);
+  line.start = path.points.at(line.start_idx).point.pose;
+  line.end_idx = findPathIndexFromArclength(arc, line.end_longitudinal);
+  line.end = path.points.at(line.end_idx).point.pose;
+}
+
+void fillAdditionalInfoFromLongitudinal(
+  const AvoidancePlanningData & data, AvoidOutlines & outlines)
+{
+  for (auto & outline : outlines) {
+    fillAdditionalInfoFromLongitudinal(data, outline.avoid_line);
+    fillAdditionalInfoFromLongitudinal(data, outline.return_line);
+
+    std::for_each(outline.middle_lines.begin(), outline.middle_lines.end(), [&](auto & line) {
+      fillAdditionalInfoFromLongitudinal(data, line);
+    });
+  }
+}
+
 void fillAdditionalInfoFromLongitudinal(const AvoidancePlanningData & data, AvoidLineArray & lines)
 {
   const auto & path = data.reference_path;
@@ -1443,34 +1478,29 @@ AvoidLineArray combineRawShiftLinesWithUniqueCheck(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
-  const bool is_object_front, const std::shared_ptr<AvoidanceParameters> & parameters)
+  const bool is_object_front, const bool limit_to_max_velocity,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  if (path.points.empty()) {
-    return {};
-  }
-
-  const auto & acceleration = parameters->max_acceleration;
   const auto & vehicle_pose = planner_data->self_odometry->pose.pose;
   const auto & initial_velocity = std::abs(planner_data->self_odometry->twist.twist.linear.x);
-  const auto & time_horizon = is_object_front ? parameters->time_horizon_for_front_object
-                                              : parameters->time_horizon_for_rear_object;
-  const auto & time_resolution = parameters->safety_check_time_resolution;
-
   const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(path.points);
-  std::vector<PoseWithVelocityStamped> predicted_path;
-  const auto vehicle_pose_frenet =
-    convertToFrenetPoint(path.points, vehicle_pose.position, ego_seg_idx);
 
-  for (double t = 0.0; t < time_horizon + 1e-3; t += time_resolution) {
-    const double velocity =
-      std::max(initial_velocity + acceleration * t, parameters->min_slow_down_speed);
-    const double length = initial_velocity * t + 0.5 * acceleration * t * t;
-    const auto pose =
-      motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length);
-    predicted_path.emplace_back(t, pose, velocity);
-  }
+  auto ego_predicted_path_params =
+    std::make_shared<behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams>();
 
-  return predicted_path;
+  ego_predicted_path_params->min_velocity = parameters->min_slow_down_speed;
+  ego_predicted_path_params->acceleration = parameters->max_acceleration;
+  ego_predicted_path_params->max_velocity = std::numeric_limits<double>::infinity();
+  ego_predicted_path_params->time_horizon_for_front_object =
+    parameters->time_horizon_for_front_object;
+  ego_predicted_path_params->time_horizon_for_rear_object =
+    parameters->time_horizon_for_rear_object;
+  ego_predicted_path_params->time_resolution = parameters->safety_check_time_resolution;
+  ego_predicted_path_params->delay_until_departure = 0.0;
+
+  return behavior_path_planner::utils::path_safety_checker::createPredictedPath(
+    ego_predicted_path_params, path.points, vehicle_pose, initial_velocity, ego_seg_idx,
+    is_object_front, limit_to_max_velocity);
 }
 
 ExtendedPredictedObject transform(
@@ -1674,5 +1704,144 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   });
 
   return std::make_pair(target_objects, other_objects);
+}
+
+DrivableLanes generateExpandDrivableLanes(
+  const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  const auto & route_handler = planner_data->route_handler;
+
+  DrivableLanes current_drivable_lanes;
+  current_drivable_lanes.left_lane = lanelet;
+  current_drivable_lanes.right_lane = lanelet;
+
+  if (!parameters->use_adjacent_lane) {
+    return current_drivable_lanes;
+  }
+
+  // 1. get left/right side lanes
+  const auto update_left_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
+    const auto all_left_lanelets = route_handler->getAllLeftSharedLinestringLanelets(
+      target_lane, parameters->use_opposite_lane, true);
+    if (!all_left_lanelets.empty()) {
+      current_drivable_lanes.left_lane = all_left_lanelets.back();  // leftmost lanelet
+      pushUniqueVector(
+        current_drivable_lanes.middle_lanes,
+        lanelet::ConstLanelets(all_left_lanelets.begin(), all_left_lanelets.end() - 1));
+    }
+  };
+  const auto update_right_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
+    const auto all_right_lanelets = route_handler->getAllRightSharedLinestringLanelets(
+      target_lane, parameters->use_opposite_lane, true);
+    if (!all_right_lanelets.empty()) {
+      current_drivable_lanes.right_lane = all_right_lanelets.back();  // rightmost lanelet
+      pushUniqueVector(
+        current_drivable_lanes.middle_lanes,
+        lanelet::ConstLanelets(all_right_lanelets.begin(), all_right_lanelets.end() - 1));
+    }
+  };
+
+  update_left_lanelets(lanelet);
+  update_right_lanelets(lanelet);
+
+  // 2.1 when there are multiple lanes whose previous lanelet is the same
+  const auto get_next_lanes_from_same_previous_lane =
+    [&route_handler](const lanelet::ConstLanelet & lane) {
+      // get previous lane, and return false if previous lane does not exist
+      lanelet::ConstLanelets prev_lanes;
+      if (!route_handler->getPreviousLaneletsWithinRoute(lane, &prev_lanes)) {
+        return lanelet::ConstLanelets{};
+      }
+
+      lanelet::ConstLanelets next_lanes;
+      for (const auto & prev_lane : prev_lanes) {
+        const auto next_lanes_from_prev = route_handler->getNextLanelets(prev_lane);
+        pushUniqueVector(next_lanes, next_lanes_from_prev);
+      }
+      return next_lanes;
+    };
+
+  const auto next_lanes_for_right =
+    get_next_lanes_from_same_previous_lane(current_drivable_lanes.right_lane);
+  const auto next_lanes_for_left =
+    get_next_lanes_from_same_previous_lane(current_drivable_lanes.left_lane);
+
+  // 2.2 look for neighbor lane recursively, where end line of the lane is connected to end line
+  // of the original lane
+  const auto update_drivable_lanes =
+    [&](const lanelet::ConstLanelets & next_lanes, const bool is_left) {
+      for (const auto & next_lane : next_lanes) {
+        const auto & edge_lane =
+          is_left ? current_drivable_lanes.left_lane : current_drivable_lanes.right_lane;
+        if (next_lane.id() == edge_lane.id()) {
+          continue;
+        }
+
+        const auto & left_lane = is_left ? next_lane : edge_lane;
+        const auto & right_lane = is_left ? edge_lane : next_lane;
+        if (!isEndPointsConnected(left_lane, right_lane)) {
+          continue;
+        }
+
+        if (is_left) {
+          current_drivable_lanes.left_lane = next_lane;
+        } else {
+          current_drivable_lanes.right_lane = next_lane;
+        }
+
+        const auto & middle_lanes = current_drivable_lanes.middle_lanes;
+        const auto has_same_lane = std::any_of(
+          middle_lanes.begin(), middle_lanes.end(),
+          [&edge_lane](const auto & lane) { return lane.id() == edge_lane.id(); });
+
+        if (!has_same_lane) {
+          if (is_left) {
+            if (current_drivable_lanes.right_lane.id() != edge_lane.id()) {
+              current_drivable_lanes.middle_lanes.push_back(edge_lane);
+            }
+          } else {
+            if (current_drivable_lanes.left_lane.id() != edge_lane.id()) {
+              current_drivable_lanes.middle_lanes.push_back(edge_lane);
+            }
+          }
+        }
+
+        return true;
+      }
+      return false;
+    };
+
+  const auto expand_drivable_area_recursively =
+    [&](const lanelet::ConstLanelets & next_lanes, const bool is_left) {
+      // NOTE: set max search num to avoid infinity loop for drivable area expansion
+      constexpr size_t max_recursive_search_num = 3;
+      for (size_t i = 0; i < max_recursive_search_num; ++i) {
+        const bool is_update_kept = update_drivable_lanes(next_lanes, is_left);
+        if (!is_update_kept) {
+          break;
+        }
+        if (i == max_recursive_search_num - 1) {
+          RCLCPP_ERROR(
+            rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
+            "Drivable area expansion reaches max iteration.");
+        }
+      }
+    };
+  expand_drivable_area_recursively(next_lanes_for_right, false);
+  expand_drivable_area_recursively(next_lanes_for_left, true);
+
+  // 3. update again for new left/right lanes
+  update_left_lanelets(current_drivable_lanes.left_lane);
+  update_right_lanelets(current_drivable_lanes.right_lane);
+
+  // 4. compensate that current_lane is in either of left_lane, right_lane or middle_lanes.
+  if (
+    current_drivable_lanes.left_lane.id() != lanelet.id() &&
+    current_drivable_lanes.right_lane.id() != lanelet.id()) {
+    current_drivable_lanes.middle_lanes.push_back(lanelet);
+  }
+
+  return current_drivable_lanes;
 }
 }  // namespace behavior_path_planner::utils::avoidance
