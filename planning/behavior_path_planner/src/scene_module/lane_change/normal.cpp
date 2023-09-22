@@ -864,6 +864,45 @@ bool NormalLaneChange::hasEnoughLength(
   return true;
 }
 
+bool NormalLaneChange::hasEnoughLengthToCrosswalk(
+  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const
+{
+  const auto current_pose = getEgoPose();
+  const auto & route_handler = *getRouteHandler();
+  const auto overall_graphs_ptr = route_handler.getOverallGraphPtr();
+
+  const double dist_to_crosswalk_from_lane_change_start_pose =
+    utils::getDistanceToCrosswalk(current_pose, current_lanes, *overall_graphs_ptr) -
+    path.info.length.prepare;
+  // Check lane changing section includes crosswalk
+  if (
+    dist_to_crosswalk_from_lane_change_start_pose > 0.0 &&
+    dist_to_crosswalk_from_lane_change_start_pose < path.info.length.lane_changing) {
+    return false;
+  }
+
+  return true;
+}
+
+bool NormalLaneChange::hasEnoughLengthToIntersection(
+  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const
+{
+  const auto current_pose = getEgoPose();
+  const auto & route_handler = *getRouteHandler();
+  const auto overall_graphs_ptr = route_handler.getOverallGraphPtr();
+
+  const double dist_to_intersection_from_lane_change_start_pose =
+    utils::getDistanceToNextIntersection(current_pose, current_lanes) - path.info.length.prepare;
+  // Check lane changing section includes intersection
+  if (
+    dist_to_intersection_from_lane_change_start_pose > 0.0 &&
+    dist_to_intersection_from_lane_change_start_pose < path.info.length.lane_changing) {
+    return false;
+  }
+
+  return true;
+}
+
 bool NormalLaneChange::getLaneChangePaths(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
   Direction direction, LaneChangePaths * candidate_paths, const bool check_safety) const
@@ -907,10 +946,10 @@ bool NormalLaneChange::getLaneChangePaths(
 
   const auto target_objects = getTargetObjects(current_lanes, target_lanes);
 
+  const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
+
   candidate_paths->reserve(
     longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num * prepare_durations.size());
-
-  const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
 
   for (const auto & prepare_duration : prepare_durations) {
     for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
@@ -1064,11 +1103,22 @@ bool NormalLaneChange::getLaneChangePaths(
           continue;
         }
 
-        const auto is_valid =
-          hasEnoughLength(*candidate_path, current_lanes, target_lanes, direction);
-
-        if (!is_valid) {
+        if (!hasEnoughLength(*candidate_path, current_lanes, target_lanes, direction)) {
           RCLCPP_DEBUG(logger_, "invalid candidate path!!");
+          continue;
+        }
+
+        if (
+          lane_change_parameters_->regulate_on_crosswalk &&
+          !hasEnoughLengthToCrosswalk(*candidate_path, current_lanes)) {
+          RCLCPP_DEBUG(logger_, "Including crosswalk!!");
+          continue;
+        }
+
+        if (
+          lane_change_parameters_->regulate_on_intersection &&
+          !hasEnoughLengthToIntersection(*candidate_path, current_lanes)) {
+          RCLCPP_DEBUG(logger_, "Including intersection!!");
           continue;
         }
 

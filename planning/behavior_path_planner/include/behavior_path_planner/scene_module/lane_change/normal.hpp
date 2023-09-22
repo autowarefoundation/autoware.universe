@@ -129,6 +129,12 @@ protected:
     const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes, const Direction direction = Direction::NONE) const;
 
+  bool hasEnoughLengthToCrosswalk(
+    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
+
+  bool hasEnoughLengthToIntersection(
+    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
+
   bool getLaneChangePaths(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
     Direction direction, LaneChangePaths * candidate_paths,
