@@ -47,6 +47,6 @@ private:
   std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask>
     diagnostics_func_is_running_ndt_aling_service;
   std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask>
-  diagnostics_func_latest_ndt_aling_service_best_score;
+    diagnostics_func_latest_ndt_aling_service_best_score;
 };
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_DIAGNOSTICS_UPDATER_CORE_HPP_
