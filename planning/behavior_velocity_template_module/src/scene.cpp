@@ -23,10 +23,6 @@
 
 namespace behavior_velocity_planner
 {
-using motion_utils::calcSignedArcLength;
-using tier4_autoware_utils::createPoint;
-
-using geometry_msgs::msg::Point32;
 
 TemplateModule::TemplateModule(
   const int64_t module_id, const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
@@ -47,20 +43,9 @@ motion_utils::VirtualWalls TemplateModule::createVirtualWalls()
 }
 
 bool TemplateModule::modifyPathVelocity(
-  PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
+  [[maybe_unused]] PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
-  std::stringstream ss;
-
-  ss << "----------------------------\n";
-  int idx = 0;
-  for (const auto & point : path->points) {
-    auto longitudinal_velocity_ = point.point.longitudinal_velocity_mps;
-    ss << "Point ID:" << idx++ << "\n";
-    ss << "Longitudinal Velocity " << longitudinal_velocity_ << "\n";
-  }
-  ss << "----------------------------\n";
-
-  RCLCPP_INFO(logger_, ss.str().c_str());
+  RCLCPP_INFO(logger_, "Template Module execution");
 
   return false;
 }

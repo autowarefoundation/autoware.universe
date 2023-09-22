@@ -28,7 +28,6 @@
 
 namespace behavior_velocity_planner
 {
-using lanelet::autoware::SpeedBump;
 using tier4_autoware_utils::getOrDeclareParameter;
 
 TemplateModuleManager::TemplateModuleManager(rclcpp::Node & node)
@@ -39,25 +38,21 @@ TemplateModuleManager::TemplateModuleManager(rclcpp::Node & node)
 }
 
 void TemplateModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  // RCLCPP_INFO(logger_, "---Launching template module!---");
-
-  auto n_points = path.points.size();
-  int64_t module_id = 0 + n_points;
+  int64_t module_id = 0;
   if (!isModuleRegistered(module_id)) {
     registerModule(
-      std::make_shared<TemplateModule>(module_id, logger_.get_child("template_module"), clock_));
+      std::make_shared<TemplateModule>(module_id, logger_.get_child(getModuleName()), clock_));
   }
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 TemplateModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  [[maybe_unused]] const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  return [&path](const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {
-    auto random_var = path.points.size() * std::abs(scene_module->getDistance());
-    return random_var >= 0;
+  return []([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {
+    return false;
   };
 }
 
