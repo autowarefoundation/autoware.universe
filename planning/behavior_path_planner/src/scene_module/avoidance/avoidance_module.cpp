@@ -1957,25 +1957,6 @@ bool AvoidanceModule::isSafePath(
   return safe_ || safe_count_ > parameters_->hysteresis_factor_safe_count;
 }
 
-void AvoidanceModule::generateExpandDrivableLanes(BehaviorModuleOutput & output) const
-{
-  DrivableAreaInfo current_drivable_area_info;
-  // generate drivable lanes
-  current_drivable_area_info.drivable_lanes = avoid_data_.drivable_lanes;
-  // generate obstacle polygons
-  current_drivable_area_info.obstacles = utils::avoidance::generateObstaclePolygonsForDrivableArea(
-    avoid_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
-  // expand hatched road markings
-  current_drivable_area_info.enable_expanding_hatched_road_markings =
-    parameters_->use_hatched_road_markings;
-  // expand intersection areas
-  current_drivable_area_info.enable_expanding_intersection_areas =
-    parameters_->use_intersection_areas;
-
-  output.drivable_area_info = utils::combineDrivableAreaInfo(
-    current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
-}
-
 PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & original_path) const
 {
   const auto previous_path = helper_.getPreviousReferencePath();
@@ -2109,8 +2090,26 @@ BehaviorModuleOutput AvoidanceModule::plan()
   utils::clipPathLength(*output.path, ego_idx, planner_data_->parameters);
 
   // Drivable area generation.
-  generateExpandDrivableLanes(output);
-  setDrivableLanes(output.drivable_area_info.drivable_lanes);
+  {
+    DrivableAreaInfo current_drivable_area_info;
+    // generate drivable lanes
+    current_drivable_area_info.drivable_lanes = avoid_data_.drivable_lanes;
+    // generate obstacle polygons
+    current_drivable_area_info.obstacles =
+      utils::avoidance::generateObstaclePolygonsForDrivableArea(
+        avoid_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
+    // expand hatched road markings
+    current_drivable_area_info.enable_expanding_hatched_road_markings =
+      parameters_->use_hatched_road_markings;
+    // expand intersection areas
+    current_drivable_area_info.enable_expanding_intersection_areas =
+      parameters_->use_intersection_areas;
+
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+
+    setDrivableLanes(output.drivable_area_info.drivable_lanes);
+  }
 
   return output;
 }

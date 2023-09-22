@@ -477,13 +477,6 @@ private:
    */
   TurnSignalInfo calcTurnSignalInfo(const ShiftedPath & path) const;
 
-  // TODO(murooka) judge when and which way to extend drivable area. current implementation is keep
-  // extending during avoidance module
-  // TODO(murooka) freespace during turning in intersection where there is no neighbor lanes
-  // NOTE: Assume that there is no situation where there is an object in the middle lane of more
-  // than two lanes since which way to avoid is not obvious
-  void generateExpandDrivableLanes(BehaviorModuleOutput & output) const;
-
   /**
    * @brief fill debug markers.
    */
