@@ -108,6 +108,8 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   using std::placeholders::_1;
   using std::placeholders::_2;
 
+  printf("tmp ci build test");
+
   sub_map_ = create_subscription<HADMapBin>(
     "input/vector_map", rclcpp::QoS(10).transient_local(),
     std::bind(&SimplePlanningSimulator::on_map, this, _1));
