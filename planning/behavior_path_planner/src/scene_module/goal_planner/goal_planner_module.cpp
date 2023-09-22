@@ -736,8 +736,13 @@ void GoalPlannerModule::setStopPathFromCurrentPath(BehaviorModuleOutput & output
 {
   // safe or not safe(no feasible stop_path found) -> not_safe: try to find new feasible stop_path
   if (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr) {
-    if (const auto stop_inserted_path = generateStopInsertedCurrentPath()) {
-      output.path = std::make_shared<PathWithLaneId>(*stop_inserted_path);
+    auto current_path = getCurrentPath();
+    const auto stop_path =
+      behavior_path_planner::utils::start_goal_planner_common::generateFeasibleStopPath(
+        current_path, planner_data_, *stop_pose_, parameters_->maximum_deceleration_for_stop,
+        parameters_->maximum_jerk_for_stop);
+    if (stop_path) {
+      output.path = std::make_shared<PathWithLaneId>(*stop_path);
       status_.prev_stop_path_after_approval = output.path;
       RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, generate stop path");
     } else {
@@ -1113,34 +1118,6 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
   }
 
   return stop_path;
-}
-
-std::optional<PathWithLaneId> GoalPlannerModule::generateStopInsertedCurrentPath()
-{
-  auto current_path = getCurrentPath();
-  if (current_path.points.empty()) {
-    return {};
-  }
-
-  // try to insert stop point in current_path after approval
-  // but if can't stop with constraints(maximum deceleration, maximum jerk), don't insert stop point
-  const auto min_stop_distance = calcFeasibleDecelDistance(
-    planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0.0);
-  if (!min_stop_distance) {
-    return {};
-  }
-
-  // set stop point
-  const auto stop_idx = motion_utils::insertStopPoint(
-    planner_data_->self_odometry->pose.pose, *min_stop_distance, current_path.points);
-
-  if (!stop_idx) {
-    return {};
-  } else {
-    stop_pose_ = current_path.points.at(*stop_idx).point.pose;
-  }
-
-  return current_path;
 }
 
 void GoalPlannerModule::transitionToNextPathIfFinishingCurrentPath()
@@ -1649,6 +1626,9 @@ void GoalPlannerModule::setDebugData()
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createPredictedPathMarkerArray;
+  using marker_utils::showPolygon;
+  using marker_utils::showPredictedPath;
+  using marker_utils::showSafetyCheckInfo;
   using motion_utils::createStopVirtualWallMarker;
   using tier4_autoware_utils::createDefaultMarker;
   using tier4_autoware_utils::createMarkerColor;
@@ -1690,17 +1670,26 @@ void GoalPlannerModule::setDebugData()
       add(
         createPathMarkerArray(partial_path, "partial_path_" + std::to_string(i), 0, 0.9, 0.5, 0.9));
     }
+  }
+  // safety check
+  if (parameters_->safety_check_params.enable_safety_check) {
     if (goal_planner_data_.ego_predicted_path.size() > 0) {
       const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
         goal_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
       add(createPredictedPathMarkerArray(
-        ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
+        ego_predicted_path, vehicle_info_, "ego_predicted_path_goal_planner", 0, 0.0, 0.5, 0.9));
     }
 
     if (goal_planner_data_.filtered_objects.objects.size() > 0) {
       add(createObjectsMarkerArray(
         goal_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
     }
+
+    add(showSafetyCheckInfo(goal_planner_data_.collision_check, "object_debug_info"));
+    add(showPredictedPath(goal_planner_data_.collision_check, "ego_predicted_path"));
+    add(showPolygon(goal_planner_data_.collision_check, "ego_and_target_polygon_relation"));
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      goal_planner_data_.collision_check);
   }
 
   // Visualize planner type text
