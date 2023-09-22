@@ -903,8 +903,8 @@ std::vector<DiscretizedLane> generateDetectionLaneDivisions(
       }
       area += bg::area(lane.polygon2d().basicPolygon());
     }
-    lanelet::LineString3d right = lanelet::LineString3d(lanelet::InvalId, lefts).invert();
-    lanelet::LineString3d left = lanelet::LineString3d(lanelet::InvalId, rights).invert();
+    lanelet::LineString3d right = lanelet::LineString3d(lanelet::InvalId, lefts);
+    lanelet::LineString3d left = lanelet::LineString3d(lanelet::InvalId, rights);
     lanelet::Lanelet merged = lanelet::Lanelet(lanelet::InvalId, left, right);
     merged_branches[src] = std::make_pair(merged, area);
   }

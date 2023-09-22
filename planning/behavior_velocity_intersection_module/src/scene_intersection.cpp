@@ -19,11 +19,7 @@
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <magic_enum.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <opencv2/imgproc.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
@@ -31,9 +27,11 @@
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/algorithms/intersection.hpp>
 
+#include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/geometry/Polygon.h>
-#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+#include <lanelet2_core/primitives/LineString.h>
 
 #include <algorithm>
 #include <limits>
@@ -1216,6 +1214,7 @@ bool IntersectionModule::isOcclusionCleared(
     first_inside_attention_idx_ip_opt
       ? std::make_pair(first_inside_attention_idx_ip_opt.value(), std::get<1>(lane_interval_ip))
       : lane_interval_ip;
+  const auto [lane_start_idx, lane_end_idx] = lane_attention_interval_ip;
 
   const int width = occ_grid.info.width;
   const int height = occ_grid.info.height;
@@ -1352,22 +1351,12 @@ bool IntersectionModule::isOcclusionCleared(
     }
     debug_data_.occlusion_polygons.push_back(polygon_msg);
   }
+  // (4.1) re-draw occluded cells using valid_contours
+  occlusion_mask = cv::Mat(width, height, CV_8UC1, cv::Scalar(0));
+  for (unsigned i = 0; i < valid_contours.size(); ++i) {
+    cv::drawContours(occlusion_mask, valid_contours, i, cv::Scalar(255), cv::LINE_AA);
+  }
 
-  // (5) create distance grid
-  // value: 0 - 254: signed distance representing [distance_min, distance_max]
-  // 255: undefined value
-  const double distance_max = std::hypot(width * resolution / 2, height * resolution / 2);
-  const double distance_min = -distance_max;
-  const int undef_pixel = 255;
-  const int max_cost_pixel = 254;
-  auto dist2pixel = [=](const double dist) {
-    return std::min(
-      max_cost_pixel,
-      static_cast<int>((dist - distance_min) / (distance_max - distance_min) * max_cost_pixel));
-  };
-  auto pixel2dist = [=](const int pixel) {
-    return pixel * 1.0 / max_cost_pixel * (distance_max - distance_min) + distance_min;
-  };
   auto coord2index = [&](const double x, const double y) {
     const int idx_x = (x - origin.x) / resolution;
     const int idx_y = (y - origin.y) / resolution;
@@ -1375,107 +1364,57 @@ bool IntersectionModule::isOcclusionCleared(
     if (idx_y < 0 || idx_y >= height) return std::make_tuple(false, -1, -1);
     return std::make_tuple(true, idx_x, idx_y);
   };
-  const int zero_dist_pixel = dist2pixel(0.0);
-  cv::Mat distance_grid(width, height, CV_8UC1, cv::Scalar(undef_pixel));
-  cv::Mat projection_ind_grid(width, height, CV_32S, cv::Scalar(-1));
-
-  const auto [lane_start, lane_end] = lane_attention_interval_ip;
-  for (int i = static_cast<int>(lane_end); i >= static_cast<int>(lane_start); i--) {
-    const auto & path_pos = path_ip.points.at(i).point.pose.position;
-    const int idx_x = (path_pos.x - origin.x) / resolution;
-    const int idx_y = (path_pos.y - origin.y) / resolution;
-    if (idx_x < 0 || idx_x >= width) continue;
-    if (idx_y < 0 || idx_y >= height) continue;
-    distance_grid.at<unsigned char>(height - 1 - idx_y, idx_x) = zero_dist_pixel;
-    projection_ind_grid.at<int>(height - 1 - idx_y, idx_x) = i;
+  LineString2d path_linestring;
+  for (auto i = lane_start_idx; i <= lane_end_idx; i++) {
+    Point2d path_point{
+      path_ip.points.at(i).point.pose.position.x, path_ip.points.at(i).point.pose.position.y};
+    path_linestring.push_back(path_point);
   }
-
+  struct NearestOcclusionPoint
+  {
+    int lane_id;
+    size_t division_index;
+    double dist;
+  } nearest_occlusion_point;
+  double min_dist = std::numeric_limits<double>::infinity();
   for (const auto & lane_division : lane_divisions) {
     const auto & divisions = lane_division.divisions;
-    for (const auto & division : divisions) {
-      bool is_in_grid = false;
-      bool zero_dist_cell_found = false;
-      int projection_ind = -1;
-      std::optional<std::tuple<double, double, double, int>> cost_prev_checkpoint =
-        std::nullopt;  // cost, x, y, projection_ind
-      for (auto point = division.begin(); point != division.end(); point++) {
-        const double x = point->x(), y = point->y();
-        const auto [valid, idx_x, idx_y] = coord2index(x, y);
-        // exited grid just now
-        if (is_in_grid && !valid) break;
+    const auto lane_id = lane_division.lane_id;
+    for (unsigned division_index = 0; division_index < divisions.size(); ++division_index) {
+      const auto & division = divisions.at(division_index);
+      const auto & division_start = division.front();
+      const auto & division_end = division.back();
 
-        // still not entering grid
-        if (!is_in_grid && !valid) continue;
-
-        // From here, "valid"
-        const int pixel = distance_grid.at<unsigned char>(height - 1 - idx_y, idx_x);
-
-        // entered grid for 1st time
-        if (!is_in_grid) {
-          assert(pixel == undef_pixel || pixel == zero_dist_pixel);
-          is_in_grid = true;
-          if (pixel == undef_pixel) {
-            continue;
-          }
-        }
-
-        if (pixel == zero_dist_pixel) {
-          zero_dist_cell_found = true;
-          projection_ind = projection_ind_grid.at<int>(height - 1 - idx_y, idx_x);
-          assert(projection_ind >= 0);
-          cost_prev_checkpoint =
-            std::make_optional<std::tuple<double, double, double, int>>(0.0, x, y, projection_ind);
-          continue;
-        }
-
-        if (zero_dist_cell_found) {
-          // finally traversed to defined cell (first half)
-          const auto [prev_cost, prev_checkpoint_x, prev_checkpoint_y, prev_projection_ind] =
-            cost_prev_checkpoint.value();
-          const double dy = y - prev_checkpoint_y, dx = x - prev_checkpoint_x;
-          double new_dist = prev_cost + std::hypot(dy, dx);
-          const int new_projection_ind = projection_ind_grid.at<int>(height - 1 - idx_y, idx_x);
-          const double cur_dist = pixel2dist(pixel);
-          if (planner_param_.occlusion.do_dp && cur_dist < new_dist) {
-            new_dist = cur_dist;
-            if (new_projection_ind > 0) {
-              projection_ind = std::min<int>(prev_projection_ind, new_projection_ind);
-            }
-          }
-          projection_ind_grid.at<int>(height - 1 - idx_y, idx_x) = projection_ind;
-          distance_grid.at<unsigned char>(height - 1 - idx_y, idx_x) = dist2pixel(new_dist);
-          cost_prev_checkpoint = std::make_optional<std::tuple<double, double, double, int>>(
-            new_dist, x, y, projection_ind);
-        }
-      }
-    }
-  }
-
-  const int min_cost_thr = dist2pixel(occlusion_dist_thr);
-  int min_cost = undef_pixel - 1;
-  geometry_msgs::msg::Point nearest_occlusion_point;
-  for (const auto & occlusion_contour : valid_contours) {
-    for (const auto & p : occlusion_contour) {
-      const int pixel = static_cast<int>(distance_grid.at<unsigned char>(p.y, p.x));
-      const bool occluded = (occlusion_mask.at<unsigned char>(p.y, p.x) == 255);
-      if (pixel == undef_pixel || !occluded) {
+      // find the intersecton point of lane_line and path
+      std::vector<Point2d> intersection_points;
+      boost::geometry::intersection(
+        LineString2d{
+          Point2d{division_start.x(), division_start.y()},
+          Point2d{division_end.x(), division_end.y()}},
+        path_linestring, intersection_points);
+      if (intersection_points.empty()) {
         continue;
       }
-      if (pixel < min_cost) {
-        min_cost = pixel;
-        nearest_occlusion_point.x = origin.x + p.x * resolution;
-        nearest_occlusion_point.y = origin.y + (height - 1 - p.y) * resolution;
-        nearest_occlusion_point.z = origin.z;
+      const auto & projection_point = intersection_points.at(0);
+      for (auto point = division.begin(); point != division.end(); point++) {
+        const auto [valid, idx_x, idx_y] = coord2index(point->x(), point->y());
+        if (!valid) continue;
+        if (occlusion_mask.at<unsigned char>(height - 1 - idx_y, idx_x) == 255) {
+          const double dist =
+            std::hypot(point->x() - projection_point.x(), point->y() - projection_point.y());
+          if (dist < min_dist) {
+            min_dist = dist;
+            nearest_occlusion_point = {lane_id, division_index, dist};
+          }
+        }
       }
     }
   }
 
-  if (min_cost > min_cost_thr) {
-    return true;
-  } else {
-    debug_data_.nearest_occlusion_point = nearest_occlusion_point;
+  if (min_dist == std::numeric_limits<double>::infinity()) {
     return false;
   }
+  return true;
 }
 
 /*
