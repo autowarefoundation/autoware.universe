@@ -14,7 +14,8 @@
 
 #include "freespace_planning_algorithms/abstract_algorithm.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/math/normalization.hpp>
 
 #include <vector>
 
@@ -123,11 +124,14 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
   is_obstacle_table_ = is_obstacle_table;
 
   // construct collision indexes table
-  for (int i = 0; i < planner_common_param_.theta_size; i++) {
-    std::vector<IndexXY> indexes_2d, vertex_indexes_2d;
-    computeCollisionIndexes(i, indexes_2d, vertex_indexes_2d);
-    coll_indexes_table_.push_back(indexes_2d);
-    vertex_indexes_table_.push_back(vertex_indexes_2d);
+  if (is_collision_table_initialized == false) {
+    for (int i = 0; i < planner_common_param_.theta_size; i++) {
+      std::vector<IndexXY> indexes_2d, vertex_indexes_2d;
+      computeCollisionIndexes(i, indexes_2d, vertex_indexes_2d);
+      coll_indexes_table_.push_back(indexes_2d);
+      vertex_indexes_table_.push_back(vertex_indexes_2d);
+    }
+    is_collision_table_initialized = true;
   }
 }
 

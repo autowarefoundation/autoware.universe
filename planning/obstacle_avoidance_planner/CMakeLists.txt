@@ -22,7 +22,6 @@ ament_auto_add_library(obstacle_avoidance_planner SHARED
   src/node.cpp
   # core algorithms
   src/replan_checker.cpp
-  src/eb_path_smoother.cpp
   src/mpt_optimizer.cpp
   src/state_equation_generator.cpp
   # debug marker
@@ -46,6 +45,15 @@ rclcpp_components_register_node(obstacle_avoidance_planner
   EXECUTABLE obstacle_avoidance_planner_node
 )
 
+if(BUILD_TESTING)
+  ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
+    test/test_${PROJECT_NAME}_node_interface.cpp
+  )
+  target_link_libraries(test_${PROJECT_NAME}
+    ${PROJECT_NAME}
+  )
+endif()
+
 ament_auto_package(
   INSTALL_TO_SHARE
     launch
@@ -54,6 +62,6 @@ ament_auto_package(
 )
 
 install(PROGRAMS
-  scripts/calclation_time_plotter.py
+  scripts/calculation_time_plotter.py
   DESTINATION lib/${PROJECT_NAME}
 )

@@ -24,7 +24,6 @@
 #include <pcl/point_types.h>
 
 #include <chrono>
-#include <filesystem>
 #include <memory>
 
 using std::chrono_literals::operator""ms;
@@ -57,13 +56,7 @@ protected:
     pcl::io::savePCDFileASCII(temp_pcd_path, cloud);
   }
 
-  void TearDown() override
-  {
-    // Delete the temporary PCD file
-    std::filesystem::remove(temp_pcd_path);
-
-    rclcpp::shutdown();
-  }
+  void TearDown() override { rclcpp::shutdown(); }
 };
 
 TEST_F(TestPointcloudMapLoaderModule, LoadPCDFilesNoDownsampleTest)
@@ -99,7 +92,7 @@ TEST_F(TestPointcloudMapLoaderModule, LoadPCDFilesNoDownsampleTest)
   // Check if the point cloud is received and the content is as expected
   ASSERT_TRUE(*pointcloud_received);
 
-  // Convert the received point cloud to pcl::PointCloudpcl::PointXYZ
+  // Convert the received point cloud to pcl::PointCloud<pcl::PointXYZ>
   pcl::PointCloud<pcl::PointXYZ> received_cloud;
   pcl::fromROSMsg(*pointcloud_msg, received_cloud);
 

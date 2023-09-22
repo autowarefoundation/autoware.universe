@@ -14,13 +14,12 @@
 
 #include "planning_evaluator/metrics_calculator.hpp"
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "planning_evaluator/metrics/deviation_metrics.hpp"
 #include "planning_evaluator/metrics/obstacle_metrics.hpp"
 #include "planning_evaluator/metrics/stability_metrics.hpp"
 #include "planning_evaluator/metrics/trajectory_metrics.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 namespace planning_diagnostics
 {
 std::optional<Stat<double>> MetricsCalculator::calculate(
@@ -106,9 +105,15 @@ void MetricsCalculator::setPredictedObjects(const PredictedObjects & objects)
   dynamic_objects_ = objects;
 }
 
-void MetricsCalculator::setEgoPose(const geometry_msgs::msg::Pose & pose) { ego_pose_ = pose; }
+void MetricsCalculator::setEgoPose(const geometry_msgs::msg::Pose & pose)
+{
+  ego_pose_ = pose;
+}
 
-Pose MetricsCalculator::getEgoPose() { return ego_pose_; }
+Pose MetricsCalculator::getEgoPose()
+{
+  return ego_pose_;
+}
 
 Trajectory MetricsCalculator::getLookaheadTrajectory(
   const Trajectory & traj, const double max_dist_m, const double max_time_s) const

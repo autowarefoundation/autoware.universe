@@ -17,7 +17,11 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>
+#else
 #include <cv_bridge/cv_bridge.h>
+#endif
 
 #include <chrono>
 #include <string>
@@ -39,7 +43,10 @@ ByteTrackVisualizerNode::ByteTrackVisualizerNode(const rclcpp::NodeOptions & nod
   image_pub_ = image_transport::create_publisher(this, "~/out/image");
 }
 
-ByteTrackVisualizerNode::~ByteTrackVisualizerNode() { cv::destroyAllWindows(); }
+ByteTrackVisualizerNode::~ByteTrackVisualizerNode()
+{
+  cv::destroyAllWindows();
+}
 
 bool ByteTrackVisualizerNode::get_topic_qos(const std::string & query_topic, rclcpp::QoS & qos)
 {

@@ -20,7 +20,11 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/math/normalization.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -145,8 +149,9 @@ void DefaultPlanner::initialize_common(rclcpp::Node * node)
     node_->create_publisher<MarkerArray>("debug/goal_footprint", durable_qos);
 
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*node_).getVehicleInfo();
-  param_.goal_angle_threshold_deg = node_->declare_parameter("goal_angle_threshold_deg", 45.0);
-  param_.enable_correct_goal_pose = node_->declare_parameter("enable_correct_goal_pose", false);
+  param_.goal_angle_threshold_deg = node_->declare_parameter<double>("goal_angle_threshold_deg");
+  param_.enable_correct_goal_pose = node_->declare_parameter<bool>("enable_correct_goal_pose");
+  param_.consider_no_drivable_lanes = node_->declare_parameter<bool>("consider_no_drivable_lanes");
 }
 
 void DefaultPlanner::initialize(rclcpp::Node * node)
@@ -163,7 +168,10 @@ void DefaultPlanner::initialize(rclcpp::Node * node, const HADMapBin::ConstShare
   map_callback(msg);
 }
 
-bool DefaultPlanner::ready() const { return is_graph_ready_; }
+bool DefaultPlanner::ready() const
+{
+  return is_graph_ready_;
+}
 
 void DefaultPlanner::map_callback(const HADMapBin::ConstSharedPtr msg)
 {
@@ -201,7 +209,7 @@ PlannerPlugin::MarkerArray DefaultPlanner::visualize(const LaneletRoute & route)
   std_msgs::msg::ColorRGBA cl_end;
   std_msgs::msg::ColorRGBA cl_normal;
   std_msgs::msg::ColorRGBA cl_goal;
-  set_color(&cl_route, 0.2, 0.4, 0.2, 0.05);
+  set_color(&cl_route, 0.8, 0.99, 0.8, 0.15);
   set_color(&cl_goal, 0.2, 0.4, 0.4, 0.05);
   set_color(&cl_end, 0.2, 0.2, 0.4, 0.05);
   set_color(&cl_normal, 0.2, 0.4, 0.2, 0.05);
@@ -398,7 +406,8 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     const auto goal_check_point = points.at(i);
     lanelet::ConstLanelets path_lanelets;
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
-          start_check_point, goal_check_point, &path_lanelets)) {
+          start_check_point, goal_check_point, &path_lanelets, param_.consider_no_drivable_lanes)) {
+      RCLCPP_WARN(logger, "Failed to plan route.");
       return route_msg;
     }
     for (const auto & lane : path_lanelets) {
@@ -409,6 +418,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
     route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
   }
+  route_handler_.setRouteLanelets(all_route_lanelets);
 
   auto goal_pose = points.back();
   if (param_.enable_correct_goal_pose) {
@@ -447,6 +457,16 @@ geometry_msgs::msg::Pose DefaultPlanner::refine_goal_height(
   Pose refined_goal = goal;
   refined_goal.position.z = goal_height;
   return refined_goal;
+}
+
+void DefaultPlanner::updateRoute(const PlannerPlugin::LaneletRoute & route)
+{
+  route_handler_.setRoute(route);
+}
+
+void DefaultPlanner::clearRoute()
+{
+  route_handler_.clearRoute();
 }
 
 }  // namespace mission_planner::lanelet2

@@ -32,15 +32,28 @@ def launch_setup(context, *args, **kwargs):
     with open(param_file, "r") as f:
         laserscan_based_occupancy_grid_map_node_params = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    updater_param_file = LaunchConfiguration("updater_param_file").perform(context)
+    with open(updater_param_file, "r") as f:
+        occupancy_grid_map_updater_params = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     composable_nodes = [
         ComposableNode(
             package="pointcloud_to_laserscan",
             plugin="pointcloud_to_laserscan::PointCloudToLaserScanNode",
             name="pointcloud_to_laserscan_node",
             remappings=[
-                ("~/input/pointcloud", LaunchConfiguration("input/obstacle_pointcloud")),
-                ("~/output/laserscan", LaunchConfiguration("output/laserscan")),
-                ("~/output/pointcloud", LaunchConfiguration("output/pointcloud")),
+                (
+                    "~/input/pointcloud",
+                    LaunchConfiguration("input/obstacle_pointcloud"),
+                ),
+                (
+                    "~/output/laserscan",
+                    LaunchConfiguration("output/laserscan"),
+                ),
+                (
+                    "~/output/pointcloud",
+                    LaunchConfiguration("output/pointcloud"),
+                ),
                 ("~/output/ray", LaunchConfiguration("output/ray")),
                 ("~/output/stixel", LaunchConfiguration("output/stixel")),
             ],
@@ -76,17 +89,25 @@ def launch_setup(context, *args, **kwargs):
             name="occupancy_grid_map_node",
             remappings=[
                 ("~/input/laserscan", LaunchConfiguration("output/laserscan")),
-                ("~/input/obstacle_pointcloud", LaunchConfiguration("input/obstacle_pointcloud")),
-                ("~/input/raw_pointcloud", LaunchConfiguration("input/raw_pointcloud")),
+                (
+                    "~/input/obstacle_pointcloud",
+                    LaunchConfiguration("input/obstacle_pointcloud"),
+                ),
+                (
+                    "~/input/raw_pointcloud",
+                    LaunchConfiguration("input/raw_pointcloud"),
+                ),
                 ("~/output/occupancy_grid_map", LaunchConfiguration("output")),
             ],
             parameters=[
                 laserscan_based_occupancy_grid_map_node_params,
+                occupancy_grid_map_updater_params,
                 {
                     "input_obstacle_pointcloud": LaunchConfiguration("input_obstacle_pointcloud"),
                     "input_obstacle_and_raw_pointcloud": LaunchConfiguration(
                         "input_obstacle_and_raw_pointcloud"
                     ),
+                    "updater_type": LaunchConfiguration("updater_type"),
                 },
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -139,13 +160,19 @@ def generate_launch_description():
             add_launch_arg("output/pointcloud", "virtual_scan/pointcloud"),
             add_launch_arg("output/ray", "virtual_scan/ray"),
             add_launch_arg("output/stixel", "virtual_scan/stixel"),
-            add_launch_arg("input_obstacle_pointcloud", "false"),
-            add_launch_arg("input_obstacle_and_raw_pointcloud", "true"),
             add_launch_arg(
                 "param_file",
                 get_package_share_directory("probabilistic_occupancy_grid_map")
                 + "/config/laserscan_based_occupancy_grid_map.param.yaml",
             ),
+            add_launch_arg("updater_type", "binary_bayes_filter"),
+            add_launch_arg(
+                "updater_param_file",
+                get_package_share_directory("probabilistic_occupancy_grid_map")
+                + "/config/updater.param.yaml",
+            ),
+            add_launch_arg("input_obstacle_pointcloud", "false"),
+            add_launch_arg("input_obstacle_and_raw_pointcloud", "true"),
             add_launch_arg("use_pointcloud_container", "false"),
             add_launch_arg("container_name", "occupancy_grid_map_container"),
             set_container_executable,

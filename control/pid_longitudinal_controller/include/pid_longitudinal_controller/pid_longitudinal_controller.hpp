@@ -16,8 +16,6 @@
 #define PID_LONGITUDINAL_CONTROLLER__PID_LONGITUDINAL_CONTROLLER_HPP_
 
 #include "diagnostic_updater/diagnostic_updater.hpp"
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Geometry"
 #include "pid_longitudinal_controller/debug_values.hpp"
 #include "pid_longitudinal_controller/longitudinal_controller_utils.hpp"
 #include "pid_longitudinal_controller/lowpass_filter.hpp"
@@ -29,6 +27,9 @@
 #include "tf2_ros/transform_listener.h"
 #include "trajectory_follower_base/longitudinal_controller_base.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
 #include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
@@ -55,6 +56,7 @@ namespace trajectory_follower = ::autoware::motion::control::trajectory_follower
 class PidLongitudinalController : public trajectory_follower::LongitudinalControllerBase
 {
 public:
+  /// \param node Reference to the node used only for the component and parameter initialization.
   explicit PidLongitudinalController(rclcpp::Node & node);
 
 private:
@@ -76,7 +78,9 @@ private:
     double slope_angle{0.0};
     double dt{0.0};
   };
-  rclcpp::Node * node_;
+  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr node_parameters_;
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Logger logger_;
   // ros variables
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_slope;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_debug;
@@ -201,7 +205,7 @@ private:
   // debug values
   DebugValues m_debug_values;
 
-  std::shared_ptr<rclcpp::Time> m_last_running_time{std::make_shared<rclcpp::Time>(node_->now())};
+  std::shared_ptr<rclcpp::Time> m_last_running_time{std::make_shared<rclcpp::Time>(clock_->now())};
 
   // Diagnostic
 

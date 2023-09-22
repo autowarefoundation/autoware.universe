@@ -40,8 +40,8 @@ if the roi msgs can be matched, fuse them and cache the pointcloud.
 | :-----------------: | :--------: | :-------: | :-------: | :-------: |
 | subscription status | O | O | O | |
 
-If the roi msg 3 is subscribed before the next pointcloud messge coming or timeout, fuse it if matched, otherwise wait for the next roi msg 3.
-If the roi msg 3 is not subscribed before the next pointcloud messge coming or timeout, postprocess the pointcloud messege as it is.
+If the roi msg 3 is subscribed before the next pointcloud message coming or timeout, fuse it if matched, otherwise wait for the next roi msg 3.
+If the roi msg 3 is not subscribed before the next pointcloud message coming or timeout, postprocess the pointcloud message as it is.
 
 The timeout threshold should be set according to the postprocessing time.
 E.g, if the postprocessing time is around 50ms, the timeout threshold should be set smaller than 50ms, so that the whole processing time could be less than 100ms.
@@ -58,3 +58,4 @@ The rclcpp::TimerBase timer could not break a for loop, therefore even if time i
 | roi_cluster_fusion         | Overwrite a classification label of clusters by that of ROIs from a 2D object detector.         | [link](./docs/roi-cluster-fusion.md)         |
 | roi_detected_object_fusion | Overwrite a classification label of detected objects by that of ROIs from a 2D object detector. | [link](./docs/roi-detected-object-fusion.md) |
 | pointpainting_fusion       | Paint the point cloud with the ROIs from a 2D object detector and feed to a 3D object detector. | [link](./docs/pointpainting-fusion.md)       |
+| roi_pointcloud_fusion      | Matching pointcloud with ROIs from a 2D object detector to detect unknown-labeled objects       | [link](./docs/roi-pointcloud-fusion.md)      |

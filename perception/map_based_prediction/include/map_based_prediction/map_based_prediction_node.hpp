@@ -17,13 +17,9 @@
 
 #include "map_based_prediction/path_generator.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -31,14 +27,12 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <tier4_debug_msgs/msg/string_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_core/geometry/BoundingBox.h>
-#include <lanelet2_core/geometry/Lanelet.h>
-#include <lanelet2_core/geometry/Point.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include <lanelet2_core/Forward.h>
+#include <lanelet2_routing/Forward.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
 
 #include <deque>
 #include <memory>
@@ -59,6 +53,13 @@ struct LateralKinematicsToLanelet
   double filtered_right_lateral_velocity;
 };
 
+enum class Maneuver {
+  UNINITIALIZED = 0,
+  LANE_FOLLOW = 1,
+  LEFT_LANE_CHANGE = 2,
+  RIGHT_LANE_CHANGE = 3,
+};
+
 struct ObjectData
 {
   std_msgs::msg::Header header;
@@ -69,12 +70,9 @@ struct ObjectData
   double time_delay;
   // for lane change prediction
   std::unordered_map<lanelet::ConstLanelet, LateralKinematicsToLanelet> lateral_kinematics_set;
-};
-
-enum class Maneuver {
-  LANE_FOLLOW = 0,
-  LEFT_LANE_CHANGE = 1,
-  RIGHT_LANE_CHANGE = 2,
+  Maneuver one_shot_maneuver{Maneuver::UNINITIALIZED};
+  Maneuver output_maneuver{
+    Maneuver::UNINITIALIZED};  // output maneuver considering previous one shot maneuvers
 };
 
 struct LaneletData
@@ -102,6 +100,7 @@ using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjectKinematics;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
 using tier4_autoware_utils::StopWatch;
+using tier4_debug_msgs::msg::StringStamped;
 
 class MapBasedPredictionNode : public rclcpp::Node
 {
@@ -112,6 +111,7 @@ private:
   // ROS Publisher and Subscriber
   rclcpp::Publisher<PredictedObjects>::SharedPtr pub_objects_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_markers_;
+  rclcpp::Publisher<StringStamped>::SharedPtr pub_calculation_time_;
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
 
@@ -135,9 +135,11 @@ private:
   // Parameters
   bool enable_delay_compensation_;
   double prediction_time_horizon_;
+  double prediction_time_horizon_rate_for_validate_lane_length_;
   double prediction_sampling_time_interval_;
   double min_velocity_for_map_based_prediction_;
   double min_crosswalk_user_velocity_;
+  double max_crosswalk_user_delta_yaw_threshold_for_lanelet_;
   double debug_accumulated_time_;
   double dist_threshold_for_searching_lanelet_;
   double delta_yaw_threshold_for_searching_lanelet_;
@@ -145,9 +147,15 @@ private:
   double sigma_yaw_angle_deg_;
   double object_buffer_time_length_;
   double history_time_length_;
+  std::string lane_change_detection_method_;
   double dist_threshold_to_bound_;
   double time_threshold_to_bound_;
   double cutoff_freq_of_velocity_lpf_;
+  double dist_ratio_threshold_to_left_bound_;
+  double dist_ratio_threshold_to_right_bound_;
+  double diff_dist_threshold_to_left_bound_;
+  double diff_dist_threshold_to_right_bound_;
+  int num_continuous_state_transition_;
   double reference_path_resolution_;
 
   // Stop watch
@@ -169,7 +177,7 @@ private:
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
     const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
-    const lanelet::BasicPoint2d & search_point);
+    const bool check_distance = true);
   float calculateLocalLikelihood(
     const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const;
   void updateObjectData(TrackedObject & object);
@@ -182,7 +190,7 @@ private:
     const TrackedObject & object, const LaneletsData & current_lanelets_data,
     const double object_detected_time);
   Maneuver predictObjectManeuver(
-    const TrackedObject & object, const LaneletData & current_lanelet,
+    const TrackedObject & object, const LaneletData & current_lanelet_data,
     const double object_detected_time);
   geometry_msgs::msg::Pose compensateTimeDelay(
     const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,
@@ -213,6 +221,13 @@ private:
 
   visualization_msgs::msg::Marker getDebugMarker(
     const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num);
+
+  Maneuver predictObjectManeuverByTimeToLaneChange(
+    const TrackedObject & object, const LaneletData & current_lanelet_data,
+    const double object_detected_time);
+  Maneuver predictObjectManeuverByLatDiffDistance(
+    const TrackedObject & object, const LaneletData & current_lanelet_data,
+    const double object_detected_time);
 };
 }  // namespace map_based_prediction
 

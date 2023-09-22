@@ -15,14 +15,14 @@
 #ifndef BEHAVIOR_PATH_PLANNER__TURN_SIGNAL_DECIDER_HPP_
 #define BEHAVIOR_PATH_PLANNER__TURN_SIGNAL_DECIDER_HPP_
 
-#include <behavior_path_planner/data_manager.hpp>
+#include <behavior_path_planner/parameters.hpp>
 #include <route_handler/route_handler.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/Forward.h>
 
 #include <limits>
 #include <map>
@@ -45,16 +45,46 @@ const std::map<std::string, uint8_t> signal_map = {
   {"straight", TurnIndicatorsCommand::DISABLE},
   {"none", TurnIndicatorsCommand::DISABLE}};
 
+struct TurnSignalInfo
+{
+  TurnSignalInfo()
+  {
+    turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
+    hazard_signal.command = HazardLightsCommand::NO_COMMAND;
+  }
+
+  // desired turn signal
+  TurnIndicatorsCommand turn_signal;
+  HazardLightsCommand hazard_signal;
+
+  geometry_msgs::msg::Pose desired_start_point;
+  geometry_msgs::msg::Pose desired_end_point;
+  geometry_msgs::msg::Pose required_start_point;
+  geometry_msgs::msg::Pose required_end_point;
+};
+
+struct TurnSignalDebugData
+{
+  TurnSignalInfo intersection_turn_signal_info;
+  TurnSignalInfo behavior_turn_signal_info;
+};
+
 class TurnSignalDecider
 {
 public:
   TurnIndicatorsCommand getTurnSignal(
-    const std::shared_ptr<const PlannerData> & planner_data, const PathWithLaneId & path,
-    const TurnSignalInfo & turn_signal_info);
+    const std::shared_ptr<RouteHandler> & route_handler, const PathWithLaneId & path,
+    const TurnSignalInfo & turn_signal_info, const Pose & current_pose, const double current_vel,
+    const BehaviorPathPlannerParameters & parameters, TurnSignalDebugData & debug_data);
 
   TurnIndicatorsCommand resolve_turn_signal(
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
     const TurnSignalInfo & intersection_signal_info, const TurnSignalInfo & behavior_signal_info,
+    const double nearest_dist_threshold, const double nearest_yaw_threshold);
+
+  TurnSignalInfo use_prior_turn_signal(
+    const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
+    const TurnSignalInfo & original_signal, const TurnSignalInfo & new_signal,
     const double nearest_dist_threshold, const double nearest_yaw_threshold);
 
   void setParameters(

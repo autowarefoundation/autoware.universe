@@ -47,11 +47,11 @@ std::string getModuleName(const uint8_t module_type)
     case Module::AVOIDANCE_RIGHT: {
       return "avoidance_right";
     }
-    case Module::PULL_OVER: {
-      return "pull_over";
+    case Module::GOAL_PLANNER: {
+      return "goal_planner";
     }
-    case Module::PULL_OUT: {
-      return "pull_out";
+    case Module::START_PLANNER: {
+      return "start_planner";
     }
     case Module::TRAFFIC_LIGHT: {
       return "traffic_light";
@@ -92,8 +92,7 @@ RTCReplayerNode::RTCReplayerNode(const rclcpp::NodeOptions & node_options)
 {
   sub_statuses_ = create_subscription<CooperateStatusArray>(
     "/debug/rtc_status", 1, std::bind(&RTCReplayerNode::onCooperateStatus, this, _1));
-  client_rtc_commands_ = create_client<CooperateCommands>(
-    "/api/external/set/rtc_commands", rmw_qos_profile_services_default);
+  client_rtc_commands_ = create_client<CooperateCommands>("/api/external/set/rtc_commands");
 }
 
 void RTCReplayerNode::onCooperateStatus(const CooperateStatusArray::ConstSharedPtr msg)

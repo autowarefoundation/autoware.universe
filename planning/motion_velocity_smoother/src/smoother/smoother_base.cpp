@@ -16,8 +16,10 @@
 
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/resample.hpp"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <algorithm>
@@ -26,7 +28,6 @@
 
 namespace motion_velocity_smoother
 {
-using vehicle_info_util::VehicleInfoUtil;
 
 SmootherBase::SmootherBase(rclcpp::Node & node)
 {
@@ -58,17 +59,40 @@ SmootherBase::SmootherBase(rclcpp::Node & node)
     node.declare_parameter<double>("sparse_min_interval_distance");
 }
 
-void SmootherBase::setParam(const BaseParam & param) { base_param_ = param; }
+void SmootherBase::setWheelBase(const double wheel_base)
+{
+  base_param_.wheel_base = wheel_base;
+}
 
-SmootherBase::BaseParam SmootherBase::getBaseParam() const { return base_param_; }
+void SmootherBase::setParam(const BaseParam & param)
+{
+  base_param_ = param;
+}
 
-double SmootherBase::getMaxAccel() const { return base_param_.max_accel; }
+SmootherBase::BaseParam SmootherBase::getBaseParam() const
+{
+  return base_param_;
+}
 
-double SmootherBase::getMinDecel() const { return base_param_.min_decel; }
+double SmootherBase::getMaxAccel() const
+{
+  return base_param_.max_accel;
+}
 
-double SmootherBase::getMaxJerk() const { return base_param_.max_jerk; }
+double SmootherBase::getMinDecel() const
+{
+  return base_param_.min_decel;
+}
 
-double SmootherBase::getMinJerk() const { return base_param_.min_jerk; }
+double SmootherBase::getMaxJerk() const
+{
+  return base_param_.max_jerk;
+}
+
+double SmootherBase::getMinJerk() const
+{
+  return base_param_.min_jerk;
+}
 
 TrajectoryPoints SmootherBase::applyLateralAccelerationFilter(
   const TrajectoryPoints & input, [[maybe_unused]] const double v0,

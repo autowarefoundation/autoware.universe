@@ -15,12 +15,12 @@
 #ifndef PID_LONGITUDINAL_CONTROLLER__LONGITUDINAL_CONTROLLER_UTILS_HPP_
 #define PID_LONGITUDINAL_CONTROLLER__LONGITUDINAL_CONTROLLER_UTILS_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Geometry"
 #include "interpolation/linear_interpolation.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tf2/utils.h"
 
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <experimental/optional>  // NOLINT
 
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
@@ -72,11 +72,12 @@ double getPitchByTraj(
 double calcElevationAngle(const TrajectoryPoint & p_from, const TrajectoryPoint & p_to);
 
 /**
- * @brief calculate vehicle pose after time delay by moving the vehicle at current velocity for
- * delayed time
+ * @brief calculate vehicle pose after time delay by moving the vehicle at current velocity and
+ * acceleration for delayed time
  */
 Pose calcPoseAfterTimeDelay(
-  const Pose & current_pose, const double delay_time, const double current_vel);
+  const Pose & current_pose, const double delay_time, const double current_vel,
+  const double current_acc);
 
 /**
  * @brief apply linear interpolation to orientation

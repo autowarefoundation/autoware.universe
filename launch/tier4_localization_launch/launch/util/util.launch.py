@@ -34,7 +34,7 @@ def launch_setup(context, *args, **kwargs):
         plugin="pointcloud_preprocessor::CropBoxFilterComponent",
         name="crop_box_filter_measurement_range",
         remappings=[
-            ("input", LaunchConfiguration("input/pointcloud")),
+            ("input", LaunchConfiguration("input_pointcloud")),
             ("output", "measurement_range/pointcloud"),
         ],
         parameters=[
@@ -114,7 +114,7 @@ def generate_launch_description():
         ],
         "path to the parameter file of random_downsample_filter",
     )
-    add_launch_arg("use_intra_process", "true", "use ROS2 component container communication")
+    add_launch_arg("use_intra_process", "true", "use ROS 2 component container communication")
     add_launch_arg("use_pointcloud_container", "True", "use pointcloud container")
     add_launch_arg(
         "pointcloud_container_name",

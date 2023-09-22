@@ -16,7 +16,9 @@
 #define BEHAVIOR_PATH_PLANNER__DATA_MANAGER_HPP_
 
 #include "behavior_path_planner/parameters.hpp"
-#include "behavior_path_planner/util/drivable_area_expansion/parameters.hpp"
+#include "behavior_path_planner/turn_signal_decider.hpp"
+#include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
@@ -28,12 +30,13 @@
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
 
 #include <limits>
 #include <memory>
@@ -43,6 +46,7 @@
 namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::OperationModeState;
+using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
@@ -55,6 +59,7 @@ using nav_msgs::msg::Odometry;
 using route_handler::RouteHandler;
 using tier4_planning_msgs::msg::LateralOffset;
 using PlanResult = PathWithLaneId::SharedPtr;
+using unique_identifier_msgs::msg::UUID;
 
 struct BoolStamped
 {
@@ -76,22 +81,26 @@ struct DrivableLanes
   lanelet::ConstLanelets middle_lanes;
 };
 
-struct TurnSignalInfo
+// NOTE: To deal with some policies about drivable area generation, currently DrivableAreaInfo is
+// quite messy. Needs to be refactored.
+struct DrivableAreaInfo
 {
-  TurnSignalInfo()
+  struct Obstacle
   {
-    turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
-    hazard_signal.command = HazardLightsCommand::NO_COMMAND;
-  }
+    geometry_msgs::msg::Pose pose;
+    tier4_autoware_utils::Polygon2d poly;
+    bool is_left;
+  };
+  std::vector<DrivableLanes> drivable_lanes{};
+  std::vector<Obstacle> obstacles{};  // obstacles to extract from the drivable area
+  bool enable_expanding_hatched_road_markings{false};
+  bool enable_expanding_intersection_areas{false};
 
-  // desired turn signal
-  TurnIndicatorsCommand turn_signal;
-  HazardLightsCommand hazard_signal;
+  // temporary only for pull over's freespace planning
+  double drivable_margin{0.0};
 
-  geometry_msgs::msg::Pose desired_start_point;
-  geometry_msgs::msg::Pose desired_end_point;
-  geometry_msgs::msg::Pose required_start_point;
-  geometry_msgs::msg::Pose required_end_point;
+  // temporary only for side shift
+  bool is_already_expanded{false};
 };
 
 struct BehaviorModuleOutput
@@ -108,8 +117,9 @@ struct BehaviorModuleOutput
 
   std::optional<PoseWithUuidStamped> modified_goal{};
 
-  // drivable lanes
-  std::vector<DrivableLanes> drivable_lanes;
+  // drivable area info to create drivable area
+  // NOTE: Drivable area in the path is generated at last from drivable_area_info.
+  DrivableAreaInfo drivable_area_info;
 };
 
 struct CandidateOutput
@@ -133,10 +143,25 @@ struct PlannerData
   OperationModeState::ConstSharedPtr operation_mode{};
   PathWithLaneId::SharedPtr reference_path{std::make_shared<PathWithLaneId>()};
   PathWithLaneId::SharedPtr prev_output_path{std::make_shared<PathWithLaneId>()};
+  std::optional<PoseWithUuidStamped> prev_modified_goal{};
+  std::optional<UUID> prev_route_id{};
   lanelet::ConstLanelets current_lanes{};
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
   BehaviorPathPlannerParameters parameters{};
   drivable_area_expansion::DrivableAreaExpansionParameters drivable_area_expansion_parameters{};
+
+  mutable std::optional<geometry_msgs::msg::Pose> drivable_area_expansion_prev_crop_pose;
+  mutable TurnSignalDecider turn_signal_decider;
+
+  TurnIndicatorsCommand getTurnSignal(
+    const PathWithLaneId & path, const TurnSignalInfo & turn_signal_info,
+    TurnSignalDebugData & debug_data)
+  {
+    const auto & current_pose = self_odometry->pose.pose;
+    const auto & current_vel = self_odometry->twist.twist.linear.x;
+    return turn_signal_decider.getTurnSignal(
+      route_handler, path, turn_signal_info, current_pose, current_vel, parameters, debug_data);
+  }
 
   template <class T>
   size_t findEgoIndex(const std::vector<T> & points) const

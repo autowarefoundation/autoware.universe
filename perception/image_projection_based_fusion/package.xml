@@ -9,14 +9,16 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-
-  <build_depend>autoware_cmake</build_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
+  <depend>autoware_point_types</depend>
   <depend>cv_bridge</depend>
+  <depend>euclidean_cluster</depend>
   <depend>image_transport</depend>
   <depend>lidar_centerpoint</depend>
   <depend>message_filters</depend>
+  <depend>object_recognition_utils</depend>
   <depend>pcl_conversions</depend>
   <depend>pcl_ros</depend>
   <depend>rclcpp</depend>

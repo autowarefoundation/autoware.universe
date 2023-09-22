@@ -27,7 +27,11 @@
 #include <std_msgs/msg/header.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>
+#else
 #include <cv_bridge/cv_bridge.h>
+#endif
 
 #include <string>
 #include <vector>
@@ -41,8 +45,7 @@ class BlockageDiagComponent : public pointcloud_preprocessor::Filter
 {
 protected:
   virtual void filter(
-    const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
-    PointCloud2 & output);
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 

@@ -81,15 +81,14 @@ public:
     m_default_topic{default_topic}
   {
     m_display_type_property = new rviz_common::properties::EnumProperty(
-      "Polygon Type", "3d", "Type of the polygon to display object.", this, SLOT(updatePalette()));
+      "Polygon Type", "3d", "Type of the polygon to display object.", this);
     // Option values here must correspond to indices in palette_textures_ array in onInitialize()
     // below.
     m_display_type_property->addOption("3d", 0);
     m_display_type_property->addOption("2d", 1);
     m_display_type_property->addOption("Disable", 2);
     m_simple_visualize_mode_property = new rviz_common::properties::EnumProperty(
-      "Visualization Type", "Normal", "Simplicity of the polygon to display object.", this,
-      SLOT(updatePalette()));
+      "Visualization Type", "Normal", "Simplicity of the polygon to display object.", this);
     m_simple_visualize_mode_property->addOption("Normal", 0);
     m_simple_visualize_mode_property->addOption("Simple", 1);
     // iterate over default values to create and initialize the properties.
@@ -145,6 +144,11 @@ public:
   void add_marker(visualization_msgs::msg::MarkerArray::ConstSharedPtr markers_ptr)
   {
     m_marker_common.addMessage(markers_ptr);
+  }
+
+  void deleteMarker(rviz_default_plugins::displays::MarkerID marker_id)
+  {
+    m_marker_common.deleteMarker(marker_id);
   }
 
 protected:
@@ -347,9 +351,13 @@ protected:
   {
     std_msgs::msg::ColorRGBA sample_color;
     sample_color.r = 1.0;
-    sample_color.g = 0.0;
-    sample_color.b = 1.0;
-    colors.push_back(sample_color);  // magenta
+    sample_color.g = 0.65;
+    sample_color.b = 0.0;
+    colors.push_back(sample_color);  // orange
+    sample_color.r = 1.0;
+    sample_color.g = 1.0;
+    sample_color.b = 0.0;
+    colors.push_back(sample_color);  // yellow
     sample_color.r = 0.69;
     sample_color.g = 1.0;
     sample_color.b = 0.18;
@@ -362,22 +370,18 @@ protected:
     sample_color.g = 1.0;
     sample_color.b = 0.0;
     colors.push_back(sample_color);  // chartreuse green
-    sample_color.r = 0.12;
-    sample_color.g = 0.56;
-    sample_color.b = 1.0;
-    colors.push_back(sample_color);  // dodger blue
     sample_color.r = 0.0;
     sample_color.g = 1.0;
     sample_color.b = 1.0;
     colors.push_back(sample_color);  // cyan
-    sample_color.r = 0.54;
-    sample_color.g = 0.168;
-    sample_color.b = 0.886;
-    colors.push_back(sample_color);  // blueviolet
-    sample_color.r = 0.0;
-    sample_color.g = 1.0;
-    sample_color.b = 0.5;
-    colors.push_back(sample_color);  // spring green
+    sample_color.r = 0.53;
+    sample_color.g = 0.81;
+    sample_color.b = 0.98;
+    colors.push_back(sample_color);  // light skyblue
+    sample_color.r = 1.0;
+    sample_color.g = 0.41;
+    sample_color.b = 0.71;
+    colors.push_back(sample_color);  // hot pink
   }
 
   double get_line_width() { return m_line_width_property.getFloat(); }

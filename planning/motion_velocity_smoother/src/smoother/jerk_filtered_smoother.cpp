@@ -14,8 +14,9 @@
 
 #include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 
-#include "eigen3/Eigen/Core"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
+
+#include <Eigen/Core>
 
 #include <algorithm>
 #include <chrono>
@@ -49,7 +50,10 @@ void JerkFilteredSmoother::setParam(const Param & smoother_param)
   smoother_param_ = smoother_param;
 }
 
-JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const { return smoother_param_; }
+JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const
+{
+  return smoother_param_;
+}
 
 bool JerkFilteredSmoother::apply(
   const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
@@ -290,6 +294,17 @@ bool JerkFilteredSmoother::apply(
   // execute optimization
   const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
   const std::vector<double> optval = std::get<0>(result);
+  const int status_val = std::get<3>(result);
+  if (status_val != 1) {
+    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    return false;
+  }
+  const auto has_nan =
+    std::any_of(optval.begin(), optval.end(), [](const auto v) { return std::isnan(v); });
+  if (has_nan) {
+    RCLCPP_WARN(logger_, "optimization failed: result contains NaN values");
+    return false;
+  }
 
   const auto tf1 = std::chrono::system_clock::now();
   const double dt_ms1 =
@@ -314,7 +329,7 @@ bool JerkFilteredSmoother::apply(
     const auto msg = status_polish == 0    ? "unperformed"
                      : status_polish == -1 ? "unsuccessful"
                                            : "unknown";
-    RCLCPP_WARN(logger_, "osqp polish process failed : %s. The result may be inaccurate", msg);
+    RCLCPP_DEBUG(logger_, "osqp polish process failed : %s. The result may be inaccurate", msg);
   }
 
   if (VERBOSE_TRAJECTORY_VELOCITY) {

@@ -15,8 +15,6 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Sparse"
 #include "gtest/gtest.h"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
@@ -24,8 +22,11 @@
 #include "obstacle_avoidance_planner/state_equation_generator.hpp"
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "osqp_interface/osqp_interface.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Sparse>
 
 #include <memory>
 #include <optional>
@@ -108,14 +109,16 @@ public:
     const std::shared_ptr<DebugData> debug_data_ptr,
     const std::shared_ptr<TimeKeeper> time_keeper_ptr);
 
-  std::optional<std::vector<TrajectoryPoint>> getModelPredictiveTrajectory(
+  std::vector<TrajectoryPoint> optimizeTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points);
+  std::optional<std::vector<TrajectoryPoint>> getPrevOptimizedTrajectoryPoints() const;
 
   void initialize(const bool enable_debug_info, const TrajectoryParam & traj_param);
   void resetPreviousData();
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
   double getTrajectoryLength() const;
+  double getDeltaArcLength() const;
   int getNumberOfPoints() const;
 
 private:
@@ -178,11 +181,13 @@ private:
     double steer_rate_weight;
 
     // avoidance
+    double max_bound_fixing_time;
     double max_longitudinal_margin_for_bound_violation;
     double max_avoidance_cost;
     double avoidance_cost_margin;
     double avoidance_cost_band_length;
     double avoidance_cost_decrease_rate;
+    double min_drivable_width;
     double avoidance_lat_error_weight;
     double avoidance_yaw_error_weight;
     double avoidance_steer_input_weight;
@@ -233,7 +238,9 @@ private:
   // previous data
   int prev_mat_n_ = 0;
   int prev_mat_m_ = 0;
+  int prev_solution_status_ = 0;
   std::shared_ptr<std::vector<ReferencePoint>> prev_ref_points_ptr_{nullptr};
+  std::shared_ptr<std::vector<TrajectoryPoint>> prev_optimized_traj_points_ptr_{nullptr};
 
   void updateVehicleCircles();
 
@@ -248,9 +255,14 @@ private:
   void updateBounds(
     std::vector<ReferencePoint> & ref_points,
     const std::vector<geometry_msgs::msg::Point> & left_bound,
-    const std::vector<geometry_msgs::msg::Point> & right_bound) const;
+    const std::vector<geometry_msgs::msg::Point> & right_bound,
+    const geometry_msgs::msg::Pose & ego_pose, const double ego_vel) const;
+  void keepMinimumBoundsWidth(std::vector<ReferencePoint> & ref_points) const;
   std::vector<ReferencePoint> extendViolatedBounds(
     const std::vector<ReferencePoint> & ref_points) const;
+  void avoidSuddenSteering(
+    std::vector<ReferencePoint> & ref_points, const geometry_msgs::msg::Pose & ego_pose,
+    const double ego_vel) const;
   void updateVehicleBounds(
     std::vector<ReferencePoint> & ref_points,
     const SplineInterpolationPoints2d & ref_points_spline) const;
@@ -285,7 +297,7 @@ private:
     const std::vector<ReferencePoint> & ref_points) const;
 
   std::optional<std::vector<TrajectoryPoint>> calcMPTPoints(
-    std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & U,
+    std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & optimized_variables,
     const StateEquationGenerator::Matrix & mpt_matrix) const;
 
   void publishDebugTrajectories(

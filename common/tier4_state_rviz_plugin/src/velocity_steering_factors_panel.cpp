@@ -202,6 +202,7 @@ void VelocitySteeringFactorsPanel::onVelocityFactors(const VelocityFactorArray::
       velocity_factors_table_->setCellWidget(i, 3, label);
     }
   }
+  velocity_factors_table_->update();
 }
 
 void VelocitySteeringFactorsPanel::onSteeringFactors(const SteeringFactorArray::ConstSharedPtr msg)
@@ -231,11 +232,11 @@ void VelocitySteeringFactorsPanel::onSteeringFactors(const SteeringFactorArray::
         case SteeringFactor::STATION:
           label->setText("STATION");
           break;
-        case SteeringFactor::PULL_OUT:
-          label->setText("PULL_OUT");
+        case SteeringFactor::START_PLANNER:
+          label->setText("START_PLANNER");
           break;
-        case SteeringFactor::PULL_OVER:
-          label->setText("PULL_OVER");
+        case SteeringFactor::GOAL_PLANNER:
+          label->setText("GOAL_PLANNER");
           break;
         case SteeringFactor::EMERGENCY_OPERATION:
           label->setText("EMERGENCY_OPERATION");
@@ -317,6 +318,7 @@ void VelocitySteeringFactorsPanel::onSteeringFactors(const SteeringFactorArray::
       steering_factors_table_->setCellWidget(i, 5, label);
     }
   }
+  steering_factors_table_->update();
 }
 }  // namespace rviz_plugins
 

@@ -21,6 +21,7 @@ from launch.conditions import IfCondition
 from launch.conditions import LaunchConfigurationEquals
 from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
@@ -41,6 +42,39 @@ def launch_setup(context, *args, **kwargs):
     with open(LaunchConfiguration("nearest_search_param_path").perform(context), "r") as f:
         nearest_search_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    # path smoother
+    smoother_output_path_topic = "path_smoother/path"
+    with open(LaunchConfiguration("elastic_band_smoother_param_path").perform(context), "r") as f:
+        elastic_band_smoother_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    elastic_band_smoother_component = ComposableNode(
+        package="path_smoother",
+        plugin="path_smoother::ElasticBandSmoother",
+        name="elastic_band_smoother",
+        namespace="",
+        remappings=[
+            ("~/input/path", LaunchConfiguration("input_path_topic")),
+            ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/output/path", smoother_output_path_topic),
+        ],
+        parameters=[
+            nearest_search_param,
+            elastic_band_smoother_param,
+        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+    )
+
+    planner_input_path_topic = PythonExpression(
+        [
+            "'",
+            LaunchConfiguration("input_path_topic"),
+            "' if '",
+            LaunchConfiguration("path_smoother_type"),
+            "' == 'none'",
+            " else '",
+            smoother_output_path_topic,
+            "'",
+        ]
+    )
     # obstacle avoidance planner
     with open(
         LaunchConfiguration("obstacle_avoidance_planner_param_path").perform(context), "r"
@@ -52,13 +86,34 @@ def launch_setup(context, *args, **kwargs):
         name="obstacle_avoidance_planner",
         namespace="",
         remappings=[
-            ("~/input/path", LaunchConfiguration("input_path_topic")),
+            ("~/input/path", planner_input_path_topic),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/output/path", "obstacle_avoidance_planner/trajectory"),
         ],
         parameters=[
             nearest_search_param,
             obstacle_avoidance_planner_param,
+            vehicle_info_param,
+        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+    )
+
+    # path sampler
+    with open(LaunchConfiguration("path_sampler_param_path").perform(context), "r") as f:
+        path_sampler_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    path_sampler_component = ComposableNode(
+        package="path_sampler",
+        plugin="path_sampler::PathSampler",
+        name="path_sampler",
+        namespace="",
+        remappings=[
+            ("~/input/path", planner_input_path_topic),
+            ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/output/path", "obstacle_avoidance_planner/trajectory"),
+        ],
+        parameters=[
+            nearest_search_param,
+            path_sampler_param,
             vehicle_info_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -87,7 +142,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             obstacle_velocity_limiter_param,
             vehicle_info_param,
-            {"obstacles.dynamic_source": "static_only"},
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -209,7 +263,6 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
-            obstacle_avoidance_planner_component,
             obstacle_velocity_limiter_component,
         ],
     )
@@ -232,19 +285,51 @@ def launch_setup(context, *args, **kwargs):
         condition=LaunchConfigurationEquals("cruise_planner_type", "none"),
     )
 
+    smoother_loader = LoadComposableNodes(
+        composable_node_descriptions=[elastic_band_smoother_component],
+        target_container=container,
+        condition=LaunchConfigurationEquals("path_smoother_type", "elastic_band"),
+    )
+
+    obstacle_avoidance_planner_loader = LoadComposableNodes(
+        composable_node_descriptions=[obstacle_avoidance_planner_component],
+        target_container=container,
+        condition=LaunchConfigurationEquals("path_planner_type", "obstacle_avoidance_planner"),
+    )
+
+    path_sampler_loader = LoadComposableNodes(
+        composable_node_descriptions=[path_sampler_component],
+        target_container=container,
+        condition=LaunchConfigurationEquals("path_planner_type", "path_sampler"),
+    )
+
     surround_obstacle_checker_loader = LoadComposableNodes(
         composable_node_descriptions=[surround_obstacle_checker_component],
         target_container=container,
         condition=IfCondition(LaunchConfiguration("use_surround_obstacle_check")),
     )
 
+    glog_component = ComposableNode(
+        package="glog_component",
+        plugin="GlogComponent",
+        name="glog_component",
+    )
+    glog_component_loader = LoadComposableNodes(
+        composable_node_descriptions=[glog_component],
+        target_container=container,
+    )
+
     group = GroupAction(
         [
             container,
+            smoother_loader,
+            obstacle_avoidance_planner_loader,
+            path_sampler_loader,
             obstacle_stop_planner_loader,
             obstacle_cruise_planner_loader,
             obstacle_cruise_planner_relay_loader,
             surround_obstacle_checker_loader,
+            glog_component_loader,
         ]
     )
     return [group]
@@ -273,8 +358,12 @@ def generate_launch_description():
     add_launch_arg(
         "cruise_planner_type"
     )  # select from "obstacle_stop_planner", "obstacle_cruise_planner", "none"
+    add_launch_arg(
+        "path_planner_type", "obstacle_avoidance_planner"
+    )  # select from "obstacle_avoidance_planner", "path_sampler"
+    add_launch_arg("path_smoother_type", "elastic_band")  # select from "elastic_band", "none"
 
-    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
+    add_launch_arg("use_intra_process", "false", "use ROS 2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
 
     set_container_executable = SetLaunchConfiguration(

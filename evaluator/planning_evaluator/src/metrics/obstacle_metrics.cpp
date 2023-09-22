@@ -14,8 +14,9 @@
 
 #include "planning_evaluator/metrics/obstacle_metrics.hpp"
 
-#include "eigen3/Eigen/Core"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+
+#include <Eigen/Core>
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
@@ -63,10 +64,10 @@ Stat<double> calcTimeToCollision(
       const double dt = traj_dist / std::abs(p0.longitudinal_velocity_mps);
       t += dt;
       for (auto obstacle : obstacles.objects) {
-        const double obst_dist =
+        const double obstacle_dist =
           calcDistance2d(p, obstacle.kinematics.initial_pose_with_covariance.pose);
         // TODO(Maxime CLEMENT): take shape into consideration
-        if (obst_dist <= distance_threshold) {
+        if (obstacle_dist <= distance_threshold) {
           stat.add(t);
           break;
         }

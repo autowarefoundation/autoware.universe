@@ -30,11 +30,10 @@
 #define EIGEN_MPL2_ONLY
 #include "multi_object_tracker/tracker/model/pass_through_tracker.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
-#include "perception_utils/perception_utils.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 PassThroughTracker::PassThroughTracker(
   const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
@@ -83,7 +82,7 @@ bool PassThroughTracker::measure(
 bool PassThroughTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = perception_utils::toTrackedObject(object_);
+  object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
   object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = 0.0;

@@ -18,7 +18,6 @@
 #include "obstacle_velocity_limiter/obstacles.hpp"
 #include "obstacle_velocity_limiter/parameters.hpp"
 #include "obstacle_velocity_limiter/types.hpp"
-// cspell: ignore multipolygon, multilinestring
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
@@ -75,7 +74,7 @@ private:
   OccupancyGrid::ConstSharedPtr occupancy_grid_ptr_;
   PointCloud::ConstSharedPtr pointcloud_ptr_;
   lanelet::LaneletMapPtr lanelet_map_ptr_{new lanelet::LaneletMap};
-  multilinestring_t static_map_obstacles_;
+  multi_linestring_t static_map_obstacles_;
   nav_msgs::msg::Odometry::ConstSharedPtr current_odometry_ptr_;
 
   // parameters
@@ -100,9 +99,8 @@ private:
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
 
   /// @brief validate the inputs of the node
-  /// @param[in] ego_idx trajectory index closest to the current ego pose
   /// @return true if the inputs are valid
-  bool validInputs(const boost::optional<size_t> & ego_idx);
+  bool validInputs();
 };
 }  // namespace obstacle_velocity_limiter
 

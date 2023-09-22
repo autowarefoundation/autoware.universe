@@ -8,23 +8,24 @@
 
 ### Input
 
-| Name                                 | Type                                                     | Description        |
-| ------------------------------------ | -------------------------------------------------------- | ------------------ |
-| `~/input/vector_map`                 | `autoware_auto_mapping_msgs::msg::HADMapBin`             | vector map         |
-| `~/input/route`                      | `autoware_planning_msgs::msg::LaneletRoute`              | route              |
-| `~/input/classified/traffic_signals` | `autoware_auto_perception_msgs::msg::TrafficSignalArray` | classified signals |
+| Name                                 | Type                                             | Description        |
+| ------------------------------------ | ------------------------------------------------ | ------------------ |
+| `~/input/vector_map`                 | `autoware_auto_mapping_msgs::msg::HADMapBin`     | vector map         |
+| `~/input/route`                      | `autoware_planning_msgs::msg::LaneletRoute`      | route              |
+| `~/input/classified/traffic_signals` | `tier4_perception_msgs::msg::TrafficSignalArray` | classified signals |
 
 ### Output
 
-| Name                       | Type                                                     | Description                                               |
-| -------------------------- | -------------------------------------------------------- | --------------------------------------------------------- |
-| `~/output/traffic_signals` | `autoware_auto_perception_msgs::msg::TrafficSignalArray` | output that contains estimated pedestrian traffic signals |
+| Name                       | Type                                             | Description                                               |
+| -------------------------- | ------------------------------------------------ | --------------------------------------------------------- |
+| `~/output/traffic_signals` | `tier4_perception_msgs::msg::TrafficSignalArray` | output that contains estimated pedestrian traffic signals |
 
 ## Parameters
 
-| Name                    | Type   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Default value |
-| :---------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `use_last_detect_color` | `bool` | If this parameter is `true`, this module estimates pedestrian's traffic signal as RED not only when vehicle's traffic signal is detected as GREEN/AMBER but also when detection results change GREEN/AMBER to UNKNOWN. (If detection results change RED or AMBER to UNKNOWN, this module estimates pedestrian's traffic signal as UNKNOWN.) If this parameter is `false`, this module use only latest detection results for estimation. (Only when the detection result is GREEN/AMBER, this module estimates pedestrian's traffic signal as RED.) | `true`        |
+| Name                          | Type     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Default value |
+| :---------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `use_last_detect_color`       | `bool`   | If this parameter is `true`, this module estimates pedestrian's traffic signal as RED not only when vehicle's traffic signal is detected as GREEN/AMBER but also when detection results change GREEN/AMBER to UNKNOWN. (If detection results change RED or AMBER to UNKNOWN, this module estimates pedestrian's traffic signal as UNKNOWN.) If this parameter is `false`, this module use only latest detection results for estimation. (Only when the detection result is GREEN/AMBER, this module estimates pedestrian's traffic signal as RED.) | `true`        |
+| `last_detect_color_hold_time` | `double` | The time threshold to hold for last detect color.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `2.0`         |
 
 ## Inner-workings / Algorithms
 

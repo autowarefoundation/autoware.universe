@@ -19,6 +19,7 @@
 
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/initialize_localization.hpp>
+#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
 namespace localization_interface
@@ -34,7 +35,7 @@ struct InitializationState
 {
   using Message = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
   static constexpr char name[] = "/localization/initialization_state";
-  static constexpr size_t depth = 3;
+  static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
@@ -43,6 +44,15 @@ struct KinematicState
 {
   using Message = nav_msgs::msg::Odometry;
   static constexpr char name[] = "/localization/kinematic_state";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
+};
+
+struct Acceleration
+{
+  using Message = geometry_msgs::msg::AccelWithCovarianceStamped;
+  static constexpr char name[] = "/localization/acceleration";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;

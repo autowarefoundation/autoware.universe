@@ -2,7 +2,7 @@
 
 ## Debug visualization
 
-The visualization markers of the planning flow (Input, Elastic Band, Model Predictive Trajectory, and Output) are explained here.
+The visualization markers of the planning flow (Input, Model Predictive Trajectory, and Output) are explained here.
 
 All the following markers can be visualized by
 
@@ -28,7 +28,7 @@ The `vehicle_model` must be specified to make footprints with vehicle's size.
 
 ![path_footprint](../media/debug/path_footprint_visualization.png)
 
-- **Drivalbe Area**
+- **Drivable Area**
   - The Drivable area generated in the `behavior` planner.
   - The skyblue left and right line strings, that is visualized by default.
   - NOTE:
@@ -37,18 +37,6 @@ The `vehicle_model` must be specified to make footprints with vehicle's size.
     - During avoidance or lane change by the `behavior` planner, please make sure that the drivable area is expanded correctly.
 
 ![drivable_area](../media/debug/drivable_area_visualization.png)
-
-### Elastic Band (EB)
-
-- **EB Fixed Trajectory**
-  - The fixed trajectory points as a constraint of elastic band.
-
-![eb_fixed_traj](../media/debug/eb_fixed_traj_visualization.png)
-
-- **EB Trajectory**
-  - The optimized trajectory points by elastic band.
-
-![eb_traj](../media/debug/eb_traj_visualization.png)
 
 ### Model Predictive Trajectory (MPT)
 
@@ -69,7 +57,7 @@ The `vehicle_model` must be specified to make footprints with vehicle's size.
 
 - **Vehicle Circles**
   - The vehicle's shape is represented by a set of circles.
-  - The `obstcle_avoidance_planner` will try to make the these circles inside the above boundaries' width.
+  - The `obstacle_avoidance_planner` will try to make the these circles inside the above boundaries' width.
 
 ![vehicle_circles](../media/debug/vehicle_circles_visualization.png)
 
@@ -100,7 +88,7 @@ The `vehicle_model` must be specified to make footprints with vehicle's size.
 
 ## Calculation time
 
-The `obstacle_avoidance_planner` consists of many functions such as boundaries' width calculation, reference path smoothing, collision-free planning, etc.
+The `obstacle_avoidance_planner` consists of many functions such as boundaries' width calculation, collision-free planning, etc.
 We can see the calculation time for each function as follows.
 
 ### Raw data
@@ -147,7 +135,7 @@ onPath:= 20.737 [ms]
 With the following script, any calculation time of the above functions can be plot.
 
 ```sh
-ros2 run obstacle_avoidance_planner calclation_time_plotter.py
+ros2 run obstacle_avoidance_planner calculation_time_plotter.py
 ```
 
 ![calculation_time_plot](../media/debug/calculation_time_plot.png)
@@ -155,7 +143,7 @@ ros2 run obstacle_avoidance_planner calclation_time_plotter.py
 You can specify functions to plot with the `-f` option.
 
 ```sh
-ros2 run obstacle_avoidance_planner calclation_time_plotter.py -f "onPath, generateOptimizedTrajectory, calcReferencePoints"
+ros2 run obstacle_avoidance_planner calculation_time_plotter.py -f "onPath, generateOptimizedTrajectory, calcReferencePoints"
 ```
 
 ## Q&A for Debug
@@ -169,8 +157,6 @@ For your information, the following functions for optimization and its initializ
 - MPT
   - `initOsqp`
   - `solveOsqp`
-- EB
-  - `optimizeTrajectory`
 
 ### When a part of the trajectory has high curvature
 
@@ -186,5 +172,4 @@ Please check if there is something weird by the visualization.
 Some of the following may have an issue.
 Please check if there is something weird by the visualization.
 
-- EB Trajectory
 - Vehicle Circles on Trajectory
