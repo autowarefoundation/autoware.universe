@@ -42,12 +42,19 @@ NDTScanMatcherDiagnosticsUpdaterCore::NDTScanMatcherDiagnosticsUpdaterCore(
       std::bind(
         &NDTScanMatcherDiagnosticsUpdaterCore::check_is_running_ndt_aling_service, this,
         std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_running_ndt_aling_service_))));
+  diagnostics_func_latest_ndt_aling_service_best_score.reset(
+    new diagnostic_updater::FunctionDiagnosticTask(
+      "check_latest_ndt_aling_service_best_score",
+      std::bind(
+        &NDTScanMatcherDiagnosticsUpdaterCore::check_latest_ndt_aling_service_best_score, this,
+        std::placeholders::_1, &(ndt_scan_mathcer_ptr->latest_ndt_aling_service_best_score_))));
 
   diagnostics_composite_task_.reset(
     new diagnostic_updater::CompositeDiagnosticTask("ndt_scan_matcher_core"));
   diagnostics_composite_task_->addTask(diagnostics_func_is_activated_.get());
   diagnostics_composite_task_->addTask(diagnostics_func_is_succeed_latest_ndt_aling_service.get());
   diagnostics_composite_task_->addTask(diagnostics_func_is_running_ndt_aling_service.get());
+  diagnostics_composite_task_->addTask(diagnostics_func_latest_ndt_aling_service_best_score.get());
 
   const double timer_period_sec = 0.1;
   diagnostics_updater_.reset(
@@ -95,6 +102,18 @@ void NDTScanMatcherDiagnosticsUpdaterCore::check_is_running_ndt_aling_service(
   const bool * const is_running_ndt_aling_service_ptr)
 {
   stat.add("is_running_ndt_aling_service", *is_running_ndt_aling_service_ptr);
+
+  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  std::string diag_message = "OK";
+
+  stat.summary(diag_level, diag_message);
+}
+
+void NDTScanMatcherDiagnosticsUpdaterCore::check_latest_ndt_aling_service_best_score(
+  diagnostic_updater::DiagnosticStatusWrapper & stat,
+  const double * const latest_ndt_aling_service_best_score_ptr)
+{
+  stat.add("latest_ndt_aling_service_best_score", *latest_ndt_aling_service_best_score_ptr);
 
   int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   std::string diag_message = "OK";

@@ -77,6 +77,7 @@ NDTScanMatcher::NDTScanMatcher()
   is_activated_ = false;
   is_succeed_latest_ndt_aling_service_ = false;
   is_running_ndt_aling_service_ = false;
+  latest_ndt_aling_service_best_score_ = 0.0;
 
   int points_queue_size = this->declare_parameter<int>("input_sensor_points_queue_size");
   points_queue_size = std::max(points_queue_size, 0);
@@ -716,6 +717,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
   output_pose_with_cov_to_log(
     get_logger(), "align_using_monte_carlo_output", result_pose_with_cov_msg);
   RCLCPP_INFO_STREAM(get_logger(), "best_score," << best_particle_ptr->score);
+  latest_ndt_aling_service_best_score_ = best_particle_ptr->score;
 
   return result_pose_with_cov_msg;
 }

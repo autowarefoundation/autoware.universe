@@ -225,6 +225,7 @@ private:
   bool is_activated_;
   bool is_succeed_latest_ndt_aling_service_;
   bool is_running_ndt_aling_service_;
+  double latest_ndt_aling_service_best_score_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
   std::unique_ptr<DiagnosticsModule> diagnostics_module_;
   std::unique_ptr<NDTScanMatcherDiagnosticsUpdaterCore> diagnostics_update_module_;

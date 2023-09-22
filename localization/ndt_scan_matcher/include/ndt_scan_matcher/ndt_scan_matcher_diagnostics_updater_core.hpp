@@ -35,6 +35,9 @@ private:
   void check_is_running_ndt_aling_service(
     diagnostic_updater::DiagnosticStatusWrapper & stat,
     const bool * const is_running_ndt_aling_service_ptr);
+  void check_latest_ndt_aling_service_best_score(
+    diagnostic_updater::DiagnosticStatusWrapper & stat,
+    const double * const latest_ndt_aling_service_best_score_ptr);
 
   std::unique_ptr<DiagnosticsUpdaterModule> diagnostics_updater_;
   std::shared_ptr<diagnostic_updater::CompositeDiagnosticTask> diagnostics_composite_task_;
@@ -43,5 +46,7 @@ private:
     diagnostics_func_is_succeed_latest_ndt_aling_service;
   std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask>
     diagnostics_func_is_running_ndt_aling_service;
+  std::shared_ptr<diagnostic_updater::FunctionDiagnosticTask>
+  diagnostics_func_latest_ndt_aling_service_best_score;
 };
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_DIAGNOSTICS_UPDATER_CORE_HPP_
