@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef NDT_SCAN_MATCHER__DIAGNOSTICS_UPDATER_MODULE_HPP_
 #define NDT_SCAN_MATCHER__DIAGNOSTICS_UPDATER_MODULE_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <string>
 
@@ -28,17 +26,18 @@
 class DiagnosticsUpdaterModule : public diagnostic_updater::DiagnosticTaskVector
 {
 public:
-  DiagnosticsUpdaterModule(rclcpp::Node * node, const double period = 1.0, const std::string & prefix_diagnostic_name = "");
+  DiagnosticsUpdaterModule(
+    rclcpp::Node * node, const double period = 1.0,
+    const std::string & prefix_diagnostic_name = "");
 
 private:
-  
   void publish(std::vector<diagnostic_msgs::msg::DiagnosticStatus> & status_vec);
   void update();
 
   rclcpp::Node::SharedPtr node_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr publisher_;
   rclcpp::TimerBase::SharedPtr update_timer_;
-  
+
   std::string prefix_diagnostic_name_;
 };
 

@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "ndt_scan_matcher/ndt_scan_matcher_core.hpp"
-#include "ndt_scan_matcher/ndt_scan_matcher_diagnostics_updater_core.hpp"
 
 #include "ndt_scan_matcher/matrix_type.hpp"
+#include "ndt_scan_matcher/ndt_scan_matcher_diagnostics_updater_core.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/pose_array_interpolator.hpp"
 #include "ndt_scan_matcher/util_func.hpp"
@@ -203,7 +203,8 @@ NDTScanMatcher::NDTScanMatcher()
 
   tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
 
-  diagnostics_module_ = std::make_unique<DiagnosticsModule>(this, "localization", "sensor_points_callback");
+  diagnostics_module_ =
+    std::make_unique<DiagnosticsModule>(this, "localization", "sensor_points_callback");
   diagnostics_update_module_ = std::make_unique<NDTScanMatcherDiagnosticsUpdaterCore>(this);
 
   use_dynamic_map_loading_ = this->declare_parameter<bool>("use_dynamic_map_loading");
@@ -214,7 +215,6 @@ NDTScanMatcher::NDTScanMatcher()
     map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, main_callback_group);
   }
 }
-
 
 void NDTScanMatcher::callback_initial_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
@@ -268,7 +268,6 @@ void NDTScanMatcher::callback_sensor_points(
 
   bool is_map_sensor_points = validate_is_set_map_points();
   if (is_activated_) {
-
     bool is_published_topic = false;
     if (is_set_sensor_points && is_map_sensor_points) {
       is_published_topic = process_scan_matching(sensor_points_msg_in_sensor_frame);
@@ -292,7 +291,8 @@ bool NDTScanMatcher::set_input_source(
     return false;
   }
 
-  if (!validate_sensor_points_delay_time(sensor_points_msg_in_sensor_frame->header.stamp, this->now(), lidar_topic_timeout_sec_)) {
+  if (!validate_sensor_points_delay_time(
+        sensor_points_msg_in_sensor_frame->header.stamp, this->now(), lidar_topic_timeout_sec_)) {
     // If the delay time of the LiDAR topic exceeds the delay compensation time of ekf_localizer,
     // even if further processing continues, the estimated result will be rejected by ekf_localizer.
     // Therefore, it would be acceptable to exit the function here.
@@ -317,7 +317,8 @@ bool NDTScanMatcher::set_input_source(
   return true;
 }
 
-bool NDTScanMatcher::process_scan_matching(sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame)
+bool NDTScanMatcher::process_scan_matching(
+  sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame)
 {
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
 
@@ -335,15 +336,21 @@ bool NDTScanMatcher::process_scan_matching(sensor_msgs::msg::PointCloud2::ConstS
 
   PoseArrayInterpolator interpolator(this, sensor_ros_time, initial_pose_msg_ptr_array_);
 
-  if (!validate_time_stamp_difference("old_pose", interpolator.get_old_pose().header.stamp, sensor_ros_time, initial_pose_timeout_sec_)) {
+  if (!validate_time_stamp_difference(
+        "old_pose", interpolator.get_old_pose().header.stamp, sensor_ros_time,
+        initial_pose_timeout_sec_)) {
     return false;
   }
 
-  if (!validate_time_stamp_difference("new_pose", interpolator.get_new_pose().header.stamp, sensor_ros_time, initial_pose_timeout_sec_)) {
+  if (!validate_time_stamp_difference(
+        "new_pose", interpolator.get_new_pose().header.stamp, sensor_ros_time,
+        initial_pose_timeout_sec_)) {
     return false;
   }
 
-  if (!validate_position_difference(interpolator.get_old_pose().pose.pose.position, interpolator.get_new_pose().pose.pose.position, initial_pose_distance_tolerance_m_)) {
+  if (!validate_position_difference(
+        interpolator.get_old_pose().pose.pose.position,
+        interpolator.get_new_pose().pose.pose.position, initial_pose_distance_tolerance_m_)) {
     return false;
   }
 
@@ -391,13 +398,14 @@ bool NDTScanMatcher::process_scan_matching(sensor_msgs::msg::PointCloud2::ConstS
     validate_num_iteration(ndt_result.iteration_num, ndt_ptr_->getMaximumIterations() + 2);
 
   bool is_ok_local_optimal_solution_oscillation = validate_local_optimal_solution_oscillation(
-      transformation_msg_array, oscillation_threshold_, inversion_vector_threshold_);
+    transformation_msg_array, oscillation_threshold_, inversion_vector_threshold_);
 
   bool is_ok_converged_param = validate_converged_param(
     ndt_result.transform_probability, ndt_result.nearest_voxel_transformation_likelihood);
 
   // bool is_converged = is_ok_iteration_num && is_ok_converged_param;
-  bool is_converged = (is_ok_iteration_num || is_ok_local_optimal_solution_oscillation) && is_ok_converged_param;
+  bool is_converged =
+    (is_ok_iteration_num || is_ok_local_optimal_solution_oscillation) && is_ok_converged_param;
   if (!is_converged) {
     RCLCPP_WARN(get_logger(), "Not Converged");
   }
@@ -570,7 +578,6 @@ void NDTScanMatcher::publish_initial_to_result_distances(
   initial_to_result_distance_new_pub_->publish(
     make_float32_stamped(sensor_ros_time, initial_to_result_distance_new));
 }
-
 
 std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolate_regularization_pose(
   const rclcpp::Time & sensor_ros_time)

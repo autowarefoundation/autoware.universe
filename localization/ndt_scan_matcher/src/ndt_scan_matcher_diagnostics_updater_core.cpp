@@ -13,32 +13,50 @@
 // limitations under the License.
 
 #include "ndt_scan_matcher/ndt_scan_matcher_diagnostics_updater_core.hpp"
+
 #include "ndt_scan_matcher/ndt_scan_matcher_core.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 
-#include <string>
 #include <algorithm>
+#include <string>
 
-NDTScanMatcherDiagnosticsUpdaterCore::NDTScanMatcherDiagnosticsUpdaterCore(NDTScanMatcher * ndt_scan_mathcer_ptr)
+NDTScanMatcherDiagnosticsUpdaterCore::NDTScanMatcherDiagnosticsUpdaterCore(
+  NDTScanMatcher * ndt_scan_mathcer_ptr)
 {
-  diagnostics_func_is_activated_.reset(new diagnostic_updater::FunctionDiagnosticTask("check_is_activated", std::bind(&NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated, this, std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_activated_))));
-  diagnostics_func_is_succeed_latest_ndt_aling_service.reset(new diagnostic_updater::FunctionDiagnosticTask("check_is_succeed_latest_ndt_aling_service", std::bind(&NDTScanMatcherDiagnosticsUpdaterCore::check_is_succeed_latest_ndt_aling_service, this, std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_succeed_latest_ndt_aling_service_))));
-  diagnostics_func_is_running_ndt_aling_service.reset(new diagnostic_updater::FunctionDiagnosticTask("check_is_running_ndt_aling_service", std::bind(&NDTScanMatcherDiagnosticsUpdaterCore::check_is_running_ndt_aling_service, this, std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_running_ndt_aling_service_))));
+  diagnostics_func_is_activated_.reset(new diagnostic_updater::FunctionDiagnosticTask(
+    "check_is_activated", std::bind(
+                            &NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated, this,
+                            std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_activated_))));
+  diagnostics_func_is_succeed_latest_ndt_aling_service.reset(
+    new diagnostic_updater::FunctionDiagnosticTask(
+      "check_is_succeed_latest_ndt_aling_service",
+      std::bind(
+        &NDTScanMatcherDiagnosticsUpdaterCore::check_is_succeed_latest_ndt_aling_service, this,
+        std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_succeed_latest_ndt_aling_service_))));
+  diagnostics_func_is_running_ndt_aling_service.reset(
+    new diagnostic_updater::FunctionDiagnosticTask(
+      "check_is_running_ndt_aling_service",
+      std::bind(
+        &NDTScanMatcherDiagnosticsUpdaterCore::check_is_running_ndt_aling_service, this,
+        std::placeholders::_1, &(ndt_scan_mathcer_ptr->is_running_ndt_aling_service_))));
 
-  diagnostics_composite_task_.reset(new diagnostic_updater::CompositeDiagnosticTask("ndt_scan_matcher_core"));
+  diagnostics_composite_task_.reset(
+    new diagnostic_updater::CompositeDiagnosticTask("ndt_scan_matcher_core"));
   diagnostics_composite_task_->addTask(diagnostics_func_is_activated_.get());
   diagnostics_composite_task_->addTask(diagnostics_func_is_succeed_latest_ndt_aling_service.get());
   diagnostics_composite_task_->addTask(diagnostics_func_is_running_ndt_aling_service.get());
 
   const double timer_period_sec = 0.1;
-  diagnostics_updater_.reset(new DiagnosticsUpdaterModule(ndt_scan_mathcer_ptr, timer_period_sec, "localization"));
+  diagnostics_updater_.reset(
+    new DiagnosticsUpdaterModule(ndt_scan_mathcer_ptr, timer_period_sec, "localization"));
   diagnostics_updater_->add(*diagnostics_composite_task_);
 }
 
-void NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated(diagnostic_updater::DiagnosticStatusWrapper & stat, const bool * const is_activated_ptr)
+void NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated(
+  diagnostic_updater::DiagnosticStatusWrapper & stat, const bool * const is_activated_ptr)
 {
   stat.add("is_activated", *is_activated_ptr);
 
@@ -54,7 +72,9 @@ void NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated(diagnostic_updater
   stat.summary(diag_level, diag_message);
 }
 
-void NDTScanMatcherDiagnosticsUpdaterCore::check_is_succeed_latest_ndt_aling_service(diagnostic_updater::DiagnosticStatusWrapper & stat, const bool * const is_succeed_latest_ndt_aling_service_ptr)
+void NDTScanMatcherDiagnosticsUpdaterCore::check_is_succeed_latest_ndt_aling_service(
+  diagnostic_updater::DiagnosticStatusWrapper & stat,
+  const bool * const is_succeed_latest_ndt_aling_service_ptr)
 {
   stat.add("is_succeed_latest_ndt_aling_service", *is_succeed_latest_ndt_aling_service_ptr);
 
@@ -70,7 +90,9 @@ void NDTScanMatcherDiagnosticsUpdaterCore::check_is_succeed_latest_ndt_aling_ser
   stat.summary(diag_level, diag_message);
 }
 
-void NDTScanMatcherDiagnosticsUpdaterCore::check_is_running_ndt_aling_service(diagnostic_updater::DiagnosticStatusWrapper & stat, const bool * const is_running_ndt_aling_service_ptr)
+void NDTScanMatcherDiagnosticsUpdaterCore::check_is_running_ndt_aling_service(
+  diagnostic_updater::DiagnosticStatusWrapper & stat,
+  const bool * const is_running_ndt_aling_service_ptr)
 {
   stat.add("is_running_ndt_aling_service", *is_running_ndt_aling_service_ptr);
 

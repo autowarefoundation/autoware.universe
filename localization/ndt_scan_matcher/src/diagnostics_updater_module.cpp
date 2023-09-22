@@ -16,32 +16,35 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-DiagnosticsUpdaterModule::DiagnosticsUpdaterModule(rclcpp::Node * node, const double period, const std::string & prefix_diagnostic_name)
+DiagnosticsUpdaterModule::DiagnosticsUpdaterModule(
+  rclcpp::Node * node, const double period, const std::string & prefix_diagnostic_name)
 {
   node_.reset(node);
   if (node_ == nullptr) {
-    return; // TODO throw error
+    return;  // TODO throw error
   }
 
   publisher_ = node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
 
   update_timer_ = rclcpp::create_timer(
-    node_, node_->get_clock(), rclcpp::Duration::from_seconds(period), std::bind(&DiagnosticsUpdaterModule::update, this));
+    node_, node_->get_clock(), rclcpp::Duration::from_seconds(period),
+    std::bind(&DiagnosticsUpdaterModule::update, this));
 
-  prefix_diagnostic_name_ = prefix_diagnostic_name.empty() ? "" : (prefix_diagnostic_name + std::string(": "));
+  prefix_diagnostic_name_ =
+    prefix_diagnostic_name.empty() ? "" : (prefix_diagnostic_name + std::string(": "));
 }
 
-void DiagnosticsUpdaterModule::publish(std::vector<diagnostic_msgs::msg::DiagnosticStatus> & status_vec)
+void DiagnosticsUpdaterModule::publish(
+  std::vector<diagnostic_msgs::msg::DiagnosticStatus> & status_vec)
 {
-  for (std::vector<diagnostic_msgs::msg::DiagnosticStatus>::iterator iter =
-    status_vec.begin();
-    iter != status_vec.end(); iter++)
-  {
-    iter->name = prefix_diagnostic_name_ + std::string(node_->get_name()) + std::string(": ") + iter->name;
+  for (std::vector<diagnostic_msgs::msg::DiagnosticStatus>::iterator iter = status_vec.begin();
+       iter != status_vec.end(); iter++) {
+    iter->name =
+      prefix_diagnostic_name_ + std::string(node_->get_name()) + std::string(": ") + iter->name;
   }
   diagnostic_msgs::msg::DiagnosticArray msg;
   msg.status = status_vec;
@@ -52,16 +55,13 @@ void DiagnosticsUpdaterModule::publish(std::vector<diagnostic_msgs::msg::Diagnos
 void DiagnosticsUpdaterModule::update()
 {
   if (rclcpp::ok()) {
-
     std::vector<diagnostic_msgs::msg::DiagnosticStatus> status_vec;
 
     std::unique_lock<std::mutex> lock(
-      lock_);    // Make sure no adds happen while we are processing here.
+      lock_);  // Make sure no adds happen while we are processing here.
     const std::vector<DiagnosticTaskInternal> & tasks = getTasks();
-    for (std::vector<DiagnosticTaskInternal>::const_iterator iter =
-      tasks.begin();
-      iter != tasks.end(); iter++)
-    {
+    for (std::vector<DiagnosticTaskInternal>::const_iterator iter = tasks.begin();
+         iter != tasks.end(); iter++) {
       diagnostic_updater::DiagnosticStatusWrapper status;
 
       status.name = iter->getName();
@@ -74,9 +74,8 @@ void DiagnosticsUpdaterModule::update()
       if (status.level == diagnostic_msgs::msg::DiagnosticStatus::OK) {
         status.message = "OK";
       }
-  
-      status_vec.push_back(status);
 
+      status_vec.push_back(status);
     }
     publish(status_vec);
   }

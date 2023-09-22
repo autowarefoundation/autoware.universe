@@ -13,26 +13,30 @@
 // limitations under the License.
 
 #include "ndt_scan_matcher/diagnostics_module.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 
-#include <string>
 #include <algorithm>
+#include <string>
 
 DiagnosticsModule::DiagnosticsModule(
-  rclcpp::Node * node, const std::string & prefix_diagnostic_name, const std::string & suffix_diagnostic_name)
+  rclcpp::Node * node, const std::string & prefix_diagnostic_name,
+  const std::string & suffix_diagnostic_name)
 {
   node_.reset(node);
   if (node_ == nullptr) {
-    return; // TODO throw error
+    return;  // TODO throw error
   }
 
-  diagnostics_pub_ = node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
+  diagnostics_pub_ =
+    node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
 
-
-  const auto prefix_name = prefix_diagnostic_name.empty() ? "" : (prefix_diagnostic_name + std::string(": "));
-  const auto suffix_name = suffix_diagnostic_name.empty() ? "" : (std::string(": ") + suffix_diagnostic_name);
+  const auto prefix_name =
+    prefix_diagnostic_name.empty() ? "" : (prefix_diagnostic_name + std::string(": "));
+  const auto suffix_name =
+    suffix_diagnostic_name.empty() ? "" : (std::string(": ") + suffix_diagnostic_name);
   diagnostics_status_msg_.name = prefix_name + std::string(node_->get_name()) + suffix_name;
   diagnostics_status_msg_.hardware_id = node_->get_name();
 }
@@ -59,14 +63,16 @@ void DiagnosticsModule::addKeyValue(const diagnostic_msgs::msg::KeyValue & key_v
 {
   const auto it = findIteratorByKey(key_value_msg.key);
   if (existIterator(it)) {
-    diagnostics_status_msg_.values.at(std::distance(std::cbegin(diagnostics_status_msg_.values), it)).value = key_value_msg.value;  // FIX ME
-  }
-  else {
+    diagnostics_status_msg_.values
+      .at(std::distance(std::cbegin(diagnostics_status_msg_.values), it))
+      .value = key_value_msg.value;  // FIX ME
+  } else {
     diagnostics_status_msg_.values.push_back(key_value_msg);
   }
 }
 
-template<> void DiagnosticsModule::addKeyValue(const std::string & key, const std::string & value)
+template <>
+void DiagnosticsModule::addKeyValue(const std::string & key, const std::string & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = key;
@@ -74,7 +80,8 @@ template<> void DiagnosticsModule::addKeyValue(const std::string & key, const st
   addKeyValue(key_value);
 }
 
-template<> void DiagnosticsModule::addKeyValue(const std::string & key, const bool & value)
+template <>
+void DiagnosticsModule::addKeyValue(const std::string & key, const bool & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = key;
@@ -113,14 +120,17 @@ diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::createDiagnosticsArray(
   return diagnostics_msg;
 }
 
-std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator DiagnosticsModule::findIteratorByKey(const std::string & key) const 
+std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator DiagnosticsModule::findIteratorByKey(
+  const std::string & key) const
 {
-  const auto it = std::find_if(std::begin(diagnostics_status_msg_.values), std::end(diagnostics_status_msg_.values),
+  const auto it = std::find_if(
+    std::begin(diagnostics_status_msg_.values), std::end(diagnostics_status_msg_.values),
     [key](const auto & arg) { return arg.key == key; });
   return it;
 }
 
-bool DiagnosticsModule::existIterator(const std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator & it) const 
+bool DiagnosticsModule::existIterator(
+  const std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator & it) const
 {
   return it != std::cend(diagnostics_status_msg_.values);
 }

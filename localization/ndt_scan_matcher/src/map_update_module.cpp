@@ -67,7 +67,8 @@ MapUpdateModule::MapUpdateModule(
     node, clock_, period_ns, std::bind(&MapUpdateModule::map_update_timer_callback, this),
     map_callback_group_);
 
-  diagnostics_module_ = std::make_unique<DiagnosticsModule>(node, "localization", "map_update_module");
+  diagnostics_module_ =
+    std::make_unique<DiagnosticsModule>(node, "localization", "map_update_module");
   initialize_diagnostics_key_value();
 }
 

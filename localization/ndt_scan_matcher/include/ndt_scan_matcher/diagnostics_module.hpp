@@ -24,28 +24,32 @@
 class DiagnosticsModule
 {
 public:
-  DiagnosticsModule(rclcpp::Node * node, const std::string & prefix_diagnostic_name = "", const std::string & suffix_diagnostic_name = "");
+  DiagnosticsModule(
+    rclcpp::Node * node, const std::string & prefix_diagnostic_name = "",
+    const std::string & suffix_diagnostic_name = "");
   void clear();
   void clearKeyValue();
   void clearLevelAndMessage();
   void addKeyValue(const diagnostic_msgs::msg::KeyValue & key_value_msg);
-  template<typename T> void addKeyValue(const std::string & key, const T & value);
+  template <typename T>
+  void addKeyValue(const std::string & key, const T & value);
   void updateLevelAndMessage(const int8_t level, const std::string & message);
   void publish();
 
 private:
   diagnostic_msgs::msg::DiagnosticArray createDiagnosticsArray() const;
-  std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator findIteratorByKey(const std::string & key) const;
+  std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator findIteratorByKey(
+    const std::string & key) const;
   bool existIterator(const std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator & it) const;
 
   rclcpp::Node::SharedPtr node_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
 
-  diagnostic_msgs::msg::DiagnosticStatus diagnostics_status_msg_ ;
-
+  diagnostic_msgs::msg::DiagnosticStatus diagnostics_status_msg_;
 };
 
-template<typename T> void DiagnosticsModule::addKeyValue(const std::string & key, const T & value)
+template <typename T>
+void DiagnosticsModule::addKeyValue(const std::string & key, const T & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = key;
@@ -53,7 +57,9 @@ template<typename T> void DiagnosticsModule::addKeyValue(const std::string & key
   addKeyValue(key_value);
 }
 
-template<> void DiagnosticsModule::addKeyValue(const std::string & key, const std::string & value);
-template<> void DiagnosticsModule::addKeyValue(const std::string & key, const bool & value);
+template <>
+void DiagnosticsModule::addKeyValue(const std::string & key, const std::string & value);
+template <>
+void DiagnosticsModule::addKeyValue(const std::string & key, const bool & value);
 
 #endif  // NDT_SCAN_MATCHER__DIAGNOSTICS_MODULE_HPP_

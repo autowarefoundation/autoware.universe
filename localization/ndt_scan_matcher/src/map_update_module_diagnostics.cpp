@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ndt_scan_matcher/map_update_module.hpp"
 #include "ndt_scan_matcher/diagnostics_module.hpp"
+#include "ndt_scan_matcher/map_update_module.hpp"
 
 void MapUpdateModule::initialize_diagnostics_key_value()
 {
@@ -26,14 +26,18 @@ void MapUpdateModule::initialize_diagnostics_key_value()
   diagnostics_module_->addKeyValue("latest_update_execution_time", 0.0);
 }
 
-bool MapUpdateModule::validate_map_is_in_lidar_range(const double distance, const double warn_distance)
+bool MapUpdateModule::validate_map_is_in_lidar_range(
+  const double distance, const double warn_distance)
 {
-  diagnostics_module_->addKeyValue("distance_last_updete_position_to_current_lidar_range", distance);
+  diagnostics_module_->addKeyValue(
+    "distance_last_updete_position_to_current_lidar_range", distance);
 
   bool is_ok = (distance < warn_distance);
   if (!is_ok) {
     RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1, "Dynamic map loading is not keeping up.");
-    diagnostics_module_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "[ERROR] Dynamic map loading is not keeping up");
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::ERROR,
+      "[ERROR] Dynamic map loading is not keeping up");
   }
 
   return is_ok;
@@ -51,7 +55,8 @@ bool MapUpdateModule::validate_is_set_current_position(const bool is_set_current
       "provided to NDT.");
     diagnostics_module_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN,
-      "[WARN] Cannot find the reference position for map update. Please check if the EKF odometry is"
+      "[WARN] Cannot find the reference position for map update. Please check if the EKF odometry "
+      "is"
       "provided to NDT.");
   }
 

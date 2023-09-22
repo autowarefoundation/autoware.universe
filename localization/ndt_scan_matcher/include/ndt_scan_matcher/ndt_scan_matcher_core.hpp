@@ -20,8 +20,8 @@
 #include "ndt_scan_matcher/diagnostics_module.hpp"
 #include "ndt_scan_matcher/map_module.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
-#include "ndt_scan_matcher/tf2_listener_module.hpp"
 #include "ndt_scan_matcher/ndt_scan_matcher_diagnostics_updater_core.hpp"
+#include "ndt_scan_matcher/tf2_listener_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -68,7 +68,6 @@ enum class ConvergedParamType {
   TRANSFORM_PROBABILITY = 0,
   NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
 };
-
 
 class NDTScanMatcher : public rclcpp::Node
 {
@@ -137,25 +136,26 @@ private:
   bool validate_is_set_map_points();
   bool validate_is_set_sensor_points(const bool is_set_sensor_points);
   bool validate_sensor_points_empty(const size_t sensor_points_size);
-  bool validate_sensor_points_delay_time(const rclcpp::Time & sensor_ros_time, const rclcpp::Time & ros_time_now, const double warn_timeout_sec);
+  bool validate_sensor_points_delay_time(
+    const rclcpp::Time & sensor_ros_time, const rclcpp::Time & ros_time_now,
+    const double warn_timeout_sec);
   bool validate_initial_pose_array_size(const size_t initial_pose_array_size);
   bool validate_time_stamp_difference(
-    const std::string & name,
-    const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
+    const std::string & name, const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
     const double time_tolerance_sec);
   bool validate_position_difference(
-    const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Point & reference_point,
-    const double distance_tolerance_m_);
+    const geometry_msgs::msg::Point & target_point,
+    const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
   bool validate_num_iteration(const int iter_num, const int max_iter_num);
-  bool validate_local_optimal_solution_oscillation( const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array,
-  const float oscillation_threshold, const float inversion_vector_threshold);
+  bool validate_local_optimal_solution_oscillation(
+    const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array,
+    const float oscillation_threshold, const float inversion_vector_threshold);
   bool validate_score(
     const double score, const double score_threshold, const std::string & score_name);
   bool validate_converged_param(
     const double transform_probability, const double nearest_voxel_transformation_likelihood);
   bool validate_execution_time(const double execution_time, const double warn_execution_time);
   bool validate_skipping_publish_num(const size_t skipping_publish_num, const size_t error_num);
-
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
@@ -216,7 +216,6 @@ private:
     initial_pose_msg_ptr_array_;
   std::mutex ndt_ptr_mtx_;
   std::mutex initial_pose_array_mtx_;
-
 
   // variables for regularization
   const bool regularization_enabled_;
