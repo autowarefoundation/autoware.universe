@@ -740,8 +740,6 @@ void NDTScanMatcher::service_ndt_align(
   tf2_listener_module_->get_transform(
     get_clock()->now(), map_frame_, req->pose_with_covariance.header.frame_id, tf_pose_to_map_ptr);
 
-  output_pose_with_cov_to_log(get_logger(), "service_ndt_align_input", req->pose_with_covariance);
-
   // transform pose_frame to map_frame
   const auto initial_pose_msg_in_map_frame =
     transform(req->pose_with_covariance, *tf_pose_to_map_ptr);
