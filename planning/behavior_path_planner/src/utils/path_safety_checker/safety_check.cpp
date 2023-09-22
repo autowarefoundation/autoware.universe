@@ -348,12 +348,12 @@ bool checkCollision(
   return true;
 }
 
-bool checkCollisionWithExtraStoppingMargin(
-  const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects,
-  const double base_to_front, const double base_to_rear, const double width,
-  const double maximum_deceleration, const double collision_check_margin,
-  const double max_extra_stopping_margin)
+std::vector<Polygon2d> generatePolygonsWithStoppingAndInertialMargin(
+  const PathWithLaneId & ego_path, const double base_to_front, const double base_to_rear,
+  const double width, const double maximum_deceleration, const double max_extra_stopping_margin)
 {
+  std::vector<Polygon2d> polygons;
+
   for (size_t i = 0; i < ego_path.points.size(); ++i) {
     const auto p = ego_path.points.at(i);
 
@@ -380,14 +380,24 @@ bool checkCollisionWithExtraStoppingMargin(
     const auto ego_polygon = tier4_autoware_utils::toFootprint(
       temp_pose, base_to_front + extra_stopping_margin, base_to_rear,
       width + std::abs(extra_lateral_margin));
+    polygons.push_back(ego_polygon);
+  }
+  return polygons;
+}
 
+bool checkCollisionWithMargin(
+  const std::vector<Polygon2d> & ego_polygons, const PredictedObjects & dynamic_objects,
+  const double collision_check_margin)
+{
+  for (const auto & ego_polygon : ego_polygons) {
     for (const auto & object : dynamic_objects.objects) {
       const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
       const double distance = boost::geometry::distance(obj_polygon, ego_polygon);
-      if (distance < collision_check_margin) return true;
+      if (distance < collision_check_margin) {
+        return true;
+      }
     }
   }
-
   return false;
 }
 }  // namespace behavior_path_planner::utils::path_safety_checker
