@@ -3,19 +3,8 @@ project(component_interface_specs)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
-find_package(rclcpp REQUIRED)
-find_package(rosidl_runtime_cpp REQUIRED)
-find_package(rcl REQUIRED)
-find_package(autoware_adapi_v1_msgs REQUIRED)
-find_package(autoware_auto_planning_msgs REQUIRED)
-find_package(autoware_planning_msgs REQUIRED) 
-find_package(tier4_control_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(tier4_system_msgs REQUIRED)
+
 find_package(autoware_auto_vehicle_msgs REQUIRED)
-find_package(tier4_vehicle_msgs REQUIRED)
-find_package(autoware_auto_perception_msgs REQUIRED)
-find_package(tier4_map_msgs REQUIRED)
 include_directories(
   include
   SYSTEM
@@ -25,6 +14,7 @@ include_directories(
   ${autoware_adapi_v1_msgs_INCLUDE_DIRS}
   ${autoware_auto_planning_msgs_INCLUDE_DIRS}
   ${autoware_planning_msgs_INCLUDE_DIRS}
+  ${autoware_auto_vehicle_msgs_INCLUDE_DIRS}
   ${tier4_control_msgs_INCLUDE_DIRS}
   ${nav_msgs_INCLUDE_DIRS}
   ${tier4_system_msgs_INCLUDE_DIRS}
