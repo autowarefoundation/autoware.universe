@@ -57,11 +57,12 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
-ArTagDetector::ArTagDetector() : Node("ar_tag_based_localizer"), cam_info_received_(false)
+ArTagBasedLocalizer::ArTagBasedLocalizer()
+: Node("ar_tag_based_localizer"), cam_info_received_(false)
 {
 }
 
-bool ArTagDetector::setup()
+bool ArTagBasedLocalizer::setup()
 {
   /*
     Declare node parameters
@@ -113,13 +114,13 @@ bool ArTagDetector::setup()
   qos_sub.best_effort();
   image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
     "~/input/image", qos_sub,
-    std::bind(&ArTagDetector::image_callback, this, std::placeholders::_1));
+    std::bind(&ArTagBasedLocalizer::image_callback, this, std::placeholders::_1));
   cam_info_sub_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
     "~/input/camera_info", qos_sub,
-    std::bind(&ArTagDetector::cam_info_callback, this, std::placeholders::_1));
+    std::bind(&ArTagBasedLocalizer::cam_info_callback, this, std::placeholders::_1));
   ekf_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "~/input/ekf_pose", qos_sub,
-    std::bind(&ArTagDetector::ekf_pose_callback, this, std::placeholders::_1));
+    std::bind(&ArTagBasedLocalizer::ekf_pose_callback, this, std::placeholders::_1));
 
   /*
     Publishers
@@ -133,7 +134,7 @@ bool ArTagDetector::setup()
   return true;
 }
 
-void ArTagDetector::image_callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg)
+void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg)
 {
   if ((image_pub_.getNumSubscribers() == 0) && (pose_pub_->get_subscription_count() == 0)) {
     RCLCPP_DEBUG(this->get_logger(), "No subscribers, not looking for ArUco markers");
@@ -201,7 +202,7 @@ void ArTagDetector::image_callback(const sensor_msgs::msg::Image::ConstSharedPtr
 }
 
 // wait for one camera info, then shut down that subscriber
-void ArTagDetector::cam_info_callback(const sensor_msgs::msg::CameraInfo & msg)
+void ArTagBasedLocalizer::cam_info_callback(const sensor_msgs::msg::CameraInfo & msg)
 {
   if (cam_info_received_) {
     return;
@@ -234,12 +235,13 @@ void ArTagDetector::cam_info_callback(const sensor_msgs::msg::CameraInfo & msg)
   cam_info_received_ = true;
 }
 
-void ArTagDetector::ekf_pose_callback(const geometry_msgs::msg::PoseWithCovarianceStamped & msg)
+void ArTagBasedLocalizer::ekf_pose_callback(
+  const geometry_msgs::msg::PoseWithCovarianceStamped & msg)
 {
   latest_ekf_pose_ = msg;
 }
 
-void ArTagDetector::publish_pose_as_base_link(
+void ArTagBasedLocalizer::publish_pose_as_base_link(
   const geometry_msgs::msg::PoseStamped & msg, const std::string & camera_frame_id)
 {
   // Check if frame_id is in target_tag_ids
@@ -346,7 +348,7 @@ void ArTagDetector::publish_pose_as_base_link(
   pose_pub_->publish(pose_with_covariance_stamped);
 }
 
-tf2::Transform ArTagDetector::aruco_marker_to_tf2(const aruco::Marker & marker)
+tf2::Transform ArTagBasedLocalizer::aruco_marker_to_tf2(const aruco::Marker & marker)
 {
   cv::Mat rot(3, 3, CV_64FC1);
   cv::Mat r_vec64;

@@ -1,6 +1,6 @@
-# AR Tag Detector
+# AR Tag Based Localizer
 
-**ArTagDetector** is a vision-based localization node.
+**ArTagBasedLocalizer** is a vision-based localization node.
 
 <img src="./doc_image/ar_tag_image.png" width="320px">
 

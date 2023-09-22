@@ -60,10 +60,10 @@
 #include <string>
 #include <vector>
 
-class ArTagDetector : public rclcpp::Node
+class ArTagBasedLocalizer : public rclcpp::Node
 {
 public:
-  ArTagDetector();
+  ArTagBasedLocalizer();
   bool setup();
 
 private:
