@@ -542,6 +542,8 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     }
 
     if (!is_under_control && stopped_condition && keep_stopped_condition) {
+      // NOTE: When the ego is stopped on manual driving, since the driving state may transit to
+      //       autonomous, keep_stopped_condition should be checked.
       return changeState(ControlState::STOPPED);
     }
 
