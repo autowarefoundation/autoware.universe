@@ -541,6 +541,10 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
       return changeState(ControlState::EMERGENCY);
     }
 
+    if (!is_under_control && stopped_condition && keep_stopped_condition) {
+      return changeState(ControlState::STOPPED);
+    }
+
     if (m_enable_smooth_stop) {
       if (stopping_condition) {
         // predictions after input time delay
@@ -608,14 +612,11 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
   // in EMERGENCY state
   if (m_control_state == ControlState::EMERGENCY) {
     if (!emergency_condition) {
-      if (is_under_control) {
-        if (stopped_condition) {
-          return changeState(ControlState::STOPPED);
-        }
-      } else {
-        if (stopped_condition) {
-          return changeState(ControlState::STOPPED);
-        }
+      if (stopped_condition) {
+        return changeState(ControlState::STOPPED);
+      }
+      if (!is_under_control) {
+        // NOTE: On manual driving, no need stopping to exit the emergency.
         return changeState(ControlState::DRIVE);
       }
     }
