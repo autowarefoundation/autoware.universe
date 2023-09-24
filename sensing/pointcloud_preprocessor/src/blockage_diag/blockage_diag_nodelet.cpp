@@ -31,23 +31,19 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
 {
   {
     // initialize params:
-    horizontal_ring_id_ = static_cast<uint>(declare_parameter("horizontal_ring_id", 12));
-    blockage_ratio_threshold_ =
-      static_cast<float>(declare_parameter("blockage_ratio_threshold", 0.1));
-    vertical_bins_ = static_cast<uint>(declare_parameter("vertical_bins", 40));
-    angle_range_deg_ = declare_parameter("angle_range", std::vector<double>{0.0, 360.0});
-    lidar_model_ = static_cast<std::string>(declare_parameter("model", "Pandar40P"));
-    blockage_count_threshold_ =
-      static_cast<uint>(declare_parameter("blockage_count_threshold", 50));
-    blockage_buffering_frames_ =
-      static_cast<int>(declare_parameter("blockage_buffering_frames", 100));
-    blockage_buffering_interval_ =
-      static_cast<int>(declare_parameter("blockage_buffering_interval", 5));
-    dust_ratio_threshold_ = static_cast<float>(declare_parameter("dust_ratio_threshold", 0.2));
-    dust_count_threshold_ = static_cast<int>(declare_parameter("dust_count_threshold", 10));
-    dust_kernel_size_ = static_cast<int>(declare_parameter("dust_kernel_size", 2));
-    dust_buffering_frames_ = static_cast<int>(declare_parameter("dust_buffering_frames", 10));
-    dust_buffering_interval_ = static_cast<int>(declare_parameter("dust_buffering_interval", 1));
+    horizontal_ring_id_ = declare_parameter<int>("horizontal_ring_id");
+    blockage_ratio_threshold_ = declare_parameter<float>("blockage_ratio_threshold");
+    vertical_bins_ = declare_parameter<int>("vertical_bins");
+    angle_range_deg_ = declare_parameter<std::vector<double>>("angle_range");
+    lidar_model_ = declare_parameter<std::string>("model");
+    blockage_count_threshold_ = declare_parameter<int>("blockage_count_threshold");
+    blockage_buffering_frames_ = declare_parameter<int>("blockage_buffering_frames");
+    blockage_buffering_interval_ = declare_parameter<int>("blockage_buffering_interval");
+    dust_ratio_threshold_ = declare_parameter<float>("dust_ratio_threshold");
+    dust_count_threshold_ = declare_parameter<int>("dust_count_threshold");
+    dust_kernel_size_ = declare_parameter<int>("dust_kernel_size");
+    dust_buffering_frames_ = declare_parameter<int>("dust_buffering_frames");
+    dust_buffering_interval_ = declare_parameter<int>("dust_buffering_interval");
   }
 
   updater_.setHardwareID("blockage_diag");
