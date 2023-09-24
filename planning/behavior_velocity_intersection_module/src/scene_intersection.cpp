@@ -753,9 +753,10 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       planner_param_.occlusion.occlusion_attention_area_length,
       planner_param_.common.consider_wrong_direction_vehicle);
   }
-  const bool tl_arrow_solid_on =
-    util::isTrafficLightArrowActivated(assigned_lanelet, planner_data_->traffic_light_id_map);
-  intersection_lanelets_.value().update(tl_arrow_solid_on, interpolated_path_info);
+  const auto traffic_protected_level =
+    util::getTrafficProtectedLevel(assigned_lanelet, planner_data_->traffic_light_id_map);
+  const bool is_protected = traffic_protected_level == util::TrafficProtectedLevel::FULLY_PROTECTED;
+  intersection_lanelets_.value().update(is_protected, interpolated_path_info);
 
   const auto & conflicting_lanelets = intersection_lanelets_.value().conflicting();
   const auto & first_conflicting_area_opt = intersection_lanelets_.value().first_conflicting_area();
@@ -886,7 +887,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
 
   // calculate dynamic collision around detection area
-  const double time_delay = (is_go_out_ || tl_arrow_solid_on)
+  const double time_delay = (is_go_out_ || is_protected)
                               ? 0.0
                               : (planner_param_.collision_detection.state_transit_margin_time -
                                  collision_state_machine_.getDuration());
@@ -894,14 +895,14 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     filterTargetObjects(attention_lanelets, adjacent_lanelets, intersection_area);
 
   const bool has_collision = checkCollision(
-    *path, target_objects, path_lanelets, closest_idx, time_delay, tl_arrow_solid_on);
+    *path, target_objects, path_lanelets, closest_idx, time_delay, traffic_protected_level);
   collision_state_machine_.setStateWithMarginTime(
     has_collision ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("collision state_machine"), *clock_);
   const bool has_collision_with_margin =
     collision_state_machine_.getState() == StateMachine::State::STOP;
 
-  if (tl_arrow_solid_on) {
+  if (is_protected) {
     return TrafficLightArrowSolidOn{
       has_collision_with_margin, closest_idx, collision_stop_line_idx, occlusion_stop_line_idx};
   }
@@ -927,7 +928,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
                object.kinematics.initial_twist_with_covariance.twist.linear.y) <= thresh;
     });
   const bool is_occlusion_cleared =
-    (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty() && !tl_arrow_solid_on)
+    (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty() && !is_protected)
       ? isOcclusionCleared(
           *planner_data_->occupancy_grid, occlusion_attention_area, adjacent_lanelets,
           first_attention_area, interpolated_path_info, occlusion_attention_divisions,
@@ -1054,7 +1055,7 @@ bool IntersectionModule::checkCollision(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const util::PathLanelets & path_lanelets, const int closest_idx, const double time_delay,
-  const bool tl_arrow_solid_on)
+  const util::TrafficProtectedLevel & traffic_protected_level)
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;
@@ -1077,12 +1078,21 @@ bool IntersectionModule::checkCollision(
 
   const auto ego_poly = ego_lane.polygon2d().basicPolygon();
   // check collision between predicted_path and ego_area
-  const double collision_start_margin_time =
-    tl_arrow_solid_on ? planner_param_.collision_detection.relaxed.collision_start_margin_time
-                      : planner_param_.collision_detection.normal.collision_start_margin_time;
-  const double collision_end_margin_time =
-    tl_arrow_solid_on ? planner_param_.collision_detection.relaxed.collision_end_margin_time
-                      : planner_param_.collision_detection.normal.collision_end_margin_time;
+  const auto [collision_start_margin_time, collision_end_margin_time] = [&]() {
+    if (traffic_protected_level == util::TrafficProtectedLevel::FULLY_PROTECTED) {
+      return std::make_pair(
+        planner_param_.collision_detection.fully_protected.collision_start_margin_time,
+        planner_param_.collision_detection.fully_protected.collision_end_margin_time);
+    }
+    if (traffic_protected_level == util::TrafficProtectedLevel::PARTIALLY_PROTECTED) {
+      return std::make_pair(
+        planner_param_.collision_detection.partially_protected.collision_start_margin_time,
+        planner_param_.collision_detection.partially_protected.collision_end_margin_time);
+    }
+    return std::make_pair(
+      planner_param_.collision_detection.unprotected.collision_start_margin_time,
+      planner_param_.collision_detection.unprotected.collision_end_margin_time);
+  }();
   bool collision_detected = false;
   for (const auto & object : target_objects.objects) {
     for (const auto & predicted_path : object.kinematics.predicted_paths) {
