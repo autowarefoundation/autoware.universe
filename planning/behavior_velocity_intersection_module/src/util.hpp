@@ -112,7 +112,7 @@ std::optional<Polygon2d> getIntersectionArea(
 
 bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane);
 
-TrafficProtectedLevel getTrafficProtectedLevel(
+TrafficPrioritizedLevel getTrafficPrioritizedLevel(
   lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos);
 
 std::vector<DiscretizedLane> generateDetectionLaneDivisions(

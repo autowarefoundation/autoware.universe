@@ -764,7 +764,7 @@ bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane)
   return tl_id.has_value();
 }
 
-TrafficProtectedLevel getTrafficProtectedLevel(
+TrafficPrioritizedLevel getTrafficPrioritizedLevel(
   lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos)
 {
   using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
@@ -776,12 +776,12 @@ TrafficProtectedLevel getTrafficProtectedLevel(
   }
   if (!tl_id) {
     // this lane has no traffic light
-    return TrafficProtectedLevel::UNPROTECTED;
+    return TrafficPrioritizedLevel::NOT_PRIORITIZED;
   }
   const auto tl_info_it = tl_infos.find(tl_id.value());
   if (tl_info_it == tl_infos.end()) {
     // the info of this traffic light is not available
-    return TrafficProtectedLevel::UNPROTECTED;
+    return TrafficPrioritizedLevel::NOT_PRIORITIZED;
   }
   const auto & tl_info = tl_info_it->second;
   bool has_amber_signal{false};
@@ -791,13 +791,13 @@ TrafficProtectedLevel getTrafficProtectedLevel(
     }
     if (tl_light.color == TrafficSignalElement::RED) {
       // NOTE: Return here since the red signal has the highest priority.
-      return TrafficProtectedLevel::FULLY_PROTECTED;
+      return TrafficPrioritizedLevel::FULLY_PRIORITIZED;
     }
   }
   if (has_amber_signal) {
-    return TrafficProtectedLevel::PARTIALLY_PROTECTED;
+    return TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED;
   }
-  return TrafficProtectedLevel::UNPROTECTED;
+  return TrafficPrioritizedLevel::NOT_PRIORITIZED;
 }
 
 std::vector<DiscretizedLane> generateDetectionLaneDivisions(
@@ -1180,9 +1180,9 @@ double calcDistanceUntilIntersectionLanelet(
 }
 
 void IntersectionLanelets::update(
-  const bool is_protected, const InterpolatedPathInfo & interpolated_path_info)
+  const bool is_prioritized, const InterpolatedPathInfo & interpolated_path_info)
 {
-  is_protected_ = is_protected;
+  is_prioritized_ = is_prioritized;
   // find the first conflicting/detection area polygon intersecting the path
   const auto & path = interpolated_path_info.path;
   const auto & lane_interval = interpolated_path_info.lane_id_interval.value();
