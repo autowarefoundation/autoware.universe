@@ -66,8 +66,8 @@ std::string getModuleName(const uint8_t module_type)
     case Module::GOAL_PLANNER: {
       return "goal_planner";
     }
-    case Module::PULL_OUT: {
-      return "pull_out";
+    case Module::START_PLANNER: {
+      return "start_planner";
     }
     case Module::TRAFFIC_LIGHT: {
       return "traffic_light";
@@ -105,7 +105,7 @@ bool isPathChangeModule(const uint8_t module_type)
     module_type == Module::EXT_REQUEST_LANE_CHANGE_RIGHT ||
     module_type == Module::AVOIDANCE_BY_LC_LEFT || module_type == Module::AVOIDANCE_BY_LC_RIGHT ||
     module_type == Module::AVOIDANCE_LEFT || module_type == Module::AVOIDANCE_RIGHT ||
-    module_type == Module::GOAL_PLANNER || module_type == Module::PULL_OUT) {
+    module_type == Module::GOAL_PLANNER || module_type == Module::START_PLANNER) {
     return true;
   }
   return false;
@@ -366,7 +366,10 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
   rtc_table_->clearContents();
   num_rtc_status_ptr_->setText(
     QString::fromStdString("The Number of RTC Statuses: " + std::to_string(msg->statuses.size())));
-  if (msg->statuses.empty()) return;
+  if (msg->statuses.empty()) {
+    rtc_table_->update();
+    return;
+  }
   // this is to stable rtc display not to occupy too much
   size_t min_display_size{5};
   size_t max_display_size{10};
@@ -374,8 +377,17 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
   rtc_table_->setRowCount(
     std::max(min_display_size, std::min(msg->statuses.size(), max_display_size)));
   int cnt = 0;
-  for (auto status : msg->statuses) {
-    if (static_cast<size_t>(cnt) >= max_display_size) return;
+
+  auto sorted_statuses = msg->statuses;
+  std::partition(sorted_statuses.begin(), sorted_statuses.end(), [](const auto & status) {
+    return !status.auto_mode && !uint2bool(status.command_status.type);
+  });
+
+  for (auto status : sorted_statuses) {
+    if (static_cast<size_t>(cnt) >= max_display_size) {
+      rtc_table_->update();
+      return;
+    }
     // uuid
     {
       std::stringstream uuid;

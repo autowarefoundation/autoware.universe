@@ -17,7 +17,8 @@
 
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <memory>
 #include <optional>
@@ -97,6 +98,7 @@ struct DebugData
   std::vector<std::vector<geometry_msgs::msg::Pose>> vehicle_circles_pose;
 
   std::vector<TrajectoryPoint> extended_traj_points;
+  std::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area = std::nullopt;
 };
 
 struct TrajectoryParam

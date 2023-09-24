@@ -15,8 +15,11 @@
 #include "obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
 
 #include "interpolation/spline_interpolation.hpp"
+#include "motion_utils/marker/marker_helper.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
 
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"
 
@@ -314,7 +317,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
         stop_traj_points.at(wall_idx).pose, "obstacle cruise", planner_data.current_time, 0);
       // NOTE: use a different color from slow down one to visualize cruise and slow down
       // separately.
-      markers.markers.front().color = tier4_autoware_utils::createMarkerColor(1.0, 0.3, 0.0, 0.5);
+      markers.markers.front().color = tier4_autoware_utils::createMarkerColor(1.0, 0.6, 0.1, 0.5);
       tier4_autoware_utils::appendMarkerArray(markers, &debug_data_ptr_->cruise_wall_marker);
 
       // cruise obstacle

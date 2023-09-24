@@ -18,6 +18,7 @@
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
@@ -29,12 +30,13 @@
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
 
 #include <limits>
 #include <memory>
@@ -92,6 +94,7 @@ struct DrivableAreaInfo
   std::vector<DrivableLanes> drivable_lanes{};
   std::vector<Obstacle> obstacles{};  // obstacles to extract from the drivable area
   bool enable_expanding_hatched_road_markings{false};
+  bool enable_expanding_intersection_areas{false};
 
   // temporary only for pull over's freespace planning
   double drivable_margin{0.0};
@@ -147,15 +150,17 @@ struct PlannerData
   BehaviorPathPlannerParameters parameters{};
   drivable_area_expansion::DrivableAreaExpansionParameters drivable_area_expansion_parameters{};
 
+  mutable std::optional<geometry_msgs::msg::Pose> drivable_area_expansion_prev_crop_pose;
   mutable TurnSignalDecider turn_signal_decider;
 
   TurnIndicatorsCommand getTurnSignal(
-    const PathWithLaneId & path, const TurnSignalInfo & turn_signal_info)
+    const PathWithLaneId & path, const TurnSignalInfo & turn_signal_info,
+    TurnSignalDebugData & debug_data)
   {
     const auto & current_pose = self_odometry->pose.pose;
     const auto & current_vel = self_odometry->twist.twist.linear.x;
     return turn_signal_decider.getTurnSignal(
-      route_handler, path, turn_signal_info, current_pose, current_vel, parameters);
+      route_handler, path, turn_signal_info, current_pose, current_vel, parameters, debug_data);
   }
 
   template <class T>

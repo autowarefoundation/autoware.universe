@@ -25,8 +25,10 @@
 struct ModuleConfigParameters
 {
   bool enable_module{false};
+  bool enable_rtc{false};
   bool enable_simultaneous_execution_as_approved_module{false};
   bool enable_simultaneous_execution_as_candidate_module{false};
+  bool keep_last{false};
   uint8_t priority{0};
   uint8_t max_module_size{0};
 };
@@ -79,7 +81,7 @@ struct BehaviorPathPlannerParameters
   ModuleConfigParameters config_avoidance;
   ModuleConfigParameters config_avoidance_by_lc;
   ModuleConfigParameters config_dynamic_avoidance;
-  ModuleConfigParameters config_pull_out;
+  ModuleConfigParameters config_start_planner;
   ModuleConfigParameters config_goal_planner;
   ModuleConfigParameters config_side_shift;
   ModuleConfigParameters config_lane_change_left;
@@ -99,10 +101,9 @@ struct BehaviorPathPlannerParameters
 
   // lane change parameters
   double lane_changing_lateral_jerk{0.5};
-  double lateral_acc_switching_velocity{0.4};
   double minimum_lane_changing_velocity{5.6};
   double lane_change_prepare_duration{4.0};
-  double minimum_prepare_length;
+  double lane_change_finish_judge_buffer{3.0};
   LateralAccelerationMap lane_change_lat_acc_map;
 
   double minimum_pull_over_length;
@@ -118,8 +119,8 @@ struct BehaviorPathPlannerParameters
   double turn_signal_shift_length_threshold;
   bool turn_signal_on_swerving;
 
-  double enable_akima_spline_first;
-  double enable_cog_on_centerline;
+  bool enable_akima_spline_first;
+  bool enable_cog_on_centerline;
   double input_path_interval;
   double output_path_interval;
 
@@ -141,19 +142,6 @@ struct BehaviorPathPlannerParameters
 
   // maximum drivable area visualization
   bool visualize_maximum_drivable_area;
-
-  // collision check
-  double lateral_distance_max_threshold;
-  double longitudinal_distance_min_threshold;
-
-  double expected_front_deceleration;  // brake parameter under normal lane change
-  double expected_rear_deceleration;   // brake parameter under normal lane change
-
-  double expected_front_deceleration_for_abort;  // hard brake parameter for abort
-  double expected_rear_deceleration_for_abort;   // hard brake parameter for abort
-
-  double rear_vehicle_reaction_time;
-  double rear_vehicle_safety_time_margin;
 };
 
 #endif  // BEHAVIOR_PATH_PLANNER__PARAMETERS_HPP_

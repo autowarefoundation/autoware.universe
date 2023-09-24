@@ -20,6 +20,8 @@
 #include <grid_map_pcl/helpers.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_utils/polygon_iterator.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/logger.hpp>
 
 #include <grid_map_msgs/msg/grid_map.hpp>
@@ -141,7 +143,8 @@ void ElevationMapLoaderNode::publish()
     try {
       is_bag_loaded = grid_map::GridMapRosConverter::loadFromBag(
         *data_manager_.elevation_map_path_, "elevation_map", elevation_map_);
-    } catch (rosbag2_storage_plugins::SqliteException & e) {
+    } catch (const std::runtime_error & e) {
+      RCLCPP_ERROR(this->get_logger(), e.what());
       is_bag_loaded = false;
     }
     if (!is_bag_loaded) {

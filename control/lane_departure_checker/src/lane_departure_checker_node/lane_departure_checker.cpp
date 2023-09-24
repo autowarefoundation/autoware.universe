@@ -39,6 +39,16 @@ namespace
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using geometry_msgs::msg::Point;
+
+Point fromVector2dToMsg(const Eigen::Vector2d & point)
+{
+  Point msg{};
+  msg.x = point.x();
+  msg.y = point.y();
+  msg.z = 0.0;
+  return msg;
+}
 
 double calcBrakingDistance(
   const double abs_velocity, const double max_deceleration, const double delay_time)
@@ -54,6 +64,27 @@ bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2
     }
   }
 
+  return false;
+}
+
+bool isCrossingWithBoundary(
+  const lanelet::BasicLineString2d & boundary, const std::vector<LinearRing2d> & footprints)
+{
+  for (auto & footprint : footprints) {
+    for (size_t i = 0; i < footprint.size() - 1; ++i) {
+      auto footprint1 = footprint.at(i).to_3d();
+      auto footprint2 = footprint.at(i + 1).to_3d();
+      for (size_t i = 0; i < boundary.size() - 1; ++i) {
+        auto boundary1 = boundary.at(i);
+        auto boundary2 = boundary.at(i + 1);
+        if (tier4_autoware_utils::intersect(
+              tier4_autoware_utils::toMsg(footprint1), tier4_autoware_utils::toMsg(footprint2),
+              fromVector2dToMsg(boundary1), fromVector2dToMsg(boundary2))) {
+          return true;
+        }
+      }
+    }
+  }
   return false;
 }
 
@@ -140,6 +171,10 @@ Output LaneDepartureChecker::update(const Input & input)
 
   output.is_out_of_lane = isOutOfLane(output.candidate_lanelets, output.vehicle_footprints.front());
   output.processing_time_map["isOutOfLane"] = stop_watch.toc(true);
+
+  output.will_cross_boundary = willCrossBoundary(
+    output.candidate_lanelets, output.vehicle_footprints, input.boundary_types_to_detect);
+  output.processing_time_map["willCrossBoundary"] = stop_watch.toc(true);
 
   return output;
 }
@@ -298,4 +333,39 @@ bool LaneDepartureChecker::isOutOfLane(
 
   return false;
 }
+
+bool LaneDepartureChecker::willCrossBoundary(
+  const lanelet::ConstLanelets & candidate_lanelets,
+  const std::vector<LinearRing2d> & vehicle_footprints,
+  const std::vector<std::string> & boundary_types_to_detect)
+{
+  for (const auto & candidate_lanelet : candidate_lanelets) {
+    const std::string r_type =
+      candidate_lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
+    if (
+      std::find(boundary_types_to_detect.begin(), boundary_types_to_detect.end(), r_type) !=
+      boundary_types_to_detect.end()) {
+      if (isCrossingWithBoundary(
+            candidate_lanelet.rightBound2d().basicLineString(), vehicle_footprints)) {
+        // std::cerr << "The crossed road_border's line string id: "
+        //           << candidate_lanelet.rightBound().id() << std::endl;
+        return true;
+      }
+    }
+    const std::string l_type =
+      candidate_lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
+    if (
+      std::find(boundary_types_to_detect.begin(), boundary_types_to_detect.end(), l_type) !=
+      boundary_types_to_detect.end()) {
+      if (isCrossingWithBoundary(
+            candidate_lanelet.leftBound2d().basicLineString(), vehicle_footprints)) {
+        // std::cerr << "The crossed road_border's line string id: "
+        //           << candidate_lanelet.leftBound().id() << std::endl;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 }  // namespace lane_departure_checker

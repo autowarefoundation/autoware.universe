@@ -55,14 +55,20 @@ def launch_setup(context, *args, **kwargs):
         lane_change_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("goal_planner_param_path").perform(context), "r") as f:
         goal_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("pull_out_param_path").perform(context), "r") as f:
-        pull_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("start_planner_param_path").perform(context), "r") as f:
+        start_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("drivable_area_expansion_param_path").perform(context), "r") as f:
         drivable_area_expansion_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("scene_module_manager_param_path").perform(context), "r") as f:
         scene_module_manager_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("behavior_path_planner_param_path").perform(context), "r") as f:
         behavior_path_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    glog_component = ComposableNode(
+        package="glog_component",
+        plugin="GlogComponent",
+        name="glog_component",
+    )
 
     behavior_path_planner_component = ComposableNode(
         package="behavior_path_planner",
@@ -96,15 +102,12 @@ def launch_setup(context, *args, **kwargs):
             dynamic_avoidance_param,
             lane_change_param,
             goal_planner_param,
-            pull_out_param,
+            start_planner_param,
             drivable_area_expansion_param,
             scene_module_manager_param,
             behavior_path_planner_param,
             vehicle_param,
             {
-                "lane_change.enable_abort_lane_change": LaunchConfiguration(
-                    "use_experimental_lane_change_function"
-                ),
                 "lane_change.enable_collision_check_at_prepare_phase": LaunchConfiguration(
                     "use_experimental_lane_change_function"
                 ),
@@ -114,7 +117,6 @@ def launch_setup(context, *args, **kwargs):
                 "lane_change.use_all_predicted_path": LaunchConfiguration(
                     "use_experimental_lane_change_function"
                 ),
-                "bt_tree_config_path": LaunchConfiguration("behavior_path_planner_tree_param_path"),
             },
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -131,34 +133,22 @@ def launch_setup(context, *args, **kwargs):
         behavior_velocity_smoother_type_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     # behavior velocity planner
-    with open(LaunchConfiguration("blind_spot_param_path").perform(context), "r") as f:
-        blind_spot_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("crosswalk_param_path").perform(context), "r") as f:
-        crosswalk_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("detection_area_param_path").perform(context), "r") as f:
-        detection_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("intersection_param_path").perform(context), "r") as f:
-        intersection_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("stop_line_param_path").perform(context), "r") as f:
-        stop_line_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("traffic_light_param_path").perform(context), "r") as f:
-        traffic_light_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("virtual_traffic_light_param_path").perform(context), "r") as f:
-        virtual_traffic_light_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("occlusion_spot_param_path").perform(context), "r") as f:
-        occlusion_spot_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("no_stopping_area_param_path").perform(context), "r") as f:
-        no_stopping_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("run_out_param_path").perform(context), "r") as f:
-        run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("speed_bump_param_path").perform(context), "r") as f:
-        speed_bump_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(LaunchConfiguration("out_of_lane_param_path").perform(context), "r") as f:
-        out_of_lane_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    with open(
-        LaunchConfiguration("behavior_velocity_planner_param_path").perform(context), "r"
-    ) as f:
-        behavior_velocity_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    behavior_velocity_planner_common_param_path = LaunchConfiguration(
+        "behavior_velocity_planner_common_param_path"
+    ).perform(context)
+    behavior_velocity_planner_module_param_paths = LaunchConfiguration(
+        "behavior_velocity_planner_module_param_paths"
+    ).perform(context)
+
+    behavior_velocity_planner_params_paths = [
+        behavior_velocity_planner_common_param_path,
+        *yaml.safe_load(behavior_velocity_planner_module_param_paths),
+    ]
+
+    behavior_velocity_planner_params = {}
+    for path in behavior_velocity_planner_params_paths:
+        with open(path) as f:
+            behavior_velocity_planner_params.update(yaml.safe_load(f)["/**"]["ros__parameters"])
 
     behavior_velocity_planner_component = ComposableNode(
         package="behavior_velocity_planner",
@@ -188,10 +178,6 @@ def launch_setup(context, *args, **kwargs):
                 "/perception/traffic_light_recognition/traffic_signals",
             ),
             (
-                "~/input/external_traffic_signals",
-                "/external/traffic_light_recognition/traffic_signals",
-            ),
-            (
                 "~/input/external_velocity_limit_mps",
                 "/planning/scenario_planning/max_velocity_default",
             ),
@@ -210,20 +196,8 @@ def launch_setup(context, *args, **kwargs):
         ],
         parameters=[
             nearest_search_param,
-            behavior_velocity_planner_param,
-            blind_spot_param,
-            crosswalk_param,
-            detection_area_param,
-            intersection_param,
-            stop_line_param,
-            traffic_light_param,
-            virtual_traffic_light_param,
-            occlusion_spot_param,
-            no_stopping_area_param,
+            behavior_velocity_planner_params,
             vehicle_param,
-            run_out_param,
-            speed_bump_param,
-            out_of_lane_param,
             common_param,
             motion_velocity_smoother_param,
             behavior_velocity_smoother_type_param,
@@ -239,22 +213,16 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[
             behavior_path_planner_component,
             behavior_velocity_planner_component,
+            glog_component,
         ],
         output="screen",
     )
 
     # This condition is true if run_out module is enabled and its detection method is Points
-    launch_run_out_with_points_method = PythonExpression(
-        [
-            LaunchConfiguration(
-                "launch_run_out", default=behavior_velocity_planner_param["launch_run_out"]
-            ),
-            " and ",
-            "'",
-            run_out_param["run_out"]["detection_method"],
-            "' == 'Points'",
-        ]
-    )
+    run_out_module = "behavior_velocity_planner::RunOutModulePlugin"
+    run_out_method = behavior_velocity_planner_params.get("run_out", {}).get("detection_method")
+    launch_run_out = run_out_module in behavior_velocity_planner_params["launch_modules"]
+    launch_run_out_with_points_method = launch_run_out and run_out_method == "Points"
 
     # load compare map for run_out module
     load_compare_map = IncludeLaunchDescription(
@@ -270,7 +238,7 @@ def launch_setup(context, *args, **kwargs):
             "use_multithread": "true",
         }.items(),
         # launch compare map only when run_out module is enabled and detection method is Points
-        condition=IfCondition(launch_run_out_with_points_method),
+        condition=IfCondition(PythonExpression(str(launch_run_out_with_points_method))),
     )
 
     load_vector_map_inside_area_filter = IncludeLaunchDescription(
@@ -287,7 +255,7 @@ def launch_setup(context, *args, **kwargs):
             "polygon_type": "no_obstacle_segmentation_area_for_run_out",
         }.items(),
         # launch vector map filter only when run_out module is enabled and detection method is Points
-        condition=IfCondition(launch_run_out_with_points_method),
+        condition=IfCondition(PythonExpression(str(launch_run_out_with_points_method))),
     )
 
     group = GroupAction(

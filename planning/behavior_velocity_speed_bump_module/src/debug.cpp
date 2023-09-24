@@ -15,8 +15,11 @@
 #include "scene.hpp"
 
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <motion_utils/motion_utils.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <lanelet2_extension/regulatory_elements/speed_bump.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
+#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <vector>
 
@@ -101,7 +104,7 @@ motion_utils::VirtualWalls SpeedBumpModule::createVirtualWalls()
   wall.ns = std::to_string(module_id_) + "_";
   wall.style = motion_utils::VirtualWallType::slowdown;
   for (const auto & p : debug_data_.slow_start_poses) {
-    wall.pose = p;
+    wall.pose = tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }
   return virtual_walls;

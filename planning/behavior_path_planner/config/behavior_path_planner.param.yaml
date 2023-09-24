@@ -1,10 +1,6 @@
 /**:
   ros__parameters:
     verbose: false
-
-    groot_zmq_publisher_port: 1666
-    groot_zmq_server_port: 1667
-
     planning_hz: 10.0
     backward_path_length: 5.0
     forward_path_length: 300.0
@@ -28,18 +24,6 @@
     output_path_interval: 2.0
 
     visualize_maximum_drivable_area: true
-
-    lateral_distance_max_threshold: 2.0
-    longitudinal_distance_min_threshold: 3.0
-
-    expected_front_deceleration: -1.0
-    expected_rear_deceleration: -1.0
-
-    expected_front_deceleration_for_abort: -1.0
-    expected_rear_deceleration_for_abort: -2.0
-
-    rear_vehicle_reaction_time: 2.0
-    rear_vehicle_safety_time_margin: 1.0
 
     lane_following:
       drivable_area_right_bound_offset: 0.0

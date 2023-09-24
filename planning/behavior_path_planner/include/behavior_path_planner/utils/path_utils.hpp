@@ -26,7 +26,7 @@
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/Forward.h>
 
 #include <limits>
 #include <memory>
@@ -75,7 +75,8 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   const BehaviorPathPlannerParameters & common_parameter);
 
 PathWithLaneId convertWayPointsToPathWithLaneId(
-  const freespace_planning_algorithms::PlannerWaypoints & waypoints, const double velocity);
+  const freespace_planning_algorithms::PlannerWaypoints & waypoints, const double velocity,
+  const lanelet::ConstLanelets & lanelets);
 
 std::vector<size_t> getReversingIndices(const PathWithLaneId & path);
 
