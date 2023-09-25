@@ -152,12 +152,14 @@ bool PathShifter::generate(
   // Use orientation before shift to remove points in reverse order
   // before setting wrong azimuth orientation
   removeInvalidOrientationPoints(shifted_path->path.points);
-  // Set the azimuth orientation to the next point at each point
-  insertOrientation(shifted_path->path.points, true);
-  // Use azimuth orientation to remove points in reverse order
-  removeInvalidOrientationPoints(shifted_path->path.points);
-  // Re-set the azimuth to the remaining points
-  insertOrientation(shifted_path->path.points, true);
+  size_t previous_size{shifted_path->path.points.size()};
+  do {
+    previous_size = shifted_path->path.points.size();
+    // Set the azimuth orientation to the next point at each point
+    insertOrientation(shifted_path->path.points, true);
+    // Use azimuth orientation to remove points in reverse order
+    removeInvalidOrientationPoints(shifted_path->path.points);
+  } while (previous_size != shifted_path->path.points.size());
 
   // DEBUG
   RCLCPP_DEBUG_STREAM_THROTTLE(
