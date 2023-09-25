@@ -19,6 +19,7 @@
 #include <lanelet2_core/geometry/LaneletMap.h>
 
 #include <algorithm>
+#include <string>
 
 namespace behavior_velocity_planner::out_of_lane
 {
