@@ -65,10 +65,16 @@ NDTScanMatcherDiagnosticsUpdaterCore::NDTScanMatcherDiagnosticsUpdaterCore(
 void NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated(
   diagnostic_updater::DiagnosticStatusWrapper & stat, const bool * const is_activated_ptr)
 {
-  stat.add("is_activated", *is_activated_ptr);
-
   int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   std::string diag_message = "OK";
+
+  if (is_activated_ptr == nullptr) {
+    diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    diag_message = "[ERROR] is_activated is nullptr";
+    stat.add("is_activated", false);
+    stat.summary(diag_level, diag_message);
+    return;
+  }
 
   bool is_ok = *is_activated_ptr;
   if (!is_ok) {
@@ -76,6 +82,7 @@ void NDTScanMatcherDiagnosticsUpdaterCore::check_is_activated(
     diag_message = "[WARN] Node is not activated";
   }
 
+  stat.add("is_activated", *is_activated_ptr);
   stat.summary(diag_level, diag_message);
 }
 
@@ -83,10 +90,17 @@ void NDTScanMatcherDiagnosticsUpdaterCore::check_is_succeed_latest_ndt_aling_ser
   diagnostic_updater::DiagnosticStatusWrapper & stat,
   const bool * const is_succeed_latest_ndt_aling_service_ptr)
 {
-  stat.add("is_succeed_latest_ndt_aling_service", *is_succeed_latest_ndt_aling_service_ptr);
 
   int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   std::string diag_message = "OK";
+
+  if (is_succeed_latest_ndt_aling_service_ptr == nullptr) {
+    diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    diag_message = "[ERROR] is_succeed_latest_ndt_aling_service_ptr is nullptr";
+    stat.add("is_succeed_latest_ndt_aling_service", false);
+    stat.summary(diag_level, diag_message);
+    return;
+  }
 
   bool is_ok = *is_succeed_latest_ndt_aling_service_ptr;
   if (!is_ok) {
@@ -94,6 +108,7 @@ void NDTScanMatcherDiagnosticsUpdaterCore::check_is_succeed_latest_ndt_aling_ser
     diag_message = "[WARN] latest ndt_aling_service was faild";
   }
 
+  stat.add("is_succeed_latest_ndt_aling_service", *is_succeed_latest_ndt_aling_service_ptr);
   stat.summary(diag_level, diag_message);
 }
 
@@ -101,11 +116,18 @@ void NDTScanMatcherDiagnosticsUpdaterCore::check_is_running_ndt_aling_service(
   diagnostic_updater::DiagnosticStatusWrapper & stat,
   const bool * const is_running_ndt_aling_service_ptr)
 {
-  stat.add("is_running_ndt_aling_service", *is_running_ndt_aling_service_ptr);
-
   int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   std::string diag_message = "OK";
 
+  if (is_running_ndt_aling_service_ptr == nullptr) {
+    diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    diag_message = "[ERROR] is_running_ndt_aling_service_ptr is nullptr";
+    stat.add("is_running_ndt_aling_service_ptr", false);
+    stat.summary(diag_level, diag_message);
+    return;
+  }
+
+  stat.add("is_running_ndt_aling_service", *is_running_ndt_aling_service_ptr);
   stat.summary(diag_level, diag_message);
 }
 
@@ -113,10 +135,17 @@ void NDTScanMatcherDiagnosticsUpdaterCore::check_latest_ndt_aling_service_best_s
   diagnostic_updater::DiagnosticStatusWrapper & stat,
   const double * const latest_ndt_aling_service_best_score_ptr)
 {
-  stat.add("latest_ndt_aling_service_best_score", *latest_ndt_aling_service_best_score_ptr);
-
   int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   std::string diag_message = "OK";
 
+  if (latest_ndt_aling_service_best_score_ptr == nullptr) {
+    diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    diag_message = "[ERROR] latest_ndt_aling_service_best_score_ptr is nullptr";
+    stat.add("latest_ndt_aling_service_best_score_ptr", false);
+    stat.summary(diag_level, diag_message);
+    return;
+  }
+
+  stat.add("latest_ndt_aling_service_best_score", *latest_ndt_aling_service_best_score_ptr);
   stat.summary(diag_level, diag_message);
 }
