@@ -33,6 +33,7 @@ void NDTScanMatcher::initialize_diagnostics_key_value()
   diagnostics_module_->addKeyValue("is_ok_local_optimal_solution_oscillation", false);
   diagnostics_module_->addKeyValue("transform_probability", 0.0);
   diagnostics_module_->addKeyValue("nearest_voxel_transformation_likelihood", 0.0);
+  diagnostics_module_->addKeyValue("distance_from_initial_to_result", 0.0);
   diagnostics_module_->addKeyValue("execution_time", 0.0);
   diagnostics_module_->addKeyValue("skipping_publish_num", 0);
 }
@@ -247,6 +248,22 @@ bool NDTScanMatcher::validate_converged_param(
       this->get_logger(), *this->get_clock(), 1, "Unknown converged param type.");
     diagnostics_module_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, "[WARN] Unknown converged param type");
+  }
+  return is_ok;
+}
+
+bool NDTScanMatcher::validate_distance_from_initial_to_result(
+  const double distance_from_initial_to_result, const double warn_distance_from_initial_to_result)
+{
+  diagnostics_module_->addKeyValue("distance_from_initial_to_result", distance_from_initial_to_result);
+
+  bool is_ok = distance_from_initial_to_result < warn_distance_from_initial_to_result;
+  if (!is_ok) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1,
+      "distance_from_initial_to_result is too large. ( " << distance_from_initial_to_result << " [m])");
+    diagnostics_module_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, "[WARN] distance_from_initial_to_result is too large");
   }
   return is_ok;
 }
