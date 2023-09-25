@@ -21,7 +21,10 @@
 TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
   const int64_t n_startup_trials, const double x_stddev, const double y_stddev,
   const double z_stddev, const double roll_stddev, const double pitch_stddev)
-: good_num_(0),
+: engine_(std::random_device{}()),
+  dist_uniform_(-M_PI, M_PI),
+  dist_normal_(0.0, 1.0),
+  good_num_(0),
   n_startup_trials_(n_startup_trials),
   x_stddev_(x_stddev),
   y_stddev_(y_stddev),
@@ -50,24 +53,13 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
   static std::normal_distribution<double> dist_norm(0.0, 1.0);
 
   if (trials_.empty()) {
-    // return all 0
+    // The first attempt returns all zeros.
+    // This means that the input `base_pose` is used as is.
+    // Do this because the input `base_pose` may be a good candidate.
     return Input{};
   } else if (static_cast<int64_t>(trials_.size()) < n_startup_trials_) {
-    // return random
-
-    Input input{};
-    // Only for yaw, use uniform distribution instead of normal distribution
-    input.x = dist_norm(engine) * x_stddev_;
-    input.y = dist_norm(engine) * y_stddev_;
-    input.z = dist_norm(engine) * z_stddev_;
-    input.roll = dist_norm(engine) * roll_stddev_;
-    input.pitch = dist_norm(engine) * pitch_stddev_;
-    input.yaw = dist_uni(engine);
-
-    // fixed roll and pitch in [-pi, pi]
-    input.roll = fix_angle(input.roll);
-    input.pitch = fix_angle(input.pitch);
-    return input;
+    // Random sampling based on prior until the number of trials reaches `n_startup_trials_`.
+    return sample_from_prior();
   }
 
   Input best_input;
@@ -76,17 +68,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
     Input input{};
     const int64_t index = engine() % (good_num_ + 1);
     if (index == good_num_) {
-      // Only for yaw, use uniform distribution instead of normal distribution
-      input.x = dist_norm(engine) * x_stddev_;
-      input.y = dist_norm(engine) * y_stddev_;
-      input.z = dist_norm(engine) * z_stddev_;
-      input.roll = dist_norm(engine) * roll_stddev_;
-      input.pitch = dist_norm(engine) * pitch_stddev_;
-      input.yaw = dist_uni(engine);
-
-      // fixed roll and pitch in [-pi, pi]
-      input.roll = fix_angle(input.roll);
-      input.pitch = fix_angle(input.pitch);
+      input = sample_from_prior();
     } else {
       const Input & base = trials_[index].input;
 
@@ -197,4 +179,21 @@ double TreeStructuredParzenEstimator::fix_angle(const double angle)
     fixed_angle += 2 * M_PI;
   }
   return fixed_angle;
+}
+
+TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::sample_from_prior()
+{
+  Input input{};
+  // Only for yaw, use uniform distribution instead of normal distribution
+  input.x = dist_normal_(engine_) * x_stddev_;
+  input.y = dist_normal_(engine_) * y_stddev_;
+  input.z = dist_normal_(engine_) * z_stddev_;
+  input.roll = dist_normal_(engine_) * roll_stddev_;
+  input.pitch = dist_normal_(engine_) * pitch_stddev_;
+  input.yaw = dist_uniform_(engine_);
+
+  // fixed roll and pitch in [-pi, pi]
+  input.roll = fix_angle(input.roll);
+  input.pitch = fix_angle(input.pitch);
+  return input;
 }

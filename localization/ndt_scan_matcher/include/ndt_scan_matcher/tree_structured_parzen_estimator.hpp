@@ -55,7 +55,12 @@ private:
 
   double acquisition_function(const Input & input);
   double gauss(const Input & input, const Input & mu, const Input & sigma);
-  double fix_angle(const double angle);
+  static double fix_angle(const double angle);
+  Input sample_from_prior();
+
+  std::mt19937_64 engine_;
+  std::uniform_real_distribution<double> dist_uniform_;
+  std::normal_distribution<double> dist_normal_;
 
   std::vector<Trial> trials_;
   int64_t good_num_;
