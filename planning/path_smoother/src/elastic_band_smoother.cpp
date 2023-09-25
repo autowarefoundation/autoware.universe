@@ -270,7 +270,7 @@ void ElasticBandSmoother::applyInputVelocity(
   // insert stop point explicitly
   const auto stop_idx = motion_utils::searchZeroVelocityIndex(forward_cropped_input_traj_points);
   if (stop_idx) {
-    const auto input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.get()).pose;
+    const auto & input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.get()).pose;
     const size_t stop_seg_idx = trajectory_utils::findEgoSegmentIndex(
       output_traj_points, input_stop_pose, ego_nearest_param_);
 
