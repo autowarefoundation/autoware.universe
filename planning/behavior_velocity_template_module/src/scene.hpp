@@ -31,9 +31,36 @@ public:
   TemplateModule(
     const int64_t module_id, const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);
 
+  /**
+   * @brief Modify the velocity of path points.
+   *
+   * This method is responsible for adjusting the velocity of each point in the input path based on
+   * specific criteria.
+   *
+   * @param path A pointer to the path containing points to be modified.
+   * @param stop_reason A pointer to the stop reason data.
+   * @return [bool] wether the path velocity was modified or not.
+   */
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
+  /**
+   * @brief Create a visualization of debug markers.
+   *
+   * This method is responsible for generating a visualization of debug markers and returning them
+   * as a `visualization_msgs::msg::MarkerArray`.
+   *
+   * @return A `visualization_msgs::msg::MarkerArray` containing debug markers.
+   */
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+
+  /**
+   * @brief Create virtual walls for the scene.
+   *
+   * This method is responsible for generating virtual walls for the scene and returning them as a
+   * `motion_utils::VirtualWalls` object.
+   *
+   * @return A `motion_utils::VirtualWalls` object representing virtual walls in the scene.
+   */
   motion_utils::VirtualWalls createVirtualWalls() override;
 };
 
