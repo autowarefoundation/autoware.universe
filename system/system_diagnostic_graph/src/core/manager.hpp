@@ -41,7 +41,7 @@ struct Modes
 class GraphManager
 {
 public:
-  void init(const std::string & file);
+  void init(const std::string & file, const std::string & mode);
   void callback(const DiagnosticArray & array, const rclcpp::Time & stamp);
   void update(const rclcpp::Time & stamp);
   DiagnosticGraph create_graph_message() const;

@@ -35,9 +35,10 @@ UnitNode * find_node(Graph & graph, const std::string & name)
   return node;
 };
 
-void GraphManager::init(const std::string & file)
+void GraphManager::init(const std::string & file, const std::string & mode)
 {
   const auto configs = load_config_file(file);
+  (void)mode;
 
   // Create unit nodes first because it is necessary for the link.
   std::vector<std::pair<NodeConfig, UnitNode *>> units;

@@ -41,7 +41,8 @@ MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
   // Init diagnostics graph.
   {
     const auto file = declare_parameter<std::string>("graph_file");
-    manager_.init(file);
+    const auto mode = declare_parameter<std::string>("mode");
+    manager_.init(file, mode);
     manager_.debug();
   }
 }
