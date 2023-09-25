@@ -34,7 +34,7 @@ ament_auto_add_executable(ndt_scan_matcher
   src/tf2_listener_module.cpp
   src/map_module.cpp
   src/map_update_module.cpp
-  src/tree-structured_parzen_estimator.cpp
+  src/tree_structured_parzen_estimator.cpp
 )
 
 link_directories(${PCL_LIBRARY_DIRS})

@@ -17,7 +17,7 @@
 #include "ndt_scan_matcher/matrix_type.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/pose_array_interpolator.hpp"
-#include "ndt_scan_matcher/tree-structured_parzen_estimator.hpp"
+#include "ndt_scan_matcher/tree_structured_parzen_estimator.hpp"
 #include "ndt_scan_matcher/util_func.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
