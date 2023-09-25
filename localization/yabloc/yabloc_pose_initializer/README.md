@@ -7,7 +7,7 @@ This package contains a node related to initial pose estimation.
 This package requires the pre-trained semantic segmentation model for runtime. This model is usually downloaded by `ansible` during env preparation phase of the [installation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/).
 It is also possible to download it manually. Even if the model is not downloaded, initialization will still complete, but the accuracy may be compromised.
 
-To downloand and extract the model manually:
+To download and extract the model manually:
 
 ```bash
 $ mkdir -p ~/autoware_data/yabloc_pose_initializer/
