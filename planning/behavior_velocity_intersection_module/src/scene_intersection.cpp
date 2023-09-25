@@ -907,8 +907,9 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
                               ? 0.0
                               : (planner_param_.collision_detection.state_transit_margin_time -
                                  collision_state_machine_.getDuration());
-  const auto target_objects =
-    filterTargetObjects(attention_lanelets, adjacent_lanelets, intersection_area);
+  const auto target_objects = filterTargetObjects(
+    attention_lanelets, adjacent_lanelets, intersection_area,
+    planner_param_.occlusion.ignore_parked_vehicle_speed_threshold);
 
   const bool has_collision = checkCollision(
     *path, target_objects, path_lanelets, closest_idx,
@@ -1047,7 +1048,8 @@ bool IntersectionModule::checkStuckVehicle(
 autoware_auto_perception_msgs::msg::PredictedObjects IntersectionModule::filterTargetObjects(
   const lanelet::ConstLanelets & attention_area_lanelets,
   const lanelet::ConstLanelets & adjacent_lanelets,
-  const std::optional<Polygon2d> & intersection_area) const
+  const std::optional<Polygon2d> & intersection_area,
+  const double parked_vehicle_speed_threshold) const
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;
@@ -1063,7 +1065,8 @@ autoware_auto_perception_msgs::msg::PredictedObjects IntersectionModule::filterT
     }
 
     // check direction of objects
-    const auto object_direction = util::getObjectPoseWithVelocityDirection(object.kinematics);
+    const auto object_direction =
+      util::getObjectPoseWithVelocityDirection(object.kinematics, parked_vehicle_speed_threshold);
     const auto is_in_adjacent_lanelets = util::checkAngleForTargetLanelets(
       object_direction, adjacent_lanelets, planner_param_.common.attention_area_angle_thr,
       planner_param_.common.consider_wrong_direction_vehicle,

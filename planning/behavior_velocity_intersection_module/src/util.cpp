@@ -956,9 +956,13 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
 
 // from here
 geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
-  const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state)
+  const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state,
+  const double parked_vehicle_speed_threshold)
 {
-  if (obj_state.initial_twist_with_covariance.twist.linear.x >= 0) {
+  if (
+    obj_state.initial_twist_with_covariance.twist.linear.x >= 0 ||
+    std::fabs(obj_state.initial_twist_with_covariance.twist.linear.x) <=
+      parked_vehicle_speed_threshold) {
     return obj_state.initial_pose_with_covariance.pose;
   }
 

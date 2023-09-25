@@ -125,7 +125,8 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const rclcpp::Logger logger);
 
 geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
-  const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state);
+  const autoware_auto_perception_msgs::msg::PredictedObjectKinematics & obj_state,
+  const double parked_vehicle_speed_threshold);
 
 bool checkStuckVehicleInIntersection(
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,

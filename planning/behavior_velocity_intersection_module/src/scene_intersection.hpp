@@ -257,7 +257,8 @@ private:
   autoware_auto_perception_msgs::msg::PredictedObjects filterTargetObjects(
     const lanelet::ConstLanelets & attention_area_lanelets,
     const lanelet::ConstLanelets & adjacent_lanelets,
-    const std::optional<Polygon2d> & intersection_area) const;
+    const std::optional<Polygon2d> & intersection_area,
+    const double parked_vehicle_speed_threshold) const;
 
   bool checkCollision(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
