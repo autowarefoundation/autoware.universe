@@ -118,11 +118,12 @@ Either one is activated when all conditions are met.
 
 ## General parameters for goal_planner
 
-| Name                | Unit  | Type   | Description                                        | Default value |
-| :------------------ | :---- | :----- | :------------------------------------------------- | :------------ |
-| th_arrived_distance | [m]   | double | distance threshold for arrival of path termination | 1.0           |
-| th_stopped_velocity | [m/s] | double | velocity threshold for arrival of path termination | 0.01          |
-| th_stopped_time     | [s]   | double | time threshold for arrival of path termination     | 2.0           |
+| Name                      | Unit  | Type   | Description                                        | Default value |
+| :------------------------ | :---- | :----- | :------------------------------------------------- | :------------ |
+| th_arrived_distance       | [m]   | double | distance threshold for arrival of path termination | 1.0           |
+| th_stopped_velocity       | [m/s] | double | velocity threshold for arrival of path termination | 0.01          |
+| th_stopped_time           | [s]   | double | time threshold for arrival of path termination     | 2.0           |
+| center_line_path_interval | [m]   | double | reference center line path point interval          | 1.0           |
 
 ## **collision check**
 
@@ -132,13 +133,14 @@ Generate footprints from ego-vehicle path points and determine obstacle collisio
 
 #### Parameters for occupancy grid based collision check
 
-| Name                                       | Unit | Type   | Description                                                                                                     | Default value |
-| :----------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
-| use_occupancy_grid                         | [-]  | bool   | flag whether to use occupancy grid for collision check                                                          | true          |
-| use_occupancy_grid_for_longitudinal_margin | [-]  | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
-| occupancy_grid_collision_check_margin      | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
-| theta_size                                 | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
-| obstacle_threshold                         | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
+| Name                                            | Unit | Type   | Description                                                                                                     | Default value |
+| :---------------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
+| use_occupancy_grid_for_goal_search              | [-]  | bool   | flag whether to use occupancy grid for goal search collision check                                              | true          |
+| use_occupancy_grid_for_goal_longitudinal_margin | [-]  | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
+| use_occupancy_grid_for_path_collision_check     | [-]  | bool   | flag whether to use occupancy grid for collision check                                                          | false         |
+| occupancy_grid_collision_check_margin           | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
+| theta_size                                      | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
+| obstacle_threshold                              | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
 
 ### **object recognition based collision check**
 

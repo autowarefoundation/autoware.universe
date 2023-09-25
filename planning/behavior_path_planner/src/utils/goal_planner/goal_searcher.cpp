@@ -17,11 +17,15 @@
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "lanelet2_extension/regulatory_elements/no_parking_area.hpp"
+#include "lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <boost/geometry/algorithms/union.hpp>
 #include <boost/optional.hpp>
+
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <memory>
 #include <vector>
@@ -179,7 +183,7 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
 
 bool GoalSearcher::checkCollision(const Pose & pose) const
 {
-  if (parameters_.use_occupancy_grid) {
+  if (parameters_.use_occupancy_grid_for_goal_search) {
     const Pose pose_grid_coords = global2local(occupancy_grid_map_->getMap(), pose);
     const auto idx = pose2index(
       occupancy_grid_map_->getMap(), pose_grid_coords, occupancy_grid_map_->getParam().theta_size);
@@ -210,7 +214,9 @@ bool GoalSearcher::checkCollision(const Pose & pose) const
 bool GoalSearcher::checkCollisionWithLongitudinalDistance(
   const Pose & ego_pose, const PredictedObjects & dynamic_objects) const
 {
-  if (parameters_.use_occupancy_grid && parameters_.use_occupancy_grid_for_longitudinal_margin) {
+  if (
+    parameters_.use_occupancy_grid_for_goal_search &&
+    parameters_.use_occupancy_grid_for_goal_longitudinal_margin) {
     constexpr bool check_out_of_range = false;
     const double offset = std::max(
       parameters_.longitudinal_margin - parameters_.occupancy_grid_collision_check_margin, 0.0);
