@@ -90,7 +90,6 @@ void NDTScanMatcherDiagnosticsUpdaterCore::check_is_succeed_latest_ndt_aling_ser
   diagnostic_updater::DiagnosticStatusWrapper & stat,
   const bool * const is_succeed_latest_ndt_aling_service_ptr)
 {
-
   int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   std::string diag_message = "OK";
 
