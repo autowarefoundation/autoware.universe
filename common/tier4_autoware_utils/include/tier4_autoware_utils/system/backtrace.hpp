@@ -15,13 +15,14 @@
 #ifndef TIER4_AUTOWARE_UTILS__SYSTEM__BACKTRACE_HPP_
 #define TIER4_AUTOWARE_UTILS__SYSTEM__BACKTRACE_HPP_
 
+#include "rclcpp/rclcpp.hpp"
+
 #include <execinfo.h>
 
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <vector>
-#include "rclcpp/rclcpp.hpp"
 
 namespace tier4_autoware_utils
 {
