@@ -1,5 +1,5 @@
 <library path="tier4_logging_level_configure_rviz_plugin">
-  <class 
+  <class
     type="rviz_plugin::LoggingLevelConfigureRvizPlugin"
     base_class_type="rviz_common::Panel">
     <description>tier4_logging_level_configure_rviz_plugin</description>

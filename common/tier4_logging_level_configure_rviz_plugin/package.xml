@@ -14,13 +14,12 @@
   <depend>libqt5-core</depend>
   <depend>libqt5-gui</depend>
   <depend>libqt5-widgets</depend>
+  <depend>logging_demo</depend>
   <depend>qtbase5-dev</depend>
   <depend>rclcpp</depend>
   <depend>rviz_common</depend>
   <depend>rviz_default_plugins</depend>
   <depend>rviz_rendering</depend>
-  <depend>logging_demo</depend>
-  
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

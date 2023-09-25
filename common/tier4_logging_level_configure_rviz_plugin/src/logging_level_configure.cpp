@@ -25,6 +25,40 @@ namespace rviz_plugin
 LoggingLevelConfigureRvizPlugin::LoggingLevelConfigureRvizPlugin(QWidget * parent)
 : rviz_common::Panel(parent)
 {
+}
+
+// Calculate the maximum width among all target_module_name.
+int LoggingLevelConfigureRvizPlugin::getMaxModuleNameWidth(QLabel * containerLabel)
+{
+  int max_width = 0;
+  QFontMetrics metrics(containerLabel->font());
+  for (const auto & item : logger_node_map_) {
+    const auto & target_module_name = item.first;
+    int width = metrics.horizontalAdvance(target_module_name);
+    if (width > max_width) {
+      max_width = width;
+    }
+  }
+  return max_width;
+}
+
+// create container list in logger_node_map_ without
+QStringList LoggingLevelConfigureRvizPlugin::getContainerList()
+{
+  QStringList containers;
+  for (const auto & item : logger_node_map_) {
+    const auto & container_logger_vec = item.second;
+    for (const auto & container_logger_pair : container_logger_vec) {
+      if (!containers.contains(container_logger_pair.first)) {
+        containers.append(container_logger_pair.first);
+      }
+    }
+  }
+  return containers;
+}
+
+void LoggingLevelConfigureRvizPlugin::onInitialize()
+{
   setLoggerNodeMap();
 
   attachLoggingComponent();
@@ -66,42 +100,9 @@ LoggingLevelConfigureRvizPlugin::LoggingLevelConfigureRvizPlugin(QWidget * paren
   }
 
   setLayout(layout);
-}
 
-// Calculate the maximum width among all target_module_name.
-int LoggingLevelConfigureRvizPlugin::getMaxModuleNameWidth(QLabel * containerLabel)
-{
-  int max_width = 0;
-  QFontMetrics metrics(containerLabel->font());
-  for (const auto & item : logger_node_map_) {
-    const auto & target_module_name = item.first;
-    int width = metrics.horizontalAdvance(target_module_name);
-    if (width > max_width) {
-      max_width = width;
-    }
-  }
-  return max_width;
-}
-
-// create container list in logger_node_map_ without
-QStringList LoggingLevelConfigureRvizPlugin::getContainerList()
-{
-  QStringList containers;
-  for (const auto & item : logger_node_map_) {
-    const auto & container_logger_vec = item.second;
-    for (const auto & container_logger_pair : container_logger_vec) {
-      if (!containers.contains(container_logger_pair.first)) {
-        containers.append(container_logger_pair.first);
-      }
-    }
-  }
-  return containers;
-}
-
-void LoggingLevelConfigureRvizPlugin::onInitialize()
-{
+  // set up service clients
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
-
   const auto & containers = getContainerList();
   for (const QString & container : containers) {
     const auto client = raw_node_->create_client<logging_demo::srv::ConfigLogger>(
