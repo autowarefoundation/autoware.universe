@@ -88,6 +88,7 @@ namespace pointcloud_preprocessor
 {
 using autoware_point_types::PointXYZI;
 using point_cloud_msg_wrapper::PointCloud2Modifier;
+
 /** \brief @b PointCloudConcatenateDataSynchronizerComponent is a special form of data
  * synchronizer: it listens for a set of input PointCloud messages on the same topic,
  * checks their timestamps, and concatenates their fields together into a single
@@ -135,6 +136,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   diagnostic_updater::Updater updater_{this};
 
+  const std::string input_twist_topic_type_;
+
   /** \brief Output TF frame the concatenated points should be transformed to. */
   std::string output_frame_;
 
@@ -170,6 +173,7 @@ private:
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
     const std::string & topic_name);
   void twist_callback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input);
+  void odom_callback(const nav_msgs::msg::Odometry::ConstSharedPtr input);
   void timer_callback();
 
   void checkConcatStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
