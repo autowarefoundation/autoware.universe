@@ -1197,7 +1197,7 @@ bool IntersectionModule::isOcclusionCleared(
   const std::vector<util::DiscretizedLane> & lane_divisions,
   [[maybe_unused]] const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> &
     parked_attention_objects,
-  const double occlusion_dist_thr)
+  [[maybe_unused]] const double occlusion_dist_thr)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto & lane_interval_ip = interpolated_path_info.lane_id_interval.value();
@@ -1220,11 +1220,6 @@ bool IntersectionModule::isOcclusionCleared(
   const int height = occ_grid.info.height;
   const double resolution = occ_grid.info.resolution;
   const auto & origin = occ_grid.info.origin.position;
-
-  // NOTE: interesting area is set to 255 for later masking
-  cv::Mat attention_mask(width, height, CV_8UC1, cv::Scalar(0));
-  cv::Mat unknown_mask_raw(width, height, CV_8UC1, cv::Scalar(0));
-  cv::Mat unknown_mask(width, height, CV_8UC1, cv::Scalar(0));
 
   Polygon2d grid_poly;
   grid_poly.outer().emplace_back(origin.x, origin.y);
@@ -1266,6 +1261,8 @@ bool IntersectionModule::isOcclusionCleared(
   // (1) prepare detection area mask
   // attention: 255
   // non-attention: 0
+  // NOTE: interesting area is set to 255 for later masking
+  cv::Mat attention_mask(width, height, CV_8UC1, cv::Scalar(0));
   std::vector<std::vector<cv::Point>> attention_area_cv_polygons;
   for (const auto & attention_area : attention_areas) {
     const auto area2d = lanelet::utils::to2D(attention_area);
@@ -1289,6 +1286,8 @@ bool IntersectionModule::isOcclusionCleared(
   // In OpenCV the pixel at (X=x, Y=y) (with left-upper origin) is accessed by img[y, x]
   // unknown: 255
   // not-unknown: 0
+  cv::Mat unknown_mask_raw(width, height, CV_8UC1, cv::Scalar(0));
+  cv::Mat unknown_mask(width, height, CV_8UC1, cv::Scalar(0));
   for (int x = 0; x < width; x++) {
     for (int y = 0; y < height; y++) {
       const int idx = y * width + x;
@@ -1364,17 +1363,50 @@ bool IntersectionModule::isOcclusionCleared(
     if (idx_y < 0 || idx_y >= height) return std::make_tuple(false, -1, -1);
     return std::make_tuple(true, idx_x, idx_y);
   };
+
+  // (5) find distance
+  // (5.1) discretize path_ip with resolution for computational cost
   LineString2d path_linestring;
-  for (auto i = lane_start_idx; i <= lane_end_idx; i++) {
-    Point2d path_point{
-      path_ip.points.at(i).point.pose.position.x, path_ip.points.at(i).point.pose.position.y};
-    path_linestring.push_back(path_point);
+  path_linestring.emplace_back(
+    path_ip.points.at(lane_start_idx).point.pose.position.x,
+    path_ip.points.at(lane_start_idx).point.pose.position.y);
+  {
+    auto prev_path_linestring_point = path_ip.points.at(lane_start_idx).point.pose.position;
+    for (auto i = lane_start_idx + 1; i <= lane_end_idx; i++) {
+      const auto path_linestring_point = path_ip.points.at(i).point.pose.position;
+      if (
+        tier4_autoware_utils::calcDistance2d(prev_path_linestring_point, path_linestring_point) <
+        1.0 /* rough tick for computational cost */) {
+        continue;
+      }
+      path_linestring.emplace_back(path_linestring_point.x, path_linestring_point.y);
+      prev_path_linestring_point = path_linestring_point;
+    }
   }
+
+  auto findNearestPointToProjection =
+    [](lanelet::ConstLineString2d division, const Point2d & projection, const double dist_thresh) {
+      double min_dist = std::numeric_limits<double>::infinity();
+      auto nearest = division.end();
+      for (auto it = division.begin(); it != division.end(); it++) {
+        const double dist = std::hypot(it->x() - projection.x(), it->y() - projection.y());
+        if (dist < min_dist) {
+          min_dist = dist;
+          nearest = it;
+        }
+        if (dist < dist_thresh) {
+          break;
+        }
+      }
+      return nearest;
+    };
   struct NearestOcclusionPoint
   {
     int lane_id;
-    size_t division_index;
+    int64 division_index;
     double dist;
+    geometry_msgs::msg::Point point;
+    geometry_msgs::msg::Point projection;
   } nearest_occlusion_point;
   double min_dist = std::numeric_limits<double>::infinity();
   for (const auto & lane_division : lane_divisions) {
@@ -1382,29 +1414,53 @@ bool IntersectionModule::isOcclusionCleared(
     const auto lane_id = lane_division.lane_id;
     for (unsigned division_index = 0; division_index < divisions.size(); ++division_index) {
       const auto & division = divisions.at(division_index);
-      const auto & division_start = division.front();
-      const auto & division_end = division.back();
+      LineString2d division_linestring;
+      auto point_it = division.begin();
+      division_linestring.emplace_back(point_it->x(), point_it->y());
+      for (auto point = division.begin(); point != division.end(); point++) {
+        if (
+          std::hypot(point->x() - point_it->x(), point->y() - point_it->y()) <
+          3.0 /* rough tick for computational cost */) {
+          continue;
+        }
+        division_linestring.emplace_back(point_it->x(), point_it->y());
+        point_it = point;
+      }
 
       // find the intersecton point of lane_line and path
       std::vector<Point2d> intersection_points;
-      boost::geometry::intersection(
-        LineString2d{
-          Point2d{division_start.x(), division_start.y()},
-          Point2d{division_end.x(), division_end.y()}},
-        path_linestring, intersection_points);
+      boost::geometry::intersection(division_linestring, path_linestring, intersection_points);
       if (intersection_points.empty()) {
         continue;
       }
       const auto & projection_point = intersection_points.at(0);
-      for (auto point = division.begin(); point != division.end(); point++) {
-        const auto [valid, idx_x, idx_y] = coord2index(point->x(), point->y());
+      const auto projection_it =
+        findNearestPointToProjection(division, projection_point, resolution);
+      if (projection_it == division.end()) {
+        continue;
+      }
+      double acc_dist = 0.0;
+      auto acc_dist_it = division.begin();
+      for (auto it = division.begin(); it != projection_it; it++) {
+        const double dist = std::hypot(it->x() - acc_dist_it->x(), it->y() - acc_dist_it->y());
+        acc_dist += dist;
+        acc_dist_it = it;
+      }
+      for (auto point_it = projection_it; point_it != division.end(); point_it++) {
+        const double dist =
+          std::hypot(point_it->x() - acc_dist_it->x(), point_it->y() - acc_dist_it->y());
+        acc_dist += dist;
+        acc_dist_it = point_it;
+        const auto [valid, idx_x, idx_y] = coord2index(point_it->x(), point_it->y());
+        // TODO(Mamoru Sobue): add handling for blocking vehicles
         if (!valid) continue;
         if (occlusion_mask.at<unsigned char>(height - 1 - idx_y, idx_x) == 255) {
-          const double dist =
-            std::hypot(point->x() - projection_point.x(), point->y() - projection_point.y());
-          if (dist < min_dist) {
-            min_dist = dist;
-            nearest_occlusion_point = {lane_id, division_index, dist};
+          if (acc_dist < min_dist) {
+            min_dist = acc_dist;
+            nearest_occlusion_point = {
+              lane_id, std::distance(division.begin(), point_it), acc_dist,
+              tier4_autoware_utils::createPoint(point_it->x(), point_it->y(), origin.z),
+              tier4_autoware_utils::createPoint(projection_it->x(), projection_it->y(), origin.z)};
           }
         }
       }
@@ -1414,6 +1470,8 @@ bool IntersectionModule::isOcclusionCleared(
   if (min_dist == std::numeric_limits<double>::infinity()) {
     return false;
   }
+  debug_data_.nearest_occlusion_projection =
+    std::make_pair(nearest_occlusion_point.point, nearest_occlusion_point.projection);
   return true;
 }
 
