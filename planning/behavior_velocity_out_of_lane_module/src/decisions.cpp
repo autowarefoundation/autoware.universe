@@ -299,10 +299,6 @@ bool should_not_enter(
       logger, "\t\t[%s] going at %2.2fm/s",
       tier4_autoware_utils::toHexString(object.object_id).c_str(),
       object.kinematics.initial_twist_with_covariance.twist.linear.x);
-    if (object.kinematics.initial_twist_with_covariance.twist.linear.x < params.objects_min_vel) {
-      RCLCPP_DEBUG(logger, " SKIP (velocity bellow threshold %2.2fm/s)\n", params.objects_min_vel);
-      continue;  // skip objects with velocity bellow a threshold
-    }
     // skip objects that are already on the interval
     const auto enter_exit_time =
       params.objects_use_predicted_paths

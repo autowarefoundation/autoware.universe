@@ -63,8 +63,11 @@ bool OutOfLaneModule::modifyPathVelocity(
   EgoData ego_data;
   ego_data.pose = planner_data_->current_odometry->pose;
   ego_data.path = path;
-  ego_data.first_path_idx =
-    motion_utils::findNearestSegmentIndex(path->points, ego_data.pose.position);
+  if (tier4_autoware_utils::calcDistance2d(path->points.front().point.pose, ego_data.pose) < 1e-8)
+    ego_data.first_path_idx = 0;
+  else
+    ego_data.first_path_idx =
+      motion_utils::findNearestSegmentIndex(path->points, ego_data.pose.position);
   ego_data.velocity = planner_data_->current_velocity->twist.linear.x;
   ego_data.max_decel = -planner_data_->max_stop_acceleration_threshold;
   stopwatch.tic("calculate_path_footprints");

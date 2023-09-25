@@ -39,7 +39,9 @@ autoware_auto_perception_msgs::msg::PredictedObjects filter_predicted_objects(
       std::find_if(object.classification.begin(), object.classification.end(), [](const auto & c) {
         return c.label == autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
       }) != object.classification.end();
-    if (is_pedestrian) continue;
+    const auto is_too_low_velocity =
+      object.kinematics.initial_twist_with_covariance.twist.linear.x < params.objects_min_vel;
+    if (is_pedestrian || is_too_low_velocity) continue;
 
     auto filtered_object = object;
     const auto is_invalid_predicted_path = [&](const auto & predicted_path) {
