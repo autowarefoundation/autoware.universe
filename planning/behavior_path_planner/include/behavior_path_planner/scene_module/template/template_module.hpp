@@ -15,13 +15,18 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__TEMPLATE__TEMPLATE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__TEMPLATE__TEMPLATE_MODULE_HPP_
 
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/utils/template/template_parameters.hpp"
+#include "behavior_path_planner/utils/template/util.hpp"
+#include "behavior_path_planner/utils/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -42,7 +47,6 @@ public:
   bool isExecutionReady() const override;
   BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
-  void setParameters(const std::shared_ptr<TemplateParameters> & parameters);
 
   void updateModuleParams(const std::any & parameters) override
   {
