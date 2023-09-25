@@ -734,15 +734,9 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
       }
     }
 
-    const auto check_backward_polygon = [&](const auto & target_backward_polygon) {
-      if (
-        target_backward_polygon &&
-        boost::geometry::intersects(target_backward_polygon.value(), obj_polygon)) {
-        const auto lateral = tier4_autoware_utils::calcLateralDeviation(
-          current_pose, object.kinematics.initial_pose_with_covariance.pose.position);
-        return (std::abs(lateral) > common_parameters.vehicle_width);
-      }
-      return false;
+    const auto check_backward_polygon = [&obj_polygon](const auto & target_backward_polygon) {
+      return target_backward_polygon &&
+             boost::geometry::intersects(target_backward_polygon.value(), obj_polygon);
     };
 
     // check if the object intersects with target backward lanes
