@@ -10,8 +10,8 @@ set(CMAKE_AUTOMOC ON)
 add_definitions(-DQT_NO_KEYWORDS)
 
 ament_auto_add_library(tier4_logging_level_configure_rviz_plugin SHARED
-  include/tier4_logging_level_configure_rviz_plugin/plugin.hpp
-  src/plugin.cpp
+  include/tier4_logging_level_configure_rviz_plugin/logging_level_configure.hpp
+  src/logging_level_configure.cpp
 )
 
 target_link_libraries(tier4_logging_level_configure_rviz_plugin
@@ -23,6 +23,5 @@ pluginlib_export_plugin_description_file(rviz_common plugins/plugin_description.
 
 ament_auto_package(
   INSTALL_TO_SHARE
-  # icons
   plugins
 )
