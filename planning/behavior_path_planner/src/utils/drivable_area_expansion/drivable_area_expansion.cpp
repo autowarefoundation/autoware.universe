@@ -19,20 +19,62 @@
 #include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/types.hpp"
-#include "interpolation/linear_interpolation.hpp"
 
 #include <Eigen/Geometry>
+#include <interpolation/linear_interpolation.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 
 #include <boost/geometry.hpp>
 
 namespace drivable_area_expansion
 {
 
+std::vector<PathPointWithLaneId> crop_and_resample(
+  const std::vector<PathPointWithLaneId> & points, const DrivableAreaExpansionParameters & params,
+  const size_t first_idx)
+{
+  if (first_idx >= points.size()) return points;
+  const auto & crop_pose = points[first_idx].point.pose;
+  const auto & crop_distance = motion_utils::calcSignedArcLength(points, 0, first_idx);
+  // crop
+  const auto crop_seg_idx = motion_utils::findNearestSegmentIndex(points, crop_pose.position);
+  const auto cropped_points = motion_utils::cropPoints(
+    points, crop_pose.position, crop_seg_idx, params.max_path_arc_length,
+    params.max_path_arc_length - crop_distance);
+  // resample
+  PathWithLaneId cropped_path;
+  cropped_path.points = cropped_points;
+  const auto resampled_path =
+    motion_utils::resamplePath(cropped_path, params.resample_interval, true, true, false);
+
+  return resampled_path.points;
+}
+
 void expandDrivableArea(
-  PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
-  const PredictedObjects & dynamic_objects, const route_handler::RouteHandler & route_handler,
+  PathWithLaneId & path,
+  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data,
   const lanelet::ConstLanelets & path_lanes)
 {
+  if (path.points.empty() || path.left_bound.empty() || path.right_bound.empty()) return;
+
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stopwatch;
+  const auto & params = planner_data->drivable_area_expansion_parameters;
+  const auto & dynamic_objects = *planner_data->dynamic_object;
+  const auto & route_handler = *planner_data->route_handler;
+
+  stopwatch.tic("calc_replan");
+  const auto ego_index = planner_data->findEgoIndex(path.points);
+  auto & replan_checker = planner_data->drivable_area_expansion_replan_checker;
+  const auto replan_index = params.replan_enable ? replan_checker.calculate_replan_index(
+                                                     path, ego_index, params.replan_max_deviation)
+                                                 : 0;
+  const auto & prev_expanded_drivable_area = replan_checker.get_previous_expanded_drivable_area();
+  const auto is_replanning =
+    params.expansion_method == "polygon" && !params.avoid_dynamic_objects &&
+    !boost::geometry::is_empty(prev_expanded_drivable_area) && replan_index > ego_index;
+  const auto calc_replan_duration = stopwatch.toc("calc_replan");
+
+  stopwatch.tic("extract_uncrossable_lines");
   const auto uncrossable_lines =
     extractUncrossableLines(*route_handler.getLaneletMapPtr(), params.avoid_linestring_types);
   multi_linestring_t uncrossable_lines_in_range;
@@ -40,16 +82,50 @@ void expandDrivableArea(
   for (const auto & line : uncrossable_lines)
     if (boost::geometry::distance(line, point_t{p.x, p.y}) < params.max_path_arc_length)
       uncrossable_lines_in_range.push_back(line);
-  const auto path_footprints = createPathFootprints(path, params);
-  const auto predicted_paths = createObjectFootprints(dynamic_objects, params);
-  const auto expansion_polygons =
+  const auto extra_uncrossable_lines_duration = stopwatch.toc("extract_uncrossable_lines");
+
+  stopwatch.tic("crop");
+  const auto points = crop_and_resample(path.points, params, replan_index);
+  const auto crop_duration = stopwatch.toc("crop");
+  stopwatch.tic("footprints");
+  const auto path_footprints = createPathFootprints(points, params);
+  const auto footprints_duration = stopwatch.toc("footprints");
+  const auto predicted_paths = params.avoid_dynamic_objects
+                                 ? createObjectFootprints(dynamic_objects, params)
+                                 : multi_polygon_t{};
+  stopwatch.tic("exp_polys");
+  auto expansion_polygons =
     params.expansion_method == "lanelet"
       ? createExpansionLaneletPolygons(
           path_lanes, route_handler, path_footprints, predicted_paths, params)
       : createExpansionPolygons(
           path, path_footprints, predicted_paths, uncrossable_lines_in_range, params);
+  if (is_replanning) expansion_polygons.push_back(prev_expanded_drivable_area);
+  const auto exp_polygons_duration = stopwatch.toc("exp_polys");
+  stopwatch.tic("exp_da");
   const auto expanded_drivable_area = createExpandedDrivableAreaPolygon(path, expansion_polygons);
+  const auto exp_da_duration = stopwatch.toc("exp_da");
+
+  linestring_t path_ls;
+  for (const auto & p : path.points)
+    path_ls.emplace_back(p.point.pose.position.x, p.point.pose.position.y);
+
+  stopwatch.tic("update");
   updateDrivableAreaBounds(path, expanded_drivable_area);
+  const auto update_duration = stopwatch.toc("update");
+  planner_data->drivable_area_expansion_replan_checker.set_previous(path);
+
+  if (params.debug_print) {
+    std::printf("Dynamic drivable area expansion runtime: %2.2fms\n", stopwatch.toc());
+    std::printf("\tcalc_replan: %2.2fms\n", calc_replan_duration);
+    std::printf("\textract_lines: %2.2fms\n", extra_uncrossable_lines_duration);
+    std::printf("\tcrop: %2.2fms\n", crop_duration);
+    std::printf("\tfootprints: %2.2fms\n", footprints_duration);
+    std::printf("\texp_polys: %2.2fms\n", exp_polygons_duration);
+    std::printf("\texp_da: %2.2fms\n", exp_da_duration);
+    std::printf("\tupdate: %2.2fms\n", update_duration);
+    std::cout << std::endl;
+  }
 }
 
 point_t convert_point(const Point & p)
@@ -113,8 +189,8 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
 {
   const auto original_left_bound = path.left_bound;
   const auto original_right_bound = path.right_bound;
-  const auto is_left_of_segment = [](const point_t & a, const point_t & b, const point_t & p) {
-    return (b.x() - a.x()) * (p.y() - a.y()) - (b.y() - a.y()) * (p.x() - a.x()) > 0;
+  const auto is_left_of_path = [&](const point_t & p) {
+    return motion_utils::calcLateralOffset(path.points, convert_point(p)) > 0.0;
   };
   // prepare delimiting lines: start and end of the original expanded drivable area
   const auto start_segment =
@@ -178,12 +254,10 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
             *it, *std::next(it), start_segment.first, start_segment.second);
     if (inter_start) {
       const auto dist = boost::geometry::distance(*inter_start, path_start_segment);
-      const auto is_left_of_path_start = is_left_of_segment(
-        convert_point(path.points[0].point.pose.position),
-        convert_point(path.points[1].point.pose.position), *inter_start);
-      if (is_left_of_path_start && dist < start_left.distance)
+      const auto is_left = is_left_of_path(*inter_start);
+      if (is_left && dist < start_left.distance)
         start_left.update(*inter_start, it, dist);
-      else if (!is_left_of_path_start && dist < start_right.distance)
+      else if (!is_left && dist < start_right.distance)
         start_right.update(*inter_start, it, dist);
     }
     const auto inter_end =
@@ -192,11 +266,10 @@ void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_
         : segment_to_line_intersection(*it, *std::next(it), end_segment.first, end_segment.second);
     if (inter_end) {
       const auto dist = boost::geometry::distance(*inter_end, path_end_segment);
-      const auto is_left_of_path_end = is_left_of_segment(
-        convert_point(path.points.back().point.pose.position), end_segment_center, *inter_end);
-      if (is_left_of_path_end && dist < end_left.distance)
+      const auto is_left = is_left_of_path(*inter_end);
+      if (is_left && dist < end_left.distance)
         end_left.update(*inter_end, it, dist);
-      else if (!is_left_of_path_end && dist < end_right.distance)
+      else if (!is_left && dist < end_right.distance)
         end_right.update(*inter_end, it, dist);
     }
   }
