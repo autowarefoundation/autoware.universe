@@ -681,6 +681,7 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     lanelet::ConstLanelets lanelet{target_backward_lane};
     auto lane_polygon =
       utils::lane_change::createPolygon(lanelet, 0.0, std::numeric_limits<double>::max());
+    target_backward_polygons.push_back(lane_polygon);
   }
 
   auto filtered_objects = objects;
