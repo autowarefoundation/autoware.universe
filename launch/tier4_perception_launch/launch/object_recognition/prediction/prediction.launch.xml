@@ -2,10 +2,11 @@
 <launch>
   <arg name="use_vector_map" default="false" description="use vector map in prediction"/>
   <arg name="param_path" default="$(find-pkg-share map_based_prediction)/config/map_based_prediction.param.yaml"/>
-  <arg name="use_tracking_merger" default="false" description="flag to use tracking merger in prediction"/>
   <arg name="output_topic" default="/perception/object_recognition/objects"/>
 
-  <!-- if use_tracking_merger is true, remap input topics -->
+  <!-- "use_tracking_merger" controls wheather to join radar far tracking objects to lidar tracking objects.
+      Prediction input will changed to merged tracking objects if "use_tracking_merger" is true. -->
+  <arg name="use_tracking_merger" default="false" description="flag to use tracking merger in prediction"/>
   <arg name="default_tracking_objects" default="/perception/object_recognition/tracking/objects"/>
   <arg name="merged_tracking_objects" default="/perception/object_recognition/tracking/merged/objects"/>
   <let name="input_topic_to_prediction" value="$(var merged_tracking_objects)" if="$(var use_tracking_merger)"/>
