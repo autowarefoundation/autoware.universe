@@ -38,6 +38,7 @@
 #include <memory>
 #include <tuple>
 #include <vector>
+
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
@@ -1196,8 +1197,8 @@ bool IntersectionModule::isOcclusionCleared(
   const util::InterpolatedPathInfo & interpolated_path_info,
   const std::vector<util::DiscretizedLane> & lane_divisions,
   [[maybe_unused]] const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> &
-    parked_attention_objects,
-  [[maybe_unused]] const double occlusion_dist_thr)
+    blocking_attention_objects,
+  const double occlusion_dist_thr)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto & lane_interval_ip = interpolated_path_info.lane_id_interval.value();
@@ -1353,7 +1354,8 @@ bool IntersectionModule::isOcclusionCleared(
   // (4.1) re-draw occluded cells using valid_contours
   occlusion_mask = cv::Mat(width, height, CV_8UC1, cv::Scalar(0));
   for (unsigned i = 0; i < valid_contours.size(); ++i) {
-    cv::drawContours(occlusion_mask, valid_contours, i, cv::Scalar(255), cv::LINE_AA);
+    // NOTE: drawContour does not work well
+    cv::fillPoly(occlusion_mask, valid_contours[i], cv::Scalar(255), cv::LINE_AA);
   }
 
   auto coord2index = [&](const double x, const double y) {
@@ -1415,16 +1417,17 @@ bool IntersectionModule::isOcclusionCleared(
     for (unsigned division_index = 0; division_index < divisions.size(); ++division_index) {
       const auto & division = divisions.at(division_index);
       LineString2d division_linestring;
-      auto point_it = division.begin();
-      division_linestring.emplace_back(point_it->x(), point_it->y());
-      for (auto point = division.begin(); point != division.end(); point++) {
+      auto division_point_it = division.begin();
+      division_linestring.emplace_back(division_point_it->x(), division_point_it->y());
+      for (auto point_it = division.begin(); point_it != division.end(); point_it++) {
         if (
-          std::hypot(point->x() - point_it->x(), point->y() - point_it->y()) <
+          std::hypot(
+            point_it->x() - division_point_it->x(), point_it->y() - division_point_it->y()) <
           3.0 /* rough tick for computational cost */) {
           continue;
         }
         division_linestring.emplace_back(point_it->x(), point_it->y());
-        point_it = point;
+        division_point_it = point_it;
       }
 
       // find the intersecton point of lane_line and path
@@ -1440,12 +1443,7 @@ bool IntersectionModule::isOcclusionCleared(
         continue;
       }
       double acc_dist = 0.0;
-      auto acc_dist_it = division.begin();
-      for (auto it = division.begin(); it != projection_it; it++) {
-        const double dist = std::hypot(it->x() - acc_dist_it->x(), it->y() - acc_dist_it->y());
-        acc_dist += dist;
-        acc_dist_it = it;
-      }
+      auto acc_dist_it = projection_it;
       for (auto point_it = projection_it; point_it != division.end(); point_it++) {
         const double dist =
           std::hypot(point_it->x() - acc_dist_it->x(), point_it->y() - acc_dist_it->y());
@@ -1467,12 +1465,12 @@ bool IntersectionModule::isOcclusionCleared(
     }
   }
 
-  if (min_dist == std::numeric_limits<double>::infinity()) {
-    return false;
+  if (min_dist == std::numeric_limits<double>::infinity() || min_dist > occlusion_dist_thr) {
+    return true;
   }
   debug_data_.nearest_occlusion_projection =
     std::make_pair(nearest_occlusion_point.point, nearest_occlusion_point.projection);
-  return true;
+  return false;
 }
 
 /*
