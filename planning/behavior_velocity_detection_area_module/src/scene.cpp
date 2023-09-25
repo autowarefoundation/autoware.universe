@@ -17,12 +17,13 @@
 #include <behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
+
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <algorithm>
 #include <memory>

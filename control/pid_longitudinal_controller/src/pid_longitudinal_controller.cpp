@@ -531,16 +531,20 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     RCLCPP_INFO_SKIPFIRST_THROTTLE(logger_, *clock_, 5000, "%s", s);
   };
 
-  // if current operation mode is not autonomous mode, then change state to stopped
-  if (m_current_operation_mode.mode != OperationModeState::AUTONOMOUS) {
-    return changeState(ControlState::STOPPED);
-  }
+  const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&
+                                m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
 
   // transit state
   // in DRIVE state
   if (m_control_state == ControlState::DRIVE) {
     if (emergency_condition) {
       return changeState(ControlState::EMERGENCY);
+    }
+
+    if (!is_under_control && stopped_condition && keep_stopped_condition) {
+      // NOTE: When the ego is stopped on manual driving, since the driving state may transit to
+      //       autonomous, keep_stopped_condition should be checked.
+      return changeState(ControlState::STOPPED);
     }
 
     if (m_enable_smooth_stop) {
@@ -609,8 +613,14 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
 
   // in EMERGENCY state
   if (m_control_state == ControlState::EMERGENCY) {
-    if (stopped_condition && !emergency_condition) {
-      return changeState(ControlState::STOPPED);
+    if (!emergency_condition) {
+      if (stopped_condition) {
+        return changeState(ControlState::STOPPED);
+      }
+      if (!is_under_control) {
+        // NOTE: On manual driving, no need stopping to exit the emergency.
+        return changeState(ControlState::DRIVE);
+      }
     }
     return;
   }
@@ -817,7 +827,7 @@ double PidLongitudinalController::applySlopeCompensation(
   const double pitch_limited = std::min(std::max(pitch, m_min_pitch_rad), m_max_pitch_rad);
 
   // Acceleration command is always positive independent of direction (= shift) when car is running
-  double sign = (shift == Shift::Forward) ? -1 : (shift == Shift::Reverse ? 1 : 0);
+  double sign = (shift == Shift::Forward) ? 1.0 : (shift == Shift::Reverse ? -1.0 : 0);
   double compensated_acc = input_acc + sign * 9.81 * std::sin(pitch_limited);
   return compensated_acc;
 }
@@ -923,7 +933,8 @@ double PidLongitudinalController::applyVelocityFeedback(
 {
   const double current_vel_abs = std::fabs(current_vel);
   const double target_vel_abs = std::fabs(target_motion.vel);
-  const bool is_under_control = m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
+  const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&
+                                m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
   const bool enable_integration =
     (current_vel_abs > m_current_vel_threshold_pid_integrate) && is_under_control;
   const double error_vel_filtered = m_lpf_vel_error->filter(target_vel_abs - current_vel_abs);
