@@ -21,6 +21,7 @@
 #include <memory>
 #include <sstream>
 #include <vector>
+#include "rclcpp/rclcpp.hpp"
 
 namespace tier4_autoware_utils
 {
@@ -43,7 +44,7 @@ inline void print_backtrace()
   for (int i = 1; i < addrlen; i++) {
     ss << "   @   " << symbol_list[i] << std::endl;
   }
-  std::cerr << ss.str() << std::endl;
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("tier4_autoware_utils"), ss.str());
 
   free(symbol_list);
 }
