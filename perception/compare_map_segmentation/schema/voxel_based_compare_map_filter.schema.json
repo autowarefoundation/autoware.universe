@@ -37,7 +37,14 @@
           "description": "Timer interval to load map points [ms]"
         }
       },
-      "required": ["distance_threshold", "use_dynamic_map_loading", "downsize_ratio_z_axis", "map_update_distance_threshold", "map_loader_radius", "timer_interval_ms"],
+      "required": [
+        "distance_threshold",
+        "use_dynamic_map_loading",
+        "downsize_ratio_z_axis",
+        "map_update_distance_threshold",
+        "map_loader_radius",
+        "timer_interval_ms"
+      ],
       "additionalProperties": false
     }
   },
