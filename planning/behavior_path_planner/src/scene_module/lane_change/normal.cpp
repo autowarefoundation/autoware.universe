@@ -40,7 +40,7 @@ namespace behavior_path_planner
 NormalLaneChange::NormalLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters, LaneChangeModuleType type,
   Direction direction)
-: LaneChangeBase(parameters, type, direction), stop_time_{0.0}
+: LaneChangeBase(parameters, type, direction)
 {
   stop_watch_.tic(getModuleTypeStr());
   stop_watch_.tic("stop_time");
