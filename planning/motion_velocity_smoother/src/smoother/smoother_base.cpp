@@ -16,8 +16,10 @@
 
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/resample.hpp"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <algorithm>
@@ -26,7 +28,6 @@
 
 namespace motion_velocity_smoother
 {
-using vehicle_info_util::VehicleInfoUtil;
 
 SmootherBase::SmootherBase(rclcpp::Node & node)
 {
@@ -102,8 +103,6 @@ TrajectoryPoints SmootherBase::applyLateralAccelerationFilter(
     return input;  // cannot calculate lateral acc. do nothing.
   }
 
-  constexpr double curvature_calc_dist = 5.0;  // [m] calc curvature with 5m away points
-
   // Interpolate with constant interval distance for lateral acceleration calculation.
   TrajectoryPoints output;
   const double points_interval =
@@ -123,8 +122,8 @@ TrajectoryPoints SmootherBase::applyLateralAccelerationFilter(
     output = input;
   }
 
-  const size_t idx_dist =
-    static_cast<size_t>(std::max(static_cast<int>((curvature_calc_dist) / points_interval), 1));
+  const size_t idx_dist = static_cast<size_t>(
+    std::max(static_cast<int>((base_param_.curvature_calculation_distance) / points_interval), 1));
 
   // Calculate curvature assuming the trajectory points interval is constant
   const auto curvature_v = trajectory_utils::calcTrajectoryCurvatureFrom3Points(output, idx_dist);
