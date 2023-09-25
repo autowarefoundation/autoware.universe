@@ -1,18 +1,16 @@
 ## Template
 
-A template for behavior velocity modules based off the behavior_velocity_speed_bump_module.
+A template for behavior velocity modules based on the behavior_velocity_speed_bump_module.
 
 # Autoware Behavior Velocity Module Template
 
 ## `Scene`
 ### `TemplateModule` Class
 
-The `TemplateModule` class is a fundamental part of the Autoware behavior velocity planner framework, responsible for defining the behavior and functionality of a scene module. It consists of both declarations in `scene.hpp` and implementations in `scene.cpp`.
-
-The `TemplateModule` class serves as the foundation for creating a scene module within the Autoware behavior velocity planner. It defines the core methods and functionality needed for the module's behavior. You should replace the placeholder code with actual implementations tailored to your specific behavior velocity module.
+The `TemplateModule` class serves as a foundation for creating a scene module within the Autoware behavior velocity planner. It defines the core methods and functionality needed for the module's behavior. You should replace the placeholder code with actual implementations tailored to your specific behavior velocity module.
 #### Constructor
 
-- The constructor for `TemplateModule` takes the essential parameters to create a module: `module_id`, `logger`, and `clock`. These parameters are supplied by the `TemplateModuleManager` when registering a new module. Other parameters can be added to the constructor, if required by your specific module implementation.
+- The constructor for `TemplateModule` takes the essential parameters to create a module: `const int64_t module_id`, `const rclcpp::Logger & logger`, and `const rclcpp::Clock::SharedPtr clock`. These parameters are supplied by the `TemplateModuleManager` when registering a new module. Other parameters can be added to the constructor, if required by your specific module implementation.
 
 #### `modifyPathVelocity` Method
 
@@ -31,10 +29,9 @@ The `TemplateModule` class serves as the foundation for creating a scene module 
 ## `Manager`
 The managing of your modules is defined in manager.hpp and manager.cpp. The managing is handled by two classes:
 
-- The `TemplateModuleManager` class defines the core logic for managing and launching your modules. It inherits essential manager attributes from its parent class `SceneModuleManagerInterface`.
-- The `TemplateModulePlugin` class provides a way to integrate your manager into the Autoware plugin system.
+- The `TemplateModuleManager` class defines the core logic for managing and launching the behavior_velocity_template scenes (defined in behavior_velocity_template_module/src/scene.cpp/hpp). It inherits essential manager attributes from its parent class `SceneModuleManagerInterface`.
+- The `TemplateModulePlugin` class provides a way to integrate the `TemplateModuleManager` into the  logic of the Behavior Velocity Planner.
 
-Please note that the specific functionality of the methods `launchNewModules()` and `getModuleExpiredFunction()` would depend on the details of your behavior velocity modules and how they are intended to be managed within the Autoware system. You would need to implement these methods according to your module's requirements.
 ### `TemplateModuleManager` Class
 
 #### Constructor `TemplateModuleManager`
@@ -55,10 +52,27 @@ Please note that the specific functionality of the methods `launchNewModules()` 
 - It returns a `std::function<bool(const std::shared_ptr<SceneModuleInterface>&)>`. This function is used by the behavior velocity planner to determine whether a particular module has expired or not based on the given path.
 - The implementation of this method is expected to return a function that can be used to check the expiration status of modules.
 
+Please note that the specific functionality of the methods `launchNewModules()` and `getModuleExpiredFunction()` would depend on the details of your behavior velocity modules and how they are intended to be managed within the Autoware system. You would need to implement these methods according to your module's requirements.
+
 ### `TemplateModulePlugin` Class
 
 #### `TemplateModulePlugin` Class
 - This class inherits from `PluginWrapper<TemplateModuleManager>`. It essentially wraps your `TemplateModuleManager` class within a plugin, which can be loaded and managed dynamically.
+
+## `Example Usage`
+
+In the following example, we take each point of the path, and multiply it by 2. Essentially duplicating the speed. Note that the velocity smoother will further modify the path speed after all the behavior velocity modules are executed.
+```cpp
+bool TemplateModule::modifyPathVelocity(
+  [[maybe_unused]] PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
+{
+  for (auto & p : path->points) {
+    p.point.longitudinal_velocity_mps *= 2.0;
+  }
+
+  return false;
+}
+```
 
 
 
