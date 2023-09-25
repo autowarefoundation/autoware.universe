@@ -1430,7 +1430,7 @@ bool IntersectionModule::isOcclusionCleared(
         division_point_it = point_it;
       }
 
-      // find the intersecton point of lane_line and path
+      // find the intersection point of lane_line and path
       std::vector<Point2d> intersection_points;
       boost::geometry::intersection(division_linestring, path_linestring, intersection_points);
       if (intersection_points.empty()) {
