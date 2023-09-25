@@ -48,8 +48,10 @@ struct DrivableAreaExpansionParameters
     "dynamic_expansion.dynamic_objects.extra_footprint_offset.right";
   static constexpr auto EXPANSION_METHOD_PARAM = "dynamic_expansion.expansion.method";
   static constexpr auto MAX_EXP_DIST_PARAM = "dynamic_expansion.expansion.max_distance";
+  static constexpr auto RESAMPLE_INTERVAL_PARAM =
+    "dynamic_expansion.path_preprocessing.resample_interval";
   static constexpr auto MAX_PATH_ARC_LENGTH_PARAM =
-    "dynamic_expansion.expansion.max_path_arc_length";
+    "dynamic_expansion.path_preprocessing.max_arc_length";
   static constexpr auto EXTRA_ARC_LENGTH_PARAM = "dynamic_expansion.expansion.extra_arc_length";
   static constexpr auto AVOID_DYN_OBJECTS_PARAM = "dynamic_expansion.dynamic_objects.avoid";
   static constexpr auto AVOID_LINESTRING_TYPES_PARAM = "dynamic_expansion.avoid_linestring.types";
@@ -57,6 +59,10 @@ struct DrivableAreaExpansionParameters
   static constexpr auto COMPENSATE_PARAM = "dynamic_expansion.avoid_linestring.compensate.enable";
   static constexpr auto EXTRA_COMPENSATE_PARAM =
     "dynamic_expansion.avoid_linestring.compensate.extra_distance";
+  static constexpr auto REPLAN_ENABLE_PARAM = "dynamic_expansion.replan_checker.enable";
+  static constexpr auto REPLAN_MAX_DEVIATION_PARAM =
+    "dynamic_expansion.replan_checker.max_deviation";
+  static constexpr auto DEBUG_PRINT_PARAM = "dynamic_expansion.debug_print";
 
   double drivable_area_right_bound_offset;
   double drivable_area_left_bound_offset;
@@ -78,11 +84,15 @@ struct DrivableAreaExpansionParameters
   double dynamic_objects_extra_front_offset{};
   double max_expansion_distance{};
   double max_path_arc_length{};
+  double resample_interval{};
   double extra_arc_length{};
   bool avoid_dynamic_objects{};
   std::vector<std::string> avoid_linestring_types{};
   bool compensate_uncrossable_lines = false;
   double compensate_extra_dist{};
+  bool replan_enable{};
+  double replan_max_deviation{};
+  bool debug_print{};
 
   DrivableAreaExpansionParameters() = default;
   explicit DrivableAreaExpansionParameters(rclcpp::Node & node) { init(node); }
@@ -98,6 +108,7 @@ struct DrivableAreaExpansionParameters
     enabled = node.declare_parameter<bool>(ENABLED_PARAM);
     max_expansion_distance = node.declare_parameter<double>(MAX_EXP_DIST_PARAM);
     max_path_arc_length = node.declare_parameter<double>(MAX_PATH_ARC_LENGTH_PARAM);
+    resample_interval = node.declare_parameter<double>(RESAMPLE_INTERVAL_PARAM);
     ego_extra_front_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_FRONT);
     ego_extra_rear_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_REAR);
     ego_extra_left_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_LEFT);
@@ -118,6 +129,9 @@ struct DrivableAreaExpansionParameters
     compensate_uncrossable_lines = node.declare_parameter<bool>(COMPENSATE_PARAM);
     compensate_extra_dist = node.declare_parameter<double>(EXTRA_COMPENSATE_PARAM);
     expansion_method = node.declare_parameter<std::string>(EXPANSION_METHOD_PARAM);
+    replan_enable = node.declare_parameter<bool>(REPLAN_ENABLE_PARAM);
+    replan_max_deviation = node.declare_parameter<double>(REPLAN_MAX_DEVIATION_PARAM);
+    debug_print = node.declare_parameter<bool>(DEBUG_PRINT_PARAM);
 
     const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
     ego_left_offset = vehicle_info.max_lateral_offset_m;
