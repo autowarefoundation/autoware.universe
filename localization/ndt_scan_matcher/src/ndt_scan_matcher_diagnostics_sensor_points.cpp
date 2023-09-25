@@ -255,15 +255,18 @@ bool NDTScanMatcher::validate_converged_param(
 bool NDTScanMatcher::validate_distance_from_initial_to_result(
   const double distance_from_initial_to_result, const double warn_distance_from_initial_to_result)
 {
-  diagnostics_module_->addKeyValue("distance_from_initial_to_result", distance_from_initial_to_result);
+  diagnostics_module_->addKeyValue(
+    "distance_from_initial_to_result", distance_from_initial_to_result);
 
   bool is_ok = distance_from_initial_to_result < warn_distance_from_initial_to_result;
   if (!is_ok) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1,
-      "distance_from_initial_to_result is too large. ( " << distance_from_initial_to_result << " [m])");
+      "distance_from_initial_to_result is too large. ( " << distance_from_initial_to_result
+                                                         << " [m])");
     diagnostics_module_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::WARN, "[WARN] distance_from_initial_to_result is too large");
+      diagnostic_msgs::msg::DiagnosticStatus::WARN,
+      "[WARN] distance_from_initial_to_result is too large");
   }
   return is_ok;
 }

@@ -155,7 +155,8 @@ private:
   bool validate_converged_param(
     const double transform_probability, const double nearest_voxel_transformation_likelihood);
   bool validate_distance_from_initial_to_result(
-    const double distance_from_initial_to_result, const double warn_distance_from_initial_to_result);
+    const double distance_from_initial_to_result,
+    const double warn_distance_from_initial_to_result);
   bool validate_execution_time(const double execution_time, const double warn_execution_time);
   bool validate_skipping_publish_num(const size_t skipping_publish_num, const size_t error_num);
 

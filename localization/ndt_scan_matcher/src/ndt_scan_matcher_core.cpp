@@ -411,19 +411,18 @@ bool NDTScanMatcher::process_scan_matching(
     RCLCPP_WARN(get_logger(), "Not Converged");
   }
 
-  const auto distance_from_initial_to_result =
-    static_cast<float>(norm(interpolator.get_new_pose().pose.pose.position, result_pose_msg.position));
+  const auto distance_from_initial_to_result = static_cast<float>(
+    norm(interpolator.get_new_pose().pose.pose.position, result_pose_msg.position));
   const double warn_distance_from_initial_to_result = 3.0;
   if (!validate_distance_from_initial_to_result(
-    distance_from_initial_to_result, warn_distance_from_initial_to_result)) {
+        distance_from_initial_to_result, warn_distance_from_initial_to_result)) {
     // return;
-   }
+  }
 
   const double critical_upper_bound_exe_time_ms = 100.0;
   if (!validate_execution_time(exe_time, critical_upper_bound_exe_time_ms)) {
     // return;
   }
-
 
   // publish
   initial_pose_with_covariance_pub_->publish(interpolator.get_current_pose());
