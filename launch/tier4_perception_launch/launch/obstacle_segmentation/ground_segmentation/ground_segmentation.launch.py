@@ -123,8 +123,9 @@ class GroundSegmentationPipeline:
                 name="concatenate_data",
                 namespace="plane_fitting",
                 remappings=[
-                    ("~/input/odom", "/localization/kinematic_state")
-                    ("output", "concatenated/pointcloud"),
+                    ("~/input/odom", "/localization/kinematic_state")(
+                        "output", "concatenated/pointcloud"
+                    ),
                 ],
                 parameters=[
                     {
@@ -438,7 +439,7 @@ class GroundSegmentationPipeline:
             name="concatenate_data",
             remappings=[
                 ("~/input/odom", "/localization/kinematic_state"),
-                ("output", output_topic)
+                ("output", output_topic),
             ],
             parameters=[
                 {
@@ -458,7 +459,7 @@ class GroundSegmentationPipeline:
             name="concatenate_no_ground_data",
             remappings=[
                 ("~/input/odom", "/localization/kinematic_state"),
-                ("output", output_topic)
+                ("output", output_topic),
             ],
             parameters=[
                 {

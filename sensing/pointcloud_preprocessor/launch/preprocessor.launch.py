@@ -40,7 +40,7 @@ def launch_setup(context, *args, **kwargs):
             name="sync_and_concatenate_filter",
             remappings=[
                 ("~/input/twist", "/sensing/vehicle_velocity_converter/twist_with_covariance"),
-                ("output", "points_raw/concatenated")
+                ("output", "points_raw/concatenated"),
             ],
             parameters=[
                 {

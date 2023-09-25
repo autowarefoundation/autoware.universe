@@ -168,13 +168,16 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
     if (input_twist_topic_type_ == "twist") {
       auto twist_cb = std::bind(
-        &PointCloudConcatenateDataSynchronizerComponent::twist_callback, this, std::placeholders::_1);
+        &PointCloudConcatenateDataSynchronizerComponent::twist_callback, this,
+        std::placeholders::_1);
       sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
         "~/input/twist", rclcpp::QoS{100}, twist_cb);
     } else if (input_twist_topic_type_ == "odom") {
       auto odom_cb = std::bind(
-        &PointCloudConcatenateDataSynchronizerComponent::odom_callback, this, std::placeholders::_1);
-      sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>("~/input/odom", rclcpp::QoS{100}, odom_cb);
+        &PointCloudConcatenateDataSynchronizerComponent::odom_callback, this,
+        std::placeholders::_1);
+      sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+        "~/input/odom", rclcpp::QoS{100}, odom_cb);
     }
   }
 
