@@ -130,7 +130,7 @@ struct IntersectionStopLines
   std::optional<size_t> stuck_stop_line{std::nullopt};
   // NOTE: null if path is over map stop_line OR its value is calculated negative
   std::optional<size_t> default_stop_line{std::nullopt};
-  // NOTE: null if the index is calcualted negative
+  // NOTE: null if the index is calculated negative
   std::optional<size_t> first_attention_stop_line{std::nullopt};
   // NOTE: null if footprints do not change from outside to inside of detection area
   std::optional<size_t> occlusion_peeking_stop_line{std::nullopt};
