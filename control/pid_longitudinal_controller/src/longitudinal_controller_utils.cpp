@@ -73,17 +73,25 @@ double calcStopDistance(
   return signed_length_on_traj;
 }
 
-double getPitchByPose(const Quaternion & quaternion_msg)
+// Calculate pitch angle from ego_pose information.
+// The angle of the slope is defined as positive for an uphill slope.
+double getSlopeByPose(const Quaternion & quaternion_msg)
 {
   double roll, pitch, yaw;
   tf2::Quaternion quaternion;
   tf2::fromMsg(quaternion_msg, quaternion);
   tf2::Matrix3x3{quaternion}.getRPY(roll, pitch, yaw);
 
-  return pitch;
+  // The pitch angle of the posture is defined as positive when facing downward.
+  // Thus, the definition is the opposite of the slope.
+  const auto slope = -pitch;
+
+  return slope;
 }
 
-double getPitchByTraj(
+// Calculate pitch angle from trajectory information.
+// The angle of the slope is defined as positive for an uphill slope.
+double getSlopeByTraj(
   const Trajectory & trajectory, const size_t nearest_idx, const double wheel_base)
 {
   // cannot calculate pitch

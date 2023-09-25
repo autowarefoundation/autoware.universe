@@ -54,7 +54,7 @@ double calcStopDistance(
 /**
  * @brief calculate pitch angle from estimated current pose
  */
-double getPitchByPose(const Quaternion & quaternion);
+double getSlopeByPose(const Quaternion & quaternion);
 
 /**
  * @brief calculate pitch angle from trajectory on map
@@ -63,7 +63,7 @@ double getPitchByPose(const Quaternion & quaternion);
  * @param [in] closest_idx nearest index to current vehicle position
  * @param [in] wheel_base length of wheel base
  */
-double getPitchByTraj(
+double getSlopeByTraj(
   const Trajectory & trajectory, const size_t closest_idx, const double wheel_base);
 
 /**

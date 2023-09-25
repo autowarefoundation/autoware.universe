@@ -457,9 +457,9 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
     current_pose, m_trajectory, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
 
   // pitch
-  const double raw_pitch = longitudinal_utils::getPitchByPose(current_pose.orientation);
+  const double raw_pitch = longitudinal_utils::getSlopeByPose(current_pose.orientation);
   const double traj_pitch =
-    longitudinal_utils::getPitchByTraj(m_trajectory, control_data.nearest_idx, m_wheel_base);
+    longitudinal_utils::getSlopeByTraj(m_trajectory, control_data.nearest_idx, m_wheel_base);
   control_data.slope_angle = m_use_traj_for_pitch ? traj_pitch : m_lpf_pitch->filter(raw_pitch);
   updatePitchDebugValues(control_data.slope_angle, traj_pitch, raw_pitch);
 

@@ -102,16 +102,20 @@ TEST(TestLongitudinalControllerUtils, calcStopDistance)
   EXPECT_EQ(longitudinal_utils::calcStopDistance(current_pose, traj, max_dist, max_yaw), 3.0);
 }
 
-TEST(TestLongitudinalControllerUtils, getPitchByPose)
+TEST(TestLongitudinalControllerUtils, getSlopeByPose)
 {
+  // NOTE: the slope is defined as positive for an uphill slope, while the pitch is defined as
+  // positive when facing downward. They are opposite.
   tf2::Quaternion quaternion_tf;
   quaternion_tf.setRPY(0.0, 0.0, 0.0);
-  EXPECT_EQ(longitudinal_utils::getPitchByPose(tf2::toMsg(quaternion_tf)), 0.0);
+  EXPECT_EQ(longitudinal_utils::getSlopeByPose(tf2::toMsg(quaternion_tf)), 0.0);
   quaternion_tf.setRPY(0.0, 1.0, 0.0);
-  EXPECT_EQ(longitudinal_utils::getPitchByPose(tf2::toMsg(quaternion_tf)), 1.0);
+  EXPECT_EQ(longitudinal_utils::getSlopeByPose(tf2::toMsg(quaternion_tf)), -1.0);
+  quaternion_tf.setRPY(0.0, 0.1, 0.0);
+  EXPECT_EQ(longitudinal_utils::getSlopeByPose(tf2::toMsg(quaternion_tf)), -0.1);
 }
 
-TEST(TestLongitudinalControllerUtils, getPitchByTraj)
+TEST(TestLongitudinalControllerUtils, getSlopeByTraj)
 {
   using autoware_auto_planning_msgs::msg::Trajectory;
   using autoware_auto_planning_msgs::msg::TrajectoryPoint;
@@ -144,17 +148,17 @@ TEST(TestLongitudinalControllerUtils, getPitchByTraj)
   traj.points.push_back(point);
   size_t closest_idx = 0;
   EXPECT_DOUBLE_EQ(
-    std::abs(longitudinal_utils::getPitchByTraj(traj, closest_idx, wheel_base)), M_PI_4);
+    std::abs(longitudinal_utils::getSlopeByTraj(traj, closest_idx, wheel_base)), M_PI_4);
   closest_idx = 1;
   EXPECT_DOUBLE_EQ(
-    std::abs(longitudinal_utils::getPitchByTraj(traj, closest_idx, wheel_base)), M_PI_4);
+    std::abs(longitudinal_utils::getSlopeByTraj(traj, closest_idx, wheel_base)), M_PI_4);
   closest_idx = 2;
   EXPECT_DOUBLE_EQ(
-    std::abs(longitudinal_utils::getPitchByTraj(traj, closest_idx, wheel_base)),
+    std::abs(longitudinal_utils::getSlopeByTraj(traj, closest_idx, wheel_base)),
     std::atan2(0.5, 1));
   closest_idx = 3;
   EXPECT_DOUBLE_EQ(
-    std::abs(longitudinal_utils::getPitchByTraj(traj, closest_idx, wheel_base)),
+    std::abs(longitudinal_utils::getSlopeByTraj(traj, closest_idx, wheel_base)),
     std::atan2(0.5, 1));
 }
 
