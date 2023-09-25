@@ -122,10 +122,16 @@ void StartPlannerModule::processOnExit()
 
 bool StartPlannerModule::isExecutionRequested() const
 {
-  // TODO(Sugahara): if required lateral shift distance is small, don't engage this module.
-  // Execute when current pose is near route start pose
-  const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
+  const double lateral_distance_to_center_lane =
+    lanelet::utils::getArcCoordinates(current_lanes, current_pose).distance;
+
+  if (std::abs(lateral_distance_to_center_lane) < parameters_->th_distance_to_middle_of_the_road) {
+    return false;
+  }
+
+  const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
   if (
     tier4_autoware_utils::calcDistance2d(start_pose.position, current_pose.position) >
     parameters_->th_arrived_distance) {
@@ -1154,8 +1160,11 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
 
     DrivableAreaInfo current_drivable_area_info;
     current_drivable_area_info.drivable_lanes = target_drivable_lanes;
-    output.drivable_area_info = utils::combineDrivableAreaInfo(
-      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+    output.drivable_area_info =
+      status_.back_finished
+        ? utils::combineDrivableAreaInfo(
+            current_drivable_area_info, getPreviousModuleOutput().drivable_area_info)
+        : current_drivable_area_info;
   }
 }
 
@@ -1185,35 +1194,27 @@ void StartPlannerModule::setDebugData() const
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
   add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
-  if (start_planner_data_.ego_predicted_path.size() > 0) {
-    const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
-      start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
-    add(createPredictedPathMarkerArray(
-      ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
-  }
-
-  if (start_planner_data_.filtered_objects.objects.size() > 0) {
-    add(createObjectsMarkerArray(
-      start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
-  }
+  add(createPathMarkerArray(status_.backward_path, "backward_driving_path", 0, 0.0, 0.9, 0.0));
 
   // safety check
-  {
+  if (parameters_->safety_check_params.enable_safety_check) {
+    if (start_planner_data_.ego_predicted_path.size() > 0) {
+      const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
+        start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
+      add(createPredictedPathMarkerArray(
+        ego_predicted_path, vehicle_info_, "ego_predicted_path_start_planner", 0, 0.0, 0.5, 0.9));
+    }
+
+    if (start_planner_data_.filtered_objects.objects.size() > 0) {
+      add(createObjectsMarkerArray(
+        start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
+    }
+
     add(showSafetyCheckInfo(start_planner_data_.collision_check, "object_debug_info"));
     add(showPredictedPath(start_planner_data_.collision_check, "ego_predicted_path"));
     add(showPolygon(start_planner_data_.collision_check, "ego_and_target_polygon_relation"));
-  }
-
-  if (start_planner_data_.ego_predicted_path.size() > 0) {
-    const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
-      start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
-    add(createPredictedPathMarkerArray(
-      ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
-  }
-
-  if (start_planner_data_.filtered_objects.objects.size() > 0) {
-    add(createObjectsMarkerArray(
-      start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      start_planner_data_.collision_check);
   }
 
   // Visualize planner type text

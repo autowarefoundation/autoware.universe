@@ -84,14 +84,23 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".collision_detection.minimum_ego_predicted_velocity");
   ip.collision_detection.state_transit_margin_time =
     getOrDeclareParameter<double>(node, ns + ".collision_detection.state_transit_margin_time");
-  ip.collision_detection.normal.collision_start_margin_time = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.normal.collision_start_margin_time");
-  ip.collision_detection.normal.collision_end_margin_time = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.normal.collision_end_margin_time");
-  ip.collision_detection.relaxed.collision_start_margin_time = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.relaxed.collision_start_margin_time");
-  ip.collision_detection.relaxed.collision_end_margin_time = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.relaxed.collision_end_margin_time");
+  ip.collision_detection.fully_prioritized.collision_start_margin_time =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.fully_prioritized.collision_start_margin_time");
+  ip.collision_detection.fully_prioritized.collision_end_margin_time =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.fully_prioritized.collision_end_margin_time");
+  ip.collision_detection.partially_prioritized.collision_start_margin_time =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.partially_prioritized.collision_start_margin_time");
+  ip.collision_detection.partially_prioritized.collision_end_margin_time =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.partially_prioritized.collision_end_margin_time");
+  ip.collision_detection.not_prioritized.collision_start_margin_time =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.not_prioritized.collision_start_margin_time");
+  ip.collision_detection.not_prioritized.collision_end_margin_time = getOrDeclareParameter<double>(
+    node, ns + ".collision_detection.not_prioritized.collision_end_margin_time");
   ip.collision_detection.keep_detection_vel_thr =
     getOrDeclareParameter<double>(node, ns + ".collision_detection.keep_detection_vel_thr");
 
@@ -273,6 +282,7 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
   mp.stop_line_margin = getOrDeclareParameter<double>(node, ns + ".stop_line_margin");
   mp.path_interpolation_ds =
     node.get_parameter("intersection.common.path_interpolation_ds").as_double();
+  mp.stop_distance_threshold = getOrDeclareParameter<double>(node, ns + ".stop_distance_threshold");
 }
 
 void MergeFromPrivateModuleManager::launchNewModules(
