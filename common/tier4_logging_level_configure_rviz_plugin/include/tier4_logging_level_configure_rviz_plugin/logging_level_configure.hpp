@@ -26,7 +26,11 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
+#include <map>
 #include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace rviz_plugin
 {

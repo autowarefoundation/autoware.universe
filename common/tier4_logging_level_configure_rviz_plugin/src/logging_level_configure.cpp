@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <QLabel>
-#include <pluginlib/class_list_macros.hpp>
 #include <rviz_common/display_context.hpp>
 #include <tier4_logging_level_configure_rviz_plugin/logging_level_configure.hpp>
 
