@@ -411,11 +411,11 @@ bool NDTScanMatcher::process_scan_matching(
     RCLCPP_WARN(get_logger(), "Not Converged");
   }
 
-  const auto distance_initial_to_result =
-    static_cast<float>(norm(interpolator.get_new_pose().pose.pose.position, result_pose_msg.position));
+  const auto distance_initial_to_result = static_cast<float>(
+    norm(interpolator.get_new_pose().pose.pose.position, result_pose_msg.position));
   const double warn_distance_initial_to_result = 3.0;
   if (!validate_distance_initial_to_result(
-    distance_initial_to_result, warn_distance_initial_to_result)) {
+        distance_initial_to_result, warn_distance_initial_to_result)) {
     // return;
   }
 

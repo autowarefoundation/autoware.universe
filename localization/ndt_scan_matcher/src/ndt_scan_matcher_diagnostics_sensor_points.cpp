@@ -263,7 +263,8 @@ bool NDTScanMatcher::validate_distance_initial_to_result(
       this->get_logger(), *this->get_clock(), 1,
       "distance_initial_to_result is too large. ( " << distance_initial_to_result << " [m])");
     diagnostics_module_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::WARN, "[WARN] distance_initial_to_result is too large");
+      diagnostic_msgs::msg::DiagnosticStatus::WARN,
+      "[WARN] distance_initial_to_result is too large");
   }
   return is_ok;
 }
