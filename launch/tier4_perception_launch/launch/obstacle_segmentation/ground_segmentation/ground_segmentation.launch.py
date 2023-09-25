@@ -432,7 +432,10 @@ class GroundSegmentationPipeline:
             package="pointcloud_preprocessor",
             plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
             name="concatenate_data",
-            remappings=[("output", output_topic)],
+            remappings=[
+                ("~/input/twist", "/sensing/vehicle_velocity_converter/twist_with_covariance"),
+                ("output", output_topic),
+            ],
             parameters=[
                 {
                     "input_topics": input_topics,
