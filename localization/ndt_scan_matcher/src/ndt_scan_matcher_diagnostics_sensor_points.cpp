@@ -28,12 +28,12 @@ void NDTScanMatcher::initialize_diagnostics_key_value()
   diagnostics_module_->addKeyValue("initial_pose_array_size", 0);
   diagnostics_module_->addKeyValue("time_difference_of_lidar_and_old_pose", 0.0);
   diagnostics_module_->addKeyValue("time_difference_of_lidar_and_new_pose", 0.0);
-  diagnostics_module_->addKeyValue("distance_of_pose_interpolate", 0.0);
+  diagnostics_module_->addKeyValue("distance_old_pose_to_new_pose", 0.0);
   diagnostics_module_->addKeyValue("iteration_num", 0);
   diagnostics_module_->addKeyValue("is_ok_local_optimal_solution_oscillation", false);
   diagnostics_module_->addKeyValue("transform_probability", 0.0);
   diagnostics_module_->addKeyValue("nearest_voxel_transformation_likelihood", 0.0);
-  diagnostics_module_->addKeyValue("distance_from_initial_to_result", 0.0);
+  diagnostics_module_->addKeyValue("distance_initial_to_result", 0.0);
   diagnostics_module_->addKeyValue("execution_time", 0.0);
   diagnostics_module_->addKeyValue("skipping_publish_num", 0);
 }
@@ -157,7 +157,7 @@ bool NDTScanMatcher::validate_position_difference(
   const double distance_tolerance_m_)
 {
   double distance = norm(target_point, reference_point);
-  diagnostics_module_->addKeyValue("distance_of_pose_interpolate", distance);
+  diagnostics_module_->addKeyValue("distance_old_pose_to_new_pose", distance);
 
   bool is_ok = distance < distance_tolerance_m_;
   if (!is_ok) {
@@ -252,21 +252,18 @@ bool NDTScanMatcher::validate_converged_param(
   return is_ok;
 }
 
-bool NDTScanMatcher::validate_distance_from_initial_to_result(
-  const double distance_from_initial_to_result, const double warn_distance_from_initial_to_result)
+bool NDTScanMatcher::validate_distance_initial_to_result(
+  const double distance_initial_to_result, const double warn_distance_initial_to_result)
 {
-  diagnostics_module_->addKeyValue(
-    "distance_from_initial_to_result", distance_from_initial_to_result);
+  diagnostics_module_->addKeyValue("distance_initial_to_result", distance_initial_to_result);
 
-  bool is_ok = distance_from_initial_to_result < warn_distance_from_initial_to_result;
+  bool is_ok = distance_initial_to_result < warn_distance_initial_to_result;
   if (!is_ok) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1,
-      "distance_from_initial_to_result is too large. ( " << distance_from_initial_to_result
-                                                         << " [m])");
+      "distance_initial_to_result is too large. ( " << distance_initial_to_result << " [m])");
     diagnostics_module_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::WARN,
-      "[WARN] distance_from_initial_to_result is too large");
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, "[WARN] distance_initial_to_result is too large");
   }
   return is_ok;
 }
