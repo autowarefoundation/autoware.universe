@@ -875,7 +875,6 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
     if (isActivated() && isWaitingApproval()) {
       last_approved_time_ = std::make_unique<rclcpp::Time>(clock_->now());
       last_approved_pose_ = std::make_unique<Pose>(planner_data_->self_odometry->pose.pose);
-      clearWaitingApproval();
       decideVelocity();
     }
     transitionToNextPathIfFinishingCurrentPath();
@@ -936,8 +935,6 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
 
 BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification()
 {
-  waitApproval();
-
   updateOccupancyGrid();
   BehaviorModuleOutput out;
   out.modified_goal = plan().modified_goal;  // update status_

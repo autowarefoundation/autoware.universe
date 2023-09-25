@@ -209,7 +209,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
   }
 
   if (isWaitingApproval()) {
-    clearWaitingApproval();
     resetPathCandidate();
     resetPathReference();
     // save current_pose when approved for start_point of turn_signal for backward driving
@@ -325,7 +324,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   if (IsGoalBehindOfEgoInSameRouteSegment()) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
-    clearWaitingApproval();
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
     updateRTCStatus(0, 0);
@@ -336,14 +334,11 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   if (!status_.is_safe_static_objects) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
-    clearWaitingApproval();
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
     updateRTCStatus(0, 0);
     return output;
   }
-
-  waitApproval();
 
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
@@ -803,7 +798,6 @@ void StartPlannerModule::checkBackFinished()
     status_.back_finished = true;
 
     // request start_planner approval
-    waitApproval();
     removeRTCStatus();
     for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
       itr->second = generateUUID();
