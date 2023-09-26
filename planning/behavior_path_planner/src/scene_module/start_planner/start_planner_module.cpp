@@ -140,6 +140,10 @@ void StartPlannerModule::updateData()
   last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
 
   if (current_state_ == ModuleStatus::WAITING_APPROVAL) {
+    // save pull out lanes which is generated using current pose before starting pull out
+    status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
+      planner_data_,
+      planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
     status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
       planner_data_,
       planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
@@ -655,10 +659,7 @@ std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
 
 void StartPlannerModule::updatePullOutStatusBeforeApproval()
 {
-  // save pull out lanes which is generated using current pose before starting pull out
   // (before approval)
-  status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
-    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 }
 
 void StartPlannerModule::updateStatusAfterBackwardDriving()
