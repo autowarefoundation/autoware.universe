@@ -70,7 +70,7 @@ namespace pointcloud_preprocessor
 PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchronizerComponent(
   const rclcpp::NodeOptions & node_options)
 : Node("point_cloud_concatenator_component", node_options),
-  input_twist_topic_type_(declare_parameter<std::string>("input_twist_topic_type", "twist")),
+  input_twist_topic_type_(declare_parameter<std::string>("input_twist_topic_type", "twist"))
 {
   // initialize debug tool
   {

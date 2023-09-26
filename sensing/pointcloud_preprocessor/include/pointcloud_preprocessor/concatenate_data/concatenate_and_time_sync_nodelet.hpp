@@ -75,6 +75,7 @@
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
 #include <tier4_debug_msgs/msg/string_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <message_filters/pass_through.h>
 #include <message_filters/subscriber.h>
@@ -132,6 +133,7 @@ private:
   std::vector<rclcpp::Subscription<PointCloud2>::SharedPtr> filters_;
 
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr sub_twist_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   diagnostic_updater::Updater updater_{this};
