@@ -2557,8 +2557,9 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
         shifted_vehicle_footprint = transformVector(
           local_vehicle_footprint,
           tier4_autoware_utils::pose2transform(path.path.points.at(i).point.pose));
-        if (boost::geometry::intersects(lane_left_bound, shifted_vehicle_footprint) ||
-            boost::geometry::intersects(lane_right_bound, shifted_vehicle_footprint)){
+        if (
+          boost::geometry::intersects(lane_left_bound, shifted_vehicle_footprint) ||
+          boost::geometry::intersects(lane_right_bound, shifted_vehicle_footprint)) {
           if (segment_shift_length > 0.0) {
             turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
           } else {
