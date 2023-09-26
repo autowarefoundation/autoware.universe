@@ -257,6 +257,20 @@ boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVeloci
   return PoseWithVelocityAndPolygonStamped{current_time, pose, velocity, ego_polygon};
 }
 
+bool checkCollision(
+  const PathWithLaneId & planned_path,
+  const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
+  const ExtendedPredictedObject & target_object,
+  const PredictedPathWithPolygon & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
+  const double hysteresis_factor, CollisionCheckDebug & debug)
+{
+  const auto collided_polygons = getCollidedPolygons(
+    planned_path, predicted_ego_path, target_object, target_object_path, common_parameters,
+    rss_parameters, hysteresis_factor, debug);
+  return collided_polygons.empty();
+}
+
 std::vector<Polygon2d> getCollidedPolygons(
   [[maybe_unused]] const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
@@ -350,21 +364,6 @@ std::vector<Polygon2d> getCollidedPolygons(
 
   return collided_polygons;
 }
-
-bool checkCollision(
-  const PathWithLaneId & planned_path,
-  const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
-  const ExtendedPredictedObject & target_object,
-  const PredictedPathWithPolygon & target_object_path,
-  const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
-  const double hysteresis_factor, CollisionCheckDebug & debug)
-{
-  const auto collided_polygons = getCollidedPolygons(
-    planned_path, predicted_ego_path, target_object, target_object_path, common_parameters,
-    rss_parameters, hysteresis_factor, debug);
-  return collided_polygons.empty();
-}
-
 bool checkCollisionWithExtraStoppingMargin(
   const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects,
   const double base_to_front, const double base_to_rear, const double width,

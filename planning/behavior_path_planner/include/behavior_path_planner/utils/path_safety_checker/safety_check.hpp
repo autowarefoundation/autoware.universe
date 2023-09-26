@@ -88,7 +88,6 @@ boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
 boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
   const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
   const VehicleInfo & ego_info);
-
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
@@ -101,9 +100,9 @@ boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVeloci
  * @param front_object_deceleration The deceleration of the object in the front.(used in RSS)
  * @param rear_object_deceleration The deceleration of the object in the rear.(used in RSS)
  * @param debug The debug information for collision checking.
- * @return a list of polygon when collision is expected.
+ * @return true if distance is safe.
  */
-std::vector<Polygon2d> getCollidedPolygons(
+bool checkCollision(
   const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,
@@ -123,9 +122,9 @@ std::vector<Polygon2d> getCollidedPolygons(
  * @param front_object_deceleration The deceleration of the object in the front.(used in RSS)
  * @param rear_object_deceleration The deceleration of the object in the rear.(used in RSS)
  * @param debug The debug information for collision checking.
- * @return true if distance is safe.
+ * @return a list of polygon when collision is expected.
  */
-bool checkCollision(
+std::vector<Polygon2d> getCollidedPolygons(
   const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,
