@@ -142,7 +142,7 @@ NDTScanMatcher::NDTScanMatcher()
 
   lidar_topic_timeout_sec_ = this->declare_parameter<double>("lidar_topic_timeout_sec");
   critical_upper_bound_exe_time_ms_ =
-    this->declare_parameter("critical_upperbound_exe_time", critical_upper_bound_exe_time_ms_);
+    this->declare_parameter("critical_upper_bound_exe_time_ms", critical_upper_bound_exe_time_ms_);
 
   initial_pose_timeout_sec_ =
     this->declare_parameter("initial_pose_timeout_sec", initial_pose_timeout_sec_);
