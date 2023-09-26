@@ -218,7 +218,7 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
   diag_status.hardware_id = this->get_name();
 
   diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "Detected AR tags";
+  key_value.key = "Number of Detected AR Tags";
   key_value.value = std::to_string(detected_tags);
   diag_status.values.push_back(key_value);
 
