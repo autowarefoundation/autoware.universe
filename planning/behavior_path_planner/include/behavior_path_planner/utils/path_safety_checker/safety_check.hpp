@@ -103,7 +103,7 @@ boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVeloci
  * @param debug The debug information for collision checking.
  * @return true if distance is safe.
  */
-bool checkCollision(
+std::optional<std::vector<Polygon2d>> checkCollision(
   const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,

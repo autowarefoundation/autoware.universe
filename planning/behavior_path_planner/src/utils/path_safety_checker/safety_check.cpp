@@ -257,7 +257,7 @@ boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVeloci
   return PoseWithVelocityAndPolygonStamped{current_time, pose, velocity, ego_polygon};
 }
 
-bool checkCollision(
+std::optional<std::vector<Polygon2d>> checkCollision(
   [[maybe_unused]] const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,
@@ -271,6 +271,8 @@ bool checkCollision(
     debug.current_obj_pose = target_object.initial_pose.pose;
   }
 
+  std::vector<Polygon2d> collided_polygons{};
+  collided_polygons.reserve(target_object_path.path.size());
   for (const auto & obj_pose_with_poly : target_object_path.path) {
     const auto & current_time = obj_pose_with_poly.time;
 
@@ -302,7 +304,8 @@ bool checkCollision(
     // check overlap
     if (boost::geometry::overlaps(ego_polygon, obj_polygon)) {
       debug.unsafe_reason = "overlap_polygon";
-      return false;
+      collided_polygons.push_back(obj_polygon);
+      continue;
     }
 
     // compute which one is at the front of the other
@@ -341,11 +344,15 @@ bool checkCollision(
     // check overlap with extended polygon
     if (boost::geometry::overlaps(extended_ego_polygon, extended_obj_polygon)) {
       debug.unsafe_reason = "overlap_extended_polygon";
-      return false;
+      collided_polygons.push_back(obj_polygon);
     }
   }
 
-  return true;
+  if (!collided_polygons.empty()) {
+    return collided_polygons;
+  }
+
+  return std::nullopt;
 }
 
 bool checkCollisionWithExtraStoppingMargin(

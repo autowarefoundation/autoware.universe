@@ -1889,7 +1889,7 @@ bool AvoidanceModule::isSafePath(
                                         : ego_predicted_path_for_rear_object;
 
     for (const auto & obj_path : obj_predicted_paths) {
-      if (!utils::path_safety_checker::checkCollision(
+      if (utils::path_safety_checker::checkCollision(
             shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
             hysteresis_factor, current_debug_data.second)) {
         marker_utils::updateCollisionCheckDebugMap(
