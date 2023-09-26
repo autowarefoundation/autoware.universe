@@ -1587,7 +1587,7 @@ bool GoalPlannerModule::isSafePath() const
 
     // If a collision is detected, mark the object as unsafe and break the loop
     for (const auto & obj_path : obj_predicted_paths) {
-      if (utils::path_safety_checker::checkCollision(
+      if (!utils::path_safety_checker::checkCollision(
             pull_over_path, ego_predicted_path, object, obj_path, planner_data_->parameters,
             safety_check_params_->rss_params, hysteresis_factor, current_debug_data.second)) {
         marker_utils::updateCollisionCheckDebugMap(

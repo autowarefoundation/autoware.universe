@@ -257,7 +257,7 @@ boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVeloci
   return PoseWithVelocityAndPolygonStamped{current_time, pose, velocity, ego_polygon};
 }
 
-std::optional<std::vector<Polygon2d>> checkCollision(
+std::vector<Polygon2d> getCollidedPolygons(
   [[maybe_unused]] const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,
@@ -348,11 +348,21 @@ std::optional<std::vector<Polygon2d>> checkCollision(
     }
   }
 
-  if (!collided_polygons.empty()) {
-    return collided_polygons;
-  }
+  return collided_polygons;
+}
 
-  return std::nullopt;
+bool checkCollision(
+  const PathWithLaneId & planned_path,
+  const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
+  const ExtendedPredictedObject & target_object,
+  const PredictedPathWithPolygon & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
+  const double hysteresis_factor, CollisionCheckDebug & debug)
+{
+  const auto collided_polygons = getCollidedPolygons(
+    planned_path, predicted_ego_path, target_object, target_object_path, common_parameters,
+    rss_parameters, hysteresis_factor, debug);
+  return collided_polygons.empty();
 }
 
 bool checkCollisionWithExtraStoppingMargin(
