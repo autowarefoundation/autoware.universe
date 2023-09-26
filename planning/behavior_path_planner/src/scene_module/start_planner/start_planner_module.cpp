@@ -208,14 +208,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
     return output;
   }
 
-  if (isWaitingApproval()) {
-    clearWaitingApproval();
-    resetPathCandidate();
-    resetPathReference();
-    // save current_pose when approved for start_point of turn_signal for backward driving
-    last_approved_pose_ = std::make_unique<Pose>(planner_data_->self_odometry->pose.pose);
-  }
-
   BehaviorModuleOutput output;
   if (!status_.is_safe_static_objects) {
     RCLCPP_WARN_THROTTLE(
@@ -664,6 +656,8 @@ void StartPlannerModule::updatePullOutStatus()
       *route_handler, status_.pull_out_lanes, current_pose, status_.pull_out_start_pose,
       parameters_->backward_velocity);
   }
+  // save current_pose when start_point of backward driving is approved for turn_signal
+  last_approved_pose_ = std::make_unique<Pose>(planner_data_->self_odometry->pose.pose);
 }
 
 PathWithLaneId StartPlannerModule::calcStartPoseCandidatesBackwardPath() const
