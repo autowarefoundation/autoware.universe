@@ -27,7 +27,7 @@
 //   ...
 //
 //   // Define logger_configure as a node class member variable
-//   std::shared_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+//   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 // }
 //
 // ___In your_node.cpp___
@@ -35,7 +35,7 @@
 //   ...
 //
 //   // Set up logger_configure
-//   logger_configure_ = std::make_shared<LoggerLevelConfigure>(this);
+//   logger_configure_ = std::make_unique<LoggerLevelConfigure>(this);
 // }
 
 #ifndef TIER4_AUTOWARE_UTILS__ROS__LOGGER_LEVEL_CONFIGURE_HPP_
@@ -47,11 +47,11 @@
 
 namespace tier4_autoware_utils
 {
-
-using logging_demo::srv::ConfigLogger;
-
 class LoggerLevelConfigure
 {
+private:
+  using ConfigLogger = logging_demo::srv::ConfigLogger;
+
 public:
   explicit LoggerLevelConfigure(rclcpp::Node * node);
 

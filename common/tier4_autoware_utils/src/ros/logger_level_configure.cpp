@@ -23,11 +23,8 @@ LoggerLevelConfigure::LoggerLevelConfigure(rclcpp::Node * node) : ros_logger_(no
   using std::placeholders::_1;
   using std::placeholders::_2;
 
-  const auto service_name =
-    std::string(node->get_namespace()) + node->get_name() + "/config_logger";
-
   srv_config_logger_ = node->create_service<ConfigLogger>(
-    service_name, std::bind(&LoggerLevelConfigure::onLoggerConfigService, this, _1, _2));
+    "~/config_logger", std::bind(&LoggerLevelConfigure::onLoggerConfigService, this, _1, _2));
 }
 
 void LoggerLevelConfigure::onLoggerConfigService(
