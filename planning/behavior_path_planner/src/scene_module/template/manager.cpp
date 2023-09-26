@@ -29,9 +29,6 @@ TemplateModuleManager::TemplateModuleManager(
   rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
 : SceneModuleManagerInterface(node, name, config, {})
 {
-  TemplateParameters p{};
-  p.dummy_parameter = node->declare_parameter<double>(name + ".dummy_parameter");
-  parameters_ = std::make_shared<TemplateParameters>(p);
 }
 
 }  // namespace behavior_path_planner

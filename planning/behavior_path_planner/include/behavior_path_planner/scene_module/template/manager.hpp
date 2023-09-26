@@ -40,7 +40,8 @@ public:
     return std::make_unique<TemplateModule>(name_, *node_, parameters_, rtc_interface_ptr_map_);
   }
 
-  void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override{};
+  void updateModuleParams(
+    [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) override{};
 
 private:
   std::shared_ptr<TemplateParameters> parameters_;
