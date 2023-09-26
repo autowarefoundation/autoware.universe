@@ -218,7 +218,7 @@ boost::optional<size_t> searchZeroVelocityIndex(
 
   constexpr double epsilon = 1e-3;
   for (size_t i = src_idx; i < dst_idx; ++i) {
-    if (std::fabs(points_with_twist.at(i).longitudinal_velocity_mps) < epsilon) {
+    if (tier4_autoware_utils::getLongitudinalVelocity(points_with_twist.at(i)) < epsilon) {
       return i;
     }
   }
@@ -271,6 +271,9 @@ boost::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist)
 extern template boost::optional<size_t>
 searchZeroVelocityIndex<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist);
+extern template boost::optional<size_t>
+searchZeroVelocityIndex<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points_with_twist);
 
 /**
  * @brief find nearest point index through points container for a given point.

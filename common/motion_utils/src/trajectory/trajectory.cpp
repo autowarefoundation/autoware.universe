@@ -76,6 +76,9 @@ searchZeroVelocityIndex<std::vector<autoware_auto_planning_msgs::msg::Trajectory
 template boost::optional<size_t>
 searchZeroVelocityIndex<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points_with_twist);
+template boost::optional<size_t>
+searchZeroVelocityIndex<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points_with_twist);
 
 //
 template size_t findNearestIndex<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(

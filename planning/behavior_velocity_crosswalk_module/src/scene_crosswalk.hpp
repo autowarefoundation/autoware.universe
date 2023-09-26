@@ -288,6 +288,10 @@ private:
     const std::vector<geometry_msgs::msg::Point> & path_intersects,
     const std::optional<geometry_msgs::msg::Pose> & stop_pose) const;
 
+  std::optional<StopFactor> checkStopForOriginalStopPoint(
+    const PathWithLaneId & ego_path, const std::vector<geometry_msgs::msg::Point> & path_intersects,
+    const std::optional<geometry_msgs::msg::Pose> & stop_pose) const;
+
   std::optional<CollisionPoint> getCollisionPoint(
     const PathWithLaneId & ego_path, const PredictedObject & object,
     const std::pair<double, double> & crosswalk_attention_range, const Polygon2d & attention_area);
@@ -295,7 +299,8 @@ private:
   std::optional<StopFactor> getNearestStopFactor(
     const PathWithLaneId & ego_path,
     const std::optional<StopFactor> & stop_factor_for_crosswalk_users,
-    const std::optional<StopFactor> & stop_factor_for_stuck_vehicles);
+    const std::optional<StopFactor> & stop_factor_for_stuck_vehicles,
+    const std::optional<StopFactor> & stop_factor_for_original_stop_point);
 
   void setDistanceToStop(
     const PathWithLaneId & ego_path,

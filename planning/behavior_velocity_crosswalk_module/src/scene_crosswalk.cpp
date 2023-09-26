@@ -259,9 +259,14 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   const auto stop_factor_for_stuck_vehicles = checkStopForStuckVehicles(
     sparse_resample_path, objects_ptr->objects, path_intersects, default_stop_pose);
 
+  // Decide to stop for original stop point
+  const auto stop_factor_for_original_stop_point =
+    checkStopForOriginalStopPoint(sparse_resample_path, path_intersects, default_stop_pose);
+
   // Get nearest stop factor
-  const auto nearest_stop_factor =
-    getNearestStopFactor(*path, stop_factor_for_crosswalk_users, stop_factor_for_stuck_vehicles);
+  const auto nearest_stop_factor = getNearestStopFactor(
+    *path, stop_factor_for_crosswalk_users, stop_factor_for_stuck_vehicles,
+    stop_factor_for_original_stop_point);
   recordTime(3);
 
   // Set safe or unsafe
@@ -858,10 +863,67 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
   return {};
 }
 
+std::optional<StopFactor> CrosswalkModule::checkStopForOriginalStopPoint(
+  const PathWithLaneId & ego_path, const std::vector<geometry_msgs::msg::Point> & path_intersects,
+  const std::optional<geometry_msgs::msg::Pose> & stop_pose) const
+{
+  const auto & p = planner_param_;
+
+  if (path_intersects.size() < 2 || !stop_pose) {
+    return {};
+  }
+
+  const auto & ego_pos = planner_data_->current_odometry->pose.position;
+  const auto ego_vel = planner_data_->current_velocity->twist.linear.x;
+  const auto ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
+
+  const double near_attention_range =
+    calcSignedArcLength(ego_path.points, ego_pos, path_intersects.front()) -
+    planner_data_->vehicle_info_.max_longitudinal_offset_m;
+  const double far_attention_range =
+    calcSignedArcLength(ego_path.points, ego_pos, path_intersects.back()) -
+    planner_data_->vehicle_info_.min_longitudinal_offset_m;
+
+  const auto zero_vel_idx = motion_utils::searchZeroVelocityIndex(ego_path.points);
+  if (!zero_vel_idx) {
+    return {};
+  }
+  const auto dist_ego2original_stop_point =
+    calcSignedArcLength(ego_path.points, ego_pos, *zero_vel_idx);
+
+  if (
+    near_attention_range < dist_ego2original_stop_point &&
+    dist_ego2original_stop_point < far_attention_range) {
+    // Plan STOP considering min_acc, max_jerk and min_jerk.
+    const auto min_feasible_dist_ego2stop = calcDecelDistWithJerkAndAccConstraints(
+      ego_vel, 0.0, ego_acc, p.min_acc_for_stuck_vehicle, p.max_jerk_for_stuck_vehicle,
+      p.min_jerk_for_stuck_vehicle);
+    if (!min_feasible_dist_ego2stop) {
+      return {};
+    }
+
+    const double dist_ego2stop = calcSignedArcLength(ego_path.points, ego_pos, stop_pose->position);
+    const double feasible_dist_ego2stop = std::max(*min_feasible_dist_ego2stop, dist_ego2stop);
+    const double dist_to_ego =
+      calcSignedArcLength(ego_path.points, ego_path.points.front().point.pose.position, ego_pos);
+
+    const auto feasible_stop_pose =
+      calcLongitudinalOffsetPose(ego_path.points, 0, dist_to_ego + feasible_dist_ego2stop);
+    if (!feasible_stop_pose) {
+      return {};
+    }
+
+    return createStopFactor(*feasible_stop_pose);
+  }
+
+  return {};
+}
+
 std::optional<StopFactor> CrosswalkModule::getNearestStopFactor(
   const PathWithLaneId & ego_path,
   const std::optional<StopFactor> & stop_factor_for_crosswalk_users,
-  const std::optional<StopFactor> & stop_factor_for_stuck_vehicles)
+  const std::optional<StopFactor> & stop_factor_for_stuck_vehicles,
+  const std::optional<StopFactor> & stop_factor_for_original_stop_point)
 {
   const auto get_distance_to_stop = [&](const auto stop_factor) -> std::optional<double> {
     const auto & ego_pos = planner_data_->current_odometry->pose.position;
@@ -871,18 +933,29 @@ std::optional<StopFactor> CrosswalkModule::getNearestStopFactor(
   const auto dist_to_stop_for_crosswalk_users =
     get_distance_to_stop(stop_factor_for_crosswalk_users);
   const auto dist_to_stop_for_stuck_vehicles = get_distance_to_stop(stop_factor_for_stuck_vehicles);
+  const auto dist_to_stop_for_original_stop_point =
+    get_distance_to_stop(stop_factor_for_original_stop_point);
 
-  if (dist_to_stop_for_crosswalk_users) {
-    if (dist_to_stop_for_stuck_vehicles) {
-      if (*dist_to_stop_for_stuck_vehicles < *dist_to_stop_for_crosswalk_users) {
-        return stop_factor_for_stuck_vehicles;
-      }
-    }
-    return stop_factor_for_crosswalk_users;
+  // calculate nearest stop factor
+  double min_dist_to_stop{std::numeric_limits<double>::max()};
+  std::optional<StopFactor> nearest_stop_factor{std::nullopt};
+  if (dist_to_stop_for_crosswalk_users && *dist_to_stop_for_crosswalk_users < min_dist_to_stop) {
+    min_dist_to_stop = *dist_to_stop_for_crosswalk_users;
+    nearest_stop_factor = stop_factor_for_crosswalk_users;
+  }
+  if (dist_to_stop_for_stuck_vehicles && *dist_to_stop_for_stuck_vehicles < min_dist_to_stop) {
+    min_dist_to_stop = *dist_to_stop_for_stuck_vehicles;
+    nearest_stop_factor = stop_factor_for_stuck_vehicles;
+  }
+  if (
+    dist_to_stop_for_original_stop_point &&
+    *dist_to_stop_for_original_stop_point < min_dist_to_stop) {
+    min_dist_to_stop = *dist_to_stop_for_original_stop_point;
+    nearest_stop_factor = stop_factor_for_original_stop_point;
   }
 
-  if (dist_to_stop_for_stuck_vehicles) {
-    return stop_factor_for_stuck_vehicles;
+  if (nearest_stop_factor) {
+    return *nearest_stop_factor;
   }
 
   return {};
