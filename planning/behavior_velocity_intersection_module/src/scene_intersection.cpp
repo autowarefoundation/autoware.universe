@@ -65,14 +65,18 @@ static bool isTargetCollisionVehicleType(
 }
 
 IntersectionModule::IntersectionModule(
-  const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
+  const int64_t module_id, const int64_t lane_id,
+  [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const std::set<int> & associative_ids,
-  const bool is_private_area, const bool enable_occlusion_detection, rclcpp::Node & node,
+  const std::string & turn_direction, const bool has_traffic_light,
+  const bool enable_occlusion_detection, const bool is_private_area, rclcpp::Node & node,
   const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   node_(node),
   lane_id_(lane_id),
   associative_ids_(associative_ids),
+  turn_direction_(turn_direction),
+  has_traffic_light_(has_traffic_light),
   enable_occlusion_detection_(enable_occlusion_detection),
   occlusion_attention_divisions_(std::nullopt),
   is_private_area_(is_private_area),
@@ -81,11 +85,10 @@ IntersectionModule::IntersectionModule(
   velocity_factor_.init(VelocityFactor::INTERSECTION);
   planner_param_ = planner_param;
 
-  const auto & assigned_lanelet =
-    planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id);
-  turn_direction_ = assigned_lanelet.attributeOr("turn_direction", "else");
-  collision_state_machine_.setMarginTime(
-    planner_param_.collision_detection.state_transit_margin_time);
+  {
+    collision_state_machine_.setMarginTime(
+      planner_param_.collision_detection.state_transit_margin_time);
+  }
   {
     before_creep_state_machine_.setMarginTime(planner_param_.occlusion.before_creep_stop_time);
     before_creep_state_machine_.setState(StateMachine::State::STOP);
@@ -783,10 +786,13 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto & first_attention_area_opt = intersection_lanelets_.value().first_attention_area();
   const auto & dummy_first_attention_area =
     first_attention_area_opt ? first_attention_area_opt.value() : first_conflicting_area;
+  const double peeking_offset = has_traffic_light_
+                                  ? planner_param_.occlusion.peeking_offset
+                                  : planner_param_.occlusion.peeking_offset_absence_tl;
   const auto intersection_stop_lines_opt = util::generateIntersectionStopLines(
     first_conflicting_area, dummy_first_attention_area, planner_data_, interpolated_path_info,
     planner_param_.stuck_vehicle.use_stuck_stopline, planner_param_.common.stop_line_margin,
-    planner_param_.occlusion.peeking_offset, path);
+    peeking_offset, path);
   if (!intersection_stop_lines_opt) {
     RCLCPP_DEBUG(logger_, "failed to generate intersection_stop_lines");
     return IntersectionModule::Indecisive{};
