@@ -38,17 +38,17 @@
         },
         "use_steer_ff": {
           "type": "boolean",
-          "description": "steering steer controller using steer feed forward ",
+          "description": "steering steer controller using steer feed forward or not",
           "default": "true"
         },
         "use_steer_fb": {
           "type": "boolean",
-          "description": "steering steer controller using steer feed back",
+          "description": "steering steer controller using steer feed back or not",
           "default": "true"
         },
         "is_debugging": {
           "type": "boolean",
-          "description": "If it is debugging mode.",
+          "description": "debugging mode or not",
           "default": "false"
         },
         "max_throttle": {
@@ -78,63 +78,63 @@
           "properties": {
             "kp": {
               "type": "number",
-              "description": "proportional coefficient in PID control",
+              "description": "proportional coefficient value in PID control",
               "default": "150.0"
             },
             "ki": {
               "type": "number",
-              "description": "integral coefficient in PID control",
+              "description": "integral coefficient value in PID control",
               "default": "15.0",
               "exclusiveMinimum": 0.0
             },
             "kd": {
               "type": "number",
-              "description": "derivative coefficient in PID control",
+              "description": "derivative coefficient value in PID control",
               "default": "0.0"
             },
             "max": {
               "type": "number",
-              "description": "Maximum value of PID",
+              "description": "maximum value of PID",
               "default": "8.0"
             },
             "min": {
               "type": "number",
-              "description": "Minimum value of PID",
+              "description": "minimum value of PID",
               "default": "-8.0."
             },
             "max_p": {
               "type": "number",
-              "description": "Maximum value of Proportional in PID",
+              "description": "maximum value of Proportional in PID",
               "default": "8.0"
             },
             "min_p": {
               "type": "number",
-              "description": "Minimum value of Proportional in PID",
+              "description": "minimum value of Proportional in PID",
               "default": "-8.0"
             },
             "max_i": {
               "type": "number",
-              "description": "Maximum value of Integral in PID",
+              "description": "maximum value of Integral in PID",
               "default": "8.0"
             },
             "min_i": {
               "type": "number",
-              "description": "Minimum value of Integral in PID",
+              "description": "minimum value of Integral in PID",
               "default": "-8.0"
             },
             "max_d": {
               "type": "number",
-              "description": "Maximum value of Derivative in PID",
+              "description": "maximum value of Derivative in PID",
               "default": "0.0"
             },
             "min_d": {
               "type": "number",
-              "description": "Minimum value of Derivative in PID",
+              "description": "minimum value of Derivative in PID",
               "default": "0.0"
             },
             "invalid_integration_decay": {
               "type": "number",
-              "description": "invalid integration decay in PID control",
+              "description": "invalid integration decay value in PID control",
               "default": "0.97",
               "Maximum": 1.0,
               "exclusiveMinimum": 0.0
