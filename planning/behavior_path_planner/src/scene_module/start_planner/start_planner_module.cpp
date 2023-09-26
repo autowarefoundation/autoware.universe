@@ -96,6 +96,7 @@ void StartPlannerModule::onFreespacePlannerTimer()
 
 BehaviorModuleOutput StartPlannerModule::run()
 {
+  updateData();
   if (!isActivated()) {
     return planWaitingApproval();
   }
@@ -118,6 +119,13 @@ void StartPlannerModule::processOnExit()
   resetPathCandidate();
   resetPathReference();
   debug_marker_.markers.clear();
+}
+
+void StartPlannerModule::updateData()
+{
+  if (isBackwardDrivingComplete()) {
+    updateStatusAfterBackwardDriving();
+  }
 }
 
 bool StartPlannerModule::isExecutionRequested() const
