@@ -13,10 +13,10 @@
 // limitations under the License.
 
 // =============== Note ===============
-// This is a util class implementation of the logger_config_component provided by ROS2
+// This is a util class implementation of the logger_config_component provided by ROS 2
 // https://github.com/ros2/demos/blob/humble/logging_demo/src/logger_config_component.cpp
 //
-// When ROS2 officially supports the set_logger_level option in release version, this class can be
+// When ROS 2 officially supports the set_logger_level option in release version, this class can be
 // removed.
 // https://github.com/ros2/ros2/issues/1355
 
