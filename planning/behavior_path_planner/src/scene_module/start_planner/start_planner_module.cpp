@@ -102,6 +102,14 @@ void StartPlannerModule::processOnEntry()
     utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
       start_planner_data_.collision_check);
   }
+
+  const bool has_received_new_route =
+    !planner_data_->prev_route_id ||
+    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
+
+  if (has_received_new_route) {
+    status_ = PullOutStatus();
+  }
 }
 
 void StartPlannerModule::processOnExit()
@@ -591,14 +599,6 @@ std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
 
 void StartPlannerModule::updatePullOutStatus()
 {
-  const bool has_received_new_route =
-    !planner_data_->prev_route_id ||
-    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
-
-  if (has_received_new_route) {
-    status_ = PullOutStatus();
-  }
-
   // save pull out lanes which is generated using current pose before starting pull out
   // (before approval)
   status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
