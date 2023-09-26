@@ -663,7 +663,7 @@ void StartPlannerModule::updatePullOutStatus()
 
   if (isBackwardDrivingComplete()) {
     updateStatusAfterBackwardDriving();
-    return ModuleStatus::SUCCESS;  // for breaking loop
+    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   } else {
     status_.backward_path = start_planner_utils::getBackwardPath(
       *route_handler, status_.pull_out_lanes, current_pose, status_.pull_out_start_pose,
