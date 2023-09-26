@@ -366,7 +366,7 @@ PathWithLaneId StartPlannerModule::getFullPath() const
 
 BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 {
-  updatePullOutStatus();
+  updatePullOutStatusBeforeApproval();
 
   if (IsGoalBehindOfEgoInSameRouteSegment()) {
     RCLCPP_WARN_THROTTLE(
@@ -649,7 +649,7 @@ std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
   return drivable_lanes;
 }
 
-void StartPlannerModule::updatePullOutStatus()
+void StartPlannerModule::updatePullOutStatusBeforeApproval()
 {
   // save pull out lanes which is generated using current pose before starting pull out
   // (before approval)

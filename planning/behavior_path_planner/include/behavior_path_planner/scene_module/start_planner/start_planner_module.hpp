@@ -166,7 +166,7 @@ private:
   PathWithLaneId generateStopPath() const;
   lanelet::ConstLanelets getPathRoadLanes(const PathWithLaneId & path) const;
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
-  void updatePullOutStatus();
+  void updatePullOutStatusBeforeApproval();
   void updateStatusAfterBackwardDriving();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,
