@@ -178,6 +178,10 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
         std::placeholders::_1);
       sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "~/input/odom", rclcpp::QoS{100}, odom_cb);
+    } else {
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "input_twist_topic_type is invalid: " << input_twist_topic_type_);
+      throw std::runtime_error("input_twist_topic_type is invalid: " + input_twist_topic_type_);
     }
   }
 
