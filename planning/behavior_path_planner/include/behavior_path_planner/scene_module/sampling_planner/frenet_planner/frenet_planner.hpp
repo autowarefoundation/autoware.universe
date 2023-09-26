@@ -15,9 +15,9 @@
 #ifndef FRENET_PLANNER__FRENET_PLANNER_HPP_
 #define FRENET_PLANNER__FRENET_PLANNER_HPP_
 
-#include "frenet_planner/structures.hpp"
-#include "sampler_common/structures.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/frenet_planner/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/transform/spline_transform.hpp"
 
 #include <optional>
 #include <vector>

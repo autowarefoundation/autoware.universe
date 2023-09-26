@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <bezier_sampler/bezier.hpp>
+#include "behavior_path_planner/scene_module/sampling_planner/bezier_sampler/bezier.hpp"
 
 #include <iostream>
 

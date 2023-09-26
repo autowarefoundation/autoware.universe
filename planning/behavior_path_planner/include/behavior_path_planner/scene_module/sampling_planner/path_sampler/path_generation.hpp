@@ -15,12 +15,12 @@
 #ifndef PATH_SAMPLER__PATH_GENERATION_HPP_
 #define PATH_SAMPLER__PATH_GENERATION_HPP_
 
-#include "bezier_sampler/bezier_sampling.hpp"
-#include "frenet_planner/structures.hpp"
-#include "path_sampler/parameters.hpp"
-#include "sampler_common/constraints/hard_constraint.hpp"
-#include "sampler_common/structures.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/bezier_sampler/bezier_sampling.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/frenet_planner/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/path_sampler/parameters.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/constraints/hard_constraint.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/transform/spline_transform.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 

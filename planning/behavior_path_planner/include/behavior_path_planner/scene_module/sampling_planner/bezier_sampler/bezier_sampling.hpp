@@ -15,9 +15,10 @@
 #ifndef BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
 #define BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
 
-#include <bezier_sampler/bezier.hpp>
+#include "behavior_path_planner/scene_module/sampling_planner/bezier_sampler/bezier.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
+
 #include <eigen3/Eigen/Core>
-#include <sampler_common/structures.hpp>
 
 #include <vector>
 

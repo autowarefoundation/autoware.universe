@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sampler_common/constraints/soft_constraint.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/constraints/soft_constraint.hpp"
 
-#include "sampler_common/structures.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/transform/spline_transform.hpp"
 
 #include <numeric>
 

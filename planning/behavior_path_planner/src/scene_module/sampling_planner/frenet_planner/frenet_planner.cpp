@@ -14,13 +14,14 @@
 
 #include "frenet_planner/frenet_planner.hpp"
 
+#include "behavior_path_planner/scene_module/sampling_planner/frenet_planner/conversions.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/frenet_planner/polynomials.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/frenet_planner/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/transform/spline_transform.hpp"
+
 #include <eigen3/Eigen/Eigen>
-#include <frenet_planner/conversions.hpp>
-#include <frenet_planner/polynomials.hpp>
-#include <frenet_planner/structures.hpp>
 #include <helper_functions/angle_utils.hpp>
-#include <sampler_common/structures.hpp>
-#include <sampler_common/transform/spline_transform.hpp>
 
 #include <algorithm>
 #include <cmath>

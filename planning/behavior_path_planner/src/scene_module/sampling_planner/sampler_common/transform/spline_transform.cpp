@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <sampler_common/transform/spline_transform.hpp>
+#include <behavior_path_planner/scene_module/sampling_planner/sampler_common/transform/spline_transform.hpp>
 
 #include <algorithm>
 #include <cmath>

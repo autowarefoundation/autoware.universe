@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sampler_common/constraints/footprint.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/constraints/footprint.hpp"
 
-#include "sampler_common/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
 
 #include <eigen3/Eigen/Core>
 

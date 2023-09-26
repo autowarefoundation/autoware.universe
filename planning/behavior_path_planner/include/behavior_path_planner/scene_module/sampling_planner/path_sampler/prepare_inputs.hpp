@@ -15,10 +15,10 @@
 #ifndef PATH_SAMPLER__PREPARE_INPUTS_HPP_
 #define PATH_SAMPLER__PREPARE_INPUTS_HPP_
 
-#include "frenet_planner/structures.hpp"
-#include "path_sampler/parameters.hpp"
-#include "path_sampler/type_alias.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/frenet_planner/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/path_sampler/parameters.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/path_sampler/type_alias.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/transform/spline_transform.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>

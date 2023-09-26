@@ -15,8 +15,8 @@
 #ifndef PATH_SAMPLER__PARAMETERS_HPP_
 #define PATH_SAMPLER__PARAMETERS_HPP_
 
-#include "bezier_sampler/bezier_sampling.hpp"
-#include "sampler_common/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/bezier_sampler/bezier_sampling.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
 
 #include <vector>
 

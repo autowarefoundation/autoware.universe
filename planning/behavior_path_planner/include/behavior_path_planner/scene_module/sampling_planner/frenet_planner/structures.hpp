@@ -15,9 +15,8 @@
 #ifndef FRENET_PLANNER__STRUCTURES_HPP_
 #define FRENET_PLANNER__STRUCTURES_HPP_
 
-#include "frenet_planner/polynomials.hpp"
-
-#include <sampler_common/structures.hpp>
+#include "behavior_path_planner/scene_module/sampling_planner/frenet_planner/polynomials.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
 
 #include <optional>
 #include <vector>

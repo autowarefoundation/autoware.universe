@@ -15,14 +15,13 @@
 #ifndef PATH_SAMPLER__NODE_HPP_
 #define PATH_SAMPLER__NODE_HPP_
 
-#include "path_sampler/common_structs.hpp"
-#include "path_sampler/parameters.hpp"
-#include "path_sampler/type_alias.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/path_sampler/common_structs.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/path_sampler/parameters.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/path_sampler/type_alias.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/transform/spline_transform.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
-
-#include <sampler_common/structures.hpp>
 
 #include <algorithm>
 #include <memory>

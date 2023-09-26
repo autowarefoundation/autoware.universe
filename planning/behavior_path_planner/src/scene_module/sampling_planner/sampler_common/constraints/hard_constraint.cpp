@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sampler_common/constraints/hard_constraint.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/constraints/hard_constraint.hpp"
 
-#include "sampler_common/constraints/footprint.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/constraints/footprint.hpp"
 
 #include <boost/geometry/algorithms/within.hpp>
 

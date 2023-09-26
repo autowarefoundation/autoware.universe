@@ -15,9 +15,9 @@
 #ifndef PATH_SAMPLER__COMMON_STRUCTS_HPP_
 #define PATH_SAMPLER__COMMON_STRUCTS_HPP_
 
-#include "path_sampler/type_alias.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/path_sampler/type_alias.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "sampler_common/structures.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 

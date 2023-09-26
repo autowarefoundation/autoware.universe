@@ -15,7 +15,7 @@
 #ifndef SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
 #define SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
 
-#include "sampler_common/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
 
 namespace sampler_common::constraints
 {

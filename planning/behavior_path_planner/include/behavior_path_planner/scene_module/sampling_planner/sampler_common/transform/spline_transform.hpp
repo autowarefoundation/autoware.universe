@@ -15,7 +15,7 @@
 #ifndef SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
 #define SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
 
-#include "sampler_common/structures.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampler_common/structures.hpp"
 
 #include <vector>
 
