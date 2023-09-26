@@ -126,6 +126,14 @@ void StartPlannerModule::updateData()
   if (isBackwardDrivingComplete()) {
     updateStatusAfterBackwardDriving();
   }
+
+  const bool has_received_new_route =
+    !planner_data_->prev_route_id ||
+    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
+
+  if (has_received_new_route) {
+    status_ = PullOutStatus();
+  }
 }
 
 bool StartPlannerModule::isExecutionRequested() const
@@ -186,26 +194,38 @@ bool StartPlannerModule::isExecutionReady() const
   return true;
 }
 
-ModuleStatus StartPlannerModule::updateState()
+void StartPlannerModule::updateCurrentState()
 {
-  RCLCPP_DEBUG(getLogger(), "START_PLANNER updateState");
+  RCLCPP_DEBUG(getLogger(), "START_PLANNER updateCurrentState");
 
-  if (isActivated() && !isWaitingApproval()) {
-    current_state_ = ModuleStatus::RUNNING;
-  } else {
-    current_state_ = ModuleStatus::IDLE;
-  }
+  // start copy from base function
+  const auto print = [this](const auto & from, const auto & to) {
+    RCLCPP_DEBUG(getLogger(), "[start_planner] Transit from %s to %s.", from.data(), to.data());
+  };
 
+  const auto & from = current_state_;
+  current_state_ = updateState();
+  print(magic_enum::enum_name(from), magic_enum::enum_name(current_state_));
+  // end copy from base function
+
+  // TODO(someone): move to canTransitSuccessState
   if (hasFinishedPullOut()) {
-    return ModuleStatus::SUCCESS;
+    current_state_ = ModuleStatus::SUCCESS;
   }
-
+  // TODO(someone): move to canTransitSuccessState
   if (isBackwardDrivingComplete()) {
-    updateStatusAfterBackwardDriving();
-    return ModuleStatus::SUCCESS;  // for breaking loop
+    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   }
 
-  return current_state_;
+  std::cerr << "isActivated():" << isActivated() << std::endl;
+  std::cerr << "isWaitingApproval():" << isWaitingApproval() << std::endl;
+  std::cerr << "current_state_:" << magic_enum::enum_name(current_state_) << std::endl;
+
+  // if (isActivated() && !isWaitingApproval()) {
+  //   current_state_ = ModuleStatus::RUNNING;
+  // } else {
+  //   current_state_ = ModuleStatus::IDLE;
+  // }
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()
@@ -618,15 +638,6 @@ void StartPlannerModule::updatePullOutStatus()
   const bool has_received_new_route =
     !planner_data_->prev_route_id ||
     *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
-
-  if (has_received_new_route) {
-    status_ = PullOutStatus();
-  }
-
-  // save pull out lanes which is generated using current pose before starting pull out
-  // (before approval)
-  status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
-    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   // skip updating if enough time has not passed for preventing chattering between back and
   // start_planner
