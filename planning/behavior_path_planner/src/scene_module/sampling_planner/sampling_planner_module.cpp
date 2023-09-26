@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/scene_module/template/template_module.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/sampling_planner_module.hpp"
 
 namespace behavior_path_planner
 {
@@ -24,30 +24,30 @@ using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::getPoint;
 
-TemplateModule::TemplateModule(
+SamplingPlannerModule::SamplingPlannerModule(
   const std::string & name, rclcpp::Node & node,
-  const std::shared_ptr<TemplateParameters> & parameters,
+  const std::shared_ptr<SamplingPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{parameters}
 {
 }
 
-bool TemplateModule::isExecutionRequested() const
+bool SamplingPlannerModule::isExecutionRequested() const
 {
   return true;
 }
 
-bool TemplateModule::isExecutionReady() const
+bool SamplingPlannerModule::isExecutionReady() const
 {
   return true;
 }
 
-BehaviorModuleOutput TemplateModule::plan()
+BehaviorModuleOutput SamplingPlannerModule::plan()
 {
   return {};
 }
 
-CandidateOutput TemplateModule::planCandidate() const
+CandidateOutput SamplingPlannerModule::planCandidate() const
 {
   return {};
 }

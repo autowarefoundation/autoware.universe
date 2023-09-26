@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2021 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__UTILS__TEMPLATE__TEMPLATE_PARAMETERS_HPP_
-#define BEHAVIOR_PATH_PLANNER__UTILS__TEMPLATE__TEMPLATE_PARAMETERS_HPP_
-
-#include <memory>
-#include <string>
-#include <vector>
+#ifndef BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__UTIL_HPP_
+#define BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__UTIL_HPP_
 
 namespace behavior_path_planner
 {
 
-struct TemplateParameters
-{
-  double dummy_parameter{0.0};
-};
-
 }  // namespace behavior_path_planner
-#endif  // BEHAVIOR_PATH_PLANNER__UTILS__TEMPLATE__TEMPLATE_PARAMETERS_HPP_
+
+#endif  // BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__UTIL_HPP_

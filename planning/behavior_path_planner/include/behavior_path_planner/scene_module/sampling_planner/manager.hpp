@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__TEMPLATE__MANAGER_HPP_
-#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__TEMPLATE__MANAGER_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__MANAGER_HPP_
+#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__MANAGER_HPP_
 
+#include "behavior_path_planner/scene_module/sampling_planner/sampling_planner_module.hpp"
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
-#include "behavior_path_planner/scene_module/template/template_module.hpp"
-#include "behavior_path_planner/utils/template/template_parameters.hpp"
+#include "behavior_path_planner/utils/sampling_planner/sampling_planner_parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -29,24 +29,25 @@
 namespace behavior_path_planner
 {
 
-class TemplateModuleManager : public SceneModuleManagerInterface
+class SamplingPlannerModuleManager : public SceneModuleManagerInterface
 {
 public:
-  TemplateModuleManager(
+  SamplingPlannerModuleManager(
     rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config);
 
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {
-    return std::make_unique<TemplateModule>(name_, *node_, parameters_, rtc_interface_ptr_map_);
+    return std::make_unique<SamplingPlannerModule>(
+      name_, *node_, parameters_, rtc_interface_ptr_map_);
   }
 
   void updateModuleParams(
     [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) override{};
 
 private:
-  std::shared_ptr<TemplateParameters> parameters_;
+  std::shared_ptr<SamplingPlannerParameters> parameters_;
 };
 
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__TEMPLATE__MANAGER_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__MANAGER_HPP_

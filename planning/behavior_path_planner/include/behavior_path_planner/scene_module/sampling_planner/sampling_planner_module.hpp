@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__TEMPLATE__TEMPLATE_MODULE_HPP_
-#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__TEMPLATE__TEMPLATE_MODULE_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__SAMPLING_PLANNER_MODULE_HPP_
+#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__SAMPLING_PLANNER_MODULE_HPP_
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/utils/template/template_parameters.hpp"
-#include "behavior_path_planner/utils/template/util.hpp"
+#include "behavior_path_planner/utils/sampling_planner/sampling_planner_parameters.hpp"
+#include "behavior_path_planner/utils/sampling_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -35,12 +35,12 @@
 
 namespace behavior_path_planner
 {
-class TemplateModule : public SceneModuleInterface
+class SamplingPlannerModule : public SceneModuleInterface
 {
 public:
-  TemplateModule(
+  SamplingPlannerModule(
     const std::string & name, rclcpp::Node & node,
-    const std::shared_ptr<TemplateParameters> & parameters,
+    const std::shared_ptr<SamplingPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map);
 
   bool isExecutionRequested() const override;
@@ -50,7 +50,7 @@ public:
 
   void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = std::any_cast<std::shared_ptr<TemplateParameters>>(parameters);
+    parameters_ = std::any_cast<std::shared_ptr<SamplingPlannerParameters>>(parameters);
   }
 
   void acceptVisitor(
@@ -66,9 +66,9 @@ private:
   bool canTransitIdleToRunningState() override { return false; }
 
   // member
-  std::shared_ptr<TemplateParameters> parameters_;
+  std::shared_ptr<SamplingPlannerParameters> parameters_;
 };
 
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__TEMPLATE__TEMPLATE_MODULE_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__SAMPLING_PLANNER_MODULE_HPP_

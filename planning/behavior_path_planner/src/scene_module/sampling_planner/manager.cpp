@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/scene_module/template/manager.hpp"
+#include "behavior_path_planner/scene_module/sampling_planner/manager.hpp"
 
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
@@ -25,7 +25,7 @@
 namespace behavior_path_planner
 {
 
-TemplateModuleManager::TemplateModuleManager(
+SamplingPlannerModuleManager::SamplingPlannerModuleManager(
   rclcpp::Node * node, const std::string & name, const ModuleConfigParameters & config)
 : SceneModuleManagerInterface(node, name, config, {})
 {
