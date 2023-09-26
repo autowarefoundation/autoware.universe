@@ -45,6 +45,7 @@ struct SortByLongitudinalDistance
   {
     const double diff = a.distance_from_original_goal - b.distance_from_original_goal;
     constexpr double eps = 0.01;
+　// If the longitudinal distances are approximately equal, sort based on lateral offset.
     if (std::abs(diff) < eps) {
       return a.lateral_offset < b.lateral_offset;
     }
