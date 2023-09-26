@@ -95,6 +95,7 @@ public:
         double collision_end_margin_time;    //! end margin time to check collision
       } not_prioritized;
       double keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
+      bool use_upstream_velocity;
     } collision_detection;
     struct Occlusion
     {

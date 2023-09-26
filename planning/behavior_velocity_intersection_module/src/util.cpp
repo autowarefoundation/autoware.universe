@@ -1109,7 +1109,7 @@ TimeDistanceArray calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::shared_ptr<const PlannerData> & planner_data, const std::set<int> & associative_ids,
   const int closest_idx, const double time_delay, const double intersection_velocity,
-  const double minimum_ego_velocity)
+  const double minimum_ego_velocity, const bool use_upstream_velocity)
 {
   double dist_sum = 0.0;
   int assigned_lane_found = false;
@@ -1119,7 +1119,9 @@ TimeDistanceArray calcIntersectionPassingTime(
   PathWithLaneId reference_path;
   for (size_t i = closest_idx; i < path.points.size(); ++i) {
     auto reference_point = path.points.at(i);
-    reference_point.point.longitudinal_velocity_mps = intersection_velocity;
+    if (!use_upstream_velocity) {
+      reference_point.point.longitudinal_velocity_mps = intersection_velocity;
+    }
     reference_path.points.push_back(reference_point);
     bool has_objective_lane_id = hasLaneIds(path.points.at(i), associative_ids);
     if (assigned_lane_found && !has_objective_lane_id) {

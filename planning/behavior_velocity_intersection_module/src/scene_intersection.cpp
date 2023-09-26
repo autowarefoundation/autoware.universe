@@ -1108,7 +1108,8 @@ bool IntersectionModule::checkCollision(
   const auto time_distance_array = util::calcIntersectionPassingTime(
     path, planner_data_, associative_ids_, closest_idx, time_delay,
     planner_param_.common.intersection_velocity,
-    planner_param_.collision_detection.minimum_ego_predicted_velocity);
+    planner_param_.collision_detection.minimum_ego_predicted_velocity,
+    planner_param_.collision_detection.use_upstream_velocity);
   const double passing_time = time_distance_array.back().first;
   auto target_objects = objects;
   util::cutPredictPathWithDuration(&target_objects, clock_, passing_time);
