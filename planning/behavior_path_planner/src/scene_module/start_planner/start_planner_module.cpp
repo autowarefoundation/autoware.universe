@@ -94,6 +94,15 @@ void StartPlannerModule::onFreespacePlannerTimer()
   }
 }
 
+BehaviorModuleOutput StartPlannerModule::run()
+{
+  if (!isActivated()) {
+    return planWaitingApproval();
+  }
+
+  return plan();
+}
+
 void StartPlannerModule::processOnEntry()
 {
   // Initialize safety checker
@@ -211,7 +220,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
 
   BehaviorModuleOutput output;
   if (!status_.is_safe_static_objects) {
-    std::cerr << "Not found safe pull out path, publish stop path in plan()" << std::endl;
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
     const auto output = generateStopOutput();
@@ -327,8 +335,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 
   BehaviorModuleOutput output;
   if (!status_.is_safe_static_objects) {
-    std::cerr << "Not found safe pull out path, publish stop path in planWaitingApproval()"
-              << std::endl;
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
     const auto output = generateStopOutput();
