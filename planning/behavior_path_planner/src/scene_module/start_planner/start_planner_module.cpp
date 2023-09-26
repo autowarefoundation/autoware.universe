@@ -94,6 +94,15 @@ void StartPlannerModule::onFreespacePlannerTimer()
   }
 }
 
+BehaviorModuleOutput StartPlannerModule::run()
+{
+  if (!isActivated()) {
+    return planWaitingApproval();
+  }
+
+  return plan();
+}
+
 void StartPlannerModule::processOnEntry()
 {
   // Initialize safety checker
