@@ -669,8 +669,6 @@ void StartPlannerModule::updatePullOutStatus()
 void StartPlannerModule::updateStatusAfterBackwardDriving()
 {
   status_.back_finished = true;
-  // request start_planner approval
-  waitApproval();
   // To enable approval of the forward path, the RTC status is removed.
   removeRTCStatus();
   for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
