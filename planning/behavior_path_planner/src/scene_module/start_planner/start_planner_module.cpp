@@ -311,7 +311,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   if (IsGoalBehindOfEgoInSameRouteSegment()) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
-    clearWaitingApproval();
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
     updateRTCStatus(0, 0);
@@ -322,14 +321,11 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   if (!status_.is_safe_static_objects) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
-    clearWaitingApproval();
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
     updateRTCStatus(0, 0);
     return output;
   }
-
-  waitApproval();
 
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
