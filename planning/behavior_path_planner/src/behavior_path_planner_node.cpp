@@ -66,7 +66,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
-  modified_goal_publisher_ = create_publisher<PoseWithUuidStamped>("~/output/modified_goal", 1);
+  const auto durable_qos = rclcpp::QoS(1).transient_local();
+  modified_goal_publisher_ =
+    create_publisher<PoseWithUuidStamped>("~/output/modified_goal", durable_qos);
   stop_reason_publisher_ = create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
   reroute_availability_publisher_ =
     create_publisher<RerouteAvailability>("~/output/is_reroute_available", 1);
@@ -268,6 +270,18 @@ std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
     }
   }
   return waiting_approval_modules;
+}
+
+std::vector<std::string> BehaviorPathPlannerNode::getRunningModules()
+{
+  auto all_scene_module_ptr = planner_manager_->getSceneModuleStatus();
+  std::vector<std::string> running_modules;
+  for (const auto & module : all_scene_module_ptr) {
+    if (module->status == ModuleStatus::RUNNING) {
+      running_modules.push_back(module->module_name);
+    }
+  }
+  return running_modules;
 }
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()

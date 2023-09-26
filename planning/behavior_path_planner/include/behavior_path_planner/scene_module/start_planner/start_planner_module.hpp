@@ -28,8 +28,6 @@
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
@@ -170,11 +168,12 @@ private:
   lanelet::ConstLanelets getPathRoadLanes(const PathWithLaneId & path) const;
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
+  void updateStatusAfterBackwardDriving();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,
     const tier4_autoware_utils::LinearRing2d & vehicle_footprint);
   bool hasFinishedPullOut() const;
-  void checkBackFinished();
+  bool isBackwardDrivingComplete() const;
   bool isStopped();
   bool isStuck();
   bool hasFinishedCurrentPath();
