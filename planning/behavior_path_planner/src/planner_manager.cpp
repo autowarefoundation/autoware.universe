@@ -16,8 +16,8 @@
 
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
-#include "tier4_autoware_utils/system/stop_watch.hpp"
 #include "tier4_autoware_utils/ros/debug_publisher.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <magic_enum.hpp>

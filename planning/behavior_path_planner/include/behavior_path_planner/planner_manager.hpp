@@ -19,12 +19,12 @@
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
-#include "tier4_autoware_utils/system/stop_watch.hpp"
 #include "tier4_autoware_utils/ros/debug_publisher.hpp"
-#include "tier4_debug_msgs/msg/float64_stamped.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
+#include "tier4_debug_msgs/msg/float64_stamped.hpp"
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 
@@ -46,8 +46,8 @@ using tier4_autoware_utils::StopWatch;
 using tier4_planning_msgs::msg::StopReasonArray;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;
-using DebugPublisher=tier4_autoware_utils::DebugPublisher;
-using DebugDoubleMsg=tier4_debug_msgs::msg::Float64Stamped;
+using DebugPublisher = tier4_autoware_utils::DebugPublisher;
+using DebugDoubleMsg = tier4_debug_msgs::msg::Float64Stamped;
 
 enum Action {
   ADD = 0,
