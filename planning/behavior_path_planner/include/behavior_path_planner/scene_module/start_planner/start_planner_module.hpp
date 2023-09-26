@@ -81,9 +81,6 @@ public:
     parameters_ = std::any_cast<std::shared_ptr<StartPlannerParameters>>(parameters);
   }
 
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] BehaviorModuleOutput run() override;
-
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   // TODO(someone): remove this, and use base class function
