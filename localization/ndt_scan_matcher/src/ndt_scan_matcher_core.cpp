@@ -297,7 +297,7 @@ void NDTScanMatcher::timer_diagnostic()
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       diag_status_msg.message += "NDT score is unreliably low. ";
     }
-    if (state_ptr_->count("exe_time") && std::stod((*state_ptr_)["exe_time"]) >= critical_upperbound_exe_time_) {
+    if (state_ptr_->count("execution_time") && std::stod((*state_ptr_)["execution_time"]) >= critical_upperbound_exe_time_) {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       diag_status_msg.message += "NDT exe time is too long. (took " + (*state_ptr_)["execution_time"] + " [ms])";
     }
