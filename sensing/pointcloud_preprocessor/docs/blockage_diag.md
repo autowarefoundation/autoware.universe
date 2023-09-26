@@ -51,21 +51,21 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ## Parameters
 
-| Name                          | Type   | Description                                                      |
-| ----------------------------- | ------ | ---------------------------------------------------------------- |
-| `blockage_ratio_threshold`    | float  | The threshold of blockage area ratio                             |
-| `blockage_count_threshold`    | float  | The threshold of number continuous blockage frames               |
-| `horizontal_ring_id`          | int    | The id of horizontal ring of the LiDAR                           |
-| `angle_range`                 | vector | The effective range of LiDAR                                     |
-| `vertical_bins`               | int    | The LiDAR channel number                                         |
-| `model`                       | string | The LiDAR model                                                  |
-| `blockage_buffering_frames`   | int    | The number of buffering about blockage detection [range:1-200]   |
-| `blockage_buffering_interval` | int    | The interval of buffering about blockage detection               |
-| `dust_ratio_threshold`        | float  | The threshold of dusty area ratio                                |
-| `dust_count_threshold`        | int    | The threshold of number continuous frames include dusty area     |
-| `dust_kernel_size`            | int    | The kernel size of morphology processing in dusty area detection |
-| `dust_buffering_frames`       | int    | The number of buffering about dusty area detection [range:1-200] |
-| `dust_buffering_interval`     | int    | The interval of buffering about dusty area detection             |
+| Name                          | Type   | Description                                                                                                                   |
+| ----------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `blockage_ratio_threshold`    | float  | The threshold of blockage area ratio.If the blockage value exceeds this threshold, the diagnostic state will be set to ERROR. |
+| `blockage_count_threshold`    | float  | The threshold of number continuous blockage frames                                                                            |
+| `horizontal_ring_id`          | int    | The id of horizontal ring of the LiDAR                                                                                        |
+| `angle_range`                 | vector | The effective range of LiDAR                                                                                                  |
+| `vertical_bins`               | int    | The LiDAR channel number                                                                                                      |
+| `model`                       | string | The LiDAR model                                                                                                               |
+| `blockage_buffering_frames`   | int    | The number of buffering about blockage detection [range:1-200]                                                                |
+| `blockage_buffering_interval` | int    | The interval of buffering about blockage detection                                                                            |
+| `dust_ratio_threshold`        | float  | The threshold of dusty area ratio                                                                                             |
+| `dust_count_threshold`        | int    | The threshold of number continuous frames include dusty area                                                                  |
+| `dust_kernel_size`            | int    | The kernel size of morphology processing in dusty area detection                                                              |
+| `dust_buffering_frames`       | int    | The number of buffering about dusty area detection [range:1-200]                                                              |
+| `dust_buffering_interval`     | int    | The interval of buffering about dusty area detection                                                                          |
 
 ## Assumptions / Known limits
 
