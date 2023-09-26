@@ -48,7 +48,7 @@ def launch_setup(context, *args, **kwargs):
                     "output_frame": LaunchConfiguration("tf_output_frame"),
                     "approximate_sync": True,
                     "publish_synchronized_pointcloud": False,
-                    "input_twist_type": "twist",
+                    "input_twist_topic_type": "twist",
                 }
             ],
         )

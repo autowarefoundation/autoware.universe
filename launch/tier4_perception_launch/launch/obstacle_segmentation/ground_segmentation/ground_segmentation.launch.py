@@ -131,7 +131,7 @@ class GroundSegmentationPipeline:
                         "input_topics": self.ground_segmentation_param["ransac_input_topics"],
                         "output_frame": LaunchConfiguration("base_frame"),
                         "timeout_sec": 1.0,
-                        "input_twist_type": "odom",
+                        "input_twist_topic_type": "odom",
                     }
                 ],
                 extra_arguments=[
@@ -444,7 +444,7 @@ class GroundSegmentationPipeline:
                 {
                     "input_topics": input_topics,
                     "output_frame": LaunchConfiguration("base_frame"),
-                    "input_twist_type": "odom",
+                    "input_twist_topic_type": "odom",
                 }
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -464,7 +464,7 @@ class GroundSegmentationPipeline:
                 {
                     "input_topics": input_topics,
                     "output_frame": LaunchConfiguration("base_frame"),
-                    "input_twist_type": "odom",
+                    "input_twist_topic_type": "odom",
                 }
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
