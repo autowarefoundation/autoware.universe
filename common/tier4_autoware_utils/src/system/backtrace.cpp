@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "tier4_autoware_utils/system/backtrace.hpp"
+
 #include "rclcpp/rclcpp.hpp"
 
 #include <execinfo.h>
@@ -20,9 +22,6 @@
 #include <memory>
 #include <sstream>
 #include <vector>
-
-#include "tier4_autoware_utils/system/backtrace.hpp"
-
 
 namespace tier4_autoware_utils
 {
@@ -51,4 +50,3 @@ void print_backtrace()
 }
 
 }  // namespace tier4_autoware_utils
-
