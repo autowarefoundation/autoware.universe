@@ -90,6 +90,7 @@ public:
   CandidateOutput planCandidate() const override;
   void processOnEntry() override;
   void processOnExit() override;
+  void updateData() override;
 
   void setParameters(const std::shared_ptr<StartPlannerParameters> & parameters)
   {
