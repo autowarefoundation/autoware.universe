@@ -2551,17 +2551,17 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
     for (const auto & cl : current_lanes) {
       // get left and right bounds of current lane
       const auto lane_left_bound = cl.leftBound2d().basicLineString();
+      const auto lane_right_bound = cl.rightBound2d().basicLineString();
       for (size_t i = start_idx; i < end_idx; ++i) {
         // transform vehicle footprint onto path points
         shifted_vehicle_footprint = transformVector(
           local_vehicle_footprint,
           tier4_autoware_utils::pose2transform(path.path.points.at(i).point.pose));
-        if (segment_shift_length > 0.0) {
-          if (boost::geometry::intersects(lane_left_bound, shifted_vehicle_footprint)) {
+        if (boost::geometry::intersects(lane_left_bound, shifted_vehicle_footprint) ||
+            boost::geometry::intersects(lane_right_bound, shifted_vehicle_footprint)){
+          if (segment_shift_length > 0.0) {
             turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-          }
-        } else {
-          if (boost::geometry::intersects(lane_left_bound, shifted_vehicle_footprint)) {
+          } else {
             turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
           }
         }
