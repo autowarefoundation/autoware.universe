@@ -16,6 +16,8 @@
 
 #include <rcutils/logging.h>
 
+namespace tier4_autoware_utils
+{
 LoggerLevelConfigure::LoggerLevelConfigure(rclcpp::Node * node) : ros_logger_(node->get_logger())
 {
   using std::placeholders::_1;
@@ -58,3 +60,5 @@ void LoggerLevelConfigure::onLoggerConfigService(
     ros_logger_, "Logger level [" << request->level << "] is set for " << request->logger_name);
   return;
 }
+
+}  // namespace tier4_autoware_utils

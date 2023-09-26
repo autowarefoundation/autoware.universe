@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ===== Note =====
+// =============== Note ===============
 // This is a util class implementation of the logger_config_component provided by ROS2
 // https://github.com/ros2/demos/blob/humble/logging_demo/src/logger_config_component.cpp
 //
@@ -20,12 +20,33 @@
 // removed.
 // https://github.com/ros2/ros2/issues/1355
 
+// =============== How to use ===============
+// ___In your_node.hpp___
+// #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+// class YourNode : public rclcpp::Node {
+//   ...
+//
+//   // Define logger_configure as a node class member variable
+//   std::shared_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+// }
+//
+// ___In your_node.cpp___
+// YourNode::YourNode() {
+//   ...
+//
+//   // Set up logger_configure
+//   logger_configure_ = std::make_shared<LoggerLevelConfigure>(this);
+// }
+
 #ifndef TIER4_AUTOWARE_UTILS__ROS__LOGGER_LEVEL_CONFIGURE_HPP_
 #define TIER4_AUTOWARE_UTILS__ROS__LOGGER_LEVEL_CONFIGURE_HPP_
 
 #include "logging_demo/srv/config_logger.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+
+namespace tier4_autoware_utils
+{
 
 using logging_demo::srv::ConfigLogger;
 
@@ -43,4 +64,5 @@ private:
     const ConfigLogger::Response::SharedPtr response);
 };
 
+}  // namespace tier4_autoware_utils
 #endif  // TIER4_AUTOWARE_UTILS__ROS__LOGGER_LEVEL_CONFIGURE_HPP_
