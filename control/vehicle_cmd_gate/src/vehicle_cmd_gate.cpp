@@ -73,8 +73,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   pub_external_emergency_ = create_publisher<Emergency>("output/external_emergency", durable_qos);
   operation_mode_pub_ = create_publisher<OperationModeState>("output/operation_mode", durable_qos);
 
-  is_filter_activated_pub_ =
-    create_publisher<IsFilterActivated>("~/is_filter_activated", durable_qos);
+  is_filter_activated_pub_ = create_publisher<GateFilterInfo>("~/gate_filter_info", durable_qos);
   filter_activated_marker_pub_ =
     create_publisher<MarkerArray>("~/is_filter_activated/marker", durable_qos);
 
@@ -524,11 +523,11 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   filter_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
   filter_on_transition_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
 
-  IsFilterActivated is_filter_activated;
+  GateFilterInfo filter_info_;
 
   // Apply transition_filter when transiting from MANUAL to AUTO.
   if (mode.is_in_transition) {
-    filter_on_transition_.filterAll(dt, current_steer_, out, is_filter_activated);
+    filter_on_transition_.filterAll(dt, current_steer_, out, filter_info_);
   } else {
     // When ego is stopped and the input command is not stopping,
     // use the higher of actual vehicle longitudinal state
@@ -547,7 +546,7 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
           : current_status_cmd.longitudinal.speed;
       filter_.setPrevCmd(prev_cmd);
     }
-    filter_.filterAll(dt, current_steer_, out, is_filter_activated);
+    filter_.filterAll(dt, current_steer_, out, filter_info_);
   }
 
   // set prev value for both to keep consistency over switching:
@@ -570,9 +569,9 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   filter_.setPrevCmd(prev_values);
   filter_on_transition_.setPrevCmd(prev_values);
 
-  is_filter_activated.stamp = now();
-  is_filter_activated_pub_->publish(is_filter_activated);
-  filter_activated_marker_pub_->publish(createMarkerArray(is_filter_activated));
+  filter_info_.stamp = now();
+  is_filter_activated_pub_->publish(filter_info_);
+  filter_activated_marker_pub_->publish(createMarkerArray(filter_info_));
 
   return out;
 }
@@ -740,11 +739,11 @@ void VehicleCmdGate::checkExternalEmergencyStop(diagnostic_updater::DiagnosticSt
   stat.summary(status.level, status.message);
 }
 
-MarkerArray VehicleCmdGate::createMarkerArray(const IsFilterActivated & filter_activated)
+MarkerArray VehicleCmdGate::createMarkerArray(const GateFilterInfo & filter_info)
 {
   MarkerArray msg;
 
-  if (!filter_activated.is_activated) {
+  if (!filter_info.is_activated) {
     return msg;
   }
 
@@ -752,23 +751,23 @@ MarkerArray VehicleCmdGate::createMarkerArray(const IsFilterActivated & filter_a
   bool first_msg = true;
   std::string reason = "filter activated on";
 
-  if (filter_activated.is_activated_on_acceleration) {
+  if (filter_info.is_activated_on_acceleration) {
     reason += " lon_acc";
     first_msg = false;
   }
-  if (filter_activated.is_activated_on_jerk) {
+  if (filter_info.is_activated_on_jerk) {
     reason += first_msg ? " jerk" : ", jerk";
     first_msg = false;
   }
-  if (filter_activated.is_activated_on_speed) {
+  if (filter_info.is_activated_on_speed) {
     reason += first_msg ? " speed" : ", speed";
     first_msg = false;
   }
-  if (filter_activated.is_activated_on_steering) {
+  if (filter_info.is_activated_on_steering) {
     reason += first_msg ? " steer" : ", steer";
     first_msg = false;
   }
-  if (filter_activated.is_activated_on_steering_rate) {
+  if (filter_info.is_activated_on_steering_rate) {
     reason += first_msg ? " steer_rate" : ", steer_rate";
     first_msg = false;
   }

@@ -16,7 +16,7 @@
 #define VEHICLE_CMD_FILTER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <vehicle_cmd_gate/msg/is_filter_activated.hpp>
+#include <vehicle_cmd_gate/msg/gate_filter_info.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
@@ -25,7 +25,7 @@
 namespace vehicle_cmd_gate
 {
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using vehicle_cmd_gate::msg::IsFilterActivated;
+using vehicle_cmd_gate::msg::GateFilterInfo;
 using LimitArray = std::vector<double>;
 
 struct VehicleCmdFilterParam
@@ -60,20 +60,25 @@ public:
   void setParam(const VehicleCmdFilterParam & p);
   void setPrevCmd(const AckermannControlCommand & v) { prev_cmd_ = v; }
 
-  void limitLongitudinalWithVel(AckermannControlCommand & input) const;
-  void limitLongitudinalWithAcc(const double dt, AckermannControlCommand & input) const;
-  void limitLongitudinalWithJerk(const double dt, AckermannControlCommand & input) const;
-  void limitLateralWithLatAcc(const double dt, AckermannControlCommand & input) const;
-  void limitLateralWithLatJerk(const double dt, AckermannControlCommand & input) const;
+  void limitLongitudinalWithVel(AckermannControlCommand & input, GateFilterInfo & info) const;
+  void limitLongitudinalWithAcc(
+    const double dt, AckermannControlCommand & input, GateFilterInfo & info) const;
+  void limitLongitudinalWithJerk(
+    const double dt, AckermannControlCommand & input, GateFilterInfo & info) const;
+  void limitLateralWithLatAcc(
+    const double dt, AckermannControlCommand & input, GateFilterInfo & info) const;
+  void limitLateralWithLatJerk(
+    const double dt, AckermannControlCommand & input, GateFilterInfo & info) const;
   void limitActualSteerDiff(
-    const double current_steer_angle, AckermannControlCommand & input) const;
-  void limitLateralSteer(AckermannControlCommand & input) const;
-  void limitLateralSteerRate(const double dt, AckermannControlCommand & input) const;
+    const double current_steer_angle, AckermannControlCommand & input, GateFilterInfo & info) const;
+  void limitLateralSteer(AckermannControlCommand & input, GateFilterInfo & info) const;
+  void limitLateralSteerRate(
+    const double dt, AckermannControlCommand & input, GateFilterInfo & info) const;
   void filterAll(
     const double dt, const double current_steer_angle, AckermannControlCommand & input,
-    IsFilterActivated & is_activated) const;
-  static IsFilterActivated checkIsActivated(
-    const AckermannControlCommand & c1, const AckermannControlCommand & c2,
+    GateFilterInfo & info) const;
+  static void updateIsActivated(
+    GateFilterInfo & info, const AckermannControlCommand & c1, const AckermannControlCommand & c2,
     const double tol = 1.0e-3);
 
   AckermannControlCommand getPrevCmd() { return prev_cmd_; }

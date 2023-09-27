@@ -22,7 +22,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <vehicle_cmd_gate/msg/is_filter_activated.hpp>
+#include <vehicle_cmd_gate/msg/gate_filter_info.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
@@ -66,7 +66,7 @@ using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
 using tier4_system_msgs::msg::MrmBehaviorStatus;
 using tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
-using vehicle_cmd_gate::msg::IsFilterActivated;
+using vehicle_cmd_gate::msg::GateFilterInfo;
 using visualization_msgs::msg::MarkerArray;
 
 using diagnostic_msgs::msg::DiagnosticStatus;
@@ -103,7 +103,7 @@ private:
   rclcpp::Publisher<GateMode>::SharedPtr gate_mode_pub_;
   rclcpp::Publisher<EngageMsg>::SharedPtr engage_pub_;
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_pub_;
-  rclcpp::Publisher<IsFilterActivated>::SharedPtr is_filter_activated_pub_;
+  rclcpp::Publisher<GateFilterInfo>::SharedPtr is_filter_activated_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr filter_activated_marker_pub_;
 
   // Subscription
@@ -234,7 +234,7 @@ private:
   double stop_check_duration_;
 
   // debug
-  MarkerArray createMarkerArray(const IsFilterActivated & filter_activated);
+  MarkerArray createMarkerArray(const GateFilterInfo & filter_info);
 };
 
 }  // namespace vehicle_cmd_gate

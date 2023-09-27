@@ -1,0 +1,8 @@
+float64 velocity
+float64 lon_acceleration
+float64 lon_jerk
+float64 lat_acceleration
+float64 lat_jerk
+float64 steering
+float64 steering_rate
+float64 steering_diff

@@ -26,6 +26,7 @@
 
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using vehicle_cmd_gate::LimitArray;
+using vehicle_cmd_gate::msg::GateFilterInfo;
 
 constexpr double NOMINAL_INTERVAL = 1.0;
 
@@ -103,6 +104,7 @@ void test_1d_limit(
   double STEER_DIFF, double STEER_LIM, double STEER_RATE_LIM,
   const AckermannControlCommand & prev_cmd, const AckermannControlCommand & raw_cmd)
 {
+  GateFilterInfo info;
   const double WHEELBASE = 3.0;
   const double DT = 0.1;  // [s]
 
@@ -116,7 +118,7 @@ void test_1d_limit(
   // velocity filter
   {
     auto filtered_cmd = raw_cmd;
-    filter.limitLongitudinalWithVel(filtered_cmd);
+    filter.limitLongitudinalWithVel(filtered_cmd, info);
 
     // check if the filtered value does not exceed the limit.
     ASSERT_LT_NEAR(filtered_cmd.longitudinal.speed, V_LIM);
@@ -130,7 +132,7 @@ void test_1d_limit(
   // acceleration filter
   {
     auto filtered_cmd = raw_cmd;
-    filter.limitLongitudinalWithAcc(DT, filtered_cmd);
+    filter.limitLongitudinalWithAcc(DT, filtered_cmd, info);
 
     // check if the filtered value does not exceed the limit.
     ASSERT_LT_NEAR(filtered_cmd.longitudinal.acceleration, A_LIM);
@@ -159,7 +161,7 @@ void test_1d_limit(
   // jerk filter
   {
     auto filtered_cmd = raw_cmd;
-    filter.limitLongitudinalWithJerk(DT, filtered_cmd);
+    filter.limitLongitudinalWithJerk(DT, filtered_cmd, info);
     const double acc_max = prev_cmd.longitudinal.acceleration + J_LIM * DT;
     const double acc_min = prev_cmd.longitudinal.acceleration - J_LIM * DT;
 
@@ -178,7 +180,7 @@ void test_1d_limit(
   // lateral acceleration filter
   {
     auto filtered_cmd = raw_cmd;
-    filter.limitLateralWithLatAcc(DT, filtered_cmd);
+    filter.limitLateralWithLatAcc(DT, filtered_cmd, info);
     const double filtered_latacc = calcLatAcc(filtered_cmd, WHEELBASE, ego_v);
     const double raw_latacc = calcLatAcc(raw_cmd, WHEELBASE, ego_v);
 
@@ -194,7 +196,7 @@ void test_1d_limit(
   // lateral jerk filter
   {
     auto filtered_cmd = raw_cmd;
-    filter.limitLateralWithLatJerk(DT, filtered_cmd);
+    filter.limitLateralWithLatJerk(DT, filtered_cmd, info);
     const double prev_lat_acc = calcLatAcc(prev_cmd, WHEELBASE, ego_v);
     const double filtered_lat_acc = calcLatAcc(filtered_cmd, WHEELBASE, ego_v);
     const double raw_lat_acc = calcLatAcc(raw_cmd, WHEELBASE, ego_v);
@@ -215,7 +217,7 @@ void test_1d_limit(
   {
     const auto current_steering = 0.1;
     auto filtered_cmd = raw_cmd;
-    filter.limitActualSteerDiff(current_steering, filtered_cmd);
+    filter.limitActualSteerDiff(current_steering, filtered_cmd, info);
     const auto filtered_steer_diff = filtered_cmd.lateral.steering_tire_angle - current_steering;
     const auto raw_steer_diff = raw_cmd.lateral.steering_tire_angle - current_steering;
     // check if the filtered value does not exceed the limit.
@@ -293,6 +295,8 @@ TEST(VehicleCmdFilter, VehicleCmdFilterInterpolate)
 
   const auto DT = 0.033;
 
+  GateFilterInfo info;
+
   const auto orig_cmd = []() {
     AckermannControlCommand cmd;
     cmd.lateral.steering_tire_angle = 0.5;
@@ -308,43 +312,43 @@ TEST(VehicleCmdFilter, VehicleCmdFilterInterpolate)
   };
   const auto _limitSteer = [&](const auto & in) {
     auto out = in;
-    filter.limitLateralSteer(out);
+    filter.limitLateralSteer(out, info);
     return out;
   };
   const auto _limitSteerRate = [&](const auto & in) {
     auto out = in;
-    filter.limitLateralSteerRate(DT, out);
+    filter.limitLateralSteerRate(DT, out, info);
     return out;
   };
   const auto _limitLongitudinalWithVel = [&](const auto & in) {
     auto out = in;
-    filter.limitLongitudinalWithVel(out);
+    filter.limitLongitudinalWithVel(out, info);
     return out;
   };
   const auto _limitLongitudinalWithAcc = [&](const auto & in) {
     auto out = in;
-    filter.limitLongitudinalWithAcc(DT, out);
+    filter.limitLongitudinalWithAcc(DT, out, info);
     return out;
   };
   const auto _limitLongitudinalWithJerk = [&](const auto & in) {
     auto out = in;
-    filter.limitLongitudinalWithJerk(DT, out);
+    filter.limitLongitudinalWithJerk(DT, out, info);
     return out;
   };
   const auto _limitLateralWithLatAcc = [&](const auto & in) {
     auto out = in;
-    filter.limitLateralWithLatAcc(DT, out);
+    filter.limitLateralWithLatAcc(DT, out, info);
     return out;
   };
   const auto _limitLateralWithLatJerk = [&](const auto & in) {
     auto out = in;
-    filter.limitLateralWithLatJerk(DT, out);
+    filter.limitLateralWithLatJerk(DT, out, info);
     return out;
   };
   const auto _limitActualSteerDiff = [&](const auto & in) {
     auto out = in;
     const auto prev_steering = 0.0;
-    filter.limitActualSteerDiff(prev_steering, out);
+    filter.limitActualSteerDiff(prev_steering, out, info);
     return out;
   };
 
