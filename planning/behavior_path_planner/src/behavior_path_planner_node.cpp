@@ -145,6 +145,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
         manager->name(), create_publisher<Path>(path_reference_name_space + manager->name(), 1));
     }
     {
+      RCLCPP_INFO(get_logger(), "The priority is %d", p.config_sampling_planner.priority);
       ModuleConfigParameters config;
       config.enable_module = true;
       config.priority = 16;
