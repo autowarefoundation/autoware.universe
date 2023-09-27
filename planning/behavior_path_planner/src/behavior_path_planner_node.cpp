@@ -144,13 +144,11 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       path_reference_publishers_.emplace(
         manager->name(), create_publisher<Path>(path_reference_name_space + manager->name(), 1));
     }
-    {
+    if (p.config_sampling_planner.enable_module) {
       RCLCPP_INFO(get_logger(), "The priority is %d", p.config_sampling_planner.priority);
-      ModuleConfigParameters config;
-      config.enable_module = true;
-      config.priority = 16;
-      auto manager =
-        std::make_shared<SamplingPlannerModuleManager>(this, "sampling_planner", config);
+
+      auto manager = std::make_shared<SamplingPlannerModuleManager>(
+        this, "sampling_planner", p.config_sampling_planner);
       planner_manager_->registerSceneModuleManager(manager);
     }
   }
