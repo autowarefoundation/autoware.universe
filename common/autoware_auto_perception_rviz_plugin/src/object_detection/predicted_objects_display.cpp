@@ -26,11 +26,49 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
+PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks")
+{
+  num_threads_property = new rviz_common::properties::IntProperty(
+    "Num Threads", 4, "Num of Threads to use", this);  // by default, use 4 threads
+  max_num_threads = 8;            // hard code the number of threads to be created
+  num_threads = max_num_threads;  // this will be soon modified in the workerThread
+
+  for (int ii = 0; ii < max_num_threads; ++ii) {
+    threads.emplace_back(std::thread(&PredictedObjectsDisplay::workerThread, this));
+  }
+
+  // ParallelizedThread Initialization
+  std::vector<std::thread> thread_vector;
+  ending_semaphores = reinterpret_cast<sem_t *>(malloc(max_num_threads * sizeof(sem_t)));
+
+  for (int rank = 0; rank < max_num_threads; rank++) {
+    sem_init(&ending_semaphores[rank], 0, 0);
+  }
+}
+
+void PredictedObjectsDisplay::workerThread()
+{ // A standard working thread that waiting for jobs
+  while (true) {
+    std::function<void()> job;
+    {
+      std::unique_lock<std::mutex> lock(queue_mutex);
+      mutex_condition.wait(
+        lock, [this]{
+          return !jobs.empty() || should_terminate;
+        }
+      );
+      if (should_terminate) {
+        return;
+      }
+      job = jobs.front();
+      jobs.pop();
+    }
+    job();
+  }
+}
+
 void PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread(int rank)
 {
-  while (true) {                           // keep the thread alive
-    sem_wait(&starting_semaphores[rank]);  // wait for the signal to start
-
     // Determine the number of objects to be processed by this thread
     int length = tmp_msg->objects.size();
     int num_object_per_thread = static_cast<int>(ceil(length / static_cast<float>(num_threads)));
@@ -47,70 +85,42 @@ void PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread(int rank)
     push_tmp_markers(thread_makers);
 
     sem_post(&ending_semaphores[rank]);  // signal the end of the job
-  }
 }
 
-PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks")
-{
-  num_threads_property = new rviz_common::properties::IntProperty(
-    "Num Threads", 4, "Num of Threads to use", this);  // by default, use 4 threads
-  max_num_threads = 8;            // hard code the number of threads to be created
-  num_threads = max_num_threads;  // this will be soon modified in the workerThread
-  std::thread worker(&PredictedObjectsDisplay::workerThread, this);
-  worker.detach();
-}
+void PredictedObjectsDisplay::messageProcessorThreadJob(){
+  // Receiving 
+  std::unique_lock<std::mutex> lock(mutex);
+  tmp_msg = this->msg;
+  this->msg.reset();
+  lock.unlock();
 
-void PredictedObjectsDisplay::workerThread()
-{
-  // ParallelizedThread Initialization
-  std::vector<std::thread> thread_vector;
-  starting_semaphores = reinterpret_cast<sem_t *>(malloc(max_num_threads * sizeof(sem_t)));
-  ending_semaphores = reinterpret_cast<sem_t *>(malloc(max_num_threads * sizeof(sem_t)));
+  int N = tmp_msg->objects.size();
+  update_id_map(tmp_msg);
 
-  for (int rank = 0; rank < max_num_threads; rank++) {
-    sem_init(&starting_semaphores[rank], 0, 0);
-    sem_init(&ending_semaphores[rank], 0, 0);
-    thread_vector.push_back(
-      std::thread(&PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread, this, rank));
-    thread_vector[rank].detach();
-  }
+  // max_num_threads : Hard-coded for now. Define the pool of all threads.
+  // num_threads: dynamically change the number of threads based on the number of objects.
+  num_threads = std::min(max_num_threads, N / 2);
+  num_threads = std::min(num_threads_property->getInt(), num_threads);
+  num_threads = std::max(1, num_threads);
 
-  while (true) {
-    std::unique_lock<std::mutex> lock(mutex);
-    // waiting for the main process to get the message
-    condition.wait(lock, [this] { return this->msg; });
-
-    tmp_msg = this->msg;
-    this->msg.reset();
-
-    lock.unlock();
-    int N = tmp_msg->objects.size();
-
-    update_id_map(tmp_msg);
-
-    // max_num_threads : Hard-coded for now. Define the pool of all threads.
-    // num_threads: dynamically change the number of threads based on the number of objects.
-    num_threads = std::min(max_num_threads, N / 2);
-    num_threads = std::min(num_threads_property->getInt(), num_threads);
-    num_threads = std::max(1, num_threads);
-
-    if (num_threads > 1) {
-      tmp_markers.clear();
-      for (int rank = 0; rank < num_threads; rank++) {
-        sem_post(&starting_semaphores[rank]);
-      }
-      for (int rank = 0; rank < num_threads; rank++) {
-        sem_wait(&ending_semaphores[rank]);
-      }
-    } else {
-      tmp_markers = createMarkers(tmp_msg);
+  if (num_threads > 1){
+    tmp_markers.clear();
+    for (int rank = 0; rank < num_threads; rank++){
+      std::function<void()> f = std::bind(&PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread, this, rank);
+      queueJob(f);
     }
-
-    lock.lock();
-    markers = tmp_markers;
-
-    consumed = true;
+    for (int rank = 0; rank < num_threads; rank++){
+      sem_wait(&ending_semaphores[rank]);
+    }
   }
+  else{
+    tmp_markers = createMarkers(tmp_msg);
+  }
+
+  lock.lock();
+  markers = tmp_markers;
+
+  consumed = true;
 }
 
 void PredictedObjectsDisplay::push_tmp_markers(
@@ -262,7 +272,8 @@ void PredictedObjectsDisplay::processMessage(PredictedObjects::ConstSharedPtr ms
   std::unique_lock<std::mutex> lock(mutex);
 
   this->msg = msg;
-  condition.notify_one();
+  std::function<void()> f = std::bind(&PredictedObjectsDisplay::messageProcessorThreadJob, this);
+  queueJob(f);
 }
 
 void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)

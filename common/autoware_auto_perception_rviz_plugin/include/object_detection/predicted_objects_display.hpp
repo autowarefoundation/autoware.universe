@@ -47,9 +47,33 @@ public:
   using PredictedObjects = autoware_auto_perception_msgs::msg::PredictedObjects;
 
   PredictedObjectsDisplay();
+  ~PredictedObjectsDisplay(){
+    {
+      std::unique_lock<std::mutex> lock(queue_mutex);
+      should_terminate=true;
+    }
+    mutex_condition.notify_all();
+    for (std::thread& active_thread: threads){
+      active_thread.join();
+    }
+    threads.clear();
+
+    for (int ii = 0; ii < max_num_threads; ++ii){
+      sem_close(&ending_semaphores[ii]);
+    }
+    ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>::~ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>();
+  }
 
 private:
   void processMessage(PredictedObjects::ConstSharedPtr msg) override;
+
+  void queueJob(std::function<void()>& job) {
+    {
+      std::unique_lock<std::mutex> lock(queue_mutex);
+      jobs.push(job);
+    }
+    mutex_condition.notify_one();
+  }
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
   {
@@ -107,6 +131,8 @@ private:
   // parallelizedCreateMarkerWorkerThread: create markers from the message with multiple workers
   void parallelizedCreateMarkerWorkerThread(int rank);
 
+  void messageProcessorThreadJob();
+
   void update(float wall_dt, float ros_dt) override;
 
   std::vector<visualization_msgs::msg::Marker::SharedPtr> tackle_one_object(
@@ -141,7 +167,13 @@ private:
   // max_num_threads: number of threads to be created, hard-coded to be 8;
   int max_num_threads;
 
-  sem_t * starting_semaphores;
+  bool should_terminate{false};
+  std::mutex queue_mutex;
+  std::condition_variable mutex_condition;
+  std::vector<std::thread> threads;
+  std::queue<std::function<void()>> jobs;
+
+  // semaphores showing the completion of marker creation in each thread
   sem_t * ending_semaphores;
 
   // condition: condition variable for working thread to wait for main callback to get this->msg;
