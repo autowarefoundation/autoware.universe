@@ -261,7 +261,8 @@ private:
   bool checkCollision(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const autoware_auto_perception_msgs::msg::PredictedObjects & target_objects,
-    const util::PathLanelets & path_lanelets, const int closest_idx, const double time_delay,
+    const util::PathLanelets & path_lanelets, const size_t closest_idx,
+    const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
     const util::TrafficPrioritizedLevel & traffic_prioritized_level);
 
   bool isOcclusionCleared(
