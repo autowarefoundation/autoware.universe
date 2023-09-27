@@ -7,9 +7,7 @@
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
 #include "emergency_handler/emergency_handler_core.hpp"
@@ -21,21 +19,20 @@
 EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
 {
   // Parameter
-  param_.update_rate = declare_parameter<int>("update_rate");
-  param_.timeout_hazard_status = declare_parameter<double>("timeout_hazard_status");
-  param_.timeout_takeover_request = declare_parameter<double>("timeout_takeover_request");
-  param_.use_takeover_request = declare_parameter<bool>("use_takeover_request");
-  param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped");
-  param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop");
-  param_.turning_hazard_on.emergency = declare_parameter<bool>("turning_hazard_on.emergency");
+  param_.update_rate = declare_parameter<int>("update_rate", 10);
+  param_.timeout_operation_mode_availability = declare_parameter<double>("timeout_operation_mode_availability", 0.5);
+  param_.use_emergency_holding = declare_parameter<bool>("use_emergency_holding", false);
+  param_.timeout_emergency_recovery = declare_parameter<double>("timeout_emergency_recovery", 5.0);
+  param_.timeout_takeover_request = declare_parameter<double>("timeout_takeover_request", 10.0);
+  param_.use_takeover_request = declare_parameter<bool>("use_takeover_request", false);
+  param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped", false);
+  param_.use_pull_over = declare_parameter<bool>("use_pull_over", false);
+  param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop", false);
+  param_.turning_hazard_on.emergency = declare_parameter<bool>("turning_hazard_on.emergency", true);
 
   using std::placeholders::_1;
 
   // Subscriber
-  sub_hazard_status_stamped_ =
-    create_subscription<autoware_auto_system_msgs::msg::HazardStatusStamped>(
-      "~/input/hazard_status", rclcpp::QoS{1},
-      std::bind(&EmergencyHandler::onHazardStatusStamped, this, _1));
   sub_prev_control_command_ =
     create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
       "~/input/prev_control_command", rclcpp::QoS{1},
@@ -45,6 +42,13 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // subscribe control mode
   sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
+  sub_operation_mode_availability_ =
+    create_subscription<tier4_system_msgs::msg::OperationModeAvailability>(
+      "~/input/operation_mode_availability", rclcpp::QoS{1},
+      std::bind(&EmergencyHandler::onOperationModeAvailability, this, _1));
+  sub_mrm_pull_over_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
+    "~/input/mrm/pull_over/status", rclcpp::QoS{1},
+    std::bind(&EmergencyHandler::onMrmPullOverStatus, this, _1));
   sub_mrm_comfortable_stop_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
     "~/input/mrm/comfortable_stop/status", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onMrmComfortableStopStatus, this, _1));
@@ -63,6 +67,11 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     create_publisher<autoware_adapi_v1_msgs::msg::MrmState>("~/output/mrm/state", rclcpp::QoS{1});
 
   // Clients
+  client_mrm_pull_over_group_ =
+    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  client_mrm_pull_over_ = create_client<tier4_system_msgs::srv::OperateMrm>(
+    "~/output/mrm/pull_over/operate", rmw_qos_profile_services_default,
+    client_mrm_pull_over_group_);
   client_mrm_comfortable_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_mrm_comfortable_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
@@ -92,13 +101,6 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     this, get_clock(), update_period_ns, std::bind(&EmergencyHandler::onTimer, this));
 }
 
-void EmergencyHandler::onHazardStatusStamped(
-  const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg)
-{
-  hazard_status_stamped_ = msg;
-  stamp_hazard_status_ = this->now();
-}
-
 void EmergencyHandler::onPrevControlCommand(
   const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg)
 {
@@ -119,6 +121,46 @@ void EmergencyHandler::onControlMode(
   control_mode_ = msg;
 }
 
+void EmergencyHandler::onOperationModeAvailability(
+  const tier4_system_msgs::msg::OperationModeAvailability::ConstSharedPtr msg)
+{
+
+  if (!param_.use_emergency_holding) {
+    operation_mode_availability_ = msg;
+    return;
+  }
+
+  if (emergency_holding_) {
+    return;
+  }
+
+  if (msg->autonomous) {
+    stamp_autonomous_become_unavailable.reset();
+    operation_mode_availability_ = msg;
+    return;
+  }
+
+  if (!msg->autonomous) {
+    if (!stamp_autonomous_become_unavailable) {
+      stamp_autonomous_become_unavailable = this->now();
+      operation_mode_availability_ = msg;
+      return;
+    }
+    const auto emergency_duration = (this->now() - stamp_autonomous_become_unavailable.value()).seconds();
+    if (emergency_duration < param_.timeout_emergency_recovery) {
+      operation_mode_availability_ = msg;
+    } else {
+      emergency_holding_ = true;
+    }
+  }
+}
+
+void EmergencyHandler::onMrmPullOverStatus(
+  const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg)
+{
+  mrm_pull_over_status_ = msg;
+}
+
 void EmergencyHandler::onMrmComfortableStopStatus(
   const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg)
 {
@@ -137,16 +179,19 @@ autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHaz
   HazardLightsCommand msg;
 
   // Check emergency
-  const bool is_emergency = isEmergency(hazard_status_stamped_->status);
+  const bool is_emergency = isEmergency();
 
-  if (hazard_status_stamped_->status.emergency_holding) {
+  /*if (hazard_status_stamped_->status.emergency_holding) {
+    // turn hazard on during emergency holding
+    msg.command = HazardLightsCommand::ENABLE;
+  } else*/
+  if (emergency_holding_) {
     // turn hazard on during emergency holding
     msg.command = HazardLightsCommand::ENABLE;
   } else if (is_emergency && param_.turning_hazard_on.emergency) {
     // turn hazard on if vehicle is in emergency state and
     // turning hazard on if emergency flag is true
     msg.command = HazardLightsCommand::ENABLE;
-
   } else {
     msg.command = HazardLightsCommand::NO_COMMAND;
   }
@@ -228,6 +273,15 @@ void EmergencyHandler::callMrmBehavior(
     RCLCPP_WARN(this->get_logger(), "MRM behavior is None. Do nothing.");
     return;
   }
+  if (mrm_behavior == MrmState::PULL_OVER) {
+    auto result = client_mrm_pull_over_->async_send_request(request).get();
+    if (result->response.success == true) {
+      RCLCPP_WARN(this->get_logger(), "Pull over is operated");
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Pull over is failed to operate");
+    }
+    return;
+  }
   if (mrm_behavior == MrmState::COMFORTABLE_STOP) {
     auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
     if (result->response.success == true) {
@@ -261,6 +315,15 @@ void EmergencyHandler::cancelMrmBehavior(
     // Do nothing
     return;
   }
+  if (mrm_behavior == MrmState::PULL_OVER) {
+    auto result = client_mrm_pull_over_->async_send_request(request).get();
+    if (result->response.success == true) {
+      RCLCPP_WARN(this->get_logger(), "Pull over is canceled");
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Pull over is failed to cancel");
+    }
+    return;
+  }
   if (mrm_behavior == MrmState::COMFORTABLE_STOP) {
     auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
     if (result->response.success == true) {
@@ -284,12 +347,22 @@ void EmergencyHandler::cancelMrmBehavior(
 
 bool EmergencyHandler::isDataReady()
 {
-  if (!hazard_status_stamped_) {
+  if (!operation_mode_availability_) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for hazard_status_stamped msg...");
     return false;
   }
+
+  if (
+    param_.use_pull_over && mrm_pull_over_status_->state ==
+                                     tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE) {
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
+      "waiting for mrm pull over to become available...");
+    return false;
+  }
+
 
   if (
     param_.use_comfortable_stop && mrm_comfortable_stop_status_->state ==
@@ -316,12 +389,12 @@ void EmergencyHandler::onTimer()
   if (!isDataReady()) {
     return;
   }
-  const bool is_hazard_status_timeout =
-    (this->now() - stamp_hazard_status_).seconds() > param_.timeout_hazard_status;
-  if (is_hazard_status_timeout) {
+  const bool is_operation_mode_availability_timeout=
+    (this->now() - stamp_hazard_status_).seconds() > param_.timeout_operation_mode_availability;
+  if (is_operation_mode_availability_timeout) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "heartbeat_hazard_status is timeout");
+      "heartbeat operation_mode_availability is timeout");
     mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::MRM_OPERATING;
     publishControlCommands();
     return;
@@ -371,7 +444,7 @@ void EmergencyHandler::updateMrmState()
   using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 
   // Check emergency
-  const bool is_emergency = isEmergency(hazard_status_stamped_->status);
+  const bool is_emergency = isEmergency();
 
   // Get mode
   const bool is_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
@@ -429,36 +502,46 @@ void EmergencyHandler::updateMrmState()
 autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurrentMrmBehavior()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
-  using autoware_auto_system_msgs::msg::HazardStatus;
-
-  // Get hazard level
-  const auto level = hazard_status_stamped_->status.level;
+  using tier4_system_msgs::msg::OperationModeAvailability;
 
   // State machine
   if (mrm_state_.behavior == MrmState::NONE) {
-    if (level == HazardStatus::LATENT_FAULT) {
+    if (operation_mode_availability_->pull_over) {
+      if (param_.use_pull_over) {
+        return MrmState::PULL_OVER;
+      }
+    }
+    if (operation_mode_availability_->comfortable_stop) {
       if (param_.use_comfortable_stop) {
         return MrmState::COMFORTABLE_STOP;
       }
-      return MrmState::EMERGENCY_STOP;
     }
-    if (level == HazardStatus::SINGLE_POINT_FAULT) {
+    if (!operation_mode_availability_->emergency_stop) {
+      RCLCPP_WARN(
+        this->get_logger(), "no mrm operation available: operate emergency_stop");
+    }
+    return MrmState::EMERGENCY_STOP;
+  }
+  if (mrm_state_.behavior == MrmState::PULL_OVER) {
+    if (!operation_mode_availability_->pull_over) {
+      if (!operation_mode_availability_->emergency_stop) {
+        RCLCPP_WARN(
+          this->get_logger(), "no mrm operation available: operate emergency_stop");
+      }
       return MrmState::EMERGENCY_STOP;
     }
   }
   if (mrm_state_.behavior == MrmState::COMFORTABLE_STOP) {
-    if (level == HazardStatus::SINGLE_POINT_FAULT) {
+    if (!operation_mode_availability_->comfortable_stop) {
+      if (!operation_mode_availability_->emergency_stop) {
+        RCLCPP_WARN(
+          this->get_logger(), "no mrm operation available: operate emergency_stop");
+      }
       return MrmState::EMERGENCY_STOP;
     }
   }
 
   return mrm_state_.behavior;
-}
-
-bool EmergencyHandler::isEmergency(
-  const autoware_auto_system_msgs::msg::HazardStatus & hazard_status)
-{
-  return hazard_status.emergency || hazard_status.emergency_holding;
 }
 
 bool EmergencyHandler::isStopped()
@@ -469,4 +552,9 @@ bool EmergencyHandler::isStopped()
   }
 
   return false;
+}
+
+bool EmergencyHandler::isEmergency() const
+{
+  return !operation_mode_availability_->autonomous;
 }
