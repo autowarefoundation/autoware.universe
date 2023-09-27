@@ -105,6 +105,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".collision_detection.keep_detection_vel_thr");
   ip.collision_detection.use_upstream_velocity =
     getOrDeclareParameter<bool>(node, ns + ".collision_detection.use_upstream_velocity");
+  ip.collision_detection.minimum_upstream_velocity =
+    getOrDeclareParameter<double>(node, ns + ".collision_detection.minimum_upstream_velocity");
 
   ip.occlusion.enable = getOrDeclareParameter<bool>(node, ns + ".occlusion.enable");
   ip.occlusion.occlusion_attention_area_length =

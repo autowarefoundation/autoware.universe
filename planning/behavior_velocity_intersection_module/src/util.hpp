@@ -149,7 +149,7 @@ TimeDistanceArray calcIntersectionPassingTime(
   const std::shared_ptr<const PlannerData> & planner_data, const std::set<int> & associative_ids,
   const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
   const double time_delay, const double intersection_velocity, const double minimum_ego_velocity,
-  const bool use_upstream_velocity);
+  const bool use_upstream_velocity, const double minimum_upstream_velocity);
 
 double calcDistanceUntilIntersectionLanelet(
   const lanelet::ConstLanelet & assigned_lanelet,

@@ -96,6 +96,7 @@ public:
       } not_prioritized;
       double keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
       bool use_upstream_velocity;
+      double minimum_upstream_velocity;
     } collision_detection;
     struct Occlusion
     {

@@ -1110,7 +1110,7 @@ TimeDistanceArray calcIntersectionPassingTime(
   const std::shared_ptr<const PlannerData> & planner_data, const std::set<int> & associative_ids,
   const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
   const double time_delay, const double intersection_velocity, const double minimum_ego_velocity,
-  const bool use_upstream_velocity)
+  const bool use_upstream_velocity, const double minimum_upstream_velocity)
 {
   double dist_sum = 0.0;
   int assigned_lane_found = false;
@@ -1155,7 +1155,7 @@ TimeDistanceArray calcIntersectionPassingTime(
       (p1.point.longitudinal_velocity_mps + p2.point.longitudinal_velocity_mps) / 2.0;
     const double minimum_ego_velocity_division =
       (use_upstream_velocity && i > last_intersection_stop_line_candidate_idx)
-        ? 0.001 /* to avoid null division */
+        ? minimum_upstream_velocity /* to avoid null division */
         : minimum_ego_velocity;
     const double passing_velocity =
       std::max<double>(minimum_ego_velocity_division, average_velocity);
