@@ -11,6 +11,11 @@ if(NOT ${CUDA_FOUND})
   return()
 endif()
 
+include_directories(
+  include
+  ${CUDA_INCLUDE_DIRS}
+)
+
 install(
   DIRECTORY include/${PROJECT_NAME}/
   DESTINATION include/${PROJECT_NAME}
@@ -19,6 +24,11 @@ install(
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+  file(GLOB_RECURSE test_files test/*.cpp)
+  ament_add_ros_isolated_gtest(test_cuda_utils ${test_files})
+  target_link_libraries(test_cuda_utils
+    ${CUDA_LIBRARIES}
+  )
 endif()
 
 ament_export_include_directories(include)
