@@ -72,7 +72,8 @@ public:
   void limitActualSteerDiff(
     const double current_steer_angle, AckermannControlCommand & input, GateFilterInfo & info) const;
   void limitLateralSteer(AckermannControlCommand & input, GateFilterInfo & info) const;
-  void limitLateralSteerRate(const double dt, AckermannControlCommand & input) const;
+  void limitLateralSteerRate(
+    const double dt, AckermannControlCommand & input, GateFilterInfo & info) const;
   void filterAll(
     const double dt, const double current_steer_angle, AckermannControlCommand & input,
     GateFilterInfo & info) const;

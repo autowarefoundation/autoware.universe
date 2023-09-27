@@ -317,7 +317,7 @@ TEST(VehicleCmdFilter, VehicleCmdFilterInterpolate)
   };
   const auto _limitSteerRate = [&](const auto & in) {
     auto out = in;
-    filter.limitLateralSteerRate(DT, out);
+    filter.limitLateralSteerRate(DT, out, info);
     return out;
   };
   const auto _limitLongitudinalWithVel = [&](const auto & in) {

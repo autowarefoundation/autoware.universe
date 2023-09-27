@@ -215,19 +215,24 @@ void VehicleCmdFilter::limitLateralSteer(
   info.filtered.steering = input.lateral.steering_tire_angle;
 }
 
-void VehicleCmdFilter::limitLateralSteerRate(const double dt, AckermannControlCommand & input) const
+void VehicleCmdFilter::limitLateralSteerRate(
+  const double dt, AckermannControlCommand & input, GateFilterInfo & info) const
 {
   const float steer_rate_limit = getSteerRateLim();
+  info.limit.steering_rate = steer_rate_limit;
 
   // for steering angle rate
+  info.raw.steering_rate = input.lateral.steering_tire_rotation_rate;
   input.lateral.steering_tire_rotation_rate =
     std::clamp(input.lateral.steering_tire_rotation_rate, -steer_rate_limit, steer_rate_limit);
+  info.filtered.steering_rate = input.lateral.steering_tire_rotation_rate;
 
   // for steering angle
   const float steer_diff_limit = steer_rate_limit * dt;
   float ds = input.lateral.steering_tire_angle - prev_cmd_.lateral.steering_tire_angle;
   ds = std::clamp(ds, -steer_diff_limit, steer_diff_limit);
   input.lateral.steering_tire_angle = prev_cmd_.lateral.steering_tire_angle + ds;
+  info.filtered.steering = input.lateral.steering_tire_angle;
 }
 
 void VehicleCmdFilter::filterAll(
@@ -236,7 +241,7 @@ void VehicleCmdFilter::filterAll(
 {
   const auto cmd_orig = cmd;
   limitLateralSteer(cmd, info);
-  limitLateralSteerRate(dt, cmd);
+  limitLateralSteerRate(dt, cmd, info);
   limitLongitudinalWithJerk(dt, cmd, info);
   limitLongitudinalWithAcc(dt, cmd, info);
   limitLongitudinalWithVel(cmd, info);
