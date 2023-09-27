@@ -48,9 +48,9 @@ public:
 
 private:
   static constexpr double MAX_GOOD_RATE = 0.10;
-  static constexpr double BASE_STDDEV_COEFF = 0.25;
+  static constexpr double BASE_STDDEV_COEFF = 1.0;
   static constexpr double TARGET_SCORE = 6.0;
-  static constexpr double MIN_GOOD_SCORE = 1.8;
+  static constexpr double MIN_GOOD_SCORE = 2.0;
   static constexpr int64_t N_EI_CANDIDATES = 100;
 
   double acquisition_function(const Input & input);
@@ -74,8 +74,8 @@ private:
   // Only for yaw, uniform distribution instead of normal distribution is used as initial
   // distribution. So yaw_stddev value is not set from the constructor. However, the basic
   // stddev is needed for kernel density estimation, so it is given as a fixed value.
-  // The value is determined empirically to 30 degrees.
-  const double yaw_stddev_ = M_PI / 6.0;
+  // The value is determined empirically to 90 degrees.
+  const double yaw_stddev_ = M_PI / 2;
 };
 
 #endif  // NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
