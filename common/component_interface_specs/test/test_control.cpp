@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 #include "component_interface_specs/control.hpp"
 
-TEST(controlinterface,interface)
+TEST(control,interface)
 {
   {
     using control_interface::IsPaused;

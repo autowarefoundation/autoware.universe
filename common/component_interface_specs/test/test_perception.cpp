@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 #include "component_interface_specs/perception.hpp"
 
-TEST(perceptioninterface,interface)
+TEST(perception,interface)
 {
   {
     using perception_interface::ObjectRecognition;
