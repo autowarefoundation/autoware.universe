@@ -27,13 +27,18 @@ include_directories(${PCL_INCLUDE_DIRS})
 
 ament_auto_add_executable(ndt_scan_matcher
   src/debug.cpp
+  src/diagnostics_module.cpp
+  src/diagnostics_updater_module.cpp
   src/ndt_scan_matcher_node.cpp
   src/ndt_scan_matcher_core.cpp
+  src/ndt_scan_matcher_diagnostics_updater_core.cpp
+  src/ndt_scan_matcher_diagnostics_sensor_points.cpp
   src/util_func.cpp
   src/pose_array_interpolator.cpp
   src/tf2_listener_module.cpp
   src/map_module.cpp
   src/map_update_module.cpp
+  src/map_update_module_diagnostics.cpp
 )
 
 link_directories(${PCL_LIBRARY_DIRS})

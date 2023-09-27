@@ -16,6 +16,7 @@
 #define NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
 #include "ndt_scan_matcher/debug.hpp"
+#include "ndt_scan_matcher/diagnostics_module.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/tf2_listener_module.hpp"
 #include "ndt_scan_matcher/util_func.hpp"
@@ -51,8 +52,7 @@ public:
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
     std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
     std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
-    rclcpp::CallbackGroup::SharedPtr main_callback_group,
-    std::shared_ptr<std::map<std::string, std::string>> state_ptr);
+    rclcpp::CallbackGroup::SharedPtr main_callback_group);
 
 private:
   friend class NDTScanMatcher;
@@ -65,6 +65,11 @@ private:
   void update_map(const geometry_msgs::msg::Point & position);
   [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position) const;
   void publish_partial_pcd_map();
+
+  // These functions are written in map_update_module_diagnostics.cpp
+  void initialize_diagnostics_key_value();
+  bool validate_map_is_in_lidar_range(const double distance, const double warn_distance);
+  bool validate_is_set_current_position(const bool is_set_current_position);
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
 
@@ -82,7 +87,7 @@ private:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
-  std::shared_ptr<std::map<std::string, std::string>> state_ptr_;
+  std::unique_ptr<DiagnosticsModule> diagnostics_module_;
 
   std::optional<geometry_msgs::msg::Point> last_update_position_ = std::nullopt;
   std::optional<geometry_msgs::msg::Point> current_position_ = std::nullopt;
