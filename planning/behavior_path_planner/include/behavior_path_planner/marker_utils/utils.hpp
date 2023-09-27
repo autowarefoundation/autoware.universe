@@ -17,9 +17,6 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
@@ -27,8 +24,9 @@
 #include <geometry_msgs/msg/polygon.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/Forward.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -42,6 +40,7 @@ using behavior_path_planner::ShiftLineArray;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugPair;
 using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
+using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObjects;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Polygon;
 using geometry_msgs::msg::Pose;
@@ -109,6 +108,10 @@ MarkerArray showPolygon(const CollisionCheckDebugMap & obj_debug_vec, std::strin
 MarkerArray showPredictedPath(const CollisionCheckDebugMap & obj_debug_vec, std::string && ns);
 
 MarkerArray showSafetyCheckInfo(const CollisionCheckDebugMap & obj_debug_vec, std::string && ns);
+
+MarkerArray showFilteredObjects(
+  const ExtendedPredictedObjects & predicted_objects, const std::string & ns,
+  const ColorRGBA & color, int32_t id);
 }  // namespace marker_utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__MARKER_UTILS__UTILS_HPP_

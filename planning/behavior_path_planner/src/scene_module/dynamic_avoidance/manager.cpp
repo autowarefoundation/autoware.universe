@@ -14,6 +14,8 @@
 
 #include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
 
+#include "tier4_autoware_utils/ros/update_param.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -45,6 +47,7 @@ DynamicAvoidanceModuleManager::DynamicAvoidanceModuleManager(
     p.avoid_bicycle = node->declare_parameter<bool>(ns + "bicycle");
     p.avoid_motorcycle = node->declare_parameter<bool>(ns + "motorcycle");
     p.avoid_pedestrian = node->declare_parameter<bool>(ns + "pedestrian");
+    p.max_obstacle_vel = node->declare_parameter<double>(ns + "max_obstacle_vel");
     p.min_obstacle_vel = node->declare_parameter<double>(ns + "min_obstacle_vel");
     p.successive_num_to_entry_dynamic_avoidance_condition =
       node->declare_parameter<int>(ns + "successive_num_to_entry_dynamic_avoidance_condition");
@@ -134,6 +137,7 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
     updateParam<bool>(parameters, ns + "motorcycle", p->avoid_motorcycle);
     updateParam<bool>(parameters, ns + "pedestrian", p->avoid_pedestrian);
 
+    updateParam<double>(parameters, ns + "max_obstacle_vel", p->max_obstacle_vel);
     updateParam<double>(parameters, ns + "min_obstacle_vel", p->min_obstacle_vel);
 
     updateParam<int>(

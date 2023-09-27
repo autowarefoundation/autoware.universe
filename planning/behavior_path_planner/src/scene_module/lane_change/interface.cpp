@@ -15,6 +15,7 @@
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 
 #include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
@@ -88,14 +89,11 @@ ModuleStatus LaneChangeInterface::updateState()
   }
 
   if (!module_type_->isValidPath()) {
-    return ModuleStatus::RUNNING;
+    return ModuleStatus::SUCCESS;
   }
 
   if (module_type_->isAbortState()) {
-    if (module_type_->hasFinishedAbort()) {
-      resetLaneChangeModule();
-    }
-    return ModuleStatus::RUNNING;
+    return module_type_->hasFinishedAbort() ? ModuleStatus::SUCCESS : ModuleStatus::RUNNING;
   }
 
   if (module_type_->hasFinishedLaneChange()) {
@@ -154,10 +152,7 @@ ModuleStatus LaneChangeInterface::updateState()
       getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
       "Lane change path is unsafe. Cancel lane change.");
     module_type_->toCancelState();
-    if (!isWaitingApproval()) {
-      resetLaneChangeModule();
-    }
-    return ModuleStatus::RUNNING;
+    return isWaitingApproval() ? ModuleStatus::RUNNING : ModuleStatus::SUCCESS;
   }
 
   if (!module_type_->isAbortEnabled()) {
@@ -190,13 +185,6 @@ ModuleStatus LaneChangeInterface::updateState()
     "Lane change path is unsafe. Abort lane change.");
   module_type_->toAbortState();
   return ModuleStatus::RUNNING;
-}
-
-void LaneChangeInterface::resetLaneChangeModule()
-{
-  processOnExit();
-  removeRTCStatus();
-  processOnEntry();
 }
 
 void LaneChangeInterface::updateData()
@@ -306,10 +294,12 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   using marker_utils::showPredictedPath;
   using marker_utils::showSafetyCheckInfo;
   using marker_utils::lane_change_markers::showAllValidLaneChangePath;
+  using marker_utils::lane_change_markers::showFilteredObjects;
 
   const auto debug_data = module_type_->getDebugData();
   const auto debug_after_approval = module_type_->getAfterApprovalDebugData();
   const auto debug_valid_path = module_type_->getDebugValidPath();
+  const auto debug_filtered_objects = module_type_->getDebugFilteredObjects();
 
   debug_marker_.markers.clear();
   const auto add = [this](const MarkerArray & added) {
@@ -317,6 +307,9 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   };
 
   add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
+  add(showFilteredObjects(
+    debug_filtered_objects.current_lane, debug_filtered_objects.target_lane,
+    debug_filtered_objects.other_lane, "object_filtered"));
   if (!debug_data.empty()) {
     add(showSafetyCheckInfo(debug_data, "object_debug_info"));
     add(showPredictedPath(debug_data, "ego_predicted_path"));

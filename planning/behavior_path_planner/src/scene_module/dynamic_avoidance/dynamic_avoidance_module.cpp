@@ -20,7 +20,12 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+
+#include <boost/geometry/algorithms/correct.hpp>
+
+#include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <algorithm>
 #include <limits>
@@ -28,7 +33,6 @@
 #include <set>
 #include <string>
 #include <vector>
-
 namespace behavior_path_planner
 {
 namespace
@@ -407,10 +411,12 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // 1.b. check if velocity is large enough
+    // 1.b. check obstacle velocity
     const auto [obj_tangent_vel, obj_normal_vel] =
       projectObstacleVelocityToTrajectory(prev_module_path->points, predicted_object);
-    if (std::abs(obj_tangent_vel) < parameters_->min_obstacle_vel) {
+    if (
+      std::abs(obj_tangent_vel) < parameters_->min_obstacle_vel ||
+      parameters_->max_obstacle_vel < std::abs(obj_tangent_vel)) {
       continue;
     }
 

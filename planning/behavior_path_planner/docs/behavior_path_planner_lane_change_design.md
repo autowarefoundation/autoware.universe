@@ -163,7 +163,7 @@ First, we divide the target objects into obstacles in the target lane, obstacles
 
 ![object lanes](../image/lane_change/lane_objects.drawio.svg)
 
-Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light.
+Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light.　The explanation for parked car detection is written in [documentation for avoidance module](../docs/behavior_path_planner_avoidance_design.md).
 
 ##### Collision check in prepare phase
 
@@ -185,6 +185,14 @@ minimum_lane_change_distance = minimum_prepare_length + minimum_lane_changing_ve
 The following figure illustrates when the lane is blocked in multiple lane changes cases.
 
 ![multiple-lane-changes](../image/lane_change/lane_change-when_cannot_change_lanes.png)
+
+### Lane change regulations
+
+If you want to regulate lane change on crosswalks or intersections, the lane change module finds a lane change path excluding it includes crosswalks or intersections.
+To regulate lane change on crosswalks or intersections, change `regulation.crosswalk` or `regulation.intersection` to `true`.
+If the ego vehicle gets stuck, to avoid stuck, it enables lane change in crosswalk/intersection.
+If the ego vehicle stops more than `stuck_detection.stop_time` seconds, it is regarded as a stuck.
+If the ego vehicle velocity is smaller than `stuck_detection.velocity`, it is regarded as stopping.
 
 ### Aborting lane change
 
@@ -276,7 +284,7 @@ The following parameters are configurable in `lane_change.param.yaml`.
 | `prediction_time_resolution`                | [s]    | double  | Time resolution for object's path interpolation and collision check.                                            | 0.5                |
 | `longitudinal_acceleration_sampling_num`    | [-]    | int     | Number of possible lane-changing trajectories that are being influenced by longitudinal acceleration            | 5                  |
 | `lateral_acceleration_sampling_num`         | [-]    | int     | Number of possible lane-changing trajectories that are being influenced by lateral acceleration                 | 3                  |
-| `object_check_min_road_shoulder_width`      | [m]    | double  | Vehicles around the center line within this distance will be excluded from parking objects                      | 0.5                |
+| `object_check_min_road_shoulder_width`      | [m]    | double  | Width considered as a road shoulder if the lane does not have a road shoulder                                   | 0.5                |
 | `object_shiftable_ratio_threshold`          | [-]    | double  | Vehicles around the center line within this distance ratio will be excluded from parking objects                | 0.6                |
 | `min_length_for_turn_signal_activation`     | [m]    | double  | Turn signal will be activated if the ego vehicle approaches to this length from minimum lane change length      | 10.0               |
 | `length_ratio_for_turn_signal_deactivation` | [-]    | double  | Turn signal will be deactivated if the ego vehicle approaches to this length ratio for lane change finish point | 0.8                |
@@ -293,6 +301,20 @@ The following parameters are configurable in `lane_change.param.yaml`.
 | `target_object.bicycle`                     | [-]    | boolean | Include bicycle objects for safety check                                                                        | true               |
 | `target_object.motorcycle`                  | [-]    | boolean | Include motorcycle objects for safety check                                                                     | true               |
 | `target_object.pedestrian`                  | [-]    | boolean | Include pedestrian objects for safety check                                                                     | true               |
+
+### Lane change regulations
+
+| Name                      | Unit | Type    | Description                           | Default value |
+| :------------------------ | ---- | ------- | ------------------------------------- | ------------- |
+| `regulation.crosswalk`    | [-]  | boolean | Regulate lane change on crosswalks    | false         |
+| `regulation.intersection` | [-]  | boolean | Regulate lane change on intersections | false         |
+
+### Ego vehicle stuck detection
+
+| Name                        | Unit  | Type   | Description                                         | Default value |
+| :-------------------------- | ----- | ------ | --------------------------------------------------- | ------------- |
+| `stuck_detection.velocity`  | [m/s] | double | Velocity threshold for ego vehicle stuck detection  | 0.1           |
+| `stuck_detection.stop_time` | [s]   | double | Stop time threshold for ego vehicle stuck detection | 3.0           |
 
 ### Collision checks during lane change
 

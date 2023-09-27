@@ -15,14 +15,25 @@
 #include "map_based_prediction/map_based_prediction_node.hpp"
 
 #include <interpolation/linear_interpolation.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/resample/resample.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/math/constants.hpp>
+#include <tier4_autoware_utils/math/normalization.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
 
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_routing/RoutingGraph.h>
 #include <tf2/utils.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -735,13 +746,13 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     prediction_time_horizon_, prediction_sampling_time_interval_, min_crosswalk_user_velocity_);
 
   sub_objects_ = this->create_subscription<TrackedObjects>(
-    "/perception/object_recognition/tracking/objects", 1,
+    "~/input/objects", 1,
     std::bind(&MapBasedPredictionNode::objectsCallback, this, std::placeholders::_1));
   sub_map_ = this->create_subscription<HADMapBin>(
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionNode::mapCallback, this, std::placeholders::_1));
 
-  pub_objects_ = this->create_publisher<PredictedObjects>("objects", rclcpp::QoS{1});
+  pub_objects_ = this->create_publisher<PredictedObjects>("~/output/objects", rclcpp::QoS{1});
   pub_debug_markers_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
   pub_calculation_time_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);

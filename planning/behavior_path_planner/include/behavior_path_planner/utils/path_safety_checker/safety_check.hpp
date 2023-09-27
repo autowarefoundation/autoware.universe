@@ -20,6 +20,7 @@
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
@@ -46,11 +47,15 @@ using autoware_auto_perception_msgs::msg::Shape;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
+using tier4_autoware_utils::calcYawDeviation;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using vehicle_info_util::VehicleInfo;
 
 namespace bg = boost::geometry;
+
+bool isTargetObjectOncoming(
+  const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose);
 
 bool isTargetObjectFront(
   const geometry_msgs::msg::Pose & ego_pose, const Polygon2d & obj_polygon,
@@ -83,7 +88,6 @@ boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
 boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
   const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
   const VehicleInfo & ego_info);
-
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
@@ -99,6 +103,28 @@ boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVeloci
  * @return true if distance is safe.
  */
 bool checkCollision(
+  const PathWithLaneId & planned_path,
+  const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
+  const ExtendedPredictedObject & target_object,
+  const PredictedPathWithPolygon & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
+  const double hysteresis_factor, CollisionCheckDebug & debug);
+
+/**
+ * @brief Iterate the points in the ego and target's predicted path and
+ *        perform safety check for each of the iterated points.
+ * @param planned_path The predicted path of the ego vehicle.
+ * @param predicted_ego_path Ego vehicle's predicted path
+ * @param ego_current_velocity Current velocity of the ego vehicle.
+ * @param target_object The predicted object to check collision with.
+ * @param target_object_path The predicted path of the target object.
+ * @param common_parameters The common parameters used in behavior path planner.
+ * @param front_object_deceleration The deceleration of the object in the front.(used in RSS)
+ * @param rear_object_deceleration The deceleration of the object in the rear.(used in RSS)
+ * @param debug The debug information for collision checking.
+ * @return a list of polygon when collision is expected.
+ */
+std::vector<Polygon2d> getCollidedPolygons(
   const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,

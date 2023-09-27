@@ -22,13 +22,18 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/interpolation.hpp>
+#include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_core/geometry/Polygon.h>
 #include <tf2/utils.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -173,17 +178,6 @@ std::vector<double> getAccelerationValues(
   std::reverse(sampled_values.begin(), sampled_values.end());
 
   return sampled_values;
-}
-
-PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2)
-{
-  PathWithLaneId path;
-  path.points.insert(path.points.end(), path1.points.begin(), path1.points.end());
-
-  // skip overlapping point
-  path.points.insert(path.points.end(), next(path2.points.begin()), path2.points.end());
-
-  return path;
 }
 
 lanelet::ConstLanelets getTargetPreferredLanes(
@@ -350,7 +344,7 @@ std::optional<LaneChangePath> constructCandidatePath(
     return std::nullopt;
   }
 
-  candidate_path.path = combineReferencePath(prepare_segment, shifted_path.path);
+  candidate_path.path = utils::combinePath(prepare_segment, shifted_path.path);
   candidate_path.shifted_path = shifted_path;
 
   return std::optional<LaneChangePath>{candidate_path};
@@ -652,22 +646,6 @@ lanelet::ConstLanelets getBackwardLanelets(
   return backward_lanes;
 }
 
-bool isTargetObjectType(const PredictedObject & object, const LaneChangeParameters & parameters)
-{
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
-  const auto t = utils::getHighestProbLabel(object.classification);
-  const auto is_object_type =
-    ((t == ObjectClassification::CAR && parameters.check_car) ||
-     (t == ObjectClassification::TRUCK && parameters.check_truck) ||
-     (t == ObjectClassification::BUS && parameters.check_bus) ||
-     (t == ObjectClassification::TRAILER && parameters.check_trailer) ||
-     (t == ObjectClassification::UNKNOWN && parameters.check_unknown) ||
-     (t == ObjectClassification::BICYCLE && parameters.check_bicycle) ||
-     (t == ObjectClassification::MOTORCYCLE && parameters.check_motorcycle) ||
-     (t == ObjectClassification::PEDESTRIAN && parameters.check_pedestrian));
-  return is_object_type;
-}
-
 double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer)
 {
   return lateral_buffer + 0.5 * vehicle_width;
@@ -821,19 +799,6 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
     predicted_path.emplace_back(t, pose, velocity);
   }
 
-  return predicted_path;
-}
-
-PredictedPath convertToPredictedPath(
-  const std::vector<PoseWithVelocityStamped> & path, const double time_resolution)
-{
-  PredictedPath predicted_path;
-  predicted_path.time_step = rclcpp::Duration::from_seconds(time_resolution);
-  predicted_path.path.resize(path.size());
-
-  for (size_t i = 0; i < path.size(); ++i) {
-    predicted_path.path.at(i) = path.at(i).pose;
-  }
   return predicted_path;
 }
 
@@ -1126,5 +1091,17 @@ ExtendedPredictedObject transform(
   }
 
   return extended_object;
+}
+
+bool isCollidedPolygonsInLanelet(
+  const std::vector<Polygon2d> & collided_polygons, const lanelet::ConstLanelets & lanes)
+{
+  const auto lanes_polygon = createPolygon(lanes, 0.0, std::numeric_limits<double>::max());
+
+  const auto is_in_lanes = [&](const auto & collided_polygon) {
+    return lanes_polygon && boost::geometry::intersects(lanes_polygon.value(), collided_polygon);
+  };
+
+  return std::any_of(collided_polygons.begin(), collided_polygons.end(), is_in_lanes);
 }
 }  // namespace behavior_path_planner::utils::lane_change
