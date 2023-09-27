@@ -26,11 +26,11 @@
 
 #include <condition_variable>
 #include <list>
+#include <queue>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <queue>
 
 namespace autoware
 {
