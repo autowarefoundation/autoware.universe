@@ -17,11 +17,15 @@
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "lanelet2_extension/regulatory_elements/no_parking_area.hpp"
+#include "lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <boost/geometry/algorithms/union.hpp>
 #include <boost/optional.hpp>
+
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <memory>
 #include <vector>
@@ -33,6 +37,35 @@ using lanelet::autoware::NoParkingArea;
 using lanelet::autoware::NoStoppingArea;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::inverseTransformPose;
+
+// Sort with smaller longitudinal distances taking precedence over smaller lateral distances.
+struct SortByLongitudinalDistance
+{
+  bool operator()(const GoalCandidate & a, const GoalCandidate & b) const noexcept
+  {
+    const double diff = a.distance_from_original_goal - b.distance_from_original_goal;
+    constexpr double eps = 0.01;
+    // If the longitudinal distances are approximately equal, sort based on lateral offset.
+    if (std::abs(diff) < eps) {
+      return a.lateral_offset < b.lateral_offset;
+    }
+    return a.distance_from_original_goal < b.distance_from_original_goal;
+  }
+};
+
+// Sort with the weighted sum of the longitudinal distance and the lateral distance weighted by
+// lateral_cost.
+struct SortByWeightedDistance
+{
+  double lateral_cost{0.0};
+  explicit SortByWeightedDistance(double cost) : lateral_cost(cost) {}
+
+  bool operator()(const GoalCandidate & a, const GoalCandidate & b) const noexcept
+  {
+    return a.distance_from_original_goal + lateral_cost * a.lateral_offset <
+           b.distance_from_original_goal + lateral_cost * b.lateral_offset;
+  }
+};
 
 GoalSearcher::GoalSearcher(
   const GoalPlannerParameters & parameters, const LinearRing2d & vehicle_footprint,
@@ -137,33 +170,38 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
   }
   createAreaPolygons(original_search_poses);
 
-  // Sort with distance from original goal
-  std::sort(goal_candidates.begin(), goal_candidates.end());
+  if (parameters_.goal_priority == "minimum_weighted_distance") {
+    std::sort(
+      goal_candidates.begin(), goal_candidates.end(),
+      SortByWeightedDistance(parameters_.minimum_weighted_distance_lateral_weight));
+  } else if (parameters_.goal_priority == "minimum_longitudinal_distance") {
+    std::sort(goal_candidates.begin(), goal_candidates.end(), SortByLongitudinalDistance());
+  }
 
   return goal_candidates;
 }
 
 void GoalSearcher::update(GoalCandidates & goal_candidates) const
 {
+  const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+    *(planner_data_->dynamic_object), parameters_.th_moving_object_velocity);
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
+    parameters_.forward_goal_search_length);
+  const auto [pull_over_lane_stop_objects, others] =
+    utils::path_safety_checker::separateObjectsByLanelets(stop_objects, pull_over_lanes);
+
   // update is_safe
   for (auto & goal_candidate : goal_candidates) {
     const Pose goal_pose = goal_candidate.goal_pose;
 
     // check collision with footprint
-    if (checkCollision(goal_pose)) {
+    if (checkCollision(goal_pose, pull_over_lane_stop_objects)) {
       goal_candidate.is_safe = false;
       continue;
     }
 
     // check longitudinal margin with pull over lane objects
-    const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
-      *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
-      parameters_.forward_goal_search_length);
-    const auto [pull_over_lane_objects, others] =
-      utils::path_safety_checker::separateObjectsByLanelets(
-        *(planner_data_->dynamic_object), pull_over_lanes);
-    const auto pull_over_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-      pull_over_lane_objects, parameters_.th_moving_object_velocity);
     constexpr bool filter_inside = true;
     const auto target_objects = goal_planner_utils::filterObjectsByLateralDistance(
       goal_pose, planner_data_->parameters.vehicle_width, pull_over_lane_stop_objects,
@@ -177,7 +215,7 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
   }
 }
 
-bool GoalSearcher::checkCollision(const Pose & pose) const
+bool GoalSearcher::checkCollision(const Pose & pose, const PredictedObjects & dynamic_objects) const
 {
   if (parameters_.use_occupancy_grid_for_goal_search) {
     const Pose pose_grid_coords = global2local(occupancy_grid_map_->getMap(), pose);
@@ -190,16 +228,8 @@ bool GoalSearcher::checkCollision(const Pose & pose) const
   }
 
   if (parameters_.use_object_recognition) {
-    const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
-      *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
-      parameters_.forward_goal_search_length);
-    const auto [pull_over_lane_objects, others] =
-      utils::path_safety_checker::separateObjectsByLanelets(
-        *(planner_data_->dynamic_object), pull_over_lanes);
-    const auto pull_over_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
-      pull_over_lane_objects, parameters_.th_moving_object_velocity);
     if (utils::checkCollisionBetweenFootprintAndObjects(
-          vehicle_footprint_, pose, pull_over_lane_stop_objects,
+          vehicle_footprint_, pose, dynamic_objects,
           parameters_.object_recognition_collision_check_margin)) {
       return true;
     }

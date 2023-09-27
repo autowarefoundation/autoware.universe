@@ -20,6 +20,7 @@
 #include "obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
 #include "obstacle_cruise_planner/type_alias.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -48,6 +49,10 @@ private:
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   // main functions
+  std::vector<Polygon2d> createOneStepPolygons(
+    const std::vector<TrajectoryPoint> & traj_points,
+    const vehicle_info_util::VehicleInfo & vehicle_info,
+    const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin = 0.0) const;
   std::vector<Obstacle> convertToObstacles(const std::vector<TrajectoryPoint> & traj_points) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
@@ -193,6 +198,9 @@ private:
     double lat_hysteresis_margin_for_slow_down;
     int successive_num_to_entry_slow_down_condition;
     int successive_num_to_exit_slow_down_condition;
+    // consideration for the current ego pose
+    bool enable_to_consider_current_pose{false};
+    double time_to_convergence{1.5};
   };
   BehaviorDeterminationParam behavior_determination_param_;
 
@@ -252,6 +260,8 @@ private:
 
   // previous closest obstacle
   std::shared_ptr<StopObstacle> prev_closest_stop_obstacle_ptr_{nullptr};
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace motion_planning
 

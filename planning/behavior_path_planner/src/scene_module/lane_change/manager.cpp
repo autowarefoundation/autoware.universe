@@ -78,6 +78,17 @@ LaneChangeModuleManager::LaneChangeModuleManager(
   p.use_all_predicted_path =
     getOrDeclareParameter<bool>(*node, parameter("use_all_predicted_path"));
 
+  // lane change regulations
+  p.regulate_on_crosswalk = getOrDeclareParameter<bool>(*node, parameter("regulation.crosswalk"));
+  p.regulate_on_intersection =
+    getOrDeclareParameter<bool>(*node, parameter("regulation.intersection"));
+
+  // ego vehicle stuck detection
+  p.stop_velocity_threshold =
+    getOrDeclareParameter<double>(*node, parameter("stuck_detection.velocity"));
+  p.stop_time_threshold =
+    getOrDeclareParameter<double>(*node, parameter("stuck_detection.stop_time"));
+
   p.rss_params.longitudinal_distance_min_threshold = getOrDeclareParameter<double>(
     *node, parameter("safety_check.longitudinal_distance_min_threshold"));
   p.rss_params.longitudinal_velocity_delta_time = getOrDeclareParameter<double>(
@@ -111,14 +122,16 @@ LaneChangeModuleManager::LaneChangeModuleManager(
   // target object
   {
     std::string ns = "lane_change.target_object.";
-    p.check_car = getOrDeclareParameter<bool>(*node, ns + "car");
-    p.check_truck = getOrDeclareParameter<bool>(*node, ns + "truck");
-    p.check_bus = getOrDeclareParameter<bool>(*node, ns + "bus");
-    p.check_trailer = getOrDeclareParameter<bool>(*node, ns + "trailer");
-    p.check_unknown = getOrDeclareParameter<bool>(*node, ns + "unknown");
-    p.check_bicycle = getOrDeclareParameter<bool>(*node, ns + "bicycle");
-    p.check_motorcycle = getOrDeclareParameter<bool>(*node, ns + "motorcycle");
-    p.check_pedestrian = getOrDeclareParameter<bool>(*node, ns + "pedestrian");
+    p.object_types_to_check.check_car = getOrDeclareParameter<bool>(*node, ns + "car");
+    p.object_types_to_check.check_truck = getOrDeclareParameter<bool>(*node, ns + "truck");
+    p.object_types_to_check.check_bus = getOrDeclareParameter<bool>(*node, ns + "bus");
+    p.object_types_to_check.check_trailer = getOrDeclareParameter<bool>(*node, ns + "trailer");
+    p.object_types_to_check.check_unknown = getOrDeclareParameter<bool>(*node, ns + "unknown");
+    p.object_types_to_check.check_bicycle = getOrDeclareParameter<bool>(*node, ns + "bicycle");
+    p.object_types_to_check.check_motorcycle =
+      getOrDeclareParameter<bool>(*node, ns + "motorcycle");
+    p.object_types_to_check.check_pedestrian =
+      getOrDeclareParameter<bool>(*node, ns + "pedestrian");
   }
 
   // lane change cancel
