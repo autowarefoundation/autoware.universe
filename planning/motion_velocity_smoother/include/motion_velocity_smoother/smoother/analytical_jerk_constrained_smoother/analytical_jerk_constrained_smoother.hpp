@@ -71,6 +71,11 @@ public:
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
     TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) override;
 
+  // "apply" function in Analytical jerk constrained smoother does not change the state of the node.
+  bool apply_const(
+    const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
+    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) const;
+
   TrajectoryPoints resampleTrajectory(
     const TrajectoryPoints & input, [[maybe_unused]] const double v0,
     [[maybe_unused]] const geometry_msgs::msg::Pose & current_pose,

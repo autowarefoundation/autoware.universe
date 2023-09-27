@@ -104,6 +104,13 @@ bool AnalyticalJerkConstrainedSmoother::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
   TrajectoryPoints & output, [[maybe_unused]] std::vector<TrajectoryPoints> & debug_trajectories)
 {
+  return apply_const(initial_vel, initial_acc, input, output, debug_trajectories);
+}
+
+bool AnalyticalJerkConstrainedSmoother::apply_const(
+  const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
+  TrajectoryPoints & output, [[maybe_unused]] std::vector<TrajectoryPoints> & debug_trajectories) const
+{
   RCLCPP_DEBUG(logger_, "-------------------- Start --------------------");
 
   // guard
