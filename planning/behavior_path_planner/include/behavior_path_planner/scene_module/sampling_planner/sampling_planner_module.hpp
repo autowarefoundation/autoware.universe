@@ -20,6 +20,7 @@
 #include "behavior_path_planner/utils/sampling_planner/sampling_planner_parameters.hpp"
 #include "behavior_path_planner/utils/sampling_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "bezier_sampler/bezier_sampling.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
