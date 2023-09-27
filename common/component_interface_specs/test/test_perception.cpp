@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include "component_interface_specs/perception.hpp"
+#include "gtest/gtest.h"
 
-TEST(perception,interface)
+TEST(perception, interface)
 {
   {
     using perception_interface::ObjectRecognition;
-    ObjectRecognition object_recognition;    
-    size_t depth=1;
-    EXPECT_EQ(object_recognition.depth,depth);
-    EXPECT_EQ(object_recognition.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(object_recognition.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    ObjectRecognition object_recognition;
+    size_t depth = 1;
+    EXPECT_EQ(object_recognition.depth, depth);
+    EXPECT_EQ(object_recognition.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(object_recognition.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 }

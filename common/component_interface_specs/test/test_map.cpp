@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include "component_interface_specs/map.hpp"
+#include "gtest/gtest.h"
 
-TEST(map,interface)
+TEST(map, interface)
 {
   {
     using map_interface::MapProjectorInfo;
-    MapProjectorInfo map_projector;    
-    size_t depth=1;
-    EXPECT_EQ(map_projector.depth,depth);
-    EXPECT_EQ(map_projector.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(map_projector.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+    MapProjectorInfo map_projector;
+    size_t depth = 1;
+    EXPECT_EQ(map_projector.depth, depth);
+    EXPECT_EQ(map_projector.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(map_projector.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
   }
 }

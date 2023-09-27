@@ -12,54 +12,53 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include "component_interface_specs/vehicle.hpp"
+#include "gtest/gtest.h"
 
-TEST(vehicle,interface)
+TEST(vehicle, interface)
 {
   {
     using vehicle_interface::SteeringStatus;
-    SteeringStatus status;    
-    size_t depth=1;
-    EXPECT_EQ(status.depth,depth);
-    EXPECT_EQ(status.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(status.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    SteeringStatus status;
+    size_t depth = 1;
+    EXPECT_EQ(status.depth, depth);
+    EXPECT_EQ(status.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(status.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using vehicle_interface::GearStatus;
-    GearStatus status;    
-    size_t depth=1;
-    EXPECT_EQ(status.depth,depth);
-    EXPECT_EQ(status.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(status.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    GearStatus status;
+    size_t depth = 1;
+    EXPECT_EQ(status.depth, depth);
+    EXPECT_EQ(status.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(status.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using vehicle_interface::TurnIndicatorStatus;
-    TurnIndicatorStatus status;    
-    size_t depth=1;
-    EXPECT_EQ(status.depth,depth);
-    EXPECT_EQ(status.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(status.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    TurnIndicatorStatus status;
+    size_t depth = 1;
+    EXPECT_EQ(status.depth, depth);
+    EXPECT_EQ(status.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(status.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using vehicle_interface::HazardLightStatus;
-    HazardLightStatus status;    
-    size_t depth=1;
-    EXPECT_EQ(status.depth,depth);
-    EXPECT_EQ(status.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(status.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    HazardLightStatus status;
+    size_t depth = 1;
+    EXPECT_EQ(status.depth, depth);
+    EXPECT_EQ(status.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(status.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using vehicle_interface::EnergyStatus;
-    EnergyStatus status;    
-    size_t depth=1;
-    EXPECT_EQ(status.depth,depth);
-    EXPECT_EQ(status.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(status.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    EnergyStatus status;
+    size_t depth = 1;
+    EXPECT_EQ(status.depth, depth);
+    EXPECT_EQ(status.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(status.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
-
 }

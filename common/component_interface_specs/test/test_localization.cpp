@@ -12,35 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include "component_interface_specs/localization.hpp"
+#include "gtest/gtest.h"
 
-TEST(localization,interface)
+TEST(localization, interface)
 {
   {
     using localization_interface::InitializationState;
-    InitializationState initialization_state;    
-    size_t depth=1;
-    EXPECT_EQ(initialization_state.depth,depth);
-    EXPECT_EQ(initialization_state.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(initialization_state.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+    InitializationState initialization_state;
+    size_t depth = 1;
+    EXPECT_EQ(initialization_state.depth, depth);
+    EXPECT_EQ(initialization_state.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(initialization_state.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
   }
 
   {
     using localization_interface::KinematicState;
-    KinematicState kinematic_state;    
-    size_t depth=1;
-    EXPECT_EQ(kinematic_state.depth,depth);
-    EXPECT_EQ(kinematic_state.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(kinematic_state.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    KinematicState kinematic_state;
+    size_t depth = 1;
+    EXPECT_EQ(kinematic_state.depth, depth);
+    EXPECT_EQ(kinematic_state.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(kinematic_state.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using localization_interface::Acceleration;
-    Acceleration acceleration;    
-    size_t depth=1;
-    EXPECT_EQ(acceleration.depth,depth);
-    EXPECT_EQ(acceleration.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(acceleration.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    Acceleration acceleration;
+    size_t depth = 1;
+    EXPECT_EQ(acceleration.depth, depth);
+    EXPECT_EQ(acceleration.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(acceleration.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 }

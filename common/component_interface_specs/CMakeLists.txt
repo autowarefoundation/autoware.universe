@@ -24,7 +24,7 @@ include_directories(
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_component_interface_specs
-    test/gtest_main.cpp 
+    test/gtest_main.cpp
     test/test_planning.cpp
     test/test_control.cpp
     test/test_localization.cpp

@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include "component_interface_specs/system.hpp"
+#include "gtest/gtest.h"
 
-TEST(system,interface)
+TEST(system, interface)
 {
   {
     using system_interface::MrmState;
-    MrmState state;    
-    size_t depth=1;
-    EXPECT_EQ(state.depth,depth);
-    EXPECT_EQ(state.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(state.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    MrmState state;
+    size_t depth = 1;
+    EXPECT_EQ(state.depth, depth);
+    EXPECT_EQ(state.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(state.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using system_interface::OperationModeState;
-    OperationModeState state;    
-    size_t depth=1;
-    EXPECT_EQ(state.depth,depth);
-    EXPECT_EQ(state.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(state.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+    OperationModeState state;
+    size_t depth = 1;
+    EXPECT_EQ(state.depth, depth);
+    EXPECT_EQ(state.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(state.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
   }
 }

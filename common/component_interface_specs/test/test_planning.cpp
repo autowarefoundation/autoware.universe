@@ -12,54 +12,53 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include "component_interface_specs/planning.hpp"
+#include "gtest/gtest.h"
 
-TEST(planning,interface)
+TEST(planning, interface)
 {
-    {
-        using planning_interface::RouteState;
-        RouteState state;    
-        size_t depth=1;
-        EXPECT_EQ(state.depth,depth);
-        EXPECT_EQ(state.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-        EXPECT_EQ(state.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-    }
+  {
+    using planning_interface::RouteState;
+    RouteState state;
+    size_t depth = 1;
+    EXPECT_EQ(state.depth, depth);
+    EXPECT_EQ(state.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(state.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+  }
 
-    {
-        using planning_interface::Route;
-        Route route;    
-        size_t depth=1;
-        EXPECT_EQ(route.depth,depth);
-        EXPECT_EQ(route.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-        EXPECT_EQ(route.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-    }
+  {
+    using planning_interface::Route;
+    Route route;
+    size_t depth = 1;
+    EXPECT_EQ(route.depth, depth);
+    EXPECT_EQ(route.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(route.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+  }
 
-    {
-        using planning_interface::NormalRoute;
-        NormalRoute route;    
-        size_t depth=1;
-        EXPECT_EQ(route.depth,depth);
-        EXPECT_EQ(route.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-        EXPECT_EQ(route.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-    }
+  {
+    using planning_interface::NormalRoute;
+    NormalRoute route;
+    size_t depth = 1;
+    EXPECT_EQ(route.depth, depth);
+    EXPECT_EQ(route.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(route.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+  }
 
-    {
-        using planning_interface::MrmRoute;
-        MrmRoute route;    
-        size_t depth=1;
-        EXPECT_EQ(route.depth,depth);
-        EXPECT_EQ(route.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-        EXPECT_EQ(route.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-    }
+  {
+    using planning_interface::MrmRoute;
+    MrmRoute route;
+    size_t depth = 1;
+    EXPECT_EQ(route.depth, depth);
+    EXPECT_EQ(route.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(route.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+  }
 
-    {
-        using planning_interface::Trajectory;
-        Trajectory trajectory;    
-        size_t depth=1;
-        EXPECT_EQ(trajectory.depth,depth);
-        EXPECT_EQ(trajectory.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-        EXPECT_EQ(trajectory.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
-    }
-
+  {
+    using planning_interface::Trajectory;
+    Trajectory trajectory;
+    size_t depth = 1;
+    EXPECT_EQ(trajectory.depth, depth);
+    EXPECT_EQ(trajectory.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(trajectory.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
+  }
 }
