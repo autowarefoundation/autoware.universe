@@ -92,6 +92,7 @@
   <!-- Camera-Lidar fusion parameters -->
   <arg name="remove_unknown" default="true"/>
   <arg name="trust_distance" default="30.0"/>
+  <arg name="iou_x_use_distance_threshold" default="100.0"/>
 
   <!-- Perception module -->
   <group>
@@ -168,6 +169,7 @@
           <arg name="container_name" value="$(var pointcloud_container_name)"/>
           <arg name="remove_unknown" value="$(var remove_unknown)"/>
           <arg name="trust_distance" value="$(var trust_distance)"/>
+          <arg name="iou_x_use_distance_threshold" value="$(var iou_x_use_distance_threshold)"/>
           <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
         </include>
       </group>
