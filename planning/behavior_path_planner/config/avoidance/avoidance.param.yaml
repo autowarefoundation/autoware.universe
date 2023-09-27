@@ -4,8 +4,6 @@
     avoidance:
       resample_interval_for_planning: 0.3               # [m]
       resample_interval_for_output: 4.0                 # [m]
-      detection_area_right_expand_dist: 0.0             # [m]
-      detection_area_left_expand_dist: 1.0              # [m]
       drivable_area_right_bound_offset: 0.0             # [m]
       drivable_area_left_bound_offset: 0.0              # [m]
 
@@ -142,10 +140,19 @@
         # collision check parameters
         check_all_predicted_path: false                  # [-]
         time_resolution: 0.5                             # [s]
-        time_horizon: 10.0                               # [s]
+        time_horizon_for_front_object: 10.0              # [s]
+        time_horizon_for_rear_object: 10.0               # [s]
         safety_check_backward_distance: 100.0            # [m]
-        safety_check_hysteresis_factor: 2.0              # [-]
-        safety_check_ego_offset: 1.0                     # [m]
+        hysteresis_factor_expand_rate: 2.0               # [-]
+        hysteresis_factor_safe_count: 10                 # [-]
+        # rss parameters
+        expected_front_deceleration: -1.0                # [m/ss]
+        expected_rear_deceleration: -1.0                 # [m/ss]
+        rear_vehicle_reaction_time: 2.0                  # [s]
+        rear_vehicle_safety_time_margin: 1.0             # [s]
+        lateral_distance_max_threshold: 2.0              # [m]
+        longitudinal_distance_min_threshold: 3.0         # [m]
+        longitudinal_velocity_delta_time: 0.8            # [s]
 
       # For avoidance maneuver
       avoidance:
@@ -154,7 +161,8 @@
           lateral_execution_threshold: 0.499            # [m]
           lateral_small_shift_threshold: 0.101          # [m]
           lateral_avoid_check_threshold: 0.1            # [m]
-          road_shoulder_safety_margin: 0.3              # [m]
+          soft_road_shoulder_margin: 0.8                # [m]
+          hard_road_shoulder_margin: 0.3                # [m]
           max_right_shift_length: 5.0
           max_left_shift_length: 5.0
         # avoidance distance parameters

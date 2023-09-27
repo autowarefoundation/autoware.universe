@@ -17,7 +17,7 @@
 #include "planning_validator/utils.hpp"
 
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <memory>
 #include <string>
@@ -49,6 +49,8 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
   if (publish_diag_) {
     setupDiag();
   }
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 void PlanningValidator::setupParameters()

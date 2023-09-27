@@ -32,7 +32,8 @@
 
 #include "freespace_planning_algorithms/abstract_algorithm.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <algorithm>
 #include <deque>
@@ -284,6 +285,8 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
     timer_ = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&FreespacePlannerNode::onTimer, this));
   }
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 PlannerCommonParam FreespacePlannerNode::getPlannerCommonParam()

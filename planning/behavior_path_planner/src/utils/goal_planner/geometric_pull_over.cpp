@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -34,7 +35,8 @@ GeometricPullOver::GeometricPullOver(
   parallel_parking_parameters_{parameters.parallel_parking_parameters},
   lane_departure_checker_{lane_departure_checker},
   occupancy_grid_map_{occupancy_grid_map},
-  is_forward_{is_forward}
+  is_forward_{is_forward},
+  left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
   planner_.setParameters(parallel_parking_parameters_);
 }
@@ -47,13 +49,13 @@ boost::optional<PullOverPath> GeometricPullOver::plan(const Pose & goal_pose)
   const auto road_lanes = utils::getExtendedCurrentLanes(
     planner_data_, parameters_.backward_goal_search_length, parameters_.forward_goal_search_length,
     /*forward_only_in_route*/ false);
-  const auto shoulder_lanes =
-    goal_planner_utils::getPullOverLanes(*route_handler, left_side_parking_);
-  if (road_lanes.empty() || shoulder_lanes.empty()) {
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    *route_handler, left_side_parking_, parameters_.backward_goal_search_length,
+    parameters_.forward_goal_search_length);
+  if (road_lanes.empty() || pull_over_lanes.empty()) {
     return {};
   }
-  auto lanes = road_lanes;
-  lanes.insert(lanes.end(), shoulder_lanes.begin(), shoulder_lanes.end());
+  const auto lanes = utils::combineLanelets(road_lanes, pull_over_lanes);
 
   const auto & p = parallel_parking_parameters_;
   const double max_steer_angle =
@@ -62,7 +64,7 @@ boost::optional<PullOverPath> GeometricPullOver::plan(const Pose & goal_pose)
   planner_.setPlannerData(planner_data_);
 
   const bool found_valid_path =
-    planner_.planPullOver(goal_pose, road_lanes, shoulder_lanes, is_forward_);
+    planner_.planPullOver(goal_pose, road_lanes, pull_over_lanes, is_forward_, left_side_parking_);
   if (!found_valid_path) {
     return {};
   }
@@ -75,6 +77,7 @@ boost::optional<PullOverPath> GeometricPullOver::plan(const Pose & goal_pose)
   PullOverPath pull_over_path{};
   pull_over_path.type = getPlannerType();
   pull_over_path.partial_paths = planner_.getPaths();
+  pull_over_path.pairs_terminal_velocity_and_accel = planner_.getPairsTerminalVelocityAndAccel();
   pull_over_path.start_pose = planner_.getStartPose();
   pull_over_path.end_pose = planner_.getArcEndPose();
 
