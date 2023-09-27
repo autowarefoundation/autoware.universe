@@ -32,7 +32,6 @@ using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
 namespace behavior_path_planner
 {
-using start_planner_utils::combineReferencePath;
 using start_planner_utils::getPullOutLanes;
 
 ShiftPullOut::ShiftPullOut(
@@ -302,9 +301,6 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     if (!path_shifter.generate(&shifted_path, offset_back)) {
       continue;
     }
-
-    shifted_path.path =
-      utils::start_goal_planner_common::removeInverseOrderPathPoints(shifted_path.path);
 
     // set velocity
     const size_t pull_out_end_idx =
