@@ -118,11 +118,12 @@ Either one is activated when all conditions are met.
 
 ## General parameters for goal_planner
 
-| Name                | Unit  | Type   | Description                                        | Default value |
-| :------------------ | :---- | :----- | :------------------------------------------------- | :------------ |
-| th_arrived_distance | [m]   | double | distance threshold for arrival of path termination | 1.0           |
-| th_stopped_velocity | [m/s] | double | velocity threshold for arrival of path termination | 0.01          |
-| th_stopped_time     | [s]   | double | time threshold for arrival of path termination     | 2.0           |
+| Name                      | Unit  | Type   | Description                                        | Default value |
+| :------------------------ | :---- | :----- | :------------------------------------------------- | :------------ |
+| th_arrived_distance       | [m]   | double | distance threshold for arrival of path termination | 1.0           |
+| th_stopped_velocity       | [m/s] | double | velocity threshold for arrival of path termination | 0.01          |
+| th_stopped_time           | [s]   | double | time threshold for arrival of path termination     | 2.0           |
+| center_line_path_interval | [m]   | double | reference center line path point interval          | 1.0           |
 
 ## **collision check**
 
@@ -132,13 +133,14 @@ Generate footprints from ego-vehicle path points and determine obstacle collisio
 
 #### Parameters for occupancy grid based collision check
 
-| Name                                       | Unit | Type   | Description                                                                                                     | Default value |
-| :----------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
-| use_occupancy_grid                         | [-]  | bool   | flag whether to use occupancy grid for collision check                                                          | true          |
-| use_occupancy_grid_for_longitudinal_margin | [-]  | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
-| occupancy_grid_collision_check_margin      | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
-| theta_size                                 | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
-| obstacle_threshold                         | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
+| Name                                            | Unit | Type   | Description                                                                                                     | Default value |
+| :---------------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
+| use_occupancy_grid_for_goal_search              | [-]  | bool   | flag whether to use occupancy grid for goal search collision check                                              | true          |
+| use_occupancy_grid_for_goal_longitudinal_margin | [-]  | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
+| use_occupancy_grid_for_path_collision_check     | [-]  | bool   | flag whether to use occupancy grid for collision check                                                          | false         |
+| occupancy_grid_collision_check_margin           | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
+| theta_size                                      | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
+| obstacle_threshold                              | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
 
 ### **object recognition based collision check**
 
@@ -159,18 +161,19 @@ searched for in certain range of the shoulder lane.
 
 ### Parameters for goal search
 
-| Name                            | Unit | Type   | Description                                                                                                                                                                                                              | Default value  |
-| :------------------------------ | :--- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
-| search_priority                 | [-]  | string | In case `efficient_path` use a goal that can generate an efficient path( priority is `shift_parking` -> `arc_forward_parking` -> `arc_backward_parking`). In case `close_goal` use the closest goal to the original one. | efficient_path |
-| forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                            | 20.0           |
-| backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                           | 20.0           |
-| goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                        | 2.0            |
-| longitudinal_margin             | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                            | 3.0            |
-| max_lateral_offset              | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                   | 0.5            |
-| lateral_offset_interval         | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                | 0.25           |
-| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                      | 0.0            |
-| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                      | 0.0            |
-| margin_from_boundary            | [m]  | double | distance margin from edge of the shoulder lane                                                                                                                                                                           | 0.5            |
+| Name                            | Unit | Type   | Description                                                                                                                                                                                                                                 | Default value               |
+| :------------------------------ | :--- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------- |
+| goal_priority                   | [-]  | string | In case `minimum_weighted_distance`, sort with smaller longitudinal distances taking precedence over smaller lateral distances. In case `minimum_longitudinal_distance`, sort with weighted lateral distance against longitudinal distance. | `minimum_weighted_distance` |
+| path_priority                   | [-]  | string | In case `efficient_path` use a goal that can generate an efficient path( priority is `shift_parking` -> `arc_forward_parking` -> `arc_backward_parking`). In case `close_goal` use the closest goal to the original one.                    | efficient_path              |
+| forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                                               | 20.0                        |
+| backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                                              | 20.0                        |
+| goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                                           | 2.0                         |
+| longitudinal_margin             | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                                               | 3.0                         |
+| max_lateral_offset              | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                                      | 0.5                         |
+| lateral_offset_interval         | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                                   | 0.25                        |
+| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                                         | 0.0                         |
+| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                                         | 0.0                         |
+| margin_from_boundary            | [m]  | double | distance margin from edge of the shoulder lane                                                                                                                                                                                              | 0.5                         |
 
 ## **Pull Over**
 

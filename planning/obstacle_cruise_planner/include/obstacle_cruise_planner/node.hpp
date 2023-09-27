@@ -48,6 +48,10 @@ private:
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   // main functions
+  std::vector<Polygon2d> createOneStepPolygons(
+    const std::vector<TrajectoryPoint> & traj_points,
+    const vehicle_info_util::VehicleInfo & vehicle_info,
+    const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin = 0.0) const;
   std::vector<Obstacle> convertToObstacles(const std::vector<TrajectoryPoint> & traj_points) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
@@ -100,6 +104,9 @@ private:
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
   double min_behavior_stop_margin_;
+  bool enable_approaching_on_curve_;
+  double additional_safe_distance_margin_on_curve_;
+  double min_safe_distance_margin_on_curve_;
   bool suppress_sudden_obstacle_stop_;
 
   std::vector<int> stop_obstacle_types_;
@@ -190,6 +197,9 @@ private:
     double lat_hysteresis_margin_for_slow_down;
     int successive_num_to_entry_slow_down_condition;
     int successive_num_to_exit_slow_down_condition;
+    // consideration for the current ego pose
+    bool enable_to_consider_current_pose{false};
+    double time_to_convergence{1.5};
   };
   BehaviorDeterminationParam behavior_determination_param_;
 

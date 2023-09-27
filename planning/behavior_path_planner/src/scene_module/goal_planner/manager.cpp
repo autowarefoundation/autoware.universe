@@ -15,8 +15,8 @@
 #include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
 
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -38,12 +38,17 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
     p.th_stopped_velocity = node->declare_parameter<double>(base_ns + "th_stopped_velocity");
     p.th_arrived_distance = node->declare_parameter<double>(base_ns + "th_arrived_distance");
     p.th_stopped_time = node->declare_parameter<double>(base_ns + "th_stopped_time");
+    p.center_line_path_interval =
+      node->declare_parameter<double>(base_ns + "center_line_path_interval");
   }
 
   // goal search
   {
     const std::string ns = base_ns + "goal_search.";
-    p.search_priority = node->declare_parameter<std::string>(ns + "search_priority");
+    p.goal_priority = node->declare_parameter<std::string>(ns + "goal_priority");
+    p.minimum_weighted_distance_lateral_weight =
+      node->declare_parameter<double>(ns + "minimum_weighted_distance.lateral_weight");
+    p.path_priority = node->declare_parameter<std::string>(ns + "path_priority");
     p.forward_goal_search_length =
       node->declare_parameter<double>(ns + "forward_goal_search_length");
     p.backward_goal_search_length =
@@ -72,9 +77,12 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
   // occupancy grid map
   {
     const std::string ns = base_ns + "occupancy_grid.";
-    p.use_occupancy_grid = node->declare_parameter<bool>(ns + "use_occupancy_grid");
-    p.use_occupancy_grid_for_longitudinal_margin =
-      node->declare_parameter<bool>(ns + "use_occupancy_grid_for_longitudinal_margin");
+    p.use_occupancy_grid_for_goal_search =
+      node->declare_parameter<bool>(ns + "use_occupancy_grid_for_goal_search");
+    p.use_occupancy_grid_for_path_collision_check =
+      node->declare_parameter<bool>(ns + "use_occupancy_grid_for_path_collision_check");
+    p.use_occupancy_grid_for_goal_longitudinal_margin =
+      node->declare_parameter<bool>(ns + "use_occupancy_grid_for_goal_longitudinal_margin");
     p.occupancy_grid_collision_check_margin =
       node->declare_parameter<double>(ns + "occupancy_grid_collision_check_margin");
     p.theta_size = node->declare_parameter<int>(ns + "theta_size");
@@ -90,6 +98,7 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
     p.object_recognition_collision_check_max_extra_stopping_margin =
       node->declare_parameter<double>(
         ns + "object_recognition_collision_check_max_extra_stopping_margin");
+    p.th_moving_object_velocity = node->declare_parameter<double>(ns + "th_moving_object_velocity");
   }
 
   // pull over general params
@@ -115,6 +124,13 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
     p.deceleration_interval = node->declare_parameter<double>(ns + "deceleration_interval");
     p.after_shift_straight_distance =
       node->declare_parameter<double>(ns + "after_shift_straight_distance");
+  }
+
+  // parallel parking common
+  {
+    const std::string ns = base_ns + "pull_over.parallel_parking.";
+    p.parallel_parking_parameters.center_line_path_interval =
+      p.center_line_path_interval;  // for geometric parallel parking
   }
 
   // forward parallel parking forward
@@ -232,18 +248,20 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
   // EgoPredictedPath
   std::string ego_path_ns = path_safety_check_ns + "ego_predicted_path.";
   {
+    p.ego_predicted_path_params.min_velocity =
+      node->declare_parameter<double>(ego_path_ns + "min_velocity");
     p.ego_predicted_path_params.acceleration =
       node->declare_parameter<double>(ego_path_ns + "acceleration");
-    p.ego_predicted_path_params.time_horizon =
-      node->declare_parameter<double>(ego_path_ns + "time_horizon");
+    p.ego_predicted_path_params.max_velocity =
+      node->declare_parameter<double>(ego_path_ns + "max_velocity");
+    p.ego_predicted_path_params.time_horizon_for_front_object =
+      node->declare_parameter<double>(ego_path_ns + "time_horizon_for_front_object");
+    p.ego_predicted_path_params.time_horizon_for_rear_object =
+      node->declare_parameter<double>(ego_path_ns + "time_horizon_for_rear_object");
     p.ego_predicted_path_params.time_resolution =
       node->declare_parameter<double>(ego_path_ns + "time_resolution");
-    p.ego_predicted_path_params.min_slow_speed =
-      node->declare_parameter<double>(ego_path_ns + "min_slow_speed");
     p.ego_predicted_path_params.delay_until_departure =
       node->declare_parameter<double>(ego_path_ns + "delay_until_departure");
-    p.ego_predicted_path_params.target_velocity =
-      node->declare_parameter<double>(ego_path_ns + "target_velocity");
   }
 
   // ObjectFilteringParams
@@ -312,6 +330,8 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
   {
     p.safety_check_params.enable_safety_check =
       node->declare_parameter<bool>(safety_check_ns + "enable_safety_check");
+    p.safety_check_params.hysteresis_factor_expand_rate =
+      node->declare_parameter<double>(safety_check_ns + "hysteresis_factor_expand_rate");
     p.safety_check_params.backward_path_length =
       node->declare_parameter<double>(safety_check_ns + "backward_path_length");
     p.safety_check_params.forward_path_length =

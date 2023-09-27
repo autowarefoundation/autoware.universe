@@ -20,6 +20,7 @@
 #include "obstacle_cruise_planner/polygon_utils.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
 #include <boost/format.hpp>
@@ -130,11 +131,11 @@ double calcObstacleMaxLength(const Shape & shape)
 }
 
 TrajectoryPoint getExtendTrajectoryPoint(
-  const double extend_distance, const TrajectoryPoint & goal_point)
+  const double extend_distance, const TrajectoryPoint & goal_point, const bool is_driving_forward)
 {
   TrajectoryPoint extend_trajectory_point;
-  extend_trajectory_point.pose =
-    tier4_autoware_utils::calcOffsetPose(goal_point.pose, extend_distance, 0.0, 0.0);
+  extend_trajectory_point.pose = tier4_autoware_utils::calcOffsetPose(
+    goal_point.pose, extend_distance * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
   extend_trajectory_point.longitudinal_velocity_mps = goal_point.longitudinal_velocity_mps;
   extend_trajectory_point.lateral_velocity_mps = goal_point.lateral_velocity_mps;
   extend_trajectory_point.acceleration_mps2 = goal_point.acceleration_mps2;
@@ -146,6 +147,8 @@ std::vector<TrajectoryPoint> extendTrajectoryPoints(
   const double step_length)
 {
   auto output_points = input_points;
+  const auto is_driving_forward_opt = motion_utils::isDrivingForwardWithTwist(input_points);
+  const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
 
   if (extend_distance < std::numeric_limits<double>::epsilon()) {
     return output_points;
@@ -155,11 +158,13 @@ std::vector<TrajectoryPoint> extendTrajectoryPoints(
 
   double extend_sum = 0.0;
   while (extend_sum <= (extend_distance - step_length)) {
-    const auto extend_trajectory_point = getExtendTrajectoryPoint(extend_sum, goal_point);
+    const auto extend_trajectory_point =
+      getExtendTrajectoryPoint(extend_sum, goal_point, is_driving_forward);
     output_points.push_back(extend_trajectory_point);
     extend_sum += step_length;
   }
-  const auto extend_trajectory_point = getExtendTrajectoryPoint(extend_distance, goal_point);
+  const auto extend_trajectory_point =
+    getExtendTrajectoryPoint(extend_distance, goal_point, is_driving_forward);
   output_points.push_back(extend_trajectory_point);
 
   return output_points;
@@ -269,6 +274,10 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
     "behavior_determination.slow_down.successive_num_to_entry_slow_down_condition");
   successive_num_to_exit_slow_down_condition = node.declare_parameter<int>(
     "behavior_determination.slow_down.successive_num_to_exit_slow_down_condition");
+  enable_to_consider_current_pose = node.declare_parameter<bool>(
+    "behavior_determination.consider_current_pose.enable_to_consider_current_pose");
+  time_to_convergence = node.declare_parameter<double>(
+    "behavior_determination.consider_current_pose.time_to_convergence");
 }
 
 void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
@@ -327,6 +336,12 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
   tier4_autoware_utils::updateParam<int>(
     parameters, "behavior_determination.slow_down.successive_num_to_exit_slow_down_condition",
     successive_num_to_exit_slow_down_condition);
+  tier4_autoware_utils::updateParam<bool>(
+    parameters, "behavior_determination.consider_current_pose.enable_to_consider_current_pose",
+    enable_to_consider_current_pose);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.consider_current_pose.time_to_convergence",
+    time_to_convergence);
 }
 
 ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions & node_options)
@@ -397,11 +412,18 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     }
 
     min_behavior_stop_margin_ = declare_parameter<double>("common.min_behavior_stop_margin");
+    additional_safe_distance_margin_on_curve_ =
+      declare_parameter<double>("common.stop_on_curve.additional_safe_distance_margin");
+    enable_approaching_on_curve_ =
+      declare_parameter<bool>("common.stop_on_curve.enable_approaching");
+    min_safe_distance_margin_on_curve_ =
+      declare_parameter<double>("common.stop_on_curve.min_safe_distance_margin");
     suppress_sudden_obstacle_stop_ =
       declare_parameter<bool>("common.suppress_sudden_obstacle_stop");
     planner_ptr_->setParam(
       enable_debug_info_, enable_calculation_time_info_, min_behavior_stop_margin_,
-      suppress_sudden_obstacle_stop_);
+      enable_approaching_on_curve_, additional_safe_distance_margin_on_curve_,
+      min_safe_distance_margin_on_curve_, suppress_sudden_obstacle_stop_);
   }
 
   {  // stop/cruise/slow down obstacle type
@@ -438,9 +460,20 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
     parameters, "common.enable_debug_info", enable_debug_info_);
   tier4_autoware_utils::updateParam<bool>(
     parameters, "common.enable_calculation_time_info", enable_calculation_time_info_);
+
+  tier4_autoware_utils::updateParam<bool>(
+    parameters, "common.stop_on_curve.enable_approaching", enable_approaching_on_curve_);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "common.stop_on_curve.additional_safe_distance_margin",
+    additional_safe_distance_margin_on_curve_);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "common.stop_on_curve.min_safe_distance_margin",
+    min_safe_distance_margin_on_curve_);
+
   planner_ptr_->setParam(
     enable_debug_info_, enable_calculation_time_info_, min_behavior_stop_margin_,
-    suppress_sudden_obstacle_stop_);
+    enable_approaching_on_curve_, additional_safe_distance_margin_on_curve_,
+    min_safe_distance_margin_on_curve_, suppress_sudden_obstacle_stop_);
 
   tier4_autoware_utils::updateParam<bool>(
     parameters, "common.enable_slow_down_planning", enable_slow_down_planning_);
@@ -509,6 +542,57 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   publishCalculationTime(calculation_time);
   RCLCPP_INFO_EXPRESSION(
     get_logger(), enable_calculation_time_info_, "%s := %f [ms]", __func__, calculation_time);
+}
+
+std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
+  const std::vector<TrajectoryPoint> & traj_points,
+  const vehicle_info_util::VehicleInfo & vehicle_info,
+  const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin) const
+{
+  const auto & p = behavior_determination_param_;
+  const bool is_enable_current_pose_consideration = p.enable_to_consider_current_pose;
+  const double step_length = p.decimate_trajectory_step_length;
+  const double time_to_convergence = p.time_to_convergence;
+
+  std::vector<Polygon2d> polygons;
+  const double current_ego_lat_error =
+    motion_utils::calcLateralOffset(traj_points, current_ego_pose.position);
+  const double current_ego_yaw_error =
+    motion_utils::calcYawDeviation(traj_points, current_ego_pose);
+  double time_elapsed = 0.0;
+
+  std::vector<geometry_msgs::msg::Pose> last_poses = {traj_points.at(0).pose};
+  if (is_enable_current_pose_consideration) {
+    last_poses.push_back(current_ego_pose);
+  }
+
+  for (size_t i = 0; i < traj_points.size(); ++i) {
+    std::vector<geometry_msgs::msg::Pose> current_poses = {traj_points.at(i).pose};
+
+    // estimate the future ego pose with assuming that the pose error against the reference path
+    // will decrease to zero by the time_to_convergence
+    if (is_enable_current_pose_consideration && time_elapsed < time_to_convergence) {
+      const double rem_ratio = (time_to_convergence - time_elapsed) / time_to_convergence;
+      geometry_msgs::msg::Pose indexed_pose_err;
+      indexed_pose_err.set__orientation(
+        tier4_autoware_utils::createQuaternionFromYaw(current_ego_yaw_error * rem_ratio));
+      indexed_pose_err.set__position(
+        tier4_autoware_utils::createPoint(0.0, current_ego_lat_error * rem_ratio, 0.0));
+
+      current_poses.push_back(
+        tier4_autoware_utils::transformPose(indexed_pose_err, traj_points.at(i).pose));
+
+      if (traj_points.at(i).longitudinal_velocity_mps != 0.0) {
+        time_elapsed += step_length / traj_points.at(i).longitudinal_velocity_mps;
+      } else {
+        time_elapsed = std::numeric_limits<double>::max();
+      }
+    }
+    polygons.push_back(
+      polygon_utils::createOneStepPolygon(last_poses, current_poses, vehicle_info, lat_margin));
+    last_poses = current_poses;
+  }
+  return polygons;
 }
 
 std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
@@ -630,7 +714,7 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   // calculated decimated trajectory points and trajectory polygon
   const auto decimated_traj_points = decimateTrajectoryPoints(traj_points);
   const auto decimated_traj_polys =
-    polygon_utils::createOneStepPolygons(decimated_traj_points, vehicle_info_);
+    createOneStepPolygons(decimated_traj_points, vehicle_info_, ego_odom_ptr_->pose.pose);
   debug_data_ptr_->detection_polygons = decimated_traj_polys;
 
   // determine ego's behavior from stop, cruise and slow down
@@ -911,7 +995,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
   }
 
   const auto [tangent_vel, normal_vel] = projectObstacleVelocityToTrajectory(traj_points, obstacle);
-  return StopObstacle{obstacle.uuid, obstacle.stamp, obstacle.pose,
+  return StopObstacle{obstacle.uuid, obstacle.stamp, obstacle.pose,   obstacle.shape,
                       tangent_vel,   normal_vel,     *collision_point};
 }
 
@@ -962,8 +1046,8 @@ ObstacleCruisePlannerNode::createCollisionPointForStopObstacle(
   }
 
   // calculate collision points with trajectory with lateral stop margin
-  const auto traj_polys_with_lat_margin =
-    polygon_utils::createOneStepPolygons(traj_points, vehicle_info_, p.max_lat_margin_for_stop);
+  const auto traj_polys_with_lat_margin = createOneStepPolygons(
+    traj_points, vehicle_info_, ego_odom_ptr_->pose.pose, p.max_lat_margin_for_stop);
   const auto collision_point = polygon_utils::getCollisionPoint(
     traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_);
   return collision_point;
@@ -1024,8 +1108,8 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
 
   // calculate collision points with trajectory with lateral stop margin
   // NOTE: For additional margin, hysteresis is not divided by two.
-  const auto traj_polys_with_lat_margin = polygon_utils::createOneStepPolygons(
-    traj_points, vehicle_info_,
+  const auto traj_polys_with_lat_margin = createOneStepPolygons(
+    traj_points, vehicle_info_, ego_odom_ptr_->pose.pose,
     p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down);
 
   std::vector<Polygon2d> front_collision_polygons;

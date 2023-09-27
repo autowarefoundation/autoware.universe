@@ -37,6 +37,8 @@ struct VehicleCmdFilterParam
   LimitArray lon_jerk_lim;
   LimitArray lat_acc_lim;
   LimitArray lat_jerk_lim;
+  LimitArray steer_lim;
+  LimitArray steer_rate_lim;
   LimitArray actual_steer_diff_lim;
 };
 class VehicleCmdFilter
@@ -47,6 +49,8 @@ public:
 
   void setWheelBase(double v) { param_.wheel_base = v; }
   void setVelLim(double v) { param_.vel_lim = v; }
+  void setSteerLim(LimitArray v);
+  void setSteerRateLim(LimitArray v);
   void setLonAccLim(LimitArray v);
   void setLonJerkLim(LimitArray v);
   void setLatAccLim(LimitArray v);
@@ -68,6 +72,7 @@ public:
   void limitActualSteerDiff(
     const double current_steer_angle, AckermannControlCommand & input, GateFilterInfo & info) const;
   void limitLateralSteer(AckermannControlCommand & input, GateFilterInfo & info) const;
+  void limitLateralSteerRate(const double dt, AckermannControlCommand & input) const;
   void filterAll(
     const double dt, const double current_steer_angle, AckermannControlCommand & input,
     GateFilterInfo & info) const;
@@ -94,6 +99,8 @@ private:
   double getLonJerkLim() const;
   double getLatAccLim() const;
   double getLatJerkLim() const;
+  double getSteerLim() const;
+  double getSteerRateLim() const;
   double getSteerDiffLim() const;
 };
 }  // namespace vehicle_cmd_gate

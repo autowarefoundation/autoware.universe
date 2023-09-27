@@ -20,11 +20,18 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/resample/resample.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_auto_perception_msgs/msg/predicted_path.hpp"
 
-#include <boost/assign/list_of.hpp>
+#include <boost/geometry/algorithms/is_valid.hpp>
+
+#include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_routing/RoutingGraphContainer.h>
 
 #include <algorithm>
 #include <limits>
@@ -1537,7 +1544,9 @@ void generateDrivableArea(
 
   // make bound longitudinally monotonic
   // TODO(Murooka) Fix makeBoundLongitudinallyMonotonic
-  if (enable_expanding_hatched_road_markings || enable_expanding_intersection_areas) {
+  if (
+    is_driving_forward &&
+    (enable_expanding_hatched_road_markings || enable_expanding_intersection_areas)) {
     makeBoundLongitudinallyMonotonic(path, planner_data, true);   // for left bound
     makeBoundLongitudinallyMonotonic(path, planner_data, false);  // for right bound
   }
@@ -1663,6 +1672,13 @@ std::vector<geometry_msgs::msg::Point> calcBound(
         output_points.push_back(point);
       }
 
+      continue;
+    }
+
+    if (!enable_expanding_hatched_road_markings) {
+      for (const auto & point : bound) {
+        output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(point));
+      }
       continue;
     }
 
@@ -2433,20 +2449,15 @@ std::optional<double> getSignedDistanceFromBoundary(
   const auto & bound_line_2d = left_side ? lanelet::utils::to2D(combined_lane.leftBound3d())
                                          : lanelet::utils::to2D(combined_lane.rightBound3d());
 
-  // Initialize the lateral distance to the maximum (for left side) or the minimum (for right side)
-  // possible value.
-  double lateral_distance =
-    left_side ? -std::numeric_limits<double>::max() : std::numeric_limits<double>::max();
-
   // Find the closest bound segment that contains the corner point in the X-direction
   // and calculate the lateral distance from that segment.
-  const auto calcLateralDistanceFromBound = [&](
-                                              const Point & vehicle_corner_point,
-                                              boost::optional<double> & lateral_distance,
-                                              boost::optional<size_t> & segment_idx) {
+  const auto calcLateralDistanceFromBound =
+    [&](const Point & vehicle_corner_point) -> boost::optional<std::pair<double, size_t>> {
     Pose vehicle_corner_pose{};
     vehicle_corner_pose.position = vehicle_corner_point;
     vehicle_corner_pose.orientation = vehicle_pose.orientation;
+
+    boost::optional<std::pair<double, size_t>> lateral_distance_with_idx{};
 
     // Euclidean distance to find the closest segment containing the corner point.
     double min_distance = std::numeric_limits<double>::max();
@@ -2473,38 +2484,45 @@ std::optional<double> getSignedDistanceFromBoundary(
         min_distance = std::min(distance1, distance2);
         // Update lateral distance using the formula derived from similar triangles in the lateral
         // cross-section view.
-        lateral_distance = -1.0 * (dy_p1 * dx_p2 + dy_p2 * -dx_p1) / (dx_p2 - dx_p1);
-        segment_idx = i;
+        lateral_distance_with_idx =
+          std::make_pair(-1.0 * (dy_p1 * dx_p2 + dy_p2 * -dx_p1) / (dx_p2 - dx_p1), i);
       }
     }
+    if (lateral_distance_with_idx) {
+      return lateral_distance_with_idx;
+    }
+    return boost::optional<std::pair<double, size_t>>{};
   };
 
   // Calculate the lateral distance for both the rear and front corners of the vehicle.
-  boost::optional<size_t> rear_segment_idx{};
-  boost::optional<double> rear_lateral_distance{};
-  calcLateralDistanceFromBound(rear_corner_point, rear_lateral_distance, rear_segment_idx);
-  boost::optional<size_t> front_segment_idx{};
-  boost::optional<double> front_lateral_distance{};
-  calcLateralDistanceFromBound(front_corner_point, front_lateral_distance, front_segment_idx);
+  const boost::optional<std::pair<double, size_t>> rear_lateral_distance_with_idx =
+    calcLateralDistanceFromBound(rear_corner_point);
+  const boost::optional<std::pair<double, size_t>> front_lateral_distance_with_idx =
+    calcLateralDistanceFromBound(front_corner_point);
 
   // If no closest bound segment was found for both corners, return an empty optional.
-  if (!rear_lateral_distance && !front_lateral_distance) {
+  if (!rear_lateral_distance_with_idx && !front_lateral_distance_with_idx) {
     return {};
   }
   // If only one of them found the closest bound, return the found lateral distance.
-  if (!rear_lateral_distance) {
-    return *front_lateral_distance;
-  } else if (!front_lateral_distance) {
-    return *rear_lateral_distance;
+  if (!rear_lateral_distance_with_idx) {
+    return front_lateral_distance_with_idx.get().first;
+  } else if (!front_lateral_distance_with_idx) {
+    return rear_lateral_distance_with_idx.get().first;
   }
   // If both corners found their closest bound, return the maximum (for left side) or the minimum
   // (for right side) lateral distance.
-  lateral_distance = left_side ? std::max(*rear_lateral_distance, *front_lateral_distance)
-                               : std::min(*rear_lateral_distance, *front_lateral_distance);
+  double lateral_distance =
+    left_side
+      ? std::max(
+          rear_lateral_distance_with_idx.get().first, front_lateral_distance_with_idx.get().first)
+      : std::min(
+          rear_lateral_distance_with_idx.get().first, front_lateral_distance_with_idx.get().first);
 
   // Iterate through all segments between the segments closest to the rear and front corners.
   // Update the lateral distance in case any of these inner segments are closer to the vehicle.
-  for (size_t i = *rear_segment_idx + 1; i < *front_segment_idx; i++) {
+  for (size_t i = rear_lateral_distance_with_idx.get().second + 1;
+       i < front_lateral_distance_with_idx.get().second; i++) {
     Pose bound_pose;
     bound_pose.position = lanelet::utils::conversion::toGeomMsgPt(bound_line_2d[i]);
     bound_pose.orientation = vehicle_pose.orientation;
@@ -2848,7 +2866,7 @@ BehaviorModuleOutput getReferencePath(
   // clip backward length
   // NOTE: In order to keep backward_path_length at least, resampling interval is added to the
   // backward.
-  const size_t current_seg_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     reference_path.points, no_shift_pose, p.ego_nearest_dist_threshold,
     p.ego_nearest_yaw_threshold);
   reference_path.points = motion_utils::cropPoints(
@@ -3138,15 +3156,12 @@ double calcMinimumLaneChangeLength(
   const double & max_lateral_acc = lat_acc.second;
   const double & lateral_jerk = common_param.lane_changing_lateral_jerk;
   const double & finish_judge_buffer = common_param.lane_change_finish_judge_buffer;
-  const auto prepare_length = 0.5 * common_param.max_acc *
-                              common_param.lane_change_prepare_duration *
-                              common_param.lane_change_prepare_duration;
 
   double accumulated_length = length_to_intersection;
   for (const auto & shift_interval : shift_intervals) {
     const double t =
       PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
-    accumulated_length += vel * t + prepare_length + finish_judge_buffer;
+    accumulated_length += vel * t + finish_judge_buffer;
   }
   accumulated_length +=
     common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);

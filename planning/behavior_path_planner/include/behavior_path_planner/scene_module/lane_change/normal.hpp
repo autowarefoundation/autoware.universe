@@ -108,7 +108,7 @@ protected:
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
-  double calcPrepareDuration(
+  std::vector<double> calcPrepareDuration(
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
@@ -128,6 +128,12 @@ protected:
   bool hasEnoughLength(
     const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes, const Direction direction = Direction::NONE) const;
+
+  bool hasEnoughLengthToCrosswalk(
+    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
+
+  bool hasEnoughLengthToIntersection(
+    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
 
   bool getLaneChangePaths(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
@@ -149,7 +155,12 @@ protected:
 
   void setStopPose(const Pose & stop_pose);
 
+  void updateStopTime();
+
+  double getStopTime() const { return stop_time_; }
+
   rclcpp::Logger logger_ = rclcpp::get_logger("lane_change").get_child(getModuleTypeStr());
+  double stop_time_{0.0};
 };
 }  // namespace behavior_path_planner
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_

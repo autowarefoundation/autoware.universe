@@ -22,6 +22,8 @@
 
 #include <Eigen/Geometry>
 #include <interpolation/linear_interpolation.hpp>
+#include <motion_utils/resample/resample.hpp>
+#include <motion_utils/trajectory/interpolation.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 
 #include <boost/geometry.hpp>
