@@ -143,10 +143,10 @@ NDTScanMatcher::NDTScanMatcher()
     this->declare_parameter<double>("converged_param_nearest_voxel_transformation_likelihood");
 
   lidar_topic_timeout_sec_ = this->declare_parameter<double>("lidar_topic_timeout_sec");
-
+    
   critical_upper_bound_exe_time_ms_ =
     this->declare_parameter<int>("critical_upper_bound_exe_time_ms");
-
+    
   initial_pose_timeout_sec_ = this->declare_parameter<double>("initial_pose_timeout_sec");
 
   initial_pose_distance_tolerance_m_ =
