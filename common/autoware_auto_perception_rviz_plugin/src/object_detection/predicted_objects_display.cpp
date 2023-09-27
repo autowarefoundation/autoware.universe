@@ -47,16 +47,12 @@ PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("t
 }
 
 void PredictedObjectsDisplay::workerThread()
-{ // A standard working thread that waiting for jobs
+{  // A standard working thread that waiting for jobs
   while (true) {
     std::function<void()> job;
     {
       std::unique_lock<std::mutex> lock(queue_mutex);
-      mutex_condition.wait(
-        lock, [this]{
-          return !jobs.empty() || should_terminate;
-        }
-      );
+      mutex_condition.wait(lock, [this] { return !jobs.empty() || should_terminate; });
       if (should_terminate) {
         return;
       }
@@ -69,26 +65,27 @@ void PredictedObjectsDisplay::workerThread()
 
 void PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread(int rank)
 {
-    // Determine the number of objects to be processed by this thread
-    int length = tmp_msg->objects.size();
-    int num_object_per_thread = static_cast<int>(ceil(length / static_cast<float>(num_threads)));
+  // Determine the number of objects to be processed by this thread
+  int length = tmp_msg->objects.size();
+  int num_object_per_thread = static_cast<int>(ceil(length / static_cast<float>(num_threads)));
 
-    int first_object_index = rank * num_object_per_thread;
-    int last_object_index = first_object_index + num_object_per_thread;
-    if (last_object_index > length) {
-      last_object_index = length;
-    }
-    std::vector<visualization_msgs::msg::Marker::SharedPtr> thread_makers;
-    for (int i = first_object_index; i < last_object_index; i++) {
-      thread_makers = tackle_one_object(tmp_msg, i, thread_makers);
-    }
-    push_tmp_markers(thread_makers);
+  int first_object_index = rank * num_object_per_thread;
+  int last_object_index = first_object_index + num_object_per_thread;
+  if (last_object_index > length) {
+    last_object_index = length;
+  }
+  std::vector<visualization_msgs::msg::Marker::SharedPtr> thread_makers;
+  for (int i = first_object_index; i < last_object_index; i++) {
+    thread_makers = tackle_one_object(tmp_msg, i, thread_makers);
+  }
+  push_tmp_markers(thread_makers);
 
-    sem_post(&ending_semaphores[rank]);  // signal the end of the job
+  sem_post(&ending_semaphores[rank]);  // signal the end of the job
 }
 
-void PredictedObjectsDisplay::messageProcessorThreadJob(){
-  // Receiving 
+void PredictedObjectsDisplay::messageProcessorThreadJob()
+{
+  // Receiving
   std::unique_lock<std::mutex> lock(mutex);
   tmp_msg = this->msg;
   this->msg.reset();
@@ -103,17 +100,17 @@ void PredictedObjectsDisplay::messageProcessorThreadJob(){
   num_threads = std::min(num_threads_property->getInt(), num_threads);
   num_threads = std::max(1, num_threads);
 
-  if (num_threads > 1){
+  if (num_threads > 1) {
     tmp_markers.clear();
-    for (int rank = 0; rank < num_threads; rank++){
-      std::function<void()> f = std::bind(&PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread, this, rank);
+    for (int rank = 0; rank < num_threads; rank++) {
+      std::function<void()> f =
+        std::bind(&PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread, this, rank);
       queueJob(f);
     }
-    for (int rank = 0; rank < num_threads; rank++){
+    for (int rank = 0; rank < num_threads; rank++) {
       sem_wait(&ending_semaphores[rank]);
     }
-  }
-  else{
+  } else {
     tmp_markers = createMarkers(tmp_msg);
   }
 

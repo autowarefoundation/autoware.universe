@@ -47,27 +47,30 @@ public:
   using PredictedObjects = autoware_auto_perception_msgs::msg::PredictedObjects;
 
   PredictedObjectsDisplay();
-  ~PredictedObjectsDisplay(){
+  ~PredictedObjectsDisplay()
+  {
     {
       std::unique_lock<std::mutex> lock(queue_mutex);
-      should_terminate=true;
+      should_terminate = true;
     }
     mutex_condition.notify_all();
-    for (std::thread& active_thread: threads){
+    for (std::thread & active_thread : threads) {
       active_thread.join();
     }
     threads.clear();
 
-    for (int ii = 0; ii < max_num_threads; ++ii){
+    for (int ii = 0; ii < max_num_threads; ++ii) {
       sem_close(&ending_semaphores[ii]);
     }
-    ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>::~ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>();
+    ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>::
+      ~ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>();
   }
 
 private:
   void processMessage(PredictedObjects::ConstSharedPtr msg) override;
 
-  void queueJob(std::function<void()>& job) {
+  void queueJob(std::function<void()> & job)
+  {
     {
       std::unique_lock<std::mutex> lock(queue_mutex);
       jobs.push(job);
