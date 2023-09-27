@@ -54,7 +54,7 @@ private:
   static constexpr int64_t N_EI_CANDIDATES = 100;
 
   double acquisition_function(const Input & input);
-  double gauss(const Input & input, const Input & mu, const Input & sigma);
+  double log_gaussian_pdf(const Input & input, const Input & mu, const Input & sigma);
   static double fix_angle(const double angle);
   Input sample_from_prior();
 

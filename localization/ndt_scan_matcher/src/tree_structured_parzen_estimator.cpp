@@ -104,8 +104,8 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
 
   // The upper KDE and the lower KDE are calculated respectively, and the ratio is the score of the
   // acquisition function.
-  double upper = 0.0;
-  double lower = 0.0;
+  std::vector<double> upper_logs;
+  std::vector<double> lower_logs;
 
   // Scott's rule
   const double coeff_upper = BASE_STDDEV_COEFF * std::pow(good_num_, -1.0 / 10);
@@ -119,52 +119,63 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   for (int64_t i = 0; i < n; i++) {
     const double v = trials_[i].score - MIN_GOOD_SCORE;
     const double w = std::min(std::abs(v), 1.0);
+    const double log_w = std::log(w);
     if (i < good_num_) {
-      const double p = gauss(input, trials_[i].input, sigma_upper);
-      upper += w * p;
+      const double log_p = log_gaussian_pdf(input, trials_[i].input, sigma_upper);
+      upper_logs.push_back(log_p + log_w);
     } else {
-      const double p = gauss(input, trials_[i].input, sigma_lower);
-      lower += w * p;
+      const double log_p = log_gaussian_pdf(input, trials_[i].input, sigma_lower);
+      lower_logs.push_back(log_p + log_w);
     }
   }
 
   const Input zeros{};
   const Input sigma{x_stddev_, y_stddev_, z_stddev_, roll_stddev_, pitch_stddev_, 10.0};
-  upper += gauss(input, zeros, sigma);
-  lower += gauss(input, zeros, sigma);
+  const double log_p = log_gaussian_pdf(input, zeros, sigma);
+  upper_logs.push_back(log_p);
 
-  const double r = upper / lower;
+  auto log_sum_exp = [](const std::vector<double> & log_vec) {
+    const double max = *std::max_element(log_vec.begin(), log_vec.end());
+    double sum = 0.0;
+    for (const double log_v : log_vec) {
+      sum += std::exp(log_v - max);
+    }
+    return max + std::log(sum);
+  };
+
+  const double upper = log_sum_exp(upper_logs);
+  const double lower = log_sum_exp(lower_logs);
+  const double r = upper - lower;
   return r;
 }
 
-double TreeStructuredParzenEstimator::gauss(
+double TreeStructuredParzenEstimator::log_gaussian_pdf(
   const Input & input, const Input & mu, const Input & sigma)
 {
-  const double sqrt_2pi = std::sqrt(2 * M_PI);
-  double result = 1.0;
+  const double log_2pi = std::log(2.0 * M_PI);
+  double result = 0.0;
 
-  auto f = [&](const double diff, const double sigma) {
-    const double exponent = -(diff * diff) / (2 * sigma * sigma);
-    return std::exp(exponent) / (sqrt_2pi * sigma);
+  auto log_gaussian_pdf_1d = [&](const double diff, const double sigma) {
+    return -0.5 * log_2pi - std::log(sigma) - (diff * diff) / (2.0 * sigma * sigma);
   };
 
   const double diff_x = input.x - mu.x;
-  result *= f(diff_x, sigma.x);
+  result += log_gaussian_pdf_1d(diff_x, sigma.x);
 
   const double diff_y = input.y - mu.y;
-  result *= f(diff_y, sigma.y);
+  result += log_gaussian_pdf_1d(diff_y, sigma.y);
 
   const double diff_z = input.z - mu.z;
-  result *= f(diff_z, sigma.z);
+  result += log_gaussian_pdf_1d(diff_z, sigma.z);
 
   const double diff_roll = fix_angle(input.roll - mu.roll);
-  result *= f(diff_roll, sigma.roll);
+  result += log_gaussian_pdf_1d(diff_roll, sigma.roll);
 
   const double diff_pitch = fix_angle(input.pitch - mu.pitch);
-  result *= f(diff_pitch, sigma.pitch);
+  result += log_gaussian_pdf_1d(diff_pitch, sigma.pitch);
 
   const double diff_yaw = fix_angle(input.yaw - mu.yaw);
-  result *= f(diff_yaw, sigma.yaw);
+  result += log_gaussian_pdf_1d(diff_yaw, sigma.yaw);
 
   return result;
 }
