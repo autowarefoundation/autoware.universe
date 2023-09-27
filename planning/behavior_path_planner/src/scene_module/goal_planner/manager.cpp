@@ -38,12 +38,17 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
     p.th_stopped_velocity = node->declare_parameter<double>(base_ns + "th_stopped_velocity");
     p.th_arrived_distance = node->declare_parameter<double>(base_ns + "th_arrived_distance");
     p.th_stopped_time = node->declare_parameter<double>(base_ns + "th_stopped_time");
+    p.center_line_path_interval =
+      node->declare_parameter<double>(base_ns + "center_line_path_interval");
   }
 
   // goal search
   {
     const std::string ns = base_ns + "goal_search.";
-    p.search_priority = node->declare_parameter<std::string>(ns + "search_priority");
+    p.goal_priority = node->declare_parameter<std::string>(ns + "goal_priority");
+    p.minimum_weighted_distance_lateral_weight =
+      node->declare_parameter<double>(ns + "minimum_weighted_distance.lateral_weight");
+    p.path_priority = node->declare_parameter<std::string>(ns + "path_priority");
     p.forward_goal_search_length =
       node->declare_parameter<double>(ns + "forward_goal_search_length");
     p.backward_goal_search_length =
@@ -119,6 +124,13 @@ GoalPlannerModuleManager::GoalPlannerModuleManager(
     p.deceleration_interval = node->declare_parameter<double>(ns + "deceleration_interval");
     p.after_shift_straight_distance =
       node->declare_parameter<double>(ns + "after_shift_straight_distance");
+  }
+
+  // parallel parking common
+  {
+    const std::string ns = base_ns + "pull_over.parallel_parking.";
+    p.parallel_parking_parameters.center_line_path_interval =
+      p.center_line_path_interval;  // for geometric parallel parking
   }
 
   // forward parallel parking forward
