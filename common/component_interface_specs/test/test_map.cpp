@@ -1,4 +1,4 @@
-// Copyright 2018 the Autoware Foundation
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,20 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
 #include "gtest/gtest.h"
 #include "component_interface_specs/map.hpp"
 
-TEST(mapinterface,interface)
+TEST(map,interface)
 {
   {
     using map_interface::MapProjectorInfo;
-    MapProjectorInfo mapprojectorinfo;    
+    MapProjectorInfo map_projector;    
     size_t depth=1;
-    EXPECT_EQ(mapprojectorinfo.depth,depth);
-    EXPECT_EQ(mapprojectorinfo.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(mapprojectorinfo.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+    EXPECT_EQ(map_projector.depth,depth);
+    EXPECT_EQ(map_projector.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(map_projector.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
   }
 }

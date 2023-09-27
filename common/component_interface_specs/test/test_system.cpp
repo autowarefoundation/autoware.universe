@@ -1,4 +1,4 @@
-// Copyright 2018 the Autoware Foundation
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,29 +11,27 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
 #include "gtest/gtest.h"
 #include "component_interface_specs/system.hpp"
 
-TEST(systeminterface,interface)
+TEST(system,interface)
 {
   {
     using system_interface::MrmState;
-    MrmState mrmstate;    
+    MrmState state;    
     size_t depth=1;
-    EXPECT_EQ(mrmstate.depth,depth);
-    EXPECT_EQ(mrmstate.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(mrmstate.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    EXPECT_EQ(state.depth,depth);
+    EXPECT_EQ(state.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(state.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using system_interface::OperationModeState;
-    OperationModeState operationmodeState;    
+    OperationModeState state;    
     size_t depth=1;
-    EXPECT_EQ(operationmodeState.depth,depth);
-    EXPECT_EQ(operationmodeState.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(operationmodeState.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+    EXPECT_EQ(state.depth,depth);
+    EXPECT_EQ(state.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(state.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
   }
 }

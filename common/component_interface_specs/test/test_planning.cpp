@@ -1,4 +1,4 @@
-// Copyright 2018 the Autoware Foundation
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,21 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
 #include "gtest/gtest.h"
 #include "component_interface_specs/planning.hpp"
 
-TEST(planninginterface,interface)
+TEST(planning,interface)
 {
     {
         using planning_interface::RouteState;
-        RouteState routstate;    
+        RouteState state;    
         size_t depth=1;
-        EXPECT_EQ(routstate.depth,depth);
-        EXPECT_EQ(routstate.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-        EXPECT_EQ(routstate.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+        EXPECT_EQ(state.depth,depth);
+        EXPECT_EQ(state.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+        EXPECT_EQ(state.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
     }
 
     {
@@ -39,20 +37,20 @@ TEST(planninginterface,interface)
 
     {
         using planning_interface::NormalRoute;
-        NormalRoute normalroute;    
+        NormalRoute route;    
         size_t depth=1;
-        EXPECT_EQ(normalroute.depth,depth);
-        EXPECT_EQ(normalroute.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-        EXPECT_EQ(normalroute.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+        EXPECT_EQ(route.depth,depth);
+        EXPECT_EQ(route.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+        EXPECT_EQ(route.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
     }
 
     {
         using planning_interface::MrmRoute;
-        MrmRoute mrmroute;    
+        MrmRoute route;    
         size_t depth=1;
-        EXPECT_EQ(mrmroute.depth,depth);
-        EXPECT_EQ(mrmroute.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-        EXPECT_EQ(mrmroute.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+        EXPECT_EQ(route.depth,depth);
+        EXPECT_EQ(route.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+        EXPECT_EQ(route.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
     }
 
     {

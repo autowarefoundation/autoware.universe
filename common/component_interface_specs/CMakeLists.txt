@@ -4,7 +4,6 @@ project(component_interface_specs)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(autoware_auto_vehicle_msgs REQUIRED)
 include_directories(
   include
   SYSTEM

@@ -1,4 +1,4 @@
-// Copyright 2018 the Autoware Foundation
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,30 +11,28 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
 #include "gtest/gtest.h"
 #include "component_interface_specs/localization.hpp"
 
-TEST(localizationinterface,interface)
+TEST(localization,interface)
 {
   {
     using localization_interface::InitializationState;
-    InitializationState initializationstate;    
+    InitializationState initialization_state;    
     size_t depth=1;
-    EXPECT_EQ(initializationstate.depth,depth);
-    EXPECT_EQ(initializationstate.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(initializationstate.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+    EXPECT_EQ(initialization_state.depth,depth);
+    EXPECT_EQ(initialization_state.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(initialization_state.durability,RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
   }
 
   {
     using localization_interface::KinematicState;
-    KinematicState kinematicstate;    
+    KinematicState kinematic_state;    
     size_t depth=1;
-    EXPECT_EQ(kinematicstate.depth,depth);
-    EXPECT_EQ(kinematicstate.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(kinematicstate.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    EXPECT_EQ(kinematic_state.depth,depth);
+    EXPECT_EQ(kinematic_state.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(kinematic_state.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {

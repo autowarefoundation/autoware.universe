@@ -1,4 +1,4 @@
-// Copyright 2018 the Autoware Foundation
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,57 +11,55 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
 #include "gtest/gtest.h"
 #include "component_interface_specs/vehicle.hpp"
 
-TEST(vehicleinterface,interface)
+TEST(vehicle,interface)
 {
   {
     using vehicle_interface::SteeringStatus;
-    SteeringStatus steeringstatus;    
+    SteeringStatus status;    
     size_t depth=1;
-    EXPECT_EQ(steeringstatus.depth,depth);
-    EXPECT_EQ(steeringstatus.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(steeringstatus.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    EXPECT_EQ(status.depth,depth);
+    EXPECT_EQ(status.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(status.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using vehicle_interface::GearStatus;
-    GearStatus gearstatus;    
+    GearStatus status;    
     size_t depth=1;
-    EXPECT_EQ(gearstatus.depth,depth);
-    EXPECT_EQ(gearstatus.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(gearstatus.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    EXPECT_EQ(status.depth,depth);
+    EXPECT_EQ(status.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(status.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using vehicle_interface::TurnIndicatorStatus;
-    TurnIndicatorStatus turnindicatorstatus;    
+    TurnIndicatorStatus status;    
     size_t depth=1;
-    EXPECT_EQ(turnindicatorstatus.depth,depth);
-    EXPECT_EQ(turnindicatorstatus.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(turnindicatorstatus.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    EXPECT_EQ(status.depth,depth);
+    EXPECT_EQ(status.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(status.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using vehicle_interface::HazardLightStatus;
-    HazardLightStatus hazardlightstatus;    
+    HazardLightStatus status;    
     size_t depth=1;
-    EXPECT_EQ(hazardlightstatus.depth,depth);
-    EXPECT_EQ(hazardlightstatus.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(hazardlightstatus.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    EXPECT_EQ(status.depth,depth);
+    EXPECT_EQ(status.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(status.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
   {
     using vehicle_interface::EnergyStatus;
-    EnergyStatus energystatus;    
+    EnergyStatus status;    
     size_t depth=1;
-    EXPECT_EQ(energystatus.depth,depth);
-    EXPECT_EQ(energystatus.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(energystatus.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    EXPECT_EQ(status.depth,depth);
+    EXPECT_EQ(status.reliability,RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(status.durability,RMW_QOS_POLICY_DURABILITY_VOLATILE);
   }
 
 }
