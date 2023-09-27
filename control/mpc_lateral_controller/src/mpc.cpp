@@ -728,10 +728,9 @@ double MPC::calcDesiredSteeringRate(
 
   const size_t STEER_IDX = 2;  // for kinematics model
 
-  const auto steer_0 = x0(STEER_IDX, 0);
   const auto steer_1 = Xex(STEER_IDX, 0);
-
-  const auto steer_rate = (steer_1 - steer_0) / predict_dt;
+  const auto steer_2 = Xex(STEER_IDX + m_vehicle_model_ptr->getDimX(), 0);
+  const auto steer_rate = (steer_2 - steer_1) / predict_dt;
 
   return steer_rate;
 }
