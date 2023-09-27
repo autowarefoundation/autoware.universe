@@ -217,6 +217,10 @@ void GoalPlannerModule::onFreespaceParkingTimer()
   if (!planner_data_->costmap) {
     return;
   }
+  // fixed goal planner do not use freespace planner
+  if (!goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
+    return;
+  }
 
   const bool is_new_costmap =
     (clock_->now() - planner_data_->costmap->header.stamp).seconds() < 1.0;
@@ -459,6 +463,7 @@ ModuleStatus GoalPlannerModule::updateState()
 bool GoalPlannerModule::planFreespacePath()
 {
   mutex_.lock();
+  goal_searcher_->setPlannerData(planner_data_);
   goal_searcher_->update(goal_candidates_);
   const auto goal_candidates = goal_candidates_;
   debug_data_.freespace_planner.num_goal_candidates = goal_candidates.size();
