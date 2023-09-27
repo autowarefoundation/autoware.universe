@@ -22,6 +22,7 @@
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <algorithm>
@@ -128,6 +129,8 @@ protected:  // for the static_centerline_optimizer package
 
 private:
   double vehicle_stop_margin_outside_drivable_area_;
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace obstacle_avoidance_planner
 
