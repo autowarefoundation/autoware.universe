@@ -94,8 +94,8 @@ NDTScanMatcher::NDTScanMatcher()
   lidar_topic_timeout_sec_(),
   initial_pose_timeout_sec_(),
   initial_pose_distance_tolerance_m_(),
-  inversion_vector_threshold_(-0.9),    // Not necessary to extract to ndt_scan_matcher.param.yaml 
-  oscillation_threshold_(10),           // Not necessary to extract to ndt_scan_matcher.param.yaml 
+  inversion_vector_threshold_(-0.9),  // Not necessary to extract to ndt_scan_matcher.param.yaml
+  oscillation_threshold_(10),         // Not necessary to extract to ndt_scan_matcher.param.yaml
   output_pose_covariance_(),
   regularization_enabled_(declare_parameter<bool>("regularization_enabled")),
   estimate_scores_for_degrounded_scan_(),
@@ -160,7 +160,7 @@ NDTScanMatcher::NDTScanMatcher()
 
   initial_estimate_particles_num_ = this->declare_parameter<int>("initial_estimate_particles_num");
 
-  estimate_scores_for_degrounded_scan_ = 
+  estimate_scores_for_degrounded_scan_ =
     this->declare_parameter<bool>("estimate_scores_for_degrounded_scan");
 
   z_margin_for_ground_removal_ = this->declare_parameter<double>("z_margin_for_ground_removal");
