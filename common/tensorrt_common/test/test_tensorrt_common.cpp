@@ -12,18 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
 #include "tensorrt_common/tensorrt_common.hpp"
 
+#include <gtest/gtest.h>
+
 // test get_input_dims function
-TEST(TrtCommonTest, TestGetInputDims) {
-  std::string onnx_file_path = "src/universe/autoware.universe/common/tensorrt_common/data/yolov5s.onnx";
+TEST(TrtCommonTest, TestGetInputDims)
+{
+  std::string onnx_file_path =
+    "src/universe/autoware.universe/common/tensorrt_common/data/yolov5s.onnx";
   nvinfer1::Dims input_dims = tensorrt_common::get_input_dims(onnx_file_path);
   ASSERT_GT(input_dims.nbDims, 0);
 }
 
 // test is_valid_precision_string function
-TEST(TrtCommonTest, TestIsValidPrecisionString) {
+TEST(TrtCommonTest, TestIsValidPrecisionString)
+{
   std::string valid_precision = "fp16";
   std::string invalid_precision = "invalid_precision";
   ASSERT_TRUE(tensorrt_common::is_valid_precision_string(valid_precision));
@@ -32,7 +36,8 @@ TEST(TrtCommonTest, TestIsValidPrecisionString) {
 
 // In the future, more test cases will be written to test the functionality of TrtCommon class
 
-int main(int argc, char * argv[]) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+int main(int argc, char * argv[])
+{
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
