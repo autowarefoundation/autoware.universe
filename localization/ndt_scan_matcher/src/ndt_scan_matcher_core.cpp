@@ -158,7 +158,7 @@ NDTScanMatcher::NDTScanMatcher()
   }
 
   initial_estimate_particles_num_ = this->declare_parameter<int>("initial_estimate_particles_num");
-  n_startup_trials_ = 10;
+  n_startup_trials_ = 30;
   // TODO : fixed launch
   // n_startup_trials_ = this->declare_parameter<int>("n_startup_trials");
 

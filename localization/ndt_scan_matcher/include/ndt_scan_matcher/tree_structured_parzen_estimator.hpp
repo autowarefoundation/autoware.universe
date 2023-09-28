@@ -50,7 +50,7 @@ private:
   static constexpr double MAX_GOOD_RATE = 0.10;
   static constexpr double BASE_STDDEV_COEFF = 1.0;
   static constexpr double TARGET_SCORE = 6.0;
-  static constexpr double MIN_GOOD_SCORE = 2.0;
+  static constexpr double MIN_GOOD_SCORE = 1.8;
   static constexpr int64_t N_EI_CANDIDATES = 100;
 
   double acquisition_function(const Input & input);

@@ -62,11 +62,20 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
     return sample_from_prior();
   }
 
+  std::vector<double> scores;
+  for (int64_t i = 0; i < good_num_; i++) {
+    const double diff = trials_[i].score - MIN_GOOD_SCORE;
+    scores.push_back(std::exp(diff));
+  }
+  constexpr double PRIOR_WEIGHT = 1.0;
+  scores.push_back(PRIOR_WEIGHT);
+  std::discrete_distribution<int64_t> dist_good(scores.begin(), scores.end());
+
   Input best_input;
   double best_score = -1e9;
   for (int64_t i = 0; i < N_EI_CANDIDATES; i++) {
     Input input{};
-    const int64_t index = 0;
+    const int64_t index = dist_good(engine);
     if (index == good_num_) {
       input = sample_from_prior();
     } else {
