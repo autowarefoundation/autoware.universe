@@ -410,5 +410,6 @@
     <arg name="priority_mode" value="0"/>
     <arg name="data_association_matrix_path" value="$(var object_recognition_detection_object_merger_data_association_matrix_param_path)"/>
     <arg name="distance_threshold_list_path" value="$(var object_recognition_detection_object_merger_distance_threshold_list_path)"/>
+    <arg name="sync_queue_size" value="$(var far_object_merger_sync_queue_size)"/>
   </include>
 </launch>
