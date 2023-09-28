@@ -30,6 +30,10 @@ public:
   struct Input
   {
     double x, y, z, roll, pitch, yaw;
+    Input operator*(double scalar) const
+    {
+      return {x * scalar, y * scalar, z * scalar, roll * scalar, pitch * scalar, yaw * scalar};
+    }
   };
   using Score = double;
   struct Trial
@@ -76,6 +80,7 @@ private:
   // stddev is needed for kernel density estimation, so it is given as a fixed value.
   // The value is determined empirically to 90 degrees.
   const double yaw_stddev_ = M_PI / 2;
+  const Input base_stddev_;
 };
 
 #endif  // NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_

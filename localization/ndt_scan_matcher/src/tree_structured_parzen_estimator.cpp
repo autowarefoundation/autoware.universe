@@ -30,7 +30,8 @@ TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
   y_stddev_(y_stddev),
   z_stddev_(z_stddev),
   roll_stddev_(roll_stddev),
-  pitch_stddev_(pitch_stddev)
+  pitch_stddev_(pitch_stddev),
+  base_stddev_({x_stddev_, y_stddev_, z_stddev_, roll_stddev_, pitch_stddev_, yaw_stddev_})
 {
 }
 
@@ -115,12 +116,8 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   // Scott's rule
   const double coeff_upper = BASE_STDDEV_COEFF * std::pow(good_num_, -1.0 / 10);
   const double coeff_lower = BASE_STDDEV_COEFF * std::pow(n - good_num_, -1.0 / 10);
-  const Input sigma_upper{coeff_upper * x_stddev_,     coeff_upper * y_stddev_,
-                          coeff_upper * z_stddev_,     coeff_upper * roll_stddev_,
-                          coeff_upper * pitch_stddev_, coeff_upper * yaw_stddev_};
-  const Input sigma_lower{coeff_lower * x_stddev_,     coeff_lower * y_stddev_,
-                          coeff_lower * z_stddev_,     coeff_lower * roll_stddev_,
-                          coeff_lower * pitch_stddev_, coeff_lower * yaw_stddev_};
+  const Input sigma_upper = base_stddev_ * coeff_upper;
+  const Input sigma_lower = base_stddev_ * coeff_lower;
 
   std::vector<double> weights;
   constexpr double PRIOR_WEIGHT = 1.0;
@@ -152,6 +149,8 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
     }
   }
 
+  // prior
+  // Only yaw has a large variance in order to have a pseudo-uniform distribution.
   const Input zeros{};
   const Input sigma{x_stddev_, y_stddev_, z_stddev_, roll_stddev_, pitch_stddev_, 10.0};
   const double log_p = log_gaussian_pdf(input, zeros, sigma);
