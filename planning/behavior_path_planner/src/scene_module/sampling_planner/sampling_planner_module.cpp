@@ -92,6 +92,14 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   BehaviorModuleOutput output;
 
   output.reference_path = getPreviousModuleOutput().reference_path;
+
+  // const auto & dp = planner_data_->drivable_area_expansion_parameters;
+  // const auto drivable_lanes = utils::generateDrivableLanes(current_lanelets_);
+  // const auto shorten_lanes = utils::cutOverlappedLanes(clipped_path, drivable_lanes);
+  // const auto expanded_lanes =
+  //   utils::expandLanelets(shorten_lanes, left_offset, right_offset,
+  //   dp.drivable_area_types_to_skip);
+
   output.path = std::make_shared<PathWithLaneId>(clipped_path);
 
   return output;
