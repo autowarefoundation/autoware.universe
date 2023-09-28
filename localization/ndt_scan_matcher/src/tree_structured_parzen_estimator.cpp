@@ -48,10 +48,6 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
 
 TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input()
 {
-  static std::mt19937_64 engine(std::random_device{}());
-  static std::uniform_real_distribution<double> dist_uni(-M_PI, M_PI);
-  static std::normal_distribution<double> dist_norm(0.0, 1.0);
-
   if (trials_.empty()) {
     // The first attempt returns all zeros.
     // This means that the input `base_pose` is used as is.
@@ -75,7 +71,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
   double best_score = -1e9;
   for (int64_t i = 0; i < N_EI_CANDIDATES; i++) {
     Input input{};
-    const int64_t index = dist_good(engine);
+    const int64_t index = dist_good(engine_);
     if (index == good_num_) {
       input = sample_from_prior();
     } else {
@@ -86,12 +82,12 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
       const double score_diff = std::max(TARGET_SCORE - trials_[index].score, 0.0);
       const double linear = 1.0 + (score_diff / (TARGET_SCORE - MIN_GOOD_SCORE)) * 3.0;
       const double coeff = BASE_STDDEV_COEFF * linear / 20;
-      input.x = base.x + dist_norm(engine) * coeff * x_stddev_;
-      input.y = base.y + dist_norm(engine) * coeff * y_stddev_;
-      input.z = base.z + dist_norm(engine) * coeff * z_stddev_;
-      input.roll = base.roll + dist_norm(engine) * coeff * roll_stddev_;
-      input.pitch = base.pitch + dist_norm(engine) * coeff * pitch_stddev_;
-      input.yaw = base.yaw + dist_norm(engine) * coeff * yaw_stddev_;
+      input.x = base.x + dist_normal_(engine_) * coeff * x_stddev_;
+      input.y = base.y + dist_normal_(engine_) * coeff * y_stddev_;
+      input.z = base.z + dist_normal_(engine_) * coeff * z_stddev_;
+      input.roll = base.roll + dist_normal_(engine_) * coeff * roll_stddev_;
+      input.pitch = base.pitch + dist_normal_(engine_) * coeff * pitch_stddev_;
+      input.yaw = base.yaw + dist_normal_(engine_) * coeff * yaw_stddev_;
 
       // fixed angle
       input.roll = fix_angle(input.roll);
