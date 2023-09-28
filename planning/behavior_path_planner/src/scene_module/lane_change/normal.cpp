@@ -674,8 +674,11 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
 
   const auto current_polygon =
     utils::lane_change::createPolygon(current_lanes, 0.0, std::numeric_limits<double>::max());
-  const auto target_polygon =
-    utils::lane_change::createPolygon(target_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
+    target_lanes, direction_, lane_change_parameters_->lane_expansion_left_offset,
+    lane_change_parameters_->lane_expansion_right_offset);
+  const auto target_polygon = utils::lane_change::createPolygon(
+    expanded_target_lanes, 0.0, std::numeric_limits<double>::max());
   const auto dist_ego_to_current_lanes_center =
     lanelet::utils::getLateralDistanceToClosestLanelet(current_lanes, current_pose);
   std::vector<std::optional<lanelet::BasicPolygon2d>> target_backward_polygons;
