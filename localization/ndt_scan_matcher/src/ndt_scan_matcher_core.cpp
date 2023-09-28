@@ -92,7 +92,7 @@ NDTScanMatcher::NDTScanMatcher()
   converged_param_transform_probability_(4.5),
   converged_param_nearest_voxel_transformation_likelihood_(2.3),
   initial_estimate_particles_num_(100),
-  n_startup_trials_(50),
+  n_startup_trials_(30),
   lidar_topic_timeout_sec_(1.0),
   initial_pose_timeout_sec_(1.0),
   initial_pose_distance_tolerance_m_(10.0),
