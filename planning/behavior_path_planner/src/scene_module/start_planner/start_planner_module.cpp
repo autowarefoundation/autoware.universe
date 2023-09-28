@@ -259,6 +259,10 @@ BehaviorModuleOutput StartPlannerModule::plan()
     updateRTCStatus(0, 0);
     return output;
   }
+  std::cerr << "status_.back_finished: " << status_.back_finished << std::endl;
+  std::cerr << "status_.prev_stop_path_after_approval == nullptr: "
+            << (status_.prev_stop_path_after_approval == nullptr) << std::endl;
+  std::cerr << "status_.has_stop_point: " << status_.has_stop_point << std::endl;
 
   PathWithLaneId path;
   if (status_.back_finished) {
@@ -268,8 +272,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
     }
 
     if (
-      !status_.is_safe_dynamic_objects && isActivated() &&
-      (status_.prev_is_safe_dynamic_objects || status_.prev_stop_path_after_approval == nullptr)) {
+      !status_.is_safe_dynamic_objects && !isWaitingApproval() && status_.has_stop_point == false) {
       auto current_path = getCurrentPath();
       const auto stop_path =
         behavior_path_planner::utils::start_goal_planner_common::generateFeasibleStopPath(
@@ -278,15 +281,23 @@ BehaviorModuleOutput StartPlannerModule::plan()
       if (stop_path) {
         RCLCPP_ERROR_THROTTLE(
           getLogger(), *clock_, 5000, "Insert stop point in the path because of dynamic objects");
+        path = *stop_path;
+        status_.prev_stop_path_after_approval = std::make_shared<PathWithLaneId>(path);
+        status_.has_stop_point = true;
+      } else {
+        path = current_path;
       }
-
-      status_.prev_stop_path_after_approval =
-        stop_path ? std::make_shared<PathWithLaneId>(*stop_path) : nullptr;
-      path = stop_path ? *status_.prev_stop_path_after_approval : current_path;
+    } else if (!isWaitingApproval() && status_.has_stop_point == true) {
+      if (status_.is_safe_dynamic_objects && isStopped() /*&& closeToStopPose*/) {
+        // delete stop point
+        status_.has_stop_point = false;
+        path = getCurrentPath();
+      }
+      path = *status_.prev_stop_path_after_approval;
     } else {
       path = getCurrentPath();
     }
-    status_.prev_is_safe_dynamic_objects = status_.is_safe_dynamic_objects;
+
   } else {
     path = status_.backward_path;
   }
