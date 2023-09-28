@@ -84,23 +84,9 @@ NDTScanMatcher::NDTScanMatcher()
   tf2_broadcaster_(*this),
   ndt_ptr_(new NormalDistributionsTransform),
   state_ptr_(new std::map<std::string, std::string>),
-  base_frame_(),
-  ndt_base_frame_(),
-  map_frame_(),
-  converged_param_type_(),
-  converged_param_transform_probability_(),
-  converged_param_nearest_voxel_transformation_likelihood_(),
-  initial_estimate_particles_num_(),
-  lidar_topic_timeout_sec_(),
-  initial_pose_timeout_sec_(),
-  initial_pose_distance_tolerance_m_(),
   inversion_vector_threshold_(-0.9),  // Not necessary to extract to ndt_scan_matcher.param.yaml
   oscillation_threshold_(10),         // Not necessary to extract to ndt_scan_matcher.param.yaml
-  output_pose_covariance_(),
-  regularization_enabled_(declare_parameter<bool>("regularization_enabled")),
-  estimate_scores_for_degrounded_scan_(),
-  z_margin_for_ground_removal_(),
-  critical_upper_bound_exe_time_ms_()
+  regularization_enabled_(declare_parameter<bool>("regularization_enabled"))
 {
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
