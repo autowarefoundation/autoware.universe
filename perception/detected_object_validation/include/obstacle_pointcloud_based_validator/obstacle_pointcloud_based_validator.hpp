@@ -37,9 +37,9 @@ namespace obstacle_pointcloud_based_validator
 {
 struct PointsNumThresholdParam
 {
-  size_t min_points_num;
-  size_t max_points_num;
-  float min_points_and_distance_ratio;
+  std::map<uint8_t, int64_t> min_points_num;
+  std::map<uint8_t, int64_t> max_points_num;
+  std::map<uint8_t, double> min_points_and_distance_ratio;
 };
 class ObstaclePointCloudBasedValidator : public rclcpp::Node
 {
