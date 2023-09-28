@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <stdexcept>
 
 TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
   const int64_t n_startup_trials, const double x_stddev, const double y_stddev,
@@ -78,11 +77,12 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
     } else {
       const Input & base = trials_[index].input;
 
-      // Linear interpolation so that it becomes 1.0 or more at TARGET_SCORE and 4.0 at
-      // MIN_GOOD_SCORE.
+      // When score is TARGET_SCORE, coeff is 1.0 / 40
+      // When score is MIN_GOOD_SCORE, coeff is 5.0 / 40
+      // Interpolate linearly between these two values.
       const double score_diff = std::max(TARGET_SCORE - trials_[index].score, 0.0);
-      const double linear = 1.0 + (score_diff / (TARGET_SCORE - MIN_GOOD_SCORE)) * 3.0;
-      const double coeff = BASE_STDDEV_COEFF * linear / 20;
+      const double linear = 1.0 + (score_diff / (TARGET_SCORE - MIN_GOOD_SCORE)) * 4.0;
+      const double coeff = BASE_STDDEV_COEFF * linear / 40;
       input.x = base.x + dist_normal_(engine_) * coeff * x_stddev_;
       input.y = base.y + dist_normal_(engine_) * coeff * y_stddev_;
       input.z = base.z + dist_normal_(engine_) * coeff * z_stddev_;
@@ -120,7 +120,7 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   const Input sigma_lower = base_stddev_ * coeff_lower;
 
   std::vector<double> weights;
-  constexpr double PRIOR_WEIGHT = 1.0;
+  constexpr double PRIOR_WEIGHT = 0.5;
   double upper_sum = PRIOR_WEIGHT;
   double lower_sum = 0.0;
   for (int64_t i = 0; i < n; i++) {
@@ -152,7 +152,7 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   // prior
   // Only yaw has a large variance in order to have a pseudo-uniform distribution.
   const Input zeros{};
-  const Input sigma{x_stddev_, y_stddev_, z_stddev_, roll_stddev_, pitch_stddev_, 10.0};
+  const Input sigma{x_stddev_, y_stddev_, z_stddev_, roll_stddev_, pitch_stddev_, M_PI * 2};
   const double log_p = log_gaussian_pdf(input, zeros, sigma);
   const double log_w = std::log(PRIOR_WEIGHT / upper_sum);
   upper_logs.push_back(log_p + log_w);
