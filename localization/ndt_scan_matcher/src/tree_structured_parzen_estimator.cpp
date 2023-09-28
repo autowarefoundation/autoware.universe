@@ -123,7 +123,8 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
                           coeff_lower * pitch_stddev_, coeff_lower * yaw_stddev_};
 
   std::vector<double> weights;
-  double upper_sum = 1.0;  // initialize prior
+  constexpr double PRIOR_WEIGHT = 1.0;
+  double upper_sum = PRIOR_WEIGHT;
   double lower_sum = 0.0;
   for (int64_t i = 0; i < n; i++) {
     const double v = trials_[i].score - MIN_GOOD_SCORE;
@@ -154,7 +155,7 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   const Input zeros{};
   const Input sigma{x_stddev_, y_stddev_, z_stddev_, roll_stddev_, pitch_stddev_, 10.0};
   const double log_p = log_gaussian_pdf(input, zeros, sigma);
-  const double log_w = std::log(1.0 / n);
+  const double log_w = std::log(PRIOR_WEIGHT / upper_sum);
   upper_logs.push_back(log_p + log_w);
 
   auto log_sum_exp = [](const std::vector<double> & log_vec) {
