@@ -244,7 +244,7 @@ Here is a split PCD map for `sample-map-rosbag` from Autoware tutorial: [`sample
 
 ### Abstract
 
-This is a function that uses de-grounded LiDAR scan estimate scan matching score.This score can more accurately reflect the current localization performance.
+This is a function that uses de-grounded LiDAR scan to estimate the scan matching score. This score can reflect the current localization performance more accurately.
 [related issue](https://github.com/autowarefoundation/autoware.universe/issues/2044).
 
 ### Parameters
