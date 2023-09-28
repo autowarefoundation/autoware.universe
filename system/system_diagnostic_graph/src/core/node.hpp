@@ -33,7 +33,9 @@ namespace system_diagnostic_graph
 class BaseNode
 {
 public:
+  explicit BaseNode(const std::string & path);
   virtual ~BaseNode() = default;
+  virtual void create(ConfigObject & config, ExprInit & exprs) = 0;
   virtual void update(const rclcpp::Time & stamp) = 0;
   virtual DiagnosticNode report() const = 0;
   virtual DiagDebugData debug() const = 0;
@@ -41,25 +43,27 @@ public:
 
   DiagnosticLevel level() const { return node_.status.level; }
   std::string name() const { return node_.status.name; }
+  std::string path() const { return path_; }
 
   size_t index() const { return index_; }
   void set_index(const size_t index) { index_ = index; }
 
 protected:
-  size_t index_ = 0;
+  const std::string path_;
+  size_t index_;
   DiagnosticNode node_;
 };
 
 class UnitNode : public BaseNode
 {
 public:
-  explicit UnitNode(const std::string & name);
+  explicit UnitNode(const std::string & path);
   ~UnitNode() override;
+  void create(ConfigObject & config, ExprInit & exprs) override;
+  void update(const rclcpp::Time & stamp) override;
 
   DiagnosticNode report() const override;
   DiagDebugData debug() const override;
-  void update(const rclcpp::Time & stamp) override;
-  void create(Graph & graph, const NodeConfig & config);
 
   std::vector<BaseNode *> links() const override;
 
@@ -70,17 +74,22 @@ private:
 class DiagNode : public BaseNode
 {
 public:
-  explicit DiagNode(const std::string & name, const std::string & hardware);
+  using BaseNode::BaseNode;
+  void create(ConfigObject & config, ExprInit & exprs) override;
+  void update(const rclcpp::Time & stamp) override;
 
   DiagnosticNode report() const override;
   DiagDebugData debug() const override;
-  void update(const rclcpp::Time & stamp) override;
   void callback(const DiagnosticStatus & status, const rclcpp::Time & stamp);
 
+  std::pair<std::string, std::string> key() const;
   std::vector<BaseNode *> links() const override { return {}; }
 
 private:
+  double timeout_;
   std::optional<rclcpp::Time> time_;
+  std::string name_;
+  std::string hardware_;
 };
 
 }  // namespace system_diagnostic_graph

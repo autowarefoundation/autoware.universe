@@ -15,6 +15,8 @@
 #include "manager.hpp"
 
 #include "config.hpp"
+#include "expr.hpp"
+#include "node.hpp"
 
 #include <deque>
 #include <memory>
@@ -23,56 +25,97 @@
 #include <utility>
 #include <vector>
 
+// DEBUG
+#include <iostream>
+
 namespace system_diagnostic_graph
 {
 
-UnitNode * find_node(Graph & graph, const std::string & name)
+GraphManager::GraphManager()
 {
-  const auto node = graph.find_unit(name);
-  if (!node) {
-    throw ConfigError("summary node '" + name + "' does node exist");
-  }
-  return node;
-};
+  // for unique_ptr
+}
+
+GraphManager::~GraphManager()
+{
+  // for unique_ptr
+}
 
 void GraphManager::init(const std::string & file, const std::string & mode)
 {
-  const auto configs = load_config_file(file);
-  (void)mode;
+  ConfigFile root = load_config_root(file);
 
-  // Create unit nodes first because it is necessary for the link.
-  std::vector<std::pair<NodeConfig, UnitNode *>> units;
-  for (const auto & config : configs) {
-    UnitNode * unit = graph_.make_unit(config->path);
-    units.push_back(std::make_pair(config, unit));
+  std::vector<std::unique_ptr<BaseNode>> nodes;
+  std::unordered_map<std::string, BaseNode *> paths;
+
+  ExprInit exprs(mode);
+
+  for (auto & config : root.units) {
+    if (config.mode.check(mode)) {
+      nodes.push_back(std::make_unique<UnitNode>(config.path));
+    }
   }
 
+  for (auto & config : root.diags) {
+    if (config.mode.check(mode)) {
+      nodes.push_back(std::make_unique<DiagNode>(config.path));
+    }
+  }
+
+  for (const auto & node : nodes) {
+    paths[node->path()] = node.get();
+  }
+
+  for (auto & config : root.units) {
+    if (paths.count(config.path)) {
+      paths.at(config.path)->create(config.dict, exprs);
+    }
+  }
+
+  for (auto & config : root.diags) {
+    if (paths.count(config.path)) {
+      paths.at(config.path)->create(config.dict, exprs);
+    }
+  }
+
+  for (const auto & node : nodes) {
+    std::cout << node->path() << std::endl;
+  }
+
+  /*
+  for (const auto & expr : exprs.get()) {
+    std::cout << std::left << std::setw(17) << expr.type << " ";
+    std::cout << std::setw(14) << expr.expr << " ";
+    std::cout << expr.dict.mark().str() << std::endl;
+  }
+  */
+
   // Reflect the config after creating all the unit nodes,
+  /*
   for (auto & [config, unit] : units) {
     unit->create(graph_, config);
   }
+  */
 
   // Sort unit nodes in topological order for update dependencies.
-  graph_.topological_sort();
+  // graph_.topological_sort();
 
   // Set the link index for the ros message.
+  /*
   const auto & nodes = graph_.nodes();
   for (size_t i = 0; i < nodes.size(); ++i) {
     nodes[i]->set_index(i);
   }
+  */
 
-  // Get reserved unit node for summary.
-  modes_.stop_mode = find_node(graph_, "/autoware/operation/stop");
-  modes_.autonomous_mode = find_node(graph_, "/autoware/operation/autonomous");
-  modes_.local_mode = find_node(graph_, "/autoware/operation/local");
-  modes_.remote_mode = find_node(graph_, "/autoware/operation/remote");
-  modes_.emergency_stop_mrm = find_node(graph_, "/autoware/operation/emergency-stop");
-  modes_.comfortable_stop_mrm = find_node(graph_, "/autoware/operation/comfortable-stop");
-  modes_.pull_over_mrm = find_node(graph_, "/autoware/operation/pull-over");
+  nodes_ = std::move(nodes);
 }
 
 void GraphManager::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
 {
+  (void)array;
+  (void)stamp;
+  /*
   for (const auto & status : array.status) {
     auto diag = graph_.find_diag(status.name, status.hardware_id);
     if (diag) {
@@ -81,11 +124,12 @@ void GraphManager::callback(const DiagnosticArray & array, const rclcpp::Time & 
       // TODO(Takagi, Isamu): handle unknown diagnostics
     }
   }
+  */
 }
 
 void GraphManager::update(const rclcpp::Time & stamp)
 {
-  for (const auto & node : graph_.nodes()) {
+  for (const auto & node : nodes_) {
     node->update(stamp);
   }
   stamp_ = stamp;
@@ -95,26 +139,10 @@ DiagnosticGraph GraphManager::create_graph_message() const
 {
   DiagnosticGraph message;
   message.stamp = stamp_;
-  message.nodes.reserve(graph_.nodes().size());
-  for (const auto & node : graph_.nodes()) {
+  message.nodes.reserve(nodes_.size());
+  for (const auto & node : nodes_) {
     message.nodes.push_back(node->report());
   }
-  return message;
-}
-
-OperationModeAvailability GraphManager::create_modes_message() const
-{
-  const auto is_ok = [](const UnitNode * node) { return node->level() == DiagnosticStatus::OK; };
-
-  OperationModeAvailability message;
-  message.stamp = stamp_;
-  message.stop = is_ok(modes_.stop_mode);
-  message.autonomous = is_ok(modes_.autonomous_mode);
-  message.local = is_ok(modes_.local_mode);
-  message.remote = is_ok(modes_.remote_mode);
-  message.emergency_stop = is_ok(modes_.emergency_stop_mrm);
-  message.comfortable_stop = is_ok(modes_.comfortable_stop_mrm);
-  message.pull_over = is_ok(modes_.pull_over_mrm);
   return message;
 }
 

@@ -31,8 +31,6 @@ MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
     const auto callback = std::bind(&MainNode::on_diag, this, _1);
     sub_input_ = create_subscription<DiagnosticArray>("/diagnostics", qos_input, callback);
     pub_graph_ = create_publisher<DiagnosticGraph>("/diagnostics_graph", qos_graph);
-    pub_modes_ = create_publisher<OperationModeAvailability>(
-      "/system/operation_mode/availability", rclcpp::QoS(1));
 
     const auto rate = rclcpp::Rate(declare_parameter<double>("rate"));
     timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
@@ -49,10 +47,11 @@ MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
 
 void MainNode::on_timer()
 {
+  /*
   manager_.update(now());
   manager_.debug();
   pub_graph_->publish(manager_.create_graph_message());
-  pub_modes_->publish(manager_.create_modes_message());
+  */
 }
 
 void MainNode::on_diag(const DiagnosticArray::ConstSharedPtr msg)

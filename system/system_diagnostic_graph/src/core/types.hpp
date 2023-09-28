@@ -22,6 +22,9 @@
 #include <tier4_system_msgs/msg/diagnostic_node.hpp>
 #include <tier4_system_msgs/msg/operation_mode_availability.hpp>
 
+#include <string>
+#include <unordered_map>
+
 namespace system_diagnostic_graph
 {
 
@@ -31,14 +34,16 @@ using tier4_system_msgs::msg::DiagnosticGraph;
 using tier4_system_msgs::msg::DiagnosticLink;
 using tier4_system_msgs::msg::DiagnosticNode;
 using tier4_system_msgs::msg::OperationModeAvailability;
-
 using DiagnosticLevel = DiagnosticStatus::_level_type;
 
 class Graph;
+
 class BaseNode;
 class UnitNode;
 class DiagNode;
+
 class BaseExpr;
+class ExprInit;
 
 }  // namespace system_diagnostic_graph
 

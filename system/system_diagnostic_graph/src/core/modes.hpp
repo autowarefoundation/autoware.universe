@@ -12,38 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CORE__MANAGER_HPP_
-#define CORE__MANAGER_HPP_
+#ifndef CORE__MODES_HPP_
+#define CORE__MODES_HPP_
 
 #include "types.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <memory>
-#include <string>
-#include <vector>
-
 namespace system_diagnostic_graph
 {
 
-class GraphManager final
+class OperationModes
 {
 public:
-  GraphManager();
-  ~GraphManager();
-
-  void init(const std::string & file, const std::string & mode);
-  void callback(const DiagnosticArray & array, const rclcpp::Time & stamp);
-  void update(const rclcpp::Time & stamp);
-  DiagnosticGraph create_graph_message() const;
-
-  void debug();
+  explicit OperationModes(rclcpp::Node * node);
 
 private:
-  std::vector<std::unique_ptr<BaseNode>> nodes_;
-  rclcpp::Time stamp_;
+  rclcpp::Publisher<OperationModeAvailability>::SharedPtr pub_modes_;
+
+  UnitNode * stop_mode;
+  UnitNode * autonomous_mode;
+  UnitNode * local_mode;
+  UnitNode * remote_mode;
+  UnitNode * emergency_stop_mrm;
+  UnitNode * comfortable_stop_mrm;
+  UnitNode * pull_over_mrm;
 };
 
 }  // namespace system_diagnostic_graph
 
-#endif  // CORE__MANAGER_HPP_
+#endif  // CORE__MODES_HPP_

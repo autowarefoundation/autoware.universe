@@ -18,9 +18,11 @@
 #include <yaml-cpp/yaml.h>
 
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace system_diagnostic_graph
@@ -31,43 +33,79 @@ struct ConfigError : public std::runtime_error
   using runtime_error::runtime_error;
 };
 
-struct NodeConfig_
+class ErrorMarker
 {
-  std::string file;
-  std::string path;
-  YAML::Node yaml;
+public:
+  explicit ErrorMarker(const std::string & file = "");
+  std::string str() const;
+  ErrorMarker type(const std::string & type) const;
+  ErrorMarker index(size_t index) const;
+
+private:
+  std::string file_;
+  std::string type_;
+  std::vector<size_t> indices_;
 };
 
-struct FileConfig_
+class ConfigObject
 {
-  std::string path;
-  std::vector<std::shared_ptr<FileConfig_>> files;
-  std::vector<std::shared_ptr<NodeConfig_>> nodes;
+public:
+  ConfigObject(const ErrorMarker & mark, YAML::Node yaml, const std::string & type);
+  ErrorMarker mark() const;
+  std::optional<YAML::Node> take_yaml(const std::string & name);
+  std::string take_text(const std::string & name);
+  std::string take_text(const std::string & name, const std::string & fail);
+  std::vector<YAML::Node> take_list(const std::string & name);
+
+private:
+  ErrorMarker mark_;
+  std::string type_;
+  std::unordered_map<std::string, YAML::Node> dict_;
 };
 
-using NodeConfig = std::shared_ptr<NodeConfig_>;
-using FileConfig = std::shared_ptr<FileConfig_>;
-using ConfigDict = std::unordered_map<std::string, YAML::Node>;
+struct ConfigFilter
+{
+  bool check(const std::string & mode) const;
+  std::unordered_set<std::string> excludes;
+  std::unordered_set<std::string> includes;
+};
 
 struct ExprConfig
 {
   std::string type;
-  ConfigDict dict;
+  ConfigFilter mode;
+  ConfigObject dict;
 };
 
-ConfigError create_error(const FileConfig & config, const std::string & message);
-ConfigError create_error(const NodeConfig & config, const std::string & message);
-std::vector<NodeConfig> load_config_file(const std::string & path);
+struct NodeConfig
+{
+  std::string path;
+  ConfigFilter mode;
+  ConfigObject dict;
+};
 
-FileConfig parse_config_file(const std::string & path);
-FileConfig parse_config_path(const std::string & path, const FileConfig & scope);
-FileConfig parse_config_path(YAML::Node yaml, const FileConfig & scope);
-NodeConfig parse_config_node(YAML::Node yaml, const FileConfig & scope);
-ExprConfig parse_expr_object(YAML::Node yaml);
+struct FileConfig
+{
+  ErrorMarker mark;
+  std::string path;
+};
 
-std::string take_expr_text(ConfigDict & dict, const std::string & name);
-std::string take_expr_text(ConfigDict & dict, const std::string & name, const std::string & fail);
-std::vector<YAML::Node> take_expr_list(ConfigDict & dict, const std::string & name);
+struct ConfigFile
+{
+  explicit ConfigFile(const ErrorMarker & mark) : mark(mark) {}
+  ErrorMarker mark;
+  std::vector<FileConfig> files;
+  std::vector<NodeConfig> units;
+  std::vector<NodeConfig> diags;
+};
+
+using ConfigDict = std::unordered_map<std::string, YAML::Node>;
+
+ConfigError create_error(const ErrorMarker & mark, const std::string & message);
+ConfigFile load_config_root(const std::string & path);
+
+ExprConfig parse_expr_config(const ErrorMarker & mark, YAML::Node yaml);
+ExprConfig parse_expr_config(ConfigObject & dict);
 
 }  // namespace system_diagnostic_graph
 

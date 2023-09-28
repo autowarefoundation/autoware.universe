@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: /autoware/system
     type: and
     list:

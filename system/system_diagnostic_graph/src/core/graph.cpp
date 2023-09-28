@@ -29,11 +29,15 @@ namespace system_diagnostic_graph
 
 UnitNode * Graph::make_unit(const std::string & name)
 {
+  (void)name;
+  return nullptr;
+  /*
   const auto key = name;
   auto unit = std::make_unique<UnitNode>(key);
   units_[key] = unit.get();
   nodes_.emplace_back(std::move(unit));
   return units_[key];
+  */
 }
 
 UnitNode * Graph::find_unit(const std::string & name)
@@ -44,11 +48,16 @@ UnitNode * Graph::find_unit(const std::string & name)
 
 DiagNode * Graph::make_diag(const std::string & name, const std::string & hardware)
 {
+  (void)name;
+  (void)hardware;
+  return nullptr;
+  /*
   const auto key = std::make_pair(name, hardware);
   auto diag = std::make_unique<DiagNode>(name, hardware);
   diags_[key] = diag.get();
   nodes_.emplace_back(std::move(diag));
   return diags_[key];
+  */
 }
 
 DiagNode * Graph::find_diag(const std::string & name, const std::string & hardware)

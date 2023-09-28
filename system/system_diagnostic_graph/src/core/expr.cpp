@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-//
+// DEBUG
 #include <iostream>
 
 namespace system_diagnostic_graph
@@ -42,41 +42,6 @@ void extend_false(LinkStatus & a, const LinkStatus & b)
   }
 }
 
-std::unique_ptr<BaseExpr> BaseExpr::create(Graph & graph, YAML::Node yaml)
-{
-  const auto object = parse_expr_object(yaml);
-
-  if (object.type == "unit") {
-    return std::make_unique<UnitExpr>(graph, object.dict);
-  }
-  if (object.type == "diag") {
-    return std::make_unique<DiagExpr>(graph, object.dict);
-  }
-  if (object.type == "and") {
-    return std::make_unique<AndExpr>(graph, object.dict, false);
-  }
-  if (object.type == "short-circuit-and") {
-    return std::make_unique<AndExpr>(graph, object.dict, true);
-  }
-  if (object.type == "or") {
-    return std::make_unique<OrExpr>(graph, object.dict);
-  }
-  if (object.type == "debug-ok") {
-    return std::make_unique<ConstExpr>(DiagnosticStatus::OK);
-  }
-  if (object.type == "debug-warn") {
-    return std::make_unique<ConstExpr>(DiagnosticStatus::WARN);
-  }
-  if (object.type == "debug-error") {
-    return std::make_unique<ConstExpr>(DiagnosticStatus::ERROR);
-  }
-  if (object.type == "debug-stale") {
-    return std::make_unique<ConstExpr>(DiagnosticStatus::STALE);
-  }
-
-  throw ConfigError("unknown expr type: " + object.type);
-}
-
 ConstExpr::ConstExpr(const DiagnosticLevel level)
 {
   level_ = level;
@@ -94,16 +59,24 @@ std::vector<BaseNode *> ConstExpr::get_dependency() const
   return {};
 }
 
-UnitExpr::UnitExpr(Graph & graph, ConfigDict dict)
+LinkExpr::LinkExpr(ExprInit & exprs, ConfigObject & config)
 {
-  const auto path = take_expr_text(dict, "path");
-  node_ = graph.find_unit(path);
-  if (!node_) {
-    throw ConfigError("unit node '" + path + "' does not exist");
-  }
+  (void)config;
+  (void)exprs;
 }
 
-ExprStatus UnitExpr::eval() const
+/*
+void LinkExpr::init(const std::unordered_map<std::string, BaseNode *> & node)
+{
+  const auto path = config.take_text("path");
+  if (!nodes.count(path)) {
+    throw ConfigError("node path '" + path + "' does not exist");
+  }
+  node_ = nodes.at(path);
+}
+*/
+
+ExprStatus LinkExpr::eval() const
 {
   ExprStatus status;
   status.level = node_->level();
@@ -111,41 +84,23 @@ ExprStatus UnitExpr::eval() const
   return status;
 }
 
-std::vector<BaseNode *> UnitExpr::get_dependency() const
+std::vector<BaseNode *> LinkExpr::get_dependency() const
 {
   return {node_};
 }
 
-DiagExpr::DiagExpr(Graph & graph, ConfigDict dict)
+AndExpr::AndExpr(ExprInit & exprs, ConfigObject & config, bool short_circuit)
 {
-  const auto name = take_expr_text(dict, "name");
-  const auto hardware = take_expr_text(dict, "hardware", "");
-  node_ = graph.find_diag(name, hardware);
-  if (!node_) {
-    node_ = graph.make_diag(name, hardware);
+  const auto list = config.take_list("list");
+  std::cout << "size: " << list.size() << std::endl;
+  for (size_t i = 0; i < list.size(); ++i) {
+    auto dict = parse_expr_config(config.mark().index(i), list[i]);
+    auto expr = exprs.create(dict);
+    if (expr) {
+      list_.push_back(std::move(expr));
+    }
   }
-}
-
-ExprStatus DiagExpr::eval() const
-{
-  ExprStatus status;
-  status.level = node_->level();
-  status.links.push_back(std::make_pair(node_, true));
-  return status;
-}
-
-std::vector<BaseNode *> DiagExpr::get_dependency() const
-{
-  return {node_};
-}
-
-AndExpr::AndExpr(Graph & graph, ConfigDict dict, bool short_circuit)
-{
   short_circuit_ = short_circuit;
-
-  for (const auto & node : take_expr_list(dict, "list")) {
-    list_.push_back(BaseExpr::create(graph, node));
-  }
 }
 
 ExprStatus AndExpr::eval() const
@@ -180,11 +135,17 @@ std::vector<BaseNode *> AndExpr::get_dependency() const
   return depends;
 }
 
-OrExpr::OrExpr(Graph & graph, ConfigDict dict)
+OrExpr::OrExpr(ExprInit & exprs, ConfigObject & config)
 {
+  (void)config;
+  (void)exprs;
+  throw std::runtime_error("OrExpr::OrExpr");
+
+  /*
   for (const auto & node : take_expr_list(dict, "list")) {
     list_.push_back(BaseExpr::create(graph, node));
   }
+  */
 }
 
 ExprStatus OrExpr::eval() const
@@ -214,6 +175,53 @@ std::vector<BaseNode *> OrExpr::get_dependency() const
     depends.insert(depends.end(), nodes.begin(), nodes.end());
   }
   return depends;
+}
+
+ExprInit::ExprInit(const std::string & mode)
+{
+  mode_ = mode;
+}
+
+std::vector<ExprConfig> ExprInit::get() const
+{
+  return exprs_;
+}
+
+std::unique_ptr<BaseExpr> ExprInit::create(ExprConfig config)
+{
+  const auto build = [this](ExprConfig & config) -> std::unique_ptr<BaseExpr> {
+    if (!config.mode.check(mode_)) {
+      return nullptr;
+    }
+    if (config.type == "link") {
+      return std::make_unique<LinkExpr>(*this, config.dict);
+    }
+    if (config.type == "and") {
+      return std::make_unique<AndExpr>(*this, config.dict, false);
+    }
+    if (config.type == "short-circuit-and") {
+      return std::make_unique<AndExpr>(*this, config.dict, true);
+    }
+    if (config.type == "or") {
+      return std::make_unique<OrExpr>(*this, config.dict);
+    }
+    if (config.type == "debug-ok") {
+      return std::make_unique<ConstExpr>(DiagnosticStatus::OK);
+    }
+    if (config.type == "debug-warn") {
+      return std::make_unique<ConstExpr>(DiagnosticStatus::WARN);
+    }
+    if (config.type == "debug-error") {
+      return std::make_unique<ConstExpr>(DiagnosticStatus::ERROR);
+    }
+    if (config.type == "debug-stale") {
+      return std::make_unique<ConstExpr>(DiagnosticStatus::STALE);
+    }
+    throw ConfigError("unknown expr type: " + config.type);
+  };
+
+  auto expr = build(config);
+  return expr;
 }
 
 }  // namespace system_diagnostic_graph

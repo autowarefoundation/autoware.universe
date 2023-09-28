@@ -35,7 +35,7 @@ const std::unordered_map<DiagnosticLevel, std::string> level_names = {
 void GraphManager::debug()
 {
   std::vector<DiagDebugData> lines;
-  for (const auto & node : graph_.nodes()) {
+  for (const auto & node : nodes_) {
     lines.push_back(node->debug());
   }
 
@@ -60,16 +60,14 @@ void GraphManager::debug()
 DiagDebugData UnitNode::debug() const
 {
   const auto & level = node_.status.level;
-  const auto & name = node_.status.name;
-  return DiagDebugData{std::to_string(index()), "unit", name, "-----", level_names.at(level)};
+  return DiagDebugData{std::to_string(index()), "unit", path_, "-----", level_names.at(level)};
 }
 
 DiagDebugData DiagNode::debug() const
 {
   const auto & level = node_.status.level;
-  const auto & name = node_.status.name;
-  const auto & hardware = node_.status.hardware_id;
-  return DiagDebugData{std::to_string(index()), "diag", name, hardware, level_names.at(level)};
+  return DiagDebugData{
+    std::to_string(index()), "diag", path_, name_ + " / " + hardware_, level_names.at(level)};
 }
 
 }  // namespace system_diagnostic_graph

@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: /autoware/perception
     type: and
     list:

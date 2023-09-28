@@ -35,7 +35,6 @@ struct ExprStatus
 class BaseExpr
 {
 public:
-  static std::unique_ptr<BaseExpr> create(Graph & graph, YAML::Node yaml);
   virtual ~BaseExpr() = default;
   virtual ExprStatus eval() const = 0;
   virtual std::vector<BaseNode *> get_dependency() const = 0;
@@ -52,32 +51,21 @@ private:
   DiagnosticLevel level_;
 };
 
-class UnitExpr : public BaseExpr
+class LinkExpr : public BaseExpr
 {
 public:
-  UnitExpr(Graph & graph, ConfigDict dict);
+  LinkExpr(ExprInit & exprs, ConfigObject & config);
   ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
 private:
-  UnitNode * node_;
-};
-
-class DiagExpr : public BaseExpr
-{
-public:
-  DiagExpr(Graph & graph, ConfigDict dict);
-  ExprStatus eval() const override;
-  std::vector<BaseNode *> get_dependency() const override;
-
-private:
-  DiagNode * node_;
+  BaseNode * node_;
 };
 
 class AndExpr : public BaseExpr
 {
 public:
-  AndExpr(Graph & graph, ConfigDict dict, bool short_circuit);
+  AndExpr(ExprInit & exprs, ConfigObject & config, bool short_circuit);
   ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
@@ -89,12 +77,24 @@ private:
 class OrExpr : public BaseExpr
 {
 public:
-  OrExpr(Graph & graph, ConfigDict dict);
+  OrExpr(ExprInit & exprs, ConfigObject & config);
   ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
 private:
   std::vector<std::unique_ptr<BaseExpr>> list_;
+};
+
+class ExprInit
+{
+public:
+  explicit ExprInit(const std::string & mode);
+  std::vector<ExprConfig> get() const;
+  std::unique_ptr<BaseExpr> create(ExprConfig config);
+
+private:
+  std::string mode_;
+  std::vector<ExprConfig> exprs_;
 };
 
 }  // namespace system_diagnostic_graph
