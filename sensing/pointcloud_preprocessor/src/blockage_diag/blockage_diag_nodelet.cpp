@@ -223,14 +223,15 @@ void BlockageDiagComponent::filter(
   cv::Mat no_return_mask_binarized(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
 
-  blockage_frame_count_++;
   if (blockage_buffering_interval_ == 0) {
     no_return_mask.copyTo(time_series_blockage_result);
   } else {
     no_return_mask_binarized = no_return_mask / 255;
-    if (blockage_frame_count_ == blockage_buffering_interval_) {
+    if (blockage_frame_count_ >= blockage_buffering_interval_) {
       no_return_mask_buffer.push_back(no_return_mask_binarized);
       blockage_frame_count_ = 0;
+    } else {
+      blockage_frame_count_++;
     }
     for (const auto & binary_mask : no_return_mask_buffer) {
       time_series_blockage_mask += binary_mask;
@@ -299,16 +300,17 @@ void BlockageDiagComponent::filter(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   cv::Mat multi_frame_ground_dust_result(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
-  dust_buffering_frame_counter_++;
 
   if (dust_buffering_interval_ == 0) {
     single_dust_img.copyTo(multi_frame_ground_dust_result);
     dust_buffering_frame_counter_ = 0;
   } else {
     binarized_dust_mask_ = single_dust_img / 255;
-    if (dust_buffering_frame_counter_ == dust_buffering_interval_) {
+    if (dust_buffering_frame_counter_ >= dust_buffering_interval_) {
       dust_mask_buffer.push_back(binarized_dust_mask_);
       dust_buffering_frame_counter_ = 0;
+    } else {
+      dust_buffering_frame_counter_++;
     }
     for (const auto & binarized_dust_mask : dust_mask_buffer) {
       multi_frame_dust_mask += binarized_dust_mask;

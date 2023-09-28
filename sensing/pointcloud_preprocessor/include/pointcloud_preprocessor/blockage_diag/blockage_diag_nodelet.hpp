@@ -86,9 +86,9 @@ private:
   int dust_kernel_size_;
   int dust_buffering_frames_;
   int dust_buffering_interval_;
-  int dust_buffering_frame_counter_;
+  int dust_buffering_frame_counter_ = 0;
   int dust_count_threshold_;
-  int dust_frame_count_;
+  int dust_frame_count_ = 0;
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
