@@ -849,18 +849,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     tpe.add_trial(
       TreeStructuredParzenEstimator::Trial{result, ndt_result.transform_probability, i});
 
-    rpy.x = rpy.x * 180.0 / M_PI;
-    rpy.y = rpy.y * 180.0 / M_PI;
-    rpy.z = rpy.z * 180.0 / M_PI;
-
-    RCLCPP_INFO_STREAM(
-      get_logger(), std::fixed << i << "," << pose.position.x << "," << pose.position.y << ","
-                               << pose.position.z << "," << pose.orientation.x << ","
-                               << pose.orientation.y << "," << pose.orientation.z << ","
-                               << pose.orientation.w << "," << rpy.x << "," << rpy.y << "," << rpy.z
-                               << "," << ndt_result.transform_probability << ","
-                               << ndt_result.nearest_voxel_transformation_likelihood);
-
     auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     tier4_autoware_utils::transformPointCloud(
       *ndt_ptr->getInputSource(), *sensor_points_in_map_ptr, ndt_result.pose);
