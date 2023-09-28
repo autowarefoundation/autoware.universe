@@ -17,7 +17,7 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_component_interface_utils
     test/test_component_interface_utils.cpp
   )
-  
+
   target_include_directories(test_component_interface_utils
     PRIVATE include
   )
