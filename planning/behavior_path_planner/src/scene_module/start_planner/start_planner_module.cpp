@@ -259,25 +259,25 @@ BehaviorModuleOutput StartPlannerModule::plan()
     updateRTCStatus(0, 0);
     return output;
   }
-  std::cerr << "status_.back_finished: " << status_.back_finished << std::endl;
-  std::cerr << "status_.prev_stop_path_after_approval == nullptr: "
-            << (status_.prev_stop_path_after_approval == nullptr) << std::endl;
-  std::cerr << "status_.has_stop_point: " << status_.has_stop_point << std::endl;
 
   PathWithLaneId path;
+
+  // Check if backward motion is finished
   if (status_.back_finished) {
+    // Increment path index if the current path is finished
     if (hasFinishedCurrentPath()) {
       RCLCPP_INFO(getLogger(), "Increment path index");
       incrementPathIndex();
     }
 
-    if (
-      !status_.is_safe_dynamic_objects && !isWaitingApproval() && status_.has_stop_point == false) {
+    if (!status_.is_safe_dynamic_objects && !isWaitingApproval() && !status_.has_stop_point) {
       auto current_path = getCurrentPath();
       const auto stop_path =
         behavior_path_planner::utils::start_goal_planner_common::generateFeasibleStopPath(
           current_path, planner_data_, *stop_pose_, parameters_->maximum_deceleration_for_stop,
           parameters_->maximum_jerk_for_stop);
+
+      // Insert stop point in the path if needed
       if (stop_path) {
         RCLCPP_ERROR_THROTTLE(
           getLogger(), *clock_, 5000, "Insert stop point in the path because of dynamic objects");
@@ -287,9 +287,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
       } else {
         path = current_path;
       }
-    } else if (!isWaitingApproval() && status_.has_stop_point == true) {
-      if (status_.is_safe_dynamic_objects && isStopped() /*&& closeToStopPose*/) {
-        // delete stop point
+    } else if (!isWaitingApproval() && status_.has_stop_point) {
+      // Delete stop point if conditions are met
+      if (status_.is_safe_dynamic_objects && isStopped()) {
         status_.has_stop_point = false;
         path = getCurrentPath();
       }
@@ -297,7 +297,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
     } else {
       path = getCurrentPath();
     }
-
   } else {
     path = status_.backward_path;
   }
