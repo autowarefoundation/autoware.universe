@@ -65,9 +65,6 @@
       <param name="input/rois7" value="$(var input/rois7)"/>
       <param name="input/camera_info7" value="$(var input/camera_info7)"/>
       <param name="input/image7" value="$(var input/image7)"/>
-
-      <!-- debug -->
-      <param name="debug_mode" value="$(var debug_mode)"/>
     </node>
   </group>
 </launch>

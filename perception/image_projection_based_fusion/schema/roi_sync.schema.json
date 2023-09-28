@@ -31,6 +31,11 @@
           "default": 15,
           "minimum": 1
         },
+        "debug_mode": {
+          "type": "boolean",
+          "description": "Whether to debug or not.",
+          "default": false
+        },
         "filter_scope_minx": {
           "type": "number",
           "description": "Minimum x position to be considered for debug [m].",
