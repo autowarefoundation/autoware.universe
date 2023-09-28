@@ -92,6 +92,8 @@ public:
         double collision_end_margin_time;
       } relaxed;
       double keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
+      bool use_upstream_velocity;
+      double minimum_upstream_velocity;
     } collision_detection;
     struct Occlusion
     {
@@ -261,7 +263,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const autoware_auto_perception_msgs::msg::PredictedObjects & target_objects,
     const util::PathLanelets & path_lanelets, const int closest_idx, const double time_delay,
-    const bool tl_arrow_solid_on);
+    const size_t last_intersection_stop_line_candidate_idx, const bool tl_arrow_solid_on);
 
   bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,
