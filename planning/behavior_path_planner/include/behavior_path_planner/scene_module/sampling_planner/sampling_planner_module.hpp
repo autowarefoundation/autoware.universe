@@ -17,18 +17,28 @@
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/sampling_planner/sampling_planner_parameters.hpp"
 #include "behavior_path_planner/utils/sampling_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 #include "bezier_sampler/bezier_sampling.hpp"
+#include "path_sampler/common_structs.hpp"
+#include "path_sampler/node.hpp"
+#include "path_sampler/parameters.hpp"
+#include "path_sampler/type_alias.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "sampler_common/transform/spline_transform.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <sampler_common/structures.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -48,6 +58,7 @@ public:
   bool isExecutionReady() const override;
   BehaviorModuleOutput plan() override;
   CandidateOutput planCandidate() const override;
+  void updateData() override;
 
   void updateModuleParams(const std::any & parameters) override
   {
@@ -67,7 +78,10 @@ private:
   bool canTransitIdleToRunningState() override { return false; }
 
   // member
+  Parameters params_;
+  path_sampler::PlannerData planner_data;
   std::shared_ptr<SamplingPlannerParameters> parameters_;
+  vehicle_info_util::VehicleInfo vehicle_info_{};
 };
 
 }  // namespace behavior_path_planner

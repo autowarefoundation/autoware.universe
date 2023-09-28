@@ -68,6 +68,7 @@
   <depend>visualization_msgs</depend>
   <depend>bezier_sampler</depend>
   <depend>frenet_planner</depend>
+  <depend>path_sampler</depend>
 
 
   <test_depend>ament_cmake_ros</test_depend>
