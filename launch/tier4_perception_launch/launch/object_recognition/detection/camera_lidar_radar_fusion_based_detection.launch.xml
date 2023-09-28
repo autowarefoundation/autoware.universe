@@ -307,7 +307,7 @@
   <!-- Camera late fusion -->
   <group>
     <let name="target_objects" value="radar_fusion/objects" if="$(var use_near_radar_fusion)"/>
-    <let name="target_objects" value="$(var lidar_detection_model)/objects" unless ="$(var use_near_radar_fusion)"/>
+    <let name="target_objects" value="$(var lidar_detection_model)/objects" unless="$(var use_near_radar_fusion)"/>
 
     <include file="$(find-pkg-share image_projection_based_fusion)/launch/roi_detected_object_fusion.launch.xml">
       <arg name="input/camera_info0" value="$(var camera_info0)"/>
