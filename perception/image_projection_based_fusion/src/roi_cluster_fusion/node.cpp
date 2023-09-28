@@ -112,7 +112,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       continue;
     }
 
-    if (filter_by_distance(input_cluster_msg.feature_objects.at(i))) {
+    if (is_far_enough(input_cluster_msg.feature_objects.at(i), trust_distance_)) {
       continue;
     }
 
@@ -175,11 +175,10 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     double max_iou = 0.0;
     bool is_roi_label_known =
       feature_obj.object.classification.front().label != ObjectClassification::UNKNOWN;
-    bool is_long_range_obj = get_object_square_distance(feature_obj) >
-                             iou_x_use_distance_threshold_ * iou_x_use_distance_threshold_;
+    bool is_long_range_obj = is_far_enough(feature_obj, iou_x_use_distance_threshold_);
     for (const auto & cluster_map : m_cluster_roi) {
       double iou(0.0), iou_x(0.0), iou_y(0.0);
-      if (use_iou_) {
+      if (use_iou_ && !is_long_range_obj) {
         iou = calcIoU(cluster_map.second, feature_obj.feature.roi);
       }
       // use for unknown roi to improve small objects like traffic cone detect
@@ -277,15 +276,12 @@ bool RoiClusterFusionNode::out_of_scope(const DetectedObjectWithFeature & obj)
   return is_out;
 }
 
-double RoiClusterFusionNode::get_object_square_distance(const DetectedObjectWithFeature & obj)
+bool RoiClusterFusionNode::is_far_enough(
+  const DetectedObjectWithFeature & obj, const double distance_threshold)
 {
   const auto & position = obj.object.kinematics.pose_with_covariance.pose.position;
-  return position.x * position.x + position.y * position.y;
-}
-
-bool RoiClusterFusionNode::filter_by_distance(const DetectedObjectWithFeature & obj)
-{
-  return get_object_square_distance(obj) > trust_distance_ * trust_distance_;
+  return position.x * position.x + position.y * position.y >
+         distance_threshold * distance_threshold;
 }
 
 }  // namespace image_projection_based_fusion

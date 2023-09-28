@@ -52,8 +52,7 @@ protected:
   double trust_distance_;
   double iou_x_use_distance_threshold_;
 
-  double get_object_square_distance(const DetectedObjectWithFeature & obj);
-  bool filter_by_distance(const DetectedObjectWithFeature & obj);
+  bool is_far_enough(const DetectedObjectWithFeature & obj, const double distance_threshold);
   bool out_of_scope(const DetectedObjectWithFeature & obj);
   // bool CheckUnknown(const DetectedObjectsWithFeature & obj);
 };
