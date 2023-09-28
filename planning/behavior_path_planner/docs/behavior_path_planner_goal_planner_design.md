@@ -89,6 +89,10 @@ Either one is activated when all conditions are met.
 - Route is set with `allow_goal_modification=false` by default.
 - ego-vehicle is in the same lane as the goal.
 
+If the target path contains a goal, modify the points of the path so that the path and the goal are connected smoothly. This process will change the shape of the path by the distance of `refine_goal_search_radius_range` from the goal. Note that this logic depends on the interpolation algorithm that will be executed in a later module (at the moment it uses spline interpolation), so it needs to be updated in the future.
+
+![path_goal_refinement](../image/path_goal_refinement.drawio.svg)
+
 <img src="https://user-images.githubusercontent.com/39142679/237929955-c0adf01b-9e3c-45e3-848d-98cf11e52b65.png" width="600">
 
 ### rough_goal_planner
@@ -164,7 +168,7 @@ searched for in certain range of the shoulder lane.
 | Name                            | Unit | Type   | Description                                                                                                                                                                                                                                 | Default value               |
 | :------------------------------ | :--- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------- |
 | goal_priority                   | [-]  | string | In case `minimum_weighted_distance`, sort with smaller longitudinal distances taking precedence over smaller lateral distances. In case `minimum_longitudinal_distance`, sort with weighted lateral distance against longitudinal distance. | `minimum_weighted_distance` |
-| path_priority                   | [-]  | string | In case `efficient_path` use a goal that can generate an efficient path( priority is `shift_parking` -> `arc_forward_parking` -> `arc_backward_parking`). In case `close_goal` use the closest goal to the original one.                    | efficient_path              |
+| prioritize_goals_before_objects | [-]  | bool   | If there are objects that may need to be avoided, prioritize the goal in front of them                                                                                                                                                      | true                        |
 | forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                                               | 20.0                        |
 | backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                                              | 20.0                        |
 | goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                                           | 2.0                         |
@@ -180,13 +184,15 @@ searched for in certain range of the shoulder lane.
 There are three path generation methods.
 The path is generated with a certain margin (default: `0.5 m`) from the boundary of shoulder lane.
 
-| Name                             | Unit   | Type   | Description                                                                                                                             | Default value |
-| :------------------------------- | :----- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| pull_over_minimum_request_length | [m]    | double | when the ego-vehicle approaches the goal by this distance or a safe distance to stop, pull over is activated.                           | 100.0         |
-| pull_over_velocity               | [m/s]  | double | decelerate to this speed by the goal search area                                                                                        | 3.0           |
-| pull_over_minimum_velocity       | [m/s]  | double | speed of pull_over after stopping once. this prevents excessive acceleration.                                                           | 1.38          |
-| decide_path_distance             | [m]    | double | decide path if it approaches this distance relative to the parking position. after that, no path planning and goal search are performed | 10.0          |
-| maximum_deceleration             | [m/s2] | double | maximum deceleration. it prevents sudden deceleration when a parking path cannot be found suddenly                                      | 1.0           |
+| Name                             | Unit   | Type   | Description                                                                                                                                                                    | Default value                            |
+| :------------------------------- | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- |
+| pull_over_minimum_request_length | [m]    | double | when the ego-vehicle approaches the goal by this distance or a safe distance to stop, pull over is activated.                                                                  | 100.0                                    |
+| pull_over_velocity               | [m/s]  | double | decelerate to this speed by the goal search area                                                                                                                               | 3.0                                      |
+| pull_over_minimum_velocity       | [m/s]  | double | speed of pull_over after stopping once. this prevents excessive acceleration.                                                                                                  | 1.38                                     |
+| decide_path_distance             | [m]    | double | decide path if it approaches this distance relative to the parking position. after that, no path planning and goal search are performed                                        | 10.0                                     |
+| maximum_deceleration             | [m/s2] | double | maximum deceleration. it prevents sudden deceleration when a parking path cannot be found suddenly                                                                             | 1.0                                      |
+| path_priority                    | [-]    | string | In case `efficient_path` use a goal that can generate an efficient path which is set in `efficient_path_order`. In case `close_goal` use the closest goal to the original one. | efficient_path                           |
+| efficient_path_order             | [-]    | string | efficient order of pull over planner along lanes　excluding freespace pull over                                                                                                | ["SHIFT", "ARC_FORWARD", "ARC_BACKWARD"] |
 
 ### **shift parking**
 
@@ -264,7 +270,8 @@ If the vehicle gets stuck with `lane_parking`, run `freespace_parking`.
 To run this feature, you need to set `parking_lot` to the map, `activate_by_scenario` of [costmap_generator](../../costmap_generator/README.md) to `false` and `enable_freespace_parking` to `true`
 
 ![pull_over_freespace_parking_flowchart](../image/pull_over_freespace_parking_flowchart.drawio.svg)
-\*Series execution with `avoidance_module` in the flowchart is under development.
+
+Simultaneous execution with `avoidance_module` in the flowchart is under development.
 
 <img src="https://user-images.githubusercontent.com/39142679/221167581-9a654810-2460-4a0c-8afd-7943ca877cf5.png" width="600">
 
