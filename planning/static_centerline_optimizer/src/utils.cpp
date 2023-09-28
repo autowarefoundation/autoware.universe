@@ -16,8 +16,11 @@
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
 
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Lanelet.h>
 namespace static_centerline_optimizer
 {
 namespace

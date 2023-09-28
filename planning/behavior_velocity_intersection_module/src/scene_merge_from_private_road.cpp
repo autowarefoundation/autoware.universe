@@ -22,6 +22,7 @@
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -134,12 +135,11 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
       path->points, current_pose.position, path->points.at(stop_line_idx).point.pose.position);
 
-    constexpr double distance_threshold = 2.0;
     if (
-      signed_arc_dist_to_stop_point < distance_threshold &&
+      signed_arc_dist_to_stop_point < planner_param_.stop_distance_threshold &&
       planner_data_->isVehicleStopped(planner_param_.stop_duration_sec)) {
       state_machine_.setState(StateMachine::State::GO);
-      if (signed_arc_dist_to_stop_point < -distance_threshold) {
+      if (signed_arc_dist_to_stop_point < -planner_param_.stop_distance_threshold) {
         RCLCPP_ERROR(logger_, "Failed to stop near stop line but ego stopped. Change state to GO");
       }
     }

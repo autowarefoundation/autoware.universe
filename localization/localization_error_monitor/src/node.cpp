@@ -34,14 +34,15 @@
 
 LocalizationErrorMonitor::LocalizationErrorMonitor() : Node("localization_error_monitor")
 {
-  scale_ = this->declare_parameter("scale", 3.0);
-  error_ellipse_size_ = this->declare_parameter("error_ellipse_size", 1.0);
-  warn_ellipse_size_ = this->declare_parameter("warn_ellipse_size", 0.8);
+  scale_ = this->declare_parameter<double>("scale");
+  error_ellipse_size_ = this->declare_parameter<double>("error_ellipse_size");
+  warn_ellipse_size_ = this->declare_parameter<double>("warn_ellipse_size");
 
   error_ellipse_size_lateral_direction_ =
-    this->declare_parameter("error_ellipse_size_lateral_direction", 0.3);
+    this->declare_parameter<double>("error_ellipse_size_lateral_direction");
   warn_ellipse_size_lateral_direction_ =
-    this->declare_parameter("warn_ellipse_size_lateral_direction", 0.25);
+    this->declare_parameter<double>("warn_ellipse_size_lateral_direction");
+
 
   odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "input/odom", 1, std::bind(&LocalizationErrorMonitor::onOdom, this, std::placeholders::_1));
@@ -58,7 +59,7 @@ LocalizationErrorMonitor::LocalizationErrorMonitor() : Node("localization_error_
 visualization_msgs::msg::Marker LocalizationErrorMonitor::createEllipseMarker(
   const Ellipse & ellipse, nav_msgs::msg::Odometry::ConstSharedPtr odom)
 {
-  tf2::Quaternion quat;
+  tf2::Quater>>>>>>> mainnion quat;
   quat.setEuler(0, 0, ellipse.yaw);
 
   const double ellipse_long_radius = std::min(ellipse.long_radius, 30.0);
@@ -89,7 +90,7 @@ void LocalizationErrorMonitor::onOdom(nav_msgs::msg::Odometry::ConstSharedPtr in
   Eigen::Matrix2d xy_covariance;
   const auto cov = input_msg->pose.covariance;
   xy_covariance(0, 0) = cov[0 * 6 + 0];
-  xy_covariance(0, 1) = cov[0 * 6 + 1];
+  xy_covarianc>>>>>>> maine(0, 1) = cov[0 * 6 + 1];
   xy_covariance(1, 0) = cov[1 * 6 + 0];
   xy_covariance(1, 1) = cov[1 * 6 + 1];
 

@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -34,7 +35,8 @@ GeometricPullOver::GeometricPullOver(
   parallel_parking_parameters_{parameters.parallel_parking_parameters},
   lane_departure_checker_{lane_departure_checker},
   occupancy_grid_map_{occupancy_grid_map},
-  is_forward_{is_forward}
+  is_forward_{is_forward},
+  left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
   planner_.setParameters(parallel_parking_parameters_);
 }
@@ -62,7 +64,7 @@ boost::optional<PullOverPath> GeometricPullOver::plan(const Pose & goal_pose)
   planner_.setPlannerData(planner_data_);
 
   const bool found_valid_path =
-    planner_.planPullOver(goal_pose, road_lanes, pull_over_lanes, is_forward_);
+    planner_.planPullOver(goal_pose, road_lanes, pull_over_lanes, is_forward_, left_side_parking_);
   if (!found_valid_path) {
     return {};
   }

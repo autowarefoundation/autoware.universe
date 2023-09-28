@@ -23,7 +23,7 @@
 #include "obstacle_velocity_limiter/types.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
-#include <motion_utils/motion_utils.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
@@ -79,6 +79,8 @@ ObstacleVelocityLimiterNode::ObstacleVelocityLimiterNode(const rclcpp::NodeOptio
 
   set_param_res_ =
     add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 rcl_interfaces::msg::SetParametersResult ObstacleVelocityLimiterNode::onParameter(

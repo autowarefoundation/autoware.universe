@@ -16,8 +16,14 @@
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "interpolation/linear_interpolation.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/algorithms/overlaps.hpp>
+#include <boost/geometry/strategies/strategies.hpp>
 
 namespace behavior_path_planner::utils::path_safety_checker
 {
@@ -28,6 +34,12 @@ void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point &
   point.y() = geom_point.y;
 
   bg::append(polygon.outer(), point);
+}
+
+bool isTargetObjectOncoming(
+  const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose)
+{
+  return std::abs(calcYawDeviation(vehicle_pose, object_pose)) > M_PI_2;
 }
 
 bool isTargetObjectFront(
@@ -246,6 +258,20 @@ boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVeloci
 }
 
 bool checkCollision(
+  const PathWithLaneId & planned_path,
+  const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
+  const ExtendedPredictedObject & target_object,
+  const PredictedPathWithPolygon & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
+  const double hysteresis_factor, CollisionCheckDebug & debug)
+{
+  const auto collided_polygons = getCollidedPolygons(
+    planned_path, predicted_ego_path, target_object, target_object_path, common_parameters,
+    rss_parameters, hysteresis_factor, debug);
+  return collided_polygons.empty();
+}
+
+std::vector<Polygon2d> getCollidedPolygons(
   [[maybe_unused]] const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,
@@ -259,6 +285,8 @@ bool checkCollision(
     debug.current_obj_pose = target_object.initial_pose.pose;
   }
 
+  std::vector<Polygon2d> collided_polygons{};
+  collided_polygons.reserve(target_object_path.path.size());
   for (const auto & obj_pose_with_poly : target_object_path.path) {
     const auto & current_time = obj_pose_with_poly.time;
 
@@ -290,7 +318,8 @@ bool checkCollision(
     // check overlap
     if (boost::geometry::overlaps(ego_polygon, obj_polygon)) {
       debug.unsafe_reason = "overlap_polygon";
-      return false;
+      collided_polygons.push_back(obj_polygon);
+      continue;
     }
 
     // compute which one is at the front of the other
@@ -329,13 +358,12 @@ bool checkCollision(
     // check overlap with extended polygon
     if (boost::geometry::overlaps(extended_ego_polygon, extended_obj_polygon)) {
       debug.unsafe_reason = "overlap_extended_polygon";
-      return false;
+      collided_polygons.push_back(obj_polygon);
     }
   }
 
-  return true;
+  return collided_polygons;
 }
-
 bool checkCollisionWithExtraStoppingMargin(
   const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects,
   const double base_to_front, const double base_to_rear, const double width,

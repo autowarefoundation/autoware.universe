@@ -18,6 +18,7 @@
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
@@ -35,7 +36,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
 
 #include <limits>
 #include <memory>

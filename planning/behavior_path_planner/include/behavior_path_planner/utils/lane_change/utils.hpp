@@ -30,7 +30,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
-#include <lanelet2_core/primitives/Primitive.h>
+#include <lanelet2_core/Forward.h>
 
 #include <memory>
 #include <string>
@@ -88,8 +88,6 @@ std::vector<std::vector<int64_t>> getSortedLaneIds(
   const RouteHandler & route_handler, const Pose & current_pose,
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes);
 
-PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2);
-
 lanelet::ConstLanelets getTargetPreferredLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes, const Direction & direction,
@@ -142,8 +140,6 @@ lanelet::ConstLanelets getBackwardLanelets(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & current_pose, const double backward_length);
 
-bool isTargetObjectType(const PredictedObject & object, const LaneChangeParameters & parameters);
-
 double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer = 0.0);
 
 double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer);
@@ -159,9 +155,6 @@ boost::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & pose,
   const BehaviorPathPlannerParameters & common_parameters, const double resolution);
-
-PredictedPath convertToPredictedPath(
-  const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);
 
 bool isParkedObject(
   const PathWithLaneId & path, const RouteHandler & route_handler,
@@ -190,5 +183,8 @@ std::optional<lanelet::BasicPolygon2d> createPolygon(
 ExtendedPredictedObject transform(
   const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters);
+
+bool isCollidedPolygonsInLanelet(
+  const std::vector<Polygon2d> & collided_polygons, const lanelet::ConstLanelets & lanes);
 }  // namespace behavior_path_planner::utils::lane_change
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_

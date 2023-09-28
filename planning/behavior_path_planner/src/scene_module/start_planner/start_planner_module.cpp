@@ -21,10 +21,14 @@
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
+#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+
+#include <boost/geometry/algorithms/within.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
 
 #include <algorithm>
 #include <memory>
@@ -99,6 +103,16 @@ BehaviorModuleOutput StartPlannerModule::run()
   return plan();
 }
 
+void StartPlannerModule::processOnEntry()
+{
+  // Initialize safety checker
+  if (parameters_->safety_check_params.enable_safety_check) {
+    initializeSafetyCheckParameters();
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      start_planner_data_.collision_check);
+  }
+}
+
 void StartPlannerModule::processOnExit()
 {
   resetPathCandidate();
@@ -108,10 +122,16 @@ void StartPlannerModule::processOnExit()
 
 bool StartPlannerModule::isExecutionRequested() const
 {
-  // TODO(Sugahara): if required lateral shift distance is small, don't engage this module.
-  // Execute when current pose is near route start pose
-  const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
+  const double lateral_distance_to_center_lane =
+    lanelet::utils::getArcCoordinates(current_lanes, current_pose).distance;
+
+  if (std::abs(lateral_distance_to_center_lane) < parameters_->th_distance_to_middle_of_the_road) {
+    return false;
+  }
+
+  const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
   if (
     tier4_autoware_utils::calcDistance2d(start_pose.position, current_pose.position) >
     parameters_->th_arrived_distance) {
@@ -141,16 +161,15 @@ bool StartPlannerModule::isExecutionRequested() const
 
 bool StartPlannerModule::isExecutionReady() const
 {
+  if (!status_.is_safe_static_objects) {
+    return false;
+  }
+
   if (status_.pull_out_path.partial_paths.empty()) {
     return true;
   }
 
   if (status_.is_safe_static_objects && parameters_->safety_check_params.enable_safety_check) {
-    utils::start_goal_planner_common::updateEgoPredictedPathParams(
-      ego_predicted_path_params_, parameters_);
-    utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
-    utils::start_goal_planner_common::updateObjectsFilteringParams(
-      objects_filtering_params_, parameters_);
     if (!isSafePath()) {
       RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
       return false;
@@ -173,7 +192,10 @@ ModuleStatus StartPlannerModule::updateState()
     return ModuleStatus::SUCCESS;
   }
 
-  checkBackFinished();
+  if (isBackwardDrivingComplete()) {
+    updateStatusAfterBackwardDriving();
+    return ModuleStatus::SUCCESS;  // for breaking loop
+  }
 
   return current_state_;
 }
@@ -185,6 +207,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
       getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
+    updateRTCStatus(0, 0);
     return output;
   }
 
@@ -202,6 +225,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
+    updateRTCStatus(0, 0);
     return output;
   }
 
@@ -267,6 +291,15 @@ CandidateOutput StartPlannerModule::planCandidate() const
   return CandidateOutput{};
 }
 
+void StartPlannerModule::initializeSafetyCheckParameters()
+{
+  utils::start_goal_planner_common::updateEgoPredictedPathParams(
+    ego_predicted_path_params_, parameters_);
+  utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
+  utils::start_goal_planner_common::updateObjectsFilteringParams(
+    objects_filtering_params_, parameters_);
+}
+
 PathWithLaneId StartPlannerModule::getFullPath() const
 {
   // combine partial pull out path
@@ -298,6 +331,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     clearWaitingApproval();
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
+    updateRTCStatus(0, 0);
     return output;
   }
 
@@ -308,6 +342,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     clearWaitingApproval();
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
+    updateRTCStatus(0, 0);
     return output;
   }
 
@@ -561,7 +596,7 @@ std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
       std::back_inserter(shoulder_lanes),
       [&rh](const auto & pull_out_lane) { return rh->isShoulderLanelet(pull_out_lane); });
 
-    return utils::generateDrivableLanesWithShoulderLanes(getPathRoadLanes(path), shoulder_lanes);
+    return utils::generateDrivableLanesWithShoulderLanes(path_road_lanes, shoulder_lanes);
   }
 
   // if path_road_lanes is empty, use only pull_out_lanes as drivable lanes
@@ -592,7 +627,7 @@ void StartPlannerModule::updatePullOutStatus()
 
   // skip updating if enough time has not passed for preventing chattering between back and
   // start_planner
-  if (!has_received_new_route && !last_pull_out_start_update_time_ && !status_.back_finished) {
+  if (!has_received_new_route) {
     if (!last_pull_out_start_update_time_) {
       last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
     }
@@ -626,11 +661,25 @@ void StartPlannerModule::updatePullOutStatus()
   planWithPriority(
     start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
 
-  checkBackFinished();
-  if (!status_.back_finished) {
+  if (isBackwardDrivingComplete()) {
+    updateStatusAfterBackwardDriving();
+    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
+  } else {
     status_.backward_path = start_planner_utils::getBackwardPath(
       *route_handler, status_.pull_out_lanes, current_pose, status_.pull_out_start_pose,
       parameters_->backward_velocity);
+  }
+}
+
+void StartPlannerModule::updateStatusAfterBackwardDriving()
+{
+  status_.back_finished = true;
+  // request start_planner approval
+  waitApproval();
+  // To enable approval of the forward path, the RTC status is removed.
+  removeRTCStatus();
+  for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
+    itr->second = generateUUID();
   }
 }
 
@@ -669,9 +718,16 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
   const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     pull_out_lane_objects, parameters_->th_moving_object_velocity);
 
+  // Set the maximum backward distance less than the distance from the vehicle's base_link to the
+  // lane's rearmost point to prevent lane departure.
+  const double s_current =
+    lanelet::utils::getArcCoordinates(status_.pull_out_lanes, current_pose).length;
+  const double max_back_distance = std::clamp(
+    s_current - planner_data_->parameters.base_link2rear, 0.0, parameters_->max_back_distance);
+
   // check collision between footprint and object at the backed pose
   const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
-  for (double back_distance = 0.0; back_distance <= parameters_->max_back_distance;
+  for (double back_distance = 0.0; back_distance <= max_back_distance;
        back_distance += parameters_->backward_search_resolution) {
     const auto backed_pose = calcLongitudinalOffsetPose(
       start_pose_candidates.points, current_pose.position, -back_distance);
@@ -748,9 +804,9 @@ bool StartPlannerModule::hasFinishedPullOut() const
   return has_finished;
 }
 
-void StartPlannerModule::checkBackFinished()
+bool StartPlannerModule::isBackwardDrivingComplete() const
 {
-  // check ego car is close enough to pull out start pose
+  // check ego car is close enough to pull out start pose and stopped
   const auto current_pose = planner_data_->self_odometry->pose.pose;
   const auto distance =
     tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_start_pose);
@@ -759,18 +815,12 @@ void StartPlannerModule::checkBackFinished()
   const double ego_vel = utils::l2Norm(planner_data_->self_odometry->twist.twist.linear);
   const bool is_stopped = ego_vel < parameters_->th_stopped_velocity;
 
-  if (!status_.back_finished && is_near && is_stopped) {
+  const bool back_finished = !status_.back_finished && is_near && is_stopped;
+  if (back_finished) {
     RCLCPP_INFO(getLogger(), "back finished");
-    status_.back_finished = true;
-
-    // request start_planner approval
-    waitApproval();
-    removeRTCStatus();
-    for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
-      itr->second = generateUUID();
-    }
-    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   }
+
+  return back_finished;
 }
 
 bool StartPlannerModule::isStopped()
@@ -957,10 +1007,13 @@ bool StartPlannerModule::isSafePath() const
   RCLCPP_DEBUG(getLogger(), "current_path_idx %ld", status_.current_path_idx);
   utils::start_goal_planner_common::updatePathProperty(
     ego_predicted_path_params_, terminal_velocity_and_accel);
+  // TODO(Sugahara): shoule judge is_object_front properly
+  const bool is_object_front = true;
+  const bool limit_to_max_velocity = true;
   const auto ego_predicted_path =
     behavior_path_planner::utils::path_safety_checker::createPredictedPath(
-      ego_predicted_path_params_, pull_out_path.points, current_pose, current_velocity,
-      ego_seg_idx);
+      ego_predicted_path_params_, pull_out_path.points, current_pose, current_velocity, ego_seg_idx,
+      is_object_front, limit_to_max_velocity);
 
   // filtering objects with velocity, position and class
   const auto & filtered_objects = utils::path_safety_checker::filterObjects(
@@ -971,12 +1024,10 @@ bool StartPlannerModule::isSafePath() const
     current_lanes, route_handler, filtered_objects, objects_filtering_params_);
 
   const double hysteresis_factor =
-    status_.is_safe_dynamic_objects ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+    status_.is_safe_dynamic_objects ? 1.0 : safety_check_params_->hysteresis_factor_expand_rate;
 
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     start_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
-  utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
-    start_planner_data_.collision_check);
 
   bool is_safe_dynamic_objects = true;
   // Check for collisions with each predicted path of the object
@@ -1120,8 +1171,11 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
 
     DrivableAreaInfo current_drivable_area_info;
     current_drivable_area_info.drivable_lanes = target_drivable_lanes;
-    output.drivable_area_info = utils::combineDrivableAreaInfo(
-      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+    output.drivable_area_info =
+      status_.back_finished
+        ? utils::combineDrivableAreaInfo(
+            current_drivable_area_info, getPreviousModuleOutput().drivable_area_info)
+        : current_drivable_area_info;
   }
 }
 
@@ -1151,35 +1205,27 @@ void StartPlannerModule::setDebugData() const
   add(createPoseMarkerArray(status_.pull_out_path.start_pose, "start_pose", 0, 0.3, 0.9, 0.3));
   add(createPoseMarkerArray(status_.pull_out_path.end_pose, "end_pose", 0, 0.9, 0.9, 0.3));
   add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
-  if (start_planner_data_.ego_predicted_path.size() > 0) {
-    const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
-      start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
-    add(createPredictedPathMarkerArray(
-      ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
-  }
-
-  if (start_planner_data_.filtered_objects.objects.size() > 0) {
-    add(createObjectsMarkerArray(
-      start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
-  }
+  add(createPathMarkerArray(status_.backward_path, "backward_driving_path", 0, 0.0, 0.9, 0.0));
 
   // safety check
-  {
+  if (parameters_->safety_check_params.enable_safety_check) {
+    if (start_planner_data_.ego_predicted_path.size() > 0) {
+      const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
+        start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
+      add(createPredictedPathMarkerArray(
+        ego_predicted_path, vehicle_info_, "ego_predicted_path_start_planner", 0, 0.0, 0.5, 0.9));
+    }
+
+    if (start_planner_data_.filtered_objects.objects.size() > 0) {
+      add(createObjectsMarkerArray(
+        start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
+    }
+
     add(showSafetyCheckInfo(start_planner_data_.collision_check, "object_debug_info"));
     add(showPredictedPath(start_planner_data_.collision_check, "ego_predicted_path"));
     add(showPolygon(start_planner_data_.collision_check, "ego_and_target_polygon_relation"));
-  }
-
-  if (start_planner_data_.ego_predicted_path.size() > 0) {
-    const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
-      start_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
-    add(createPredictedPathMarkerArray(
-      ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
-  }
-
-  if (start_planner_data_.filtered_objects.objects.size() > 0) {
-    add(createObjectsMarkerArray(
-      start_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      start_planner_data_.collision_check);
   }
 
   // Visualize planner type text

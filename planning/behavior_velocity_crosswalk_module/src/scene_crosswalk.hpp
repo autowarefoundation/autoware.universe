@@ -19,10 +19,9 @@
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/regulatory_elements/crosswalk.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -31,9 +30,8 @@
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_routing/RoutingGraphContainer.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/primitives/LineString.h>
 #include <pcl/common/distances.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
