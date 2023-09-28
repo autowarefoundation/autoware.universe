@@ -120,6 +120,75 @@ void StartPlannerModule::processOnExit()
   debug_marker_.markers.clear();
 }
 
+void StartPlannerModule::updateData()
+{
+  if (isBackwardDrivingComplete()) {
+    updateStatusAfterBackwardDriving();
+  }
+
+  const bool has_received_new_route =
+    !planner_data_->prev_route_id ||
+    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
+
+  // if new route is received, reset status
+  if (has_received_new_route) {
+    status_ = PullOutStatus();
+  }
+
+  // skip updating if enough time has not passed for preventing chattering between back and
+  // start_planner
+  if (!has_received_new_route) {
+    if (!last_pull_out_start_update_time_) {
+      last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+    }
+    const auto elapsed_time = (clock_->now() - *last_pull_out_start_update_time_).seconds();
+    if (elapsed_time < parameters_->backward_path_update_duration) {
+      return;
+    }
+  }
+  last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+
+  if (current_state_ == ModuleStatus::WAITING_APPROVAL) {
+    // save pull out lanes which is generated using current pose before starting pull out
+    status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
+      planner_data_,
+      planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+    status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
+      planner_data_,
+      planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+    const auto & route_handler = planner_data_->route_handler;
+    const auto & current_pose = planner_data_->self_odometry->pose.pose;
+    const auto & goal_pose = planner_data_->route_handler->getGoalPose();
+
+    // refine start pose with pull out lanes.
+    // 1) backward driving is not allowed: use refined pose just as start pose.
+    // 2) backward driving is allowed: use refined pose to check if backward driving is needed.
+    const PathWithLaneId start_pose_candidates_path = calcStartPoseCandidatesBackwardPath();
+    const auto refined_start_pose = calcLongitudinalOffsetPose(
+      start_pose_candidates_path.points, planner_data_->self_odometry->pose.pose.position, 0.0);
+    if (!refined_start_pose) return;
+
+    // search pull out start candidates backward
+    const std::vector<Pose> start_pose_candidates = std::invoke([&]() -> std::vector<Pose> {
+      if (parameters_->enable_back) {
+        return searchPullOutStartPoses(start_pose_candidates_path);
+      }
+      return {*refined_start_pose};
+    });
+
+    planWithPriority(
+      start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
+
+    if (isBackwardDrivingComplete()) {
+      updateStatusAfterBackwardDriving();
+    } else {
+      status_.backward_path = start_planner_utils::getBackwardPath(
+        *route_handler, status_.pull_out_lanes, current_pose, status_.pull_out_start_pose,
+        parameters_->backward_velocity);
+    }
+  }
+}
+
 bool StartPlannerModule::isExecutionRequested() const
 {
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
@@ -192,8 +261,7 @@ ModuleStatus StartPlannerModule::updateState()
     return ModuleStatus::SUCCESS;
   }
 
-  if (isBackwardDrivingComplete()) {
-    updateStatusAfterBackwardDriving();
+  if (status_.back_finished) {
     return ModuleStatus::SUCCESS;  // for breaking loop
   }
 
@@ -209,14 +277,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
     setDebugData();  // use status updated in generateStopOutput()
     updateRTCStatus(0, 0);
     return output;
-  }
-
-  if (isWaitingApproval()) {
-    clearWaitingApproval();
-    resetPathCandidate();
-    resetPathReference();
-    // save current_pose when approved for start_point of turn_signal for backward driving
-    last_approved_pose_ = std::make_unique<Pose>(planner_data_->self_odometry->pose.pose);
   }
 
   BehaviorModuleOutput output;
@@ -323,12 +383,11 @@ PathWithLaneId StartPlannerModule::getFullPath() const
 
 BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 {
-  updatePullOutStatus();
+  updatePullOutStatusBeforeApproval();
 
   if (IsGoalBehindOfEgoInSameRouteSegment()) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
-    clearWaitingApproval();
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
     updateRTCStatus(0, 0);
@@ -339,14 +398,11 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   if (!status_.is_safe_static_objects) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
-    clearWaitingApproval();
     const auto output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
     updateRTCStatus(0, 0);
     return output;
   }
-
-  waitApproval();
 
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
@@ -610,64 +666,20 @@ std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
   return drivable_lanes;
 }
 
-void StartPlannerModule::updatePullOutStatus()
+void StartPlannerModule::updatePullOutStatusBeforeApproval()
 {
-  const bool has_received_new_route =
-    !planner_data_->prev_route_id ||
-    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
-
-  if (has_received_new_route) {
-    status_ = PullOutStatus();
-  }
-
-  // save pull out lanes which is generated using current pose before starting pull out
   // (before approval)
-  status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
-    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+}
 
-  // skip updating if enough time has not passed for preventing chattering between back and
-  // start_planner
-  if (!has_received_new_route) {
-    if (!last_pull_out_start_update_time_) {
-      last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
-    }
-    const auto elapsed_time = (clock_->now() - *last_pull_out_start_update_time_).seconds();
-    if (elapsed_time < parameters_->backward_path_update_duration) {
-      return;
-    }
-  }
-  last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
-
-  const auto & route_handler = planner_data_->route_handler;
-  const auto & current_pose = planner_data_->self_odometry->pose.pose;
-  const auto & goal_pose = planner_data_->route_handler->getGoalPose();
-
-  // refine start pose with pull out lanes.
-  // 1) backward driving is not allowed: use refined pose just as start pose.
-  // 2) backward driving is allowed: use refined pose to check if backward driving is needed.
-  const PathWithLaneId start_pose_candidates_path = calcStartPoseCandidatesBackwardPath();
-  const auto refined_start_pose = calcLongitudinalOffsetPose(
-    start_pose_candidates_path.points, planner_data_->self_odometry->pose.pose.position, 0.0);
-  if (!refined_start_pose) return;
-
-  // search pull out start candidates backward
-  const std::vector<Pose> start_pose_candidates = std::invoke([&]() -> std::vector<Pose> {
-    if (parameters_->enable_back) {
-      return searchPullOutStartPoses(start_pose_candidates_path);
-    }
-    return {*refined_start_pose};
-  });
-
-  planWithPriority(
-    start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
-
-  if (isBackwardDrivingComplete()) {
-    updateStatusAfterBackwardDriving();
-    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
-  } else {
-    status_.backward_path = start_planner_utils::getBackwardPath(
-      *route_handler, status_.pull_out_lanes, current_pose, status_.pull_out_start_pose,
-      parameters_->backward_velocity);
+void StartPlannerModule::updateStatusAfterBackwardDriving()
+{
+  status_.back_finished = true;
+  // save current_pose when start_point of backward driving is approved for turn_signal
+  last_approved_pose_ = std::make_unique<Pose>(planner_data_->self_odometry->pose.pose);
+  // To enable approval of the forward path, the RTC status is removed.
+  removeRTCStatus();
+  for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
+    itr->second = generateUUID();
   }
 }
 

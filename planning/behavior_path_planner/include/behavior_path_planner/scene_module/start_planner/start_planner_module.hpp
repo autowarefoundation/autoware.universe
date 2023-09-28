@@ -93,6 +93,7 @@ public:
   CandidateOutput planCandidate() const override;
   void processOnEntry() override;
   void processOnExit() override;
+  void updateData() override;
 
   void setParameters(const std::shared_ptr<StartPlannerParameters> & parameters)
   {
@@ -139,6 +140,7 @@ private:
 
   std::unique_ptr<rclcpp::Time> last_route_received_time_;
   std::unique_ptr<rclcpp::Time> last_pull_out_start_update_time_;
+  // pose before approval of backward driving path
   std::unique_ptr<Pose> last_approved_pose_;
 
   // generate freespace pull out paths in a separate thread
@@ -167,7 +169,7 @@ private:
   PathWithLaneId generateStopPath() const;
   lanelet::ConstLanelets getPathRoadLanes(const PathWithLaneId & path) const;
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
-  void updatePullOutStatus();
+  void updatePullOutStatusBeforeApproval();
   void updateStatusAfterBackwardDriving();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,
