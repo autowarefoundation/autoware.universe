@@ -232,11 +232,10 @@ public:
     // Get full network path
     std::string network_prefix;
     if (autoware_data_path == "") {
-      network_prefix = ament_index_cpp::get_package_share_directory(pkg_name) +
-                                 "/models/" + config.network_name + "/";
+      network_prefix = ament_index_cpp::get_package_share_directory(pkg_name) + "/models/" +
+                       config.network_name + "/";
     } else {
-      network_prefix =
-      autoware_data_path + pkg_name + "/models/" + config.network_name + "/";
+      network_prefix = autoware_data_path + pkg_name + "/models/" + config.network_name + "/";
     }
     std::string network_module_path = network_prefix + config.network_module_path;
     std::string network_graph_path = network_prefix + config.network_graph_path;
