@@ -258,6 +258,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     timer_ = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&BehaviorPathPlannerNode::run, this));
   }
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
@@ -270,6 +272,18 @@ std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
     }
   }
   return waiting_approval_modules;
+}
+
+std::vector<std::string> BehaviorPathPlannerNode::getRunningModules()
+{
+  auto all_scene_module_ptr = planner_manager_->getSceneModuleStatus();
+  std::vector<std::string> running_modules;
+  for (const auto & module : all_scene_module_ptr) {
+    if (module->status == ModuleStatus::RUNNING) {
+      running_modules.push_back(module->module_name);
+    }
+  }
+  return running_modules;
 }
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()

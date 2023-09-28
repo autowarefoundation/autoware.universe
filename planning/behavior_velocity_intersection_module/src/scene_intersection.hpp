@@ -79,17 +79,24 @@ public:
       //! minimum confidence value of predicted path to use for collision detection
       double minimum_ego_predicted_velocity;  //! used to calculate ego's future velocity profile
       double state_transit_margin_time;
-      struct Normal
+      struct FullyPrioritized
       {
         double collision_start_margin_time;  //! start margin time to check collision
         double collision_end_margin_time;    //! end margin time to check collision
-      } normal;
-      struct Relaxed
+      } fully_prioritized;
+      struct PartiallyPrioritized
       {
-        double collision_start_margin_time;
-        double collision_end_margin_time;
-      } relaxed;
+        double collision_start_margin_time;  //! start margin time to check collision
+        double collision_end_margin_time;    //! end margin time to check collision
+      } partially_prioritized;
+      struct NotPrioritized
+      {
+        double collision_start_margin_time;  //! start margin time to check collision
+        double collision_end_margin_time;    //! end margin time to check collision
+      } not_prioritized;
       double keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
+      bool use_upstream_velocity;
+      double minimum_upstream_velocity;
     } collision_detection;
     struct Occlusion
     {
@@ -108,6 +115,7 @@ public:
       std::vector<double> possible_object_bbox;
       double ignore_parked_vehicle_speed_threshold;
       double stop_release_margin_time;
+      bool temporal_stop_before_attention_area;
     } occlusion;
   };
 
@@ -136,15 +144,19 @@ public:
     // NOTE: if intersection_occlusion is disapproved externally through RTC,
     // it indicates "is_forcefully_occluded"
     bool is_actually_occlusion_cleared{false};
+    bool temporal_stop_before_attention_required{false};
     size_t closest_idx{0};
     size_t collision_stop_line_idx{0};
+    size_t first_attention_stop_line_idx{0};
     size_t occlusion_stop_line_idx{0};
   };
   struct OccludedCollisionStop
   {
     bool is_actually_occlusion_cleared{false};
+    bool temporal_stop_before_attention_required{false};
     size_t closest_idx{0};
     size_t collision_stop_line_idx{0};
+    size_t first_attention_stop_line_idx{0};
     size_t occlusion_stop_line_idx{0};
   };
   struct Safe
@@ -217,6 +229,7 @@ private:
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop
   StateMachine occlusion_stop_state_machine_;
+  StateMachine temporal_stop_before_attention_state_machine_;
   // NOTE: uuid_ is base member
 
   // for stuck vehicle detection
@@ -249,8 +262,9 @@ private:
   bool checkCollision(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const autoware_auto_perception_msgs::msg::PredictedObjects & target_objects,
-    const util::PathLanelets & path_lanelets, const int closest_idx, const double time_delay,
-    const bool tl_arrow_solid_on);
+    const util::PathLanelets & path_lanelets, const size_t closest_idx,
+    const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
+    const util::TrafficPrioritizedLevel & traffic_prioritized_level);
 
   bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,

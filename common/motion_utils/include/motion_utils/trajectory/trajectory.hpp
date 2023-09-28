@@ -18,6 +18,7 @@
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/geometry/pose_deviation.hpp"
 #include "tier4_autoware_utils/math/constants.hpp"
+#include "tier4_autoware_utils/system/backtrace.hpp"
 
 #include <Eigen/Geometry>
 
@@ -43,6 +44,7 @@ template <class T>
 void validateNonEmpty(const T & points)
 {
   if (points.empty()) {
+    tier4_autoware_utils::print_backtrace();
     throw std::invalid_argument("Points is empty.");
   }
 }
@@ -80,6 +82,7 @@ void validateNonSharpAngle(
 
   constexpr double epsilon = 1e-3;
   if (std::cos(angle_threshold) < product / dist_1to2 / dist_3to2 + epsilon) {
+    tier4_autoware_utils::print_backtrace();
     throw std::invalid_argument("Sharp angle.");
   }
 }
@@ -396,6 +399,7 @@ double calcLongitudinalOffsetToSegment(
 {
   if (seg_idx >= points.size() - 1) {
     const std::out_of_range e("Segment index is invalid.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
@@ -418,6 +422,7 @@ double calcLongitudinalOffsetToSegment(
 
   if (seg_idx >= overlap_removed_points.size() - 1) {
     const std::runtime_error e("Same points are given.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
@@ -574,6 +579,7 @@ double calcLateralOffset(
 
   if (overlap_removed_points.size() == 1) {
     const std::runtime_error e("Same points are given.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
@@ -635,6 +641,7 @@ double calcLateralOffset(
 
   if (overlap_removed_points.size() == 1) {
     const std::runtime_error e("Same points are given.");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
@@ -1037,6 +1044,7 @@ boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
 
   if (points.size() - 1 < src_idx) {
     const auto e = std::out_of_range("Invalid source index");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
@@ -1161,6 +1169,7 @@ boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
 
   if (points.size() - 1 < src_idx) {
     const auto e = std::out_of_range("Invalid source index");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }
@@ -1850,7 +1859,8 @@ insertOrientation<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
 
 /**
  * @brief Remove points with invalid orientation differences from a given points container
- * (trajectory, path, ...)
+ * (trajectory, path, ...). Check the difference between the angles of two points and the difference
+ * between the azimuth angle between the two points and the angle of the next point.
  * @param points Points of trajectory, path, or other point container (input / output)
  * @param max_yaw_diff Maximum acceptable yaw angle difference between two consecutive points in
  * radians (default: M_PI_2)
@@ -1859,10 +1869,14 @@ template <class T>
 void removeInvalidOrientationPoints(T & points, const double max_yaw_diff = M_PI_2)
 {
   for (size_t i = 1; i < points.size();) {
-    const double yaw1 = tf2::getYaw(tier4_autoware_utils::getPose(points.at(i - 1)).orientation);
-    const double yaw2 = tf2::getYaw(tier4_autoware_utils::getPose(points.at(i)).orientation);
+    const auto p1 = tier4_autoware_utils::getPose(points.at(i - 1));
+    const auto p2 = tier4_autoware_utils::getPose(points.at(i));
+    const double yaw1 = tf2::getYaw(p1.orientation);
+    const double yaw2 = tf2::getYaw(p2.orientation);
 
-    if (max_yaw_diff < std::abs(tier4_autoware_utils::normalizeRadian(yaw1 - yaw2))) {
+    if (
+      max_yaw_diff < std::abs(tier4_autoware_utils::normalizeRadian(yaw1 - yaw2)) ||
+      !tier4_autoware_utils::isDrivingForward(p1, p2)) {
       points.erase(points.begin() + i);
     } else {
       ++i;
@@ -2370,6 +2384,7 @@ double calcYawDeviation(
 
   if (overlap_removed_points.size() <= 1) {
     const std::runtime_error e("points size is less than 2");
+    tier4_autoware_utils::print_backtrace();
     if (throw_exception) {
       throw e;
     }

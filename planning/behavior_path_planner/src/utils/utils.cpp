@@ -1544,7 +1544,9 @@ void generateDrivableArea(
 
   // make bound longitudinally monotonic
   // TODO(Murooka) Fix makeBoundLongitudinallyMonotonic
-  if (enable_expanding_hatched_road_markings || enable_expanding_intersection_areas) {
+  if (
+    is_driving_forward &&
+    (enable_expanding_hatched_road_markings || enable_expanding_intersection_areas)) {
     makeBoundLongitudinallyMonotonic(path, planner_data, true);   // for left bound
     makeBoundLongitudinallyMonotonic(path, planner_data, false);  // for right bound
   }
@@ -1670,6 +1672,13 @@ std::vector<geometry_msgs::msg::Point> calcBound(
         output_points.push_back(point);
       }
 
+      continue;
+    }
+
+    if (!enable_expanding_hatched_road_markings) {
+      for (const auto & point : bound) {
+        output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(point));
+      }
       continue;
     }
 
@@ -3147,15 +3156,12 @@ double calcMinimumLaneChangeLength(
   const double & max_lateral_acc = lat_acc.second;
   const double & lateral_jerk = common_param.lane_changing_lateral_jerk;
   const double & finish_judge_buffer = common_param.lane_change_finish_judge_buffer;
-  const auto prepare_length = 0.5 * common_param.max_acc *
-                              common_param.lane_change_prepare_duration *
-                              common_param.lane_change_prepare_duration;
 
   double accumulated_length = length_to_intersection;
   for (const auto & shift_interval : shift_intervals) {
     const double t =
       PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
-    accumulated_length += vel * t + prepare_length + finish_judge_buffer;
+    accumulated_length += vel * t + finish_judge_buffer;
   }
   accumulated_length +=
     common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);

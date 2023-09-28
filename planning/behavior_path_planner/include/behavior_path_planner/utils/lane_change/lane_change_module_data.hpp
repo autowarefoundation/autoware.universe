@@ -68,6 +68,14 @@ struct LaneChangeParameters
   bool check_objects_on_other_lanes{true};
   bool use_all_predicted_path{false};
 
+  // regulatory elements
+  bool regulate_on_crosswalk{false};
+  bool regulate_on_intersection{false};
+
+  // ego vehicle stuck detection
+  double stop_velocity_threshold{0.1};
+  double stop_time_threshold{3.0};
+
   // true by default for all objects
   utils::path_safety_checker::ObjectTypesToCheck object_types_to_check;
 
