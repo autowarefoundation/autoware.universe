@@ -177,11 +177,11 @@ double TreeStructuredParzenEstimator::log_gaussian_pdf(
   const Input & input, const Input & mu, const Input & sigma)
 {
   const double log_2pi = std::log(2.0 * M_PI);
-  double result = 0.0;
-
   auto log_gaussian_pdf_1d = [&](const double diff, const double sigma) {
     return -0.5 * log_2pi - std::log(sigma) - (diff * diff) / (2.0 * sigma * sigma);
   };
+
+  double result = 0.0;
 
   const double diff_x = input.x - mu.x;
   result += log_gaussian_pdf_1d(diff_x, sigma.x);
