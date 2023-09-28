@@ -34,22 +34,22 @@ namespace behavior_velocity_planner::util
 
 struct DebugData
 {
-  std::optional<geometry_msgs::msg::Pose> collision_stop_wall_pose = std::nullopt;
-  std::optional<geometry_msgs::msg::Pose> occlusion_stop_wall_pose = std::nullopt;
-  std::optional<geometry_msgs::msg::Pose> occlusion_first_stop_wall_pose = std::nullopt;
-  std::optional<geometry_msgs::msg::Pose> pass_judge_wall_pose = std::nullopt;
-  std::optional<std::vector<lanelet::CompoundPolygon3d>> attention_area = std::nullopt;
-  std::optional<geometry_msgs::msg::Polygon> intersection_area = std::nullopt;
-  std::optional<lanelet::CompoundPolygon3d> ego_lane = std::nullopt;
-  std::optional<std::vector<lanelet::CompoundPolygon3d>> adjacent_area = std::nullopt;
-  std::optional<geometry_msgs::msg::Polygon> stuck_vehicle_detect_area = std::nullopt;
-  std::optional<geometry_msgs::msg::Polygon> candidate_collision_ego_lane_polygon = std::nullopt;
+  std::optional<geometry_msgs::msg::Pose> collision_stop_wall_pose{std::nullopt};
+  std::optional<geometry_msgs::msg::Pose> occlusion_stop_wall_pose{std::nullopt};
+  std::optional<geometry_msgs::msg::Pose> occlusion_first_stop_wall_pose{std::nullopt};
+  std::optional<geometry_msgs::msg::Pose> pass_judge_wall_pose{std::nullopt};
+  std::optional<std::vector<lanelet::CompoundPolygon3d>> attention_area{std::nullopt};
+  std::optional<geometry_msgs::msg::Polygon> intersection_area{std::nullopt};
+  std::optional<lanelet::CompoundPolygon3d> ego_lane{std::nullopt};
+  std::optional<std::vector<lanelet::CompoundPolygon3d>> adjacent_area{std::nullopt};
+  std::optional<geometry_msgs::msg::Polygon> stuck_vehicle_detect_area{std::nullopt};
+  std::optional<geometry_msgs::msg::Polygon> candidate_collision_ego_lane_polygon{std::nullopt};
   std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
   autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
   autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
-  std::optional<geometry_msgs::msg::Point> nearest_occlusion_point = std::nullopt;
-  std::optional<geometry_msgs::msg::Point> nearest_occlusion_projection_point = std::nullopt;
   std::vector<geometry_msgs::msg::Polygon> occlusion_polygons;
+  std::optional<std::pair<geometry_msgs::msg::Point, geometry_msgs::msg::Point>>
+    nearest_occlusion_projection{std::nullopt};
 };
 
 struct InterpolatedPathInfo
@@ -128,8 +128,10 @@ struct IntersectionStopLines
   size_t closest_idx{0};
   // NOTE: null if path does not conflict with first_conflicting_area
   std::optional<size_t> stuck_stop_line{std::nullopt};
-  // NOTE: null if path is over map stop_line OR its value is calculated negative area
+  // NOTE: null if path is over map stop_line OR its value is calculated negative
   std::optional<size_t> default_stop_line{std::nullopt};
+  // NOTE: null if the index is calculated negative
+  std::optional<size_t> first_attention_stop_line{std::nullopt};
   // NOTE: null if footprints do not change from outside to inside of detection area
   std::optional<size_t> occlusion_peeking_stop_line{std::nullopt};
   // if the value is calculated negative, its value is 0
