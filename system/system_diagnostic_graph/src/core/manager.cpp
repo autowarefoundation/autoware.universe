@@ -78,25 +78,13 @@ void GraphManager::init(const std::string & file, const std::string & mode)
     }
   }
 
+  for (auto & [link, config] : exprs.get()) {
+    link->init(config, paths);
+  }
+
   for (const auto & node : nodes) {
     std::cout << node->path() << std::endl;
   }
-
-  /*
-  for (const auto & expr : exprs.get()) {
-    std::cout << std::left << std::setw(17) << expr.type << " ";
-    std::cout << std::setw(14) << expr.expr << " ";
-    std::cout << expr.dict.mark().str() << std::endl;
-  }
-  */
-
-  // Reflect the config after creating all the unit nodes,
-  /*
-  for (auto & [config, unit] : units) {
-    unit->create(graph_, config);
-  }
-  */
-
   // Sort unit nodes in topological order for update dependencies.
   // graph_.topological_sort();
 

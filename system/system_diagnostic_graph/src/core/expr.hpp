@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -55,6 +56,7 @@ class LinkExpr : public BaseExpr
 {
 public:
   LinkExpr(ExprInit & exprs, ConfigObject & config);
+  void init(ConfigObject & config, std::unordered_map<std::string, BaseNode *> nodes);
   ExprStatus eval() const override;
   std::vector<BaseNode *> get_dependency() const override;
 
@@ -89,12 +91,12 @@ class ExprInit
 {
 public:
   explicit ExprInit(const std::string & mode);
-  std::vector<ExprConfig> get() const;
   std::unique_ptr<BaseExpr> create(ExprConfig config);
+  auto get() const { return links_; }
 
 private:
   std::string mode_;
-  std::vector<ExprConfig> exprs_;
+  std::vector<std::pair<LinkExpr *, ConfigObject>> links_;
 };
 
 }  // namespace system_diagnostic_graph

@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // DEBUG
@@ -65,8 +66,7 @@ LinkExpr::LinkExpr(ExprInit & exprs, ConfigObject & config)
   (void)exprs;
 }
 
-/*
-void LinkExpr::init(const std::unordered_map<std::string, BaseNode *> & node)
+void LinkExpr::init(ConfigObject & config, std::unordered_map<std::string, BaseNode *> nodes)
 {
   const auto path = config.take_text("path");
   if (!nodes.count(path)) {
@@ -74,7 +74,6 @@ void LinkExpr::init(const std::unordered_map<std::string, BaseNode *> & node)
   }
   node_ = nodes.at(path);
 }
-*/
 
 ExprStatus LinkExpr::eval() const
 {
@@ -182,46 +181,38 @@ ExprInit::ExprInit(const std::string & mode)
   mode_ = mode;
 }
 
-std::vector<ExprConfig> ExprInit::get() const
-{
-  return exprs_;
-}
-
 std::unique_ptr<BaseExpr> ExprInit::create(ExprConfig config)
 {
-  const auto build = [this](ExprConfig & config) -> std::unique_ptr<BaseExpr> {
-    if (!config.mode.check(mode_)) {
-      return nullptr;
-    }
-    if (config.type == "link") {
-      return std::make_unique<LinkExpr>(*this, config.dict);
-    }
-    if (config.type == "and") {
-      return std::make_unique<AndExpr>(*this, config.dict, false);
-    }
-    if (config.type == "short-circuit-and") {
-      return std::make_unique<AndExpr>(*this, config.dict, true);
-    }
-    if (config.type == "or") {
-      return std::make_unique<OrExpr>(*this, config.dict);
-    }
-    if (config.type == "debug-ok") {
-      return std::make_unique<ConstExpr>(DiagnosticStatus::OK);
-    }
-    if (config.type == "debug-warn") {
-      return std::make_unique<ConstExpr>(DiagnosticStatus::WARN);
-    }
-    if (config.type == "debug-error") {
-      return std::make_unique<ConstExpr>(DiagnosticStatus::ERROR);
-    }
-    if (config.type == "debug-stale") {
-      return std::make_unique<ConstExpr>(DiagnosticStatus::STALE);
-    }
-    throw ConfigError("unknown expr type: " + config.type);
-  };
-
-  auto expr = build(config);
-  return expr;
+  if (!config.mode.check(mode_)) {
+    return nullptr;
+  }
+  if (config.type == "link") {
+    auto expr = std::make_unique<LinkExpr>(*this, config.dict);
+    links_.push_back(std::make_pair(expr.get(), config.dict));
+    return expr;
+  }
+  if (config.type == "and") {
+    return std::make_unique<AndExpr>(*this, config.dict, false);
+  }
+  if (config.type == "short-circuit-and") {
+    return std::make_unique<AndExpr>(*this, config.dict, true);
+  }
+  if (config.type == "or") {
+    return std::make_unique<OrExpr>(*this, config.dict);
+  }
+  if (config.type == "debug-ok") {
+    return std::make_unique<ConstExpr>(DiagnosticStatus::OK);
+  }
+  if (config.type == "debug-warn") {
+    return std::make_unique<ConstExpr>(DiagnosticStatus::WARN);
+  }
+  if (config.type == "debug-error") {
+    return std::make_unique<ConstExpr>(DiagnosticStatus::ERROR);
+  }
+  if (config.type == "debug-stale") {
+    return std::make_unique<ConstExpr>(DiagnosticStatus::STALE);
+  }
+  throw ConfigError("unknown expr type: " + config.type);
 }
 
 }  // namespace system_diagnostic_graph
