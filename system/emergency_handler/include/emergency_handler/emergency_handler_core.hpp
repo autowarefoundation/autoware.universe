@@ -17,9 +17,9 @@
 
 // Core
 #include <memory>
+#include <optional>
 #include <string>
 #include <variant>
-#include <optional>
 
 // Autoware
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
@@ -92,8 +92,7 @@ private:
   void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
   void onOperationModeAvailability(
     const tier4_system_msgs::msg::OperationModeAvailability::ConstSharedPtr msg);
-  void onMrmPullOverStatus(
-    const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
+  void onMrmPullOverStatus(const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
   void onMrmComfortableStopStatus(
     const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
   void onMrmEmergencyStopStatus(

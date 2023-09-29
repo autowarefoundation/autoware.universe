@@ -7,21 +7,23 @@
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and
-// limitations under the License.
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+// governing permissions and limitations under the License.
 
 #include "emergency_handler/emergency_handler_core.hpp"
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <utility>
-#include <chrono>
 
 EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
 {
   // Parameter
   param_.update_rate = declare_parameter<int>("update_rate", 10);
-  param_.timeout_operation_mode_availability = declare_parameter<double>("timeout_operation_mode_availability", 0.5);
+  param_.timeout_operation_mode_availability =
+    declare_parameter<double>("timeout_operation_mode_availability", 0.5);
   param_.use_emergency_holding = declare_parameter<bool>("use_emergency_holding", false);
   param_.timeout_emergency_recovery = declare_parameter<double>("timeout_emergency_recovery", 5.0);
   param_.timeout_takeover_request = declare_parameter<double>("timeout_takeover_request", 10.0);
@@ -68,8 +70,7 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     create_publisher<autoware_adapi_v1_msgs::msg::MrmState>("~/output/mrm/state", rclcpp::QoS{1});
 
   // Clients
-  client_mrm_pull_over_group_ =
-    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  client_mrm_pull_over_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_mrm_pull_over_ = create_client<tier4_system_msgs::srv::OperateMrm>(
     "~/output/mrm/pull_over/operate", rmw_qos_profile_services_default,
     client_mrm_pull_over_group_);
@@ -89,8 +90,7 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
   prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
-  mrm_pull_over_status_ =
-    std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
+  mrm_pull_over_status_ = std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
   mrm_comfortable_stop_status_ =
     std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
   mrm_emergency_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
@@ -127,7 +127,6 @@ void EmergencyHandler::onControlMode(
 void EmergencyHandler::onOperationModeAvailability(
   const tier4_system_msgs::msg::OperationModeAvailability::ConstSharedPtr msg)
 {
-
   stamp_operation_mode_availability_ = this->now();
 
   if (!param_.use_emergency_holding) {
@@ -142,7 +141,8 @@ void EmergencyHandler::onOperationModeAvailability(
       if (!stamp_autonomous_become_unavailable_.has_value()) {
         stamp_autonomous_become_unavailable_.emplace(this->now());
       } else {
-        const auto emergency_duration = (this->now() - stamp_autonomous_become_unavailable_.value()).seconds();
+        const auto emergency_duration =
+          (this->now() - stamp_autonomous_become_unavailable_.value()).seconds();
         if (emergency_duration > param_.timeout_emergency_recovery) {
           is_emergency_holding_ = true;
         }
@@ -352,14 +352,13 @@ bool EmergencyHandler::isDataReady()
   }
 
   if (
-    param_.use_pull_over && mrm_pull_over_status_->state ==
-                                     tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE) {
+    param_.use_pull_over &&
+    mrm_pull_over_status_->state == tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for mrm pull over to become available...");
     return false;
   }
-
 
   if (
     param_.use_comfortable_stop && mrm_comfortable_stop_status_->state ==
@@ -387,7 +386,8 @@ void EmergencyHandler::onTimer()
     return;
   }
   const bool is_operation_mode_availability_timeout =
-    (this->now() - stamp_operation_mode_availability_).seconds() > param_.timeout_operation_mode_availability;
+    (this->now() - stamp_operation_mode_availability_).seconds() >
+    param_.timeout_operation_mode_availability;
   if (is_operation_mode_availability_timeout) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
@@ -514,16 +514,14 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurre
       }
     }
     if (!operation_mode_availability_->emergency_stop) {
-      RCLCPP_WARN(
-        this->get_logger(), "no mrm operation available: operate emergency_stop");
+      RCLCPP_WARN(this->get_logger(), "no mrm operation available: operate emergency_stop");
     }
     return MrmState::EMERGENCY_STOP;
   }
   if (mrm_state_.behavior == MrmState::PULL_OVER) {
     if (!operation_mode_availability_->pull_over) {
       if (!operation_mode_availability_->emergency_stop) {
-        RCLCPP_WARN(
-          this->get_logger(), "no mrm operation available: operate emergency_stop");
+        RCLCPP_WARN(this->get_logger(), "no mrm operation available: operate emergency_stop");
       }
       return MrmState::EMERGENCY_STOP;
     }
@@ -531,8 +529,7 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurre
   if (mrm_state_.behavior == MrmState::COMFORTABLE_STOP) {
     if (!operation_mode_availability_->comfortable_stop) {
       if (!operation_mode_availability_->emergency_stop) {
-        RCLCPP_WARN(
-          this->get_logger(), "no mrm operation available: operate emergency_stop");
+        RCLCPP_WARN(this->get_logger(), "no mrm operation available: operate emergency_stop");
       }
       return MrmState::EMERGENCY_STOP;
     }
