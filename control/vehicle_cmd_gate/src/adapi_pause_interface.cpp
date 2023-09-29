@@ -34,6 +34,11 @@ bool AdapiPauseInterface::is_paused()
   return is_paused_;
 }
 
+bool AdapiPauseInterface::is_start_requested()
+{
+  return is_start_requested_;
+}
+
 void AdapiPauseInterface::publish()
 {
   if (prev_is_paused_ != is_paused_) {

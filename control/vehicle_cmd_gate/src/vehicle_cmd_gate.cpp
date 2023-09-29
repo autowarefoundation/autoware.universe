@@ -167,6 +167,9 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   filter_activated_count_threshold_ = declare_parameter<int>("filter_activated_count_threshold");
   filter_activated_velocity_threshold_ =
     declare_parameter<double>("filter_activated_velocity_threshold");
+  enable_keep_steering_until_convergence_ =
+    declare_parameter<bool>("enable_keep_steering_until_convergence");
+  steering_convergence_threshold_ = declare_parameter<double>("steering_convergence_threshold");
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -430,13 +433,25 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
 
   // Check engage
   if (!is_engaged_) {
-    filtered_commands.control = createStopControlCmd();
+    // TODO(brkay54): Connect the engage state to moderate_stop_interface
+    filtered_commands.control.longitudinal = createStopTransitionControlCmd();
   }
 
   // Check pause. Place this check after all other checks as it needs the final output.
+  constexpr double stopped_vel_th = 1e-2;
   adapi_pause_->update(filtered_commands.control);
   if (adapi_pause_->is_paused()) {
-    filtered_commands.control = createStopControlCmd();
+    if (adapi_pause_->is_start_requested()) {
+      filtered_commands.control.longitudinal = createStopTransitionControlCmd();
+    } else {
+      filtered_commands.control = createStopControlCmd();
+    }
+  } else if (enable_keep_steering_until_convergence_) {
+    if (fabs(current_kinematics_.twist.twist.linear.x) < stopped_vel_th) {
+      if (!isSteeringConverged(filtered_commands.control.lateral)) {
+        filtered_commands.control.longitudinal = createStopTransitionControlCmd();
+      }
+    }
   }
 
   // Check if command filtering option is enable
@@ -597,6 +612,17 @@ AckermannControlCommand VehicleCmdGate::createStopControlCmd() const
   cmd.longitudinal.acceleration = stop_hold_acceleration_;
 
   return cmd;
+}
+
+LongitudinalCommand VehicleCmdGate::createStopTransitionControlCmd() const
+{
+  LongitudinalCommand longitudinal_cmd;
+  const auto t = this->now();
+  longitudinal_cmd.stamp = t;
+  longitudinal_cmd.speed = 0.0;
+  longitudinal_cmd.acceleration = stop_hold_acceleration_;
+
+  return longitudinal_cmd;
 }
 
 AckermannControlCommand VehicleCmdGate::createEmergencyStopControlCmd() const
@@ -816,6 +842,12 @@ void VehicleCmdGate::publishMarkers(const IsFilterActivated & filter_activated)
   filter_activated_flag_pub_->publish(filter_activated_flag);
   filter_activated_marker_raw_pub_->publish(createMarkerArray(filter_activated));
 }
+bool VehicleCmdGate::isSteeringConverged(AckermannLateralCommand & lateral_cmd)
+{
+  return std::fabs(lateral_cmd.steering_tire_angle - current_steer_) <
+         steering_convergence_threshold_;
+}
+
 }  // namespace vehicle_cmd_gate
 
 #include <rclcpp_components/register_node_macro.hpp>

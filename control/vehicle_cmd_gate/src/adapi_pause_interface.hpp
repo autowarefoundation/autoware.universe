@@ -36,6 +36,7 @@ private:
 public:
   explicit AdapiPauseInterface(rclcpp::Node * node);
   bool is_paused();
+  bool is_start_requested();
   void publish();
   void update(const AckermannControlCommand & control);
 

@@ -14,6 +14,8 @@
     moderate_stop_service_acceleration: -1.5
     stopped_state_entry_duration_time: 0.1
     stop_check_duration: 1.0
+    enable_keep_steering_until_convergence: true
+    steering_convergence_threshold: 0.01 # [rad]
     nominal:
       vel_lim: 25.0
       reference_speed_points: [20.0, 30.0]

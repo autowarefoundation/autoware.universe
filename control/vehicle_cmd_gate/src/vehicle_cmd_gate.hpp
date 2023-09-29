@@ -55,6 +55,8 @@ namespace vehicle_cmd_gate
 using autoware_adapi_v1_msgs::msg::MrmState;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_control_msgs::msg::AckermannLateralCommand;
+using autoware_auto_control_msgs::msg::LongitudinalCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
@@ -179,6 +181,8 @@ private:
   bool enable_cmd_limit_filter_;
   int filter_activated_count_threshold_;
   double filter_activated_velocity_threshold_;
+  bool enable_keep_steering_until_convergence_;
+  double steering_convergence_threshold_;
 
   // Service
   rclcpp::Service<EngageSrv>::SharedPtr srv_engage_;
@@ -220,8 +224,9 @@ private:
   // Algorithm
   AckermannControlCommand prev_control_cmd_;
   AckermannControlCommand createStopControlCmd() const;
+  LongitudinalCommand createStopTransitionControlCmd() const;
   AckermannControlCommand createEmergencyStopControlCmd() const;
-
+  bool isSteeringConverged(AckermannLateralCommand & lateral_cmd);
   std::shared_ptr<rclcpp::Time> prev_time_;
   double getDt();
   AckermannControlCommand getActualStatusAsCommand();
