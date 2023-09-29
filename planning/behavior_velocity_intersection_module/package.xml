@@ -9,6 +9,7 @@
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
   <maintainer email="shumpei.wakabayashi@tier4.jp">Shumpei Wakabayashi</maintainer>
+  <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
 
   <license>Apache License 2.0</license>
 
@@ -22,6 +23,7 @@
   <depend>autoware_perception_msgs</depend>
   <depend>behavior_velocity_planner_common</depend>
   <depend>geometry_msgs</depend>
+  <depend>grid_map_core</depend>
   <depend>interpolation</depend>
   <depend>lanelet2_extension</depend>
   <depend>libopencv-dev</depend>
