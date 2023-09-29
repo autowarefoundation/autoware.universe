@@ -1078,7 +1078,7 @@ bool checkAngleForTargetLanelets(
       if (std::fabs(angle_diff) < detection_area_angle_thr) {
         return true;
       }
-      // NOTE: sometimes parked vehicle direction is reversed even if its lognitudinal velocity is
+      // NOTE: sometimes parked vehicle direction is reversed even if its longitudinal velocity is
       // positive
       if (
         std::fabs(longitudinal_velocity) < parked_vehicle_speed_threshold &&

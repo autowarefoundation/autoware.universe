@@ -102,7 +102,7 @@ The occlusion is detected as the common area of occlusion attention area(which i
 
 ![occlusion_detection](./docs/occlusion_grid.drawio.svg)
 
-If the nearest occlusion cell value is below the threshold, occlsion is detected. It is expected that the occlusion gets cleared as the vehicle approaches the occlusion peeking stop line.
+If the nearest occlusion cell value is below the threshold, occlusion is detected. It is expected that the occlusion gets cleared as the vehicle approaches the occlusion peeking stop line.
 
 ### Module Parameters
 
