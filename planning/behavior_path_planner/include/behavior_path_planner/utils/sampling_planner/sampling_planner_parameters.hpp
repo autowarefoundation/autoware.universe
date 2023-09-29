@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2023 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,46 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__SAMPLING_PLANNER_PARAMETERS_HPP_
-#define BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__SAMPLING_PLANNER_PARAMETERS_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__PARAMETERS_HPP_
+#define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__PARAMETERS_HPP_
 
-#include <memory>
-#include <string>
+#include "bezier_sampler/bezier_sampling.hpp"
+#include "sampler_common/structures.hpp"
+
 #include <vector>
-
 namespace behavior_path_planner
 {
-
 struct SamplingPlannerParameters
 {
   double dummy_parameter{0.0};
 };
 
+struct Parameters
+{
+  sampler_common::Constraints constraints;
+  struct
+  {
+    bool enable_frenet{};
+    bool enable_bezier{};
+    double resolution{};
+    int previous_path_reuse_points_nb{};
+    std::vector<double> target_lengths{};
+    std::vector<double> target_lateral_positions{};
+    int nb_target_lateral_positions{};
+    struct
+    {
+      std::vector<double> target_lateral_velocities{};
+      std::vector<double> target_lateral_accelerations{};
+    } frenet;
+    bezier_sampler::SamplingParameters bezier{};
+  } sampling;
+
+  struct
+  {
+    bool force_zero_deviation{};
+    bool force_zero_heading{};
+    bool smooth_reference{};
+  } preprocessing{};
+};
 }  // namespace behavior_path_planner
-#endif  // BEHAVIOR_PATH_PLANNER__UTILS__SAMPLING_PLANNER__SAMPLING_PLANNER_PARAMETERS_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SAMPLING_PLANNER__PARAMETERS_HPP_
