@@ -1,5 +1,6 @@
 #include "pose_estimator_manager/pose_estimator_manager.hpp"
 #include "pose_estimator_manager/pose_estimator_name.hpp"
+#include "pose_estimator_manager/sub_manager/sub_manager_artag.hpp"
 #include "pose_estimator_manager/sub_manager/sub_manager_eagleye.hpp"
 #include "pose_estimator_manager/sub_manager/sub_manager_ndt.hpp"
 #include "pose_estimator_manager/sub_manager/sub_manager_yabloc.hpp"
@@ -22,6 +23,8 @@ static std::unordered_set<PoseEstimatorName> parse_estimator_name_args(
       running_estimator_list.insert(PoseEstimatorName::YABLOC);
     } else if (estimator_name == "eagleye") {
       running_estimator_list.insert(PoseEstimatorName::EAGLEYE);
+    } else if (estimator_name == "artag") {
+      running_estimator_list.insert(PoseEstimatorName::ARTAG);
     } else {
       RCLCPP_ERROR_STREAM(
         rclcpp::get_logger("pose_estimator_manager"),
@@ -54,6 +57,9 @@ PoseEstimatorManager::PoseEstimatorManager()
       case PoseEstimatorName::EAGLEYE:
         sub_managers_.emplace(
           PoseEstimatorName::EAGLEYE, std::make_shared<SubManagerEagleye>(this));
+        break;
+      case PoseEstimatorName::ARTAG:
+        sub_managers_.emplace(PoseEstimatorName::ARTAG, std::make_shared<SubManagerArTag>(this));
         break;
       default:
         RCLCPP_WARN_STREAM(get_logger(), "invalid pose_estimator is specified");

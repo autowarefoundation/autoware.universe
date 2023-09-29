@@ -85,6 +85,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
       {PoseEstimatorName::NDT, true},
       {PoseEstimatorName::YABLOC, true},
       {PoseEstimatorName::EAGLEYE, true},
+      {PoseEstimatorName::ARTAG, true},
     };
   }
 
@@ -97,6 +98,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
       {PoseEstimatorName::NDT, true},
       {PoseEstimatorName::YABLOC, true},
       {PoseEstimatorName::EAGLEYE, true},
+      {PoseEstimatorName::ARTAG, true},
     };
   }
 
@@ -108,6 +110,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
       {PoseEstimatorName::NDT, false},
       {PoseEstimatorName::YABLOC, false},
       {PoseEstimatorName::EAGLEYE, true},
+      {PoseEstimatorName::ARTAG, false},
     };
   }
 
@@ -119,6 +122,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
       {PoseEstimatorName::NDT, true},
       {PoseEstimatorName::YABLOC, false},
       {PoseEstimatorName::EAGLEYE, false},
+      {PoseEstimatorName::ARTAG, true},  // TODO: erase later
     };
   }
 
@@ -130,6 +134,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
       {PoseEstimatorName::NDT, false},
       {PoseEstimatorName::YABLOC, true},
       {PoseEstimatorName::EAGLEYE, false},
+      {PoseEstimatorName::ARTAG, false},
     };
   }
 
@@ -163,12 +168,14 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
     toggle_list[PoseEstimatorName::NDT] = true;
     toggle_list[PoseEstimatorName::YABLOC] = false;
     toggle_list[PoseEstimatorName::EAGLEYE] = false;
+    toggle_list[PoseEstimatorName::ARTAG] = false;
     ss << "enable NDT";
     RCLCPP_WARN_STREAM(get_logger(), "Enable NDT");
   } else {
     toggle_list[PoseEstimatorName::NDT] = false;
     toggle_list[PoseEstimatorName::YABLOC] = true;
     toggle_list[PoseEstimatorName::EAGLEYE] = false;
+    toggle_list[PoseEstimatorName::ARTAG] = false;
     ss << "enable YabLoc";
     RCLCPP_WARN_STREAM(get_logger(), "Enable YabLoc");
   }

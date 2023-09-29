@@ -8,6 +8,9 @@
     <param name="pcd_occupancy_rule/pcd_density_lower_threshold" value="20"/>
     <param name="pose_sources" value="$(var pose_sources)"/>
 
+    <!-- artag -->
+    <remap from="~/input/artag/image" to="/sensing/camera/traffic_light/image_raw"/>
+    <remap from="~/output/artag/image" to="/sensing/camera/traffic_light/image_raw/relay"/>
     <!-- yabloc -->
     <remap from="~/input/image" to="/localization/pose_estimator/yabloc/image_processing/undistorted/image_raw"/>
     <remap from="~/output/image" to="/localization/pose_estimator/yabloc/image_processing/undistorted/image_raw/relay"/>
