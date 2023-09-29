@@ -45,6 +45,10 @@ MapBasedRule::MapBasedRule(
     "~/input/initialization_state", latch_qos, on_initialization_state);
   sub_eagleye_fix_ = node.create_subscription<NavSatFix>("~/input/eagleye/fix", 10, on_eagleye_fix);
 
+  if (running_estimator_list.count(PoseEstimatorName::ARTAG)) {
+    ar_tag_position_ = std::make_unique<ArTagPosition>(&node);
+  }
+
   //
   initialization_state_.state = InitializationState::UNINITIALIZED;
 }
@@ -114,6 +118,18 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
     };
   }
 
+  // (3.5) If AR marker exists around ego position, enable ARTAG
+  if (artag_is_available()) {
+    debug_string_msg_ = "enable ARTAG\nlandmark exists around the ego";
+    RCLCPP_WARN_STREAM(get_logger(), "Enable ARTAG");
+    return {
+      {PoseEstimatorName::NDT, false},
+      {PoseEstimatorName::YABLOC, false},
+      {PoseEstimatorName::EAGLEYE, false},
+      {PoseEstimatorName::ARTAG, true},
+    };
+  }
+
   // (4) If yabloc is disabled, enable NDT
   if (!yabloc_is_available()) {
     debug_string_msg_ = "enable NDT\nonly NDT is available";
@@ -122,7 +138,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
       {PoseEstimatorName::NDT, true},
       {PoseEstimatorName::YABLOC, false},
       {PoseEstimatorName::EAGLEYE, false},
-      {PoseEstimatorName::ARTAG, true},  // TODO: erase later
+      {PoseEstimatorName::ARTAG, false},
     };
   }
 
@@ -251,6 +267,19 @@ void MapBasedRule::on_point_cloud_map(PointCloud2::ConstSharedPtr msg)
 void MapBasedRule::on_pose_cov(PoseCovStamped::ConstSharedPtr msg)
 {
   latest_pose_ = *msg;
+}
+
+bool MapBasedRule::artag_is_available() const
+{
+  if (running_estimator_list_.count(PoseEstimatorName::ARTAG) == 0) {
+    return false;
+  }
+
+  if (!latest_pose_.has_value()) {
+    return false;
+  }
+
+  return ar_tag_position_->exist_ar_tag_around_ego(latest_pose_->pose.pose.position);
 }
 
 }  // namespace multi_pose_estimator

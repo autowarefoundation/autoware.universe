@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pose_estimator_manager/pose_estimator_name.hpp"
+#include "pose_estimator_manager/switch_rule/ar_tag_position.hpp"
 #include "pose_estimator_manager/switch_rule/base_switch_rule.hpp"
 #include "pose_estimator_manager/switch_rule/eagleye_area.hpp"
 
@@ -39,6 +40,7 @@ protected:
   const int pcd_density_upper_threshold_;
   const int pcd_density_lower_threshold_;
   const std::unordered_set<PoseEstimatorName> running_estimator_list_;
+  std::unique_ptr<ArTagPosition> ar_tag_position_{nullptr};
 
   std::string debug_string_msg_;
   InitializationState initialization_state_;
@@ -59,6 +61,7 @@ protected:
   bool eagleye_is_available() const;
   bool yabloc_is_available() const;
   bool ndt_is_available() const;
+  bool artag_is_available() const;
 
   void on_point_cloud_map(PointCloud2::ConstSharedPtr msg);
   void on_vector_map(HADMapBin::ConstSharedPtr msg);
