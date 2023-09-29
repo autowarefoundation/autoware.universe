@@ -62,6 +62,10 @@ SamplingPlannerModule::SamplingPlannerModule(
 
 bool SamplingPlannerModule::isExecutionRequested() const
 {
+  if (planner_data_->reference_path->points.empty()) {
+    RCLCPP_WARN(getLogger(), "reference path is empty.");
+    return false;
+  }
   return true;
 }
 
@@ -78,8 +82,9 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     return {};
   }
   const auto ego_closest_path_index = planner_data_->findEgoIndex(reference_path->points);
-  resetPathCandidate();
-  resetPathReference();
+  RCLCPP_INFO(getLogger(), "ego_closest_path_index %ld", ego_closest_path_index);
+  // resetPathCandidate();
+  // resetPathReference();
   // const auto path = toPath(*reference_path);
   // size_t end_idx = utils::getIdxByArclength(
   //   *reference_path, ego_closest_path_index, params_.sampling.target_lengths[0]);
@@ -92,14 +97,30 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   BehaviorModuleOutput output;
 
   output.reference_path = getPreviousModuleOutput().reference_path;
+  // output.reference_path = reference_path;
 
-  // const auto & dp = planner_data_->drivable_area_expansion_parameters;
-  // const auto drivable_lanes = utils::generateDrivableLanes(current_lanelets_);
-  // const auto shorten_lanes = utils::cutOverlappedLanes(clipped_path, drivable_lanes);
-  // const auto expanded_lanes =
-  //   utils::expandLanelets(shorten_lanes, left_offset, right_offset,
-  //   dp.drivable_area_types_to_skip);
+  const auto & route_handler = planner_data_->route_handler;
+  const auto reference_pose = planner_data_->self_odometry->pose.pose;
+  const auto & p = planner_data_->parameters;
 
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler->getClosestLaneletWithinRoute(reference_pose, &current_lane)) {
+    RCLCPP_ERROR_THROTTLE(
+      getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
+  }
+
+  // For current_lanes with desired length
+  auto current_lanelets_ = route_handler->getLaneletSequence(
+    current_lane, reference_pose, p.backward_path_length, p.forward_path_length);
+
+  const auto & dp = planner_data_->drivable_area_expansion_parameters;
+  const auto drivable_lanes = utils::generateDrivableLanes(current_lanelets_);
+  const auto shorten_lanes = utils::cutOverlappedLanes(clipped_path, drivable_lanes);
+  const auto expanded_lanes =
+    utils::expandLanelets(shorten_lanes, 2.0, 2.0, dp.drivable_area_types_to_skip);
+
+  output.drivable_area_info.drivable_lanes = expanded_lanes;
+  output.drivable_area_info.is_already_expanded = true;
   output.path = std::make_shared<PathWithLaneId>(clipped_path);
 
   return output;
