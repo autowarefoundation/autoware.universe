@@ -907,9 +907,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
                               ? 0.0
                               : (planner_param_.collision_detection.state_transit_margin_time -
                                  collision_state_machine_.getDuration());
-  const auto target_objects = filterTargetObjects(
-    attention_lanelets, adjacent_lanelets, intersection_area,
-    planner_param_.occlusion.ignore_parked_vehicle_speed_threshold);
+  const auto target_objects =
+    filterTargetObjects(attention_lanelets, adjacent_lanelets, intersection_area);
 
   const bool has_collision = checkCollision(
     *path, target_objects, path_lanelets, closest_idx,
@@ -1048,8 +1047,7 @@ bool IntersectionModule::checkStuckVehicle(
 autoware_auto_perception_msgs::msg::PredictedObjects IntersectionModule::filterTargetObjects(
   const lanelet::ConstLanelets & attention_area_lanelets,
   const lanelet::ConstLanelets & adjacent_lanelets,
-  const std::optional<Polygon2d> & intersection_area,
-  const double parked_vehicle_speed_threshold) const
+  const std::optional<Polygon2d> & intersection_area) const
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;
@@ -1065,12 +1063,13 @@ autoware_auto_perception_msgs::msg::PredictedObjects IntersectionModule::filterT
     }
 
     // check direction of objects
-    const auto object_direction =
-      util::getObjectPoseWithVelocityDirection(object.kinematics, parked_vehicle_speed_threshold);
+    const auto object_direction = util::getObjectPoseWithVelocityDirection(object.kinematics);
     const auto is_in_adjacent_lanelets = util::checkAngleForTargetLanelets(
-      object_direction, adjacent_lanelets, planner_param_.common.attention_area_angle_thr,
+      object_direction, object.kinematics.initial_twist_with_covariance.twist.linear.x,
+      adjacent_lanelets, planner_param_.common.attention_area_angle_thr,
       planner_param_.common.consider_wrong_direction_vehicle,
-      planner_param_.common.attention_area_margin);
+      planner_param_.common.attention_area_margin,
+      planner_param_.occlusion.ignore_parked_vehicle_speed_threshold);
     if (is_in_adjacent_lanelets) {
       continue;
     }
@@ -1082,17 +1081,19 @@ autoware_auto_perception_msgs::msg::PredictedObjects IntersectionModule::filterT
       if (is_in_intersection_area) {
         target_objects.objects.push_back(object);
       } else if (util::checkAngleForTargetLanelets(
-                   object_direction, attention_area_lanelets,
-                   planner_param_.common.attention_area_angle_thr,
+                   object_direction, object.kinematics.initial_twist_with_covariance.twist.linear.x,
+                   attention_area_lanelets, planner_param_.common.attention_area_angle_thr,
                    planner_param_.common.consider_wrong_direction_vehicle,
-                   planner_param_.common.attention_area_margin)) {
+                   planner_param_.common.attention_area_margin,
+                   planner_param_.occlusion.ignore_parked_vehicle_speed_threshold)) {
         target_objects.objects.push_back(object);
       }
     } else if (util::checkAngleForTargetLanelets(
-                 object_direction, attention_area_lanelets,
-                 planner_param_.common.attention_area_angle_thr,
+                 object_direction, object.kinematics.initial_twist_with_covariance.twist.linear.x,
+                 attention_area_lanelets, planner_param_.common.attention_area_angle_thr,
                  planner_param_.common.consider_wrong_direction_vehicle,
-                 planner_param_.common.attention_area_margin)) {
+                 planner_param_.common.attention_area_margin,
+                 planner_param_.occlusion.ignore_parked_vehicle_speed_threshold)) {
       // intersection_area is not available, use detection_area_with_margin as before
       target_objects.objects.push_back(object);
     }
