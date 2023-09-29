@@ -17,10 +17,12 @@
 
 #include "image_projection_based_fusion/fusion_node.hpp"
 
+#include <map>
 #include <memory>
-
+#include <string>
 namespace image_projection_based_fusion
 {
+const std::map<std::string, uint8_t> IOU_MODE_MAP{{"iou", 0}, {"iou_x", 1}, {"iou_y", 2}};
 
 class RoiClusterFusionNode
 : public FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature>
@@ -38,9 +40,7 @@ protected:
     const sensor_msgs::msg::CameraInfo & camera_info,
     DetectedObjectsWithFeature & output_cluster_msg) override;
 
-  bool use_iou_x_{false};
-  bool use_iou_y_{false};
-  bool use_iou_{false};
+  std::string iou_mode_{"iou"};
   bool use_cluster_semantic_type_{false};
   bool only_allow_inside_cluster_{false};
   double roi_scale_factor_{1.1};

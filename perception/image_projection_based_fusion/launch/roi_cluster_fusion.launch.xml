@@ -46,9 +46,7 @@
   <arg name="input/image7" default="/image_raw7"/>
   <group>
     <node pkg="image_projection_based_fusion" exec="roi_cluster_fusion_node" name="roi_cluster_fusion" output="screen">
-      <param name="use_iou" value="true"/>
-      <param name="use_iou_x" value="false"/>
-      <param name="use_iou_y" value="false"/>
+      <param name="iou_mode" value="iou"/>
       <param name="use_cluster_semantic_type" value="false"/>
       <param name="only_allow_inside_cluster" value="true"/>
       <param name="roi_scale_factor" value="1.1"/>
