@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <chrono>
 
 EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
 {
@@ -88,6 +89,8 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
   prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
+  mrm_pull_over_status_ =
+    std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
   mrm_comfortable_stop_status_ =
     std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
   mrm_emergency_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
@@ -125,34 +128,28 @@ void EmergencyHandler::onOperationModeAvailability(
   const tier4_system_msgs::msg::OperationModeAvailability::ConstSharedPtr msg)
 {
 
+  stamp_operation_mode_availability_ = this->now();
+
   if (!param_.use_emergency_holding) {
     operation_mode_availability_ = msg;
     return;
   }
 
-  if (emergency_holding_) {
-    return;
-  }
-
-  if (msg->autonomous) {
-    stamp_autonomous_become_unavailable.reset();
-    operation_mode_availability_ = msg;
-    return;
-  }
-
-  if (!msg->autonomous) {
-    if (!stamp_autonomous_become_unavailable) {
-      stamp_autonomous_become_unavailable = this->now();
-      operation_mode_availability_ = msg;
-      return;
-    }
-    const auto emergency_duration = (this->now() - stamp_autonomous_become_unavailable.value()).seconds();
-    if (emergency_duration < param_.timeout_emergency_recovery) {
-      operation_mode_availability_ = msg;
-    } else {
-      emergency_holding_ = true;
+  if (!is_emergency_holding_) {
+    if (msg->autonomous) {
+      stamp_autonomous_become_unavailable_.reset();
+    } else if (!msg->autonomous) {
+      if (!stamp_autonomous_become_unavailable_.has_value()) {
+        stamp_autonomous_become_unavailable_.emplace(this->now());
+      } else {
+        const auto emergency_duration = (this->now() - stamp_autonomous_become_unavailable_.value()).seconds();
+        if (emergency_duration > param_.timeout_emergency_recovery) {
+          is_emergency_holding_ = true;
+        }
+      }
     }
   }
+  operation_mode_availability_ = msg;
 }
 
 void EmergencyHandler::onMrmPullOverStatus(
@@ -185,7 +182,7 @@ autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHaz
     // turn hazard on during emergency holding
     msg.command = HazardLightsCommand::ENABLE;
   } else*/
-  if (emergency_holding_) {
+  if (is_emergency_holding_) {
     // turn hazard on during emergency holding
     msg.command = HazardLightsCommand::ENABLE;
   } else if (is_emergency && param_.turning_hazard_on.emergency) {
@@ -350,7 +347,7 @@ bool EmergencyHandler::isDataReady()
   if (!operation_mode_availability_) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
-      "waiting for hazard_status_stamped msg...");
+      "waiting for operation_mode_availability msg...");
     return false;
   }
 
@@ -389,8 +386,8 @@ void EmergencyHandler::onTimer()
   if (!isDataReady()) {
     return;
   }
-  const bool is_operation_mode_availability_timeout=
-    (this->now() - stamp_hazard_status_).seconds() > param_.timeout_operation_mode_availability;
+  const bool is_operation_mode_availability_timeout =
+    (this->now() - stamp_operation_mode_availability_).seconds() > param_.timeout_operation_mode_availability;
   if (is_operation_mode_availability_timeout) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
@@ -556,5 +553,5 @@ bool EmergencyHandler::isStopped()
 
 bool EmergencyHandler::isEmergency() const
 {
-  return !operation_mode_availability_->autonomous;
+  return !operation_mode_availability_->autonomous | is_emergency_holding_;
 }

@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <variant>
+#include <optional>
 
 // Autoware
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
@@ -143,13 +144,13 @@ private:
   void onTimer();
 
   // Heartbeat
-  rclcpp::Time stamp_hazard_status_;
-  std::optional<rclcpp::Time> stamp_autonomous_become_unavailable;
+  rclcpp::Time stamp_operation_mode_availability_;
+  std::optional<rclcpp::Time> stamp_autonomous_become_unavailable_ = std::nullopt;
 
   // Algorithm
   rclcpp::Time takeover_requested_time_;
   bool is_takeover_request_ = false;
-  bool emergency_holding_ = false;
+  bool is_emergency_holding_ = false;
   void transitionTo(const int new_state);
   void updateMrmState();
   void operateMrm();
