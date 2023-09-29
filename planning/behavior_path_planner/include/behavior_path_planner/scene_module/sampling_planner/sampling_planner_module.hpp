@@ -95,11 +95,6 @@ private:
 
   bool canTransitIdleToRunningState() override { return false; }
 
-  template <typename T>
-  std::vector<TrajectoryPoint> convertToTrajectoryPoints(const std::vector<T> & points);
-  template <typename T>
-  TrajectoryPoint convertToTrajectoryPoint(const T & point);
-
   frenet_planner::SamplingParameters prepareSamplingParameters(
     const sampler_common::State & initial_state,
     const sampler_common::transform::Spline2D & path_spline, const Parameters & params);

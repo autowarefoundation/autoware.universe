@@ -79,29 +79,6 @@ bool SamplingPlannerModule::isExecutionReady() const
   return true;
 }
 
-template <typename T>
-TrajectoryPoint SamplingPlannerModule::convertToTrajectoryPoint(const T & point)
-{
-  TrajectoryPoint traj_point;
-  traj_point.pose = tier4_autoware_utils::getPose(point);
-  traj_point.longitudinal_velocity_mps = 0;
-  traj_point.lateral_velocity_mps = 0;
-  traj_point.heading_rate_rps = 0;
-  return traj_point;
-}
-
-template <typename T>
-std::vector<TrajectoryPoint> SamplingPlannerModule::convertToTrajectoryPoints(
-  const std::vector<T> & points)
-{
-  std::vector<TrajectoryPoint> traj_points;
-  for (const auto & point : points) {
-    const auto traj_point = convertToTrajectoryPoint(point);
-    traj_points.push_back(traj_point);
-  }
-  return traj_points;
-}
-
 SamplingPlannerData SamplingPlannerModule::createPlannerData(const PlanResult & path)
 {
   // create planner data
@@ -109,7 +86,6 @@ SamplingPlannerData SamplingPlannerModule::createPlannerData(const PlanResult & 
   SamplingPlannerData data;
   // planner_data.header = path.header;
   auto points = path->points;
-  data.traj_points = convertToTrajectoryPoints(points);
   data.left_bound = path->left_bound;
   data.right_bound = path->right_bound;
   data.ego_pose = planner_data_->self_odometry->pose.pose;
