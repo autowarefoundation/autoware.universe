@@ -875,7 +875,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     filterTargetObjects(attention_lanelets, adjacent_lanelets, intersection_area);
 
   const bool has_collision = checkCollision(
-    *path, target_objects, path_lanelets, closest_idx, time_delay, tl_arrow_solid_on);
+    *path, target_objects, path_lanelets, closest_idx, time_delay,
+    std::min<size_t>(occlusion_peeking_stop_line_idx, path->points.size() - 1), tl_arrow_solid_on);
   collision_state_machine_.setStateWithMarginTime(
     has_collision ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("collision state_machine"), *clock_);
@@ -1060,7 +1061,7 @@ bool IntersectionModule::checkCollision(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const util::PathLanelets & path_lanelets, const int closest_idx, const double time_delay,
-  const bool tl_arrow_solid_on)
+  const size_t last_intersection_stop_line_candidate_idx, const bool tl_arrow_solid_on)
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getPolygonFromArcLength;
@@ -1068,9 +1069,11 @@ bool IntersectionModule::checkCollision(
   // check collision between target_objects predicted path and ego lane
   // cut the predicted path at passing_time
   const auto time_distance_array = util::calcIntersectionPassingTime(
-    path, planner_data_, associative_ids_, closest_idx, time_delay,
-    planner_param_.common.intersection_velocity,
-    planner_param_.collision_detection.minimum_ego_predicted_velocity);
+    path, planner_data_, associative_ids_, closest_idx, last_intersection_stop_line_candidate_idx,
+    time_delay, planner_param_.common.intersection_velocity,
+    planner_param_.collision_detection.minimum_ego_predicted_velocity,
+    planner_param_.collision_detection.use_upstream_velocity,
+    planner_param_.collision_detection.minimum_upstream_velocity);
   const double passing_time = time_distance_array.back().first;
   auto target_objects = objects;
   util::cutPredictPathWithDuration(&target_objects, clock_, passing_time);

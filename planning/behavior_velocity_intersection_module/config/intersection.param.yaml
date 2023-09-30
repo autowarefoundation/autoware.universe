@@ -31,6 +31,8 @@
           collision_start_margin_time: 2.0
           collision_end_margin_time: 0.0
         keep_detection_vel_thr: 0.833 # == 3.0km/h. keep detection if ego is ego.vel < keep_detection_vel_thr
+        use_upstream_velocity: true # flag to use the planned velocity profile from the upstream module
+        minimum_upstream_velocity: 0.01 # [m/s] minimum velocity to avoid null division for the stop line from the upstream velocity
 
       occlusion:
         enable: false
