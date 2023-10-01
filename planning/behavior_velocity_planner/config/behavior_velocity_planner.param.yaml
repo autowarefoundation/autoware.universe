@@ -10,7 +10,7 @@
     is_publish_debug_path: false # publish all debug path with lane id in each module
 
     # NOTE: The following order is the same as the order to launch modules.
-    #       Chaning the order may change its behavior.
+    #       Changing the order may change its behavior.
     launch_modules:
       - behavior_velocity_planner::CrosswalkModulePlugin
       - behavior_velocity_planner::WalkwayModulePlugin
