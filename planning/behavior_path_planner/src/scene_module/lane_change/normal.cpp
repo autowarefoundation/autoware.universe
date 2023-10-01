@@ -861,13 +861,16 @@ bool NormalLaneChange::hasEnoughLengthToCrosswalk(
   const auto & route_handler = *getRouteHandler();
   const auto overall_graphs_ptr = route_handler.getOverallGraphPtr();
 
+  const double base_link2front = planner_data_->parameters.base_link2front;
   const double dist_to_crosswalk_from_lane_change_start_pose =
     utils::getDistanceToCrosswalk(current_pose, current_lanes, *overall_graphs_ptr) -
-    path.info.length.prepare;
+    base_link2front;
+
   // Check lane changing section includes crosswalk
   if (
-    dist_to_crosswalk_from_lane_change_start_pose > 0.0 &&
-    dist_to_crosswalk_from_lane_change_start_pose < path.info.length.lane_changing) {
+    dist_to_crosswalk_from_lane_change_start_pose > path.info.length.prepare &&
+    dist_to_crosswalk_from_lane_change_start_pose <
+      path.info.length.prepare + path.info.length.lane_changing) {
     return false;
   }
 
