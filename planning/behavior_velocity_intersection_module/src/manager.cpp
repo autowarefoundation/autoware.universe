@@ -296,10 +296,9 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
   auto & mp = merge_from_private_area_param_;
   mp.stop_duration_sec = getOrDeclareParameter<double>(node, ns + ".stop_duration_sec");
   mp.attention_area_length =
-    node.get_parameter("intersection.common.attention_area_length").as_double();
-  mp.stop_line_margin = getOrDeclareParameter<double>(node, ns + ".stop_line_margin");
+    getOrDeclareParameter<double>(node, "intersection.common.attention_area_length");
   mp.path_interpolation_ds =
-    node.get_parameter("intersection.common.path_interpolation_ds").as_double();
+    getOrDeclareParameter<double>(node, "intersection.common.path_interpolation_ds");
   mp.stop_distance_threshold = getOrDeclareParameter<double>(node, ns + ".stop_distance_threshold");
 }
 
