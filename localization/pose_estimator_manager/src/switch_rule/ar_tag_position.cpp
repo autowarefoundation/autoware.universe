@@ -16,7 +16,9 @@ struct ArTagPosition::Impl
   rclcpp::AsyncParametersClient::SharedPtr params_tf_caster_;
 };
 
-ArTagPosition::ArTagPosition(rclcpp::Node * node) : logger_(node->get_logger())
+ArTagPosition::ArTagPosition(rclcpp::Node * node)
+: logger_(node->get_logger()), tf2_buffer_(node->get_clock()), tf2_listener_(tf2_buffer_)
+
 {
   const std::string ar_tag_node_name =
     "/localization/pose_estimator/ar_tag_based_localizer/ar_tag_based_localizer";
@@ -44,14 +46,39 @@ ArTagPosition::ArTagPosition(rclcpp::Node * node) : logger_(node->get_logger())
 
 bool ArTagPosition::exist_ar_tag_around_ego(const geometry_msgs::msg::Point &) const
 {
-  RCLCPP_INFO_STREAM(logger_, "try to check availability");
+  RCLCPP_INFO_STREAM(
+    logger_,
+    "try to check availability: searching for " << impl_->target_tag_ids_.size() << " markers");
 
-  RCLCPP_INFO_STREAM(logger_, "target tag ids " << impl_->target_tag_ids_.size());
+  double squared_distance_to_nearest_marker = std::numeric_limits<double>::max();
+
   for (const std::string & tag_id : impl_->target_tag_ids_) {
     RCLCPP_INFO_STREAM(logger_, "target tag id " << tag_id);
+    const auto opt_transform = get_transform("base_link", "tag_" + tag_id);
+    if (opt_transform.has_value()) {
+      const auto t = opt_transform->transform.translation;
+      const double squared_distance = t.x * t.x + t.x * t.x + t.x * t.z;
+      squared_distance_to_nearest_marker =
+        std::min(squared_distance, squared_distance_to_nearest_marker);
+    }
   }
 
-  return false;
+  RCLCPP_INFO_STREAM(logger_, "distance to nearest markers" << squared_distance_to_nearest_marker);
+  return squared_distance_to_nearest_marker < (15 * 15);
+}
+
+std::optional<ArTagPosition::TransformStamped> ArTagPosition::get_transform(
+  const std::string & target_frame, const std::string & source_frame) const
+{
+  TransformStamped transform_stamped;
+  try {
+    transform_stamped = tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN(logger_, "%s", ex.what());
+    RCLCPP_ERROR(logger_, "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+    return std::nullopt;
+  }
+  return transform_stamped;
 }
 
 std::string ArTagPosition::debug_string() const
