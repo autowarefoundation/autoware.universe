@@ -1,5 +1,6 @@
 #include "pose_estimator_manager/switch_rule/ar_tag_position.hpp"
 
+#include <Eigen/Core>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/parameter_client.hpp>
@@ -44,27 +45,30 @@ ArTagPosition::ArTagPosition(rclcpp::Node * node)
   impl_->params_tf_caster_->get_parameters({target_tag_ids_parameter_name}, callback);
 }
 
-bool ArTagPosition::exist_ar_tag_around_ego(const geometry_msgs::msg::Point &) const
+double ArTagPosition::distance_to_nearest_ar_tag_around_ego(
+  const geometry_msgs::msg::Point & ego_position) const
 {
   RCLCPP_INFO_STREAM(
     logger_,
     "try to check availability: searching for " << impl_->target_tag_ids_.size() << " markers");
 
-  double squared_distance_to_nearest_marker = std::numeric_limits<double>::max();
+  double distance_to_nearest_marker = std::numeric_limits<double>::max();
+
+  const Eigen::Vector3d ego_vector(ego_position.x, ego_position.y, ego_position.z);
 
   for (const std::string & tag_id : impl_->target_tag_ids_) {
     RCLCPP_INFO_STREAM(logger_, "target tag id " << tag_id);
-    const auto opt_transform = get_transform("base_link", "tag_" + tag_id);
+    const auto opt_transform = get_transform("map", "tag_" + tag_id);
     if (opt_transform.has_value()) {
       const auto t = opt_transform->transform.translation;
-      const double squared_distance = t.x * t.x + t.x * t.x + t.x * t.z;
-      squared_distance_to_nearest_marker =
-        std::min(squared_distance, squared_distance_to_nearest_marker);
+      const Eigen::Vector3d marker_vector(t.x, t.y, t.z);
+
+      distance_to_nearest_marker =
+        std::min((marker_vector - ego_vector).norm(), distance_to_nearest_marker);
     }
   }
 
-  RCLCPP_INFO_STREAM(logger_, "distance to nearest markers" << squared_distance_to_nearest_marker);
-  return squared_distance_to_nearest_marker < (15 * 15);
+  return distance_to_nearest_marker;
 }
 
 std::optional<ArTagPosition::TransformStamped> ArTagPosition::get_transform(

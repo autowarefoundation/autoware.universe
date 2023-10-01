@@ -18,6 +18,8 @@ MapBasedRule::MapBasedRule(
     node.declare_parameter<int>("pcd_occupancy_rule/pcd_density_upper_threshold")),
   pcd_density_lower_threshold_(
     node.declare_parameter<int>("pcd_occupancy_rule/pcd_density_lower_threshold")),
+  ar_marker_available_distance_(
+    node.declare_parameter<int>("ar_marker_rule/ar_marker_available_distance")),
   running_estimator_list_(running_estimator_list)
 {
   RCLCPP_INFO_STREAM(get_logger(), "MapBasedRule is initialized");
@@ -279,7 +281,9 @@ bool MapBasedRule::artag_is_available() const
     return false;
   }
 
-  return ar_tag_position_->exist_ar_tag_around_ego(latest_pose_->pose.pose.position);
+  const double distance_to_marker =
+    ar_tag_position_->distance_to_nearest_ar_tag_around_ego(latest_pose_->pose.pose.position);
+  return distance_to_marker < ar_marker_available_distance_;
 }
 
 }  // namespace multi_pose_estimator

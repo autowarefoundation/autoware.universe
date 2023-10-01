@@ -23,7 +23,7 @@ public:
 
   ArTagPosition(rclcpp::Node * node);
 
-  bool exist_ar_tag_around_ego(const geometry_msgs::msg::Point & point) const;
+  double distance_to_nearest_ar_tag_around_ego(const geometry_msgs::msg::Point & ego_point) const;
 
   std::string debug_string() const;
 

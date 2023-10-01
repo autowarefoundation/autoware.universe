@@ -6,7 +6,9 @@
   <node pkg="pose_estimator_manager" exec="pose_estimator_manager" name="pose_estimator_manager" output="screen" args="--ros-args --log-level info">
     <param name="pcd_occupancy_rule/pcd_density_upper_threshold" value="25"/>
     <param name="pcd_occupancy_rule/pcd_density_lower_threshold" value="20"/>
+    <param name="/pcd_density_lower_threshold" value="20"/>
     <param name="pose_sources" value="$(var pose_sources)"/>
+    <param name="ar_marker_rule/ar_marker_available_distance" value="30"/>
 
     <!-- artag -->
     <remap from="~/input/artag/image" to="/sensing/camera/traffic_light/image_raw"/>

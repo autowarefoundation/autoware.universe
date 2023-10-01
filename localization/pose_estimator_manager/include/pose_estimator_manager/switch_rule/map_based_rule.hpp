@@ -39,6 +39,7 @@ public:
 protected:
   const int pcd_density_upper_threshold_;
   const int pcd_density_lower_threshold_;
+  const double ar_marker_available_distance_;
   const std::unordered_set<PoseEstimatorName> running_estimator_list_;
   std::unique_ptr<ArTagPosition> ar_tag_position_{nullptr};
 
