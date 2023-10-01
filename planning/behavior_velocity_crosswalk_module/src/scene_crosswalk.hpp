@@ -185,7 +185,6 @@ public:
         const double timeout_no_intention_to_walk = InterpolateMap(
           planner_param.distance_map_for_no_intention_to_walk,
           planner_param.timeout_map_for_no_intention_to_walk, distance_to_crosswalk);
-        std::cerr << timeout_no_intention_to_walk << std::endl;
         const bool intent_to_cross =
           (now - *time_to_start_stopped).seconds() < timeout_no_intention_to_walk;
         if (
