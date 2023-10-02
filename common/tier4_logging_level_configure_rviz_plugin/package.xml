@@ -15,6 +15,7 @@
   <depend>libqt5-core</depend>
   <depend>libqt5-gui</depend>
   <depend>libqt5-widgets</depend>
+  <depend>libyaml-cpp-dev</depend>
   <depend>logging_demo</depend>
   <depend>qtbase5-dev</depend>
   <depend>rclcpp</depend>

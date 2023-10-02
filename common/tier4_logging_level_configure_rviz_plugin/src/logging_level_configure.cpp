@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "yaml-cpp/yaml.h"
+
 #include <QLabel>
 #include <rviz_common/display_context.hpp>
 #include <tier4_logging_level_configure_rviz_plugin/logging_level_configure.hpp>
@@ -164,78 +166,20 @@ void LoggingLevelConfigureRvizPlugin::load(const rviz_common::Config & config)
 
 void LoggingLevelConfigureRvizPlugin::setLoggerNodeMap()
 {
-  // ===============================================================================================
-  // ====================================== Planning ===============================================
-  // ===============================================================================================
+  const auto filename =
+    "/home/horibe/workspace/pilot-auto.latest/src/autoware/universe/common/"
+    "tier4_logging_level_configure_rviz_plugin/config/logger_config.yaml";
+  YAML::Node config = YAML::LoadFile(filename);
 
-  QString behavior_path_planner =
-    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner";
-  QString behavior_velocity_planner =
-    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner";
-
-  // behavior_path_planner (all)
-  node_logger_map_["behavior_path_planner"] = {
-    {behavior_path_planner,
-     "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner"},
-    {behavior_path_planner, "tier4_autoware_utils"}};
-
-  // behavior_path_planner: avoidance
-  node_logger_map_["behavior_path_planner: avoidance"] = {
-    {behavior_path_planner,
-     "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner."
-     "avoidance"}};
-
-  // behavior_velocity_planner (all)
-  node_logger_map_["behavior_velocity_planner"] = {
-    {behavior_velocity_planner,
-     "planning.scenario_planning.lane_driving.behavior_planning.behavior_velocity_planner"},
-    {behavior_velocity_planner, "tier4_autoware_utils"}};
-
-  // behavior_velocity_planner: intersection
-  node_logger_map_["behavior_velocity_planner: intersection"] = {
-    {behavior_velocity_planner,
-     "planning.scenario_planning.lane_driving.behavior_planning.behavior_velocity_planner."
-     "intersection"}};
-
-  // obstacle_avoidance_planner
-  QString motion_avoidance =
-    "/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner";
-  node_logger_map_["motion: obstacle_avoidance"] = {
-    {motion_avoidance,
-     "planning.scenario_planning.lane_driving.motion_planning.obstacle_avoidance_planner"},
-    {motion_avoidance, "tier4_autoware_utils"}};
-
-  // motion_velocity_smoother
-  QString velocity_smoother = "/planning/scenario_planning/motion_velocity_smoother";
-  node_logger_map_["motion: velocity_smoother"] = {
-    {velocity_smoother, "planning.scenario_planning.motion_velocity_smoother"},
-    {velocity_smoother, "tier4_autoware_utils"}};
-
-  // ===============================================================================================
-  // ======================================= Control ===============================================
-  // ===============================================================================================
-
-  QString trajectory_follower = "/control/trajectory_follower/controller_node_exe";
-
-  // lateral_controller
-  node_logger_map_["lateral_controller"] = {
-    {trajectory_follower, "control.trajectory_follower.controller_node_exe.lateral_controller"},
-    {trajectory_follower, "tier4_autoware_utils"},
-  };
-
-  // longitudinal_controller
-  node_logger_map_["longitudinal_controller"] = {
-    {trajectory_follower,
-     "control.trajectory_follower.controller_node_exe.longitudinal_controller"},
-    {trajectory_follower, "tier4_autoware_utils"},
-  };
-
-  // vehicle_cmd_gate
-  QString vehicle_cmd_gate = "/control/vehicle_cmd_gate";
-  node_logger_map_["vehicle_cmd_gate"] = {
-    {vehicle_cmd_gate, "control.vehicle_cmd_gate"},
-    {vehicle_cmd_gate, "tier4_autoware_utils"},
-  };
+  for (YAML::const_iterator it = config.begin(); it != config.end(); ++it) {
+    const auto key = QString::fromStdString(it->first.as<std::string>());
+    const YAML::Node values = it->second;
+    for (size_t i = 0; i < values.size(); i++) {
+      const auto node_name = QString::fromStdString(values[i]["node_name"].as<std::string>());
+      const auto logger_name = QString::fromStdString(values[i]["logger_name"].as<std::string>());
+      node_logger_map_[key].push_back({node_name, logger_name});
+    }
+  }
 }
 
 }  // namespace rviz_plugin
