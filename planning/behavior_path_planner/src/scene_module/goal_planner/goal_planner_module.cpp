@@ -68,22 +68,17 @@ GoalPlannerModule::GoalPlannerModule(
   // planner when goal modification is not allowed
   fixed_goal_planner_ = std::make_unique<DefaultFixedGoalPlanner>();
 
-  // set enabled planner
-  if (parameters_->enable_shift_parking) {
-    pull_over_planners_.push_back(std::make_shared<ShiftPullOver>(
-      node, *parameters, lane_departure_checker, occupancy_grid_map_));
-  }
-
-  // set geometric pull over
-  if (parameters_->enable_arc_forward_parking) {
-    constexpr bool is_forward = true;
-    pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, *parameters, lane_departure_checker, occupancy_grid_map_, is_forward));
-  }
-  if (parameters_->enable_arc_backward_parking) {
-    constexpr bool is_forward = false;
-    pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, *parameters, lane_departure_checker, occupancy_grid_map_, is_forward));
+  for (const std::string & planner_type : parameters_->efficient_path_order) {
+    if (planner_type == "SHIFT" && parameters_->enable_shift_parking) {
+      pull_over_planners_.push_back(std::make_shared<ShiftPullOver>(
+        node, *parameters, lane_departure_checker, occupancy_grid_map_));
+    } else if (planner_type == "ARC_FORWARD" && parameters_->enable_arc_forward_parking) {
+      pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
+        node, *parameters, lane_departure_checker, occupancy_grid_map_, /*is_forward*/ true));
+    } else if (planner_type == "ARC_BACKWARD" && parameters_->enable_arc_backward_parking) {
+      pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
+        node, *parameters, lane_departure_checker, occupancy_grid_map_, /*is_forward*/ false));
+    }
   }
 
   if (pull_over_planners_.empty()) {
@@ -215,6 +210,10 @@ void GoalPlannerModule::onFreespaceParkingTimer()
     return;
   }
   if (!planner_data_->costmap) {
+    return;
+  }
+  // fixed goal planner do not use freespace planner
+  if (!goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return;
   }
 
@@ -366,12 +365,7 @@ bool GoalPlannerModule::isExecutionRequested() const
 
 bool GoalPlannerModule::isExecutionReady() const
 {
-  // TODO(Sugahara): should check safe or not but in the current flow, it is not possible.
-  if (status_.pull_over_path == nullptr) {
-    return true;
-  }
-
-  if (status_.is_safe_static_objects && parameters_->safety_check_params.enable_safety_check) {
+  if (parameters_->safety_check_params.enable_safety_check && isWaitingApproval()) {
     if (!isSafePath()) {
       RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
       return false;
@@ -459,6 +453,7 @@ ModuleStatus GoalPlannerModule::updateState()
 bool GoalPlannerModule::planFreespacePath()
 {
   mutex_.lock();
+  goal_searcher_->setPlannerData(planner_data_);
   goal_searcher_->update(goal_candidates_);
   const auto goal_candidates = goal_candidates_;
   debug_data_.freespace_planner.num_goal_candidates = goal_candidates.size();
@@ -546,7 +541,8 @@ void GoalPlannerModule::generateGoalCandidates()
   refined_goal_pose_ = calcRefinedGoal(goal_pose);
   if (goal_planner_utils::isAllowedGoalModification(route_handler)) {
     goal_searcher_->setPlannerData(planner_data_);
-    goal_candidates_ = goal_searcher_->search(refined_goal_pose_);
+    goal_searcher_->setReferenceGoal(refined_goal_pose_);
+    goal_candidates_ = goal_searcher_->search();
   } else {
     GoalCandidate goal_candidate{};
     goal_candidate.goal_pose = goal_pose;
@@ -572,15 +568,47 @@ BehaviorModuleOutput GoalPlannerModule::plan()
   }
 }
 
+void GoalPlannerModule::sortPullOverPathCandidatesByGoalPriority(
+  std::vector<PullOverPath> & pull_over_path_candidates,
+  const GoalCandidates & goal_candidates) const
+{
+  // Create a map of goal_id to its index in goal_candidates
+  std::map<size_t, size_t> goal_id_to_index;
+  for (size_t i = 0; i < goal_candidates.size(); ++i) {
+    goal_id_to_index[goal_candidates[i].id] = i;
+  }
+
+  // Sort pull_over_path_candidates based on the order in goal_candidates
+  std::stable_sort(
+    pull_over_path_candidates.begin(), pull_over_path_candidates.end(),
+    [&goal_id_to_index](const auto & a, const auto & b) {
+      return goal_id_to_index[a.goal_id] < goal_id_to_index[b.goal_id];
+    });
+
+  // Sort pull_over_path_candidates based on the order in efficient_path_order
+  if (parameters_->path_priority == "efficient_path") {
+    std::stable_sort(
+      pull_over_path_candidates.begin(), pull_over_path_candidates.end(),
+      [this](const auto & a, const auto & b) {
+        const auto & order = parameters_->efficient_path_order;
+        const auto a_pos = std::find(order.begin(), order.end(), magic_enum::enum_name(a.type));
+        const auto b_pos = std::find(order.begin(), order.end(), magic_enum::enum_name(b.type));
+        return a_pos < b_pos;
+      });
+  }
+}
+
 void GoalPlannerModule::selectSafePullOverPath()
 {
   // select safe lane pull over path from candidates
   mutex_.lock();
   goal_searcher_->setPlannerData(planner_data_);
   goal_searcher_->update(goal_candidates_);
+  sortPullOverPathCandidatesByGoalPriority(pull_over_path_candidates_, goal_candidates_);
   const auto pull_over_path_candidates = pull_over_path_candidates_;
   const auto goal_candidates = goal_candidates_;
   mutex_.unlock();
+
   status_.is_safe_static_objects = false;
   for (const auto & pull_over_path : pull_over_path_candidates) {
     // check if goal is safe

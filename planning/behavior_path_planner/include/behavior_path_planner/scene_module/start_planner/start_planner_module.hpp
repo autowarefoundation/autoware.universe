@@ -63,7 +63,13 @@ struct PullOutStatus
   bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
   bool back_finished{false};  // if backward driving is not required, this is also set to true
                               // todo: rename to clear variable name.
+  bool backward_driving_complete{
+    false};  // after backward driving is complete, this is set to true (warning: this is set to
+             // false at next cycle after backward driving is complete)
   Pose pull_out_start_pose{};
+  bool prev_is_safe_dynamic_objects{false};
+  std::shared_ptr<PathWithLaneId> prev_stop_path_after_approval{nullptr};
+  bool has_stop_point{false};
 
   PullOutStatus() {}
 };
@@ -87,12 +93,13 @@ public:
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   // TODO(someone): remove this, and use base class function
-  [[deprecated]] ModuleStatus updateState() override;
+  [[deprecated]] void updateCurrentState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
   void processOnEntry() override;
   void processOnExit() override;
+  void updateData() override;
 
   void setParameters(const std::shared_ptr<StartPlannerParameters> & parameters)
   {
@@ -139,7 +146,6 @@ private:
 
   std::unique_ptr<rclcpp::Time> last_route_received_time_;
   std::unique_ptr<rclcpp::Time> last_pull_out_start_update_time_;
-  std::unique_ptr<Pose> last_approved_pose_;
 
   // generate freespace pull out paths in a separate thread
   std::unique_ptr<PullOutPlannerBase> freespace_planner_;
@@ -168,11 +174,12 @@ private:
   lanelet::ConstLanelets getPathRoadLanes(const PathWithLaneId & path) const;
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
+  void updateStatusAfterBackwardDriving();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,
     const tier4_autoware_utils::LinearRing2d & vehicle_footprint);
   bool hasFinishedPullOut() const;
-  void checkBackFinished();
+  bool isBackwardDrivingComplete() const;
   bool isStopped();
   bool isStuck();
   bool hasFinishedCurrentPath();

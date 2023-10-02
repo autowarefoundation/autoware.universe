@@ -136,9 +136,10 @@ Polygon2d generateStuckVehicleDetectAreaPolygon(
   const util::PathLanelets & path_lanelets, const double stuck_vehicle_detect_dist);
 
 bool checkAngleForTargetLanelets(
-  const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
-  const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle,
-  const double margin = 0.0);
+  const geometry_msgs::msg::Pose & pose, const double longitudinal_velocity,
+  const lanelet::ConstLanelets & target_lanelets, const double detection_area_angle_thr,
+  const bool consider_wrong_direction_vehicle, const double dist_margin,
+  const double parked_vehicle_speed_threshold);
 
 void cutPredictPathWithDuration(
   autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
@@ -147,8 +148,9 @@ void cutPredictPathWithDuration(
 TimeDistanceArray calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::shared_ptr<const PlannerData> & planner_data, const std::set<int> & associative_ids,
-  const int closest_idx, const double time_delay, const double intersection_velocity,
-  const double minimum_ego_velocity);
+  const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
+  const double time_delay, const double intersection_velocity, const double minimum_ego_velocity,
+  const bool use_upstream_velocity, const double minimum_upstream_velocity);
 
 double calcDistanceUntilIntersectionLanelet(
   const lanelet::ConstLanelet & assigned_lanelet,

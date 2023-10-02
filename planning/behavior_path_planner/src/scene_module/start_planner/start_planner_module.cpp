@@ -96,6 +96,7 @@ void StartPlannerModule::onFreespacePlannerTimer()
 
 BehaviorModuleOutput StartPlannerModule::run()
 {
+  updateData();
   if (!isActivated()) {
     return planWaitingApproval();
   }
@@ -118,6 +119,29 @@ void StartPlannerModule::processOnExit()
   resetPathCandidate();
   resetPathReference();
   debug_marker_.markers.clear();
+}
+
+void StartPlannerModule::updateData()
+{
+  if (isBackwardDrivingComplete()) {
+    updateStatusAfterBackwardDriving();
+  } else {
+    status_.backward_driving_complete = false;
+  }
+
+  const bool has_received_new_route =
+    !planner_data_->prev_route_id ||
+    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
+
+  if (has_received_new_route) {
+    status_ = PullOutStatus();
+  }
+  // check safety status after back finished
+  if (parameters_->safety_check_params.enable_safety_check && status_.back_finished) {
+    status_.is_safe_dynamic_objects = isSafePath();
+  } else {
+    status_.is_safe_dynamic_objects = true;
+  }
 }
 
 bool StartPlannerModule::isExecutionRequested() const
@@ -161,26 +185,35 @@ bool StartPlannerModule::isExecutionRequested() const
 
 bool StartPlannerModule::isExecutionReady() const
 {
+  // when is_safe_static_objects is false,the path is not generated and approval shouldn't be
+  // allowed
   if (!status_.is_safe_static_objects) {
+    RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against static objects");
     return false;
   }
 
-  if (status_.pull_out_path.partial_paths.empty()) {
-    return true;
-  }
-
-  if (status_.is_safe_static_objects && parameters_->safety_check_params.enable_safety_check) {
+  if (
+    parameters_->safety_check_params.enable_safety_check && status_.back_finished &&
+    isWaitingApproval()) {
     if (!isSafePath()) {
       RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
+      stop_pose_ = planner_data_->self_odometry->pose.pose;
       return false;
     }
   }
   return true;
 }
 
-ModuleStatus StartPlannerModule::updateState()
+void StartPlannerModule::updateCurrentState()
 {
-  RCLCPP_DEBUG(getLogger(), "START_PLANNER updateState");
+  RCLCPP_DEBUG(getLogger(), "START_PLANNER updateCurrentState");
+
+  const auto print = [this](const auto & from, const auto & to) {
+    RCLCPP_DEBUG(getLogger(), "[start_planner] Transit from %s to %s.", from.data(), to.data());
+  };
+
+  const auto & from = current_state_;
+  // current_state_ = updateState();
 
   if (isActivated() && !isWaitingApproval()) {
     current_state_ = ModuleStatus::RUNNING;
@@ -188,13 +221,16 @@ ModuleStatus StartPlannerModule::updateState()
     current_state_ = ModuleStatus::IDLE;
   }
 
+  // TODO(someone): move to canTransitSuccessState
   if (hasFinishedPullOut()) {
-    return ModuleStatus::SUCCESS;
+    current_state_ = ModuleStatus::SUCCESS;
+  }
+  // TODO(someone): move to canTransitSuccessState
+  if (status_.backward_driving_complete) {
+    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   }
 
-  checkBackFinished();
-
-  return current_state_;
+  print(magic_enum::enum_name(from), magic_enum::enum_name(current_state_));
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()
@@ -212,8 +248,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
     clearWaitingApproval();
     resetPathCandidate();
     resetPathReference();
-    // save current_pose when approved for start_point of turn_signal for backward driving
-    last_approved_pose_ = std::make_unique<Pose>(planner_data_->self_odometry->pose.pose);
   }
 
   BehaviorModuleOutput output;
@@ -227,12 +261,42 @@ BehaviorModuleOutput StartPlannerModule::plan()
   }
 
   PathWithLaneId path;
+
+  // Check if backward motion is finished
   if (status_.back_finished) {
+    // Increment path index if the current path is finished
     if (hasFinishedCurrentPath()) {
       RCLCPP_INFO(getLogger(), "Increment path index");
       incrementPathIndex();
     }
-    path = getCurrentPath();
+
+    if (!status_.is_safe_dynamic_objects && !isWaitingApproval() && !status_.has_stop_point) {
+      auto current_path = getCurrentPath();
+      const auto stop_path =
+        behavior_path_planner::utils::start_goal_planner_common::generateFeasibleStopPath(
+          current_path, planner_data_, *stop_pose_, parameters_->maximum_deceleration_for_stop,
+          parameters_->maximum_jerk_for_stop);
+
+      // Insert stop point in the path if needed
+      if (stop_path) {
+        RCLCPP_ERROR_THROTTLE(
+          getLogger(), *clock_, 5000, "Insert stop point in the path because of dynamic objects");
+        path = *stop_path;
+        status_.prev_stop_path_after_approval = std::make_shared<PathWithLaneId>(path);
+        status_.has_stop_point = true;
+      } else {
+        path = current_path;
+      }
+    } else if (!isWaitingApproval() && status_.has_stop_point) {
+      // Delete stop point if conditions are met
+      if (status_.is_safe_dynamic_objects && isStopped()) {
+        status_.has_stop_point = false;
+        path = getCurrentPath();
+      }
+      path = *status_.prev_stop_path_after_approval;
+    } else {
+      path = getCurrentPath();
+    }
   } else {
     path = status_.backward_path;
   }
@@ -613,10 +677,6 @@ void StartPlannerModule::updatePullOutStatus()
     !planner_data_->prev_route_id ||
     *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
 
-  if (has_received_new_route) {
-    status_ = PullOutStatus();
-  }
-
   // save pull out lanes which is generated using current pose before starting pull out
   // (before approval)
   status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
@@ -658,11 +718,26 @@ void StartPlannerModule::updatePullOutStatus()
   planWithPriority(
     start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
 
-  checkBackFinished();
-  if (!status_.back_finished) {
+  if (isBackwardDrivingComplete()) {
+    updateStatusAfterBackwardDriving();
+    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
+  } else {
     status_.backward_path = start_planner_utils::getBackwardPath(
       *route_handler, status_.pull_out_lanes, current_pose, status_.pull_out_start_pose,
       parameters_->backward_velocity);
+  }
+}
+
+void StartPlannerModule::updateStatusAfterBackwardDriving()
+{
+  status_.back_finished = true;
+  status_.backward_driving_complete = true;
+  // request start_planner approval
+  waitApproval();
+  // To enable approval of the forward path, the RTC status is removed.
+  removeRTCStatus();
+  for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
+    itr->second = generateUUID();
   }
 }
 
@@ -787,9 +862,9 @@ bool StartPlannerModule::hasFinishedPullOut() const
   return has_finished;
 }
 
-void StartPlannerModule::checkBackFinished()
+bool StartPlannerModule::isBackwardDrivingComplete() const
 {
-  // check ego car is close enough to pull out start pose
+  // check ego car is close enough to pull out start pose and stopped
   const auto current_pose = planner_data_->self_odometry->pose.pose;
   const auto distance =
     tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_start_pose);
@@ -798,18 +873,12 @@ void StartPlannerModule::checkBackFinished()
   const double ego_vel = utils::l2Norm(planner_data_->self_odometry->twist.twist.linear);
   const bool is_stopped = ego_vel < parameters_->th_stopped_velocity;
 
-  if (!status_.back_finished && is_near && is_stopped) {
+  const bool back_finished = !status_.back_finished && is_near && is_stopped;
+  if (back_finished) {
     RCLCPP_INFO(getLogger(), "back finished");
-    status_.back_finished = true;
-
-    // request start_planner approval
-    waitApproval();
-    removeRTCStatus();
-    for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
-      itr->second = generateUUID();
-    }
-    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   }
+
+  return back_finished;
 }
 
 bool StartPlannerModule::isStopped()
@@ -875,7 +944,7 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo() const
   // turn on hazard light when backward driving
   if (!status_.back_finished) {
     turn_signal.hazard_signal.command = HazardLightsCommand::ENABLE;
-    const auto back_start_pose = isWaitingApproval() ? current_pose : *last_approved_pose_;
+    const auto back_start_pose = planner_data_->route_handler->getOriginalStartPose();
     turn_signal.desired_start_point = back_start_pose;
     turn_signal.required_start_point = back_start_pose;
     // pull_out start_pose is same to backward driving end_pose
