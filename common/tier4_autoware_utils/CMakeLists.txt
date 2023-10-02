@@ -7,7 +7,6 @@ autoware_package()
 find_package(Boost REQUIRED)
 
 ament_auto_add_library(tier4_autoware_utils SHARED
-  src/tier4_autoware_utils.cpp
   src/geometry/geometry.cpp
   src/geometry/pose_deviation.cpp
   src/geometry/boost_polygon_utils.cpp
@@ -15,6 +14,8 @@ ament_auto_add_library(tier4_autoware_utils SHARED
   src/math/trigonometry.cpp
   src/ros/msg_operation.cpp
   src/ros/marker_helper.cpp
+  src/ros/logger_level_configure.cpp
+  src/system/backtrace.cpp
 )
 
 if(BUILD_TESTING)

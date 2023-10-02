@@ -19,6 +19,7 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/distance/distance.hpp>
 #include <motion_utils/resample/resample.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -961,8 +962,10 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
       continue;
     }
 
-    if (lights.front().color == TrafficSignalElement::RED) {
-      return true;
+    for (const auto & element : lights) {
+      if (
+        element.color == TrafficSignalElement::RED && element.shape == TrafficSignalElement::CIRCLE)
+        return true;
     }
   }
 

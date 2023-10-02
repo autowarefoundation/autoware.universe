@@ -84,44 +84,32 @@ NDTScanMatcher::NDTScanMatcher()
   tf2_broadcaster_(*this),
   ndt_ptr_(new NormalDistributionsTransform),
   state_ptr_(new std::map<std::string, std::string>),
-  base_frame_("base_link"),
-  ndt_base_frame_("ndt_base_link"),
-  map_frame_("map"),
-  converged_param_type_(ConvergedParamType::TRANSFORM_PROBABILITY),
-  converged_param_transform_probability_(4.5),
-  converged_param_nearest_voxel_transformation_likelihood_(2.3),
-  initial_estimate_particles_num_(100),
-  lidar_topic_timeout_sec_(1.0),
-  initial_pose_timeout_sec_(1.0),
-  initial_pose_distance_tolerance_m_(10.0),
-  inversion_vector_threshold_(-0.9),
-  oscillation_threshold_(10),
-  output_pose_covariance_(),
-  regularization_enabled_(declare_parameter("regularization_enabled", false)),
-  estimate_scores_for_degrounded_scan_(
-    declare_parameter("estimate_scores_for_degrounded_scan", false)),
-  z_margin_for_ground_removal_(declare_parameter("z_margin_for_ground_removal", 0.8))
+  inversion_vector_threshold_(-0.9),  // Not necessary to extract to ndt_scan_matcher.param.yaml
+  oscillation_threshold_(10),         // Not necessary to extract to ndt_scan_matcher.param.yaml
+  regularization_enabled_(declare_parameter<bool>("regularization_enabled"))
 {
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
 
-  int points_queue_size =
-    static_cast<int>(this->declare_parameter("input_sensor_points_queue_size", 0));
+  int points_queue_size = this->declare_parameter<int>("input_sensor_points_queue_size");
   points_queue_size = std::max(points_queue_size, 0);
   RCLCPP_INFO(get_logger(), "points_queue_size: %d", points_queue_size);
 
-  base_frame_ = this->declare_parameter("base_frame", base_frame_);
+  base_frame_ = this->declare_parameter<std::string>("base_frame");
   RCLCPP_INFO(get_logger(), "base_frame_id: %s", base_frame_.c_str());
 
-  ndt_base_frame_ = this->declare_parameter("ndt_base_frame", ndt_base_frame_);
+  ndt_base_frame_ = this->declare_parameter<std::string>("ndt_base_frame");
   RCLCPP_INFO(get_logger(), "ndt_base_frame_id: %s", ndt_base_frame_.c_str());
+
+  map_frame_ = this->declare_parameter<std::string>("map_frame");
+  RCLCPP_INFO(get_logger(), "map_frame_id: %s", map_frame_.c_str());
 
   pclomp::NdtParams ndt_params{};
   ndt_params.trans_epsilon = this->declare_parameter<double>("trans_epsilon");
   ndt_params.step_size = this->declare_parameter<double>("step_size");
   ndt_params.resolution = this->declare_parameter<double>("resolution");
-  ndt_params.max_iterations = static_cast<int>(this->declare_parameter<int>("max_iterations"));
-  ndt_params.num_threads = static_cast<int>(this->declare_parameter<int>("num_threads"));
+  ndt_params.max_iterations = this->declare_parameter<int>("max_iterations");
+  ndt_params.num_threads = this->declare_parameter<int>("num_threads");
   ndt_params.num_threads = std::max(ndt_params.num_threads, 1);
   ndt_params.regularization_scale_factor =
     static_cast<float>(this->declare_parameter<float>("regularization_scale_factor"));
@@ -132,24 +120,23 @@ NDTScanMatcher::NDTScanMatcher()
     ndt_params.trans_epsilon, ndt_params.step_size, ndt_params.resolution,
     ndt_params.max_iterations);
 
-  int converged_param_type_tmp =
-    static_cast<int>(this->declare_parameter("converged_param_type", 0));
+  int converged_param_type_tmp = this->declare_parameter<int>("converged_param_type");
   converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
 
-  converged_param_transform_probability_ = this->declare_parameter(
-    "converged_param_transform_probability", converged_param_transform_probability_);
-  converged_param_nearest_voxel_transformation_likelihood_ = this->declare_parameter(
-    "converged_param_nearest_voxel_transformation_likelihood",
-    converged_param_nearest_voxel_transformation_likelihood_);
+  converged_param_transform_probability_ =
+    this->declare_parameter<double>("converged_param_transform_probability");
+  converged_param_nearest_voxel_transformation_likelihood_ =
+    this->declare_parameter<double>("converged_param_nearest_voxel_transformation_likelihood");
 
-  lidar_topic_timeout_sec_ =
-    this->declare_parameter("lidar_topic_timeout_sec", lidar_topic_timeout_sec_);
+  lidar_topic_timeout_sec_ = this->declare_parameter<double>("lidar_topic_timeout_sec");
 
-  initial_pose_timeout_sec_ =
-    this->declare_parameter("initial_pose_timeout_sec", initial_pose_timeout_sec_);
+  critical_upper_bound_exe_time_ms_ =
+    this->declare_parameter<int>("critical_upper_bound_exe_time_ms");
 
-  initial_pose_distance_tolerance_m_ = this->declare_parameter(
-    "initial_pose_distance_tolerance_m", initial_pose_distance_tolerance_m_);
+  initial_pose_timeout_sec_ = this->declare_parameter<double>("initial_pose_timeout_sec");
+
+  initial_pose_distance_tolerance_m_ =
+    this->declare_parameter<double>("initial_pose_distance_tolerance_m");
 
   std::vector<double> output_pose_covariance =
     this->declare_parameter<std::vector<double>>("output_pose_covariance");
@@ -157,8 +144,12 @@ NDTScanMatcher::NDTScanMatcher()
     output_pose_covariance_[i] = output_pose_covariance[i];
   }
 
-  initial_estimate_particles_num_ = static_cast<int>(
-    this->declare_parameter("initial_estimate_particles_num", initial_estimate_particles_num_));
+  initial_estimate_particles_num_ = this->declare_parameter<int>("initial_estimate_particles_num");
+
+  estimate_scores_for_degrounded_scan_ =
+    this->declare_parameter<bool>("estimate_scores_for_degrounded_scan");
+
+  z_margin_for_ground_removal_ = this->declare_parameter<double>("z_margin_for_ground_removal");
 
   rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group;
   initial_pose_callback_group =
@@ -297,6 +288,13 @@ void NDTScanMatcher::timer_diagnostic()
         converged_param_nearest_voxel_transformation_likelihood_) {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       diag_status_msg.message += "NDT score is unreliably low. ";
+    }
+    if (
+      state_ptr_->count("execution_time") &&
+      std::stod((*state_ptr_)["execution_time"]) >= critical_upper_bound_exe_time_ms_) {
+      diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+      diag_status_msg.message +=
+        "NDT exe time is too long. (took " + (*state_ptr_)["execution_time"] + " [ms])";
     }
     // Ignore local optimal solution
     if (
@@ -534,6 +532,7 @@ void NDTScanMatcher::callback_sensor_points(
   } else {
     (*state_ptr_)["is_local_optimal_solution_oscillation"] = "0";
   }
+  (*state_ptr_)["execution_time"] = std::to_string(exe_time);
 }
 
 void NDTScanMatcher::transform_sensor_measurement(
