@@ -990,69 +990,83 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     // Drivable area expansion parameters
     using drivable_area_expansion::DrivableAreaExpansionParameters;
     const std::lock_guard<std::mutex> lock(mutex_pd_);  // for planner_data_
-    updateParam(
+    bool updated = false;
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::DRIVABLE_AREA_RIGHT_BOUND_OFFSET_PARAM,
       planner_data_->drivable_area_expansion_parameters.drivable_area_right_bound_offset);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::DRIVABLE_AREA_LEFT_BOUND_OFFSET_PARAM,
       planner_data_->drivable_area_expansion_parameters.drivable_area_left_bound_offset);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::DRIVABLE_AREA_TYPES_TO_SKIP_PARAM,
       planner_data_->drivable_area_expansion_parameters.drivable_area_types_to_skip);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::ENABLED_PARAM,
       planner_data_->drivable_area_expansion_parameters.enabled);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::AVOID_DYN_OBJECTS_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_dynamic_objects);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::EXPANSION_METHOD_PARAM,
       planner_data_->drivable_area_expansion_parameters.expansion_method);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_TYPES_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_linestring_types);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::AVOID_LINESTRING_DIST_PARAM,
       planner_data_->drivable_area_expansion_parameters.avoid_linestring_dist);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_FRONT,
       planner_data_->drivable_area_expansion_parameters.ego_extra_front_offset);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_REAR,
       planner_data_->drivable_area_expansion_parameters.ego_extra_rear_offset);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_LEFT,
       planner_data_->drivable_area_expansion_parameters.ego_extra_left_offset);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::EGO_EXTRA_OFFSET_RIGHT,
       planner_data_->drivable_area_expansion_parameters.ego_extra_right_offset);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_FRONT,
       planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_front_offset);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_REAR,
       planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_rear_offset);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_LEFT,
       planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_left_offset);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_RIGHT,
       planner_data_->drivable_area_expansion_parameters.dynamic_objects_extra_right_offset);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::MAX_EXP_DIST_PARAM,
       planner_data_->drivable_area_expansion_parameters.max_expansion_distance);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::MAX_PATH_ARC_LENGTH_PARAM,
       planner_data_->drivable_area_expansion_parameters.max_path_arc_length);
-    updateParam(
+    updated |= updateParam(
+      parameters, DrivableAreaExpansionParameters::RESAMPLE_INTERVAL_PARAM,
+      planner_data_->drivable_area_expansion_parameters.resample_interval);
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::EXTRA_ARC_LENGTH_PARAM,
       planner_data_->drivable_area_expansion_parameters.extra_arc_length);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::COMPENSATE_PARAM,
       planner_data_->drivable_area_expansion_parameters.compensate_uncrossable_lines);
-    updateParam(
+    updated |= updateParam(
       parameters, DrivableAreaExpansionParameters::EXTRA_COMPENSATE_PARAM,
       planner_data_->drivable_area_expansion_parameters.compensate_extra_dist);
+    updated |= updateParam(
+      parameters, DrivableAreaExpansionParameters::REPLAN_ENABLE_PARAM,
+      planner_data_->drivable_area_expansion_parameters.replan_enable);
+    updated |= updateParam(
+      parameters, DrivableAreaExpansionParameters::REPLAN_MAX_DEVIATION_PARAM,
+      planner_data_->drivable_area_expansion_parameters.replan_max_deviation);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::DEBUG_PRINT_PARAM,
+      planner_data_->drivable_area_expansion_parameters.debug_print);
+    if (updated) planner_data_->drivable_area_expansion_replan_checker.reset();
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();
