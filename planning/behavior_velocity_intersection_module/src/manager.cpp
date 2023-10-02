@@ -136,8 +136,10 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".occlusion.stop_release_margin_time");
   ip.occlusion.temporal_stop_before_attention_area =
     getOrDeclareParameter<bool>(node, ns + ".occlusion.temporal_stop_before_attention_area");
-  ip.occlusion.peeking_offset_absence_tl =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.peeking_offset_absence_tl");
+  ip.occlusion.absence_traffic_light.creep_velocity =
+    getOrDeclareParameter<double>(node, ns + ".occlusion.absence_traffic_light.creep_velocity");
+  ip.occlusion.absence_traffic_light.maximum_peeking_distance = getOrDeclareParameter<double>(
+    node, ns + ".occlusion.absence_traffic_light.maximum_peeking_distance");
 }
 
 void IntersectionModuleManager::launchNewModules(
