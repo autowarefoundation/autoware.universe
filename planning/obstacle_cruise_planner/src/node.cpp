@@ -106,7 +106,7 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
 
   const Eigen::Rotation2Dd R_ego_to_obstacle(obstacle_yaw - traj_yaw);
   const Eigen::Vector2d obstacle_velocity(obstacle.twist.linear.x, obstacle.twist.linear.y);
-  const auto projected_velocity = R_ego_to_obstacle * obstacle_velocity;
+  const Eigen::Vector2d projected_velocity = R_ego_to_obstacle * obstacle_velocity;
 
   return std::make_pair(projected_velocity[0], projected_velocity[1]);
 }
