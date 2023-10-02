@@ -1251,7 +1251,7 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
     for (const auto & lanelet : surrounding_opposite_lanelets) {
       // Check if the close lanelets meet the necessary condition for start lanelets
       // except for distance checking
-      if (!checkCloseLaneletCondition(lanelet, object, false)) {
+      if (!checkCloseLaneletCondition(lanelet, object)) {
         continue;
       }
 
@@ -1271,8 +1271,7 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
 }
 
 bool MapBasedPredictionNode::checkCloseLaneletCondition(
-  const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
-  const bool check_distance)
+  const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object)
 {
   // Step1. If we only have one point in the centerline, we will ignore the lanelet
   if (lanelet.second.centerline().size() <= 1) {
