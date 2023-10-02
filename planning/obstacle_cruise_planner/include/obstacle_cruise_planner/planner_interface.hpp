@@ -221,12 +221,33 @@ private:
 
   struct SlowDownParam
   {
+    std::vector<std::string> obstacle_labels{"default"};
+    struct ObstacleSpecificParams
+    {
+      double max_lat_margin;
+      double min_lat_margin;
+      double max_ego_velocity;
+      double min_ego_velocity;
+    };
     explicit SlowDownParam(rclcpp::Node & node)
     {
-      max_lat_margin = node.declare_parameter<double>("slow_down.max_lat_margin");
-      min_lat_margin = node.declare_parameter<double>("slow_down.min_lat_margin");
-      max_ego_velocity = node.declare_parameter<double>("slow_down.max_ego_velocity");
-      min_ego_velocity = node.declare_parameter<double>("slow_down.min_ego_velocity");
+      obstacle_labels =
+        node.declare_parameter<std::vector<std::string>>("slow_down.labels", obstacle_labels);
+      // obstacle label dependant parameters
+      for (const auto & label : obstacle_labels) {
+        ObstacleSpecificParams params;
+        params.max_lat_margin =
+          node.declare_parameter<double>("slow_down." + label + ".max_lat_margin");
+        params.min_lat_margin =
+          node.declare_parameter<double>("slow_down." + label + ".min_lat_margin");
+        params.max_ego_velocity =
+          node.declare_parameter<double>("slow_down." + label + ".max_ego_velocity");
+        params.min_ego_velocity =
+          node.declare_parameter<double>("slow_down." + label + ".min_ego_velocity");
+        obstacle_to_param_struct_map.emplace(std::make_pair(label, params));
+      }
+
+      // common parameters
       time_margin_on_target_velocity =
         node.declare_parameter<double>("slow_down.time_margin_on_target_velocity");
       lpf_gain_slow_down_vel = node.declare_parameter<double>("slow_down.lpf_gain_slow_down_vel");
@@ -235,16 +256,38 @@ private:
         node.declare_parameter<double>("slow_down.lpf_gain_dist_to_slow_down");
     }
 
+    bool getObstacleParamByLabel(ObstacleSpecificParams & params, const std::string & label)
+    {
+      auto it = obstacle_to_param_struct_map.find(label);
+
+      if (it != obstacle_to_param_struct_map.end()) {
+        params = obstacle_to_param_struct_map.at(label);
+        return true;
+      }
+      params = obstacle_to_param_struct_map.at("default");
+      return false;
+    }
+
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
     {
-      tier4_autoware_utils::updateParam<double>(
-        parameters, "slow_down.max_lat_margin", max_lat_margin);
-      tier4_autoware_utils::updateParam<double>(
-        parameters, "slow_down.min_lat_margin", min_lat_margin);
-      tier4_autoware_utils::updateParam<double>(
-        parameters, "slow_down.max_ego_velocity", max_ego_velocity);
-      tier4_autoware_utils::updateParam<double>(
-        parameters, "slow_down.min_ego_velocity", min_ego_velocity);
+      // obstacle type dependant parameters
+      for (const auto & label : obstacle_labels) {
+        auto & param_by_obstacle_label = obstacle_to_param_struct_map[label];
+        tier4_autoware_utils::updateParam<double>(
+          parameters, "slow_down." + label + ".max_lat_margin",
+          param_by_obstacle_label.max_lat_margin);
+        tier4_autoware_utils::updateParam<double>(
+          parameters, "slow_down." + label + ".min_lat_margin",
+          param_by_obstacle_label.min_lat_margin);
+        tier4_autoware_utils::updateParam<double>(
+          parameters, "slow_down." + label + ".max_ego_velocity",
+          param_by_obstacle_label.max_ego_velocity);
+        tier4_autoware_utils::updateParam<double>(
+          parameters, "slow_down." + label + ".min_ego_velocity",
+          param_by_obstacle_label.min_ego_velocity);
+      }
+
+      // common parameters
       tier4_autoware_utils::updateParam<double>(
         parameters, "slow_down.time_margin_on_target_velocity", time_margin_on_target_velocity);
       tier4_autoware_utils::updateParam<double>(
@@ -255,10 +298,8 @@ private:
         parameters, "slow_down.lpf_gain_dist_to_slow_down", lpf_gain_dist_to_slow_down);
     }
 
-    double max_lat_margin;
-    double min_lat_margin;
-    double max_ego_velocity;
-    double min_ego_velocity;
+    std::map<std::string, ObstacleSpecificParams> obstacle_to_param_struct_map;
+
     double time_margin_on_target_velocity;
     double lpf_gain_slow_down_vel;
     double lpf_gain_lat_dist;
