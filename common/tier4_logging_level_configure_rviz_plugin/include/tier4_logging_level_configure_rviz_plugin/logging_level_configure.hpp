@@ -64,7 +64,8 @@ private:
 
 private Q_SLOTS:
   void onButtonClick(QPushButton * button, const QString & name, const QString & level);
-  void updateButtonColors(const QString & target_module_name, QPushButton * active_button);
+  void updateButtonColors(
+    const QString & target_module_name, QPushButton * active_button, const QString & level);
   void changeLogLevel(const QString & container, const QString & level);
 };
 

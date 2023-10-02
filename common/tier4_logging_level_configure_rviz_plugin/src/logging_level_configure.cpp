@@ -65,7 +65,7 @@ void LoggingLevelConfigureRvizPlugin::onInitialize()
       });
     }
     // Set the "INFO" button as checked by default and change its color.
-    updateButtonColors(target_node_name, button_map_[target_node_name]["INFO"]);
+    updateButtonColors(target_node_name, button_map_[target_node_name]["INFO"], "INFO");
 
     buttonGroups_[target_node_name] = group;
     layout->addLayout(hLayout);
@@ -148,27 +148,35 @@ void LoggingLevelConfigureRvizPlugin::onButtonClick(
     }
 
     updateButtonColors(
-      target_module_name, button);  // Modify updateButtonColors to accept QPushButton only.
+      target_module_name, button, level);  // Modify updateButtonColors to accept QPushButton only.
   }
 }
 
 void LoggingLevelConfigureRvizPlugin::updateButtonColors(
-  const QString & target_module_name, QPushButton * active_button)
+  const QString & target_module_name, QPushButton * active_button, const QString & level)
 {
-  const QString LIGHT_GREEN = "rgb(181, 255, 20)";
-  const QString LIGHT_GRAY = "rgb(211, 211, 211)";
+  std::unordered_map<QString, QString> colorMap = {
+    {"DEBUG", "rgb(181, 255, 20)"}, /* green */
+    {"INFO", "rgb(200, 255, 255)"}, /* light blue */
+    {"WARN", "rgb(255, 255, 0)"},   /* yellow */
+    {"ERROR", "rgb(255, 0, 0)"},    /* red */
+    {"FATAL", "rgb(139, 0, 0)"},    /* dark red */
+    {"OFF", "rgb(211, 211, 211)"}   /* gray */
+  };
+
   const QString LIGHT_GRAY_TEXT = "rgb(180, 180, 180)";
+
+  const QString color = colorMap.count(level) ? colorMap[level] : colorMap["OFF"];
 
   for (const auto & button : button_map_[target_module_name]) {
     if (button.second == active_button) {
-      button.second->setStyleSheet("background-color: " + LIGHT_GREEN + "; color: black");
+      button.second->setStyleSheet("background-color: " + color + "; color: black");
     } else {
       button.second->setStyleSheet(
-        "background-color: " + LIGHT_GRAY + "; color: " + LIGHT_GRAY_TEXT);
+        "background-color: " + colorMap["OFF"] + "; color: " + LIGHT_GRAY_TEXT);
     }
   }
 }
-
 void LoggingLevelConfigureRvizPlugin::save(rviz_common::Config config) const
 {
   Panel::save(config);
