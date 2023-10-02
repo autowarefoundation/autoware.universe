@@ -215,10 +215,11 @@ void StartPlannerModule::updateCurrentState()
   const auto & from = current_state_;
   // current_state_ = updateState();
 
-  // start copy from base function
-  const auto print = [this](const auto & from, const auto & to) {
-    RCLCPP_DEBUG(getLogger(), "[start_planner] Transit from %s to %s.", from.data(), to.data());
-  };
+  if (isActivated() && !isWaitingApproval()) {
+    current_state_ = ModuleStatus::RUNNING;
+  } else {
+    current_state_ = ModuleStatus::IDLE;
+  }
 
   // TODO(someone): move to canTransitSuccessState
   if (hasFinishedPullOut()) {
