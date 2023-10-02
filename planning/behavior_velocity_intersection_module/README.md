@@ -104,6 +104,10 @@ The occlusion is detected as the common area of occlusion attention area(which i
 
 If the nearest occlusion cell value is below the threshold, occlusion is detected. It is expected that the occlusion gets cleared as the vehicle approaches the occlusion peeking stop line.
 
+In there are no traffic lights associated with the lane, the ego vehicle will make a brief stop at the _default stop line_ and the position where the vehicle heading touches the attention area for the first time(which is denoted as _first attention stop line_). After stopping at the _first attention area stop line_ this module inserts `occlusion.absence_traffic_light.creep_velocity` velocity between ego and the position which is `occlusion.absence_traffic_light.maximum_peeking_distance` ahead of _first attention area stop line_ while occlusion is not cleared. If collision is detected, ego will instantly stop. Once the occlusion is cleared or ego passed `occlusion.absence_traffic_light.maximum_peeking_distance` this module does not detect collision and occlusion because ego vehicle is already inside the intersection.
+
+![occlusion_detection](./docs/occlusion-without-tl.drawio.svg)
+
 ### Module Parameters
 
 | Parameter                                           | Type   | Description                                                                                    |
@@ -115,7 +119,6 @@ If the nearest occlusion cell value is below the threshold, occlusion is detecte
 | `common.intersection_velocity`                      | double | [m/s] velocity profile for pass judge calculation                                              |
 | `common.intersection_max_accel`                     | double | [m/s^2] acceleration profile for pass judge calculation                                        |
 | `common.stop_overshoot_margin`                      | double | [m] margin for the overshoot from stopline                                                     |
-| `common.path_interpolation_ds`                      | double | [m] path interpolation interval                                                                |
 | `stuck_vehicle.stuck_vehicle_detect_dist`           | double | [m] length toward from the exit of intersection for stuck vehicle detection                    |
 | `stuck_vehicle.stuck_vehicle_vel_thr`               | double | [m/s] velocity threshold for stuck vehicle detection                                           |
 | `collision_detection.state_transit_margin_time`     | double | [m] time margin to change state                                                                |
@@ -128,7 +131,13 @@ If the nearest occlusion cell value is below the threshold, occlusion is detecte
 | `occlusion.peeking_offset`                          | double | [m] the offset of the front of the vehicle into the attention area for peeking to occlusion    |
 | `occlusion.min_vehicle_brake_for_rss`               | double | [m/s] assumed minimum brake of the vehicle running from behind the occlusion                   |
 | `occlusion.max_vehicle_velocity_for_rss`            | double | [m/s] assumed maximum velocity of the vehicle running from behind the occlusion                |
-| `occlusion.denoise_kernel`                          | double | [m] the window size of morphology process for clearing noisy occlusion                         |
+
+#### For developers only
+
+| Parameter                      | Type   | Description                                                            |
+| ------------------------------ | ------ | ---------------------------------------------------------------------- |
+| `common.path_interpolation_ds` | double | [m] path interpolation interval                                        |
+| `occlusion.denoise_kernel`     | double | [m] the window size of morphology process for clearing noisy occlusion |
 
 ### How to turn parameters
 
