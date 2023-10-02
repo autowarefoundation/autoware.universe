@@ -419,11 +419,11 @@ bool ProcessMonitor::getCommandLineFromPiD(const std::string & pid, std::string 
   std::string commandLineFilePath = "/proc/" + pid + "/cmdline";
   std::ifstream commandFile(commandLineFilePath);
   if (commandFile.is_open()) {
-      std::getline(commandFile, *command);
-      commandFile.close();
-      return true;
+    std::getline(commandFile, *command);
+    commandFile.close();
+    return true;
   } else {
-      return false;
+    return false;
   }
 }
 
@@ -481,7 +481,7 @@ void ProcessMonitor::getTopratedProcesses(
     bool flag_find_commandline = getCommandLineFromPiD(info.processId, &info.commandName);
 
     if (!flag_find_commandline) {
-      info.commandName = program_name; // if command line is not found, use program name instead
+      info.commandName = program_name;  // if command line is not found, use program name instead
     }
 
     tasks->at(index)->setDiagnosticsStatus(DiagStatus::OK, "OK");
