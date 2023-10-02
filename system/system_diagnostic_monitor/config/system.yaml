@@ -2,6 +2,9 @@ units:
   - path: /autoware/system
     type: and
     list:
-      - type: diag
-        name: "topic_state_monitor_system_emergency_control_cmd: system_topic_status"
-        hardware: topic_state_monitor
+      - { type: link, path: /autoware/system/topic_rate_check/emergency_control_command }
+
+diags:
+  - path: /autoware/system/topic_rate_check/emergency_control_command
+    name: "topic_state_monitor_system_emergency_control_cmd: system_topic_status"
+    hardware: topic_state_monitor

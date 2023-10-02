@@ -2,6 +2,9 @@ units:
   - path: /autoware/perception
     type: and
     list:
-      - type: diag
-        name: "topic_state_monitor_object_recognition_objects: perception_topic_status"
-        hardware: topic_state_monitor
+      - { type: link, path: /autoware/perception/topic_rate_check/objects }
+
+diags:
+  - path: /autoware/perception/topic_rate_check/objects
+    name: "topic_state_monitor_object_recognition_objects: perception_topic_status"
+    hardware: topic_state_monitor

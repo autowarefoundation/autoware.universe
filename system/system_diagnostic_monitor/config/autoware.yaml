@@ -7,17 +7,17 @@ files:
   - { package: system_diagnostic_monitor, path: config/vehicle.yaml }
   - { package: system_diagnostic_monitor, path: config/system.yaml }
 
-units:
+links:
   - path: /autoware
     type: and
     list:
-      - { type: unit, path: /autoware/operation/stop }
-      - { type: unit, path: /autoware/operation/autonomous }
-      - { type: unit, path: /autoware/operation/local }
-      - { type: unit, path: /autoware/operation/remote }
-      - { type: unit, path: /autoware/operation/emergency-stop }
-      - { type: unit, path: /autoware/operation/comfortable-stop }
-      - { type: unit, path: /autoware/operation/pull-over }
+      - { type: link, path: /autoware/operation/stop }
+      - { type: link, path: /autoware/operation/autonomous }
+      - { type: link, path: /autoware/operation/local }
+      - { type: link, path: /autoware/operation/remote }
+      - { type: link, path: /autoware/operation/emergency-stop }
+      - { type: link, path: /autoware/operation/comfortable-stop }
+      - { type: link, path: /autoware/operation/pull-over }
 
   - path: /autoware/operation/stop
     type: debug-ok
@@ -25,50 +25,50 @@ units:
   - path: /autoware/operation/autonomous
     type: and
     list:
-      - { type: unit, path: /autoware/map }
-      - { type: unit, path: /autoware/localization }
-      - { type: unit, path: /autoware/planning }
-      - { type: unit, path: /autoware/perception }
-      - { type: unit, path: /autoware/control }
-      - { type: unit, path: /autoware/vehicle }
-      - { type: unit, path: /autoware/system }
+      - { type: link, path: /autoware/map }
+      - { type: link, path: /autoware/localization }
+      - { type: link, path: /autoware/planning }
+      - { type: link, path: /autoware/perception }
+      - { type: link, path: /autoware/control }
+      - { type: link, path: /autoware/vehicle }
+      - { type: link, path: /autoware/system }
 
   - path: /autoware/operation/local
     type: and
     list:
-      - { type: unit, path: /autoware/vehicle }
-      - { type: unit, path: /autoware/system }
+      - { type: link, path: /autoware/vehicle }
+      - { type: link, path: /autoware/system }
 
   - path: /autoware/operation/remote
     type: and
     list:
-      - { type: unit, path: /autoware/vehicle }
-      - { type: unit, path: /autoware/system }
+      - { type: link, path: /autoware/vehicle }
+      - { type: link, path: /autoware/system }
 
   - path: /autoware/operation/emergency-stop
     type: and
     list:
-      - { type: unit, path: /autoware/vehicle }
-      - { type: unit, path: /autoware/system }
+      - { type: link, path: /autoware/vehicle }
+      - { type: link, path: /autoware/system }
 
   - path: /autoware/operation/comfortable-stop
     type: and
     list:
-      - { type: unit, path: /autoware/map }
-      - { type: unit, path: /autoware/localization }
-      - { type: unit, path: /autoware/planning }
-      - { type: unit, path: /autoware/perception }
-      - { type: unit, path: /autoware/control }
-      - { type: unit, path: /autoware/vehicle }
-      - { type: unit, path: /autoware/system }
+      - { type: link, path: /autoware/map }
+      - { type: link, path: /autoware/localization }
+      - { type: link, path: /autoware/planning }
+      - { type: link, path: /autoware/perception }
+      - { type: link, path: /autoware/control }
+      - { type: link, path: /autoware/vehicle }
+      - { type: link, path: /autoware/system }
 
   - path: /autoware/operation/pull-over
     type: and
     list:
-      - { type: unit, path: /autoware/map }
-      - { type: unit, path: /autoware/localization }
-      - { type: unit, path: /autoware/planning }
-      - { type: unit, path: /autoware/perception }
-      - { type: unit, path: /autoware/control }
-      - { type: unit, path: /autoware/vehicle }
-      - { type: unit, path: /autoware/system }
+      - { type: link, path: /autoware/map }
+      - { type: link, path: /autoware/localization }
+      - { type: link, path: /autoware/planning }
+      - { type: link, path: /autoware/perception }
+      - { type: link, path: /autoware/control }
+      - { type: link, path: /autoware/vehicle }
+      - { type: link, path: /autoware/system }

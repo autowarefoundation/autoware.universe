@@ -2,5 +2,8 @@ units:
   - path: /autoware/localization
     type: and
     list:
-      - type: diag
-        name: "component_state_diagnostics: localization_state"
+      - { type: link, path: /autoware/localization/state }
+
+diags:
+  - path: /autoware/localization/state
+    name: "component_state_diagnostics: localization_state"
