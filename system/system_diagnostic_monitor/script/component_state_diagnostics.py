@@ -21,9 +21,37 @@ from diagnostic_msgs.msg import DiagnosticStatus
 import rclpy
 import rclpy.node
 import rclpy.qos
+import rclpy.time
 
 
-class ComponentStateDiagnostics(rclpy.node.Node):
+class ComponentStateDiagnostics:
+    def __init__(self, node, diag_name, topic_name, topic_type, topic_qos, diag_func):
+        self.node = node
+        self.name = diag_name
+        self.func = diag_func
+        self.sub = node.create_subscription(topic_type, topic_name, self.callback, topic_qos)
+        self.level = DiagnosticStatus.STALE
+        self.stamp = None
+
+    def callback(self, msg):
+        self.level = DiagnosticStatus.OK if self.func(msg) else DiagnosticStatus.ERROR
+        self.stamp = self.node.get_clock().now()
+
+    def update(self, stamp):
+        if self.stamp:
+            elapsed = (stamp - self.stamp).nanoseconds * 1e-9
+            if 3.0 < elapsed:
+                self.level = DiagnosticStatus.STALE
+                self.stamp = None
+
+    def message(self):
+        status = DiagnosticStatus()
+        status.name = self.name
+        status.level = self.level
+        return status
+
+
+class ComponentStateDiagnosticsNode(rclpy.node.Node):
     def __init__(self):
         super().__init__("component_state_diagnostics")
         durable_qos = rclpy.qos.QoSProfile(
@@ -34,46 +62,38 @@ class ComponentStateDiagnostics(rclpy.node.Node):
 
         self.timer = self.create_timer(0.5, self.on_timer)
         self.pub = self.create_publisher(DiagnosticArray, "/diagnostics", 1)
-        self.sub1 = self.create_subscription(
-            LocalizationState,
-            "/api/localization/initialization_state",
-            self.on_localization,
-            durable_qos,
-        )
-        self.sub2 = self.create_subscription(
-            RouteState, "/api/routing/state", self.on_routing, durable_qos
-        )
-
-        self.diags = DiagnosticArray()
-        self.diags.status.append(
-            DiagnosticStatus(
-                level=DiagnosticStatus.STALE, name="component_state_diagnostics: localization_state"
+        self.states = []
+        self.states.append(
+            ComponentStateDiagnostics(
+                self,
+                "component_state_diagnostics: localization_state",
+                "/api/localization/initialization_state",
+                LocalizationState,
+                durable_qos,
+                lambda msg: msg.state == LocalizationState.INITIALIZED,
             )
         )
-        self.diags.status.append(
-            DiagnosticStatus(
-                level=DiagnosticStatus.STALE, name="component_state_diagnostics: route_state"
+        self.states.append(
+            ComponentStateDiagnostics(
+                self,
+                "component_state_diagnostics: route_state",
+                "/api/routing/state",
+                RouteState,
+                durable_qos,
+                lambda msg: msg.state != RouteState.UNSET,
             )
         )
 
     def on_timer(self):
-        self.diags.header.stamp = self.get_clock().now().to_msg()
-        self.pub.publish(self.diags)
-
-    def on_localization(self, msg):
-        self.diags.status[0].level = (
-            DiagnosticStatus.OK
-            if msg.state == LocalizationState.INITIALIZED
-            else DiagnosticStatus.ERROR
-        )
-
-    def on_routing(self, msg):
-        self.diags.status[1].level = (
-            DiagnosticStatus.OK if msg.state != RouteState.UNSET else DiagnosticStatus.ERROR
-        )
+        stamp = self.get_clock().now()
+        array = DiagnosticArray()
+        array.header.stamp = stamp.to_msg()
+        for state in self.states:
+            array.status.append(state.message())
+        self.pub.publish(array)
 
 
 if __name__ == "__main__":
     rclpy.init()
-    rclpy.spin(ComponentStateDiagnostics())
+    rclpy.spin(ComponentStateDiagnosticsNode())
     rclpy.shutdown()
