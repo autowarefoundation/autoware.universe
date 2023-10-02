@@ -93,7 +93,7 @@ In the simple_planning_simulator.launch.py, the node that outputs the `map`->`od
 
 Ego vehicle pitch angle is calculated in the following manner.
 
-![pitch calcluation](./media/pitch-calculation.drawio.svg)
+![pitch calculation](./media/pitch-calculation.drawio.svg)
 
 ## Error detection and handling
 
