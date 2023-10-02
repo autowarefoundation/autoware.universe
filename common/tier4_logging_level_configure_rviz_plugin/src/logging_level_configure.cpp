@@ -15,6 +15,7 @@
 #include "yaml-cpp/yaml.h"
 
 #include <QLabel>
+#include <QScrollArea>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rviz_common/display_context.hpp>
 #include <tier4_logging_level_configure_rviz_plugin/logging_level_configure.hpp>
@@ -100,7 +101,19 @@ void LoggingLevelConfigureRvizPlugin::onInitialize()
     layout->addLayout(hLayout);
   }
 
-  setLayout(layout);
+  // Create a QWidget to hold the layout.
+  QWidget * containerWidget = new QWidget;
+  containerWidget->setLayout(layout);
+
+  // Create a QScrollArea to make the layout scrollable.
+  QScrollArea * scrollArea = new QScrollArea;
+  scrollArea->setWidget(containerWidget);
+  scrollArea->setWidgetResizable(true);
+
+  // Set the QScrollArea as the layout of the main widget.
+  QVBoxLayout * mainLayout = new QVBoxLayout;
+  mainLayout->addWidget(scrollArea);
+  setLayout(mainLayout);
 
   // set up service clients
   const auto & nodes = getNodeList();
