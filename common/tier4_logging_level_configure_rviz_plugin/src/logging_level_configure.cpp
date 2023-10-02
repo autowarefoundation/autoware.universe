@@ -101,7 +101,7 @@ int LoggingLevelConfigureRvizPlugin::getMaxModuleNameWidth(QLabel * label)
   QFontMetrics metrics(label->font());
   for (const auto & item : node_logger_map_) {
     const auto & target_module_name = item.first;
-    int width = metrics.horizontalAdvance(target_module_name);
+    const int width = metrics.horizontalAdvance(target_module_name);
     if (width > max_width) {
       max_width = width;
     }
