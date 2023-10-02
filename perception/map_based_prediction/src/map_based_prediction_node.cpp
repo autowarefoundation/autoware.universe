@@ -1306,7 +1306,7 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
   const double object_vel = object.kinematics.twist_with_covariance.twist.linear.x;
   const bool is_yaw_reversed =
     M_PI - delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta && object_vel < 0.0;
-  if (check_distance && dist_threshold_for_searching_lanelet_ < lanelet.first) {
+  if (dist_threshold_for_searching_lanelet_ < lanelet.first) {
     return false;
   }
   if (!is_yaw_reversed && delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta) {
