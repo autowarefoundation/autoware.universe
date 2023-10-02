@@ -46,17 +46,15 @@ void UnitNode::create(ConfigObject & config, ExprInit & exprs)
 
 void UnitNode::update(const rclcpp::Time &)
 {
-  /*
   const auto result = expr_->eval();
-  status_.level = result.level;
-  node_.links.clear();
+  level_ = result.level;
+  links_.clear();
   for (const auto & [node, used] : result.links) {
     DiagnosticLink link;
     link.index = node->index();
     link.used = used;
-    node_.links.push_back(link);
+    links_.push_back(link);
   }
-  */
 }
 
 DiagnosticNode UnitNode::report() const
@@ -64,6 +62,7 @@ DiagnosticNode UnitNode::report() const
   DiagnosticNode message;
   message.status.level = level_;
   message.status.name = path_;
+  message.links = links_;
   return message;
 }
 

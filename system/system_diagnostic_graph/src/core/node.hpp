@@ -66,6 +66,7 @@ public:
 
 private:
   std::unique_ptr<BaseExpr> expr_;
+  std::vector<DiagnosticLink> links_;
   DiagnosticLevel level_;
 };
 
