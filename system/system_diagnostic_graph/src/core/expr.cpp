@@ -14,7 +14,6 @@
 
 #include "expr.hpp"
 
-#include "graph.hpp"
 #include "node.hpp"
 
 #include <algorithm>
@@ -212,7 +211,7 @@ std::unique_ptr<BaseExpr> ExprInit::create(ExprConfig config)
   if (config.type == "debug-stale") {
     return std::make_unique<ConstExpr>(DiagnosticStatus::STALE);
   }
-  throw ConfigError("unknown expr type: " + config.type);
+  throw ConfigError("unknown expr type: " + config.type + " " + config.dict.mark().str());
 }
 
 }  // namespace system_diagnostic_graph

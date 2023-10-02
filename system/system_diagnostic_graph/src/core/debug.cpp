@@ -14,7 +14,7 @@
 
 #include "debug.hpp"
 
-#include "manager.hpp"
+#include "graph.hpp"
 #include "node.hpp"
 #include "types.hpp"
 
@@ -59,15 +59,16 @@ void GraphManager::debug()
 
 DiagDebugData UnitNode::debug() const
 {
-  const auto & level = node_.status.level;
-  return DiagDebugData{std::to_string(index()), "unit", path_, "-----", level_names.at(level)};
+  const auto level_name = level_names.at(node_.status.level);
+  const auto index_name = std::to_string(index());
+  return {"unit", index_name, level_name, path_, "-----", "-----"};
 }
 
 DiagDebugData DiagNode::debug() const
 {
-  const auto & level = node_.status.level;
-  return DiagDebugData{
-    std::to_string(index()), "diag", path_, name_ + " / " + hardware_, level_names.at(level)};
+  const auto level_name = level_names.at(node_.status.level);
+  const auto index_name = std::to_string(index());
+  return {"diag", index_name, level_name, path_, name_, hardware_};
 }
 
 }  // namespace system_diagnostic_graph

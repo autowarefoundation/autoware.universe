@@ -47,11 +47,9 @@ MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
 
 void MainNode::on_timer()
 {
-  /*
   manager_.update(now());
   manager_.debug();
   pub_graph_->publish(manager_.create_graph_message());
-  */
 }
 
 void MainNode::on_diag(const DiagnosticArray::ConstSharedPtr msg)

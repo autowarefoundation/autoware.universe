@@ -15,8 +15,6 @@
 #ifndef CORE__UPDATE_HPP_
 #define CORE__UPDATE_HPP_
 
-#include "graph.hpp"
-#include "node.hpp"
 #include "types.hpp"
 
 #include <rclcpp/rclcpp.hpp>

@@ -10,7 +10,6 @@ ament_auto_add_executable(aggregator
   src/core/graph.cpp
   src/core/node.cpp
   src/core/expr.cpp
-  src/core/manager.cpp
   src/main.cpp
 )
 
