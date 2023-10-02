@@ -27,11 +27,11 @@ LoggingLevelConfigureRvizPlugin::LoggingLevelConfigureRvizPlugin(QWidget * paren
 }
 
 // Calculate the maximum width among all target_module_name.
-int LoggingLevelConfigureRvizPlugin::getMaxModuleNameWidth(QLabel * containerLabel)
+int LoggingLevelConfigureRvizPlugin::getMaxModuleNameWidth(QLabel * label)
 {
   int max_width = 0;
-  QFontMetrics metrics(containerLabel->font());
-  for (const auto & item : logger_node_map_) {
+  QFontMetrics metrics(label->font());
+  for (const auto & item : node_logger_map_) {
     const auto & target_module_name = item.first;
     int width = metrics.horizontalAdvance(target_module_name);
     if (width > max_width) {
@@ -41,44 +41,41 @@ int LoggingLevelConfigureRvizPlugin::getMaxModuleNameWidth(QLabel * containerLab
   return max_width;
 }
 
-// create container list in logger_node_map_ without
-QStringList LoggingLevelConfigureRvizPlugin::getContainerList()
+// create node list in node_logger_map_ without
+QStringList LoggingLevelConfigureRvizPlugin::getNodeList()
 {
-  QStringList containers;
-  for (const auto & item : logger_node_map_) {
-    const auto & container_logger_vec = item.second;
-    for (const auto & container_logger_pair : container_logger_vec) {
-      if (!containers.contains(container_logger_pair.first)) {
-        containers.append(container_logger_pair.first);
+  QStringList nodes;
+  for (const auto & item : node_logger_map_) {
+    const auto & node_logger_vec = item.second;
+    for (const auto & node_logger_pair : node_logger_vec) {
+      if (!nodes.contains(node_logger_pair.first)) {
+        nodes.append(node_logger_pair.first);
       }
     }
   }
-  return containers;
+  return nodes;
 }
 
 void LoggingLevelConfigureRvizPlugin::onInitialize()
 {
   setLoggerNodeMap();
 
-  attachLoggingComponent();
-
   QVBoxLayout * layout = new QVBoxLayout;
 
   QStringList levels = {"DEBUG", "INFO", "WARN", "ERROR", "FATAL"};
 
-  QStringList loaded_container;
   constexpr int height = 20;
-  for (const auto & item : logger_node_map_) {
-    const auto & target_module_name = item.first;
+  for (const auto & item : node_logger_map_) {
+    const auto & target_node_name = item.first;
 
     QHBoxLayout * hLayout = new QHBoxLayout;
 
-    // Create a QLabel to display the container name.
-    QLabel * containerLabel = new QLabel(target_module_name);
-    containerLabel->setFixedHeight(height);  // Set fixed height for the button
-    containerLabel->setFixedWidth(getMaxModuleNameWidth(containerLabel));
+    // Create a QLabel to display the node name.
+    QLabel * label = new QLabel(target_node_name);
+    label->setFixedHeight(height);  // Set fixed height for the button
+    label->setFixedWidth(getMaxModuleNameWidth(label));
 
-    hLayout->addWidget(containerLabel);  // Add the QLabel to the hLayout.
+    hLayout->addWidget(label);  // Add the QLabel to the hLayout.
 
     QButtonGroup * group = new QButtonGroup(this);
     for (const QString & level : levels) {
@@ -86,15 +83,15 @@ void LoggingLevelConfigureRvizPlugin::onInitialize()
       btn->setFixedHeight(height);  // Set fixed height for the button
       hLayout->addWidget(btn);      // Add each QPushButton to the hLayout.
       group->addButton(btn);
-      button_map_[target_module_name][level] = btn;
-      connect(btn, &QPushButton::clicked, this, [this, btn, target_module_name, level]() {
-        this->onButtonClick(btn, target_module_name, level);
+      button_map_[target_node_name][level] = btn;
+      connect(btn, &QPushButton::clicked, this, [this, btn, target_node_name, level]() {
+        this->onButtonClick(btn, target_node_name, level);
       });
     }
     // Set the "INFO" button as checked by default and change its color.
-    updateButtonColors(target_module_name, button_map_[target_module_name]["INFO"]);
+    updateButtonColors(target_node_name, button_map_[target_node_name]["INFO"]);
 
-    buttonGroups_[target_module_name] = group;
+    buttonGroups_[target_node_name] = group;
     layout->addLayout(hLayout);
   }
 
@@ -102,25 +99,11 @@ void LoggingLevelConfigureRvizPlugin::onInitialize()
 
   // set up service clients
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
-  const auto & containers = getContainerList();
-  for (const QString & container : containers) {
+  const auto & nodes = getNodeList();
+  for (const QString & node : nodes) {
     const auto client = raw_node_->create_client<logging_demo::srv::ConfigLogger>(
-      container.toStdString() + "/config_logger");
-    client_map_[container] = client;
-  }
-}
-
-void LoggingLevelConfigureRvizPlugin::attachLoggingComponent()
-{
-  const auto & containers = getContainerList();
-  for (const auto & container_name : containers) {
-    // Load the component for each container
-    QString command = "ros2 component load --node-namespace " + container_name +
-                      " --node-name logging_configure " + container_name +
-                      " logging_demo logging_demo::LoggerConfig";
-    int result = system(qPrintable(command));
-    std::cerr << "load logger in " << container_name.toStdString() << ": result = " << result
-              << std::endl;
+      node.toStdString() + "/config_logger");
+    client_map_[node] = client;
   }
 }
 
@@ -135,16 +118,16 @@ void LoggingLevelConfigureRvizPlugin::onButtonClick(
                   << std::string(future.get()->success ? "success!" : "failed...") << std::endl;
       };
 
-    for (const auto & container_logger_map : logger_node_map_[target_module_name]) {
-      const auto container_node = container_logger_map.first;
-      const auto logger_name = container_logger_map.second;
+    for (const auto & node_logger_map : node_logger_map_[target_module_name]) {
+      const auto node_name = node_logger_map.first;
+      const auto logger_name = node_logger_map.second;
       const auto req = std::make_shared<logging_demo::srv::ConfigLogger::Request>();
 
       req->logger_name = logger_name.toStdString();
       req->level = level.toStdString();
       std::cerr << "logger level of " << req->logger_name << " is set to " << req->level
                 << std::endl;
-      client_map_[container_node]->async_send_request(req, callback);
+      client_map_[node_name]->async_send_request(req, callback);
     }
 
     updateButtonColors(
@@ -185,63 +168,73 @@ void LoggingLevelConfigureRvizPlugin::setLoggerNodeMap()
   // ====================================== Planning ===============================================
   // ===============================================================================================
 
-  QString behavior_planning_container =
-    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_planning_container";
-  QString motion_planning_container =
-    "/planning/scenario_planning/lane_driving/motion_planning/motion_planning_container";
+  QString behavior_path_planner =
+    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner";
+  QString behavior_velocity_planner =
+    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner";
 
   // behavior_path_planner (all)
-  logger_node_map_["behavior_path_planner"] = {
-    {behavior_planning_container,
+  node_logger_map_["behavior_path_planner"] = {
+    {behavior_path_planner,
      "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner"},
-    {behavior_planning_container, "tier4_autoware_utils"}};
+    {behavior_path_planner, "tier4_autoware_utils"}};
 
   // behavior_path_planner: avoidance
-  logger_node_map_["behavior_path_planner: avoidance"] = {
-    {behavior_planning_container,
+  node_logger_map_["behavior_path_planner: avoidance"] = {
+    {behavior_path_planner,
      "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner."
      "avoidance"}};
 
   // behavior_velocity_planner (all)
-  logger_node_map_["behavior_velocity_planner"] = {
-    {behavior_planning_container,
+  node_logger_map_["behavior_velocity_planner"] = {
+    {behavior_velocity_planner,
      "planning.scenario_planning.lane_driving.behavior_planning.behavior_velocity_planner"},
-    {behavior_planning_container, "tier4_autoware_utils"}};
+    {behavior_velocity_planner, "tier4_autoware_utils"}};
 
   // behavior_velocity_planner: intersection
-  logger_node_map_["behavior_velocity_planner: intersection"] = {
-    {behavior_planning_container,
+  node_logger_map_["behavior_velocity_planner: intersection"] = {
+    {behavior_velocity_planner,
      "planning.scenario_planning.lane_driving.behavior_planning.behavior_velocity_planner."
      "intersection"}};
 
   // obstacle_avoidance_planner
-  logger_node_map_["motion: obstacle_avoidance"] = {
-    {motion_planning_container,
+  QString motion_avoidance =
+    "/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner";
+  node_logger_map_["motion: obstacle_avoidance"] = {
+    {motion_avoidance,
      "planning.scenario_planning.lane_driving.motion_planning.obstacle_avoidance_planner"},
-    {motion_planning_container, "tier4_autoware_utils"}};
+    {motion_avoidance, "tier4_autoware_utils"}};
 
   // motion_velocity_smoother
-  QString container = "/planning/scenario_planning/motion_velocity_smoother_container";
-  logger_node_map_["motion: velocity_smoother"] = {
-    {container, "planning.scenario_planning.motion_velocity_smoother"},
-    {container, "tier4_autoware_utils"}};
+  QString velocity_smoother = "/planning/scenario_planning/motion_velocity_smoother";
+  node_logger_map_["motion: velocity_smoother"] = {
+    {velocity_smoother, "planning.scenario_planning.motion_velocity_smoother"},
+    {velocity_smoother, "tier4_autoware_utils"}};
 
   // ===============================================================================================
   // ======================================= Control ===============================================
   // ===============================================================================================
 
-  QString control_container = "/control/control_container";
+  QString trajectory_follower = "/control/trajectory_follower/controller_node_exe";
 
   // lateral_controller
-  logger_node_map_["lateral_controller"] = {
-    {control_container, "control.trajectory_follower.controller_node_exe.lateral_controller"},
-    {control_container, "tier4_autoware_utils"},
+  node_logger_map_["lateral_controller"] = {
+    {trajectory_follower, "control.trajectory_follower.controller_node_exe.lateral_controller"},
+    {trajectory_follower, "tier4_autoware_utils"},
   };
 
   // longitudinal_controller
-  logger_node_map_["longitudinal_controller"] = {
-    {control_container, "control.trajectory_follower.controller_node_exe.longitudinal_controller"},
-    {control_container, "tier4_autoware_utils"},
+  node_logger_map_["longitudinal_controller"] = {
+    {trajectory_follower,
+     "control.trajectory_follower.controller_node_exe.longitudinal_controller"},
+    {trajectory_follower, "tier4_autoware_utils"},
+  };
+
+  // vehicle_cmd_gate
+  QString vehicle_cmd_gate = "/control/vehicle_cmd_gate";
+  node_logger_map_["vehicle_cmd_gate"] = {
+    {vehicle_cmd_gate, "control.vehicle_cmd_gate"},
+    {vehicle_cmd_gate, "tier4_autoware_utils"},
   };
 }
 
