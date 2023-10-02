@@ -478,9 +478,9 @@ void ProcessMonitor::getTopratedProcesses(
     std::string program_name;
     std::getline(stream, program_name);
 
-    bool flag_find_commandline = getCommandLineFromPiD(info.processId, &info.commandName);
+    bool flag_find_command_line = getCommandLineFromPiD(info.processId, &info.commandName);
 
-    if (!flag_find_commandline) {
+    if (!flag_find_command_line) {
       info.commandName = program_name;  // if command line is not found, use program name instead
     }
 
