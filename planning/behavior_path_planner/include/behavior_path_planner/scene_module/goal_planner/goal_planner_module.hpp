@@ -74,29 +74,47 @@ enum class PathType {
   FREESPACE,
 };
 
-#define DEFINE_SETTER_GETTER(TYPE, NAME)                      \
-public:                                                       \
-  void set_##NAME(const TYPE & value)                         \
-  {                                                           \
-    const std::lock_guard<std::recursive_mutex> lock(mutex_); \
-    NAME##_ = value;                                          \
-  }                                                           \
-                                                              \
-  TYPE get_##NAME() const                                     \
-  {                                                           \
-    const std::lock_guard<std::recursive_mutex> lock(mutex_); \
-    return NAME##_;                                           \
+class PullOverStatus;  // Forward declaration for Transaction
+// class that locks the PullOverStatus when multiple values are being updated from
+// an external source.
+class Transaction
+{
+public:
+  explicit Transaction(PullOverStatus & status);
+  ~Transaction();
+
+private:
+  PullOverStatus & status_;
+};
+
+#define DEFINE_SETTER_GETTER(TYPE, NAME)              \
+public:                                               \
+  void set_##NAME(const TYPE & value)                 \
+  {                                                   \
+    if (!is_in_transaction_) {                        \
+      const std::lock_guard<std::mutex> lock(mutex_); \
+      NAME##_ = value;                                \
+    } else {                                          \
+      NAME##_ = value;                                \
+    }                                                 \
+  }                                                   \
+                                                      \
+  TYPE get_##NAME() const                             \
+  {                                                   \
+    if (!is_in_transaction_) {                        \
+      const std::lock_guard<std::mutex> lock(mutex_); \
+      return NAME##_;                                 \
+    }                                                 \
+    return NAME##_;                                   \
   }
 
 class PullOverStatus
 {
 public:
-  explicit PullOverStatus(std::recursive_mutex & mutex) : mutex_(mutex) {}
-
   // Reset all data members to their initial states
   void reset()
   {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    const std::lock_guard<std::mutex> lock(mutex_);
     pull_over_path_ = nullptr;
     lane_parking_pull_over_path_ = nullptr;
     current_path_idx_ = 0;
@@ -115,6 +133,9 @@ public:
     has_requested_approval_ = false;
     is_ready_ = false;
   }
+
+  // lock all data members
+  Transaction startTransaction() { return Transaction(*this); }
 
   DEFINE_SETTER_GETTER(std::shared_ptr<PullOverPath>, pull_over_path)
   DEFINE_SETTER_GETTER(std::shared_ptr<PullOverPath>, lane_parking_pull_over_path)
@@ -145,7 +166,7 @@ public:
 
   void push_goal_candidate(const GoalCandidate & goal_candidate)
   {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     goal_candidates_.push_back(goal_candidate);
   }
 
@@ -183,7 +204,9 @@ private:
   std::vector<PullOverPath> pull_over_path_candidates_;
   std::optional<Pose> closest_start_pose_;
 
-  std::recursive_mutex & mutex_;
+  friend class Transaction;
+  mutable std::mutex mutex_;
+  bool is_in_transaction_{false};
 };
 
 #undef DEFINE_SETTER_GETTER
@@ -275,7 +298,7 @@ private:
 
   tier4_autoware_utils::LinearRing2d vehicle_footprint_;
 
-  std::recursive_mutex mutex_;
+  std::mutex mutex_;
   PullOverStatus status_;
 
   // approximate distance from the start point to the end point of pull_over.
