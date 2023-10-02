@@ -314,6 +314,7 @@ double SimplePlanningSimulator::calculate_ego_pitch() const
   const bool reverse_sign = std::cos(ego_yaw_against_lanelet) < 0.0;
   const double ego_pitch_angle =
     reverse_sign ? -std::atan2(-diff_z, -diff_xy) : -std::atan2(diff_z, diff_xy);
+  return ego_pitch_angle;
 }
 
 void SimplePlanningSimulator::on_timer()
