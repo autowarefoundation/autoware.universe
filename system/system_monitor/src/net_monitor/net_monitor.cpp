@@ -42,7 +42,8 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   device_params_(
     declare_parameter<std::vector<std::string>>("devices", std::vector<std::string>())),
   getifaddrs_error_code_(0),
-  network_traffic_monitor_activated_(declare_parameter<bool>("network_traffic_monitor_activated", true)),
+  network_traffic_monitor_activated_(
+    declare_parameter<bool>("network_traffic_monitor_activated", true)),
   monitor_program_(declare_parameter<std::string>("monitor_program", "greengrass")),
   socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path)),
   crc_error_check_duration_(declare_parameter<int>("crc_error_check_duration", 1)),
@@ -241,7 +242,6 @@ void NetMonitor::monitor_traffic(diagnostic_updater::DiagnosticStatusWrapper & s
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
   if (network_traffic_monitor_activated_) {
-
     // Get result of nethogs
     traffic_reader_service::Result result;
     get_nethogs_result(result);
