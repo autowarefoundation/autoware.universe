@@ -222,6 +222,7 @@ private:
   struct SlowDownParam
   {
     std::vector<std::string> obstacle_labels{"default"};
+    std::unordered_map<uint8_t, std::string> types_map;
     struct ObstacleSpecificParams
     {
       double max_lat_margin;
@@ -231,6 +232,14 @@ private:
     };
     explicit SlowDownParam(rclcpp::Node & node)
     {
+      types_map = {{ObjectClassification::UNKNOWN, "unknown"},
+                   {ObjectClassification::CAR, "car"},
+                   {ObjectClassification::TRUCK, "truck"},
+                   {ObjectClassification::BUS, "bus"},
+                   {ObjectClassification::TRAILER, "trailer"},
+                   {ObjectClassification::MOTORCYCLE, "motorcycle"},
+                   {ObjectClassification::BICYCLE, "bicycle"},
+                   {ObjectClassification::PEDESTRIAN, "pedestrian"}};
       obstacle_labels =
         node.declare_parameter<std::vector<std::string>>("slow_down.labels", obstacle_labels);
       // obstacle label dependant parameters
@@ -256,16 +265,15 @@ private:
         node.declare_parameter<double>("slow_down.lpf_gain_dist_to_slow_down");
     }
 
-    bool getObstacleParamByLabel(ObstacleSpecificParams & params, const std::string & label)
+    ObstacleSpecificParams getObstacleParamByLabel(const ObjectClassification & label_id) const
     {
+      std::string label = types_map.at(label_id.label);
       auto it = obstacle_to_param_struct_map.find(label);
 
       if (it != obstacle_to_param_struct_map.end()) {
-        params = obstacle_to_param_struct_map.at(label);
-        return true;
+        return obstacle_to_param_struct_map.at(label);
       }
-      params = obstacle_to_param_struct_map.at("default");
-      return false;
+      return obstacle_to_param_struct_map.at("default");
     }
 
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -298,7 +306,7 @@ private:
         parameters, "slow_down.lpf_gain_dist_to_slow_down", lpf_gain_dist_to_slow_down);
     }
 
-    std::map<std::string, ObstacleSpecificParams> obstacle_to_param_struct_map;
+    std::unordered_map<std::string, ObstacleSpecificParams> obstacle_to_param_struct_map;
 
     double time_margin_on_target_velocity;
     double lpf_gain_slow_down_vel;
