@@ -146,7 +146,7 @@ NDTScanMatcher::NDTScanMatcher()
   }
 
   initial_estimate_particles_num_ = this->declare_parameter<int>("initial_estimate_particles_num");
-  n_startup_trials_ = this->declare_parameter<int>("n_startup_trials");
+  n_startup_trials_ = 30;
 
   estimate_scores_for_degrounded_scan_ =
     this->declare_parameter<bool>("estimate_scores_for_degrounded_scan");
@@ -789,14 +789,15 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
   const auto base_rpy = get_rpy(initial_pose_with_cov);
   const Eigen::Map<const RowMatrixXd> covariance = {
     initial_pose_with_cov.pose.covariance.data(), 6, 6};
+  const double stddev_x = std::sqrt(covariance(0, 0));
+  const double stddev_y = std::sqrt(covariance(1, 1));
+  const double stddev_z = std::sqrt(covariance(2, 2));
+  const double stddev_roll = std::sqrt(covariance(3, 3));
+  const double stddev_pitch = std::sqrt(covariance(4, 4));
 
   // Optimizing (x, y, z, roll, pitch, yaw) 6 dimensions.
-  // For the yaw, a uniform distribution is used.
-  // For the remaining 5 dimensions (x, y, z, roll, pitch), a normal distribution is applied.
-  // The standard deviation is set to 5 for these dimensions.
   TreeStructuredParzenEstimator tpe(
-    n_startup_trials_, std::sqrt(covariance(0, 0)), std::sqrt(covariance(1, 1)),
-    std::sqrt(covariance(2, 2)), std::sqrt(covariance(3, 3)), std::sqrt(covariance(4, 4)));
+    TreeStructuredParzenEstimator::Direction::MAXIMIZE, n_startup_trials_);
 
   std::vector<Particle> particle_array;
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
@@ -805,13 +806,13 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     const TreeStructuredParzenEstimator::Input input = tpe.get_next_input();
 
     geometry_msgs::msg::Pose initial_pose;
-    initial_pose.position.x = initial_pose_with_cov.pose.pose.position.x + input.x;
-    initial_pose.position.y = initial_pose_with_cov.pose.pose.position.y + input.y;
-    initial_pose.position.z = initial_pose_with_cov.pose.pose.position.z + input.z;
+    initial_pose.position.x = initial_pose_with_cov.pose.pose.position.x + input[0] * stddev_x;
+    initial_pose.position.y = initial_pose_with_cov.pose.pose.position.y + input[1] * stddev_y;
+    initial_pose.position.z = initial_pose_with_cov.pose.pose.position.z + input[2] * stddev_z;
     geometry_msgs::msg::Vector3 init_rpy;
-    init_rpy.x = base_rpy.x + input.roll;
-    init_rpy.y = base_rpy.y + input.pitch;
-    init_rpy.z = base_rpy.z + input.yaw;
+    init_rpy.x = base_rpy.x + input[3] * stddev_roll;
+    init_rpy.y = base_rpy.y + input[4] * stddev_pitch;
+    init_rpy.z = base_rpy.z + input[5] * M_PI;
     tf2::Quaternion tf_quaternion;
     tf_quaternion.setRPY(init_rpy.x, init_rpy.y, init_rpy.z);
     initial_pose.orientation = tf2::toMsg(tf_quaternion);
@@ -832,15 +833,14 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     const geometry_msgs::msg::Pose pose = matrix4f_to_pose(ndt_result.pose);
     geometry_msgs::msg::Vector3 rpy = get_rpy(pose);
 
-    TreeStructuredParzenEstimator::Input result;
-    result.x = pose.position.x - initial_pose_with_cov.pose.pose.position.x;
-    result.y = pose.position.y - initial_pose_with_cov.pose.pose.position.y;
-    result.z = pose.position.z - initial_pose_with_cov.pose.pose.position.z;
-    result.roll = rpy.x - base_rpy.x;
-    result.pitch = rpy.y - base_rpy.y;
-    result.yaw = rpy.z - base_rpy.z;
-    tpe.add_trial(
-      TreeStructuredParzenEstimator::Trial{result, ndt_result.transform_probability, i});
+    TreeStructuredParzenEstimator::Input result(6);
+    result[0] = (pose.position.x - initial_pose_with_cov.pose.pose.position.x) / stddev_x;
+    result[1] = (pose.position.y - initial_pose_with_cov.pose.pose.position.y) / stddev_y;
+    result[2] = (pose.position.z - initial_pose_with_cov.pose.pose.position.z) / stddev_z;
+    result[3] = (rpy.x - base_rpy.x) / stddev_roll;
+    result[4] = (rpy.y - base_rpy.y) / stddev_pitch;
+    result[5] = (rpy.z - base_rpy.z) / M_PI;
+    tpe.add_trial(TreeStructuredParzenEstimator::Trial{result, ndt_result.transform_probability});
 
     auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     tier4_autoware_utils::transformPointCloud(

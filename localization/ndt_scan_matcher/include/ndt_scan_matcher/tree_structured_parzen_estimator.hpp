@@ -17,7 +17,7 @@
 
 /*
 A implementation of tree-structured parzen estimator
-Search num_variables double variables in (-1, 1)
+Search double variables in [-1, 1)
 */
 
 #include <cstdint>
@@ -27,60 +27,45 @@ Search num_variables double variables in (-1, 1)
 class TreeStructuredParzenEstimator
 {
 public:
-  struct Input
-  {
-    double x, y, z, roll, pitch, yaw;
-    Input operator*(double scalar) const
-    {
-      return {x * scalar, y * scalar, z * scalar, roll * scalar, pitch * scalar, yaw * scalar};
-    }
-  };
+  using Input = std::vector<double>;
   using Score = double;
   struct Trial
   {
     Input input;
     Score score;
-    int64_t id;
+  };
+
+  enum Direction {
+    MINIMIZE = 0,
+    MAXIMIZE = 1,
   };
 
   TreeStructuredParzenEstimator() = delete;
-  TreeStructuredParzenEstimator(
-    const int64_t n_startup_trials, const double x_stddev, const double y_stddev,
-    const double z_stddev, const double roll_stddev, const double pitch_stddev);
+  TreeStructuredParzenEstimator(const Direction direction, const int64_t n_startup_trials);
   void add_trial(const Trial & trial);
   Input get_next_input();
 
 private:
+  static constexpr double BASE_STDDEV_COEFF = 0.2;
   static constexpr double MAX_GOOD_RATE = 0.10;
-  static constexpr double BASE_STDDEV_COEFF = 1.0;
-  static constexpr double TARGET_SCORE = 6.0;
-  static constexpr double MIN_GOOD_SCORE = 1.8;
+  static constexpr double MAX_VALUE = 1.0;
+  static constexpr double MIN_VALUE = -1.0;
   static constexpr int64_t N_EI_CANDIDATES = 100;
+  static constexpr int64_t DIMENSION = 6;
 
   double acquisition_function(const Input & input);
-  double log_gaussian_pdf(const Input & input, const Input & mu, const Input & sigma);
-  static double fix_angle(const double angle);
-  Input sample_from_prior();
+  static double log_gaussian_pdf(const Input & input, const Input & mu, const Input & sigma);
+  static std::vector<double> get_weights(const int64_t n);
 
   std::mt19937_64 engine_;
   std::uniform_real_distribution<double> dist_uniform_;
   std::normal_distribution<double> dist_normal_;
 
   std::vector<Trial> trials_;
-  int64_t good_num_;
+  int64_t above_num_;
+  const Direction direction_;
   const int64_t n_startup_trials_;
-  const double x_stddev_;
-  const double y_stddev_;
-  const double z_stddev_;
-  const double roll_stddev_;
-  const double pitch_stddev_;
-
-  // Only for yaw, uniform distribution instead of normal distribution is used as initial
-  // distribution. So yaw_stddev value is not set from the constructor. However, the basic
-  // stddev is needed for kernel density estimation, so it is given as a fixed value.
-  // The value is determined empirically to 90 degrees.
-  const double yaw_stddev_ = M_PI / 2;
-  const Input base_stddev_;
+  Input base_stddev_;
 };
 
 #endif  // NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
