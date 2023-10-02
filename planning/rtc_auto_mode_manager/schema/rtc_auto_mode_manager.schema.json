@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for RTC Auto Mode Manager",
+  "type": "object",
+  "definitions": {
+    "rtc_auto_mode_manager": {
+      "type": "object",
+      "properties": {
+        "module_list": {
+          "type": "array",
+          "description": "Module names managing in rtc_auto_mode_manager",
+          "default": "['blind_spot', 'crosswalk', 'detection_area', 'intersection', 'no_stopping_area', 'traffic_light', 'lane_change_left', 'lane_change_right', 'avoidance_left', 'avoidance_right', 'goal_planner', 'start_planner', 'intersection_occlusion']"
+        },
+        "default_enable_list": {
+          "type": "array",
+          "description": "Module names enabled auto mode at initialization",
+          "default": "['blind_spot', 'crosswalk', 'detection_area', 'intersection', 'no_stopping_area', 'traffic_light', 'lane_change_left', lane_change_right', 'avoidance_left', 'avoidance_right', 'goal_planner', 'start_planner', 'intersection_occlusion']"
+        }
+      },
+      "required": [
+        "module_list",
+        "default_enable_list"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/rtc_auto_mode_manager"
+        }
+      },
+      "required": [
+        "ros__parameters"
+      ]
+    }
+  },
+  "required": [
+    "/**"
+  ]
+}
