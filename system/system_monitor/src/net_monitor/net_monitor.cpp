@@ -42,6 +42,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   device_params_(
     declare_parameter<std::vector<std::string>>("devices", std::vector<std::string>())),
   getifaddrs_error_code_(0),
+  network_traffic_monitor_activated_(declare_parameter<bool>("network_traffic_monitor_activated", true)),
   monitor_program_(declare_parameter<std::string>("monitor_program", "greengrass")),
   socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path)),
   crc_error_check_duration_(declare_parameter<int>("crc_error_check_duration", 1)),
@@ -82,7 +83,9 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   get_reassembles_failed_column_index();
 
   // Send request to start nethogs
-  send_start_nethogs_request();
+  if (network_traffic_monitor_activated_) {
+    send_start_nethogs_request();
+  }
 }
 
 NetMonitor::~NetMonitor()
@@ -237,38 +240,44 @@ void NetMonitor::monitor_traffic(diagnostic_updater::DiagnosticStatusWrapper & s
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
-  // Get result of nethogs
-  traffic_reader_service::Result result;
-  get_nethogs_result(result);
+  if (network_traffic_monitor_activated_) {
 
-  // traffic_reader result to output
-  if (result.error_code != EXIT_SUCCESS) {
-    status.summary(DiagStatus::ERROR, "traffic_reader error");
-    status.add("error", result.output);
-  } else {
-    status.summary(DiagStatus::OK, "OK");
+    // Get result of nethogs
+    traffic_reader_service::Result result;
+    get_nethogs_result(result);
 
-    if (result.output.empty()) {
-      status.add("nethogs: result", fmt::format("No data monitored: {}", monitor_program_));
+    // traffic_reader result to output
+    if (result.error_code != EXIT_SUCCESS) {
+      status.summary(DiagStatus::ERROR, "traffic_reader error");
+      status.add("error", result.output);
     } else {
-      std::stringstream lines{result.output};
-      std::string line;
-      std::vector<std::string> list;
-      int index = 0;
-      while (std::getline(lines, line)) {
-        if (line.empty()) continue;
+      status.summary(DiagStatus::OK, "OK");
 
-        boost::split(list, line, boost::is_any_of("\t"), boost::token_compress_on);
-        if (list.size() >= 3) {
-          status.add(fmt::format("nethogs {}: program", index), list[3].c_str());
-          status.add(fmt::format("nethogs {}: sent (KB/s)", index), list[1].c_str());
-          status.add(fmt::format("nethogs {}: received (KB/sec)", index), list[2].c_str());
-        } else {
-          status.add(fmt::format("nethogs {}: result", index), line);
+      if (result.output.empty()) {
+        status.add("nethogs: result", fmt::format("No data monitored: {}", monitor_program_));
+      } else {
+        std::stringstream lines{result.output};
+        std::string line;
+        std::vector<std::string> list;
+        int index = 0;
+        while (std::getline(lines, line)) {
+          if (line.empty()) continue;
+
+          boost::split(list, line, boost::is_any_of("\t"), boost::token_compress_on);
+          if (list.size() >= 3) {
+            status.add(fmt::format("nethogs {}: program", index), list[3].c_str());
+            status.add(fmt::format("nethogs {}: sent (KB/s)", index), list[1].c_str());
+            status.add(fmt::format("nethogs {}: received (KB/sec)", index), list[2].c_str());
+          } else {
+            status.add(fmt::format("nethogs {}: result", index), line);
+          }
+          ++index;
         }
-        ++index;
       }
     }
+  } else {
+    status.summary(DiagStatus::OK, "OK");
+    status.add("nethogs: result", "traffic monitor is NOT activated");
   }
 
   // Measure elapsed time since start time and report
