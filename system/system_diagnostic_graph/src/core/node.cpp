@@ -31,7 +31,7 @@ BaseNode::BaseNode(const std::string & path) : path_(path)
 
 UnitNode::UnitNode(const std::string & path) : BaseNode(path)
 {
-  // for unique_ptr
+  level_ = DiagnosticStatus::STALE;
 }
 
 UnitNode::~UnitNode()
@@ -41,10 +41,6 @@ UnitNode::~UnitNode()
 
 void UnitNode::create(ConfigObject & config, ExprInit & exprs)
 {
-  node_.status.level = DiagnosticStatus::STALE;
-  node_.status.name = "";
-  node_.status.hardware_id = "";
-
   expr_ = exprs.create(parse_expr_config(config));
 }
 
@@ -52,7 +48,7 @@ void UnitNode::update(const rclcpp::Time &)
 {
   /*
   const auto result = expr_->eval();
-  node_.status.level = result.level;
+  status_.level = result.level;
   node_.links.clear();
   for (const auto & [node, used] : result.links) {
     DiagnosticLink link;
@@ -65,7 +61,15 @@ void UnitNode::update(const rclcpp::Time &)
 
 DiagnosticNode UnitNode::report() const
 {
-  return node_;
+  DiagnosticNode message;
+  message.status.level = level_;
+  message.status.name = path_;
+  return message;
+}
+
+DiagnosticLevel UnitNode::level() const
+{
+  return level_;
 }
 
 std::vector<BaseNode *> UnitNode::links() const
@@ -73,18 +77,17 @@ std::vector<BaseNode *> UnitNode::links() const
   return expr_->get_dependency();
 }
 
-void DiagNode::create(ConfigObject & config, ExprInit &)
+DiagNode::DiagNode(const std::string & path, ConfigObject & config) : BaseNode(path)
 {
-  node_.status.level = DiagnosticStatus::STALE;
-
   timeout_ = 3.0;  // TODO(Takagi, Isamu): parameterize
   name_ = config.take_text("name");
   hardware_ = config.take_text("hardware", "");
+
+  status_.level = DiagnosticStatus::STALE;
 }
 
-std::pair<std::string, std::string> DiagNode::key() const
+void DiagNode::create(ConfigObject &, ExprInit &)
 {
-  return std::make_pair(name_, hardware_);
 }
 
 void DiagNode::update(const rclcpp::Time & stamp)
@@ -92,12 +95,8 @@ void DiagNode::update(const rclcpp::Time & stamp)
   if (time_) {
     const auto elapsed = (stamp - time_.value()).seconds();
     if (timeout_ < elapsed) {
-      const auto name = node_.status.name;
-      const auto hardware = node_.status.hardware_id;
-      node_.status = DiagnosticStatus();
-      node_.status.level = DiagnosticStatus::STALE;
-      node_.status.name = name;
-      node_.status.hardware_id = hardware;
+      status_ = DiagnosticStatus();
+      status_.level = DiagnosticStatus::STALE;
       time_ = std::nullopt;
     }
   }
@@ -105,12 +104,26 @@ void DiagNode::update(const rclcpp::Time & stamp)
 
 DiagnosticNode DiagNode::report() const
 {
-  return node_;
+  DiagnosticNode message;
+  message.status = status_;
+  message.status.name = path_;
+  message.status.hardware_id = "";
+  return message;
+}
+
+DiagnosticLevel DiagNode::level() const
+{
+  return status_.level;
+}
+
+std::pair<std::string, std::string> DiagNode::key() const
+{
+  return std::make_pair(name_, hardware_);
 }
 
 void DiagNode::callback(const DiagnosticStatus & status, const rclcpp::Time & stamp)
 {
-  node_.status = status;
+  status_ = status;
   time_ = stamp;
 }
 

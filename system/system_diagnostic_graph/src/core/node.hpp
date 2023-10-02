@@ -38,11 +38,10 @@ public:
   virtual void create(ConfigObject & config, ExprInit & exprs) = 0;
   virtual void update(const rclcpp::Time & stamp) = 0;
   virtual DiagnosticNode report() const = 0;
+  virtual DiagnosticLevel level() const = 0;
   virtual DiagDebugData debug() const = 0;
   virtual std::vector<BaseNode *> links() const = 0;
 
-  DiagnosticLevel level() const { return node_.status.level; }
-  std::string name() const { return node_.status.name; }
   std::string path() const { return path_; }
 
   size_t index() const { return index_; }
@@ -51,7 +50,6 @@ public:
 protected:
   const std::string path_;
   size_t index_;
-  DiagnosticNode node_;
 };
 
 class UnitNode : public BaseNode
@@ -61,35 +59,36 @@ public:
   ~UnitNode() override;
   void create(ConfigObject & config, ExprInit & exprs) override;
   void update(const rclcpp::Time & stamp) override;
-
   DiagnosticNode report() const override;
+  DiagnosticLevel level() const override;
   DiagDebugData debug() const override;
-
   std::vector<BaseNode *> links() const override;
 
 private:
   std::unique_ptr<BaseExpr> expr_;
+  DiagnosticLevel level_;
 };
 
 class DiagNode : public BaseNode
 {
 public:
-  using BaseNode::BaseNode;
+  DiagNode(const std::string & path, ConfigObject & config);
   void create(ConfigObject & config, ExprInit & exprs) override;
   void update(const rclcpp::Time & stamp) override;
-
   DiagnosticNode report() const override;
+  DiagnosticLevel level() const override;
   DiagDebugData debug() const override;
-  void callback(const DiagnosticStatus & status, const rclcpp::Time & stamp);
-
-  std::pair<std::string, std::string> key() const;
   std::vector<BaseNode *> links() const override { return {}; }
+  std::pair<std::string, std::string> key() const;
+
+  void callback(const DiagnosticStatus & status, const rclcpp::Time & stamp);
 
 private:
   double timeout_;
   std::optional<rclcpp::Time> time_;
   std::string name_;
   std::string hardware_;
+  DiagnosticStatus status_;
 };
 
 }  // namespace system_diagnostic_graph

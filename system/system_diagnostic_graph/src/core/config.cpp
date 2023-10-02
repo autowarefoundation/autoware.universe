@@ -240,12 +240,10 @@ ConfigFile load_config_root(const std::string & path)
 
   ConfigFile result(mark);
   for (const auto & config : configs) {
-    dump(config);
     result.files.insert(result.files.end(), config.files.begin(), config.files.end());
     result.units.insert(result.units.end(), config.units.begin(), config.units.end());
     result.diags.insert(result.diags.end(), config.diags.begin(), config.diags.end());
   }
-  dump(result);
   return result;
 }
 

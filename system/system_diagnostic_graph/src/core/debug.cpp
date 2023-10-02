@@ -59,14 +59,14 @@ void GraphManager::debug()
 
 DiagDebugData UnitNode::debug() const
 {
-  const auto level_name = level_names.at(node_.status.level);
+  const auto level_name = level_names.at(level());
   const auto index_name = std::to_string(index());
   return {"unit", index_name, level_name, path_, "-----", "-----"};
 }
 
 DiagDebugData DiagNode::debug() const
 {
-  const auto level_name = level_names.at(node_.status.level);
+  const auto level_name = level_names.at(level());
   const auto index_name = std::to_string(index());
   return {"diag", index_name, level_name, path_, name_, hardware_};
 }

@@ -19,8 +19,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace system_diagnostic_graph
@@ -41,6 +43,7 @@ public:
 
 private:
   std::vector<std::unique_ptr<BaseNode>> nodes_;
+  std::map<std::pair<std::string, std::string>, DiagNode *> diags_;
   rclcpp::Time stamp_;
 };
 

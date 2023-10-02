@@ -42,6 +42,20 @@ void extend_false(LinkStatus & a, const LinkStatus & b)
   }
 }
 
+auto create_expr_list(ExprInit & exprs, ConfigObject & config)
+{
+  std::vector<std::unique_ptr<BaseExpr>> result;
+  const auto list = config.take_list("list");
+  for (size_t i = 0; i < list.size(); ++i) {
+    auto dict = parse_expr_config(config.mark().index(i), list[i]);
+    auto expr = exprs.create(dict);
+    if (expr) {
+      result.push_back(std::move(expr));
+    }
+  }
+  return result;
+}
+
 ConstExpr::ConstExpr(const DiagnosticLevel level)
 {
   level_ = level;
@@ -61,6 +75,7 @@ std::vector<BaseNode *> ConstExpr::get_dependency() const
 
 LinkExpr::LinkExpr(ExprInit & exprs, ConfigObject & config)
 {
+  // TODO(Takagi, Isamu): remove
   (void)config;
   (void)exprs;
 }
@@ -89,15 +104,7 @@ std::vector<BaseNode *> LinkExpr::get_dependency() const
 
 AndExpr::AndExpr(ExprInit & exprs, ConfigObject & config, bool short_circuit)
 {
-  const auto list = config.take_list("list");
-  std::cout << "size: " << list.size() << std::endl;
-  for (size_t i = 0; i < list.size(); ++i) {
-    auto dict = parse_expr_config(config.mark().index(i), list[i]);
-    auto expr = exprs.create(dict);
-    if (expr) {
-      list_.push_back(std::move(expr));
-    }
-  }
+  list_ = create_expr_list(exprs, config);
   short_circuit_ = short_circuit;
 }
 
@@ -135,15 +142,7 @@ std::vector<BaseNode *> AndExpr::get_dependency() const
 
 OrExpr::OrExpr(ExprInit & exprs, ConfigObject & config)
 {
-  (void)config;
-  (void)exprs;
-  throw std::runtime_error("OrExpr::OrExpr");
-
-  /*
-  for (const auto & node : take_expr_list(dict, "list")) {
-    list_.push_back(BaseExpr::create(graph, node));
-  }
-  */
+  list_ = create_expr_list(exprs, config);
 }
 
 ExprStatus OrExpr::eval() const
