@@ -30,36 +30,6 @@ LoggingLevelConfigureRvizPlugin::LoggingLevelConfigureRvizPlugin(QWidget * paren
 {
 }
 
-// Calculate the maximum width among all target_module_name.
-int LoggingLevelConfigureRvizPlugin::getMaxModuleNameWidth(QLabel * label)
-{
-  int max_width = 0;
-  QFontMetrics metrics(label->font());
-  for (const auto & item : node_logger_map_) {
-    const auto & target_module_name = item.first;
-    int width = metrics.horizontalAdvance(target_module_name);
-    if (width > max_width) {
-      max_width = width;
-    }
-  }
-  return max_width;
-}
-
-// create node list in node_logger_map_ without
-QStringList LoggingLevelConfigureRvizPlugin::getNodeList()
-{
-  QStringList nodes;
-  for (const auto & item : node_logger_map_) {
-    const auto & node_logger_vec = item.second;
-    for (const auto & node_logger_pair : node_logger_vec) {
-      if (!nodes.contains(node_logger_pair.first)) {
-        nodes.append(node_logger_pair.first);
-      }
-    }
-  }
-  return nodes;
-}
-
 void LoggingLevelConfigureRvizPlugin::onInitialize()
 {
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
@@ -122,6 +92,36 @@ void LoggingLevelConfigureRvizPlugin::onInitialize()
       node.toStdString() + "/config_logger");
     client_map_[node] = client;
   }
+}
+
+// Calculate the maximum width among all target_module_name.
+int LoggingLevelConfigureRvizPlugin::getMaxModuleNameWidth(QLabel * label)
+{
+  int max_width = 0;
+  QFontMetrics metrics(label->font());
+  for (const auto & item : node_logger_map_) {
+    const auto & target_module_name = item.first;
+    int width = metrics.horizontalAdvance(target_module_name);
+    if (width > max_width) {
+      max_width = width;
+    }
+  }
+  return max_width;
+}
+
+// create node list in node_logger_map_ without
+QStringList LoggingLevelConfigureRvizPlugin::getNodeList()
+{
+  QStringList nodes;
+  for (const auto & item : node_logger_map_) {
+    const auto & node_logger_vec = item.second;
+    for (const auto & node_logger_pair : node_logger_vec) {
+      if (!nodes.contains(node_logger_pair.first)) {
+        nodes.append(node_logger_pair.first);
+      }
+    }
+  }
+  return nodes;
 }
 
 // Modify the signature of the onButtonClick function:
