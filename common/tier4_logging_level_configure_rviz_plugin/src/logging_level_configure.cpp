@@ -15,6 +15,7 @@
 #include "yaml-cpp/yaml.h"
 
 #include <QLabel>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rviz_common/display_context.hpp>
 #include <tier4_logging_level_configure_rviz_plugin/logging_level_configure.hpp>
 
@@ -60,6 +61,8 @@ QStringList LoggingLevelConfigureRvizPlugin::getNodeList()
 
 void LoggingLevelConfigureRvizPlugin::onInitialize()
 {
+  raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
+
   setLoggerNodeMap();
 
   QVBoxLayout * layout = new QVBoxLayout;
@@ -100,7 +103,6 @@ void LoggingLevelConfigureRvizPlugin::onInitialize()
   setLayout(layout);
 
   // set up service clients
-  raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
   const auto & nodes = getNodeList();
   for (const QString & node : nodes) {
     const auto client = raw_node_->create_client<logging_demo::srv::ConfigLogger>(
@@ -166,9 +168,14 @@ void LoggingLevelConfigureRvizPlugin::load(const rviz_common::Config & config)
 
 void LoggingLevelConfigureRvizPlugin::setLoggerNodeMap()
 {
+  const std::string package_share_directory =
+    ament_index_cpp::get_package_share_directory("tier4_logging_level_configure_rviz_plugin");
+  const std::string default_config_path = package_share_directory + "/config/logger_config.yaml";
+
   const auto filename =
-    "/home/horibe/workspace/pilot-auto.latest/src/autoware/universe/common/"
-    "tier4_logging_level_configure_rviz_plugin/config/logger_config.yaml";
+    raw_node_->declare_parameter<std::string>("config_filename", default_config_path);
+  RCLCPP_INFO(raw_node_->get_logger(), "load config file: %s", filename.c_str());
+
   YAML::Node config = YAML::LoadFile(filename);
 
   for (YAML::const_iterator it = config.begin(); it != config.end(); ++it) {
