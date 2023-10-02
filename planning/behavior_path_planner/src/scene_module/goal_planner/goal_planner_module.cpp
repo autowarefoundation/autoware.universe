@@ -1324,6 +1324,8 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
     utils::path_safety_checker::generatePolygonsWithStoppingAndInertialMargin(
       path, base_link2front, base_link2rear, vehicle_width, parameters_->maximum_deceleration,
       parameters_->object_recognition_collision_check_max_extra_stopping_margin);
+  debug_data_.ego_polygons = ego_polygons;
+
   return utils::path_safety_checker::checkCollisionWithMargin(
     ego_polygons, pull_over_lane_stop_objects,
     parameters_->object_recognition_collision_check_margin);
@@ -1692,13 +1694,32 @@ void GoalPlannerModule::setDebugData()
       add(
         createPathMarkerArray(partial_path, "partial_path_" + std::to_string(i), 0, 0.9, 0.5, 0.9));
     }
+    {  // footprint polygons
+      auto marker = tier4_autoware_utils::createDefaultMarker(
+        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "detection_polygons", 0, Marker::LINE_LIST,
+        tier4_autoware_utils::createMarkerScale(0.01, 0.0, 0.0),
+        tier4_autoware_utils::createMarkerColor(0.0, 0.0, 1.0, 0.999));
+
+      for (const auto & ego_polygon : debug_data_.ego_polygons) {
+        for (size_t ep_idx = 0; ep_idx < ego_polygon.outer().size(); ++ep_idx) {
+          const auto & current_point = ego_polygon.outer().at(ep_idx);
+          const auto & next_point =
+            ego_polygon.outer().at((ep_idx + 1) % ego_polygon.outer().size());
+
+          marker.points.push_back(
+            tier4_autoware_utils::createPoint(current_point.x(), current_point.y(), 0.0));
+          marker.points.push_back(
+            tier4_autoware_utils::createPoint(next_point.x(), next_point.y(), 0.0));
+        }
+      }
+      debug_marker_.markers.push_back(marker);
+    }
     if (goal_planner_data_.ego_predicted_path.size() > 0) {
       const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
         goal_planner_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
       add(createPredictedPathMarkerArray(
         ego_predicted_path, vehicle_info_, "ego_predicted_path", 0, 0.0, 0.5, 0.9));
     }
-
     if (goal_planner_data_.filtered_objects.objects.size() > 0) {
       add(createObjectsMarkerArray(
         goal_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));

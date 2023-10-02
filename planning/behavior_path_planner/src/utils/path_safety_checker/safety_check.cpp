@@ -371,7 +371,8 @@ std::vector<Polygon2d> generatePolygonsWithStoppingAndInertialMargin(
       std::pow(p.point.longitudinal_velocity_mps, 2) * 0.5 / maximum_deceleration,
       max_extra_stopping_margin);
 
-    double extra_lateral_margin = (-1) * curvature * std::pow(p.point.longitudinal_velocity_mps, 2);
+    double extra_lateral_margin = (-1) * curvature * p.point.longitudinal_velocity_mps *
+                                  std::abs(p.point.longitudinal_velocity_mps);
     extra_lateral_margin =
       std::clamp(extra_lateral_margin, -extra_stopping_margin, extra_stopping_margin);
 

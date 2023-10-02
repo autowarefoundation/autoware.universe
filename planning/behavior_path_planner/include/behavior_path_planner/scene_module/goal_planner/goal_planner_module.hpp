@@ -106,6 +106,7 @@ struct FreespacePlannerDebugData
 struct GoalPlannerDebugData
 {
   FreespacePlannerDebugData freespace_planner{};
+  std::vector<Polygon2d> ego_polygons{};
 };
 
 class GoalPlannerModule : public SceneModuleInterface
