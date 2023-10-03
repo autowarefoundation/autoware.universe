@@ -14,48 +14,62 @@
 
 #include "modes.hpp"
 
+#include "config.hpp"
+#include "nodes.hpp"
+
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 namespace system_diagnostic_graph
 {
 
-/*
-UnitNode * find_node(Graph & graph, const std::string & name)
+OperationModes::OperationModes(rclcpp::Node & node, const std::vector<BaseNode *> & graph)
 {
-  const auto node = graph.find_unit(name);
-  if (!node) {
-    throw ConfigError("summary node '" + name + "' does node exist");
+  pub_ = node.create_publisher<Availability>("/system/operation_mode/availability", rclcpp::QoS(1));
+
+  using PathNodes = std::unordered_map<std::string, BaseNode *>;
+  PathNodes paths;
+  for (const auto & node : graph) {
+    paths[node->path()] = node;
   }
-  return node;
-};
 
-void GraphManager::init(const std::string & file, const std::string & mode)
-{
-  pub_modes_ = create_publisher<OperationModeAvailability>(
-    "/system/operation_mode/availability", rclcpp::QoS(1));
+  const auto find_node = [](const PathNodes & paths, const std::string & name) {
+    const auto iter = paths.find(name);
+    if (iter != paths.end()) {
+      return iter->second;
+    }
+    throw ConfigError("summary node '" + name + "' does node exist");
+  };
 
-  modes_.stop_mode = find_node(graph_, "/autoware/operation/stop");
-  modes_.autonomous_mode = find_node(graph_, "/autoware/operation/autonomous");
-  modes_.local_mode = find_node(graph_, "/autoware/operation/local");
-  modes_.remote_mode = find_node(graph_, "/autoware/operation/remote");
-  modes_.emergency_stop_mrm = find_node(graph_, "/autoware/operation/emergency-stop");
-  modes_.comfortable_stop_mrm = find_node(graph_, "/autoware/operation/comfortable-stop");
-  modes_.pull_over_mrm = find_node(graph_, "/autoware/operation/pull-over");
+  // clang-format off
+  stop_mode_ =            find_node(paths, "/autoware/operation/stop");
+  autonomous_mode_ =      find_node(paths, "/autoware/operation/autonomous");
+  local_mode_ =           find_node(paths, "/autoware/operation/local");
+  remote_mode_ =          find_node(paths, "/autoware/operation/remote");
+  emergency_stop_mrm_ =   find_node(paths, "/autoware/operation/emergency-stop");
+  comfortable_stop_mrm_ = find_node(paths, "/autoware/operation/comfortable-stop");
+  pull_over_mrm_ =        find_node(paths, "/autoware/operation/pull-over");
+  // clang-format on
 }
 
-OperationModeAvailability GraphManager::create_modes_message() const
+void OperationModes::update(const rclcpp::Time & stamp) const
 {
-  const auto is_ok = [](const UnitNode * node) { return node->level() == DiagnosticStatus::OK; };
+  const auto is_ok = [](const BaseNode * node) { return node->level() == DiagnosticStatus::OK; };
 
-  OperationModeAvailability message;
-  message.stamp = stamp_;
-  message.stop = is_ok(modes_.stop_mode);
-  message.autonomous = is_ok(modes_.autonomous_mode);
-  message.local = is_ok(modes_.local_mode);
-  message.remote = is_ok(modes_.remote_mode);
-  message.emergency_stop = is_ok(modes_.emergency_stop_mrm);
-  message.comfortable_stop = is_ok(modes_.comfortable_stop_mrm);
-  message.pull_over = is_ok(modes_.pull_over_mrm);
-  return message;
+  // clang-format off
+  Availability message;
+  message.stamp            = stamp;
+  message.stop             = is_ok(stop_mode_);
+  message.autonomous       = is_ok(autonomous_mode_);
+  message.local            = is_ok(local_mode_);
+  message.remote           = is_ok(remote_mode_);
+  message.emergency_stop   = is_ok(emergency_stop_mrm_);
+  message.comfortable_stop = is_ok(comfortable_stop_mrm_);
+  message.pull_over        = is_ok(pull_over_mrm_);
+  // clang-format on
+
+  pub_->publish(message);
 }
-*/
 
 }  // namespace system_diagnostic_graph

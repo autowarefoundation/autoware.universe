@@ -15,8 +15,8 @@
 #include "graph.hpp"
 
 #include "config.hpp"
-#include "expr.hpp"
-#include "node.hpp"
+#include "exprs.hpp"
+#include "nodes.hpp"
 
 #include <deque>
 #include <map>
@@ -90,17 +90,17 @@ void topological_sort(std::vector<std::unique_ptr<BaseNode>> & input)
   input = std::move(sorted);
 }
 
-GraphManager::GraphManager()
+Graph::Graph()
 {
   // for unique_ptr
 }
 
-GraphManager::~GraphManager()
+Graph::~Graph()
 {
   // for unique_ptr
 }
 
-void GraphManager::init(const std::string & file, const std::string & mode)
+void Graph::init(const std::string & file, const std::string & mode)
 {
   ConfigFile root = load_config_root(file);
 
@@ -154,7 +154,7 @@ void GraphManager::init(const std::string & file, const std::string & mode)
   diags_ = diags;
 }
 
-void GraphManager::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
+void Graph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
 {
   for (const auto & status : array.status) {
     const auto iter = diags_.find(std::make_pair(status.name, status.hardware_id));
@@ -166,7 +166,7 @@ void GraphManager::callback(const DiagnosticArray & array, const rclcpp::Time & 
   }
 }
 
-void GraphManager::update(const rclcpp::Time & stamp)
+void Graph::update(const rclcpp::Time & stamp)
 {
   for (const auto & node : nodes_) {
     node->update(stamp);
@@ -174,15 +174,25 @@ void GraphManager::update(const rclcpp::Time & stamp)
   stamp_ = stamp;
 }
 
-DiagnosticGraph GraphManager::create_graph_message() const
+DiagnosticGraph Graph::message() const
 {
-  DiagnosticGraph message;
-  message.stamp = stamp_;
-  message.nodes.reserve(nodes_.size());
+  DiagnosticGraph result;
+  result.stamp = stamp_;
+  result.nodes.reserve(nodes_.size());
   for (const auto & node : nodes_) {
-    message.nodes.push_back(node->report());
+    result.nodes.push_back(node->report());
   }
-  return message;
+  return result;
+}
+
+std::vector<BaseNode *> Graph::nodes() const
+{
+  std::vector<BaseNode *> result;
+  result.reserve(nodes_.size());
+  for (const auto & node : nodes_) {
+    result.push_back(node.get());
+  }
+  return result;
 }
 
 }  // namespace system_diagnostic_graph

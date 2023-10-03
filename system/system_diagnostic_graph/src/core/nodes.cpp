@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "node.hpp"
+#include "nodes.hpp"
 
-#include "expr.hpp"
+#include "exprs.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CORE__NODE_HPP_
-#define CORE__NODE_HPP_
+#ifndef CORE__NODES_HPP_
+#define CORE__NODES_HPP_
 
 #include "config.hpp"
 #include "debug.hpp"
@@ -94,4 +94,4 @@ private:
 
 }  // namespace system_diagnostic_graph
 
-#endif  // CORE__NODE_HPP_
+#endif  // CORE__NODES_HPP_

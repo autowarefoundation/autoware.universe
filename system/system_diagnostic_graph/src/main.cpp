@@ -22,6 +22,17 @@ namespace system_diagnostic_graph
 
 MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
 {
+  // Init diagnostics graph.
+  {
+    const auto file = declare_parameter<std::string>("graph_file");
+    const auto mode = declare_parameter<std::string>("mode");
+    graph_.init(file, mode);
+    graph_.debug();
+  }
+
+  // Init plugins
+  modes_ = std::make_unique<OperationModes>(*this, graph_.nodes());
+
   // Init ros interface.
   {
     using std::placeholders::_1;
@@ -35,26 +46,26 @@ MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
     const auto rate = rclcpp::Rate(declare_parameter<double>("rate"));
     timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
   }
+}
 
-  // Init diagnostics graph.
-  {
-    const auto file = declare_parameter<std::string>("graph_file");
-    const auto mode = declare_parameter<std::string>("mode");
-    manager_.init(file, mode);
-    manager_.debug();
-  }
+MainNode::~MainNode()
+{
+  // for unique_ptr
 }
 
 void MainNode::on_timer()
 {
-  manager_.update(now());
-  manager_.debug();
-  pub_graph_->publish(manager_.create_graph_message());
+  const auto stamp = now();
+  graph_.update(stamp);
+  graph_.debug();
+  pub_graph_->publish(graph_.message());
+
+  modes_->update(stamp);
 }
 
 void MainNode::on_diag(const DiagnosticArray::ConstSharedPtr msg)
 {
-  manager_.callback(*msg, now());
+  graph_.callback(*msg, now());
 }
 
 }  // namespace system_diagnostic_graph

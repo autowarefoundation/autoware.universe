@@ -8,8 +8,9 @@ ament_auto_add_executable(aggregator
   src/core/config.cpp
   src/core/debug.cpp
   src/core/graph.cpp
-  src/core/node.cpp
-  src/core/expr.cpp
+  src/core/nodes.cpp
+  src/core/exprs.cpp
+  src/core/modes.cpp
   src/main.cpp
 )
 

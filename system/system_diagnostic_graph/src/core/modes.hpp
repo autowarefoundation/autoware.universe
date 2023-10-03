@@ -19,24 +19,31 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <tier4_system_msgs/msg/operation_mode_availability.hpp>
+
+#include <vector>
+
 namespace system_diagnostic_graph
 {
 
 class OperationModes
 {
 public:
-  explicit OperationModes(rclcpp::Node * node);
+  explicit OperationModes(rclcpp::Node & node, const std::vector<BaseNode *> & graph);
+  void update(const rclcpp::Time & stamp) const;
 
 private:
-  rclcpp::Publisher<OperationModeAvailability>::SharedPtr pub_modes_;
+  using Availability = tier4_system_msgs::msg::OperationModeAvailability;
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Publisher<Availability>::SharedPtr pub_;
 
-  UnitNode * stop_mode;
-  UnitNode * autonomous_mode;
-  UnitNode * local_mode;
-  UnitNode * remote_mode;
-  UnitNode * emergency_stop_mrm;
-  UnitNode * comfortable_stop_mrm;
-  UnitNode * pull_over_mrm;
+  BaseNode * stop_mode_;
+  BaseNode * autonomous_mode_;
+  BaseNode * local_mode_;
+  BaseNode * remote_mode_;
+  BaseNode * emergency_stop_mrm_;
+  BaseNode * comfortable_stop_mrm_;
+  BaseNode * pull_over_mrm_;
 };
 
 }  // namespace system_diagnostic_graph

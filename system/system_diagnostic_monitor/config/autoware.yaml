@@ -7,7 +7,7 @@ files:
   - { package: system_diagnostic_monitor, path: config/vehicle.yaml }
   - { package: system_diagnostic_monitor, path: config/system.yaml }
 
-links:
+units:
   - path: /autoware
     type: and
     list:

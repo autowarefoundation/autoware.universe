@@ -28,16 +28,17 @@
 namespace system_diagnostic_graph
 {
 
-class GraphManager final
+class Graph final
 {
 public:
-  GraphManager();
-  ~GraphManager();
+  Graph();
+  ~Graph();
 
   void init(const std::string & file, const std::string & mode);
   void callback(const DiagnosticArray & array, const rclcpp::Time & stamp);
   void update(const rclcpp::Time & stamp);
-  DiagnosticGraph create_graph_message() const;
+  DiagnosticGraph message() const;
+  std::vector<BaseNode *> nodes() const;
 
   void debug();
 
