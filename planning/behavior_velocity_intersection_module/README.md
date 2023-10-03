@@ -108,6 +108,60 @@ In there are no traffic lights associated with the lane, the ego vehicle will ma
 
 ![occlusion_detection](./docs/occlusion-without-tl.drawio.svg)
 
+### Data Structure
+
+#### `IntersectionLanelets`
+
+```plantuml
+@startuml
+entity IntersectionLanelets {
+ * conflicting lanes/area
+ --
+ * first conflicting area
+ The conflicting lane area which the path intersects first
+ --
+ * attention lanes/area
+ --
+ * first attention lane area
+ The attention lane area which the path intersects first
+ --
+ * occlusion attention lanes/area
+ Part of attention lanes/area for occlusion detection
+ --
+ * is_priortized: bool
+ If ego vehicle has priority in current traffic light context
+}
+@enduml
+```
+
+#### `IntersectionStopLines`
+
+Each stop lines are generated from interpolated path points to obtain precise positions.
+
+```plantuml
+@startuml
+entity IntersectionStopLines {
+  * closest_idx: size_t
+  closest path point index for ego vehicle
+  --
+  * stuck_stop_line: size_t
+  stop line index on stuck vehicle detection
+  --
+  * default_stop_line: size_t
+  If defined on the map, its index on the path. Otherwise generated before first_attention_stop_line
+  --
+  * first_attention_stop_line
+  The index of the first path point which is inside the attention area
+  --
+  * occlusion_peeking_stop_line
+  The index of the path point for the peeking limit position
+  --
+  * pass_judge_line
+  The index of the path point which is before first_attention_stop_line/occlusion_peeking_stop_line by braking distance
+}
+@enduml
+```
+
 ### Module Parameters
 
 | Parameter                                           | Type   | Description                                                                                    |
