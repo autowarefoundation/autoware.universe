@@ -1107,9 +1107,10 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
                                                         occlusion_stop_line_idx};
     }
   } else {
-    const auto occlusion_stop_line = planner_param_.occlusion.temporal_stop_before_attention_area
-                                       ? first_attention_stop_line_idx
-                                       : occlusion_stop_line_idx;
+    const auto occlusion_stop_line =
+      (planner_param_.occlusion.temporal_stop_before_attention_area || !has_traffic_light_)
+        ? first_attention_stop_line_idx
+        : occlusion_stop_line_idx;
     return IntersectionModule::FirstWaitBeforeOcclusion{
       is_occlusion_cleared_with_margin, closest_idx, default_stop_line_idx, occlusion_stop_line};
   }
