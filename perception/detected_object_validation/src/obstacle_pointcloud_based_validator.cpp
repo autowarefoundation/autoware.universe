@@ -37,17 +37,6 @@
 
 namespace
 {
-template <typename T>
-inline std::map<uint8_t, T> convertListToMap(const std::vector<T> & input_vector)
-{
-  std::map<uint8_t, T> output_map;
-  uint8_t label = 0;
-  for (const T & v : input_vector) {
-    output_map.insert(std::make_pair(label, v));
-    label++;
-  }
-  return output_map;
-}
 inline pcl::PointXY toPCL(const double x, const double y)
 {
   pcl::PointXY pcl_point;
@@ -104,11 +93,11 @@ ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(
     "~/output/objects", rclcpp::QoS{1});
 
   points_num_threshold_param_.min_points_num =
-    convertListToMap(declare_parameter<std::vector<int64_t>>("min_points_num"));
+    declare_parameter<std::vector<int64_t>>("min_points_num");
   points_num_threshold_param_.max_points_num =
-    convertListToMap(declare_parameter<std::vector<int64_t>>("max_points_num"));
+    declare_parameter<std::vector<int64_t>>("max_points_num");
   points_num_threshold_param_.min_points_and_distance_ratio =
-    convertListToMap(declare_parameter<std::vector<double>>("min_points_and_distance_ratio"));
+    declare_parameter<std::vector<double>>("min_points_and_distance_ratio");
 
   const bool enable_debugger = declare_parameter<bool>("enable_debugger", false);
   if (enable_debugger) debugger_ = std::make_shared<Debugger>(this);
