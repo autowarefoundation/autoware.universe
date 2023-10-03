@@ -52,7 +52,7 @@ private:
   static constexpr double MAX_VALUE = 1.0;
   static constexpr double MIN_VALUE = -1.0;
   static constexpr int64_t N_EI_CANDIDATES = 100;
-  static constexpr double PRIOR_WEIGHT = 1.0;
+  static constexpr double PRIOR_WEIGHT = 0.0;
 
   double acquisition_function(const Input & input);
   double log_gaussian_pdf(const Input & input, const Input & mu, const Input & sigma) const;
