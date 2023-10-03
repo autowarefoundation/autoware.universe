@@ -63,7 +63,6 @@ SamplingPlannerModule::SamplingPlannerModule(
 bool SamplingPlannerModule::isExecutionRequested() const
 {
   if (getPreviousModuleOutput().reference_path->points.empty()) {
-    RCLCPP_WARN(getLogger(), "reference path is empty.");
     return false;
   }
 
@@ -82,7 +81,6 @@ bool SamplingPlannerModule::isExecutionReady() const
 SamplingPlannerData SamplingPlannerModule::createPlannerData(const PlanResult & path)
 {
   // create planner data
-
   SamplingPlannerData data;
   // planner_data.header = path.header;
   auto points = path->points;
@@ -139,7 +137,112 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   // drivable area and copy to the expected output and finally copy the velocities from the ref path
   RCLCPP_INFO(getLogger(), "Generated paths %ld", frenet_paths.size());
 
-  return {};
+  debug_data_.footprints.clear();
+  for (auto & path : frenet_paths) {
+    const auto footprint =
+      sampler_common::constraints::checkHardConstraints(path, params_.constraints);
+    debug_data_.footprints.push_back(footprint);
+    sampler_common::constraints::calculateCost(path, params_.constraints, reference_spline);
+  }
+  std::vector<sampler_common::Path> candidate_paths;
+  const auto move_to_paths = [&candidate_paths](auto & paths_to_move) {
+    candidate_paths.insert(
+      candidate_paths.end(), std::make_move_iterator(paths_to_move.begin()),
+      std::make_move_iterator(paths_to_move.end()));
+  };
+
+  move_to_paths(frenet_paths);
+  debug_data_.previous_sampled_candidates_nb = debug_data_.sampled_candidates.size();
+  debug_data_.sampled_candidates = candidate_paths;
+  debug_data_.obstacles = params_.constraints.obstacle_polygons;
+  // updateDebugMarkers();
+
+  auto p = getPreviousModuleOutput().reference_path;
+  BehaviorModuleOutput out;
+  out.path = p;
+  out.reference_path = p;
+  return out;
+}
+
+void SamplingPlannerModule::updateDebugMarkers()
+{
+  const auto header = planner_data_->route_handler->getRouteHeader();
+  visualization_msgs::msg::Marker m;
+  m.header.frame_id = "map";
+  m.header.stamp = header.stamp;
+  m.action = m.ADD;
+  m.id = 0UL;
+  m.type = m.LINE_STRIP;
+  m.color.a = 1.0;
+  m.scale.x = 0.02;
+  m.ns = "candidates";
+  for (const auto & c : debug_data_.sampled_candidates) {
+    m.points.clear();
+    for (const auto & p : c.points)
+      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+    if (c.constraint_results.isValid()) {
+      m.color.g = 1.0;
+      m.color.r = 0.0;
+    } else {
+      m.color.r = 1.0;
+      m.color.g = 0.0;
+    }
+    debug_marker_.markers.push_back(m);
+    info_marker_.markers.push_back(m);
+    ++m.id;
+  }
+  m.ns = "footprint";
+  m.id = 0UL;
+  m.type = m.POINTS;
+  m.points.clear();
+  m.color.r = 1.0;
+  m.color.g = 0.0;
+  m.color.b = 1.0;
+  m.scale.y = 0.02;
+  if (!debug_data_.footprints.empty()) {
+    m.action = m.ADD;
+    for (const auto & p : debug_data_.footprints[debug_data_.footprints.size()])
+      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+  } else {
+    m.action = m.DELETE;
+  }
+  m.ns = "debug_path";
+  m.id = 0UL;
+  m.type = m.POINTS;
+  m.points.clear();
+  m.color.g = 1.0;
+  m.color.b = 0.0;
+  m.scale.y = 0.04;
+  if (!debug_data_.sampled_candidates.empty()) {
+    m.action = m.ADD;
+    for (const auto & p :
+         debug_data_.sampled_candidates[debug_data_.sampled_candidates.size()].points)
+      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+  } else {
+    m.action = m.DELETE;
+  }
+  debug_marker_.markers.push_back(m);
+  info_marker_.markers.push_back(m);
+  m.type = m.LINE_STRIP;
+  m.ns = "obstacles";
+  m.id = 0UL;
+  m.color.r = 1.0;
+  m.color.g = 0.0;
+  m.color.b = 0.0;
+  for (const auto & obs : debug_data_.obstacles) {
+    m.points.clear();
+    for (const auto & p : obs.outer())
+      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+    debug_marker_.markers.push_back(m);
+    info_marker_.markers.push_back(m);
+    ++m.id;
+  }
+  m.action = m.DELETE;
+  m.ns = "candidates";
+  for (m.id = debug_data_.sampled_candidates.size();
+       static_cast<size_t>(m.id) < debug_data_.previous_sampled_candidates_nb; ++m.id)
+    debug_marker_.markers.push_back(m);
+  info_marker_.markers.push_back(m);
 }
 
 CandidateOutput SamplingPlannerModule::planCandidate() const

@@ -24,6 +24,8 @@
 #include "bezier_sampler/bezier_sampling.hpp"
 #include "frenet_planner/frenet_planner.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "sampler_common/constraints/hard_constraint.hpp"
+#include "sampler_common/constraints/soft_constraint.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
@@ -32,7 +34,6 @@
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <sampler_common/structures.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -60,6 +61,14 @@ struct SamplingPlannerData
   geometry_msgs::msg::Pose ego_pose;
   double ego_vel{};
 };
+
+struct SamplingPlannerDebugData
+{
+  std::vector<sampler_common::Path> sampled_candidates{};
+  size_t previous_sampled_candidates_nb = 0UL;
+  std::vector<tier4_autoware_utils::Polygon2d> obstacles{};
+  std::vector<tier4_autoware_utils::MultiPoint2d> footprints{};
+};
 class SamplingPlannerModule : public SceneModuleInterface
 {
 public:
@@ -84,6 +93,8 @@ public:
   {
   }
 
+  SamplingPlannerDebugData debug_data_;
+
 private:
   SamplingPlannerData createPlannerData(const PlanResult & path);
 
@@ -94,6 +105,8 @@ private:
   bool canTransitFailureState() override { return false; }
 
   bool canTransitIdleToRunningState() override { return false; }
+
+  void updateDebugMarkers();
 
   frenet_planner::SamplingParameters prepareSamplingParameters(
     const sampler_common::State & initial_state,
