@@ -169,7 +169,7 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
     if (debugger_) debugger_->addNeighborPointcloud(neighbor_pointcloud);
 
     // Filter object that have few pointcloud in them.
-    // TODO change from polygon to bounding box
+    // TODO(badai-nguyen) add 3d validator option
     const auto num = getPointCloudNumWithinPolygon(transformed_object, neighbor_pointcloud);
     const auto object_distance =
       std::hypot(transformed_object_position.x, transformed_object_position.y);
