@@ -58,16 +58,15 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
   Input best_input;
   double best_score = std::numeric_limits<double>::lowest();
   const double coeff = BASE_STDDEV_COEFF * std::pow(above_num_, -1.0 / (4 + input_dimension_));
-  std::uniform_int_distribution<int64_t> dist(0, above_num_);
+  std::vector<double> weights = get_weights(above_num_);
+  weights.push_back(PRIOR_WEIGHT);
+  std::discrete_distribution<int64_t> dist(weights.begin(), weights.end());
   for (int64_t i = 0; i < N_EI_CANDIDATES; i++) {
     Input mu, sigma;
     const int64_t index = dist(engine_);
     if (index == above_num_) {
       mu = Input(input_dimension_, 0.0);
       sigma = base_stddev_;
-      for (int64_t j = 0; j < input_dimension_; j++) {
-        sigma[j] *= BASE_STDDEV_COEFF;
-      }
     } else {
       mu = trials_[index].input;
       sigma = base_stddev_;
@@ -113,7 +112,6 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
     sigma_below[j] *= coeff_below;
   }
 
-  constexpr double PRIOR_WEIGHT = 1.0;
   std::vector<double> above_weights = get_weights(above_num_);
   std::vector<double> below_weights = get_weights(n - above_num_);
   std::reverse(below_weights.begin(), below_weights.end());  // below_weights is ascending order
@@ -140,9 +138,11 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   }
 
   // prior
-  const double log_p = log_gaussian_pdf(input, Input(input_dimension_, 0.0), base_stddev_);
-  const double log_w = std::log(PRIOR_WEIGHT / above_sum);
-  above_logs.push_back(log_p + log_w);
+  if (PRIOR_WEIGHT > 0.0) {
+    const double log_p = log_gaussian_pdf(input, Input(input_dimension_, 0.0), base_stddev_);
+    const double log_w = std::log(PRIOR_WEIGHT / above_sum);
+    above_logs.push_back(log_p + log_w);
+  }
 
   auto log_sum_exp = [](const std::vector<double> & log_vec) {
     const double max = *std::max_element(log_vec.begin(), log_vec.end());
