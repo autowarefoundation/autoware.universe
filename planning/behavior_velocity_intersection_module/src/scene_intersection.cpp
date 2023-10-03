@@ -831,7 +831,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       "Path has no interval on intersection lane " + std::to_string(lane_id_)};
   }
 
-  // cache intesersection lane information because it is invariant
+  // cache intersection lane information because it is invariant
   const auto & current_pose = planner_data_->current_odometry->pose;
   const auto lanelets_on_path =
     planning_utils::getLaneletsOnPath(*path, lanelet_map_ptr, current_pose);
@@ -975,7 +975,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
 
   // occlusion stop line is generated from the intersection of ego footprint along the path with the
-  // attention area, so if this is null, eog has already passed the interection
+  // attention area, so if this is null, eog has already passed the intersection
   if (!first_attention_stop_line_idx_opt || !occlusion_peeking_stop_line_idx_opt) {
     return IntersectionModule::Indecisive{"occlusion stop line is null"};
   }
