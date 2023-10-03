@@ -1313,14 +1313,14 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
   const double base_link2rear = common_parameters.base_link2rear;
   const double vehicle_width = common_parameters.vehicle_width;
 
-  const auto ego_polygons =
+  const auto ego_polygons_expanded =
     utils::path_safety_checker::generatePolygonsWithStoppingAndInertialMargin(
       path, base_link2front, base_link2rear, vehicle_width, parameters_->maximum_deceleration,
       parameters_->object_recognition_collision_check_max_extra_stopping_margin);
-  debug_data_.ego_polygons = ego_polygons;
+  debug_data_.ego_polygons_expanded = ego_polygons_expanded;
 
   return utils::path_safety_checker::checkCollisionWithMargin(
-    ego_polygons, pull_over_lane_stop_objects,
+    ego_polygons_expanded, pull_over_lane_stop_objects,
     parameters_->object_recognition_collision_check_margin);
 }
 
@@ -1696,7 +1696,7 @@ void GoalPlannerModule::setDebugData()
       tier4_autoware_utils::createMarkerScale(0.01, 0.0, 0.0),
       tier4_autoware_utils::createMarkerColor(0.0, 0.0, 1.0, 0.999));
 
-    for (const auto & ego_polygon : debug_data_.ego_polygons) {
+    for (const auto & ego_polygon : debug_data_.ego_polygons_expanded) {
       for (size_t ep_idx = 0; ep_idx < ego_polygon.outer().size(); ++ep_idx) {
         const auto & current_point = ego_polygon.outer().at(ep_idx);
         const auto & next_point = ego_polygon.outer().at((ep_idx + 1) % ego_polygon.outer().size());
