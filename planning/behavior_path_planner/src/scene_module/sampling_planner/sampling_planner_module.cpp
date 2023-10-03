@@ -155,7 +155,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   debug_data_.previous_sampled_candidates_nb = debug_data_.sampled_candidates.size();
   debug_data_.sampled_candidates = candidate_paths;
   debug_data_.obstacles = params_.constraints.obstacle_polygons;
-  // updateDebugMarkers();
+  updateDebugMarkers();
 
   auto p = getPreviousModuleOutput().reference_path;
   BehaviorModuleOutput out;
@@ -166,83 +166,84 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
 void SamplingPlannerModule::updateDebugMarkers()
 {
-  const auto header = planner_data_->route_handler->getRouteHeader();
-  visualization_msgs::msg::Marker m;
-  m.header.frame_id = "map";
-  m.header.stamp = header.stamp;
-  m.action = m.ADD;
-  m.id = 0UL;
-  m.type = m.LINE_STRIP;
-  m.color.a = 1.0;
-  m.scale.x = 0.02;
-  m.ns = "candidates";
-  for (const auto & c : debug_data_.sampled_candidates) {
-    m.points.clear();
-    for (const auto & p : c.points)
-      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
-    if (c.constraint_results.isValid()) {
-      m.color.g = 1.0;
-      m.color.r = 0.0;
-    } else {
-      m.color.r = 1.0;
-      m.color.g = 0.0;
-    }
-    debug_marker_.markers.push_back(m);
-    info_marker_.markers.push_back(m);
-    ++m.id;
-  }
-  m.ns = "footprint";
-  m.id = 0UL;
-  m.type = m.POINTS;
-  m.points.clear();
-  m.color.r = 1.0;
-  m.color.g = 0.0;
-  m.color.b = 1.0;
-  m.scale.y = 0.02;
-  if (!debug_data_.footprints.empty()) {
-    m.action = m.ADD;
-    for (const auto & p : debug_data_.footprints[debug_data_.footprints.size()])
-      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
-  } else {
-    m.action = m.DELETE;
-  }
-  m.ns = "debug_path";
-  m.id = 0UL;
-  m.type = m.POINTS;
-  m.points.clear();
-  m.color.g = 1.0;
-  m.color.b = 0.0;
-  m.scale.y = 0.04;
-  if (!debug_data_.sampled_candidates.empty()) {
-    m.action = m.ADD;
-    for (const auto & p :
-         debug_data_.sampled_candidates[debug_data_.sampled_candidates.size()].points)
-      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
-  } else {
-    m.action = m.DELETE;
-  }
-  debug_marker_.markers.push_back(m);
-  info_marker_.markers.push_back(m);
-  m.type = m.LINE_STRIP;
-  m.ns = "obstacles";
-  m.id = 0UL;
-  m.color.r = 1.0;
-  m.color.g = 0.0;
-  m.color.b = 0.0;
-  for (const auto & obs : debug_data_.obstacles) {
-    m.points.clear();
-    for (const auto & p : obs.outer())
-      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
-    debug_marker_.markers.push_back(m);
-    info_marker_.markers.push_back(m);
-    ++m.id;
-  }
-  m.action = m.DELETE;
-  m.ns = "candidates";
-  for (m.id = debug_data_.sampled_candidates.size();
-       static_cast<size_t>(m.id) < debug_data_.previous_sampled_candidates_nb; ++m.id)
-    debug_marker_.markers.push_back(m);
-  info_marker_.markers.push_back(m);
+  // const auto header = planner_data_->route_handler->getRouteHeader();
+  // visualization_msgs::msg::Marker m;
+  // m.header.frame_id = "map";
+  // m.header.stamp = header.stamp;
+  // m.action = m.ADD;
+  // m.id = 0UL;
+  // m.type = m.LINE_STRIP;
+  // m.color.a = 1.0;
+  // m.scale.x = 0.02;
+  // m.ns = "candidates";
+  // for (const auto & c : debug_data_.sampled_candidates) {
+  //   m.points.clear();
+  //   for (const auto & p : c.points)
+  //     m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+  //   if (c.constraint_results.isValid()) {
+  //     m.color.g = 1.0;
+  //     m.color.r = 0.0;
+  //   } else {
+  //     m.color.r = 1.0;
+  //     m.color.g = 0.0;
+  //   }
+  //   debug_marker_.markers.push_back(m);
+  //   info_marker_.markers.push_back(m);
+  //   ++m.id;
+  // }
+  // m.ns = "footprint";
+  // m.id = 0UL;
+  // m.type = m.POINTS;
+  // m.points.clear();
+  // m.color.r = 1.0;
+  // m.color.g = 0.0;
+  // m.color.b = 1.0;
+  // m.scale.y = 0.02;
+  // if (!debug_data_.footprints.empty()) {
+  //   m.action = m.ADD;
+  //   for (const auto & p : debug_data_.footprints[debug_data_.footprints.size()])
+  //     m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+  // } else {
+  //   m.action = m.DELETE;
+  // }
+  // m.ns = "debug_path";
+  // m.id = 0UL;
+  // m.type = m.POINTS;
+  // m.points.clear();
+  // m.color.g = 1.0;
+  // m.color.b = 0.0;
+  // m.scale.y = 0.04;
+  // if (!debug_data_.sampled_candidates.empty()) {
+  //   m.action = m.ADD;
+  //   for (const auto & p :
+  //        debug_data_.sampled_candidates[debug_data_.sampled_candidates.size()].points)
+  //     m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+  // } else {
+  //   m.action = m.DELETE;
+  // }
+  // debug_marker_.markers.push_back(m);
+  // info_marker_.markers.push_back(m);
+  // m.type = m.LINE_STRIP;
+  // m.ns = "obstacles";
+  // m.id = 0UL;
+  // m.color.r = 1.0;
+  // m.color.g = 0.0;
+  // m.color.b = 0.0;
+  // for (const auto & obs : debug_data_.obstacles) {
+  //   m.points.clear();
+  //   for (const auto & p : obs.outer())
+  //     m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+  //   debug_marker_.markers.push_back(m);
+  //   info_marker_.markers.push_back(m);
+  //   ++m.id;
+  // }
+  // m.action = m.DELETE;
+  // m.ns = "candidates";
+  // for (m.id = debug_data_.sampled_candidates.size();
+  //      static_cast<size_t>(m.id) < debug_data_.previous_sampled_candidates_nb; ++m.id) {
+  //   debug_marker_.markers.push_back(m);
+  //   info_marker_.markers.push_back(m);
+  // }
 }
 
 CandidateOutput SamplingPlannerModule::planCandidate() const
