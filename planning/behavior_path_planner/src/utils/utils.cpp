@@ -2002,19 +2002,27 @@ void makeBoundLongitudinallyMonotonic(
       return bound;
     }
 
-    std::vector<Point> ret;
+    std::vector<Point> ret = bound;
+    auto itr = std::next(ret.begin());
+    while (std::next(itr) != ret.end()) {
+      const auto p1 = *std::prev(itr);
+      const auto p2 = *itr;
+      const auto p3 = *std::next(itr);
 
-    for (size_t i = 0; i < bound.size(); i++) {
-      const auto & p_new = bound.at(i);
-      const auto duplicated_points_itr = std::find_if(
-        ret.begin(), ret.end(),
-        [&p_new](const auto & p) { return calcDistance2d(p, p_new) < 0.1; });
+      const std::vector vec_1to2 = {p2.x - p1.x, p2.y - p1.y, p2.z - p1.z};
+      const std::vector vec_3to2 = {p2.x - p3.x, p2.y - p3.y, p2.z - p3.z};
+      const auto product =
+        std::inner_product(vec_1to2.begin(), vec_1to2.end(), vec_3to2.begin(), 0.0);
 
-      if (duplicated_points_itr != ret.end() && std::next(duplicated_points_itr, 2) == ret.end()) {
-        ret.erase(duplicated_points_itr, ret.end());
+      const auto dist_1to2 = tier4_autoware_utils::calcDistance3d(p1, p2);
+      const auto dist_3to2 = tier4_autoware_utils::calcDistance3d(p3, p2);
+
+      constexpr double epsilon = 1e-3;
+      if (std::cos(M_PI_4) < product / dist_1to2 / dist_3to2 + epsilon) {
+        itr = ret.erase(itr);
+      } else {
+        itr++;
       }
-
-      ret.push_back(p_new);
     }
 
     return ret;
