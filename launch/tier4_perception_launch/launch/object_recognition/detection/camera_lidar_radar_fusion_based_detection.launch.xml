@@ -194,21 +194,13 @@
         </include>
       </group>
 
-      <!-- simple_cluster_merger -->
-      <group>
-        <include file="$(find-pkg-share cluster_merger)/launch/cluster_merger.launch.xml" if="$(var use_roi_based_cluster)">
-          <arg name="input/cluster0" value="euclidean_cluster/clusters"/>
-          <arg name="input/cluster1" value="roi_cluster/clusters"/>
-          <arg name="output/clusters" value="clusters"/>
-        </include>
-      </group>
-
       <group>
         <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
           <arg name="input/objects" value="clusters"/>
           <arg name="output/objects" value="objects_with_feature"/>
         </include>
       </group>
+
       <!-- convert DynamicObjectsWithFeatureArray to DynamicObjects -->
       <group>
         <include file="$(find-pkg-share detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml">
