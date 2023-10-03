@@ -49,12 +49,12 @@ public:
       qos = rclcpp::QoS(10).durability_volatile().best_effort();
     }
 
-    auto on_image_compressed = std::bind(&UndistortNode::on_image_compressed, this, _1);
     auto on_image = std::bind(&UndistortNode::on_image, this, _1);
+    auto on_compressed_image = std::bind(&UndistortNode::on_compressed_image, this, _1);
     auto on_info = std::bind(&UndistortNode::on_info, this, _1);
     sub_image_ = create_subscription<Image>("~/input/image_raw", qos, std::move(on_image));
-    sub_image_compressed_ = create_subscription<CompressedImage>(
-      "~/input/image_raw/compressed", qos, std::move(on_image_compressed));
+    sub_compressed_image_ = create_subscription<CompressedImage>(
+      "~/input/image_raw/compressed", qos, std::move(on_compressed_image));
 
     sub_info_ = create_subscription<CameraInfo>("~/input/camera_info", qos, std::move(on_info));
 
@@ -67,7 +67,7 @@ private:
   const std::string OVERRIDE_FRAME_ID;
 
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
-  rclcpp::Subscription<CompressedImage>::SharedPtr sub_image_compressed_;
+  rclcpp::Subscription<CompressedImage>::SharedPtr sub_compressed_image_;
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Publisher<CameraInfo>::SharedPtr pub_info_;
@@ -131,12 +131,16 @@ private:
 
   void on_image(const Image & msg)
   {
-    if (!info_.has_value()) return;
-    if (undistort_map_x.empty()) make_remap_lut();
+    if (!info_.has_value()) {
+      return;
+    }
+    if (undistort_map_x.empty()) {
+      make_remap_lut();
+    }
 
     // To remove redundant decompression, deactivate compressed image subscriber
-    if (sub_image_compressed_) {
-      sub_image_compressed_.reset();
+    if (sub_compressed_image_) {
+      sub_compressed_image_.reset();
     }
 
     tier4_autoware_utils::StopWatch stop_watch;
@@ -144,10 +148,14 @@ private:
     RCLCPP_INFO_STREAM(get_logger(), "image undistort: " << stop_watch.toc() << "[ms]");
   }
 
-  void on_image_compressed(const CompressedImage & msg)
+  void on_compressed_image(const CompressedImage & msg)
   {
-    if (!info_.has_value()) return;
-    if (undistort_map_x.empty()) make_remap_lut();
+    if (!info_.has_value()) {
+      return;
+    }
+    if (undistort_map_x.empty()) {
+      make_remap_lut();
+    }
 
     tier4_autoware_utils::StopWatch stop_watch;
     remap_and_publish(common::decompress_to_cv_mat(msg), msg.header);
