@@ -20,16 +20,18 @@
 #include <numeric>
 
 TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
-  const Direction direction, const int64_t n_startup_trials)
+  const Direction direction, const int64_t n_startup_trials, std::vector<bool> is_loop_variable)
 : engine_(std::random_device{}()),
-  dist_uniform_(-1, 1),
+  dist_uniform_(MIN_VALUE, MAX_VALUE),
   dist_normal_(0.0, 1.0),
   above_num_(0),
   direction_(direction),
-  n_startup_trials_(n_startup_trials)
+  n_startup_trials_(n_startup_trials),
+  input_dimension_(is_loop_variable.size()),
+  is_loop_variable_(is_loop_variable)
 {
   const double width = MAX_VALUE - MIN_VALUE;
-  base_stddev_ = Input(DIMENSION, width);
+  base_stddev_ = Input(input_dimension_, width);
 }
 
 void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
@@ -46,8 +48,8 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
 {
   if (static_cast<int64_t>(trials_.size()) < n_startup_trials_ || above_num_ == 0) {
     // Random sampling based on prior until the number of trials reaches `n_startup_trials_`.
-    Input input(DIMENSION);
-    for (int64_t j = 0; j < DIMENSION; j++) {
+    Input input(input_dimension_);
+    for (int64_t j = 0; j < input_dimension_; j++) {
       input[j] = dist_uniform_(engine_);
     }
     return input;
@@ -55,29 +57,31 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
 
   Input best_input;
   double best_score = std::numeric_limits<double>::lowest();
-  const double coeff = BASE_STDDEV_COEFF * std::pow(above_num_, -1.0 / (4 + DIMENSION));
+  const double coeff = BASE_STDDEV_COEFF * std::pow(above_num_, -1.0 / (4 + input_dimension_));
   std::uniform_int_distribution<int64_t> dist(0, above_num_);
   for (int64_t i = 0; i < N_EI_CANDIDATES; i++) {
     Input mu, sigma;
     const int64_t index = dist(engine_);
     if (index == above_num_) {
-      mu = Input(DIMENSION, 0.0);
+      mu = Input(input_dimension_, 0.0);
       sigma = base_stddev_;
-      for (int64_t j = 0; j < DIMENSION; j++) {
+      for (int64_t j = 0; j < input_dimension_; j++) {
         sigma[j] *= BASE_STDDEV_COEFF;
       }
     } else {
       mu = trials_[index].input;
       sigma = base_stddev_;
-      for (int64_t j = 0; j < DIMENSION; j++) {
+      for (int64_t j = 0; j < input_dimension_; j++) {
         sigma[j] *= coeff;
       }
     }
     // sample from the normal distribution
-    Input input(DIMENSION);
-    for (int64_t j = 0; j < DIMENSION; j++) {
+    Input input(input_dimension_);
+    for (int64_t j = 0; j < input_dimension_; j++) {
       input[j] = mu[j] + dist_normal_(engine_) * sigma[j];
-      input[j] = std::clamp(input[j], -1.0, 1.0);
+      input[j] =
+        (is_loop_variable_[j] ? normalize_loop_variable(input[j])
+                              : std::clamp(input[j], MIN_VALUE, MAX_VALUE));
     }
     const double score = acquisition_function(input);
     if (score > best_score) {
@@ -98,11 +102,13 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   std::vector<double> below_logs;
 
   // Scott's rule
-  const double coeff_above = BASE_STDDEV_COEFF * std::pow(above_num_, -1.0 / (4 + DIMENSION));
-  const double coeff_below = BASE_STDDEV_COEFF * std::pow(n - above_num_, -1.0 / (4 + DIMENSION));
+  const double coeff_above =
+    BASE_STDDEV_COEFF * std::pow(above_num_, -1.0 / (4 + input_dimension_));
+  const double coeff_below =
+    BASE_STDDEV_COEFF * std::pow(n - above_num_, -1.0 / (4 + input_dimension_));
   Input sigma_above = base_stddev_;
   Input sigma_below = base_stddev_;
-  for (int64_t j = 0; j < DIMENSION; j++) {
+  for (int64_t j = 0; j < input_dimension_; j++) {
     sigma_above[j] *= coeff_above;
     sigma_below[j] *= coeff_below;
   }
@@ -134,7 +140,7 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
   }
 
   // prior
-  const double log_p = log_gaussian_pdf(input, Input(DIMENSION, 0.0), base_stddev_);
+  const double log_p = log_gaussian_pdf(input, Input(input_dimension_, 0.0), base_stddev_);
   const double log_w = std::log(PRIOR_WEIGHT / above_sum);
   above_logs.push_back(log_p + log_w);
 
@@ -154,7 +160,7 @@ double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
 }
 
 double TreeStructuredParzenEstimator::log_gaussian_pdf(
-  const Input & input, const Input & mu, const Input & sigma)
+  const Input & input, const Input & mu, const Input & sigma) const
 {
   const double log_2pi = std::log(2.0 * M_PI);
   auto log_gaussian_pdf_1d = [&](const double diff, const double sigma) {
@@ -165,7 +171,10 @@ double TreeStructuredParzenEstimator::log_gaussian_pdf(
 
   double result = 0.0;
   for (int64_t i = 0; i < n; i++) {
-    const double diff = input[i] - mu[i];
+    double diff = input[i] - mu[i];
+    if (is_loop_variable_[i]) {
+      diff = normalize_loop_variable(diff);
+    }
     result += log_gaussian_pdf_1d(diff, sigma[i]);
   }
   return result;
@@ -201,4 +210,17 @@ std::vector<double> TreeStructuredParzenEstimator::get_weights(const int64_t n)
   }
 
   return weights;
+}
+
+double TreeStructuredParzenEstimator::normalize_loop_variable(const double value)
+{
+  // Normalize the loop variable to [-1, 1)
+  double result = value;
+  while (result >= MAX_VALUE) {
+    result -= 2.0;
+  }
+  while (result < MIN_VALUE) {
+    result += 2.0;
+  }
+  return result;
 }

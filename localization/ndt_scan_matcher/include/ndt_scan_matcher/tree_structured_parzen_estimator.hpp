@@ -41,7 +41,8 @@ public:
   };
 
   TreeStructuredParzenEstimator() = delete;
-  TreeStructuredParzenEstimator(const Direction direction, const int64_t n_startup_trials);
+  TreeStructuredParzenEstimator(
+    const Direction direction, const int64_t n_startup_trials, std::vector<bool> is_loop_variable);
   void add_trial(const Trial & trial);
   Input get_next_input();
 
@@ -51,11 +52,11 @@ private:
   static constexpr double MAX_VALUE = 1.0;
   static constexpr double MIN_VALUE = -1.0;
   static constexpr int64_t N_EI_CANDIDATES = 100;
-  static constexpr int64_t DIMENSION = 6;
 
   double acquisition_function(const Input & input);
-  static double log_gaussian_pdf(const Input & input, const Input & mu, const Input & sigma);
+  double log_gaussian_pdf(const Input & input, const Input & mu, const Input & sigma) const;
   static std::vector<double> get_weights(const int64_t n);
+  static double normalize_loop_variable(const double value);
 
   std::mt19937_64 engine_;
   std::uniform_real_distribution<double> dist_uniform_;
@@ -65,6 +66,8 @@ private:
   int64_t above_num_;
   const Direction direction_;
   const int64_t n_startup_trials_;
+  const int64_t input_dimension_;
+  const std::vector<bool> is_loop_variable_;
   Input base_stddev_;
 };
 
