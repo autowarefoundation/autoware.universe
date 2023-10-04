@@ -252,8 +252,7 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
     // Broadcasting the Basic Error Infos
     int number_of_comfortable_stop_messages =
       static_cast<int>(mrm_comfortable_stop_summary_list.size());
-    if (number_of_comfortable_stop_messages > 0)  // Only Display when there are some
-                                                  // errors
+    if (number_of_comfortable_stop_messages > 0)  // Only Display when there are errors
     {
       output_text << std::fixed
                   << "Comfortable Stop MRM Summary: " << number_of_comfortable_stop_messages
