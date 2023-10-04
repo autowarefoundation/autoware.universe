@@ -826,7 +826,7 @@ TrafficPrioritizedLevel getTrafficPrioritizedLevel(
   return TrafficPrioritizedLevel::NOT_PRIORITIZED;
 }
 
-double getHigestCurvature(const lanelet::ConstLineString3d & centerline)
+double getHighestCurvature(const lanelet::ConstLineString3d & centerline)
 {
   std::vector<lanelet::ConstPoint3d> points;
   for (auto point = centerline.begin(); point != centerline.end(); point++) {
@@ -859,7 +859,7 @@ std::vector<DiscretizedLane> generateDetectionLaneDivisions(
     }
     const auto fine_centerline =
       lanelet::utils::generateFineCenterline(detection_lanelet, curvature_calculation_ds);
-    const double highest_curvature = getHigestCurvature(fine_centerline);
+    const double highest_curvature = getHighestCurvature(fine_centerline);
     if (highest_curvature > curvature_threshold) {
       continue;
     }

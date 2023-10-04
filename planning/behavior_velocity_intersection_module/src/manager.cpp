@@ -142,8 +142,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node, ns + ".occlusion.absence_traffic_light.maximum_peeking_distance");
   ip.occlusion.attention_lane_crop_curvature_threshold =
     getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_crop_curvature_threshold");
-  ip.occlusion.attention_lane_curvature_calcluation_ds =
-    getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_curvature_calcluation_ds");
+  ip.occlusion.attention_lane_curvature_calculation_ds =
+    getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_curvature_calculation_ds");
 }
 
 void IntersectionModuleManager::launchNewModules(

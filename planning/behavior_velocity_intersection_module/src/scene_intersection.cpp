@@ -1030,7 +1030,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       occlusion_attention_lanelets, routing_graph_ptr,
       planner_data_->occupancy_grid->info.resolution,
       planner_param_.occlusion.attention_lane_crop_curvature_threshold,
-      planner_param_.occlusion.attention_lane_curvature_calcluation_ds);
+      planner_param_.occlusion.attention_lane_curvature_calculation_ds);
   }
   const auto & occlusion_attention_divisions = occlusion_attention_divisions_.value();
 
