@@ -5,6 +5,7 @@
   <version>1.0.0</version>
   <description>The ROS 2 gnss_poser package</description>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
+  <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
   <license>Apache License 2.0</license>
   <author email="ryo.watanabe@tier4.jp">Ryo Watanabe</author>
 
@@ -14,8 +15,11 @@
   <build_depend>libboost-dev</build_depend>
 
   <depend>autoware_sensing_msgs</depend>
-  <depend>geo_pos_conv</depend>
+  <depend>component_interface_specs</depend>
+  <depend>component_interface_utils</depend>
+  <depend>geographic_msgs</depend>
   <depend>geographiclib</depend>
+  <depend>geography_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

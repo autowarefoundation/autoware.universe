@@ -16,11 +16,10 @@
 #define SURROUND_OBSTACLE_CHECKER__NODE_HPP_
 
 #include "surround_obstacle_checker/debug_marker.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
-#include <motion_utils/motion_utils.hpp>
+#include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <tier4_autoware_utils/transform/transforms.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -32,12 +31,15 @@
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <boost/optional/optional.hpp>
+
 #include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -62,18 +64,27 @@ public:
 
   struct NodeParam
   {
-    bool use_pointcloud;
-    bool use_dynamic_object;
     bool is_surround_obstacle;
-    // For preventing chattering,
-    // surround_check_recover_distance_ must be  bigger than surround_check_distance_
-    double surround_check_recover_distance;
-    double surround_check_distance;
+    std::unordered_map<int, bool> enable_check_map;
+    std::unordered_map<int, double> surround_check_front_distance_map;
+    std::unordered_map<int, double> surround_check_side_distance_map;
+    std::unordered_map<int, double> surround_check_back_distance_map;
+    bool pointcloud_enable_check;
+    double pointcloud_surround_check_front_distance;
+    double pointcloud_surround_check_side_distance;
+    double pointcloud_surround_check_back_distance;
+    double surround_check_hysteresis_distance;
     double state_clear_time;
     bool publish_debug_footprints;
+    std::string debug_footprint_label;
   };
 
 private:
+  rcl_interfaces::msg::SetParametersResult onParam(
+    const std::vector<rclcpp::Parameter> & parameters);
+
+  std::array<double, 3> getCheckDistances(const std::string & str_label) const;
+
   void onTimer();
 
   void onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
@@ -107,6 +118,9 @@ private:
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
 
+  // parameter callback result
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+
   // stop checker
   std::unique_ptr<VehicleStopChecker> vehicle_stop_checker_;
 
@@ -125,6 +139,8 @@ private:
   // State Machine
   State state_ = State::PASS;
   std::shared_ptr<const rclcpp::Time> last_obstacle_found_time_;
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace surround_obstacle_checker
 

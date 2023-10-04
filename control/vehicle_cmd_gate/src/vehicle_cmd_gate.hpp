@@ -17,11 +17,13 @@
 
 #include "adapi_pause_interface.hpp"
 #include "moderate_stop_interface.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "vehicle_cmd_filter.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
-#include <motion_utils/motion_utils.hpp>
+#include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <vehicle_cmd_gate/msg/is_filter_activated.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
@@ -43,6 +45,7 @@
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <memory>
 
@@ -64,6 +67,8 @@ using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
 using tier4_system_msgs::msg::MrmBehaviorStatus;
 using tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
+using vehicle_cmd_gate::msg::IsFilterActivated;
+using visualization_msgs::msg::MarkerArray;
 
 using diagnostic_msgs::msg::DiagnosticStatus;
 using nav_msgs::msg::Odometry;
@@ -99,6 +104,8 @@ private:
   rclcpp::Publisher<GateMode>::SharedPtr gate_mode_pub_;
   rclcpp::Publisher<EngageMsg>::SharedPtr engage_pub_;
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_pub_;
+  rclcpp::Publisher<IsFilterActivated>::SharedPtr is_filter_activated_pub_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr filter_activated_marker_pub_;
 
   // Subscription
   rclcpp::Subscription<Heartbeat>::SharedPtr external_emergency_stop_heartbeat_sub_;
@@ -164,6 +171,7 @@ private:
   double stop_hold_acceleration_;
   double emergency_acceleration_;
   double moderate_stop_service_acceleration_;
+  bool enable_cmd_limit_filter_;
 
   // Service
   rclcpp::Service<EngageSrv>::SharedPtr srv_engage_;
@@ -225,6 +233,11 @@ private:
   // stop checker
   std::unique_ptr<VehicleStopChecker> vehicle_stop_checker_;
   double stop_check_duration_;
+
+  // debug
+  MarkerArray createMarkerArray(const IsFilterActivated & filter_activated);
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 
 }  // namespace vehicle_cmd_gate

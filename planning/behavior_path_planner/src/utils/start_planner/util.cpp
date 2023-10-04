@@ -20,6 +20,7 @@
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
@@ -37,19 +38,6 @@
 
 namespace behavior_path_planner::start_planner_utils
 {
-PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2)
-{
-  PathWithLaneId path;
-  path.points.insert(path.points.end(), path1.points.begin(), path1.points.end());
-
-  // skip overlapping point
-  path.points.insert(path.points.end(), next(path2.points.begin()), path2.points.end());
-
-  PathWithLaneId filtered_path = path;
-  filtered_path.points = motion_utils::removeOverlapPoints(filtered_path.points);
-  return filtered_path;
-}
-
 PathWithLaneId getBackwardPath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & shoulder_lanes,
   const Pose & current_pose, const Pose & backed_pose, const double velocity)
@@ -116,6 +104,28 @@ lanelet::ConstLanelets getPullOutLanes(
   return utils::getExtendedCurrentLanes(
     planner_data, backward_length,
     /*forward_length*/ std::numeric_limits<double>::max(),
-    /*until_goal_lane*/ true);
+    /*forward_only_in_route*/ true);
 }
+
+std::pair<double, bool> calcEndArcLength(
+  const double s_start, const double forward_path_length, const lanelet::ConstLanelets & road_lanes,
+  const Pose & goal_pose)
+{
+  const double s_forward_length = s_start + forward_path_length;
+  // use forward length if the goal pose is not in the lanelets
+  if (!utils::isInLanelets(goal_pose, road_lanes)) {
+    return {s_forward_length, false};
+  }
+
+  const double s_goal = lanelet::utils::getArcCoordinates(road_lanes, goal_pose).length;
+
+  // If the goal is behind the start or beyond the forward length, use forward length.
+  if (s_goal < s_start || s_goal >= s_forward_length) {
+    return {s_forward_length, false};
+  }
+
+  // path end is goal
+  return {s_goal, true};
+}
+
 }  // namespace behavior_path_planner::start_planner_utils

@@ -64,6 +64,12 @@ def launch_setup(context, *args, **kwargs):
     with open(LaunchConfiguration("behavior_path_planner_param_path").perform(context), "r") as f:
         behavior_path_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    glog_component = ComposableNode(
+        package="glog_component",
+        plugin="GlogComponent",
+        name="glog_component",
+    )
+
     behavior_path_planner_component = ComposableNode(
         package="behavior_path_planner",
         plugin="behavior_path_planner::BehaviorPathPlannerNode",
@@ -172,10 +178,6 @@ def launch_setup(context, *args, **kwargs):
                 "/perception/traffic_light_recognition/traffic_signals",
             ),
             (
-                "~/input/external_traffic_signals",
-                "/external/traffic_light_recognition/traffic_signals",
-            ),
-            (
                 "~/input/external_velocity_limit_mps",
                 "/planning/scenario_planning/max_velocity_default",
             ),
@@ -211,6 +213,7 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[
             behavior_path_planner_component,
             behavior_velocity_planner_component,
+            glog_component,
         ],
         output="screen",
     )

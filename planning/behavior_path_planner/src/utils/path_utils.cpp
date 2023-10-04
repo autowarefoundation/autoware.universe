@@ -15,12 +15,15 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include "behavior_path_planner/utils/utils.hpp"
+#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/resample/resample.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/interpolation.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
+// #include <lanelet2_core/geometry/Lanelet.h>
 #include <tf2/utils.h>
 
 #include <algorithm>
@@ -336,14 +339,28 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
 }
 
 PathWithLaneId convertWayPointsToPathWithLaneId(
-  const freespace_planning_algorithms::PlannerWaypoints & waypoints, const double velocity)
+  const freespace_planning_algorithms::PlannerWaypoints & waypoints, const double velocity,
+  const lanelet::ConstLanelets & lanelets)
 {
   PathWithLaneId path;
   path.header = waypoints.header;
-  for (const auto & waypoint : waypoints.waypoints) {
+  for (size_t i = 0; i < waypoints.waypoints.size(); ++i) {
+    const auto & waypoint = waypoints.waypoints.at(i);
     PathPointWithLaneId point{};
     point.point.pose = waypoint.pose.pose;
-    // point.lane_id = // todo
+    // put the lane that contain waypoints in lane_ids.
+    bool is_in_lanes = false;
+    for (const auto & lane : lanelets) {
+      if (lanelet::utils::isInLanelet(point.point.pose, lane)) {
+        point.lane_ids.push_back(lane.id());
+        is_in_lanes = true;
+      }
+    }
+    // If none of them corresponds, assign the previous lane_ids.
+    if (!is_in_lanes && i > 0) {
+      point.lane_ids = path.points.at(i - 1).lane_ids;
+    }
+
     point.point.longitudinal_velocity_mps = (waypoint.is_back ? -1 : 1) * velocity;
     path.points.push_back(point);
   }
@@ -404,6 +421,7 @@ void correctDividedPathVelocity(std::vector<PathWithLaneId> & divided_paths)
 {
   for (auto & path : divided_paths) {
     const auto is_driving_forward = motion_utils::isDrivingForward(path.points);
+    // If the number of points in the path is less than 2, don't correct the velocity
     if (!is_driving_forward) {
       continue;
     }
@@ -543,4 +561,25 @@ PathWithLaneId calcCenterLinePath(
 
   return centerline_path;
 }
+
+PathWithLaneId combinePath(const PathWithLaneId & path1, const PathWithLaneId & path2)
+{
+  if (path1.points.empty()) {
+    return path2;
+  }
+  if (path2.points.empty()) {
+    return path1;
+  }
+
+  PathWithLaneId path{};
+  path.points.insert(path.points.end(), path1.points.begin(), path1.points.end());
+
+  // skip overlapping point
+  path.points.insert(path.points.end(), next(path2.points.begin()), path2.points.end());
+
+  PathWithLaneId filtered_path = path;
+  filtered_path.points = motion_utils::removeOverlapPoints(filtered_path.points);
+  return filtered_path;
+}
+
 }  // namespace behavior_path_planner::utils
