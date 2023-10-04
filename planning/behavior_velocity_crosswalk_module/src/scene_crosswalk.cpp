@@ -423,12 +423,15 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
     const double ahead_margin = planner_param_.max_ahead_longitudinal_margin;
     const Point default_stop_point = createPoint(
       default_stop_pose->position.x, default_stop_pose->position.y, default_stop_pose->position.z);
+    // Search for the inserted stop point that is ahead of the ego path with the margin.
     inserted_forward_stop_point =
       searchAheadInsertedStopPoint(ego_path, default_stop_point, ahead_margin);
 
+    // If there are any inserted forward stop points
     if (!inserted_forward_stop_point.empty()) {
       const double dist_inserted_stop_point2crosswalk = calcSignedArcLength(
         ego_path.points, path_intersects.front(), inserted_forward_stop_point.front());
+      // Check if the merged stop point is in front of the crosswalk
       merged_stop_point_is_front_of_crosswalk =
         dist_inserted_stop_point2crosswalk + base_link2front < 0.0;
       RCLCPP_DEBUG_THROTTLE(

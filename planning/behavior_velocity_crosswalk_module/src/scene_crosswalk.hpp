@@ -338,6 +338,24 @@ private:
     const std::optional<StopFactor> & stop_factor_for_crosswalk_users,
     const std::optional<StopFactor> & stop_factor_for_stuck_vehicles);
 
+  /**
+   * @brief Searches for stop points ahead of a given candidate stop point in the ego path.
+   *
+   * This function searches for stop points that are ahead of the given candidate stop point
+   * within a specified margin. If a stop point is found within the margin and its longitudinal
+   * velocity is approximately zero, it is considered as a valid stop point and added to the result.
+   * If no such point is found, an empty vector is returned.
+   *
+   * @param ego_path The path of the ego vehicle witch contains velocity information.
+   * @param candidate_stop_point The reference point to start searching for stop points.
+   * @param ahead_margin The distance margin ahead of the candidate stop point within which to
+   * search for stop points.
+   * @return A vector containing the found stop points. If no stop point is found, returns an empty
+   * vector.
+   *
+   * @note The function uses a small epsilon value to check if the longitudinal velocity of a point
+   * is approximately zero.
+   */
   std::vector<Point> searchAheadInsertedStopPoint(
     const PathWithLaneId & ego_path, const Point & candidate_stop_point,
     const double ahead_margin) const;
