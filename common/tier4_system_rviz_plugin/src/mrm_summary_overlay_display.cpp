@@ -250,18 +250,21 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
     output_text << "Error Notice: Planning goal not initialized" << std::endl;
   } else {
     // Broadcasting the Basic Error Infos
-    int number_of_comfortable_stop_messages = static_cast<int>(mrm_comfortable_stop_summary_list.size());
+    int number_of_comfortable_stop_messages =
+      static_cast<int>(mrm_comfortable_stop_summary_list.size());
     if (number_of_comfortable_stop_messages > 0)  // Only Display when there are some
-                                                            // errors
+                                                  // errors
     {
-      output_text << std::fixed << "Comfortable Stop MRM Summary: "
-                  << number_of_comfortable_stop_messages << std::endl;
+      output_text << std::fixed
+                  << "Comfortable Stop MRM Summary: " << number_of_comfortable_stop_messages
+                  << std::endl;
       for (const auto & mrm_element : mrm_comfortable_stop_summary_list) {
         output_text << mrm_element << std::endl;
       }
     }
 
-    int number_of_emergency_stop_messages = static_cast<int>(mrm_emergency_stop_summary_list.size());
+    int number_of_emergency_stop_messages =
+      static_cast<int>(mrm_emergency_stop_summary_list.size());
     if (number_of_emergency_stop_messages > 0)  // Only Display when there are some errors
     {
       output_text << "Emergency Stop MRM Summary: " << int(mrm_emergency_stop_summary_list.size())
