@@ -788,14 +788,16 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
   output_pose_with_cov_to_log(get_logger(), "align_using_monte_carlo_input", initial_pose_with_cov);
 
+  const double CONVERT_COEFF = std::sqrt(2);
+
   const auto base_rpy = get_rpy(initial_pose_with_cov);
   const Eigen::Map<const RowMatrixXd> covariance = {
     initial_pose_with_cov.pose.covariance.data(), 6, 6};
-  const double stddev_x = std::sqrt(covariance(0, 0));
-  const double stddev_y = std::sqrt(covariance(1, 1));
-  const double stddev_z = std::sqrt(covariance(2, 2));
-  const double stddev_roll = std::sqrt(covariance(3, 3));
-  const double stddev_pitch = std::sqrt(covariance(4, 4));
+  const double stddev_x = CONVERT_COEFF * std::sqrt(covariance(0, 0));
+  const double stddev_y = CONVERT_COEFF * std::sqrt(covariance(1, 1));
+  const double stddev_z = CONVERT_COEFF * std::sqrt(covariance(2, 2));
+  const double stddev_roll = CONVERT_COEFF * std::sqrt(covariance(3, 3));
+  const double stddev_pitch = CONVERT_COEFF * std::sqrt(covariance(4, 4));
 
   auto uniform_to_normal = [](const double uniform) {
     assert(-1.0 <= uniform && uniform <= 1.0);
