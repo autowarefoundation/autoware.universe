@@ -18,7 +18,7 @@
         # For the case where the stop position is determined according to the object position.
         stop_distance_from_object: 2.0 # [m] the vehicle decelerates to be able to stop in front of object with margin
         # If the ahead stop position is already inserted, use the same position for the new stop point.
-        max_ahead_longitudinal_margin: 3.0 # [m]  specifies the margin between the current position and the stop point
+        max_ahead_longitudinal_margin: 5.0 # [m]  specifies the margin between the current position and the stop point
 
       # param for ego's slow down velocity
       slow_down:

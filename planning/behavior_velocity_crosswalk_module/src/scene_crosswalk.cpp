@@ -331,7 +331,7 @@ std::vector<Point> CrosswalkModule::searchAheadInsertedStopPoint(
       break;
     }
     if (std::abs(ego_path.points.at(idx).point.longitudinal_velocity_mps) < epsilon) {
-      RCLCPP_INFO_EXPRESSION(
+      RCLCPP_INFO(
         logger_, "Stop point is found and distance from inserted stop point: %f module_id: %ld",
         calcSignedArcLength(ego_path.points, candidate_stop_point_idx, idx), module_id_);
       const auto stop_point = createPoint(
@@ -415,12 +415,9 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   if (!nearest_stop_info) {
     return {};
   }
-
   std::vector<Point> ahead_inserted_stop_point{};
-  bool stop_point_inserted = false;
   bool inserted_stop_point_is_front_of_crosswalk = false;
 
-  // TBD
   if (default_stop_pose.has_value()) {
     const double ahead_margin = planner_param_.max_ahead_longitudinal_margin;
     const Point default_stop_point = createPoint(
@@ -428,14 +425,12 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
     ahead_inserted_stop_point =
       searchAheadInsertedStopPoint(ego_path, default_stop_point, ahead_margin);
 
-    stop_point_inserted = !ahead_inserted_stop_point.empty();
-    // don't insert stop point if the stop point is inserted within ***[m] ahead
-    // NOTE: Make sure that the stop point is located before the crosswalk.
-    if (stop_point_inserted) {
+    if (!ahead_inserted_stop_point.empty()) {
       const double dist_inserted_stop_point2crosswalk = calcSignedArcLength(
         ego_path.points, path_intersects.front(), ahead_inserted_stop_point.front());
-      inserted_stop_point_is_front_of_crosswalk = dist_inserted_stop_point2crosswalk + base_link2front < 0.0;
-      RCLCPP_INFO_EXPRESSION(logger_, "Distance to crosswalk: %f", dist_inserted_stop_point2crosswalk);
+      inserted_stop_point_is_front_of_crosswalk =
+        dist_inserted_stop_point2crosswalk + base_link2front < 0.0;
+      RCLCPP_INFO(logger_, "Distance to crosswalk: %f", dist_inserted_stop_point2crosswalk);
     }
   }
 
@@ -444,23 +439,14 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
     dist_ego_to_stop < nearest_stop_info->second &&
     nearest_stop_info->second < dist_ego_to_stop + planner_param_.far_object_threshold;
 
-  // std::cerr << "stop_at_stop_line:" << stop_at_stop_line << std::endl;
-  // std::cerr << "default_stop_pose:" << default_stop_pose.has_value() << std::endl;
-  // std::cerr << "stop_line_found:" << stop_line_found << std::endl;
-  // std::cerr << "stop_point_inserted:" << stop_point_inserted << std::endl;
-  // std::cerr << "inserted_stop_point_is_front_of_crosswalk:"
-  //           << inserted_stop_point_is_front_of_crosswalk << std::endl;
-  if (stop_at_stop_line) {
-    // Stop at the stop line
-    if (default_stop_pose) {
-      if (inserted_stop_point_is_front_of_crosswalk) {
-        RCLCPP_INFO_EXPRESSION(logger_, "Insert stop point ahead");
-        const auto inserted_stop_pose = calcLongitudinalOffsetPose(
-          ego_path.points, ahead_inserted_stop_point.front(), 0.0);
-        return createStopFactor(*inserted_stop_pose, ahead_inserted_stop_point);
-      }
-      return createStopFactor(*default_stop_pose, stop_factor_points);
+  if (stop_at_stop_line && default_stop_pose) {
+    if (inserted_stop_point_is_front_of_crosswalk) {
+      RCLCPP_INFO(logger_, "change stop point forward");
+      const auto inserted_stop_pose =
+        calcLongitudinalOffsetPose(ego_path.points, ahead_inserted_stop_point.front(), 0.0);
+      return createStopFactor(*inserted_stop_pose, ahead_inserted_stop_point);
     }
+    return createStopFactor(*default_stop_pose, stop_factor_points);
   } else {
     // Stop beyond the stop line
     const auto stop_pose = calcLongitudinalOffsetPose(
