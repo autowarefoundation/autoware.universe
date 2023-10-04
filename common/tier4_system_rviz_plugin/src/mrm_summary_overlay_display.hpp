@@ -86,6 +86,8 @@ protected:
   void update(float wall_dt, float ros_dt) override;
   void processMessage(
     const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr) override;
+  bool checkLocalizationNotInit();
+  bool checkPlanningGoalNotInit();
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
   rviz_common::properties::ColorProperty * property_text_color_;
   rviz_common::properties::IntProperty * property_left_;
