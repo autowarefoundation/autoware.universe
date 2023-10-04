@@ -119,6 +119,7 @@ public:
         double creep_velocity;
         double maximum_peeking_distance;
       } absence_traffic_light;
+      double attention_lane_crop_curvature_threshold;
     } occlusion;
   };
 

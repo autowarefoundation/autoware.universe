@@ -1027,7 +1027,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   if (!occlusion_attention_divisions_) {
     occlusion_attention_divisions_ = util::generateDetectionLaneDivisions(
       occlusion_attention_lanelets, routing_graph_ptr,
-      planner_data_->occupancy_grid->info.resolution);
+      planner_data_->occupancy_grid->info.resolution,
+      planner_param_.occlusion.attention_lane_crop_curvature_threshold);
   }
   const auto & occlusion_attention_divisions = occlusion_attention_divisions_.value();
 
@@ -1553,7 +1554,7 @@ bool IntersectionModule::isOcclusionCleared(
   }
 
   auto findNearestPointToProjection =
-    [](lanelet::ConstLineString2d division, const Point2d & projection, const double dist_thresh) {
+    [](lanelet::ConstLineString3d division, const Point2d & projection, const double dist_thresh) {
       double min_dist = std::numeric_limits<double>::infinity();
       auto nearest = division.end();
       for (auto it = division.begin(); it != division.end(); it++) {

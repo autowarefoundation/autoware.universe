@@ -121,7 +121,7 @@ struct DiscretizedLane
 {
   int lane_id{0};
   // discrete fine lines from left to right
-  std::vector<lanelet::ConstLineString2d> divisions{};
+  std::vector<lanelet::ConstLineString3d> divisions{};
 };
 
 struct IntersectionStopLines

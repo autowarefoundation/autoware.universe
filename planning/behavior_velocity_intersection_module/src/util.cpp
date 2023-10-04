@@ -20,6 +20,7 @@
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <interpolation/spline_interpolation_points_2d.hpp>
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -42,6 +43,22 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+
+namespace tier4_autoware_utils
+{
+
+template <>
+inline geometry_msgs::msg::Point getPoint(const lanelet::ConstPoint3d & p)
+{
+  geometry_msgs::msg::Point point;
+  point.x = p.x();
+  point.y = p.y();
+  point.z = p.z();
+  return point;
+}
+
+}  // namespace tier4_autoware_utils
+
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
@@ -809,10 +826,42 @@ TrafficPrioritizedLevel getTrafficPrioritizedLevel(
   return TrafficPrioritizedLevel::NOT_PRIORITIZED;
 }
 
+static void cutLineStringByCurvatureThresholdAndRevert(
+  lanelet::LineString3d & centerline, const double curvature_threshold)
+{
+  std::vector<lanelet::ConstPoint3d> points;
+  for (auto point = centerline.begin(); point != centerline.end(); point++) {
+    points.push_back(*point);
+  }
+  std::reverse(points.begin(), points.end());
+
+  SplineInterpolationPoints2d interpolation(points);
+  const std::vector<double> curvatures = interpolation.getSplineInterpolatedCurvatures();
+  std::optional<size_t> threshold_index{std::nullopt};
+  for (auto it = curvatures.begin(); it != curvatures.end(); it++) {
+    if (std::fabs(*it) > curvature_threshold) {
+      threshold_index = std::distance(curvatures.begin(), it);
+      // NOTE: points beyond high curvature is not used for occlusion calculation
+      break;
+    }
+  }
+  centerline.clear();
+  if (threshold_index) {
+    const auto trim_index = threshold_index.value();
+    for (unsigned i = 0; i <= trim_index; i++) {
+      centerline.push_back(lanelet::Point3d(points.at(i).x(), points.at(i).y(), points.at(i).z()));
+    }
+  } else {
+    for (unsigned i = 0; i < points.size(); i++) {
+      centerline.push_back(lanelet::Point3d(points.at(i).x(), points.at(i).y(), points.at(i).z()));
+    }
+  }
+}
+
 std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets_all,
-  [[maybe_unused]] const lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const double resolution)
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution,
+  const double crop_curvature_threshold)
 {
   using lanelet::utils::getCenterlineWithOffset;
   using lanelet::utils::to2D;
@@ -911,13 +960,13 @@ std::vector<DiscretizedLane> generateDetectionLaneDivisions(
       }
       area += bg::area(lane.polygon2d().basicPolygon());
     }
-    lanelet::LineString3d right = lanelet::LineString3d(lanelet::InvalId, lefts).invert();
-    lanelet::LineString3d left = lanelet::LineString3d(lanelet::InvalId, rights).invert();
+    lanelet::LineString3d right = lanelet::LineString3d(lanelet::InvalId, lefts);
+    lanelet::LineString3d left = lanelet::LineString3d(lanelet::InvalId, rights);
     lanelet::Lanelet merged = lanelet::Lanelet(lanelet::InvalId, left, right);
     merged_branches[src] = std::make_pair(merged, area);
   }
 
-  // (3) discretize each merged lanelet
+  // (3) discretize each merged lanelet and then revert
   std::vector<DiscretizedLane> detection_divisions;
   for (const auto & [last_lane_id, branch] : merged_branches) {
     DiscretizedLane detection_division;
@@ -929,9 +978,17 @@ std::vector<DiscretizedLane> generateDetectionLaneDivisions(
     auto & divisions = detection_division.divisions;
     for (int i = 0; i < static_cast<int>(width / resolution); ++i) {
       const double offset = resolution * i - width / 2;
-      divisions.push_back(to2D(getCenterlineWithOffset(detection_lanelet, offset, resolution)));
+      auto centerline = getCenterlineWithOffset(detection_lanelet, offset, resolution);
+      lanelet::LineString3d mut_centerline(
+        std::const_pointer_cast<lanelet::LineStringData>(centerline.constData()));
+      cutLineStringByCurvatureThresholdAndRevert(mut_centerline, crop_curvature_threshold);
+      divisions.push_back(std::move(mut_centerline));
     }
-    divisions.push_back(to2D(getCenterlineWithOffset(detection_lanelet, width / 2, resolution)));
+    auto centerline = getCenterlineWithOffset(detection_lanelet, width / 2, resolution);
+    lanelet::LineString3d mut_centerline(
+      std::const_pointer_cast<lanelet::LineStringData>(centerline.constData()));
+    cutLineStringByCurvatureThresholdAndRevert(mut_centerline, crop_curvature_threshold);
+    divisions.push_back(std::move(mut_centerline));
     detection_divisions.push_back(detection_division);
   }
   return detection_divisions;
