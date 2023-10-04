@@ -19,27 +19,26 @@ struct ArTagPosition::Impl
 
 ArTagPosition::ArTagPosition(rclcpp::Node * node)
 : logger_(node->get_logger()), tf2_buffer_(node->get_clock()), tf2_listener_(tf2_buffer_)
-
 {
-  const std::string ar_tag_node_name =
+  // The landmark_based_localizer broadcasts landmarks using TF, and we can confirm the names of
+  // these landmarks by inspecting the parameters held by the tag_based_localizer. Here we get the
+  // ID of the landmark using AsyncParametersClient
+  constexpr char target_tag_ids_parameter_name[] = "target_tag_ids";
+  constexpr char ar_tag_node_name[] =
     "/localization/pose_estimator/ar_tag_based_localizer/ar_tag_based_localizer";
 
-  impl_ = std::make_shared<Impl>();
-
-  const std::string target_tag_ids_parameter_name = "target_tag_ids";
-
-  const auto callback = [&](const std::shared_future<std::vector<rclcpp::Parameter>> & future) {
-    RCLCPP_INFO_STREAM(logger_, "AsyncParameters callback");
-
+  const auto callback = [&, target_tag_ids_parameter_name](
+                          const std::shared_future<std::vector<rclcpp::Parameter>> & future) {
     for (const auto & param : future.get()) {
-      RCLCPP_INFO_STREAM(logger_, "param : " << param.get_name());
-      // TODO(KYabuuchi): We cannot use target_tag_ids_parameter_name here?
-      if (param.get_name() == "target_tag_ids") {
+      if (param.get_name() == target_tag_ids_parameter_name) {
         impl_->target_tag_ids_ = param.as_string_array();
-        RCLCPP_INFO_STREAM(logger_, "target tag ids: " << param.as_string_array().size());
+        RCLCPP_INFO_STREAM(
+          logger_, "AsyncParameters got " << param.as_string_array().size() << " ladnmark IDs");
       }
     }
   };
+
+  impl_ = std::make_shared<Impl>();
   impl_->params_tf_caster_ = rclcpp::AsyncParametersClient::make_shared(node, ar_tag_node_name);
   impl_->params_tf_caster_->wait_for_service();
   impl_->params_tf_caster_->get_parameters({target_tag_ids_parameter_name}, callback);
@@ -48,16 +47,10 @@ ArTagPosition::ArTagPosition(rclcpp::Node * node)
 double ArTagPosition::distance_to_nearest_ar_tag_around_ego(
   const geometry_msgs::msg::Point & ego_position) const
 {
-  RCLCPP_INFO_STREAM(
-    logger_,
-    "try to check availability: searching for " << impl_->target_tag_ids_.size() << " markers");
-
   double distance_to_nearest_marker = std::numeric_limits<double>::max();
-
   const Eigen::Vector3d ego_vector(ego_position.x, ego_position.y, ego_position.z);
 
   for (const std::string & tag_id : impl_->target_tag_ids_) {
-    RCLCPP_INFO_STREAM(logger_, "target tag id " << tag_id);
     const auto opt_transform = get_transform("map", "tag_" + tag_id);
     if (opt_transform.has_value()) {
       const auto t = opt_transform->transform.translation;
@@ -84,15 +77,4 @@ std::optional<ArTagPosition::TransformStamped> ArTagPosition::get_transform(
   }
   return transform_stamped;
 }
-
-std::string ArTagPosition::debug_string() const
-{
-  return {};
-}
-
-ArTagPosition::MarkerArray ArTagPosition::debug_marker_array() const
-{
-  return MarkerArray{};
-}
-
 }  // namespace multi_pose_estimator
