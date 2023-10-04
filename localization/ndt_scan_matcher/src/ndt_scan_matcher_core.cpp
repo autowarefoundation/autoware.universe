@@ -148,7 +148,7 @@ NDTScanMatcher::NDTScanMatcher()
   }
 
   initial_estimate_particles_num_ = this->declare_parameter<int>("initial_estimate_particles_num");
-  n_startup_trials_ = 30;
+  n_startup_trials_ = this->declare_parameter<int>("n_startup_trials");
 
   estimate_scores_for_degrounded_scan_ =
     this->declare_parameter<bool>("estimate_scores_for_degrounded_scan");
