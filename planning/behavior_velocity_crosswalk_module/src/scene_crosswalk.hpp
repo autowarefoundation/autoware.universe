@@ -54,6 +54,7 @@ using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::TrafficSignalElement;
+using geometry_msgs::msg::Point;
 using lanelet::autoware::Crosswalk;
 using tier4_api_msgs::msg::CrosswalkStatus;
 using tier4_autoware_utils::Polygon2d;
@@ -115,6 +116,7 @@ public:
     double stop_distance_from_crosswalk;
     double far_object_threshold;
     double stop_position_threshold;
+    double max_ahead_longitudinal_margin;
     // param for ego velocity
     float min_slow_down_velocity;
     double max_slow_down_jerk;
@@ -160,7 +162,7 @@ public:
     CollisionState collision_state{};
     std::optional<rclcpp::Time> time_to_start_stopped{std::nullopt};
 
-    geometry_msgs::msg::Point position{};
+    Point position{};
     std::optional<CollisionPoint> collision_point{};
 
     void transitState(
@@ -311,21 +313,20 @@ public:
 private:
   // main functions
   void applySafetySlowDownSpeed(
-    PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects);
+    PathWithLaneId & output, const std::vector<Point> & path_intersects);
 
-  std::optional<std::pair<geometry_msgs::msg::Point, double>> getStopPointWithMargin(
-    const PathWithLaneId & ego_path,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
+  std::optional<std::pair<Point, double>> getStopPointWithMargin(
+    const PathWithLaneId & ego_path, const std::vector<Point> & path_intersects) const;
 
   std::optional<StopFactor> checkStopForCrosswalkUsers(
     const PathWithLaneId & ego_path, const PathWithLaneId & sparse_resample_path,
-    const std::optional<std::pair<geometry_msgs::msg::Point, double>> & p_stop_line,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects,
+    const std::optional<std::pair<Point, double>> & p_stop_line,
+    const std::vector<Point> & path_intersects,
     const std::optional<geometry_msgs::msg::Pose> & default_stop_pose);
 
   std::optional<StopFactor> checkStopForStuckVehicles(
     const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects,
+    const std::vector<Point> & path_intersects,
     const std::optional<geometry_msgs::msg::Pose> & stop_pose) const;
 
   std::optional<CollisionPoint> getCollisionPoint(
@@ -336,6 +337,10 @@ private:
     const PathWithLaneId & ego_path,
     const std::optional<StopFactor> & stop_factor_for_crosswalk_users,
     const std::optional<StopFactor> & stop_factor_for_stuck_vehicles);
+
+  std::vector<Point> searchAheadInsertedStopPoint(
+    const PathWithLaneId & ego_path, const Point & candidate_stop_point,
+    const double ahead_margin) const;
 
   void setDistanceToStop(
     const PathWithLaneId & ego_path,
@@ -350,24 +355,20 @@ private:
 
   // minor functions
   std::pair<double, double> getAttentionRange(
-    const PathWithLaneId & ego_path,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects);
+    const PathWithLaneId & ego_path, const std::vector<Point> & path_intersects);
 
   void insertDecelPointWithDebugInfo(
-    const geometry_msgs::msg::Point & stop_point, const float target_velocity,
-    PathWithLaneId & output) const;
+    const Point & stop_point, const float target_velocity, PathWithLaneId & output) const;
 
   std::pair<double, double> clampAttentionRangeByNeighborCrosswalks(
     const PathWithLaneId & ego_path, const double near_attention_range,
     const double far_attention_range);
 
   CollisionPoint createCollisionPoint(
-    const geometry_msgs::msg::Point & nearest_collision_point, const double dist_ego2cp,
-    const double dist_obj2cp, const geometry_msgs::msg::Vector3 & ego_vel,
-    const geometry_msgs::msg::Vector3 & obj_vel) const;
+    const Point & nearest_collision_point, const double dist_ego2cp, const double dist_obj2cp,
+    const geometry_msgs::msg::Vector3 & ego_vel, const geometry_msgs::msg::Vector3 & obj_vel) const;
 
-  float calcTargetVelocity(
-    const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;
+  float calcTargetVelocity(const Point & stop_point, const PathWithLaneId & ego_path) const;
 
   Polygon2d getAttentionArea(
     const PathWithLaneId & sparse_resample_path,
@@ -375,7 +376,7 @@ private:
 
   bool isStuckVehicle(
     const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
+    const std::vector<Point> & path_intersects) const;
 
   void updateObjectState(
     const double dist_ego_to_stop, const PathWithLaneId & sparse_resample_path,

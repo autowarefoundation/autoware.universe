@@ -53,6 +53,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".stop_position.far_object_threshold");
   cp.stop_position_threshold =
     getOrDeclareParameter<double>(node, ns + ".stop_position.stop_position_threshold");
+  cp.max_ahead_longitudinal_margin =
+    getOrDeclareParameter<double>(node, ns + ".stop_position.max_ahead_longitudinal_margin");
 
   // param for ego velocity
   cp.min_slow_down_velocity =
