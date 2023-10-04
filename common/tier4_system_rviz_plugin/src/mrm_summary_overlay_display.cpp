@@ -152,15 +152,17 @@ void MrmSummaryOverlayDisplay::onDisable()
   overlay_->hide();
 }
 
-bool checkErrorFromNotInit(autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr, std::string error_name)
+bool checkErrorFromNotInit(
+  autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr,
+  std::string error_name)
 {
-  for (const auto & diag_status: msg_ptr->status.diag_single_point_fault) {
+  for (const auto & diag_status : msg_ptr->status.diag_single_point_fault) {
     std::string name = diag_status.name;
     if (name != error_name) {
       continue;
     }
     // else: name == error_name
-    for (const auto & key_value: diag_status.values) {
+    for (const auto & key_value : diag_status.values) {
       if (key_value.key == "status" && key_value.value == "NotReceived") {
         return true;
       }
@@ -172,15 +174,17 @@ bool checkErrorFromNotInit(autoware_auto_system_msgs::msg::HazardStatusStamped::
 bool MrmSummaryOverlayDisplay::checkLocalizationNotInit()
 {
   // Check if there is errors related with intialization
-  std::string localization_not_init_error_name = 
-      "/autoware/localization/node_alive_monitoring/topic_status/topic_state_monitor_initialpose3d: localization_topic_status";
+  std::string localization_not_init_error_name =
+    "/autoware/localization/node_alive_monitoring/topic_status/topic_state_monitor_initialpose3d: "
+    "localization_topic_status";
   return checkErrorFromNotInit(last_msg_ptr_, localization_not_init_error_name);
 }
 
 bool MrmSummaryOverlayDisplay::checkPlanningGoalNotInit()
 {
-  std::string planning_error_name = 
-      "/autoware/planning/node_alive_monitoring/topic_status/topic_state_monitor_mission_planning_route: planning_topic_status";
+  std::string planning_error_name =
+    "/autoware/planning/node_alive_monitoring/topic_status/"
+    "topic_state_monitor_mission_planning_route: planning_topic_status";
   return checkErrorFromNotInit(last_msg_ptr_, planning_error_name);
 }
 
@@ -240,31 +244,26 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
 
   std::ostringstream output_text;
 
-  if (localization_not_init)
-  {
+  if (localization_not_init) {
     output_text << "Error Notice: Localization not initialized" << std::endl;
-  }
-  else if (planning_not_init)
-  {
+  } else if (planning_not_init) {
     output_text << "Error Notice: Planning goal not initialized" << std::endl;
-  }
-  else
-  {
+  } else {
     // Broadcasting the Basic Error Infos
-    if (int(mrm_comfortable_stop_summary_list.size()) > 0) // Only Display when there are some errors
+    if (int(mrm_comfortable_stop_summary_list.size()) > 0)  // Only Display when there are some
+                                                            // errors
     {
-      output_text << std::fixed
-                << "Comfortable Stop MRM Summary: " << int(mrm_comfortable_stop_summary_list.size())
-                << std::endl;
+      output_text << std::fixed << "Comfortable Stop MRM Summary: "
+                  << int(mrm_comfortable_stop_summary_list.size()) << std::endl;
       for (const auto & mrm_element : mrm_comfortable_stop_summary_list) {
         output_text << mrm_element << std::endl;
       }
     }
-    
-    if (int(mrm_emergency_stop_summary_list.size()) > 0) // Only Display when there are some errors
+
+    if (int(mrm_emergency_stop_summary_list.size()) > 0)  // Only Display when there are some errors
     {
       output_text << "Emergency Stop MRM Summary: " << int(mrm_emergency_stop_summary_list.size())
-              << std::endl;
+                  << std::endl;
       for (const auto & mrm_element : mrm_emergency_stop_summary_list) {
         output_text << mrm_element << std::endl;
       }
