@@ -41,7 +41,7 @@
     converged_param_nearest_voxel_transformation_likelihood: 2.3
 
     # The number of particles to estimate initial pose
-    initial_estimate_particles_num: 100
+    initial_estimate_particles_num: 200
 
     # The number of initial random trials in the TPE (Tree-Structured Parzen Estimator).
     # This value should be equal to or less than 'initial_estimate_particles_num' and more than 0.
