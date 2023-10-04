@@ -163,7 +163,7 @@ bool checkErrorFromNotInit(
     }
     // else: name == error_name
     for (const auto & key_value : diag_status.values) {
-      if (key_value.key == "status" && key_value.value == "NotReceived") {
+      if ( (key_value.key == "status") && (key_value.value == "NotReceived") ) {
         return true;
       }
     }
