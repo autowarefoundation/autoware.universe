@@ -20,14 +20,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/point.hpp>
-
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
-
 #include <map>
 #include <memory>
 #include <optional>
@@ -136,9 +128,10 @@ Polygon2d generateStuckVehicleDetectAreaPolygon(
   const util::PathLanelets & path_lanelets, const double stuck_vehicle_detect_dist);
 
 bool checkAngleForTargetLanelets(
-  const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
-  const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle,
-  const double margin = 0.0);
+  const geometry_msgs::msg::Pose & pose, const double longitudinal_velocity,
+  const lanelet::ConstLanelets & target_lanelets, const double detection_area_angle_thr,
+  const bool consider_wrong_direction_vehicle, const double dist_margin,
+  const double parked_vehicle_speed_threshold);
 
 void cutPredictPathWithDuration(
   autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
