@@ -37,7 +37,13 @@
           "minimum": 0.0
         }
       },
-      "required": ["update_rate", "th_max_message_delay_sec", "th_arrived_distance_m", "th_stopped_time_sec", "th_stopped_velocity_mps"]
+      "required": [
+        "update_rate",
+        "th_max_message_delay_sec",
+        "th_arrived_distance_m",
+        "th_stopped_time_sec",
+        "th_stopped_velocity_mps"
+      ]
     }
   },
   "properties": {
