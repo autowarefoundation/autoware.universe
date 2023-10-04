@@ -297,6 +297,7 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
   mp.stop_duration_sec = getOrDeclareParameter<double>(node, ns + ".stop_duration_sec");
   mp.attention_area_length =
     getOrDeclareParameter<double>(node, "intersection.common.attention_area_length");
+  mp.stop_line_margin = getOrDeclareParameter<double>(node, ns + ".stop_line_margin");
   mp.path_interpolation_ds =
     getOrDeclareParameter<double>(node, "intersection.common.path_interpolation_ds");
   mp.stop_distance_threshold = getOrDeclareParameter<double>(node, ns + ".stop_distance_threshold");
