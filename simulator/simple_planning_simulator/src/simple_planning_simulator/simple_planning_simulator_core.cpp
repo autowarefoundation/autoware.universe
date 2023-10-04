@@ -117,16 +117,18 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     "input/initialtwist", QoS{1}, std::bind(&SimplePlanningSimulator::on_initialtwist, this, _1));
   sub_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
     "input/ackermann_control_command", QoS{1},
-    [this](const AckermannControlCommand::SharedPtr msg) { current_ackermann_cmd_ = *msg; });
+    [this](const AckermannControlCommand::ConstSharedPtr msg) { current_ackermann_cmd_ = *msg; });
   sub_manual_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
     "input/manual_ackermann_control_command", QoS{1},
-    [this](const AckermannControlCommand::SharedPtr msg) { current_manual_ackermann_cmd_ = *msg; });
+    [this](const AckermannControlCommand::ConstSharedPtr msg) {
+      current_manual_ackermann_cmd_ = *msg;
+    });
   sub_gear_cmd_ = create_subscription<GearCommand>(
     "input/gear_command", QoS{1},
-    [this](const GearCommand::SharedPtr msg) { current_gear_cmd_ = *msg; });
+    [this](const GearCommand::ConstSharedPtr msg) { current_gear_cmd_ = *msg; });
   sub_manual_gear_cmd_ = create_subscription<GearCommand>(
     "input/manual_gear_command", QoS{1},
-    [this](const GearCommand::SharedPtr msg) { current_manual_gear_cmd_ = *msg; });
+    [this](const GearCommand::ConstSharedPtr msg) { current_manual_gear_cmd_ = *msg; });
   sub_turn_indicators_cmd_ = create_subscription<TurnIndicatorsCommand>(
     "input/turn_indicators_command", QoS{1},
     std::bind(&SimplePlanningSimulator::on_turn_indicators_cmd, this, _1));
@@ -311,7 +313,7 @@ double SimplePlanningSimulator::calculate_ego_pitch() const
                          std::cos(ego_yaw_against_lanelet);
   const bool reverse_sign = std::cos(ego_yaw_against_lanelet) < 0.0;
   const double ego_pitch_angle =
-    reverse_sign ? std::atan2(-diff_z, -diff_xy) : std::atan2(diff_z, diff_xy);
+    reverse_sign ? -std::atan2(-diff_z, -diff_xy) : -std::atan2(diff_z, diff_xy);
   return ego_pitch_angle;
 }
 
@@ -484,7 +486,7 @@ void SimplePlanningSimulator::on_engage(const Engage::ConstSharedPtr msg)
 }
 
 void SimplePlanningSimulator::on_control_mode_request(
-  const ControlModeCommand::Request::SharedPtr request,
+  const ControlModeCommand::Request::ConstSharedPtr request,
   const ControlModeCommand::Response::SharedPtr response)
 {
   const auto m = request->mode;

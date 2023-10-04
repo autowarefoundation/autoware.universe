@@ -19,6 +19,7 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/distance/distance.hpp>
 #include <motion_utils/resample/resample.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -927,7 +928,7 @@ void CrosswalkModule::updateObjectState(
       getCollisionPoint(sparse_resample_path, object, crosswalk_attention_range, attention_area);
     object_info_manager_.update(
       obj_uuid, obj_pos, std::hypot(obj_vel.x, obj_vel.y), clock_->now(), is_ego_yielding,
-      has_traffic_light, collision_point, planner_param_);
+      has_traffic_light, collision_point, planner_param_, crosswalk_.polygon2d().basicPolygon());
 
     if (collision_point) {
       const auto collision_state = object_info_manager_.getCollisionState(obj_uuid);
@@ -961,8 +962,10 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
       continue;
     }
 
-    if (lights.front().color == TrafficSignalElement::RED) {
-      return true;
+    for (const auto & element : lights) {
+      if (
+        element.color == TrafficSignalElement::RED && element.shape == TrafficSignalElement::CIRCLE)
+        return true;
     }
   }
 

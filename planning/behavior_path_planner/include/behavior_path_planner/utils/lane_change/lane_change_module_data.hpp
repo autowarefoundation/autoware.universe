@@ -67,16 +67,19 @@ struct LaneChangeParameters
   bool check_objects_on_current_lanes{true};
   bool check_objects_on_other_lanes{true};
   bool use_all_predicted_path{false};
+  double lane_expansion_left_offset{0.0};
+  double lane_expansion_right_offset{0.0};
 
-  // true by default
-  bool check_car{true};         // check object car
-  bool check_truck{true};       // check object truck
-  bool check_bus{true};         // check object bus
-  bool check_trailer{true};     // check object trailer
-  bool check_unknown{true};     // check object unknown
-  bool check_bicycle{true};     // check object bicycle
-  bool check_motorcycle{true};  // check object motorbike
-  bool check_pedestrian{true};  // check object pedestrian
+  // regulatory elements
+  bool regulate_on_crosswalk{false};
+  bool regulate_on_intersection{false};
+
+  // ego vehicle stuck detection
+  double stop_velocity_threshold{0.1};
+  double stop_time_threshold{3.0};
+
+  // true by default for all objects
+  utils::path_safety_checker::ObjectTypesToCheck object_types_to_check;
 
   // safety check
   utils::path_safety_checker::RSSparams rss_params{};

@@ -106,6 +106,7 @@ struct FreespacePlannerDebugData
 struct GoalPlannerDebugData
 {
   FreespacePlannerDebugData freespace_planner{};
+  std::vector<Polygon2d> ego_polygons_expanded{};
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -234,17 +235,6 @@ private:
   PathWithLaneId generateStopPath();
   PathWithLaneId generateFeasibleStopPath();
 
-  /**
-   * @brief Generate a stop point in the current path based on the vehicle's pose and constraints.
-   *
-   * This function generates a stop point in the current path. If no lanes are available or if
-   * stopping is not feasible due to constraints (maximum deceleration, maximum jerk), no stop point
-   * is inserted into the path.
-   *
-   * @return the modified path with the stop point inserted.  If no feasible stop point can be
-   * determined, returns an empty optional.
-   */
-  std::optional<PathWithLaneId> generateStopInsertedCurrentPath();
   void keepStoppedWithCurrentPath(PathWithLaneId & path);
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
 
@@ -253,7 +243,6 @@ private:
   bool isStopped(
     std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer, const double time);
   bool hasFinishedCurrentPath();
-  bool hasFinishedGoalPlanner();
   bool isOnModifiedGoal() const;
   double calcModuleRequestLength() const;
   void resetStatus();
@@ -279,6 +268,9 @@ private:
   BehaviorModuleOutput planWithGoalModification();
   BehaviorModuleOutput planWaitingApprovalWithGoalModification();
   void selectSafePullOverPath();
+  void sortPullOverPathCandidatesByGoalPriority(
+    std::vector<PullOverPath> & pull_over_path_candidates,
+    const GoalCandidates & goal_candidates) const;
 
   // deal with pull over partial paths
   PathWithLaneId getCurrentPath() const;
