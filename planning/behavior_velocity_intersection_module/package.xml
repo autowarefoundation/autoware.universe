@@ -25,7 +25,7 @@
   <depend>geometry_msgs</depend>
   <depend>interpolation</depend>
   <depend>lanelet2_extension</depend>
-  <depend>magic_enum</depend>
+  <depend>libopencv-dev</depend>
   <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>pluginlib</depend>
@@ -38,8 +38,6 @@
   <depend>tier4_planning_msgs</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
-
-  <exec_depend>grid_map_rviz_plugin</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
