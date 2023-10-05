@@ -219,10 +219,10 @@ double TreeStructuredParzenEstimator::normalize_loop_variable(const double value
   // Normalize the loop variable to [-1, 1)
   double result = value;
   while (result >= MAX_VALUE) {
-    result -= 2.0;
+    result -= VALUE_WIDTH;
   }
   while (result < MIN_VALUE) {
-    result += 2.0;
+    result += VALUE_WIDTH;
   }
   return result;
 }
