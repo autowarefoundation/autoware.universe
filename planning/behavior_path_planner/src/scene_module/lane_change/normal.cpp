@@ -674,12 +674,25 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
 
   const auto current_polygon =
     utils::lane_change::createPolygon(current_lanes, 0.0, std::numeric_limits<double>::max());
-  const auto target_polygon =
-    utils::lane_change::createPolygon(target_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
+    target_lanes, direction_, lane_change_parameters_->lane_expansion_left_offset,
+    lane_change_parameters_->lane_expansion_right_offset);
+  const auto target_polygon = utils::lane_change::createPolygon(
+    expanded_target_lanes, 0.0, std::numeric_limits<double>::max());
   const auto dist_ego_to_current_lanes_center =
     lanelet::utils::getLateralDistanceToClosestLanelet(current_lanes, current_pose);
   std::vector<std::optional<lanelet::BasicPolygon2d>> target_backward_polygons;
   for (const auto & target_backward_lane : target_backward_lanes) {
+    // Check to see is target_backward_lane is in current_lanes
+    // Without this check, current lane object might be treated as target lane object
+    const auto is_current_lane = [&](const lanelet::ConstLanelet & current_lane) {
+      return current_lane.id() == target_backward_lane.id();
+    };
+
+    if (std::any_of(current_lanes.begin(), current_lanes.end(), is_current_lane)) {
+      continue;
+    }
+
     lanelet::ConstLanelets lanelet{target_backward_lane};
     auto lane_polygon =
       utils::lane_change::createPolygon(lanelet, 0.0, std::numeric_limits<double>::max());
@@ -1449,6 +1462,11 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
       target_objects.other_lane.end());
   }
 
+  const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
+    lane_change_path.info.target_lanes, direction_,
+    lane_change_parameters_->lane_expansion_left_offset,
+    lane_change_parameters_->lane_expansion_right_offset);
+
   for (const auto & obj : collision_check_objects) {
     auto current_debug_data = marker_utils::createObjectDebug(obj);
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
@@ -1464,8 +1482,8 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
 
       const auto collision_in_current_lanes = utils::lane_change::isCollidedPolygonsInLanelet(
         collided_polygons, lane_change_path.info.current_lanes);
-      const auto collision_in_target_lanes = utils::lane_change::isCollidedPolygonsInLanelet(
-        collided_polygons, lane_change_path.info.target_lanes);
+      const auto collision_in_target_lanes =
+        utils::lane_change::isCollidedPolygonsInLanelet(collided_polygons, expanded_target_lanes);
 
       if (!collision_in_current_lanes && !collision_in_target_lanes) {
         continue;

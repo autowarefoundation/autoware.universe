@@ -299,8 +299,7 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> CrosswalkModule::get
     const auto p_stop_lines = getLinestringIntersects(
       ego_path, lanelet::utils::to2D(stop_line).basicLineString(), ego_pos, 2);
     if (!p_stop_lines.empty()) {
-      return std::make_pair(
-        p_stop_lines.front(), -planner_param_.stop_distance_from_object - base_link2front);
+      return std::make_pair(p_stop_lines.front(), -base_link2front);
     }
   }
 
@@ -928,7 +927,7 @@ void CrosswalkModule::updateObjectState(
       getCollisionPoint(sparse_resample_path, object, crosswalk_attention_range, attention_area);
     object_info_manager_.update(
       obj_uuid, obj_pos, std::hypot(obj_vel.x, obj_vel.y), clock_->now(), is_ego_yielding,
-      has_traffic_light, collision_point, planner_param_);
+      has_traffic_light, collision_point, planner_param_, crosswalk_.polygon2d().basicPolygon());
 
     if (collision_point) {
       const auto collision_state = object_info_manager_.getCollisionState(obj_uuid);
@@ -962,8 +961,10 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
       continue;
     }
 
-    if (lights.front().color == TrafficSignalElement::RED) {
-      return true;
+    for (const auto & element : lights) {
+      if (
+        element.color == TrafficSignalElement::RED && element.shape == TrafficSignalElement::CIRCLE)
+        return true;
     }
   }
 

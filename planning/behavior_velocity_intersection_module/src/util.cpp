@@ -16,10 +16,11 @@
 
 #include "util_type.hpp"
 
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <interpolation/spline_interpolation.hpp>
+#include <interpolation/spline_interpolation_points_2d.hpp>
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -42,6 +43,22 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+
+namespace tier4_autoware_utils
+{
+
+template <>
+inline geometry_msgs::msg::Point getPoint(const lanelet::ConstPoint3d & p)
+{
+  geometry_msgs::msg::Point point;
+  point.x = p.x();
+  point.y = p.y();
+  point.z = p.z();
+  return point;
+}
+
+}  // namespace tier4_autoware_utils
+
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
@@ -809,10 +826,26 @@ TrafficPrioritizedLevel getTrafficPrioritizedLevel(
   return TrafficPrioritizedLevel::NOT_PRIORITIZED;
 }
 
+double getHighestCurvature(const lanelet::ConstLineString3d & centerline)
+{
+  std::vector<lanelet::ConstPoint3d> points;
+  for (auto point = centerline.begin(); point != centerline.end(); point++) {
+    points.push_back(*point);
+  }
+
+  SplineInterpolationPoints2d interpolation(points);
+  const std::vector<double> curvatures = interpolation.getSplineInterpolatedCurvatures();
+  std::vector<double> curvatures_positive;
+  for (const auto & curvature : curvatures) {
+    curvatures_positive.push_back(std::fabs(curvature));
+  }
+  return *std::max_element(curvatures_positive.begin(), curvatures_positive.end());
+}
+
 std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets_all,
-  [[maybe_unused]] const lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const double resolution)
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution,
+  const double curvature_threshold, const double curvature_calculation_ds)
 {
   using lanelet::utils::getCenterlineWithOffset;
   using lanelet::utils::to2D;
@@ -822,6 +855,12 @@ std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   for (const auto & detection_lanelet : detection_lanelets_all) {
     const auto turn_direction = getTurnDirection(detection_lanelet);
     if (turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0) {
+      continue;
+    }
+    const auto fine_centerline =
+      lanelet::utils::generateFineCenterline(detection_lanelet, curvature_calculation_ds);
+    const double highest_curvature = getHighestCurvature(fine_centerline);
+    if (highest_curvature > curvature_threshold) {
       continue;
     }
     detection_lanelets.push_back(detection_lanelet);
@@ -1058,23 +1097,32 @@ Polygon2d generateStuckVehicleDetectAreaPolygon(
 }
 
 bool checkAngleForTargetLanelets(
-  const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
-  const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle,
-  const double margin)
+  const geometry_msgs::msg::Pose & pose, const double longitudinal_velocity,
+  const lanelet::ConstLanelets & target_lanelets, const double detection_area_angle_thr,
+  const bool consider_wrong_direction_vehicle, const double dist_margin,
+  const double parked_vehicle_speed_threshold)
 {
   for (const auto & ll : target_lanelets) {
-    if (!lanelet::utils::isInLanelet(pose, ll, margin)) {
+    if (!lanelet::utils::isInLanelet(pose, ll, dist_margin)) {
       continue;
     }
     const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
     const double pose_angle = tf2::getYaw(pose.orientation);
-    const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle);
+    const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle, -M_PI);
     if (consider_wrong_direction_vehicle) {
       if (std::fabs(angle_diff) > 1.57 || std::fabs(angle_diff) < detection_area_angle_thr) {
         return true;
       }
     } else {
       if (std::fabs(angle_diff) < detection_area_angle_thr) {
+        return true;
+      }
+      // NOTE: sometimes parked vehicle direction is reversed even if its longitudinal velocity is
+      // positive
+      if (
+        std::fabs(longitudinal_velocity) < parked_vehicle_speed_threshold &&
+        (std::fabs(angle_diff) < detection_area_angle_thr ||
+         (std::fabs(angle_diff + M_PI) < detection_area_angle_thr))) {
         return true;
       }
     }
@@ -1108,8 +1156,9 @@ void cutPredictPathWithDuration(
 TimeDistanceArray calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::shared_ptr<const PlannerData> & planner_data, const std::set<int> & associative_ids,
-  const int closest_idx, const double time_delay, const double intersection_velocity,
-  const double minimum_ego_velocity)
+  const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
+  const double time_delay, const double intersection_velocity, const double minimum_ego_velocity,
+  const bool use_upstream_velocity, const double minimum_upstream_velocity)
 {
   double dist_sum = 0.0;
   int assigned_lane_found = false;
@@ -1119,7 +1168,9 @@ TimeDistanceArray calcIntersectionPassingTime(
   PathWithLaneId reference_path;
   for (size_t i = closest_idx; i < path.points.size(); ++i) {
     auto reference_point = path.points.at(i);
-    reference_point.point.longitudinal_velocity_mps = intersection_velocity;
+    if (!use_upstream_velocity) {
+      reference_point.point.longitudinal_velocity_mps = intersection_velocity;
+    }
     reference_path.points.push_back(reference_point);
     bool has_objective_lane_id = hasLaneIds(path.points.at(i), associative_ids);
     if (assigned_lane_found && !has_objective_lane_id) {
@@ -1150,10 +1201,13 @@ TimeDistanceArray calcIntersectionPassingTime(
     // use average velocity between p1 and p2
     const double average_velocity =
       (p1.point.longitudinal_velocity_mps + p2.point.longitudinal_velocity_mps) / 2.0;
-    passing_time +=
-      (dist / std::max<double>(
-                minimum_ego_velocity,
-                average_velocity));  // to avoid zero-division
+    const double minimum_ego_velocity_division =
+      (use_upstream_velocity && i > last_intersection_stop_line_candidate_idx)
+        ? minimum_upstream_velocity /* to avoid null division */
+        : minimum_ego_velocity;
+    const double passing_velocity =
+      std::max<double>(minimum_ego_velocity_division, average_velocity);
+    passing_time += (dist / passing_velocity);
 
     time_distance_array.emplace_back(passing_time, dist_sum);
   }

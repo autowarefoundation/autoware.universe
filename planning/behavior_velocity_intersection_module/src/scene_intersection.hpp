@@ -18,9 +18,7 @@
 #include "util_type.hpp"
 
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/state_machine.hpp>
-#include <grid_map_core/grid_map_core.hpp>
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -95,6 +93,8 @@ public:
         double collision_end_margin_time;    //! end margin time to check collision
       } not_prioritized;
       double keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
+      bool use_upstream_velocity;
+      double minimum_upstream_velocity;
     } collision_detection;
     struct Occlusion
     {
@@ -114,10 +114,20 @@ public:
       double ignore_parked_vehicle_speed_threshold;
       double stop_release_margin_time;
       bool temporal_stop_before_attention_area;
+      struct AbsenceTrafficLight
+      {
+        double creep_velocity;
+        double maximum_peeking_distance;
+      } absence_traffic_light;
+      double attention_lane_crop_curvature_threshold;
+      double attention_lane_curvature_calculation_ds;
     } occlusion;
   };
 
-  using Indecisive = std::monostate;
+  struct Indecisive
+  {
+    std::string error;
+  };
   struct StuckStop
   {
     size_t closest_idx{0};
@@ -157,6 +167,15 @@ public:
     size_t first_attention_stop_line_idx{0};
     size_t occlusion_stop_line_idx{0};
   };
+  struct OccludedAbsenceTrafficLight
+  {
+    bool is_actually_occlusion_cleared{false};
+    bool collision_detected{false};
+    bool temporal_stop_before_attention_required{false};
+    size_t closest_idx{0};
+    size_t first_attention_area_stop_line_idx{0};
+    size_t peeking_limit_line_idx{0};
+  };
   struct Safe
   {
     // NOTE: if RTC is disapproved status, default stop lines are still needed.
@@ -172,20 +191,22 @@ public:
     size_t occlusion_stop_line_idx{0};
   };
   using DecisionResult = std::variant<
-    Indecisive,                // internal process error, or over the pass judge line
-    StuckStop,                 // detected stuck vehicle
-    NonOccludedCollisionStop,  // detected collision while FOV is clear
-    FirstWaitBeforeOcclusion,  // stop for a while before peeking to occlusion
-    PeekingTowardOcclusion,    // peeking into occlusion while collision is not detected
-    OccludedCollisionStop,     // occlusion and collision are both detected
-    Safe,                      // judge as safe
-    TrafficLightArrowSolidOn   // only detect vehicles violating traffic rules
+    Indecisive,                   // internal process error, or over the pass judge line
+    StuckStop,                    // detected stuck vehicle
+    NonOccludedCollisionStop,     // detected collision while FOV is clear
+    FirstWaitBeforeOcclusion,     // stop for a while before peeking to occlusion
+    PeekingTowardOcclusion,       // peeking into occlusion while collision is not detected
+    OccludedCollisionStop,        // occlusion and collision are both detected
+    OccludedAbsenceTrafficLight,  // occlusion is detected in the absence of traffic light
+    Safe,                         // judge as safe
+    TrafficLightArrowSolidOn      // only detect vehicles violating traffic rules
     >;
 
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<int> & associative_ids,
-    const bool is_private_area, const bool enable_occlusion_detection, rclcpp::Node & node,
+    const std::string & turn_direction, const bool has_traffic_light,
+    const bool enable_occlusion_detection, const bool is_private_area, rclcpp::Node & node,
     const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
 
   /**
@@ -209,7 +230,8 @@ private:
   rclcpp::Node & node_;
   const int64_t lane_id_;
   const std::set<int> associative_ids_;
-  std::string turn_direction_;
+  const std::string turn_direction_;
+  const bool has_traffic_light_;
 
   bool is_go_out_ = false;
   bool is_permanent_go_ = false;
@@ -228,6 +250,7 @@ private:
   StateMachine before_creep_state_machine_;  //! for two phase stop
   StateMachine occlusion_stop_state_machine_;
   StateMachine temporal_stop_before_attention_state_machine_;
+
   // NOTE: uuid_ is base member
 
   // for stuck vehicle detection
@@ -260,7 +283,8 @@ private:
   bool checkCollision(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const autoware_auto_perception_msgs::msg::PredictedObjects & target_objects,
-    const util::PathLanelets & path_lanelets, const int closest_idx, const double time_delay,
+    const util::PathLanelets & path_lanelets, const size_t closest_idx,
+    const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
     const util::TrafficPrioritizedLevel & traffic_prioritized_level);
 
   bool isOcclusionCleared(

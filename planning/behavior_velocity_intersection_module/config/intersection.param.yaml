@@ -34,6 +34,8 @@
           collision_start_margin_time: 4.0 # [s] this + state_transit_margin_time should be higher to account for collision with fast/accelerating object
           collision_end_margin_time: 6.0 # [s] this + state_transit_margin_time should be higher to account for collision with slow/decelerating object
         keep_detection_vel_thr: 0.833 # == 3.0km/h. keep detection if ego is ego.vel < keep_detection_vel_thr
+        use_upstream_velocity: true # flag to use the planned velocity profile from the upstream module
+        minimum_upstream_velocity: 0.01 # [m/s] minimum velocity to avoid null division for the stop line from the upstream velocity
 
       occlusion:
         enable: false
@@ -52,6 +54,11 @@
         ignore_parked_vehicle_speed_threshold: 0.8333 # == 3.0km/h
         stop_release_margin_time: 1.5 # [s]
         temporal_stop_before_attention_area: false
+        absence_traffic_light:
+          creep_velocity: 1.388 # [m/s]
+          maximum_peeking_distance: 6.0 # [m]
+        attention_lane_crop_curvature_threshold: 0.25
+        attention_lane_curvature_calculation_ds: 0.5
 
       enable_rtc:
         intersection: true # If set to true, the scene modules require approval from the rtc (request to cooperate) function. If set to false, the modules can be executed without requiring rtc approval

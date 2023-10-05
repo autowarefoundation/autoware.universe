@@ -39,6 +39,7 @@ struct DebugData
   std::optional<geometry_msgs::msg::Pose> occlusion_first_stop_wall_pose{std::nullopt};
   std::optional<geometry_msgs::msg::Pose> pass_judge_wall_pose{std::nullopt};
   std::optional<std::vector<lanelet::CompoundPolygon3d>> attention_area{std::nullopt};
+  std::optional<std::vector<lanelet::CompoundPolygon3d>> occlusion_attention_area{std::nullopt};
   std::optional<geometry_msgs::msg::Polygon> intersection_area{std::nullopt};
   std::optional<lanelet::CompoundPolygon3d> ego_lane{std::nullopt};
   std::optional<std::vector<lanelet::CompoundPolygon3d>> adjacent_area{std::nullopt};
@@ -50,6 +51,8 @@ struct DebugData
   std::vector<geometry_msgs::msg::Polygon> occlusion_polygons;
   std::optional<std::pair<geometry_msgs::msg::Point, geometry_msgs::msg::Point>>
     nearest_occlusion_projection{std::nullopt};
+  autoware_auto_perception_msgs::msg::PredictedObjects blocking_attention_objects;
+  std::optional<geometry_msgs::msg::Pose> absence_traffic_light_creep_wall{std::nullopt};
 };
 
 struct InterpolatedPathInfo
