@@ -16,12 +16,12 @@
         "port": {
           "type": "integer",
           "description": "Port to connect to on the device",
-          "default": "7640"
+          "default": 7640
         },
         "timeout": {
           "type": "integer",
           "description": "Time in seconds to wait for a response from the device",
-          "default": "5"
+          "default": 5
         },
         "rtt_warn": {
           "type": "number",
