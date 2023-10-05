@@ -29,6 +29,8 @@ set(TVM_UTILITY_NODE_LIB_HEADERS
 ament_auto_add_library(${PROJECT_NAME} SHARED ${TVM_UTILITY_NODE_LIB_HEADERS})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
+set(BUILD_EXAMPLE OFF CACHE BOOL "enable build yolo_v2_tiny")
+
 if(BUILD_TESTING)
   # Get target backend
   set(${PROJECT_NAME}_BACKEND llvm CACHE STRING "${PROJECT_NAME} neural network backend")
@@ -47,6 +49,11 @@ if(BUILD_TESTING)
     endif()
     # the folder name becomes the test case name
     file(RELATIVE_PATH TEST_CASE_NAME ${CMAKE_CURRENT_LIST_DIR}/test ${TEST_FOLDER})
+
+    # skip yolo_v2_tiny example by default
+    if(TEST_CASE_NAME STREQUAL "yolo_v2_tiny" AND NOT BUILD_EXAMPLE)
+      continue()
+    endif()
 
     # Get neural network.
     set(NN_DEPENDENCY "")
