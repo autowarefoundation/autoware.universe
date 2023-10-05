@@ -275,7 +275,7 @@ TEST(DrivableAreaExpansionProjection, expandDrivableArea)
   planner_data.route_handler = std::make_shared<route_handler::RouteHandler>(route_handler);
   // we expect the drivable area to be expanded by 1m on each side
   drivable_area_expansion::expandDrivableArea(
-    path, std::make_shared<behavior_path_planner::PlannerData>(planner_data), path_lanes);
+    path, std::make_shared<behavior_path_planner::PlannerData>(planner_data));
   // unchanged path points
   ASSERT_EQ(path.points.size(), 3ul);
   for (auto i = 0.0; i < path.points.size(); ++i) {

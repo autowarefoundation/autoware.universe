@@ -86,6 +86,7 @@ struct DrivableAreaExpansionParameters
   std::vector<std::string> avoid_linestring_types{};
   bool compensate_uncrossable_lines = false;
   double compensate_extra_dist{};
+  vehicle_info_util::VehicleInfo vehicle_info;
 
   DrivableAreaExpansionParameters() = default;
   explicit DrivableAreaExpansionParameters(rclcpp::Node & node) { init(node); }
@@ -123,11 +124,7 @@ struct DrivableAreaExpansionParameters
     compensate_extra_dist = node.declare_parameter<double>(EXTRA_COMPENSATE_PARAM);
     expansion_method = node.declare_parameter<std::string>(EXPANSION_METHOD_PARAM);
 
-    const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
-    ego_left_offset = vehicle_info.max_lateral_offset_m;
-    ego_right_offset = vehicle_info.min_lateral_offset_m;
-    ego_rear_offset = vehicle_info.min_longitudinal_offset_m;
-    ego_front_offset = vehicle_info.max_longitudinal_offset_m;
+    vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
   }
 };
 

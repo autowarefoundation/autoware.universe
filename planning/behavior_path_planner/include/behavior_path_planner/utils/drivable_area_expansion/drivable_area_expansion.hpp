@@ -27,27 +27,12 @@
 
 namespace drivable_area_expansion
 {
-/// @brief Expand the drivable area based on the projected ego footprint along the path
+/// @brief Expand the drivable area based on the path curvature and the vehicle dimensions
 /// @param[inout] path path whose drivable area will be expanded
-/// @param[inout] planner_data planning data (params, dynamic objects, route handler, ...)
-/// @param[in] path_lanes lanelets of the path
+/// @param[inout] planner_data planning data (params, dynamic objects, vehicle info, ...)
 void expandDrivableArea(
   PathWithLaneId & path,
-  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data,
-  const lanelet::ConstLanelets & path_lanes);
-
-/// @brief Create a polygon combining the drivable area of a path and some expansion polygons
-/// @param[in] path path and its drivable area
-/// @param[in] expansion_polygons polygons to add to the drivable area
-/// @return expanded drivable area polygon
-polygon_t createExpandedDrivableAreaPolygon(
-  const PathWithLaneId & path, const multi_polygon_t & expansion_polygons);
-
-/// @brief Update the drivable area of the given path with the given polygon
-/// @details this function splits the polygon into a left and right bound and sets it in the path
-/// @param[in] path path whose drivable area will be expanded
-/// @param[in] expanded_drivable_area polygon of the new drivable area
-void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_drivable_area);
+  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data);
 }  // namespace drivable_area_expansion
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__DRIVABLE_AREA_EXPANSION__DRIVABLE_AREA_EXPANSION_HPP_

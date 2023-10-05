@@ -50,5 +50,8 @@ struct Projection
   double distance;
   double arc_length;
 };
+
+enum Side { LEFT, RIGHT };
+
 }  // namespace drivable_area_expansion
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__DRIVABLE_AREA_EXPANSION__TYPES_HPP_
