@@ -51,7 +51,7 @@ Example:
 
 ## Parameters
 
-{{ json_to_markdown("external_velocity_limit_selector/schema/external_velocity_limit_selector.schema.json") }}
+{{ json_to_markdown("planning/external_velocity_limit_selector/schema/external_velocity_limit_selector.schema.json") }}
 
 ## Assumptions / Known limits
 
