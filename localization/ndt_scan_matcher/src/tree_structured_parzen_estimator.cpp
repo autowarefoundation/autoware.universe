@@ -31,10 +31,9 @@ TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
   direction_(direction),
   n_startup_trials_(n_startup_trials),
   input_dimension_(is_loop_variable.size()),
-  is_loop_variable_(is_loop_variable)
+  is_loop_variable_(is_loop_variable),
+  base_stddev_(input_dimension_, VALUE_WIDTH)
 {
-  const double width = MAX_VALUE - MIN_VALUE;
-  base_stddev_ = Input(input_dimension_, width);
 }
 
 void TreeStructuredParzenEstimator::add_trial(const Trial & trial)

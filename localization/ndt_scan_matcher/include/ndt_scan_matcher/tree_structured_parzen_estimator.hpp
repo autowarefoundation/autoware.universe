@@ -55,6 +55,7 @@ private:
   static constexpr double MAX_GOOD_RATE = 0.10;
   static constexpr double MAX_VALUE = 1.0;
   static constexpr double MIN_VALUE = -1.0;
+  static constexpr double VALUE_WIDTH = MAX_VALUE - MIN_VALUE;
   static constexpr int64_t N_EI_CANDIDATES = 100;
   static constexpr double PRIOR_WEIGHT = 0.0;
 
@@ -73,7 +74,7 @@ private:
   const int64_t n_startup_trials_;
   const int64_t input_dimension_;
   const std::vector<bool> is_loop_variable_;
-  Input base_stddev_;
+  const Input base_stddev_;
 };
 
 #endif  // NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
