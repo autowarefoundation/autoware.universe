@@ -11,7 +11,10 @@
           "description": "Bluetooth addresses of the device to monitor",
           "items": {
             "type": "string"
-          }
+          },
+          "default": [
+            "4C:B9:9B:6E:7F:9A"
+          ]
         },
         "port": {
           "type": "integer",
