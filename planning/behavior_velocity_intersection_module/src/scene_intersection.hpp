@@ -70,7 +70,7 @@ public:
       bool enable_front_car_decel_prediction;  //! flag for using above feature
       */
       double timeout_private_area;
-      bool enabled_private_area_stuck_disregard;
+      bool enable_private_area_stuck_disregard;
     } stuck_vehicle;
     struct CollisionDetection
     {
