@@ -56,7 +56,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
   }
 
   Input best_input;
-  double best_score = std::numeric_limits<double>::lowest();
+  double best_log_likelihood_ratio = std::numeric_limits<double>::lowest();
   const double coeff = BASE_STDDEV_COEFF * std::pow(above_num_, -1.0 / (4 + input_dimension_));
   std::vector<double> weights = get_weights(above_num_);
   weights.push_back(PRIOR_WEIGHT);
@@ -82,21 +82,21 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
         (is_loop_variable_[j] ? normalize_loop_variable(input[j])
                               : std::clamp(input[j], MIN_VALUE, MAX_VALUE));
     }
-    const double score = acquisition_function(input);
-    if (score > best_score) {
-      best_score = score;
+    const double log_likelihood_ratio = compute_log_likelihood_ratio(input);
+    if (log_likelihood_ratio > best_log_likelihood_ratio) {
+      best_log_likelihood_ratio = log_likelihood_ratio;
       best_input = input;
     }
   }
   return best_input;
 }
 
-double TreeStructuredParzenEstimator::acquisition_function(const Input & input)
+double TreeStructuredParzenEstimator::compute_log_likelihood_ratio(const Input & input)
 {
   const int64_t n = trials_.size();
 
-  // The above KDE and the below KDE are calculated respectively, and the ratio is the score of the
-  // acquisition function.
+  // The above KDE and the below KDE are calculated respectively, and the ratio is the criteria to
+  // select best sample.
   std::vector<double> above_logs;
   std::vector<double> below_logs;
 

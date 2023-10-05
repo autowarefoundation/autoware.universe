@@ -54,7 +54,7 @@ private:
   static constexpr int64_t N_EI_CANDIDATES = 100;
   static constexpr double PRIOR_WEIGHT = 0.0;
 
-  double acquisition_function(const Input & input);
+  double compute_log_likelihood_ratio(const Input & input);
   double log_gaussian_pdf(const Input & input, const Input & mu, const Input & sigma) const;
   static std::vector<double> get_weights(const int64_t n);
   static double normalize_loop_variable(const double value);
