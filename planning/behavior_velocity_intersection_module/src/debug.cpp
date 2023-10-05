@@ -173,6 +173,14 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       &debug_marker_array);
   }
 
+  if (debug_data_.occlusion_attention_area) {
+    appendMarkerArray(
+      createLaneletPolygonsMarkerArray(
+        debug_data_.occlusion_attention_area.value(), "occlusion_attention_area", lane_id_, 0.917,
+        0.568, 0.596),
+      &debug_marker_array);
+  }
+
   if (debug_data_.adjacent_area) {
     appendMarkerArray(
       createLaneletPolygonsMarkerArray(
@@ -271,27 +279,35 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
 
 motion_utils::VirtualWalls IntersectionModule::createVirtualWalls()
 {
-  // TODO(Mamoru Sobue): collision stop pose depends on before/after occlusion clearance
   motion_utils::VirtualWalls virtual_walls;
   motion_utils::VirtualWall wall;
-  wall.style = motion_utils::VirtualWallType::stop;
 
   if (debug_data_.collision_stop_wall_pose) {
+    wall.style = motion_utils::VirtualWallType::stop;
     wall.text = "intersection";
     wall.ns = "intersection" + std::to_string(module_id_) + "_";
     wall.pose = debug_data_.collision_stop_wall_pose.value();
     virtual_walls.push_back(wall);
   }
   if (debug_data_.occlusion_first_stop_wall_pose) {
+    wall.style = motion_utils::VirtualWallType::stop;
     wall.text = "intersection";
     wall.ns = "intersection_occlusion_first_stop" + std::to_string(module_id_) + "_";
     wall.pose = debug_data_.occlusion_first_stop_wall_pose.value();
     virtual_walls.push_back(wall);
   }
   if (debug_data_.occlusion_stop_wall_pose) {
+    wall.style = motion_utils::VirtualWallType::stop;
     wall.text = "intersection_occlusion";
     wall.ns = "intersection_occlusion" + std::to_string(module_id_) + "_";
     wall.pose = debug_data_.occlusion_stop_wall_pose.value();
+    virtual_walls.push_back(wall);
+  }
+  if (debug_data_.absence_traffic_light_creep_wall) {
+    wall.style = motion_utils::VirtualWallType::slowdown;
+    wall.text = "intersection_occlusion";
+    wall.ns = "intersection_occlusion" + std::to_string(module_id_) + "_";
+    wall.pose = debug_data_.absence_traffic_light_creep_wall.value();
     virtual_walls.push_back(wall);
   }
   return virtual_walls;
