@@ -12,9 +12,7 @@
           "items": {
             "type": "string"
           },
-          "default": [
-            "4C:B9:9B:6E:7F:9A"
-          ]
+          "default": ["4C:B9:9B:6E:7F:9A"]
         },
         "port": {
           "type": "integer",
