@@ -24,6 +24,5 @@
 
     <!-- Parameter -->
     <param from="$(var front_vehicle_velocity_estimator_param_file)"/>
-
   </node>
 </launch>
