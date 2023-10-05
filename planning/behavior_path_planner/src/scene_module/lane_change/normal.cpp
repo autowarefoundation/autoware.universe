@@ -203,8 +203,9 @@ void NormalLaneChange::insertStopPoint(
 
   const double stop_point_buffer = getCommonParam().backward_length_buffer_for_end_of_lane;
   const double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
-  if (stopping_distance > 0.0) {
-    const auto stop_point = utils::insertStopPoint(stopping_distance, path);
+  const double stopping_distance_baselink = stopping_distance - getCommonParam().base_link2front;
+  if (stopping_distance_baselink > 0.0) {
+    const auto stop_point = utils::insertStopPoint(stopping_distance_baselink, path);
     setStopPose(stop_point.point.pose);
   }
 }
