@@ -918,10 +918,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const bool stuck_detected = checkStuckVehicle(planner_data_, path_lanelets);
   if (stuck_detected && stuck_stop_line_idx_opt) {
     auto stuck_stop_line_idx = stuck_stop_line_idx_opt.value();
-    // const bool stopped_at_stuck_line = stoppedForDuration(
-    //   stuck_stop_line_idx, planner_param_.stuck_vehicle.timeout_private_area,
-    //   stuck_private_area_timeout_);
-    // const bool timeout = ();
     if (is_private_area_ && planner_param_.stuck_vehicle.enabled_private_area_stuck_disregard) {
       if (
         default_stop_line_idx_opt &&
