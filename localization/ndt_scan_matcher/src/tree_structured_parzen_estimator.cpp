@@ -19,12 +19,15 @@
 #include <iostream>
 #include <numeric>
 
+// random number generator
+std::mt19937_64 TreeStructuredParzenEstimator::engine(std::random_device{}());
+std::uniform_real_distribution<double> TreeStructuredParzenEstimator::dist_uniform(
+  TreeStructuredParzenEstimator::MIN_VALUE, TreeStructuredParzenEstimator::MAX_VALUE);
+std::normal_distribution<double> TreeStructuredParzenEstimator::dist_normal(0.0, 1.0);
+
 TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
   const Direction direction, const int64_t n_startup_trials, std::vector<bool> is_loop_variable)
-: engine_(std::random_device{}()),
-  dist_uniform_(MIN_VALUE, MAX_VALUE),
-  dist_normal_(0.0, 1.0),
-  above_num_(0),
+: above_num_(0),
   direction_(direction),
   n_startup_trials_(n_startup_trials),
   input_dimension_(is_loop_variable.size()),
@@ -44,13 +47,13 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
     std::min(static_cast<int64_t>(25), static_cast<int64_t>(trials_.size() * MAX_GOOD_RATE));
 }
 
-TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input()
+TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input() const
 {
   if (static_cast<int64_t>(trials_.size()) < n_startup_trials_ || above_num_ == 0) {
     // Random sampling based on prior until the number of trials reaches `n_startup_trials_`.
     Input input(input_dimension_);
     for (int64_t j = 0; j < input_dimension_; j++) {
-      input[j] = dist_uniform_(engine_);
+      input[j] = dist_uniform(engine);
     }
     return input;
   }
@@ -63,7 +66,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
   std::discrete_distribution<int64_t> dist(weights.begin(), weights.end());
   for (int64_t i = 0; i < N_EI_CANDIDATES; i++) {
     Input mu, sigma;
-    const int64_t index = dist(engine_);
+    const int64_t index = dist(engine);
     if (index == above_num_) {
       mu = Input(input_dimension_, 0.0);
       sigma = base_stddev_;
@@ -77,7 +80,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
     // sample from the normal distribution
     Input input(input_dimension_);
     for (int64_t j = 0; j < input_dimension_; j++) {
-      input[j] = mu[j] + dist_normal_(engine_) * sigma[j];
+      input[j] = mu[j] + dist_normal(engine) * sigma[j];
       input[j] =
         (is_loop_variable_[j] ? normalize_loop_variable(input[j])
                               : std::clamp(input[j], MIN_VALUE, MAX_VALUE));
@@ -91,7 +94,7 @@ TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_inp
   return best_input;
 }
 
-double TreeStructuredParzenEstimator::compute_log_likelihood_ratio(const Input & input)
+double TreeStructuredParzenEstimator::compute_log_likelihood_ratio(const Input & input) const
 {
   const int64_t n = trials_.size();
 
