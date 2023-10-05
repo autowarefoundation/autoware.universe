@@ -16,8 +16,12 @@
 #define NDT_SCAN_MATCHER__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
 
 /*
-A implementation of tree-structured parzen estimator
-Search double variables in [-1, 1)
+A implementation of tree-structured parzen estimator (TPE)
+See below pdf for the TPE algorithm detail.
+https://papers.nips.cc/paper_files/paper/2011/file/86e8f7ab32cfd12577bc2619bc635690-Paper.pdf
+
+Optuna is also used as a reference for implementation.
+https://github.com/optuna/optuna
 */
 
 #include <cstdint>
