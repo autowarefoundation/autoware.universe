@@ -57,18 +57,18 @@ FrontVehicleVelocityEstimatorNode::FrontVehicleVelocityEstimatorNode(
     std::bind(&FrontVehicleVelocityEstimatorNode::onSetParam, this, std::placeholders::_1));
 
   // Node Parameter
-  node_param_.update_rate_hz = declare_parameter<double>("node_params.update_rate_hz", 10.0);
+  node_param_.update_rate_hz = declare_parameter<double>("node_params.update_rate_hz");
 
   // Core Parameter
-  core_param_.moving_average_num = declare_parameter<int>("core_params.moving_average_num", 1);
+  core_param_.moving_average_num = declare_parameter<int>("core_params.moving_average_num");
   core_param_.threshold_pointcloud_z_high =
-    declare_parameter<float>("core_params.threshold_pointcloud_z_high", 1.0f);
+    declare_parameter<float>("core_params.threshold_pointcloud_z_high");
   core_param_.threshold_pointcloud_z_low =
-    declare_parameter<float>("core_params.threshold_pointcloud_z_low", 0.6f);
+    declare_parameter<float>("core_params.threshold_pointcloud_z_low");
   core_param_.threshold_relative_velocity =
-    declare_parameter<double>("core_params.threshold_relative_velocity", 10.0);
+    declare_parameter<double>("core_params.threshold_relative_velocity");
   core_param_.threshold_absolute_velocity =
-    declare_parameter<double>("core_params.threshold_absolute_velocity", 20.0);
+    declare_parameter<double>("core_params.threshold_absolute_velocity");
 
   // Core
   front_vehicle_velocity_estimator_ = std::make_unique<FrontVehicleVelocityEstimator>(get_logger());

@@ -9,7 +9,7 @@
   <arg name="debug/nearest_neighbor_pointcloud" default="~/debug/nearest_neighbor_pointcloud"/>
 
   <!-- Parameter -->
-  <arg name="core_params.moving_average_num" default="1"/>
+  <arg name="front_vehicle_velocity_estimator_param_file" default="$(find-pkg-share front_vehicle_velocity_estimator)/config/front_vehicle_velocity_estimator.param.yaml"/>
 
   <!-- Node -->
   <node pkg="front_vehicle_velocity_estimator" exec="front_vehicle_velocity_estimator_node" name="front_vehicle_velocity_estimator" output="screen">
@@ -23,6 +23,7 @@
     <remap from="~/debug/nearest_neighbor_pointcloud" to="$(var debug/nearest_neighbor_pointcloud)"/>
 
     <!-- Parameter -->
-    <param name="core_params.moving_average_num" value="$(var core_params.moving_average_num)"/>
+    <param from="$(var front_vehicle_velocity_estimator_param_file)"/>
+
   </node>
 </launch>

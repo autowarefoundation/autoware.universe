@@ -1,0 +1,78 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Parameters for front vehicle velocity estinator node",
+    "type": "object",
+    "definitions": {
+        "front_vehicle_velocity_estimator": {
+            "type": "object",
+            "properties": {
+                "node_params": {
+                    "type": "object",
+                    "properties": {
+                        "update_rate_hz": {
+                            "type": "number",
+                            "description": "Update rate of the node in Hz",
+                            "default": 10.0
+                        }
+                    },
+                    "required": [
+                        "update_rate_hz"
+                    ]
+                },
+                "core_params": {
+                    "type": "object",
+                    "properties": {
+                        "moving_average_num": {
+                            "type": "integer",
+                            "description": "The moving average number for velocity estimation.",
+                            "default": 1
+                        },
+                        "threshold_pointcloud_z_high": {
+                            "type": "number",
+                            "description": "The threshold for z position value of point when choosing nearest neighbor point within front vehicle [m]. If z > `threshold_pointcloud_z_high`, the point is considered to noise.",
+                            "default": 1.0
+                        },
+                        "threshold_pointcloud_z_low": {
+                            "type": "number",
+                            "description": "The threshold for z position value of point when choosing nearest neighbor point within front vehicle [m]. If z < `threshold_pointcloud_z_low`, the point is considered to noise like ground.",
+                            "default": 0.6
+                        },
+                        "threshold_relative_velocity": {
+                            "type": "number",
+                            "description": "The threshold for min and max of estimated relative velocity ($v_{re}$) [m/s]. If $v_{re}$ < - `threshold_relative_velocity` , then $v_{re}$ = - `threshold_relative_velocity`. If $v_{re}$ > `threshold_relative_velocity`, then $v_{re}$ = `threshold_relative_velocity`.",
+                            "default": 10.0
+                        },
+                        "threshold_absolute_velocity": {
+                            "type": "number",
+                            "description": "The threshold for max of estimated absolute velocity ($v_{ae}$) [m/s]. If $v_{ae}$ > `threshold_absolute_velocity`, then $v_{ae}$ = `threshold_absolute_velocity`.",
+                            "default": 20.0
+                        }
+                    }
+                }
+            },
+            "required": [
+                "node_params",
+                "core_params"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "properties": {
+        "/**": {
+            "type": "object",
+            "properties": {
+                "ros__parameters": {
+                    "$ref": "#/definitions/front_vehicle_velocity_estimator"
+                }
+            },
+            "required": [
+                "ros__parameters"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "/**"
+    ],
+    "additionalProperties": false
+}
