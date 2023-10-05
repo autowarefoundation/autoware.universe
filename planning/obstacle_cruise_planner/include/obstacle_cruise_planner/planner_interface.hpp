@@ -268,10 +268,8 @@ private:
 
     ObstacleSpecificParams getObstacleParamByLabel(const ObjectClassification & label_id) const
     {
-      std::string label = types_map.at(label_id.label);
-      auto it = obstacle_to_param_struct_map.find(label);
-
-      if (it != obstacle_to_param_struct_map.end()) {
+      const std::string label = types_map.at(label_id.label);
+      if (obstacle_to_param_struct_map.count(label) > 0) {
         return obstacle_to_param_struct_map.at(label);
       }
       return obstacle_to_param_struct_map.at("default");
