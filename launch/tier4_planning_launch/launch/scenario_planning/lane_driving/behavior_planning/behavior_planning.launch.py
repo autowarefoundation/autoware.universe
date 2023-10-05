@@ -24,6 +24,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
 import yaml
@@ -70,9 +71,10 @@ def launch_setup(context, *args, **kwargs):
         name="glog_component",
     )
 
-    behavior_path_planner_component = ComposableNode(
+    behavior_path_planner_component = Node(
         package="behavior_path_planner",
-        plugin="behavior_path_planner::BehaviorPathPlannerNode",
+        # plugin="behavior_path_planner::BehaviorPathPlannerNode",
+        executable="behavior_path_planner",
         name="behavior_path_planner",
         namespace="",
         remappings=[
@@ -119,7 +121,8 @@ def launch_setup(context, *args, **kwargs):
                 ),
             },
         ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        # extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        prefix="konsole -e gdb -ex run --args",
     )
 
     # smoother param
@@ -211,7 +214,6 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
-            behavior_path_planner_component,
             behavior_velocity_planner_component,
             glog_component,
         ],
@@ -261,6 +263,7 @@ def launch_setup(context, *args, **kwargs):
     group = GroupAction(
         [
             container,
+            behavior_path_planner_component,
             load_compare_map,
             load_vector_map_inside_area_filter,
         ]
