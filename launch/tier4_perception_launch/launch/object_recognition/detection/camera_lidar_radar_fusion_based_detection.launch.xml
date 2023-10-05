@@ -16,6 +16,7 @@
   <arg name="use_validator" default="true" description="use obstacle_pointcloud based validator"/>
   <arg name="remove_unknown" default="true"/>
   <arg name="trust_distance" default="30.0"/>
+  <arg name="use_roi_based_cluster" default="false"/>
 
   <!-- Camera parameters -->
   <arg name="image_raw0" default="/image_raw" description="image raw topic name"/>
