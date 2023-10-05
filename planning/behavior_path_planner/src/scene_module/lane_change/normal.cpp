@@ -202,7 +202,68 @@ void NormalLaneChange::insertStopPoint(
   }
 
   const double stop_point_buffer = getCommonParam().backward_length_buffer_for_end_of_lane;
-  const double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
+  const auto target_objects = getTargetObjects(status_.current_lanes, status_.target_lanes);
+  const bool is_in_terminal_section = lanelet::utils::isInLanelet(getEgoPose(), lanelets.back()) ||
+                                      distance_to_terminal < lane_change_buffer;
+  const double stationary_obj_velocity_threshold = 0.3;
+  const bool has_blocking_target_lane_obj = std::any_of(
+    target_objects.target_lane.begin(), target_objects.target_lane.end(), [&](const auto & o) {
+      if (o.initial_twist.twist.linear.x > stationary_obj_velocity_threshold) {
+        return false;
+      }
+      const double distance_to_target_lane_obj = utils::getSignedDistance(
+        path.points.front().point.pose, o.initial_pose.pose, status_.target_lanes);
+      return distance_to_target_lane_obj < distance_to_terminal;
+    });
+
+  // auto stopping_distance = raw_stopping_distance;
+  double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
+  if (is_in_terminal_section || !has_blocking_target_lane_obj) {
+    // calculate minimum distance from path front to the stationary object on the ego lane.
+    const auto distance_to_ego_lane_obj = [&]() -> double {
+      double distance_to_obj = distance_to_terminal;
+      const double distance_to_ego =
+        utils::getSignedDistance(path.points.front().point.pose, getEgoPose(), lanelets);
+
+      for (const auto & object : target_objects.current_lane) {
+        // check if stationary
+        if (std::abs(object.initial_twist.twist.linear.x) > stationary_obj_velocity_threshold) {
+          continue;
+        }
+
+        // calculate distance from path front to the stationary object polygon on the ego lane.
+        for (const auto & polygon_p :
+             tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape).outer()) {
+          auto p = object.initial_pose.pose;
+          p.position =
+            tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), p.position.z);
+          if (p.position.x < 0.01 || p.position.y < 0.01) {
+            // todo(kosuke55): inverseClockwise make polygon have invalid value, so skip it.
+            continue;
+          }
+          const double current_distance_to_obj =
+            utils::getSignedDistance(path.points.front().point.pose, p, lanelets);
+          // ignore backward object
+          if (current_distance_to_obj < distance_to_ego) {
+            continue;
+          }
+          distance_to_obj = std::min(distance_to_obj, current_distance_to_obj);
+        }
+      }
+      return distance_to_obj;
+    }();
+
+    // If the lane change space is occupied by a stationary obstacle, move the stop line closer.
+    // TODO(Horibe): We need to loop this process because the new space could be occupied as well.
+    stopping_distance = std::min(
+      distance_to_ego_lane_obj - lane_change_buffer - stop_point_buffer -
+        getCommonParam().base_link2front -
+        calcRssDistance(
+          0.0, planner_data_->parameters.minimum_lane_changing_velocity,
+          lane_change_parameters_->rss_params),
+      stopping_distance);
+  }
+
   if (stopping_distance > 0.0) {
     const auto stop_point = utils::insertStopPoint(stopping_distance, path);
     setStopPose(stop_point.point.pose);
