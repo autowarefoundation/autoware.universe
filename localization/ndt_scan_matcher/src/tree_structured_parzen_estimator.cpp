@@ -186,17 +186,6 @@ std::vector<double> TreeStructuredParzenEstimator::get_weights(const int64_t n)
 {
   // See optuna
   // https://github.com/optuna/optuna/blob/4bfab78e98bf786f6a2ce6e593a26e3f8403e08d/optuna/samplers/_tpe/sampler.py#L50-L58
-  /*
-    def default_weights(x: int) -> np.ndarray:
-      if x == 0:
-          return np.asarray([])
-      elif x < 25:
-          return np.ones(x)
-      else:
-          ramp = np.linspace(1.0 / x, 1.0, num=x - 25)
-          flat = np.ones(25)
-          return np.concatenate([ramp, flat], axis=0)
-  */
   std::vector<double> weights;
   constexpr int64_t WEIGHT_ALPHA = 25;
   if (n == 0) {
