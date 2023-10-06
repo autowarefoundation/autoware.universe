@@ -254,7 +254,6 @@ private:
 
   // for stuck vehicle detection
   const bool is_private_area_;
-  StateMachine stuck_private_area_timeout_;
 
   // for RTC
   const UUID occlusion_uuid_;

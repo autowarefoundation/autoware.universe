@@ -97,10 +97,6 @@ IntersectionModule::IntersectionModule(
     occlusion_stop_state_machine_.setState(StateMachine::State::GO);
   }
   {
-    stuck_private_area_timeout_.setMarginTime(planner_param_.stuck_vehicle.timeout_private_area);
-    stuck_private_area_timeout_.setState(StateMachine::State::STOP);
-  }
-  {
     temporal_stop_before_attention_state_machine_.setMarginTime(
       planner_param_.occlusion.before_creep_stop_time);
     temporal_stop_before_attention_state_machine_.setState(StateMachine::State::STOP);
