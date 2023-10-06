@@ -670,10 +670,30 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
 
   const auto current_polygon =
     utils::lane_change::createPolygon(current_lanes, 0.0, std::numeric_limits<double>::max());
-  const auto target_polygon =
-    utils::lane_change::createPolygon(target_lanes, 0.0, std::numeric_limits<double>::max());
-  const auto target_backward_polygon = utils::lane_change::createPolygon(
-    target_backward_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
+    target_lanes, direction_, lane_change_parameters_->lane_expansion_left_offset,
+    lane_change_parameters_->lane_expansion_right_offset);
+  const auto target_polygon = utils::lane_change::createPolygon(
+    expanded_target_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto dist_ego_to_current_lanes_center =
+    lanelet::utils::getLateralDistanceToClosestLanelet(current_lanes, current_pose);
+  std::vector<std::optional<lanelet::BasicPolygon2d>> target_backward_polygons;
+  for (const auto & target_backward_lane : target_backward_lanes) {
+    // Check to see is target_backward_lane is in current_lanes
+    // Without this check, current lane object might be treated as target lane object
+    const auto is_current_lane = [&](const lanelet::ConstLanelet & current_lane) {
+      return current_lane.id() == target_backward_lane.id();
+    };
+
+    if (std::any_of(current_lanes.begin(), current_lanes.end(), is_current_lane)) {
+      continue;
+    }
+
+    lanelet::ConstLanelets lanelet{target_backward_lane};
+    auto lane_polygon =
+      utils::lane_change::createPolygon(lanelet, 0.0, std::numeric_limits<double>::max());
+    target_backward_polygons.push_back(lane_polygon);
+  }
 
   auto filtered_objects = objects;
 
@@ -702,6 +722,14 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
       min_dist_ego_to_obj = std::min(dist_ego_to_obj, min_dist_ego_to_obj);
     }
 
+    const auto is_lateral_far = [&]() {
+      const auto dist_object_to_current_lanes_center =
+        lanelet::utils::getLateralDistanceToClosestLanelet(
+          current_lanes, object.kinematics.initial_pose_with_covariance.pose);
+      const auto lateral = dist_object_to_current_lanes_center - dist_ego_to_current_lanes_center;
+      return std::abs(lateral) > (common_parameters.vehicle_width / 2);
+    };
+
     // ignore static object that are behind the ego vehicle
     if (obj_velocity_norm < 1.0 && max_dist_ego_to_obj < 0.0) {
       continue;
@@ -712,14 +740,22 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
       // TODO(watanabe): ignore static parked object that are in front of the ego vehicle in target
       // lanes
 
-      filtered_obj_indices.target_lane.push_back(i);
-      continue;
+      if (max_dist_ego_to_obj >= 0 || is_lateral_far()) {
+        filtered_obj_indices.target_lane.push_back(i);
+        continue;
+      }
     }
+
+    const auto check_backward_polygon = [&obj_polygon](const auto & target_backward_polygon) {
+      return target_backward_polygon &&
+             boost::geometry::intersects(target_backward_polygon.value(), obj_polygon);
+    };
 
     // check if the object intersects with target backward lanes
     if (
-      target_backward_polygon &&
-      boost::geometry::intersects(target_backward_polygon.value(), obj_polygon)) {
+      !target_backward_polygons.empty() &&
+      std::any_of(
+        target_backward_polygons.begin(), target_backward_polygons.end(), check_backward_polygon)) {
       filtered_obj_indices.target_lane.push_back(i);
       continue;
     }
@@ -908,6 +944,7 @@ bool NormalLaneChange::getLaneChangePaths(
     utils::lane_change::getTargetNeighborLanesPolygon(route_handler, current_lanes, type_);
 
   const auto target_objects = getTargetObjects(current_lanes, target_lanes);
+  debug_filtered_objects_ = target_objects;
 
   const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
 
@@ -1124,6 +1161,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
   const auto & target_lanes = status_.target_lanes;
 
   const auto target_objects = getTargetObjects(current_lanes, target_lanes);
+  debug_filtered_objects_ = target_objects;
 
   CollisionCheckDebugMap debug_data;
   const auto safety_status = isLaneChangePathSafe(
@@ -1420,23 +1458,41 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
       target_objects.other_lane.end());
   }
 
+  const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
+    lane_change_path.info.target_lanes, direction_,
+    lane_change_parameters_->lane_expansion_left_offset,
+    lane_change_parameters_->lane_expansion_right_offset);
+
   for (const auto & obj : collision_check_objects) {
     auto current_debug_data = marker_utils::createObjectDebug(obj);
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
       obj, lane_change_parameters_->use_all_predicted_path);
     for (const auto & obj_path : obj_predicted_paths) {
-      if (!utils::path_safety_checker::checkCollision(
-            path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
-            current_debug_data.second)) {
-        path_safety_status.is_safe = false;
-        marker_utils::updateCollisionCheckDebugMap(
-          debug_data, current_debug_data, path_safety_status.is_safe);
-        const auto & obj_pose = obj.initial_pose.pose;
-        const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj_pose, obj.shape);
-        path_safety_status.is_object_coming_from_rear |=
-          !utils::path_safety_checker::isTargetObjectFront(
-            path, current_pose, common_parameters.vehicle_info, obj_polygon);
+      const auto collided_polygons = utils::path_safety_checker::getCollidedPolygons(
+        path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
+        current_debug_data.second);
+
+      if (collided_polygons.empty()) {
+        continue;
       }
+
+      const auto collision_in_current_lanes = utils::lane_change::isCollidedPolygonsInLanelet(
+        collided_polygons, lane_change_path.info.current_lanes);
+      const auto collision_in_target_lanes =
+        utils::lane_change::isCollidedPolygonsInLanelet(collided_polygons, expanded_target_lanes);
+
+      if (!collision_in_current_lanes && !collision_in_target_lanes) {
+        continue;
+      }
+
+      path_safety_status.is_safe = false;
+      marker_utils::updateCollisionCheckDebugMap(
+        debug_data, current_debug_data, path_safety_status.is_safe);
+      const auto & obj_pose = obj.initial_pose.pose;
+      const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj_pose, obj.shape);
+      path_safety_status.is_object_coming_from_rear |=
+        !utils::path_safety_checker::isTargetObjectFront(
+          path, current_pose, common_parameters.vehicle_info, obj_polygon);
     }
     marker_utils::updateCollisionCheckDebugMap(
       debug_data, current_debug_data, path_safety_status.is_safe);

@@ -1111,4 +1111,25 @@ ExtendedPredictedObject transform(
 
   return extended_object;
 }
+
+bool isCollidedPolygonsInLanelet(
+  const std::vector<Polygon2d> & collided_polygons, const lanelet::ConstLanelets & lanes)
+{
+  const auto lanes_polygon = createPolygon(lanes, 0.0, std::numeric_limits<double>::max());
+
+  const auto is_in_lanes = [&](const auto & collided_polygon) {
+    return lanes_polygon && boost::geometry::intersects(lanes_polygon.value(), collided_polygon);
+  };
+
+  return std::any_of(collided_polygons.begin(), collided_polygons.end(), is_in_lanes);
+}
+
+lanelet::ConstLanelets generateExpandedLanelets(
+  const lanelet::ConstLanelets & lanes, const Direction direction, const double left_offset,
+  const double right_offset)
+{
+  const auto left_extend_offset = (direction == Direction::LEFT) ? left_offset : 0.0;
+  const auto right_extend_offset = (direction == Direction::RIGHT) ? -right_offset : 0.0;
+  return lanelet::utils::getExpandedLanelets(lanes, left_extend_offset, right_extend_offset);
+}
 }  // namespace behavior_path_planner::utils::lane_change

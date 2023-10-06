@@ -65,6 +65,8 @@ struct LaneChangeParameters
   bool check_objects_on_current_lanes{true};
   bool check_objects_on_other_lanes{true};
   bool use_all_predicted_path{false};
+  double lane_expansion_left_offset{0.0};
+  double lane_expansion_right_offset{0.0};
 
   // regulatory elements
   bool regulate_on_crosswalk{false};
@@ -78,8 +80,9 @@ struct LaneChangeParameters
   utils::path_safety_checker::ObjectTypesToCheck object_types_to_check;
 
   // safety check
-  utils::path_safety_checker::RSSparams rss_params;
-  utils::path_safety_checker::RSSparams rss_params_for_abort;
+  bool allow_loose_check_for_cancel{true};
+  utils::path_safety_checker::RSSparams rss_params{};
+  utils::path_safety_checker::RSSparams rss_params_for_abort{};
 
   // abort
   LaneChangeCancelParameters cancel;
