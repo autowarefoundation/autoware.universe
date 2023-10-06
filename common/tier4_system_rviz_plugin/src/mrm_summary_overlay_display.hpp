@@ -60,6 +60,8 @@
 #include <rviz_common/ros_topic_display.hpp>
 
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
+#include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
+#include <autoware_adapi_v1_msgs/msg/route_state.hpp>
 
 #endif
 
@@ -69,6 +71,10 @@ class MrmSummaryOverlayDisplay
 : public rviz_common::RosTopicDisplay<autoware_auto_system_msgs::msg::HazardStatusStamped>
 
 {
+  using LocalizationInitializationState =
+    autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
+  using RouteState = autoware_adapi_v1_msgs::msg::RouteState;
+
   Q_OBJECT
 
 public:
@@ -86,8 +92,23 @@ protected:
   void update(float wall_dt, float ros_dt) override;
   void processMessage(
     const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr) override;
-  bool checkLocalizationNotInit();
-  bool checkPlanningGoalNotInit();
+  rclcpp::Node::SharedPtr raw_node_;
+
+  rclcpp::Subscription<LocalizationInitializationState>::SharedPtr sub_localization_init_;
+  rclcpp::Subscription<RouteState>::SharedPtr sub_route_state_;
+  bool flag_localization_initialized;
+  bool flag_route_set;
+
+  void onLocalizationInit(const LocalizationInitializationState::ConstSharedPtr msg_ptr)
+  {
+    flag_localization_initialized = 
+      (msg_ptr->state == LocalizationInitializationState::INITIALIZED);
+  }
+  void onRouteState(const RouteState::ConstSharedPtr msg_ptr)
+  {
+    flag_route_set = !(msg_ptr->state == RouteState::UNSET);
+  }
+
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
   rviz_common::properties::ColorProperty * property_text_color_;
   rviz_common::properties::IntProperty * property_left_;
@@ -96,6 +117,8 @@ protected:
   rviz_common::properties::FloatProperty * property_value_scale_;
   rviz_common::properties::IntProperty * property_font_size_;
   rviz_common::properties::IntProperty * property_max_letter_num_;
+  rviz_common::properties::StringProperty * property_localization_state_api_topic_;
+  rviz_common::properties::StringProperty * property_routing_state_api_topic_;
   // QImage hud_;
 
 private:
