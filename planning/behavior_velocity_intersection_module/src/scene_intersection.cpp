@@ -833,7 +833,9 @@ static bool isGreenSolidOn(
   }
   const auto & tl_info = tl_info_it->second;
   for (auto && tl_light : tl_info.signal.elements) {
-    if (tl_light.color == TrafficSignalElement::GREEN) {
+    if (
+      tl_light.color == TrafficSignalElement::GREEN &&
+      tl_light.shape == TrafficSignalElement::CIRCLE) {
       return true;
     }
   }
