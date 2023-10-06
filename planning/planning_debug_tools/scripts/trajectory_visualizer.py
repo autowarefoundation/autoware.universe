@@ -52,10 +52,10 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-PLOT_MIN_ARCLENGTH = -5
+PLOT_MIN_ARCLENGTH = -1
 
 if args.length is None:
-    PLOT_MAX_ARCLENGTH = 200
+    PLOT_MAX_ARCLENGTH = 150
 else:
     PLOT_MAX_ARCLENGTH = int(args.length)
 print("max arclength = " + str(PLOT_MAX_ARCLENGTH))
@@ -72,7 +72,7 @@ else:
 print("plot type = " + PLOT_TYPE)
 
 if args.max_velocity is None:
-    MAX_VELOCITY = 20
+    MAX_VELOCITY = 10
 else:
     MAX_VELOCITY = args.max_velocity
 
@@ -180,12 +180,12 @@ class TrajectoryVisualizer(Node):
         if PLOT_TYPE == "VEL_ACC_JERK":
             self.setPlotTrajectory()
             self.ani = animation.FuncAnimation(
-                self.fig, self.plotTrajectory, interval=100, blit=True
+                self.fig, self.plotTrajectory, interval=25, blit=True
             )
         else:
             self.setPlotTrajectoryVelocity()
             self.ani = animation.FuncAnimation(
-                self.fig, self.plotTrajectoryVelocity, interval=100, blit=True
+                self.fig, self.plotTrajectoryVelocity, interval=25, blit=True
             )
 
         plt.show()
