@@ -7,7 +7,12 @@ output.
 
 ## Compiling the Example
 
-1. Download an example image to be used as test input. this image needs to be
+1. Check if model was downloaded during the env preparation step by ansible and
+   models files exist in the folder $HOME/autoware_data/tvm_utility/models/yolo_v2_tiny.
+
+   If not you can download them manually, see [Manual Artifacts Downloading](https://github.com/autowarefoundation/autoware/tree/main/ansible/roles/artifacts).
+
+2. Download an example image to be used as test input. This image needs to be
    saved in the `artifacts/yolo_v2_tiny/` folder
 
 ```sh
@@ -18,7 +23,7 @@ curl https://raw.githubusercontent.com/pjreddie/darknet/master/data/dog.jpg \
 1. Build and test.
 
 ```sh
-colcon build --packages-up-to tvm_utility
+colcon build --packages-up-to tvm_utility --cmake-args -DBUILD_EXAMPLE=ON
 colcon test --packages-select tvm_utility
 ```
 

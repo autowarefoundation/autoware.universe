@@ -41,7 +41,7 @@ The earliest supported version depends on each package making use of the inferen
 
 #### Models
 
-Dependent packages are expected to use the `get_neural_network` cmake function from this package in order to get the compiled TVM models.
+Dependent packages are expected to use the `get_neural_network` cmake function from this package in order to build proper external dependency.
 
 ### Error detection and handling
 
@@ -54,7 +54,7 @@ The neural networks are compiled as part of the
 [Model Zoo](https://github.com/autowarefoundation/modelzoo/) CI pipeline and saved to an S3 bucket.
 
 The `get_neural_network` function creates an abstraction for the artifact management.
-Users should provide model files under "data/user/${MODEL_NAME}/". Otherwise, nothing happens and compilation of the package will be skipped.
+Users should check if  model configuration header file is under "data/user/${MODEL_NAME}/". Otherwise, nothing happens and compilation of the package will be skipped.
 
 The structure inside of the source directory of the package making use of the function is as follow:
 
@@ -63,9 +63,6 @@ The structure inside of the source directory of the package making use of the fu
 ├── data
 │   └── user
 │       ├── ${MODEL 1}
-│       │   ├── deploy_graph.json
-│       │   ├── deploy_lib.so
-│       │   ├── deploy_param.params
 │       │   └── inference_engine_tvm_config.hpp
 │       ├── ...
 │       └── ${MODEL ...}
@@ -76,6 +73,28 @@ The `inference_engine_tvm_config.hpp` file needed for compilation by dependent p
 Dependent packages can use the cmake `add_dependencies` function with the name provided in the `DEPENDENCY` output parameter of `get_neural_network` to ensure this file is created before it gets used.
 
 The other `deploy_*` files are installed to "models/${MODEL_NAME}/" under the `share` directory of the package.
+
+The other model files:
+
+- deploy_graph.json
+- deploy_lib.so
+- deploy_param.params
+
+should be stored in autoware_data folder under sub folder with the structure. 
+
+```{text}
+$HOME/autoware_data
+|     └──${package}
+|        └──models
+|           ├── ${MODEL 1}
+|           |    ├── deploy_graph.json
+|           |    ├── deploy_lib.so
+|           |    └── deploy_param.params
+|           ├── ...
+|           └── ${MODEL ...}
+|                └── ...
+```
+
 
 #### Inputs / Outputs
 
