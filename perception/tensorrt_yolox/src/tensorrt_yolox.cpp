@@ -447,6 +447,7 @@ void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
   const float input_height = static_cast<float>(input_dims.d[2]);
   const float input_width = static_cast<float>(input_dims.d[3]);
   int b = 0;
+  size_t argmax_out_elem_num = 0;
   for (const auto & image : images) {
     if (!image_buf_h_) {
       const float scale = std::min(input_width / image.cols, input_height / image.rows);
@@ -462,7 +463,30 @@ void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
       image_buf_h_.get() + index, &image.data[0],
       image.cols * image.rows * 3 * sizeof(unsigned char));
     b++;
+
+    if (multitask_) {
+      for (int m = 0; m < multitask_; m++) {
+        const auto output_dims =
+            trt_common_->getBindingDimensions(m + 2);  // 0: input, 1: output for detections
+        const float scale =
+            std::min(output_dims.d[3] / float(image.cols), output_dims.d[2] / float(image.rows));
+        int out_w = static_cast<int>(image.cols * scale);
+        int out_h = static_cast<int>(image.rows * scale);
+        argmax_out_elem_num += out_w * out_h * batch_size;
+      }
+    }
   }
+
+  if (multitask_) {
+    if (!argmax_buf_h_) {
+      argmax_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
+          argmax_out_elem_num, cudaHostAllocPortable);
+    }
+    if (!argmax_buf_d_) {
+      argmax_buf_d_ = cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num);
+    }
+  }
+
   // Copy into device memory
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     image_buf_d_.get(), image_buf_h_.get(),
