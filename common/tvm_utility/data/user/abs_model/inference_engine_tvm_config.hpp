@@ -14,8 +14,8 @@
 
 #include "tvm_utility/pipeline.hpp"
 
-#ifndef ENGINE_LOAD_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
-#define ENGINE_LOAD_INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#ifndef COMMON__TVM_UTILITY__DATA__USER__ABS_MODEL__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#define COMMON__TVM_UTILITY__DATA__USER__ABS_MODEL__INFERENCE_ENGINE_TVM_CONFIG_HPP_
 
 namespace model_zoo
 {
@@ -26,34 +26,26 @@ namespace engine_load
 namespace abs_model
 {
 
-static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
-  {
-    0,
-    0,
-    0
-  },  // modelzoo_version
+static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
+  {0, 0, 0},  // modelzoo_version
 
   "abs_model",  // network_name
-  "llvm",  // network_backend
+  "llvm",       // network_backend
 
-  "./deploy_lib.so",  //network_module_path
-  "./deploy_graph.json",  // network_graph_path
+  "./deploy_lib.so",        // network_module_path
+  "./deploy_graph.json",    // network_graph_path
   "./deploy_param.params",  // network_params_path
 
   kDLCPU,  // tvm_device_type
-  0,  // tvm_device_id
+  0,       // tvm_device_id
 
-  {
-    {"a", kDLFloat, 32, 1, {2, 2}}
-  },  // network_inputs
+  {{"a", kDLFloat, 32, 1, {2, 2}}},  // network_inputs
 
-  {
-    {"output", kDLFloat, 32, 1, {2, 2}}
-  }  // network_outputs
+  {{"output", kDLFloat, 32, 1, {2, 2}}}  // network_outputs
 };
 
 }  // namespace abs_model
 }  // namespace engine_load
 }  // namespace inf_test
 }  // namespace model_zoo
-#endif  // ENGINE_LOAD_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#endif  // COMMON__TVM_UTILITY__DATA__USER__ABS_MODEL__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT

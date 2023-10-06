@@ -14,18 +14,17 @@
 
 #include "gtest/gtest.h"
 #include "tvm_utility/pipeline.hpp"
-#include <abs_model/inference_engine_tvm_config.hpp>
 
+#include <abs_model/inference_engine_tvm_config.hpp>
 #include <opencv2/opencv.hpp>
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
 #include <utility>
 #include <vector>
-#include <cstdio>
 
 using model_zoo::inf_test::engine_load::abs_model::config;
-
 
 namespace tvm_utility
 {
@@ -49,7 +48,7 @@ public:
       config.network_inputs[0].tvm_dtype_lanes,
       config.tvm_device_type,
       config.tvm_device_id};
-    
+
     output = a;
   }
 
@@ -68,8 +67,7 @@ public:
 
     TVMArrayCopyFromBytes(
       output.getArray(), a_input.data,
-      network_input_a_width * network_input_a_height *
-        network_input_datatype_bytes);
+      network_input_a_width * network_input_a_height * network_input_datatype_bytes);
 
     return {output};
   }
@@ -98,13 +96,11 @@ public:
     assert(input[0].getArray()->dtype.bits == sizeof(float) * 8);
 
     // Copy the inference data to CPU memory
-    std::vector<float> infer(
-      network_output_width * network_output_height, 0.0f);
-    
+    std::vector<float> infer(network_output_width * network_output_height, 0.0f);
+
     TVMArrayCopyToBytes(
       input[0].getArray(), infer.data(),
-      network_output_width * network_output_height*
-        network_output_datatype_bytes);
+      network_output_width * network_output_height * network_output_datatype_bytes);
 
     return infer;
   }
@@ -131,12 +127,12 @@ TEST(PipelineExamples, SimplePipeline)
   auto version_status = IE.version_check({2, 0, 0});
   EXPECT_NE(version_status, tvm_utility::Version::Unsupported);
 
-  // create input array 
-  std::vector<float> input_arr {-1., -2., -3., 4.};
+  // create input array
+  std::vector<float> input_arr{-1., -2., -3., 4.};
   // send it to the model
   auto output = pipeline.schedule(input_arr);
 
-  // define vector with expected values  
+  // define vector with expected values
   std::vector<float> expected_output{1., 2., 3., 4.};
 
   // // Test: check if the generated output is equal to the reference
@@ -144,8 +140,7 @@ TEST(PipelineExamples, SimplePipeline)
   for (size_t i = 0; i < output.size(); ++i) {
     EXPECT_NEAR(expected_output[i], output[i], 0.0001) << "at index: " << i;
   }
-
 }
 
-}  // namespace yolo_v2_tiny
+}  // namespace linear_model
 }  // namespace tvm_utility

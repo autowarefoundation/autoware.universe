@@ -54,7 +54,7 @@ The neural networks are compiled as part of the
 [Model Zoo](https://github.com/autowarefoundation/modelzoo/) CI pipeline and saved to an S3 bucket.
 
 The `get_neural_network` function creates an abstraction for the artifact management.
-Users should check if  model configuration header file is under "data/user/${MODEL_NAME}/". Otherwise, nothing happens and compilation of the package will be skipped.
+Users should check if model configuration header file is under "data/user/${MODEL_NAME}/". Otherwise, nothing happens and compilation of the package will be skipped.
 
 The structure inside of the source directory of the package making use of the function is as follow:
 
