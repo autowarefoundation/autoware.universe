@@ -161,36 +161,37 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   BehaviorModuleOutput out;
   out.path = p;
   out.reference_path = p;
+  out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
   return out;
 }
 
 void SamplingPlannerModule::updateDebugMarkers()
 {
-  // const auto header = planner_data_->route_handler->getRouteHeader();
-  // visualization_msgs::msg::Marker m;
-  // m.header.frame_id = "map";
-  // m.header.stamp = header.stamp;
-  // m.action = m.ADD;
-  // m.id = 0UL;
-  // m.type = m.LINE_STRIP;
-  // m.color.a = 1.0;
-  // m.scale.x = 0.02;
-  // m.ns = "candidates";
-  // for (const auto & c : debug_data_.sampled_candidates) {
-  //   m.points.clear();
-  //   for (const auto & p : c.points)
-  //     m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
-  //   if (c.constraint_results.isValid()) {
-  //     m.color.g = 1.0;
-  //     m.color.r = 0.0;
-  //   } else {
-  //     m.color.r = 1.0;
-  //     m.color.g = 0.0;
-  //   }
-  //   debug_marker_.markers.push_back(m);
-  //   info_marker_.markers.push_back(m);
-  //   ++m.id;
-  // }
+  const auto header = planner_data_->route_handler->getRouteHeader();
+  visualization_msgs::msg::Marker m;
+  m.header.frame_id = "map";
+  m.header.stamp = header.stamp;
+  m.action = m.ADD;
+  m.id = 0UL;
+  m.type = m.LINE_STRIP;
+  m.color.a = 1.0;
+  m.scale.x = 0.02;
+  m.ns = "candidates";
+  for (const auto & c : debug_data_.sampled_candidates) {
+    m.points.clear();
+    for (const auto & p : c.points)
+      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+    if (c.constraint_results.isValid()) {
+      m.color.g = 1.0;
+      m.color.r = 0.0;
+    } else {
+      m.color.r = 1.0;
+      m.color.g = 0.0;
+    }
+    debug_marker_.markers.push_back(m);
+    info_marker_.markers.push_back(m);
+    ++m.id;
+  }
   // m.ns = "footprint";
   // m.id = 0UL;
   // m.type = m.POINTS;
