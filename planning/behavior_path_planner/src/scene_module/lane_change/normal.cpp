@@ -568,11 +568,10 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
 
   // If the ego is in stuck, sampling all possible accelerations to find avoiding path.
   if (isVehicleStuckByObstacle(current_lanes, max_lane_change_length)) {
-    RCLCPP_WARN(logger_, "vehicle is stuck. sample all lon acc.");
+    auto clock = rclcpp::Clock(RCL_ROS_TIME);
+    RCLCPP_INFO_THROTTLE(logger_, "vehicle is stuck. sample all longitudinal acceleration.");
     return utils::lane_change::getAccelerationValues(
       min_acc, max_acc, longitudinal_acc_sampling_num);
-  } else {
-    RCLCPP_INFO(logger_, "No vehicle is stuck. Consider max acc.");
   }
 
   // if maximum lane change length is less than length to goal or the end of target lanes, only
