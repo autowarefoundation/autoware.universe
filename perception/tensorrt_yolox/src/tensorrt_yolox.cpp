@@ -384,7 +384,7 @@ void TrtYoloX::initPreprocessBuffer(int width, int height)
       image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(width * height * 3 * batch_size_);
     }
     if (multitask_) {
-      size_t argmax_out_elem_num_ = 0;
+      size_t argmax_out_elem_num = 0;
       for (int m = 0; m < multitask_; m++) {
         const auto output_dims =
           trt_common_->getBindingDimensions(m + 2);  // 0 : input, 1 : output for detections
@@ -396,11 +396,11 @@ void TrtYoloX::initPreprocessBuffer(int width, int height)
         // output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
         //	out_elem_num = out_elem_num * batch_size_;
         size_t out_elem_num = out_w * out_h * batch_size_;
-        argmax_out_elem_num_ += out_elem_num;
+        argmax_out_elem_num += out_elem_num;
       }
       argmax_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
-        argmax_out_elem_num_, cudaHostAllocWriteCombined);
-      argmax_buf_d_ = cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num_);
+          argmax_out_elem_num, cudaHostAllocPortable);
+      argmax_buf_d_ = cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num);
     }
   }
 }
