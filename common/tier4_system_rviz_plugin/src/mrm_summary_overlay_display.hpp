@@ -59,9 +59,9 @@
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/ros_topic_display.hpp>
 
-#include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/route_state.hpp>
+#include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 
 #endif
 
@@ -101,7 +101,7 @@ protected:
 
   void onLocalizationInit(const LocalizationInitializationState::ConstSharedPtr msg_ptr)
   {
-    flag_localization_initialized = 
+    flag_localization_initialized =
       (msg_ptr->state == LocalizationInitializationState::INITIALIZED);
   }
   void onRouteState(const RouteState::ConstSharedPtr msg_ptr)

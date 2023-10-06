@@ -116,8 +116,8 @@ MrmSummaryOverlayDisplay::MrmSummaryOverlayDisplay()
   property_max_letter_num_->setMin(10);
 
   property_localization_state_api_topic_ = new rviz_common::properties::StringProperty(
-    "Localization State API Topic", "/api/localization/initialization_state", "Localization State API Topic", this,
-    SLOT(updateVisualization()), this);
+    "Localization State API Topic", "/api/localization/initialization_state",
+    "Localization State API Topic", this, SLOT(updateVisualization()), this);
   property_routing_state_api_topic_ = new rviz_common::properties::StringProperty(
     "Routing API Topic", "/api/routing/state", "Routing API Topic", this,
     SLOT(updateVisualization()), this);
@@ -137,7 +137,7 @@ void MrmSummaryOverlayDisplay::onInitialize()
   // Subscribe initialization ADAPI topics
   flag_localization_initialized = false;
   flag_route_set = false;
-   
+
   raw_node_ = rviz_ros_node_.lock()->get_raw_node();
   std::string localization_state_api_topic = property_localization_state_api_topic_->getStdString();
   std::string routing_state_api_topic = property_routing_state_api_topic_->getStdString();
@@ -148,7 +148,7 @@ void MrmSummaryOverlayDisplay::onInitialize()
   sub_route_state_ = raw_node_->create_subscription<RouteState>(
     routing_state_api_topic, rclcpp::QoS{1},
     std::bind(&MrmSummaryOverlayDisplay::onRouteState, this, std::placeholders::_1));
-  
+
   static int count = 0;
   rviz_common::UniformStringStream ss;
   ss << "MrmSummaryOverlayDisplayObject" << count++;
