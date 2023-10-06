@@ -74,13 +74,7 @@ Dependent packages can use the cmake `add_dependencies` function with the name p
 
 The other `deploy_*` files are installed to "models/${MODEL_NAME}/" under the `share` directory of the package.
 
-The other model files:
-
-- deploy_graph.json
-- deploy_lib.so
-- deploy_param.params
-
-should be stored in autoware_data folder under sub folder with the structure. 
+The other model files should be stored in autoware_data folder under package folder with the structure:
 
 ```{text}
 $HOME/autoware_data
@@ -94,7 +88,6 @@ $HOME/autoware_data
 |           └── ${MODEL ...}
 |                └── ...
 ```
-
 
 #### Inputs / Outputs
 
