@@ -28,7 +28,7 @@ using model_zoo::inf_test::engine_load::abs_model::config;
 
 namespace tvm_utility
 {
-namespace linear_model
+namespace abs_model
 {
 
 class PreProcessorLinearModel : public tvm_utility::pipeline::PreProcessor<std::vector<float>>
@@ -142,5 +142,5 @@ TEST(PipelineExamples, SimplePipeline)
   }
 }
 
-}  // namespace linear_model
+}  // namespace abs_model
 }  // namespace tvm_utility
