@@ -97,6 +97,7 @@ public:
       double minimum_upstream_velocity;
       struct YieldOnGreeTrafficLight
       {
+        double distance_to_assigned_lanelet_start;
         double duration;
         double range;
       } yield_on_green_traffic_light;
