@@ -1169,9 +1169,6 @@ bool NormalLaneChange::getLaneChangePaths(
           *candidate_path, target_objects, lane_change_parameters_->rss_params, object_debug_);
 
         if (is_safe) {
-          RCLCPP_INFO(
-            logger_, "safe path found: lat_acc = %f, lon_acc = %f, prepare_duration = %f",
-            lateral_acc, sampled_longitudinal_acc, prepare_duration);
           return true;
         }
       }
