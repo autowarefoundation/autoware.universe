@@ -40,7 +40,7 @@ protected:
     const sensor_msgs::msg::CameraInfo & camera_info,
     DetectedObjectsWithFeature & output_cluster_msg) override;
 
-  std::string iou_mode_{"iou"};
+  std::string trust_object_iou_mode_{"iou"};
   bool use_cluster_semantic_type_{false};
   bool only_allow_inside_cluster_{false};
   double roi_scale_factor_{1.1};
@@ -49,11 +49,14 @@ protected:
   const float min_roi_existence_prob_ =
     0.1;  // keep small value to lessen affect on merger object stage
   bool remove_unknown_;
-  double trust_distance_;
-  double iou_x_use_distance_threshold_;
-
+  double fusion_distance_;
+  double trust_object_distance_;
+  std::string non_trust_object_iou_mode_{"iou_x"};
   bool is_far_enough(const DetectedObjectWithFeature & obj, const double distance_threshold);
   bool out_of_scope(const DetectedObjectWithFeature & obj);
+  double cal_iou_by_mode(
+    const sensor_msgs::msg::RegionOfInterest & roi_1,
+    const sensor_msgs::msg::RegionOfInterest & roi_2, const std::string iou_mode);
   // bool CheckUnknown(const DetectedObjectsWithFeature & obj);
 };
 
