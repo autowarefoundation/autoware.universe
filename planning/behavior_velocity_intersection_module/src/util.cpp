@@ -41,7 +41,6 @@
 #include <unordered_map>
 #include <vector>
 
-/*
 namespace tier4_autoware_utils
 {
 
@@ -56,7 +55,6 @@ inline geometry_msgs::msg::Point getPoint(const lanelet::ConstPoint3d & p)
 }
 
 }  // namespace tier4_autoware_utils
-*/
 
 namespace behavior_velocity_planner
 {
