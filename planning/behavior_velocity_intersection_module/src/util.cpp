@@ -244,6 +244,24 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     return std::nullopt;
   }
   const auto first_inside_detection_ip = first_inside_detection_idx_ip_opt.value();
+  // find the index of the first point whose vehicle footprint on it intersects with detection_area
+  std::optional<size_t> first_footprint_inside_detection_ip_opt = std::nullopt;
+  const auto local_footprint = planner_data->vehicle_info_.createFootprint(0.0, 0.0);
+  const auto area_2d = lanelet::utils::to2D(first_detection_area).basicPolygon();
+  for (size_t i = std::get<0>(lane_interval_ip); i <= std::get<1>(lane_interval_ip); ++i) {
+    const auto & base_pose = path_ip.points.at(i).point.pose;
+    const auto path_footprint = tier4_autoware_utils::transformVector(
+      local_footprint, tier4_autoware_utils::pose2transform(base_pose));
+    if (bg::intersects(path_footprint, area_2d)) {
+      first_footprint_inside_detection_ip_opt = i;
+      break;
+    }
+  }
+  if (!first_footprint_inside_detection_ip_opt) {
+    RCLCPP_INFO(rclcpp::get_logger("temp"), "no footprint detection intersection");
+    return std::nullopt;
+  }
+  const auto first_footprint_inside_detection_ip = first_footprint_inside_detection_ip_opt.value();
 
   // (1) default stop line position on interpolated path
   bool default_stop_line_valid = true;
@@ -254,8 +272,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     stop_idx_ip_int = static_cast<int>(map_stop_idx_ip.value()) - base2front_idx_dist;
   }
   if (stop_idx_ip_int < 0) {
-    stop_idx_ip_int = static_cast<size_t>(first_inside_detection_ip) - stop_line_margin_idx_dist -
-                      base2front_idx_dist;
+    stop_idx_ip_int = first_footprint_inside_detection_ip - stop_line_margin_idx_dist;
   }
   if (stop_idx_ip_int < 0) {
     default_stop_line_valid = false;
@@ -272,8 +289,6 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const auto closest_idx_ip = closest_idx_ip_opt.value();
 
   // (3) occlusion peeking stop line position on interpolated path
-  const auto local_footprint = planner_data->vehicle_info_.createFootprint(0.0, 0.0);
-  const auto area_2d = lanelet::utils::to2D(first_detection_area).basicPolygon();
   int occlusion_peeking_line_ip_int = static_cast<int>(default_stop_line_ip);
   bool occlusion_peeking_line_valid = true;
   {
@@ -286,15 +301,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     }
   }
   if (occlusion_peeking_line_valid) {
-    for (size_t i = default_stop_line_ip + 1; i <= std::get<1>(lane_interval_ip); ++i) {
-      const auto & base_pose = path_ip.points.at(i).point.pose;
-      const auto path_footprint = tier4_autoware_utils::transformVector(
-        local_footprint, tier4_autoware_utils::pose2transform(base_pose));
-      if (bg::intersects(path_footprint, area_2d)) {
-        occlusion_peeking_line_ip_int = i;
-        break;
-      }
-    }
+    occlusion_peeking_line_ip_int = first_footprint_inside_detection_ip;
   }
   const auto first_attention_stop_line_ip = static_cast<size_t>(occlusion_peeking_line_ip_int);
   const bool first_attention_stop_line_valid = occlusion_peeking_line_valid;
