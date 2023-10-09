@@ -214,56 +214,56 @@ RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_
   logging_.path = declare_parameter<std::string>("logging_file_path");
 
   // noise filter
-    declare_parameter<bool>("use_distance_based_noise_filtering");
+  declare_parameter<bool>("use_distance_based_noise_filtering");
   use_map_based_noise_filtering_ = declare_parameter<bool>("use_map_based_noise_filtering");
   minimum_range_threshold_ = declare_parameter<double>("minimum_range_threshold");
   max_distance_from_lane_ = declare_parameter<double>("max_distance_from_lane");
   max_angle_diff_from_lane_ = declare_parameter<double>("max_angle_diff_from_lane");
   max_lateral_velocity_ = declare_parameter<double>("max_lateral_velocity");
 
-    tracker_config_directory_ =
-      ament_index_cpp::get_package_share_directory("radar_object_tracker") + "/config/tracking/";
-  }
+  tracker_config_directory_ =
+    ament_index_cpp::get_package_share_directory("radar_object_tracker") + "/config/tracking/";
+}
 
-  auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
-    this->get_node_base_interface(), this->get_node_timers_interface());
-  tf_buffer_.setCreateTimerInterface(cti);
+auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
+  this->get_node_base_interface(), this->get_node_timers_interface());
+tf_buffer_.setCreateTimerInterface(cti);
 
-  // Create ROS time based timer
-  if (enable_delay_compensation) {
-    const auto period_ns = rclcpp::Rate(publish_rate).period();
-    publish_timer_ = rclcpp::create_timer(
-      this, get_clock(), period_ns, std::bind(&RadarObjectTrackerNode::onTimer, this));
-  }
+// Create ROS time based timer
+if (enable_delay_compensation) {
+  const auto period_ns = rclcpp::Rate(publish_rate).period();
+  publish_timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&RadarObjectTrackerNode::onTimer, this));
+}
 
-  const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");
-  const std::vector<int> can_assign_matrix(tmp.begin(), tmp.end());
+const auto tmp = this -> declare_parameter<std::vector<int64_t>>("can_assign_matrix");
+const std::vector<int> can_assign_matrix(tmp.begin(), tmp.end());
 
-  // import association matrices
-  const auto max_dist_matrix = this->declare_parameter<std::vector<double>>("max_dist_matrix");
-  const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
-  const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
-  const auto max_rad_matrix = this->declare_parameter<std::vector<double>>("max_rad_matrix");
-  const auto min_iou_matrix = this->declare_parameter<std::vector<double>>("min_iou_matrix");
-  data_association_ = std::make_unique<DataAssociation>(
-    can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix, max_rad_matrix,
-    min_iou_matrix);
+// import association matrices
+const auto max_dist_matrix = this -> declare_parameter<std::vector<double>>("max_dist_matrix");
+const auto max_area_matrix = this -> declare_parameter<std::vector<double>>("max_area_matrix");
+const auto min_area_matrix = this -> declare_parameter<std::vector<double>>("min_area_matrix");
+const auto max_rad_matrix = this -> declare_parameter<std::vector<double>>("max_rad_matrix");
+const auto min_iou_matrix = this -> declare_parameter<std::vector<double>>("min_iou_matrix");
+data_association_ = std::make_unique<DataAssociation>(
+  can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix, max_rad_matrix,
+  min_iou_matrix);
 
-  // tracker map
-  tracker_map_.insert(
-    std::make_pair(Label::CAR, this->declare_parameter<std::string>("car_tracker")));
-  tracker_map_.insert(
-    std::make_pair(Label::TRUCK, this->declare_parameter<std::string>("truck_tracker")));
-  tracker_map_.insert(
-    std::make_pair(Label::BUS, this->declare_parameter<std::string>("bus_tracker")));
-  tracker_map_.insert(
-    std::make_pair(Label::TRAILER, this->declare_parameter<std::string>("trailer_tracker")));
-  tracker_map_.insert(
-    std::make_pair(Label::PEDESTRIAN, this->declare_parameter<std::string>("pedestrian_tracker")));
-  tracker_map_.insert(
-    std::make_pair(Label::BICYCLE, this->declare_parameter<std::string>("bicycle_tracker")));
-  tracker_map_.insert(
-    std::make_pair(Label::MOTORCYCLE, this->declare_parameter<std::string>("motorcycle_tracker")));
+// tracker map
+tracker_map_.insert(
+  std::make_pair(Label::CAR, this->declare_parameter<std::string>("car_tracker")));
+tracker_map_.insert(
+  std::make_pair(Label::TRUCK, this->declare_parameter<std::string>("truck_tracker")));
+tracker_map_.insert(
+  std::make_pair(Label::BUS, this->declare_parameter<std::string>("bus_tracker")));
+tracker_map_.insert(
+  std::make_pair(Label::TRAILER, this->declare_parameter<std::string>("trailer_tracker")));
+tracker_map_.insert(
+  std::make_pair(Label::PEDESTRIAN, this->declare_parameter<std::string>("pedestrian_tracker")));
+tracker_map_.insert(
+  std::make_pair(Label::BICYCLE, this->declare_parameter<std::string>("bicycle_tracker")));
+tracker_map_.insert(
+  std::make_pair(Label::MOTORCYCLE, this->declare_parameter<std::string>("motorcycle_tracker")));
 }
 
 // load map information to node parameter
