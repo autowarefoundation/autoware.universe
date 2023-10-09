@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <limits>
 #include <list>
 #include <type_traits>
@@ -48,13 +49,12 @@ using autoware::common::geometry::times_2d;
 using autoware_auto_perception_msgs::msg::BoundingBox;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
-using Point = geometry_msgs::msg::Point32;
-
 namespace details
 {
 
 /// Alias for a std::pair of two points
-using Line = std::pair<Point, Point>;
+template <typename PointType>
+using LineType = std::pair<PointType, PointType>;
 
 /// \tparam Iter1 Iterator over point-types that must have point adapters
 //      defined or have float members x and y
@@ -63,10 +63,12 @@ using Line = std::pair<Point, Point>;
 /// \param[in] end End iterator of the list of points
 /// \return The list of faces
 template <typename Iter>
-std::vector<Line> get_sorted_face_list(const Iter start, const Iter end)
+std::vector<LineType<typename std::iterator_traits<Iter>::value_type>> get_sorted_face_list(const Iter start, const Iter end)
 {
+  using PointType = typename std::iterator_traits<Iter>::value_type;
+  using Line = LineType<PointType>;
   // First get a sorted list of points - convex_hull does that by modifying its argument
-  auto corner_list = std::list<Point>(start, end);
+  auto corner_list = std::list<PointType>(start, end);
   const auto first_interior_point = convex_hull(corner_list);
 
   std::vector<Line> face_list{};
@@ -189,6 +191,7 @@ void append_intersection_points(
 template <typename Iter>
 bool intersect(const Iter begin1, const Iter end1, const Iter begin2, const Iter end2)
 {
+  using PointType = typename std::iterator_traits<Iter>::value_type;
   // Obtain sorted lists of faces of both boxes, merge them into one big list of faces
   auto faces = details::get_sorted_face_list(begin1, end1);
   const auto faces_2 = details::get_sorted_face_list(begin2, end2);
@@ -200,13 +203,13 @@ bool intersect(const Iter begin1, const Iter end1, const Iter begin2, const Iter
     // Compute normal vector to the face and define a closure to get progress along it
     const auto normal = get_normal(minus_2d(face.second, face.first));
     auto get_position_along_line = [&normal](auto point) {
-      return dot_2d(normal, minus_2d(point, Point{}));
+      return dot_2d(normal, minus_2d(point, PointType{}));
     };
 
     // Define a function to get the minimum and maximum projected position of the corners
     // of a given bounding box along the normal line of the face
     auto get_projected_min_max = [&get_position_along_line, &normal](Iter begin, Iter end) {
-      const auto zero_point = Point{};
+      const auto zero_point = PointType{};
       auto min_corners = get_position_along_line(closest_line_point_2d(normal, zero_point, *begin));
       auto max_corners = min_corners;
 
