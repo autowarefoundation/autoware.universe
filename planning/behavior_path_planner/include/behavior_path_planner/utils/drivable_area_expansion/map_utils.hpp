@@ -15,6 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__DRIVABLE_AREA_EXPANSION__MAP_UTILS_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__DRIVABLE_AREA_EXPANSION__MAP_UTILS_HPP_
 
+#include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/types.hpp"
 
 #include <lanelet2_core/LaneletMap.h>
@@ -24,12 +25,14 @@
 
 namespace drivable_area_expansion
 {
-/// @brief Extract uncrossable linestrings from the lanelet map
+/// @brief Extract uncrossable linestrings from the lanelet map that are in range of ego
 /// @param[in] lanelet_map lanelet map
-/// @param[in] uncrossable_types types that cannot be crossed
+/// @param[in] ego_point point of the current ego position
+/// @param[in] params parameters with linestring types that cannot be crossed and maximum range
 /// @return the uncrossable linestrings
-multi_linestring_t extractUncrossableLines(
-  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & uncrossable_types);
+MultiLineString2d extractUncrossableLines(
+  const lanelet::LaneletMap & lanelet_map, const Point & ego_point,
+  const DrivableAreaExpansionParameters & params);
 
 /// @brief Determine if the given linestring has one of the given types
 /// @param[in] ls linestring to check

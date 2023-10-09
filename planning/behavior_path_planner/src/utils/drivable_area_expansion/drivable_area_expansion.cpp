@@ -40,7 +40,6 @@
 
 namespace drivable_area_expansion
 {
-
 std::vector<PathPointWithLaneId> crop_and_resample(
   const std::vector<PathPointWithLaneId> & points,
   const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data,
@@ -88,9 +87,9 @@ std::vector<PathPointWithLaneId> crop_and_resample(
   return resampled_path.points;
 }
 
-point_t convert_point(const Point & p)
+Point2d convert_point(const Point & p)
 {
-  return point_t{p.x, p.y};
+  return Point2d{p.x, p.y};
 }
 
 double calculate_minimum_lane_width(
@@ -104,68 +103,72 @@ double calculate_minimum_lane_width(
   return (a * a + 2 * a * l + 2 * k * w + l * l + w * w) / (2 * k + w);
 }
 
-std::vector<double> calculate_minimum_lateral_distances(
+std::vector<BoundExpansion> calculate_minimum_expansions(
   const std::vector<PathPointWithLaneId> & points, const std::vector<Point> bound,
   const std::vector<double> curvatures, const Side side,
   const DrivableAreaExpansionParameters & params)
 {
+  std::vector<BoundExpansion> bound_expansions(bound.size());
   size_t lb_idx = 0;
-  std::vector<double> min_lateral_distances(bound.size(), 0.0);
   for (auto path_idx = 0UL; path_idx < points.size(); ++path_idx) {
     const auto & path_p = points[path_idx].point.pose;
     if (curvatures[path_idx] == 0.0) continue;
     const auto curvature_radius = 1 / curvatures[path_idx];
     const auto min_lane_width = calculate_minimum_lane_width(curvature_radius, params);
     const auto side_distance = min_lane_width / 2.0 * (side == LEFT ? -1.0 : 1.0);
-    const auto offset_pose =
+    const auto offset_point =
       tier4_autoware_utils::calcOffsetPose(path_p, 0.0, side_distance, 0.0).position;
     for (auto bound_idx = lb_idx; bound_idx + 1 < bound.size(); ++bound_idx) {
       const auto & prev_p = bound[bound_idx];
       const auto & next_p = bound[bound_idx + 1];
       const auto intersection_point =
-        tier4_autoware_utils::intersect(offset_pose, path_p.position, prev_p, next_p);
+        tier4_autoware_utils::intersect(offset_point, path_p.position, prev_p, next_p);
       if (intersection_point) {
         lb_idx = bound_idx;
-        const auto dist = tier4_autoware_utils::calcDistance2d(*intersection_point, offset_pose);
-        if (dist > min_lateral_distances[bound_idx]) min_lateral_distances[bound_idx] = dist;
-        if (dist > min_lateral_distances[bound_idx + 1])
-          min_lateral_distances[bound_idx + 1] = dist;
+        const auto dist = tier4_autoware_utils::calcDistance2d(*intersection_point, offset_point);
+        if (dist > bound_expansions[bound_idx].expansion_distance) {
+          bound_expansions[bound_idx].expansion_distance = dist;
+          bound_expansions[bound_idx].expansion_point = offset_point;
+        }
+        if (dist > bound_expansions[bound_idx + 1].expansion_distance) {
+          bound_expansions[bound_idx + 1].expansion_distance = dist;
+          bound_expansions[bound_idx + 1].expansion_point = offset_point;
+        }
         break;  // TODO(Maxime): should we rm this break to handle multiple segments intersect ?
       }
     }
   }
-  return min_lateral_distances;
+  return bound_expansions;
 }
 
-void apply_velocity_limit(
-  std::vector<double> & distance_vector, const std::vector<Point> & bound_vector,
+void apply_bound_velocity_limit(
+  std::vector<BoundExpansion> & expansions, const std::vector<Point> & bound_vector,
   const double max_velocity)
 {
-  const auto apply_max_vel = [&](auto & dist_vector, const auto from, const auto to) {
-    if (dist_vector[from] > dist_vector[to]) {
+  const auto apply_max_vel = [&](auto & exp, const auto from, const auto to) {
+    if (exp[from].expansion_distance > exp[to].expansion_distance) {
       const auto arc_length =
         tier4_autoware_utils::calcDistance2d(bound_vector[from], bound_vector[to]);
-      const auto smoothed_dist = dist_vector[from] - arc_length * max_velocity;
-      dist_vector[to] = std::max(dist_vector[to], smoothed_dist);
+      const auto smoothed_dist = exp[from].expansion_distance - arc_length * max_velocity;
+      exp[to].expansion_distance = std::max(exp[to].expansion_distance, smoothed_dist);
     }
   };
-  for (auto idx = 0LU; idx + 1 < distance_vector.size(); ++idx)
-    apply_max_vel(distance_vector, idx, idx + 1);
-  for (auto idx = distance_vector.size() - 1; idx > 0; --idx)
-    apply_max_vel(distance_vector, idx, idx - 1);
+  for (auto idx = 0LU; idx + 1 < expansions.size(); ++idx) apply_max_vel(expansions, idx, idx + 1);
+  for (auto idx = expansions.size() - 1; idx > 0; --idx) apply_max_vel(expansions, idx, idx - 1);
 }
 
 void expand_bound(
   std::vector<Point> & bound, const std::vector<PathPointWithLaneId> & path_points,
-  const std::vector<double> new_distances)
+  const std::vector<BoundExpansion> & expansions)
 {
-  linestring_t path_ls;
+  LineString2d path_ls;
   for (const auto & p : path_points) path_ls.push_back(convert_point(p.point.pose.position));
   for (auto idx = 0LU; idx < bound.size(); ++idx) {
     const auto bound_p = convert_point(bound[idx]);
     const auto projection = point_to_linestring_projection(bound_p, path_ls);
     const auto expansion_ratio =
-      (new_distances[idx] + std::abs(projection.distance)) / std::abs(projection.distance);
+      (expansions[idx].expansion_distance + std::abs(projection.distance)) /
+      std::abs(projection.distance);
     if (expansion_ratio > 1.0) {
       const auto & path_p = projection.projected_point;
       const auto expanded_p = lerp_point(path_p, bound_p, expansion_ratio);
@@ -175,14 +178,30 @@ void expand_bound(
   }
 }
 
+std::vector<double> calculate_smoothed_curvatures(
+  const std::vector<PathPointWithLaneId> & points, const size_t smoothing_window_size)
+{
+  const auto curvatures = motion_utils::calcCurvature(points);
+  std::vector<double> smoothed_curvatures(curvatures.size());
+  for (auto i = 0UL; i < curvatures.size(); ++i) {
+    auto sum = 0.0;
+    const auto from_idx = (i >= smoothing_window_size ? i - smoothing_window_size : 0);
+    const auto to_idx = std::min(i + smoothing_window_size, curvatures.size() - 1);
+    for (auto j = from_idx; j <= to_idx; ++j) sum += std::abs(curvatures[j]);
+    smoothed_curvatures[i] = sum / static_cast<double>(to_idx - from_idx + 1);
+  }
+  return smoothed_curvatures;
+}
+
 void expandDrivableArea(
   PathWithLaneId & path,
   const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data)
 {
   // Declare a stream and an SVG mapper
-  std::ofstream svg("/home/mclement/Pictures/da.svg");  // /!\ CHANGE PATH
+  std::ofstream svg("/home/mclement/Pictures/da.svg");
   boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
-  linestring_t left_ls, right_ls;
+
+  LineString2d left_ls, right_ls;
   for (const auto & p : path.left_bound) left_ls.push_back(convert_point(p));
   for (const auto & p : path.right_bound) right_ls.push_back(convert_point(p));
   mapper.add(left_ls);
@@ -192,43 +211,56 @@ void expandDrivableArea(
 
   const auto & params = planner_data->drivable_area_expansion_parameters;
   const auto & route_handler = *planner_data->route_handler;
-  const auto uncrossable_lines =
-    extractUncrossableLines(*route_handler.getLaneletMapPtr(), params.avoid_linestring_types);
-  multi_linestring_t uncrossable_lines_in_range;
-  const auto & p = path.points.front().point.pose.position;
-  for (const auto & line : uncrossable_lines)
-    if (boost::geometry::distance(line, point_t{p.x, p.y}) < params.max_path_arc_length)
-      uncrossable_lines_in_range.push_back(line);
+  const auto uncrossable_lines = extractUncrossableLines(
+    *route_handler.getLaneletMapPtr(), planner_data->self_odometry->pose.pose.position, params);
+
+  for (const auto & l : uncrossable_lines)
+    mapper.map(l, "fill-opacity:1.0;fill:grey;stroke:grey;stroke-width:1");
 
   const auto points = crop_and_resample(path.points, planner_data, params.resample_interval);
   const auto predicted_paths = createObjectFootprints(*planner_data->dynamic_object, params);
 
-  const auto curvatures = motion_utils::calcCurvature(points);
-  std::vector<double> smoothed_curvatures(curvatures.size());
-  constexpr auto move_avg_window = 3;
-  for (auto i = 0UL; i < curvatures.size(); ++i) {
-    auto sum = 0.0;
-    const auto from_idx = (i >= move_avg_window ? i - move_avg_window : 0);
-    const auto to_idx = std::min(i + move_avg_window, curvatures.size() - 1);
-    for (auto j = from_idx; j <= to_idx; ++j) sum += std::abs(curvatures[j]);
-    smoothed_curvatures[i] = sum / static_cast<double>(to_idx - from_idx + 1);
-  }
-
-  auto new_left_distances =
-    calculate_minimum_lateral_distances(points, path.left_bound, smoothed_curvatures, LEFT, params);
-  auto new_right_distances = calculate_minimum_lateral_distances(
-    points, path.right_bound, smoothed_curvatures, RIGHT, params);
+  const auto curvatures = calculate_smoothed_curvatures(points, 3 /*TODO(Maxime): param*/);
+  auto left_expansions =
+    calculate_minimum_expansions(points, path.left_bound, curvatures, LEFT, params);
+  auto right_expansions =
+    calculate_minimum_expansions(points, path.right_bound, curvatures, RIGHT, params);
 
   // smooth the distances
   constexpr auto max_bound_vel = 0.5;  // TODO(Maxime): param
-  apply_velocity_limit(new_left_distances, path.left_bound, max_bound_vel);
-  apply_velocity_limit(new_right_distances, path.right_bound, max_bound_vel);
+  apply_bound_velocity_limit(left_expansions, path.left_bound, max_bound_vel);
+  apply_bound_velocity_limit(right_expansions, path.right_bound, max_bound_vel);
+  std::cout << "new_left_dist :\n\t";
+  for (const auto & e : left_expansions) std::cout << e.expansion_distance << " ";
+  std::cout << std::endl;
+  std::cout << "new_right_dist :\n\t";
+  for (const auto & e : right_expansions) std::cout << e.expansion_distance << " ";
+  std::cout << std::endl;
   // limit the distances based on the uncrossable lines
+  // const auto apply_bound_limits = [&]() {
+  //   for(const auto & p : )
+
+  // };
   // limit the distances based on the total width (left + right < min_lane_width)
 
   // update the points based on the distances
   // TODO(Maxime): add an arc length offset / margin ?
-  expand_bound(path.left_bound, points, new_left_distances);
-  expand_bound(path.right_bound, points, new_right_distances);
+  for (const auto & e : left_expansions) {
+    mapper.map(
+      convert_point(e.expansion_point), "fill-opacity:0.3;fill:orange;stroke:orange;stroke-width:2",
+      2);
+    mapper.map(
+      Segment2d{convert_point(e.expansion_point), e.path_projection_point},
+      "fill-opacity:0.3;fill:black;stroke:black;stroke-width:2");
+  }
+  for (const auto & e : right_expansions) {
+    mapper.map(
+      convert_point(e.expansion_point), "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2", 2);
+    mapper.map(
+      Segment2d{convert_point(e.expansion_point), e.path_projection_point},
+      "fill-opacity:0.3;fill:black;stroke:black;stroke-width:2");
+  }
+  expand_bound(path.left_bound, points, left_expansions);
+  expand_bound(path.right_bound, points, right_expansions);
 }
 }  // namespace drivable_area_expansion
