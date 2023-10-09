@@ -63,7 +63,8 @@ using LineType = std::pair<PointType, PointType>;
 /// \param[in] end End iterator of the list of points
 /// \return The list of faces
 template <typename Iter>
-std::vector<LineType<typename std::iterator_traits<Iter>::value_type>> get_sorted_face_list(const Iter start, const Iter end)
+std::vector<LineType<typename std::iterator_traits<Iter>::value_type>> get_sorted_face_list(
+  const Iter start, const Iter end)
 {
   using PointType = typename std::iterator_traits<Iter>::value_type;
   using Line = LineType<PointType>;
