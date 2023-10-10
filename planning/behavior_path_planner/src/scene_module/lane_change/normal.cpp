@@ -1532,7 +1532,7 @@ bool NormalLaneChange::isVehicleStuckByObstacle(
   const lanelet::ConstLanelets & current_lanes, const double obstacle_check_distance) const
 {
   // Ego is still moving, not in stuck
-  if (std::abs(getEgoVelocity()) > 0.1) {
+  if (std::abs(getEgoVelocity()) > lane_change_parameters_->stop_velocity_threshold) {
     return false;
   }
 
