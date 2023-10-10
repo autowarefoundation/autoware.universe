@@ -1065,8 +1065,7 @@ ExtendedPredictedObject transform(
   const auto & check_at_prepare_phase =
     lane_change_parameters.enable_prepare_segment_collision_check;
   const auto & prepare_duration = common_parameters.lane_change_prepare_duration;
-  const auto & velocity_threshold =
-    lane_change_parameters.prepare_segment_ignore_object_velocity_thresh;
+  const auto & velocity_threshold = lane_change_parameters.stop_velocity_threshold;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
   const double obj_vel_norm = std::hypot(
     extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
@@ -1084,7 +1083,9 @@ ExtendedPredictedObject transform(
       if (t < prepare_duration && obj_vel_norm < velocity_threshold) {
         continue;
       }
-      const auto obj_pose = object_recognition_utils::calcInterpolatedPose(path, t);
+      const auto obj_pose = obj_vel_norm > velocity_threshold
+                              ? object_recognition_utils::calcInterpolatedPose(path, t)
+                              : extended_object.initial_pose.pose;
       if (obj_pose) {
         const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, object.shape);
         extended_object.predicted_paths.at(i).path.emplace_back(
