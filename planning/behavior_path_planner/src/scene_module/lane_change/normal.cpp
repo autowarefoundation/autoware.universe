@@ -510,7 +510,7 @@ int NormalLaneChange::getNumToPreferredLane(const lanelet::ConstLanelet & lane) 
 
 std::pair<double, double> NormalLaneChange::calcCurrentMinMaxAcceleration() const
 {
-  const auto & p = planner_data_->parameters;
+  const auto & p = getCommonParam();
 
   const auto vehicle_min_acc = std::max(p.min_acc, lane_change_parameters_->min_longitudinal_acc);
   const auto vehicle_max_acc = std::min(p.max_acc, lane_change_parameters_->max_longitudinal_acc);
