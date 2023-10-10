@@ -61,14 +61,21 @@ private:
   PointsNumThresholdParam points_num_threshold_param_;
 
   std::shared_ptr<Debugger> debugger_;
+  bool using_2d_validator_;
 
 private:
   void onObjectsAndObstaclePointCloud(
     const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_obstacle_pointcloud);
+  void on3dObjectsAndObstaclePointCloud(
+    const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_obstacle_pointcloud);
   std::optional<size_t> getPointCloudNumWithinPolygon(
     const autoware_auto_perception_msgs::msg::DetectedObject & object,
     const pcl::PointCloud<pcl::PointXY>::Ptr pointcloud);
+  std::optional<size_t> getPointCloudNumWithinShape(
+    const autoware_auto_perception_msgs::msg::DetectedObject & object,
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
   std::optional<float> getMaxRadius(
     const autoware_auto_perception_msgs::msg::DetectedObject & object);
 };

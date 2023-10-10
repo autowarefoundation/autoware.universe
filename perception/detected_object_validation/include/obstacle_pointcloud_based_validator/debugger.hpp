@@ -76,6 +76,12 @@ public:
     }
   }
 
+  void addNeighborPointcloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr & input)
+  {
+    for (const auto & point : *input) {
+      neighbor_pointcloud_->push_back(point);
+    }
+  }
   void addPointcloudWithinPolygon(const pcl::PointCloud<pcl::PointXYZ>::Ptr & input)
   {
     // pcl::PointCloud<pcl::PointXYZ>::Ptr input_xyz = toXYZ(input);
