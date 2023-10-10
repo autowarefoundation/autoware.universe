@@ -77,7 +77,6 @@ private:
 
   std::vector<geometry_msgs::msg::Vector3Stamped> gyro_all_;
   std::vector<geometry_msgs::msg::PoseStamped> pose_buf_;
-
 };
 }  // namespace imu_corrector
 

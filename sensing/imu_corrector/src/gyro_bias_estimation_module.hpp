@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef IMU_CORRECTOR__GYRO_BIAS_ESTIMATION_MODULE_HPP_
-#define IMU_CORRECTOR__GYRO_BIAS_ESTIMATION_MODULE_HPP_
+#ifndef GYRO_BIAS_ESTIMATION_MODULE_HPP_
+#define GYRO_BIAS_ESTIMATION_MODULE_HPP_
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 
-#include <utility>
 #include <deque>
+#include <utility>
 
 namespace imu_corrector
 {
@@ -40,4 +40,4 @@ private:
 };
 }  // namespace imu_corrector
 
-#endif  // IMU_CORRECTOR__GYRO_BIAS_ESTIMATION_MODULE_HPP_
+#endif  // GYRO_BIAS_ESTIMATION_MODULE_HPP_
