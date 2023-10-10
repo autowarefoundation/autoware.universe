@@ -28,3 +28,4 @@ The clear API is called automatically before setting the route.
 | Subscription | ~/input/waypoint   | /planning/mission_planning/checkpoint | The waypoint pose of route.                        |
 | Client       | -                  | /api/routing/clear_route              | The route clear API.                               |
 | Client       | -                  | /api/routing/set_route_points         | The route points set API.                          |
+| Client       | -                  | /api/routing/change_route_points      | The route points change API.                       |
