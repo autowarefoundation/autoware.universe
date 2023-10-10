@@ -24,7 +24,7 @@
 
 namespace drivable_area_expansion
 {
-MultiLineString2d extractUncrossableLines(
+MultiLineString2d extract_uncrossable_lines(
   const lanelet::LaneletMap & lanelet_map, const Point & ego_point,
   const DrivableAreaExpansionParameters & params)
 {
@@ -32,7 +32,7 @@ MultiLineString2d extractUncrossableLines(
   LineString2d line;
   const auto ego_p = Point2d{ego_point.x, ego_point.y};
   for (const auto & ls : lanelet_map.lineStringLayer) {
-    if (hasTypes(ls, params.avoid_linestring_types)) {
+    if (has_types(ls, params.avoid_linestring_types)) {
       line.clear();
       for (const auto & p : ls) line.push_back(Point2d{p.x(), p.y()});
       if (boost::geometry::distance(line, ego_p) < params.max_path_arc_length)
@@ -42,7 +42,7 @@ MultiLineString2d extractUncrossableLines(
   return uncrossable_lines_in_range;
 }
 
-bool hasTypes(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & types)
+bool has_types(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & types)
 {
   constexpr auto no_type = "";
   const auto type = ls.attributeOr(lanelet::AttributeName::Type, no_type);

@@ -53,8 +53,8 @@ struct BoundExpansion
 {
   double expansion_distance = 0.0;
   Point expansion_point{};
-  Point2d path_projection_point{};
-  size_t original_bound_point_idx{};
+  size_t path_idx{};
+  size_t bound_segment_idx{};
 };
 enum Side { LEFT, RIGHT };
 

@@ -30,7 +30,7 @@ namespace drivable_area_expansion
 /// @param[in] ego_point point of the current ego position
 /// @param[in] params parameters with linestring types that cannot be crossed and maximum range
 /// @return the uncrossable linestrings
-MultiLineString2d extractUncrossableLines(
+MultiLineString2d extract_uncrossable_lines(
   const lanelet::LaneletMap & lanelet_map, const Point & ego_point,
   const DrivableAreaExpansionParameters & params);
 
@@ -38,7 +38,7 @@ MultiLineString2d extractUncrossableLines(
 /// @param[in] ls linestring to check
 /// @param[in] types type strings to check
 /// @return true if the linestring has one of the given types
-bool hasTypes(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & types);
+bool has_types(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & types);
 }  // namespace drivable_area_expansion
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__DRIVABLE_AREA_EXPANSION__MAP_UTILS_HPP_
