@@ -37,12 +37,11 @@ PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("t
     threads.emplace_back(std::thread(&PredictedObjectsDisplay::workerThread, this));
   }
 
-  // ParallelizedThread Initialization
-  std::vector<std::thread> thread_vector;
-  ending_semaphores = reinterpret_cast<sem_t *>(malloc(max_num_threads * sizeof(sem_t)));
+  // Initialize the semaphores, which signify the completion of the marker creation tasks.
+  task_completed_semaphores = reinterpret_cast<sem_t *>(malloc(max_num_threads * sizeof(sem_t)));
 
   for (int rank = 0; rank < max_num_threads; rank++) {
-    sem_init(&ending_semaphores[rank], 0, 0);
+    sem_init(&task_completed_semaphores[rank], 0, 0);
   }
 }
 
@@ -80,7 +79,7 @@ void PredictedObjectsDisplay::parallelizedCreateMarkerWorkerThread(int rank)
   }
   push_tmp_markers(thread_makers);
 
-  sem_post(&ending_semaphores[rank]);  // signal the end of the job
+  sem_post(&task_completed_semaphores[rank]);  // signal the end of the job
 }
 
 void PredictedObjectsDisplay::messageProcessorThreadJob()
@@ -108,7 +107,7 @@ void PredictedObjectsDisplay::messageProcessorThreadJob()
       queueJob(f);
     }
     for (int rank = 0; rank < num_threads; rank++) {
-      sem_wait(&ending_semaphores[rank]);
+      sem_wait(&task_completed_semaphores[rank]);
     }
   } else {
     tmp_markers = createMarkers(tmp_msg);

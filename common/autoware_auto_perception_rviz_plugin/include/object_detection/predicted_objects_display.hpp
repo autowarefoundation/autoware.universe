@@ -178,7 +178,7 @@ private:
   std::queue<std::function<void()>> jobs;
 
   // semaphores showing the completion of marker creation in each thread
-  sem_t * ending_semaphores;
+  sem_t * task_completed_semaphores;
 
   // condition: condition variable for working thread to wait for main callback to get this->msg;
   std::condition_variable condition;
