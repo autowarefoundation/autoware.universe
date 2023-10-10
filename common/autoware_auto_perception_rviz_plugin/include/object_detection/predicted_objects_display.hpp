@@ -61,7 +61,7 @@ public:
     threads.clear();
 
     for (int ii = 0; ii < max_num_threads; ++ii) {
-      sem_close(&ending_semaphores[ii]);
+      sem_close(&task_completed_semaphores[ii]);
     }
     ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>::
       ~ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>();
