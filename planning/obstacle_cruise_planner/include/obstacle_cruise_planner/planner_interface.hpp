@@ -266,12 +266,15 @@ private:
         node.declare_parameter<double>("slow_down.lpf_gain_dist_to_slow_down");
     }
 
-    ObstacleSpecificParams getObstacleParamByLabel(const ObjectClassification & label_id) const
+    ObstacleSpecificParams getObstacleParamByLabel(
+      const ObjectClassification & label_id, const bool & is_obstacle_moving) const
     {
-      const std::string label = types_map.at(label_id.label);
-      if (obstacle_to_param_struct_map.count(label) > 0) {
-        return obstacle_to_param_struct_map.at(label);
-      }
+      std::string label("default");
+      std::string moving_prefix("");
+      if (is_obstacle_moving) moving_prefix = "moving_";
+      if (types_map.count(label_id.label) > 0) label = types_map.at(label_id.label);
+      if (obstacle_to_param_struct_map.count(moving_prefix + label) > 0)
+        return obstacle_to_param_struct_map.at(moving_prefix + label);
       return obstacle_to_param_struct_map.at("default");
     }
 
@@ -279,7 +282,7 @@ private:
     {
       // obstacle type dependant parameters
       for (const auto & label : obstacle_labels) {
-        auto & param_by_obstacle_label = obstacle_to_param_struct_map[label];
+        auto & param_by_obstacle_label = obstacle_to_param_struct_map.at(label);
         tier4_autoware_utils::updateParam<double>(
           parameters, "slow_down." + label + ".max_lat_margin",
           param_by_obstacle_label.max_lat_margin);

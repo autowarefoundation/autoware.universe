@@ -665,8 +665,9 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
 double PlannerInterface::calculateSlowDownVelocity(
   const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output) const
 {
-  const auto & p = slow_down_param_.getObstacleParamByLabel(obstacle.classification);
-
+  const bool is_obstacle_moving = [&obstacle]() { return std::abs(obstacle.velocity) > 0.5; }();
+  const auto & p =
+    slow_down_param_.getObstacleParamByLabel(obstacle.classification, is_obstacle_moving);
   const double stable_precise_lat_dist = [&]() {
     if (prev_output) {
       return signal_processing::lowpassFilter(
