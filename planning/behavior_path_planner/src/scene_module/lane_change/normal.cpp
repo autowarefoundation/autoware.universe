@@ -536,7 +536,7 @@ double NormalLaneChange::calcMaximumLaneChangeLength(
   const auto shift_intervals =
     getRouteHandler()->getLateralIntervalsToPreferredLane(current_terminal_lanelet);
   return utils::lane_change::calcMaximumLaneChangeLength(
-    getEgoVelocity(), planner_data_->parameters, shift_intervals, max_acc);
+    getEgoVelocity(), getCommonParam(), shift_intervals, max_acc);
 }
 
 std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
