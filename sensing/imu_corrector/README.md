@@ -54,7 +54,7 @@ Note that the node calculates bias from the gyroscope data by averaging the data
 | Name              | Type                                             | Description      |
 | ----------------- | ------------------------------------------------ | ---------------- |
 | `~/input/imu_raw` | `sensor_msgs::msg::Imu`                          | **raw** imu data |
-| `~/input/twist`   | `geometry_msgs::msg::TwistWithCovarianceStamped` | vehicle velocity |
+| `~/input/pose`    | `geometry_msgs::msg::PoseWithCovarianceStamped`  | ndt pose         |
 
 ### Output
 
@@ -64,12 +64,12 @@ Note that the node calculates bias from the gyroscope data by averaging the data
 
 ### Parameters
 
-| Name                        | Type   | Description                                                                   |
-| --------------------------- | ------ | ----------------------------------------------------------------------------- |
-| `angular_velocity_offset_x` | double | roll rate offset in imu_link [rad/s]                                          |
-| `angular_velocity_offset_y` | double | pitch rate offset imu_link [rad/s]                                            |
-| `angular_velocity_offset_z` | double | yaw rate offset imu_link [rad/s]                                              |
-| `gyro_bias_threshold`       | double | threshold of the bias of the gyroscope [rad/s]                                |
-| `velocity_threshold`        | double | threshold of the vehicle velocity to determine if the vehicle is stopped[m/s] |
-| `timestamp_threshold`       | double | threshold of the timestamp diff between IMU and twist [s]                     |
-| `data_num_threshold`        | int    | number of data used to calculate bias                                         |
+| Name                                  | Type   | Description                                                                                 |
+| ------------------------------------- | ------ | ------------------------------------------------------------------------------------------- |
+| `angular_velocity_offset_x`           | double | roll rate offset in imu_link [rad/s]                                                        |
+| `angular_velocity_offset_y`           | double | pitch rate offset imu_link [rad/s]                                                          |
+| `angular_velocity_offset_z`           | double | yaw rate offset imu_link [rad/s]                                                            |
+| `gyro_bias_threshold`                 | double | threshold of the bias of the gyroscope [rad/s]                                              |
+| `timer_callback_interval_sec`         | double | seconds about the timer callback function [sec]                                             |
+| `straight_motion_ang_vel_upper_limit` | double | upper limit of yaw angular velocity, beyond which motion is not considered straight [rad/s] |
+| `data_num_threshold`                  | int    | number of data used to calculate bias                                                       |
