@@ -26,6 +26,7 @@
 #include <motion_utils/resample/resample.hpp>
 #include <motion_utils/trajectory/interpolation.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <boost/geometry.hpp>
 
@@ -230,6 +231,8 @@ void expandDrivableArea(
   PathWithLaneId & path,
   const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data)
 {
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("overall");
   // Declare a stream and an SVG mapper
   std::ofstream svg("/home/mclement/Pictures/da.svg");
   boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
@@ -242,25 +245,32 @@ void expandDrivableArea(
   mapper.add(right_ls);
   mapper.map(right_ls, "fill-opacity:0.3;fill:blue;stroke:blue;stroke-width:2");
 
+  stop_watch.tic("preprocessing");
   const auto & params = planner_data->drivable_area_expansion_parameters;
   const auto & route_handler = *planner_data->route_handler;
   const auto uncrossable_lines = extract_uncrossable_lines(
     *route_handler.getLaneletMapPtr(), planner_data->self_odometry->pose.pose.position, params);
   const auto uncrossable_polygons = createObjectFootprints(*planner_data->dynamic_object, params);
+  const auto preprocessing_ms = stop_watch.toc("preprocessing");
 
   for (const auto & l : uncrossable_lines)
     mapper.map(l, "fill-opacity:1.0;fill:grey;stroke:grey;stroke-width:1");
   for (const auto & p : uncrossable_polygons)
     mapper.map(p, "fill-opacity:0.2;fill:grey;stroke:grey;stroke-width:1");
 
+  stop_watch.tic("crop");
   const auto points = crop_and_resample(path.points, planner_data, params.resample_interval);
+  const auto crop_ms = stop_watch.toc("crop");
 
+  stop_watch.tic("curvatures_expansion");
   const auto curvatures = calculate_smoothed_curvatures(points, 3 /*TODO(Maxime): param*/);
   auto left_expansions =
     calculate_minimum_expansions(points, path.left_bound, curvatures, LEFT, params);
   auto right_expansions =
     calculate_minimum_expansions(points, path.right_bound, curvatures, RIGHT, params);
+  const auto curv_expansion_ms = stop_watch.toc("curvatures_expansion");
 
+  stop_watch.tic("max_dist");
   const auto max_left_expansions =
     calculate_maximum_distance(points, path.left_bound, uncrossable_lines, uncrossable_polygons);
   const auto max_right_expansions =
@@ -271,6 +281,7 @@ void expandDrivableArea(
   for (auto i = 0LU; i < right_expansions.size(); ++i)
     right_expansions[i].expansion_distance =
       std::min(right_expansions[i].expansion_distance, max_right_expansions[i]);
+  const auto max_dist_ms = stop_watch.toc("max_dist");
 
   for (const auto & e : left_expansions) {
     if (e.expansion_distance > 0.0) {
@@ -294,10 +305,11 @@ void expandDrivableArea(
     }
   }
 
-  // smooth the distances
+  stop_watch.tic("smooth");
   constexpr auto max_bound_vel = 0.5;  // TODO(Maxime): param
   apply_bound_velocity_limit(left_expansions, path.left_bound, max_bound_vel);
   apply_bound_velocity_limit(right_expansions, path.right_bound, max_bound_vel);
+  const auto smooth_ms = stop_watch.toc("smooth");
   std::cout << "new_left_dist :\n\t";
   for (const auto & e : left_expansions) std::cout << e.expansion_distance << " ";
   std::cout << std::endl;
@@ -312,7 +324,15 @@ void expandDrivableArea(
   std::cout << std::endl;
   // TODO(Maxime): add an arc length shift or margin ?
   // TODO(Maxime): limit the distances based on the total width (left + right < min_lane_width)
+  stop_watch.tic("expand");
   expand_bound(path.left_bound, points, left_expansions);
   expand_bound(path.right_bound, points, right_expansions);
+  const auto expand_ms = stop_watch.toc("expand");
+
+  const auto total_ms = stop_watch.toc("overall");
+  std::printf(
+    "Total runtime(ms): %2.2f\n\tPreprocessing: %2.2f\n\tCrop: %2.2f\n\tCurvature expansion: "
+    "%2.2f\n\tMaximum expansion: %2.2f\n\tSmoothing: %2.2f\n\tExpansion: %2.2f\n\n",
+    total_ms, preprocessing_ms, crop_ms, curv_expansion_ms, max_dist_ms, smooth_ms, expand_ms);
 }
 }  // namespace drivable_area_expansion
