@@ -19,7 +19,6 @@
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp>
 
 using lanelet::utils::getArcCoordinates;
 using motion_utils::findNearestIndex;
@@ -49,11 +48,14 @@ boost::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, con
     /*forward_only_in_route*/ true);
   const auto pull_out_lanes = getPullOutLanes(planner_data_, backward_path_length);
 
+  // check if the ego is at left or right side of road lane center
+  const bool left_side_start = 0 < getArcCoordinates(road_lanes, start_pose).distance;
+
   planner_.setTurningRadius(
     planner_data_->parameters, parallel_parking_parameters_.pull_out_max_steer_angle);
   planner_.setPlannerData(planner_data_);
   const bool found_valid_path =
-    planner_.planPullOut(start_pose, goal_pose, road_lanes, pull_out_lanes);
+    planner_.planPullOut(start_pose, goal_pose, road_lanes, pull_out_lanes, left_side_start);
   if (!found_valid_path) {
     return {};
   }

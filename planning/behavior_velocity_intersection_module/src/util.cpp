@@ -23,9 +23,11 @@
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
+#include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
@@ -40,7 +42,6 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
@@ -278,6 +279,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
       }
     }
   }
+  const auto first_attention_stop_line_ip = static_cast<size_t>(occlusion_peeking_line_ip_int);
+  const bool first_attention_stop_line_valid = occlusion_peeking_line_valid;
   occlusion_peeking_line_ip_int += std::ceil(peeking_offset / ds);
   const auto occlusion_peeking_line_ip = static_cast<size_t>(
     std::clamp<int>(occlusion_peeking_line_ip_int, 0, static_cast<int>(path_ip.points.size()) - 1));
@@ -323,6 +326,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     size_t closest_idx{0};
     size_t stuck_stop_line{0};
     size_t default_stop_line{0};
+    size_t first_attention_stop_line{0};
     size_t occlusion_peeking_stop_line{0};
     size_t pass_judge_line{0};
   };
@@ -332,6 +336,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     {&closest_idx_ip, &intersection_stop_lines_temp.closest_idx},
     {&stuck_stop_line_ip, &intersection_stop_lines_temp.stuck_stop_line},
     {&default_stop_line_ip, &intersection_stop_lines_temp.default_stop_line},
+    {&first_attention_stop_line_ip, &intersection_stop_lines_temp.first_attention_stop_line},
     {&occlusion_peeking_line_ip, &intersection_stop_lines_temp.occlusion_peeking_stop_line},
     {&pass_judge_line_ip, &intersection_stop_lines_temp.pass_judge_line},
   };
@@ -365,6 +370,10 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   }
   if (default_stop_line_valid) {
     intersection_stop_lines.default_stop_line = intersection_stop_lines_temp.default_stop_line;
+  }
+  if (first_attention_stop_line_valid) {
+    intersection_stop_lines.first_attention_stop_line =
+      intersection_stop_lines_temp.first_attention_stop_line;
   }
   if (occlusion_peeking_line_valid) {
     intersection_stop_lines.occlusion_peeking_stop_line =
@@ -764,12 +773,11 @@ bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane)
   return tl_id.has_value();
 }
 
-bool isTrafficLightArrowActivated(
+TrafficPrioritizedLevel getTrafficPrioritizedLevel(
   lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos)
 {
   using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
 
-  const auto & turn_direction = lane.attributeOr("turn_direction", "else");
   std::optional<int> tl_id = std::nullopt;
   for (auto && tl_reg_elem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
     tl_id = tl_reg_elem->id();
@@ -777,24 +785,28 @@ bool isTrafficLightArrowActivated(
   }
   if (!tl_id) {
     // this lane has no traffic light
-    return false;
+    return TrafficPrioritizedLevel::NOT_PRIORITIZED;
   }
   const auto tl_info_it = tl_infos.find(tl_id.value());
   if (tl_info_it == tl_infos.end()) {
     // the info of this traffic light is not available
-    return false;
+    return TrafficPrioritizedLevel::NOT_PRIORITIZED;
   }
   const auto & tl_info = tl_info_it->second;
+  bool has_amber_signal{false};
   for (auto && tl_light : tl_info.signal.elements) {
-    if (tl_light.color != TrafficSignalElement::GREEN) continue;
-    if (tl_light.status != TrafficSignalElement::SOLID_ON) continue;
-    if (turn_direction == std::string("left") && tl_light.shape == TrafficSignalElement::LEFT_ARROW)
-      return true;
-    if (
-      turn_direction == std::string("right") && tl_light.shape == TrafficSignalElement::RIGHT_ARROW)
-      return true;
+    if (tl_light.color == TrafficSignalElement::AMBER) {
+      has_amber_signal = true;
+    }
+    if (tl_light.color == TrafficSignalElement::RED) {
+      // NOTE: Return here since the red signal has the highest priority.
+      return TrafficPrioritizedLevel::FULLY_PRIORITIZED;
+    }
   }
-  return false;
+  if (has_amber_signal) {
+    return TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED;
+  }
+  return TrafficPrioritizedLevel::NOT_PRIORITIZED;
 }
 
 std::vector<DiscretizedLane> generateDetectionLaneDivisions(
@@ -1177,9 +1189,9 @@ double calcDistanceUntilIntersectionLanelet(
 }
 
 void IntersectionLanelets::update(
-  const bool tl_arrow_solid_on, const InterpolatedPathInfo & interpolated_path_info)
+  const bool is_prioritized, const InterpolatedPathInfo & interpolated_path_info)
 {
-  tl_arrow_solid_on_ = tl_arrow_solid_on;
+  is_prioritized_ = is_prioritized;
   // find the first conflicting/detection area polygon intersecting the path
   const auto & path = interpolated_path_info.path;
   const auto & lane_interval = interpolated_path_info.lane_id_interval.value();
