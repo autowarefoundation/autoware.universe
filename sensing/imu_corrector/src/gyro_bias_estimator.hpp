@@ -27,6 +27,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace imu_corrector
 {

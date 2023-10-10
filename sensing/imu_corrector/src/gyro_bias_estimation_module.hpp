@@ -20,13 +20,14 @@
 
 #include <deque>
 #include <utility>
+#include <vector>
 
 namespace imu_corrector
 {
 class GyroBiasEstimationModule
 {
 public:
-  GyroBiasEstimationModule(const size_t data_num_threshold);
+  explicit GyroBiasEstimationModule(const size_t data_num_threshold);
   void update_bias(
     const std::vector<geometry_msgs::msg::PoseStamped> & pose_list,
     const std::vector<geometry_msgs::msg::Vector3Stamped> & gyro_list);
