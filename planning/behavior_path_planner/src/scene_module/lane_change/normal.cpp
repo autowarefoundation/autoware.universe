@@ -226,23 +226,16 @@ void NormalLaneChange::insertStopPoint(
       const double distance_to_ego =
         utils::getSignedDistance(path.points.front().point.pose, getEgoPose(), lanelets);
 
-      for (const auto & object : planner_data_->dynamic_object->objects) {
+      for (const auto & object : target_objects.current_lane) {
         // check if stationary
-        const auto obj_v = std::abs(object.kinematics.initial_twist_with_covariance.twist.linear.x);
+        const auto obj_v = std::abs(object.initial_twist.twist.linear.x);
         if (obj_v > lane_change_parameters_->stop_velocity_threshold) {
           continue;
         }
 
-        // check if the object is close to ego path
-        const auto lateral_dist = motion_utils::calcLateralOffset(
-          path.points, object.kinematics.initial_pose_with_covariance.pose.position);
-        constexpr auto margin = 10.0;  // can be large since the check for footprint is done later
-        if (lateral_dist > planner_data_->parameters.vehicle_width + margin) {
-          continue;
-        }
-
         // calculate distance from path front to the stationary object polygon on the ego lane.
-        const auto polygon = tier4_autoware_utils::toPolygon2d(object).outer();
+        const auto polygon =
+          tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape).outer();
         for (const auto & polygon_p : polygon) {
           const auto p_fp = tier4_autoware_utils::toMsg(polygon_p.to_3d());
           const auto lateral_fp = motion_utils::calcLateralOffset(path.points, p_fp);
