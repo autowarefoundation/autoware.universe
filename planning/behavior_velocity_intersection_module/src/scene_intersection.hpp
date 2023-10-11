@@ -77,6 +77,7 @@ public:
       */
       double timeout_private_area;
       bool enable_private_area_stuck_disregard;
+      double yield_stuck_distance_thr;
     } stuck_vehicle;
     struct CollisionDetection
     {
@@ -147,6 +148,11 @@ public:
     size_t stuck_stop_line_idx{0};
     std::optional<size_t> occlusion_stop_line_idx{std::nullopt};
   };
+  struct YieldStuckStop
+  {
+    size_t closest_idx{0};
+    size_t stuck_stop_line_idx{0};
+  };
   struct NonOccludedCollisionStop
   {
     size_t closest_idx{0};
@@ -206,6 +212,7 @@ public:
   using DecisionResult = std::variant<
     Indecisive,                   // internal process error, or over the pass judge line
     StuckStop,                    // detected stuck vehicle
+    YieldStuckStop,               // detected yield stuck vehicle
     NonOccludedCollisionStop,     // detected collision while FOV is clear
     FirstWaitBeforeOcclusion,     // stop for a while before peeking to occlusion
     PeekingTowardOcclusion,       // peeking into occlusion while collision is not detected
@@ -287,6 +294,11 @@ private:
   bool checkStuckVehicle(
     const std::shared_ptr<const PlannerData> & planner_data,
     const util::PathLanelets & path_lanelets);
+
+  bool checkYieldStuckVehicle(
+    const std::shared_ptr<const PlannerData> & planner_data,
+    const util::PathLanelets & path_lanelets,
+    const std::optional<lanelet::CompoundPolygon3d> & first_attention_area);
 
   autoware_auto_perception_msgs::msg::PredictedObjects filterTargetObjects(
     const lanelet::ConstLanelets & attention_area_lanelets,
