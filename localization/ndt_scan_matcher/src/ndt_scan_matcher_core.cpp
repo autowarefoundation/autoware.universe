@@ -788,25 +788,33 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
   output_pose_with_cov_to_log(get_logger(), "align_using_monte_carlo_input", initial_pose_with_cov);
 
-  const double CONVERT_COEFF = std::sqrt(2);
-
   const auto base_rpy = get_rpy(initial_pose_with_cov);
   const Eigen::Map<const RowMatrixXd> covariance = {
     initial_pose_with_cov.pose.covariance.data(), 6, 6};
-  const double stddev_x = CONVERT_COEFF * std::sqrt(covariance(0, 0));
-  const double stddev_y = CONVERT_COEFF * std::sqrt(covariance(1, 1));
-  const double stddev_z = CONVERT_COEFF * std::sqrt(covariance(2, 2));
-  const double stddev_roll = CONVERT_COEFF * std::sqrt(covariance(3, 3));
-  const double stddev_pitch = CONVERT_COEFF * std::sqrt(covariance(4, 4));
+  const double stddev_x = std::sqrt(covariance(0, 0));
+  const double stddev_y = std::sqrt(covariance(1, 1));
+  const double stddev_z = std::sqrt(covariance(2, 2));
+  const double stddev_roll = std::sqrt(covariance(3, 3));
+  const double stddev_pitch = std::sqrt(covariance(4, 4));
 
-  auto uniform_to_normal = [](const double uniform) {
+  // Let phi be the cumulative distribution function of the standard normal distribution.
+  // It has the following relationship with the error function (erf).
+  //   phi(x) = 1/2 (1 + erf(x / sqrt(2)))
+  // so, 2 * phi(x) - 1 = erf(x / sqrt(2)).
+  // The range taken by 2 * phi(x) - 1 is [-1, 1], so it can be used as a uniform distribution in
+  // TPE. Let u = 2 * phi(x) - 1, then x = sqrt(2) * erf_inv(u). Computationally, it is not a good
+  // to give erf_inv -1 and 1, so it is rounded off at (-1 + eps, 1 - eps).
+  const double SQRT2 = std::sqrt(2);
+  auto uniform_to_normal = [&SQRT2](const double uniform) {
     assert(-1.0 <= uniform && uniform <= 1.0);
     constexpr double epsilon = 1.0e-6;
     const double clamped = std::clamp(uniform, -1.0 + epsilon, 1.0 - epsilon);
-    return boost::math::erf_inv(clamped);
+    return boost::math::erf_inv(clamped) * SQRT2;
   };
 
-  auto normal_to_uniform = [](const double normal) { return boost::math::erf(normal); };
+  auto normal_to_uniform = [&SQRT2](const double normal) {
+    return boost::math::erf(normal / SQRT2);
+  };
 
   // Optimizing (x, y, z, roll, pitch, yaw) 6 dimensions.
   // The last dimension (yaw) is a loop variable.
