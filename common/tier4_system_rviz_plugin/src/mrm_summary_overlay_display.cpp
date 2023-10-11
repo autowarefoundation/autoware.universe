@@ -50,8 +50,8 @@
 #include <QPainter>
 #include <rviz_common/uniform_string_stream.hpp>
 
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
 #include <X11/Xlib.h>
 
@@ -207,8 +207,7 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
   std::ostringstream output_text;
 
   // Display the MRM Summary only when there is a fault
-  if (hazard_level != autoware_auto_system_msgs::msg::HazardStatus::NO_FAULT)
-  {
+  if (hazard_level != autoware_auto_system_msgs::msg::HazardStatus::NO_FAULT) {
     // Broadcasting the Basic Error Infos
     int number_of_comfortable_stop_messages =
       static_cast<int>(mrm_comfortable_stop_summary_list.size());
