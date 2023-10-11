@@ -31,7 +31,7 @@ MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
   }
 
   // Init plugins
-  modes_ = std::make_unique<OperationModes>(*this, graph_.nodes());
+  // modes_ = std::make_unique<OperationModes>(*this, graph_.nodes());
 
   // Init ros interface.
   {
@@ -60,7 +60,7 @@ void MainNode::on_timer()
   graph_.debug();
   pub_graph_->publish(graph_.message());
 
-  modes_->update(stamp);
+  // modes_->update(stamp);
 }
 
 void MainNode::on_diag(const DiagnosticArray::ConstSharedPtr msg)

@@ -80,7 +80,6 @@ DiagNode::DiagNode(const std::string & path, ConfigObject & config) : BaseNode(p
 {
   timeout_ = 3.0;  // TODO(Takagi, Isamu): parameterize
   name_ = config.take_text("name");
-  hardware_ = config.take_text("hardware", "");
 
   status_.level = DiagnosticStatus::STALE;
 }
@@ -113,11 +112,6 @@ DiagnosticNode DiagNode::report() const
 DiagnosticLevel DiagNode::level() const
 {
   return status_.level;
-}
-
-std::pair<std::string, std::string> DiagNode::key() const
-{
-  return std::make_pair(name_, hardware_);
 }
 
 void DiagNode::callback(const DiagnosticStatus & status, const rclcpp::Time & stamp)

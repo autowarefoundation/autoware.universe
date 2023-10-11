@@ -19,9 +19,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -44,7 +44,7 @@ public:
 
 private:
   std::vector<std::unique_ptr<BaseNode>> nodes_;
-  std::map<std::pair<std::string, std::string>, DiagNode *> diags_;
+  std::unordered_map<std::string, DiagNode *> diags_;
   rclcpp::Time stamp_;
 };
 

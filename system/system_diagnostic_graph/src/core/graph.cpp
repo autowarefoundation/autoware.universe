@@ -19,7 +19,6 @@
 #include "nodes.hpp"
 
 #include <deque>
-#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -105,7 +104,7 @@ void Graph::init(const std::string & file, const std::string & mode)
   ConfigFile root = load_config_root(file);
 
   std::vector<std::unique_ptr<BaseNode>> nodes;
-  std::map<std::pair<std::string, std::string>, DiagNode *> diags;
+  std::unordered_map<std::string, DiagNode *> diags;
   std::unordered_map<std::string, BaseNode *> paths;
   ExprInit exprs(mode);
 
@@ -118,7 +117,7 @@ void Graph::init(const std::string & file, const std::string & mode)
   for (auto & config : root.diags) {
     if (config.mode.check(mode)) {
       auto node = std::make_unique<DiagNode>(config.path, config.dict);
-      diags[node->key()] = node.get();
+      diags[node->name()] = node.get();
       nodes.push_back(std::move(node));
     }
   }
@@ -157,7 +156,7 @@ void Graph::init(const std::string & file, const std::string & mode)
 void Graph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
 {
   for (const auto & status : array.status) {
-    const auto iter = diags_.find(std::make_pair(status.name, status.hardware_id));
+    const auto iter = diags_.find(status.name);
     if (iter != diags_.end()) {
       iter->second->callback(status, stamp);
     } else {

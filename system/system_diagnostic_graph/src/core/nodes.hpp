@@ -80,7 +80,7 @@ public:
   DiagnosticLevel level() const override;
   DiagDebugData debug() const override;
   std::vector<BaseNode *> links() const override { return {}; }
-  std::pair<std::string, std::string> key() const;
+  std::string name() const { return name_; }
 
   void callback(const DiagnosticStatus & status, const rclcpp::Time & stamp);
 
@@ -88,7 +88,6 @@ private:
   double timeout_;
   std::optional<rclcpp::Time> time_;
   std::string name_;
-  std::string hardware_;
   DiagnosticStatus status_;
 };
 
