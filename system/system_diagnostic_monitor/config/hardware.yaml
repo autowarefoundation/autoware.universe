@@ -51,6 +51,24 @@ units:
       - { type: link, path: /hardware/hdd/007-load/write-rate }
       - { type: link, path: /hardware/hdd/007-load/write-iops }
 
+  - path: /hardware/process/002-load
+    type: and
+    list:
+      - { type: link, path: /hardware/process/002-load/proc-0 }
+      - { type: link, path: /hardware/process/002-load/proc-1 }
+      - { type: link, path: /hardware/process/002-load/proc-2 }
+      - { type: link, path: /hardware/process/002-load/proc-3 }
+      - { type: link, path: /hardware/process/002-load/proc-4 }
+
+  - path: /hardware/process/003-memory
+    type: and
+    list:
+      - { type: link, path: /hardware/process/003-memory/proc-0 }
+      - { type: link, path: /hardware/process/003-memory/proc-1 }
+      - { type: link, path: /hardware/process/003-memory/proc-2 }
+      - { type: link, path: /hardware/process/003-memory/proc-3 }
+      - { type: link, path: /hardware/process/003-memory/proc-4 }
+
 diags:
   - path: /hardware/cpu/001-temperature
     name: "cpu_monitor: CPU Temperature"
@@ -103,18 +121,26 @@ diags:
 
   - path: /hardware/process/001-summary
     name: "process_monitor: Tasks Summary"
-  - path: /hardware/process/002-load
+  - path: /hardware/process/002-load/proc-0
     name: "process_monitor: High-load Proc[0]"
-    # name: "process_monitor: High-load Proc[1]"
-    # name: "process_monitor: High-load Proc[2]"
-    # name: "process_monitor: High-load Proc[3]"
-    # name: "process_monitor: High-load Proc[4]"
-  - path: /hardware/process/003-memory
+  - path: /hardware/process/002-load/proc-1
+    name: "process_monitor: High-load Proc[1]"
+  - path: /hardware/process/002-load/proc-2
+    name: "process_monitor: High-load Proc[2]"
+  - path: /hardware/process/002-load/proc-3
+    name: "process_monitor: High-load Proc[3]"
+  - path: /hardware/process/002-load/proc-4
+    name: "process_monitor: High-load Proc[4]"
+  - path: /hardware/process/003-memory/proc-0
     name: "process_monitor: High-mem Proc[0]"
-    # name: "process_monitor: High-mem Proc[1]"
-    # name: "process_monitor: High-mem Proc[2]"
-    # name: "process_monitor: High-mem Proc[3]"
-    # name: "process_monitor: High-mem Proc[4]"
+  - path: /hardware/process/003-memory/proc-1
+    name: "process_monitor: High-mem Proc[1]"
+  - path: /hardware/process/003-memory/proc-2
+    name: "process_monitor: High-mem Proc[2]"
+  - path: /hardware/process/003-memory/proc-3
+    name: "process_monitor: High-mem Proc[3]"
+  - path: /hardware/process/003-memory/proc-4
+    name: "process_monitor: High-mem Proc[4]"
 
   - path: /hardware/gpu/001-temperature
     name: "gpu_monitor: GPU Temperature"
