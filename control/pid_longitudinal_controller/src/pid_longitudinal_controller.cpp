@@ -504,6 +504,8 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
 
   const bool is_stopped = std::abs(current_vel) < p.stopped_state_entry_vel &&
                           std::abs(current_acc) < p.stopped_state_entry_acc;
+  // Case where the ego slips in the opposite direction of the gear due to e.g. a slope is also
+  // considered as a stop
   const bool is_not_running = [&]() {
     if (control_data.shift == Shift::Forward) {
       if (is_stopped || current_vel < 0.0) {
