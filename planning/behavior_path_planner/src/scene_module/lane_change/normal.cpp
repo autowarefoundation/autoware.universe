@@ -232,15 +232,12 @@ void NormalLaneChange::insertStopPoint(
         }
 
         // calculate distance from path front to the stationary object polygon on the ego lane.
-        for (const auto & polygon_p :
-             tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape).outer()) {
-          auto p = object.initial_pose.pose;
+        const auto polygon =
+          tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape).outer();
+        auto p = object.initial_pose.pose;
+        for (const auto & polygon_p : polygon) {
           p.position =
             tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), p.position.z);
-          if (p.position.x < 0.01 || p.position.y < 0.01) {
-            // todo(kosuke55): inverseClockwise make polygon have invalid value, so skip it.
-            continue;
-          }
           const double current_distance_to_obj =
             utils::getSignedDistance(path.points.front().point.pose, p, lanelets);
           // ignore backward object
