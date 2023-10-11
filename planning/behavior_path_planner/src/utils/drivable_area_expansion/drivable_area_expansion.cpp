@@ -43,51 +43,43 @@
 
 namespace drivable_area_expansion
 {
-std::vector<PathPointWithLaneId> crop_and_resample(
-  const std::vector<PathPointWithLaneId> & points,
-  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data,
-  const double resample_interval)
+void reuse_previous_points(
+  const PathWithLaneId & path, std::vector<Pose> & prev_poses,
+  std::vector<double> & prev_curvatures, const DrivableAreaExpansionParameters & params)
 {
-  auto lon_offset = 0.0;
-  auto crop_pose = *planner_data->drivable_area_expansion_prev_crop_pose;
-  // reuse or update the previous crop point
-  if (planner_data->drivable_area_expansion_prev_crop_pose) {
-    const auto lon_offset = motion_utils::calcSignedArcLength(
-      points, points.front().point.pose.position, crop_pose.position);
-    if (lon_offset < 0.0) {
-      planner_data->drivable_area_expansion_prev_crop_pose.reset();
-    } else {
-      const auto is_behind_ego =
-        motion_utils::calcSignedArcLength(
-          points, crop_pose.position, planner_data->self_odometry->pose.pose.position) > 0.0;
-      const auto is_too_far = motion_utils::calcLateralOffset(points, crop_pose.position) > 0.1;
-      if (!is_behind_ego || is_too_far)
-        planner_data->drivable_area_expansion_prev_crop_pose.reset();
+  /* REUSE
+  crop input path up to last prev
+  resample after last prev
+  */
+  constexpr auto max_deviation = 0.5 /* TODO(Maxime): param*/;
+  std::vector<Pose> cropped_poses;
+  std::vector<double> cropped_curvatures;
+  if (prev_poses.size() > 1) {
+    const auto first_idx = motion_utils::findNearestSegmentIndex(
+      prev_poses, path.points.front().point.pose, max_deviation);
+    if (first_idx) {
+      for (auto idx = *first_idx; idx < prev_poses.size(); ++idx) {
+        if (motion_utils::calcLateralOffset(path.points, prev_poses[idx].position) > max_deviation)
+          break;
+        cropped_poses.push_back(prev_poses[idx]);
+        cropped_curvatures.push_back(prev_curvatures[idx]);
+      }
     }
   }
-  if (!planner_data->drivable_area_expansion_prev_crop_pose) {
-    crop_pose = planner_data->drivable_area_expansion_prev_crop_pose.value_or(
-      motion_utils::calcInterpolatedPose(points, resample_interval - lon_offset));
-  }
-  // crop
-  const auto crop_seg_idx = motion_utils::findNearestSegmentIndex(points, crop_pose.position);
-  const auto cropped_points = motion_utils::cropPoints(
-    points, crop_pose.position, crop_seg_idx,
-    planner_data->drivable_area_expansion_parameters.max_path_arc_length, 0.0);
-  planner_data->drivable_area_expansion_prev_crop_pose = crop_pose;
-  // resample
-  PathWithLaneId cropped_path;
-  if (tier4_autoware_utils::calcDistance2d(crop_pose, cropped_points.front()) > 1e-3) {
-    PathPointWithLaneId crop_path_point;
-    crop_path_point.point.pose = crop_pose;
-    cropped_path.points.push_back(crop_path_point);
-  }
-  cropped_path.points.insert(
-    cropped_path.points.end(), cropped_points.begin(), cropped_points.end());
-  const auto resampled_path =
-    motion_utils::resamplePath(cropped_path, resample_interval, true, true, false);
+  auto arc_length = motion_utils::calcArcLength(cropped_poses);
+  const auto resampled_path_points =
+    motion_utils::resamplePath(path, params.resample_interval, true, true, false).points;
+  const auto first_path_idx =
+    cropped_poses.empty()
+      ? 0LU
+      : *motion_utils::findNearestSegmentIndex(resampled_path_points, cropped_poses.back());
+  for (auto idx = first_path_idx; idx < resampled_path_points.size(); ++idx)
+    cropped_poses.push_back(resampled_path_points[idx].point.pose);
+  cropped_poses = motion_utils::cropForwardPoints(
+    cropped_poses, cropped_poses.front().position, 0LU, params.max_path_arc_length);
 
-  return resampled_path.points;
+  prev_poses = cropped_poses;
+  prev_curvatures = cropped_curvatures;
 }
 
 Point2d convert_point(const Point & p)
@@ -107,25 +99,25 @@ double calculate_minimum_lane_width(
 }
 
 std::vector<BoundExpansion> calculate_minimum_expansions(
-  const std::vector<PathPointWithLaneId> & points, const std::vector<Point> bound,
+  const std::vector<Pose> & path_poses, const std::vector<Point> bound,
   const std::vector<double> curvatures, const Side side,
   const DrivableAreaExpansionParameters & params)
 {
   std::vector<BoundExpansion> bound_expansions(bound.size());
   size_t lb_idx = 0;
-  for (auto path_idx = 0UL; path_idx < points.size(); ++path_idx) {
-    const auto & path_p = points[path_idx].point.pose;
+  for (auto path_idx = 0UL; path_idx < path_poses.size(); ++path_idx) {
+    const auto & path_pose = path_poses[path_idx];
     if (curvatures[path_idx] == 0.0) continue;
     const auto curvature_radius = 1 / curvatures[path_idx];
     const auto min_lane_width = calculate_minimum_lane_width(curvature_radius, params);
     const auto side_distance = min_lane_width / 2.0 * (side == LEFT ? -1.0 : 1.0);
     const auto offset_point =
-      tier4_autoware_utils::calcOffsetPose(path_p, 0.0, side_distance, 0.0).position;
+      tier4_autoware_utils::calcOffsetPose(path_pose, 0.0, side_distance, 0.0).position;
     for (auto bound_idx = lb_idx; bound_idx + 1 < bound.size(); ++bound_idx) {
       const auto & prev_p = bound[bound_idx];
       const auto & next_p = bound[bound_idx + 1];
       const auto intersection_point =
-        tier4_autoware_utils::intersect(offset_point, path_p.position, prev_p, next_p);
+        tier4_autoware_utils::intersect(offset_point, path_pose.position, prev_p, next_p);
       if (intersection_point) {
         lb_idx = bound_idx;
         const auto dist = tier4_autoware_utils::calcDistance2d(*intersection_point, offset_point);
@@ -166,15 +158,16 @@ void apply_bound_velocity_limit(
 }
 
 std::vector<double> calculate_maximum_distance(
-  const std::vector<PathPointWithLaneId> & path, const std::vector<Point> bound,
+  const std::vector<Pose> & path_poses, const std::vector<Point> bound,
   const std::vector<LineString2d> & uncrossable_lines,
   const std::vector<Polygon2d> & uncrossable_polygons)
 {
+  // TODO(Maxime): improve performances (dont use bg::distance ? use rtree ?)
   std::vector<double> maximum_distances(bound.size(), std::numeric_limits<double>::max());
   LineString2d path_ls;
   LineString2d bound_ls;
   for (const auto & p : bound) bound_ls.push_back(convert_point(p));
-  for (const auto & p : path) path_ls.push_back(convert_point(p.point.pose.position));
+  for (const auto & p : path_poses) path_ls.push_back(convert_point(p.position));
   for (auto i = 0UL; i + 1 < bound_ls.size(); ++i) {
     const LineString2d segment_ls = {bound_ls[i], bound_ls[i + 1]};
     for (const auto & uncrossable_line : uncrossable_lines) {
@@ -192,11 +185,11 @@ std::vector<double> calculate_maximum_distance(
 }
 
 void expand_bound(
-  std::vector<Point> & bound, const std::vector<PathPointWithLaneId> & path_points,
+  std::vector<Point> & bound, const std::vector<Pose> & path_poses,
   const std::vector<BoundExpansion> & expansions)
 {
   LineString2d path_ls;
-  for (const auto & p : path_points) path_ls.push_back(convert_point(p.point.pose.position));
+  for (const auto & p : path_poses) path_ls.push_back(convert_point(p.position));
   for (auto idx = 0LU; idx < bound.size(); ++idx) {
     const auto bound_p = convert_point(bound[idx]);
     const auto projection = point_to_linestring_projection(bound_p, path_ls);
@@ -213,9 +206,9 @@ void expand_bound(
 }
 
 std::vector<double> calculate_smoothed_curvatures(
-  const std::vector<PathPointWithLaneId> & points, const size_t smoothing_window_size)
+  const std::vector<Pose> & poses, const size_t smoothing_window_size)
 {
-  const auto curvatures = motion_utils::calcCurvature(points);
+  const auto curvatures = motion_utils::calcCurvature(poses);
   std::vector<double> smoothed_curvatures(curvatures.size());
   for (auto i = 0UL; i < curvatures.size(); ++i) {
     auto sum = 0.0;
@@ -246,6 +239,7 @@ void expandDrivableArea(
   mapper.map(right_ls, "fill-opacity:0.3;fill:blue;stroke:blue;stroke-width:2");
 
   stop_watch.tic("preprocessing");
+  // crop first/last non deviating path_poses
   const auto & params = planner_data->drivable_area_expansion_parameters;
   const auto & route_handler = *planner_data->route_handler;
   const auto uncrossable_lines = extract_uncrossable_lines(
@@ -259,22 +253,31 @@ void expandDrivableArea(
     mapper.map(p, "fill-opacity:0.2;fill:grey;stroke:grey;stroke-width:1");
 
   stop_watch.tic("crop");
-  const auto points = crop_and_resample(path.points, planner_data, params.resample_interval);
+  std::vector<Pose> path_poses = planner_data->drivable_area_expansion_prev_path_poses;
+  std::vector<double> curvatures = planner_data->drivable_area_expansion_prev_curvatures;
+  reuse_previous_points(path, path_poses, curvatures, params);
+  for (const auto & p : path_poses)
+    mapper.map(
+      convert_point(p.position), "fill-opacity:0.5;fill:grey;stroke:grey;stroke-width:1", 1);
   const auto crop_ms = stop_watch.toc("crop");
 
   stop_watch.tic("curvatures_expansion");
-  const auto curvatures = calculate_smoothed_curvatures(points, 3 /*TODO(Maxime): param*/);
+  // Only add curvatures for the new points. Curvatures of reused path points are not updated.
+  const auto new_curvatures = calculate_smoothed_curvatures(path_poses, 3 /*TODO(Maxime): param*/);
+  const auto first_new_point_idx = curvatures.size();
+  curvatures.insert(
+    curvatures.end(), new_curvatures.begin() + first_new_point_idx, new_curvatures.end());
   auto left_expansions =
-    calculate_minimum_expansions(points, path.left_bound, curvatures, LEFT, params);
+    calculate_minimum_expansions(path_poses, path.left_bound, curvatures, LEFT, params);
   auto right_expansions =
-    calculate_minimum_expansions(points, path.right_bound, curvatures, RIGHT, params);
+    calculate_minimum_expansions(path_poses, path.right_bound, curvatures, RIGHT, params);
   const auto curv_expansion_ms = stop_watch.toc("curvatures_expansion");
 
   stop_watch.tic("max_dist");
-  const auto max_left_expansions =
-    calculate_maximum_distance(points, path.left_bound, uncrossable_lines, uncrossable_polygons);
-  const auto max_right_expansions =
-    calculate_maximum_distance(points, path.right_bound, uncrossable_lines, uncrossable_polygons);
+  const auto max_left_expansions = calculate_maximum_distance(
+    path_poses, path.left_bound, uncrossable_lines, uncrossable_polygons);
+  const auto max_right_expansions = calculate_maximum_distance(
+    path_poses, path.right_bound, uncrossable_lines, uncrossable_polygons);
   for (auto i = 0LU; i < left_expansions.size(); ++i)
     left_expansions[i].expansion_distance =
       std::min(left_expansions[i].expansion_distance, max_left_expansions[i]);
@@ -289,8 +292,7 @@ void expandDrivableArea(
         convert_point(e.expansion_point),
         "fill-opacity:0.3;fill:orange;stroke:orange;stroke-width:2", 2);
       mapper.map(
-        Segment2d{
-          convert_point(e.expansion_point), convert_point(points[e.path_idx].point.pose.position)},
+        Segment2d{convert_point(e.expansion_point), convert_point(path_poses[e.path_idx].position)},
         "fill-opacity:0.3;fill:black;stroke:black;stroke-width:2");
     }
   }
@@ -299,8 +301,7 @@ void expandDrivableArea(
       mapper.map(
         convert_point(e.expansion_point), "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2", 2);
       mapper.map(
-        Segment2d{
-          convert_point(e.expansion_point), convert_point(points[e.path_idx].point.pose.position)},
+        Segment2d{convert_point(e.expansion_point), convert_point(path_poses[e.path_idx].position)},
         "fill-opacity:0.3;fill:black;stroke:black;stroke-width:2");
     }
   }
@@ -325,8 +326,8 @@ void expandDrivableArea(
   // TODO(Maxime): add an arc length shift or margin ?
   // TODO(Maxime): limit the distances based on the total width (left + right < min_lane_width)
   stop_watch.tic("expand");
-  expand_bound(path.left_bound, points, left_expansions);
-  expand_bound(path.right_bound, points, right_expansions);
+  expand_bound(path.left_bound, path_poses, left_expansions);
+  expand_bound(path.right_bound, path_poses, right_expansions);
   const auto expand_ms = stop_watch.toc("expand");
 
   const auto total_ms = stop_watch.toc("overall");
@@ -334,5 +335,8 @@ void expandDrivableArea(
     "Total runtime(ms): %2.2f\n\tPreprocessing: %2.2f\n\tCrop: %2.2f\n\tCurvature expansion: "
     "%2.2f\n\tMaximum expansion: %2.2f\n\tSmoothing: %2.2f\n\tExpansion: %2.2f\n\n",
     total_ms, preprocessing_ms, crop_ms, curv_expansion_ms, max_dist_ms, smooth_ms, expand_ms);
+
+  planner_data->drivable_area_expansion_prev_path_poses = path_poses;
+  planner_data->drivable_area_expansion_prev_curvatures = curvatures;
 }
 }  // namespace drivable_area_expansion

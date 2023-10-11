@@ -29,6 +29,7 @@ using autoware_auto_planning_msgs::msg::PathPoint;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
+using geometry_msgs::msg::Pose;
 
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::MultiLineString2d;
