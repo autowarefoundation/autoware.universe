@@ -1,0 +1,99 @@
+units:
+  - path: /hardware/summary/error
+    type: and
+    list:
+      - { type: link, path: /hardware/cpu/002-usage }
+      - { type: link, path: /hardware/cpu/004-throttling }
+  - path: /hardware/summary/warn
+    type: and
+    list: []
+
+  - path: /hardware/summary/notice
+    type: and
+    list: []
+
+  - path: /hardware/summary/info
+    type: and
+    list:
+      - { type: link, path: /hardware/cpu/001-temperature }
+      - { type: link, path: /hardware/cpu/003-load-average }
+      - { type: link, path: /hardware/cpu/005-frequency }
+
+diags:
+  - path: /hardware/cpu/001-temperature
+    name: "cpu_monitor: CPU Temperature"
+  - path: /hardware/cpu/002-usage
+    name: "cpu_monitor: CPU Usage"
+  - path: /hardware/cpu/003-load-average
+    name: "cpu_monitor: CPU Load Average"
+  - path: /hardware/cpu/004-throttling
+    name: "cpu_monitor: CPU Thermal Throttling"
+  - path: /hardware/cpu/005-frequency
+    name: "cpu_monitor: CPU Frequency"
+
+  - path: /hardware/hdd/001-temperature
+    name: "hdd_monitor: HDD Temperature"
+  - path: /hardware/hdd/002-usage
+    name: "hdd_monitor: HDD Usage"
+  - path: /hardware/hdd/003-connection
+    name: "hdd_monitor: HDD Connection"
+  - path: /hardware/hdd/004-total-written
+    name: "hdd_monitor: HDD TotalDataWritten"
+  - path: /hardware/hdd/005-warranty-period
+    name: "hdd_monitor: HDD PowerOnHours"
+  - path: /hardware/hdd/006-soft-error
+    name: "hdd_monitor: HDD RecoveredError"
+  - path: /hardware/hdd/007-load/read-rate
+    name: "hdd_monitor: HDD ReadDataRate"
+  - path: /hardware/hdd/007-load/write-rate
+    name: "hdd_monitor: HDD WriteDataRate"
+  - path: /hardware/hdd/007-load/read-iops
+    name: "hdd_monitor: HDD ReadIOPS"
+  - path: /hardware/hdd/007-load/write-iops
+    name: "hdd_monitor: HDD WriteIOPS"
+
+  - path: /hardware/memory/001-usage
+    name: "mem_monitor: Memory Usage"
+  - path: /hardware/memory/002-ecc
+    name: "mem_monitor: Memory ECC"
+
+  - path: /hardware/network/001-usage
+    name: "net_monitor: Network Usage"
+  - path: /hardware/network/002-traffic
+    name: "net_monitor: Network Traffic"
+  - path: /hardware/network/003-crc
+    name: "net_monitor: Network CRC Error"
+  - path: /hardware/network/004-packet-reassembles
+    name: "net_monitor: IP Packet Reassembles Failed"
+
+  - path: /hardware/ntp/001-sync
+    name: "ntp_monitor: NTP Offset"
+
+  - path: /hardware/process/001-summary
+    name: "process_monitor: Tasks Summary"
+  - path: /hardware/process/002-load
+    name: "process_monitor: High-load Proc[0]"
+    # name: "process_monitor: High-load Proc[1]"
+    # name: "process_monitor: High-load Proc[2]"
+    # name: "process_monitor: High-load Proc[3]"
+    # name: "process_monitor: High-load Proc[4]"
+  - path: /hardware/process/003-memory
+    name: "process_monitor: High-mem Proc[0]"
+    # name: "process_monitor: High-mem Proc[1]"
+    # name: "process_monitor: High-mem Proc[2]"
+    # name: "process_monitor: High-mem Proc[3]"
+    # name: "process_monitor: High-mem Proc[4]"
+
+  - path: /hardware/gpu/001-temperature
+    name: "gpu_monitor: GPU Temperature"
+  - path: /hardware/gpu/002-usage
+    name: "gpu_monitor: GPU Usage"
+  - path: /hardware/gpu/003-memory
+    name: "gpu_monitor: GPU Memory Usage"
+  - path: /hardware/gpu/004-throttling
+    name: "gpu_monitor: GPU Thermal Throttling"
+  - path: /hardware/gpu/005-frequency
+    name: "gpu_monitor: GPU Frequency"
+
+  - path: /hardware/bios/001-battery
+    name: "voltage_monitor: CMOS Battery Status"
