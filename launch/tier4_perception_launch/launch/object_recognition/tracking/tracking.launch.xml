@@ -3,8 +3,16 @@
   <arg name="mode" default="lidar" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
   <arg name="publish_rate" default="10.0"/>
   <arg name="enable_delay_compensation" default="true"/>
+
+  <!-- Radar Tracking and Merger parameters -->
+  <arg name="radar_long_range_integration" default="detection" description="integration method for radar long range information. Following args are used only if this parameter is set to 'tracking'"/>
   <arg name="radar_tracker_input" default="/perception/object_recognition/detection/radar/far_objects"/>
   <arg name="radar_tracker_output" default="/perception/object_recognition/tracking/radar/far_objects"/>
+  <arg name="object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path" description="association param file for radar far object tracking"/>
+  <arg name="object_recognition_tracking_radar_object_tracker_tracking_setting_param_path" description="tracking setting param file for radar far object tracking"/>
+  <arg name="object_recognition_tracking_radar_object_tracker_node_param_path" description="node param file for radar far object tracking"/>
+  <arg name="object_recognition_tracking_object_merger_data_association_matrix_param_path" description="association param file for radar and lidar object merger"/>
+  <arg name="object_recognition_tracking_object_merger_node_param_path" description="node param file for radar and lidar object merger"/>
 
   <group>
     <!--multi object tracking-->
@@ -14,8 +22,9 @@
       <arg name="enable_delay_compensation" value="$(var enable_delay_compensation)"/>
     </include>
 
-    <!--radar long range dynamic object tracking if mode contains radar input-->
-    <group if="$(eval '&quot;$(var mode)&quot;==&quot;radar&quot; or &quot;$(var mode)&quot;==&quot;lidar_radar_fusion&quot; or &quot;$(var mode)&quot;==&quot;camera_lidar_radar_fusion&quot;')">
+    <!-- add radar long range tracking and merger node if integration parameter is set to tracking -->
+    <group if="$(eval &quot;'$(var radar_long_range_integration)'=='tracking'&quot;)">
+      <!--radar long range dynamic object tracking-->
       <include file="$(find-pkg-share radar_object_tracker)/launch/radar_object_tracker.launch.xml">
         <arg name="publish_rate" value="$(var publish_rate)"/>
         <arg name="enable_delay_compensation" value="$(var enable_delay_compensation)"/>
@@ -23,6 +32,15 @@
         <arg name="output" value="$(var radar_tracker_output)"/>
         <arg name="data_association_matrix_path" value="$(var object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path)"/>
         <arg name="tracker_setting_path" value="$(var object_recognition_tracking_radar_object_tracker_tracking_setting_param_path)"/>
+      </include>
+
+      <!--radar long range dynamic object tracking merger-->
+      <include file="$(find-pkg-share tracking_object_merger)/launch/decorative_tracker_merger.launch.xml">
+        <arg name="main_object" value="/perception/object_recognition/tracking/objects"/>
+        <arg name="sub_object" value="$(var radar_tracker_output)"/>
+        <arg name="output" value="/perception/object_recognition/tracking/merged/objects"/>
+        <arg name="data_association_matrix_path" value="$(var object_recognition_tracking_object_merger_data_association_matrix_param_path)"/>
+        <arg name="node_param_file_path" value="$(var object_recognition_tracking_object_merger_node_param_path)"/>
       </include>
     </group>
   </group>
