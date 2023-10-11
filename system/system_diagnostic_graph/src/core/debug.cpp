@@ -71,4 +71,11 @@ DiagDebugData DiagNode::debug() const
   return {"diag", index_name, level_name, path_, name_};
 }
 
+DiagDebugData UnknownNode::debug() const
+{
+  const auto level_name = level_names.at(level());
+  const auto index_name = std::to_string(index());
+  return {"test", index_name, level_name, path_, "-----"};
+}
+
 }  // namespace system_diagnostic_graph

@@ -122,6 +122,13 @@ void Graph::init(const std::string & file, const std::string & mode)
     }
   }
 
+  // TODO(Takagi, Isamu): unknown diag names
+  {
+    auto node = std::make_unique<UnknownNode>("/unknown");
+    unknown_ = node.get();
+    nodes.push_back(std::move(node));
+  }
+
   for (const auto & node : nodes) {
     paths[node->path()] = node.get();
   }
@@ -160,7 +167,7 @@ void Graph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
     if (iter != diags_.end()) {
       iter->second->callback(status, stamp);
     } else {
-      // TODO(Takagi, Isamu): handle unknown diagnostics
+      unknown_->callback(status, stamp);
     }
   }
 }

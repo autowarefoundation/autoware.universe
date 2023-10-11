@@ -45,6 +45,7 @@ public:
 private:
   std::vector<std::unique_ptr<BaseNode>> nodes_;
   std::unordered_map<std::string, DiagNode *> diags_;
+  UnknownNode * unknown_;
   rclcpp::Time stamp_;
 };
 

@@ -24,6 +24,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -89,6 +90,23 @@ private:
   std::optional<rclcpp::Time> time_;
   std::string name_;
   DiagnosticStatus status_;
+};
+
+class UnknownNode : public BaseNode
+{
+public:
+  explicit UnknownNode(const std::string & path);
+  void create(ConfigObject & config, ExprInit & exprs) override;
+  void update(const rclcpp::Time & stamp) override;
+  DiagnosticNode report() const override;
+  DiagnosticLevel level() const override;
+  DiagDebugData debug() const override;
+  std::vector<BaseNode *> links() const override { return {}; }
+
+  void callback(const DiagnosticStatus & status, const rclcpp::Time & stamp);
+
+private:
+  std::unordered_map<std::string, rclcpp::Time> diagnostics_;
 };
 
 }  // namespace system_diagnostic_graph

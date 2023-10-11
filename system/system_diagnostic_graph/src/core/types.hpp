@@ -34,6 +34,7 @@ using DiagnosticLevel = DiagnosticStatus::_level_type;
 class BaseNode;
 class UnitNode;
 class DiagNode;
+class UnknownNode;
 
 class BaseExpr;
 class ExprInit;

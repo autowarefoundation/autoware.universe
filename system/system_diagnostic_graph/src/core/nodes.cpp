@@ -105,7 +105,6 @@ DiagnosticNode DiagNode::report() const
   DiagnosticNode message;
   message.status = status_;
   message.status.name = path_;
-  message.status.hardware_id = "";
   return message;
 }
 
@@ -118,6 +117,41 @@ void DiagNode::callback(const DiagnosticStatus & status, const rclcpp::Time & st
 {
   status_ = status;
   time_ = stamp;
+}
+
+UnknownNode::UnknownNode(const std::string & path) : BaseNode(path)
+{
+}
+
+void UnknownNode::create(ConfigObject &, ExprInit &)
+{
+}
+
+void UnknownNode::update(const rclcpp::Time & stamp)
+{
+  (void)stamp;
+}
+
+DiagnosticNode UnknownNode::report() const
+{
+  DiagnosticNode message;
+  message.status.name = path_;
+  for (const auto & diag : diagnostics_) {
+    diagnostic_msgs::msg::KeyValue kv;
+    kv.key = diag.first;
+    message.status.values.push_back(kv);
+  }
+  return message;
+}
+
+DiagnosticLevel UnknownNode::level() const
+{
+  return DiagnosticStatus::WARN;
+}
+
+void UnknownNode::callback(const DiagnosticStatus & status, const rclcpp::Time & stamp)
+{
+  diagnostics_[status.name] = stamp;
 }
 
 }  // namespace system_diagnostic_graph
