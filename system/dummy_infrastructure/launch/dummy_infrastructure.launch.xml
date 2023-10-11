@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <!-- Input -->
   <arg name="input/command_array" default="/planning/scenario_planning/status/infrastructure_commands"/>
@@ -6,7 +7,7 @@
   <arg name="output/state_array" default="/system/v2x/virtual_traffic_light_states"/>
 
   <!-- Parameter -->
-  <arg name="config_file" default="$(find-pkg-share dummy_infrastructure)/config/dummy_infrastructure.param.yaml"/>
+  <arg name="dummy_infrastructure_node_param_file" default="$(find-pkg-share dummy_infrastructure)/config/dummy_infrastructure.param.yaml"/>
 
   <!-- Node -->
   <node pkg="dummy_infrastructure" exec="dummy_infrastructure_node" name="dummy_infrastructure" output="screen">
@@ -17,6 +18,6 @@
     <remap from="~/output/state_array" to="$(var output/state_array)"/>
 
     <!-- Parameter -->
-    <param from="$(var config_file)"/>
+    <param from="$(var dummy_infrastructure_node_param_file)"/>
   </node>
 </launch>
