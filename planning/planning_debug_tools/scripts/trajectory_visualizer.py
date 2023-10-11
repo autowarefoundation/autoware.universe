@@ -123,6 +123,7 @@ class TrajectoryVisualizer(Node):
         self.obstacle_avoid_traj = Trajectory()
         self.obstacle_stop_traj = Trajectory()
 
+
         self.plotted = [False] * 9
         self.sub_localization_kinematics = self.create_subscription(
             Odometry, "/localization/kinematic_state", self.CallbackLocalizationTwist, 1
