@@ -205,10 +205,9 @@ void NormalLaneChange::insertStopPoint(
   const auto target_objects = getTargetObjects(status_.current_lanes, status_.target_lanes);
   const bool is_in_terminal_section = lanelet::utils::isInLanelet(getEgoPose(), lanelets.back()) ||
                                       distance_to_terminal < lane_change_buffer;
-  const double stationary_obj_velocity_threshold = 0.3;
   const bool has_blocking_target_lane_obj = std::any_of(
     target_objects.target_lane.begin(), target_objects.target_lane.end(), [&](const auto & o) {
-      if (o.initial_twist.twist.linear.x > stationary_obj_velocity_threshold) {
+      if (o.initial_twist.twist.linear.x > lane_change_parameters_->stop_velocity_threshold) {
         return false;
       }
       const double distance_to_target_lane_obj = utils::getSignedDistance(
@@ -227,7 +226,8 @@ void NormalLaneChange::insertStopPoint(
 
       for (const auto & object : target_objects.current_lane) {
         // check if stationary
-        if (std::abs(object.initial_twist.twist.linear.x) > stationary_obj_velocity_threshold) {
+        const auto obj_v = std::abs(object.initial_twist.twist.linear.x);
+        if (obj_v > lane_change_parameters_->stop_velocity_threshold) {
           continue;
         }
 
