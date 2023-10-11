@@ -86,7 +86,6 @@ protected:
   void update(float wall_dt, float ros_dt) override;
   void processMessage(
     const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr) override;
-
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
   rviz_common::properties::ColorProperty * property_text_color_;
   rviz_common::properties::IntProperty * property_left_;
@@ -95,6 +94,7 @@ protected:
   rviz_common::properties::FloatProperty * property_value_scale_;
   rviz_common::properties::IntProperty * property_font_size_;
   rviz_common::properties::IntProperty * property_max_letter_num_;
+  // QImage hud_;
 
 private:
   static constexpr int line_width_ = 2;
