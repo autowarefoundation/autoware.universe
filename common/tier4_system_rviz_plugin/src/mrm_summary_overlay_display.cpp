@@ -51,6 +51,7 @@
 #include <rviz_common/uniform_string_stream.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 
 #include <X11/Xlib.h>
 
@@ -114,13 +115,6 @@ MrmSummaryOverlayDisplay::MrmSummaryOverlayDisplay()
   property_max_letter_num_ = new rviz_common::properties::IntProperty(
     "Max Letter Num", 100, "Max Letter Num", this, SLOT(updateVisualization()), this);
   property_max_letter_num_->setMin(10);
-
-  property_localization_state_api_topic_ = new rviz_common::properties::StringProperty(
-    "Localization State API Topic", "/api/localization/initialization_state",
-    "Localization State API Topic", this, SLOT(updateVisualization()), this);
-  property_routing_state_api_topic_ = new rviz_common::properties::StringProperty(
-    "Routing API Topic", "/api/routing/state", "Routing API Topic", this,
-    SLOT(updateVisualization()), this);
 }
 
 MrmSummaryOverlayDisplay::~MrmSummaryOverlayDisplay()
@@ -133,21 +127,6 @@ MrmSummaryOverlayDisplay::~MrmSummaryOverlayDisplay()
 void MrmSummaryOverlayDisplay::onInitialize()
 {
   RTDClass::onInitialize();
-
-  // Subscribe initialization ADAPI topics
-  flag_localization_initialized = false;
-  flag_route_set = false;
-
-  raw_node_ = rviz_ros_node_.lock()->get_raw_node();
-  std::string localization_state_api_topic = property_localization_state_api_topic_->getStdString();
-  std::string routing_state_api_topic = property_routing_state_api_topic_->getStdString();
-  sub_localization_init_ = raw_node_->create_subscription<LocalizationInitializationState>(
-    localization_state_api_topic, rclcpp::QoS{1},
-    std::bind(&MrmSummaryOverlayDisplay::onLocalizationInit, this, std::placeholders::_1));
-
-  sub_route_state_ = raw_node_->create_subscription<RouteState>(
-    routing_state_api_topic, rclcpp::QoS{1},
-    std::bind(&MrmSummaryOverlayDisplay::onRouteState, this, std::placeholders::_1));
 
   static int count = 0;
   rviz_common::UniformStringStream ss;
@@ -183,10 +162,11 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
   // MRM summary
   std::vector<std::string> mrm_comfortable_stop_summary_list = {};
   std::vector<std::string> mrm_emergency_stop_summary_list = {};
-
+  int hazard_level = 0;
   {
     std::lock_guard<std::mutex> message_lock(mutex_);
     if (last_msg_ptr_) {
+      hazard_level = last_msg_ptr_->status.level;
       for (const auto & diag_status : last_msg_ptr_->status.diag_latent_fault) {
         const std::optional<std::string> msg = generateMrmMessage(diag_status);
         if (msg != std::nullopt) {
@@ -226,11 +206,9 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
 
   std::ostringstream output_text;
 
-  if (!flag_localization_initialized) {
-    output_text << "Error Notice: Localization not initialized" << std::endl;
-  } else if (!flag_route_set) {
-    output_text << "Error Notice: Route is not set" << std::endl;
-  } else {
+  // Display the MRM Summary only when there is a fault
+  if (hazard_level != autoware_auto_system_msgs::msg::HazardStatus::NO_FAULT)
+  {
     // Broadcasting the Basic Error Infos
     int number_of_comfortable_stop_messages =
       static_cast<int>(mrm_comfortable_stop_summary_list.size());
