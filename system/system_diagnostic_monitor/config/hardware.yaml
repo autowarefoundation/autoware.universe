@@ -4,13 +4,32 @@ units:
     list:
       - { type: link, path: /hardware/cpu/002-usage }
       - { type: link, path: /hardware/cpu/004-throttling }
+      - { type: link, path: /hardware/hdd/001-temperature }
+      - { type: link, path: /hardware/hdd/003-connection }
+      - { type: link, path: /hardware/hdd/006-soft-error }
+      - { type: link, path: /hardware/hdd/007-load }
+      - { type: link, path: /hardware/memory/001-usage }
+      - { type: link, path: /hardware/memory/002-ecc }
+      - { type: link, path: /hardware/network/003-crc }
+      - { type: link, path: /hardware/network/004-packet-reassembles }
+      - { type: link, path: /hardware/gpu/001-temperature }
+      - { type: link, path: /hardware/gpu/002-usage }
+      - { type: link, path: /hardware/gpu/003-memory }
+      - { type: link, path: /hardware/gpu/004-throttling }
+      - { type: link, path: /hardware/gpu/005-frequency }
+
   - path: /hardware/summary/warn
     type: and
-    list: []
+    list:
+      - { type: link, path: /hardware/hdd/002-usage }
 
   - path: /hardware/summary/notice
     type: and
-    list: []
+    list:
+      - { type: link, path: /hardware/hdd/004-total-written }
+      - { type: link, path: /hardware/hdd/005-warranty-period }
+      - { type: link, path: /hardware/ntp/001-sync }
+      - { type: link, path: /hardware/bios/001-battery }
 
   - path: /hardware/summary/info
     type: and
@@ -18,6 +37,19 @@ units:
       - { type: link, path: /hardware/cpu/001-temperature }
       - { type: link, path: /hardware/cpu/003-load-average }
       - { type: link, path: /hardware/cpu/005-frequency }
+      - { type: link, path: /hardware/network/001-usage }
+      - { type: link, path: /hardware/network/002-traffic }
+      - { type: link, path: /hardware/process/001-summary }
+      - { type: link, path: /hardware/process/002-load }
+      - { type: link, path: /hardware/process/003-memory }
+
+  - path: /hardware/hdd/007-load
+    type: and
+    list:
+      - { type: link, path: /hardware/hdd/007-load/read-rate }
+      - { type: link, path: /hardware/hdd/007-load/read-iops }
+      - { type: link, path: /hardware/hdd/007-load/write-rate }
+      - { type: link, path: /hardware/hdd/007-load/write-iops }
 
 diags:
   - path: /hardware/cpu/001-temperature
