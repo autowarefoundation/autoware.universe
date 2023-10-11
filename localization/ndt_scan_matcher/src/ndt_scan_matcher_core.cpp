@@ -857,20 +857,24 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
 
     const geometry_msgs::msg::Pose pose = matrix4f_to_pose(ndt_result.pose);
-    geometry_msgs::msg::Vector3 rpy = get_rpy(pose);
+    const geometry_msgs::msg::Vector3 rpy = get_rpy(pose);
 
+    const double diff_x = pose.position.x - initial_pose_with_cov.pose.pose.position.x;
+    const double diff_y = pose.position.y - initial_pose_with_cov.pose.pose.position.y;
+    const double diff_z = pose.position.z - initial_pose_with_cov.pose.pose.position.z;
+    const double diff_roll = rpy.x - base_rpy.x;
+    const double diff_pitch = rpy.y - base_rpy.y;
+    const double diff_yaw = rpy.z - base_rpy.z;
+
+    // Only yaw is a loop_variable, so only simple normalization is performed.
+    // All other variables are converted from normal distribution to uniform distribution.
     TreeStructuredParzenEstimator::Input result(is_loop_variable.size());
-    result[0] = (pose.position.x - initial_pose_with_cov.pose.pose.position.x) / stddev_x;
-    result[1] = (pose.position.y - initial_pose_with_cov.pose.pose.position.y) / stddev_y;
-    result[2] = (pose.position.z - initial_pose_with_cov.pose.pose.position.z) / stddev_z;
-    result[3] = (rpy.x - base_rpy.x) / stddev_roll;
-    result[4] = (rpy.y - base_rpy.y) / stddev_pitch;
-    result[5] = (rpy.z - base_rpy.z) / M_PI;
-    result[0] = normal_to_uniform(result[0]);
-    result[1] = normal_to_uniform(result[1]);
-    result[2] = normal_to_uniform(result[2]);
-    result[3] = normal_to_uniform(result[3]);
-    result[4] = normal_to_uniform(result[4]);
+    result[0] = normal_to_uniform(diff_x / stddev_x);
+    result[1] = normal_to_uniform(diff_y / stddev_y);
+    result[2] = normal_to_uniform(diff_z / stddev_z);
+    result[3] = normal_to_uniform(diff_roll / stddev_roll);
+    result[4] = normal_to_uniform(diff_pitch / stddev_pitch);
+    result[5] = diff_yaw / M_PI;
     tpe.add_trial(TreeStructuredParzenEstimator::Trial{result, ndt_result.transform_probability});
 
     auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
