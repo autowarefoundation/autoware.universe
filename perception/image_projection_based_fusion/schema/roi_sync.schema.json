@@ -36,32 +36,32 @@
           "description": "Whether to debug or not.",
           "default": false
         },
-        "filter_scope_minx": {
+        "filter_scope_min_x": {
           "type": "number",
           "description": "Minimum x position to be considered for debug [m].",
           "default": -100.0
         },
-        "filter_scope_miny": {
+        "filter_scope_min_y": {
           "type": "number",
           "description": "Minimum y position to be considered for debug [m].",
           "default": -100.0
         },
-        "filter_scope_minz": {
+        "filter_scope_min_z": {
           "type": "number",
           "description": "Minimum z position to be considered for debug [m].",
           "default": -100.0
         },
-        "filter_scope_maxx": {
+        "filter_scope_max_x": {
           "type": "number",
           "description": "Maximum x position to be considered for debug [m].",
           "default": 100.0
         },
-        "filter_scope_maxy": {
+        "filter_scope_max_y": {
           "type": "number",
           "description": "Maximum y position to be considered for debug [m].",
           "default": 100.0
         },
-        "filter_scope_maxz": {
+        "filter_scope_max_z": {
           "type": "number",
           "description": "Maximum z position [m].",
           "default": 100.0

@@ -5,9 +5,9 @@
     match_threshold_ms: 50.0
     image_buffer_size: 15
     debug_mode: false
-    filter_scope_minx: -100.0
-    filter_scope_miny: -100.0
-    filter_scope_minz: -100.0
-    filter_scope_maxx: 100.0
-    filter_scope_maxy: 100.0
-    filter_scope_maxz: 100.0
+    filter_scope_min_x: -100.0
+    filter_scope_min_y: -100.0
+    filter_scope_min_z: -100.0
+    filter_scope_max_x: 100.0
+    filter_scope_max_y: 100.0
+    filter_scope_max_z: 100.0

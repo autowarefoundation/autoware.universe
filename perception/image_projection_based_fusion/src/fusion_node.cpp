@@ -139,12 +139,12 @@ FusionNode<Msg, ObjType>::FusionNode(
 
   // cspell: ignore minx, maxx, miny, maxy, minz, maxz
   // FIXME: use min_x instead of minx
-  filter_scope_minx_ = declare_parameter<double>("filter_scope_minx");
-  filter_scope_maxx_ = declare_parameter<double>("filter_scope_maxx");
-  filter_scope_miny_ = declare_parameter<double>("filter_scope_miny");
-  filter_scope_maxy_ = declare_parameter<double>("filter_scope_maxy");
-  filter_scope_minz_ = declare_parameter<double>("filter_scope_minz");
-  filter_scope_maxz_ = declare_parameter<double>("filter_scope_maxz");
+  filter_scope_minx_ = declare_parameter<double>("filter_scope_min_x");
+  filter_scope_maxx_ = declare_parameter<double>("filter_scope_max_x");
+  filter_scope_miny_ = declare_parameter<double>("filter_scope_min_y");
+  filter_scope_maxy_ = declare_parameter<double>("filter_scope_max_y");
+  filter_scope_minz_ = declare_parameter<double>("filter_scope_min_z");
+  filter_scope_maxz_ = declare_parameter<double>("filter_scope_max_z");
 }
 
 template <class Msg, class Obj>
