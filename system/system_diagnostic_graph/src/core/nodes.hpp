@@ -21,10 +21,10 @@
 
 #include <rclcpp/time.hpp>
 
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -106,7 +106,7 @@ public:
   void callback(const DiagnosticStatus & status, const rclcpp::Time & stamp);
 
 private:
-  std::unordered_map<std::string, rclcpp::Time> diagnostics_;
+  std::map<std::string, rclcpp::Time> diagnostics_;
 };
 
 }  // namespace system_diagnostic_graph
