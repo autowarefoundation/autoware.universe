@@ -44,8 +44,6 @@ using geometry_msgs::msg::Twist;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
-// TODO(sugahara) move to util
-PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2);
 lanelet::ConstLanelets getPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
   const double forward_distance);
@@ -66,6 +64,9 @@ MarkerArray createTextsMarkerArray(
   const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color);
 MarkerArray createGoalCandidatesMarkerArray(
   GoalCandidates & goal_candidates, const std_msgs::msg::ColorRGBA & color);
+MarkerArray createNumObjectsToAvoidTextsMarkerArray(
+  const GoalCandidates & goal_candidates, std::string && ns,
+  const std_msgs::msg::ColorRGBA & color);
 }  // namespace goal_planner_utils
 }  // namespace behavior_path_planner
 
