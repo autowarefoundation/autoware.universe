@@ -239,7 +239,8 @@ static std::optional<size_t> getFirstPointInsidePolygonByFootprint(
   return std::nullopt;
 }
 
-static std::optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>
+static std::optional<std::pair<
+  size_t /* the index of interpolated PathPoint*/, size_t /* the index of corresponding Polygon */>>
 getFirstPointInsidePolygonsByFootprint(
   const std::vector<lanelet::CompoundPolygon3d> & polygons,
   const InterpolatedPathInfo & interpolated_path_info,
@@ -252,12 +253,11 @@ getFirstPointInsidePolygonsByFootprint(
     const auto & pose = path_ip.points.at(i).point.pose;
     const auto path_footprint =
       tier4_autoware_utils::transformVector(footprint, tier4_autoware_utils::pose2transform(pose));
-    for (const auto & polygon : polygons) {
-      const auto area_2d = lanelet::utils::to2D(polygon).basicPolygon();
+    for (size_t j = 0; j < polygons.size(); ++j) {
+      const auto area_2d = lanelet::utils::to2D(polygons.at(j)).basicPolygon();
       const bool is_in_polygon = bg::intersects(area_2d, path_footprint);
       if (is_in_polygon) {
-        return std::make_optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>(
-          i, polygon);
+        return std::make_optional<std::pair<size_t, size_t>>(i, j);
       }
     }
   }
@@ -841,7 +841,8 @@ IntersectionLanelets getObjectiveLanelets(
   result.occlusion_attention_ =
     std::move(occlusion_detection_and_preceding_lanelets_wo_turn_direction);
 
-  // compoundPolygon3d
+  // NOTE: to properly update(), each element in conflicting_/conflicting_area_,
+  // attention_non_preceding_/attention_non_preceding_area_ need to be matched
   result.attention_area_ = getPolygon3dFromLanelets(result.attention_);
   result.attention_non_preceding_area_ = getPolygon3dFromLanelets(result.attention_non_preceding_);
   result.conflicting_area_ = getPolygon3dFromLanelets(result.conflicting_);
@@ -1383,14 +1384,16 @@ void IntersectionLanelets::update(
     auto first =
       getFirstPointInsidePolygonsByFootprint(conflicting_area_, interpolated_path_info, footprint);
     if (first) {
-      first_conflicting_area_ = first.value().second;
+      first_conflicting_lane_ = conflicting_.at(first.value().second);
+      first_conflicting_area_ = conflicting_area_.at(first.value().second);
     }
   }
   if (!first_attention_area_) {
     auto first = getFirstPointInsidePolygonsByFootprint(
       attention_non_preceding_area_, interpolated_path_info, footprint);
     if (first) {
-      first_attention_area_ = first.value().second;
+      first_attention_lane_ = attention_non_preceding_.at(first.value().second);
+      first_attention_area_ = attention_non_preceding_area_.at(first.value().second);
     }
   }
 }

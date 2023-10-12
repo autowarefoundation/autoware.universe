@@ -96,9 +96,17 @@ public:
   {
     return occlusion_attention_area_;
   }
+  const std::optional<lanelet::ConstLanelet> & first_conflicting_lane() const
+  {
+    return first_conflicting_lane_;
+  }
   const std::optional<lanelet::CompoundPolygon3d> & first_conflicting_area() const
   {
     return first_conflicting_area_;
+  }
+  const std::optional<lanelet::ConstLanelet> & first_attention_lane() const
+  {
+    return first_attention_lane_;
   }
   const std::optional<lanelet::CompoundPolygon3d> & first_attention_area() const
   {
@@ -122,7 +130,9 @@ public:
   // the first area intersecting with the path
   // even if lane change/re-routing happened on the intersection, these areas area are supposed to
   // be invariant under the 'associative' lanes.
+  std::optional<lanelet::ConstLanelet> first_conflicting_lane_{std::nullopt};
   std::optional<lanelet::CompoundPolygon3d> first_conflicting_area_{std::nullopt};
+  std::optional<lanelet::ConstLanelet> first_attention_lane_{std::nullopt};
   std::optional<lanelet::CompoundPolygon3d> first_attention_area_{std::nullopt};
   bool is_prioritized_ = false;
 };
