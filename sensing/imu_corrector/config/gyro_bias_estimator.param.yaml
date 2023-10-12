@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    gyro_bias_threshold: 0.0050 # [rad/s]
+    gyro_bias_threshold: 0.0015 # [rad/s]
     timer_callback_interval_sec: 0.5 # [sec]
     straight_motion_ang_vel_upper_limit: 0.015 # [rad/s]
     data_num_threshold: 200 # [num]
