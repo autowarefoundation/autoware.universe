@@ -1,4 +1,4 @@
-# dup
+# Duplicated Node Checker
 
 ## Purpose
 
