@@ -818,6 +818,9 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
   // Optimizing (x, y, z, roll, pitch, yaw) 6 dimensions.
   // The last dimension (yaw) is a loop variable.
+  // Although roll and pitch are also angles, they are considered non-looping variables that follow
+  // a normal distribution with a small standard deviation. This assumes that the initial pose of
+  // the ego vehicle is aligned with the ground to some extent about roll and pitch.
   const std::vector<bool> is_loop_variable = {false, false, false, false, false, true};
   TreeStructuredParzenEstimator tpe(
     TreeStructuredParzenEstimator::Direction::MAXIMIZE, n_startup_trials_, is_loop_variable);
