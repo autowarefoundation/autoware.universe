@@ -129,7 +129,10 @@ bool AvoidanceModule::isExecutionRequested() const
     return false;
   }
 
-  return !avoid_data_.target_objects.empty();
+  return std::any_of(
+    avoid_data_.target_objects.begin(), avoid_data_.target_objects.end(), [](const auto & o) {
+      return o.is_avoidable || o.reason == AvoidanceDebugFactor::TOO_LARGE_JERK;
+    });
 }
 
 bool AvoidanceModule::isExecutionReady() const
@@ -247,12 +250,16 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   using utils::avoidance::filterTargetObjects;
   using utils::avoidance::getTargetLanelets;
 
+  // Add margin in order to prevent avoidance request chattering only when the module is running.
+  const auto is_running = getCurrentStatus() == ModuleStatus::RUNNING ||
+                          getCurrentStatus() == ModuleStatus::WAITING_APPROVAL;
+
   // Separate dynamic objects based on whether they are inside or outside of the expanded lanelets.
   const auto [object_within_target_lane, object_outside_target_lane] =
     utils::avoidance::separateObjectsByPath(
       utils::resamplePathWithSpline(
         helper_.getPreviousSplineShiftPath().path, parameters_->resample_interval_for_output),
-      planner_data_, data, parameters_, debug);
+      planner_data_, data, parameters_, is_running, debug);
 
   for (const auto & object : object_outside_target_lane.objects) {
     ObjectData other_object;
