@@ -105,29 +105,24 @@ public:
     return first_attention_area_;
   }
 
-  lanelet::ConstLanelets attention_;
+  lanelet::ConstLanelets attention_;  // topologically merged lanelets
   lanelet::ConstLanelets attention_non_preceding_;
   lanelet::ConstLanelets conflicting_;
   lanelet::ConstLanelets adjacent_;
-  lanelet::ConstLanelets occlusion_attention_;  // for occlusion detection
-  std::vector<lanelet::CompoundPolygon3d> attention_area_;
+  lanelet::ConstLanelets occlusion_attention_;    // topologically merged lanelets
+  std::vector<double> occlusion_attention_size_;  // the area() of each occlusion attention lanelets
+  std::vector<lanelet::CompoundPolygon3d> attention_area_;  // topologically merged lanelets
   std::vector<lanelet::CompoundPolygon3d> attention_non_preceding_area_;
   std::vector<lanelet::CompoundPolygon3d> conflicting_area_;
   std::vector<lanelet::CompoundPolygon3d> adjacent_area_;
-  std::vector<lanelet::CompoundPolygon3d> occlusion_attention_area_;
+  std::vector<lanelet::CompoundPolygon3d>
+    occlusion_attention_area_;  // topologically merged lanelets
   // the first area intersecting with the path
   // even if lane change/re-routing happened on the intersection, these areas area are supposed to
   // be invariant under the 'associative' lanes.
+  std::optional<lanelet::CompoundPolygon3d> first_conflicting_area_{std::nullopt};
+  std::optional<lanelet::CompoundPolygon3d> first_attention_area_{std::nullopt};
   bool is_prioritized_ = false;
-  std::optional<lanelet::CompoundPolygon3d> first_conflicting_area_ = std::nullopt;
-  std::optional<lanelet::CompoundPolygon3d> first_attention_area_ = std::nullopt;
-};
-
-struct DiscretizedLane
-{
-  int lane_id{0};
-  // discrete fine lines from left to right
-  std::vector<lanelet::ConstLineString2d> divisions{};
 };
 
 struct IntersectionStopLines

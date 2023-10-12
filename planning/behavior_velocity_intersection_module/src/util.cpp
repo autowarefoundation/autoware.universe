@@ -570,6 +570,98 @@ static std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
   return polys;
 }
 
+static std::string getTurnDirection(lanelet::ConstLanelet lane)
+{
+  return lane.attributeOr("turn_direction", "else");
+}
+
+/**
+ * @param pair lanelets and the vector of original laneles in topological order (not reversed as
+ *in generateDetectionLaneDivisions())
+ **/
+static std::pair<lanelet::ConstLanelets, std::vector<lanelet::ConstLanelets>>
+mergeLaneletsByTopologicalSort(
+  const lanelet::ConstLanelets & lanelets,
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr)
+{
+  const int n_node = lanelets.size();
+  std::vector<std::vector<int>> adjacency(n_node);
+  for (int dst = 0; dst < n_node; ++dst) {
+    adjacency[dst].resize(n_node);
+    for (int src = 0; src < n_node; ++src) {
+      adjacency[dst][src] = false;
+    }
+  }
+  std::set<lanelet::Id> lanelet_ids;
+  std::unordered_map<lanelet::Id, int> id2ind;
+  std::unordered_map<int, lanelet::Id> ind2id;
+  std::unordered_map<lanelet::Id, lanelet::ConstLanelet> id2lanelet;
+  int ind = 0;
+  for (const auto & lanelet : lanelets) {
+    lanelet_ids.insert(lanelet.id());
+    const auto id = lanelet.id();
+    id2ind[id] = ind;
+    ind2id[ind] = id;
+    id2lanelet[id] = lanelet;
+    ind++;
+  }
+  for (const auto & lanelet : lanelets) {
+    const auto & followings = routing_graph_ptr->following(lanelet);
+    const int dst = lanelet.id();
+    for (const auto & following : followings) {
+      if (const int src = following.id(); lanelet_ids.find(src) != lanelet_ids.end()) {
+        adjacency[(id2ind[src])][(id2ind[dst])] = true;
+      }
+    }
+  }
+  // terminal node
+  std::map<lanelet::Id, std::vector<lanelet::Id>> branches;
+  auto has_no_previous = [&](const int node) {
+    for (int dst = 0; dst < n_node; dst++) {
+      if (adjacency[dst][node]) {
+        return false;
+      }
+    }
+    return true;
+  };
+  for (int src = 0; src < n_node; src++) {
+    if (!has_no_previous(src)) {
+      continue;
+    }
+    branches[(ind2id[src])] = std::vector<lanelet::Id>{};
+    auto & branch = branches[(ind2id[src])];
+    lanelet::Id node_iter = ind2id[src];
+    while (true) {
+      const auto & destinations = adjacency[(id2ind[node_iter])];
+      // NOTE: assuming detection lanelets have only one previous lanelet
+      const auto next = std::find(destinations.begin(), destinations.end(), true);
+      if (next == destinations.end()) {
+        branch.push_back(node_iter);
+        break;
+      }
+      branch.push_back(node_iter);
+      node_iter = ind2id[std::distance(destinations.begin(), next)];
+    }
+  }
+  for (decltype(branches)::iterator it = branches.begin(); it != branches.end(); it++) {
+    auto & branch = it->second;
+    std::reverse(branch.begin(), branch.end());
+  }
+  lanelet::ConstLanelets merged;
+  std::vector<lanelet::ConstLanelets> originals;
+  for (const auto & [id, sub_ids] : branches) {
+    lanelet::ConstLanelets merge;
+    originals.push_back(lanelet::ConstLanelets({}));
+    auto & original = originals.back();
+    for (const auto sub_id : sub_ids) {
+      merge.push_back(id2lanelet[sub_id]);
+      original.push_back(id2lanelet[sub_id]);
+    }
+    merged.push_back(lanelet::utils::combineLaneletsShape(merge));
+  }
+  return {merged, originals};
+}
+
 IntersectionLanelets getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const lanelet::ConstLanelet assigned_lanelet, const lanelet::ConstLanelets & lanelets_on_path,
@@ -707,13 +799,26 @@ IntersectionLanelets getObjectiveLanelets(
       }
     }
   }
+  lanelet::ConstLanelets occlusion_detection_and_preceding_lanelets_wo_turn_direction;
+  for (const auto & ll : occlusion_detection_and_preceding_lanelets) {
+    const auto turn_direction = getTurnDirection(ll);
+    if (turn_direction == "left" || turn_direction == "right") {
+      continue;
+    }
+    occlusion_detection_and_preceding_lanelets_wo_turn_direction.push_back(ll);
+  }
 
   IntersectionLanelets result;
-  result.attention_ = std::move(detection_and_preceding_lanelets);
+  result.attention_ =
+    mergeLaneletsByTopologicalSort(detection_and_preceding_lanelets, routing_graph_ptr).first;
   result.attention_non_preceding_ = std::move(detection_lanelets);
   result.conflicting_ = std::move(conflicting_ex_ego_lanelets);
   result.adjacent_ = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, associative_ids);
-  result.occlusion_attention_ = std::move(occlusion_detection_and_preceding_lanelets);
+  // TODO(Mamoru Sobue): apply mergeLaneletsByTopologicalSort for occulusion lanelets as well and
+  // then trim part of them based on curvature threshold
+  result.occlusion_attention_ =
+    std::move(occlusion_detection_and_preceding_lanelets_wo_turn_direction);
+
   // compoundPolygon3d
   result.attention_area_ = getPolygon3dFromLanelets(result.attention_);
   result.attention_non_preceding_area_ = getPolygon3dFromLanelets(result.attention_non_preceding_);
@@ -721,11 +826,6 @@ IntersectionLanelets getObjectiveLanelets(
   result.adjacent_area_ = getPolygon3dFromLanelets(result.adjacent_);
   result.occlusion_attention_area_ = getPolygon3dFromLanelets(result.occlusion_attention_);
   return result;
-}
-
-static std::string getTurnDirection(lanelet::ConstLanelet lane)
-{
-  return lane.attributeOr("turn_direction", "else");
 }
 
 bool isOverTargetIndex(
@@ -893,21 +993,17 @@ double getHighestCurvature(const lanelet::ConstLineString3d & centerline)
   return *std::max_element(curvatures_positive.begin(), curvatures_positive.end());
 }
 
-std::vector<DiscretizedLane> generateDetectionLaneDivisions(
+std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets_all,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution,
   const double curvature_threshold, const double curvature_calculation_ds)
 {
   using lanelet::utils::getCenterlineWithOffset;
-  using lanelet::utils::to2D;
 
   // (0) remove left/right lanelet
   lanelet::ConstLanelets detection_lanelets;
   for (const auto & detection_lanelet : detection_lanelets_all) {
-    const auto turn_direction = getTurnDirection(detection_lanelet);
-    if (turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0) {
-      continue;
-    }
+    // TODO(Mamoru Sobue): instead of ignoring, only trim straight part of lanelet
     const auto fine_centerline =
       lanelet::utils::generateFineCenterline(detection_lanelet, curvature_calculation_ds);
     const double highest_curvature = getHighestCurvature(fine_centerline);
@@ -918,111 +1014,34 @@ std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   }
 
   // (1) tsort detection_lanelets
-  // generate adjacency matrix
-  // if lanelet1 => lanelet2; then adjacency[lanelet2][lanelet1] = true
-  const int n_node = detection_lanelets.size();
-  std::vector<std::vector<int>> adjacency(n_node);
-  for (int dst = 0; dst < n_node; ++dst) {
-    adjacency[dst].resize(n_node);
-    for (int src = 0; src < n_node; ++src) {
-      adjacency[dst][src] = false;
-    }
-  }
-  std::set<int> detection_lanelet_ids;
-  std::unordered_map<int, int> id2ind, ind2id;
-  std::unordered_map<int, lanelet::ConstLanelet> id2lanelet;
-  int ind = 0;
-  for (const auto & detection_lanelet : detection_lanelets) {
-    detection_lanelet_ids.insert(detection_lanelet.id());
-    const int id = detection_lanelet.id();
-    id2ind[id] = ind;
-    ind2id[ind] = id;
-    id2lanelet[id] = detection_lanelet;
-    ind++;
-  }
-  for (const auto & detection_lanelet : detection_lanelets) {
-    const auto & followings = routing_graph_ptr->following(detection_lanelet);
-    const int dst = detection_lanelet.id();
-    for (const auto & following : followings) {
-      if (const int src = following.id();
-          detection_lanelet_ids.find(src) != detection_lanelet_ids.end()) {
-        adjacency[(id2ind[src])][(id2ind[dst])] = true;
-      }
-    }
-  }
-  // terminal node
-  std::map<int, std::vector<int>> branches;
-  auto has_no_previous = [&](const int node) {
-    for (int dst = 0; dst < n_node; dst++) {
-      if (adjacency[dst][node]) {
-        return false;
-      }
-    }
-    return true;
-  };
-  for (int src = 0; src < n_node; src++) {
-    if (!has_no_previous(src)) {
-      continue;
-    }
-    branches[(ind2id[src])] = std::vector<int>{};
-    auto & branch = branches[(ind2id[src])];
-    int node_iter = ind2id[src];
-    while (true) {
-      const auto & destinations = adjacency[(id2ind[node_iter])];
-      // NOTE: assuming detection lanelets have only one previous lanelet
-      const auto next = std::find(destinations.begin(), destinations.end(), true);
-      if (next == destinations.end()) {
-        branch.push_back(node_iter);
-        break;
-      }
-      branch.push_back(node_iter);
-      node_iter = ind2id[std::distance(destinations.begin(), next)];
-    }
-  }
-  for (decltype(branches)::iterator it = branches.begin(); it != branches.end(); it++) {
-    auto & branch = it->second;
-    std::reverse(branch.begin(), branch.end());
-  }
+  const auto [merged_detection_lanelets, originals] =
+    mergeLaneletsByTopologicalSort(detection_lanelets, routing_graph_ptr);
 
   // (2) merge each branch to one lanelet
   // NOTE: somehow bg::area() for merged lanelet does not work, so calculate it here
-  std::unordered_map<int, std::pair<lanelet::ConstLanelet, double>> merged_branches;
-  for (const auto & [src, branch] : branches) {
-    lanelet::Points3d lefts;
-    lanelet::Points3d rights;
+  std::vector<std::pair<lanelet::ConstLanelet, double>> merged_lanelet_with_area;
+  for (unsigned i = 0; i < merged_detection_lanelets.size(); ++i) {
+    const auto & merged_detection_lanelet = merged_detection_lanelets.at(i);
+    const auto & original = originals.at(i);
     double area = 0;
-    for (const auto & lane_id : branch) {
-      const auto lane = id2lanelet[lane_id];
-      for (const auto & left_point : lane.leftBound()) {
-        lefts.push_back(lanelet::Point3d(left_point));
-      }
-      for (const auto & right_point : lane.rightBound()) {
-        rights.push_back(lanelet::Point3d(right_point));
-      }
-      area += bg::area(lane.polygon2d().basicPolygon());
+    for (const auto & partition : original) {
+      area += bg::area(partition.polygon2d().basicPolygon());
     }
-    lanelet::LineString3d right = lanelet::LineString3d(lanelet::InvalId, lefts).invert();
-    lanelet::LineString3d left = lanelet::LineString3d(lanelet::InvalId, rights).invert();
-    lanelet::Lanelet merged = lanelet::Lanelet(lanelet::InvalId, left, right);
-    merged_branches[src] = std::make_pair(merged, area);
+    merged_lanelet_with_area.emplace_back(merged_detection_lanelet, area);
   }
 
   // (3) discretize each merged lanelet
-  std::vector<DiscretizedLane> detection_divisions;
-  for (const auto & [last_lane_id, branch] : merged_branches) {
-    DiscretizedLane detection_division;
-    detection_division.lane_id = last_lane_id;
-    const auto detection_lanelet = branch.first;
-    const double area = branch.second;
-    const double length = bg::length(detection_lanelet.centerline());
+  std::vector<lanelet::ConstLineString3d> detection_divisions;
+  for (const auto & [merged_lanelet, area] : merged_lanelet_with_area) {
+    const double length = bg::length(merged_lanelet.centerline());
     const double width = area / length;
-    auto & divisions = detection_division.divisions;
     for (int i = 0; i < static_cast<int>(width / resolution); ++i) {
       const double offset = resolution * i - width / 2;
-      divisions.push_back(to2D(getCenterlineWithOffset(detection_lanelet, offset, resolution)));
+      detection_divisions.push_back(
+        getCenterlineWithOffset(merged_lanelet, offset, resolution).invert());
     }
-    divisions.push_back(to2D(getCenterlineWithOffset(detection_lanelet, width / 2, resolution)));
-    detection_divisions.push_back(detection_division);
+    detection_divisions.push_back(
+      getCenterlineWithOffset(merged_lanelet, width / 2, resolution).invert());
   }
   return detection_divisions;
 }
@@ -1346,8 +1365,8 @@ void IntersectionLanelets::update(
     }
   }
   if (!first_attention_area_) {
-    auto first =
-      getFirstPointInsidePolygonsByFootprint(attention_area_, interpolated_path_info, footprint);
+    auto first = getFirstPointInsidePolygonsByFootprint(
+      attention_non_preceding_area_, interpolated_path_info, footprint);
     if (first) {
       first_attention_area_ = first.value().second;
     }

@@ -107,7 +107,7 @@ bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane);
 TrafficPrioritizedLevel getTrafficPrioritizedLevel(
   lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos);
 
-std::vector<DiscretizedLane> generateDetectionLaneDivisions(
+std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution,
   const double curvature_threshold, const double curvature_calculation_ds);

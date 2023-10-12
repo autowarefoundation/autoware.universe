@@ -266,7 +266,8 @@ private:
 
   // for occlusion detection
   const bool enable_occlusion_detection_;
-  std::optional<std::vector<util::DiscretizedLane>> occlusion_attention_divisions_{std::nullopt};
+  std::optional<std::vector<lanelet::ConstLineString3d>> occlusion_attention_divisions_{
+    std::nullopt};
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop
   StateMachine occlusion_stop_state_machine_;
@@ -320,7 +321,7 @@ private:
     const lanelet::ConstLanelets & adjacent_lanelets,
     const lanelet::CompoundPolygon3d & first_attention_area,
     const util::InterpolatedPathInfo & interpolated_path_info,
-    const std::vector<util::DiscretizedLane> & lane_divisions,
+    const std::vector<lanelet::ConstLineString3d> & lane_divisions,
     const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> &
       parked_attention_objects,
     const double occlusion_dist_thr);
