@@ -1138,7 +1138,7 @@ bool checkYieldStuckVehicleInIntersection(
     }
 
     // check if the footprint is in the stuck detect area
-    const bool is_in_stuck_area = !bg::disjoint(obj_footprint, first_attention_area_poly);
+    const bool is_in_stuck_area = bg::within(obj_footprint, first_attention_area_poly);
     if (is_in_stuck_area && debug_data) {
       debug_data->yield_stuck_targets.objects.push_back(object);
       return true;

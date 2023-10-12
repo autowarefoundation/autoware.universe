@@ -29,7 +29,7 @@
             left: true
             right: false
             straight: false
-          distance_thr: 2.0 # [m]
+          distance_thr: 1.0 # [m]
 
       collision_detection:
         state_transit_margin_time: 1.0
