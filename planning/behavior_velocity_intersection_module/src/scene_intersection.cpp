@@ -1309,6 +1309,18 @@ bool IntersectionModule::checkYieldStuckVehicle(
     return false;
   }
 
+  const bool yield_stuck_detection_direction = [&]() {
+    return (turn_direction_ == "left" &&
+            planner_param_.stuck_vehicle.yield_stuck_turn_direction.left) ||
+           (turn_direction_ == "right" &&
+            planner_param_.stuck_vehicle.yield_stuck_turn_direction.right) ||
+           (turn_direction_ == "straight" &&
+            planner_param_.stuck_vehicle.yield_stuck_turn_direction.straight);
+  }();
+  if (!yield_stuck_detection_direction) {
+    return false;
+  }
+
   const auto & objects_ptr = planner_data->predicted_objects;
 
   const auto & ego_lane = path_lanelets.ego_or_entry2exit;

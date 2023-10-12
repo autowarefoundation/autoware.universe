@@ -66,7 +66,8 @@ public:
         bool left;
         bool right;
         bool straight;
-      } turn_direction;
+      };
+      TurnDirection turn_direction;
       bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
       double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
       double stuck_vehicle_vel_thr;      //! Threshold of the speed to be recognized as stopped
@@ -78,6 +79,7 @@ public:
       double timeout_private_area;
       bool enable_private_area_stuck_disregard;
       double yield_stuck_distance_thr;
+      TurnDirection yield_stuck_turn_direction;
     } stuck_vehicle;
     struct CollisionDetection
     {
