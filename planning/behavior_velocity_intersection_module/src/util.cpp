@@ -650,6 +650,9 @@ mergeLaneletsByTopologicalSort(
   lanelet::ConstLanelets merged;
   std::vector<lanelet::ConstLanelets> originals;
   for (const auto & [id, sub_ids] : branches) {
+    if (sub_ids.size() == 0) {
+      continue;
+    }
     lanelet::ConstLanelets merge;
     originals.push_back(lanelet::ConstLanelets({}));
     auto & original = originals.back();
@@ -808,12 +811,31 @@ IntersectionLanelets getObjectiveLanelets(
     occlusion_detection_and_preceding_lanelets_wo_turn_direction.push_back(ll);
   }
 
+  auto [attention_lanelets, original_attention_lanelet_seqs] =
+    mergeLaneletsByTopologicalSort(detection_and_preceding_lanelets, routing_graph_ptr);
   IntersectionLanelets result;
-  result.attention_ =
-    mergeLaneletsByTopologicalSort(detection_and_preceding_lanelets, routing_graph_ptr).first;
+  result.attention_ = std::move(attention_lanelets);
+  for (const auto & original_attention_lanelet_seq : original_attention_lanelet_seqs) {
+    // NOTE: in mergeLaneletsByTopologicalSort(), sub_ids are empty checked, so it is ensured that
+    // back() exists.
+    std::optional<lanelet::ConstLineString3d> stop_line{std::nullopt};
+    for (auto it = original_attention_lanelet_seq.rbegin();
+         it != original_attention_lanelet_seq.rend(); ++it) {
+      const auto traffic_lights = it->regulatoryElementsAs<lanelet::TrafficLight>();
+      for (const auto & traffic_light : traffic_lights) {
+        const auto stop_line_opt = traffic_light->stopLine();
+        if (!stop_line_opt) continue;
+        stop_line = stop_line_opt.get();
+        break;
+      }
+      if (stop_line) break;
+    }
+    result.attention_stop_lines_.push_back(stop_line);
+  }
   result.attention_non_preceding_ = std::move(detection_lanelets);
   result.conflicting_ = std::move(conflicting_ex_ego_lanelets);
   result.adjacent_ = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, associative_ids);
+  // NOTE: occlusion_attention is not inverted here
   // TODO(Mamoru Sobue): apply mergeLaneletsByTopologicalSort for occulusion lanelets as well and
   // then trim part of them based on curvature threshold
   result.occlusion_attention_ =

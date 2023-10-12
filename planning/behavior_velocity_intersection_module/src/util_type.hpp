@@ -106,6 +106,8 @@ public:
   }
 
   lanelet::ConstLanelets attention_;  // topologically merged lanelets
+  std::vector<std::optional<lanelet::ConstLineString3d>>
+    attention_stop_lines_;  // the stop lines for each attention_ lanelets
   lanelet::ConstLanelets attention_non_preceding_;
   lanelet::ConstLanelets conflicting_;
   lanelet::ConstLanelets adjacent_;
