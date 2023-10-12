@@ -67,8 +67,6 @@ void reuse_previous_points(
         cropped_poses.push_back(prev_poses[idx]);
         cropped_curvatures.push_back(prev_curvatures[idx]);
       }
-    } else {
-      std::cout << "/!\\ could not reuse prev points" << std::endl;
     }
   }
   const auto resampled_path_points =
@@ -217,6 +215,25 @@ void expand_bound(
       bound[idx].y = expanded_p.y();
     }
   }
+
+  // remove loops TODO(Maxime): move to separate function
+  std::vector<Point> no_loop_bound = {bound.front()};
+  for (auto idx = 1LU; idx < bound.size(); ++idx) {
+    bool is_intersecting = false;
+    for (auto succ_idx = idx + 1; succ_idx < bound.size(); ++succ_idx) {
+      const auto intersection = tier4_autoware_utils::intersect(
+        bound[idx - 1], bound[idx], bound[succ_idx - 1], bound[succ_idx]);
+      if (
+        intersection &&
+        tier4_autoware_utils::calcDistance2d(*intersection, bound[idx - 1]) < 1e-3 &&
+        tier4_autoware_utils::calcDistance2d(*intersection, bound[idx]) < 1e-3) {
+        idx = succ_idx;
+        is_intersecting = true;
+      }
+    }
+    if (!is_intersecting) no_loop_bound.push_back(bound[idx]);
+  }
+  bound = no_loop_bound;
 }
 
 std::vector<double> calculate_smoothed_curvatures(
