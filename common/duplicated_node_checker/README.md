@@ -32,7 +32,7 @@ The types of topic status and corresponding diagnostic status are following.
 
 | Name          | Type   | Default Value | Description                |
 | ------------- | ------ | ------------- | -------------------------- |
-| `update_rate` | double | 10.0           | Timer callback period [Hz] |
+| `update_rate` | double | 10.0          | Timer callback period [Hz] |
 
 ## Assumptions / Known limits
 

@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <rclcpp/rclcpp.hpp>
+#include "duplicated_node_checker/duplicated_node_checker_core.hpp"
+
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include <rclcpp/rclcpp.hpp>
+
 #include <chrono>
 #include <string>
 #include <vector>
-#include "duplicated_node_checker/duplicated_node_checker_core.hpp"
 
 namespace duplicated_node_checker
 {
@@ -25,61 +27,55 @@ namespace duplicated_node_checker
 DuplicatedNodeChecker::DuplicatedNodeChecker(const rclcpp::NodeOptions & node_options)
 : Node("duplicated_node_checker", node_options)
 {
-    double update_rate = declare_parameter("update_rate", 10.0);
-    updater_.setHardwareID("duplicated_node_checker");
-    updater_.add("duplicated_node_checker", this, &DuplicatedNodeChecker::produceDiagnostics);
-    
-    const auto period_ns = rclcpp::Rate(update_rate).period();
-    timer_ = rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&DuplicatedNodeChecker::onTimer, this));
+  double update_rate = declare_parameter("update_rate", 10.0);
+  updater_.setHardwareID("duplicated_node_checker");
+  updater_.add("duplicated_node_checker", this, &DuplicatedNodeChecker::produceDiagnostics);
+
+  const auto period_ns = rclcpp::Rate(update_rate).period();
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&DuplicatedNodeChecker::onTimer, this));
 }
 
 std::string get_fullname_from_name_ns_pair(std::pair<std::string, std::string> name_and_ns_pair)
 {
-    std::string full_name;
-    const std::string & name = name_and_ns_pair.first;
-    const std::string & ns = name_and_ns_pair.second;
-    if (ns.back() == '/')
-    {
-        full_name = ns + name;
-    }
-    else
-    {
-        full_name = ns + "/" + name;
-    }
-    return full_name;
+  std::string full_name;
+  const std::string & name = name_and_ns_pair.first;
+  const std::string & ns = name_and_ns_pair.second;
+  if (ns.back() == '/') {
+    full_name = ns + name;
+  } else {
+    full_name = ns + "/" + name;
+  }
+  return full_name;
 }
 
 void DuplicatedNodeChecker::onTimer()
 {
-    updater_.force_update();
+  updater_.force_update();
 }
 
 void DuplicatedNodeChecker::produceDiagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
-{   
-    using diagnostic_msgs::msg::DiagnosticStatus;
+{
+  using diagnostic_msgs::msg::DiagnosticStatus;
 
-    std::vector<std::string> node_names = this->get_node_names();
-    std::vector<std::string> identical_names = findIdenticalNames(node_names);
-    std::string msg;
-    int level;
-    if (identical_names.size() > 0) 
-    {
-        msg = "Error";
-        level = DiagnosticStatus::ERROR;
-        for (auto name : identical_names)
-        {
-            stat.add("Duplicated Node Name", name);
-        }
+  std::vector<std::string> node_names = this->get_node_names();
+  std::vector<std::string> identical_names = findIdenticalNames(node_names);
+  std::string msg;
+  int level;
+  if (identical_names.size() > 0) {
+    msg = "Error";
+    level = DiagnosticStatus::ERROR;
+    for (auto name : identical_names) {
+      stat.add("Duplicated Node Name", name);
     }
-    else
-    {
-        msg = "OK";
-        level = DiagnosticStatus::OK;
-    }
-    stat.summary(level, msg);
+  } else {
+    msg = "OK";
+    level = DiagnosticStatus::OK;
+  }
+  stat.summary(level, msg);
 }
 
-} // namespace duplicated_node_checker
+}  // namespace duplicated_node_checker
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(duplicated_node_checker::DuplicatedNodeChecker)

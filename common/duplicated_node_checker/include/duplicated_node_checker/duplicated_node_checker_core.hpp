@@ -15,11 +15,12 @@
 #ifndef DUPLICATED_NODE_CHECKER__DUPLICATED_NODE_CHECKER_CORE_HPP_
 #define DUPLICATED_NODE_CHECKER__DUPLICATED_NODE_CHECKER_CORE_HPP_
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <vector>
+
 #include <string>
 #include <unordered_set>
-#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <vector>
 
 namespace duplicated_node_checker
 {
@@ -32,11 +33,11 @@ public:
     std::unordered_set<std::string> unique_names;
     std::vector<std::string> identical_names;
     for (auto name : input_name_lists) {
-        if (unique_names.find(name) != unique_names.end()) {
-            identical_names.push_back(name);
-        } else {
-            unique_names.insert(name);
-        }
+      if (unique_names.find(name) != unique_names.end()) {
+        identical_names.push_back(name);
+      } else {
+        unique_names.insert(name);
+      }
     }
     return identical_names;
   }
@@ -44,10 +45,10 @@ public:
 private:
   void onTimer();
   void produceDiagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
-  
+
   diagnostic_updater::Updater updater_{this};
   rclcpp::TimerBase::SharedPtr timer_;
 };
-}
+}  // namespace duplicated_node_checker
 
 #endif  // DUPLICATED_NODE_CHECKER__DUPLICATED_NODE_CHECKER_CORE_HPP_
