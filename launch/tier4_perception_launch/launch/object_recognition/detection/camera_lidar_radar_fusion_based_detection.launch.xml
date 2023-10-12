@@ -51,6 +51,10 @@
   <arg name="use_near_radar_fusion" default="false"/>
   <arg name="far_object_merger_sync_queue_size" default="20"/>
 
+  <!-- Filter output name. Switch output topic name by 'radar_long_range_integration' parameter defined in perception.launch -->
+  <let name="output_of_filtered_objects" value="$(var output/objects)" if="$(eval &quot; '$(var radar_long_range_integration)'=='tracking' &quot;)"/>
+  <let name="output_of_filtered_objects" value="near_objects" unless="$(eval &quot; '$(var radar_long_range_integration)'=='tracking' &quot;)"/>
+
   <!-- Jetson AGX -->
   <!-- <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">
     <arg name="image_raw0" value="$(var image_raw0)"/>
@@ -387,10 +391,6 @@
       <arg name="distance_threshold_list_path" value="$(var object_recognition_detection_object_merger_distance_threshold_list_path)"/>
     </include>
   </group>
-
-  <!-- Switch filter output name by 'radar_long_range_integration' parameter defined in perception.launch -->
-  <let name="output_of_filtered_objects" value="$(var output/objects)" if="$(eval &quot; '$(var radar_long_range_integration)'=='tracking' &quot;)"/>
-  <let name="output_of_filtered_objects" value="near_objects" unless="$(eval &quot; '$(var radar_long_range_integration)'=='tracking' &quot;)"/>
 
   <!-- Filter -->
   <group if="$(eval &quot;'$(var objects_filter_method)'=='lanelet_filter'&quot;)">

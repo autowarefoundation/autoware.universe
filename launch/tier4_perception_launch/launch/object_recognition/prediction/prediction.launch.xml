@@ -3,7 +3,7 @@
   <arg name="use_vector_map" default="false" description="use vector map in prediction"/>
   <arg name="param_path" default="$(find-pkg-share map_based_prediction)/config/map_based_prediction.param.yaml"/>
 
-  <!-- "radar_long_range_integration" controls wheather to join radar far tracking objects to lidar tracking objects.
+  <!-- "radar_long_range_integration" controls whether to join radar far tracking objects to lidar tracking objects.
       Prediction input will changed to merged tracking objects if "radar_long_range_integration" is 'tracking'. -->
   <arg name="radar_long_range_integration" default="detection" description="integration method for radar long range information. Following args are used only if this parameter is set to tracking"/>
   <arg name="default_tracking_objects" default="/perception/object_recognition/tracking/objects"/>
