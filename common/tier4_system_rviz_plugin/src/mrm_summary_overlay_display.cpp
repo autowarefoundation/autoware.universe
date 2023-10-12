@@ -162,7 +162,7 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
   // MRM summary
   std::vector<std::string> mrm_comfortable_stop_summary_list = {};
   std::vector<std::string> mrm_emergency_stop_summary_list = {};
-  int hazard_level = 0;
+  int hazard_level = autoware_auto_system_msgs::msg::HazardStatus::NO_FAULT;
   {
     std::lock_guard<std::mutex> message_lock(mutex_);
     if (last_msg_ptr_) {
