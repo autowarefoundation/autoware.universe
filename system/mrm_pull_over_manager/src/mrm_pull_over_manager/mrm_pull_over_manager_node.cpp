@@ -22,7 +22,7 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::executors::MultiThreadedExecutor executor;
-  auto node = std::make_shared<MrmPullOverManager>();
+  auto node = std::make_shared<mrm_pull_over_manager::MrmPullOverManager>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);

@@ -17,7 +17,7 @@
 
 // Core
 #include <memory>
-#include <string>
+#include <vector>
 
 // Autoware
 #include <route_handler/route_handler.hpp>
@@ -27,6 +27,7 @@
 // lanelet
 #include <lanelet2_extension/regulatory_elements/Forward.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
 
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/LaneletMap.h>
@@ -39,7 +40,14 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
+namespace mrm_pull_over_manager
+{
 
+struct PoseWithLaneId
+{
+  geometry_msgs::msg::Pose pose;
+  lanelet::Id lane_id;
+};
 class MrmPullOverManager : public rclcpp::Node
 {
 public:
@@ -48,42 +56,44 @@ public:
 private:
   using Odometry = nav_msgs::msg::Odometry;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
 
   // Subscribers
   rclcpp::Subscription<Odometry>::SharedPtr sub_odom_;
+  rclcpp::Subscription<LaneletRoute>::SharedPtr sub_route_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
 
   Odometry::ConstSharedPtr odom_;
-  lanelet::LaneletMapPtr lanelet_map_ptr_;
-  lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
-  lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
-  std::shared_ptr<const lanelet::routing::RoutingGraphContainer> overall_graphs_ptr_;
-  lanelet::ConstLanelets road_lanelets_;
-  lanelet::ConstLanelets shoulder_lanelets_;
   route_handler::RouteHandler route_handler_;
 
-  void onOdometry(const Odometry::ConstSharedPtr msg);
-  void onMap(const HADMapBin::ConstSharedPtr msg);
+  void on_odometry(const Odometry::ConstSharedPtr msg);
+  void on_route(const LaneletRoute::ConstSharedPtr msg);
+  void on_map(const HADMapBin::ConstSharedPtr msg);
 
   // Publisher
-  // rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
-  //   pub_control_command_;
-
-  // void publishMrmState();
 
   // Clients
-  // rclcpp::CallbackGroup::SharedPtr client_mrm_comfortable_stop_group_;
-  // rclcpp::Client<tier4_system_msgs::srv::OperateMrm>::SharedPtr client_mrm_comfortable_stop_;
 
+  // TODO: temporary for debug
   // Timer
-  // rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  void on_timer();
 
   // Parameters
   // Param param_;
 
-  bool isDataReady();
+  std::vector<PoseWithLaneId> candidate_goals_;
 
   // Algorithm
+  bool is_data_ready();
+  std::vector<geometry_msgs::msg::Pose> find_near_goals();
+  lanelet::ConstLanelet get_current_lanelet();
+  lanelet::ConstLanelets get_all_following_and_left_lanelets(
+    const lanelet::ConstLanelet & start_lanelet) const;
+  lanelet::ConstLanelets get_all_left_lanelets(const lanelet::ConstLanelet & base_lanelet) const;
+  std::vector<geometry_msgs::msg::Pose> find_goals_in_lanelets(
+    const lanelet::ConstLanelets & candidate_lanelets) const;
 };
+}  // namespace mrm_pull_over_manager
 
 #endif  // MRM_PULL_OVER_MANAGER__MRM_PULL_OVER_MANAGER_CORE_HPP_

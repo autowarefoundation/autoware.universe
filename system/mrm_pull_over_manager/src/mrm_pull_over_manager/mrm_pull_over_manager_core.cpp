@@ -14,9 +14,24 @@
 
 #include "mrm_pull_over_manager/mrm_pull_over_manager_core.hpp"
 
-#include <memory>
-#include <string>
-#include <utility>
+namespace mrm_pull_over_manager
+{
+
+namespace
+{
+PoseWithLaneId create_pose_with_lane_id(
+  const double x, const double y, const double z, const lanelet::Id lanelet_id)
+{
+  PoseWithLaneId pose_with_lane_id;
+  pose_with_lane_id.pose = geometry_msgs::msg::Pose();
+  pose_with_lane_id.pose.position.x = x;
+  pose_with_lane_id.pose.position.y = y;
+  pose_with_lane_id.pose.position.z = z;
+  pose_with_lane_id.lane_id = lanelet_id;
+
+  return pose_with_lane_id;
+}
+}  // namespace
 
 MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
 {
@@ -34,10 +49,13 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
 
   // Subscriber
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/odometry", rclcpp::QoS{1}, std::bind(&MrmPullOverManager::onOdometry, this, _1));
+    "~/input/odometry", rclcpp::QoS{1}, std::bind(&MrmPullOverManager::on_odometry, this, _1));
+  sub_route_ = this->create_subscription<LaneletRoute>(
+    "~/input/route", rclcpp::QoS{1}.transient_local(),
+    std::bind(&MrmPullOverManager::on_route, this, _1));
   sub_map_ = create_subscription<HADMapBin>(
-    "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&MrmPullOverManager::onMap, this, _1));
+    "~/input/lanelet_map", rclcpp::QoS{1}.transient_local(),
+    std::bind(&MrmPullOverManager::on_map, this, _1));
 
   // Publisher
   // pub_control_command_ =
@@ -58,64 +76,143 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
   // client_mrm_comfortable_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
   //   "~/output/mrm/comfortable_stop/operate", rmw_qos_profile_services_default,
   //   client_mrm_comfortable_stop_group_);
+
+  // TODO: temporary
+  // Timer
+  const auto update_period_ns = rclcpp::Rate(10.0).period();
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), update_period_ns, std::bind(&MrmPullOverManager::on_timer, this));
 }
 
-void MrmPullOverManager::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
+void MrmPullOverManager::on_timer()
+{
+  if (is_data_ready()) {
+    const auto emergency_goals = find_near_goals();
+  }
+}
+void MrmPullOverManager::on_odometry(const Odometry::ConstSharedPtr msg)
 {
   odom_ = msg;
 }
 
-void MrmPullOverManager::onMap(const HADMapBin::ConstSharedPtr msg)
+void MrmPullOverManager::on_route(const LaneletRoute::ConstSharedPtr msg)
 {
-  // lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
-  // lanelet::utils::conversion::fromBinMsg(
-  //   *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
-  // const auto traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
-  //   lanelet::Locations::Germany, lanelet::Participants::Vehicle);
-  // const auto pedestrian_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
-  //   lanelet::Locations::Germany, lanelet::Participants::Pedestrian);
-  // lanelet::routing::RoutingGraphConstPtr vehicle_graph =
-  //   lanelet::routing::RoutingGraph::build(*lanelet_map_ptr_, *traffic_rules);
-  // lanelet::routing::RoutingGraphConstPtr pedestrian_graph =
-  //   lanelet::routing::RoutingGraph::build(*lanelet_map_ptr_, *pedestrian_rules);
-  // lanelet::routing::RoutingGraphContainer overall_graphs({vehicle_graph, pedestrian_graph});
-  // overall_graphs_ptr_ =
-  //   std::make_shared<const lanelet::routing::RoutingGraphContainer>(overall_graphs);
-
-  route_handler_.setMap(*msg);
-  lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
-  lanelet::utils::conversion::fromBinMsg(
-    *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
-  lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
-  road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
-  shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
+  route_handler_.setRoute(*msg);
 }
 
-bool MrmPullOverManager::isDataReady()
+void MrmPullOverManager::on_map(const HADMapBin::ConstSharedPtr msg)
 {
-  // if (!hazard_status_stamped_) {
-  //   RCLCPP_INFO_THROTTLE(
-  //     this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
-  //     "waiting for hazard_status_stamped msg...");
-  //   return false;
-  // }
+  route_handler_.setMap(*msg);
+}
 
-  // if (
-  //   param_.use_comfortable_stop && mrm_comfortable_stop_status_->state ==
-  //                                    tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE) {
-  //   RCLCPP_INFO_THROTTLE(
-  //     this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
-  //     "waiting for mrm comfortable stop to become available...");
-  //   return false;
-  // }
+bool MrmPullOverManager::is_data_ready()
+{
+  if (!odom_) {
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
+      "waiting for odometry msg...");
+    return false;
+  }
 
-  // if (
-  //   mrm_emergency_stop_status_->state ==
-  //   tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE) { RCLCPP_INFO_THROTTLE(
-  //     this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
-  //     "waiting for mrm emergency stop to become available...");
-  //   return false;
-  // }
+  if (!route_handler_.isHandlerReady()) {
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 5000, "Waiting for route handler.");
+    return false;
+  }
 
   return true;
 }
+
+std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::find_near_goals()
+{
+  const auto current_lanelet = get_current_lanelet();
+  RCLCPP_INFO(this->get_logger(), "current lanelet id:%ld", current_lanelet.id());
+
+  const auto candidate_lanelets = get_all_following_and_left_lanelets(current_lanelet);
+
+  candidate_goals_.emplace_back(create_pose_with_lane_id(1, 1, 1, 19464));
+  candidate_goals_.emplace_back(create_pose_with_lane_id(2, 2, 2, 19779));
+  candidate_goals_.emplace_back(create_pose_with_lane_id(3, 3, 3, 20976));
+  candidate_goals_.emplace_back(create_pose_with_lane_id(4, 4, 4, 20478));
+  const auto emergency_goals = find_goals_in_lanelets(candidate_lanelets);
+
+  return emergency_goals;
+}
+
+/**
+ * @brief get current root lanelet
+ * @param
+ * @return current lanelet
+ */
+lanelet::ConstLanelet MrmPullOverManager::get_current_lanelet()
+{
+  lanelet::ConstLanelet current_lanelet;
+  route_handler_.getClosestLaneletWithinRoute(odom_->pose.pose, &current_lanelet);
+
+  return current_lanelet;
+}
+
+/**
+ * @brief get all lanes followed by start_lanelet and left adjacent lanes.
+ * @param start_lanelet
+ * @return current lanelet
+ */
+lanelet::ConstLanelets MrmPullOverManager::get_all_following_and_left_lanelets(
+  const lanelet::ConstLanelet & start_lanelet) const
+{
+  lanelet::ConstLanelet base_lanelet = start_lanelet;
+  lanelet::ConstLanelet next_lanelet;
+  lanelet::ConstLanelets result_lanelets;
+  while (true) {
+    RCLCPP_INFO(this->get_logger(), "base lanelet id: %ld", base_lanelet.id());
+    result_lanelets.emplace_back(base_lanelet);
+
+    // If there are multiple lanes to the left of the current lane, retrieve all of them
+    const auto left_lanelets = get_all_left_lanelets(base_lanelet);
+    result_lanelets.insert(result_lanelets.end(), left_lanelets.begin(), left_lanelets.end());
+
+    // search next following lanelet
+    const bool has_next = route_handler_.getNextLaneletWithinRoute(base_lanelet, &next_lanelet);
+    if (!has_next) {
+      break;
+    }
+    base_lanelet = next_lanelet;
+  }
+
+  return result_lanelets;
+}
+
+/**
+ * @brief get all lanes followed by state_lanelet and left adjacent lanes of those lanes.
+ * @param base_lanelet
+ * @return
+ */
+lanelet::ConstLanelets MrmPullOverManager::get_all_left_lanelets(
+  const lanelet::ConstLanelet & base_lanelet) const
+{
+  lanelet::ConstLanelets left_lanalets;
+  auto left_lanelet = route_handler_.getLeftLanelet(base_lanelet, false, true);
+  while (left_lanelet) {
+    left_lanalets.emplace_back(left_lanelet.get());
+    RCLCPP_INFO(this->get_logger(), "left lanelet id: %ld", left_lanelet->id());
+
+    // get next left lanelet
+    left_lanelet = route_handler_.getLeftLanelet(left_lanelet.get(), false, true);
+  }
+
+  return left_lanalets;
+}
+
+/**
+ * @brief
+ * @param candidate_lanelets
+ * @return
+ */
+std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::find_goals_in_lanelets(
+  const lanelet::ConstLanelets & candidate_lanelets) const
+{
+  std::vector<geometry_msgs::msg::Pose> goals;
+  return goals;
+}
+
+}  // namespace mrm_pull_over_manager
