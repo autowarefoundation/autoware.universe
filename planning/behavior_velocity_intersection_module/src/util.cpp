@@ -16,10 +16,11 @@
 
 #include "util_type.hpp"
 
+#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <interpolation/spline_interpolation.hpp>
+#include <interpolation/spline_interpolation_points_2d.hpp>
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -39,6 +40,21 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+
+namespace tier4_autoware_utils
+{
+
+template <>
+inline geometry_msgs::msg::Point getPoint(const lanelet::ConstPoint3d & p)
+{
+  geometry_msgs::msg::Point point;
+  point.x = p.x();
+  point.y = p.y();
+  point.z = p.z();
+  return point;
+}
+
+}  // namespace tier4_autoware_utils
 
 namespace behavior_velocity_planner
 {
@@ -227,14 +243,19 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const auto first_inside_detection_ip = first_inside_detection_idx_ip_opt.value();
 
   // (1) default stop line position on interpolated path
-  int stop_idx_ip_int = 0;
+  bool default_stop_line_valid = true;
+  int stop_idx_ip_int = -1;
   if (const auto map_stop_idx_ip =
         getStopLineIndexFromMap(interpolated_path_info, planner_data, 10.0);
       map_stop_idx_ip) {
     stop_idx_ip_int = static_cast<int>(map_stop_idx_ip.value()) - base2front_idx_dist;
-  } else {
+  }
+  if (stop_idx_ip_int < 0) {
     stop_idx_ip_int = static_cast<size_t>(first_inside_detection_ip) - stop_line_margin_idx_dist -
                       base2front_idx_dist;
+  }
+  if (stop_idx_ip_int < 0) {
+    default_stop_line_valid = false;
   }
   const auto default_stop_line_ip = stop_idx_ip_int >= 0 ? static_cast<size_t>(stop_idx_ip_int) : 0;
 
@@ -251,15 +272,29 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const auto local_footprint = planner_data->vehicle_info_.createFootprint(0.0, 0.0);
   const auto area_2d = lanelet::utils::to2D(first_detection_area).basicPolygon();
   int occlusion_peeking_line_ip_int = static_cast<int>(default_stop_line_ip);
-  for (size_t i = default_stop_line_ip; i <= std::get<1>(lane_interval_ip); ++i) {
-    const auto & base_pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = tier4_autoware_utils::transformVector(
-      local_footprint, tier4_autoware_utils::pose2transform(base_pose));
-    if (bg::intersects(path_footprint, area_2d)) {
-      occlusion_peeking_line_ip_int = i;
-      break;
+  bool occlusion_peeking_line_valid = true;
+  {
+    // NOTE: if footprints[0] is already inside the detection area, invalid
+    const auto & base_pose0 = path_ip.points.at(default_stop_line_ip).point.pose;
+    const auto path_footprint0 = tier4_autoware_utils::transformVector(
+      local_footprint, tier4_autoware_utils::pose2transform(base_pose0));
+    if (bg::intersects(path_footprint0, area_2d)) {
+      occlusion_peeking_line_valid = false;
     }
   }
+  if (occlusion_peeking_line_valid) {
+    for (size_t i = default_stop_line_ip + 1; i <= std::get<1>(lane_interval_ip); ++i) {
+      const auto & base_pose = path_ip.points.at(i).point.pose;
+      const auto path_footprint = tier4_autoware_utils::transformVector(
+        local_footprint, tier4_autoware_utils::pose2transform(base_pose));
+      if (bg::intersects(path_footprint, area_2d)) {
+        occlusion_peeking_line_ip_int = i;
+        break;
+      }
+    }
+  }
+  const auto first_attention_stop_line_ip = static_cast<size_t>(occlusion_peeking_line_ip_int);
+  const bool first_attention_stop_line_valid = occlusion_peeking_line_valid;
   occlusion_peeking_line_ip_int += std::ceil(peeking_offset / ds);
   const auto occlusion_peeking_line_ip = static_cast<size_t>(
     std::clamp<int>(occlusion_peeking_line_ip_int, 0, static_cast<int>(path_ip.points.size()) - 1));
@@ -279,26 +314,45 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
 
   // (5) stuck vehicle stop line
   int stuck_stop_line_ip_int = 0;
+  bool stuck_stop_line_valid = true;
   if (use_stuck_stopline) {
+    // NOTE: when ego vehicle is approaching detection area and already passed
+    // first_conflicting_area, this could be null.
     const auto stuck_stop_line_idx_ip_opt =
       getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_conflicting_area);
     if (!stuck_stop_line_idx_ip_opt) {
-      return std::nullopt;
+      stuck_stop_line_valid = false;
+      stuck_stop_line_ip_int = 0;
+    } else {
+      stuck_stop_line_ip_int = stuck_stop_line_idx_ip_opt.value();
     }
-    stuck_stop_line_ip_int = stuck_stop_line_idx_ip_opt.value();
   } else {
     stuck_stop_line_ip_int = std::get<0>(lane_interval_ip);
   }
-  const auto stuck_stop_line_ip = static_cast<size_t>(
-    std::max(0, stuck_stop_line_ip_int - stop_line_margin_idx_dist - base2front_idx_dist));
+  stuck_stop_line_ip_int -= (stop_line_margin_idx_dist + base2front_idx_dist);
+  if (stuck_stop_line_ip_int < 0) {
+    stuck_stop_line_valid = false;
+  }
+  const auto stuck_stop_line_ip = static_cast<size_t>(std::max(0, stuck_stop_line_ip_int));
 
-  IntersectionStopLines intersection_stop_lines;
+  struct IntersectionStopLinesTemp
+  {
+    size_t closest_idx{0};
+    size_t stuck_stop_line{0};
+    size_t default_stop_line{0};
+    size_t first_attention_stop_line{0};
+    size_t occlusion_peeking_stop_line{0};
+    size_t pass_judge_line{0};
+  };
+
+  IntersectionStopLinesTemp intersection_stop_lines_temp;
   std::list<std::pair<const size_t *, size_t *>> stop_lines = {
-    {&closest_idx_ip, &intersection_stop_lines.closest_idx},
-    {&stuck_stop_line_ip, &intersection_stop_lines.stuck_stop_line},
-    {&default_stop_line_ip, &intersection_stop_lines.default_stop_line},
-    {&occlusion_peeking_line_ip, &intersection_stop_lines.occlusion_peeking_stop_line},
-    {&pass_judge_line_ip, &intersection_stop_lines.pass_judge_line},
+    {&closest_idx_ip, &intersection_stop_lines_temp.closest_idx},
+    {&stuck_stop_line_ip, &intersection_stop_lines_temp.stuck_stop_line},
+    {&default_stop_line_ip, &intersection_stop_lines_temp.default_stop_line},
+    {&first_attention_stop_line_ip, &intersection_stop_lines_temp.first_attention_stop_line},
+    {&occlusion_peeking_line_ip, &intersection_stop_lines_temp.occlusion_peeking_stop_line},
+    {&pass_judge_line_ip, &intersection_stop_lines_temp.pass_judge_line},
   };
   stop_lines.sort(
     [](const auto & it1, const auto & it2) { return *(std::get<0>(it1)) < *(std::get<0>(it2)); });
@@ -311,27 +365,68 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     *stop_idx = insert_idx.value();
   }
   if (
-    intersection_stop_lines.occlusion_peeking_stop_line <
-    intersection_stop_lines.default_stop_line) {
-    intersection_stop_lines.occlusion_peeking_stop_line = intersection_stop_lines.default_stop_line;
+    intersection_stop_lines_temp.occlusion_peeking_stop_line <
+    intersection_stop_lines_temp.default_stop_line) {
+    intersection_stop_lines_temp.occlusion_peeking_stop_line =
+      intersection_stop_lines_temp.default_stop_line;
   }
   if (
-    intersection_stop_lines.occlusion_peeking_stop_line > intersection_stop_lines.pass_judge_line) {
-    intersection_stop_lines.pass_judge_line = intersection_stop_lines.occlusion_peeking_stop_line;
+    intersection_stop_lines_temp.occlusion_peeking_stop_line >
+    intersection_stop_lines_temp.pass_judge_line) {
+    intersection_stop_lines_temp.pass_judge_line =
+      intersection_stop_lines_temp.occlusion_peeking_stop_line;
   }
+
+  IntersectionStopLines intersection_stop_lines;
+  intersection_stop_lines.closest_idx = intersection_stop_lines_temp.closest_idx;
+  if (stuck_stop_line_valid) {
+    intersection_stop_lines.stuck_stop_line = intersection_stop_lines_temp.stuck_stop_line;
+  }
+  if (default_stop_line_valid) {
+    intersection_stop_lines.default_stop_line = intersection_stop_lines_temp.default_stop_line;
+  }
+  if (first_attention_stop_line_valid) {
+    intersection_stop_lines.first_attention_stop_line =
+      intersection_stop_lines_temp.first_attention_stop_line;
+  }
+  if (occlusion_peeking_line_valid) {
+    intersection_stop_lines.occlusion_peeking_stop_line =
+      intersection_stop_lines_temp.occlusion_peeking_stop_line;
+  }
+  intersection_stop_lines.pass_judge_line = intersection_stop_lines_temp.pass_judge_line;
   return intersection_stop_lines;
 }
 
 std::optional<size_t> getFirstPointInsidePolygon(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon)
+  const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon,
+  const bool search_forward)
 {
+  // NOTE: if first point is already inside the polygon, returns nullopt
   const auto polygon_2d = lanelet::utils::to2D(polygon);
-  for (size_t i = lane_interval.first; i <= lane_interval.second; ++i) {
-    auto p = path.points.at(i).point.pose.position;
-    const auto is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
-    if (is_in_lanelet) {
-      return std::make_optional<size_t>(i);
+  if (search_forward) {
+    const auto & p0 = path.points.at(lane_interval.first).point.pose.position;
+    if (bg::within(to_bg2d(p0), polygon_2d)) {
+      return std::nullopt;
+    }
+    for (size_t i = lane_interval.first; i <= lane_interval.second; ++i) {
+      const auto & p = path.points.at(i).point.pose.position;
+      const auto is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+      if (is_in_lanelet) {
+        return std::make_optional<size_t>(i);
+      }
+    }
+  } else {
+    const auto & p0 = path.points.at(lane_interval.second).point.pose.position;
+    if (bg::within(to_bg2d(p0), polygon_2d)) {
+      return std::nullopt;
+    }
+    for (size_t i = lane_interval.second; i >= lane_interval.first; --i) {
+      const auto & p = path.points.at(i).point.pose.position;
+      const auto is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+      if (is_in_lanelet) {
+        return std::make_optional<size_t>(i);
+      }
     }
   }
   return std::nullopt;
@@ -341,21 +436,39 @@ static std::optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>
 getFirstPointInsidePolygons(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::pair<size_t, size_t> lane_interval,
-  const std::vector<lanelet::CompoundPolygon3d> & polygons)
+  const std::vector<lanelet::CompoundPolygon3d> & polygons, const bool search_forward = true)
 {
-  for (size_t i = lane_interval.first; i <= lane_interval.second; ++i) {
-    bool is_in_lanelet = false;
-    auto p = path.points.at(i).point.pose.position;
-    for (const auto & polygon : polygons) {
-      const auto polygon_2d = lanelet::utils::to2D(polygon);
-      is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+  if (search_forward) {
+    for (size_t i = lane_interval.first; i <= lane_interval.second; ++i) {
+      bool is_in_lanelet = false;
+      const auto & p = path.points.at(i).point.pose.position;
+      for (const auto & polygon : polygons) {
+        const auto polygon_2d = lanelet::utils::to2D(polygon);
+        is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+        if (is_in_lanelet) {
+          return std::make_optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>(
+            i, polygon);
+        }
+      }
       if (is_in_lanelet) {
-        return std::make_optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>(
-          i, polygon);
+        break;
       }
     }
-    if (is_in_lanelet) {
-      break;
+  } else {
+    for (size_t i = lane_interval.second; i >= lane_interval.first; --i) {
+      bool is_in_lanelet = false;
+      const auto & p = path.points.at(i).point.pose.position;
+      for (const auto & polygon : polygons) {
+        const auto polygon_2d = lanelet::utils::to2D(polygon);
+        is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
+        if (is_in_lanelet) {
+          return std::make_optional<std::pair<size_t, const lanelet::CompoundPolygon3d &>>(
+            i, polygon);
+        }
+      }
+      if (is_in_lanelet) {
+        break;
+      }
     }
   }
   return std::nullopt;
@@ -674,12 +787,11 @@ bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane)
   return tl_id.has_value();
 }
 
-bool isTrafficLightArrowActivated(
+TrafficPrioritizedLevel getTrafficPrioritizedLevel(
   lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos)
 {
   using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
 
-  const auto & turn_direction = lane.attributeOr("turn_direction", "else");
   std::optional<int> tl_id = std::nullopt;
   for (auto && tl_reg_elem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
     tl_id = tl_reg_elem->id();
@@ -687,30 +799,50 @@ bool isTrafficLightArrowActivated(
   }
   if (!tl_id) {
     // this lane has no traffic light
-    return false;
+    return TrafficPrioritizedLevel::NOT_PRIORITIZED;
   }
   const auto tl_info_it = tl_infos.find(tl_id.value());
   if (tl_info_it == tl_infos.end()) {
     // the info of this traffic light is not available
-    return false;
+    return TrafficPrioritizedLevel::NOT_PRIORITIZED;
   }
   const auto & tl_info = tl_info_it->second;
+  bool has_amber_signal{false};
   for (auto && tl_light : tl_info.signal.elements) {
-    if (tl_light.color != TrafficSignalElement::GREEN) continue;
-    if (tl_light.status != TrafficSignalElement::SOLID_ON) continue;
-    if (turn_direction == std::string("left") && tl_light.shape == TrafficSignalElement::LEFT_ARROW)
-      return true;
-    if (
-      turn_direction == std::string("right") && tl_light.shape == TrafficSignalElement::RIGHT_ARROW)
-      return true;
+    if (tl_light.color == TrafficSignalElement::AMBER) {
+      has_amber_signal = true;
+    }
+    if (tl_light.color == TrafficSignalElement::RED) {
+      // NOTE: Return here since the red signal has the highest priority.
+      return TrafficPrioritizedLevel::FULLY_PRIORITIZED;
+    }
   }
-  return false;
+  if (has_amber_signal) {
+    return TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED;
+  }
+  return TrafficPrioritizedLevel::NOT_PRIORITIZED;
+}
+
+double getHighestCurvature(const lanelet::ConstLineString3d & centerline)
+{
+  std::vector<lanelet::ConstPoint3d> points;
+  for (auto point = centerline.begin(); point != centerline.end(); point++) {
+    points.push_back(*point);
+  }
+
+  SplineInterpolationPoints2d interpolation(points);
+  const std::vector<double> curvatures = interpolation.getSplineInterpolatedCurvatures();
+  std::vector<double> curvatures_positive;
+  for (const auto & curvature : curvatures) {
+    curvatures_positive.push_back(std::fabs(curvature));
+  }
+  return *std::max_element(curvatures_positive.begin(), curvatures_positive.end());
 }
 
 std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets_all,
-  [[maybe_unused]] const lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const double resolution)
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution,
+  const double curvature_threshold, const double curvature_calculation_ds)
 {
   using lanelet::utils::getCenterlineWithOffset;
   using lanelet::utils::to2D;
@@ -720,6 +852,12 @@ std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   for (const auto & detection_lanelet : detection_lanelets_all) {
     const auto turn_direction = getTurnDirection(detection_lanelet);
     if (turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0) {
+      continue;
+    }
+    const auto fine_centerline =
+      lanelet::utils::generateFineCenterline(detection_lanelet, curvature_calculation_ds);
+    const double highest_curvature = getHighestCurvature(fine_centerline);
+    if (highest_curvature > curvature_threshold) {
       continue;
     }
     detection_lanelets.push_back(detection_lanelet);
@@ -917,35 +1055,29 @@ bool checkStuckVehicleInIntersection(
 }
 
 Polygon2d generateStuckVehicleDetectAreaPolygon(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
-  const double stuck_vehicle_detect_dist, const double stuck_vehicle_ignore_dist,
-  const double vehicle_length_m)
+  const util::PathLanelets & path_lanelets, const double stuck_vehicle_detect_dist)
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getLaneletLength3d;
   using lanelet::utils::getPolygonFromArcLength;
   using lanelet::utils::to2D;
 
-  const double extra_dist = stuck_vehicle_detect_dist + vehicle_length_m;
-  const double ignore_dist = stuck_vehicle_ignore_dist + vehicle_length_m;
-
-  const double intersection_exit_length = getLaneletLength3d(ego_lane_with_next_lane.front());
-
-  const auto closest_arc_coords = getArcCoordinates(
-    ego_lane_with_next_lane, tier4_autoware_utils::getPose(path.points.at(closest_idx).point));
-
-  const double start_arc_length = intersection_exit_length - ignore_dist > closest_arc_coords.length
-                                    ? intersection_exit_length - ignore_dist
-                                    : closest_arc_coords.length;
-
-  const double end_arc_length = getLaneletLength3d(ego_lane_with_next_lane.front()) + extra_dist;
-
-  const auto target_polygon =
-    to2D(getPolygonFromArcLength(ego_lane_with_next_lane, start_arc_length, end_arc_length))
-      .basicPolygon();
-
   Polygon2d polygon{};
+  if (path_lanelets.conflicting_interval_and_remaining.size() == 0) {
+    return polygon;
+  }
+
+  double target_polygon_length =
+    getLaneletLength3d(path_lanelets.conflicting_interval_and_remaining);
+  lanelet::ConstLanelets targets = path_lanelets.conflicting_interval_and_remaining;
+  if (path_lanelets.next) {
+    targets.push_back(path_lanelets.next.value());
+    const double next_arc_length =
+      std::min(stuck_vehicle_detect_dist, getLaneletLength3d(path_lanelets.next.value()));
+    target_polygon_length += next_arc_length;
+  }
+  const auto target_polygon =
+    to2D(getPolygonFromArcLength(targets, 0, target_polygon_length)).basicPolygon();
 
   if (target_polygon.empty()) {
     return polygon;
@@ -962,23 +1094,32 @@ Polygon2d generateStuckVehicleDetectAreaPolygon(
 }
 
 bool checkAngleForTargetLanelets(
-  const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
-  const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle,
-  const double margin)
+  const geometry_msgs::msg::Pose & pose, const double longitudinal_velocity,
+  const lanelet::ConstLanelets & target_lanelets, const double detection_area_angle_thr,
+  const bool consider_wrong_direction_vehicle, const double dist_margin,
+  const double parked_vehicle_speed_threshold)
 {
   for (const auto & ll : target_lanelets) {
-    if (!lanelet::utils::isInLanelet(pose, ll, margin)) {
+    if (!lanelet::utils::isInLanelet(pose, ll, dist_margin)) {
       continue;
     }
     const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
     const double pose_angle = tf2::getYaw(pose.orientation);
-    const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle);
+    const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle, -M_PI);
     if (consider_wrong_direction_vehicle) {
       if (std::fabs(angle_diff) > 1.57 || std::fabs(angle_diff) < detection_area_angle_thr) {
         return true;
       }
     } else {
       if (std::fabs(angle_diff) < detection_area_angle_thr) {
+        return true;
+      }
+      // NOTE: sometimes parked vehicle direction is reversed even if its longitudinal velocity is
+      // positive
+      if (
+        std::fabs(longitudinal_velocity) < parked_vehicle_speed_threshold &&
+        (std::fabs(angle_diff) < detection_area_angle_thr ||
+         (std::fabs(angle_diff + M_PI) < detection_area_angle_thr))) {
         return true;
       }
     }
@@ -1099,9 +1240,9 @@ double calcDistanceUntilIntersectionLanelet(
 }
 
 void IntersectionLanelets::update(
-  const bool tl_arrow_solid_on, const InterpolatedPathInfo & interpolated_path_info)
+  const bool is_prioritized, const InterpolatedPathInfo & interpolated_path_info)
 {
-  tl_arrow_solid_on_ = tl_arrow_solid_on;
+  is_prioritized_ = is_prioritized;
   // find the first conflicting/detection area polygon intersecting the path
   const auto & path = interpolated_path_info.path;
   const auto & lane_interval = interpolated_path_info.lane_id_interval.value();
@@ -1134,13 +1275,19 @@ static lanelet::ConstLanelets getPrevLanelets(
 
 std::optional<PathLanelets> generatePathLanelets(
   const lanelet::ConstLanelets & lanelets_on_path,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::set<int> & associative_ids, const size_t closest_idx, const double width)
+  const util::InterpolatedPathInfo & interpolated_path_info, const std::set<int> & associative_ids,
+  const lanelet::CompoundPolygon3d & first_conflicting_area,
+  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+  const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
+  const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx,
+  const double width)
 {
-  const auto assigned_lane_interval_opt = findLaneIdsInterval(path, associative_ids);
+  const auto & assigned_lane_interval_opt = interpolated_path_info.lane_id_interval;
   if (!assigned_lane_interval_opt) {
     return std::nullopt;
   }
+  const auto assigned_lane_interval = assigned_lane_interval_opt.value();
+  const auto & path = interpolated_path_info.path;
 
   PathLanelets path_lanelets;
   // prev
@@ -1148,7 +1295,7 @@ std::optional<PathLanelets> generatePathLanelets(
   path_lanelets.all = path_lanelets.prev;
 
   // entry2ego if exist
-  const auto [assigned_lane_start, assigned_lane_end] = assigned_lane_interval_opt.value();
+  const auto [assigned_lane_start, assigned_lane_end] = assigned_lane_interval;
   if (closest_idx > assigned_lane_start) {
     path_lanelets.all.push_back(
       planning_utils::generatePathLanelet(path, assigned_lane_start, closest_idx, width));
@@ -1166,12 +1313,31 @@ std::optional<PathLanelets> generatePathLanelets(
     const auto next_lane_interval_opt = findLaneIdsInterval(path, {next_id});
     if (next_lane_interval_opt) {
       const auto [next_start, next_end] = next_lane_interval_opt.value();
-      path_lanelets.next =
-        planning_utils::generatePathLanelet(path, next_start + 1, next_end, width);
+      path_lanelets.next = planning_utils::generatePathLanelet(path, next_start, next_end, width);
       path_lanelets.all.push_back(path_lanelets.next.value());
     }
   }
 
+  const auto first_inside_conflicting_idx_opt =
+    first_attention_area.has_value()
+      ? getFirstPointInsidePolygon(path, assigned_lane_interval, first_attention_area.value())
+      : getFirstPointInsidePolygon(path, assigned_lane_interval, first_conflicting_area);
+  const auto last_inside_conflicting_idx_opt =
+    first_attention_area.has_value()
+      ? getFirstPointInsidePolygons(path, assigned_lane_interval, attention_areas, false)
+      : getFirstPointInsidePolygons(path, assigned_lane_interval, conflicting_areas, false);
+  if (first_inside_conflicting_idx_opt && last_inside_conflicting_idx_opt) {
+    const auto first_inside_conflicting_idx = first_inside_conflicting_idx_opt.value();
+    const auto last_inside_conflicting_idx = last_inside_conflicting_idx_opt.value().first;
+    lanelet::ConstLanelet conflicting_interval = planning_utils::generatePathLanelet(
+      path, first_inside_conflicting_idx, last_inside_conflicting_idx, width);
+    path_lanelets.conflicting_interval_and_remaining.push_back(std::move(conflicting_interval));
+    if (last_inside_conflicting_idx < assigned_lane_end) {
+      lanelet::ConstLanelet remaining_interval = planning_utils::generatePathLanelet(
+        path, last_inside_conflicting_idx, assigned_lane_end, width);
+      path_lanelets.conflicting_interval_and_remaining.push_back(std::move(remaining_interval));
+    }
+  }
   return path_lanelets;
 }
 

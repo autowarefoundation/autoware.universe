@@ -20,14 +20,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/point.hpp>
-
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
-
 #include <map>
 #include <memory>
 #include <optional>
@@ -83,7 +75,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
 
 std::optional<size_t> getFirstPointInsidePolygon(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon);
+  const std::pair<size_t, size_t> lane_interval, const lanelet::CompoundPolygon3d & polygon,
+  const bool search_forward = true);
 
 /**
  * @brief check if ego is over the target_idx. If the index is same, compare the exact pose
@@ -110,12 +103,14 @@ std::optional<Polygon2d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr);
 
 bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane);
-bool isTrafficLightArrowActivated(
+
+TrafficPrioritizedLevel getTrafficPrioritizedLevel(
   lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos);
 
 std::vector<DiscretizedLane> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets,
-  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution);
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution,
+  const double curvature_threshold, const double curvature_calculation_ds);
 
 std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const int lane_id, const std::set<int> & associative_lane_ids,
@@ -131,15 +126,13 @@ bool checkStuckVehicleInIntersection(
   DebugData * debug_data);
 
 Polygon2d generateStuckVehicleDetectAreaPolygon(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::ConstLanelets & ego_lane_with_next_lane, const int closest_idx,
-  const double stuck_vehicle_detect_dist, const double stuck_vehicle_ignore_dist,
-  const double vehicle_length_m);
+  const util::PathLanelets & path_lanelets, const double stuck_vehicle_detect_dist);
 
 bool checkAngleForTargetLanelets(
-  const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
-  const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle,
-  const double margin = 0.0);
+  const geometry_msgs::msg::Pose & pose, const double longitudinal_velocity,
+  const lanelet::ConstLanelets & target_lanelets, const double detection_area_angle_thr,
+  const bool consider_wrong_direction_vehicle, const double dist_margin,
+  const double parked_vehicle_speed_threshold);
 
 void cutPredictPathWithDuration(
   autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
@@ -158,8 +151,12 @@ double calcDistanceUntilIntersectionLanelet(
 
 std::optional<PathLanelets> generatePathLanelets(
   const lanelet::ConstLanelets & lanelets_on_path,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::set<int> & associative_ids, const size_t closest_idx, const double width);
+  const util::InterpolatedPathInfo & interpolated_path_info, const std::set<int> & associative_ids,
+  const lanelet::CompoundPolygon3d & first_conflicting_area,
+  const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
+  const std::optional<lanelet::CompoundPolygon3d> & first_attention_area,
+  const std::vector<lanelet::CompoundPolygon3d> & attention_areas, const size_t closest_idx,
+  const double width);
 
 }  // namespace util
 }  // namespace behavior_velocity_planner
