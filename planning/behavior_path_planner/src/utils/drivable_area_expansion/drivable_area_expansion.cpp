@@ -32,15 +32,6 @@
 
 #include <limits>
 
-// for writing the svg file
-#include <fstream>
-#include <iostream>
-// for the geometry types
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-// for the svg mapper
-#include <boost/geometry/io/svg/svg_mapper.hpp>
-#include <boost/geometry/io/svg/write.hpp>
-
 namespace drivable_area_expansion
 {
 void reuse_previous_points(
@@ -261,18 +252,6 @@ void expand_drivable_area(
 {
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("overall");
-  // Declare a stream and an SVG mapper
-  std::ofstream svg("/home/mclement/Pictures/da.svg");
-  boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
-
-  LineString2d left_ls, right_ls;
-  for (const auto & p : path.left_bound) left_ls.push_back(convert_point(p));
-  for (const auto & p : path.right_bound) right_ls.push_back(convert_point(p));
-  mapper.add(left_ls);
-  mapper.map(left_ls, "fill-opacity:0.3;fill:blue;stroke:blue;stroke-width:2");
-  mapper.add(right_ls);
-  mapper.map(right_ls, "fill-opacity:0.3;fill:blue;stroke:blue;stroke-width:2");
-
   stop_watch.tic("preprocessing");
   // crop first/last non deviating path_poses
   const auto & params = planner_data->drivable_area_expansion_parameters;
@@ -282,19 +261,11 @@ void expand_drivable_area(
   const auto uncrossable_polygons = create_object_footprints(*planner_data->dynamic_object, params);
   const auto preprocessing_ms = stop_watch.toc("preprocessing");
 
-  for (const auto & l : uncrossable_lines)
-    mapper.map(l, "fill-opacity:1.0;fill:grey;stroke:grey;stroke-width:1");
-  for (const auto & p : uncrossable_polygons)
-    mapper.map(p, "fill-opacity:0.2;fill:grey;stroke:grey;stroke-width:1");
-
   stop_watch.tic("crop");
   std::vector<Pose> path_poses = planner_data->drivable_area_expansion_prev_path_poses;
   std::vector<double> curvatures = planner_data->drivable_area_expansion_prev_curvatures;
   reuse_previous_points(
     path, path_poses, curvatures, planner_data->self_odometry->pose.pose.position, params);
-  for (const auto & p : path_poses)
-    mapper.map(
-      convert_point(p.position), "fill-opacity:0.5;fill:grey;stroke:grey;stroke-width:1", 1);
   const auto crop_ms = stop_watch.toc("crop");
 
   stop_watch.tic("curvatures_expansion");
@@ -322,26 +293,6 @@ void expand_drivable_area(
     right_expansions[i].expansion_distance =
       std::min(right_expansions[i].expansion_distance, max_right_expansions[i]);
   const auto max_dist_ms = stop_watch.toc("max_dist");
-
-  for (const auto & e : left_expansions) {
-    if (e.expansion_distance > 0.0) {
-      mapper.map(
-        convert_point(e.expansion_point),
-        "fill-opacity:0.3;fill:orange;stroke:orange;stroke-width:2", 2);
-      mapper.map(
-        Segment2d{convert_point(e.expansion_point), convert_point(path_poses[e.path_idx].position)},
-        "fill-opacity:0.3;fill:black;stroke:black;stroke-width:2");
-    }
-  }
-  for (const auto & e : right_expansions) {
-    if (e.expansion_distance > 0.0) {
-      mapper.map(
-        convert_point(e.expansion_point), "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2", 2);
-      mapper.map(
-        Segment2d{convert_point(e.expansion_point), convert_point(path_poses[e.path_idx].position)},
-        "fill-opacity:0.3;fill:black;stroke:black;stroke-width:2");
-    }
-  }
 
   stop_watch.tic("smooth");
   apply_bound_velocity_limit(left_expansions, path.left_bound, params.max_bound_rate);
