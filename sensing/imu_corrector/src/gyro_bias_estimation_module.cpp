@@ -64,11 +64,6 @@ geometry_msgs::msg::Vector3 calculate_error_rpy(
   return error_rpy;
 }
 
-GyroBiasEstimationModule::GyroBiasEstimationModule(const size_t data_num_threshold)
-: data_num_threshold_(data_num_threshold)
-{
-}
-
 /**
  * @brief update gyroscope bias based on a given trajectory data
  */
@@ -102,10 +97,6 @@ void GyroBiasEstimationModule::update_bias(
   gyro_bias.x = error_rpy.x / dt_pose;
   gyro_bias.y = error_rpy.y / dt_pose;
   gyro_bias.z = error_rpy.z / dt_pose;
-  gyro_bias_deque_.push_back(gyro_bias);
-  if (gyro_bias_deque_.size() > data_num_threshold_) {
-    gyro_bias_deque_.pop_front();
-  }
 }
 
 /**
@@ -123,37 +114,6 @@ geometry_msgs::msg::Vector3 GyroBiasEstimationModule::get_bias_base_link() const
   gyro_bias_base.y = gyro_bias_pair_.first.y / gyro_bias_pair_.second.y;
   gyro_bias_base.z = gyro_bias_pair_.first.z / gyro_bias_pair_.second.z;
   return gyro_bias_base;
-}
-
-/**
- * @brief getter function for current standard deviation of estimated bias
- */
-geometry_msgs::msg::Vector3 GyroBiasEstimationModule::get_bias_std() const
-{
-  auto calculate_std_mean_const = [](const std::vector<double> & v, const double mean) {
-    if (v.size() == 0) {
-      return 0.0;
-    }
-
-    double error = 0;
-    for (const double & t : v) {
-      error += pow(t - mean, 2);
-    }
-    return std::sqrt(error / v.size());
-  };
-
-  std::vector<double> stddev_bias_list_x, stddev_bias_list_y, stddev_bias_list_z;
-  for (const auto & e : gyro_bias_deque_) {
-    stddev_bias_list_x.push_back(e.x);
-    stddev_bias_list_y.push_back(e.y);
-    stddev_bias_list_z.push_back(e.z);
-  }
-  geometry_msgs::msg::Vector3 mean = get_bias_base_link();
-  geometry_msgs::msg::Vector3 stddev_bias;
-  stddev_bias.x = calculate_std_mean_const(stddev_bias_list_x, mean.x);
-  stddev_bias.y = calculate_std_mean_const(stddev_bias_list_y, mean.y);
-  stddev_bias.z = calculate_std_mean_const(stddev_bias_list_z, mean.z);
-  return stddev_bias;
 }
 
 }  // namespace imu_corrector

@@ -37,10 +37,8 @@ GyroBiasEstimator::GyroBiasEstimator()
 {
   updater_.setHardwareID(get_name());
   updater_.add("gyro_bias_validator", this, &GyroBiasEstimator::update_diagnostics);
-  const size_t data_num_threshold =
-    static_cast<size_t>(declare_parameter<int>("data_num_threshold"));
 
-  gyro_bias_estimation_module_ = std::make_unique<GyroBiasEstimationModule>(data_num_threshold);
+  gyro_bias_estimation_module_ = std::make_unique<GyroBiasEstimationModule>();
 
   imu_sub_ = create_subscription<Imu>(
     "~/input/imu_raw", rclcpp::SensorDataQoS(),

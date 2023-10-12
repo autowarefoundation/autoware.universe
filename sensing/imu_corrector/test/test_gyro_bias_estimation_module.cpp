@@ -23,8 +23,7 @@ namespace imu_corrector
 class GyroBiasEstimationModuleTest : public ::testing::Test
 {
 protected:
-  size_t data_num_threshold = 10;
-  GyroBiasEstimationModule module = GyroBiasEstimationModule(data_num_threshold);
+  GyroBiasEstimationModule module;
 };
 
 TEST_F(GyroBiasEstimationModuleTest, GetBiasEstimationWhenVehicleStopped)
@@ -53,7 +52,7 @@ TEST_F(GyroBiasEstimationModuleTest, GetBiasEstimationWhenVehicleStopped)
   gyro2.vector.z = 0.3;
   gyro_list.push_back(gyro2);
 
-  for (size_t i = 0; i < data_num_threshold + 1; ++i) {
+  for (size_t i = 0; i < 10; ++i) {
     module.update_bias(pose_list, gyro_list);
   }
   const geometry_msgs::msg::Vector3 result = module.get_bias_base_link();
@@ -83,7 +82,7 @@ TEST_F(GyroBiasEstimationModuleTest, GetInsufficientDataExceptionWhenVehicleMovi
   gyro1.vector.z = 0.3;
   gyro_list.push_back(gyro1);
 
-  for (size_t i = 0; i < data_num_threshold + 1; ++i) {
+  for (size_t i = 0; i < 10; ++i) {
     ASSERT_THROW(module.update_bias(pose_list, gyro_list), std::runtime_error);
   }
 }

@@ -72,4 +72,3 @@ Note that the node calculates bias from the gyroscope data by averaging the data
 | `gyro_bias_threshold`                 | double | threshold of the bias of the gyroscope [rad/s]                                              |
 | `timer_callback_interval_sec`         | double | seconds about the timer callback function [sec]                                             |
 | `straight_motion_ang_vel_upper_limit` | double | upper limit of yaw angular velocity, beyond which motion is not considered straight [rad/s] |
-| `data_num_threshold`                  | int    | number of data used to calculate bias                                                       |
