@@ -21,6 +21,6 @@
       decay_rate: 0.1
       max_dt: 1.0
 
-    # loggin
+    # logging settings
     enable_logging: false
     log_file_path: "/tmp/decorative_tracker_merger.log"

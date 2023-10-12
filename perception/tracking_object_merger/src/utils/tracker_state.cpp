@@ -22,7 +22,7 @@ using autoware_auto_perception_msgs::msg::TrackedObjects;
 /**
  * @brief Construct a new Tracker State:: Tracker State object
  *
- * @param input_source : input source distinguisher
+ * @param input_source : input source distinguished
  * @param tracked_object : input source tracked object
  * @param last_update_time : last update time
  */
@@ -93,7 +93,7 @@ bool TrackerState::predict(const rclcpp::Time & current_time)
  *
  * @param dt : time to predict
  * @param func : update function (e.g. PredictPastOrFutureTrackedObject)
- * @return true: prediction successed
+ * @return true: prediction succeeded
  * @return false: prediction failed
  */
 bool TrackerState::predict(
