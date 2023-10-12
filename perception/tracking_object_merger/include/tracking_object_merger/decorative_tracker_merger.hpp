@@ -24,10 +24,6 @@
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 #include <std_msgs/msg/header.hpp>
 
-#include <tf2/LinearMath/Transform.h>
-#include <tf2/convert.h>
-#include <tf2/transform_datatypes.h>
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -39,6 +35,7 @@
 
 #include <map>
 #include <memory>
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <vector>

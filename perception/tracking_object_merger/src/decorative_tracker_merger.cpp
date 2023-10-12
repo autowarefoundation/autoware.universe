@@ -15,7 +15,6 @@
 #include "tracking_object_merger/decorative_tracker_merger.hpp"
 
 #include "object_recognition_utils/object_recognition_utils.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "tracking_object_merger/data_association/solver/successive_shortest_path.hpp"
 #include "tracking_object_merger/utils/utils.hpp"
 

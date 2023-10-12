@@ -13,13 +13,12 @@
 // limitations under the License.
 //
 //
-// Author: v1.0 Yukihiro Saito
-//
 
 #ifndef TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
 #define TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+// #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
@@ -29,7 +28,11 @@
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/utils.h>
+
 #include <cmath>
+#include <iostream>
 #include <tuple>
 #include <vector>
 
