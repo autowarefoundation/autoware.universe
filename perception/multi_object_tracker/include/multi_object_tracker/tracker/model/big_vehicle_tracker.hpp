@@ -32,7 +32,7 @@ private:
 private:
   KalmanFilter ekf_;
   rclcpp::Time last_update_time_;
-  enum IDX { X = 0, Y = 1, YAW = 2, VX = 3, SLIP = 4 };
+  enum IDX { X = 0, Y = 1, YAW = 2, VX = 3, AX = 4, SLIP = 5 };
   struct EkfParams
   {
     char dim_x = 5;
@@ -41,7 +41,9 @@ private:
     float q_cov_yaw;
     float q_cov_slip;
     float q_cov_vx;
+    float q_cov_ax;
     float p0_cov_vx;
+    float p0_cov_ax;
     float p0_cov_slip;
     float r_cov_x;
     float r_cov_y;
@@ -52,6 +54,7 @@ private:
     float p0_cov_yaw;
   } ekf_params_;
   double max_vx_;
+  double max_ax_;
   double max_slip_;
   double lf_;
   double lr_;
