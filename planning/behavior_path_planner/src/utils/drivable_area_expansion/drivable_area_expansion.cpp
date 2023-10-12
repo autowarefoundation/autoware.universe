@@ -45,34 +45,48 @@ namespace drivable_area_expansion
 {
 void reuse_previous_points(
   const PathWithLaneId & path, std::vector<Pose> & prev_poses,
-  std::vector<double> & prev_curvatures, const DrivableAreaExpansionParameters & params)
+  std::vector<double> & prev_curvatures, const Point & ego_point,
+  const DrivableAreaExpansionParameters & params)
 {
-  /* REUSE
-  crop input path up to last prev
-  resample after last prev
-  */
   constexpr auto max_deviation = 0.5 /* TODO(Maxime): param*/;
   std::vector<Pose> cropped_poses;
   std::vector<double> cropped_curvatures;
-  if (prev_poses.size() > 1) {
-    const auto first_idx = motion_utils::findNearestSegmentIndex(
-      prev_poses, path.points.front().point.pose, max_deviation);
-    if (first_idx) {
+  const auto ego_is_behind =
+    motion_utils::calcLongitudinalOffsetToSegment(prev_poses, 0, ego_point) < 0.0;
+  const auto ego_is_far = !prev_poses.empty() &&
+                          tier4_autoware_utils::calcDistance2d(ego_point, prev_poses.front()) < 0.0;
+  if (!ego_is_behind && !ego_is_far && prev_poses.size() > 1) {
+    const auto first_idx =
+      motion_utils::findNearestSegmentIndex(prev_poses, path.points.front().point.pose);
+    const auto deviation =
+      motion_utils::calcLateralOffset(prev_poses, path.points.front().point.pose.position);
+    if (first_idx && deviation < max_deviation) {
       for (auto idx = *first_idx; idx < prev_poses.size(); ++idx) {
         if (motion_utils::calcLateralOffset(path.points, prev_poses[idx].position) > max_deviation)
           break;
         cropped_poses.push_back(prev_poses[idx]);
         cropped_curvatures.push_back(prev_curvatures[idx]);
       }
+    } else {
+      std::cout << "/!\\ could not reuse prev points" << std::endl;
     }
   }
-  auto arc_length = motion_utils::calcArcLength(cropped_poses);
   const auto resampled_path_points =
     motion_utils::resamplePath(path, params.resample_interval, true, true, false).points;
-  const auto first_path_idx =
+  auto first_path_idx =
     cropped_poses.empty()
       ? 0LU
-      : *motion_utils::findNearestSegmentIndex(resampled_path_points, cropped_poses.back());
+      : *motion_utils::findNearestSegmentIndex(resampled_path_points, cropped_poses.back()) + 1;
+  // make sure we do not had the same last point or segment
+  if (
+    !cropped_poses.empty() && resampled_path_points.size() > first_path_idx + 1 &&
+    tier4_autoware_utils::calcDistance2d(
+      resampled_path_points[first_path_idx + 1], cropped_poses.back()) < 1e-1)
+    first_path_idx += 2;
+  else if (
+    !cropped_poses.empty() && tier4_autoware_utils::calcDistance2d(
+                                resampled_path_points[first_path_idx], cropped_poses.back()) < 1e-1)
+    ++first_path_idx;
   for (auto idx = first_path_idx; idx < resampled_path_points.size(); ++idx)
     cropped_poses.push_back(resampled_path_points[idx].point.pose);
   cropped_poses = motion_utils::cropForwardPoints(
@@ -110,7 +124,7 @@ std::vector<BoundExpansion> calculate_minimum_expansions(
     if (curvatures[path_idx] == 0.0) continue;
     const auto curvature_radius = 1 / curvatures[path_idx];
     const auto min_lane_width = calculate_minimum_lane_width(curvature_radius, params);
-    const auto side_distance = min_lane_width / 2.0 * (side == LEFT ? -1.0 : 1.0);
+    const auto side_distance = min_lane_width / 2.0 * (side == LEFT ? 1.0 : -1.0);
     const auto offset_point =
       tier4_autoware_utils::calcOffsetPose(path_pose, 0.0, side_distance, 0.0).position;
     for (auto bound_idx = lb_idx; bound_idx + 1 < bound.size(); ++bound_idx) {
@@ -255,7 +269,8 @@ void expandDrivableArea(
   stop_watch.tic("crop");
   std::vector<Pose> path_poses = planner_data->drivable_area_expansion_prev_path_poses;
   std::vector<double> curvatures = planner_data->drivable_area_expansion_prev_curvatures;
-  reuse_previous_points(path, path_poses, curvatures, params);
+  reuse_previous_points(
+    path, path_poses, curvatures, planner_data->self_odometry->pose.pose.position, params);
   for (const auto & p : path_poses)
     mapper.map(
       convert_point(p.position), "fill-opacity:0.5;fill:grey;stroke:grey;stroke-width:1", 1);
@@ -311,18 +326,6 @@ void expandDrivableArea(
   apply_bound_velocity_limit(left_expansions, path.left_bound, max_bound_vel);
   apply_bound_velocity_limit(right_expansions, path.right_bound, max_bound_vel);
   const auto smooth_ms = stop_watch.toc("smooth");
-  std::cout << "new_left_dist :\n\t";
-  for (const auto & e : left_expansions) std::cout << e.expansion_distance << " ";
-  std::cout << std::endl;
-  std::cout << "new_right_dist :\n\t";
-  for (const auto & e : right_expansions) std::cout << e.expansion_distance << " ";
-  std::cout << std::endl;
-  std::cout << "max_left_dist:\n\t";
-  for (const auto & e : max_left_expansions) std::cout << e << " ";
-  std::cout << std::endl;
-  std::cout << "max_right_dist :\n\t";
-  for (const auto & e : max_right_expansions) std::cout << e << " ";
-  std::cout << std::endl;
   // TODO(Maxime): add an arc length shift or margin ?
   // TODO(Maxime): limit the distances based on the total width (left + right < min_lane_width)
   stop_watch.tic("expand");
