@@ -46,8 +46,8 @@
 
     <!--tracking object merger to merge near objects and far objects -->
     <include file="$(find-pkg-share tracking_object_merger)/launch/decorative_tracker_merger.launch.xml">
-      <arg name="main_object" value="/perception/object_recognition/tracking/near_objects"/>
-      <arg name="sub_object" value="$(var radar_tracker_output)"/>
+      <arg name="input/main_object" value="/perception/object_recognition/tracking/near_objects"/>
+      <arg name="input/sub_object" value="$(var radar_tracker_output)"/>
       <arg name="output" value="/perception/object_recognition/tracking/objects"/>
       <arg name="data_association_matrix_path" value="$(var object_recognition_tracking_object_merger_data_association_matrix_param_path)"/>
       <arg name="node_param_file_path" value="$(var object_recognition_tracking_object_merger_node_param_path)"/>
