@@ -265,7 +265,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
   const auto calculation_time_msg = createStringStamped(now(), time_keeper_ptr_->getLog());
   debug_calculation_time_str_pub_->publish(calculation_time_msg);
   debug_calculation_time_float_pub_->publish(
-    createFloat32Stamped(now(), time_keeper_ptr_->getAccumulatedTime()));
+    createFloat64Stamped(now(), time_keeper_ptr_->getAccumulatedTime()));
 
   const auto output_traj_msg =
     trajectory_utils::createTrajectory(path_ptr->header, full_traj_points);
