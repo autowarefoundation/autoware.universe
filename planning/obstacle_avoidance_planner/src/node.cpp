@@ -45,7 +45,7 @@ StringStamped createStringStamped(const rclcpp::Time & now, const std::string & 
   return msg;
 }
 
-Float64Stamped createFloat32Stamped(const rclcpp::Time & now, const float & data)
+Float64Stamped createFloat64Stamped(const rclcpp::Time & now, const float & data)
 {
   Float64Stamped msg;
   msg.stamp = now;
