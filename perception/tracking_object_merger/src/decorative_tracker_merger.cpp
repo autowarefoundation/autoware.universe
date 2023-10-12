@@ -101,9 +101,8 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
     create_publisher<TrackedObjects>("debug/interpolated_sub_object", rclcpp::QoS{1});
 
   // logging
-  logging_.enable = declare_parameter<bool>("enable_logging", false);
-  logging_.path =
-    declare_parameter<std::string>("logging_file_path", "~/.ros/association_log.json");
+  logging_.enable = declare_parameter<bool>("enable_logging");
+  logging_.path = declare_parameter<std::string>("logging_file_path");
 
   // Parameters
   publish_interpolated_sub_objects_ = declare_parameter<bool>("publish_interpolated_sub_objects");
@@ -229,11 +228,6 @@ void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::Const
       return (now - rclcpp::Time(sub_object->header.stamp)).seconds() > sub_object_timeout_sec_;
     });
   sub_objects_buffer_.erase(remove_itr, sub_objects_buffer_.end());
-
-  // print sub objects buffer size
-  // RCLCPP_DEBUG(
-  //   this->get_logger(), "sub objects buffer size: %d",
-  //   static_cast<int>(sub_objects_buffer_.size()));
 }
 
 /**
@@ -277,7 +271,8 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
     ->assign(score_matrix, direct_assignment, reverse_assignment);
 
   // look for tracker
-  for (size_t tracker_idx = 0; tracker_idx < inner_tracker_objects_.size(); ++tracker_idx) {
+  for (int tracker_idx = 0; tracker_idx < static_cast<int>(inner_tracker_objects_.size());
+       ++tracker_idx) {
     auto & object0_state = inner_tracker_objects_.at(tracker_idx);
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found and merge
       const auto & object1 = objects1.at(direct_assignment.at(tracker_idx));
@@ -289,7 +284,7 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
     }
   }
   // look for new object
-  for (size_t object1_idx = 0; object1_idx < objects1.size(); ++object1_idx) {
+  for (int object1_idx = 0; object1_idx < static_cast<int>(objects1.size()); ++object1_idx) {
     const auto & object1 = objects1.at(object1_idx);
     if (reverse_assignment.find(object1_idx) != reverse_assignment.end()) {  // found
     } else {                                                                 // not found

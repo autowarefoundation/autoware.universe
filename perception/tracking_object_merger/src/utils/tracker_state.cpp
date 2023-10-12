@@ -257,7 +257,8 @@ TrackedObject TrackerState::getObject() const
 {
   TrackedObject tracked_object = tracked_object_;
   tracked_object.object_id = const_uuid_;
-  tracked_object.existence_probability = existence_probability_;
+  tracked_object.existence_probability =
+    static_cast<float>(existence_probability_);  // double -> float
   return tracked_object;
 }
 

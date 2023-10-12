@@ -326,7 +326,7 @@ float probabilityMerger(const float main_prob, const float sub_prob, const Merge
   } else if (policy == MergePolicy::OVERWRITE) {
     return sub_prob;
   } else if (policy == MergePolicy::FUSION) {
-    return mean(main_prob, sub_prob);
+    return static_cast<float>(mean(main_prob, sub_prob));
   } else {
     std::cerr << "unknown merge policy in probabilityMerger function." << std::endl;
     return main_prob;
