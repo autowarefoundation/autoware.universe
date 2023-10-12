@@ -173,7 +173,7 @@ TEST(DrivableAreaExpansionProjection, InverseProjection)
   }
 }
 
-TEST(DrivableAreaExpansionProjection, expandDrivableArea)
+TEST(DrivableAreaExpansionProjection, expand_drivable_area)
 {
   drivable_area_expansion::DrivableAreaExpansionParameters params;
   drivable_area_expansion::PredictedObjects dynamic_objects;
@@ -216,17 +216,13 @@ TEST(DrivableAreaExpansionProjection, expandDrivableArea)
     params.avoid_dynamic_objects = false;
     params.avoid_linestring_dist = 0.0;
     params.avoid_linestring_types = {};
-    params.compensate_extra_dist = false;
     params.max_expansion_distance = 0.0;  // means no limit
     params.max_path_arc_length = 0.0;     // means no limit
     params.resample_interval = 1.0;
-    params.extra_arc_length = 1.0;
-    params.expansion_method = "polygon";
     // 2m x 4m ego footprint
-    params.ego_front_offset = 1.0;
-    params.ego_rear_offset = -1.0;
-    params.ego_left_offset = 2.0;
-    params.ego_right_offset = -2.0;
+    params.vehicle_info.front_overhang_m = 0.0;
+    params.vehicle_info.wheel_base_m = 2.0;
+    params.vehicle_info.vehicle_width_m = 2.0;
   }
   behavior_path_planner::PlannerData planner_data;
   planner_data.drivable_area_expansion_parameters = params;
@@ -234,7 +230,7 @@ TEST(DrivableAreaExpansionProjection, expandDrivableArea)
     std::make_shared<drivable_area_expansion::PredictedObjects>(dynamic_objects);
   planner_data.route_handler = std::make_shared<route_handler::RouteHandler>(route_handler);
   // we expect the drivable area to be expanded by 1m on each side
-  drivable_area_expansion::expandDrivableArea(
+  drivable_area_expansion::expand_drivable_area(
     path, std::make_shared<behavior_path_planner::PlannerData>(planner_data));
   // unchanged path points
   ASSERT_EQ(path.points.size(), 3ul);

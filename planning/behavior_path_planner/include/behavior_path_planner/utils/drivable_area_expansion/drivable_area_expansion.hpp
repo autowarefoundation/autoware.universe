@@ -30,7 +30,7 @@ namespace drivable_area_expansion
 /// @brief Expand the drivable area based on the path curvature and the vehicle dimensions
 /// @param[inout] path path whose drivable area will be expanded
 /// @param[inout] planner_data planning data (params, dynamic objects, vehicle info, ...)
-void expandDrivableArea(
+void expand_drivable_area(
   PathWithLaneId & path,
   const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data);
 }  // namespace drivable_area_expansion
