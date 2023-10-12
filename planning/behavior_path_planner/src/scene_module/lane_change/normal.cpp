@@ -205,6 +205,8 @@ void NormalLaneChange::insertStopPoint(
   }
 
   const double stop_point_buffer = getCommonParam().backward_length_buffer_for_end_of_lane;
+  const auto stop_margin_for_lc =
+    lane_change_buffer + stop_point_buffer + getCommonParam().base_link2front;
   const auto target_objects = getTargetObjects(status_.current_lanes, status_.target_lanes);
   const bool is_in_terminal_section = lanelet::utils::isInLanelet(getEgoPose(), lanelets.back()) ||
                                       distance_to_terminal < lane_change_buffer;
@@ -218,8 +220,7 @@ void NormalLaneChange::insertStopPoint(
       return distance_to_target_lane_obj < distance_to_terminal;
     });
 
-  // auto stopping_distance = raw_stopping_distance;
-  double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
+  double stopping_distance = distance_to_terminal - stop_margin_for_lc;
   if (is_in_terminal_section || !has_blocking_target_lane_obj) {
     // calculate minimum distance from path front to the stationary object on the ego lane.
     const auto distance_to_ego_lane_obj = [&]() -> double {
@@ -260,13 +261,13 @@ void NormalLaneChange::insertStopPoint(
 
     // If the lane change space is occupied by a stationary obstacle, move the stop line closer.
     // TODO(Horibe): We need to loop this process because the new space could be occupied as well.
-    stopping_distance = std::min(
-      distance_to_ego_lane_obj - lane_change_buffer - stop_point_buffer -
-        getCommonParam().base_link2front -
-        calcRssDistance(
-          0.0, planner_data_->parameters.minimum_lane_changing_velocity,
-          lane_change_parameters_->rss_params),
-      stopping_distance);
+    const auto rss_dist = calcRssDistance(
+      0.0, planner_data_->parameters.minimum_lane_changing_velocity,
+      lane_change_parameters_->rss_params);
+
+    // consider rss distance when the LC need to avoid obstacles
+    stopping_distance =
+      std::min(distance_to_ego_lane_obj - stop_margin_for_lc - rss_dist, stopping_distance);
   }
 
   if (stopping_distance > 0.0) {
