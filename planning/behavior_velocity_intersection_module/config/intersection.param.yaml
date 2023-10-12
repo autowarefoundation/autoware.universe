@@ -25,6 +25,10 @@
         timeout_private_area: 3.0 # [s] cancel stuck vehicle stop in private area
         enable_private_area_stuck_disregard: false #In the intersections which labeled as "private area", the obstacle vehicles judged as "stuck" are neglected if this param is set as true.
         yield_stuck:
+          turn_direction:
+            left: true
+            right: false
+            straight: false
           distance_thr: 2.0 # [m]
 
       collision_detection:
