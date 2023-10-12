@@ -99,7 +99,7 @@
   <!-- Radar long range integration methods -->
   <arg
     name="radar_long_range_integration"
-    default="detection"
+    default="tracking"
     description="integration method for radar long range information.
    'detection' means radar information is merged in detection launch. 'tracking' means radar information is merged in tracking launch. 'none' means radar information is not merged."
   />
