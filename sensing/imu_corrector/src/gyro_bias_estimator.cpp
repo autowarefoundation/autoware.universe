@@ -78,6 +78,16 @@ void GyroBiasEstimator::callback_imu(const Imu::ConstSharedPtr imu_msg_ptr)
   gyro.vector = transform_vector3(imu_msg_ptr->angular_velocity, *tf_imu2base_ptr);
 
   gyro_all_.push_back(gyro);
+
+  // Publish results for debugging
+  if (gyro_bias_ != std::nullopt) {
+    Vector3Stamped gyro_bias_msg;
+
+    gyro_bias_msg.header.stamp = this->now();
+    gyro_bias_msg.vector = gyro_bias_.value();
+
+    gyro_bias_pub_->publish(gyro_bias_msg);
+  }
 }
 
 void GyroBiasEstimator::callback_pose(const PoseWithCovarianceStamped::ConstSharedPtr pose_msg_ptr)
