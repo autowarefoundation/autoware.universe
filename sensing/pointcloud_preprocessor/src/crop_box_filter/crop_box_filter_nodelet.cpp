@@ -119,7 +119,8 @@ void CropBoxFilterComponent::faster_filter(
   stop_watch_ptr_->toc("processing_time", true);
 
   if (indices) {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Indices are not supported and will be ignored");
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 1000, "Indices are not supported and will be ignored");
   }
 
   int x_offset = input->fields[pcl::getFieldIndex(*input, "x")].offset;
@@ -165,7 +166,9 @@ void CropBoxFilterComponent::faster_filter(
   }
 
   if (skipped_count > 0) {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "%d points contained NaN values and have been ignored", skipped_count);
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 1000, "%d points contained NaN values and have been ignored",
+      skipped_count);
   }
 
   output.data.resize(output_size);
