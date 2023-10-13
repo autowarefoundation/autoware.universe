@@ -1454,12 +1454,15 @@ bool IntersectionModule::checkCollision(
       return false;
     }
     const double dist_to_stop_line = target_object.dist_to_stop_line.value();
+    if (dist_to_stop_line < 0) {
+      return false;
+    }
     const double v = target_object.object.kinematics.initial_twist_with_covariance.twist.linear.x;
     const double braking_distance =
       v * v /
       (2.0 * std::fabs(planner_param_.collision_detection.ignore_on_amber_traffic_light
                          .object_expected_deceleration));
-    return braking_distance < dist_to_stop_line;
+    return dist_to_stop_line > braking_distance;
   };
 
   // check collision between predicted_path and ego_area

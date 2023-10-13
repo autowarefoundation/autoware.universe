@@ -576,7 +576,7 @@ static std::string getTurnDirection(lanelet::ConstLanelet lane)
 }
 
 /**
- * @param pair lanelets and the vector of original laneles in topological order (not reversed as
+ * @param pair lanelets and the vector of original lanelets in topological order (not reversed as
  *in generateDetectionLaneDivisions())
  **/
 static std::pair<lanelet::ConstLanelets, std::vector<lanelet::ConstLanelets>>
@@ -811,12 +811,12 @@ IntersectionLanelets getObjectiveLanelets(
     occlusion_detection_and_preceding_lanelets_wo_turn_direction.push_back(ll);
   }
 
-  auto [attention_lanelets, original_attention_lanelet_seqs] =
+  auto [attention_lanelets, original_attention_lanelet_sequences] =
     mergeLaneletsByTopologicalSort(detection_and_preceding_lanelets, routing_graph_ptr);
 
   IntersectionLanelets result;
   result.attention_ = std::move(attention_lanelets);
-  for (const auto & original_attention_lanelet_seq : original_attention_lanelet_seqs) {
+  for (const auto & original_attention_lanelet_seq : original_attention_lanelet_sequences) {
     // NOTE: in mergeLaneletsByTopologicalSort(), sub_ids are empty checked, so it is ensured that
     // back() exists.
     std::optional<lanelet::ConstLineString3d> stop_line{std::nullopt};
@@ -841,7 +841,7 @@ IntersectionLanelets getObjectiveLanelets(
   result.conflicting_ = std::move(conflicting_ex_ego_lanelets);
   result.adjacent_ = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, associative_ids);
   // NOTE: occlusion_attention is not inverted here
-  // TODO(Mamoru Sobue): apply mergeLaneletsByTopologicalSort for occulusion lanelets as well and
+  // TODO(Mamoru Sobue): apply mergeLaneletsByTopologicalSort for occlusion lanelets as well and
   // then trim part of them based on curvature threshold
   result.occlusion_attention_ =
     std::move(occlusion_detection_and_preceding_lanelets_wo_turn_direction);
