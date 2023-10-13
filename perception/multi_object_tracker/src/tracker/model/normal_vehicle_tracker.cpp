@@ -535,7 +535,8 @@ bool NormalVehicleTracker::getTrackedObject(
 
   // acc
   acc_with_cov.accel.linear.x = X_t(IDX::AX);
-  acc_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::AX, IDX::AX);
+  acc_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::AX, IDX::AX) * std::cos(X_t(IDX::SLIP));
+  acc_with_cov.covariance[utils::MSG_COV_IDX::Y_Y] = P(IDX::AX, IDX::AX) * std::sin(X_t(IDX::SLIP));
 
   // set shape
   object.shape.dimensions.x = bounding_box_.length;

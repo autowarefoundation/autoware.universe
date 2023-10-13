@@ -83,7 +83,7 @@ BicycleTracker::BicycleTracker(
   ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
   ekf_params_.p0_cov_ax = std::pow(p0_stddev_ax, 2.0);
   ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
-  max_ax_ = 9.8 / 2;
+  max_ax_ = 9.8 * 0.2;
   max_vx_ = tier4_autoware_utils::kmph2mps(100);  // [m/s]
   max_slip_ = tier4_autoware_utils::deg2rad(30);  // [rad/s]
 
@@ -479,7 +479,8 @@ bool BicycleTracker::getTrackedObject(
 
   // acc
   acc_with_cov.accel.linear.x = X_t(IDX::AX);
-  acc_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::AX, IDX::AX);
+  acc_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::AX, IDX::AX) * std::cos(X_t(IDX::SLIP));
+  acc_with_cov.covariance[utils::MSG_COV_IDX::Y_Y] = P(IDX::AX, IDX::AX) * std::sin(X_t(IDX::SLIP));
 
   // set shape
   object.shape.dimensions.x = bounding_box_.length;
