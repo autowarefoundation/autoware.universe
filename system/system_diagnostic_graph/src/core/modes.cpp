@@ -43,13 +43,13 @@ OperationModes::OperationModes(rclcpp::Node & node, const std::vector<BaseNode *
   };
 
   // clang-format off
-  stop_mode_ =            find_node(paths, "/autoware/operation/stop");
-  autonomous_mode_ =      find_node(paths, "/autoware/operation/autonomous");
-  local_mode_ =           find_node(paths, "/autoware/operation/local");
-  remote_mode_ =          find_node(paths, "/autoware/operation/remote");
-  emergency_stop_mrm_ =   find_node(paths, "/autoware/operation/emergency-stop");
-  comfortable_stop_mrm_ = find_node(paths, "/autoware/operation/comfortable-stop");
-  pull_over_mrm_ =        find_node(paths, "/autoware/operation/pull-over");
+  stop_mode_ =            find_node(paths, "/autoware/modes/stop");
+  autonomous_mode_ =      find_node(paths, "/autoware/modes/autonomous");
+  local_mode_ =           find_node(paths, "/autoware/modes/local");
+  remote_mode_ =          find_node(paths, "/autoware/modes/remote");
+  emergency_stop_mrm_ =   find_node(paths, "/autoware/modes/emergency-stop");
+  comfortable_stop_mrm_ = find_node(paths, "/autoware/modes/comfortable-stop");
+  pull_over_mrm_ =        find_node(paths, "/autoware/modes/pull-over");
   // clang-format on
 }
 
