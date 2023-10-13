@@ -813,6 +813,7 @@ IntersectionLanelets getObjectiveLanelets(
 
   auto [attention_lanelets, original_attention_lanelet_seqs] =
     mergeLaneletsByTopologicalSort(detection_and_preceding_lanelets, routing_graph_ptr);
+
   IntersectionLanelets result;
   result.attention_ = std::move(attention_lanelets);
   for (const auto & original_attention_lanelet_seq : original_attention_lanelet_seqs) {
@@ -833,6 +834,10 @@ IntersectionLanelets getObjectiveLanelets(
     result.attention_stop_lines_.push_back(stop_line);
   }
   result.attention_non_preceding_ = std::move(detection_lanelets);
+  // TODO(Mamoru Sobue): find stop lines for attention_non_preceding_ if needed
+  for (unsigned i = 0; i < result.attention_non_preceding_.size(); ++i) {
+    result.attention_non_preceding_stop_lines_.push_back(std::nullopt);
+  }
   result.conflicting_ = std::move(conflicting_ex_ego_lanelets);
   result.adjacent_ = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, associative_ids);
   // NOTE: occlusion_attention is not inverted here
@@ -1228,13 +1233,13 @@ Polygon2d generateStuckVehicleDetectAreaPolygon(
   return polygon;
 }
 
-bool checkAngleForTargetLanelets(
-  const geometry_msgs::msg::Pose & pose, const double longitudinal_velocity,
-  const lanelet::ConstLanelets & target_lanelets, const double detection_area_angle_thr,
-  const bool consider_wrong_direction_vehicle, const double dist_margin,
-  const double parked_vehicle_speed_threshold)
+std::optional<size_t> checkAngleForTargetLanelets(
+  const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
+  const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle,
+  const double dist_margin, const bool is_parked_vehicle)
 {
-  for (const auto & ll : target_lanelets) {
+  for (unsigned i = 0; i < target_lanelets.size(); ++i) {
+    const auto & ll = target_lanelets.at(i);
     if (!lanelet::utils::isInLanelet(pose, ll, dist_margin)) {
       continue;
     }
@@ -1243,39 +1248,38 @@ bool checkAngleForTargetLanelets(
     const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle, -M_PI);
     if (consider_wrong_direction_vehicle) {
       if (std::fabs(angle_diff) > 1.57 || std::fabs(angle_diff) < detection_area_angle_thr) {
-        return true;
+        return std::make_optional<size_t>(i);
       }
     } else {
       if (std::fabs(angle_diff) < detection_area_angle_thr) {
-        return true;
+        return std::make_optional<size_t>(i);
       }
       // NOTE: sometimes parked vehicle direction is reversed even if its longitudinal velocity is
       // positive
       if (
-        std::fabs(longitudinal_velocity) < parked_vehicle_speed_threshold &&
-        (std::fabs(angle_diff) < detection_area_angle_thr ||
-         (std::fabs(angle_diff + M_PI) < detection_area_angle_thr))) {
-        return true;
+        is_parked_vehicle && (std::fabs(angle_diff) < detection_area_angle_thr ||
+                              (std::fabs(angle_diff + M_PI) < detection_area_angle_thr))) {
+        return std::make_optional<size_t>(i);
       }
     }
   }
-  return false;
+  return std::nullopt;
 }
 
 void cutPredictPathWithDuration(
-  autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
-  const rclcpp::Clock::SharedPtr clock, const double time_thr)
+  util::TargetObjects * target_objects, const rclcpp::Clock::SharedPtr clock, const double time_thr)
 {
   const rclcpp::Time current_time = clock->now();
-  for (auto & object : objects_ptr->objects) {                         // each objects
-    for (auto & predicted_path : object.kinematics.predicted_paths) {  // each predicted paths
+  for (auto & target_object : target_objects->all) {  // each objects
+    for (auto & predicted_path :
+         target_object.object.kinematics.predicted_paths) {  // each predicted paths
       const auto origin_path = predicted_path;
       predicted_path.path.clear();
 
       for (size_t k = 0; k < origin_path.path.size(); ++k) {  // each path points
         const auto & predicted_pose = origin_path.path.at(k);
         const auto predicted_time =
-          rclcpp::Time(objects_ptr->header.stamp) +
+          rclcpp::Time(target_objects->header.stamp) +
           rclcpp::Duration(origin_path.time_step) * static_cast<double>(k);
         if ((predicted_time - current_time).seconds() < time_thr) {
           predicted_path.path.push_back(predicted_pose);
@@ -1477,6 +1481,24 @@ std::optional<PathLanelets> generatePathLanelets(
     }
   }
   return path_lanelets;
+}
+
+void TargetObject::calc_dist_to_stop_line()
+{
+  if (!attention_lanelet || !stop_line) {
+    return;
+  }
+  const auto attention_lanelet_val = attention_lanelet.value();
+  const auto object_arc_coords = lanelet::utils::getArcCoordinates(
+    {attention_lanelet_val}, object.kinematics.initial_pose_with_covariance.pose);
+  const auto stop_line_val = stop_line.value();
+  geometry_msgs::msg::Pose stopline_center;
+  stopline_center.position.x = (stop_line_val.front().x() + stop_line_val.back().x()) / 2.0;
+  stopline_center.position.y = (stop_line_val.front().y() + stop_line_val.back().y()) / 2.0;
+  stopline_center.position.z = (stop_line_val.front().z() + stop_line_val.back().z()) / 2.0;
+  const auto stopline_arc_coords =
+    lanelet::utils::getArcCoordinates({attention_lanelet_val}, stopline_center);
+  dist_to_stop_line = (stopline_arc_coords.length - object_arc_coords.length);
 }
 
 }  // namespace util
