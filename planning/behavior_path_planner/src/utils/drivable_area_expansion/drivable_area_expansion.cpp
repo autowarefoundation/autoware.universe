@@ -61,27 +61,23 @@ void reuse_previous_points(
       }
     }
   }
-  const auto resampled_path_points =
-    motion_utils::resamplePath(path, params.resample_interval, true, true, false).points;
-  auto first_path_idx =
-    cropped_poses.empty()
-      ? 0LU
-      : *motion_utils::findNearestSegmentIndex(resampled_path_points, cropped_poses.back()) + 1;
-  // make sure we do not had the same last point or segment
-  if (
-    !cropped_poses.empty() && resampled_path_points.size() > first_path_idx + 1 &&
-    tier4_autoware_utils::calcDistance2d(
-      resampled_path_points[first_path_idx + 1], cropped_poses.back()) < 1e-1)
-    first_path_idx += 2;
-  else if (
-    !cropped_poses.empty() && tier4_autoware_utils::calcDistance2d(
-                                resampled_path_points[first_path_idx], cropped_poses.back()) < 1e-1)
-    ++first_path_idx;
-  for (auto idx = first_path_idx; idx < resampled_path_points.size(); ++idx)
-    cropped_poses.push_back(resampled_path_points[idx].point.pose);
-  cropped_poses = motion_utils::cropForwardPoints(
-    cropped_poses, cropped_poses.front().position, 0LU, params.max_path_arc_length);
-
+  if (cropped_poses.empty()) {
+    const auto resampled_path_points =
+      motion_utils::resamplePath(path, params.resample_interval, true, true, false).points;
+    for (const auto & p : resampled_path_points) cropped_poses.push_back(p.point.pose);
+    cropped_poses =
+      motion_utils::cropForwardPoints(cropped_poses, ego_point, 0LU, params.max_path_arc_length);
+  } else if (!path.points.empty()) {
+    const auto initial_arc_length = motion_utils::calcArcLength(cropped_poses);
+    const auto max_path_arc_length = motion_utils::calcArcLength(path.points);
+    const auto first_arc_length = motion_utils::calcSignedArcLength(
+      path.points, path.points.front().point.pose.position, cropped_poses.back().position);
+    for (auto arc_length = first_arc_length + params.resample_interval;
+         initial_arc_length + (arc_length - first_arc_length) <= params.max_path_arc_length &&
+         arc_length <= max_path_arc_length;
+         arc_length += params.resample_interval)
+      cropped_poses.push_back(motion_utils::calcInterpolatedPose(path.points, arc_length));
+  }
   prev_poses = cropped_poses;
   prev_curvatures = cropped_curvatures;
 }
