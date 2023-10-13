@@ -1861,8 +1861,8 @@ ManeuverProbability MapBasedPredictionNode::calculateManeuverProbability(
     lane_follow_probability = 0.0;
 
     // If the given lane is empty, the probability goes to 0
-    left_lane_change_probability = LC_PROB * !left_paths.empty();
-    right_lane_change_probability = RC_PROB * !right_paths.empty();
+    left_lane_change_probability = left_paths.empty() ? 0.0 : LC_PROB;
+    right_lane_change_probability = right_paths.empty() ? 0.0 : RC_PROB;
   }
 
   const float MIN_PROBABILITY = 1e-3;
