@@ -13,4 +13,7 @@
   <node pkg="autoware_auto_msgs_adapter" exec="autoware_auto_msgs_adapter_exe" name="autoware_auto_msgs_adapter_perception" output="screen">
     <param from="$(var perception_param_path)"/>
   </node>
+  <node pkg="autoware_auto_msgs_adapter" exec="autoware_auto_msgs_adapter_exe" name="autoware_auto_msgs_adapter_planning" output="screen">
+  <param from="$(var planning_param_path)"/>
+
 </launch>
