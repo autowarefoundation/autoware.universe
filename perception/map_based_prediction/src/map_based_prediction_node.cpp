@@ -852,7 +852,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     switch (label) {
       case ObjectClassification::PEDESTRIAN:
       case ObjectClassification::BICYCLE: {
-        auto predicted_object_crosswalk = getPredictedObjectAsCrosswalkUser(transformed_object);
+        const auto predicted_object_crosswalk =
+          getPredictedObjectAsCrosswalkUser(transformed_object);
         output.objects.push_back(predicted_object_crosswalk);
         break;
       }
@@ -865,7 +866,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         updateObjectData(transformed_object);
 
         // Get Closest Lanelet
-        auto current_lanelets = getCurrentLanelets(transformed_object);
+        const auto current_lanelets = getCurrentLanelets(transformed_object);
 
         // Update Objects History
         updateObjectsHistory(output.header, transformed_object, current_lanelets);
