@@ -8,6 +8,7 @@
     # Dynamic expansion by using the path curvature
     dynamic_expansion:
       enabled: true
+      print_runtime: false
       max_expansion_distance: 0.0 # [m] maximum distance by which the drivable area can be expended (0.0 means no limit)
       smoothing:
         curvature_average_window: 3  # window size used for smoothing the curvatures using a moving window average

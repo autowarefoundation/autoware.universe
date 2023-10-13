@@ -306,10 +306,11 @@ void expand_drivable_area(
   const auto expand_ms = stop_watch.toc("expand");
 
   const auto total_ms = stop_watch.toc("overall");
-  std::printf(
-    "Total runtime(ms): %2.2f\n\tPreprocessing: %2.2f\n\tCrop: %2.2f\n\tCurvature expansion: "
-    "%2.2f\n\tMaximum expansion: %2.2f\n\tSmoothing: %2.2f\n\tExpansion: %2.2f\n\n",
-    total_ms, preprocessing_ms, crop_ms, curv_expansion_ms, max_dist_ms, smooth_ms, expand_ms);
+  if (params.print_runtime)
+    std::printf(
+      "Total runtime(ms): %2.2f\n\tPreprocessing: %2.2f\n\tCrop: %2.2f\n\tCurvature expansion: "
+      "%2.2f\n\tMaximum expansion: %2.2f\n\tSmoothing: %2.2f\n\tExpansion: %2.2f\n\n",
+      total_ms, preprocessing_ms, crop_ms, curv_expansion_ms, max_dist_ms, smooth_ms, expand_ms);
 
   planner_data->drivable_area_expansion_prev_path_poses = path_poses;
   planner_data->drivable_area_expansion_prev_curvatures = curvatures;

@@ -57,6 +57,7 @@ struct DrivableAreaExpansionParameters
     "dynamic_expansion.smoothing.curvature_average_window";
   static constexpr auto SMOOTHING_MAX_BOUND_RATE_PARAM =
     "dynamic_expansion.smoothing.max_bound_rate";
+  static constexpr auto PRINT_RUNTIME_PARAM = "dynamic_expansion.print_runtime";
 
   // static expansion
   double drivable_area_right_bound_offset{};
@@ -79,6 +80,7 @@ struct DrivableAreaExpansionParameters
   double resample_interval{};
   double max_reuse_deviation{};
   bool avoid_dynamic_objects{};
+  bool print_runtime{};
   std::vector<std::string> avoid_linestring_types{};
   vehicle_info_util::VehicleInfo vehicle_info;
 
@@ -115,6 +117,7 @@ struct DrivableAreaExpansionParameters
       node.declare_parameter<std::vector<std::string>>(AVOID_LINESTRING_TYPES_PARAM);
     avoid_dynamic_objects = node.declare_parameter<bool>(AVOID_DYN_OBJECTS_PARAM);
     avoid_linestring_dist = node.declare_parameter<double>(AVOID_LINESTRING_DIST_PARAM);
+    print_runtime = node.declare_parameter<bool>(PRINT_RUNTIME_PARAM);
 
     vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
   }
