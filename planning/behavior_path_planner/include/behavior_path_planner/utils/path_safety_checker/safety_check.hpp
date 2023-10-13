@@ -76,7 +76,7 @@ double calcRssDistance(
 
 double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
-  const BehaviorPathPlannerParameters & params);
+  const RSSparams & rss_params);
 
 boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
   const std::vector<PoseWithVelocityStamped> & path, const double relative_time);
