@@ -3,7 +3,7 @@
 ## Purpose
 
 This node monitors the ROS 2 environments and detect duplication of node names in the environment.
-The result is publushed as diagnostics.
+The result is published as diagnostics.
 
 ### Standalone Startup
 
