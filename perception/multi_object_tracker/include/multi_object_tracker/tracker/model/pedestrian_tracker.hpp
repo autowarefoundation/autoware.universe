@@ -37,17 +37,20 @@ private:
     Y = 1,
     YAW = 2,
     VX = 3,
-    WZ = 4,
+    AX = 4,
+    WZ = 5,
   };
   struct EkfParams
   {
-    char dim_x = 5;
+    char dim_x = 6;
     float q_cov_x;
     float q_cov_y;
     float q_cov_yaw;
     float q_cov_wz;
     float q_cov_vx;
+    float q_cov_ax;
     float p0_cov_vx;
+    float p0_cov_ax;
     float p0_cov_wz;
     float r_cov_x;
     float r_cov_y;
@@ -58,6 +61,7 @@ private:
   } ekf_params_;
 
   double max_vx_;
+  double max_ax_;
   double max_wz_;
   float z_;
 

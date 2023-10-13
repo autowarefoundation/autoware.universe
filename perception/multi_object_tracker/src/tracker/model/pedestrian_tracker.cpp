@@ -57,6 +57,7 @@ PedestrianTracker::PedestrianTracker(
   float q_stddev_y = 0.4;                                     // [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
   float q_stddev_vx = tier4_autoware_utils::kmph2mps(5);      // [m/(s*s)]
+  float q_stddev_ax = 9.8 * 0.1;                              // [m/(s*s)]
   float q_stddev_wz = tier4_autoware_utils::deg2rad(20);      // [rad/(s*s)]
   float r_stddev_x = 0.4;                                     // [m]
   float r_stddev_y = 0.4;                                     // [m]
@@ -65,11 +66,13 @@ PedestrianTracker::PedestrianTracker(
   float p0_stddev_y = 1.0;                                    // [m/s]
   float p0_stddev_yaw = tier4_autoware_utils::deg2rad(1000);  // [rad/s]
   float p0_stddev_vx = tier4_autoware_utils::kmph2mps(5);     // [m/(s*s)]
+  float p0_stddev_ax = 9.8 * 0.1;                             // [m/(s*s)]
   float p0_stddev_wz = tier4_autoware_utils::deg2rad(10);     // [rad/(s*s)]
   ekf_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
   ekf_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
   ekf_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
   ekf_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
+  ekf_params_.q_cov_ax = std::pow(q_stddev_ax, 2.0);
   ekf_params_.q_cov_wz = std::pow(q_stddev_wz, 2.0);
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
@@ -78,9 +81,11 @@ PedestrianTracker::PedestrianTracker(
   ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
   ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
   ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
+  ekf_params_.p0_cov_ax = std::pow(p0_stddev_ax, 2.0);
   ekf_params_.p0_cov_wz = std::pow(p0_stddev_wz, 2.0);
   max_vx_ = tier4_autoware_utils::kmph2mps(10);  // [m/s]
-  max_wz_ = tier4_autoware_utils::deg2rad(30);   // [rad/s]
+  max_ax_ = 9.8 * 0.5;
+  max_wz_ = tier4_autoware_utils::deg2rad(30);  // [rad/s]
 
   // initialize X matrix
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
@@ -94,6 +99,7 @@ PedestrianTracker::PedestrianTracker(
     X(IDX::VX) = 0.0;
     X(IDX::WZ) = 0.0;
   }
+  X(IDX::AX) = 0.0;
 
   // initialize P matrix
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -128,6 +134,7 @@ PedestrianTracker::PedestrianTracker(
       P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
       P(IDX::WZ, IDX::WZ) = ekf_params_.p0_cov_wz;
     }
+    P(IDX::AX, IDX::AX) = ekf_params_.p0_cov_ax;
   }
 
   bounding_box_ = {0.5, 0.5, 1.7};
@@ -159,18 +166,20 @@ bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
    * x_{k+1}   = x_k + vx_k * cos(yaw_k) * dt
    * y_{k+1}   = y_k + vx_k * sin(yaw_k) * dt
    * yaw_{k+1} = yaw_k + (wz_k) * dt
-   * vx_{k+1}  = vx_k
+   * vx_{k+1}  = vx_k + ax_k * dt
+   * ax_{k+1}  = ax_k
    * wz_{k+1}  = wz_k
    *
    */
 
   /*  == Linearized model ==
    *
-   * A = [ 1, 0, -vx*sin(yaw)*dt, cos(yaw)*dt,  0]
-   *     [ 0, 1,  vx*cos(yaw)*dt, sin(yaw)*dt,  0]
-   *     [ 0, 0,               1,           0, dt]
-   *     [ 0, 0,               0,           1,  0]
-   *     [ 0, 0,               0,           0,  1]
+   * A = [ 1, 0, -vx*sin(yaw)*dt, cos(yaw)*dt, 0, 0]
+   *     [ 0, 1,  vx*cos(yaw)*dt, sin(yaw)*dt, 0, 0]
+   *     [ 0, 0,               1,           0, 0, dt]
+   *     [ 0, 0,               0,           1, dt, 0]
+   *     [ 0, 0,               0,           0,  1, 0]
+   *     [ 0, 0,               0,           0,  0, 1]
    */
 
   // X t
@@ -185,8 +194,9 @@ bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
   X_next_t(IDX::X) = X_t(IDX::X) + X_t(IDX::VX) * cos_yaw * dt;  // dx = v * cos(yaw)
   X_next_t(IDX::Y) = X_t(IDX::Y) + X_t(IDX::VX) * sin_yaw * dt;  // dy = v * sin(yaw)
   X_next_t(IDX::YAW) = X_t(IDX::YAW) + (X_t(IDX::WZ)) * dt;      // dyaw = omega
-  X_next_t(IDX::VX) = X_t(IDX::VX);
+  X_next_t(IDX::VX) = X_t(IDX::VX) + X_t(IDX::AX) * dt;          // dvx = a
   X_next_t(IDX::WZ) = X_t(IDX::WZ);
+  X_next_t(IDX::AX) = X_t(IDX::AX);
 
   // A
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -195,6 +205,7 @@ bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
   A(IDX::Y, IDX::YAW) = X_t(IDX::VX) * cos_yaw * dt;
   A(IDX::Y, IDX::VX) = sin_yaw * dt;
   A(IDX::YAW, IDX::WZ) = dt;
+  A(IDX::VX, IDX::AX) = dt;
 
   // Q
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -209,6 +220,7 @@ bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
   Q(IDX::YAW, IDX::YAW) = ekf_params_.q_cov_yaw * dt * dt;
   Q(IDX::VX, IDX::VX) = ekf_params_.q_cov_vx * dt * dt;
   Q(IDX::WZ, IDX::WZ) = ekf_params_.q_cov_wz * dt * dt;
+  Q(IDX::AX, IDX::AX) = ekf_params_.q_cov_ax * dt * dt;
   Eigen::MatrixXd B = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   Eigen::MatrixXd u = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
 
@@ -284,6 +296,9 @@ bool PedestrianTracker::measureWithPose(
     if (!(-max_vx_ <= X_t(IDX::VX) && X_t(IDX::VX) <= max_vx_)) {
       X_t(IDX::VX) = X_t(IDX::VX) < 0 ? -max_vx_ : max_vx_;
     }
+    if (!(-max_ax_ <= X_t(IDX::AX) && X_t(IDX::AX) <= max_ax_)) {
+      X_t(IDX::AX) = X_t(IDX::AX) < 0 ? -max_ax_ : max_ax_;
+    }
     if (!(-max_wz_ <= X_t(IDX::WZ) && X_t(IDX::WZ) <= max_wz_)) {
       X_t(IDX::WZ) = X_t(IDX::WZ) < 0 ? -max_wz_ : max_wz_;
     }
@@ -358,6 +373,7 @@ bool PedestrianTracker::getTrackedObject(
 
   auto & pose_with_cov = object.kinematics.pose_with_covariance;
   auto & twist_with_cov = object.kinematics.twist_with_covariance;
+  auto & acc_with_cov = object.kinematics.acceleration_with_covariance;
 
   // position
   pose_with_cov.pose.position.x = X_t(IDX::X);
@@ -407,6 +423,10 @@ bool PedestrianTracker::getTrackedObject(
   twist_with_cov.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
+
+  // acc
+  acc_with_cov.accel.linear.x = X_t(IDX::AX);
+  acc_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::AX, IDX::AX);
 
   // set shape
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
