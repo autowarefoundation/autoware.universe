@@ -13,9 +13,7 @@
           "description": "The scanning and update frequency of the checker."
         }
       },
-      "required": [
-        "update_rate"
-      ]
+      "required": ["update_rate"]
     }
   },
   "properties": {
