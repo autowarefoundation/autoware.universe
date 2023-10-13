@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This node monitors the ROS2 environments and detect duplication of node names in the envionrment.
+This node monitors the ROS 2 environments and detect duplication of node names in the environment.
 The result is publushed as diagnostics.
 
 ### Standalone Startup
