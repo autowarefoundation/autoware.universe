@@ -25,22 +25,50 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
+#include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
 
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include <lanelet2_core/primitives/LineString.h>
 
 #include <algorithm>
 #include <limits>
+#include <map>
 #include <memory>
 #include <tuple>
 #include <vector>
-
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
+
+namespace
+{
+Polygon2d createOneStepPolygon(
+  const geometry_msgs::msg::Pose & prev_pose, const geometry_msgs::msg::Pose & next_pose,
+  const autoware_auto_perception_msgs::msg::Shape & shape)
+{
+  const auto prev_poly = tier4_autoware_utils::toPolygon2d(prev_pose, shape);
+  const auto next_poly = tier4_autoware_utils::toPolygon2d(next_pose, shape);
+
+  Polygon2d one_step_poly;
+  for (const auto & point : prev_poly.outer()) {
+    one_step_poly.outer().push_back(point);
+  }
+  for (const auto & point : next_poly.outer()) {
+    one_step_poly.outer().push_back(point);
+  }
+
+  bg::correct(one_step_poly);
+
+  Polygon2d convex_one_step_poly;
+  bg::convex_hull(one_step_poly, convex_one_step_poly);
+
+  return convex_one_step_poly;
+}
+}  // namespace
 
 static bool isTargetCollisionVehicleType(
   const autoware_auto_perception_msgs::msg::PredictedObject & object)
@@ -95,10 +123,6 @@ IntersectionModule::IntersectionModule(
   {
     occlusion_stop_state_machine_.setMarginTime(planner_param_.occlusion.stop_release_margin_time);
     occlusion_stop_state_machine_.setState(StateMachine::State::GO);
-  }
-  {
-    stuck_private_area_timeout_.setMarginTime(planner_param_.stuck_vehicle.timeout_private_area);
-    stuck_private_area_timeout_.setState(StateMachine::State::STOP);
   }
   {
     temporal_stop_before_attention_state_machine_.setMarginTime(
@@ -811,6 +835,36 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   return true;
 }
 
+static bool isGreenSolidOn(
+  lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos)
+{
+  using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement;
+
+  std::optional<int> tl_id = std::nullopt;
+  for (auto && tl_reg_elem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
+    tl_id = tl_reg_elem->id();
+    break;
+  }
+  if (!tl_id) {
+    // this lane has no traffic light
+    return false;
+  }
+  const auto tl_info_it = tl_infos.find(tl_id.value());
+  if (tl_info_it == tl_infos.end()) {
+    // the info of this traffic light is not available
+    return false;
+  }
+  const auto & tl_info = tl_info_it->second;
+  for (auto && tl_light : tl_info.signal.elements) {
+    if (
+      tl_light.color == TrafficSignalElement::GREEN &&
+      tl_light.shape == TrafficSignalElement::CIRCLE) {
+      return true;
+    }
+  }
+  return false;
+}
+
 IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
@@ -850,7 +904,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     util::getTrafficPrioritizedLevel(assigned_lanelet, planner_data_->traffic_light_id_map);
   const bool is_prioritized =
     traffic_prioritized_level == util::TrafficPrioritizedLevel::FULLY_PRIORITIZED;
-  intersection_lanelets.update(is_prioritized, interpolated_path_info);
+  const auto footprint = planner_data_->vehicle_info_.createFootprint(0.0, 0.0);
+  intersection_lanelets.update(is_prioritized, interpolated_path_info, footprint);
 
   // this is abnormal
   const auto & conflicting_lanelets = intersection_lanelets.conflicting();
@@ -918,16 +973,13 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const bool stuck_detected = checkStuckVehicle(planner_data_, path_lanelets);
   if (stuck_detected && stuck_stop_line_idx_opt) {
     auto stuck_stop_line_idx = stuck_stop_line_idx_opt.value();
-    const bool stopped_at_stuck_line = stoppedForDuration(
-      stuck_stop_line_idx, planner_param_.stuck_vehicle.timeout_private_area,
-      stuck_private_area_timeout_);
-    const bool timeout = (is_private_area_ && stopped_at_stuck_line);
-    if (!timeout) {
+    if (is_private_area_ && planner_param_.stuck_vehicle.enable_private_area_stuck_disregard) {
       if (
         default_stop_line_idx_opt &&
         fromEgoDist(stuck_stop_line_idx) < -planner_param_.common.stop_overshoot_margin) {
         stuck_stop_line_idx = default_stop_line_idx_opt.value();
       }
+    } else {
       return IntersectionModule::StuckStop{
         closest_idx, stuck_stop_line_idx, occlusion_peeking_stop_line_idx_opt};
     }
@@ -1001,13 +1053,52 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     debug_data_.intersection_area = toGeomPoly(intersection_area_2d);
   }
 
+  const auto target_objects =
+    filterTargetObjects(attention_lanelets, adjacent_lanelets, intersection_area);
+
+  // If there are any vehicles on the attention area when ego entered the intersection on green
+  // light, do pseudo collision detection because the vehicles are very slow and no collisions may
+  // be detected. check if ego vehicle entered assigned lanelet
+  const bool is_green_solid_on =
+    isGreenSolidOn(assigned_lanelet, planner_data_->traffic_light_id_map);
+  if (is_green_solid_on) {
+    if (!initial_green_light_observed_time_) {
+      const auto assigned_lane_begin_point = assigned_lanelet.centerline().front();
+      const bool approached_assigned_lane =
+        motion_utils::calcSignedArcLength(
+          path->points, closest_idx,
+          tier4_autoware_utils::createPoint(
+            assigned_lane_begin_point.x(), assigned_lane_begin_point.y(),
+            assigned_lane_begin_point.z())) <
+        planner_param_.collision_detection.yield_on_green_traffic_light
+          .distance_to_assigned_lanelet_start;
+      if (approached_assigned_lane) {
+        initial_green_light_observed_time_ = clock_->now();
+      }
+    }
+    if (initial_green_light_observed_time_) {
+      const auto now = clock_->now();
+      const bool exist_close_vehicles = std::any_of(
+        target_objects.objects.begin(), target_objects.objects.end(), [&](const auto & object) {
+          return tier4_autoware_utils::calcDistance3d(
+                   object.kinematics.initial_pose_with_covariance.pose, current_pose) <
+                 planner_param_.collision_detection.yield_on_green_traffic_light.range;
+        });
+      if (
+        exist_close_vehicles &&
+        rclcpp::Duration((now - initial_green_light_observed_time_.value())).seconds() <
+          planner_param_.collision_detection.yield_on_green_traffic_light.duration) {
+        return IntersectionModule::NonOccludedCollisionStop{
+          closest_idx, collision_stop_line_idx, occlusion_stop_line_idx};
+      }
+    }
+  }
+
   // calculate dynamic collision around attention area
   const double time_to_restart = (is_go_out_ || is_prioritized)
                                    ? 0.0
                                    : (planner_param_.collision_detection.state_transit_margin_time -
                                       collision_state_machine_.getDuration());
-  const auto target_objects =
-    filterTargetObjects(attention_lanelets, adjacent_lanelets, intersection_area);
 
   const bool has_collision = checkCollision(
     *path, target_objects, path_lanelets, closest_idx,
@@ -1122,6 +1213,15 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
 bool IntersectionModule::checkStuckVehicle(
   const std::shared_ptr<const PlannerData> & planner_data, const util::PathLanelets & path_lanelets)
 {
+  const bool stuck_detection_direction = [&]() {
+    return (turn_direction_ == "left" && planner_param_.stuck_vehicle.turn_direction.left) ||
+           (turn_direction_ == "right" && planner_param_.stuck_vehicle.turn_direction.right) ||
+           (turn_direction_ == "straight" && planner_param_.stuck_vehicle.turn_direction.straight);
+  }();
+  if (!stuck_detection_direction) {
+    return false;
+  }
+
   const auto & objects_ptr = planner_data->predicted_objects;
 
   // considering lane change in the intersection, these lanelets are generated from the path
@@ -1249,14 +1349,14 @@ bool IntersectionModule::checkCollision(
       // collision point
       const auto first_itr = std::adjacent_find(
         predicted_path.path.cbegin(), predicted_path.path.cend(),
-        [&ego_poly](const auto & a, const auto & b) {
-          return bg::intersects(ego_poly, LineString2d{to_bg2d(a), to_bg2d(b)});
+        [&ego_poly, &object](const auto & a, const auto & b) {
+          return bg::intersects(ego_poly, createOneStepPolygon(a, b, object.shape));
         });
       if (first_itr == predicted_path.path.cend()) continue;
       const auto last_itr = std::adjacent_find(
         predicted_path.path.crbegin(), predicted_path.path.crend(),
-        [&ego_poly](const auto & a, const auto & b) {
-          return bg::intersects(ego_poly, LineString2d{to_bg2d(a), to_bg2d(b)});
+        [&ego_poly, &object](const auto & a, const auto & b) {
+          return bg::intersects(ego_poly, createOneStepPolygon(a, b, object.shape));
         });
       if (last_itr == predicted_path.path.crend()) continue;
 
