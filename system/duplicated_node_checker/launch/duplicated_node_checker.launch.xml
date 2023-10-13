@@ -1,7 +1,7 @@
 <launch>
-  <arg name="update_rate" default="10.0" description="update rate[Hz]"/>
+  <arg name="param_file" default="$(find-pkg-share duplicated_node_checker)/config/duplicated_node_checker.param.yaml"/>
 
   <node pkg="duplicated_node_checker" exec="duplicated_node_checker_node" name="duplicated_node_checker" output="screen">
-    <param name="update_rate" value="$(var update_rate)"/>
+    <param from="$(var param_file)"/>
   </node>
 </launch>

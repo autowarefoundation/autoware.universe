@@ -27,7 +27,7 @@ namespace duplicated_node_checker
 DuplicatedNodeChecker::DuplicatedNodeChecker(const rclcpp::NodeOptions & node_options)
 : Node("duplicated_node_checker", node_options)
 {
-  double update_rate = declare_parameter("update_rate", 10.0);
+  double update_rate = declare_parameter<double>("update_rate");
   updater_.setHardwareID("duplicated_node_checker");
   updater_.add("duplicated_node_checker", this, &DuplicatedNodeChecker::produceDiagnostics);
 

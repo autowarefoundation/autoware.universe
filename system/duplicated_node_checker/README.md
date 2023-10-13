@@ -30,9 +30,7 @@ The types of topic status and corresponding diagnostic status are following.
 
 ## Parameters
 
-| Name          | Type   | Default Value | Description                |
-| ------------- | ------ | ------------- | -------------------------- |
-| `update_rate` | double | 10.0          | Timer callback period [Hz] |
+{{ json_to_markdown("system/duplicated_node_checker/schema/duplicated_node_checker.schema.json") }}
 
 ## Assumptions / Known limits
 
