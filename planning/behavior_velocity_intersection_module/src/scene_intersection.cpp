@@ -1384,9 +1384,9 @@ util::TargetObjects IntersectionModule::generateTargetObjects(
                  planner_param_.common.attention_area_angle_thr,
                  planner_param_.common.consider_wrong_direction_vehicle,
                  planner_param_.common.attention_area_margin, is_parked_vehicle);
-               belong_attention_lanelet_id) {
+               belong_attention_lanelet_id.has_value()) {
       // intersection_area is not available, use detection_area_with_margin as before
-      const auto id = belong_adjacent_lanelet_id.value();
+      const auto id = belong_attention_lanelet_id.value();
       util::TargetObject target_object;
       target_object.object = object;
       target_object.attention_lanelet = attention_lanelets.at(id);
