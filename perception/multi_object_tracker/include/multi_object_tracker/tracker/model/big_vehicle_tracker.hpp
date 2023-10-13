@@ -35,7 +35,7 @@ private:
   enum IDX { X = 0, Y = 1, YAW = 2, VX = 3, AX = 4, SLIP = 5 };
   struct EkfParams
   {
-    char dim_x = 5;
+    char dim_x = 6;
     float q_cov_x;
     float q_cov_y;
     float q_cov_yaw;
