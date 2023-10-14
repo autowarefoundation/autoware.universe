@@ -182,13 +182,15 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 
 #### Steer Offset
 
-| Name                                | Type    | Description                                                                   | Default value |
-| :---------------------------------- | :------ | :---------------------------------------------------------------------------- | :------------ |
-| enable_auto_steering_offset_removal | boolean | flag for auto steering offset removal                                         | true          |
-| update_vel_threshold                | double  | velocity threshold for auto steering offset removal                           | 5.56          |
-| update_steer_threshold              | double  | steering angle threshold for auto steering offset removal                     | 0.035         |
-| average_num                         | int     | number of data points for average calculation in auto steering offset removal | 1000          |
-| steering_offset_limit               | double  | maximum allowable steering offset in auto steering offset removal             | 0.02          |
+Defined in the `steering_offset` namespace. This logic is designed as simple as possible, with minimum design parameters.
+
+| Name                                | Type    | Description                                                                                      | Default value |
+| :---------------------------------- | :------ | :----------------------------------------------------------------------------------------------- | :------------ |
+| enable_auto_steering_offset_removal | boolean | Estimate the steering offset and apply compensation                                              | true          |
+| update_vel_threshold                | double  | If the velocity is smaller than this value, the data is not used for the offset estimation       | 5.56          |
+| update_steer_threshold              | double  | If the steering angle is larger than this value, the data is not used for the offset estimation. | 0.035         |
+| average_num                         | int     | The average of this number of data is used as a steering offset.                                 | 1000          |
+| steering_offset_limit               | double  | The angle limit to be applied to the offset compensation.                                        | 0.02          |
 
 ##### For dynamics model (WIP)
 
