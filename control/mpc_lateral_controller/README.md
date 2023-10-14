@@ -67,7 +67,7 @@ Set the following from the [controller_node](../trajectory_follower_node/README.
 
 - `autoware_auto_planning_msgs/Trajectory` : reference trajectory to follow.
 - `nav_msgs/Odometry`: current odometry
-- `autoware_auto_vehicle_msgs/SteeringReport` current steering
+- `autoware_auto_vehicle_msgs/SteeringReport`: current steering
 
 ### Outputs
 
@@ -239,10 +239,8 @@ If you want to adjust the effect only in the high-speed range, you can use `weig
 - `weight_steering_input`: Reduce oscillation of tracking.
 - `weight_steering_input_squared_vel_coeff`: Reduce oscillation of tracking in high speed range.
 - `weight_lat_jerk`: Reduce lateral jerk.
-- `weight_terminal_lat_error`: Preferable to set a higher value than normal lateral weight `weight_lat_error` for
-  stability.
-- `weight_terminal_heading_error`: Preferable to set a higher value than normal heading weight `weight_heading_error`
-  for stability.
+- `weight_terminal_lat_error`: Preferable to set a higher value than normal lateral weight `weight_lat_error` for stability.
+- `weight_terminal_heading_error`: Preferable to set a higher value than normal heading weight `weight_heading_error` for stability.
 
 #### Other tips for tuning
 
