@@ -16,14 +16,6 @@
 #define POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_
 
 #include "pointcloud_preprocessor/filter.hpp"
-
-#include <pcl/common/impl/common.hpp>
-
-#include <pcl/filters/extract_indices.h>
-#include <pcl/filters/radius_outlier_removal.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/search/pcl_search.h>
-
 #include <vector>
 
 namespace pointcloud_preprocessor
@@ -32,15 +24,11 @@ class RadiusSearch2DOutlierFilterComponent : public pointcloud_preprocessor::Fil
 {
 protected:
   virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+    const PointCloud2ConstPtr & input, PointCloud2 & output);
 
 private:
   double search_radius_;
   size_t min_neighbors_;
-
-  // pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2> radius_outlier_removal_;
-  pcl::search::Search<pcl::PointXY>::Ptr kd_tree_;
-  // pcl::ExtractIndices<pcl::PCLPointCloud2> extract_indices_;
 
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;

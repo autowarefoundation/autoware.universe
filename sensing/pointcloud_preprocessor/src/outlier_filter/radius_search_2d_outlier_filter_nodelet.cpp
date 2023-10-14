@@ -14,12 +14,6 @@
 
 #include "pointcloud_preprocessor/outlier_filter/radius_search_2d_outlier_filter_nodelet.hpp"
 
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/search/kdtree.h>
-#include <pcl/segmentation/segment_differences.h>
-
-#include <vector>
-
 namespace pointcloud_preprocessor
 {
 RadiusSearch2DOutlierFilterComponent::RadiusSearch2DOutlierFilterComponent(
@@ -32,41 +26,32 @@ RadiusSearch2DOutlierFilterComponent::RadiusSearch2DOutlierFilterComponent(
     search_radius_ = static_cast<double>(declare_parameter("search_radius", 0.2));
   }
 
-  kd_tree_ = pcl::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);
-
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&RadiusSearch2DOutlierFilterComponent::paramCallback, this, _1));
 }
 
 void RadiusSearch2DOutlierFilterComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+  const PointCloud2ConstPtr & input, PointCloud2 & output)
 {
-  std::scoped_lock lock(mutex_);
-  if (indices) {
-    RCLCPP_WARN(get_logger(), "Indices are not supported and will be ignored");
-  }
-  pcl::PointCloud<pcl::PointXYZ>::Ptr xyz_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(*input, *xyz_cloud);
+  size_t point_size input->points.size();
+  std::vector<size_t> neighbors(point_size, 0);
+  for (size_t i = 0; i < point_size; i++) {
+    for (size_t j = i + 1; j < point_size; j++) {
+      size_t square_distance =
+        (input->points[i].x - input->points[j].x) * (input->points[i].x - input->points[j].x) + 
+        (input->points[i].y - input->points[j].y) * (input->points[i].y - input->points[j].y);
+      if (square_distance <= search_radius_ * search_radius_) {
+        neighbors[i]++;
+        neighbors[j]++;
+      }
+    }
 
-  pcl::PointCloud<pcl::PointXY>::Ptr xy_cloud(new pcl::PointCloud<pcl::PointXY>);
-  xy_cloud->points.resize(xyz_cloud->points.size());
-  for (size_t i = 0; i < xyz_cloud->points.size(); ++i) {
-    xy_cloud->points[i].x = xyz_cloud->points[i].x;
-    xy_cloud->points[i].y = xyz_cloud->points[i].y;
-  }
-
-  std::vector<int> k_indices(xy_cloud->points.size());
-  std::vector<float> k_sqr_distances(xy_cloud->points.size());
-  kd_tree_->setInputCloud(xy_cloud);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
-  for (size_t i = 0; i < xy_cloud->points.size(); ++i) {
-    size_t k = kd_tree_->radiusSearch(i, search_radius_, k_indices, k_sqr_distances);
-    if (k >= min_neighbors_) {
-      pcl_output->points.push_back(xyz_cloud->points.at(i));
+    if (neighbors[i] >= min_neighbors_) {
+      output->points.push_back(input[i]);
     }
   }
-  pcl::toROSMsg(*pcl_output, output);
+
   output.header = input->header;
 }
 
