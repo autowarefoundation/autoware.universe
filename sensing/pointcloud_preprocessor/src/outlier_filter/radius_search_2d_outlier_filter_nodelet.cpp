@@ -39,7 +39,7 @@ void RadiusSearch2DOutlierFilterComponent::filter(
   for (size_t i = 0; i < point_size; i++) {
     for (size_t j = i + 1; j < point_size; j++) {
       size_t square_distance =
-        (input->points[i].x - input->points[j].x) * (input->points[i].x - input->points[j].x) + 
+        (input->points[i].x - input->points[j].x) * (input->points[i].x - input->points[j].x) +
         (input->points[i].y - input->points[j].y) * (input->points[i].y - input->points[j].y);
       if (square_distance <= search_radius_ * search_radius_) {
         neighbors[i]++;

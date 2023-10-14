@@ -16,6 +16,7 @@
 #define POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_
 
 #include "pointcloud_preprocessor/filter.hpp"
+
 #include <vector>
 
 namespace pointcloud_preprocessor
@@ -23,8 +24,7 @@ namespace pointcloud_preprocessor
 class RadiusSearch2DOutlierFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, PointCloud2 & output);
+  virtual void filter(const PointCloud2ConstPtr & input, PointCloud2 & output);
 
 private:
   double search_radius_;
