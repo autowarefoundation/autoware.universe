@@ -16,6 +16,7 @@
 #define NODE_HPP_
 
 #include "planner_manager.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <behavior_velocity_planner_common/planner_data.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -111,6 +112,8 @@ private:
   autoware_auto_planning_msgs::msg::Path generatePath(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
     const PlannerData & planner_data);
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace behavior_velocity_planner
 
