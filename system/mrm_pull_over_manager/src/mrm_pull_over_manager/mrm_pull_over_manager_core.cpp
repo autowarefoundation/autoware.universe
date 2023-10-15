@@ -106,7 +106,7 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
   param_.pull_over_point_file_path = declare_parameter<std::string>("pull_over_point_file_path");
   param_.max_goal_pose_num = declare_parameter<int>("max_goal_pose_num");
   param_.yaw_deviation_threshold = declare_parameter<double>("yaw_deviation_threshold");
-  param_.distance_threshold = declare_parameter<double>("distance_threshold");
+  param_.margin_time_to_goal = declare_parameter<double>("margin_time_to_goal");
 
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -299,8 +299,10 @@ std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::filter_nearby_goals(
     // exceeding the threshold is found
     const double arc_length_to_pose = motion_utils::calcSignedArcLength(
       trajectory_->points, odom_->pose.pose.position, it->position);
+    const double distance_threshold = odom_->twist.twist.linear.x * param_.margin_time_to_goal;
     RCLCPP_INFO(this->get_logger(), "distance to the pose: %lf", arc_length_to_pose);
-    if (arc_length_to_pose > param_.distance_threshold) {
+    RCLCPP_INFO(this->get_logger(), "distance threshold: %lf", distance_threshold);
+    if (arc_length_to_pose > distance_threshold) {
       break;
     }
   }

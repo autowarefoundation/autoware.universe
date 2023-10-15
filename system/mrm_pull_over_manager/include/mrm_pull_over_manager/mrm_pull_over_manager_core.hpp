@@ -71,7 +71,7 @@ private:
     std::string pull_over_point_file_path;
     size_t max_goal_pose_num;
     double yaw_deviation_threshold;
-    double distance_threshold;
+    double margin_time_to_goal;
   };
 
   // Subscribtoers
