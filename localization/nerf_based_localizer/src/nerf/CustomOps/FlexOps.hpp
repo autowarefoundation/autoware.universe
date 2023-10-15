@@ -15,8 +15,8 @@
 // Created by ppwang on 2023/2/11.
 //
 
-#ifndef NERF_BASED_LOCALIZER__FLEX_OPS_HPP_
-#define NERF_BASED_LOCALIZER__FLEX_OPS_HPP_
+#ifndef NERF__CUSTOMOPS__FLEXOPS_HPP_
+#define NERF__CUSTOMOPS__FLEXOPS_HPP_
 
 #include "../common.hpp"
 
@@ -30,4 +30,4 @@ torch::Tensor AccumulateSum(torch::Tensor val, torch::Tensor idx_start_end, bool
 
 }  // namespace FlexOps
 
-#endif  // NERF_BASED_LOCALIZER__FLEX_OPS_HPP_
+#endif  // NERF__CUSTOMOPS__FLEXOPS_HPP_

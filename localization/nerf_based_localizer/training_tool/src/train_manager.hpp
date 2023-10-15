@@ -15,8 +15,8 @@
 // Created by ppwang on 2022/5/6.
 //
 
-#ifndef NERF_BASED_LOCALIZER__TRAIN_MANAGER_HPP_
-#define NERF_BASED_LOCALIZER__TRAIN_MANAGER_HPP_
+#ifndef TRAIN_MANAGER_HPP_
+#define TRAIN_MANAGER_HPP_
 
 #include "../../src/nerf/dataset.hpp"
 #include "../../src/nerf/renderer.hpp"
@@ -55,4 +55,4 @@ public:
   std::shared_ptr<torch::optim::Adam> optimizer_;
 };
 
-#endif  // NERF_BASED_LOCALIZER__TRAIN_MANAGER_HPP_
+#endif  // TRAIN_MANAGER_HPP_

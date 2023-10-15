@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef NERF_BASED_LOCALIZER__LOCALIZER_HPP_
-#define NERF_BASED_LOCALIZER__LOCALIZER_HPP_
+#ifndef NERF__LOCALIZER_HPP_
+#define NERF__LOCALIZER_HPP_
 
 #include "dataset.hpp"
 #include "renderer.hpp"
@@ -76,4 +76,4 @@ private:
   float radius_;
 };
 
-#endif  // NERF_BASED_LOCALIZER__LOCALIZER_HPP_
+#endif  // NERF__LOCALIZER_HPP_

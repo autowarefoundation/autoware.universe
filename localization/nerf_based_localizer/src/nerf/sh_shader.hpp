@@ -15,8 +15,8 @@
 // Created by ppwang on 2022/10/8.
 //
 
-#ifndef NERF_BASED_LOCALIZER__SH_SHADER_HPP_
-#define NERF_BASED_LOCALIZER__SH_SHADER_HPP_
+#ifndef NERF__SH_SHADER_HPP_
+#define NERF__SH_SHADER_HPP_
 
 #include <torch/torch.h>
 
@@ -39,4 +39,4 @@ private:
   torch::nn::Sequential mlp_ = nullptr;
 };
 
-#endif  // NERF_BASED_LOCALIZER__SH_SHADER_HPP_
+#endif  // NERF__SH_SHADER_HPP_

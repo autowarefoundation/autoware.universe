@@ -15,8 +15,8 @@
 // Created by ppwang on 2022/5/7.
 //
 
-#ifndef NERF_BASED_LOCALIZER__RENDERER_HPP_
-#define NERF_BASED_LOCALIZER__RENDERER_HPP_
+#ifndef NERF__RENDERER_HPP_
+#define NERF__RENDERER_HPP_
 
 #include "hash_3d_anchored.hpp"
 #include "points_sampler.hpp"
@@ -61,4 +61,4 @@ private:
   Tensor app_emb_;
 };
 
-#endif  // NERF_BASED_LOCALIZER__RENDERER_HPP_
+#endif  // NERF__RENDERER_HPP_

@@ -15,8 +15,8 @@
 // Created by ppwang on 2022/5/7.
 //
 
-#ifndef NERF_BASED_LOCALIZER__DATASET_HPP_
-#define NERF_BASED_LOCALIZER__DATASET_HPP_
+#ifndef NERF__DATASET_HPP_
+#define NERF__DATASET_HPP_
 
 #include "common.hpp"
 #include "rays.hpp"
@@ -49,4 +49,4 @@ public:
   int height, width;
 };
 
-#endif  // NERF_BASED_LOCALIZER__DATASET_HPP_
+#endif  // NERF__DATASET_HPP_

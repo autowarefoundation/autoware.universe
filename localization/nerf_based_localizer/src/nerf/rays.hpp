@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef NERF_BASED_LOCALIZER__RAY_HPP_
-#define NERF_BASED_LOCALIZER__RAY_HPP_
+#ifndef NERF__RAYS_HPP_
+#define NERF__RAYS_HPP_
 
 #include <torch/torch.h>
 
@@ -25,4 +25,4 @@ struct alignas(32) Rays
 Rays get_rays_from_pose(
   const torch::Tensor & pose, const torch::Tensor & intrinsic, const torch::Tensor & ij);
 
-#endif  // NERF_BASED_LOCALIZER__RAY_HPP_
+#endif  // NERF__RAYS_HPP_

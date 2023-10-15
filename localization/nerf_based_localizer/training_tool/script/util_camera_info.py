@@ -1,12 +1,15 @@
-import yaml
 import numpy as np
+import yaml
 
 
 def camera_info_to_dict(camera_info):
     return {
         "header": {
-            "stamp": {"sec": camera_info.header.stamp.sec, "nanosec": camera_info.header.stamp.nanosec},
-            "frame_id": camera_info.header.frame_id
+            "stamp": {
+                "sec": camera_info.header.stamp.sec,
+                "nanosec": camera_info.header.stamp.nanosec,
+            },
+            "frame_id": camera_info.header.frame_id,
         },
         "height": camera_info.height,
         "width": camera_info.width,
@@ -22,8 +25,8 @@ def camera_info_to_dict(camera_info):
             "y_offset": camera_info.roi.y_offset,
             "height": camera_info.roi.height,
             "width": camera_info.roi.width,
-            "do_rectify": camera_info.roi.do_rectify
-        }
+            "do_rectify": camera_info.roi.do_rectify,
+        },
     }
 
 

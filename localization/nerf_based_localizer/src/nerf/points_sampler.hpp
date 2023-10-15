@@ -15,8 +15,8 @@
 // Created by ppwang on 2022/6/20.
 //
 
-#ifndef NERF_BASED_LOCALIZER__POINTS_SAMPLER_HPP_
-#define NERF_BASED_LOCALIZER__POINTS_SAMPLER_HPP_
+#ifndef NERF__POINTS_SAMPLER_HPP_
+#define NERF__POINTS_SAMPLER_HPP_
 
 #include "Eigen/Eigen"
 #include "common.hpp"
@@ -52,4 +52,4 @@ private:
   static constexpr float SAMPLE_L = 1.0 / 256;
 };
 
-#endif  // NERF_BASED_LOCALIZER__POINTS_SAMPLER_HPP_
+#endif  // NERF__POINTS_SAMPLER_HPP_

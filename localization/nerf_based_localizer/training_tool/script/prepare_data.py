@@ -1,29 +1,33 @@
 #!/usr/bin/env python3
 
 import argparse
-from cv_bridge import CvBridge
-from sensor_msgs.msg import Image, CompressedImage, CameraInfo
-from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped
-import numpy as np
-import cv2
-from rclpy.serialization import deserialize_message
 import os
+import sys
+
+from convert_pose_tsv_to_cams_meta import generate_cams_meta
+import cv2
+from cv_bridge import CvBridge
+import geometry_msgs
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from interpolate import interpolate_pose_in_time
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-from util_camera_info import save_camera_info_to_yaml
+from rclpy.serialization import deserialize_message
+import rosbag2_py
+from scipy.spatial.transform import Rotation
+from sensor_msgs.msg import CameraInfo
+from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import Image
 from tf2_msgs.msg import TFMessage
 from tf2_ros import Buffer
-import geometry_msgs
-from scipy.spatial.transform import Rotation
-import matplotlib.pyplot as plt
-import rosbag2_py
-from interpolate import interpolate_pose_in_time
-import sys
-from convert_pose_tsv_to_cams_meta import generate_cams_meta
+from util_camera_info import save_camera_info_to_yaml
 
 
 def create_reader(input_bag_dir: str, storage_id: str):
-    storage_options = rosbag2_py.StorageOptions(
-        uri=input_bag_dir, storage_id=storage_id)
+    storage_options = rosbag2_py.StorageOptions(uri=input_bag_dir, storage_id=storage_id)
     converter_options = rosbag2_py.ConverterOptions(
         input_serialization_format="cdr", output_serialization_format="cdr"
     )
@@ -35,9 +39,8 @@ def create_reader(input_bag_dir: str, storage_id: str):
 def transform_pose_base_link_2_camera(pose: Pose, target_frame: str, tf_buffer, time):
     # get static transform
     transform = tf_buffer.lookup_transform(
-        target_frame="base_link",
-        source_frame=target_frame,
-        time=time)
+        target_frame="base_link", source_frame=target_frame, time=time
+    )
 
     # transform pose
     R1: geometry_msgs.msg.Quaternion = transform.transform.rotation
@@ -73,8 +76,7 @@ if __name__ == "__main__":
     parser.add_argument("path_to_rosbag", type=str)
     parser.add_argument("output_dir", type=str)
     parser.add_argument("--skip", type=int, default=1)
-    parser.add_argument("--storage_id", type=str,
-                        default="sqlite3", choices=["mcap", "sqlite3"])
+    parser.add_argument("--storage_id", type=str, default="sqlite3", choices=["mcap", "sqlite3"])
     parser.add_argument("--crop_height", type=int, default=850)
     parser.add_argument("--use_cvt_color", action="store_true")
     args = parser.parse_args()
@@ -92,8 +94,7 @@ if __name__ == "__main__":
     image_topic_type = Image()
     pose_topic_type = PoseWithCovarianceStamped()
 
-    reader, storage_options, converter_options = create_reader(
-        path_to_rosbag, storage_id)
+    reader, storage_options, converter_options = create_reader(path_to_rosbag, storage_id)
     os.makedirs(output_dir, exist_ok=True)
 
     # save command
@@ -116,15 +117,14 @@ if __name__ == "__main__":
         if topic == image_topic_name:
             image_msg = deserialize_message(data, image_topic_type)
             if image_topic_type == Image():
-                curr_image = bridge.imgmsg_to_cv2(
-                    image_msg, desired_encoding="passthrough")
+                curr_image = bridge.imgmsg_to_cv2(image_msg, desired_encoding="passthrough")
             elif image_topic_type == CompressedImage():
                 curr_image = bridge.compressed_imgmsg_to_cv2(
-                    image_msg, desired_encoding="passthrough")
+                    image_msg, desired_encoding="passthrough"
+                )
             if use_cvt_color:
                 curr_image = cv2.cvtColor(curr_image, cv2.COLOR_BGR2RGB)
-            diff = (1 if prev_image is None else np.abs(
-                prev_image - curr_image).sum())
+            diff = 1 if prev_image is None else np.abs(prev_image - curr_image).sum()
             prev_image = curr_image
             index_images_all += 1
             if diff == 0 or index_images_all % skip != 0:
@@ -134,12 +134,17 @@ if __name__ == "__main__":
             image_list.append(curr_image)
         elif topic == pose_topic_name:
             pose_msg = deserialize_message(data, pose_topic_type)
-            pose = pose_msg.pose.pose if pose_topic_type == PoseWithCovarianceStamped() else pose_msg.pose
+            pose = (
+                pose_msg.pose.pose
+                if pose_topic_type == PoseWithCovarianceStamped()
+                else pose_msg.pose
+            )
             if target_frame is None:
                 continue
             try:
                 pose = transform_pose_base_link_2_camera(
-                    pose, target_frame, tf_buffer, pose_msg.header.stamp)
+                    pose, target_frame, tf_buffer, pose_msg.header.stamp
+                )
             except Exception as e:
                 print(e)
                 continue
@@ -155,26 +160,22 @@ if __name__ == "__main__":
             ]
         elif topic == camera_info_topic_name:
             camera_info = deserialize_message(data, CameraInfo())
-            save_camera_info_to_yaml(
-                camera_info, f"{output_dir}/camera_info.yaml")
+            save_camera_info_to_yaml(camera_info, f"{output_dir}/camera_info.yaml")
         elif topic == "/tf" or topic == "/tf_static":
-            is_static = (topic == "/tf_static")
+            is_static = topic == "/tf_static"
             tf_msg = deserialize_message(data, TFMessage())
             for transform_stamped in tf_msg.transforms:
                 if is_static:
-                    tf_buffer.set_transform_static(
-                        transform_stamped, "default_authority")
+                    tf_buffer.set_transform_static(transform_stamped, "default_authority")
                 else:
-                    tf_buffer.set_transform(
-                        transform_stamped, "default_authority")
+                    tf_buffer.set_transform(transform_stamped, "default_authority")
 
     image_timestamp_list = np.array(image_timestamp_list)
     image_list = np.array(image_list)
 
     min_pose_t = df_pose["timestamp"].min()
     max_pose_t = df_pose["timestamp"].max()
-    ok_image_timestamp = (min_pose_t < image_timestamp_list) * \
-        (image_timestamp_list < max_pose_t)
+    ok_image_timestamp = (min_pose_t < image_timestamp_list) * (image_timestamp_list < max_pose_t)
     image_timestamp_list = image_timestamp_list[ok_image_timestamp]
     image_list = image_list[ok_image_timestamp]
 
@@ -186,8 +187,7 @@ if __name__ == "__main__":
         image = image[0:crop_height]
         cv2.imwrite(save_path, image)
 
-    df_pose.to_csv(f"{output_dir}/pose.tsv",
-                   index=True, sep="\t", float_format="%.12f")
+    df_pose.to_csv(f"{output_dir}/pose.tsv", index=True, sep="\t", float_format="%.12f")
 
     # plot all of trajectory
     save_path = f"{output_dir}/plot_pose.png"

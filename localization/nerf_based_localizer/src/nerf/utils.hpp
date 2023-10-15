@@ -15,8 +15,8 @@
 // Created by ppwang on 2022/5/11.
 //
 
-#ifndef NERF_BASED_LOCALIZER__UTILS_HPP_
-#define NERF_BASED_LOCALIZER__UTILS_HPP_
+#ifndef NERF__UTILS_HPP_
+#define NERF__UTILS_HPP_
 
 #include <torch/torch.h>
 
@@ -33,4 +33,4 @@ float calc_loss(Tensor pred_image, Tensor gt_image);
 
 }  // namespace utils
 
-#endif  // NERF_BASED_LOCALIZER__UTILS_HPP_
+#endif  // NERF__UTILS_HPP_

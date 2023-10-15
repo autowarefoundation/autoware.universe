@@ -15,8 +15,8 @@
 // Created by ppwang on 2023/3/27.
 //
 
-#ifndef NERF_BASED_LOCALIZER__SCATTER_HPP_
-#define NERF_BASED_LOCALIZER__SCATTER_HPP_
+#ifndef NERF__CUSTOMOPS__SCATTER_HPP_
+#define NERF__CUSTOMOPS__SCATTER_HPP_
 
 #include "../common.hpp"
 
@@ -33,4 +33,4 @@ torch::Tensor ScatterAdd(torch::Tensor emb, torch::Tensor idx, torch::Tensor to_
 torch::Tensor ScatterIdx(int n_all_pts, torch::Tensor idx_start_end, torch::Tensor emb_idx);
 }  // namespace CustomOps
 
-#endif  // NERF_BASED_LOCALIZER__SCATTER_HPP_
+#endif  // NERF__CUSTOMOPS__SCATTER_HPP_

@@ -13,7 +13,7 @@ NeRFBasedLocalizer is a vision-based localization package.
 ### Input
 
 | Name            | Type                                            | Description                      |
-| :---------------| :---------------------------------------------- | :------------------------------- |
+| :-------------- | :---------------------------------------------- | :------------------------------- |
 | `~/input/pose`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | EKF Pose without IMU correction. |
 | `~/input/image` | `sensor_msgs::msg::Image`                       | Camera Image                     |
 

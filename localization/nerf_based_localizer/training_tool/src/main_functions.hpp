@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef NERF_BASED_LOCALIZER__MAIN_FUNCTIONS_HPP_
-#define NERF_BASED_LOCALIZER__MAIN_FUNCTIONS_HPP_
+#ifndef MAIN_FUNCTIONS_HPP_
+#define MAIN_FUNCTIONS_HPP_
 
 #include <string>
 
@@ -20,4 +20,4 @@ void walk(const std::string & train_result_dir);
 void test(const std::string & train_result_dir, const std::string & dataset_dir);
 void infer(const std::string & train_result_dir, const std::string & dataset_dir);
 
-#endif  // NERF_BASED_LOCALIZER__MAIN_FUNCTIONS_HPP_
+#endif  // MAIN_FUNCTIONS_HPP_

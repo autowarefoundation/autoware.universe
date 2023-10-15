@@ -15,8 +15,8 @@
 // Created by ppwang on 2022/7/17.
 //
 
-#ifndef NERF_BASED_LOCALIZER__HASH_3D_ANCHORED_HPP_
-#define NERF_BASED_LOCALIZER__HASH_3D_ANCHORED_HPP_
+#ifndef NERF__HASH_3D_ANCHORED_HPP_
+#define NERF__HASH_3D_ANCHORED_HPP_
 
 #include <torch/torch.h>
 
@@ -64,4 +64,4 @@ public:
 
 }  // namespace torch::autograd
 
-#endif  // NERF_BASED_LOCALIZER__HASH_3D_ANCHORED_HPP_
+#endif  // NERF__HASH_3D_ANCHORED_HPP_

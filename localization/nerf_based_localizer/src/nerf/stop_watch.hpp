@@ -15,8 +15,8 @@
 // Created by ppwang on 2022/5/18.
 //
 
-#ifndef NERF_BASED_LOCALIZER__STOP_WATCH_HPP_
-#define NERF_BASED_LOCALIZER__STOP_WATCH_HPP_
+#ifndef NERF__STOP_WATCH_HPP_
+#define NERF__STOP_WATCH_HPP_
 
 #include <chrono>
 #include <string>
@@ -47,4 +47,4 @@ private:
   std::chrono::steady_clock::time_point start_time_;
 };
 
-#endif  // NERF_BASED_LOCALIZER__STOP_WATCH_HPP_
+#endif  // NERF__STOP_WATCH_HPP_
