@@ -1,0 +1,22 @@
+/**:
+  ros__parameters:
+    train_result_dir: "/path/to/train_result_dir"
+    optimization_mode: 1  # 0: random_search, 1: differential
+
+    # if optimization_mode is 0, the following parameters are used
+    particle_num: 50
+    render_pixel_num: 128
+    noise_position_x: 0.10  # [m]
+    noise_position_y: 0.10  # [m]
+    noise_position_z: 0.05  # [m]
+    noise_rotation_x: 0.05  # [deg]
+    noise_rotation_y: 0.05  # [deg]
+    noise_rotation_z: 0.10  # [deg]
+
+    # if optimization_mode is 1, the following parameters are used
+    iteration_num: 1
+    learning_rate: 0.0001
+
+    # The following parameters are used in both optimization_mode 0 and 1
+    output_covariance: 0.000225
+    resize_factor: 20

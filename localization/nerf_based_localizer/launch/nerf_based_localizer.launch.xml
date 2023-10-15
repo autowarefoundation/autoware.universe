@@ -1,0 +1,29 @@
+<launch>
+  <arg name="param_file" default="$(find-pkg-share nerf_based_localizer)/config/nerf_based_localizer.param.yaml"/>
+  <arg name="node_name" default="nerf_based_localizer"/>
+
+  <!-- Topics -->
+  <arg name="input_pose" default="~/input/pose"/>
+  <arg name="input_image" default="~/input/image"/>
+  <arg name="service_optimize_pose" default="~/service/optimize_pose"/>
+  <arg name="service_trigger_node" default="~/service/trigger_node"/>
+
+  <arg name="output_pose" default="~/output/pose"/>
+  <arg name="output_pose_with_covariance" default="~/output/pose_with_covariance"/>
+  <arg name="output_score" default="~/output/score"/>
+  <arg name="output_image" default="~/output/image"/>
+
+  <node pkg="nerf_based_localizer" exec="nerf_based_localizer" name="$(var node_name)" output="log" args="--ros-args --log-level INFO">
+    <remap from="~/input/pose" to="$(var input_pose)"/>
+    <remap from="~/input/image" to="$(var input_image)"/>
+    <remap from="~/service/optimize_pose" to="$(var service_optimize_pose)"/>
+    <remap from="~/service/trigger_node" to="$(var service_trigger_node)"/>
+
+    <remap from="~/output/pose" to="$(var output_pose)"/>
+    <remap from="~/output/pose_with_covariance" to="$(var output_pose_with_covariance)"/>
+    <remap from="~/output/score" to="$(var output_score)"/>
+    <remap from="~/output/image" to="$(var output_image)"/>
+
+    <param from="$(var param_file)"/>
+  </node>
+</launch>

@@ -1,0 +1,76 @@
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="538px" height="272px" viewBox="-0.5 -0.5 538 272" content="&lt;mxfile&gt;&lt;diagram id=&quot;z_GJx55S16-dNHi1224P&quot; name=&quot;ページ1&quot;&gt;zZjLcpswFIafxstmkAQYL2tip4veplk0XXkUEEYTzPEI+danrzAHc7VjJ05SFhnOrwvS90s6cgbMX2zvFF/G3yAUyYBa4XbAbgeUjphn/ubCrhBsmxTCXMmwkGrCvfwrULRQXclQZI2KGiDRctkUA0hTEeiGxpWCTbNaBEnzq0s+Fx3hPuBJV/0tQx0XqkeHlf5FyHlcfpm4o6JkwcvKOJMs5iFsahKbDJivAHTxttj6IsnZlVyKdtMjpYeBKZHqcxrQosGaJyucG45L78rJKlilocjrWwM2jiDVaAihGPuQgNpXZtb+MXp3IDi2tVBabGsSDuxOwEJotTNVsNQuIeEqYRhuKuQHLa7hdlHj6PL80HMFwrwgi34udofLd/FrapQxzwwL6pq5knyeX8EsC8NDPcdNJkmNk+9PnKkZyzjTCp5ErcQNPPEYvS1Zx26StbtkidVD1r4CWadD9oeOc3zW55WGjZlWje6SB09mM2WXwp1Ofb8Prkcfmeu+8bJlHweXDXv281RvZKZnG6njWQBrriRPA9FBKkJzxmEISscwh5Qnk0odGyZq94DM98GfPLgZOmV8u62X3u4wOkpVczUXKDHU8nGc5KxEwrVcN8/iPmrY9CdI89mDP9Rp+kM978ZpdpLBSgUC27XoHwZyliHlEdY0RC7yBHPKgBTSU8SvApwM3wc4K/d8CZxYbeDFsDrAO10Rt+kd8dw3c87rc24JmbhoJ5VGbqV+qKwzUW4kwffKxTzY1S3tMZ++2P2CTtP9F21BtOOTdUPMUzR67SpxW6tkePkqKStCFGXitQuA9J6lqVDR7DG/BMySV6b+YzmoeyXYP9fJTnTU2kHuAXM9QTk9Ccq5RoIifVDFU/RympjrP4Rm+yJlGL0nTbt7mcrTfTTLtNmKwTkHU8izeM+W/Hdpo3UgENIidr2z3naPrcqLz/tnbk7ksjzenzask2njrNOffaCxtJXE6ejcC1inK6d9lxt5Z6WM59eICatf4UX16l8ZbPIP&lt;/diagram&gt;&lt;/mxfile&gt;">
+    <defs/>
+    <g>
+        <rect x="267" y="0" width="230" height="60" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
+        <rect x="387" y="10" width="100" height="40" fill="#cce5ff" stroke="#6c8ebf" pointer-events="all"/>
+        <g fill="#000000" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="436.5" y="27.5">
+                NeRF Based
+            </text>
+            <text x="436.5" y="41.5">
+                Localizer
+            </text>
+        </g>
+        <rect x="277" y="10" width="100" height="40" fill="#ccffcc" stroke="#82b366" pointer-events="all"/>
+        <g fill="#000000" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="326.5" y="27.5">
+                Other Autoware
+            </text>
+            <text x="326.5" y="41.5">
+                packages
+            </text>
+        </g>
+        <path d="M 97 258.5 L 232 258.5 Q 242 258.5 252 258.47 L 380.63 258.02" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 385.88 258 L 378.89 261.53 L 380.63 258.02 L 378.87 254.53 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="11px">
+            <rect fill="rgb(255, 255, 255)" stroke="none" x="187" y="253" width="112" height="14" stroke-width="0"/>
+            <text x="241.5" y="262.5">
+                /twist_with_covariance
+            </text>
+        </g>
+        <path d="M 7 156 L 130.63 155.52" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 135.88 155.5 L 128.9 159.03 L 130.63 155.52 L 128.87 152.03 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="11px">
+            <rect fill="rgb(255, 255, 255)" stroke="none" x="55" y="150" width="35" height="14" stroke-width="0"/>
+            <text x="71.5" y="159.75">
+                /image
+            </text>
+        </g>
+        <path d="M 212 180.5 L 380.9 231.17" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 385.93 232.68 L 378.22 234.02 L 380.9 231.17 L 380.23 227.31 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="11px">
+            <rect fill="rgb(255, 255, 255)" stroke="none" x="233" y="198" width="114" height="14" stroke-width="0"/>
+            <text x="289.08" y="207.78">
+                /pose_with_covariance
+            </text>
+        </g>
+        <rect x="137" y="130.5" width="150" height="50" fill="#cce5ff" stroke="#666666" pointer-events="all"/>
+        <g fill="#000000" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="211.5" y="160">
+                /nerf_based_localizer
+            </text>
+        </g>
+        <rect x="387" y="220.5" width="150" height="50" fill="#ccffcc" stroke="#666666" pointer-events="all"/>
+        <g fill="#000000" font-family="Helvetica" text-anchor="middle" font-size="12px">
+            <text x="461.5" y="250">
+                /ekf_localizer
+            </text>
+        </g>
+        <path d="M 212 80 L 212 124.13" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="stroke"/>
+        <path d="M 212 129.38 L 208.5 122.38 L 212 124.13 L 215.5 122.38 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="11px">
+            <rect fill="rgb(255, 255, 255)" stroke="none" x="191" y="99" width="43" height="14" stroke-width="0"/>
+            <text x="211.5" y="109">
+                /tf_static
+            </text>
+        </g>
+        <path d="M 462 220.5 L 462 165.5 Q 462 155.5 452 155.5 L 293.37 155.5" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"/>
+        <path d="M 288.12 155.5 L 295.12 152 L 293.37 155.5 L 295.12 159 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <g fill="rgb(0, 0, 0)" font-family="Helvetica" text-anchor="middle" font-size="11px">
+            <rect fill="rgb(255, 255, 255)" stroke="none" x="340" y="150" width="135" height="14" stroke-width="0"/>
+            <text x="406.5" y="159.5">
+                /ekf_pose_with_covariance
+            </text>
+        </g>
+    </g>
+</svg>

@@ -23,6 +23,7 @@
   <exec_depend>gyro_odometer</exec_depend>
   <exec_depend>landmark_tf_caster</exec_depend>
   <exec_depend>ndt_scan_matcher</exec_depend>
+  <exec_depend>nerf_based_localizer</exec_depend>
   <exec_depend>pointcloud_preprocessor</exec_depend>
   <exec_depend>pose_initializer</exec_depend>
   <exec_depend>topic_tools</exec_depend>
