@@ -14,21 +14,37 @@
 
 #include "mrm_pull_over_manager/mrm_pull_over_manager_core.hpp"
 
+#include "mrm_pull_over_manager/csv_parser.hpp"
 namespace mrm_pull_over_manager
 {
 
-// TODO: あとでけす
+// TODO: temporary
 namespace
 {
-geometry_msgs::msg::Pose create_pose(const double x, const double y, const double z)
-{
-  geometry_msgs::msg::Pose pose;
-  pose.position.x = x;
-  pose.position.y = y;
-  pose.position.z = z;
+// geometry_msgs::msg::Quaternion yaw_to_quaternion(double yaw)
+// {
+//   geometry_msgs::msg::Quaternion ros_quat;
 
-  return pose;
-}
+//   // Convert yaw angle (theta) to quaternion
+//   ros_quat.x = 0.0;
+//   ros_quat.y = 0.0;
+//   ros_quat.z = sin(yaw * 0.5);
+//   ros_quat.w = cos(yaw * 0.5);
+
+//   return ros_quat;
+// }
+
+// geometry_msgs::msg::Pose create_pose(
+//   const double x, const double y, const double z, const double yaw)
+// {
+//   geometry_msgs::msg::Pose pose;
+//   pose.position.x = x;
+//   pose.position.y = y;
+//   pose.position.z = z;
+//   pose.orientation = yaw_to_quaternion(yaw);
+
+//   return pose;
+// }
 }  // namespace
 
 namespace lanelet_util
@@ -121,6 +137,10 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
   // Publisher
   pub_pose_array_ = create_publisher<PoseArray>("~/output/emergency_goals", rclcpp::QoS{1});
 
+  const std::string filepath = "/media/tomohitoando/data/map/shiojiri_100laps/pull_over_point.csv";
+  CsvPoseParser parser(filepath);
+  candidate_goals_ = parser.parse();
+
   // TODO: temporary
   // Timer
   const auto update_period_ns = rclcpp::Rate(10.0).period();
@@ -130,7 +150,8 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
 
 void MrmPullOverManager::on_timer()
 {
-  const bool result = find_nearby_goals();
+  const bool result = find_goals_within_route();
+  RCLCPP_INFO_STREAM(this->get_logger(), "result: " << result);
 }
 
 void MrmPullOverManager::activatePullOver(
@@ -138,7 +159,7 @@ void MrmPullOverManager::activatePullOver(
   const tier4_system_msgs::srv::ActivatePullOver::Response::SharedPtr response)
 {
   if (request->activate == true) {
-    const bool result = find_nearby_goals();
+    const bool result = find_goals_within_route();
     response->status.success = result;
   }
 
@@ -191,13 +212,11 @@ bool MrmPullOverManager::is_data_ready()
   return true;
 }
 
-bool MrmPullOverManager::find_nearby_goals()
+bool MrmPullOverManager::find_goals_within_route()
 {
   if (!is_data_ready()) {
     return false;
   }
-
-  RCLCPP_INFO(this->get_logger(), "--- search lanelets within the route ---");
 
   const auto current_lanelet = lanelet_util::get_current_lanelet(route_handler_, odom_->pose.pose);
   RCLCPP_INFO(this->get_logger(), "current lanelet id:%ld", current_lanelet.id());
@@ -205,13 +224,12 @@ bool MrmPullOverManager::find_nearby_goals()
   const auto candidate_lanelets =
     lanelet_util::get_all_following_and_left_lanelets(route_handler_, current_lanelet);
 
-  candidate_goals_[19464] = create_pose(65401.7, 684.4, 715.8);
-  candidate_goals_[19779] = create_pose(65567.9, 681.5, 714.5);
-  candidate_goals_[20976] = create_pose(65808.1, 720.5, 712.6);
-  candidate_goals_[20478] = create_pose(65570.5, 673.9, 714.5);
-  auto emergency_goals = find_goals_in_lanelets(candidate_lanelets);
+  PoseArray emergency_goals;
+  emergency_goals.header.frame_id = "map";
+  emergency_goals.header.stamp = now();
+  emergency_goals.poses = find_goals_in_lanelets(candidate_lanelets);
 
-  RCLCPP_INFO(this->get_logger(), "---found goals---");
+  // temporary
   for (const auto & goal : emergency_goals.poses) {
     RCLCPP_INFO(this->get_logger(), "goal x: %f", goal.position.x);
   }
@@ -223,20 +241,18 @@ bool MrmPullOverManager::find_nearby_goals()
   return true;
 }
 
-geometry_msgs::msg::PoseArray MrmPullOverManager::find_goals_in_lanelets(
+std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::find_goals_in_lanelets(
   const lanelet::ConstLanelets & candidate_lanelets) const
 {
-  RCLCPP_INFO(this->get_logger(), "candidate count: %ld", candidate_lanelets.size());
-  PoseArray goals;
-  goals.header.frame_id = "map";
-  goals.header.stamp = now();  // TODO
+  RCLCPP_INFO(this->get_logger(), "candidate lanelet count: %ld", candidate_lanelets.size());
+  std::vector<Pose> goals;
 
   for (const auto & lane : candidate_lanelets) {
     const auto it = candidate_goals_.find(lane.id());
 
     // found the goal that has the same lanelet id
     if (it != candidate_goals_.end()) {
-      goals.poses.emplace_back(it->second);
+      goals.emplace_back(it->second);
     }
   }
 
@@ -249,11 +265,20 @@ std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::filter_nearby_goals(
   RCLCPP_INFO(this->get_logger(), "pose count: %ld", poses.size());
   std::vector<geometry_msgs::msg::Pose> filtered_poses;
 
-  // The poses are stored in order of distance, so the loop exits as soon as the first one exceeding
-  // the threshold is found
   const double distance_threshold = 10.0;  // TODO
+  const double yaw_threshold = 1.0;        // TODO
   auto it = poses.begin();
   for (; it != poses.end(); ++it) {
+    // filter unsafe yaw pose
+    const double yaw_deviation = motion_utils::calcYawDeviation(trajectory_->points, *it);
+    RCLCPP_INFO(this->get_logger(), "yaw deviation to pose: %lf", yaw_deviation);
+    if (std::abs(yaw_deviation) > yaw_threshold) {
+      continue;
+    }
+
+    // filter too near pose
+    // The poses are stored in order of distance, so the loop exits as soon as the first one
+    // exceeding the threshold is found
     const double arc_length_to_pose = motion_utils::calcSignedArcLength(
       trajectory_->points, odom_->pose.pose.position, it->position);
     RCLCPP_INFO(this->get_logger(), "distance to the pose: %lf", arc_length_to_pose);

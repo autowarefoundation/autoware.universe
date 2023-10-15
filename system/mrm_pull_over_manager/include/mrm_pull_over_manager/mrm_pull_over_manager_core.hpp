@@ -54,12 +54,13 @@ public:
   MrmPullOverManager();
 
 private:
+  using Pose = geometry_msgs::msg::Pose;
+  using PoseArray = geometry_msgs::msg::PoseArray;
+  using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
   using Odometry = nav_msgs::msg::Odometry;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
-  using PoseLaneIdMap = std::map<lanelet::Id, geometry_msgs::msg::Pose>;
-  using PoseArray = geometry_msgs::msg::PoseArray;
-  using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
+  using PoseLaneIdMap = std::map<lanelet::Id, Pose>;
 
   // Subscribtoers
   rclcpp::Subscription<Odometry>::SharedPtr sub_odom_;
@@ -102,22 +103,21 @@ private:
   /**
    * @brief Find the goals within the lanelet and publish them
    */
-  bool find_nearby_goals();
+  bool find_goals_within_route();
 
   /**
    * @brief Find the goals that have the same lanelet id with the candidate_lanelets
    * @param candidate_lanelets
    * @return
    */
-  PoseArray find_goals_in_lanelets(const lanelet::ConstLanelets & candidate_lanelets) const;
+  std::vector<Pose> find_goals_in_lanelets(const lanelet::ConstLanelets & candidate_lanelets) const;
 
   /**
    * @brief Find the goals that have the same lanelet id with the candidate_lanelets
    * @param poses Poses to be filtered
    * @return Filtered poses
    */
-  std::vector<geometry_msgs::msg::Pose> filter_nearby_goals(
-    const std::vector<geometry_msgs::msg::Pose> & poses);
+  std::vector<Pose> filter_nearby_goals(const std::vector<Pose> & poses);
 };
 }  // namespace mrm_pull_over_manager
 
