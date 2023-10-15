@@ -91,59 +91,58 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 
 #### System
 
-| Name                      | Type    | Description                                                        | Default value |
-| :------------------------ | :------ | :----------------------------------------------------------------- | :------------ |
-| traj_resample_dist        | double  | path resampling interval [m]                                       | 0.1           |
-| use_steer_prediction      | boolean | flag for using steer prediction (do not use steer measurement)     | false         |
-| admissible_position_error | double  | stop mpc calculation when error is larger than the following value | 5.0           |
-| admissible_yaw_error_rad  | double  | stop mpc calculation when error is larger than the following value | 1.57          |
+| Name                      | Type    | Description                                                                 | Default value |
+| :------------------------ | :------ | :-------------------------------------------------------------------------- | :------------ |
+| traj_resample_dist        | double  | distance of waypoints in resampling [m]                                     | 0.1           |
+| use_steer_prediction      | boolean | flag for using steer prediction (do not use steer measurement)              | false         |
+| admissible_position_error | double  | stop vehicle when following position error is larger than this value [m]    | 5.0           |
+| admissible_yaw_error_rad  | double  | stop vehicle when following yaw angle error is larger than this value [rad] | 1.57          |
 
 #### Path Smoothing
 
-| Name                              | Type    | Description                                                                               | Default value |
-| :-------------------------------- | :------ | :---------------------------------------------------------------------------------------- | :------------ |
-| enable_path_smoothing             | boolean | flag for path smoothing                                                                   | false         |
-| path_filter_moving_ave_num        | int     | param of moving average filter for path smoothing                                         | 25            |
-| curvature_smoothing_num_traj      | int     | point-to-point index distance used in curvature calculation (for trajectory)              | 15            |
-| curvature_smoothing_num_ref_steer | int     | point-to-point index distance used in curvature calculation (for steer command reference) | 15            |
+| Name                              | Type    | Description                                                                                                                                          | Default value |
+| :-------------------------------- | :------ | :--------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| enable_path_smoothing             | boolean | path smoothing flag. This should be true when uses path resampling to reduce resampling noise.                                                       | false         |
+| path_filter_moving_ave_num        | int     | number of data points moving average filter for path smoothing                                                                                       | 25            |
+| curvature_smoothing_num_traj      | int     | index distance of points used in curvature calculation for trajectory: p(i-num), p(i), p(i+num). larger num makes less noisy values.                 | 15            |
+| curvature_smoothing_num_ref_steer | int     | index distance of points used in curvature calculation for reference steering command: p(i-num), p(i), p(i+num). larger num makes less noisy values. | 15            |
 
 #### Trajectory Extending
 
-| Name                                  | Type    | Description                                           | Default value |
-| :------------------------------------ | :------ | :---------------------------------------------------- | :------------ |
-| extend_trajectory_for_end_yaw_control | boolean | flag of trajectory extending for terminal yaw control | true          |
+| Name                                  | Type    | Description                                   | Default value |
+| :------------------------------------ | :------ | :-------------------------------------------- | :------------ |
+| extend_trajectory_for_end_yaw_control | boolean | trajectory extending flag for end yaw control | true          |
 
 #### MPC Optimization
 
-| Name                                                | Type   | Description                                                             | Default value |
-| :-------------------------------------------------- | :----- | :---------------------------------------------------------------------- | :------------ |
-| qp_solver_type                                      | string | optimization solver option (unconstraint_fast or osqp)                  | "osqp"        |
-| mpc_prediction_horizon                              | int    | prediction horizon step                                                 | 50            |
-| mpc_prediction_dt                                   | double | prediction horizon period [s]                                           | 0.1           |
-| mpc_weight_lat_error                                | double | lateral error weight in matrix Q                                        | 1.0           |
-| mpc_weight_heading_error                            | double | heading error weight in matrix Q                                        | 0.0           |
-| mpc_weight_heading_error_squared_vel                | double | heading error \* velocity weight in matrix Q                            | 0.3           |
-| mpc_weight_steering_input                           | double | steering error weight in matrix R                                       | 1.0           |
-| mpc_weight_steering_input_squared_vel               | double | steering error \* velocity weight in matrix R                           | 0.25          |
-| mpc_weight_lat_jerk                                 | double | lateral jerk weight in matrix R                                         | 0.1           |
-| mpc_weight_steer_rate                               | double | steering rate weight in matrix R                                        | 0.0           |
-| mpc_weight_steer_acc                                | double | steering angular acceleration weight in matrix R                        | 0.000001      |
-| mpc_low_curvature_weight_lat_error                  | double | lateral error weight in matrix Q in low curvature point                 | 0.1           |
-| mpc_low_curvature_weight_heading_error              | double | heading error weight in matrix Q in low curvature point                 | 0.0           |
-| mpc_low_curvature_weight_heading_error_squared_vel  | double | heading error \* velocity weight in matrix Q in low curvature point     | 0.3           |
-| mpc_low_curvature_weight_steering_input             | double | steering error weight in matrix R in low curvature point                | 1.0           |
-| mpc_low_curvature_weight_steering_input_squared_vel | double | steering error \* velocity weight in matrix R in low curvature point    | 0.25          |
-| mpc_low_curvature_weight_lat_jerk                   | double | lateral jerk weight in matrix R in low curvature point                  | 0.0           |
-| mpc_low_curvature_weight_steer_rate                 | double | steering rate weight in matrix R in low curvature point                 | 0.0           |
-| mpc_low_curvature_weight_steer_acc                  | double | steering angular acceleration weight in matrix R in low curvature point | 0.000001      |
-| mpc_low_curvature_thresh_curvature                  | double | threshold of curvature to use "low_curvature" parameter                 | 0.0           |
-| mpc_weight_terminal_lat_error                       | double | terminal lateral error weight in matrix Q to improve mpc stability      | 1.0           |
-| mpc_weight_terminal_heading_error                   | double | terminal heading error weight in matrix Q to improve mpc stability      | 0.1           |
-| mpc_zero_ff_steer_deg                               | double | threshold that feed-forward angle becomes zero                          | 0.5           |
-| mpc_acceleration_limit                              | double | limit on the vehicle's acceleration                                     | 2.0           |
-| mpc_velocity_time_constant                          | double | time constant used for velocity smoothing                               | 0.3           |
-| mpc_min_prediction_length                           | double | minimum prediction length                                               | 5.0           |
-| 2.0                                                 |
+| Name                                                | Type   | Description                                                                                                  | Default value |
+| :-------------------------------------------------- | :----- | :----------------------------------------------------------------------------------------------------------- | :------------ |
+| qp_solver_type                                      | string | QP solver option. described below in detail.                                                                 | "osqp"        |
+| mpc_prediction_horizon                              | int    | total prediction step for MPC                                                                                | 50            |
+| mpc_prediction_dt                                   | double | prediction period for one step [s]                                                                           | 0.1           |
+| mpc_weight_lat_error                                | double | weight for lateral error                                                                                     | 1.0           |
+| mpc_weight_heading_error                            | double | weight for heading error                                                                                     | 0.0           |
+| mpc_weight_heading_error_squared_vel                | double | weight for heading error \* velocity                                                                         | 0.3           |
+| mpc_weight_steering_input                           | double | weight for steering error (steer command - reference steer)                                                  | 1.0           |
+| mpc_weight_steering_input_squared_vel               | double | weight for steering error (steer command - reference steer) \* velocity                                      | 0.25          |
+| mpc_weight_lat_jerk                                 | double | weight for lateral jerk (steer(i) - steer(i-1)) \* velocity                                                  | 0.1           |
+| mpc_weight_steer_rate                               | double | weight for steering rate [rad/s]                                                                             | 0.0           |
+| mpc_weight_steer_acc                                | double | weight for derivatives of the steering rate [rad/ss]                                                         | 0.000001      |
+| mpc_low_curvature_weight_lat_error                  | double | [used in a low curvature trajectory] weight for lateral error                                                | 0.1           |
+| mpc_low_curvature_weight_heading_error              | double | [used in a low curvature trajectory] weight for heading error                                                | 0.0           |
+| mpc_low_curvature_weight_heading_error_squared_vel  | double | [used in a low curvature trajectory] weight for heading error \* velocity                                    | 0.3           |
+| mpc_low_curvature_weight_steering_input             | double | [used in a low curvature trajectory] weight for steering error (steer command - reference steer)             | 1.0           |
+| mpc_low_curvature_weight_steering_input_squared_vel | double | [used in a low curvature trajectory] weight for steering error (steer command - reference steer) \* velocity | 0.25          |
+| mpc_low_curvature_weight_lat_jerk                   | double | [used in a low curvature trajectory] weight for lateral jerk (steer(i) - steer(i-1)) \* velocity             | 0.0           |
+| mpc_low_curvature_weight_steer_rate                 | double | [used in a low curvature trajectory] weight for steering rate [rad/s]                                        | 0.0           |
+| mpc_low_curvature_weight_steer_acc                  | double | [used in a low curvature trajectory] weight for derivatives of the steering rate [rad/ss]                    | 0.000001      |
+| mpc_low_curvature_thresh_curvature                  | double | threshold of curvature to use "low_curvature" parameter                                                      | 0.0           |
+| mpc_weight_terminal_lat_error                       | double | terminal lateral error weight in matrix Q to improve mpc stability                                           | 1.0           |
+| mpc_weight_terminal_heading_error                   | double | terminal heading error weight in matrix Q to improve mpc stability                                           | 0.1           |
+| mpc_zero_ff_steer_deg                               | double | threshold that feed-forward angle becomes zero                                                               | 0.5           |
+| mpc_acceleration_limit                              | double | limit on the vehicle's acceleration                                                                          | 2.0           |
+| mpc_velocity_time_constant                          | double | time constant used for velocity smoothing                                                                    | 0.3           |
+| mpc_min_prediction_length                           | double | minimum prediction length                                                                                    | 5.0           |
 
 #### Vehicle Model
 
@@ -161,22 +160,22 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 
 #### Lowpass Filter for Noise Reduction
 
-| Name                      | Type   | Description                                                  | Default value |
-| :------------------------ | :----- | :----------------------------------------------------------- | :------------ |
-| steering_lpf_cutoff_hz    | double | cutoff frequency of lowpass filter for steering command [Hz] | 3.0           |
-| error_deriv_lpf_cutoff_hz | double | cutoff frequency of lowpass filter for error derivative [Hz] | 5.0           |
+| Name                      | Type   | Description                                                         | Default value |
+| :------------------------ | :----- | :------------------------------------------------------------------ | :------------ |
+| steering_lpf_cutoff_hz    | double | cutoff frequency of lowpass filter for steering output command [hz] | 3.0           |
+| error_deriv_lpf_cutoff_hz | double | cutoff frequency of lowpass filter for error derivative [Hz]        | 5.0           |
 
 #### Stop State
 
-| Name                                         | Type    | Description                                                                                | Default value |
-| :------------------------------------------- | :------ | :----------------------------------------------------------------------------------------- | :------------ |
-| stop_state_entry_ego_speed <sup>\*1</sup>    | double  | threshold of ego vehicle speed for stop state entry                                        | 0.001         |
-| stop_state_entry_target_speed <sup>\*1</sup> | double  | threshold of target speed for stop state entry                                             | 0.001         |
-| converged_steer_rad                          | double  | threshold value of the steer convergence                                                   | 0.1           |
-| keep_steer_control_until_converged           | boolean | keep steer control until steer is converged                                                | true          |
-| new_traj_duration_time                       | double  | threshold value of the time to be considered as new trajectory                             | 1.0           |
-| new_traj_end_dist                            | double  | threshold value of the distance between trajectory ends to be considered as new trajectory | 0.3           |
-| mpc_converged_threshold_rps                  | double  | threshold of mpc convergence check [rad/s]                                                 | 0.01          |
+| Name                                         | Type    | Description                                                                                     | Default value |
+| :------------------------------------------- | :------ | :---------------------------------------------------------------------------------------------- | :------------ |
+| stop_state_entry_ego_speed <sup>\*1</sup>    | double  | threshold value of the ego vehicle speed used to the stop state entry condition                 | 0.001         |
+| stop_state_entry_target_speed <sup>\*1</sup> | double  | threshold value of the target speed used to the stop state entry condition                      | 0.001         |
+| converged_steer_rad                          | double  | threshold value of the steer convergence                                                        | 0.1           |
+| keep_steer_control_until_converged           | boolean | keep steer control until steer is converged                                                     | true          |
+| new_traj_duration_time                       | double  | threshold value of the time to be considered as new trajectory                                  | 1.0           |
+| new_traj_end_dist                            | double  | threshold value of the distance between trajectory ends to be considered as new trajectory      | 0.3           |
+| mpc_converged_threshold_rps                  | double  | threshold value to be sure output of the optimization is converged, it is used in stopped state | 0.01          |
 
 (\*1) To prevent unnecessary steering movement, the steering command is fixed to the previous value in the stop state.
 
