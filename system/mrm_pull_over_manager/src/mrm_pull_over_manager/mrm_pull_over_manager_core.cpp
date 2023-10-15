@@ -17,21 +17,23 @@
 namespace mrm_pull_over_manager
 {
 
+// TODO: あとでけす
 namespace
 {
-PoseWithLaneId create_pose_with_lane_id(
-  const double x, const double y, const double z, const lanelet::Id lanelet_id)
+geometry_msgs::msg::Pose create_pose(const double x, const double y, const double z)
 {
-  PoseWithLaneId pose_with_lane_id;
-  pose_with_lane_id.pose = geometry_msgs::msg::Pose();
-  pose_with_lane_id.pose.position.x = x;
-  pose_with_lane_id.pose.position.y = y;
-  pose_with_lane_id.pose.position.z = z;
-  pose_with_lane_id.lane_id = lanelet_id;
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = x;
+  pose.position.y = y;
+  pose.position.z = z;
 
-  return pose_with_lane_id;
+  return pose;
 }
 }  // namespace
+
+namespace lanelet_util
+{
+}  // namespace lanelet_util
 
 MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
 {
@@ -130,11 +132,20 @@ std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::find_near_goals()
 
   const auto candidate_lanelets = get_all_following_and_left_lanelets(current_lanelet);
 
-  candidate_goals_.emplace_back(create_pose_with_lane_id(1, 1, 1, 19464));
-  candidate_goals_.emplace_back(create_pose_with_lane_id(2, 2, 2, 19779));
-  candidate_goals_.emplace_back(create_pose_with_lane_id(3, 3, 3, 20976));
-  candidate_goals_.emplace_back(create_pose_with_lane_id(4, 4, 4, 20478));
+  // candidate_goals_.emplace_back(create_pose_with_lane_id(1, 1, 1, 19464));
+  // candidate_goals_.emplace_back(create_pose_with_lane_id(2, 2, 2, 19779));
+  // candidate_goals_.emplace_back(create_pose_with_lane_id(3, 3, 3, 20976));
+  // candidate_goals_.emplace_back(create_pose_with_lane_id(4, 4, 4, 20478));
+  candidate_goals_[19464] = create_pose(1, 1, 1);
+  candidate_goals_[19779] = create_pose(2, 2, 2);
+  candidate_goals_[20976] = create_pose(3, 3, 3);
+  candidate_goals_[20478] = create_pose(4, 4, 4);
   const auto emergency_goals = find_goals_in_lanelets(candidate_lanelets);
+
+  RCLCPP_INFO(this->get_logger(), "---found goals---");
+  for (const auto & goal : emergency_goals) {
+    RCLCPP_INFO(this->get_logger(), "goal x: %f", goal.position.x);
+  }
 
   return emergency_goals;
 }
@@ -153,37 +164,33 @@ lanelet::ConstLanelet MrmPullOverManager::get_current_lanelet()
 }
 
 /**
- * @brief get all lanes followed by start_lanelet and left adjacent lanes.
+ * @brief get all following lanes and left adjacent lanes from start_lanelet.
  * @param start_lanelet
  * @return current lanelet
  */
 lanelet::ConstLanelets MrmPullOverManager::get_all_following_and_left_lanelets(
   const lanelet::ConstLanelet & start_lanelet) const
 {
-  lanelet::ConstLanelet base_lanelet = start_lanelet;
-  lanelet::ConstLanelet next_lanelet;
+  lanelet::ConstLanelet current_lanelet = start_lanelet;
   lanelet::ConstLanelets result_lanelets;
-  while (true) {
-    RCLCPP_INFO(this->get_logger(), "base lanelet id: %ld", base_lanelet.id());
-    result_lanelets.emplace_back(base_lanelet);
+  result_lanelets.emplace_back(start_lanelet);
 
-    // If there are multiple lanes to the left of the current lane, retrieve all of them
-    const auto left_lanelets = get_all_left_lanelets(base_lanelet);
+  // Update current_lanelet to the next following lanelet, if any
+  while (route_handler_.getNextLaneletWithinRoute(current_lanelet, &current_lanelet)) {
+    RCLCPP_INFO(this->get_logger(), "current lanelet id: %ld", current_lanelet.id());
+
+    result_lanelets.emplace_back(current_lanelet);
+
+    // Add all left lanelets
+    auto left_lanelets = get_all_left_lanelets(current_lanelet);
     result_lanelets.insert(result_lanelets.end(), left_lanelets.begin(), left_lanelets.end());
-
-    // search next following lanelet
-    const bool has_next = route_handler_.getNextLaneletWithinRoute(base_lanelet, &next_lanelet);
-    if (!has_next) {
-      break;
-    }
-    base_lanelet = next_lanelet;
   }
 
   return result_lanelets;
 }
 
 /**
- * @brief get all lanes followed by state_lanelet and left adjacent lanes of those lanes.
+ * @brief
  * @param base_lanelet
  * @return
  */
@@ -204,14 +211,25 @@ lanelet::ConstLanelets MrmPullOverManager::get_all_left_lanelets(
 }
 
 /**
- * @brief
+ * @brief Find the goals that have the same lanelet id with the candidate_lanelets
  * @param candidate_lanelets
  * @return
  */
 std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::find_goals_in_lanelets(
   const lanelet::ConstLanelets & candidate_lanelets) const
 {
+  RCLCPP_INFO(this->get_logger(), "candidate count: %ld", candidate_lanelets.size());
   std::vector<geometry_msgs::msg::Pose> goals;
+
+  for (const auto & lane : candidate_lanelets) {
+    const auto it = candidate_goals_.find(lane.id());
+
+    // found the goal that has the same lanelet id
+    if (it != candidate_goals_.end()) {
+      goals.emplace_back(it->second);
+    }
+  }
+
   return goals;
 }
 

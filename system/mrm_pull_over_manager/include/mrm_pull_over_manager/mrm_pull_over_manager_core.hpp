@@ -16,6 +16,7 @@
 #define MRM_PULL_OVER_MANAGER__MRM_PULL_OVER_MANAGER_CORE_HPP_
 
 // Core
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -42,12 +43,6 @@
 #include <nav_msgs/msg/odometry.hpp>
 namespace mrm_pull_over_manager
 {
-
-struct PoseWithLaneId
-{
-  geometry_msgs::msg::Pose pose;
-  lanelet::Id lane_id;
-};
 class MrmPullOverManager : public rclcpp::Node
 {
 public:
@@ -57,6 +52,7 @@ private:
   using Odometry = nav_msgs::msg::Odometry;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
+  using PoseLaneIdMap = std::map<lanelet::Id, geometry_msgs::msg::Pose>;
 
   // Subscribers
   rclcpp::Subscription<Odometry>::SharedPtr sub_odom_;
@@ -82,7 +78,7 @@ private:
   // Parameters
   // Param param_;
 
-  std::vector<PoseWithLaneId> candidate_goals_;
+  PoseLaneIdMap candidate_goals_;
 
   // Algorithm
   bool is_data_ready();
