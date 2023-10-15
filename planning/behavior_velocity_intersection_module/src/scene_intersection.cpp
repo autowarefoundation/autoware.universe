@@ -876,6 +876,11 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     activated_, occlusion_activated_, decision_result, planner_param_, baselink2front, path,
     stop_reason, &velocity_factor_, &debug_data_);
 
+  if (!activated_ || !occlusion_activated_) {
+    is_go_out_ = false;
+  } else {
+    is_go_out_ = true;
+  }
   RCLCPP_DEBUG(logger_, "===== plan end =====");
   return true;
 }
@@ -1066,13 +1071,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     planning_utils::getAheadPose(pass_judge_line_idx, baselink2front, *path);
   const bool is_over_pass_judge_line =
     util::isOverTargetIndex(*path, closest_idx, current_pose, pass_judge_line_idx);
-  /* NEW
-  if (
-    planner_param_.collision_detection.pass_judge.judge_before_default_stop_line &&
-    is_over_pass_judge_line) {
-    return IntersectionModule::Indecisive{"over the pass judge line. no plan needed"};
-  }
-  */
   const bool is_over_default_stop_line =
     util::isOverTargetIndex(*path, closest_idx, current_pose, default_stop_line_idx);
   const double vel_norm = std::hypot(
@@ -1087,13 +1085,13 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       logger_, "is_over_default_stop_line && !is_over_pass_judge_line && keep_detection");
     // do nothing
   } else if (
-    (was_safe && is_over_default_stop_line && is_over_pass_judge_line) || is_permanent_go_) {
+    (was_safe && is_over_default_stop_line && is_over_pass_judge_line && is_go_out_) ||
+    is_permanent_go_) {
+    // is_go_out_: previous RTC approval
     // activated_: current RTC approval
     is_permanent_go_ = true;
     return IntersectionModule::Indecisive{"over the pass judge line. no plan needed"};
   }
-  const bool was_going_out =
-    (was_safe || std::holds_alternative<IntersectionModule::Indecisive>(prev_decision_result_));
 
   // occlusion stop line is generated from the intersection of ego footprint along the path with the
   // attention area, so if this is null, eog has already passed the intersection
@@ -1163,7 +1161,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
 
   // calculate dynamic collision around attention area
-  const double time_to_restart = (was_going_out || is_prioritized)
+  const double time_to_restart = (is_go_out_ || is_prioritized)
                                    ? 0.0
                                    : (planner_param_.collision_detection.state_transit_margin_time -
                                       collision_state_machine_.getDuration());

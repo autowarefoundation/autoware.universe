@@ -264,6 +264,7 @@ private:
   const std::string turn_direction_;
   const bool has_traffic_light_;
 
+  bool is_go_out_{false};
   bool is_permanent_go_{false};
   DecisionResult prev_decision_result_{Indecisive{""}};
 
