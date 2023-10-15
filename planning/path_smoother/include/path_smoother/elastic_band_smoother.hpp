@@ -21,8 +21,8 @@
 #include "path_smoother/replan_checker.hpp"
 #include "path_smoother/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <algorithm>
 #include <memory>

@@ -21,8 +21,8 @@
 #include "obstacle_avoidance_planner/replan_checker.hpp"
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <algorithm>
