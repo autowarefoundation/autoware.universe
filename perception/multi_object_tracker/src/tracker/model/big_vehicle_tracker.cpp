@@ -56,6 +56,7 @@ BigVehicleTracker::BigVehicleTracker(
   float q_stddev_y = 1.5;                                     // [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
   float q_stddev_vx = tier4_autoware_utils::kmph2mps(10);     // [m/(s*s)]
+  float q_stddev_ax = 9.8 * 0.2;                              // [m/(s*s)]
   float q_stddev_slip = tier4_autoware_utils::deg2rad(5);     // [rad/(s*s)]
   float r_stddev_x = 1.5;                                     // [m]
   float r_stddev_y = 0.5;                                     // [m]
@@ -65,11 +66,13 @@ BigVehicleTracker::BigVehicleTracker(
   float p0_stddev_y = 0.5;                                    // [m]
   float p0_stddev_yaw = tier4_autoware_utils::deg2rad(30);    // [rad]
   float p0_stddev_vx = tier4_autoware_utils::kmph2mps(1000);  // [m/s]
+  float p0_stddev_ax = tier4_autoware_utils::kmph2mps(1000);  // [m/(s*s)]
   float p0_stddev_slip = tier4_autoware_utils::deg2rad(10);   // [rad/s]
   ekf_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
   ekf_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
   ekf_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
   ekf_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
+  ekf_params_.q_cov_ax = std::pow(q_stddev_ax, 2.0);
   ekf_params_.q_cov_slip = std::pow(q_stddev_slip, 2.0);
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
@@ -79,8 +82,10 @@ BigVehicleTracker::BigVehicleTracker(
   ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
   ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
   ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
+  ekf_params_.p0_cov_ax = std::pow(p0_stddev_ax, 2.0);
   ekf_params_.p0_cov_slip = std::pow(p0_stddev_slip, 2.0);
   max_vx_ = tier4_autoware_utils::kmph2mps(100);                       // [m/s]
+  max_ax_ = 9.8 * 0.4;                                                 // [m/s^2]
   max_slip_ = tier4_autoware_utils::deg2rad(30);                       // [rad]
   velocity_deviation_threshold_ = tier4_autoware_utils::kmph2mps(10);  // [m/s]
 
@@ -96,6 +101,7 @@ BigVehicleTracker::BigVehicleTracker(
   } else {
     X(IDX::VX) = 0.0;
   }
+  X(IDX::AX) = 0.0;
 
   // initialize P matrix
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -113,6 +119,7 @@ BigVehicleTracker::BigVehicleTracker(
     P(IDX::Y, IDX::X) = P(IDX::X, IDX::Y);
     P(IDX::YAW, IDX::YAW) = ekf_params_.p0_cov_yaw;
     P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
+    P(IDX::AX, IDX::AX) = ekf_params_.p0_cov_ax;
     P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
   } else {
     P(IDX::X, IDX::X) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
@@ -128,6 +135,7 @@ BigVehicleTracker::BigVehicleTracker(
       P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
     }
     P(IDX::SLIP, IDX::SLIP) = ekf_params_.p0_cov_slip;
+    P(IDX::AX, IDX::AX) = ekf_params_.p0_cov_ax;
   }
 
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -174,18 +182,20 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
    * x_{k+1}   = x_k + vx_k * cos(yaw_k + slip_k) * dt
    * y_{k+1}   = y_k + vx_k * sin(yaw_k + slip_k) * dt
    * yaw_{k+1} = yaw_k + vx_k / l_r * sin(slip_k) * dt
-   * vx_{k+1}  = vx_k
+   * vx_{k+1}  = vx_k + ax_k * dt
+   * ax_{k+1} = ax_k
    * slip_{k+1}  = slip_k
    *
    */
 
   /*  == Linearized model ==
    *
-   * A = [ 1, 0, -vx*sin(yaw+slip)*dt, cos(yaw+slip)*dt,  -vx*sin(yaw+slip)*dt]
-   *     [ 0, 1,  vx*cos(yaw+slip)*dt, sin(yaw+slip)*dt,  vx*cos(yaw+slip)*dt]
-   *     [ 0, 0,               1,    1/l_r*sin(slip)*dt,  vx/l_r*cos(slip)*dt]
-   *     [ 0, 0,               0,                     1,  0]
-   *     [ 0, 0,               0,                     0,  1]
+   * A = [ 1, 0, -vx*sin(yaw+slip)*dt, cos(yaw+slip)*dt,  0,   -vx*sin(yaw+slip)*dt]
+   *     [ 0, 1,  vx*cos(yaw+slip)*dt, sin(yaw+slip)*dt,  0,   vx*cos(yaw+slip)*dt]
+   *     [ 0, 0,               1,    1/l_r*sin(slip)*dt,  0,   vx/l_r*cos(slip)*dt]
+   *     [ 0, 0,               0,                     1,  dt,    0]
+   *     [ 0, 0,               0,                     0,  1,    0]
+   *     [ 0, 0,               0,                     0,  0,    1]
    */
 
   // X t
@@ -197,13 +207,15 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   const double sin_slip = std::sin(X_t(IDX::SLIP));
   const double vx = X_t(IDX::VX);
   const double sin_2yaw = std::sin(2.0f * X_t(IDX::YAW));
+  const double acc_attenuate_rate = 1.0;
 
   // X t+1
   Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);                 // predicted state
   X_next_t(IDX::X) = X_t(IDX::X) + vx * cos_yaw * dt;             // dx = v * cos(yaw)
   X_next_t(IDX::Y) = X_t(IDX::Y) + vx * sin_yaw * dt;             // dy = v * sin(yaw)
   X_next_t(IDX::YAW) = X_t(IDX::YAW) + vx / lr_ * sin_slip * dt;  // dyaw = omega
-  X_next_t(IDX::VX) = X_t(IDX::VX);
+  X_next_t(IDX::VX) = X_t(IDX::VX) + X_t(IDX::AX) * dt;
+  X_next_t(IDX::AX) = acc_attenuate_rate * X_t(IDX::AX);
   X_next_t(IDX::SLIP) = X_t(IDX::SLIP);
 
   // A
@@ -216,6 +228,8 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   A(IDX::Y, IDX::SLIP) = vx * cos_yaw * dt;
   A(IDX::YAW, IDX::VX) = 1.0 / lr_ * sin_slip * dt;
   A(IDX::YAW, IDX::SLIP) = vx / lr_ * cos_slip * dt;
+  A(IDX::VX, IDX::AX) = dt;
+  A(IDX::AX, IDX::AX) = acc_attenuate_rate;
 
   // Q
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
@@ -229,6 +243,7 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
   Q(IDX::Y, IDX::X) = Q(IDX::X, IDX::Y);
   Q(IDX::YAW, IDX::YAW) = ekf_params_.q_cov_yaw * dt * dt;
   Q(IDX::VX, IDX::VX) = ekf_params_.q_cov_vx * dt * dt;
+  Q(IDX::AX, IDX::AX) = ekf_params_.q_cov_ax * dt * dt;
   Q(IDX::SLIP, IDX::SLIP) = ekf_params_.q_cov_slip * dt * dt;
   Eigen::MatrixXd B = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   Eigen::MatrixXd u = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
@@ -356,6 +371,9 @@ bool BigVehicleTracker::measureWithPose(
     if (!(-max_vx_ <= X_t(IDX::VX) && X_t(IDX::VX) <= max_vx_)) {
       X_t(IDX::VX) = X_t(IDX::VX) < 0 ? -max_vx_ : max_vx_;
     }
+    if (!(-max_ax_ <= X_t(IDX::AX) && X_t(IDX::AX) <= max_ax_)) {
+      X_t(IDX::AX) = X_t(IDX::AX) < 0 ? -max_ax_ : max_ax_;
+    }
     if (!(-max_slip_ <= X_t(IDX::SLIP) && X_t(IDX::SLIP) <= max_slip_)) {
       X_t(IDX::SLIP) = X_t(IDX::SLIP) < 0 ? -max_slip_ : max_slip_;
     }
@@ -438,6 +456,7 @@ bool BigVehicleTracker::getTrackedObject(
   /*  put predicted pose and twist to output object  */
   auto & pose_with_cov = object.kinematics.pose_with_covariance;
   auto & twist_with_cov = object.kinematics.twist_with_covariance;
+  auto & acc_with_cov = object.kinematics.acceleration_with_covariance;
 
   // recover bounding box from tracking point
   const double dl = bounding_box_.length - last_input_bounding_box_.length;
@@ -497,6 +516,11 @@ bool BigVehicleTracker::getTrackedObject(
   twist_with_cov.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;
   twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::SLIP, IDX::SLIP);
+
+  // acc
+  acc_with_cov.accel.linear.x = X_t(IDX::AX);
+  acc_with_cov.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::AX, IDX::AX) * std::cos(X_t(IDX::SLIP));
+  acc_with_cov.covariance[utils::MSG_COV_IDX::Y_Y] = P(IDX::AX, IDX::AX) * std::sin(X_t(IDX::SLIP));
 
   // set shape
   object.shape.dimensions.x = bounding_box_.length;
