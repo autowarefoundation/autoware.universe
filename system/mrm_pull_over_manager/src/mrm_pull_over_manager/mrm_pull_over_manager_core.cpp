@@ -47,7 +47,7 @@ lanelet::ConstLanelets get_all_left_lanelets(
   auto left_lanelet = route_handler.getLeftLanelet(base_lanelet, false, true);
   while (left_lanelet) {
     left_lanalets.emplace_back(left_lanelet.get());
-    RCLCPP_INFO(rclcpp::get_logger(__func__), "left lanelet id: %ld", left_lanelet->id());
+    RCLCPP_DEBUG(rclcpp::get_logger(__func__), "left lanelet id: %ld", left_lanelet->id());
 
     // get next left lanelet
     left_lanelet = route_handler.getLeftLanelet(left_lanelet.get(), false, true);
@@ -88,7 +88,7 @@ lanelet::ConstLanelets get_all_following_and_left_lanelets(
 
     const auto current_lane = route_handler.getLaneletsFromId(segment.preferred_primitive.id);
     result_lanelets.emplace_back(current_lane);
-    RCLCPP_INFO(rclcpp::get_logger(__func__), "current lanelet id: %ld", current_lane.id());
+    RCLCPP_DEBUG(rclcpp::get_logger(__func__), "current lanelet id: %ld", current_lane.id());
 
     // Add all left lanelets
     auto left_lanes = get_all_left_lanelets(route_handler, current_lane);
@@ -201,14 +201,14 @@ void MrmPullOverManager::on_trajectory(const Trajectory::ConstSharedPtr msg)
 bool MrmPullOverManager::is_data_ready()
 {
   if (!odom_) {
-    RCLCPP_INFO_THROTTLE(
+    RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for odometry msg...");
     return false;
   }
 
   if (!route_) {
-    RCLCPP_INFO_THROTTLE(
+    RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for route...");
     return false;
@@ -235,7 +235,7 @@ bool MrmPullOverManager::find_goals_within_route()
   }
 
   const auto current_lanelet = lanelet_util::get_current_lanelet(route_handler_, odom_->pose.pose);
-  RCLCPP_INFO(this->get_logger(), "current lanelet id:%ld", current_lanelet.id());
+  RCLCPP_DEBUG(this->get_logger(), "current lanelet id:%ld", current_lanelet.id());
 
   const auto candidate_lanelets =
     lanelet_util::get_all_following_and_left_lanelets(route_handler_, *route_, current_lanelet);
@@ -244,11 +244,6 @@ bool MrmPullOverManager::find_goals_within_route()
   emergency_goals.header.frame_id = "map";
   emergency_goals.header.stamp = now();
   emergency_goals.poses = find_goals_in_lanelets(candidate_lanelets);
-
-  // temporary
-  for (const auto & goal : emergency_goals.poses) {
-    RCLCPP_INFO(this->get_logger(), "goal x: %f", goal.position.x);
-  }
 
   emergency_goals.poses = filter_nearby_goals(emergency_goals.poses);
 
@@ -260,7 +255,7 @@ bool MrmPullOverManager::find_goals_within_route()
 std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::find_goals_in_lanelets(
   const lanelet::ConstLanelets & candidate_lanelets) const
 {
-  RCLCPP_INFO(this->get_logger(), "candidate lanelet count: %ld", candidate_lanelets.size());
+  RCLCPP_DEBUG(this->get_logger(), "candidate lanelet count: %ld", candidate_lanelets.size());
   std::vector<Pose> goals;
 
   for (const auto & lane : candidate_lanelets) {
@@ -282,14 +277,14 @@ std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::find_goals_in_lanelets
 std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::filter_nearby_goals(
   const std::vector<geometry_msgs::msg::Pose> & poses)
 {
-  RCLCPP_INFO(this->get_logger(), "pose count: %ld", poses.size());
+  RCLCPP_DEBUG(this->get_logger(), "pose count: %ld", poses.size());
   std::vector<geometry_msgs::msg::Pose> filtered_poses;
 
   auto it = poses.begin();
   for (; it != poses.end(); ++it) {
     // filter unsafe yaw pose
     const double yaw_deviation = motion_utils::calcYawDeviation(trajectory_->points, *it);
-    RCLCPP_INFO(this->get_logger(), "yaw deviation to pose: %lf", yaw_deviation);
+    RCLCPP_DEBUG(this->get_logger(), "yaw deviation to pose: %lf", yaw_deviation);
     if (std::abs(yaw_deviation) > param_.yaw_deviation_threshold) {
       continue;
     }
@@ -297,11 +292,12 @@ std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::filter_nearby_goals(
     // filter too near pose
     // The poses are stored in order of distance, so the loop exits as soon as the first one
     // exceeding the threshold is found
+    // TODO(TomohitoAndo): Replace with better logic to filter the near goals
     const double arc_length_to_pose = motion_utils::calcSignedArcLength(
       trajectory_->points, odom_->pose.pose.position, it->position);
     const double distance_threshold = odom_->twist.twist.linear.x * param_.margin_time_to_goal;
-    RCLCPP_INFO(this->get_logger(), "distance to the pose: %lf", arc_length_to_pose);
-    RCLCPP_INFO(this->get_logger(), "distance threshold: %lf", distance_threshold);
+    RCLCPP_DEBUG(this->get_logger(), "distance to the pose: %lf", arc_length_to_pose);
+    RCLCPP_DEBUG(this->get_logger(), "distance threshold: %lf", distance_threshold);
     if (arc_length_to_pose > distance_threshold) {
       break;
     }
