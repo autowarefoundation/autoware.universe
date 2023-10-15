@@ -102,6 +102,7 @@ lanelet::ConstLanelets get_all_following_and_left_lanelets(
 MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
 {
   // Parameter
+  param_.update_rate = declare_parameter<double>("update_rate");
   param_.pull_over_point_file_path = declare_parameter<std::string>("pull_over_point_file_path");
   param_.max_goal_pose_num = declare_parameter<int>("max_goal_pose_num");
   param_.yaw_deviation_threshold = declare_parameter<double>("yaw_deviation_threshold");
@@ -133,7 +134,8 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
     "~/input/mrm/pull_over/activate",
     std::bind(&MrmPullOverManager::activatePullOver, this, _1, _2));
 
-  const auto update_period_ns = rclcpp::Rate(10.0).period();
+  // Timer
+  const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), update_period_ns, std::bind(&MrmPullOverManager::on_timer, this));
 

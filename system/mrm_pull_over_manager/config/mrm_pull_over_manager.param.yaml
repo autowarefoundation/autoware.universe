@@ -1,5 +1,6 @@
 /**:
   ros__parameters:
+    update_rate: 10
     max_goal_pose_num: 3
     yaw_deviation_threshold: 0.5 # [rad]
     distance_threshold: 10.0 # [m]
