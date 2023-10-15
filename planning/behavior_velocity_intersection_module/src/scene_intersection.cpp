@@ -1077,7 +1077,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     planner_data_->current_velocity->twist.linear.x,
     planner_data_->current_velocity->twist.linear.y);
   const bool keep_detection =
-    (vel_norm < planner_param_.collision_detection.keep_detection_vel_thr);
+    (vel_norm < planner_param_.collision_detection.pass_judge.keep_detection_vel_thr);
   const bool was_safe = std::holds_alternative<IntersectionModule::Safe>(prev_decision_result_);
   // if ego is over the pass judge line and not stopped
   if (is_over_default_stop_line && !is_over_pass_judge_line && keep_detection) {

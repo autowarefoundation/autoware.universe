@@ -117,8 +117,10 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
       node, ns + ".collision_detection.not_prioritized.collision_start_margin_time");
   ip.collision_detection.not_prioritized.collision_end_margin_time = getOrDeclareParameter<double>(
     node, ns + ".collision_detection.not_prioritized.collision_end_margin_time");
-  ip.collision_detection.keep_detection_vel_thr =
-    getOrDeclareParameter<double>(node, ns + ".collision_detection.keep_detection_vel_thr");
+  ip.collision_detection.pass_judge.judge_before_default_stop_line = getOrDeclareParameter<bool>(
+    node, ns + ".collision_detection.pass_judge.judge_before_default_stop_line");
+  ip.collision_detection.pass_judge.keep_detection_vel_thr = getOrDeclareParameter<double>(
+    node, ns + ".collision_detection.pass_judge.keep_detection_vel_thr");
   ip.collision_detection.use_upstream_velocity =
     getOrDeclareParameter<bool>(node, ns + ".collision_detection.use_upstream_velocity");
   ip.collision_detection.minimum_upstream_velocity =

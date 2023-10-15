@@ -102,7 +102,12 @@ public:
         double collision_start_margin_time;  //! start margin time to check collision
         double collision_end_margin_time;    //! end margin time to check collision
       } not_prioritized;
-      double keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
+      struct PassJudge
+      {
+        bool judge_before_default_stop_line;
+        double
+          keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
+      } pass_judge;
       bool use_upstream_velocity;
       double minimum_upstream_velocity;
       struct YieldOnGreeTrafficLight
