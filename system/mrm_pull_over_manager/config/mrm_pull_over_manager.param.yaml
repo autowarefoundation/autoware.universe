@@ -1,5 +1,5 @@
-# Default configuration for emergency handler
----
 /**:
   ros__parameters:
-    test: 10
+    max_goal_pose_num: 3
+    yaw_deviation_threshold: 0.5 # [rad]
+    distance_threshold: 10.0 # [m]

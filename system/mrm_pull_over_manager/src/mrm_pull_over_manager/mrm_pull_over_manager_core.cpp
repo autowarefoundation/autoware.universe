@@ -17,36 +17,6 @@
 #include "mrm_pull_over_manager/csv_parser.hpp"
 namespace mrm_pull_over_manager
 {
-
-// TODO: temporary
-namespace
-{
-// geometry_msgs::msg::Quaternion yaw_to_quaternion(double yaw)
-// {
-//   geometry_msgs::msg::Quaternion ros_quat;
-
-//   // Convert yaw angle (theta) to quaternion
-//   ros_quat.x = 0.0;
-//   ros_quat.y = 0.0;
-//   ros_quat.z = sin(yaw * 0.5);
-//   ros_quat.w = cos(yaw * 0.5);
-
-//   return ros_quat;
-// }
-
-// geometry_msgs::msg::Pose create_pose(
-//   const double x, const double y, const double z, const double yaw)
-// {
-//   geometry_msgs::msg::Pose pose;
-//   pose.position.x = x;
-//   pose.position.y = y;
-//   pose.position.z = z;
-//   pose.orientation = yaw_to_quaternion(yaw);
-
-//   return pose;
-// }
-}  // namespace
-
 namespace lanelet_util
 {
 /**
@@ -94,21 +64,35 @@ lanelet::ConstLanelets get_all_left_lanelets(
  * @return A collection of lanelets that are following and to the left of the start lanelet.
  */
 lanelet::ConstLanelets get_all_following_and_left_lanelets(
-  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelet & start_lanelet)
+  const route_handler::RouteHandler & route_handler,
+  const autoware_planning_msgs::msg::LaneletRoute & route,
+  const lanelet::ConstLanelet & start_lanelet)
 {
-  lanelet::ConstLanelet current_lanelet = start_lanelet;
   lanelet::ConstLanelets result_lanelets;
-  result_lanelets.emplace_back(start_lanelet);
+  bool found_start_lane = false;
+  for (const auto & segment : route.segments) {
+    // If the start lanelet hasn't been found, search for it
+    if (!found_start_lane) {
+      for (const auto & primitive : segment.primitives) {
+        if (primitive.id == start_lanelet.id()) {
+          found_start_lane = true;
+          break;  // Break out once the start lanelet is found
+        }
+      }
+    }
 
-  // Update current_lanelet to the next following lanelet, if any
-  while (route_handler.getNextLaneletWithinRoute(current_lanelet, &current_lanelet)) {
-    RCLCPP_INFO(rclcpp::get_logger(__func__), "current lanelet id: %ld", current_lanelet.id());
+    // search lanelets from the start_lanelet
+    if (!found_start_lane) {
+      continue;
+    }
 
-    result_lanelets.emplace_back(current_lanelet);
+    const auto current_lane = route_handler.getLaneletsFromId(segment.preferred_primitive.id);
+    result_lanelets.emplace_back(current_lane);
+    RCLCPP_INFO(rclcpp::get_logger(__func__), "current lanelet id: %ld", current_lane.id());
 
     // Add all left lanelets
-    auto left_lanelets = get_all_left_lanelets(route_handler, current_lanelet);
-    result_lanelets.insert(result_lanelets.end(), left_lanelets.begin(), left_lanelets.end());
+    auto left_lanes = get_all_left_lanelets(route_handler, current_lane);
+    result_lanelets.insert(result_lanelets.end(), left_lanes.begin(), left_lanes.end());
   }
 
   return result_lanelets;
@@ -118,9 +102,13 @@ lanelet::ConstLanelets get_all_following_and_left_lanelets(
 MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
 {
   // Parameter
-  // param_.update_rate = declare_parameter<int>("update_rate", 10);
+  param_.pull_over_point_file_path = declare_parameter<std::string>("pull_over_point_file_path");
+  param_.max_goal_pose_num = declare_parameter<int>("max_goal_pose_num");
+  param_.yaw_deviation_threshold = declare_parameter<double>("yaw_deviation_threshold");
+  param_.distance_threshold = declare_parameter<double>("distance_threshold");
 
   using std::placeholders::_1;
+  using std::placeholders::_2;
 
   // Subscriber
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
@@ -135,23 +123,38 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
     "~/input/trajectory", rclcpp::QoS{1}, std::bind(&MrmPullOverManager::on_trajectory, this, _1));
 
   // Publisher
-  pub_pose_array_ = create_publisher<PoseArray>("~/output/emergency_goals", rclcpp::QoS{1});
+  pub_pose_array_ =
+    create_publisher<PoseArray>("~/output/mrm/pull_over/emergency_goals", rclcpp::QoS{1});
+  pub_status_ =
+    create_publisher<MrmBehaviorStatus>("~/output/mrm/pull_over/status", rclcpp::QoS{1});
 
-  const std::string filepath = "/media/tomohitoando/data/map/shiojiri_100laps/pull_over_point.csv";
-  CsvPoseParser parser(filepath);
-  candidate_goals_ = parser.parse();
+  // Server
+  activate_pull_over_ = create_service<tier4_system_msgs::srv::ActivatePullOver>(
+    "~/input/mrm/pull_over/activate",
+    std::bind(&MrmPullOverManager::activatePullOver, this, _1, _2));
 
-  // TODO: temporary
-  // Timer
   const auto update_period_ns = rclcpp::Rate(10.0).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), update_period_ns, std::bind(&MrmPullOverManager::on_timer, this));
+
+  // Parse CSV and store the emergency goals
+  CsvPoseParser parser(param_.pull_over_point_file_path);
+  candidate_goals_ = parser.parse();
+
+  // Initialize the state
+  status_.state = MrmBehaviorStatus::AVAILABLE;
 }
 
 void MrmPullOverManager::on_timer()
 {
-  const bool result = find_goals_within_route();
-  RCLCPP_INFO_STREAM(this->get_logger(), "result: " << result);
+  publishStatus();
+}
+
+void MrmPullOverManager::publishStatus() const
+{
+  auto status = status_;
+  status.stamp = this->now();
+  pub_status_->publish(status);
 }
 
 void MrmPullOverManager::activatePullOver(
@@ -161,11 +164,13 @@ void MrmPullOverManager::activatePullOver(
   if (request->activate == true) {
     const bool result = find_goals_within_route();
     response->status.success = result;
+    status_.state = MrmBehaviorStatus::OPERATING;
   }
 
   if (request->activate == false) {
-    // TODO: Call ClearEmergency service
+    // TODO(TomohitoAndo): Call ClearEmergency service
     response->status.success = true;
+    status_.state = MrmBehaviorStatus::AVAILABLE;
   }
 }
 
@@ -176,6 +181,8 @@ void MrmPullOverManager::on_odometry(const Odometry::ConstSharedPtr msg)
 
 void MrmPullOverManager::on_route(const LaneletRoute::ConstSharedPtr msg)
 {
+  // TODO(TomohitoAndo): If we can get all the lanes including lane change, route_ is not required
+  route_ = msg;
   route_handler_.setRoute(*msg);
 }
 
@@ -195,6 +202,13 @@ bool MrmPullOverManager::is_data_ready()
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for odometry msg...");
+    return false;
+  }
+
+  if (!route_) {
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
+      "waiting for route...");
     return false;
   }
 
@@ -222,7 +236,7 @@ bool MrmPullOverManager::find_goals_within_route()
   RCLCPP_INFO(this->get_logger(), "current lanelet id:%ld", current_lanelet.id());
 
   const auto candidate_lanelets =
-    lanelet_util::get_all_following_and_left_lanelets(route_handler_, current_lanelet);
+    lanelet_util::get_all_following_and_left_lanelets(route_handler_, *route_, current_lanelet);
 
   PoseArray emergency_goals;
   emergency_goals.header.frame_id = "map";
@@ -254,6 +268,10 @@ std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::find_goals_in_lanelets
     if (it != candidate_goals_.end()) {
       goals.emplace_back(it->second);
     }
+
+    if (goals.size() > param_.max_goal_pose_num) {
+      break;
+    }
   }
 
   return goals;
@@ -265,14 +283,12 @@ std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::filter_nearby_goals(
   RCLCPP_INFO(this->get_logger(), "pose count: %ld", poses.size());
   std::vector<geometry_msgs::msg::Pose> filtered_poses;
 
-  const double distance_threshold = 10.0;  // TODO
-  const double yaw_threshold = 1.0;        // TODO
   auto it = poses.begin();
   for (; it != poses.end(); ++it) {
     // filter unsafe yaw pose
     const double yaw_deviation = motion_utils::calcYawDeviation(trajectory_->points, *it);
     RCLCPP_INFO(this->get_logger(), "yaw deviation to pose: %lf", yaw_deviation);
-    if (std::abs(yaw_deviation) > yaw_threshold) {
+    if (std::abs(yaw_deviation) > param_.yaw_deviation_threshold) {
       continue;
     }
 
@@ -282,7 +298,7 @@ std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::filter_nearby_goals(
     const double arc_length_to_pose = motion_utils::calcSignedArcLength(
       trajectory_->points, odom_->pose.pose.position, it->position);
     RCLCPP_INFO(this->get_logger(), "distance to the pose: %lf", arc_length_to_pose);
-    if (arc_length_to_pose > distance_threshold) {
+    if (arc_length_to_pose > param_.distance_threshold) {
       break;
     }
   }

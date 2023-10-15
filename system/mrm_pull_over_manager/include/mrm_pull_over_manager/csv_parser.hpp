@@ -31,7 +31,7 @@ namespace mrm_pull_over_manager
 class CsvPoseParser
 {
 public:
-  CsvPoseParser(const std::string & filepath) : filepath_(filepath) {}
+  explicit CsvPoseParser(const std::string & filepath) : filepath_(filepath) {}
 
   std::map<lanelet::Id, geometry_msgs::msg::Pose> parse()
   {

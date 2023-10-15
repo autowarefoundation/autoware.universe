@@ -18,6 +18,7 @@
 // C++
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 // ROS 2
@@ -32,6 +33,7 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/srv/activate_pull_over.hpp>
 
 // lanelet
@@ -61,6 +63,15 @@ private:
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
   using PoseLaneIdMap = std::map<lanelet::Id, Pose>;
+  using MrmBehaviorStatus = tier4_system_msgs::msg::MrmBehaviorStatus;
+
+  struct Parameter
+  {
+    std::string pull_over_point_file_path;
+    size_t max_goal_pose_num;
+    double yaw_deviation_threshold;
+    double distance_threshold;
+  };
 
   // Subscribtoers
   rclcpp::Subscription<Odometry>::SharedPtr sub_odom_;
@@ -69,6 +80,7 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
 
   Odometry::ConstSharedPtr odom_;
+  LaneletRoute::ConstSharedPtr route_;
   route_handler::RouteHandler route_handler_;
   Trajectory::ConstSharedPtr trajectory_;
 
@@ -86,19 +98,22 @@ private:
 
   // Publisher
   rclcpp::Publisher<PoseArray>::SharedPtr pub_pose_array_;
+  rclcpp::Publisher<MrmBehaviorStatus>::SharedPtr pub_status_;
 
-  // TODO: temporary for debug
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
   void on_timer();
 
   // Parameters
-  // Param param_;
+  Parameter param_;
 
+  // Variables
   PoseLaneIdMap candidate_goals_;
+  MrmBehaviorStatus status_;
 
   // Algorithm
   bool is_data_ready();
+  void publishStatus() const;
 
   /**
    * @brief Find the goals within the lanelet and publish them
