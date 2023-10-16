@@ -18,6 +18,7 @@
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
@@ -35,7 +36,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
 
 #include <limits>
 #include <memory>
@@ -140,16 +141,15 @@ struct PlannerData
   OccupancyGrid::ConstSharedPtr costmap{};
   LateralOffset::ConstSharedPtr lateral_offset{};
   OperationModeState::ConstSharedPtr operation_mode{};
-  PathWithLaneId::SharedPtr reference_path{std::make_shared<PathWithLaneId>()};
   PathWithLaneId::SharedPtr prev_output_path{std::make_shared<PathWithLaneId>()};
   std::optional<PoseWithUuidStamped> prev_modified_goal{};
   std::optional<UUID> prev_route_id{};
-  lanelet::ConstLanelets current_lanes{};
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
   BehaviorPathPlannerParameters parameters{};
   drivable_area_expansion::DrivableAreaExpansionParameters drivable_area_expansion_parameters{};
 
-  mutable std::optional<geometry_msgs::msg::Pose> drivable_area_expansion_prev_crop_pose;
+  mutable std::vector<geometry_msgs::msg::Pose> drivable_area_expansion_prev_path_poses{};
+  mutable std::vector<double> drivable_area_expansion_prev_curvatures{};
   mutable TurnSignalDecider turn_signal_decider;
 
   TurnIndicatorsCommand getTurnSignal(

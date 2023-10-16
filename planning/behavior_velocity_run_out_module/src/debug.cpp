@@ -16,7 +16,9 @@
 
 #include "scene.hpp"
 
-#include <motion_utils/motion_utils.hpp>
+#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcOffsetPose;
@@ -74,7 +76,6 @@ RunOutDebug::RunOutDebug(rclcpp::Node & node) : node_(node)
   pub_debug_values_ =
     node.create_publisher<Float32MultiArrayStamped>("~/debug/run_out/debug_values", 1);
   pub_accel_reason_ = node.create_publisher<Int32Stamped>("~/debug/run_out/accel_reason", 1);
-  pub_debug_trajectory_ = node.create_publisher<Trajectory>("~/debug/run_out/trajectory", 1);
   pub_debug_pointcloud_ = node.create_publisher<PointCloud2>(
     "~/debug/run_out/filtered_pointcloud", rclcpp::SensorDataQoS().keep_last(1));
 }
@@ -302,11 +303,6 @@ void RunOutDebug::publishDebugValue()
   accel_reason.stamp = node_.now();
   accel_reason.data = static_cast<int>(accel_reason_);
   pub_accel_reason_->publish(accel_reason);
-}
-
-void RunOutDebug::publishDebugTrajectory(const Trajectory & trajectory)
-{
-  pub_debug_trajectory_->publish(trajectory);
 }
 
 void RunOutDebug::publishFilteredPointCloud(

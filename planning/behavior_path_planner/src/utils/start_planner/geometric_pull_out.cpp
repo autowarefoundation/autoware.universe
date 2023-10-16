@@ -15,8 +15,10 @@
 #include "behavior_path_planner/utils/start_planner/geometric_pull_out.hpp"
 
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 
@@ -26,7 +28,6 @@ using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
 namespace behavior_path_planner
 {
-using start_planner_utils::combineReferencePath;
 using start_planner_utils::getPullOutLanes;
 
 GeometricPullOut::GeometricPullOut(rclcpp::Node & node, const StartPlannerParameters & parameters)
@@ -36,7 +37,7 @@ GeometricPullOut::GeometricPullOut(rclcpp::Node & node, const StartPlannerParame
   planner_.setParameters(parallel_parking_parameters_);
 }
 
-boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_pose)
+boost::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, const Pose & goal_pose)
 {
   PullOutPath output;
 
@@ -47,22 +48,15 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
     planner_data_, backward_path_length, std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
   const auto pull_out_lanes = getPullOutLanes(planner_data_, backward_path_length);
-  auto lanes = road_lanes;
-  for (const auto & pull_out_lane : pull_out_lanes) {
-    auto it = std::find_if(
-      lanes.begin(), lanes.end(), [&pull_out_lane](const lanelet::ConstLanelet & lane) {
-        return lane.id() == pull_out_lane.id();
-      });
-    if (it == lanes.end()) {
-      lanes.push_back(pull_out_lane);
-    }
-  }
+
+  // check if the ego is at left or right side of road lane center
+  const bool left_side_start = 0 < getArcCoordinates(road_lanes, start_pose).distance;
 
   planner_.setTurningRadius(
     planner_data_->parameters, parallel_parking_parameters_.pull_out_max_steer_angle);
   planner_.setPlannerData(planner_data_);
   const bool found_valid_path =
-    planner_.planPullOut(start_pose, goal_pose, road_lanes, pull_out_lanes);
+    planner_.planPullOut(start_pose, goal_pose, road_lanes, pull_out_lanes, left_side_start);
   if (!found_valid_path) {
     return {};
   }
@@ -72,7 +66,8 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
   const auto & stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     *(planner_data_->dynamic_object), parameters_.th_moving_object_velocity);
   const auto [pull_out_lane_stop_objects, others] =
-    utils::path_safety_checker::separateObjectsByLanelets(stop_objects, pull_out_lanes);
+    utils::path_safety_checker::separateObjectsByLanelets(
+      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
   if (utils::checkCollisionBetweenPathFootprintsAndObjects(
         vehicle_footprint_, arc_path, pull_out_lane_stop_objects,
@@ -113,7 +108,7 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
       std::make_pair(velocity, velocity * velocity / (2 * arc_length_on_second_arc_path)));
   } else {
     const auto partial_paths = planner_.getPaths();
-    const auto combined_path = combineReferencePath(partial_paths.at(0), partial_paths.at(1));
+    const auto combined_path = utils::combinePath(partial_paths.at(0), partial_paths.at(1));
     output.partial_paths.push_back(combined_path);
 
     // Calculate the acceleration required to reach the forward parking velocity at the center of

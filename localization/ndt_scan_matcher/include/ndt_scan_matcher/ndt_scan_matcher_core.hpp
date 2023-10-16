@@ -179,6 +179,8 @@ private:
   double converged_param_nearest_voxel_transformation_likelihood_;
 
   int initial_estimate_particles_num_;
+  int n_startup_trials_;
+  double lidar_topic_timeout_sec_;
   double initial_pose_timeout_sec_;
   double initial_pose_distance_tolerance_m_;
   float inversion_vector_threshold_;
@@ -207,6 +209,9 @@ private:
   double z_margin_for_ground_removal_;
 
   bool use_dynamic_map_loading_;
+
+  // The execution time which means probably NDT cannot matches scans properly
+  int critical_upper_bound_exe_time_ms_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

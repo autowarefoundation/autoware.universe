@@ -14,6 +14,9 @@
 
 #include "behavior_path_planner/scene_module/avoidance/manager.hpp"
 
+#include "tier4_autoware_utils/ros/parameter.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -139,17 +142,29 @@ AvoidanceModuleManager::AvoidanceModuleManager(
     p.check_other_object = getOrDeclareParameter<bool>(*node, ns + "check_other_object");
     p.check_all_predicted_path =
       getOrDeclareParameter<bool>(*node, ns + "check_all_predicted_path");
-    p.time_horizon_for_front_object =
-      getOrDeclareParameter<double>(*node, ns + "time_horizon_for_front_object");
-    p.time_horizon_for_rear_object =
-      getOrDeclareParameter<double>(*node, ns + "time_horizon_for_rear_object");
-    p.safety_check_time_resolution = getOrDeclareParameter<double>(*node, ns + "time_resolution");
     p.safety_check_backward_distance =
       getOrDeclareParameter<double>(*node, ns + "safety_check_backward_distance");
     p.hysteresis_factor_expand_rate =
       getOrDeclareParameter<double>(*node, ns + "hysteresis_factor_expand_rate");
     p.hysteresis_factor_safe_count =
       getOrDeclareParameter<int>(*node, ns + "hysteresis_factor_safe_count");
+  }
+
+  // safety check predicted path params
+  {
+    std::string ns = "avoidance.safety_check.";
+    p.ego_predicted_path_params.min_velocity =
+      getOrDeclareParameter<double>(*node, ns + "min_velocity");
+    p.ego_predicted_path_params.max_velocity =
+      getOrDeclareParameter<double>(*node, ns + "max_velocity");
+    p.ego_predicted_path_params.acceleration =
+      getOrDeclareParameter<double>(*node, "avoidance.constraints.longitudinal.max_acceleration");
+    p.ego_predicted_path_params.time_horizon_for_rear_object =
+      getOrDeclareParameter<double>(*node, ns + "time_horizon_for_rear_object");
+    p.ego_predicted_path_params.time_resolution =
+      getOrDeclareParameter<double>(*node, ns + "time_resolution");
+    p.ego_predicted_path_params.delay_until_departure =
+      getOrDeclareParameter<double>(*node, ns + "delay_until_departure");
   }
 
   // safety check rss params
@@ -186,6 +201,8 @@ AvoidanceModuleManager::AvoidanceModuleManager(
       getOrDeclareParameter<double>(*node, ns + "lateral_avoid_check_threshold");
     p.max_right_shift_length = getOrDeclareParameter<double>(*node, ns + "max_right_shift_length");
     p.max_left_shift_length = getOrDeclareParameter<double>(*node, ns + "max_left_shift_length");
+    p.max_deviation_from_lane =
+      getOrDeclareParameter<double>(*node, ns + "max_deviation_from_lane");
   }
 
   // avoidance maneuver (longitudinal)

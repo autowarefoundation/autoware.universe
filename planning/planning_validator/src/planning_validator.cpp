@@ -17,7 +17,7 @@
 #include "planning_validator/utils.hpp"
 
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <memory>
 #include <string>
@@ -41,6 +41,7 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
   pub_traj_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_status_ = create_publisher<PlanningValidatorStatus>("~/output/validation_status", 1);
   pub_markers_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/output/markers", 1);
+  pub_processing_time_ms_ = create_publisher<Float64Stamped>("~/debug/processing_time_ms", 1);
 
   debug_pose_publisher_ = std::make_shared<PlanningValidatorDebugMarkerPublisher>(this);
 
@@ -49,6 +50,8 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
   if (publish_diag_) {
     setupDiag();
   }
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 void PlanningValidator::setupParameters()
@@ -165,6 +168,8 @@ bool PlanningValidator::isDataReady()
 
 void PlanningValidator::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
+  stop_watch_.tic(__func__);
+
   current_trajectory_ = msg;
 
   if (!isDataReady()) return;
@@ -178,6 +183,7 @@ void PlanningValidator::onTrajectory(const Trajectory::ConstSharedPtr msg)
   publishTrajectory();
 
   // for debug
+  publishProcessingTime(stop_watch_.toc(__func__));
   publishDebugInfo();
   displayStatus();
 }
@@ -218,6 +224,14 @@ void PlanningValidator::publishTrajectory()
     "Invalid Trajectory detected, no valid trajectory found in the past. Trajectory is not "
     "published.");
   return;
+}
+
+void PlanningValidator::publishProcessingTime(const double processing_time_ms)
+{
+  Float64Stamped msg{};
+  msg.stamp = this->now();
+  msg.data = processing_time_ms;
+  pub_processing_time_ms_->publish(msg);
 }
 
 void PlanningValidator::publishDebugInfo()

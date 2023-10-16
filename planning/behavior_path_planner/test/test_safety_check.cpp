@@ -15,7 +15,8 @@
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 
@@ -51,9 +52,10 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
 
     const double lon_length = 10.0;
     const double lat_margin = 2.0;
+    const bool is_stopped_object = false;
 
-    const auto polygon =
-      createExtendedPolygon(ego_pose, vehicle_info, lon_length, lat_margin, debug);
+    const auto polygon = createExtendedPolygon(
+      ego_pose, vehicle_info, lon_length, lat_margin, is_stopped_object, debug);
 
     EXPECT_EQ(polygon.outer().size(), static_cast<unsigned int>(5));
 
@@ -78,9 +80,10 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
 
     const double lon_length = 10.0;
     const double lat_margin = 2.0;
+    const bool is_stopped_object = false;
 
-    const auto polygon =
-      createExtendedPolygon(ego_pose, vehicle_info, lon_length, lat_margin, debug);
+    const auto polygon = createExtendedPolygon(
+      ego_pose, vehicle_info, lon_length, lat_margin, is_stopped_object, debug);
 
     EXPECT_EQ(polygon.outer().size(), static_cast<unsigned int>(5));
 
@@ -106,9 +109,10 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
 
     const double lon_length = 10.0;
     const double lat_margin = 2.0;
+    const bool is_stopped_object = false;
 
-    const auto polygon =
-      createExtendedPolygon(ego_pose, vehicle_info, lon_length, lat_margin, debug);
+    const auto polygon = createExtendedPolygon(
+      ego_pose, vehicle_info, lon_length, lat_margin, is_stopped_object, debug);
 
     EXPECT_EQ(polygon.outer().size(), static_cast<unsigned int>(5));
 
@@ -154,9 +158,11 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedObjPolygon)
 
     const double lon_length = 10.0;
     const double lat_margin = 2.0;
+    const bool is_stopped_object = false;
 
     CollisionCheckDebug debug;
-    const auto polygon = createExtendedPolygon(obj_pose, shape, lon_length, lat_margin, debug);
+    const auto polygon =
+      createExtendedPolygon(obj_pose, shape, lon_length, lat_margin, is_stopped_object, debug);
 
     EXPECT_EQ(polygon.outer().size(), static_cast<unsigned int>(5));
 

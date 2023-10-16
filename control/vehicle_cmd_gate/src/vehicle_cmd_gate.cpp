@@ -169,6 +169,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     p.vel_lim = declare_parameter<double>("nominal.vel_lim");
     p.reference_speed_points =
       declare_parameter<std::vector<double>>("nominal.reference_speed_points");
+    p.steer_lim = declare_parameter<std::vector<double>>("nominal.steer_lim");
+    p.steer_rate_lim = declare_parameter<std::vector<double>>("nominal.steer_rate_lim");
     p.lon_acc_lim = declare_parameter<std::vector<double>>("nominal.lon_acc_lim");
     p.lon_jerk_lim = declare_parameter<std::vector<double>>("nominal.lon_jerk_lim");
     p.lat_acc_lim = declare_parameter<std::vector<double>>("nominal.lat_acc_lim");
@@ -184,6 +186,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     p.vel_lim = declare_parameter<double>("on_transition.vel_lim");
     p.reference_speed_points =
       declare_parameter<std::vector<double>>("on_transition.reference_speed_points");
+    p.steer_lim = declare_parameter<std::vector<double>>("on_transition.steer_lim");
+    p.steer_rate_lim = declare_parameter<std::vector<double>>("on_transition.steer_rate_lim");
     p.lon_acc_lim = declare_parameter<std::vector<double>>("on_transition.lon_acc_lim");
     p.lon_jerk_lim = declare_parameter<std::vector<double>>("on_transition.lon_jerk_lim");
     p.lat_acc_lim = declare_parameter<std::vector<double>>("on_transition.lat_acc_lim");
@@ -229,6 +233,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&VehicleCmdGate::onTimer, this));
   timer_pub_status_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&VehicleCmdGate::publishStatus, this));
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 bool VehicleCmdGate::isHeartbeatTimeout(
@@ -549,9 +555,7 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   // set prev value for both to keep consistency over switching:
   // Actual steer, vel, acc should be considered in manual mode to prevent sudden motion when
   // switching from manual to autonomous
-  const auto in_autonomous =
-    (mode.mode == OperationModeState::AUTONOMOUS && mode.is_autoware_control_enabled);
-  auto prev_values = in_autonomous ? out : current_status_cmd;
+  auto prev_values = mode.is_autoware_control_enabled ? out : current_status_cmd;
 
   if (ego_is_stopped) {
     prev_values.longitudinal = out.longitudinal;

@@ -18,8 +18,15 @@
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/distance/distance.hpp>
+#include <motion_utils/resample/resample.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
+
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_routing/RoutingGraphContainer.h>
 
 #include <algorithm>
 #include <cmath>
@@ -37,6 +44,7 @@ using motion_utils::calcLateralOffset;
 using motion_utils::calcLongitudinalOffsetPoint;
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
+using motion_utils::calcSignedArcLengthPartialSum;
 using motion_utils::findNearestSegmentIndex;
 using motion_utils::insertTargetPoint;
 using motion_utils::resamplePath;
@@ -291,8 +299,7 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> CrosswalkModule::get
     const auto p_stop_lines = getLinestringIntersects(
       ego_path, lanelet::utils::to2D(stop_line).basicLineString(), ego_pos, 2);
     if (!p_stop_lines.empty()) {
-      return std::make_pair(
-        p_stop_lines.front(), -planner_param_.stop_distance_from_object - base_link2front);
+      return std::make_pair(p_stop_lines.front(), -base_link2front);
     }
   }
 
@@ -751,15 +758,15 @@ Polygon2d CrosswalkModule::getAttentionArea(
 {
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
   const auto ego_polygon = createVehiclePolygon(planner_data_->vehicle_info_);
+  const auto backward_path_length =
+    calcSignedArcLength(sparse_resample_path.points, size_t(0), ego_pos);
+  const auto length_sum = calcSignedArcLengthPartialSum(
+    sparse_resample_path.points, size_t(0), sparse_resample_path.points.size());
 
   Polygon2d attention_area;
   for (size_t j = 0; j < sparse_resample_path.points.size() - 1; ++j) {
-    const auto & p_ego_front = sparse_resample_path.points.at(j).point.pose;
-    const auto & p_ego_back = sparse_resample_path.points.at(j + 1).point.pose;
-    const auto front_length =
-      calcSignedArcLength(sparse_resample_path.points, ego_pos, p_ego_front.position);
-    const auto back_length =
-      calcSignedArcLength(sparse_resample_path.points, ego_pos, p_ego_back.position);
+    const auto front_length = length_sum.at(j) - backward_path_length;
+    const auto back_length = length_sum.at(j + 1) - backward_path_length;
 
     if (back_length < crosswalk_attention_range.first) {
       continue;
@@ -920,7 +927,7 @@ void CrosswalkModule::updateObjectState(
       getCollisionPoint(sparse_resample_path, object, crosswalk_attention_range, attention_area);
     object_info_manager_.update(
       obj_uuid, obj_pos, std::hypot(obj_vel.x, obj_vel.y), clock_->now(), is_ego_yielding,
-      has_traffic_light, collision_point, planner_param_);
+      has_traffic_light, collision_point, planner_param_, crosswalk_.polygon2d().basicPolygon());
 
     if (collision_point) {
       const auto collision_state = object_info_manager_.getCollisionState(obj_uuid);
@@ -937,28 +944,27 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
     crosswalk_.regulatoryElementsAs<const lanelet::TrafficLight>();
 
   for (const auto & traffic_lights_reg_elem : traffic_lights_reg_elems) {
-    lanelet::ConstLineStringsOrPolygons3d traffic_lights = traffic_lights_reg_elem->trafficLights();
-    for (const auto & traffic_light : traffic_lights) {
-      const auto ll_traffic_light = static_cast<lanelet::ConstLineString3d>(traffic_light);
-      const auto traffic_signal_stamped = planner_data_->getTrafficSignal(ll_traffic_light.id());
-      if (!traffic_signal_stamped) {
-        continue;
-      }
+    const auto traffic_signal_stamped =
+      planner_data_->getTrafficSignal(traffic_lights_reg_elem->id());
+    if (!traffic_signal_stamped) {
+      continue;
+    }
 
+    if (
+      planner_param_.traffic_light_state_timeout <
+      (clock_->now() - traffic_signal_stamped->stamp).seconds()) {
+      continue;
+    }
+
+    const auto & lights = traffic_signal_stamped->signal.elements;
+    if (lights.empty()) {
+      continue;
+    }
+
+    for (const auto & element : lights) {
       if (
-        planner_param_.traffic_light_state_timeout <
-        (clock_->now() - traffic_signal_stamped->header.stamp).seconds()) {
-        continue;
-      }
-
-      const auto & lights = traffic_signal_stamped->signal.lights;
-      if (lights.empty()) {
-        continue;
-      }
-
-      if (lights.front().color == TrafficLight::RED) {
+        element.color == TrafficSignalElement::RED && element.shape == TrafficSignalElement::CIRCLE)
         return true;
-      }
     }
   }
 

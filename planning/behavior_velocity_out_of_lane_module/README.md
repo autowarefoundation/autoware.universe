@@ -140,23 +140,22 @@ Moreover, parameter `action.distance_buffer` adds an extra distance between the 
 
 | Parameter /objects              | Type   | Description                                                                                                                                                               |
 | ------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `minimum_velocity`              | double | [m/s] consider objects with an estimated time to collision bellow this value while on the overlap                                                                         |
-| `use_predicted_paths`           | bool   | [-] if true, use the predicted paths to estimate future positions; if false, assume the object moves at constant velocity along _all_ lanelets it currently is located in |
+| `minimum_velocity`              | double | [m/s] ignore objects with a velocity lower than this value                                                                                                                |
 | `predicted_path_min_confidence` | double | [-] minimum confidence required for a predicted path to be considered                                                                                                     |
+| `use_predicted_paths`           | bool   | [-] if true, use the predicted paths to estimate future positions; if false, assume the object moves at constant velocity along _all_ lanelets it currently is located in |
 
 | Parameter /overlap | Type   | Description                                                                                          |
 | ------------------ | ------ | ---------------------------------------------------------------------------------------------------- |
 | `minimum_distance` | double | [m] minimum distance inside a lanelet for an overlap to be considered                                |
 | `extra_length`     | double | [m] extra arc length to add to the front and back of an overlap (used to calculate enter/exit times) |
 
-| Parameter /action             | Type   | Description                                                                                                                                                                                                              |
-| ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `skip_if_over_max_decel`      | bool   | [-] if true, do not take an action that would cause more deceleration than the maximum allowed                                                                                                                           |
-| `strict`                      | bool   | [-] if true, when a decision is taken to avoid entering a lane, the stop point will make sure no lane at all is entered by ego; if false, ego stops just before entering a lane but may then be overlapping another lane |
-| `distance_buffer`             | double | [m] buffer distance to try to keep between the ego footprint and lane                                                                                                                                                    |
-| `slowdown.distance_threshold` | double | [m] insert a slow down when closer than this distance from an overlap                                                                                                                                                    |
-| `slowdown.velocity`           | double | [m] slow down velocity                                                                                                                                                                                                   |
-| `stop.distance_threshold`     | double | [m] insert a stop when closer than this distance from an overlap                                                                                                                                                         |
+| Parameter /action             | Type   | Description                                                                                    |
+| ----------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
+| `skip_if_over_max_decel`      | bool   | [-] if true, do not take an action that would cause more deceleration than the maximum allowed |
+| `distance_buffer`             | double | [m] buffer distance to try to keep between the ego footprint and lane                          |
+| `slowdown.distance_threshold` | double | [m] insert a slow down when closer than this distance from an overlap                          |
+| `slowdown.velocity`           | double | [m] slow down velocity                                                                         |
+| `stop.distance_threshold`     | double | [m] insert a stop when closer than this distance from an overlap                               |
 
 | Parameter /ego       | Type   | Description                                          |
 | -------------------- | ------ | ---------------------------------------------------- |

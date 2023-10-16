@@ -30,7 +30,7 @@ namespace autoware::motion::control::pid_longitudinal_controller
 PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
 : node_parameters_(node.get_node_parameters_interface()),
   clock_(node.get_clock()),
-  logger_(node.get_logger()),
+  logger_(node.get_logger().get_child("longitudinal_controller")),
   diagnostic_updater_(&node)
 {
   using std::placeholders::_1;
@@ -457,7 +457,9 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
     current_pose, m_trajectory, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
 
   // pitch
-  const double raw_pitch = longitudinal_utils::getPitchByPose(current_pose.orientation);
+  // NOTE: getPitchByTraj() calculates the pitch angle as defined in
+  // ../media/slope_definition.drawio.svg while getPitchByPose() is not, so `raw_pitch` is reversed
+  const double raw_pitch = (-1.0) * longitudinal_utils::getPitchByPose(current_pose.orientation);
   const double traj_pitch =
     longitudinal_utils::getPitchByTraj(m_trajectory, control_data.nearest_idx, m_wheel_base);
   control_data.slope_angle = m_use_traj_for_pitch ? traj_pitch : m_lpf_pitch->filter(raw_pitch);
@@ -531,16 +533,20 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     RCLCPP_INFO_SKIPFIRST_THROTTLE(logger_, *clock_, 5000, "%s", s);
   };
 
-  // if current operation mode is not autonomous mode, then change state to stopped
-  if (m_current_operation_mode.mode != OperationModeState::AUTONOMOUS) {
-    return changeState(ControlState::STOPPED);
-  }
+  const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&
+                                m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
 
   // transit state
   // in DRIVE state
   if (m_control_state == ControlState::DRIVE) {
     if (emergency_condition) {
       return changeState(ControlState::EMERGENCY);
+    }
+
+    if (!is_under_control && stopped_condition && keep_stopped_condition) {
+      // NOTE: When the ego is stopped on manual driving, since the driving state may transit to
+      //       autonomous, keep_stopped_condition should be checked.
+      return changeState(ControlState::STOPPED);
     }
 
     if (m_enable_smooth_stop) {
@@ -609,8 +615,14 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
 
   // in EMERGENCY state
   if (m_control_state == ControlState::EMERGENCY) {
-    if (stopped_condition && !emergency_condition) {
-      return changeState(ControlState::STOPPED);
+    if (!emergency_condition) {
+      if (stopped_condition) {
+        return changeState(ControlState::STOPPED);
+      }
+      if (!is_under_control) {
+        // NOTE: On manual driving, no need stopping to exit the emergency.
+        return changeState(ControlState::DRIVE);
+      }
     }
     return;
   }
@@ -644,7 +656,8 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     m_debug_values.setValues(DebugValues::TYPE::PREDICTED_VEL, pred_vel_in_target);
 
     raw_ctrl_cmd.vel = target_motion.vel;
-    raw_ctrl_cmd.acc = applyVelocityFeedback(target_motion, control_data.dt, pred_vel_in_target);
+    raw_ctrl_cmd.acc =
+      applyVelocityFeedback(target_motion, control_data.dt, pred_vel_in_target, control_data.shift);
     RCLCPP_DEBUG(
       logger_,
       "[feedback control]  vel: %3.3f, acc: %3.3f, dt: %3.3f, v_curr: %3.3f, v_ref: %3.3f "
@@ -817,7 +830,7 @@ double PidLongitudinalController::applySlopeCompensation(
   const double pitch_limited = std::min(std::max(pitch, m_min_pitch_rad), m_max_pitch_rad);
 
   // Acceleration command is always positive independent of direction (= shift) when car is running
-  double sign = (shift == Shift::Forward) ? -1 : (shift == Shift::Reverse ? 1 : 0);
+  double sign = (shift == Shift::Forward) ? 1.0 : (shift == Shift::Reverse ? -1.0 : 0);
   double compensated_acc = input_acc + sign * 9.81 * std::sin(pitch_limited);
   return compensated_acc;
 }
@@ -919,14 +932,16 @@ double PidLongitudinalController::predictedVelocityInTargetPoint(
 }
 
 double PidLongitudinalController::applyVelocityFeedback(
-  const Motion target_motion, const double dt, const double current_vel)
+  const Motion target_motion, const double dt, const double current_vel, const Shift & shift)
 {
-  const double current_vel_abs = std::fabs(current_vel);
-  const double target_vel_abs = std::fabs(target_motion.vel);
-  const bool is_under_control = m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
+  // NOTE: Acceleration command is always positive even if the ego drives backward.
+  const double vel_sign = (shift == Shift::Forward) ? 1.0 : (shift == Shift::Reverse ? -1.0 : 0.0);
+  const double diff_vel = (target_motion.vel - current_vel) * vel_sign;
+  const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&
+                                m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
   const bool enable_integration =
-    (current_vel_abs > m_current_vel_threshold_pid_integrate) && is_under_control;
-  const double error_vel_filtered = m_lpf_vel_error->filter(target_vel_abs - current_vel_abs);
+    (std::abs(current_vel) > m_current_vel_threshold_pid_integrate) && is_under_control;
+  const double error_vel_filtered = m_lpf_vel_error->filter(diff_vel);
 
   std::vector<double> pid_contributions(3);
   const double pid_acc =
@@ -939,8 +954,8 @@ double PidLongitudinalController::applyVelocityFeedback(
   // deviation will be bigger.
   constexpr double ff_scale_max = 2.0;  // for safety
   constexpr double ff_scale_min = 0.5;  // for safety
-  const double ff_scale =
-    std::clamp(current_vel_abs / std::max(target_vel_abs, 0.1), ff_scale_min, ff_scale_max);
+  const double ff_scale = std::clamp(
+    std::abs(current_vel) / std::max(std::abs(target_motion.vel), 0.1), ff_scale_min, ff_scale_max);
   const double ff_acc = target_motion.acc * ff_scale;
 
   const double feedback_acc = ff_acc + pid_acc;

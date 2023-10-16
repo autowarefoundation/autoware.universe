@@ -15,14 +15,25 @@
 #include "map_based_prediction/map_based_prediction_node.hpp"
 
 #include <interpolation/linear_interpolation.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/resample/resample.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/math/constants.hpp>
+#include <tier4_autoware_utils/math/normalization.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
 
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_routing/RoutingGraph.h>
 #include <tf2/utils.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -1240,7 +1251,7 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
     for (const auto & lanelet : surrounding_opposite_lanelets) {
       // Check if the close lanelets meet the necessary condition for start lanelets
       // except for distance checking
-      if (!checkCloseLaneletCondition(lanelet, object, false)) {
+      if (!checkCloseLaneletCondition(lanelet, object)) {
         continue;
       }
 
@@ -1260,8 +1271,7 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
 }
 
 bool MapBasedPredictionNode::checkCloseLaneletCondition(
-  const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
-  const bool check_distance)
+  const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object)
 {
   // Step1. If we only have one point in the centerline, we will ignore the lanelet
   if (lanelet.second.centerline().size() <= 1) {
@@ -1296,7 +1306,7 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
   const double object_vel = object.kinematics.twist_with_covariance.twist.linear.x;
   const bool is_yaw_reversed =
     M_PI - delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta && object_vel < 0.0;
-  if (check_distance && dist_threshold_for_searching_lanelet_ < lanelet.first) {
+  if (dist_threshold_for_searching_lanelet_ < lanelet.first) {
     return false;
   }
   if (!is_yaw_reversed && delta_yaw_threshold_for_searching_lanelet_ < abs_norm_delta) {
