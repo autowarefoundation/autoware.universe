@@ -253,7 +253,7 @@ bool check_near(double expected, double actual, double tolerance)
 
 int main(int argc, char * argv[])
 {
-  // inint node to use parameters
+  // init node to use parameters
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("tvm_yolo_example");
   node->declare_parameter("image_filename", IMAGE_FILENAME);
@@ -266,8 +266,6 @@ int main(int argc, char * argv[])
   using PostPT = tvm_utility::yolo_v2_tiny::PostProcessorYoloV2Tiny;
 
   PrePT PreP{config};
-  // std::string home_dir = getenv("HOME");
-  // std::string autoware_data = "/autoware_data/";
   IET IE{config, "tvm_utility", node->get_parameter("data_path").as_string()};
   PostPT PostP{
     config,
@@ -276,9 +274,6 @@ int main(int argc, char * argv[])
   };
 
   tvm_utility::pipeline::Pipeline<PrePT, IET, PostPT> pipeline(PreP, IE, PostP);
-
-  // auto version_status = IE.version_check({2, 0, 0});
-  // EXPECT_NE(version_status, tvm_utility::Version::Unsupported);
 
   // Push data input the pipeline and get the output
   auto output = pipeline.schedule(node->get_parameter("image_filename").as_string());
@@ -296,7 +291,6 @@ int main(int argc, char * argv[])
   }
 
   // Test: check if the generated output is equal to the reference
-  // EXPECT_EQ(expected_output.size(), output.size()) << "Unexpected output size";
   if (expected_output.size() == output.size()) {
     std::cout << "Model has proper output size" << std::endl;
   } else {
@@ -304,7 +298,6 @@ int main(int argc, char * argv[])
   }
 
   for (size_t i = 0; i < output.size(); ++i) {
-    // EXPECT_NEAR(expected_output[i], output[i], 0.0001) << "at index: " << i;
     if (check_near(expected_output[i], output[i], 0.0001)) {
       std::cout << "Model has proper output at index: " << i << std::endl;
     } else {
