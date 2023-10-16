@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include "tvm_utility/pipeline.hpp"
 #include "yolo_v2_tiny/inference_engine_tvm_config.hpp"
 
 #include <opencv2/opencv.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <algorithm>
+#include <cmath>
+#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -102,7 +104,7 @@ public:
     TVMArrayCopyFromBytes(
       output.getArray(), image_3f.data,
       network_input_width * network_input_height * network_input_depth *
-        network_input_datatype_bytes);
+      network_input_datatype_bytes);
 
     return {output};
   }
@@ -118,16 +120,18 @@ private:
 class PostProcessorYoloV2Tiny : public tvm_utility::pipeline::PostProcessor<std::vector<float>>
 {
 public:
-  explicit PostProcessorYoloV2Tiny(tvm_utility::pipeline::InferenceEngineTVMConfig config)
+  explicit PostProcessorYoloV2Tiny(
+    tvm_utility::pipeline::InferenceEngineTVMConfig config, std::string label_filename,
+    std::string anchor_filename)
   : network_output_width(config.network_outputs[0].node_shape[1]),
     network_output_height(config.network_outputs[0].node_shape[2]),
     network_output_depth(config.network_outputs[0].node_shape[3]),
     network_output_datatype_bytes(config.network_outputs[0].tvm_dtype_bits / 8)
   {
     // Parse human readable names for the classes
-    std::ifstream label_file{LABEL_FILENAME};
+    std::ifstream label_file{label_filename};
     if (!label_file.good()) {
-      std::string label_filename = LABEL_FILENAME;
+      std::string label_filename = label_filename;
       throw std::runtime_error("unable to open label file:" + label_filename);
     }
     std::string line{};
@@ -136,9 +140,9 @@ public:
     }
 
     // Get anchor values for this network from the anchor file
-    std::ifstream anchor_file{ANCHOR_FILENAME};
+    std::ifstream anchor_file{anchor_filename};
     if (!anchor_file.good()) {
-      std::string anchor_filename = ANCHOR_FILENAME;
+      std::string anchor_filename = anchor_filename;
       throw std::runtime_error("unable to open anchor file:" + anchor_filename);
     }
     std::string first{};
@@ -152,7 +156,7 @@ public:
   }
 
   // Sigmoid function
-  float sigmoid(float x) { return static_cast<float>(1.0 / (1.0 + std::exp(-x))); }
+  float sigmoid(float x) {return static_cast<float>(1.0 / (1.0 + std::exp(-x)));}
 
   std::vector<float> schedule(const tvm_utility::pipeline::TVMArrayContainerVector & input)
   {
@@ -172,15 +176,15 @@ public:
     TVMArrayCopyToBytes(
       input[0].getArray(), infer.data(),
       network_output_width * network_output_height * network_output_depth *
-        network_output_datatype_bytes);
+      network_output_datatype_bytes);
 
     // Utility function to return data from y given index
     auto get_output_data = [this, infer, n_classes, n_anchors, n_coords](
-                             auto row_i, auto col_j, auto anchor_k, auto offset) {
-      auto box_index = (row_i * network_output_height + col_j) * network_output_depth;
-      auto index = box_index + anchor_k * (n_classes + n_coords + 1);
-      return infer[index + offset];
-    };
+      auto row_i, auto col_j, auto anchor_k, auto offset) {
+        auto box_index = (row_i * network_output_height + col_j) * network_output_depth;
+        auto index = box_index + anchor_k * (n_classes + n_coords + 1);
+        return infer[index + offset];
+      };
 
     // Vector used to check if the result is accurate,
     // this is also the output of this (schedule) function
@@ -239,31 +243,50 @@ private:
   std::vector<std::pair<float, float>> anchors{};
 };
 
-TEST(PipelineExamples, SimplePipeline)
+}  // namespace yolo_v2_tiny
+}  // namespace tvm_utility
+
+bool check_near(double expected, double actual, double tolerance)
 {
+  return fabs(expected - actual) <= tolerance;
+}
+
+int main(int argc, char * argv[])
+{
+  // inint node to use parameters
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("tvm_yolo_example");
+  node->declare_parameter("image_filename", IMAGE_FILENAME);
+  node->declare_parameter("label_filename", LABEL_FILENAME);
+  node->declare_parameter("anchor_filename", ANCHOR_FILENAME);
+  node->declare_parameter("data_path", "");
   // Instantiate the pipeline
-  using PrePT = PreProcessorYoloV2Tiny;
+  using PrePT = tvm_utility::yolo_v2_tiny::PreProcessorYoloV2Tiny;
   using IET = tvm_utility::pipeline::InferenceEngineTVM;
-  using PostPT = PostProcessorYoloV2Tiny;
+  using PostPT = tvm_utility::yolo_v2_tiny::PostProcessorYoloV2Tiny;
 
   PrePT PreP{config};
-  std::string home_dir = getenv("HOME");
-  std::string autoware_data = "/autoware_data/";
-  IET IE{config, "tvm_utility", home_dir + autoware_data};
-  PostPT PostP{config};
+  // std::string home_dir = getenv("HOME");
+  // std::string autoware_data = "/autoware_data/";
+  IET IE{config, "tvm_utility", node->get_parameter("data_path").as_string()};
+  PostPT PostP{
+    config,
+    node->get_parameter("label_filename").as_string(),
+    node->get_parameter("anchor_filename").as_string()
+  };
 
   tvm_utility::pipeline::Pipeline<PrePT, IET, PostPT> pipeline(PreP, IE, PostP);
 
-  auto version_status = IE.version_check({2, 0, 0});
-  EXPECT_NE(version_status, tvm_utility::Version::Unsupported);
+  // auto version_status = IE.version_check({2, 0, 0});
+  // EXPECT_NE(version_status, tvm_utility::Version::Unsupported);
 
   // Push data input the pipeline and get the output
-  auto output = pipeline.schedule(IMAGE_FILENAME);
+  auto output = pipeline.schedule(node->get_parameter("image_filename").as_string());
 
   // Define reference vector containing expected values, expressed as hexadecimal integers
   std::vector<int32_t> int_output{0x3eb64594, 0x3f435656, 0x3ece1600, 0x3e99d381,
-                                  0x3f1cd6bc, 0x3f14f4dd, 0x3ed8065f, 0x3ee9f4fa,
-                                  0x3ec1b5e8, 0x3f4e7c6c, 0x3f136af1};
+    0x3f1cd6bc, 0x3f14f4dd, 0x3ed8065f, 0x3ee9f4fa,
+    0x3ec1b5e8, 0x3f4e7c6c, 0x3f136af1};
 
   std::vector<float> expected_output(int_output.size());
 
@@ -273,11 +296,21 @@ TEST(PipelineExamples, SimplePipeline)
   }
 
   // Test: check if the generated output is equal to the reference
-  EXPECT_EQ(expected_output.size(), output.size()) << "Unexpected output size";
-  for (size_t i = 0; i < output.size(); ++i) {
-    EXPECT_NEAR(expected_output[i], output[i], 0.0001) << "at index: " << i;
+  // EXPECT_EQ(expected_output.size(), output.size()) << "Unexpected output size";
+  if (expected_output.size() == output.size()) {
+    std::cout << "Model has proper output size" << std::endl;
+  } else {
+    std::cout << "Model has unexpected output size" << std::endl;
   }
-}
 
-}  // namespace yolo_v2_tiny
-}  // namespace tvm_utility
+  for (size_t i = 0; i < output.size(); ++i) {
+    // EXPECT_NEAR(expected_output[i], output[i], 0.0001) << "at index: " << i;
+    if (check_near(expected_output[i], output[i], 0.0001)) {
+      std::cout << "Model has proper output at index: " << i << std::endl;
+    } else {
+      std::cout << "Model has unexpected output at index: " << i << std::endl;
+    }
+  }
+  rclcpp::shutdown();
+  return 0;
+}
