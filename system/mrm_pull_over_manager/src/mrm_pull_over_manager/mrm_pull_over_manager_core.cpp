@@ -124,8 +124,8 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
     "~/input/trajectory", rclcpp::QoS{1}, std::bind(&MrmPullOverManager::on_trajectory, this, _1));
 
   // Publisher
-  pub_pose_array_ =
-    create_publisher<PoseArray>("~/output/mrm/pull_over/emergency_goals", rclcpp::QoS{1});
+  pub_emergency_goals_ = create_publisher<EmergencyGoalsStamped>(
+    "~/output/mrm/pull_over/emergency_goals", rclcpp::QoS{1});
   pub_status_ =
     create_publisher<MrmBehaviorStatus>("~/output/mrm/pull_over/status", rclcpp::QoS{1});
   pub_emergency_goals_clear_command_ = create_publisher<EmergencyGoalsClearCommand>(
@@ -148,6 +148,11 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
   status_.state = MrmBehaviorStatus::AVAILABLE;
 }
 
+std::string MrmPullOverManager::get_module_name() const
+{
+  return "mrm_pull_over_manager";
+}
+
 void MrmPullOverManager::on_timer()
 {
   publishStatus();
@@ -160,12 +165,21 @@ void MrmPullOverManager::publishStatus() const
   pub_status_->publish(status);
 }
 
-void MrmPullOverManager::publishEmergencyGoalsClearComand() const
+void MrmPullOverManager::publishEmergencyGoals(const std::vector<Pose> & emergency_goals) const
+{
+  EmergencyGoalsStamped emergency_goals_stamped;
+  emergency_goals_stamped.goals = emergency_goals;
+  emergency_goals_stamped.stamp = now();
+  emergency_goals_stamped.sender = get_module_name();
+  pub_emergency_goals_->publish(emergency_goals_stamped);
+}
+
+void MrmPullOverManager::publishEmergencyGoalsClearCommand() const
 {
   EmergencyGoalsClearCommand goals_clear_command;
   goals_clear_command.stamp = this->now();
   goals_clear_command.command = true;
-  goals_clear_command.sender = "mrm_pull_over_manager";
+  goals_clear_command.sender = get_module_name();
 
   pub_emergency_goals_clear_command_->publish(goals_clear_command);
 }
@@ -181,7 +195,7 @@ void MrmPullOverManager::operateMrm(
   }
 
   if (request->operate == false) {
-    publishEmergencyGoalsClearComand();
+    publishEmergencyGoalsClearCommand();
     response->response.success = true;
     status_.state = MrmBehaviorStatus::AVAILABLE;
   }
@@ -251,14 +265,11 @@ bool MrmPullOverManager::find_goals_within_route()
   const auto candidate_lanelets =
     lanelet_util::get_all_following_and_left_lanelets(route_handler_, *route_, current_lanelet);
 
-  PoseArray emergency_goals;
-  emergency_goals.header.frame_id = "map";
-  emergency_goals.header.stamp = now();
-  emergency_goals.poses = find_goals_in_lanelets(candidate_lanelets);
+  const auto emergency_goals = find_goals_in_lanelets(candidate_lanelets);
 
-  emergency_goals.poses = filter_nearby_goals(emergency_goals.poses);
+  const auto filtered_emergency_goals = filter_nearby_goals(emergency_goals);
 
-  pub_pose_array_->publish(emergency_goals);
+  publishEmergencyGoals(filtered_emergency_goals);
 
   return true;
 }

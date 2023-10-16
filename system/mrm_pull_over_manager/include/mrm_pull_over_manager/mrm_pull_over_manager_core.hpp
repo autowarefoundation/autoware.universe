@@ -24,7 +24,6 @@
 // ROS 2
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/pose_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
 // Autoware
@@ -34,6 +33,7 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <tier4_system_msgs/msg/emergency_goals_clear_command.hpp>
+#include <tier4_system_msgs/msg/emergency_goals_stamped.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/srv/operate_mrm.hpp>
 
@@ -58,7 +58,6 @@ public:
 
 private:
   using Pose = geometry_msgs::msg::Pose;
-  using PoseArray = geometry_msgs::msg::PoseArray;
   using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
   using Odometry = nav_msgs::msg::Odometry;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
@@ -66,6 +65,7 @@ private:
   using PoseLaneIdMap = std::map<lanelet::Id, Pose>;
   using MrmBehaviorStatus = tier4_system_msgs::msg::MrmBehaviorStatus;
   using EmergencyGoalsClearCommand = tier4_system_msgs::msg::EmergencyGoalsClearCommand;
+  using EmergencyGoalsStamped = tier4_system_msgs::msg::EmergencyGoalsStamped;
 
   struct Parameter
   {
@@ -100,7 +100,7 @@ private:
     const tier4_system_msgs::srv::OperateMrm::Response::SharedPtr response);
 
   // Publisher
-  rclcpp::Publisher<PoseArray>::SharedPtr pub_pose_array_;
+  rclcpp::Publisher<EmergencyGoalsStamped>::SharedPtr pub_emergency_goals_;
   rclcpp::Publisher<MrmBehaviorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<EmergencyGoalsClearCommand>::SharedPtr pub_emergency_goals_clear_command_;
 
@@ -118,7 +118,9 @@ private:
   // Algorithm
   bool is_data_ready();
   void publishStatus() const;
-  void publishEmergencyGoalsClearComand() const;
+  void publishEmergencyGoalsClearCommand() const;
+  void publishEmergencyGoals(const std::vector<Pose> & emergency_goals) const;
+  std::string get_module_name() const;
 
   /**
    * @brief Find the goals within the lanelet and publish them
