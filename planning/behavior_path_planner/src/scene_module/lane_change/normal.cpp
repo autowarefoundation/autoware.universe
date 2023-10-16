@@ -282,6 +282,19 @@ void NormalLaneChange::insertStopPoint(
         if (v > lane_change_parameters_->stop_velocity_threshold) {
           return false;
         }
+
+        // target_objects includes objects out of target lanes, so filter them out
+        const auto polygon =
+          tier4_autoware_utils::toPolygon2d(o.initial_pose.pose, o.shape).outer();
+        if (std::all_of(polygon.begin(), polygon.end(), [&](const auto & polygon_p) {
+              auto footprint_pose = o.initial_pose.pose;
+              footprint_pose.position = tier4_autoware_utils::createPoint(
+                polygon_p.x(), polygon_p.y(), footprint_pose.position.z);
+              return !utils::isInLanelets(footprint_pose, status_.target_lanes);
+            })) {
+          return false;
+        }
+
         const double distance_to_target_lane_obj = getDistanceAlongLanelet(o.initial_pose.pose);
         return stopping_distance_for_obj < distance_to_target_lane_obj &&
                distance_to_target_lane_obj < distance_to_ego_lane_obj;
