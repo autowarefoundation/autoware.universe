@@ -227,8 +227,8 @@ TEST(DrivableAreaExpansionProjection, expand_drivable_area)
   planner_data.drivable_area_expansion_parameters = params;
   planner_data.dynamic_object =
     std::make_shared<drivable_area_expansion::PredictedObjects>(dynamic_objects);
+  planner_data.self_odometry = std::make_shared<nav_msgs::msg::Odometry>();
   planner_data.route_handler = std::make_shared<route_handler::RouteHandler>(route_handler);
-  // we expect the drivable area to be expanded by 1m on each side
   drivable_area_expansion::expand_drivable_area(
     path, std::make_shared<behavior_path_planner::PlannerData>(planner_data));
   // unchanged path points
@@ -237,23 +237,37 @@ TEST(DrivableAreaExpansionProjection, expand_drivable_area)
     EXPECT_NEAR(path.points[i].point.pose.position.x, i, eps);
     EXPECT_NEAR(path.points[i].point.pose.position.y, 0.0, eps);
   }
-
+  // straight path: no expansion
   // expanded left bound
-  ASSERT_EQ(path.left_bound.size(), 4ul);
+  ASSERT_EQ(path.left_bound.size(), 3ul);
   EXPECT_NEAR(path.left_bound[0].x, 0.0, eps);
   EXPECT_NEAR(path.left_bound[0].y, 1.0, eps);
-  EXPECT_NEAR(path.left_bound[1].x, 0.0, eps);
-  EXPECT_NEAR(path.left_bound[1].y, 2.0, eps);
+  EXPECT_NEAR(path.left_bound[1].x, 1.0, eps);
+  EXPECT_NEAR(path.left_bound[1].y, 1.0, eps);
   EXPECT_NEAR(path.left_bound[2].x, 2.0, eps);
-  EXPECT_NEAR(path.left_bound[2].y, 2.0, eps);
-  EXPECT_NEAR(path.left_bound[3].x, 2.0, eps);
-  EXPECT_NEAR(path.left_bound[3].y, 1.0, eps);
+  EXPECT_NEAR(path.left_bound[2].y, 1.0, eps);
   // expanded right bound
   ASSERT_EQ(path.right_bound.size(), 3ul);
   EXPECT_NEAR(path.right_bound[0].x, 0.0, eps);
-  EXPECT_NEAR(path.right_bound[0].y, -2.0, eps);
-  EXPECT_NEAR(path.right_bound[1].x, 2.0, eps);
-  EXPECT_NEAR(path.right_bound[1].y, -2.0, eps);
+  EXPECT_NEAR(path.right_bound[0].y, -1.0, eps);
+  EXPECT_NEAR(path.right_bound[1].x, 1.0, eps);
+  EXPECT_NEAR(path.right_bound[1].y, -1.0, eps);
   EXPECT_NEAR(path.right_bound[2].x, 2.0, eps);
   EXPECT_NEAR(path.right_bound[2].y, -1.0, eps);
+
+  // add some curvature
+  path.points[1].point.pose.position.y = 0.5;
+
+  drivable_area_expansion::expand_drivable_area(
+    path, std::make_shared<behavior_path_planner::PlannerData>(planner_data));
+  // expanded left bound
+  ASSERT_EQ(path.left_bound.size(), 3ul);
+  EXPECT_GT(path.left_bound[0].y, 1.0);
+  EXPECT_GT(path.left_bound[1].y, 1.0);
+  EXPECT_GT(path.left_bound[2].y, 1.0);
+  // expanded right bound
+  ASSERT_EQ(path.right_bound.size(), 3ul);
+  EXPECT_LT(path.right_bound[0].y, -1.0);
+  EXPECT_LT(path.right_bound[1].y, -1.0);
+  EXPECT_LT(path.right_bound[2].y, -1.0);
 }
