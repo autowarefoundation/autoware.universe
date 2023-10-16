@@ -288,7 +288,7 @@ std::vector<geometry_msgs::msg::Pose> MrmPullOverManager::find_goals_in_lanelets
       goals.emplace_back(it->second);
     }
 
-    if (goals.size() > param_.max_goal_pose_num) {
+    if (goals.size() >= param_.max_goal_pose_num) {
       break;
     }
   }
