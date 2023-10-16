@@ -284,14 +284,11 @@ void NormalLaneChange::insertStopPoint(
         }
 
         // target_objects includes objects out of target lanes, so filter them out
-        const auto polygon =
-          tier4_autoware_utils::toPolygon2d(o.initial_pose.pose, o.shape).outer();
-        if (std::all_of(polygon.begin(), polygon.end(), [&](const auto & polygon_p) {
-              auto footprint_pose = o.initial_pose.pose;
-              footprint_pose.position = tier4_autoware_utils::createPoint(
-                polygon_p.x(), polygon_p.y(), footprint_pose.position.z);
-              return !utils::isInLanelets(footprint_pose, status_.target_lanes);
-            })) {
+        if (!boost::geometry::intersects(
+              tier4_autoware_utils::toPolygon2d(o.initial_pose.pose, o.shape).outer(),
+              lanelet::utils::combineLaneletsShape(status_.target_lanes)
+                .polygon2d()
+                .basicPolygon())) {
           return false;
         }
 
