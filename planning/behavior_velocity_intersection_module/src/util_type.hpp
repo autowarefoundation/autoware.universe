@@ -159,6 +159,8 @@ struct IntersectionStopLines
   std::optional<size_t> occlusion_peeking_stop_line{std::nullopt};
   // if the value is calculated negative, its value is 0
   size_t pass_judge_line{0};
+  // NOTE: this position is calculated with delay_response_time = 0.0
+  size_t sudden_stop_position_line{0};
 };
 
 struct PathLanelets

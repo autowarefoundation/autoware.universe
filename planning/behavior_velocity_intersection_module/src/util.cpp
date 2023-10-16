@@ -269,7 +269,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const lanelet::CompoundPolygon3d & first_detection_area,
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
-  const double stop_line_margin, const double peeking_offset, const double enable_occlusion,
+  const double stop_line_margin, const double peeking_offset,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
 {
   const auto & path_ip = interpolated_path_info.path;
@@ -360,6 +360,13 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const auto pass_judge_line_ip = static_cast<size_t>(
     std::clamp<int>(pass_judge_ip_int, 0, static_cast<int>(path_ip.points.size()) - 1));
 
+  // (4.1) expected stop position on sudden braking
+  constexpr double emergency_response_time = 0.0;
+  const double emergency_braking_dist = planning_utils::calcJudgeLineDistWithJerkLimit(
+    velocity, acceleration, max_stop_acceleration, max_stop_jerk, emergency_response_time);
+  const auto sudden_stop_position_line_ip = std::min<size_t>(
+    closest_idx_ip + std::ceil(emergency_braking_dist / ds), path_ip.points.size() - 1);
+
   // (5) stuck vehicle stop line
   int stuck_stop_line_ip_int = 0;
   bool stuck_stop_line_valid = true;
@@ -391,6 +398,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     size_t first_attention_stop_line{0};
     size_t occlusion_peeking_stop_line{0};
     size_t pass_judge_line{0};
+    size_t sudden_stop_position_line{0};
   };
 
   IntersectionStopLinesTemp intersection_stop_lines_temp;
@@ -401,7 +409,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     {&first_attention_stop_line_ip, &intersection_stop_lines_temp.first_attention_stop_line},
     {&occlusion_peeking_line_ip, &intersection_stop_lines_temp.occlusion_peeking_stop_line},
     {&pass_judge_line_ip, &intersection_stop_lines_temp.pass_judge_line},
-  };
+    {&sudden_stop_position_line_ip, &intersection_stop_lines_temp.sudden_stop_position_line}};
   stop_lines.sort(
     [](const auto & it1, const auto & it2) { return *(std::get<0>(it1)) < *(std::get<0>(it2)); });
   for (const auto & [stop_idx_ip, stop_idx] : stop_lines) {
@@ -412,19 +420,6 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     }
     *stop_idx = insert_idx.value();
   }
-  if (
-    intersection_stop_lines_temp.occlusion_peeking_stop_line <
-    intersection_stop_lines_temp.default_stop_line) {
-    intersection_stop_lines_temp.occlusion_peeking_stop_line =
-      intersection_stop_lines_temp.default_stop_line;
-  }
-  if (
-    enable_occlusion && intersection_stop_lines_temp.occlusion_peeking_stop_line >
-                          intersection_stop_lines_temp.pass_judge_line) {
-    intersection_stop_lines_temp.pass_judge_line =
-      intersection_stop_lines_temp.occlusion_peeking_stop_line;
-  }
-
   IntersectionStopLines intersection_stop_lines;
   intersection_stop_lines.closest_idx = intersection_stop_lines_temp.closest_idx;
   if (stuck_stop_line_valid) {
@@ -442,6 +437,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
       intersection_stop_lines_temp.occlusion_peeking_stop_line;
   }
   intersection_stop_lines.pass_judge_line = intersection_stop_lines_temp.pass_judge_line;
+  intersection_stop_lines.sudden_stop_position_line =
+    intersection_stop_lines_temp.sudden_stop_position_line;
   return intersection_stop_lines;
 }
 

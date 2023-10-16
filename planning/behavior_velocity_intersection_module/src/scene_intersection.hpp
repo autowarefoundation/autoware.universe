@@ -107,6 +107,8 @@ public:
         bool judge_before_default_stop_line;
         double
           keep_detection_vel_thr;  //! keep detection if ego is ego.vel < keep_detection_vel_thr
+        bool allow_overshoot_to_unprotected_area;
+        double tolerable_overshoot_to_unprotected_area;
       } pass_judge;
       bool use_upstream_velocity;
       double minimum_upstream_velocity;
@@ -152,6 +154,12 @@ public:
   struct Indecisive
   {
     std::string error;
+  };
+  struct OverPassJudge
+  {
+    size_t closest_idx{0};
+    size_t collision_stop_line_idx{0};
+    size_t occlusion_stop_line_idx{0};
   };
   struct StuckStop
   {
@@ -221,7 +229,8 @@ public:
     size_t occlusion_stop_line_idx{0};
   };
   using DecisionResult = std::variant<
-    Indecisive,                   // internal process error, or over the pass judge line
+    Indecisive,  // internal process error
+    // OverPassJudge cannot avoid overshoot to unprotected area if stopped suddenly
     StuckStop,                    // detected stuck vehicle
     YieldStuckStop,               // detected yield stuck vehicle
     NonOccludedCollisionStop,     // detected collision while FOV is clear
@@ -258,14 +267,13 @@ public:
   bool isOcclusionFirstStopRequired() { return occlusion_first_stop_required_; }
 
 private:
-  rclcpp::Node & node_;
   const int64_t lane_id_;
   const std::set<int> associative_ids_;
   const std::string turn_direction_;
   const bool has_traffic_light_;
 
-  bool is_go_out_{false};
-  bool is_permanent_go_{false};
+  bool is_trying_stop_previously_{false};
+  bool is_going_permanently_{false};
   DecisionResult prev_decision_result_{Indecisive{""}};
 
   // Parameter

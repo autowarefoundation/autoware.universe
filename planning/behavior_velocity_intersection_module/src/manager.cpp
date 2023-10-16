@@ -121,6 +121,12 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     node, ns + ".collision_detection.pass_judge.judge_before_default_stop_line");
   ip.collision_detection.pass_judge.keep_detection_vel_thr = getOrDeclareParameter<double>(
     node, ns + ".collision_detection.pass_judge.keep_detection_vel_thr");
+  ip.collision_detection.pass_judge.allow_overshoot_to_unprotected_area =
+    getOrDeclareParameter<bool>(
+      node, ns + ".collision_detection.pass_judge.allow_overshoot_to_unprotected_area");
+  ip.collision_detection.pass_judge.tolerable_overshoot_to_unprotected_area =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.pass_judge.tolerable_overshoot_to_unprotected_area");
   ip.collision_detection.use_upstream_velocity =
     getOrDeclareParameter<bool>(node, ns + ".collision_detection.use_upstream_velocity");
   ip.collision_detection.minimum_upstream_velocity =
