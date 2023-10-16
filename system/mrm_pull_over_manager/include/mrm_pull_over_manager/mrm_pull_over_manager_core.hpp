@@ -33,6 +33,7 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <tier4_system_msgs/msg/emergency_goals_clear_command.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/srv/operate_mrm.hpp>
 
@@ -64,6 +65,7 @@ private:
   using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
   using PoseLaneIdMap = std::map<lanelet::Id, Pose>;
   using MrmBehaviorStatus = tier4_system_msgs::msg::MrmBehaviorStatus;
+  using EmergencyGoalsClearCommand = tier4_system_msgs::msg::EmergencyGoalsClearCommand;
 
   struct Parameter
   {
@@ -100,6 +102,7 @@ private:
   // Publisher
   rclcpp::Publisher<PoseArray>::SharedPtr pub_pose_array_;
   rclcpp::Publisher<MrmBehaviorStatus>::SharedPtr pub_status_;
+  rclcpp::Publisher<EmergencyGoalsClearCommand>::SharedPtr pub_emergency_goals_clear_command_;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -115,6 +118,7 @@ private:
   // Algorithm
   bool is_data_ready();
   void publishStatus() const;
+  void publishEmergencyGoalsClearComand() const;
 
   /**
    * @brief Find the goals within the lanelet and publish them

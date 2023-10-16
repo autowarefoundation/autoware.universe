@@ -128,6 +128,8 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
     create_publisher<PoseArray>("~/output/mrm/pull_over/emergency_goals", rclcpp::QoS{1});
   pub_status_ =
     create_publisher<MrmBehaviorStatus>("~/output/mrm/pull_over/status", rclcpp::QoS{1});
+  pub_emergency_goals_clear_command_ = create_publisher<EmergencyGoalsClearCommand>(
+    "~/output/mrm/pull_over/goals_clear_command", rclcpp::QoS{1});
 
   // Server
   operate_mrm_ = create_service<tier4_system_msgs::srv::OperateMrm>(
@@ -158,6 +160,16 @@ void MrmPullOverManager::publishStatus() const
   pub_status_->publish(status);
 }
 
+void MrmPullOverManager::publishEmergencyGoalsClearComand() const
+{
+  EmergencyGoalsClearCommand goals_clear_command;
+  goals_clear_command.stamp = this->now();
+  goals_clear_command.command = true;
+  goals_clear_command.sender = "mrm_pull_over_manager";
+
+  pub_emergency_goals_clear_command_->publish(goals_clear_command);
+}
+
 void MrmPullOverManager::operateMrm(
   const tier4_system_msgs::srv::OperateMrm::Request::SharedPtr request,
   const tier4_system_msgs::srv::OperateMrm::Response::SharedPtr response)
@@ -169,7 +181,7 @@ void MrmPullOverManager::operateMrm(
   }
 
   if (request->operate == false) {
-    // TODO(TomohitoAndo): Call ClearEmergency service
+    publishEmergencyGoalsClearComand();
     response->response.success = true;
     status_.state = MrmBehaviorStatus::AVAILABLE;
   }
