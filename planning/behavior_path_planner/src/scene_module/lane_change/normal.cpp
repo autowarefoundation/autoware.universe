@@ -1137,9 +1137,8 @@ bool NormalLaneChange::getLaneChangePaths(
         std::abs(max_lateral_acc - min_lateral_acc) / lateral_acc_sampling_num;
 
       std::vector<double> sample_lat_acc;
-      constexpr double lateral_acc_epsilon = 0.01;
-      for (double a = min_lateral_acc; a < max_lateral_acc + lateral_acc_epsilon;
-           a += lateral_acc_resolution) {
+      constexpr double eps = 0.01;
+      for (double a = min_lateral_acc; a < max_lateral_acc + eps; a += lateral_acc_resolution) {
         sample_lat_acc.push_back(a);
       }
       RCLCPP_DEBUG(logger_, "  -  sampling num for lat_acc: %lu", sample_lat_acc.size());
