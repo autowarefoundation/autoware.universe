@@ -97,12 +97,12 @@ double calculate_minimum_lane_width(
   return (a * a + 2 * a * l + 2 * k * w + l * l + w * w) / (2 * k + w);
 }
 
-std::vector<BoundExpansion> calculate_minimum_expansions(
+std::vector<double> calculate_minimum_expansions(
   const std::vector<Pose> & path_poses, const std::vector<Point> bound,
   const std::vector<double> curvatures, const Side side,
   const DrivableAreaExpansionParameters & params)
 {
-  std::vector<BoundExpansion> bound_expansions(bound.size());
+  std::vector<double> minimum_expansions(bound.size());
   size_t lb_idx = 0;
   for (auto path_idx = 0UL; path_idx < path_poses.size(); ++path_idx) {
     const auto & path_pose = path_poses[path_idx];
@@ -120,36 +120,52 @@ std::vector<BoundExpansion> calculate_minimum_expansions(
       if (intersection_point) {
         lb_idx = bound_idx;
         const auto dist = tier4_autoware_utils::calcDistance2d(*intersection_point, offset_point);
-        if (dist > bound_expansions[bound_idx].expansion_distance) {
-          bound_expansions[bound_idx].expansion_distance = dist;
-          bound_expansions[bound_idx].expansion_point = offset_point;
-          bound_expansions[bound_idx].path_idx = path_idx;
-          bound_expansions[bound_idx].bound_segment_idx = bound_idx;
+        minimum_expansions[bound_idx] = std::max(minimum_expansions[bound_idx], dist);
+        minimum_expansions[bound_idx + 1] = std::max(minimum_expansions[bound_idx + 1], dist);
+        // apply the expansion to all bound points within the extra arc length
+        if (bound_idx + 2 < bound.size()) {
+          auto up_arc_length =
+            tier4_autoware_utils::calcDistance2d(*intersection_point, bound[bound_idx + 1]) +
+            tier4_autoware_utils::calcDistance2d(bound[bound_idx + 1], bound[bound_idx + 2]);
+          for (auto up_bound_idx = bound_idx + 2;
+               bound_idx < bound.size() && up_arc_length <= params.extra_arc_length;
+               ++up_bound_idx) {
+            minimum_expansions[up_bound_idx] = std::max(minimum_expansions[up_bound_idx], dist);
+            if (up_bound_idx + 1 < bound.size())
+              up_arc_length +=
+                tier4_autoware_utils::calcDistance2d(bound[up_bound_idx], bound[up_bound_idx + 1]);
+          }
         }
-        if (dist > bound_expansions[bound_idx + 1].expansion_distance) {
-          bound_expansions[bound_idx + 1].expansion_distance = dist;
-          bound_expansions[bound_idx + 1].expansion_point = offset_point;
-          bound_expansions[bound_idx + 1].path_idx = path_idx;
-          bound_expansions[bound_idx + 1].bound_segment_idx = bound_idx;
+        if (bound_idx > 0) {
+          auto down_arc_length =
+            tier4_autoware_utils::calcDistance2d(*intersection_point, bound[bound_idx]) +
+            tier4_autoware_utils::calcDistance2d(bound[bound_idx - 1], bound[bound_idx]);
+          for (auto down_bound_idx = bound_idx - 1;
+               down_bound_idx > 0 && down_arc_length <= params.extra_arc_length; --down_bound_idx) {
+            minimum_expansions[down_bound_idx] = std::max(minimum_expansions[down_bound_idx], dist);
+            if (down_bound_idx > 1)
+              down_arc_length += tier4_autoware_utils::calcDistance2d(
+                bound[down_bound_idx], bound[down_bound_idx - 1]);
+          }
         }
         break;
       }
     }
   }
-  return bound_expansions;
+  return minimum_expansions;
 }
 
 void apply_bound_velocity_limit(
-  std::vector<BoundExpansion> & expansions, const std::vector<Point> & bound_vector,
+  std::vector<double> & expansions, const std::vector<Point> & bound_vector,
   const double max_velocity)
 {
   if (expansions.empty()) return;
   const auto apply_max_vel = [&](auto & exp, const auto from, const auto to) {
-    if (exp[from].expansion_distance > exp[to].expansion_distance) {
+    if (exp[from] > exp[to]) {
       const auto arc_length =
         tier4_autoware_utils::calcDistance2d(bound_vector[from], bound_vector[to]);
-      const auto smoothed_dist = exp[from].expansion_distance - arc_length * max_velocity;
-      exp[to].expansion_distance = std::max(exp[to].expansion_distance, smoothed_dist);
+      const auto smoothed_dist = exp[from] - arc_length * max_velocity;
+      exp[to] = std::max(exp[to], smoothed_dist);
     }
   };
   for (auto idx = 0LU; idx + 1 < expansions.size(); ++idx) apply_max_vel(expansions, idx, idx + 1);
@@ -189,7 +205,7 @@ std::vector<double> calculate_maximum_distance(
 
 void expand_bound(
   std::vector<Point> & bound, const std::vector<Pose> & path_poses,
-  const std::vector<BoundExpansion> & expansions)
+  const std::vector<double> & expansions)
 {
   LineString2d path_ls;
   for (const auto & p : path_poses) path_ls.push_back(convert_point(p.position));
@@ -197,8 +213,7 @@ void expand_bound(
     const auto bound_p = convert_point(bound[idx]);
     const auto projection = point_to_linestring_projection(bound_p, path_ls);
     const auto expansion_ratio =
-      (expansions[idx].expansion_distance + std::abs(projection.distance)) /
-      std::abs(projection.distance);
+      (expansions[idx] + std::abs(projection.distance)) / std::abs(projection.distance);
     if (expansion_ratio > 1.0) {
       const auto & path_p = projection.projected_point;
       const auto expanded_p = lerp_point(path_p, bound_p, expansion_ratio);
@@ -283,11 +298,9 @@ void expand_drivable_area(
   const auto max_right_expansions = calculate_maximum_distance(
     path_poses, path.right_bound, uncrossable_lines, uncrossable_polygons, params);
   for (auto i = 0LU; i < left_expansions.size(); ++i)
-    left_expansions[i].expansion_distance =
-      std::min(left_expansions[i].expansion_distance, max_left_expansions[i]);
+    left_expansions[i] = std::min(left_expansions[i], max_left_expansions[i]);
   for (auto i = 0LU; i < right_expansions.size(); ++i)
-    right_expansions[i].expansion_distance =
-      std::min(right_expansions[i].expansion_distance, max_right_expansions[i]);
+    right_expansions[i] = std::min(right_expansions[i], max_right_expansions[i]);
   const auto max_dist_ms = stop_watch.toc("max_dist");
 
   stop_watch.tic("smooth");
