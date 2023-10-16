@@ -83,8 +83,17 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
 
   // find candidate paths
   LaneChangePaths valid_paths{};
-  const auto found_safe_path =
-    getLaneChangePaths(current_lanes, target_lanes, direction_, &valid_paths);
+  const bool is_stuck = isVehicleStuckByObstacle(current_lanes);
+  bool found_safe_path = getLaneChangePaths(
+    current_lanes, target_lanes, direction_, &valid_paths, lane_change_parameters_->rss_params,
+    is_stuck);
+  // if no safe path is found and ego is stuck, try to find a path with a small margin
+  if (!found_safe_path && is_stuck) {
+    found_safe_path = getLaneChangePaths(
+      current_lanes, target_lanes, direction_, &valid_paths,
+      lane_change_parameters_->rss_params_for_stuck, is_stuck);
+  }
+
   debug_valid_path_ = valid_paths;
 
   if (valid_paths.empty()) {
@@ -194,79 +203,93 @@ void NormalLaneChange::insertStopPoint(
   const double lane_change_buffer =
     utils::calcMinimumLaneChangeLength(getCommonParam(), shift_intervals, 0.0);
 
+  const auto getDistanceAlongLanelet = [&](const geometry_msgs::msg::Pose & target) {
+    return utils::getSignedDistance(path.points.front().point.pose, target, lanelets);
+  };
+
   // If lanelets.back() is in goal route section, get distance to goal.
   // Otherwise, get distance to end of lane.
   double distance_to_terminal = 0.0;
   if (route_handler->isInGoalRouteSection(lanelets.back())) {
     const auto goal = route_handler->getGoalPose();
-    distance_to_terminal = utils::getSignedDistance(path.points.front().point.pose, goal, lanelets);
+    distance_to_terminal = getDistanceAlongLanelet(goal);
   } else {
     distance_to_terminal = utils::getDistanceToEndOfLane(path.points.front().point.pose, lanelets);
   }
 
   const double stop_point_buffer = getCommonParam().backward_length_buffer_for_end_of_lane;
   const auto target_objects = getTargetObjects(status_.current_lanes, status_.target_lanes);
-  const bool is_in_terminal_section = lanelet::utils::isInLanelet(getEgoPose(), lanelets.back()) ||
-                                      distance_to_terminal < lane_change_buffer;
-  const bool has_blocking_target_lane_obj = std::any_of(
-    target_objects.target_lane.begin(), target_objects.target_lane.end(), [&](const auto & o) {
-      if (o.initial_twist.twist.linear.x > lane_change_parameters_->stop_velocity_threshold) {
-        return false;
-      }
-      const double distance_to_target_lane_obj = utils::getSignedDistance(
-        path.points.front().point.pose, o.initial_pose.pose, status_.target_lanes);
-      return distance_to_target_lane_obj < distance_to_terminal;
-    });
-
-  // auto stopping_distance = raw_stopping_distance;
   double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
-  if (is_in_terminal_section || !has_blocking_target_lane_obj) {
-    // calculate minimum distance from path front to the stationary object on the ego lane.
-    const auto distance_to_ego_lane_obj = [&]() -> double {
-      double distance_to_obj = distance_to_terminal;
-      const double distance_to_ego =
-        utils::getSignedDistance(path.points.front().point.pose, getEgoPose(), lanelets);
 
-      for (const auto & object : target_objects.current_lane) {
-        // check if stationary
-        const auto obj_v = std::abs(object.initial_twist.twist.linear.x);
-        if (obj_v > lane_change_parameters_->stop_velocity_threshold) {
+  // calculate minimum distance from path front to the stationary object on the ego lane.
+  const auto distance_to_ego_lane_obj = [&]() -> double {
+    double distance_to_obj = distance_to_terminal;
+    const double distance_to_ego = getDistanceAlongLanelet(getEgoPose());
+
+    for (const auto & object : target_objects.current_lane) {
+      // check if stationary
+      const auto obj_v = std::abs(object.initial_twist.twist.linear.x);
+      if (obj_v > lane_change_parameters_->stop_velocity_threshold) {
+        continue;
+      }
+
+      // calculate distance from path front to the stationary object polygon on the ego lane.
+      const auto polygon =
+        tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape).outer();
+      for (const auto & polygon_p : polygon) {
+        const auto p_fp = tier4_autoware_utils::toMsg(polygon_p.to_3d());
+        const auto lateral_fp = motion_utils::calcLateralOffset(path.points, p_fp);
+
+        // ignore if the point is around the ego path
+        if (std::abs(lateral_fp) > planner_data_->parameters.vehicle_width) {
           continue;
         }
 
-        // calculate distance from path front to the stationary object polygon on the ego lane.
-        const auto polygon =
-          tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape).outer();
-        for (const auto & polygon_p : polygon) {
-          const auto p_fp = tier4_autoware_utils::toMsg(polygon_p.to_3d());
-          const auto lateral_fp = motion_utils::calcLateralOffset(path.points, p_fp);
+        const double current_distance_to_obj = calcSignedArcLength(path.points, 0, p_fp);
 
-          // ignore if the point is around the ego path
-          if (std::abs(lateral_fp) > planner_data_->parameters.vehicle_width) {
-            continue;
-          }
-
-          const double current_distance_to_obj = calcSignedArcLength(path.points, 0, p_fp);
-
-          // ignore backward object
-          if (current_distance_to_obj < distance_to_ego) {
-            continue;
-          }
-          distance_to_obj = std::min(distance_to_obj, current_distance_to_obj);
+        // ignore backward object
+        if (current_distance_to_obj < distance_to_ego) {
+          continue;
         }
+        distance_to_obj = std::min(distance_to_obj, current_distance_to_obj);
       }
-      return distance_to_obj;
-    }();
+    }
+    return distance_to_obj;
+  }();
 
-    // If the lane change space is occupied by a stationary obstacle, move the stop line closer.
-    // TODO(Horibe): We need to loop this process because the new space could be occupied as well.
-    stopping_distance = std::min(
-      distance_to_ego_lane_obj - lane_change_buffer - stop_point_buffer -
-        getCommonParam().base_link2front -
-        calcRssDistance(
-          0.0, planner_data_->parameters.minimum_lane_changing_velocity,
-          lane_change_parameters_->rss_params),
-      stopping_distance);
+  // Need to stop before blocking obstacle
+  if (distance_to_ego_lane_obj < distance_to_terminal) {
+    // consider rss distance when the LC need to avoid obstacles
+    const auto rss_dist = calcRssDistance(
+      0.0, planner_data_->parameters.minimum_lane_changing_velocity,
+      lane_change_parameters_->rss_params);
+
+    const auto stopping_distance_for_obj = distance_to_ego_lane_obj - lane_change_buffer -
+                                           stop_point_buffer - rss_dist -
+                                           getCommonParam().base_link2front;
+
+    //  If the target lane in the lane change section is blocked by a stationary obstacle, there
+    //  is no reason for stopping with a lane change margin. Instead, stop right behind the
+    //  obstacle.
+    //  ----------------------------------------------------------
+    //                            [obj]>
+    //  ----------------------------------------------------------
+    //    [ego]>          | <--- lane change margin --->  [obj]>
+    //  ----------------------------------------------------------
+    const bool has_blocking_target_lane_obj = std::any_of(
+      target_objects.target_lane.begin(), target_objects.target_lane.end(), [&](const auto & o) {
+        const auto v = std::abs(o.initial_twist.twist.linear.x);
+        if (v > lane_change_parameters_->stop_velocity_threshold) {
+          return false;
+        }
+        const double distance_to_target_lane_obj = getDistanceAlongLanelet(o.initial_pose.pose);
+        return stopping_distance_for_obj < distance_to_target_lane_obj &&
+               distance_to_target_lane_obj < distance_to_ego_lane_obj;
+      });
+
+    if (!has_blocking_target_lane_obj) {
+      stopping_distance = stopping_distance_for_obj;
+    }
   }
 
   if (stopping_distance > 0.0) {
@@ -619,6 +642,8 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
 
   // if max acc is not positive, then we do the normal sampling
   if (max_acc <= 0.0) {
+    RCLCPP_DEBUG(
+      logger_, "Available max acc <= 0. Normal sampling for acc: [%f ~ %f]", min_acc, max_acc);
     return utils::lane_change::getAccelerationValues(
       min_acc, max_acc, longitudinal_acc_sampling_num);
   }
@@ -627,15 +652,19 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   const double max_lane_change_length = calcMaximumLaneChangeLength(current_lanes.back(), max_acc);
 
   if (max_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
+    RCLCPP_DEBUG(
+      logger_, "No enough distance to the end of lane. Normal sampling for acc: [%f ~ %f]", min_acc,
+      max_acc);
     return utils::lane_change::getAccelerationValues(
       min_acc, max_acc, longitudinal_acc_sampling_num);
   }
 
   // If the ego is in stuck, sampling all possible accelerations to find avoiding path.
-  if (isVehicleStuckByObstacle(current_lanes, max_lane_change_length)) {
+  if (isVehicleStuckByObstacle(current_lanes)) {
     auto clock = rclcpp::Clock(RCL_ROS_TIME);
     RCLCPP_INFO_THROTTLE(
-      logger_, clock, 1000, "Vehicle is stuck. sample all longitudinal acceleration.");
+      logger_, clock, 1000, "Vehicle is in stuck. Sample all possible acc: [%f ~ %f]", min_acc,
+      max_acc);
     return utils::lane_change::getAccelerationValues(
       min_acc, max_acc, longitudinal_acc_sampling_num);
   }
@@ -645,12 +674,17 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   if (route_handler.isInGoalRouteSection(target_lanes.back())) {
     const auto goal_pose = route_handler.getGoalPose();
     if (max_lane_change_length < utils::getSignedDistance(current_pose, goal_pose, target_lanes)) {
+      RCLCPP_DEBUG(
+        logger_, "Distance to goal has enough distance. Sample only max_acc: %f", max_acc);
       return {max_acc};
     }
   } else if (max_lane_change_length < utils::getDistanceToEndOfLane(current_pose, target_lanes)) {
+    RCLCPP_DEBUG(
+      logger_, "Distance to end of lane has enough distance. Sample only max_acc: %f", max_acc);
     return {max_acc};
   }
 
+  RCLCPP_DEBUG(logger_, "Normal sampling for acc: [%f ~ %f]", min_acc, max_acc);
   return utils::lane_change::getAccelerationValues(min_acc, max_acc, longitudinal_acc_sampling_num);
 }
 
@@ -992,10 +1026,13 @@ bool NormalLaneChange::hasEnoughLengthToIntersection(
 
 bool NormalLaneChange::getLaneChangePaths(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-  Direction direction, LaneChangePaths * candidate_paths, const bool check_safety) const
+  Direction direction, LaneChangePaths * candidate_paths,
+  const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
+  const bool check_safety) const
 {
   object_debug_.clear();
   if (current_lanes.empty() || target_lanes.empty()) {
+    RCLCPP_WARN(logger_, "target_neighbor_preferred_lane_poly_2d is empty. Not expected.");
     return false;
   }
   const auto & route_handler = *getRouteHandler();
@@ -1031,6 +1068,7 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto target_neighbor_preferred_lane_poly_2d =
     utils::lane_change::getTargetNeighborLanesPolygon(route_handler, current_lanes, type_);
   if (target_neighbor_preferred_lane_poly_2d.empty()) {
+    RCLCPP_WARN(logger_, "target_neighbor_preferred_lane_poly_2d is empty. Not expected.");
     return false;
   }
 
@@ -1042,8 +1080,18 @@ bool NormalLaneChange::getLaneChangePaths(
   candidate_paths->reserve(
     longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num * prepare_durations.size());
 
+  RCLCPP_DEBUG(
+    logger_, "lane change sampling start. Sampling num for prep_time: %lu, acc: %lu",
+    prepare_durations.size(), longitudinal_acc_sampling_values.size());
+
   for (const auto & prepare_duration : prepare_durations) {
     for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
+      const auto debug_print = [&](const auto & s) {
+        RCLCPP_DEBUG_STREAM(
+          logger_, "  -  " << s << " : prep_time = " << prepare_duration
+                           << ", lon_acc = " << sampled_longitudinal_acc);
+      };
+
       // get path on original lanes
       const auto prepare_velocity = std::max(
         current_velocity + sampled_longitudinal_acc * prepare_duration,
@@ -1061,7 +1109,7 @@ bool NormalLaneChange::getLaneChangePaths(
       auto prepare_segment = getPrepareSegment(current_lanes, backward_path_length, prepare_length);
 
       if (prepare_segment.points.empty()) {
-        RCLCPP_DEBUG(logger_, "prepare segment is empty!!");
+        debug_print("prepare segment is empty...? Unexpected.");
         continue;
       }
 
@@ -1072,8 +1120,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
       // Check if the lane changing start point is not on the lanes next to target lanes,
       if (target_length_from_lane_change_start_pose > 0.0) {
-        RCLCPP_DEBUG(
-          logger_, "[only new arch] lane change start getEgoPose() is behind target lanelet!!");
+        debug_print("lane change start getEgoPose() is behind target lanelet!");
         break;
       }
 
@@ -1088,11 +1135,21 @@ bool NormalLaneChange::getLaneChangePaths(
         common_parameters.lane_change_lat_acc_map.find(initial_lane_changing_velocity);
       const auto lateral_acc_resolution =
         std::abs(max_lateral_acc - min_lateral_acc) / lateral_acc_sampling_num;
-      constexpr double lateral_acc_epsilon = 0.01;
 
-      for (double lateral_acc = min_lateral_acc;
-           lateral_acc < max_lateral_acc + lateral_acc_epsilon;
-           lateral_acc += lateral_acc_resolution) {
+      std::vector<double> sample_lat_acc;
+      constexpr double eps = 0.01;
+      for (double a = min_lateral_acc; a < max_lateral_acc + eps; a += lateral_acc_resolution) {
+        sample_lat_acc.push_back(a);
+      }
+      RCLCPP_DEBUG(logger_, "  -  sampling num for lat_acc: %lu", sample_lat_acc.size());
+
+      for (const auto & lateral_acc : sample_lat_acc) {
+        const auto debug_print = [&](const auto & s) {
+          RCLCPP_DEBUG_STREAM(
+            logger_, "    -  " << s << " : prep_time = " << prepare_duration << ", lon_acc = "
+                               << sampled_longitudinal_acc << ", lat_acc = " << lateral_acc);
+        };
+
         const auto lane_changing_time = PathShifter::calcShiftTimeFromJerk(
           shift_length, common_parameters.lane_changing_lateral_jerk, lateral_acc);
         const double longitudinal_acc_on_lane_changing =
@@ -1108,7 +1165,7 @@ bool NormalLaneChange::getLaneChangePaths(
           prepare_segment, current_velocity, terminal_lane_changing_velocity);
 
         if (lane_changing_length + prepare_length > dist_to_end_of_current_lanes) {
-          RCLCPP_DEBUG(logger_, "length of lane changing path is longer than length to goal!!");
+          debug_print("Reject: length of lane changing path is longer than length to goal!!");
           continue;
         }
 
@@ -1126,7 +1183,7 @@ bool NormalLaneChange::getLaneChangePaths(
             s_start + lane_changing_length + finish_judge_buffer + backward_buffer +
               next_lane_change_buffer >
             s_goal) {
-            RCLCPP_DEBUG(logger_, "length of lane changing path is longer than length to goal!!");
+            debug_print("Reject: length of lane changing path is longer than length to goal!!");
             continue;
           }
         }
@@ -1136,7 +1193,7 @@ bool NormalLaneChange::getLaneChangePaths(
           initial_lane_changing_velocity, next_lane_change_buffer);
 
         if (target_segment.points.empty()) {
-          RCLCPP_DEBUG(logger_, "target segment is empty!! something wrong...");
+          debug_print("Reject: target segment is empty!! something wrong...");
           continue;
         }
 
@@ -1153,7 +1210,9 @@ bool NormalLaneChange::getLaneChangePaths(
           boost::geometry::covered_by(lc_start_point, target_lane_poly_2d);
 
         if (!is_valid_start_point) {
-          // lane changing points are not inside of the target preferred lanes or its neighbors
+          debug_print(
+            "Reject: lane changing points are not inside of the target preferred lanes or its "
+            "neighbors");
           continue;
         }
 
@@ -1165,7 +1224,7 @@ bool NormalLaneChange::getLaneChangePaths(
           next_lane_change_buffer);
 
         if (target_lane_reference_path.points.empty()) {
-          RCLCPP_DEBUG(logger_, "target_lane_reference_path is empty!!");
+          debug_print("Reject: target_lane_reference_path is empty!!");
           continue;
         }
 
@@ -1190,59 +1249,68 @@ bool NormalLaneChange::getLaneChangePaths(
           sorted_lane_ids);
 
         if (!candidate_path) {
-          RCLCPP_DEBUG(logger_, "no candidate path!!");
+          debug_print("Reject: failed to generate candidate path!!");
           continue;
         }
 
         if (!hasEnoughLength(*candidate_path, current_lanes, target_lanes, direction)) {
-          RCLCPP_DEBUG(logger_, "invalid candidate path!!");
+          debug_print("Reject: invalid candidate path!!");
           continue;
         }
 
         if (
           lane_change_parameters_->regulate_on_crosswalk &&
           !hasEnoughLengthToCrosswalk(*candidate_path, current_lanes)) {
-          RCLCPP_DEBUG(logger_, "Including crosswalk!!");
           if (getStopTime() < lane_change_parameters_->stop_time_threshold) {
+            debug_print("Reject: including crosswalk!!");
             continue;
           }
-          auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-          RCLCPP_WARN_THROTTLE(
-            logger_, clock, 1000, "Stop time is over threshold. Allow lane change in crosswalk.");
+          RCLCPP_INFO_THROTTLE(
+            logger_, clock_, 1000, "Stop time is over threshold. Allow lane change in crosswalk.");
         }
 
         if (
           lane_change_parameters_->regulate_on_intersection &&
           !hasEnoughLengthToIntersection(*candidate_path, current_lanes)) {
-          RCLCPP_DEBUG(logger_, "Including intersection!!");
           if (getStopTime() < lane_change_parameters_->stop_time_threshold) {
+            debug_print("Reject: including intersection!!");
             continue;
           }
           RCLCPP_WARN_STREAM(
             logger_, "Stop time is over threshold. Allow lane change in intersection.");
         }
 
-        if (utils::lane_change::passParkedObject(
-              route_handler, *candidate_path, target_objects.target_lane, lane_change_buffer,
-              is_goal_in_route, *lane_change_parameters_)) {
+        candidate_paths->push_back(*candidate_path);
+        if (
+          !is_stuck &&
+          utils::lane_change::passParkedObject(
+            route_handler, *candidate_path, target_objects.target_lane, lane_change_buffer,
+            is_goal_in_route, *lane_change_parameters_, object_debug_)) {
+          debug_print(
+            "Reject: parking vehicle exists in the target lane, and the ego is not in stuck. Skip "
+            "lane change.");
           return false;
         }
-        candidate_paths->push_back(*candidate_path);
 
         if (!check_safety) {
+          debug_print("ACCEPT!!!: it is valid (and safety check is skipped).");
           return false;
         }
 
         const auto [is_safe, is_object_coming_from_rear] = isLaneChangePathSafe(
-          *candidate_path, target_objects, lane_change_parameters_->rss_params, object_debug_);
+          *candidate_path, target_objects, rss_params, is_stuck, object_debug_);
 
         if (is_safe) {
+          debug_print("ACCEPT!!!: it is valid and safe!");
           return true;
         }
+
+        debug_print("Reject: sampled path is not safe.");
       }
     }
   }
 
+  RCLCPP_DEBUG(logger_, "No safety path found.");
   return false;
 }
 
@@ -1256,8 +1324,9 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
   debug_filtered_objects_ = target_objects;
 
   CollisionCheckDebugMap debug_data;
+  const bool is_stuck = isVehicleStuckByObstacle(current_lanes);
   const auto safety_status = isLaneChangePathSafe(
-    path, target_objects, lane_change_parameters_->rss_params_for_abort, debug_data);
+    path, target_objects, lane_change_parameters_->rss_params_for_abort, is_stuck, debug_data);
   {
     // only for debug purpose
     object_debug_.clear();
@@ -1514,7 +1583,7 @@ bool NormalLaneChange::getAbortPath()
 
 PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
   const LaneChangePath & lane_change_path, const LaneChangeTargetObjects & target_objects,
-  const utils::path_safety_checker::RSSparams & rss_params,
+  const utils::path_safety_checker::RSSparams & rss_params, const bool is_stuck,
   CollisionCheckDebugMap & debug_data) const
 {
   PathSafetyStatus path_safety_status;
@@ -1538,7 +1607,6 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
 
   auto collision_check_objects = target_objects.target_lane;
   const auto current_lanes = getCurrentLanes();
-  const auto is_stuck = isVehicleStuckByObstacle(current_lanes);
 
   if (lane_change_parameters_->check_objects_on_current_lanes || is_stuck) {
     collision_check_objects.insert(
@@ -1603,11 +1671,13 @@ bool NormalLaneChange::isVehicleStuckByObstacle(
 {
   // Ego is still moving, not in stuck
   if (std::abs(getEgoVelocity()) > lane_change_parameters_->stop_velocity_threshold) {
+    RCLCPP_DEBUG(logger_, "Ego is still moving, not in stuck");
     return false;
   }
 
   // Ego is just stopped, not sure it is in stuck yet.
   if (getStopTime() < lane_change_parameters_->stop_time_threshold) {
+    RCLCPP_DEBUG(logger_, "Ego is just stopped, counting for stuck judge... (%f)", getStopTime());
     return false;
   }
 
@@ -1625,11 +1695,13 @@ bool NormalLaneChange::isVehicleStuckByObstacle(
 
     const auto ego_to_obj_dist = getArcCoordinates(current_lanes, p).length - base_distance;
     if (0 < ego_to_obj_dist && ego_to_obj_dist < obstacle_check_distance) {
+      RCLCPP_DEBUG(logger_, "Stationary object is in front of ego.");
       return true;  // Stationary object is in front of ego.
     }
   }
 
   // No stationary objects found in obstacle_check_distance
+  RCLCPP_DEBUG(logger_, "No stationary objects found in obstacle_check_distance");
   return false;
 }
 
@@ -1641,7 +1713,21 @@ bool NormalLaneChange::isVehicleStuckByObstacle(const lanelet::ConstLanelets & c
 
   const auto [min_acc, max_acc] = calcCurrentMinMaxAcceleration();
   const auto max_lane_change_length = calcMaximumLaneChangeLength(current_lanes.back(), max_acc);
-  return isVehicleStuckByObstacle(current_lanes, max_lane_change_length);
+  const auto rss_dist = calcRssDistance(
+    0.0, planner_data_->parameters.minimum_lane_changing_velocity,
+    lane_change_parameters_->rss_params);
+
+  // It is difficult to define the detection range. If it is too short, the stuck will not be
+  // determined, even though you are stuck by an obstacle. If it is too long,
+  // the ego will be judged to be stuck by a distant vehicle, even though the ego is only
+  // stopped at a traffic light. Essentially, the calculation should be based on the information of
+  // the stop reason, but this is outside the scope of one module. I keep it as a TODO.
+  constexpr double DETECTION_DISTANCE_MARGIN = 10.0;
+  const auto detection_distance = max_lane_change_length + rss_dist +
+                                  getCommonParam().base_link2front + DETECTION_DISTANCE_MARGIN;
+  RCLCPP_DEBUG(logger_, "max_lane_change_length: %f, max_acc: %f", max_lane_change_length, max_acc);
+
+  return isVehicleStuckByObstacle(current_lanes, detection_distance);
 }
 
 void NormalLaneChange::setStopPose(const Pose & stop_pose)
