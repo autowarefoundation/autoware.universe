@@ -51,9 +51,9 @@
   <arg name="use_near_radar_fusion" default="false"/>
   <arg name="far_object_merger_sync_queue_size" default="20"/>
 
-  <!-- Filter output name. Switch output topic name by 'radar_long_range_integration' parameter defined in perception.launch -->
-  <let name="output_of_filtered_objects" value="$(var output/objects)" if="$(eval &quot; '$(var radar_long_range_integration)'=='tracking' &quot;)"/>
-  <let name="output_of_filtered_objects" value="near_objects" unless="$(eval &quot; '$(var radar_long_range_integration)'=='tracking' &quot;)"/>
+  <!-- Filter output name. Switch output topic name by 'use_radar_tracking_fusion' parameter defined in perception.launch -->
+  <let name="output_of_filtered_objects" value="$(var output/objects)" if="$(var use_radar_tracking_fusion)"/>
+  <let name="output_of_filtered_objects" value="near_objects" unless="$(var use_radar_tracking_fusion)"/>
 
   <!-- Jetson AGX -->
   <!-- <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">
@@ -410,8 +410,8 @@
   </group>
 
   <!-- Merge far_objects and near_objects in detection stage.
-      Control parameter 'radar_long_range_integration' should defined in perception.launch.xml -->
-  <group if="$(eval &quot;'$(var radar_long_range_integration)'=='detection'&quot;)">
+      Control parameter 'use_radar_tracking_fusion' should defined in perception.launch.xml -->
+  <group if="$(var use_radar_tracking_fusion)">
     <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
       <arg name="input/object0" value="near_objects"/>
       <arg name="input/object1" value="radar/far_objects"/>

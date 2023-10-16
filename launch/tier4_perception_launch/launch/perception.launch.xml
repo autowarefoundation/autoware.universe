@@ -98,10 +98,9 @@
 
   <!-- Radar long range integration methods -->
   <arg
-    name="radar_long_range_integration"
-    default="tracking"
-    description="integration method for radar long range information.
-   'detection' means radar information is merged in detection launch. 'tracking' means radar information is merged in tracking launch. 'none' means radar information is not merged."
+    name="use_radar_tracking_fusion"
+    default="false"
+    description="if use_radar_tracking_fusion:=true, radar information is merged in tracking launch. Otherwise, radar information is merged in detection launch."
   />
 
   <!-- Perception module -->

@@ -5,7 +5,7 @@
   <arg name="enable_delay_compensation" default="true"/>
 
   <!-- Radar Tracking and Merger parameters -->
-  <arg name="radar_long_range_integration" default="detection" description="integration method for radar long range information. Following args are used only if this parameter is set to 'tracking'"/>
+  <arg name="use_radar_tracking_fusion" default="false" description="use radar tracking fusion"/>
   <arg name="radar_tracker_input" default="/perception/object_recognition/detection/radar/far_objects"/>
   <arg name="radar_tracker_output" default="/perception/object_recognition/tracking/radar/far_objects"/>
   <arg name="object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path" description="association param file for radar far object tracking"/>
@@ -15,7 +15,7 @@
   <arg name="object_recognition_tracking_object_merger_node_param_path" description="node param file for radar and lidar object merger"/>
 
   <!-- Run without tracking merger-->
-  <group unless="$(eval &quot;'$(var radar_long_range_integration)'=='tracking'&quot;)">
+  <group unless="$(var use_radar_tracking_fusion)">
     <!--multi object tracking-->
     <include file="$(find-pkg-share multi_object_tracker)/launch/multi_object_tracker.launch.xml">
       <arg name="data_association_matrix_path" value="$(var object_recognition_tracking_multi_object_tracker_data_association_matrix_param_path)"/>
@@ -25,7 +25,7 @@
   </group>
 
   <!-- Run with tracking merger to add far radar information -->
-  <group if="$(eval &quot;'$(var radar_long_range_integration)'=='tracking'&quot;)">
+  <group if="$(var use_radar_tracking_fusion)">
     <!--multi object tracking for near objects-->
     <include file="$(find-pkg-share multi_object_tracker)/launch/multi_object_tracker.launch.xml">
       <arg name="data_association_matrix_path" value="$(var object_recognition_tracking_multi_object_tracker_data_association_matrix_param_path)"/>
