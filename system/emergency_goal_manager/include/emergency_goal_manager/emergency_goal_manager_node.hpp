@@ -16,22 +16,25 @@
 #define EMERGENCY_GOAL_MANAGER__EMERGENCY_GOAL_MANAGER_CORE_HPP_
 
 // Core
-#include <functional>
-#include <memory>
+#include <unordered_map>
+#include <queue>
+#include <string>
 
 // Autoware
+#include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
+#include <tier4_system_msgs/msg/emergency_goals_clear_command.hpp>
+#include <tier4_system_msgs/msg/emergency_goals_stamped.hpp>
 
 // ROS 2 core
+#include <geometry_msgs/msg/pose.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/trigger.hpp>
 
 namespace emergency_goal_manager
 {
 
 struct Parameters
 {
-  int update_rate;             // [Hz]
-  double target_acceleration;  // [m/s^2]
-  double target_jerk;          // [m/s^3]
 };
 
 class EmergencyGoalManagerNode : public rclcpp::Node
@@ -44,14 +47,32 @@ private:
   Parameters params_;
 
   // Subscriber
+  rclcpp::Subscription<tier4_system_msgs::msg::EmergencyGoalsStamped>::SharedPtr sub_emergency_goals_;
+  rclcpp::Subscription<tier4_system_msgs::msg::EmergencyGoalsClearCommand>::SharedPtr
+    sub_emergency_goals_clear_command_;
+  
+  void onEmergencyGoals(const tier4_system_msgs::msg::EmergencyGoalsStamped::SharedPtr msg);
+  void onEmergencyGoalsClearCommand(
+    const tier4_system_msgs::msg::EmergencyGoalsClearCommand::SharedPtr msg);
 
   // Server
-
+ 
   // Publisher
+
+  // Client
+  rclcpp::CallbackGroup::SharedPtr client_set_mrm_route_points_callback_group_;
+  rclcpp::Client<autoware_adapi_v1_msgs::srv::SetRoutePoints>::SharedPtr
+    client_set_mrm_route_points_;
+  rclcpp::CallbackGroup::SharedPtr client_clear_mrm_route_callback_group_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client_clear_mrm_route_;
+  
+  void callSetMrmRoutePoints();
+  void callClearMrmRoute();
 
   // Timer
 
   // States
+  std::unordered_map<std::string, std::queue<geometry_msgs::msg::Pose>> emergency_goals_map_;
 
   // Algorithm
 };
