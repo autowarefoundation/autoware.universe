@@ -597,7 +597,6 @@ ObjectClassification::_label_type changeLabelForPrediction(
     case ObjectClassification::TRAILER:
     case ObjectClassification::UNKNOWN:
       return label;
-      break;
 
     case ObjectClassification::MOTORCYCLE:
     case ObjectClassification::BICYCLE: {  // if object is within road lanelet and satisfies yaw
@@ -616,7 +615,6 @@ ObjectClassification::_label_type changeLabelForPrediction(
       // return ObjectClassification::UNKNOWN; // temporary disabled
       if (high_speed_object) return label;  // Do nothing for now
       return ObjectClassification::BICYCLE;
-      break;
     }
 
     case ObjectClassification::PEDESTRIAN: {
@@ -634,12 +632,10 @@ ObjectClassification::_label_type changeLabelForPrediction(
       // fast human outside road lanelet will move like unknown object
       // return ObjectClassification::UNKNOWN;
       return label;
-      break;
     }
 
     default:
       return label;
-      break;
   }
 }
 
