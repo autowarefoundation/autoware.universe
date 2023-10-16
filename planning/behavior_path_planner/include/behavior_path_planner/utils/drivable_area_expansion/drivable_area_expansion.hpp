@@ -38,8 +38,8 @@ void expand_drivable_area(
 /// @brief prepare path poses and try to reuse their previously calculated curvatures
 /// @details poses are reused if they do not deviate too much from the current path
 /// @param [in] path input path
-/// @param [inout] prev_poses previous posesto reuse
-/// @param [inout] prev_curvatures previous curvaturesto reuse
+/// @param [inout] prev_poses previous poses to reuse
+/// @param [inout] prev_curvatures previous curvatures to reuse
 /// @param [in] ego_point current ego point
 /// @param [in] params parameters for reuse criteria and resampling interval
 void update_path_poses_and_previous_curvatures(

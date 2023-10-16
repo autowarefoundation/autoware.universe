@@ -99,7 +99,7 @@ double calculate_minimum_lane_width(
   const auto a = params.vehicle_info.front_overhang_m + params.extra_front_overhang;
   const auto w = params.vehicle_info.vehicle_width_m + params.extra_width;
   const auto l = params.vehicle_info.wheel_base_m + params.extra_wheelbase;
-  return (a * a + 2 * a * l + 2 * k * w + l * l + w * w) / (2 * k + w);
+  return (a * a + 2.0 * a * l + 2.0 * k * w + l * l + w * w) / (2.0 * k + w);
 }
 
 std::vector<double> calculate_minimum_expansions(
@@ -295,7 +295,7 @@ void expand_drivable_area(
     calculate_minimum_expansions(path_poses, path.left_bound, curvatures, LEFT, params);
   auto right_expansions =
     calculate_minimum_expansions(path_poses, path.right_bound, curvatures, RIGHT, params);
-  const auto curv_expansion_ms = stop_watch.toc("curvatures_expansion");
+  const auto curvature_expansion_ms = stop_watch.toc("curvatures_expansion");
 
   stop_watch.tic("max_dist");
   const auto max_left_expansions = calculate_maximum_distance(
@@ -323,7 +323,8 @@ void expand_drivable_area(
     std::printf(
       "Total runtime(ms): %2.2f\n\tPreprocessing: %2.2f\n\tCrop: %2.2f\n\tCurvature expansion: "
       "%2.2f\n\tMaximum expansion: %2.2f\n\tSmoothing: %2.2f\n\tExpansion: %2.2f\n\n",
-      total_ms, preprocessing_ms, crop_ms, curv_expansion_ms, max_dist_ms, smooth_ms, expand_ms);
+      total_ms, preprocessing_ms, crop_ms, curvature_expansion_ms, max_dist_ms, smooth_ms,
+      expand_ms);
 
   planner_data->drivable_area_expansion_prev_path_poses = path_poses;
   planner_data->drivable_area_expansion_prev_curvatures = curvatures;
