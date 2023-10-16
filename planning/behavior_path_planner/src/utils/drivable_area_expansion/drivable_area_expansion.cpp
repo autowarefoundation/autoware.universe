@@ -52,21 +52,18 @@ Point convert_to_geometry_point(const Point2d & point)
 double calculate_point_segment_distance(
   const Point2d & p1, const Point2d & p2_first, const Point2d & p2_second)
 {
-  Eigen::Vector2d first_to_target(p1.x() - p2_first.x(), p1.y() - p2_first.y());
-  Eigen::Vector2d second_to_target(p1.x() - p2_second.x(), p1.y() - p2_second.y());
-  Eigen::Vector2d first_to_second(p2_second.x() - p2_first.x(), p2_second.y() - p2_first.y());
+  // NOTE: use 3 dimension to use the cross operation.
+  Eigen::Vector3d p(p1.x(), p1.y(), 0.0);
+  Eigen::Vector3d a(p2_first.x(), p2_first.y(), 0.0);
+  Eigen::Vector3d b(p2_second.x(), p2_second.y(), 0.0);
 
-  if (first_to_target.dot(first_to_second) < 0) {
-    return first_to_target.norm();
+  if ((p - a).dot(b - a) < 0) {
+    return (p - a).norm();
   }
-  if (second_to_target.dot(-first_to_second) < 0) {
-    return second_to_target.norm();
+  if ((p - b).dot(a - b) < 0) {
+    return (p - b).norm();
   }
-
-  Eigen::Vector2d p2_nearest =
-    Eigen::Vector2d{p2_first.x(), p2_first.y()} +
-    first_to_second * first_to_target.dot(first_to_second) / std::pow(first_to_second.norm(), 2);
-  return (p1 - p2_nearest).norm();
+  return ((b - a).cross(p - a)).norm() / (b - a).norm();
 }
 
 double calculate_segments_distance(
@@ -82,9 +79,11 @@ double calculate_segments_distance(
   }
 
   // calculate distance between point and segment
-  const double dist_p1 = calculate_point_segment_distance(p1_first, p2_first, p2_second);
-  const double dist_p2 = calculate_point_segment_distance(p2_first, p1_first, p1_second);
-  return std::min(dist_p1, dist_p2);
+  const double dist1 = calculate_point_segment_distance(p1_first, p2_first, p2_second);
+  const double dist2 = calculate_point_segment_distance(p1_second, p2_first, p2_second);
+  const double dist3 = calculate_point_segment_distance(p2_first, p1_first, p1_second);
+  const double dist4 = calculate_point_segment_distance(p2_second, p1_first, p1_second);
+  return std::min(std::min(std::min(dist1, dist2), dist3), dist4);
 }
 
 double calculate_lines_distance(const LineString2d & line1, const LineString2d line2)
