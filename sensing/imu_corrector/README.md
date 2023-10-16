@@ -56,6 +56,8 @@ Note that the node calculates bias from the gyroscope data by averaging the data
 | `~/input/imu_raw` | `sensor_msgs::msg::Imu`                         | **raw** imu data |
 | `~/input/pose`    | `geometry_msgs::msg::PoseWithCovarianceStamped` | ndt pose         |
 
+Note that the input pose is assumed to be accurate enough. For example when using NDT, we assume that the NDT is appropriately converged.
+
 ### Output
 
 | Name                 | Type                                 | Description                   |
