@@ -158,8 +158,8 @@ void ObstaclePointCloudBasedValidator::on3dObjectsAndObstaclePointCloud(
     trans_obj_position_pcl.y = transformed_object_position.y;
     trans_obj_position_pcl.z = transformed_object_position.z;
     kdtree->radiusSearch(trans_obj_position_pcl, search_radius.value(), indices, distances);
-    for (const auto & indice : indices) {
-      neighbor_pointcloud->push_back(obstacle_pointcloud->at(indice));
+    for (const auto & index : indices) {
+      neighbor_pointcloud->push_back(obstacle_pointcloud->at(index));
     }
 
     if (debugger_) debugger_->addNeighborPointcloud(neighbor_pointcloud);

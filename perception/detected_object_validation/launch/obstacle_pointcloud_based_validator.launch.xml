@@ -11,5 +11,6 @@
     <remap from="~/output/objects" to="$(var output/objects)"/>
     <param name="enable_debugger" value="false"/>
     <param from="$(var obstacle_pointcloud_based_validator_param_path)"/>
+    <param name="using_2d_validator" value="true"/>
   </node>
 </launch>
