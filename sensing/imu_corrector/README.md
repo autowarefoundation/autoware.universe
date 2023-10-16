@@ -58,6 +58,10 @@ Note that the node calculates bias from the gyroscope data by averaging the data
 
 Note that the input pose is assumed to be accurate enough. For example when using NDT, we assume that the NDT is appropriately converged.
 
+Currently, it is possible to use methods other than NDT as a `pose_source` for Autoware, but less accurate methods are not suitable for IMU bias estimation.
+
+In the future, with careful implementation for pose errors, the IMU bias estimated by NDT could potentially be used not only for validation but also for online calibration.
+
 ### Output
 
 | Name                 | Type                                 | Description                   |
