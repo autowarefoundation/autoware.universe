@@ -50,13 +50,6 @@ struct Projection
   double distance;
   double arc_length;
 };
-struct BoundExpansion
-{
-  double expansion_distance = 0.0;
-  Point expansion_point{};
-  size_t path_idx{};
-  size_t bound_segment_idx{};
-};
 enum Side { LEFT, RIGHT };
 
 }  // namespace drivable_area_expansion

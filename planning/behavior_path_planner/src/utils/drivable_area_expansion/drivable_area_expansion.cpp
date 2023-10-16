@@ -14,7 +14,6 @@
 
 #include "behavior_path_planner/utils/drivable_area_expansion/drivable_area_expansion.hpp"
 
-#include "behavior_path_planner/utils/drivable_area_expansion/expansion.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/footprints.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
@@ -34,15 +33,26 @@
 
 namespace drivable_area_expansion
 {
-void reuse_previous_points(
+
+namespace
+{
+
+Point2d convert_point(const Point & p)
+{
+  return Point2d{p.x, p.y};
+}
+
+}  // namespace
+
+void reuse_previous_poses(
   const PathWithLaneId & path, std::vector<Pose> & prev_poses,
   std::vector<double> & prev_curvatures, const Point & ego_point,
   const DrivableAreaExpansionParameters & params)
 {
   std::vector<Pose> cropped_poses;
   std::vector<double> cropped_curvatures;
-  const auto ego_is_behind =
-    motion_utils::calcLongitudinalOffsetToSegment(prev_poses, 0, ego_point) < 0.0;
+  const auto ego_is_behind = prev_poses.size() > 1 && motion_utils::calcLongitudinalOffsetToSegment(
+                                                        prev_poses, 0, ego_point) < 0.0;
   const auto ego_is_far = !prev_poses.empty() &&
                           tier4_autoware_utils::calcDistance2d(ego_point, prev_poses.front()) < 0.0;
   if (!ego_is_behind && !ego_is_far && prev_poses.size() > 1) {
@@ -78,13 +88,8 @@ void reuse_previous_points(
          arc_length += params.resample_interval)
       cropped_poses.push_back(motion_utils::calcInterpolatedPose(path.points, arc_length));
   }
-  prev_poses = cropped_poses;
+  prev_poses = motion_utils::removeOverlapPoints(cropped_poses);
   prev_curvatures = cropped_curvatures;
-}
-
-Point2d convert_point(const Point & p)
-{
-  return Point2d{p.x, p.y};
 }
 
 double calculate_minimum_lane_width(
@@ -155,21 +160,19 @@ std::vector<double> calculate_minimum_expansions(
   return minimum_expansions;
 }
 
-void apply_bound_velocity_limit(
-  std::vector<double> & expansions, const std::vector<Point> & bound_vector,
-  const double max_velocity)
+void apply_bound_change_rate_limit(
+  std::vector<double> & distances, const std::vector<Point> & bound, const double max_rate)
 {
-  if (expansions.empty()) return;
+  if (distances.empty()) return;
   const auto apply_max_vel = [&](auto & exp, const auto from, const auto to) {
     if (exp[from] > exp[to]) {
-      const auto arc_length =
-        tier4_autoware_utils::calcDistance2d(bound_vector[from], bound_vector[to]);
-      const auto smoothed_dist = exp[from] - arc_length * max_velocity;
+      const auto arc_length = tier4_autoware_utils::calcDistance2d(bound[from], bound[to]);
+      const auto smoothed_dist = exp[from] - arc_length * max_rate;
       exp[to] = std::max(exp[to], smoothed_dist);
     }
   };
-  for (auto idx = 0LU; idx + 1 < expansions.size(); ++idx) apply_max_vel(expansions, idx, idx + 1);
-  for (auto idx = expansions.size() - 1; idx > 0; --idx) apply_max_vel(expansions, idx, idx - 1);
+  for (auto idx = 0LU; idx + 1 < distances.size(); ++idx) apply_max_vel(distances, idx, idx + 1);
+  for (auto idx = distances.size() - 1; idx > 0; --idx) apply_max_vel(distances, idx, idx - 1);
 }
 
 std::vector<double> calculate_maximum_distance(
@@ -222,7 +225,7 @@ void expand_bound(
     }
   }
 
-  // remove loops TODO(Maxime): move to separate function
+  // remove any self intersection by skipping the points inside of the loop
   std::vector<Point> no_loop_bound = {bound.front()};
   for (auto idx = 1LU; idx < bound.size(); ++idx) {
     bool is_intersecting = false;
@@ -261,6 +264,8 @@ void expand_drivable_area(
   PathWithLaneId & path,
   const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data)
 {
+  // skip if no bounds or not enough points to calculate path curvature
+  if (path.points.size() < 3 || path.left_bound.empty() || path.right_bound.empty()) return;
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("overall");
   stop_watch.tic("preprocessing");
@@ -275,7 +280,7 @@ void expand_drivable_area(
   stop_watch.tic("crop");
   std::vector<Pose> path_poses = planner_data->drivable_area_expansion_prev_path_poses;
   std::vector<double> curvatures = planner_data->drivable_area_expansion_prev_curvatures;
-  reuse_previous_points(
+  reuse_previous_poses(
     path, path_poses, curvatures, planner_data->self_odometry->pose.pose.position, params);
   const auto crop_ms = stop_watch.toc("crop");
 
@@ -304,10 +309,9 @@ void expand_drivable_area(
   const auto max_dist_ms = stop_watch.toc("max_dist");
 
   stop_watch.tic("smooth");
-  apply_bound_velocity_limit(left_expansions, path.left_bound, params.max_bound_rate);
-  apply_bound_velocity_limit(right_expansions, path.right_bound, params.max_bound_rate);
+  apply_bound_change_rate_limit(left_expansions, path.left_bound, params.max_bound_rate);
+  apply_bound_change_rate_limit(right_expansions, path.right_bound, params.max_bound_rate);
   const auto smooth_ms = stop_watch.toc("smooth");
-  // TODO(Maxime): add an arc length shift or margin ?
   // TODO(Maxime): limit the distances based on the total width (left + right < min_lane_width)
   stop_watch.tic("expand");
   expand_bound(path.left_bound, path_poses, left_expansions);
