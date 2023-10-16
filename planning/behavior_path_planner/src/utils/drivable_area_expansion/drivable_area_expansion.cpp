@@ -131,7 +131,7 @@ std::vector<double> calculate_minimum_expansions(
             tier4_autoware_utils::calcDistance2d(*intersection_point, bound[bound_idx + 1]) +
             tier4_autoware_utils::calcDistance2d(bound[bound_idx + 1], bound[bound_idx + 2]);
           for (auto up_bound_idx = bound_idx + 2;
-               bound_idx < bound.size() && up_arc_length <= params.extra_arc_length;
+               up_bound_idx < bound.size() && up_arc_length <= params.extra_arc_length;
                ++up_bound_idx) {
             minimum_expansions[up_bound_idx] = std::max(minimum_expansions[up_bound_idx], dist);
             if (up_bound_idx + 1 < bound.size())
