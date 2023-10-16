@@ -100,14 +100,15 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
   const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle)
 {
   const size_t object_idx = motion_utils::findNearestIndex(traj_points, obstacle.pose.position);
-
-  const double object_vel_norm = std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y);
-  const double object_vel_yaw = std::atan2(obstacle.twist.linear.y, obstacle.twist.linear.x);
   const double traj_yaw = tf2::getYaw(traj_points.at(object_idx).pose.orientation);
 
-  return std::make_pair(
-    object_vel_norm * std::cos(object_vel_yaw - traj_yaw),
-    object_vel_norm * std::sin(object_vel_yaw - traj_yaw));
+  const double obstacle_yaw = tf2::getYaw(obstacle.pose.orientation);
+
+  const Eigen::Rotation2Dd R_ego_to_obstacle(obstacle_yaw - traj_yaw);
+  const Eigen::Vector2d obstacle_velocity(obstacle.twist.linear.x, obstacle.twist.linear.y);
+  const Eigen::Vector2d projected_velocity = R_ego_to_obstacle * obstacle_velocity;
+
+  return std::make_pair(projected_velocity[0], projected_velocity[1]);
 }
 
 double calcObstacleMaxLength(const Shape & shape)
@@ -373,7 +374,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
 
   // debug publisher
-  debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/calculation_time", 1);
+  debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/processing_time_ms", 1);
   debug_cruise_wall_marker_pub_ = create_publisher<MarkerArray>("~/debug/cruise/virtual_wall", 1);
   debug_stop_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
   debug_slow_down_wall_marker_pub_ =
@@ -438,6 +439,8 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   // set parameter callback
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&ObstacleCruisePlannerNode::onParam, this, std::placeholders::_1));
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 ObstacleCruisePlannerNode::PlanningAlgorithm ObstacleCruisePlannerNode::getPlanningAlgorithmType(
@@ -1172,9 +1175,9 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   }
 
   const auto [tangent_vel, normal_vel] = projectObstacleVelocityToTrajectory(traj_points, obstacle);
-  return SlowDownObstacle{obstacle.uuid,         obstacle.stamp,      obstacle.pose,
-                          tangent_vel,           normal_vel,          precise_lat_dist,
-                          front_collision_point, back_collision_point};
+  return SlowDownObstacle{obstacle.uuid,    obstacle.stamp,        obstacle.classification,
+                          obstacle.pose,    tangent_vel,           normal_vel,
+                          precise_lat_dist, front_collision_point, back_collision_point};
 }
 
 void ObstacleCruisePlannerNode::checkConsistency(

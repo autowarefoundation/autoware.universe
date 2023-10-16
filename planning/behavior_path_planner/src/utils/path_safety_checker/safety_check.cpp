@@ -258,6 +258,20 @@ boost::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVeloci
 }
 
 bool checkCollision(
+  const PathWithLaneId & planned_path,
+  const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
+  const ExtendedPredictedObject & target_object,
+  const PredictedPathWithPolygon & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
+  const double hysteresis_factor, CollisionCheckDebug & debug)
+{
+  const auto collided_polygons = getCollidedPolygons(
+    planned_path, predicted_ego_path, target_object, target_object_path, common_parameters,
+    rss_parameters, hysteresis_factor, debug);
+  return collided_polygons.empty();
+}
+
+std::vector<Polygon2d> getCollidedPolygons(
   [[maybe_unused]] const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,
@@ -271,6 +285,8 @@ bool checkCollision(
     debug.current_obj_pose = target_object.initial_pose.pose;
   }
 
+  std::vector<Polygon2d> collided_polygons{};
+  collided_polygons.reserve(target_object_path.path.size());
   for (const auto & obj_pose_with_poly : target_object_path.path) {
     const auto & current_time = obj_pose_with_poly.time;
 
@@ -302,7 +318,8 @@ bool checkCollision(
     // check overlap
     if (boost::geometry::overlaps(ego_polygon, obj_polygon)) {
       debug.unsafe_reason = "overlap_polygon";
-      return false;
+      collided_polygons.push_back(obj_polygon);
+      continue;
     }
 
     // compute which one is at the front of the other
@@ -341,34 +358,55 @@ bool checkCollision(
     // check overlap with extended polygon
     if (boost::geometry::overlaps(extended_ego_polygon, extended_obj_polygon)) {
       debug.unsafe_reason = "overlap_extended_polygon";
-      return false;
+      collided_polygons.push_back(obj_polygon);
     }
   }
 
-  return true;
+  return collided_polygons;
 }
 
-bool checkCollisionWithExtraStoppingMargin(
-  const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects,
-  const double base_to_front, const double base_to_rear, const double width,
-  const double maximum_deceleration, const double collision_check_margin,
-  const double max_extra_stopping_margin)
+std::vector<Polygon2d> generatePolygonsWithStoppingAndInertialMargin(
+  const PathWithLaneId & ego_path, const double base_to_front, const double base_to_rear,
+  const double width, const double maximum_deceleration, const double max_extra_stopping_margin)
 {
-  for (const auto & p : ego_path.points) {
+  std::vector<Polygon2d> polygons;
+  const auto curvatures = motion_utils::calcCurvature(ego_path.points);
+
+  for (size_t i = 0; i < ego_path.points.size(); ++i) {
+    const auto p = ego_path.points.at(i);
+
     const double extra_stopping_margin = std::min(
       std::pow(p.point.longitudinal_velocity_mps, 2) * 0.5 / maximum_deceleration,
       max_extra_stopping_margin);
 
-    const auto ego_polygon = tier4_autoware_utils::toFootprint(
-      p.point.pose, base_to_front + extra_stopping_margin, base_to_rear, width);
+    double extra_lateral_margin = (-1) * curvatures[i] * p.point.longitudinal_velocity_mps *
+                                  std::abs(p.point.longitudinal_velocity_mps);
+    extra_lateral_margin =
+      std::clamp(extra_lateral_margin, -extra_stopping_margin, extra_stopping_margin);
 
+    const auto lateral_offset_pose =
+      tier4_autoware_utils::calcOffsetPose(p.point.pose, 0.0, extra_lateral_margin / 2.0, 0.0);
+    const auto ego_polygon = tier4_autoware_utils::toFootprint(
+      lateral_offset_pose, base_to_front + extra_stopping_margin, base_to_rear,
+      width + std::abs(extra_lateral_margin));
+    polygons.push_back(ego_polygon);
+  }
+  return polygons;
+}
+
+bool checkCollisionWithMargin(
+  const std::vector<Polygon2d> & ego_polygons, const PredictedObjects & dynamic_objects,
+  const double collision_check_margin)
+{
+  for (const auto & ego_polygon : ego_polygons) {
     for (const auto & object : dynamic_objects.objects) {
       const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
       const double distance = boost::geometry::distance(obj_polygon, ego_polygon);
-      if (distance < collision_check_margin) return true;
+      if (distance < collision_check_margin) {
+        return true;
+      }
     }
   }
-
   return false;
 }
 }  // namespace behavior_path_planner::utils::path_safety_checker

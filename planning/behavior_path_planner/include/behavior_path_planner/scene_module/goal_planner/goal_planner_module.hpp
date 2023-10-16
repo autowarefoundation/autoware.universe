@@ -106,6 +106,7 @@ struct FreespacePlannerDebugData
 struct GoalPlannerDebugData
 {
   FreespacePlannerDebugData freespace_planner{};
+  std::vector<Polygon2d> ego_polygons_expanded{};
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -267,6 +268,9 @@ private:
   BehaviorModuleOutput planWithGoalModification();
   BehaviorModuleOutput planWaitingApprovalWithGoalModification();
   void selectSafePullOverPath();
+  void sortPullOverPathCandidatesByGoalPriority(
+    std::vector<PullOverPath> & pull_over_path_candidates,
+    const GoalCandidates & goal_candidates) const;
 
   // deal with pull over partial paths
   PathWithLaneId getCurrentPath() const;

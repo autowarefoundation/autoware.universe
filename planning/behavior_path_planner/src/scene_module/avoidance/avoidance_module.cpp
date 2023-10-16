@@ -17,6 +17,7 @@
 #include "behavior_path_planner/marker_utils/avoidance/debug.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/avoidance/utils.hpp"
+#include "behavior_path_planner/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
@@ -1838,10 +1839,16 @@ bool AvoidanceModule::isSafePath(
   }
 
   const bool limit_to_max_velocity = false;
-  const auto ego_predicted_path_for_front_object = utils::avoidance::convertToPredictedPath(
-    shifted_path.path, planner_data_, true, limit_to_max_velocity, parameters_);
-  const auto ego_predicted_path_for_rear_object = utils::avoidance::convertToPredictedPath(
-    shifted_path.path, planner_data_, false, limit_to_max_velocity, parameters_);
+  const auto ego_predicted_path_params =
+    std::make_shared<utils::path_safety_checker::EgoPredictedPathParams>(
+      parameters_->ego_predicted_path_params);
+  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(shifted_path.path.points);
+  const auto ego_predicted_path_for_front_object = utils::path_safety_checker::createPredictedPath(
+    ego_predicted_path_params, shifted_path.path.points, getEgoPose(), getEgoSpeed(), ego_seg_idx,
+    true, limit_to_max_velocity);
+  const auto ego_predicted_path_for_rear_object = utils::path_safety_checker::createPredictedPath(
+    ego_predicted_path_params, shifted_path.path.points, getEgoPose(), getEgoSpeed(), ego_seg_idx,
+    false, limit_to_max_velocity);
 
   const auto ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
   const auto is_right_shift = [&]() -> std::optional<bool> {
@@ -2543,9 +2550,31 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
       turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
     }
   } else {
-    turn_signal_info.turn_signal.command = TurnIndicatorsCommand::DISABLE;
+    const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
+    const auto local_vehicle_footprint =
+      createVehicleFootprint(planner_data_->parameters.vehicle_info);
+    boost::geometry::model::ring<tier4_autoware_utils::Point2d> shifted_vehicle_footprint;
+    for (const auto & cl : current_lanes) {
+      // get left and right bounds of current lane
+      const auto lane_left_bound = cl.leftBound2d().basicLineString();
+      const auto lane_right_bound = cl.rightBound2d().basicLineString();
+      for (size_t i = start_idx; i < end_idx; ++i) {
+        // transform vehicle footprint onto path points
+        shifted_vehicle_footprint = transformVector(
+          local_vehicle_footprint,
+          tier4_autoware_utils::pose2transform(path.path.points.at(i).point.pose));
+        if (
+          boost::geometry::intersects(lane_left_bound, shifted_vehicle_footprint) ||
+          boost::geometry::intersects(lane_right_bound, shifted_vehicle_footprint)) {
+          if (segment_shift_length > 0.0) {
+            turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+          } else {
+            turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+          }
+        }
+      }
+    }
   }
-
   if (ego_front_to_shift_start > 0.0) {
     turn_signal_info.desired_start_point = planner_data_->self_odometry->pose.pose;
   } else {
@@ -2639,6 +2668,7 @@ void AvoidanceModule::updateDebugMarker(
     addObjects(data.other_objects, std::string("OutOfTargetArea"));
     addObjects(data.other_objects, std::string("NotNeedAvoidance"));
     addObjects(data.other_objects, std::string("LessThanExecutionThreshold"));
+    addObjects(data.other_objects, std::string("TooNearToGoal"));
   }
 
   // shift line pre-process
