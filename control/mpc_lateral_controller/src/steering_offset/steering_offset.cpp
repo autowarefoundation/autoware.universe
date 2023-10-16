@@ -30,16 +30,19 @@ SteeringOffsetEstimator::SteeringOffsetEstimator(
 }
 
 void SteeringOffsetEstimator::updateOffset(
-  const geometry_msgs::msg::Twist & twist, const double steering)
+  const geometry_msgs::msg::Twist & twist, const double measured_steering_angle)
 {
   const bool update_offset =
     (std::abs(twist.linear.x) > update_vel_threshold_ &&
-     std::abs(steering) < update_steer_threshold_);
+     std::abs(measured_steering_angle) < update_steer_threshold_);
 
   if (!update_offset) return;
 
-  const auto steer_angvel = std::atan2(twist.angular.z * wheelbase_, twist.linear.x);
-  const auto steer_offset = steering - steer_angvel;
+  // calculate the steering angle needed to achieve the current rate of rotation given the current
+  // velocity along the x-axis of the vehicle, under the below assumptions
+  // (i.e., no slipping, no lag in the steering mechanism, etc.).
+  const auto expected_steering_angle = std::atan2(twist.angular.z * wheelbase_, twist.linear.x);
+  const auto steer_offset = measured_steering_angle - expected_steering_angle;
   steering_offset_storage_.push_back(steer_offset);
   if (steering_offset_storage_.size() > average_num_) {
     steering_offset_storage_.pop_front();
