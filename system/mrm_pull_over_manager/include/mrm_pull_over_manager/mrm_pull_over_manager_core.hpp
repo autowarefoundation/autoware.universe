@@ -117,9 +117,9 @@ private:
 
   // Algorithm
   bool is_data_ready();
-  void publishStatus() const;
-  void publishEmergencyGoalsClearCommand() const;
-  void publishEmergencyGoals(const std::vector<Pose> & emergency_goals) const;
+  void publish_status() const;
+  void publish_emergency_goals_clear_command() const;
+  void publish_emergency_goals(const std::vector<Pose> & emergency_goals) const;
   std::string get_module_name() const;
 
   /**

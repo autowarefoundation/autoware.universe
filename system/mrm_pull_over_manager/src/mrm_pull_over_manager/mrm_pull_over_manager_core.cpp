@@ -155,17 +155,17 @@ std::string MrmPullOverManager::get_module_name() const
 
 void MrmPullOverManager::on_timer()
 {
-  publishStatus();
+  publish_status();
 }
 
-void MrmPullOverManager::publishStatus() const
+void MrmPullOverManager::publish_status() const
 {
   auto status = status_;
   status.stamp = this->now();
   pub_status_->publish(status);
 }
 
-void MrmPullOverManager::publishEmergencyGoals(const std::vector<Pose> & emergency_goals) const
+void MrmPullOverManager::publish_emergency_goals(const std::vector<Pose> & emergency_goals) const
 {
   EmergencyGoalsStamped emergency_goals_stamped;
   emergency_goals_stamped.goals = emergency_goals;
@@ -174,7 +174,7 @@ void MrmPullOverManager::publishEmergencyGoals(const std::vector<Pose> & emergen
   pub_emergency_goals_->publish(emergency_goals_stamped);
 }
 
-void MrmPullOverManager::publishEmergencyGoalsClearCommand() const
+void MrmPullOverManager::publish_emergency_goals_clear_command() const
 {
   EmergencyGoalsClearCommand goals_clear_command;
   goals_clear_command.stamp = this->now();
@@ -195,7 +195,7 @@ void MrmPullOverManager::operateMrm(
   }
 
   if (request->operate == false) {
-    publishEmergencyGoalsClearCommand();
+    publish_emergency_goals_clear_command();
     response->response.success = true;
     status_.state = MrmBehaviorStatus::AVAILABLE;
   }
@@ -269,7 +269,7 @@ bool MrmPullOverManager::find_goals_within_route()
 
   const auto filtered_emergency_goals = filter_nearby_goals(emergency_goals);
 
-  publishEmergencyGoals(filtered_emergency_goals);
+  publish_emergency_goals(filtered_emergency_goals);
 
   return true;
 }
