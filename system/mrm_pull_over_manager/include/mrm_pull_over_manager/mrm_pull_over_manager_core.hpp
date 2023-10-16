@@ -34,7 +34,7 @@
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
-#include <tier4_system_msgs/srv/activate_pull_over.hpp>
+#include <tier4_system_msgs/srv/operate_mrm.hpp>
 
 // lanelet
 #include <lanelet2_extension/regulatory_elements/Forward.hpp>
@@ -91,11 +91,11 @@ private:
   void on_trajectory(const Trajectory::ConstSharedPtr msg);
 
   // Server
-  rclcpp::Service<tier4_system_msgs::srv::ActivatePullOver>::SharedPtr activate_pull_over_;
+  rclcpp::Service<tier4_system_msgs::srv::OperateMrm>::SharedPtr operate_mrm_;
 
-  void activatePullOver(
-    const tier4_system_msgs::srv::ActivatePullOver::Request::SharedPtr request,
-    const tier4_system_msgs::srv::ActivatePullOver::Response::SharedPtr response);
+  void operateMrm(
+    const tier4_system_msgs::srv::OperateMrm::Request::SharedPtr request,
+    const tier4_system_msgs::srv::OperateMrm::Response::SharedPtr response);
 
   // Publisher
   rclcpp::Publisher<PoseArray>::SharedPtr pub_pose_array_;

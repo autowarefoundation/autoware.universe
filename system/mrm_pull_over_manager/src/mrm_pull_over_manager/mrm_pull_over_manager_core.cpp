@@ -130,9 +130,8 @@ MrmPullOverManager::MrmPullOverManager() : Node("mrm_pull_over_manager")
     create_publisher<MrmBehaviorStatus>("~/output/mrm/pull_over/status", rclcpp::QoS{1});
 
   // Server
-  activate_pull_over_ = create_service<tier4_system_msgs::srv::ActivatePullOver>(
-    "~/input/mrm/pull_over/activate",
-    std::bind(&MrmPullOverManager::activatePullOver, this, _1, _2));
+  operate_mrm_ = create_service<tier4_system_msgs::srv::OperateMrm>(
+    "~/input/mrm/pull_over/operate", std::bind(&MrmPullOverManager::operateMrm, this, _1, _2));
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -159,19 +158,19 @@ void MrmPullOverManager::publishStatus() const
   pub_status_->publish(status);
 }
 
-void MrmPullOverManager::activatePullOver(
-  const tier4_system_msgs::srv::ActivatePullOver::Request::SharedPtr request,
-  const tier4_system_msgs::srv::ActivatePullOver::Response::SharedPtr response)
+void MrmPullOverManager::operateMrm(
+  const tier4_system_msgs::srv::OperateMrm::Request::SharedPtr request,
+  const tier4_system_msgs::srv::OperateMrm::Response::SharedPtr response)
 {
-  if (request->activate == true) {
+  if (request->operate == true) {
     const bool result = find_goals_within_route();
-    response->status.success = result;
+    response->response.success = result;
     status_.state = MrmBehaviorStatus::OPERATING;
   }
 
-  if (request->activate == false) {
+  if (request->operate == false) {
     // TODO(TomohitoAndo): Call ClearEmergency service
-    response->status.success = true;
+    response->response.success = true;
     status_.state = MrmBehaviorStatus::AVAILABLE;
   }
 }
