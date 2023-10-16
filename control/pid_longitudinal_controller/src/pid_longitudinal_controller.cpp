@@ -512,10 +512,11 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
         // NOTE: Stopped or moving backward
         return true;
       }
-    }
-    if (is_stopped || 0.0 < current_vel) {
-      // NOTE: Stopped or moving forward
-      return true;
+    } else {
+      if (is_stopped || 0.0 < current_vel) {
+        // NOTE: Stopped or moving forward
+        return true;
+      }
     }
     return false;
   }();
