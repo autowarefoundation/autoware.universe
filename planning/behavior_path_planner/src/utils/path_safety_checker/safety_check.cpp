@@ -39,7 +39,8 @@ bool isTargetObjectFront(
     tier4_autoware_utils::calcOffsetPose(ego_pose, base_to_front, 0.0, 0.0);
 
   // check all edges in the polygon
-  for (const auto & obj_edge : obj_polygon.outer()) {
+  const auto obj_polygon_outer = obj_polygon.outer();
+  for (const auto & obj_edge : obj_polygon_outer) {
     const auto obj_point = tier4_autoware_utils::createPoint(obj_edge.x(), obj_edge.y(), 0.0);
     if (tier4_autoware_utils::calcLongitudinalDeviation(ego_offset_pose, obj_point) > 0.0) {
       return true;
@@ -58,7 +59,8 @@ bool isTargetObjectFront(
     tier4_autoware_utils::calcOffsetPose(ego_pose, base_to_front, 0.0, 0.0).position;
 
   // check all edges in the polygon
-  for (const auto & obj_edge : obj_polygon.outer()) {
+  const auto obj_polygon_outer = obj_polygon.outer();
+  for (const auto & obj_edge : obj_polygon_outer) {
     const auto obj_point = tier4_autoware_utils::createPoint(obj_edge.x(), obj_edge.y(), 0.0);
     if (motion_utils::isTargetPointFront(path.points, ego_point, obj_point)) {
       return true;
@@ -122,7 +124,8 @@ Polygon2d createExtendedPolygon(
   double min_x = std::numeric_limits<double>::max();
   double max_y = std::numeric_limits<double>::lowest();
   double min_y = std::numeric_limits<double>::max();
-  for (const auto & polygon_p : obj_polygon.outer()) {
+  const auto obj_polygon_outer = obj_polygon.outer();
+  for (const auto & polygon_p : obj_polygon_outer) {
     const auto obj_p = tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
     const auto transformed_p = tier4_autoware_utils::inverseTransformPoint(obj_p, obj_pose);
 
