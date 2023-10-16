@@ -25,6 +25,7 @@
 #include <motion_utils/resample/resample.hpp>
 #include <motion_utils/trajectory/interpolation.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <boost/geometry.hpp>
@@ -33,15 +34,77 @@
 
 namespace drivable_area_expansion
 {
-
 namespace
 {
-
 Point2d convert_point(const Point & p)
 {
   return Point2d{p.x, p.y};
 }
 
+Point convert_to_geometry_point(const Point2d & point)
+{
+  Point geom_point;
+  geom_point.x = point.x();
+  geom_point.y = point.y();
+  return geom_point;
+}
+
+double calculate_point_segment_distance(
+  const Point2d & p1, const Point2d & p2_first, const Point2d & p2_second)
+{
+  Eigen::Vector2d first_to_target(p1.x() - p2_first.x(), p1.y() - p2_first.y());
+  Eigen::Vector2d second_to_target(p1.x() - p2_second.x(), p1.y() - p2_second.y());
+  Eigen::Vector2d first_to_second(p2_second.x() - p2_first.x(), p2_second.y() - p2_first.y());
+
+  if (first_to_target.dot(first_to_second) < 0) {
+    return first_to_target.norm();
+  }
+  if (second_to_target.dot(-first_to_second) < 0) {
+    return second_to_target.norm();
+  }
+
+  Eigen::Vector2d p2_nearest =
+    Eigen::Vector2d{p2_first.x(), p2_first.y()} +
+    first_to_second * first_to_target.dot(first_to_second) / std::pow(first_to_second.norm(), 2);
+  return (p1 - p2_nearest).norm();
+}
+
+double calculate_segments_distance(
+  const Point2d & p1_first, const Point2d & p1_second, const Point2d & p2_first,
+  const Point2d & p2_second)
+{
+  // check if the segments intersect
+  const auto has_intersection = tier4_autoware_utils::intersect(
+    convert_to_geometry_point(p1_first), convert_to_geometry_point(p1_second),
+    convert_to_geometry_point(p2_first), convert_to_geometry_point(p2_second));
+  if (has_intersection) {
+    return 0.0;
+  }
+
+  // calculate distance between point and segment
+  const double dist_p1 = calculate_point_segment_distance(p1_first, p2_first, p2_second);
+  const double dist_p2 = calculate_point_segment_distance(p2_first, p1_first, p1_second);
+  return std::min(dist_p1, dist_p2);
+}
+
+double calculate_lines_distance(const LineString2d & line1, const LineString2d line2)
+{
+  if (line1.empty() || line2.empty()) {
+    return 0.0;
+  }
+
+  double min_dist = std::numeric_limits<double>::max();
+  for (size_t i = 0; i < line1.size() - 1; ++i) {
+    for (size_t j = 0; j < line2.size() - 1; ++j) {
+      const double dist =
+        calculate_segments_distance(line1.at(i), line1.at(i + 1), line2.at(j), line2.at(j + 1));
+      if (dist < min_dist) {
+        min_dist = dist;
+      }
+    }
+  }
+  return min_dist;
+}
 }  // namespace
 
 void reuse_previous_poses(
@@ -188,7 +251,7 @@ std::vector<double> calculate_maximum_distance(
   for (auto i = 0UL; i + 1 < bound_ls.size(); ++i) {
     const LineString2d segment_ls = {bound_ls[i], bound_ls[i + 1]};
     for (const auto & uncrossable_line : uncrossable_lines) {
-      const auto bound_to_line_dist = boost::geometry::distance(segment_ls, uncrossable_line);
+      const auto bound_to_line_dist = calculate_lines_distance(segment_ls, uncrossable_line);
       const auto dist_limit = std::max(0.0, bound_to_line_dist - params.avoid_linestring_dist);
       maximum_distances[i] = std::min(maximum_distances[i], dist_limit);
       maximum_distances[i + 1] = std::min(maximum_distances[i + 1], dist_limit);
