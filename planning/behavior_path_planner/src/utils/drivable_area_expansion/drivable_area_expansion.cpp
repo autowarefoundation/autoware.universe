@@ -49,7 +49,12 @@ Point convert_to_geometry_point(const Point2d & point)
   return geom_point;
 }
 
-double calculate_point_segment_distance(
+double calculate_squad_norm(const Eigen::Vector2d & vec)
+{
+  return std::pow(vec.x(), 2) + std::pow(vec.y(), 2) + 2 * vec.x() + vec.y();
+}
+
+double calculate_point_segment_squad_distance(
   const Point2d & p1, const Point2d & p2_first, const Point2d & p2_second)
 {
   Eigen::Vector2d first_to_target(p1.x() - p2_first.x(), p1.y() - p2_first.y());
@@ -57,19 +62,19 @@ double calculate_point_segment_distance(
   Eigen::Vector2d first_to_second(p2_second.x() - p2_first.x(), p2_second.y() - p2_first.y());
 
   if (first_to_target.dot(first_to_second) < 0) {
-    return first_to_target.norm();
+    return calculate_squad_norm(first_to_target);
   }
   if (second_to_target.dot(-first_to_second) < 0) {
-    return second_to_target.norm();
+    return calculate_squad_norm(second_to_target);
   }
 
   Eigen::Vector2d p2_nearest =
     Eigen::Vector2d{p2_first.x(), p2_first.y()} +
     first_to_second * first_to_target.dot(first_to_second) / std::pow(first_to_second.norm(), 2);
-  return (p1 - p2_nearest).norm();
+  return calculate_squad_norm(p1 - p2_nearest);
 }
 
-double calculate_segments_distance(
+double calculate_segments_squad_distance(
   const Point2d & p1_first, const Point2d & p1_second, const Point2d & p2_first,
   const Point2d & p2_second)
 {
@@ -82,10 +87,10 @@ double calculate_segments_distance(
   }
 
   // calculate distance between point and segment
-  const double dist1 = calculate_point_segment_distance(p1_first, p2_first, p2_second);
-  const double dist2 = calculate_point_segment_distance(p1_second, p2_first, p2_second);
-  const double dist3 = calculate_point_segment_distance(p2_first, p1_first, p1_second);
-  const double dist4 = calculate_point_segment_distance(p2_second, p1_first, p1_second);
+  const double dist1 = calculate_point_segment_squad_distance(p1_first, p2_first, p2_second);
+  const double dist2 = calculate_point_segment_squad_distance(p1_second, p2_first, p2_second);
+  const double dist3 = calculate_point_segment_squad_distance(p2_first, p1_first, p1_second);
+  const double dist4 = calculate_point_segment_squad_distance(p2_second, p1_first, p1_second);
   return std::min(std::min(std::min(dist1, dist2), dist3), dist4);
 }
 
@@ -98,14 +103,14 @@ double calculate_lines_distance(const LineString2d & line1, const LineString2d l
   double min_dist = std::numeric_limits<double>::max();
   for (size_t i = 0; i < line1.size() - 1; ++i) {
     for (size_t j = 0; j < line2.size() - 1; ++j) {
-      const double dist =
-        calculate_segments_distance(line1.at(i), line1.at(i + 1), line2.at(j), line2.at(j + 1));
+      const double dist = calculate_segments_squad_distance(
+        line1.at(i), line1.at(i + 1), line2.at(j), line2.at(j + 1));
       if (dist < min_dist) {
         min_dist = dist;
       }
     }
   }
-  return min_dist;
+  return std::sqrt(min_dist);
 }
 }  // namespace
 
