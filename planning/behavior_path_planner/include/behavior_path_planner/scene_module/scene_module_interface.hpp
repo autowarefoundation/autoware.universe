@@ -132,7 +132,8 @@ public:
   virtual void updateData() {}
 
   /**
-   * @brief This function is executed after path generation and before the ModuleStatus update.
+   * @brief After executing run(), update the module-specific status and/or data used for internal
+   *        processing that are not defined in ModuleStatus.
    */
   virtual void postProcess() {}
 
