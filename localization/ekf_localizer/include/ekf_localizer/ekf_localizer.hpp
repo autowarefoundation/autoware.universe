@@ -153,6 +153,7 @@ private:
   Simple1DFilter z_filter_;
   Simple1DFilter roll_filter_;
   Simple1DFilter pitch_filter_;
+  Simple1DFilter diagnostic_yaw_bias_filter_;
 
   const HyperParameters params_;
 
@@ -196,6 +197,7 @@ private:
   geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
   std::array<double, 36ul> current_pose_covariance_;
   std::array<double, 36ul> current_twist_covariance_;
+  geometry_msgs::msg::PoseWithCovarianceStamped previous_ndt_pose_;  //!< @brief previous ndt pose
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
@@ -281,6 +283,14 @@ private:
    */
   void updateSimple1DFilters(
     const geometry_msgs::msg::PoseWithCovarianceStamped & pose, const size_t smoothing_step);
+
+  /**
+   * @brief estimate yaw bias
+   */
+  void simpleEstimateYawBias(
+    const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
+    const geometry_msgs::msg::TwistWithCovarianceStamped & twist,
+    double & yaw_bias, double & obs_variance);
 
   /**
    * @brief initialize simple1DFilter
