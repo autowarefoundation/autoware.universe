@@ -25,18 +25,18 @@ autoware_package()
 set(TVM_UTILITY_NODE_LIB_HEADERS
   "include/${PROJECT_NAME}/pipeline.hpp"
   )
-  
+
   ament_auto_add_library(${PROJECT_NAME} SHARED ${TVM_UTILITY_NODE_LIB_HEADERS})
   set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-  
+
   set(BUILD_EXAMPLE OFF CACHE BOOL "enable build yolo_v2_tiny")
-  
+
   find_package(OpenCV REQUIRED)
   set(tvm_runtime_DIR ${tvm_vendor_DIR})
   find_package(tvm_runtime CONFIG REQUIRED)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(rclcpp REQUIRED)
-  
+
 if(BUILD_TESTING)
   # Get target backend
   set(${PROJECT_NAME}_BACKEND llvm CACHE STRING "${PROJECT_NAME} neural network backend")

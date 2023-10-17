@@ -104,7 +104,7 @@ public:
     TVMArrayCopyFromBytes(
       output.getArray(), image_3f.data,
       network_input_width * network_input_height * network_input_depth *
-      network_input_datatype_bytes);
+        network_input_datatype_bytes);
 
     return {output};
   }
@@ -156,7 +156,7 @@ public:
   }
 
   // Sigmoid function
-  float sigmoid(float x) {return static_cast<float>(1.0 / (1.0 + std::exp(-x)));}
+  float sigmoid(float x) { return static_cast<float>(1.0 / (1.0 + std::exp(-x))); }
 
   std::vector<float> schedule(const tvm_utility::pipeline::TVMArrayContainerVector & input)
   {
@@ -176,15 +176,15 @@ public:
     TVMArrayCopyToBytes(
       input[0].getArray(), infer.data(),
       network_output_width * network_output_height * network_output_depth *
-      network_output_datatype_bytes);
+        network_output_datatype_bytes);
 
     // Utility function to return data from y given index
     auto get_output_data = [this, infer, n_classes, n_anchors, n_coords](
-      auto row_i, auto col_j, auto anchor_k, auto offset) {
-        auto box_index = (row_i * network_output_height + col_j) * network_output_depth;
-        auto index = box_index + anchor_k * (n_classes + n_coords + 1);
-        return infer[index + offset];
-      };
+                             auto row_i, auto col_j, auto anchor_k, auto offset) {
+      auto box_index = (row_i * network_output_height + col_j) * network_output_depth;
+      auto index = box_index + anchor_k * (n_classes + n_coords + 1);
+      return infer[index + offset];
+    };
 
     // Vector used to check if the result is accurate,
     // this is also the output of this (schedule) function
@@ -269,10 +269,8 @@ int main(int argc, char * argv[])
   PrePT PreP{config};
   IET IE{config, "tvm_utility", node->get_parameter("data_path").as_string()};
   PostPT PostP{
-    config,
-    node->get_parameter("label_filename").as_string(),
-    node->get_parameter("anchor_filename").as_string()
-  };
+    config, node->get_parameter("label_filename").as_string(),
+    node->get_parameter("anchor_filename").as_string()};
 
   tvm_utility::pipeline::Pipeline<PrePT, IET, PostPT> pipeline(PreP, IE, PostP);
 
@@ -281,8 +279,8 @@ int main(int argc, char * argv[])
 
   // Define reference vector containing expected values, expressed as hexadecimal integers
   std::vector<int32_t> int_output{0x3eb64594, 0x3f435656, 0x3ece1600, 0x3e99d381,
-    0x3f1cd6bc, 0x3f14f4dd, 0x3ed8065f, 0x3ee9f4fa,
-    0x3ec1b5e8, 0x3f4e7c6c, 0x3f136af1};
+                                  0x3f1cd6bc, 0x3f14f4dd, 0x3ed8065f, 0x3ee9f4fa,
+                                  0x3ec1b5e8, 0x3f4e7c6c, 0x3f136af1};
 
   std::vector<float> expected_output(int_output.size());
 
