@@ -48,5 +48,5 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
 }  // namespace engine_load
 }  // namespace inf_test
 }  // namespace model_zoo
-#endif  // COMMON__TVM_UTILITY__DATA__USER__ABS_MODEL_AARCH64__INFERENCE_ENGINE_TVM_CONFIG_HPP_  //
+#endif  // COMMON__TVM_UTILITY__DATA__USER__ABS_MODEL_AARCH64__INFERENCE_ENGINE_TVM_CONFIG_HPP_
         // NOLINT
