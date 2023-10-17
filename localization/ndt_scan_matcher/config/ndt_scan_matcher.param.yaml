@@ -62,6 +62,11 @@
         0.0,   0.0,   0.0,   0.0,      0.0,      0.000625,
       ]
 
+    # 2D Real-time covariance estimation (output_pose_covariance is the minimum value)
+    use_covariance_estimation: false
+    offset_array_x: [0.0,0.0,0.5,-0.5,1.0,-1.0]
+    offset_array_y: [0.5,-0.5,0.0,0.0,0.0,0.0]
+
     # Regularization switch
     regularization_enabled: false
 
