@@ -29,12 +29,12 @@ namespace abs_model
 static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
   {0, 0, 0},  // modelzoo_version
 
-  "abs_model_arm",                    // network_name
+  "abs_model_aarch64",                    // network_name
   "llvm -mtriple=aarch64-linux-gnu",  // network_backend
 
-  "./deploy_lib.so",        // network_module_path
-  "./deploy_graph.json",    // network_graph_path
-  "./deploy_param.params",  // network_params_path
+  "deploy_lib.so",        // network_module_path
+  "deploy_graph.json",    // network_graph_path
+  "deploy_param.params",  // network_params_path
 
   kDLCPU,  // tvm_device_type
   0,       // tvm_device_id
