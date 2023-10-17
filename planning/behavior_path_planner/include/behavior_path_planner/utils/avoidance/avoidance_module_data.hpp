@@ -239,9 +239,6 @@ struct AvoidanceParameters
   // Even if the obstacle is very large, it will not avoid more than this length for left direction
   double max_left_shift_length;
 
-  // Validate vehicle departure from driving lane.
-  double max_deviation_from_lane{0.0};
-
   // To prevent large acceleration while avoidance.
   double max_lateral_acceleration;
 
@@ -479,15 +476,7 @@ struct AvoidancePlanningData
   // safe shift point
   AvoidLineArray safe_new_sl{};
 
-  std::vector<DrivableLanes> drivable_lanes{};
-
-  lanelet::BasicLineString3d right_bound{};
-
-  lanelet::BasicLineString3d left_bound{};
-
   bool safe{false};
-
-  bool valid{false};
 
   bool comfortable{false};
 
