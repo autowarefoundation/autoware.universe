@@ -145,9 +145,9 @@ struct AvoidanceParameters
   double object_ignore_section_crosswalk_behind_distance{0.0};
 
   // distance to avoid object detection
-  double object_check_forward_distance{0.0};
-
-  // continue to detect backward vehicles as avoidance targets until they are this distance away
+  bool use_static_detection_area{true};
+  double object_check_min_forward_distance{0.0};
+  double object_check_max_forward_distance{0.0};
   double object_check_backward_distance{0.0};
 
   // if the distance between object and goal position is less than this parameter, the module ignore
@@ -231,6 +231,9 @@ struct AvoidanceParameters
 
   // Even if the obstacle is very large, it will not avoid more than this length for left direction
   double max_left_shift_length{0.0};
+
+  // Validate vehicle departure from driving lane.
+  double max_deviation_from_lane{0.0};
 
   // To prevent large acceleration while avoidance.
   double max_lateral_acceleration{0.0};
@@ -490,7 +493,15 @@ struct AvoidancePlanningData
   // safe shift point
   AvoidLineArray safe_shift_line{};
 
+  std::vector<DrivableLanes> drivable_lanes{};
+
+  lanelet::BasicLineString3d right_bound{};
+
+  lanelet::BasicLineString3d left_bound{};
+
   bool safe{false};
+
+  bool valid{false};
 
   bool comfortable{false};
 

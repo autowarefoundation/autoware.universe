@@ -235,7 +235,17 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
 
   appendMarkerArray(
     debug::createObjectsMarkerArray(
+      debug_data_.amber_ignore_targets, "amber_ignore_targets", module_id_, now, 0.0, 1.0, 0.0),
+    &debug_marker_array, now);
+
+  appendMarkerArray(
+    debug::createObjectsMarkerArray(
       debug_data_.stuck_targets, "stuck_targets", module_id_, now, 0.99, 0.99, 0.2),
+    &debug_marker_array, now);
+
+  appendMarkerArray(
+    debug::createObjectsMarkerArray(
+      debug_data_.yield_stuck_targets, "stuck_targets", module_id_, now, 0.4, 0.99, 0.2),
     &debug_marker_array, now);
 
   appendMarkerArray(
