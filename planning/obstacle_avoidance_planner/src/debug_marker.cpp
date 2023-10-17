@@ -270,8 +270,7 @@ MarkerArray getCurrentVehicleCirclesMarkerArray(
 MarkerArray getVehicleCirclesMarkerArray(
   const std::vector<TrajectoryPoint> & mpt_traj_points,
   const std::vector<double> & vehicle_circle_longitudinal_offsets,
-  const std::vector<double> & vehicle_circle_radiuses,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const size_t sampling_num,
+  const std::vector<double> & vehicle_circle_radiuses, const size_t sampling_num,
   const std::string & ns, const double r, const double g, const double b)
 {
   MarkerArray msg;
@@ -391,7 +390,7 @@ MarkerArray getDebugMarker(
   appendMarkerArray(
     getCurrentVehicleCirclesMarkerArray(
       debug_data.ego_pose, debug_data.vehicle_circle_longitudinal_offsets,
-      debug_data.vehicle_circle_radiuses, vehicle_info, "current_vehicle_circles", 1.0, 0.3, 0.3),
+      debug_data.vehicle_circle_radiuses,"current_vehicle_circles", 1.0, 0.3, 0.3),
     &marker_array);
 
   // NOTE: Default debug marker is limited for less calculation time
