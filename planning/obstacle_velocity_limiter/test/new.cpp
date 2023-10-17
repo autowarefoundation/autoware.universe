@@ -291,14 +291,13 @@ TEST(BicycleModel, distanceToClosestCollision)
   obstacles.points.emplace_back(4.0, 0.0);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
-  ASSERT_FALSE(result.has_value());
-  // EXPECT_DOUBLE_EQ(*result, 4.0);
+  ASSERT_FALSE(result.has_value()); //sqrt(4*0)
 
   obstacles.points.emplace_back(3.0, 0.5);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_TRUE(result.has_value());
-  EXPECT_NEAR(*result, 3.05, EPS); //3.2
+  EXPECT_NEAR(*result, 3.05, EPS); //0
 
   obstacles.points.emplace_back(2.5, -0.75);
   result =
