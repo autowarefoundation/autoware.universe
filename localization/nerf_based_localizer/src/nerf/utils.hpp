@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+// This file is derived from the following file.
+// https://github.com/Totoro97/f2-nerf/blob/main/src/Utils/Utils.h
+//
 // Created by ppwang on 2022/5/11.
 //
 

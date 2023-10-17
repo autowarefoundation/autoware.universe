@@ -11,6 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// This file is derived from the following file.
+// https://github.com/Totoro97/f2-nerf/blob/main/src/Utils/CustomOps/FlexOps.cu
+
 #include "../common_cuda.hpp"
 #include "FlexOps.hpp"
 
