@@ -76,7 +76,9 @@ private:
   std::optional<size_t> getPointCloudNumWithinShape(
     const autoware_auto_perception_msgs::msg::DetectedObject & object,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
-  std::optional<float> getMaxRadius(
+  std::optional<float> getMaxRadius2D(
+    const autoware_auto_perception_msgs::msg::DetectedObject & object);
+  std::optional<float> getMaxRadius3D(
     const autoware_auto_perception_msgs::msg::DetectedObject & object);
 };
 }  // namespace obstacle_pointcloud_based_validator

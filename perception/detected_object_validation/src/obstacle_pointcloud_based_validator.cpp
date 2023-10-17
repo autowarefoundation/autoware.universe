@@ -144,7 +144,7 @@ void ObstaclePointCloudBasedValidator::on3dObjectsAndObstaclePointCloud(
     const auto & object = input_objects->objects.at(i);
     const auto & transformed_object_position =
       transformed_object.kinematics.pose_with_covariance.pose.position;
-    const auto search_radius = getMaxRadius(transformed_object);
+    const auto search_radius = getMaxRadius3D(transformed_object);
     if (!search_radius) {
       output.objects.push_back(object);
       continue;
@@ -153,11 +153,11 @@ void ObstaclePointCloudBasedValidator::on3dObjectsAndObstaclePointCloud(
     pcl::PointCloud<pcl::PointXYZ>::Ptr neighbor_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
     std::vector<int> indices;
     std::vector<float> distances;
-    kdtree->radiusSearch(
-      pcl::PointXYZ(
-        transformed_object_position.x, transformed_object_position.y,
-        transformed_object_position.z),
-      search_radius.value(), indices, distances);
+    pcl::PointXYZ trans_obj_position_pcl;
+    trans_obj_position_pcl.x = transformed_object_position.x;
+    trans_obj_position_pcl.y = transformed_object_position.y;
+    trans_obj_position_pcl.z = transformed_object_position.z;
+    kdtree->radiusSearch(trans_obj_position_pcl, search_radius.value(), indices, distances);
     for (const auto & indice : indices) {
       neighbor_pointcloud->push_back(obstacle_pointcloud->at(indice));
     }
@@ -180,11 +180,12 @@ void ObstaclePointCloudBasedValidator::on3dObjectsAndObstaclePointCloud(
     } else {
       output.objects.push_back(object);
     }
-    objects_pub_->publish(output);
-    if (debugger_) {
-      debugger_->publishRemovedObjects(removed_objects);
-      debugger_->publishNeighborPointcloud(input_obstacle_pointcloud->header);
-    }
+  }
+  objects_pub_->publish(output);
+  if (debugger_) {
+    debugger_->publishRemovedObjects(removed_objects);
+    debugger_->publishNeighborPointcloud(input_obstacle_pointcloud->header);
+    debugger_->publishPointcloudWithinPolygon(input_obstacle_pointcloud->header);
   }
 }
 void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
@@ -224,7 +225,7 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
     const auto & object = input_objects->objects.at(i);
     const auto & transformed_object_position =
       transformed_object.kinematics.pose_with_covariance.pose.position;
-    const auto search_radius = getMaxRadius(transformed_object);
+    const auto search_radius = getMaxRadius2D(transformed_object);
     if (!search_radius) {
       output.objects.push_back(object);
       continue;
@@ -242,7 +243,6 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
     if (debugger_) debugger_->addNeighborPointcloud(neighbor_pointcloud);
 
     // Filter object that have few pointcloud in them.
-    // TODO(badai-nguyen) add 3d validator option
     const auto num = getPointCloudNumWithinPolygon(transformed_object, neighbor_pointcloud);
     const auto object_distance =
       std::hypot(transformed_object_position.x, transformed_object_position.y);
@@ -272,14 +272,14 @@ std::optional<size_t> ObstaclePointCloudBasedValidator::getPointCloudNumWithinSh
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud)
 {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_pointcloud_2d(new pcl::PointCloud<pcl::PointXYZ>);
   std::vector<pcl::Vertices> vertices_array;
   pcl::Vertices vertices;
 
   auto const & object_position = object.kinematics.pose_with_covariance.pose.position;
   auto const object_height = object.shape.dimensions.z;
-  float z_min = object_position.z - object_height / 2.0f;
-  float z_max = object_position.z + object_height / 2.0f;
+  auto z_min = object_position.z - object_height / 2.0f;
+  auto z_max = object_position.z + object_height / 2.0f;
 
   Polygon2d poly2d =
     tier4_autoware_utils::toPolygon2d(object.kinematics.pose_with_covariance.pose, object.shape);
@@ -290,18 +290,25 @@ std::optional<size_t> ObstaclePointCloudBasedValidator::getPointCloudNumWithinSh
   for (size_t i = 0; i < poly2d.outer().size(); ++i) {
     vertices.vertices.emplace_back(i);
     vertices_array.emplace_back(vertices);
-    poly3d->emplace_back(poly2d.outer().at(i).x(), poly2d.outer().at(i).y(), z_min);
-    poly3d->emplace_back(poly2d.outer().at(i).x(), poly2d.outer().at(i).y(), z_max);
+    poly3d->emplace_back(poly2d.outer().at(i).x(), poly2d.outer().at(i).y(), 0.0);
   }
   pcl::CropHull<pcl::PointXYZ> cropper;
   cropper.setInputCloud(pointcloud);
-  cropper.setDim(3);
+  cropper.setDim(2);
   cropper.setHullIndices(vertices_array);
   cropper.setHullCloud(poly3d);
   cropper.setCropOutside(true);
-  cropper.filter(*cropped_pointcloud);
-  if (debugger_) debugger_->addPointcloudWithinPolygon(cropped_pointcloud);
-  return cropped_pointcloud->size();
+  cropper.filter(*cropped_pointcloud_2d);
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_pointcloud_3d(new pcl::PointCloud<pcl::PointXYZ>);
+  cropped_pointcloud_3d->reserve(cropped_pointcloud_2d->size());
+  for (const auto & point : *cropped_pointcloud_2d) {
+    if (point.z > z_min && point.z < z_max) {
+      cropped_pointcloud_3d->push_back(point);
+    }
+  }
+  if (debugger_) debugger_->addPointcloudWithinPolygon(cropped_pointcloud_3d);
+  return cropped_pointcloud_3d->size();
 }
 
 std::optional<size_t> ObstaclePointCloudBasedValidator::getPointCloudNumWithinPolygon(
@@ -336,7 +343,7 @@ std::optional<size_t> ObstaclePointCloudBasedValidator::getPointCloudNumWithinPo
   return cropped_pointcloud->size();
 }
 
-std::optional<float> ObstaclePointCloudBasedValidator::getMaxRadius(
+std::optional<float> ObstaclePointCloudBasedValidator::getMaxRadius2D(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
   if (object.shape.type == Shape::BOUNDING_BOX || object.shape.type == Shape::CYLINDER) {
@@ -352,6 +359,16 @@ std::optional<float> ObstaclePointCloudBasedValidator::getMaxRadius(
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "unknown shape type");
     return std::nullopt;
   }
+}
+std::optional<float> ObstaclePointCloudBasedValidator::getMaxRadius3D(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+{
+  const auto max_dist_2d = getMaxRadius2D(object);
+  if (!max_dist_2d) {
+    return std::nullopt;
+  }
+  const auto object_height = object.shape.dimensions.z;
+  return std::hypot(max_dist_2d.value(), object_height / 2.0);
 }
 
 }  // namespace obstacle_pointcloud_based_validator
