@@ -29,7 +29,7 @@ namespace abs_model
 static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
   {0, 0, 0},  // modelzoo_version
 
-  "abs_model_aarch64",                    // network_name
+  "abs_model_aarch64",                // network_name
   "llvm -mtriple=aarch64-linux-gnu",  // network_backend
 
   "deploy_lib.so",        // network_module_path
