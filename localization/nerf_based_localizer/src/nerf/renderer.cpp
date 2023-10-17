@@ -28,9 +28,10 @@
 using Tensor = torch::Tensor;
 namespace F = torch::nn::functional;
 
-Renderer::Renderer(int n_images)
+Renderer::Renderer(int n_images, const int sample_num_per_ray)
+: sample_num_per_ray_(sample_num_per_ray)
 {
-  pts_sampler_ = std::make_shared<PtsSampler>();
+  pts_sampler_ = std::make_shared<PtsSampler>(sample_num_per_ray_);
 
   scene_field_ = std::make_shared<Hash3DAnchored>();
   register_module("scene_field", scene_field_);
@@ -86,7 +87,7 @@ RenderResult Renderer::render(
     sample_result_early_stop.dt = sample_result.dt.index({mask_idx}).contiguous();
     sample_result_early_stop.t = sample_result.t.index({mask_idx}).contiguous();
 
-    Tensor mask_2d = mask.reshape({n_rays, MAX_SAMPLE_PER_RAY});
+    Tensor mask_2d = mask.reshape({n_rays, sample_num_per_ray_});
     Tensor num = mask_2d.sum(1);
     Tensor cum_num = torch::cumsum(num, 0);
     Tensor idx_bounds =

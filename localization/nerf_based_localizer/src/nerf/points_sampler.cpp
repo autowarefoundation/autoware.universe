@@ -26,7 +26,7 @@
 
 using Tensor = torch::Tensor;
 
-PtsSampler::PtsSampler()
+PtsSampler::PtsSampler(const int sample_num_per_ray) : sample_num_per_ray_(sample_num_per_ray)
 {
 }
 
@@ -38,8 +38,7 @@ SampleResultFlex PtsSampler::get_samples(
 
   int n_rays = rays_o.sizes()[0];
 
-  // do ray marching
-  const int n_all_pts = n_rays * MAX_SAMPLE_PER_RAY;
+  const int n_all_pts = n_rays * sample_num_per_ray_;
 
   Tensor rays_noise;
   if (mode == RunningMode::VALIDATE) {
@@ -47,7 +46,7 @@ SampleResultFlex PtsSampler::get_samples(
   } else {
     rays_noise = ((torch::rand({n_all_pts}, CUDAFloat) - .5f) + 1.f).contiguous();
   }
-  rays_noise = rays_noise.view({n_rays, MAX_SAMPLE_PER_RAY}).contiguous();
+  rays_noise = rays_noise.view({n_rays, sample_num_per_ray_}).contiguous();
   Tensor cum_noise = torch::cumsum(rays_noise, 1) * SAMPLE_L;
   Tensor sampled_t = cum_noise.reshape({n_all_pts}).contiguous();
 
@@ -64,14 +63,14 @@ SampleResultFlex PtsSampler::get_samples(
 
   Tensor pts_idx_start_end =
     torch::ones({n_rays, 2}, torch::TensorOptions().dtype(torch::kInt).device(torch::kCUDA)) *
-    MAX_SAMPLE_PER_RAY;
+    sample_num_per_ray_;
   Tensor pts_num = pts_idx_start_end.index({Slc(), 0});
   Tensor cum_num = torch::cumsum(pts_num, 0);
   pts_idx_start_end.index_put_({Slc(), 0}, cum_num - pts_num);
   pts_idx_start_end.index_put_({Slc(), 1}, cum_num);
 
   Tensor sampled_dirs =
-    rays_d.expand({-1, MAX_SAMPLE_PER_RAY, -1}).reshape({n_all_pts, 3}).contiguous();
+    rays_d.expand({-1, sample_num_per_ray_, -1}).reshape({n_all_pts, 3}).contiguous();
 
   return {sampled_pts, sampled_dirs, sampled_distances, sampled_t, pts_idx_start_end};
 }

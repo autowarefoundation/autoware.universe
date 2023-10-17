@@ -39,7 +39,7 @@ class Renderer : public torch::nn::Module
   using Tensor = torch::Tensor;
 
 public:
-  Renderer(int n_images);
+  Renderer(int n_images, const int sample_num_per_ray = 1024);
 
   RenderResult render(
     const Tensor & rays_o, const Tensor & rays_d, const Tensor & emb_idx, RunningMode mode);
@@ -54,6 +54,8 @@ public:
   std::vector<torch::optim::OptimizerParamGroup> optim_param_groups(float lr);
 
 private:
+  const int sample_num_per_ray_;
+
   std::shared_ptr<PtsSampler> pts_sampler_;
   std::shared_ptr<Hash3DAnchored> scene_field_;
   std::shared_ptr<SHShader> shader_;

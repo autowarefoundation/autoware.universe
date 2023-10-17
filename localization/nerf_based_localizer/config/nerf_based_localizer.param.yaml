@@ -20,3 +20,4 @@
     # The following parameters are used in both optimization_mode 0 and 1
     output_covariance: 0.000225
     resize_factor: 20
+    sample_num_per_ray: 1024

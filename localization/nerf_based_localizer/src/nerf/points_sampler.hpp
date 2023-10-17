@@ -25,8 +25,6 @@
 
 #include <memory>
 
-constexpr int MAX_SAMPLE_PER_RAY = 1024;
-
 struct SampleResultFlex
 {
   using Tensor = torch::Tensor;
@@ -44,11 +42,13 @@ class PtsSampler
   using Tensor = torch::Tensor;
 
 public:
-  PtsSampler();
+  explicit PtsSampler(const int sample_num_per_ray);
 
   SampleResultFlex get_samples(const Tensor & rays_o, const Tensor & rays_d, RunningMode mode);
 
 private:
+  const int sample_num_per_ray_;
+
   static constexpr float SAMPLE_L = 1.0 / 256;
 };
 

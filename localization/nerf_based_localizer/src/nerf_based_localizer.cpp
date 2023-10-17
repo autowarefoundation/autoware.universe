@@ -77,6 +77,7 @@ NerfBasedLocalizer::NerfBasedLocalizer(
   param.noise_rotation_y = this->declare_parameter<float>("noise_rotation_y");
   param.noise_rotation_z = this->declare_parameter<float>("noise_rotation_z");
   param.resize_factor = this->declare_parameter<int>("resize_factor");
+  param.sample_num_per_ray = this->declare_parameter<int>("sample_num_per_ray");
   localizer_ = Localizer(param);
 
   initial_pose_with_covariance_subscriber_ =

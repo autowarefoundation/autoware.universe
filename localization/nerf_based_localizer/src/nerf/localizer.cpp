@@ -47,7 +47,7 @@ Localizer::Localizer(const LocalizerParam & param) : param_(param)
 
   radius_ = (float)inference_params["normalizing_radius"];
 
-  renderer_ = std::make_shared<Renderer>(n_images);
+  renderer_ = std::make_shared<Renderer>(n_images, param.sample_num_per_ray);
 
   torch::load(renderer_, train_result_dir + "/checkpoints/latest/renderer.pt");
 
