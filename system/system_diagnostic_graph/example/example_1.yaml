@@ -1,0 +1,19 @@
+units:
+  - path: /functions/pose_estimation
+    type: and
+    list:
+      - { type: link, path: /sensing/liders/top }
+
+  - path: /functions/obstacle_detection
+    type: or
+    list:
+      - { type: link, path: /sensing/liders/front }
+      - { type: link, path: /sensing/raders/front }
+
+diags:
+  - path: /sensing/liders/top
+    name: "lidar_driver/top: status"
+  - path: /sensing/liders/front
+    name: "lidar_driver/front: status"
+  - path: /sensing/raders/front
+    name: "radar_driver/front: status"

@@ -1,0 +1,5 @@
+diags:
+  - path: /external/joystick_command
+    name: "external_command_checker: joystick_command"
+  - path: /external/remote_command
+    name: "external_command_checker: remote_command"
