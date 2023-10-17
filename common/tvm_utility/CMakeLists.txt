@@ -22,20 +22,18 @@ autoware_package()
 
 # Library
 
-set(TVM_UTILITY_NODE_LIB_HEADERS
-  "include/${PROJECT_NAME}/pipeline.hpp"
-  )
+set(TVM_UTILITY_NODE_LIB_HEADERS "include/${PROJECT_NAME}/pipeline.hpp")
 
-  ament_auto_add_library(${PROJECT_NAME} SHARED ${TVM_UTILITY_NODE_LIB_HEADERS})
-  set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+ament_auto_add_library(${PROJECT_NAME} SHARED ${TVM_UTILITY_NODE_LIB_HEADERS})
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
-  set(BUILD_EXAMPLE OFF CACHE BOOL "enable build yolo_v2_tiny")
+set(BUILD_EXAMPLE OFF CACHE BOOL "enable build yolo_v2_tiny")
 
-  find_package(OpenCV REQUIRED)
-  set(tvm_runtime_DIR ${tvm_vendor_DIR})
-  find_package(tvm_runtime CONFIG REQUIRED)
-  find_package(ament_cmake_gtest REQUIRED)
-  find_package(rclcpp REQUIRED)
+find_package(OpenCV REQUIRED)
+set(tvm_runtime_DIR ${tvm_vendor_DIR})
+find_package(tvm_runtime CONFIG REQUIRED)
+find_package(ament_cmake_gtest REQUIRED)
+find_package(rclcpp REQUIRED)
 
 if(BUILD_TESTING)
   # Get target backend
@@ -50,10 +48,10 @@ if(BUILD_TESTING)
     endif()
     # the folder name becomes the test case name
     file(RELATIVE_PATH TEST_CASE_NAME ${CMAKE_CURRENT_LIST_DIR}/test ${TEST_FOLDER})
-
+    message(INFO " system processor is ${CMAKE_SYSTEM_PROCESSOR}")
     # Get neural network.
     set(NN_DEPENDENCY "")
-    get_neural_network(${TEST_CASE_NAME} ${${PROJECT_NAME}_BACKEND} NN_DEPENDENCY)
+    get_neural_network(${TEST_CASE_NAME}_${CMAKE_SYSTEM_PROCESSOR} ${${PROJECT_NAME}_BACKEND} NN_DEPENDENCY)
 
     if(NOT NN_DEPENDENCY STREQUAL "")
       # add all cpp files in the folder to the target
@@ -73,7 +71,7 @@ if(BUILD_TESTING)
       target_include_directories("${TEST_CASE_NAME}" SYSTEM PUBLIC
         "${OpenCV_INCLUDE_DIRS}"
         "${tvm_utility_FOUND_INCLUDE_DIRS}"
-        "data/models"
+        "data/models/${TEST_CASE_NAME}_${CMAKE_SYSTEM_PROCESSOR}"
         "include"
       )
 

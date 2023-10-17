@@ -14,8 +14,9 @@
 
 #include "gtest/gtest.h"
 #include "tvm_utility/pipeline.hpp"
+// file for current arch x86 or arm is chosen in cmake file
+#include <inference_engine_tvm_config.hpp>  
 
-#include <abs_model/inference_engine_tvm_config.hpp>
 #include <opencv2/opencv.hpp>
 
 #include <algorithm>
