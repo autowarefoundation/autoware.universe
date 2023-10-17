@@ -74,9 +74,12 @@ void reuse_previous_poses(
   if (cropped_poses.empty()) {
     const auto resampled_path_points =
       motion_utils::resamplePath(path, params.resample_interval, true, true, false).points;
-    const auto cropped_path = motion_utils::cropForwardPoints(
-      path.points, resampled_path_points.front().point.pose.position, 0,
-      params.max_path_arc_length);
+    const auto cropped_path =
+      params.max_path_arc_length <= 0.0
+        ? resampled_path_points
+        : motion_utils::cropForwardPoints(
+            resampled_path_points, resampled_path_points.front().point.pose.position, 0,
+            params.max_path_arc_length);
     for (const auto & p : cropped_path) cropped_poses.push_back(p.point.pose);
   } else {
     const auto initial_arc_length = motion_utils::calcArcLength(cropped_poses);
