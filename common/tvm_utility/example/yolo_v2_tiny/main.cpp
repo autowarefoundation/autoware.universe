@@ -260,6 +260,7 @@ int main(int argc, char * argv[])
   node->declare_parameter("label_filename", LABEL_FILENAME);
   node->declare_parameter("anchor_filename", ANCHOR_FILENAME);
   node->declare_parameter("data_path", "");
+  RCLCPP_INFO(node->get_logger(), "Node started");
   // Instantiate the pipeline
   using PrePT = tvm_utility::yolo_v2_tiny::PreProcessorYoloV2Tiny;
   using IET = tvm_utility::pipeline::InferenceEngineTVM;
@@ -292,16 +293,18 @@ int main(int argc, char * argv[])
 
   // Test: check if the generated output is equal to the reference
   if (expected_output.size() == output.size()) {
-    std::cout << "Model has proper output size" << std::endl;
+    RCLCPP_INFO(node->get_logger(), "Model has proper output size");
   } else {
-    std::cout << "Model has unexpected output size" << std::endl;
+    RCLCPP_INFO(node->get_logger(), "Model has unexpected output size");
   }
 
   for (size_t i = 0; i < output.size(); ++i) {
     if (check_near(expected_output[i], output[i], 0.0001)) {
       std::cout << "Model has proper output at index: " << i << std::endl;
+      RCLCPP_INFO(node->get_logger(), "Model has proper output at index: %zu", i);
+
     } else {
-      std::cout << "Model has unexpected output at index: " << i << std::endl;
+      RCLCPP_INFO(node->get_logger(), "Model has unexpected output at index: %zu", i);
     }
   }
   rclcpp::shutdown();

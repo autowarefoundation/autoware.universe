@@ -42,7 +42,6 @@ if(BUILD_TESTING)
   set(${PROJECT_NAME}_BACKEND llvm CACHE STRING "${PROJECT_NAME} neural network backend")
 
   # compile each folder inside test/ as a test case
-
   set(TEST_ARTIFACTS "${CMAKE_CURRENT_LIST_DIR}/artifacts")
   file(GLOB TEST_CASES test/*)
   foreach(TEST_FOLDER ${TEST_CASES})
@@ -105,7 +104,6 @@ if(BUILD_EXAMPLE)
     endif()
     # the folder name becomes the example name
     file(RELATIVE_PATH EXAMPLE_NAME ${CMAKE_CURRENT_LIST_DIR}/example ${EXAMPLE_FOLDER})
-    # message(INFO " example name is ${EXAMPLE_NAME}")
     # Get neural network.
     set(NN_DEPENDENCY "")
     get_neural_network(${EXAMPLE_NAME} ${${PROJECT_NAME}_BACKEND} NN_DEPENDENCY)
@@ -118,8 +116,6 @@ if(BUILD_EXAMPLE)
       endif()
       # add all cpp files in the folder to the target
       file(GLOB EXAMPLE_SOURCES ${EXAMPLE_FOLDER}/*.cpp)
-      # ament_add_gtest(${EXAMPLE_NAME} ${EXAMPLE_SOURCES})
-      # message(INFO "Example sources are ${EXAMPLE_SOURCES}")
       ament_auto_add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCES})
       ament_target_dependencies(${EXAMPLE_NAME}
         "ament_index_cpp"
@@ -140,13 +136,6 @@ if(BUILD_EXAMPLE)
         "include"
       )
 
-      # Install example-specific files
-      if(IS_DIRECTORY ${EXAMPLE_ARTIFACTS}/${EXAMPLE_NAME})
-        install(DIRECTORY ${EXAMPLE_ARTIFACTS}/${EXAMPLE_NAME}/
-          DESTINATION ${CMAKE_BINARY_DIR}/${EXAMPLE_NAME}_artifacts
-        )
-      endif()
-
     else()
       message(WARNING "No model is generated for ${EXAMPLE_FOLDER} example")
     endif()
@@ -155,4 +144,8 @@ if(BUILD_EXAMPLE)
 endif()
 
 list(APPEND ${PROJECT_NAME}_CONFIG_EXTRAS "${PROJECT_NAME}-extras.cmake")
-ament_auto_package()
+# ament_auto_package()
+ament_auto_package(
+  INSTALL_TO_SHARE
+  launch
+  artifacts)

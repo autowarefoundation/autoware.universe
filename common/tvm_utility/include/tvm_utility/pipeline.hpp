@@ -36,7 +36,8 @@ namespace tvm_utility
 /**
  * @brief Possible version status for a neural network.
  */
-enum class Version {
+enum class Version
+{
   OK,
   Unknown,
   Untested,
@@ -62,14 +63,14 @@ public:
     handle_ = std::make_shared<TVMArrayHandle>(x);
   }
 
-  TVMArrayHandle getArray() const { return *handle_.get(); }
+  TVMArrayHandle getArray() const {return *handle_.get();}
 
 private:
   std::shared_ptr<TVMArrayHandle> handle_{nullptr, [](TVMArrayHandle ptr) {
-                                            if (ptr) {
-                                              TVMArrayFree(ptr);
-                                            }
-                                          }};
+      if (ptr) {
+        TVMArrayFree(ptr);
+      }
+    }};
 };
 
 using TVMArrayContainerVector = std::vector<TVMArrayContainer>;
@@ -81,7 +82,7 @@ using TVMArrayContainerVector = std::vector<TVMArrayContainer>;
  * @tparam InputType The datatype of the input of the pipeline stage.
  * @tparam OutputType The datatype of the output from the pipeline stage.
  */
-template <class InputType, class OutputType>
+template<class InputType, class OutputType>
 class PipelineStage
 {
 public:
@@ -107,7 +108,7 @@ public:
  * @tparam InputType The data type of the input to the pre-processing pipeline
  * stage. Usually a ROS message type.
  */
-template <class InputType>
+template<class InputType>
 class PreProcessor : public PipelineStage<InputType, TVMArrayContainerVector>
 {
 };
@@ -131,7 +132,7 @@ class InferenceEngine : public PipelineStage<TVMArrayContainerVector, TVMArrayCo
  * @tparam OutputType The data type of the output of the inference pipeline.
  * Usually a ROS message type.
  */
-template <class OutputType>
+template<class OutputType>
 class PostProcessor : public PipelineStage<TVMArrayContainerVector, OutputType>
 {
 };
@@ -141,7 +142,7 @@ class PostProcessor : public PipelineStage<TVMArrayContainerVector, OutputType>
  * @brief Inference Pipeline. Consists of 3 stages: preprocessor, inference
  * stage and postprocessor.
  */
-template <class PreProcessorType, class InferenceEngineType, class PostProcessorType>
+template<class PreProcessorType, class InferenceEngineType, class PostProcessorType>
 class Pipeline
 {
   using InputType = decltype(std::declval<PreProcessorType>().input_type_indicator_);
@@ -233,9 +234,9 @@ public:
     std::string network_prefix;
     if (autoware_data_path == "") {
       network_prefix = ament_index_cpp::get_package_share_directory(pkg_name) + "/models/" +
-                       config.network_name + "/";
+        config.network_name + "/";
     } else {
-      network_prefix = autoware_data_path + pkg_name + "/models/" + config.network_name + "/";
+      network_prefix = autoware_data_path + "/" + pkg_name + "/models/" + config.network_name + "/";
     }
     std::string network_module_path = network_prefix + config.network_module_path;
     std::string network_graph_path = network_prefix + config.network_graph_path;
@@ -245,7 +246,8 @@ public:
     std::ifstream module(network_module_path);
     if (!module.good()) {
       throw std::runtime_error(
-        "File " + network_module_path + " specified in inference_engine_tvm_config.hpp not found");
+              "File " + network_module_path +
+              " specified in inference_engine_tvm_config.hpp not found");
     }
     module.close();
     tvm::runtime::Module mod = tvm::runtime::Module::LoadFromFile(network_module_path);
@@ -254,7 +256,8 @@ public:
     std::ifstream json_in(network_graph_path, std::ios::in);
     if (!json_in.good()) {
       throw std::runtime_error(
-        "File " + network_graph_path + " specified in inference_engine_tvm_config.hpp not found");
+              "File " + network_graph_path +
+              " specified in inference_engine_tvm_config.hpp not found");
     }
     std::string json_data(
       (std::istreambuf_iterator<char>(json_in)), std::istreambuf_iterator<char>());
@@ -264,7 +267,8 @@ public:
     std::ifstream params_in(network_params_path, std::ios::binary);
     if (!params_in.good()) {
       throw std::runtime_error(
-        "File " + network_params_path + " specified in inference_engine_tvm_config.hpp not found");
+              "File " + network_params_path +
+              " specified in inference_engine_tvm_config.hpp not found");
     }
     std::string params_data(
       (std::istreambuf_iterator<char>(params_in)), std::istreambuf_iterator<char>());
@@ -293,9 +297,10 @@ public:
     get_output = runtime_mod.GetFunction("get_output");
 
     for (auto & output_config : config.network_outputs) {
-      output_.push_back(TVMArrayContainer(
-        output_config.node_shape, output_config.tvm_dtype_code, output_config.tvm_dtype_bits,
-        output_config.tvm_dtype_lanes, config.tvm_device_type, config.tvm_device_id));
+      output_.push_back(
+        TVMArrayContainer(
+          output_config.node_shape, output_config.tvm_dtype_code, output_config.tvm_dtype_bits,
+          output_config.tvm_dtype_lanes, config.tvm_device_type, config.tvm_device_id));
     }
   }
 
@@ -355,7 +360,7 @@ private:
   const std::array<int8_t, 3> version_up_to{2, 1, 0};
 };
 
-template <
+template<
   class PreProcessorType, class InferenceEngineType, class TVMScriptEngineType,
   class PostProcessorType>
 class TowStagePipeline
