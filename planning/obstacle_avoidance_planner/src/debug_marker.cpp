@@ -72,8 +72,8 @@ MarkerArray getFootprintsMarkerArray(
 }
 
 MarkerArray getBoundsWidthMarkerArray(
-  const std::vector<ReferencePoint> & ref_points, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const size_t sampling_num)
+  const std::vector<ReferencePoint> & ref_points,
+  const vehicle_info_util::VehicleInfo & vehicle_info, const size_t sampling_num)
 {
   const auto current_time = rclcpp::Clock().now();
   MarkerArray marker_array;
@@ -106,7 +106,8 @@ MarkerArray getBoundsWidthMarkerArray(
         }
 
         const geometry_msgs::msg::Pose & pose = ref_points.at(i).pose_on_constraints.at(bound_idx);
-        const double base_to_right = (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.right_overhang_m;
+        const double base_to_right =
+          (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.right_overhang_m;
         const double lb_y =
           ref_points.at(i).bounds_on_constraints.at(bound_idx).lower_bound - base_to_right;
         const auto lb = tier4_autoware_utils::calcOffsetPose(pose, 0.0, lb_y, 0.0).position;
@@ -127,7 +128,8 @@ MarkerArray getBoundsWidthMarkerArray(
         }
 
         const geometry_msgs::msg::Pose & pose = ref_points.at(i).pose_on_constraints.at(bound_idx);
-        const double base_to_left = (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.left_overhang_m;
+        const double base_to_left =
+          (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.left_overhang_m;
         const double ub_y =
           ref_points.at(i).bounds_on_constraints.at(bound_idx).upper_bound + base_to_left;
         const auto ub = tier4_autoware_utils::calcOffsetPose(pose, 0.0, ub_y, 0.0).position;
@@ -143,7 +145,8 @@ MarkerArray getBoundsWidthMarkerArray(
 }
 
 MarkerArray getBoundsLineMarkerArray(
-  const std::vector<ReferencePoint> & ref_points, const vehicle_info_util::VehicleInfo & vehicle_info)
+  const std::vector<ReferencePoint> & ref_points,
+  const vehicle_info_util::VehicleInfo & vehicle_info)
 {
   MarkerArray marker_array;
 
@@ -180,8 +183,8 @@ MarkerArray getBoundsLineMarkerArray(
 MarkerArray getVehicleCircleLinesMarkerArray(
   const std::vector<ReferencePoint> & ref_points,
   const std::vector<double> & vehicle_circle_longitudinal_offsets,
-  const vehicle_info_util::VehicleInfo & vehicle_info,
-  const size_t sampling_num, const std::string & ns)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const size_t sampling_num,
+  const std::string & ns)
 {
   const auto current_time = rclcpp::Clock().now();
   MarkerArray msg;
@@ -211,7 +214,8 @@ MarkerArray getVehicleCircleLinesMarkerArray(
       auto base_pose = tier4_autoware_utils::calcOffsetPose(pose_with_deviation, d, 0.0, 0.0);
       base_pose.orientation =
         tier4_autoware_utils::createQuaternionFromYaw(ref_point.getYaw() + ref_point.alpha);
-      const double base_to_right = (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.right_overhang_m;
+      const double base_to_right =
+        (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.right_overhang_m;
       const double base_to_left = (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.left_overhang_m;
       const auto ub =
         tier4_autoware_utils::calcOffsetPose(base_pose, 0.0, base_to_left, 0.0).position;
@@ -266,8 +270,9 @@ MarkerArray getCurrentVehicleCirclesMarkerArray(
 MarkerArray getVehicleCirclesMarkerArray(
   const std::vector<TrajectoryPoint> & mpt_traj_points,
   const std::vector<double> & vehicle_circle_longitudinal_offsets,
-  const std::vector<double> & vehicle_circle_radiuses, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const size_t sampling_num, const std::string & ns, const double r, const double g, const double b)
+  const std::vector<double> & vehicle_circle_radiuses,
+  const vehicle_info_util::VehicleInfo & vehicle_info, const size_t sampling_num,
+  const std::string & ns, const double r, const double g, const double b)
 {
   MarkerArray msg;
 
@@ -374,8 +379,7 @@ MarkerArray getDebugMarker(
   MarkerArray marker_array;
 
   // bounds line
-  appendMarkerArray(
-    getBoundsLineMarkerArray(debug_data.ref_points, vehicle_info), &marker_array);
+  appendMarkerArray(getBoundsLineMarkerArray(debug_data.ref_points, vehicle_info), &marker_array);
 
   // bounds width
   appendMarkerArray(
@@ -410,9 +414,8 @@ MarkerArray getDebugMarker(
     // vehicle circle line
     appendMarkerArray(
       getVehicleCircleLinesMarkerArray(
-        debug_data.ref_points, debug_data.vehicle_circle_longitudinal_offsets,
-        vehicle_info, debug_data.mpt_visualize_sampling_num,
-        "vehicle_circle_lines"),
+        debug_data.ref_points, debug_data.vehicle_circle_longitudinal_offsets, vehicle_info,
+        debug_data.mpt_visualize_sampling_num, "vehicle_circle_lines"),
       &marker_array);
 
     // footprint by drivable area

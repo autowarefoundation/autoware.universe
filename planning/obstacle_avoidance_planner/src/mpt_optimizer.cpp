@@ -64,7 +64,8 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesByBicycle
   const double lateral_offset =
     abs(vehicle_info.right_overhang_m - vehicle_info.left_overhang_m) / 2.0;
   // 1st circle (rear wheel)
-  const double rear_radius = vehicle_info.vehicle_width_m / 2.0 + lateral_offset * rear_radius_ratio;
+  const double rear_radius =
+    vehicle_info.vehicle_width_m / 2.0 + lateral_offset * rear_radius_ratio;
   const double rear_lon_offset = 0.0;
 
   // 2nd circle (front wheel)
