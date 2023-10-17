@@ -1108,26 +1108,28 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
     object_pose, object_twist.linear.x * 0.1, object_twist.linear.y * 0.1, 0.0);
 
   // assumption: the object vx is much larger than vy
-  if (object.kinematics.twist_with_covariance.twist.linear.x < 0.0) {
-    if (
-      object.kinematics.orientation_availability ==
-      autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN) {
+  if (object.kinematics.twist_with_covariance.twist.linear.x >= 0.0) return;
+
+  switch (object.kinematics.orientation_availability) {
+    case autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN: {
       const auto original_yaw =
         tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
       // flip the angle
       object.kinematics.pose_with_covariance.pose.orientation =
         tier4_autoware_utils::createQuaternionFromYaw(tier4_autoware_utils::pi + original_yaw);
-    } else {
+      break;
+    }
+    default: {
       const auto updated_object_yaw =
         tier4_autoware_utils::calcAzimuthAngle(object_pose.position, future_object_pose.position);
 
       object.kinematics.pose_with_covariance.pose.orientation =
         tier4_autoware_utils::createQuaternionFromYaw(updated_object_yaw);
+      break;
     }
-
-    object.kinematics.twist_with_covariance.twist.linear.x *= -1.0;
-    object.kinematics.twist_with_covariance.twist.linear.y *= -1.0;
   }
+  object.kinematics.twist_with_covariance.twist.linear.x *= -1.0;
+  object.kinematics.twist_with_covariance.twist.linear.y *= -1.0;
 
   return;
 }
