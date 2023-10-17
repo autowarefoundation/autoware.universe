@@ -71,8 +71,6 @@ inline pcl::PointCloud<pcl::PointXYZ>::Ptr toXYZ(
 namespace obstacle_pointcloud_based_validator
 {
 namespace bg = boost::geometry;
-using Shape = autoware_auto_perception_msgs::msg::Shape;
-using Polygon2d = tier4_autoware_utils::Polygon2d;
 
 ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(
   const rclcpp::NodeOptions & node_options)
@@ -97,96 +95,13 @@ ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(
   using std::placeholders::_1;
   using std::placeholders::_2;
 
-  if (using_2d_validator_) {
-    sync_.registerCallback(
-      std::bind(&ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud, this, _1, _2));
-  } else {
-    sync_.registerCallback(
-      std::bind(&ObstaclePointCloudBasedValidator::on3dObjectsAndObstaclePointCloud, this, _1, _2));
-  }
-
+  sync_.registerCallback(
+    std::bind(&ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud, this, _1, _2));
   objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
 
   const bool enable_debugger = declare_parameter<bool>("enable_debugger", false);
   if (enable_debugger) debugger_ = std::make_shared<Debugger>(this);
-}
-void ObstaclePointCloudBasedValidator::on3dObjectsAndObstaclePointCloud(
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_obstacle_pointcloud)
-{
-  autoware_auto_perception_msgs::msg::DetectedObjects output, removed_objects;
-  output.header = input_objects->header;
-  removed_objects.header = input_objects->header;
-
-  // Transform to pointcloud frame
-  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
-  if (!object_recognition_utils::transformObjects(
-        *input_objects, input_obstacle_pointcloud->header.frame_id, tf_buffer_,
-        transformed_objects)) {
-    return;
-  }
-
-  // Convert to PCL
-  pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(*input_obstacle_pointcloud, *obstacle_pointcloud);
-  if (obstacle_pointcloud->empty()) {
-    return;
-  }
-
-  // Create Kd-tree to search neighbor pointcloud to reduce cost
-  pcl::search::Search<pcl::PointXYZ>::Ptr kdtree =
-    pcl::make_shared<pcl::search::KdTree<pcl::PointXYZ>>(false);
-  kdtree->setInputCloud(obstacle_pointcloud);
-  for (size_t i = 0; i < transformed_objects.objects.size(); ++i) {
-    const auto & transformed_object = transformed_objects.objects.at(i);
-    const auto object_label_id = transformed_object.classification.front().label;
-    const auto & object = input_objects->objects.at(i);
-    const auto & transformed_object_position =
-      transformed_object.kinematics.pose_with_covariance.pose.position;
-    const auto search_radius = getMaxRadius3D(transformed_object);
-    if (!search_radius) {
-      output.objects.push_back(object);
-      continue;
-    }
-    // Search neighbor pointcloud to reduce cost
-    pcl::PointCloud<pcl::PointXYZ>::Ptr neighbor_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
-    std::vector<int> indices;
-    std::vector<float> distances;
-    pcl::PointXYZ trans_obj_position_pcl;
-    trans_obj_position_pcl.x = transformed_object_position.x;
-    trans_obj_position_pcl.y = transformed_object_position.y;
-    trans_obj_position_pcl.z = transformed_object_position.z;
-    kdtree->radiusSearch(trans_obj_position_pcl, search_radius.value(), indices, distances);
-    for (const auto & index : indices) {
-      neighbor_pointcloud->push_back(obstacle_pointcloud->at(index));
-    }
-
-    if (debugger_) debugger_->addNeighborPointcloud(neighbor_pointcloud);
-    // Filter object that have few pointcloud in them
-    const auto num = getPointCloudNumWithinShape(transformed_object, neighbor_pointcloud);
-    const auto object_distance =
-      std::hypot(transformed_object_position.x, transformed_object_position.y);
-    size_t min_pointcloud_num = std::clamp(
-      static_cast<size_t>(
-        points_num_threshold_param_.min_points_and_distance_ratio.at(object_label_id) /
-          object_distance +
-        0.5f),
-      static_cast<size_t>(points_num_threshold_param_.min_points_num.at(object_label_id)),
-      static_cast<size_t>(points_num_threshold_param_.max_points_num.at(object_label_id)));
-    if (num) {
-      (min_pointcloud_num <= num.value()) ? output.objects.push_back(object)
-                                          : removed_objects.objects.push_back(object);
-    } else {
-      output.objects.push_back(object);
-    }
-  }
-  objects_pub_->publish(output);
-  if (debugger_) {
-    debugger_->publishRemovedObjects(removed_objects);
-    debugger_->publishNeighborPointcloud(input_obstacle_pointcloud->header);
-    debugger_->publishPointcloudWithinPolygon(input_obstacle_pointcloud->header);
-  }
 }
 void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
@@ -206,61 +121,102 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
   }
 
   // Convert to PCL
-  pcl::PointCloud<pcl::PointXY>::Ptr obstacle_pointcloud(new pcl::PointCloud<pcl::PointXY>);
-  pcl::fromROSMsg(*input_obstacle_pointcloud, *obstacle_pointcloud);
-  if (obstacle_pointcloud->empty()) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "cannot receive pointcloud");
-    // objects_pub_->publish(*input_objects);
-    return;
+
+  if (using_2d_validator_) {
+    pcl::PointCloud<pcl::PointXY>::Ptr obstacle_pointcloud(new pcl::PointCloud<pcl::PointXY>);
+    pcl::fromROSMsg(*input_obstacle_pointcloud, *obstacle_pointcloud);
+    if (obstacle_pointcloud->empty()) {
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "cannot receive pointcloud");
+      // objects_pub_->publish(*input_objects);
+      return;
+    }
+
+    // Create Kd-tree to search neighbor pointcloud to reduce cost.
+    pcl::search::Search<pcl::PointXY>::Ptr kdtree =
+      pcl::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);
+    kdtree->setInputCloud(obstacle_pointcloud);
+
+    for (size_t i = 0; i < transformed_objects.objects.size(); ++i) {
+      const auto & transformed_object = transformed_objects.objects.at(i);
+      const auto object_label_id = transformed_object.classification.front().label;
+      const auto & object = input_objects->objects.at(i);
+      const auto & transformed_object_position =
+        transformed_object.kinematics.pose_with_covariance.pose.position;
+      const auto search_radius = getMaxRadius2D(transformed_object);
+      if (!search_radius) {
+        output.objects.push_back(object);
+        continue;
+      }
+
+      // Search neighbor pointcloud to reduce cost.
+      pcl::PointCloud<pcl::PointXY>::Ptr neighbor_pointcloud(new pcl::PointCloud<pcl::PointXY>);
+      std::vector<int> indices;
+      std::vector<float> distances;
+      kdtree->radiusSearch(
+        toPCL(transformed_object_position), search_radius.value(), indices, distances);
+      for (const auto & index : indices) {
+        neighbor_pointcloud->push_back(obstacle_pointcloud->at(index));
+      }
+      if (debugger_) debugger_->addNeighborPointcloud(neighbor_pointcloud);
+
+      // Filter object that have few pointcloud in them.
+      const auto num = getPointCloudNumWithinPolygon(transformed_object, neighbor_pointcloud);
+      auto validation_threshold =
+        getValidationThreshold(transformed_object_position, object_label_id);
+      if (num) {
+        (validation_threshold <= num.value()) ? output.objects.push_back(object)
+                                              : removed_objects.objects.push_back(object);
+      } else {
+        output.objects.push_back(object);
+      }
+    }
+  } else {
+    // Convert to PCL
+    pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromROSMsg(*input_obstacle_pointcloud, *obstacle_pointcloud);
+    if (obstacle_pointcloud->empty()) {
+      return;
+    }
+
+    // Create Kd-tree to search neighbor pointcloud to reduce cost
+    pcl::search::Search<pcl::PointXYZ>::Ptr kdtree =
+      pcl::make_shared<pcl::search::KdTree<pcl::PointXYZ>>(false);
+    kdtree->setInputCloud(obstacle_pointcloud);
+    for (size_t i = 0; i < transformed_objects.objects.size(); ++i) {
+      const auto & transformed_object = transformed_objects.objects.at(i);
+      const auto object_label_id = transformed_object.classification.front().label;
+      const auto & object = input_objects->objects.at(i);
+      const auto & transformed_object_position =
+        transformed_object.kinematics.pose_with_covariance.pose.position;
+      const auto search_radius = getMaxRadius3D(transformed_object);
+      if (!search_radius) {
+        output.objects.push_back(object);
+        continue;
+      }
+      // Search neighbor pointcloud to reduce cost
+      pcl::PointCloud<pcl::PointXYZ>::Ptr neighbor_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
+      std::vector<int> indices;
+      std::vector<float> distances;
+      pcl::PointXYZ trans_obj_position_pcl = pcl::PointXYZ(
+        transformed_object_position.x, transformed_object_position.y,
+        transformed_object_position.z);
+      kdtree->radiusSearch(trans_obj_position_pcl, search_radius.value(), indices, distances);
+      for (const auto & index : indices) {
+        neighbor_pointcloud->push_back(obstacle_pointcloud->at(index));
+      }
+      if (debugger_) debugger_->addNeighborPointcloud(neighbor_pointcloud);
+      // Filter object that have few pointcloud in them
+      const auto num = getPointCloudNumWithinShape(transformed_object, neighbor_pointcloud);
+      auto validation_threshold =
+        getValidationThreshold(transformed_object_position, object_label_id);
+      if (num) {
+        (validation_threshold <= num.value()) ? output.objects.push_back(object)
+                                              : removed_objects.objects.push_back(object);
+      } else {
+        output.objects.push_back(object);
+      }
+    }
   }
-
-  // Create Kd-tree to search neighbor pointcloud to reduce cost.
-  pcl::search::Search<pcl::PointXY>::Ptr kdtree =
-    pcl::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);
-  kdtree->setInputCloud(obstacle_pointcloud);
-
-  for (size_t i = 0; i < transformed_objects.objects.size(); ++i) {
-    const auto & transformed_object = transformed_objects.objects.at(i);
-    const auto object_label_id = transformed_object.classification.front().label;
-    const auto & object = input_objects->objects.at(i);
-    const auto & transformed_object_position =
-      transformed_object.kinematics.pose_with_covariance.pose.position;
-    const auto search_radius = getMaxRadius2D(transformed_object);
-    if (!search_radius) {
-      output.objects.push_back(object);
-      continue;
-    }
-
-    // Search neighbor pointcloud to reduce cost.
-    pcl::PointCloud<pcl::PointXY>::Ptr neighbor_pointcloud(new pcl::PointCloud<pcl::PointXY>);
-    std::vector<int> indices;
-    std::vector<float> distances;
-    kdtree->radiusSearch(
-      toPCL(transformed_object_position), search_radius.value(), indices, distances);
-    for (const auto & index : indices) {
-      neighbor_pointcloud->push_back(obstacle_pointcloud->at(index));
-    }
-    if (debugger_) debugger_->addNeighborPointcloud(neighbor_pointcloud);
-
-    // Filter object that have few pointcloud in them.
-    const auto num = getPointCloudNumWithinPolygon(transformed_object, neighbor_pointcloud);
-    const auto object_distance =
-      std::hypot(transformed_object_position.x, transformed_object_position.y);
-    size_t min_pointcloud_num = std::clamp(
-      static_cast<size_t>(
-        points_num_threshold_param_.min_points_and_distance_ratio.at(object_label_id) /
-          object_distance +
-        0.5f),
-      static_cast<size_t>(points_num_threshold_param_.min_points_num.at(object_label_id)),
-      static_cast<size_t>(points_num_threshold_param_.max_points_num.at(object_label_id)));
-    if (num) {
-      (min_pointcloud_num <= num.value()) ? output.objects.push_back(object)
-                                          : removed_objects.objects.push_back(object);
-    } else {
-      output.objects.push_back(object);
-    }
-  }
-
   objects_pub_->publish(output);
   if (debugger_) {
     debugger_->publishRemovedObjects(removed_objects);
@@ -272,33 +228,16 @@ std::optional<size_t> ObstaclePointCloudBasedValidator::getPointCloudNumWithinSh
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud)
 {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_pointcloud_2d(new pcl::PointCloud<pcl::PointXYZ>);
-  std::vector<pcl::Vertices> vertices_array;
-  pcl::Vertices vertices;
-
-  auto const & object_position = object.kinematics.pose_with_covariance.pose.position;
-  auto const object_height = object.shape.dimensions.z;
-  auto z_min = object_position.z - object_height / 2.0f;
-  auto z_max = object_position.z + object_height / 2.0f;
-
   Polygon2d poly2d =
     tier4_autoware_utils::toPolygon2d(object.kinematics.pose_with_covariance.pose, object.shape);
   if (bg::is_empty(poly2d)) return std::nullopt;
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr poly3d(new pcl::PointCloud<pcl::PointXYZ>);
-
-  for (size_t i = 0; i < poly2d.outer().size(); ++i) {
-    vertices.vertices.emplace_back(i);
-    vertices_array.emplace_back(vertices);
-    poly3d->emplace_back(poly2d.outer().at(i).x(), poly2d.outer().at(i).y(), 0.0);
-  }
-  pcl::CropHull<pcl::PointXYZ> cropper;
-  cropper.setInputCloud(pointcloud);
-  cropper.setDim(2);
-  cropper.setHullIndices(vertices_array);
-  cropper.setHullCloud(poly3d);
-  cropper.setCropOutside(true);
-  cropper.filter(*cropped_pointcloud_2d);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_pointcloud_2d(new pcl::PointCloud<pcl::PointXYZ>);
+  cropPointsInsidePolygon(pointcloud, poly2d, cropped_pointcloud_2d);
+  auto const & object_position = object.kinematics.pose_with_covariance.pose.position;
+  auto const object_height = object.shape.dimensions.z;
+  auto z_min = object_position.z - object_height / 2.0f;
+  auto z_max = object_position.z + object_height / 2.0f;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_pointcloud_3d(new pcl::PointCloud<pcl::PointXYZ>);
   cropped_pointcloud_3d->reserve(cropped_pointcloud_2d->size());
@@ -315,34 +254,36 @@ std::optional<size_t> ObstaclePointCloudBasedValidator::getPointCloudNumWithinPo
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const pcl::PointCloud<pcl::PointXY>::Ptr pointcloud)
 {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
-  std::vector<pcl::Vertices> vertices_array;
-  pcl::Vertices vertices;
-
   Polygon2d poly2d =
     tier4_autoware_utils::toPolygon2d(object.kinematics.pose_with_covariance.pose, object.shape);
   if (bg::is_empty(poly2d)) return std::nullopt;
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr poly3d(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
+  cropPointsInsidePolygon(toXYZ(pointcloud), poly2d, cropped_pointcloud);
+  if (debugger_) debugger_->addPointcloudWithinPolygon(cropped_pointcloud);
+  return cropped_pointcloud->size();
+}
 
+void ObstaclePointCloudBasedValidator::cropPointsInsidePolygon(
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr & input_points, const Polygon2d & poly2d,
+  pcl::PointCloud<pcl::PointXYZ>::Ptr & output_points)
+{
+  std::vector<pcl::Vertices> vertices_array;
+  pcl::Vertices vertices;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr poly3d(new pcl::PointCloud<pcl::PointXYZ>);
   for (size_t i = 0; i < poly2d.outer().size(); ++i) {
     vertices.vertices.emplace_back(i);
     vertices_array.emplace_back(vertices);
     poly3d->emplace_back(poly2d.outer().at(i).x(), poly2d.outer().at(i).y(), 0.0);
   }
-
-  pcl::CropHull<pcl::PointXYZ> cropper;  // don't be implemented PointXY by PCL
-  cropper.setInputCloud(toXYZ(pointcloud));
+  pcl::CropHull<pcl::PointXYZ> cropper;
+  cropper.setInputCloud(input_points);
   cropper.setDim(2);
   cropper.setHullIndices(vertices_array);
   cropper.setHullCloud(poly3d);
   cropper.setCropOutside(true);
-  cropper.filter(*cropped_pointcloud);
-
-  if (debugger_) debugger_->addPointcloudWithinPolygon(cropped_pointcloud);
-  return cropped_pointcloud->size();
+  cropper.filter(*output_points);
 }
-
 std::optional<float> ObstaclePointCloudBasedValidator::getMaxRadius2D(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
@@ -369,6 +310,21 @@ std::optional<float> ObstaclePointCloudBasedValidator::getMaxRadius3D(
   }
   const auto object_height = object.shape.dimensions.z;
   return std::hypot(max_dist_2d.value(), object_height / 2.0);
+}
+
+size_t ObstaclePointCloudBasedValidator::getValidationThreshold(
+  const geometry_msgs::msg::Point & transformed_object_position, const uint8_t object_label_id)
+{
+  const auto object_distance =
+    std::hypot(transformed_object_position.x, transformed_object_position.y);
+  size_t min_pointcloud_num = std::clamp(
+    static_cast<size_t>(
+      points_num_threshold_param_.min_points_and_distance_ratio.at(object_label_id) /
+        object_distance +
+      0.5f),
+    static_cast<size_t>(points_num_threshold_param_.min_points_num.at(object_label_id)),
+    static_cast<size_t>(points_num_threshold_param_.max_points_num.at(object_label_id)));
+  return min_pointcloud_num;
 }
 
 }  // namespace obstacle_pointcloud_based_validator
