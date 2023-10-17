@@ -132,6 +132,11 @@ public:
   virtual void updateData() {}
 
   /**
+   * @brief This function is executed after path generation and before the ModuleStatus update.
+   */
+  virtual void postProcess() {}
+
+  /**
    * @brief Execute module. Once this function is executed,
    *        it will continue to run as long as it is in the RUNNING state.
    */
