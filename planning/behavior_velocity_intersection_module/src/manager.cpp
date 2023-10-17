@@ -63,6 +63,12 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.common.consider_wrong_direction_vehicle =
     getOrDeclareParameter<bool>(node, ns + ".common.consider_wrong_direction_vehicle");
 
+  ip.stuck_vehicle.turn_direction.left =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.left");
+  ip.stuck_vehicle.turn_direction.right =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.right");
+  ip.stuck_vehicle.turn_direction.straight =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.straight");
   ip.stuck_vehicle.use_stuck_stopline =
     getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.use_stuck_stopline");
   ip.stuck_vehicle.stuck_vehicle_detect_dist =
@@ -79,6 +85,14 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.timeout_private_area");
   ip.stuck_vehicle.enable_private_area_stuck_disregard =
     getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.enable_private_area_stuck_disregard");
+  ip.stuck_vehicle.yield_stuck_turn_direction.left =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.yield_stuck.turn_direction.left");
+  ip.stuck_vehicle.yield_stuck_turn_direction.right =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.yield_stuck.turn_direction.right");
+  ip.stuck_vehicle.yield_stuck_turn_direction.straight =
+    getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.yield_stuck.turn_direction.straight");
+  ip.stuck_vehicle.yield_stuck_distance_thr =
+    getOrDeclareParameter<double>(node, ns + ".stuck_vehicle.yield_stuck.distance_thr");
 
   ip.collision_detection.min_predicted_path_confidence =
     getOrDeclareParameter<double>(node, ns + ".collision_detection.min_predicted_path_confidence");
@@ -115,8 +129,12 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
       ns + ".collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start");
   ip.collision_detection.yield_on_green_traffic_light.duration = getOrDeclareParameter<double>(
     node, ns + ".collision_detection.yield_on_green_traffic_light.duration");
-  ip.collision_detection.yield_on_green_traffic_light.range = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.yield_on_green_traffic_light.range");
+  ip.collision_detection.yield_on_green_traffic_light.object_dist_to_stopline =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.yield_on_green_traffic_light.object_dist_to_stopline");
+  ip.collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration");
 
   ip.occlusion.enable = getOrDeclareParameter<bool>(node, ns + ".occlusion.enable");
   ip.occlusion.occlusion_attention_area_length =

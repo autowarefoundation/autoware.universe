@@ -61,6 +61,13 @@ public:
     } common;
     struct StuckVehicle
     {
+      struct TurnDirection
+      {
+        bool left;
+        bool right;
+        bool straight;
+      };
+      TurnDirection turn_direction;
       bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
       double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
       double stuck_vehicle_vel_thr;      //! Threshold of the speed to be recognized as stopped
@@ -71,6 +78,8 @@ public:
       */
       double timeout_private_area;
       bool enable_private_area_stuck_disregard;
+      double yield_stuck_distance_thr;
+      TurnDirection yield_stuck_turn_direction;
     } stuck_vehicle;
     struct CollisionDetection
     {
@@ -100,8 +109,12 @@ public:
       {
         double distance_to_assigned_lanelet_start;
         double duration;
-        double range;
+        double object_dist_to_stopline;
       } yield_on_green_traffic_light;
+      struct IgnoreOnAmberTrafficLight
+      {
+        double object_expected_deceleration;
+      } ignore_on_amber_traffic_light;
     } collision_detection;
     struct Occlusion
     {
@@ -140,6 +153,11 @@ public:
     size_t closest_idx{0};
     size_t stuck_stop_line_idx{0};
     std::optional<size_t> occlusion_stop_line_idx{std::nullopt};
+  };
+  struct YieldStuckStop
+  {
+    size_t closest_idx{0};
+    size_t stuck_stop_line_idx{0};
   };
   struct NonOccludedCollisionStop
   {
@@ -200,6 +218,7 @@ public:
   using DecisionResult = std::variant<
     Indecisive,                   // internal process error, or over the pass judge line
     StuckStop,                    // detected stuck vehicle
+    YieldStuckStop,               // detected yield stuck vehicle
     NonOccludedCollisionStop,     // detected collision while FOV is clear
     FirstWaitBeforeOcclusion,     // stop for a while before peeking to occlusion
     PeekingTowardOcclusion,       // peeking into occlusion while collision is not detected
@@ -251,7 +270,8 @@ private:
 
   // for occlusion detection
   const bool enable_occlusion_detection_;
-  std::optional<std::vector<util::DiscretizedLane>> occlusion_attention_divisions_{std::nullopt};
+  std::optional<std::vector<lanelet::ConstLineString3d>> occlusion_attention_divisions_{
+    std::nullopt};
   StateMachine collision_state_machine_;     //! for stable collision checking
   StateMachine before_creep_state_machine_;  //! for two phase stop
   StateMachine occlusion_stop_state_machine_;
@@ -282,17 +302,20 @@ private:
     const std::shared_ptr<const PlannerData> & planner_data,
     const util::PathLanelets & path_lanelets);
 
-  autoware_auto_perception_msgs::msg::PredictedObjects filterTargetObjects(
-    const lanelet::ConstLanelets & attention_area_lanelets,
-    const lanelet::ConstLanelets & adjacent_lanelets,
+  bool checkYieldStuckVehicle(
+    const std::shared_ptr<const PlannerData> & planner_data,
+    const util::PathLanelets & path_lanelets,
+    const std::optional<lanelet::CompoundPolygon3d> & first_attention_area);
+
+  util::TargetObjects generateTargetObjects(
+    const util::IntersectionLanelets & intersection_lanelets,
     const std::optional<Polygon2d> & intersection_area) const;
 
   bool checkCollision(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const autoware_auto_perception_msgs::msg::PredictedObjects & target_objects,
-    const util::PathLanelets & path_lanelets, const size_t closest_idx,
-    const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
-    const util::TrafficPrioritizedLevel & traffic_prioritized_level);
+    util::TargetObjects * target_objects, const util::PathLanelets & path_lanelets,
+    const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
+    const double time_delay, const util::TrafficPrioritizedLevel & traffic_prioritized_level);
 
   bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,
@@ -300,9 +323,8 @@ private:
     const lanelet::ConstLanelets & adjacent_lanelets,
     const lanelet::CompoundPolygon3d & first_attention_area,
     const util::InterpolatedPathInfo & interpolated_path_info,
-    const std::vector<util::DiscretizedLane> & lane_divisions,
-    const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> &
-      parked_attention_objects,
+    const std::vector<lanelet::ConstLineString3d> & lane_divisions,
+    const std::vector<util::TargetObject> & blocking_attention_objects,
     const double occlusion_dist_thr);
 
   /*

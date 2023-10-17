@@ -81,6 +81,9 @@ void setStartData(
   const size_t start_idx, const double start_dist);
 
 Polygon2d createEnvelopePolygon(
+  const Polygon2d & object_polygon, const Pose & closest_pose, const double envelope_buffer);
+
+Polygon2d createEnvelopePolygon(
   const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer);
 
 std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
@@ -164,7 +167,7 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
   const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
-  DebugData & debug);
+  const bool is_running, DebugData & debug);
 
 DrivableLanes generateExpandDrivableLanes(
   const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,

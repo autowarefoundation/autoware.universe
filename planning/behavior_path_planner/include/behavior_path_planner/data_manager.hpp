@@ -141,16 +141,15 @@ struct PlannerData
   OccupancyGrid::ConstSharedPtr costmap{};
   LateralOffset::ConstSharedPtr lateral_offset{};
   OperationModeState::ConstSharedPtr operation_mode{};
-  PathWithLaneId::SharedPtr reference_path{std::make_shared<PathWithLaneId>()};
   PathWithLaneId::SharedPtr prev_output_path{std::make_shared<PathWithLaneId>()};
   std::optional<PoseWithUuidStamped> prev_modified_goal{};
   std::optional<UUID> prev_route_id{};
-  lanelet::ConstLanelets current_lanes{};
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
   BehaviorPathPlannerParameters parameters{};
   drivable_area_expansion::DrivableAreaExpansionParameters drivable_area_expansion_parameters{};
 
-  mutable std::optional<geometry_msgs::msg::Pose> drivable_area_expansion_prev_crop_pose;
+  mutable std::vector<geometry_msgs::msg::Pose> drivable_area_expansion_prev_path_poses{};
+  mutable std::vector<double> drivable_area_expansion_prev_curvatures{};
   mutable TurnSignalDecider turn_signal_decider;
 
   TurnIndicatorsCommand getTurnSignal(

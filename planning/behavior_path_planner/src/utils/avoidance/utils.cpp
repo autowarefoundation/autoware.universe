@@ -29,9 +29,12 @@
 
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
 
+#include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/union.hpp>
+#include <boost/geometry/geometries/geometries.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/strategies/convex_hull.hpp>
 
 #include <lanelet2_routing/RoutingGraphContainer.h>
@@ -472,14 +475,13 @@ void setStartData(
 }
 
 Polygon2d createEnvelopePolygon(
-  const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer)
+  const Polygon2d & object_polygon, const Pose & closest_pose, const double envelope_buffer)
 {
   namespace bg = boost::geometry;
+  using tier4_autoware_utils::expandPolygon;
   using tier4_autoware_utils::Point2d;
   using tier4_autoware_utils::Polygon2d;
   using Box = bg::model::box<Point2d>;
-
-  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
 
   const auto toPolygon2d = [](const geometry_msgs::msg::Polygon & polygon) {
     Polygon2d ret{};
@@ -515,9 +517,15 @@ Polygon2d createEnvelopePolygon(
   tf2::doTransform(
     toMsg(envelope_poly, closest_pose.position.z), envelope_ros_polygon, geometry_tf);
 
-  const auto expanded_polygon =
-    tier4_autoware_utils::expandPolygon(toPolygon2d(envelope_ros_polygon), envelope_buffer);
+  const auto expanded_polygon = expandPolygon(toPolygon2d(envelope_ros_polygon), envelope_buffer);
   return expanded_polygon;
+}
+
+Polygon2d createEnvelopePolygon(
+  const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer)
+{
+  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
+  return createEnvelopePolygon(object_polygon, closest_pose, envelope_buffer);
 }
 
 std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
@@ -655,8 +663,6 @@ void fillObjectEnvelopePolygon(
   ObjectData & object_data, const ObjectDataArray & registered_objects, const Pose & closest_pose,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
-  using boost::geometry::within;
-
   const auto object_type = utils::getHighestProbLabel(object_data.object.classification);
   const auto object_parameter = parameters->object_parameters.at(object_type);
 
@@ -674,15 +680,26 @@ void fillObjectEnvelopePolygon(
     return;
   }
 
-  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
+  const auto envelope_poly =
+    createEnvelopePolygon(object_data, closest_pose, envelope_buffer_margin);
 
-  if (!within(object_polygon, same_id_obj->envelope_poly)) {
+  if (boost::geometry::within(envelope_poly, same_id_obj->envelope_poly)) {
+    object_data.envelope_poly = same_id_obj->envelope_poly;
+    return;
+  }
+
+  std::vector<Polygon2d> unions;
+  boost::geometry::union_(envelope_poly, same_id_obj->envelope_poly, unions);
+
+  if (unions.empty()) {
     object_data.envelope_poly =
       createEnvelopePolygon(object_data, closest_pose, envelope_buffer_margin);
     return;
   }
 
-  object_data.envelope_poly = same_id_obj->envelope_poly;
+  boost::geometry::correct(unions.front());
+
+  object_data.envelope_poly = createEnvelopePolygon(unions.front(), closest_pose, 0.0);
 }
 
 void fillObjectMovingTime(
@@ -1602,7 +1619,7 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
   const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
-  DebugData & debug)
+  const bool is_running, DebugData & debug)
 {
   PredictedObjects target_objects;
   PredictedObjects other_objects;
@@ -1636,6 +1653,25 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
     if (!unions.empty()) {
       attention_area = unions.front();
       boost::geometry::correct(attention_area);
+    }
+  }
+
+  // expand detection area width only when the module is running.
+  if (is_running) {
+    constexpr int PER_CIRCLE = 36;
+    constexpr double MARGIN = 1.0;  // [m]
+    boost::geometry::strategy::buffer::distance_symmetric<double> distance_strategy(MARGIN);
+    boost::geometry::strategy::buffer::join_round join_strategy(PER_CIRCLE);
+    boost::geometry::strategy::buffer::end_round end_strategy(PER_CIRCLE);
+    boost::geometry::strategy::buffer::point_circle circle_strategy(PER_CIRCLE);
+    boost::geometry::strategy::buffer::side_straight side_strategy;
+    boost::geometry::model::multi_polygon<Polygon2d> result;
+    // Create the buffer of a multi polygon
+    boost::geometry::buffer(
+      attention_area, result, distance_strategy, side_strategy, join_strategy, end_strategy,
+      circle_strategy);
+    if (!result.empty()) {
+      attention_area = result.front();
     }
   }
 
