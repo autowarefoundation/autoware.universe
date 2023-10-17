@@ -390,7 +390,7 @@ MarkerArray getDebugMarker(
   appendMarkerArray(
     getCurrentVehicleCirclesMarkerArray(
       debug_data.ego_pose, debug_data.vehicle_circle_longitudinal_offsets,
-      debug_data.vehicle_circle_radiuses,"current_vehicle_circles", 1.0, 0.3, 0.3),
+      debug_data.vehicle_circle_radiuses, "current_vehicle_circles", 1.0, 0.3, 0.3),
     &marker_array);
 
   // NOTE: Default debug marker is limited for less calculation time
