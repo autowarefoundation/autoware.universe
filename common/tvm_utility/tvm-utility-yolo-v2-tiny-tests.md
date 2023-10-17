@@ -13,19 +13,24 @@ output.
    If not you can download them manually, see [Manual Artifacts Downloading](https://github.com/autowarefoundation/autoware/tree/main/ansible/roles/artifacts).
 
 2. Download an example image to be used as test input. This image needs to be
-   saved in the `artifacts/yolo_v2_tiny/` folder
+   saved in the `artifacts/yolo_v2_tiny/` folder.
 
-```sh
-curl https://raw.githubusercontent.com/pjreddie/darknet/master/data/dog.jpg \
-  > artifacts/yolo_v2_tiny/test_image_0.jpg
-```
+   ```sh
+   curl https://raw.githubusercontent.com/pjreddie/darknet/master/data/dog.jpg \
+   > artifacts/yolo_v2_tiny/test_image_0.jpg
+   ```
 
-1. Build and test.
+3. Build.
 
-```sh
-colcon build --packages-up-to tvm_utility --cmake-args -DBUILD_EXAMPLE=ON
-colcon test --packages-select tvm_utility
-```
+   ```sh
+   colcon build --packages-up-to tvm_utility --cmake-args -DBUILD_EXAMPLE=ON
+   ```
+
+4. Run.
+
+   ```sh
+   ros2 launch tvm_utility yolo_v2_tiny_example.launch.xml
+   ```
 
 ## GPU backend
 
