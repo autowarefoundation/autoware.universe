@@ -15,17 +15,19 @@
 #ifndef OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 #define OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_cruise_planner/common_structs.hpp"
 #include "obstacle_cruise_planner/stop_planning_debug_info.hpp"
 #include "obstacle_cruise_planner/type_alias.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <memory>
 #include <optional>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -53,11 +55,17 @@ public:
 
   void setParam(
     const bool enable_debug_info, const bool enable_calculation_time_info,
-    const double min_behavior_stop_margin)
+    const double min_behavior_stop_margin, const double enable_approaching_on_curve,
+    const double additional_safe_distance_margin_on_curve,
+    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
   {
     enable_debug_info_ = enable_debug_info;
     enable_calculation_time_info_ = enable_calculation_time_info;
     min_behavior_stop_margin_ = min_behavior_stop_margin;
+    enable_approaching_on_curve_ = enable_approaching_on_curve;
+    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
+    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
+    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
   }
 
   std::vector<TrajectoryPoint> generateStopTrajectory(
@@ -101,6 +109,10 @@ protected:
   bool enable_calculation_time_info_{false};
   LongitudinalInfo longitudinal_info_;
   double min_behavior_stop_margin_;
+  bool enable_approaching_on_curve_;
+  double additional_safe_distance_margin_on_curve_;
+  double min_safe_distance_margin_on_curve_;
+  bool suppress_sudden_obstacle_stop_;
 
   // stop watch
   tier4_autoware_utils::StopWatch<
@@ -192,6 +204,8 @@ private:
     std::optional<geometry_msgs::msg::Pose> start_point{std::nullopt};
     std::optional<geometry_msgs::msg::Pose> end_point{std::nullopt};
   };
+  double calculateMarginFromObstacleOnCurve(
+    const PlannerData & planner_data, const StopObstacle & stop_obstacle) const;
   double calculateSlowDownVelocity(
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output) const;
   std::optional<std::tuple<double, double, double>> calculateDistanceToSlowDownWithConstraints(
@@ -208,12 +222,42 @@ private:
 
   struct SlowDownParam
   {
+    std::vector<std::string> obstacle_labels{"default"};
+    std::unordered_map<uint8_t, std::string> types_map;
+    struct ObstacleSpecificParams
+    {
+      double max_lat_margin;
+      double min_lat_margin;
+      double max_ego_velocity;
+      double min_ego_velocity;
+    };
     explicit SlowDownParam(rclcpp::Node & node)
     {
-      max_lat_margin = node.declare_parameter<double>("slow_down.max_lat_margin");
-      min_lat_margin = node.declare_parameter<double>("slow_down.min_lat_margin");
-      max_ego_velocity = node.declare_parameter<double>("slow_down.max_ego_velocity");
-      min_ego_velocity = node.declare_parameter<double>("slow_down.min_ego_velocity");
+      types_map = {{ObjectClassification::UNKNOWN, "unknown"},
+                   {ObjectClassification::CAR, "car"},
+                   {ObjectClassification::TRUCK, "truck"},
+                   {ObjectClassification::BUS, "bus"},
+                   {ObjectClassification::TRAILER, "trailer"},
+                   {ObjectClassification::MOTORCYCLE, "motorcycle"},
+                   {ObjectClassification::BICYCLE, "bicycle"},
+                   {ObjectClassification::PEDESTRIAN, "pedestrian"}};
+      obstacle_labels =
+        node.declare_parameter<std::vector<std::string>>("slow_down.labels", obstacle_labels);
+      // obstacle label dependant parameters
+      for (const auto & label : obstacle_labels) {
+        ObstacleSpecificParams params;
+        params.max_lat_margin =
+          node.declare_parameter<double>("slow_down." + label + ".max_lat_margin");
+        params.min_lat_margin =
+          node.declare_parameter<double>("slow_down." + label + ".min_lat_margin");
+        params.max_ego_velocity =
+          node.declare_parameter<double>("slow_down." + label + ".max_ego_velocity");
+        params.min_ego_velocity =
+          node.declare_parameter<double>("slow_down." + label + ".min_ego_velocity");
+        obstacle_to_param_struct_map.emplace(std::make_pair(label, params));
+      }
+
+      // common parameters
       time_margin_on_target_velocity =
         node.declare_parameter<double>("slow_down.time_margin_on_target_velocity");
       lpf_gain_slow_down_vel = node.declare_parameter<double>("slow_down.lpf_gain_slow_down_vel");
@@ -222,16 +266,35 @@ private:
         node.declare_parameter<double>("slow_down.lpf_gain_dist_to_slow_down");
     }
 
+    ObstacleSpecificParams getObstacleParamByLabel(const ObjectClassification & label_id) const
+    {
+      const std::string label = types_map.at(label_id.label);
+      if (obstacle_to_param_struct_map.count(label) > 0) {
+        return obstacle_to_param_struct_map.at(label);
+      }
+      return obstacle_to_param_struct_map.at("default");
+    }
+
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
     {
-      tier4_autoware_utils::updateParam<double>(
-        parameters, "slow_down.max_lat_margin", max_lat_margin);
-      tier4_autoware_utils::updateParam<double>(
-        parameters, "slow_down.min_lat_margin", min_lat_margin);
-      tier4_autoware_utils::updateParam<double>(
-        parameters, "slow_down.max_ego_velocity", max_ego_velocity);
-      tier4_autoware_utils::updateParam<double>(
-        parameters, "slow_down.min_ego_velocity", min_ego_velocity);
+      // obstacle type dependant parameters
+      for (const auto & label : obstacle_labels) {
+        auto & param_by_obstacle_label = obstacle_to_param_struct_map[label];
+        tier4_autoware_utils::updateParam<double>(
+          parameters, "slow_down." + label + ".max_lat_margin",
+          param_by_obstacle_label.max_lat_margin);
+        tier4_autoware_utils::updateParam<double>(
+          parameters, "slow_down." + label + ".min_lat_margin",
+          param_by_obstacle_label.min_lat_margin);
+        tier4_autoware_utils::updateParam<double>(
+          parameters, "slow_down." + label + ".max_ego_velocity",
+          param_by_obstacle_label.max_ego_velocity);
+        tier4_autoware_utils::updateParam<double>(
+          parameters, "slow_down." + label + ".min_ego_velocity",
+          param_by_obstacle_label.min_ego_velocity);
+      }
+
+      // common parameters
       tier4_autoware_utils::updateParam<double>(
         parameters, "slow_down.time_margin_on_target_velocity", time_margin_on_target_velocity);
       tier4_autoware_utils::updateParam<double>(
@@ -242,10 +305,8 @@ private:
         parameters, "slow_down.lpf_gain_dist_to_slow_down", lpf_gain_dist_to_slow_down);
     }
 
-    double max_lat_margin;
-    double min_lat_margin;
-    double max_ego_velocity;
-    double min_ego_velocity;
+    std::unordered_map<std::string, ObstacleSpecificParams> obstacle_to_param_struct_map;
+
     double time_margin_on_target_velocity;
     double lpf_gain_slow_down_vel;
     double lpf_gain_lat_dist;
@@ -254,6 +315,11 @@ private:
   SlowDownParam slow_down_param_;
 
   std::vector<SlowDownOutput> prev_slow_down_output_;
+  // previous trajectory and distance to stop
+  // NOTE: Previous trajectory is memorized to deal with nearest index search for overlapping or
+  // crossing lanes.
+  std::optional<std::pair<std::vector<TrajectoryPoint>, double>> prev_stop_distance_info_{
+    std::nullopt};
 };
 
 #endif  // OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_

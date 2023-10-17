@@ -16,6 +16,7 @@
 #define MISSION_PLANNER__MISSION_PLANNER_HPP_
 
 #include "arrival_checker.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <component_interface_specs/planning.hpp>
 #include <component_interface_utils/rclcpp.hpp>
@@ -27,6 +28,7 @@
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <tier4_planning_msgs/msg/reroute_availability.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -55,6 +57,7 @@ using NormalRoute = planning_interface::NormalRoute;
 using MrmRoute = planning_interface::MrmRoute;
 using RouteState = planning_interface::RouteState;
 using Odometry = nav_msgs::msg::Odometry;
+using RerouteAvailability = tier4_planning_msgs::msg::RerouteAvailability;
 
 class MissionPlanner : public rclcpp::Node
 {
@@ -71,9 +74,20 @@ private:
   PoseStamped transform_pose(const PoseStamped & input);
 
   rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
-  rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
+  rclcpp::Subscription<RerouteAvailability>::SharedPtr sub_reroute_availability_;
+  rclcpp::Subscription<PoseWithUuidStamped>::SharedPtr sub_modified_goal_;
+
   Odometry::ConstSharedPtr odometry_;
+  HADMapBin::ConstSharedPtr map_ptr_;
+  RerouteAvailability::ConstSharedPtr reroute_availability_;
   void on_odometry(const Odometry::ConstSharedPtr msg);
+  void on_map(const HADMapBin::ConstSharedPtr msg);
+  void on_reroute_availability(const RerouteAvailability::ConstSharedPtr msg);
+  void on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr msg);
+
+  rclcpp::TimerBase::SharedPtr data_check_timer_;
+  void checkInitialization();
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   void clear_route();
@@ -121,11 +135,6 @@ private:
     const ClearMrmRoute::Service::Request::SharedPtr req,
     const ClearMrmRoute::Service::Response::SharedPtr res);
 
-  HADMapBin::ConstSharedPtr map_ptr_{nullptr};
-  void onMap(const HADMapBin::ConstSharedPtr msg);
-
-  component_interface_utils::Subscription<ModifiedGoal>::SharedPtr sub_modified_goal_;
-  void on_modified_goal(const ModifiedGoal::Message::ConstSharedPtr msg);
   void on_change_route(
     const SetRoute::Service::Request::SharedPtr req,
     const SetRoute::Service::Response::SharedPtr res);
@@ -139,6 +148,8 @@ private:
 
   std::shared_ptr<LaneletRoute> normal_route_{nullptr};
   std::shared_ptr<LaneletRoute> mrm_route_{nullptr};
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 
 }  // namespace mission_planner

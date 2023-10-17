@@ -16,8 +16,9 @@
 
 #include "util.hpp"
 
-#include <motion_utils/motion_utils.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/geometry/pose_deviation.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -37,6 +38,10 @@ AutonomousMode::AutonomousMode(rclcpp::Node * node)
   sub_control_cmd_ = node->create_subscription<AckermannControlCommand>(
     "control_cmd", 1,
     [this](const AckermannControlCommand::SharedPtr msg) { control_cmd_ = *msg; });
+  sub_trajectory_follower_control_cmd_ = node->create_subscription<AckermannControlCommand>(
+    "trajectory_follower_control_cmd", 1, [this](const AckermannControlCommand::SharedPtr msg) {
+      trajectory_follower_control_cmd_ = *msg;
+    });
 
   sub_kinematics_ = node->create_subscription<Odometry>(
     "kinematics", 1, [this](const Odometry::SharedPtr msg) { kinematics_ = *msg; });
@@ -45,6 +50,7 @@ AutonomousMode::AutonomousMode(rclcpp::Node * node)
     "trajectory", 1, [this](const Trajectory::SharedPtr msg) { trajectory_ = *msg; });
 
   check_engage_condition_ = node->declare_parameter<bool>("check_engage_condition");
+  enable_engage_on_driving_ = node->declare_parameter<bool>("enable_engage_on_driving");
   nearest_dist_deviation_threshold_ =
     node->declare_parameter<double>("nearest_dist_deviation_threshold");
   nearest_yaw_deviation_threshold_ =
@@ -121,14 +127,24 @@ bool AutonomousMode::isModeChangeCompleted()
   const auto closest_point = trajectory_.points.at(*closest_idx);
 
   // check for lateral deviation
-  const auto dist_deviation = calcDistance2d(closest_point.pose, kinematics_.pose.pose);
+  const auto dist_deviation =
+    motion_utils::calcLateralOffset(trajectory_.points, kinematics_.pose.pose.position);
+  if (std::isnan(dist_deviation)) {
+    RCLCPP_INFO(logger_, "Not stable yet: lateral offset calculation failed.");
+    return unstable();
+  }
   if (dist_deviation > stable_check_param_.dist_threshold) {
     RCLCPP_INFO(logger_, "Not stable yet: distance deviation is too large: %f", dist_deviation);
     return unstable();
   }
 
   // check for yaw deviation
-  const auto yaw_deviation = calcYawDeviation(closest_point.pose, kinematics_.pose.pose);
+  const auto yaw_deviation =
+    motion_utils::calcYawDeviation(trajectory_.points, kinematics_.pose.pose);
+  if (std::isnan(yaw_deviation)) {
+    RCLCPP_INFO(logger_, "Not stable yet: lateral offset calculation failed.");
+    return unstable();
+  }
   if (yaw_deviation > stable_check_param_.yaw_threshold) {
     RCLCPP_INFO(logger_, "Not stable yet: yaw deviation is too large: %f", yaw_deviation);
     return unstable();
@@ -207,6 +223,15 @@ bool AutonomousMode::isModeChangeAvailable()
   const auto target_control_speed = control_cmd_.longitudinal.speed;
   const auto & param = engage_acceptable_param_;
 
+  if (!enable_engage_on_driving_ && std::fabs(current_speed) > 1.0e-2) {
+    RCLCPP_INFO(
+      logger_,
+      "Engage unavailable: enable_engage_on_driving is false, and the vehicle is not "
+      "stationary.");
+    debug_info_ = DebugInfo{};  // all false
+    return false;
+  }
+
   if (trajectory_.points.size() < 2) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, *clock_, 5000, "Engage unavailable: trajectory size must be > 2");
@@ -240,7 +265,10 @@ bool AutonomousMode::isModeChangeAvailable()
   const bool speed_lower_deviation_ok = speed_deviation >= param.speed_lower_threshold;
 
   // No engagement if the vehicle is moving but the target speed is zero.
-  const bool stop_ok = !(std::abs(current_speed) > 0.1 && std::abs(target_control_speed) < 0.01);
+  const bool is_stop_cmd_indicated =
+    std::abs(target_control_speed) < 0.01 ||
+    std::abs(trajectory_follower_control_cmd_.longitudinal.speed) < 0.01;
+  const bool stop_ok = !(std::abs(current_speed) > 0.1 && is_stop_cmd_indicated);
 
   // No engagement if the large acceleration is commanded.
   const bool large_acceleration_ok = !hasDangerAcceleration();

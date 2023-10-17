@@ -49,6 +49,8 @@ def launch_setup(context, *args, **kwargs):
         vehicle_cmd_gate_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("lane_departure_checker_param_path").perform(context), "r") as f:
         lane_departure_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("control_validator_param_path").perform(context), "r") as f:
+        control_validator_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(
         LaunchConfiguration("operation_mode_transition_manager_param_path").perform(context), "r"
     ) as f:
@@ -61,6 +63,8 @@ def launch_setup(context, *args, **kwargs):
         obstacle_collision_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("aeb_param_path").perform(context), "r") as f:
         aeb_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(LaunchConfiguration("predicted_path_checker_param_path").perform(context), "r") as f:
+        predicted_path_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     controller_component = ComposableNode(
         package="trajectory_follower_node",
@@ -112,6 +116,23 @@ def launch_setup(context, *args, **kwargs):
         parameters=[nearest_search_param, lane_departure_checker_param, vehicle_info_param],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
+    # control validator checker
+    control_validator_component = ComposableNode(
+        package="control_validator",
+        plugin="control_validator::ControlValidator",
+        name="control_validator",
+        remappings=[
+            ("~/input/kinematics", "/localization/kinematic_state"),
+            ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
+            (
+                "~/input/predicted_trajectory",
+                "/control/trajectory_follower/lateral/predicted_trajectory",
+            ),
+            ("~/output/validation_status", "~/validation_status"),
+        ],
+        parameters=[control_validator_param],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+    )
 
     # shift decider
     shift_decider_component = ComposableNode(
@@ -154,6 +175,34 @@ def launch_setup(context, *args, **kwargs):
     autonomous_emergency_braking_loader = LoadComposableNodes(
         condition=IfCondition(LaunchConfiguration("enable_autonomous_emergency_braking")),
         composable_node_descriptions=[autonomous_emergency_braking],
+        target_container="/control/control_container",
+    )
+
+    # autonomous emergency braking
+    predicted_path_checker = ComposableNode(
+        package="predicted_path_checker",
+        plugin="autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode",
+        name="predicted_path_checker",
+        remappings=[
+            ("~/input/objects", "/perception/object_recognition/objects"),
+            ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
+            ("~/input/current_accel", "/localization/acceleration"),
+            ("~/input/odometry", "/localization/kinematic_state"),
+            (
+                "~/input/predicted_trajectory",
+                "/control/trajectory_follower/lateral/predicted_trajectory",
+            ),
+        ],
+        parameters=[
+            vehicle_info_param,
+            predicted_path_checker_param,
+        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+    )
+
+    predicted_path_checker_loader = LoadComposableNodes(
+        condition=IfCondition(LaunchConfiguration("enable_predicted_path_checker")),
+        composable_node_descriptions=[predicted_path_checker],
         target_container="/control/control_container",
     )
 
@@ -220,6 +269,7 @@ def launch_setup(context, *args, **kwargs):
             ("steering", "/vehicle/status/steering_status"),
             ("trajectory", "/planning/scenario_planning/trajectory"),
             ("control_cmd", "/control/command/control_cmd"),
+            ("trajectory_follower_control_cmd", "/control/trajectory_follower/control_cmd"),
             ("control_mode_report", "/vehicle/status/control_mode"),
             ("gate_operation_mode", "/control/vehicle_cmd_gate/operation_mode"),
             # output
@@ -287,6 +337,12 @@ def launch_setup(context, *args, **kwargs):
         target_container="/control/control_container",
     )
 
+    glog_component = ComposableNode(
+        package="glog_component",
+        plugin="GlogComponent",
+        name="glog_component",
+    )
+
     # set container to run all required components in the same process
     container = ComposableNodeContainer(
         name="control_container",
@@ -295,10 +351,12 @@ def launch_setup(context, *args, **kwargs):
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
             controller_component,
+            control_validator_component,
             lane_departure_component,
             shift_decider_component,
             vehicle_cmd_gate_component,
             operation_mode_transition_manager_component,
+            glog_component,
         ],
     )
 
@@ -310,6 +368,7 @@ def launch_setup(context, *args, **kwargs):
             external_cmd_converter_loader,
             obstacle_collision_checker_loader,
             autonomous_emergency_braking_loader,
+            predicted_path_checker_loader,
         ]
     )
 
@@ -338,11 +397,14 @@ def generate_launch_description():
     add_launch_arg("lon_controller_param_path")
     add_launch_arg("vehicle_cmd_gate_param_path")
     add_launch_arg("lane_departure_checker_param_path")
+    add_launch_arg("control_validator_param_path")
     add_launch_arg("operation_mode_transition_manager_param_path")
     add_launch_arg("shift_decider_param_path")
     add_launch_arg("obstacle_collision_checker_param_path")
     add_launch_arg("external_cmd_selector_param_path")
     add_launch_arg("aeb_param_path")
+    add_launch_arg("predicted_path_checker_param_path")
+    add_launch_arg("enable_predicted_path_checker")
     add_launch_arg("enable_autonomous_emergency_braking")
     add_launch_arg("check_external_emergency_heartbeat")
 

@@ -18,11 +18,16 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/constants.hpp>
 #include <motion_utils/resample/resample.hpp>
+#include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/math/normalization.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <limits>
+#include <queue>
 #include <string>
 #include <utility>
 
@@ -260,21 +265,24 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
       continue;
     }
 
-    if (
-      (lane_attribute == "right" || lane_attribute == "left" || lane_attribute == "straight") &&
-      dist_to_front_point < search_distance) {
-      // update map if necessary
-      if (desired_start_point_map_.find(lane_id) == desired_start_point_map_.end()) {
-        desired_start_point_map_.emplace(lane_id, current_pose);
-      }
+    constexpr double stop_velocity_threshold = 0.1;
+    if (dist_to_front_point < search_distance) {
+      if (
+        lane_attribute == "right" || lane_attribute == "left" ||
+        (lane_attribute == "straight" && current_vel < stop_velocity_threshold)) {
+        // update map if necessary
+        if (desired_start_point_map_.find(lane_id) == desired_start_point_map_.end()) {
+          desired_start_point_map_.emplace(lane_id, current_pose);
+        }
 
-      TurnSignalInfo turn_signal_info{};
-      turn_signal_info.desired_start_point = desired_start_point_map_.at(lane_id);
-      turn_signal_info.required_start_point = lane_front_pose;
-      turn_signal_info.required_end_point = get_required_end_point(combined_lane.centerline3d());
-      turn_signal_info.desired_end_point = lane_back_pose;
-      turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
-      signal_queue.push(turn_signal_info);
+        TurnSignalInfo turn_signal_info{};
+        turn_signal_info.desired_start_point = desired_start_point_map_.at(lane_id);
+        turn_signal_info.required_start_point = lane_front_pose;
+        turn_signal_info.required_end_point = get_required_end_point(combined_lane.centerline3d());
+        turn_signal_info.desired_end_point = lane_back_pose;
+        turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
+        signal_queue.push(turn_signal_info);
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 # imu_corrector
 
-## Purpose
+## imu_corrector
 
 `imu_corrector_node` is a node that correct imu data.
 
@@ -19,8 +19,6 @@ We also assume that $n\sim\mathcal{N}(0, \sigma^2)$.
 <!-- TODO(TIER IV): Make this repository public or change the link. -->
 <!-- Use the value estimated by [deviation_estimator](https://github.com/tier4/calibration_tools/tree/main/localization/deviation_estimation_tools) as the parameters for this node. -->
 
-## Inputs / Outputs
-
 ### Input
 
 | Name     | Type                    | Description  |
@@ -33,9 +31,7 @@ We also assume that $n\sim\mathcal{N}(0, \sigma^2)$.
 | --------- | ----------------------- | ------------------ |
 | `~output` | `sensor_msgs::msg::Imu` | corrected imu data |
 
-## Parameters
-
-### Core Parameters
+### Parameters
 
 | Name                         | Type   | Description                                      |
 | ---------------------------- | ------ | ------------------------------------------------ |
@@ -47,12 +43,38 @@ We also assume that $n\sim\mathcal{N}(0, \sigma^2)$.
 | `angular_velocity_stddev_zz` | double | yaw rate standard deviation imu_link [rad/s]     |
 | `acceleration_stddev`        | double | acceleration standard deviation imu_link [m/s^2] |
 
-## Assumptions / Known limits
+## gyro_bias_estimator
 
-## (Optional) Error detection and handling
+`gyro_bias_validator` is a node that validates the bias of the gyroscope. It subscribes to the `sensor_msgs::msg::Imu` topic and validate if the bias of the gyroscope is within the specified range.
 
-## (Optional) Performance characterization
+Note that the node calculates bias from the gyroscope data by averaging the data only when the vehicle is stopped.
 
-## (Optional) References/External links
+### Input
 
-## (Optional) Future extensions / Unimplemented parts
+| Name              | Type                                            | Description      |
+| ----------------- | ----------------------------------------------- | ---------------- |
+| `~/input/imu_raw` | `sensor_msgs::msg::Imu`                         | **raw** imu data |
+| `~/input/pose`    | `geometry_msgs::msg::PoseWithCovarianceStamped` | ndt pose         |
+
+Note that the input pose is assumed to be accurate enough. For example when using NDT, we assume that the NDT is appropriately converged.
+
+Currently, it is possible to use methods other than NDT as a `pose_source` for Autoware, but less accurate methods are not suitable for IMU bias estimation.
+
+In the future, with careful implementation for pose errors, the IMU bias estimated by NDT could potentially be used not only for validation but also for online calibration.
+
+### Output
+
+| Name                 | Type                                 | Description                   |
+| -------------------- | ------------------------------------ | ----------------------------- |
+| `~/output/gyro_bias` | `geometry_msgs::msg::Vector3Stamped` | bias of the gyroscope [rad/s] |
+
+### Parameters
+
+| Name                                  | Type   | Description                                                                                 |
+| ------------------------------------- | ------ | ------------------------------------------------------------------------------------------- |
+| `angular_velocity_offset_x`           | double | roll rate offset in imu_link [rad/s]                                                        |
+| `angular_velocity_offset_y`           | double | pitch rate offset imu_link [rad/s]                                                          |
+| `angular_velocity_offset_z`           | double | yaw rate offset imu_link [rad/s]                                                            |
+| `gyro_bias_threshold`                 | double | threshold of the bias of the gyroscope [rad/s]                                              |
+| `timer_callback_interval_sec`         | double | seconds about the timer callback function [sec]                                             |
+| `straight_motion_ang_vel_upper_limit` | double | upper limit of yaw angular velocity, beyond which motion is not considered straight [rad/s] |
