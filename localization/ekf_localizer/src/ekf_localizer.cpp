@@ -33,8 +33,8 @@
 #include <tier4_autoware_utils/ros/msg_covariance.hpp>
 
 #include <fmt/core.h>
-
 #include <math.h>
+
 #include <algorithm>
 #include <functional>
 #include <memory>
@@ -678,8 +678,8 @@ void EKFLocalizer::publishDiagnostics()
     diag_status_array.push_back(checkMeasurementMahalanobisGate(
       "pose", pose_is_passed_mahalanobis_gate_, pose_mahalanobis_distance_,
       params_.pose_gate_dist));
-    diag_status_array.push_back(checkDianosticYawBias(
-      "pose", diagnostic_yaw_bias_filter_.get_x(), 0.1));
+    diag_status_array.push_back(
+      checkDianosticYawBias("pose", diagnostic_yaw_bias_filter_.get_x(), 0.1));
 
     diag_status_array.push_back(checkMeasurementUpdated(
       "twist", twist_no_update_count_, params_.twist_no_update_count_threshold_warn,
@@ -720,7 +720,7 @@ void EKFLocalizer::updateSimple1DFilters(
   roll_filter_.update(rpy.x, roll_dev, pose.header.stamp);
   pitch_filter_.update(rpy.y, pitch_dev, pose.header.stamp);
 
-  if (twist_queue_.size() > 0){
+  if (twist_queue_.size() > 0) {
     auto twist = twist_queue_.back();
     double yaw_bias, obs_variance;
     simpleEstimateYawBias(pose, *twist, yaw_bias, obs_variance);
@@ -729,32 +729,32 @@ void EKFLocalizer::updateSimple1DFilters(
   }
 }
 
-void EKFLocalizer::simpleEstimateYawBias(const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
-    const geometry_msgs::msg::TwistWithCovarianceStamped & twist,
-    double & yaw_bias, double & obs_variance)
+void EKFLocalizer::simpleEstimateYawBias(
+  const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
+  const geometry_msgs::msg::TwistWithCovarianceStamped & twist, double & yaw_bias,
+  double & obs_variance)
 {
   double dx = pose.pose.pose.position.x - previous_ndt_pose_.pose.pose.position.x;
   double dy = pose.pose.pose.position.y - previous_ndt_pose_.pose.pose.position.y;
-  double distance = std::sqrt(dx*dx + dy*dy);
+  double distance = std::sqrt(dx * dx + dy * dy);
   double estimated_yaw = std::atan2(dy, dx);
   double measured_yaw = std::atan2(pose.pose.pose.orientation.z, pose.pose.pose.orientation.w);
 
   yaw_bias = measured_yaw - estimated_yaw;
 
-  while (yaw_bias > M_PI/2) {
+  while (yaw_bias > M_PI / 2) {
     yaw_bias -= M_PI;
   }
-  while (yaw_bias < -M_PI/2) {
+  while (yaw_bias < -M_PI / 2) {
     yaw_bias += M_PI;
-  } // normalize to -pi/2 ~ pi/2
+  }  // normalize to -pi/2 ~ pi/2
 
   double speed = std::abs(twist.twist.twist.linear.x);
   double rotation_speed = std::abs(twist.twist.twist.angular.z);
 
-  if ( (speed > 2) && (rotation_speed < 0.01) && (distance < 10)) {
-     obs_variance = 0.1;
-  }
-  else {
+  if ((speed > 2) && (rotation_speed < 0.01) && (distance < 10)) {
+    obs_variance = 0.1;
+  } else {
     obs_variance = 999;
   }
 }
@@ -770,13 +770,14 @@ void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovaria
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z];
   double roll_dev = pose.pose.covariance[COV_IDX::ROLL_ROLL];
   double pitch_dev = pose.pose.covariance[COV_IDX::PITCH_PITCH];
-  double diagnostic_yaw_dev_init = 1e9; // make no assumption for the 
+  double diagnostic_yaw_dev_init = 1e9;  // make no assumption for the
 
   z_filter_.init(z, z_dev, pose.header.stamp);
   roll_filter_.init(rpy.x, roll_dev, pose.header.stamp);
   pitch_filter_.init(rpy.y, pitch_dev, pose.header.stamp);
-  diagnostic_yaw_bias_filter_.init(diagnostic_yaw_bias_init, diagnostic_yaw_dev_init, pose.header.stamp);
-  
+  diagnostic_yaw_bias_filter_.init(
+    diagnostic_yaw_bias_init, diagnostic_yaw_dev_init, pose.header.stamp);
+
   // Record this as the previous pose
   previous_ndt_pose_ = pose;
 }

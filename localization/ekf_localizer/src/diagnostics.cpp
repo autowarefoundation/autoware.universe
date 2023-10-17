@@ -16,9 +16,10 @@
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
+#include <math.h>
+
 #include <string>
 #include <vector>
-#include <math.h>
 
 diagnostic_msgs::msg::DiagnosticStatus checkProcessActivated(const bool is_activated)
 {
@@ -162,7 +163,6 @@ diagnostic_msgs::msg::DiagnosticStatus checkDianosticYawBias(
 
   return stat;
 }
-
 
 // The highest level within the stat_array will be reflected in the merged_stat.
 // When all stat_array entries are 'OK,' the message of merged_stat will be "OK"

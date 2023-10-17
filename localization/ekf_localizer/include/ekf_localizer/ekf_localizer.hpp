@@ -289,8 +289,8 @@ private:
    */
   void simpleEstimateYawBias(
     const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
-    const geometry_msgs::msg::TwistWithCovarianceStamped & twist,
-    double & yaw_bias, double & obs_variance);
+    const geometry_msgs::msg::TwistWithCovarianceStamped & twist, double & yaw_bias,
+    double & obs_variance);
 
   /**
    * @brief initialize simple1DFilter
