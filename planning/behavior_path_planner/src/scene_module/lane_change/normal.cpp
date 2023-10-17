@@ -282,6 +282,16 @@ void NormalLaneChange::insertStopPoint(
         if (v > lane_change_parameters_->stop_velocity_threshold) {
           return false;
         }
+
+        // target_objects includes objects out of target lanes, so filter them out
+        if (!boost::geometry::intersects(
+              tier4_autoware_utils::toPolygon2d(o.initial_pose.pose, o.shape).outer(),
+              lanelet::utils::combineLaneletsShape(status_.target_lanes)
+                .polygon2d()
+                .basicPolygon())) {
+          return false;
+        }
+
         const double distance_to_target_lane_obj = getDistanceAlongLanelet(o.initial_pose.pose);
         return stopping_distance_for_obj < distance_to_target_lane_obj &&
                distance_to_target_lane_obj < distance_to_ego_lane_obj;
@@ -732,7 +742,9 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
   const auto current_pose = getEgoPose();
   const auto & route_handler = *getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
-  const auto & objects = *planner_data_->dynamic_object;
+  auto objects = *planner_data_->dynamic_object;
+  utils::path_safety_checker::filterObjectsByClass(
+    objects, lane_change_parameters_->object_types_to_check);
 
   // get backward lanes
   const auto backward_length = lane_change_parameters_->backward_lane_length;
@@ -740,7 +752,8 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
     route_handler, target_lanes, current_pose, backward_length);
 
   // filter objects to get target object index
-  const auto target_obj_index = filterObject(current_lanes, target_lanes, target_backward_lanes);
+  const auto target_obj_index =
+    filterObject(objects, current_lanes, target_lanes, target_backward_lanes);
 
   LaneChangeTargetObjects target_objects;
   target_objects.current_lane.reserve(target_obj_index.current_lane.size());
@@ -772,13 +785,13 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
 }
 
 LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+  const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & target_lanes,
   const lanelet::ConstLanelets & target_backward_lanes) const
 {
   const auto current_pose = getEgoPose();
   const auto & route_handler = *getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
-  const auto & objects = *planner_data_->dynamic_object;
 
   // Guard
   if (objects.objects.empty()) {
@@ -818,15 +831,10 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     target_backward_polygons.push_back(lane_polygon);
   }
 
-  auto filtered_objects = objects;
-
-  utils::path_safety_checker::filterObjectsByClass(
-    filtered_objects, lane_change_parameters_->object_types_to_check);
-
   LaneChangeTargetObjectIndices filtered_obj_indices;
-  for (size_t i = 0; i < filtered_objects.objects.size(); ++i) {
-    const auto & object = filtered_objects.objects.at(i);
-    const auto & obj_velocity_norm = std::hypot(
+  for (size_t i = 0; i < objects.objects.size(); ++i) {
+    const auto & object = objects.objects.at(i);
+    const auto obj_velocity_norm = std::hypot(
       object.kinematics.initial_twist_with_covariance.twist.linear.x,
       object.kinematics.initial_twist_with_covariance.twist.linear.y);
     const auto extended_object =
@@ -837,7 +845,8 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     // calc distance from the current ego position
     double max_dist_ego_to_obj = std::numeric_limits<double>::lowest();
     double min_dist_ego_to_obj = std::numeric_limits<double>::max();
-    for (const auto & polygon_p : obj_polygon.outer()) {
+    const auto obj_polygon_outer = obj_polygon.outer();
+    for (const auto & polygon_p : obj_polygon_outer) {
       const auto obj_p = tier4_autoware_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
       const double dist_ego_to_obj = calcSignedArcLength(path.points, current_pose.position, obj_p);
       max_dist_ego_to_obj = std::max(dist_ego_to_obj, max_dist_ego_to_obj);
