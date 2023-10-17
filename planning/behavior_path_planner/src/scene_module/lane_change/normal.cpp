@@ -1709,8 +1709,27 @@ bool NormalLaneChange::isVehicleStuckByObstacle(
     }
   }
 
-  // No stationary objects found in obstacle_check_distance
-  RCLCPP_DEBUG(logger_, "No stationary objects found in obstacle_check_distance");
+  // Check if Ego is in terminal of current lanes
+  const auto & route_handler = getRouteHandler();
+  const double distance_to_terminal =
+    route_handler->isInGoalRouteSection(current_lanes.back())
+      ? utils::getSignedDistance(getEgoPose(), route_handler->getGoalPose(), current_lanes)
+      : utils::getDistanceToEndOfLane(getEgoPose(), current_lanes);
+  const auto shift_intervals =
+    route_handler->getLateralIntervalsToPreferredLane(current_lanes.back());
+  const double lane_change_buffer =
+    utils::calcMinimumLaneChangeLength(getCommonParam(), shift_intervals, 0.0);
+  const double stop_point_buffer = getCommonParam().backward_length_buffer_for_end_of_lane;
+  const double terminal_judge_buffer = lane_change_buffer + stop_point_buffer + 1.0;
+  if (distance_to_terminal < terminal_judge_buffer) {
+    return true;
+  }
+
+  // No stationary objects found in obstacle_check_distance and Ego is not in terminal of current
+  RCLCPP_DEBUG(
+    logger_,
+    "No stationary objects found in obstacle_check_distance and Ego is not in "
+    "terminal of current lanes");
   return false;
 }
 
