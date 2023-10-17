@@ -48,7 +48,6 @@ if(BUILD_TESTING)
     endif()
     # the folder name becomes the test case name
     file(RELATIVE_PATH TEST_CASE_NAME ${CMAKE_CURRENT_LIST_DIR}/test ${TEST_FOLDER})
-    message(INFO " system processor is ${CMAKE_SYSTEM_PROCESSOR}")
     # Get neural network.
     set(NN_DEPENDENCY "")
     get_neural_network(${TEST_CASE_NAME}_${CMAKE_SYSTEM_PROCESSOR} ${${PROJECT_NAME}_BACKEND} NN_DEPENDENCY)
