@@ -119,3 +119,7 @@ This approach unlocks the potential to achieve accurate and robust self-localiza
 ## Acknowledgement
 
 The code for this package is based on [F2-NeRF](https://github.com/Totoro97/f2-nerf) with significant code changes.
+
+The license of F2-NeRF is Apache License 2.0: <https://github.com/Totoro97/f2-nerf/blob/main/LICENSE>.
+
+The license file is also copied to this directory as [ORIGINAL_LICENSE](./ORIGINAL_LICENSE).
