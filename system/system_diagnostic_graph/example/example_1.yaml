@@ -1,4 +1,4 @@
-units:
+nodes:
   - path: /functions/pose_estimation
     type: and
     list:
@@ -10,10 +10,14 @@ units:
       - { type: link, path: /sensing/liders/front }
       - { type: link, path: /sensing/raders/front }
 
-diags:
   - path: /sensing/liders/top
+    type: diag
     name: "lidar_driver/top: status"
+
   - path: /sensing/liders/front
+    type: diag
     name: "lidar_driver/front: status"
+
   - path: /sensing/raders/front
+    type: diag
     name: "radar_driver/front: status"

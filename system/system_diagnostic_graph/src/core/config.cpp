@@ -218,10 +218,21 @@ ConfigFile load_config_file(const FileConfig & file)
   const auto mark = ErrorMarker(file.path);
   auto dict = ConfigObject(mark, yaml, "config file");
 
+  std::vector<YAML::Node> units;
+  std::vector<YAML::Node> diags;
+  for (const auto & node : dict.take_list("nodes")) {
+    const auto type = node["type"].as<std::string>();
+    if (type == "diag") {
+      diags.push_back(node);
+    } else {
+      units.push_back(node);
+    }
+  }
+
   ConfigFile config(mark);
   config.files = apply<FileConfig>(mark.type("file"), parse_file_config, dict.take_list("files"));
-  config.units = apply<NodeConfig>(mark.type("unit"), parse_node_config, dict.take_list("units"));
-  config.diags = apply<NodeConfig>(mark.type("diag"), parse_node_config, dict.take_list("diags"));
+  config.units = apply<NodeConfig>(mark.type("unit"), parse_node_config, units);
+  config.diags = apply<NodeConfig>(mark.type("diag"), parse_node_config, diags);
   return config;
 }
 

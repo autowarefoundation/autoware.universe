@@ -2,7 +2,7 @@ files:
   - { package: system_diagnostic_graph, path: example/example_1.yaml }
   - { package: system_diagnostic_graph, path: example/example_2.yaml }
 
-units:
+nodes:
   - path: /autoware/modes/stop
     type: debug-ok
 
