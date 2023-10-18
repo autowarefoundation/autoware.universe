@@ -739,11 +739,9 @@ void NDTScanMatcher::estimate_covariance(
   }
 
   // first result is added to mean and covariance
-  Eigen::Vector2d tmp_centroid;
-  Eigen::Matrix2d tmp_cov;
   Eigen::Vector2d p2d(ndt_result.pose(0, 3), ndt_result.pose(1, 3));
-  tmp_centroid += p2d;
-  tmp_cov += p2d * p2d.transpose();
+  Eigen::Vector2d tmp_centroid = p2d;
+  Eigen::Matrix2d tmp_cov = p2d * p2d.transpose();
 
   // prepare msg
   geometry_msgs::msg::PoseArray multi_ndt_result_msg;
