@@ -204,9 +204,9 @@ void apply_bound_change_rate_limit(
 std::vector<double> calculate_maximum_distance(
   const std::vector<Pose> & path_poses, const std::vector<Point> bound,
   const SegmentRtree & uncrossable_segments, const std::vector<Polygon2d> & uncrossable_polygons,
-  const DrivableAreaExpansionParameters & params,
-  boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> & mapper)
+  const DrivableAreaExpansionParameters & params)
 {
+  // TODO(Maxime): improve performances (dont use bg::distance ? use rtree ?)
   std::vector<double> maximum_distances(bound.size(), std::numeric_limits<double>::max());
   LineString2d path_ls;
   LineString2d bound_ls;
@@ -219,12 +219,6 @@ std::vector<double> calculate_maximum_distance(
       uncrossable_segments, boost::geometry::index::nearest(segment_ls, 1),
       std::back_inserter(query_result));
     if (!query_result.empty()) {
-      {
-        Point2d p1, p2;
-        boost::geometry::centroid(segment_ls, p1);
-        boost::geometry::centroid(query_result.front(), p1);
-        mapper.map(Segment2d{p1, p2}, "fill-opacity:0.3;fill:red;stroke:red;stroke-width:1");
-      }
       const auto bound_to_line_dist = boost::geometry::distance(segment_ls, query_result.front());
       const auto dist_limit = std::max(0.0, bound_to_line_dist - params.avoid_linestring_dist);
       maximum_distances[i] = std::min(maximum_distances[i], dist_limit);
@@ -331,13 +325,10 @@ void expand_drivable_area(
   for (const auto & p : path.right_bound) right_ls.push_back(convert_point(p));
   mapper.add(left_ls);
   mapper.add(right_ls);
-  for (const auto & s : uncrossable_segments) mapper.add(s);
   for (const auto & p : path_poses)
-    mapper.map(convert_point(p.position), "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2", 2);
+    mapper.map(convert_point(p.position), "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2");
   mapper.map(left_ls, "fill-opacity:0.3;fill:black;stroke:black;stroke-width:1");
   mapper.map(right_ls, "fill-opacity:0.3;fill:black;stroke:black;stroke-width:1");
-  for (const auto & s : uncrossable_segments)
-    mapper.map(s, "opacity:0.5;fill:black;stroke:black;stroke-width:1");
   stop_watch.tic("curvatures_expansion");
   // Only add curvatures for the new points. Curvatures of reused path points are not updated.
   const auto new_curvatures =
@@ -353,9 +344,9 @@ void expand_drivable_area(
 
   stop_watch.tic("max_dist");
   const auto max_left_expansions = calculate_maximum_distance(
-    path_poses, path.left_bound, uncrossable_segments, uncrossable_polygons, params, mapper);
+    path_poses, path.left_bound, uncrossable_segments, uncrossable_polygons, params);
   const auto max_right_expansions = calculate_maximum_distance(
-    path_poses, path.right_bound, uncrossable_segments, uncrossable_polygons, params, mapper);
+    path_poses, path.right_bound, uncrossable_segments, uncrossable_polygons, params);
   for (auto i = 0LU; i < left_expansions.size(); ++i)
     left_expansions[i] = std::min(left_expansions[i], max_left_expansions[i]);
   for (auto i = 0LU; i < right_expansions.size(); ++i)
