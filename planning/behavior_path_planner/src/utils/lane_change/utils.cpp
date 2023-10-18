@@ -14,6 +14,7 @@
 
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
 
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
@@ -21,7 +22,6 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
-#include "behavior_path_planner/marker_utils/utils.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
