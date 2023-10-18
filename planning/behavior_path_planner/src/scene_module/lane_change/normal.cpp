@@ -79,7 +79,7 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
 
   // find candidate paths
   LaneChangePaths valid_paths{};
-  const bool is_stuck = isVehicleStuckByObstacle(current_lanes);
+  const bool is_stuck = isVehicleStuck(current_lanes);
   bool found_safe_path = getLaneChangePaths(
     current_lanes, target_lanes, direction_, &valid_paths, lane_change_parameters_->rss_params,
     is_stuck);
@@ -666,7 +666,7 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   }
 
   // If the ego is in stuck, sampling all possible accelerations to find avoiding path.
-  if (isVehicleStuckByObstacle(current_lanes)) {
+  if (isVehicleStuck(current_lanes)) {
     auto clock = rclcpp::Clock(RCL_ROS_TIME);
     RCLCPP_INFO_THROTTLE(
       logger_, clock, 1000, "Vehicle is in stuck. Sample all possible acc: [%f ~ %f]", min_acc,
@@ -1330,7 +1330,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
   debug_filtered_objects_ = target_objects;
 
   CollisionCheckDebugMap debug_data;
-  const bool is_stuck = isVehicleStuckByObstacle(current_lanes);
+  const bool is_stuck = isVehicleStuck(current_lanes);
   const auto safety_status = isLaneChangePathSafe(
     path, target_objects, lane_change_parameters_->rss_params_for_abort, is_stuck, debug_data);
   {
@@ -1671,8 +1671,8 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
   return path_safety_status;
 }
 
-// Check if the ego vehicle is in stuck by a stationary obstacle.
-bool NormalLaneChange::isVehicleStuckByObstacle(
+// Check if the ego vehicle is in stuck by a stationary obstacle or by the terminal of current lanes
+bool NormalLaneChange::isVehicleStuck(
   const lanelet::ConstLanelets & current_lanes, const double obstacle_check_distance) const
 {
   // Ego is still moving, not in stuck
@@ -1706,12 +1706,31 @@ bool NormalLaneChange::isVehicleStuckByObstacle(
     }
   }
 
-  // No stationary objects found in obstacle_check_distance
-  RCLCPP_DEBUG(logger_, "No stationary objects found in obstacle_check_distance");
+  // Check if Ego is in terminal of current lanes
+  const auto & route_handler = getRouteHandler();
+  const double distance_to_terminal =
+    route_handler->isInGoalRouteSection(current_lanes.back())
+      ? utils::getSignedDistance(getEgoPose(), route_handler->getGoalPose(), current_lanes)
+      : utils::getDistanceToEndOfLane(getEgoPose(), current_lanes);
+  const auto shift_intervals =
+    route_handler->getLateralIntervalsToPreferredLane(current_lanes.back());
+  const double lane_change_buffer =
+    utils::calcMinimumLaneChangeLength(getCommonParam(), shift_intervals, 0.0);
+  const double stop_point_buffer = getCommonParam().backward_length_buffer_for_end_of_lane;
+  const double terminal_judge_buffer = lane_change_buffer + stop_point_buffer + 1.0;
+  if (distance_to_terminal < terminal_judge_buffer) {
+    return true;
+  }
+
+  // No stationary objects found in obstacle_check_distance and Ego is not in terminal of current
+  RCLCPP_DEBUG(
+    logger_,
+    "No stationary objects found in obstacle_check_distance and Ego is not in "
+    "terminal of current lanes");
   return false;
 }
 
-bool NormalLaneChange::isVehicleStuckByObstacle(const lanelet::ConstLanelets & current_lanes) const
+bool NormalLaneChange::isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const
 {
   if (current_lanes.empty()) {
     return false;  // can not check
@@ -1733,7 +1752,7 @@ bool NormalLaneChange::isVehicleStuckByObstacle(const lanelet::ConstLanelets & c
                                   getCommonParam().base_link2front + DETECTION_DISTANCE_MARGIN;
   RCLCPP_INFO(logger_, "max_lane_change_length: %f, max_acc: %f", max_lane_change_length, max_acc);
 
-  return isVehicleStuckByObstacle(current_lanes, detection_distance);
+  return isVehicleStuck(current_lanes, detection_distance);
 }
 
 void NormalLaneChange::setStopPose(const Pose & stop_pose)
