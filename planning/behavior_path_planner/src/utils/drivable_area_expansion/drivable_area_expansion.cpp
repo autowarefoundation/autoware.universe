@@ -36,35 +36,11 @@ namespace drivable_area_expansion
 
 namespace
 {
-
 Point2d convert_point(const Point & p)
 {
   return Point2d{p.x, p.y};
 }
-
-struct LateralOffsetSearchResult
-{
-  double lateral_offset = std::numeric_limits<double>::max();
-  size_t segment_idx = 0LU;
-};
-
 }  // namespace
-
-LateralOffsetSearchResult calcLateralOffset(
-  const std::vector<PathPointWithLaneId> & points, const Point & target, const size_t start_index)
-{
-  LateralOffsetSearchResult result;
-  for (auto idx = start_index; idx + 1 < points.size(); ++idx) {
-    const auto projection = point_to_segment_projection(
-      convert_point(target), convert_point(points[idx].point.pose.position),
-      convert_point(points[idx + 1].point.pose.position));
-    if (std::abs(projection.distance) < result.lateral_offset) {
-      result.lateral_offset = std::abs(projection.distance);
-      result.segment_idx = idx;
-    }
-  }
-  return result;
-}
 
 void reuse_previous_poses(
   const PathWithLaneId & path, std::vector<Pose> & prev_poses,
@@ -83,11 +59,17 @@ void reuse_previous_poses(
     const auto deviation =
       motion_utils::calcLateralOffset(prev_poses, path.points.front().point.pose.position);
     if (first_idx && deviation < params.max_reuse_deviation) {
-      LateralOffsetSearchResult prev_search_result;
+      LineString2d path_ls;
+      for (const auto & p : path.points) path_ls.push_back(convert_point(p.point.pose.position));
       for (auto idx = *first_idx; idx < prev_poses.size(); ++idx) {
-        prev_search_result =
-          calcLateralOffset(path.points, prev_poses[idx].position, prev_search_result.segment_idx);
-        if (prev_search_result.lateral_offset > params.max_reuse_deviation) break;
+        double lateral_offset = std::numeric_limits<double>::max();
+        for (auto segment_idx = 0LU; segment_idx + 1 < path_ls.size(); ++segment_idx) {
+          const auto projection = point_to_line_projection(
+            convert_point(prev_poses[idx].position), path_ls[segment_idx],
+            path_ls[segment_idx + 1]);
+          lateral_offset = std::min(projection.distance, lateral_offset);
+        }
+        if (lateral_offset > params.max_reuse_deviation) break;
         cropped_poses.push_back(prev_poses[idx]);
         cropped_curvatures.push_back(prev_curvatures[idx]);
       }
