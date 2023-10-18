@@ -988,9 +988,7 @@ void MapBasedPredictionNode::removePedestrianCrossingWithFence(PredictedObjects 
       predicted_objects.objects.erase(
         std::remove_if(
           predicted_objects.objects.begin(), predicted_objects.objects.end(),
-          [this, &predicted_path](const PredictedObject & obj) {
-            return this->crossWithFence(predicted_path);
-          }),
+          [this, &predicted_path]([[maybe_unused]]auto & object) { return this->crossWithFence(predicted_path); }),
         predicted_objects.objects.end());
     }
   }
@@ -1008,13 +1006,21 @@ bool MapBasedPredictionNode::crossWithFence(const PredictedPath & predicted_path
       fence_line.emplace_back(lanelet::BasicPoint2d{p.x(), p.y()});
     }
 
-    for (size_t i = 0; i < predicted_path.path.size() - 1; ++i) {
+    for (size_t i = 0; i < predicted_path.path.size(); ++i) {
       for (size_t j = 0; j < fence_line.size() - 1; ++j) {
         // check whether the predicted path cross with fence
         // (predicted_path.path[i], predicted_path.path[i + 1]) and (fence_line[i], fence_line[i +
         // 1])
-        const auto intersect_point = tier4_autoware_utils::intersect(
-          predicted_path.path[i], predicted_path.path[i + 1], fence_line[j], fence_line[j + 1]);
+
+        const auto p1 = tier4_autoware_utils::createPoint(
+          predicted_path.path[i].position.x, predicted_path.path[i].position.y, 0.0);
+        const auto p2 = tier4_autoware_utils::createPoint(
+          predicted_path.path[i + 1].position.x, predicted_path.path[i + 1].position.y, 0.0);
+        const auto p3 =
+          tier4_autoware_utils::createPoint(fence_line[j].x(), fence_line[j].y(), 0.0);
+        const auto p4 =
+          tier4_autoware_utils::createPoint(fence_line[j + 1].x(), fence_line[j + 1].y(), 0.0);
+        const auto intersect_point = tier4_autoware_utils::intersect(p1, p2, p3, p4);
         if (intersect_point) {
           return true;
         }
