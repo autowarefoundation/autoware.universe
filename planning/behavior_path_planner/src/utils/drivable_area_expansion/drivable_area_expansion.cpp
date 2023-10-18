@@ -64,9 +64,11 @@ LateralOffsetSearchResult calcLateralOffset(
 {
   LateralOffsetSearchResult result;
   for (auto idx = start_index; idx + 1 < points.size(); ++idx) {
-    const auto offset = motion_utils::calcLateralOffset(points, target, idx);
-    if (offset < result.lateral_offset) {
-      result.lateral_offset = offset;
+    const auto projection = point_to_segment_projection(
+      convert_point(target), convert_point(points[idx].point.pose.position),
+      convert_point(points[idx + 1].point.pose.position));
+    if (std::abs(projection.distance) < result.lateral_offset) {
+      result.lateral_offset = std::abs(projection.distance);
       result.segment_idx = idx;
     }
   }
