@@ -978,7 +978,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto intersection_stop_lines_opt = util::generateIntersectionStopLines(
     first_conflicting_area, dummy_first_attention_area, planner_data_, interpolated_path_info,
     planner_param_.stuck_vehicle.use_stuck_stopline, planner_param_.common.stop_line_margin,
-    planner_param.occlusion.enable, peeking_offset, path);
+    planner_param_.occlusion.enable, peeking_offset, path);
   if (!intersection_stop_lines_opt) {
     return IntersectionModule::Indecisive{"failed to generate intersection_stop_lines"};
   }
@@ -1085,7 +1085,9 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       logger_, "is_over_default_stop_line && !is_over_pass_judge_line && keep_detection");
     // do nothing
   } else if (
-    (was_safe && is_over_default_stop_line && is_over_pass_judge_line && is_go_out_) ||
+    (was_safe &&
+     (is_over_default_stop_line || planner_param_.common.disable_pass_judge_sudden_stop) &&
+     is_over_pass_judge_line && is_go_out_) ||
     is_permanent_go_) {
     // is_go_out_: previous RTC approval
     // activated_: current RTC approval

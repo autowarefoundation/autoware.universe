@@ -62,6 +62,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".common.path_interpolation_ds");
   ip.common.consider_wrong_direction_vehicle =
     getOrDeclareParameter<bool>(node, ns + ".common.consider_wrong_direction_vehicle");
+  ip.common.disable_pass_judge_sudden_stop =
+    getOrDeclareParameter<bool>(node, ns + ".common.disable_pass_judge_sudden_stop");
 
   ip.stuck_vehicle.turn_direction.left =
     getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.left");

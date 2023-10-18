@@ -57,6 +57,7 @@ public:
       double stop_overshoot_margin;  //! overshoot margin for stuck, collision detection
       bool use_intersection_area;
       bool consider_wrong_direction_vehicle;
+      bool disable_pass_judge_sudden_stop;
       double path_interpolation_ds;
     } common;
     struct StuckVehicle
