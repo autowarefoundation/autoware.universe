@@ -57,6 +57,7 @@ struct DebugData
     nearest_occlusion_projection{std::nullopt};
   autoware_auto_perception_msgs::msg::PredictedObjects blocking_attention_objects;
   std::optional<geometry_msgs::msg::Pose> absence_traffic_light_creep_wall{std::nullopt};
+  std::optional<double> static_occlusion_with_traffic_light_timeout{std::nullopt};
 };
 
 struct InterpolatedPathInfo

@@ -1022,6 +1022,19 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       }
       return state_machine.getState() == StateMachine::State::GO;
     };
+  auto stoppedAtPosition = [&](const size_t pos) {
+    const double dist_stopline = fromEgoDist(pos);
+    const bool approached_dist_stopline =
+      (std::fabs(dist_stopline) < planner_param_.common.stop_overshoot_margin);
+    const bool over_stopline = (dist_stopline < 0.0);
+    const bool is_stopped = planner_data_->isVehicleStopped(0.0);
+    if (over_stopline) {
+      return true;
+    } else if (is_stopped && approached_dist_stopline) {
+      return true;
+    }
+    return false;
+  };
 
   // stuck vehicle detection is viable even if attention area is empty
   // so this needs to be checked before attention area validation
@@ -1204,15 +1217,16 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     debug_data_.blocking_attention_objects.objects.push_back(blocking_attention_object.object);
   }
   const auto & not_attention_intersection_area_objects = target_objects.intersection_area_objects;
-  const std::optional<IntersectionModule::OcclusionType> occlusion_status =
+  const auto occlusion_status =
     (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty() && !is_prioritized)
-      ? std::make_optional<IntersectionModule::OcclusionType>(getOcclusionStatus(
+      ? getOcclusionStatus(
           *planner_data_->occupancy_grid, occlusion_attention_area, adjacent_lanelets,
           first_attention_area, interpolated_path_info, occlusion_attention_divisions,
-          blocking_attention_objects, not_attention_intersection_area_objects, occlusion_dist_thr))
-      : std::nullopt;
+          blocking_attention_objects, not_attention_intersection_area_objects, current_pose,
+          occlusion_dist_thr)
+      : OcclusionType::NOT_OCCLUDED;
   occlusion_stop_state_machine_.setStateWithMarginTime(
-    occlusion_status.has_value() ? StateMachine::State::GO : StateMachine::STOP,
+    occlusion_status == OcclusionType::NOT_OCCLUDED ? StateMachine::State::GO : StateMachine::STOP,
     logger_.get_child("occlusion_stop"), *clock_);
   const bool is_occlusion_cleared_with_margin =
     (occlusion_stop_state_machine_.getState() == StateMachine::State::GO);
@@ -1234,7 +1248,8 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     default_stop_line_idx, planner_param_.occlusion.before_creep_stop_time,
     before_creep_state_machine_);
   if (stopped_at_default_line) {
-    // in this case ego will temporarily stop before entering attention area
+    // if specified the parameter occlusion.temporal_stop_before_attention_area OR
+    // has_no_traffic_light_, ego will temporarily stop before entering attention area
     const bool temporal_stop_before_attention_required =
       (planner_param_.occlusion.temporal_stop_before_attention_area || !has_traffic_light_)
         ? !stoppedForDuration(
@@ -1251,20 +1266,47 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
         temporal_stop_before_attention_required, closest_idx,
         first_attention_stop_line_idx,           occlusion_stop_line_idx};
     }
+    // following remaining block is "has_traffic_light_"
+    // if ego is stuck by static occlusion in the presence of traffic light, start timeout count
+    const bool is_stuck_by_static_occlusion =
+      stoppedAtPosition(occlusion_stop_line_idx) &&
+      (occlusion_status == OcclusionType::STATICALLY_OCCLUDED);
+    if (has_collision_with_margin) {
+      static_occlusion_timeout_state_machine_.setState(StateMachine::State::STOP);
+    } else if (is_stuck_by_static_occlusion) {
+      static_occlusion_timeout_state_machine_.setStateWithMarginTime(
+        StateMachine::State::GO, logger_.get_child("static_occlusion"), *clock_);
+    }
+    const bool release_static_occlusion_stuck =
+      (static_occlusion_timeout_state_machine_.getState() == StateMachine::State::GO);
+    if (!has_collision_with_margin && release_static_occlusion_stuck) {
+      return IntersectionModule::Safe{
+        closest_idx, collision_stop_line_idx, occlusion_stop_line_idx};
+    }
+    // even if occlusion_status == OcclusionType::NON_OCCLUDED, "is_occlusion_state" can be true if
+    // required by RTC and/or within margin time
+    const std::optional<double> static_occlusion_timeout =
+      (occlusion_status == OcclusionType::STATICALLY_OCCLUDED)
+        ? std::make_optional<double>(
+            planner_param_.occlusion.static_occlusion_with_traffic_light_timeout -
+            static_occlusion_timeout_state_machine_.getDuration())
+        : std::nullopt;
     if (has_collision_with_margin) {
       return IntersectionModule::OccludedCollisionStop{is_occlusion_cleared_with_margin,
                                                        temporal_stop_before_attention_required,
                                                        closest_idx,
                                                        collision_stop_line_idx,
                                                        first_attention_stop_line_idx,
-                                                       occlusion_stop_line_idx};
+                                                       occlusion_stop_line_idx,
+                                                       static_occlusion_timeout};
     } else {
       return IntersectionModule::PeekingTowardOcclusion{is_occlusion_cleared_with_margin,
                                                         temporal_stop_before_attention_required,
                                                         closest_idx,
                                                         collision_stop_line_idx,
                                                         first_attention_stop_line_idx,
-                                                        occlusion_stop_line_idx};
+                                                        occlusion_stop_line_idx,
+                                                        static_occlusion_timeout};
     }
   } else {
     const auto occlusion_stop_line =
@@ -1583,7 +1625,7 @@ IntersectionModule::OcclusionType IntersectionModule::getOcclusionStatus(
   const std::vector<lanelet::ConstLineString3d> & lane_divisions,
   const std::vector<util::TargetObject> & blocking_attention_objects,
   [[maybe_unused]] const std::vector<util::TargetObject> & not_attention_intersection_area_objects,
-  const double occlusion_dist_thr)
+  [[maybe_unused]] const geometry_msgs::msg::Pose & current_pose, const double occlusion_dist_thr)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto & lane_interval_ip = interpolated_path_info.lane_id_interval.value();
@@ -1817,8 +1859,9 @@ IntersectionModule::OcclusionType IntersectionModule::getOcclusionStatus(
   };
   struct NearestOcclusionPoint
   {
-    int64 division_index;
-    double dist;
+    int64 division_index{0};
+    int64 point_index{0};
+    double dist{0.0};
     geometry_msgs::msg::Point point;
     geometry_msgs::msg::Point projection;
   } nearest_occlusion_point;
@@ -1867,7 +1910,7 @@ IntersectionModule::OcclusionType IntersectionModule::getOcclusionStatus(
         if (acc_dist < min_dist) {
           min_dist = acc_dist;
           nearest_occlusion_point = {
-            std::distance(division.begin(), point_it), acc_dist,
+            division_index, std::distance(division.begin(), point_it), acc_dist,
             tier4_autoware_utils::createPoint(point_it->x(), point_it->y(), origin.z),
             tier4_autoware_utils::createPoint(projection_it->x(), projection_it->y(), origin.z)};
         }
@@ -1878,8 +1921,24 @@ IntersectionModule::OcclusionType IntersectionModule::getOcclusionStatus(
   if (min_dist == std::numeric_limits<double>::infinity() || min_dist > occlusion_dist_thr) {
     return OcclusionType::NOT_OCCLUDED;
   }
+
   debug_data_.nearest_occlusion_projection =
     std::make_pair(nearest_occlusion_point.point, nearest_occlusion_point.projection);
+  const auto & nearest_lane_division = lane_divisions.at(nearest_occlusion_point.division_index);
+  for (auto it = nearest_lane_division.begin() + nearest_occlusion_point.point_index;
+       it != nearest_lane_division.end(); it++) {
+    LineString2d ego_nearest_occlusion_line;
+    ego_nearest_occlusion_line.emplace_back(current_pose.position.x, current_pose.position.y);
+    ego_nearest_occlusion_line.emplace_back(it->x(), it->y());
+    for (const auto & not_attention_intersection_area_object :
+         not_attention_intersection_area_objects) {
+      const auto obj_poly =
+        tier4_autoware_utils::toPolygon2d(not_attention_intersection_area_object.object);
+      if (bg::intersects(obj_poly, ego_nearest_occlusion_line)) {
+        return OcclusionType::DYNAMICALLY_OCCLUDED;
+      }
+    }
+  }
   return OcclusionType::STATICALLY_OCCLUDED;
 }
 

@@ -145,6 +145,12 @@ public:
     } occlusion;
   };
 
+  enum OcclusionType {
+    NOT_OCCLUDED,
+    STATICALLY_OCCLUDED,
+    DYNAMICALLY_OCCLUDED,
+  };
+
   struct Indecisive
   {
     std::string error;
@@ -173,6 +179,7 @@ public:
     size_t first_stop_line_idx{0};
     size_t occlusion_stop_line_idx{0};
   };
+  // A state peeking to occlusion limit line in the presence of traffic light
   struct PeekingTowardOcclusion
   {
     // NOTE: if intersection_occlusion is disapproved externally through RTC,
@@ -183,7 +190,12 @@ public:
     size_t collision_stop_line_idx{0};
     size_t first_attention_stop_line_idx{0};
     size_t occlusion_stop_line_idx{0};
+    // if null, it is dynamic occlusion and shows up intersection_occlusion(dyn)
+    // if valid, it contains the remaining time to release the static occlusion stuck and shows up
+    // intersection_occlusion(x.y)
+    std::optional<double> static_occlusion_timeout{std::nullopt};
   };
+  // A state detecting both collision and occlusion in the presence of traffic light
   struct OccludedCollisionStop
   {
     bool is_actually_occlusion_cleared{false};
@@ -192,6 +204,9 @@ public:
     size_t collision_stop_line_idx{0};
     size_t first_attention_stop_line_idx{0};
     size_t occlusion_stop_line_idx{0};
+    // if null, it is dynamic occlusion and shows up intersection_occlusion(dyn)
+    // if valid, it contains the remaining time to release the static occlusion stuck
+    std::optional<double> static_occlusion_timeout{std::nullopt};
   };
   struct OccludedAbsenceTrafficLight
   {
@@ -228,12 +243,6 @@ public:
     Safe,                         // judge as safe
     TrafficLightArrowSolidOn      // only detect vehicles violating traffic rules
     >;
-
-  enum OcclusionType {
-    NOT_OCCLUDED,
-    STATICALLY_OCCLUDED,
-    DYNAMICALLY_OCCLUDED,
-  };
 
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
@@ -334,7 +343,7 @@ private:
     const std::vector<lanelet::ConstLineString3d> & lane_divisions,
     const std::vector<util::TargetObject> & blocking_attention_objects,
     const std::vector<util::TargetObject> & not_attention_intersection_area_objects,
-    const double occlusion_dist_thr);
+    const geometry_msgs::msg::Pose & current_pose, const double occlusion_dist_thr);
 
   /*
   bool IntersectionModule::checkFrontVehicleDeceleration(
