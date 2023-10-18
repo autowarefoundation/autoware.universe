@@ -82,8 +82,10 @@ struct LaneChangeParameters
   utils::path_safety_checker::ObjectTypesToCheck object_types_to_check;
 
   // safety check
+  bool allow_loose_check_for_cancel{true};
   utils::path_safety_checker::RSSparams rss_params{};
   utils::path_safety_checker::RSSparams rss_params_for_abort{};
+  utils::path_safety_checker::RSSparams rss_params_for_stuck{};
 
   // abort
   LaneChangeCancelParameters cancel{};

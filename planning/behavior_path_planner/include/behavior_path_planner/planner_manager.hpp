@@ -243,6 +243,11 @@ public:
   void print() const;
 
   /**
+   * @brief publish processing time of each module.
+   */
+  void publishProcessingTime() const;
+
+  /**
    * @brief visit each module and get debug information.
    */
   std::shared_ptr<SceneModuleVisitor> getDebugMsg();
@@ -266,6 +271,8 @@ private:
     module_ptr->lockRTCCommand();
     const auto result = module_ptr->run();
     module_ptr->unlockRTCCommand();
+
+    module_ptr->postProcess();
 
     module_ptr->updateCurrentState();
 
