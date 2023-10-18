@@ -38,9 +38,10 @@ void SteeringOffsetEstimator::updateOffset(
 
   if (!update_offset) return;
 
-  // calculate the steering angle needed to achieve the current rate of rotation given the current
-  // velocity along the x-axis of the vehicle, under the below assumptions
-  // (i.e., no slipping, no lag in the steering mechanism, etc.).
+  // Assuming the yaw rate and speed are sufficiently accurate, we calculate the expected steering
+  // angle for the current yaw rate and speed from the vehicle model. To ignore dynamic
+  // characteristics such as steering delay or slip, estimation is performed only when the vehicle
+  // is driving at high speed and the steering angle is close to zero position.
   const auto expected_steering_angle = std::atan2(twist.angular.z * wheelbase_, twist.linear.x);
   const auto steer_offset = measured_steering_angle - expected_steering_angle;
   steering_offset_storage_.push_back(steer_offset);
