@@ -165,6 +165,9 @@ private:
   void mapCallback(const HADMapBin::ConstSharedPtr msg);
   void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
 
+  void removePedestrianCrossingWithFence(PredictedObjects & predicted_objects);
+  bool crossWithFence(const PredictedPath & predicted_path);
+
   PredictedObjectKinematics convertToPredictedKinematics(
     const TrackedObjectKinematics & tracked_object);
 
