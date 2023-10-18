@@ -141,6 +141,7 @@ public:
       } absence_traffic_light;
       double attention_lane_crop_curvature_threshold;
       double attention_lane_curvature_calculation_ds;
+      double static_occlusion_with_traffic_light_timeout;
     } occlusion;
   };
 
@@ -228,6 +229,12 @@ public:
     TrafficLightArrowSolidOn      // only detect vehicles violating traffic rules
     >;
 
+  enum OcclusionType {
+    NOT_OCCLUDED,
+    STATICALLY_OCCLUDED,
+    DYNAMICALLY_OCCLUDED,
+  };
+
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<int> & associative_ids,
@@ -276,6 +283,7 @@ private:
   StateMachine before_creep_state_machine_;  //! for two phase stop
   StateMachine occlusion_stop_state_machine_;
   StateMachine temporal_stop_before_attention_state_machine_;
+  StateMachine static_occlusion_timeout_state_machine_;
 
   // for pseudo-collision detection when ego just entered intersection on green light and upcoming
   // vehicles are very slow
@@ -317,7 +325,7 @@ private:
     const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
     const double time_delay, const util::TrafficPrioritizedLevel & traffic_prioritized_level);
 
-  bool isOcclusionCleared(
+  OcclusionType getOcclusionStatus(
     const nav_msgs::msg::OccupancyGrid & occ_grid,
     const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
     const lanelet::ConstLanelets & adjacent_lanelets,
@@ -325,6 +333,7 @@ private:
     const util::InterpolatedPathInfo & interpolated_path_info,
     const std::vector<lanelet::ConstLineString3d> & lane_divisions,
     const std::vector<util::TargetObject> & blocking_attention_objects,
+    const std::vector<util::TargetObject> & not_attention_intersection_area_objects,
     const double occlusion_dist_thr);
 
   /*

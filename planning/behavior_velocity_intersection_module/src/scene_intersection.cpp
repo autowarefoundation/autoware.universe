@@ -129,6 +129,11 @@ IntersectionModule::IntersectionModule(
       planner_param_.occlusion.before_creep_stop_time);
     temporal_stop_before_attention_state_machine_.setState(StateMachine::State::STOP);
   }
+  {
+    static_occlusion_timeout_state_machine_.setMarginTime(
+      planner_param_.occlusion.static_occlusion_with_traffic_light_timeout);
+    static_occlusion_timeout_state_machine_.setState(StateMachine::State::STOP);
+  }
 
   decision_state_pub_ =
     node_.create_publisher<std_msgs::msg::String>("~/debug/intersection/decision_state", 1);
@@ -1194,20 +1199,20 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const double occlusion_dist_thr = std::fabs(
     std::pow(planner_param_.occlusion.max_vehicle_velocity_for_rss, 2) /
     (2 * planner_param_.occlusion.min_vehicle_brake_for_rss));
-  const auto blocking_attention_objects = target_objects.parked_attention_objects;
+  const auto & blocking_attention_objects = target_objects.parked_attention_objects;
   for (const auto & blocking_attention_object : blocking_attention_objects) {
     debug_data_.blocking_attention_objects.objects.push_back(blocking_attention_object.object);
   }
-  // debug_data_.blocking_attention_objects.objects = blocking_attention_objects;
-  const bool is_occlusion_cleared =
+  const auto & not_attention_intersection_area_objects = target_objects.intersection_area_objects;
+  const std::optional<IntersectionModule::OcclusionType> occlusion_status =
     (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty() && !is_prioritized)
-      ? isOcclusionCleared(
+      ? std::make_optional<IntersectionModule::OcclusionType>(getOcclusionStatus(
           *planner_data_->occupancy_grid, occlusion_attention_area, adjacent_lanelets,
           first_attention_area, interpolated_path_info, occlusion_attention_divisions,
-          blocking_attention_objects, occlusion_dist_thr)
-      : true;
+          blocking_attention_objects, not_attention_intersection_area_objects, occlusion_dist_thr))
+      : std::nullopt;
   occlusion_stop_state_machine_.setStateWithMarginTime(
-    is_occlusion_cleared ? StateMachine::State::GO : StateMachine::STOP,
+    occlusion_status.has_value() ? StateMachine::State::GO : StateMachine::STOP,
     logger_.get_child("occlusion_stop"), *clock_);
   const bool is_occlusion_cleared_with_margin =
     (occlusion_stop_state_machine_.getState() == StateMachine::State::GO);
@@ -1377,7 +1382,7 @@ util::TargetObjects IntersectionModule::generateTargetObjects(
         target_object.object = object;
         target_object.attention_lanelet = std::nullopt;
         target_object.stop_line = std::nullopt;
-        container.push_back(target_object);
+        target_objects.intersection_area_objects.push_back(target_object);
       }
     } else if (const auto belong_attention_lanelet_id = util::checkAngleForTargetLanelets(
                  object_direction, attention_lanelets,
@@ -1398,6 +1403,9 @@ util::TargetObjects IntersectionModule::generateTargetObjects(
     target_objects.all.push_back(object);
   }
   for (const auto & object : target_objects.parked_attention_objects) {
+    target_objects.all.push_back(object);
+  }
+  for (const auto & object : target_objects.intersection_area_objects) {
     target_objects.all.push_back(object);
   }
   for (auto & object : target_objects.all) {
@@ -1566,7 +1574,7 @@ bool IntersectionModule::checkCollision(
   return collision_detected;
 }
 
-bool IntersectionModule::isOcclusionCleared(
+IntersectionModule::OcclusionType IntersectionModule::getOcclusionStatus(
   const nav_msgs::msg::OccupancyGrid & occ_grid,
   const std::vector<lanelet::CompoundPolygon3d> & attention_areas,
   const lanelet::ConstLanelets & adjacent_lanelets,
@@ -1574,6 +1582,7 @@ bool IntersectionModule::isOcclusionCleared(
   const util::InterpolatedPathInfo & interpolated_path_info,
   const std::vector<lanelet::ConstLineString3d> & lane_divisions,
   const std::vector<util::TargetObject> & blocking_attention_objects,
+  [[maybe_unused]] const std::vector<util::TargetObject> & not_attention_intersection_area_objects,
   const double occlusion_dist_thr)
 {
   const auto & path_ip = interpolated_path_info.path;
@@ -1582,7 +1591,7 @@ bool IntersectionModule::isOcclusionCleared(
   const auto first_attention_area_idx =
     util::getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_attention_area);
   if (!first_attention_area_idx) {
-    return false;
+    return OcclusionType::NOT_OCCLUDED;
   }
 
   const auto first_inside_attention_idx_ip_opt =
@@ -1867,11 +1876,11 @@ bool IntersectionModule::isOcclusionCleared(
   }
 
   if (min_dist == std::numeric_limits<double>::infinity() || min_dist > occlusion_dist_thr) {
-    return true;
+    return OcclusionType::NOT_OCCLUDED;
   }
   debug_data_.nearest_occlusion_projection =
     std::make_pair(nearest_occlusion_point.point, nearest_occlusion_point.projection);
-  return false;
+  return OcclusionType::STATICALLY_OCCLUDED;
 }
 
 /*
