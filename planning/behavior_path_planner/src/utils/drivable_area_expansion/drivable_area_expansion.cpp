@@ -31,15 +31,6 @@
 
 #include <limits>
 
-// for writing the svg file
-#include <fstream>
-#include <iostream>
-// for the geometry types
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-// for the svg mapper
-#include <boost/geometry/io/svg/svg_mapper.hpp>
-#include <boost/geometry/io/svg/write.hpp>
-
 namespace drivable_area_expansion
 {
 
@@ -293,10 +284,6 @@ void expand_drivable_area(
   PathWithLaneId & path,
   const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data)
 {
-  // Declare a stream and an SVG mapper
-  std::ofstream svg("/home/mclement/Pictures/dyn_da.svg");  // /!\ CHANGE PATH
-  boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
-
   // skip if no bounds or not enough points to calculate path curvature
   if (path.points.size() < 3 || path.left_bound.empty() || path.right_bound.empty()) return;
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
@@ -318,17 +305,6 @@ void expand_drivable_area(
     path, path_poses, curvatures, planner_data->self_odometry->pose.pose.position, params);
   const auto crop_ms = stop_watch.toc("crop");
 
-  for (const auto & p : path_poses) mapper.add(convert_point(p.position));
-  LineString2d left_ls;
-  for (const auto & p : path.left_bound) left_ls.push_back(convert_point(p));
-  LineString2d right_ls;
-  for (const auto & p : path.right_bound) right_ls.push_back(convert_point(p));
-  mapper.add(left_ls);
-  mapper.add(right_ls);
-  for (const auto & p : path_poses)
-    mapper.map(convert_point(p.position), "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2");
-  mapper.map(left_ls, "fill-opacity:0.3;fill:black;stroke:black;stroke-width:1");
-  mapper.map(right_ls, "fill-opacity:0.3;fill:black;stroke:black;stroke-width:1");
   stop_watch.tic("curvatures_expansion");
   // Only add curvatures for the new points. Curvatures of reused path points are not updated.
   const auto new_curvatures =
