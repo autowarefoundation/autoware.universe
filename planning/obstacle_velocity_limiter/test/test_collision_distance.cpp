@@ -26,8 +26,8 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
+#include<iostream>
 
 const auto point_in_polygon = [](const auto x, const auto y, const auto & polygon) {
   return std::find_if(polygon.outer().begin(), polygon.outer().end(), [=](const auto & pt) {
@@ -65,7 +65,7 @@ TEST(particleModel, distanceToClosestCollision)
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_FALSE(result.has_value());
 
-  // this one V
+//this one V
 
   obstacles.points.emplace_back(4.0, 0.0);
   result =
@@ -98,7 +98,7 @@ TEST(particleModel, distanceToClosestCollision)
   ASSERT_FALSE(result.has_value());
 
   obstacles.points.emplace_back(4.0, 4.0);
-
+  
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_TRUE(result.has_value());
@@ -110,7 +110,7 @@ TEST(particleModel, distanceToClosestCollision)
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 2.121, 1e-3);
 
-  // this one V
+//this one V
   obstacles.lines.push_back(linestring_t{{-2.0, 2.0}, {3.0, -1.0}});
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
@@ -156,6 +156,8 @@ TEST(particleModel, distanceToClosestCollision)
   EXPECT_NEAR(*result, 2.121, 1e-3);
 }
 
+
+
 TEST(approximationMethod, distanceToClosestCollision)
 {
   using obstacle_velocity_limiter::CollisionChecker;
@@ -177,7 +179,7 @@ TEST(approximationMethod, distanceToClosestCollision)
   std::optional<double> result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_FALSE(result.has_value());
-  // Non Value obstacles
+//Non Value obstacles
   obstacles.points.emplace_back(-1.0, 0.0);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
@@ -188,7 +190,7 @@ TEST(approximationMethod, distanceToClosestCollision)
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_FALSE(result.has_value());
 
-  // inside the polygon
+//inside the polygon
   obstacles.points.emplace_back(4.0, 0.0);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
@@ -199,13 +201,14 @@ TEST(approximationMethod, distanceToClosestCollision)
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_TRUE(result.has_value());
-  EXPECT_NEAR(*result, 3.04, EPS);
+  EXPECT_NEAR(*result, 3.04, EPS); 
 
   obstacles.points.emplace_back(2.5, -0.75);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_TRUE(result.has_value());
-  EXPECT_NEAR(*result, 2.61, EPS);
+  EXPECT_NEAR(*result, 2.61, EPS); 
+
 
   obstacles.points.emplace_back(2.0, -1.0);
   result =
@@ -213,7 +216,7 @@ TEST(approximationMethod, distanceToClosestCollision)
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 2.23, EPS);
 
-  // Change vector and footprint
+// Change vector and footprint
   vector = linestring_t{{0.0, 0.0}, {5.0, 5.0}};
   params.heading = M_PI_4;
   footprint.outer() = {{-1.0, 1.0}, {4.0, 6.0}, {6.0, 4.0}, {1.0, -1.0}};
@@ -222,7 +225,7 @@ TEST(approximationMethod, distanceToClosestCollision)
   obstacles.lines.clear();
 
   // auto EPS = 1e-3;
-  obstacles.points.emplace_back(5.0, 1.0);
+ obstacles.points.emplace_back(5.0, 1.0);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_FALSE(result.has_value());
@@ -239,7 +242,7 @@ TEST(approximationMethod, distanceToClosestCollision)
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 2.23, EPS);
 
-  // Change vector (opposite direction)
+// Change vector (opposite direction)
   params.heading = -3 * M_PI_4;
   vector = linestring_t{{5.0, 5.0}, {0.0, 0.0}};
   obstacles.points.clear();
@@ -256,6 +259,7 @@ TEST(approximationMethod, distanceToClosestCollision)
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 2.23, EPS);
+
 }
 
 TEST(bicycleModel, distanceToClosestCollision)
@@ -293,19 +297,20 @@ TEST(bicycleModel, distanceToClosestCollision)
   obstacles.points.emplace_back(4.0, 0.0);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
-  ASSERT_FALSE(result.has_value());
+  ASSERT_FALSE(result.has_value()); 
 
   obstacles.points.emplace_back(3.0, 0.5);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_TRUE(result.has_value());
-  EXPECT_NEAR(*result, 3.05, EPS);
+  EXPECT_NEAR(*result, 3.05, EPS); 
 
   obstacles.points.emplace_back(2.5, -0.75);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_TRUE(result.has_value());
-  EXPECT_NEAR(*result, 2.64, EPS);
+  EXPECT_NEAR(*result, 2.64, EPS); 
+
 
   // Change vector and footprint
   vector = linestring_t{{0.0, 0.0}, {5.0, 5.0}};
@@ -314,6 +319,7 @@ TEST(bicycleModel, distanceToClosestCollision)
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
   obstacles.points.clear();
   obstacles.lines.clear();
+
 
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
@@ -332,7 +338,7 @@ TEST(bicycleModel, distanceToClosestCollision)
   EXPECT_NEAR(*result, 2.31, EPS);
 
   // Change vector (opposite direction)
-  params.heading = -M_PI;
+  params.heading = - M_PI;
   vector = linestring_t{{5.0, 5.0}, {0.0, 0.0}};
   obstacles.points.clear();
   obstacles.lines.clear();
@@ -349,8 +355,8 @@ TEST(bicycleModel, distanceToClosestCollision)
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 2.76, EPS);
 
-  // change vector and footprint
-  params.heading = M_PI_2;
+//change vector and footprint
+   params.heading = M_PI_2;
   vector = linestring_t{{3.0, 3.0}, {0.0, 3.0}};
   footprint.outer() = {{1.0, -1.0}, {-4.0, 6.0}, {-5.0, -4.0}, {1.0, -4.0}};
   boost::geometry::correct(footprint);
@@ -362,6 +368,8 @@ TEST(bicycleModel, distanceToClosestCollision)
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 7.34, EPS);
+
+
 }
 
 TEST(TestCollisionDistance, arcDistance)
@@ -409,6 +417,7 @@ TEST(TestCollisionDistance, createObjPolygons)
 
   polygons = createObjectPolygons(objects, 0.0, 1.0);
   EXPECT_TRUE(polygons.empty());
+  
 
   polygons = createObjectPolygons(objects, 0.0, 0.0);
   ASSERT_EQ(polygons.size(), 1ul);
@@ -444,3 +453,6 @@ TEST(TestCollisionDistance, createObjPolygons)
   polygons = createObjectPolygons(objects, 0.0, 0.0);
   EXPECT_EQ(polygons.size(), 2ul);
 }
+
+
+
