@@ -314,7 +314,7 @@ TEST(bicycleModel, distanceToClosestCollision)
 
   // Change vector and footprint
   vector = linestring_t{{0.0, 0.0}, {5.0, 5.0}};
-  params.heading = M_PI_4;
+  params.heading = M_PI_2;
   footprint.outer() = {{-1.0, 1.0}, {4.0, 6.0}, {6.0, 4.0}, {1.0, -1.0}};
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
   obstacles.points.clear();
@@ -329,13 +329,13 @@ TEST(bicycleModel, distanceToClosestCollision)
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_TRUE(result.has_value());
-  EXPECT_NEAR(*result, 0.0, EPS);
+  EXPECT_NEAR(*result, 6.28, EPS);
 
   obstacles.points.emplace_back(1.0, 2.0);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_TRUE(result.has_value());
-  EXPECT_NEAR(*result, 0, EPS);
+  EXPECT_NEAR(*result, 2.31, EPS);
 
   // Change vector (opposite direction)
   params.heading = - M_PI;
