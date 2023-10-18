@@ -417,6 +417,7 @@ TEST(TestCollisionDistance, createObjPolygons)
 
   polygons = createObjectPolygons(objects, 0.0, 1.0);
   EXPECT_TRUE(polygons.empty());
+  
 
   polygons = createObjectPolygons(objects, 0.0, 0.0);
   ASSERT_EQ(polygons.size(), 1ul);
