@@ -213,7 +213,6 @@ In order to prevent chattering of recognition results, once an obstacle is targe
 
 ```plantuml
 @startuml
-skinparam monochrome true
 skinparam defaultTextAlignment center
 skinparam noteTextAlignment left
 
@@ -245,14 +244,13 @@ stop
 endif
 endif
 
-:return true;
+#FF006C :return true;
 stop
 @enduml
 ```
 
 ```plantuml
 @startuml
-skinparam monochrome true
 skinparam defaultTextAlignment center
 skinparam noteTextAlignment left
 
@@ -280,7 +278,7 @@ else (\n no)
 :return false;
 stop
 endif
-:return true;
+#FF006C :return true;
 stop
 }
 
@@ -289,7 +287,6 @@ stop
 
 ```plantuml
 @startuml
-skinparam monochrome true
 skinparam defaultTextAlignment center
 skinparam noteTextAlignment left
 
@@ -298,28 +295,37 @@ start
 
 partition isSatisfiedWithVehicleCodition() {
 if(object is force avoidance target ?) then (yes)
-else (\n yes)
-if(object is on same lane for ego ?) then (yes)
-if(object is nearer lane centerline than threshold ?) then (no)
+#FF006C :return true;
+stop
+else (\n no)
+if(object is nearer lane centerline than threshold ?) then (yes)
 :return false;
 stop
-else (\n yes)
+else (\n no)
+if(object is on same lane for ego ?) then (yes)
+if(object is shifting right or left side road shoulder more than threshold ?) then (yes)
+#FF006C :return true;
+stop
+else (\n no)
+:return false;
+stop
 endif
 else (\n no)
-if(object is shifting right or left side road shoulder more than threshold ?) then (no)
-:return false;
-stop
-else (\n yes)
 if(object is in intersection ?) then (no)
-:return false;
+#FF006C :return true;
 stop
 else (\n yes)
-endif
-endif
-endif
-endif
-:return true;
+if(object pose is paralell to ego lane ?) then (no)
+#FF006C :return true;
 stop
+else (\n yes)
+:return false;
+stop
+endif
+endif
+endif
+endif
+endif
 }
 
 @enduml
@@ -327,7 +333,6 @@ stop
 
 ```plantuml
 @startuml
-skinparam monochrome true
 skinparam defaultTextAlignment center
 skinparam noteTextAlignment left
 
@@ -336,11 +341,11 @@ start
 
 partition isSatisfiedWithNonVehicleCodition() {
 if(object is nearer crosswalk than threshold ?) then (yes)
-:ignore the object;
+:return false;
 stop
 else (\n no)
 endif
-:return true;
+#FF006C :return true;
 stop
 }
 
