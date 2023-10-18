@@ -141,7 +141,7 @@ NDTScanMatcher::NDTScanMatcher()
   initial_pose_distance_tolerance_m_ =
     this->declare_parameter<double>("initial_pose_distance_tolerance_m");
 
-  use_cov_estimation_ = this->declare_parameter("use_covariance_estimation", use_cov_estimation_);
+  use_cov_estimation_ = this->declare_parameter<bool>("use_covariance_estimation");
   if (use_cov_estimation_) {
     std::vector<double> offset_array_x =
       this->declare_parameter<std::vector<double>>("offset_array_x");
@@ -447,6 +447,13 @@ void NDTScanMatcher::callback_sensor_points(
   const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
   (*state_ptr_)["state"] = "Sleeping";
 
+  // covariance estimation
+  std::array<double, 36> ndt_covariance;
+  ndt_covariance = output_pose_covariance_;
+  if (is_converged && use_cov_estimation_) {
+    estimate_covariance(ndt_result, initial_pose_matrix, ndt_covariance, sensor_ros_time);
+  }
+
   const auto exe_end_time = std::chrono::system_clock::now();
   const auto duration_micro_sec =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
@@ -488,13 +495,6 @@ void NDTScanMatcher::callback_sensor_points(
   } else {
     ++skipping_publish_num;
     RCLCPP_WARN(get_logger(), "Not Converged");
-  }
-
-  // covariance estimation
-  std::array<double, 36> ndt_covariance;
-  ndt_covariance = output_pose_covariance_;
-  if (is_converged && use_cov_estimation_) {
-    estimate_covariance(ndt_result, initial_pose_matrix, ndt_covariance, sensor_ros_time);
   }
 
   // publish
@@ -730,8 +730,7 @@ void NDTScanMatcher::estimate_covariance(
   // Laplace approximation
   const Eigen::Matrix2d hessian_inv = -ndt_result.hessian.inverse().block(0, 0, 2, 2);
   const Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> lap_eigensolver(hessian_inv);
-  Eigen::Matrix2d rot;
-  rot = Eigen::Rotation2Dd(0.0);
+  Eigen::Matrix2d rot = Eigen::Rotation2Dd(0.0);
   if (lap_eigensolver.info() == Eigen::Success) {
     const Eigen::Vector2d lap_eigen_vec = lap_eigensolver.eigenvectors().col(1);
     const double th = std::atan2(lap_eigen_vec.y(), lap_eigen_vec.x());
@@ -777,9 +776,9 @@ void NDTScanMatcher::estimate_covariance(
     multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(sub_initial_pose_matrix));
   }
   Eigen::Vector2d centroid = tmp_centroid / (offset_array_.size() + 1);
-  // TODO unbiased covariance: R * ((n-1)/n))
-  Eigen::Matrix2d pca_covariance;
-  pca_covariance = (tmp_cov / (offset_array_.size() + 1) - (centroid * centroid.transpose()));
+
+  Eigen::Matrix2d pca_covariance =
+    (tmp_cov / (offset_array_.size() + 1) - (centroid * centroid.transpose()));
   ndt_covariance[0] = output_pose_covariance_[0] + pca_covariance(0, 0);
   ndt_covariance[1] = pca_covariance(1, 0);
   ndt_covariance[6] = pca_covariance(0, 1);
