@@ -33,8 +33,8 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
     test/test_forward_projection.cpp
     test/test_obstacles.cpp
-    test/new.cpp
-    # test/test_collision_distance.cpp
+    # test/new.cpp
+    test/test_collision_distance.cpp
     test/test_occupancy_grid_utils.cpp
     test/test_${PROJECT_NAME}_node_interface.cpp
   )
