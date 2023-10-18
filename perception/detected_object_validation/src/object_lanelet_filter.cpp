@@ -88,8 +88,10 @@ void ObjectLaneletFilterNode::objectCallback(
   // calculate convex hull
   const auto convex_hull = getConvexHull(transformed_objects);
   // get intersected lanelets
-  lanelet::ConstLanelets intersected_road_lanelets = getIntersectedLanelets(convex_hull, road_lanelets_);
-  lanelet::ConstLanelets intersected_shoulder_lanelets = getIntersectedLanelets(convex_hull, shoulder_lanelets_);
+  lanelet::ConstLanelets intersected_road_lanelets =
+    getIntersectedLanelets(convex_hull, road_lanelets_);
+  lanelet::ConstLanelets intersected_shoulder_lanelets =
+    getIntersectedLanelets(convex_hull, shoulder_lanelets_);
 
   int index = 0;
   for (const auto & object : transformed_objects.objects) {
@@ -105,8 +107,7 @@ void ObjectLaneletFilterNode::objectCallback(
       polygon.outer().push_back(polygon.outer().front());
       if (isPolygonOverlapLanelets(polygon, intersected_road_lanelets)) {
         output_object_msg.objects.emplace_back(input_msg->objects.at(index));
-      }
-      else if (isPolygonOverlapLanelets(polygon, intersected_shoulder_lanelets)) {
+      } else if (isPolygonOverlapLanelets(polygon, intersected_shoulder_lanelets)) {
         output_object_msg.objects.emplace_back(input_msg->objects.at(index));
       }
     } else {
