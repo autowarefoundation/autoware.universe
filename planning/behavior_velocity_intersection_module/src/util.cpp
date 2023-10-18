@@ -269,7 +269,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const lanelet::CompoundPolygon3d & first_detection_area,
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
-  const double stop_line_margin, const double peeking_offset, const bool enable_occlusion,
+  const double stop_line_margin, const bool enable_peeking_pass_judge, const double peeking_offset,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
 {
   const auto & path_ip = interpolated_path_info.path;
@@ -419,8 +419,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
       intersection_stop_lines_temp.default_stop_line;
   }
   if (
-    enable_occlusion && (intersection_stop_lines_temp.occlusion_peeking_stop_line >
-                         intersection_stop_lines_temp.pass_judge_line)) {
+    enable_peeking_pass_judge && (intersection_stop_lines_temp.occlusion_peeking_stop_line >
+                                  intersection_stop_lines_temp.pass_judge_line)) {
     intersection_stop_lines_temp.pass_judge_line =
       intersection_stop_lines_temp.occlusion_peeking_stop_line;
   }

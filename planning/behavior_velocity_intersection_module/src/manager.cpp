@@ -64,6 +64,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns + ".common.consider_wrong_direction_vehicle");
   ip.common.disable_pass_judge_sudden_stop =
     getOrDeclareParameter<bool>(node, ns + ".common.disable_pass_judge_sudden_stop");
+  ip.common.enable_peeking_pass_judge =
+    getOrDeclareParameter<bool>(node, ns + ".common.enable_peeking_pass_judge");
 
   ip.stuck_vehicle.turn_direction.left =
     getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.left");
