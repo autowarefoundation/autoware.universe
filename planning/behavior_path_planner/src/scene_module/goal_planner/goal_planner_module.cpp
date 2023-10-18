@@ -1174,7 +1174,7 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
 
 void GoalPlannerModule::transitionToNextPathIfFinishingCurrentPath()
 {
-  if (isActivated() && !status_.get_last_approved_time()) {
+  if (isActivated() && status_.get_last_approved_time()) {
     // if using arc_path and finishing current_path, get next path
     // enough time for turn signal
     const bool has_passed_enough_time =
