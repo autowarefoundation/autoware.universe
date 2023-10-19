@@ -22,24 +22,27 @@ autoware_package()
 
 # Library
 
-set(TVM_UTILITY_NODE_LIB_HEADERS "include/${PROJECT_NAME}/pipeline.hpp")
+set(TVM_UTILITY_NODE_LIB_HEADERS
+  "include/${PROJECT_NAME}/pipeline.hpp"
+)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED ${TVM_UTILITY_NODE_LIB_HEADERS})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 set(BUILD_EXAMPLE OFF CACHE BOOL "enable build yolo_v2_tiny")
 
-find_package(OpenCV REQUIRED)
-set(tvm_runtime_DIR ${tvm_vendor_DIR})
-find_package(tvm_runtime CONFIG REQUIRED)
-find_package(ament_cmake_gtest REQUIRED)
-find_package(rclcpp REQUIRED)
-
-if(BUILD_TESTING)
+if(BUILD_TESTING OR BUILD_EXAMPLE)
+  find_package(OpenCV REQUIRED)
+  set(tvm_runtime_DIR ${tvm_vendor_DIR})
+  find_package(tvm_runtime CONFIG REQUIRED)
   # Get target backend
   set(${PROJECT_NAME}_BACKEND llvm CACHE STRING "${PROJECT_NAME} neural network backend")
+endif()
 
+if(BUILD_TESTING)
   # compile each folder inside test/ as a test case
+  find_package(ament_cmake_gtest REQUIRED)
+
   set(TEST_ARTIFACTS "${CMAKE_CURRENT_LIST_DIR}/artifacts")
   file(GLOB TEST_CASES test/*)
   foreach(TEST_FOLDER ${TEST_CASES})
@@ -89,10 +92,9 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_EXAMPLE)
-  # Get target backend
-  set(${PROJECT_NAME}_BACKEND llvm CACHE STRING "${PROJECT_NAME} neural network backend")
-
   # compile each folder inside example/ as an example
+  find_package(rclcpp REQUIRED)
+
   set(EXAMPLE_ARTIFACTS "${CMAKE_CURRENT_LIST_DIR}/artifacts")
   file(GLOB EXAMPLE_CASES example/*)
   foreach(EXAMPLE_FOLDER ${EXAMPLE_CASES})

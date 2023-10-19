@@ -14,24 +14,27 @@
 
 #include "tvm_utility/pipeline.hpp"
 
-#ifndef COMMON__TVM_UTILITY__DATA__USER__ABS_MODEL_X86_64__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
-#define COMMON__TVM_UTILITY__DATA__USER__ABS_MODEL_X86_64__INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#ifndef COMMON__TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#define COMMON__TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_
 
 namespace model_zoo
 {
-namespace inf_test
+namespace perception
 {
-namespace engine_load
+namespace camera_obstacle_detection
 {
-namespace abs_model
+namespace yolo_v2_tiny
+{
+namespace tensorflow_fp32_coco
 {
 
 static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
-  {0, 0, 0},  // modelzoo_version
+  {3, 0, 0},  // modelzoo_version
 
-  "abs_model_x86_64",  // network_name
-  "llvm",              // network_backend
+  "yolo_v2_tiny",  // network_name
+  "llvm",          // network_backend
 
+  // cspell: ignore DLCPU
   "deploy_lib.so",        // network_module_path
   "deploy_graph.json",    // network_graph_path
   "deploy_param.params",  // network_params_path
@@ -39,14 +42,15 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
   kDLCPU,  // tvm_device_type
   0,       // tvm_device_id
 
-  {{"a", kDLFloat, 32, 1, {2, 2}}},  // network_inputs
+  {{"input", kDLFloat, 32, 1, {-1, 416, 416, 3}}},  // network_inputs
 
-  {{"output", kDLFloat, 32, 1, {2, 2}}}  // network_outputs
+  {{"output", kDLFloat, 32, 1, {1, 13, 13, 425}}}  // network_outputs
 };
 
-}  // namespace abs_model
-}  // namespace engine_load
-}  // namespace inf_test
+}  // namespace tensorflow_fp32_coco
+}  // namespace yolo_v2_tiny
+}  // namespace camera_obstacle_detection
+}  // namespace perception
 }  // namespace model_zoo
-#endif  // COMMON__TVM_UTILITY__DATA__USER__ABS_MODEL_X86_64__INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#endif  // COMMON__TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_
         // NOLINT

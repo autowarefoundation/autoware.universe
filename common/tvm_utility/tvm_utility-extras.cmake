@@ -28,33 +28,7 @@ function(get_neural_network MODEL_NAME MODEL_BACKEND DEPENDENCY)
   set(DATA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/data)
   set(EXTERNALPROJECT_NAME ${MODEL_NAME}_${MODEL_BACKEND})
   set(PREPROCESSING "")
-
-  # Use user-provided models.
-  # cspell: ignore COPYONLY
-  if(IS_DIRECTORY "${DATA_PATH}/user/${MODEL_NAME}")
-    message(STATUS "Using user-provided model from ${DATA_PATH}/user/${MODEL_NAME}")
-    file(REMOVE_RECURSE "${DATA_PATH}/models/${MODEL_NAME}/")
-    configure_file(
-      "${DATA_PATH}/user/${MODEL_NAME}/inference_engine_tvm_config.hpp"
-      "${DATA_PATH}/models/${MODEL_NAME}/inference_engine_tvm_config.hpp"
-      COPYONLY
-    )
-    if(EXISTS "${DATA_PATH}/user/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp")
-      configure_file(
-        "${DATA_PATH}/user/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp"
-        "${DATA_PATH}/models/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp"
-        COPYONLY
-      )
-    endif()
-    set(SOURCE_DIR "${DATA_PATH}/user/${MODEL_NAME}")
-    set(INSTALL_DIRECTORY "${DATA_PATH}/user/${MODEL_NAME}")
-  else()
-    message(WARNING " NO ${MODEL_NAME} model provided by user, for more info check"
-    " https://autowarefoundation.github.io/autoware.universe/main/common/tvm_utility/")
-    set(${DEPENDENCY} "" PARENT_SCOPE)
-    return()
-
-  endif()
+  set(SOURCE_DIR "${DATA_PATH}/models/${MODEL_NAME}")
 
   include(ExternalProject)
   externalproject_add(${EXTERNALPROJECT_NAME}

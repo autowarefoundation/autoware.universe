@@ -61,7 +61,7 @@ The structure inside of the source directory of the package making use of the fu
 ```{text}
 .
 ├── data
-│   └── user
+│   └── models
 │       ├── ${MODEL 1}
 │       │   └── inference_engine_tvm_config.hpp
 │       ├── ...
