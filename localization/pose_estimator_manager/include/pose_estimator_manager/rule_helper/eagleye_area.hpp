@@ -20,6 +20,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <memory>
+#include <string>
 
 namespace multi_pose_estimator
 {

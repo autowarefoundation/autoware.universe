@@ -19,6 +19,8 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
+#include <memory>
+
 namespace multi_pose_estimator
 {
 class SubManagerYabLoc : public BasePoseEstimatorSubManager
@@ -27,7 +29,7 @@ public:
   using Image = sensor_msgs::msg::Image;
   using SetBool = std_srvs::srv::SetBool;
 
-  SubManagerYabLoc(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
+  explicit SubManagerYabLoc(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
   {
     yabloc_is_enabled_ = true;
 
@@ -36,7 +38,7 @@ public:
     sub_image_ = node->create_subscription<Image>("~/input/image", 5, on_image);
     pub_image_ = node->create_publisher<Image>("~/output/image", 5);
 
-    using namespace std::chrono_literals;
+    using namespace std::literals::chrono_literals;
     service_callback_group_ =
       node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     enable_service_client_ = node->create_client<SetBool>(
@@ -59,7 +61,7 @@ protected:
 
   void request_service(bool flag)
   {
-    using namespace std::chrono_literals;
+    using namespace std::literals::chrono_literals;
     auto request = std::make_shared<SetBool::Request>();
     request->data = flag;
 

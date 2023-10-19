@@ -25,7 +25,7 @@ class SubManagerNdt : public BasePoseEstimatorSubManager
 public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
 
-  SubManagerNdt(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
+  explicit SubManagerNdt(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
   {
     using std::placeholders::_1;
     auto on_pointcloud = std::bind(&SubManagerNdt::on_pointcloud, this, _1);

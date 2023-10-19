@@ -28,7 +28,7 @@ public:
   using Image = sensor_msgs::msg::Image;
   using SetBool = std_srvs::srv::SetBool;
 
-  SubManagerArTag(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
+  explicit SubManagerArTag(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
   {
     ar_tag_is_enabled_ = true;
 

@@ -25,7 +25,7 @@ class SubManagerEagleye : public BasePoseEstimatorSubManager
 public:
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-  SubManagerEagleye(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
+  explicit SubManagerEagleye(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
   {
     eagleye_is_enabled_ = true;
 

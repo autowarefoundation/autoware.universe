@@ -32,6 +32,12 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
 namespace multi_pose_estimator
 {
 class MapBasedRule : public BaseSwitchRule

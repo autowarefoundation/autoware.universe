@@ -25,6 +25,7 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
+#include <string>
 
 namespace multi_pose_estimator
 {
@@ -34,7 +35,7 @@ class ArTagPosition
 public:
   using TransformStamped = geometry_msgs::msg::TransformStamped;
 
-  ArTagPosition(rclcpp::Node * node);
+  explicit ArTagPosition(rclcpp::Node * node);
 
   double distance_to_nearest_ar_tag_around_ego(const geometry_msgs::msg::Point & ego_point) const;
 

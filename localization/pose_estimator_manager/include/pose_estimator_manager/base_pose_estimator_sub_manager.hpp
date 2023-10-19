@@ -17,6 +17,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <memory>
+
 namespace multi_pose_estimator
 {
 class BasePoseEstimatorSubManager
@@ -24,7 +26,7 @@ class BasePoseEstimatorSubManager
 public:
   using SharedPtr = std::shared_ptr<BasePoseEstimatorSubManager>;
 
-  BasePoseEstimatorSubManager(rclcpp::Node * node) : logger_(node->get_logger()) {}
+  explicit BasePoseEstimatorSubManager(rclcpp::Node * node) : logger_(node->get_logger()) {}
 
   void enable() { set_enable(true); }
   void disable() { set_enable(false); }

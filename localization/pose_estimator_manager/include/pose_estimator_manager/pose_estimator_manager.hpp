@@ -25,6 +25,10 @@
 #include <std_srvs/srv/set_bool.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <memory>
+#include <unordered_map>
+#include <unordered_set>
+
 namespace multi_pose_estimator
 {
 class PoseEstimatorManager : public rclcpp::Node

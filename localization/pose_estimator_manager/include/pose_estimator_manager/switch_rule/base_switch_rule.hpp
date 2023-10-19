@@ -22,7 +22,9 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace multi_pose_estimator
 {
@@ -31,7 +33,7 @@ class BaseSwitchRule
 {
 public:
   using MarkerArray = visualization_msgs::msg::MarkerArray;
-  BaseSwitchRule(rclcpp::Node & node)
+  explicit BaseSwitchRule(rclcpp::Node & node)
   : logger_ptr_(std::make_shared<rclcpp::Logger>(node.get_logger()))
   {
   }
