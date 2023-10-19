@@ -764,20 +764,20 @@ void NDTScanMatcher::service_ndt_align(
     map_update_module_->update_map(initial_pose_msg_in_map_frame.pose.pose.position);
   }
 
+  // mutex Map
+  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
+
   if (ndt_ptr_->getInputTarget() == nullptr) {
     res->success = false;
-    RCLCPP_WARN(get_logger(), "No InputTarget");
+    RCLCPP_WARN(get_logger(), "No InputTarget. Please check the map file and the map_loader service");
     return;
   }
 
   if (ndt_ptr_->getInputSource() == nullptr) {
     res->success = false;
-    RCLCPP_WARN(get_logger(), "No InputSource");
+    RCLCPP_WARN(get_logger(), "No InputSource. Please check the input lidar topic");
     return;
   }
-
-  // mutex Map
-  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
 
   (*state_ptr_)["state"] = "Aligning";
   res->pose_with_covariance = align_pose(initial_pose_msg_in_map_frame);
@@ -789,11 +789,6 @@ void NDTScanMatcher::service_ndt_align(
 geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
-  if (ndt_ptr_->getInputTarget() == nullptr || ndt_ptr_->getInputSource() == nullptr) {
-    RCLCPP_WARN(get_logger(), "No Map or Sensor PointCloud");
-    return geometry_msgs::msg::PoseWithCovarianceStamped();
-  }
-
   output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
 
   const auto base_rpy = get_rpy(initial_pose_with_cov);
