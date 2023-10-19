@@ -22,7 +22,9 @@ namespace multi_pose_estimator
 {
 std::vector<PoseEstimatorName> MapBasedRule::supporting_pose_estimators()
 {
-  return {PoseEstimatorName::NDT, PoseEstimatorName::YABLOC, PoseEstimatorName::EAGLEYE};
+  return {
+    PoseEstimatorName::ndt, PoseEstimatorName::yabloc, PoseEstimatorName::eagleye,
+    PoseEstimatorName::artag};
 }
 
 MapBasedRule::MapBasedRule(
@@ -61,7 +63,7 @@ MapBasedRule::MapBasedRule(
     "~/input/initialization_state", latch_qos, on_initialization_state);
   sub_eagleye_fix_ = node.create_subscription<NavSatFix>("~/input/eagleye/fix", 10, on_eagleye_fix);
 
-  if (running_estimator_list.count(PoseEstimatorName::ARTAG)) {
+  if (running_estimator_list.count(PoseEstimatorName::artag)) {
     ar_tag_position_ = std::make_unique<ArTagPosition>(&node);
   }
 
@@ -71,7 +73,7 @@ MapBasedRule::MapBasedRule(
 
 bool MapBasedRule::eagleye_is_available() const
 {
-  if (running_estimator_list_.count(PoseEstimatorName::EAGLEYE) == 0) {
+  if (running_estimator_list_.count(PoseEstimatorName::eagleye) == 0) {
     return false;
   }
 
@@ -87,12 +89,12 @@ bool MapBasedRule::eagleye_is_available() const
 }
 bool MapBasedRule::yabloc_is_available() const
 {
-  return running_estimator_list_.count(PoseEstimatorName::YABLOC) != 0;
+  return running_estimator_list_.count(PoseEstimatorName::yabloc) != 0;
 }
 
 bool MapBasedRule::ndt_is_available() const
 {
-  return running_estimator_list_.count(PoseEstimatorName::NDT) != 0;
+  return running_estimator_list_.count(PoseEstimatorName::ndt) != 0;
 }
 
 bool MapBasedRule::ndt_is_more_suitable_than_yabloc(std::string * optional_message) const
@@ -199,7 +201,7 @@ void MapBasedRule::on_pose_cov(PoseCovStamped::ConstSharedPtr msg)
 
 bool MapBasedRule::artag_is_available() const
 {
-  if (running_estimator_list_.count(PoseEstimatorName::ARTAG) == 0) {
+  if (running_estimator_list_.count(PoseEstimatorName::artag) == 0) {
     return false;
   }
 

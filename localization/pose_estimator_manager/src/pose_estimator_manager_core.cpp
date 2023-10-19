@@ -20,6 +20,8 @@
 #include "pose_estimator_manager/sub_manager/sub_manager_yabloc.hpp"
 #include "pose_estimator_manager/switch_rule/map_based_rule.hpp"
 
+#include <magic_enum.hpp>
+
 #include <sstream>
 
 namespace multi_pose_estimator
@@ -30,15 +32,9 @@ static std::unordered_set<PoseEstimatorName> parse_estimator_name_args(
 {
   std::unordered_set<PoseEstimatorName> running_estimator_list;
   for (const auto & estimator_name : arg) {
-    // TODO(KYabuuchi): Use magic_enum or fuzzy interpretation
-    if (estimator_name == "ndt") {
-      running_estimator_list.insert(PoseEstimatorName::NDT);
-    } else if (estimator_name == "yabloc") {
-      running_estimator_list.insert(PoseEstimatorName::YABLOC);
-    } else if (estimator_name == "eagleye") {
-      running_estimator_list.insert(PoseEstimatorName::EAGLEYE);
-    } else if (estimator_name == "artag") {
-      running_estimator_list.insert(PoseEstimatorName::ARTAG);
+    auto estimator = magic_enum::enum_cast<PoseEstimatorName>(estimator_name);
+    if (estimator.has_value()) {
+      running_estimator_list.insert(estimator.value());
     } else {
       RCLCPP_ERROR_STREAM(
         rclcpp::get_logger("pose_estimator_manager"),
@@ -60,23 +56,21 @@ PoseEstimatorManager::PoseEstimatorManager()
 
   // sub-managers
   for (auto pose_estimator_name : running_estimator_list_) {
-    // TODO(KYabuuchi): Use magic enum
     switch (pose_estimator_name) {
-      case PoseEstimatorName::NDT:
-        sub_managers_.emplace(PoseEstimatorName::NDT, std::make_shared<SubManagerNdt>(this));
+      case PoseEstimatorName::ndt:
+        sub_managers_.emplace(pose_estimator_name, std::make_shared<SubManagerNdt>(this));
         break;
-      case PoseEstimatorName::YABLOC:
-        sub_managers_.emplace(PoseEstimatorName::YABLOC, std::make_shared<SubManagerYabLoc>(this));
+      case PoseEstimatorName::yabloc:
+        sub_managers_.emplace(pose_estimator_name, std::make_shared<SubManagerYabLoc>(this));
         break;
-      case PoseEstimatorName::EAGLEYE:
-        sub_managers_.emplace(
-          PoseEstimatorName::EAGLEYE, std::make_shared<SubManagerEagleye>(this));
+      case PoseEstimatorName::eagleye:
+        sub_managers_.emplace(pose_estimator_name, std::make_shared<SubManagerEagleye>(this));
         break;
-      case PoseEstimatorName::ARTAG:
-        sub_managers_.emplace(PoseEstimatorName::ARTAG, std::make_shared<SubManagerArTag>(this));
+      case PoseEstimatorName::artag:
+        sub_managers_.emplace(pose_estimator_name, std::make_shared<SubManagerArTag>(this));
         break;
       default:
-        RCLCPP_WARN_STREAM(get_logger(), "invalid pose_estimator is specified");
+        RCLCPP_ERROR_STREAM(get_logger(), "invalid pose_estimator is specified");
     }
   }
 

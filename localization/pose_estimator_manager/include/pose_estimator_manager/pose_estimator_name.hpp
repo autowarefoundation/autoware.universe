@@ -17,7 +17,7 @@
 
 namespace multi_pose_estimator
 {
-enum class PoseEstimatorName { NDT, YABLOC, EAGLEYE, ARTAG };
+enum class PoseEstimatorName : int { ndt = 1, yabloc = 2, eagleye = 4, artag = 8 };
 }
 
 #endif  // POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_NAME_HPP_
