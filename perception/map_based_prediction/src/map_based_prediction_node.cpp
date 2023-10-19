@@ -976,23 +976,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   pub_calculation_time_->publish(calculation_time_msg);
 }
 
-void MapBasedPredictionNode::removePedestrianCrossingWithFence(PredictedObjects & predicted_objects)
-{
-  predicted_objects.objects.erase(
-    std::remove_if(
-      predicted_objects.objects.begin(), predicted_objects.objects.end(),
-      [this](const auto & predicted_object) {
-        if (predicted_object.classification.front().label != ObjectClassification::PEDESTRIAN) {
-          return false;
-        }
-        return std::any_of(
-          predicted_object.kinematics.predicted_paths.begin(),
-          predicted_object.kinematics.predicted_paths.end(),
-          [this](const auto & path) { return this->doesPathCrossAnyFence(path); });
-      }),
-    predicted_objects.objects.end());
-}
-
 bool MapBasedPredictionNode::doesPathCrossAnyFence(const PredictedPath & predicted_path)
 {
   const lanelet::ConstLineStrings3d & all_fences =
