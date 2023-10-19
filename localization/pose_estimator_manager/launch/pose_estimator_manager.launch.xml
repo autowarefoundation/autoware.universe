@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-
   <arg name="pose_sources" default="" description=""/>
 
   <node pkg="pose_estimator_manager" exec="pose_estimator_manager" name="pose_estimator_manager" output="screen" args="--ros-args --log-level info">
@@ -31,5 +30,4 @@
     <remap from="~/input/initialization_state" to="/localization/initialization_state"/>
     <remap from="~/input/eagleye/fix" to="/localization/pose_estimator/eagleye/fix"/>
   </node>
-
 </launch>

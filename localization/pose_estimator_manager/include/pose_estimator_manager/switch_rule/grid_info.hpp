@@ -1,5 +1,5 @@
-#ifndef POSE_ESTIMATOR_MANAGER__GRID_INFO_HPP_
-#define POSE_ESTIMATOR_MANAGER__GRID_INFO_HPP_
+#ifndef POSE_ESTIMATOR_MANAGER__SWITCH_RULE__GRID_INFO_HPP_
+#define POSE_ESTIMATOR_MANAGER__SWITCH_RULE__GRID_INFO_HPP_
 #include <boost/functional/hash.hpp>
 
 #include <pcl/point_types.h>
@@ -51,4 +51,4 @@ public:
 };
 }  // namespace std
 
-#endif /* POSE_ESTIMATOR_MANAGER__GRID_INFO_HPP_ */
+#endif  // POSE_ESTIMATOR_MANAGER__SWITCH_RULE__GRID_INFO_HPP_

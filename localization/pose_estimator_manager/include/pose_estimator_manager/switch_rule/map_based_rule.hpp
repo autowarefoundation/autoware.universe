@@ -63,6 +63,7 @@ protected:
   bool yabloc_is_available() const;
   bool ndt_is_available() const;
   bool artag_is_available() const;
+  bool ndt_is_more_suitable_than_yabloc(std::string * optional_message = nullptr) const;
 
   void on_point_cloud_map(PointCloud2::ConstSharedPtr msg);
   void on_vector_map(HADMapBin::ConstSharedPtr msg);

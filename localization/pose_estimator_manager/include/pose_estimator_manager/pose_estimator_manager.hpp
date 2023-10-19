@@ -42,4 +42,4 @@ private:
 };
 }  // namespace multi_pose_estimator
 
-#endif /* POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_MANAGER_HPP_ */
+#endif  // POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_MANAGER_HPP_

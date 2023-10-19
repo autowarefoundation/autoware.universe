@@ -19,8 +19,8 @@ import time
 import unittest
 
 from ament_index_python import get_package_share_directory
-from geometry_msgs.msg import PoseWithCovarianceStamped
 from autoware_adapi_v1_msgs.msg import LocalizationInitializationState
+from geometry_msgs.msg import PoseWithCovarianceStamped
 import launch
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
@@ -28,10 +28,10 @@ from launch.logging import get_logger
 import launch_testing
 import pytest
 import rclpy
-from std_srvs.srv import SetBool
+from rclpy.qos import DurabilityPolicy
+from rclpy.qos import QoSProfile
 from std_msgs.msg import String
-
-from rclpy.qos import QoSProfile, DurabilityPolicy
+from std_srvs.srv import SetBool
 
 logger = get_logger(__name__)
 
@@ -86,9 +86,7 @@ class TestEKFLocalizer(unittest.TestCase):
 
     def test_node_link(self):
         # Trigger pose_estimator_manager to activate the node
-        self.test_node.create_service(
-            SetBool, "/yabloc_suspend_srv", self.yabloc_callback
-        )
+        self.test_node.create_service(SetBool, "/yabloc_suspend_srv", self.yabloc_callback)
 
         # Receive state
         msg_buffer = []
@@ -122,9 +120,7 @@ class TestEKFLocalizer(unittest.TestCase):
             rclpy.spin_once(self.test_node, timeout_sec=0.1)
 
         # Check if the manager state is transitioning correctly
-        self.assertEqual(
-            msg_buffer[-1], "enable All\nestimated pose has not been published yet"
-        )
+        self.assertEqual(msg_buffer[-1], "enable All\nestimated pose has not been published yet")
 
         # Wait until the node publishes some topic
         end_time = time.time() + 1.0  # 1.5s
@@ -132,9 +128,7 @@ class TestEKFLocalizer(unittest.TestCase):
             rclpy.spin_once(self.test_node, timeout_sec=0.1)
 
         # Check if the manager state is transitioning correctly
-        self.assertEqual(
-            msg_buffer[-1], "enable All\nestimated pose has not been published yet"
-        )
+        self.assertEqual(msg_buffer[-1], "enable All\nestimated pose has not been published yet")
 
         # Publish dummy estimated pose
         pub_pose_stamped = self.test_node.create_publisher(

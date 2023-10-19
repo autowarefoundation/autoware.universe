@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="pose_source"
-        description="A string consisting of ndt, yabloc, and eagleye joined by underscores no matter the order. e.g. ndt_yabloc"/>
+  <arg name="pose_source" description="A string consisting of ndt, yabloc, and eagleye joined by underscores no matter the order. e.g. ndt_yabloc"/>
   <arg name="twist_source"/>
   <arg name="system_run_mode"/>
 
@@ -35,6 +34,5 @@
     <group>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/localization_error_monitor/localization_error_monitor.launch.xml"/>
     </group>
-
   </group>
 </launch>
