@@ -93,7 +93,6 @@ private:
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
   geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
-    const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
   void transform_sensor_measurement(

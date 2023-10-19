@@ -780,17 +780,16 @@ void NDTScanMatcher::service_ndt_align(
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
 
   (*state_ptr_)["state"] = "Aligning";
-  res->pose_with_covariance = align_pose(ndt_ptr_, initial_pose_msg_in_map_frame);
+  res->pose_with_covariance = align_pose(initial_pose_msg_in_map_frame);
   (*state_ptr_)["state"] = "Sleeping";
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
 geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
-  const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
-  if (ndt_ptr->getInputTarget() == nullptr || ndt_ptr->getInputSource() == nullptr) {
+  if (ndt_ptr_->getInputTarget() == nullptr || ndt_ptr_->getInputSource() == nullptr) {
     RCLCPP_WARN(get_logger(), "No Map or Sensor PointCloud");
     return geometry_msgs::msg::PoseWithCovarianceStamped();
   }
@@ -856,8 +855,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
     initial_pose.orientation = tf2::toMsg(tf_quaternion);
 
     const Eigen::Matrix4f initial_pose_matrix = pose_to_matrix4f(initial_pose);
-    ndt_ptr->align(*output_cloud, initial_pose_matrix);
-    const pclomp::NdtResult ndt_result = ndt_ptr->getResult();
+    ndt_ptr_->align(*output_cloud, initial_pose_matrix);
+    const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
 
     Particle particle(
       initial_pose, matrix4f_to_pose(ndt_result.pose), ndt_result.transform_probability,
@@ -891,7 +890,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
 
     auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     tier4_autoware_utils::transformPointCloud(
-      *ndt_ptr->getInputSource(), *sensor_points_in_map_ptr, ndt_result.pose);
+      *ndt_ptr_->getInputSource(), *sensor_points_in_map_ptr, ndt_result.pose);
     publish_point_cloud(initial_pose_with_cov.header.stamp, map_frame_, sensor_points_in_map_ptr);
   }
 
