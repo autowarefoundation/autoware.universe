@@ -29,6 +29,7 @@ namespace abs_model
 static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
   {0, 0, 0},  // modelzoo_version
 
+  // cspell: ignore mtriple
   "abs_model_aarch64",                // network_name
   "llvm -mtriple=aarch64-linux-gnu",  // network_backend
 
@@ -36,6 +37,7 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
   "deploy_graph.json",    // network_graph_path
   "deploy_param.params",  // network_params_path
 
+  // cspell: ignore DLCPU
   kDLCPU,  // tvm_device_type
   0,       // tvm_device_id
 
