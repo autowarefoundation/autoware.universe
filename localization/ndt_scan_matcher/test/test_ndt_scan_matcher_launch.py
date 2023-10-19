@@ -86,10 +86,12 @@ class TestNDTScanMatcher(unittest.TestCase):
 
         if future.result() is not None:
             self.test_node.get_logger().info("Result of bool service: %s" % future.result().message)
+            self.assertTrue(future.result().success, "ndt_scan_matcher is not activated")
         else:
             self.test_node.get_logger().error(
                 "Exception while calling service: %r" % future.exception()
             )
+            raise self.failureException("service trigger failed")
 
 
 @launch_testing.post_shutdown_test()
