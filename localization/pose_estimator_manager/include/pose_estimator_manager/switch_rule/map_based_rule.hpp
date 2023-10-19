@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef POSE_ESTIMATOR_MANAGER__SWITCH_RULE__MAP_BASED_RULE_HPP_
+#define POSE_ESTIMATOR_MANAGER__SWITCH_RULE__MAP_BASED_RULE_HPP_
 
 #include "pose_estimator_manager/pose_estimator_name.hpp"
 #include "pose_estimator_manager/rule_helper/ar_tag_position.hpp"
@@ -84,3 +85,5 @@ protected:
   void on_pose_cov(PoseCovStamped::ConstSharedPtr msg);
 };
 }  // namespace multi_pose_estimator
+
+#endif  // POSE_ESTIMATOR_MANAGER__SWITCH_RULE__MAP_BASED_RULE_HPP_

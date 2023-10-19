@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef POSE_ESTIMATOR_MANAGER__RULE_HELPER__EAGLEYE_AREA_HPP_
+#define POSE_ESTIMATOR_MANAGER__RULE_HELPER__EAGLEYE_AREA_HPP_
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/point.hpp>
@@ -44,3 +45,5 @@ private:
   std::shared_ptr<Impl> impl_;
 };
 }  // namespace multi_pose_estimator
+
+#endif  // POSE_ESTIMATOR_MANAGER__RULE_HELPER__EAGLEYE_AREA_HPP_

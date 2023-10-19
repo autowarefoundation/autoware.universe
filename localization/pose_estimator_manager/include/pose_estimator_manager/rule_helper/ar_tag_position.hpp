@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef POSE_ESTIMATOR_MANAGER__RULE_HELPER__AR_TAG_POSITION_HPP_
+#define POSE_ESTIMATOR_MANAGER__RULE_HELPER__AR_TAG_POSITION_HPP_
 
 #include <rclcpp/logger.hpp>
 #include <rclcpp/node.hpp>
@@ -49,3 +50,5 @@ private:
     const std::string & target_frame, const std::string & source_frame) const;
 };
 }  // namespace multi_pose_estimator
+
+#endif  // POSE_ESTIMATOR_MANAGER__RULE_HELPER__AR_TAG_POSITION_HPP_

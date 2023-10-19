@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_NAME_HPP_
+#define POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_NAME_HPP_
 
 namespace multi_pose_estimator
 {
 enum class PoseEstimatorName { NDT, YABLOC, EAGLEYE, ARTAG };
 }
+
+#endif  // POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_NAME_HPP_

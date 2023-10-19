@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_ARTAG_HPP_
+#define POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_ARTAG_HPP_
+
 #include "pose_estimator_manager/base_pose_estimator_sub_manager.hpp"
 
 #include <sensor_msgs/msg/image.hpp>
@@ -56,3 +58,5 @@ private:
   }
 };
 }  // namespace multi_pose_estimator
+
+#endif  // POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_ARTAG_HPP_
