@@ -132,7 +132,9 @@ public:
   /// \param[in] dense_param The densification parameter used to constructing vg_ptr.
   /// \param[in] config The CenterPoint model configuration.
   explicit CenterPointTVM(
-    const DensificationParam & densification_param, const CenterPointConfig & config);
+    const DensificationParam & densification_param, 
+    const CenterPointConfig & config, 
+    const std::string & data_path);
 
   ~CenterPointTVM();
 
