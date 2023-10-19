@@ -75,132 +75,44 @@ bool MapBasedRule::yabloc_is_available() const
 {
   return running_estimator_list_.count(PoseEstimatorName::YABLOC) != 0;
 }
+
 bool MapBasedRule::ndt_is_available() const
 {
   return running_estimator_list_.count(PoseEstimatorName::NDT) != 0;
 }
 
-std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
+bool MapBasedRule::ndt_is_more_suitable_than_yabloc(std::string * optional_message) const
 {
-  // (1) If the localization state is not 'INITIALIZED'
-  if (initialization_state_.state != InitializationState::INITIALIZED) {
-    debug_string_msg_ = "enable All\nlocalization is not initialized";
-    RCLCPP_WARN_STREAM(
-      get_logger(), "Enable all estimators because localization component is not initialized");
-    return {
-      {PoseEstimatorName::NDT, true},
-      {PoseEstimatorName::YABLOC, true},
-      {PoseEstimatorName::EAGLEYE, true},
-      {PoseEstimatorName::ARTAG, true},
-    };
-  }
-
-  // (2) If no pose are published, enable all;
-  if (!latest_pose_.has_value()) {
-    debug_string_msg_ = "enable All\nestimated pose has not been published yet";
-    RCLCPP_WARN_STREAM(
-      get_logger(), "Unable to determine which estimation to use, due to lack of latest position");
-    return {
-      {PoseEstimatorName::NDT, true},
-      {PoseEstimatorName::YABLOC, true},
-      {PoseEstimatorName::EAGLEYE, true},
-      {PoseEstimatorName::ARTAG, true},
-    };
-  }
-
-  // (3) If no pose are published, enable all;
-  if (eagleye_is_available()) {
-    debug_string_msg_ = "enable Eagleye\nthe vehicle is within eagleye_area";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable eagleye");
-    return {
-      {PoseEstimatorName::NDT, false},
-      {PoseEstimatorName::YABLOC, false},
-      {PoseEstimatorName::EAGLEYE, true},
-      {PoseEstimatorName::ARTAG, false},
-    };
-  }
-
-  // (3.5) If AR marker exists around ego position, enable ARTAG
-  if (artag_is_available()) {
-    debug_string_msg_ = "enable ARTAG\nlandmark exists around the ego";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable ARTAG");
-    return {
-      {PoseEstimatorName::NDT, false},
-      {PoseEstimatorName::YABLOC, false},
-      {PoseEstimatorName::EAGLEYE, false},
-      {PoseEstimatorName::ARTAG, true},
-    };
-  }
-
-  // (4) If yabloc is disabled, enable NDT
-  if (!yabloc_is_available()) {
-    debug_string_msg_ = "enable NDT\nonly NDT is available";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable NDT");
-    return {
-      {PoseEstimatorName::NDT, true},
-      {PoseEstimatorName::YABLOC, false},
-      {PoseEstimatorName::EAGLEYE, false},
-      {PoseEstimatorName::ARTAG, false},
-    };
-  }
-
-  // (5) If ndt is disabled, enable YabLoc
-  if (!ndt_is_available()) {
-    debug_string_msg_ = "enable YabLoc\nonly yabloc is available";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable YABLOC");
-    return {
-      {PoseEstimatorName::NDT, false},
-      {PoseEstimatorName::YABLOC, true},
-      {PoseEstimatorName::EAGLEYE, false},
-      {PoseEstimatorName::ARTAG, false},
-    };
-  }
-
-  // (6) If PCD is not subscribed yet
   if (!kdtree_) {
-    debug_string_msg_ = "enable YabLoc\npcd is not subscribed yet";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable YABLOC");
-    return {
-      {PoseEstimatorName::NDT, false},
-      {PoseEstimatorName::YABLOC, true},
-      {PoseEstimatorName::EAGLEYE, false},
-    };
+    if (optional_message) {
+      *optional_message = "enable YabLoc\npcd is not subscribed yet";
+    }
+    return false;
   }
 
-  // (7) If PCD density is enough,
   const auto position = latest_pose_->pose.pose.position;
-  const pcl::PointXYZ query(position.x, position.y, position.z);
+  const pcl::PointXYZ query{
+    static_cast<float>(position.x), static_cast<float>(position.y), static_cast<float>(position.z)};
   std::vector<int> indices;
   std::vector<float> distances;
   const int count = kdtree_->radiusSearch(query, 50, indices, distances, 0);
-
-  std::stringstream ss;
-  std::unordered_map<PoseEstimatorName, bool> toggle_list;
 
   static bool last_is_ndt_mode = true;
   const bool is_ndt_mode = (last_is_ndt_mode) ? (count > pcd_density_lower_threshold_)
                                               : (count > pcd_density_upper_threshold_);
   last_is_ndt_mode = is_ndt_mode;
 
+  std::stringstream ss;
   if (is_ndt_mode) {
-    toggle_list[PoseEstimatorName::NDT] = true;
-    toggle_list[PoseEstimatorName::YABLOC] = false;
-    toggle_list[PoseEstimatorName::EAGLEYE] = false;
-    toggle_list[PoseEstimatorName::ARTAG] = false;
     ss << "enable NDT";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable NDT");
   } else {
-    toggle_list[PoseEstimatorName::NDT] = false;
-    toggle_list[PoseEstimatorName::YABLOC] = true;
-    toggle_list[PoseEstimatorName::EAGLEYE] = false;
-    toggle_list[PoseEstimatorName::ARTAG] = false;
     ss << "enable YabLoc";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable YabLoc");
   }
   ss << "\npcd occupancy: " << count << " > "
      << (last_is_ndt_mode ? pcd_density_lower_threshold_ : pcd_density_upper_threshold_);
-  debug_string_msg_ = ss.str();
-  return toggle_list;
+  *optional_message = ss.str();
+
+  return true;
 }
 
 std::string MapBasedRule::debug_string()

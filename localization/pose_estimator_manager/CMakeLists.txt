@@ -7,6 +7,7 @@ autoware_package()
 ament_auto_add_library(switch_rule
   SHARED
   src/switch_rule/map_based_rule.cpp
+  src/switch_rule/map_based_rule_core.cpp
   src/switch_rule/eagleye_area.cpp
   src/switch_rule/ar_tag_position.cpp
 )
