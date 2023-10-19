@@ -12,12 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Get user-provided variables
-set(DOWNLOAD_ARTIFACTS OFF CACHE BOOL "enable artifacts download")
-set(MODELZOO_VERSION "3.0.0-20221221" CACHE STRING "targeted ModelZoo version")
-
 #
-# Download the selected neural network if it is not already present on disk.
 # Make inference_engine_tvm_config.hpp available under "data/models/${MODEL_NAME}/".
 # Install the TVM artifacts to "share/${PROJECT_NAME}/models/".
 # Return the name of the custom target in the DEPENDENCY parameter.
@@ -34,7 +29,7 @@ function(get_neural_network MODEL_NAME MODEL_BACKEND DEPENDENCY)
   set(EXTERNALPROJECT_NAME ${MODEL_NAME}_${MODEL_BACKEND})
   set(PREPROCESSING "")
 
-  # Prioritize user-provided models.
+  # Use user-provided models.
   # cspell: ignore COPYONLY
   if(IS_DIRECTORY "${DATA_PATH}/user/${MODEL_NAME}")
     message(STATUS "Using user-provided model from ${DATA_PATH}/user/${MODEL_NAME}")
@@ -54,27 +49,10 @@ function(get_neural_network MODEL_NAME MODEL_BACKEND DEPENDENCY)
     set(SOURCE_DIR "${DATA_PATH}/user/${MODEL_NAME}")
     set(INSTALL_DIRECTORY "${DATA_PATH}/user/${MODEL_NAME}")
   else()
-    set(ARCHIVE_NAME "${MODEL_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${MODEL_BACKEND}-${MODELZOO_VERSION}.tar.gz")
-
-    # Use previously-downloaded archives if available.
-    set(DOWNLOAD_DIR "${DATA_PATH}/downloads")
-    if(DOWNLOAD_ARTIFACTS)
-      message(STATUS "Downloading ${ARCHIVE_NAME} ...")
-      if(NOT EXISTS "${DATA_PATH}/downloads/${ARCHIVE_NAME}")
-        set(URL "https://autoware-modelzoo.s3.us-east-2.amazonaws.com/models/${MODELZOO_VERSION}/${ARCHIVE_NAME}")
-        file(DOWNLOAD ${URL} "${DOWNLOAD_DIR}/${ARCHIVE_NAME}")
-      endif()
-    else()
-      message(WARNING "Skipped download for ${MODEL_NAME} (enable by setting DOWNLOAD_ARTIFACTS)")
-      set(${DEPENDENCY} "" PARENT_SCOPE)
-      return()
-    endif()
-    set(SOURCE_DIR "${DATA_PATH}/models/${MODEL_NAME}")
-    set(INSTALL_DIRECTORY "${DATA_PATH}/models/${MODEL_NAME}")
-    file(ARCHIVE_EXTRACT INPUT "${DOWNLOAD_DIR}/${ARCHIVE_NAME}" DESTINATION "${SOURCE_DIR}")
-    if(EXISTS "${DATA_PATH}/models/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp")
-      set(PREPROCESSING "${DATA_PATH}/models/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp")
-    endif()
+    message(WARNING " NO ${MODEL_NAME} model provided by user, for more info check"
+    " https://autowarefoundation.github.io/autoware.universe/main/common/tvm_utility/")
+    set(${DEPENDENCY} "" PARENT_SCOPE)
+    return()
 
   endif()
 

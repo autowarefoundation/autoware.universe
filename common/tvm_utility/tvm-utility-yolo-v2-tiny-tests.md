@@ -7,20 +7,30 @@ output.
 
 ## Compiling the Example
 
-1. Download an example image to be used as test input. this image needs to be
-   saved in the `artifacts/yolo_v2_tiny/` folder
+1. Check if model was downloaded during the env preparation step by ansible and
+   models files exist in the folder $HOME/autoware_data/tvm_utility/models/yolo_v2_tiny.
 
-```sh
-curl https://raw.githubusercontent.com/pjreddie/darknet/master/data/dog.jpg \
-  > artifacts/yolo_v2_tiny/test_image_0.jpg
-```
+   If not you can download them manually, see [Manual Artifacts Downloading](https://github.com/autowarefoundation/autoware/tree/main/ansible/roles/artifacts).
 
-1. Build and test with the `DOWNLOAD_ARTIFACTS` flag set.
+2. Download an example image to be used as test input. This image needs to be
+   saved in the `artifacts/yolo_v2_tiny/` folder.
 
-```sh
-colcon build --packages-up-to tvm_utility --cmake-args -DDOWNLOAD_ARTIFACTS=ON
-colcon test --packages-select tvm_utility
-```
+   ```sh
+   curl https://raw.githubusercontent.com/pjreddie/darknet/master/data/dog.jpg \
+   > artifacts/yolo_v2_tiny/test_image_0.jpg
+   ```
+
+3. Build.
+
+   ```sh
+   colcon build --packages-up-to tvm_utility --cmake-args -DBUILD_EXAMPLE=ON
+   ```
+
+4. Run.
+
+   ```sh
+   ros2 launch tvm_utility yolo_v2_tiny_example.launch.xml
+   ```
 
 ## GPU backend
 
@@ -28,5 +38,5 @@ Vulkan is supported by default by the tvm_vendor package.
 It can be selected by setting the `tvm_utility_BACKEND` variable:
 
 ```sh
-colcon build --packages-up-to tvm_utility --cmake-args -DDOWNLOAD_ARTIFACTS=ON -Dtvm_utility_BACKEND=vulkan
+colcon build --packages-up-to tvm_utility -Dtvm_utility_BACKEND=vulkan
 ```

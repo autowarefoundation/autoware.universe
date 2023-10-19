@@ -1,0 +1,13 @@
+<launch>
+  <arg name="image_filename" default="$(find-pkg-share tvm_utility)/artifacts/yolo_v2_tiny/test_image_0.jpg" description="path to example image file"/>
+  <arg name="label_filename" default="$(find-pkg-share tvm_utility)/artifacts/yolo_v2_tiny/labels.txt" description="path to the file with human readable class names"/>
+  <arg name="anchor_filename" default="$(find-pkg-share tvm_utility)/artifacts/yolo_v2_tiny/anchors.csv" description="path to the file with the anchor values for the network"/>
+  <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
+  <!-- Node -->
+  <node pkg="tvm_utility" exec="yolo_v2_tiny" name="tvm_yolo_example">
+    <param name="image_filename" value="$(var image_filename)"/>
+    <param name="label_filename" value="$(var label_filename)"/>
+    <param name="anchor_filename" value="$(var anchor_filename)"/>
+    <param name="data_path" value="$(var data_path)"/>
+  </node>
+</launch>
