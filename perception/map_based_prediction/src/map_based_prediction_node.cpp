@@ -969,7 +969,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     }
   }
 
-  // TODO(Sugahara): improve function to be able to remove any class of objects
+  // TODO(Sugahara): improve function so that any class of objects can be removed
   removePedestrianCrossingWithFence(output);
   // Publish Results
   pub_objects_->publish(output);
@@ -980,54 +980,59 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
 void MapBasedPredictionNode::removePedestrianCrossingWithFence(PredictedObjects & predicted_objects)
 {
-  for (const auto & predicted_object : predicted_objects.objects) {
-    if (predicted_object.classification.front().label != ObjectClassification::PEDESTRIAN) {
-      continue;
-    }
-    for (const auto & predicted_path : predicted_object.kinematics.predicted_paths) {
-      predicted_objects.objects.erase(
-        std::remove_if(
-          predicted_objects.objects.begin(), predicted_objects.objects.end(),
-          [this, &predicted_path]([[maybe_unused]]auto & object) { return this->crossWithFence(predicted_path); }),
-        predicted_objects.objects.end());
-    }
-  }
+  predicted_objects.objects.erase(
+    std::remove_if(
+      predicted_objects.objects.begin(), predicted_objects.objects.end(),
+      [this](const auto & predicted_object) {
+        if (predicted_object.classification.front().label != ObjectClassification::PEDESTRIAN) {
+          return false;
+        }
+        return std::any_of(
+          predicted_object.kinematics.predicted_paths.begin(),
+          predicted_object.kinematics.predicted_paths.end(),
+          [this](const auto & path) { return this->crossWithFence(path); });
+      }),
+    predicted_objects.objects.end());
 }
 
 bool MapBasedPredictionNode::crossWithFence(const PredictedPath & predicted_path)
 {
   const lanelet::ConstLineStrings3d & all_fences =
     lanelet::utils::query::getAllFences(lanelet_map_ptr_);
-  // lanelet::utils::query::laneletLayer(lanelet_map_ptr_)
-  // check whether the predicted path cross with fence
-  for (const auto & fence : all_fences) {
-    lanelet::BasicLineString2d fence_line;
-    for (const auto & p : fence) {
-      fence_line.emplace_back(lanelet::BasicPoint2d{p.x(), p.y()});
+  for (const auto & fence_line : all_fences) {
+    if (doesPathCrossFence(predicted_path, fence_line)) {
+      return true;
     }
+  }
+  return false;
+}
 
-    for (size_t i = 0; i < predicted_path.path.size(); ++i) {
-      for (size_t j = 0; j < fence_line.size() - 1; ++j) {
-        // check whether the predicted path cross with fence
-        // (predicted_path.path[i], predicted_path.path[i + 1]) and (fence_line[i], fence_line[i +
-        // 1])
-
-        const auto p1 = tier4_autoware_utils::createPoint(
-          predicted_path.path[i].position.x, predicted_path.path[i].position.y, 0.0);
-        const auto p2 = tier4_autoware_utils::createPoint(
-          predicted_path.path[i + 1].position.x, predicted_path.path[i + 1].position.y, 0.0);
-        const auto p3 =
-          tier4_autoware_utils::createPoint(fence_line[j].x(), fence_line[j].y(), 0.0);
-        const auto p4 =
-          tier4_autoware_utils::createPoint(fence_line[j + 1].x(), fence_line[j + 1].y(), 0.0);
-        const auto intersect_point = tier4_autoware_utils::intersect(p1, p2, p3, p4);
-        if (intersect_point) {
-          return true;
-        }
+bool MapBasedPredictionNode::doesPathCrossFence(
+  const PredictedPath & predicted_path, const lanelet::ConstLineString3d & fence_line)
+{
+  // check whether the predicted path cross with fence
+  for (size_t i = 0; i < predicted_path.path.size(); ++i) {
+    for (size_t j = 0; j < fence_line.size() - 1; ++j) {
+      if (isIntersecting(
+            predicted_path.path[i].position, predicted_path.path[i + 1].position, fence_line[j],
+            fence_line[j + 1])) {
+        return true;
       }
     }
   }
   return false;
+}
+
+bool MapBasedPredictionNode::isIntersecting(
+  const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2,
+  const lanelet::ConstPoint3d & point3, const lanelet::ConstPoint3d & point4)
+{
+  const auto p1 = tier4_autoware_utils::createPoint(point1.x, point1.y, 0.0);
+  const auto p2 = tier4_autoware_utils::createPoint(point2.x, point2.y, 0.0);
+  const auto p3 = tier4_autoware_utils::createPoint(point3.x(), point3.y(), 0.0);
+  const auto p4 = tier4_autoware_utils::createPoint(point4.x(), point4.y(), 0.0);
+  const auto intersection = tier4_autoware_utils::intersect(p1, p2, p3, p4);
+  return intersection.has_value();
 }
 
 PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(

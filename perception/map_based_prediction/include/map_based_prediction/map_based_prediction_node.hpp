@@ -167,6 +167,12 @@ private:
 
   void removePedestrianCrossingWithFence(PredictedObjects & predicted_objects);
   bool crossWithFence(const PredictedPath & predicted_path);
+  bool doesPathCrossFence(
+    const PredictedPath & predicted_path, const lanelet::ConstLineString3d & fence_line);
+  lanelet::BasicLineString2d convertToFenceLine(const lanelet::ConstLineString3d & fence);
+  bool isIntersecting(
+    const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2,
+    const lanelet::ConstPoint3d & point3, const lanelet::ConstPoint3d & point4);
 
   PredictedObjectKinematics convertToPredictedKinematics(
     const TrackedObjectKinematics & tracked_object);
