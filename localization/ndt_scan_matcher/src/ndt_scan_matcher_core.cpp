@@ -769,7 +769,8 @@ void NDTScanMatcher::service_ndt_align(
 
   if (ndt_ptr_->getInputTarget() == nullptr) {
     res->success = false;
-    RCLCPP_WARN(get_logger(), "No InputTarget. Please check the map file and the map_loader service");
+    RCLCPP_WARN(
+      get_logger(), "No InputTarget. Please check the map file and the map_loader service");
     return;
   }
 
