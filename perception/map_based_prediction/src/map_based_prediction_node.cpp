@@ -988,12 +988,12 @@ void MapBasedPredictionNode::removePedestrianCrossingWithFence(PredictedObjects 
         return std::any_of(
           predicted_object.kinematics.predicted_paths.begin(),
           predicted_object.kinematics.predicted_paths.end(),
-          [this](const auto & path) { return this->crossWithFence(path); });
+          [this](const auto & path) { return this->doesPathCrossAnyFence(path); });
       }),
     predicted_objects.objects.end());
 }
 
-bool MapBasedPredictionNode::crossWithFence(const PredictedPath & predicted_path)
+bool MapBasedPredictionNode::doesPathCrossAnyFence(const PredictedPath & predicted_path)
 {
   const lanelet::ConstLineStrings3d & all_fences =
     lanelet::utils::query::getAllFences(lanelet_map_ptr_);
@@ -1143,7 +1143,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
         continue;
       }
       // If the predicted path to the crosswalk is crossing the fence, don't use it
-      if (crossWithFence(predicted_path)) {
+      if (doesPathCrossAnyFence(predicted_path)) {
         continue;
       }
 

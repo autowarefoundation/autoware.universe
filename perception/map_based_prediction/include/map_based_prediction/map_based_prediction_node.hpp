@@ -166,7 +166,7 @@ private:
   void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
 
   void removePedestrianCrossingWithFence(PredictedObjects & predicted_objects);
-  bool crossWithFence(const PredictedPath & predicted_path);
+  bool doesPathCrossAnyFence(const PredictedPath & predicted_path);
   bool doesPathCrossFence(
     const PredictedPath & predicted_path, const lanelet::ConstLineString3d & fence_line);
   lanelet::BasicLineString2d convertToFenceLine(const lanelet::ConstLineString3d & fence);
