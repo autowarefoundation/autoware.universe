@@ -15,8 +15,13 @@
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/scene_module/avoidance/manager.hpp"
+#include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
+#include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
-#include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
+#include "behavior_path_planner/scene_module/lane_change/manager.hpp"
+#include "behavior_path_planner/scene_module/side_shift/manager.hpp"
+#include "behavior_path_planner/scene_module/start_planner/manager.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <tier4_autoware_utils/ros/update_param.hpp>
@@ -26,7 +31,6 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace
@@ -132,7 +136,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     const std::lock_guard<std::mutex> lock(mutex_manager_);  // for planner_manager_
 
     const auto & p = planner_data_->parameters;
-    planner_manager_ = std::make_shared<PlannerManager>(*this, p.verbose);
+    planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num, p.verbose);
 
     const auto register_and_create_publisher =
       [&](const auto & manager, const bool create_publishers) {
@@ -272,6 +276,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   BehaviorPathPlannerParameters p{};
 
   p.verbose = declare_parameter<bool>("verbose");
+  p.max_iteration_num = declare_parameter<int>("max_iteration_num");
 
   const auto get_scene_module_manager_param = [&](std::string && ns) {
     ModuleConfigParameters config;
