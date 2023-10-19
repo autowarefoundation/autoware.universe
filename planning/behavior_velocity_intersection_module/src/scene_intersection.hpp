@@ -149,6 +149,7 @@ public:
     NOT_OCCLUDED,
     STATICALLY_OCCLUDED,
     DYNAMICALLY_OCCLUDED,
+    RTC_OCCLUDED,  // actual occlusion does not exist, only disapproved by RTC
   };
 
   struct Indecisive
@@ -278,6 +279,7 @@ private:
   bool is_go_out_{false};
   bool is_permanent_go_{false};
   DecisionResult prev_decision_result_{Indecisive{""}};
+  OcclusionType prev_occlusion_status_;
 
   // Parameter
   PlannerParam planner_param_;

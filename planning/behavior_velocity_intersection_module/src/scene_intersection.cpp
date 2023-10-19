@@ -594,6 +594,8 @@ void reactRTCApprovalByDecisionResult(
     planning_utils::setVelocityFromIndex(occlusion_peeking_stop_line, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(occlusion_peeking_stop_line, baselink2front, *path);
+    debug_data->static_occlusion_with_traffic_light_timeout =
+      decision_result.static_occlusion_timeout;
     {
       tier4_planning_msgs::msg::StopFactor stop_factor;
       stop_factor.stop_pose = path->points.at(occlusion_peeking_stop_line).point.pose;
@@ -653,6 +655,8 @@ void reactRTCApprovalByDecisionResult(
     planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
+    debug_data->static_occlusion_with_traffic_light_timeout =
+      decision_result.static_occlusion_timeout;
     {
       tier4_planning_msgs::msg::StopFactor stop_factor;
       stop_factor.stop_pose = path->points.at(stop_line_idx).point.pose;
@@ -1217,7 +1221,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     debug_data_.blocking_attention_objects.objects.push_back(blocking_attention_object.object);
   }
   const auto & not_attention_intersection_area_objects = target_objects.intersection_area_objects;
-  const auto occlusion_status =
+  auto occlusion_status =
     (enable_occlusion_detection_ && !occlusion_attention_lanelets.empty() && !is_prioritized)
       ? getOcclusionStatus(
           *planner_data_->occupancy_grid, occlusion_attention_area, adjacent_lanelets,
@@ -1230,10 +1234,18 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     logger_.get_child("occlusion_stop"), *clock_);
   const bool is_occlusion_cleared_with_margin =
     (occlusion_stop_state_machine_.getState() == StateMachine::State::GO);
-
   // distinguish if ego detected occlusion or RTC detects occlusion
   const bool ext_occlusion_requested = (is_occlusion_cleared_with_margin && !occlusion_activated_);
+  if (ext_occlusion_requested) {
+    occlusion_status = OcclusionType::RTC_OCCLUDED;
+  }
   const bool is_occlusion_state = (!is_occlusion_cleared_with_margin || ext_occlusion_requested);
+  if (is_occlusion_state && occlusion_status == OcclusionType::NOT_OCCLUDED) {
+    occlusion_status = prev_occlusion_status_;
+  } else {
+    prev_occlusion_status_ = occlusion_status;
+  }
+
   // Safe
   if (!is_occlusion_state && !has_collision_with_margin) {
     return IntersectionModule::Safe{closest_idx, collision_stop_line_idx, occlusion_stop_line_idx};
@@ -1244,6 +1256,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       closest_idx, collision_stop_line_idx, occlusion_stop_line_idx};
   }
   // Occluded
+  // occlusion_status is assured to be not NOT_OCCLUDED
   const bool stopped_at_default_line = stoppedForDuration(
     default_stop_line_idx, planner_param_.occlusion.before_creep_stop_time,
     before_creep_state_machine_);
@@ -1268,10 +1281,11 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     }
     // following remaining block is "has_traffic_light_"
     // if ego is stuck by static occlusion in the presence of traffic light, start timeout count
+    const bool is_static_occlusion = occlusion_status == OcclusionType::STATICALLY_OCCLUDED;
     const bool is_stuck_by_static_occlusion =
-      stoppedAtPosition(occlusion_stop_line_idx) &&
-      (occlusion_status == OcclusionType::STATICALLY_OCCLUDED);
+      stoppedAtPosition(occlusion_stop_line_idx) && is_static_occlusion;
     if (has_collision_with_margin) {
+      // if collision is detected, timeout is reset
       static_occlusion_timeout_state_machine_.setState(StateMachine::State::STOP);
     } else if (is_stuck_by_static_occlusion) {
       static_occlusion_timeout_state_machine_.setStateWithMarginTime(
@@ -1283,14 +1297,16 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
       return IntersectionModule::Safe{
         closest_idx, collision_stop_line_idx, occlusion_stop_line_idx};
     }
-    // even if occlusion_status == OcclusionType::NON_OCCLUDED, "is_occlusion_state" can be true if
-    // required by RTC and/or within margin time
+    // occlusion_status is either STATICALLY_OCCLUDED or DYNAMICALLY_OCCLUDED
+    const double max_timeout =
+      planner_param_.occlusion.static_occlusion_with_traffic_light_timeout +
+      planner_param_.occlusion.stop_release_margin_time;
     const std::optional<double> static_occlusion_timeout =
-      (occlusion_status == OcclusionType::STATICALLY_OCCLUDED)
+      is_stuck_by_static_occlusion
         ? std::make_optional<double>(
-            planner_param_.occlusion.static_occlusion_with_traffic_light_timeout -
-            static_occlusion_timeout_state_machine_.getDuration())
-        : std::nullopt;
+            max_timeout - static_occlusion_timeout_state_machine_.getDuration() -
+            occlusion_stop_state_machine_.getDuration())
+        : (is_static_occlusion ? std::make_optional<double>(max_timeout) : std::nullopt);
     if (has_collision_with_margin) {
       return IntersectionModule::OccludedCollisionStop{is_occlusion_cleared_with_margin,
                                                        temporal_stop_before_attention_required,
