@@ -969,8 +969,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     }
   }
 
-  // TODO(Sugahara): improve function so that any class of objects can be removed
-  removePedestrianCrossingWithFence(output);
   // Publish Results
   pub_objects_->publish(output);
   pub_debug_markers_->publish(debug_markers);
@@ -1054,6 +1052,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
     }
   }
 
+  // If the object is in the crosswalk, generate path to the crosswalk edge
   if (crossing_crosswalk) {
     const auto edge_points = getCrosswalkEdgePoints(crossing_crosswalk.get());
 
@@ -1077,6 +1076,8 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
       predicted_object.kinematics.predicted_paths.push_back(predicted_path);
     }
 
+    // If the object is not crossing the crosswalk, in the road lanelets, try to find the closest
+    // crosswalk and generate path to the crosswalk edge
   } else if (withinRoadLanelet(object, lanelet_map_ptr_)) {
     lanelet::ConstLanelet closest_crosswalk{};
     const auto & obj_pose = object.kinematics.pose_with_covariance.pose;
@@ -1107,6 +1108,8 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
       }
     }
 
+    // If the object is not crossing the crosswalk, not in the road lanelets, try to find the edge
+    // points for all crosswalks and generate path to the crosswalk edge
   } else {
     for (const auto & crosswalk : crosswalks_) {
       const auto edge_points = getCrosswalkEdgePoints(crosswalk);
@@ -1137,6 +1140,10 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
       predicted_path.confidence = 1.0;
 
       if (predicted_path.path.empty()) {
+        continue;
+      }
+      // If the predicted path to the crosswalk is crossing the fence, don't use it
+      if (crossWithFence(predicted_path)) {
         continue;
       }
 
