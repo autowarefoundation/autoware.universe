@@ -780,13 +780,13 @@ void NDTScanMatcher::service_ndt_align(
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
 
   (*state_ptr_)["state"] = "Aligning";
-  res->pose_with_covariance = align_using_monte_carlo(ndt_ptr_, initial_pose_msg_in_map_frame);
+  res->pose_with_covariance = align_pose(ndt_ptr_, initial_pose_msg_in_map_frame);
   (*state_ptr_)["state"] = "Sleeping";
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_carlo(
+geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
@@ -795,7 +795,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     return geometry_msgs::msg::PoseWithCovarianceStamped();
   }
 
-  output_pose_with_cov_to_log(get_logger(), "align_using_monte_carlo_input", initial_pose_with_cov);
+  output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
 
   const auto base_rpy = get_rpy(initial_pose_with_cov);
   const Eigen::Map<const RowMatrixXd> covariance = {
@@ -904,8 +904,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
   result_pose_with_cov_msg.header.frame_id = map_frame_;
   result_pose_with_cov_msg.pose.pose = best_particle_ptr->result_pose;
 
-  output_pose_with_cov_to_log(
-    get_logger(), "align_using_monte_carlo_output", result_pose_with_cov_msg);
+  output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
   RCLCPP_INFO_STREAM(get_logger(), "best_score," << best_particle_ptr->score);
 
   return result_pose_with_cov_msg;

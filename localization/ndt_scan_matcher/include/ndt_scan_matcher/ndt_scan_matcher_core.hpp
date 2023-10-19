@@ -92,7 +92,7 @@ private:
   void callback_regularization_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
-  geometry_msgs::msg::PoseWithCovarianceStamped align_using_monte_carlo(
+  geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
     const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
