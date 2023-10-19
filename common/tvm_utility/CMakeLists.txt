@@ -31,7 +31,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 set(BUILD_EXAMPLE OFF CACHE BOOL "enable build yolo_v2_tiny")
 
-if (BUILD_TESTING OR BUILD_EXAMPLE)
+if(BUILD_TESTING OR BUILD_EXAMPLE)
   find_package(OpenCV REQUIRED)
   set(tvm_runtime_DIR ${tvm_vendor_DIR})
   find_package(tvm_runtime CONFIG REQUIRED)
@@ -42,7 +42,7 @@ endif()
 if(BUILD_TESTING)
   # compile each folder inside test/ as a test case
   find_package(ament_cmake_gtest REQUIRED)
-  
+
   set(TEST_ARTIFACTS "${CMAKE_CURRENT_LIST_DIR}/artifacts")
   file(GLOB TEST_CASES test/*)
   foreach(TEST_FOLDER ${TEST_CASES})
@@ -94,7 +94,7 @@ endif()
 if(BUILD_EXAMPLE)
   # compile each folder inside example/ as an example
   find_package(rclcpp REQUIRED)
-  
+
   set(EXAMPLE_ARTIFACTS "${CMAKE_CURRENT_LIST_DIR}/artifacts")
   file(GLOB EXAMPLE_CASES example/*)
   foreach(EXAMPLE_FOLDER ${EXAMPLE_CASES})
