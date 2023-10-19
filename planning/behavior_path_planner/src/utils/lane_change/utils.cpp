@@ -236,6 +236,9 @@ lanelet::BasicPolygon2d getTargetNeighborLanesPolygon(
 {
   const auto target_neighbor_lanelets =
     utils::lane_change::getTargetNeighborLanes(route_handler, current_lanes, type);
+  if (target_neighbor_lanelets.empty()) {
+    return {};
+  }
   const auto target_neighbor_preferred_lane_poly = lanelet::utils::getPolygonFromArcLength(
     target_neighbor_lanelets, 0, std::numeric_limits<double>::max());
 
@@ -296,6 +299,15 @@ std::optional<LaneChangePath> constructCandidatePath(
     RCLCPP_DEBUG(
       rclcpp::get_logger("behavior_path_planner").get_child("util").get_child("lane_change"),
       "failed to generate shifted path.");
+  }
+
+  // TODO(Zulfaqar Azmi): have to think of a more feasible solution for points being remove by path
+  // shifter.
+  if (shifted_path.path.points.size() < shift_line.end_idx + 1) {
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils").get_child(__func__),
+      "path points are removed by PathShifter.");
+    return std::nullopt;
   }
 
   const auto & prepare_length = lane_change_length.prepare;
@@ -927,7 +939,8 @@ bool isParkedObject(
 bool passParkedObject(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
   const std::vector<ExtendedPredictedObject> & objects, const double minimum_lane_change_length,
-  const bool is_goal_in_route, const LaneChangeParameters & lane_change_parameters)
+  const bool is_goal_in_route, const LaneChangeParameters & lane_change_parameters,
+  CollisionCheckDebugMap & object_debug)
 {
   const auto & object_check_min_road_shoulder_width =
     lane_change_parameters.object_check_min_road_shoulder_width;
@@ -950,6 +963,7 @@ bool passParkedObject(
   }
 
   const auto & leading_obj = objects.at(*leading_obj_idx);
+  auto debug = marker_utils::createObjectDebug(leading_obj);
   const auto leading_obj_poly =
     tier4_autoware_utils::toPolygon2d(leading_obj.initial_pose.pose, leading_obj.shape);
   if (leading_obj_poly.outer().empty()) {
@@ -973,6 +987,8 @@ bool passParkedObject(
 
   // If there are still enough length after the target object, we delay the lane change
   if (min_dist_to_end_of_current_lane > minimum_lane_change_length) {
+    debug.second.unsafe_reason = "delay lane change";
+    marker_utils::updateCollisionCheckDebugMap(object_debug, debug, false);
     return true;
   }
 

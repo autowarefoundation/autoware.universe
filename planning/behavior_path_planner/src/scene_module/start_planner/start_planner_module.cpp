@@ -20,6 +20,7 @@
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -772,7 +773,8 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
   // filter pull out lanes stop objects
   const auto [pull_out_lane_objects, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
-      *planner_data_->dynamic_object, status_.pull_out_lanes);
+      *planner_data_->dynamic_object, status_.pull_out_lanes,
+      utils::path_safety_checker::isPolygonOverlapLanelet);
   const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     pull_out_lane_objects, parameters_->th_moving_object_velocity);
 

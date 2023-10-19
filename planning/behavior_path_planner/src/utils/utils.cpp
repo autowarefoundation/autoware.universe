@@ -1539,7 +1539,7 @@ void generateDrivableArea(
   }
   const auto & expansion_params = planner_data->drivable_area_expansion_parameters;
   if (expansion_params.enabled) {
-    drivable_area_expansion::expandDrivableArea(path, planner_data, transformed_lanes);
+    drivable_area_expansion::expand_drivable_area(path, planner_data);
   }
 
   // make bound longitudinally monotonic
@@ -1731,7 +1731,7 @@ std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
     const auto shared_point_itr_last =
       std::find_if(expanded_bound.rbegin(), expanded_bound.rend(), [&](const auto & p) {
         return std::any_of(
-          intersection_bound.begin(), intersection_bound.end(),
+          intersection_bound.rbegin(), intersection_bound.rend(),
           [&](const auto & point) { return point.id() == p.id(); });
       });
 
@@ -1754,6 +1754,13 @@ std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
       if (
         trim_point_itr_init == intersection_bound.end() ||
         trim_point_itr_last == intersection_bound.end()) {
+        continue;
+      }
+
+      // TODO(Satoshi OTA): remove this guard.
+      if (
+        std::distance(intersection_bound.begin(), trim_point_itr_last) <
+        std::distance(intersection_bound.begin(), trim_point_itr_init)) {
         continue;
       }
 
@@ -2673,6 +2680,19 @@ double getArcLengthToTargetLanelet(
 
   return std::max(
     std::min(arc_front.length - arc_pose.length, arc_back.length - arc_pose.length), 0.0);
+}
+
+Polygon2d toPolygon2d(const lanelet::ConstLanelet & lanelet)
+{
+  Polygon2d polygon;
+  for (const auto & p : lanelet.polygon2d().basicPolygon()) {
+    polygon.outer().emplace_back(p.x(), p.y());
+  }
+  polygon.outer().push_back(polygon.outer().front());
+
+  return tier4_autoware_utils::isClockwise(polygon)
+           ? polygon
+           : tier4_autoware_utils::inverseClockwise(polygon);
 }
 
 std::vector<Polygon2d> getTargetLaneletPolygons(

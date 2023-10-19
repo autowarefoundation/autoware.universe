@@ -153,6 +153,11 @@ class PerceptionReplayerCommon(Node):
                 pass
 
     def binary_search(self, data, timestamp):
+        if data[-1][0] < timestamp:
+            return data[-1][1]
+        elif data[0][0] > timestamp:
+            return data[0][1]
+
         low, high = 0, len(data) - 1
 
         while low <= high:
@@ -175,10 +180,4 @@ class PerceptionReplayerCommon(Node):
         return objects_data, traffic_signals_data
 
     def find_ego_odom_by_timestamp(self, timestamp):
-        ego_odom_data = None
-        for data in self.rosbag_ego_odom_data:
-            if timestamp < data[0]:
-                ego_odom_data = data[1]
-                break
-
-        return ego_odom_data
+        return self.binary_search(self.rosbag_ego_odom_data, timestamp)

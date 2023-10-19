@@ -272,7 +272,8 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
     *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
     parameters_.forward_goal_search_length);
   const auto [pull_over_lane_stop_objects, others] =
-    utils::path_safety_checker::separateObjectsByLanelets(stop_objects, pull_over_lanes);
+    utils::path_safety_checker::separateObjectsByLanelets(
+      stop_objects, pull_over_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
   if (parameters_.prioritize_goals_before_objects) {
     countObjectsToAvoid(goal_candidates, pull_over_lane_stop_objects);

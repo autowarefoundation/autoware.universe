@@ -118,8 +118,6 @@
         object_ignore_section_crosswalk_in_front_distance: 30.0     # [m]
         object_ignore_section_crosswalk_behind_distance: 30.0       # [m]
         # detection range
-        object_check_forward_distance: 150.0            # [m]
-        object_check_backward_distance: 2.0             # [m]
         object_check_goal_distance: 20.0                # [m]
         # filtering parking objects
         threshold_distance_object_is_on_center: 1.0     # [m]
@@ -127,6 +125,13 @@
         object_check_min_road_shoulder_width: 0.5       # [m]
         # lost object compensation
         object_last_seen_threshold: 2.0
+
+        # detection area generation parameters
+        detection_area:
+          static: true                                   # [-]
+          min_forward_distance: 50.0                     # [m]
+          max_forward_distance: 150.0                    # [m]
+          backward_distance: 10.0                        # [m]
 
       # For safety check
       safety_check:
@@ -139,12 +144,16 @@
         check_other_object: true                         # [-]
         # collision check parameters
         check_all_predicted_path: false                  # [-]
-        time_resolution: 0.5                             # [s]
-        time_horizon_for_front_object: 10.0              # [s]
-        time_horizon_for_rear_object: 10.0               # [s]
         safety_check_backward_distance: 100.0            # [m]
         hysteresis_factor_expand_rate: 2.0               # [-]
         hysteresis_factor_safe_count: 10                 # [-]
+        # predicted path parameters
+        min_velocity: 1.38                               # [m/s]
+        max_velocity: 50.0                               # [m/s]
+        time_resolution: 0.5                             # [s]
+        time_horizon_for_front_object: 10.0              # [s]
+        time_horizon_for_rear_object: 10.0               # [s]
+        delay_until_departure: 0.0                       # [s]
         # rss parameters
         expected_front_deceleration: -1.0                # [m/ss]
         expected_rear_deceleration: -1.0                 # [m/ss]
@@ -165,6 +174,7 @@
           hard_road_shoulder_margin: 0.3                # [m]
           max_right_shift_length: 5.0
           max_left_shift_length: 5.0
+          max_deviation_from_lane: 0.5                  # [m]
         # avoidance distance parameters
         longitudinal:
           prepare_time: 2.0                             # [s]
