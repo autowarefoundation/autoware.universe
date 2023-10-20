@@ -36,9 +36,9 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
   "centerpoint_backbone",  // network_name
   "llvm",                  // network_backend
 
-  "preprocess.so",  // network_module_path
-  "",               // network_graph_path
-  "",               // network_params_path
+  "./preprocess.so",  // network_module_path
+  "./",               // network_graph_path
+  "./",               // network_params_path
 
   kDLCPU,  // tvm_device_type
   0,       // tvm_device_id
