@@ -223,13 +223,16 @@ FrenetPath PathGenerator::generateFrenetPath(
 
   path.reserve(static_cast<size_t>(duration / sampling_time_interval_));
   for (double t = 0.0; t <= duration; t += sampling_time_interval_) {
-    const double d_next_ = current_point.d + current_point.d_vel * t + 0 * 2 * std::pow(t, 2) +
-                           lat_coeff(0) * std::pow(t, 3) + lat_coeff(1) * std::pow(t, 4) +
-                           lat_coeff(2) * std::pow(t, 5);
+    const double current_acc =
+      0.0;  // Currently we assume the object is traveling at a constant speed
+    const double d_next_ = current_point.d + current_point.d_vel * t +
+                           current_acc * 2.0 * std::pow(t, 2) + lat_coeff(0) * std::pow(t, 3) +
+                           lat_coeff(1) * std::pow(t, 4) + lat_coeff(2) * std::pow(t, 5);
     // t > lateral_duration: 0.0, else d_next_
     const double d_next = t > lateral_duration ? 0.0 : d_next_;
-    const double s_next = current_point.s + current_point.s_vel * t + 2 * 0 * std::pow(t, 2) +
-                          lon_coeff(0) * std::pow(t, 3) + lon_coeff(1) * std::pow(t, 4);
+    const double s_next = current_point.s + current_point.s_vel * t +
+                          2.0 * current_acc * std::pow(t, 2) + lon_coeff(0) * std::pow(t, 3) +
+                          lon_coeff(1) * std::pow(t, 4);
     if (s_next > max_length) {
       break;
     }
