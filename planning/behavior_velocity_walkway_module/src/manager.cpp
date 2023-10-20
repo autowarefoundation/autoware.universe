@@ -64,13 +64,6 @@ void WalkwayModuleManager::launchNewModules(const PathWithLaneId & path)
       lanelet.id(), lanelet_map_ptr, p, use_regulatory_element, logger, clock_));
   };
 
-  const auto crosswalk_leg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
-    path, rh->getLaneletMapPtr(), planner_data_->current_odometry->pose);
-
-  for (const auto & crosswalk : crosswalk_leg_elem_map) {
-    launch(crosswalk.first->crosswalkLanelet(), true);
-  }
-
   const auto crosswalk_lanelets = getCrosswalksOnPath(
     planner_data_->current_odometry->pose, path, rh->getLaneletMapPtr(), rh->getOverallGraphPtr());
 
