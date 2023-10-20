@@ -166,6 +166,8 @@
   </group>
   <!-- visualizer -->
   <group>
-    <include file="$(find-pkg-share traffic_light_visualization)/launch/traffic_light_map_visualizer.launch.xml"/>
+    <include file="$(find-pkg-share traffic_light_visualization)/launch/traffic_light_map_visualizer.launch.xml">
+      <arg name="input/tl_state" value="/perception/traffic_light_recognition/traffic_signals"/>
+    </include>
   </group>
 </launch>
