@@ -14,8 +14,8 @@
 
 #include "tvm_utility/pipeline.hpp"
 
-#ifndef CENTERPOINT_BACKBONE_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
-#define CENTERPOINT_BACKBONE_INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#ifndef PERCEPTION__LIDAR_CENTERPOINT_TVM__DATA__MODELS__CENTERPOINT_BACKBONE__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#define PERCEPTION__LIDAR_CENTERPOINT_TVM__DATA__MODELS__CENTERPOINT_BACKBONE__INFERENCE_ENGINE_TVM_CONFIG_HPP_
 
 namespace model_zoo
 {
@@ -28,35 +28,27 @@ namespace centerpoint_backbone
 namespace onnx_centerpoint_backbone
 {
 
-static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
-  {
-    3,
-    0,
-    0
-  },  // modelzoo_version
+static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
+  {3, 0, 0},  // modelzoo_version
 
   "centerpoint_backbone",  // network_name
-  "llvm",  // network_backend
+  "llvm",                  // network_backend
 
-  "deploy_lib.so",  // network_module_path
-  "deploy_graph.json",  // network_graph_path
+  "deploy_lib.so",        // network_module_path
+  "deploy_graph.json",    // network_graph_path
   "deploy_param.params",  // network_params_path
 
   kDLCPU,  // tvm_device_type
-  0,  // tvm_device_id
+  0,       // tvm_device_id
 
-  {
-    {"spatial_features", kDLFloat, 32, 1, {1, 32, 560, 560}}
-  },  // network_inputs
+  {{"spatial_features", kDLFloat, 32, 1, {1, 32, 560, 560}}},  // network_inputs
 
-  {
-    {"heatmap", kDLFloat, 32, 1, {1, 3, 560, 560}},
-    {"reg", kDLFloat, 32, 1, {1, 2, 560, 560}},
-    {"height", kDLFloat, 32, 1, {1, 1, 560, 560}},
-    {"dim", kDLFloat, 32, 1, {1, 3, 560, 560}},
-    {"rot", kDLFloat, 32, 1, {1, 2, 560, 560}},
-    {"vel", kDLFloat, 32, 1, {1, 2, 560, 560}}
-  }  // network_outputs
+  {{"heatmap", kDLFloat, 32, 1, {1, 3, 560, 560}},
+   {"reg", kDLFloat, 32, 1, {1, 2, 560, 560}},
+   {"height", kDLFloat, 32, 1, {1, 1, 560, 560}},
+   {"dim", kDLFloat, 32, 1, {1, 3, 560, 560}},
+   {"rot", kDLFloat, 32, 1, {1, 2, 560, 560}},
+   {"vel", kDLFloat, 32, 1, {1, 2, 560, 560}}}  // network_outputs
 };
 
 }  // namespace onnx_centerpoint_backbone
@@ -64,4 +56,5 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
 }  // namespace lidar_obstacle_detection
 }  // namespace perception
 }  // namespace model_zoo
-#endif  // CENTERPOINT_BACKBONE_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#endif  // PERCEPTION__LIDAR_CENTERPOINT_TVM__DATA__MODELS__CENTERPOINT_BACKBONE__INFERENCE_ENGINE_TVM_CONFIG_HPP_
+        // // NOLINT

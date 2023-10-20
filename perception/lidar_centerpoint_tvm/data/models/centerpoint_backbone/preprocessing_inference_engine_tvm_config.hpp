@@ -14,8 +14,8 @@
 
 #include "tvm_utility/pipeline.hpp"
 
-#ifndef CENTERPOINT_BACKBONE_SCATTER_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
-#define CENTERPOINT_BACKBONE_SCATTER_INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#ifndef PERCEPTION__LIDAR_CENTERPOINT_TVM__DATA__MODELS__CENTERPOINT_BACKBONE__PREPROCESSING_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#define PERCEPTION__LIDAR_CENTERPOINT_TVM__DATA__MODELS__CENTERPOINT_BACKBONE__PREPROCESSING_INFERENCE_ENGINE_TVM_CONFIG_HPP_
 
 namespace model_zoo
 {
@@ -30,31 +30,23 @@ namespace onnx_centerpoint_backbone
 namespace preprocessing
 {
 
-static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
-  {
-    3,
-    0,
-    0
-  },  // modelzoo_version
+static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
+  {3, 0, 0},  // modelzoo_version
 
   "centerpoint_backbone",  // network_name
-  "llvm",  // network_backend
+  "llvm",                  // network_backend
 
   "preprocess.so",  // network_module_path
-  "",  // network_graph_path
-  "",  // network_params_path
+  "",               // network_graph_path
+  "",               // network_params_path
 
   kDLCPU,  // tvm_device_type
-  0,  // tvm_device_id
+  0,       // tvm_device_id
 
-  {
-    {"pillar_features", kDLFloat, 32, 1, {40000, 1, 32}},
-    {"coords", kDLInt, 32, 1, {40000, 3}}
-  },  // network_inputs
+  {{"pillar_features", kDLFloat, 32, 1, {40000, 1, 32}},
+   {"coords", kDLInt, 32, 1, {40000, 3}}},  // network_inputs
 
-  {
-    {"spatial_features", kDLFloat, 32, 1, {1, 32, 560, 560}}
-  }  // network_outputs
+  {{"spatial_features", kDLFloat, 32, 1, {1, 32, 560, 560}}}  // network_outputs
 };
 
 }  // namespace preprocessing
@@ -63,4 +55,5 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
 }  // namespace lidar_obstacle_detection
 }  // namespace perception
 }  // namespace model_zoo
-#endif  // CENTERPOINT_BACKBONE_SCATTER_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#endif  // PERCEPTION__LIDAR_CENTERPOINT_TVM__DATA__MODELS__CENTERPOINT_BACKBONE__PREPROCESSING_INFERENCE_ENGINE_TVM_CONFIG_HPP_
+        // // NOLINT

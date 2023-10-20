@@ -67,7 +67,6 @@ LidarCenterPointTVMNode::LidarCenterPointTVMNode(const rclcpp::NodeOptions & nod
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("encoder_in_feature_size"));
   const auto data_path = this->declare_parameter<std::string>("data_path");
 
-
   DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
 

@@ -42,10 +42,8 @@ namespace lidar_centerpoint_tvm
 {
 
 TVMScatterIE::TVMScatterIE(
-  tvm_utility::pipeline::InferenceEngineTVMConfig config,
-  const std::string & data_path,
-  const std::string & pkg_name,
-  const std::string & function_name)
+  tvm_utility::pipeline::InferenceEngineTVMConfig config, const std::string & data_path,
+  const std::string & pkg_name, const std::string & function_name)
 : config_(config)
 {
   std::string network_prefix = data_path + "/" + pkg_name + "/models/" + config.network_name + "/";
@@ -160,8 +158,7 @@ std::vector<Box3D> BackboneNeckHeadPostProcessor::schedule(const TVMArrayContain
 }
 
 CenterPointTVM::CenterPointTVM(
-  const DensificationParam & densification_param,
-  const CenterPointConfig & config,
+  const DensificationParam & densification_param, const CenterPointConfig & config,
   const std::string & data_path)
 : config_ve(config_en),
   config_bnh(config_bk),
