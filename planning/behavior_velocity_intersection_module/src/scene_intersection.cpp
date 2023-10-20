@@ -1221,7 +1221,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   occlusion_stop_state_machine_.setStateWithMarginTime(
     occlusion_status == OcclusionType::NOT_OCCLUDED ? StateMachine::State::GO : StateMachine::STOP,
     logger_.get_child("occlusion_stop"), *clock_);
-  RCLCPP_INFO(rclcpp::get_logger("temp"), "occlusion status is % d", occlusion_status);
   const bool is_occlusion_cleared_with_margin =
     (occlusion_stop_state_machine_.getState() == StateMachine::State::GO);
   // distinguish if ego detected occlusion or RTC detects occlusion
