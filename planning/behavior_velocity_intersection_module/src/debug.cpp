@@ -188,14 +188,6 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       &debug_marker_array);
   }
 
-  if (debug_data_.intersection_area) {
-    appendMarkerArray(
-      debug::createPolygonMarkerArray(
-        debug_data_.intersection_area.value(), "intersection_area", lane_id_, now, 0.3, 0.0, 0.0,
-        0.0, 1.0, 0.0),
-      &debug_marker_array);
-  }
-
   if (debug_data_.stuck_vehicle_detect_area) {
     appendMarkerArray(
       debug::createPolygonMarkerArray(

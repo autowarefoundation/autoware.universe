@@ -343,9 +343,8 @@ private:
     const lanelet::CompoundPolygon3d & first_attention_area,
     const util::InterpolatedPathInfo & interpolated_path_info,
     const std::vector<lanelet::ConstLineString3d> & lane_divisions,
-    const std::vector<util::TargetObject> & blocking_attention_objects,
-    const std::vector<util::TargetObject> & not_attention_intersection_area_objects,
-    const geometry_msgs::msg::Pose & current_pose, const double occlusion_dist_thr);
+    const util::TargetObjects & target_objects, const geometry_msgs::msg::Pose & current_pose,
+    const double occlusion_dist_thr);
 
   /*
   bool IntersectionModule::checkFrontVehicleDeceleration(
