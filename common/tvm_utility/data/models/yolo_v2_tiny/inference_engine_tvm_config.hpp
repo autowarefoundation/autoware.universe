@@ -35,9 +35,9 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
   "llvm",          // network_backend
 
   // cspell: ignore DLCPU
-  "deploy_lib.so",        // network_module_path
-  "deploy_graph.json",    // network_graph_path
-  "deploy_param.params",  // network_params_path
+  "./deploy_lib.so",        // network_module_path
+  "./deploy_graph.json",    // network_graph_path
+  "./deploy_param.params",  // network_params_path
 
   kDLCPU,  // tvm_device_type
   0,       // tvm_device_id
