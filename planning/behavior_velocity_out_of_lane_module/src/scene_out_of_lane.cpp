@@ -148,7 +148,15 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     (!prev_inserted_point_ || prev_inserted_point_->slowdown.lane_to_avoid.id() ==
                                 point_to_insert->slowdown.lane_to_avoid.id()))
     prev_inserted_point_time_ = clock_->now();
-  if (!point_to_insert && prev_inserted_point_) point_to_insert = prev_inserted_point_;
+  if (!point_to_insert && prev_inserted_point_) {
+    // if the path changed the prev point is no longer on the path so we project it
+    const auto insert_arc_length = motion_utils::calcSignedArcLength(
+      path->points, 0LU, prev_inserted_point_->point.point.pose.position);
+    prev_inserted_point_->point.point.pose =
+      motion_utils::calcInterpolatedPose(path->points, insert_arc_length);
+    point_to_insert = prev_inserted_point_;
+  }
+
   if (point_to_insert) {
     prev_inserted_point_ = point_to_insert;
     RCLCPP_INFO(logger_, "Avoiding lane %lu", point_to_insert->slowdown.lane_to_avoid.id());
