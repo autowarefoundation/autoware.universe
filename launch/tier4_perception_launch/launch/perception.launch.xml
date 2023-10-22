@@ -93,6 +93,9 @@
   <arg name="remove_unknown" default="true"/>
   <arg name="trust_distance" default="30.0"/>
 
+  <!-- skip detection by tracker -->
+  <arg name="use_detection_by_tracker" default="true"/>
+
   <!-- Perception module -->
   <group>
     <push-ros-namespace namespace="perception"/>
