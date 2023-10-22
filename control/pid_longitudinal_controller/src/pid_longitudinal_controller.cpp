@@ -616,7 +616,7 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     }
     // ---------------
 
-    if (keep_stopped_condition) {
+    if (keep_stopped_condition || current_vel < 0.0) {
       return changeState(ControlState::STOPPED);
     }
     if (departure_condition_from_stopped) {
