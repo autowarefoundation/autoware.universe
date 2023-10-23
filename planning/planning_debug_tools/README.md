@@ -248,7 +248,7 @@ Instead of publishing predicted objects, you can publish detected/tracked object
 
 The purpose of the Processing Time Subscriber is to monitor and visualize the processing times of various ROS 2 topics in a system. By providing a real-time terminal-based visualization, users can easily confirm the processing time performance as in the picture below.
 
-![](image/processing_time_checker.png)
+![processing_time_checker](image/processing_time_checker.png)
 
 You can run the program by the following command.
 

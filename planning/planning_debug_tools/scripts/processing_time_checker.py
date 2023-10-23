@@ -21,7 +21,6 @@ import sys
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float64
 from tier4_debug_msgs.msg import Float64Stamped
 
 
@@ -48,7 +47,6 @@ class ProcessingTimeSubscriber(Node):
                 self.get_logger().info(f"Subscribed to {topic} | Type: {types}")
 
     def callback(self, msg, topic):
-        # Update the latest data for the topic
         self.data_map[topic] = msg.data
 
     def print_data(self):
@@ -93,17 +91,13 @@ def main(args=None):
     )
     args = parser.parse_args()
 
-    try:
-        rclpy.init(args=cmd_args)  # Use the original command line arguments here
-        subscriber = ProcessingTimeSubscriber(
-            max_display_time=args.max_display_time, display_frequency=args.display_frequency
-        )
-        rclpy.spin(subscriber)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        subscriber.destroy_node()
-        rclpy.shutdown()
+    rclpy.init(args=cmd_args)  # Use the original command line arguments here
+    subscriber = ProcessingTimeSubscriber(
+        max_display_time=args.max_display_time, display_frequency=args.display_frequency
+    )
+    rclpy.spin(subscriber)
+    subscriber.destroy_node()
+    rclpy.shutdown()
 
 
 if __name__ == "__main__":
