@@ -55,6 +55,10 @@ class ProcessingTimeSubscriber(Node):
         # Clear terminal
         os.system("cls" if os.name == "nt" else "clear")
 
+        if not self.data_map:
+            print("No topics available.")
+            return
+
         # Get the maximum topic name length for alignment
         max_topic_length = max(map(len, self.data_map.keys()))
 
