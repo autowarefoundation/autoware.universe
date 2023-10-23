@@ -6,19 +6,19 @@ autoware_package()
 
 ament_auto_add_library(switch_rule
   SHARED
-  src/switch_rule/map_based_rule.cpp
-  src/switch_rule/map_based_rule_core.cpp
-  src/rule_helper/eagleye_area.cpp
-  src/rule_helper/ar_tag_position.cpp
-  src/rule_helper/pcd_occupancy.cpp
+  src/pose_estimator_manager/switch_rule/map_based_rule.cpp
+  src/pose_estimator_manager/switch_rule/map_based_rule_core.cpp
+  src/pose_estimator_manager/rule_helper/eagleye_area.cpp
+  src/pose_estimator_manager/rule_helper/ar_tag_position.cpp
+  src/pose_estimator_manager/rule_helper/pcd_occupancy.cpp
 )
-target_include_directories(switch_rule PUBLIC include)
+target_include_directories(switch_rule PUBLIC src)
 
 ament_auto_add_executable(${PROJECT_NAME}
-  src/pose_estimator_manager_core.cpp
-  src/pose_estimator_manager_node.cpp
+  src/pose_estimator_manager/pose_estimator_manager_core.cpp
+  src/pose_estimator_manager/pose_estimator_manager_node.cpp
 )
-target_include_directories(${PROJECT_NAME} PUBLIC include)
+target_include_directories(${PROJECT_NAME} PUBLIC src)
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${PCL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} switch_rule)
 
@@ -29,7 +29,7 @@ function(add_testcase filepath)
 
   ament_add_gtest(${test_name} ${filepath})
   target_link_libraries("${test_name}" switch_rule)
-  target_include_directories(${test_name} PUBLIC include)
+  target_include_directories(${test_name} PUBLIC src)
   ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
 endfunction()
 
