@@ -16,15 +16,19 @@
 
 #include "pose_estimator_manager/rule_helper/grid_info.hpp"
 
+#include <tier4_autoware_utils/ros/parameter.hpp>
+
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace pose_estimator_manager::rule_helper
 {
+using tier4_autoware_utils::getOrDeclareParameter;
+
 PcdOccupancy::PcdOccupancy(rclcpp::Node * node)
 : pcd_density_upper_threshold_(
-    node->declare_parameter<int>("pcd_occupancy_rule/pcd_density_upper_threshold")),
+    getOrDeclareParameter<int>(*node, "pcd_occupancy_rule/pcd_density_upper_threshold")),
   pcd_density_lower_threshold_(
-    node->declare_parameter<int>("pcd_occupancy_rule/pcd_density_lower_threshold"))
+    getOrDeclareParameter<int>(*node, "pcd_occupancy_rule/pcd_density_lower_threshold"))
 {
 }
 

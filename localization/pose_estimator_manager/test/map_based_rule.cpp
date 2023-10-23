@@ -16,6 +16,7 @@
 
 #include "pose_estimator_manager/rule_helper/eagleye_area.hpp"
 #include "pose_estimator_manager/rule_helper/grid_info.hpp"
+#include "pose_estimator_manager/rule_helper/pcd_occupancy.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
@@ -42,7 +43,21 @@ lanelet::Polygon3d create_polygon3d()
   return polygon;
 }
 
-TEST(MapBasedRule, eagleyeArea)
+class MapBasedRule : public ::testing::Test
+{
+protected:
+  virtual void SetUp()
+  {
+    rclcpp::init(0, nullptr);
+    node = std::make_shared<rclcpp::Node>("test_node");
+  }
+
+  std::shared_ptr<rclcpp::Node> node{nullptr};
+
+  virtual void TearDown() { rclcpp::shutdown(); }
+};
+
+TEST_F(MapBasedRule, eagleyeArea)
 {
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
 
@@ -54,8 +69,7 @@ TEST(MapBasedRule, eagleyeArea)
 
   using Point = geometry_msgs::msg::Point;
 
-  rclcpp::Logger logger = rclcpp::get_logger("logger");
-  pose_estimator_manager::rule_helper::EagleyeArea eagleye_area(logger);
+  pose_estimator_manager::rule_helper::EagleyeArea eagleye_area(&(*node));
   eagleye_area.init(std::make_shared<HADMapBin>(msg));
 
   EXPECT_TRUE(eagleye_area.within(Point().set__x(5).set__y(5).set__z(0)));
@@ -63,7 +77,21 @@ TEST(MapBasedRule, eagleyeArea)
   EXPECT_EQ(eagleye_area.debug_string(), "0,0 10,0 10,10 0,10 0,0 \n");
 }
 
-TEST(MapBasedRule, gridInfo)
+TEST_F(MapBasedRule, pcdOccupancy)
+{
+  using pose_estimator_manager::rule_helper::PcdOccupancy;
+  node->declare_parameter<int>("pcd_occupancy_rule/pcd_density_upper_threshold", 20);
+  node->declare_parameter<int>("pcd_occupancy_rule/pcd_density_lower_threshold", 10);
+
+  pose_estimator_manager::rule_helper::PcdOccupancy pcd_occupancy(&(*node));
+  geometry_msgs::msg::Point point;
+  std::string message;
+
+  // Since we have not yet given a point cloud, this returns false.
+  EXPECT_FALSE(pcd_occupancy.ndt_can_operate(point, &message));
+}
+
+TEST_F(MapBasedRule, gridInfo)
 {
   using pose_estimator_manager::rule_helper::GridInfo;
   EXPECT_TRUE(GridInfo(10., -5.) == GridInfo(10., -10.));

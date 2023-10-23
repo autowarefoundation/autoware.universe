@@ -24,7 +24,6 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 import launch
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
-from launch.logging import get_logger
 import launch_testing
 import pytest
 import rclpy
@@ -32,8 +31,6 @@ from rclpy.qos import DurabilityPolicy
 from rclpy.qos import QoSProfile
 from std_msgs.msg import String
 from std_srvs.srv import SetBool
-
-logger = get_logger(__name__)
 
 
 @pytest.mark.launch_test
@@ -58,7 +55,7 @@ def generate_test_description():
     )
 
 
-class TestEKFLocalizer(unittest.TestCase):
+class TestPoseEstimatorManager(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Initialize the ROS context for the test node
@@ -76,16 +73,11 @@ class TestEKFLocalizer(unittest.TestCase):
     def tearDown(self):
         self.test_node.destroy_node()
 
-    @staticmethod
-    def print_message(stat):
-        logger.debug("===========================")
-        logger.debug(stat)
-
     def yabloc_callback(self, srv):
-        logger.debug(srv)
+        pass
 
     def test_node_link(self):
-        # Trigger pose_estimator_manager to activate the node
+        # The manager waits for the service to start, so here it instantiates a meaningless service server.
         self.test_node.create_service(SetBool, "/yabloc_suspend_srv", self.yabloc_callback)
 
         # Receive state
