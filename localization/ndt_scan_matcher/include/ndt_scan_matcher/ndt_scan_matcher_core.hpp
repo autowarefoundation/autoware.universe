@@ -92,8 +92,7 @@ private:
   void callback_regularization_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
-  geometry_msgs::msg::PoseWithCovarianceStamped align_using_monte_carlo(
-    const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
+  geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
   void transform_sensor_measurement(
@@ -111,7 +110,7 @@ private:
     const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr);
   void publish_marker(
     const rclcpp::Time & sensor_ros_time, const std::vector<geometry_msgs::msg::Pose> & pose_array);
-  void publish_initial_to_result_distances(
+  void publish_initial_to_result(
     const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_cov_msg,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_old_msg,
@@ -150,6 +149,8 @@ private:
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     no_ground_nearest_voxel_transformation_likelihood_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Int32Stamped>::SharedPtr iteration_num_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
+    initial_to_result_relative_pose_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     initial_to_result_distance_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
@@ -179,6 +180,7 @@ private:
   double converged_param_nearest_voxel_transformation_likelihood_;
 
   int initial_estimate_particles_num_;
+  int n_startup_trials_;
   double lidar_topic_timeout_sec_;
   double initial_pose_timeout_sec_;
   double initial_pose_distance_tolerance_m_;

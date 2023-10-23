@@ -15,7 +15,9 @@
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include "behavior_path_planner/utils/drivable_area_expansion/drivable_area_expansion.hpp"
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -23,9 +25,6 @@
 #include <motion_utils/resample/resample.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
-
-#include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
-#include "autoware_auto_perception_msgs/msg/predicted_path.hpp"
 
 #include <boost/geometry/algorithms/is_valid.hpp>
 
@@ -1539,7 +1538,7 @@ void generateDrivableArea(
   }
   const auto & expansion_params = planner_data->drivable_area_expansion_parameters;
   if (expansion_params.enabled) {
-    drivable_area_expansion::expandDrivableArea(path, planner_data, transformed_lanes);
+    drivable_area_expansion::expand_drivable_area(path, planner_data);
   }
 
   // make bound longitudinally monotonic
@@ -1731,7 +1730,7 @@ std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
     const auto shared_point_itr_last =
       std::find_if(expanded_bound.rbegin(), expanded_bound.rend(), [&](const auto & p) {
         return std::any_of(
-          intersection_bound.begin(), intersection_bound.end(),
+          intersection_bound.rbegin(), intersection_bound.rend(),
           [&](const auto & point) { return point.id() == p.id(); });
       });
 
@@ -1754,6 +1753,13 @@ std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
       if (
         trim_point_itr_init == intersection_bound.end() ||
         trim_point_itr_last == intersection_bound.end()) {
+        continue;
+      }
+
+      // TODO(Satoshi OTA): remove this guard.
+      if (
+        std::distance(intersection_bound.begin(), trim_point_itr_last) <
+        std::distance(intersection_bound.begin(), trim_point_itr_init)) {
         continue;
       }
 
