@@ -27,17 +27,6 @@
 
 using model_zoo::perception::camera_obstacle_detection::yolo_v2_tiny::tensorflow_fp32_coco::config;
 
-// Name of file containing the human readable names of the classes. One class
-// on each line.
-static constexpr const char * LABEL_FILENAME = "./yolo_v2_tiny_artifacts/labels.txt";
-
-// Name of file containing the anchor values for the network. Each line is one
-// anchor. each anchor has 2 comma separated floating point values.
-static constexpr const char * ANCHOR_FILENAME = "./yolo_v2_tiny_artifacts/anchors.csv";
-
-// Filename of the image on which to run the inference
-static constexpr const char * IMAGE_FILENAME = "./yolo_v2_tiny_artifacts/test_image_0.jpg";
-
 namespace tvm_utility
 {
 namespace yolo_v2_tiny
@@ -256,11 +245,18 @@ int main(int argc, char * argv[])
   // init node to use parameters
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("tvm_yolo_example");
-  node->declare_parameter("image_filename", IMAGE_FILENAME);
-  node->declare_parameter("label_filename", LABEL_FILENAME);
-  node->declare_parameter("anchor_filename", ANCHOR_FILENAME);
-  node->declare_parameter("data_path", "");
+  // Filename of the image on which to run the inference
+  node->declare_parameter<std::string>("image_filename");
+  // Name of file containing the human readable names of the classes. One class
+  // on each line.
+  node->declare_parameter<std::string>("label_filename");
+  // Name of file containing the anchor values for the network. Each line is one
+  // anchor. each anchor has 2 comma separated floating point values.
+  node->declare_parameter<std::string>("anchor_filename");
+  node->declare_parameter<std::string>("data_path");
+  
   RCLCPP_INFO(node->get_logger(), "Node started");
+  
   // Instantiate the pipeline
   using PrePT = tvm_utility::yolo_v2_tiny::PreProcessorYoloV2Tiny;
   using IET = tvm_utility::pipeline::InferenceEngineTVM;
