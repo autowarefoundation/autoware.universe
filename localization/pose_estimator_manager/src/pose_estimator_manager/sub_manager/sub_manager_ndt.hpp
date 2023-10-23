@@ -31,9 +31,9 @@ public:
     auto on_pointcloud = std::bind(&SubManagerNdt::on_pointcloud, this, _1);
 
     sub_pointcloud_ = node->create_subscription<PointCloud2>(
-      "~/input/pointcloud", rclcpp::SensorDataQoS(), on_pointcloud);
+      "~/input/ndt/pointcloud", rclcpp::SensorDataQoS(), on_pointcloud);
     pub_pointcloud_ = node->create_publisher<PointCloud2>(
-      "~/output/pointcloud", rclcpp::SensorDataQoS().keep_last(10));
+      "~/output/ndt/pointcloud", rclcpp::SensorDataQoS().keep_last(10));
 
     ndt_is_enabled_ = true;
   }

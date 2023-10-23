@@ -35,8 +35,8 @@ public:
 
     using std::placeholders::_1;
     auto on_image = std::bind(&SubManagerYabLoc::on_image, this, _1);
-    sub_image_ = node->create_subscription<Image>("~/input/image", 5, on_image);
-    pub_image_ = node->create_publisher<Image>("~/output/image", 5);
+    sub_image_ = node->create_subscription<Image>("~/input/yabloc/image", 5, on_image);
+    pub_image_ = node->create_publisher<Image>("~/output/yabloc/image", 5);
 
     using namespace std::literals::chrono_literals;
     service_callback_group_ =

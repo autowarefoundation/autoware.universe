@@ -54,7 +54,8 @@ TEST(MapBasedRule, eagleyeArea)
 
   using Point = geometry_msgs::msg::Point;
 
-  pose_estimator_manager::rule_helper::EagleyeArea eagleye_area;
+  rclcpp::Logger logger = rclcpp::get_logger("logger");
+  pose_estimator_manager::rule_helper::EagleyeArea eagleye_area(logger);
   eagleye_area.init(std::make_shared<HADMapBin>(msg));
 
   EXPECT_TRUE(eagleye_area.within(Point().set__x(5).set__y(5).set__z(0)));

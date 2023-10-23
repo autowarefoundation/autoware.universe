@@ -56,19 +56,22 @@ PoseEstimatorManager::PoseEstimatorManager()
 
   // sub-managers
   for (auto pose_estimator_name : running_estimator_list_) {
-    using namespace sub_manager;
     switch (pose_estimator_name) {
       case PoseEstimatorName::ndt:
-        sub_managers_.emplace(pose_estimator_name, std::make_shared<SubManagerNdt>(this));
+        sub_managers_.emplace(
+          pose_estimator_name, std::make_shared<sub_manager::SubManagerNdt>(this));
         break;
       case PoseEstimatorName::yabloc:
-        sub_managers_.emplace(pose_estimator_name, std::make_shared<SubManagerYabLoc>(this));
+        sub_managers_.emplace(
+          pose_estimator_name, std::make_shared<sub_manager::SubManagerYabLoc>(this));
         break;
       case PoseEstimatorName::eagleye:
-        sub_managers_.emplace(pose_estimator_name, std::make_shared<SubManagerEagleye>(this));
+        sub_managers_.emplace(
+          pose_estimator_name, std::make_shared<sub_manager::SubManagerEagleye>(this));
         break;
       case PoseEstimatorName::artag:
-        sub_managers_.emplace(pose_estimator_name, std::make_shared<SubManagerArTag>(this));
+        sub_managers_.emplace(
+          pose_estimator_name, std::make_shared<sub_manager::SubManagerArTag>(this));
         break;
       default:
         RCLCPP_ERROR_STREAM(get_logger(), "invalid pose_estimator is specified");

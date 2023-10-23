@@ -16,21 +16,23 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 
 #include <boost/geometry/geometry.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 
+#include <unordered_set>
+#include <vector>
+
 namespace pose_estimator_manager::rule_helper
 {
 using BoostPoint = boost::geometry::model::d2::point_xy<double>;
 using BoostPolygon = boost::geometry::model::polygon<BoostPoint>;
-rclcpp::Logger logger = rclcpp::get_logger("EagleyeArea");
 
 struct EagleyeArea::Impl
 {
+  Impl(rclcpp::Logger logger) : logger_(logger) {}
   std::vector<BoostPolygon> bounding_boxes_;
   void init(HADMapBin::ConstSharedPtr msg);
   bool within(const geometry_msgs::msg::Point & point) const;
@@ -38,12 +40,17 @@ struct EagleyeArea::Impl
   MarkerArray debug_marker_array() const { return marker_array_; }
 
 private:
+  rclcpp::Logger logger_;
   MarkerArray marker_array_;
 };
 
-EagleyeArea::EagleyeArea()
+EagleyeArea::EagleyeArea(const rclcpp::Logger & logger) : logger_(logger)
 {
-  impl_ = std::make_shared<Impl>();
+  impl_ = std::make_shared<Impl>(logger_);
+}
+
+EagleyeArea::EagleyeArea(rclcpp::Node * node) : EagleyeArea(node->get_logger())
+{
 }
 
 void EagleyeArea::init(HADMapBin::ConstSharedPtr msg)
@@ -74,14 +81,14 @@ void EagleyeArea::Impl::init(HADMapBin::ConstSharedPtr msg)
   const auto & po_layer = lanelet_map->polygonLayer;
   const std::unordered_set<std::string> bounding_box_labels_ = {"eagleye_area"};
 
-  RCLCPP_INFO_STREAM(logger, "Polygon layer size: " << po_layer.size());
+  RCLCPP_INFO_STREAM(logger_, "Polygon layer size: " << po_layer.size());
   for (const auto & polygon : po_layer) {
     if (!polygon.hasAttribute(lanelet::AttributeName::Type)) {
       continue;
     }
 
     const lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
-    RCLCPP_INFO_STREAM(logger, "a polygon attribute: " << attr.value());
+    RCLCPP_INFO_STREAM(logger_, "a polygon attribute: " << attr.value());
 
     if (bounding_box_labels_.count(attr.value()) == 0) {
       continue;

@@ -46,10 +46,11 @@ public:
 
   MapBasedRule(
     rclcpp::Node & node, const std::unordered_set<PoseEstimatorName> & running_estimator_list);
+
   std::unordered_map<PoseEstimatorName, bool> update() override;
-  std::vector<PoseEstimatorName> supporting_pose_estimators() override;
 
   std::string debug_string() override;
+
   MarkerArray debug_marker_array() override;
 
 protected:
@@ -58,7 +59,7 @@ protected:
 
   std::unique_ptr<rule_helper::ArTagPosition> ar_tag_position_{nullptr};
   std::unique_ptr<rule_helper::PcdOccupancy> pcd_occupancy_{nullptr};
-  rule_helper::EagleyeArea eagleye_area_;
+  std::unique_ptr<rule_helper::EagleyeArea> eagleye_area_{nullptr};
 
   std::string debug_string_msg_;
   InitializationState initialization_state_;

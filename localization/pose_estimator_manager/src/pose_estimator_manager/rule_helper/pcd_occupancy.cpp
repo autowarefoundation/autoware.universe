@@ -16,11 +16,6 @@
 
 #include "pose_estimator_manager/rule_helper/grid_info.hpp"
 
-#include <rclcpp/logger.hpp>
-
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace pose_estimator_manager::rule_helper
@@ -64,7 +59,7 @@ bool PcdOccupancy::ndt_can_operate(
      << (last_is_ndt_mode ? pcd_density_lower_threshold_ : pcd_density_upper_threshold_);
   *optional_message = ss.str();
 
-  return true;
+  return is_ndt_mode;
 }
 
 visualization_msgs::msg::MarkerArray PcdOccupancy::debug_marker_array() const

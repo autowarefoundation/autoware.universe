@@ -16,13 +16,6 @@
 
 namespace pose_estimator_manager::switch_rule
 {
-std::vector<PoseEstimatorName> MapBasedRule::supporting_pose_estimators()
-{
-  return {
-    PoseEstimatorName::ndt, PoseEstimatorName::yabloc, PoseEstimatorName::eagleye,
-    PoseEstimatorName::artag};
-}
-
 MapBasedRule::MapBasedRule(
   rclcpp::Node & node, const std::unordered_set<PoseEstimatorName> & running_estimator_list)
 : BaseSwitchRule(node),
@@ -61,6 +54,9 @@ MapBasedRule::MapBasedRule(
   if (running_estimator_list.count(PoseEstimatorName::artag)) {
     ar_tag_position_ = std::make_unique<rule_helper::ArTagPosition>(&node);
   }
+  if (running_estimator_list.count(PoseEstimatorName::eagleye)) {
+    eagleye_area_ = std::make_unique<rule_helper::EagleyeArea>(&node);
+  }
 
   //
   initialization_state_.state = InitializationState::UNINITIALIZED;
@@ -80,7 +76,11 @@ bool MapBasedRule::eagleye_is_available() const
     return false;
   }
 
-  return eagleye_area_.within(latest_pose_->pose.pose.position);
+  if (!eagleye_area_) {
+    throw std::runtime_error("eagleye_area_ is not initialized");
+  }
+
+  return eagleye_area_->within(latest_pose_->pose.pose.position);
 }
 bool MapBasedRule::yabloc_is_available() const
 {
@@ -106,8 +106,9 @@ MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
     array_msg.markers.insert(array_msg.markers.end(), additional.begin(), additional.end());
   }
 
-  for (const auto & marker : eagleye_area_.debug_marker_array().markers) {
-    array_msg.markers.push_back(marker);
+  if (eagleye_area_) {
+    const auto & additional = eagleye_area_->debug_marker_array().markers;
+    array_msg.markers.insert(array_msg.markers.end(), additional.begin(), additional.end());
   }
 
   return array_msg;
@@ -115,8 +116,9 @@ MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
 
 void MapBasedRule::on_vector_map(HADMapBin::ConstSharedPtr msg)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "subscribed binary vector map");
-  eagleye_area_.init(msg);
+  if (eagleye_area_) {
+    eagleye_area_->init(msg);
+  }
 }
 
 void MapBasedRule::on_point_cloud_map(PointCloud2::ConstSharedPtr msg)

@@ -15,13 +15,11 @@
 #include "pose_estimator_manager/rule_helper/ar_tag_position.hpp"
 
 #include <Eigen/Core>
-#include <rclcpp/logger.hpp>
-#include <rclcpp/logging.hpp>
 #include <rclcpp/parameter_client.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <geometry_msgs/msg/point.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
+#include <algorithm>
+#include <limits>
+#include <vector>
 
 namespace pose_estimator_manager::rule_helper
 {

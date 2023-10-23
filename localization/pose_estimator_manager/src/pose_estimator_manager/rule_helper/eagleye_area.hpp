@@ -15,6 +15,9 @@
 #ifndef POSE_ESTIMATOR_MANAGER__RULE_HELPER__EAGLEYE_AREA_HPP_
 #define POSE_ESTIMATOR_MANAGER__RULE_HELPER__EAGLEYE_AREA_HPP_
 
+#include <rclcpp/logger.hpp>
+#include <rclcpp/node.hpp>
+
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -31,7 +34,8 @@ public:
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
-  EagleyeArea();
+  explicit EagleyeArea(rclcpp::Node * node);
+  explicit EagleyeArea(const rclcpp::Logger & logger);
 
   void init(const HADMapBin::ConstSharedPtr msg);
 
@@ -44,6 +48,7 @@ public:
 private:
   struct Impl;
   std::shared_ptr<Impl> impl_;
+  rclcpp::Logger logger_;
 };
 }  // namespace pose_estimator_manager::rule_helper
 
