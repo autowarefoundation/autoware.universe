@@ -228,16 +228,9 @@ void GoalPlannerModule::onFreespaceParkingTimer()
   }
 }
 
-BehaviorModuleOutput GoalPlannerModule::run()
+void GoalPlannerModule::updateData()
 {
-  current_state_ = ModuleStatus::RUNNING;
   updateOccupancyGrid();
-
-  if (!isActivated()) {
-    return planWaitingApproval();
-  }
-
-  return plan();
 }
 
 void GoalPlannerModule::initializeOccupancyGridMap()
@@ -444,13 +437,6 @@ Pose GoalPlannerModule::calcRefinedGoal(const Pose & goal_pose) const
   const auto refined_goal_pose = calcOffsetPose(center_pose, 0, -offset_from_center_line, 0);
 
   return refined_goal_pose;
-}
-
-ModuleStatus GoalPlannerModule::updateState()
-{
-  // start_planner module will be run when setting new goal, so not need finishing pull_over module.
-  // Finishing it causes wrong lane_following path generation.
-  return current_state_;
 }
 
 bool GoalPlannerModule::planFreespacePath()
@@ -905,6 +891,12 @@ void GoalPlannerModule::decideVelocity()
   status_.set_has_decided_velocity(true);
 }
 
+CandidateOutput GoalPlannerModule::planCandidate() const
+{
+  return CandidateOutput(
+    status_.get_pull_over_path() ? status_.get_pull_over_path()->getFullPath() : PathWithLaneId());
+}
+
 BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
 {
   constexpr double path_update_duration = 1.0;
@@ -943,7 +935,7 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
   // set output and status
   BehaviorModuleOutput output{};
   setOutput(output);
-  path_candidate_ = std::make_shared<PathWithLaneId>(status_.get_pull_over_path()->getFullPath());
+  path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
   path_reference_ = getPreviousModuleOutput().reference_path;
 
   // return to lane parking if it is possible
@@ -996,10 +988,7 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification(
   out.modified_goal = plan().modified_goal;  // update status_
   out.path = std::make_shared<PathWithLaneId>(generateStopPath());
   out.reference_path = getPreviousModuleOutput().reference_path;
-  path_candidate_ =
-    status_.get_is_safe_static_objects()
-      ? std::make_shared<PathWithLaneId>(status_.get_pull_over_path()->getFullPath())
-      : out.path;
+  path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
   path_reference_ = getPreviousModuleOutput().reference_path;
   const auto distance_to_path_change = calcDistanceToPathChange();
 
