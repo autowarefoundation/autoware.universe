@@ -255,9 +255,9 @@ int main(int argc, char * argv[])
   node->declare_parameter<std::string>("anchor_filename");
   // Packages data and artifacts directory path.
   node->declare_parameter<std::string>("data_path");
-  
+
   RCLCPP_INFO(node->get_logger(), "Node started");
-  
+
   // Instantiate the pipeline
   using PrePT = tvm_utility::yolo_v2_tiny::PreProcessorYoloV2Tiny;
   using IET = tvm_utility::pipeline::InferenceEngineTVM;
