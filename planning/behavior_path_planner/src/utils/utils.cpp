@@ -2009,11 +2009,18 @@ void makeBoundLongitudinallyMonotonic(
       const auto dist_3to2 = tier4_autoware_utils::calcDistance3d(p3, p2);
 
       constexpr double epsilon = 1e-3;
-      if (std::cos(M_PI_4) < product / dist_1to2 / dist_3to2 + epsilon) {
-        itr = ret.erase(itr);
-      } else {
-        itr++;
+
+      if (dist_1to2 < epsilon || dist_3to2 < epsilon) {
+        itr = std::prev(ret.erase(itr));
+        continue;
       }
+
+      if (std::cos(M_PI_4) < product / dist_1to2 / dist_3to2 + epsilon) {
+        itr = std::prev(ret.erase(itr));
+        continue;
+      }
+
+      itr++;
     }
 
     return ret;
