@@ -162,8 +162,7 @@ bool OutOfLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
                       path->points, point_to_insert->point.point.pose.position) +
                     1;
     planning_utils::insertVelocity(
-      *path, point_to_insert->point, point_to_insert->slowdown.velocity, path_idx,
-      params_.precision);
+      *path, point_to_insert->point, point_to_insert->slowdown.velocity, path_idx);
     if (point_to_insert->slowdown.velocity == 0.0) {
       tier4_planning_msgs::msg::StopFactor stop_factor;
       stop_factor.stop_pose = point_to_insert->point.point.pose;
