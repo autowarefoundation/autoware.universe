@@ -33,7 +33,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::switch_rule
 {
 class MapBasedRule : public BaseSwitchRule
 {
@@ -56,9 +56,9 @@ protected:
   const double ar_marker_available_distance_;
   const std::unordered_set<PoseEstimatorName> running_estimator_list_;
 
-  std::unique_ptr<ArTagPosition> ar_tag_position_{nullptr};
-  std::unique_ptr<PcdOccupancy> pcd_occupancy_{nullptr};
-  EagleyeArea eagleye_area_;
+  std::unique_ptr<rule_helper::ArTagPosition> ar_tag_position_{nullptr};
+  std::unique_ptr<rule_helper::PcdOccupancy> pcd_occupancy_{nullptr};
+  rule_helper::EagleyeArea eagleye_area_;
 
   std::string debug_string_msg_;
   InitializationState initialization_state_;
@@ -81,6 +81,6 @@ protected:
   void on_vector_map(HADMapBin::ConstSharedPtr msg);
   void on_pose_cov(PoseCovStamped::ConstSharedPtr msg);
 };
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::switch_rule
 
 #endif  // POSE_ESTIMATOR_MANAGER__SWITCH_RULE__MAP_BASED_RULE_HPP_

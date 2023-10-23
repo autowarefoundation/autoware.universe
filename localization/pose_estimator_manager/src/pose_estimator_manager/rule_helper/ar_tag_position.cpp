@@ -23,7 +23,7 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::rule_helper
 {
 struct ArTagPosition::Impl
 {
@@ -91,4 +91,4 @@ std::optional<ArTagPosition::TransformStamped> ArTagPosition::get_transform(
   }
   return transform_stamped;
 }
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::rule_helper

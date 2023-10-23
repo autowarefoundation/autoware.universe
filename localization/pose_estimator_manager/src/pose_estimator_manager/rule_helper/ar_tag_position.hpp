@@ -27,7 +27,7 @@
 #include <memory>
 #include <string>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::rule_helper
 {
 // This class finds the distance to the nearest landmark for AR tag based localization.
 class ArTagPosition
@@ -50,6 +50,6 @@ private:
   std::optional<TransformStamped> get_transform(
     const std::string & target_frame, const std::string & source_frame) const;
 };
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::rule_helper
 
 #endif  // POSE_ESTIMATOR_MANAGER__RULE_HELPER__AR_TAG_POSITION_HPP_

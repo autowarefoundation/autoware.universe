@@ -20,7 +20,7 @@
 
 #include <functional>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::rule_helper
 {
 struct GridInfo
 {
@@ -46,16 +46,16 @@ struct GridInfo
   friend bool operator!=(const GridInfo & one, const GridInfo & other) { return !(one == other); }
 };
 
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::rule_helper
 
 // This is for unordered_map and unodered_set
 namespace std
 {
 template <>
-struct hash<multi_pose_estimator::GridInfo>
+struct hash<pose_estimator_manager::rule_helper::GridInfo>
 {
 public:
-  size_t operator()(const multi_pose_estimator::GridInfo & grid) const
+  size_t operator()(const pose_estimator_manager::rule_helper::GridInfo & grid) const
   {
     std::size_t seed = 0;
     boost::hash_combine(seed, grid.x);

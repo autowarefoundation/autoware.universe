@@ -54,7 +54,7 @@ TEST(MapBasedRule, eagleyeArea)
 
   using Point = geometry_msgs::msg::Point;
 
-  multi_pose_estimator::EagleyeArea eagleye_area;
+  pose_estimator_manager::rule_helper::EagleyeArea eagleye_area;
   eagleye_area.init(std::make_shared<HADMapBin>(msg));
 
   EXPECT_TRUE(eagleye_area.within(Point().set__x(5).set__y(5).set__z(0)));
@@ -64,7 +64,7 @@ TEST(MapBasedRule, eagleyeArea)
 
 TEST(MapBasedRule, gridInfo)
 {
-  using multi_pose_estimator::GridInfo;
+  using pose_estimator_manager::rule_helper::GridInfo;
   EXPECT_TRUE(GridInfo(10., -5.) == GridInfo(10., -10.));
   EXPECT_TRUE(GridInfo(10., -5.) != GridInfo(10., -15.));
 

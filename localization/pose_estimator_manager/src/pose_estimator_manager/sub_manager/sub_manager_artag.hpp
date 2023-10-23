@@ -20,7 +20,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::sub_manager
 {
 class SubManagerArTag : public BasePoseEstimatorSubManager
 {
@@ -57,6 +57,6 @@ private:
     }
   }
 };
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::sub_manager
 
 #endif  // POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_ARTAG_HPP_

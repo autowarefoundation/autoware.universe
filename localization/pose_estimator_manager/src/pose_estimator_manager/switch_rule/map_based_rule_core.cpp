@@ -19,7 +19,7 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::switch_rule
 {
 std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 {
@@ -117,4 +117,4 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
     {PoseEstimatorName::artag, false}};
 }
 
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::switch_rule

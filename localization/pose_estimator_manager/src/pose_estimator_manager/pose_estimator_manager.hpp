@@ -29,7 +29,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager
 {
 class PoseEstimatorManager : public rclcpp::Node
 {
@@ -49,7 +49,7 @@ private:
 
   std::unordered_map<PoseEstimatorName, BasePoseEstimatorSubManager::SharedPtr> sub_managers_;
 
-  std::shared_ptr<BaseSwitchRule> switch_rule_{nullptr};
+  std::shared_ptr<switch_rule::BaseSwitchRule> switch_rule_{nullptr};
 
   void toggle_all(bool enabled);
   void toggle_each(const std::unordered_map<PoseEstimatorName, bool> & toggle_list);
@@ -58,6 +58,6 @@ private:
 
   void load_switch_rule();
 };
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager
 
 #endif  // POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_MANAGER_HPP_

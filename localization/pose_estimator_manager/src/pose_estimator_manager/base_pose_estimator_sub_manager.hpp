@@ -19,7 +19,7 @@
 
 #include <memory>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager
 {
 class BasePoseEstimatorSubManager
 {
@@ -38,6 +38,6 @@ protected:
 
 private:
 };
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager
 
 #endif  // POSE_ESTIMATOR_MANAGER__BASE_POSE_ESTIMATOR_SUB_MANAGER_HPP_

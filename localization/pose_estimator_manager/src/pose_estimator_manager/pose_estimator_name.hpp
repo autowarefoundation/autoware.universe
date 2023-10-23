@@ -15,7 +15,7 @@
 #ifndef POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_NAME_HPP_
 #define POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_NAME_HPP_
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager
 {
 enum class PoseEstimatorName : int { ndt = 1, yabloc = 2, eagleye = 4, artag = 8 };
 }

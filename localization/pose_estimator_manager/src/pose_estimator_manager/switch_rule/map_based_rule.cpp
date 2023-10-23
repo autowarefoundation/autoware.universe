@@ -14,7 +14,7 @@
 
 #include "pose_estimator_manager/switch_rule/map_based_rule.hpp"
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::switch_rule
 {
 std::vector<PoseEstimatorName> MapBasedRule::supporting_pose_estimators()
 {
@@ -56,10 +56,10 @@ MapBasedRule::MapBasedRule(
   sub_eagleye_fix_ = node.create_subscription<NavSatFix>("~/input/eagleye/fix", 10, on_eagleye_fix);
 
   if (running_estimator_list.count(PoseEstimatorName::ndt)) {
-    pcd_occupancy_ = std::make_unique<PcdOccupancy>(&node);
+    pcd_occupancy_ = std::make_unique<rule_helper::PcdOccupancy>(&node);
   }
   if (running_estimator_list.count(PoseEstimatorName::artag)) {
-    ar_tag_position_ = std::make_unique<ArTagPosition>(&node);
+    ar_tag_position_ = std::make_unique<rule_helper::ArTagPosition>(&node);
   }
 
   //
@@ -160,4 +160,4 @@ bool MapBasedRule::ndt_is_more_suitable_than_yabloc(std::string * optional_messa
   return pcd_occupancy_->ndt_can_operate(position, optional_message);
 }
 
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::switch_rule

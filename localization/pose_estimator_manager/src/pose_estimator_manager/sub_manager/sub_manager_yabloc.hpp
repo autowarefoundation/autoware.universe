@@ -21,7 +21,7 @@
 
 #include <memory>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::sub_manager
 {
 class SubManagerYabLoc : public BasePoseEstimatorSubManager
 {
@@ -87,5 +87,5 @@ private:
     }
   }
 };
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::sub_manager
 #endif  // POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_YABLOC_HPP_

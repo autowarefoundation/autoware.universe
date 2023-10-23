@@ -26,9 +26,8 @@
 #include <unordered_map>
 #include <vector>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::switch_rule
 {
-
 class BaseSwitchRule
 {
 public:
@@ -50,6 +49,6 @@ protected:
   std::shared_ptr<rclcpp::Logger> logger_ptr_{nullptr};
 };
 
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::switch_rule
 
 #endif  // POSE_ESTIMATOR_MANAGER__SWITCH_RULE__BASE_SWITCH_RULE_HPP_

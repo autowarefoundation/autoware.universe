@@ -23,7 +23,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::rule_helper
 {
 PcdOccupancy::PcdOccupancy(rclcpp::Node * node)
 : pcd_density_upper_threshold_(
@@ -111,4 +111,4 @@ void PcdOccupancy::on_point_cloud_map(PointCloud2::ConstSharedPtr msg)
   kdtree_->setInputCloud(occupied_areas_);
 }
 
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::rule_helper

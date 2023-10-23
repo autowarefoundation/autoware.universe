@@ -23,7 +23,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::rule_helper
 {
 using BoostPoint = boost::geometry::model::d2::point_xy<double>;
 using BoostPolygon = boost::geometry::model::polygon<BoostPoint>;
@@ -135,4 +135,4 @@ std::string EagleyeArea::Impl::debug_string() const
   return ss.str();
 }
 
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::rule_helper

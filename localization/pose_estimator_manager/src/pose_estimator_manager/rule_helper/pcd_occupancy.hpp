@@ -24,7 +24,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::rule_helper
 {
 class PcdOccupancy
 {
@@ -47,6 +47,6 @@ private:
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
 };
 
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::rule_helper
 
 #endif  // POSE_ESTIMATOR_MANAGER__RULE_HELPER__PCD_OCCUPANCY_HPP_

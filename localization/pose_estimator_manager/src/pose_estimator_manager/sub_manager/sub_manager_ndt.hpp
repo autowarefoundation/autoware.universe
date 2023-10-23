@@ -18,7 +18,7 @@
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::sub_manager
 {
 class SubManagerNdt : public BasePoseEstimatorSubManager
 {
@@ -50,6 +50,6 @@ private:
     if (ndt_is_enabled_) pub_pointcloud_->publish(*msg);
   }
 };
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::sub_manager
 
 #endif  // POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_NDT_HPP_

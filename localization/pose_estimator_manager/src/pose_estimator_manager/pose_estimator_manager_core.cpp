@@ -24,7 +24,7 @@
 
 #include <sstream>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager
 {
 
 static std::unordered_set<PoseEstimatorName> parse_estimator_name_args(
@@ -56,6 +56,7 @@ PoseEstimatorManager::PoseEstimatorManager()
 
   // sub-managers
   for (auto pose_estimator_name : running_estimator_list_) {
+    using namespace sub_manager;
     switch (pose_estimator_name) {
       case PoseEstimatorName::ndt:
         sub_managers_.emplace(pose_estimator_name, std::make_shared<SubManagerNdt>(this));
@@ -90,7 +91,7 @@ void PoseEstimatorManager::load_switch_rule()
 {
   // NOTE: In the future, some rule will be laid below
   RCLCPP_INFO_STREAM(get_logger(), "load default switching rule");
-  switch_rule_ = std::make_shared<MapBasedRule>(*this, running_estimator_list_);
+  switch_rule_ = std::make_shared<switch_rule::MapBasedRule>(*this, running_estimator_list_);
 }
 
 void PoseEstimatorManager::toggle_each(
@@ -139,4 +140,4 @@ void PoseEstimatorManager::on_timer()
   }
 }
 
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager

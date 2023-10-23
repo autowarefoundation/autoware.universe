@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::rule_helper
 {
 class EagleyeArea
 {
@@ -45,6 +45,6 @@ private:
   struct Impl;
   std::shared_ptr<Impl> impl_;
 };
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::rule_helper
 
 #endif  // POSE_ESTIMATOR_MANAGER__RULE_HELPER__EAGLEYE_AREA_HPP_

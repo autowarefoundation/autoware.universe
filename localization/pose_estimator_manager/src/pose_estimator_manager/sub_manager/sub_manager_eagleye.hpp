@@ -18,7 +18,7 @@
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
-namespace multi_pose_estimator
+namespace pose_estimator_manager::sub_manager
 {
 class SubManagerEagleye : public BasePoseEstimatorSubManager
 {
@@ -50,6 +50,6 @@ private:
     }
   }
 };
-}  // namespace multi_pose_estimator
+}  // namespace pose_estimator_manager::sub_manager
 
 #endif  // POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_EAGLEYE_HPP_
