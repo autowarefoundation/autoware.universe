@@ -124,6 +124,13 @@ GoalPlannerModule::GoalPlannerModule(
       freespace_parking_timer_cb_group_);
   }
 
+  // Initialize safety checker
+  if (parameters_->safety_check_params.enable_safety_check) {
+    initializeSafetyCheckParameters();
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      goal_planner_data_.collision_check);
+  }
+
   status_.reset();
 }
 
@@ -230,6 +237,15 @@ void GoalPlannerModule::onFreespaceParkingTimer()
 
 void GoalPlannerModule::updateData()
 {
+  // Initialize Occupancy Grid Map
+  // This operation requires waiting for `planner_data_`, hence it is executed here instead of in
+  // the constructor. Ideally, this operation should only need to be performed once.
+  if (
+    parameters_->use_occupancy_grid_for_goal_search ||
+    parameters_->use_occupancy_grid_for_path_collision_check) {
+    initializeOccupancyGridMap();
+  }
+
   updateOccupancyGrid();
 }
 
@@ -255,22 +271,6 @@ void GoalPlannerModule::initializeSafetyCheckParameters()
   utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
   utils::start_goal_planner_common::updateObjectsFilteringParams(
     objects_filtering_params_, parameters_);
-}
-
-void GoalPlannerModule::processOnEntry()
-{
-  // Initialize occupancy grid map
-  if (
-    parameters_->use_occupancy_grid_for_goal_search ||
-    parameters_->use_occupancy_grid_for_path_collision_check) {
-    initializeOccupancyGridMap();
-  }
-  // Initialize safety checker
-  if (parameters_->safety_check_params.enable_safety_check) {
-    initializeSafetyCheckParameters();
-    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
-      goal_planner_data_.collision_check);
-  }
 }
 
 void GoalPlannerModule::processOnExit()

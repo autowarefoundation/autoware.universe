@@ -251,7 +251,6 @@ public:
   BehaviorModuleOutput planWaitingApproval() override;
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  void processOnEntry() override;
   void processOnExit() override;
   void updateData() override;
   void setParameters(const std::shared_ptr<GoalPlannerParameters> & parameters);
