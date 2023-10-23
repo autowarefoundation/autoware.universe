@@ -35,6 +35,7 @@ def generate_launch_description():
     arguments = [
         DeclareLaunchArgument("input/pointcloud", default_value="/sensing/lidar/pointcloud"),
         DeclareLaunchArgument("output/objects", default_value="labeled_clusters"),
+        DeclareLaunchArgument("data_path", default_value=os.path.join(os.environ["HOME"], "autoware_data")),
     ]
 
     # lidar segmentation node execution definition.
