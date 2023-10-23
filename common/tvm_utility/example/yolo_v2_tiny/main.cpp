@@ -244,7 +244,7 @@ int main(int argc, char * argv[])
 {
   // init node to use parameters
   rclcpp::init(argc, argv);
-  auto node = rclcpp::Node::make_shared("tvm_yolo_example");
+  auto node = rclcpp::Node::make_shared("yolo_v2_tiny_example");
   // Filename of the image on which to run the inference
   node->declare_parameter<std::string>("image_filename");
   // Name of file containing the human readable names of the classes. One class
@@ -253,6 +253,7 @@ int main(int argc, char * argv[])
   // Name of file containing the anchor values for the network. Each line is one
   // anchor. each anchor has 2 comma separated floating point values.
   node->declare_parameter<std::string>("anchor_filename");
+  // Packages data and artifacts directory path.
   node->declare_parameter<std::string>("data_path");
   
   RCLCPP_INFO(node->get_logger(), "Node started");
