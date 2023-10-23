@@ -30,12 +30,12 @@
       "required": ["image_filename", "label_filename", "anchor_filename", "data_path"]
     }
   },
-    "properties": {
-        "/**": {
-            "type": "object",
-            "properties": {
-                "ros__parameters": {
-                    "$ref": "#/definitions/yolo_v2_tiny_example"
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/yolo_v2_tiny_example"
         }
       },
       "required": ["ros__parameters"],
