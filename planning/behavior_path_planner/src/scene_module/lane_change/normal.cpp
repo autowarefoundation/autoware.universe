@@ -15,9 +15,9 @@
 #include "behavior_path_planner/scene_module/lane_change/normal.hpp"
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
-#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
@@ -507,6 +507,12 @@ bool NormalLaneChange::hasFinishedLaneChange() const
 bool NormalLaneChange::isAbleToReturnCurrentLane() const
 {
   if (status_.lane_change_path.path.points.size() < 2) {
+    return false;
+  }
+
+  if (!utils::isEgoWithinOriginalLane(
+        status_.current_lanes, getEgoPose(), planner_data_->parameters,
+        lane_change_parameters_->cancel.overhang_tolerance)) {
     return false;
   }
 
