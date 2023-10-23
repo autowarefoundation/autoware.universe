@@ -18,19 +18,14 @@
 #include "pose_estimator_manager/pose_estimator_name.hpp"
 #include "pose_estimator_manager/rule_helper/ar_tag_position.hpp"
 #include "pose_estimator_manager/rule_helper/eagleye_area.hpp"
+#include "pose_estimator_manager/rule_helper/pcd_occupancy.hpp"
 #include "pose_estimator_manager/switch_rule/base_switch_rule.hpp"
-
-#include <rclcpp/logger.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 
 #include <memory>
 #include <string>
@@ -58,11 +53,12 @@ public:
   MarkerArray debug_marker_array() override;
 
 protected:
-  const int pcd_density_upper_threshold_;
-  const int pcd_density_lower_threshold_;
   const double ar_marker_available_distance_;
   const std::unordered_set<PoseEstimatorName> running_estimator_list_;
+
   std::unique_ptr<ArTagPosition> ar_tag_position_{nullptr};
+  std::unique_ptr<PcdOccupancy> pcd_occupancy_{nullptr};
+  EagleyeArea eagleye_area_;
 
   std::string debug_string_msg_;
   InitializationState initialization_state_;
@@ -74,11 +70,6 @@ protected:
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
   rclcpp::Subscription<InitializationState>::SharedPtr sub_initialization_state_;
   rclcpp::Subscription<NavSatFix>::SharedPtr sub_eagleye_fix_;
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr occupied_areas_{nullptr};
-  pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
-
-  EagleyeArea eagleye_area_;
 
   bool eagleye_is_available() const;
   bool yabloc_is_available() const;

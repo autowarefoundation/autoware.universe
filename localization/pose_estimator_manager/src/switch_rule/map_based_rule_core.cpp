@@ -99,11 +99,12 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 
   // (7) If PCD is enough occupied, enable ndt
   if (ndt_is_more_suitable_than_yabloc(&debug_string_msg_)) {
-    RCLCPP_WARN_STREAM(get_logger(), "Enable yabloc");
+    RCLCPP_WARN_STREAM(get_logger(), "Enable ndt");
     return {
-      {PoseEstimatorName::ndt, false},
-      {PoseEstimatorName::yabloc, true},
+      {PoseEstimatorName::ndt, true},
+      {PoseEstimatorName::yabloc, false},
       {PoseEstimatorName::eagleye, false},
+      {PoseEstimatorName::artag, false},
     };
   }
 

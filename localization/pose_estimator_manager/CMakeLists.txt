@@ -10,6 +10,7 @@ ament_auto_add_library(switch_rule
   src/switch_rule/map_based_rule_core.cpp
   src/rule_helper/eagleye_area.cpp
   src/rule_helper/ar_tag_position.cpp
+  src/rule_helper/pcd_occupancy.cpp
 )
 target_include_directories(switch_rule PUBLIC include)
 
