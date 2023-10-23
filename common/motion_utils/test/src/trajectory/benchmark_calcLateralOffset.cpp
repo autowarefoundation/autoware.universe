@@ -19,6 +19,7 @@
 
 #include <gtest/gtest.h>
 #include <gtest/internal/gtest-port.h>
+#include <lanelet2_core/geometry/LineString.h>
 #include <tf2/LinearMath/Quaternion.h>
 
 #include <limits>
@@ -81,4 +82,22 @@ TEST(trajectory_benchmark, DISABLED_calcLateralOffset)
   }
   std::cerr << "rm overlaps: " << motion_utils::rm_overlaps_durations_us << "us\n";
   std::cerr << "other: " << motion_utils::other_duration_us << "us\n";
+}
+
+TEST(trajectory_benchmark, DISABLED_calcLateralOffsetLanelet)
+{
+  std::random_device r;
+  std::default_random_engine e1(r());
+  std::uniform_real_distribution<double> uniform_dist(0.0, 1000.0);
+
+  using motion_utils::calcLateralOffset;
+
+  const auto traj = generateTestTrajectory<Trajectory>(1000, 1.0, 0.0, 0.0, 0.1);
+  constexpr auto nb_iteration = 10000;
+  lanelet::BasicLineString2d path_ls;
+  for (const auto & p : traj.points) path_ls.emplace_back(p.pose.position.x, p.pose.position.y);
+  for (auto i = 0; i < nb_iteration; ++i) {
+    const auto point = lanelet::BasicPoint2d{uniform_dist(e1), uniform_dist(e1)};
+    lanelet::geometry::toArcCoordinates(path_ls, point);
+  }
 }
