@@ -1722,7 +1722,7 @@ std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
     const auto shared_point_itr_last =
       std::find_if(expanded_bound.rbegin(), expanded_bound.rend(), [&](const auto & p) {
         return std::any_of(
-          intersection_bound.begin(), intersection_bound.end(),
+          intersection_bound.rbegin(), intersection_bound.rend(),
           [&](const auto & point) { return point.id() == p.id(); });
       });
 
@@ -1745,6 +1745,13 @@ std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
       if (
         trim_point_itr_init == intersection_bound.end() ||
         trim_point_itr_last == intersection_bound.end()) {
+        continue;
+      }
+
+      // TODO(Satoshi OTA): remove this guard.
+      if (
+        std::distance(intersection_bound.begin(), trim_point_itr_last) <
+        std::distance(intersection_bound.begin(), trim_point_itr_init)) {
         continue;
       }
 
