@@ -38,7 +38,7 @@
                     "$ref": "#/definitions/yolo_v2_tiny_example"
         }
       },
-      "required": ["ros_parameters"],
+      "required": ["ros__parameters"],
       "additionalProperties": false
     }
   },
