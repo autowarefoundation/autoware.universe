@@ -83,7 +83,9 @@ PoseEstimatorManager::PoseEstimatorManager()
   {
     using std::placeholders::_1;
     const rclcpp::QoS sensor_qos = rclcpp::SensorDataQoS();
+    const rclcpp::QoS latch_qos = rclcpp::QoS(1).transient_local().reliable();
 
+    // subscriber for sub manager
     auto on_artag_input = std::bind(&PoseEstimatorManager::on_artag_input, this, _1);
     sub_artag_input_ =
       create_subscription<Image>("~/input/artag/image", sensor_qos, on_artag_input);
@@ -95,6 +97,28 @@ PoseEstimatorManager::PoseEstimatorManager()
     auto on_eagleye_output = std::bind(&PoseEstimatorManager::on_eagleye_output, this, _1);
     sub_eagleye_output_ = create_subscription<PoseCovStamped>(
       "~/input/ealgeye/pose_with_covariance", 5, on_eagleye_output);
+
+    // subscriber for switch rule
+    auto on_vector_map = [this](HADMapBin::ConstSharedPtr msg) -> void {
+      shared_data_->vector_map_.set(msg);
+    };
+    auto on_point_cloud_map = [this](PointCloud2::ConstSharedPtr msg) -> void {
+      shared_data_->point_cloud_map_.set(msg);
+    };
+    auto on_localization_pose_cov = [this](PoseCovStamped::ConstSharedPtr msg) -> void {
+      shared_data_->localization_pose_cov_.set(msg);
+    };
+    auto on_initialization_state = [this](InitializationState::ConstSharedPtr msg) -> void {
+      shared_data_->initialization_state_.set(msg);
+    };
+    sub_localization_pose_cov_ = create_subscription<PoseCovStamped>(
+      "~/input/pose_with_covariance", 5, on_localization_pose_cov);
+    sub_point_cloud_map_ =
+      create_subscription<PointCloud2>("~/input/pointcloud_map", latch_qos, on_point_cloud_map);
+    sub_vector_map_ =
+      create_subscription<HADMapBin>("~/input/vector_map", latch_qos, on_vector_map);
+    sub_initialization_state_ = create_subscription<InitializationState>(
+      "~/input/initialization_state", latch_qos, on_initialization_state);
   }
 
   // Load switching rule
@@ -113,7 +137,8 @@ void PoseEstimatorManager::load_switch_rule()
 {
   // NOTE: In the future, some rule will be laid below
   RCLCPP_INFO_STREAM(get_logger(), "load default switching rule");
-  switch_rule_ = std::make_shared<switch_rule::MapBasedRule>(*this, running_estimator_list_);
+  switch_rule_ =
+    std::make_shared<switch_rule::MapBasedRule>(*this, running_estimator_list_, shared_data_);
 }
 
 void PoseEstimatorManager::toggle_each(

@@ -15,9 +15,13 @@
 #ifndef POSE_ESTIMATOR_MANAGER__SHARED_DATA_HPP_
 #define POSE_ESTIMATOR_MANAGER__SHARED_DATA_HPP_
 
+#include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <optional>
 
 namespace pose_estimator_manager
 {
@@ -34,12 +38,14 @@ struct TrackableData
 
   void reset_update_flag() { updated_ = false; }
 
-  const T operator()() const { return data_; }
+  bool has_value() const { return data_.has_value(); }
+
+  const T operator()() const { return data_.value(); }
 
   bool updated_;
 
 private:
-  T data_;
+  std::optional<T> data_{std::nullopt};
 };
 
 struct SharedData
@@ -48,12 +54,21 @@ public:
   using Image = sensor_msgs::msg::Image;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
+  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
 
   SharedData() {}
+
+  // Used for sub manager
   TrackableData<PoseCovStamped::ConstSharedPtr> eagleye_output_pose_cov_;
   TrackableData<Image::ConstSharedPtr> artag_input_image_;
   TrackableData<PointCloud2::ConstSharedPtr> ndt_input_points_;
   TrackableData<Image::ConstSharedPtr> yabloc_input_image_;
+  // Used for switch rule
+  TrackableData<PoseCovStamped::ConstSharedPtr> localization_pose_cov_;
+  TrackableData<PointCloud2::ConstSharedPtr> point_cloud_map_;
+  TrackableData<HADMapBin::ConstSharedPtr> vector_map_;
+  TrackableData<InitializationState::ConstSharedPtr> initialization_state_;
 
   void reset_update_flag()
   {
@@ -61,6 +76,11 @@ public:
     artag_input_image_.reset_update_flag();
     ndt_input_points_.reset_update_flag();
     yabloc_input_image_.reset_update_flag();
+
+    localization_pose_cov_.reset_update_flag();
+    point_cloud_map_.reset_update_flag();
+    vector_map_.reset_update_flag();
+    initialization_state_.reset_update_flag();
   }
 };
 

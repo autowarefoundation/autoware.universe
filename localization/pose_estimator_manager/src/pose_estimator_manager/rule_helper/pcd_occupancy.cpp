@@ -89,8 +89,13 @@ visualization_msgs::msg::MarkerArray PcdOccupancy::debug_marker_array() const
   return msg_array;
 }
 
-void PcdOccupancy::on_point_cloud_map(PointCloud2::ConstSharedPtr msg)
+void PcdOccupancy::init(PointCloud2::ConstSharedPtr msg)
 {
+  if (kdtree_) {
+    // already initialized
+    return;
+  }
+
   pcl::PointCloud<pcl::PointXYZ> cloud;
   pcl::fromROSMsg(*msg, cloud);
 

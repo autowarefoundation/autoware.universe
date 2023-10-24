@@ -35,7 +35,7 @@ public:
   explicit PcdOccupancy(rclcpp::Node * node);
 
   MarkerArray debug_marker_array() const;
-  void on_point_cloud_map(PointCloud2::ConstSharedPtr msg);
+  void init(PointCloud2::ConstSharedPtr msg);
   bool ndt_can_operate(
     const geometry_msgs::msg::Point & position, std::string * optional_message) const;
 

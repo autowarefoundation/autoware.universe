@@ -19,6 +19,7 @@
 #include "pose_estimator_manager/rule_helper/ar_tag_position.hpp"
 #include "pose_estimator_manager/rule_helper/eagleye_area.hpp"
 #include "pose_estimator_manager/rule_helper/pcd_occupancy.hpp"
+#include "pose_estimator_manager/shared_data.hpp"
 #include "pose_estimator_manager/switch_rule/base_switch_rule.hpp"
 
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
@@ -45,7 +46,8 @@ public:
   using NavSatFix = sensor_msgs::msg::NavSatFix;
 
   MapBasedRule(
-    rclcpp::Node & node, const std::unordered_set<PoseEstimatorName> & running_estimator_list);
+    rclcpp::Node & node, const std::unordered_set<PoseEstimatorName> & running_estimator_list,
+    const std::shared_ptr<const SharedData> shared_data);
 
   std::unordered_map<PoseEstimatorName, bool> update() override;
 
@@ -56,21 +58,22 @@ public:
 protected:
   const double ar_marker_available_distance_;
   const std::unordered_set<PoseEstimatorName> running_estimator_list_;
+  std::shared_ptr<const SharedData> shared_data_{nullptr};
 
   std::unique_ptr<rule_helper::ArTagPosition> ar_tag_position_{nullptr};
   std::unique_ptr<rule_helper::PcdOccupancy> pcd_occupancy_{nullptr};
   std::unique_ptr<rule_helper::EagleyeArea> eagleye_area_{nullptr};
 
   std::string debug_string_msg_;
-  InitializationState initialization_state_;
-  std::optional<PoseCovStamped> latest_pose_{std::nullopt};
-  bool eagleye_is_initialized{false};
+  // InitializationState initialization_state_;
+  // std::optional<PoseCovStamped> latest_pose_{std::nullopt};
+  // bool eagleye_is_initialized{false};
 
-  rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_cov_;
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_map_;
-  rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
-  rclcpp::Subscription<InitializationState>::SharedPtr sub_initialization_state_;
-  rclcpp::Subscription<NavSatFix>::SharedPtr sub_eagleye_fix_;
+  // rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_cov_;
+  // rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_map_;
+  // rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
+  // rclcpp::Subscription<InitializationState>::SharedPtr sub_initialization_state_;
+  // rclcpp::Subscription<NavSatFix>::SharedPtr sub_eagleye_fix_;
 
   bool eagleye_is_available() const;
   bool yabloc_is_available() const;
@@ -78,9 +81,9 @@ protected:
   bool artag_is_available() const;
   bool ndt_is_more_suitable_than_yabloc(std::string * optional_message = nullptr) const;
 
-  void on_point_cloud_map(PointCloud2::ConstSharedPtr msg);
-  void on_vector_map(HADMapBin::ConstSharedPtr msg);
-  void on_pose_cov(PoseCovStamped::ConstSharedPtr msg);
+  // void on_point_cloud_map(PointCloud2::ConstSharedPtr msg);
+  // void on_vector_map(HADMapBin::ConstSharedPtr msg);
+  // void on_pose_cov(PoseCovStamped::ConstSharedPtr msg);
 };
 }  // namespace pose_estimator_manager::switch_rule
 

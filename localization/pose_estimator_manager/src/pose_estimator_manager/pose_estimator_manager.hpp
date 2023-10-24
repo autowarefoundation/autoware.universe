@@ -41,6 +41,8 @@ public:
   using Image = sensor_msgs::msg::Image;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
   PoseEstimatorManager();
 
 private:
@@ -48,14 +50,21 @@ private:
 
   std::shared_ptr<SharedData> shared_data_{nullptr};
 
+  // Timer callback
+  rclcpp::TimerBase::SharedPtr timer_;
+  //
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_array_;
   rclcpp::Publisher<String>::SharedPtr pub_debug_string_;
-
-  rclcpp::TimerBase::SharedPtr timer_;
+  // For sub manager subscriber
   rclcpp::Subscription<Image>::SharedPtr sub_yabloc_input_;
   rclcpp::Subscription<Image>::SharedPtr sub_artag_input_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ndt_input_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_eagleye_output_;
+  // For switch rule subscriber
+  rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_localization_pose_cov_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_map_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
+  rclcpp::Subscription<InitializationState>::SharedPtr sub_initialization_state_;
 
   std::unordered_map<PoseEstimatorName, BasePoseEstimatorSubManager::SharedPtr> sub_managers_;
 
@@ -68,11 +77,13 @@ private:
 
   void call_all_callback();
 
+  // Timer callback
+  void on_timer();
+  // For sub manager
   void on_yabloc_input(Image::ConstSharedPtr msg);
   void on_artag_input(Image::ConstSharedPtr msg);
   void on_ndt_input(PointCloud2::ConstSharedPtr msg);
   void on_eagleye_output(PoseCovStamped::ConstSharedPtr msg);
-  void on_timer();
 };
 }  // namespace pose_estimator_manager
 

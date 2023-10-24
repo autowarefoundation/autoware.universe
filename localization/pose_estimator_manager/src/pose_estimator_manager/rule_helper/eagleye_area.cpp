@@ -75,6 +75,11 @@ EagleyeArea::MarkerArray EagleyeArea::debug_marker_array() const
 
 void EagleyeArea::Impl::init(HADMapBin::ConstSharedPtr msg)
 {
+  if (!bounding_boxes_.empty()) {
+    // already initialized
+    return;
+  }
+
   lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map);
 
