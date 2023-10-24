@@ -2003,6 +2003,11 @@ void makeBoundLongitudinallyMonotonic(
     std::vector<Point> ret = bound;
     auto itr = std::next(ret.begin());
     while (std::next(itr) != ret.end()) {
+      if (itr == ret.begin()) {
+        itr++;
+        continue;
+      }
+
       const auto p1 = *std::prev(itr);
       const auto p2 = *itr;
       const auto p3 = *std::next(itr);
