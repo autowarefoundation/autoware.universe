@@ -15,7 +15,6 @@
 #include "debug.hpp"
 
 #include "graph.hpp"
-#include "nodes.hpp"
 #include "types.hpp"
 
 #include <algorithm>
@@ -34,6 +33,7 @@ const std::unordered_map<DiagnosticLevel, std::string> level_names = {
 
 void Graph::debug()
 {
+  /*
   std::vector<DiagDebugData> lines;
   for (const auto & node : nodes_) {
     lines.push_back(node->debug());
@@ -55,8 +55,10 @@ void Graph::debug()
     }
     std::cout << "|" << std::endl;
   }
+  */
 }
 
+/*
 DiagDebugData UnitNode::debug() const
 {
   const auto level_name = level_names.at(level());
@@ -77,5 +79,6 @@ DiagDebugData UnknownNode::debug() const
   const auto index_name = std::to_string(index());
   return {"test", index_name, level_name, path_, "-----"};
 }
+*/
 
 }  // namespace system_diagnostic_graph

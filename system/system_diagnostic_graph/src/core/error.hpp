@@ -12,28 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CORE__TYPES_HPP_
-#define CORE__TYPES_HPP_
+#ifndef CORE__ERROR_HPP_
+#define CORE__ERROR_HPP_
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
-#include <tier4_system_msgs/msg/diagnostic_graph.hpp>
-#include <tier4_system_msgs/msg/diagnostic_link.hpp>
-#include <tier4_system_msgs/msg/diagnostic_node.hpp>
+#include <stdexcept>
 
 namespace system_diagnostic_graph
 {
 
-using diagnostic_msgs::msg::DiagnosticArray;
-using diagnostic_msgs::msg::DiagnosticStatus;
-using tier4_system_msgs::msg::DiagnosticGraph;
-using tier4_system_msgs::msg::DiagnosticLink;
-using tier4_system_msgs::msg::DiagnosticNode;
-using DiagnosticLevel = DiagnosticStatus::_level_type;
-
-class BaseUnit;
-class DiagUnit;
+struct ConfigError : public std::runtime_error
+{
+  using runtime_error::runtime_error;
+};
 
 }  // namespace system_diagnostic_graph
 
-#endif  // CORE__TYPES_HPP_
+#endif  // CORE__ERROR_HPP_

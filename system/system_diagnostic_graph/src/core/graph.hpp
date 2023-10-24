@@ -38,14 +38,13 @@ public:
   void callback(const DiagnosticArray & array, const rclcpp::Time & stamp);
   void update(const rclcpp::Time & stamp);
   DiagnosticGraph message() const;
-  std::vector<BaseNode *> nodes() const;
+  std::vector<BaseUnit *> nodes() const;
 
   void debug();
 
 private:
-  std::vector<std::unique_ptr<BaseNode>> nodes_;
-  std::unordered_map<std::string, DiagNode *> diags_;
-  UnknownNode * unknown_;
+  std::vector<std::unique_ptr<BaseUnit>> nodes_;
+  std::unordered_map<std::string, DiagUnit *> diags_;
   rclcpp::Time stamp_;
 };
 

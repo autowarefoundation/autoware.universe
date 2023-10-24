@@ -15,8 +15,8 @@
 #include "graph.hpp"
 
 #include "config.hpp"
-#include "exprs.hpp"
-#include "nodes.hpp"
+#include "error.hpp"
+#include "units.hpp"
 
 #include <deque>
 #include <memory>
@@ -31,8 +31,11 @@
 namespace system_diagnostic_graph
 {
 
-void topological_sort(std::vector<std::unique_ptr<BaseNode>> & input)
+BaseUnit::UniquePtrList topological_sort(BaseUnit::UniquePtrList && input)
 {
+  return std::move(input);
+
+  /*
   std::unordered_map<BaseNode *, int> degrees;
   std::deque<BaseNode *> nodes;
   std::deque<BaseNode *> result;
@@ -87,6 +90,39 @@ void topological_sort(std::vector<std::unique_ptr<BaseNode>> & input)
     sorted[indices[node.get()]] = std::move(node);
   }
   input = std::move(sorted);
+  */
+}
+
+BaseUnit::UniquePtr make_node(const UnitConfig::SharedPtr & config)
+{
+  if (config->type == "diag") {
+    return std::make_unique<DiagUnit>(config->path);
+  }
+  if (config->type == "link") {
+    return std::make_unique<LinkUnit>(config->path);
+  }
+  if (config->type == "and") {
+    return std::make_unique<AndUnit>(config->path, false);
+  }
+  if (config->type == "short-circuit-and") {
+    return std::make_unique<AndUnit>(config->path, true);
+  }
+  if (config->type == "or") {
+    return std::make_unique<OrUnit>(config->path);
+  }
+  if (config->type == "debug-ok") {
+    return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::OK);
+  }
+  if (config->type == "debug-warn") {
+    return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::WARN);
+  }
+  if (config->type == "debug-error") {
+    return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::ERROR);
+  }
+  if (config->type == "debug-stale") {
+    return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::STALE);
+  }
+  throw ConfigError("unknown node type: " + config->type + " " + "TODO");
 }
 
 Graph::Graph()
@@ -101,63 +137,39 @@ Graph::~Graph()
 
 void Graph::init(const std::string & file, const std::string & mode)
 {
-  ConfigFile root = load_config_root(file);
+  (void)mode;  // TODO(Takagi, Isamu)
 
-  std::vector<std::unique_ptr<BaseNode>> nodes;
-  std::unordered_map<std::string, DiagNode *> diags;
-  std::unordered_map<std::string, BaseNode *> paths;
-  ExprInit exprs(mode);
+  BaseUnit::UniquePtrList nodes;
+  BaseUnit::NodeDict dict;
 
-  for (auto & config : root.units) {
-    if (config.mode.check(mode)) {
-      auto node = std::make_unique<UnitNode>(config.path);
-      nodes.push_back(std::move(node));
+  for (const auto & config : load_config_root(file).nodes) {
+    const auto node = nodes.emplace_back(make_node(config)).get();
+    dict.configs[config] = node;
+    dict.paths[config->path] = node;
+  }
+  dict.paths.erase("");
+
+  for (const auto & [config, node] : dict.configs) {
+    node->init(config, dict);
+  }
+
+  // DEBUG
+  for (size_t index = 0; index < nodes.size(); ++index) {
+    nodes[index]->set_index(index);
+  }
+
+  for (const auto & [config, node] : dict.configs) {
+    std::cout << std::left << std::setw(3) << node->index();
+    std::cout << std::left << std::setw(10) << config->type;
+    std::cout << std::left << std::setw(40) << node->path();
+    for (const auto & child : node->children()) {
+      std::cout << " " << child->index();
     }
-  }
-  for (auto & config : root.diags) {
-    if (config.mode.check(mode)) {
-      auto node = std::make_unique<DiagNode>(config.path, config.dict);
-      diags[node->name()] = node.get();
-      nodes.push_back(std::move(node));
-    }
+    std::cout << std::endl;
   }
 
-  // TODO(Takagi, Isamu): unknown diag names
-  {
-    auto node = std::make_unique<UnknownNode>("/unknown");
-    unknown_ = node.get();
-    nodes.push_back(std::move(node));
-  }
-
-  for (const auto & node : nodes) {
-    paths[node->path()] = node.get();
-  }
-
-  for (auto & config : root.units) {
-    if (paths.count(config.path)) {
-      paths.at(config.path)->create(config.dict, exprs);
-    }
-  }
-  for (auto & config : root.diags) {
-    if (paths.count(config.path)) {
-      paths.at(config.path)->create(config.dict, exprs);
-    }
-  }
-
-  for (auto & [link, config] : exprs.get()) {
-    link->init(config, paths);
-  }
-
-  // Sort unit nodes in topological order for update dependencies.
-  topological_sort(nodes);
-
-  // Set the link index for the ros message.
-  for (size_t i = 0; i < nodes.size(); ++i) {
-    nodes[i]->set_index(i);
-  }
-
-  nodes_ = std::move(nodes);
-  diags_ = diags;
+  // Sort units in topological order for update dependencies.
+  nodes_ = topological_sort(std::move(nodes));
 }
 
 void Graph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
@@ -167,7 +179,8 @@ void Graph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
     if (iter != diags_.end()) {
       iter->second->callback(status, stamp);
     } else {
-      unknown_->callback(status, stamp);
+      // TODO(Takagi, Isamu)
+      // unknown_->callback(status, stamp);
     }
   }
 }
@@ -191,9 +204,9 @@ DiagnosticGraph Graph::message() const
   return result;
 }
 
-std::vector<BaseNode *> Graph::nodes() const
+std::vector<BaseUnit *> Graph::nodes() const
 {
-  std::vector<BaseNode *> result;
+  std::vector<BaseUnit *> result;
   result.reserve(nodes_.size());
   for (const auto & node : nodes_) {
     result.push_back(node.get());
