@@ -29,13 +29,15 @@ public:
   using Image = sensor_msgs::msg::Image;
   using SetBool = std_srvs::srv::SetBool;
 
-  explicit SubManagerYabLoc(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
+  explicit SubManagerYabLoc(
+    rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+  : BasePoseEstimatorSubManager(node, shared_data)
   {
     yabloc_is_enabled_ = true;
 
-    using std::placeholders::_1;
-    auto on_image = std::bind(&SubManagerYabLoc::on_image, this, _1);
-    sub_image_ = node->create_subscription<Image>("~/input/yabloc/image", 5, on_image);
+    // using std::placeholders::_1;
+    // auto on_image = std::bind(&SubManagerYabLoc::on_image, this, _1);
+    // sub_image_ = node->create_subscription<Image>("~/input/yabloc/image", 5, on_image);
     pub_image_ = node->create_publisher<Image>("~/output/yabloc/image", 5);
 
     using namespace std::literals::chrono_literals;
@@ -54,6 +56,16 @@ public:
       request_service(enabled);
     }
     yabloc_is_enabled_ = enabled;
+  }
+
+  void callback() override
+  {
+    if (!shared_data_->yabloc_input_image_.updated_) {
+      return;
+    }
+    if (yabloc_is_enabled_) {
+      pub_image_->publish(*shared_data_->yabloc_input_image_());
+    }
   }
 
 protected:
@@ -80,12 +92,12 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
 
-  void on_image(Image::ConstSharedPtr msg)
-  {
-    if (yabloc_is_enabled_) {
-      pub_image_->publish(*msg);
-    }
-  }
+  // void on_image(Image::ConstSharedPtr msg)
+  // {
+  //   if (yabloc_is_enabled_) {
+  //     pub_image_->publish(*msg);
+  //   }
+  // }
 };
 }  // namespace pose_estimator_manager::sub_manager
 #endif  // POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_YABLOC_HPP_

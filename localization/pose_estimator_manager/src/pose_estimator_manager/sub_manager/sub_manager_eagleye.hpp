@@ -25,30 +25,43 @@ class SubManagerEagleye : public BasePoseEstimatorSubManager
 public:
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-  explicit SubManagerEagleye(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
+  explicit SubManagerEagleye(
+    rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+  : BasePoseEstimatorSubManager(node, shared_data)
   {
     eagleye_is_enabled_ = true;
 
-    using std::placeholders::_1;
-    auto on_pose = std::bind(&SubManagerEagleye::on_pose, this, _1);
-    sub_pose_ =
-      node->create_subscription<PoseCovStamped>("~/input/eagleye/pose_with_covariance", 5, on_pose);
+    // using std::placeholders::_1;
+    // auto on_pose = std::bind(&SubManagerEagleye::on_pose, this, _1);
+    // sub_pose_ =
+    //   node->create_subscription<PoseCovStamped>("~/input/eagleye/pose_with_covariance", 5,
+    //   on_pose);
     pub_pose_ = node->create_publisher<PoseCovStamped>("~/output/eagleye/pose_with_covariance", 5);
   }
 
   void set_enable(bool enabled) override { eagleye_is_enabled_ = enabled; }
+
+  void callback() override
+  {
+    if (!shared_data_->eagleye_output_pose_cov_.updated_) {
+      return;
+    }
+    if (eagleye_is_enabled_) {
+      pub_pose_->publish(*shared_data_->eagleye_output_pose_cov_());
+    }
+  }
 
 private:
   bool eagleye_is_enabled_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_;
 
-  void on_pose(PoseCovStamped::ConstSharedPtr msg)
-  {
-    if (eagleye_is_enabled_) {
-      pub_pose_->publish(*msg);
-    }
-  }
+  // void on_pose(PoseCovStamped::ConstSharedPtr msg)
+  // {
+  //   if (eagleye_is_enabled_) {
+  //     pub_pose_->publish(*msg);
+  //   }
+  // }
 };
 }  // namespace pose_estimator_manager::sub_manager
 

@@ -16,6 +16,7 @@
 #define POSE_ESTIMATOR_MANAGER__POSE_ESTIMATOR_MANAGER_HPP_
 
 #include "pose_estimator_manager/base_pose_estimator_sub_manager.hpp"
+#include "pose_estimator_manager/shared_data.hpp"
 #include "pose_estimator_manager/switch_rule/base_switch_rule.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -37,15 +38,24 @@ public:
   using SetBool = std_srvs::srv::SetBool;
   using String = std_msgs::msg::String;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
+  using Image = sensor_msgs::msg::Image;
+  using PointCloud2 = sensor_msgs::msg::PointCloud2;
+  using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   PoseEstimatorManager();
 
 private:
   const std::unordered_set<PoseEstimatorName> running_estimator_list_;
 
+  std::shared_ptr<SharedData> shared_data_{nullptr};
+
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_array_;
   rclcpp::Publisher<String>::SharedPtr pub_debug_string_;
 
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Subscription<Image>::SharedPtr sub_yabloc_input_;
+  rclcpp::Subscription<Image>::SharedPtr sub_artag_input_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_ndt_input_;
+  rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_eagleye_output_;
 
   std::unordered_map<PoseEstimatorName, BasePoseEstimatorSubManager::SharedPtr> sub_managers_;
 
@@ -54,9 +64,15 @@ private:
   void toggle_all(bool enabled);
   void toggle_each(const std::unordered_map<PoseEstimatorName, bool> & toggle_list);
 
-  void on_timer();
-
   void load_switch_rule();
+
+  void call_all_callback();
+
+  void on_yabloc_input(Image::ConstSharedPtr msg);
+  void on_artag_input(Image::ConstSharedPtr msg);
+  void on_ndt_input(PointCloud2::ConstSharedPtr msg);
+  void on_eagleye_output(PoseCovStamped::ConstSharedPtr msg);
+  void on_timer();
 };
 }  // namespace pose_estimator_manager
 

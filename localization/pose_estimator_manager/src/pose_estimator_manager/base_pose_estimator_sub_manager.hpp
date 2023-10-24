@@ -15,6 +15,8 @@
 #ifndef POSE_ESTIMATOR_MANAGER__BASE_POSE_ESTIMATOR_SUB_MANAGER_HPP_
 #define POSE_ESTIMATOR_MANAGER__BASE_POSE_ESTIMATOR_SUB_MANAGER_HPP_
 
+#include "shared_data.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -26,17 +28,21 @@ class BasePoseEstimatorSubManager
 public:
   using SharedPtr = std::shared_ptr<BasePoseEstimatorSubManager>;
 
-  explicit BasePoseEstimatorSubManager(rclcpp::Node * node) : logger_(node->get_logger()) {}
+  explicit BasePoseEstimatorSubManager(
+    rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+  : logger_(node->get_logger()), shared_data_(shared_data)
+  {
+  }
 
   void enable() { set_enable(true); }
   void disable() { set_enable(false); }
 
+  virtual void callback() = 0;
   virtual void set_enable(bool enabled) = 0;
 
 protected:
   rclcpp::Logger logger_;
-
-private:
+  std::shared_ptr<const SharedData> shared_data_{nullptr};
 };
 }  // namespace pose_estimator_manager
 

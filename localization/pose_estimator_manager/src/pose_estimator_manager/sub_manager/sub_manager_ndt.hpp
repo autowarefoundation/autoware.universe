@@ -25,13 +25,13 @@ class SubManagerNdt : public BasePoseEstimatorSubManager
 public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
 
-  explicit SubManagerNdt(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
+  explicit SubManagerNdt(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+  : BasePoseEstimatorSubManager(node, shared_data)
   {
-    using std::placeholders::_1;
-    auto on_pointcloud = std::bind(&SubManagerNdt::on_pointcloud, this, _1);
-
-    sub_pointcloud_ = node->create_subscription<PointCloud2>(
-      "~/input/ndt/pointcloud", rclcpp::SensorDataQoS(), on_pointcloud);
+    // using std::placeholders::_1;
+    // auto on_pointcloud = std::bind(&SubManagerNdt::on_pointcloud, this, _1);
+    // sub_pointcloud_ = node->create_subscription<PointCloud2>(
+    //   "~/input/ndt/pointcloud", rclcpp::SensorDataQoS(), on_pointcloud);
     pub_pointcloud_ = node->create_publisher<PointCloud2>(
       "~/output/ndt/pointcloud", rclcpp::SensorDataQoS().keep_last(10));
 
@@ -40,15 +40,25 @@ public:
 
   void set_enable(bool enabled) override { ndt_is_enabled_ = enabled; }
 
+  void callback() override
+  {
+    if (!shared_data_->ndt_input_points_.updated_) {
+      return;
+    }
+    if (ndt_is_enabled_) {
+      pub_pointcloud_->publish(*shared_data_->ndt_input_points_());
+    }
+  }
+
 private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_pointcloud_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_pointcloud_;
   bool ndt_is_enabled_;
 
-  void on_pointcloud(PointCloud2::ConstSharedPtr msg)
-  {
-    if (ndt_is_enabled_) pub_pointcloud_->publish(*msg);
-  }
+  // void on_pointcloud(PointCloud2::ConstSharedPtr msg)
+  // {
+  //   if (ndt_is_enabled_) pub_pointcloud_->publish(*msg);
+  // }
 };
 }  // namespace pose_estimator_manager::sub_manager
 

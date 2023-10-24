@@ -28,19 +28,30 @@ public:
   using Image = sensor_msgs::msg::Image;
   using SetBool = std_srvs::srv::SetBool;
 
-  explicit SubManagerArTag(rclcpp::Node * node) : BasePoseEstimatorSubManager(node)
+  explicit SubManagerArTag(rclcpp::Node * node, const std::shared_ptr<const SharedData> shared_data)
+  : BasePoseEstimatorSubManager(node, shared_data)
   {
     ar_tag_is_enabled_ = true;
 
     rclcpp::QoS qos = rclcpp::SensorDataQoS();
 
-    using std::placeholders::_1;
-    auto on_image = std::bind(&SubManagerArTag::on_image, this, _1);
-    sub_image_ = node->create_subscription<Image>("~/input/artag/image", qos, on_image);
+    // using std::placeholders::_1;
+    // auto on_image = std::bind(&SubManagerArTag::on_image, this, _1);
+    // sub_image_ = node->create_subscription<Image>("~/input/artag/image", qos, on_image);
     pub_image_ = node->create_publisher<Image>("~/output/artag/image", qos);
   }
 
   void set_enable(bool enabled) override { ar_tag_is_enabled_ = enabled; }
+
+  void callback() override
+  {
+    if (!shared_data_->artag_input_image_.updated_) {
+      return;
+    }
+    if (ar_tag_is_enabled_) {
+      pub_image_->publish(*shared_data_->artag_input_image_());
+    }
+  }
 
 protected:
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
@@ -50,12 +61,12 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
 
-  void on_image(Image::ConstSharedPtr msg)
-  {
-    if (ar_tag_is_enabled_) {
-      pub_image_->publish(*msg);
-    }
-  }
+  // void on_image(Image::ConstSharedPtr msg)
+  // {
+  //   if (ar_tag_is_enabled_) {
+  //     pub_image_->publish(*msg);
+  //   }
+  // }
 };
 }  // namespace pose_estimator_manager::sub_manager
 

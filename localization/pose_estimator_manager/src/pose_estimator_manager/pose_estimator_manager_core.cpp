@@ -54,28 +54,47 @@ PoseEstimatorManager::PoseEstimatorManager()
   pub_debug_string_ = create_publisher<String>("~/debug/string", 10);
   pub_debug_marker_array_ = create_publisher<MarkerArray>("~/debug/marker_array", 10);
 
+  shared_data_ = std::make_shared<SharedData>();
+
   // sub-managers
   for (auto pose_estimator_name : running_estimator_list_) {
     switch (pose_estimator_name) {
       case PoseEstimatorName::ndt:
         sub_managers_.emplace(
-          pose_estimator_name, std::make_shared<sub_manager::SubManagerNdt>(this));
+          pose_estimator_name, std::make_shared<sub_manager::SubManagerNdt>(this, shared_data_));
         break;
       case PoseEstimatorName::yabloc:
         sub_managers_.emplace(
-          pose_estimator_name, std::make_shared<sub_manager::SubManagerYabLoc>(this));
+          pose_estimator_name, std::make_shared<sub_manager::SubManagerYabLoc>(this, shared_data_));
         break;
       case PoseEstimatorName::eagleye:
         sub_managers_.emplace(
-          pose_estimator_name, std::make_shared<sub_manager::SubManagerEagleye>(this));
+          pose_estimator_name,
+          std::make_shared<sub_manager::SubManagerEagleye>(this, shared_data_));
         break;
       case PoseEstimatorName::artag:
         sub_managers_.emplace(
-          pose_estimator_name, std::make_shared<sub_manager::SubManagerArTag>(this));
+          pose_estimator_name, std::make_shared<sub_manager::SubManagerArTag>(this, shared_data_));
         break;
       default:
         RCLCPP_ERROR_STREAM(get_logger(), "invalid pose_estimator is specified");
     }
+  }
+  {
+    using std::placeholders::_1;
+    const rclcpp::QoS sensor_qos = rclcpp::SensorDataQoS();
+
+    auto on_artag_input = std::bind(&PoseEstimatorManager::on_artag_input, this, _1);
+    sub_artag_input_ =
+      create_subscription<Image>("~/input/artag/image", sensor_qos, on_artag_input);
+    auto on_yabloc_input = std::bind(&PoseEstimatorManager::on_yabloc_input, this, _1);
+    sub_yabloc_input_ = create_subscription<Image>("~/input/yabloc/image", 5, on_yabloc_input);
+    auto on_ndt_input = std::bind(&PoseEstimatorManager::on_ndt_input, this, _1);
+    sub_ndt_input_ =
+      create_subscription<PointCloud2>("~/input/ndt/pointcloud", sensor_qos, on_ndt_input);
+    auto on_eagleye_output = std::bind(&PoseEstimatorManager::on_eagleye_output, this, _1);
+    sub_eagleye_output_ = create_subscription<PoseCovStamped>(
+      "~/input/ealgeye/pose_with_covariance", 5, on_eagleye_output);
   }
 
   // Load switching rule
@@ -141,6 +160,38 @@ void PoseEstimatorManager::on_timer()
       get_logger(), "swtich_rule is not activated. Therefore, enable all pose_estimators");
     toggle_all(true);
   }
+}
+
+void PoseEstimatorManager::call_all_callback()
+{
+  for (auto & [name, manager] : sub_managers_) {
+    manager->callback();
+  }
+}
+
+void PoseEstimatorManager::on_yabloc_input(Image::ConstSharedPtr msg)
+{
+  shared_data_->yabloc_input_image_.set(msg);
+  call_all_callback();
+  shared_data_->reset_update_flag();
+}
+void PoseEstimatorManager::on_artag_input(Image::ConstSharedPtr msg)
+{
+  shared_data_->artag_input_image_.set(msg);
+  call_all_callback();
+  shared_data_->reset_update_flag();
+}
+void PoseEstimatorManager::on_ndt_input(PointCloud2::ConstSharedPtr msg)
+{
+  shared_data_->ndt_input_points_.set(msg);
+  call_all_callback();
+  shared_data_->reset_update_flag();
+}
+void PoseEstimatorManager::on_eagleye_output(PoseCovStamped::ConstSharedPtr msg)
+{
+  shared_data_->eagleye_output_pose_cov_.set(msg);
+  call_all_callback();
+  shared_data_->reset_update_flag();
 }
 
 }  // namespace pose_estimator_manager
