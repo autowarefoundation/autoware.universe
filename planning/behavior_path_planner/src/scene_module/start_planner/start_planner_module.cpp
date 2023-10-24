@@ -518,13 +518,12 @@ void StartPlannerModule::planWithPriority(
 
     // If this is the last start pose candidate, return false
     if (i == start_pose_candidates.size() - 1) return false;
+
     // check next path if back is needed
     const auto & pull_out_start_pose_next = start_pose_candidates.at(index + 1);
     const auto pull_out_path_next = planner->plan(pull_out_start_pose_next, goal_pose);
     // not found safe path after backward driving
     if (!pull_out_path_next) return false;
-    // Update status with the path after backward driving
-
     // Update status with the path after backward driving
     {
       const std::lock_guard<std::mutex> lock(mutex_);
@@ -557,9 +556,10 @@ void StartPlannerModule::planWithPriority(
   }
 
   for (const auto & pair : order_priority) {
-    if (isSafePath(pair.first, pair.second)) return;
+    if (is_safe_with_pose_planner(pair.first, pair.second)) return;
   }
 
+  // not found safe path
   if (status_.planner_type != PlannerType::FREESPACE) {
     const std::lock_guard<std::mutex> lock(mutex_);
     status_.found_pull_out_path = false;
