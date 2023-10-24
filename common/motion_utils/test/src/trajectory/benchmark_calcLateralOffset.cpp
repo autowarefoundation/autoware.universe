@@ -12,19 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "motion_utils/trajectory/tmp_conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "tier4_autoware_utils/geometry/boost_geometry.hpp"
-#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <gtest/gtest.h>
 #include <gtest/internal/gtest-port.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <tf2/LinearMath/Quaternion.h>
 
-#include <limits>
 #include <random>
-#include <vector>
 
 namespace
 {
