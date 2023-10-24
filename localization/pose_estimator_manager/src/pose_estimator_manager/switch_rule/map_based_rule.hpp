@@ -65,25 +65,12 @@ protected:
   std::unique_ptr<rule_helper::EagleyeArea> eagleye_area_{nullptr};
 
   std::string debug_string_msg_;
-  // InitializationState initialization_state_;
-  // std::optional<PoseCovStamped> latest_pose_{std::nullopt};
-  // bool eagleye_is_initialized{false};
-
-  // rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_cov_;
-  // rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_map_;
-  // rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
-  // rclcpp::Subscription<InitializationState>::SharedPtr sub_initialization_state_;
-  // rclcpp::Subscription<NavSatFix>::SharedPtr sub_eagleye_fix_;
 
   bool eagleye_is_available() const;
   bool yabloc_is_available() const;
   bool ndt_is_available() const;
   bool artag_is_available() const;
   bool ndt_is_more_suitable_than_yabloc(std::string * optional_message = nullptr) const;
-
-  // void on_point_cloud_map(PointCloud2::ConstSharedPtr msg);
-  // void on_vector_map(HADMapBin::ConstSharedPtr msg);
-  // void on_pose_cov(PoseCovStamped::ConstSharedPtr msg);
 };
 }  // namespace pose_estimator_manager::switch_rule
 

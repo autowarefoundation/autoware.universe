@@ -28,6 +28,7 @@ namespace pose_estimator_manager
 template <typename T>
 struct TrackableData
 {
+  TrackableData(T initial_data) : updated_(false) { data_ = initial_data; }
   TrackableData() : updated_(false) {}
 
   void set(const T & data)
@@ -68,7 +69,9 @@ public:
   TrackableData<PoseCovStamped::ConstSharedPtr> localization_pose_cov_;
   TrackableData<PointCloud2::ConstSharedPtr> point_cloud_map_;
   TrackableData<HADMapBin::ConstSharedPtr> vector_map_;
-  TrackableData<InitializationState::ConstSharedPtr> initialization_state_;
+  TrackableData<InitializationState::ConstSharedPtr> initialization_state_{
+    std::make_shared<InitializationState>(
+      InitializationState{}.set__state(InitializationState::UNINITIALIZED))};
 
   void reset_update_flag()
   {

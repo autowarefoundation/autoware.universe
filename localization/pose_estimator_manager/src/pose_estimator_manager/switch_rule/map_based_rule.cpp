@@ -27,30 +27,6 @@ MapBasedRule::MapBasedRule(
 {
   RCLCPP_INFO_STREAM(get_logger(), "MapBasedRule is initialized");
 
-  using std::placeholders::_1;
-  // const auto latch_qos = rclcpp::QoS(1).transient_local().reliable();
-  // auto on_vector_map = std::bind(&MapBasedRule::on_vector_map, this, _1);
-  // auto on_point_cloud_map = std::bind(&MapBasedRule::on_point_cloud_map, this, _1);
-  // auto on_pose_cov = std::bind(&MapBasedRule::on_pose_cov, this, _1);
-  // auto on_initialization_state = [this](InitializationState::ConstSharedPtr msg) -> void {
-  //   initialization_state_ = *msg;
-  // };
-  // auto on_eagleye_fix = [this](NavSatFix::ConstSharedPtr) -> void {
-  //   eagleye_is_initialized = true;
-  // };
-
-  // sub_vector_map_ =
-  //   node.create_subscription<HADMapBin>("~/input/vector_map", latch_qos, on_vector_map);
-  // sub_point_cloud_map_ =
-  //   node.create_subscription<PointCloud2>("~/input/pointcloud_map", latch_qos,
-  //   on_point_cloud_map);
-  // sub_pose_cov_ =
-  //   node.create_subscription<PoseCovStamped>("~/input/pose_with_covariance", 10, on_pose_cov);
-  // sub_initialization_state_ = node.create_subscription<InitializationState>(
-  //   "~/input/initialization_state", latch_qos, on_initialization_state);
-  // sub_eagleye_fix_ = node.create_subscription<NavSatFix>("~/input/eagleye/fix", 10,
-  // on_eagleye_fix);
-
   if (running_estimator_list.count(PoseEstimatorName::ndt)) {
     pcd_occupancy_ = std::make_unique<rule_helper::PcdOccupancy>(&node);
   }
@@ -60,9 +36,6 @@ MapBasedRule::MapBasedRule(
   if (running_estimator_list.count(PoseEstimatorName::eagleye)) {
     eagleye_area_ = std::make_unique<rule_helper::EagleyeArea>(&node);
   }
-
-  //
-  // initialization_state_.state = InitializationState::UNINITIALIZED;
 }
 
 bool MapBasedRule::eagleye_is_available() const
@@ -74,16 +47,10 @@ bool MapBasedRule::eagleye_is_available() const
   if (!shared_data_->eagleye_output_pose_cov_.has_value()) {
     return false;
   }
-  // if (!eagleye_is_initialized) {
-  //   return false;
-  // }
 
   if (!shared_data_->localization_pose_cov_.has_value()) {
     return false;
   }
-  // if (!latest_pose_.has_value()) {
-  //   return false;
-  // }
 
   if (!eagleye_area_) {
     throw std::runtime_error("eagleye_area_ is not initialized");
@@ -94,7 +61,6 @@ bool MapBasedRule::eagleye_is_available() const
   }
 
   return eagleye_area_->within(shared_data_->localization_pose_cov_()->pose.pose.position);
-  // return eagleye_area_->within(latest_pose_->pose.pose.position);
 }
 bool MapBasedRule::yabloc_is_available() const
 {
@@ -128,25 +94,6 @@ MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
   return array_msg;
 }
 
-// void MapBasedRule::on_vector_map(HADMapBin::ConstSharedPtr msg)
-// {
-//   if (eagleye_area_) {
-//     eagleye_area_->init(msg);
-//   }
-// }
-
-// void MapBasedRule::on_point_cloud_map(PointCloud2::ConstSharedPtr msg)
-// {
-//   if (pcd_occupancy_) {
-//     pcd_occupancy_->on_point_cloud_map(msg);
-//   }
-// }
-
-// void MapBasedRule::on_pose_cov(PoseCovStamped::ConstSharedPtr msg)
-// {
-//   latest_pose_ = *msg;
-// }
-
 bool MapBasedRule::artag_is_available() const
 {
   if (running_estimator_list_.count(PoseEstimatorName::artag) == 0) {
@@ -156,9 +103,6 @@ bool MapBasedRule::artag_is_available() const
   if (!shared_data_->localization_pose_cov_.has_value()) {
     return false;
   }
-  // if (!latest_pose_.has_value()) {
-  //   return false;
-  // }
 
   const auto position = shared_data_->localization_pose_cov_()->pose.pose.position;
   const double distance_to_marker =
@@ -175,14 +119,11 @@ bool MapBasedRule::ndt_is_more_suitable_than_yabloc(std::string * optional_messa
   if (!shared_data_->localization_pose_cov_.has_value()) {
     return false;
   }
-  // if (!latest_pose_) {
-  //   return false;
-  // }
+
   if (shared_data_->point_cloud_map_.has_value()) {
     pcd_occupancy_->init(shared_data_->point_cloud_map_());
   }
 
-  // const auto position = latest_pose_->pose.pose.position;
   const auto position = shared_data_->localization_pose_cov_()->pose.pose.position;
   return pcd_occupancy_->ndt_can_operate(position, optional_message);
 }
