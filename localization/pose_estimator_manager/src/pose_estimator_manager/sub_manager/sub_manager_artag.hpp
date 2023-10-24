@@ -32,13 +32,7 @@ public:
   : BasePoseEstimatorSubManager(node, shared_data)
   {
     ar_tag_is_enabled_ = true;
-
-    rclcpp::QoS qos = rclcpp::SensorDataQoS();
-
-    // using std::placeholders::_1;
-    // auto on_image = std::bind(&SubManagerArTag::on_image, this, _1);
-    // sub_image_ = node->create_subscription<Image>("~/input/artag/image", qos, on_image);
-    pub_image_ = node->create_publisher<Image>("~/output/artag/image", qos);
+    pub_image_ = node->create_publisher<Image>("~/output/artag/image", rclcpp::SensorDataQoS());
   }
 
   void set_enable(bool enabled) override { ar_tag_is_enabled_ = enabled; }
@@ -58,15 +52,7 @@ protected:
 
 private:
   bool ar_tag_is_enabled_;
-  rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
-
-  // void on_image(Image::ConstSharedPtr msg)
-  // {
-  //   if (ar_tag_is_enabled_) {
-  //     pub_image_->publish(*msg);
-  //   }
-  // }
 };
 }  // namespace pose_estimator_manager::sub_manager
 

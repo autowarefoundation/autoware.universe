@@ -34,10 +34,6 @@ public:
   : BasePoseEstimatorSubManager(node, shared_data)
   {
     yabloc_is_enabled_ = true;
-
-    // using std::placeholders::_1;
-    // auto on_image = std::bind(&SubManagerYabLoc::on_image, this, _1);
-    // sub_image_ = node->create_subscription<Image>("~/input/yabloc/image", 5, on_image);
     pub_image_ = node->create_publisher<Image>("~/output/yabloc/image", 5);
 
     using namespace std::literals::chrono_literals;
@@ -89,15 +85,7 @@ protected:
 private:
   bool yabloc_is_enabled_;
   rclcpp::Client<SetBool>::SharedPtr enable_service_client_;
-  rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
-
-  // void on_image(Image::ConstSharedPtr msg)
-  // {
-  //   if (yabloc_is_enabled_) {
-  //     pub_image_->publish(*msg);
-  //   }
-  // }
 };
 }  // namespace pose_estimator_manager::sub_manager
 #endif  // POSE_ESTIMATOR_MANAGER__SUB_MANAGER__SUB_MANAGER_YABLOC_HPP_
