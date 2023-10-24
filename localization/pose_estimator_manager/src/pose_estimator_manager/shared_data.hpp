@@ -28,25 +28,25 @@ namespace pose_estimator_manager
 template <typename T>
 struct TrackableData
 {
-  TrackableData(T initial_data) : updated_(false) { data_ = initial_data; }
-  TrackableData() : updated_(false) {}
+  TrackableData(T initial_data) : updated(false) { data = initial_data; }
+  TrackableData() : updated(false) {}
 
-  void set(const T & data)
+  void set(const T & new_data)
   {
-    data_ = data;
-    updated_ = true;
+    data = new_data;
+    updated = true;
   }
 
-  void reset_update_flag() { updated_ = false; }
+  void reset_update_flag() { updated = false; }
 
-  bool has_value() const { return data_.has_value(); }
+  bool has_value() const { return data.has_value(); }
 
-  const T operator()() const { return data_.value(); }
+  const T operator()() const { return data.value(); }
 
-  bool updated_;
+  bool updated;
 
 private:
-  std::optional<T> data_{std::nullopt};
+  std::optional<T> data{std::nullopt};
 };
 
 struct SharedData
@@ -61,29 +61,29 @@ public:
   SharedData() {}
 
   // Used for sub manager
-  TrackableData<PoseCovStamped::ConstSharedPtr> eagleye_output_pose_cov_;
-  TrackableData<Image::ConstSharedPtr> artag_input_image_;
-  TrackableData<PointCloud2::ConstSharedPtr> ndt_input_points_;
-  TrackableData<Image::ConstSharedPtr> yabloc_input_image_;
+  TrackableData<PoseCovStamped::ConstSharedPtr> eagleye_output_pose_cov;
+  TrackableData<Image::ConstSharedPtr> artag_input_image;
+  TrackableData<PointCloud2::ConstSharedPtr> ndt_input_points;
+  TrackableData<Image::ConstSharedPtr> yabloc_input_image;
   // Used for switch rule
-  TrackableData<PoseCovStamped::ConstSharedPtr> localization_pose_cov_;
-  TrackableData<PointCloud2::ConstSharedPtr> point_cloud_map_;
-  TrackableData<HADMapBin::ConstSharedPtr> vector_map_;
-  TrackableData<InitializationState::ConstSharedPtr> initialization_state_{
+  TrackableData<PoseCovStamped::ConstSharedPtr> localization_pose_cov;
+  TrackableData<PointCloud2::ConstSharedPtr> point_cloud_map;
+  TrackableData<HADMapBin::ConstSharedPtr> vector_map;
+  TrackableData<InitializationState::ConstSharedPtr> initialization_state{
     std::make_shared<InitializationState>(
       InitializationState{}.set__state(InitializationState::UNINITIALIZED))};
 
   void reset_update_flag()
   {
-    eagleye_output_pose_cov_.reset_update_flag();
-    artag_input_image_.reset_update_flag();
-    ndt_input_points_.reset_update_flag();
-    yabloc_input_image_.reset_update_flag();
+    eagleye_output_pose_cov.reset_update_flag();
+    artag_input_image.reset_update_flag();
+    ndt_input_points.reset_update_flag();
+    yabloc_input_image.reset_update_flag();
 
-    localization_pose_cov_.reset_update_flag();
-    point_cloud_map_.reset_update_flag();
-    vector_map_.reset_update_flag();
-    initialization_state_.reset_update_flag();
+    localization_pose_cov.reset_update_flag();
+    point_cloud_map.reset_update_flag();
+    vector_map.reset_update_flag();
+    initialization_state.reset_update_flag();
   }
 };
 

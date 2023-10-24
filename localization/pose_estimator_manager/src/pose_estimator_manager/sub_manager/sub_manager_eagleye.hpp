@@ -37,11 +37,11 @@ public:
 
   void callback() override
   {
-    if (!shared_data_->eagleye_output_pose_cov_.updated_) {
+    if (!shared_data_->eagleye_output_pose_cov.updated) {
       return;
     }
     if (eagleye_is_enabled_) {
-      pub_pose_->publish(*shared_data_->eagleye_output_pose_cov_());
+      pub_pose_->publish(*shared_data_->eagleye_output_pose_cov());
     }
   }
 

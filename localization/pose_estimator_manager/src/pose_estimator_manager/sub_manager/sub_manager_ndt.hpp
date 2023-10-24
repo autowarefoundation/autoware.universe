@@ -37,11 +37,11 @@ public:
 
   void callback() override
   {
-    if (!shared_data_->ndt_input_points_.updated_) {
+    if (!shared_data_->ndt_input_points.updated) {
       return;
     }
     if (ndt_is_enabled_) {
-      pub_pointcloud_->publish(*shared_data_->ndt_input_points_());
+      pub_pointcloud_->publish(*shared_data_->ndt_input_points());
     }
   }
 

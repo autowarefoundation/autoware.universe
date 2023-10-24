@@ -39,11 +39,11 @@ public:
 
   void callback() override
   {
-    if (!shared_data_->artag_input_image_.updated_) {
+    if (!shared_data_->artag_input_image.updated) {
       return;
     }
     if (ar_tag_is_enabled_) {
-      pub_image_->publish(*shared_data_->artag_input_image_());
+      pub_image_->publish(*shared_data_->artag_input_image());
     }
   }
 

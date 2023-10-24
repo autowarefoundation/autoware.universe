@@ -22,8 +22,6 @@
 
 #include <magic_enum.hpp>
 
-#include <sstream>
-
 namespace pose_estimator_manager
 {
 
@@ -100,16 +98,16 @@ PoseEstimatorManager::PoseEstimatorManager()
 
     // subscriber for switch rule
     auto on_vector_map = [this](HADMapBin::ConstSharedPtr msg) -> void {
-      shared_data_->vector_map_.set(msg);
+      shared_data_->vector_map.set(msg);
     };
     auto on_point_cloud_map = [this](PointCloud2::ConstSharedPtr msg) -> void {
-      shared_data_->point_cloud_map_.set(msg);
+      shared_data_->point_cloud_map.set(msg);
     };
     auto on_localization_pose_cov = [this](PoseCovStamped::ConstSharedPtr msg) -> void {
-      shared_data_->localization_pose_cov_.set(msg);
+      shared_data_->localization_pose_cov.set(msg);
     };
     auto on_initialization_state = [this](InitializationState::ConstSharedPtr msg) -> void {
-      shared_data_->initialization_state_.set(msg);
+      shared_data_->initialization_state.set(msg);
     };
     sub_localization_pose_cov_ = create_subscription<PoseCovStamped>(
       "~/input/pose_with_covariance", 5, on_localization_pose_cov);
@@ -196,25 +194,25 @@ void PoseEstimatorManager::call_all_callback()
 
 void PoseEstimatorManager::on_yabloc_input(Image::ConstSharedPtr msg)
 {
-  shared_data_->yabloc_input_image_.set(msg);
+  shared_data_->yabloc_input_image.set(msg);
   call_all_callback();
   shared_data_->reset_update_flag();
 }
 void PoseEstimatorManager::on_artag_input(Image::ConstSharedPtr msg)
 {
-  shared_data_->artag_input_image_.set(msg);
+  shared_data_->artag_input_image.set(msg);
   call_all_callback();
   shared_data_->reset_update_flag();
 }
 void PoseEstimatorManager::on_ndt_input(PointCloud2::ConstSharedPtr msg)
 {
-  shared_data_->ndt_input_points_.set(msg);
+  shared_data_->ndt_input_points.set(msg);
   call_all_callback();
   shared_data_->reset_update_flag();
 }
 void PoseEstimatorManager::on_eagleye_output(PoseCovStamped::ConstSharedPtr msg)
 {
-  shared_data_->eagleye_output_pose_cov_.set(msg);
+  shared_data_->eagleye_output_pose_cov.set(msg);
   call_all_callback();
   shared_data_->reset_update_flag();
 }

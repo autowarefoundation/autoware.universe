@@ -22,12 +22,6 @@
 #include "pose_estimator_manager/shared_data.hpp"
 #include "pose_estimator_manager/switch_rule/base_switch_rule.hpp"
 
-#include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -39,12 +33,6 @@ namespace pose_estimator_manager::switch_rule
 class MapBasedRule : public BaseSwitchRule
 {
 public:
-  using PointCloud2 = sensor_msgs::msg::PointCloud2;
-  using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
-  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
-  using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
-  using NavSatFix = sensor_msgs::msg::NavSatFix;
-
   MapBasedRule(
     rclcpp::Node & node, const std::unordered_set<PoseEstimatorName> & running_estimator_list,
     const std::shared_ptr<const SharedData> shared_data);

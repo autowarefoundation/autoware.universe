@@ -56,11 +56,11 @@ public:
 
   void callback() override
   {
-    if (!shared_data_->yabloc_input_image_.updated_) {
+    if (!shared_data_->yabloc_input_image.updated) {
       return;
     }
     if (yabloc_is_enabled_) {
-      pub_image_->publish(*shared_data_->yabloc_input_image_());
+      pub_image_->publish(*shared_data_->yabloc_input_image());
     }
   }
 

@@ -15,16 +15,13 @@
 #include "pose_estimator_manager/rule_helper/grid_info.hpp"
 #include "pose_estimator_manager/switch_rule/map_based_rule.hpp"
 
-#include <magic_enum.hpp>
-
-#include <pcl_conversions/pcl_conversions.h>
-
 namespace pose_estimator_manager::switch_rule
 {
 std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 {
   // (1) If the localization state is not 'INITIALIZED'
-  if (shared_data_->initialization_state_()->state != InitializationState::INITIALIZED) {
+  using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
+  if (shared_data_->initialization_state()->state != InitializationState::INITIALIZED) {
     debug_string_msg_ = "enable All\nlocalization is not initialized";
     RCLCPP_WARN_STREAM(
       get_logger(), "Enable all estimators because localization component is not initialized");
@@ -37,7 +34,7 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
   }
 
   // (2) If no pose are published, enable all;
-  if (!shared_data_->localization_pose_cov_.has_value()) {
+  if (!shared_data_->localization_pose_cov.has_value()) {
     debug_string_msg_ = "enable All\nestimated pose has not been published yet";
     RCLCPP_WARN_STREAM(
       get_logger(), "Unable to determine which estimation to use, due to lack of latest position");

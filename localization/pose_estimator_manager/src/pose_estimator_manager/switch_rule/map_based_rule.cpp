@@ -44,11 +44,11 @@ bool MapBasedRule::eagleye_is_available() const
     return false;
   }
 
-  if (!shared_data_->eagleye_output_pose_cov_.has_value()) {
+  if (!shared_data_->eagleye_output_pose_cov.has_value()) {
     return false;
   }
 
-  if (!shared_data_->localization_pose_cov_.has_value()) {
+  if (!shared_data_->localization_pose_cov.has_value()) {
     return false;
   }
 
@@ -56,11 +56,11 @@ bool MapBasedRule::eagleye_is_available() const
     throw std::runtime_error("eagleye_area_ is not initialized");
   }
 
-  if (shared_data_->vector_map_.has_value()) {
-    eagleye_area_->init(shared_data_->vector_map_());
+  if (shared_data_->vector_map.has_value()) {
+    eagleye_area_->init(shared_data_->vector_map());
   }
 
-  return eagleye_area_->within(shared_data_->localization_pose_cov_()->pose.pose.position);
+  return eagleye_area_->within(shared_data_->localization_pose_cov()->pose.pose.position);
 }
 bool MapBasedRule::yabloc_is_available() const
 {
@@ -100,11 +100,11 @@ bool MapBasedRule::artag_is_available() const
     return false;
   }
 
-  if (!shared_data_->localization_pose_cov_.has_value()) {
+  if (!shared_data_->localization_pose_cov.has_value()) {
     return false;
   }
 
-  const auto position = shared_data_->localization_pose_cov_()->pose.pose.position;
+  const auto position = shared_data_->localization_pose_cov()->pose.pose.position;
   const double distance_to_marker =
     ar_tag_position_->distance_to_nearest_ar_tag_around_ego(position);
   return distance_to_marker < ar_marker_available_distance_;
@@ -116,15 +116,15 @@ bool MapBasedRule::ndt_is_more_suitable_than_yabloc(std::string * optional_messa
     throw std::runtime_error("pcd_occupancy is not initialized");
   }
 
-  if (!shared_data_->localization_pose_cov_.has_value()) {
+  if (!shared_data_->localization_pose_cov.has_value()) {
     return false;
   }
 
-  if (shared_data_->point_cloud_map_.has_value()) {
-    pcd_occupancy_->init(shared_data_->point_cloud_map_());
+  if (shared_data_->point_cloud_map.has_value()) {
+    pcd_occupancy_->init(shared_data_->point_cloud_map());
   }
 
-  const auto position = shared_data_->localization_pose_cov_()->pose.pose.position;
+  const auto position = shared_data_->localization_pose_cov()->pose.pose.position;
   return pcd_occupancy_->ndt_can_operate(position, optional_message);
 }
 
