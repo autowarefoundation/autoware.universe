@@ -3070,7 +3070,7 @@ lanelet::ConstLanelets getCurrentLanesFromPath(
   auto current_lanes = route_handler->getLaneletSequence(
     current_lane, current_pose, p.backward_path_length, p.forward_path_length);
 
-  // Extend the 'lanes' with previous lanes until it contains 'front_lane_ids'.
+  // Extend the 'current_lanes' with previous lanes until it contains 'front_lane_ids'.
   const auto front_lane_ids = path.points.front().lane_ids;
   auto have_front_lanes = [front_lane_ids](const auto & lanes) {
     return std::any_of(lanes.begin(), lanes.end(), [&](const auto & lane) {
