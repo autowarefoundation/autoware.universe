@@ -123,13 +123,6 @@ void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::Const
   const double sign = getShiftVelocitySign(*current_shift_cmd_);
   double ref_acceleration = calculateAcc(*cmd_ptr, std::fabs(*current_velocity_ptr_));
 
-  if (ref_acceleration > 0.0 && sign == 0.0) {
-    RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-      "Target acceleration is positive, but the gear is not appropriate. accel: %f, gear: %d",
-      ref_acceleration, current_shift_cmd_->command);
-  }
-
   double ref_velocity = *current_velocity_ptr_ + ref_acceleration * ref_vel_gain_ * sign;
   if (current_shift_cmd_->command == GearCommand::REVERSE) {
     ref_velocity = std::min(0.0, ref_velocity);
@@ -147,6 +140,13 @@ void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::Const
   if (auto_brake_hold_ && std::abs(*current_velocity_ptr_) < stop_velocity_thr) {
     ref_velocity = 0.0;
     ref_acceleration = -1.5;  // TODO(Horibe): parametrize hold brake
+  }
+
+  if (ref_acceleration > 0.0 && sign == 0.0) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      "Target acceleration is positive, but the gear is not appropriate. accel: %f, gear: %d",
+      ref_acceleration, current_shift_cmd_->command);
   }
 
   // Publish ControlCommand
