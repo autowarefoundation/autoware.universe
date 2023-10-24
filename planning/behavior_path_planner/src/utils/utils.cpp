@@ -2030,11 +2030,13 @@ void makeBoundLongitudinallyMonotonic(
 
       constexpr double epsilon = 1e-3;
 
+      // Remove overlapped point.
       if (dist_1to2 < epsilon || dist_3to2 < epsilon) {
         itr = std::prev(ret.erase(itr));
         continue;
       }
 
+      // If the angle between the points is sharper than 45 degrees, remove the middle point.
       if (std::cos(M_PI_4) < product / dist_1to2 / dist_3to2 + epsilon) {
         itr = std::prev(ret.erase(itr));
         continue;
