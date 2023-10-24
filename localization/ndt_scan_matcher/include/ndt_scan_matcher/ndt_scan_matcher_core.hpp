@@ -17,9 +17,9 @@
 
 #define FMT_HEADER_ONLY
 
+#include "localization_util/tf2_listener_module.hpp"
 #include "ndt_scan_matcher/map_module.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
-#include "ndt_scan_matcher/tf2_listener_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -92,8 +92,7 @@ private:
   void callback_regularization_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
-  geometry_msgs::msg::PoseWithCovarianceStamped align_using_monte_carlo(
-    const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
+  geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
   void transform_sensor_measurement(

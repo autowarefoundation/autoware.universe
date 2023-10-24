@@ -269,7 +269,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const lanelet::CompoundPolygon3d & first_detection_area,
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
-  const double stop_line_margin, const double peeking_offset,
+  const double stop_line_margin, const double max_accel, const double max_jerk,
+  const double delay_response_time, const double peeking_offset,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
 {
   const auto & path_ip = interpolated_path_info.path;
@@ -350,11 +351,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   // (4) pass judge line position on interpolated path
   const double velocity = planner_data->current_velocity->twist.linear.x;
   const double acceleration = planner_data->current_acceleration->accel.accel.linear.x;
-  const double max_stop_acceleration = planner_data->max_stop_acceleration_threshold;
-  const double max_stop_jerk = planner_data->max_stop_jerk_threshold;
-  const double delay_response_time = planner_data->delay_response_time;
   const double braking_dist = planning_utils::calcJudgeLineDistWithJerkLimit(
-    velocity, acceleration, max_stop_acceleration, max_stop_jerk, delay_response_time);
+    velocity, acceleration, max_accel, max_jerk, delay_response_time);
   int pass_judge_ip_int =
     static_cast<int>(first_footprint_inside_detection_ip) - std::ceil(braking_dist / ds);
   const auto pass_judge_line_ip = static_cast<size_t>(
@@ -605,6 +603,8 @@ mergeLaneletsByTopologicalSort(
     id2lanelet[id] = lanelet;
     ind++;
   }
+  // NOTE: this function aims to traverse the detection lanelet backward from ego side to farthest
+  // side, so if lane B follows lane A on the routing_graph, adj[B][A] = true
   for (const auto & lanelet : lanelets) {
     const auto & followings = routing_graph_ptr->following(lanelet);
     const int dst = lanelet.id();
@@ -628,18 +628,25 @@ mergeLaneletsByTopologicalSort(
     if (!has_no_previous(src)) {
       continue;
     }
+    // So `src` has no previous lanelets
     branches[(ind2id[src])] = std::vector<lanelet::Id>{};
     auto & branch = branches[(ind2id[src])];
     lanelet::Id node_iter = ind2id[src];
+    std::set<lanelet::Id> visited_ids;
     while (true) {
       const auto & destinations = adjacency[(id2ind[node_iter])];
-      // NOTE: assuming detection lanelets have only one previous lanelet
+      // NOTE: assuming detection lanelets have only one "previous"(on the routing_graph) lanelet
       const auto next = std::find(destinations.begin(), destinations.end(), true);
       if (next == destinations.end()) {
         branch.push_back(node_iter);
         break;
       }
+      if (visited_ids.find(node_iter) != visited_ids.end()) {
+        // loop detected
+        break;
+      }
       branch.push_back(node_iter);
+      visited_ids.insert(node_iter);
       node_iter = ind2id[std::distance(destinations.begin(), next)];
     }
   }
@@ -1270,7 +1277,7 @@ void cutPredictPathWithDuration(
   util::TargetObjects * target_objects, const rclcpp::Clock::SharedPtr clock, const double time_thr)
 {
   const rclcpp::Time current_time = clock->now();
-  for (auto & target_object : target_objects->all) {  // each objects
+  for (auto & target_object : target_objects->all_attention_objects) {  // each objects
     for (auto & predicted_path :
          target_object.object.kinematics.predicted_paths) {  // each predicted paths
       const auto origin_path = predicted_path;
@@ -1327,6 +1334,19 @@ TimeDistanceArray calcIntersectionPassingTime(
   dist_sum = 0.0;
   double passing_time = time_delay;
   time_distance_array.emplace_back(passing_time, dist_sum);
+
+  // NOTE: `reference_path` is resampled in `reference_smoothed_path`, so
+  // `last_intersection_stop_line_candidate_idx` makes no sense
+  const auto last_intersection_stop_line_candidate_point_orig =
+    path.points.at(last_intersection_stop_line_candidate_idx).point.pose;
+  const auto last_intersection_stop_line_candidate_nearest_ind_opt = motion_utils::findNearestIndex(
+    smoothed_reference_path.points, last_intersection_stop_line_candidate_point_orig, 3.0, M_PI_4);
+  if (!last_intersection_stop_line_candidate_nearest_ind_opt) {
+    return time_distance_array;
+  }
+  const auto last_intersection_stop_line_candidate_nearest_ind =
+    last_intersection_stop_line_candidate_nearest_ind_opt.value();
+
   for (size_t i = 1; i < smoothed_reference_path.points.size(); ++i) {
     const auto & p1 = smoothed_reference_path.points.at(i - 1);
     const auto & p2 = smoothed_reference_path.points.at(i);
@@ -1338,7 +1358,7 @@ TimeDistanceArray calcIntersectionPassingTime(
     const double average_velocity =
       (p1.point.longitudinal_velocity_mps + p2.point.longitudinal_velocity_mps) / 2.0;
     const double minimum_ego_velocity_division =
-      (use_upstream_velocity && i > last_intersection_stop_line_candidate_idx)
+      (use_upstream_velocity && i > last_intersection_stop_line_candidate_nearest_ind)
         ? minimum_upstream_velocity /* to avoid null division */
         : minimum_ego_velocity;
     const double passing_velocity =
