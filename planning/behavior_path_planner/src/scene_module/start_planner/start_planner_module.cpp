@@ -184,9 +184,9 @@ bool StartPlannerModule::isExecutionRequested() const
 
 bool StartPlannerModule::isExecutionReady() const
 {
-  // when found_pull_over_path is false,the path is not generated and approval shouldn't be
+  // when found_pull_out_path is false,the path is not generated and approval shouldn't be
   // allowed
-  if (!status_.found_pull_over_path) {
+  if (!status_.found_pull_out_path) {
     RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Pull over path is not found");
     return false;
   }
@@ -250,7 +250,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
   }
 
   BehaviorModuleOutput output;
-  if (!status_.found_pull_over_path) {
+  if (!status_.found_pull_out_path) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
     const auto output = generateStopOutput();
@@ -396,7 +396,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   }
 
   BehaviorModuleOutput output;
-  if (!status_.found_pull_over_path) {
+  if (!status_.found_pull_out_path) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
     clearWaitingApproval();
@@ -514,7 +514,7 @@ void StartPlannerModule::planWithPriority(
     // use current path if back is not needed
     if (status_.driving_forward) {
       const std::lock_guard<std::mutex> lock(mutex_);
-      status_.found_pull_over_path = true;
+      status_.found_pull_out_path = true;
       status_.pull_out_path = *pull_out_path;
       status_.pull_out_start_pose = pull_out_start_pose;
       status_.planner_type = planner->getPlannerType();
@@ -535,7 +535,7 @@ void StartPlannerModule::planWithPriority(
     // Update status variables with the next path information
     {
       const std::lock_guard<std::mutex> lock(mutex_);
-      status_.found_pull_over_path = true;
+      status_.found_pull_out_path = true;
       status_.pull_out_path = *pull_out_path_next;
       status_.pull_out_start_pose = pull_out_start_pose_next;
       status_.planner_type = planner->getPlannerType();
@@ -587,7 +587,7 @@ void StartPlannerModule::planWithPriority(
   // not found safe path
   if (status_.planner_type != PlannerType::FREESPACE) {
     const std::lock_guard<std::mutex> lock(mutex_);
-    status_.found_pull_over_path = false;
+    status_.found_pull_out_path = false;
     status_.planner_type = PlannerType::NONE;
   }
 }
@@ -835,7 +835,7 @@ bool StartPlannerModule::isOverlappedWithLane(
 
 bool StartPlannerModule::hasFinishedPullOut() const
 {
-  if (!status_.driving_forward || !status_.found_pull_over_path) {
+  if (!status_.driving_forward || !status_.found_pull_out_path) {
     return false;
   }
 
@@ -916,7 +916,7 @@ bool StartPlannerModule::isStuck()
   }
 
   // not found safe path
-  if (!status_.found_pull_over_path) {
+  if (!status_.found_pull_out_path) {
     return true;
   }
 
@@ -1209,7 +1209,7 @@ bool StartPlannerModule::planFreespacePath()
     status_.pull_out_path = *freespace_path;
     status_.pull_out_start_pose = current_pose;
     status_.planner_type = freespace_planner_->getPlannerType();
-    status_.found_pull_over_path = true;
+    status_.found_pull_out_path = true;
     status_.driving_forward = true;
     return true;
   }
@@ -1291,8 +1291,8 @@ void StartPlannerModule::setDebugData() const
   const auto header = planner_data_->route_handler->getRouteHeader();
   {
     visualization_msgs::msg::MarkerArray planner_type_marker_array{};
-    const auto color = status_.found_pull_over_path ? createMarkerColor(1.0, 1.0, 1.0, 0.99)
-                                                    : createMarkerColor(1.0, 0.0, 0.0, 0.99);
+    const auto color = status_.found_pull_out_path ? createMarkerColor(1.0, 1.0, 1.0, 0.99)
+                                                   : createMarkerColor(1.0, 0.0, 0.0, 0.99);
     auto marker = createDefaultMarker(
       header.frame_id, header.stamp, "planner_type", 0,
       visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0), color);
