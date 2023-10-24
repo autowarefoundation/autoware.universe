@@ -67,6 +67,11 @@ def generate_launch_description():
             default_value="3.0",
             description="emergency stop timeout for external heartbeat",
         ),
+        DeclareLaunchArgument(
+            "auto_brake_hold",
+            default_value="true",
+            description="hold brake when the ego vehicle is stationary",
+        ),
         # input
         DeclareLaunchArgument(
             "in/external_control_cmd",
@@ -121,6 +126,7 @@ def generate_launch_description():
                     _create_mapping_tuple("wait_for_first_topic"),
                     _create_mapping_tuple("control_command_timeout"),
                     _create_mapping_tuple("emergency_stop_timeout"),
+                    _create_mapping_tuple("auto_brake_hold"),
                 ]
             )
         ],

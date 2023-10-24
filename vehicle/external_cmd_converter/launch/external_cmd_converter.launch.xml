@@ -9,6 +9,7 @@
   <arg name="wait_for_first_topic" default="true"/>
   <arg name="control_command_timeout" default="1.0"/>
   <arg name="emergency_stop_timeout" default="3.0"/>
+  <arg name="auto_brake_hold" default="true"/>
 
   <!-- input -->
   <arg name="in/external_control_cmd" default="/external/selected/external_control_cmd"/>
@@ -29,6 +30,7 @@
     <param name="wait_for_first_topic" value="$(var wait_for_first_topic)"/>
     <param name="control_command_timeout" value="$(var control_command_timeout)"/>
     <param name="emergency_stop_timeout" value="$(var emergency_stop_timeout)"/>
+    <param name="auto_brake_hold" value="$(var auto_brake_hold)"/>
     <remap from="in/external_control_cmd" to="$(var in/external_control_cmd)"/>
     <remap from="in/shift_cmd" to="$(var in/shift_cmd)"/>
     <remap from="in/emergency_stop" to="$(var in/emergency_stop)"/>
