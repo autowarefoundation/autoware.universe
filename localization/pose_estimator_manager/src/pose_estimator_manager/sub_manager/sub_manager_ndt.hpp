@@ -18,6 +18,8 @@
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+#include <memory>
+
 namespace pose_estimator_manager::sub_manager
 {
 class SubManagerNdt : public BasePoseEstimatorSubManager

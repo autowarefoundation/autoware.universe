@@ -32,7 +32,7 @@ using BoostPolygon = boost::geometry::model::polygon<BoostPoint>;
 
 struct EagleyeArea::Impl
 {
-  Impl(rclcpp::Logger logger) : logger_(logger) {}
+  explicit Impl(rclcpp::Logger logger) : logger_(logger) {}
   std::vector<BoostPolygon> bounding_boxes_;
   void init(HADMapBin::ConstSharedPtr msg);
   bool within(const geometry_msgs::msg::Point & point) const;

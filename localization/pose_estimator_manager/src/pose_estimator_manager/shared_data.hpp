@@ -21,6 +21,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+#include <memory>
 #include <optional>
 
 namespace pose_estimator_manager
@@ -28,7 +29,7 @@ namespace pose_estimator_manager
 template <typename T>
 struct TrackableData
 {
-  TrackableData(T initial_data) : updated(false) { data = initial_data; }
+  explicit TrackableData(T initial_data) : updated(false) { data = initial_data; }
   TrackableData() : updated(false) {}
 
   void set(const T & new_data)

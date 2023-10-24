@@ -74,7 +74,7 @@ bool MapBasedRule::ndt_is_available() const
 
 std::string MapBasedRule::debug_string()
 {
-  return debug_string_msg_;
+  return debug_string_;
 }
 
 MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()

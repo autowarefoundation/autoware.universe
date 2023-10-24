@@ -52,7 +52,7 @@ protected:
   std::unique_ptr<rule_helper::PcdOccupancy> pcd_occupancy_{nullptr};
   std::unique_ptr<rule_helper::EagleyeArea> eagleye_area_{nullptr};
 
-  std::string debug_string_msg_;
+  std::string debug_string_;
 
   bool eagleye_is_available() const;
   bool yabloc_is_available() const;

@@ -22,9 +22,8 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
   // (1) If the localization state is not 'INITIALIZED'
   using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
   if (shared_data_->initialization_state()->state != InitializationState::INITIALIZED) {
-    debug_string_msg_ = "enable All\nlocalization is not initialized";
-    RCLCPP_WARN_STREAM(
-      get_logger(), "Enable all estimators because localization component is not initialized");
+    debug_string_ = "enable All\nlocalization is not initialized";
+    RCLCPP_WARN_STREAM(get_logger(), debug_string_);
     return {
       {PoseEstimatorName::ndt, true},
       {PoseEstimatorName::yabloc, true},
@@ -35,9 +34,9 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 
   // (2) If no pose are published, enable all;
   if (!shared_data_->localization_pose_cov.has_value()) {
-    debug_string_msg_ = "enable All\nestimated pose has not been published yet";
-    RCLCPP_WARN_STREAM(
-      get_logger(), "Unable to determine which estimation to use, due to lack of latest position");
+    debug_string_ =
+      "enable All\nestimated pose has not been published yet, so unable to determine which to use";
+    RCLCPP_WARN_STREAM(get_logger(), debug_string_);
     return {
       {PoseEstimatorName::ndt, true},
       {PoseEstimatorName::yabloc, true},
@@ -48,8 +47,8 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 
   // (3) If eagleye is vailable, enable eagleye
   if (eagleye_is_available()) {
-    debug_string_msg_ = "enable Eagleye\nthe vehicle is within eagleye_area";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable eagleye");
+    debug_string_ = "enable Eagleye\nthe vehicle is within eagleye_area";
+    RCLCPP_WARN_STREAM(get_logger(), debug_string_);
     return {
       {PoseEstimatorName::ndt, false},
       {PoseEstimatorName::yabloc, false},
@@ -60,8 +59,8 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 
   // (4) If AR marker exists around ego position, enable artag
   if (artag_is_available()) {
-    debug_string_msg_ = "enable artag\nlandmark exists around the ego";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable artag");
+    debug_string_ = "enable Artag\nlandmark exists around the ego";
+    RCLCPP_WARN_STREAM(get_logger(), debug_string_);
     return {
       {PoseEstimatorName::ndt, false},
       {PoseEstimatorName::yabloc, false},
@@ -72,8 +71,8 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 
   // (5) If yabloc is disabled, enable ndt
   if (!yabloc_is_available()) {
-    debug_string_msg_ = "enable ndt\nonly ndt is available";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable ndt");
+    debug_string_ = "enable Ndt\nonly ndt is available";
+    RCLCPP_WARN_STREAM(get_logger(), debug_string_);
     return {
       {PoseEstimatorName::ndt, true},
       {PoseEstimatorName::yabloc, false},
@@ -84,8 +83,8 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
 
   // (6) If ndt is disabled, enable YabLoc
   if (!ndt_is_available()) {
-    debug_string_msg_ = "enable YabLoc\nonly yabloc is available";
-    RCLCPP_WARN_STREAM(get_logger(), "Enable yabloc");
+    debug_string_ = "enable YabLoc\nonly yabloc is available";
+    RCLCPP_WARN_STREAM(get_logger(), debug_string_);
     return {
       {PoseEstimatorName::ndt, false},
       {PoseEstimatorName::yabloc, true},
@@ -94,24 +93,23 @@ std::unordered_map<PoseEstimatorName, bool> MapBasedRule::update()
     };
   }
 
-  // (7) If PCD is enough occupied, enable ndt
-  if (ndt_is_more_suitable_than_yabloc(&debug_string_msg_)) {
-    RCLCPP_WARN_STREAM(get_logger(), "Enable ndt");
+  // (7) If PCD is enough occupied, enable ndt. Otherwise, enable yabloc
+  if (ndt_is_more_suitable_than_yabloc(&debug_string_)) {
+    RCLCPP_WARN_STREAM(get_logger(), debug_string_);
     return {
       {PoseEstimatorName::ndt, true},
       {PoseEstimatorName::yabloc, false},
       {PoseEstimatorName::eagleye, false},
       {PoseEstimatorName::artag, false},
     };
+  } else {
+    RCLCPP_WARN_STREAM(get_logger(), debug_string_);
+    return {
+      {PoseEstimatorName::ndt, false},
+      {PoseEstimatorName::yabloc, true},
+      {PoseEstimatorName::eagleye, false},
+      {PoseEstimatorName::artag, false}};
   }
-
-  // (8) Enable YabLoc
-  RCLCPP_WARN_STREAM(get_logger(), "Enable YabLoc");
-  return {
-    {PoseEstimatorName::ndt, false},
-    {PoseEstimatorName::yabloc, true},
-    {PoseEstimatorName::eagleye, false},
-    {PoseEstimatorName::artag, false}};
 }
 
 }  // namespace pose_estimator_manager::switch_rule
