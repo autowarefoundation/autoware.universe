@@ -170,11 +170,11 @@ void TopicStateMonitorNode::checkTopicStatus(diagnostic_updater::DiagnosticStatu
   } else if (topic_status == TopicStatus::WarnRate) {
     level = DiagnosticStatus::WARN;
     stat.add("status", "WarnRate");
-    print_warn(node_param_.topic + " topic has dropped to the warning level.");
+    print_warn(node_param_.topic + " topic rate has dropped to the warning level.");
   } else if (topic_status == TopicStatus::ErrorRate) {
     level = DiagnosticStatus::ERROR;
     stat.add("status", "ErrorRate");
-    print_warn(node_param_.topic + " topic has dropped to the error level.");
+    print_warn(node_param_.topic + " topic rate has dropped to the error level.");
   } else if (topic_status == TopicStatus::Timeout) {
     level = DiagnosticStatus::ERROR;
     stat.add("status", "Timeout");
