@@ -21,7 +21,6 @@
 #include "tier4_autoware_utils/system/backtrace.hpp"
 
 #include <Eigen/Geometry>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
@@ -623,16 +622,11 @@ calcLateralOffset<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
  * @param throw_exception flag to enable/disable exception throwing
  * @return length (unsigned)
  */
-static auto rm_overlaps_durations_us = 0;
-static auto other_duration_us = 0;
 template <class T>
 double calcLateralOffset(
   const T & points, const geometry_msgs::msg::Point & p_target, const bool throw_exception = false)
 {
-  tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
   const auto overlap_removed_points = removeOverlapPoints(points, 0);
-  rm_overlaps_durations_us += stopwatch.toc();
-  stopwatch.tic("other");
 
   if (throw_exception) {
     validateNonEmpty(overlap_removed_points);
@@ -656,9 +650,7 @@ double calcLateralOffset(
   }
 
   const size_t seg_idx = findNearestSegmentIndex(overlap_removed_points, p_target);
-  const auto result = calcLateralOffset(points, p_target, seg_idx, throw_exception);
-  other_duration_us += stopwatch.toc("other");
-  return result;
+  return calcLateralOffset(points, p_target, seg_idx, throw_exception);
 }
 
 extern template double calcLateralOffset<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(

@@ -80,8 +80,6 @@ TEST(trajectory_benchmark, DISABLED_calcLateralOffset)
     const auto point = createPoint(uniform_dist(e1), uniform_dist(e1), 0.0);
     calcLateralOffset(traj.points, point);
   }
-  std::cerr << "rm overlaps: " << motion_utils::rm_overlaps_durations_us << "us\n";
-  std::cerr << "other: " << motion_utils::other_duration_us << "us\n";
 }
 
 TEST(trajectory_benchmark, DISABLED_calcLateralOffsetLanelet)
