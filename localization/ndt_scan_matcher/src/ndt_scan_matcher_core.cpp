@@ -447,18 +447,6 @@ void NDTScanMatcher::callback_sensor_points(
   const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
   (*state_ptr_)["state"] = "Sleeping";
 
-  // covariance estimation
-  std::array<double, 36> ndt_covariance;
-  ndt_covariance = output_pose_covariance_;
-  if (is_converged && use_cov_estimation_) {
-    estimate_covariance(ndt_result, initial_pose_matrix, ndt_covariance, sensor_ros_time);
-  }
-
-  const auto exe_end_time = std::chrono::system_clock::now();
-  const auto duration_micro_sec =
-    std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
-  const auto exe_time = static_cast<float>(duration_micro_sec) / 1000.0f;
-
   const geometry_msgs::msg::Pose result_pose_msg = matrix4f_to_pose(ndt_result.pose);
   std::vector<geometry_msgs::msg::Pose> transformation_msg_array;
   for (const auto & pose_matrix : ndt_result.transformation_array) {
@@ -484,6 +472,18 @@ void NDTScanMatcher::callback_sensor_points(
     ++skipping_publish_num;
     RCLCPP_WARN(get_logger(), "Not Converged");
   }
+
+  // covariance estimation
+  std::array<double, 36> ndt_covariance;
+  ndt_covariance = output_pose_covariance_;
+  if (is_converged && use_cov_estimation_) {
+    estimate_covariance(ndt_result, initial_pose_matrix, ndt_covariance, sensor_ros_time);
+  }
+
+  const auto exe_end_time = std::chrono::system_clock::now();
+  const auto duration_micro_sec =
+    std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
+  const auto exe_time = static_cast<float>(duration_micro_sec) / 1000.0f;
 
   // publish
   initial_pose_with_covariance_pub_->publish(interpolator.get_current_pose());
@@ -718,7 +718,7 @@ void NDTScanMatcher::estimate_covariance(
   // Laplace approximation
   const Eigen::Matrix2d hessian_inv = -ndt_result.hessian.inverse().block(0, 0, 2, 2);
   const Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> lap_eigensolver(hessian_inv);
-  Eigen::Matrix2d rot = Eigen::Rotation2Dd(0.0);
+  Eigen::Matrix2d rot = Eigen::Matrix2d::Identity();
   if (lap_eigensolver.info() == Eigen::Success) {
     const Eigen::Vector2d lap_eigen_vec = lap_eigensolver.eigenvectors().col(1);
     const double th = std::atan2(lap_eigen_vec.y(), lap_eigen_vec.x());
@@ -726,46 +726,42 @@ void NDTScanMatcher::estimate_covariance(
   }
 
   // first result is added to mean and covariance
-  Eigen::Vector2d p2d(ndt_result.pose(0, 3), ndt_result.pose(1, 3));
+  const Eigen::Vector2d p2d(ndt_result.pose(0, 3), ndt_result.pose(1, 3));
   Eigen::Vector2d tmp_centroid = p2d;
   Eigen::Matrix2d tmp_cov = p2d * p2d.transpose();
 
-  // prepare msg
   geometry_msgs::msg::PoseArray multi_ndt_result_msg;
   geometry_msgs::msg::PoseArray multi_initial_pose_msg;
   multi_ndt_result_msg.header.stamp = sensor_ros_time;
+  multi_ndt_result_msg.header.frame_id = map_frame_;
   multi_initial_pose_msg.header.stamp = sensor_ros_time;
+  multi_initial_pose_msg.header.frame_id = map_frame_;
   multi_ndt_result_msg.poses.push_back(matrix4f_to_pose(ndt_result.pose));
   multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(initial_pose_matrix));
 
-  // Multiple search
+  // multiple searches
   for (const auto & offset_vec : offset_array_) {
-    Eigen::Vector2d offset_2d;
-    offset_2d = rot * offset_vec;
+    const Eigen::Vector2d offset_2d = rot * offset_vec;
 
     Eigen::Matrix4f sub_initial_pose_matrix(Eigen::Matrix4f::Identity());
     sub_initial_pose_matrix = ndt_result.pose;
     sub_initial_pose_matrix(0, 3) += static_cast<float>(offset_2d.x());
     sub_initial_pose_matrix(1, 3) += static_cast<float>(offset_2d.y());
 
-    // align
     auto sub_output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
     ndt_ptr_->align(*sub_output_cloud, sub_initial_pose_matrix);
     const Eigen::Matrix4f sub_ndt_result = ndt_ptr_->getResult().pose;
 
-    // Eigen::Vector2d sub_p2d(
-    //   static_cast<double>(sub_ndt_result(0, 3)), static_cast<double>(sub_ndt_result(1, 3)));
-    Eigen::Vector2d sub_p2d = sub_ndt_result.topRightCorner<2, 1>().cast<double>();
+    const Eigen::Vector2d sub_p2d = sub_ndt_result.topRightCorner<2, 1>().cast<double>();
     tmp_centroid += sub_p2d;
     tmp_cov += sub_p2d * sub_p2d.transpose();
 
-    // push back msg
     multi_ndt_result_msg.poses.push_back(matrix4f_to_pose(sub_ndt_result));
     multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(sub_initial_pose_matrix));
   }
-  Eigen::Vector2d centroid = tmp_centroid / (offset_array_.size() + 1);
+  const Eigen::Vector2d centroid = tmp_centroid / (offset_array_.size() + 1);
 
-  Eigen::Matrix2d pca_covariance =
+  const Eigen::Matrix2d pca_covariance =
     (tmp_cov / (offset_array_.size() + 1) - (centroid * centroid.transpose()));
   ndt_covariance[0] = output_pose_covariance_[0] + pca_covariance(0, 0);
   ndt_covariance[1] = pca_covariance(1, 0);
