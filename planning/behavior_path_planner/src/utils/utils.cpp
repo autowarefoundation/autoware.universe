@@ -1935,7 +1935,7 @@ void makeBoundLongitudinallyMonotonic(
 
       const auto theta = normalizeRadian(p1_to_p2 - p2_to_p3);
 
-      return (is_points_left && 0 < theta) || (!is_points_left && theta < 0);
+      return (is_points_left && 0 > theta) || (!is_points_left && theta > 0);
     };
 
   // define a function to remove non monotonic point on bound
@@ -1954,7 +1954,7 @@ void makeBoundLongitudinallyMonotonic(
 
       // NOTE: is_bound_left is used instead of is_points_left since orientation of path point is
       // opposite.
-      const double lat_offset = is_bound_left ? 100.0 : -100.0;
+      const double lat_offset = is_bound_left ? 0.1 : -0.1;
 
       const auto p_bound_1 = getPoint(bound_with_pose.at(bound_idx));
       const auto p_bound_2 = getPoint(bound_with_pose.at(bound_idx + 1));
@@ -1962,7 +1962,7 @@ void makeBoundLongitudinallyMonotonic(
       const auto p_bound_offset =
         calcOffsetPose(getPose(bound_with_pose.at(bound_idx)), 0.0, lat_offset, 0.0);
 
-      if (!is_monotonic(p_bound_1, p_bound_2, p_bound_offset.position, is_points_left)) {
+      if (is_monotonic(p_bound_1, p_bound_2, p_bound_offset.position, is_points_left)) {
         bound_idx++;
         continue;
       }
