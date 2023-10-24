@@ -493,24 +493,19 @@ void StartPlannerModule::planWithPriority(
   const Pose & goal_pose, const std::string search_priority)
 {
   // check if start pose candidates are valid
-  if (start_pose_candidates.empty()) {
-    return;
-  }
+  if (start_pose_candidates.empty()) return;
 
-  const auto is_safe_with_pose_planner = [&](const size_t i, const auto & planner) {
+  const auto is_safe_with_pose_planner = [&](const size_t index, const auto & planner) {
     // Get the pull_out_start_pose for the current index
-    const auto & pull_out_start_pose = start_pose_candidates.at(i);
-
+    const auto & pull_out_start_pose = start_pose_candidates.at(index);
     // Set back_finished to true if the current start pose is same to refined_start_pose
     status_.back_finished =
       tier4_autoware_utils::calcDistance2d(pull_out_start_pose, refined_start_pose) < 0.01;
 
     planner->setPlannerData(planner_data_);
     const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
-    // not found safe path
-    if (!pull_out_path) {
-      return false;
-    }
+    if (!pull_out_path) return false;
+
     // use current path if back is not needed
     if (status_.back_finished) {
       const std::lock_guard<std::mutex> lock(mutex_);
@@ -523,70 +518,47 @@ void StartPlannerModule::planWithPriority(
 
     // If this is the last start pose candidate, return false
     if (i == start_pose_candidates.size() - 1) return false;
-
     // check next path if back is needed
-    const auto & pull_out_start_pose_next = start_pose_candidates.at(i + 1);
+    const auto & pull_out_start_pose_next = start_pose_candidates.at(index + 1);
     const auto pull_out_path_next = planner->plan(pull_out_start_pose_next, goal_pose);
-    // not found safe path
-    if (!pull_out_path_next) {
-      return false;
-    }
+    // not found safe path after backward driving
+    if (!pull_out_path_next) return false;
+    // Update status with the path after backward driving
 
-    // Update status variables with the next path information
-    {
-      const std::lock_guard<std::mutex> lock(mutex_);
-      status_.is_safe_static_objects = true;
-      status_.pull_out_path = *pull_out_path_next;
-      status_.pull_out_start_pose = pull_out_start_pose_next;
-      status_.planner_type = planner->getPlannerType();
-    }
+    const std::lock_guard<std::mutex> lock(mutex_);
+    status_.is_safe_static_objects = true;
+    status_.pull_out_path = *pull_out_path_next;
+    status_.pull_out_start_pose = pull_out_start_pose_next;
+    status_.planner_type = planner->getPlannerType();
     return true;
   };
 
   using PriorityOrder = std::vector<std::pair<size_t, std::shared_ptr<PullOutPlannerBase>>>;
-  const auto make_loop_order_planner_first = [&]() {
-    PriorityOrder order_priority;
+  PriorityOrder order_priority;
+
+  if (search_priority == "efficient_path") {
     for (const auto & planner : start_planners_) {
       for (size_t i = 0; i < start_pose_candidates.size(); i++) {
         order_priority.emplace_back(i, planner);
       }
     }
-    return order_priority;
-  };
-
-  const auto make_loop_order_pose_first = [&]() {
-    PriorityOrder order_priority;
+  } else if (search_priority == "short_back_distance") {
     for (size_t i = 0; i < start_pose_candidates.size(); i++) {
       for (const auto & planner : start_planners_) {
         order_priority.emplace_back(i, planner);
       }
     }
-    return order_priority;
-  };
-
-  // Choose loop order based on priority_on_efficient_path
-  PriorityOrder order_priority;
-  if (search_priority == "efficient_path") {
-    order_priority = make_loop_order_planner_first();
-  } else if (search_priority == "short_back_distance") {
-    order_priority = make_loop_order_pose_first();
   } else {
-    RCLCPP_ERROR(
-      getLogger(),
-      "search_priority should be efficient_path or short_back_distance, but %s is given.",
-      search_priority.c_str());
+    RCLCPP_ERROR(getLogger(), "Invalid search_priority: %s", search_priority.c_str());
     throw std::domain_error("[start_planner] invalid search_priority");
   }
 
-  for (const auto & p : order_priority) {
-    if (is_safe_with_pose_planner(p.first, p.second)) {
-      return;
-    }
+  for (const auto & pair : order_priority) {
+    if (isSafePath(pair.first, pair.second)) return;
   }
 
-  // not found safe path
   if (status_.planner_type != PlannerType::FREESPACE) {
-    const std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     status_.is_safe_static_objects = false;
     status_.planner_type = PlannerType::NONE;
   }
