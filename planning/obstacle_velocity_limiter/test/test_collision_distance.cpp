@@ -65,8 +65,6 @@ TEST(particleModel, distanceToClosestCollision)
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_FALSE(result.has_value());
 
-  // this one V
-
   obstacles.points.emplace_back(4.0, 0.0);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
