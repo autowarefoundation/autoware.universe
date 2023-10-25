@@ -59,7 +59,7 @@ TEST(TestCollisionDistance, distanceToClosestCollisionParticleModel)
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_FALSE(result.has_value());
 
-  obstacles.points.emplace_back(1.5, 2.0);
+  obstacles.points.emplace_back(1.0, 2.0);
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
   ASSERT_FALSE(result.has_value());
@@ -254,7 +254,7 @@ TEST(TestCollisionDistance, distanceToClosestCollisionApproximation)
   EXPECT_NEAR(*result, 2.23, EPS);
 }
 
-TEST(bicycleModel, distanceToClosestCollision)
+TEST(TestCollisionDistance, distanceToClosestCollisionBicycleModel)
 {
   using obstacle_velocity_limiter::CollisionChecker;
   using obstacle_velocity_limiter::distanceToClosestCollision;
