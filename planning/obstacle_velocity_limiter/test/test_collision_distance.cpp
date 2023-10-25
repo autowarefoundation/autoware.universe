@@ -34,7 +34,7 @@ const auto point_in_polygon = [](const auto x, const auto y, const auto & polygo
          }) != polygon.outer().end();
 };
 
-TEST(particleModel, distanceToClosestCollision)
+TEST(TestCollisionDistance, distanceToClosestCollisionParticleModel)
 {
   using obstacle_velocity_limiter::CollisionChecker;
   using obstacle_velocity_limiter::distanceToClosestCollision;
