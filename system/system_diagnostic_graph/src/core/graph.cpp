@@ -45,8 +45,8 @@ BaseUnit::UniquePtrList topological_sort(BaseUnit::UniquePtrList && input)
 
   // Count degrees of each node.
   for (const auto & node : nodes) {
-    for (const auto & [link, used] : node->links()) {
-      ++degrees[link];
+    for (const auto & child : node->children()) {
+      ++degrees[child];
     }
   }
 
@@ -61,9 +61,9 @@ BaseUnit::UniquePtrList topological_sort(BaseUnit::UniquePtrList && input)
   while (!buffer.empty()) {
     const auto node = buffer.front();
     buffer.pop_front();
-    for (const auto & [link, used] : node->links()) {
-      if (--degrees[link] == 0) {
-        buffer.push_back(link);
+    for (const auto & child : node->children()) {
+      if (--degrees[child] == 0) {
+        buffer.push_back(child);
       }
     }
     result.push_back(node);
@@ -163,15 +163,14 @@ void Graph::init(const std::string & file, const std::string & mode)
   nodes_ = std::move(nodes);
 }
 
-void Graph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
+void Graph::callback(const rclcpp::Time & stamp, const DiagnosticArray & array)
 {
   for (const auto & status : array.status) {
     const auto iter = diags_.find(status.name);
     if (iter != diags_.end()) {
-      iter->second->callback(status, stamp);
+      iter->second->callback(stamp, status);
     } else {
       // TODO(Takagi, Isamu)
-      // unknown_->callback(status, stamp);
       std::cout << "unknown diag: " << status.name << std::endl;
     }
   }
@@ -179,6 +178,10 @@ void Graph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
 
 DiagnosticGraph Graph::report(const rclcpp::Time & stamp)
 {
+  for (const auto & node : nodes_) {
+    node->update(stamp);
+  }
+
   DiagnosticGraph message;
   message.stamp = stamp;
   message.nodes.reserve(nodes_.size());

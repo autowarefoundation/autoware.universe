@@ -14,6 +14,7 @@
 
 #include "units.hpp"
 
+#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -21,33 +22,44 @@
 namespace system_diagnostic_graph
 {
 
-auto resolve(const BaseUnit::NodeDict & dict, const std::vector<UnitConfig::SharedPtr> & links)
+using LinkList = std::vector<std::pair<BaseUnit *, bool>>;
+
+void merge(LinkList & a, const LinkList & b, bool uses)
 {
-  std::vector<std::pair<BaseUnit *, bool>> result;
-  for (const auto & link : links) {
-    result.push_back(std::make_pair(dict.configs.at(link), true));
+  for (const auto & [node, used] : b) {
+    a.push_back(std::make_pair(node, used && uses));
+  }
+}
+
+auto resolve(const BaseUnit::NodeDict & dict, const std::vector<UnitConfig::SharedPtr> & children)
+{
+  std::vector<BaseUnit *> result;
+  for (const auto & child : children) {
+    result.push_back(dict.configs.at(child));
   }
   return result;
 }
 
 auto resolve(const BaseUnit::NodeDict & dict, const std::string & path)
 {
-  std::vector<std::pair<BaseUnit *, bool>> result;
-  result.push_back(std::make_pair(dict.paths.at(path), true));
+  std::vector<BaseUnit *> result;
+  result.push_back(dict.paths.at(path));
   return result;
 }
 
 BaseUnit::BaseUnit(const std::string & path) : path_(path)
 {
   index_ = 0;
-  level_ = DiagnosticStatus::STALE;
+  level_ = DiagnosticStatus::OK;
 }
 
-DiagnosticNode BaseUnit::report(const rclcpp::Time & stamp)
+BaseUnit::NodeData BaseUnit::status()
 {
-  const auto message = update(stamp);
-  level_ = message.status.level;
-  return message;
+  if (path_.empty()) {
+    return {level_, links_};
+  } else {
+    return {level_, {std::make_pair(this, true)}};
+  }
 }
 
 void DiagUnit::init(const UnitConfig::SharedPtr & config, const NodeDict &)
@@ -56,39 +68,26 @@ void DiagUnit::init(const UnitConfig::SharedPtr & config, const NodeDict &)
   name_ = config->data.take_text("name", path_);
 }
 
-void DiagUnit::eval()
+void DiagUnit::update(const rclcpp::Time & stamp)
 {
   if (diagnostics_) {
-    level_ = diagnostics_.value().first.status.level;
-  } else {
-    level_ = DiagnosticStatus::STALE;
-  }
-}
-
-void DiagUnit::callback(const DiagnosticStatus & status, const rclcpp::Time & stamp)
-{
-  diagnostics_ = std::make_pair(status, stamp);
-}
-
-DiagnosticNode DiagUnit::update(const rclcpp::Time & stamp)
-{
-  if (diagnostics_) {
-    const auto updated = diagnostics_.value().second;
+    const auto updated = diagnostics_.value().first;
     const auto elapsed = (stamp - updated).seconds();
     if (timeout_ < elapsed) {
       diagnostics_ = std::nullopt;
     }
   }
 
-  DiagnosticNode message;
   if (diagnostics_) {
-    message.status = diagnostics_.value().first;
-    message.status.name = path_;
+    level_ = diagnostics_.value().second.level;
   } else {
-    message.status.level = DiagnosticStatus::STALE;
-    message.status.name = path_;
+    level_ = DiagnosticStatus::STALE;
   }
-  return message;
+}
+
+void DiagUnit::callback(const rclcpp::Time & stamp, const DiagnosticStatus & status)
+{
+  diagnostics_ = std::make_pair(stamp, status);
 }
 
 AndUnit::AndUnit(const std::string & path, bool short_circuit) : BaseUnit(path)
@@ -98,26 +97,50 @@ AndUnit::AndUnit(const std::string & path, bool short_circuit) : BaseUnit(path)
 
 void AndUnit::init(const UnitConfig::SharedPtr & config, const NodeDict & dict)
 {
-  links_ = resolve(dict, config->children);
+  children_ = resolve(dict, config->children);
 }
 
-DiagnosticNode AndUnit::update(const rclcpp::Time &)
+void AndUnit::update(const rclcpp::Time &)
 {
-  DiagnosticNode message;
-  message.status.name = path_;
-  return message;
+  if (children_.empty()) {
+    return;
+  }
+
+  bool uses = true;
+  level_ = DiagnosticStatus::OK;
+  links_ = LinkList();
+
+  for (const auto & child : children_) {
+    const auto status = child->status();
+    level_ = std::max(level_, status.level);
+    merge(links_, status.links, uses);
+    if (short_circuit_ && level_ != DiagnosticStatus::OK) {
+      uses = false;
+    }
+  }
+  level_ = std::min(level_, DiagnosticStatus::ERROR);
 }
 
 void OrUnit::init(const UnitConfig::SharedPtr & config, const NodeDict & dict)
 {
-  links_ = resolve(dict, config->children);
+  children_ = resolve(dict, config->children);
 }
 
-DiagnosticNode OrUnit::update(const rclcpp::Time &)
+void OrUnit::update(const rclcpp::Time &)
 {
-  DiagnosticNode message;
-  message.status.name = path_;
-  return message;
+  if (children_.empty()) {
+    return;
+  }
+
+  level_ = DiagnosticStatus::ERROR;
+  links_ = LinkList();
+
+  for (const auto & child : children_) {
+    const auto status = child->status();
+    level_ = std::min(level_, status.level);
+    merge(links_, status.links, true);
+  }
+  level_ = std::min(level_, DiagnosticStatus::ERROR);
 }
 
 DebugUnit::DebugUnit(const std::string & path, const DiagnosticLevel level) : BaseUnit(path)
@@ -129,11 +152,8 @@ void DebugUnit::init(const UnitConfig::SharedPtr &, const NodeDict &)
 {
 }
 
-DiagnosticNode DebugUnit::update(const rclcpp::Time &)
+void DebugUnit::update(const rclcpp::Time &)
 {
-  DiagnosticNode message;
-  message.status.name = path_;
-  return message;
 }
 
 }  // namespace system_diagnostic_graph

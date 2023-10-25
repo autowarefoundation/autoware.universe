@@ -49,21 +49,24 @@ public:
   explicit BaseUnit(const std::string & path);
   virtual ~BaseUnit() = default;
   virtual void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) = 0;
-  virtual void eval() = 0;
+  virtual void update(const rclcpp::Time & stamp) = 0;
 
-  DiagnosticNode report(const rclcpp::Time & stamp);
-  auto level() const { return level_; }
-  auto links() const { return links_; }
+  DiagnosticLevel level() const { return level_; }
+  NodeData status();
+  // NodeData report();
+  DiagnosticNode report(const rclcpp::Time &) const { return DiagnosticNode(); }
+
   auto path() const { return path_; }
+  auto children() const { return children_; }
 
   size_t index() const { return index_; }
   void set_index(const size_t index) { index_ = index; }
 
 protected:
-  virtual DiagnosticNode update(const rclcpp::Time & stamp) = 0;
   DiagnosticLevel level_;
-  std::vector<std::pair<BaseUnit *, bool>> links_;
   std::string path_;
+  std::vector<BaseUnit *> children_;
+  std::vector<std::pair<BaseUnit *, bool>> links_;
 
 private:
   size_t index_;
@@ -74,15 +77,14 @@ class DiagUnit : public BaseUnit
 public:
   using BaseUnit::BaseUnit;
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
-  void eval() override;
+  void update(const rclcpp::Time & stamp) override;
 
   std::string name() const { return name_; }
-  void callback(const DiagnosticStatus & status, const rclcpp::Time & stamp);
+  void callback(const rclcpp::Time & stamp, const DiagnosticStatus & status);
 
 private:
-  DiagnosticNode update(const rclcpp::Time & stamp) override;
   double timeout_;
-  std::optional<std::pair<DiagnosticStatus, rclcpp::Time>> diagnostics_;
+  std::optional<std::pair<rclcpp::Time, DiagnosticStatus>> diagnostics_;
   std::string name_;
 };
 
@@ -91,10 +93,9 @@ class AndUnit : public BaseUnit
 public:
   AndUnit(const std::string & path, bool short_circuit);
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
-  void eval() override;
+  void update(const rclcpp::Time & stamp) override;
 
 private:
-  DiagnosticNode update(const rclcpp::Time & stamp) override;
   bool short_circuit_;
 };
 
@@ -103,10 +104,9 @@ class OrUnit : public BaseUnit
 public:
   using BaseUnit::BaseUnit;
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
-  void eval() override;
+  void update(const rclcpp::Time & stamp) override;
 
 private:
-  DiagnosticNode update(const rclcpp::Time & stamp) override;
 };
 
 class DebugUnit : public BaseUnit
@@ -114,10 +114,9 @@ class DebugUnit : public BaseUnit
 public:
   DebugUnit(const std::string & path, const DiagnosticLevel level);
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
-  void eval() override;
+  void update(const rclcpp::Time & stamp) override;
 
 private:
-  DiagnosticNode update(const rclcpp::Time & stamp) override;
   DiagnosticLevel const_;
 };
 

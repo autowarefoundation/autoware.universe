@@ -35,7 +35,7 @@ public:
   ~Graph();
 
   void init(const std::string & file, const std::string & mode);
-  void callback(const DiagnosticArray & array, const rclcpp::Time & stamp);
+  void callback(const rclcpp::Time & stamp, const DiagnosticArray & array);
   DiagnosticGraph report(const rclcpp::Time & stamp);
   std::vector<BaseUnit *> nodes() const;
 
