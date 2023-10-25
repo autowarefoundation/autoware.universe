@@ -186,7 +186,17 @@ DiagnosticGraph Graph::report(const rclcpp::Time & stamp)
   message.stamp = stamp;
   message.nodes.reserve(nodes_.size());
   for (const auto & node : nodes_) {
-    message.nodes.push_back(node->report(stamp));
+    const auto report = node->report();
+    DiagnosticNode temp;
+    temp.status.name = node->path();
+    temp.status.level = report.level;
+    for (const auto & [ref, used] : report.links) {
+      DiagnosticLink link;
+      link.index = ref->index();
+      link.used = used;
+      temp.links.push_back(link);
+    }
+    message.nodes.push_back(temp);
   }
   return message;
 }

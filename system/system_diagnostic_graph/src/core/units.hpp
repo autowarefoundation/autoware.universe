@@ -41,7 +41,7 @@ public:
   struct NodeData
   {
     DiagnosticLevel level;
-    std::vector<std::pair<BaseUnit *, bool>> links;
+    std::vector<std::pair<const BaseUnit *, bool>> links;
   };
   using UniquePtr = std::unique_ptr<BaseUnit>;
   using UniquePtrList = std::vector<std::unique_ptr<BaseUnit>>;
@@ -51,10 +51,9 @@ public:
   virtual void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) = 0;
   virtual void update(const rclcpp::Time & stamp) = 0;
 
+  NodeData status() const;
+  NodeData report() const;
   DiagnosticLevel level() const { return level_; }
-  NodeData status();
-  // NodeData report();
-  DiagnosticNode report(const rclcpp::Time &) const { return DiagnosticNode(); }
 
   auto path() const { return path_; }
   auto children() const { return children_; }
@@ -66,7 +65,7 @@ protected:
   DiagnosticLevel level_;
   std::string path_;
   std::vector<BaseUnit *> children_;
-  std::vector<std::pair<BaseUnit *, bool>> links_;
+  std::vector<std::pair<const BaseUnit *, bool>> links_;
 
 private:
   size_t index_;
@@ -105,19 +104,14 @@ public:
   using BaseUnit::BaseUnit;
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
   void update(const rclcpp::Time & stamp) override;
-
-private:
 };
 
 class DebugUnit : public BaseUnit
 {
 public:
-  DebugUnit(const std::string & path, const DiagnosticLevel level);
+  DebugUnit(const std::string & path, DiagnosticLevel level);
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
   void update(const rclcpp::Time & stamp) override;
-
-private:
-  DiagnosticLevel const_;
 };
 
 }  // namespace system_diagnostic_graph

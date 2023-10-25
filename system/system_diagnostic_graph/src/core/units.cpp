@@ -22,7 +22,7 @@
 namespace system_diagnostic_graph
 {
 
-using LinkList = std::vector<std::pair<BaseUnit *, bool>>;
+using LinkList = std::vector<std::pair<const BaseUnit *, bool>>;
 
 void merge(LinkList & a, const LinkList & b, bool uses)
 {
@@ -53,13 +53,18 @@ BaseUnit::BaseUnit(const std::string & path) : path_(path)
   level_ = DiagnosticStatus::OK;
 }
 
-BaseUnit::NodeData BaseUnit::status()
+BaseUnit::NodeData BaseUnit::status() const
 {
   if (path_.empty()) {
     return {level_, links_};
   } else {
     return {level_, {std::make_pair(this, true)}};
   }
+}
+
+BaseUnit::NodeData BaseUnit::report() const
+{
+  return {level_, links_};
 }
 
 void DiagUnit::init(const UnitConfig::SharedPtr & config, const NodeDict &)
@@ -143,9 +148,9 @@ void OrUnit::update(const rclcpp::Time &)
   level_ = std::min(level_, DiagnosticStatus::ERROR);
 }
 
-DebugUnit::DebugUnit(const std::string & path, const DiagnosticLevel level) : BaseUnit(path)
+DebugUnit::DebugUnit(const std::string & path, DiagnosticLevel level) : BaseUnit(path)
 {
-  const_ = level;
+  level_ = level;  // overwrite
 }
 
 void DebugUnit::init(const UnitConfig::SharedPtr &, const NodeDict &)
