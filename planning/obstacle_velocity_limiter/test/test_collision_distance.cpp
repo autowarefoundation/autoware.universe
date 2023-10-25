@@ -152,7 +152,7 @@ TEST(TestCollisionDistance, distanceToClosestCollisionParticleModel)
   EXPECT_NEAR(*result, 2.121, 1e-3);
 }
 
-TEST(approximationMethod, distanceToClosestCollision)
+TEST(TestCollisionDistance, distanceToClosestCollisionApproximation)
 {
   using obstacle_velocity_limiter::CollisionChecker;
   using obstacle_velocity_limiter::distanceToClosestCollision;
