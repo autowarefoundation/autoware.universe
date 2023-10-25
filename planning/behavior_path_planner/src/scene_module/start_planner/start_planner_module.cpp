@@ -20,7 +20,6 @@
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 #include "behavior_path_planner/utils/start_planner/util.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -39,7 +38,6 @@
 
 using motion_utils::calcLongitudinalOffsetPose;
 using tier4_autoware_utils::calcOffsetPose;
-using tier4_autoware_utils::inverseTransformPoint;
 
 namespace behavior_path_planner
 {
@@ -626,6 +624,9 @@ lanelet::ConstLanelets StartPlannerModule::getPathRoadLanes(const PathWithLaneId
   std::vector<lanelet::Id> lane_ids;
   for (const auto & p : path.points) {
     for (const auto & id : p.lane_ids) {
+      if (id == lanelet::InvalId) {
+        continue;
+      }
       if (route_handler->isShoulderLanelet(lanelet_layer.get(id))) {
         continue;
       }
@@ -638,9 +639,7 @@ lanelet::ConstLanelets StartPlannerModule::getPathRoadLanes(const PathWithLaneId
   lanelet::ConstLanelets path_lanes;
   path_lanes.reserve(lane_ids.size());
   for (const auto & id : lane_ids) {
-    if (id != lanelet::InvalId) {
-      path_lanes.push_back(lanelet_layer.get(id));
-    }
+    path_lanes.push_back(lanelet_layer.get(id));
   }
 
   return path_lanes;

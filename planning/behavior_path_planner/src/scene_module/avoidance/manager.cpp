@@ -114,10 +114,6 @@ AvoidanceModuleManager::AvoidanceModuleManager(
       *node, ns + "object_ignore_section_crosswalk_in_front_distance");
     p.object_ignore_section_crosswalk_behind_distance =
       getOrDeclareParameter<double>(*node, ns + "object_ignore_section_crosswalk_behind_distance");
-    p.object_check_forward_distance =
-      getOrDeclareParameter<double>(*node, ns + "object_check_forward_distance");
-    p.object_check_backward_distance =
-      getOrDeclareParameter<double>(*node, ns + "object_check_backward_distance");
     p.object_check_goal_distance =
       getOrDeclareParameter<double>(*node, ns + "object_check_goal_distance");
     p.threshold_distance_object_is_on_center =
@@ -128,6 +124,17 @@ AvoidanceModuleManager::AvoidanceModuleManager(
       getOrDeclareParameter<double>(*node, ns + "object_check_min_road_shoulder_width");
     p.object_last_seen_threshold =
       getOrDeclareParameter<double>(*node, ns + "object_last_seen_threshold");
+  }
+
+  {
+    std::string ns = "avoidance.target_filtering.detection_area.";
+    p.use_static_detection_area = getOrDeclareParameter<bool>(*node, ns + "static");
+    p.object_check_min_forward_distance =
+      getOrDeclareParameter<double>(*node, ns + "min_forward_distance");
+    p.object_check_max_forward_distance =
+      getOrDeclareParameter<double>(*node, ns + "max_forward_distance");
+    p.object_check_backward_distance =
+      getOrDeclareParameter<double>(*node, ns + "backward_distance");
   }
 
   // safety check general params
@@ -201,6 +208,8 @@ AvoidanceModuleManager::AvoidanceModuleManager(
       getOrDeclareParameter<double>(*node, ns + "lateral_avoid_check_threshold");
     p.max_right_shift_length = getOrDeclareParameter<double>(*node, ns + "max_right_shift_length");
     p.max_left_shift_length = getOrDeclareParameter<double>(*node, ns + "max_left_shift_length");
+    p.max_deviation_from_lane =
+      getOrDeclareParameter<double>(*node, ns + "max_deviation_from_lane");
   }
 
   // avoidance maneuver (longitudinal)

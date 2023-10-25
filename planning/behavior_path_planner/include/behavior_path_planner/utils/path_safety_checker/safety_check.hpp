@@ -16,7 +16,6 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__PATH_SAFETY_CHECKER__SAFETY_CHECK_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
@@ -35,7 +34,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::utils::path_safety_checker
@@ -52,8 +50,6 @@ using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using vehicle_info_util::VehicleInfo;
 
-namespace bg = boost::geometry;
-
 bool isTargetObjectOncoming(
   const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose);
 
@@ -66,10 +62,11 @@ bool isTargetObjectFront(
 
 Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const double lon_length, const double lat_margin, CollisionCheckDebug & debug);
+  const double lon_length, const double lat_margin, const double is_stopped_obj,
+  CollisionCheckDebug & debug);
 Polygon2d createExtendedPolygon(
   const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin,
-  CollisionCheckDebug & debug);
+  const double is_stopped_obj, CollisionCheckDebug & debug);
 
 PredictedPath convertToPredictedPath(
   const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);
@@ -80,7 +77,7 @@ double calcRssDistance(
 
 double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
-  const BehaviorPathPlannerParameters & params);
+  const RSSparams & rss_params);
 
 boost::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
   const std::vector<PoseWithVelocityStamped> & path, const double relative_time);

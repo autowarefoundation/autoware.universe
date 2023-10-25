@@ -22,6 +22,8 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
+#include <boost/geometry/index/rtree.hpp>
+
 namespace drivable_area_expansion
 {
 using autoware_auto_perception_msgs::msg::PredictedObjects;
@@ -29,26 +31,30 @@ using autoware_auto_planning_msgs::msg::PathPoint;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
+using geometry_msgs::msg::Pose;
 
-using point_t = tier4_autoware_utils::Point2d;
-using multi_point_t = tier4_autoware_utils::MultiPoint2d;
-using polygon_t = tier4_autoware_utils::Polygon2d;
-using ring_t = tier4_autoware_utils::LinearRing2d;
-using multi_polygon_t = tier4_autoware_utils::MultiPolygon2d;
-using segment_t = tier4_autoware_utils::Segment2d;
-using linestring_t = tier4_autoware_utils::LineString2d;
-using multi_linestring_t = tier4_autoware_utils::MultiLineString2d;
+using tier4_autoware_utils::LineString2d;
+using tier4_autoware_utils::MultiLineString2d;
+using tier4_autoware_utils::MultiPoint2d;
+using tier4_autoware_utils::MultiPolygon2d;
+using tier4_autoware_utils::Point2d;
+using tier4_autoware_utils::Polygon2d;
+using tier4_autoware_utils::Segment2d;
+
+typedef boost::geometry::index::rtree<Segment2d, boost::geometry::index::rstar<16>> SegmentRtree;
 
 struct PointDistance
 {
-  point_t point;
+  Point2d point;
   double distance;
 };
 struct Projection
 {
-  point_t projected_point;
+  Point2d projected_point;
   double distance;
   double arc_length;
 };
+enum Side { LEFT, RIGHT };
+
 }  // namespace drivable_area_expansion
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__DRIVABLE_AREA_EXPANSION__TYPES_HPP_
