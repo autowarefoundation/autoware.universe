@@ -220,19 +220,24 @@ void NormalLaneChange::insertStopPoint(
   const double stop_point_buffer = getCommonParam().backward_length_buffer_for_end_of_lane;
   const auto target_objects = getTargetObjects(status_.current_lanes, status_.target_lanes);
   double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
-  const auto lc_start_point = lanelet::utils::conversion::toLaneletPoint(
-    status_.lane_change_path.info.lane_changing_start.position);
 
-  const auto target_neighbor_preferred_lane_poly_2d =
-    utils::lane_change::getTargetNeighborLanesPolygon(*route_handler, status_.current_lanes, type_);
-  const auto is_valid_start_point = boost::geometry::covered_by(
-    lanelet::traits::to2D(lc_start_point), target_neighbor_preferred_lane_poly_2d);
+  const auto is_valid_start_point = std::invoke([&]() -> bool {
+    auto lc_start_point = lanelet::utils::conversion::toLaneletPoint(
+      status_.lane_change_path.info.lane_changing_start.position);
+    const auto target_neighbor_preferred_lane_poly_2d =
+      utils::lane_change::getTargetNeighborLanesPolygon(
+        *route_handler, status_.current_lanes, type_);
+    return boost::geometry::covered_by(
+      lanelet::traits::to2D(lc_start_point), target_neighbor_preferred_lane_poly_2d);
+  });
+
   if (!is_valid_start_point) {
     const auto stop_point = utils::insertStopPoint(stopping_distance, path);
     setStopPose(stop_point.point.pose);
 
     return;
   }
+
   // calculate minimum distance from path front to the stationary object on the ego lane.
   const auto distance_to_ego_lane_obj = [&]() -> double {
     double distance_to_obj = distance_to_terminal;
