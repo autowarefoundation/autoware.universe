@@ -108,7 +108,6 @@ TEST(particleModel, distanceToClosestCollision)
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(*result, 2.121, 1e-3);
 
-  // this one V
   obstacles.lines.push_back(linestring_t{{-2.0, 2.0}, {3.0, -1.0}});
   result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
