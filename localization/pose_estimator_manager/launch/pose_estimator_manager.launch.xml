@@ -27,6 +27,5 @@
     <remap from="~/input/vector_map" to="/map/vector_map"/>
     <remap from="~/input/pose_with_covariance" to="/localization/pose_with_covariance"/>
     <remap from="~/input/initialization_state" to="/localization/initialization_state"/>
-    <remap from="~/input/eagleye/fix" to="/localization/pose_estimator/eagleye/fix"/>
   </node>
 </launch>
