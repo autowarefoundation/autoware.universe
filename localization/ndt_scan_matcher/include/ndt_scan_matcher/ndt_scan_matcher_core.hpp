@@ -123,9 +123,9 @@ private:
   bool validate_converged_param(
     const double & transform_probability, const double & nearest_voxel_transformation_likelihood);
 
-  void estimate_covariance(
+  std::array<double, 36> estimate_covariance(
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
-    std::array<double, 36> & ndt_covariance, const rclcpp::Time & sensor_ros_time);
+    const rclcpp::Time & sensor_ros_time);
 
   std::optional<Eigen::Matrix4f> interpolate_regularization_pose(
     const rclcpp::Time & sensor_ros_time);
@@ -194,7 +194,7 @@ private:
   float inversion_vector_threshold_;
   float oscillation_threshold_;
   bool use_cov_estimation_;
-  std::vector<Eigen::Vector2d> offset_array_;
+  std::vector<Eigen::Vector2d> initial_pose_offset_model_;
   std::array<double, 36> output_pose_covariance_;
 
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>

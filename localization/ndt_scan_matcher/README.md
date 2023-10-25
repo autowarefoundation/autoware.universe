@@ -260,7 +260,7 @@ This is a function that uses de-grounded LiDAR scan to estimate the scan matchin
 | `estimate_scores_for_degrounded_scan` | bool   | Flag for using scan matching score based on de-grounded LiDAR scan (FALSE by default) |
 | `z_margin_for_ground_removal`         | double | Z-value margin for removal ground points                                              |
 
-## 2D rea-time covariance estimation
+## 2D real-time covariance estimation
 
 ### Abstract
 
@@ -270,10 +270,13 @@ In this implementation, the number of initial positions is fixed to simplify the
 The covariance can be seen as error ellipse from ndt_pose_with_covariance setting on rviz2.
 [original paper](https://www.fujipress.jp/jrm/rb/robot003500020435/).
 
-### Parameters
+Note that this function may spoil healthy system behavior if it consumes much calculation resource.
 
-| Name                       | Type                | Description                                                      |
-| ---------------------------| ------------------- | -----------------------------------------------------------------|
-| `use_covariance_estimation`| bool                | Flag for using real-time covariance estimation (FALSE by default)|
-| `offset_array_x`           | std::vector<double> | Default arrangement of initial poses (x)                         |
-| `offset_array_y`           | std::vector<double> | Default arrangement of initial poses (y)                         |
+### Parameters
+initial_pose_offset_model is rotated around (0,0) in the direction of the first principal component of the Hessian matrix.
+initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.
+| Name                         | Type                | Description                                                      |
+| -----------------------------| ------------------- | -----------------------------------------------------------------|
+| `use_covariance_estimation`  | bool                | Flag for using real-time covariance estimation (FALSE by default)|
+| `initial_pose_offset_model_x`| std::vector<double> | X-axis offset [m]                                                |
+| `initial_pose_offset_model_y`| std::vector<double> | Y-axis offset [m]                                                |

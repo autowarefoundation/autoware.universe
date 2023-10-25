@@ -36,9 +36,8 @@
 #include <string>
 #include <vector>
 
-void create_offset_array(
-  const std::vector<double> & x, const std::vector<double> & y,
-  std::vector<Eigen::Vector2d> & offset_array);
+std::vector<Eigen::Vector2d> create_initial_pose_offset_model(
+  const std::vector<double> & x, const std::vector<double> & y);
 
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
 std_msgs::msg::ColorRGBA exchange_color_crc(double x);

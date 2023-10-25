@@ -18,17 +18,17 @@
 
 static std::random_device seed_gen;
 
-void create_offset_array(
-  const std::vector<double> & x, const std::vector<double> & y,
-  std::vector<Eigen::Vector2d> & offset_array)
+std::vector<Eigen::Vector2d> create_initial_pose_offset_model(
+  const std::vector<double> & x, const std::vector<double> & y)
 {
   int size = x.size();
-  offset_array.resize(size);
-  if (x.size() == y.size())
-    for (int i = 0; i < size; i++) {
-      offset_array[i].x() = x[i];
-      offset_array[i].y() = y[i];
-    }
+  std::vector<Eigen::Vector2d> initial_pose_offset_model(size);
+  for (int i = 0; i < size; i++) {
+    initial_pose_offset_model[i].x() = x[i];
+    initial_pose_offset_model[i].y() = y[i];
+  }
+
+  return initial_pose_offset_model;
 }
 
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html

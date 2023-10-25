@@ -143,11 +143,17 @@ NDTScanMatcher::NDTScanMatcher()
 
   use_cov_estimation_ = this->declare_parameter<bool>("use_covariance_estimation");
   if (use_cov_estimation_) {
-    std::vector<double> offset_array_x =
-      this->declare_parameter<std::vector<double>>("offset_array_x");
-    std::vector<double> offset_array_y =
-      this->declare_parameter<std::vector<double>>("offset_array_y");
-    create_offset_array(offset_array_x, offset_array_y, offset_array_);
+    std::vector<double> initial_pose_offset_model_x =
+      this->declare_parameter<std::vector<double>>("initial_pose_offset_model_x");
+    std::vector<double> initial_pose_offset_model_y =
+      this->declare_parameter<std::vector<double>>("initial_pose_offset_model_y");
+
+    if (initial_pose_offset_model_x.size() == initial_pose_offset_model_y.size()) {
+      initial_pose_offset_model_ =
+        create_initial_pose_offset_model(initial_pose_offset_model_x, initial_pose_offset_model_y);
+    } else {
+      use_cov_estimation_ = false;
+    }
   }
 
   std::vector<double> output_pose_covariance =
@@ -474,10 +480,11 @@ void NDTScanMatcher::callback_sensor_points(
   }
 
   // covariance estimation
-  std::array<double, 36> ndt_covariance;
-  ndt_covariance = output_pose_covariance_;
+  std::array<double, 36> ndt_covariance = output_pose_covariance_;
   if (is_converged && use_cov_estimation_) {
-    estimate_covariance(ndt_result, initial_pose_matrix, ndt_covariance, sensor_ros_time);
+    const auto estimated_covariance =
+      estimate_covariance(ndt_result, initial_pose_matrix, sensor_ros_time);
+    ndt_covariance = estimated_covariance;
   }
 
   const auto exe_end_time = std::chrono::system_clock::now();
@@ -711,9 +718,9 @@ bool NDTScanMatcher::validate_converged_param(
   return is_ok_converged_param;
 }
 
-void NDTScanMatcher::estimate_covariance(
+std::array<double, 36> NDTScanMatcher::estimate_covariance(
   const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
-  std::array<double, 36> & ndt_covariance, const rclcpp::Time & sensor_ros_time)
+  const rclcpp::Time & sensor_ros_time)
 {
   // Laplace approximation
   const Eigen::Matrix2d hessian_inv = -ndt_result.hessian.inverse().block(0, 0, 2, 2);
@@ -725,10 +732,13 @@ void NDTScanMatcher::estimate_covariance(
     rot = Eigen::Rotation2Dd(th);
   }
 
-  // first result is added to mean and covariance
-  const Eigen::Vector2d p2d(ndt_result.pose(0, 3), ndt_result.pose(1, 3));
-  Eigen::Vector2d tmp_centroid = p2d;
-  Eigen::Matrix2d tmp_cov = p2d * p2d.transpose();
+  // first result is added to mean
+  const int n = initial_pose_offset_model_.size() + 1;
+  const Eigen::Vector2d ndt_pose_2d(ndt_result.pose(0, 3), ndt_result.pose(1, 3));
+  Eigen::Vector2d mean = ndt_pose_2d;
+  std::vector<Eigen::Vector2d> ndt_pose_2d_vec;
+  ndt_pose_2d_vec.reserve(n);
+  ndt_pose_2d_vec.emplace_back(ndt_pose_2d);
 
   geometry_msgs::msg::PoseArray multi_ndt_result_msg;
   geometry_msgs::msg::PoseArray multi_initial_pose_msg;
@@ -740,36 +750,45 @@ void NDTScanMatcher::estimate_covariance(
   multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(initial_pose_matrix));
 
   // multiple searches
-  for (const auto & offset_vec : offset_array_) {
-    const Eigen::Vector2d offset_2d = rot * offset_vec;
+  for (const auto & pose_offset : initial_pose_offset_model_) {
+    const Eigen::Vector2d rotated_pose_offset_2d = rot * pose_offset;
 
     Eigen::Matrix4f sub_initial_pose_matrix(Eigen::Matrix4f::Identity());
     sub_initial_pose_matrix = ndt_result.pose;
-    sub_initial_pose_matrix(0, 3) += static_cast<float>(offset_2d.x());
-    sub_initial_pose_matrix(1, 3) += static_cast<float>(offset_2d.y());
+    sub_initial_pose_matrix(0, 3) += static_cast<float>(rotated_pose_offset_2d.x());
+    sub_initial_pose_matrix(1, 3) += static_cast<float>(rotated_pose_offset_2d.y());
 
     auto sub_output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
     ndt_ptr_->align(*sub_output_cloud, sub_initial_pose_matrix);
     const Eigen::Matrix4f sub_ndt_result = ndt_ptr_->getResult().pose;
 
-    const Eigen::Vector2d sub_p2d = sub_ndt_result.topRightCorner<2, 1>().cast<double>();
-    tmp_centroid += sub_p2d;
-    tmp_cov += sub_p2d * sub_p2d.transpose();
+    const Eigen::Vector2d sub_ndt_pose_2d = sub_ndt_result.topRightCorner<2, 1>().cast<double>();
+    mean += sub_ndt_pose_2d;
+    ndt_pose_2d_vec.emplace_back(sub_ndt_pose_2d);
 
     multi_ndt_result_msg.poses.push_back(matrix4f_to_pose(sub_ndt_result));
     multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(sub_initial_pose_matrix));
   }
-  const Eigen::Vector2d centroid = tmp_centroid / (offset_array_.size() + 1);
 
-  const Eigen::Matrix2d pca_covariance =
-    (tmp_cov / (offset_array_.size() + 1) - (centroid * centroid.transpose()));
-  ndt_covariance[0] = output_pose_covariance_[0] + pca_covariance(0, 0);
-  ndt_covariance[1] = pca_covariance(1, 0);
-  ndt_covariance[6] = pca_covariance(0, 1);
-  ndt_covariance[7] = output_pose_covariance_[7] + pca_covariance(1, 1);
+  // calculate the covariance matrix
+  mean /= n;
+  Eigen::Matrix2d pca_covariance = Eigen::Matrix2d::Zero();
+  for (const auto & temp_ndt_pose_2d : ndt_pose_2d_vec) {
+    const Eigen::Vector2d diff_2d = temp_ndt_pose_2d - mean;
+    pca_covariance += diff_2d * diff_2d.transpose();
+  }
+  pca_covariance /= (n - 1);  // unbiased covariance
+
+  std::array<double, 36> ndt_covariance = output_pose_covariance_;
+  ndt_covariance[0 + 6 * 0] += pca_covariance(0, 0);
+  ndt_covariance[1 + 6 * 0] += pca_covariance(1, 0);
+  ndt_covariance[0 + 6 * 1] += pca_covariance(0, 1);
+  ndt_covariance[1 + 6 * 1] += pca_covariance(1, 1);
 
   multi_ndt_pose_pub_->publish(multi_ndt_result_msg);
   multi_initial_pose_pub_->publish(multi_initial_pose_msg);
+
+  return ndt_covariance;
 }
 
 std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolate_regularization_pose(
