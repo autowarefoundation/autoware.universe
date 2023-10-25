@@ -9,7 +9,7 @@
 
     # delay compensate parameters
     publish_rate: 10.0
-    enable_delay_compensation: false
+    enable_delay_compensation: true
 
     # logging
     enable_logging: false

@@ -69,6 +69,10 @@ private:
   double filter_tau_;  // time constant of 1st order low pass filter
   double filter_dt_;   // sampling time of 1st order low pass filter
 
+  bool trust_yaw_input_;
+  bool trust_twist_input_;
+  bool use_polar_coordinate_in_measurement_noise_;
+
 private:
   struct BoundingBox
   {
@@ -95,7 +99,9 @@ public:
   bool measure(
     const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) override;
-  bool measureWithPose(const autoware_auto_perception_msgs::msg::DetectedObject & object);
+  bool measureWithPose(
+    const autoware_auto_perception_msgs::msg::DetectedObject & object,
+    const geometry_msgs::msg::Transform & self_transform);
   bool measureWithShape(const autoware_auto_perception_msgs::msg::DetectedObject & object);
   bool getTrackedObject(
     const rclcpp::Time & time,
