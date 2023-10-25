@@ -26,7 +26,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 
 const auto point_in_polygon = [](const auto x, const auto y, const auto & polygon) {
