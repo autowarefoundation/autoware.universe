@@ -468,4 +468,28 @@ bool GoalSearcher::isInAreas(const LinearRing2d & footprint, const BasicPolygons
   return false;
 }
 
+GoalCandidate GoalSearcher::getClosetGoalCandidateAlongLanes(
+  const GoalCandidates & goal_candidates) const
+{
+  const auto current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_.backward_goal_search_length, parameters_.forward_goal_search_length,
+    /*forward_only_in_route*/ false);
+
+  const auto closest_goal_candidate = std::min_element(
+    goal_candidates.begin(), goal_candidates.end(),
+    [&current_lanes](const auto & a, const auto & b) {
+      const auto goal_arc_length_a =
+        lanelet::utils::getArcCoordinates(current_lanes, a.goal_pose).length;
+      const auto goal_arc_length_b =
+        lanelet::utils::getArcCoordinates(current_lanes, b.goal_pose).length;
+      return goal_arc_length_a < goal_arc_length_b;
+    });
+
+  if (closest_goal_candidate == goal_candidates.end()) {
+    return {};  // return empty GoalCandidate in case no valid candidates are found.
+  }
+
+  return *closest_goal_candidate;
+}
+
 }  // namespace behavior_path_planner
