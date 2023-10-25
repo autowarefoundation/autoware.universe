@@ -497,9 +497,8 @@ void StartPlannerModule::planWithPriority(
   const PriorityOrder order_priority =
     determinePriorityOrder(search_priority, start_pose_candidates.size());
 
-  for (const auto & pair : order_priority) {
-    if (findPullOutPath(
-          start_pose_candidates, pair.first, pair.second, refined_start_pose, goal_pose))
+  for (const auto & [index, planner] : order_priority) {
+    if (findPullOutPath(start_pose_candidates, index, planner, refined_start_pose, goal_pose))
       return;
   }
 
@@ -507,7 +506,7 @@ void StartPlannerModule::planWithPriority(
 }
 
 PriorityOrder StartPlannerModule::determinePriorityOrder(
-  const std::string & search_priority, size_t candidates_size)
+  const std::string & search_priority, const size_t candidates_size)
 {
   PriorityOrder order_priority;
   if (search_priority == "efficient_path") {
@@ -551,7 +550,7 @@ bool StartPlannerModule::findPullOutPath(
 
   // If driving forward, update status with the current path and return true
   if (is_driving_forward) {
-    updateStatusWithCurrentPath(*pull_out_path, pull_out_start_pose, planner);
+    updateStatusWithCurrentPath(*pull_out_path, pull_out_start_pose, planner->getPlannerType());
     return true;
   }
 
@@ -565,32 +564,33 @@ bool StartPlannerModule::findPullOutPath(
   if (!next_pull_out_path) return false;
 
   // Update status with the next path and return true
-  updateStatusWithNextPath(*next_pull_out_path, next_pull_out_start_pose, planner);
+  updateStatusWithNextPath(
+    *next_pull_out_path, next_pull_out_start_pose, planner->getPlannerType());
   return true;
 }
 
 void StartPlannerModule::updateStatusWithCurrentPath(
   const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
-  const std::shared_ptr<PullOutPlannerBase> & planner)
+  const behavior_path_planner::PlannerType & planner_type)
 {
   const std::lock_guard<std::mutex> lock(mutex_);
   status_.driving_forward = true;
   status_.found_pull_out_path = true;
   status_.pull_out_path = path;
   status_.pull_out_start_pose = start_pose;
-  status_.planner_type = planner->getPlannerType();
+  status_.planner_type = planner_type;
 }
 
 void StartPlannerModule::updateStatusWithNextPath(
   const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
-  const std::shared_ptr<PullOutPlannerBase> & planner)
+  const behavior_path_planner::PlannerType & planner_type)
 {
   const std::lock_guard<std::mutex> lock(mutex_);
   status_.driving_forward = false;
   status_.found_pull_out_path = true;
   status_.pull_out_path = path;
   status_.pull_out_start_pose = start_pose;
-  status_.planner_type = planner->getPlannerType();
+  status_.planner_type = planner_type;
 }
 
 void StartPlannerModule::updateStatusIfNoSafePathFound()

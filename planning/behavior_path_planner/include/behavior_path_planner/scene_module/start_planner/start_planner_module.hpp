@@ -132,17 +132,18 @@ private:
 
   void initializeSafetyCheckParameters();
 
-  PriorityOrder determinePriorityOrder(const std::string & search_priority, size_t candidates_size);
+  PriorityOrder determinePriorityOrder(
+    const std::string & search_priority, const size_t candidates_size);
   bool findPullOutPath(
     const std::vector<Pose> & start_pose_candidates, const size_t index,
     const std::shared_ptr<PullOutPlannerBase> & planner, const Pose & refined_start_pose,
     const Pose & goal_pose);
   void updateStatusWithCurrentPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
-    const std::shared_ptr<PullOutPlannerBase> & planner);
+    const behavior_path_planner::PlannerType & planner_type);
   void updateStatusWithNextPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
-    const std::shared_ptr<PullOutPlannerBase> & planner);
+    const behavior_path_planner::PlannerType & planner_type);
   void updateStatusIfNoSafePathFound();
 
   std::shared_ptr<StartPlannerParameters> parameters_;
