@@ -36,8 +36,7 @@ public:
 
   void init(const std::string & file, const std::string & mode);
   void callback(const DiagnosticArray & array, const rclcpp::Time & stamp);
-  void update(const rclcpp::Time & stamp);
-  DiagnosticGraph message() const;
+  DiagnosticGraph report(const rclcpp::Time & stamp);
   std::vector<BaseUnit *> nodes() const;
 
   void debug();
@@ -45,7 +44,6 @@ public:
 private:
   std::vector<std::unique_ptr<BaseUnit>> nodes_;
   std::unordered_map<std::string, DiagUnit *> diags_;
-  rclcpp::Time stamp_;
 };
 
 }  // namespace system_diagnostic_graph

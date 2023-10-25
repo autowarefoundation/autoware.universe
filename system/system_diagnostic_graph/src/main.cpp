@@ -27,7 +27,6 @@ MainNode::MainNode() : Node("system_diagnostic_graph_aggregator")
     const auto file = declare_parameter<std::string>("graph_file");
     const auto mode = declare_parameter<std::string>("mode");
     graph_.init(file, mode);
-    return;
     graph_.debug();
   }
 
@@ -59,10 +58,8 @@ MainNode::~MainNode()
 void MainNode::on_timer()
 {
   const auto stamp = now();
-  graph_.update(stamp);
+  pub_graph_->publish(graph_.report(stamp));
   graph_.debug();
-  pub_graph_->publish(graph_.message());
-
   if (modes_) modes_->update(stamp);
 }
 

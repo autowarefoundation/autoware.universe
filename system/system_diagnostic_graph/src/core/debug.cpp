@@ -16,6 +16,7 @@
 
 #include "graph.hpp"
 #include "types.hpp"
+#include "units.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -33,10 +34,11 @@ const std::unordered_map<DiagnosticLevel, std::string> level_names = {
 
 void Graph::debug()
 {
-  /*
   std::vector<DiagDebugData> lines;
   for (const auto & node : nodes_) {
-    lines.push_back(node->debug());
+    const auto level_name = level_names.at(node->level());
+    const auto index_name = std::to_string(node->index());
+    lines.push_back({"unit", index_name, level_name, node->path(), "-----"});
   }
 
   std::array<size_t, diag_debug_size> widths = {};
@@ -55,7 +57,6 @@ void Graph::debug()
     }
     std::cout << "|" << std::endl;
   }
-  */
 }
 
 /*

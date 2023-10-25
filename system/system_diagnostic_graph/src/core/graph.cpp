@@ -33,13 +33,10 @@ namespace system_diagnostic_graph
 
 BaseUnit::UniquePtrList topological_sort(BaseUnit::UniquePtrList && input)
 {
-  return std::move(input);
-
-  /*
-  std::unordered_map<BaseNode *, int> degrees;
-  std::deque<BaseNode *> nodes;
-  std::deque<BaseNode *> result;
-  std::deque<BaseNode *> buffer;
+  std::unordered_map<BaseUnit *, int> degrees;
+  std::deque<BaseUnit *> nodes;
+  std::deque<BaseUnit *> result;
+  std::deque<BaseUnit *> buffer;
 
   // Create a list of raw pointer nodes.
   for (const auto & node : input) {
@@ -48,7 +45,7 @@ BaseUnit::UniquePtrList topological_sort(BaseUnit::UniquePtrList && input)
 
   // Count degrees of each node.
   for (const auto & node : nodes) {
-    for (const auto & link : node->links()) {
+    for (const auto & [link, used] : node->links()) {
       ++degrees[link];
     }
   }
@@ -64,7 +61,7 @@ BaseUnit::UniquePtrList topological_sort(BaseUnit::UniquePtrList && input)
   while (!buffer.empty()) {
     const auto node = buffer.front();
     buffer.pop_front();
-    for (const auto & link : node->links()) {
+    for (const auto & [link, used] : node->links()) {
       if (--degrees[link] == 0) {
         buffer.push_back(link);
       }
@@ -78,28 +75,24 @@ BaseUnit::UniquePtrList topological_sort(BaseUnit::UniquePtrList && input)
   }
 
   // Reverse the result to process from leaf node.
-  result = std::deque<BaseNode *>(result.rbegin(), result.rend());
+  result = std::deque<BaseUnit *>(result.rbegin(), result.rend());
 
   // Replace node vector.
-  std::unordered_map<BaseNode *, size_t> indices;
+  std::unordered_map<BaseUnit *, size_t> indices;
   for (size_t i = 0; i < result.size(); ++i) {
     indices[result[i]] = i;
   }
-  std::vector<std::unique_ptr<BaseNode>> sorted(input.size());
+  std::vector<std::unique_ptr<BaseUnit>> sorted(input.size());
   for (auto & node : input) {
     sorted[indices[node.get()]] = std::move(node);
   }
-  input = std::move(sorted);
-  */
+  return sorted;
 }
 
 BaseUnit::UniquePtr make_node(const UnitConfig::SharedPtr & config)
 {
   if (config->type == "diag") {
     return std::make_unique<DiagUnit>(config->path);
-  }
-  if (config->type == "link") {
-    return std::make_unique<LinkUnit>(config->path);
   }
   if (config->type == "and") {
     return std::make_unique<AndUnit>(config->path, false);
@@ -153,23 +146,21 @@ void Graph::init(const std::string & file, const std::string & mode)
     node->init(config, dict);
   }
 
-  // DEBUG
+  // Sort units in topological order for update dependencies.
+  nodes = topological_sort(std::move(nodes));
+
   for (size_t index = 0; index < nodes.size(); ++index) {
     nodes[index]->set_index(index);
   }
 
-  for (const auto & [config, node] : dict.configs) {
-    std::cout << std::left << std::setw(3) << node->index();
-    std::cout << std::left << std::setw(10) << config->type;
-    std::cout << std::left << std::setw(40) << node->path();
-    for (const auto & child : node->children()) {
-      std::cout << " " << child->index();
+  for (const auto & node : nodes) {
+    const auto diag = dynamic_cast<DiagUnit *>(node.get());
+    if (diag) {
+      diags_[diag->name()] = diag;
+      std::cout << diag->name() << std::endl;
     }
-    std::cout << std::endl;
   }
-
-  // Sort units in topological order for update dependencies.
-  nodes_ = topological_sort(std::move(nodes));
+  nodes_ = std::move(nodes);
 }
 
 void Graph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
@@ -181,27 +172,20 @@ void Graph::callback(const DiagnosticArray & array, const rclcpp::Time & stamp)
     } else {
       // TODO(Takagi, Isamu)
       // unknown_->callback(status, stamp);
+      std::cout << "unknown diag: " << status.name << std::endl;
     }
   }
 }
 
-void Graph::update(const rclcpp::Time & stamp)
+DiagnosticGraph Graph::report(const rclcpp::Time & stamp)
 {
+  DiagnosticGraph message;
+  message.stamp = stamp;
+  message.nodes.reserve(nodes_.size());
   for (const auto & node : nodes_) {
-    node->update(stamp);
+    message.nodes.push_back(node->report(stamp));
   }
-  stamp_ = stamp;
-}
-
-DiagnosticGraph Graph::message() const
-{
-  DiagnosticGraph result;
-  result.stamp = stamp_;
-  result.nodes.reserve(nodes_.size());
-  for (const auto & node : nodes_) {
-    result.nodes.push_back(node->report());
-  }
-  return result;
+  return message;
 }
 
 std::vector<BaseUnit *> Graph::nodes() const

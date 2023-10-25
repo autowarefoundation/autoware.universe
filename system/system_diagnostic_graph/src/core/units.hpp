@@ -21,8 +21,10 @@
 #include <rclcpp/time.hpp>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace system_diagnostic_graph
@@ -36,36 +38,35 @@ public:
     std::unordered_map<UnitConfig::SharedPtr, BaseUnit *> configs;
     std::unordered_map<std::string, BaseUnit *> paths;
   };
+  struct NodeData
+  {
+    DiagnosticLevel level;
+    std::vector<std::pair<BaseUnit *, bool>> links;
+  };
   using UniquePtr = std::unique_ptr<BaseUnit>;
   using UniquePtrList = std::vector<std::unique_ptr<BaseUnit>>;
 
   explicit BaseUnit(const std::string & path);
   virtual ~BaseUnit() = default;
   virtual void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) = 0;
+  virtual void eval() = 0;
 
-  std::string path() const { return path_; }
-  std::vector<BaseUnit *> children() const { return children_; }
+  DiagnosticNode report(const rclcpp::Time & stamp);
+  auto level() const { return level_; }
+  auto links() const { return links_; }
+  auto path() const { return path_; }
 
   size_t index() const { return index_; }
   void set_index(const size_t index) { index_ = index; }
 
-  /*
-  virtual void update(const rclcpp::Time & stamp) = 0;
-  virtual DiagnosticNode report() const = 0;
-  virtual DiagnosticLevel level() const = 0;
-  */
-  virtual void update(const rclcpp::Time & stamp) { (void)stamp; }
-  virtual DiagnosticNode report() const { return DiagnosticNode(); }
-  virtual DiagnosticLevel level() const { return DiagnosticStatus::OK; }
-
-  /*
-  virtual std::vector<BaseNode *> links() const = 0;
-  */
-
 protected:
-  const std::string path_;
+  virtual DiagnosticNode update(const rclcpp::Time & stamp) = 0;
+  DiagnosticLevel level_;
+  std::vector<std::pair<BaseUnit *, bool>> links_;
+  std::string path_;
+
+private:
   size_t index_;
-  std::vector<BaseUnit *> children_;
 };
 
 class DiagUnit : public BaseUnit
@@ -73,14 +74,16 @@ class DiagUnit : public BaseUnit
 public:
   using BaseUnit::BaseUnit;
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
-  void callback(const DiagnosticStatus & status, const rclcpp::Time & stamp);
-};
+  void eval() override;
 
-class LinkUnit : public BaseUnit
-{
-public:
-  using BaseUnit::BaseUnit;
-  void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
+  std::string name() const { return name_; }
+  void callback(const DiagnosticStatus & status, const rclcpp::Time & stamp);
+
+private:
+  DiagnosticNode update(const rclcpp::Time & stamp) override;
+  double timeout_;
+  std::optional<std::pair<DiagnosticStatus, rclcpp::Time>> diagnostics_;
+  std::string name_;
 };
 
 class AndUnit : public BaseUnit
@@ -88,8 +91,10 @@ class AndUnit : public BaseUnit
 public:
   AndUnit(const std::string & path, bool short_circuit);
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
+  void eval() override;
 
 private:
+  DiagnosticNode update(const rclcpp::Time & stamp) override;
   bool short_circuit_;
 };
 
@@ -98,6 +103,10 @@ class OrUnit : public BaseUnit
 public:
   using BaseUnit::BaseUnit;
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
+  void eval() override;
+
+private:
+  DiagnosticNode update(const rclcpp::Time & stamp) override;
 };
 
 class DebugUnit : public BaseUnit
@@ -105,9 +114,11 @@ class DebugUnit : public BaseUnit
 public:
   DebugUnit(const std::string & path, const DiagnosticLevel level);
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
+  void eval() override;
 
 private:
-  DiagnosticLevel level_;
+  DiagnosticNode update(const rclcpp::Time & stamp) override;
+  DiagnosticLevel const_;
 };
 
 }  // namespace system_diagnostic_graph

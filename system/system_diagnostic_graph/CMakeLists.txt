@@ -17,9 +17,4 @@ ament_auto_add_executable(converter
   src/tool.cpp
 )
 
-install(
-  PROGRAMS util/debug.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-
 ament_auto_package(INSTALL_TO_SHARE config example launch)
