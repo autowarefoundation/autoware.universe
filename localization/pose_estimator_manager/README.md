@@ -1,9 +1,9 @@
 # pose_estimator_manager
 
-* [Purpose](##urpose)
-* [Interface](#Interface)
-* [Architecture](#Architecture)
-* [Switching Rules](#SwitchingRules)
+* [Purpose](#purpose)
+* [Interface](#interfaces)
+* [Architecture](#architecture)
+* [Switching Rules](#switching-rules)
 
 ## Purpose
 
@@ -84,7 +84,7 @@ Currently, only one rule is implemented, but in the future, multiple rules will 
 
 ```mermaid
 flowchart LR
-  A{Localization initialization\n state is 'INITIALIZED'？}
+  A{Localization initialization\n state is 'INITIALIZED'?}
   A --false --> _A[enable all]
   A --true --> B{/localization\n/pose_with_covariance\n is subscribes?}
   B -- false --> _B[enable All]
