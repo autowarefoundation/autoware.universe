@@ -494,7 +494,7 @@ void StartPlannerModule::planWithPriority(
 {
   if (start_pose_candidates.empty()) return;
 
-  PriorityOrder order_priority =
+  const PriorityOrder order_priority =
     determinePriorityOrder(search_priority, start_pose_candidates.size());
 
   for (const auto & pair : order_priority) {
