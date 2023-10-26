@@ -2888,7 +2888,7 @@ lanelet::ConstLanelets getCurrentLanesFromPath(
   auto extended_lanes = current_lanes;
   while (rclcpp::ok()) {
     const size_t pre_extension_size = extended_lanes.size();  // Get existing size before extension
-    extended_lanes = extendPrevLane(route_handler, extended_lanes);
+    extended_lanes = extendPrevLane(route_handler, extended_lanes, true);
     if (extended_lanes.size() == pre_extension_size) break;
     if (have_front_lanes(extended_lanes)) {
       current_lanes = extended_lanes;
