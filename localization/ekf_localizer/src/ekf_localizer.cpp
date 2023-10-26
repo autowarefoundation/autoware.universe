@@ -181,11 +181,11 @@ void EKFLocalizer::timerCallback()
   /* pose measurement update */
 
   pose_diag_info_.queue_size = pose_queue_.size();
-  pose_diag_info_.is_passed_delay_gate_ = true;
-  pose_diag_info_.delay_time_ = 0.0;
-  pose_diag_info_.delay_time_threshold_ = 0.0;
-  pose_diag_info_.is_passed_mahalanobis_gate_ = true;
-  pose_diag_info_.mahalanobis_distance_ = 0.0;
+  pose_diag_info_.is_passed_delay_gate = true;
+  pose_diag_info_.delay_time = 0.0;
+  pose_diag_info_.delay_time_threshold = 0.0;
+  pose_diag_info_.is_passed_mahalanobis_gate = true;
+  pose_diag_info_.mahalanobis_distance = 0.0;
 
   bool pose_is_updated = false;
 
@@ -205,16 +205,16 @@ void EKFLocalizer::timerCallback()
     DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose calc time = %f [ms]", stop_watch_.toc());
     DEBUG_INFO(get_logger(), "------------------------- end Pose -------------------------\n");
   }
-  pose_diag_info_.pose_no_update_count =
-    pose_is_updated ? 0 : (pose_diag_info_.pose_no_update_count + 1);
+  pose_diag_info_.no_update_count =
+    pose_is_updated ? 0 : (pose_diag_info_.no_update_count + 1);
 
   /* twist measurement update */
 
-  twist_diag_info_.queue_size_ = twist_queue_.size();
-  twist_diag_info_.is_passed_delay_gate_ = true;
-  twist_diag_info_.delay_time_ = 0.0;
-  twist_diag_info_.delay_time_threshold_ = 0.0;
-  twist_diag_info_.is_passed_mahalanobis_gate_ = true;
+  twist_diag_info_.queue_size = twist_queue_.size();
+  twist_diag_info_.is_passed_delay_gate = true;
+  twist_diag_info_.delay_time = 0.0;
+  twist_diag_info_.delay_time_threshold = 0.0;
+  twist_diag_info_.is_passed_mahalanobis_gate = true;
   twist_diag_info_.mahalanobis_distance = 0.0;
 
   bool twist_is_updated = false;
@@ -235,8 +235,8 @@ void EKFLocalizer::timerCallback()
     DEBUG_INFO(get_logger(), "[EKF] measurementUpdateTwist calc time = %f [ms]", stop_watch_.toc());
     DEBUG_INFO(get_logger(), "------------------------- end Twist -------------------------\n");
   }
-  twist_diag_info_.twist_no_update_count =
-    twist_is_updated ? 0 : (twist_diag_info_.twist_no_update_count + 1);
+  twist_diag_info_.no_update_count =
+    twist_is_updated ? 0 : (twist_diag_info_.no_update_count + 1);
 
   const double x = ekf_.getXelement(IDX::X);
   const double y = ekf_.getXelement(IDX::Y);
@@ -440,7 +440,7 @@ bool EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
 
   const int delay_step = std::roundf(delay_time / ekf_dt_);
 
-  pose_diag_info_.delay_time = std::max(delay_time, pose_diag_info_.delay_time_);
+  pose_diag_info_.delay_time = std::max(delay_time, pose_diag_info_.delay_time);
   pose_diag_info_.delay_time_threshold = params_.extend_state_step * ekf_dt_;
   if (delay_step >= params_.extend_state_step) {
     pose_diag_info_.is_passed_delay_gate = false;

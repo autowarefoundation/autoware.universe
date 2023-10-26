@@ -40,7 +40,7 @@ struct EKFDiagnosticInfo
   double delay_time_threshold;
   bool is_passed_mahalanobis_gate;
   double mahalanobis_distance;
-}
+};
 
 diagnostic_msgs::msg::DiagnosticStatus
 checkProcessActivated(const bool is_activated);

@@ -18,6 +18,7 @@
 #include "ekf_localizer/aged_object_queue.hpp"
 #include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/warning.hpp"
+#include "ekf_localizer/diagnostics.hpp"
 
 #include <kalman_filter/kalman_filter.hpp>
 #include <kalman_filter/time_delay_kalman_filter.hpp>
