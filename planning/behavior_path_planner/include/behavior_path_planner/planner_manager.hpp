@@ -18,20 +18,17 @@
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_manager_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
-#include "behavior_path_planner/utils/lane_following/module_data.hpp"
 #include "tier4_autoware_utils/ros/debug_publisher.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "tier4_debug_msgs/msg/float64_stamped.hpp"
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
 
 #include <algorithm>
-#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -97,7 +94,7 @@ struct SceneModuleStatus
 class PlannerManager
 {
 public:
-  PlannerManager(rclcpp::Node & node, const bool verbose);
+  PlannerManager(rclcpp::Node & node, const size_t max_iteration_num, const bool verbose);
 
   /**
    * @brief run all candidate and approved modules.
@@ -272,6 +269,8 @@ private:
     const auto result = module_ptr->run();
     module_ptr->unlockRTCCommand();
 
+    module_ptr->postProcess();
+
     module_ptr->updateCurrentState();
 
     module_ptr->publishRTCStatus();
@@ -443,6 +442,8 @@ private:
   mutable std::vector<ModuleUpdateInfo> debug_info_;
 
   mutable std::shared_ptr<SceneModuleVisitor> debug_msg_ptr_;
+
+  size_t max_iteration_num_{100};
 
   bool verbose_{false};
 };
