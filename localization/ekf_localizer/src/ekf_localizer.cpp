@@ -262,7 +262,7 @@ geometry_msgs::msg::PoseStamped EKFLocalizer::getCurrentEKFPose(bool get_biased_
   current_ekf_pose.header.frame_id = params_.pose_frame_id;
   current_ekf_pose.header.stamp = this->now();
   current_ekf_pose.pose.position = tier4_autoware_utils::createPoint(x, y, z);
-  if (get_biased_yaw) { 
+  if (get_biased_yaw) {
     current_ekf_pose.pose.orientation =
       tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, biased_yaw);
   } else {

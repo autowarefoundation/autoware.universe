@@ -264,7 +264,6 @@ private:
    */
   geometry_msgs::msg::TwistStamped getCurrentEKFTwist() const;
 
-
   /**
    * @brief publish current EKF estimation result
    */
