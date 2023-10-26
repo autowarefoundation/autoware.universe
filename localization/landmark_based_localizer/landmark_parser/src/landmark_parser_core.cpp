@@ -62,11 +62,11 @@ std::map<std::string, geometry_msgs::msg::Pose> parse_landmark(
     const auto & v3 = vertices[3];
     const double volume = (v1 - v0).cross(v2 - v0).dot(v3 - v0) / 6.0;
     RCLCPP_INFO_STREAM(logger, "volume = " << volume);
-    const double volume_threshold_ = 1e-5;
-    if (volume > volume_threshold_) {
+    const double volume_threshold = 1e-5;
+    if (volume > volume_threshold) {
       RCLCPP_WARN_STREAM(
         logger,
-        "volume (" << volume << ") > threshold (" << volume_threshold_ << "), This is not plane.");
+        "volume (" << volume << ") > threshold (" << volume_threshold << "), This is not plane.");
       continue;
     }
 
