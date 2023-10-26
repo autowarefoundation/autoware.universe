@@ -55,4 +55,4 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
 }  // namespace lidar_obstacle_detection
 }  // namespace perception
 }  // namespace model_zoo
-#endif 
+#endif  // PERCEPTION__LIDAR_CENTERPOINT_TVM__DATA__MODELS__CENTERPOINT_BACKBONE__PREPROCESSING_INFERENCE_ENGINE_TVM_CONFIG_HPP_
