@@ -24,6 +24,7 @@
 
 #include <condition_variable>
 #include <list>
+#include <queue>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -45,9 +46,33 @@ public:
   using PredictedObjects = autoware_auto_perception_msgs::msg::PredictedObjects;
 
   PredictedObjectsDisplay();
+  ~PredictedObjectsDisplay()
+  {
+    {
+      std::unique_lock<std::mutex> lock(queue_mutex);
+      should_terminate = true;
+    }
+    mutex_condition.notify_all();
+    for (std::thread & active_thread : threads) {
+      active_thread.join();
+    }
+    threads.clear();
+
+    ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>::
+      ~ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>();
+  }
 
 private:
   void processMessage(PredictedObjects::ConstSharedPtr msg) override;
+
+  void queueJob(std::function<void()> & job)
+  {
+    {
+      std::unique_lock<std::mutex> lock(queue_mutex);
+      jobs.push(job);
+    }
+    mutex_condition.notify_one();
+  }
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
   {
@@ -100,6 +125,8 @@ private:
     PredictedObjects::ConstSharedPtr msg);
   void workerThread();
 
+  void messageProcessorThreadJob();
+
   void update(float wall_dt, float ros_dt) override;
 
   std::unordered_map<boost::uuids::uuid, int32_t, boost::hash<boost::uuids::uuid>> id_map;
@@ -107,6 +134,15 @@ private:
   std::list<int32_t> unused_marker_ids;
   int32_t marker_id = 0;
   const int32_t PATH_ID_CONSTANT = 1e3;
+
+  // max_num_threads: number of threads created in the thread pool, hard-coded to be 1;
+  int max_num_threads;
+
+  bool should_terminate{false};
+  std::mutex queue_mutex;
+  std::condition_variable mutex_condition;
+  std::vector<std::thread> threads;
+  std::queue<std::function<void()>> jobs;
 
   PredictedObjects::ConstSharedPtr msg;
   bool consumed{false};
