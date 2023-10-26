@@ -13,21 +13,22 @@
 // limitations under the License.
 
 #include "ekf_localizer/extended_kalman_filter_module.hpp"
+
+#include "ekf_localizer/covariance.hpp"
+#include "ekf_localizer/mahalanobis.hpp"
 #include "ekf_localizer/matrix_types.hpp"
-#include "ekf_localizer/state_transition.hpp"
 #include "ekf_localizer/measurement.hpp"
 #include "ekf_localizer/numeric.hpp"
-#include "ekf_localizer/mahalanobis.hpp"
-#include "ekf_localizer/covariance.hpp"
+#include "ekf_localizer/state_transition.hpp"
 
-#include <tier4_autoware_utils/ros/msg_covariance.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/msg_covariance.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
 ExtendedKalmanFilterModule::ExtendedKalmanFilterModule(const HyperParameters params)
-: dim_x_(6), // x, y, yaw, yaw_bias, vx, wz
+: dim_x_(6),  // x, y, yaw, yaw_bias, vx, wz
   params_(params)
 {
   Eigen::MatrixXd X = Eigen::MatrixXd::Zero(dim_x_, 1);
@@ -42,7 +43,8 @@ ExtendedKalmanFilterModule::ExtendedKalmanFilterModule(const HyperParameters par
   ekf_.init(X, P, params_.extend_state_step);
 }
 
-void ExtendedKalmanFilterModule::initialize(PoseWithCovariance & initial_pose, geometry_msgs::msg::TransformStamped & transform)
+void ExtendedKalmanFilterModule::initialize(
+  PoseWithCovariance & initial_pose, geometry_msgs::msg::TransformStamped & transform)
 {
   Eigen::MatrixXd X(dim_x_, 1);
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(dim_x_, dim_x_);
@@ -69,7 +71,8 @@ void ExtendedKalmanFilterModule::initialize(PoseWithCovariance & initial_pose, g
   ekf_.init(X, P, params_.extend_state_step);
 }
 
-geometry_msgs::msg::PoseStamped ExtendedKalmanFilterModule::getCurrentPose(const rclcpp::Time & current_time, bool get_biased_yaw) const 
+geometry_msgs::msg::PoseStamped ExtendedKalmanFilterModule::getCurrentPose(
+  const rclcpp::Time & current_time, bool get_biased_yaw) const
 {
   const double x = ekf_.getXelement(IDX::X);
   const double y = ekf_.getXelement(IDX::Y);
@@ -93,7 +96,8 @@ geometry_msgs::msg::PoseStamped ExtendedKalmanFilterModule::getCurrentPose(const
   return current_ekf_pose;
 }
 
-geometry_msgs::msg::TwistStamped ExtendedKalmanFilterModule::getCurrentTwist(const rclcpp::Time & current_time) const 
+geometry_msgs::msg::TwistStamped ExtendedKalmanFilterModule::getCurrentTwist(
+  const rclcpp::Time & current_time) const
 {
   const double vx = ekf_.getXelement(IDX::VX);
   const double wz = ekf_.getXelement(IDX::WZ);
@@ -147,7 +151,8 @@ void ExtendedKalmanFilterModule::predictWithDelay(const double dt)
 }
 
 void ExtendedKalmanFilterModule::measurementUpdatePoseQueue(
-  AgedObjectQueue<PoseWithCovariance::SharedPtr> & pose_queue, const double dt, const rclcpp::Time & current_stamp)
+  AgedObjectQueue<PoseWithCovariance::SharedPtr> & pose_queue, const double dt,
+  const rclcpp::Time & current_stamp)
 {
   pose_diag_info_.queue_size = pose_queue.size();
   pose_diag_info_.is_passed_delay_gate = true;
@@ -173,7 +178,8 @@ void ExtendedKalmanFilterModule::measurementUpdatePoseQueue(
 }
 
 void ExtendedKalmanFilterModule::measurementUpdateTwistQueue(
-  AgedObjectQueue<TwistWithCovariance::SharedPtr> & twist_queue, const double dt, const rclcpp::Time & current_stamp)
+  AgedObjectQueue<TwistWithCovariance::SharedPtr> & twist_queue, const double dt,
+  const rclcpp::Time & current_stamp)
 {
   twist_diag_info_.queue_size = twist_queue.size();
   twist_diag_info_.is_passed_delay_gate = true;

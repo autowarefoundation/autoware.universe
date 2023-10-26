@@ -16,9 +16,9 @@
 #define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
 #include "ekf_localizer/aged_object_queue.hpp"
+#include "ekf_localizer/extended_kalman_filter_module.hpp"
 #include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/warning.hpp"
-#include "ekf_localizer/extended_kalman_filter_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>

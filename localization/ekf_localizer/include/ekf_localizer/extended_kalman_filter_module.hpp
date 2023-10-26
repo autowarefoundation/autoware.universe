@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_HPP_
-#define EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_HPP_
+#ifndef EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_MODULE_HPP_
+#define EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_MODULE_HPP_
 
 #include "ekf_localizer/aged_object_queue.hpp"
-#include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/hyper_parameters.hpp"
-
-#include <rclcpp/rclcpp.hpp>
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
-#include <geometry_msgs/msg/transform_stamped.hpp>
+#include "ekf_localizer/state_index.hpp"
 
 #include <kalman_filter/kalman_filter.hpp>
 #include <kalman_filter/time_delay_kalman_filter.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 
 struct EKFDiagnosticInfo
 {
@@ -51,7 +51,6 @@ struct EKFDiagnosticInfo
   double mahalanobis_distance;
 };
 
-
 class ExtendedKalmanFilterModule
 {
 private:
@@ -63,25 +62,31 @@ private:
 public:
   ExtendedKalmanFilterModule(const HyperParameters params);
 
-  void initialize(PoseWithCovariance & initial_pose, geometry_msgs::msg::TransformStamped & transform);
+  void initialize(
+    PoseWithCovariance & initial_pose, geometry_msgs::msg::TransformStamped & transform);
 
-  geometry_msgs::msg::PoseStamped getCurrentPose(const rclcpp::Time & current_time, bool get_biased_yaw) const;
+  geometry_msgs::msg::PoseStamped getCurrentPose(
+    const rclcpp::Time & current_time, bool get_biased_yaw) const;
   geometry_msgs::msg::TwistStamped getCurrentTwist(const rclcpp::Time & current_time) const;
   double getYawBias() const;
   EKFDiagnosticInfo getPoseDiagInfo() const;
   EKFDiagnosticInfo getTwistDiagInfo() const;
   std::array<double, 36> getCurrentPoseCovariance() const;
   std::array<double, 36> getCurrentTwistCovariance() const;
-  
+
   void predictWithDelay(const double dt);
   void measurementUpdatePoseQueue(
-    AgedObjectQueue<PoseWithCovariance::SharedPtr> & pose_queue, const double dt, const rclcpp::Time & current_stamp);
+    AgedObjectQueue<PoseWithCovariance::SharedPtr> & pose_queue, const double dt,
+    const rclcpp::Time & current_stamp);
   void measurementUpdateTwistQueue(
-    AgedObjectQueue<TwistWithCovariance::SharedPtr> & twist_queue, const double dt, const rclcpp::Time & current_stamp);
+    AgedObjectQueue<TwistWithCovariance::SharedPtr> & twist_queue, const double dt,
+    const rclcpp::Time & current_stamp);
 
 private:
-  bool measurementUpdatePose(const PoseWithCovariance & pose, const double dt, const rclcpp::Time & t_curr);
-  bool measurementUpdateTwist(const TwistWithCovariance & twist, const double dt, const rclcpp::Time & t_curr);
+  bool measurementUpdatePose(
+    const PoseWithCovariance & pose, const double dt, const rclcpp::Time & t_curr);
+  bool measurementUpdateTwist(
+    const TwistWithCovariance & twist, const double dt, const rclcpp::Time & t_curr);
 
   TimeDelayKalmanFilter ekf_;
   EKFDiagnosticInfo pose_diag_info_;
@@ -90,4 +95,4 @@ private:
   const HyperParameters params_;
 };
 
-#endif  // EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_HPP_
+#endif  // EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_MODULE_HPP_

@@ -152,9 +152,12 @@ void EKFLocalizer::timerCallback()
   /* twist measurement update */
   ekf_module_->measurementUpdateTwistQueue(twist_queue_, ekf_dt_, this->now());
 
-  const geometry_msgs::msg::PoseStamped current_ekf_pose = ekf_module_->getCurrentPose(this->now(), false);
-  const geometry_msgs::msg::PoseStamped current_biased_ekf_pose = ekf_module_->getCurrentPose(this->now(), true);
-  const geometry_msgs::msg::TwistStamped current_ekf_twist = ekf_module_->getCurrentTwist(this->now());
+  const geometry_msgs::msg::PoseStamped current_ekf_pose =
+    ekf_module_->getCurrentPose(this->now(), false);
+  const geometry_msgs::msg::PoseStamped current_biased_ekf_pose =
+    ekf_module_->getCurrentPose(this->now(), true);
+  const geometry_msgs::msg::TwistStamped current_ekf_twist =
+    ekf_module_->getCurrentTwist(this->now());
 
   /* publish ekf result */
   publishEstimateResult(current_ekf_pose, current_biased_ekf_pose, current_ekf_twist);
@@ -175,7 +178,8 @@ void EKFLocalizer::timerTFCallback()
   }
 
   geometry_msgs::msg::TransformStamped transform_stamped;
-  transform_stamped = tier4_autoware_utils::pose2transform(ekf_module_->getCurrentPose(this->now(), false), "base_link");
+  transform_stamped = tier4_autoware_utils::pose2transform(
+    ekf_module_->getCurrentPose(this->now(), false), "base_link");
   transform_stamped.header.stamp = this->now();
   tf_br_->sendTransform(transform_stamped);
 }
@@ -248,7 +252,6 @@ void EKFLocalizer::callbackTwistWithCovariance(
   }
   twist_queue_.push(msg);
 }
-
 
 /*
  * publishEstimateResult
