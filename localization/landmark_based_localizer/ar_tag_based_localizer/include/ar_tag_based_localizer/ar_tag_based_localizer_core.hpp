@@ -59,6 +59,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
