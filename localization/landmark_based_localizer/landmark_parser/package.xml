@@ -14,10 +14,10 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_auto_mapping_msgs</depend>
-  <depend>lanelet2_extension</depend>
-  <depend>rclcpp</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>rclcpp</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
