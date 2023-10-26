@@ -171,21 +171,8 @@ private:
 
   bool is_activated_;
 
-  size_t pose_no_update_count_;
-  size_t pose_queue_size_;
-  bool pose_is_passed_delay_gate_;
-  double pose_delay_time_;
-  double pose_delay_time_threshold_;
-  bool pose_is_passed_mahalanobis_gate_;
-  double pose_mahalanobis_distance_;
-
-  size_t twist_no_update_count_;
-  size_t twist_queue_size_;
-  bool twist_is_passed_delay_gate_;
-  double twist_delay_time_;
-  double twist_delay_time_threshold_;
-  bool twist_is_passed_mahalanobis_gate_;
-  double twist_mahalanobis_distance_;
+  EKFDiagnosticInfo pose_diag_info_;
+  EKFDiagnosticInfo twist_diag_info_;
 
   AgedObjectQueue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr> pose_queue_;
   AgedObjectQueue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> twist_queue_;
