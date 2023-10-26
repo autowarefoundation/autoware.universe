@@ -13,8 +13,9 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <build_depend>eigen</build_depend>
+
   <depend>autoware_auto_mapping_msgs</depend>
-  <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>rclcpp</depend>
