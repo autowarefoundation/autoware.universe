@@ -12,13 +12,10 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_executable(landmark_tf_caster
-  src/landmark_tf_caster_node.cpp
+ament_auto_add_library(landmark_tf_caster
   src/landmark_tf_caster_core.cpp
 )
 
 ament_auto_package(
   INSTALL_TO_SHARE
-  launch
-  config
 )

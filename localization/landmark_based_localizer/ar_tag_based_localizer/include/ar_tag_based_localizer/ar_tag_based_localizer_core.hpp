@@ -45,6 +45,8 @@
 #ifndef AR_TAG_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_
 #define AR_TAG_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_
 
+#include "landmark_tf_caster/landmark_tf_caster_core.hpp"
+
 #include <image_transport/image_transport.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -68,6 +70,7 @@ public:
   bool setup();
 
 private:
+  void map_bin_callback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg);
   void image_callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg);
   void cam_info_callback(const sensor_msgs::msg::CameraInfo & msg);
   void ekf_pose_callback(const geometry_msgs::msg::PoseWithCovarianceStamped & msg);
@@ -92,6 +95,7 @@ private:
   std::unique_ptr<image_transport::ImageTransport> it_;
 
   // Subscribers
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_bin_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr cam_info_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr ekf_pose_sub_;
@@ -106,6 +110,7 @@ private:
   aruco::CameraParameters cam_param_;
   bool cam_info_received_;
   geometry_msgs::msg::PoseWithCovarianceStamped latest_ekf_pose_{};
+  std::map<std::string, geometry_msgs::msg::Pose> landmark_map_;
 };
 
 #endif  // AR_TAG_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_

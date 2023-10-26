@@ -18,32 +18,13 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "autoware_auto_mapping_msgs/msg/had_map_bin.hpp"
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
-#include <lanelet2_core/primitives/Polygon.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/static_transform_broadcaster.h>
+#include <map>
+#include <string>
 
-#include <memory>
-
-class LandmarkTfCaster : public rclcpp::Node
-{
-public:
-  LandmarkTfCaster();
-
-private:
-  void map_bin_callback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg);
-  void publish_tf(const lanelet::Polygon3d & poly);
-
-  // Parameters
-  double volume_threshold_;
-
-  // tf
-  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
-  std::unique_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
-
-  // Subscribers
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_bin_sub_;
-};
+std::map<std::string, geometry_msgs::msg::Pose> parse_landmark(
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
+  const std::string & target_subtype, const rclcpp::Logger & logger);
 
 #endif  // LANDMARK_TF_CASTER__LANDMARK_TF_CASTER_CORE_HPP_
