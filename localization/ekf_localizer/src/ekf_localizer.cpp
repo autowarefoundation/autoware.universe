@@ -249,23 +249,25 @@ void EKFLocalizer::timerCallback()
   const double vx = ekf_.getXelement(IDX::VX);
   const double wz = ekf_.getXelement(IDX::WZ);
 
-  current_ekf_pose_.header.frame_id = params_.pose_frame_id;
-  current_ekf_pose_.header.stamp = this->now();
-  current_ekf_pose_.pose.position = tier4_autoware_utils::createPoint(x, y, z);
-  current_ekf_pose_.pose.orientation =
+  geometry_msgs::msg::PoseStamped current_ekf_pose;
+  current_ekf_pose.header.frame_id = params_.pose_frame_id;
+  current_ekf_pose.header.stamp = this->now();
+  current_ekf_pose.pose.position = tier4_autoware_utils::createPoint(x, y, z);
+  current_ekf_pose.pose.orientation =
     tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, yaw);
 
-  current_biased_ekf_pose_ = current_ekf_pose_;
-  current_biased_ekf_pose_.pose.orientation =
+  geometry_msgs::msg::PoseStamped current_biased_ekf_pose = current_ekf_pose;
+  current_biased_ekf_pose.pose.orientation =
     tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, biased_yaw);
 
-  current_ekf_twist_.header.frame_id = "base_link";
-  current_ekf_twist_.header.stamp = this->now();
-  current_ekf_twist_.twist.linear.x = vx;
-  current_ekf_twist_.twist.angular.z = wz;
+  geometry_msgs::msg::PoseStamped current_ekf_twist;
+  current_ekf_twist.header.frame_id = "base_link";
+  current_ekf_twist.header.stamp = this->now();
+  current_ekf_twist.twist.linear.x = vx;
+  current_ekf_twist.twist.angular.z = wz;
 
   /* publish ekf result */
-  publishEstimateResult();
+  publishEstimateResult(current_ekf_pose, current_biased_ekf_pose, current_ekf_twist);
   publishDiagnostics();
 }
 
@@ -286,12 +288,12 @@ void EKFLocalizer::timerTFCallback()
     return;
   }
 
-  if (current_ekf_pose_.header.frame_id == "") {
+  if (params_.pose_frame_id == "") {
     return;
   }
 
   geometry_msgs::msg::TransformStamped transform_stamped;
-  transform_stamped = tier4_autoware_utils::pose2transform(current_ekf_pose_, "base_link");
+  transform_stamped = tier4_autoware_utils::pose2transform(params_.pose_frame_id, "base_link");
   transform_stamped.header.stamp = this->now();
   tf_br_->sendTransform(transform_stamped);
 }
@@ -342,8 +344,6 @@ void EKFLocalizer::callbackInitialPose(
 
   X(IDX::X) = initialpose->pose.pose.position.x + transform.transform.translation.x;
   X(IDX::Y) = initialpose->pose.pose.position.y + transform.transform.translation.y;
-  current_ekf_pose_.pose.position.z =
-    initialpose->pose.pose.position.z + transform.transform.translation.z;
   X(IDX::YAW) =
     tf2::getYaw(initialpose->pose.pose.orientation) + tf2::getYaw(transform.transform.rotation);
   X(IDX::YAWB) = 0.0;
@@ -590,26 +590,29 @@ bool EKFLocalizer::measurementUpdateTwist(
 /*
  * publishEstimateResult
  */
-void EKFLocalizer::publishEstimateResult()
+void EKFLocalizer::publishEstimateResult(
+  const geometry_msgs::msg::PoseStamped::SharedPtr current_ekf_pose,
+  const geometry_msgs::msg::PoseStamped::SharedPtr current_biased_ekf_pose,
+  const geometry_msgs::msg::TwistStamped::SharedPtr current_ekf_twist)
 {
   rclcpp::Time current_time = this->now();
   const Eigen::MatrixXd X = ekf_.getLatestX();
   const Eigen::MatrixXd P = ekf_.getLatestP();
 
   /* publish latest pose */
-  pub_pose_->publish(current_ekf_pose_);
-  pub_biased_pose_->publish(current_biased_ekf_pose_);
+  pub_pose_->publish(current_ekf_pose);
+  pub_biased_pose_->publish(current_biased_ekf_pose);
 
   /* publish latest pose with covariance */
   geometry_msgs::msg::PoseWithCovarianceStamped pose_cov;
   pose_cov.header.stamp = current_time;
-  pose_cov.header.frame_id = current_ekf_pose_.header.frame_id;
-  pose_cov.pose.pose = current_ekf_pose_.pose;
+  pose_cov.header.frame_id = current_ekf_pose.header.frame_id;
+  pose_cov.pose.pose = current_ekf_pose.pose;
   pose_cov.pose.covariance = ekfCovarianceToPoseMessageCovariance(P);
   pub_pose_cov_->publish(pose_cov);
 
   geometry_msgs::msg::PoseWithCovarianceStamped biased_pose_cov = pose_cov;
-  biased_pose_cov.pose.pose = current_biased_ekf_pose_.pose;
+  biased_pose_cov.pose.pose = current_biased_ekf_pose.pose;
   pub_biased_pose_cov_->publish(biased_pose_cov);
 
   /* publish latest twist */
@@ -618,8 +621,8 @@ void EKFLocalizer::publishEstimateResult()
   /* publish latest twist with covariance */
   geometry_msgs::msg::TwistWithCovarianceStamped twist_cov;
   twist_cov.header.stamp = current_time;
-  twist_cov.header.frame_id = current_ekf_twist_.header.frame_id;
-  twist_cov.twist.twist = current_ekf_twist_.twist;
+  twist_cov.header.frame_id = current_ekf_twist.header.frame_id;
+  twist_cov.twist.twist = current_ekf_twist.twist;
   twist_cov.twist.covariance = ekfCovarianceToTwistMessageCovariance(P);
   pub_twist_cov_->publish(twist_cov);
 
@@ -632,7 +635,7 @@ void EKFLocalizer::publishEstimateResult()
   /* publish latest odometry */
   nav_msgs::msg::Odometry odometry;
   odometry.header.stamp = current_time;
-  odometry.header.frame_id = current_ekf_pose_.header.frame_id;
+  odometry.header.frame_id = current_ekf_pose.header.frame_id;
   odometry.child_frame_id = "base_link";
   odometry.pose = pose_cov.pose;
   odometry.twist = twist_cov.twist;

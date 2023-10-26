@@ -190,13 +190,6 @@ private:
   AgedObjectQueue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr> pose_queue_;
   AgedObjectQueue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> twist_queue_;
 
-  geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
-  geometry_msgs::msg::PoseStamped
-    current_biased_ekf_pose_;  //!< @brief current estimated pose without yaw bias correction
-  geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
-  std::array<double, 36ul> current_pose_covariance_;
-  std::array<double, 36ul> current_twist_covariance_;
-
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
    */
@@ -264,7 +257,10 @@ private:
   /**
    * @brief publish current EKF estimation result
    */
-  void publishEstimateResult();
+  void publishEstimateResult(
+    const geometry_msgs::msg::PoseStamped::SharedPtr current_ekf_pose,
+    const geometry_msgs::msg::PoseStamped::SharedPtr current_biased_ekf_pose,
+    const geometry_msgs::msg::TwistStamped::SharedPtr current_ekf_twist);
 
   /**
    * @brief publish diagnostics message
