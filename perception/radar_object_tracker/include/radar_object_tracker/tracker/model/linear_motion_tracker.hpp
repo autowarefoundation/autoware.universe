@@ -69,6 +69,7 @@ private:
   double filter_tau_;  // time constant of 1st order low pass filter
   double filter_dt_;   // sampling time of 1st order low pass filter
 
+  bool estimate_acc_;
   bool trust_yaw_input_;
   bool trust_twist_input_;
   bool use_polar_coordinate_in_measurement_noise_;

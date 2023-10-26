@@ -193,8 +193,9 @@ void LinearMotionTracker::loadDefaultModelParameters(const std::string & path)
     config["default"]["ekf_params"]["initial_covariance_std"]["ax"].as<float>();  // [m/(s*s)]
   const float p0_stddev_ay =
     config["default"]["ekf_params"]["initial_covariance_std"]["ay"].as<float>();  // [m/(s*s)]
-  trust_yaw_input_ = config["default"]["trust_yaw_input"].as<bool>(false);        // default false
-  trust_twist_input_ = config["default"]["trust_twist_input"].as<bool>(false);    // default false
+  estimate_acc_ = config["default"]["ekf_params"]["estimate_acc"].as<bool>();
+  trust_yaw_input_ = config["default"]["trust_yaw_input"].as<bool>(false);      // default false
+  trust_twist_input_ = config["default"]["trust_twist_input"].as<bool>(false);  // default false
   use_polar_coordinate_in_measurement_noise_ =
     config["default"]["use_polar_coordinate_in_measurement_noise"].as<bool>(
       false);  // default false
@@ -262,6 +263,8 @@ bool LinearMotionTracker::predict(const double dt, KalmanFilter & ekf) const
    *      0, 0, 0,  0,  1,          0,
    *      0, 0, 0,  0,  0,          1]
    */
+  // estimate acc
+  const double acc_coeff = estimate_acc_ ? 1.0 : 0.0;
 
   // X t
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
@@ -275,10 +278,10 @@ bool LinearMotionTracker::predict(const double dt, KalmanFilter & ekf) const
 
   // X t+1
   Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);
-  X_next_t(IDX::X) = x + vx * dt + 0.5 * ax * dt * dt;
-  X_next_t(IDX::Y) = y + vy * dt + 0.5 * ay * dt * dt;
-  X_next_t(IDX::VX) = vx + ax * dt;
-  X_next_t(IDX::VY) = vy + ay * dt;
+  X_next_t(IDX::X) = x + vx * dt + 0.5 * ax * dt * dt * acc_coeff;
+  X_next_t(IDX::Y) = y + vy * dt + 0.5 * ay * dt * dt * acc_coeff;
+  X_next_t(IDX::VX) = vx + ax * dt * acc_coeff;
+  X_next_t(IDX::VY) = vy + ay * dt * acc_coeff;
   X_next_t(IDX::AX) = ax;
   X_next_t(IDX::AY) = ay;
 
@@ -286,10 +289,10 @@ bool LinearMotionTracker::predict(const double dt, KalmanFilter & ekf) const
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
   A(IDX::X, IDX::VX) = dt;
   A(IDX::Y, IDX::VY) = dt;
-  A(IDX::X, IDX::AX) = 0.5 * dt * dt;
-  A(IDX::Y, IDX::AY) = 0.5 * dt * dt;
-  A(IDX::VX, IDX::AX) = dt;
-  A(IDX::VY, IDX::AY) = dt;
+  A(IDX::X, IDX::AX) = 0.5 * dt * dt * acc_coeff;
+  A(IDX::Y, IDX::AY) = 0.5 * dt * dt * acc_coeff;
+  A(IDX::VX, IDX::AX) = dt * acc_coeff;
+  A(IDX::VY, IDX::AY) = dt * acc_coeff;
 
   // Q: system noise
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
