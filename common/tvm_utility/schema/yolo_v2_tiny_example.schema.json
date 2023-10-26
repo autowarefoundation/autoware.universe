@@ -9,7 +9,7 @@
         "image_filename": {
           "type": "string",
           "default": "$(find-pkg-share tvm_utility)/artifacts/yolo_v2_tiny/test_image_0.jpg",
-          "description": "Filename of the image on which to run the inference"
+          "description": "Filename of the image on which to run the inference."
         },
         "label_filename": {
           "type": "string",
@@ -24,7 +24,7 @@
         "data_path": {
           "type": "string",
           "default": "$(env HOME)/autoware_data",
-          "description": "Packages data and artifacts directory path"
+          "description": "Packages data and artifacts directory path."
         }
       },
       "required": ["image_filename", "label_filename", "anchor_filename", "data_path"]
