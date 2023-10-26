@@ -600,29 +600,29 @@ void EKFLocalizer::publishEstimateResult(
   const Eigen::MatrixXd P = ekf_.getLatestP();
 
   /* publish latest pose */
-  pub_pose_->publish(current_ekf_pose);
-  pub_biased_pose_->publish(current_biased_ekf_pose);
+  pub_pose_->publish(*current_ekf_pose);
+  pub_biased_pose_->publish(*current_biased_ekf_pose);
 
   /* publish latest pose with covariance */
   geometry_msgs::msg::PoseWithCovarianceStamped pose_cov;
   pose_cov.header.stamp = current_time;
-  pose_cov.header.frame_id = current_ekf_pose.header.frame_id;
-  pose_cov.pose.pose = current_ekf_pose.pose;
+  pose_cov.header.frame_id = current_ekf_pose->header.frame_id;
+  pose_cov.pose.pose = current_ekf_pose->pose;
   pose_cov.pose.covariance = ekfCovarianceToPoseMessageCovariance(P);
   pub_pose_cov_->publish(pose_cov);
 
   geometry_msgs::msg::PoseWithCovarianceStamped biased_pose_cov = pose_cov;
-  biased_pose_cov.pose.pose = current_biased_ekf_pose.pose;
+  biased_pose_cov.pose.pose = current_biased_ekf_pose->pose;
   pub_biased_pose_cov_->publish(biased_pose_cov);
 
   /* publish latest twist */
-  pub_twist_->publish(current_ekf_twist_);
+  pub_twist_->publish(*current_ekf_twist);
 
   /* publish latest twist with covariance */
   geometry_msgs::msg::TwistWithCovarianceStamped twist_cov;
   twist_cov.header.stamp = current_time;
-  twist_cov.header.frame_id = current_ekf_twist.header.frame_id;
-  twist_cov.twist.twist = current_ekf_twist.twist;
+  twist_cov.header.frame_id = current_ekf_twist->header.frame_id;
+  twist_cov.twist.twist = current_ekf_twist->twist;
   twist_cov.twist.covariance = ekfCovarianceToTwistMessageCovariance(P);
   pub_twist_cov_->publish(twist_cov);
 
@@ -635,7 +635,7 @@ void EKFLocalizer::publishEstimateResult(
   /* publish latest odometry */
   nav_msgs::msg::Odometry odometry;
   odometry.header.stamp = current_time;
-  odometry.header.frame_id = current_ekf_pose.header.frame_id;
+  odometry.header.frame_id = current_ekf_pose->header.frame_id;
   odometry.child_frame_id = "base_link";
   odometry.pose = pose_cov.pose;
   odometry.twist = twist_cov.twist;
