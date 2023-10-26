@@ -14,11 +14,11 @@
 
 #include "ndt_scan_matcher/ndt_scan_matcher_core.hpp"
 
-#include "ndt_scan_matcher/matrix_type.hpp"
+#include "localization_util/matrix_type.hpp"
+#include "localization_util/pose_array_interpolator.hpp"
+#include "localization_util/util_func.hpp"
 #include "ndt_scan_matcher/particle.hpp"
-#include "ndt_scan_matcher/pose_array_interpolator.hpp"
-#include "ndt_scan_matcher/tree_structured_parzen_estimator.hpp"
-#include "ndt_scan_matcher/util_func.hpp"
+#include "tree_structured_parzen_estimator/tree_structured_parzen_estimator.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/transform/transforms.hpp>
@@ -205,6 +205,8 @@ NDTScanMatcher::NDTScanMatcher()
       "no_ground_nearest_voxel_transformation_likelihood", 10);
   iteration_num_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Int32Stamped>("iteration_num", 10);
+  initial_to_result_relative_pose_pub_ =
+    this->create_publisher<geometry_msgs::msg::PoseStamped>("initial_to_result_relative_pose", 10);
   initial_to_result_distance_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("initial_to_result_distance", 10);
   initial_to_result_distance_old_pub_ =
@@ -446,20 +448,8 @@ void NDTScanMatcher::callback_sensor_points(
   }
 
   // perform several validations
-  /*****************************************************************************
-  The reason the add 2 to the ndt_ptr_->getMaximumIterations() is that there are bugs in
-  implementation of ndt.
-  1. gradient descent method ends when the iteration is greater than max_iteration if it does not
-  converge (be careful it's 'greater than' instead of 'greater equal than'.)
-     https://github.com/tier4/autoware.iv/blob/2323e5baa0b680d43a9219f5fb3b7a11dd9edc82/localization/pose_estimator/ndt_scan_matcher/ndt_omp/include/ndt_omp/ndt_omp_impl.hpp#L212
-  2. iterate iteration count when end of gradient descent function.
-     https://github.com/tier4/autoware.iv/blob/2323e5baa0b680d43a9219f5fb3b7a11dd9edc82/localization/pose_estimator/ndt_scan_matcher/ndt_omp/include/ndt_omp/ndt_omp_impl.hpp#L217
-
-  These bugs are now resolved in original pcl implementation.
-  https://github.com/PointCloudLibrary/pcl/blob/424c1c6a0ca97d94ca63e5daff4b183a4db8aae4/registration/include/pcl/registration/impl/ndt.hpp#L73-L180
-  *****************************************************************************/
   bool is_ok_iteration_num =
-    validate_num_iteration(ndt_result.iteration_num, ndt_ptr_->getMaximumIterations() + 2);
+    validate_num_iteration(ndt_result.iteration_num, ndt_ptr_->getMaximumIterations());
   bool is_local_optimal_solution_oscillation = false;
   if (!is_ok_iteration_num) {
     is_local_optimal_solution_oscillation = validate_local_optimal_solution_oscillation(
@@ -487,7 +477,7 @@ void NDTScanMatcher::callback_sensor_points(
   publish_tf(sensor_ros_time, result_pose_msg);
   publish_pose(sensor_ros_time, result_pose_msg, is_converged);
   publish_marker(sensor_ros_time, transformation_msg_array);
-  publish_initial_to_result_distances(
+  publish_initial_to_result(
     sensor_ros_time, result_pose_msg, interpolator.get_current_pose(), interpolator.get_old_pose(),
     interpolator.get_new_pose());
 
@@ -628,12 +618,19 @@ void NDTScanMatcher::publish_marker(
   ndt_marker_pub_->publish(marker_array);
 }
 
-void NDTScanMatcher::publish_initial_to_result_distances(
+void NDTScanMatcher::publish_initial_to_result(
   const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_cov_msg,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_old_msg,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_new_msg)
 {
+  geometry_msgs::msg::PoseStamped initial_to_result_relative_pose_stamped;
+  initial_to_result_relative_pose_stamped.pose =
+    tier4_autoware_utils::inverseTransformPose(result_pose_msg, initial_pose_cov_msg.pose.pose);
+  initial_to_result_relative_pose_stamped.header.stamp = sensor_ros_time;
+  initial_to_result_relative_pose_stamped.header.frame_id = map_frame_;
+  initial_to_result_relative_pose_pub_->publish(initial_to_result_relative_pose_stamped);
+
   const auto initial_to_result_distance =
     static_cast<float>(norm(initial_pose_cov_msg.pose.pose.position, result_pose_msg.position));
   initial_to_result_distance_pub_->publish(
@@ -755,38 +752,33 @@ void NDTScanMatcher::service_ndt_align(
     map_update_module_->update_map(initial_pose_msg_in_map_frame.pose.pose.position);
   }
 
+  // mutex Map
+  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
+
   if (ndt_ptr_->getInputTarget() == nullptr) {
     res->success = false;
-    RCLCPP_WARN(get_logger(), "No InputTarget");
+    RCLCPP_WARN(
+      get_logger(), "No InputTarget. Please check the map file and the map_loader service");
     return;
   }
 
   if (ndt_ptr_->getInputSource() == nullptr) {
     res->success = false;
-    RCLCPP_WARN(get_logger(), "No InputSource");
+    RCLCPP_WARN(get_logger(), "No InputSource. Please check the input lidar topic");
     return;
   }
 
-  // mutex Map
-  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
-
   (*state_ptr_)["state"] = "Aligning";
-  res->pose_with_covariance = align_using_monte_carlo(ndt_ptr_, initial_pose_msg_in_map_frame);
+  res->pose_with_covariance = align_pose(initial_pose_msg_in_map_frame);
   (*state_ptr_)["state"] = "Sleeping";
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_carlo(
-  const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
+geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
-  if (ndt_ptr->getInputTarget() == nullptr || ndt_ptr->getInputSource() == nullptr) {
-    RCLCPP_WARN(get_logger(), "No Map or Sensor PointCloud");
-    return geometry_msgs::msg::PoseWithCovarianceStamped();
-  }
-
-  output_pose_with_cov_to_log(get_logger(), "align_using_monte_carlo_input", initial_pose_with_cov);
+  output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
 
   const auto base_rpy = get_rpy(initial_pose_with_cov);
   const Eigen::Map<const RowMatrixXd> covariance = {
@@ -847,8 +839,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     initial_pose.orientation = tf2::toMsg(tf_quaternion);
 
     const Eigen::Matrix4f initial_pose_matrix = pose_to_matrix4f(initial_pose);
-    ndt_ptr->align(*output_cloud, initial_pose_matrix);
-    const pclomp::NdtResult ndt_result = ndt_ptr->getResult();
+    ndt_ptr_->align(*output_cloud, initial_pose_matrix);
+    const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
 
     Particle particle(
       initial_pose, matrix4f_to_pose(ndt_result.pose), ndt_result.transform_probability,
@@ -882,7 +874,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
     auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     tier4_autoware_utils::transformPointCloud(
-      *ndt_ptr->getInputSource(), *sensor_points_in_map_ptr, ndt_result.pose);
+      *ndt_ptr_->getInputSource(), *sensor_points_in_map_ptr, ndt_result.pose);
     publish_point_cloud(initial_pose_with_cov.header.stamp, map_frame_, sensor_points_in_map_ptr);
   }
 
@@ -895,8 +887,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
   result_pose_with_cov_msg.header.frame_id = map_frame_;
   result_pose_with_cov_msg.pose.pose = best_particle_ptr->result_pose;
 
-  output_pose_with_cov_to_log(
-    get_logger(), "align_using_monte_carlo_output", result_pose_with_cov_msg);
+  output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
   RCLCPP_INFO_STREAM(get_logger(), "best_score," << best_particle_ptr->score);
 
   return result_pose_with_cov_msg;

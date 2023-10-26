@@ -20,7 +20,6 @@
 #include "lanelet2_extension/regulatory_elements/no_parking_area.hpp"
 #include "lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
-#include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <boost/geometry/algorithms/union.hpp>
@@ -37,7 +36,6 @@ using lane_departure_checker::LaneDepartureChecker;
 using lanelet::autoware::NoParkingArea;
 using lanelet::autoware::NoStoppingArea;
 using tier4_autoware_utils::calcOffsetPose;
-using tier4_autoware_utils::inverseTransformPose;
 
 // Sort with smaller longitudinal distances taking precedence over smaller lateral distances.
 struct SortByLongitudinalDistance
@@ -468,6 +466,32 @@ bool GoalSearcher::isInAreas(const LinearRing2d & footprint, const BasicPolygons
     }
   }
   return false;
+}
+
+GoalCandidate GoalSearcher::getClosetGoalCandidateAlongLanes(
+  const GoalCandidates & goal_candidates) const
+{
+  const auto current_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_.backward_goal_search_length, parameters_.forward_goal_search_length,
+    /*forward_only_in_route*/ false);
+
+  // Define a lambda function to compute the arc length for a given goal candidate.
+  auto getGoalArcLength = [&current_lanes](const auto & candidate) {
+    return lanelet::utils::getArcCoordinates(current_lanes, candidate.goal_pose).length;
+  };
+
+  // Find the closest goal candidate by comparing the arc lengths of each candidate.
+  const auto closest_goal_candidate = std::min_element(
+    goal_candidates.begin(), goal_candidates.end(),
+    [&getGoalArcLength](const auto & a, const auto & b) {
+      return getGoalArcLength(a) < getGoalArcLength(b);
+    });
+
+  if (closest_goal_candidate == goal_candidates.end()) {
+    return {};  // return empty GoalCandidate in case no valid candidates are found.
+  }
+
+  return *closest_goal_candidate;
 }
 
 }  // namespace behavior_path_planner

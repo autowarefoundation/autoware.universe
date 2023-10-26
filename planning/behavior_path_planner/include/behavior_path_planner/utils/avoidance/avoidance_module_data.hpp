@@ -15,7 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
@@ -71,6 +71,8 @@ struct ObjectParameter
   double safety_buffer_lateral{1.0};
 
   double safety_buffer_longitudinal{0.0};
+
+  bool use_conservative_buffer_longitudinal{true};
 };
 
 struct AvoidanceParameters
@@ -145,9 +147,9 @@ struct AvoidanceParameters
   double object_ignore_section_crosswalk_behind_distance{0.0};
 
   // distance to avoid object detection
-  double object_check_forward_distance{0.0};
-
-  // continue to detect backward vehicles as avoidance targets until they are this distance away
+  bool use_static_detection_area{true};
+  double object_check_min_forward_distance{0.0};
+  double object_check_max_forward_distance{0.0};
   double object_check_backward_distance{0.0};
 
   // if the distance between object and goal position is less than this parameter, the module ignore
