@@ -3,9 +3,10 @@
   ros__parameters:
     # basic settings
     world_frame_id: "map"
-    tracker_lifetime: 1.0  # [sec]
+    tracker_lifetime: 1.5  # [sec]
     # if empty, use default config declared in this package
     tracking_config_directory: ""
+    measurement_count_threshold: 3 # object will be published if it is tracked more than this threshold
 
     # delay compensate parameters
     publish_rate: 10.0
