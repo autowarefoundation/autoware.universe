@@ -42,8 +42,7 @@ struct EKFDiagnosticInfo
   double mahalanobis_distance;
 };
 
-diagnostic_msgs::msg::DiagnosticStatus
-checkProcessActivated(const bool is_activated);
+diagnostic_msgs::msg::DiagnosticStatus checkProcessActivated(const bool is_activated);
 
 diagnostic_msgs::msg::DiagnosticStatus checkMeasurementUpdated(
   const std::string & measurement_type, const size_t no_update_count,

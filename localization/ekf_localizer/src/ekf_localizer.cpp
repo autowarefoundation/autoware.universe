@@ -205,8 +205,7 @@ void EKFLocalizer::timerCallback()
     DEBUG_INFO(get_logger(), "[EKF] measurementUpdatePose calc time = %f [ms]", stop_watch_.toc());
     DEBUG_INFO(get_logger(), "------------------------- end Pose -------------------------\n");
   }
-  pose_diag_info_.no_update_count =
-    pose_is_updated ? 0 : (pose_diag_info_.no_update_count + 1);
+  pose_diag_info_.no_update_count = pose_is_updated ? 0 : (pose_diag_info_.no_update_count + 1);
 
   /* twist measurement update */
 
@@ -235,8 +234,7 @@ void EKFLocalizer::timerCallback()
     DEBUG_INFO(get_logger(), "[EKF] measurementUpdateTwist calc time = %f [ms]", stop_watch_.toc());
     DEBUG_INFO(get_logger(), "------------------------- end Twist -------------------------\n");
   }
-  twist_diag_info_.no_update_count =
-    twist_is_updated ? 0 : (twist_diag_info_.no_update_count + 1);
+  twist_diag_info_.no_update_count = twist_is_updated ? 0 : (twist_diag_info_.no_update_count + 1);
 
   const double x = ekf_.getXelement(IDX::X);
   const double y = ekf_.getXelement(IDX::Y);
