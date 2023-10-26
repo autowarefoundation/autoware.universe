@@ -18,11 +18,8 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 
-#include <algorithm>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -79,6 +76,9 @@ void setEndData(
 void setStartData(
   AvoidLine & al, const double start_shift_length, const geometry_msgs::msg::Pose & start,
   const size_t start_idx, const double start_dist);
+
+Polygon2d createEnvelopePolygon(
+  const Polygon2d & object_polygon, const Pose & closest_pose, const double envelope_buffer);
 
 Polygon2d createEnvelopePolygon(
   const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer);
@@ -164,7 +164,7 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
   const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
-  const bool is_running, DebugData & debug);
+  const double object_check_forward_distance, const bool is_running, DebugData & debug);
 
 DrivableLanes generateExpandDrivableLanes(
   const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
