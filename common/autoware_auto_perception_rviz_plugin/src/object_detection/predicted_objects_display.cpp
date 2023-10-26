@@ -25,7 +25,7 @@ namespace object_detection
 {
 PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks")
 {
-  max_num_threads = 1;            // hard code the number of threads to be created
+  max_num_threads = 1;  // hard code the number of threads to be created
 
   for (int ii = 0; ii < max_num_threads; ++ii) {
     threads.emplace_back(std::thread(&PredictedObjectsDisplay::workerThread, this));
