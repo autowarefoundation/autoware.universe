@@ -36,12 +36,12 @@ output.
 
 ## Parameters
 
-| Name              | Type   | Default Value                                                           | Description                                                                                |
-| ------------------| ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `image_filename`  | string | `$(find-pkg-share tvm_utility)/artifacts/yolo_v2_tiny/test_image_0.jpg` | Filename of the image on which to run the inference.                                       |
-| `label_filename`  | string | `$(find-pkg-share tvm_utility)/artifacts/yolo_v2_tiny/labels.txt`       | Name of file containing the human readable names of the classes. One class on each line.   |
-| `anchor_filename` | string | `$(find-pkg-share tvm_utility)/artifacts/yolo_v2_tiny/anchors.csv`      | Name of file containing the anchor values for the network. Each line is one anchor. each anchor has 2 comma separated floating point values.   |
-| `data_path`       | string | `$(env HOME)/autoware_data`                                             | Packages data and artifacts directory path.                                                |
+| Name              | Type   | Default Value                                                           | Description                                                                                                                                  |
+| ----------------- | ------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `image_filename`  | string | `$(find-pkg-share tvm_utility)/artifacts/yolo_v2_tiny/test_image_0.jpg` | Filename of the image on which to run the inference.                                                                                         |
+| `label_filename`  | string | `$(find-pkg-share tvm_utility)/artifacts/yolo_v2_tiny/labels.txt`       | Name of file containing the human readable names of the classes. One class on each line.                                                     |
+| `anchor_filename` | string | `$(find-pkg-share tvm_utility)/artifacts/yolo_v2_tiny/anchors.csv`      | Name of file containing the anchor values for the network. Each line is one anchor. each anchor has 2 comma separated floating point values. |
+| `data_path`       | string | `$(env HOME)/autoware_data`                                             | Packages data and artifacts directory path.                                                                                                  |
 
 ## GPU backend
 
