@@ -20,6 +20,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <regex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -194,6 +195,18 @@ void check_config_nodes(const std::vector<UnitConfig::SharedPtr> & nodes)
   }
 }
 
+std::string resolve_file_path(const std::string & path)
+{
+  static const std::regex pattern(R"(\$\([^()]*\))");
+  std::smatch m;
+  std::regex_search(path, m, pattern);
+
+  std::cout << path << std::endl;
+  std::cout << m.str() << std::endl;
+
+  return path;
+}
+
 void resolve_link_nodes(std::vector<UnitConfig::SharedPtr> & nodes)
 {
   std::vector<UnitConfig::SharedPtr> filtered;
@@ -241,6 +254,9 @@ RootConfig load_config_root(const std::string & path)
     const auto & node = config.nodes[i];
     extend(config.nodes, node->children);
   }
+
+  resolve_file_path("$(find-pkg-share system_diagnostic_graph)/aaa/bbb/ccc.yaml");
+  resolve_file_path("$(dirname)/$(find-pkg-share aaa)/bbb/ccc.yaml");
 
   check_config_nodes(config.nodes);
   resolve_link_nodes(config.nodes);
