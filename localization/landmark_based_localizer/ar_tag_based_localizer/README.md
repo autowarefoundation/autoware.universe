@@ -26,6 +26,7 @@ The positions and orientations of the AR-Tags are assumed to be written in the L
 | :------------------------------ | :---------------------------------------------- | :---------------------------------------------------------------------------------------- |
 | `~/output/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Estimated Pose                                                                            |
 | `~/debug/result`                | `sensor_msgs::msg::Image`                       | [debug topic] Image in which marker detection results are superimposed on the input image |
+| `~/debug/marker`                | `visualization_msgs::msg::Marker`               | [debug topic] Loaded landmarks to visualize in Rviz as thin boards                        |
 | `/tf`                           | `geometry_msgs::msg::TransformStamped`          | [debug topic] TF from camera to detected tag                                              |
 | `/diagnostics`                  | `diagnostic_msgs::msg::DiagnosticArray`         | Diagnostics outputs                                                                       |
 

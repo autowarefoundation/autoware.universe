@@ -128,6 +128,11 @@ bool ArTagBasedLocalizer::setup()
   /*
     Publishers
   */
+  rclcpp::QoS qos_marker = rclcpp::QoS(rclcpp::KeepLast(10));
+  qos_marker.transient_local();
+  qos_marker.reliable();
+  marker_pub_ =
+    this->create_publisher<visualization_msgs::msg::Marker>("~/debug/marker", qos_marker);
   rclcpp::QoS qos_pub(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
   image_pub_ = it_->advertise("~/debug/result", 1);
   pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -143,6 +148,7 @@ void ArTagBasedLocalizer::map_bin_callback(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg)
 {
   landmark_map_ = parse_landmark(msg, "apriltag_16h5", this->get_logger());
+  publish_landmark_markers(landmark_map_, marker_pub_);
 }
 
 void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg)

@@ -106,3 +106,48 @@ std::map<std::string, geometry_msgs::msg::Pose> parse_landmark(
 
   return landmark_map;
 }
+
+void publish_landmark_markers(
+  const std::map<std::string, geometry_msgs::msg::Pose> & landmarks,
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr publisher)
+{
+  int32_t id = 0;
+  for (const auto & [id_str, pose] : landmarks) {
+    // publish cube as a thin board
+    visualization_msgs::msg::Marker cube_marker;
+    cube_marker.header.frame_id = "map";
+    cube_marker.header.stamp = rclcpp::Clock().now();
+    cube_marker.ns = "landmark_cube";
+    cube_marker.id = id;
+    cube_marker.type = visualization_msgs::msg::Marker::CUBE;
+    cube_marker.action = visualization_msgs::msg::Marker::ADD;
+    cube_marker.pose = pose;
+    cube_marker.scale.x = 1.0;
+    cube_marker.scale.y = 2.0;
+    cube_marker.scale.z = 0.1;
+    cube_marker.color.a = 0.5;
+    cube_marker.color.r = 0.0;
+    cube_marker.color.g = 1.0;
+    cube_marker.color.b = 0.0;
+    publisher->publish(cube_marker);
+
+    // publish text
+    visualization_msgs::msg::Marker text_marker;
+    text_marker.header.frame_id = "map";
+    text_marker.header.stamp = rclcpp::Clock().now();
+    text_marker.ns = "landmark_text";
+    text_marker.id = id;
+    text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+    text_marker.action = visualization_msgs::msg::Marker::ADD;
+    text_marker.pose = pose;
+    text_marker.text = "(" + id_str + ")";
+    text_marker.scale.z = 0.5;
+    text_marker.color.a = 1.0;
+    text_marker.color.r = 1.0;
+    text_marker.color.g = 0.0;
+    text_marker.color.b = 0.0;
+    publisher->publish(text_marker);
+
+    id++;
+  }
+}
