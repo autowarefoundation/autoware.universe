@@ -14,9 +14,10 @@
   limitations under the License.
 -->
 <launch>
-  <arg name="tvm_utiliyt_example_node_param_path" default="$(find-pkg-share tvm_utility)/config/yolo_v2_tiny_example.param.yaml"/>
+  <arg name="tvm_utility_example_node_param_path" default="$(find-pkg-share tvm_utility)/config/yolo_v2_tiny_example.param.yaml"/>
   <!-- Node -->
+  <!-- cspell: ignore substs -->
   <node pkg="tvm_utility" exec="yolo_v2_tiny" name="yolo_v2_tiny_example">
-    <param from="$(var tvm_utiliyt_example_node_param_path)" allow_substs="true"/>
+    <param from="$(var tvm_utility_example_node_param_path)" allow_substs="true"/>
   </node>
 </launch>
