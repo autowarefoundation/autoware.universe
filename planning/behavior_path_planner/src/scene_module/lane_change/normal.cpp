@@ -927,7 +927,7 @@ std::vector<ExtendedPredictedObject> NormalLaneChange::filterObjectsInTargetLane
   if (target_polygon) {
     for (auto & obj : objects.target_lane) {
       const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj.initial_pose.pose, obj.shape);
-      if (target_polygon && boost::geometry::intersects(target_polygon.value(), obj_polygon)) {
+      if (boost::geometry::intersects(target_polygon.value(), obj_polygon)) {
         filtered_objects.push_back(obj);
       }
     }
