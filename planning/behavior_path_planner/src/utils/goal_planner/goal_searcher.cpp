@@ -475,14 +475,17 @@ GoalCandidate GoalSearcher::getClosetGoalCandidateAlongLanes(
     planner_data_, parameters_.backward_goal_search_length, parameters_.forward_goal_search_length,
     /*forward_only_in_route*/ false);
 
+  // Define a lambda function to compute the arc length for a given goal candidate.
+  auto getGoalArcLength = [&current_lanes](const auto & candidate) {
+    return lanelet::utils::getArcCoordinates(current_lanes, candidate.goal_pose).length;
+  };
+
+  // Find the closest goal candidate by comparing the arc lengths of each candidate.
   const auto closest_goal_candidate = std::min_element(
     goal_candidates.begin(), goal_candidates.end(),
-    [&current_lanes](const auto & a, const auto & b) {
-      const auto goal_arc_length_a =
-        lanelet::utils::getArcCoordinates(current_lanes, a.goal_pose).length;
-      const auto goal_arc_length_b =
-        lanelet::utils::getArcCoordinates(current_lanes, b.goal_pose).length;
-      return goal_arc_length_a < goal_arc_length_b;
+    [&getGoalArcLength](const auto & a, const auto & b) {
+      return getGoalArcLength(a) < getGoalArcLength(b);
+    });
     });
 
   if (closest_goal_candidate == goal_candidates.end()) {
