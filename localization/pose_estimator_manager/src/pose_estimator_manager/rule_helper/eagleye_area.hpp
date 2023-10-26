@@ -38,6 +38,7 @@ public:
   explicit EagleyeArea(const rclcpp::Logger & logger);
 
   void init(const HADMapBin::ConstSharedPtr msg);
+  bool vector_map_initialized() const;
 
   bool within(const geometry_msgs::msg::Point & point) const;
 
@@ -47,8 +48,9 @@ public:
 
 private:
   struct Impl;
-  std::shared_ptr<Impl> impl_;
+  std::shared_ptr<Impl> impl_{nullptr};
   rclcpp::Logger logger_;
+  bool vector_map_is_initialized_{false};
 };
 }  // namespace pose_estimator_manager::rule_helper
 

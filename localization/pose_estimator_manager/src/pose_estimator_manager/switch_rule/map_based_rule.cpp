@@ -40,6 +40,12 @@ MapBasedRule::MapBasedRule(
 
 bool MapBasedRule::eagleye_is_available() const
 {
+  if (shared_data_->vector_map.has_value()) {
+    if (!eagleye_area_->vector_map_initialized()) {
+      eagleye_area_->init(shared_data_->vector_map());
+    }
+  }
+
   if (running_estimator_list_.count(PoseEstimatorName::eagleye) == 0) {
     return false;
   }
@@ -54,10 +60,6 @@ bool MapBasedRule::eagleye_is_available() const
 
   if (!eagleye_area_) {
     throw std::runtime_error("eagleye_area_ is not initialized");
-  }
-
-  if (shared_data_->vector_map.has_value()) {
-    eagleye_area_->init(shared_data_->vector_map());
   }
 
   return eagleye_area_->within(shared_data_->localization_pose_cov()->pose.pose.position);

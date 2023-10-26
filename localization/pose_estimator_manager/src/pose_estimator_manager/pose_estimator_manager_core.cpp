@@ -94,7 +94,7 @@ PoseEstimatorManager::PoseEstimatorManager()
       create_subscription<PointCloud2>("~/input/ndt/pointcloud", sensor_qos, on_ndt_input);
     auto on_eagleye_output = std::bind(&PoseEstimatorManager::on_eagleye_output, this, _1);
     sub_eagleye_output_ = create_subscription<PoseCovStamped>(
-      "~/input/ealgeye/pose_with_covariance", 5, on_eagleye_output);
+      "~/input/eagleye/pose_with_covariance", 5, on_eagleye_output);
 
     // subscriber for switch rule
     auto on_vector_map = [this](HADMapBin::ConstSharedPtr msg) -> void {

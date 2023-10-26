@@ -55,7 +55,13 @@ EagleyeArea::EagleyeArea(rclcpp::Node * node) : EagleyeArea(node->get_logger())
 
 void EagleyeArea::init(HADMapBin::ConstSharedPtr msg)
 {
+  vector_map_is_initialized_ = true;
   impl_->init(msg);
+}
+
+bool EagleyeArea::vector_map_initialized() const
+{
+  return vector_map_is_initialized_;
 }
 
 bool EagleyeArea::within(const geometry_msgs::msg::Point & point) const
