@@ -486,7 +486,6 @@ GoalCandidate GoalSearcher::getClosetGoalCandidateAlongLanes(
     [&getGoalArcLength](const auto & a, const auto & b) {
       return getGoalArcLength(a) < getGoalArcLength(b);
     });
-});
 
 if (closest_goal_candidate == goal_candidates.end()) {
   return {};  // return empty GoalCandidate in case no valid candidates are found.
