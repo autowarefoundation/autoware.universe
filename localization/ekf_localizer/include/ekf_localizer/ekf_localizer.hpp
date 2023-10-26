@@ -89,7 +89,7 @@ public:
     return;
   };
   void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
-  double get_x() { return x_; }
+  double get_x() const { return x_; }
 
 private:
   bool initialized_;
@@ -255,12 +255,23 @@ private:
   void setCurrentResult();
 
   /**
+   * @brief get current ekf pose
+   */
+  geometry_msgs::msg::PoseStamped getCurrentEKFPose(bool get_biased_yaw) const;
+
+  /**
+   * @brief get current ekf twist
+   */
+  geometry_msgs::msg::TwistStamped getCurrentEKFTwist() const;
+
+
+  /**
    * @brief publish current EKF estimation result
    */
   void publishEstimateResult(
-    const geometry_msgs::msg::PoseStamped::SharedPtr current_ekf_pose,
-    const geometry_msgs::msg::PoseStamped::SharedPtr current_biased_ekf_pose,
-    const geometry_msgs::msg::TwistStamped::SharedPtr current_ekf_twist);
+    const geometry_msgs::msg::PoseStamped & current_ekf_pose,
+    const geometry_msgs::msg::PoseStamped & current_biased_ekf_pose,
+    const geometry_msgs::msg::TwistStamped & current_ekf_twist);
 
   /**
    * @brief publish diagnostics message
