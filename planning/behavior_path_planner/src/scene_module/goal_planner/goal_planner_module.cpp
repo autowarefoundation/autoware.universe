@@ -22,6 +22,7 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -50,25 +51,14 @@ using tier4_autoware_utils::inverseTransformPose;
 
 namespace behavior_path_planner
 {
-Transaction::Transaction(PullOverStatus & status) : status_(status)
-{
-  status_.mutex_.lock();
-  status_.is_in_transaction_ = true;
-}
-
-Transaction::~Transaction()
-{
-  status_.mutex_.unlock();
-  status_.is_in_transaction_ = false;
-}
-
 GoalPlannerModule::GoalPlannerModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<GoalPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface> > & rtc_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map},
   parameters_{parameters},
-  vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
+  vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()},
+  status_{mutex_}
 {
   LaneDepartureChecker lane_departure_checker{};
   lane_departure_checker.setVehicleInfo(vehicle_info_);
@@ -198,9 +188,11 @@ void GoalPlannerModule::onTimer()
   }
 
   // set member variables
-  const auto transaction = status_.startTransaction();
-  status_.set_pull_over_path_candidates(path_candidates);
-  status_.set_closest_start_pose(closest_start_pose);
+  {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
+    status_.set_pull_over_path_candidates(path_candidates);
+    status_.set_closest_start_pose(closest_start_pose);
+  }
 }
 
 void GoalPlannerModule::onFreespaceParkingTimer()
@@ -461,7 +453,7 @@ bool GoalPlannerModule::planFreespacePath()
   status_.set_goal_candidates(goal_candidates);
 
   {
-    const std::lock_guard<std::mutex> lock(mutex_);
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     debug_data_.freespace_planner.num_goal_candidates = goal_candidates.size();
     debug_data_.freespace_planner.is_planning = true;
   }
@@ -469,7 +461,7 @@ bool GoalPlannerModule::planFreespacePath()
   for (size_t i = 0; i < goal_candidates.size(); i++) {
     const auto goal_candidate = goal_candidates.at(i);
     {
-      const std::lock_guard<std::mutex> lock(mutex_);
+      const std::lock_guard<std::recursive_mutex> lock(mutex_);
       debug_data_.freespace_planner.current_goal_idx = i;
     }
 
@@ -484,20 +476,19 @@ bool GoalPlannerModule::planFreespacePath()
     }
 
     {
-      const auto transaction = status_.startTransaction();
+      const std::lock_guard<std::recursive_mutex> lock(mutex_);
       status_.set_pull_over_path(std::make_shared<PullOverPath>(*freespace_path));
       status_.set_current_path_idx(0);
       status_.set_is_safe_static_objects(true);
       status_.set_modified_goal_pose(goal_candidate);
       status_.set_last_path_update_time(std::make_shared<rclcpp::Time>(clock_->now()));
-      const std::lock_guard<std::mutex> lock(mutex_);
       debug_data_.freespace_planner.is_planning = false;
     }
 
     return true;
   }
 
-  const std::lock_guard<std::mutex> lock(mutex_);
+  const std::lock_guard<std::recursive_mutex> lock(mutex_);
   debug_data_.freespace_planner.is_planning = false;
   return false;
 }
@@ -527,7 +518,7 @@ void GoalPlannerModule::returnToLaneParking()
   }
 
   {
-    const auto transaction = status_.startTransaction();
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     status_.set_is_safe_static_objects(true);
     status_.set_has_decided_path(false);
     status_.set_pull_over_path(status_.get_lane_parking_pull_over_path());
@@ -560,7 +551,9 @@ void GoalPlannerModule::generateGoalCandidates()
     GoalCandidate goal_candidate{};
     goal_candidate.goal_pose = goal_pose;
     goal_candidate.distance_from_original_goal = 0.0;
-    status_.push_goal_candidate(goal_candidate);
+    GoalCandidates goal_candidates{};
+    goal_candidates.push_back(goal_candidate);
+    status_.set_goal_candidates(goal_candidates);
   }
 }
 
@@ -621,7 +614,7 @@ void GoalPlannerModule::selectSafePullOverPath()
   std::vector<PullOverPath> pull_over_path_candidates{};
   GoalCandidates goal_candidates{};
   {
-    const auto transaction = status_.startTransaction();
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     goal_searcher_->setPlannerData(planner_data_);
     goal_candidates = status_.get_goal_candidates();
     goal_searcher_->update(goal_candidates);
@@ -652,7 +645,7 @@ void GoalPlannerModule::selectSafePullOverPath()
 
     // found safe pull over path
     {
-      const auto transaction = status_.startTransaction();
+      const std::lock_guard<std::recursive_mutex> lock(mutex_);
       status_.set_is_safe_static_objects(true);
       status_.set_pull_over_path(std::make_shared<PullOverPath>(pull_over_path));
       status_.set_current_path_idx(0);
@@ -693,7 +686,7 @@ void GoalPlannerModule::selectSafePullOverPath()
 
 void GoalPlannerModule::setLanes()
 {
-  const auto transaction = status_.startTransaction();
+  const std::lock_guard<std::recursive_mutex> lock(mutex_);
   status_.set_current_lanes(utils::getExtendedCurrentLanes(
     planner_data_, parameters_->backward_goal_search_length,
     parameters_->forward_goal_search_length,
@@ -743,7 +736,7 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output)
 
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
-  const auto transaction = status_.startTransaction();
+  const std::lock_guard<std::recursive_mutex> lock(mutex_);
   status_.set_prev_is_safe(status_.get_is_safe_static_objects());
   status_.set_prev_is_safe_dynamic_objects(
     parameters_->safety_check_params.enable_safety_check ? isSafePath() : true);
@@ -754,7 +747,7 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
   if (status_.get_prev_is_safe() || !status_.get_prev_stop_path()) {
     // safe -> not_safe or no prev_stop_path: generate new stop_path
     output.path = std::make_shared<PathWithLaneId>(generateStopPath());
-    const auto transaction = status_.startTransaction();
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
     status_.set_prev_stop_path(output.path);
     // set stop path as pull over path
     auto stop_pull_over_path = std::make_shared<PullOverPath>();
@@ -922,7 +915,7 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
   if (status_.get_has_decided_path()) {
     if (isActivated() && isWaitingApproval()) {
       {
-        const auto transaction = status_.startTransaction();
+        const std::lock_guard<std::recursive_mutex> lock(mutex_);
         status_.set_last_approved_time(std::make_shared<rclcpp::Time>(clock_->now()));
         status_.set_last_approved_pose(
           std::make_shared<Pose>(planner_data_->self_odometry->pose.pose));
@@ -1235,7 +1228,7 @@ bool GoalPlannerModule::isStopped(
 
 bool GoalPlannerModule::isStopped()
 {
-  const std::lock_guard<std::mutex> lock(mutex_);
+  const std::lock_guard<std::recursive_mutex> lock(mutex_);
   return isStopped(odometry_buffer_stopped_, parameters_->th_stopped_time);
 }
 
@@ -1245,7 +1238,6 @@ bool GoalPlannerModule::isStuck()
     return false;
   }
 
-  const std::lock_guard<std::mutex> lock(mutex_);
   constexpr double stuck_time = 5.0;
   if (!isStopped(odometry_buffer_stuck_, stuck_time)) {
     return false;
@@ -1334,7 +1326,6 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
       return true;
     }
   }
-
   if (!parameters_->use_object_recognition) {
     return false;
   }
@@ -1348,20 +1339,41 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
       utils::path_safety_checker::isPolygonOverlapLanelet);
   const auto pull_over_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     pull_over_lane_objects, parameters_->th_moving_object_velocity);
-  const auto common_parameters = planner_data_->parameters;
-  const double base_link2front = common_parameters.base_link2front;
-  const double base_link2rear = common_parameters.base_link2rear;
-  const double vehicle_width = common_parameters.vehicle_width;
+  std::vector<Polygon2d> obj_polygons;
+  for (const auto & object : pull_over_lane_stop_objects.objects) {
+    obj_polygons.push_back(tier4_autoware_utils::toPolygon2d(object));
+  }
 
-  const auto ego_polygons_expanded =
-    utils::path_safety_checker::generatePolygonsWithStoppingAndInertialMargin(
-      path, base_link2front, base_link2rear, vehicle_width, parameters_->maximum_deceleration,
+  std::vector<Polygon2d> ego_polygons_expanded;
+  const auto curvatures = motion_utils::calcCurvature(path.points);
+  for (size_t i = 0; i < path.points.size(); ++i) {
+    const auto p = path.points.at(i);
+
+    const double extra_stopping_margin = std::min(
+      std::pow(p.point.longitudinal_velocity_mps, 2) * 0.5 / parameters_->maximum_deceleration,
       parameters_->object_recognition_collision_check_max_extra_stopping_margin);
+
+    double extra_lateral_margin = (-1) * curvatures.at(i) * p.point.longitudinal_velocity_mps *
+                                  std::abs(p.point.longitudinal_velocity_mps);
+    extra_lateral_margin =
+      std::clamp(extra_lateral_margin, -extra_stopping_margin, extra_stopping_margin);
+
+    const auto lateral_offset_pose =
+      tier4_autoware_utils::calcOffsetPose(p.point.pose, 0.0, extra_lateral_margin / 2.0, 0.0);
+    const auto ego_polygon = tier4_autoware_utils::toFootprint(
+      lateral_offset_pose,
+      planner_data_->parameters.base_link2front +
+        parameters_->object_recognition_collision_check_margin + extra_stopping_margin,
+      planner_data_->parameters.base_link2rear +
+        parameters_->object_recognition_collision_check_margin,
+      planner_data_->parameters.vehicle_width +
+        parameters_->object_recognition_collision_check_margin * 2.0 +
+        std::abs(extra_lateral_margin));
+    ego_polygons_expanded.push_back(ego_polygon);
+  }
   debug_data_.ego_polygons_expanded = ego_polygons_expanded;
 
-  return utils::path_safety_checker::checkCollisionWithMargin(
-    ego_polygons_expanded, pull_over_lane_stop_objects,
-    parameters_->object_recognition_collision_check_margin);
+  return utils::path_safety_checker::checkPolygonsIntersects(ego_polygons_expanded, obj_polygons);
 }
 
 bool GoalPlannerModule::hasEnoughDistance(const PullOverPath & pull_over_path) const
@@ -1374,7 +1386,7 @@ bool GoalPlannerModule::hasEnoughDistance(const PullOverPath & pull_over_path) c
   // so need enough distance to restart.
   // distance to restart should be less than decide_path_distance.
   // otherwise, the goal would change immediately after departure.
-  const bool is_separated_path = status_.get_pull_over_path()->partial_paths.size() > 1;
+  const bool is_separated_path = pull_over_path.partial_paths.size() > 1;
   const double distance_to_start = calcSignedArcLength(
     pull_over_path.getFullPath().points, current_pose.position, pull_over_path.start_pose.position);
   const double distance_to_restart = parameters_->decide_path_distance / 2;
