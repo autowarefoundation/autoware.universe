@@ -487,11 +487,11 @@ GoalCandidate GoalSearcher::getClosetGoalCandidateAlongLanes(
       return getGoalArcLength(a) < getGoalArcLength(b);
     });
 
-if (closest_goal_candidate == goal_candidates.end()) {
-  return {};  // return empty GoalCandidate in case no valid candidates are found.
-}
+  if (closest_goal_candidate == goal_candidates.end()) {
+    return {};  // return empty GoalCandidate in case no valid candidates are found.
+  }
 
-return *closest_goal_candidate;
+  return *closest_goal_candidate;
 }
 
 }  // namespace behavior_path_planner
