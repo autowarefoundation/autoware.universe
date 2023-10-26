@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "landmark_tf_caster/landmark_tf_caster_core.hpp"
+#include "landmark_parser/landmark_parser_core.hpp"
 
 #include "lanelet2_extension/utility/message_conversion.hpp"
 

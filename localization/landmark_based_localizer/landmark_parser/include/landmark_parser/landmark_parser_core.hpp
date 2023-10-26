@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LANDMARK_TF_CASTER__LANDMARK_TF_CASTER_CORE_HPP_
-#define LANDMARK_TF_CASTER__LANDMARK_TF_CASTER_CORE_HPP_
+#ifndef LANDMARK_PARSER__LANDMARK_PARSER_CORE_HPP_
+#define LANDMARK_PARSER__LANDMARK_PARSER_CORE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -27,4 +27,4 @@ std::map<std::string, geometry_msgs::msg::Pose> parse_landmark(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
   const std::string & target_subtype, const rclcpp::Logger & logger);
 
-#endif  // LANDMARK_TF_CASTER__LANDMARK_TF_CASTER_CORE_HPP_
+#endif  // LANDMARK_PARSER__LANDMARK_PARSER_CORE_HPP_

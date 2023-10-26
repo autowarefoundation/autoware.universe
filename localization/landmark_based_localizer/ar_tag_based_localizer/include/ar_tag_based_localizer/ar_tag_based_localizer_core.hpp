@@ -45,7 +45,7 @@
 #ifndef AR_TAG_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_
 #define AR_TAG_BASED_LOCALIZER__AR_TAG_BASED_LOCALIZER_CORE_HPP_
 
-#include "landmark_tf_caster/landmark_tf_caster_core.hpp"
+#include "landmark_parser/landmark_parser_core.hpp"
 
 #include <image_transport/image_transport.hpp>
 #include <rclcpp/rclcpp.hpp>
