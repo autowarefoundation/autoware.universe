@@ -26,7 +26,12 @@ nodes:
     type: debug-ok
 
   - path: /autoware/modes/comfortable-stop
-    type: debug-ok
+    type: and
+    list:
+      - { type: link, link: /functions/obstacle_detection }
 
   - path: /autoware/modes/pull-over
-    type: debug-ok
+    type: and
+    list:
+      - { type: link, link: /functions/pose_estimation }
+      - { type: link, link: /functions/obstacle_detection }

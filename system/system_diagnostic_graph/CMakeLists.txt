@@ -17,4 +17,10 @@ ament_auto_add_executable(converter
   src/tool.cpp
 )
 
+if(BUILD_TESTING)
+  get_filename_component(RESOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/test/files ABSOLUTE)
+  ament_auto_add_gtest(gtest_${PROJECT_NAME} test/src/test.cpp)
+  target_compile_definitions(gtest_${PROJECT_NAME} PRIVATE TEST_RESOURCE_PATH="${RESOURCE_PATH}")
+endif()
+
 ament_auto_package(INSTALL_TO_SHARE config example launch)
