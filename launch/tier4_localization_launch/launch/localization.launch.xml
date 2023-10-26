@@ -28,6 +28,8 @@
     <group>
       <push-ros-namespace namespace="pose_twist_fusion_filter"/>
       <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml"/>
+
+      <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_instability_detector/pose_instability_detector.launch.xml"/>
     </group>
 
     <!-- localization_error_monitor_module -->
