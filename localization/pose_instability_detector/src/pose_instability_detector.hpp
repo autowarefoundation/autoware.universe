@@ -21,6 +21,8 @@
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <vector>
+
 class PoseInstabilityDetector : public rclcpp::Node
 {
   using Odometry = nav_msgs::msg::Odometry;
@@ -39,6 +41,10 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
+
+  Odometry latest_odometry_;
+  Odometry prev_odometry_;
+  std::vector<TwistWithCovarianceStamped> twist_buffer_;
 };
 
 #endif  // POSE_INSTABILITY_DETECTOR_HPP_
