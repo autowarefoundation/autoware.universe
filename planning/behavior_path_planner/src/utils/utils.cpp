@@ -2011,6 +2011,11 @@ void makeBoundLongitudinallyMonotonic(
     std::vector<Point> ret = bound;
     auto itr = std::next(ret.begin());
     while (std::next(itr) != ret.end()) {
+      if (itr == ret.begin()) {
+        itr++;
+        continue;
+      }
+
       const auto p1 = *std::prev(itr);
       const auto p2 = *itr;
       const auto p3 = *std::next(itr);
@@ -2024,11 +2029,20 @@ void makeBoundLongitudinallyMonotonic(
       const auto dist_3to2 = tier4_autoware_utils::calcDistance3d(p3, p2);
 
       constexpr double epsilon = 1e-3;
-      if (std::cos(M_PI_4) < product / dist_1to2 / dist_3to2 + epsilon) {
-        itr = ret.erase(itr);
-      } else {
-        itr++;
+
+      // Remove overlapped point.
+      if (dist_1to2 < epsilon || dist_3to2 < epsilon) {
+        itr = std::prev(ret.erase(itr));
+        continue;
       }
+
+      // If the angle between the points is sharper than 45 degrees, remove the middle point.
+      if (std::cos(M_PI_4) < product / dist_1to2 / dist_3to2 + epsilon) {
+        itr = std::prev(ret.erase(itr));
+        continue;
+      }
+
+      itr++;
     }
 
     return ret;
@@ -3067,14 +3081,31 @@ lanelet::ConstLanelets getCurrentLanesFromPath(
 
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(reference_lanes, current_pose, &current_lane);
-
-  return route_handler->getLaneletSequence(
+  auto current_lanes = route_handler->getLaneletSequence(
     current_lane, current_pose, p.backward_path_length, p.forward_path_length);
+
+  // Extend the 'current_lanes' with previous lanes until it contains 'front_lane_ids'.
+  const auto front_lane_ids = path.points.front().lane_ids;
+  auto have_front_lanes = [front_lane_ids](const auto & lanes) {
+    return std::any_of(lanes.begin(), lanes.end(), [&](const auto & lane) {
+      return std::find(front_lane_ids.begin(), front_lane_ids.end(), lane.id()) !=
+             front_lane_ids.end();
+    });
+  };
+  while (!have_front_lanes(current_lanes)) {
+    const auto extended_lanes = extendPrevLane(route_handler, current_lanes);
+    if (extended_lanes.size() == current_lanes.size()) break;
+    current_lanes = extended_lanes;
+  }
+
+  return current_lanes;
 }
 
 lanelet::ConstLanelets extendNextLane(
   const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
 {
+  if (lanes.empty()) return lanes;
+
   auto extended_lanes = lanes;
 
   // Add next lane
@@ -3096,6 +3127,8 @@ lanelet::ConstLanelets extendNextLane(
 lanelet::ConstLanelets extendPrevLane(
   const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
 {
+  if (lanes.empty()) return lanes;
+
   auto extended_lanes = lanes;
 
   // Add previous lane
