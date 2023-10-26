@@ -107,11 +107,11 @@ std::map<std::string, geometry_msgs::msg::Pose> parse_landmark(
   return landmark_map;
 }
 
-void publish_landmark_markers(
-  const std::map<std::string, geometry_msgs::msg::Pose> & landmarks,
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr publisher)
+visualization_msgs::msg::MarkerArray convert_to_marker_array_msg(
+  const std::map<std::string, geometry_msgs::msg::Pose> & landmarks)
 {
   int32_t id = 0;
+  visualization_msgs::msg::MarkerArray marker_array;
   for (const auto & [id_str, pose] : landmarks) {
     // publish cube as a thin board
     visualization_msgs::msg::Marker cube_marker;
@@ -129,7 +129,7 @@ void publish_landmark_markers(
     cube_marker.color.r = 0.0;
     cube_marker.color.g = 1.0;
     cube_marker.color.b = 0.0;
-    publisher->publish(cube_marker);
+    marker_array.markers.push_back(cube_marker);
 
     // publish text
     visualization_msgs::msg::Marker text_marker;
@@ -146,8 +146,9 @@ void publish_landmark_markers(
     text_marker.color.r = 1.0;
     text_marker.color.g = 0.0;
     text_marker.color.b = 0.0;
-    publisher->publish(text_marker);
+    marker_array.markers.push_back(text_marker);
 
     id++;
   }
+  return marker_array;
 }

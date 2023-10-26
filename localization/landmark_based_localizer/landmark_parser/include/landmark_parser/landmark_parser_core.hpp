@@ -19,7 +19,7 @@
 
 #include "autoware_auto_mapping_msgs/msg/had_map_bin.hpp"
 #include <geometry_msgs/msg/pose.hpp>
-#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <map>
 #include <string>
@@ -28,8 +28,7 @@ std::map<std::string, geometry_msgs::msg::Pose> parse_landmark(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
   const std::string & target_subtype, const rclcpp::Logger & logger);
 
-void publish_landmark_markers(
-  const std::map<std::string, geometry_msgs::msg::Pose> & landmarks,
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr publisher);
+visualization_msgs::msg::MarkerArray convert_to_marker_array_msg(
+  const std::map<std::string, geometry_msgs::msg::Pose> & landmarks);
 
 #endif  // LANDMARK_PARSER__LANDMARK_PARSER_CORE_HPP_
