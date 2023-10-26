@@ -147,4 +147,5 @@ list(APPEND ${PROJECT_NAME}_CONFIG_EXTRAS "${PROJECT_NAME}-extras.cmake")
 ament_auto_package(
   INSTALL_TO_SHARE
   launch
+  config
   artifacts)
