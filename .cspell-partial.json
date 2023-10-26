@@ -5,8 +5,5 @@
     "perception/bytetrack/lib/**"
   ],
   "ignoreRegExpList": [],
-  "words": [
-    "dltype",
-    "tvmgen"
-  ]
+  "words": ["dltype", "tvmgen"]
 }
