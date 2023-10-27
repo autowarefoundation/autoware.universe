@@ -20,8 +20,8 @@
 
 #include <tf2/LinearMath/Quaternion.h>
 
-PoseInstabilityDetector::PoseInstabilityDetector()
-: Node("pose_instability_detector"),
+PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & options)
+: Node("pose_instability_detector", options),
   threshold_linear_x_(this->declare_parameter<double>("threshold_linear_x")),
   threshold_linear_y_(this->declare_parameter<double>("threshold_linear_y")),
   threshold_linear_z_(this->declare_parameter<double>("threshold_linear_z")),

@@ -37,7 +37,7 @@ class PoseInstabilityDetector : public rclcpp::Node
   using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
 
 public:
-  PoseInstabilityDetector();
+  explicit PoseInstabilityDetector(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
   void callback_odometry(Odometry::ConstSharedPtr odometry_msg_ptr);
