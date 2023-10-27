@@ -110,9 +110,9 @@ protected:
   bool received_diagnostic_array_flag_ = false;
 };
 
-TEST_F(TestPoseInstabilityDetector, test_constructor)  // NOLINT
+TEST_F(TestPoseInstabilityDetector, test_normal_behavior)  // NOLINT
 {
-  // send first odometry message
+  // send the first odometry message
   builtin_interfaces::msg::Time timestamp{};
   timestamp.sec = 0;
   timestamp.nanosec = 0;
@@ -125,12 +125,12 @@ TEST_F(TestPoseInstabilityDetector, test_constructor)  // NOLINT
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
-  // send a twist message
+  // send the twist message
   timestamp.sec = 1;
   timestamp.nanosec = 0;
   SendTwistMessage(timestamp, 1.0, 0.0, 0.0);
 
-  // send second odometry message
+  // send the second odometry message
   timestamp.sec = 2;
   timestamp.nanosec = 0;
   SendOdometryMessage(timestamp, 1.0, 0.0, 0.0);
