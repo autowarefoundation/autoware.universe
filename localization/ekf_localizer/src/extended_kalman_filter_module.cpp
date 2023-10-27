@@ -84,7 +84,7 @@ geometry_msgs::msg::PoseStamped ExtendedKalmanFilterModule::getCurrentPose(
   const double biased_yaw = ekf_.getXelement(IDX::YAW);
   const double yaw_bias = ekf_.getXelement(IDX::YAWB);
   const double yaw = biased_yaw + yaw_bias;
-  geometry_msgs::msg::PoseStamped current_ekf_pose;
+  Pose current_ekf_pose;
   current_ekf_pose.header.frame_id = params_.pose_frame_id;
   current_ekf_pose.header.stamp = current_time;
   current_ekf_pose.pose.position = tier4_autoware_utils::createPoint(x, y, z);
@@ -104,7 +104,7 @@ geometry_msgs::msg::TwistStamped ExtendedKalmanFilterModule::getCurrentTwist(
   const double vx = ekf_.getXelement(IDX::VX);
   const double wz = ekf_.getXelement(IDX::WZ);
 
-  geometry_msgs::msg::TwistStamped current_ekf_twist;
+  Twist current_ekf_twist;
   current_ekf_twist.header.frame_id = "base_link";
   current_ekf_twist.header.stamp = current_time;
   current_ekf_twist.twist.linear.x = vx;
