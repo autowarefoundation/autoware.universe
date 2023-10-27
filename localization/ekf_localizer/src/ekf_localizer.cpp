@@ -176,7 +176,6 @@ void EKFLocalizer::timerCallback()
   pose_diag_info_.no_update_count = pose_is_updated ? 0 : (pose_diag_info_.no_update_count + 1);
 
   /* twist measurement update */
-  // ekf_module_->measurementUpdateTwistQueue(twist_queue_, ekf_dt_, this->now());
   twist_diag_info_.queue_size = twist_queue_.size();
   twist_diag_info_.is_passed_delay_gate = true;
   twist_diag_info_.delay_time = 0.0;
