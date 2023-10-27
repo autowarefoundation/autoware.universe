@@ -77,6 +77,10 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     create_publisher<IsFilterActivated>("~/is_filter_activated", durable_qos);
   filter_activated_marker_pub_ =
     create_publisher<MarkerArray>("~/is_filter_activated/marker", durable_qos);
+  filter_activated_marker_raw_pub_ =
+    create_publisher<MarkerArray>("~/is_filter_activated/marker_raw", durable_qos);
+  filter_activated_flag_pub_ =
+    create_publisher<BoolStamped>("~/is_filter_activated/flag", durable_qos);
 
   // Subscriber
   external_emergency_stop_heartbeat_sub_ = create_subscription<Heartbeat>(
@@ -160,6 +164,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     declare_parameter<double>("moderate_stop_service_acceleration");
   stop_check_duration_ = declare_parameter<double>("stop_check_duration");
   enable_cmd_limit_filter_ = declare_parameter<bool>("enable_cmd_limit_filter");
+  filter_activated_count_threshold_ = declare_parameter<int>("filter_activated_count_threshold");
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -572,7 +577,20 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
 
   is_filter_activated.stamp = now();
   is_filter_activated_pub_->publish(is_filter_activated);
-  filter_activated_marker_pub_->publish(createMarkerArray(is_filter_activated));
+  filter_activated_marker_raw_pub_->publish(createMarkerArray(is_filter_activated));
+
+  BoolStamped is_filter_activated_flag;
+  if (is_filter_activated.is_activated) {
+    filter_activated_count_++;
+  } else {
+    filter_activated_count_ = 0;
+  }
+  if (filter_activated_count_ >= filter_activated_count_threshold_) {
+    filter_activated_marker_pub_->publish(createMarkerArray(is_filter_activated));
+    is_filter_activated_flag.data = true;
+  }
+  is_filter_activated_flag.stamp = now();
+  filter_activated_flag_pub_->publish(is_filter_activated_flag);
 
   return out;
 }
