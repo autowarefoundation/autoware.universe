@@ -51,6 +51,5 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
 }  // namespace lidar_obstacle_detection
 }  // namespace perception
 }  // namespace model_zoo
-// NOLINTBEGIN
+// NOLINTNEXTLINE
 #endif  // PERCEPTION__LIDAR_APOLLO_SEGMENTATION_TVM__DATA__MODELS__BAIDU_CNN__INFERENCE_ENGINE_TVM_CONFIG_HPP_
-// NOLINTEND
