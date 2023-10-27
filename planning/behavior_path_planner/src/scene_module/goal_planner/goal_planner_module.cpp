@@ -919,10 +919,8 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
   // Use decided path
   if (status_.get_has_decided_path()) {
     if (isActivated() && !last_approval_data_) {
-      {
-        last_approval_data_ = std::make_unique<LastApprovalData>(
-          clock_->now(), planner_data_->self_odometry->pose.pose);
-      }
+      last_approval_data_ =
+        std::make_unique<LastApprovalData>(clock_->now(), planner_data_->self_odometry->pose.pose);
       decideVelocity();
     }
     transitionToNextPathIfFinishingCurrentPath();
