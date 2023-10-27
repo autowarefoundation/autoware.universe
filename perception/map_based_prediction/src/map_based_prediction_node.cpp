@@ -687,6 +687,33 @@ lanelet::Lanelets getLeftOppositeLanelets(
 
   return opposite_lanelets;
 }
+
+void replaceObjectYawWithLaneletsYaw(
+  const LaneletsData & current_lanelets, TrackedObject & transformed_object)
+{
+  auto & pose_with_cov = transformed_object.kinematics.pose_with_covariance;
+  // for each lanelet, calc lanelet angle and calculate mean angle
+  double sum_x = 0.0;
+  double sum_y = 0.0;
+  for (const auto & current_lanelet : current_lanelets) {
+    const auto lanelet_angle =
+      lanelet::utils::getLaneletAngle(current_lanelet.lanelet, pose_with_cov.pose.position);
+    sum_x += std::cos(lanelet_angle);
+    sum_y += std::sin(lanelet_angle);
+  }
+  const double mean_yaw_angle = std::atan2(sum_y, sum_x);
+  double roll, pitch, yaw;
+  tf2::Quaternion original_quaternion;
+  tf2::fromMsg(pose_with_cov.pose.orientation, original_quaternion);
+  tf2::Matrix3x3(original_quaternion).getRPY(roll, pitch, yaw);
+  tf2::Quaternion filtered_quaternion;
+  filtered_quaternion.setRPY(roll, pitch, mean_yaw_angle);
+  pose_with_cov.pose.orientation.x = filtered_quaternion.x();
+  pose_with_cov.pose.orientation.y = filtered_quaternion.y();
+  pose_with_cov.pose.orientation.z = filtered_quaternion.z();
+  pose_with_cov.pose.orientation.w = filtered_quaternion.w();
+}
+
 }  // namespace
 
 MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_options)
@@ -866,8 +893,15 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         // Get Closest Lanelet
         const auto current_lanelets = getCurrentLanelets(transformed_object);
 
-        // Update Objects History
-        updateObjectsHistory(output.header, transformed_object, current_lanelets);
+      // Fix object angle if its orientation unreliable (e.g. far object by radar sensor)
+      if (
+        transformed_object.kinematics.orientation_availability ==
+        autoware_auto_perception_msgs::msg::TrackedObjectKinematics::UNAVAILABLE) {
+        replaceObjectYawWithLaneletsYaw(current_lanelets, transformed_object);
+      }
+
+      // Update Objects History
+      updateObjectsHistory(output.header, transformed_object, current_lanelets);
 
         // For off lane obstacles
         if (current_lanelets.empty()) {
