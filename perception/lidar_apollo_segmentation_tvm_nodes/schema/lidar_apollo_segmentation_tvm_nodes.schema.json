@@ -64,7 +64,7 @@
         },
         "data_path": {
           "type": "string",
-          "default": $(env HOME)/autoware_data,
+          "default": "$(env HOME)/autoware_data",
           "description": "Packages data and artifacts directory path."
         }
       },
