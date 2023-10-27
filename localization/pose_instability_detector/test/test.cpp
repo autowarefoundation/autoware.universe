@@ -25,6 +25,11 @@
 
 class TestPoseInstabilityDetector : public ::testing::Test
 {
+  using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
+  using Odometry = nav_msgs::msg::Odometry;
+  using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
+  using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
+
 protected:
   void SetUp() override
   {
@@ -46,16 +51,101 @@ protected:
       }
     }
     node_ = std::make_shared<PoseInstabilityDetector>(node_options);
+    executor_.add_node(node_);
+
+    // internal test publisher
+    odometry_publisher_ = node_->create_publisher<Odometry>("~/input/odometry", 10);
+    twist_publisher_ = node_->create_publisher<TwistWithCovarianceStamped>("~/input/twist", 10);
+
+    // internal test subscriber
+    diagnostic_subscriber_ = node_->create_subscription<DiagnosticArray>(
+      "/diagnostics", 10,
+      std::bind(&TestPoseInstabilityDetector::CallbackDiagnostic, this, std::placeholders::_1));
+
     rcl_yaml_node_struct_fini(params_st);
   }
 
+  void TearDown() override { executor_.remove_node(node_); }
+
+  void SendOdometryMessage(
+    const builtin_interfaces::msg::Time timestamp, const double x, const double y, const double z)
+  {
+    Odometry message{};
+    message.header.stamp = timestamp;
+    message.pose.pose.position.x = x;
+    message.pose.pose.position.y = y;
+    message.pose.pose.position.z = z;
+    odometry_publisher_->publish(message);
+  }
+
+  void SendTwistMessage(
+    const builtin_interfaces::msg::Time timestamp, const double x, const double y, const double z)
+  {
+    TwistWithCovarianceStamped message{};
+    message.header.stamp = timestamp;
+    message.twist.twist.linear.x = x;
+    message.twist.twist.linear.y = y;
+    message.twist.twist.linear.z = z;
+    twist_publisher_->publish(message);
+  }
+
+  void CallbackDiagnostic(const DiagnosticArray::ConstSharedPtr msg)
+  {
+    received_diagnostic_array_ = *msg;
+    received_diagnostic_array_flag_ = true;
+  }
+
+  bool IsDiagnosticStatusLevel(
+    const DiagnosticStatus & diagnostic_status, const int32_t level) const
+  {
+    return diagnostic_status.level == level;
+  }
+
+  rclcpp::executors::SingleThreadedExecutor executor_;
   std::shared_ptr<PoseInstabilityDetector> node_;
+  rclcpp::Publisher<Odometry>::SharedPtr odometry_publisher_;
+  rclcpp::Publisher<TwistWithCovarianceStamped>::SharedPtr twist_publisher_;
+  rclcpp::Subscription<DiagnosticArray>::SharedPtr diagnostic_subscriber_;
+  DiagnosticArray received_diagnostic_array_;
+  bool received_diagnostic_array_flag_ = false;
 };
 
 TEST_F(TestPoseInstabilityDetector, test_constructor)  // NOLINT
 {
-  const std::string name = node_->get_name();
-  EXPECT_EQ(name, "pose_instability_detector");
+  // send first odometry message
+  builtin_interfaces::msg::Time timestamp{};
+  timestamp.sec = 0;
+  timestamp.nanosec = 0;
+  SendOdometryMessage(timestamp, 0.0, 0.0, 0.0);
+
+  // process the above message (by timer_callback)
+  received_diagnostic_array_flag_ = false;
+  while (!received_diagnostic_array_flag_) {
+    executor_.spin_some();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
+  // send a twist message
+  timestamp.sec = 1;
+  timestamp.nanosec = 0;
+  SendTwistMessage(timestamp, 1.0, 0.0, 0.0);
+
+  // send second odometry message
+  timestamp.sec = 2;
+  timestamp.nanosec = 0;
+  SendOdometryMessage(timestamp, 1.0, 0.0, 0.0);
+
+  // process the above messages (by timer_callback)
+  received_diagnostic_array_flag_ = false;
+  while (!received_diagnostic_array_flag_) {
+    executor_.spin_some();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
+  // check result
+  const diagnostic_msgs::msg::DiagnosticStatus & diagnostic_status =
+    received_diagnostic_array_.status[0];
+  EXPECT_TRUE(diagnostic_status.level == diagnostic_msgs::msg::DiagnosticStatus::OK);
 }
 
 int main(int argc, char ** argv)
