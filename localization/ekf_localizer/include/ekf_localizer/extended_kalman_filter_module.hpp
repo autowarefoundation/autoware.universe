@@ -15,7 +15,6 @@
 #ifndef EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_MODULE_HPP_
 #define EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_MODULE_HPP_
 
-#include "ekf_localizer/aged_object_queue.hpp"
 #include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/warning.hpp"

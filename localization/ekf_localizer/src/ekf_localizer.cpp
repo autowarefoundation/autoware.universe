@@ -15,10 +15,7 @@
 #include "ekf_localizer/ekf_localizer.hpp"
 
 #include "ekf_localizer/diagnostics.hpp"
-#include "ekf_localizer/matrix_types.hpp"
-#include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/string.hpp"
-#include "ekf_localizer/warning.hpp"
 #include "ekf_localizer/warning_message.hpp"
 
 #include <rclcpp/duration.hpp>
