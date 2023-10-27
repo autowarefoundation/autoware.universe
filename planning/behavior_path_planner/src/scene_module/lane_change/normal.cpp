@@ -269,7 +269,7 @@ void NormalLaneChange::insertStopPoint(
       getCommonParam().backward_length_buffer_for_blocking_object, 0.0);
 
     const auto stopping_distance_for_obj =
-      distance_to_ego_lane_obj - lane_change_buffer_for_blocking_object - stop_point_buffer -
+      distance_to_ego_lane_obj - lane_change_buffer_for_blocking_object - getCommonParam().backward_length_buffer_for_blocking_object -
       rss_dist - getCommonParam().base_link2front;
 
     //  If the target lane in the lane change section is blocked by a stationary obstacle, there
