@@ -71,7 +71,7 @@ void PoseInstabilityDetector::callback_timer()
   };
 
   Pose pose = prev_odometry_.pose.pose;
-  rclcpp::Time time = rclcpp::Time(prev_odometry_.header.stamp);
+  rclcpp::Time prev_time = rclcpp::Time(prev_odometry_.header.stamp);
   for (const TwistWithCovarianceStamped & twist_with_cov : twist_buffer_) {
     const Twist twist = twist_with_cov.twist.twist;
 
@@ -80,7 +80,7 @@ void PoseInstabilityDetector::callback_timer()
       break;
     }
 
-    const rclcpp::Duration time_diff = curr_time - rclcpp::Time(time);
+    const rclcpp::Duration time_diff = curr_time - prev_time;
     const double time_diff_sec = time_diff.seconds();
     if (time_diff_sec < 0.0) {
       RCLCPP_WARN_STREAM(get_logger(), "time_diff_sec(" << time_diff_sec << ") < 0.0");
@@ -109,7 +109,7 @@ void PoseInstabilityDetector::callback_timer()
     pose.orientation.y = quat.y();
     pose.orientation.z = quat.z();
     pose.orientation.w = quat.w();
-    time = curr_time;
+    prev_time = curr_time;
   }
 
   // compare pose and latest_odometry_
