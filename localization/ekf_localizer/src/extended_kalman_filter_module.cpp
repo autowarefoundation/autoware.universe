@@ -29,6 +29,12 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
+// clang-format off
+#define DEBUG_PRINT_MAT(X) {\
+  if (params_.show_debug_info) {std::cout << #X << ": " << X << std::endl;}\
+}
+// clang-format on
+
 ExtendedKalmanFilterModule::ExtendedKalmanFilterModule(
   std::shared_ptr<Warning> warning, const HyperParameters params)
 : warning_(std::move(warning)),
@@ -154,6 +160,7 @@ bool ExtendedKalmanFilterModule::measurementUpdatePose(
       2000);
   }
   const Eigen::MatrixXd X_curr = ekf_.getLatestX();
+  DEBUG_PRINT_MAT(X_curr.transpose());
 
   constexpr int dim_y = 3;  // pos_x, pos_y, yaw, depending on Pose output
 
@@ -208,11 +215,21 @@ bool ExtendedKalmanFilterModule::measurementUpdatePose(
     return false;
   }
 
+  DEBUG_PRINT_MAT(y.transpose());
+  DEBUG_PRINT_MAT(y_ekf.transpose());
+  DEBUG_PRINT_MAT((y - y_ekf).transpose());
+
   const Eigen::Matrix<double, 3, 6> C = poseMeasurementMatrix();
   const Eigen::Matrix3d R =
     poseMeasurementCovariance(pose.pose.covariance, params_.pose_smoothing_steps);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
+
+  // debug
+  const Eigen::MatrixXd X_result = ekf_.getLatestX();
+  DEBUG_PRINT_MAT(X_result.transpose());
+  DEBUG_PRINT_MAT((X_result - X_curr).transpose());
+
   return true;
 }
 
@@ -236,6 +253,7 @@ bool ExtendedKalmanFilterModule::measurementUpdateTwist(
   }
 
   const Eigen::MatrixXd X_curr = ekf_.getLatestX();
+  DEBUG_PRINT_MAT(X_curr.transpose());
 
   constexpr int dim_y = 2;  // vx, wz
 
@@ -282,11 +300,20 @@ bool ExtendedKalmanFilterModule::measurementUpdateTwist(
     return false;
   }
 
+  DEBUG_PRINT_MAT(y.transpose());
+  DEBUG_PRINT_MAT(y_ekf.transpose());
+  DEBUG_PRINT_MAT((y - y_ekf).transpose());
+
   const Eigen::Matrix<double, 2, 6> C = twistMeasurementMatrix();
   const Eigen::Matrix2d R =
     twistMeasurementCovariance(twist.twist.covariance, params_.twist_smoothing_steps);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
+
+  // debug
+  const Eigen::MatrixXd X_result = ekf_.getLatestX();
+  DEBUG_PRINT_MAT(X_result.transpose());
+  DEBUG_PRINT_MAT((X_result - X_curr).transpose());
 
   return true;
 }
