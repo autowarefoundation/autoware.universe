@@ -1,6 +1,6 @@
 files:
-  - { package: system_diagnostic_graph, path: example/example_1.yaml }
-  - { package: system_diagnostic_graph, path: example/example_2.yaml }
+  - { path: $(find-pkg-share system_diagnostic_graph)/example/example_1.yaml }
+  - { path: $(find-pkg-share system_diagnostic_graph)/example/example_2.yaml }
 
 nodes:
   - path: /autoware/modes/stop

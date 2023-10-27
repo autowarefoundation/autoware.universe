@@ -31,6 +31,11 @@
 namespace system_diagnostic_graph
 {
 
+ConfigData::ConfigData(const std::string & path)
+{
+  file = path;
+}
+
 ConfigData ConfigData::load(YAML::Node yaml)
 {
   if (!yaml.IsMap()) {
@@ -44,16 +49,14 @@ ConfigData ConfigData::load(YAML::Node yaml)
 
 ConfigData ConfigData::type(const std::string & name) const
 {
-  ConfigData data;
-  data.file = file;
+  ConfigData data(file);
   data.mark = name;
   return data;
 }
 
 ConfigData ConfigData::node(const size_t index) const
 {
-  ConfigData data;
-  data.file = file;
+  ConfigData data(file);
   data.mark = mark + "-" + std::to_string(index);
   return data;
 }
@@ -111,75 +114,6 @@ auto enumerate(const std::vector<T> & v)
   return result;
 }
 
-UnitConfig::SharedPtr parse_node_config(const ConfigData & data)
-{
-  const auto node = std::make_shared<UnitConfig>();
-  node->data = data;
-  node->path = node->data.take_text("path", "");
-  node->type = node->data.take_text("type");
-
-  for (const auto & [index, yaml] : enumerate(node->data.take_list("list"))) {
-    const auto child = data.node(index).load(yaml);
-    node->children.push_back(parse_node_config(child));
-  }
-  return node;
-}
-
-FileConfig::SharedPtr parse_file_config(const ConfigData & data)
-{
-  const auto file = std::make_shared<FileConfig>();
-  file->data = data;
-  file->package_name = file->data.take_text("package");
-  file->package_path = file->data.take_text("path");
-  return file;
-}
-
-void dump_node(const UnitConfig & config, const std::string & indent = "")
-{
-  std::cout << indent << " - node: " << config.type << " (" << config.path << ")" << std::endl;
-  for (const auto & child : config.children) dump_node(*child, indent + "  ");
-}
-
-void dump_file(const FileConfig & config)
-{
-  std::cout << "=================================================================" << std::endl;
-  std::cout << config.path << std::endl;
-  for (const auto & file : config.files) {
-    std::cout << " - file: " << file->package_name << "/" << file->package_path << std::endl;
-  }
-  for (const auto & node : config.nodes) {
-    dump_node(*node);
-  }
-}
-
-void load_config_file(FileConfig & config, const ConfigData & parent)
-{
-  if (config.path.empty()) {
-    const auto package_base = ament_index_cpp::get_package_share_directory(config.package_name);
-    config.path = package_base + "/" + config.package_path;
-  }
-
-  if (!std::filesystem::exists(config.path)) {
-    (void)parent;
-    throw ConfigError("TODO");
-  }
-
-  ConfigData data;
-  data.file = config.path.empty() ? config.package_path + "/" + config.package_path : "root";
-  data.load(YAML::LoadFile(config.path));
-  const auto files = data.take_list("files");
-  const auto nodes = data.take_list("nodes");
-
-  for (const auto & [index, yaml] : enumerate(files)) {
-    const auto file = data.type("file").node(index).load(yaml);
-    config.files.push_back(parse_file_config(file));
-  }
-  for (const auto & [index, yaml] : enumerate(nodes)) {
-    const auto node = data.type("file").node(index).load(yaml);
-    config.nodes.push_back(parse_node_config(node));
-  }
-}
-
 void check_config_nodes(const std::vector<UnitConfig::SharedPtr> & nodes)
 {
   std::unordered_map<std::string, size_t> path_count;
@@ -193,18 +127,6 @@ void check_config_nodes(const std::vector<UnitConfig::SharedPtr> & nodes)
       throw ConfigError("TODO: path conflict");
     }
   }
-}
-
-std::string resolve_file_path(const std::string & path)
-{
-  static const std::regex pattern(R"(\$\([^()]*\))");
-  std::smatch m;
-  std::regex_search(path, m, pattern);
-
-  std::cout << path << std::endl;
-  std::cout << m.str() << std::endl;
-
-  return path;
 }
 
 void resolve_link_nodes(std::vector<UnitConfig::SharedPtr> & nodes)
@@ -234,33 +156,123 @@ void resolve_link_nodes(std::vector<UnitConfig::SharedPtr> & nodes)
   }
 }
 
+std::string resolve_substitution(const std::string & substitution, const ConfigData & data)
+{
+  std::stringstream ss(substitution);
+  std::string word;
+  std::vector<std::string> words;
+  while (getline(ss, word, ' ')) {
+    words.push_back(word);
+  }
+
+  if (words.size() == 2 && words[0] == "find-pkg-share") {
+    return ament_index_cpp::get_package_share_directory(words[1]);
+  }
+  if (words.size() == 1 && words[0] == "dirname") {
+    return std::filesystem::path(data.file).parent_path();
+  }
+  throw ConfigError("unknown substitution: " + substitution);
+}
+
+std::string resolve_file_path(const std::string & path, const ConfigData & data)
+{
+  static const std::regex pattern(R"(\$\(([^()]*)\))");
+  std::smatch m;
+  std::string result = path;
+  while (std::regex_search(result, m, pattern)) {
+    const std::string prefix = m.prefix();
+    const std::string suffix = m.suffix();
+    result = prefix + resolve_substitution(m.str(1), data) + suffix;
+  }
+  return result;
+}
+
+PathConfig::SharedPtr parse_path_config(const ConfigData & data)
+{
+  const auto path = std::make_shared<PathConfig>(data);
+  path->original = path->data.take_text("path");
+  path->resolved = resolve_file_path(path->original, path->data);
+  return path;
+}
+
+UnitConfig::SharedPtr parse_node_config(const ConfigData & data)
+{
+  const auto node = std::make_shared<UnitConfig>(data);
+  node->path = node->data.take_text("path", "");
+  node->type = node->data.take_text("type");
+
+  for (const auto & [index, yaml] : enumerate(node->data.take_list("list"))) {
+    const auto child = data.node(index).load(yaml);
+    node->children.push_back(parse_node_config(child));
+  }
+  return node;
+}
+
+FileConfig::SharedPtr parse_file_config(const ConfigData & data)
+{
+  const auto file = std::make_shared<FileConfig>(data);
+  const auto path_data = data.type("file");
+  const auto node_data = data.type("node");
+  const auto paths = file->data.take_list("files");
+  const auto nodes = file->data.take_list("nodes");
+
+  for (const auto & [index, yaml] : enumerate(paths)) {
+    const auto path = path_data.node(index).load(yaml);
+    file->paths.push_back(parse_path_config(path));
+  }
+  for (const auto & [index, yaml] : enumerate(nodes)) {
+    const auto node = node_data.node(index).load(yaml);
+    file->nodes.push_back(parse_node_config(node));
+  }
+  return file;
+}
+
+FileConfig::SharedPtr load_config_file(PathConfig & config)
+{
+  const auto path = std::filesystem::path(config.resolved);
+  if (!std::filesystem::exists(path)) {
+    (void)config.data;
+    throw ConfigError("TODO: file does not exist");
+  }
+  const auto file = ConfigData(path).load(YAML::LoadFile(path));
+  return parse_file_config(file);
+}
+
+RootConfig load_config_root(const PathConfig::SharedPtr root)
+{
+  std::vector<PathConfig::SharedPtr> paths;
+  paths.push_back(root);
+
+  std::vector<FileConfig::SharedPtr> files;
+  for (size_t i = 0; i < paths.size(); ++i) {
+    const auto path = paths[i];
+    const auto file = load_config_file(*path);
+    files.push_back(file);
+    extend(paths, file->paths);
+  }
+
+  std::vector<UnitConfig::SharedPtr> nodes;
+  for (const auto & file : files) {
+    extend(nodes, file->nodes);
+  }
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    const auto node = nodes[i];
+    extend(nodes, node->children);
+  }
+  check_config_nodes(nodes);
+  resolve_link_nodes(nodes);
+
+  RootConfig config;
+  config.nodes = nodes;
+  return config;
+}
+
 RootConfig load_config_root(const std::string & path)
 {
-  RootConfig config;
-  config.files.push_back(std::make_shared<FileConfig>());
-  config.files.back()->path = path;
-
-  for (size_t i = 0; i < config.files.size(); ++i) {
-    const auto & file = config.files[i];
-    load_config_file(*file, {});
-    extend(config.files, file->files);
-  }
-
-  for (const auto & file : config.files) {
-    extend(config.nodes, file->nodes);
-  }
-
-  for (size_t i = 0; i < config.nodes.size(); ++i) {
-    const auto & node = config.nodes[i];
-    extend(config.nodes, node->children);
-  }
-
-  resolve_file_path("$(find-pkg-share system_diagnostic_graph)/aaa/bbb/ccc.yaml");
-  resolve_file_path("$(dirname)/$(find-pkg-share aaa)/bbb/ccc.yaml");
-
-  check_config_nodes(config.nodes);
-  resolve_link_nodes(config.nodes);
-  return config;
+  const auto root = std::make_shared<PathConfig>(ConfigData("root"));
+  root->original = path;
+  root->resolved = path;
+  return load_config_root(root);
 }
 
 }  // namespace system_diagnostic_graph

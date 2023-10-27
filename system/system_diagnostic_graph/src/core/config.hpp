@@ -27,6 +27,7 @@ namespace system_diagnostic_graph
 
 struct ConfigData
 {
+  explicit ConfigData(const std::string & file);
   ConfigData load(YAML::Node yaml);
   ConfigData type(const std::string & name) const;
   ConfigData node(const size_t index) const;
@@ -40,29 +41,39 @@ struct ConfigData
   std::unordered_map<std::string, YAML::Node> object;
 };
 
-struct UnitConfig
+struct BaseConfig
 {
-  using SharedPtr = std::shared_ptr<UnitConfig>;
-  std::string type;
-  std::string path;
-  std::vector<UnitConfig::SharedPtr> children;
+  explicit BaseConfig(const ConfigData & data) : data(data) {}
   ConfigData data;
 };
 
-struct FileConfig
+struct PathConfig : public BaseConfig
+{
+  using SharedPtr = std::shared_ptr<PathConfig>;
+  using BaseConfig::BaseConfig;
+  std::string original;
+  std::string resolved;
+};
+
+struct UnitConfig : public BaseConfig
+{
+  using SharedPtr = std::shared_ptr<UnitConfig>;
+  using BaseConfig::BaseConfig;
+  std::string type;
+  std::string path;
+  std::vector<UnitConfig::SharedPtr> children;
+};
+
+struct FileConfig : public BaseConfig
 {
   using SharedPtr = std::shared_ptr<FileConfig>;
-  std::string package_name;
-  std::string package_path;
-  std::string path;
-  std::vector<FileConfig::SharedPtr> files;
+  using BaseConfig::BaseConfig;
+  std::vector<PathConfig::SharedPtr> paths;
   std::vector<UnitConfig::SharedPtr> nodes;
-  ConfigData data;
 };
 
 struct RootConfig
 {
-  std::vector<FileConfig::SharedPtr> files;
   std::vector<UnitConfig::SharedPtr> nodes;
 };
 
