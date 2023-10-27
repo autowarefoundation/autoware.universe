@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ar_tag_based_localizer/ar_tag_based_localizer_core.hpp"
+#include "../src/ar_tag_based_localizer.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
