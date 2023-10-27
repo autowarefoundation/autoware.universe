@@ -110,7 +110,7 @@ protected:
   bool received_diagnostic_array_flag_ = false;
 };
 
-TEST_F(TestPoseInstabilityDetector, test_normal_behavior)  // NOLINT
+TEST_F(TestPoseInstabilityDetector, output_ok_when_twist_matches_odometry)  // NOLINT
 {
   // send the first odometry message
   builtin_interfaces::msg::Time timestamp{};
@@ -146,6 +146,44 @@ TEST_F(TestPoseInstabilityDetector, test_normal_behavior)  // NOLINT
   const diagnostic_msgs::msg::DiagnosticStatus & diagnostic_status =
     received_diagnostic_array_.status[0];
   EXPECT_TRUE(diagnostic_status.level == diagnostic_msgs::msg::DiagnosticStatus::OK);
+}
+
+TEST_F(TestPoseInstabilityDetector, output_warn_when_twist_is_too_small)  // NOLINT
+{
+  // send the first odometry message
+  builtin_interfaces::msg::Time timestamp{};
+  timestamp.sec = 0;
+  timestamp.nanosec = 0;
+  SendOdometryMessage(timestamp, 0.0, 0.0, 0.0);
+
+  // process the above message (by timer_callback)
+  received_diagnostic_array_flag_ = false;
+  while (!received_diagnostic_array_flag_) {
+    executor_.spin_some();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
+  // send the twist message
+  timestamp.sec = 1;
+  timestamp.nanosec = 0;
+  SendTwistMessage(timestamp, 0.1, 0.0, 0.0);  // small twist
+
+  // send the second odometry message
+  timestamp.sec = 2;
+  timestamp.nanosec = 0;
+  SendOdometryMessage(timestamp, 1.0, 0.0, 0.0);
+
+  // process the above messages (by timer_callback)
+  received_diagnostic_array_flag_ = false;
+  while (!received_diagnostic_array_flag_) {
+    executor_.spin_some();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
+  // check result
+  const diagnostic_msgs::msg::DiagnosticStatus & diagnostic_status =
+    received_diagnostic_array_.status[0];
+  EXPECT_TRUE(diagnostic_status.level == diagnostic_msgs::msg::DiagnosticStatus::WARN);
 }
 
 int main(int argc, char ** argv)
