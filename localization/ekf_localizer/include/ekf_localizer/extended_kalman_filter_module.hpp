@@ -86,7 +86,7 @@ public:
     const PoseWithCovariance & pose, const double delay_time);
 
 private:
-  TimeDelayKalmanFilter ekf_;
+  TimeDelayKalmanFilter kalman_filter_;
 
   std::shared_ptr<Warning> warning_;
   const int dim_x_;

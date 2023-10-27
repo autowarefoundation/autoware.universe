@@ -50,7 +50,7 @@ ExtendedKalmanFilterModule::ExtendedKalmanFilterModule(
   P(IDX::VX, IDX::VX) = 1000.0;  // for vx
   P(IDX::WZ, IDX::WZ) = 50.0;    // for wz
 
-  ekf_.init(X, P, params_.extend_state_step);
+  kalman_filter_.init(X, P, params_.extend_state_step);
 }
 
 void ExtendedKalmanFilterModule::initialize(
@@ -78,17 +78,17 @@ void ExtendedKalmanFilterModule::initialize(
   P(IDX::VX, IDX::VX) = 0.01;
   P(IDX::WZ, IDX::WZ) = 0.01;
 
-  ekf_.init(X, P, params_.extend_state_step);
+  kalman_filter_.init(X, P, params_.extend_state_step);
 }
 
 geometry_msgs::msg::PoseStamped ExtendedKalmanFilterModule::getCurrentPose(
   const rclcpp::Time & current_time, const double z, const double roll, const double pitch,
   bool get_biased_yaw) const
 {
-  const double x = ekf_.getXelement(IDX::X);
-  const double y = ekf_.getXelement(IDX::Y);
-  const double biased_yaw = ekf_.getXelement(IDX::YAW);
-  const double yaw_bias = ekf_.getXelement(IDX::YAWB);
+  const double x = kalman_filter_.getXelement(IDX::X);
+  const double y = kalman_filter_.getXelement(IDX::Y);
+  const double biased_yaw = kalman_filter_.getXelement(IDX::YAW);
+  const double yaw_bias = kalman_filter_.getXelement(IDX::YAWB);
   const double yaw = biased_yaw + yaw_bias;
   Pose current_ekf_pose;
   current_ekf_pose.header.frame_id = params_.pose_frame_id;
@@ -107,8 +107,8 @@ geometry_msgs::msg::PoseStamped ExtendedKalmanFilterModule::getCurrentPose(
 geometry_msgs::msg::TwistStamped ExtendedKalmanFilterModule::getCurrentTwist(
   const rclcpp::Time & current_time) const
 {
-  const double vx = ekf_.getXelement(IDX::VX);
-  const double wz = ekf_.getXelement(IDX::WZ);
+  const double vx = kalman_filter_.getXelement(IDX::VX);
+  const double wz = kalman_filter_.getXelement(IDX::WZ);
 
   Twist current_ekf_twist;
   current_ekf_twist.header.frame_id = "base_link";
@@ -120,23 +120,23 @@ geometry_msgs::msg::TwistStamped ExtendedKalmanFilterModule::getCurrentTwist(
 
 std::array<double, 36> ExtendedKalmanFilterModule::getCurrentPoseCovariance() const
 {
-  return ekfCovarianceToPoseMessageCovariance(ekf_.getLatestP());
+  return ekfCovarianceToPoseMessageCovariance(kalman_filter_.getLatestP());
 }
 
 std::array<double, 36> ExtendedKalmanFilterModule::getCurrentTwistCovariance() const
 {
-  return ekfCovarianceToTwistMessageCovariance(ekf_.getLatestP());
+  return ekfCovarianceToTwistMessageCovariance(kalman_filter_.getLatestP());
 }
 
 double ExtendedKalmanFilterModule::getYawBias() const
 {
-  return ekf_.getLatestX()(IDX::YAWB);
+  return kalman_filter_.getLatestX()(IDX::YAWB);
 }
 
 void ExtendedKalmanFilterModule::predictWithDelay(const double dt)
 {
-  const Eigen::MatrixXd X_curr = ekf_.getLatestX();
-  const Eigen::MatrixXd P_curr = ekf_.getLatestP();
+  const Eigen::MatrixXd X_curr = kalman_filter_.getLatestX();
+  const Eigen::MatrixXd P_curr = kalman_filter_.getLatestP();
 
   const double proc_cov_vx_d = std::pow(params_.proc_stddev_vx_c * dt, 2.0);
   const double proc_cov_wz_d = std::pow(params_.proc_stddev_wz_c * dt, 2.0);
@@ -145,7 +145,7 @@ void ExtendedKalmanFilterModule::predictWithDelay(const double dt)
   const Vector6d X_next = predictNextState(X_curr, dt);
   const Matrix6d A = createStateTransitionMatrix(X_curr, dt);
   const Matrix6d Q = processNoiseCovariance(proc_cov_yaw_d, proc_cov_vx_d, proc_cov_wz_d);
-  ekf_.predictWithDelay(X_next, A, Q);
+  kalman_filter_.predictWithDelay(X_next, A, Q);
 }
 
 bool ExtendedKalmanFilterModule::measurementUpdatePose(
@@ -159,7 +159,7 @@ bool ExtendedKalmanFilterModule::measurementUpdatePose(
         pose.header.frame_id.c_str(), params_.pose_frame_id.c_str()),
       2000);
   }
-  const Eigen::MatrixXd X_curr = ekf_.getLatestX();
+  const Eigen::MatrixXd X_curr = kalman_filter_.getLatestX();
   DEBUG_PRINT_MAT(X_curr.transpose());
 
   constexpr int dim_y = 3;  // pos_x, pos_y, yaw, depending on Pose output
@@ -185,7 +185,7 @@ bool ExtendedKalmanFilterModule::measurementUpdatePose(
 
   /* Set yaw */
   double yaw = tf2::getYaw(pose.pose.pose.orientation);
-  const double ekf_yaw = ekf_.getXelement(delay_step * dim_x_ + IDX::YAW);
+  const double ekf_yaw = kalman_filter_.getXelement(delay_step * dim_x_ + IDX::YAW);
   const double yaw_error = normalizeYaw(yaw - ekf_yaw);  // normalize the error not to exceed 2 pi
   yaw = yaw_error + ekf_yaw;
 
@@ -201,9 +201,9 @@ bool ExtendedKalmanFilterModule::measurementUpdatePose(
 
   /* Gate */
   const Eigen::Vector3d y_ekf(
-    ekf_.getXelement(delay_step * dim_x_ + IDX::X), ekf_.getXelement(delay_step * dim_x_ + IDX::Y),
+    kalman_filter_.getXelement(delay_step * dim_x_ + IDX::X), kalman_filter_.getXelement(delay_step * dim_x_ + IDX::Y),
     ekf_yaw);
-  const Eigen::MatrixXd P_curr = ekf_.getLatestP();
+  const Eigen::MatrixXd P_curr = kalman_filter_.getLatestP();
   const Eigen::MatrixXd P_y = P_curr.block(0, 0, dim_y, dim_y);
 
   const double distance = mahalanobis(y_ekf, y, P_y);
@@ -223,10 +223,10 @@ bool ExtendedKalmanFilterModule::measurementUpdatePose(
   const Eigen::Matrix3d R =
     poseMeasurementCovariance(pose.pose.covariance, params_.pose_smoothing_steps);
 
-  ekf_.updateWithDelay(y, C, R, delay_step);
+  kalman_filter_.updateWithDelay(y, C, R, delay_step);
 
   // debug
-  const Eigen::MatrixXd X_result = ekf_.getLatestX();
+  const Eigen::MatrixXd X_result = kalman_filter_.getLatestX();
   DEBUG_PRINT_MAT(X_result.transpose());
   DEBUG_PRINT_MAT((X_result - X_curr).transpose());
 
@@ -237,7 +237,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped ExtendedKalmanFilterModule::compen
   const PoseWithCovariance & pose, const double delay_time)
 {
   const auto rpy = tier4_autoware_utils::getRPY(pose.pose.pose.orientation);
-  const double dz_delay = ekf_.getXelement(IDX::VX) * delay_time * std::sin(-rpy.y);
+  const double dz_delay = kalman_filter_.getXelement(IDX::VX) * delay_time * std::sin(-rpy.y);
   PoseWithCovariance pose_with_z_delay;
   pose_with_z_delay = pose;
   pose_with_z_delay.pose.pose.position.z += dz_delay;
@@ -252,7 +252,7 @@ bool ExtendedKalmanFilterModule::measurementUpdateTwist(
     warning_->warnThrottle("twist frame_id must be base_link", 2000);
   }
 
-  const Eigen::MatrixXd X_curr = ekf_.getLatestX();
+  const Eigen::MatrixXd X_curr = kalman_filter_.getLatestX();
   DEBUG_PRINT_MAT(X_curr.transpose());
 
   constexpr int dim_y = 2;  // vx, wz
@@ -286,9 +286,9 @@ bool ExtendedKalmanFilterModule::measurementUpdateTwist(
   }
 
   const Eigen::Vector2d y_ekf(
-    ekf_.getXelement(delay_step * dim_x_ + IDX::VX),
-    ekf_.getXelement(delay_step * dim_x_ + IDX::WZ));
-  const Eigen::MatrixXd P_curr = ekf_.getLatestP();
+    kalman_filter_.getXelement(delay_step * dim_x_ + IDX::VX),
+    kalman_filter_.getXelement(delay_step * dim_x_ + IDX::WZ));
+  const Eigen::MatrixXd P_curr = kalman_filter_.getLatestP();
   const Eigen::MatrixXd P_y = P_curr.block(4, 4, dim_y, dim_y);
 
   const double distance = mahalanobis(y_ekf, y, P_y);
@@ -308,10 +308,10 @@ bool ExtendedKalmanFilterModule::measurementUpdateTwist(
   const Eigen::Matrix2d R =
     twistMeasurementCovariance(twist.twist.covariance, params_.twist_smoothing_steps);
 
-  ekf_.updateWithDelay(y, C, R, delay_step);
+  kalman_filter_.updateWithDelay(y, C, R, delay_step);
 
   // debug
-  const Eigen::MatrixXd X_result = ekf_.getLatestX();
+  const Eigen::MatrixXd X_result = kalman_filter_.getLatestX();
   DEBUG_PRINT_MAT(X_result.transpose());
   DEBUG_PRINT_MAT((X_result - X_curr).transpose());
 
