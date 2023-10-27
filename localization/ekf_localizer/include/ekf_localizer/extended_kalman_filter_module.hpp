@@ -29,6 +29,8 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 
+#include <memory>
+
 struct EKFDiagnosticInfo
 {
   EKFDiagnosticInfo()
