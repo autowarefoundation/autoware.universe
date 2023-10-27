@@ -57,8 +57,8 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
-ArTagBasedLocalizer::ArTagBasedLocalizer()
-: Node("ar_tag_based_localizer"), cam_info_received_(false)
+ArTagBasedLocalizer::ArTagBasedLocalizer(const rclcpp::NodeOptions & options)
+: Node("ar_tag_based_localizer", options), cam_info_received_(false)
 {
 }
 
