@@ -76,11 +76,11 @@ public:
 
   void predictWithDelay(const double dt);
   bool measurementUpdatePose(
-    const PoseWithCovariance & pose, const double dt,
-    const rclcpp::Time & t_curr, EKFDiagnosticInfo & pose_diag_info);
+    const PoseWithCovariance & pose, const double dt, const rclcpp::Time & t_curr,
+    EKFDiagnosticInfo & pose_diag_info);
   bool measurementUpdateTwist(
-    const TwistWithCovariance & twist, const double dt,
-    const rclcpp::Time & t_curr, EKFDiagnosticInfo & twist_diag_info);
+    const TwistWithCovariance & twist, const double dt, const rclcpp::Time & t_curr,
+    EKFDiagnosticInfo & twist_diag_info);
   geometry_msgs::msg::PoseWithCovarianceStamped compensatePoseWithZDelay(
     const PoseWithCovariance & pose, const double delay_time);
 

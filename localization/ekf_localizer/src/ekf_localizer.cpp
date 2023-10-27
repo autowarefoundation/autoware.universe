@@ -166,7 +166,8 @@ void EKFLocalizer::timerCallback()
         pose_is_updated = true;
 
         // Update Simple 1D filter with considering change of z value due to measurement pose delay
-        const double delay_time = (t_curr - pose->header.stamp).seconds() + params_.pose_additional_delay;
+        const double delay_time =
+          (t_curr - pose->header.stamp).seconds() + params_.pose_additional_delay;
         const auto pose_with_z_delay = ekf_module_->compensatePoseWithZDelay(*pose, delay_time);
         updateSimple1DFilters(pose_with_z_delay, params_.pose_smoothing_steps);
       }
@@ -190,7 +191,8 @@ void EKFLocalizer::timerCallback()
     const auto t_curr = this->now();
     for (size_t i = 0; i < twist_queue_.size(); ++i) {
       const auto twist = twist_queue_.pop_increment_age();
-      bool is_updated = ekf_module_->measurementUpdateTwist(*twist, ekf_dt_, t_curr, twist_diag_info_);
+      bool is_updated =
+        ekf_module_->measurementUpdateTwist(*twist, ekf_dt_, t_curr, twist_diag_info_);
       if (is_updated) {
         twist_is_updated = true;
       }

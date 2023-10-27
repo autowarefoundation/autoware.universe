@@ -24,8 +24,8 @@
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/msg_covariance.hpp>
-#include <fmt/core.h>
 
+#include <fmt/core.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
@@ -76,7 +76,8 @@ void ExtendedKalmanFilterModule::initialize(
 }
 
 geometry_msgs::msg::PoseStamped ExtendedKalmanFilterModule::getCurrentPose(
-  const rclcpp::Time & current_time, const double z, const double roll, const double pitch, bool get_biased_yaw) const
+  const rclcpp::Time & current_time, const double z, const double roll, const double pitch,
+  bool get_biased_yaw) const
 {
   const double x = ekf_.getXelement(IDX::X);
   const double y = ekf_.getXelement(IDX::Y);
@@ -142,8 +143,8 @@ void ExtendedKalmanFilterModule::predictWithDelay(const double dt)
 }
 
 bool ExtendedKalmanFilterModule::measurementUpdatePose(
-  const PoseWithCovariance & pose, const double dt,
-  const rclcpp::Time & t_curr, EKFDiagnosticInfo & pose_diag_info)
+  const PoseWithCovariance & pose, const double dt, const rclcpp::Time & t_curr,
+  EKFDiagnosticInfo & pose_diag_info)
 {
   if (pose.header.frame_id != params_.pose_frame_id) {
     warning_->warnThrottle(
@@ -227,8 +228,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped ExtendedKalmanFilterModule::compen
 }
 
 bool ExtendedKalmanFilterModule::measurementUpdateTwist(
-  const TwistWithCovariance & twist, const double dt,
-  const rclcpp::Time & t_curr, EKFDiagnosticInfo & twist_diag_info)
+  const TwistWithCovariance & twist, const double dt, const rclcpp::Time & t_curr,
+  EKFDiagnosticInfo & twist_diag_info)
 {
   if (twist.header.frame_id != "base_link") {
     warning_->warnThrottle("twist frame_id must be base_link", 2000);
