@@ -64,6 +64,7 @@ private:
   Odometry latest_odometry_;
   Odometry prev_odometry_;
   std::vector<TwistWithCovarianceStamped> twist_buffer_;
+  bool set_first_odometry_;
 };
 
 #endif  // POSE_INSTABILITY_DETECTOR_HPP_

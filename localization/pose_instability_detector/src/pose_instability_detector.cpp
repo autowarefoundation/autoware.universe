@@ -27,7 +27,8 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
   threshold_linear_z_(this->declare_parameter<double>("threshold_linear_z")),
   threshold_angular_x_(this->declare_parameter<double>("threshold_angular_x")),
   threshold_angular_y_(this->declare_parameter<double>("threshold_angular_y")),
-  threshold_angular_z_(this->declare_parameter<double>("threshold_angular_z"))
+  threshold_angular_z_(this->declare_parameter<double>("threshold_angular_z")),
+  set_first_odometry_(false)
 {
   odometry_sub_ = this->create_subscription<Odometry>(
     "~/input/odometry", 10,
@@ -58,6 +59,12 @@ void PoseInstabilityDetector::callback_twist(
 
 void PoseInstabilityDetector::callback_timer()
 {
+  if (!set_first_odometry_) {
+    prev_odometry_ = latest_odometry_;
+    set_first_odometry_ = true;
+    return;
+  }
+
   auto quat_to_rpy = [](const Quaternion & quat) {
     tf2::Quaternion tf2_quat(quat.x, quat.y, quat.z, quat.w);
     tf2::Matrix3x3 mat(tf2_quat);
