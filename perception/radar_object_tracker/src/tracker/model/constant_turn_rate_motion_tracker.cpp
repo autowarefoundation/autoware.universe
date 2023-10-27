@@ -548,8 +548,13 @@ bool ConstantTurnRateMotionTracker::getTrackedObject(
     pose_with_cov.pose.orientation.y = filtered_quaternion.y();
     pose_with_cov.pose.orientation.z = filtered_quaternion.z();
     pose_with_cov.pose.orientation.w = filtered_quaternion.w();
-    object.kinematics.orientation_availability =
-      autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
+    if (trust_yaw_input_) {
+      object.kinematics.orientation_availability =
+        autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
+    } else {
+      object.kinematics.orientation_availability =
+        autoware_auto_perception_msgs::msg::TrackedObjectKinematics::UNAVAILABLE;
+    }
   }
   // twist
   // twist need to converted to local coordinate
