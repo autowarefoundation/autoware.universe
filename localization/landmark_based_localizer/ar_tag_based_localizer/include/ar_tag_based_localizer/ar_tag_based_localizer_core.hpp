@@ -67,7 +67,7 @@
 class ArTagBasedLocalizer : public rclcpp::Node
 {
 public:
-  ArTagBasedLocalizer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  explicit ArTagBasedLocalizer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
   bool setup();
 
 private:

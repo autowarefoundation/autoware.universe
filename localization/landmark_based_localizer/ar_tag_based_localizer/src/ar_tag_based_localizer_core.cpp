@@ -219,7 +219,7 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
     image_pub_.publish(out_msg.toImageMsg());
   }
 
-  const int detected_tags = markers.size();
+  const int detected_tags = static_cast<int>(markers.size());
 
   diagnostic_msgs::msg::DiagnosticStatus diag_status;
 

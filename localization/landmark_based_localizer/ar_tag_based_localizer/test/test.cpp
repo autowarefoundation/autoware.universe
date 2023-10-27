@@ -52,7 +52,7 @@ protected:
   std::shared_ptr<ArTagBasedLocalizer> node_;
 };
 
-TEST_F(TestArTagBasedLocalizer, test_setup)
+TEST_F(TestArTagBasedLocalizer, test_setup)  // NOLINT
 {
   EXPECT_TRUE(node_->setup());
 }
