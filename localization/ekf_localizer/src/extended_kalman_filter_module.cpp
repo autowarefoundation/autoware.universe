@@ -20,15 +20,19 @@
 #include "ekf_localizer/measurement.hpp"
 #include "ekf_localizer/numeric.hpp"
 #include "ekf_localizer/state_transition.hpp"
+#include "ekf_localizer/warning_message.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/msg_covariance.hpp>
+#include <fmt/core.h>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
-ExtendedKalmanFilterModule::ExtendedKalmanFilterModule(const HyperParameters params)
-: dim_x_(6),  // x, y, yaw, yaw_bias, vx, wz
+ExtendedKalmanFilterModule::ExtendedKalmanFilterModule(
+  std::shared_ptr<Warning> warning, const HyperParameters params)
+: warning_(std::move(warning)),
+  dim_x_(6),  // x, y, yaw, yaw_bias, vx, wz
   params_(params)
 {
   Eigen::MatrixXd X = Eigen::MatrixXd::Zero(dim_x_, 1);
@@ -72,15 +76,12 @@ void ExtendedKalmanFilterModule::initialize(
 }
 
 geometry_msgs::msg::PoseStamped ExtendedKalmanFilterModule::getCurrentPose(
-  const rclcpp::Time & current_time, bool get_biased_yaw) const
+  const rclcpp::Time & current_time, const double z, const double roll, const double pitch, bool get_biased_yaw) const
 {
   const double x = ekf_.getXelement(IDX::X);
   const double y = ekf_.getXelement(IDX::Y);
-  const double z = z_filter_.get_x();
   const double biased_yaw = ekf_.getXelement(IDX::YAW);
   const double yaw_bias = ekf_.getXelement(IDX::YAWB);
-  const double roll = roll_filter_.get_x();
-  const double pitch = pitch_filter_.get_x();
   const double yaw = biased_yaw + yaw_bias;
   geometry_msgs::msg::PoseStamped current_ekf_pose;
   current_ekf_pose.header.frame_id = params_.pose_frame_id;
@@ -125,16 +126,6 @@ double ExtendedKalmanFilterModule::getYawBias() const
   return ekf_.getLatestX()(IDX::YAWB);
 }
 
-EKFDiagnosticInfo ExtendedKalmanFilterModule::getPoseDiagInfo() const
-{
-  return pose_diag_info_;
-}
-
-EKFDiagnosticInfo ExtendedKalmanFilterModule::getTwistDiagInfo() const
-{
-  return twist_diag_info_;
-}
-
 void ExtendedKalmanFilterModule::predictWithDelay(const double dt)
 {
   const Eigen::MatrixXd X_curr = ekf_.getLatestX();
@@ -150,90 +141,37 @@ void ExtendedKalmanFilterModule::predictWithDelay(const double dt)
   ekf_.predictWithDelay(X_next, A, Q);
 }
 
-void ExtendedKalmanFilterModule::measurementUpdatePoseQueue(
-  AgedObjectQueue<PoseWithCovariance::SharedPtr> & pose_queue, const double dt,
-  const rclcpp::Time & current_stamp)
-{
-  pose_diag_info_.queue_size = pose_queue.size();
-  pose_diag_info_.is_passed_delay_gate = true;
-  pose_diag_info_.delay_time = 0.0;
-  pose_diag_info_.delay_time_threshold = 0.0;
-  pose_diag_info_.is_passed_mahalanobis_gate = true;
-  pose_diag_info_.mahalanobis_distance = 0.0;
-
-  bool pose_is_updated = false;
-
-  if (!pose_queue.empty()) {
-    // save the initial size because the queue size can change in the loop
-    const size_t n = pose_queue.size();
-    for (size_t i = 0; i < n; ++i) {
-      const auto pose = pose_queue.pop_increment_age();
-      bool is_updated = measurementUpdatePose(*pose, dt, current_stamp);
-      if (is_updated) {
-        pose_is_updated = true;
-      }
-    }
-  }
-  pose_diag_info_.no_update_count = pose_is_updated ? 0 : (pose_diag_info_.no_update_count + 1);
-}
-
-void ExtendedKalmanFilterModule::measurementUpdateTwistQueue(
-  AgedObjectQueue<TwistWithCovariance::SharedPtr> & twist_queue, const double dt,
-  const rclcpp::Time & current_stamp)
-{
-  twist_diag_info_.queue_size = twist_queue.size();
-  twist_diag_info_.is_passed_delay_gate = true;
-  twist_diag_info_.delay_time = 0.0;
-  twist_diag_info_.delay_time_threshold = 0.0;
-  twist_diag_info_.is_passed_mahalanobis_gate = true;
-  twist_diag_info_.mahalanobis_distance = 0.0;
-
-  bool twist_is_updated = false;
-
-  if (!twist_queue.empty()) {
-    // save the initial size because the queue size can change in the loop
-    const size_t n = twist_queue.size();
-    for (size_t i = 0; i < n; ++i) {
-      const auto twist = twist_queue.pop_increment_age();
-      bool is_updated = measurementUpdateTwist(*twist, dt, current_stamp);
-      if (is_updated) {
-        twist_is_updated = true;
-      }
-    }
-  }
-  twist_diag_info_.no_update_count = twist_is_updated ? 0 : (twist_diag_info_.no_update_count + 1);
-}
-
 bool ExtendedKalmanFilterModule::measurementUpdatePose(
-  const PoseWithCovariance & pose, const double dt, const rclcpp::Time & t_curr)
+  const PoseWithCovariance & pose, const double dt,
+  const rclcpp::Time & t_curr, EKFDiagnosticInfo & pose_diag_info)
 {
-  // if (pose.header.frame_id != params_.pose_frame_id) {
-  //   warning_.warnThrottle(
-  //     fmt::format(
-  //       "pose frame_id is %s, but pose_frame is set as %s. They must be same.",
-  //       pose.header.frame_id.c_str(), params_.pose_frame_id.c_str()),
-  //     2000);
-  // }
+  if (pose.header.frame_id != params_.pose_frame_id) {
+    warning_->warnThrottle(
+      fmt::format(
+        "pose frame_id is %s, but pose_frame is set as %s. They must be same.",
+        pose.header.frame_id.c_str(), params_.pose_frame_id.c_str()),
+      2000);
+  }
   const Eigen::MatrixXd X_curr = ekf_.getLatestX();
 
   constexpr int dim_y = 3;  // pos_x, pos_y, yaw, depending on Pose output
 
   /* Calculate delay step */
   double delay_time = (t_curr - pose.header.stamp).seconds() + params_.pose_additional_delay;
-  // if (delay_time < 0.0) {
-  //   warning_.warnThrottle(poseDelayTimeWarningMessage(delay_time), 1000);
-  // }
+  if (delay_time < 0.0) {
+    warning_->warnThrottle(poseDelayTimeWarningMessage(delay_time), 1000);
+  }
 
   delay_time = std::max(delay_time, 0.0);
 
   const int delay_step = std::roundf(delay_time / dt);
 
-  pose_diag_info_.delay_time = std::max(delay_time, pose_diag_info_.delay_time);
-  pose_diag_info_.delay_time_threshold = params_.extend_state_step * dt;
+  pose_diag_info.delay_time = std::max(delay_time, pose_diag_info.delay_time);
+  pose_diag_info.delay_time_threshold = params_.extend_state_step * dt;
   if (delay_step >= params_.extend_state_step) {
-    pose_diag_info_.is_passed_delay_gate = false;
-    // warning_.warnThrottle(
-    //   poseDelayStepWarningMessage(delay_time, params_.extend_state_step, dt), 2000);
+    pose_diag_info.is_passed_delay_gate = false;
+    warning_->warnThrottle(
+      poseDelayStepWarningMessage(delay_time, params_.extend_state_step, dt), 2000);
     return false;
   }
 
@@ -248,8 +186,8 @@ bool ExtendedKalmanFilterModule::measurementUpdatePose(
   y << pose.pose.pose.position.x, pose.pose.pose.position.y, yaw;
 
   if (hasNan(y) || hasInf(y)) {
-    // warning_.warn(
-    //   "[EKF] pose measurement matrix includes NaN of Inf. ignore update. check pose message.");
+    warning_->warn(
+      "[EKF] pose measurement matrix includes NaN of Inf. ignore update. check pose message.");
     return false;
   }
 
@@ -261,11 +199,11 @@ bool ExtendedKalmanFilterModule::measurementUpdatePose(
   const Eigen::MatrixXd P_y = P_curr.block(0, 0, dim_y, dim_y);
 
   const double distance = mahalanobis(y_ekf, y, P_y);
-  pose_diag_info_.mahalanobis_distance = std::max(distance, pose_diag_info_.mahalanobis_distance);
+  pose_diag_info.mahalanobis_distance = std::max(distance, pose_diag_info.mahalanobis_distance);
   if (distance > params_.pose_gate_dist) {
-    pose_diag_info_.is_passed_mahalanobis_gate = false;
-    // warning_.warnThrottle(mahalanobisWarningMessage(distance, params_.pose_gate_dist), 2000);
-    // warning_.warnThrottle("Ignore the measurement data.", 2000);
+    pose_diag_info.is_passed_mahalanobis_gate = false;
+    warning_->warnThrottle(mahalanobisWarningMessage(distance, params_.pose_gate_dist), 2000);
+    warning_->warnThrottle("Ignore the measurement data.", 2000);
     return false;
   }
 
@@ -274,26 +212,26 @@ bool ExtendedKalmanFilterModule::measurementUpdatePose(
     poseMeasurementCovariance(pose.pose.covariance, params_.pose_smoothing_steps);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
-
-  // Considering change of z value due to measurement pose delay
-  const auto rpy = tier4_autoware_utils::getRPY(pose.pose.pose.orientation);
-  const double dz_delay = ekf_.getXelement(IDX::VX) * delay_time * std::sin(-rpy.y);
-  geometry_msgs::msg::PoseWithCovarianceStamped pose_with_z_delay;
-  pose_with_z_delay = pose;
-  pose_with_z_delay.pose.pose.position.z += dz_delay;
-
-  updateSimple1DFilters(pose_with_z_delay, params_.pose_smoothing_steps);
-
   return true;
 }
 
+geometry_msgs::msg::PoseWithCovarianceStamped ExtendedKalmanFilterModule::compensatePoseWithZDelay(
+  const PoseWithCovariance & pose, const double delay_time)
+{
+  const auto rpy = tier4_autoware_utils::getRPY(pose.pose.pose.orientation);
+  const double dz_delay = ekf_.getXelement(IDX::VX) * delay_time * std::sin(-rpy.y);
+  PoseWithCovariance pose_with_z_delay;
+  pose_with_z_delay = pose;
+  pose_with_z_delay.pose.pose.position.z += dz_delay;
+  return pose_with_z_delay;
+}
+
 bool ExtendedKalmanFilterModule::measurementUpdateTwist(
-  const TwistWithCovariance & twist, const double dt, const rclcpp::Time & t_curr)
+  const TwistWithCovariance & twist, const double dt,
+  const rclcpp::Time & t_curr, EKFDiagnosticInfo & twist_diag_info)
 {
   if (twist.header.frame_id != "base_link") {
-    // RCLCPP_WARN_THROTTLE(
-    //   get_logger(), *get_clock(), std::chrono::milliseconds(2000).count(),
-    //   "twist frame_id must be base_link");
+    warning_->warnThrottle("twist frame_id must be base_link", 2000);
   }
 
   const Eigen::MatrixXd X_curr = ekf_.getLatestX();
@@ -302,19 +240,19 @@ bool ExtendedKalmanFilterModule::measurementUpdateTwist(
 
   /* Calculate delay step */
   double delay_time = (t_curr - twist.header.stamp).seconds() + params_.twist_additional_delay;
-  // if (delay_time < 0.0) {
-  //   warning_.warnThrottle(twistDelayTimeWarningMessage(delay_time), 1000);
-  // }
+  if (delay_time < 0.0) {
+    warning_->warnThrottle(twistDelayTimeWarningMessage(delay_time), 1000);
+  }
   delay_time = std::max(delay_time, 0.0);
 
   const int delay_step = std::roundf(delay_time / dt);
 
-  twist_diag_info_.delay_time = std::max(delay_time, twist_diag_info_.delay_time);
-  twist_diag_info_.delay_time_threshold = params_.extend_state_step * dt;
+  twist_diag_info.delay_time = std::max(delay_time, twist_diag_info.delay_time);
+  twist_diag_info.delay_time_threshold = params_.extend_state_step * dt;
   if (delay_step >= params_.extend_state_step) {
-    twist_diag_info_.is_passed_delay_gate = false;
-    // warning_.warnThrottle(
-    //   twistDelayStepWarningMessage(delay_time, params_.extend_state_step, dt), 2000);
+    twist_diag_info.is_passed_delay_gate = false;
+    warning_->warnThrottle(
+      twistDelayStepWarningMessage(delay_time, params_.extend_state_step, dt), 2000);
     return false;
   }
 
@@ -323,8 +261,8 @@ bool ExtendedKalmanFilterModule::measurementUpdateTwist(
   y << twist.twist.twist.linear.x, twist.twist.twist.angular.z;
 
   if (hasNan(y) || hasInf(y)) {
-    // warning_.warn(
-    //   "[EKF] twist measurement matrix includes NaN of Inf. ignore update. check twist message.");
+    warning_->warn(
+      "[EKF] twist measurement matrix includes NaN of Inf. ignore update. check twist message.");
     return false;
   }
 
@@ -335,11 +273,11 @@ bool ExtendedKalmanFilterModule::measurementUpdateTwist(
   const Eigen::MatrixXd P_y = P_curr.block(4, 4, dim_y, dim_y);
 
   const double distance = mahalanobis(y_ekf, y, P_y);
-  twist_diag_info_.mahalanobis_distance = std::max(distance, twist_diag_info_.mahalanobis_distance);
+  twist_diag_info.mahalanobis_distance = std::max(distance, twist_diag_info.mahalanobis_distance);
   if (distance > params_.twist_gate_dist) {
-    twist_diag_info_.is_passed_mahalanobis_gate = false;
-    // warning_.warnThrottle(mahalanobisWarningMessage(distance, params_.twist_gate_dist), 2000);
-    // warning_.warnThrottle("Ignore the measurement data.", 2000);
+    twist_diag_info.is_passed_mahalanobis_gate = false;
+    warning_->warnThrottle(mahalanobisWarningMessage(distance, params_.twist_gate_dist), 2000);
+    warning_->warnThrottle("Ignore the measurement data.", 2000);
     return false;
   }
 

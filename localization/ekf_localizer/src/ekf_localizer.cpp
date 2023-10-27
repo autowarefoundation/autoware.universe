@@ -48,7 +48,7 @@ using std::placeholders::_1;
 
 EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options),
-  warning_(std::make_unique<Warning>(this)),
+  warning_(std::make_shared<Warning>(this)),
   params_(this),
   ekf_rate_(params_.ekf_rate),
   ekf_dt_(params_.ekf_dt),
@@ -98,7 +98,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   tf_br_ = std::make_shared<tf2_ros::TransformBroadcaster>(
     std::shared_ptr<rclcpp::Node>(this, [](auto) {}));
 
-  ekf_module_ = std::make_unique<ExtendedKalmanFilterModule>(params_);
+  ekf_module_ = std::make_unique<ExtendedKalmanFilterModule>(warning_, params_);
 
   z_filter_.set_proc_dev(1.0);
   roll_filter_.set_proc_dev(0.01);
@@ -147,15 +147,64 @@ void EKFLocalizer::timerCallback()
   ekf_module_->predictWithDelay(ekf_dt_);
 
   /* pose measurement update */
-  ekf_module_->measurementUpdatePoseQueue(pose_queue_, ekf_dt_, this->now());
+  pose_diag_info_.queue_size = pose_queue_.size();
+  pose_diag_info_.is_passed_delay_gate = true;
+  pose_diag_info_.delay_time = 0.0;
+  pose_diag_info_.delay_time_threshold = 0.0;
+  pose_diag_info_.is_passed_mahalanobis_gate = true;
+  pose_diag_info_.mahalanobis_distance = 0.0;
+
+  bool pose_is_updated = false;
+
+  if (!pose_queue_.empty()) {
+    // save the initial size because the queue size can change in the loop
+    const auto t_curr = this->now();
+    for (size_t i = 0; i < pose_queue_.size(); ++i) {
+      const auto pose = pose_queue_.pop_increment_age();
+      bool is_updated = ekf_module_->measurementUpdatePose(*pose, ekf_dt_, t_curr, pose_diag_info_);
+      if (is_updated) {
+        pose_is_updated = true;
+
+        // Update Simple 1D filter with considering change of z value due to measurement pose delay
+        const double delay_time = (t_curr - pose->header.stamp).seconds() + params_.pose_additional_delay;
+        const auto pose_with_z_delay = ekf_module_->compensatePoseWithZDelay(*pose, delay_time);
+        updateSimple1DFilters(pose_with_z_delay, params_.pose_smoothing_steps);
+      }
+    }
+  }
+  pose_diag_info_.no_update_count = pose_is_updated ? 0 : (pose_diag_info_.no_update_count + 1);
 
   /* twist measurement update */
-  ekf_module_->measurementUpdateTwistQueue(twist_queue_, ekf_dt_, this->now());
+  // ekf_module_->measurementUpdateTwistQueue(twist_queue_, ekf_dt_, this->now());
+  twist_diag_info_.queue_size = twist_queue_.size();
+  twist_diag_info_.is_passed_delay_gate = true;
+  twist_diag_info_.delay_time = 0.0;
+  twist_diag_info_.delay_time_threshold = 0.0;
+  twist_diag_info_.is_passed_mahalanobis_gate = true;
+  twist_diag_info_.mahalanobis_distance = 0.0;
 
+  bool twist_is_updated = false;
+
+  if (!twist_queue_.empty()) {
+    // save the initial size because the queue size can change in the loop
+    const auto t_curr = this->now();
+    for (size_t i = 0; i < twist_queue_.size(); ++i) {
+      const auto twist = twist_queue_.pop_increment_age();
+      bool is_updated = ekf_module_->measurementUpdateTwist(*twist, ekf_dt_, t_curr, twist_diag_info_);
+      if (is_updated) {
+        twist_is_updated = true;
+      }
+    }
+  }
+  twist_diag_info_.no_update_count = twist_is_updated ? 0 : (twist_diag_info_.no_update_count + 1);
+
+  const double z = z_filter_.get_x();
+  const double roll = roll_filter_.get_x();
+  const double pitch = pitch_filter_.get_x();
   const geometry_msgs::msg::PoseStamped current_ekf_pose =
-    ekf_module_->getCurrentPose(this->now(), false);
+    ekf_module_->getCurrentPose(this->now(), z, roll, pitch, false);
   const geometry_msgs::msg::PoseStamped current_biased_ekf_pose =
-    ekf_module_->getCurrentPose(this->now(), true);
+    ekf_module_->getCurrentPose(this->now(), z, roll, pitch, true);
   const geometry_msgs::msg::TwistStamped current_ekf_twist =
     ekf_module_->getCurrentTwist(this->now());
 
@@ -177,9 +226,13 @@ void EKFLocalizer::timerTFCallback()
     return;
   }
 
+  const double z = z_filter_.get_x();
+  const double roll = roll_filter_.get_x();
+  const double pitch = pitch_filter_.get_x();
+
   geometry_msgs::msg::TransformStamped transform_stamped;
   transform_stamped = tier4_autoware_utils::pose2transform(
-    ekf_module_->getCurrentPose(this->now(), false), "base_link");
+    ekf_module_->getCurrentPose(this->now(), z, roll, pitch, false), "base_link");
   transform_stamped.header.stamp = this->now();
   tf_br_->sendTransform(transform_stamped);
 }

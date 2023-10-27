@@ -18,6 +18,7 @@
 #include "ekf_localizer/aged_object_queue.hpp"
 #include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/state_index.hpp"
+#include "ekf_localizer/warning.hpp"
 
 #include <kalman_filter/kalman_filter.hpp>
 #include <kalman_filter/time_delay_kalman_filter.hpp>
@@ -60,37 +61,33 @@ private:
   using Twist = geometry_msgs::msg::TwistStamped;
 
 public:
-  ExtendedKalmanFilterModule(const HyperParameters params);
+  ExtendedKalmanFilterModule(std::shared_ptr<Warning> warning, const HyperParameters params);
 
   void initialize(
     PoseWithCovariance & initial_pose, geometry_msgs::msg::TransformStamped & transform);
 
   geometry_msgs::msg::PoseStamped getCurrentPose(
-    const rclcpp::Time & current_time, bool get_biased_yaw) const;
+    const rclcpp::Time & current_time, const double z, const double roll, const double pitch,
+    bool get_biased_yaw) const;
   geometry_msgs::msg::TwistStamped getCurrentTwist(const rclcpp::Time & current_time) const;
   double getYawBias() const;
-  EKFDiagnosticInfo getPoseDiagInfo() const;
-  EKFDiagnosticInfo getTwistDiagInfo() const;
   std::array<double, 36> getCurrentPoseCovariance() const;
   std::array<double, 36> getCurrentTwistCovariance() const;
 
   void predictWithDelay(const double dt);
-  void measurementUpdatePoseQueue(
-    AgedObjectQueue<PoseWithCovariance::SharedPtr> & pose_queue, const double dt,
-    const rclcpp::Time & current_stamp);
-  void measurementUpdateTwistQueue(
-    AgedObjectQueue<TwistWithCovariance::SharedPtr> & twist_queue, const double dt,
-    const rclcpp::Time & current_stamp);
+  bool measurementUpdatePose(
+    const PoseWithCovariance & pose, const double dt,
+    const rclcpp::Time & t_curr, EKFDiagnosticInfo & pose_diag_info);
+  bool measurementUpdateTwist(
+    const TwistWithCovariance & twist, const double dt,
+    const rclcpp::Time & t_curr, EKFDiagnosticInfo & twist_diag_info);
+  geometry_msgs::msg::PoseWithCovarianceStamped compensatePoseWithZDelay(
+    const PoseWithCovariance & pose, const double delay_time);
 
 private:
-  bool measurementUpdatePose(
-    const PoseWithCovariance & pose, const double dt, const rclcpp::Time & t_curr);
-  bool measurementUpdateTwist(
-    const TwistWithCovariance & twist, const double dt, const rclcpp::Time & t_curr);
-
   TimeDelayKalmanFilter ekf_;
-  EKFDiagnosticInfo pose_diag_info_;
-  EKFDiagnosticInfo twist_diag_info_;
+
+  std::shared_ptr<Warning> warning_;
   const int dim_x_;
   const HyperParameters params_;
 };
