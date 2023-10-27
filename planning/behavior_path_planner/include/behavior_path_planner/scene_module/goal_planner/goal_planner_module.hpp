@@ -142,6 +142,7 @@ public:
   DEFINE_SETTER_GETTER(std::optional<GoalCandidate>, modified_goal_pose)
   DEFINE_SETTER_GETTER(Pose, refined_goal_pose)
   DEFINE_SETTER_GETTER(GoalCandidates, goal_candidates)
+  DEFINE_SETTER_GETTER(Pose, closest_goal_candidate_pose)
   DEFINE_SETTER_GETTER(std::vector<PullOverPath>, pull_over_path_candidates)
   DEFINE_SETTER_GETTER(std::optional<Pose>, closest_start_pose)
 
@@ -174,6 +175,7 @@ private:
   std::optional<GoalCandidate> modified_goal_pose_;
   Pose refined_goal_pose_{};
   GoalCandidates goal_candidates_{};
+  Pose closest_goal_candidate_pose_{};
 
   //  pull over path
   std::vector<PullOverPath> pull_over_path_candidates_;
@@ -217,11 +219,14 @@ public:
     }
   }
 
-  CandidateOutput planCandidate() const override;
-  BehaviorModuleOutput plan() override;
-  BehaviorModuleOutput planWaitingApproval() override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] BehaviorModuleOutput run() override;
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
+  // TODO(someone): remove this, and use base class function
+  [[deprecated]] ModuleStatus updateState() override;
+  BehaviorModuleOutput plan() override;
+  BehaviorModuleOutput planWaitingApproval() override;
   void processOnExit() override;
   void updateData() override;
   void setParameters(const std::shared_ptr<GoalPlannerParameters> & parameters);
@@ -230,15 +235,15 @@ public:
   {
   }
 
+  // not used, but need to override
+  CandidateOutput planCandidate() const override { return CandidateOutput{}; };
+
 private:
-  // The start_planner activates when it receives a new route,
-  // so there is no need to terminate the goal planner.
-  // If terminating it, it may switch to lane following and could generate an inappropriate path.
   bool canTransitSuccessState() override { return false; }
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return true; }
+  bool canTransitIdleToRunningState() override { return false; }
 
   mutable StartGoalPlannerData goal_planner_data_;
 
