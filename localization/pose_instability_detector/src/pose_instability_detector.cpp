@@ -20,7 +20,14 @@
 
 #include <tf2/LinearMath/Quaternion.h>
 
-PoseInstabilityDetector::PoseInstabilityDetector() : Node("pose_instability_detector")
+PoseInstabilityDetector::PoseInstabilityDetector()
+: Node("pose_instability_detector"),
+  threshold_linear_x_(this->declare_parameter<double>("threshold_linear_x")),
+  threshold_linear_y_(this->declare_parameter<double>("threshold_linear_y")),
+  threshold_linear_z_(this->declare_parameter<double>("threshold_linear_z")),
+  threshold_angular_x_(this->declare_parameter<double>("threshold_angular_x")),
+  threshold_angular_y_(this->declare_parameter<double>("threshold_angular_y")),
+  threshold_angular_z_(this->declare_parameter<double>("threshold_angular_z"))
 {
   odometry_sub_ = this->create_subscription<Odometry>(
     "~/input/odometry", 10,
@@ -35,8 +42,7 @@ PoseInstabilityDetector::PoseInstabilityDetector() : Node("pose_instability_dete
     std::chrono::duration<double>(interval_sec),
     std::bind(&PoseInstabilityDetector::callback_timer, this));
 
-  diagnostics_pub_ =
-    this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
+  diagnostics_pub_ = this->create_publisher<DiagnosticArray>("/diagnostics", 10);
 }
 
 void PoseInstabilityDetector::callback_odometry(Odometry::ConstSharedPtr odometry_msg_ptr)
@@ -56,7 +62,7 @@ void PoseInstabilityDetector::callback_timer()
 {
   RCLCPP_INFO_STREAM(get_logger(), "callback_timer");
 
-  auto quat_to_rpy = [](const geometry_msgs::msg::Quaternion & quat) {
+  auto quat_to_rpy = [](const Quaternion & quat) {
     tf2::Quaternion tf2_quat(quat.x, quat.y, quat.z, quat.w);
     tf2::Matrix3x3 mat(tf2_quat);
     double roll, pitch, yaw;
@@ -64,10 +70,10 @@ void PoseInstabilityDetector::callback_timer()
     return std::make_tuple(roll, pitch, yaw);
   };
 
-  geometry_msgs::msg::Pose pose = prev_odometry_.pose.pose;
+  Pose pose = prev_odometry_.pose.pose;
   rclcpp::Time time = rclcpp::Time(prev_odometry_.header.stamp);
   for (const TwistWithCovarianceStamped & twist_with_cov : twist_buffer_) {
-    const geometry_msgs::msg::Twist twist = twist_with_cov.twist.twist;
+    const Twist twist = twist_with_cov.twist.twist;
 
     const rclcpp::Time curr_time = rclcpp::Time(twist_with_cov.header.stamp);
     if (curr_time > latest_odometry_.header.stamp) {
@@ -77,8 +83,7 @@ void PoseInstabilityDetector::callback_timer()
     const rclcpp::Duration time_diff = curr_time - rclcpp::Time(time);
     const double time_diff_sec = time_diff.seconds();
     if (time_diff_sec < 0.0) {
-      RCLCPP_WARN_STREAM(
-        get_logger(), "twist buffer is not sorted. time_diff_sec:" << time_diff_sec);
+      RCLCPP_WARN_STREAM(get_logger(), "time_diff_sec(" << time_diff_sec << ") < 0.0");
       continue;
     }
 
@@ -108,20 +113,55 @@ void PoseInstabilityDetector::callback_timer()
   }
 
   // compare pose and latest_odometry_
-  const geometry_msgs::msg::Pose latest_ekf_pose = latest_odometry_.pose.pose;
-
-  geometry_msgs::msg::PoseStamped ekf_to_odom;
+  const Pose latest_ekf_pose = latest_odometry_.pose.pose;
+  PoseStamped ekf_to_odom;
   ekf_to_odom.pose = tier4_autoware_utils::inverseTransformPose(pose, latest_ekf_pose);
   ekf_to_odom.header.stamp = latest_odometry_.header.stamp;
   ekf_to_odom.header.frame_id = "base_link";
-  RCLCPP_INFO_STREAM(get_logger(), "ekf_to_odom.x:" << ekf_to_odom.pose.position.x);
-  RCLCPP_INFO_STREAM(get_logger(), "ekf_to_odom.y:" << ekf_to_odom.pose.position.y);
-  RCLCPP_INFO_STREAM(get_logger(), "ekf_to_odom.z:" << ekf_to_odom.pose.position.z);
+  const auto [ang_x, ang_y, ang_z] = quat_to_rpy(ekf_to_odom.pose.orientation);
 
-  auto [ang_x, ang_y, ang_z] = quat_to_rpy(ekf_to_odom.pose.orientation);
-  RCLCPP_INFO_STREAM(get_logger(), "ekf_to_odom.ang_x:" << ang_x);
-  RCLCPP_INFO_STREAM(get_logger(), "ekf_to_odom.ang_y:" << ang_y);
-  RCLCPP_INFO_STREAM(get_logger(), "ekf_to_odom.ang_z:" << ang_z);
+  // publish diagnostics
+  const std::vector<double> values = {
+    ekf_to_odom.pose.position.x,
+    ekf_to_odom.pose.position.y,
+    ekf_to_odom.pose.position.z,
+    ang_x,
+    ang_y,
+    ang_z};
+
+  const std::vector<double> thresholds = {threshold_linear_x_,  threshold_linear_y_,
+                                          threshold_linear_z_,  threshold_angular_x_,
+                                          threshold_angular_y_, threshold_angular_z_};
+
+  const std::vector<std::string> labels = {"linear_x",  "linear_y",  "linear_z",
+                                           "angular_x", "angular_y", "angular_z"};
+
+  DiagnosticArray diagnostics;
+  diagnostics.header.stamp = latest_odometry_.header.stamp;
+
+  DiagnosticStatus status;
+  status.name = "pose_instability_detector";
+  bool all_ok = true;
+
+  for (size_t i = 0; i < values.size(); ++i) {
+    const bool ok = (std::abs(values[i]) < thresholds[i]);
+    all_ok &= ok;
+    diagnostic_msgs::msg::KeyValue kv;
+    kv.key = labels[i] + ":threshold";
+    kv.value = std::to_string(thresholds[i]);
+    status.values.push_back(kv);
+    kv.key = labels[i] + ":value";
+    kv.value = std::to_string(values[i]);
+    status.values.push_back(kv);
+    kv.key = labels[i] + ":status";
+    kv.value = (ok ? "OK" : "WARN");
+    status.values.push_back(kv);
+  }
+  status.level = (all_ok ? DiagnosticStatus::OK : DiagnosticStatus::WARN);
+  status.message = (all_ok ? "OK" : "WARN");
+  diagnostics.status.emplace_back(status);
+
+  diagnostics_pub_->publish(diagnostics);
 
   // prepare for next loop
   prev_odometry_ = latest_odometry_;

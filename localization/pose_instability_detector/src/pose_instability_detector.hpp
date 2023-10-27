@@ -18,6 +18,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
@@ -25,8 +26,15 @@
 
 class PoseInstabilityDetector : public rclcpp::Node
 {
-  using Odometry = nav_msgs::msg::Odometry;
+  using Quaternion = geometry_msgs::msg::Quaternion;
+  using Twist = geometry_msgs::msg::Twist;
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
+  using Pose = geometry_msgs::msg::Pose;
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
+  using Odometry = nav_msgs::msg::Odometry;
+  using KeyValue = diagnostic_msgs::msg::KeyValue;
+  using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
+  using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
 
 public:
   PoseInstabilityDetector();
@@ -36,12 +44,23 @@ private:
   void callback_twist(TwistWithCovarianceStamped::ConstSharedPtr twist_msg_ptr);
   void callback_timer();
 
+  // subscribers and timer
   rclcpp::Subscription<Odometry>::SharedPtr odometry_sub_;
   rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
+  // publisher
+  rclcpp::Publisher<DiagnosticArray>::SharedPtr diagnostics_pub_;
 
+  // parameters
+  const double threshold_linear_x_;
+  const double threshold_linear_y_;
+  const double threshold_linear_z_;
+  const double threshold_angular_x_;
+  const double threshold_angular_y_;
+  const double threshold_angular_z_;
+
+  // variables
   Odometry latest_odometry_;
   Odometry prev_odometry_;
   std::vector<TwistWithCovarianceStamped> twist_buffer_;
