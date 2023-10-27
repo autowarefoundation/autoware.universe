@@ -275,6 +275,8 @@ void GoalPlannerModule::processOnExit()
   resetPathCandidate();
   resetPathReference();
   debug_marker_.markers.clear();
+  status_.reset();
+  last_approval_data_.reset();
 }
 
 bool GoalPlannerModule::isExecutionRequested() const
@@ -916,12 +918,10 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
 
   // Use decided path
   if (status_.get_has_decided_path()) {
-    if (isActivated() && isWaitingApproval()) {
+    if (isActivated() && !last_approval_data_) {
       {
-        const std::lock_guard<std::recursive_mutex> lock(mutex_);
-        status_.set_last_approved_time(std::make_shared<rclcpp::Time>(clock_->now()));
-        status_.set_last_approved_pose(
-          std::make_shared<Pose>(planner_data_->self_odometry->pose.pose));
+        last_approval_data_ = std::make_unique<LastApprovalData>(
+          clock_->now(), planner_data_->self_odometry->pose.pose);
       }
       decideVelocity();
     }
@@ -1170,12 +1170,11 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
 
 void GoalPlannerModule::transitionToNextPathIfFinishingCurrentPath()
 {
-  if (isActivated() && status_.get_last_approved_time()) {
+  if (isActivated() && last_approval_data_) {
     // if using arc_path and finishing current_path, get next path
     // enough time for turn signal
-    const bool has_passed_enough_time =
-      (clock_->now() - *status_.get_last_approved_time()).seconds() >
-      planner_data_->parameters.turn_signal_search_time;
+    const bool has_passed_enough_time = (clock_->now() - last_approval_data_->time).seconds() >
+                                        planner_data_->parameters.turn_signal_search_time;
 
     if (hasFinishedCurrentPath() && has_passed_enough_time && status_.get_require_increment()) {
       if (incrementPathIndex()) {
@@ -1310,10 +1309,9 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo() const
   {
     // ego decelerates so that current pose is the point `turn_light_on_threshold_time` seconds
     // before starting pull_over
-    turn_signal.desired_start_point =
-      status_.get_last_approved_pose() && status_.get_has_decided_path()
-        ? *status_.get_last_approved_pose()
-        : current_pose;
+    turn_signal.desired_start_point = last_approval_data_ && status_.get_has_decided_path()
+                                        ? last_approval_data_->pose
+                                        : current_pose;
     turn_signal.desired_end_point = end_pose;
     turn_signal.required_start_point = start_pose;
     turn_signal.required_end_point = end_pose;
