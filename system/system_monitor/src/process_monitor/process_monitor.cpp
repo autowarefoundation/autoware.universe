@@ -421,9 +421,13 @@ bool ProcessMonitor::getCommandLineFromPiD(const std::string & pid, std::string 
 
   if (commandFile.is_open()) {
     std::vector<uint8_t> buffer;
-    std::copy(std::istream_iterator<uint8_t>(commandFile), std::istream_iterator<uint8_t>(), std::back_inserter(buffer));
+    std::copy(
+      std::istream_iterator<uint8_t>(commandFile), std::istream_iterator<uint8_t>(),
+      std::back_inserter(buffer));
     commandFile.close();
-    std::replace(buffer.begin(), buffer.end(), '\0', ' ');  // 0x00 is used as delimiter in /cmdline instead of 0x20 (space)
+    std::replace(
+      buffer.begin(), buffer.end(), '\0',
+      ' ');  // 0x00 is used as delimiter in /cmdline instead of 0x20 (space)
     command = std::string(buffer.begin(), buffer.end());
     return (buffer.size() > 0) ? true : false;  // cmdline is empty if it is kernel process
   } else {
