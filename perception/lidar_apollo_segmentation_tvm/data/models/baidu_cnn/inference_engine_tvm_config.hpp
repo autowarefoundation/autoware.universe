@@ -15,7 +15,7 @@
 #include "tvm_utility/pipeline.hpp"
 
 #ifndef PERCEPTION__LIDAR_APOLLO_SEGMENTATION_TVM__DATA__MODELS__BAIDU_CNN__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
-#define PERCEPTION__LIDAR_APOLLO_SEGMENTATION_TVM__DATA__MODELS__BAIDU_CNN__INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#define PERCEPTION__LIDAR_APOLLO_SEGMENTATION_TVM__DATA__MODELS__BAIDU_CNN__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
 
 namespace model_zoo
 {
@@ -51,5 +51,6 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
 }  // namespace lidar_obstacle_detection
 }  // namespace perception
 }  // namespace model_zoo
+// NOLINTBEGIN
 #endif  // PERCEPTION__LIDAR_APOLLO_SEGMENTATION_TVM__DATA__MODELS__BAIDU_CNN__INFERENCE_ENGINE_TVM_CONFIG_HPP_
-        // // NOLINT
+// NOLINTEND
