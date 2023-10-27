@@ -44,9 +44,21 @@
 
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
+// initialize static parameter
+bool LinearMotionTracker::is_initialized_ = false;
+LinearMotionTracker::EkfParams LinearMotionTracker::ekf_params_;
+double LinearMotionTracker::max_vx_;
+double LinearMotionTracker::max_vy_;
+double LinearMotionTracker::filter_tau_;
+double LinearMotionTracker::filter_dt_;
+bool LinearMotionTracker::estimate_acc_;
+bool LinearMotionTracker::trust_yaw_input_;
+bool LinearMotionTracker::trust_twist_input_;
+bool LinearMotionTracker::use_polar_coordinate_in_measurement_noise_;
+
 LinearMotionTracker::LinearMotionTracker(
   const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const std::string & /*tracker_param_file*/, const std::uint8_t & /*label*/)
+  const std::string & tracker_param_file, const std::uint8_t & /*label*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("LinearMotionTracker")),
   last_update_time_(time),
@@ -55,11 +67,13 @@ LinearMotionTracker::LinearMotionTracker(
   object_ = object;
 
   // load setting from yaml file
-  const std::string default_setting_file =
-    ament_index_cpp::get_package_share_directory("radar_object_tracker") +
-    "/config/tracking/linear_motion_tracker.yaml";
-  loadDefaultModelParameters(default_setting_file);
-  // loadModelParameters(tracker_param_file, label);
+  if (!is_initialized_) {
+    loadDefaultModelParameters(tracker_param_file);
+    is_initialized_ = true;
+  }
+  // shape initialization
+  bounding_box_ = {0.5, 0.5, 1.7};
+  cylinder_ = {0.3, 1.7};
 
   // initialize X matrix and position
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
@@ -225,11 +239,6 @@ void LinearMotionTracker::loadDefaultModelParameters(const std::string & path)
   const float max_speed_kmph = config["default"]["limit"]["max_speed"].as<float>();  // [km/h]
   max_vx_ = tier4_autoware_utils::kmph2mps(max_speed_kmph);                          // [m/s]
   max_vy_ = tier4_autoware_utils::kmph2mps(max_speed_kmph);                          // [rad/s]
-
-  // shape initialization
-  // (TODO): this may be written in another yaml file based on classify result
-  bounding_box_ = {0.5, 0.5, 1.7};
-  cylinder_ = {0.3, 1.7};
 }
 
 bool LinearMotionTracker::predict(const rclcpp::Time & time)

@@ -44,9 +44,20 @@
 
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
+// init static member variables
+bool ConstantTurnRateMotionTracker::is_initialized_ = false;
+ConstantTurnRateMotionTracker::EkfParams ConstantTurnRateMotionTracker::ekf_params_;
+double ConstantTurnRateMotionTracker::max_vx_;
+double ConstantTurnRateMotionTracker::filter_tau_;
+double ConstantTurnRateMotionTracker::filter_dt_;
+bool ConstantTurnRateMotionTracker::assume_zero_yaw_rate_;
+bool ConstantTurnRateMotionTracker::trust_yaw_input_;
+bool ConstantTurnRateMotionTracker::trust_twist_input_;
+bool ConstantTurnRateMotionTracker::use_polar_coordinate_in_measurement_noise_;
+
 ConstantTurnRateMotionTracker::ConstantTurnRateMotionTracker(
   const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const std::string & /*tracker_param_file*/, const std::uint8_t & /*label*/)
+  const std::string & tracker_param_file, const std::uint8_t & /*label*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("ConstantTurnRateMotionTracker")),
   last_update_time_(time),
@@ -55,11 +66,14 @@ ConstantTurnRateMotionTracker::ConstantTurnRateMotionTracker(
   object_ = object;
 
   // load setting from yaml file
-  const std::string default_setting_file =
-    ament_index_cpp::get_package_share_directory("radar_object_tracker") +
-    "/config/tracking/constant_turn_rate_motion_tracker.yaml";
-  loadDefaultModelParameters(default_setting_file);
-  // loadModelParameters(tracker_param_file, label);
+  if (!is_initialized_) {
+    loadDefaultModelParameters(tracker_param_file);  // currently not using label
+    is_initialized_ = true;
+  }
+
+  // shape initialization
+  bounding_box_ = {0.5, 0.5, 1.7};
+  cylinder_ = {0.3, 1.7};
 
   // initialize X matrix and position
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
@@ -168,13 +182,11 @@ void ConstantTurnRateMotionTracker::loadDefaultModelParameters(const std::string
     config["default"]["ekf_params"]["initial_covariance_std"]["vx"].as<float>();  // [m/(s)]
   const float p0_stddev_wz =
     config["default"]["ekf_params"]["initial_covariance_std"]["wz"].as<float>();  // [rad/s]
-  assume_zero_yaw_rate_ =
-    config["default"]["assume_zero_yaw_rate"].as<bool>(false);                  // default false
-  trust_yaw_input_ = config["default"]["trust_yaw_input"].as<bool>(false);      // default false
-  trust_twist_input_ = config["default"]["trust_twist_input"].as<bool>(false);  // default false
+  assume_zero_yaw_rate_ = config["default"]["assume_zero_yaw_rate"].as<bool>();   // default false
+  trust_yaw_input_ = config["default"]["trust_yaw_input"].as<bool>();             // default false
+  trust_twist_input_ = config["default"]["trust_twist_input"].as<bool>();         // default false
   use_polar_coordinate_in_measurement_noise_ =
-    config["default"]["use_polar_coordinate_in_measurement_noise"].as<bool>(
-      false);  // default false
+    config["default"]["use_polar_coordinate_in_measurement_noise"].as<bool>();  // default false
   ekf_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
   ekf_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
   ekf_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
@@ -191,18 +203,13 @@ void ConstantTurnRateMotionTracker::loadDefaultModelParameters(const std::string
   ekf_params_.p0_cov_wz = std::pow(p0_stddev_wz, 2.0);
 
   // lpf filter parameters
-  filter_tau_ = config["default"]["low_pass_filter"]["time_constant"].as<float>(1.0);  // [s]
-  filter_dt_ = config["default"]["low_pass_filter"]["sampling_time"].as<float>(0.1);   // [s]
+  filter_tau_ = config["default"]["low_pass_filter"]["time_constant"].as<float>();  // [s]
+  filter_dt_ = config["default"]["low_pass_filter"]["sampling_time"].as<float>();   // [s]
 
   // limitation
   // (TODO): this may be written in another yaml file based on classify result
   const float max_speed_kmph = config["default"]["limit"]["max_speed"].as<float>();  // [km/h]
   max_vx_ = tier4_autoware_utils::kmph2mps(max_speed_kmph);                          // [m/s]
-
-  // shape initialization
-  // (TODO): this may be written in another yaml file based on classify result
-  bounding_box_ = {0.5, 0.5, 1.7};
-  cylinder_ = {0.3, 1.7};
 }
 
 bool ConstantTurnRateMotionTracker::predict(const rclcpp::Time & time)

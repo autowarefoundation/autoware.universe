@@ -54,21 +54,24 @@ private:
     double p0_cov_yaw;
     double p0_cov_vx;
     double p0_cov_wz;
-  } ekf_params_;
+  };
+  static EkfParams ekf_params_;
 
   // limitation
-  double max_vx_;
+  static double max_vx_;
   // rough tracking parameters
   float z_;
 
   // lpf parameter
-  double filter_tau_;  // time constant of 1st order low pass filter
-  double filter_dt_;   // sampling time of 1st order low pass filter
+  static double filter_tau_;  // time constant of 1st order low pass filter
+  static double filter_dt_;   // sampling time of 1st order low pass filter
 
-  bool trust_yaw_input_;
-  bool trust_twist_input_;
-  bool use_polar_coordinate_in_measurement_noise_;
-  bool assume_zero_yaw_rate_;
+  // static flags
+  static bool is_initialized_;
+  static bool trust_yaw_input_;
+  static bool trust_twist_input_;
+  static bool use_polar_coordinate_in_measurement_noise_;
+  static bool assume_zero_yaw_rate_;
 
 private:
   struct BoundingBox
@@ -90,7 +93,7 @@ public:
     const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
     const std::string & tracker_param_file, const std::uint8_t & label);
 
-  void loadDefaultModelParameters(const std::string & path);
+  static void loadDefaultModelParameters(const std::string & path);
   bool predict(const rclcpp::Time & time) override;
   bool predict(const double dt, KalmanFilter & ekf) const;
   bool measure(
