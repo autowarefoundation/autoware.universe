@@ -122,6 +122,11 @@ public:
       {
         double object_margin_to_path;
       } ignore_on_red_traffic_light;
+      struct ForceStop
+      {
+        bool enable;
+        double distance_margin_to_stop_line;
+      } force_stop;
     } collision_detection;
     struct Occlusion
     {

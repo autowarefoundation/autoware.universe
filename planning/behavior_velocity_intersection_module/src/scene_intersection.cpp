@@ -486,7 +486,19 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stop_line_idx = decision_result.collision_stop_line_idx;
-    planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
+    if (planner_param.collision_detection.force_stop.enable) {
+      const double dist_to_stop_line =
+        motion_utils::calcSignedArcLength(path->points, decision_result.closest_idx, stop_line_idx);
+      if (
+        dist_to_stop_line <
+        planner_param.collision_detection.force_stop.distance_margin_to_stop_line) {
+        for (unsigned i = 0; i < path->points.size(); ++i) {
+          planning_utils::setVelocityFromIndex(i, 0.0, path);
+        }
+      }
+    } else {
+      planning_utils::setVelocityFromIndex(stop_line_idx, 0.0, path);
+    }
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stop_line_idx, baselink2front, *path);
     {
