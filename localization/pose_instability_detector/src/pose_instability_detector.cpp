@@ -47,21 +47,17 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
 
 void PoseInstabilityDetector::callback_odometry(Odometry::ConstSharedPtr odometry_msg_ptr)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "callback_odometry:" << odometry_msg_ptr->header.stamp.sec);
   latest_odometry_ = *odometry_msg_ptr;
 }
 
 void PoseInstabilityDetector::callback_twist(
   TwistWithCovarianceStamped::ConstSharedPtr twist_msg_ptr)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "callback_twist:" << twist_msg_ptr->header.stamp.sec);
   twist_buffer_.push_back(*twist_msg_ptr);
 }
 
 void PoseInstabilityDetector::callback_timer()
 {
-  RCLCPP_INFO_STREAM(get_logger(), "callback_timer");
-
   auto quat_to_rpy = [](const Quaternion & quat) {
     tf2::Quaternion tf2_quat(quat.x, quat.y, quat.z, quat.w);
     tf2::Matrix3x3 mat(tf2_quat);
