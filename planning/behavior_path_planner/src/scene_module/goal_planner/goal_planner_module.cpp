@@ -114,6 +114,13 @@ GoalPlannerModule::GoalPlannerModule(
       freespace_parking_timer_cb_group_);
   }
 
+  // Initialize safety checker
+  if (parameters_->safety_check_params.enable_safety_check) {
+    initializeSafetyCheckParameters();
+    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
+      goal_planner_data_.collision_check);
+  }
+
   status_.reset();
 }
 
@@ -232,6 +239,25 @@ BehaviorModuleOutput GoalPlannerModule::run()
   return plan();
 }
 
+void GoalPlannerModule::updateData()
+{
+  // Initialize Occupancy Grid Map
+  // This operation requires waiting for `planner_data_`, hence it is executed here instead of in
+  // the constructor. Ideally, this operation should only need to be performed once.
+  if (
+    parameters_->use_occupancy_grid_for_goal_search ||
+    parameters_->use_occupancy_grid_for_path_collision_check) {
+    initializeOccupancyGridMap();
+  }
+
+  updateOccupancyGrid();
+
+  // set current road lanes, pull over lanes, and drivable lane
+  setLanes();
+
+  generateGoalCandidates();
+}
+
 void GoalPlannerModule::initializeOccupancyGridMap()
 {
   OccupancyGridMapParam occupancy_grid_map_param{};
@@ -254,22 +280,6 @@ void GoalPlannerModule::initializeSafetyCheckParameters()
   utils::start_goal_planner_common::updateSafetyCheckParams(safety_check_params_, parameters_);
   utils::start_goal_planner_common::updateObjectsFilteringParams(
     objects_filtering_params_, parameters_);
-}
-
-void GoalPlannerModule::processOnEntry()
-{
-  // Initialize occupancy grid map
-  if (
-    parameters_->use_occupancy_grid_for_goal_search ||
-    parameters_->use_occupancy_grid_for_path_collision_check) {
-    initializeOccupancyGridMap();
-  }
-  // Initialize safety checker
-  if (parameters_->safety_check_params.enable_safety_check) {
-    initializeSafetyCheckParameters();
-    utils::start_goal_planner_common::initializeCollisionCheckDebugMap(
-      goal_planner_data_.collision_check);
-  }
 }
 
 void GoalPlannerModule::processOnExit()
@@ -547,6 +557,11 @@ void GoalPlannerModule::generateGoalCandidates()
     goal_searcher_->setPlannerData(planner_data_);
     goal_searcher_->setReferenceGoal(status_.get_refined_goal_pose());
     status_.set_goal_candidates(goal_searcher_->search());
+    const auto current_lanes = utils::getExtendedCurrentLanes(
+      planner_data_, parameters_->backward_goal_search_length,
+      parameters_->forward_goal_search_length, false);
+    status_.set_closest_goal_candidate_pose(
+      goal_searcher_->getClosetGoalCandidateAlongLanes(status_.get_goal_candidates()).goal_pose);
   } else {
     GoalCandidate goal_candidate{};
     goal_candidate.goal_pose = goal_pose;
@@ -554,6 +569,7 @@ void GoalPlannerModule::generateGoalCandidates()
     GoalCandidates goal_candidates{};
     goal_candidates.push_back(goal_candidate);
     status_.set_goal_candidates(goal_candidates);
+    status_.set_closest_goal_candidate_pose(goal_pose);
   }
 }
 
@@ -561,8 +577,6 @@ BehaviorModuleOutput GoalPlannerModule::plan()
 {
   resetPathCandidate();
   resetPathReference();
-
-  generateGoalCandidates();
 
   path_reference_ = getPreviousModuleOutput().reference_path;
 
@@ -900,13 +914,15 @@ void GoalPlannerModule::decideVelocity()
 
 BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
 {
+  // if pull over path candidates generation is not finished, use previous module output
+  if (status_.get_pull_over_path_candidates().empty()) {
+    return getPreviousModuleOutput();
+  }
+
   constexpr double path_update_duration = 1.0;
 
   resetPathCandidate();
   resetPathReference();
-
-  // set current road lanes, pull over lanes, and drivable lane
-  setLanes();
 
   // Check if it needs to decide path
   status_.set_has_decided_path(hasDecidedPath());
@@ -982,9 +998,13 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
 
 BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification()
 {
+  // if pull over path candidates generation is not finished, use previous module output
+  if (status_.get_pull_over_path_candidates().empty()) {
+    return getPreviousModuleOutput();
+  }
+
   waitApproval();
 
-  updateOccupancyGrid();
   BehaviorModuleOutput out;
   out.modified_goal = plan().modified_goal;  // update status_
   out.path = std::make_shared<PathWithLaneId>(generateStopPath());
@@ -1025,7 +1045,7 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification(
 
 std::pair<double, double> GoalPlannerModule::calcDistanceToPathChange() const
 {
-  const auto & full_path = status_.get_pull_over_path()->getFullPath();
+  const auto full_path = status_.get_pull_over_path()->getFullPath();
 
   const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
     full_path.points, planner_data_->self_odometry->pose.pose, std::numeric_limits<double>::max(),
@@ -1082,20 +1102,23 @@ PathWithLaneId GoalPlannerModule::generateStopPath()
   //     difference between the outer and inner sides)
   // 4. feasible stop
   const auto search_start_offset_pose = calcLongitudinalOffsetPose(
-    reference_path.points, status_.get_refined_goal_pose().position,
-    -parameters_->backward_goal_search_length - common_parameters.base_link2front -
-      approximate_pull_over_distance_);
+    reference_path.points, status_.get_closest_goal_candidate_pose().position,
+    -approximate_pull_over_distance_);
   if (
     !status_.get_is_safe_static_objects() && !status_.get_closest_start_pose() &&
     !search_start_offset_pose) {
     return generateFeasibleStopPath();
   }
 
-  const Pose stop_pose =
-    status_.get_is_safe_static_objects()
-      ? status_.get_pull_over_path()->start_pose
-      : (status_.get_closest_start_pose() ? status_.get_closest_start_pose().value()
-                                          : *search_start_offset_pose);
+  const Pose stop_pose = [&]() -> Pose {
+    if (status_.get_is_safe_static_objects()) {
+      return status_.get_pull_over_path()->start_pose;
+    }
+    if (status_.get_closest_start_pose()) {
+      return status_.get_closest_start_pose().value();
+    }
+    return *search_start_offset_pose;
+  }();
 
   // if stop pose is closer than min_stop_distance, stop as soon as possible
   const double ego_to_stop_distance = calcSignedArcLengthFromEgo(reference_path, stop_pose);
