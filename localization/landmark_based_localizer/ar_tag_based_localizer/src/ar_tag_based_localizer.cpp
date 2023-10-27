@@ -51,6 +51,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <tf2/LinearMath/Transform.h>
 
+#include <algorithm>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
