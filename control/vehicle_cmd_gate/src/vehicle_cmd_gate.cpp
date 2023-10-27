@@ -585,7 +585,9 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   } else {
     filter_activated_count_ = 0;
   }
-  if (filter_activated_count_ >= filter_activated_count_threshold_ && mode != OperationMode::AUTO) {
+  if (
+    filter_activated_count_ >= filter_activated_count_threshold_ &&
+    mode.mode == OperationModeState::AUTONOMOUS) {
     filter_activated_marker_pub_->publish(createMarkerArray(is_filter_activated));
     is_filter_activated_flag.data = true;
   }
