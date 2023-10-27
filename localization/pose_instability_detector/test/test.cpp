@@ -90,12 +90,12 @@ TEST_F(TestPoseInstabilityDetector, output_ok_when_twist_matches_odometry)  // N
   // send the twist message
   timestamp.sec = 1;
   timestamp.nanosec = 0;
-  helper_->send_twist_message(timestamp, 0.0, 0.0, 0.0);
+  helper_->send_twist_message(timestamp, 1.0, 0.0, 0.0);
 
   // send the second odometry message
   timestamp.sec = 2;
   timestamp.nanosec = 0;
-  helper_->send_odometry_message(timestamp, 0.0, 0.0, 0.0);
+  helper_->send_odometry_message(timestamp, 1.0, 0.0, 0.0);
 
   // process the above messages (by timer_callback)
   helper_->received_diagnostic_array_flag = false;
@@ -128,12 +128,12 @@ TEST_F(TestPoseInstabilityDetector, output_warn_when_twist_is_too_small)  // NOL
   // send the twist message
   timestamp.sec = 1;
   timestamp.nanosec = 0;
-  helper_->send_twist_message(timestamp, 0.0, 0.0, 0.0);  // small twist
+  helper_->send_twist_message(timestamp, 0.1, 0.0, 0.0);  // small twist
 
   // send the second odometry message
   timestamp.sec = 2;
   timestamp.nanosec = 0;
-  helper_->send_odometry_message(timestamp, 0.0, 0.0, 0.0);
+  helper_->send_odometry_message(timestamp, 1.0, 0.0, 0.0);
 
   // process the above messages (by timer_callback)
   helper_->received_diagnostic_array_flag = false;
