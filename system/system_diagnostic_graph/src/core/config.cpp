@@ -31,6 +31,29 @@
 namespace system_diagnostic_graph
 {
 
+template <class T>
+T error(const std::string & text, const std::string & value, const ConfigData & data)
+{
+  const auto hint = data.mark.empty() ? data.file : data.mark + ":" + data.file;
+  return T(text + ": " + value + " (" + hint + ")");
+}
+
+template <class T>
+void extend(std::vector<T> & u, const std::vector<T> & v)
+{
+  u.insert(u.end(), v.begin(), v.end());
+}
+
+template <class T>
+auto enumerate(const std::vector<T> & v)
+{
+  std::vector<std::pair<size_t, T>> result;
+  for (size_t i = 0; i < v.size(); ++i) {
+    result.push_back(std::make_pair(i, v[i]));
+  }
+  return result;
+}
+
 ConfigData::ConfigData(const std::string & path)
 {
   file = path;
@@ -96,22 +119,6 @@ std::vector<YAML::Node> ConfigData::take_list(const std::string & name)
     throw ConfigError("the '" + name + "' field is not a list type");
   }
   return std::vector<YAML::Node>(yaml.begin(), yaml.end());
-}
-
-template <class T>
-void extend(std::vector<T> & u, const std::vector<T> & v)
-{
-  u.insert(u.end(), v.begin(), v.end());
-}
-
-template <class T>
-auto enumerate(const std::vector<T> & v)
-{
-  std::vector<std::pair<size_t, T>> result;
-  for (size_t i = 0; i < v.size(); ++i) {
-    result.push_back(std::make_pair(i, v[i]));
-  }
-  return result;
 }
 
 void check_config_nodes(const std::vector<UnitConfig::SharedPtr> & nodes)
@@ -231,8 +238,7 @@ FileConfig::SharedPtr load_config_file(PathConfig & config)
 {
   const auto path = std::filesystem::path(config.resolved);
   if (!std::filesystem::exists(path)) {
-    (void)config.data;
-    throw ConfigError("TODO: file does not exist");
+    throw error<FileNotFound>("file does not found", path, config.data);
   }
   const auto file = ConfigData(path).load(YAML::LoadFile(path));
   return parse_file_config(file);
@@ -269,7 +275,7 @@ RootConfig load_config_root(const PathConfig::SharedPtr root)
 
 RootConfig load_config_root(const std::string & path)
 {
-  const auto root = std::make_shared<PathConfig>(ConfigData("root"));
+  const auto root = std::make_shared<PathConfig>(ConfigData("root-file"));
   root->original = path;
   root->resolved = path;
   return load_config_root(root);

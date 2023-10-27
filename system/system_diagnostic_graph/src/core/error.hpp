@@ -20,9 +20,15 @@
 namespace system_diagnostic_graph
 {
 
-struct ConfigError : public std::runtime_error
+struct Exception : public std::runtime_error
 {
   using runtime_error::runtime_error;
+};
+using ConfigError = Exception;
+
+class FileNotFound : public Exception
+{
+  using Exception::Exception;
 };
 
 }  // namespace system_diagnostic_graph
