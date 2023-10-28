@@ -193,8 +193,9 @@ struct AvoidanceParameters
   size_t hysteresis_factor_safe_count;
   double hysteresis_factor_expand_rate{0.0};
 
-  // keep target velocity in yield maneuver
+  // for yield maneuver
   double yield_velocity{0.0};
+  double yield_condition_yaw_deviation{0.087};
 
   // maximum stop distance
   double stop_max_distance{0.0};

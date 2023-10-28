@@ -418,6 +418,15 @@ bool AvoidanceModule::canYieldManeuver(const AvoidancePlanningData & data) const
 {
   // transit yield maneuver only when the avoidance maneuver is not initiated.
   if (helper_.isShifted()) {
+    RCLCPP_DEBUG(getLogger(), "lateral deviation is bigger than threshold.");
+    return false;
+  }
+
+  const auto idx = planner_data_->findEgoIndex(data.reference_path.points);
+  const auto closest_pose = getPose(data.reference_path.points.at(idx));
+  const auto ego_yaw_deviation = tier4_autoware_utils::calcYawDeviation(getEgoPose(), closest_pose);
+  if (std::abs(ego_yaw_deviation) > parameters_->yield_condition_yaw_deviation) {
+    RCLCPP_DEBUG(getLogger(), "yaw deviation is bigger than threshold.");
     return false;
   }
 

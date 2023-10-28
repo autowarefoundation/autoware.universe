@@ -195,6 +195,8 @@
       # For yield maneuver
       yield:
         yield_velocity: 2.78                            # [m/s]
+        condition:
+          yaw_deviation: 0.087                          # [rad] (default: 5.0deg)
 
       # For stop maneuver
       stop:

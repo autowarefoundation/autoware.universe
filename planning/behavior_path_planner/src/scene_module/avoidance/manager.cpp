@@ -230,6 +230,8 @@ AvoidanceModuleManager::AvoidanceModuleManager(
   {
     std::string ns = "avoidance.yield.";
     p.yield_velocity = getOrDeclareParameter<double>(*node, ns + "yield_velocity");
+    p.yield_condition_yaw_deviation =
+      getOrDeclareParameter<double>(*node, ns + "condition.yaw_deviation");
   }
 
   // stop
