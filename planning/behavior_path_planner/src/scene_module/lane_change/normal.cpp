@@ -1288,13 +1288,13 @@ bool NormalLaneChange::getLaneChangePaths(
           lane_changing_length, forward_path_length, resample_interval, is_goal_in_route,
           next_lane_change_buffer);
 
-        lane_change_info.shift_line = utils::lane_change::getLaneChangingShiftLine(
-          prepare_segment, target_segment, target_lane_reference_path, shift_length);
-
         if (target_lane_reference_path.points.empty()) {
           debug_print("Reject: target_lane_reference_path is empty!!");
           continue;
         }
+
+        lane_change_info.shift_line = utils::lane_change::getLaneChangingShiftLine(
+          prepare_segment, target_segment, target_lane_reference_path, shift_length);
 
         const auto candidate_path = utils::lane_change::constructCandidatePath(
           lane_change_info, prepare_segment, target_segment, target_lane_reference_path,
