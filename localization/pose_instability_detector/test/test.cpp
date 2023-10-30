@@ -87,7 +87,12 @@ TEST_F(TestPoseInstabilityDetector, output_ok_when_twist_matches_odometry)  // N
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
-  // send the twist message (move 1m in x direction)
+  // send the twist message1 (move 0.5m in x direction)
+  timestamp.sec = 0;
+  timestamp.nanosec = 5e8;
+  helper_->send_twist_message(timestamp, 1.0, 0.0, 0.0);
+
+  // send the twist message2 (move 0.5m in x direction)
   timestamp.sec = 1;
   timestamp.nanosec = 0;
   helper_->send_twist_message(timestamp, 1.0, 0.0, 0.0);
@@ -125,10 +130,15 @@ TEST_F(TestPoseInstabilityDetector, output_warn_when_twist_is_too_small)  // NOL
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
-  // send the twist message (move 0.1m in x direction)
+  // send the twist message1 (move 0.05m in x direction)
+  timestamp.sec = 0;
+  timestamp.nanosec = 5e8;
+  helper_->send_twist_message(timestamp, 0.1, 0.0, 0.0);
+
+  // send the twist message2 (move 0.05m in x direction)
   timestamp.sec = 1;
   timestamp.nanosec = 0;
-  helper_->send_twist_message(timestamp, 0.1, 0.0, 0.0);  // small twist
+  helper_->send_twist_message(timestamp, 0.1, 0.0, 0.0);
 
   // send the second odometry message (finish x = 11)
   timestamp.sec = 2;
