@@ -4,8 +4,8 @@ The `pose_instability_detector` package includes a node designed to monitor the 
 
 This node triggers periodic timer callbacks to compare two poses:
 
-* The pose obtained by integrating the twist values from the last received message on `/localization/kinematic_state` over a duration specified by `interval_sec`.
-* The latest pose from `/localization/kinematic_state`.
+- The pose obtained by integrating the twist values from the last received message on `/localization/kinematic_state` over a duration specified by `interval_sec`.
+- The latest pose from `/localization/kinematic_state`.
 
 The results of this comparison are then output to the `/diagnostics` topic.
 
@@ -32,10 +32,10 @@ See [pose_instability_detector.param.yaml](config/pose_instability_detector.para
 
 ## Input
 
-| Name               | Type                                           | Description                           |
-| ------------------ | ---------------------------------------------- | ------------------------------------- |
-| `~/input/odometry` | nav_msgs::msg::Odometry                        | Pose estimated by EKF                 |
-| `~/input/twist`    | geometry_msgs::msg::TwistWithCovarianceStamped | Twist                                 |
+| Name               | Type                                           | Description           |
+| ------------------ | ---------------------------------------------- | --------------------- |
+| `~/input/odometry` | nav_msgs::msg::Odometry                        | Pose estimated by EKF |
+| `~/input/twist`    | geometry_msgs::msg::TwistWithCovarianceStamped | Twist                 |
 
 ## Output
 
