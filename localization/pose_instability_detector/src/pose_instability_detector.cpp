@@ -20,6 +20,8 @@
 
 #include <tf2/LinearMath/Quaternion.h>
 
+#include <string>
+
 PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & options)
 : Node("pose_instability_detector", options),
   threshold_linear_x_(this->declare_parameter<double>("threshold_linear_x")),
@@ -68,7 +70,9 @@ void PoseInstabilityDetector::callback_timer()
   auto quat_to_rpy = [](const Quaternion & quat) {
     tf2::Quaternion tf2_quat(quat.x, quat.y, quat.z, quat.w);
     tf2::Matrix3x3 mat(tf2_quat);
-    double roll, pitch, yaw;
+    double roll{};
+    double pitch{};
+    double yaw{};
     mat.getRPY(roll, pitch, yaw);
     return std::make_tuple(roll, pitch, yaw);
   };
