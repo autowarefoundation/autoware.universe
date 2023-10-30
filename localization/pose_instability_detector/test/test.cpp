@@ -74,11 +74,11 @@ protected:
 
 TEST_F(TestPoseInstabilityDetector, output_ok_when_twist_matches_odometry)  // NOLINT
 {
-  // send the first odometry message
+  // send the first odometry message (start x = 10)
   builtin_interfaces::msg::Time timestamp{};
   timestamp.sec = 0;
   timestamp.nanosec = 0;
-  helper_->send_odometry_message(timestamp, 0.0, 0.0, 0.0);
+  helper_->send_odometry_message(timestamp, 10.0, 0.0, 0.0);
 
   // process the above message (by timer_callback)
   helper_->received_diagnostic_array_flag = false;
@@ -87,15 +87,15 @@ TEST_F(TestPoseInstabilityDetector, output_ok_when_twist_matches_odometry)  // N
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
-  // send the twist message
+  // send the twist message (move 1m in x direction)
   timestamp.sec = 1;
   timestamp.nanosec = 0;
   helper_->send_twist_message(timestamp, 1.0, 0.0, 0.0);
 
-  // send the second odometry message
+  // send the second odometry message (finish x = 11)
   timestamp.sec = 2;
   timestamp.nanosec = 0;
-  helper_->send_odometry_message(timestamp, 1.0, 0.0, 0.0);
+  helper_->send_odometry_message(timestamp, 11.0, 0.0, 0.0);
 
   // process the above messages (by timer_callback)
   helper_->received_diagnostic_array_flag = false;
@@ -112,11 +112,11 @@ TEST_F(TestPoseInstabilityDetector, output_ok_when_twist_matches_odometry)  // N
 
 TEST_F(TestPoseInstabilityDetector, output_warn_when_twist_is_too_small)  // NOLINT
 {
-  // send the first odometry message
+  // send the first odometry message (start x = 10)
   builtin_interfaces::msg::Time timestamp{};
   timestamp.sec = 0;
   timestamp.nanosec = 0;
-  helper_->send_odometry_message(timestamp, 0.0, 0.0, 0.0);
+  helper_->send_odometry_message(timestamp, 10.0, 0.0, 0.0);
 
   // process the above message (by timer_callback)
   helper_->received_diagnostic_array_flag = false;
@@ -125,15 +125,15 @@ TEST_F(TestPoseInstabilityDetector, output_warn_when_twist_is_too_small)  // NOL
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
-  // send the twist message
+  // send the twist message (move 0.1m in x direction)
   timestamp.sec = 1;
   timestamp.nanosec = 0;
   helper_->send_twist_message(timestamp, 0.1, 0.0, 0.0);  // small twist
 
-  // send the second odometry message
+  // send the second odometry message (finish x = 11)
   timestamp.sec = 2;
   timestamp.nanosec = 0;
-  helper_->send_odometry_message(timestamp, 1.0, 0.0, 0.0);
+  helper_->send_odometry_message(timestamp, 11.0, 0.0, 0.0);
 
   // process the above messages (by timer_callback)
   helper_->received_diagnostic_array_flag = false;
