@@ -35,9 +35,6 @@
 #include <vector>
 namespace obstacle_pointcloud_based_validator
 {
-using Shape = autoware_auto_perception_msgs::msg::Shape;
-using Polygon2d = tier4_autoware_utils::Polygon2d;
-
 struct PointsNumThresholdParam
 {
   std::vector<int64_t> min_points_num;
@@ -70,11 +67,9 @@ private:
   void onObjectsAndObstaclePointCloud(
     const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_obstacle_pointcloud);
-  void cropPointsInsidePolygon(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr & input_points, const Polygon2d & poly2d,
-    pcl::PointCloud<pcl::PointXYZ>::Ptr & output_points);
-  size_t getValidationThreshold(
-    const geometry_msgs::msg::Point & transformed_object_position, const uint8_t object_label_id);
+  void on3dObjectsAndObstaclePointCloud(
+    const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_obstacle_pointcloud);
   std::optional<size_t> getPointCloudNumWithinPolygon(
     const autoware_auto_perception_msgs::msg::DetectedObject & object,
     const pcl::PointCloud<pcl::PointXY>::Ptr pointcloud);
