@@ -31,8 +31,10 @@ class TestMessageHelperNode : public rclcpp::Node
 public:
   TestMessageHelperNode() : Node("test_message_helper_node")
   {
-    odometry_publisher_ = this->create_publisher<Odometry>("~/input/odometry", 10);
-    twist_publisher_ = this->create_publisher<TwistWithCovarianceStamped>("~/input/twist", 10);
+    odometry_publisher_ =
+      this->create_publisher<Odometry>("/pose_instability_detector/input/odometry", 10);
+    twist_publisher_ = this->create_publisher<TwistWithCovarianceStamped>(
+      "/pose_instability_detector/input/twist", 10);
     diagnostic_subscriber_ = this->create_subscription<DiagnosticArray>(
       "/diagnostics", 10,
       std::bind(&TestMessageHelperNode::callback_diagnostics, this, std::placeholders::_1));
