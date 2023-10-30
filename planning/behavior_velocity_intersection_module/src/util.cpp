@@ -1304,14 +1304,23 @@ TimeDistanceArray calcIntersectionPassingTime(
   const bool use_upstream_velocity, const double minimum_upstream_velocity,
   tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array)
 {
-  double dist_sum = 0.0;
+  const double current_velocity = planner_data->current_velocity->twist.linear.x;
+
   int assigned_lane_found = false;
 
   // crop intersection part of the path, and set the reference velocity to intersection_velocity
   // for ego's ttc
   PathWithLaneId reference_path;
-  for (size_t i = closest_idx; i < path.points.size(); ++i) {
+  for (size_t i = 0; i < path.points.size() - 1; ++i) {
     auto reference_point = path.points.at(i);
+    const auto & next_reference_point = path.points.at(i + 1);
+    const double dist = tier4_autoware_utils::calcDistance2d(reference_point, next_reference_point);
+    if (dist < 0.5) {
+      continue;
+    }
+    if (i < closest_idx) {
+      reference_point.point.longitudinal_velocity_mps = current_velocity;
+    }
     if (!use_upstream_velocity) {
       reference_point.point.longitudinal_velocity_mps = intersection_velocity;
     }
@@ -1326,18 +1335,32 @@ TimeDistanceArray calcIntersectionPassingTime(
     return {{0.0, 0.0}};  // has already passed the intersection.
   }
 
+  std::vector<std::pair<double, double>> original_path_xy;
+  for (size_t i = 0; i < reference_path.points.size(); ++i) {
+    const auto & p = reference_path.points.at(i).point.pose.position;
+    original_path_xy.emplace_back(p.x, p.y);
+  }
+
   // apply smoother to reference velocity
   PathWithLaneId smoothed_reference_path = reference_path;
-  smoothPath(reference_path, smoothed_reference_path, planner_data, true);
+  if (!smoothPath(reference_path, smoothed_reference_path, planner_data, true)) {
+    smoothed_reference_path = reference_path;
+  }
 
   // calculate when ego is going to reach each (interpolated) points on the path
   TimeDistanceArray time_distance_array{};
-  dist_sum = 0.0;
+  double dist_sum = 0.0;
   double passing_time = time_delay;
   time_distance_array.emplace_back(passing_time, dist_sum);
 
   // NOTE: `reference_path` is resampled in `reference_smoothed_path`, so
   // `last_intersection_stop_line_candidate_idx` makes no sense
+  const auto smoothed_path_closest_idx_opt = motion_utils::findNearestIndex(
+    smoothed_reference_path.points, path.points.at(closest_idx).point.pose, 3.0, M_PI_4);
+  if (!smoothed_path_closest_idx_opt) {
+    return time_distance_array;
+  }
+  const auto smoothed_path_closest_idx = smoothed_path_closest_idx_opt.value();
   const auto last_intersection_stop_line_candidate_point_orig =
     path.points.at(last_intersection_stop_line_candidate_idx).point.pose;
   const auto last_intersection_stop_line_candidate_nearest_ind =
@@ -1345,9 +1368,9 @@ TimeDistanceArray calcIntersectionPassingTime(
       smoothed_reference_path.points, last_intersection_stop_line_candidate_point_orig,
       planner_data->ego_nearest_dist_threshold, planner_data->ego_nearest_yaw_threshold);
 
-  for (size_t i = 1; i < smoothed_reference_path.points.size(); ++i) {
-    const auto & p1 = smoothed_reference_path.points.at(i - 1);
-    const auto & p2 = smoothed_reference_path.points.at(i);
+  for (size_t i = smoothed_path_closest_idx; i < smoothed_reference_path.points.size() - 1; ++i) {
+    const auto & p1 = smoothed_reference_path.points.at(i);
+    const auto & p2 = smoothed_reference_path.points.at(i + 1);
 
     const double dist = tier4_autoware_utils::calcDistance2d(p1, p2);
     dist_sum += dist;
@@ -1379,11 +1402,13 @@ TimeDistanceArray calcIntersectionPassingTime(
   for (const auto & [t, d] : time_distance_array) {
     debug_ttc_array->data.push_back(d);
   }
-  for (const auto & p : smoothed_reference_path.points) {
-    debug_ttc_array->data.push_back(p.point.pose.position.x);
+  for (size_t i = smoothed_path_closest_idx; i < smoothed_reference_path.points.size(); ++i) {
+    const auto & p = smoothed_reference_path.points.at(i).point.pose.position;
+    debug_ttc_array->data.push_back(p.x);
   }
-  for (const auto & p : smoothed_reference_path.points) {
-    debug_ttc_array->data.push_back(p.point.pose.position.y);
+  for (size_t i = smoothed_path_closest_idx; i < smoothed_reference_path.points.size(); ++i) {
+    const auto & p = smoothed_reference_path.points.at(i).point.pose.position;
+    debug_ttc_array->data.push_back(p.y);
   }
   return time_distance_array;
 }
