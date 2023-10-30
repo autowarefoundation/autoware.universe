@@ -89,7 +89,7 @@ class TTCVisualizer(Node):
         )
         self.ego_ttc_data = None
         self.object_ttc_data = None
-        self.npcs = []
+        self.npc_vehicles = []
         self.args = args
         self.images = []
         self.last_sub = time.time()
@@ -100,7 +100,7 @@ class TTCVisualizer(Node):
         self.ttc_vel_ax = self.ttc_ax.twinx()
         self.world_ax = self.fig.add_subplot(1, 2, 2)
         self.lock = Lock()
-        self.colorlist = [
+        self.color_list = [
             "#e41a1c",
             "#377eb8",
             "#4daf4a",
@@ -127,7 +127,7 @@ class TTCVisualizer(Node):
         time_dist_plot = self.ttc_ax.plot(ego_ttc_time, ego_ttc_dist, label="time-dist", c="orange")
         self.ttc_ax.set_xlim(min(ego_ttc_time) - 2.0, max(ego_ttc_time) + 3.0)
         self.ttc_ax.set_ylim(min(ego_ttc_dist) - 2.0, max(ego_ttc_dist) + 3.0)
-        for npc, color in zip(self.npcs, cycle(self.colorlist)):
+        for npc, color in zip(self.npc_vehicles, cycle(self.color_list)):
             t0, t1 = npc.collision_start_time, npc.collision_end_time
             d0, d1 = npc.collision_start_dist, npc.collision_end_dist
             self.ttc_ax.fill(
@@ -186,7 +186,7 @@ class TTCVisualizer(Node):
                 head_length=0.1,
             )
 
-        for npc, color in zip(self.npcs, cycle(self.colorlist)):
+        for npc, color in zip(self.npc_vehicles, cycle(self.color_list)):
             x, y, th, w, h = npc.x, npc.y, npc.th, npc.width, npc.height
             bbox = np.array(
                 [
@@ -245,18 +245,18 @@ class TTCVisualizer(Node):
             self.ego_ttc_data = msg
             self.last_sub = time.time()
 
-    def parse_npcs(self):
-        self.npcs = []
-        n_npcs = int(self.object_ttc_data.layout.dim[0].size)
+    def parse_npc_vehicles(self):
+        self.npc_vehicles = []
+        n_npc_vehicles = int(self.object_ttc_data.layout.dim[0].size)
         npc_data_size = int(self.object_ttc_data.layout.dim[1].size)
-        for i in range(0, n_npcs):
+        for i in range(0, n_npc_vehicles):
             data = self.object_ttc_data.data[i * npc_data_size : (i + 1) * npc_data_size]
-            self.npcs.append(NPC(data))
+            self.npc_vehicles.append(NPC(data))
 
     def on_object_ttc(self, msg):
         with self.lock:
             self.object_ttc_data = msg
-            self.parse_npcs()
+            self.parse_npc_vehicles()
             self.last_sub = time.time()
 
 
