@@ -24,9 +24,38 @@ struct Exception : public std::runtime_error
 {
   using runtime_error::runtime_error;
 };
-using ConfigError = Exception;
 
 class FileNotFound : public Exception
+{
+  using Exception::Exception;
+};
+
+class UnknownType : public Exception
+{
+  using Exception::Exception;
+};
+
+class InvalidType : public Exception
+{
+  using Exception::Exception;
+};
+
+class FieldNotFound : public Exception
+{
+  using Exception::Exception;
+};
+
+class PathNotFound : public Exception
+{
+  using Exception::Exception;
+};
+
+class PathConflict : public Exception
+{
+  using Exception::Exception;
+};
+
+class GraphStructure : public Exception
 {
   using Exception::Exception;
 };

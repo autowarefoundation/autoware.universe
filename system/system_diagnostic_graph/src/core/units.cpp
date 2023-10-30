@@ -70,7 +70,7 @@ BaseUnit::NodeData BaseUnit::report() const
 void DiagUnit::init(const UnitConfig::SharedPtr & config, const NodeDict &)
 {
   timeout_ = 3.0;  // TODO(Takagi, Isamu): parameterize
-  name_ = config->data.take_text("name", path_);
+  name_ = config->data.take_text("diag");
 }
 
 void DiagUnit::update(const rclcpp::Time & stamp)

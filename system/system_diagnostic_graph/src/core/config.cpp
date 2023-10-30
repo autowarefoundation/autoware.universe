@@ -32,13 +32,6 @@ namespace system_diagnostic_graph
 {
 
 template <class T>
-T error(const std::string & text, const std::string & value, const ConfigData & data)
-{
-  const auto hint = data.mark.empty() ? data.file : data.mark + ":" + data.file;
-  return T(text + ": " + value + " (" + hint + ")");
-}
-
-template <class T>
 void extend(std::vector<T> & u, const std::vector<T> & v)
 {
   u.insert(u.end(), v.begin(), v.end());
@@ -62,7 +55,7 @@ ConfigData::ConfigData(const std::string & path)
 ConfigData ConfigData::load(YAML::Node yaml)
 {
   if (!yaml.IsMap()) {
-    throw ConfigError(std::string("TODO") + " is not a dict type");
+    throw error<InvalidType>("object is not a dict type", *this);
   }
   for (const auto & kv : yaml) {
     object[kv.first.as<std::string>()] = kv.second;
@@ -87,7 +80,7 @@ ConfigData ConfigData::node(const size_t index) const
 std::string ConfigData::take_text(const std::string & name)
 {
   if (!object.count(name)) {
-    throw ConfigError("object has no '" + name + "' field");
+    throw error<FieldNotFound>("required field is not found", name, *this);
   }
 
   const auto yaml = object.at(name);
@@ -116,7 +109,7 @@ std::vector<YAML::Node> ConfigData::take_list(const std::string & name)
   object.erase(name);
 
   if (!yaml.IsSequence()) {
-    throw ConfigError("the '" + name + "' field is not a list type");
+    throw error<InvalidType>("field is not a list type", name, *this);
   }
   return std::vector<YAML::Node>(yaml.begin(), yaml.end());
 }
@@ -131,7 +124,7 @@ void check_config_nodes(const std::vector<UnitConfig::SharedPtr> & nodes)
   path_count.erase("");
   for (const auto & [path, count] : path_count) {
     if (1 < count) {
-      throw ConfigError("TODO: path conflict");
+      throw error<PathConflict>("object path is not unique", path);
     }
   }
 }
@@ -178,7 +171,7 @@ std::string resolve_substitution(const std::string & substitution, const ConfigD
   if (words.size() == 1 && words[0] == "dirname") {
     return std::filesystem::path(data.file).parent_path();
   }
-  throw ConfigError("unknown substitution: " + substitution);
+  throw error<UnknownType>("unknown substitution", substitution, data);
 }
 
 std::string resolve_file_path(const std::string & path, const ConfigData & data)
@@ -234,17 +227,17 @@ FileConfig::SharedPtr parse_file_config(const ConfigData & data)
   return file;
 }
 
-FileConfig::SharedPtr load_config_file(PathConfig & config)
+FileConfig::SharedPtr load_file_config(PathConfig & config)
 {
   const auto path = std::filesystem::path(config.resolved);
   if (!std::filesystem::exists(path)) {
-    throw error<FileNotFound>("file does not found", path, config.data);
+    throw error<FileNotFound>("file is not found", path, config.data);
   }
   const auto file = ConfigData(path).load(YAML::LoadFile(path));
   return parse_file_config(file);
 }
 
-RootConfig load_config_root(const PathConfig::SharedPtr root)
+RootConfig load_root_config(const PathConfig::SharedPtr root)
 {
   std::vector<PathConfig::SharedPtr> paths;
   paths.push_back(root);
@@ -252,7 +245,7 @@ RootConfig load_config_root(const PathConfig::SharedPtr root)
   std::vector<FileConfig::SharedPtr> files;
   for (size_t i = 0; i < paths.size(); ++i) {
     const auto path = paths[i];
-    const auto file = load_config_file(*path);
+    const auto file = load_file_config(*path);
     files.push_back(file);
     extend(paths, file->paths);
   }
@@ -265,20 +258,22 @@ RootConfig load_config_root(const PathConfig::SharedPtr root)
     const auto node = nodes[i];
     extend(nodes, node->children);
   }
+
   check_config_nodes(nodes);
   resolve_link_nodes(nodes);
 
   RootConfig config;
+  config.files = files;
   config.nodes = nodes;
   return config;
 }
 
-RootConfig load_config_root(const std::string & path)
+RootConfig load_root_config(const std::string & path)
 {
   const auto root = std::make_shared<PathConfig>(ConfigData("root-file"));
   root->original = path;
   root->resolved = path;
-  return load_config_root(root);
+  return load_root_config(root);
 }
 
 }  // namespace system_diagnostic_graph

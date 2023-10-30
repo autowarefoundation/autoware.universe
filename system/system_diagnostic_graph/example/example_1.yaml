@@ -12,12 +12,12 @@ nodes:
 
   - path: /sensing/lidars/top
     type: diag
-    name: "lidar_driver/top: status"
+    diag: "lidar_driver/top: status"
 
   - path: /sensing/lidars/front
     type: diag
-    name: "lidar_driver/front: status"
+    diag: "lidar_driver/front: status"
 
   - path: /sensing/radars/front
     type: diag
-    name: "radar_driver/front: status"
+    diag: "radar_driver/front: status"

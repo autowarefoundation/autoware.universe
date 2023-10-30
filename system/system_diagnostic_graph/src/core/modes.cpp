@@ -40,7 +40,7 @@ OperationModes::OperationModes(rclcpp::Node & node, const std::vector<BaseUnit *
     if (iter != paths.end()) {
       return iter->second;
     }
-    throw ConfigError("summary node '" + name + "' does node exist");
+    throw error<PathNotFound>("summary node is not found", name);
   };
 
   // clang-format off

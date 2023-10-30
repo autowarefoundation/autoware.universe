@@ -71,7 +71,7 @@ BaseUnit::UniquePtrList topological_sort(BaseUnit::UniquePtrList && input)
 
   // Detect circulation because the result does not include the nodes on the loop.
   if (result.size() != nodes.size()) {
-    throw ConfigError("detect graph circulation");
+    throw error<GraphStructure>("detect graph circulation");
   }
 
   // Reverse the result to process from leaf node.
@@ -115,7 +115,7 @@ BaseUnit::UniquePtr make_node(const UnitConfig::SharedPtr & config)
   if (config->type == "debug-stale") {
     return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::STALE);
   }
-  throw ConfigError("unknown node type: " + config->type + " " + "TODO");
+  throw error<UnknownType>("unknown node type", config->type, config->data);
 }
 
 Graph::Graph()
@@ -135,7 +135,7 @@ void Graph::init(const std::string & file, const std::string & mode)
   BaseUnit::UniquePtrList nodes;
   BaseUnit::NodeDict dict;
 
-  for (const auto & config : load_config_root(file).nodes) {
+  for (const auto & config : load_root_config(file).nodes) {
     const auto node = nodes.emplace_back(make_node(config)).get();
     dict.configs[config] = node;
     dict.paths[config->path] = node;

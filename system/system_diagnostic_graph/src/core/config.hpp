@@ -74,10 +74,36 @@ struct FileConfig : public BaseConfig
 
 struct RootConfig
 {
+  std::vector<FileConfig::SharedPtr> files;
   std::vector<UnitConfig::SharedPtr> nodes;
 };
 
-RootConfig load_config_root(const std::string & path);
+template <class T>
+T error(const std::string & text, const ConfigData & data)
+{
+  const auto hint = data.mark.empty() ? data.file : data.mark + ":" + data.file;
+  return T(text + " (" + hint + ")");
+}
+
+template <class T>
+T error(const std::string & text)
+{
+  return T(text);
+}
+
+template <class T>
+T error(const std::string & text, const std::string & value, const ConfigData & data)
+{
+  return error<T>(text + ": " + value, data);
+}
+
+template <class T>
+T error(const std::string & text, const std::string & value)
+{
+  return error<T>(text + ": " + value);
+}
+
+RootConfig load_root_config(const std::string & path);
 
 }  // namespace system_diagnostic_graph
 
