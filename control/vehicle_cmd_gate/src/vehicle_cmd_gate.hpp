@@ -243,6 +243,7 @@ private:
 
   // debug
   MarkerArray createMarkerArray(const IsFilterActivated & filter_activated);
+  void publishMarkers(const IsFilterActivated & filter_activated);
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
