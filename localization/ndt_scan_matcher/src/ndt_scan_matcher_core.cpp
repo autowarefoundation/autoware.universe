@@ -55,7 +55,7 @@ tier4_debug_msgs::msg::Int32Stamped make_int32_stamped(
 
 bool validate_local_optimal_solution_oscillation(
   const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array,
-  const float oscillation_threshold, const float inversion_vector_threshold)
+  const int oscillation_threshold, const float inversion_vector_threshold)
 {
   bool prev_oscillation = false;
   int oscillation_cnt = 0;
@@ -69,7 +69,7 @@ bool validate_local_optimal_solution_oscillation(
     const auto prev_vec = (prev_pose - prev_prev_pose).normalized();
     const bool oscillation = prev_vec.dot(current_vec) < inversion_vector_threshold;
     if (prev_oscillation && oscillation) {
-      if (static_cast<float>(oscillation_cnt) > oscillation_threshold) {
+      if (oscillation_cnt > oscillation_threshold) {
         return true;
       }
       ++oscillation_cnt;
@@ -89,33 +89,34 @@ NDTScanMatcher::NDTScanMatcher()
   state_ptr_(new std::map<std::string, std::string>),
   inversion_vector_threshold_(-0.9),  // Not necessary to extract to ndt_scan_matcher.param.yaml
   oscillation_threshold_(10),         // Not necessary to extract to ndt_scan_matcher.param.yaml
+  output_pose_covariance_({}),
   regularization_enabled_(declare_parameter<bool>("regularization_enabled"))
 {
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
 
-  int points_queue_size = this->declare_parameter<int>("input_sensor_points_queue_size");
-  points_queue_size = std::max(points_queue_size, 0);
-  RCLCPP_INFO(get_logger(), "points_queue_size: %d", points_queue_size);
+  int64_t points_queue_size = this->declare_parameter<int64_t>("input_sensor_points_queue_size");
+  points_queue_size = std::max(points_queue_size, static_cast<int64_t>(0));
+  RCLCPP_INFO_STREAM(get_logger(), "points_queue_size: " << points_queue_size);
 
   base_frame_ = this->declare_parameter<std::string>("base_frame");
-  RCLCPP_INFO(get_logger(), "base_frame_id: %s", base_frame_.c_str());
+  RCLCPP_INFO_STREAM(get_logger(), "base_frame_id: " << base_frame_);
 
   ndt_base_frame_ = this->declare_parameter<std::string>("ndt_base_frame");
-  RCLCPP_INFO(get_logger(), "ndt_base_frame_id: %s", ndt_base_frame_.c_str());
+  RCLCPP_INFO_STREAM(get_logger(), "ndt_base_frame_id: " << ndt_base_frame_);
 
   map_frame_ = this->declare_parameter<std::string>("map_frame");
-  RCLCPP_INFO(get_logger(), "map_frame_id: %s", map_frame_.c_str());
+  RCLCPP_INFO_STREAM(get_logger(), "map_frame_id: " << map_frame_);
 
   pclomp::NdtParams ndt_params{};
   ndt_params.trans_epsilon = this->declare_parameter<double>("trans_epsilon");
   ndt_params.step_size = this->declare_parameter<double>("step_size");
   ndt_params.resolution = this->declare_parameter<double>("resolution");
-  ndt_params.max_iterations = this->declare_parameter<int>("max_iterations");
-  ndt_params.num_threads = this->declare_parameter<int>("num_threads");
+  ndt_params.max_iterations = static_cast<int>(this->declare_parameter<int64_t>("max_iterations"));
+  ndt_params.num_threads = static_cast<int>(this->declare_parameter<int64_t>("num_threads"));
   ndt_params.num_threads = std::max(ndt_params.num_threads, 1);
   ndt_params.regularization_scale_factor =
-    static_cast<float>(this->declare_parameter<float>("regularization_scale_factor"));
+    static_cast<float>(this->declare_parameter<double>("regularization_scale_factor"));
   ndt_ptr_->setParams(ndt_params);
 
   RCLCPP_INFO(
@@ -123,7 +124,7 @@ NDTScanMatcher::NDTScanMatcher()
     ndt_params.trans_epsilon, ndt_params.step_size, ndt_params.resolution,
     ndt_params.max_iterations);
 
-  int converged_param_type_tmp = this->declare_parameter<int>("converged_param_type");
+  const int64_t converged_param_type_tmp = this->declare_parameter<int64_t>("converged_param_type");
   converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
 
   converged_param_transform_probability_ =
@@ -134,7 +135,7 @@ NDTScanMatcher::NDTScanMatcher()
   lidar_topic_timeout_sec_ = this->declare_parameter<double>("lidar_topic_timeout_sec");
 
   critical_upper_bound_exe_time_ms_ =
-    this->declare_parameter<int>("critical_upper_bound_exe_time_ms");
+    static_cast<int>(this->declare_parameter<int64_t>("critical_upper_bound_exe_time_ms"));
 
   initial_pose_timeout_sec_ = this->declare_parameter<double>("initial_pose_timeout_sec");
 
@@ -147,8 +148,9 @@ NDTScanMatcher::NDTScanMatcher()
     output_pose_covariance_[i] = output_pose_covariance[i];
   }
 
-  initial_estimate_particles_num_ = this->declare_parameter<int>("initial_estimate_particles_num");
-  n_startup_trials_ = this->declare_parameter<int>("n_startup_trials");
+  initial_estimate_particles_num_ =
+    this->declare_parameter<int64_t>("initial_estimate_particles_num");
+  n_startup_trials_ = this->declare_parameter<int64_t>("n_startup_trials");
 
   estimate_scores_for_degrounded_scan_ =
     this->declare_parameter<bool>("estimate_scores_for_degrounded_scan");
@@ -796,16 +798,16 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   // The range taken by 2 * phi(x) - 1 is [-1, 1], so it can be used as a uniform distribution in
   // TPE. Let u = 2 * phi(x) - 1, then x = sqrt(2) * erf_inv(u). Computationally, it is not a good
   // to give erf_inv -1 and 1, so it is rounded off at (-1 + eps, 1 - eps).
-  const double SQRT2 = std::sqrt(2);
-  auto uniform_to_normal = [&SQRT2](const double uniform) {
+  const double sqrt2 = std::sqrt(2);
+  auto uniform_to_normal = [&sqrt2](const double uniform) {
     assert(-1.0 <= uniform && uniform <= 1.0);
     constexpr double epsilon = 1.0e-6;
     const double clamped = std::clamp(uniform, -1.0 + epsilon, 1.0 - epsilon);
-    return boost::math::erf_inv(clamped) * SQRT2;
+    return boost::math::erf_inv(clamped) * sqrt2;
   };
 
-  auto normal_to_uniform = [&SQRT2](const double normal) {
-    return boost::math::erf(normal / SQRT2);
+  auto normal_to_uniform = [&sqrt2](const double normal) {
+    return boost::math::erf(normal / sqrt2);
   };
 
   // Optimizing (x, y, z, roll, pitch, yaw) 6 dimensions.

@@ -179,13 +179,13 @@ private:
   double converged_param_transform_probability_;
   double converged_param_nearest_voxel_transformation_likelihood_;
 
-  int initial_estimate_particles_num_;
-  int n_startup_trials_;
+  int64_t initial_estimate_particles_num_;
+  int64_t n_startup_trials_;
   double lidar_topic_timeout_sec_;
   double initial_pose_timeout_sec_;
   double initial_pose_distance_tolerance_m_;
   float inversion_vector_threshold_;
-  float oscillation_threshold_;
+  int oscillation_threshold_;
   std::array<double, 36> output_pose_covariance_;
 
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
