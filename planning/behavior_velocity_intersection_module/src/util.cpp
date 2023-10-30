@@ -1328,7 +1328,7 @@ TimeDistanceArray calcIntersectionPassingTime(
 
   // apply smoother to reference velocity
   PathWithLaneId smoothed_reference_path = reference_path;
-  smoothPath(reference_path, smoothed_reference_path, planner_data);
+  smoothPath(reference_path, smoothed_reference_path, planner_data, true);
 
   // calculate when ego is going to reach each (interpolated) points on the path
   TimeDistanceArray time_distance_array{};
