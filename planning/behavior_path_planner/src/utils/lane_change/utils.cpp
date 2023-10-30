@@ -14,13 +14,14 @@
 
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
 
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -39,7 +40,6 @@
 
 #include <algorithm>
 #include <limits>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -604,8 +604,8 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
 {
   const auto shift_intervals =
     route_handler.getLateralIntervalsToPreferredLane(current_lanes.back(), direction);
-  const double minimum_lane_change_length =
-    utils::calcMinimumLaneChangeLength(common_param, shift_intervals);
+  const double minimum_lane_change_length = utils::calcMinimumLaneChangeLength(
+    common_param, shift_intervals, common_param.backward_length_buffer_for_end_of_lane);
   const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
   if (abort_plus_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     return false;

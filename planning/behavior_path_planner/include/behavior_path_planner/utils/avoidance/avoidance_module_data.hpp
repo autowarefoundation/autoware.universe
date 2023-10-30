@@ -15,7 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
@@ -71,6 +71,8 @@ struct ObjectParameter
   double safety_buffer_lateral{1.0};
 
   double safety_buffer_longitudinal{0.0};
+
+  bool use_conservative_buffer_longitudinal{true};
 };
 
 struct AvoidanceParameters
@@ -378,6 +380,9 @@ struct ObjectData  // avoidance target
 
   // is stoppable under the constraints
   bool is_stoppable{false};
+
+  // is within intersection area
+  bool is_within_intersection{false};
 
   // unavoidable reason
   std::string reason{""};

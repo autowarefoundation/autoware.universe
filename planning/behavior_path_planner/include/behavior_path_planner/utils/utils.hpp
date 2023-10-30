@@ -16,14 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__UTILS_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_utils/utils.hpp"
-#include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
-#include "behavior_path_planner/utils/lane_following/module_data.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
-#include "behavior_path_planner/utils/start_planner/pull_out_path.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
@@ -51,8 +45,6 @@
 #include <limits>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::utils
@@ -338,6 +330,8 @@ std::optional<double> getSignedDistanceFromBoundary(
 
 Polygon2d toPolygon2d(const lanelet::ConstLanelet & lanelet);
 
+Polygon2d toPolygon2d(const lanelet::BasicPolygon2d & polygon);
+
 std::vector<Polygon2d> getTargetLaneletPolygons(
   const lanelet::ConstLanelets & lanelets, const Pose & pose, const double check_length,
   const std::string & target_type);
@@ -373,10 +367,12 @@ lanelet::ConstLanelets getCurrentLanesFromPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data);
 
 lanelet::ConstLanelets extendNextLane(
-  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes);
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes,
+  const bool only_in_route = false);
 
 lanelet::ConstLanelets extendPrevLane(
-  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes);
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes,
+  const bool only_in_route = false);
 
 lanelet::ConstLanelets extendLanes(
   const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes);
@@ -398,7 +394,7 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
 
 double calcMinimumLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
-  const double length_to_intersection = 0.0);
+  const double backward_buffer, const double length_to_intersection = 0.0);
 
 lanelet::ConstLanelets getLaneletsFromPath(
   const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
