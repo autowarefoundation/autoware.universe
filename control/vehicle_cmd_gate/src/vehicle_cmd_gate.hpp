@@ -178,6 +178,7 @@ private:
   double moderate_stop_service_acceleration_;
   bool enable_cmd_limit_filter_;
   int filter_activated_count_threshold_;
+  double filter_activated_velocity_threshold_;
 
   // Service
   rclcpp::Service<EngageSrv>::SharedPtr srv_engage_;

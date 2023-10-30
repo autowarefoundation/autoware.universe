@@ -165,6 +165,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   stop_check_duration_ = declare_parameter<double>("stop_check_duration");
   enable_cmd_limit_filter_ = declare_parameter<bool>("enable_cmd_limit_filter");
   filter_activated_count_threshold_ = declare_parameter<int>("filter_activated_count_threshold");
+  filter_activated_velocity_threshold_ =
+    declare_parameter<double>("filter_activated_velocity_threshold");
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -587,10 +589,14 @@ AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannCont
   }
   if (
     filter_activated_count_ >= filter_activated_count_threshold_ &&
+    std::fabs(current_status_cmd.longitudinal.speed) >= filter_activated_velocity_threshold_ &&
     mode.mode == OperationModeState::AUTONOMOUS) {
     filter_activated_marker_pub_->publish(createMarkerArray(is_filter_activated));
     is_filter_activated_flag.data = true;
+  } else {
+    is_filter_activated_flag.data = false;
   }
+
   is_filter_activated_flag.stamp = now();
   filter_activated_flag_pub_->publish(is_filter_activated_flag);
 
