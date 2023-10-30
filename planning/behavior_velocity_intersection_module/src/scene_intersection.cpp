@@ -1471,8 +1471,9 @@ bool IntersectionModule::checkCollision(
   // cut the predicted path at passing_time
   tier4_debug_msgs::msg::Float64MultiArrayStamped ego_ttc_time_array;
   const auto time_distance_array = util::calcIntersectionPassingTime(
-    path, planner_data_, associative_ids_, closest_idx, last_intersection_stop_line_candidate_idx,
-    time_delay, planner_param_.common.intersection_velocity,
+    path, planner_data_, lane_id_, associative_ids_, closest_idx,
+    last_intersection_stop_line_candidate_idx, time_delay,
+    planner_param_.common.intersection_velocity,
     planner_param_.collision_detection.minimum_ego_predicted_velocity,
     planner_param_.collision_detection.use_upstream_velocity,
     planner_param_.collision_detection.minimum_upstream_velocity, &ego_ttc_time_array);
@@ -1568,13 +1569,16 @@ bool IntersectionModule::checkCollision(
   tier4_debug_msgs::msg::Float64MultiArrayStamped object_ttc_time_array;
   object_ttc_time_array.layout.dim.resize(3);
   object_ttc_time_array.layout.dim.at(0).label = "objects";
-  object_ttc_time_array.layout.dim.at(0).size = 0;  // incremented in the loop
+  object_ttc_time_array.layout.dim.at(0).size = 1;  // incremented in the loop, first row is lane_id
   object_ttc_time_array.layout.dim.at(1).label =
     "[x, y, th, length, width, speed, dangerous, ref_obj_enter_time, ref_obj_exit_time, "
     "start_time, start_dist, "
     "end_time, end_dist, first_collision_x, first_collision_y, last_collision_x, last_collision_y, "
     "prd_x[0], ... pred_x[19], pred_y[0], ... pred_y[19]]";
   object_ttc_time_array.layout.dim.at(1).size = 57;
+  for (unsigned i = 0; i < object_ttc_time_array.layout.dim.at(1).size; ++i) {
+    object_ttc_time_array.data.push_back(lane_id_);
+  }
   bool collision_detected = false;
   for (const auto & target_object : target_objects->all_attention_objects) {
     const auto & object = target_object.object;

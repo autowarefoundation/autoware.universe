@@ -87,10 +87,11 @@ class TTCVisualizer(Node):
             self.on_object_ttc,
             1,
         )
+        self.args = args
+        self.lane_id = args.lane_id
         self.ego_ttc_data = None
         self.object_ttc_data = None
         self.npc_vehicles = []
-        self.args = args
         self.images = []
         self.last_sub = time.time()
 
@@ -118,8 +119,8 @@ class TTCVisualizer(Node):
         self.ttc_vel_ax.cla()
 
         n_ttc_data = int(self.ego_ttc_data.layout.dim[1].size)
-        ego_ttc_time = self.ego_ttc_data.data[0:n_ttc_data]
-        ego_ttc_dist = self.ego_ttc_data.data[n_ttc_data : 2 * n_ttc_data]
+        ego_ttc_time = self.ego_ttc_data.data[n_ttc_data : 2 * n_ttc_data]
+        ego_ttc_dist = self.ego_ttc_data.data[2 * n_ttc_data : 3 * n_ttc_data]
 
         self.ttc_ax.grid()
         self.ttc_ax.set_xlabel("ego time")
@@ -153,8 +154,8 @@ class TTCVisualizer(Node):
         detect_range = self.args.range
         self.world_ax.cla()
         n_ttc_data = int(self.ego_ttc_data.layout.dim[1].size)
-        ego_path_x = self.ego_ttc_data.data[2 * n_ttc_data : 3 * n_ttc_data]
-        ego_path_y = self.ego_ttc_data.data[3 * n_ttc_data : 4 * n_ttc_data]
+        ego_path_x = self.ego_ttc_data.data[3 * n_ttc_data : 4 * n_ttc_data]
+        ego_path_y = self.ego_ttc_data.data[4 * n_ttc_data : 5 * n_ttc_data]
         self.world_ax.set_aspect("equal")
         self.world_ax.scatter(ego_path_x[0], ego_path_y[0], marker="x", c="red", s=15)
         min_x, max_x = min(ego_path_x), max(ego_path_x)
@@ -242,26 +243,34 @@ class TTCVisualizer(Node):
 
     def on_ego_ttc(self, msg):
         with self.lock:
-            self.ego_ttc_data = msg
-            self.last_sub = time.time()
+            if int(msg.data[0]) == self.lane_id:
+                self.ego_ttc_data = msg
+                self.last_sub = time.time()
 
     def parse_npc_vehicles(self):
         self.npc_vehicles = []
         n_npc_vehicles = int(self.object_ttc_data.layout.dim[0].size)
         npc_data_size = int(self.object_ttc_data.layout.dim[1].size)
-        for i in range(0, n_npc_vehicles):
+        for i in range(1, n_npc_vehicles):
             data = self.object_ttc_data.data[i * npc_data_size : (i + 1) * npc_data_size]
             self.npc_vehicles.append(NPC(data))
 
     def on_object_ttc(self, msg):
         with self.lock:
-            self.object_ttc_data = msg
-            self.parse_npc_vehicles()
-            self.last_sub = time.time()
+            if int(msg.data[0]) == self.lane_id:
+                self.object_ttc_data = msg
+                self.parse_npc_vehicles()
+                self.last_sub = time.time()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--lane_id",
+        type=int,
+        required=True,
+        help="lane_id to analyze",
+    )
     parser.add_argument(
         "--range",
         type=float,
