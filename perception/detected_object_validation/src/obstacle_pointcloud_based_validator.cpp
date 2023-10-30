@@ -97,6 +97,7 @@ ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(
   using std::placeholders::_1;
   using std::placeholders::_2;
 
+  // TODO(badai-nguyen): change to single bind function
   if (using_2d_validator_) {
     sync_.registerCallback(
       std::bind(&ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud, this, _1, _2));
