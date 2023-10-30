@@ -1572,8 +1572,9 @@ bool IntersectionModule::checkCollision(
   object_ttc_time_array.layout.dim.at(1).label =
     "[x, y, th, length, width, speed, dangerous, ref_obj_enter_time, ref_obj_exit_time, "
     "start_time, start_dist, "
-    "end_time, end_dist, prd_x[0], ... pred_x[19], pred_y[0], ... pred_y[19]]";
-  object_ttc_time_array.layout.dim.at(1).size = 53;
+    "end_time, end_dist, first_collision_x, first_collision_y, last_collision_x, last_collision_y, "
+    "prd_x[0], ... pred_x[19], pred_y[0], ... pred_y[19]]";
+  object_ttc_time_array.layout.dim.at(1).size = 57;
   bool collision_detected = false;
   for (const auto & target_object : target_objects->all_attention_objects) {
     const auto & object = target_object.object;
@@ -1682,7 +1683,8 @@ bool IntersectionModule::checkCollision(
          object.kinematics.initial_twist_with_covariance.twist.linear.x,
          1.0 * static_cast<int>(collision_detected), ref_object_enter_time, ref_object_exit_time,
          start_time_distance_itr->first, start_time_distance_itr->second,
-         end_time_distance_itr->first, end_time_distance_itr->second});
+         end_time_distance_itr->first, end_time_distance_itr->second, first_itr->position.x,
+         first_itr->position.y, last_itr->position.x, last_itr->position.y});
       for (unsigned i = 0; i < 20; i++) {
         const auto & pos =
           predicted_path.path.at(std::min<size_t>(i, predicted_path.path.size() - 1)).position;

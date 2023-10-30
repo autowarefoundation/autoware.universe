@@ -64,8 +64,12 @@ class NPC:
         self.collision_start_dist = data[10]
         self.collision_end_time = data[11]
         self.collision_end_dist = data[12]
-        self.pred_x = data[13:53:2]
-        self.pred_y = data[14:53:2]
+        self.first_collision_x = data[13]
+        self.first_collision_y = data[14]
+        self.last_collision_x = data[15]
+        self.last_collision_y = data[16]
+        self.pred_x = data[17:58:2]
+        self.pred_y = data[18:58:2]
 
 
 class TTCVisualizer(Node):
@@ -196,6 +200,12 @@ class TTCVisualizer(Node):
             Rth = np.array([[math.cos(th), -math.sin(th)], [math.sin(th), math.cos(th)]])
             bbox_rot = Rth @ bbox
             self.world_ax.fill(bbox_rot[0, :] + x, bbox_rot[1, :] + y, color, alpha=0.5)
+            self.world_ax.plot(
+                [npc.first_collision_x, npc.last_collision_x],
+                [npc.first_collision_y, npc.last_collision_y],
+                c=color,
+                linewidth=3.0,
+            )
             if npc.dangerous:
                 self.world_ax.plot(npc.pred_x, npc.pred_y, c=color, linewidth=1.5)
             else:
@@ -255,7 +265,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--range",
         type=float,
-        default=100,
+        default=60,
         help="detect range for drawing",
     )
     parser.add_argument("-s", "--save", action="store_true", help="flag to save gif")
