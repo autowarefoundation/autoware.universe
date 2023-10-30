@@ -79,11 +79,12 @@ Quaternion lerpOrientation(const Quaternion & o_from, const Quaternion & o_to, c
 //! smooth path point with lane id starts from ego position on path to the path end
 bool smoothPath(
   const PathWithLaneId & in_path, PathWithLaneId & out_path,
-  const std::shared_ptr<const PlannerData> & planner_data)
+  const std::shared_ptr<const PlannerData> & planner_data, const bool rectify_acceleration)
 {
   const geometry_msgs::msg::Pose current_pose = planner_data->current_odometry->pose;
   const double v0 = planner_data->current_velocity->twist.linear.x;
-  const double a0 = planner_data->current_acceleration->accel.accel.linear.x;
+  const double current_a = planner_data->current_acceleration->accel.accel.linear.x;
+  const double a0 = rectify_acceleration ? std::max<double>(0.0, current_a) : current_a;
   const auto & external_v_limit = planner_data->external_velocity_limit;
   const auto & smoother = planner_data->velocity_smoother_;
 
