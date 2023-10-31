@@ -682,6 +682,7 @@ void fillObjectEnvelopePolygon(
   const auto one_shot_envelope_poly =
     createEnvelopePolygon(object_data, closest_pose, envelope_buffer_margin);
 
+  // If the one_shot_envelope_poly is within the registered envelope, use the registered one
   if (boost::geometry::within(one_shot_envelope_poly, same_id_obj->envelope_poly)) {
     object_data.envelope_poly = same_id_obj->envelope_poly;
     return;
