@@ -690,6 +690,7 @@ void fillObjectEnvelopePolygon(
   std::vector<Polygon2d> unions;
   boost::geometry::union_(one_shot_envelope_poly, same_id_obj->envelope_poly, unions);
 
+  // If union fails, use the current envelope
   if (unions.empty()) {
     object_data.envelope_poly = one_shot_envelope_poly;
     return;
