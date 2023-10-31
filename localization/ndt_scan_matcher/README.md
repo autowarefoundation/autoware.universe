@@ -270,7 +270,7 @@ In this implementation, the number of initial positions is fixed to simplify the
 The covariance can be seen as error ellipse from ndt_pose_with_covariance setting on rviz2.
 [original paper](https://www.fujipress.jp/jrm/rb/robot003500020435/).
 
-Note that this function may spoil healthy system behavior if it consumes much calculation resource.
+Note that this function may spoil healthy system behavior if it consumes much calculation resources.
 
 ### Parameters
 initial_pose_offset_model is rotated around (x,y) = (0,0) in the direction of the first principal component of the Hessian matrix.

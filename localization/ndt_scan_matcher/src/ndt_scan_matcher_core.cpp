@@ -722,14 +722,9 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
   const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
   const rclcpp::Time & sensor_ros_time)
 {
-  // Laplace approximation
-  const Eigen::Matrix2d hessian_inv = -ndt_result.hessian.inverse().block(0, 0, 2, 2);
-  const Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> lap_eigensolver(hessian_inv);
-  Eigen::Matrix2d rot = Eigen::Matrix2d::Identity();
-  if (lap_eigensolver.info() == Eigen::Success) {
-    const Eigen::Vector2d lap_eigen_vec = lap_eigensolver.eigenvectors().col(1);
-    const double th = std::atan2(lap_eigen_vec.y(), lap_eigen_vec.x());
-    rot = Eigen::Rotation2Dd(th);
+  Eigen::Matrix2d rot = calc_eigenvector_angle(ndt_result.hessian.inverse().block(0, 0, 2, 2));
+  if (rot == Eigen::Matrix2d::Zero()) {
+    return output_pose_covariance_;
   }
 
   // first result is added to mean
