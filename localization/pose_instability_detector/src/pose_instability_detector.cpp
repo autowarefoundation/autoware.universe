@@ -41,8 +41,8 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
     std::bind(&PoseInstabilityDetector::callback_twist, this, std::placeholders::_1));
 
   const double interval_sec = this->declare_parameter<double>("interval_sec");
-  timer_ = this->create_wall_timer(
-    std::chrono::duration<double>(interval_sec),
+  timer_ = rclcpp::create_timer(
+    this, this->get_clock(), std::chrono::duration<double>(interval_sec),
     std::bind(&PoseInstabilityDetector::callback_timer, this));
 
   diagnostics_pub_ = this->create_publisher<DiagnosticArray>("/diagnostics", 10);
