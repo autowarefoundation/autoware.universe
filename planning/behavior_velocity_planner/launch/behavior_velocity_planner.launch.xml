@@ -52,6 +52,7 @@
     <remap from="~/input/traffic_signals" to="$(var input_traffic_light_topic_name)"/>
     <remap from="~/input/virtual_traffic_light_states" to="$(var virtual_traffic_light_topic_name)"/>
     <remap from="~/input/occupancy_grid" to="/sensing/lidar/occupancy_grid"/>
+    <remap from="~/input/traffic_signals_raw_v2i" to="/v2i/external/v2i_traffic_light_info"/>
     <remap from="~/output/path" to="path"/>
     <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons"/>
     <remap from="~/output/infrastructure_commands" to="/planning/scenario_planning/status/infrastructure_commands"/>
