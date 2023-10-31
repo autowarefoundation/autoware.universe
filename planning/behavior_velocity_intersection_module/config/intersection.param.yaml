@@ -12,6 +12,9 @@
         use_intersection_area: false
         path_interpolation_ds: 0.1 # [m]
         consider_wrong_direction_vehicle: false
+        max_accel: -2.8
+        max_jerk: -5.0
+        delay_response_time: 0.5
       stuck_vehicle:
         turn_direction:
           left: true
@@ -53,6 +56,8 @@
           object_dist_to_stopline: 10.0 # [m]
         ignore_on_amber_traffic_light:
           object_expected_deceleration: 2.0 # [m/ss]
+        ignore_on_red_traffic_light:
+          object_margin_to_path: 2.0
 
       occlusion:
         enable: false
@@ -76,6 +81,10 @@
           maximum_peeking_distance: 6.0 # [m]
         attention_lane_crop_curvature_threshold: 0.25
         attention_lane_curvature_calculation_ds: 0.5
+        static_occlusion_with_traffic_light_timeout: 3.5
+
+      debug:
+        ttc: [0]
 
       enable_rtc:
         intersection: false # If set to true, the scene modules require approval from the rtc (request to cooperate) function. If set to false, the modules can be executed without requiring rtc approval

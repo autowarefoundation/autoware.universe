@@ -62,6 +62,10 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".common.path_interpolation_ds");
   ip.common.consider_wrong_direction_vehicle =
     getOrDeclareParameter<bool>(node, ns + ".common.consider_wrong_direction_vehicle");
+  ip.common.max_accel = getOrDeclareParameter<double>(node, ns + ".common.max_accel");
+  ip.common.max_jerk = getOrDeclareParameter<double>(node, ns + ".common.max_jerk");
+  ip.common.delay_response_time =
+    getOrDeclareParameter<double>(node, ns + ".common.delay_response_time");
 
   ip.stuck_vehicle.turn_direction.left =
     getOrDeclareParameter<bool>(node, ns + ".stuck_vehicle.turn_direction.left");
@@ -135,6 +139,9 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration =
     getOrDeclareParameter<double>(
       node, ns + ".collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration");
+  ip.collision_detection.ignore_on_red_traffic_light.object_margin_to_path =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.ignore_on_red_traffic_light.object_margin_to_path");
 
   ip.occlusion.enable = getOrDeclareParameter<bool>(node, ns + ".occlusion.enable");
   ip.occlusion.occlusion_attention_area_length =
@@ -172,6 +179,9 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_crop_curvature_threshold");
   ip.occlusion.attention_lane_curvature_calculation_ds =
     getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_curvature_calculation_ds");
+  ip.occlusion.static_occlusion_with_traffic_light_timeout = getOrDeclareParameter<double>(
+    node, ns + ".occlusion.static_occlusion_with_traffic_light_timeout");
+  ip.debug.ttc = getOrDeclareParameter<std::vector<int64_t>>(node, ns + ".debug.ttc");
 }
 
 void IntersectionModuleManager::launchNewModules(
