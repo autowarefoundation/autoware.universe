@@ -24,12 +24,12 @@
 
 PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & options)
 : Node("pose_instability_detector", options),
-  threshold_linear_x_(this->declare_parameter<double>("threshold_linear_x")),
-  threshold_linear_y_(this->declare_parameter<double>("threshold_linear_y")),
-  threshold_linear_z_(this->declare_parameter<double>("threshold_linear_z")),
-  threshold_angular_x_(this->declare_parameter<double>("threshold_angular_x")),
-  threshold_angular_y_(this->declare_parameter<double>("threshold_angular_y")),
-  threshold_angular_z_(this->declare_parameter<double>("threshold_angular_z")),
+  threshold_diff_position_x_(this->declare_parameter<double>("threshold_diff_position_x")),
+  threshold_diff_position_y_(this->declare_parameter<double>("threshold_diff_position_y")),
+  threshold_diff_position_z_(this->declare_parameter<double>("threshold_diff_position_z")),
+  threshold_diff_angle_x_(this->declare_parameter<double>("threshold_diff_angle_x")),
+  threshold_diff_angle_y_(this->declare_parameter<double>("threshold_diff_angle_y")),
+  threshold_diff_angle_z_(this->declare_parameter<double>("threshold_diff_angle_z")),
   set_first_odometry_(false)
 {
   odometry_sub_ = this->create_subscription<Odometry>(
@@ -136,12 +136,12 @@ void PoseInstabilityDetector::callback_timer()
     ang_y,
     ang_z};
 
-  const std::vector<double> thresholds = {threshold_linear_x_,  threshold_linear_y_,
-                                          threshold_linear_z_,  threshold_angular_x_,
-                                          threshold_angular_y_, threshold_angular_z_};
+  const std::vector<double> thresholds = {threshold_diff_position_x_, threshold_diff_position_y_,
+                                          threshold_diff_position_z_, threshold_diff_angle_x_,
+                                          threshold_diff_angle_y_,    threshold_diff_angle_z_};
 
-  const std::vector<std::string> labels = {"linear_x",  "linear_y",  "linear_z",
-                                           "angular_x", "angular_y", "angular_z"};
+  const std::vector<std::string> labels = {"diff_position_x", "diff_position_y", "diff_position_z",
+                                           "diff_angle_x",    "diff_angle_y",    "diff_angle_z"};
 
   DiagnosticArray diagnostics;
   diagnostics.header.stamp = latest_odometry_.header.stamp;

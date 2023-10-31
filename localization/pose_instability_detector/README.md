@@ -20,15 +20,15 @@ The following diagram provides an overview of what the timeline of this process 
 
 See [pose_instability_detector.param.yaml](config/pose_instability_detector.param.yaml).
 
-| Name                  | Type   | Description                         |
-| --------------------- | ------ | ----------------------------------- |
-| `interval_sec`        | double | Interval of timer callback (second) |
-| `threshold_linear_x`  | double | Threshold of linear x (m)           |
-| `threshold_linear_y`  | double | Threshold of linear y (m)           |
-| `threshold_linear_z`  | double | Threshold of linear z (m)           |
-| `threshold_angular_x` | double | Threshold of angular x (rad)        |
-| `threshold_angular_y` | double | Threshold of angular y (rad)        |
-| `threshold_angular_z` | double | Threshold of angular z (rad)        |
+| Name                        | Type   | Description                         |
+| --------------------------- | ------ | ----------------------------------- |
+| `interval_sec`              | double | Interval of timer callback (second) |
+| `threshold_diff_position_x` | double | Threshold of diff_position x (m)    |
+| `threshold_diff_position_y` | double | Threshold of diff_position y (m)    |
+| `threshold_diff_position_z` | double | Threshold of diff_position z (m)    |
+| `threshold_diff_angle_x`    | double | Threshold of diff_angle x (rad)     |
+| `threshold_diff_angle_y`    | double | Threshold of diff_angle y (rad)     |
+| `threshold_diff_angle_z`    | double | Threshold of diff_angle z (rad)     |
 
 ## Input
 

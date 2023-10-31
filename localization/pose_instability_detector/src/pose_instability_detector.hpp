@@ -53,12 +53,12 @@ private:
   rclcpp::Publisher<DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   // parameters
-  const double threshold_linear_x_;
-  const double threshold_linear_y_;
-  const double threshold_linear_z_;
-  const double threshold_angular_x_;
-  const double threshold_angular_y_;
-  const double threshold_angular_z_;
+  const double threshold_diff_position_x_;
+  const double threshold_diff_position_y_;
+  const double threshold_diff_position_z_;
+  const double threshold_diff_angle_x_;
+  const double threshold_diff_angle_y_;
+  const double threshold_diff_angle_z_;
 
   // variables
   Odometry latest_odometry_;
