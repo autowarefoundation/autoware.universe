@@ -33,10 +33,7 @@
           "type": "string",
           "description": "If 'ORIGIN', the initial pose is set at (0,0,0). If 'INITIAL_POSE_TOPIC', node will wait until the 'input/initialpose' topic is published.",
           "default": "INITIAL_POSE_TOPIC",
-          "enum": [
-            "ORIGIN",
-            "INITIAL_POSE_TOPIC"
-          ]
+          "enum": ["ORIGIN", "INITIAL_POSE_TOPIC"]
         },
         "initial_engage_state": {
           "type": "boolean",
@@ -268,12 +265,8 @@
           "$ref": "#/definitions/simple_planning_simulator"
         }
       },
-      "required": [
-        "ros__parameters"
-      ]
+      "required": ["ros__parameters"]
     }
   },
-  "required": [
-    "/**"
-  ]
+  "required": ["/**"]
 }
