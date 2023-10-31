@@ -10,7 +10,7 @@ This node triggers periodic timer callbacks to compare two poses:
 The results of this comparison are then output to the `/diagnostics` topic.
 
 If this node outputs WARN messages to `/diagnostics`, it means that the EKF output is significantly different from the integrated twist values.
-This discrepancy suggests that there may be an issue with either the `pose_estimator` or the `twist_estimator`.
+This discrepancy suggests that there may be an issue with either the estimated pose or the input twist.
 
 The following diagram provides an overview of what the timeline of this process looks like:
 
