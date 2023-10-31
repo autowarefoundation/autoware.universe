@@ -160,6 +160,14 @@ void resolve_link_nodes(std::vector<UnitConfig::SharedPtr> & nodes)
   }
 }
 
+std::string complement_node_type(ConfigData & data)
+{
+  if (data.object.count("diag")) {
+    return "diag";
+  }
+  return data.take_text("type");
+}
+
 std::string resolve_substitution(const std::string & substitution, const ConfigData & data)
 {
   std::stringstream ss(substitution);
@@ -203,7 +211,11 @@ UnitConfig::SharedPtr parse_node_config(const ConfigData & data)
 {
   const auto node = std::make_shared<UnitConfig>(data);
   node->path = node->data.take_text("path", "");
-  node->type = node->data.take_text("type");
+  node->type = node->data.take_text("type", "");
+
+  if (node->type.empty()) {
+    node->type = complement_node_type(node->data);
+  }
 
   for (const auto & [index, yaml] : enumerate(node->data.take_list("list"))) {
     const auto child = data.node(index).load(yaml);
