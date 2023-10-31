@@ -35,8 +35,7 @@
 }
 // clang-format on
 
-EKFModule::EKFModule(
-  std::shared_ptr<Warning> warning, const HyperParameters params)
+EKFModule::EKFModule(std::shared_ptr<Warning> warning, const HyperParameters params)
 : warning_(std::move(warning)),
   dim_x_(6),  // x, y, yaw, yaw_bias, vx, wz
   params_(params)
@@ -104,8 +103,7 @@ geometry_msgs::msg::PoseStamped EKFModule::getCurrentPose(
   return current_ekf_pose;
 }
 
-geometry_msgs::msg::TwistStamped EKFModule::getCurrentTwist(
-  const rclcpp::Time & current_time) const
+geometry_msgs::msg::TwistStamped EKFModule::getCurrentTwist(const rclcpp::Time & current_time) const
 {
   const double vx = kalman_filter_.getXelement(IDX::VX);
   const double wz = kalman_filter_.getXelement(IDX::WZ);

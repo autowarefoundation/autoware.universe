@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_MODULE_HPP_
-#define EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_MODULE_HPP_
+#ifndef EKF_LOCALIZER__EKF_MODULE_HPP_
+#define EKF_LOCALIZER__EKF_MODULE_HPP_
 
 #include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/state_index.hpp"
@@ -65,7 +65,8 @@ public:
   EKFModule(std::shared_ptr<Warning> warning, const HyperParameters params);
 
   void initialize(
-    const PoseWithCovariance & initial_pose, const geometry_msgs::msg::TransformStamped & transform);
+    const PoseWithCovariance & initial_pose,
+    const geometry_msgs::msg::TransformStamped & transform);
 
   geometry_msgs::msg::PoseStamped getCurrentPose(
     const rclcpp::Time & current_time, const double z, const double roll, const double pitch,
@@ -93,4 +94,4 @@ private:
   const HyperParameters params_;
 };
 
-#endif  // EKF_LOCALIZER__EXTENDED_KALMAN_FILTER_MODULE_HPP_
+#endif  // EKF_LOCALIZER__EKF_MODULE_HPP_
