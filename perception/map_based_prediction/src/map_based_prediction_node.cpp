@@ -710,10 +710,7 @@ void replaceObjectYawWithLaneletsYaw(
   tf2::Matrix3x3(original_quaternion).getRPY(roll, pitch, yaw);
   tf2::Quaternion filtered_quaternion;
   filtered_quaternion.setRPY(roll, pitch, mean_yaw_angle);
-  pose_with_cov.pose.orientation.x = filtered_quaternion.x();
-  pose_with_cov.pose.orientation.y = filtered_quaternion.y();
-  pose_with_cov.pose.orientation.z = filtered_quaternion.z();
-  pose_with_cov.pose.orientation.w = filtered_quaternion.w();
+  pose_with_cov.pose.orientation = tf2::toMsg(filtered_quaternion);
 }
 
 }  // namespace
