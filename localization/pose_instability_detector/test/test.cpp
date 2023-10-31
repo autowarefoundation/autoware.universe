@@ -87,20 +87,20 @@ TEST_F(TestPoseInstabilityDetector, output_ok_when_twist_matches_odometry)  // N
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
-  // send the twist message1 (move 0.5m in x direction)
+  // send the twist message1 (move 1m in x direction)
   timestamp.sec = 0;
   timestamp.nanosec = 5e8;
-  helper_->send_twist_message(timestamp, 1.0, 0.0, 0.0);
+  helper_->send_twist_message(timestamp, 2.0, 0.0, 0.0);
 
-  // send the twist message2 (move 0.5m in x direction)
+  // send the twist message2 (move 1m in x direction)
   timestamp.sec = 1;
   timestamp.nanosec = 0;
-  helper_->send_twist_message(timestamp, 1.0, 0.0, 0.0);
+  helper_->send_twist_message(timestamp, 2.0, 0.0, 0.0);
 
-  // send the second odometry message (finish x = 11)
+  // send the second odometry message (finish x = 12)
   timestamp.sec = 2;
   timestamp.nanosec = 0;
-  helper_->send_odometry_message(timestamp, 11.0, 0.0, 0.0);
+  helper_->send_odometry_message(timestamp, 12.0, 0.0, 0.0);
 
   // process the above messages (by timer_callback)
   helper_->received_diagnostic_array_flag = false;
@@ -130,20 +130,20 @@ TEST_F(TestPoseInstabilityDetector, output_warn_when_twist_is_too_small)  // NOL
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
-  // send the twist message1 (move 0.05m in x direction)
+  // send the twist message1 (move 0.1m in x direction)
   timestamp.sec = 0;
   timestamp.nanosec = 5e8;
-  helper_->send_twist_message(timestamp, 0.1, 0.0, 0.0);
+  helper_->send_twist_message(timestamp, 0.2, 0.0, 0.0);
 
-  // send the twist message2 (move 0.05m in x direction)
+  // send the twist message2 (move 0.1m in x direction)
   timestamp.sec = 1;
   timestamp.nanosec = 0;
-  helper_->send_twist_message(timestamp, 0.1, 0.0, 0.0);
+  helper_->send_twist_message(timestamp, 0.2, 0.0, 0.0);
 
-  // send the second odometry message (finish x = 11)
+  // send the second odometry message (finish x = 12)
   timestamp.sec = 2;
   timestamp.nanosec = 0;
-  helper_->send_odometry_message(timestamp, 11.0, 0.0, 0.0);
+  helper_->send_odometry_message(timestamp, 12.0, 0.0, 0.0);
 
   // process the above messages (by timer_callback)
   helper_->received_diagnostic_array_flag = false;
