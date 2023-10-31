@@ -2708,6 +2708,17 @@ Polygon2d toPolygon2d(const lanelet::ConstLanelet & lanelet)
            : tier4_autoware_utils::inverseClockwise(polygon);
 }
 
+Polygon2d toPolygon2d(const lanelet::BasicPolygon2d & polygon)
+{
+  Polygon2d ret;
+  for (const auto & p : polygon) {
+    ret.outer().emplace_back(p.x(), p.y());
+  }
+  ret.outer().push_back(ret.outer().front());
+
+  return tier4_autoware_utils::isClockwise(ret) ? ret : tier4_autoware_utils::inverseClockwise(ret);
+}
+
 std::vector<Polygon2d> getTargetLaneletPolygons(
   const lanelet::PolygonLayer & map_polygons, lanelet::ConstLanelets & lanelets, const Pose & pose,
   const double check_length, const std::string & target_type)
@@ -3310,7 +3321,7 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
 
 double calcMinimumLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
-  const double length_to_intersection)
+  const double backward_buffer, const double length_to_intersection)
 {
   if (shift_intervals.empty()) {
     return 0.0;
@@ -3328,8 +3339,7 @@ double calcMinimumLaneChangeLength(
       PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
     accumulated_length += vel * t + finish_judge_buffer;
   }
-  accumulated_length +=
-    common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);
+  accumulated_length += backward_buffer * (shift_intervals.size() - 1.0);
 
   return accumulated_length;
 }

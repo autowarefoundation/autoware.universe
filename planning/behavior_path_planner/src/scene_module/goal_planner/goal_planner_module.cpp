@@ -146,6 +146,17 @@ void GoalPlannerModule::onTimer()
   if (status_.get_goal_candidates().empty()) {
     return;
   }
+
+  if (!isExecutionRequested()) {
+    return;
+  }
+
+  if (
+    !planner_data_ ||
+    !goal_planner_utils::isAllowedGoalModification(planner_data_->route_handler)) {
+    return;
+  }
+
   const auto goal_candidates = status_.get_goal_candidates();
 
   // generate valid pull over path candidates and calculate closest start pose
@@ -227,20 +238,12 @@ void GoalPlannerModule::onFreespaceParkingTimer()
   }
 }
 
-BehaviorModuleOutput GoalPlannerModule::run()
-{
-  current_state_ = ModuleStatus::RUNNING;
-  updateOccupancyGrid();
-
-  if (!isActivated()) {
-    return planWaitingApproval();
-  }
-
-  return plan();
-}
-
 void GoalPlannerModule::updateData()
 {
+  if (getCurrentStatus() == ModuleStatus::IDLE) {
+    return;
+  }
+
   // Initialize Occupancy Grid Map
   // This operation requires waiting for `planner_data_`, hence it is executed here instead of in
   // the constructor. Ideally, this operation should only need to be performed once.
@@ -287,6 +290,8 @@ void GoalPlannerModule::processOnExit()
   resetPathCandidate();
   resetPathReference();
   debug_marker_.markers.clear();
+  status_.reset();
+  last_approval_data_.reset();
 }
 
 bool GoalPlannerModule::isExecutionRequested() const
@@ -446,13 +451,6 @@ Pose GoalPlannerModule::calcRefinedGoal(const Pose & goal_pose) const
   const auto refined_goal_pose = calcOffsetPose(center_pose, 0, -offset_from_center_line, 0);
 
   return refined_goal_pose;
-}
-
-ModuleStatus GoalPlannerModule::updateState()
-{
-  // start_planner module will be run when setting new goal, so not need finishing pull_over module.
-  // Finishing it causes wrong lane_following path generation.
-  return current_state_;
 }
 
 bool GoalPlannerModule::planFreespacePath()
@@ -775,6 +773,7 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output)
   } else {
     // not_safe -> not_safe: use previous stop path
     output.path = status_.get_prev_stop_path();
+    stop_pose_ = utils::getFirstStopPoseFromPath(*output.path);
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path, use previous stop path");
   }
@@ -804,6 +803,7 @@ void GoalPlannerModule::setStopPathFromCurrentPath(BehaviorModuleOutput & output
   } else {
     // not_safe safe(no feasible stop path found) -> not_safe: use previous stop path
     output.path = status_.get_prev_stop_path_after_approval();
+    stop_pose_ = utils::getFirstStopPoseFromPath(*output.path);
     RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, use previous stop path");
   }
   output.reference_path = getPreviousModuleOutput().reference_path;
@@ -912,6 +912,12 @@ void GoalPlannerModule::decideVelocity()
   status_.set_has_decided_velocity(true);
 }
 
+CandidateOutput GoalPlannerModule::planCandidate() const
+{
+  return CandidateOutput(
+    status_.get_pull_over_path() ? status_.get_pull_over_path()->getFullPath() : PathWithLaneId());
+}
+
 BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
 {
   // if pull over path candidates generation is not finished, use previous module output
@@ -929,14 +935,9 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
 
   // Use decided path
   if (status_.get_has_decided_path()) {
-    if (isActivated() && isWaitingApproval()) {
-      {
-        const std::lock_guard<std::recursive_mutex> lock(mutex_);
-        status_.set_last_approved_time(std::make_shared<rclcpp::Time>(clock_->now()));
-        status_.set_last_approved_pose(
-          std::make_shared<Pose>(planner_data_->self_odometry->pose.pose));
-      }
-      clearWaitingApproval();
+    if (isActivated() && !last_approval_data_) {
+      last_approval_data_ =
+        std::make_unique<LastApprovalData>(clock_->now(), planner_data_->self_odometry->pose.pose);
       decideVelocity();
     }
     transitionToNextPathIfFinishingCurrentPath();
@@ -952,7 +953,7 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
   // set output and status
   BehaviorModuleOutput output{};
   setOutput(output);
-  path_candidate_ = std::make_shared<PathWithLaneId>(status_.get_pull_over_path()->getFullPath());
+  path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
   path_reference_ = getPreviousModuleOutput().reference_path;
 
   // return to lane parking if it is possible
@@ -1003,16 +1004,11 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification(
     return getPreviousModuleOutput();
   }
 
-  waitApproval();
-
   BehaviorModuleOutput out;
-  out.modified_goal = plan().modified_goal;  // update status_
+  out.modified_goal = planWithGoalModification().modified_goal;  // update status_
   out.path = std::make_shared<PathWithLaneId>(generateStopPath());
   out.reference_path = getPreviousModuleOutput().reference_path;
-  path_candidate_ =
-    status_.get_is_safe_static_objects()
-      ? std::make_shared<PathWithLaneId>(status_.get_pull_over_path()->getFullPath())
-      : out.path;
+  path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
   path_reference_ = getPreviousModuleOutput().reference_path;
   const auto distance_to_path_change = calcDistanceToPathChange();
 
@@ -1189,12 +1185,11 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath()
 
 void GoalPlannerModule::transitionToNextPathIfFinishingCurrentPath()
 {
-  if (isActivated() && status_.get_last_approved_time()) {
+  if (isActivated() && last_approval_data_) {
     // if using arc_path and finishing current_path, get next path
     // enough time for turn signal
-    const bool has_passed_enough_time =
-      (clock_->now() - *status_.get_last_approved_time()).seconds() >
-      planner_data_->parameters.turn_signal_search_time;
+    const bool has_passed_enough_time = (clock_->now() - last_approval_data_->time).seconds() >
+                                        planner_data_->parameters.turn_signal_search_time;
 
     if (hasFinishedCurrentPath() && has_passed_enough_time && status_.get_require_increment()) {
       if (incrementPathIndex()) {
@@ -1329,10 +1324,9 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo() const
   {
     // ego decelerates so that current pose is the point `turn_light_on_threshold_time` seconds
     // before starting pull_over
-    turn_signal.desired_start_point =
-      status_.get_last_approved_pose() && status_.get_has_decided_path()
-        ? *status_.get_last_approved_pose()
-        : current_pose;
+    turn_signal.desired_start_point = last_approval_data_ && status_.get_has_decided_path()
+                                        ? last_approval_data_->pose
+                                        : current_pose;
     turn_signal.desired_end_point = end_pose;
     turn_signal.required_start_point = start_pose;
     turn_signal.required_end_point = end_pose;
