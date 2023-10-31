@@ -92,7 +92,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   tf_br_ = std::make_shared<tf2_ros::TransformBroadcaster>(
     std::shared_ptr<rclcpp::Node>(this, [](auto) {}));
 
-  ekf_module_ = std::make_unique<ExtendedKalmanFilterModule>(warning_, params_);
+  ekf_module_ = std::make_unique<EKFModule>(warning_, params_);
 
   z_filter_.set_proc_dev(1.0);
   roll_filter_.set_proc_dev(0.01);
@@ -161,7 +161,8 @@ void EKFLocalizer::timerCallback()
 
     // save the initial size because the queue size can change in the loop
     const auto t_curr = this->now();
-    for (size_t i = 0; i < pose_queue_.size(); ++i) {
+    const size_t n = pose_queue_.size();
+    for (size_t i = 0; i < n; ++i) {
       const auto pose = pose_queue_.pop_increment_age();
       bool is_updated = ekf_module_->measurementUpdatePose(*pose, ekf_dt_, t_curr, pose_diag_info_);
       if (is_updated) {
@@ -195,7 +196,8 @@ void EKFLocalizer::timerCallback()
 
     // save the initial size because the queue size can change in the loop
     const auto t_curr = this->now();
-    for (size_t i = 0; i < twist_queue_.size(); ++i) {
+    const size_t n = twist_queue_.size();
+    for (size_t i = 0; i < n; ++i) {
       const auto twist = twist_queue_.pop_increment_age();
       bool is_updated =
         ekf_module_->measurementUpdateTwist(*twist, ekf_dt_, t_curr, twist_diag_info_);

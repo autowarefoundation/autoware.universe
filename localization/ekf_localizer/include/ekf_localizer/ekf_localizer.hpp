@@ -16,7 +16,7 @@
 #define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
 #include "ekf_localizer/aged_object_queue.hpp"
-#include "ekf_localizer/extended_kalman_filter_module.hpp"
+#include "ekf_localizer/ekf_module.hpp"
 #include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/warning.hpp"
 
@@ -144,7 +144,7 @@ private:
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;
 
   //!< @brief  extended kalman filter instance.
-  std::unique_ptr<ExtendedKalmanFilterModule> ekf_module_;
+  std::unique_ptr<EKFModule> ekf_module_;
   Simple1DFilter z_filter_;
   Simple1DFilter roll_filter_;
   Simple1DFilter pitch_filter_;

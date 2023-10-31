@@ -53,7 +53,7 @@ struct EKFDiagnosticInfo
   double mahalanobis_distance;
 };
 
-class ExtendedKalmanFilterModule
+class EKFModule
 {
 private:
   using PoseWithCovariance = geometry_msgs::msg::PoseWithCovarianceStamped;
@@ -62,10 +62,10 @@ private:
   using Twist = geometry_msgs::msg::TwistStamped;
 
 public:
-  ExtendedKalmanFilterModule(std::shared_ptr<Warning> warning, const HyperParameters params);
+  EKFModule(std::shared_ptr<Warning> warning, const HyperParameters params);
 
   void initialize(
-    PoseWithCovariance & initial_pose, geometry_msgs::msg::TransformStamped & transform);
+    const PoseWithCovariance & initial_pose, const geometry_msgs::msg::TransformStamped & transform);
 
   geometry_msgs::msg::PoseStamped getCurrentPose(
     const rclcpp::Time & current_time, const double z, const double roll, const double pitch,
