@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameters for Simple Planning_ Simulator",
+  "title": "Parameters for Simple Planning Simulator Node",
   "type": "object",
   "definitions": {
     "simple_planning_simulator": {
@@ -255,7 +255,8 @@
         "steer_time_delay",
         "steer_time_constant",
         "x_stddev",
-        "y_stddev"
+        "y_stddev",
+        "vehicle_characteristics"
       ]
     }
   },
