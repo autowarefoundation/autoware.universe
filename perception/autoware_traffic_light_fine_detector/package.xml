@@ -16,6 +16,7 @@
 
   <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_tensorrt_yolox</depend>
+  <depend>cuda</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
   <depend>message_filters</depend>

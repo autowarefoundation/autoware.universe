@@ -23,6 +23,7 @@
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_point_types</depend>
   <depend>autoware_universe_utils</depend>
+  <depend>cuda</depend>
   <depend>cv_bridge</depend>
   <depend>image_geometry</depend>
   <depend>image_transport</depend>
