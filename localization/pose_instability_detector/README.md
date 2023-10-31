@@ -39,8 +39,14 @@ See [pose_instability_detector.param.yaml](config/pose_instability_detector.para
 
 ## Output
 
-| Name           | Type                                  | Description |
-| -------------- | ------------------------------------- | ----------- |
-| `/diagnostics` | diagnostic_msgs::msg::DiagnosticArray | Diagnostics |
+| Name                      | Type                                  | Description     |
+| ------------------------- | ------------------------------------- | --------------- |
+| `~/debug/diff_position_x` | tier4_debug_msgs::msg::Float64Stamped | diff_position x |
+| `~/debug/diff_position_y` | tier4_debug_msgs::msg::Float64Stamped | diff_position y |
+| `~/debug/diff_position_z` | tier4_debug_msgs::msg::Float64Stamped | diff_position z |
+| `~/debug/diff_angle_x`    | tier4_debug_msgs::msg::Float64Stamped | diff_angle x    |
+| `~/debug/diff_angle_y`    | tier4_debug_msgs::msg::Float64Stamped | diff_angle y    |
+| `~/debug/diff_angle_z`    | tier4_debug_msgs::msg::Float64Stamped | diff_angle z    |
+| `/diagnostics`            | diagnostic_msgs::msg::DiagnosticArray | Diagnostics     |
 
 ![rqt_runtime_monitor](./media/rqt_runtime_monitor.png)

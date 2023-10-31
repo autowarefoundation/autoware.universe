@@ -21,6 +21,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
 #include <vector>
 
@@ -32,6 +33,7 @@ class PoseInstabilityDetector : public rclcpp::Node
   using Pose = geometry_msgs::msg::Pose;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
   using Odometry = nav_msgs::msg::Odometry;
+  using Float64Stamped = tier4_debug_msgs::msg::Float64Stamped;
   using KeyValue = diagnostic_msgs::msg::KeyValue;
   using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
   using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
@@ -50,6 +52,12 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   // publisher
+  rclcpp::Publisher<Float64Stamped>::SharedPtr diff_position_x_pub_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr diff_position_y_pub_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr diff_position_z_pub_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr diff_angle_x_pub_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr diff_angle_y_pub_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr diff_angle_z_pub_;
   rclcpp::Publisher<DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   // parameters

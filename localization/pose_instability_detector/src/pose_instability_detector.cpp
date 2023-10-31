@@ -45,6 +45,12 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
     this, this->get_clock(), std::chrono::duration<double>(interval_sec),
     std::bind(&PoseInstabilityDetector::callback_timer, this));
 
+  diff_position_x_pub_ = this->create_publisher<Float64Stamped>("~/debug/diff_position_x", 10);
+  diff_position_y_pub_ = this->create_publisher<Float64Stamped>("~/debug/diff_position_y", 10);
+  diff_position_z_pub_ = this->create_publisher<Float64Stamped>("~/debug/diff_position_z", 10);
+  diff_angle_x_pub_ = this->create_publisher<Float64Stamped>("~/debug/diff_angle_x", 10);
+  diff_angle_y_pub_ = this->create_publisher<Float64Stamped>("~/debug/diff_angle_y", 10);
+  diff_angle_z_pub_ = this->create_publisher<Float64Stamped>("~/debug/diff_angle_z", 10);
   diagnostics_pub_ = this->create_publisher<DiagnosticArray>("/diagnostics", 10);
 }
 
@@ -125,16 +131,18 @@ void PoseInstabilityDetector::callback_timer()
   ekf_to_odom.pose = tier4_autoware_utils::inverseTransformPose(pose, latest_ekf_pose);
   ekf_to_odom.header.stamp = latest_odometry_.header.stamp;
   ekf_to_odom.header.frame_id = "base_link";
+  const geometry_msgs::msg::Point pos = ekf_to_odom.pose.position;
   const auto [ang_x, ang_y, ang_z] = quat_to_rpy(ekf_to_odom.pose.orientation);
+  const std::vector<double> values = {pos.x, pos.y, pos.z, ang_x, ang_y, ang_z};
 
-  // publish diagnostics
-  const std::vector<double> values = {
-    ekf_to_odom.pose.position.x,
-    ekf_to_odom.pose.position.y,
-    ekf_to_odom.pose.position.z,
-    ang_x,
-    ang_y,
-    ang_z};
+  // publish debug
+  const rclcpp::Time stamp = latest_odometry_.header.stamp;
+  diff_position_x_pub_->publish(tier4_debug_msgs::build<Float64Stamped>().stamp(stamp).data(pos.x));
+  diff_position_y_pub_->publish(tier4_debug_msgs::build<Float64Stamped>().stamp(stamp).data(pos.y));
+  diff_position_z_pub_->publish(tier4_debug_msgs::build<Float64Stamped>().stamp(stamp).data(pos.z));
+  diff_angle_x_pub_->publish(tier4_debug_msgs::build<Float64Stamped>().stamp(stamp).data(ang_x));
+  diff_angle_y_pub_->publish(tier4_debug_msgs::build<Float64Stamped>().stamp(stamp).data(ang_y));
+  diff_angle_z_pub_->publish(tier4_debug_msgs::build<Float64Stamped>().stamp(stamp).data(ang_z));
 
   const std::vector<double> thresholds = {threshold_diff_position_x_, threshold_diff_position_y_,
                                           threshold_diff_position_z_, threshold_diff_angle_x_,
@@ -143,8 +151,9 @@ void PoseInstabilityDetector::callback_timer()
   const std::vector<std::string> labels = {"diff_position_x", "diff_position_y", "diff_position_z",
                                            "diff_angle_x",    "diff_angle_y",    "diff_angle_z"};
 
+  // publish diagnostics
   DiagnosticArray diagnostics;
-  diagnostics.header.stamp = latest_odometry_.header.stamp;
+  diagnostics.header.stamp = stamp;
 
   DiagnosticStatus status;
   status.name = "pose_instability_detector";
