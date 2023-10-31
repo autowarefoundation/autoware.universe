@@ -164,6 +164,9 @@ void PoseEstimatorManager::toggle_all(bool enabled)
 
 void PoseEstimatorManager::on_timer()
 {
+  auto now = rclcpp::Clock().now();
+  RCLCPP_WARN_STREAM(get_logger(), "debug " << now.seconds() << " " << now.nanoseconds());
+
   if (switch_rule_) {
     auto toggle_list = switch_rule_->update();
     toggle_each(toggle_list);

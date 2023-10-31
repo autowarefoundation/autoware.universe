@@ -1,15 +1,37 @@
 # pose_estimator_manager
 
+Table of contents:
+
 * [Purpose](#purpose)
 * [Interface](#interfaces)
 * [Architecture](#architecture)
+* [How to launch](#how-to-launch)
 * [Switching Rules](#switching-rules)
 
 ## Purpose
 
 The `pose_estimator_manager` is the package for multi pose_estiamator mode.
 
+[this discussion](https://github.com/orgs/autowarefoundation/discussions/3878)
 
+### Demonstration
+
+TODO: change the video
+
+<div><video controls src="https://user-images.githubusercontent.com/24854875/271473970-eb9f6412-a849-4b12-b487-4bd7aef6de09.mp4" muted="false" width="400"></video></div>
+
+Users can reproduce the demonstration using the following data and launch command:
+
+* rosbag: TODO:
+* map: TODO:
+
+```bash
+ros2 launch autoware_launch logging_simulator.launch.xml \
+  map_path:=<your-map-path> \
+  vehicle_model:=sample_vehicle \
+  sensor_model:=awsim_sensor_kit \
+  pose_source:=ndt_yabloc_artag_eagleye
+```
 
 ## Interfaces
 
@@ -75,6 +97,30 @@ For swithing rule
 <img src="./media/architecture.drawio.svg" alt="drawing" width="800"/>
 
 
+## How to launch
+
+The user can launch the desired pose_estimators by giving the pose_estimator names as a concatenation of underscores for the runtime argument `pose_source`.
+
+```bash
+ros2 launch autoware_launch logging_simulator.launch.xml \
+  map_path:=<your-map-path> \
+  vehicle_model:=sample_vehicle \
+  sensor_model:=awsim_sensor_kit \
+  pose_source:=ndt_yabloc_artag_eagleye
+```
+
+Even if `pose_source`` includes an unexpected string, it will be filtered appropriately.
+Please see the table below for details.
+
+| given runtime argument                       | parsed pose_estimator_manager's param (pose_sources) |
+|----------------------------------------------|------------------------------------------------------|
+| `pose_source:=ndt`                           | `["ndt"]`                                            |
+| `pose_source:=hoge`                          | `[]`                                                 |
+| `pose_source:=yabloc_ndt`                    | `["ndt","yabloc"]`                                   |
+| `pose_source:=yabloc_ndt_ndt_ndt`            | `["ndt","yabloc"]`                                   |
+| `pose_source:=ndt_yabloc_eagleye`            | `["ndt","yabloc","eagleye"]`                         |
+| `pose_source:=ndt_yabloc_hoge_eagleye_artag` | `["ndt","yabloc","eagleye","artag"]`                 |
+
 
 ## Switching Rules
 
@@ -84,31 +130,46 @@ Currently, only one rule is implemented, but in the future, multiple rules will 
 
 ```mermaid
 flowchart LR
-  A{Localization initialization\n state is 'INITIALIZED'?}
+  A{Localization\n Initialization\n state is 'INITIALIZED'?}
   A --false --> _A[enable all]
-  A --true --> B{/localization\n/pose_with_covariance\n is subscribes?}
+  A --true --> B{/localization\n/pose_with_covariance\n is subscribed?}
   B -- false --> _B[enable All]
-  B -- true --> C{eagleye_is_available}
+  B -- true --> C{eagleye is\navailable}
   C -- true --> _C[enable eagleye]
-  C -- false --> D{artag_is_available}
-  D -- false --> _D[enable ArTag]
-  D -- true --> E{yabloc is available}
+  C -- false --> D[#]
+
+  D'[#] -- false --> D''{ArTag is\navailable}
+  D'' -- false --> _D[enable ArTag]
+  D'' -- true --> E{yabloc is\navailable}
   E -- false --> _E[enable NDT]
-  E -- true --> F{NDT is available}
+  E -- true --> F{NDT is\navailable}
   F -- false --> _F[enable yabloc]
-  F -- true --> G{NDT is more suitable than yabloc}
+  F -- true --> G{NDT is more suitable\nthan yabloc}
   G -- true --> _G[enable NDT]
   G -- false --> __G[enable yabloc]
 ```
 
+| branch | description                                                             |
+|--------|-------------------------------------------------------------------------|
+| [1]    | Enable all pose_estimators, because system does not know which pose_estimator is  available for initial localization.|
+| [2]    | Enable all pose_estimators, bacause it is not possible to determine which pose_estimators are available due to the current position.|
+| [3]    |          |
+| [4]    |          |
+
+
 ## Rule helpers
+
+
+
+* [PCD occupancy](#pcd-occupancy)
+* [Eagleye area](#eagleye-area)
+* [AR tag position](#ar-tag-position)
 
 ### PCD occupancy 
 
-
 <img src="./media/pcd_occupancy.drawio.svg" alt="drawing" width="800"/>
 
-### Example of eagleye area
+### eagleye area
 
 The values provided below are placeholders. Ensure to input the correct coordinates corresponding to the actual location where the area is specified, such as lat, lon, mgrs_code, local_x, local_y.
 The following snipet is an example of eagleye area.
@@ -151,3 +212,9 @@ The following snipet is an example of eagleye area.
   </way>
 
 ```
+
+### AR tag position
+
+
+
+## For developers
