@@ -142,7 +142,11 @@ void resolve_link_nodes(std::vector<UnitConfig::SharedPtr> & nodes)
 
   for (const auto & node : nodes) {
     if (node->type == "link" && node->path == "") {
-      links[node] = paths.at(node->data.take_text("link"));
+      const auto link = node->data.take_text("link");
+      if (!paths.count(link)) {
+        throw error<PathNotFound>("link path is not found", link, node->data);
+      }
+      links[node] = paths.at(link);
     } else {
       filtered.push_back(node);
     }

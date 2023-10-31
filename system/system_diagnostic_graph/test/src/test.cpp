@@ -27,14 +27,62 @@ std::filesystem::path resource(const std::string & path)
   return std::filesystem::path(TEST_RESOURCE_PATH) / path;
 }
 
-TEST(TestSuite, RootNotFound)
+TEST(ConfigFile, RootNotFound)
 {
   Graph graph;
-  EXPECT_THROW(graph.init(resource("fake-file-name.yaml"), ""), FileNotFound);
+  EXPECT_THROW(graph.init(resource("fake-file-name.yaml")), FileNotFound);
 }
 
-TEST(TestSuite, FileNotFound)
+TEST(ConfigFile, FileNotFound)
 {
   Graph graph;
-  EXPECT_THROW(graph.init(resource("file-not-found.yaml"), ""), FileNotFound);
+  EXPECT_THROW(graph.init(resource("file-not-found.yaml")), FileNotFound);
+}
+
+TEST(ConfigFile, UnknownSubstitution)
+{
+  Graph graph;
+  EXPECT_THROW(graph.init(resource("unknown-substitution.yaml")), UnknownType);
+}
+
+TEST(ConfigFile, UnknownNodeType)
+{
+  Graph graph;
+  EXPECT_THROW(graph.init(resource("unknown-node-type.yaml")), UnknownType);
+}
+
+TEST(ConfigFile, InvalidDictType)
+{
+  Graph graph;
+  EXPECT_THROW(graph.init(resource("invalid-dict-type.yaml")), InvalidType);
+}
+
+TEST(ConfigFile, InvalidListType)
+{
+  Graph graph;
+  EXPECT_THROW(graph.init(resource("invalid-list-type.yaml")), InvalidType);
+}
+
+TEST(ConfigFile, FieldNotFound)
+{
+  Graph graph;
+  EXPECT_THROW(graph.init(resource("field-not-found.yaml")), FieldNotFound);
+}
+
+TEST(ConfigFile, PathConflict)
+{
+  Graph graph;
+  EXPECT_THROW(graph.init(resource("path-conflict.yaml")), PathConflict);
+}
+
+TEST(ConfigFile, PathNotFound)
+{
+  Graph graph;
+  EXPECT_THROW(graph.init(resource("path-not-found.yaml")), PathNotFound);
+}
+
+TEST(ConfigFile, GraphCirculation)
+{
+  Graph graph;
+  EXPECT_THROW(graph.init(resource("graph-circulation.yaml")), GraphStructure);
 }

@@ -45,12 +45,12 @@ class FieldNotFound : public Exception
   using Exception::Exception;
 };
 
-class PathNotFound : public Exception
+class PathConflict : public Exception
 {
   using Exception::Exception;
 };
 
-class PathConflict : public Exception
+class PathNotFound : public Exception
 {
   using Exception::Exception;
 };
