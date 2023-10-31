@@ -18,17 +18,7 @@ The following diagram provides an overview of what the timeline of this process 
 
 ## Parameters
 
-See [pose_instability_detector.param.yaml](config/pose_instability_detector.param.yaml).
-
-| Name                        | Type   | Description                         |
-| --------------------------- | ------ | ----------------------------------- |
-| `interval_sec`              | double | Interval of timer callback (second) |
-| `threshold_diff_position_x` | double | Threshold of diff_position x (m)    |
-| `threshold_diff_position_y` | double | Threshold of diff_position y (m)    |
-| `threshold_diff_position_z` | double | Threshold of diff_position z (m)    |
-| `threshold_diff_angle_x`    | double | Threshold of diff_angle x (rad)     |
-| `threshold_diff_angle_y`    | double | Threshold of diff_angle y (rad)     |
-| `threshold_diff_angle_z`    | double | Threshold of diff_angle z (rad)     |
+{{ json_to_markdown("localization/pose_instability_detector/schema/pose_instability_detector.schema.json") }}
 
 ## Input
 
