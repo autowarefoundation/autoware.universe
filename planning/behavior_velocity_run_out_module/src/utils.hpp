@@ -121,6 +121,12 @@ struct DynamicObstacleParam
   float points_interval;      // [m]
 };
 
+struct IgnoreMomentaryDetection
+{
+  bool enable;
+  double time_threshold;
+};
+
 struct PlannerParam
 {
   CommonParam common;
@@ -133,6 +139,7 @@ struct PlannerParam
   DynamicObstacleParam dynamic_obstacle;
   SlowDownLimit slow_down_limit;
   Smoother smoother;
+  IgnoreMomentaryDetection ignore_momentary_detection;
 };
 
 enum class DetectionMethod {
