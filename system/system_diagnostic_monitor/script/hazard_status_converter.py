@@ -93,7 +93,7 @@ class HazardStatusConverter(rclpy.node.Node):
         self.sub_modes = self.create_subscription(
             OperationModeState, "/api/operation_mode/state", self.on_modes, durable_qos
         )
-        self.pub_hazard = self.create_publisher(HazardStatus, "/hazard_status2", 1)
+        self.pub_hazard = self.create_publisher(HazardStatus, "/hazard_status", 1)
 
     def on_modes(self, msg):
         self.mode_name = get_mode_name(msg.mode)
