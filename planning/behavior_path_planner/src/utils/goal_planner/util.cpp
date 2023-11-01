@@ -14,22 +14,18 @@
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 
-#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
-
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <boost/geometry/algorithms/dispatch/distance.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/primitives/Lanelet.h>
 #include <tf2/utils.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
-#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -44,47 +40,38 @@ namespace behavior_path_planner
 {
 namespace goal_planner_utils
 {
-PathWithLaneId combineReferencePath(const PathWithLaneId & path1, const PathWithLaneId & path2)
+
+lanelet::ConstLanelets getPullOverLanes(
+  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
+  const double forward_distance)
 {
-  PathWithLaneId path;
-  path.points.insert(path.points.end(), path1.points.begin(), path1.points.end());
+  const Pose goal_pose = route_handler.getOriginalGoalPose();
 
-  // skip overlapping point
-  path.points.insert(path.points.end(), next(path2.points.begin()), path2.points.end());
-
-  return path;
-}
-
-lanelet::ConstLanelets getPullOverLanes(const RouteHandler & route_handler, const bool left_side)
-{
-  const Pose goal_pose = route_handler.getGoalPose();
+  // Buffer to get enough lanes in front of the goal, need much longer than the pull over distance.
+  // In the case of loop lanes, it may not be possible to extend the lane forward.
+  // todo(kosuek55): automatically calculates this distance.
+  const double backward_distance_with_buffer = backward_distance + 100;
 
   lanelet::ConstLanelet target_shoulder_lane{};
   if (route_handler::RouteHandler::getPullOverTarget(
         route_handler.getShoulderLanelets(), goal_pose, &target_shoulder_lane)) {
     // pull over on shoulder lane
-    return route_handler.getShoulderLaneletSequence(target_shoulder_lane, goal_pose);
+    return route_handler.getShoulderLaneletSequence(
+      target_shoulder_lane, goal_pose, backward_distance_with_buffer, forward_distance);
   }
 
-  // pull over on road lane
   lanelet::ConstLanelet closest_lane{};
   route_handler.getClosestLaneletWithinRoute(goal_pose, &closest_lane);
-
   lanelet::ConstLanelet outermost_lane{};
   if (left_side) {
-    outermost_lane = route_handler.getMostLeftLanelet(closest_lane);
+    outermost_lane = route_handler.getMostLeftLanelet(closest_lane, false, true);
   } else {
-    outermost_lane = route_handler.getMostRightLanelet(closest_lane);
+    outermost_lane = route_handler.getMostRightLanelet(closest_lane, false, true);
   }
 
-  lanelet::ConstLanelet outermost_shoulder_lane;
-  if (route_handler.getLeftShoulderLanelet(outermost_lane, &outermost_shoulder_lane)) {
-    return route_handler.getShoulderLaneletSequence(outermost_shoulder_lane, goal_pose);
-  }
-
-  const bool dist = std::numeric_limits<double>::max();
   constexpr bool only_route_lanes = false;
-  return route_handler.getLaneletSequence(outermost_lane, dist, dist, only_route_lanes);
+  return route_handler.getLaneletSequence(
+    outermost_lane, backward_distance_with_buffer, forward_distance, only_route_lanes);
 }
 
 PredictedObjects filterObjectsByLateralDistance(
@@ -140,7 +127,7 @@ MarkerArray createPosesMarkerArray(
   return msg;
 }
 
-MarkerArray createTextsMarkerArray(
+MarkerArray createGoalPriorityTextsMarkerArray(
   const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color)
 {
   MarkerArray msg{};
@@ -159,47 +146,72 @@ MarkerArray createTextsMarkerArray(
   return msg;
 }
 
-MarkerArray createGoalCandidatesMarkerArray(
-  GoalCandidates & goal_candidates, const std_msgs::msg::ColorRGBA & color)
+MarkerArray createNumObjectsToAvoidTextsMarkerArray(
+  const GoalCandidates & goal_candidates, std::string && ns, const std_msgs::msg::ColorRGBA & color)
 {
-  // convert to pose vector
-  std::vector<Pose> pose_vector{};
+  MarkerArray msg{};
+  int32_t i = 0;
   for (const auto & goal_candidate : goal_candidates) {
-    if (goal_candidate.is_safe) {
-      pose_vector.push_back(goal_candidate.goal_pose);
-    }
+    const Pose & pose = goal_candidate.goal_pose;
+    Marker marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i, Marker::TEXT_VIEW_FACING,
+      createMarkerScale(0.3, 0.3, 0.3), color);
+    marker.pose = calcOffsetPose(pose, -0.5, 0, 1.0);
+    marker.id = i;
+    marker.text = std::to_string(goal_candidate.num_objects_to_avoid);
+    msg.markers.push_back(marker);
+    i++;
   }
+
+  return msg;
+}
+
+MarkerArray createGoalCandidatesMarkerArray(
+  const GoalCandidates & goal_candidates, const std_msgs::msg::ColorRGBA & color)
+{
+  GoalCandidates safe_goal_candidates{};
+  std::copy_if(
+    goal_candidates.begin(), goal_candidates.end(), std::back_inserter(safe_goal_candidates),
+    [](const auto & goal_candidate) { return goal_candidate.is_safe; });
+
+  std::vector<Pose> pose_vector{};
+  std::transform(
+    safe_goal_candidates.begin(), safe_goal_candidates.end(), std::back_inserter(pose_vector),
+    [](const auto & goal_candidate) { return goal_candidate.goal_pose; });
 
   auto marker_array = createPosesMarkerArray(pose_vector, "goal_candidates", color);
   for (const auto & text_marker :
-       createTextsMarkerArray(
+       createGoalPriorityTextsMarkerArray(
          pose_vector, "goal_candidates_priority", createMarkerColor(1.0, 1.0, 1.0, 0.999))
          .markers) {
+    marker_array.markers.push_back(text_marker);
+  }
+  for (const auto & text_marker : createNumObjectsToAvoidTextsMarkerArray(
+                                    safe_goal_candidates, "goal_candidates_num_objects_to_avoid",
+                                    createMarkerColor(0.5, 0.5, 0.5, 0.999))
+                                    .markers) {
     marker_array.markers.push_back(text_marker);
   }
 
   return marker_array;
 }
 
-bool isAllowedGoalModification(
-  const std::shared_ptr<RouteHandler> & route_handler, const bool left_side_parking)
+bool isAllowedGoalModification(const std::shared_ptr<RouteHandler> & route_handler)
 {
-  return route_handler->isAllowedGoalModification() ||
-         checkOriginalGoalIsInShoulder(route_handler, left_side_parking);
+  return route_handler->isAllowedGoalModification() || checkOriginalGoalIsInShoulder(route_handler);
 }
 
-bool checkOriginalGoalIsInShoulder(
-  const std::shared_ptr<RouteHandler> & route_handler, const bool left_side_parking)
+bool checkOriginalGoalIsInShoulder(const std::shared_ptr<RouteHandler> & route_handler)
 {
   const Pose & goal_pose = route_handler->getGoalPose();
+  const auto shoulder_lanes = route_handler->getShoulderLanelets();
 
-  const lanelet::ConstLanelets pull_over_lanes =
-    goal_planner_utils::getPullOverLanes(*(route_handler), left_side_parking);
-  lanelet::ConstLanelet target_lane{};
-  lanelet::utils::query::getClosestLanelet(pull_over_lanes, goal_pose, &target_lane);
+  lanelet::ConstLanelet closest_shoulder_lane{};
+  if (lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &closest_shoulder_lane)) {
+    return lanelet::utils::isInLanelet(goal_pose, closest_shoulder_lane, 0.1);
+  }
 
-  return route_handler->isShoulderLanelet(target_lane) &&
-         lanelet::utils::isInLanelet(goal_pose, target_lane, 0.1);
+  return false;
 }
 
 }  // namespace goal_planner_utils

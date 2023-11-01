@@ -16,16 +16,22 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <behavior_path_planner/steering_factor_interface.hpp>
 #include <behavior_path_planner/turn_signal_decider.hpp>
 #include <magic_enum.hpp>
+#include <motion_utils/marker/marker_helper.hpp>
+#include <motion_utils/trajectory/path_with_lane_id.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 #include <rtc_interface/rtc_interface.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -125,6 +131,12 @@ public:
    *        planCandidate (e.g., resampling of path).
    */
   virtual void updateData() {}
+
+  /**
+   * @brief After executing run(), update the module-specific status and/or data used for internal
+   *        processing that are not defined in ModuleStatus.
+   */
+  virtual void postProcess() {}
 
   /**
    * @brief Execute module. Once this function is executed,

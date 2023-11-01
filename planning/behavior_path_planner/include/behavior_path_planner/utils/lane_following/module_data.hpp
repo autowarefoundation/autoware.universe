@@ -15,19 +15,16 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__LANE_FOLLOWING__MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__LANE_FOLLOWING__MODULE_DATA_HPP_
 
-#include <string>
-#include <vector>
-
 namespace behavior_path_planner
 {
 
 struct LaneFollowingParameters
 {
-  double lane_change_prepare_duration;
+  double lane_change_prepare_duration{0.0};
 
   // finding closest lanelet
-  double distance_threshold;
-  double yaw_threshold;
+  double distance_threshold{0.0};
+  double yaw_threshold{0.0};
 };
 
 }  // namespace behavior_path_planner

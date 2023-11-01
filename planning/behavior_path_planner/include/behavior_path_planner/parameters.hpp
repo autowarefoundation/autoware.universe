@@ -18,7 +18,6 @@
 #include <interpolation/linear_interpolation.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -28,6 +27,7 @@ struct ModuleConfigParameters
   bool enable_rtc{false};
   bool enable_simultaneous_execution_as_approved_module{false};
   bool enable_simultaneous_execution_as_candidate_module{false};
+  bool keep_last{false};
   uint8_t priority{0};
   uint8_t max_module_size{0};
 };
@@ -76,6 +76,8 @@ struct LateralAccelerationMap
 struct BehaviorPathPlannerParameters
 {
   bool verbose;
+  size_t max_iteration_num{100};
+  double traffic_light_signal_timeout{1.0};
 
   ModuleConfigParameters config_avoidance;
   ModuleConfigParameters config_avoidance_by_lc;
@@ -91,6 +93,7 @@ struct BehaviorPathPlannerParameters
   double backward_path_length;
   double forward_path_length;
   double backward_length_buffer_for_end_of_lane;
+  double backward_length_buffer_for_blocking_object;
   double backward_length_buffer_for_end_of_pull_over;
   double backward_length_buffer_for_end_of_pull_out;
 

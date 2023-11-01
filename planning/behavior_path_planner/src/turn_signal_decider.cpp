@@ -18,11 +18,16 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/constants.hpp>
 #include <motion_utils/resample/resample.hpp>
+#include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/math/normalization.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <limits>
+#include <queue>
 #include <string>
 #include <utility>
 
@@ -160,30 +165,16 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
       const std::string lane_attribute =
         current_lane.attributeOr("turn_direction", std::string("none"));
 
-      // check next lanes
-      auto next_lanes = route_handler.getNextLanelets(current_lane);
-      if (next_lanes.empty()) {
+      // check next lane has the same attribute
+      lanelet::ConstLanelet next_lane{};
+      if (!route_handler.getNextLaneletWithinRoute(current_lane, &next_lane)) {
+        break;
+      }
+      if (next_lane.attributeOr("turn_direction", std::string("none")) != lane_attribute) {
         break;
       }
 
-      // filter next lanes with same attribute in the path
-      std::vector<lanelet::ConstLanelet> next_lanes_in_path{};
-      std::copy_if(
-        next_lanes.begin(), next_lanes.end(), std::back_inserter(next_lanes_in_path),
-        [&](const auto & next_lane) {
-          const bool is_in_unique_ids =
-            std::find(unique_lane_ids.begin(), unique_lane_ids.end(), next_lane.id()) !=
-            unique_lane_ids.end();
-          const bool has_same_attribute =
-            next_lane.attributeOr("turn_direction", std::string("none")) == lane_attribute;
-          return is_in_unique_ids && has_same_attribute;
-        });
-      if (next_lanes_in_path.empty()) {
-        break;
-      }
-
-      // assume that the next lane in the path is only one
-      current_lane = next_lanes_in_path.front();
+      current_lane = next_lane;
     }
 
     if (!combined_lane_elems.empty()) {

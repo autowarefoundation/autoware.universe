@@ -25,7 +25,7 @@ sample-map-rosbag
 
 ```yaml
 # map_projector_info.yaml
-type: "local"
+projector_type: local
 ```
 
 ### Using MGRS
@@ -46,6 +46,20 @@ If you want to use local cartesian UTM, please specify the map origin as well.
 ```yaml
 # map_projector_info.yaml
 projector_type: LocalCartesianUTM
+vertical_datum: WGS84
+map_origin:
+  latitude: 35.6762 # [deg]
+  longitude: 139.6503 # [deg]
+  altitude: 0.0 # [m]
+```
+
+### Using TransverseMercator
+
+If you want to use Transverse Mercator projection, please specify the map origin as well.
+
+```yaml
+# map_projector_info.yaml
+projector_type: TransverseMercator
 vertical_datum: WGS84
 map_origin:
   latitude: 35.6762 # [deg]

@@ -84,6 +84,10 @@ def launch_setup(context, *args, **kwargs):
                 "~/input/costmap",
                 "/planning/scenario_planning/parking/costmap_generator/occupancy_grid",
             ),
+            (
+                "~/input/traffic_signals",
+                "/perception/traffic_light_recognition/traffic_signals",
+            ),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/accel", "/localization/acceleration"),
             ("~/input/scenario", "/planning/scenario_planning/scenario"),
@@ -176,10 +180,6 @@ def launch_setup(context, *args, **kwargs):
             (
                 "~/input/traffic_signals",
                 "/perception/traffic_light_recognition/traffic_signals",
-            ),
-            (
-                "~/input/external_traffic_signals",
-                "/external/traffic_light_recognition/traffic_signals",
             ),
             (
                 "~/input/external_velocity_limit_mps",

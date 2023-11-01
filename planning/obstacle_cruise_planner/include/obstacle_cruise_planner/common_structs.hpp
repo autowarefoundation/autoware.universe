@@ -15,9 +15,13 @@
 #ifndef OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 #define OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 
-#include "motion_utils/motion_utils.hpp"
+#include "motion_utils/trajectory/interpolation.hpp"
+#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_cruise_planner/type_alias.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
+#include "tier4_autoware_utils/ros/uuid_helper.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -104,12 +108,15 @@ struct StopObstacle : public TargetObstacleInterface
 {
   StopObstacle(
     const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const geometry_msgs::msg::Pose & arg_pose, const double arg_lon_velocity,
-    const double arg_lat_velocity, const geometry_msgs::msg::Point arg_collision_point)
+    const geometry_msgs::msg::Pose & arg_pose, const Shape & arg_shape,
+    const double arg_lon_velocity, const double arg_lat_velocity,
+    const geometry_msgs::msg::Point arg_collision_point)
   : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_lon_velocity, arg_lat_velocity),
+    shape(arg_shape),
     collision_point(arg_collision_point)
   {
   }
+  Shape shape;
   geometry_msgs::msg::Point collision_point;
 };
 
@@ -130,19 +137,21 @@ struct SlowDownObstacle : public TargetObstacleInterface
 {
   SlowDownObstacle(
     const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const geometry_msgs::msg::Pose & arg_pose, const double arg_lon_velocity,
-    const double arg_lat_velocity, const double arg_precise_lat_dist,
+    const ObjectClassification & object_classification, const geometry_msgs::msg::Pose & arg_pose,
+    const double arg_lon_velocity, const double arg_lat_velocity, const double arg_precise_lat_dist,
     const geometry_msgs::msg::Point & arg_front_collision_point,
     const geometry_msgs::msg::Point & arg_back_collision_point)
   : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_lon_velocity, arg_lat_velocity),
     precise_lat_dist(arg_precise_lat_dist),
     front_collision_point(arg_front_collision_point),
-    back_collision_point(arg_back_collision_point)
+    back_collision_point(arg_back_collision_point),
+    classification(object_classification)
   {
   }
   double precise_lat_dist;  // for efficient calculation
   geometry_msgs::msg::Point front_collision_point;
   geometry_msgs::msg::Point back_collision_point;
+  ObjectClassification classification;
 };
 
 struct LongitudinalInfo

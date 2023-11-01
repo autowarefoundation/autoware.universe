@@ -9,6 +9,7 @@
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
   <maintainer email="shumpei.wakabayashi@tier4.jp">Shumpei Wakabayashi</maintainer>
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
+  <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
 
   <license>Apache License 2.0</license>
 
@@ -21,6 +22,7 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_tf2</depend>
+  <depend>autoware_perception_msgs</depend>
   <depend>behavior_velocity_planner_common</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>

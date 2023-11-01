@@ -86,8 +86,12 @@ Either one is activated when all conditions are met.
 
 ### fixed_goal_planner
 
-- The distance between the goal and ego-vehicle is shorter than `minimum_request_length`.
 - Route is set with `allow_goal_modification=false` by default.
+- ego-vehicle is in the same lane as the goal.
+
+If the target path contains a goal, modify the points of the path so that the path and the goal are connected smoothly. This process will change the shape of the path by the distance of `refine_goal_search_radius_range` from the goal. Note that this logic depends on the interpolation algorithm that will be executed in a later module (at the moment it uses spline interpolation), so it needs to be updated in the future.
+
+![path_goal_refinement](../image/path_goal_refinement.drawio.svg)
 
 <img src="https://user-images.githubusercontent.com/39142679/237929955-c0adf01b-9e3c-45e3-848d-98cf11e52b65.png" width="600">
 
@@ -95,7 +99,7 @@ Either one is activated when all conditions are met.
 
 #### pull over on road lane
 
-- The distance between the goal and ego-vehicle is shorter than `minimum_request_length`.
+- The distance between the goal and ego-vehicle is shorter than `pull_over_minimum_request_length`.
 - Route is set with `allow_goal_modification=true` .
   - We can set this option with [SetRoute](https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2) api service.
   - We support `2D Rough Goal Pose` with the key bind `r` in RViz, but in the future there will be a panel of tools to manipulate various Route API from RViz.
@@ -105,7 +109,7 @@ Either one is activated when all conditions are met.
 
 #### pull over on shoulder lane
 
-- The distance between the goal and ego-vehicle is shorter than `minimum_request_length`.
+- The distance between the goal and ego-vehicle is shorter than `pull_over_minimum_request_length`.
 - Goal is set in the `road_shoulder`.
 
 <img src="https://user-images.githubusercontent.com/39142679/237929941-2ce26ea5-c84d-4d17-8cdc-103f5246db90.png" width="600">
@@ -118,17 +122,12 @@ Either one is activated when all conditions are met.
 
 ## General parameters for goal_planner
 
-| Name                       | Unit   | Type   | Description                                                                                                                             | Default value |
-| :------------------------- | :----- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| minimum_request_length     | [m]    | double | when the ego-vehicle approaches the goal by this distance or a safe distance to stop, the module is activated.                          | 100.0         |
-| th_arrived_distance        | [m]    | double | distance threshold for arrival of path termination                                                                                      | 1.0           |
-| th_stopped_velocity        | [m/s]  | double | velocity threshold for arrival of path termination                                                                                      | 0.01          |
-| th_stopped_time            | [s]    | double | time threshold for arrival of path termination                                                                                          | 2.0           |
-| pull_over_velocity         | [m/s]  | double | decelerate to this speed by the goal search area                                                                                        | 3.0           |
-| pull_over_minimum_velocity | [m/s]  | double | speed of pull_over after stopping once. this prevents excessive acceleration.                                                           | 1.38          |
-| margin_from_boundary       | [m]    | double | distance margin from edge of the shoulder lane                                                                                          | 0.5           |
-| decide_path_distance       | [m]    | double | decide path if it approaches this distance relative to the parking position. after that, no path planning and goal search are performed | 10.0          |
-| maximum_deceleration       | [m/s2] | double | maximum deceleration. it prevents sudden deceleration when a parking path cannot be found suddenly                                      | 1.0           |
+| Name                      | Unit  | Type   | Description                                        | Default value |
+| :------------------------ | :---- | :----- | :------------------------------------------------- | :------------ |
+| th_arrived_distance       | [m]   | double | distance threshold for arrival of path termination | 1.0           |
+| th_stopped_velocity       | [m/s] | double | velocity threshold for arrival of path termination | 0.01          |
+| th_stopped_time           | [s]   | double | time threshold for arrival of path termination     | 2.0           |
+| center_line_path_interval | [m]   | double | reference center line path point interval          | 1.0           |
 
 ## **collision check**
 
@@ -138,23 +137,24 @@ Generate footprints from ego-vehicle path points and determine obstacle collisio
 
 #### Parameters for occupancy grid based collision check
 
-| Name                                       | Unit | Type   | Description                                                                                                     | Default value |
-| :----------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
-| use_occupancy_grid                         | [-]  | bool   | flag whether to use occupancy grid for collision check                                                          | true          |
-| use_occupancy_grid_for_longitudinal_margin | [-]  | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
-| occupancy_grid_collision_check_margin      | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
-| theta_size                                 | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
-| obstacle_threshold                         | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
+| Name                                            | Unit | Type   | Description                                                                                                     | Default value |
+| :---------------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
+| use_occupancy_grid_for_goal_search              | [-]  | bool   | flag whether to use occupancy grid for goal search collision check                                              | true          |
+| use_occupancy_grid_for_goal_longitudinal_margin | [-]  | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
+| use_occupancy_grid_for_path_collision_check     | [-]  | bool   | flag whether to use occupancy grid for collision check                                                          | false         |
+| occupancy_grid_collision_check_margin           | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
+| theta_size                                      | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
+| obstacle_threshold                              | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
 
 ### **object recognition based collision check**
 
 #### Parameters for object recognition based collision check
 
-| Name                                                         | Unit | Type   | Description                                                | Default value |
-| :----------------------------------------------------------- | :--- | :----- | :--------------------------------------------------------- | :------------ | ---------------------------------------------------------------------------------------------------------- |
-| use_object_recognition                                       | [-]  | bool   | flag whether to use object recognition for collision check | true          |
-| object_recognition_collision_check_margin                    | [m]  | double | margin to calculate ego-vehicle cells from footprint.      | 0.6           |
-| object_recognition_collision_check_max_extra_stopping_margin | [m]  | double |                                                            | 1.0           | 　maximum value when adding longitudinal distance margin for collision check considering stopping distance |
+| Name                                                         | Unit | Type   | Description                                                                                              | Default value |
+| :----------------------------------------------------------- | :--- | :----- | :------------------------------------------------------------------------------------------------------- | :------------ |
+| use_object_recognition                                       | [-]  | bool   | flag whether to use object recognition for collision check                                               | true          |
+| object_recognition_collision_check_margin                    | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                    | 0.6           |
+| object_recognition_collision_check_max_extra_stopping_margin | [m]  | double | maximum value when adding longitudinal distance margin for collision check considering stopping distance | 1.0           |
 
 ## **Goal Search**
 
@@ -165,21 +165,34 @@ searched for in certain range of the shoulder lane.
 
 ### Parameters for goal search
 
-| Name                            | Unit | Type   | Description                                                                                                                                                                                                              | Default value  |
-| :------------------------------ | :--- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
-| search_priority                 | [-]  | string | In case `efficient_path` use a goal that can generate an efficient path( priority is `shift_parking` -> `arc_forward_parking` -> `arc_backward_parking`). In case `close_goal` use the closest goal to the original one. | efficient_path |
-| forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                            | 20.0           |
-| backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                           | 20.0           |
-| goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                        | 2.0            |
-| longitudinal_margin             | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                            | 3.0            |
-| max_lateral_offset              | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                   | 0.5            |
-| lateral_offset_interval         | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                | 0.25           |
-| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                      | 15.0           |
+| Name                            | Unit | Type   | Description                                                                                                                                                                                                                                 | Default value               |
+| :------------------------------ | :--- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------- |
+| goal_priority                   | [-]  | string | In case `minimum_weighted_distance`, sort with smaller longitudinal distances taking precedence over smaller lateral distances. In case `minimum_longitudinal_distance`, sort with weighted lateral distance against longitudinal distance. | `minimum_weighted_distance` |
+| prioritize_goals_before_objects | [-]  | bool   | If there are objects that may need to be avoided, prioritize the goal in front of them                                                                                                                                                      | true                        |
+| forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                                               | 20.0                        |
+| backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                                              | 20.0                        |
+| goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                                           | 2.0                         |
+| longitudinal_margin             | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                                               | 3.0                         |
+| max_lateral_offset              | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                                      | 0.5                         |
+| lateral_offset_interval         | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                                   | 0.25                        |
+| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                                         | 0.0                         |
+| ignore_distance_from_lane_start | [m]  | double | distance from start of pull over lanes for ignoring goal candidates                                                                                                                                                                         | 0.0                         |
+| margin_from_boundary            | [m]  | double | distance margin from edge of the shoulder lane                                                                                                                                                                                              | 0.5                         |
 
-## **Path Generation**
+## **Pull Over**
 
 There are three path generation methods.
-The path is generated with a certain margin (default: `0.5 m`) from left boundary of shoulder lane.
+The path is generated with a certain margin (default: `0.5 m`) from the boundary of shoulder lane.
+
+| Name                             | Unit   | Type   | Description                                                                                                                                                                    | Default value                            |
+| :------------------------------- | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- |
+| pull_over_minimum_request_length | [m]    | double | when the ego-vehicle approaches the goal by this distance or a safe distance to stop, pull over is activated.                                                                  | 100.0                                    |
+| pull_over_velocity               | [m/s]  | double | decelerate to this speed by the goal search area                                                                                                                               | 3.0                                      |
+| pull_over_minimum_velocity       | [m/s]  | double | speed of pull_over after stopping once. this prevents excessive acceleration.                                                                                                  | 1.38                                     |
+| decide_path_distance             | [m]    | double | decide path if it approaches this distance relative to the parking position. after that, no path planning and goal search are performed                                        | 10.0                                     |
+| maximum_deceleration             | [m/s2] | double | maximum deceleration. it prevents sudden deceleration when a parking path cannot be found suddenly                                                                             | 1.0                                      |
+| path_priority                    | [-]    | string | In case `efficient_path` use a goal that can generate an efficient path which is set in `efficient_path_order`. In case `close_goal` use the closest goal to the original one. | efficient_path                           |
+| efficient_path_order             | [-]    | string | efficient order of pull over planner along lanes　excluding freespace pull over                                                                                                | ["SHIFT", "ARC_FORWARD", "ARC_BACKWARD"] |
 
 ### **shift parking**
 
@@ -257,7 +270,8 @@ If the vehicle gets stuck with `lane_parking`, run `freespace_parking`.
 To run this feature, you need to set `parking_lot` to the map, `activate_by_scenario` of [costmap_generator](../../costmap_generator/README.md) to `false` and `enable_freespace_parking` to `true`
 
 ![pull_over_freespace_parking_flowchart](../image/pull_over_freespace_parking_flowchart.drawio.svg)
-\*Series execution with `avoidance_module` in the flowchart is under development.
+
+Simultaneous execution with `avoidance_module` in the flowchart is under development.
 
 <img src="https://user-images.githubusercontent.com/39142679/221167581-9a654810-2460-4a0c-8afd-7943ca877cf5.png" width="600">
 

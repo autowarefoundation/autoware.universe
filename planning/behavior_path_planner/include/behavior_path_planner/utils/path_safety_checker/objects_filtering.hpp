@@ -27,7 +27,6 @@
 #include <tf2/utils.h>
 
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -37,6 +36,24 @@ namespace behavior_path_planner::utils::path_safety_checker
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
+
+/**
+ * @brief Filters objects based on object centroid position.
+ *
+ * @param objects The predicted objects to filter.
+ * @param lanelet
+ * @return result.
+ */
+bool isCentroidWithinLanelet(const PredictedObject & object, const lanelet::ConstLanelet & lanelet);
+
+/**
+ * @brief Filters objects based on object polygon overlapping with lanelet.
+ *
+ * @param objects The predicted objects to filter.
+ * @param lanelet
+ * @return result.
+ */
+bool isPolygonOverlapLanelet(const PredictedObject & object, const lanelet::ConstLanelet & lanelet);
 
 /**
  * @brief Filters objects based on various criteria.
@@ -100,6 +117,7 @@ void filterObjectsByPosition(
   PredictedObjects & objects, const std::vector<PathPointWithLaneId> & path_points,
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance);
+
 /**
  * @brief Filters the provided objects based on their classification.
  *
@@ -116,14 +134,16 @@ void filterObjectsByClass(
  * lanelet.
  */
 std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
+  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets,
+  const std::function<bool(const PredictedObject, const lanelet::ConstLanelet)> & condition);
 
 /**
  * @brief Separate the objects into two part based on whether the object is within lanelet.
  * @return Objects pair. first objects are in the lanelet, and second others are out of lanelet.
  */
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
+  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets,
+  const std::function<bool(const PredictedObject, const lanelet::ConstLanelet)> & condition);
 
 /**
  * @brief Get the predicted path from an object.
@@ -137,19 +157,31 @@ std::vector<PredictedPathWithPolygon> getPredictedPathFromObj(
   const ExtendedPredictedObject & obj, const bool & is_use_all_predicted_path);
 
 /**
- * @brief Create a predicted path based on ego vehicle parameters.
+ * @brief Create a predicted path using the provided parameters.
  *
- * @param ego_predicted_path_params Parameters for ego's predicted path.
- * @param path_points Points on the path.
- * @param vehicle_pose Current pose of the ego-vehicle.
+ * The function predicts the path based on the current vehicle pose, its current velocity,
+ * and certain parameters related to the vehicle's behavior and environment. The prediction
+ * considers acceleration, delay before departure, and maximum velocity constraints.
+ *
+ * During the delay before departure, the vehicle's velocity is assumed to be zero, and it does
+ * not move. After the delay, the vehicle starts to accelerate as per the provided parameters
+ * until it reaches the maximum allowable velocity or the specified time horizon.
+ *
+ * @param ego_predicted_path_params Parameters associated with the ego's predicted path behavior.
+ * @param path_points Path points to be followed by the vehicle.
+ * @param vehicle_pose Current pose of the vehicle.
  * @param current_velocity Current velocity of the vehicle.
- * @param ego_seg_idx Index of the ego segment.
- * @return std::vector<PoseWithVelocityStamped> The predicted path.
+ * @param ego_seg_idx Segment index where the ego vehicle is currently located on the path.
+ * @param is_object_front Flag indicating if there is an object in front of the ego vehicle.
+ * @param limit_to_max_velocity Flag indicating if the predicted path should consider the
+ *                              maximum allowable velocity.
+ * @return std::vector<PoseWithVelocityStamped> Predicted path based on the input parameters.
  */
 std::vector<PoseWithVelocityStamped> createPredictedPath(
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::vector<PathPointWithLaneId> & path_points,
-  const geometry_msgs::msg::Pose & vehicle_pose, const double current_velocity, size_t ego_seg_idx);
+  const geometry_msgs::msg::Pose & vehicle_pose, const double current_velocity,
+  const size_t ego_seg_idx, const bool is_object_front, const bool limit_to_max_velocity);
 
 /**
  * @brief Checks if the centroid of a given object is within the provided lanelets.
@@ -186,6 +218,20 @@ TargetObjectsOnLane createTargetObjectsOnLane(
   const lanelet::ConstLanelets & current_lanes, const std::shared_ptr<RouteHandler> & route_handler,
   const PredictedObjects & filtered_objects,
   const std::shared_ptr<ObjectsFilteringParams> & params);
+
+/**
+ * @brief Determines whether the predicted object type matches any of the target object types
+ * specified by the user.
+ *
+ * @param object The predicted object whose type is to be checked.
+ * @param target_object_types A structure containing boolean flags for each object type that the
+ * user is interested in checking.
+ *
+ * @return Returns true if the predicted object's highest probability label matches any of the
+ * specified target object types.
+ */
+bool isTargetObjectType(
+  const PredictedObject & object, const ObjectTypesToCheck & target_object_types);
 
 }  // namespace behavior_path_planner::utils::path_safety_checker
 

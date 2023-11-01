@@ -18,6 +18,11 @@
 
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <motion_utils/distance/distance.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+
+#include <boost/geometry/algorithms/intersection.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -132,7 +137,7 @@ bool RunOutModule::modifyPathVelocity(
 }
 
 boost::optional<DynamicObstacle> RunOutModule::detectCollision(
-  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path) const
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path)
 {
   if (path.points.size() < 2) {
     RCLCPP_WARN_STREAM(logger_, "path doesn't have enough points.");
@@ -176,6 +181,11 @@ boost::optional<DynamicObstacle> RunOutModule::detectCollision(
       continue;
     }
 
+    // ignore momentary obstacle detection to avoid sudden stopping by false positive
+    if (isMomentaryDetection()) {
+      return {};
+    }
+
     debug_ptr_->pushCollisionPoints(obstacle_selected->collision_points);
     debug_ptr_->pushNearestCollisionPoint(obstacle_selected->nearest_collision_point);
 
@@ -183,6 +193,7 @@ boost::optional<DynamicObstacle> RunOutModule::detectCollision(
   }
 
   // no collision detected
+  first_detected_time_.reset();
   return {};
 }
 
@@ -807,4 +818,21 @@ void RunOutModule::publishDebugValue(
   debug_ptr_->publishDebugValue();
 }
 
+bool RunOutModule::isMomentaryDetection()
+{
+  if (!planner_param_.ignore_momentary_detection.enable) {
+    return false;
+  }
+
+  if (!first_detected_time_) {
+    first_detected_time_ = std::make_shared<rclcpp::Time>(clock_->now());
+    return true;
+  }
+
+  const auto now = clock_->now();
+  const double elapsed_time_since_detection = (now - *first_detected_time_).seconds();
+  RCLCPP_DEBUG_STREAM(logger_, "elapsed_time_since_detection: " << elapsed_time_since_detection);
+
+  return elapsed_time_since_detection < planner_param_.ignore_momentary_detection.time_threshold;
+}
 }  // namespace behavior_velocity_planner

@@ -14,8 +14,10 @@
 
 #include "detected_object_filter/object_lanelet_filter.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
 #include <object_recognition_utils/object_recognition_utils.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
@@ -60,6 +62,7 @@ void ObjectLaneletFilterNode::mapCallback(
   lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr_);
   const lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
+  shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
 }
 
 void ObjectLaneletFilterNode::objectCallback(
@@ -85,7 +88,10 @@ void ObjectLaneletFilterNode::objectCallback(
   // calculate convex hull
   const auto convex_hull = getConvexHull(transformed_objects);
   // get intersected lanelets
-  lanelet::ConstLanelets intersected_lanelets = getIntersectedLanelets(convex_hull, road_lanelets_);
+  lanelet::ConstLanelets intersected_road_lanelets =
+    getIntersectedLanelets(convex_hull, road_lanelets_);
+  lanelet::ConstLanelets intersected_shoulder_lanelets =
+    getIntersectedLanelets(convex_hull, shoulder_lanelets_);
 
   int index = 0;
   for (const auto & object : transformed_objects.objects) {
@@ -99,7 +105,9 @@ void ObjectLaneletFilterNode::objectCallback(
         polygon.outer().emplace_back(point_transformed.x, point_transformed.y);
       }
       polygon.outer().push_back(polygon.outer().front());
-      if (isPolygonOverlapLanelets(polygon, intersected_lanelets)) {
+      if (isPolygonOverlapLanelets(polygon, intersected_road_lanelets)) {
+        output_object_msg.objects.emplace_back(input_msg->objects.at(index));
+      } else if (isPolygonOverlapLanelets(polygon, intersected_shoulder_lanelets)) {
         output_object_msg.objects.emplace_back(input_msg->objects.at(index));
       }
     } else {
