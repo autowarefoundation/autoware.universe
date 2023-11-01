@@ -24,6 +24,7 @@
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 
@@ -106,6 +107,8 @@ private:
   rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr sub_current_gate_mode_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
     sub_control_mode_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_ego_kinematics_;
+  nav_msgs::msg::Odometry::ConstSharedPtr ego_kinematics_;
   void onAutowareState(const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr msg);
   void onCurrentGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);

@@ -252,6 +252,10 @@ AutowareErrorMonitor::AutowareErrorMonitor()
     "~/input/control_mode", rclcpp::QoS{1},
     std::bind(&AutowareErrorMonitor::onControlMode, this, _1));
 
+  sub_ego_kinematics_ = create_subscription<nav_msgs::msg::Odometry>(
+    "/localization/kinematic_state", rclcpp::QoS{1},
+    [this](const nav_msgs::msg::Odometry::ConstSharedPtr msg) { ego_kinematics_ = msg; });
+
   // Publisher
   pub_hazard_status_ = create_publisher<autoware_auto_system_msgs::msg::HazardStatusStamped>(
     "~/output/hazard_status", rclcpp::QoS{1});
@@ -410,6 +414,12 @@ bool AutowareErrorMonitor::isDataReady()
       get_logger(), *get_clock(), 5000, "waiting for vehicle_state_report msg...");
     return false;
   }
+
+  if (!ego_kinematics_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for ego_kinematics msg...");
+    return false;
+  }
+
   return true;
 }
 
