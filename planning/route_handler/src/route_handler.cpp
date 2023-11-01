@@ -2114,13 +2114,19 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
 
   // Find lanelets for goal point.
   lanelet::ConstLanelet goal_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_checkpoint, &goal_lanelet)) {
-    RCLCPP_WARN_STREAM(
-      logger_, "Failed to find closest lanelet."
-                 << std::endl
-                 << " - start checkpoint: " << toString(start_checkpoint) << std::endl
-                 << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
-    return false;
+  lanelet::ConstLanelets goal_lanelets;
+  if (!lanelet::utils::query::getCurrentLanelets(
+        road_lanelets_, goal_checkpoint, &goal_lanelets)) {
+    if (!lanelet::utils::query::getClosestLanelet(
+          road_lanelets_, goal_checkpoint, &goal_lanelet)) {
+      RCLCPP_WARN_STREAM(
+        logger_, "Failed to find current lanelet."
+                   << std::endl
+                   << " - start checkpoint: " << toString(start_checkpoint) << std::endl
+                   << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
+      return false;
+    }
+    goal_lanelets = {goal_lanelet};
   }
 
   lanelet::Optional<lanelet::routing::Route> optional_route;
@@ -2133,36 +2139,38 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   double shortest_path_length2d = std::numeric_limits<double>::max();
 
   for (const auto & st_llt : start_lanelets) {
-    // check if the angle difference between start_checkpoint and start lanelet center line
-    // orientation is in yaw_threshold range
-    double yaw_threshold = M_PI / 2.0;
-    bool is_proper_angle = false;
-    {
-      double lanelet_angle = lanelet::utils::getLaneletAngle(st_llt, start_checkpoint.position);
-      double pose_yaw = tf2::getYaw(start_checkpoint.orientation);
-      double angle_diff = std::abs(autoware_utils::normalize_radian(lanelet_angle - pose_yaw));
+    for (const auto & gl_llt : goal_lanelets) {
+      // check if the angle difference between start_checkpoint and start lanelet center line
+      // orientation is in yaw_threshold range
+      double yaw_threshold = M_PI / 2.0;
+      bool is_proper_angle = false;
+      {
+        double lanelet_angle = lanelet::utils::getLaneletAngle(st_llt, start_checkpoint.position);
+        double pose_yaw = tf2::getYaw(start_checkpoint.orientation);
+        double angle_diff = std::abs(autoware_utils::normalize_radian(lanelet_angle - pose_yaw));
 
-      if (angle_diff <= std::abs(yaw_threshold)) {
-        is_proper_angle = true;
+        if (angle_diff <= std::abs(yaw_threshold)) {
+          is_proper_angle = true;
+        }
       }
-    }
 
-    optional_route = routing_graph_ptr_->getRoute(st_llt, goal_lanelet, 0);
-    if (!optional_route || !is_proper_angle) {
-      RCLCPP_ERROR_STREAM(
-        logger_, "Failed to find a proper route!"
-                   << std::endl
-                   << " - start checkpoint: " << toString(start_checkpoint) << std::endl
-                   << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl
-                   << " - start lane id: " << st_llt.id() << std::endl
-                   << " - goal lane id: " << goal_lanelet.id() << std::endl);
-    } else {
-      is_route_found = true;
-
-      if (optional_route->length2d() < shortest_path_length2d) {
-        shortest_path_length2d = optional_route->length2d();
-        shortest_path = optional_route->shortestPath();
-        start_lanelet = st_llt;
+      optional_route = routing_graph_ptr_->getRoute(st_llt, gl_llt, 0);
+      if (!optional_route || !is_proper_angle) {
+        RCLCPP_ERROR_STREAM(
+          logger_, "Failed to find a proper route!"
+                     << std::endl
+                     << " - start checkpoint: " << toString(start_checkpoint) << std::endl
+                     << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl
+                     << " - start lane id: " << st_llt.id() << std::endl
+                     << " - goal lane id: " << gl_llt.id() << std::endl);
+      } else {
+        is_route_found = true;
+        if (optional_route->length2d() < shortest_path_length2d) {
+          shortest_path_length2d = optional_route->length2d();
+          shortest_path = optional_route->shortestPath();
+          start_lanelet = st_llt;
+          goal_lanelet = gl_llt;
+        }
       }
     }
   }
