@@ -56,18 +56,25 @@ private:
     double p0_cov_vy;
     double p0_cov_ax;
     double p0_cov_ay;
-  } ekf_params_;
+  };
+  static EkfParams ekf_params_;
 
   // limitation
-  double max_vx_;
-  double max_vy_;
+  static double max_vx_;
+  static double max_vy_;
   // rough tracking parameters
   float z_;
   float yaw_;
 
   // lpf parameter
-  double filter_tau_;  // time constant of 1st order low pass filter
-  double filter_dt_;   // sampling time of 1st order low pass filter
+  static double filter_tau_;  // time constant of 1st order low pass filter
+  static double filter_dt_;   // sampling time of 1st order low pass filter
+
+  static bool is_initialized_;
+  static bool estimate_acc_;
+  static bool trust_yaw_input_;
+  static bool trust_twist_input_;
+  static bool use_polar_coordinate_in_measurement_noise_;
 
 private:
   struct BoundingBox
@@ -89,13 +96,15 @@ public:
     const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
     const std::string & tracker_param_file, const std::uint8_t & label);
 
-  void loadDefaultModelParameters(const std::string & path);
+  static void loadDefaultModelParameters(const std::string & path);
   bool predict(const rclcpp::Time & time) override;
   bool predict(const double dt, KalmanFilter & ekf) const;
   bool measure(
     const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) override;
-  bool measureWithPose(const autoware_auto_perception_msgs::msg::DetectedObject & object);
+  bool measureWithPose(
+    const autoware_auto_perception_msgs::msg::DetectedObject & object,
+    const geometry_msgs::msg::Transform & self_transform);
   bool measureWithShape(const autoware_auto_perception_msgs::msg::DetectedObject & object);
   bool getTrackedObject(
     const rclcpp::Time & time,
