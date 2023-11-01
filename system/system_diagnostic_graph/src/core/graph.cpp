@@ -103,16 +103,16 @@ BaseUnit::UniquePtr make_node(const UnitConfig::SharedPtr & config)
   if (config->type == "or") {
     return std::make_unique<OrUnit>(config->path);
   }
-  if (config->type == "debug-ok") {
+  if (config->type == "ok") {
     return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::OK);
   }
-  if (config->type == "debug-warn") {
+  if (config->type == "warn") {
     return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::WARN);
   }
-  if (config->type == "debug-error") {
+  if (config->type == "error") {
     return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::ERROR);
   }
-  if (config->type == "debug-stale") {
+  if (config->type == "stale") {
     return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::STALE);
   }
   throw error<UnknownType>("unknown node type", config->type, config->data);
