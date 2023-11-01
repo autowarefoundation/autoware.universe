@@ -72,7 +72,7 @@ if(NOT EXISTS ${TRTEXEC_DEFAULT_BIN})
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin
   )
-else()  
+else()
   message(STATUS "Found trtexec: ${TRTEXEC_DEFAULT_BIN}")
 endif()
 
