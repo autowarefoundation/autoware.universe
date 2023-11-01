@@ -24,6 +24,17 @@ from tier4_system_msgs.msg import DiagnosticGraph
 from tier4_system_msgs.msg import HazardStatus
 
 
+def get_mode_name(mode):
+    if mode == OperationModeState.STOP:
+        return "/autoware/modes/stop"
+    elif mode == OperationModeState.AUTONOMOUS:
+        return "/autoware/modes/autonomous"
+    if mode == OperationModeState.LOCAL:
+        return "/autoware/modes/local"
+    if mode == OperationModeState.REMOTE:
+        return "/autoware/modes/remote"
+
+
 def level_text(level):
     if level == DiagnosticStatus.OK:
         return "OK   "
@@ -72,7 +83,7 @@ class HazardStatusConverter(rclpy.node.Node):
     def __init__(self):
         super().__init__("hazard_status_converter")
         self.create_interface()
-        self.mode_name = "/autoware/modes/autonomous"
+        self.mode_name = None
 
     def create_interface(self):
         durable_qos = rclpy.qos.QoSProfile(
@@ -89,7 +100,7 @@ class HazardStatusConverter(rclpy.node.Node):
         self.pub_hazard = self.create_publisher(HazardStatus, "/hazard_status2", 1)
 
     def on_modes(self, msg):
-        pass
+        self.mode_name = get_mode_name(msg.mode)
 
     def on_graph(self, msg):
         nodes = [DiagNode(node) for node in msg.nodes]
