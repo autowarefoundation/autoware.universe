@@ -1081,6 +1081,21 @@ bool NormalLaneChange::hasEnoughLengthToIntersection(
   return true;
 }
 
+bool NormalLaneChange::hasEnoughLengthToTrafficLight(
+  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
+  lanelet::Id & traffic_light_id) const
+{
+  const auto current_pose = getEgoPose();
+  const auto [next_traffic_light_id, dist_to_next_traffic_light] =
+    utils::getDistanceToNextTrafficLight(current_pose, current_lanes);
+  traffic_light_id = next_traffic_light_id;
+  const auto dist_to_next_traffic_light_from_lc_start_pose =
+    dist_to_next_traffic_light - path.info.length.prepare;
+
+  return dist_to_next_traffic_light_from_lc_start_pose <= 0.0 ||
+         dist_to_next_traffic_light_from_lc_start_pose >= path.info.length.lane_changing;
+}
+
 bool NormalLaneChange::getLaneChangePaths(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
   Direction direction, LaneChangePaths * candidate_paths,
@@ -1338,6 +1353,13 @@ bool NormalLaneChange::getLaneChangePaths(
           }
           RCLCPP_WARN_STREAM(
             logger_, "Stop time is over threshold. Allow lane change in intersection.");
+        }
+
+        auto traffic_light_id = lanelet::InvalId;
+        if (
+          lane_change_parameters_->regulate_on_traffic_light &&
+          !hasEnoughLengthToTrafficLight(*candidate_path, current_lanes, traffic_light_id)) {
+          continue;
         }
 
         candidate_paths->push_back(*candidate_path);
