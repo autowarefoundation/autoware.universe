@@ -127,12 +127,9 @@ void PoseInstabilityDetector::callback_timer()
 
   // compare pose and latest_odometry_
   const Pose latest_ekf_pose = latest_odometry_.pose.pose;
-  PoseStamped ekf_to_odom;
-  ekf_to_odom.pose = tier4_autoware_utils::inverseTransformPose(pose, latest_ekf_pose);
-  ekf_to_odom.header.stamp = latest_odometry_.header.stamp;
-  ekf_to_odom.header.frame_id = "base_link";
-  const geometry_msgs::msg::Point pos = ekf_to_odom.pose.position;
-  const auto [ang_x, ang_y, ang_z] = quat_to_rpy(ekf_to_odom.pose.orientation);
+  const Pose ekf_to_odom = tier4_autoware_utils::inverseTransformPose(pose, latest_ekf_pose);
+  const geometry_msgs::msg::Point pos = ekf_to_odom.position;
+  const auto [ang_x, ang_y, ang_z] = quat_to_rpy(ekf_to_odom.orientation);
   const std::vector<double> values = {pos.x, pos.y, pos.z, ang_x, ang_y, ang_z};
 
   // publish debug
