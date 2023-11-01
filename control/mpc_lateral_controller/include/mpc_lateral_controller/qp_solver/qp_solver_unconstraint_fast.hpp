@@ -16,6 +16,7 @@
 #define MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_
 
 #include "mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
+#include "osqp_interface/osqp_interface.hpp"
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
@@ -53,6 +54,13 @@ public:
     const Eigen::MatrixXd & h_mat, const Eigen::MatrixXd & f_vec, const Eigen::MatrixXd & a,
     const Eigen::VectorXd & lb, const Eigen::VectorXd & ub, const Eigen::VectorXd & lb_a,
     const Eigen::VectorXd & ub_a, Eigen::VectorXd & u) override;
+
+  int64_t getTakenIter() const override { return osqpsolver_.getTakenIter(); }
+  double getRunTime() const override { return osqpsolver_.getRunTime(); }
+  double getObjVal() const override { return osqpsolver_.getObjVal(); }
+
+private:
+  autoware::common::osqp::OSQPInterface osqpsolver_;
 };
 }  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_
