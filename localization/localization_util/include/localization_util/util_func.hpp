@@ -29,19 +29,12 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include <Eigen/Dense>
-
 #include <algorithm>
 #include <cmath>
 #include <deque>
 #include <random>
 #include <string>
 #include <vector>
-
-std::vector<Eigen::Vector2d> create_initial_pose_offset_model(
-  const std::vector<double> & x, const std::vector<double> & y);
-
-Eigen::Matrix2d calc_eigenvector_angle(const Eigen::Matrix2d & matrix);
 
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
 std_msgs::msg::ColorRGBA exchange_color_crc(double x);

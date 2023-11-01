@@ -273,6 +273,7 @@ The covariance can be seen as error ellipse from ndt_pose_with_covariance settin
 Note that this function may spoil healthy system behavior if it consumes much calculation resources.
 
 ### Parameters
+
 initial_pose_offset_model is rotated around (x,y) = (0,0) in the direction of the first principal component of the Hessian matrix.
 initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.
 | Name                         | Type                | Description                                                      |

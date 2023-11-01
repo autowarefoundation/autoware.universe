@@ -18,32 +18,6 @@
 
 static std::random_device seed_gen;
 
-std::vector<Eigen::Vector2d> create_initial_pose_offset_model(
-  const std::vector<double> & x, const std::vector<double> & y)
-{
-  int size = x.size();
-  std::vector<Eigen::Vector2d> initial_pose_offset_model(size);
-  for (int i = 0; i < size; i++) {
-    initial_pose_offset_model[i].x() = x[i];
-    initial_pose_offset_model[i].y() = y[i];
-  }
-
-  return initial_pose_offset_model;
-}
-
-Eigen::Matrix2d calc_eigenvector_angle(const Eigen::Matrix2d & matrix)
-{
-  const Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> eigensolver(matrix);
-  Eigen::Matrix2d rot = Eigen::Matrix2d::Zero();
-  if (eigensolver.info() == Eigen::Success) {
-    const Eigen::Vector2d eigen_vec = eigensolver.eigenvectors().col(0);
-    const double th = std::atan2(eigen_vec.y(), eigen_vec.x());
-    rot = Eigen::Rotation2Dd(th);
-  }
-
-  return rot;
-}
-
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
 std_msgs::msg::ColorRGBA exchange_color_crc(double x)
 {

@@ -53,6 +53,32 @@ tier4_debug_msgs::msg::Int32Stamped make_int32_stamped(
   return tier4_debug_msgs::build<T>().stamp(stamp).data(data);
 }
 
+std::vector<Eigen::Vector2d> create_initial_pose_offset_model(
+  const std::vector<double> & x, const std::vector<double> & y)
+{
+  int size = x.size();
+  std::vector<Eigen::Vector2d> initial_pose_offset_model(size);
+  for (int i = 0; i < size; i++) {
+    initial_pose_offset_model[i].x() = x[i];
+    initial_pose_offset_model[i].y() = y[i];
+  }
+
+  return initial_pose_offset_model;
+}
+
+Eigen::Matrix2d find_rotation_matrix_aligning_covariance_to_principal_axes(
+  const Eigen::Matrix2d & matrix)
+{
+  const Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> eigensolver(matrix);
+  if (eigensolver.info() == Eigen::Success) {
+    const Eigen::Vector2d eigen_vec = eigensolver.eigenvectors().col(0);
+    const double th = std::atan2(eigen_vec.y(), eigen_vec.x());
+    return Eigen::Rotation2Dd(th).toRotationMatrix();
+  } else {
+    throw std::runtime_error("Eigen solver failed. Return output_pose_covariance value.");
+  }
+}
+
 bool validate_local_optimal_solution_oscillation(
   const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array,
   const float oscillation_threshold, const float inversion_vector_threshold)
@@ -152,6 +178,9 @@ NDTScanMatcher::NDTScanMatcher()
       initial_pose_offset_model_ =
         create_initial_pose_offset_model(initial_pose_offset_model_x, initial_pose_offset_model_y);
     } else {
+      RCLCPP_WARN(
+        get_logger(),
+        "Invalid initial pose offset model parameters. Disable covariance estimation.");
       use_cov_estimation_ = false;
     }
   }
@@ -722,8 +751,12 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
   const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
   const rclcpp::Time & sensor_ros_time)
 {
-  Eigen::Matrix2d rot = calc_eigenvector_angle(ndt_result.hessian.inverse().block(0, 0, 2, 2));
-  if (rot == Eigen::Matrix2d::Zero()) {
+  Eigen::Matrix2d rot = Eigen::Matrix2d::Identity();
+  try {
+    rot = find_rotation_matrix_aligning_covariance_to_principal_axes(
+      ndt_result.hessian.inverse().block(0, 0, 2, 2));
+  } catch (const std::exception & e) {
+    RCLCPP_WARN(get_logger(), e.what());
     return output_pose_covariance_;
   }
 
