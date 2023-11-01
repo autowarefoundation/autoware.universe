@@ -49,6 +49,28 @@
 #include <string>
 #include <vector>
 
+struct EKFDiagnosticInfo
+{
+  EKFDiagnosticInfo()
+  : no_update_count(0),
+    queue_size(0),
+    is_passed_delay_gate(true),
+    delay_time(0),
+    delay_time_threshold(0),
+    is_passed_mahalanobis_gate(true),
+    mahalanobis_distance(0)
+  {
+  }
+
+  size_t no_update_count;
+  size_t queue_size;
+  bool is_passed_delay_gate;
+  double delay_time;
+  double delay_time_threshold;
+  bool is_passed_mahalanobis_gate;
+  double mahalanobis_distance;
+};
+
 class Simple1DFilter
 {
 public:
@@ -89,7 +111,7 @@ public:
     return;
   };
   void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
-  double get_x() { return x_; }
+  double get_x() const { return x_; }
 
 private:
   bool initialized_;
@@ -117,10 +139,6 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_twist_;
   //!< @brief ekf estimated twist with covariance publisher
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr pub_twist_cov_;
-  //!< @brief debug info publisher
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr pub_debug_;
-  //!< @brief debug measurement pose publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_measured_pose_;
   //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;
   //!< @brief ekf estimated yaw bias publisher
@@ -171,31 +189,11 @@ private:
 
   bool is_activated_;
 
-  size_t pose_no_update_count_;
-  size_t pose_queue_size_;
-  bool pose_is_passed_delay_gate_;
-  double pose_delay_time_;
-  double pose_delay_time_threshold_;
-  bool pose_is_passed_mahalanobis_gate_;
-  double pose_mahalanobis_distance_;
-
-  size_t twist_no_update_count_;
-  size_t twist_queue_size_;
-  bool twist_is_passed_delay_gate_;
-  double twist_delay_time_;
-  double twist_delay_time_threshold_;
-  bool twist_is_passed_mahalanobis_gate_;
-  double twist_mahalanobis_distance_;
+  EKFDiagnosticInfo pose_diag_info_;
+  EKFDiagnosticInfo twist_diag_info_;
 
   AgedObjectQueue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr> pose_queue_;
   AgedObjectQueue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> twist_queue_;
-
-  geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
-  geometry_msgs::msg::PoseStamped
-    current_biased_ekf_pose_;  //!< @brief current estimated pose without yaw bias correction
-  geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
-  std::array<double, 36ul> current_pose_covariance_;
-  std::array<double, 36ul> current_twist_covariance_;
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
@@ -262,9 +260,22 @@ private:
   void setCurrentResult();
 
   /**
+   * @brief get current ekf pose
+   */
+  geometry_msgs::msg::PoseStamped getCurrentEKFPose(bool get_biased_yaw) const;
+
+  /**
+   * @brief get current ekf twist
+   */
+  geometry_msgs::msg::TwistStamped getCurrentEKFTwist() const;
+
+  /**
    * @brief publish current EKF estimation result
    */
-  void publishEstimateResult();
+  void publishEstimateResult(
+    const geometry_msgs::msg::PoseStamped & current_ekf_pose,
+    const geometry_msgs::msg::PoseStamped & current_biased_ekf_pose,
+    const geometry_msgs::msg::TwistStamped & current_ekf_twist);
 
   /**
    * @brief publish diagnostics message
