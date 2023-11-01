@@ -26,7 +26,7 @@ The `autoware_bag_recorder` package does not produce any output topics.
 Here are the core parameters that can be configured for the `autoware_bag_recorder` package:
 
 | Name                               | Type   | Default Value        | Description                                                           |
-|------------------------------------| ------ |----------------------|-----------------------------------------------------------------------|
+| ---------------------------------- | ------ | -------------------- | --------------------------------------------------------------------- |
 | `database_storage`                 | string | `"sqlite3"`          | Choose between `"sqlite3"` or `"mcap"` for database storage options.  |
 | `maximum_record_time`              | int    | 36000                | Maximum duration (in seconds) for recording bag files.                |
 | `maximum_allowed_bag_storage_size` | int    | 500.0                | Maximum allowed size (in GB) for storing bag files.                   |
@@ -40,14 +40,13 @@ Here are the core parameters that can be configured for the `autoware_bag_record
 
 ### Topic Parameters
 
-There are two topic section for this package: input_raw and other topics. input_raw_topics is used for the launching autoware pipeline with 
+There are two topic section for this package: input_raw and other topics. input_raw_topics is used for the launching autoware pipeline with
 logging (rosbag-replay simulation) simulator. Other topics can be any topics. If record_other value is false, then other topics will not be recorded.
 
-| Name                                  | Type           | Default Value | Description                                                    |
-|---------------------------------------|----------------|---------------|----------------------------------------------------------------|
-| `record_other`  `record_raw_input`    | bool           | false         | If it is false, then this section topics will not be recorded. |
-| `other_topics`    `raw_input_topics`  | vector(string) | any topics    | Topic names will be recorded.                                  |
-
+| Name                              | Type           | Default Value | Description                                                    |
+| --------------------------------- | -------------- | ------------- | -------------------------------------------------------------- |
+| `record_other` `record_raw_input` | bool           | false         | If it is false, then this section topics will not be recorded. |
+| `other_topics` `raw_input_topics` | vector(string) | any topics    | Topic names will be recorded.                                  |
 
 ## Assumptions / Known Limits
 
