@@ -29,8 +29,7 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
   threshold_diff_position_z_(this->declare_parameter<double>("threshold_diff_position_z")),
   threshold_diff_angle_x_(this->declare_parameter<double>("threshold_diff_angle_x")),
   threshold_diff_angle_y_(this->declare_parameter<double>("threshold_diff_angle_y")),
-  threshold_diff_angle_z_(this->declare_parameter<double>("threshold_diff_angle_z")),
-  set_first_odometry_(false)
+  threshold_diff_angle_z_(this->declare_parameter<double>("threshold_diff_angle_z"))
 {
   odometry_sub_ = this->create_subscription<Odometry>(
     "~/input/odometry", 10,
@@ -67,9 +66,11 @@ void PoseInstabilityDetector::callback_twist(
 
 void PoseInstabilityDetector::callback_timer()
 {
-  if (!set_first_odometry_) {
+  if (latest_odometry_ == std::nullopt) {
+    return;
+  }
+  if (prev_odometry_ == std::nullopt) {
     prev_odometry_ = latest_odometry_;
-    set_first_odometry_ = true;
     return;
   }
 
@@ -83,13 +84,13 @@ void PoseInstabilityDetector::callback_timer()
     return std::make_tuple(roll, pitch, yaw);
   };
 
-  Pose pose = prev_odometry_.pose.pose;
-  rclcpp::Time prev_time = rclcpp::Time(prev_odometry_.header.stamp);
+  Pose pose = prev_odometry_->pose.pose;
+  rclcpp::Time prev_time = rclcpp::Time(prev_odometry_->header.stamp);
   for (const TwistWithCovarianceStamped & twist_with_cov : twist_buffer_) {
     const Twist twist = twist_with_cov.twist.twist;
 
     const rclcpp::Time curr_time = rclcpp::Time(twist_with_cov.header.stamp);
-    if (curr_time > latest_odometry_.header.stamp) {
+    if (curr_time > latest_odometry_->header.stamp) {
       break;
     }
 
@@ -126,14 +127,14 @@ void PoseInstabilityDetector::callback_timer()
   }
 
   // compare pose and latest_odometry_
-  const Pose latest_ekf_pose = latest_odometry_.pose.pose;
+  const Pose latest_ekf_pose = latest_odometry_->pose.pose;
   const Pose ekf_to_odom = tier4_autoware_utils::inverseTransformPose(pose, latest_ekf_pose);
   const geometry_msgs::msg::Point pos = ekf_to_odom.position;
   const auto [ang_x, ang_y, ang_z] = quat_to_rpy(ekf_to_odom.orientation);
   const std::vector<double> values = {pos.x, pos.y, pos.z, ang_x, ang_y, ang_z};
 
   // publish debug
-  const rclcpp::Time stamp = latest_odometry_.header.stamp;
+  const rclcpp::Time stamp = latest_odometry_->header.stamp;
   diff_position_x_pub_->publish(tier4_debug_msgs::build<Float64Stamped>().stamp(stamp).data(pos.x));
   diff_position_y_pub_->publish(tier4_debug_msgs::build<Float64Stamped>().stamp(stamp).data(pos.y));
   diff_position_z_pub_->publish(tier4_debug_msgs::build<Float64Stamped>().stamp(stamp).data(pos.z));

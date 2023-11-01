@@ -69,10 +69,9 @@ private:
   const double threshold_diff_angle_z_;
 
   // variables
-  Odometry latest_odometry_;
-  Odometry prev_odometry_;
+  std::optional<Odometry> latest_odometry_ = std::nullopt;
+  std::optional<Odometry> prev_odometry_ = std::nullopt;
   std::vector<TwistWithCovarianceStamped> twist_buffer_;
-  bool set_first_odometry_;
 };
 
 #endif  // POSE_INSTABILITY_DETECTOR_HPP_
