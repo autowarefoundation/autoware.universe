@@ -28,7 +28,8 @@ if(TENSORRT_VERSION VERSION_LESS 8.2.1)
 endif()
 
 set(TRTEXEC_DEFAULT_BIN /usr/src/tensorrt/bin/trtexec)
-if(NOT EXISTS TRTEXEC_DEFAULT_BIN)
+if(NOT EXISTS ${TRTEXEC_DEFAULT_BIN})
+  message(STATUS "${TRTEXEC_DEFAULT_BIN} not found, download and build from source...")
   include(FetchContent)
   fetchcontent_declare(tensorrt
     GIT_REPOSITORY https://github.com/NVIDIA/TensorRT
@@ -71,6 +72,8 @@ if(NOT EXISTS TRTEXEC_DEFAULT_BIN)
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin
   )
+else()  
+  message(STATUS "Found trtexec: ${TRTEXEC_DEFAULT_BIN}")
 endif()
 
 if(BUILD_TESTING)
