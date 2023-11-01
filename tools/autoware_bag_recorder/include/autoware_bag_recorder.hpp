@@ -21,7 +21,7 @@
 #include "rosbag2_cpp/typesupport_helpers.hpp"
 #include "rosbag2_cpp/writer.hpp"
 
-#include <rosbag2_storage/rosbag2_storage/storage_options.hpp>
+#include <rosbag2_storage/storage_options.hpp>
 
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 
