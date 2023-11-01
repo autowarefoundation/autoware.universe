@@ -153,7 +153,8 @@ void PoseInstabilityDetector::callback_timer()
   diagnostics.header.stamp = stamp;
 
   DiagnosticStatus status;
-  status.name = "pose_instability_detector";
+  status.name = "localization: pose_instability_detector";
+  status.hardware_id = this->get_name();
   bool all_ok = true;
 
   for (size_t i = 0; i < values.size(); ++i) {
