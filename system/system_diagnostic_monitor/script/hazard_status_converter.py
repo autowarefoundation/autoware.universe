@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import enum
+
 from autoware_adapi_v1_msgs.msg import OperationModeState
 from diagnostic_msgs.msg import DiagnosticStatus
 import rclpy
@@ -22,6 +24,13 @@ import rclpy.qos
 import rclpy.time
 from tier4_system_msgs.msg import DiagnosticGraph
 from tier4_system_msgs.msg import HazardStatus
+
+
+class FaultLevel(enum.Enum):
+    NF = 1
+    SF = 2
+    LF = 3
+    SPF = 4
 
 
 def get_mode_name(mode):
@@ -35,24 +44,10 @@ def get_mode_name(mode):
         return "/autoware/modes/remote"
 
 
-def level_text(level):
-    if level == DiagnosticStatus.OK:
-        return "OK   "
-    if level == DiagnosticStatus.WARN:
-        return "WARN "
-    if level == DiagnosticStatus.ERROR:
-        return "ERROR"
-    if level == DiagnosticStatus.STALE:
-        return "STALE"
-    if level is None:
-        return "NONE "
-    return "-----"
-
-
 class DiagNode:
     def __init__(self, node):
         self.node = node
-        self.view = DiagnosticStatus.OK
+        self.view = []
 
     @property
     def level(self):
@@ -71,12 +66,12 @@ class DiagNode:
     @property
     def category(self):
         if self.level == DiagnosticStatus.OK:
-            return "NF "
+            return FaultLevel.NF
         if self.view == DiagnosticStatus.OK:
-            return "SF "
+            return FaultLevel.SF
         if self.view == DiagnosticStatus.WARN:
-            return "LF "
-        return "SPF"
+            return FaultLevel.LF
+        return FaultLevel.SPF
 
 
 class HazardStatusConverter(rclpy.node.Node):
@@ -84,6 +79,7 @@ class HazardStatusConverter(rclpy.node.Node):
         super().__init__("hazard_status_converter")
         self.create_interface()
         self.mode_name = None
+        self.mode_name = "/autoware/modes/autonomous"
 
     def create_interface(self):
         durable_qos = rclpy.qos.QoSProfile(
@@ -104,20 +100,31 @@ class HazardStatusConverter(rclpy.node.Node):
 
     def on_graph(self, msg):
         nodes = [DiagNode(node) for node in msg.nodes]
+        level = DiagnosticStatus.OK
         for node in nodes:
-            for index in node.links:
-                link = nodes[index]
-                link.view = max(link.view, node.level)
-            if node.name == self.mode_name:
-                node.view = node.level
+            if node.name.startswith("/autoware/modes/"):
+                if node.name == self.mode_name:
+                    level = node.level
+                    node.view = [node.level]
+                else:
+                    node.view = [DiagnosticStatus.OK]
 
-        print("=" * 100)
-        for node in nodes:
-            print(
-                level_text(node.level), level_text(node.view), node.category, node.node.status.name
-            )
+        for node in reversed(nodes):
+            node.view = min(node.level, max(node.view, default=DiagnosticStatus.OK))
+            for index in node.links:
+                nodes[index].view.append(node.view)
+
+        faults = {level: [] for level in FaultLevel}
+        for node in reversed(nodes):
+            faults[node.category].append(node.node.status)
 
         hazards = HazardStatus()
+        hazards.level = int.from_bytes(level, "little")
+        hazards.emergency = DiagnosticStatus.ERROR <= level
+        hazards.diagnostics_nf = faults[FaultLevel.NF]
+        hazards.diagnostics_sf = faults[FaultLevel.SF]
+        hazards.diagnostics_lf = faults[FaultLevel.LF]
+        hazards.diagnostics_spf = faults[FaultLevel.SPF]
         self.pub_hazard.publish(hazards)
 
 
