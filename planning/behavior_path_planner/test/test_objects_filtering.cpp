@@ -14,37 +14,45 @@
 
 #include <gtest/gtest.h>
 
-
+#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 
+
+#include <lanelet2_core/geometry/Lanelet.h>
 
 using namespace behavior_path_planner::utils::path_safety_checker;
 
 
 TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByVelocity)
 {
+    using autoware_auto_perception_msgs::msg::PredictedObject;
+    using autoware_auto_perception_msgs::msg::PredictedObjects;
     using behavior_path_planner::utils::path_safety_checker::filterObjectsByVelocity;
     
-    
-    PredictedObjects predicted_objects; 
-    predicted_objects = []; // sample kara sagasu
+    const PredictedObjects & predicted_objects;
+    const PredictedObjects expected_objects;
+    predicted_objects[0].kinematics.initial_twist_with_covariance.twist.linear.x = 1.0;
+    predicted_objects[0].kinematics.initial_twist_with_covariance.twist.linear.y = 1.0;
+
+    predicted_objects[1].kinematics.initial_twist_with_covariance.twist.linear.x = 0.5;
+    predicted_objects[1].kinematics.initial_twist_with_covariance.twist.linear.y = 0.5;
 
     // case function has boolian flag "remove_above_threshold" = true
     const double velocity_threshold = 1.0; // eg 0.5
-    bool remove_threshold = true; 
+    const bool remove_threshold = true; 
 
-    expected_objects = [];
+    expected_objects = {predicted_objects[1]};
+    const PredictedObjects ans;
     ans = filterObjectsByVelocity(predicted_objects, velocity_threshold, remove_threshold);
-    EXPECT_EQ(ans, expected_objects)
+    EXPECT_EQ(ans, expected_objects);
 
 
     // another case
-    const double velocity_threshold = 1.0; // eg 0.5
-    bool remove_threshold = false; 
+    // const double velocity_threshold = 1.0; // eg 0.5
+    // bool remove_threshold = false; 
 
-    expected_objects = [];
-    ans = filterObjectsByVelocity(predicted_objects, velocity_threshold, remove_threshold);
-    EXPECT_EQ(ans, expected_objects)
+    // expected_objects = [predicted_objects[1]];
+    // ans = filterObjectsByVelocity(predicted_objects, velocity_threshold, remove_threshold);
+    // EXPECT_EQ(ans, expected_objects);
 }
