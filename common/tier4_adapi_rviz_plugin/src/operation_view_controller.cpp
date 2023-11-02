@@ -127,10 +127,10 @@ void OperationViewController::handleMouseEvent(rviz_common::ViewportMouseEvent &
     int height = camera_->getViewport()->getActualHeight();
 
     Ogre::Ray mouse_ray =
-      camera_->getCameraToViewportRay(event.x / (float)width, event.y / (float)height);
+      camera_->getCameraToViewportRay(event.x / static_cast<float>(width), event.y / static_cast<float>(height));
 
     Ogre::Ray last_mouse_ray =
-      camera_->getCameraToViewportRay(event.last_x / (float)width, event.last_y / (float)height);
+      camera_->getCameraToViewportRay(event.last_x / static_cast<float>(width), event.last_y / static_cast<float>(height));
 
     auto last_intersect_pair = intersectGroundPlane(last_mouse_ray);
     auto intersect_pair = intersectGroundPlane(mouse_ray);

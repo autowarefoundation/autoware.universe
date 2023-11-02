@@ -73,7 +73,7 @@ public:
   virtual int processMouseEvent(rviz_common::ViewportMouseEvent & event);
 
 private Q_SLOTS:
-  void setOffset() { m_pos_offset = (double)step_length_property_->getFloat(); }
+  void setOffset() { m_pos_offset = static_cast<double>(step_length_property_->getFloat()); }
   void setBoost()
   {
     if (boost_property_->getFloat() < 0.0) {
@@ -81,7 +81,7 @@ private Q_SLOTS:
     } else if (boost_property_->getFloat() > 1.0) {
       m_boost = 1.0;
     } else {
-      m_boost = (double)boost_property_->getFloat();
+      m_boost = static_cast<double>(boost_property_->getFloat());
     }
   }
 
