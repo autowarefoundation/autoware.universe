@@ -32,13 +32,13 @@
 #ifndef THIRD_PERSON_VIEW_TOOL_HPP_
 #define THIRD_PERSON_VIEW_TOOL_HPP_
 
-#include "third_person_view_controller.hpp"
 #include "rviz_common/properties/bool_property.hpp"
 #include "rviz_common/properties/enum_property.hpp"
 #include "rviz_common/properties/float_property.hpp"
 #include "rviz_common/render_panel.hpp"
 #include "rviz_common/tool.hpp"
 #include "rviz_common/viewport_mouse_event.hpp"
+#include "third_person_view_controller.hpp"
 
 #include <QApplication>
 #include <QIcon>

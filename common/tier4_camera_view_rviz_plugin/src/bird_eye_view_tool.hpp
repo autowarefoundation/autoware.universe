@@ -29,8 +29,8 @@
  *
  */
 
-#ifndef BIRDEYEVIEW_TOOL_HPP_
-#define BIRDEYEVIEW_TOOL_HPP_
+#ifndef BIRD_EYE_VIEW_TOOL_HPP_
+#define BIRD_EYE_VIEW_TOOL_HPP_
 
 #include "bird_eye_view_controller.hpp"
 #include "rviz_common/properties/bool_property.hpp"
@@ -128,4 +128,4 @@ private:
   void setFallbackViewControllerProperty();
 };
 }  // namespace tier4_camera_view_rviz_plugin
-#endif  // BIRDEYEVIEW_TOOL_HPP_
+#endif  // BIRD_EYE_VIEW_TOOL_HPP_
