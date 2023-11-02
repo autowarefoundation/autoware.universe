@@ -277,8 +277,8 @@ Note that this function may spoil healthy system behavior if it consumes much ca
 initial_pose_offset_model is rotated around (x,y) = (0,0) in the direction of the first principal component of the Hessian matrix.
 initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.
 
-| Name                         | Type                | Description                                                      |
-| -----------------------------| ------------------- | -----------------------------------------------------------------|
-| `use_covariance_estimation`  | bool                | Flag for using real-time covariance estimation (FALSE by default)|
-| `initial_pose_offset_model_x`| std::vector<double> | X-axis offset [m]                                                |
-| `initial_pose_offset_model_y`| std::vector<double> | Y-axis offset [m]                                                |
+| Name                          | Type                | Description                                                       |
+| ----------------------------- | ------------------- | ----------------------------------------------------------------- |
+| `use_covariance_estimation`   | bool                | Flag for using real-time covariance estimation (FALSE by default) |
+| `initial_pose_offset_model_x` | std::vector<double> | X-axis offset [m]                                                 |
+| `initial_pose_offset_model_y` | std::vector<double> | Y-axis offset [m]                                                 |
