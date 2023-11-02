@@ -92,7 +92,6 @@ void PoseInstabilityDetector::callback_timer()
     const rclcpp::Duration time_diff = curr_time - prev_time;
     const double time_diff_sec = time_diff.seconds();
     if (time_diff_sec < 0.0) {
-      RCLCPP_WARN_STREAM(get_logger(), "time_diff_sec(" << time_diff_sec << ") < 0.0");
       continue;
     }
 
