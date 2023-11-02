@@ -89,5 +89,5 @@
         sd -- \
         "  - macros" \
         "  - macros:
-               module_name: mkdocs_macros" {source}
+              module_name: mkdocs_macros" {source}
     - source: docs/assets/js/mathjax.js
