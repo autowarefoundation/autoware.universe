@@ -55,6 +55,7 @@ static const float YAW_START = Ogre::Math::PI;
 static const float DISTANCE_START = 30;
 static const float FOCAL_SHAPE_SIZE_START = 0.05;
 static const bool FOCAL_SHAPE_FIXED_SIZE = true;
+static const char* TARGET_FRAME_START = "base_link";
 
 // move camera up so the focal point appears in the lower image half
 static const float CAMERA_OFFSET = 0.2;
@@ -172,7 +173,7 @@ void OperationViewController::mimic(rviz_common::ViewController * source_view)
 {
   FramePositionTrackingViewController::mimic(source_view);
 
-  target_frame_property_->setValue("base_link");
+  target_frame_property_->setValue(TARGET_FRAME_START);
   getNewTransform();
 
   Ogre::Camera * source_camera = source_view->getCamera();
