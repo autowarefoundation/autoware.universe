@@ -9,7 +9,7 @@ files:
 
 nodes:
   - path: /autoware/modes/stop
-    type: debug-ok
+    type: ok
 
   - path: /autoware/modes/autonomous
     type: and
