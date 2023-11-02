@@ -33,6 +33,7 @@
 #include "rviz_default_plugins/view_controllers/orbit/orbit_view_controller.hpp"
 
 #include <OgreVector3.h>
+
 #include <utility>
 
 namespace Ogre
