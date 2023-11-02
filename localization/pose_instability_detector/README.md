@@ -29,9 +29,9 @@ The following diagram provides an overview of what the timeline of this process 
 
 ## Output
 
-| Name                | Type                                  | Description     |
-| ------------------- | ------------------------------------- | --------------- |
-| `~/debug/diff_pose` | geometry_msgs::msg::PoseStamped       | diff_pose       |
-| `/diagnostics`      | diagnostic_msgs::msg::DiagnosticArray | Diagnostics     |
+| Name                | Type                                  | Description |
+| ------------------- | ------------------------------------- | ----------- |
+| `~/debug/diff_pose` | geometry_msgs::msg::PoseStamped       | diff_pose   |
+| `/diagnostics`      | diagnostic_msgs::msg::DiagnosticArray | Diagnostics |
 
 ![rqt_runtime_monitor](./media/rqt_runtime_monitor.png)
