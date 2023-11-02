@@ -15,15 +15,14 @@
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 
 #include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <algorithm>
-#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -146,7 +145,7 @@ ModuleStatus LaneChangeInterface::updateState()
     return ModuleStatus::RUNNING;
   }
 
-  if (module_type_->isEgoOnPreparePhase()) {
+  if (module_type_->isEgoOnPreparePhase() && module_type_->isAbleToReturnCurrentLane()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
       "Lane change path is unsafe. Cancel lane change.");
@@ -293,10 +292,12 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   using marker_utils::showPredictedPath;
   using marker_utils::showSafetyCheckInfo;
   using marker_utils::lane_change_markers::showAllValidLaneChangePath;
+  using marker_utils::lane_change_markers::showFilteredObjects;
 
   const auto debug_data = module_type_->getDebugData();
   const auto debug_after_approval = module_type_->getAfterApprovalDebugData();
   const auto debug_valid_path = module_type_->getDebugValidPath();
+  const auto debug_filtered_objects = module_type_->getDebugFilteredObjects();
 
   debug_marker_.markers.clear();
   const auto add = [this](const MarkerArray & added) {
@@ -304,6 +305,9 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   };
 
   add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
+  add(showFilteredObjects(
+    debug_filtered_objects.current_lane, debug_filtered_objects.target_lane,
+    debug_filtered_objects.other_lane, "object_filtered"));
   if (!debug_data.empty()) {
     add(showSafetyCheckInfo(debug_data, "object_debug_info"));
     add(showPredictedPath(debug_data, "ego_predicted_path"));
@@ -449,8 +453,8 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
   const auto & common_parameter = module_type_->getCommonParam();
   const auto shift_intervals =
     route_handler->getLateralIntervalsToPreferredLane(current_lanes.back());
-  const double next_lane_change_buffer =
-    utils::calcMinimumLaneChangeLength(common_parameter, shift_intervals);
+  const double next_lane_change_buffer = utils::calcMinimumLaneChangeLength(
+    common_parameter, shift_intervals, common_parameter.backward_length_buffer_for_end_of_lane);
   const double & nearest_dist_threshold = common_parameter.ego_nearest_dist_threshold;
   const double & nearest_yaw_threshold = common_parameter.ego_nearest_yaw_threshold;
   const double & base_to_front = common_parameter.base_link2front;

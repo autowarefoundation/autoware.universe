@@ -18,14 +18,11 @@
 #include "behavior_path_planner/utils/goal_planner/goal_searcher_base.hpp"
 #include "behavior_path_planner/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 
-#include "autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp"
-
 #include <memory>
 #include <vector>
 
 namespace behavior_path_planner
 {
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using tier4_autoware_utils::LinearRing2d;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
@@ -36,14 +33,18 @@ public:
     const GoalPlannerParameters & parameters, const LinearRing2d & vehicle_footprint,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> & occupancy_grid_map);
 
-  GoalCandidates search(const Pose & original_goal_pose) override;
+  GoalCandidates search() override;
   void update(GoalCandidates & goal_candidates) const override;
+  GoalCandidate getClosetGoalCandidateAlongLanes(
+    const GoalCandidates & goal_candidates) const override;
 
 private:
+  void countObjectsToAvoid(
+    GoalCandidates & goal_candidates, const PredictedObjects & objects) const;
   void createAreaPolygons(std::vector<Pose> original_search_poses);
-  bool checkCollision(const Pose & pose) const;
+  bool checkCollision(const Pose & pose, const PredictedObjects & objects) const;
   bool checkCollisionWithLongitudinalDistance(
-    const Pose & ego_pose, const PredictedObjects & dynamic_objects) const;
+    const Pose & ego_pose, const PredictedObjects & objects) const;
   BasicPolygons2d getNoParkingAreaPolygons(const lanelet::ConstLanelets & lanes) const;
   BasicPolygons2d getNoStoppingAreaPolygons(const lanelet::ConstLanelets & lanes) const;
   bool isInAreas(const LinearRing2d & footprint, const BasicPolygons2d & areas) const;

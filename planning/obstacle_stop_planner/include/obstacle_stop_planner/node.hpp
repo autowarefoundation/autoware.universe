@@ -18,6 +18,8 @@
 #include "obstacle_stop_planner/adaptive_cruise_control.hpp"
 #include "obstacle_stop_planner/debug_marker.hpp"
 #include "obstacle_stop_planner/planner_data.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <motion_utils/trajectory/tmp_conversion.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
@@ -36,6 +38,7 @@
 #include <tier4_debug_msgs/msg/bool_stamped.hpp>
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
@@ -77,9 +80,11 @@ using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
+using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::BoolStamped;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_debug_msgs::msg::Float32Stamped;
+using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
@@ -142,6 +147,8 @@ private:
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_collision_pointcloud_debug_;
 
+  rclcpp::Publisher<Float64Stamped>::SharedPtr pub_processing_time_ms_;
+
   std::unique_ptr<AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
   boost::optional<SlowDownSection> latest_slow_down_section_{boost::none};
@@ -164,6 +171,8 @@ private:
   NodeParam node_param_;
   StopParam stop_param_;
   SlowDownParam slow_down_param_;
+
+  StopWatch<std::chrono::milliseconds> stop_watch_;
 
   // mutex for vehicle_info_, stop_param_, current_acc_, obstacle_ros_pointcloud_ptr_
   // NOTE: shared_ptr itself is thread safe so we do not have to care if *ptr is not used
@@ -274,6 +283,8 @@ private:
 
     return ret;
   }
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace motion_planning
 

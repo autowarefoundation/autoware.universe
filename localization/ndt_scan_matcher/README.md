@@ -38,6 +38,7 @@ One optional function is regularization. Please see the regularization chapter i
 | `transform_probability`           | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] score of scan matching                                                                                                     |
 | `no_ground_transform_probability` | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] score of scan matching based on de-grounded LiDAR scan                                                                     |
 | `iteration_num`                   | `tier4_debug_msgs::msg::Int32Stamped`           | [debug topic] number of scan matching iterations                                                                                         |
+| `initial_to_result_relative_pose` | `geometry_msgs::msg::PoseStamped`               | [debug topic] relative pose between the initial point and the convergence point                                                          |
 | `initial_to_result_distance`      | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] distance difference between the initial point and the convergence point [m]                                                |
 | `initial_to_result_distance_old`  | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] distance difference between the older of the two initial points used in linear interpolation and the convergence point [m] |
 | `initial_to_result_distance_new`  | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] distance difference between the newer of the two initial points used in linear interpolation and the convergence point [m] |
@@ -54,18 +55,26 @@ One optional function is regularization. Please see the regularization chapter i
 
 ### Core Parameters
 
-| Name                                    | Type   | Description                                                                                     |
-| --------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
-| `base_frame`                            | string | Vehicle reference frame                                                                         |
-| `input_sensor_points_queue_size`        | int    | Subscriber queue size                                                                           |
-| `trans_epsilon`                         | double | The maximum difference between two consecutive transformations in order to consider convergence |
-| `step_size`                             | double | The newton line search maximum step length                                                      |
-| `resolution`                            | double | The ND voxel grid resolution [m]                                                                |
-| `max_iterations`                        | int    | The number of iterations required to calculate alignment                                        |
-| `converged_param_type`                  | int    | The type of indicators for scan matching score (0: TP, 1: NVTL)                                 |
-| `converged_param_transform_probability` | double | Threshold for deciding whether to trust the estimation result                                   |
-| `lidar_topic_timeout_sec`               | double | Tolerance of timestamp difference between current time and sensor pointcloud                    |
-| `num_threads`                           | int    | Number of threads used for parallel computing                                                   |
+| Name                                                      | Type                   | Description                                                                                        |
+| --------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
+| `base_frame`                                              | string                 | Vehicle reference frame                                                                            |
+| `ndt_base_frame`                                          | string                 | NDT reference frame                                                                                |
+| `map_frame`                                               | string                 | map frame                                                                                          |
+| `input_sensor_points_queue_size`                          | int                    | Subscriber queue size                                                                              |
+| `trans_epsilon`                                           | double                 | The max difference between two consecutive transformations to consider convergence                 |
+| `step_size`                                               | double                 | The newton line search maximum step length                                                         |
+| `resolution`                                              | double                 | The ND voxel grid resolution [m]                                                                   |
+| `max_iterations`                                          | int                    | The number of iterations required to calculate alignment                                           |
+| `converged_param_type`                                    | int                    | The type of indicators for scan matching score (0: TP, 1: NVTL)                                    |
+| `converged_param_transform_probability`                   | double                 | TP threshold for deciding whether to trust the estimation result (when converged_param_type = 0)   |
+| `converged_param_nearest_voxel_transformation_likelihood` | double                 | NVTL threshold for deciding whether to trust the estimation result (when converged_param_type = 1) |
+| `initial_estimate_particles_num`                          | int                    | The number of particles to estimate initial pose                                                   |
+| `n_startup_trials`                                        | int                    | The number of initial random trials in the TPE (Tree-Structured Parzen Estimator).                 |
+| `lidar_topic_timeout_sec`                                 | double                 | Tolerance of timestamp difference between current time and sensor pointcloud                       |
+| `initial_pose_timeout_sec`                                | int                    | Tolerance of timestamp difference between initial_pose and sensor pointcloud. [sec]                |
+| `initial_pose_distance_tolerance_m`                       | double                 | Tolerance of distance difference between two initial poses used for linear interpolation. [m]      |
+| `num_threads`                                             | int                    | Number of threads used for parallel computing                                                      |
+| `output_pose_covariance`                                  | std::array<double, 36> | The covariance of output pose                                                                      |
 
 (TP: Transform Probability, NVTL: Nearest Voxel Transform Probability)
 
@@ -237,7 +246,7 @@ Here is a split PCD map for `sample-map-rosbag` from Autoware tutorial: [`sample
 
 ### Abstract
 
-This is a function that using de-grounded LiDAR scan estimate scan matching score.This score can more accurately reflect the current localization performance.
+This is a function that uses de-grounded LiDAR scan to estimate the scan matching score. This score can reflect the current localization performance more accurately.
 [related issue](https://github.com/autowarefoundation/autoware.universe/issues/2044).
 
 ### Parameters

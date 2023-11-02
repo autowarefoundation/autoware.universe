@@ -14,13 +14,15 @@
 
 #include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
 
-#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+
+#include <boost/geometry/algorithms/correct.hpp>
 
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_core/geometry/Polygon.h>
@@ -28,7 +30,6 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -105,21 +106,17 @@ std::pair<double, double> projectObstacleVelocityToTrajectory(
   const std::vector<PathPointWithLaneId> & path_points, const PredictedObject & object)
 {
   const auto & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
-  const double obj_vel_norm = std::hypot(
-    object.kinematics.initial_twist_with_covariance.twist.linear.x,
-    object.kinematics.initial_twist_with_covariance.twist.linear.y);
-
-  const size_t obj_idx = motion_utils::findNearestIndex(path_points, obj_pose.position);
-
   const double obj_yaw = tf2::getYaw(obj_pose.orientation);
-  const double obj_vel_yaw =
-    obj_yaw + std::atan2(
-                object.kinematics.initial_twist_with_covariance.twist.linear.y,
-                object.kinematics.initial_twist_with_covariance.twist.linear.x);
+  const size_t obj_idx = motion_utils::findNearestIndex(path_points, obj_pose.position);
   const double path_yaw = tf2::getYaw(path_points.at(obj_idx).point.pose.orientation);
 
-  const double diff_yaw = tier4_autoware_utils::normalizeRadian(obj_vel_yaw - path_yaw);
-  return std::make_pair(obj_vel_norm * std::cos(diff_yaw), obj_vel_norm * std::sin(diff_yaw));
+  const Eigen::Rotation2Dd R_ego_to_obstacle(obj_yaw - path_yaw);
+  const Eigen::Vector2d obstacle_velocity(
+    object.kinematics.initial_twist_with_covariance.twist.linear.x,
+    object.kinematics.initial_twist_with_covariance.twist.linear.y);
+  const Eigen::Vector2d projected_velocity = R_ego_to_obstacle * obstacle_velocity;
+
+  return std::make_pair(projected_velocity[0], projected_velocity[1]);
 }
 
 double calcObstacleMaxLength(const autoware_auto_perception_msgs::msg::Shape & shape)
@@ -410,10 +407,12 @@ void DynamicAvoidanceModule::updateTargetObjects()
       continue;
     }
 
-    // 1.b. check if velocity is large enough
+    // 1.b. check obstacle velocity
     const auto [obj_tangent_vel, obj_normal_vel] =
       projectObstacleVelocityToTrajectory(prev_module_path->points, predicted_object);
-    if (std::abs(obj_tangent_vel) < parameters_->min_obstacle_vel) {
+    if (
+      std::abs(obj_tangent_vel) < parameters_->min_obstacle_vel ||
+      parameters_->max_obstacle_vel < std::abs(obj_tangent_vel)) {
       continue;
     }
 

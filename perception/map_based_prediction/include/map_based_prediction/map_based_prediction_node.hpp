@@ -135,6 +135,7 @@ private:
   // Parameters
   bool enable_delay_compensation_;
   double prediction_time_horizon_;
+  double lateral_control_time_horizon_;
   double prediction_time_horizon_rate_for_validate_lane_length_;
   double prediction_sampling_time_interval_;
   double min_velocity_for_map_based_prediction_;
@@ -165,6 +166,14 @@ private:
   void mapCallback(const HADMapBin::ConstSharedPtr msg);
   void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
 
+  bool doesPathCrossAnyFence(const PredictedPath & predicted_path);
+  bool doesPathCrossFence(
+    const PredictedPath & predicted_path, const lanelet::ConstLineString3d & fence_line);
+  lanelet::BasicLineString2d convertToFenceLine(const lanelet::ConstLineString3d & fence);
+  bool isIntersecting(
+    const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2,
+    const lanelet::ConstPoint3d & point3, const lanelet::ConstPoint3d & point4);
+
   PredictedObjectKinematics convertToPredictedKinematics(
     const TrackedObjectKinematics & tracked_object);
 
@@ -176,8 +185,7 @@ private:
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
-    const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
-    const bool check_distance = true);
+    const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object);
   float calculateLocalLikelihood(
     const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const;
   void updateObjectData(TrackedObject & object);
