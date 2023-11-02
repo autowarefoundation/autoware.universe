@@ -12,7 +12,7 @@ install(PROGRAMS
 
 install(PROGRAMS
   script/hazard_status_converter.py
-# RENAME hazard_status_converter
+  RENAME hazard_status_converter
   DESTINATION lib/${PROJECT_NAME}
 )
 
