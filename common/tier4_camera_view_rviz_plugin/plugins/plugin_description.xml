@@ -1,0 +1,24 @@
+<library path="tier4_camera_view_rviz_plugin">
+
+  <class name="tier4_camera_view_rviz_plugin/RouteSet" type="tier4_camera_view_rviz_plugin::RouteSetViewController" base_class_type="rviz_common::ViewController">
+    <description>
+      Control the camera for Route Set.
+    </description>
+  </class>
+  <class name="tier4_camera_view_rviz_plugin/RouteSetTool" type="tier4_camera_view_rviz_plugin::RouteSetTool" base_class_type="rviz_common::Tool">
+    <description>
+      Route Set Tool. This tool requires the corresponding RouteSetViewController.
+    </description>
+  </class>
+  <class name="tier4_camera_view_rviz_plugin/OperationView" type="tier4_camera_view_rviz_plugin::OperationViewController" base_class_type="rviz_common::ViewController">
+    <description>
+      Control the camera for Operation View.
+    </description>
+  </class>
+  <class name="tier4_camera_view_rviz_plugin/OperationViewTool" type="tier4_camera_view_rviz_plugin::OperationViewTool" base_class_type="rviz_common::Tool">
+    <description>
+      Route Set Tool. This tool requires the corresponding OperationViewController.
+    </description>
+  </class>
+
+</library>
