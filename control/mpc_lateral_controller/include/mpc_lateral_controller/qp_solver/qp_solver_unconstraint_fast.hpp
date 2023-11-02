@@ -54,9 +54,10 @@ public:
     const Eigen::VectorXd & lb, const Eigen::VectorXd & ub, const Eigen::VectorXd & lb_a,
     const Eigen::VectorXd & ub_a, Eigen::VectorXd & u) override;
 
-  int64_t getTakenIter() const override { return 0; }
-  double getRunTime() const override { return 0.0; }
-  double getObjVal() const override { return 0.0; }
+  int64_t getTakenIter() const override { return 1; };
+  // TODO(someone): calculate runtime and object value, otherwise just return 0 by base class
+  // double getRunTime() const override { return 0.0; }
+  // double getObjVal() const override { return 0.0; }
 
 private:
 };
