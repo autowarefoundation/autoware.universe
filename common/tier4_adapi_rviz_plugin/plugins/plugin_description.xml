@@ -7,5 +7,26 @@
   <class type="tier4_adapi_rviz_plugins::RoutePanel" base_class_type="rviz_common::Panel">
     <description>RoutePanel</description>
   </class>
+  
+  <class name="tier4_adapi_rviz_plugins/RouteSet" type="tier4_adapi_rviz_plugins::RouteSetViewController" base_class_type="rviz_common::ViewController">
+    <description>
+      Control the camera for Route Set.
+    </description>
+  </class>
+  <class name="tier4_adapi_rviz_plugins/RouteSetTool" type="tier4_adapi_rviz_plugins::RouteSetTool" base_class_type="rviz_common::Tool">
+    <description>
+      Route Set Tool. This tool requires the corresponding RouteSetViewController.
+    </description>
+  </class>
+  <class name="tier4_adapi_rviz_plugins/OperationView" type="tier4_adapi_rviz_plugins::OperationViewController" base_class_type="rviz_common::ViewController">
+    <description>
+      Control the camera for Operation View.
+    </description>
+  </class>
+  <class name="tier4_adapi_rviz_plugins/OperationViewTool" type="tier4_adapi_rviz_plugins::OperationViewTool" base_class_type="rviz_common::Tool">
+    <description>
+      Route Set Tool. This tool requires the corresponding OperationViewController.
+    </description>
+  </class>
 
 </library>

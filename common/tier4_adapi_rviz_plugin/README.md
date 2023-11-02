@@ -9,3 +9,11 @@ Enable or disable of allow_goal_modification option can be set with the check bo
 Push the mode button in the waypoint to enter waypoint mode. In this mode, the pose is added to waypoints.
 Press the apply button to set the route using the saved waypoints (the last one is a goal).
 Reset the saved waypoints with the reset button.
+
+## Operation View Tool
+
+Add the `tier4_adapi_rviz_plugins/OperationViewTool` tool to the RViz. Push the button, the camera will focus on the vehicle and set the target frame to `base_link`.
+
+## RouteSet Tool
+
+Add the `tier4_adapi_rviz_plugins/RouteSetTool` tool to the RViz. Push the button, the camera will turn to the BEV view, the target frame is consistent with the latest frame.
