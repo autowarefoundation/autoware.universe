@@ -7,7 +7,7 @@
   <class type="tier4_adapi_rviz_plugins::RoutePanel" base_class_type="rviz_common::Panel">
     <description>RoutePanel</description>
   </class>
-  
+
   <class name="tier4_adapi_rviz_plugins/RouteSet" type="tier4_adapi_rviz_plugins::RouteSetViewController" base_class_type="rviz_common::ViewController">
     <description>
       Control the camera for Route Set.

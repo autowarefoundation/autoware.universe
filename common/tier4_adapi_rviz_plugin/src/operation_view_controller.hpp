@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OPERATION_VIEW_PLUGINS__OPERATION_VIEW_CONTROLLER_HPP_
-#define OPERATION_VIEW_PLUGINS__OPERATION_VIEW_CONTROLLER_HPP_
+#ifndef OPERATION_VIEW_CONTROLLER_HPP_
+#define OPERATION_VIEW_CONTROLLER_HPP_
 
 #include "rviz_default_plugins/view_controllers/orbit/orbit_view_controller.hpp"
 
@@ -41,11 +41,11 @@ class SceneNode;
 
 namespace tier4_adapi_rviz_plugins
 {
- class TfFrameProperty;
+class TfFrameProperty;
 
 /**
-* \brief Like the orbit view controller, but focal point moves only in the x-y plane.
-*/
+ * \brief Like the orbit view controller, but focal point moves only in the x-y plane.
+ */
 class OperationViewController : public rviz_default_plugins::view_controllers::OrbitViewController
 {
   Q_OBJECT
@@ -60,10 +60,10 @@ public:
   void reset() override;
 
   /** @brief Configure the settings of this view controller to give,
- * as much as possible, a similar view as that given by the
- * @a source_view.
- *
- * @a source_view must return a valid @c Ogre::Camera* from getCamera(). */
+   * as much as possible, a similar view as that given by the
+   * @a source_view.
+   *
+   * @a source_view must return a valid @c Ogre::Camera* from getCamera(). */
   void mimic(rviz_common::ViewController * source_view) override;
 
 protected:
@@ -74,6 +74,6 @@ protected:
   std::pair<bool, Ogre::Vector3> intersectGroundPlane(Ogre::Ray mouse_ray);
 };
 
-} // namespace tier4_adapi_rviz_plugins
+}  // namespace tier4_adapi_rviz_plugins
 
-#endif // OPERATION_VIEW_PLUGINS__OPERATION_VIEW_CONTROLLER_HPP_
+#endif  // OPERATION_VIEW_CONTROLLER_HPP_

@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROUTE_SET_PLUGINS__ROUTE_SET_VIEW_CONTROLLER_HPP_
-#define ROUTE_SET_PLUGINS__ROUTE_SET_VIEW_CONTROLLER_HPP_
+#ifndef ROUTE_SET_VIEW_CONTROLLER_HPP_
+#define ROUTE_SET_VIEW_CONTROLLER_HPP_
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -105,4 +105,4 @@ protected:
 
 }  // namespace tier4_adapi_rviz_plugins
 
-#endif  // ROUTE_SET_PLUGINS__ROUTE_SET_VIEW_CONTROLLER_HPP_
+#endif  // ROUTE_SET_VIEW_CONTROLLER_HPP_

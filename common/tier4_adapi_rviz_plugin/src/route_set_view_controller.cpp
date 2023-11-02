@@ -27,12 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <OgreCamera.h>
-#include <OgreQuaternion.h>
-#include <OgreSceneManager.h>
-#include <OgreSceneNode.h>
-#include <OgreVector3.h>
-#include <OgreViewport.h>
+#include "route_set_view_controller.hpp"
 
 #include "rviz_common/display_context.hpp"
 #include "rviz_common/properties/bool_property.hpp"
@@ -41,7 +36,12 @@
 #include "rviz_rendering/objects/shape.hpp"
 #include "rviz_rendering/orthographic.hpp"
 
-#include "route_set_view_controller.hpp"
+#include <OgreCamera.h>
+#include <OgreQuaternion.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+#include <OgreVector3.h>
+#include <OgreViewport.h>
 
 namespace tier4_adapi_rviz_plugins
 {
@@ -52,8 +52,7 @@ static const Ogre::Quaternion ROBOT_TO_CAMERA_ROTATION =
 static const float PITCH_LIMIT_LOW = -Ogre::Math::HALF_PI + 0.001;
 static const float PITCH_LIMIT_HIGH = Ogre::Math::HALF_PI - 0.001;
 
-RouteSetViewController::RouteSetViewController()
-: dragging_(false)
+RouteSetViewController::RouteSetViewController() : dragging_(false)
 {
   scale_property_ = new rviz_common::properties::FloatProperty(
     "Scale", 10, "How much to scale up the size of things in the scene.", this);
@@ -65,7 +64,9 @@ RouteSetViewController::RouteSetViewController()
     new rviz_common::properties::FloatProperty("Y", 0, "Y component of camera position.", this);
 }
 
-RouteSetViewController::~RouteSetViewController() {}
+RouteSetViewController::~RouteSetViewController()
+{
+}
 
 void RouteSetViewController::onInitialize()
 {
@@ -224,4 +225,5 @@ void RouteSetViewController::move(float dx, float dy)
 }  // namespace tier4_adapi_rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(tier4_adapi_rviz_plugins::RouteSetViewController, rviz_common::ViewController)
+PLUGINLIB_EXPORT_CLASS(
+  tier4_adapi_rviz_plugins::RouteSetViewController, rviz_common::ViewController)

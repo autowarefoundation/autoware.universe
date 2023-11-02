@@ -27,7 +27,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdint.h>
+#include "operation_view_controller.hpp"
+
+#include "rviz_common/display_context.hpp"
+#include "rviz_common/properties/bool_property.hpp"
+#include "rviz_common/properties/float_property.hpp"
+#include "rviz_common/properties/tf_frame_property.hpp"
+#include "rviz_common/properties/vector_property.hpp"
+#include "rviz_common/viewport_mouse_event.hpp"
+#include "rviz_rendering/objects/shape.hpp"
 
 #include <OgreCamera.h>
 #include <OgreMath.h>
@@ -37,16 +45,7 @@
 #include <OgreSceneNode.h>
 #include <OgreVector3.h>
 #include <OgreViewport.h>
-
-#include "rviz_common/display_context.hpp"
-#include "rviz_common/properties/bool_property.hpp"
-#include "rviz_common/properties/float_property.hpp"
-#include "rviz_common/properties/vector_property.hpp"
-#include "rviz_common/viewport_mouse_event.hpp"
-#include "rviz_rendering/objects/shape.hpp"
-#include "rviz_common/properties/tf_frame_property.hpp"
-
-#include "operation_view_controller.hpp"
+#include <stdint.h>
 
 namespace tier4_adapi_rviz_plugins
 {
@@ -55,7 +54,7 @@ static const float YAW_START = Ogre::Math::PI;
 static const float DISTANCE_START = 30;
 static const float FOCAL_SHAPE_SIZE_START = 0.05;
 static const bool FOCAL_SHAPE_FIXED_SIZE = true;
-static const char* TARGET_FRAME_START = "base_link";
+static const char * TARGET_FRAME_START = "base_link";
 
 // move camera up so the focal point appears in the lower image half
 static const float CAMERA_OFFSET = 0.2;
@@ -209,7 +208,7 @@ void OperationViewController::updateCamera()
   camera_->getParentSceneNode()->setPosition(
     camera_->getParentSceneNode()->getPosition() +
     camera_->getParentSceneNode()->getLocalAxes() * Ogre::Vector3::UNIT_Y *
-    distance_property_->getFloat() * CAMERA_OFFSET);
+      distance_property_->getFloat() * CAMERA_OFFSET);
 }
 
 void OperationViewController::updateTargetSceneNode()
@@ -240,4 +239,5 @@ void OperationViewController::lookAt(const Ogre::Vector3 & point)
 }  // namespace tier4_adapi_rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(tier4_adapi_rviz_plugins::OperationViewController, rviz_common::ViewController)
+PLUGINLIB_EXPORT_CLASS(
+  tier4_adapi_rviz_plugins::OperationViewController, rviz_common::ViewController)
