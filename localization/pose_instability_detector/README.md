@@ -29,14 +29,9 @@ The following diagram provides an overview of what the timeline of this process 
 
 ## Output
 
-| Name                      | Type                                  | Description     |
-| ------------------------- | ------------------------------------- | --------------- |
-| `~/debug/diff_position_x` | tier4_debug_msgs::msg::Float64Stamped | diff_position x |
-| `~/debug/diff_position_y` | tier4_debug_msgs::msg::Float64Stamped | diff_position y |
-| `~/debug/diff_position_z` | tier4_debug_msgs::msg::Float64Stamped | diff_position z |
-| `~/debug/diff_angle_x`    | tier4_debug_msgs::msg::Float64Stamped | diff_angle x    |
-| `~/debug/diff_angle_y`    | tier4_debug_msgs::msg::Float64Stamped | diff_angle y    |
-| `~/debug/diff_angle_z`    | tier4_debug_msgs::msg::Float64Stamped | diff_angle z    |
-| `/diagnostics`            | diagnostic_msgs::msg::DiagnosticArray | Diagnostics     |
+| Name                | Type                                  | Description     |
+| ------------------- | ------------------------------------- | --------------- |
+| `~/debug/diff_pose` | geometry_msgs::msg::PoseStamped       | diff_pose       |
+| `/diagnostics`      | diagnostic_msgs::msg::DiagnosticArray | Diagnostics     |
 
 ![rqt_runtime_monitor](./media/rqt_runtime_monitor.png)
