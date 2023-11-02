@@ -29,10 +29,10 @@
  *
  */
 
-#ifndef ROUTE_SET_TOOL_HPP_
-#define ROUTE_SET_TOOL_HPP_
+#ifndef THIRD_PERSON_VIEW_TOOL_HPP_
+#define THIRD_PERSON_VIEW_TOOL_HPP_
 
-#include "route_set_view_controller.hpp"
+#include "third_person_view_controller.hpp"
 #include "rviz_common/properties/bool_property.hpp"
 #include "rviz_common/properties/enum_property.hpp"
 #include "rviz_common/properties/float_property.hpp"
@@ -49,7 +49,7 @@
 
 /**
  *
- *@class RouteSetTool
+ *@class ThirdPersonViewTool
  *
  *@brief Implements a rviz tool that allows to navigate in a ego-shooter mode.
  */
@@ -58,13 +58,13 @@ namespace tier4_camera_view_rviz_plugin
 {
 
 class FPSMotionConfigWidget;
-class RouteSetTool : public rviz_common::Tool
+class ThirdPersonViewTool : public rviz_common::Tool
 {
   Q_OBJECT
 
 public:
-  RouteSetTool();
-  ~RouteSetTool();
+  ThirdPersonViewTool();
+  ~ThirdPersonViewTool();
   virtual void onInitialize();
   virtual void activate();
   virtual void deactivate();
@@ -128,4 +128,4 @@ private:
   void setFallbackViewControllerProperty();
 };
 }  // namespace tier4_camera_view_rviz_plugin
-#endif  // ROUTE_SET_TOOL_HPP_
+#endif  // THIRD_PERSON_VIEW_TOOL_HPP_

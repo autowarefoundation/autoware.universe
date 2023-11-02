@@ -27,32 +27,45 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef OPERATION_VIEW_CONTROLLER_HPP_
-#define OPERATION_VIEW_CONTROLLER_HPP_
+#ifndef BIRD_EYE_VIEW_CONTROLLER_HPP_
+#define BIRD_EYE_VIEW_CONTROLLER_HPP_
 
-#include "rviz_default_plugins/view_controllers/orbit/orbit_view_controller.hpp"
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wkeyword-macro"
+#endif
 
+#include <OgreQuaternion.h>
 #include <OgreVector3.h>
 
-#include <utility>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
-namespace Ogre
+#include "rviz_common/frame_position_tracking_view_controller.hpp"
+
+namespace rviz_common
 {
-class SceneNode;
-}
+namespace properties
+{
+class FloatProperty;
+class Shape;
+class VectorProperty;
+}  // namespace properties
+}  // namespace rviz_common
 
 namespace tier4_camera_view_rviz_plugin
 {
-class TfFrameProperty;
-
-/**
- * \brief Like the orbit view controller, but focal point moves only in the x-y plane.
- */
-class OperationViewController : public rviz_default_plugins::view_controllers::OrbitViewController
+/** @brief A first-person camera, controlled by yaw, pitch, and position. */
+class BirdEyeViewController : public rviz_common::FramePositionTrackingViewController
 {
   Q_OBJECT
 
 public:
+  BirdEyeViewController();
+
+  ~BirdEyeViewController() override;
+
   void onInitialize() override;
 
   void handleMouseEvent(rviz_common::ViewportMouseEvent & evt) override;
@@ -63,19 +76,33 @@ public:
 
   /** @brief Configure the settings of this view controller to give,
    * as much as possible, a similar view as that given by the
-   * @a source_view.
+   * @param source_view.
    *
-   * @a source_view must return a valid @c Ogre::Camera* from getCamera(). */
+   * @param source_view must return a valid @c Ogre::Camera* from getCamera(). */
   void mimic(rviz_common::ViewController * source_view) override;
 
+  void update(float dt, float ros_dt) override;
+
 protected:
-  void updateCamera() override;
+  void onTargetFrameChanged(
+    const Ogre::Vector3 & old_reference_position,
+    const Ogre::Quaternion & old_reference_orientation) override;
 
-  void updateTargetSceneNode() override;
+  /** Set the camera orientation based on angle_. */
+  void orientCamera();
 
-  std::pair<bool, Ogre::Vector3> intersectGroundPlane(Ogre::Ray mouse_ray);
+  void setPosition(const Ogre::Vector3 & pos_rel_target);
+  void move_camera(float x, float y);
+  void updateCamera();
+  Ogre::SceneNode * getCameraParent(Ogre::Camera * camera);
+
+  rviz_common::properties::FloatProperty * scale_property_;
+  rviz_common::properties::FloatProperty * angle_property_;
+  rviz_common::properties::FloatProperty * x_property_;
+  rviz_common::properties::FloatProperty * y_property_;
+  bool dragging_;
 };
 
 }  // namespace tier4_camera_view_rviz_plugin
 
-#endif  // OPERATION_VIEW_CONTROLLER_HPP_
+#endif  // BIRD_EYE_VIEW_CONTROLLER_HPP_

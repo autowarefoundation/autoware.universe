@@ -29,7 +29,7 @@
  *
  */
 
-#include "route_set_tool.hpp"
+#include "bird_eye_view_tool.hpp"
 
 #include "rviz_common/display_context.hpp"
 #include "rviz_common/view_manager.hpp"
@@ -38,18 +38,18 @@
 
 namespace tier4_camera_view_rviz_plugin
 {
-RouteSetTool::RouteSetTool()
+BirdEyeViewTool::BirdEyeViewTool()
 {
   shortcut_key_ = 'r';
 }
 
-RouteSetTool::~RouteSetTool()
+BirdEyeViewTool::~BirdEyeViewTool()
 {
 }
 
-void RouteSetTool::onInitialize()
+void BirdEyeViewTool::onInitialize()
 {
-  setName("Route Set");
+  setName("Bird Eye View");
 
   step_length_property_ = new rviz_common::properties::FloatProperty(
     "Step Length", 0.1, "The length by with the position is updated on each step.",
@@ -68,7 +68,7 @@ void RouteSetTool::onInitialize()
     getPropertyContainer(), SLOT(setLeftHandMode()), this);
 
   fallback_view_controller_property_ = new rviz_common::properties::EnumProperty(
-    "Fallback ViewController", QString("tier4_camera_view_rviz_plugin/RouteSet"),
+    "Fallback ViewController", QString("tier4_camera_view_rviz_plugin/BirdEyeView"),
     "Determines to which view controller the control switches, if the tool is deactivated.",
     getPropertyContainer(), SLOT(setFallbackViewController()), this);
 
@@ -82,7 +82,7 @@ void RouteSetTool::onInitialize()
   setFallbackViewControllerProperty();
 }
 
-void RouteSetTool::setFallbackViewControllerProperty()
+void BirdEyeViewTool::setFallbackViewControllerProperty()
 {
   fallback_view_controller_property_->clearOptions();
   m_view_controller_classes.clear();
@@ -90,7 +90,7 @@ void RouteSetTool::setFallbackViewControllerProperty()
   m_view_controller_classes = context_->getViewManager()->getDeclaredClassIdsFromFactory();
 
   for (int i = 0; i < m_view_controller_classes.size(); i++) {
-    if (m_view_controller_classes[i] != QString("tier4_camera_view_rviz_plugin/RouteSet")) {
+    if (m_view_controller_classes[i] != QString("tier4_camera_view_rviz_plugin/BirdEyeView")) {
       fallback_view_controller_property_->addOption(m_view_controller_classes[i], i);
       m_view_controller.push_back(context_->getViewManager()->getViewAt(i));
     }
@@ -101,7 +101,7 @@ void RouteSetTool::setFallbackViewControllerProperty()
 }
 
 // temporarily disabled
-// void RouteSetTool::setFallbackToolProperty()
+// void BirdEyeViewTool::setFallbackToolProperty()
 // {
 //   fallback_tool_property_->clearOptions();
 //   m_tools.clear();
@@ -119,10 +119,10 @@ void RouteSetTool::setFallbackViewControllerProperty()
 //   setFallbackTool();
 // }
 
-void RouteSetTool::activate()
+void BirdEyeViewTool::activate()
 {
   context_->getViewManager()->setCurrentViewControllerType(
-    QString("tier4_camera_view_rviz_plugin/RouteSet"));
+    QString("tier4_camera_view_rviz_plugin/BirdEyeView"));
   context_->getViewManager()->getCurrent()->reset();
 
   // temporarily disabled
@@ -130,16 +130,16 @@ void RouteSetTool::activate()
   setFallbackViewControllerProperty();
 }
 
-void RouteSetTool::deactivate()
+void BirdEyeViewTool::deactivate()
 {
 }
 
-int RouteSetTool::processKeyEvent(QKeyEvent * event, rviz_common::RenderPanel * panel)
+int BirdEyeViewTool::processKeyEvent(QKeyEvent * event, rviz_common::RenderPanel * panel)
 {
   return 0;
 }
 
-int RouteSetTool::processMouseEvent(rviz_common::ViewportMouseEvent & event)
+int BirdEyeViewTool::processMouseEvent(rviz_common::ViewportMouseEvent & event)
 {
   if (event.panel->getViewController()) {
     event.panel->getViewController()->handleMouseEvent(event);
@@ -151,4 +151,4 @@ int RouteSetTool::processMouseEvent(rviz_common::ViewportMouseEvent & event)
 }  // namespace tier4_camera_view_rviz_plugin
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(tier4_camera_view_rviz_plugin::RouteSetTool, rviz_common::Tool)
+PLUGINLIB_EXPORT_CLASS(tier4_camera_view_rviz_plugin::BirdEyeViewTool, rviz_common::Tool)

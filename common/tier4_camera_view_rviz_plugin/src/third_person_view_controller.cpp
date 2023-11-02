@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "operation_view_controller.hpp"
+#include "third_person_view_controller.hpp"
 
 #include "rviz_common/display_context.hpp"
 #include "rviz_common/properties/bool_property.hpp"
@@ -61,13 +61,13 @@ static const char * TARGET_FRAME_START = "base_link";
 // move camera up so the focal point appears in the lower image half
 static const float CAMERA_OFFSET = 0.2;
 
-void OperationViewController::onInitialize()
+void ThirdPersonViewController::onInitialize()
 {
   OrbitViewController::onInitialize();
   focal_shape_->setColor(0.0f, 1.0f, 1.0f, 0.5f);
 }
 
-void OperationViewController::reset()
+void ThirdPersonViewController::reset()
 {
   yaw_property_->setFloat(YAW_START);
   pitch_property_->setFloat(PITCH_START);
@@ -78,7 +78,7 @@ void OperationViewController::reset()
   focal_point_property_->setVector(Ogre::Vector3::ZERO);
 }
 
-std::pair<bool, Ogre::Vector3> OperationViewController::intersectGroundPlane(Ogre::Ray mouse_ray)
+std::pair<bool, Ogre::Vector3> ThirdPersonViewController::intersectGroundPlane(Ogre::Ray mouse_ray)
 {
   // convert rays into reference frame
   mouse_ray.setOrigin(target_scene_node_->convertWorldToLocalPosition(mouse_ray.getOrigin()));
@@ -92,7 +92,7 @@ std::pair<bool, Ogre::Vector3> OperationViewController::intersectGroundPlane(Ogr
   return std::make_pair(intersection.first, mouse_ray.getPoint(intersection.second));
 }
 
-void OperationViewController::handleMouseEvent(rviz_common::ViewportMouseEvent & event)
+void ThirdPersonViewController::handleMouseEvent(rviz_common::ViewportMouseEvent & event)
 {
   if (event.shift()) {
     setStatus("<b>Left-Click:</b> Move X/Y.  <b>Right-Click:</b>: Zoom.");
@@ -170,7 +170,7 @@ void OperationViewController::handleMouseEvent(rviz_common::ViewportMouseEvent &
   }
 }
 
-void OperationViewController::mimic(rviz_common::ViewController * source_view)
+void ThirdPersonViewController::mimic(rviz_common::ViewController * source_view)
 {
   FramePositionTrackingViewController::mimic(source_view);
 
@@ -204,7 +204,7 @@ void OperationViewController::mimic(rviz_common::ViewController * source_view)
   }
 }
 
-void OperationViewController::updateCamera()
+void ThirdPersonViewController::updateCamera()
 {
   OrbitViewController::updateCamera();
   camera_->getParentSceneNode()->setPosition(
@@ -213,7 +213,7 @@ void OperationViewController::updateCamera()
       distance_property_->getFloat() * CAMERA_OFFSET);
 }
 
-void OperationViewController::updateTargetSceneNode()
+void ThirdPersonViewController::updateTargetSceneNode()
 {
   if (FramePositionTrackingViewController::getNewTransform()) {
     target_scene_node_->setPosition(reference_position_);
@@ -226,7 +226,7 @@ void OperationViewController::updateTargetSceneNode()
   }
 }
 
-void OperationViewController::lookAt(const Ogre::Vector3 & point)
+void ThirdPersonViewController::lookAt(const Ogre::Vector3 & point)
 {
   Ogre::Vector3 camera_position = camera_->getParentSceneNode()->getPosition();
   Ogre::Vector3 new_focal_point =
@@ -242,4 +242,4 @@ void OperationViewController::lookAt(const Ogre::Vector3 & point)
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  tier4_camera_view_rviz_plugin::OperationViewController, rviz_common::ViewController)
+  tier4_camera_view_rviz_plugin::ThirdPersonViewController, rviz_common::ViewController)

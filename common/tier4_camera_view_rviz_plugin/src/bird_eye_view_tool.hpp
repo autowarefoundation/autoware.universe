@@ -29,10 +29,10 @@
  *
  */
 
-#ifndef OPERATION_VIEW_TOOL_HPP_
-#define OPERATION_VIEW_TOOL_HPP_
+#ifndef BIRDEYEVIEW_TOOL_HPP_
+#define BIRDEYEVIEW_TOOL_HPP_
 
-#include "operation_view_controller.hpp"
+#include "bird_eye_view_controller.hpp"
 #include "rviz_common/properties/bool_property.hpp"
 #include "rviz_common/properties/enum_property.hpp"
 #include "rviz_common/properties/float_property.hpp"
@@ -49,7 +49,7 @@
 
 /**
  *
- *@class OperationViewTool
+ *@class BirdEyeViewTool
  *
  *@brief Implements a rviz tool that allows to navigate in a ego-shooter mode.
  */
@@ -58,13 +58,13 @@ namespace tier4_camera_view_rviz_plugin
 {
 
 class FPSMotionConfigWidget;
-class OperationViewTool : public rviz_common::Tool
+class BirdEyeViewTool : public rviz_common::Tool
 {
   Q_OBJECT
 
 public:
-  OperationViewTool();
-  ~OperationViewTool();
+  BirdEyeViewTool();
+  ~BirdEyeViewTool();
   virtual void onInitialize();
   virtual void activate();
   virtual void deactivate();
@@ -128,4 +128,4 @@ private:
   void setFallbackViewControllerProperty();
 };
 }  // namespace tier4_camera_view_rviz_plugin
-#endif  // OPERATION_VIEW_TOOL_HPP_
+#endif  // BIRDEYEVIEW_TOOL_HPP_

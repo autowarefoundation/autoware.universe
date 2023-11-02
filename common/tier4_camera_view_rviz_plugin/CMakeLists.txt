@@ -15,10 +15,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/operation_view_controller.cpp
-  src/operation_view_tool.cpp
-  src/route_set_tool.cpp
-  src/route_set_view_controller.cpp
+  src/third_person_view_controller.cpp
+  src/third_person_view_tool.cpp
+  src/bird_eye_view_tool.cpp
+  src/bird_eye_view_controller.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

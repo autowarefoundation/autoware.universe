@@ -30,7 +30,7 @@
  *
  */
 
-#include "operation_view_tool.hpp"
+#include "third_person_view_tool.hpp"
 
 #include "rviz_common/display_context.hpp"
 #include "rviz_common/view_manager.hpp"
@@ -39,18 +39,18 @@
 
 namespace tier4_camera_view_rviz_plugin
 {
-OperationViewTool::OperationViewTool()
+ThirdPersonViewTool::ThirdPersonViewTool()
 {
   shortcut_key_ = 'o';
 }
 
-OperationViewTool::~OperationViewTool()
+ThirdPersonViewTool::~ThirdPersonViewTool()
 {
 }
 
-void OperationViewTool::onInitialize()
+void ThirdPersonViewTool::onInitialize()
 {
-  setName("Operation View");
+  setName("Third Person View");
 
   step_length_property_ = new rviz_common::properties::FloatProperty(
     "Step Length", 0.1, "The length by with the position is updated on each step.",
@@ -70,11 +70,11 @@ void OperationViewTool::onInitialize()
 
   // temporarily disabled
   // fallback_tool_property_ = new rviz_common::properties::EnumProperty(
-  //   "Fallback Tool", QString("tier4_camera_view_rviz_plugin/OperationViewTool"),
+  //   "Fallback Tool", QString("tier4_camera_view_rviz_plugin/ThirdPersonViewTool"),
   //   "Determines to which tool the control switches, if the tool is deactivated.",
   //   getPropertyContainer(), SLOT(setFallbackTool()), this);
   fallback_view_controller_property_ = new rviz_common::properties::EnumProperty(
-    "Fallback ViewController", QString("tier4_camera_view_rviz_plugin/OperationView"),
+    "Fallback ViewController", QString("tier4_camera_view_rviz_plugin/ThirdPersonView"),
     "Determines to which view controller the control switches, if the tool is deactivated.",
     getPropertyContainer(), SLOT(setFallbackViewController()), this);
 
@@ -88,7 +88,7 @@ void OperationViewTool::onInitialize()
   setFallbackViewControllerProperty();
 }
 
-void OperationViewTool::setFallbackViewControllerProperty()
+void ThirdPersonViewTool::setFallbackViewControllerProperty()
 {
   fallback_view_controller_property_->clearOptions();
   m_view_controller_classes.clear();
@@ -96,7 +96,7 @@ void OperationViewTool::setFallbackViewControllerProperty()
   m_view_controller_classes = context_->getViewManager()->getDeclaredClassIdsFromFactory();
 
   for (int i = 0; i < m_view_controller_classes.size(); i++) {
-    if (m_view_controller_classes[i] != QString("tier4_camera_view_rviz_plugin/OperationView")) {
+    if (m_view_controller_classes[i] != QString("tier4_camera_view_rviz_plugin/ThirdPersonView")) {
       fallback_view_controller_property_->addOption(m_view_controller_classes[i], i);
       m_view_controller.push_back(context_->getViewManager()->getViewAt(i));
     }
@@ -107,7 +107,7 @@ void OperationViewTool::setFallbackViewControllerProperty()
 }
 
 // temporarily disabled
-// void OperationViewTool::setFallbackToolProperty()
+// void ThirdPersonViewTool::setFallbackToolProperty()
 // {
 //   fallback_tool_property_->clearOptions();
 //   m_tools.clear();
@@ -125,10 +125,10 @@ void OperationViewTool::setFallbackViewControllerProperty()
 //   setFallbackTool();
 // }
 
-void OperationViewTool::activate()
+void ThirdPersonViewTool::activate()
 {
   context_->getViewManager()->setCurrentViewControllerType(
-    QString("tier4_camera_view_rviz_plugin/OperationView"));
+    QString("tier4_camera_view_rviz_plugin/ThirdPersonView"));
   context_->getViewManager()->getCurrent()->reset();
 
   // temporarily disabled
@@ -136,16 +136,16 @@ void OperationViewTool::activate()
   setFallbackViewControllerProperty();
 }
 
-void OperationViewTool::deactivate()
+void ThirdPersonViewTool::deactivate()
 {
 }
 
-int OperationViewTool::processKeyEvent(QKeyEvent * event, rviz_common::RenderPanel * panel)
+int ThirdPersonViewTool::processKeyEvent(QKeyEvent * event, rviz_common::RenderPanel * panel)
 {
   return 0;
 }
 
-int OperationViewTool::processMouseEvent(rviz_common::ViewportMouseEvent & event)
+int ThirdPersonViewTool::processMouseEvent(rviz_common::ViewportMouseEvent & event)
 {
   if (event.panel->getViewController()) {
     event.panel->getViewController()->handleMouseEvent(event);
@@ -157,4 +157,4 @@ int OperationViewTool::processMouseEvent(rviz_common::ViewportMouseEvent & event
 }  // namespace tier4_camera_view_rviz_plugin
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(tier4_camera_view_rviz_plugin::OperationViewTool, rviz_common::Tool)
+PLUGINLIB_EXPORT_CLASS(tier4_camera_view_rviz_plugin::ThirdPersonViewTool, rviz_common::Tool)

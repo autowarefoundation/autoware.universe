@@ -1,23 +1,23 @@
 <library path="tier4_camera_view_rviz_plugin">
 
-  <class name="tier4_camera_view_rviz_plugin/RouteSet" type="tier4_camera_view_rviz_plugin::RouteSetViewController" base_class_type="rviz_common::ViewController">
+  <class name="tier4_camera_view_rviz_plugin/BirdEyeView" type="tier4_camera_view_rviz_plugin::BirdEyeViewController" base_class_type="rviz_common::ViewController">
     <description>
-      Control the camera for Route Set.
+      Control the camera for bird-eye view.
     </description>
   </class>
-  <class name="tier4_camera_view_rviz_plugin/RouteSetTool" type="tier4_camera_view_rviz_plugin::RouteSetTool" base_class_type="rviz_common::Tool">
+  <class name="tier4_camera_view_rviz_plugin/BirdEyeViewTool" type="tier4_camera_view_rviz_plugin::BirdEyeViewTool" base_class_type="rviz_common::Tool">
     <description>
-      Route Set Tool. This tool requires the corresponding RouteSetViewController.
+      Bird-eye-view Tool. This tool requires the corresponding BirdEyeViewController.
     </description>
   </class>
-  <class name="tier4_camera_view_rviz_plugin/OperationView" type="tier4_camera_view_rviz_plugin::OperationViewController" base_class_type="rviz_common::ViewController">
+  <class name="tier4_camera_view_rviz_plugin/ThirdPersonView" type="tier4_camera_view_rviz_plugin::ThirdPersonViewController" base_class_type="rviz_common::ViewController">
     <description>
-      Control the camera for Operation View.
+      Control the camera for third-person view.
     </description>
   </class>
-  <class name="tier4_camera_view_rviz_plugin/OperationViewTool" type="tier4_camera_view_rviz_plugin::OperationViewTool" base_class_type="rviz_common::Tool">
+  <class name="tier4_camera_view_rviz_plugin/ThirdPersonViewTool" type="tier4_camera_view_rviz_plugin::ThirdPersonViewTool" base_class_type="rviz_common::Tool">
     <description>
-      Route Set Tool. This tool requires the corresponding OperationViewController.
+      Third-person-view Tool. This tool requires the corresponding ThirdPersonViewController.
     </description>
   </class>
 

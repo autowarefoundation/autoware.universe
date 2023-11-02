@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "route_set_view_controller.hpp"
+#include "bird_eye_view_controller.hpp"
 
 #include "rviz_common/display_context.hpp"
 #include "rviz_common/properties/bool_property.hpp"
@@ -52,7 +52,7 @@ static const Ogre::Quaternion ROBOT_TO_CAMERA_ROTATION =
 static const float PITCH_LIMIT_LOW = -Ogre::Math::HALF_PI + 0.001;
 static const float PITCH_LIMIT_HIGH = Ogre::Math::HALF_PI - 0.001;
 
-RouteSetViewController::RouteSetViewController() : dragging_(false)
+BirdEyeViewController::BirdEyeViewController() : dragging_(false)
 {
   scale_property_ = new rviz_common::properties::FloatProperty(
     "Scale", 10, "How much to scale up the size of things in the scene.", this);
@@ -64,11 +64,11 @@ RouteSetViewController::RouteSetViewController() : dragging_(false)
     new rviz_common::properties::FloatProperty("Y", 0, "Y component of camera position.", this);
 }
 
-RouteSetViewController::~RouteSetViewController()
+BirdEyeViewController::~BirdEyeViewController()
 {
 }
 
-void RouteSetViewController::onInitialize()
+void BirdEyeViewController::onInitialize()
 {
   FramePositionTrackingViewController::onInitialize();
 
@@ -78,7 +78,7 @@ void RouteSetViewController::onInitialize()
   invert_z_->hide();
 }
 
-void RouteSetViewController::reset()
+void BirdEyeViewController::reset()
 {
   scale_property_->setFloat(10);
   angle_property_->setFloat(0);
@@ -86,7 +86,7 @@ void RouteSetViewController::reset()
   y_property_->setFloat(0);
 }
 
-void RouteSetViewController::handleMouseEvent(rviz_common::ViewportMouseEvent & event)
+void BirdEyeViewController::handleMouseEvent(rviz_common::ViewportMouseEvent & event)
 {
   if (event.shift()) {
     setStatus("<b>Left-Click:</b> Move X/Y.");
@@ -139,17 +139,17 @@ void RouteSetViewController::handleMouseEvent(rviz_common::ViewportMouseEvent & 
   }
 }
 
-void RouteSetViewController::orientCamera()
+void BirdEyeViewController::orientCamera()
 {
   camera_->setOrientation(
     Ogre::Quaternion(Ogre::Radian(angle_property_->getFloat()), Ogre::Vector3::UNIT_Z));
 }
 
-void RouteSetViewController::mimic(rviz_common::ViewController * source_view)
+void BirdEyeViewController::mimic(rviz_common::ViewController * source_view)
 {
   FramePositionTrackingViewController::mimic(source_view);
 
-  if (RouteSetViewController * source_ortho = qobject_cast<RouteSetViewController *>(source_view)) {
+  if (BirdEyeViewController * source_ortho = qobject_cast<BirdEyeViewController *>(source_view)) {
     scale_property_->setFloat(source_ortho->scale_property_->getFloat());
     angle_property_->setFloat(source_ortho->angle_property_->getFloat());
     x_property_->setFloat(source_ortho->x_property_->getFloat());
@@ -159,18 +159,18 @@ void RouteSetViewController::mimic(rviz_common::ViewController * source_view)
     setPosition(source_camera_parent->getPosition());
   }
 }
-void RouteSetViewController::update(float dt, float ros_dt)
+void BirdEyeViewController::update(float dt, float ros_dt)
 {
   FramePositionTrackingViewController::update(dt, ros_dt);
   updateCamera();
 }
 
-void RouteSetViewController::lookAt(const Ogre::Vector3 & point)
+void BirdEyeViewController::lookAt(const Ogre::Vector3 & point)
 {
   setPosition(point - target_scene_node_->getPosition());
 }
 
-void RouteSetViewController::onTargetFrameChanged(
+void BirdEyeViewController::onTargetFrameChanged(
   const Ogre::Vector3 & old_reference_position,
   const Ogre::Quaternion & /*old_reference_orientation*/)
 {
@@ -179,7 +179,7 @@ void RouteSetViewController::onTargetFrameChanged(
     old_reference_position.y - reference_position_.y);
 }
 
-void RouteSetViewController::updateCamera()
+void BirdEyeViewController::updateCamera()
 {
   orientCamera();
 
@@ -199,7 +199,7 @@ void RouteSetViewController::updateCamera()
   camera_parent->setPosition(x_property_->getFloat(), y_property_->getFloat(), 500);
 }
 
-Ogre::SceneNode * RouteSetViewController::getCameraParent(Ogre::Camera * camera)
+Ogre::SceneNode * BirdEyeViewController::getCameraParent(Ogre::Camera * camera)
 {
   auto camera_parent = camera->getParentSceneNode();
 
@@ -209,13 +209,13 @@ Ogre::SceneNode * RouteSetViewController::getCameraParent(Ogre::Camera * camera)
   return camera_parent;
 }
 
-void RouteSetViewController::setPosition(const Ogre::Vector3 & pos_rel_target)
+void BirdEyeViewController::setPosition(const Ogre::Vector3 & pos_rel_target)
 {
   x_property_->setFloat(pos_rel_target.x);
   y_property_->setFloat(pos_rel_target.y);
 }
 
-void RouteSetViewController::move_camera(float dx, float dy)
+void BirdEyeViewController::move_camera(float dx, float dy)
 {
   float angle = angle_property_->getFloat();
   x_property_->add(dx * cos(angle) - dy * sin(angle));
@@ -226,4 +226,4 @@ void RouteSetViewController::move_camera(float dx, float dy)
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  tier4_camera_view_rviz_plugin::RouteSetViewController, rviz_common::ViewController)
+  tier4_camera_view_rviz_plugin::BirdEyeViewController, rviz_common::ViewController)

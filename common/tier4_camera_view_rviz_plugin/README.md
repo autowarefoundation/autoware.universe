@@ -1,9 +1,9 @@
 # tier4_camera_view_rviz_plugin
 
-## Operation View Tool
+## ThirdPersonView Tool
 
-Add the `tier4_camera_view_rviz_plugin/OperationViewTool` tool to the RViz. Push the button, the camera will focus on the vehicle and set the target frame to `base_link`. Short cut key 'o'.
+Add the `tier4_camera_view_rviz_plugin/ThirdPersonViewTool` tool to the RViz. Push the button, the camera will focus on the vehicle and set the target frame to `base_link`. Short cut key 'o'.
 
-## RouteSet Tool
+## BirdEyeView Tool
 
-Add the `tier4_camera_view_rviz_plugin/RouteSetTool` tool to the RViz. Push the button, the camera will turn to the BEV view, the target frame is consistent with the latest frame. Short cut key 'r'.
+Add the `tier4_camera_view_rviz_plugin/BirdEyeViewTool` tool to the RViz. Push the button, the camera will turn to the BEV view, the target frame is consistent with the latest frame. Short cut key 'r'.
