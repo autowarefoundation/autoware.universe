@@ -57,7 +57,6 @@ public:
       active_thread.join();
     }
     threads.clear();
-
   }
 
 private:
