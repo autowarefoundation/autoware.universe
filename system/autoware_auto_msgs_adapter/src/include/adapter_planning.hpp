@@ -48,6 +48,7 @@ protected:
     Trajectory_auto msg_auto;
     msg_auto.header = msg_source.header;
     Point_auto TrajectoryPoint_auto;
+    msg_auto.points.reserve(msg_source.points.size());
     for(size_t i = 0;i < msg_source.points.size();i++)
     {       
         TrajectoryPoint_auto.time_from_start = msg_source.points.at(i).time_from_start;
