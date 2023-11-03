@@ -229,7 +229,7 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const double vel_time_constant = declare_parameter("vel_time_constant", 0.5);
   const double steer_time_delay = declare_parameter("steer_time_delay", 0.24);
   const double steer_time_constant = declare_parameter("steer_time_constant", 0.27);
-  const double steer_dead_band = declare_parameter("steer_dead_band", 0.0012);
+  const double steer_dead_band = declare_parameter("steer_dead_band", 0.0);
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   const double wheelbase = vehicle_info.wheel_base_m;
 
