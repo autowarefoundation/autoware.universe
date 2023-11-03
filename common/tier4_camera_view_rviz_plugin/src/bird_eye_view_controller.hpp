@@ -43,12 +43,10 @@
 #ifndef BIRD_EYE_VIEW_CONTROLLER_HPP_
 #define BIRD_EYE_VIEW_CONTROLLER_HPP_
 
+#include "rviz_common/frame_position_tracking_view_controller.hpp"
 
 #include <OgreQuaternion.h>
 #include <OgreVector3.h>
-
-
-#include "rviz_common/frame_position_tracking_view_controller.hpp"
 
 namespace rviz_common
 {
