@@ -62,7 +62,7 @@ public:
 private:
   void processMessage(PredictedObjects::ConstSharedPtr msg) override;
 
-  void queueJob(std::function<void()>  job)
+  void queueJob(std::function<void()> job)
   {
     {
       std::unique_lock<std::mutex> lock(queue_mutex);
