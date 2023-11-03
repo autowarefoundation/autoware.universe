@@ -58,8 +58,6 @@ public:
     }
     threads.clear();
 
-    ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>::
-      ~ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>();
   }
 
 private:
