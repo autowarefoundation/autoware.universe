@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Autoware Foundation
+// Copyright 2023 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,17 +43,10 @@
 #ifndef BIRD_EYE_VIEW_CONTROLLER_HPP_
 #define BIRD_EYE_VIEW_CONTROLLER_HPP_
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wkeyword-macro"
-#endif
 
 #include <OgreQuaternion.h>
 #include <OgreVector3.h>
 
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 
 #include "rviz_common/frame_position_tracking_view_controller.hpp"
 
