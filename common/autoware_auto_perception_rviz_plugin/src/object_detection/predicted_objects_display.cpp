@@ -205,8 +205,7 @@ void PredictedObjectsDisplay::processMessage(PredictedObjects::ConstSharedPtr ms
   std::unique_lock<std::mutex> lock(mutex);
 
   this->msg = msg;
-  std::function<void()> f = std::bind(&PredictedObjectsDisplay::messageProcessorThreadJob, this);
-  queueJob(f);
+  queueJob(std::bind(&PredictedObjectsDisplay::messageProcessorThreadJob, this));
 }
 
 void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
