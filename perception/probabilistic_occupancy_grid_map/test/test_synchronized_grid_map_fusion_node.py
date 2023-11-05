@@ -39,6 +39,10 @@ INPUT_TOPICS = ["/topic1", "/topic2"]
 DEBUG_OUTPUT_TOPIC = "/synchronized_grid_map_fusion_node/debug/single_frame_map"
 OUTPUT_TOPIC = "/synchronized_grid_map_fusion_node/output/occupancy_grid_map"
 
+FREE_VALUE = 1
+UNKNOWN_VALUE = 50
+OCCUPIED_VALUE = 99
+
 
 # test launcher to launch grid map fusion node
 @pytest.mark.launch_test
@@ -82,11 +86,11 @@ def create_nav_msgs_occupancy_grid_msg(fill_value: int = 0, stamp: rclpy.time.Ti
     msg = OccupancyGrid()
     msg.header.stamp = rclpy.clock.Clock().now().to_msg() if stamp is None else stamp.to_msg()
     msg.header.frame_id = "map"
-    msg.info.resolution = 0.5
-    msg.info.width = 100
-    msg.info.height = 100
-    msg.info.origin.position.x = msg.info.width / 2.0  # center should match with base_link
-    msg.info.origin.position.y = msg.info.height / 2.0
+    msg.info.resolution = 0.5  # 0.5m x 0.5m
+    msg.info.width = 200  # 100m x 100m
+    msg.info.height = 200
+    msg.info.origin.position.x = -msg.info.width * msg.info.resolution / 2.0
+    msg.info.origin.position.y = -msg.info.height * msg.info.resolution / 2.0
     msg.info.origin.position.z = 0.0
     msg.info.origin.orientation.x = 0.0
     msg.info.origin.orientation.y = 0.0
@@ -191,28 +195,57 @@ class TestSynchronizedOGMFusion(unittest.TestCase):
 
     # test functions
     def test_same_ogm_fusion(self):
-        """Test free ogm and free ogm input fusion.
+        """Test 1~3.
 
-        Expected output: free ogm
+        Expected output: same ogm.
         """
         # wait for the node to be ready
         time.sleep(3)
         pubs, sub = self.create_pub_sub()  # pubs have two publishers
 
-        fill_values = [0, 100, 50]  # 0: free, 100: occupied, 50: unknown
+        fill_values = [FREE_VALUE, OCCUPIED_VALUE, UNKNOWN_VALUE]
 
         for fill_value in fill_values:
-            # create free ogm
+            # create free/occupied/unknown ogm
             ogm = create_nav_msgs_occupancy_grid_msg(fill_value=fill_value)
-            # publish free ogm
+            # publish free/occupied/unknown ogm
             pubs[0].publish(ogm)
             pubs[1].publish(ogm)
 
             # try to subscribe output pointcloud once
             rclpy.spin_once(self.node, timeout_sec=2.0)
             fused_mean = self.get_newest_ogm_value()
-            print(fill_value, fused_mean)
-            self.assertAlmostEqual(fused_mean, fill_value, delta=3)
+            print("same ogm test: ", fill_value, fused_mean)
+            # assert almost equal
+            self.assertAlmostEqual(fused_mean, fill_value, delta=3.0)
+
+    def test_unknown_fusion(self):
+        """Test unknown ogm and free ogm input fusion.
+
+        Expected output: free, occupied, unknown.
+        """
+        # wait for the node to be ready
+        time.sleep(3)
+        pubs, sub = self.create_pub_sub()
+
+        fill_values = [FREE_VALUE, OCCUPIED_VALUE, UNKNOWN_VALUE]
+        now = rclpy.clock.Clock().now()
+        unknown_ogm = create_nav_msgs_occupancy_grid_msg(fill_value=UNKNOWN_VALUE, stamp=now)
+
+        for fill_value in fill_values:
+            # publish unknown ogm
+            pubs[0].publish(unknown_ogm)
+            # create free/occupied/unknown ogm
+            ogm = create_nav_msgs_occupancy_grid_msg(fill_value=fill_value, stamp=now)
+            # publish ogm
+            pubs[1].publish(ogm)
+
+            # try to subscribe output pointcloud once
+            rclpy.spin_once(self.node, timeout_sec=2.0)
+            fused_mean = self.get_newest_ogm_value()
+            print("unknown ogm test: ", fill_value, fused_mean)
+            # assert almost equal
+            self.assertAlmostEqual(fused_mean, fill_value, delta=3.0)
 
 
 @launch_testing.post_shutdown_test()
