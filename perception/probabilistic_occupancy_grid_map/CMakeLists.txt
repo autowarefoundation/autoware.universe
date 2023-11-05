@@ -84,6 +84,7 @@ if(BUILD_TESTING)
   # launch_testing
   find_package(launch_testing_ament_cmake REQUIRED)
   add_launch_test(test/test_pointcloud_based_method.py)
+  add_launch_test(test/test_synchronized_grid_map_fusion_node.py)
 
   # gtest
   ament_add_gtest(test_utils
