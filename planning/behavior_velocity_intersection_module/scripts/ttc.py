@@ -97,9 +97,9 @@ class TTCVisualizer(Node):
 
         self.plot_timer = self.create_timer(0.2, self.on_plot_timer)
         self.fig = plt.figure(figsize=(13, 6))
-        self.ttc_ax = self.fig.add_subplot(1, 3, 1)
+        self.ttc_ax = self.fig.add_subplot(1, 2, 1)
         self.ttc_vel_ax = self.ttc_ax.twinx()
-        self.world_ax = self.fig.add_subplot(1, 3, 2)
+        self.world_ax = self.fig.add_subplot(1, 2, 2)
         self.lock = Lock()
         self.color_list = [
             "#e41a1c",
@@ -126,7 +126,10 @@ class TTCVisualizer(Node):
         self.ttc_ax.set_xlabel("ego time")
         self.ttc_ax.set_ylabel("ego dist")
         time_dist_plot = self.ttc_ax.plot(ego_ttc_time, ego_ttc_dist, label="time-dist", c="orange")
-        self.ttc_ax.set_xlim(min(ego_ttc_time) - 2.0, max(ego_ttc_time) + 3.0)
+        self.ttc_ax.set_xlim(
+            min(ego_ttc_time) - 2.0,
+            min(max(ego_ttc_time) + 3.0, self.args.max_time),
+        )
         # self.ttc_ax.set_ylim(min(ego_ttc_dist) - 2.0, max(ego_ttc_dist) + 3.0)
         for npc, color in zip(self.npc_vehicles, cycle(self.color_list)):
             t0, t1 = npc.collision_start_time, npc.collision_end_time
@@ -140,11 +143,35 @@ class TTCVisualizer(Node):
         dd = [d1 - d0 for d0, d1 in zip(ego_ttc_dist, ego_ttc_dist[1:])]
         dt = [t1 - t0 for t0, t1 in zip(ego_ttc_time, ego_ttc_time[1:])]
         v = [d / t for d, t in zip(dd, dt)]
+        v_average = self.ego_ttc_data.data[3 * n_ttc_data : 4 * n_ttc_data]
+        v_monotonic = self.ego_ttc_data.data[4 * n_ttc_data : 5 * n_ttc_data]
         self.ttc_vel_ax.yaxis.set_label_position("right")
         self.ttc_vel_ax.set_ylabel("ego velocity")
         # self.ttc_vel_ax.set_ylim(0.0, max(v) + 1.0)
         time_velocity_plot = self.ttc_vel_ax.plot(ego_ttc_time[1:], v, label="time-v", c="red")
-        lines = time_dist_plot + time_velocity_plot
+        average_velocity_plot = self.ttc_vel_ax.plot(
+            ego_ttc_time,
+            v_average,
+            label="time-v(avg)",
+            c="blue",
+            linestyle="dashed",
+            marker="o",
+            markerfacecolor="#ffffff",
+            markersize=3,
+        )
+        monotonic_velocity_plot = self.ttc_vel_ax.plot(
+            ego_ttc_time,
+            v_monotonic,
+            label="time-v(monotonic)",
+            c="red",
+            linestyle="dashed",
+            marker="o",
+            markerfacecolor="#ffffff",
+            markersize=3,
+        )
+        lines = (
+            time_dist_plot + time_velocity_plot + average_velocity_plot + monotonic_velocity_plot
+        )
         labels = [line.get_label() for line in lines]
         self.ttc_ax.legend(lines, labels, loc="upper left")
 
@@ -275,6 +302,7 @@ if __name__ == "__main__":
         default=60,
         help="detect range for drawing",
     )
+    parser.add_argument("--max_time", type=float, default=20, help="max plot limit for time")
     parser.add_argument("-s", "--save", action="store_true", help="flag to save gif")
     parser.add_argument("--gif", type=str, default="ttc", help="filename of gif file")
     parser.add_argument("--fps", type=float, default=5, help="fps of gif")
