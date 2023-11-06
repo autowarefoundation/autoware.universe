@@ -287,18 +287,19 @@ public:
     }
   }
 
-  CandidateOutput planCandidate() const override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   void processOnExit() override;
   void updateData() override;
+  void postProcess() override;
   void setParameters(const std::shared_ptr<GoalPlannerParameters> & parameters);
   void acceptVisitor(
     [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
   {
   }
+  CandidateOutput planCandidate() const override { return CandidateOutput{}; }
 
 private:
   // The start_planner activates when it receives a new route,
@@ -411,8 +412,9 @@ private:
   void returnToLaneParking();
 
   // plan pull over path
-  BehaviorModuleOutput planWithGoalModification();
-  BehaviorModuleOutput planWaitingApprovalWithGoalModification();
+  BehaviorModuleOutput planPullOver();
+  BehaviorModuleOutput planPullOverAsOutput();
+  BehaviorModuleOutput planPullOverAsCandidate();
   void selectSafePullOverPath();
   std::vector<PullOverPath> sortPullOverPathCandidatesByGoalPriority(
     const std::vector<PullOverPath> & pull_over_path_candidates,
