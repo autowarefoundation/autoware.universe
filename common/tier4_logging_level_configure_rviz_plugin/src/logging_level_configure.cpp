@@ -41,9 +41,7 @@ void LoggingLevelConfigureRvizPlugin::onInitialize()
   QStringList levels = {"DEBUG", "INFO", "WARN", "ERROR", "FATAL"};
 
   constexpr int height = 20;
-  for (const auto & item : node_logger_map_) {
-    const auto & target_node_name = item.first;
-
+  for (const auto & target_node_name : ordered_button_name_) {
     QHBoxLayout * hLayout = new QHBoxLayout;
 
     // Create a QLabel to display the node name.
@@ -198,6 +196,7 @@ void LoggingLevelConfigureRvizPlugin::setLoggerNodeMap()
 
   for (YAML::const_iterator it = config.begin(); it != config.end(); ++it) {
     const auto key = QString::fromStdString(it->first.as<std::string>());
+    ordered_button_name_.push_back(key);
     const YAML::Node values = it->second;
     for (size_t i = 0; i < values.size(); i++) {
       const auto node_name = QString::fromStdString(values[i]["node_name"].as<std::string>());

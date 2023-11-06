@@ -50,6 +50,7 @@ private:
 
   // node_logger_map_[button_name] = {node_name, logger_name}
   std::map<QString, std::vector<std::pair<QString, QString>>> node_logger_map_;
+  std::vector<QString> ordered_button_name_;  // this is for ordering the node_logger_map_
 
   // client_map_[node_name] = service_client
   std::unordered_map<QString, rclcpp::Client<logging_demo::srv::ConfigLogger>::SharedPtr>
