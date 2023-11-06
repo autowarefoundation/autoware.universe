@@ -19,6 +19,7 @@
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
   <depend>libpcl-all-dev</depend>
+  <depend>libgoogle-glog-dev</depend>
   <depend>localization_util</depend>
   <depend>nav_msgs</depend>
   <depend>ndt_omp</depend>
