@@ -103,7 +103,7 @@ def generate_launch_description():
         "vehicle_info_param_file",
         [
             FindPackageShare("vehicle_info_util"),
-            "/config/vehicle_info.config.yaml",
+            "/config/vehicle_info.param.yaml",
         ],
         "path to the parameter file of vehicle information",
     )
@@ -112,7 +112,7 @@ def generate_launch_description():
         "vehicle_characteristics_param_file",
         [
             FindPackageShare("simple_planning_simulator"),
-            "/config/vehicle_characteristics.config.yaml",
+            "/config/vehicle_characteristics.param.yaml",
         ],
         "path to config file for vehicle characteristics",
     )
@@ -121,7 +121,7 @@ def generate_launch_description():
         "simulator_model_param_file",
         [
             FindPackageShare("simple_planning_simulator"),
-            "/config/simple_planning_simulator_default.config.yaml",
+            "/config/simple_planning_simulator_default.param.yaml",
         ],
         "path to config file for simulator_model",
     )
