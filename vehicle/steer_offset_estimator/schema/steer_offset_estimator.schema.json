@@ -58,12 +58,8 @@
           "$ref": "#/definitions/steer_offset_estimator"
         }
       },
-      "required": [
-        "ros__parameters"
-      ]
+      "required": ["ros__parameters"]
     }
   },
-  "required": [
-    "/**"
-  ]
+  "required": ["/**"]
 }
