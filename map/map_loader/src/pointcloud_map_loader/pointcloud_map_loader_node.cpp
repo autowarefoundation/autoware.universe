@@ -125,21 +125,19 @@ std::vector<std::string> PointCloudMapLoaderNode::getPcdPaths(
 {
   std::vector<std::string> pcd_paths;
   for (const auto & p : pcd_paths_or_directory) {
-    if (!fs::exists(p)) {
-      RCLCPP_ERROR_STREAM(get_logger(), "invalid path: " << p);
-    }
-
-    if (isPcdFile(p)) {
-      pcd_paths.push_back(p);
-    }
-
-    if (fs::is_directory(p)) {
-      for (const auto & file : fs::directory_iterator(p)) {
-        const auto filename = file.path().string();
+    if (fs::exists(p + ".pcd")) {
+      pcd_paths.push_back(p + ".pcd");
+    } else if (fs::exists(p + ".PCD")) {
+      pcd_paths.push_back(p + ".PCD");
+    } else if (fs::exists(p) && fs::is_directory(p)) {
+      for (const auto & entry : fs::directory_iterator(p)) {
+        const auto filename = entry.path().string();
         if (isPcdFile(filename)) {
           pcd_paths.push_back(filename);
         }
       }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "invalid path: " << p << " or " << p + ".pcd");
     }
   }
   return pcd_paths;
