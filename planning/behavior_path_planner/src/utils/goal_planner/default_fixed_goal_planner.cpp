@@ -99,6 +99,15 @@ lanelet::ConstLanelets extractLaneletsFromPath(const PathPointWithLaneId& refine
 // end of the extractLaneletsFromPath (new test)
 
 
+// isPathValid (test)
+// the utilization of the extractLaneletsFromPath: isAllPointsInAnyLane(refined_path,extractLaneletsFromPath(refined_path))
+
+bool isPathValid(const PathWithLaneId &refined_path) {
+  const auto lanelets = extractLaneletsFromPath(refined_path);
+  return isAllPointsInAnyLane(refined_path, lanelets);
+}
+
+// end of isPathValid (test)
 
 
 
