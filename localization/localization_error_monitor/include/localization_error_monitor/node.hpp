@@ -17,6 +17,7 @@
 
 #include <Eigen/Dense>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/logger_level_configure.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -39,6 +40,9 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diag_pub_;
 
   rclcpp::TimerBase::SharedPtr timer_;
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
   double scale_;
   double error_ellipse_size_;
   double warn_ellipse_size_;

@@ -17,6 +17,7 @@
 
 #include "tier4_autoware_utils/ros/msg_covariance.hpp"
 #include "tier4_autoware_utils/ros/transform_listener.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -63,6 +64,7 @@ private:
     twist_with_covariance_pub_;
 
   std::shared_ptr<tier4_autoware_utils::TransformListener> transform_listener_;
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
   std::string output_frame_;
   double message_timeout_sec_;

@@ -29,6 +29,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_srvs/srv/set_bool.hpp>
+#include <tier4_autoware_utils/ros/logger_level_configure.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
@@ -204,6 +205,7 @@ private:
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
   std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
   // cspell: ignore degrounded
   bool estimate_scores_for_degrounded_scan_;
