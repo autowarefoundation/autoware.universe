@@ -218,7 +218,6 @@ void LoggingLevelConfigureRvizPlugin::setLoggerNodeMap()
     const auto ns = QString::fromStdString(it->first.as<std::string>());
     const YAML::Node ns_config = it->second;
 
-    // std::vector<std::pair<QString, QString>> node_logger_vec;
     LoggerNamespaceInfo display_data;
     display_data.ns = ns;
 
