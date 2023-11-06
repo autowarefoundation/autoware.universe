@@ -42,29 +42,33 @@ BehaviorModuleOutput DefaultFixedGoalPlanner::plan(
 
 
 
-// isPathFullyContainedInLanelet new test
-#include <lanelet2_core/LaneletMap.h>
+// use the isAllPointsInAnyLane (new test)
+// copied isInAnyLane()
 
+#include "lanelet2_core/LaneletMap.h"
 
-bool areAllPathPointsContainedInAnyLanelet(const PathWithLaneId &path,
-                                          const lanelet::ConstLanelets &lanelets) {
-  for (const auto &path_point : path.points) {
-    bool is_point_in_any_lanelet = false;
-    for (const lanelet::ConstLanelet &lanelet : lanelets) {
-      // Check whether path_point.lane_ids matches the current Lanelet's ID
-      if (path_point.lane_ids == lanelet.id()) {
-          is_point_in_any_lanelet = true;
-          break;
-        }
+bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2d & point)
+{
+  for (const auto & ll : candidate_lanelets) {
+    if (boost::geometry::within(point, ll.polygon2d().basicPolygon())) {
+      return true;
     }
+  }
+  return false;
+}
+
+bool isAllPointsInAnyLane(const PathPointWithLaneId &refined_path,
+                          const lanelet::ConstLanelets &candidate_lanelets) {
+  for (const auto &path_point : refined_path) {
+    bool is_point_in_any_lanelet = isInAnyLane(candidate_lanelets, path_point.point.pose.position);
     if (!is_point_in_any_lanelet) {
-      return false;  // if the current path point is not included in any lanelet
+      return false;  // at least one path_point falls outside any lanelet
     }
   }
   return true;
 }
 
-// end the isPathFullyContainedInLanelet
+// end of the isAllPointsInAnyLane
 
 
 
