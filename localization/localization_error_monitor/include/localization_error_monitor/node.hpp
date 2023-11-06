@@ -23,6 +23,8 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <memory>
+
 struct Ellipse
 {
   double long_radius;
