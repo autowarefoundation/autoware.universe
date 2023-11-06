@@ -69,6 +69,14 @@ if(NOT NN_DEPENDENCY STREQUAL "")
     ${tvm_runtime_LIBRARIES}
   )
 
+  if(BUILD_TESTING)
+    # gtest
+    set(LIDAR_APOLLO_SEGMENTATION_TVM_GTEST lidar_apollo_segmentation_tvm_gtest)
+    ament_add_gtest(${LIDAR_APOLLO_SEGMENTATION_TVM_GTEST} test/main.cpp TIMEOUT 120)
+    target_include_directories(${LIDAR_APOLLO_SEGMENTATION_TVM_GTEST} PRIVATE "include")
+    target_link_libraries(${LIDAR_APOLLO_SEGMENTATION_TVM_GTEST} ${PROJECT_NAME})
+  endif()
+
   ament_export_include_directories(${PCL_INCLUDE_DIRS})
   set(${PROJECT_NAME}_BUILT TRUE)
 else()
