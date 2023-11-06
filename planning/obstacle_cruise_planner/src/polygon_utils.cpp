@@ -98,6 +98,7 @@ std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
 
   return std::nullopt;
 }
+
 }  // namespace
 
 namespace polygon_utils
@@ -127,10 +128,9 @@ Polygon2d createOneStepPolygon(
   }
 
   bg::correct(polygon);
-
   Polygon2d hull_polygon;
   bg::convex_hull(polygon, hull_polygon);
-
+  bg::correct(hull_polygon);
   return hull_polygon;
 }
 

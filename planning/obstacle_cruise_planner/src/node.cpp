@@ -24,6 +24,8 @@
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
 #include <boost/format.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/algorithms/intersects.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -790,8 +792,9 @@ std::vector<TrajectoryPoint> ObstacleCruisePlannerNode::decimateTrajectoryPoints
     resampleTrajectoryPoints(trimmed_traj_points, p.decimate_trajectory_step_length);
 
   // extend trajectory
-  const auto extended_traj_points = extendTrajectoryPoints(
-    decimated_traj_points, p.goal_extension_length, p.goal_extension_interval);
+  // const auto extended_traj_points = extendTrajectoryPoints(
+  //   decimated_traj_points, p.goal_extension_length, p.goal_extension_interval);
+  const auto extended_traj_points = extendTrajectoryPoints(decimated_traj_points, 6.0, 2.0);
   if (extended_traj_points.size() < 2) {
     return traj_points;
   }
@@ -997,9 +1000,85 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
     return std::nullopt;
   }
 
+  const auto traj_dist_to_secure_stop_point =
+    calcTrajDistToSecurePolysDist(traj_points, traj_polys, obstacle);
+  if (!traj_dist_to_secure_stop_point) {
+    return std::nullopt;
+  }
+
   const auto [tangent_vel, normal_vel] = projectObstacleVelocityToTrajectory(traj_points, obstacle);
-  return StopObstacle{obstacle.uuid, obstacle.stamp, obstacle.pose,   obstacle.shape,
-                      tangent_vel,   normal_vel,     *collision_point};
+  return StopObstacle{
+    obstacle.uuid, obstacle.stamp, obstacle.pose,    obstacle.shape,
+    tangent_vel,   normal_vel,     *collision_point, *traj_dist_to_secure_stop_point};
+}
+
+std::optional<double> ObstacleCruisePlannerNode::calcTrajDistToSecurePolysDist(
+  const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
+  const Obstacle & obstacle) const
+{
+  const auto & p = behavior_determination_param_;
+  const auto & object_id = obstacle.uuid.substr(0, 4);
+
+  // NOTE: Dynamic obstacles for stop are crossing ego's trajectory with high speed,
+  //       and the collision between ego and obstacles are within the margin threshold.
+  const bool is_obstacle_crossing = isObstacleCrossing(traj_points, obstacle);
+  const double has_high_speed = p.crossing_obstacle_velocity_threshold <
+                                std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y);
+  if (is_obstacle_crossing && has_high_speed) {
+    // Get highest confidence predicted path
+    const auto resampled_predicted_path = resampleHighestConfidencePredictedPath(
+      obstacle.predicted_paths, p.prediction_resampling_time_interval,
+      p.prediction_resampling_time_horizon);
+
+    std::vector<size_t> collision_index;
+    const auto collision_points = polygon_utils::getCollisionPoints(
+      traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
+      is_driving_forward_, collision_index);
+    if (collision_points.empty()) {
+      RCLCPP_INFO_EXPRESSION(
+        get_logger(), enable_debug_info_,
+        "[Stop] Ignore inside obstacle (%s) since there is no collision point between the "
+        "predicted path "
+        "and the ego.",
+        object_id.c_str());
+      debug_data_ptr_->intentionally_ignored_obstacles.push_back(obstacle);
+      return std::nullopt;
+    }
+
+    const double collision_time_margin =
+      calcCollisionTimeMargin(collision_points, traj_points, is_driving_forward_);
+    if (p.collision_time_margin < collision_time_margin) {
+      RCLCPP_INFO_EXPRESSION(
+        get_logger(), enable_debug_info_,
+        "[Stop] Ignore inside obstacle (%s) since it will not collide with the ego.",
+        object_id.c_str());
+      debug_data_ptr_->intentionally_ignored_obstacles.push_back(obstacle);
+      return std::nullopt;
+    }
+  }
+
+  const auto traj_polys_with_lat_margin = createOneStepPolygons(
+    traj_points, vehicle_info_, ego_odom_ptr_->pose.pose, p.max_lat_margin_for_stop);
+  auto obstacle_polygon = tier4_autoware_utils::toPolygon2d(obstacle.pose, obstacle.shape);
+  const auto dist_to_be_secured = planner_ptr_->getSafeDistanceMargin();
+
+  for (size_t col_i = 0; col_i < traj_polys_with_lat_margin.size(); ++col_i) {
+    if (boost::geometry::intersects(traj_polys_with_lat_margin.at(col_i), obstacle_polygon)) {
+      double last_dist = 0.0;
+      for (std::int32_t sec_i = col_i - 1; sec_i >= 0; --sec_i) {
+        double sec_i_dist =
+          boost::geometry::distance(traj_polys_with_lat_margin.at(sec_i), obstacle_polygon);
+        if (sec_i_dist > dist_to_be_secured) {
+          const double decimal_secure_index =
+            sec_i + (dist_to_be_secured - sec_i_dist) / (last_dist - sec_i_dist);
+          return decimal_secure_index * p.decimate_trajectory_step_length;
+        }
+        last_dist = sec_i_dist;
+      }
+      return last_dist - dist_to_be_secured;
+    }
+  }
+  return std::nullopt;
 }
 
 std::optional<geometry_msgs::msg::Point>
