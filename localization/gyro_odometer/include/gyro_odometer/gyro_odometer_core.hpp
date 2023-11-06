@@ -15,9 +15,9 @@
 #ifndef GYRO_ODOMETER__GYRO_ODOMETER_CORE_HPP_
 #define GYRO_ODOMETER__GYRO_ODOMETER_CORE_HPP_
 
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "tier4_autoware_utils/ros/msg_covariance.hpp"
 #include "tier4_autoware_utils/ros/transform_listener.hpp"
-#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

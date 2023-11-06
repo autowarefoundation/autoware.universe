@@ -23,8 +23,8 @@
 #include <kalman_filter/time_delay_kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <tier4_autoware_utils/ros/logger_level_configure.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
