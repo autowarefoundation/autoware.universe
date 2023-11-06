@@ -76,47 +76,29 @@ enum class PathType {
   FREESPACE,
 };
 
-class PullOverStatus;  // Forward declaration for Transaction
-// class that locks the PullOverStatus when multiple values are being updated from
-// an external source.
-class Transaction
-{
-public:
-  explicit Transaction(PullOverStatus & status);
-  ~Transaction();
-
-private:
-  PullOverStatus & status_;
-};
-
-#define DEFINE_SETTER_GETTER(TYPE, NAME)              \
-public:                                               \
-  void set_##NAME(const TYPE & value)                 \
-  {                                                   \
-    if (!is_in_transaction_) {                        \
-      const std::lock_guard<std::mutex> lock(mutex_); \
-      NAME##_ = value;                                \
-    } else {                                          \
-      NAME##_ = value;                                \
-    }                                                 \
-  }                                                   \
-                                                      \
-  TYPE get_##NAME() const                             \
-  {                                                   \
-    if (!is_in_transaction_) {                        \
-      const std::lock_guard<std::mutex> lock(mutex_); \
-      return NAME##_;                                 \
-    }                                                 \
-    return NAME##_;                                   \
+#define DEFINE_SETTER_GETTER(TYPE, NAME)                      \
+public:                                                       \
+  void set_##NAME(const TYPE & value)                         \
+  {                                                           \
+    const std::lock_guard<std::recursive_mutex> lock(mutex_); \
+    NAME##_ = value;                                          \
+  }                                                           \
+                                                              \
+  TYPE get_##NAME() const                                     \
+  {                                                           \
+    const std::lock_guard<std::recursive_mutex> lock(mutex_); \
+    return NAME##_;                                           \
   }
 
 class PullOverStatus
 {
 public:
+  explicit PullOverStatus(std::recursive_mutex & mutex) : mutex_(mutex) {}
+
   // Reset all data members to their initial states
   void reset()
   {
-    const std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     pull_over_path_ = nullptr;
     lane_parking_pull_over_path_ = nullptr;
     current_path_idx_ = 0;
@@ -136,9 +118,6 @@ public:
     is_ready_ = false;
   }
 
-  // lock all data members
-  Transaction startTransaction() { return Transaction(*this); }
-
   DEFINE_SETTER_GETTER(std::shared_ptr<PullOverPath>, pull_over_path)
   DEFINE_SETTER_GETTER(std::shared_ptr<PullOverPath>, lane_parking_pull_over_path)
   DEFINE_SETTER_GETTER(size_t, current_path_idx)
@@ -156,21 +135,14 @@ public:
   DEFINE_SETTER_GETTER(bool, has_decided_velocity)
   DEFINE_SETTER_GETTER(bool, has_requested_approval)
   DEFINE_SETTER_GETTER(bool, is_ready)
-  DEFINE_SETTER_GETTER(std::shared_ptr<rclcpp::Time>, last_approved_time)
   DEFINE_SETTER_GETTER(std::shared_ptr<rclcpp::Time>, last_increment_time)
   DEFINE_SETTER_GETTER(std::shared_ptr<rclcpp::Time>, last_path_update_time)
-  DEFINE_SETTER_GETTER(std::shared_ptr<Pose>, last_approved_pose)
   DEFINE_SETTER_GETTER(std::optional<GoalCandidate>, modified_goal_pose)
   DEFINE_SETTER_GETTER(Pose, refined_goal_pose)
   DEFINE_SETTER_GETTER(GoalCandidates, goal_candidates)
+  DEFINE_SETTER_GETTER(Pose, closest_goal_candidate_pose)
   DEFINE_SETTER_GETTER(std::vector<PullOverPath>, pull_over_path_candidates)
   DEFINE_SETTER_GETTER(std::optional<Pose>, closest_start_pose)
-
-  void push_goal_candidate(const GoalCandidate & goal_candidate)
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    goal_candidates_.push_back(goal_candidate);
-  }
 
 private:
   std::shared_ptr<PullOverPath> pull_over_path_{nullptr};
@@ -192,23 +164,20 @@ private:
   bool is_ready_{false};
 
   // save last time and pose
-  std::shared_ptr<rclcpp::Time> last_approved_time_;
   std::shared_ptr<rclcpp::Time> last_increment_time_;
   std::shared_ptr<rclcpp::Time> last_path_update_time_;
-  std::shared_ptr<Pose> last_approved_pose_;
 
   // goal modification
   std::optional<GoalCandidate> modified_goal_pose_;
   Pose refined_goal_pose_{};
   GoalCandidates goal_candidates_{};
+  Pose closest_goal_candidate_pose_{};
 
   //  pull over path
   std::vector<PullOverPath> pull_over_path_candidates_;
   std::optional<Pose> closest_start_pose_;
 
-  friend class Transaction;
-  mutable std::mutex mutex_;
-  bool is_in_transaction_{false};
+  std::recursive_mutex & mutex_;
 };
 
 #undef DEFINE_SETTER_GETTER
@@ -224,6 +193,14 @@ struct GoalPlannerDebugData
 {
   FreespacePlannerDebugData freespace_planner{};
   std::vector<Polygon2d> ego_polygons_expanded{};
+};
+
+struct LastApprovalData
+{
+  LastApprovalData(rclcpp::Time time, Pose pose) : time(time), pose(pose) {}
+
+  rclcpp::Time time{};
+  Pose pose{};
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -246,31 +223,28 @@ public:
     }
   }
 
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] BehaviorModuleOutput run() override;
-  bool isExecutionRequested() const override;
-  bool isExecutionReady() const override;
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] ModuleStatus updateState() override;
+  CandidateOutput planCandidate() const override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
-  void processOnEntry() override;
+  bool isExecutionRequested() const override;
+  bool isExecutionReady() const override;
   void processOnExit() override;
+  void updateData() override;
   void setParameters(const std::shared_ptr<GoalPlannerParameters> & parameters);
   void acceptVisitor(
     [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
   {
   }
 
-  // not used, but need to override
-  CandidateOutput planCandidate() const override { return CandidateOutput{}; };
-
 private:
+  // The start_planner activates when it receives a new route,
+  // so there is no need to terminate the goal planner.
+  // If terminating it, it may switch to lane following and could generate an inappropriate path.
   bool canTransitSuccessState() override { return false; }
 
   bool canTransitFailureState() override { return false; }
 
-  bool canTransitIdleToRunningState() override { return false; }
+  bool canTransitIdleToRunningState() override { return true; }
 
   mutable StartGoalPlannerData goal_planner_data_;
 
@@ -300,8 +274,10 @@ private:
 
   tier4_autoware_utils::LinearRing2d vehicle_footprint_;
 
-  std::mutex mutex_;
+  std::recursive_mutex mutex_;
   PullOverStatus status_;
+
+  std::unique_ptr<LastApprovalData> last_approval_data_{nullptr};
 
   // approximate distance from the start point to the end point of pull_over.
   // this is used as an assumed value to decelerate, etc., before generating the actual path.

@@ -139,6 +139,9 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration =
     getOrDeclareParameter<double>(
       node, ns + ".collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration");
+  ip.collision_detection.ignore_on_red_traffic_light.object_margin_to_path =
+    getOrDeclareParameter<double>(
+      node, ns + ".collision_detection.ignore_on_red_traffic_light.object_margin_to_path");
 
   ip.occlusion.enable = getOrDeclareParameter<bool>(node, ns + ".occlusion.enable");
   ip.occlusion.occlusion_attention_area_length =
@@ -178,6 +181,7 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_curvature_calculation_ds");
   ip.occlusion.static_occlusion_with_traffic_light_timeout = getOrDeclareParameter<double>(
     node, ns + ".occlusion.static_occlusion_with_traffic_light_timeout");
+  ip.debug.ttc = getOrDeclareParameter<std::vector<int64_t>>(node, ns + ".debug.ttc");
 }
 
 void IntersectionModuleManager::launchNewModules(

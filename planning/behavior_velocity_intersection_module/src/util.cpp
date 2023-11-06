@@ -269,8 +269,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const lanelet::CompoundPolygon3d & first_detection_area,
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
-  const double stop_line_margin, const double peeking_offset, const double max_accel,
-  const double max_jerk, const double delay_response_time,
+  const double stop_line_margin, const double max_accel, const double max_jerk,
+  const double delay_response_time, const double peeking_offset,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
 {
   const auto & path_ip = interpolated_path_info.path;
@@ -841,9 +841,16 @@ IntersectionLanelets getObjectiveLanelets(
     result.attention_stop_lines_.push_back(stop_line);
   }
   result.attention_non_preceding_ = std::move(detection_lanelets);
-  // TODO(Mamoru Sobue): find stop lines for attention_non_preceding_ if needed
   for (unsigned i = 0; i < result.attention_non_preceding_.size(); ++i) {
-    result.attention_non_preceding_stop_lines_.push_back(std::nullopt);
+    std::optional<lanelet::ConstLineString3d> stop_line = std::nullopt;
+    const auto & ll = result.attention_non_preceding_.at(i);
+    const auto traffic_lights = ll.regulatoryElementsAs<lanelet::TrafficLight>();
+    for (const auto & traffic_light : traffic_lights) {
+      const auto stop_line_opt = traffic_light->stopLine();
+      if (!stop_line_opt) continue;
+      stop_line = stop_line_opt.get();
+    }
+    result.attention_non_preceding_stop_lines_.push_back(stop_line);
   }
   result.conflicting_ = std::move(conflicting_ex_ego_lanelets);
   result.adjacent_ = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, associative_ids);
@@ -1298,10 +1305,12 @@ void cutPredictPathWithDuration(
 
 TimeDistanceArray calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::shared_ptr<const PlannerData> & planner_data, const std::set<int> & associative_ids,
-  const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
-  const double time_delay, const double intersection_velocity, const double minimum_ego_velocity,
-  const bool use_upstream_velocity, const double minimum_upstream_velocity)
+  const std::shared_ptr<const PlannerData> & planner_data, const lanelet::Id lane_id,
+  const std::set<int> & associative_ids, const size_t closest_idx,
+  const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
+  const double intersection_velocity, const double minimum_ego_velocity,
+  const bool use_upstream_velocity, const double minimum_upstream_velocity,
+  tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array)
 {
   double dist_sum = 0.0;
   int assigned_lane_found = false;
@@ -1367,7 +1376,26 @@ TimeDistanceArray calcIntersectionPassingTime(
 
     time_distance_array.emplace_back(passing_time, dist_sum);
   }
-
+  debug_ttc_array->layout.dim.resize(3);
+  debug_ttc_array->layout.dim.at(0).label = "lane_id_@[0][0], ttc_time, ttc_dist, path_x, path_y";
+  debug_ttc_array->layout.dim.at(0).size = 5;
+  debug_ttc_array->layout.dim.at(1).label = "values";
+  debug_ttc_array->layout.dim.at(1).size = time_distance_array.size();
+  for (unsigned i = 0; i < time_distance_array.size(); ++i) {
+    debug_ttc_array->data.push_back(lane_id);
+  }
+  for (const auto & [t, d] : time_distance_array) {
+    debug_ttc_array->data.push_back(t);
+  }
+  for (const auto & [t, d] : time_distance_array) {
+    debug_ttc_array->data.push_back(d);
+  }
+  for (const auto & p : smoothed_reference_path.points) {
+    debug_ttc_array->data.push_back(p.point.pose.position.x);
+  }
+  for (const auto & p : smoothed_reference_path.points) {
+    debug_ttc_array->data.push_back(p.point.pose.position.y);
+  }
   return time_distance_array;
 }
 

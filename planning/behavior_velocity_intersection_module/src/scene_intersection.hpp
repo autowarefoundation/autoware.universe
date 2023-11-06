@@ -24,6 +24,7 @@
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -118,6 +119,10 @@ public:
       {
         double object_expected_deceleration;
       } ignore_on_amber_traffic_light;
+      struct IgnoreOnRedTrafficLight
+      {
+        double object_margin_to_path;
+      } ignore_on_red_traffic_light;
     } collision_detection;
     struct Occlusion
     {
@@ -146,6 +151,10 @@ public:
       double attention_lane_curvature_calculation_ds;
       double static_occlusion_with_traffic_light_timeout;
     } occlusion;
+    struct Debug
+    {
+      std::vector<int64_t> ttc;
+    } debug;
   };
 
   enum OcclusionType {
@@ -359,6 +368,8 @@ private:
 
   util::DebugData debug_data_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr decision_state_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr ego_ttc_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr object_ttc_pub_;
 };
 
 }  // namespace behavior_velocity_planner

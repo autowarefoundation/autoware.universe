@@ -330,6 +330,8 @@ std::optional<double> getSignedDistanceFromBoundary(
 
 Polygon2d toPolygon2d(const lanelet::ConstLanelet & lanelet);
 
+Polygon2d toPolygon2d(const lanelet::BasicPolygon2d & polygon);
+
 std::vector<Polygon2d> getTargetLaneletPolygons(
   const lanelet::ConstLanelets & lanelets, const Pose & pose, const double check_length,
   const std::string & target_type);
@@ -365,10 +367,12 @@ lanelet::ConstLanelets getCurrentLanesFromPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data);
 
 lanelet::ConstLanelets extendNextLane(
-  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes);
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes,
+  const bool only_in_route = false);
 
 lanelet::ConstLanelets extendPrevLane(
-  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes);
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes,
+  const bool only_in_route = false);
 
 lanelet::ConstLanelets extendLanes(
   const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes);
@@ -390,7 +394,7 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
 
 double calcMinimumLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
-  const double length_to_intersection = 0.0);
+  const double backward_buffer, const double length_to_intersection = 0.0);
 
 lanelet::ConstLanelets getLaneletsFromPath(
   const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
