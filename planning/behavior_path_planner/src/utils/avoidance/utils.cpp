@@ -48,6 +48,7 @@
 namespace behavior_path_planner::utils::avoidance
 {
 
+using autoware_perception_msgs::msg::TrafficSignalElement;
 using motion_utils::calcLongitudinalOffsetPoint;
 using motion_utils::calcSignedArcLength;
 using motion_utils::findNearestIndex;
@@ -225,6 +226,86 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
 {
   base_vector.insert(base_vector.end(), additional_vector.begin(), additional_vector.end());
 }
+
+bool hasTrafficLightCircleColor(const TrafficSignal & tl_state, const uint8_t & lamp_color)
+{
+  const auto it_lamp =
+    std::find_if(tl_state.elements.begin(), tl_state.elements.end(), [&lamp_color](const auto & x) {
+      return x.shape == TrafficSignalElement::CIRCLE && x.color == lamp_color;
+    });
+
+  return it_lamp != tl_state.elements.end();
+}
+
+bool hasTrafficLightShape(const TrafficSignal & tl_state, const uint8_t & lamp_shape)
+{
+  const auto it_lamp = std::find_if(
+    tl_state.elements.begin(), tl_state.elements.end(),
+    [&lamp_shape](const auto & x) { return x.shape == lamp_shape; });
+
+  return it_lamp != tl_state.elements.end();
+}
+
+bool isTrafficSignalStop(const lanelet::ConstLanelet & lanelet, const TrafficSignal & tl_state)
+{
+  if (hasTrafficLightCircleColor(tl_state, TrafficSignalElement::GREEN)) {
+    return false;
+  }
+
+  if (hasTrafficLightCircleColor(tl_state, TrafficSignalElement::UNKNOWN)) {
+    return false;
+  }
+
+  const std::string turn_direction = lanelet.attributeOr("turn_direction", "else");
+
+  if (turn_direction == "else") {
+    return true;
+  }
+  if (
+    turn_direction == "right" &&
+    hasTrafficLightShape(tl_state, TrafficSignalElement::RIGHT_ARROW)) {
+    return false;
+  }
+  if (
+    turn_direction == "left" && hasTrafficLightShape(tl_state, TrafficSignalElement::LEFT_ARROW)) {
+    return false;
+  }
+  if (
+    turn_direction == "straight" &&
+    hasTrafficLightShape(tl_state, TrafficSignalElement::UP_ARROW)) {
+    return false;
+  }
+
+  return true;
+}
+
+std::optional<double> calcDistanceToRedTrafficLight(
+  const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,
+  const std::shared_ptr<const PlannerData> & planner_data)
+{
+  for (const auto & lanelet : lanelets) {
+    for (const auto & element : lanelet.regulatoryElementsAs<TrafficLight>()) {
+      const auto traffic_signal_stamped = planner_data->getTrafficSignal(element->id());
+      if (!traffic_signal_stamped.has_value()) {
+        continue;
+      }
+
+      if (!isTrafficSignalStop(lanelet, traffic_signal_stamped.value().signal)) {
+        continue;
+      }
+
+      const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
+      lanelet::ConstLineString3d stop_line = *(element->stopLine());
+      const auto x = 0.5 * (stop_line.front().x() + stop_line.back().x());
+      const auto y = 0.5 * (stop_line.front().y() + stop_line.back().y());
+      const auto z = 0.5 * (stop_line.front().z() + stop_line.back().z());
+
+      return calcSignedArcLength(path.points, ego_pos, tier4_autoware_utils::createPoint(x, y, z));
+    }
+  }
+
+  return std::nullopt;
+}
 }  // namespace
 
 bool isOnRight(const ObjectData & obj)
@@ -290,6 +371,81 @@ bool isWithinCrosswalk(
   }
 
   return false;
+}
+
+bool isWithinIntersection(
+  const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler)
+{
+  const std::string id = object.overhang_lanelet.attributeOr("intersection_area", "else");
+  if (id == "else") {
+    return false;
+  }
+
+  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object.object);
+
+  const auto polygon = route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(id.c_str()));
+
+  return boost::geometry::within(
+    object_polygon, utils::toPolygon2d(lanelet::utils::to2D(polygon.basicPolygon())));
+}
+
+bool isForceAvoidanceTarget(
+  ObjectData & object, const lanelet::ConstLanelets & extend_lanelets,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  if (!parameters->enable_force_avoidance_for_stopped_vehicle) {
+    return false;
+  }
+
+  const auto stop_time_longer_than_threshold =
+    object.stop_time > parameters->threshold_time_force_avoidance_for_stopped_vehicle;
+
+  if (!stop_time_longer_than_threshold) {
+    return false;
+  }
+
+  if (object.is_within_intersection) {
+    RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object is in the intersection area.");
+    return false;
+  }
+
+  const auto rh = planner_data->route_handler;
+
+  if (
+    !!rh->getRoutingGraphPtr()->right(object.overhang_lanelet) &&
+    !!rh->getRoutingGraphPtr()->left(object.overhang_lanelet)) {
+    RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object isn't on the edge lane.");
+    return false;
+  }
+
+  const auto & ego_pose = planner_data->self_odometry->pose.pose;
+  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
+
+  // force avoidance for stopped vehicle
+  bool not_parked_object = true;
+
+  // check traffic light
+  const auto to_traffic_light = utils::getDistanceToNextTrafficLight(object_pose, extend_lanelets);
+  {
+    not_parked_object =
+      to_traffic_light < parameters->object_ignore_section_traffic_light_in_front_distance;
+  }
+
+  // check crosswalk
+  const auto to_crosswalk =
+    utils::getDistanceToCrosswalk(ego_pose, extend_lanelets, *rh->getOverallGraphPtr()) -
+    object.longitudinal;
+  {
+    const auto stop_for_crosswalk =
+      to_crosswalk < parameters->object_ignore_section_crosswalk_in_front_distance &&
+      to_crosswalk > -1.0 * parameters->object_ignore_section_crosswalk_behind_distance;
+    not_parked_object = not_parked_object || stop_for_crosswalk;
+  }
+
+  object.to_stop_factor_distance = std::min(to_traffic_light, to_crosswalk);
+
+  return !not_parked_object;
 }
 
 double calcShiftLength(
@@ -679,26 +835,41 @@ void fillObjectEnvelopePolygon(
     return;
   }
 
-  const auto envelope_poly =
+  const auto one_shot_envelope_poly =
     createEnvelopePolygon(object_data, closest_pose, envelope_buffer_margin);
 
-  if (boost::geometry::within(envelope_poly, same_id_obj->envelope_poly)) {
+  // If the one_shot_envelope_poly is within the registered envelope, use the registered one
+  if (boost::geometry::within(one_shot_envelope_poly, same_id_obj->envelope_poly)) {
     object_data.envelope_poly = same_id_obj->envelope_poly;
     return;
   }
 
   std::vector<Polygon2d> unions;
-  boost::geometry::union_(envelope_poly, same_id_obj->envelope_poly, unions);
+  boost::geometry::union_(one_shot_envelope_poly, same_id_obj->envelope_poly, unions);
 
+  // If union fails, use the current envelope
   if (unions.empty()) {
-    object_data.envelope_poly =
-      createEnvelopePolygon(object_data, closest_pose, envelope_buffer_margin);
+    object_data.envelope_poly = one_shot_envelope_poly;
     return;
   }
 
   boost::geometry::correct(unions.front());
 
-  object_data.envelope_poly = createEnvelopePolygon(unions.front(), closest_pose, 0.0);
+  const auto multi_step_envelope_poly = createEnvelopePolygon(unions.front(), closest_pose, 0.0);
+
+  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object_data.object);
+  const auto object_polygon_area = boost::geometry::area(object_polygon);
+  const auto envelope_polygon_area = boost::geometry::area(multi_step_envelope_poly);
+
+  // keep multi-step envelope polygon.
+  constexpr double THRESHOLD = 5.0;
+  if (envelope_polygon_area < object_polygon_area * THRESHOLD) {
+    object_data.envelope_poly = multi_step_envelope_poly;
+    return;
+  }
+
+  // use latest one-shot envelope polygon.
+  object_data.envelope_poly = one_shot_envelope_poly;
 }
 
 void fillObjectMovingTime(
@@ -1127,42 +1298,14 @@ void filterTargetObjects(
       continue;
     }
 
+    o.is_within_intersection = isWithinIntersection(o, rh);
+
     // from here condition check for vehicle type objects.
-
-    const auto stop_time_longer_than_threshold =
-      o.stop_time > parameters->threshold_time_force_avoidance_for_stopped_vehicle;
-
-    if (stop_time_longer_than_threshold && parameters->enable_force_avoidance_for_stopped_vehicle) {
-      // force avoidance for stopped vehicle
-      bool not_parked_object = true;
-
-      // check traffic light
-      const auto to_traffic_light =
-        utils::getDistanceToNextTrafficLight(object_pose, extend_lanelets);
-      {
-        not_parked_object =
-          to_traffic_light < parameters->object_ignore_section_traffic_light_in_front_distance;
-      }
-
-      // check crosswalk
-      const auto to_crosswalk =
-        utils::getDistanceToCrosswalk(ego_pose, extend_lanelets, *rh->getOverallGraphPtr()) -
-        o.longitudinal;
-      {
-        const auto stop_for_crosswalk =
-          to_crosswalk < parameters->object_ignore_section_crosswalk_in_front_distance &&
-          to_crosswalk > -1.0 * parameters->object_ignore_section_crosswalk_behind_distance;
-        not_parked_object = not_parked_object || stop_for_crosswalk;
-      }
-
-      o.to_stop_factor_distance = std::min(to_traffic_light, to_crosswalk);
-
-      if (!not_parked_object) {
-        o.last_seen = now;
-        o.avoid_margin = avoid_margin;
-        data.target_objects.push_back(o);
-        continue;
-      }
+    if (isForceAvoidanceTarget(o, extend_lanelets, planner_data, parameters)) {
+      o.last_seen = now;
+      o.avoid_margin = avoid_margin;
+      data.target_objects.push_back(o);
+      continue;
     }
 
     // Object is on center line -> ignore.
@@ -1839,5 +1982,64 @@ DrivableLanes generateExpandDrivableLanes(
   }
 
   return current_drivable_lanes;
+}
+
+double calcDistanceToAvoidStartLine(
+  const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  if (lanelets.empty()) {
+    return std::numeric_limits<double>::lowest();
+  }
+
+  double distance_to_return_dead_line = std::numeric_limits<double>::lowest();
+
+  // dead line stop factor(traffic light)
+  if (parameters->enable_dead_line_for_traffic_light) {
+    const auto to_traffic_light = calcDistanceToRedTrafficLight(lanelets, path, planner_data);
+    if (to_traffic_light.has_value()) {
+      distance_to_return_dead_line = std::max(
+        distance_to_return_dead_line,
+        to_traffic_light.value() + parameters->dead_line_buffer_for_traffic_light);
+    }
+  }
+
+  return distance_to_return_dead_line;
+}
+
+double calcDistanceToReturnDeadLine(
+  const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  if (lanelets.empty()) {
+    return std::numeric_limits<double>::max();
+  }
+
+  double distance_to_return_dead_line = std::numeric_limits<double>::max();
+
+  // dead line stop factor(traffic light)
+  if (parameters->enable_dead_line_for_traffic_light) {
+    const auto to_traffic_light = calcDistanceToRedTrafficLight(lanelets, path, planner_data);
+    if (to_traffic_light.has_value()) {
+      distance_to_return_dead_line = std::min(
+        distance_to_return_dead_line,
+        to_traffic_light.value() - parameters->dead_line_buffer_for_traffic_light);
+    }
+  }
+
+  // dead line for goal
+  if (parameters->enable_dead_line_for_goal) {
+    if (planner_data->route_handler->isInGoalRouteSection(lanelets.back())) {
+      const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
+      const auto to_goal_distance =
+        calcSignedArcLength(path.points, ego_pos, path.points.size() - 1);
+      distance_to_return_dead_line = std::min(
+        distance_to_return_dead_line, to_goal_distance - parameters->dead_line_buffer_for_goal);
+    }
+  }
+
+  return distance_to_return_dead_line;
 }
 }  // namespace behavior_path_planner::utils::avoidance
