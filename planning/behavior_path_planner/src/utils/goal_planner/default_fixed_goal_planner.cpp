@@ -72,6 +72,32 @@ bool isAllPointsInAnyLane(const PathPointWithLaneId &refined_path,
 
 
 
+// retreive the extractLaneletsFromPath (new test)
+
+#include "route_handler/route_handler.hpp" // MAKE SURE
+
+lanelet::ConstLanelets extractLaneletsFromPath(const PathPointWithLaneId& refined_path) {
+    const auto & rh = planner_data->route_handler; // HOW
+    lanelet::ConstLanelets refined_path_lanelets;
+    for (const auto& path_point : refined_path) {
+        int64_t lane_id = path_point.lane_ids;
+        lanelet::ConstLanelet lanelet = rh->getLaneletsFromId(lane_id);
+        bool is_unique = true;
+        for (const lanelet::ConstLanelet& existing_lanelet : refined_path_lanelets) {
+            if (lanelet == existing_lanelet) {
+                is_unique = false;
+                break;
+            }
+        }
+        if (is_unique) {
+            refined_path_lanelets.push_back(lanelet);
+        }
+    }
+    return refined_path_lanelets;
+}
+
+// end of the extractLaneletsFromPath (new test)
+
 
 
 
