@@ -42,12 +42,12 @@ void test_segmentation(bool use_intensity_feature, bool use_constant_feature, bo
 
   std::string home = std::getenv("HOME");
   fs::path data_path(home);
-  data_path /= "autoware_data"; 
+  data_path /= "autoware_data";
   fs::path apollo_data_path(data_path);
   apollo_data_path /= "lidar_apollo_segmentation_tvm";
   fs::path deploy_path(apollo_data_path);
   deploy_path /= "models/baidu_cnn";
-  
+
   fs::path deploy_graph("deploy_graph.json");
   fs::path deploy_lib("deploy_lib.so");
   fs::path deploy_param("deploy_param.params");
@@ -56,12 +56,12 @@ void test_segmentation(bool use_intensity_feature, bool use_constant_feature, bo
   fs::path deploy_lib_path = deploy_path / deploy_lib;
   fs::path deploy_param_path = deploy_path / deploy_param;
 
-  if (not fs::exists(deploy_graph_path)
-      or not fs::exists(deploy_lib_path)
-      or not fs::exists(deploy_param_path)) {
-        printf("Model deploy files not found. Skip test.\n");
-        GTEST_SKIP(); 
-        return;
+  if (
+    not fs::exists(deploy_graph_path) or not fs::exists(deploy_lib_path) or
+    not fs::exists(deploy_param_path)) {
+    printf("Model deploy files not found. Skip test.\n");
+    GTEST_SKIP();
+    return;
   };
 
   ApolloLidarSegmentation segmentation(
