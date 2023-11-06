@@ -57,12 +57,12 @@ void test_segmentation(bool use_intensity_feature, bool use_constant_feature, bo
   fs::path deploy_param_path = deploy_path / deploy_param;
 
   if (
-    not fs::exists(deploy_graph_path) or not fs::exists(deploy_lib_path) or
-    not fs::exists(deploy_param_path)) {
+    !fs::exists(deploy_graph_path) || !fs::exists(deploy_lib_path) ||
+    !fs::exists(deploy_param_path)) {
     printf("Model deploy files not found. Skip test.\n");
     GTEST_SKIP();
     return;
-  };
+  }
 
   ApolloLidarSegmentation segmentation(
     range, score_threshold, use_intensity_feature, use_constant_feature, z_offset, min_height,
