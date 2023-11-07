@@ -44,7 +44,6 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 : rclcpp::Node(node_name, node_options),
   warning_(std::make_shared<Warning>(this)),
   params_(this),
-  ekf_rate_(params_.ekf_rate),
   ekf_dt_(params_.ekf_dt),
   pose_queue_(params_.pose_smoothing_steps),
   twist_queue_(params_.twist_smoothing_steps)
@@ -104,9 +103,8 @@ void EKFLocalizer::updatePredictFrequency()
     if (get_clock()->now() < *last_predict_time_) {
       warning_->warn("Detected jump back in time");
     } else {
-      ekf_rate_ = 1.0 / (get_clock()->now() - *last_predict_time_).seconds();
-      DEBUG_INFO(get_logger(), "[EKF] update ekf_rate_ to %f hz", ekf_rate_);
-      ekf_dt_ = 1.0 / std::max(ekf_rate_, 0.1);
+      ekf_dt_ = std::min((get_clock()->now() - *last_predict_time_).seconds(), 10.0);
+      DEBUG_INFO(get_logger(), "[EKF] update ekf_rate_ to %f hz", 1 / ekf_dt_);
     }
   }
   last_predict_time_ = std::make_shared<const rclcpp::Time>(get_clock()->now());
