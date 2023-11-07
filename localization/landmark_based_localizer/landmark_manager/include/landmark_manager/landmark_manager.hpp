@@ -32,9 +32,9 @@ public:
     const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
     const std::string & target_subtype, const rclcpp::Logger & logger);
 
-  visualization_msgs::msg::MarkerArray get_landmarks_marker_array_msg() const;
+  [[nodiscard]] visualization_msgs::msg::MarkerArray get_landmarks_marker_array_msg() const;
 
-  std::optional<geometry_msgs::msg::Pose> convert_landmark_pose_to_ego_pose(
+  [[nodiscard]] std::optional<geometry_msgs::msg::Pose> convert_landmark_pose_to_ego_pose(
     const geometry_msgs::msg::Pose & base_link_to_landmark, const std::string & landmark_id) const;
 
 private:
