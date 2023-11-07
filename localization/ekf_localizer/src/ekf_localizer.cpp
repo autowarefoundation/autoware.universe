@@ -49,11 +49,6 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   pose_queue_(params_.pose_smoothing_steps),
   twist_queue_(params_.twist_smoothing_steps)
 {
-  /* convert to continuous to discrete */
-  proc_cov_vx_d_ = std::pow(params_.proc_stddev_vx_c * ekf_dt_, 2.0);
-  proc_cov_wz_d_ = std::pow(params_.proc_stddev_wz_c * ekf_dt_, 2.0);
-  proc_cov_yaw_d_ = std::pow(params_.proc_stddev_yaw_c * ekf_dt_, 2.0);
-
   is_activated_ = false;
 
   /* initialize ros system */
@@ -112,11 +107,6 @@ void EKFLocalizer::updatePredictFrequency()
       ekf_rate_ = 1.0 / (get_clock()->now() - *last_predict_time_).seconds();
       DEBUG_INFO(get_logger(), "[EKF] update ekf_rate_ to %f hz", ekf_rate_);
       ekf_dt_ = 1.0 / std::max(ekf_rate_, 0.1);
-
-      /* Update discrete proc_cov*/
-      proc_cov_vx_d_ = std::pow(params_.proc_stddev_vx_c * ekf_dt_, 2.0);
-      proc_cov_wz_d_ = std::pow(params_.proc_stddev_wz_c * ekf_dt_, 2.0);
-      proc_cov_yaw_d_ = std::pow(params_.proc_stddev_yaw_c * ekf_dt_, 2.0);
     }
   }
   last_predict_time_ = std::make_shared<const rclcpp::Time>(get_clock()->now());
