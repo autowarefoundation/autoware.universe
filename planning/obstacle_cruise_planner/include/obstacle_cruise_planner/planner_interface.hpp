@@ -49,6 +49,11 @@ public:
       node.create_publisher<VelocityFactorArray>("/planning/velocity_factors/obstacle_cruise", 1);
     stop_speed_exceeded_pub_ =
       node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
+
+    moving_object_speed_threshold =
+      node.declare_parameter<double>("slow_down.moving_object_speed_threshold");
+    moving_object_hysteresis_range =
+      node.declare_parameter<double>("slow_down.moving_object_hysteresis_range");
   }
 
   PlannerInterface() = default;
@@ -183,11 +188,12 @@ private:
       const std::string & arg_uuid, const std::vector<TrajectoryPoint> & traj_points,
       const std::optional<size_t> & start_idx, const std::optional<size_t> & end_idx,
       const double arg_target_vel, const double arg_feasible_target_vel,
-      const double arg_precise_lat_dist)
+      const double arg_precise_lat_dist, const bool is_moving)
     : uuid(arg_uuid),
       target_vel(arg_target_vel),
       feasible_target_vel(arg_feasible_target_vel),
-      precise_lat_dist(arg_precise_lat_dist)
+      precise_lat_dist(arg_precise_lat_dist),
+      is_moving(is_moving)
     {
       if (start_idx) {
         start_point = traj_points.at(*start_idx).pose;
@@ -203,15 +209,17 @@ private:
     double precise_lat_dist;
     std::optional<geometry_msgs::msg::Pose> start_point{std::nullopt};
     std::optional<geometry_msgs::msg::Pose> end_point{std::nullopt};
+    bool is_moving;
   };
   double calculateMarginFromObstacleOnCurve(
     const PlannerData & planner_data, const StopObstacle & stop_obstacle) const;
   double calculateSlowDownVelocity(
-    const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output) const;
+    const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
+    bool & is_obstacle_moving) const;
   std::optional<std::tuple<double, double, double>> calculateDistanceToSlowDownWithConstraints(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
-    const double dist_to_ego) const;
+    const double dist_to_ego, bool & is_obstacle_moving) const;
 
   struct SlowDownInfo
   {
@@ -290,7 +298,7 @@ private:
         for (const auto & movement_postfix : obstacle_moving_classification) {
           if (obstacle_to_param_struct_map.count(label + "_" + movement_postfix) < 1) continue;
           auto & param_by_obstacle_label =
-            obstacle_to_param_struct_map.at(movement_postfix + "_" + label);
+            obstacle_to_param_struct_map.at(label + "_" + movement_postfix);
           tier4_autoware_utils::updateParam<double>(
             parameters, "slow_down." + label + "." + movement_postfix + ".max_lat_margin",
             param_by_obstacle_label.max_lat_margin);
@@ -325,7 +333,8 @@ private:
     double lpf_gain_dist_to_slow_down;
   };
   SlowDownParam slow_down_param_;
-
+  double moving_object_speed_threshold;
+  double moving_object_hysteresis_range;
   std::vector<SlowDownOutput> prev_slow_down_output_;
   // previous trajectory and distance to stop
   // NOTE: Previous trajectory is memorized to deal with nearest index search for overlapping or
