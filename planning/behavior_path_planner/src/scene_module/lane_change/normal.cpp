@@ -136,31 +136,33 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
 
   if (isAbortState() && abort_path_) {
     output.path = std::make_shared<PathWithLaneId>(abort_path_->path);
-    extendOutputDrivableArea(output);
     output.reference_path = std::make_shared<PathWithLaneId>(prev_module_reference_path_);
     output.turn_signal_info = prev_turn_signal_info_;
-    return output;
+    insertStopPoint(status_.current_lanes, *output.path);
+  } else {
+    output.path = std::make_shared<PathWithLaneId>(getLaneChangePath().path);
+
+    const auto found_extended_path = extendPath();
+    if (found_extended_path) {
+      *output.path = utils::combinePath(*output.path, *found_extended_path);
+    }
+    output.reference_path = std::make_shared<PathWithLaneId>(getReferencePath());
+    output.turn_signal_info = updateOutputTurnSignal();
+
+    if (isStopState()) {
+      const auto current_velocity = getEgoVelocity();
+      const auto current_dist = calcSignedArcLength(
+        output.path->points, output.path->points.front().point.pose.position, getEgoPosition());
+      const auto stop_dist =
+        -(current_velocity * current_velocity / (2.0 * planner_data_->parameters.min_acc));
+      const auto stop_point = utils::insertStopPoint(stop_dist + current_dist, *output.path);
+      setStopPose(stop_point.point.pose);
+    } else {
+      insertStopPoint(status_.target_lanes, *output.path);
+    }
   }
 
-  output.path = std::make_shared<PathWithLaneId>(getLaneChangePath().path);
-
-  const auto found_extended_path = extendPath();
-  if (found_extended_path) {
-    *output.path = utils::combinePath(*output.path, *found_extended_path);
-  }
   extendOutputDrivableArea(output);
-  output.reference_path = std::make_shared<PathWithLaneId>(getReferencePath());
-  output.turn_signal_info = updateOutputTurnSignal();
-
-  if (isStopState()) {
-    const auto current_velocity = getEgoVelocity();
-    const auto current_dist = calcSignedArcLength(
-      output.path->points, output.path->points.front().point.pose.position, getEgoPosition());
-    const auto stop_dist =
-      -(current_velocity * current_velocity / (2.0 * planner_data_->parameters.min_acc));
-    const auto stop_point = utils::insertStopPoint(stop_dist + current_dist, *output.path);
-    setStopPose(stop_point.point.pose);
-  }
 
   const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path->points);
   output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(

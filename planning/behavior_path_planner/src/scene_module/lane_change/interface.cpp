@@ -208,12 +208,6 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   path_reference_ = output.reference_path;
   *prev_approved_path_ = *getPreviousModuleOutput().path;
 
-  if (module_type_->isAbortState()) {
-    module_type_->insertStopPoint(module_type_->getLaneChangeStatus().current_lanes, *output.path);
-  } else {
-    module_type_->insertStopPoint(module_type_->getLaneChangeStatus().target_lanes, *output.path);
-  }
-
   stop_pose_ = module_type_->getStopPose();
 
   updateSteeringFactorPtr(output);
