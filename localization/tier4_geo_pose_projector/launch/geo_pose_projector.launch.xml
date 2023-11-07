@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="input_geo_pose" default="/geo_pose_with_covariance"/>
+  <arg name="output_pose" default="/pose_with_covariance"/>
+
+  <node pkg="tier4_geo_pose_projector" exec="tier4_geo_pose_projector" name="geo_pose_projector" output="screen">
+    <remap from="input_geo_pose" to="$(var input_geo_pose)"/>
+    <remap from="output_pose" to="$(var output_pose)"/>
+  </node>
+</launch>
