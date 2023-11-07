@@ -19,6 +19,7 @@
 #include "behavior_path_planner/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/traffic_light_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -38,6 +39,7 @@
 namespace behavior_path_planner
 {
 using motion_utils::calcSignedArcLength;
+using utils::traffic_light::getDistanceToNextTrafficLight;
 
 NormalLaneChange::NormalLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters, LaneChangeModuleType type,
@@ -1082,13 +1084,11 @@ bool NormalLaneChange::hasEnoughLengthToIntersection(
 }
 
 bool NormalLaneChange::hasEnoughLengthToTrafficLight(
-  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-  lanelet::Id & traffic_light_id) const
+  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const
 {
   const auto current_pose = getEgoPose();
-  const auto [next_traffic_light_id, dist_to_next_traffic_light] =
-    utils::getDistanceToNextTrafficLight(current_pose, current_lanes);
-  traffic_light_id = next_traffic_light_id;
+  const auto dist_to_next_traffic_light =
+    getDistanceToNextTrafficLight(current_pose, current_lanes);
   const auto dist_to_next_traffic_light_from_lc_start_pose =
     dist_to_next_traffic_light - path.info.length.prepare;
 
@@ -1355,10 +1355,9 @@ bool NormalLaneChange::getLaneChangePaths(
             logger_, "Stop time is over threshold. Allow lane change in intersection.");
         }
 
-        auto traffic_light_id = lanelet::InvalId;
         if (
           lane_change_parameters_->regulate_on_traffic_light &&
-          !hasEnoughLengthToTrafficLight(*candidate_path, current_lanes, traffic_light_id)) {
+          !hasEnoughLengthToTrafficLight(*candidate_path, current_lanes)) {
           continue;
         }
 
