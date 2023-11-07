@@ -7,13 +7,22 @@ Table of contents:
 * [Architecture](#architecture)
 * [How to launch](#how-to-launch)
 * [Switching Rules](#switching-rules)
+* [Pose Initialization](#pose-initialization)
+* [Future Plans](#future-plans)
 
-## Purpose
+## Abstract
 
 This package launches multiple pose estimators and provides the capability to stop or resume specific pose estimators based on the situation.
-The package provides provisional switching rules and will be adaptable to a wide variety of rules in the future.
+It provides provisional switching rules and will be adaptable to a wide variety of rules in the future.
 
 Please refer to [this discussion](https://github.com/orgs/autowarefoundation/discussions/3878)  about other ideas on implementation.
+
+### Supporting pose_estimators
+
+* [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher)
+* [eagleye](https://autowarefoundation.github.io/autoware-documentation/main/how-to-guides/integrating-autoware/launch-autoware/localization-methods/eagleye-guide/)
+* [yabloc](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/yabloc)
+* [Landmark_based_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/landmark_based_localizer)
 
 ### Demonstration
 
@@ -63,9 +72,9 @@ For pose estimator arbitration:
 | Name                                  | Type                                          | Description    |
 |---------------------------------------|-----------------------------------------------|----------------|
 | `/input/artag/image`                  | sensor_msgs::msg::Image                       | ArTag input    |
-| `/input/yabloc/image`                 | sensor_msgs::msg::Image                       | YabLoc input    |
+| `/input/yabloc/image`                 | sensor_msgs::msg::Image                       | YabLoc input   |
 | `/input/eagleye/pose_with_covariance` | geometry_msgs::msg::PoseWithCovarianceStamped | Eagleye output |
-| `/input/ndt/pointcloud`               | sensor_msgs::msg::PointCloud2                 | NDT input|
+| `/input/ndt/pointcloud`               | sensor_msgs::msg::PointCloud2                 | NDT input      |
 
 For swithing rule:
 
@@ -87,18 +96,35 @@ For swithing rule:
 | `/output/debug/marker_array`           | visualization_msgs::msg::MarkerArray          | [debug topic] everything for visualization             |
 | `/output/debug/string`                 | visualization_msgs::msg::MarkerArray          | [debug topic] debug information such as current status |
 
-
 ## Architecture
 
 ### Case of running a single pose estimator
 
 <img src="./media/single_pose_estimator.drawio.svg" alt="drawing" width="600"/>
 
-
 ### Case of running multiple pose estimators
 
 <img src="./media/architecture.drawio.svg" alt="drawing" width="800"/>
 
+* **NDT**
+
+The NDT sub-manager relays topics in the frontside of the point cloud pre-processor. 
+
+* **YabLoc**
+
+The YabLoc sub-manager relays topics in the frontend of the image pre-processor. 
+YabLoc includes a particle filter process that operates on a timer, and even when image topics are not flowing, the particle prediction process continues to work. 
+To address this, the YabLoc sub-manager also has a service client for explicitly stopping and resuming YabLoc.
+
+* **Eagleye**
+
+The Eagleye sub-manager relays topics in the backend of Eagleye's estimation process. 
+Eagleye performs time-series processing internally, and it can't afford to stop the input stream. 
+Furthermore, Eagleye's estimation process is lightweight enough to be run continuously without a significant load, so the relay is inserted in the backend.
+
+* **ArTag**
+
+The ArTag sub-manager relays topics in the frontside of the landmark localizer.
 
 ## How to launch
 
@@ -131,7 +157,6 @@ Currently, only one rule (map based rule) is implemented, but in the future, mul
 
 ### Map Based Rule
 
-
 ```mermaid
 flowchart LR
   A{<1>\nLocalization\n Initialization\n state is 'INITIALIZED'?}
@@ -156,31 +181,34 @@ flowchart LR
 In the flowchart, any pose_estimators which are not enabled are disabled.
 This rule basically allows only one pose_estimator to be activated.
 
-| branch index | description                                                             |
-|--------|-------------------------------------------------------------------------|
-| 1    | If localization initialization state is not `INITIALIZED`, enable all pose_estimators. This is because system does not know which pose_estimator is  available for initial localization.|
-| 2    | If localization initialization state is not `INITIALIZED`, enable all pose_estimators. This is bacause it is not possible to determine which pose_estimators are available due to the current position.|
-| 3    | 自己位置がEagleye areaに含まれている場合、Eagleyeを有効にする。eagleye areaの詳細は[Eagleye area](#eagleye-area)を見て。         |
-| 4    | ARタグ用のランドマークが周辺にある場合、ARマーカーベース位置推定を有効にする。         |
-| 5    | YabLocが実行時引数で有効にされていない場合、NDTを起動する。         |
-| 6    | NDTが実行時引数で有効にされていない場合、YabLocを起動する。         |
-| 7    | PCD occupancyがしきい値を上回っていればNDTを有効にする。 PCD occupancyの詳細は[PCD occupancy](#pcd-occupancy)を見て。         |
+| branch | condition description                                                                                                                                                                    |
+|--------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1      | If localization initialization state is not `INITIALIZED`, enable all pose_estimators. This is because system does not know which pose_estimator is  available for initial localization. |
+| 2      | If ego-position is not subscribed yet, enable all pose_estimators. This is bacause it is not possible to determine which pose_estimators are available.                                  |
+| 3      | If ego-position enters Eagleye area, enable Eagley. See [Eagleye area](#eagleye-area) for more details                                                                                   |
+| 4      | If there are landmarks in the surrounding area, enable AR tag based estimation.                                                                                                          |
+| 5      | If YabLoc is not enabled as a runtime argument, enable NDT.                                                                                                                              |
+| 6      | If NDT is not enabled as a runtime argument, enable YabLoc.                                                                                                                              |
+| 7      | If PCD occupancy is above the threshold, enable NDT. See [PCD occupancy](#pcd-occupancy) for more details.                                                                               |
 
+### Rule helpers
 
-## Rule helpers
+A rule helper is an auxiliary tool for describing switching rules.
 
 * [PCD occupancy](#pcd-occupancy)
 * [Eagleye area](#eagleye-area)
 * [AR tag position](#ar-tag-position)
 
-### PCD occupancy 
+#### PCD occupancy
 
 <img src="./media/pcd_occupancy.drawio.svg" alt="drawing" width="800"/>
 
-### eagleye area
+#### eagleye area
 
-The values provided below are placeholders. Ensure to input the correct coordinates corresponding to the actual location where the area is specified, such as lat, lon, mgrs_code, local_x, local_y.
-The following snipet is an example of eagleye area.
+The eagleye area is a planar area described by polygon in lanelet2.
+The height of the area is meaningless; it judges if the projection of its self-position is contained within the polygon or not.
+
+A sample eagleye area is shown below. The values provided below are placeholders.
 
 ```xml
   <node id="1" lat="35.8xxxxx" lon="139.6xxxxx">
@@ -221,9 +249,45 @@ The following snipet is an example of eagleye area.
 
 ```
 
-### AR tag position
+#### AR tag position
 
+This rule helper searches for near landmark tags in the neighborhood.
 
+## Pose Initialization
 
-## For developers
+When using multiple pose_estimators, it is necessary to appropriately adjust the parameters provided to the `pose_initializer`.
 
+The following table is based on the runtime argument "pose_source," indicating which initial pose estimation methods are available and the parameters that should be provided to the pose_initialization node.
+To avoid making the application too complicated, a priority is established so that NDT is always used when it is available.
+(The pose_initializer will only perform NDT-based initial pose estimation when `ndt_enabled` and `yabloc_enabled` are both `true`).
+
+This table's usage is described from three perspectives:
+
+* **Autoware Users:** Autoware users do not need to consult this table.
+  They simply provide the desired combinations of pose_estimators, and the appropriate parameters are automatically provided to the pose_initializer.
+* **Autoware Developers:** Autoware developers can consult this table to know which parameters are assigned.
+* **Who implements New Pose Estimator Switching:**
+  Developers must extend this table and implement the assignment of appropriate parameters to the pose_initializer.
+
+TODO: 画像じゃなくてtableにする。
+
+<img src="./media/pose_initialization.drawio.svg" alt="drawing" width="1200"/>
+
+## Future Plans
+
+### gradually swithing
+
+In the future, this package will provide not only ON/OFF switching, but also a mechanism to operate 50% NDT & 50% YabLoc.
+
+### sub_managers for pose_estimators to be added in the future
+
+The basic strategy is to realize ON/OFF switching by relaying the input or output topics of that pose_estimator.
+If pose_estimator involves time-series processing with heavy computations, it's not possible to pause and resume with just topic relaying.
+
+In such cases, there may not be generally applicable solutions, but the following methods may help:
+
+1. Completely stop and **reinitialize** time-series processing, as seen in the case of YabLoc.
+2. Subscribe to `localization/kinematic_state` and **keep updating states** to ensure that the estimation does not break (relying on the output of the active pose_estimator).
+3. The multi_pose_estimator **does not support** that particular pose_estimator.
+
+It is important to note that this issue is fundamental to realizing multiple pose_estimators, and it will arise regardless of the architecture proposed in this case.
