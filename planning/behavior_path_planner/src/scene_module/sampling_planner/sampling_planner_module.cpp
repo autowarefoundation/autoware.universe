@@ -23,6 +23,7 @@ using motion_utils::findNearestSegmentIndex;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::getPoint;
+using tier4_autoware_utils::Point2d;
 using utils::toPath;
 
 SamplingPlannerModule::SamplingPlannerModule(
