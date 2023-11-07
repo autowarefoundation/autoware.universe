@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LANDMARK_PARSER__LANDMARK_PARSER_CORE_HPP_
-#define LANDMARK_PARSER__LANDMARK_PARSER_CORE_HPP_
+#ifndef LANDMARK_MANAGER__LANDMARK_MANAGER_HPP_
+#define LANDMARK_MANAGER__LANDMARK_MANAGER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -35,12 +35,11 @@ public:
   visualization_msgs::msg::MarkerArray get_landmarks_marker_array_msg() const;
 
   std::optional<geometry_msgs::msg::Pose> convert_landmark_pose_to_ego_pose(
-    const geometry_msgs::msg::Pose & base_link_to_landmark,
-    const std::string & landmark_id) const;
+    const geometry_msgs::msg::Pose & base_link_to_landmark, const std::string & landmark_id) const;
 
 private:
   // Landmark is held as a map of <landmark_name(std::string), Pose>
   std::map<std::string, geometry_msgs::msg::Pose> landmarks_;
 };
 
-#endif  // LANDMARK_PARSER__LANDMARK_PARSER_CORE_HPP_
+#endif  // LANDMARK_MANAGER__LANDMARK_MANAGER_HPP_

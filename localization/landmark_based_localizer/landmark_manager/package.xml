@@ -18,8 +18,8 @@
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
-  <depend>tf2_eigen</depend>
   <depend>rclcpp</depend>
+  <depend>tf2_eigen</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
