@@ -17,12 +17,20 @@ It provides provisional switching rules and will be adaptable to a wide variety 
 
 Please refer to [this discussion](https://github.com/orgs/autowarefoundation/discussions/3878)  about other ideas on implementation.
 
+### Why do we need a stop/resume mechanism?
+
+It is possible to launch multiple pose_estimators and fuse them using a Kalman filter by editing launch files.
+However, this approach is not preferable due to computational costs.
+
+Particularly, NDT and YabLoc are computationally intensive, and it's not recommended to run them simultaneously.
+Also, even if both can be activated at the same time, the Kalman Filter may be affected by one of them giving bad output.
+
 ### Supporting pose_estimators
 
 * [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher)
 * [eagleye](https://autowarefoundation.github.io/autoware-documentation/main/how-to-guides/integrating-autoware/launch-autoware/localization-methods/eagleye-guide/)
 * [yabloc](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/yabloc)
-* [Landmark_based_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/landmark_based_localizer)
+* [landmark_based_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/landmark_based_localizer)
 
 ### Demonstration
 
@@ -100,31 +108,44 @@ For swithing rule:
 
 ### Case of running a single pose estimator
 
+When each pose_estimator is run alone, this package does nothing.
+Following figure shows the node configuration when NDT, YabLoc Eagleye and AR-Tag are run independently.
+
 <img src="./media/single_pose_estimator.drawio.svg" alt="drawing" width="600"/>
 
 ### Case of running multiple pose estimators
+
+When running multiple pose_estimators, pose_estimator_manager is executed.
+It comprises a **switching rule** and **sub managers** corresponding to each pose_estimator.
+
+* Sub managers controls the pose_estimator activity by relaying inputs or outputs, or by requesting a suspend service.
+* Switching rules determine which pose_estimator to use.
+
+Which sub managers and switching rules are instantiated depends on the runtime arguments at startup.
+
+Following figure shows the node configuration when all pose_estiamtor are run simultaneously.
 
 <img src="./media/architecture.drawio.svg" alt="drawing" width="800"/>
 
 * **NDT**
 
-The NDT sub-manager relays topics in the frontside of the point cloud pre-processor. 
+The NDT sub-manager relays topics in the frontside of the point cloud pre-processor.
 
 * **YabLoc**
 
-The YabLoc sub-manager relays topics in the frontend of the image pre-processor. 
-YabLoc includes a particle filter process that operates on a timer, and even when image topics are not flowing, the particle prediction process continues to work. 
+The YabLoc sub-manager relays input image topics in the frontend of the image pre-processor.
+YabLoc includes a particle filter process that operates on a timer, and even when image topics are not streamed, the particle prediction process continues to work.
 To address this, the YabLoc sub-manager also has a service client for explicitly stopping and resuming YabLoc.
 
 * **Eagleye**
 
-The Eagleye sub-manager relays topics in the backend of Eagleye's estimation process. 
-Eagleye performs time-series processing internally, and it can't afford to stop the input stream. 
+The Eagleye sub-manager relays Eagleye's output pose topics in the backend of Eagleye's estimation process.
+Eagleye performs time-series processing internally, and it can't afford to stop the input stream.
 Furthermore, Eagleye's estimation process is lightweight enough to be run continuously without a significant load, so the relay is inserted in the backend.
 
 * **ArTag**
 
-The ArTag sub-manager relays topics in the frontside of the landmark localizer.
+The ArTag sub-manager relays image topics in the frontside of the landmark localizer.
 
 ## How to launch
 
@@ -193,7 +214,7 @@ This rule basically allows only one pose_estimator to be activated.
 
 ### Rule helpers
 
-A rule helper is an auxiliary tool for describing switching rules.
+Rule helpers are auxiliary tools for describing switching rules.
 
 * [PCD occupancy](#pcd-occupancy)
 * [Eagleye area](#eagleye-area)
@@ -269,15 +290,28 @@ This table's usage is described from three perspectives:
 * **Who implements New Pose Estimator Switching:**
   Developers must extend this table and implement the assignment of appropriate parameters to the pose_initializer.
 
-TODO: 画像じゃなくてtableにする。
-
-<img src="./media/pose_initialization.drawio.svg" alt="drawing" width="1200"/>
+|         pose_source         | invoked initialization method | `ndt_enabled` | `yabloc_enabled` | `gnss_enabled` | `sub_gnss_pose_cov`                          |
+|:---------------------------:|-------------------------------|---------------|------------------|----------------|----------------------------------------------|
+|             ndt             | ndt                           | true          | false            | true           | /sensing/gnss/pose_with_covariance           |
+|           yabloc            | yabloc                        | false         | true             | true           | /sensing/gnss/pose_with_covariance           |
+|           eagleye           | vehicle needs run for a while | false         | false            | true           | /localization/pose_estimator/eagleye/...     |
+|            artag            | 2D Pose Estimate (RViz)       | false         | false            | true           | /sensing/gnss/pose_with_covariance           |
+|         ndt, yabloc         | ndt                           | ndt           | true             | true           | /sensing/gnss/pose_with_covariance           |
+|        ndt, eagleye         | ndt                           | ndt           | false            | true           | /sensing/gnss/pose_with_covariance           |
+|         ndt, artag          | ndt                           | ndt           | false            | true           | /sensing/gnss/pose_with_covariance           |
+|       yabloc, eagleye       | yabloc                        | false         | true             | true           | /sensing/gnss/pose_with_covariance           |
+|        yabloc, artag        | yabloc                        | false         | true             | true           | /sensing/gnss/pose_with_covariance           |
+|       eagleye, artag        | vehicle needs run for a while | false         | false            | true           | /localization/pose_estimator/eagleye/pose... |
+|    ndt, yabloc, eagleye     | ndt                           | ndt           | true             | true           | /sensing/gnss/pose_with_covariance           |
+|     ndt, eagleye, artag     | ndt                           | ndt           | false            | true           | /sensing/gnss/pose_with_covariance           |
+|   yabloc, eagleye, artag    | yabloc                        | ndt           | true             | true           | /sensing/gnss/pose_with_covariance           |
+| ndt, yabloc, eagleye, artag | ndt                           | ndt           | true             | true           | /sensing/gnss/pose_with_covariance           |
 
 ## Future Plans
 
 ### gradually swithing
 
-In the future, this package will provide not only ON/OFF switching, but also a mechanism to operate 50% NDT & 50% YabLoc.
+In the future, this package will provide not only ON/OFF switching, but also a mechanism for low frequency operation, such as 50% NDT & 50% YabLoc.
 
 ### sub_managers for pose_estimators to be added in the future
 
@@ -288,6 +322,6 @@ In such cases, there may not be generally applicable solutions, but the followin
 
 1. Completely stop and **reinitialize** time-series processing, as seen in the case of YabLoc.
 2. Subscribe to `localization/kinematic_state` and **keep updating states** to ensure that the estimation does not break (relying on the output of the active pose_estimator).
-3. The multi_pose_estimator **does not support** that particular pose_estimator.
+3. The multiple pose_estimator **does not support** that particular pose_estimator.
 
 It is important to note that this issue is fundamental to realizing multiple pose_estimators, and it will arise regardless of the architecture proposed in this case.
