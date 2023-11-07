@@ -17,7 +17,7 @@
   <depend>cv_bridge</depend>
   <depend>diagnostic_msgs</depend>
   <depend>image_transport</depend>
-  <depend>landmark_parser</depend>
+  <depend>landmark_manager</depend>
   <depend>lanelet2_extension</depend>
   <depend>rclcpp</depend>
   <depend>tf2_eigen</depend>
