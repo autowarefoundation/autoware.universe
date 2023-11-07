@@ -172,7 +172,7 @@ void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
     const auto non_red_lanelets = getNonRedLanelets(conflict_lls, traffic_light_id_map);
 
     const auto crosswalk_tl_color = estimateCrosswalkTrafficSignal(crosswalk, non_red_lanelets);
-    setCrosswalkTrafficSignal(crosswalk, crosswalk_tl_color, output);
+    setCrosswalkTrafficSignal(crosswalk, crosswalk_tl_color, output, *msg);
   }
 
   updateLastDetectedSignal(traffic_light_id_map);
@@ -289,18 +289,17 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignals(
 }
 
 void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
-  const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & msg)
+  const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & output,
+  const TrafficSignalArray & msg)
 {
   const auto tl_reg_elems = crosswalk.regulatoryElementsAs<const lanelet::TrafficLight>();
 
   std::unordered_map<lanelet::Id, size_t> valid_id2idx_map;  // detected traffic light
 
-  if (msg.signals.empty()) {
-    std::cout << "no input signal" << std::endl;
-  }
   for (size_t i = 0; i < msg.signals.size(); ++i) {
     auto signal = msg.signals[i];
     valid_id2idx_map[signal.traffic_signal_id] = i;
+    std::cout << "| signal.traffic_signal_id:" << signal.traffic_signal_id << ",idx:" << i;
   }
 
   for (const auto & tl_reg_elem : tl_reg_elems) {
@@ -311,8 +310,8 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
       auto signal = msg.signals[idx];
       std::cout << "valid prediction exists for ";
       isFlashing(signal);  // check if it is flashing
-      msg.signals[idx].elements[0].color =
-        updateState(signal);  // update msg according to flashing and current state
+      output.signals[idx].elements[0].color =
+        updateState(signal);  // update output msg according to flashing and current state
     } else {                  // not exists,
       std::cout << "no valid prediction for ";
       TrafficSignal output_traffic_signal;
@@ -324,7 +323,7 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
       output_traffic_signal.traffic_signal_id = id;
       isFlashing(output_traffic_signal);
       output_traffic_signal.elements[0].color = updateState(output_traffic_signal);
-      msg.signals.push_back(output_traffic_signal);
+      output.signals.push_back(output_traffic_signal);
     }
   }
 }
@@ -332,6 +331,7 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
 void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal)
 {
   const auto id = signal.traffic_signal_id;
+
   std::cout << id << ", color:" << +signal.elements.front().color << " , last_colors:";
   if (last_colors_.count(id) > 0) {
     std::vector<TrafficSignalAndTime> history = last_colors_.at(id);
@@ -340,15 +340,17 @@ void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal
     }
   }
   std::cout << std::endl;
-  // not detected in last_detect_color_hold_time_
+
+  // no record of detected color in last_detect_color_hold_time_(2.0s)
   if (is_flashing_.count(id) == 0) {
     is_flashing_.insert(std::make_pair(id, false));
     return;
   }
+
   // flashing green
-  else if (
+  if (
     signal.elements.front().color == TrafficSignalElement::UNKNOWN &&
-    signal.elements.front().confidence != 0 &&
+    signal.elements.front().confidence != 0 &&  // not due to occlusion
     current_state_.at(id) == TrafficSignalElement::GREEN) {
     is_flashing_.at(id) = true;
     std::cout << " flashing green" << std::endl;
@@ -360,6 +362,7 @@ void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal
     std::vector<TrafficSignalAndTime> history = last_colors_.at(id);
     for (const auto & h : history) {
       if (h.first.elements.front().color != signal.elements.front().color) {
+        // keep the current value if not same with input signal
         return;
       }
     }
@@ -367,6 +370,9 @@ void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal
     std::cout << "all history is same with input signal" << std::endl;
     is_flashing_.at(id) = false;
   }
+
+  // no record of detected color in last_color_hold_time_(1.0s)
+  // keep the current value
   return;
 }
 

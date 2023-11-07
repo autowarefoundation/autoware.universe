@@ -82,7 +82,8 @@ private:
   void isFlashing(const TrafficSignal & signal);
   uint8_t updateState(const TrafficSignal & signal);
   void setCrosswalkTrafficSignal(
-    const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & msg);
+    const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & output,
+    const TrafficSignalArray & msg);
 
   lanelet::ConstLanelets getNonRedLanelets(
     const lanelet::ConstLanelets & lanelets, const TrafficLightIdMap & traffic_light_id_map) const;
