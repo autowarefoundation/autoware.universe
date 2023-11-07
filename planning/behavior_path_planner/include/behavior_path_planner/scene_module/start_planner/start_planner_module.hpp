@@ -133,7 +133,7 @@ private:
   void initializeSafetyCheckParameters();
 
   bool isModuleRunning() const;
-  bool isStartPoseOnMiddleOfTheRoad() const;
+  bool isCurrentPoseOnMiddleOfTheRoad() const;
   bool isCloseToOriginalStartPose() const;
   bool hasArrivedAtGoal() const;
   bool isMoving() const;

@@ -155,7 +155,7 @@ bool StartPlannerModule::isExecutionRequested() const
   // - The vehicle has reached the goal position.
   // - The vehicle is still moving.
   if (
-    isStartPoseOnMiddleOfTheRoad() || isCloseToOriginalStartPose() || hasArrivedAtGoal() ||
+    isCurrentPoseOnMiddleOfTheRoad() || isCloseToOriginalStartPose() || hasArrivedAtGoal() ||
     isMoving()) {
     return false;
   }
@@ -175,7 +175,7 @@ bool StartPlannerModule::isModuleRunning() const
   return current_state_ == ModuleStatus::RUNNING;
 }
 
-bool StartPlannerModule::isStartPoseOnMiddleOfTheRoad() const
+bool StartPlannerModule::isCurrentPoseOnMiddleOfTheRoad() const
 {
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
   const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
