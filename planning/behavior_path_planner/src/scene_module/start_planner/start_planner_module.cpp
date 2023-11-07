@@ -154,7 +154,9 @@ bool StartPlannerModule::isExecutionRequested() const
   // - The vehicle has already arrived at the start position planner.
   // - The vehicle has reached the goal position.
   // - The vehicle is still moving.
-  if (isStartPoseOnMiddleOfTheRoad() || hasArrivedAtStart() || hasArrivedAtGoal() || isMoving()) {
+  if (
+    isStartPoseOnMiddleOfTheRoad() || isCloseToOriginalStartPose() || hasArrivedAtGoal() ||
+    isMoving()) {
     return false;
   }
 
