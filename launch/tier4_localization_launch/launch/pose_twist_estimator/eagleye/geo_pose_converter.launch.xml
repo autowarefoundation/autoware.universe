@@ -11,8 +11,8 @@
     <param name="tf_num" value="2"/>
     <!-- 0 : No convert  1 : ellipsoid -> altitude  2 : altitude -> ellipsoid -->
     <param name="convert_height_num" value="0"/>
-    <!-- cspell:ignore GSIGE2011 -->
-    <!-- 0 : EGM2008-1  1 : GSIGE2011 Ver2.1 -->
+    <!-- cspell:ignore GSIGEO2011 -->
+    <!-- 0 : EGM2008-1  1 : GSIGEO2011 Ver2.1 -->
     <param name="geoid_type" value="1"/>
 
     <param name="parent_frame_id" value="map"/>
