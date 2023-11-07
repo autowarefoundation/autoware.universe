@@ -52,7 +52,7 @@ public:
       std::unique_lock<std::mutex> lock(queue_mutex);
       should_terminate = true;
     }
-    mutex_condition.notify_all();
+    condition.notify_all();
     for (std::thread & active_thread : threads) {
       active_thread.join();
     }
@@ -66,9 +66,9 @@ private:
   {
     {
       std::unique_lock<std::mutex> lock(queue_mutex);
-      jobs.push(job);
+      jobs.push(std::move(job));
     }
-    mutex_condition.notify_one();
+    condition.notify_one();
   }
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
@@ -137,7 +137,6 @@ private:
 
   bool should_terminate{false};
   std::mutex queue_mutex;
-  std::condition_variable mutex_condition;
   std::vector<std::thread> threads;
   std::queue<std::function<void()>> jobs;
 

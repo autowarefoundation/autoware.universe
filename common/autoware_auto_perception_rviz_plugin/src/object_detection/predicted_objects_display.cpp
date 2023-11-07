@@ -38,7 +38,7 @@ void PredictedObjectsDisplay::workerThread()
     std::function<void()> job;
     {
       std::unique_lock<std::mutex> lock(queue_mutex);
-      mutex_condition.wait(lock, [this] { return !jobs.empty() || should_terminate; });
+      condition.wait(lock, [this] { return !jobs.empty() || should_terminate; });
       if (should_terminate) {
         return;
       }
