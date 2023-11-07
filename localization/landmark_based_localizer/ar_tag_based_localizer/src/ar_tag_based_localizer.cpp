@@ -307,7 +307,7 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
   // Transform to base_link
   geometry_msgs::msg::PoseStamped base_link_to_landmark;
   try {
-    geometry_msgs::msg::TransformStamped transform =
+    const geometry_msgs::msg::TransformStamped transform =
       tf_buffer_->lookupTransform("base_link", msg.header.frame_id, tf2::TimePointZero);
     tf2::doTransform(msg, base_link_to_landmark, transform);
     base_link_to_landmark.header.frame_id = "base_link";
@@ -324,12 +324,6 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
       this->get_logger(), "Failed to convert landmark pose to ego pose. frame_id: " << tag_id);
     return;
   }
-
-  // Construct output message
-  geometry_msgs::msg::PoseWithCovarianceStamped pose_with_covariance_stamped;
-  pose_with_covariance_stamped.header.stamp = msg.header.stamp;
-  pose_with_covariance_stamped.header.frame_id = "map";
-  pose_with_covariance_stamped.pose.pose = map_to_base_link.value();
 
   // If latest_ekf_pose_ is older than <ekf_time_tolerance_> seconds compared to current frame, it
   // will not be published.
@@ -348,7 +342,7 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
 
   // If curr_pose differs from latest_ekf_pose_ by more than <ekf_position_tolerance_>, it will not
   // be published.
-  const geometry_msgs::msg::Pose curr_pose = pose_with_covariance_stamped.pose.pose;
+  const geometry_msgs::msg::Pose curr_pose = map_to_base_link.value();
   const geometry_msgs::msg::Pose latest_ekf_pose = latest_ekf_pose_.pose.pose;
   const double diff_x = curr_pose.position.x - latest_ekf_pose.position.x;
   const double diff_y = curr_pose.position.y - latest_ekf_pose.position.y;
@@ -364,6 +358,12 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
       latest_ekf_pose.position.x, latest_ekf_pose.position.y, latest_ekf_pose.position.z);
     return;
   }
+
+  // Construct output message
+  geometry_msgs::msg::PoseWithCovarianceStamped pose_with_covariance_stamped;
+  pose_with_covariance_stamped.header.stamp = msg.header.stamp;
+  pose_with_covariance_stamped.header.frame_id = "map";
+  pose_with_covariance_stamped.pose.pose = curr_pose;
 
   // ~5[m]: base_covariance
   // 5~[m]: scaling base_covariance by std::pow(distance/5, 3)
