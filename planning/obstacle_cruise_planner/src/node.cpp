@@ -760,7 +760,7 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   slow_down_condition_counter_.removeCounterUnlessUpdated();
 
   // Check target obstacles' consistency
-  checkConsistency(objects_ptr_->header.stamp, *objects_ptr_, traj_points, stop_obstacles);
+  checkConsistency(objects_ptr_->header.stamp, *objects_ptr_, stop_obstacles);
 
   // update previous obstacles
   prev_stop_obstacles_ = stop_obstacles;
@@ -994,12 +994,6 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
     }
   }
 
-  const auto collision_point =
-    createCollisionPointForStopObstacle(traj_points, traj_polys, obstacle);
-  if (!collision_point) {
-    return std::nullopt;
-  }
-
   const auto traj_dist_to_secure_stop_point =
     calcTrajDistToSecurePolysDist(traj_points, traj_polys, obstacle);
   if (!traj_dist_to_secure_stop_point) {
@@ -1008,8 +1002,13 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
 
   const auto [tangent_vel, normal_vel] = projectObstacleVelocityToTrajectory(traj_points, obstacle);
   return StopObstacle{
-    obstacle.uuid, obstacle.stamp, obstacle.pose,    obstacle.shape,
-    tangent_vel,   normal_vel,     *collision_point, *traj_dist_to_secure_stop_point};
+    obstacle.uuid,
+    obstacle.stamp,
+    obstacle.pose,
+    obstacle.shape,
+    tangent_vel,
+    normal_vel,
+    *traj_dist_to_secure_stop_point};
 }
 
 std::optional<double> ObstacleCruisePlannerNode::calcTrajDistToSecurePolysDist(
@@ -1079,60 +1078,6 @@ std::optional<double> ObstacleCruisePlannerNode::calcTrajDistToSecurePolysDist(
     }
   }
   return std::nullopt;
-}
-
-std::optional<geometry_msgs::msg::Point>
-ObstacleCruisePlannerNode::createCollisionPointForStopObstacle(
-  const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-  const Obstacle & obstacle) const
-{
-  const auto & p = behavior_determination_param_;
-  const auto & object_id = obstacle.uuid.substr(0, 4);
-
-  // NOTE: Dynamic obstacles for stop are crossing ego's trajectory with high speed,
-  //       and the collision between ego and obstacles are within the margin threshold.
-  const bool is_obstacle_crossing = isObstacleCrossing(traj_points, obstacle);
-  const double has_high_speed = p.crossing_obstacle_velocity_threshold <
-                                std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y);
-  if (is_obstacle_crossing && has_high_speed) {
-    // Get highest confidence predicted path
-    const auto resampled_predicted_path = resampleHighestConfidencePredictedPath(
-      obstacle.predicted_paths, p.prediction_resampling_time_interval,
-      p.prediction_resampling_time_horizon);
-
-    std::vector<size_t> collision_index;
-    const auto collision_points = polygon_utils::getCollisionPoints(
-      traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
-      is_driving_forward_, collision_index);
-    if (collision_points.empty()) {
-      RCLCPP_INFO_EXPRESSION(
-        get_logger(), enable_debug_info_,
-        "[Stop] Ignore inside obstacle (%s) since there is no collision point between the "
-        "predicted path "
-        "and the ego.",
-        object_id.c_str());
-      debug_data_ptr_->intentionally_ignored_obstacles.push_back(obstacle);
-      return std::nullopt;
-    }
-
-    const double collision_time_margin =
-      calcCollisionTimeMargin(collision_points, traj_points, is_driving_forward_);
-    if (p.collision_time_margin < collision_time_margin) {
-      RCLCPP_INFO_EXPRESSION(
-        get_logger(), enable_debug_info_,
-        "[Stop] Ignore inside obstacle (%s) since it will not collide with the ego.",
-        object_id.c_str());
-      debug_data_ptr_->intentionally_ignored_obstacles.push_back(obstacle);
-      return std::nullopt;
-    }
-  }
-
-  // calculate collision points with trajectory with lateral stop margin
-  const auto traj_polys_with_lat_margin = createOneStepPolygons(
-    traj_points, vehicle_info_, ego_odom_ptr_->pose.pose, p.max_lat_margin_for_stop);
-  const auto collision_point = polygon_utils::getCollisionPoint(
-    traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_);
-  return collision_point;
 }
 
 std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacle(
@@ -1261,10 +1206,19 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
 
 void ObstacleCruisePlannerNode::checkConsistency(
   const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
-  const std::vector<TrajectoryPoint> & traj_points, std::vector<StopObstacle> & stop_obstacles)
+  std::vector<StopObstacle> & stop_obstacles)
 {
-  const auto current_closest_stop_obstacle =
-    obstacle_cruise_utils::getClosestStopObstacle(traj_points, stop_obstacles);
+  const auto current_closest_stop_obstacle = [&]() {
+    std::optional<StopObstacle> candidate_obstacle = std::nullopt;
+    for (const auto & stop_obstacle : stop_obstacles) {
+      if (
+        !candidate_obstacle ||
+        stop_obstacle.traj_dist_to_stop_point < candidate_obstacle->traj_dist_to_stop_point) {
+        candidate_obstacle = stop_obstacle;
+      }
+    }
+    return candidate_obstacle;
+  }();
 
   // If previous closest obstacle ptr is not set
   if (!prev_closest_stop_obstacle_ptr_) {

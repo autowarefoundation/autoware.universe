@@ -37,8 +37,7 @@ StopSpeedExceeded createStopSpeedExceededMsg(
 }
 
 tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
-  const rclcpp::Time & current_time, const geometry_msgs::msg::Pose & stop_pose,
-  const StopObstacle & stop_obstacle)
+  const rclcpp::Time & current_time, const geometry_msgs::msg::Pose & stop_pose)
 {
   // create header
   std_msgs::msg::Header header;
@@ -48,9 +47,6 @@ tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
   // create stop factor
   StopFactor stop_factor;
   stop_factor.stop_pose = stop_pose;
-  geometry_msgs::msg::Point stop_factor_point = stop_obstacle.collision_point;
-  stop_factor_point.z = stop_pose.position.z;
-  stop_factor.stop_factor_points.emplace_back(stop_factor_point);
 
   // create stop reason stamped
   StopReason stop_reason_msg;
@@ -371,8 +367,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
 
     // Publish Stop Reason
     const auto stop_pose = output_traj_points.at(*zero_vel_idx).pose;
-    const auto stop_reasons_msg =
-      makeStopReasonArray(planner_data.current_time, stop_pose, *closest_stop_obstacle);
+    const auto stop_reasons_msg = makeStopReasonArray(planner_data.current_time, stop_pose);
     stop_reasons_pub_->publish(stop_reasons_msg);
     velocity_factors_pub_->publish(makeVelocityFactorArray(planner_data.current_time, stop_pose));
 
@@ -404,91 +399,6 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
 
   return output_traj_points;
 }
-
-// double PlannerInterface::calculateMarginFromObstacleOnCurve(
-//   const PlannerData & planner_data, const StopObstacle & stop_obstacle) const
-// {
-//   if (!enable_approaching_on_curve_) {
-//     return longitudinal_info_.safe_distance_margin;
-//   }
-
-//   const double abs_ego_offset = planner_data.is_driving_forward
-//                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
-//                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
-
-//   // calculate short trajectory points towards obstacle
-//   const size_t obj_segment_idx =
-//     motion_utils::findNearestSegmentIndex(planner_data.traj_points,
-//     stop_obstacle.collision_point);
-//   std::vector<TrajectoryPoint> short_traj_points{planner_data.traj_points.at(obj_segment_idx +
-//   1)}; double sum_short_traj_length{0.0}; for (int i = obj_segment_idx; 0 <= i; --i) {
-//     short_traj_points.push_back(planner_data.traj_points.at(i));
-
-//     if (
-//       1 < short_traj_points.size() &&
-//       longitudinal_info_.safe_distance_margin + abs_ego_offset < sum_short_traj_length) {
-//       break;
-//     }
-//     sum_short_traj_length += tier4_autoware_utils::calcDistance2d(
-//       planner_data.traj_points.at(i), planner_data.traj_points.at(i + 1));
-//   }
-//   std::reverse(short_traj_points.begin(), short_traj_points.end());
-//   if (short_traj_points.size() < 2) {
-//     return longitudinal_info_.safe_distance_margin;
-//   }
-
-//   // calculate collision index between straight line from ego pose and object
-//   const auto calculate_distance_from_straight_ego_path =
-//     [&](const auto & ego_pose, const auto & object_polygon) {
-//       const auto forward_ego_pose = tier4_autoware_utils::calcOffsetPose(
-//         ego_pose, longitudinal_info_.safe_distance_margin + 3.0, 0.0, 0.0);
-//       const auto ego_straight_segment = tier4_autoware_utils::Segment2d{
-//         convertPoint(ego_pose.position), convertPoint(forward_ego_pose.position)};
-//       return boost::geometry::distance(ego_straight_segment, object_polygon);
-//     };
-//   const auto resampled_short_traj_points = resampleTrajectoryPoints(short_traj_points, 0.5);
-//   const auto object_polygon =
-//     tier4_autoware_utils::toPolygon2d(stop_obstacle.pose, stop_obstacle.shape);
-//   const auto collision_idx = [&]() -> std::optional<size_t> {
-//     for (size_t i = 0; i < resampled_short_traj_points.size(); ++i) {
-//       const double dist_to_obj = calculate_distance_from_straight_ego_path(
-//         resampled_short_traj_points.at(i).pose, object_polygon);
-//       if (dist_to_obj < vehicle_info_.vehicle_width_m / 2.0) {
-//         return i;
-//       }
-//     }
-//     return std::nullopt;
-//   }();
-//   if (!collision_idx) {
-//     return min_safe_distance_margin_on_curve_;
-//   }
-//   if (*collision_idx == 0) {
-//     return longitudinal_info_.safe_distance_margin;
-//   }
-
-//   // calculate margin from obstacle
-//   const double partial_segment_length = [&]() {
-//     const double collision_segment_length = tier4_autoware_utils::calcDistance2d(
-//       resampled_short_traj_points.at(*collision_idx - 1),
-//       resampled_short_traj_points.at(*collision_idx));
-//     const double prev_dist = calculate_distance_from_straight_ego_path(
-//       resampled_short_traj_points.at(*collision_idx - 1).pose, object_polygon);
-//     const double next_dist = calculate_distance_from_straight_ego_path(
-//       resampled_short_traj_points.at(*collision_idx).pose, object_polygon);
-//     return (next_dist - vehicle_info_.vehicle_width_m / 2.0) / (next_dist - prev_dist) *
-//            collision_segment_length;
-//   }();
-
-//   const double short_margin_from_obstacle =
-//     partial_segment_length +
-//     motion_utils::calcSignedArcLength(
-//       resampled_short_traj_points, *collision_idx, stop_obstacle.collision_point) -
-//     abs_ego_offset + additional_safe_distance_margin_on_curve_;
-
-//   return std::min(
-//     longitudinal_info_.safe_distance_margin,
-//     std::max(min_safe_distance_margin_on_curve_, short_margin_from_obstacle));
-// }
 
 double PlannerInterface::calcDistanceToCollisionPoint(
   const PlannerData & planner_data, const geometry_msgs::msg::Point & collision_point)
