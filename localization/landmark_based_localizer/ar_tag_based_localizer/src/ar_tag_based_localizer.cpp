@@ -197,8 +197,8 @@ void ArTagBasedLocalizer::image_callback(const sensor_msgs::msg::Image::ConstSha
     geometry_msgs::msg::PoseStamped pose_cam_to_marker;
     tf2::toMsg(tf_cam_to_marker, pose_cam_to_marker.pose);
     pose_cam_to_marker.header.stamp = curr_stamp;
-    pose_cam_to_marker.header.frame_id = std::to_string(marker.id);
-    publish_pose_as_base_link(pose_cam_to_marker, msg->header.frame_id);
+    pose_cam_to_marker.header.frame_id = msg->header.frame_id;
+    publish_pose_as_base_link(pose_cam_to_marker, std::to_string(marker.id));
 
     // drawing the detected markers
     marker.draw(in_image, cv::Scalar(0, 0, 255), 2);
@@ -288,14 +288,11 @@ void ArTagBasedLocalizer::ekf_pose_callback(
 }
 
 void ArTagBasedLocalizer::publish_pose_as_base_link(
-  const geometry_msgs::msg::PoseStamped & msg, const std::string & camera_frame_id)
+  const geometry_msgs::msg::PoseStamped & msg, const std::string & tag_id)
 {
   // Check if frame_id is in target_tag_ids
-  if (
-    std::find(target_tag_ids_.begin(), target_tag_ids_.end(), msg.header.frame_id) ==
-    target_tag_ids_.end()) {
-    RCLCPP_INFO_STREAM(
-      this->get_logger(), "frame_id(" << msg.header.frame_id << ") is not in target_tag_ids");
+  if (std::find(target_tag_ids_.begin(), target_tag_ids_.end(), tag_id) == target_tag_ids_.end()) {
+    RCLCPP_INFO_STREAM(this->get_logger(), "tag_id(" << tag_id << ") is not in target_tag_ids");
     return;
   }
 
@@ -311,8 +308,9 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
   geometry_msgs::msg::PoseStamped base_link_to_landmark;
   try {
     geometry_msgs::msg::TransformStamped transform =
-      tf_buffer_->lookupTransform("base_link", camera_frame_id, tf2::TimePointZero);
+      tf_buffer_->lookupTransform("base_link", msg.header.frame_id, tf2::TimePointZero);
     tf2::doTransform(msg, base_link_to_landmark, transform);
+    base_link_to_landmark.header.frame_id = "base_link";
   } catch (tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(), "Could not transform base_link to camera: %s", ex.what());
     return;
@@ -320,12 +318,10 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
 
   // Convert to map
   const std::optional<geometry_msgs::msg::Pose> map_to_base_link =
-    landmark_manager_.convert_landmark_pose_to_ego_pose(
-      base_link_to_landmark.pose, msg.header.frame_id);
+    landmark_manager_.convert_landmark_pose_to_ego_pose(base_link_to_landmark.pose, tag_id);
   if (!map_to_base_link) {
     RCLCPP_INFO_STREAM(
-      this->get_logger(),
-      "Failed to convert landmark pose to ego pose. frame_id: " << msg.header.frame_id);
+      this->get_logger(), "Failed to convert landmark pose to ego pose. frame_id: " << tag_id);
     return;
   }
 
