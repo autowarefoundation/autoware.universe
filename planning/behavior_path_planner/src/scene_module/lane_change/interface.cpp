@@ -165,7 +165,7 @@ ModuleStatus LaneChangeInterface::updateState()
     return ModuleStatus::RUNNING;
   }
 
-  const auto found_abort_path = module_type_->getAbortPath();
+  const auto found_abort_path = module_type_->calcAbortPath();
   if (!found_abort_path) {
     RCLCPP_WARN_STREAM_THROTTLE(
       getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
@@ -207,7 +207,12 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   auto output = module_type_->generateOutput();
   path_reference_ = output.reference_path;
   *prev_approved_path_ = *getPreviousModuleOutput().path;
-  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().target_lanes, *output.path);
+
+  if (module_type_->isAbortState()) {
+    module_type_->insertStopPoint(module_type_->getLaneChangeStatus().current_lanes, *output.path);
+  } else {
+    module_type_->insertStopPoint(module_type_->getLaneChangeStatus().target_lanes, *output.path);
+  }
 
   stop_pose_ = module_type_->getStopPose();
 
