@@ -112,7 +112,7 @@ private:
   aruco::CameraParameters cam_param_;
   bool cam_info_received_;
   geometry_msgs::msg::PoseWithCovarianceStamped latest_ekf_pose_{};
-  std::map<std::string, geometry_msgs::msg::Pose> landmark_map_;
+  LandmarkManager landmark_manager_;
 };
 
 #endif  // AR_TAG_BASED_LOCALIZER_HPP_

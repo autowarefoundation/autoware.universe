@@ -19,16 +19,28 @@
 
 #include "autoware_auto_mapping_msgs/msg/had_map_bin.hpp"
 #include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <map>
 #include <string>
 
-std::map<std::string, geometry_msgs::msg::Pose> parse_landmark(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
-  const std::string & target_subtype, const rclcpp::Logger & logger);
+class LandmarkManager
+{
+public:
+  void parse_landmark(
+    const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
+    const std::string & target_subtype, const rclcpp::Logger & logger);
 
-visualization_msgs::msg::MarkerArray convert_to_marker_array_msg(
-  const std::map<std::string, geometry_msgs::msg::Pose> & landmarks);
+  visualization_msgs::msg::MarkerArray get_landmarks_marker_array_msg() const;
+
+  std::optional<geometry_msgs::msg::Pose> convert_landmark_pose_to_ego_pose(
+    const geometry_msgs::msg::Pose & base_link_to_landmark,
+    const std::string & landmark_id) const;
+
+private:
+  // Landmark is held as a map of <landmark_name(std::string), Pose>
+  std::map<std::string, geometry_msgs::msg::Pose> landmarks_;
+};
 
 #endif  // LANDMARK_PARSER__LANDMARK_PARSER_CORE_HPP_

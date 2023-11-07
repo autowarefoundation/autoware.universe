@@ -148,9 +148,9 @@ bool ArTagBasedLocalizer::setup()
 void ArTagBasedLocalizer::map_bin_callback(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg)
 {
-  landmark_map_ = parse_landmark(msg, "apriltag_16h5", this->get_logger());
+  landmark_manager_.parse_landmark(msg, "apriltag_16h5", this->get_logger());
   const visualization_msgs::msg::MarkerArray marker_msg =
-    convert_to_marker_array_msg(landmark_map_);
+    landmark_manager_.get_landmarks_marker_array_msg();
   marker_pub_->publish(marker_msg);
 }
 
@@ -307,50 +307,33 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
     return;
   }
 
-  // Transform map to tag
-  if (landmark_map_.count(msg.header.frame_id) == 0) {
-    RCLCPP_INFO_STREAM(
-      this->get_logger(), "frame_id(" << msg.header.frame_id << ") is not in landmark_map_");
-    return;
-  }
-  const geometry_msgs::msg::Pose & tag_pose = landmark_map_.at(msg.header.frame_id);
-  geometry_msgs::msg::TransformStamped map_to_tag_tf;
-  map_to_tag_tf.header.stamp = msg.header.stamp;
-  map_to_tag_tf.header.frame_id = "map";
-  map_to_tag_tf.child_frame_id = msg.header.frame_id;
-  map_to_tag_tf.transform.translation.x = tag_pose.position.x;
-  map_to_tag_tf.transform.translation.y = tag_pose.position.y;
-  map_to_tag_tf.transform.translation.z = tag_pose.position.z;
-  map_to_tag_tf.transform.rotation = tag_pose.orientation;
-
-  // Transform camera to base_link
-  geometry_msgs::msg::TransformStamped camera_to_base_link_tf;
+  // Transform to base_link
+  geometry_msgs::msg::PoseStamped base_link_to_landmark;
   try {
-    camera_to_base_link_tf =
-      tf_buffer_->lookupTransform(camera_frame_id, "base_link", tf2::TimePointZero);
+    geometry_msgs::msg::TransformStamped transform =
+      tf_buffer_->lookupTransform("base_link", camera_frame_id, tf2::TimePointZero);
+    tf2::doTransform(msg, base_link_to_landmark, transform);
   } catch (tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(), "Could not transform base_link to camera: %s", ex.what());
     return;
   }
 
-  // Convert ROS Transforms to Eigen matrices for easy matrix multiplication and inversion
-  Eigen::Affine3d map_to_tag = tf2::transformToEigen(map_to_tag_tf.transform);
-  Eigen::Affine3d camera_to_base_link = tf2::transformToEigen(camera_to_base_link_tf.transform);
-  Eigen::Affine3d camera_to_tag = Eigen::Affine3d(
-    Eigen::Translation3d(msg.pose.position.x, msg.pose.position.y, msg.pose.position.z) *
-    Eigen::Quaterniond(
-      msg.pose.orientation.w, msg.pose.orientation.x, msg.pose.orientation.y,
-      msg.pose.orientation.z));
-  Eigen::Affine3d tag_to_camera = camera_to_tag.inverse();
-
-  // Final pose calculation
-  Eigen::Affine3d map_to_base_link = map_to_tag * tag_to_camera * camera_to_base_link;
+  // Convert to map
+  const std::optional<geometry_msgs::msg::Pose> map_to_base_link =
+    landmark_manager_.convert_landmark_pose_to_ego_pose(
+      base_link_to_landmark.pose, msg.header.frame_id);
+  if (!map_to_base_link) {
+    RCLCPP_INFO_STREAM(
+      this->get_logger(),
+      "Failed to convert landmark pose to ego pose. frame_id: " << msg.header.frame_id);
+    return;
+  }
 
   // Construct output message
   geometry_msgs::msg::PoseWithCovarianceStamped pose_with_covariance_stamped;
   pose_with_covariance_stamped.header.stamp = msg.header.stamp;
   pose_with_covariance_stamped.header.frame_id = "map";
-  pose_with_covariance_stamped.pose.pose = tf2::toMsg(map_to_base_link);
+  pose_with_covariance_stamped.pose.pose = map_to_base_link.value();
 
   // If latest_ekf_pose_ is older than <ekf_time_tolerance_> seconds compared to current frame, it
   // will not be published.
