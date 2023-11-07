@@ -67,7 +67,7 @@ If you have multiple rosbags, an example directory structure would be as follows
 ```bash
 sample-map-rosbag
 ├── lanelet2_map.osm
-├── pointcloud_map.pcd
+├── pointcloud_map
 │ ├── A.pcd
 │ ├── B.pcd
 │ ├── C.pcd
