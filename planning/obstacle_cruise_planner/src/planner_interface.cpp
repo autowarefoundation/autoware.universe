@@ -668,6 +668,7 @@ double PlannerInterface::calculateSlowDownVelocity(
   const bool is_obstacle_moving = [&obstacle]() { return std::abs(obstacle.velocity) > 0.5; }();
   const auto & p =
     slow_down_param_.getObstacleParamByLabel(obstacle.classification, is_obstacle_moving);
+  std::cerr << "Max ego vel " << p.min_ego_velocity << "\n";
   const double stable_precise_lat_dist = [&]() {
     if (prev_output) {
       return signal_processing::lowpassFilter(
