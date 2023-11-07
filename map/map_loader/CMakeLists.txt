@@ -73,6 +73,7 @@ if(BUILD_TESTING)
   add_testcase(test/test_pointcloud_map_loader_module.cpp)
   add_testcase(test/test_partial_map_loader_module.cpp)
   add_testcase(test/test_differential_map_loader_module.cpp)
+  add_testcase(test/test_append_path_or_pcd_files.cpp)
 endif()
 
 install(PROGRAMS

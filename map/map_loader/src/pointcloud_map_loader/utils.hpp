@@ -47,4 +47,7 @@ bool cylinderAndBoxOverlapExists(
 bool isGridWithinQueriedArea(
   const autoware_map_msgs::msg::AreaInfo area, const PCDFileMetadata metadata);
 
+bool isPcdFile(const std::string & p);
+void appendPathOrPcdFiles(const std::string & path, std::vector<std::string> & path_list);
+
 #endif  // POINTCLOUD_MAP_LOADER__UTILS_HPP_

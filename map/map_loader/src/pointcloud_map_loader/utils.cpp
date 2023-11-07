@@ -16,6 +16,7 @@
 
 #include <fmt/format.h>
 
+#include <filesystem>
 #include <map>
 #include <string>
 #include <vector>
@@ -98,4 +99,39 @@ bool isGridWithinQueriedArea(
   double radius = area.radius;
   bool res = cylinderAndBoxOverlapExists(center_x, center_y, radius, metadata.min, metadata.max);
   return res;
+}
+
+bool isPcdFile(const std::string & p)
+{
+  if (std::filesystem::is_directory(p)) {
+    return false;
+  }
+
+  const std::string ext = std::filesystem::path(p).extension();
+
+  if (ext != ".pcd" && ext != ".PCD") {
+    return false;
+  }
+
+  return true;
+}
+
+void appendPathOrPcdFiles(const std::string & path, std::vector<std::string> & path_list)
+{
+  // Check if path.pcd exists
+  if (std::filesystem::exists(path + ".pcd")) {
+    path_list.push_back(path + ".pcd");
+  } else if (std::filesystem::exists(path + ".PCD")) {
+    path_list.push_back(path + ".PCD");
+  } else if (std::filesystem::exists(path) && std::filesystem::is_directory(path)) {
+    for (const auto & entry : std::filesystem::directory_iterator(path)) {
+      const auto filename = entry.path().string();
+      if (isPcdFile(filename)) {
+        path_list.push_back(filename);
+      }
+    }
+  } else {
+    throw std::runtime_error("invalid path: " + path + " or " + path + ".pcd");
+  }
+  return;
 }

@@ -26,24 +26,6 @@
 
 namespace fs = std::filesystem;
 
-namespace
-{
-bool isPcdFile(const std::string & p)
-{
-  if (fs::is_directory(p)) {
-    return false;
-  }
-
-  const std::string ext = fs::path(p).extension();
-
-  if (ext != ".pcd" && ext != ".PCD") {
-    return false;
-  }
-
-  return true;
-}
-}  // namespace
-
 PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & options)
 : Node("pointcloud_map_loader", options)
 {
@@ -125,19 +107,10 @@ std::vector<std::string> PointCloudMapLoaderNode::getPcdPaths(
 {
   std::vector<std::string> pcd_paths;
   for (const auto & p : pcd_paths_or_directory) {
-    if (fs::exists(p + ".pcd")) {
-      pcd_paths.push_back(p + ".pcd");
-    } else if (fs::exists(p + ".PCD")) {
-      pcd_paths.push_back(p + ".PCD");
-    } else if (fs::exists(p) && fs::is_directory(p)) {
-      for (const auto & entry : fs::directory_iterator(p)) {
-        const auto filename = entry.path().string();
-        if (isPcdFile(filename)) {
-          pcd_paths.push_back(filename);
-        }
-      }
-    } else {
-      RCLCPP_ERROR_STREAM(get_logger(), "invalid path: " << p << " or " << p + ".pcd");
+    try {
+      appendPathOrPcdFiles(p, pcd_paths);
+    } catch (std::runtime_error & e) {
+      RCLCPP_ERROR_STREAM(get_logger(), e.what());
     }
   }
   return pcd_paths;
