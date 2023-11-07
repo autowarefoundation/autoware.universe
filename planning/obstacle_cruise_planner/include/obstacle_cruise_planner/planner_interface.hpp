@@ -107,7 +107,6 @@ public:
     return longitudinal_info_.safe_distance_margin;
   }
 
-
 protected:
   // Parameters
   bool enable_debug_info_{false};

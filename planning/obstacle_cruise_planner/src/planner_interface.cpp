@@ -208,19 +208,6 @@ double calcDecelerationVelocityFromDistanceToTarget(
   }
   return current_velocity;
 }
-
-// std::vector<TrajectoryPoint> resampleTrajectoryPoints(
-//   const std::vector<TrajectoryPoint> & traj_points, const double interval)
-// {
-//   const auto traj = motion_utils::convertToTrajectory(traj_points);
-//   const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
-//   return motion_utils::convertToTrajectoryPointArray(resampled_traj);
-// }
-
-// tier4_autoware_utils::Point2d convertPoint(const geometry_msgs::msg::Point & p)
-// {
-//   return tier4_autoware_utils::Point2d{p.x, p.y};
-// }
 }  // namespace
 
 std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
@@ -254,17 +241,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     "stop planning");
 
   // Get Closest Stop Obstacle
-  const auto closest_stop_obstacle = [&]() {
-    std::optional<StopObstacle> candidate_obstacle = std::nullopt;
-    for (const auto & stop_obstacle : stop_obstacles) {
-      if (
-        !candidate_obstacle ||
-        stop_obstacle.traj_dist_to_stop_point < candidate_obstacle->traj_dist_to_stop_point) {
-        candidate_obstacle = stop_obstacle;
-      }
-    }
-    return candidate_obstacle;
-  }();
+  const auto closest_stop_obstacle = obstacle_cruise_utils::getClosestStopObstacle(stop_obstacles);
 
   if (!closest_stop_obstacle) {
     // delete marker
@@ -354,7 +331,6 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
 
   // Insert stop point
   auto output_traj_points = planner_data.traj_points;
-  // const auto zero_vel_idx = motion_utils::insertStopPoint(0, zero_vel_dist, output_traj_points);
   const auto zero_vel_idx =
     motion_utils::insertStopPoint(0, candidate_stop_dist_on_ref_traj, output_traj_points);
   if (zero_vel_idx) {
@@ -387,8 +363,6 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
   stop_planning_debug_info_.set(
     StopPlanningDebugInfo::TYPE::STOP_CURRENT_OBSTACLE_VELOCITY, closest_stop_obstacle->velocity);
 
-  // stop_planning_debug_info_.set(
-  // StopPlanningDebugInfo::TYPE::STOP_TARGET_OBSTACLE_DISTANCE, stop_margin_from_obstacle);
   stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_VELOCITY, 0.0);
   stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_ACCELERATION, 0.0);
 

@@ -791,10 +791,9 @@ std::vector<TrajectoryPoint> ObstacleCruisePlannerNode::decimateTrajectoryPoints
   const auto decimated_traj_points =
     resampleTrajectoryPoints(trimmed_traj_points, p.decimate_trajectory_step_length);
 
-  // extend trajectory
-  // const auto extended_traj_points = extendTrajectoryPoints(
-  //   decimated_traj_points, p.goal_extension_length, p.goal_extension_interval);
-  const auto extended_traj_points = extendTrajectoryPoints(decimated_traj_points, 6.0, 2.0);
+  const auto extended_traj_points = extendTrajectoryPoints(
+    decimated_traj_points, planner_ptr_->getSafeDistanceMargin(),
+    p.decimate_trajectory_step_length);
   if (extended_traj_points.size() < 2) {
     return traj_points;
   }
@@ -1208,17 +1207,8 @@ void ObstacleCruisePlannerNode::checkConsistency(
   const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
   std::vector<StopObstacle> & stop_obstacles)
 {
-  const auto current_closest_stop_obstacle = [&]() {
-    std::optional<StopObstacle> candidate_obstacle = std::nullopt;
-    for (const auto & stop_obstacle : stop_obstacles) {
-      if (
-        !candidate_obstacle ||
-        stop_obstacle.traj_dist_to_stop_point < candidate_obstacle->traj_dist_to_stop_point) {
-        candidate_obstacle = stop_obstacle;
-      }
-    }
-    return candidate_obstacle;
-  }();
+  const auto current_closest_stop_obstacle =
+    obstacle_cruise_utils::getClosestStopObstacle(stop_obstacles);
 
   // If previous closest obstacle ptr is not set
   if (!prev_closest_stop_obstacle_ptr_) {
