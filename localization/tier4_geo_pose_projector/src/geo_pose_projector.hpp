@@ -21,6 +21,7 @@
 
 #include <geographic_msgs/msg/geo_pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <tf2_ros/transform_broadcaster.h>
 
 #include <memory>
 #include <optional>
@@ -42,7 +43,14 @@ private:
   rclcpp::Subscription<GeoPoseWithCovariance>::SharedPtr geo_pose_sub_;
   rclcpp::Publisher<PoseWithCovariance>::SharedPtr pose_pub_;
 
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+
   std::optional<MapProjectorInfo::Message> projector_info_ = std::nullopt;
+  
+  const bool publish_tf_;
+  
+  std::string parent_frame_;
+  std::string child_frame_;
 };
 
 #endif  // GEO_POSE_PROJECTOR_HPP_

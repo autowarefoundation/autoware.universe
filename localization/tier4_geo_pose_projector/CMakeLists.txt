@@ -13,4 +13,5 @@ ament_target_dependencies(tier4_geo_pose_projector)
 ament_auto_package(
   INSTALL_TO_SHARE
   launch
+  config
 )

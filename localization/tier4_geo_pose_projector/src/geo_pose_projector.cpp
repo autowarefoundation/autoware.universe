@@ -17,7 +17,15 @@
 #include <geography_utils/height.hpp>
 #include <geography_utils/projection.hpp>
 
-GeoPoseProjector::GeoPoseProjector() : Node("geo_pose_projector")
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
+GeoPoseProjector::GeoPoseProjector()
+: Node("geo_pose_projector"),
+  publish_tf_(declare_parameter<bool>("publish_tf"))
 {
   // Subscribe to map_projector_info topic
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
@@ -31,6 +39,13 @@ GeoPoseProjector::GeoPoseProjector() : Node("geo_pose_projector")
 
   // Publish pose topic
   pose_pub_ = create_publisher<PoseWithCovariance>("output_pose", 10);
+
+  // Publish tf
+  if (publish_tf_) {
+    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
+    parent_frame_ = declare_parameter<std::string>("parent_frame");
+    child_frame_ = declare_parameter<std::string>("child_frame");
+  }
 }
 
 void GeoPoseProjector::on_geo_pose(const GeoPoseWithCovariance::SharedPtr msg)
@@ -56,5 +71,29 @@ void GeoPoseProjector::on_geo_pose(const GeoPoseWithCovariance::SharedPtr msg)
   PoseWithCovariance projected_pose;
   projected_pose.header = msg->header;
   projected_pose.pose.pose.position = position;
+  projected_pose.pose.pose.orientation = msg->pose.pose.orientation;
+  projected_pose.pose.covariance = msg->pose.covariance;
+
+  // Covariance in GeoPoseWithCovariance is in Lat/Lon/Alt coordinate.
+  // TODO(TIER IV): This swap may be invalid when using other projector type.
+  projected_pose.pose.covariance[0] = msg->pose.covariance[7];
+  projected_pose.pose.covariance[7] = msg->pose.covariance[0];
+
   pose_pub_->publish(projected_pose);
+
+  // Publish tf
+  if (publish_tf_) {
+    tf2::Transform transform;
+    transform.setOrigin(tf2::Vector3(projected_pose.pose.pose.position.x, projected_pose.pose.pose.position.y, projected_pose.pose.pose.position.z));
+    const auto localization_quat = tf2::Quaternion(projected_pose.pose.pose.orientation.x, projected_pose.pose.pose.orientation.y,
+      projected_pose.pose.pose.orientation.z, projected_pose.pose.pose.orientation.w);
+    transform.setRotation(localization_quat);
+
+    geometry_msgs::msg::TransformStamped transform_stamped;
+    transform_stamped.header = msg->header;
+    transform_stamped.header.frame_id = parent_frame_;
+    transform_stamped.child_frame_id = child_frame_;
+    transform_stamped.transform = tf2::toMsg(transform);
+    tf_broadcaster_->sendTransform(transform_stamped);
+  }
 }
