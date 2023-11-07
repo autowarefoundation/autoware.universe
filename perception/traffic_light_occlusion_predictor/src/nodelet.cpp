@@ -48,6 +48,8 @@ TrafficLightOcclusionPredictorNodelet::TrafficLightOcclusionPredictorNodelet(
   using std::placeholders::_2;
   using std::placeholders::_3;
   using std::placeholders::_4;
+  using std::placeholders::_5;
+  using std::placeholders::_6;
 
   // subscribers
   map_sub_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
@@ -57,6 +59,8 @@ TrafficLightOcclusionPredictorNodelet::TrafficLightOcclusionPredictorNodelet(
   // publishers
   signal_pub_ =
     create_publisher<tier4_perception_msgs::msg::TrafficSignalArray>("~/output/traffic_signals", 1);
+  roi_pub_ = create_publisher<tier4_perception_msgs::msg::TrafficLightRoiArray>("~/output/rois", 1);
+
   // configuration parameters
   config_.azimuth_occlusion_resolution_deg =
     declare_parameter<double>("azimuth_occlusion_resolution_deg", 0.15);
@@ -72,11 +76,15 @@ TrafficLightOcclusionPredictorNodelet::TrafficLightOcclusionPredictorNodelet(
     config_.elevation_occlusion_resolution_deg);
 
   const std::vector<std::string> topics{
-    "~/input/traffic_signals", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
+    "~/input/traffic_signals_ped", "~/input/traffic_signals_car",
+    // "~/input/traffic_signals_ped",
+    "~/input/rois_ped", "~/input/rois_car",
+    // "~/input/rois_ped",
+    "~/input/camera_info", "~/input/cloud"};
   const std::vector<rclcpp::QoS> qos(topics.size(), rclcpp::SensorDataQoS());
   synchronizer_ = std::make_shared<SynchronizerType>(
     this, topics, qos,
-    std::bind(&TrafficLightOcclusionPredictorNodelet::syncCallback, this, _1, _2, _3, _4),
+    std::bind(&TrafficLightOcclusionPredictorNodelet::syncCallback, this, _1, _2, _3, _4, _5, _6),
     config_.max_image_cloud_delay, config_.max_wait_t);
 }
 
@@ -107,11 +115,24 @@ void TrafficLightOcclusionPredictorNodelet::mapCallback(
 
 void TrafficLightOcclusionPredictorNodelet::syncCallback(
   const tier4_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr in_signal_msg,
+  const tier4_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr in_signal_msg2,
   const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg,
+  const tier4_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg2,
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr in_cam_info_msg,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr in_cloud_msg)
 {
   tier4_perception_msgs::msg::TrafficSignalArray out_msg = *in_signal_msg;
+  tier4_perception_msgs::msg::TrafficLightRoiArray out_roi_msg = *in_roi_msg;
+
+  // std::cout << "signal:" << in_signal_msg->header.stamp.sec <<
+  // in_signal_msg->header.stamp.nanosec
+  //           << "-" << in_signal_msg->signals.size() << "," << in_signal_msg2->header.stamp.sec
+  //           << in_signal_msg2->header.stamp.nanosec << "-" << in_signal_msg2->signals.size()
+  //           << std::endl;
+  // std::cout << "   roi:" << in_roi_msg->header.stamp.sec << in_roi_msg->header.stamp.nanosec <<
+  // "-"
+  //           << in_roi_msg->rois.size() << "," << in_roi_msg2->header.stamp.sec
+  //           << in_roi_msg2->header.stamp.nanosec << "-" << in_roi_msg2->rois.size() << std::endl;
   std::vector<int> occlusion_ratios;
   if (
     in_cloud_msg == nullptr || in_cam_info_msg == nullptr || in_roi_msg == nullptr ||
@@ -122,12 +143,39 @@ void TrafficLightOcclusionPredictorNodelet::syncCallback(
       in_cam_info_msg, in_roi_msg, in_cloud_msg, tf_buffer_, traffic_light_position_map_,
       occlusion_ratios);
   }
+
   for (size_t i = 0; i < occlusion_ratios.size(); i++) {
     if (occlusion_ratios[i] >= config_.max_occlusion_ratio) {
       traffic_light_utils::setSignalUnknown(out_msg.signals[i]);
     }
   }
+
+  std::vector<int> occlusion_ratios2;
+  if (
+    in_cloud_msg == nullptr || in_cam_info_msg == nullptr || in_roi_msg2 == nullptr ||
+    in_roi_msg2->rois.size() != in_signal_msg2->signals.size()) {
+    occlusion_ratios2.resize(in_signal_msg2->signals.size(), 0);
+  } else {
+    for (size_t i = 0; i < in_signal_msg2->signals.size(); i++) {
+      out_msg.signals.push_back(in_signal_msg2->signals[i]);
+    }
+    for (size_t i = 0; i < in_roi_msg2->rois.size(); i++) {
+      out_roi_msg.rois.push_back(in_roi_msg2->rois[i]);
+    }
+    cloud_occlusion_predictor_->predict(
+      in_cam_info_msg, in_roi_msg2, in_cloud_msg, tf_buffer_, traffic_light_position_map_,
+      occlusion_ratios2);
+  }
+
+  int l1 = in_signal_msg->signals.size();
+  for (size_t i = 0; i < occlusion_ratios2.size(); i++) {
+    if (occlusion_ratios2[i] >= config_.max_occlusion_ratio) {
+      traffic_light_utils::setSignalUnknown(out_msg.signals[l1 + i]);
+    }
+  }
+
   signal_pub_->publish(out_msg);
+  roi_pub_->publish(out_roi_msg);
 }
 
 }  // namespace traffic_light

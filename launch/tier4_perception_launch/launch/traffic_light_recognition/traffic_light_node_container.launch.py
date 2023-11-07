@@ -41,8 +41,16 @@ def generate_launch_description():
     add_launch_arg("enable_fine_detection", "True")
     add_launch_arg("input/image", "/sensing/camera/traffic_light/image_raw")
     add_launch_arg("output/rois", "/perception/traffic_light_recognition/rois")
+    add_launch_arg("output/rois_car", "/perception/traffic_light_recognition/rois_car")
+    add_launch_arg("output/rois_ped", "/perception/traffic_light_recognition/rois_ped")
     add_launch_arg(
         "output/traffic_signals", "/perception/traffic_light_recognition/traffic_signals"
+    )
+    add_launch_arg(
+        "output/traffic_signals_car", "/perception/traffic_light_recognition/traffic_signals_car"
+    )
+    add_launch_arg(
+        "output/traffic_signals_ped", "/perception/traffic_light_recognition/traffic_signals_ped"
     )
 
     # traffic_light_fine_detector
@@ -63,11 +71,18 @@ def generate_launch_description():
     # traffic_light_classifier
     add_launch_arg("classifier_type", "1")
     add_launch_arg(
-        "classifier_model_path",
+        "classifier_model_path_car",
         os.path.join(classifier_share_dir, "data", "traffic_light_classifier_efficientNet_b1.onnx"),
     )
     add_launch_arg(
-        "classifier_label_path", os.path.join(classifier_share_dir, "data", "lamp_labels.txt")
+        "classifier_model_path_ped",
+        os.path.join(classifier_share_dir, "data", "ped_traffic_light_classifier_efficientNet_b1.onnx"),
+    )
+    add_launch_arg(
+        "classifier_label_path_car", os.path.join(classifier_share_dir, "data", "lamp_labels.txt")
+    )
+    add_launch_arg(
+        "classifier_label_path_ped", os.path.join(classifier_share_dir, "data", "lamp_labels_ped.txt")
     )
     add_launch_arg("classifier_precision", "fp16")
     add_launch_arg("classifier_mean", "[123.675, 116.28, 103.53]")
@@ -91,23 +106,69 @@ def generate_launch_description():
             ComposableNode(
                 package="traffic_light_classifier",
                 plugin="traffic_light::TrafficLightClassifierNodelet",
-                name="traffic_light_classifier",
+                name="traffic_light_classifier_car",
                 namespace="classification",
                 parameters=[
-                    create_parameter_dict(
-                        "approximate_sync",
-                        "classifier_type",
-                        "classifier_model_path",
-                        "classifier_label_path",
-                        "classifier_precision",
-                        "classifier_mean",
-                        "classifier_std",
-                    )
+                    # create_parameter_dict(
+                    #     "approximate_sync",
+                    #     "classifier_type",
+                    #     "classifier_model_path",
+                    #     "classifier_label_path",
+                    #     "classifier_precision",
+                    #     "classifier_mean",
+                    #     "classifier_std",
+                    # )
+                    {
+                        "approximate_sync": LaunchConfiguration("approximate_sync"),
+                        "classifier_type": LaunchConfiguration("classifier_type"),
+                        "classifier_model_path": LaunchConfiguration("classifier_model_path_car"),
+                        "classifier_label_path": LaunchConfiguration("classifier_label_path_car"),
+                        "classifier_precision": LaunchConfiguration("classifier_precision"),
+                        "classifier_mean": LaunchConfiguration("classifier_mean"),
+                        "classifier_std": LaunchConfiguration("classifier_std"),
+                    }
                 ],
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
-                    ("~/input/rois", LaunchConfiguration("output/rois")),
-                    ("~/output/traffic_signals", "classified/traffic_signals"),
+                    ("~/input/rois", LaunchConfiguration("output/rois_car")),
+                    ("~/output/traffic_signals", "classified/traffic_signals_car"),
+                ],
+                extra_arguments=[
+                    {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
+                ],
+            ),
+            ComposableNode(
+                package="traffic_light_classifier",
+                plugin="traffic_light::TrafficLightClassifierNodelet",
+                name="traffic_light_classifier_ped",
+                namespace="classification",
+                parameters=[
+                    # create_parameter_dict(
+                    #     "approximate_sync",
+                    #     "classifier_type",
+                    #     # "classifier_model_path",
+                    #     # "classifier_label_path",
+                    #     "classifier_precision",
+                    #     "classifier_mean",
+                    #     "classifier_std",
+                    # ).update({
+                    #     "classifier_model_path": LaunchConfiguration("classifier_model_path_ped"),
+                    #     "classifier_label_path": LaunchConfiguration("classifier_label_path_ped"),
+                    #     })
+                    {
+                        "approximate_sync": LaunchConfiguration("approximate_sync"),
+                        "classifier_type": LaunchConfiguration("classifier_type"),
+                        "classifier_model_path": LaunchConfiguration("classifier_model_path_ped"),
+                        "classifier_label_path": LaunchConfiguration("classifier_label_path_ped"),
+                        "classifier_precision": LaunchConfiguration("classifier_precision"),
+                        "classifier_mean": LaunchConfiguration("classifier_mean"),
+                        "classifier_std": LaunchConfiguration("classifier_std"),
+                    }
+                ],
+                remappings=[
+                    ("~/input/image", LaunchConfiguration("input/image")),
+                    ("~/input/rois", LaunchConfiguration("output/rois_ped")),
+                    ("~/output/traffic_signals", "classified/traffic_signals_ped"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -122,7 +183,9 @@ def generate_launch_description():
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", LaunchConfiguration("output/rois")),
                     ("~/input/rough/rois", "detection/rough/rois"),
-                    ("~/input/traffic_signals", LaunchConfiguration("output/traffic_signals")),
+                    # ("~/input/traffic_signals", LaunchConfiguration("output/traffic_signals")),
+                    ("~/input/traffic_signals", "/perception/traffic_light_recognition/camera6/classification/classified/traffic_signals_ped"),
+                    # ("~/input/traffic_signals", "/perception/traffic_light_recognition/internal/traffic_signals"),
                     ("~/output/image", "debug/rois"),
                     ("~/output/image/compressed", "debug/rois/compressed"),
                     ("~/output/image/compressedDepth", "debug/rois/compressedDepth"),
@@ -179,7 +242,8 @@ def generate_launch_description():
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", "rough/rois"),
                     ("~/expect/rois", "expect/rois"),
-                    ("~/output/rois", LaunchConfiguration("output/rois")),
+                    ("~/output/rois_car", LaunchConfiguration("output/rois_car")),
+                    ("~/output/rois_ped", LaunchConfiguration("output/rois_ped")),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}

@@ -53,6 +53,8 @@ using TrafficSignalElement = autoware_perception_msgs::msg::TrafficSignalElement
 using TrafficSignalAndTime = std::pair<TrafficSignal, rclcpp::Time>;
 using TrafficLightIdMap = std::unordered_map<lanelet::Id, TrafficSignalAndTime>;
 
+using TrafficLightIdArray = std::unordered_map<lanelet::Id, std::vector<TrafficSignalAndTime>>;
+
 class CrosswalkTrafficLightEstimatorNode : public rclcpp::Node
 {
 public:
@@ -76,8 +78,11 @@ private:
   void onTrafficLightArray(const TrafficSignalArray::ConstSharedPtr msg);
 
   void updateLastDetectedSignal(const TrafficLightIdMap & traffic_signals);
+  void updateLastDetectedSignals(const TrafficLightIdMap & traffic_signals);
+  void isFlashing(const TrafficSignal & signal);
+  uint8_t updateState(const TrafficSignal & signal);
   void setCrosswalkTrafficSignal(
-    const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & msg) const;
+    const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & msg);
 
   lanelet::ConstLanelets getNonRedLanelets(
     const lanelet::ConstLanelets & lanelets, const TrafficLightIdMap & traffic_light_id_map) const;
@@ -95,9 +100,15 @@ private:
   // Node param
   bool use_last_detect_color_;
   double last_detect_color_hold_time_;
+  double last_colors_hold_time_;
 
   // Signal history
   TrafficLightIdMap last_detect_color_;
+  TrafficLightIdArray last_colors_;
+
+  // State
+  std::map<lanelet::Id, bool> is_flashing_;
+  std::map<lanelet::Id, uint8_t> current_state_;
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;

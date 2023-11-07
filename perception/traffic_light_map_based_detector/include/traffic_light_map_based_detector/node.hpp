@@ -97,6 +97,8 @@ private:
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
 
+  std::shared_ptr<const lanelet::routing::RoutingGraphContainer> overall_graphs_ptr_;
+
   Config config_;
   /**
    * @brief Calculated the transform from map to frame_id at timestamp t

@@ -73,7 +73,6 @@ bool hasMergeLane(
 
   return false;
 }
-
 }  // namespace
 
 CrosswalkTrafficLightEstimatorNode::CrosswalkTrafficLightEstimatorNode(
@@ -84,6 +83,7 @@ CrosswalkTrafficLightEstimatorNode::CrosswalkTrafficLightEstimatorNode(
 
   use_last_detect_color_ = declare_parameter<bool>("use_last_detect_color");
   last_detect_color_hold_time_ = declare_parameter<double>("last_detect_color_hold_time");
+  last_colors_hold_time_ = declare_parameter<double>("last_colors_hold_time");
 
   sub_map_ = create_subscription<HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
@@ -122,6 +122,7 @@ void CrosswalkTrafficLightEstimatorNode::onMap(const HADMapBin::ConstSharedPtr m
 
 void CrosswalkTrafficLightEstimatorNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
+  std::cout << "---------------------------route_lanelets:" << (msg->segments).size() << std::endl;
   if (lanelet_map_ptr_ == nullptr) {
     RCLCPP_WARN(get_logger(), "cannot set traffic light in route because don't receive map");
     return;
@@ -140,6 +141,7 @@ void CrosswalkTrafficLightEstimatorNode::onRoute(const LaneletRoute::ConstShared
   }
 
   conflicting_crosswalks_.clear();
+  std::cout << "route_lanelets size:" << route_lanelets.size() << std::endl;
 
   for (const auto & route_lanelet : route_lanelets) {
     constexpr int PEDESTRIAN_GRAPH_ID = 1;
@@ -164,7 +166,6 @@ void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
     traffic_light_id_map[traffic_signal.traffic_signal_id] =
       std::pair<TrafficSignal, rclcpp::Time>(traffic_signal, get_clock()->now());
   }
-
   for (const auto & crosswalk : conflicting_crosswalks_) {
     constexpr int VEHICLE_GRAPH_ID = 0;
     const auto conflict_lls = overall_graphs_ptr_->conflictingInGraph(crosswalk, VEHICLE_GRAPH_ID);
@@ -175,6 +176,7 @@ void CrosswalkTrafficLightEstimatorNode::onTrafficLightArray(
   }
 
   updateLastDetectedSignal(traffic_light_id_map);
+  updateLastDetectedSignals(traffic_light_id_map);
 
   pub_traffic_light_array_->publish(output);
   pub_processing_time_->publish<Float64Stamped>("processing_time_ms", stop_watch.toc("Total"));
@@ -219,24 +221,183 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignal(
       }
     }
   }
-  for (const auto id : erase_id_list) last_detect_color_.erase(id);
+  for (const auto id : erase_id_list) {
+    last_detect_color_.erase(id);
+    is_flashing_.erase(id);
+    current_state_.erase(id);
+  }
+}
+
+void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignals(
+  const TrafficLightIdMap & traffic_light_id_map)
+{
+  for (const auto & input_traffic_signal : traffic_light_id_map) {
+    const auto & elements = input_traffic_signal.second.first.elements;
+
+    if (elements.empty()) {
+      continue;
+    }
+
+    if (
+      elements.front().color == TrafficSignalElement::UNKNOWN && elements.front().confidence == 1) {
+      continue;
+    }
+
+    const auto & id = input_traffic_signal.second.first.traffic_signal_id;
+
+    if (last_colors_.count(id) == 0) {
+      std::vector<TrafficSignalAndTime> signal{input_traffic_signal.second};
+      last_colors_.insert(std::make_pair(id, signal));
+      // std::cout << "insert " << input_traffic_signal.second.first.traffic_signal_id
+      //           << ",color:" << +elements.front().color
+      //           << ",confidence:" << elements.front().confidence << std::endl;
+      continue;
+    }
+
+    last_colors_.at(id).push_back(input_traffic_signal.second);
+    // std::cout << "push back " << input_traffic_signal.second.first.traffic_signal_id
+    //           << ",color:" << +elements.front().color
+    //           << ",confidence:" << elements.front().confidence << std::endl;
+  }
+
+  std::vector<int32_t> erase_id_list;
+  for (auto & last_traffic_signal : last_colors_) {
+    const auto & id = last_traffic_signal.first;
+    // std::cout << "\nlast_traffic_signal lanelet::Id:" << last_traffic_signal.first << ":";
+    for (auto it = last_traffic_signal.second.begin(); it != last_traffic_signal.second.end();) {
+      auto sig = (*it).first;
+      auto t = (*it).second;  // rclcpp::Time
+
+      // hold signal recognition results for [last_colors_hold_time_] seconds.
+      const auto time_from_last_detected = (get_clock()->now() - t).seconds();
+      if (time_from_last_detected > last_colors_hold_time_) {
+        // erase_id_list.emplace_back(id);
+        it = last_traffic_signal.second.erase(it);
+      } else {
+        // std::cout << "time_from_last_detected:" << time_from_last_detected
+        //           << ",size:" << sig.elements.size() << ",color:" << +sig.elements.front().color
+        //           << " | ";
+        ++it;
+      }
+      // }
+    }
+    if (last_traffic_signal.second.empty()) {
+      erase_id_list.emplace_back(id);
+    }
+  }
+  for (const auto id : erase_id_list) last_colors_.erase(id);
 }
 
 void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
-  const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & msg) const
+  const lanelet::ConstLanelet & crosswalk, const uint8_t color, TrafficSignalArray & msg)
 {
   const auto tl_reg_elems = crosswalk.regulatoryElementsAs<const lanelet::TrafficLight>();
 
-  for (const auto & tl_reg_elem : tl_reg_elems) {
-    TrafficSignal output_traffic_signal;
-    TrafficSignalElement output_traffic_signal_element;
-    output_traffic_signal_element.color = color;
-    output_traffic_signal_element.shape = TrafficSignalElement::CIRCLE;
-    output_traffic_signal_element.confidence = 1.0;
-    output_traffic_signal.elements.push_back(output_traffic_signal_element);
-    output_traffic_signal.traffic_signal_id = tl_reg_elem->id();
-    msg.signals.push_back(output_traffic_signal);
+  std::unordered_map<lanelet::Id, size_t> valid_id2idx_map;  // detected traffic light
+
+  if (msg.signals.empty()) {
+    std::cout << "no input signal" << std::endl;
   }
+  for (size_t i = 0; i < msg.signals.size(); ++i) {
+    auto signal = msg.signals[i];
+    valid_id2idx_map[signal.traffic_signal_id] = i;
+  }
+
+  for (const auto & tl_reg_elem : tl_reg_elems) {
+    auto id = tl_reg_elem->id();
+    // valid prediction exists, override the estimation
+    if (valid_id2idx_map.count(id)) {
+      size_t idx = valid_id2idx_map[id];
+      auto signal = msg.signals[idx];
+      std::cout << "valid prediction exists for ";
+      isFlashing(signal);  // check if it is flashing
+      msg.signals[idx].elements[0].color =
+        updateState(signal);  // update msg according to flashing and current state
+    } else {                  // not exists,
+      std::cout << "no valid prediction for ";
+      TrafficSignal output_traffic_signal;
+      TrafficSignalElement output_traffic_signal_element;
+      output_traffic_signal_element.color = color;
+      output_traffic_signal_element.shape = TrafficSignalElement::CIRCLE;
+      output_traffic_signal_element.confidence = 1.0;
+      output_traffic_signal.elements.push_back(output_traffic_signal_element);
+      output_traffic_signal.traffic_signal_id = id;
+      isFlashing(output_traffic_signal);
+      output_traffic_signal.elements[0].color = updateState(output_traffic_signal);
+      msg.signals.push_back(output_traffic_signal);
+    }
+  }
+}
+
+void CrosswalkTrafficLightEstimatorNode::isFlashing(const TrafficSignal & signal)
+{
+  const auto id = signal.traffic_signal_id;
+  std::cout << id << ", color:" << +signal.elements.front().color << " , last_colors:";
+  if (last_colors_.count(id) > 0) {
+    std::vector<TrafficSignalAndTime> history = last_colors_.at(id);
+    for (const auto & h : history) {
+      std::cout << +h.first.elements.front().color << " ";
+    }
+  }
+  std::cout << std::endl;
+  // not detected in last_detect_color_hold_time_
+  if (is_flashing_.count(id) == 0) {
+    is_flashing_.insert(std::make_pair(id, false));
+    return;
+  }
+  // flashing green
+  else if (
+    signal.elements.front().color == TrafficSignalElement::UNKNOWN &&
+    signal.elements.front().confidence != 0 &&
+    current_state_.at(id) == TrafficSignalElement::GREEN) {
+    is_flashing_.at(id) = true;
+    std::cout << " flashing green" << std::endl;
+    return;
+  }
+
+  // history exists
+  if (last_colors_.count(id) > 0) {
+    std::vector<TrafficSignalAndTime> history = last_colors_.at(id);
+    for (const auto & h : history) {
+      if (h.first.elements.front().color != signal.elements.front().color) {
+        return;
+      }
+    }
+    // all history is same with input signal
+    std::cout << "all history is same with input signal" << std::endl;
+    is_flashing_.at(id) = false;
+  }
+  return;
+}
+
+uint8_t CrosswalkTrafficLightEstimatorNode::updateState(const TrafficSignal & signal)
+{
+  const auto id = signal.traffic_signal_id;
+  const auto color = signal.elements[0].color;
+  if (id == 179794) {
+    std::cout << "\n" << id << " is_flashing_:" << is_flashing_.at(id) << ";";
+  }
+  if (current_state_.count(id) == 0) {
+    current_state_.insert(std::make_pair(id, color));
+  } else if (is_flashing_.at(id) == false) {
+    current_state_.at(id) = color;
+  } else if (is_flashing_.at(id) == true) {
+    if (
+      current_state_.at(id) == TrafficSignalElement::GREEN && color == TrafficSignalElement::RED) {
+      current_state_.at(id) = TrafficSignalElement::RED;
+    } else if (
+      current_state_.at(id) == TrafficSignalElement::RED && color == TrafficSignalElement::GREEN) {
+      current_state_.at(id) = TrafficSignalElement::GREEN;
+    } else if (current_state_.at(id) == TrafficSignalElement::UNKNOWN) {
+      if (color == TrafficSignalElement::GREEN || color == TrafficSignalElement::UNKNOWN)
+        current_state_.at(id) = TrafficSignalElement::GREEN;
+      if (color == TrafficSignalElement::RED) current_state_.at(id) = TrafficSignalElement::RED;
+    }
+  }
+  if (id == 179794) {
+    std::cout << "current_state_:" << +current_state_.at(id) << std::endl;
+  }
+  return current_state_.at(id);
 }
 
 lanelet::ConstLanelets CrosswalkTrafficLightEstimatorNode::getNonRedLanelets(

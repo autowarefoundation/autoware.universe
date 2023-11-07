@@ -114,7 +114,8 @@ private:
    */
   void detectionMatch(
     std::map<int, TrafficLightRoi> & id2expectRoi,
-    std::map<int, tensorrt_yolox::ObjectArray> & id2detections, TrafficLightRoiArray & out_rois);
+    std::map<int, tensorrt_yolox::ObjectArray> & id2detections, TrafficLightRoiArray & out_car_rois,
+    TrafficLightRoiArray & out_ped_rois);
   /**
    * @brief convert image message to cv::Mat
    *
@@ -137,14 +138,16 @@ private:
    * @return true      succeed
    * @return false     failed
    */
-  bool readLabelFile(const std::string & filepath, int & tlr_id, int & num_class);
+  bool readLabelFile(
+    const std::string & filepath, std::vector<int> & tlr_label_id_, int & num_class);
 
   // variables
   image_transport::SubscriberFilter image_sub_;
   message_filters::Subscriber<TrafficLightRoiArray> rough_roi_sub_;
   message_filters::Subscriber<TrafficLightRoiArray> expect_roi_sub_;
   std::mutex connect_mutex_;
-  rclcpp::Publisher<TrafficLightRoiArray>::SharedPtr output_roi_pub_;
+  rclcpp::Publisher<TrafficLightRoiArray>::SharedPtr output_car_roi_pub_;
+  rclcpp::Publisher<TrafficLightRoiArray>::SharedPtr output_ped_roi_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -162,7 +165,7 @@ private:
 
   bool is_approximate_sync_;
   double score_thresh_;
-  int tlr_id_;
+  std::vector<int> tlr_label_id_;
 
   int batch_size_;
   std::unique_ptr<tensorrt_yolox::TrtYoloX> trt_yolox_;
