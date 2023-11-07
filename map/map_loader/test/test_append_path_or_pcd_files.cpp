@@ -15,6 +15,7 @@
 #include "../src/pointcloud_map_loader/utils.hpp"
 
 #include <gtest/gtest.h>
+
 #include <filesystem>
 #include <fstream>
 
@@ -39,7 +40,7 @@ protected:
     // Setup dummy files
     createDummyPcdFile(test_directory + "/test1.pcd");
     createDummyPcdFile(test_directory + "/test2.PCD");
-    std::ofstream(test_directory + "/test.txt").close(); // Non-PCD file
+    std::ofstream(test_directory + "/test.txt").close();  // Non-PCD file
   }
 
   void TearDown() override
@@ -49,7 +50,8 @@ protected:
   }
 };
 
-TEST_F(AppendPathOrPcdFilesTest, AppendSinglePcdFile) {
+TEST_F(AppendPathOrPcdFilesTest, AppendSinglePcdFile)
+{
   std::vector<std::string> path_list;
   std::string pcd_file_path = test_directory + "/test1";
 
@@ -59,7 +61,8 @@ TEST_F(AppendPathOrPcdFilesTest, AppendSinglePcdFile) {
   EXPECT_EQ(path_list[0], pcd_file_path + ".pcd");
 }
 
-TEST_F(AppendPathOrPcdFilesTest, AppendSinglePCDFileCaseInsensitive) {
+TEST_F(AppendPathOrPcdFilesTest, AppendSinglePCDFileCaseInsensitive)
+{
   std::vector<std::string> path_list;
   std::string pcd_file_path = test_directory + "/test2";
 
@@ -69,17 +72,21 @@ TEST_F(AppendPathOrPcdFilesTest, AppendSinglePCDFileCaseInsensitive) {
   EXPECT_EQ(path_list[0], pcd_file_path + ".PCD");
 }
 
-TEST_F(AppendPathOrPcdFilesTest, AppendPcdFilesFromDirectory) {
+TEST_F(AppendPathOrPcdFilesTest, AppendPcdFilesFromDirectory)
+{
   std::vector<std::string> path_list;
 
   appendPathOrPcdFiles(test_directory, path_list);
 
   ASSERT_EQ(path_list.size(), 2u);
-  EXPECT_NE(std::find(path_list.begin(), path_list.end(), test_directory + "/test1.pcd"), path_list.end());
-  EXPECT_NE(std::find(path_list.begin(), path_list.end(), test_directory + "/test2.PCD"), path_list.end());
+  EXPECT_NE(
+    std::find(path_list.begin(), path_list.end(), test_directory + "/test1.pcd"), path_list.end());
+  EXPECT_NE(
+    std::find(path_list.begin(), path_list.end(), test_directory + "/test2.PCD"), path_list.end());
 }
 
-TEST_F(AppendPathOrPcdFilesTest, ThrowsExceptionForInvalidPath) {
+TEST_F(AppendPathOrPcdFilesTest, ThrowsExceptionForInvalidPath)
+{
   std::vector<std::string> path_list;
   std::string invalid_path = test_directory + "/non_existent";
 
