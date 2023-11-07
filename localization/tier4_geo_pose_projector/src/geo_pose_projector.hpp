@@ -17,10 +17,10 @@
 
 #include <component_interface_specs/map.hpp>
 #include <component_interface_utils/rclcpp.hpp>
-
 #include <rclcpp/rclcpp.hpp>
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+
 #include <geographic_msgs/msg/geo_pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 #include <memory>
 #include <optional>
@@ -39,10 +39,8 @@ private:
   void on_geo_pose(const GeoPoseWithCovariance::SharedPtr msg);
 
   component_interface_utils::Subscription<MapProjectorInfo>::SharedPtr sub_map_projector_info_;
-  rclcpp::Subscription<GeoPoseWithCovariance>::SharedPtr
-    geo_pose_sub_;
-  rclcpp::Publisher<PoseWithCovariance>::SharedPtr
-    pose_pub_;
+  rclcpp::Subscription<GeoPoseWithCovariance>::SharedPtr geo_pose_sub_;
+  rclcpp::Publisher<PoseWithCovariance>::SharedPtr pose_pub_;
 
   std::optional<MapProjectorInfo::Message> projector_info_ = std::nullopt;
 };

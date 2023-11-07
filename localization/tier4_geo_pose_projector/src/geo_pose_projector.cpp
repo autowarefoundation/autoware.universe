@@ -17,8 +17,7 @@
 #include <geography_utils/height.hpp>
 #include <geography_utils/projection.hpp>
 
-GeoPoseProjector::GeoPoseProjector()
-: Node("geo_pose_projector")
+GeoPoseProjector::GeoPoseProjector() : Node("geo_pose_projector")
 {
   // Subscribe to map_projector_info topic
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
@@ -28,8 +27,7 @@ GeoPoseProjector::GeoPoseProjector()
 
   // Subscribe to geo_pose topic
   geo_pose_sub_ = create_subscription<GeoPoseWithCovariance>(
-    "input_geo_pose", 10,
-    [this](const GeoPoseWithCovariance::SharedPtr msg) { on_geo_pose(msg); });
+    "input_geo_pose", 10, [this](const GeoPoseWithCovariance::SharedPtr msg) { on_geo_pose(msg); });
 
   // Publish pose topic
   pose_pub_ = create_publisher<PoseWithCovariance>("output_pose", 10);
@@ -48,7 +46,8 @@ void GeoPoseProjector::on_geo_pose(const GeoPoseWithCovariance::SharedPtr msg)
   gps_point.latitude = msg->pose.pose.position.latitude;
   gps_point.longitude = msg->pose.pose.position.longitude;
   gps_point.altitude = msg->pose.pose.position.altitude;
-  geometry_msgs::msg::Point position = geography_utils::project_forward(gps_point, projector_info_.value());
+  geometry_msgs::msg::Point position =
+    geography_utils::project_forward(gps_point, projector_info_.value());
   position.z = geography_utils::convert_height(
     position.z, gps_point.latitude, gps_point.longitude, MapProjectorInfo::Message::WGS84,
     projector_info_.value().vertical_datum);
