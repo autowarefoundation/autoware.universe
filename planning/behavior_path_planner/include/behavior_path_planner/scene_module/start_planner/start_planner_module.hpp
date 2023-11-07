@@ -134,7 +134,7 @@ private:
 
   bool isModuleRunning() const;
   bool isStartPoseOnMiddleOfTheRoad() const;
-  bool hasArrivedAtStart() const;
+  bool isCloseToOriginalStartPose() const;
   bool hasArrivedAtGoal() const;
   bool isMoving() const;
 

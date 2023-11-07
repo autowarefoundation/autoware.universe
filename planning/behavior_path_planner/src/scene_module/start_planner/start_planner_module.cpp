@@ -183,7 +183,7 @@ bool StartPlannerModule::isStartPoseOnMiddleOfTheRoad() const
   return std::abs(lateral_distance_to_center_lane) < parameters_->th_distance_to_middle_of_the_road;
 }
 
-bool StartPlannerModule::hasArrivedAtStart() const
+bool StartPlannerModule::isCloseToOriginalStartPose() const
 {
   const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
   return tier4_autoware_utils::calcDistance2d(
