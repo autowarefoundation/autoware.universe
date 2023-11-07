@@ -145,8 +145,7 @@
   </group>
 
   <group if="$(var use_eagleye_pose)">
-    <include file="$(find-pkg-share eagleye_geo_pose_fuser)/launch/geo_pose_fuser.launch.xml">
-    </include>
+    <include file="$(find-pkg-share eagleye_geo_pose_fuser)/launch/geo_pose_fuser.launch.xml"/>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/eagleye/geo_pose_converter.launch.xml">
       <arg name="output_pose_with_cov_name" value="$(var output_pose_with_cov_name)"/>
     </include>
