@@ -17,6 +17,7 @@
   <arg name="object_recognition_tracking_radar_object_tracker_tracking_setting_param_path"/>
   <arg name="obstacle_segmentation_ground_segmentation_param_path"/>
   <arg name="obstacle_segmentation_ground_segmentation_elevation_map_param_path"/>
+  <arg name="object_recognition_detection_obstacle_pointcloud_based_validator_param_path"/>
   <arg name="occupancy_grid_map_method"/>
   <arg name="occupancy_grid_map_param_path"/>
   <arg name="occupancy_grid_map_updater"/>
@@ -25,11 +26,12 @@
 
   <!-- CenterPoint model parameters -->
   <arg name="centerpoint_model_name" default="centerpoint_tiny" description="options: `centerpoint` or `centerpoint_tiny`"/>
-  <arg name="centerpoint_model_path" default="$(find-pkg-share lidar_centerpoint)/data"/>
+  <arg name="centerpoint_model_path" default="$(var data_path)/lidar_centerpoint"/>
 
   <!-- Common parameters -->
   <arg name="input/pointcloud" default="/sensing/lidar/concatenated/pointcloud" description="The topic will be used in the detection module"/>
   <arg name="mode" default="camera_lidar_fusion" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
+  <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
   <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
   <arg name="image_raw0" default="/sensing/camera/camera0/image_rect_color" description="image raw topic name"/>
   <arg name="camera_info0" default="/sensing/camera/camera0/camera_info" description="camera info topic name"/>
@@ -78,11 +80,11 @@
   <arg name="traffic_light_image_number" default="1" description="choose traffic light image raw number(1-2)"/>
   <arg
     name="traffic_light_fine_detector_model_path"
-    default="$(find-pkg-share traffic_light_fine_detector)/data"
+    default="$(var data_path)/traffic_light_fine_detector"
     description="options: `tlr_yolox_s_batch_**`. The batch number must be either one of 1, 4, 6"
   />
   <arg name="traffic_light_fine_detector_model_name" default="tlr_yolox_s_batch_6" description="options: `tlr_yolox_s_batch_**`. The batch number must be either one of 1, 4, 6"/>
-  <arg name="traffic_light_classifier_model_path" default="$(find-pkg-share traffic_light_classifier)/data" description="classifier onnx model path"/>
+  <arg name="traffic_light_classifier_model_path" default="$(var data_path)/traffic_light_classifier" description="classifier onnx model path"/>
   <arg
     name="traffic_light_classifier_model_name"
     default="traffic_light_classifier_mobilenetv2_batch_6"
@@ -91,7 +93,18 @@
 
   <!-- Camera-Lidar fusion parameters -->
   <arg name="remove_unknown" default="true"/>
-  <arg name="trust_distance" default="30.0"/>
+  <arg name="fusion_distance" default="100.0"/>
+  <arg name="trust_object_distance" default="100.0"/>
+
+  <!-- Whether to use detection by tracker -->
+  <arg name="use_detection_by_tracker" default="true"/>
+
+  <!-- Radar long range integration methods -->
+  <arg
+    name="use_radar_tracking_fusion"
+    default="false"
+    description="if use_radar_tracking_fusion:=true, radar information is merged in tracking launch. Otherwise, radar information is merged in detection launch."
+  />
 
   <!-- Perception module -->
   <group>
@@ -167,7 +180,8 @@
           <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)"/>
           <arg name="container_name" value="$(var pointcloud_container_name)"/>
           <arg name="remove_unknown" value="$(var remove_unknown)"/>
-          <arg name="trust_distance" value="$(var trust_distance)"/>
+          <arg name="fusion_distance" value="$(var fusion_distance)"/>
+          <arg name="trust_object_distance" value="$(var trust_object_distance)"/>
           <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
         </include>
       </group>
@@ -177,6 +191,14 @@
         <push-ros-namespace namespace="tracking"/>
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/tracking/tracking.launch.xml">
           <arg name="mode" value="$(var mode)"/>
+          <arg
+            name="object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path"
+            value="$(var object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path)"
+          />
+          <arg name="object_recognition_tracking_radar_object_tracker_tracking_setting_param_path" value="$(var object_recognition_tracking_radar_object_tracker_tracking_setting_param_path)"/>
+          <arg name="object_recognition_tracking_radar_object_tracker_node_param_path" value="$(var object_recognition_tracking_radar_object_tracker_node_param_path)"/>
+          <arg name="object_recognition_tracking_object_merger_data_association_matrix_param_path" value="$(var object_recognition_tracking_object_merger_data_association_matrix_param_path)"/>
+          <arg name="object_recognition_tracking_object_merger_node_param_path" value="$(var object_recognition_tracking_object_merger_node_param_path)"/>
         </include>
       </group>
 

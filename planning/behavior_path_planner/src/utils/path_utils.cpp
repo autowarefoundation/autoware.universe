@@ -15,7 +15,6 @@
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include "behavior_path_planner/utils/utils.hpp"
-#include "motion_utils/trajectory/path_with_lane_id.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -23,7 +22,6 @@
 #include <motion_utils/trajectory/interpolation.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-// #include <lanelet2_core/geometry/Lanelet.h>
 #include <tf2/utils.h>
 
 #include <algorithm>
@@ -226,7 +224,7 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
   const double max_time = std::numeric_limits<double>::max();
   const double max_distance = std::numeric_limits<double>::max();
-  if (path.shift_length.empty()) {
+  if (path.shift_length.size() < shift_line.end_idx + 1) {
     return std::make_pair(turn_signal, max_distance);
   }
   const auto base_link2front = common_parameter.base_link2front;
@@ -582,4 +580,13 @@ PathWithLaneId combinePath(const PathWithLaneId & path1, const PathWithLaneId & 
   return filtered_path;
 }
 
+boost::optional<Pose> getFirstStopPoseFromPath(const PathWithLaneId & path)
+{
+  for (const auto & p : path.points) {
+    if (std::abs(p.point.longitudinal_velocity_mps) < 0.01) {
+      return p.point.pose;
+    }
+  }
+  return boost::none;
+}
 }  // namespace behavior_path_planner::utils

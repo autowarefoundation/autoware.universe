@@ -51,6 +51,7 @@ using behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
 using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
 using geometry_msgs::msg::PoseArray;
 using lane_departure_checker::LaneDepartureChecker;
+using PriorityOrder = std::vector<std::pair<size_t, std::shared_ptr<PullOutPlannerBase>>>;
 
 struct PullOutStatus
 {
@@ -59,11 +60,16 @@ struct PullOutStatus
   PlannerType planner_type{PlannerType::NONE};
   PathWithLaneId backward_path{};
   lanelet::ConstLanelets pull_out_lanes{};
-  bool is_safe_static_objects{false};   // current path is safe against static objects
+  bool found_pull_out_path{false};      // current path is safe against static objects
   bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
-  bool back_finished{false};  // if backward driving is not required, this is also set to true
-                              // todo: rename to clear variable name.
+  bool driving_forward{false};          // if ego is driving on backward path, this is set to false
+  bool backward_driving_complete{
+    false};  // after backward driving is complete, this is set to true (warning: this is set to
+             // false at next cycle after backward driving is complete)
   Pose pull_out_start_pose{};
+  bool prev_is_safe_dynamic_objects{false};
+  std::shared_ptr<PathWithLaneId> prev_stop_path_after_approval{nullptr};
+  bool has_stop_point{false};
 
   PullOutStatus() {}
 };
@@ -84,12 +90,13 @@ public:
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   // TODO(someone): remove this, and use base class function
-  [[deprecated]] ModuleStatus updateState() override;
+  [[deprecated]] void updateCurrentState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
   void processOnEntry() override;
   void processOnExit() override;
+  void updateData() override;
 
   void setParameters(const std::shared_ptr<StartPlannerParameters> & parameters)
   {
@@ -110,7 +117,7 @@ public:
   }
 
   // Condition to disable simultaneous execution
-  bool isBackFinished() const { return status_.back_finished; }
+  bool isDrivingForward() const { return status_.driving_forward; }
   bool isFreespacePlanning() const { return status_.planner_type == PlannerType::FREESPACE; }
 
 private:
@@ -121,6 +128,26 @@ private:
   bool canTransitIdleToRunningState() override { return false; }
 
   void initializeSafetyCheckParameters();
+
+  bool isModuleRunning() const;
+  bool isCurrentPoseOnMiddleOfTheRoad() const;
+  bool isCloseToOriginalStartPose() const;
+  bool hasArrivedAtGoal() const;
+  bool isMoving() const;
+
+  PriorityOrder determinePriorityOrder(
+    const std::string & search_priority, const size_t candidates_size);
+  bool findPullOutPath(
+    const std::vector<Pose> & start_pose_candidates, const size_t index,
+    const std::shared_ptr<PullOutPlannerBase> & planner, const Pose & refined_start_pose,
+    const Pose & goal_pose);
+  void updateStatusWithCurrentPath(
+    const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
+    const behavior_path_planner::PlannerType & planner_type);
+  void updateStatusWithNextPath(
+    const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
+    const behavior_path_planner::PlannerType & planner_type);
+  void updateStatusIfNoSafePathFound();
 
   std::shared_ptr<StartPlannerParameters> parameters_;
   mutable std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;
@@ -136,7 +163,6 @@ private:
 
   std::unique_ptr<rclcpp::Time> last_route_received_time_;
   std::unique_ptr<rclcpp::Time> last_pull_out_start_update_time_;
-  std::unique_ptr<Pose> last_approved_pose_;
 
   // generate freespace pull out paths in a separate thread
   std::unique_ptr<PullOutPlannerBase> freespace_planner_;

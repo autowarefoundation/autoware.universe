@@ -14,65 +14,39 @@
 
 #include "graph.hpp"
 
-#include "node.hpp"
+#include "config.hpp"
+#include "error.hpp"
+#include "units.hpp"
 
 #include <deque>
-#include <map>
 #include <memory>
+#include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
-//
+// DEBUG
 #include <iostream>
 
 namespace system_diagnostic_graph
 {
 
-UnitNode * Graph::make_unit(const std::string & name)
+BaseUnit::UniquePtrList topological_sort(BaseUnit::UniquePtrList && input)
 {
-  const auto key = name;
-  auto unit = std::make_unique<UnitNode>(key);
-  units_[key] = unit.get();
-  nodes_.emplace_back(std::move(unit));
-  return units_[key];
-}
-
-UnitNode * Graph::find_unit(const std::string & name)
-{
-  const auto key = name;
-  return units_.count(key) ? units_.at(key) : nullptr;
-}
-
-DiagNode * Graph::make_diag(const std::string & name, const std::string & hardware)
-{
-  const auto key = std::make_pair(name, hardware);
-  auto diag = std::make_unique<DiagNode>(name, hardware);
-  diags_[key] = diag.get();
-  nodes_.emplace_back(std::move(diag));
-  return diags_[key];
-}
-
-DiagNode * Graph::find_diag(const std::string & name, const std::string & hardware)
-{
-  const auto key = std::make_pair(name, hardware);
-  return diags_.count(key) ? diags_.at(key) : nullptr;
-}
-
-void Graph::topological_sort()
-{
-  std::map<BaseNode *, int> degrees;
-  std::deque<BaseNode *> nodes;
-  std::deque<BaseNode *> result;
-  std::deque<BaseNode *> buffer;
+  std::unordered_map<BaseUnit *, int> degrees;
+  std::deque<BaseUnit *> nodes;
+  std::deque<BaseUnit *> result;
+  std::deque<BaseUnit *> buffer;
 
   // Create a list of raw pointer nodes.
-  for (const auto & node : nodes_) {
+  for (const auto & node : input) {
     nodes.push_back(node.get());
   }
 
   // Count degrees of each node.
   for (const auto & node : nodes) {
-    for (const auto & link : node->links()) {
-      ++degrees[link];
+    for (const auto & child : node->children()) {
+      ++degrees[child];
     }
   }
 
@@ -87,9 +61,9 @@ void Graph::topological_sort()
   while (!buffer.empty()) {
     const auto node = buffer.front();
     buffer.pop_front();
-    for (const auto & link : node->links()) {
-      if (--degrees[link] == 0) {
-        buffer.push_back(link);
+    for (const auto & child : node->children()) {
+      if (--degrees[child] == 0) {
+        buffer.push_back(child);
       }
     }
     result.push_back(node);
@@ -97,22 +71,144 @@ void Graph::topological_sort()
 
   // Detect circulation because the result does not include the nodes on the loop.
   if (result.size() != nodes.size()) {
-    throw ConfigError("detect graph circulation");
+    throw error<GraphStructure>("detect graph circulation");
   }
 
   // Reverse the result to process from leaf node.
-  result = std::deque<BaseNode *>(result.rbegin(), result.rend());
+  result = std::deque<BaseUnit *>(result.rbegin(), result.rend());
 
   // Replace node vector.
-  std::map<BaseNode *, size_t> indices;
+  std::unordered_map<BaseUnit *, size_t> indices;
   for (size_t i = 0; i < result.size(); ++i) {
     indices[result[i]] = i;
   }
-  std::vector<std::unique_ptr<BaseNode>> temp(nodes_.size());
-  for (auto & node : nodes_) {
-    temp[indices[node.get()]] = std::move(node);
+  std::vector<std::unique_ptr<BaseUnit>> sorted(input.size());
+  for (auto & node : input) {
+    sorted[indices[node.get()]] = std::move(node);
   }
-  nodes_ = std::move(temp);
+  return sorted;
+}
+
+BaseUnit::UniquePtr make_node(const UnitConfig::SharedPtr & config)
+{
+  if (config->type == "diag") {
+    return std::make_unique<DiagUnit>(config->path);
+  }
+  if (config->type == "and") {
+    return std::make_unique<AndUnit>(config->path, false);
+  }
+  if (config->type == "short-circuit-and") {
+    return std::make_unique<AndUnit>(config->path, true);
+  }
+  if (config->type == "or") {
+    return std::make_unique<OrUnit>(config->path);
+  }
+  if (config->type == "ok") {
+    return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::OK);
+  }
+  if (config->type == "warn") {
+    return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::WARN);
+  }
+  if (config->type == "error") {
+    return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::ERROR);
+  }
+  if (config->type == "stale") {
+    return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::STALE);
+  }
+  throw error<UnknownType>("unknown node type", config->type, config->data);
+}
+
+Graph::Graph()
+{
+  // for unique_ptr
+}
+
+Graph::~Graph()
+{
+  // for unique_ptr
+}
+
+void Graph::init(const std::string & file, const std::string & mode)
+{
+  (void)mode;  // TODO(Takagi, Isamu)
+
+  BaseUnit::UniquePtrList nodes;
+  BaseUnit::NodeDict dict;
+
+  for (const auto & config : load_root_config(file).nodes) {
+    const auto node = nodes.emplace_back(make_node(config)).get();
+    dict.configs[config] = node;
+    dict.paths[config->path] = node;
+  }
+  dict.paths.erase("");
+
+  for (const auto & [config, node] : dict.configs) {
+    node->init(config, dict);
+  }
+
+  // Sort units in topological order for update dependencies.
+  nodes = topological_sort(std::move(nodes));
+
+  for (size_t index = 0; index < nodes.size(); ++index) {
+    nodes[index]->set_index(index);
+  }
+
+  for (const auto & node : nodes) {
+    const auto diag = dynamic_cast<DiagUnit *>(node.get());
+    if (diag) {
+      diags_[diag->name()] = diag;
+      std::cout << diag->name() << std::endl;
+    }
+  }
+  nodes_ = std::move(nodes);
+}
+
+void Graph::callback(const rclcpp::Time & stamp, const DiagnosticArray & array)
+{
+  for (const auto & status : array.status) {
+    const auto iter = diags_.find(status.name);
+    if (iter != diags_.end()) {
+      iter->second->callback(stamp, status);
+    } else {
+      // TODO(Takagi, Isamu)
+      std::cout << "unknown diag: " << status.name << std::endl;
+    }
+  }
+}
+
+DiagnosticGraph Graph::report(const rclcpp::Time & stamp)
+{
+  for (const auto & node : nodes_) {
+    node->update(stamp);
+  }
+
+  DiagnosticGraph message;
+  message.stamp = stamp;
+  message.nodes.reserve(nodes_.size());
+  for (const auto & node : nodes_) {
+    const auto report = node->report();
+    DiagnosticNode temp;
+    temp.status.name = node->path();
+    temp.status.level = report.level;
+    for (const auto & [ref, used] : report.links) {
+      DiagnosticLink link;
+      link.index = ref->index();
+      link.used = used;
+      temp.links.push_back(link);
+    }
+    message.nodes.push_back(temp);
+  }
+  return message;
+}
+
+std::vector<BaseUnit *> Graph::nodes() const
+{
+  std::vector<BaseUnit *> result;
+  result.reserve(nodes_.size());
+  for (const auto & node : nodes_) {
+    result.push_back(node.get());
+  }
+  return result;
 }
 
 }  // namespace system_diagnostic_graph

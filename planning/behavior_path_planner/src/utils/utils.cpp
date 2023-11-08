@@ -15,7 +15,9 @@
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include "behavior_path_planner/utils/drivable_area_expansion/drivable_area_expansion.hpp"
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -23,9 +25,6 @@
 #include <motion_utils/resample/resample.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
-
-#include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
-#include "autoware_auto_perception_msgs/msg/predicted_path.hpp"
 
 #include <boost/geometry/algorithms/is_valid.hpp>
 
@@ -975,6 +974,9 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
     shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
 
+  // TODO(someone): insert 0 velocity on the path
+  // assumption: this function is called when any of the scene module is running and ego is outside
+  // of the route
   output.path = std::make_shared<PathWithLaneId>(reference_path);
   output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
   output.drivable_area_info.drivable_lanes = drivable_lanes;
@@ -1539,7 +1541,7 @@ void generateDrivableArea(
   }
   const auto & expansion_params = planner_data->drivable_area_expansion_parameters;
   if (expansion_params.enabled) {
-    drivable_area_expansion::expandDrivableArea(path, planner_data, transformed_lanes);
+    drivable_area_expansion::expand_drivable_area(path, planner_data);
   }
 
   // make bound longitudinally monotonic
@@ -1550,6 +1552,232 @@ void generateDrivableArea(
     makeBoundLongitudinallyMonotonic(path, planner_data, true);   // for left bound
     makeBoundLongitudinallyMonotonic(path, planner_data, false);  // for right bound
   }
+}
+
+std::vector<lanelet::ConstPoint3d> getBoundWithHatchedRoadMarkings(
+  const std::vector<lanelet::ConstPoint3d> & original_bound,
+  const std::shared_ptr<RouteHandler> & route_handler)
+{
+  // a function to get polygon with a designated point id
+  const auto get_corresponding_polygon_index =
+    [&](const auto & polygon, const auto & target_point_id) {
+      for (size_t poly_point_idx = 0; poly_point_idx < polygon.size(); ++poly_point_idx) {
+        if (polygon[poly_point_idx].id() == target_point_id) {
+          // NOTE: If there are duplicated points in polygon, the early one will be returned.
+          return poly_point_idx;
+        }
+      }
+      // This means calculation has some errors.
+      return polygon.size() - 1;
+    };
+
+  const auto mod = [&](const int a, const int b) {
+    return (a + b) % b;  // NOTE: consider negative value
+  };
+
+  std::vector<lanelet::ConstPoint3d> expanded_bound{};
+
+  std::optional<lanelet::Polygon3d> current_polygon{std::nullopt};
+  std::vector<size_t> current_polygon_border_indices;
+  // expand drivable area by hatched road markings.
+  for (size_t bound_point_idx = 0; bound_point_idx < original_bound.size(); ++bound_point_idx) {
+    const auto & bound_point = original_bound[bound_point_idx];
+    const auto polygon = getPolygonByPoint(route_handler, bound_point, "hatched_road_markings");
+
+    bool will_close_polygon{false};
+    if (!current_polygon) {
+      if (!polygon) {
+        expanded_bound.push_back(bound_point);
+      } else {
+        // There is a new additional polygon to expand
+        current_polygon = polygon;
+        current_polygon_border_indices.push_back(
+          get_corresponding_polygon_index(*current_polygon, bound_point.id()));
+      }
+    } else {
+      if (!polygon) {
+        will_close_polygon = true;
+      } else {
+        current_polygon_border_indices.push_back(
+          get_corresponding_polygon_index(*current_polygon, bound_point.id()));
+      }
+    }
+
+    if (bound_point_idx == original_bound.size() - 1 && current_polygon) {
+      // If drivable lanes ends earlier than polygon, close the polygon
+      will_close_polygon = true;
+    }
+
+    if (will_close_polygon) {
+      // The current additional polygon ends to expand
+      if (current_polygon_border_indices.size() == 1) {
+        expanded_bound.push_back((*current_polygon)[current_polygon_border_indices.front()]);
+      } else {
+        const size_t current_polygon_points_num = current_polygon->size();
+        const bool is_polygon_opposite_direction = [&]() {
+          const size_t modulo_diff = mod(
+            static_cast<int>(current_polygon_border_indices[1]) -
+              static_cast<int>(current_polygon_border_indices[0]),
+            current_polygon_points_num);
+          return modulo_diff == 1;
+        }();
+
+        const int target_points_num =
+          current_polygon_points_num - current_polygon_border_indices.size() + 1;
+        for (int poly_idx = 0; poly_idx <= target_points_num; ++poly_idx) {
+          const int target_poly_idx = current_polygon_border_indices.front() +
+                                      poly_idx * (is_polygon_opposite_direction ? -1 : 1);
+          expanded_bound.push_back(
+            (*current_polygon)[mod(target_poly_idx, current_polygon_points_num)]);
+        }
+      }
+      current_polygon = std::nullopt;
+      current_polygon_border_indices.clear();
+    }
+  }
+
+  return expanded_bound;
+}
+
+std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
+  const std::vector<lanelet::ConstPoint3d> & original_bound,
+  const std::shared_ptr<RouteHandler> & route_handler,
+  const std::vector<DrivableLanes> & drivable_lanes, const bool is_left)
+{
+  const auto extract_bound_from_polygon =
+    [](const auto & polygon, const auto start_idx, const auto end_idx, const auto clockwise) {
+      std::vector<lanelet::ConstPoint3d> ret{};
+      for (size_t i = start_idx; i != end_idx; i = clockwise ? i + 1 : i - 1) {
+        ret.push_back(polygon[i]);
+
+        if (i + 1 == polygon.size() && clockwise) {
+          if (end_idx == 0) {
+            ret.push_back(polygon[end_idx]);
+            return ret;
+          }
+          i = 0;
+          continue;
+        }
+
+        if (i == 0 && !clockwise) {
+          if (end_idx == polygon.size() - 1) {
+            ret.push_back(polygon[end_idx]);
+            return ret;
+          }
+          i = polygon.size() - 1;
+          continue;
+        }
+      }
+
+      ret.push_back(polygon[end_idx]);
+
+      return ret;
+    };
+
+  std::vector<lanelet::ConstPoint3d> expanded_bound = original_bound;
+
+  // expand drivable area by using intersection area.
+  for (const auto & drivable_lane : drivable_lanes) {
+    const auto edge_lanelet = is_left ? drivable_lane.left_lane : drivable_lane.right_lane;
+    const auto lanelet_bound = is_left ? edge_lanelet.leftBound3d() : edge_lanelet.rightBound3d();
+
+    if (lanelet_bound.size() < 2) {
+      continue;
+    }
+
+    const std::string id = edge_lanelet.attributeOr("intersection_area", "else");
+    if (id == "else") {
+      continue;
+    }
+
+    // Step1. extract intersection partial bound.
+    std::vector<lanelet::ConstPoint3d> intersection_bound{};
+    {
+      const auto polygon =
+        route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(id.c_str()));
+
+      const auto is_clockwise_polygon =
+        boost::geometry::is_valid(lanelet::utils::to2D(polygon.basicPolygon()));
+      const auto is_clockwise_iteration = is_clockwise_polygon ? is_left : !is_left;
+
+      const auto intersection_bound_itr_init = std::find_if(
+        polygon.begin(), polygon.end(),
+        [&lanelet_bound](const auto & p) { return p.id() == lanelet_bound.front().id(); });
+
+      const auto intersection_bound_itr_last = std::find_if(
+        polygon.begin(), polygon.end(),
+        [&lanelet_bound](const auto & p) { return p.id() == lanelet_bound.back().id(); });
+
+      if (
+        intersection_bound_itr_init == polygon.end() ||
+        intersection_bound_itr_last == polygon.end()) {
+        continue;
+      }
+
+      // extract line strings between start_idx and end_idx.
+      const size_t start_idx = std::distance(polygon.begin(), intersection_bound_itr_init);
+      const size_t end_idx = std::distance(polygon.begin(), intersection_bound_itr_last);
+
+      intersection_bound =
+        extract_bound_from_polygon(polygon, start_idx, end_idx, is_clockwise_iteration);
+    }
+
+    // Step2. check shared bound point.
+    const auto shared_point_itr_init =
+      std::find_if(expanded_bound.begin(), expanded_bound.end(), [&](const auto & p) {
+        return std::any_of(
+          intersection_bound.begin(), intersection_bound.end(),
+          [&](const auto & point) { return point.id() == p.id(); });
+      });
+
+    const auto shared_point_itr_last =
+      std::find_if(expanded_bound.rbegin(), expanded_bound.rend(), [&](const auto & p) {
+        return std::any_of(
+          intersection_bound.rbegin(), intersection_bound.rend(),
+          [&](const auto & point) { return point.id() == p.id(); });
+      });
+
+    if (
+      shared_point_itr_init == expanded_bound.end() ||
+      shared_point_itr_last == expanded_bound.rend()) {
+      continue;
+    }
+
+    // Step3. overwrite duplicate drivable bound by intersection bound.
+    {
+      const auto trim_point_itr_init = std::find_if(
+        intersection_bound.begin(), intersection_bound.end(),
+        [&](const auto & p) { return p.id() == shared_point_itr_init->id(); });
+
+      const auto trim_point_itr_last = std::find_if(
+        intersection_bound.begin(), intersection_bound.end(),
+        [&](const auto & p) { return p.id() == shared_point_itr_last->id(); });
+
+      if (
+        trim_point_itr_init == intersection_bound.end() ||
+        trim_point_itr_last == intersection_bound.end()) {
+        continue;
+      }
+
+      // TODO(Satoshi OTA): remove this guard.
+      if (
+        std::distance(intersection_bound.begin(), trim_point_itr_last) <
+        std::distance(intersection_bound.begin(), trim_point_itr_init)) {
+        continue;
+      }
+
+      std::vector<lanelet::ConstPoint3d> tmp_bound{};
+
+      tmp_bound.insert(tmp_bound.end(), expanded_bound.begin(), shared_point_itr_init);
+      tmp_bound.insert(tmp_bound.end(), trim_point_itr_init, trim_point_itr_last);
+      tmp_bound.insert(
+        tmp_bound.end(), std::next(shared_point_itr_last).base(), expanded_bound.end());
+
+      expanded_bound = tmp_bound;
+    }
+  }
+
+  return expanded_bound;
 }
 
 // calculate bounds from drivable lanes and hatched road markings
@@ -1577,171 +1805,39 @@ std::vector<geometry_msgs::msg::Point> calcBound(
     }
     return points;
   };
-  // a function to get polygon with a designated point id
-  const auto get_corresponding_polygon_index =
-    [&](const auto & polygon, const auto & target_point_id) {
-      for (size_t poly_point_idx = 0; poly_point_idx < polygon.size(); ++poly_point_idx) {
-        if (polygon[poly_point_idx].id() == target_point_id) {
-          // NOTE: If there are duplicated points in polygon, the early one will be returned.
-          return poly_point_idx;
-        }
-      }
-      // This means calculation has some errors.
-      return polygon.size() - 1;
-    };
-  const auto mod = [&](const int a, const int b) {
-    return (a + b) % b;  // NOTE: consider negative value
+
+  const auto to_ros_point = [](const std::vector<lanelet::ConstPoint3d> & bound) {
+    std::vector<Point> ret{};
+    std::for_each(bound.begin(), bound.end(), [&](const auto & p) {
+      ret.push_back(lanelet::utils::conversion::toGeomMsgPt(p));
+    });
+    return ret;
   };
-  const auto extract_bound_from_polygon =
-    [](const auto & polygon, const auto start_idx, const auto end_idx, const auto clockwise) {
-      std::vector<geometry_msgs::msg::Point> ret;
-      for (size_t i = start_idx; i != end_idx; i = clockwise ? i + 1 : i - 1) {
-        ret.push_back(lanelet::utils::conversion::toGeomMsgPt(polygon[i]));
 
-        if (i + 1 == polygon.size() && clockwise) {
-          if (end_idx == 0) {
-            ret.push_back(lanelet::utils::conversion::toGeomMsgPt(polygon[end_idx]));
-            return ret;
-          }
-          i = 0;
-          continue;
-        }
+  // Step1. create drivable bound from drivable lanes.
+  std::vector<lanelet::ConstPoint3d> bound_points = convert_to_points(drivable_lanes);
 
-        if (i == 0 && !clockwise) {
-          if (end_idx == polygon.size() - 1) {
-            ret.push_back(lanelet::utils::conversion::toGeomMsgPt(polygon[end_idx]));
-            return ret;
-          }
-          i = polygon.size() - 1;
-          continue;
-        }
-      }
-
-      return ret;
-    };
-
-  // If no need to expand with polygons, return here.
-  std::vector<geometry_msgs::msg::Point> output_points;
-  const auto bound_points = convert_to_points(drivable_lanes);
+  // Step2. if there is no drivable area defined by polygon, return original drivable bound.
   if (!enable_expanding_hatched_road_markings && !enable_expanding_intersection_areas) {
-    for (const auto & point : bound_points) {
-      output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(point));
-    }
-    return motion_utils::removeOverlapPoints(output_points);
+    return motion_utils::removeOverlapPoints(to_ros_point(bound_points));
   }
 
-  std::optional<lanelet::Polygon3d> current_polygon{std::nullopt};
-  std::vector<size_t> current_polygon_border_indices;
-  for (const auto & drivable_lane : drivable_lanes) {
-    // extract target lane and bound.
-    const auto bound_lane = is_left ? drivable_lane.left_lane : drivable_lane.right_lane;
-    const auto bound = is_left ? bound_lane.leftBound3d() : bound_lane.rightBound3d();
-
-    if (bound.size() < 2) {
-      continue;
-    }
-
-    // expand drivable area by intersection areas.
-    const std::string id = bound_lane.attributeOr("intersection_area", "else");
-    const auto use_intersection_area = enable_expanding_intersection_areas && id != "else";
-    if (use_intersection_area) {
-      const auto polygon =
-        route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(id.c_str()));
-
-      const auto is_clockwise_polygon =
-        boost::geometry::is_valid(lanelet::utils::to2D(polygon.basicPolygon()));
-      const auto is_clockwise_iteration = is_clockwise_polygon ? is_left : !is_left;
-
-      const auto start_itr = std::find_if(polygon.begin(), polygon.end(), [&bound](const auto & p) {
-        return p.id() == bound.front().id();
-      });
-
-      const auto end_itr = std::find_if(polygon.begin(), polygon.end(), [&bound](const auto & p) {
-        return p.id() == bound.back().id();
-      });
-
-      if (start_itr == polygon.end() || end_itr == polygon.end()) {
-        continue;
-      }
-
-      // extract line strings between start_idx and end_idx.
-      const size_t start_idx = std::distance(polygon.begin(), start_itr);
-      const size_t end_idx = std::distance(polygon.begin(), end_itr);
-      for (const auto & point :
-           extract_bound_from_polygon(polygon, start_idx, end_idx, is_clockwise_iteration)) {
-        output_points.push_back(point);
-      }
-
-      continue;
-    }
-
-    if (!enable_expanding_hatched_road_markings) {
-      for (const auto & point : bound) {
-        output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(point));
-      }
-      continue;
-    }
-
-    // expand drivable area by hatched road markings.
-    for (size_t bound_point_idx = 0; bound_point_idx < bound.size(); ++bound_point_idx) {
-      const auto & bound_point = bound[bound_point_idx];
-      const auto polygon = getPolygonByPoint(route_handler, bound_point, "hatched_road_markings");
-
-      bool will_close_polygon{false};
-      if (!current_polygon) {
-        if (!polygon) {
-          output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(bound_point));
-        } else {
-          // There is a new additional polygon to expand
-          current_polygon = polygon;
-          current_polygon_border_indices.push_back(
-            get_corresponding_polygon_index(*current_polygon, bound_point.id()));
-        }
-      } else {
-        if (!polygon) {
-          will_close_polygon = true;
-        } else {
-          current_polygon_border_indices.push_back(
-            get_corresponding_polygon_index(*current_polygon, bound_point.id()));
-        }
-      }
-
-      if (bound_point_idx == bound_points.size() - 1 && current_polygon) {
-        // If drivable lanes ends earlier than polygon, close the polygon
-        will_close_polygon = true;
-      }
-
-      if (will_close_polygon) {
-        // The current additional polygon ends to expand
-        if (current_polygon_border_indices.size() == 1) {
-          output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(
-            (*current_polygon)[current_polygon_border_indices.front()]));
-        } else {
-          const size_t current_polygon_points_num = current_polygon->size();
-          const bool is_polygon_opposite_direction = [&]() {
-            const size_t modulo_diff = mod(
-              static_cast<int>(current_polygon_border_indices[1]) -
-                static_cast<int>(current_polygon_border_indices[0]),
-              current_polygon_points_num);
-            return modulo_diff == 1;
-          }();
-
-          const int target_points_num =
-            current_polygon_points_num - current_polygon_border_indices.size() + 1;
-          for (int poly_idx = 0; poly_idx <= target_points_num; ++poly_idx) {
-            const int target_poly_idx = current_polygon_border_indices.front() +
-                                        poly_idx * (is_polygon_opposite_direction ? -1 : 1);
-            output_points.push_back(lanelet::utils::conversion::toGeomMsgPt(
-              (*current_polygon)[mod(target_poly_idx, current_polygon_points_num)]));
-          }
-        }
-        current_polygon = std::nullopt;
-        current_polygon_border_indices.clear();
-      }
-    }
+  // Step3. if there are hatched road markings, expand drivable bound with the polygon.
+  if (enable_expanding_hatched_road_markings) {
+    bound_points = getBoundWithHatchedRoadMarkings(bound_points, route_handler);
   }
 
-  return motion_utils::removeOverlapPoints(output_points);
+  if (!enable_expanding_intersection_areas) {
+    return motion_utils::removeOverlapPoints(to_ros_point(bound_points));
+  }
+
+  // Step4. if there are intersection areas, expand drivable bound with the polygon.
+  {
+    bound_points =
+      getBoundWithIntersectionAreas(bound_points, route_handler, drivable_lanes, is_left);
+  }
+
+  return motion_utils::removeOverlapPoints(to_ros_point(bound_points));
 }
 
 void makeBoundLongitudinallyMonotonic(
@@ -1915,19 +2011,41 @@ void makeBoundLongitudinallyMonotonic(
       return bound;
     }
 
-    std::vector<Point> ret;
-
-    for (size_t i = 0; i < bound.size(); i++) {
-      const auto & p_new = bound.at(i);
-      const auto duplicated_points_itr = std::find_if(
-        ret.begin(), ret.end(),
-        [&p_new](const auto & p) { return calcDistance2d(p, p_new) < 0.1; });
-
-      if (duplicated_points_itr != ret.end() && std::next(duplicated_points_itr, 2) == ret.end()) {
-        ret.erase(duplicated_points_itr, ret.end());
+    std::vector<Point> ret = bound;
+    auto itr = std::next(ret.begin());
+    while (std::next(itr) != ret.end()) {
+      if (itr == ret.begin()) {
+        itr++;
+        continue;
       }
 
-      ret.push_back(p_new);
+      const auto p1 = *std::prev(itr);
+      const auto p2 = *itr;
+      const auto p3 = *std::next(itr);
+
+      const std::vector vec_1to2 = {p2.x - p1.x, p2.y - p1.y, p2.z - p1.z};
+      const std::vector vec_3to2 = {p2.x - p3.x, p2.y - p3.y, p2.z - p3.z};
+      const auto product =
+        std::inner_product(vec_1to2.begin(), vec_1to2.end(), vec_3to2.begin(), 0.0);
+
+      const auto dist_1to2 = tier4_autoware_utils::calcDistance3d(p1, p2);
+      const auto dist_3to2 = tier4_autoware_utils::calcDistance3d(p3, p2);
+
+      constexpr double epsilon = 1e-3;
+
+      // Remove overlapped point.
+      if (dist_1to2 < epsilon || dist_3to2 < epsilon) {
+        itr = std::prev(ret.erase(itr));
+        continue;
+      }
+
+      // If the angle between the points is sharper than 45 degrees, remove the middle point.
+      if (std::cos(M_PI_4) < product / dist_1to2 / dist_3to2 + epsilon) {
+        itr = std::prev(ret.erase(itr));
+        continue;
+      }
+
+      itr++;
     }
 
     return ret;
@@ -2172,62 +2290,6 @@ double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLan
   const auto & arc_coordinates = lanelet::utils::getArcCoordinates(lanelets, current_pose);
   const double lanelet_length = lanelet::utils::getLaneletLength3d(lanelets);
   return lanelet_length - arc_coordinates.length;
-}
-
-double getDistanceToNextTrafficLight(
-  const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
-{
-  lanelet::ConstLanelet current_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(lanelets, current_pose, &current_lanelet)) {
-    return std::numeric_limits<double>::infinity();
-  }
-
-  const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(current_pose.position);
-  const auto to_object = lanelet::geometry::toArcCoordinates(
-    lanelet::utils::to2D(current_lanelet.centerline()),
-    lanelet::utils::to2D(lanelet_point).basicPoint());
-
-  for (const auto & element : current_lanelet.regulatoryElementsAs<lanelet::TrafficLight>()) {
-    lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().get();
-
-    const auto to_stop_line = lanelet::geometry::toArcCoordinates(
-      lanelet::utils::to2D(current_lanelet.centerline()),
-      lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
-
-    const auto distance_object_to_stop_line = to_stop_line.length - to_object.length;
-
-    if (distance_object_to_stop_line > 0.0) {
-      return distance_object_to_stop_line;
-    }
-  }
-
-  double distance = lanelet::utils::getLaneletLength3d(current_lanelet);
-
-  bool found_current_lane = false;
-  for (const auto & llt : lanelets) {
-    if (llt.id() == current_lanelet.id()) {
-      found_current_lane = true;
-      continue;
-    }
-
-    if (!found_current_lane) {
-      continue;
-    }
-
-    for (const auto & element : llt.regulatoryElementsAs<lanelet::TrafficLight>()) {
-      lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().get();
-
-      const auto to_stop_line = lanelet::geometry::toArcCoordinates(
-        lanelet::utils::to2D(llt.centerline()),
-        lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
-
-      return distance + to_stop_line.length - to_object.length;
-    }
-
-    distance += lanelet::utils::getLaneletLength3d(llt);
-  }
-
-  return std::numeric_limits<double>::infinity();
 }
 
 double getDistanceToNextIntersection(
@@ -2578,6 +2640,30 @@ double getArcLengthToTargetLanelet(
 
   return std::max(
     std::min(arc_front.length - arc_pose.length, arc_back.length - arc_pose.length), 0.0);
+}
+
+Polygon2d toPolygon2d(const lanelet::ConstLanelet & lanelet)
+{
+  Polygon2d polygon;
+  for (const auto & p : lanelet.polygon2d().basicPolygon()) {
+    polygon.outer().emplace_back(p.x(), p.y());
+  }
+  polygon.outer().push_back(polygon.outer().front());
+
+  return tier4_autoware_utils::isClockwise(polygon)
+           ? polygon
+           : tier4_autoware_utils::inverseClockwise(polygon);
+}
+
+Polygon2d toPolygon2d(const lanelet::BasicPolygon2d & polygon)
+{
+  Polygon2d ret;
+  for (const auto & p : polygon) {
+    ret.outer().emplace_back(p.x(), p.y());
+  }
+  ret.outer().push_back(ret.outer().front());
+
+  return tier4_autoware_utils::isClockwise(ret) ? ret : tier4_autoware_utils::inverseClockwise(ret);
 }
 
 std::vector<Polygon2d> getTargetLaneletPolygons(
@@ -2953,48 +3039,85 @@ lanelet::ConstLanelets getCurrentLanesFromPath(
 
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(reference_lanes, current_pose, &current_lane);
-
-  return route_handler->getLaneletSequence(
+  auto current_lanes = route_handler->getLaneletSequence(
     current_lane, current_pose, p.backward_path_length, p.forward_path_length);
+
+  // Extend the 'current_lanes' with previous lanes until it contains 'front_lane_ids'
+  // if the extended prior lanes is in same lane sequence with current lanes
+  const auto front_lane_ids = path.points.front().lane_ids;
+  auto have_front_lanes = [front_lane_ids](const auto & lanes) {
+    return std::any_of(lanes.begin(), lanes.end(), [&](const auto & lane) {
+      return std::find(front_lane_ids.begin(), front_lane_ids.end(), lane.id()) !=
+             front_lane_ids.end();
+    });
+  };
+  auto extended_lanes = current_lanes;
+  while (rclcpp::ok()) {
+    const size_t pre_extension_size = extended_lanes.size();  // Get existing size before extension
+    extended_lanes = extendPrevLane(route_handler, extended_lanes, true);
+    if (extended_lanes.size() == pre_extension_size) break;
+    if (have_front_lanes(extended_lanes)) {
+      current_lanes = extended_lanes;
+      break;
+    }
+  }
+
+  return current_lanes;
 }
 
 lanelet::ConstLanelets extendNextLane(
-  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes,
+  const bool only_in_route)
 {
+  if (lanes.empty()) return lanes;
+
   auto extended_lanes = lanes;
 
   // Add next lane
   const auto next_lanes = route_handler->getNextLanelets(extended_lanes.back());
   if (!next_lanes.empty()) {
+    boost::optional<lanelet::ConstLanelet> target_next_lane;
+    if (!only_in_route) {
+      target_next_lane = next_lanes.front();
+    }
     // use the next lane in route if it exists
-    auto target_next_lane = next_lanes.front();
     for (const auto & next_lane : next_lanes) {
       if (route_handler->isRouteLanelet(next_lane)) {
         target_next_lane = next_lane;
       }
     }
-    extended_lanes.push_back(target_next_lane);
+    if (target_next_lane) {
+      extended_lanes.push_back(*target_next_lane);
+    }
   }
 
   return extended_lanes;
 }
 
 lanelet::ConstLanelets extendPrevLane(
-  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes,
+  const bool only_in_route)
 {
+  if (lanes.empty()) return lanes;
+
   auto extended_lanes = lanes;
 
   // Add previous lane
   const auto prev_lanes = route_handler->getPreviousLanelets(extended_lanes.front());
   if (!prev_lanes.empty()) {
+    boost::optional<lanelet::ConstLanelet> target_prev_lane;
+    if (!only_in_route) {
+      target_prev_lane = prev_lanes.front();
+    }
     // use the previous lane in route if it exists
-    auto target_prev_lane = prev_lanes.front();
     for (const auto & prev_lane : prev_lanes) {
       if (route_handler->isRouteLanelet(prev_lane)) {
         target_prev_lane = prev_lane;
       }
     }
-    extended_lanes.insert(extended_lanes.begin(), target_prev_lane);
+    if (target_prev_lane) {
+      extended_lanes.insert(extended_lanes.begin(), *target_prev_lane);
+    }
   }
   return extended_lanes;
 }
@@ -3145,7 +3268,7 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
 
 double calcMinimumLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
-  const double length_to_intersection)
+  const double backward_buffer, const double length_to_intersection)
 {
   if (shift_intervals.empty()) {
     return 0.0;
@@ -3163,8 +3286,7 @@ double calcMinimumLaneChangeLength(
       PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
     accumulated_length += vel * t + finish_judge_buffer;
   }
-  accumulated_length +=
-    common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);
+  accumulated_length += backward_buffer * (shift_intervals.size() - 1.0);
 
   return accumulated_length;
 }

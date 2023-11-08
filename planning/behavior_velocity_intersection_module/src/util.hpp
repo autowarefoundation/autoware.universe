@@ -20,13 +20,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/point.hpp>
-
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
+#include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
 
 #include <map>
 #include <memory>
@@ -78,7 +72,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const lanelet::CompoundPolygon3d & first_detection_area,
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
-  const double stop_line_margin, const double peeking_offset,
+  const double stop_line_margin, const double max_accel, const double max_jerk,
+  const double delay_response_time, const double peeking_offset,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path);
 
 std::optional<size_t> getFirstPointInsidePolygon(
@@ -115,9 +110,10 @@ bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane);
 TrafficPrioritizedLevel getTrafficPrioritizedLevel(
   lanelet::ConstLanelet lane, const std::map<int, TrafficSignalStamped> & tl_infos);
 
-std::vector<DiscretizedLane> generateDetectionLaneDivisions(
+std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
   lanelet::ConstLanelets detection_lanelets,
-  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution);
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution,
+  const double curvature_threshold, const double curvature_calculation_ds);
 
 std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const int lane_id, const std::set<int> & associative_lane_ids,
@@ -132,27 +128,40 @@ bool checkStuckVehicleInIntersection(
   const Polygon2d & stuck_vehicle_detect_area, const double stuck_vehicle_vel_thr,
   DebugData * debug_data);
 
+bool checkYieldStuckVehicleInIntersection(
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+  const lanelet::BasicPolygon2d & ego_poly, const lanelet::CompoundPolygon3d & first_attention_area,
+  const double stuck_vehicle_vel_thr, const double yield_stuck_distance_thr,
+  DebugData * debug_data);
+
 Polygon2d generateStuckVehicleDetectAreaPolygon(
   const util::PathLanelets & path_lanelets, const double stuck_vehicle_detect_dist);
 
-bool checkAngleForTargetLanelets(
+std::optional<size_t> checkAngleForTargetLanelets(
   const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
   const double detection_area_angle_thr, const bool consider_wrong_direction_vehicle,
-  const double margin = 0.0);
+  const double dist_margin, const bool is_parked_vehicle);
 
 void cutPredictPathWithDuration(
-  autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
-  const rclcpp::Clock::SharedPtr clock, const double time_thr);
+  util::TargetObjects * target_objects, const rclcpp::Clock::SharedPtr clock,
+  const double time_thr);
 
 TimeDistanceArray calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::shared_ptr<const PlannerData> & planner_data, const std::set<int> & associative_ids,
-  const int closest_idx, const double time_delay, const double intersection_velocity,
-  const double minimum_ego_velocity);
+  const std::shared_ptr<const PlannerData> & planner_data, const lanelet::Id lane_id,
+  const std::set<int> & associative_ids, const size_t closest_idx,
+  const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
+  const double intersection_velocity, const double minimum_ego_velocity,
+  const bool use_upstream_velocity, const double minimum_upstream_velocity,
+  tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array);
 
 double calcDistanceUntilIntersectionLanelet(
   const lanelet::ConstLanelet & assigned_lanelet,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx);
+
+lanelet::ConstLanelet generatePathLanelet(
+  const PathWithLaneId & path, const size_t start_idx, const size_t end_idx, const double width,
+  const double interval);
 
 std::optional<PathLanelets> generatePathLanelets(
   const lanelet::ConstLanelets & lanelets_on_path,

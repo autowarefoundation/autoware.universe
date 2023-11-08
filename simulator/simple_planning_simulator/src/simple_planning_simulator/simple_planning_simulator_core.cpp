@@ -229,6 +229,7 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const double vel_time_constant = declare_parameter("vel_time_constant", 0.5);
   const double steer_time_delay = declare_parameter("steer_time_delay", 0.24);
   const double steer_time_constant = declare_parameter("steer_time_constant", 0.27);
+  const double steer_dead_band = declare_parameter("steer_dead_band", 0.0);
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   const double wheelbase = vehicle_info.wheel_base_m;
 
@@ -245,17 +246,17 @@ void SimplePlanningSimulator::initialize_vehicle_model()
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_VEL;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerVel>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-      vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant);
+      vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant, steer_dead_band);
   } else if (vehicle_model_type_str == "DELAY_STEER_ACC") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant);
+      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_dead_band);
   } else if (vehicle_model_type_str == "DELAY_STEER_ACC_GEARED") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_GEARED;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAccGeared>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant);
+      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_dead_band);
   } else {
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
@@ -313,7 +314,7 @@ double SimplePlanningSimulator::calculate_ego_pitch() const
                          std::cos(ego_yaw_against_lanelet);
   const bool reverse_sign = std::cos(ego_yaw_against_lanelet) < 0.0;
   const double ego_pitch_angle =
-    reverse_sign ? std::atan2(-diff_z, -diff_xy) : std::atan2(diff_z, diff_xy);
+    reverse_sign ? -std::atan2(-diff_z, -diff_xy) : -std::atan2(diff_z, diff_xy);
   return ego_pitch_angle;
 }
 
@@ -638,6 +639,7 @@ void SimplePlanningSimulator::publish_acceleration()
   msg.header.frame_id = "/base_link";
   msg.header.stamp = get_clock()->now();
   msg.accel.accel.linear.x = vehicle_model_ptr_->getAx();
+  msg.accel.accel.linear.y = vehicle_model_ptr_->getWz() * vehicle_model_ptr_->getVx();
 
   using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   constexpr auto COV = 0.001;
@@ -658,6 +660,7 @@ void SimplePlanningSimulator::publish_imu()
   imu.header.frame_id = "base_link";
   imu.header.stamp = now();
   imu.linear_acceleration.x = vehicle_model_ptr_->getAx();
+  imu.linear_acceleration.y = vehicle_model_ptr_->getWz() * vehicle_model_ptr_->getVx();
   constexpr auto COV = 0.001;
   imu.linear_acceleration_covariance.at(COV_IDX::X_X) = COV;
   imu.linear_acceleration_covariance.at(COV_IDX::Y_Y) = COV;
