@@ -64,3 +64,28 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByVelocity)
 
 
 }
+TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByPosition)
+{
+    using autoware_auto_perception_msgs::msg::PredictedObject;
+    using autoware_auto_perception_msgs::msg::PredictedObjects;
+    using behavior_path_planner::utils::path_safety_checker::filterObjectsByPosition;
+    using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
+    using autoware_auto_planning_msgs::msg::PathPoint;
+    using geometry_msgs::msg::Pose;
+
+    PredictedObjects predicted_objects;
+    PredictedObject predicted_object;
+    PredictedObjects ans_objects;
+    PredictedObjects ans_object;
+
+    const std::vector<PathPointWithLaneId> path_points;
+    //tier4_autoware_utils::createPoint(0, 0, 0);
+    
+    const geometry_msgs::msg::Point current_pose = tier4_autoware_utils::createPoint(1, 0, 0);
+    const double forward_distance = 1.0;
+    const double backward_distance = 1.0;
+
+    
+    filterObjectsByPosition(predicted_objects, path_points, current_pose, forward_distance, backward_distance);
+    EXPECT_EQ(predicted_objects, ans_objects);
+}
