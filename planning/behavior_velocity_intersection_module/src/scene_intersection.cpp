@@ -936,6 +936,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
   const std::string turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
+  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
   // spline interpolation
   const auto interpolated_path_info_opt = util::generateInterpolatedPath(
@@ -969,15 +970,17 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const bool is_prioritized =
     traffic_prioritized_level == util::TrafficPrioritizedLevel::FULLY_PRIORITIZED;
   const auto footprint = planner_data_->vehicle_info_.createFootprint(0.0, 0.0);
-  intersection_lanelets.update(is_prioritized, interpolated_path_info, footprint);
+  intersection_lanelets.update(is_prioritized, interpolated_path_info, footprint, baselink2front);
 
   // this is abnormal
   const auto & conflicting_lanelets = intersection_lanelets.conflicting();
   const auto & first_conflicting_area_opt = intersection_lanelets.first_conflicting_area();
-  if (conflicting_lanelets.empty() || !first_conflicting_area_opt) {
+  const auto & first_conflicting_lane_opt = intersection_lanelets.first_conflicting_lane();
+  if (conflicting_lanelets.empty() || !first_conflicting_area_opt || !first_conflicting_lane_opt) {
     return IntersectionModule::Indecisive{"conflicting area is empty"};
   }
-  const auto first_conflicting_area = first_conflicting_area_opt.value();
+  const auto & first_conflicting_lane = first_conflicting_lane_opt.value();
+  const auto & first_conflicting_area = first_conflicting_area_opt.value();
 
   // generate all stop line candidates
   // see the doc for struct IntersectionStopLines
@@ -986,14 +989,16 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   /// conflicting lanes
   const auto & dummy_first_attention_area =
     first_attention_area_opt ? first_attention_area_opt.value() : first_conflicting_area;
-  const double peeking_offset =
-    has_traffic_light_ ? planner_param_.occlusion.peeking_offset
-                       : planner_param_.occlusion.absence_traffic_light.maximum_peeking_distance;
+  const auto & dummy_first_attention_lane_centerline =
+    intersection_lanelets.first_attention_lane()
+      ? intersection_lanelets.first_attention_lane().value().centerline2d()
+      : first_conflicting_lane.centerline2d();
   const auto intersection_stop_lines_opt = util::generateIntersectionStopLines(
-    first_conflicting_area, dummy_first_attention_area, planner_data_, interpolated_path_info,
-    planner_param_.stuck_vehicle.use_stuck_stopline, planner_param_.common.stop_line_margin,
-    planner_param_.common.max_accel, planner_param_.common.max_jerk,
-    planner_param_.common.delay_response_time, peeking_offset, path);
+    first_conflicting_area, dummy_first_attention_area, dummy_first_attention_lane_centerline,
+    planner_data_, interpolated_path_info, planner_param_.stuck_vehicle.use_stuck_stopline,
+    planner_param_.common.stop_line_margin, planner_param_.common.max_accel,
+    planner_param_.common.max_jerk, planner_param_.common.delay_response_time,
+    planner_param_.occlusion.peeking_offset, enable_occlusion_detection_, has_traffic_light_, path);
   if (!intersection_stop_lines_opt) {
     return IntersectionModule::Indecisive{"failed to generate intersection_stop_lines"};
   }
@@ -1086,7 +1091,6 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   const auto default_stop_line_idx = default_stop_line_idx_opt.value();
 
   // TODO(Mamoru Sobue): this part needs more formal handling
-  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   debug_data_.pass_judge_wall_pose =
     planning_utils::getAheadPose(pass_judge_line_idx, baselink2front, *path);
   const bool is_over_pass_judge_line =
@@ -1257,7 +1261,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
             temporal_stop_before_attention_state_machine_)
         : false;
     if (!has_traffic_light_) {
-      if (fromEgoDist(first_attention_stop_line_idx) <= -peeking_offset) {
+      if (fromEgoDist(occlusion_stop_line_idx) < 0) {
         return IntersectionModule::Indecisive{
           "already passed maximum peeking line in the absence of traffic light"};
       }

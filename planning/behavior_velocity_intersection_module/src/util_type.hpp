@@ -74,7 +74,7 @@ struct IntersectionLanelets
 public:
   void update(
     const bool is_prioritized, const InterpolatedPathInfo & interpolated_path_info,
-    const tier4_autoware_utils::LinearRing2d & footprint);
+    const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length);
   const lanelet::ConstLanelets & attention() const
   {
     return is_prioritized_ ? attention_non_preceding_ : attention_;
