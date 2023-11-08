@@ -57,10 +57,13 @@ bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2
   return false;
 }
 
-bool isAllPointsInAnyLane(const PathPointWithLaneId &refined_path,
+bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
                           const lanelet::ConstLanelets &candidate_lanelets) {
+  Point2d path_point_point2D;
   for (const auto &path_point : refined_path) {
-    bool is_point_in_any_lanelet = isInAnyLane(candidate_lanelets, path_point.point.pose.position);
+    path_point_point2D.x = path_point.points.point.pose.position.x;
+    path_point_point2D.y = path_point.points.point.pose.position.y;
+    bool is_point_in_any_lanelet = isInAnyLane(candidate_lanelets, path_point_point2D);
     if (!is_point_in_any_lanelet) {
       return false;  // at least one path_point falls outside any lanelet
     }
@@ -76,21 +79,21 @@ bool isAllPointsInAnyLane(const PathPointWithLaneId &refined_path,
 
 #include "route_handler/route_handler.hpp" // MAKE SURE
 
-lanelet::ConstLanelets extractLaneletsFromPath(const PathPointWithLaneId& refined_path) {
-    const auto & rh = planner_data->route_handler; // HOW
+lanelet::ConstLanelets extractLaneletsFromPath(const PathWithLaneId& refined_path, const std::shared_ptr<const PlannerData> & planner_data) {
+    const auto & rh = planner_data->route_handler;
     lanelet::ConstLanelets refined_path_lanelets;
     for (const auto& path_point : refined_path) {
-        int64_t lane_id = path_point.lane_ids;
+        int64_t lane_id = path_point.points.lane_ids[0];
         lanelet::ConstLanelet lanelet = rh->getLaneletsFromId(lane_id);
         bool is_unique = true;
         for (const lanelet::ConstLanelet& existing_lanelet : refined_path_lanelets) {
-            if (lanelet == existing_lanelet) {
+            if (lanelet == existing_lanelet) { //not sure whether can overload.
                 is_unique = false;
                 break;
             }
         }
         if (is_unique) {
-            refined_path_lanelets.push_back(lanelet);
+            refined_path_lanelets.push_back(lanelet); //not sure whether can push_back.
         }
     }
     return refined_path_lanelets;
@@ -102,8 +105,8 @@ lanelet::ConstLanelets extractLaneletsFromPath(const PathPointWithLaneId& refine
 // isPathValid (test)
 // the utilization of the extractLaneletsFromPath: isAllPointsInAnyLane(refined_path,extractLaneletsFromPath(refined_path))
 
-bool isPathValid(const PathWithLaneId &refined_path) {
-  const auto lanelets = extractLaneletsFromPath(refined_path);
+bool isPathValid(const PathWithLaneId &refined_path, const std::shared_ptr<const PlannerData> & planner_data) {
+  const lanelet::ConstLanelets lanelets = extractLaneletsFromPath(refined_path, planner_data);
   return isAllPointsInAnyLane(refined_path, lanelets);
 }
 
@@ -130,7 +133,10 @@ PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
   auto refined_path = utils::refinePathForGoal(
     planner_data->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, refined_goal,
     goal_lane_id);
-
+    if (!isPathValid(refined_path, planner_data))
+    {
+      std::cerr << "The current planned path is NOT valid" << std::endl;
+    }    
   return refined_path;
 }
 
