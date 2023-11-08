@@ -20,6 +20,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
+
 #include <map>
 #include <memory>
 #include <optional>
@@ -146,14 +148,20 @@ void cutPredictPathWithDuration(
 
 TimeDistanceArray calcIntersectionPassingTime(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const std::shared_ptr<const PlannerData> & planner_data, const std::set<int> & associative_ids,
-  const size_t closest_idx, const size_t last_intersection_stop_line_candidate_idx,
-  const double time_delay, const double intersection_velocity, const double minimum_ego_velocity,
-  const bool use_upstream_velocity, const double minimum_upstream_velocity);
+  const std::shared_ptr<const PlannerData> & planner_data, const lanelet::Id lane_id,
+  const std::set<int> & associative_ids, const size_t closest_idx,
+  const size_t last_intersection_stop_line_candidate_idx, const double time_delay,
+  const double intersection_velocity, const double minimum_ego_velocity,
+  const bool use_upstream_velocity, const double minimum_upstream_velocity,
+  tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array);
 
 double calcDistanceUntilIntersectionLanelet(
   const lanelet::ConstLanelet & assigned_lanelet,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx);
+
+lanelet::ConstLanelet generatePathLanelet(
+  const PathWithLaneId & path, const size_t start_idx, const size_t end_idx, const double width,
+  const double interval);
 
 std::optional<PathLanelets> generatePathLanelets(
   const lanelet::ConstLanelets & lanelets_on_path,
