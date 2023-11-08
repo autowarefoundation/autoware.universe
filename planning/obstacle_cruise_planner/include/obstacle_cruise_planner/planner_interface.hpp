@@ -257,7 +257,7 @@ private:
           params.min_ego_velocity = node.declare_parameter<double>(
             "slow_down." + label + "." + movement_postfix + ".min_ego_velocity");
           obstacle_to_param_struct_map.emplace(
-            std::make_pair(label + "_" + movement_postfix, params));
+            std::make_pair(label + "." + movement_postfix, params));
         }
       }
 
@@ -285,9 +285,9 @@ private:
       std::string label =
         (types_map.count(label_id.label) > 0) ? types_map.at(label_id.label) : "default";
       std::string movement_postfix = (is_obstacle_moving) ? "moving" : "static";
-      return (obstacle_to_param_struct_map.count(label + "_" + movement_postfix) > 0)
-               ? obstacle_to_param_struct_map.at(label + "_" + movement_postfix)
-               : obstacle_to_param_struct_map.at("default_" + movement_postfix);
+      return (obstacle_to_param_struct_map.count(label + "." + movement_postfix) > 0)
+               ? obstacle_to_param_struct_map.at(label + "." + movement_postfix)
+               : obstacle_to_param_struct_map.at("default." + movement_postfix);
     }
 
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -295,9 +295,9 @@ private:
       // obstacle type dependant parameters
       for (const auto & label : obstacle_labels) {
         for (const auto & movement_postfix : obstacle_moving_classification) {
-          if (obstacle_to_param_struct_map.count(label + "_" + movement_postfix) < 1) continue;
+          if (obstacle_to_param_struct_map.count(label + "." + movement_postfix) < 1) continue;
           auto & param_by_obstacle_label =
-            obstacle_to_param_struct_map.at(label + "_" + movement_postfix);
+            obstacle_to_param_struct_map.at(label + "." + movement_postfix);
           tier4_autoware_utils::updateParam<double>(
             parameters, "slow_down." + label + "." + movement_postfix + ".max_lat_margin",
             param_by_obstacle_label.max_lat_margin);
