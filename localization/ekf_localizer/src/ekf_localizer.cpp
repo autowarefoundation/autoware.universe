@@ -44,15 +44,15 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 : rclcpp::Node(node_name, node_options),
   warning_(std::make_shared<Warning>(this)),
   params_(this),
-  ekf_dt_(params_.ekf_dt),
   pose_queue_(params_.pose_smoothing_steps),
-  twist_queue_(params_.twist_smoothing_steps)
+  twist_queue_(params_.twist_smoothing_steps),
+  accumulated_time_(0, 0)
 {
   is_activated_ = false;
 
   /* initialize ros system */
   timer_control_ = rclcpp::create_timer(
-    this, get_clock(), rclcpp::Duration::from_seconds(ekf_dt_),
+    this, get_clock(), rclcpp::Duration::from_seconds(params_.ekf_dt),
     std::bind(&EKFLocalizer::timerCallback, this));
 
   timer_tf_ = rclcpp::create_timer(
@@ -99,15 +99,17 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
  */
 void EKFLocalizer::updatePredictFrequency()
 {
-  if (last_predict_time_) {
-    if (get_clock()->now() < *last_predict_time_) {
+  rclcpp::Time current_time = get_clock()->now();
+  if (last_predict_time_.seconds() != 0.0) {
+    if (current_time < last_predict_time_) {
       warning_->warn("Detected jump back in time");
     } else {
-      ekf_dt_ = std::min((get_clock()->now() - *last_predict_time_).seconds(), 10.0);
-      DEBUG_INFO(get_logger(), "[EKF] update ekf_rate_ to %f hz", 1 / ekf_dt_);
+      accumulated_time_ = accumulated_time_ + (current_time - last_predict_time_);
+      double current_ekf_dt_ = (current_time - last_predict_time_).seconds();
+      DEBUG_INFO(get_logger(), "[EKF] update ekf_dt_ to %f seconds", current_ekf_dt_);
     }
-  }
-  last_predict_time_ = std::make_shared<const rclcpp::Time>(get_clock()->now());
+  } 
+  last_predict_time_ = current_time;
 }
 
 /*
@@ -130,8 +132,14 @@ void EKFLocalizer::timerCallback()
   /* predict model in EKF */
   stop_watch_.tic();
   DEBUG_INFO(get_logger(), "------------------------- start prediction -------------------------");
-  ekf_module_->predictWithDelay(ekf_dt_);
-  DEBUG_INFO(get_logger(), "[EKF] predictKinematicsModel calc time = %f [ms]", stop_watch_.toc());
+  DEBUG_INFO(get_logger(), "[EKF] accumulated_time = %lf [s] (before prediction)", accumulated_time_.seconds());
+  size_t prediction_times = static_cast<int>(accumulated_time_.seconds() / params_.ekf_dt);
+  for (size_t i = 0; i < prediction_times; ++i) {
+    ekf_module_->predictWithDelay(params_.ekf_dt);
+  }
+  accumulated_time_ = accumulated_time_ - rclcpp::Duration::from_seconds(params_.ekf_dt * prediction_times);
+  DEBUG_INFO(get_logger(), "[EKF] predictKinematicsModel calc time = %f [ms] (predicted %d times)", stop_watch_.toc(), static_cast<int>(prediction_times));
+  DEBUG_INFO(get_logger(), "[EKF] accumulated_time = %lf [s] (after prediction)", accumulated_time_.seconds());
   DEBUG_INFO(get_logger(), "------------------------- end prediction -------------------------\n");
 
   /* pose measurement update */
@@ -153,7 +161,7 @@ void EKFLocalizer::timerCallback()
     const size_t n = pose_queue_.size();
     for (size_t i = 0; i < n; ++i) {
       const auto pose = pose_queue_.pop_increment_age();
-      bool is_updated = ekf_module_->measurementUpdatePose(*pose, ekf_dt_, t_curr, pose_diag_info_);
+      bool is_updated = ekf_module_->measurementUpdatePose(*pose, params_.ekf_dt, t_curr, pose_diag_info_);
       if (is_updated) {
         pose_is_updated = true;
 
@@ -189,7 +197,7 @@ void EKFLocalizer::timerCallback()
     for (size_t i = 0; i < n; ++i) {
       const auto twist = twist_queue_.pop_increment_age();
       bool is_updated =
-        ekf_module_->measurementUpdateTwist(*twist, ekf_dt_, t_curr, twist_diag_info_);
+        ekf_module_->measurementUpdateTwist(*twist, params_.ekf_dt, t_curr, twist_diag_info_);
       if (is_updated) {
         twist_is_updated = true;
       }

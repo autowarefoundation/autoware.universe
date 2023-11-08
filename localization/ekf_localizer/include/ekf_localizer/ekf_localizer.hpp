@@ -135,7 +135,7 @@ private:
   //!< @brief time for ekf calculation callback
   rclcpp::TimerBase::SharedPtr timer_control_;
   //!< @brief last predict time
-  std::shared_ptr<const rclcpp::Time> last_predict_time_;
+  rclcpp::Time last_predict_time_;
   //!< @brief trigger_node service
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
 
@@ -155,8 +155,6 @@ private:
 
   const HyperParameters params_;
 
-  double ekf_dt_;
-
   bool is_activated_;
 
   EKFDiagnosticInfo pose_diag_info_;
@@ -164,6 +162,9 @@ private:
 
   AgedObjectQueue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr> pose_queue_;
   AgedObjectQueue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> twist_queue_;
+
+  //!< @brief accumulated time for timer callback
+  rclcpp::Duration accumulated_time_;
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
