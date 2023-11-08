@@ -31,6 +31,8 @@ using Point2d = tier4_autoware_utils::Point2d;
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
+#include <lanelet2_core/geometry/Polygon.h>
+
 
 
 namespace behavior_path_planner
@@ -72,8 +74,8 @@ bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
   Point2d path_point_point2D;
   for (size_t i = 0; i < refined_path.points.size(); ++i) {
     const PathPointWithLaneId& path_point = refined_path.points[i];
-    path_point_point2D.x = path_point.point.pose.position.x;
-    path_point_point2D.y = path_point.point.pose.position.y;
+    path_point_point2D.x() = path_point.point.pose.position.x;
+    path_point_point2D.y() = path_point.point.pose.position.y;
     bool is_point_in_any_lanelet = isInAnyLane(candidate_lanelets, path_point_point2D);
     if (!is_point_in_any_lanelet) {
       return false;  // at least one path_point falls outside any lanelet
