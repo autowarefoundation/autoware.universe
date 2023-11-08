@@ -620,7 +620,7 @@ PathWithLaneId StartPlannerModule::generateStopPath() const
     p.point.pose = pose;
     p.point.longitudinal_velocity_mps = 0.0;
     const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
-      planner_data_, planner_data_->route_handler->getOriginalStartPose(),
+      planner_data_,
       planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
     lanelet::Lanelet closest_lanelet;
     lanelet::utils::query::getClosestLanelet(pull_out_lanes, pose, &closest_lanelet);
@@ -668,8 +668,7 @@ std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
   const PathWithLaneId & path) const
 {
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
-    planner_data_, planner_data_->route_handler->getOriginalStartPose(),
-    planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   const auto path_road_lanes = getPathRoadLanes(path);
   if (!path_road_lanes.empty()) {
@@ -736,8 +735,7 @@ void StartPlannerModule::updatePullOutStatus()
     start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
 
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
-    planner_data_, planner_data_->route_handler->getOriginalStartPose(),
-    planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   if (isBackwardDrivingComplete()) {
     updateStatusAfterBackwardDriving();
@@ -767,8 +765,7 @@ PathWithLaneId StartPlannerModule::calcStartPoseCandidatesBackwardPath() const
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
 
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
-    planner_data_, planner_data_->route_handler->getOriginalStartPose(),
-    planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   // get backward shoulder path
   const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, current_pose);
@@ -794,8 +791,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
   std::vector<Pose> pull_out_start_pose{};
 
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
-    planner_data_, planner_data_->route_handler->getOriginalStartPose(),
-    planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   // filter pull out lanes stop objects
   const auto [pull_out_lane_objects, others] =

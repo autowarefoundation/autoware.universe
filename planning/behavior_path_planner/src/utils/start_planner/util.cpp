@@ -85,11 +85,11 @@ Pose getBackedPose(
 }
 
 lanelet::ConstLanelets getPullOutLanes(
-  const std::shared_ptr<const PlannerData> & planner_data, const Pose & start_pose,
-  const double backward_length)
+  const std::shared_ptr<const PlannerData> & planner_data, const double backward_length)
 {
   const double & vehicle_width = planner_data->parameters.vehicle_width;
   const auto & route_handler = planner_data->route_handler;
+  const auto & start_pose = planner_data->route_handler->getOriginalStartPose();
 
   lanelet::ConstLanelet current_shoulder_lane;
   lanelet::ConstLanelets shoulder_lanes;

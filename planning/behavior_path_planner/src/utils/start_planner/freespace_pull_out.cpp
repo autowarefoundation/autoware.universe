@@ -61,8 +61,8 @@ boost::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, con
     planner_data_, backward_path_length, std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
   // find candidate paths
-  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
-    planner_data_, planner_data_->route_handler->getOriginalStartPose(), backward_path_length);
+  const auto pull_out_lanes =
+    start_planner_utils::getPullOutLanes(planner_data_, backward_path_length);
   const auto lanes = utils::combineLanelets(road_lanes, pull_out_lanes);
 
   const PathWithLaneId path =
