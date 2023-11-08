@@ -97,6 +97,14 @@ if(BUILD_TESTING)
     behavior_path_planner_node
   )
 
+  ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_objects_filtering
+    test/test_objects_filtering.cpp
+  )
+
+  target_link_libraries(test_${CMAKE_PROJECT_NAME}_objects_filtering
+    behavior_path_planner_node
+  )
+
   ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_safety_check
     test/test_safety_check.cpp
   )
