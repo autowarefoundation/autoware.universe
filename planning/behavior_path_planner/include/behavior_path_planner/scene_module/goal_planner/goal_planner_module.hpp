@@ -101,12 +101,10 @@ public:
     pull_over_lanes_.clear();
     lanes_.clear();
     has_decided_path_ = false;
-    is_safe_static_objects_ = false;
     is_safe_dynamic_objects_ = false;
     prev_found_path_ = false;
     prev_is_safe_dynamic_objects_ = false;
     has_decided_velocity_ = false;
-    has_requested_approval_ = false;
   }
 
   DEFINE_SETTER_GETTER(std::shared_ptr<PullOverPath>, lane_parking_pull_over_path)
@@ -118,12 +116,10 @@ public:
   DEFINE_SETTER_GETTER(lanelet::ConstLanelets, pull_over_lanes)
   DEFINE_SETTER_GETTER(std::vector<DrivableLanes>, lanes)
   DEFINE_SETTER_GETTER(bool, has_decided_path)
-  DEFINE_SETTER_GETTER(bool, is_safe_static_objects)
   DEFINE_SETTER_GETTER(bool, is_safe_dynamic_objects)
   DEFINE_SETTER_GETTER(bool, prev_found_path)
   DEFINE_SETTER_GETTER(bool, prev_is_safe_dynamic_objects)
   DEFINE_SETTER_GETTER(bool, has_decided_velocity)
-  DEFINE_SETTER_GETTER(bool, has_requested_approval)
   DEFINE_SETTER_GETTER(Pose, refined_goal_pose)
   DEFINE_SETTER_GETTER(Pose, closest_goal_candidate_pose)
 
@@ -137,12 +133,10 @@ private:
   lanelet::ConstLanelets pull_over_lanes_{};
   std::vector<DrivableLanes> lanes_{};
   bool has_decided_path_{false};
-  bool is_safe_static_objects_{false};
   bool is_safe_dynamic_objects_{false};
   bool prev_found_path_{false};
   bool prev_is_safe_dynamic_objects_{false};
   bool has_decided_velocity_{false};
-  bool has_requested_approval_{false};
 
   Pose refined_goal_pose_{};
   Pose closest_goal_candidate_pose_{};
@@ -219,6 +213,16 @@ public:
 
     return pull_over_path_->isValidPath();
   }
+
+  PullOverPlannerType getPullOverPlannerType() const
+  {
+    const std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (!pull_over_path_) {
+      return PullOverPlannerType::NONE;
+    }
+
+    return pull_over_path_->type;
+  };
 
   void reset()
   {

@@ -802,7 +802,7 @@ void GoalPlannerModule::setStopPathFromCurrentPath(BehaviorModuleOutput & output
 
 void GoalPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
 {
-  if (thread_safe_data_.get_pull_over_path()->type == PullOverPlannerType::FREESPACE) {
+  if (thread_safe_data_.getPullOverPlannerType() == PullOverPlannerType::FREESPACE) {
     const double drivable_area_margin = planner_data_->parameters.vehicle_width;
     output.drivable_area_info.drivable_margin =
       planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
@@ -953,8 +953,19 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
   path_reference_ = getPreviousModuleOutput().reference_path;
 
   // return to lane parking if it is possible
-  if (thread_safe_data_.get_pull_over_path()->type == PullOverPlannerType::FREESPACE) {
+  if (thread_safe_data_.getPullOverPlannerType() == PullOverPlannerType::FREESPACE) {
     returnToLaneParking();
+  }
+
+  // For debug
+  setDebugData();
+  if (parameters_->print_debug_info) {
+    // For evaluations
+    printParkingPositionError();
+  }
+
+  if (!thread_safe_data_.foundPullOverPath()) {
+    return output;
   }
 
   const auto distance_to_path_change = calcDistanceToPathChange();
@@ -966,13 +977,6 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
     {thread_safe_data_.get_pull_over_path()->start_pose,
      thread_safe_data_.get_modified_goal_pose()->goal_pose},
     {distance_to_path_change.first, distance_to_path_change.second}, SteeringFactor::TURNING);
-
-  // For debug
-  setDebugData();
-  if (parameters_->print_debug_info) {
-    // For evaluations
-    printParkingPositionError();
-  }
 
   setStopReason(StopReason::GOAL_PLANNER, thread_safe_data_.get_pull_over_path()->getFullPath());
 
@@ -1007,10 +1011,9 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification(
   out.reference_path = getPreviousModuleOutput().reference_path;
   path_candidate_ = std::make_shared<PathWithLaneId>(planCandidate().path_candidate);
   path_reference_ = getPreviousModuleOutput().reference_path;
-  const auto distance_to_path_change = calcDistanceToPathChange();
 
   // generate drivable area info for new architecture
-  if (thread_safe_data_.get_pull_over_path()->type == PullOverPlannerType::FREESPACE) {
+  if (thread_safe_data_.getPullOverPlannerType() == PullOverPlannerType::FREESPACE) {
     const double drivable_area_margin = planner_data_->parameters.vehicle_width;
     out.drivable_area_info.drivable_margin =
       planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
@@ -1024,6 +1027,11 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification(
       current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
   }
 
+  if (!thread_safe_data_.foundPullOverPath()) {
+    return out;
+  }
+
+  const auto distance_to_path_change = calcDistanceToPathChange();
   if (status_.get_has_decided_path()) {
     updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
   }
@@ -1039,6 +1047,10 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApprovalWithGoalModification(
 
 std::pair<double, double> GoalPlannerModule::calcDistanceToPathChange() const
 {
+  if (!thread_safe_data_.foundPullOverPath()) {
+    return {std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
+  }
+
   const auto full_path = thread_safe_data_.get_pull_over_path()->getFullPath();
 
   const auto ego_segment_idx = motion_utils::findNearestSegmentIndex(
@@ -1493,7 +1505,7 @@ void GoalPlannerModule::decelerateForTurnSignal(const Pose & stop_pose, PathWith
     planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk, 0.0);
 
   if (min_stop_distance && *min_stop_distance < stop_point_length) {
-    const auto stop_point = utils::insertStopPoint(stop_point_length, path);
+    utils::insertStopPoint(stop_point_length, path);
   }
 }
 
@@ -1778,7 +1790,15 @@ void GoalPlannerModule::setDebugData()
       }
     }
     debug_marker_.markers.push_back(marker);
+
+    // Visualize debug poses
+    const auto & debug_poses = thread_safe_data_.get_pull_over_path()->debug_poses;
+    for (size_t i = 0; i < debug_poses.size(); ++i) {
+      add(createPoseMarkerArray(
+        debug_poses.at(i), "debug_pose_" + std::to_string(i), 0, 0.3, 0.3, 0.3));
+    }
   }
+
   // safety check
   if (parameters_->safety_check_params.enable_safety_check) {
     if (goal_planner_data_.ego_predicted_path.size() > 0) {
@@ -1811,9 +1831,13 @@ void GoalPlannerModule::setDebugData()
     marker.pose = thread_safe_data_.get_modified_goal_pose()
                     ? thread_safe_data_.get_modified_goal_pose()->goal_pose
                     : planner_data_->self_odometry->pose.pose;
-    marker.text = magic_enum::enum_name(thread_safe_data_.get_pull_over_path()->type);
-    marker.text += " " + std::to_string(status_.get_current_path_idx()) + "/" +
-                   std::to_string(thread_safe_data_.get_pull_over_path()->partial_paths.size() - 1);
+    marker.text = magic_enum::enum_name(thread_safe_data_.getPullOverPlannerType());
+    if (thread_safe_data_.foundPullOverPath()) {
+      marker.text +=
+        " " + std::to_string(status_.get_current_path_idx()) + "/" +
+        std::to_string(thread_safe_data_.get_pull_over_path()->partial_paths.size() - 1);
+    }
+
     if (isStuck()) {
       marker.text += " stuck";
     } else if (isStopped()) {
@@ -1828,13 +1852,6 @@ void GoalPlannerModule::setDebugData()
 
     planner_type_marker_array.markers.push_back(marker);
     add(planner_type_marker_array);
-  }
-
-  // Visualize debug poses
-  const auto & debug_poses = thread_safe_data_.get_pull_over_path()->debug_poses;
-  for (size_t i = 0; i < debug_poses.size(); ++i) {
-    add(createPoseMarkerArray(
-      debug_poses.at(i), "debug_pose_" + std::to_string(i), 0, 0.3, 0.3, 0.3));
   }
 }
 
