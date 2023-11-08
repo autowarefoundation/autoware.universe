@@ -47,7 +47,8 @@ boost::optional<PullOutPath> GeometricPullOut::plan(const Pose & start_pose, con
   const auto road_lanes = utils::getExtendedCurrentLanes(
     planner_data_, backward_path_length, std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
-  const auto pull_out_lanes = getPullOutLanes(planner_data_, backward_path_length);
+  const auto pull_out_lanes = getPullOutLanes(
+    planner_data_, planner_data_->route_handler->getOriginalStartPose(), backward_path_length);
 
   // check if the ego is at left or right side of road lane center
   const bool left_side_start = 0 < getArcCoordinates(road_lanes, start_pose).distance;

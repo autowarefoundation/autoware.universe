@@ -615,7 +615,7 @@ PathWithLaneId StartPlannerModule::generateStopPath() const
   const auto moved_pose = calcOffsetPose(current_pose, dummy_path_distance, 0, 0);
 
   // convert Pose to PathPointWithLaneId with 0 velocity.
-  auto toPathPointWithLaneId = [](const Pose & pose) {
+  auto toPathPointWithLaneId = [this](const Pose & pose) {
     PathPointWithLaneId p{};
     p.point.pose = pose;
     p.point.longitudinal_velocity_mps = 0.0;

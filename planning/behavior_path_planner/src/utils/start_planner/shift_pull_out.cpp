@@ -50,7 +50,8 @@ boost::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const P
 
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_.max_back_distance;
-  const auto pull_out_lanes = getPullOutLanes(planner_data_, backward_path_length);
+  const auto pull_out_lanes = getPullOutLanes(
+    planner_data_, planner_data_->route_handler->getOriginalStartPose(), backward_path_length);
   if (pull_out_lanes.empty()) {
     return boost::none;
   }
