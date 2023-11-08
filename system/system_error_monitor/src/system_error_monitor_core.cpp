@@ -702,9 +702,7 @@ bool AutowareErrorMonitor::onClearEmergencyService(
 void AutowareErrorMonitor::loggingErrors(
   const autoware_auto_system_msgs::msg::HazardStatus & hazard_status)
 {
-  const auto is_in_no_fault_condition = isInNoFaultCondition(*autoware_state_, *current_gate_mode_);
-
-  if (is_in_no_fault_condition) {
+  if (isInNoFaultCondition(*autoware_state_, *current_gate_mode_)) {
     RCLCPP_DEBUG(get_logger(), "Autoware is in no-fault condition.");
     return;
   }
