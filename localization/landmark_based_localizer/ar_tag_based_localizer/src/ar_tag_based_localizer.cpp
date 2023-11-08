@@ -347,7 +347,7 @@ void ArTagBasedLocalizer::publish_pose_as_base_link(
   // be published.
   const Pose curr_pose = map_to_base_link;
   const Pose latest_ekf_pose = latest_ekf_pose_.pose.pose;
-  const double diff_position = norm(map_to_base_link.position, latest_ekf_pose.position);
+  const double diff_position = norm(curr_pose.position, latest_ekf_pose.position);
   if (diff_position > ekf_position_tolerance_) {
     RCLCPP_INFO(
       this->get_logger(),
