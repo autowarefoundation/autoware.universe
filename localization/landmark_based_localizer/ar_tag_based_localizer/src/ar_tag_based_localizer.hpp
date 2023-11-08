@@ -85,8 +85,7 @@ private:
   void image_callback(const Image::ConstSharedPtr & msg);
   void cam_info_callback(const CameraInfo & msg);
   void ekf_pose_callback(const PoseWithCovarianceStamped & msg);
-  void publish_pose_as_base_link(
-    const PoseStamped & sensor_to_tag, const std::string & camera_frame_id);
+  void publish_pose_as_base_link(const PoseStamped & sensor_to_tag, const std::string & tag_id);
   static tf2::Transform aruco_marker_to_tf2(const aruco::Marker & marker);
 
   // Parameters
