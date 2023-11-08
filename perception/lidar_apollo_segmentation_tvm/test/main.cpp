@@ -26,8 +26,9 @@
 using autoware::perception::lidar_apollo_segmentation_tvm::ApolloLidarSegmentation;
 namespace fs = std::filesystem;
 
-void test_segmentation(const std::string & data_path, bool use_intensity_feature,
-                        bool use_constant_feature, bool expect_throw)
+void test_segmentation(
+  const std::string & data_path, bool use_intensity_feature, bool use_constant_feature,
+  bool expect_throw)
 {
   // Instantiate the pipeline
   const int width = 1;
