@@ -285,7 +285,6 @@ private:
       std::string label =
         (types_map.count(label_id.label) > 0) ? types_map.at(label_id.label) : "default";
       std::string movement_postfix = (is_obstacle_moving) ? "moving" : "static";
-      std::cerr << "Chosen label " << label + "_" + movement_postfix << "\n";
       return (obstacle_to_param_struct_map.count(label + "_" + movement_postfix) > 0)
                ? obstacle_to_param_struct_map.at(label + "_" + movement_postfix)
                : obstacle_to_param_struct_map.at("default_" + movement_postfix);

@@ -668,12 +668,11 @@ double PlannerInterface::calculateSlowDownVelocity(
   bool & is_obstacle_moving) const
 {
   is_obstacle_moving = [&]() -> bool {
-    if (!prev_output) return std::abs(obstacle.velocity) > moving_object_speed_threshold;
+    const auto object_vel_norm = std::hypot(obstacle.velocity, obstacle.lat_velocity);
+    if (!prev_output) return object_vel_norm > moving_object_speed_threshold;
     if (prev_output->is_moving)
-      return std::abs(obstacle.velocity) >
-             moving_object_speed_threshold - moving_object_hysteresis_range;
-    return std::abs(obstacle.velocity) >
-           moving_object_speed_threshold + moving_object_hysteresis_range;
+      return object_vel_norm > moving_object_speed_threshold - moving_object_hysteresis_range;
+    return object_vel_norm > moving_object_speed_threshold + moving_object_hysteresis_range;
   }();
 
   const auto & p =
