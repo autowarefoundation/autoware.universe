@@ -165,7 +165,7 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
     return;
   }
 
-  builtin_interfaces::msg::Time curr_stamp = msg->header.stamp;
+  const builtin_interfaces::msg::Time curr_stamp = msg->header.stamp;
   cv_bridge::CvImagePtr cv_ptr;
   try {
     cv_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGB8);
@@ -184,7 +184,7 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
 
   // for each marker, draw info and its boundaries in the image
   for (const aruco::Marker & marker : markers) {
-    tf2::Transform tf_cam_to_marker = aruco_marker_to_tf2(marker);
+    const tf2::Transform tf_cam_to_marker = aruco_marker_to_tf2(marker);
 
     TransformStamped tf_cam_to_marker_stamped;
     tf2::toMsg(tf_cam_to_marker, tf_cam_to_marker_stamped.transform);
@@ -254,10 +254,6 @@ void ArTagBasedLocalizer::cam_info_callback(const CameraInfo & msg)
   }
 
   cv::Mat camera_matrix(3, 4, CV_64FC1, 0.0);
-  cv::Mat distortion_coeff(4, 1, CV_64FC1);
-  cv::Size size(static_cast<int>(msg.width), static_cast<int>(msg.height));
-
-  camera_matrix.setTo(0);
   camera_matrix.at<double>(0, 0) = msg.p[0];
   camera_matrix.at<double>(0, 1) = msg.p[1];
   camera_matrix.at<double>(0, 2) = msg.p[2];
@@ -271,9 +267,12 @@ void ArTagBasedLocalizer::cam_info_callback(const CameraInfo & msg)
   camera_matrix.at<double>(2, 2) = msg.p[10];
   camera_matrix.at<double>(2, 3) = msg.p[11];
 
+  cv::Mat distortion_coeff(4, 1, CV_64FC1);
   for (int i = 0; i < 4; ++i) {
     distortion_coeff.at<double>(i, 0) = 0;
   }
+
+  const cv::Size size(static_cast<int>(msg.width), static_cast<int>(msg.height));
 
   cam_param_ = aruco::CameraParameters(camera_matrix, distortion_coeff, size);
 
