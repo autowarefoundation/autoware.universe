@@ -69,6 +69,8 @@ class DiagNode:
             return FaultLevel.NF
         if self.view == DiagnosticStatus.OK:
             return FaultLevel.SF
+        if self.level == DiagnosticStatus.WARN:
+            return FaultLevel.LF
         if self.view == DiagnosticStatus.WARN:
             return FaultLevel.LF
         return FaultLevel.SPF
