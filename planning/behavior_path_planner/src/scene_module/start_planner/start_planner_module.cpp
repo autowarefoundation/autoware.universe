@@ -136,11 +136,35 @@ void StartPlannerModule::updateData()
     status_ = PullOutStatus();
   }
   // check safety status when driving forward
-  if (parameters_->safety_check_params.enable_safety_check && status_.driving_forward) {
-    status_.is_safe_dynamic_objects = isSafePath();
-  } else {
-    status_.is_safe_dynamic_objects = true;
-  }
+  // if (parameters_->safety_check_params.enable_safety_check && status_.driving_forward) {
+  //   status_.is_safe_dynamic_objects = isSafePath();
+  // } else {
+  //   status_.is_safe_dynamic_objects = true;
+  // }
+  const auto & route_handler = planner_data_->route_handler;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
+  const auto & goal_pose = planner_data_->route_handler->getGoalPose();
+
+  // refine start pose with pull out lanes.
+  // 1) backward driving is not allowed: use refined pose just as start pose.
+  // 2) backward driving is allowed: use refined pose to check if backward driving is needed.
+  const PathWithLaneId start_pose_candidates_path = calcBackwardPathFromStartPose();
+  const auto refined_start_pose = calcLongitudinalOffsetPose(
+    start_pose_candidates_path.points, planner_data_->self_odometry->pose.pose.position, 0.0);
+  if (!refined_start_pose) return;
+
+  // search pull out start candidates backward
+  const std::vector<Pose> start_pose_candidates = std::invoke([&]() -> std::vector<Pose> {
+    if (parameters_->enable_back) {
+      return searchPullOutStartPoses(start_pose_candidates_path);
+    }
+    return {*refined_start_pose};
+  });
+
+  planWithPriority(
+    start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
+
+
 }
 
 bool StartPlannerModule::isExecutionRequested() const
@@ -693,11 +717,6 @@ void StartPlannerModule::updatePullOutStatus()
     !planner_data_->prev_route_id ||
     *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
 
-  // save pull out lanes which is generated using current pose before starting pull out
-  // (before approval)
-  status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
-    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
-
   // skip updating if enough time has not passed for preventing chattering between back and
   // start_planner
   if (!has_received_new_route) {
@@ -718,7 +737,7 @@ void StartPlannerModule::updatePullOutStatus()
   // refine start pose with pull out lanes.
   // 1) backward driving is not allowed: use refined pose just as start pose.
   // 2) backward driving is allowed: use refined pose to check if backward driving is needed.
-  const PathWithLaneId start_pose_candidates_path = calcStartPoseCandidatesBackwardPath();
+  const PathWithLaneId start_pose_candidates_path = calcBackwardPathFromStartPose();
   const auto refined_start_pose = calcLongitudinalOffsetPose(
     start_pose_candidates_path.points, planner_data_->self_odometry->pose.pose.position, 0.0);
   if (!refined_start_pose) return;
@@ -736,6 +755,7 @@ void StartPlannerModule::updatePullOutStatus()
 
   if (isBackwardDrivingComplete()) {
     updateStatusAfterBackwardDriving();
+    //should be moved to transition state
     current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   } else {
     status_.backward_path = start_planner_utils::getBackwardPath(
@@ -757,19 +777,19 @@ void StartPlannerModule::updateStatusAfterBackwardDriving()
   }
 }
 
-PathWithLaneId StartPlannerModule::calcStartPoseCandidatesBackwardPath() const
+PathWithLaneId StartPlannerModule::calcBackwardPathFromStartPose() const
 {
-  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  const Pose & start_pose = planner_data_->route_handler->getOriginalStartPose();
 
   // get backward shoulder path
   const auto arc_position_pose =
-    lanelet::utils::getArcCoordinates(status_.pull_out_lanes, current_pose);
+    lanelet::utils::getArcCoordinates(status_.pull_out_lanes, start_pose);
   const double check_distance = parameters_->max_back_distance + 30.0;  // buffer
   auto path = planner_data_->route_handler->getCenterLinePath(
     status_.pull_out_lanes, arc_position_pose.length - check_distance,
     arc_position_pose.length + check_distance);
 
-  // lateral shift to current_pose
+  // apply a lateral shift to the path points to match the start pose offset.
   const double distance_from_center_line = arc_position_pose.distance;
   for (auto & p : path.points) {
     p.point.pose = calcOffsetPose(p.point.pose, 0, distance_from_center_line, 0);

@@ -174,7 +174,7 @@ private:
   std::mutex mutex_;
 
   PathWithLaneId getFullPath() const;
-  PathWithLaneId calcStartPoseCandidatesBackwardPath() const;
+  PathWithLaneId calcBackwardPathFromStartPose() const;
   std::vector<Pose> searchPullOutStartPoses(const PathWithLaneId & start_pose_candidates) const;
 
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
