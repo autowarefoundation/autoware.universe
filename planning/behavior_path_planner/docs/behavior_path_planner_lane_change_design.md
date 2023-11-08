@@ -186,6 +186,32 @@ The following figure illustrates when the lane is blocked in multiple lane chang
 
 ![multiple-lane-changes](../image/lane_change/lane_change-when_cannot_change_lanes.png)
 
+#### Stopping position when an object exists ahead
+
+##### When the ego vehicle is near the end of the lane change
+
+Regardless of the presence or absence of objects in the lane change target lane, stop by keeping the distance necessary for lane change to the object ahead.
+
+![stop_at_terminal_no_block](../image/lane_change/lane_change-stop_at_terminal_no_block.drawio.svg)
+
+![stop_at_terminal](../image/lane_change/lane_change-stop_at_terminal.drawio.svg)
+
+##### When the ego vehicle is not near the end of the lane change
+
+If there are NO objects in the lane change section of the target lane, stop by keeping the distance necessary for lane change to the object ahead.
+
+![stop_not_at_terminal_no_blocking_object](../image/lane_change/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
+
+If there are objects in the lane change section of the target lane, stop WITHOUT keeping the distance necessary for lane change to the object ahead.
+
+![stop_not_at_terminal](../image/lane_change/lane_change-stop_not_at_terminal.drawio.svg)
+
+##### When the target lane is far away
+
+When the target lane for lane change is far away and not next to the current lane, do not keep the distance necessary for lane change to the object ahead.
+
+![stop_far_from_target_lane](../image/lane_change/lane_change-stop_far_from_target_lane.drawio.svg)
+
 ### Lane change regulations
 
 If you want to regulate lane change on crosswalks or intersections, the lane change module finds a lane change path excluding it includes crosswalks or intersections.
