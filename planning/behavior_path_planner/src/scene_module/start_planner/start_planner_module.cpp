@@ -344,7 +344,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
     // TODO(tkhmy) add handle status TRYING
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, SteeringFactor::START_PLANNER, steering_factor_direction,
+      {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
       SteeringFactor::TURNING, "");
   } else {
     const double distance = motion_utils::calcSignedArcLength(
@@ -354,7 +354,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
     // TODO(tkhmy) add handle status TRYING
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-      SteeringFactor::START_PLANNER, steering_factor_direction, SteeringFactor::TURNING, "");
+      PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::TURNING, "");
   }
 
   setDebugData();
@@ -457,7 +457,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     updateRTCStatus(start_distance, finish_distance);
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, SteeringFactor::START_PLANNER, steering_factor_direction,
+      {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
       SteeringFactor::APPROACHING, "");
   } else {
     const double distance = motion_utils::calcSignedArcLength(
@@ -466,7 +466,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     updateRTCStatus(0.0, distance);
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-      SteeringFactor::START_PLANNER, steering_factor_direction, SteeringFactor::APPROACHING, "");
+      PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::APPROACHING, "");
   }
 
   setDebugData();
