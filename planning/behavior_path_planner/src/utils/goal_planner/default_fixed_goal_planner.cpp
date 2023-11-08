@@ -23,6 +23,16 @@
 #include <memory>
 
 #include <boost/geometry.hpp>
+
+
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+using Point2d = tier4_autoware_utils::Point2d;
+
+#include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
+
+
+
 namespace behavior_path_planner
 {
 
@@ -60,9 +70,10 @@ bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2
 bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
                           const lanelet::ConstLanelets &candidate_lanelets) {
   Point2d path_point_point2D;
-  for (const auto &path_point : refined_path) {
-    path_point_point2D.x = path_point.points.point.pose.position.x;
-    path_point_point2D.y = path_point.points.point.pose.position.y;
+  for (size_t i = 0; i < refined_path.points.size(); ++i) {
+    const PathPointWithLaneId& path_point = refined_path.points[i];
+    path_point_point2D.x = path_point.point.pose.position.x;
+    path_point_point2D.y = path_point.point.pose.position.y;
     bool is_point_in_any_lanelet = isInAnyLane(candidate_lanelets, path_point_point2D);
     if (!is_point_in_any_lanelet) {
       return false;  // at least one path_point falls outside any lanelet
@@ -82,8 +93,10 @@ bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
 lanelet::ConstLanelets extractLaneletsFromPath(const PathWithLaneId& refined_path, const std::shared_ptr<const PlannerData> & planner_data) {
     const auto & rh = planner_data->route_handler;
     lanelet::ConstLanelets refined_path_lanelets;
-    for (const auto& path_point : refined_path) {
-        int64_t lane_id = path_point.points.lane_ids[0];
+
+    for (size_t i = 0; i < refined_path.points.size(); ++i) {
+        const PathPointWithLaneId& path_point = refined_path.points[i];
+        int64_t lane_id = path_point.lane_ids[0];
         lanelet::ConstLanelet lanelet = rh->getLaneletsFromId(lane_id);
         bool is_unique = true;
         for (const lanelet::ConstLanelet& existing_lanelet : refined_path_lanelets) {
