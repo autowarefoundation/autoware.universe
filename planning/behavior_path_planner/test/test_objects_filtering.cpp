@@ -57,3 +57,52 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByVelocity)
   ans = filterObjectsByVelocity(predicted_objects, velocity_threshold, remove_threshold);
   EXPECT_EQ(ans, expected_ans[0]);
 }
+
+TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByClass)
+{
+    using autoware_auto_perception_msgs::msg::PredictedObject;
+    using autoware_auto_perception_msgs::msg::PredictedObjects;
+    using autoware_auto_perception_msgs::msg::ObjectClassification;
+    using behavior_path_planner::utils::path_safety_checker::filterObjectsByClass;
+    
+
+    PredictedObjects predicted_objects;
+    PredictedObject predicted_object;
+    PredictedObjects expected_ans[2];
+
+    ObjectClassification car_class;
+    car_class.label = ObjectClassification::CAR;
+    car_class.probability = 1.0;
+
+    predicted_object.classification.push_back(car_class);
+
+    expected_ans[0].objects.push_back(predicted_object);
+    predicted_objects.objects.push_back(predicted_object);
+
+    car_class.label = ObjectClassification::UNKNOWN;
+    car_class.probability = 0.0;
+    predicted_object.classification.push_back(car_class);
+
+    expected_ans[1].objects.push_back(predicted_object);
+    predicted_objects.objects.push_back(predicted_object);
+
+    ObjectTypesToCheck target_types;
+    target_types.check_car = true;
+    target_types.check_truck = false;
+    target_types.check_bus = false;
+    target_types.check_trailer = false;
+    target_types.check_bicycle = false;
+    target_types.check_unknown = false;
+    target_types.check_motorcycle = false;
+    target_types.check_pedestrian = false;
+    
+
+    filterObjectsByClass(predicted_objects, target_types);
+
+    // size_t size_of_predicted_objects = predicted_objects.objects.size();
+    // size_t size_of_expected_ans = expected_ans[0].objects.size();
+    // std::cout << "Size of predicted_objects: " << size_of_predicted_objects << std::endl;
+    // std::cout << "Size of expected0_objects: " << size_of_expected_ans << std::endl;
+    
+    EXPECT_EQ(predicted_objects, expected_ans[0]);
+}
