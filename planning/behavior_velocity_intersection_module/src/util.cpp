@@ -1348,7 +1348,7 @@ TimeDistanceArray calcIntersectionPassingTime(
 
   // apply smoother to reference velocity
   PathWithLaneId smoothed_reference_path = reference_path;
-  if (!smoothPath(reference_path, smoothed_reference_path, planner_data, true)) {
+  if (!smoothPath(reference_path, smoothed_reference_path, planner_data)) {
     smoothed_reference_path = reference_path;
   }
 
@@ -1360,19 +1360,16 @@ TimeDistanceArray calcIntersectionPassingTime(
 
   // NOTE: `reference_path` is resampled in `reference_smoothed_path`, so
   // `last_intersection_stop_line_candidate_idx` makes no sense
-  const auto smoothed_path_closest_idx_opt = motion_utils::findNearestIndex(
-    smoothed_reference_path.points, path.points.at(closest_idx).point.pose, 3.0, M_PI_4);
-  if (!smoothed_path_closest_idx_opt) {
-    return time_distance_array;
-  }
-  const auto smoothed_path_closest_idx = smoothed_path_closest_idx_opt.value();
+  const auto smoothed_path_closest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    smoothed_reference_path.points, path.points.at(closest_idx).point.pose,
+    planner_data->ego_nearest_dist_threshold, planner_data->ego_nearest_yaw_threshold);
 
   const std::optional<size_t> upstream_stop_line_idx_opt = [&]() -> std::optional<size_t> {
     if (upstream_stop_line) {
       const auto upstream_stop_line_point = path.points.at(upstream_stop_line.value()).point.pose;
-      const auto nearest = motion_utils::findNearestIndex(
-        smoothed_reference_path.points, upstream_stop_line_point, 3.0, M_PI_4);
-      return nearest ? std::make_optional<size_t>(nearest.get()) : std::nullopt;
+      return motion_utils::findFirstNearestIndexWithSoftConstraints(
+        smoothed_reference_path.points, upstream_stop_line_point,
+        planner_data->ego_nearest_dist_threshold, planner_data->ego_nearest_yaw_threshold);
     } else {
       return std::nullopt;
     }
