@@ -85,7 +85,40 @@ public:
 
   void updateModuleParams(const std::any & parameters) override
   {
-    parameters_ = std::any_cast<std::shared_ptr<SamplingPlannerParameters>>(parameters);
+    std::shared_ptr<SamplingPlannerParameters> user_params_ =
+      std::any_cast<std::shared_ptr<SamplingPlannerParameters>>(parameters);
+
+    internal_params_->constraints.hard.max_curvature = user_params_->max_curvature;
+    internal_params_->constraints.hard.min_curvature = user_params_->min_curvature;
+    internal_params_->constraints.soft.lateral_deviation_weight =
+      user_params_->lateral_deviation_weight;
+    internal_params_->constraints.soft.length_weight = user_params_->length_weight;
+    internal_params_->constraints.soft.curvature_weight = user_params_->curvature_weight;
+    internal_params_->sampling.enable_frenet = user_params_->enable_frenet;
+    internal_params_->sampling.enable_bezier = user_params_->enable_bezier;
+    internal_params_->sampling.resolution = user_params_->resolution;
+    internal_params_->sampling.previous_path_reuse_points_nb =
+      user_params_->previous_path_reuse_points_nb;
+    internal_params_->sampling.target_lengths = user_params_->target_lengths;
+    internal_params_->sampling.target_lateral_positions = user_params_->target_lateral_positions;
+    internal_params_->sampling.nb_target_lateral_positions =
+      user_params_->nb_target_lateral_positions;
+    internal_params_->sampling.frenet.target_lateral_velocities =
+      user_params_->target_lateral_velocities;
+    internal_params_->sampling.frenet.target_lateral_accelerations =
+      user_params_->target_lateral_accelerations;
+    // internal_params_->sampling.bezier.nb_k = user_params_->nb_k;
+    // internal_params_->sampling.bezier.mk_min = user_params_->mk_min;
+    // internal_params_->sampling.bezier.mk_max = user_params_->mk_max;
+    // internal_params_->sampling.bezier.nb_t = user_params_->nb_t;
+    // internal_params_->sampling.bezier.mt_min = user_params_->mt_min;
+    // internal_params_->sampling.bezier.mt_max = user_params_->mt_max;
+    internal_params_->preprocessing.force_zero_deviation = user_params_->force_zero_deviation;
+    internal_params_->preprocessing.force_zero_heading = user_params_->force_zero_heading;
+    internal_params_->preprocessing.smooth_reference = user_params_->smooth_reference;
+    internal_params_->constraints.ego_footprint = vehicle_info_.createFootprint();
+    internal_params_->constraints.ego_width = vehicle_info_.vehicle_width_m;
+    internal_params_->constraints.ego_length = vehicle_info_.vehicle_length_m;
   }
 
   void acceptVisitor(
@@ -110,12 +143,12 @@ private:
 
   frenet_planner::SamplingParameters prepareSamplingParameters(
     const sampler_common::State & initial_state,
-    const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
+    const sampler_common::transform::Spline2D & path_spline,
+    const SamplingPlannerInternalParameters & internal_params_);
 
   // member
-  Parameters params_;
-  std::shared_ptr<SamplingPlannerParameters> parameters_;
-
+  // std::shared_ptr<SamplingPlannerParameters> params_;
+  std::shared_ptr<SamplingPlannerInternalParameters> internal_params_;
   vehicle_info_util::VehicleInfo vehicle_info_{};
 };
 

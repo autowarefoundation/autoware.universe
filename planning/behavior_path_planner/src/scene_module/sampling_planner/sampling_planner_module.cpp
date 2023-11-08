@@ -30,35 +30,9 @@ SamplingPlannerModule::SamplingPlannerModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<SamplingPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map}, parameters_{parameters}
+: SceneModuleInterface{name, node, rtc_interface_ptr_map}
 {
-  // parameters
-  params_.constraints.hard.max_curvature = 0.1;
-  params_.constraints.hard.min_curvature = -0.1;
-  params_.constraints.soft.lateral_deviation_weight = 1.0;
-  params_.constraints.soft.length_weight = 1.0;
-  params_.constraints.soft.curvature_weight = 1.0;
-  params_.sampling.enable_frenet = true;
-  params_.sampling.enable_bezier = false;
-  params_.sampling.resolution = 0.5;
-  params_.sampling.previous_path_reuse_points_nb = 2;
-  params_.sampling.target_lengths = {10.0, 20.0};
-  params_.sampling.target_lateral_positions = {-2.0, -1.0, 0.0, 1.0, 2.0};
-  params_.sampling.nb_target_lateral_positions = 2;
-  params_.sampling.frenet.target_lateral_velocities = {-0.1, 0.0, 0.1};
-  params_.sampling.frenet.target_lateral_accelerations = {0.0};
-  // params_.sampling.bezier.nb_k = declare_parameter<int>("sampling.bezier.nb_k");
-  // params_.sampling.bezier.mk_min = declare_parameter<double>("sampling.bezier.mk_min");
-  // params_.sampling.bezier.mk_max = declare_parameter<double>("sampling.bezier.mk_max");
-  // params_.sampling.bezier.nb_t = declare_parameter<int>("sampling.bezier.nb_t");
-  // params_.sampling.bezier.mt_min = declare_parameter<double>("sampling.bezier.mt_min");
-  // params_.sampling.bezier.mt_max = declare_parameter<double>("sampling.bezier.mt_max");
-  params_.preprocessing.force_zero_deviation = true;
-  params_.preprocessing.force_zero_heading = true;
-  params_.preprocessing.smooth_reference = false;
-  params_.constraints.ego_footprint = vehicle_info_.createFootprint();
-  params_.constraints.ego_width = vehicle_info_.vehicle_width_m;
-  params_.constraints.ego_length = vehicle_info_.vehicle_length_m;
+  updateModuleParams(parameters);
 }
 
 bool SamplingPlannerModule::isExecutionRequested() const
@@ -127,7 +101,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   initial_state.heading = rpy.z;
 
   frenet_planner::SamplingParameters sampling_parameters =
-    prepareSamplingParameters(initial_state, reference_spline, params_);
+    prepareSamplingParameters(initial_state, reference_spline, *params_);
 
   frenet_planner::FrenetState frenet_initial_state;
   frenet_initial_state.position = initial_state.frenet;
@@ -141,9 +115,9 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   debug_data_.footprints.clear();
   for (auto & path : frenet_paths) {
     const auto footprint =
-      sampler_common::constraints::checkHardConstraints(path, params_.constraints);
+      sampler_common::constraints::checkHardConstraints(path, params_->constraints);
     debug_data_.footprints.push_back(footprint);
-    sampler_common::constraints::calculateCost(path, params_.constraints, reference_spline);
+    sampler_common::constraints::calculateCost(path, params_->constraints, reference_spline);
   }
   std::vector<sampler_common::Path> candidate_paths;
   const auto move_to_paths = [&candidate_paths](auto & paths_to_move) {
@@ -155,7 +129,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   move_to_paths(frenet_paths);
   debug_data_.previous_sampled_candidates_nb = debug_data_.sampled_candidates.size();
   debug_data_.sampled_candidates = candidate_paths;
-  debug_data_.obstacles = params_.constraints.obstacle_polygons;
+  debug_data_.obstacles = params_->obstacle_polygons;
   updateDebugMarkers();
 
   auto p = getPreviousModuleOutput().reference_path;
@@ -259,17 +233,18 @@ void SamplingPlannerModule::updateData()
 
 frenet_planner::SamplingParameters SamplingPlannerModule::prepareSamplingParameters(
   const sampler_common::State & initial_state,
-  const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
+  const sampler_common::transform::Spline2D & path_spline,
+  const SamplingPlannerParameters & params_)
 {
   // calculate target lateral positions
   std::vector<double> target_lateral_positions;
-  if (params.sampling.nb_target_lateral_positions > 1) {
+  if (params_.nb_target_lateral_positions > 1) {
     target_lateral_positions = {0.0, initial_state.frenet.d};
     double min_d = 0.0;
     double max_d = 0.0;
     double min_d_s = std::numeric_limits<double>::max();
     double max_d_s = std::numeric_limits<double>::max();
-    for (const auto & drivable_poly : params.constraints.drivable_polygons) {
+    for (const auto & drivable_poly : params_.drivable_polygons) {
       for (const auto & p : drivable_poly.outer()) {
         const auto frenet_coordinates = path_spline.frenet(p);
         const auto d_s = std::abs(frenet_coordinates.s - initial_state.frenet.s);
@@ -283,27 +258,27 @@ frenet_planner::SamplingParameters SamplingPlannerModule::prepareSamplingParamet
         }
       }
     }
-    min_d += params.constraints.ego_width / 2.0;
-    max_d -= params.constraints.ego_width / 2.0;
+    min_d += params_.ego_width / 2.0;
+    max_d -= params_.ego_width / 2.0;
     if (min_d < max_d) {
-      for (auto r = 0.0; r <= 1.0; r += 1.0 / (params.sampling.nb_target_lateral_positions - 1))
+      for (auto r = 0.0; r <= 1.0; r += 1.0 / (params_.nb_target_lateral_positions - 1))
         target_lateral_positions.push_back(interpolation::lerp(min_d, max_d, r));
     }
   } else {
-    target_lateral_positions = params.sampling.target_lateral_positions;
+    target_lateral_positions = params_.target_lateral_positions;
   }
   frenet_planner::SamplingParameters sampling_parameters;
-  sampling_parameters.resolution = params.sampling.resolution;
+  sampling_parameters.resolution = params_.resolution;
   const auto max_s = path_spline.lastS();
   frenet_planner::SamplingParameter p;
-  for (const auto target_length : params.sampling.target_lengths) {
+  for (const auto target_length : params_.target_lengths) {
     p.target_state.position.s =
       std::min(max_s, path_spline.frenet(initial_state.pose).s + std::max(0.0, target_length));
     for (const auto target_lateral_position : target_lateral_positions) {
       p.target_state.position.d = target_lateral_position;
-      for (const auto target_lat_vel : params.sampling.frenet.target_lateral_velocities) {
+      for (const auto target_lat_vel : params_.target_lateral_velocities) {
         p.target_state.lateral_velocity = target_lat_vel;
-        for (const auto target_lat_acc : params.sampling.frenet.target_lateral_accelerations) {
+        for (const auto target_lat_acc : params_.target_lateral_accelerations) {
           p.target_state.lateral_acceleration = target_lat_acc;
           sampling_parameters.parameters.push_back(p);
         }

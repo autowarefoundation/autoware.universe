@@ -21,12 +21,40 @@
 #include <vector>
 namespace behavior_path_planner
 {
+using tier4_autoware_utils::LinearRing2d;
+using tier4_autoware_utils::MultiPoint2d;
+using tier4_autoware_utils::MultiPolygon2d;
+using tier4_autoware_utils::Point2d;
+using tier4_autoware_utils::Polygon2d;
+
 struct SamplingPlannerParameters
-{
-  double dummy_parameter{0.0};
+{  // constraints.hard
+  double max_curvature;
+  double min_curvature;
+  // constraints.soft
+  double lateral_deviation_weight;
+  double length_weight;
+  double curvature_weight;
+
+  // sampling
+  bool enable_frenet;
+  bool enable_bezier;
+  double resolution;
+  int previous_path_reuse_points_nb;
+  int nb_target_lateral_positions;
+
+  std::vector<double> target_lengths;
+  std::vector<double> target_lateral_positions;
+  // frenet
+  std::vector<double> target_lateral_velocities;
+  std::vector<double> target_lateral_accelerations;
+
+  bool force_zero_deviation;
+  bool force_zero_heading;
+  bool smooth_reference;
 };
 
-struct Parameters
+struct SamplingPlannerInternalParameters
 {
   sampler_common::Constraints constraints;
   struct
