@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 
 #include <memory>
 #include <vector>
@@ -25,7 +26,9 @@ namespace behavior_path_planner
 FreespacePullOver::FreespacePullOver(
   rclcpp::Node & node, const GoalPlannerParameters & parameters,
   const vehicle_info_util::VehicleInfo & vehicle_info)
-: PullOverPlannerBase{node, parameters}, velocity_{parameters.freespace_parking_velocity}
+: PullOverPlannerBase{node, parameters},
+  velocity_{parameters.freespace_parking_velocity},
+  left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
   freespace_planning_algorithms::VehicleShape vehicle_shape(
     vehicle_info, parameters.vehicle_shape_margin);
@@ -53,13 +56,23 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
   const Pose end_pose =
     use_back_ ? goal_pose
               : tier4_autoware_utils::calcOffsetPose(goal_pose, -straight_distance, 0.0, 0.0);
-  const bool found_path = planner_->makePlan(current_pose, end_pose);
-  if (!found_path) {
+  if (!planner_->makePlan(current_pose, end_pose)) {
     return {};
   }
 
+  const auto road_lanes = utils::getExtendedCurrentLanes(
+    planner_data_, parameters_.backward_goal_search_length, parameters_.forward_goal_search_length,
+    /*forward_only_in_route*/ false);
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
+    parameters_.forward_goal_search_length);
+  if (road_lanes.empty() || pull_over_lanes.empty()) {
+    return {};
+  }
+  const auto lanes = utils::combineLanelets(road_lanes, pull_over_lanes);
+
   PathWithLaneId path =
-    utils::convertWayPointsToPathWithLaneId(planner_->getWaypoints(), velocity_);
+    utils::convertWayPointsToPathWithLaneId(planner_->getWaypoints(), velocity_, lanes);
   const auto reverse_indices = utils::getReversingIndices(path);
   std::vector<PathWithLaneId> partial_paths = utils::dividePath(path, reverse_indices);
 
@@ -101,18 +114,21 @@ boost::optional<PullOverPath> FreespacePullOver::plan(const Pose & goal_pose)
     addPose(goal_pose);
   }
 
-  utils::correctDividedPathVelocity(partial_paths);
+  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel{};
+  pairs_terminal_velocity_and_accel.resize(partial_paths.size());
+  utils::start_goal_planner_common::modifyVelocityByDirection(
+    partial_paths, pairs_terminal_velocity_and_accel, velocity_, 0);
 
+  // Check if driving forward for each path, return empty if not
   for (auto & path : partial_paths) {
-    const auto is_driving_forward = motion_utils::isDrivingForward(path.points);
-    if (!is_driving_forward) {
-      // path points is less than 2
+    if (!motion_utils::isDrivingForward(path.points)) {
       return {};
     }
   }
 
   PullOverPath pull_over_path{};
   pull_over_path.partial_paths = partial_paths;
+  pull_over_path.pairs_terminal_velocity_and_accel = pairs_terminal_velocity_and_accel;
   pull_over_path.start_pose = current_pose;
   pull_over_path.end_pose = goal_pose;
   pull_over_path.type = getPlannerType();

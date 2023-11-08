@@ -18,8 +18,6 @@
 #include "lane_departure_checker/lane_departure_checker.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/ros/processing_time_publisher.hpp>
@@ -34,9 +32,12 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
 
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace lane_departure_checker
@@ -45,12 +46,17 @@ using autoware_auto_mapping_msgs::msg::HADMapBin;
 
 struct NodeParam
 {
+  bool will_out_of_lane_checker;
+  bool out_of_lane_checker;
+  bool boundary_departure_checker;
+
   double update_rate;
   bool visualize_lanelet;
   bool include_right_lanes;
   bool include_left_lanes;
   bool include_opposite_lanes;
   bool include_conflicting_lanes;
+  std::vector<std::string> boundary_types_to_detect;
 };
 
 class LaneDepartureCheckerNode : public rclcpp::Node

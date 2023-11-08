@@ -17,6 +17,7 @@
 
 #include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -25,22 +26,16 @@
 namespace marker_utils::lane_change_markers
 {
 using behavior_path_planner::LaneChangePath;
-using marker_utils::CollisionCheckDebug;
+using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObjects;
 using visualization_msgs::msg::MarkerArray;
-MarkerArray showObjectInfo(
-  const std::unordered_map<std::string, CollisionCheckDebug> & obj_debug_vec, std::string && ns);
 MarkerArray showAllValidLaneChangePath(
   const std::vector<LaneChangePath> & lanes, std::string && ns);
-MarkerArray showLerpedPose(
-  const std::unordered_map<std::string, CollisionCheckDebug> & obj_debug_vec, std::string && ns);
-MarkerArray showEgoPredictedPaths(
-  const std::unordered_map<std::string, CollisionCheckDebug> & obj_debug_vec, std::string && ns);
-MarkerArray showPolygon(
-  const std::unordered_map<std::string, CollisionCheckDebug> & obj_debug_vec, std::string && ns);
-MarkerArray showPolygonPose(
-  const std::unordered_map<std::string, CollisionCheckDebug> & obj_debug_vec, std::string && ns);
 MarkerArray createLaneChangingVirtualWallMarker(
   const geometry_msgs::msg::Pose & lane_changing_pose, const std::string & module_name,
   const rclcpp::Time & now, const std::string & ns);
+MarkerArray showFilteredObjects(
+  const ExtendedPredictedObjects & current_lane_objects,
+  const ExtendedPredictedObjects & target_lane_objects,
+  const ExtendedPredictedObjects & other_lane_objects, const std::string & ns);
 }  // namespace marker_utils::lane_change_markers
 #endif  // BEHAVIOR_PATH_PLANNER__MARKER_UTILS__LANE_CHANGE__DEBUG_HPP_

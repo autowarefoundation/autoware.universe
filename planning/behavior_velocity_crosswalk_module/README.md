@@ -32,7 +32,7 @@ The manager launch crosswalk scene modules when the reference path conflicts cro
 The crosswalk module determines a stop position at least `stop_distance_from_object` away from the object.
 
 <figure markdown>
-  ![stop_distance_from_object](docs/stop_distance_from_object.svg){width=1000}
+  ![stop_distance_from_object](docs/stop_margin.svg){width=1000}
   <figcaption>stop margin</figcaption>
 </figure>
 
@@ -44,14 +44,14 @@ The stop line is the reference point for the stopping position of the vehicle, b
 </figure>
 
 <figure markdown>
-  ![stop_distance_from_crosswalk](docs/stop_distance_from_crosswalk.svg){width=700}
+  ![stop_distance_from_crosswalk](docs/stop_line_distance.svg){width=700}
   <figcaption>virtual stop point</figcaption>
 </figure>
 
 On the other hand, if pedestrian (bicycle) is crossing **wide** crosswalks seen in scramble intersections, and the pedestrian position is more than `far_object_threshold` meters away from the stop line, the actual stop position is determined to be `stop_distance_from_object` and pedestrian position, not at the stop line.
 
 <figure markdown>
-  ![far_object_threshold](docs/far_object_threshold.svg){width=1000}
+  ![far_object_threshold](docs/stop_line_margin.svg){width=1000}
   <figcaption>stop at wide crosswalk</figcaption>
 </figure>
 
@@ -217,6 +217,16 @@ When multiple crosswalks are nearby (such as intersection), this module may make
 </figure>
 
 ### Known Issues
+
+### Debugging
+
+By `ros2 run behavior_velocity_crosswalk_module time_to_collision_plotter.py`, you can visualize the following figure of the ego and pedestrian's time to collision.
+The label of each plot is `<crosswalk module id>-<pedestrian uuid>`.
+
+<figure markdown>
+  ![limitation](docs/time_to_collision_plot.png){width=1000}
+  <figcaption>Plot of time to collision</figcaption>
+</figure>
 
 ### References/External links
 

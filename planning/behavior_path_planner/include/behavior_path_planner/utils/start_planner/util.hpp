@@ -16,6 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__UTIL_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 
 #include <route_handler/route_handler.hpp>
 
@@ -25,21 +27,21 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 
-#include <lanelet2_core/primitives/Primitive.h>
+#include <lanelet2_core/Forward.h>
 
 #include <memory>
-#include <vector>
+#include <utility>
 
 namespace behavior_path_planner::start_planner_utils
 {
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using route_handler::RouteHandler;
 
-PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2);
 PathWithLaneId getBackwardPath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & current_pose, const Pose & backed_pose, const double velocity);
@@ -47,6 +49,13 @@ lanelet::ConstLanelets getPullOutLanes(
   const std::shared_ptr<const PlannerData> & planner_data, const double backward_length);
 Pose getBackedPose(
   const Pose & current_pose, const double & yaw_shoulder_lane, const double & back_distance);
+/**
+ * @brief calculate end arc length to generate reference path considering the goal position
+ * @return a pair of s_end and terminal_is_goal
+ */
+std::pair<double, bool> calcEndArcLength(
+  const double s_start, const double forward_path_length, const lanelet::ConstLanelets & road_lanes,
+  const Pose & goal_pose);
 }  // namespace behavior_path_planner::start_planner_utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__START_PLANNER__UTIL_HPP_

@@ -14,6 +14,9 @@
 
 #include "traffic_light_multi_camera_fusion/node.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -216,7 +219,7 @@ void MultiCameraFusion::mapCallback(
 
     auto lights = tl->trafficLights();
     for (const auto & light : lights) {
-      traffic_light_id_to_regulatory_ele_id_[light.id()] = tl->id();
+      traffic_light_id_to_regulatory_ele_id_[light.id()].emplace_back(tl->id());
     }
   }
 }
@@ -302,11 +305,15 @@ void MultiCameraFusion::groupFusion(
     if (traffic_light_id_to_regulatory_ele_id_.count(roi_id) == 0) {
       RCLCPP_WARN_STREAM(
         get_logger(), "Found Traffic Light Id = " << roi_id << " which is not defined in Map");
-    } else {
-      /*
-      keep the best record for every regulatory element id
-      */
-      IdType reg_ele_id = traffic_light_id_to_regulatory_ele_id_[p.second.roi.traffic_light_id];
+      continue;
+    }
+
+    /*
+    keep the best record for every regulatory element id
+    */
+    const auto reg_ele_id_vec =
+      traffic_light_id_to_regulatory_ele_id_[p.second.roi.traffic_light_id];
+    for (const auto & reg_ele_id : reg_ele_id_vec) {
       if (
         grouped_record_map.count(reg_ele_id) == 0 ||
         ::compareRecord(p.second, grouped_record_map[reg_ele_id]) >= 0) {

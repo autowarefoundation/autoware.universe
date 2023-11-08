@@ -7,7 +7,6 @@
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
   <maintainer email="takamasa.horibe@tier4.jp">Takamasa Horibe</maintainer>
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
-  <maintainer email="yutaka.shimizu@tier4.jp">Yutaka Shimizu</maintainer>
   <license>Apache License 2.0</license>
 
   <author email="akihito.ohsato@tier4.jp">Akihito OHSATO</author>
@@ -19,6 +18,7 @@
   <depend>autoware_auto_planning_msgs</depend>
   <depend>freespace_planning_algorithms</depend>
   <depend>geometry_msgs</depend>
+  <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>

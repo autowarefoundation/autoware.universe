@@ -17,6 +17,7 @@
 #include "mpc_lateral_controller/mpc_lateral_controller.hpp"
 #include "pid_longitudinal_controller/pid_longitudinal_controller.hpp"
 #include "pure_pursuit/pure_pursuit_lateral_controller.hpp"
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -84,6 +85,8 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
     timer_control_ = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&Controller::callbackTimerControl, this));
   }
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 Controller::LateralControllerMode Controller::getLateralControllerMode(

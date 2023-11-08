@@ -15,16 +15,14 @@
 #include "behavior_path_planner/scene_module/lane_change/interface.hpp"
 
 #include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
-#include "behavior_path_planner/module_status.hpp"
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
-#include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <algorithm>
-#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -32,6 +30,7 @@
 
 namespace behavior_path_planner
 {
+using tier4_autoware_utils::appendMarkerArray;
 using utils::lane_change::assignToCandidate;
 
 LaneChangeInterface::LaneChangeInterface(
@@ -77,28 +76,35 @@ bool LaneChangeInterface::isExecutionReady() const
 
 ModuleStatus LaneChangeInterface::updateState()
 {
+  auto log_warn_throttled = [&](const std::string & message) -> void {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000, message);
+  };
+
   if (module_type_->specialExpiredCheck()) {
+    log_warn_throttled("expired check.");
     if (isWaitingApproval()) {
       return ModuleStatus::SUCCESS;
     }
   }
 
   if (!isActivated() || isWaitingApproval()) {
+    log_warn_throttled("Is idling.");
     return ModuleStatus::IDLE;
   }
 
   if (!module_type_->isValidPath()) {
-    return ModuleStatus::RUNNING;
+    log_warn_throttled("Is invalid path.");
+    return ModuleStatus::SUCCESS;
   }
 
   if (module_type_->isAbortState()) {
-    if (module_type_->hasFinishedAbort()) {
-      resetLaneChangeModule();
-    }
-    return ModuleStatus::RUNNING;
+    log_warn_throttled("Ego is in the process of aborting lane change.");
+    return module_type_->hasFinishedAbort() ? ModuleStatus::SUCCESS : ModuleStatus::RUNNING;
   }
 
   if (module_type_->hasFinishedLaneChange()) {
+    log_warn_throttled("Completed lane change.");
     return ModuleStatus::SUCCESS;
   }
 
@@ -106,31 +112,29 @@ ModuleStatus LaneChangeInterface::updateState()
 
   setObjectDebugVisualization();
   if (is_safe) {
+    log_warn_throttled("Lane change path is safe.");
     module_type_->toNormalState();
     return ModuleStatus::RUNNING;
   }
 
-  if (!module_type_->isCancelEnabled()) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
-      "Lane change path is unsafe but cancel was not enabled. Continue lane change.");
+  const auto change_state_if_stop_required = [&]() -> void {
     if (module_type_->isRequiredStop(is_object_coming_from_rear)) {
       module_type_->toStopState();
     } else {
       module_type_->toNormalState();
     }
+  };
+
+  if (!module_type_->isCancelEnabled()) {
+    log_warn_throttled(
+      "Lane change path is unsafe but cancel was not enabled. Continue lane change.");
+    change_state_if_stop_required();
     return ModuleStatus::RUNNING;
   }
 
   if (!module_type_->isAbleToReturnCurrentLane()) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
-      "Lane change path is unsafe but cannot return. Continue lane change.");
-    if (module_type_->isRequiredStop(is_object_coming_from_rear)) {
-      module_type_->toStopState();
-    } else {
-      module_type_->toNormalState();
-    }
+    log_warn_throttled("Lane change path is unsafe but cannot return. Continue lane change.");
+    change_state_if_stop_required();
     return ModuleStatus::RUNNING;
   }
 
@@ -138,65 +142,35 @@ ModuleStatus LaneChangeInterface::updateState()
   const auto threshold = common_parameters.backward_length_buffer_for_end_of_lane;
   const auto status = module_type_->getLaneChangeStatus();
   if (module_type_->isNearEndOfCurrentLanes(status.current_lanes, status.target_lanes, threshold)) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
-      "Lane change path is unsafe but near end of lane. Continue lane change.");
-    if (module_type_->isRequiredStop(is_object_coming_from_rear)) {
-      module_type_->toStopState();
-    } else {
-      module_type_->toNormalState();
-    }
+    log_warn_throttled("Lane change path is unsafe but near end of lane. Continue lane change.");
+    change_state_if_stop_required();
     return ModuleStatus::RUNNING;
   }
 
-  if (module_type_->isEgoOnPreparePhase()) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
-      "Lane change path is unsafe. Cancel lane change.");
+  if (module_type_->isEgoOnPreparePhase() && module_type_->isAbleToReturnCurrentLane()) {
+    log_warn_throttled("Lane change path is unsafe. Cancel lane change.");
     module_type_->toCancelState();
-    if (!isWaitingApproval()) {
-      resetLaneChangeModule();
-    }
-    return ModuleStatus::RUNNING;
+    return isWaitingApproval() ? ModuleStatus::RUNNING : ModuleStatus::SUCCESS;
   }
 
   if (!module_type_->isAbortEnabled()) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
+    log_warn_throttled(
       "Lane change path is unsafe but abort was not enabled. Continue lane change.");
-    if (module_type_->isRequiredStop(is_object_coming_from_rear)) {
-      module_type_->toStopState();
-    } else {
-      module_type_->toNormalState();
-    }
+    change_state_if_stop_required();
     return ModuleStatus::RUNNING;
   }
 
-  const auto found_abort_path = module_type_->getAbortPath();
+  const auto found_abort_path = module_type_->calcAbortPath();
   if (!found_abort_path) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
+    log_warn_throttled(
       "Lane change path is unsafe but not found abort path. Continue lane change.");
-    if (module_type_->isRequiredStop(is_object_coming_from_rear)) {
-      module_type_->toStopState();
-    } else {
-      module_type_->toNormalState();
-    }
+    change_state_if_stop_required();
     return ModuleStatus::RUNNING;
   }
 
-  RCLCPP_WARN_STREAM_THROTTLE(
-    getLogger().get_child(module_type_->getModuleTypeStr()), *clock_, 5000,
-    "Lane change path is unsafe. Abort lane change.");
+  log_warn_throttled("Lane change path is unsafe. Abort lane change.");
   module_type_->toAbortState();
   return ModuleStatus::RUNNING;
-}
-
-void LaneChangeInterface::resetLaneChangeModule()
-{
-  processOnExit();
-  removeRTCStatus();
-  processOnEntry();
 }
 
 void LaneChangeInterface::updateData()
@@ -204,6 +178,7 @@ void LaneChangeInterface::updateData()
   module_type_->setPreviousModulePaths(
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
   module_type_->updateSpecialData();
+  module_type_->resetStopPose();
 }
 
 BehaviorModuleOutput LaneChangeInterface::plan()
@@ -220,7 +195,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   auto output = module_type_->generateOutput();
   path_reference_ = output.reference_path;
   *prev_approved_path_ = *getPreviousModuleOutput().path;
-  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().target_lanes, *output.path);
+
+  stop_pose_ = module_type_->getStopPose();
 
   updateSteeringFactorPtr(output);
   clearWaitingApproval();
@@ -249,6 +225,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   out.turn_signal_info = getCurrentTurnSignalInfo(*out.path, out.turn_signal_info);
 
   path_reference_ = getPreviousModuleOutput().reference_path;
+
+  stop_pose_ = module_type_->getStopPose();
 
   if (!module_type_->isValidPath()) {
     removeRTCStatus();
@@ -287,6 +265,7 @@ void LaneChangeInterface::updateModuleParams(const std::any & parameters)
 
 void LaneChangeInterface::setData(const std::shared_ptr<const PlannerData> & data)
 {
+  planner_data_ = data;
   module_type_->setData(data);
 }
 
@@ -296,15 +275,16 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   if (!parameters_->publish_debug_marker) {
     return;
   }
+  using marker_utils::showPolygon;
+  using marker_utils::showPredictedPath;
+  using marker_utils::showSafetyCheckInfo;
   using marker_utils::lane_change_markers::showAllValidLaneChangePath;
-  using marker_utils::lane_change_markers::showLerpedPose;
-  using marker_utils::lane_change_markers::showObjectInfo;
-  using marker_utils::lane_change_markers::showPolygon;
-  using marker_utils::lane_change_markers::showPolygonPose;
+  using marker_utils::lane_change_markers::showFilteredObjects;
 
   const auto debug_data = module_type_->getDebugData();
   const auto debug_after_approval = module_type_->getAfterApprovalDebugData();
   const auto debug_valid_path = module_type_->getDebugValidPath();
+  const auto debug_filtered_objects = module_type_->getDebugFilteredObjects();
 
   debug_marker_.markers.clear();
   const auto add = [this](const MarkerArray & added) {
@@ -312,15 +292,18 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   };
 
   add(showAllValidLaneChangePath(debug_valid_path, "lane_change_valid_paths"));
+  add(showFilteredObjects(
+    debug_filtered_objects.current_lane, debug_filtered_objects.target_lane,
+    debug_filtered_objects.other_lane, "object_filtered"));
   if (!debug_data.empty()) {
-    add(showObjectInfo(debug_data, "object_debug_info"));
-    add(showLerpedPose(debug_data, "ego_predicted_path"));
+    add(showSafetyCheckInfo(debug_data, "object_debug_info"));
+    add(showPredictedPath(debug_data, "ego_predicted_path"));
     add(showPolygon(debug_data, "ego_and_target_polygon_relation"));
   }
 
   if (!debug_after_approval.empty()) {
-    add(showObjectInfo(debug_after_approval, "object_debug_info_after_approval"));
-    add(showLerpedPose(debug_after_approval, "ego_predicted_path_after_approval"));
+    add(showSafetyCheckInfo(debug_after_approval, "object_debug_info_after_approval"));
+    add(showPredictedPath(debug_after_approval, "ego_predicted_path_after_approval"));
     add(showPolygon(debug_after_approval, "ego_and_target_polygon_relation_after_approval"));
   }
 }
@@ -333,11 +316,11 @@ std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeInterface::get_debug_msg_arra
   for (const auto & [uuid, debug_data] : debug_data) {
     LaneChangeDebugMsg debug_msg;
     debug_msg.object_id = uuid;
-    debug_msg.allow_lane_change = debug_data.allow_lane_change;
+    debug_msg.allow_lane_change = debug_data.is_safe;
     debug_msg.is_front = debug_data.is_front;
-    debug_msg.relative_distance = debug_data.relative_to_ego;
-    debug_msg.failed_reason = debug_data.failed_reason;
-    debug_msg.velocity = debug_data.object_twist.linear.x;
+    debug_msg.failed_reason = debug_data.unsafe_reason;
+    debug_msg.velocity =
+      std::hypot(debug_data.object_twist.linear.x, debug_data.object_twist.linear.y);
     debug_msg_array.lane_change_info.push_back(debug_msg);
   }
   lane_change_debug_msg_array_ = debug_msg_array;
@@ -457,8 +440,8 @@ TurnSignalInfo LaneChangeInterface::getCurrentTurnSignalInfo(
   const auto & common_parameter = module_type_->getCommonParam();
   const auto shift_intervals =
     route_handler->getLateralIntervalsToPreferredLane(current_lanes.back());
-  const double next_lane_change_buffer =
-    utils::calcMinimumLaneChangeLength(common_parameter, shift_intervals);
+  const double next_lane_change_buffer = utils::calcMinimumLaneChangeLength(
+    common_parameter, shift_intervals, common_parameter.backward_length_buffer_for_end_of_lane);
   const double & nearest_dist_threshold = common_parameter.ego_nearest_dist_threshold;
   const double & nearest_yaw_threshold = common_parameter.ego_nearest_yaw_threshold;
   const double & base_to_front = common_parameter.base_link2front;

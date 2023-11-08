@@ -17,7 +17,8 @@
 
 #include "path_smoother/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <memory>
 #include <optional>
@@ -43,7 +44,11 @@ struct PlannerData
 
 struct TimeKeeper
 {
-  void init() { accumulated_msg = "\n"; }
+  void init()
+  {
+    accumulated_msg = "\n";
+    accumulated_time = 0.0;
+  }
 
   template <typename T>
   TimeKeeper & operator<<(const T & msg)
@@ -65,6 +70,7 @@ struct TimeKeeper
   {
     const double elapsed_time = stop_watch_.toc(func_name);
     *this << white_spaces << func_name << ":= " << elapsed_time << " [ms]";
+    accumulated_time = elapsed_time;
     endLine();
   }
 
@@ -72,6 +78,10 @@ struct TimeKeeper
 
   std::string accumulated_msg = "\n";
   std::stringstream latest_stream;
+
+  double getAccumulatedTime() const { return accumulated_time; }
+
+  double accumulated_time{0.0};
 
   tier4_autoware_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>

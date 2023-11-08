@@ -15,6 +15,7 @@
 #include "path_sampler/node.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
+#include "motion_utils/marker/marker_helper.hpp"
 #include "path_sampler/path_generation.hpp"
 #include "path_sampler/prepare_inputs.hpp"
 #include "path_sampler/utils/geometry_utils.hpp"
@@ -22,6 +23,8 @@
 #include "rclcpp/time.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/constraints/soft_constraint.hpp"
+
+#include <boost/geometry/algorithms/distance.hpp>
 
 #include <chrono>
 #include <limits>
@@ -458,7 +461,7 @@ std::vector<TrajectoryPoint> PathSampler::generatePath(const PlannerData & plann
     prev_path_ = selected_path;
   } else {
     RCLCPP_WARN(
-      get_logger(), "No valid path found (out of %lu) outputing %s\n", candidate_paths.size(),
+      get_logger(), "No valid path found (out of %lu) outputting %s\n", candidate_paths.size(),
       prev_path_ ? "previous path" : "stopping path");
     int coll = 0;
     int da = 0;

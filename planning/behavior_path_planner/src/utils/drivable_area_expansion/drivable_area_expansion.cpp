@@ -14,182 +14,322 @@
 
 #include "behavior_path_planner/utils/drivable_area_expansion/drivable_area_expansion.hpp"
 
-#include "behavior_path_planner/utils/drivable_area_expansion/expansion.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/footprints.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/map_utils.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/parameters.hpp"
+#include "behavior_path_planner/utils/drivable_area_expansion/path_projection.hpp"
 #include "behavior_path_planner/utils/drivable_area_expansion/types.hpp"
-#include "interpolation/linear_interpolation.hpp"
+
+#include <Eigen/Geometry>
+#include <interpolation/linear_interpolation.hpp>
+#include <motion_utils/resample/resample.hpp>
+#include <motion_utils/trajectory/interpolation.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <boost/geometry.hpp>
+
+#include <limits>
 
 namespace drivable_area_expansion
 {
 
-void expandDrivableArea(
-  PathWithLaneId & path, const DrivableAreaExpansionParameters & params,
-  const PredictedObjects & dynamic_objects, const route_handler::RouteHandler & route_handler,
-  const lanelet::ConstLanelets & path_lanes)
+namespace
 {
-  const auto uncrossable_lines =
-    extractUncrossableLines(*route_handler.getLaneletMapPtr(), params.avoid_linestring_types);
-  multilinestring_t uncrossable_lines_in_range;
-  const auto & p = path.points.front().point.pose.position;
-  for (const auto & line : uncrossable_lines)
-    if (boost::geometry::distance(line, point_t{p.x, p.y}) < params.max_path_arc_length)
-      uncrossable_lines_in_range.push_back(line);
-  const auto path_footprints = createPathFootprints(path, params);
-  const auto predicted_paths = createObjectFootprints(dynamic_objects, params);
-  const auto expansion_polygons =
-    params.expansion_method == "lanelet"
-      ? createExpansionLaneletPolygons(
-          path_lanes, route_handler, path_footprints, predicted_paths, params)
-      : createExpansionPolygons(
-          path, path_footprints, predicted_paths, uncrossable_lines_in_range, params);
-  const auto expanded_drivable_area = createExpandedDrivableAreaPolygon(path, expansion_polygons);
-  updateDrivableAreaBounds(path, expanded_drivable_area);
+Point2d convert_point(const Point & p)
+{
+  return Point2d{p.x, p.y};
 }
+}  // namespace
 
-point_t convert_point(const Point & p)
+void reuse_previous_poses(
+  const PathWithLaneId & path, std::vector<Pose> & prev_poses,
+  std::vector<double> & prev_curvatures, const Point & ego_point,
+  const DrivableAreaExpansionParameters & params)
 {
-  return point_t{p.x, p.y};
-}
-
-Point convert_point(const point_t & p)
-{
-  return Point().set__x(p.x()).set__y(p.y());
-}
-
-polygon_t createExpandedDrivableAreaPolygon(
-  const PathWithLaneId & path, const multipolygon_t & expansion_polygons)
-{
-  polygon_t original_da_poly;
-  original_da_poly.outer().reserve(path.left_bound.size() + path.right_bound.size() + 1);
-  for (const auto & p : path.left_bound) original_da_poly.outer().push_back(convert_point(p));
-  for (auto it = path.right_bound.rbegin(); it != path.right_bound.rend(); ++it)
-    original_da_poly.outer().push_back(convert_point(*it));
-  original_da_poly.outer().push_back(original_da_poly.outer().front());
-
-  multipolygon_t unions;
-  auto expanded_da_poly = original_da_poly;
-  for (const auto & p : expansion_polygons) {
-    unions.clear();
-    boost::geometry::union_(expanded_da_poly, p, unions);
-    if (unions.size() == 1)  // union of overlapping polygons should produce a single polygon
-      expanded_da_poly = unions[0];
-  }
-  return expanded_da_poly;
-}
-
-std::array<ring_t::const_iterator, 4> findLeftRightRanges(
-  const PathWithLaneId & path, const ring_t & expanded_drivable_area)
-{
-  const auto is_left_of_segment = [](const point_t & a, const point_t & b, const point_t & p) {
-    return (b.x() - a.x()) * (p.y() - a.y()) - (b.y() - a.y()) * (p.x() - a.x()) > 0;
-  };
-  const auto is_left_of_path_start = [&](const point_t & p) {
-    return is_left_of_segment(
-      convert_point(path.points[0].point.pose.position),
-      convert_point(path.points[1].point.pose.position), p);
-  };
-  const auto is_left_of_path_end = [&, size = path.points.size()](const point_t & p) {
-    return is_left_of_segment(
-      convert_point(path.points[size - 2].point.pose.position),
-      convert_point(path.points[size - 1].point.pose.position), p);
-  };
-  const auto dist_to_path_start = [start = convert_point(path.points.front().point.pose.position)](
-                                    const auto & p) { return boost::geometry::distance(start, p); };
-  const auto dist_to_path_end = [end = convert_point(path.points.back().point.pose.position)](
-                                  const auto & p) { return boost::geometry::distance(end, p); };
-
-  double min_start_dist = std::numeric_limits<double>::max();
-  auto start_transition = expanded_drivable_area.end();
-  double min_end_dist = std::numeric_limits<double>::max();
-  auto end_transition = expanded_drivable_area.end();
-  for (auto it = expanded_drivable_area.begin(); std::next(it) != expanded_drivable_area.end();
-       ++it) {
-    if (is_left_of_path_start(*it) != is_left_of_path_start(*std::next(it))) {
-      const auto dist = dist_to_path_start(*it);
-      if (dist < min_start_dist) {
-        start_transition = it;
-        min_start_dist = dist;
-      }
-    }
-    if (is_left_of_path_end(*it) != is_left_of_path_end(*std::next(it))) {
-      const auto dist = dist_to_path_end(*it);
-      if (dist < min_end_dist) {
-        end_transition = it;
-        min_end_dist = dist;
+  std::vector<Pose> cropped_poses;
+  std::vector<double> cropped_curvatures;
+  const auto ego_is_behind = prev_poses.size() > 1 && motion_utils::calcLongitudinalOffsetToSegment(
+                                                        prev_poses, 0, ego_point) < 0.0;
+  const auto ego_is_far = !prev_poses.empty() &&
+                          tier4_autoware_utils::calcDistance2d(ego_point, prev_poses.front()) < 0.0;
+  if (!ego_is_behind && !ego_is_far && prev_poses.size() > 1) {
+    const auto first_idx =
+      motion_utils::findNearestSegmentIndex(prev_poses, path.points.front().point.pose);
+    const auto deviation =
+      motion_utils::calcLateralOffset(prev_poses, path.points.front().point.pose.position);
+    if (first_idx && deviation < params.max_reuse_deviation) {
+      LineString2d path_ls;
+      for (const auto & p : path.points) path_ls.push_back(convert_point(p.point.pose.position));
+      for (auto idx = *first_idx; idx < prev_poses.size(); ++idx) {
+        double lateral_offset = std::numeric_limits<double>::max();
+        for (auto segment_idx = 0LU; segment_idx + 1 < path_ls.size(); ++segment_idx) {
+          const auto projection = point_to_line_projection(
+            convert_point(prev_poses[idx].position), path_ls[segment_idx],
+            path_ls[segment_idx + 1]);
+          lateral_offset = std::min(projection.distance, lateral_offset);
+        }
+        if (lateral_offset > params.max_reuse_deviation) break;
+        cropped_poses.push_back(prev_poses[idx]);
+        cropped_curvatures.push_back(prev_curvatures[idx]);
       }
     }
   }
-  const auto left_start =
-    is_left_of_path_start(*start_transition) ? start_transition : std::next(start_transition);
-  const auto right_start =
-    is_left_of_path_start(*start_transition) ? std::next(start_transition) : start_transition;
-  const auto left_end =
-    is_left_of_path_end(*end_transition) ? end_transition : std::next(end_transition);
-  const auto right_end =
-    is_left_of_path_end(*end_transition) ? std::next(end_transition) : end_transition;
-  return {left_start, left_end, right_start, right_end};
+  if (cropped_poses.empty()) {
+    const auto resampled_path_points =
+      motion_utils::resamplePath(path, params.resample_interval, true, true, false).points;
+    const auto cropped_path =
+      params.max_path_arc_length <= 0.0
+        ? resampled_path_points
+        : motion_utils::cropForwardPoints(
+            resampled_path_points, resampled_path_points.front().point.pose.position, 0,
+            params.max_path_arc_length);
+    for (const auto & p : cropped_path) cropped_poses.push_back(p.point.pose);
+  } else {
+    const auto initial_arc_length = motion_utils::calcArcLength(cropped_poses);
+    const auto max_path_arc_length = motion_utils::calcArcLength(path.points);
+    const auto first_arc_length = motion_utils::calcSignedArcLength(
+      path.points, path.points.front().point.pose.position, cropped_poses.back().position);
+    for (auto arc_length = first_arc_length + params.resample_interval;
+         (params.max_path_arc_length <= 0.0 ||
+          initial_arc_length + (arc_length - first_arc_length) <= params.max_path_arc_length) &&
+         arc_length <= max_path_arc_length;
+         arc_length += params.resample_interval)
+      cropped_poses.push_back(motion_utils::calcInterpolatedPose(path.points, arc_length));
+  }
+  prev_poses = motion_utils::removeOverlapPoints(cropped_poses);
+  prev_curvatures = cropped_curvatures;
 }
 
-void copy_z_over_arc_length(
-  const std::vector<geometry_msgs::msg::Point> & from, std::vector<geometry_msgs::msg::Point> & to)
+double calculate_minimum_lane_width(
+  const double curvature_radius, const DrivableAreaExpansionParameters & params)
 {
-  if (from.empty() || to.empty()) return;
-  to.front().z = from.front().z;
-  if (from.size() < 2 || to.size() < 2) return;
-  to.back().z = from.back().z;
-  auto i_from = 1lu;
-  auto s_from = tier4_autoware_utils::calcDistance2d(from[0], from[1]);
-  auto s_to = 0.0;
-  auto s_from_prev = 0.0;
-  for (auto i_to = 1lu; i_to + 1 < to.size(); ++i_to) {
-    s_to += tier4_autoware_utils::calcDistance2d(to[i_to - 1], to[i_to]);
-    for (; s_from < s_to && i_from + 1 < from.size(); ++i_from) {
-      s_from_prev = s_from;
-      s_from += tier4_autoware_utils::calcDistance2d(from[i_from], from[i_from + 1]);
-    }
-    if (s_from - s_from_prev != 0.0) {
-      const auto ratio = (s_to - s_from_prev) / (s_from - s_from_prev);
-      to[i_to].z = interpolation::lerp(from[i_from - 1].z, from[i_from].z, ratio);
-    } else {
-      to[i_to].z = to[i_to - 1].z;
-    }
-  }
+  const auto k = curvature_radius;
+  const auto a = params.vehicle_info.front_overhang_m + params.extra_front_overhang;
+  const auto w = params.vehicle_info.vehicle_width_m + params.extra_width;
+  const auto l = params.vehicle_info.wheel_base_m + params.extra_wheelbase;
+  return (a * a + 2.0 * a * l + 2.0 * k * w + l * l + w * w) / (2.0 * k + w);
 }
 
-void updateDrivableAreaBounds(PathWithLaneId & path, const polygon_t & expanded_drivable_area)
+std::vector<double> calculate_minimum_expansions(
+  const std::vector<Pose> & path_poses, const std::vector<Point> bound,
+  const std::vector<double> curvatures, const Side side,
+  const DrivableAreaExpansionParameters & params)
 {
-  const auto original_left_bound = path.left_bound;
-  const auto original_right_bound = path.right_bound;
-  path.left_bound.clear();
-  path.right_bound.clear();
-  const auto begin = expanded_drivable_area.outer().begin();
-  const auto end = std::prev(expanded_drivable_area.outer().end());
-  const auto & [left_start, left_end, right_start, right_end] =
-    findLeftRightRanges(path, expanded_drivable_area.outer());
-  // NOTE: clockwise ordering -> positive increment for left bound, negative for right bound
-  if (left_start < left_end) {
-    path.left_bound.reserve(std::distance(left_start, left_end));
-    for (auto it = left_start; it <= left_end; ++it) path.left_bound.push_back(convert_point(*it));
-  } else {  // loop back
-    path.left_bound.reserve(std::distance(left_start, end) + std::distance(begin, left_end));
-    for (auto it = left_start; it != end; ++it) path.left_bound.push_back(convert_point(*it));
-    for (auto it = begin; it <= left_end; ++it) path.left_bound.push_back(convert_point(*it));
+  std::vector<double> minimum_expansions(bound.size());
+  size_t lb_idx = 0;
+  for (auto path_idx = 0UL; path_idx < path_poses.size(); ++path_idx) {
+    const auto & path_pose = path_poses[path_idx];
+    if (curvatures[path_idx] == 0.0) continue;
+    const auto curvature_radius = 1 / curvatures[path_idx];
+    const auto min_lane_width = calculate_minimum_lane_width(curvature_radius, params);
+    const auto side_distance = min_lane_width / 2.0 * (side == LEFT ? 1.0 : -1.0);
+    const auto offset_point =
+      tier4_autoware_utils::calcOffsetPose(path_pose, 0.0, side_distance, 0.0).position;
+    for (auto bound_idx = lb_idx; bound_idx + 1 < bound.size(); ++bound_idx) {
+      const auto & prev_p = bound[bound_idx];
+      const auto & next_p = bound[bound_idx + 1];
+      const auto intersection_point =
+        tier4_autoware_utils::intersect(offset_point, path_pose.position, prev_p, next_p);
+      if (intersection_point) {
+        lb_idx = bound_idx;
+        const auto dist = tier4_autoware_utils::calcDistance2d(*intersection_point, offset_point);
+        minimum_expansions[bound_idx] = std::max(minimum_expansions[bound_idx], dist);
+        minimum_expansions[bound_idx + 1] = std::max(minimum_expansions[bound_idx + 1], dist);
+        // apply the expansion to all bound points within the extra arc length
+        auto arc_length =
+          tier4_autoware_utils::calcDistance2d(*intersection_point, bound[bound_idx + 1]);
+        for (auto up_bound_idx = bound_idx + 2; up_bound_idx < bound.size(); ++up_bound_idx) {
+          arc_length +=
+            tier4_autoware_utils::calcDistance2d(bound[up_bound_idx - 1], bound[up_bound_idx]);
+          if (arc_length > params.extra_arc_length) break;
+          minimum_expansions[up_bound_idx] = std::max(minimum_expansions[up_bound_idx], dist);
+        }
+        arc_length = tier4_autoware_utils::calcDistance2d(*intersection_point, bound[bound_idx]);
+        for (auto down_offset_idx = 1LU; down_offset_idx < bound_idx; ++down_offset_idx) {
+          const auto idx = bound_idx - down_offset_idx;
+          arc_length += tier4_autoware_utils::calcDistance2d(bound[idx - 1], bound[idx]);
+          if (arc_length > params.extra_arc_length) break;
+          minimum_expansions[idx] = std::max(minimum_expansions[idx], dist);
+        }
+        break;
+      }
+    }
   }
-  if (right_start > right_end) {
-    path.right_bound.reserve(std::distance(right_end, right_start));
-    for (auto it = right_start; it >= right_end; --it)
-      path.right_bound.push_back(convert_point(*it));
-  } else {  // loop back
-    path.right_bound.reserve(std::distance(begin, right_start) + std::distance(right_end, end));
-    for (auto it = right_start; it >= begin; --it) path.right_bound.push_back(convert_point(*it));
-    for (auto it = end - 1; it >= right_end; --it) path.right_bound.push_back(convert_point(*it));
-  }
-  copy_z_over_arc_length(original_left_bound, path.left_bound);
-  copy_z_over_arc_length(original_right_bound, path.right_bound);
+  return minimum_expansions;
 }
 
+void apply_bound_change_rate_limit(
+  std::vector<double> & distances, const std::vector<Point> & bound, const double max_rate)
+{
+  if (distances.empty()) return;
+  const auto apply_max_vel = [&](auto & exp, const auto from, const auto to) {
+    if (exp[from] > exp[to]) {
+      const auto arc_length = tier4_autoware_utils::calcDistance2d(bound[from], bound[to]);
+      const auto smoothed_dist = exp[from] - arc_length * max_rate;
+      exp[to] = std::max(exp[to], smoothed_dist);
+    }
+  };
+  for (auto idx = 0LU; idx + 1 < distances.size(); ++idx) apply_max_vel(distances, idx, idx + 1);
+  for (auto idx = distances.size() - 1; idx > 0; --idx) apply_max_vel(distances, idx, idx - 1);
+}
+
+std::vector<double> calculate_maximum_distance(
+  const std::vector<Pose> & path_poses, const std::vector<Point> bound,
+  const SegmentRtree & uncrossable_segments, const std::vector<Polygon2d> & uncrossable_polygons,
+  const DrivableAreaExpansionParameters & params)
+{
+  // TODO(Maxime): improve performances (dont use bg::distance ? use rtree ?)
+  std::vector<double> maximum_distances(bound.size(), std::numeric_limits<double>::max());
+  LineString2d path_ls;
+  LineString2d bound_ls;
+  for (const auto & p : bound) bound_ls.push_back(convert_point(p));
+  for (const auto & p : path_poses) path_ls.push_back(convert_point(p.position));
+  for (auto i = 0UL; i + 1 < bound_ls.size(); ++i) {
+    const Segment2d segment_ls = {bound_ls[i], bound_ls[i + 1]};
+    std::vector<Segment2d> query_result;
+    boost::geometry::index::query(
+      uncrossable_segments, boost::geometry::index::nearest(segment_ls, 1),
+      std::back_inserter(query_result));
+    if (!query_result.empty()) {
+      const auto bound_to_line_dist = boost::geometry::distance(segment_ls, query_result.front());
+      const auto dist_limit = std::max(0.0, bound_to_line_dist - params.avoid_linestring_dist);
+      maximum_distances[i] = std::min(maximum_distances[i], dist_limit);
+      maximum_distances[i + 1] = std::min(maximum_distances[i + 1], dist_limit);
+    }
+    for (const auto & uncrossable_poly : uncrossable_polygons) {
+      const auto bound_to_poly_dist = boost::geometry::distance(segment_ls, uncrossable_poly);
+      maximum_distances[i] = std::min(maximum_distances[i], bound_to_poly_dist);
+      maximum_distances[i + 1] = std::min(maximum_distances[i + 1], bound_to_poly_dist);
+    }
+  }
+  if (params.max_expansion_distance > 0.0)
+    for (auto & d : maximum_distances) d = std::min(params.max_expansion_distance, d);
+  return maximum_distances;
+}
+
+void expand_bound(
+  std::vector<Point> & bound, const std::vector<Pose> & path_poses,
+  const std::vector<double> & expansions)
+{
+  LineString2d path_ls;
+  for (const auto & p : path_poses) path_ls.push_back(convert_point(p.position));
+  for (auto idx = 0LU; idx < bound.size(); ++idx) {
+    if (expansions[idx] > 0.0) {
+      const auto bound_p = convert_point(bound[idx]);
+      const auto projection = point_to_linestring_projection(bound_p, path_ls);
+      const auto expansion_ratio =
+        (expansions[idx] + std::abs(projection.distance)) / std::abs(projection.distance);
+      const auto & path_p = projection.projected_point;
+      const auto expanded_p = lerp_point(path_p, bound_p, expansion_ratio);
+      bound[idx].x = expanded_p.x();
+      bound[idx].y = expanded_p.y();
+    }
+  }
+
+  // remove any self intersection by skipping the points inside of the loop
+  std::vector<Point> no_loop_bound = {bound.front()};
+  for (auto idx = 1LU; idx < bound.size(); ++idx) {
+    bool is_intersecting = false;
+    for (auto succ_idx = idx + 1; succ_idx < bound.size(); ++succ_idx) {
+      const auto intersection = tier4_autoware_utils::intersect(
+        bound[idx - 1], bound[idx], bound[succ_idx - 1], bound[succ_idx]);
+      if (
+        intersection &&
+        tier4_autoware_utils::calcDistance2d(*intersection, bound[idx - 1]) < 1e-3 &&
+        tier4_autoware_utils::calcDistance2d(*intersection, bound[idx]) < 1e-3) {
+        idx = succ_idx;
+        is_intersecting = true;
+      }
+    }
+    if (!is_intersecting) no_loop_bound.push_back(bound[idx]);
+  }
+  bound = no_loop_bound;
+}
+
+std::vector<double> calculate_smoothed_curvatures(
+  const std::vector<Pose> & poses, const size_t smoothing_window_size)
+{
+  const auto curvatures = motion_utils::calcCurvature(poses);
+  std::vector<double> smoothed_curvatures(curvatures.size());
+  for (auto i = 0UL; i < curvatures.size(); ++i) {
+    auto sum = 0.0;
+    const auto from_idx = (i >= smoothing_window_size ? i - smoothing_window_size : 0);
+    const auto to_idx = std::min(i + smoothing_window_size, curvatures.size() - 1);
+    for (auto j = from_idx; j <= to_idx; ++j) sum += std::abs(curvatures[j]);
+    smoothed_curvatures[i] = sum / static_cast<double>(to_idx - from_idx + 1);
+  }
+  return smoothed_curvatures;
+}
+
+void expand_drivable_area(
+  PathWithLaneId & path,
+  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data)
+{
+  // skip if no bounds or not enough points to calculate path curvature
+  if (path.points.size() < 3 || path.left_bound.empty() || path.right_bound.empty()) return;
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("overall");
+  stop_watch.tic("preprocessing");
+  // crop first/last non deviating path_poses
+  const auto & params = planner_data->drivable_area_expansion_parameters;
+  const auto & route_handler = *planner_data->route_handler;
+  const auto uncrossable_segments = extract_uncrossable_segments(
+    *route_handler.getLaneletMapPtr(), planner_data->self_odometry->pose.pose.position, params);
+  const auto uncrossable_polygons = create_object_footprints(*planner_data->dynamic_object, params);
+  const auto preprocessing_ms = stop_watch.toc("preprocessing");
+
+  stop_watch.tic("crop");
+  std::vector<Pose> path_poses = planner_data->drivable_area_expansion_prev_path_poses;
+  std::vector<double> curvatures = planner_data->drivable_area_expansion_prev_curvatures;
+
+  reuse_previous_poses(
+    path, path_poses, curvatures, planner_data->self_odometry->pose.pose.position, params);
+  const auto crop_ms = stop_watch.toc("crop");
+
+  stop_watch.tic("curvatures_expansion");
+  // Only add curvatures for the new points. Curvatures of reused path points are not updated.
+  const auto new_curvatures =
+    calculate_smoothed_curvatures(path_poses, params.curvature_average_window);
+  const auto first_new_point_idx = curvatures.size();
+  curvatures.insert(
+    curvatures.end(), new_curvatures.begin() + first_new_point_idx, new_curvatures.end());
+  auto left_expansions =
+    calculate_minimum_expansions(path_poses, path.left_bound, curvatures, LEFT, params);
+  auto right_expansions =
+    calculate_minimum_expansions(path_poses, path.right_bound, curvatures, RIGHT, params);
+  const auto curvature_expansion_ms = stop_watch.toc("curvatures_expansion");
+
+  stop_watch.tic("max_dist");
+  const auto max_left_expansions = calculate_maximum_distance(
+    path_poses, path.left_bound, uncrossable_segments, uncrossable_polygons, params);
+  const auto max_right_expansions = calculate_maximum_distance(
+    path_poses, path.right_bound, uncrossable_segments, uncrossable_polygons, params);
+  for (auto i = 0LU; i < left_expansions.size(); ++i)
+    left_expansions[i] = std::min(left_expansions[i], max_left_expansions[i]);
+  for (auto i = 0LU; i < right_expansions.size(); ++i)
+    right_expansions[i] = std::min(right_expansions[i], max_right_expansions[i]);
+  const auto max_dist_ms = stop_watch.toc("max_dist");
+
+  stop_watch.tic("smooth");
+  apply_bound_change_rate_limit(left_expansions, path.left_bound, params.max_bound_rate);
+  apply_bound_change_rate_limit(right_expansions, path.right_bound, params.max_bound_rate);
+  const auto smooth_ms = stop_watch.toc("smooth");
+
+  // TODO(Maxime): limit the distances based on the total width (left + right < min_lane_width)
+  stop_watch.tic("expand");
+  expand_bound(path.left_bound, path_poses, left_expansions);
+  expand_bound(path.right_bound, path_poses, right_expansions);
+  const auto expand_ms = stop_watch.toc("expand");
+
+  const auto total_ms = stop_watch.toc("overall");
+  if (params.print_runtime)
+    std::printf(
+      "Total runtime(ms): %2.2f\n\tPreprocessing: %2.2f\n\tCrop: %2.2f\n\tCurvature expansion: "
+      "%2.2f\n\tMaximum expansion: %2.2f\n\tSmoothing: %2.2f\n\tExpansion: %2.2f\n\n",
+      total_ms, preprocessing_ms, crop_ms, curvature_expansion_ms, max_dist_ms, smooth_ms,
+      expand_ms);
+  planner_data->drivable_area_expansion_prev_path_poses = path_poses;
+  planner_data->drivable_area_expansion_prev_curvatures = curvatures;
+}
 }  // namespace drivable_area_expansion

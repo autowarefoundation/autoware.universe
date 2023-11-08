@@ -55,6 +55,7 @@ public:
     enable_simultaneous_execution_as_candidate_module_(
       config.enable_simultaneous_execution_as_candidate_module),
     enable_rtc_(config.enable_rtc),
+    keep_last_(config.keep_last),
     max_module_num_(config.max_module_size),
     priority_(config.priority)
   {
@@ -100,10 +101,6 @@ public:
       return;
     }
 
-    observer.lock()->setIsSimultaneousExecutableAsApprovedModule(
-      enable_simultaneous_execution_as_approved_module_);
-    observer.lock()->setIsSimultaneousExecutableAsCandidateModule(
-      enable_simultaneous_execution_as_candidate_module_);
     observer.lock()->setData(planner_data_);
     observer.lock()->setPreviousModuleOutput(previous_module_output);
     observer.lock()->onEntry();
@@ -218,37 +215,36 @@ public:
 
   bool canLaunchNewModule() const { return observers_.size() < max_module_num_; }
 
-  bool isSimultaneousExecutableAsApprovedModule() const
+  /**
+   * Determine if the module is always executable, regardless of the state of other modules.
+   *
+   * When this returns true:
+   * - The module can be executed even if other modules are not marked as 'simultaneously
+   * executable'.
+   * - Conversely, the presence of this module will not prevent other modules
+   *   from executing, even if they are not marked as 'simultaneously executable'.
+   */
+  virtual bool isAlwaysExecutableModule() const { return false; }
+
+  virtual bool isSimultaneousExecutableAsApprovedModule() const
   {
-    if (observers_.empty()) {
-      return enable_simultaneous_execution_as_approved_module_;
+    if (isAlwaysExecutableModule()) {
+      return true;
     }
 
-    const auto checker = [this](const SceneModuleObserver & observer) {
-      if (observer.expired()) {
-        return enable_simultaneous_execution_as_approved_module_;
-      }
-      return observer.lock()->isSimultaneousExecutableAsApprovedModule();
-    };
-
-    return std::all_of(observers_.begin(), observers_.end(), checker);
+    return enable_simultaneous_execution_as_approved_module_;
   }
 
-  bool isSimultaneousExecutableAsCandidateModule() const
+  virtual bool isSimultaneousExecutableAsCandidateModule() const
   {
-    if (observers_.empty()) {
-      return enable_simultaneous_execution_as_candidate_module_;
+    if (isAlwaysExecutableModule()) {
+      return true;
     }
 
-    const auto checker = [this](const SceneModuleObserver & observer) {
-      if (observer.expired()) {
-        return enable_simultaneous_execution_as_candidate_module_;
-      }
-      return observer.lock()->isSimultaneousExecutableAsCandidateModule();
-    };
-
-    return std::all_of(observers_.begin(), observers_.end(), checker);
+    return enable_simultaneous_execution_as_candidate_module_;
   }
+
+  bool isKeepLast() const { return keep_last_; }
 
   void setData(const std::shared_ptr<PlannerData> & planner_data) { planner_data_ = planner_data; }
 
@@ -315,6 +311,8 @@ protected:
 
 private:
   bool enable_rtc_;
+
+  bool keep_last_;
 
   size_t max_module_num_;
 
