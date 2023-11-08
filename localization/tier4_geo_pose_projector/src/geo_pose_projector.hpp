@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <optional>
+#include <string>
 
 class GeoPoseProjector : public rclcpp::Node
 {

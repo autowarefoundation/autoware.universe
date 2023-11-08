@@ -23,6 +23,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include <string>
+
 GeoPoseProjector::GeoPoseProjector()
 : Node("geo_pose_projector"), publish_tf_(declare_parameter<bool>("publish_tf"))
 {
