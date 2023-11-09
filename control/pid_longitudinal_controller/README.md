@@ -55,18 +55,27 @@ For reliable stopping, the target acceleration calculated by the FeedForward sys
 
 Based on the slope information, a compensation term is added to the target acceleration.
 
-There are two sources of the slope information, which can be switched by a parameter.
+There are three ways of getting the slope information, which can be switched by a parameter.
 
-- Pitch of the estimated ego-pose (default)
-  - Calculates the current slope from the pitch angle of the estimated ego-pose
-  - Pros: Easily available
-  - Cons: Cannot extract accurate slope information due to the influence of vehicle vibration.
-- Z coordinate on the trajectory
-  - Calculates the road slope from the difference of z-coordinates between the front and rear wheel positions in the target trajectory
-  - Pros: More accurate than pitch information, if the z-coordinates of the route are properly maintained
-  - Pros: Can be used in combination with delay compensation (not yet implemented)
-  - Cons: z-coordinates of high-precision map is needed.
-  - Cons: Does not support free space planning (for now)
+1. Pitch of the estimated ego-pose (default)
+   - Calculates the current slope from the pitch angle of the estimated ego-pose
+   - Pros: Easily available
+   - Cons: Cannot extract accurate slope information due to the influence of vehicle vibration.
+2. Z coordinate on the trajectory
+   - Calculates the road slope from the difference of z-coordinates between the front and rear wheel positions in the target trajectory
+   - Pros: More accurate than pitch information, if the z-coordinates of the route are properly maintained
+   - Pros: Can be used in combination with delay compensation (not yet implemented)
+   - Cons: z-coordinates of high-precision map is needed.
+   - Limitation: Does not support free space planning (for now)
+3. Integrating velocity error (by using I-term in PID)
+   - Ego vehicle can still move uphill, albeit slowly.
+   - Pros: Allows slope compensation when localization fails or when vector map is not precise.
+   - Cons: Performs poorly when compared to the first and second method.
+   - Cons: As the integral error increases, ego might creep slowly during uphill and drops rapidly during the downhill.
+   - Limitation: This feature is not supported when ego is stopped.
+     - This limitation will be addressed in the future.
+     - However, even if it is supported, it doesn't work if ego is stopped due elements that is not under Autoware's scope. i.e.: when vehicle interface doesn't provide sufficient information to trigger the operation mode.
+     - For example, if user requires external key to start the vehicle, or when user have to press acceleration pedal to start the vehicle.
 
 **Notation:** This function works correctly only in a vehicle system that does not have acceleration feedback in the low-level control system.
 
