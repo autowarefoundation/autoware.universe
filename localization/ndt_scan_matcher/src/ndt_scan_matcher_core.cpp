@@ -56,9 +56,9 @@ tier4_debug_msgs::msg::Int32Stamped make_int32_stamped(
 std::vector<Eigen::Vector2d> create_initial_pose_offset_model(
   const std::vector<double> & x, const std::vector<double> & y)
 {
-  int size = x.size();
+  const size_t size = x.size();
   std::vector<Eigen::Vector2d> initial_pose_offset_model(size);
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     initial_pose_offset_model[i].x() = x[i];
     initial_pose_offset_model[i].y() = y[i];
   }
@@ -74,9 +74,8 @@ Eigen::Matrix2d find_rotation_matrix_aligning_covariance_to_principal_axes(
     const Eigen::Vector2d eigen_vec = eigensolver.eigenvectors().col(0);
     const double th = std::atan2(eigen_vec.y(), eigen_vec.x());
     return Eigen::Rotation2Dd(th).toRotationMatrix();
-  } else {
-    throw std::runtime_error("Eigen solver failed. Return output_pose_covariance value.");
   }
+  throw std::runtime_error("Eigen solver failed. Return output_pose_covariance value.");
 }
 
 bool validate_local_optimal_solution_oscillation(
@@ -760,12 +759,12 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     rot = find_rotation_matrix_aligning_covariance_to_principal_axes(
       ndt_result.hessian.inverse().block(0, 0, 2, 2));
   } catch (const std::exception & e) {
-    RCLCPP_WARN(get_logger(), e.what());
+    RCLCPP_WARN(get_logger(), "Exception caught: %s", e.what());
     return output_pose_covariance_;
   }
 
   // first result is added to mean
-  const int n = initial_pose_offset_model_.size() + 1;
+  const int n = static_cast<int>(initial_pose_offset_model_.size()) + 1;
   const Eigen::Vector2d ndt_pose_2d(ndt_result.pose(0, 3), ndt_result.pose(1, 3));
   Eigen::Vector2d mean = ndt_pose_2d;
   std::vector<Eigen::Vector2d> ndt_pose_2d_vec;

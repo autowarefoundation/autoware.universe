@@ -20,6 +20,7 @@
 
 int main(int argc, char ** argv)
 {
+  // NOLINTNEXTLINE
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
 
