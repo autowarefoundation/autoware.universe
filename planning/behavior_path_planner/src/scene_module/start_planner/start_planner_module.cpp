@@ -122,44 +122,64 @@ void StartPlannerModule::processOnExit()
 
 void StartPlannerModule::updateData()
 {
+  bool time_has_passed_from_last_path_update = true;
+
   if (isBackwardDrivingComplete()) {
     updateStatusAfterBackwardDriving();
   } else {
     status_.backward_driving_complete = false;
   }
 
-  const bool has_received_new_route =
-    !planner_data_->prev_route_id ||
-    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
-
-  if (has_received_new_route) {
+  // skip updating if enough time has not passed for preventing chattering between back and
+  // start_planner
+  if (receivedNewRoute()) {
     status_ = PullOutStatus();
+  } else {
+    if (!last_pull_out_start_update_time_) {
+      last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+    }
+    const auto elapsed_time = (clock_->now() - *last_pull_out_start_update_time_).seconds();
+    if (elapsed_time < parameters_->backward_path_update_duration) {
+      time_has_passed_from_last_path_update = false;
+    }
   }
+  // TODO(Sugahara): this member variable should be updated when the path is updated
+  last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
 
+  if (time_has_passed_from_last_path_update && isModuleRunning()) {
+    planPathFromStartPose();
+  }
+}
+
+void StartPlannerModule::planPathFromStartPose()
+{
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
-
   // refine start pose with pull out lanes.
   // 1) backward driving is not allowed: use refined pose just as start pose.
   // 2) backward driving is allowed: use refined pose to check if backward driving is needed.
-
   const PathWithLaneId back_path_from_start_pose = calcBackwardPathFromStartPose();
   // start pose along the backward path aligned to the start pose
   const auto refined_start_pose = calcLongitudinalOffsetPose(
     back_path_from_start_pose.points, planner_data_->route_handler->getOriginalStartPose().position,
     0.0);
-
   if (!refined_start_pose) return;
 
   // search pull out start candidates backward
   const std::vector<Pose> start_pose_candidates = std::invoke([&]() -> std::vector<Pose> {
     if (parameters_->enable_back) {
-      return searchPullOutStartPoses(back_path_from_start_pose);
+      return searchPullOutStartPoseCandidates(back_path_from_start_pose);
     }
     return {*refined_start_pose};
   });
 
   planWithPriority(
     start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
+}
+
+bool StartPlannerModule::receivedNewRoute() const
+{
+  return !planner_data_->prev_route_id ||
+         *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
 }
 
 bool StartPlannerModule::isExecutionRequested() const
@@ -713,45 +733,9 @@ std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
 
 void StartPlannerModule::updatePullOutStatus()
 {
-  const bool has_received_new_route =
-    !planner_data_->prev_route_id ||
-    *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
-
-  // skip updating if enough time has not passed for preventing chattering between back and
-  // start_planner
-  if (!has_received_new_route) {
-    if (!last_pull_out_start_update_time_) {
-      last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
-    }
-    const auto elapsed_time = (clock_->now() - *last_pull_out_start_update_time_).seconds();
-    if (elapsed_time < parameters_->backward_path_update_duration) {
-      return;
-    }
-  }
-  last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
-
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
-
-  // refine start pose with pull out lanes.
-  // 1) backward driving is not allowed: use refined pose just as start pose.
-  // 2) backward driving is allowed: use refined pose to check if backward driving is needed.
-  const PathWithLaneId start_pose_candidates_path = calcBackwardPathFromStartPose();
-  const auto refined_start_pose = calcLongitudinalOffsetPose(
-    start_pose_candidates_path.points, planner_data_->self_odometry->pose.pose.position, 0.0);
-  if (!refined_start_pose) return;
-
-  // search pull out start candidates backward
-  const std::vector<Pose> start_pose_candidates = std::invoke([&]() -> std::vector<Pose> {
-    if (parameters_->enable_back) {
-      return searchPullOutStartPoseCandidates(start_pose_candidates_path);
-    }
-    return {*refined_start_pose};
-  });
-
-  planWithPriority(
-    start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
 
   const auto & pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);

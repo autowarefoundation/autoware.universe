@@ -128,6 +128,9 @@ private:
 
   void initializeSafetyCheckParameters();
 
+  bool receivedNewRoute() const;
+  void planPathFromStartPose();
+
   bool isModuleRunning() const;
   bool isCurrentPoseOnMiddleOfTheRoad() const;
   bool isCloseToOriginalStartPose() const;
@@ -174,7 +177,8 @@ private:
 
   PathWithLaneId getFullPath() const;
   PathWithLaneId calcBackwardPathFromStartPose() const;
-  std::vector<Pose> searchPullOutStartPoses(const PathWithLaneId & back_path_from_start_pose) const;
+  std::vector<Pose> searchPullOutStartPoseCandidates(
+    const PathWithLaneId & back_path_from_start_pose) const;
 
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
