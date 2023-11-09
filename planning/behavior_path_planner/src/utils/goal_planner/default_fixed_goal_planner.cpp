@@ -77,6 +77,11 @@ bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
     path_point_point2D.x() = path_point.point.pose.position.x;
     path_point_point2D.y() = path_point.point.pose.position.y;
     bool is_point_in_any_lanelet = isInAnyLane(candidate_lanelets, path_point_point2D);
+
+    std::cerr << "number of refined_path.points:" << refined_path.points.size() << std::endl;    
+
+    std::cerr << "refined_path.points[" << i << "]" << " checked" << std::endl;
+
     if (!is_point_in_any_lanelet) {
       return false;  // at least one path_point falls outside any lanelet
     }
@@ -111,6 +116,14 @@ lanelet::ConstLanelets extractLaneletsFromPath(const PathWithLaneId& refined_pat
             refined_path_lanelets.push_back(lanelet); //not sure whether can push_back.
         }
     }
+
+
+        for (const auto& ll : refined_path_lanelets) {
+             lanelet::Id laneId = ll.id();
+             std::cerr << "laneId on the Lanelet List: " << laneId << std::endl;          
+        }
+
+
     return refined_path_lanelets;
 }
 
@@ -148,10 +161,15 @@ PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
   auto refined_path = utils::refinePathForGoal(
     planner_data->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, refined_goal,
     goal_lane_id);
-    if (!isPathValid(refined_path, planner_data))
-    {
+
+  std::cerr << "isPathValid() has been called" << std::endl;
+
+  if (!isPathValid(refined_path, planner_data)) {
       std::cerr << "The current planned path is NOT valid" << std::endl;
-    }    
+  }
+
+  std::cerr << "REAL number of refined_path.points:" << refined_path.points.size() << std::endl; 
+
   return refined_path;
 }
 
