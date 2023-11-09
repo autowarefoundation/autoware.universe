@@ -2115,10 +2115,8 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   // Find lanelets for goal point.
   lanelet::ConstLanelet goal_lanelet;
   lanelet::ConstLanelets goal_lanelets;
-  if (!lanelet::utils::query::getCurrentLanelets(
-        road_lanelets_, goal_checkpoint, &goal_lanelets)) {
-    if (!lanelet::utils::query::getClosestLanelet(
-          road_lanelets_, goal_checkpoint, &goal_lanelet)) {
+  if (!lanelet::utils::query::getCurrentLanelets(road_lanelets_, goal_checkpoint, &goal_lanelets)) {
+    if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_checkpoint, &goal_lanelet)) {
       RCLCPP_WARN_STREAM(
         logger_, "Failed to find current lanelet."
                    << std::endl

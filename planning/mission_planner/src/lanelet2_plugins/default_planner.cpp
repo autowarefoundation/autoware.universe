@@ -364,8 +364,7 @@ bool DefaultPlanner::is_goal_valid(
   for (const auto & gl_llt : goal_lanelets) {
     if (
       param_.check_footprint_inside_lanes &&
-      !check_goal_footprint(
-        gl_llt, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
+      !check_goal_footprint(gl_llt, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
       !is_in_parking_lot(
         lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_),
         lanelet::utils::conversion::toLaneletPoint(goal.position))) {
