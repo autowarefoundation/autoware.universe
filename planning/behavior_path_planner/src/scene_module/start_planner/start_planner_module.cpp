@@ -726,7 +726,7 @@ void StartPlannerModule::updatePullOutStatus()
   // search pull out start candidates backward
   const std::vector<Pose> start_pose_candidates = std::invoke([&]() -> std::vector<Pose> {
     if (parameters_->enable_back) {
-      return searchPullOutStartPoses(start_pose_candidates_path);
+      return searchPullOutStartPoseCandidates(start_pose_candidates_path);
     }
     return {*refined_start_pose};
   });
@@ -787,37 +787,38 @@ PathWithLaneId StartPlannerModule::calcBackwardPathFromStartPose() const
   return path;
 }
 
-std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
-  const PathWithLaneId & start_pose_candidates) const
+std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
+  const PathWithLaneId & back_path_from_start_pose) const
 {
-  std::vector<Pose> pull_out_start_pose{};
+  std::vector<Pose> pull_out_start_pose_candidates{};
   const auto & start_pose = planner_data_->route_handler->getOriginalStartPose();
-
+  const auto & local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
   const auto & pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
-  const auto stop_objects_in_pull_out_lanes =
+  const auto & stop_objects_in_pull_out_lanes =
     filterStopObjectsInPullOutLanes(pull_out_lanes, parameters_->th_moving_object_velocity);
 
-  const double s_current = lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose).length;
-  const double max_back_distance = std::clamp(
-    s_current - planner_data_->parameters.base_link2rear, 0.0, parameters_->max_back_distance);
+  const double current_arc_length =
+    lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose).length;
+  const double allowed_backward_distance = std::clamp(
+    current_arc_length - planner_data_->parameters.base_link2rear, 0.0,
+    parameters_->max_back_distance);
 
-  const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
-  for (double back_distance = 0.0; back_distance <= max_back_distance;
+  for (double back_distance = 0.0; back_distance <= allowed_backward_distance;
        back_distance += parameters_->backward_search_resolution) {
-    const auto backed_pose =
-      calcLongitudinalOffsetPose(start_pose_candidates.points, start_pose.position, -back_distance);
+    const auto backed_pose = calcLongitudinalOffsetPose(
+      back_path_from_start_pose.points, start_pose.position, -back_distance);
     if (!backed_pose) {
       continue;
     }
 
-    const double length_to_backed_pose =
+    const double backed_pose_arc_length =
       lanelet::utils::getArcCoordinates(pull_out_lanes, *backed_pose).length;
     const double length_to_lane_end = std::accumulate(
       std::begin(pull_out_lanes), std::end(pull_out_lanes), 0.0,
       [](double acc, const auto & lane) { return acc + lanelet::utils::getLaneletLength2d(lane); });
-    const double distance_from_lane_end = length_to_lane_end - length_to_backed_pose;
+    const double distance_from_lane_end = length_to_lane_end - backed_pose_arc_length;
     if (distance_from_lane_end < parameters_->ignore_distance_from_lane_end) {
       RCLCPP_WARN_THROTTLE(
         getLogger(), *clock_, 5000,
@@ -831,9 +832,9 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
       break;  // poses behind this has a collision, so break.
     }
 
-    pull_out_start_pose.push_back(*backed_pose);
+    pull_out_start_pose_candidates.push_back(*backed_pose);
   }
-  return pull_out_start_pose;
+  return pull_out_start_pose_candidates;
 }
 
 PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
