@@ -26,16 +26,21 @@ find_package(glog REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io registration)
 include_directories(${PCL_INCLUDE_DIRS})
 
-ament_auto_add_executable(ndt_scan_matcher
+ament_auto_add_library(ndt_scan_matcher_node SHARED
   src/debug.cpp
-  src/ndt_scan_matcher_node.cpp
   src/ndt_scan_matcher_core.cpp
   src/map_module.cpp
   src/map_update_module.cpp
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
-target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES} glog::glog)
+target_link_libraries(ndt_scan_matcher_node ${PCL_LIBRARIES} glog::glog)
+
+rclcpp_components_register_node(ndt_scan_matcher_node
+  PLUGIN "NDTScanMatcher"
+  EXECUTABLE ndt_scan_matcher
+  EXECUTOR MultiThreadedExecutor
+)
 
 if(BUILD_TESTING)
   add_launch_test(

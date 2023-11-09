@@ -108,8 +108,8 @@ bool validate_local_optimal_solution_oscillation(
 }
 
 // cspell: ignore degrounded
-NDTScanMatcher::NDTScanMatcher()
-: Node("ndt_scan_matcher"),
+NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & node_options)
+: Node("ndt_scan_matcher", node_options),
   tf2_broadcaster_(*this),
   ndt_ptr_(new NormalDistributionsTransform),
   state_ptr_(new std::map<std::string, std::string>),
@@ -1009,3 +1009,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
 
   return result_pose_with_cov_msg;
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(NDTScanMatcher)
