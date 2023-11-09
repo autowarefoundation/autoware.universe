@@ -15,6 +15,8 @@
     steer_time_delay: 0.1
     steer_time_constant: 0.1
     steer_dead_band: 0.0
+    acc_scaling_factor: 1.0
+    steer_scaling_factor: 1.0
     x_stddev: 0.0001 # x standard deviation for dummy covariance in map coordinate
     y_stddev: 0.0001 # y standard deviation for dummy covariance in map coordinate
 
