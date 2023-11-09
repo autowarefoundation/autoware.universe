@@ -135,12 +135,7 @@ void StartPlannerModule::updateData()
   if (has_received_new_route) {
     status_ = PullOutStatus();
   }
-  // check safety status when driving forward
-  // if (parameters_->safety_check_params.enable_safety_check && status_.driving_forward) {
-  //   status_.is_safe_dynamic_objects = isSafePath();
-  // } else {
-  //   status_.is_safe_dynamic_objects = true;
-  // }
+
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
@@ -791,16 +786,24 @@ PathWithLaneId StartPlannerModule::calcBackwardPathFromStartPose() const
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   // get backward shoulder path
-  const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, current_pose);
-  const double check_distance = parameters_->max_back_distance + 30.0;  // buffer
+  const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose);
+
+  // Calculate the arc position and buffer distance for checking.
+  const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose);
+  const double check_distance = parameters_->max_back_distance + 30.0;  // buffer distance
+
+  // get the centered line path from current_pose - check_distance to current_pose + check_distance
+  // along the center line
   auto path = planner_data_->route_handler->getCenterLinePath(
     pull_out_lanes, arc_position_pose.length - check_distance,
     arc_position_pose.length + check_distance);
 
-  // apply a lateral shift to the path points to match the start pose offset.
-  const double distance_from_center_line = arc_position_pose.distance;
-  for (auto & p : path.points) {
-    p.point.pose = calcOffsetPose(p.point.pose, 0, distance_from_center_line, 0);
+  // lateral shift distance from the center line.
+  const double lateral_shift = arc_position_pose.distance;
+
+  // apply the lateral shift to all path points to match the start pose offset.
+  for (auto & path_point : path.points) {
+    path_point.point.pose = calcOffsetPose(path_point.point.pose, 0, lateral_shift, 0);
   }
 
   return path;
