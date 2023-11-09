@@ -781,29 +781,24 @@ void StartPlannerModule::updateStatusAfterBackwardDriving()
 PathWithLaneId StartPlannerModule::calcBackwardPathFromStartPose() const
 {
   const Pose & start_pose = planner_data_->route_handler->getOriginalStartPose();
-
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
-  // get backward shoulder path
   const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose);
 
-  // Calculate the arc position and buffer distance for checking.
-  const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose);
-  const double check_distance = parameters_->max_back_distance + 30.0;  // buffer distance
+  // common buffer distance for both front and back
+  static constexpr double buffer = 30.0;
+  const double check_distance = parameters_->max_back_distance + buffer;
 
-  // get the centered line path from current_pose - check_distance to current_pose + check_distance
-  // along the center line
-  auto path = planner_data_->route_handler->getCenterLinePath(
-    pull_out_lanes, arc_position_pose.length - check_distance,
-    arc_position_pose.length + check_distance);
+  const double start_distance = arc_position_pose.length - check_distance;
+  const double end_distance = arc_position_pose.length + buffer;
 
-  // lateral shift distance from the center line.
-  const double lateral_shift = arc_position_pose.distance;
+  auto path =
+    planner_data_->route_handler->getCenterLinePath(pull_out_lanes, start_distance, end_distance);
 
-  // apply the lateral shift to all path points to match the start pose offset.
+  // apply the lateral shift to all path points to match the start pose offset
   for (auto & path_point : path.points) {
-    path_point.point.pose = calcOffsetPose(path_point.point.pose, 0, lateral_shift, 0);
+    path_point.point.pose = calcOffsetPose(path_point.point.pose, 0, arc_position_pose.distance, 0);
   }
 
   return path;
