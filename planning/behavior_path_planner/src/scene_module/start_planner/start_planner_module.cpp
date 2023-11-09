@@ -145,41 +145,66 @@ void StartPlannerModule::updateData()
 
 bool StartPlannerModule::isExecutionRequested() const
 {
+  if (isModuleRunning()) {
+    return true;
+  }
+
+  // Return false and do not request execution if any of the following conditions are true:
+  // - The start pose is on the middle of the road.
+  // - The vehicle has already arrived at the start position planner.
+  // - The vehicle has reached the goal position.
+  // - The vehicle is still moving.
+  if (
+    isCurrentPoseOnMiddleOfTheRoad() || isCloseToOriginalStartPose() || hasArrivedAtGoal() ||
+    isMoving()) {
+    return false;
+  }
+
+  // Check if the goal is behind the ego vehicle within the same route segment.
+  if (IsGoalBehindOfEgoInSameRouteSegment()) {
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
+    return false;
+  }
+
+  return true;
+}
+
+bool StartPlannerModule::isModuleRunning() const
+{
+  return current_state_ == ModuleStatus::RUNNING;
+}
+
+bool StartPlannerModule::isCurrentPoseOnMiddleOfTheRoad() const
+{
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
   const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
   const double lateral_distance_to_center_lane =
     lanelet::utils::getArcCoordinates(current_lanes, current_pose).distance;
 
-  if (std::abs(lateral_distance_to_center_lane) < parameters_->th_distance_to_middle_of_the_road) {
-    return false;
-  }
+  return std::abs(lateral_distance_to_center_lane) < parameters_->th_distance_to_middle_of_the_road;
+}
 
+bool StartPlannerModule::isCloseToOriginalStartPose() const
+{
   const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
-  if (
-    tier4_autoware_utils::calcDistance2d(start_pose.position, current_pose.position) >
-    parameters_->th_arrived_distance) {
-    return false;
-  }
+  return tier4_autoware_utils::calcDistance2d(
+           start_pose.position, planner_data_->self_odometry->pose.pose.position) >
+         parameters_->th_arrived_distance;
+}
 
-  // Check if ego arrives at goal
+bool StartPlannerModule::hasArrivedAtGoal() const
+{
   const Pose goal_pose = planner_data_->route_handler->getGoalPose();
-  if (
-    tier4_autoware_utils::calcDistance2d(goal_pose.position, current_pose.position) <
-    parameters_->th_arrived_distance) {
-    return false;
-  }
+  return tier4_autoware_utils::calcDistance2d(
+           goal_pose.position, planner_data_->self_odometry->pose.pose.position) <
+         parameters_->th_arrived_distance;
+}
 
-  if (current_state_ == ModuleStatus::RUNNING) {
-    return true;
-  }
-
-  const bool is_stopped = utils::l2Norm(planner_data_->self_odometry->twist.twist.linear) <
-                          parameters_->th_stopped_velocity;
-  if (!is_stopped) {
-    return false;
-  }
-
-  return true;
+bool StartPlannerModule::isMoving() const
+{
+  return utils::l2Norm(planner_data_->self_odometry->twist.twist.linear) >=
+         parameters_->th_stopped_velocity;
 }
 
 bool StartPlannerModule::isExecutionReady() const
@@ -234,15 +259,6 @@ void StartPlannerModule::updateCurrentState()
 
 BehaviorModuleOutput StartPlannerModule::plan()
 {
-  if (IsGoalBehindOfEgoInSameRouteSegment()) {
-    RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
-    const auto output = generateStopOutput();
-    setDebugData();  // use status updated in generateStopOutput()
-    updateRTCStatus(0, 0);
-    return output;
-  }
-
   if (isWaitingApproval()) {
     clearWaitingApproval();
     resetPathCandidate();
@@ -384,16 +400,6 @@ PathWithLaneId StartPlannerModule::getFullPath() const
 BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 {
   updatePullOutStatus();
-
-  if (IsGoalBehindOfEgoInSameRouteSegment()) {
-    RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
-    clearWaitingApproval();
-    const auto output = generateStopOutput();
-    setDebugData();  // use status updated in generateStopOutput()
-    updateRTCStatus(0, 0);
-    return output;
-  }
 
   BehaviorModuleOutput output;
   if (!status_.found_pull_out_path) {
@@ -613,8 +619,11 @@ PathWithLaneId StartPlannerModule::generateStopPath() const
     PathPointWithLaneId p{};
     p.point.pose = pose;
     p.point.longitudinal_velocity_mps = 0.0;
+    const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+      planner_data_,
+      planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
     lanelet::Lanelet closest_lanelet;
-    lanelet::utils::query::getClosestLanelet(status_.pull_out_lanes, pose, &closest_lanelet);
+    lanelet::utils::query::getClosestLanelet(pull_out_lanes, pose, &closest_lanelet);
     p.lane_ids.push_back(closest_lanelet.id());
     return p;
   };
@@ -658,13 +667,15 @@ lanelet::ConstLanelets StartPlannerModule::getPathRoadLanes(const PathWithLaneId
 std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
   const PathWithLaneId & path) const
 {
+  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+
   const auto path_road_lanes = getPathRoadLanes(path);
   if (!path_road_lanes.empty()) {
     lanelet::ConstLanelets shoulder_lanes;
     const auto & rh = planner_data_->route_handler;
     std::copy_if(
-      status_.pull_out_lanes.begin(), status_.pull_out_lanes.end(),
-      std::back_inserter(shoulder_lanes),
+      pull_out_lanes.begin(), pull_out_lanes.end(), std::back_inserter(shoulder_lanes),
       [&rh](const auto & pull_out_lane) { return rh->isShoulderLanelet(pull_out_lane); });
 
     return utils::generateDrivableLanesWithShoulderLanes(path_road_lanes, shoulder_lanes);
@@ -672,7 +683,7 @@ std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
 
   // if path_road_lanes is empty, use only pull_out_lanes as drivable lanes
   std::vector<DrivableLanes> drivable_lanes;
-  for (const auto & lane : status_.pull_out_lanes) {
+  for (const auto & lane : pull_out_lanes) {
     DrivableLanes drivable_lane;
     drivable_lane.right_lane = lane;
     drivable_lane.left_lane = lane;
@@ -686,11 +697,6 @@ void StartPlannerModule::updatePullOutStatus()
   const bool has_received_new_route =
     !planner_data_->prev_route_id ||
     *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
-
-  // save pull out lanes which is generated using current pose before starting pull out
-  // (before approval)
-  status_.pull_out_lanes = start_planner_utils::getPullOutLanes(
-    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   // skip updating if enough time has not passed for preventing chattering between back and
   // start_planner
@@ -728,12 +734,15 @@ void StartPlannerModule::updatePullOutStatus()
   planWithPriority(
     start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
 
+  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+
   if (isBackwardDrivingComplete()) {
     updateStatusAfterBackwardDriving();
     current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   } else {
     status_.backward_path = start_planner_utils::getBackwardPath(
-      *route_handler, status_.pull_out_lanes, current_pose, status_.pull_out_start_pose,
+      *route_handler, pull_out_lanes, current_pose, status_.pull_out_start_pose,
       parameters_->backward_velocity);
   }
 }
@@ -755,12 +764,14 @@ PathWithLaneId StartPlannerModule::calcStartPoseCandidatesBackwardPath() const
 {
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
 
+  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+
   // get backward shoulder path
-  const auto arc_position_pose =
-    lanelet::utils::getArcCoordinates(status_.pull_out_lanes, current_pose);
+  const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, current_pose);
   const double check_distance = parameters_->max_back_distance + 30.0;  // buffer
   auto path = planner_data_->route_handler->getCenterLinePath(
-    status_.pull_out_lanes, arc_position_pose.length - check_distance,
+    pull_out_lanes, arc_position_pose.length - check_distance,
     arc_position_pose.length + check_distance);
 
   // lateral shift to current_pose
@@ -779,18 +790,20 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
 
   std::vector<Pose> pull_out_start_pose{};
 
+  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+
   // filter pull out lanes stop objects
   const auto [pull_out_lane_objects, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
-      *planner_data_->dynamic_object, status_.pull_out_lanes,
+      *planner_data_->dynamic_object, pull_out_lanes,
       utils::path_safety_checker::isPolygonOverlapLanelet);
   const auto pull_out_lane_stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
     pull_out_lane_objects, parameters_->th_moving_object_velocity);
 
   // Set the maximum backward distance less than the distance from the vehicle's base_link to the
   // lane's rearmost point to prevent lane departure.
-  const double s_current =
-    lanelet::utils::getArcCoordinates(status_.pull_out_lanes, current_pose).length;
+  const double s_current = lanelet::utils::getArcCoordinates(pull_out_lanes, current_pose).length;
   const double max_back_distance = std::clamp(
     s_current - planner_data_->parameters.base_link2rear, 0.0, parameters_->max_back_distance);
 
@@ -806,10 +819,10 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
 
     // check the back pose is near the lane end
     const double length_to_backed_pose =
-      lanelet::utils::getArcCoordinates(status_.pull_out_lanes, *backed_pose).length;
+      lanelet::utils::getArcCoordinates(pull_out_lanes, *backed_pose).length;
 
     const double length_to_lane_end = std::accumulate(
-      std::begin(status_.pull_out_lanes), std::end(status_.pull_out_lanes), 0.0,
+      std::begin(pull_out_lanes), std::end(pull_out_lanes), 0.0,
       [](double acc, const auto & lane) { return acc + lanelet::utils::getLaneletLength2d(lane); });
     const double distance_from_lane_end = length_to_lane_end - length_to_backed_pose;
     if (distance_from_lane_end < parameters_->ignore_distance_from_lane_end) {
