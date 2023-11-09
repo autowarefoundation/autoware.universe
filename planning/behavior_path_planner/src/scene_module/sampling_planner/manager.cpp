@@ -30,30 +30,39 @@ SamplingPlannerModuleManager::SamplingPlannerModuleManager(
 : SceneModuleManagerInterface(node, name, config, {})
 {
   SamplingPlannerParameters p{};
-
-  p.max_curvature = node->declare_parameter<double>(name + ".max_curvature");
-  p.min_curvature = node->declare_parameter<double>(name + ".min_curvature");
-  p.lateral_deviation_weight = node->declare_parameter<double>(name + ".lateral_deviation_weight");
-  p.length_weight = node->declare_parameter<double>(name + ".length_weight");
-  p.curvature_weight = node->declare_parameter<double>(name + ".curvature_weight");
-  p.enable_frenet = node->declare_parameter<bool>(name + ".enable_frenet");
-  p.enable_bezier = node->declare_parameter<bool>(name + ".enable_bezier");
-  p.resolution = node->declare_parameter<double>(name + ".resolution");
-  p.previous_path_reuse_points_nb =
-    node->declare_parameter<int>(name + ".previous_path_reuse_points_nb");
-  p.nb_target_lateral_positions =
-    node->declare_parameter<int>(name + ".nb_target_lateral_positions");
-  p.target_lengths = node->declare_parameter<std::vector<double>>(name + ".target_lengths");
-  p.target_lateral_positions =
-    node->declare_parameter<std::vector<double>>(name + ".target_lateral_positions");
-  p.target_lateral_velocities =
-    node->declare_parameter<std::vector<double>>(name + ".target_lateral_velocities");
-  p.target_lateral_accelerations =
-    node->declare_parameter<std::vector<double>>(name + ".target_lateral_accelerations");
-  p.force_zero_deviation = node->declare_parameter<bool>(name + ".force_zero_deviation");
-  p.force_zero_heading = node->declare_parameter<bool>(name + ".force_zero_heading");
-  p.smooth_reference = node->declare_parameter<bool>(name + ".smooth_reference");
-
+  {
+    std::string ns{"constraints.hard"};
+    p.max_curvature = node->declare_parameter<double>(ns + ".max_curvature");
+    p.min_curvature = node->declare_parameter<double>(ns + ".min_curvature");
+    ns = std::string{"constraints.soft"};
+    p.lateral_deviation_weight = node->declare_parameter<double>(ns + ".lateral_deviation_weight");
+    p.length_weight = node->declare_parameter<double>(ns + ".length_weight");
+    p.curvature_weight = node->declare_parameter<double>(ns + ".curvature_weight");
+  }
+  {
+    std::string ns{"sampling"};
+    p.enable_frenet = node->declare_parameter<bool>(ns + ".enable_frenet");
+    p.enable_bezier = node->declare_parameter<bool>(ns + ".enable_bezier");
+    p.resolution = node->declare_parameter<double>(ns + ".resolution");
+    p.previous_path_reuse_points_nb =
+      node->declare_parameter<int>(ns + ".previous_path_reuse_points_nb");
+    p.nb_target_lateral_positions =
+      node->declare_parameter<int>(ns + ".nb_target_lateral_positions");
+    p.target_lengths = node->declare_parameter<std::vector<double>>(ns + ".target_lengths");
+    p.target_lateral_positions =
+      node->declare_parameter<std::vector<double>>(ns + ".target_lateral_positions");
+    ns += ".frenet";
+    p.target_lateral_velocities =
+      node->declare_parameter<std::vector<double>>(ns + ".target_lateral_velocities");
+    p.target_lateral_accelerations =
+      node->declare_parameter<std::vector<double>>(ns + ".target_lateral_accelerations");
+  }
+  {
+    std::string ns{"preprocessing"};
+    p.force_zero_deviation = node->declare_parameter<bool>(ns + ".force_zero_initial_deviation");
+    p.force_zero_heading = node->declare_parameter<bool>(ns + ".force_zero_initial_heading");
+    p.smooth_reference = node->declare_parameter<bool>(ns + ".smooth_reference_trajectory");
+  }
   parameters_ = std::make_shared<SamplingPlannerParameters>(p);
 }
 
