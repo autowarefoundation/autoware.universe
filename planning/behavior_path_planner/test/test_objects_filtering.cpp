@@ -68,25 +68,66 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByClass)
 
     PredictedObjects predicted_objects;
     PredictedObject predicted_object[2];
-    PredictedObjects expected_ans[2];
+    PredictedObjects ans;
+    PredictedObjects part_ans[2];
 
     ObjectClassification car_class[2];
     car_class[0].label = ObjectClassification::CAR;
     car_class[0].probability = 1.0;
     car_class[1].label = ObjectClassification::TRUCK;
-    car_class[1].probability = 10.0;
+    car_class[1].probability = 1.0;
+    
+    ObjectTypesToCheck target_object_types;
 
+
+    //no objects case
+    filterObjectsByClass(predicted_objects, target_object_types);
+    EXPECT_EQ(predicted_objects, ans); 
+    
 
     predicted_object[0].classification.push_back(car_class[0]);
-    expected_ans[0].objects.push_back(predicted_object[0]);
+    part_ans[0].objects.push_back(predicted_object[0]);
     predicted_objects.objects.push_back(predicted_object[0]);
 
-    
     predicted_object[1].classification.push_back(car_class[1]);
-    expected_ans[1].objects.push_back(predicted_object[1]);
+    part_ans[1].objects.push_back(predicted_object[1]);
     predicted_objects.objects.push_back(predicted_object[1]);
 
-    ObjectTypesToCheck target_object_types;
+
+    //no objects passes case
+    target_object_types.check_car = false;
+    target_object_types.check_truck = false;
+    target_object_types.check_bus = false;
+    target_object_types.check_trailer = false;
+    target_object_types.check_bicycle = false;
+    target_object_types.check_unknown = false;
+    target_object_types.check_motorcycle = false;
+    target_object_types.check_pedestrian = false;
+
+    filterObjectsByClass(predicted_objects, target_object_types);
+    EXPECT_EQ(predicted_objects, ans);
+
+    //all objects passes case
+    predicted_objects.objects.push_back(predicted_object[0]);
+    predicted_objects.objects.push_back(predicted_object[1]);
+    
+    target_object_types.check_car = true;
+    target_object_types.check_truck = true;
+    target_object_types.check_bus = false;
+    target_object_types.check_trailer = false;
+    target_object_types.check_bicycle = false;
+    target_object_types.check_unknown = false;
+    target_object_types.check_motorcycle = false;
+    target_object_types.check_pedestrian = false;
+    
+    filterObjectsByClass(predicted_objects, target_object_types);
+    ans.objects.push_back(predicted_object[0]);
+    ans.objects.push_back(predicted_object[1]);
+
+    EXPECT_EQ(predicted_objects, ans);
+
+
+    //part of objects passes case
     target_object_types.check_car = false;
     target_object_types.check_truck = true;
     target_object_types.check_bus = false;
@@ -96,8 +137,8 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByClass)
     target_object_types.check_motorcycle = false;
     target_object_types.check_pedestrian = false;
     
-
     filterObjectsByClass(predicted_objects, target_object_types);
-    
-    EXPECT_EQ(predicted_objects, expected_ans[1]);
+    EXPECT_EQ(predicted_objects, part_ans[1]);
+
+
 }
