@@ -138,6 +138,10 @@ void Debugger::publishImage(const std::size_t image_id, const rclcpp::Time & sta
         // cv::Scalar(0, 0, 255);
         cv::Scalar color = cv::Scalar(0, 0, 255);  // red
 
+        cv::rectangle(
+          cv_ptr->image, cv::Point(x, y - textSize.height - baseline),
+          cv::Point(x + textSize.width, y), cv::Scalar(255, 255, 255),
+          cv::FILLED);  // white background
         cv::putText(
           cv_ptr->image, iou_score, cv::Point(x, y), cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 1,
           cv::LINE_AA);  // text
