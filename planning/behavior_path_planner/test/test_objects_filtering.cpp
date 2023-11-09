@@ -67,42 +67,37 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByClass)
     
 
     PredictedObjects predicted_objects;
-    PredictedObject predicted_object;
+    PredictedObject predicted_object[2];
     PredictedObjects expected_ans[2];
 
-    ObjectClassification car_class;
-    car_class.label = ObjectClassification::CAR;
-    car_class.probability = 1.0;
+    ObjectClassification car_class[2];
+    car_class[0].label = ObjectClassification::CAR;
+    car_class[0].probability = 1.0;
+    car_class[1].label = ObjectClassification::TRUCK;
+    car_class[1].probability = 10.0;
 
-    predicted_object.classification.push_back(car_class);
 
-    expected_ans[0].objects.push_back(predicted_object);
-    predicted_objects.objects.push_back(predicted_object);
+    predicted_object[0].classification.push_back(car_class[0]);
+    expected_ans[0].objects.push_back(predicted_object[0]);
+    predicted_objects.objects.push_back(predicted_object[0]);
 
-    car_class.label = ObjectClassification::UNKNOWN;
-    car_class.probability = 0.0;
-    predicted_object.classification.push_back(car_class);
+    
+    predicted_object[1].classification.push_back(car_class[1]);
+    expected_ans[1].objects.push_back(predicted_object[1]);
+    predicted_objects.objects.push_back(predicted_object[1]);
 
-    expected_ans[1].objects.push_back(predicted_object);
-    predicted_objects.objects.push_back(predicted_object);
-
-    ObjectTypesToCheck target_types;
-    target_types.check_car = true;
-    target_types.check_truck = false;
-    target_types.check_bus = false;
-    target_types.check_trailer = false;
-    target_types.check_bicycle = false;
-    target_types.check_unknown = false;
-    target_types.check_motorcycle = false;
-    target_types.check_pedestrian = false;
+    ObjectTypesToCheck target_object_types;
+    target_object_types.check_car = false;
+    target_object_types.check_truck = true;
+    target_object_types.check_bus = false;
+    target_object_types.check_trailer = false;
+    target_object_types.check_bicycle = false;
+    target_object_types.check_unknown = false;
+    target_object_types.check_motorcycle = false;
+    target_object_types.check_pedestrian = false;
     
 
-    filterObjectsByClass(predicted_objects, target_types);
-
-    // size_t size_of_predicted_objects = predicted_objects.objects.size();
-    // size_t size_of_expected_ans = expected_ans[0].objects.size();
-    // std::cout << "Size of predicted_objects: " << size_of_predicted_objects << std::endl;
-    // std::cout << "Size of expected0_objects: " << size_of_expected_ans << std::endl;
+    filterObjectsByClass(predicted_objects, target_object_types);
     
-    EXPECT_EQ(predicted_objects, expected_ans[0]);
+    EXPECT_EQ(predicted_objects, expected_ans[1]);
 }
