@@ -86,6 +86,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 {
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_pointcloud_rois;
+  std::vector<double> debug_max_iou_for_image_rois;
   std::vector<Eigen::Vector2d> debug_image_points;
 
   Eigen::Matrix4d projection;
@@ -100,6 +101,9 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       tf_buffer_, /*target*/ camera_info.header.frame_id,
       /*source*/ input_cluster_msg.header.frame_id, camera_info.header.stamp);
     if (!transform_stamped_optional) {
+      RCLCPP_WARN_STREAM(
+        get_logger(), "Failed to get transform from " << input_cluster_msg.header.frame_id << " to "
+                                                      << camera_info.header.frame_id);
       return;
     }
     transform_stamped = transform_stamped_optional.value();
@@ -232,12 +236,14 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       }
     }
     debug_image_rois.push_back(feature_obj.feature.roi);
+    debug_max_iou_for_image_rois.push_back(max_iou);
   }
 
   if (debugger_) {
     debugger_->image_rois_ = debug_image_rois;
     debugger_->obstacle_rois_ = debug_pointcloud_rois;
     debugger_->obstacle_points_ = debug_image_points;
+    debugger_->max_iou_for_image_rois_ = debug_max_iou_for_image_rois;
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
   }
 }

@@ -84,6 +84,8 @@ void Debugger::publishImage(const std::size_t image_id, const rclcpp::Time & sta
   const boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr> & image_buffer =
     image_buffers_.at(image_id);
   const image_transport::Publisher & image_pub = image_pubs_.at(image_id);
+  const bool draw_iou_score =
+    max_iou_for_image_rois_.size() > 0 && max_iou_for_image_rois_.size() == image_rois_.size();
 
   for (std::size_t i = 0; i < image_buffer.size(); ++i) {
     if (image_buffer.at(i)->header.stamp != stamp) {
@@ -103,10 +105,39 @@ void Debugger::publishImage(const std::size_t image_id, const rclcpp::Time & sta
         cv::Scalar(255, 0, 0));
     }
     // TODO(yukke42): show iou_score on image
+    const int img_height = static_cast<int>(image_buffer.at(i)->height);
+    const int img_width = static_cast<int>(image_buffer.at(i)->width);
+    if (draw_iou_score) {
+      for (auto roi_index = 0; roi_index < static_cast<int>(image_rois_.size()); ++roi_index) {
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(2) << max_iou_for_image_rois_.at(roi_index);
+        std::string iou_score = stream.str();
+
+        // set text position
+        int x = image_rois_.at(roi_index).x_offset;
+        int y = image_rois_.at(roi_index).y_offset - 5;  // offset for text
+        if (y < 0)
+          y = image_rois_.at(roi_index).y_offset +
+              20;  // if roi is on the top of image, put text on lower left of roi
+        if (y > img_height)
+          y = img_height - 5;  // if roi is on the bottom of image, put text on upper left of roi
+        if (x > img_width)
+          x = img_width - 50;           // if roi is on the right of image, put text on left of roi
+        if (x < 0) x = img_width - 50;  // if roi is on the left of image, put text on right of roi
+
+        // choice color by iou score
+        // cv::Scalar color = max_iou_for_image_rois_.at(i) > 0.5 ? cv::Scalar(0, 255, 0) :
+        // cv::Scalar(0, 0, 255);
+        cv::Scalar color = cv::Scalar(0, 0, 255);  // red
+
+        cv::putText(
+          cv_ptr->image, iou_score, cv::Point(x, y), cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 1,
+          cv::LINE_AA);
+      }
+    }
+
     for (const auto & roi : image_rois_) {
-      drawRoiOnImage(
-        cv_ptr->image, roi, image_buffer.at(i)->width, image_buffer.at(i)->height,
-        cv::Scalar(0, 0, 255));
+      drawRoiOnImage(cv_ptr->image, roi, img_width, img_height, cv::Scalar(0, 0, 255));
     }
 
     image_pub.publish(cv_ptr->toImageMsg());
