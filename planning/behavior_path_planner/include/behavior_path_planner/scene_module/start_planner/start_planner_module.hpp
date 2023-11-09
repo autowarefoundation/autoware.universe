@@ -176,7 +176,7 @@ private:
   std::mutex mutex_;
 
   PathWithLaneId getFullPath() const;
-  PathWithLaneId calcStartPoseCandidatesBackwardPath() const;
+  PathWithLaneId calcBackwardPathFromStartPose() const;
   std::vector<Pose> searchPullOutStartPoses(const PathWithLaneId & start_pose_candidates) const;
 
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
@@ -194,9 +194,8 @@ private:
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   void updateStatusAfterBackwardDriving();
-  static bool isOverlappedWithLane(
-    const lanelet::ConstLanelet & candidate_lanelet,
-    const tier4_autoware_utils::LinearRing2d & vehicle_footprint);
+  PredictedObjects filterStopObjectsInPullOutLanes(
+    const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const;
   bool hasFinishedPullOut() const;
   bool isBackwardDrivingComplete() const;
   bool isStopped();
