@@ -66,4 +66,24 @@ SamplingPlannerModuleManager::SamplingPlannerModuleManager(
   parameters_ = std::make_shared<SamplingPlannerParameters>(p);
 }
 
+void SamplingPlannerModuleManager::updateModuleParams(
+  [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters)
+{
+  using tier4_autoware_utils::updateParam;
+
+  auto & p = parameters_;
+
+  [[maybe_unused]] std::string ns = name_ + ".";
+
+  std::for_each(observers_.begin(), observers_.end(), [&](const auto & observer) {
+    if (!observer.expired()) {
+      const auto sampling_planner_ptr =
+        std::dynamic_pointer_cast<SamplingPlannerModule>(observer.lock());
+      if (sampling_planner_ptr) {
+        sampling_planner_ptr->updateModuleParams(p);
+      }
+    }
+  });
+}
+
 }  // namespace behavior_path_planner

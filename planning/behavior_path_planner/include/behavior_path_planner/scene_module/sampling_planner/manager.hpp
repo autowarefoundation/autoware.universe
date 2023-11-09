@@ -42,7 +42,7 @@ public:
   }
 
   void updateModuleParams(
-    [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) override{};
+    [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) override;
 
 private:
   std::shared_ptr<SamplingPlannerParameters> parameters_;

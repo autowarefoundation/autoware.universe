@@ -76,8 +76,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   if (path_ptr->points.empty()) {
     return {};
   }
-  const auto ego_closest_path_index = planner_data_->findEgoIndex(path_ptr->points);
-  RCLCPP_INFO(getLogger(), "ego_closest_path_index %ld", ego_closest_path_index);
+  // const auto ego_closest_path_index = planner_data_->findEgoIndex(path_ptr->points);
+  // RCLCPP_INFO(getLogger(), "ego_closest_path_index %ld", ego_closest_path_index);
   // resetPathCandidate();
   // resetPathReference();
   // [[maybe_unused]] const auto path = toPath(*path_ptr);
@@ -112,7 +112,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
   // After path generation we do pruning we then select the optimal path based on obstacles and
   // drivable area and copy to the expected output and finally copy the velocities from the ref path
-  RCLCPP_INFO(getLogger(), "Generated paths %ld", frenet_paths.size());
+  // RCLCPP_INFO(getLogger(), "Generated paths %ld", frenet_paths.size());
 
   debug_data_.footprints.clear();
   for (auto & path : frenet_paths) {
@@ -145,6 +145,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
 void SamplingPlannerModule::updateDebugMarkers()
 {
+  debug_marker_.markers.clear();
+
   const auto header = planner_data_->route_handler->getRouteHeader();
   visualization_msgs::msg::Marker m;
   m.header.frame_id = "map";
