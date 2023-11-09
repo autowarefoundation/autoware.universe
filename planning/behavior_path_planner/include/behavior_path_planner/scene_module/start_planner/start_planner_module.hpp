@@ -191,9 +191,8 @@ private:
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   void updateStatusAfterBackwardDriving();
-  static bool isOverlappedWithLane(
-    const lanelet::ConstLanelet & candidate_lanelet,
-    const tier4_autoware_utils::LinearRing2d & vehicle_footprint);
+  PredictedObjects filterStopObjectsInPullOutLanes(
+    const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const;
   bool hasFinishedPullOut() const;
   bool isBackwardDrivingComplete() const;
   bool isStopped();
