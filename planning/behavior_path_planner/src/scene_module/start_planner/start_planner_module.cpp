@@ -147,6 +147,7 @@ void StartPlannerModule::updateData()
   const auto refined_start_pose = calcLongitudinalOffsetPose(
     start_pose_candidates_path.points,
     planner_data_->route_handler->getOriginalStartPose().position, 0.0);
+
   if (!refined_start_pose) return;
 
   // search pull out start candidates backward
@@ -637,7 +638,7 @@ PathWithLaneId StartPlannerModule::generateStopPath() const
     PathPointWithLaneId p{};
     p.point.pose = pose;
     p.point.longitudinal_velocity_mps = 0.0;
-    const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+    const auto & pull_out_lanes = start_planner_utils::getPullOutLanes(
       planner_data_,
       planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
     lanelet::Lanelet closest_lanelet;
@@ -685,7 +686,7 @@ lanelet::ConstLanelets StartPlannerModule::getPathRoadLanes(const PathWithLaneId
 std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
   const PathWithLaneId & path) const
 {
-  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+  const auto & pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   const auto path_road_lanes = getPathRoadLanes(path);
@@ -752,7 +753,7 @@ void StartPlannerModule::updatePullOutStatus()
   planWithPriority(
     start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
 
-  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+  const auto & pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   if (isBackwardDrivingComplete()) {
@@ -782,7 +783,7 @@ void StartPlannerModule::updateStatusAfterBackwardDriving()
 PathWithLaneId StartPlannerModule::calcBackwardPathFromStartPose() const
 {
   const Pose & start_pose = planner_data_->route_handler->getOriginalStartPose();
-  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+  const auto & pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose);
@@ -797,7 +798,7 @@ PathWithLaneId StartPlannerModule::calcBackwardPathFromStartPose() const
   auto path =
     planner_data_->route_handler->getCenterLinePath(pull_out_lanes, start_distance, end_distance);
 
-  // apply the lateral shift to all path points to match the start pose offset
+  // shift all path points laterally to align with the start pose
   for (auto & path_point : path.points) {
     path_point.point.pose = calcOffsetPose(path_point.point.pose, 0, arc_position_pose.distance, 0);
   }
@@ -833,22 +834,24 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoses(
     const double length_to_backed_pose =
       lanelet::utils::getArcCoordinates(pull_out_lanes, *backed_pose).length;
     const double length_to_lane_end = std::accumulate(
-      pull_out_lanes.begin(), pull_out_lanes.end(), 0.0,
+      std::begin(pull_out_lanes), std::end(pull_out_lanes), 0.0,
       [](double acc, const auto & lane) { return acc + lanelet::utils::getLaneletLength2d(lane); });
     const double distance_from_lane_end = length_to_lane_end - length_to_backed_pose;
     if (distance_from_lane_end < parameters_->ignore_distance_from_lane_end) {
-      continue;  // Skip poses too close to the lane end.
+      RCLCPP_WARN_THROTTLE(
+        getLogger(), *clock_, 5000,
+        "the ego is too close to the lane end, so needs backward driving");
+      continue;
     }
 
     if (utils::checkCollisionBetweenFootprintAndObjects(
           local_vehicle_footprint, *backed_pose, stop_objects_in_pull_out_lanes,
           parameters_->collision_check_margin)) {
-      break;  // Stop if collision is detected.
+      break;  // poses behind this has a collision, so break.
     }
 
     pull_out_start_pose.push_back(*backed_pose);
   }
-
   return pull_out_start_pose;
 }
 
