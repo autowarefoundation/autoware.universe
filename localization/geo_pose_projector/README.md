@@ -19,11 +19,7 @@ This node is a simple node that subscribes to the geo-referenced pose topic and 
 
 ## Parameters
 
-| Parameter      | Type   | Description     |
-| -------------- | ------ | --------------- |
-| `publish_tf`   | bool   | publish tf      |
-| `parent_frame` | String | parent frame id |
-| `child_frame`  | String | child frame id  |
+{{ json_to_markdown("localization/geo_pose_projector/schema/geo_pose_projector.schema.json") }}
 
 ## Limitations
 
