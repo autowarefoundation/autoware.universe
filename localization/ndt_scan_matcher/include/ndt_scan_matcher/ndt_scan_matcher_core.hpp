@@ -207,6 +207,8 @@ private:
   const bool regularization_enabled_;
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
     regularization_pose_msg_ptr_array_;
+  // mutex for regularization_pose_msg_ptr_array_
+  std::mutex regularization_mutex_;
 
   bool is_activated_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
