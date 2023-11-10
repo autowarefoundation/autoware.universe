@@ -25,6 +25,7 @@
 #include <tier4_autoware_utils/ros/logger_level_configure.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -105,7 +106,7 @@ private:
     const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg);
   void publish_pose(
     const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
-    const bool is_converged);
+    const std::array<double, 36> & ndt_covariance, const bool is_converged);
   void publish_point_cloud(
     const rclcpp::Time & sensor_ros_time, const std::string & frame_id,
     const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr);
@@ -123,11 +124,15 @@ private:
   bool validate_converged_param(
     const double & transform_probability, const double & nearest_voxel_transformation_likelihood);
 
+  std::array<double, 36> estimate_covariance(
+    const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
+    const rclcpp::Time & sensor_ros_time);
+
   std::optional<Eigen::Matrix4f> interpolate_regularization_pose(
     const rclcpp::Time & sensor_ros_time);
   void add_regularization_pose(const rclcpp::Time & sensor_ros_time);
 
-  void timer_diagnostic();
+  void publish_diagnostic();
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
@@ -141,6 +146,8 @@ private:
     ndt_pose_with_covariance_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     initial_pose_with_covariance_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr multi_ndt_pose_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr multi_initial_pose_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
@@ -187,14 +194,14 @@ private:
   double initial_pose_distance_tolerance_m_;
   float inversion_vector_threshold_;
   float oscillation_threshold_;
+  bool use_cov_estimation_;
+  std::vector<Eigen::Vector2d> initial_pose_offset_model_;
   std::array<double, 36> output_pose_covariance_;
 
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
     initial_pose_msg_ptr_array_;
   std::mutex ndt_ptr_mtx_;
   std::mutex initial_pose_array_mtx_;
-
-  std::thread diagnostic_thread_;
 
   // variables for regularization
   const bool regularization_enabled_;

@@ -2,7 +2,7 @@
   <arg name="interface_input_topic" default="/planning/scenario_planning/lane_driving/behavior_planning/path"/>
   <arg name="interface_output_topic" default="/planning/scenario_planning/lane_driving/trajectory"/>
 
-  <node_container pkg="rclcpp_components" exec="$(var container_type)" name="motion_planning_container" namespace="" args="">
+  <node_container pkg="rclcpp_components" exec="$(var container_type)" name="motion_planning_container" namespace="" args="" output="screen">
     <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_component" namespace=""/>
   </node_container>
 
@@ -180,7 +180,7 @@
   </group>
 
   <!-- surround obstacle check -->
-  <group if="$(var enable_surround_check)">
+  <group if="$(var launch_surround_obstacle_checker)">
     <load_composable_node target="/planning/scenario_planning/lane_driving/motion_planning/motion_planning_container">
       <composable_node pkg="surround_obstacle_checker" plugin="surround_obstacle_checker::SurroundObstacleCheckerNode" name="surround_obstacle_checker" namespace="">
         <!-- topic remap -->
