@@ -76,11 +76,14 @@ bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
     const PathPointWithLaneId& path_point = refined_path.points[i];
     path_point_point2D.x() = path_point.point.pose.position.x;
     path_point_point2D.y() = path_point.point.pose.position.y;
+    std::cerr << "refined_path.points[" << i << "]:" << std::endl;
+    std::cerr << "X:" << path_point_point2D.x() << std::endl;
+    std::cerr << "Y:" << path_point_point2D.y() << std::endl;
     bool is_point_in_any_lanelet = isInAnyLane(candidate_lanelets, path_point_point2D);
 
-    std::cerr << "number of refined_path.points:" << refined_path.points.size() << std::endl;    
+    // std::cerr << "number of refined_path.points:" << refined_path.points.size() << std::endl;    
 
-    std::cerr << "refined_path.points[" << i << "]" << " checked" << std::endl;
+    // std::cerr << "refined_path.points[" << i << "]" << " checked" << std::endl;
 
     if (!is_point_in_any_lanelet) {
       return false;  // at least one path_point falls outside any lanelet
