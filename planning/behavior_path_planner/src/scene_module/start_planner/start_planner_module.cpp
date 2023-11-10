@@ -796,7 +796,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
   const auto & pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
-  const auto & stop_objects_in_pull_out_lanes =
+  const auto stop_objects_in_pull_out_lanes =
     filterStopObjectsInPullOutLanes(pull_out_lanes, parameters_->th_moving_object_velocity);
 
   const double current_arc_length =
