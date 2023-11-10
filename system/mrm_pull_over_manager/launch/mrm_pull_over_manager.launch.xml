@@ -21,7 +21,6 @@
     <remap from="~/output/mrm/pull_over/emergency_goals" to="$(var output_emergency_goals)"/>
     <remap from="~/output/mrm/pull_over/status" to="$(var output_pull_over_status)"/>
     <remap from="~/output/mrm/pull_over/goals_clear_command" to="$(var output_goals_clear_command)"/>
-i
     <param name="pull_over_point_file_path" value="$(var pull_over_point_file_path)"/>
     <param from="$(var config_file)"/>
   </node>

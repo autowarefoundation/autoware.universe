@@ -83,6 +83,7 @@ void EmergencyGoalManager::onEmergencyGoalsClearCommand(
 void EmergencyGoalManager::callSetMrmRoutePoints()
 {
   auto request = std::make_shared<SetRoutePoints::Request>();
+  request->header.frame_id = "map";
   request->header.stamp = this->now();
   request->option.allow_goal_modification = true;
 
