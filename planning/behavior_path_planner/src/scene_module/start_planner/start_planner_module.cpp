@@ -802,6 +802,8 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
   const auto & stop_objects_in_pull_out_lanes =
     filterStopObjectsInPullOutLanes(pull_out_lanes, parameters_->th_moving_object_velocity);
 
+  // Set the maximum backward distance less than the distance from the vehicle's base_link to the
+  // lane's rearmost point to prevent lane departure.
   const double current_arc_length =
     lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose).length;
   const double allowed_backward_distance = std::clamp(
@@ -843,13 +845,13 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
 PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const
 {
+  const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+    *planner_data_->dynamic_object, velocity_threshold);
+
   // filter for objects located in pull_out_lanes and moving at a speed below the threshold
-  const auto [objects_in_pull_out_lanes, others] =
+  const auto [stop_objects_in_pull_out_lanes, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
-      *planner_data_->dynamic_object, pull_out_lanes,
-      utils::path_safety_checker::isPolygonOverlapLanelet);
-  const auto stop_objects_in_pull_out_lanes = utils::path_safety_checker::filterObjectsByVelocity(
-    objects_in_pull_out_lanes, velocity_threshold);
+      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
   return stop_objects_in_pull_out_lanes;
 }
