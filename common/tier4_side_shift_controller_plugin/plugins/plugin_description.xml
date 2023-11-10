@@ -1,0 +1,9 @@
+<library path="tier4_side_shift_controller_panel">
+
+  <class
+    type="rviz_plugins::SideShiftControllerPanel"
+    base_class_type="rviz_common::Panel">
+    <description>SideShiftControllerPanel</description>
+  </class>
+
+</library>
