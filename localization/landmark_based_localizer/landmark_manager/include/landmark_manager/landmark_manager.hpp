@@ -25,7 +25,8 @@
 #include <map>
 #include <string>
 
-struct Landmark {
+struct Landmark
+{
   std::string id;
   geometry_msgs::msg::Pose pose;
 };
@@ -35,6 +36,6 @@ std::vector<Landmark> parse_landmarks(
   const std::string & target_subtype, const rclcpp::Logger & logger);
 
 visualization_msgs::msg::MarkerArray convert_landmarks_to_marker_array_msg(
-  const std::vector<Landmark>& landmarks);
+  const std::vector<Landmark> & landmarks);
 
 #endif  // LANDMARK_MANAGER__LANDMARK_MANAGER_HPP_
