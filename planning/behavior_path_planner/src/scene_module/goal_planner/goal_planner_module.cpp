@@ -256,6 +256,20 @@ void GoalPlannerModule::updateData()
   updateOccupancyGrid();
 
   generateGoalCandidates();
+
+  if (!isActivated()) {
+    return;
+  }
+
+  if (hasFinishedCurrentPath()) {
+    thread_safe_data_.incrementPathIndex();
+  }
+
+  if (!last_approval_data_) {
+    last_approval_data_ =
+      std::make_unique<LastApprovalData>(clock_->now(), planner_data_->self_odometry->pose.pose);
+    decideVelocity();
+  }
 }
 
 void GoalPlannerModule::initializeOccupancyGridMap()
@@ -932,16 +946,6 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
 
   setStopReason(StopReason::GOAL_PLANNER, thread_safe_data_.get_pull_over_path()->getFullPath());
 
-  if (hasFinishedCurrentPath()) {
-    thread_safe_data_.incrementPathIndex();
-  }
-
-  if (isActivated() && !last_approval_data_) {
-    last_approval_data_ =
-      std::make_unique<LastApprovalData>(clock_->now(), planner_data_->self_odometry->pose.pose);
-    decideVelocity();
-  }
-
   updateStatus(output);
 
   return output;
@@ -1248,7 +1252,7 @@ bool GoalPlannerModule::isStuck()
 
 bool GoalPlannerModule::hasFinishedCurrentPath()
 {
-  if (!isActivated() || !last_approval_data_) {
+  if (!last_approval_data_) {
     return false;
   }
 

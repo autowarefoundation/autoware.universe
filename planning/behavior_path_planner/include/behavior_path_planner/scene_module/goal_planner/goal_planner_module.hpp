@@ -157,6 +157,10 @@ public:
   bool incrementPathIndex()
   {
     const std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (!pull_over_path_) {
+      return false;
+    }
+
     if (pull_over_path_->incrementPathIndex()) {
       last_path_idx_increment_time_ = clock_->now();
       return true;
@@ -241,7 +245,6 @@ private:
 #undef DEFINE_SETTER_WITH_MUTEX
 #undef DEFINE_GETTER_WITH_MUTEX
 #undef DEFINE_SETTER_GETTER_WITH_MUTEX
-
 
 struct FreespacePlannerDebugData
 {
