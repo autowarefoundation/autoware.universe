@@ -93,16 +93,6 @@ void StartPlannerModule::onFreespacePlannerTimer()
   }
 }
 
-// BehaviorModuleOutput StartPlannerModule::run()
-// {
-//   updateData();
-//   if (!isActivated()) {
-//     return planWaitingApproval();
-//   }
-
-//   return plan();
-// }
-
 void StartPlannerModule::processOnEntry()
 {
   // Initialize safety checker
@@ -146,7 +136,7 @@ void StartPlannerModule::updateData()
   // TODO(Sugahara): this member variable should be updated when the path is updated
   last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
 
-  if (time_has_passed_from_last_path_update && isModuleRunning()) {
+  if (time_has_passed_from_last_path_update && status_.found_pull_out_path) {
     planPathFromStartPose();
   }
 }
