@@ -18,6 +18,8 @@
 
 ## Parameters
 
+{{ json_to_markdown("vehicle/raw_vehicle_cmd_converter/schema/raw_vehicle_cmd_converter.schema.json") }}
+
 | Parameter                  | Type   | Description                                                                     |
 | -------------------------- | ------ | ------------------------------------------------------------------------------- |
 | `update_rate`              | double | timer's update rate                                                             |
