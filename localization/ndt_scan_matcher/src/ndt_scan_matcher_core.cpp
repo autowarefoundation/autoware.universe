@@ -219,10 +219,12 @@ NDTScanMatcher::NDTScanMatcher()
   sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
     std::bind(&NDTScanMatcher::callback_sensor_points, this, std::placeholders::_1), main_sub_opt);
-  regularization_pose_sub_ =
-    this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "regularization_pose_with_covariance", 100,
-      std::bind(&NDTScanMatcher::callback_regularization_pose, this, std::placeholders::_1));
+  if (regularization_enabled_) {
+    regularization_pose_sub_ =
+      this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+        "regularization_pose_with_covariance", 100,
+        std::bind(&NDTScanMatcher::callback_regularization_pose, this, std::placeholders::_1));
+  }
 
   sensor_aligned_pose_pub_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
