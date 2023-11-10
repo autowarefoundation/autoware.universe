@@ -897,10 +897,12 @@ void MotionVelocitySmootherNode::applyExternalVelocityLimit(TrajectoryPoints & t
     *inserted_index, traj.size(), external_velocity_limit_.velocity, traj);
 
   // create virtual wall
-  const auto virtual_wall_marker = motion_utils::createStopVirtualWallMarker(
-    traj.at(*inserted_index).pose, external_velocity_limit_.sender, this->now(), 0,
-    base_link2front_);
-  pub_virtual_wall_->publish(virtual_wall_marker);
+  if (std::abs(external_velocity_limit_.velocity) < 1e-3) {
+    const auto virtual_wall_marker = motion_utils::createStopVirtualWallMarker(
+      traj.at(*inserted_index).pose, external_velocity_limit_.sender, this->now(), 0,
+      base_link2front_);
+    pub_virtual_wall_->publish(virtual_wall_marker);
+  }
 
   RCLCPP_DEBUG(
     get_logger(), "externalVelocityLimit : limit_vel = %.3f", external_velocity_limit_.velocity);
