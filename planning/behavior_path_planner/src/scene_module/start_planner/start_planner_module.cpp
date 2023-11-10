@@ -734,7 +734,7 @@ void StartPlannerModule::updatePullOutStatus()
   planWithPriority(
     start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
 
-  const auto & pull_out_lanes = start_planner_utils::getPullOutLanes(
+  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   if (isBackwardDrivingComplete()) {
