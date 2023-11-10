@@ -15,11 +15,6 @@
 #ifndef EMERGENCY_GOAL_MANAGER__EMERGENCY_GOAL_MANAGER_CORE_HPP_
 #define EMERGENCY_GOAL_MANAGER__EMERGENCY_GOAL_MANAGER_CORE_HPP_
 
-// Core
-#include <unordered_map>
-#include <queue>
-#include <string>
-
 // Autoware
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
 #include <tier4_system_msgs/msg/emergency_goals_clear_command.hpp>
@@ -30,21 +25,19 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
+#include <unordered_map>
+#include <queue>
+#include <string>
+
 namespace emergency_goal_manager
 {
-
-struct Parameters
-{
-};
-
-class EmergencyGoalManagerNode : public rclcpp::Node
+class EmergencyGoalManager : public rclcpp::Node
 {
 public:
-  explicit EmergencyGoalManagerNode(const rclcpp::NodeOptions & node_options);
+  EmergencyGoalManager();
 
 private:
-  // Parameters
-  Parameters params_;
+  using SetRoutePoints = autoware_adapi_v1_msgs::srv::SetRoutePoints;
 
   // Subscriber
   rclcpp::Subscription<tier4_system_msgs::msg::EmergencyGoalsStamped>::SharedPtr sub_emergency_goals_;
@@ -55,28 +48,19 @@ private:
   void onEmergencyGoalsClearCommand(
     const tier4_system_msgs::msg::EmergencyGoalsClearCommand::SharedPtr msg);
 
-  // Server
- 
-  // Publisher
-
   // Client
   rclcpp::CallbackGroup::SharedPtr client_set_mrm_route_points_callback_group_;
-  rclcpp::Client<autoware_adapi_v1_msgs::srv::SetRoutePoints>::SharedPtr
-    client_set_mrm_route_points_;
+  rclcpp::Client<SetRoutePoints>::SharedPtr client_set_mrm_route_points_;
   rclcpp::CallbackGroup::SharedPtr client_clear_mrm_route_callback_group_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client_clear_mrm_route_;
-  
-  void callSetMrmRoutePoints();
-  void callClearMrmRoute();
 
-  // Timer
-
-  // States
+  // Variables
   std::unordered_map<std::string, std::queue<geometry_msgs::msg::Pose>> emergency_goals_map_;
 
   // Algorithm
+  void callSetMrmRoutePoints();
+  void callClearMrmRoute();
 };
-
 }  // namespace emergency_goal_manager
 
 #endif  // EMERGENCY_GOAL_MANAGER__EMERGENCY_GOAL_MANAGER_CORE_HPP_

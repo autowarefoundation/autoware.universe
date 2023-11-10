@@ -106,6 +106,10 @@
       <include file="$(find-pkg-share mrm_pull_over_manager)/launch/mrm_pull_over_manager.launch.xml">
       </include>
     </group>
+    <group>
+      <include file="$(find-pkg-share emergency_goal_manager)/launch/emergency_goal_manager.launch.xml">
+      </include>
+    </group>
   </group>
 
   <!-- Dummy Diag Publisher -->

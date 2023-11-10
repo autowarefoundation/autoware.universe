@@ -4,13 +4,10 @@ project(emergency_goal_manager)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_library(emergency_goal_manager_component SHARED
+ament_auto_add_executable(emergency_goal_manager
   src/emergency_goal_manager_node.cpp
+  src/emergency_goal_manager_core.cpp
 )
-
-rclcpp_components_register_node(emergency_goal_manager_component
-  PLUGIN "emergency_goal_manager::EmergencyGoalManager"
-  EXECUTABLE emergency_goal_manager)
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
