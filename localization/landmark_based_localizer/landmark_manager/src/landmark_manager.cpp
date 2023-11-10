@@ -22,7 +22,7 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
-void LandmarkManager::parse_landmark(
+std::vector<Landmark> parse_landmarks(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
   const std::string & target_subtype, const rclcpp::Logger & logger)
 {
@@ -33,7 +33,7 @@ void LandmarkManager::parse_landmark(
   lanelet::LaneletMapPtr lanelet_map_ptr{std::make_shared<lanelet::LaneletMap>()};
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_ptr);
 
-  landmarks_.clear();
+  std::vector<Landmark> landmarks;
 
   for (const auto & poly : lanelet_map_ptr->polygonLayer) {
     const std::string type{poly.attributeOr(lanelet::AttributeName::Type, "none")};
@@ -94,8 +94,8 @@ void LandmarkManager::parse_landmark(
     pose.orientation.z = q.z();
     pose.orientation.w = q.w();
 
-    // Add to map
-    landmarks_[marker_id] = pose;
+    // Add
+    landmarks.push_back(Landmark{marker_id, pose});
     RCLCPP_INFO_STREAM(logger, "id: " << marker_id);
     RCLCPP_INFO_STREAM(
       logger,
@@ -104,13 +104,16 @@ void LandmarkManager::parse_landmark(
       logger, "q = " << pose.orientation.x << ", " << pose.orientation.y << ", "
                      << pose.orientation.z << ", " << pose.orientation.w);
   }
+
+  return landmarks;
 }
 
-visualization_msgs::msg::MarkerArray LandmarkManager::get_landmarks_marker_array_msg() const
+visualization_msgs::msg::MarkerArray convert_landmarks_to_marker_array_msg(
+  const std::vector<Landmark> & landmarks)
 {
   int32_t id = 0;
   visualization_msgs::msg::MarkerArray marker_array;
-  for (const auto & [id_str, pose] : landmarks_) {
+  for (const auto & [id_str, pose] : landmarks) {
     // publish cube as a thin board
     visualization_msgs::msg::Marker cube_marker;
     cube_marker.header.frame_id = "map";
@@ -149,33 +152,4 @@ visualization_msgs::msg::MarkerArray LandmarkManager::get_landmarks_marker_array
     id++;
   }
   return marker_array;
-}
-
-std::optional<geometry_msgs::msg::Pose> LandmarkManager::convert_landmark_pose_to_ego_pose(
-  const geometry_msgs::msg::Pose & base_link_to_landmark, const std::string & landmark_id) const
-{
-  // Check if landmark_id is in landmarks_
-  if (landmarks_.count(landmark_id) == 0) {
-    return std::nullopt;
-  }
-
-  auto pose_to_eigen = [](const geometry_msgs::msg::Pose & pose) {
-    return Eigen::Affine3d(
-      Eigen::Translation3d(pose.position.x, pose.position.y, pose.position.z) *
-      Eigen::Quaterniond(
-        pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z));
-  };
-
-  // (1) map_to_landmark
-  const geometry_msgs::msg::Pose & map_to_landmark = landmarks_.at(landmark_id);
-  const Eigen::Affine3d map_to_landmark_eigen = pose_to_eigen(map_to_landmark);
-
-  // (2) landmark_to_base_link
-  const Eigen::Affine3d base_link_to_landmark_eigen = pose_to_eigen(base_link_to_landmark);
-  const Eigen::Affine3d landmark_to_base_link_eigen = base_link_to_landmark_eigen.inverse();
-
-  // calculation
-  const Eigen::Affine3d map_to_base_link = map_to_landmark_eigen * landmark_to_base_link_eigen;
-
-  return tf2::toMsg(map_to_base_link);
 }

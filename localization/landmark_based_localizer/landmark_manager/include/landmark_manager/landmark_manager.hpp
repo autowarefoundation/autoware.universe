@@ -25,21 +25,16 @@
 #include <map>
 #include <string>
 
-class LandmarkManager
-{
-public:
-  void parse_landmark(
-    const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
-    const std::string & target_subtype, const rclcpp::Logger & logger);
-
-  [[nodiscard]] visualization_msgs::msg::MarkerArray get_landmarks_marker_array_msg() const;
-
-  [[nodiscard]] std::optional<geometry_msgs::msg::Pose> convert_landmark_pose_to_ego_pose(
-    const geometry_msgs::msg::Pose & base_link_to_landmark, const std::string & landmark_id) const;
-
-private:
-  // Landmark is held as a map of <landmark_name(std::string), Pose>
-  std::map<std::string, geometry_msgs::msg::Pose> landmarks_;
+struct Landmark {
+  std::string id;
+  geometry_msgs::msg::Pose pose;
 };
+
+std::vector<Landmark> parse_landmarks(
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
+  const std::string & target_subtype, const rclcpp::Logger & logger);
+
+visualization_msgs::msg::MarkerArray convert_landmarks_to_marker_array_msg(
+  const std::vector<Landmark>& landmarks);
 
 #endif  // LANDMARK_MANAGER__LANDMARK_MANAGER_HPP_
