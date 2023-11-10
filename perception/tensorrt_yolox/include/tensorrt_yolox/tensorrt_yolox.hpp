@@ -146,8 +146,8 @@ public:
   int getMultitaskNum(void);
 
   /**
-   * @brief get colorlized masks from index using specifief colormap
-   * @param[out] cmask colorlized mask
+   * @brief get colorized masks from index using specific colormap
+   * @param[out] cmask colorized mask
    * @param[in] index multitask index
    * @param[in] colormap colormap for masks
    */
@@ -234,8 +234,8 @@ private:
   /**
    * @brief get a mask image for a segmentation head
    * @param[out] argmax argmax results
-   * @param[in] prob probmap
-   * @param[in] dims dimension for probmap
+   * @param[in] prob probability map
+   * @param[in] dims dimension for probability map
    * @param[in] out_w mask width excluding letterbox
    * @param[in] out_h mask height excluding letterbox
    */
@@ -244,7 +244,7 @@ private:
   /**
    * @brief get a mask image on GPUs for a segmentation head
    * @param[out] mask image
-   * @param[in] prob probablity map on device
+   * @param[in] prob probability map on device
    * @param[in] out_w mask width excluding letterbox
    * @param[in] out_h mask height excluding letterbox
    * @param[in] b current batch

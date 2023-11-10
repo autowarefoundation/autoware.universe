@@ -125,8 +125,7 @@ void TrtYoloXNode::onConnect()
   if (
     objects_pub_->get_subscription_count() == 0 &&
     objects_pub_->get_intra_process_subscription_count() == 0 &&
-    image_pub_.getNumSubscribers() == 0 &&
-    mask_pub_.getNumSubscribers() == 0 &&
+    image_pub_.getNumSubscribers() == 0 && mask_pub_.getNumSubscribers() == 0 &&
     color_mask_pub_.getNumSubscribers() == 0) {
     image_sub_.shutdown();
   } else if (!image_sub_) {

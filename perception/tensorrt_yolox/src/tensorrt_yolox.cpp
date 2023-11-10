@@ -300,7 +300,7 @@ TrtYoloX::TrtYoloX(
     out_classes_d_ = cuda_utils::make_unique<int32_t[]>(batch_config[2] * max_detections_);
   }
   if (multitask_) {
-    // Allocate buffer for segmentations
+    // Allocate buffer for segmentation
     segmentation_out_elem_num_ = 0;
     for (int m = 0; m < multitask_; m++) {
       const auto output_dims =
@@ -398,8 +398,8 @@ void TrtYoloX::initPreprocessBuffer(int width, int height)
         size_t out_elem_num = out_w * out_h * batch_size_;
         argmax_out_elem_num += out_elem_num;
       }
-      argmax_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
-          argmax_out_elem_num, cudaHostAllocPortable);
+      argmax_buf_h_ =
+        cuda_utils::make_unique_host<unsigned char[]>(argmax_out_elem_num, cudaHostAllocPortable);
       argmax_buf_d_ = cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num);
     }
   }
@@ -467,9 +467,9 @@ void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
     if (multitask_) {
       for (int m = 0; m < multitask_; m++) {
         const auto output_dims =
-            trt_common_->getBindingDimensions(m + 2);  // 0: input, 1: output for detections
+          trt_common_->getBindingDimensions(m + 2);  // 0: input, 1: output for detections
         const float scale =
-            std::min(output_dims.d[3] / float(image.cols), output_dims.d[2] / float(image.rows));
+          std::min(output_dims.d[3] / float(image.cols), output_dims.d[2] / float(image.rows));
         int out_w = static_cast<int>(image.cols * scale);
         int out_h = static_cast<int>(image.rows * scale);
         argmax_out_elem_num += out_w * out_h * batch_size;
@@ -479,8 +479,8 @@ void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
 
   if (multitask_) {
     if (!argmax_buf_h_) {
-      argmax_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
-          argmax_out_elem_num, cudaHostAllocPortable);
+      argmax_buf_h_ =
+        cuda_utils::make_unique_host<unsigned char[]>(argmax_out_elem_num, cudaHostAllocPortable);
     }
     if (!argmax_buf_d_) {
       argmax_buf_d_ = cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num);
