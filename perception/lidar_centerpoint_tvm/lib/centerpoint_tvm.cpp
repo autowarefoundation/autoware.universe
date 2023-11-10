@@ -42,8 +42,8 @@ namespace lidar_centerpoint_tvm
 {
 
 TVMScatterIE::TVMScatterIE(
-  tvm_utility::pipeline::InferenceEngineTVMConfig config, const std::string & data_path,
-  const std::string & pkg_name, const std::string & function_name)
+  tvm_utility::pipeline::InferenceEngineTVMConfig config, const std::string & pkg_name,
+  const std::string & data_path, const std::string & function_name)
 : config_(config)
 {
   std::string network_prefix = data_path + "/" + pkg_name + "/models/" + config.network_name + "/";
@@ -166,7 +166,7 @@ CenterPointTVM::CenterPointTVM(
   VE_IE(std::make_shared<IET>(config_en, "lidar_centerpoint_tvm", data_path)),
   BNH_IE(std::make_shared<IET>(config_bk, "lidar_centerpoint_tvm", data_path)),
   BNH_PostP(std::make_shared<BNH_PostPT>(config_bk, config)),
-  scatter_ie(std::make_shared<TSE>(config_scatter, data_path, "lidar_centerpoint_tvm", "scatter")),
+  scatter_ie(std::make_shared<TSE>(config_scatter, "lidar_centerpoint_tvm", data_path, "scatter")),
   TSP_pipeline(std::make_shared<TSP>(VE_PreP, VE_IE, scatter_ie, BNH_IE, BNH_PostP)),
   config_(config)
 {
