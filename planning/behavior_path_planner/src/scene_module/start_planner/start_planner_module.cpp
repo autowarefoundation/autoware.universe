@@ -764,7 +764,7 @@ void StartPlannerModule::updateStatusAfterBackwardDriving()
 PathWithLaneId StartPlannerModule::calcBackwardPathFromStartPose() const
 {
   const Pose & start_pose = planner_data_->route_handler->getOriginalStartPose();
-  const auto & pull_out_lanes = start_planner_utils::getPullOutLanes(
+  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, start_pose);
@@ -842,13 +842,13 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
 PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const
 {
+  const auto stop_objects = utils::path_safety_checker::filterObjectsByVelocity(
+    *planner_data_->dynamic_object, velocity_threshold);
+
   // filter for objects located in pull_out_lanes and moving at a speed below the threshold
-  const auto [objects_in_pull_out_lanes, others] =
+  const auto [stop_objects_in_pull_out_lanes, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
-      *planner_data_->dynamic_object, pull_out_lanes,
-      utils::path_safety_checker::isPolygonOverlapLanelet);
-  const auto stop_objects_in_pull_out_lanes = utils::path_safety_checker::filterObjectsByVelocity(
-    objects_in_pull_out_lanes, velocity_threshold);
+      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
 
   return stop_objects_in_pull_out_lanes;
 }
