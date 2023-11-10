@@ -183,7 +183,7 @@ extern void multi_scale_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
 /**
  * @brief Argmax on GPU
  * @param[out] dst processed image
- * @param[in] src probabilty map
+ * @param[in] src probability map
  * @param[in] d_w width for output
  * @param[in] d_h height for output
  * @param[in] s_w width for input
