@@ -667,7 +667,7 @@ lanelet::ConstLanelets StartPlannerModule::getPathRoadLanes(const PathWithLaneId
 std::vector<DrivableLanes> StartPlannerModule::generateDrivableLanes(
   const PathWithLaneId & path) const
 {
-  const auto & pull_out_lanes = start_planner_utils::getPullOutLanes(
+  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
 
   const auto path_road_lanes = getPathRoadLanes(path);
