@@ -160,6 +160,7 @@ struct IntersectionStopLines
   std::optional<size_t> occlusion_peeking_stop_line{std::nullopt};
   // if the value is calculated negative, its value is 0
   size_t pass_judge_line{0};
+  size_t occlusion_wo_tl_pass_judge_line{0};
 };
 
 struct PathLanelets

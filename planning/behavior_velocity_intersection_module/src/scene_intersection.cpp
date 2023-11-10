@@ -998,15 +998,15 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     planner_data_, interpolated_path_info, planner_param_.stuck_vehicle.use_stuck_stopline,
     planner_param_.common.stop_line_margin, planner_param_.common.max_accel,
     planner_param_.common.max_jerk, planner_param_.common.delay_response_time,
-    planner_param_.occlusion.peeking_offset, enable_occlusion_detection_, has_traffic_light_, path);
+    planner_param_.occlusion.peeking_offset, path);
   if (!intersection_stop_lines_opt) {
     return IntersectionModule::Indecisive{"failed to generate intersection_stop_lines"};
   }
   const auto & intersection_stop_lines = intersection_stop_lines_opt.value();
   const auto
     [closest_idx, stuck_stop_line_idx_opt, default_stop_line_idx_opt,
-     first_attention_stop_line_idx_opt, occlusion_peeking_stop_line_idx_opt, pass_judge_line_idx] =
-      intersection_stop_lines;
+     first_attention_stop_line_idx_opt, occlusion_peeking_stop_line_idx_opt,
+     default_pass_judge_line_idx, occlusion_wo_tl_pass_judge_line_idx] = intersection_stop_lines;
 
   // see the doc for struct PathLanelets
   const auto & conflicting_area = intersection_lanelets.conflicting_area();
@@ -1151,6 +1151,24 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   }
 
   // TODO(Mamoru Sobue): this part needs more formal handling
+  const size_t pass_judge_line_idx = [=]() {
+    if (enable_occlusion_detection_) {
+      // if occlusion detection is enabled, pass_judge position is beyond the boundary of first
+      // attention area
+      if (has_traffic_light_) {
+        return occlusion_stop_line_idx;
+      } else if (is_occlusion_state) {
+        // if there is no traffic light and occlusion is detected, pass_judge position is beyond
+        // the boundary of first attention area
+        return occlusion_wo_tl_pass_judge_line_idx;
+      } else {
+        // if there is no traffic light and occlusion is not detected, pass_judge position is
+        // default
+        return default_pass_judge_line_idx;
+      }
+    }
+    return default_pass_judge_line_idx;
+  }();
   debug_data_.pass_judge_wall_pose =
     planning_utils::getAheadPose(pass_judge_line_idx, baselink2front, *path);
   const bool is_over_pass_judge_line =
@@ -1260,14 +1278,14 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
             temporal_stop_before_attention_state_machine_)
         : false;
     if (!has_traffic_light_) {
-      if (fromEgoDist(occlusion_stop_line_idx) < 0) {
+      if (fromEgoDist(occlusion_wo_tl_pass_judge_line_idx) < 0) {
         return IntersectionModule::Indecisive{
           "already passed maximum peeking line in the absence of traffic light"};
       }
       return IntersectionModule::OccludedAbsenceTrafficLight{
         is_occlusion_cleared_with_margin,        has_collision_with_margin,
         temporal_stop_before_attention_required, closest_idx,
-        first_attention_stop_line_idx,           occlusion_stop_line_idx};
+        first_attention_stop_line_idx,           occlusion_wo_tl_pass_judge_line_idx};
     }
     // following remaining block is "has_traffic_light_"
     // if ego is stuck by static occlusion in the presence of traffic light, start timeout count

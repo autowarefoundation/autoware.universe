@@ -269,10 +269,9 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   const std::shared_ptr<const PlannerData> & planner_data,
   const InterpolatedPathInfo & interpolated_path_info, const bool use_stuck_stopline,
   const double stop_line_margin, const double max_accel, const double max_jerk,
-  const double delay_response_time, const double peeking_offset, const bool enable_occlusion,
-  const bool has_traffic_light, autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
+  const double delay_response_time, const double peeking_offset,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path)
 {
-  const bool enable_occlusion_wo_tl = (enable_occlusion && !has_traffic_light);
   const auto & path_ip = interpolated_path_info.path;
   const double ds = interpolated_path_info.ds;
   const auto & lane_interval_ip = interpolated_path_info.lane_id_interval.value();
@@ -303,6 +302,11 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
       break;
     }
   }
+  if (!first_footprint_attention_centerline_ip_opt) {
+    return std::nullopt;
+  }
+  const size_t first_footprint_attention_centerline_ip =
+    first_footprint_attention_centerline_ip_opt.value();
 
   // (1) default stop line position on interpolated path
   bool default_stop_line_valid = true;
@@ -328,13 +332,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
   // (3) occlusion peeking stop line position on interpolated path
   int occlusion_peeking_line_ip_int = static_cast<int>(default_stop_line_ip);
   bool occlusion_peeking_line_valid = true;
-  if (enable_occlusion_wo_tl) {
-    if (first_footprint_attention_centerline_ip_opt) {
-      occlusion_peeking_line_ip_int = first_footprint_attention_centerline_ip_opt.value();
-      occlusion_peeking_line_valid = true;
-    }
-  } else {
-    // NOTE: if footprints[0] is already inside the detection area, invalid
+  // NOTE: if footprints[0] is already inside the detection area, invalid
+  {
     const auto & base_pose0 = path_ip.points.at(default_stop_line_ip).point.pose;
     const auto path_footprint0 = tier4_autoware_utils::transformVector(
       local_footprint, tier4_autoware_utils::pose2transform(base_pose0));
@@ -342,31 +341,29 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
           path_footprint0, lanelet::utils::to2D(first_attention_area).basicPolygon())) {
       occlusion_peeking_line_valid = false;
     }
-    if (occlusion_peeking_line_valid) {
-      occlusion_peeking_line_ip_int =
-        first_footprint_inside_detection_ip + std::ceil(peeking_offset / ds);
-    }
   }
-  const auto first_attention_stop_line_ip = first_footprint_inside_detection_ip;
-  const bool first_attention_stop_line_valid = true;
+  if (occlusion_peeking_line_valid) {
+    occlusion_peeking_line_ip_int =
+      first_footprint_inside_detection_ip + std::ceil(peeking_offset / ds);
+  }
+
   const auto occlusion_peeking_line_ip = static_cast<size_t>(
     std::clamp<int>(occlusion_peeking_line_ip_int, 0, static_cast<int>(path_ip.points.size()) - 1));
+  const auto first_attention_stop_line_ip = first_footprint_inside_detection_ip;
+  const bool first_attention_stop_line_valid = true;
 
   // (4) pass judge line position on interpolated path
   const double velocity = planner_data->current_velocity->twist.linear.x;
   const double acceleration = planner_data->current_acceleration->accel.accel.linear.x;
   const double braking_dist = planning_utils::calcJudgeLineDistWithJerkLimit(
     velocity, acceleration, max_accel, max_jerk, delay_response_time);
-  int pass_judge_ip_int = 0;
-  if (enable_occlusion_wo_tl && first_footprint_attention_centerline_ip_opt) {
-    // TODO(Mamoru Sobue): maybe braking dist should be considered
-    pass_judge_ip_int = first_footprint_attention_centerline_ip_opt.value();
-  } else {
-    pass_judge_ip_int =
-      static_cast<int>(first_footprint_inside_detection_ip) - std::ceil(braking_dist / ds);
-  }
+  int pass_judge_ip_int =
+    static_cast<int>(first_footprint_inside_detection_ip) - std::ceil(braking_dist / ds);
   const auto pass_judge_line_ip = static_cast<size_t>(
     std::clamp<int>(pass_judge_ip_int, 0, static_cast<int>(path_ip.points.size()) - 1));
+  // TODO(Mamoru Sobue): maybe braking dist should be considered
+  const auto occlusion_wo_tl_pass_judge_line_ip =
+    static_cast<size_t>(first_footprint_attention_centerline_ip);
 
   // (5) stuck vehicle stop line
   int stuck_stop_line_ip_int = 0;
@@ -399,6 +396,7 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     size_t first_attention_stop_line{0};
     size_t occlusion_peeking_stop_line{0};
     size_t pass_judge_line{0};
+    size_t occlusion_wo_tl_pass_judge_line{0};
   };
 
   IntersectionStopLinesTemp intersection_stop_lines_temp;
@@ -408,7 +406,9 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     {&default_stop_line_ip, &intersection_stop_lines_temp.default_stop_line},
     {&first_attention_stop_line_ip, &intersection_stop_lines_temp.first_attention_stop_line},
     {&occlusion_peeking_line_ip, &intersection_stop_lines_temp.occlusion_peeking_stop_line},
-    {&pass_judge_line_ip, &intersection_stop_lines_temp.pass_judge_line}};
+    {&pass_judge_line_ip, &intersection_stop_lines_temp.pass_judge_line},
+    {&occlusion_wo_tl_pass_judge_line_ip,
+     &intersection_stop_lines_temp.occlusion_wo_tl_pass_judge_line}};
   stop_lines.sort(
     [](const auto & it1, const auto & it2) { return *(std::get<0>(it1)) < *(std::get<0>(it2)); });
   for (const auto & [stop_idx_ip, stop_idx] : stop_lines) {
@@ -426,12 +426,6 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
     intersection_stop_lines_temp.default_stop_line) {
     intersection_stop_lines_temp.occlusion_peeking_stop_line =
       intersection_stop_lines_temp.default_stop_line;
-  }
-  if (
-    enable_occlusion && intersection_stop_lines_temp.occlusion_peeking_stop_line >
-                          intersection_stop_lines_temp.pass_judge_line) {
-    intersection_stop_lines_temp.pass_judge_line =
-      intersection_stop_lines_temp.occlusion_peeking_stop_line;
   }
 
   IntersectionStopLines intersection_stop_lines;
@@ -451,6 +445,8 @@ std::optional<IntersectionStopLines> generateIntersectionStopLines(
       intersection_stop_lines_temp.occlusion_peeking_stop_line;
   }
   intersection_stop_lines.pass_judge_line = intersection_stop_lines_temp.pass_judge_line;
+  intersection_stop_lines.occlusion_wo_tl_pass_judge_line =
+    intersection_stop_lines_temp.occlusion_wo_tl_pass_judge_line;
   return intersection_stop_lines;
 }
 
