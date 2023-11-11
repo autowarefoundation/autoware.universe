@@ -19,7 +19,7 @@ namespace autoware::motion::control::trajectory_follower
 {
 struct LateralSyncData
 {
-  bool is_steer_converged{false};
+  bool is_controller_ready_to_move{false};
 };
 
 struct LongitudinalSyncData

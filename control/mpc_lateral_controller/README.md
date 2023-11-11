@@ -73,7 +73,8 @@ Return LateralOutput which contains the following to the controller node
 
 - `autoware_auto_control_msgs/AckermannLateralCommand`
 - LateralSyncData
-  - steer angle convergence
+  - is mpc ready to move?
+    - if not, the vehicle should stop until the stable mpc output is obtained
 
 ### MPC class
 

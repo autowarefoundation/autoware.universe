@@ -22,6 +22,6 @@ void LongitudinalControllerBase::sync(LateralSyncData const & lateral_sync_data)
 }
 void LongitudinalControllerBase::reset()
 {
-  lateral_sync_data_.is_steer_converged = false;
+  lateral_sync_data_.is_controller_ready_to_move = false;
 }
 }  // namespace autoware::motion::control::trajectory_follower

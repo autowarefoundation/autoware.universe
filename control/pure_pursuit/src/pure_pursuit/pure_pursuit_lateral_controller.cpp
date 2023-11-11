@@ -79,7 +79,6 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   param_.max_lookahead_distance = node.declare_parameter<double>("max_lookahead_distance");
   param_.reverse_min_lookahead_distance =
     node.declare_parameter<double>("reverse_min_lookahead_distance");
-  param_.converged_steer_rad_ = node.declare_parameter<double>("converged_steer_rad");
   param_.prediction_ds = node.declare_parameter<double>("prediction_ds");
   param_.prediction_distance_length = node.declare_parameter<double>("prediction_distance_length");
   param_.resampling_ds = node.declare_parameter<double>("resampling_ds");
@@ -348,11 +347,6 @@ LateralOutput PurePursuitLateralController::run(const InputData & input_data)
   if (param_.enable_path_smoothing) {
     averageFilterTrajectory(*trajectory_resampled_);
   }
-  const auto cmd_msg = generateOutputControlCmd();
-
-  LateralOutput output;
-  output.control_cmd = cmd_msg;
-  output.sync_data.is_steer_converged = calcIsSteerConverged(cmd_msg);
 
   // calculate predicted trajectory with iterative calculation
   const auto predicted_trajectory = generatePredictedTrajectory();
@@ -362,13 +356,14 @@ LateralOutput PurePursuitLateralController::run(const InputData & input_data)
     pub_predicted_trajectory_->publish(*predicted_trajectory);
   }
 
-  return output;
-}
+  const auto cmd_msg = generateOutputControlCmd();
 
-bool PurePursuitLateralController::calcIsSteerConverged(const AckermannLateralCommand & cmd)
-{
-  return std::abs(cmd.steering_tire_angle - current_steering_.steering_tire_angle) <
-         static_cast<float>(param_.converged_steer_rad_);
+  LateralOutput output;
+  output.control_cmd = cmd_msg;
+  output.sync_data.is_controller_ready_to_move =
+    predicted_trajectory.has_value();  // If not, not ready.
+
+  return output;
 }
 
 AckermannLateralCommand PurePursuitLateralController::generateOutputControlCmd()

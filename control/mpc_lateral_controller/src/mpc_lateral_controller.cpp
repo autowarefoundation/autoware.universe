@@ -60,8 +60,6 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node)
   /* stop state parameters */
   m_stop_state_entry_ego_speed = dp_double("stop_state_entry_ego_speed");
   m_stop_state_entry_target_speed = dp_double("stop_state_entry_target_speed");
-  m_converged_steer_rad = dp_double("converged_steer_rad");
-  m_keep_steer_control_until_converged = dp_bool("keep_steer_control_until_converged");
   m_new_traj_duration_time = dp_double("new_traj_duration_time");            // [s]
   m_new_traj_end_dist = dp_double("new_traj_end_dist");                      // [m]
   m_mpc_converged_threshold_rps = dp_double("mpc_converged_threshold_rps");  // [rad/s]
@@ -271,13 +269,11 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   const auto createLateralOutput = [this](const auto & cmd, const bool is_mpc_solved) {
     trajectory_follower::LateralOutput output;
     output.control_cmd = createCtrlCmdMsg(cmd);
-    // To be sure current steering of the vehicle is desired steering angle, we need to check
+    // To be sure lateral controller is ready to move, we need to check
     // following conditions.
     // 1. At the last loop, mpc should be solved because command should be optimized output.
-    // 2. The mpc should be converged.
-    // 3. The steer angle should be converged.
-    output.sync_data.is_steer_converged =
-      is_mpc_solved && isMpcConverged() && isSteerConverged(cmd);
+    // 2. The steering output of the mpc should be converged.
+    output.sync_data.is_controller_ready_to_move = is_mpc_solved && isMpcConverged();
 
     return output;
   };
@@ -299,22 +295,6 @@ trajectory_follower::LateralOutput MpcLateralController::run(
 
   m_ctrl_cmd_prev = ctrl_cmd;
   return createLateralOutput(ctrl_cmd, is_mpc_solved);
-}
-
-bool MpcLateralController::isSteerConverged(const AckermannLateralCommand & cmd) const
-{
-  // wait for a while to propagate the trajectory shape to the output command when the trajectory
-  // shape is changed.
-  if (!m_has_received_first_trajectory || isTrajectoryShapeChanged()) {
-    RCLCPP_DEBUG(logger_, "trajectory shaped is changed");
-    return false;
-  }
-
-  const bool is_converged =
-    std::abs(cmd.steering_tire_angle - m_current_steering.steering_tire_angle) <
-    static_cast<float>(m_converged_steer_rad);
-
-  return is_converged;
 }
 
 bool MpcLateralController::isReady(const trajectory_follower::InputData & input_data)
@@ -406,11 +386,6 @@ bool MpcLateralController::isStoppedState() const
 
   const double current_vel = m_current_kinematic_state.twist.twist.linear.x;
   const double target_vel = m_current_trajectory.points.at(nearest).longitudinal_velocity_mps;
-
-  const auto latest_published_cmd = m_ctrl_cmd_prev;  // use prev_cmd as a latest published command
-  if (m_keep_steer_control_until_converged && !isSteerConverged(latest_published_cmd)) {
-    return false;  // not stopState: keep control
-  }
 
   if (
     std::fabs(current_vel) < m_stop_state_entry_ego_speed &&

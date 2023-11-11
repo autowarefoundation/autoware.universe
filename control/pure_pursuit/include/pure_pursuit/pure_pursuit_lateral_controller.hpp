@@ -82,7 +82,6 @@ struct Param
   double min_lookahead_distance;
   double max_lookahead_distance;
   double reverse_min_lookahead_distance;  // min_lookahead_distance in reverse gear
-  double converged_steer_rad_;
   double prediction_ds;
   double prediction_distance_length;  // Total distance of prediction trajectory
   double resampling_ds;
@@ -161,8 +160,6 @@ private:
   boost::optional<Trajectory> generatePredictedTrajectory();
 
   AckermannLateralCommand generateOutputControlCmd();
-
-  bool calcIsSteerConverged(const AckermannLateralCommand & cmd);
 
   double calcLookaheadDistance(
     const double lateral_error, const double curvature, const double velocity, const double min_ld,

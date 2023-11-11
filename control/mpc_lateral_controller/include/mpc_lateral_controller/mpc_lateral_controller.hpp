@@ -73,9 +73,6 @@ private:
   // Target vehicle speed threshold to enter the stop state.
   double m_stop_state_entry_target_speed;
 
-  // Convergence threshold for steering control.
-  double m_converged_steer_rad;
-
   // max mpc output change threshold for 1 sec
   double m_mpc_converged_threshold_rps;
 
@@ -84,9 +81,6 @@ private:
 
   // Distance threshold to check if the trajectory shape has changed.
   double m_new_traj_end_dist;
-
-  // Flag indicating whether to keep the steering control until it converges.
-  bool m_keep_steer_control_until_converged;
 
   // trajectory buffer for detecting new trajectory
   std::deque<Trajectory> m_trajectory_buffer;
@@ -244,13 +238,6 @@ private:
    * @return True if the trajectory shape has changed, false otherwise.
    */
   bool isTrajectoryShapeChanged() const;
-
-  /**
-   * @brief Check if the steering control is converged and stable now.
-   * @param cmd Steering control command to be checked.
-   * @return True if the steering control is converged and stable, false otherwise.
-   */
-  bool isSteerConverged(const AckermannLateralCommand & cmd) const;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
 

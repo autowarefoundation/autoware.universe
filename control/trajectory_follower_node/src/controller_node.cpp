@@ -79,8 +79,6 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
     create_publisher<Float64Stamped>("~/lateral/debug/processing_time_ms", 1);
   pub_processing_time_lon_ms_ =
     create_publisher<Float64Stamped>("~/longitudinal/debug/processing_time_ms", 1);
-  debug_marker_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_marker", rclcpp::QoS{1});
 
   // Timer
   {
@@ -230,39 +228,7 @@ void Controller::callbackTimerControl()
   out.lateral = lat_out.control_cmd;
   out.longitudinal = lon_out.control_cmd;
   control_cmd_pub_->publish(out);
-
-  // 6. publish debug marker
-  publishDebugMarker(*input_data, lat_out);
 }
-
-void Controller::publishDebugMarker(
-  const trajectory_follower::InputData & input_data,
-  const trajectory_follower::LateralOutput & lat_out) const
-{
-  visualization_msgs::msg::MarkerArray debug_marker_array{};
-
-  // steer converged marker
-  {
-    auto marker = tier4_autoware_utils::createDefaultMarker(
-      "map", this->now(), "steer_converged", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-      tier4_autoware_utils::createMarkerScale(0.0, 0.0, 1.0),
-      tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 0.99));
-    marker.pose = input_data.current_odometry.pose.pose;
-
-    std::stringstream ss;
-    const double current = input_data.current_steering.steering_tire_angle;
-    const double cmd = lat_out.control_cmd.steering_tire_angle;
-    const double diff = current - cmd;
-    ss << "current:" << current << " cmd:" << cmd << " diff:" << diff
-       << (lat_out.sync_data.is_steer_converged ? " (converged)" : " (not converged)");
-    marker.text = ss.str();
-
-    debug_marker_array.markers.push_back(marker);
-  }
-
-  debug_marker_pub_->publish(debug_marker_array);
-}
-
 void Controller::publishProcessingTime(
   const double t_ms, const rclcpp::Publisher<Float64Stamped>::SharedPtr pub)
 {

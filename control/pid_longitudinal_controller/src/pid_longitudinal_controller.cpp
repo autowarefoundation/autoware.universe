@@ -49,8 +49,6 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
   m_enable_large_tracking_error_emergency =
     node.declare_parameter<bool>("enable_large_tracking_error_emergency");
   m_enable_slope_compensation = node.declare_parameter<bool>("enable_slope_compensation");
-  m_enable_keep_stopped_until_steer_convergence =
-    node.declare_parameter<bool>("enable_keep_stopped_until_steer_convergence");
 
   // parameters for state transition
   {
@@ -506,11 +504,6 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
   // NOTE: the same velocity threshold as motion_utils::searchZeroVelocity
   static constexpr double vel_epsilon = 1e-3;
 
-  // Let vehicle start after the steering is converged for control accuracy
-  const bool keep_stopped_condition = std::fabs(current_vel) < vel_epsilon &&
-                                      m_enable_keep_stopped_until_steer_convergence &&
-                                      !lateral_sync_data_.is_steer_converged;
-
   const bool stopping_condition = stop_dist < p.stopping_state_stop_dist;
 
   const bool is_stopped = std::abs(current_vel) < p.stopped_state_entry_vel &&
@@ -574,7 +567,7 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
       return changeState(ControlState::EMERGENCY);
     }
 
-    if (!is_under_control && stopped_condition && keep_stopped_condition) {
+    if (!is_under_control && stopped_condition) {
       // NOTE: When the ego is stopped on manual driving, since the driving state may transit to
       //       autonomous, keep_stopped_condition should be checked.
       return changeState(ControlState::STOPPED);
@@ -625,14 +618,8 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     if (has_nonzero_target_vel && !departure_condition_from_stopped) {
       info_throttle("target speed > 0, but departure condition is not met. Keep STOPPED.");
     }
-    if (has_nonzero_target_vel && keep_stopped_condition) {
-      info_throttle("target speed > 0, but keep stop condition is met. Keep STOPPED.");
-    }
     // ---------------
 
-    if (keep_stopped_condition) {
-      return changeState(ControlState::STOPPED);
-    }
     if (departure_condition_from_stopped) {
       m_pid_vel.reset();
       m_lpf_vel_error->reset(0.0);

@@ -39,7 +39,7 @@ steering
 accel
 }
 struct LongitudinalSyncData {
-is_steer_converged
+is_controller_ready_to_move
 }
 struct LateralSyncData {
 }
@@ -117,13 +117,6 @@ lateral_controller_->sync(lon_out.sync_data);
 // 5. publish control command
 control_cmd_pub_->publish(out);
 ```
-
-Giving the longitudinal controller information about steer convergence allows it to control steer when stopped if following parameters are `true`
-
-- lateral controller
-  - `keep_steer_control_until_converged`
-- longitudinal controller
-  - `enable_keep_stopped_until_steer_convergence`
 
 ### Inputs / Outputs / API
 

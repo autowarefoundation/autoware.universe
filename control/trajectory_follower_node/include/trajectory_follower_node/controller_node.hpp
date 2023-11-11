@@ -84,7 +84,6 @@ private:
     control_cmd_pub_;
   rclcpp::Publisher<Float64Stamped>::SharedPtr pub_processing_time_lat_ms_;
   rclcpp::Publisher<Float64Stamped>::SharedPtr pub_processing_time_lon_ms_;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_marker_pub_;
 
   autoware_auto_planning_msgs::msg::Trajectory::SharedPtr current_trajectory_ptr_;
   nav_msgs::msg::Odometry::SharedPtr current_odometry_ptr_;
@@ -115,9 +114,6 @@ private:
   LateralControllerMode getLateralControllerMode(const std::string & algorithm_name) const;
   LongitudinalControllerMode getLongitudinalControllerMode(
     const std::string & algorithm_name) const;
-  void publishDebugMarker(
-    const trajectory_follower::InputData & input_data,
-    const trajectory_follower::LateralOutput & lat_out) const;
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 

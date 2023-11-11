@@ -15,5 +15,5 @@ Return LateralOutput which contains the following to the controller node
 
 - `autoware_auto_control_msgs/AckermannLateralCommand`: target steering angle
 - LateralSyncData
-  - steer angle convergence
+  - controller can create predicted path successfully or not
 - `autoware_auto_planning_msgs/Trajectory`: predicted path for ego vehicle
