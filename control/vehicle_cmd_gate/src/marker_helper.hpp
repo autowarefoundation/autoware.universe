@@ -106,6 +106,30 @@ inline visualization_msgs::msg::Marker createStringMarker(
   return marker;
 }
 
+inline visualization_msgs::msg::Marker createDefaultMarker(
+  const std::string & frame_id, const rclcpp::Time & now, const std::string & ns, const int32_t id,
+  const int32_t type, const geometry_msgs::msg::Vector3 & scale,
+  const std_msgs::msg::ColorRGBA & color)
+{
+  visualization_msgs::msg::Marker marker;
+
+  marker.header.frame_id = frame_id;
+  marker.header.stamp = now;
+  marker.ns = ns;
+  marker.id = id;
+  marker.type = type;
+  marker.action = visualization_msgs::msg::Marker::ADD;
+  marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+
+  marker.pose.position = createMarkerPosition(0.0, 0.0, 0.0);
+  marker.pose.orientation = createMarkerOrientation(0.0, 0.0, 0.0, 1.0);
+  marker.scale = scale;
+  marker.color = color;
+  marker.frame_locked = true;
+
+  return marker;
+}
+
 inline void appendMarkerArray(
   const visualization_msgs::msg::MarkerArray & additional_marker_array,
   visualization_msgs::msg::MarkerArray * marker_array)

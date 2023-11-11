@@ -111,6 +111,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr filter_activated_marker_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr filter_activated_marker_raw_pub_;
   rclcpp::Publisher<BoolStamped>::SharedPtr filter_activated_flag_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_marker_pub_;
 
   // Subscription
   rclcpp::Subscription<Heartbeat>::SharedPtr external_emergency_stop_heartbeat_sub_;
@@ -249,7 +250,8 @@ private:
   // debug
   MarkerArray createMarkerArray(const IsFilterActivated & filter_activated);
   void publishMarkers(const IsFilterActivated & filter_activated);
-
+  void publishConvergenceDebugMarker(
+    const AckermannLateralCommand & lat_cmd, const bool is_converged) const;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 };
 

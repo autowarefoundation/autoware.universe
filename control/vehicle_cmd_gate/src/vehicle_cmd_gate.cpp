@@ -82,6 +82,9 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   filter_activated_flag_pub_ =
     create_publisher<BoolStamped>("~/is_filter_activated/flag", durable_qos);
 
+  debug_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>(
+    "~/is_steering_converged/debug_marker", rclcpp::QoS{1});
+
   // Subscriber
   external_emergency_stop_heartbeat_sub_ = create_subscription<Heartbeat>(
     "input/external_emergency_stop_heartbeat", 1,
@@ -844,8 +847,36 @@ void VehicleCmdGate::publishMarkers(const IsFilterActivated & filter_activated)
 }
 bool VehicleCmdGate::isSteeringConverged(AckermannLateralCommand & lateral_cmd)
 {
-  return std::fabs(lateral_cmd.steering_tire_angle - current_steer_) <
-         steering_convergence_threshold_;
+  const bool is_converged =
+    std::fabs(lateral_cmd.steering_tire_angle - current_steer_) < steering_convergence_threshold_;
+  publishConvergenceDebugMarker(lateral_cmd, is_converged);
+  return is_converged;
+}
+
+void VehicleCmdGate::publishConvergenceDebugMarker(
+  const AckermannLateralCommand & lat_cmd, const bool is_converged) const
+{
+  visualization_msgs::msg::MarkerArray debug_marker_array{};
+
+  // steer converged marker
+  {
+    auto marker = createDefaultMarker(
+      "map", this->now(), "steer_converged", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+      createMarkerScale(0.0, 0.0, 1.0), createMarkerColor(1.0, 1.0, 1.0, 0.99));
+    marker.pose = current_kinematics_.pose.pose;
+
+    std::stringstream ss;
+    const double current = current_steer_;
+    const double cmd = lat_cmd.steering_tire_angle;
+    const double diff = current - cmd;
+    ss << "current:" << current << " cmd:" << cmd << " diff:" << diff
+       << (is_converged ? " (converged)" : " (not converged)");
+    marker.text = ss.str();
+
+    debug_marker_array.markers.push_back(marker);
+  }
+
+  debug_marker_pub_->publish(debug_marker_array);
 }
 
 }  // namespace vehicle_cmd_gate
