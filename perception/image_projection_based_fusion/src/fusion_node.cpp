@@ -422,7 +422,7 @@ void FusionNode<Msg, Obj, Msg2D>::publish(const Msg & output_msg)
 template class FusionNode<DetectedObjects, DetectedObject, DetectedObjectsWithFeature>;
 template class FusionNode<
   DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>;
-template class FusionNode<
-  sensor_msgs::msg::PointCloud2, DetectedObjects, DetectedObjectsWithFeature>;
+template class FusionNode<PointCloud2, DetectedObjects, DetectedObjectsWithFeature>;
+template class FusionNode<PointCloud2, DetectedObjectWithFeature, DetectedObjectsWithFeature>;
 template class FusionNode<PointCloud2, PointCloud2, Image>;
 }  // namespace image_projection_based_fusion
