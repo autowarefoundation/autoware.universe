@@ -188,6 +188,9 @@ The following figure illustrates when the lane is blocked in multiple lane chang
 
 #### Stopping position when an object exists ahead
 
+When an obstacle is in front of the ego vehicle, stop with keeping a distance for lane change.
+The position to be stopped depends on the situation, such as when the lane change is blocked by the target lane obstacle, or when the lane change is not needed immediately.The following shows the division in that case.
+
 ##### When the ego vehicle is near the end of the lane change
 
 Regardless of the presence or absence of objects in the lane change target lane, stop by keeping the distance necessary for lane change to the object ahead.
