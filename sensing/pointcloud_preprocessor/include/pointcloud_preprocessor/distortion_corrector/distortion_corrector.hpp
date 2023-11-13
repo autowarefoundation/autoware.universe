@@ -42,7 +42,7 @@
 #include <deque>
 #include <memory>
 #include <string>
-#include <opencv4/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 namespace pointcloud_preprocessor
 {
