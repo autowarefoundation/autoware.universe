@@ -36,13 +36,13 @@
 #include <tf2_ros/transform_listener.h>
 
 // Include tier4 autoware utils
+#include <opencv2/opencv.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <deque>
 #include <memory>
 #include <string>
-#include <opencv2/opencv.hpp>
 
 namespace pointcloud_preprocessor
 {
