@@ -307,7 +307,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     *it_y = static_cast<float>(undistorted_point.getY());
     *it_z = static_cast<float>(undistorted_point.getZ());
 
-    if (update_azimuth_and_distance_ && !need_transform) {
+    if (update_azimuth_and_distance_) {
       *it_distance = sqrt(*it_x * *it_x + *it_y * *it_y + *it_z * *it_z);
       *it_azimuth = cv::fastAtan2(*it_y, *it_x) * 100;
     }
