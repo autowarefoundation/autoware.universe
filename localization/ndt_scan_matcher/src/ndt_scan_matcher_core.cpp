@@ -224,15 +224,14 @@ NDTScanMatcher::NDTScanMatcher()
   if (regularization_enabled_) {
     // NOTE: The reason that the regularization subscriber does not belong to the
     // main_callback_group is to ensure that the regularization callback is called even if
-    // sensor_callback takes time to process.
-    // Also, initial_pose_callback_group is separated from main_callback_group because
-    // callback_initial_pose missed receiving data in the past. resulting in improper interpolation.
+    // sensor_callback takes long time to process.
+    // Both callback_initial_pose and callback_regularization_pose must not miss receiving data for
+    // proper interpolation.
     regularization_pose_sub_ =
       this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "regularization_pose_with_covariance", 10,
-        std::bind(
-          &NDTScanMatcher::callback_regularization_pose, this,
-          std::placeholders::_1) /* Neither main_callback_group nor initial_pose_callback_group */);
+        std::bind(&NDTScanMatcher::callback_regularization_pose, this, std::placeholders::_1),
+        initial_pose_sub_opt);
   }
 
   sensor_aligned_pose_pub_ =
