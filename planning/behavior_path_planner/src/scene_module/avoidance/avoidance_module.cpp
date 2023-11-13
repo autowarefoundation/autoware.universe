@@ -1003,7 +1003,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
     if (feasible) {
       RCLCPP_WARN_THROTTLE(
         getLogger(), *clock_, 1000, "feasible shift length is not enough to avoid. ");
-      object.reason = AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN;
+      object.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
       return boost::none;
     }
 
