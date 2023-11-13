@@ -13,10 +13,10 @@ This node is a simple node that subscribes to the geo-referenced pose topic and 
 
 ## Published Topics
 
-| Name          | Type                                            | Description       |
-| ------------- | ----------------------------------------------- | ----------------- |
-| `output_pose` | `geometry_msgs::msg::PoseWithCovarianceStamped` | pose in map frame |
-| `/tf` | `tf2_msgs::msg::TFMessage` | tf from parent link to the child link |
+| Name          | Type                                            | Description                           |
+| ------------- | ----------------------------------------------- | ------------------------------------- |
+| `output_pose` | `geometry_msgs::msg::PoseWithCovarianceStamped` | pose in map frame                     |
+| `/tf`         | `tf2_msgs::msg::TFMessage`                      | tf from parent link to the child link |
 
 ## Parameters
 
