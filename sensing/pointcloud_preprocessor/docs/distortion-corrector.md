@@ -44,4 +44,6 @@ $ ExactPointTime = TimeStamp + TimeOffset $
 | `timestamp_field_name`        | string | "time_stamp"  | time stamp field name                                       |
 | `use_imu`                     | bool   | true          | use gyroscope for yaw rate if true, else use vehicle status |
 | `update_azimuth_and_distance`| bool   | false         | update the azimuth and distance based on undistorted xyz    |
+
 ## Assumptions / Known limits
+When setting the parameter `update_azimuth_and_distance` to True, the node will calculate the azimuth value based on the undistorted XYZ by using atan2, which will return the azimuth value with the coordinate system that the x-axis is 0 degrees and the y-axis is 90 degrees. Please make sure the frame coordinates are same as the coordinate system mentioned in the above. For autoware user, the frame_id of input pointcloud is base_link, which the coordinate system is same as the coordinate system mentioned above, therefore it won't casue any issues. Also note that by setting the parameter `update_azimuth_and_distance` to True, the time will incrase around 13%. 
