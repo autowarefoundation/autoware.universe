@@ -77,6 +77,7 @@ void Debugger::clear()
   image_rois_.clear();
   obstacle_rois_.clear();
   obstacle_points_.clear();
+  max_iou_for_image_rois_.clear();
 }
 
 void Debugger::publishImage(const std::size_t image_id, const rclcpp::Time & stamp)
