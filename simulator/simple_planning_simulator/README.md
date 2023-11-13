@@ -62,7 +62,7 @@ The purpose of this simulator is for the integration test of planning and contro
 - `DELAY_STEER_VEL`
 - `DELAY_STEER_ACC`
 - `DELAY_STEER_ACC_GEARED`
-- `DELAY_CONVERTER`
+- `DELAY_STEER_MAP_ACC_GEARD`
 
 The `IDEAL` model moves ideally as commanded, while the `DELAY` model moves based on a 1st-order with time delay model. The `STEER` means the model receives the steer command. The `VEL` means the model receives the target velocity command, while the `ACC` model receives the target acceleration command. The `GEARED` suffix means that the motion will consider the gear command: the vehicle moves only one direction following the gear.
 
