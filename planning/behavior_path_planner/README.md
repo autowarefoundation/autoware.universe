@@ -1,12 +1,18 @@
 # Behavior Path Planner
 
-## Purpose / Use cases
+The Behavior Path Planner's main objective is to significantly enhances the safety of autonomous vehicles by minimizing the risk of accidents. It improves driving efficiency through time conservation and underpins reliability with its rule-based approach. Additionally, it allows users to integrate their own custom behavior modules or use it with different types of vehicles, such as cars, buses, and delivery robots, as well as in various environments, from busy urban streets to open highways.
 
-The `behavior_path_planner` module is responsible to generate
+The module begins by thoroughly analyzing the ego vehicle's current situation, including position, speed, and surrounding environment, leading to essential driving decisions about lane changes or stopping, and subsequently generates a path that is both safe and efficient, considering road geometry, traffic rules, and dynamic conditions, while also incorporating obstacle avoidance to respond to static and dynamic obstacles such as other vehicles, pedestrians, or unexpected roadblocks, ensuring safe navigation.
 
-1. **path** based on the traffic situation,
-2. **drivable area** that the vehicle can move (defined in the path msg),
-3. **turn signal** command to be sent to the vehicle interface.
+Moreover, the planner actively interacts with other traffic participants, predicting their actions and accordingly adjusting the vehicle's path. This ensures not only the safety of the autonomous vehicle but also contributes to smooth traffic flow. Its adherence to traffic laws, including speed limits and traffic signals, further guarantees lawful and predictable driving behavior. The planner is also designed to minimize sudden or abrupt maneuvers, aiming for a comfortable and natural driving experience.
+
+## Purpose / Use Cases
+
+Essentially, the module has three primary responsibilities:
+
+1. Creating a **path based** on the traffic situation.
+2. Generating **drivable area**, i.e. the area within which the vehicle can maneuver.
+3. Generating **turn signal** commands to be relayed to the vehicle interface.
 
 ## Features
 
@@ -140,13 +146,17 @@ Expansion parameters are defined for each module of the `behavior_path_planner` 
 | drivable_area_right_bound_offset | [m]  | double          | expansion distance of the left bound       | 0.0           |
 | drivable_area_types_to_skip      |      | list of strings | types of linestrings that are not expanded | [road_border] |
 
-Click [here](./docs/behavior_path_planner_drivable_area_design.md) for details.
+!!! note
+
+    Click [here](./docs/behavior_path_planner_drivable_area_design.md) for details.
 
 ### Dynamic Drivable Area Algorithm
 
 Large vehicles require much more space, which sometimes causes them to veer out of their current lane. A typical example being a bus making a turn at a corner. In such cases, relying on a static drivable area is insufficient, since the static method depends on lane information provided by high-definition maps. To overcome the limitations of the static approach, the dynamic drivable area expansion algorithm adjusts the navigable space for an autonomous vehicle in real-time. It conserves computational power by reusing previously calculated path data, updating only when there is a significant change in the vehicle's position. The system evaluates the minimum lane width necessary to accommodate the vehicle's turning radius and other dynamic factors. It then calculates the optimal expansion of the drivable area's boundaries to ensure there is adequate space for safe maneuvering, taking into account the vehicle's path curvature. The rate at which these boundaries can expand or contract is moderated to maintain stability in the vehicle's navigation. The algorithm aims to maximize the drivable space while avoiding fixed obstacles and adhering to legal driving limits. Finally, it applies these boundary adjustments and smooths out the path curvature calculations to ensure a safe and legally compliant navigable path is maintained throughout the vehicle's operation.
 
-The feature can be enabled in the [drivable_area_expansion.param.yaml](https://github.com/autowarefoundation/autoware_launch/blob/0cd5d891a36ac34a32a417205905c109f2bafe7b/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_area_expansion.param.yaml#L10).
+!!! note
+
+    The feature can be enabled in the [drivable_area_expansion.param.yaml](https://github.com/autowarefoundation/autoware_launch/blob/0cd5d891a36ac34a32a417205905c109f2bafe7b/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_area_expansion.param.yaml#L10).
 
 ## Generating Turn Signal
 
@@ -176,16 +186,4 @@ The shifted path generation logic allows behavior path planner to dynamically ge
 
     If you're a math lover, refer to [Path Generation Design](./docs/behavior_path_planner_path_generation_design.md) for the nitty-gritty.
 
-## References / External links
-
-<!-- cspell:ignore Vorobieva, Minoiu, Enache, Mammar, IFAC -->
-
-[[1]](https://www.sciencedirect.com/science/article/pii/S1474667015347431) H. Vorobieva, S. Glaser, N. Minoiu-Enache, and S. Mammar, “Geometric path planning for automatic parallel parking in tiny spots”, IFAC Proceedings Volumes, vol. 45, no. 24, pp. 36–42, 2012.
-
-## Future extensions / Unimplemented parts
-
--
-
-## Related issues
-
--
+## Limitations & Future Work
