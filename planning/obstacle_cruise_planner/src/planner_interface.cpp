@@ -561,8 +561,15 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     const auto & obstacle = obstacles.at(i);
     const auto prev_output = getObjectFromUuid(prev_slow_down_output_, obstacle.uuid);
 
+    bool is_obstacle_moving = [&]() -> bool {
+      const auto object_vel_norm = std::hypot(obstacle.velocity, obstacle.lat_velocity);
+      if (!prev_output) return object_vel_norm > moving_object_speed_threshold;
+      if (prev_output->is_moving)
+        return object_vel_norm > moving_object_speed_threshold - moving_object_hysteresis_range;
+      return object_vel_norm > moving_object_speed_threshold + moving_object_hysteresis_range;
+    }();
+
     // calculate slow down start distance, and insert slow down velocity
-    bool is_obstacle_moving;
     const auto dist_vec_to_slow_down = calculateDistanceToSlowDownWithConstraints(
       planner_data, slow_down_traj_points, obstacle, prev_output, dist_to_ego, is_obstacle_moving);
     if (!dist_vec_to_slow_down) {
@@ -665,16 +672,8 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
 
 double PlannerInterface::calculateSlowDownVelocity(
   const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
-  bool & is_obstacle_moving) const
+  const bool is_obstacle_moving) const
 {
-  is_obstacle_moving = [&]() -> bool {
-    const auto object_vel_norm = std::hypot(obstacle.velocity, obstacle.lat_velocity);
-    if (!prev_output) return object_vel_norm > moving_object_speed_threshold;
-    if (prev_output->is_moving)
-      return object_vel_norm > moving_object_speed_threshold - moving_object_hysteresis_range;
-    return object_vel_norm > moving_object_speed_threshold + moving_object_hysteresis_range;
-  }();
-
   const auto & p =
     slow_down_param_.getObstacleParamByLabel(obstacle.classification, is_obstacle_moving);
   const double stable_precise_lat_dist = [&]() {
@@ -699,13 +698,12 @@ std::optional<std::tuple<double, double, double>>
 PlannerInterface::calculateDistanceToSlowDownWithConstraints(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
   const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
-  const double dist_to_ego, bool & is_obstacle_moving) const
+  const double dist_to_ego, const bool is_obstacle_moving) const
 {
   const double abs_ego_offset = planner_data.is_driving_forward
                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
   const double obstacle_vel = obstacle.velocity;
-
   // calculate slow down velocity
   const double slow_down_vel = calculateSlowDownVelocity(obstacle, prev_output, is_obstacle_moving);
 

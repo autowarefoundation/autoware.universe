@@ -215,11 +215,11 @@ private:
     const PlannerData & planner_data, const StopObstacle & stop_obstacle) const;
   double calculateSlowDownVelocity(
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
-    bool & is_obstacle_moving) const;
+    const bool is_obstacle_moving) const;
   std::optional<std::tuple<double, double, double>> calculateDistanceToSlowDownWithConstraints(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
-    const double dist_to_ego, bool & is_obstacle_moving) const;
+    const double dist_to_ego, const bool is_obstacle_moving) const;
 
   struct SlowDownInfo
   {
