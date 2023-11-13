@@ -62,7 +62,7 @@ BehaviorModuleOutput DefaultFixedGoalPlanner::plan(
 bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2d & point)
 {
   for (const auto & ll : candidate_lanelets) {
-    if (boost::geometry::within(point, ll.polygon2d().basicPolygon())) {
+    if (boost::geometry::covered_by(point, ll.polygon2d().basicPolygon())) {
       return true;
     }
   }
