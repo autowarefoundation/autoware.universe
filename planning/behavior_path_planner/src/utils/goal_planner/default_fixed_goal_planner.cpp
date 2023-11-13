@@ -72,6 +72,7 @@ bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2
 bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
                           const lanelet::ConstLanelets &candidate_lanelets) {
   Point2d path_point_point2D;
+
   for (size_t i = 0; i < refined_path.points.size(); ++i) {
     const PathPointWithLaneId& path_point = refined_path.points[i];
     path_point_point2D.x() = path_point.point.pose.position.x;
@@ -79,13 +80,15 @@ bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
     std::cerr << "refined_path.points[" << i << "]:" << std::endl;
     std::cerr << "X:" << path_point_point2D.x() << std::endl;
     std::cerr << "Y:" << path_point_point2D.y() << std::endl;
+  }
+
+  for (size_t i = 0; i < refined_path.points.size(); ++i) {
+    const PathPointWithLaneId& path_point = refined_path.points[i];
+    path_point_point2D.x() = path_point.point.pose.position.x;
+    path_point_point2D.y() = path_point.point.pose.position.y;
     bool is_point_in_any_lanelet = isInAnyLane(candidate_lanelets, path_point_point2D);
-
-    // std::cerr << "number of refined_path.points:" << refined_path.points.size() << std::endl;    
-
-    // std::cerr << "refined_path.points[" << i << "]" << " checked" << std::endl;
-
     if (!is_point_in_any_lanelet) {
+      std::cerr << "INVALID POINT: refined_path.points[" << i << "]" << std::endl;
       return false;  // at least one path_point falls outside any lanelet
     }
   }
@@ -163,31 +166,32 @@ PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
 
   double goal_search_radius {planner_data->parameters.refine_goal_search_radius_range};
   
-  double range_decrease_by {100};
+  double range_reduce_by {1};
   int path_is_valid {0};
 
   autoware_auto_planning_msgs::msg::PathWithLaneId refined_path;
 
   while(goal_search_radius >= 0 && !path_is_valid) {
   
-    auto refined_path = utils::refinePathForGoal(
+    refined_path = utils::refinePathForGoal(
       goal_search_radius, M_PI * 0.5, path, refined_goal,
       goal_lane_id);
 
-    std::cerr << "isPathValid() has been called" << std::endl;
 
-    if (!isPathValid(refined_path, planner_data)) {
-      std::cerr << "INVALID points on the current refined_path" << std::endl;
+    if (isPathValid(refined_path, planner_data)) {
+      path_is_valid = 1;
+      std::cerr << "valid refined_path :)" << std::endl;
     } 
     else {
-      path_is_valid = 1;
+      std::cerr << "INVALID POINTS ON THE CURRENT refined_path!" << std::endl;
     }
+
 
     std::cerr << "number of points on refined_path.points:" << refined_path.points.size() << std::endl; 
     std::cerr << "Goal Search Radius is " << goal_search_radius << " meter(s)" << std::endl;   
-    std::cerr << "Radius is reduced by " << range_decrease_by << " meter(s)" << std::endl;   
+    std::cerr << "range_reduce_by is " << range_reduce_by << " meter(s)" << std::endl;   
 
-    goal_search_radius -= range_decrease_by; 
+    goal_search_radius -= range_reduce_by; 
   }
 
   return refined_path; 
