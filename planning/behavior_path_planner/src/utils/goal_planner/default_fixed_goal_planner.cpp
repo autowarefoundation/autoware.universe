@@ -161,19 +161,37 @@ PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
     }
   }
 
-  auto refined_path = utils::refinePathForGoal(
-    planner_data->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, refined_goal,
-    goal_lane_id);
+  double goal_search_radius {planner_data->parameters.refine_goal_search_radius_range};
+  
+  double range_decrease_by {100};
+  int path_is_valid {0};
 
-  std::cerr << "isPathValid() has been called" << std::endl;
+  autoware_auto_planning_msgs::msg::PathWithLaneId refined_path;
 
-  if (!isPathValid(refined_path, planner_data)) {
-      std::cerr << "The current planned path is NOT valid" << std::endl;
+  while(goal_search_radius >= 0 && !path_is_valid) {
+  
+    auto refined_path = utils::refinePathForGoal(
+      goal_search_radius, M_PI * 0.5, path, refined_goal,
+      goal_lane_id);
+
+    std::cerr << "isPathValid() has been called" << std::endl;
+
+    if (!isPathValid(refined_path, planner_data)) {
+      std::cerr << "INVALID points on the current refined_path" << std::endl;
+    } 
+    else {
+      path_is_valid = 1;
+    }
+
+    std::cerr << "number of points on refined_path.points:" << refined_path.points.size() << std::endl; 
+    std::cerr << "Goal Search Radius is " << goal_search_radius << " meter(s)" << std::endl;   
+    std::cerr << "Radius is reduced by " << range_decrease_by << " meter(s)" << std::endl;   
+
+    goal_search_radius -= range_decrease_by; 
   }
 
-  std::cerr << "REAL number of refined_path.points:" << refined_path.points.size() << std::endl; 
+  return refined_path; 
 
-  return refined_path;
 }
 
 }  // namespace behavior_path_planner
