@@ -22,8 +22,8 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <map>
 #include <string>
+#include <vector>
 
 namespace landmark_manager
 {
