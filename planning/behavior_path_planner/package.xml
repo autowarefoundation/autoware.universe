@@ -53,6 +53,7 @@
   <depend>behaviortree_cpp_v3</depend>
   <depend>freespace_planning_algorithms</depend>
   <depend>geometry_msgs</depend>
+  <depend>interest_objects_marker_interface</depend>
   <depend>interpolation</depend>
   <depend>lane_departure_checker</depend>
   <depend>lanelet2_extension</depend>

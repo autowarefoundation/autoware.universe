@@ -25,6 +25,7 @@
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
+#include "interest_objects_marker_interface/interest_objects_marker_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -48,6 +49,7 @@ namespace behavior_path_planner
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
+using interest_objects_marker_interface::InterestObjectsMarkerInterface;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 
@@ -133,6 +135,8 @@ protected:
 
   void setObjectDebugVisualization() const;
 
+  void setObjectDebugVisualizationTmp();
+
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
 
   void updateSteeringFactorPtr(
@@ -142,6 +146,7 @@ protected:
   mutable LaneChangeDebugMsgArray lane_change_debug_msg_array_;
 
   std::unique_ptr<PathWithLaneId> prev_approved_path_;
+  InterestObjectsMarkerInterface interest_objects_marker_interface_;
 
   void clearAbortApproval() { is_abort_path_approved_ = false; }
 
