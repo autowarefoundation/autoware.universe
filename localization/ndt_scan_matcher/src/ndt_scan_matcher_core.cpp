@@ -843,7 +843,7 @@ std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolate_regularization_pose(
     interpolator = std::make_shared<PoseArrayInterpolator>(
       this, sensor_ros_time, regularization_pose_msg_ptr_array_);
 
-    // Remove old pauses to make next interpolation more efficient
+    // Remove old poses to make next interpolation more efficient
     pop_old_pose(regularization_pose_msg_ptr_array_, sensor_ros_time);
 
     // Release lock for regularization_pose_msg_ptr_array_
