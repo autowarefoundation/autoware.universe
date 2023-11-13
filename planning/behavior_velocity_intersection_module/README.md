@@ -2,11 +2,11 @@
 
 ### Role
 
-The _intersection_ module is responsible for safely going through urban intersections by:
+The _intersection_ module is responsible for safely passing urban intersections by:
 
 1. checking collisions with upcoming vehicles
 2. recognizing the occluded area in the intersection
-3. reacting to arrow signals of associated traffic lights
+3. reacting to each color/shape of associated traffic lights
 
 This module is designed to be agnostic to left-hand/right-hand traffic rules and work for crossroads, T-shape junctions, etc.
 
@@ -14,19 +14,19 @@ This module is designed to be agnostic to left-hand/right-hand traffic rules and
 
 ### Activation condition
 
-This module is activated when the path contains the lanes with _turn_direction_ tag. More precisely, if the _lane_ids_ of the path contains the ids of those lanes, corresponding instances of intersection module are activated on each lane respectively.
+This module is activated when the path contains the lanes with **_turn_direction_** tag. More precisely, if the **_lane_ids_** of the path contains the ids of those lanes, corresponding instances of intersection module are activated on each lane respectively.
 
 ### Requirements/Limitations
 
-- The HDMap needs to have the information of turn*direction tag (which should be one of \_straight*, _left_, _right_) for all the lanes in intersections and _right_of_way_ tag for specific lanes (refer to [RightOfWay](#right-of-way) section for more details). See [lanelet2_extension document](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md) for more detail.
+- The HDMap needs to have the information of turn_direction tag (which should be one of **_straight_** , **_left_** , **_right_**) for all the lanes in intersections and **_right_of_way_** tag for specific lanes (refer to [RightOfWay](#right-of-way) section for more details). See [lanelet2_extension document](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md) for more detail.
 - WIP(perception requirements/limitations)
 - WIP(sensor visibility requirements/limitations)
 
 ### Attention area
 
-The _attention area_ in the intersection are defined as the set of lanes that are conflicting with ego vehicle's path and their preceding lanes up to `common.attention_area_length` meters. RightOfWay tag is used to rule out the lanes that each lane has priority given the traffic light relation and turn*direction priority(\_yield lane*).
+The **_attention area_** in the intersection are defined as the set of lanes that are conflicting with ego vehicle's path and their preceding lanes up to `common.attention_area_length` meters. RightOfWay tag is used to rule out the lanes that each lane has priority given the traffic light relation and turn_direction priority(**_yield lane_**).
 
-_Intersection Area_, which is supposed to be defined on the HDMap, is an area converting the entire intersection.
+**_intersection area_**, which is supposed to be defined on the HDMap, is an area converting the entire intersection.
 
 ![attention_area](./docs/intersection-attention.drawio.svg)
 
@@ -50,13 +50,13 @@ This setting gives the following `attention_area` configurations.
 
 ### Possible stop lines
 
-Following figure illustrates important positions used in the intersection module. Note that each solid line represents the ego front line position and the corresponding dot represents the actual inserted stop point position for the vehicle frame, namely the center of the rear wheel.
+Following figure illustrates important positions used in the intersection module. Note that each solid line represents ego front line position and the corresponding dot represents the actual inserted stop point position for the vehicle frame, namely the center of the rear wheel.
 
 ![data structure](./docs/intersection-stoplines.drawio.svg)
 
-To precisely calculate stop positions, the path is interpolated at a certain interval of (=`common.path_interpolation_ds`).
+To precisely calculate stop positions, the path is interpolated at the certain interval of `common.path_interpolation_ds`.
 
-_closest_idx_ denotes the path point index which is closest to ego vehicle position. _first_atttention_stop_line_ denotes the first path point where ego vehicle footprint intersects with the _attention_area_. If a stopline is associated with the intersection lane on the map, that line is used as the _default_stop_line_ for collision detection. Otherwise the point which is `common.default_stopline_margin` meters behind first*attention_stop_line is defined as the default_stop_line instead. \_occlusion_peeking_stop_line* is a bit ahead of first*attention_stop_line as described later. \_occlusion_wo_tl_pass_judge_line* is the first position where ego vehicle footprint intersects with the centerline of the first attention_area lane.
+**_closest_idx_** denotes the path point index which is closest to ego vehicle position. **_first_attention_stopline_** denotes the first path point where ego vehicle footprint intersects with the **_attention_area_**. If a stopline is associated with the intersection lane on the map, that line is used as the **_default_stopline_** for collision detection. Otherwise the point which is `common.default_stopline_margin` meters behind first\_attention\_stopline is defined as the default_stopline instead. **_occlusion_peeking_stopline_** is a bit ahead of first\_attention\_stopline as described later. **_occlusion_wo_tl_pass_judge_line_** is the first position where ego vehicle footprint intersects with the centerline of the first attention_area lane.
 
 ### Target objects
 
@@ -64,11 +64,11 @@ For [stuck vehicle detection](#stuck-vehicle-detection) and [collision detection
 
 Objects that satisfy all of the following conditions are considered as target objects (possible collision objects):
 
-- The center of mass of the object is **within a certain distance** from the attention lane (threshold = `common.attention_area_margin`) .
-  - (Optional condition) The center of gravity is in the **intersection area**.
+- The center of the object is **within a certain distance** from the attention lane (threshold = `common.attention_area_margin`) .
+  - (Optional condition) The center of the object is in the **intersection area**.
     - To deal with objects that is in the area not covered by the lanelets in the intersection.
 - The posture of object is **the same direction as the attention lane** (threshold = `common.attention_area_angle_threshold`).
-- Not being **in the adjacent lanes of the ego vehicle**.
+- Not being **in the adjacent lanes of ego vehicle**.
 
 ### Stuck Vehicle Detection
 
@@ -78,21 +78,20 @@ If there is any object on the path inside the intersection and at the exit of th
 
 ### Collision detection
 
-The following process is performed for the targets objects to determine whether the ego vehicle can pass the intersection safely. If it is judged that the ego vehicle cannot pass through the intersection with enough margin, this module inserts a stopline on the path.
+The following process is performed for the targets objects to determine whether ego vehicle can pass the intersection safely. If it is judged that ego vehicle cannot pass the intersection with enough margin, this module inserts a stopline on the path.
 
-1. calculate the time interval that the ego vehicle is in the intersection. This time is set as $t_s$ ~ $t_e$
-2. extract the predicted path of the target object whose confidence is greater than `collision_detection.min_predicted_path_confidence`.
-3. detect collision between the extracted predicted path and ego's predicted path in the following process.
-   1. obtain the passing area of the ego vehicle $A_{ego}$ in $t_s$ ~ $t_e$.
-   2. calculate the passing area of the target object $A_{target}$ at $t_s$ - `collision_detection.collision_start_margin_time` ~ $t_e$ + `collision_detection.collision_end_margin_time` for each predicted path (\*1).
-   3. check if $A_{ego}$ and $A_{target}$ polygons are overlapped (has collision).
-4. when a collision is detected, the module inserts a stopline.
-5. If ego is over the _pass_judge_line_, collision checking is not processed to avoid sudden braking and/or unnecessary stop in the middle of the intersection.
+1. predict the time $t$ when the object intersects with ego path from the predicted path time step. Only the predicted whose confidence is greater than `collision_detection.min_predicted_path_confidence` is used.
+2. detect collision between the predicted path and ego's predicted path in the following process
+   1. calculate the collision interval of [$t$ - `collision_detection.collision_start_margin_time`, $t$ + `collision_detection.collision_end_margin_time`]
+   2. obtain the passing area of ego vehicle during the collision interval from the array of (time, distance) obtained by smoothed velocity profile
+   3. check if ego passing area and object predicted path interval collides
+3. if collision is detected, the module inserts a stopline
+4. if ego is over the [_**pass_judge_line**_](#pass-judge-line), collision checking is skipped to avoid sudden braking and/or unnecessary stop in the middle of the intersection
 
 The parameters `collision_detection.collision_start_margin_time` and `collision_detection.collision_end_margin_time` can be interpreted as follows:
 
-- If the ego vehicle was to pass through the intersection earlier than the target object, collision would be detected if the time difference between the two was less than `collision_detection.collision_start_margin_time`.
-- If the ego vehicle was to pass through the intersection later than the target object, collision would be detected if the time difference between the two was less than `collision_detection.collision_end_margin_time`.
+- If ego vehicle was to pass the intersection earlier than the target object, collision would be detected if the time difference between the two was less than `collision_detection.collision_start_margin_time`.
+- If ego vehicle was to pass the intersection later than the target object, collision would be detected if the time difference between the two was less than `collision_detection.collision_end_margin_time`.
 
 If collision is detected, the state transits to "STOP" immediately. On the other hand, the state does not transit to "GO" unless safe judgement continues for a certain period `collision_detection.collision_detection_hold_time` to prevent the chattering of decisions.
 
@@ -106,7 +105,7 @@ ros2 run behavior_velocity_intersection_module ttc.py --lane_id <lane_id>
 
 ### Pass Judge Line
 
-To avoid sudden braking, if deceleration and jerk more than a threshold (`common.max_accel` and `common.max_jerk`) is required to stop at first_attention_stop_line, this module does not command to stop once it passed the default_stop_line position.
+To avoid sudden braking, if deceleration and jerk more than the threshold (`common.max_accel` and `common.max_jerk`) is required to stop at first_attention_stopline, this module does not command to stop once it passed the default_stopline position.
 
 The position of the pass judge line depends on the occlusion detection configuration and the existence of the associated traffic light of the intersection lane.
 
@@ -119,19 +118,51 @@ The position of the pass judge line depends on the occlusion detection configura
 
 ### Occlusion detection
 
-If the flag `occlusion.enable` is true this module checks if there is sufficient field of view (FOV) on the attention area up to `occlusion.occlusion_attention_area_length`. If FOV is not clear enough the ego vehicle first make a brief stop at the _default stop line_ for `occlusion.temporal_stop_time_before_peeking`, and then slowly creep toward _occlusion peeking stop line_ at the speed of `occlusion.creep_during_peeking.creep_velocity` if `occlusion.creep_during_peeking.enable` is true. During the creeping if collision is detected this module inserts a stop line in front of ego vehicle immediately, and if the FOV gets sufficiently clear the _intersection occlusion_ wall will disappear. If occlusion is cleared and no collision is detected the ego vehicle will pass the intersection.
+If the flag `occlusion.enable` is true this module checks if there is sufficient field of view (FOV) on the attention area up to `occlusion.occlusion_attention_area_length`. If FOV is not clear enough ego vehicle first make a brief stop at the default stop line for `occlusion.temporal_stop_time_before_peeking`, and then slowly creep toward occlusion_peeking_stop_line at the speed of `occlusion.creep_during_peeking.creep_velocity` if `occlusion.creep_during_peeking.enable` is true. During the creeping if collision is detected this module inserts a stop line in front of ego vehicle immediately, and if the FOV gets sufficiently clear the **_intersection_occlusion_** wall will disappear. If occlusion is cleared and no collision is detected ego vehicle will pass the intersection.
 
-The occlusion is detected as the common area of occlusion attention area(which is partially the same as the normal attention area) and the unknown cells of the occupancy grid map. The occupancy grid map is denoised using morphology with the window size of `occlusion.denoise_kernel`. The occlusion attention area lanes are discretized to line strings and they are used to generate a grid whose each cell represents the distance from the ego path along the lane as shown below.
+The occlusion is detected as the common area of occlusion attention area(which is partially the same as the normal attention area) and the unknown cells of the occupancy grid map. The occupancy grid map is denoised using morphology with the window size of `occlusion.denoise_kernel`. The occlusion attention area lanes are discretized to line strings and they are used to generate a grid whose each cell represents the distance from ego path along the lane as shown below.
 
 ![occlusion_detection](./docs/occlusion_grid.drawio.svg)
 
 If the nearest occlusion cell value is below the threshold, occlusion is detected. It is expected that the occlusion gets cleared as the vehicle approaches the occlusion peeking stop line.
 
-In there are no traffic lights associated with the lane, the ego vehicle will make a brief stop at the _default stop line_ and the position where the vehicle heading touches the attention area for the first time(which is denoted as _first attention stop line_). After stopping at the _first attention area stop line_ this module inserts `occlusion.absence_traffic_light.creep_velocity` velocity between ego and the position which is `occlusion.absence_traffic_light.maximum_peeking_distance` ahead of _first attention area stop line_ while occlusion is not cleared. If collision is detected, ego will instantly stop. Once the occlusion is cleared or ego passed `occlusion.absence_traffic_light.maximum_peeking_distance` this module does not detect collision and occlusion because ego vehicle is already inside the intersection.
+#### Occlusion source estimation with traffic light
+
+At intersection with traffic light, the whereabout of occlusion is estimated by checking if there are any objects between ego and the nearest occlusion cell. While the occlusion is estimated to be caused by some object (DYNAMICALLY occluded), intersection_wall will be inserted. If no objects are found between ego and the nearest occlusion cell (STATICALLY occluded), after ego stopped for the duration of `occlusion.static_occlusion_with_traffic_light_timeout`, occlusion is ignored to avoid stuck.
+
+#### Occlusion handling without traffic light
+
+At intersection without traffic light, if occlusion is detected, ego vehicle will make a brief stop at the default_stopline and first_attention_stopline. After stopping at the first_attention_area_stopline this module inserts `occlusion.absence_traffic_light.creep_velocity` velocity between ego and occlusion_wo_tl_pass_judge_line while occlusion is not cleared. If collision is detected, ego will instantly stop. Once the occlusion is cleared or ego passed occlusion_wo_tl_pass_judge_line this module does not detect collision and occlusion because ego vehicle is already inside the intersection.
 
 ![occlusion_detection](./docs/occlusion-without-tl.drawio.svg)
 
+### Traffic signal specific behavior
+
+#### Collision detection
+
+TTC parameter varies depending on the traffic light color/shape as follows.
+
+| traffic light color | ttc(start)                                                             | ttc(end)                                                               |
+| ------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| GREEN               | `collision_detection.not_prioritized.collision_start_margin`           | `collision_detection.not_prioritized.collision_end_margin`             |
+| AMBER               | `collision_detection.partially_prioritized.collision_start_end_margin` | `collision_detection.partially_prioritized.collision_start_end_margin` |
+| RED / Arrow         | `collision_detection.fully_prioritized.collision_start_end_margin`     | `collision_detection.fully_prioritized.collision_start_end_margin`     |
+
+If the traffic light color is RED or Arrow signal is turned on, the attention lanes which are not conflicting with ego lane are not used for detection. And even if the object stops with a certain overshoot from its stopline, but its expected stop position under the deceleration of `collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration` is more than the distance `collision_detection.ignore_on_red_traffic_light.object_margin_to_path` from collision point, the object is ignored.
+
+If the traffic light color is AMBER but the object is expected to stop before its stopline under the deceleration of `collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration`, collision checking is skipped.
+
+If the traffic light color changed to GREEN and ego approached the entry of the intersection lane within `collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start` and there si any object whose distance to its stopline is less than `collision_detection.yield_on_green_traffic_light.object_dist_to_stopline`, this module commands to stop for the duration of `collision_detection.yield_on_green_traffic_light.duration` at the default_stopline.
+
+#### Occlusion detection
+
+When the traffic light color/shape is RED/Arrow, occlusion detection is skipped.
+
 ### Data Structure
+
+Each data structure is defined in `util_type.hpp`.
+
+![data-structure](./docs/data-structure.drawio.svg)
 
 #### `IntersectionLanelets`
 
@@ -185,6 +216,25 @@ entity IntersectionStopLines {
 @enduml
 ```
 
+#### `TargetObject`
+
+`TargetObject` holds the object, its belonging lane and corresponding stopline information.
+
+```plantuml
+@startuml
+entity TargetObject {
+  * object: PredictedObject
+  detected object
+  --
+  * attention_lanelet: ConstLanelet
+  belonging lanelet instance
+  --
+  * stopline: ConstLineString3d
+  reachable stopline of attention_lanelet
+}
+@enduml
+```
+
 ### Module Parameters
 
 | Parameter                                           | Type   | Description                                                                                    |
@@ -219,6 +269,8 @@ entity IntersectionStopLines {
 ### How to turn parameters
 
 WIP
+
+### Trouble shooting
 
 ### Flowchart
 
@@ -311,7 +363,7 @@ stop
 
 When an ego vehicle enters a public road from a private road (e.g. a parking lot), it needs to face and stop before entering the public road to make sure it is safe.
 
-This module is activated when there is an intersection at the private area from which the vehicle enters the public road. The stop line is generated both when the goal is in the intersection lane and when the path goes beyond the intersection lane. The basic behavior is the same as the intersection module, but the ego vehicle must stop once at the stop line.
+This module is activated when there is an intersection at the private area from which the vehicle enters the public road. The stop line is generated both when the goal is in the intersection lane and when the path goes beyond the intersection lane. The basic behavior is the same as the intersection module, but ego vehicle must stop once at the stop line.
 
 ![merge-from-private](docs/merge_from_private.png)
 
