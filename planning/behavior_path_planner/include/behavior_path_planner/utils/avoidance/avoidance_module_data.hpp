@@ -614,6 +614,9 @@ struct DebugData
 
   // debug msg array
   AvoidanceDebugMsgArray avoidance_debug_msg_array;
+
+  Pose prev_idx_pose;
+  Pose orig_idx_pose;
 };
 
 }  // namespace behavior_path_planner
