@@ -42,6 +42,7 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <opencv4/opencv.hpp>
 
 namespace pointcloud_preprocessor
 {
@@ -81,6 +82,7 @@ private:
   std::string base_link_frame_ = "base_link";
   std::string time_stamp_field_name_;
   bool use_imu_;
+  bool update_azimuth_and_distance_;
 };
 
 }  // namespace pointcloud_preprocessor
