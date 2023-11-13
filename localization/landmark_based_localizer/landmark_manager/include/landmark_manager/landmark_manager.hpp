@@ -25,6 +25,9 @@
 #include <map>
 #include <string>
 
+namespace landmark_manager
+{
+
 struct Landmark
 {
   std::string id;
@@ -37,5 +40,7 @@ std::vector<Landmark> parse_landmarks(
 
 visualization_msgs::msg::MarkerArray convert_landmarks_to_marker_array_msg(
   const std::vector<Landmark> & landmarks);
+
+}  // namespace landmark_manager
 
 #endif  // LANDMARK_MANAGER__LANDMARK_MANAGER_HPP_

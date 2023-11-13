@@ -22,6 +22,9 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
+namespace landmark_manager
+{
+
 std::vector<Landmark> parse_landmarks(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
   const std::string & target_subtype, const rclcpp::Logger & logger)
@@ -153,3 +156,5 @@ visualization_msgs::msg::MarkerArray convert_landmarks_to_marker_array_msg(
   }
   return marker_array;
 }
+
+}  // namespace landmark_manager

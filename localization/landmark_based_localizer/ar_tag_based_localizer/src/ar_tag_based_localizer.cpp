@@ -148,12 +148,13 @@ bool ArTagBasedLocalizer::setup()
 
 void ArTagBasedLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
 {
-  const std::vector<Landmark> landmarks = parse_landmarks(msg, "apriltag_16h5", this->get_logger());
-  for (const Landmark & landmark : landmarks) {
+  const std::vector<landmark_manager::Landmark> landmarks =
+    landmark_manager::parse_landmarks(msg, "apriltag_16h5", this->get_logger());
+  for (const landmark_manager::Landmark & landmark : landmarks) {
     landmark_map_[landmark.id] = landmark.pose;
   }
 
-  const MarkerArray marker_msg = convert_landmarks_to_marker_array_msg(landmarks);
+  const MarkerArray marker_msg = landmark_manager::convert_landmarks_to_marker_array_msg(landmarks);
   marker_pub_->publish(marker_msg);
 }
 
