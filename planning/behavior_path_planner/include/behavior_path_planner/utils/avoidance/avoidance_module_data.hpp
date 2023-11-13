@@ -71,6 +71,8 @@ struct ObjectParameter
   double safety_buffer_lateral{1.0};
 
   double safety_buffer_longitudinal{0.0};
+
+  bool use_conservative_buffer_longitudinal{true};
 };
 
 struct AvoidanceParameters
@@ -109,6 +111,14 @@ struct AvoidanceParameters
 
   // use intersection area for avoidance
   bool use_intersection_areas{false};
+
+  // consider avoidance return dead line
+  bool enable_dead_line_for_goal{false};
+  bool enable_dead_line_for_traffic_light{false};
+
+  // module try to return original path to keep this distance from edge point of the path.
+  double dead_line_buffer_for_goal{0.0};
+  double dead_line_buffer_for_traffic_light{0.0};
 
   // max deceleration for
   double max_deceleration{0.0};
@@ -214,9 +224,6 @@ struct AvoidanceParameters
 
   // nominal avoidance sped
   double nominal_avoidance_speed{0.0};
-
-  // module try to return original path to keep this distance from edge point of the path.
-  double remain_buffer_distance{0.0};
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
@@ -379,6 +386,9 @@ struct ObjectData  // avoidance target
   // is stoppable under the constraints
   bool is_stoppable{false};
 
+  // is within intersection area
+  bool is_within_intersection{false};
+
   // unavoidable reason
   std::string reason{""};
 
@@ -512,6 +522,10 @@ struct AvoidancePlanningData
   bool found_avoidance_path{false};
 
   double to_stop_line{std::numeric_limits<double>::max()};
+
+  double to_start_point{std::numeric_limits<double>::lowest()};
+
+  double to_return_point{std::numeric_limits<double>::max()};
 };
 
 /*
