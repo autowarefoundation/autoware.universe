@@ -71,13 +71,14 @@ You can download the onnx format of trained models by clicking on the links belo
 ## Training CenterPoint Model and Deploying to the Autoware
 
 ### Overview
-This guide provides instructions on training a CenterPoint model using the **mmdetection3d** repository
-and seamlessly deploying it within the Autoware.  
 
+This guide provides instructions on training a CenterPoint model using the **mmdetection3d** repository
+and seamlessly deploying it within the Autoware.
 
 ### Installation
 
 #### Install prerequisites
+
 **Step 1.** Download and install Miniconda from the [official website](https://mmpretrain.readthedocs.io/en/latest/get_started.html).
 
 **Step 2.** Create a conda virtual environment and activate it
@@ -94,7 +95,9 @@ Please ensure you have PyTorch installed, compatible with CUDA 11.6, as it is a 
 ```bash
 conda install pytorch==1.13.1 torchvision==0.14.1 pytorch-cuda=11.6 -c pytorch -c nvidia
 ```
+
 #### Install mmdetection3d
+
 **Step 1.** Install MMEngine, MMCV and MMDetection using MIM
 
 ```bash
@@ -107,9 +110,8 @@ mim install 'mmdet>=3.0.0'
 **Step 2.** Install mmdetection3d forked repository
 
 Introduced several valuable enhancements in our fork of the mmdetection3d repository.
-Notably, we've made the PointPillar z voxel feature input optional to maintain compatibility with the original paper. 
+Notably, we've made the PointPillar z voxel feature input optional to maintain compatibility with the original paper.
 In addition, we've integrated a PyTorch to ONNX converter and a Tier4 Dataset format reader for added functionality.
-
 
 ```bash
 git clone https://github.com/autowarefoundation/mmdetection3d.git -b dev-1.x-autoware
@@ -138,8 +140,8 @@ python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./dat
 
 #### Prepare the config file
 
-The configuration file that illustrates how to train the CenterPoint model with the NuScenes dataset is 
-located at mmdetection3d/configs/centerpoint/centerpoint_custom.py. This configuration file is a derived version of the 
+The configuration file that illustrates how to train the CenterPoint model with the NuScenes dataset is
+located at mmdetection3d/configs/centerpoint/centerpoint_custom.py. This configuration file is a derived version of the
 centerpoint_pillar02_second_secfpn_head-circlenms_8xb4-cyclic-20e_nus-3d.py configuration file from mmdetection3D.
 In this custom configuration, the **use_voxel_center_z parameter** is set to **False** to deactivate the z coordinate of the voxel center,
 aligning with the original paper's specifications and making the model compatible with Autoware. Additionally, the filter size is set as **[32, 32]**.
@@ -155,13 +157,14 @@ python tools/train.py configs/centerpoint/centerpoint_custom.py --work-dir ./wor
 
 #### Evaluation of the trained model
 
-For evaluation purposes, we have included a sample dataset captured from vehicle which consists of the following LiDAR sensors: 
+For evaluation purposes, we have included a sample dataset captured from vehicle which consists of the following LiDAR sensors:
 1 x Velodyne VLS128, 4 x Velodyne VLP16, and 1 x Robosense RS Bpearl. This dataset comprises 600 LiDAR frames and encompasses 5 distinct classes, 6905 cars, 3951 pedestrians,
 75 cyclists, 162 buses, and 326 trucks 3D annotation. In the sample dataset, frames annotatated as a 2 frame, each second. You can employ this dataset for a wide range of purposes,
-including training, evaluation, and fine-tuning of models. It is organized in the Tier4Dataset format. 
+including training, evaluation, and fine-tuning of models. It is organized in the Tier4Dataset format.
 
 ##### Download the sample dataset
-```bash 
+
+```bash
 TODO(kaancolak): add the link to the sample dataset
 
 #Extract the dataset to a folder of your choice
@@ -186,27 +189,27 @@ python tools/test.py ./configs/centerpoint/test-centerpoint.py /PATH/OF/THE/CHEC
 ```
 
 Evaluation result could be relatively low because of the e to variations in sensor modalities between the sample dataset
-and the training dataset. The model's training parameters are originally tailored to the NuScenes dataset, which employs a single lidar 
+and the training dataset. The model's training parameters are originally tailored to the NuScenes dataset, which employs a single lidar
 sensor positioned atop the vehicle. In contrast, the provided sample dataset comprises concatenated point clouds positioned at
 the base link location of the vehicle.
 
 ### Deploying CenterPoint model to Autoware
 
 #### Convert CenterPoint PyTorch model to ONNX Format
+
 The lidar_centerpoint implementation requires two ONNX models as input the voxel encoder and the backbone-neck-head of the CenterPoint model, other aspects of the network,
-such as preprocessing operations, are implemented externally. Under the fork of the mmdetection3d repository, 
-we have included a script that converts the CenterPoint model to Autoware compitible ONNX format. 
+such as preprocessing operations, are implemented externally. Under the fork of the mmdetection3d repository,
+we have included a script that converts the CenterPoint model to Autoware compitible ONNX format.
 You can find it in `mmdetection3d/tools/centerpoint_onnx_converter.py` file.
- 
 
 ```bash
 python tools/centerpoint_onnx_converter.py --cfg configs/centerpoint/centerpoint_custom.py --ckpt work_dirs/centerpoint_custom/YOUR_BEST_MODEL.pth -work-dir ./work_dirs/onnx_models
 ```
 
-#### Create the config file for custom model 
+#### Create the config file for custom model
 
 Create a new config file named **centerpoint_custom.param.yaml** under the config file directory of the lidar_centerpoint node. Sets the parameters of the config file like
-point_cloud_range, point_feature_size, voxel_size, etc. according to the training config file. 
+point_cloud_range, point_feature_size, voxel_size, etc. according to the training config file.
 
 ```yaml
 /**:
@@ -214,7 +217,7 @@ point_cloud_range, point_feature_size, voxel_size, etc. according to the trainin
     class_names: ["CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"]
     point_feature_size: 4
     max_voxel_size: 40000
-    point_cloud_range: [-51.2, -51.2, -3.0, 51.2, 51.2, 5.0,]
+    point_cloud_range: [-51.2, -51.2, -3.0, 51.2, 51.2, 5.0]
     voxel_size: [0.2, 0.2, 8.0]
     downsample_factor: 1
     encoder_in_feature_size: 9
@@ -233,7 +236,6 @@ cd /YOUR/AUTOWARE/PATH/Autoware
 source install/setup.bash
 ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml  model_name:=centerpoint_custom  model_path:=/PATH/TO/ONNX/FILE/
 ```
-
 
 ### Changelog
 
@@ -311,7 +313,8 @@ Example:
 [v1-head-centerpoint-tiny]: https://awf.ml.dev.web.auto/perception/models/centerpoint/v1/pts_backbone_neck_head_centerpoint_tiny.onnx
 
 ## Legal Notice
-*The nuScenes dataset is released publicly for non-commercial use under the Creative 
-Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License. 
-Additional Terms of Use can be found at https://www.nuscenes.org/terms-of-use. 
-To inquire about a commercial license please contact nuscenes@motional.com.*
+
+_The nuScenes dataset is released publicly for non-commercial use under the Creative
+Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License.
+Additional Terms of Use can be found at <https://www.nuscenes.org/terms-of-use>.
+To inquire about a commercial license please contact nuscenes@motional.com._
