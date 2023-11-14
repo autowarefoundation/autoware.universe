@@ -73,7 +73,46 @@ void SamplingPlannerModuleManager::updateModuleParams(
 
   auto & p = parameters_;
 
-  [[maybe_unused]] std::string ns = name_ + ".";
+  [[maybe_unused]] const std::string ns = name_ + ".";
+
+  {
+    std::string ns{"constraints.hard"};
+    updateParam<double>(parameters, ns + ".max_curvature", p->max_curvature);
+    updateParam<double>(parameters, ns + ".min_curvature", p->min_curvature);
+    ns = std::string{"constraints.soft"};
+    updateParam<double>(parameters, ns + ".lateral_deviation_weight", p->lateral_deviation_weight);
+    updateParam<double>(parameters, ns + ".length_weight", p->length_weight);
+    updateParam<double>(parameters, ns + ".curvature_weight", p->curvature_weight);
+  }
+  {
+    std::string ns{"sampling"};
+    updateParam<bool>(parameters, ns + ".enable_frenet", p->enable_frenet);
+    updateParam<bool>(parameters, ns + ".enable_bezier", p->enable_bezier);
+    updateParam<double>(parameters, ns + ".resolution", p->resolution);
+
+    updateParam<int>(
+      parameters, ns + ".previous_path_reuse_points_nb", p->previous_path_reuse_points_nb);
+
+    updateParam<int>(
+      parameters, ns + ".nb_target_lateral_positions", p->nb_target_lateral_positions);
+    updateParam<std::vector<double>>(parameters, ns + ".target_lengths", p->target_lengths);
+
+    bool updated = updateParam<std::vector<double>>(
+      parameters, ns + ".target_lateral_positions", p->target_lateral_positions);
+
+    ns += ".frenet";
+    updateParam<std::vector<double>>(
+      parameters, ns + ".target_lateral_velocities", p->target_lateral_velocities);
+
+    updateParam<std::vector<double>>(
+      parameters, ns + ".target_lateral_accelerations", p->target_lateral_accelerations);
+  }
+  {
+    std::string ns{"preprocessing"};
+    updateParam<bool>(parameters, ns + ".force_zero_initial_deviation", p->force_zero_deviation);
+    updateParam<bool>(parameters, ns + ".force_zero_initial_heading", p->force_zero_heading);
+    updateParam<bool>(parameters, ns + ".smooth_reference_trajectory", p->smooth_reference);
+  }
 
   std::for_each(observers_.begin(), observers_.end(), [&](const auto & observer) {
     if (!observer.expired()) {
