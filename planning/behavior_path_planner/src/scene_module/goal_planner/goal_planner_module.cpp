@@ -261,6 +261,9 @@ void GoalPlannerModule::updateData()
 
   generateGoalCandidates();
 
+  // Only after the path is decided, approval is allowed and Activated.
+  // The path index is not incremented until after deciding the path.
+  // So return here,
   if (!isActivated()) {
     return;
   }
