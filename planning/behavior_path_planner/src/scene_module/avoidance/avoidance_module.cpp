@@ -43,36 +43,6 @@
 #include <string>
 #include <vector>
 
-#define debug(var)                                                      \
-  do {                                                                  \
-    std::cerr << __func__ << ": " << __LINE__ << ", " << #var << " : "; \
-    view(var);                                                          \
-  } while (0)
-template <typename T>
-void view(T e)
-{
-  std::cerr << e << std::endl;
-}
-template <typename T>
-void view(const std::vector<T> & v)
-{
-  for (const auto & e : v) {
-    std::cerr << e << " ";
-  }
-  std::cerr << std::endl;
-}
-template <typename T>
-void view(const std::vector<std::vector<T>> & vv)
-{
-  for (const auto & v : vv) {
-    view(v);
-  }
-}
-#define line()                                                                         \
-  {                                                                                    \
-    std::cerr << "(" << __FILE__ << ") " << __func__ << ": " << __LINE__ << std::endl; \
-  }
-
 // set as macro so that calling function name will be printed.
 // debug print is heavy. turn on only when debugging.
 #define DEBUG_PRINT(...) \
@@ -2055,21 +2025,12 @@ PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & orig
     planner_data_->parameters.backward_path_length, longest_dist_to_shift_point + extra_margin);
 
   const size_t orig_ego_idx = planner_data_->findEgoIndex(original_path.points);
-  // const size_t prev_ego_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-  //   previous_path.points, getPose(original_path.points.at(orig_ego_idx)),
-  //   std::numeric_limits<double>::max(), planner_data_->parameters.ego_nearest_yaw_threshold);
-  const auto prev_ego_idx = motion_utils::findNearestSegmentIndex(
+  const auto prev_ego_idx = motion_utils::findNearestIndex(
     previous_path.points, getPose(original_path.points.at(orig_ego_idx)),
     std::numeric_limits<double>::max(), planner_data_->parameters.ego_nearest_yaw_threshold);
   if (!prev_ego_idx) {
-    PathWithLaneId null_path{};
-    return null_path;
+    return original_path;
   }
-
-  // debug(orig_ego_idx);
-  // debug(*prev_ego_idx);
-  // debug_data_.prev_idx_pose = getPose(previous_path.points.at(*prev_ego_idx));
-  // debug_data_.orig_idx_pose = getPose(original_path.points.at(orig_ego_idx));
 
   size_t clip_idx = 0;
   for (size_t i = 0; i < prev_ego_idx; ++i) {
@@ -2078,7 +2039,6 @@ PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & orig
     }
     clip_idx = i;
   }
-  // debug(clip_idx);
 
   PathWithLaneId extended_path{};
   {
@@ -2773,7 +2733,6 @@ void AvoidanceModule::updateDebugMarker(
   }
 
   const auto & path = data.reference_path;
-  const auto & path_rough = data.reference_path_rough;
 
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
 
@@ -2822,12 +2781,11 @@ void AvoidanceModule::updateDebugMarker(
 
   // shift line pre-process
   {
-    //   addAvoidLine(debug.step1_registered_shift_line, "step1_registered_shift_line", 0.2,
-    //   0.2, 1.0); addAvoidLine(debug.step1_current_shift_line, "step1_current_shift_line", 0.2,
-    //   0.4, 0.8, 0.3); addAvoidLine(debug.step1_merged_shift_line, "step1_merged_shift_line", 0.2,
-    //   0.6, 0.6, 0.3); addAvoidLine(debug.step1_filled_shift_line, "step1_filled_shift_line", 0.2,
-    //   0.8, 0.4, 0.3); addAvoidLine(debug.step1_return_shift_line, "step1_return_shift_line",
-    //   0.2, 1.0, 0.2, 0.3);
+    addAvoidLine(debug.step1_registered_shift_line, "step1_registered_shift_line", 0.2, 0.2, 1.0);
+    addAvoidLine(debug.step1_current_shift_line, "step1_current_shift_line", 0.2, 0.4, 0.8, 0.3);
+    addAvoidLine(debug.step1_merged_shift_line, "step1_merged_shift_line", 0.2, 0.6, 0.6, 0.3);
+    addAvoidLine(debug.step1_filled_shift_line, "step1_filled_shift_line", 0.2, 0.8, 0.4, 0.3);
+    addAvoidLine(debug.step1_return_shift_line, "step1_return_shift_line", 0.2, 1.0, 0.2, 0.3);
   }
 
   // merge process
@@ -2837,9 +2795,9 @@ void AvoidanceModule::updateDebugMarker(
 
   // trimming process
   {
-    // addAvoidLine(debug.step3_grad_filtered_1st, "step3_grad_filtered_1st", 0.2, 0.8, 0.0, 0.3);
-    // addAvoidLine(debug.step3_grad_filtered_2nd, "step3_grad_filtered_2nd", 0.4, 0.6, 0.0, 0.3);
-    // addAvoidLine(debug.step3_grad_filtered_3rd, "step3_grad_filtered_3rd", 0.6, 0.4, 0.0, 0.3);
+    addAvoidLine(debug.step3_grad_filtered_1st, "step3_grad_filtered_1st", 0.2, 0.8, 0.0, 0.3);
+    addAvoidLine(debug.step3_grad_filtered_2nd, "step3_grad_filtered_2nd", 0.4, 0.6, 0.0, 0.3);
+    addAvoidLine(debug.step3_grad_filtered_3rd, "step3_grad_filtered_3rd", 0.6, 0.4, 0.0, 0.3);
   }
 
   // registering process
@@ -2851,16 +2809,16 @@ void AvoidanceModule::updateDebugMarker(
 
   // safety check
   {
-    // add(showSafetyCheckInfo(debug.collision_check, "object_debug_info"));
-    // add(showPredictedPath(debug.collision_check, "ego_predicted_path"));
-    // add(showPolygon(debug.collision_check, "ego_and_target_polygon_relation"));
+    add(showSafetyCheckInfo(debug.collision_check, "object_debug_info"));
+    add(showPredictedPath(debug.collision_check, "ego_predicted_path"));
+    add(showPolygon(debug.collision_check, "ego_and_target_polygon_relation"));
   }
 
   // shift length
   {
-    // addShiftLength(debug.pos_shift, "merged_length_pos", 0.0, 0.7, 0.5);
-    // addShiftLength(debug.neg_shift, "merged_length_neg", 0.0, 0.5, 0.7);
-    // addShiftLength(debug.total_shift, "merged_length_total", 0.99, 0.4, 0.2);
+    addShiftLength(debug.pos_shift, "merged_length_pos", 0.0, 0.7, 0.5);
+    addShiftLength(debug.neg_shift, "merged_length_neg", 0.0, 0.5, 0.7);
+    addShiftLength(debug.total_shift, "merged_length_total", 0.99, 0.4, 0.2);
   }
 
   // shift grad
@@ -2874,14 +2832,11 @@ void AvoidanceModule::updateDebugMarker(
   // misc
   {
     add(createEgoStatusMarkerArray(data, getEgoPose(), "ego_status"));
-    add(createPoseMarkerArray(debug.prev_idx_pose, "hoge", 0, 0.9, 0.0, 0.0));
-    add(createPoseMarkerArray(debug.orig_idx_pose, "hoge", 1, 0.0, 0.0, 0.9));
-    add(createPathMarkerArray(path_rough, "rought_centerline_resampled", 0, 0.9, 0.0, 0.0));
     add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
     add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
     add(createPolygonMarkerArray(debug.detection_area, "detection_area", 0L, 0.16, 1.0, 0.69, 0.1));
-    // add(makeOverhangToRoadShoulderMarkerArray(data.target_objects, "overhang"));
-    // add(createOverhangFurthestLineStringMarkerArray(debug.bounds, "bounds", 1.0, 0.0, 1.0));
+    add(makeOverhangToRoadShoulderMarkerArray(data.target_objects, "overhang"));
+    add(createOverhangFurthestLineStringMarkerArray(debug.bounds, "bounds", 1.0, 0.0, 1.0));
   }
 }
 
