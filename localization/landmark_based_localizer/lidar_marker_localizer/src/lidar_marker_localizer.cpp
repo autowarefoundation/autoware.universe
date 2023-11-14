@@ -14,7 +14,7 @@
 
 #include "lidar_marker_localizer/lidar_marker_localizer.hpp"
 
-#include "lidar_marker_localizer/pose_array_interpolator.hpp"
+#include "localization_util/pose_array_interpolator.hpp"
 
 #include <autoware_point_types/types.hpp>
 #include <rclcpp/qos.hpp>
