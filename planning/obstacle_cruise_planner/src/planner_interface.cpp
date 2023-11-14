@@ -561,7 +561,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     const auto & obstacle = obstacles.at(i);
     const auto prev_output = getObjectFromUuid(prev_slow_down_output_, obstacle.uuid);
 
-    bool is_obstacle_moving = [&]() -> bool {
+    const bool is_obstacle_moving = [&]() -> bool {
       const auto object_vel_norm = std::hypot(obstacle.velocity, obstacle.lat_velocity);
       if (!prev_output) return object_vel_norm > moving_object_speed_threshold;
       if (prev_output->is_moving)
