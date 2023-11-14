@@ -130,9 +130,25 @@ The Planner Manager's responsibilities include:
 
 ## How to enable or disable the modules
 
+## Collision Assessment / Safety check
+
+The collision assessment function's purpose in the Behavior Path Planner is to evaluate the potential for collisions with target objects across all modules. It is utilized in two scenarios. The first event occurs during candidate path generation to ensure that the generated candidate path is collision-free. The second occurs when the path is approved by the manager, and the ego vehicle is executing the current module. If the current situation is unsafe, depending on each module's requirements, the planner will either cancel the execution or opt to execute another module.
+
+The function operates under the assumption that accurate data on the position, velocity, and shape of both the ego vehicle (the autonomous vehicle) and any target objects are available. It also relies on the yaw angle of each point in the predicted paths of these objects, which is expected to point towards the next path point.
+
+The safety check process involves several steps. Initially, it obtains the pose of the target object at a specific time, typically through interpolation of the predicted path. It then checks for any overlap between the ego vehicle and the target object at this time. If an overlap is detected, the path is deemed unsafe. The function also identifies which vehicle is in front by using the arc length along the given path.
+
+A critical part of the safety check is the calculation of the RSS (Responsibility-Sensitive Safety) distance-inspired algorithm. This algorithm takes into account reaction time, safety time margin, and the velocities and decelerations of both vehicles. Extended object polygons are then created for both the ego and target vehicles. Notably, the rear object’s polygon is extended by the RSS distance longitudinally and by a lateral margin. The function finally checks for overlap between this extended rear object polygon and the front object polygon. Any overlap indicates a potential unsafe situation.
+
+The module does have a limitation concerning the yaw angle of each point in the predicted paths of target objects, which may not always accurately point to the next point, leading to potential inaccuracies in some edge cases.
+
+!!! note
+
+    For further reading on the collision assessment  method, please refer to [Safety check utils](./docs/behavior_path_planner_safety_check.md)
+
 ## Generating Drivable Area
 
-### Static Drivable area logic
+### Static Drivable Area logic
 
 The drivable area is used to determine the area in which the ego vehicle can travel. The primary goal of static drivable area expansion is to ensure safe travel by generating an area that encompasses only the necessary spaces for the vehicle's current behavior, while excluding non-essential areas. For example, while `avoidance` module is running, the drivable area includes additional space needed for maneuvers around obstacles, and it limits the behavior by not extending the avoidance path outside of lanelet areas.
 
@@ -153,7 +169,7 @@ Static drivable area expansion operates under assumptions about the correct arra
 
     Further details can is provided in [Drivable Area Design](./docs/behavior_path_planner_drivable_area_design.md).
 
-### Dynamic Drivable Area Algorithm
+### Dynamic Drivable Area Logic
 
 Large vehicles require much more space, which sometimes causes them to veer out of their current lane. A typical example being a bus making a turn at a corner. In such cases, relying on a static drivable area is insufficient, since the static method depends on lane information provided by high-definition maps. To overcome the limitations of the static approach, the dynamic drivable area expansion algorithm adjusts the navigable space for an autonomous vehicle in real-time. It conserves computational power by reusing previously calculated path data, updating only when there is a significant change in the vehicle's position. The system evaluates the minimum lane width necessary to accommodate the vehicle's turning radius and other dynamic factors. It then calculates the optimal expansion of the drivable area's boundaries to ensure there is adequate space for safe maneuvering, taking into account the vehicle's path curvature. The rate at which these boundaries can expand or contract is moderated to maintain stability in the vehicle's navigation. The algorithm aims to maximize the drivable space while avoiding fixed obstacles and adhering to legal driving limits. Finally, it applies these boundary adjustments and smooths out the path curvature calculations to ensure a safe and legally compliant navigable path is maintained throughout the vehicle's operation.
 
@@ -190,3 +206,6 @@ The shifted path generation logic allows behavior path planner to dynamically ge
     If you're a math lover, refer to [Path Generation Design](./docs/behavior_path_planner_path_generation_design.md) for the nitty-gritty.
 
 ## Limitations & Future Work
+
+    1. Some module cannot be simultaneously executed for now. For instance
+       - Avoidance and Goal planner
