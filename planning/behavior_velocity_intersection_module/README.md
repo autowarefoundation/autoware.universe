@@ -2,7 +2,7 @@
 
 ### Role
 
-The _intersection_ module is responsible for safely passing urban intersections by:
+The intersection module is responsible for safely passing urban intersections by:
 
 1. checking collisions with upcoming vehicles
 2. recognizing the occluded area in the intersection
@@ -14,19 +14,19 @@ This module is designed to be agnostic to left-hand/right-hand traffic rules and
 
 ### Activation condition
 
-This module is activated when the path contains the lanes with **_turn_direction_** tag. More precisely, if the **_lane_ids_** of the path contains the ids of those lanes, corresponding instances of intersection module are activated on each lane respectively.
+This module is activated when the path contains the lanes with turn_direction tag. More precisely, if the lane_ids of the path contains the ids of those lanes, corresponding instances of intersection module are activated on each lane respectively.
 
 ### Requirements/Limitations
 
-- The HDMap needs to have the information of turn_direction tag (which should be one of **_straight_** , **_left_** , **_right_**) for all the lanes in intersections and **_right_of_way_** tag for specific lanes (refer to [RightOfWay](#right-of-way) section for more details). See [lanelet2_extension document](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md) for more detail.
+- The HDMap needs to have the information of turn_direction tag (which should be one of straight, left, right) for all the lanes in intersections and right_of_way tag for specific lanes (refer to [RightOfWay](#right-of-way) section for more details). See [lanelet2_extension document](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md) for more detail.
 - WIP(perception requirements/limitations)
 - WIP(sensor visibility requirements/limitations)
 
 ### Attention area
 
-The **_attention area_** in the intersection are defined as the set of lanes that are conflicting with ego vehicle's path and their preceding lanes up to `common.attention_area_length` meters. RightOfWay tag is used to rule out the lanes that each lane has priority given the traffic light relation and turn_direction priority(**_yield lane_**).
+The attention area in the intersection are defined as the set of lanes that are conflicting with ego vehicle's path and their preceding lanes up to `common.attention_area_length` meters. RightOfWay tag is used to rule out the lanes that each lane has priority given the traffic light relation and turn_direction priority(yield lane).
 
-**_intersection area_**, which is supposed to be defined on the HDMap, is an area converting the entire intersection.
+intersection_area, which is supposed to be defined on the HDMap, is an area converting the entire intersection.
 
 ![attention_area](./docs/intersection-attention.drawio.svg)
 
@@ -56,7 +56,7 @@ Following figure illustrates important positions used in the intersection module
 
 To precisely calculate stop positions, the path is interpolated at the certain interval of `common.path_interpolation_ds`.
 
-**_closest_idx_** denotes the path point index which is closest to ego vehicle position. **_first_attention_stopline_** denotes the first path point where ego vehicle footprint intersects with the **_attention_area_**. If a stopline is associated with the intersection lane on the map, that line is used as the **_default_stopline_** for collision detection. Otherwise the point which is `common.default_stopline_margin` meters behind first\_attention\_stopline is defined as the default_stopline instead. **_occlusion_peeking_stopline_** is a bit ahead of first\_attention\_stopline as described later. **_occlusion_wo_tl_pass_judge_line_** is the first position where ego vehicle footprint intersects with the centerline of the first attention_area lane.
+closest_idx denotes the path point index which is closest to ego vehicle position. first_attention_stopline denotes the first path point where ego vehicle footprint intersects with the attention_area. If a stopline is associated with the intersection lane on the map, that line is used as the default_stopline for collision detection. Otherwise the point which is `common.default_stopline_margin` meters behind first_attention_stopline is defined as the default_stopline instead. occlusion_peeking_stopline is a bit ahead of first_attention_stopline as described later. occlusion_wo_tl_pass_judge_line is the first position where ego vehicle footprint intersects with the centerline of the first attention_area lane.
 
 ### Target objects
 
@@ -86,7 +86,7 @@ The following process is performed for the targets objects to determine whether 
    2. obtain the passing area of ego vehicle during the collision interval from the array of (time, distance) obtained by smoothed velocity profile
    3. check if ego passing area and object predicted path interval collides
 3. if collision is detected, the module inserts a stopline
-4. if ego is over the [_**pass_judge_line**_](#pass-judge-line), collision checking is skipped to avoid sudden braking and/or unnecessary stop in the middle of the intersection
+4. if ego is over the [pass_judge_line](#pass-judge-line), collision checking is skipped to avoid sudden braking and/or unnecessary stop in the middle of the intersection
 
 The parameters `collision_detection.collision_start_margin_time` and `collision_detection.collision_end_margin_time` can be interpreted as follows:
 
@@ -118,7 +118,7 @@ The position of the pass judge line depends on the occlusion detection configura
 
 ### Occlusion detection
 
-If the flag `occlusion.enable` is true this module checks if there is sufficient field of view (FOV) on the attention area up to `occlusion.occlusion_attention_area_length`. If FOV is not clear enough ego vehicle first make a brief stop at the default stop line for `occlusion.temporal_stop_time_before_peeking`, and then slowly creep toward occlusion_peeking_stop_line at the speed of `occlusion.creep_during_peeking.creep_velocity` if `occlusion.creep_during_peeking.enable` is true. During the creeping if collision is detected this module inserts a stop line in front of ego vehicle immediately, and if the FOV gets sufficiently clear the **_intersection_occlusion_** wall will disappear. If occlusion is cleared and no collision is detected ego vehicle will pass the intersection.
+If the flag `occlusion.enable` is true this module checks if there is sufficient field of view (FOV) on the attention area up to `occlusion.occlusion_attention_area_length`. If FOV is not clear enough ego vehicle first make a brief stop at the default stop line for `occlusion.temporal_stop_time_before_peeking`, and then slowly creep toward occlusion_peeking_stop_line at the speed of `occlusion.creep_during_peeking.creep_velocity` if `occlusion.creep_during_peeking.enable` is true. During the creeping if collision is detected this module inserts a stop line in front of ego vehicle immediately, and if the FOV gets sufficiently clear the intersection_occlusion wall will disappear. If occlusion is cleared and no collision is detected ego vehicle will pass the intersection.
 
 The occlusion is detected as the common area of occlusion attention area(which is partially the same as the normal attention area) and the unknown cells of the occupancy grid map. The occupancy grid map is denoised using morphology with the window size of `occlusion.denoise_kernel`. The occlusion attention area lanes are discretized to line strings and they are used to generate a grid whose each cell represents the distance from ego path along the lane as shown below.
 
@@ -148,11 +148,17 @@ TTC parameter varies depending on the traffic light color/shape as follows.
 | AMBER               | `collision_detection.partially_prioritized.collision_start_end_margin` | `collision_detection.partially_prioritized.collision_start_end_margin` |
 | RED / Arrow         | `collision_detection.fully_prioritized.collision_start_end_margin`     | `collision_detection.fully_prioritized.collision_start_end_margin`     |
 
-If the traffic light color is RED or Arrow signal is turned on, the attention lanes which are not conflicting with ego lane are not used for detection. And even if the object stops with a certain overshoot from its stopline, but its expected stop position under the deceleration of `collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration` is more than the distance `collision_detection.ignore_on_red_traffic_light.object_margin_to_path` from collision point, the object is ignored.
+#### yield on GREEN
+
+If the traffic light color changed to GREEN and ego approached the entry of the intersection lane within the distance `collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start` and there is any object whose distance to its stopline is less than `collision_detection.yield_on_green_traffic_light.object_dist_to_stopline`, this module commands to stop for the duration of `collision_detection.yield_on_green_traffic_light.duration` at the default_stopline.
+
+#### skip on AMBER
 
 If the traffic light color is AMBER but the object is expected to stop before its stopline under the deceleration of `collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration`, collision checking is skipped.
 
-If the traffic light color changed to GREEN and ego approached the entry of the intersection lane within `collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start` and there si any object whose distance to its stopline is less than `collision_detection.yield_on_green_traffic_light.object_dist_to_stopline`, this module commands to stop for the duration of `collision_detection.yield_on_green_traffic_light.duration` at the default_stopline.
+#### skip on RED
+
+If the traffic light color is RED or Arrow signal is turned on, the attention lanes which are not conflicting with ego lane are not used for detection. And even if the object stops with a certain overshoot from its stopline, but its expected stop position under the deceleration of `collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration` is more than the distance `collision_detection.ignore_on_red_traffic_light.object_margin_to_path` from collision point, the object is ignored.
 
 #### Occlusion detection
 
@@ -237,34 +243,67 @@ entity TargetObject {
 
 ### Module Parameters
 
-| Parameter                                           | Type   | Description                                                                                    |
-| --------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
-| `common.attention_area_margin`                      | double | [m] margin for expanding attention area width                                                  |
-| `common.attention_area_length`                      | double | [m] range for object detection                                                                 |
-| `common.attention_area_angle_threshold`             | double | [rad] threshold of angle difference between the detected object and lane                       |
-| `common.stopline_margin`                            | double | [m] margin before stop line                                                                    |
-| `common.intersection_velocity`                      | double | [m/s] velocity profile for pass judge calculation                                              |
-| `common.intersection_max_accel`                     | double | [m/s^2] acceleration profile for pass judge calculation                                        |
-| `common.stop_overshoot_margin`                      | double | [m] margin for the overshoot from stopline                                                     |
-| `stuck_vehicle.stuck_vehicle_detect_dist`           | double | [m] length toward from the exit of intersection for stuck vehicle detection                    |
-| `stuck_vehicle.stuck_vehicle_vel_thr`               | double | [m/s] velocity threshold for stuck vehicle detection                                           |
-| `collision_detection.state_transit_margin_time`     | double | [m] time margin to change state                                                                |
-| `collision_detection.min_predicted_path_confidence` | double | [-] minimum confidence value of predicted path to use for collision detection                  |
-| `collision_detection.collision_start_margin_time`   | double | [s] time margin for the beginning of collision with upcoming vehicle                           |
-| `collision_detection.collision_end_margin_time`     | double | [s] time margin for the finish of collision with upcoming vehicle                              |
-| `collision_detection.keep_detection_vel_thr`        | double | [m/s] ego velocity threshold for continuing collision detection before pass judge line         |
-| `occlusion.occlusion_attention_area_length`         | double | [m] the length of attention are for occlusion detection                                        |
-| `occlusion.enable_creeping`                         | bool   | [-] flag to insert `occlusion_creep_velocity` while peeking to intersection occlusion stopline |
-| `occlusion.peeking_offset`                          | double | [m] the offset of the front of the vehicle into the attention area for peeking to occlusion    |
-| `occlusion.min_vehicle_brake_for_rss`               | double | [m/s] assumed minimum brake of the vehicle running from behind the occlusion                   |
-| `occlusion.max_vehicle_velocity_for_rss`            | double | [m/s] assumed maximum velocity of the vehicle running from behind the occlusion                |
+#### common
 
-#### For developers only
+| Parameter                         | Type   | Description                                                              |
+| --------------------------------- | ------ | ------------------------------------------------------------------------ |
+| `.attention_area_length`          | double | [m] range for object detection                                           |
+| `.attention_area_margin`          | double | [m] margin for expanding attention area width                            |
+| `.attention_area_angle_threshold` | double | [rad] threshold of angle difference between the detected object and lane |
+| `.use_intersection_area`          | bool   | [-] flag to use intersection_area for collision detection                |
+| `.default_stopline_margin`        | double | [m] margin before_stop_line                                              |
+| `.stopline_overshoot_margin`      | double | [m] margin for the overshoot from stopline                               |
+| `.max_accel`                      | double | [m/ss] max acceleration for stop                                         |
+| `.max_jerk`                       | double | [m/sss] max jerk for stop                                                |
+| `.delay_response_time`            | double | [s] action delay before stop                                             |
 
-| Parameter                      | Type   | Description                                                            |
-| ------------------------------ | ------ | ---------------------------------------------------------------------- |
-| `common.path_interpolation_ds` | double | [m] path interpolation interval                                        |
-| `occlusion.denoise_kernel`     | double | [m] the window size of morphology process for clearing noisy occlusion |
+#### stuck_vehicle/yield_stuck
+
+| Parameter                                        | Type   | Description                                                                  |
+| ------------------------------------------------ | ------ | ---------------------------------------------------------------------------- |
+| `stuck_vehicle.turn_direction`                   | -      | [-] turn_direction specifier for stuck vehicle detection                     |
+| `stuck_vehicle.stuck_vehicle_detect_dist`        | double | [m] length toward from the exit of intersection for stuck vehicle detection  |
+| `stuck_vehicle.stuck_vehicle_velocity_threshold` | double | [m/s] velocity threshold for stuck vehicle detection                         |
+| `yield_stuck.distance_threshold`                 | double | [m/s] distance threshold of yield stuck vehicle from ego path along the lane |
+
+#### collision_detection
+
+| Parameter                                     | Type   | Description                                                                          |
+| --------------------------------------------- | ------ | ------------------------------------------------------------------------------------ |
+| `.consider_wrong_direction_vehicle`           | bool   | [-] flag to detect objects in the wrong direction                                    |
+| `.collision_detection_hold_time`              | double | [s] hold time of collision detection                                                 |
+| `.min_predicted_path_confidence`              | double | [-] minimum confidence value of predicted path to use for collision detection        |
+| `.keep_detection_velocity_threshold`          | double | [s] ego velocity threshold for continuing collision detection before pass judge line |
+| `.velocity_profile.use_upstream`              | bool   | [-] flag to use velocity profile planned by upstream modules                         |
+| `.velocity_profile.minimum_upstream_velocity` | double | [m/s] minimum velocity of upstream velocity profile to avoid zero division           |
+| `.velocity_profile.default_velocity`          | double | [m/s] constant velocity profile when use_upstream is false                           |
+| `.velocity_profile.minimum_default_velocity`  | double | [m/s] minimum velocity of default velocity profile to avoid zero division            |
+| `.yield_on_green_traffic_light`               | -      | [-] [description](#yield-on-green)                                                   |
+| `.ignore_amber_traffic_light`                 | -      | [-] [description](#skip-on-amber)                                                    |
+| `.ignore_on_red_traffic_light`                | -      | [-] [description](#skip-on-red)                                                      |
+
+#### occlusion
+
+| Parameter                                      | Type     | Description                                                                                 |
+| ---------------------------------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `.enable`                                      | bool     | [-] flag to calculate occlusion detection                                                   |
+| `.occlusion_attention_area_length`             | double   | [m] the length of attention are for occlusion detection                                     |
+| `.free_space_max`                              | int      | [-] maximum value of occupancy grid cell to treat at occluded                               |
+| `.occupied_min`                                | int      | [-] minimum value of occupancy grid cell to treat at occluded                               |
+| `.denoise_kernel`                              | double   | [m] morphology window size for preprocessing raw occupancy grid                             |
+| `.attention_lane_crop_curvature_threshold`     | double   | [m] curvature threshold for trimming curved part of the lane                                |
+| `.attention_lane_crop_curvature_ds`            | double   | [m] discretization interval of centerline for lane curvature calculation                    |
+| `.creep_during_peeking.enable`                 | bool     | [-] flag to insert `creep_velocity` while peeking to intersection occlusion stopline        |
+| `.creep_during_peeking.creep_velocity`         | double   | [m/s] the command velocity while peeking to intersection occlusion stopline                 |
+| `.peeking_offset`                              | double   | [m] the offset of the front of the vehicle into the attention area for peeking to occlusion |
+| `.occlusion_required_clearance_distance`       | double   | [m] threshold for the distance to nearest occlusion cell from ego path                      |
+| `.possible_object_bbox`                        | [double] | [m] minimum bounding box size for checking if occlusion polygon is small enough             |
+| `.ignore_parked_vehicle_speed_threshold`       | double   | [m/s] velocity threshold for checking parked vehicle                                        |
+| `.occlusion_detection_hold_time`               | double   | [s] hold time of occlusion detection                                                        |
+| `.temporal_stop_time_before_peeking`           | double   | [s] temporal stop duration at the default_stop_line before starting peeking                 |
+| `.temporal_stop_before_attention_area`         | bool     | [-] flag to temporarily stop at first_attention_stopline before peeking into attention_area |
+| `.creep_velocity_without_traffic_light`        | double   | [m/s] creep velocity to occlusion_wo_tl_pass_judge_line                                     |
+| `.static_occlusion_with_traffic_light_timeout` | double   | [s] the timeout duration for ignoring static occlusion at intersection with traffic light   |
 
 ### How to turn parameters
 
