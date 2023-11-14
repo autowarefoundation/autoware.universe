@@ -489,7 +489,7 @@ void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovaria
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z];
   double roll_dev = pose.pose.covariance[COV_IDX::ROLL_ROLL];
   double pitch_dev = pose.pose.covariance[COV_IDX::PITCH_PITCH];
-  double diagnostic_yaw_dev_init = 1e9;  // make no assumption for the
+  double diagnostic_yaw_dev_init = 1e9;  // make no assumption for the prior
 
   z_filter_.init(z, z_dev, pose.header.stamp);
   roll_filter_.init(rpy.x, roll_dev, pose.header.stamp);
