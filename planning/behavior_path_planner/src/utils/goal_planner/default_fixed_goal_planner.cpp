@@ -27,19 +27,14 @@
 
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
+
 #include <lanelet2_core/geometry/Polygon.h>
 #include "lanelet2_core/LaneletMap.h"
 
-
-
-
-
 namespace behavior_path_planner
 {
-
 using Point2d = tier4_autoware_utils::Point2d;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-
 BehaviorModuleOutput DefaultFixedGoalPlanner::plan(
   const std::shared_ptr<const PlannerData> & planner_data) const
 {
@@ -52,8 +47,6 @@ BehaviorModuleOutput DefaultFixedGoalPlanner::plan(
   output.reference_path = getPreviousModuleOutput().reference_path;
   return output;
 }
-
-
 
 bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2d & point)
 {
@@ -91,65 +84,41 @@ bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
   return true;
 }
 
-// end of the isAllPointsInAnyLane
-
-
-
-// retreive the extractLaneletsFromPath (new test)
-
-#include "route_handler/route_handler.hpp" // MAKE SURE
-
 lanelet::ConstLanelets extractLaneletsFromPath(const PathWithLaneId& refined_path, const std::shared_ptr<const PlannerData> & planner_data) {
     const auto & rh = planner_data->route_handler;
     lanelet::ConstLanelets refined_path_lanelets;
-
     for (size_t i = 0; i < refined_path.points.size(); ++i) {
         const PathPointWithLaneId& path_point = refined_path.points[i];
         int64_t lane_id = path_point.lane_ids[0];
         lanelet::ConstLanelet lanelet = rh->getLaneletsFromId(lane_id);
         bool is_unique = true;
         for (const lanelet::ConstLanelet& existing_lanelet : refined_path_lanelets) {
-            if (lanelet == existing_lanelet) { //not sure whether can overload.
+            if (lanelet == existing_lanelet) {
                 is_unique = false;
                 break;
             }
         }
         if (is_unique) {
-            refined_path_lanelets.push_back(lanelet); //not sure whether can push_back.
+            refined_path_lanelets.push_back(lanelet);
         }
     }
-
-
         for (const auto& ll : refined_path_lanelets) {
              lanelet::Id laneId = ll.id();
              std::cerr << "laneId on the Lanelet List: " << laneId << std::endl;          
         }
-
-
     return refined_path_lanelets;
 }
-
-// end of the extractLaneletsFromPath (new test)
-
-
-// isPathValid (test)
-// the utilization of the extractLaneletsFromPath: isAllPointsInAnyLane(refined_path,extractLaneletsFromPath(refined_path))
 
 bool isPathValid(const PathWithLaneId &refined_path, const std::shared_ptr<const PlannerData> & planner_data) {
   const lanelet::ConstLanelets lanelets = extractLaneletsFromPath(refined_path, planner_data);
   return isAllPointsInAnyLane(refined_path, lanelets);
 }
 
-// end of isPathValid (test)
-
-
-
 PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data) const
 {
   const auto goal = planner_data->route_handler->getGoalPose();
   const auto goal_lane_id = planner_data->route_handler->getGoalLaneId();
-
   Pose refined_goal{};
   {
     lanelet::ConstLanelet goal_lanelet;
@@ -159,21 +128,14 @@ PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
       refined_goal = goal;
     }
   }
-
   double goal_search_radius {planner_data->parameters.refine_goal_search_radius_range};
-  
-  double range_reduce_by {1};
+  double range_reduce_by {1}; // set a reasonable value, 10% - 20% of the refine_goal_search_radius_range is recommended
   int path_is_valid {0};
-
   autoware_auto_planning_msgs::msg::PathWithLaneId refined_path;
-
   while(goal_search_radius >= 0 && !path_is_valid) {
-  
-    refined_path = utils::refinePathForGoal(
+      refined_path = utils::refinePathForGoal(
       goal_search_radius, M_PI * 0.5, path, refined_goal,
       goal_lane_id);
-
-
     if (isPathValid(refined_path, planner_data)) {
       path_is_valid = 1;
       std::cerr << "valid refined_path :)" << std::endl;
@@ -181,17 +143,12 @@ PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
     else {
       std::cerr << "INVALID POINTS ON THE CURRENT refined_path!" << std::endl;
     }
-
-
     std::cerr << "number of points on refined_path.points:" << refined_path.points.size() << std::endl; 
     std::cerr << "Goal Search Radius is " << goal_search_radius << " meter(s)" << std::endl;   
     std::cerr << "range_reduce_by is " << range_reduce_by << " meter(s)" << std::endl;   
-
     goal_search_radius -= range_reduce_by; 
   }
-
   return refined_path; 
-
 }
 
 }  // namespace behavior_path_planner
