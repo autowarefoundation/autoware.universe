@@ -43,7 +43,7 @@
 
 #include <pcl/point_types.h>
 
-class LidarMarkerDetector : public rclcpp::Node
+class LidarMarkerLocalizer : public rclcpp::Node
 {
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
@@ -57,7 +57,7 @@ public:
   };
   typedef std::vector<PointXYZIR> PointCloudXYZIR;
 
-  LidarMarkerDetector();
+  LidarMarkerLocalizer();
 
 private:
   void self_pose_callback(
@@ -98,7 +98,7 @@ private:
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
     self_pose_msg_ptr_array_;
 
-  std::vector<geometry_msgs::msg::Pose> marker_pose_on_map_arrary_;
+  std::vector<geometry_msgs::msg::Pose> marker_pose_on_map_array_;
 };
 
 #endif  // LIDAR_MARKER_LOCALIZER_HPP_

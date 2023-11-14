@@ -25,7 +25,7 @@
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-LidarMarkerDetector::LidarMarkerDetector()
+LidarMarkerLocalizer::LidarMarkerLocalizer()
 : Node("lidar_marker_localizer"),
   diag_updater_(this),
   is_activated_(false),
@@ -40,7 +40,7 @@ LidarMarkerDetector::LidarMarkerDetector()
   points_sub_opt.callback_group = points_callback_group;
   sub_points_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "input/pointcloud_ex", rclcpp::QoS(1).best_effort(),
-    std::bind(&LidarMarkerDetector::points_callback, this, _1), points_sub_opt);
+    std::bind(&LidarMarkerLocalizer::points_callback, this, _1), points_sub_opt);
 
   rclcpp::CallbackGroup::SharedPtr self_pose_callback_group;
   self_pose_callback_group =
@@ -49,10 +49,10 @@ LidarMarkerDetector::LidarMarkerDetector()
   points_sub_opt.callback_group = self_pose_callback_group;
   sub_self_pose_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "/localization/pose_twist_fusion_filter/biased_pose_with_covariance", rclcpp::QoS(1),
-    std::bind(&LidarMarkerDetector::self_pose_callback, this, _1), points_sub_opt);
+    std::bind(&LidarMarkerLocalizer::self_pose_callback, this, _1), points_sub_opt);
   sub_map_bin_ = this->create_subscription<HADMapBin>(
     "/map/vector_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
-    std::bind(&LidarMarkerDetector::map_bin_callback, this, std::placeholders::_1));
+    std::bind(&LidarMarkerLocalizer::map_bin_callback, this, std::placeholders::_1));
 
   pub_marker_points_on_base_link_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "marker_points_on_base_link", 10);  // rclcpp::SensorDataQoS().keep_last(5));
@@ -80,7 +80,7 @@ LidarMarkerDetector::LidarMarkerDetector()
   service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
     "trigger_node_srv",
     std::bind(
-      &LidarMarkerDetector::service_trigger_node, this, std::placeholders::_1,
+      &LidarMarkerLocalizer::service_trigger_node, this, std::placeholders::_1,
       std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(),
     points_callback_group);  // TODO refactor points_callback_group
@@ -89,22 +89,22 @@ LidarMarkerDetector::LidarMarkerDetector()
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, this, false);
 
   diag_updater_.setHardwareID(get_name());
-  diag_updater_.add("lidar_marker_localizer", this, &LidarMarkerDetector::update_diagnostics);
+  diag_updater_.add("lidar_marker_localizer", this, &LidarMarkerLocalizer::update_diagnostics);
 }
 
-void LidarMarkerDetector::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
+void LidarMarkerLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
 {
   const std::vector<landmark_manager::Landmark> landmarks =
     landmark_manager::parse_landmarks(msg, "reflective_paint_marker", this->get_logger());
   for (const landmark_manager::Landmark & landmark : landmarks) {
-    marker_pose_on_map_arrary_.push_back(landmark.pose);
+    marker_pose_on_map_array_.push_back(landmark.pose);
   }
 
   const MarkerArray marker_msg = landmark_manager::convert_landmarks_to_marker_array_msg(landmarks);
   pub_marker_->publish(marker_msg);
 }
 
-void LidarMarkerDetector::self_pose_callback(
+void LidarMarkerLocalizer::self_pose_callback(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & self_pose_msg_ptr)
 {
   // TODO
@@ -146,7 +146,7 @@ void LidarMarkerDetector::self_pose_callback(
   }
 }
 
-void LidarMarkerDetector::points_callback(
+void LidarMarkerLocalizer::points_callback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr)
 {
   std::string sensor_frame = points_msg_ptr->header.frame_id;
@@ -381,7 +381,7 @@ void LidarMarkerDetector::points_callback(
 
   // get nearest marker pose on map
   const auto marker_pose_on_map_from_lanelet2_map = *std::min_element(
-    std::begin(marker_pose_on_map_arrary_), std::end(marker_pose_on_map_arrary_),
+    std::begin(marker_pose_on_map_array_), std::end(marker_pose_on_map_array_),
     [&self_pose_msg](const auto & lhs, const auto & rhs) {
       return tier4_autoware_utils::calcDistance3d(lhs.position, self_pose_msg.pose.pose.position) <
              tier4_autoware_utils::calcDistance3d(rhs.position, self_pose_msg.pose.pose.position);
@@ -543,7 +543,7 @@ void LidarMarkerDetector::points_callback(
   pub_base_link_pose_with_covariance_on_map_->publish(base_link_pose_with_covariance_on_map);
 }
 
-void LidarMarkerDetector::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void LidarMarkerLocalizer::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   stat.add("exist_marker_within_self_pose", is_exist_marker_within_self_pose_ ? "Yes" : "No");
   stat.add("detected_marker", is_detected_marker_ ? "Yes" : "No");
@@ -564,7 +564,7 @@ void LidarMarkerDetector::update_diagnostics(diagnostic_updater::DiagnosticStatu
   }
 }
 
-void LidarMarkerDetector::service_trigger_node(
+void LidarMarkerLocalizer::service_trigger_node(
   const std_srvs::srv::SetBool::Request::SharedPtr req,
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
