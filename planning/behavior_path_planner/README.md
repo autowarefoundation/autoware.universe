@@ -265,5 +265,5 @@ preset
 
 ## Limitations & Future Work
 
-    1. Some module cannot be simultaneously executed for now. For instance
-       - Avoidance and Goal planner
+1. Some module cannot be simultaneously executed for now. For instance
+   - Avoidance and Goal planner
