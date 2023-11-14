@@ -74,7 +74,7 @@ bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
   return true;
 }
 
-lanelet::ConstLanelets extractLaneletsFromPath(const PathWithLaneId& refined_path, const std::shared_ptr<const PlannerData> & planner_data) {
+lanelet::ConstLanelets DefaultFixedGoalPlanner::extractLaneletsFromPath(const PathWithLaneId& refined_path, const std::shared_ptr<const PlannerData> & planner_data) const {
     const auto & rh = planner_data->route_handler;
     lanelet::ConstLanelets refined_path_lanelets;
     for (size_t i = 0; i < refined_path.points.size(); ++i) {
@@ -95,7 +95,7 @@ lanelet::ConstLanelets extractLaneletsFromPath(const PathWithLaneId& refined_pat
     return refined_path_lanelets;
 }
 
-bool isPathValid(const PathWithLaneId &refined_path, const std::shared_ptr<const PlannerData> & planner_data) {
+bool DefaultFixedGoalPlanner::isPathValid(const PathWithLaneId &refined_path, const std::shared_ptr<const PlannerData> & planner_data) const {
   const lanelet::ConstLanelets lanelets = extractLaneletsFromPath(refined_path, planner_data);
   return isAllPointsInAnyLane(refined_path, lanelets);
 }
