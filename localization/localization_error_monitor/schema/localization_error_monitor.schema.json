@@ -31,8 +31,8 @@
           "default": 0.2,
           "description": "warning threshold for size of confidence ellipse along lateral direction [m] (default: 0.2)"
         }
-    },
-    "required": [
+      },
+      "required": [
         "scale",
         "error_ellipse_size",
         "warn_ellipse_size",
