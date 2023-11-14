@@ -127,7 +127,7 @@ public:
   virtual MPCTrajectory calculatePredictedTrajectory(
     const Eigen::MatrixXd & a_d, const Eigen::MatrixXd & b_d, const Eigen::MatrixXd & c_d,
     const Eigen::MatrixXd & w_d, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
-    const MPCTrajectory & reference_trajectory, [[maybe_unused]] const double dt) const = 0;
+    const MPCTrajectory & reference_trajectory, const double dt) const = 0;
 };
 }  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_
