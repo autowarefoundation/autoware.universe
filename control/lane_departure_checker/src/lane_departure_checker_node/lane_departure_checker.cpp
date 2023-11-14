@@ -312,13 +312,14 @@ bool LaneDepartureChecker::isOutOfLane(
 
 double LaneDepartureChecker::calcMaxSearchLengthForBoundaries(const Trajectory & trajectory) const
 {
-  const double ego_lon_length = std::max(
+  const double max_ego_lon_length = std::max(
     std::abs(vehicle_info_ptr_->max_longitudinal_offset_m),
     std::abs(vehicle_info_ptr_->min_longitudinal_offset_m));
-  const double ego_lat_length = std::max(
+  const double max_ego_lat_length = std::max(
     std::abs(vehicle_info_ptr_->max_lateral_offset_m),
     std::abs(vehicle_info_ptr_->min_lateral_offset_m));
-  return calcArcLength(trajectory.points) + std::hypot(ego_lon_length, ego_lat_length);
+  const double max_ego_search_length = std::hypot(max_ego_lon_length, max_ego_lat_length);
+  return calcArcLength(trajectory.points) + max_ego_search_length;
 }
 
 SegmentRtree LaneDepartureChecker::extractUncrossableBoundaries(
@@ -353,11 +354,11 @@ SegmentRtree LaneDepartureChecker::extractUncrossableBoundaries(
 bool LaneDepartureChecker::willCrossBoundary(
   const std::vector<LinearRing2d> & vehicle_footprints, const SegmentRtree & uncrossable_segments)
 {
-  for (auto & footprint : vehicle_footprints) {
-    std::vector<Segment2d> result;
+  for (const auto & footprint : vehicle_footprints) {
+    std::vector<Segment2d> intersection_result;
     uncrossable_segments.query(
-      boost::geometry::index::intersects(footprint), std::back_inserter(result));
-    if (!result.empty()) {
+      boost::geometry::index::intersects(footprint), std::back_inserter(intersection_result));
+    if (!intersection_result.empty()) {
       return true;
     }
   }
