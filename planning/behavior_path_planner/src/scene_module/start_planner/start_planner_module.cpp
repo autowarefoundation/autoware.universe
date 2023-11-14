@@ -571,12 +571,12 @@ bool StartPlannerModule::findPullOutPath(
   // Ensure the index is within the bounds of the start_pose_candidates vector
   if (index >= start_pose_candidates.size()) return false;
 
-  const Pose & pull_out_start_pose = start_pose_candidates.at(index);
+  const Pose & pull_out_start_pose_candidate = start_pose_candidates.at(index);
   const bool is_driving_forward =
-    tier4_autoware_utils::calcDistance2d(pull_out_start_pose, refined_start_pose) < 0.01;
+    tier4_autoware_utils::calcDistance2d(pull_out_start_pose_candidate, refined_start_pose) < 0.01;
 
   planner->setPlannerData(planner_data_);
-  const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
+  const auto pull_out_path = planner->plan(pull_out_start_pose_candidate, goal_pose);
 
   // If no path is found, return false
   if (!pull_out_path) {
@@ -585,22 +585,22 @@ bool StartPlannerModule::findPullOutPath(
 
   // If driving forward, update status with the current path and return true
   if (is_driving_forward) {
-    updateStatusWithCurrentPath(*pull_out_path, pull_out_start_pose, planner->getPlannerType());
+    updateStatusWithCurrentPath(
+      *pull_out_path, pull_out_start_pose_candidate, planner->getPlannerType());
     return true;
   }
 
   // If this is the last start pose candidate, return false
   if (index == start_pose_candidates.size() - 1) return false;
 
-  const Pose & next_pull_out_start_pose = start_pose_candidates.at(index + 1);
-  const auto next_pull_out_path = planner->plan(next_pull_out_start_pose, goal_pose);
+  const auto next_pull_out_path = planner->plan(start_pose_candidates.at(index + 1), goal_pose);
 
   // If no next path is found, return false
   if (!next_pull_out_path) return false;
 
   // Update status with the next path and return true
   updateStatusWithNextPath(
-    *next_pull_out_path, next_pull_out_start_pose, planner->getPlannerType());
+    *next_pull_out_path, start_pose_candidates.at(index + 1), planner->getPlannerType());
   return true;
 }
 
@@ -609,6 +609,8 @@ void StartPlannerModule::updateStatusWithCurrentPath(
   const behavior_path_planner::PlannerType & planner_type)
 {
   const std::lock_guard<std::mutex> lock(mutex_);
+  status_.backward_path_is_enabled = false;
+  status_.stop_path = PathWithLaneId{};
   status_.driving_forward = true;
   status_.found_pull_out_path = true;
   status_.pull_out_path = path;
@@ -621,6 +623,8 @@ void StartPlannerModule::updateStatusWithNextPath(
   const behavior_path_planner::PlannerType & planner_type)
 {
   const std::lock_guard<std::mutex> lock(mutex_);
+  status_.backward_path_is_enabled = true;
+  status_.stop_path = PathWithLaneId{};
   status_.driving_forward = false;
   status_.found_pull_out_path = true;
   status_.pull_out_path = path;
@@ -632,6 +636,8 @@ void StartPlannerModule::updateStatusIfNoSafePathFound()
 {
   if (status_.planner_type != PlannerType::FREESPACE) {
     const std::lock_guard<std::mutex> lock(mutex_);
+    status_.backward_path_is_enabled = false;
+    status_.stop_path = PathWithLaneId{};
     status_.found_pull_out_path = false;
     status_.planner_type = PlannerType::NONE;
   }

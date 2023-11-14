@@ -58,6 +58,8 @@ struct PullOutStatus
   PullOutPath pull_out_path{};
   size_t current_path_idx{0};
   PlannerType planner_type{PlannerType::NONE};
+  bool backward_path_is_enabled{false};
+  PathWithLaneId stop_path{};
   PathWithLaneId backward_path{};
   bool found_pull_out_path{false};      // current path is safe against static objects
   bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
@@ -146,6 +148,8 @@ private:
   void updateStatusWithCurrentPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
     const behavior_path_planner::PlannerType & planner_type);
+
+  // this function is called when the pull out path from behind of ego position is found
   void updateStatusWithNextPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
     const behavior_path_planner::PlannerType & planner_type);
