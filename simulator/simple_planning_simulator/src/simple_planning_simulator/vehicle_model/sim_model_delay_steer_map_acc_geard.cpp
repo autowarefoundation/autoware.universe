@@ -88,7 +88,7 @@ void SimModelDelaySteerMapAccGeared::initializeInputQueue(const float64_t & dt)
 Eigen::VectorXd SimModelDelaySteerMapAccGeared::calcModel(
   const Eigen::VectorXd & state, const Eigen::VectorXd & input)
 {
-  auto sat = [](float64_t val, float64_t u, float64_t l) { return std::max(std::min(val, u), l); };
+  auto sat = [](float64_t val, float64_t u, float64_t l) { return std::clamp(val, l, u); };
 
   const float64_t vel = sat(state(IDX::VX), vx_lim_, -vx_lim_);
   const float64_t acc = sat(state(IDX::ACCX), vx_rate_lim_, -vx_rate_lim_);

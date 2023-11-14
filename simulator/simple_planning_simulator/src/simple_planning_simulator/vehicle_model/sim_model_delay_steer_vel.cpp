@@ -99,7 +99,7 @@ void SimModelDelaySteerVel::initializeInputQueue(const double & dt)
 Eigen::VectorXd SimModelDelaySteerVel::calcModel(
   const Eigen::VectorXd & state, const Eigen::VectorXd & input)
 {
-  auto sat = [](double val, double u, double l) { return std::max(std::min(val, u), l); };
+  auto sat = [](double val, double u, double l) { return std::clamp(val, l, u); };
 
   const double vx = sat(state(IDX::VX), vx_lim_, -vx_lim_);
   const double steer = sat(state(IDX::STEER), steer_lim_, -steer_lim_);

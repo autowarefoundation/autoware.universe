@@ -107,7 +107,7 @@ void SimModelDelaySteerAccGeared::initializeInputQueue(const double & dt)
 Eigen::VectorXd SimModelDelaySteerAccGeared::calcModel(
   const Eigen::VectorXd & state, const Eigen::VectorXd & input)
 {
-  auto sat = [](double val, double u, double l) { return std::max(std::min(val, u), l); };
+  auto sat = [](double val, double u, double l) { return std::clamp(val, l, u); };
 
   const double vel = sat(state(IDX::VX), vx_lim_, -vx_lim_);
   const double acc = sat(state(IDX::ACCX), vx_rate_lim_, -vx_rate_lim_);
