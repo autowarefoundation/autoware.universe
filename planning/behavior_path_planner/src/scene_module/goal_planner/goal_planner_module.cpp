@@ -915,9 +915,6 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate()
     return output;
   }
 
-  path_candidate_ =
-    std::make_shared<PathWithLaneId>(thread_safe_data_.get_pull_over_path()->getFullPath());
-
   return output;
 }
 
@@ -954,6 +951,9 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
   if (!thread_safe_data_.foundPullOverPath()) {
     return output;
   }
+
+  path_candidate_ =
+    std::make_shared<PathWithLaneId>(thread_safe_data_.get_pull_over_path()->getFullPath());
 
   updateStatus(output);
 
