@@ -53,7 +53,17 @@ void reuse_previous_poses(
                                                         prev_poses, 0, ego_point) < 0.0;
   const auto ego_is_far = !prev_poses.empty() &&
                           tier4_autoware_utils::calcDistance2d(ego_point, prev_poses.front()) < 0.0;
-  if (!ego_is_behind && !ego_is_far && prev_poses.size() > 1) {
+  // make sure the reused points are not behind the current original drivable area
+  LineString2d left_bound;
+  LineString2d right_bound;
+  for (const auto & p : path.left_bound) left_bound.push_back(convert_point(p));
+  for (const auto & p : path.right_bound) right_bound.push_back(convert_point(p));
+  LineString2d prev_poses_ls;
+  for (const auto & p : prev_poses) prev_poses_ls.push_back(convert_point(p.position));
+  auto prev_poses_accross_bounds = boost::geometry::intersects(left_bound, prev_poses_ls) ||
+                                   boost::geometry::intersects(right_bound, prev_poses_ls);
+
+  if (!ego_is_behind && !ego_is_far && prev_poses.size() > 1 && !prev_poses_accross_bounds) {
     const auto first_idx =
       motion_utils::findNearestSegmentIndex(prev_poses, path.points.front().point.pose);
     const auto deviation =
@@ -61,15 +71,16 @@ void reuse_previous_poses(
     if (first_idx && deviation < params.max_reuse_deviation) {
       LineString2d path_ls;
       for (const auto & p : path.points) path_ls.push_back(convert_point(p.point.pose.position));
+      PointDistance closest_projection;
+      closest_projection.distance = std::numeric_limits<double>::max();
       for (auto idx = *first_idx; idx < prev_poses.size(); ++idx) {
-        double lateral_offset = std::numeric_limits<double>::max();
         for (auto segment_idx = 0LU; segment_idx + 1 < path_ls.size(); ++segment_idx) {
           const auto projection = point_to_line_projection(
             convert_point(prev_poses[idx].position), path_ls[segment_idx],
             path_ls[segment_idx + 1]);
-          lateral_offset = std::min(projection.distance, lateral_offset);
+          if (projection.distance < closest_projection.distance) closest_projection = projection;
         }
-        if (lateral_offset > params.max_reuse_deviation) break;
+        if (closest_projection.distance > params.max_reuse_deviation) break;
         cropped_poses.push_back(prev_poses[idx]);
         cropped_curvatures.push_back(prev_curvatures[idx]);
       }
