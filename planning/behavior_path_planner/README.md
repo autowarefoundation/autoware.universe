@@ -130,6 +130,23 @@ The Planner Manager's responsibilities include:
 
 ## How to enable or disable the modules
 
+Enabling and disabling the modules in the behavior path planner is primarily managed through two key files: `default_preset.yaml` and `behavior_path_planner.launch.xml`.
+
+The `default_preset.yaml` file acts as a configuration file for enabling or disabling specific modules within the planner. It contains a series of arguments which represent the behavior path planner's modules or features. For example:
+
+- `launch_avoidance_module`: Set to `true` to enable the avoidance module, or `false` to disable it.
+- `use_experimental_lane_change_function`: Set to `true` to enable experimental features in the lane change module.
+
+The `behavior_path_planner.launch.xml` file references the settings defined in `default_preset.yaml` to apply the configurations when the behavior path planner's node is running. For instance, the parameter `avoidance.enable_module` in
+
+```xml
+<param name="avoidance.enable_module" value="$(var launch_avoidance_module)"/>
+```
+
+corresponds to launch_avoidance_module from `default_preset.yaml`.
+
+Therefore, to enable or disable a module, simply set the corresponding module in `default_preset.yaml` to `true` or `false`. These changes will be applied upon the next launch of Autoware.
+
 ## Collision Assessment / Safety check
 
 The collision assessment function's purpose in the Behavior Path Planner is to evaluate the potential for collisions with target objects across all modules. It is utilized in two scenarios. The first event occurs during candidate path generation to ensure that the generated candidate path is collision-free. The second occurs when the path is approved by the manager, and the ego vehicle is executing the current module. If the current situation is unsafe, depending on each module's requirements, the planner will either cancel the execution or opt to execute another module.
@@ -207,7 +224,7 @@ The shifted path generation logic allows behavior path planner to dynamically ge
 
 ## Parameters and Configuration
 
-The configuration files are organized in a hierarchical directory structure for ease of navigation and management. Each subdirectory contains specific configuration files relevant to its module. The root directory holds general configuration files that apply to the overall behavior of the planner. The following is an overview of the directory structure with the respective configuration files. These directories can be found [here](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner).
+The [configuration files](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner) are organized in a hierarchical directory structure for ease of navigation and management. Each subdirectory contains specific configuration files relevant to its module. The root directory holds general configuration files that apply to the overall behavior of the planner. The following is an overview of the directory structure with the respective configuration files.
 
 ```text
 behavior_path_planner
@@ -237,7 +254,13 @@ common
 ├── common.param.yaml
 ├── costmap_generator.param.yaml
 └── nearest_search.param.yaml
+```
 
+The [preset](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/preset) directory contains the configurations for managing the operational state of various modules. It includes the default_preset.yaml file, which specifically caters to enabling and disabling modules within the system.
+
+```text
+preset
+└── default_preset.yaml
 ```
 
 ## Limitations & Future Work
