@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lidar_marker_localizer/lidar_marker_localizer.hpp"
+#include "lidar_marker_localizer.hpp"
 
 #include "localization_util/pose_array_interpolator.hpp"
 
