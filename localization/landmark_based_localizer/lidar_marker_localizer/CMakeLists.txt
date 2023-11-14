@@ -12,7 +12,6 @@ link_directories(${PCL_LIBRARY_DIRS})
 ament_auto_add_executable(lidar_marker_localizer
   src/lidar_marker_localizer.cpp
   src/main.cpp
-  src/util_func.cpp
 )
 
 target_link_libraries(lidar_marker_localizer
