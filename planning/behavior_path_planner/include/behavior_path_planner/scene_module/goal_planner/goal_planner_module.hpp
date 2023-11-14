@@ -302,13 +302,32 @@ public:
   CandidateOutput planCandidate() const override { return CandidateOutput{}; }
 
 private:
+  /*　
+   * state transitions and plan function used in each state
+   *
+   * +--------------------------+
+   * | RUNNING                  |
+   * | plnaPullOverAsCandidate()|
+   * +------------+-------------+
+   *              | hasDecidedPath()
+   *  2           v
+   * +--------------------------+
+   * | WAITING_APPROVAL         |
+   * | planPullOverAsCandidate()|
+   * +------------+-------------+
+   *              | isActivated()
+   *  3           v
+   * +--------------------------+
+   * | RUNNING                  |
+   * | planPullOverAsOutput()   |
+   * +--------------------------+
+   */
+
   // The start_planner activates when it receives a new route,
   // so there is no need to terminate the goal planner.
   // If terminating it, it may switch to lane following and could generate an inappropriate path.
   bool canTransitSuccessState() override { return false; }
-
   bool canTransitFailureState() override { return false; }
-
   bool canTransitIdleToRunningState() override { return true; }
 
   mutable StartGoalPlannerData goal_planner_data_;
