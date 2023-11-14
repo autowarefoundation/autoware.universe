@@ -21,14 +21,14 @@
 #include "std_msgs/msg/string.hpp"
 
 #include <memory>
-//#include <pcl_ros/transforms.hpp>
-// #include <pcl/io/io.h>
-// #include <pcl/io/pcd_io.h>
-// #include <pcl/point_cloud.h>
-// #include <pcl/point_types.h>
-//#include <pcl/conversions.h>
+// #include <pcl_ros/transforms.hpp>
+//  #include <pcl/io/io.h>
+//  #include <pcl/io/pcd_io.h>
+//  #include <pcl/point_cloud.h>
+//  #include <pcl/point_types.h>
+// #include <pcl/conversions.h>
 #include <pcl_conversions/pcl_conversions.h>
-//#include <pcl_ros/transforms.hpp>
+// #include <pcl_ros/transforms.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -80,9 +80,9 @@ private:
     printf("hoge\n");
     static int call_count = 0;
     call_count++;
-    //rclcpp::Time stamp_ros = msg->header.stamp;
-    //double stamp = stamp_ros.seconds();
-    //   RCLCPP_INFO(this->get_logger(), "I heard: '%d'", msg->fields.size());
+    // rclcpp::Time stamp_ros = msg->header.stamp;
+    // double stamp = stamp_ros.seconds();
+    //    RCLCPP_INFO(this->get_logger(), "I heard: '%d'", msg->fields.size());
     for (size_t i = 0; i < msg->fields.size(); i++) {
       // RCLCPP_INFO(this->get_logger(), "I heard: '%s'",);
       printf(
@@ -214,12 +214,12 @@ private:
         for (int j = -5; j <= -4; j++) neg += intensity_line_image[i + j];
         for (int j = 4; j <= 5; j++) neg += intensity_line_image[i + j];
         double feature = pos / 5 - neg / 4;
-        //int mark;
+        // int mark;
         if (feature > 40) {
-        //  mark = 100;
+          //  mark = 100;
           vote[i]++;
         } else {
-        //  mark = 0;
+          //  mark = 0;
         }
         fprintf(ring_filter_x_fp[target_ring], "%.2f \n", feature);
         fprintf(ring_intensity_x_fp[target_ring], "%.2f \n", intensity_line_image[i]);

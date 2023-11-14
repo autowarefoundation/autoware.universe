@@ -74,7 +74,8 @@ geometry_msgs::msg::Pose matrix4f_to_pose(const Eigen::Matrix4f & eigen_pose_mat
 Eigen::Vector3d point_to_vector3d(const geometry_msgs::msg::Point & ros_pos);
 
 // std::vector<geometry_msgs::msg::Pose> create_random_pose_array(
-//   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int particle_num);
+//   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int
+//   particle_num);
 
 template <class T>
 T transform(const T & input, const geometry_msgs::msg::TransformStamped & transform)

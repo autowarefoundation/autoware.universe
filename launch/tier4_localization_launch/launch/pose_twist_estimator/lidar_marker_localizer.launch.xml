@@ -3,8 +3,7 @@
   <group>
     <push-ros-namespace namespace="lidar_marker_localizer"/>
     <group>
-      <include file="$(find-pkg-share intensity_check)/launch/lidar_marker_detector.launch.xml">
-      </include>
+      <include file="$(find-pkg-share intensity_check)/launch/lidar_marker_detector.launch.xml"/>
     </group>
   </group>
 </launch>

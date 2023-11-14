@@ -1,5 +1,4 @@
 <launch>
-
   <!-- Topics -->
   <arg name="input/pointcloud" default="/sensing/lidar/top/rectified/pointcloud_ex" description="input topic name"/>
   <arg name="output/pointcloud" default="filtered/pointcloud_ex" description="final output topic name"/>
@@ -25,6 +24,6 @@
 
   <node pkg="intensity_check" exec="lidar_marker_detector" name="lidar_marker_detector" output="log">
     <!-- <param from="$(var param_file)"/> -->
-      <remap from="input/pointcloud_ex" to="/sensing/lidar/top/outlier_filtered/pointcloud"/>
+    <remap from="input/pointcloud_ex" to="/sensing/lidar/top/outlier_filtered/pointcloud"/>
   </node>
 </launch>

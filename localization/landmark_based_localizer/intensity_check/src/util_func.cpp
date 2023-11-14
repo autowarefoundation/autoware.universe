@@ -238,7 +238,8 @@ geometry_msgs::msg::Pose matrix4f_to_pose(const Eigen::Matrix4f & eigen_pose_mat
 }
 
 // std::vector<geometry_msgs::msg::Pose> create_random_pose_array(
-//   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int particle_num)
+//   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int
+//   particle_num)
 // {
 //   std::default_random_engine engine(seed_gen());
 //   const Eigen::Map<const RowMatrixXd> covariance =

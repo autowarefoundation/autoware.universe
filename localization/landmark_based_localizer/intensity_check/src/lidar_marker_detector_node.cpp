@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <rclcpp/rclcpp.hpp>
-
 #include "intensity_check/lidar_marker_detector_core.hpp"
 
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char ** argv)
 {
