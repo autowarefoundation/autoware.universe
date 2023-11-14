@@ -155,8 +155,8 @@ diagnostic_msgs::msg::DiagnosticStatus checkDianosticYawBias(
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   stat.message = "OK";
   if (std::abs(yaw_bias) > yaw_bias_threshold) {
-    stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    stat.message = "[WARN] estimated yaw bias of " + measurement_type + " is large";
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    stat.message = "[ERROR] estimated yaw bias of " + measurement_type + " is large";
   }
 
   return stat;
