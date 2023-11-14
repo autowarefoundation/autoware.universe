@@ -39,7 +39,7 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   // Parameter
   time_stamp_field_name_ = declare_parameter("time_stamp_field_name", "time_stamp");
   use_imu_ = declare_parameter("use_imu", true);
-  update_azimuth_and_distance_ = declare_parameter("update_azimuth_and_distance", false);
+  update_azimuth_and_distance_ = declare_parameter<bool>("update_azimuth_and_distance");
 
   // Publisher
   undistorted_points_pub_ =
