@@ -441,7 +441,9 @@ void EKFLocalizer::updateSimple1DFilters(
       diagnostic_yaw_bias_filter_.update(yaw_bias, obs_variance, pose.header.stamp);
     }
     previous_ndt_pose_ = pose;
-    DEBUG_INFO(get_logger(), "[1DEKF] yaw_bias = %f; [1DEKF] filtered_yaw_bias = %f", yaw_bias, diagnostic_yaw_bias_filter_.get_x());
+    DEBUG_INFO(
+      get_logger(), "[1DEKF] yaw_bias = %f; [1DEKF] filtered_yaw_bias = %f", yaw_bias,
+      diagnostic_yaw_bias_filter_.get_x());
   }
 }
 
@@ -468,8 +470,10 @@ void EKFLocalizer::simpleEstimateYawBias(
   double speed = std::abs(twist.twist.twist.linear.x);
   double rotation_speed = std::abs(twist.twist.twist.angular.z);
 
-  DEBUG_INFO(get_logger(), "[1DEKF] dx = %f, dy = %f, yaw0 = %f, yaw1 = %f; speed = %f; rotation_speed = %f; ",
-                   dx, dy, estimated_yaw, measured_yaw, speed, rotation_speed);
+  DEBUG_INFO(
+    get_logger(),
+    "[1DEKF] dx = %f, dy = %f, yaw0 = %f, yaw1 = %f; speed = %f; rotation_speed = %f; ", dx, dy,
+    estimated_yaw, measured_yaw, speed, rotation_speed);
 
   if ((speed > 2) && (rotation_speed < 0.01) && (distance < 10) && (distance > 0.1)) {
     obs_variance = 0.1;
