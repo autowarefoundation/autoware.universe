@@ -307,7 +307,7 @@ private:
    *
    * +--------------------------+
    * | RUNNING                  |
-   * | plnaPullOverAsCandidate()|
+   * | planPullOverAsCandidate()|
    * +------------+-------------+
    *              | hasDecidedPath()
    *  2           v

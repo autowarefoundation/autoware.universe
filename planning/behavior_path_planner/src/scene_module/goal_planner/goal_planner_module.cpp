@@ -261,7 +261,7 @@ void GoalPlannerModule::updateData()
 
   generateGoalCandidates();
 
-  // Only after the path is decided, approval is allowed and Activated.
+  // Only after the path is decided, approval is allowed and the module is Activated.
   // The path index is not incremented until after deciding the path.
   // So return here,
   if (!isActivated()) {
@@ -1129,7 +1129,7 @@ PathWithLaneId GoalPlannerModule::generateStopPath() const
     return reference_path;
   }
 
-  // if already passed the decle pose, set pull_over_velocity to reference_path.
+  // if already passed the decel pose, set pull_over_velocity to reference_path.
   const auto min_decel_distance = calcFeasibleDecelDistance(
     planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk,
     pull_over_velocity);
