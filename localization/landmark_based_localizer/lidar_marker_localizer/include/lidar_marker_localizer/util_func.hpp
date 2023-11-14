@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTENSITY_CHECK__UTIL_FUNC_HPP_
-#define INTENSITY_CHECK__UTIL_FUNC_HPP_
+#ifndef LIDAR_MARKER_LOCALIZER__UTIL_FUNC_HPP_
+#define LIDAR_MARKER_LOCALIZER__UTIL_FUNC_HPP_
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -87,4 +87,4 @@ T transform(const T & input, const geometry_msgs::msg::TransformStamped & transf
 
 double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2);
 
-#endif  // INTENSITY_CHECK__UTIL_FUNC_HPP_
+#endif  // LIDAR_MARKER_LOCALIZER__UTIL_FUNC_HPP_

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTENSITY_CHECK__LIDAR_MARKER_DETECTOR_CORE_HPP_
-#define INTENSITY_CHECK__LIDAR_MARKER_DETECTOR_CORE_HPP_
+#ifndef LIDAR_MARKER_LOCALIZER__LIDAR_MARKER_LOCALIZER_HPP_
+#define LIDAR_MARKER_LOCALIZER__LIDAR_MARKER_LOCALIZER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -101,4 +101,4 @@ private:
   std::vector<geometry_msgs::msg::Pose> marker_pose_on_map_arrary_;
 };
 
-#endif  // INTENSITY_CHECK__LIDAR_MARKER_DETECTOR_CORE_HPP_
+#endif  // LIDAR_MARKER_LOCALIZER__LIDAR_MARKER_LOCALIZER_HPP_

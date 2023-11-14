@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTENSITY_CHECK__POSE_ARRAY_INTERPOLATOR_HPP_
-#define INTENSITY_CHECK__POSE_ARRAY_INTERPOLATOR_HPP_
+#ifndef LIDAR_MARKER_LOCALIZER__POSE_ARRAY_INTERPOLATOR_HPP_
+#define LIDAR_MARKER_LOCALIZER__POSE_ARRAY_INTERPOLATOR_HPP_
 
 #include "lidar_marker_localizer/util_func.hpp"
 
@@ -59,4 +59,4 @@ private:
     const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_) const;
 };
 
-#endif  // INTENSITY_CHECK__POSE_ARRAY_INTERPOLATOR_HPP_
+#endif  // LIDAR_MARKER_LOCALIZER__POSE_ARRAY_INTERPOLATOR_HPP_
