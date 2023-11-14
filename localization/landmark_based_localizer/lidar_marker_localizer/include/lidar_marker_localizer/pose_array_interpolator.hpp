@@ -15,7 +15,7 @@
 #ifndef INTENSITY_CHECK__POSE_ARRAY_INTERPOLATOR_HPP_
 #define INTENSITY_CHECK__POSE_ARRAY_INTERPOLATOR_HPP_
 
-#include "intensity_check/util_func.hpp"
+#include "lidar_marker_localizer/util_func.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

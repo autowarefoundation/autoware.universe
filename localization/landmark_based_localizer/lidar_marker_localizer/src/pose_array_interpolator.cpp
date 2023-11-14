@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "intensity_check/pose_array_interpolator.hpp"
+#include "lidar_marker_localizer/pose_array_interpolator.hpp"
 
 PoseArrayInterpolator::PoseArrayInterpolator(
   rclcpp::Node * node, const rclcpp::Time target_ros_time,

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "intensity_check/lidar_marker_detector_core.hpp"
+#include "lidar_marker_localizer/lidar_marker_localizer.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

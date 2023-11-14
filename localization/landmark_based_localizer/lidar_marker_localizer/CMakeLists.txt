@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(intensity_check)
+project(lidar_marker_localizer)
 
 # find dependencies
 find_package(autoware_cmake REQUIRED)
@@ -9,14 +9,14 @@ find_package(PCL REQUIRED COMPONENTS common io)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 
-ament_auto_add_executable(lidar_marker_detector
-  src/lidar_marker_detector_node.cpp
-  src/lidar_marker_detector_core.cpp
+ament_auto_add_executable(lidar_marker_localizer
+  src/lidar_marker_localizer.cpp
+  src/main.cpp
   src/pose_array_interpolator.cpp
   src/util_func.cpp
 )
 
-target_link_libraries(lidar_marker_detector
+target_link_libraries(lidar_marker_localizer
   ${PCL_LIBRARIES}
 )
 

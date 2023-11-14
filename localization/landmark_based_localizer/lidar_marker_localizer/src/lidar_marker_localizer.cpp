@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "intensity_check/lidar_marker_detector_core.hpp"
+#include "lidar_marker_localizer/lidar_marker_localizer.hpp"
 
-#include "intensity_check/pose_array_interpolator.hpp"
+#include "lidar_marker_localizer/pose_array_interpolator.hpp"
 
 #include <autoware_point_types/types.hpp>
 #include <rclcpp/qos.hpp>
@@ -26,7 +26,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 LidarMarkerDetector::LidarMarkerDetector()
-: Node("lidar_marker_detector"),
+: Node("lidar_marker_localizer"),
   diag_updater_(this),
   is_activated_(false),
   is_detected_marker_(false),
@@ -89,7 +89,7 @@ LidarMarkerDetector::LidarMarkerDetector()
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, this, false);
 
   diag_updater_.setHardwareID(get_name());
-  diag_updater_.add("lidar_marker_detector", this, &LidarMarkerDetector::update_diagnostics);
+  diag_updater_.add("lidar_marker_localizer", this, &LidarMarkerDetector::update_diagnostics);
 }
 
 void LidarMarkerDetector::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
