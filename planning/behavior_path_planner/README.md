@@ -36,18 +36,20 @@ Behavior Path Planner has following scene modules
 
     click on the following images to view the video of their execution
 
-    <table align="center">
-        <tr>
-            <td><img src="./image/supported_module_lane_following.svg" alt="Lane Following Module" width="300"></td>
-            <td><a href="https://www.youtube.com/watch?v=A_V9yvfKZ4E"><img src="./image/supported_module_avoidance.svg" alt="Avoidance Module" width="300"></a></td>
-            <td><img src="./image/supported_module_avoidance_by_lane_change.svg" alt="Avoidance by Lane Change Module" width="300"></td>
-        </tr>
-        <tr>
-            <td><a href="https://www.youtube.com/watch?v=0jRDGQ84cD4"><img src="./image/supported_module_lane_change.svg" alt="Lane Change Module" width="300"></a></td>
-            <td><a href="https://www.youtube.com/watch?v=xOjnPqoHup4"><img src="./image/supported_module_start_planner.svg" alt="Start Planner Module" width="300"></a></td>
-            <td><a href="https://www.youtube.com/watch?v=ornbzkWxRWU"><img src="./image/supported_module_goal_planner.svg" alt="Goal Planner Module" width="300"></a></td>
-        </tr>
-    </table>
+    <div align="center">
+        <table>
+            <tr>
+                <td><img src="./image/supported_module_lane_following.svg" alt="Lane Following Module" width="300"></td>
+                <td><a href="https://www.youtube.com/watch?v=A_V9yvfKZ4E"><img src="./image/supported_module_avoidance.svg" alt="Avoidance Module" width="300"></a></td>
+                <td><img src="./image/supported_module_avoidance_by_lane_change.svg" alt="Avoidance by Lane Change Module" width="300"></td>
+            </tr>
+            <tr>
+                <td><a href="https://www.youtube.com/watch?v=0jRDGQ84cD4"><img src="./image/supported_module_lane_change.svg" alt="Lane Change Module" width="300"></a></td>
+                <td><a href="https://www.youtube.com/watch?v=xOjnPqoHup4"><img src="./image/supported_module_start_planner.svg" alt="Start Planner Module" width="300"></a></td>
+                <td><a href="https://www.youtube.com/watch?v=ornbzkWxRWU"><img src="./image/supported_module_goal_planner.svg" alt="Goal Planner Module" width="300"></a></td>
+            </tr>
+        </table>
+    </div>
 
 !!! Note
 
@@ -69,9 +71,11 @@ The Planner Manager's responsibilities include:
 2. Managing the execution order of when multiple modules are running at the same time. If, for instance, both lane-changing and avoidance modules are operational, the manager decides which should take precedence.
 3. When multiple modules are activated simultaneously and each generates its own path, the manager merges these into a single functional path.
 
-To check the scene module's transition, i.e.: registered, approved and candidate modules, set `verbose: true` in the [behavior path planner configuration file](https://github.com/autowarefoundation/autoware_launch/blob/0cd5d891a36ac34a32a417205905c109f2bafe7b/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/behavior_path_planner.param.yaml#L3).
+!!! note
 
-![Scene module's transition table](./image/checking_module_transition.png)
+    To check the scene module's transition, i.e.: registered, approved and candidate modules, set `verbose: true` in the [behavior path planner configuration file](https://github.com/autowarefoundation/autoware_launch/blob/0cd5d891a36ac34a32a417205905c109f2bafe7b/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/behavior_path_planner.param.yaml#L3).
+
+    ![Scene module's transition table](./image/checking_module_transition.png)
 
 !!! note
 
@@ -130,21 +134,20 @@ To check the scene module's transition, i.e.: registered, approved and candidate
 
 ### Static Drivable area logic
 
-The behavior path planner generates drivable area that is defined in `autoware_auto_planning_msgs::msg::PathWithLaneId` and `autoware_auto_planning_msgs::msg::Path` messages as:
+The drivable area is used to determine the area in which the ego vehicle can travel. The primary goal of static drivable area expansion is to ensure safe travel by generating an area that encompasses only the necessary spaces for the vehicle's current behavior, while excluding non-essential areas. For example, while `avoidance` module is running, the drivable area includes additional space needed for maneuvers around obstacles, and it limits the behavior by not extending the avoidance path outside of lanelet areas.
 
-```c++
-std::vector<geometry_msgs::msg::Point> left_bound;
-std::vector<geometry_msgs::msg::Point> right_bound;
-```
+<div align="center">
+    <table>
+        <tr>
+            <td><img src="./image/static_drivable_area_before_expansion.png" alt="Before expansion"></td>
+        </tr>
+        <tr>
+            <td><img src="./image/static_drivable_area_after_expansion.png" alt="After expansion"></td>
+        </tr>
+    </table>
+</div>
 
-Optionally, the drivable area can be expanded by a static distance.
-Expansion parameters are defined for each module of the `behavior_path_planner` and should be prefixed accordingly (see `config/drivable_area_expansion.yaml` for an example).
-
-| Name                             | Unit | Type            | Description                                | Default value |
-| :------------------------------- | :--- | :-------------- | :----------------------------------------- | :------------ |
-| drivable_area_right_bound_offset | [m]  | double          | expansion distance of the right bound      | 0.0           |
-| drivable_area_right_bound_offset | [m]  | double          | expansion distance of the left bound       | 0.0           |
-| drivable_area_types_to_skip      |      | list of strings | types of linestrings that are not expanded | [road_border] |
+Static drivable area expansion operates under assumptions about the correct arrangement of lanes and the coverage of both the front and rear of the vehicle within the left and right boundaries. Key parameters for drivable area generation include extra footprint offsets for the ego vehicle, the handling of dynamic objects, maximum expansion distance, and specific methods for expansion. Additionally, since each module generates its own drivable area, before passing it as the input to generate the next running module's drivable area, or before generating a unified drivable area, the system sorts drivable lanes based on the vehicle's passage order. This ensures the correct definition of the lanes used in drivable area generation.
 
 !!! note
 
