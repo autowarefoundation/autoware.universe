@@ -4,7 +4,7 @@
 
 The `distortion_corrector` is a node that compensates pointcloud distortion caused by ego vehicle's movement during 1 scan.
 
-Since the LiDAR sensor scans by rotating an internal laser, the resulting point cloud will be distorted if the ego-vehicle moves during a single scan (as shown by the figure below). The node corrects this by interpolating sensor data using odometry of ego-vehicle.
+Since the LiDAR sensor scans by rotating an internal laser, the resulting point cloud will be distorted if the ego-vehicle moves during a single scan (as shown by the figure below). The node corrects this by interpolating sensor data using the odometry of the ego-vehicle.
 
 ## Inner-workings / Algorithms
 
@@ -47,4 +47,4 @@ $ ExactPointTime = TimeStamp + TimeOffset $
 
 ## Assumptions / Known limits
 
-When setting the parameter `update_azimuth_and_distance` to True, the node will calculate the azimuth value based on the undistorted XYZ by using atan2, which will return the azimuth value with the coordinate system that the x-axis is 0 degrees and the y-axis is 90 degrees. Please make sure the frame coordinates are same as the coordinate system mentioned in the above. For autoware user, the frame_id of input pointcloud is base_link, which the coordinate system is same as the coordinate system mentioned above, therefore it won't casue any issues. Also note that by setting the parameter `update_azimuth_and_distance` to True, the time will incrase around 13%.
+When setting the parameter `update_azimuth_and_distance` to True, the node will calculate the azimuth value based on the undistorted XYZ by using atan2, which will return the azimuth value with the coordinate system that the x-axis is 0 degrees and the y-axis is 90 degrees. Please make sure the frame coordinates are the same as the coordinate system mentioned above. For autoware users, the frame_id of input pointcloud is base_link, which the coordinate system is the same as the coordinate system mentioned above, therefore it won't cause any issues. Also note that by setting the parameter `update_azimuth_and_distance` to True, the time will increase by around 13%.
