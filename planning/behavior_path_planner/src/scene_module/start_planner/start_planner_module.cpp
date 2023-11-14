@@ -731,7 +731,6 @@ void StartPlannerModule::updatePullOutStatus()
 {
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
-  const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
