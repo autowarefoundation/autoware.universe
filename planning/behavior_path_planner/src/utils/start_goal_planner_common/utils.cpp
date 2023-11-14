@@ -14,6 +14,8 @@
 
 #include "behavior_path_planner/utils/start_goal_planner_common/utils.hpp"
 
+#include <magic_enum.hpp>
+
 namespace behavior_path_planner::utils::start_goal_planner_common
 {
 
@@ -197,6 +199,63 @@ std::optional<PathWithLaneId> generateFeasibleStopPath(
   stop_pose = current_path.points.at(*stop_idx).point.pose;
 
   return current_path;
+}
+
+void logPullOutStatus(
+  const PullOutStatus & status, rclcpp::Logger logger, rclcpp::Logger::Level log_level)
+{
+  auto logFunc = [&logger, log_level](const char * format, ...) {
+    char buffer[1024];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+    switch (log_level) {
+      case rclcpp::Logger::Level::Debug:
+        RCLCPP_DEBUG(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Info:
+        RCLCPP_INFO(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Warn:
+        RCLCPP_WARN(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Error:
+        RCLCPP_ERROR(logger, "%s", buffer);
+        break;
+      case rclcpp::Logger::Level::Fatal:
+        RCLCPP_FATAL(logger, "%s", buffer);
+        break;
+      default:
+        RCLCPP_INFO(logger, "%s", buffer);
+        break;
+    }
+  };
+
+  logFunc("======== PullOutStatus Report ========");
+
+  logFunc("[Path Info]");
+  logFunc("  Current Path Index: %zu", status.current_path_idx);
+
+  logFunc("[Planner Info]");
+  logFunc("  Planner Type: %s", magic_enum::enum_name(status.planner_type).data());
+
+  logFunc("[Safety and Direction Info]");
+  logFunc("  Found Pull Out Path: %s", status.found_pull_out_path ? "true" : "false");
+  logFunc(
+    "  Is Safe Against Dynamic Objects: %s", status.is_safe_dynamic_objects ? "true" : "false");
+  logFunc(
+    "  Previous Is Safe Dynamic Objects: %s",
+    status.prev_is_safe_dynamic_objects ? "true" : "false");
+  logFunc("  Driving Forward: %s", status.driving_forward ? "true" : "false");
+  logFunc("  Backward Driving Complete: %s", status.backward_driving_complete ? "true" : "false");
+  logFunc("  Backward Path Enabled: %s", status.backward_path_is_enabled ? "true" : "false");
+  logFunc("  Has Stop Point: %s", status.has_stop_point ? "true" : "false");
+
+  logFunc("[Position Info]");
+  // logFunc("  Pull Out Start Pose: %s", std::to_string(status.pull_out_start_pose).c_str());
+
+  logFunc("=======================================");
 }
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common

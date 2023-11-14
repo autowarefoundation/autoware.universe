@@ -257,6 +257,11 @@ bool StartPlannerModule::isExecutionReady() const
   return true;
 }
 
+bool StartPlannerModule::canTransitSuccessState()
+{
+  return hasFinishedPullOut() || status_.backward_driving_complete;
+}
+
 void StartPlannerModule::updateCurrentState()
 {
   RCLCPP_DEBUG(getLogger(), "START_PLANNER updateCurrentState");
@@ -273,17 +278,6 @@ void StartPlannerModule::updateCurrentState()
   } else {
     current_state_ = ModuleStatus::IDLE;
   }
-
-  // TODO(someone): move to canTransitSuccessState
-  if (hasFinishedPullOut()) {
-    current_state_ = ModuleStatus::SUCCESS;
-  }
-  // TODO(someone): move to canTransitSuccessState
-  if (status_.backward_driving_complete) {
-    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
-  }
-
-  print(magic_enum::enum_name(from), magic_enum::enum_name(current_state_));
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()
@@ -641,6 +635,18 @@ void StartPlannerModule::updateStatusIfNoSafePathFound()
     status_.found_pull_out_path = false;
     status_.planner_type = PlannerType::NONE;
   }
+}
+
+void StartPlannerModule::updateStatusWithStopPath()
+{
+  const std::lock_guard<std::mutex> lock(mutex_);
+  status_.backward_path_is_enabled = false;
+  status_.driving_forward = true;
+  status_.stop_path = generateStopPath();
+  status_.pull_out_path.partial_paths.clear();
+  status_.pull_out_path.partial_paths.push_back(status_.stop_path);
+  status_.found_pull_out_path = false;
+  status_.planner_type = PlannerType::STOP;
 }
 
 PathWithLaneId StartPlannerModule::generateStopPath() const
@@ -1165,27 +1171,22 @@ bool StartPlannerModule::IsGoalBehindOfEgoInSameRouteSegment() const
 // NOTE: this must be called after updatePullOutStatus(). This must be fixed.
 BehaviorModuleOutput StartPlannerModule::generateStopOutput()
 {
+  updateStatusWithStopPath();
   BehaviorModuleOutput output;
-  const PathWithLaneId stop_path = generateStopPath();
-  output.path = std::make_shared<PathWithLaneId>(stop_path);
+  output.path = std::make_shared<PathWithLaneId>(status_.stop_path);
 
   setDrivableAreaInfo(output);
 
   output.reference_path = getPreviousModuleOutput().reference_path;
 
   {
-    const std::lock_guard<std::mutex> lock(mutex_);
-    status_.driving_forward = true;
-    status_.planner_type = PlannerType::STOP;
-    status_.pull_out_path.partial_paths.clear();
-    status_.pull_out_path.partial_paths.push_back(stop_path);
     const Pose & current_pose = planner_data_->self_odometry->pose.pose;
     status_.pull_out_start_pose = current_pose;
     status_.pull_out_path.start_pose = current_pose;
     status_.pull_out_path.end_pose = current_pose;
   }
 
-  path_candidate_ = std::make_shared<PathWithLaneId>(stop_path);
+  path_candidate_ = std::make_shared<PathWithLaneId>(status_.stop_path);
   path_reference_ = getPreviousModuleOutput().reference_path;
 
   return output;
