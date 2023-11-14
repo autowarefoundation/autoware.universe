@@ -139,6 +139,29 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementMahalanobisGate(
   return stat;
 }
 
+diagnostic_msgs::msg::DiagnosticStatus checkDianosticYawBias(
+  const std::string & measurement_type, const double yaw_bias, const double yaw_bias_threshold)
+{
+  diagnostic_msgs::msg::DiagnosticStatus stat;
+
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = measurement_type + "yaw_bias";
+  key_value.value = std::to_string(yaw_bias);
+  stat.values.push_back(key_value);
+  key_value.key = measurement_type + "yaw_bias_threshold";
+  key_value.value = std::to_string(yaw_bias_threshold);
+  stat.values.push_back(key_value);
+
+  stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  stat.message = "OK";
+  if (std::abs(yaw_bias) > yaw_bias_threshold) {
+    stat.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    stat.message = "[WARN] estimated yaw bias of " + measurement_type + " is large";
+  }
+
+  return stat;
+}
+
 // The highest level within the stat_array will be reflected in the merged_stat.
 // When all stat_array entries are 'OK,' the message of merged_stat will be "OK"
 diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(

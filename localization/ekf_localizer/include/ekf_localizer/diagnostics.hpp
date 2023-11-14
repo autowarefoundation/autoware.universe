@@ -33,6 +33,8 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementDelayGate(
 diagnostic_msgs::msg::DiagnosticStatus checkMeasurementMahalanobisGate(
   const std::string & measurement_type, const bool is_passed_mahalanobis_gate,
   const double mahalanobis_distance, const double mahalanobis_distance_threshold);
+diagnostic_msgs::msg::DiagnosticStatus checkDianosticYawBias(
+  const std::string & measurement_type, const double yaw_bias, const double yaw_bias_threshold);
 
 diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
   const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & stat_array);

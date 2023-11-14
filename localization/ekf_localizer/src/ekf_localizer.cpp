@@ -98,6 +98,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   z_filter_.set_proc_dev(1.0);
   roll_filter_.set_proc_dev(0.01);
   pitch_filter_.set_proc_dev(0.01);
+  diagnostic_yaw_bias_filter_.set_proc_dev(0.0001);
 }
 
 /*
@@ -389,6 +390,8 @@ void EKFLocalizer::publishDiagnostics()
     diag_status_array.push_back(checkMeasurementMahalanobisGate(
       "pose", pose_diag_info_.is_passed_mahalanobis_gate, pose_diag_info_.mahalanobis_distance,
       params_.pose_gate_dist));
+    diag_status_array.push_back(
+      checkDianosticYawBias("pose", diagnostic_yaw_bias_filter_.get_x(), 0.1));
 
     diag_status_array.push_back(checkMeasurementUpdated(
       "twist", twist_diag_info_.no_update_count, params_.twist_no_update_count_threshold_warn,
@@ -429,11 +432,56 @@ void EKFLocalizer::updateSimple1DFilters(
   z_filter_.update(z, z_dev, pose.header.stamp);
   roll_filter_.update(rpy.x, roll_dev, pose.header.stamp);
   pitch_filter_.update(rpy.y, pitch_dev, pose.header.stamp);
+
+  if (twist_queue_.size() > 0) {
+    auto twist = twist_queue_.back();
+    double yaw_bias, obs_variance;
+    simpleEstimateYawBias(pose, *twist, yaw_bias, obs_variance);
+    if (obs_variance < 100) {
+      diagnostic_yaw_bias_filter_.update(yaw_bias, obs_variance, pose.header.stamp);
+    }
+    previous_ndt_pose_ = pose;
+    DEBUG_INFO(get_logger(), "[1DEKF] yaw_bias = %f; [1DEKF] filtered_yaw_bias = %f", yaw_bias, diagnostic_yaw_bias_filter_.get_x());
+  }
+}
+
+void EKFLocalizer::simpleEstimateYawBias(
+  const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
+  const geometry_msgs::msg::TwistWithCovarianceStamped & twist, double & yaw_bias,
+  double & obs_variance)
+{
+  double dx = pose.pose.pose.position.x - previous_ndt_pose_.pose.pose.position.x;
+  double dy = pose.pose.pose.position.y - previous_ndt_pose_.pose.pose.position.y;
+  double distance = std::sqrt(dx * dx + dy * dy);
+  double estimated_yaw = std::atan2(dy, dx);
+  double measured_yaw = std::atan2(pose.pose.pose.orientation.z, pose.pose.pose.orientation.w) * 2;
+
+  yaw_bias = measured_yaw - estimated_yaw;
+
+  while (yaw_bias > M_PI / 2) {
+    yaw_bias -= M_PI;
+  }
+  while (yaw_bias < -M_PI / 2) {
+    yaw_bias += M_PI;
+  }  // normalize to -pi/2 ~ pi/2
+
+  double speed = std::abs(twist.twist.twist.linear.x);
+  double rotation_speed = std::abs(twist.twist.twist.angular.z);
+
+  DEBUG_INFO(get_logger(), "[1DEKF] dx = %f, dy = %f, yaw0 = %f, yaw1 = %f; speed = %f; rotation_speed = %f; ",
+                   dx, dy, estimated_yaw, measured_yaw, speed, rotation_speed);
+
+  if ((speed > 2) && (rotation_speed < 0.01) && (distance < 10) && (distance > 0.1)) {
+    obs_variance = 0.1;
+  } else {
+    obs_variance = 999;
+  }
 }
 
 void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
 {
   double z = pose.pose.pose.position.z;
+  double diagnostic_yaw_bias_init = 0.0;
 
   const auto rpy = tier4_autoware_utils::getRPY(pose.pose.pose.orientation);
 
@@ -441,10 +489,13 @@ void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovaria
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z];
   double roll_dev = pose.pose.covariance[COV_IDX::ROLL_ROLL];
   double pitch_dev = pose.pose.covariance[COV_IDX::PITCH_PITCH];
+  double diagnostic_yaw_dev_init = 1e9;  // make no assumption for the
 
   z_filter_.init(z, z_dev, pose.header.stamp);
   roll_filter_.init(rpy.x, roll_dev, pose.header.stamp);
   pitch_filter_.init(rpy.y, pitch_dev, pose.header.stamp);
+  diagnostic_yaw_bias_filter_.init(
+    diagnostic_yaw_bias_init, diagnostic_yaw_dev_init, pose.header.stamp);
 }
 
 /**
