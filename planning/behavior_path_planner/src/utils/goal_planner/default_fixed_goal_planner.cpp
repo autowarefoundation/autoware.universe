@@ -115,7 +115,7 @@ PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
     }
   }
   double goal_search_radius {planner_data->parameters.refine_goal_search_radius_range};
-  double range_reduce_by {1}; // set a reasonable value, 10% - 20% of the refine_goal_search_radius_range is recommended
+  const double range_reduce_by {1}; // set a reasonable value, 10% - 20% of the refine_goal_search_radius_range is recommended
   int path_is_valid {0};
   autoware_auto_planning_msgs::msg::PathWithLaneId refined_path;
   while(goal_search_radius >= 0 && !path_is_valid) {
