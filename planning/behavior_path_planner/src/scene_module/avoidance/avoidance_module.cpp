@@ -2025,7 +2025,7 @@ PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & orig
     planner_data_->parameters.backward_path_length, longest_dist_to_shift_point + extra_margin);
 
   const size_t orig_ego_idx = planner_data_->findEgoIndex(original_path.points);
-  const auto prev_ego_idx = motion_utils::findNearestIndex(
+  const auto prev_ego_idx = motion_utils::findNearestSegmentIndex(
     previous_path.points, getPose(original_path.points.at(orig_ego_idx)),
     std::numeric_limits<double>::max(), planner_data_->parameters.ego_nearest_yaw_threshold);
   if (!prev_ego_idx) {
