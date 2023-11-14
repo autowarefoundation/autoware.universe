@@ -315,7 +315,8 @@ void LaneChangeInterface::setObjectDebugVisualizationTmp()
 {
   const auto debug_data = module_type_->getDebugData();
   for (const auto & [uuid, data] : debug_data) {
-    interest_objects_marker_interface_.insertObjectStatus(data.current_obj_pose, 1.5, data.is_safe);
+    interest_objects_marker_interface_.insertObjectStatus(
+      data.current_obj_pose, data.extended_obj_polygon, 1.5, data.is_safe);
   }
   return;
 }

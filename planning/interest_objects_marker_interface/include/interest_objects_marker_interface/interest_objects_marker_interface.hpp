@@ -16,6 +16,7 @@
 #define INTEREST_OBJECTS_MARKER_INTERFACE__INTEREST_OBJECTS_MARKER_INTERFACE_HPP_
 #include "rclcpp/rclcpp.hpp"
 
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -28,12 +29,14 @@
 namespace interest_objects_marker_interface
 {
 using geometry_msgs::msg::Pose;
+using tier4_autoware_utils::Polygon2d;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
 struct ObjectStatus
 {
   Pose pose{};
+  Polygon2d polygon{};
   double height{0.0};
   bool safe{false};
 };
@@ -42,7 +45,8 @@ class InterestObjectsMarkerInterface
 {
 public:
   InterestObjectsMarkerInterface(rclcpp::Node * node, const std::string & name);
-  void insertObjectStatus(const Pose & pose, const double obj_height, const bool safe);
+  void insertObjectStatus(
+    const Pose & pose, const Polygon2d & polygon, const double obj_height, const bool safe);
   void publishMarkerArray();
 
 private:
@@ -52,8 +56,6 @@ private:
 
   std::string name_;
   std::string topic_namespace_ = "/planning/interest_objects_marker";
-
-  mutable std::mutex mutex_;
 };
 
 }  // namespace interest_objects_marker_interface
