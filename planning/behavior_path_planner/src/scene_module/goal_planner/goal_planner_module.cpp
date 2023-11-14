@@ -852,8 +852,7 @@ void GoalPlannerModule::updateSteeringFactor(
     pose, distance, SteeringFactor::GOAL_PLANNER, steering_factor_direction, type, "");
 }
 
-// NOTE: this function returns true once it returns true. Because selectSafePullOverPath() will
-// not select new path.
+// NOTE: Once this function returns true, it will continue to return true thereafter. Because selectSafePullOverPath() will not select new path.
 bool GoalPlannerModule::hasDecidedPath() const
 {
   // if path is not safe, not decided
