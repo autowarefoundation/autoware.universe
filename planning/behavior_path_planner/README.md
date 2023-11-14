@@ -205,6 +205,41 @@ The shifted path generation logic allows behavior path planner to dynamically ge
 
     If you're a math lover, refer to [Path Generation Design](./docs/behavior_path_planner_path_generation_design.md) for the nitty-gritty.
 
+## Parameters and Configuration
+
+The configuration files are organized in a hierarchical directory structure for ease of navigation and management. Each subdirectory contains specific configuration files relevant to its module. The root directory holds general configuration files that apply to the overall behavior of the planner. The following is an overview of the directory structure with the respective configuration files. These directories can be found [here](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner).
+
+```text
+behavior_path_planner
+├── behavior_path_planner.param.yaml
+├── drivable_area_expansion.param.yaml
+├── scene_module_manager.param.yaml
+├── avoidance
+│   └── avoidance.param.yaml
+├── avoidance_by_lc
+│   └── avoidance_by_lc.param.yaml
+├── dynamic_avoidance
+│   └── dynamic_avoidance.param.yaml
+├── goal_planner
+│   └── goal_planner.param.yaml
+├── lane_change
+│   └── lane_change.param.yaml
+├── side_shift
+│   └── side_shift.param.yaml
+└── start_planner
+    └── start_planner.param.yaml
+```
+
+Similarly, the [common](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/common) directory contains configuration files that are used across various modules, providing shared parameters and settings essential for the functioning of the Behavior Path Planner:
+
+```text
+common
+├── common.param.yaml
+├── costmap_generator.param.yaml
+└── nearest_search.param.yaml
+
+```
+
 ## Limitations & Future Work
 
     1. Some module cannot be simultaneously executed for now. For instance
