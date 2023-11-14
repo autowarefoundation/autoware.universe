@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameters for vehicle_cmd_gate",
+  "title": "Parameters for vehicle cmd gate",
   "type": "object",
   "definitions": {
     "vehicle_cmd_gate": {
