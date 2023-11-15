@@ -435,7 +435,7 @@ void EKFLocalizer::updateSimple1DFilters(
   if (twist_queue_.size() > 0) {
     auto twist = twist_queue_.back();
     diagnostic_yaw_bias_filter_.update(pose, *twist, 0.1);
-    DEBUG_INFO(get_logger(), "[1DEKF] filtered_yaw_bias = %f", diagnostic_yaw_bias_filter_.get_x());
+    DEBUG_INFO(get_logger(), "[1DKF] filtered_yaw_bias = %f", diagnostic_yaw_bias_filter_.get_x());
   }
 }
 
