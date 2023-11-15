@@ -31,50 +31,12 @@
           "default": "true",
           "description": "use Gnss-Ins orientation"
         },
-        "coordinate_system": {
-          "type": "integer",
-          "default": "4",
-          "minimum": 0,
-          "maximum": 4,
-          "description": "Coordinate system enumeration; 0: UTM, 1: MGRS, 2: Plane, 3: WGS84 Local Coordinate System, 4: UTM Local Coordinate System"
-        },
-        "plane_zone": {
-          "type": "integer",
-          "default": "9",
-          "exclusiveMinimum": 0,
-          "description": "Identification number of the plane rectangular coordinate systems."
-        },
-        "height_system": {
-          "type": "integer",
-          "default": 1,
-          "minimum": 0,
-          "maximum": 1,
-          "description": "0:Orthometric Height, 1:Ellipsoid Height"
-        },
         "gnss_pose_pub_method": {
           "type": "integer",
           "default": "0",
           "minimum": 0,
           "maximum": 2,
           "description": "0: Instant Value 1: Average Value 2: Median Value. If 0 is chosen buffer_epoch parameter loses affect."
-        },
-        "latitude": {
-          "type": "number",
-          "default": "40.81187906",
-          "minimum": 0,
-          "description": "Latitude of local origin"
-        },
-        "longitude": {
-          "type": "number",
-          "default": "29.35810110",
-          "minimum": 0,
-          "description": "Longitude of local origin"
-        },
-        "altitude": {
-          "type": "number",
-          "default": "47.62",
-          "minimum": 0,
-          "description": "Altitude of local origin"
         },
         "buff_epoch": {
           "type": "integer",
@@ -89,13 +51,7 @@
         "gnss_base_frame",
         "map_frame",
         "use_gnss_ins_orientation",
-        "coordinate_system",
-        "plane_zone",
-        "height_system",
         "gnss_pose_pub_method",
-        "latitude",
-        "longitude",
-        "altitude",
         "buff_epoch"
       ]
     }
