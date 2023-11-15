@@ -98,6 +98,12 @@ MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
 
 bool MapBasedRule::artag_is_available() const
 {
+  if (shared_data_->vector_map.has_value()) {
+    if (!ar_tag_position_->vector_map_initialized()) {
+      ar_tag_position_->init(shared_data_->vector_map());
+    }
+  }
+
   if (running_estimator_list_.count(PoseEstimatorName::artag) == 0) {
     return false;
   }

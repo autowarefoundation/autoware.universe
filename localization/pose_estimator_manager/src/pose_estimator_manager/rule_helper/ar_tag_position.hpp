@@ -18,11 +18,8 @@
 #include <rclcpp/logger.hpp>
 #include <rclcpp/node.hpp>
 
-#include <geometry_msgs/msg/point.hpp>
-
-#include <tf2/transform_datatypes.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
 #include <memory>
 #include <string>
@@ -33,22 +30,20 @@ namespace pose_estimator_manager::rule_helper
 class ArTagPosition
 {
 public:
-  using TransformStamped = geometry_msgs::msg::TransformStamped;
+  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using Pose = geometry_msgs::msg::Pose;
 
   explicit ArTagPosition(rclcpp::Node * node);
 
   double distance_to_nearest_ar_tag_around_ego(const geometry_msgs::msg::Point & ego_point) const;
+  void init(const HADMapBin::ConstSharedPtr msg);
+  bool vector_map_initialized() const;
 
 private:
   struct Impl;
   std::shared_ptr<Impl> impl_;
   rclcpp::Logger logger_;
-
-  tf2_ros::Buffer tf2_buffer_;
-  tf2_ros::TransformListener tf2_listener_;
-
-  std::optional<TransformStamped> get_transform(
-    const std::string & target_frame, const std::string & source_frame) const;
+  bool vector_map_is_initialized_{false};
 };
 }  // namespace pose_estimator_manager::rule_helper
 
