@@ -163,8 +163,8 @@ private:
   AgedObjectQueue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr> pose_queue_;
   AgedObjectQueue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> twist_queue_;
 
-  //!< @brief accumulated time for timer callback
-  rclcpp::Duration accumulated_time_;
+  //!< @brief accumulated time for prediction in timer callback
+  rclcpp::Duration accumulated_lap_time_;
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
@@ -192,9 +192,9 @@ private:
   void callbackInitialPose(geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
   /**
-   * @brief update predict frequency
+   * @brief measure lap time of timer callback
    */
-  void updatePredictFrequency();
+  void measureLapTime();
 
   /**
    * @brief get transform from frame_id

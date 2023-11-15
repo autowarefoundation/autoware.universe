@@ -46,7 +46,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   params_(this),
   pose_queue_(params_.pose_smoothing_steps),
   twist_queue_(params_.twist_smoothing_steps),
-  accumulated_time_(0, 0)
+  accumulated_lap_time_(0, 0)
 {
   is_activated_ = false;
 
@@ -95,18 +95,18 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 }
 
 /*
- * updatePredictFrequency
+ * measureLapTime
  */
-void EKFLocalizer::updatePredictFrequency()
+void EKFLocalizer::measureLapTime()
 {
   rclcpp::Time current_time = get_clock()->now();
   if (last_predict_time_.seconds() != 0.0) {
     if (current_time < last_predict_time_) {
       warning_->warn("Detected jump back in time");
     } else {
-      accumulated_time_ = accumulated_time_ + (current_time - last_predict_time_);
+      accumulated_lap_time_ = accumulated_lap_time_ + (current_time - last_predict_time_);
       double current_ekf_dt_ = (current_time - last_predict_time_).seconds();
-      DEBUG_INFO(get_logger(), "[EKF] update ekf_dt_ to %f seconds", current_ekf_dt_);
+      DEBUG_INFO(get_logger(), "[EKF] timer callback lap time = %f [sec]", current_ekf_dt_);
     }
   } 
   last_predict_time_ = current_time;
@@ -126,20 +126,20 @@ void EKFLocalizer::timerCallback()
 
   DEBUG_INFO(get_logger(), "========================= timer called =========================");
 
-  /* update predict frequency with measured timer rate */
-  updatePredictFrequency();
+  /* measure lap time of this timer callback and check time jumps */
+  measureLapTime();
 
   /* predict model in EKF */
   stop_watch_.tic();
   DEBUG_INFO(get_logger(), "------------------------- start prediction -------------------------");
-  DEBUG_INFO(get_logger(), "[EKF] accumulated_time = %lf [s] (before prediction)", accumulated_time_.seconds());
-  size_t prediction_times = static_cast<int>(accumulated_time_.seconds() / params_.ekf_dt);
+  DEBUG_INFO(get_logger(), "[EKF] accumulated_time = %lf [s] (before prediction)", accumulated_lap_time_.seconds());
+  size_t prediction_times = static_cast<int>(accumulated_lap_time_.seconds() / params_.ekf_dt);
   for (size_t i = 0; i < prediction_times; ++i) {
     ekf_module_->predictWithDelay(params_.ekf_dt);
   }
-  accumulated_time_ = accumulated_time_ - rclcpp::Duration::from_seconds(params_.ekf_dt * prediction_times);
+  accumulated_lap_time_ = accumulated_lap_time_ - rclcpp::Duration::from_seconds(params_.ekf_dt * prediction_times);
   DEBUG_INFO(get_logger(), "[EKF] predictKinematicsModel calc time = %f [ms] (predicted %d times)", stop_watch_.toc(), static_cast<int>(prediction_times));
-  DEBUG_INFO(get_logger(), "[EKF] accumulated_time = %lf [s] (after prediction)", accumulated_time_.seconds());
+  DEBUG_INFO(get_logger(), "[EKF] accumulated_time = %lf [s] (after prediction)", accumulated_lap_time_.seconds());
   DEBUG_INFO(get_logger(), "------------------------- end prediction -------------------------\n");
 
   /* pose measurement update */
