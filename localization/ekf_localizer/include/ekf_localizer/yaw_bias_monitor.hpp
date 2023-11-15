@@ -17,8 +17,6 @@
 
 #include "ekf_localizer/simple_filter_base.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
@@ -58,7 +56,6 @@ public:
   }
 
 private:
-  rclcpp::Node * node_;
   geometry_msgs::msg::PoseWithCovarianceStamped previous_ndt_pose_;
 };
 
