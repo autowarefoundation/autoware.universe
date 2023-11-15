@@ -135,7 +135,7 @@ protected:
 
   void setObjectDebugVisualization() const;
 
-  void setObjectDebugVisualizationTmp();
+  void setObjectDebugVisualizationTmp(const bool is_approved);
 
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
 
