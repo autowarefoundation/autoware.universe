@@ -432,11 +432,8 @@ void EKFLocalizer::updateSimple1DFilters(
   z_filter_.update(z, z_dev, pose.header.stamp);
   roll_filter_.update(rpy.x, roll_dev, pose.header.stamp);
   pitch_filter_.update(rpy.y, pitch_dev, pose.header.stamp);
-  if (twist_queue_.size() > 0) {
-    auto twist = twist_queue_.back();
-    diagnostic_yaw_bias_filter_.update(pose, *twist, 0.1);
-    DEBUG_INFO(get_logger(), "[1DKF] filtered_yaw_bias = %f", diagnostic_yaw_bias_filter_.get_x());
-  }
+  diagnostic_yaw_bias_filter_.update(pose, 0.1);
+  DEBUG_INFO(get_logger(), "[1DKF] filtered_yaw_bias = %f", diagnostic_yaw_bias_filter_.get_x());
 }
 
 void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
