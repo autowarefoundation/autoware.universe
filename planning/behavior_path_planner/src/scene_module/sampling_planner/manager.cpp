@@ -97,7 +97,7 @@ void SamplingPlannerModuleManager::updateModuleParams(
       parameters, ns + ".nb_target_lateral_positions", p->nb_target_lateral_positions);
     updateParam<std::vector<double>>(parameters, ns + ".target_lengths", p->target_lengths);
 
-    bool updated = updateParam<std::vector<double>>(
+    updateParam<std::vector<double>>(
       parameters, ns + ".target_lateral_positions", p->target_lateral_positions);
 
     ns += ".frenet";

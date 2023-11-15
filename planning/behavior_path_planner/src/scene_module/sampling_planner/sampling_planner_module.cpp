@@ -69,7 +69,7 @@ SamplingPlannerData SamplingPlannerModule::createPlannerData(const PlanResult & 
   return data;
 }
 
-PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneId(
+PathWithLaneId SamplingPlannerModule::convertFrenetPathToPlanResult(
   const frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
   const double velocity)
 {
@@ -83,14 +83,14 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneId(
 
   PathWithLaneId path;
   const auto header = planner_data_->route_handler->getRouteHeader();
+
   for (size_t i = 0; i < frenet_path.points.size(); ++i) {
     const auto & frenet_path_point_position = frenet_path.points.at(i);
     const auto & frenet_path_point_yaw = frenet_path.yaws.at(i);
-    const auto & frenet_path_point_velocity = frenet_path.points.;
-
+    // const auto & frenet_path_point_velocity = frenet_path.points.;
     PathPointWithLaneId point{};
     point.point.pose.position.x = frenet_path_point_position.x();
-    point.point.pose.position.y = frenet_path_point_position.z();
+    point.point.pose.position.y = frenet_path_point_position.y();
     point.point.pose.position.z = 0.0;
 
     auto yaw_as_quaternion = quaternion_from_rpy(0.0, 0.0, frenet_path_point_yaw);
@@ -193,11 +193,18 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     return out;
   }
 
+  BehaviorModuleOutput out;
+  const double velocity = 0.5;
   const double max_length = *std::max_element(
     internal_params_->sampling.target_lengths.begin(),
     internal_params_->sampling.target_lengths.end());
   const auto road_lanes = utils::getExtendedCurrentLanes(planner_data_, 0, max_length, false);
-  auto out_path = convertFrenetPathToPathWithLaneId(frenet_paths[0], road_lanes);
+  auto out_path = convertFrenetPathToPlanResult(frenet_paths[0], road_lanes, velocity);
+  out.path = std::make_shared<PathWithLaneId>(out_path);
+  auto p = getPreviousModuleOutput().reference_path;
+  out.reference_path = p;
+  out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
+  return out;
 }
 
 void SamplingPlannerModule::updateDebugMarkers()

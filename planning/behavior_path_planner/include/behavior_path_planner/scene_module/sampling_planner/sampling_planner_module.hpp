@@ -152,7 +152,7 @@ private:
     const sampler_common::transform::Spline2D & path_spline,
     const SamplingPlannerInternalParameters & internal_params_);
 
-  PathWithLaneId convertFrenetPathToPathWithLaneId(
+  PathWithLaneId convertFrenetPathToPlanResult(
     const frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
     const double velocity);
   // member
