@@ -79,7 +79,7 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByPosition)
     PredictedObjects ans_object;
 
     const std::vector<PathPointWithLaneId> path_points;
-    //tier4_autoware_utils::createPoint(0, 0, 0);
+    tier4_autoware_utils::createPoint(0, 0, 0);
     
     const geometry_msgs::msg::Point current_pose = tier4_autoware_utils::createPoint(1, 0, 0);
     const double forward_distance = 1.0;
