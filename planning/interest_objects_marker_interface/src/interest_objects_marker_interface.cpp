@@ -36,7 +36,7 @@ using tier4_autoware_utils::calcAzimuthAngle;
 using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
-using tier4_autoware_utils::createQuaternion;
+using tier4_autoware_utils::createQuaternionFromRPY;
 using tier4_autoware_utils::createTranslation;
 
 using tier4_autoware_utils::cos;
@@ -44,45 +44,38 @@ using tier4_autoware_utils::getRPY;
 using tier4_autoware_utils::pi;
 using tier4_autoware_utils::sin;
 
-ColorRGBA getColor(const bool safe)
+ColorRGBA getColor(const bool safe, const float alpha)
 {
   const float r = safe ? 0.0f : 214.0 / 255.0;
   const float g = safe ? 211.0 / 255.0 : 0.0f;
   const float b = safe ? 141.0 / 255.0 : 77.0 / 255.0;
-  return createMarkerColor(r, g, b, 0.95);
+  return createMarkerColor(r, g, b, alpha);
 }
 
-double calcAzimuthAngleFromPolygon(const Polygon2d & polygon)
+Marker createArrowMarker(const size_t & id, const ObjectStatus & status, const std::string & name)
 {
-  const size_t polygon_size = polygon.outer().size();
+  Marker marker = createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name, id, Marker::ARROW,
+    createMarkerScale(0.25, 0.5, 0.5), getColor(status.safe, 0.95f));
 
-  const auto polygon_from = polygon.outer().at(polygon_size - 2);
-  Point p_from;
-  p_from.x = polygon_from.x();
-  p_from.y = polygon_from.y();
-  p_from.z = 0.0;
+  Point src, dst;
+  src = status.pose.position;
+  src.z += status.height + 1.0;
+  dst = status.pose.position;
+  dst.z += status.height;
 
-  const auto polygon_to = polygon.outer().back();
-  Point p_to;
-  p_to.x = polygon_to.x();
-  p_to.y = polygon_to.y();
-  p_to.z = 0.0;
+  marker.points.push_back(src);
+  marker.points.push_back(dst);
 
-  return calcAzimuthAngle(p_from, p_to);
+  return marker;
 }
 
 Marker createCircleMarker(
   const size_t & id, const ObjectStatus & status, const std::string & name, const double radius)
 {
-  if (status.polygon.outer().size() < 2) {
-    return Marker{};
-  }
-
-  const auto azimuth = calcAzimuthAngleFromPolygon(status.polygon);
-
   Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name + "_circle", id, Marker::LINE_STRIP,
-    createMarkerScale(0.25, 0.0, 0.0), getColor(status.safe));
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name, id, Marker::LINE_STRIP,
+    createMarkerScale(0.1, 0.0, 0.0), getColor(status.safe, 0.951f));
 
   constexpr size_t num_points = 20;
   std::vector<Point> points;
@@ -90,10 +83,10 @@ Marker createCircleMarker(
 
   for (size_t i = 0; i < num_points; ++i) {
     const double ratio = static_cast<double>(i) / static_cast<double>(num_points);
-    const double theta = 2 * pi * ratio + azimuth;
+    const double theta = 2 * pi * ratio;
     points.at(i).x = status.pose.position.x + radius * cos(theta);
     points.at(i).y = status.pose.position.y + radius * sin(theta);
-    points.at(i).z = status.pose.position.z;
+    points.at(i).z = status.pose.position.z + status.height + 0.75;
     marker.points.push_back(points.at(i));
   }
   marker.points.push_back(points.front());
@@ -101,42 +94,13 @@ Marker createCircleMarker(
   return marker;
 }
 
-MarkerArray createCrosshairMarker(
-  const size_t & id, const ObjectStatus & status, const std::string & name, const double radius)
+MarkerArray createTargetMarker(
+  const size_t & id, const ObjectStatus & status, const std::string & name)
 {
   MarkerArray marker_array;
-
-  if (status.polygon.outer().size() < 2) {
-    return marker_array;
-  }
-
-  const auto azimuth = calcAzimuthAngleFromPolygon(status.polygon);
-
-  marker_array.markers.push_back(createCircleMarker(id, status, name, radius));
-
-  for (size_t i = 0; i < 8; ++i) {
-    const double scale = (i % 2 == 0) ? 0.25 : 0.1;
-    const double radius_in = (i % 2 == 0) ? radius * 0.5 : radius * 0.75;
-    const double theta = 2 * pi * static_cast<double>(i) / 8.0 + azimuth;
-
-    Marker marker = createDefaultMarker(
-      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name + "_cross_" + std::to_string(i), id,
-      Marker::LINE_STRIP, createMarkerScale(scale, 0.0, 0.0), getColor(status.safe));
-
-    Point src;
-    src.x = status.pose.position.x + radius * cos(theta);
-    src.y = status.pose.position.y + radius * sin(theta);
-    src.z = status.pose.position.z;
-    marker.points.push_back(src);
-
-    Point dst;
-    dst.x = status.pose.position.x + radius_in * cos(theta);
-    dst.y = status.pose.position.y + radius_in * sin(theta);
-    dst.z = status.pose.position.z;
-    marker.points.push_back(dst);
-
-    marker_array.markers.push_back(marker);
-  }
+  marker_array.markers.push_back(createArrowMarker(id, status, name + "_arrow"));
+  marker_array.markers.push_back(createCircleMarker(id, status, name + "_circle1", 0.5));
+  marker_array.markers.push_back(createCircleMarker(id, status, name + "_circle2", 0.75));
 
   return marker_array;
 }
@@ -171,11 +135,9 @@ void InterestObjectsMarkerInterface::publishMarkerArray()
   MarkerArray marker_array;
   for (size_t i = 0; i < obj_status_array_.size(); ++i) {
     const auto obj = obj_status_array_.at(i);
-    const double radius = 2.5;
-    const MarkerArray crosshair_markers = createCrosshairMarker(i, obj, name_, radius);
+    const MarkerArray target_marker = createTargetMarker(i, obj, name_);
     marker_array.markers.insert(
-      marker_array.markers.end(), crosshair_markers.markers.begin(),
-      crosshair_markers.markers.end());
+      marker_array.markers.end(), target_marker.markers.begin(), target_marker.markers.end());
   }
 
   pub_marker_->publish(marker_array);
