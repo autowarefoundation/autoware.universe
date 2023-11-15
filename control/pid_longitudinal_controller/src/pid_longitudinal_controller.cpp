@@ -457,7 +457,9 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
     current_pose, m_trajectory, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
 
   // pitch
-  const double raw_pitch = longitudinal_utils::getPitchByPose(current_pose.orientation);
+  // NOTE: getPitchByTraj() calculates the pitch angle as defined in
+  // ../media/slope_definition.drawio.svg while getPitchByPose() is not, so `raw_pitch` is reversed
+  const double raw_pitch = (-1.0) * longitudinal_utils::getPitchByPose(current_pose.orientation);
   const double traj_pitch =
     longitudinal_utils::getPitchByTraj(m_trajectory, control_data.nearest_idx, m_wheel_base);
   control_data.slope_angle = m_use_traj_for_pitch ? traj_pitch : m_lpf_pitch->filter(raw_pitch);
@@ -495,13 +497,35 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     stop_dist > p.drive_state_stop_dist + p.drive_state_offset_stop_dist;
   const bool departure_condition_from_stopped = stop_dist > p.drive_state_stop_dist;
 
-  const bool keep_stopped_condition =
-    m_enable_keep_stopped_until_steer_convergence && !lateral_sync_data_.is_steer_converged;
+  // NOTE: the same velocity threshold as motion_utils::searchZeroVelocity
+  static constexpr double vel_epsilon = 1e-3;
+
+  // Let vehicle start after the steering is converged for control accuracy
+  const bool keep_stopped_condition = std::fabs(current_vel) < vel_epsilon &&
+                                      m_enable_keep_stopped_until_steer_convergence &&
+                                      !lateral_sync_data_.is_steer_converged;
 
   const bool stopping_condition = stop_dist < p.stopping_state_stop_dist;
-  if (
-    std::fabs(current_vel) > p.stopped_state_entry_vel ||
-    std::fabs(current_acc) > p.stopped_state_entry_acc) {
+
+  const bool is_stopped = std::abs(current_vel) < p.stopped_state_entry_vel &&
+                          std::abs(current_acc) < p.stopped_state_entry_acc;
+  // Case where the ego slips in the opposite direction of the gear due to e.g. a slope is also
+  // considered as a stop
+  const bool is_not_running = [&]() {
+    if (control_data.shift == Shift::Forward) {
+      if (is_stopped || current_vel < 0.0) {
+        // NOTE: Stopped or moving backward
+        return true;
+      }
+    } else {
+      if (is_stopped || 0.0 < current_vel) {
+        // NOTE: Stopped or moving forward
+        return true;
+      }
+    }
+    return false;
+  }();
+  if (!is_not_running) {
     m_last_running_time = std::make_shared<rclcpp::Time>(clock_->now());
   }
   const bool stopped_condition =
@@ -509,8 +533,6 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
       ? (clock_->now() - *m_last_running_time).seconds() > p.stopped_state_entry_duration_time
       : false;
 
-  static constexpr double vel_epsilon =
-    1e-3;  // NOTE: the same velocity threshold as motion_utils::searchZeroVelocity
   const double current_vel_cmd =
     std::fabs(m_trajectory.points.at(control_data.nearest_idx).longitudinal_velocity_mps);
   const bool emergency_condition = m_enable_overshoot_emergency &&

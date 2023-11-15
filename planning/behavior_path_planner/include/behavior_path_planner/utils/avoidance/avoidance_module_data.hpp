@@ -15,7 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
-#include "behavior_path_planner/marker_utils/utils.hpp"
+#include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 
@@ -71,6 +71,8 @@ struct ObjectParameter
   double safety_buffer_lateral{1.0};
 
   double safety_buffer_longitudinal{0.0};
+
+  bool use_conservative_buffer_longitudinal{true};
 };
 
 struct AvoidanceParameters
@@ -110,6 +112,14 @@ struct AvoidanceParameters
   // use intersection area for avoidance
   bool use_intersection_areas{false};
 
+  // consider avoidance return dead line
+  bool enable_dead_line_for_goal{false};
+  bool enable_dead_line_for_traffic_light{false};
+
+  // module try to return original path to keep this distance from edge point of the path.
+  double dead_line_buffer_for_goal{0.0};
+  double dead_line_buffer_for_traffic_light{0.0};
+
   // max deceleration for
   double max_deceleration{0.0};
 
@@ -145,9 +155,9 @@ struct AvoidanceParameters
   double object_ignore_section_crosswalk_behind_distance{0.0};
 
   // distance to avoid object detection
-  double object_check_forward_distance{0.0};
-
-  // continue to detect backward vehicles as avoidance targets until they are this distance away
+  bool use_static_detection_area{true};
+  double object_check_min_forward_distance{0.0};
+  double object_check_max_forward_distance{0.0};
   double object_check_backward_distance{0.0};
 
   // if the distance between object and goal position is less than this parameter, the module ignore
@@ -183,9 +193,6 @@ struct AvoidanceParameters
 
   // parameters for collision check.
   bool check_all_predicted_path{false};
-  double time_horizon_for_front_object{0.0};
-  double time_horizon_for_rear_object{0.0};
-  double safety_check_time_resolution{0.0};
 
   // find adjacent lane vehicles
   double safety_check_backward_distance{0.0};
@@ -218,9 +225,6 @@ struct AvoidanceParameters
   // nominal avoidance sped
   double nominal_avoidance_speed{0.0};
 
-  // module try to return original path to keep this distance from edge point of the path.
-  double remain_buffer_distance{0.0};
-
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
   double soft_road_shoulder_margin{1.0};
@@ -234,6 +238,9 @@ struct AvoidanceParameters
 
   // Even if the obstacle is very large, it will not avoid more than this length for left direction
   double max_left_shift_length{0.0};
+
+  // Validate vehicle departure from driving lane.
+  double max_deviation_from_lane{0.0};
 
   // To prevent large acceleration while avoidance.
   double max_lateral_acceleration{0.0};
@@ -294,6 +301,9 @@ struct AvoidanceParameters
 
   // parameters depend on object class
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
+
+  // ego predicted path params.
+  utils::path_safety_checker::EgoPredictedPathParams ego_predicted_path_params{};
 
   // rss parameters
   utils::path_safety_checker::RSSparams rss_params{};
@@ -375,6 +385,9 @@ struct ObjectData  // avoidance target
 
   // is stoppable under the constraints
   bool is_stoppable{false};
+
+  // is within intersection area
+  bool is_within_intersection{false};
 
   // unavoidable reason
   std::string reason{""};
@@ -490,7 +503,15 @@ struct AvoidancePlanningData
   // safe shift point
   AvoidLineArray safe_shift_line{};
 
+  std::vector<DrivableLanes> drivable_lanes{};
+
+  lanelet::BasicLineString3d right_bound{};
+
+  lanelet::BasicLineString3d left_bound{};
+
   bool safe{false};
+
+  bool valid{false};
 
   bool comfortable{false};
 
@@ -501,6 +522,10 @@ struct AvoidancePlanningData
   bool found_avoidance_path{false};
 
   double to_stop_line{std::numeric_limits<double>::max()};
+
+  double to_start_point{std::numeric_limits<double>::lowest()};
+
+  double to_return_point{std::numeric_limits<double>::max()};
 };
 
 /*

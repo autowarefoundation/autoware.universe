@@ -30,6 +30,7 @@ ament_auto_add_library(behavior_path_planner_node SHARED
   src/turn_signal_decider.cpp
   src/utils/utils.cpp
   src/utils/path_utils.cpp
+  src/utils/traffic_light_utils.cpp
   src/utils/path_safety_checker/safety_check.cpp
   src/utils/path_safety_checker/objects_filtering.cpp
   src/utils/start_goal_planner_common/utils.cpp
@@ -50,19 +51,12 @@ ament_auto_add_library(behavior_path_planner_node SHARED
   src/utils/drivable_area_expansion/drivable_area_expansion.cpp
   src/utils/drivable_area_expansion/map_utils.cpp
   src/utils/drivable_area_expansion/footprints.cpp
-  src/utils/drivable_area_expansion/expansion.cpp
   src/utils/geometric_parallel_parking/geometric_parallel_parking.cpp
   src/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.cpp
   src/marker_utils/utils.cpp
   src/marker_utils/avoidance/debug.cpp
   src/marker_utils/lane_change/debug.cpp
 )
-
-if(tf2_geometry_msgs_VERSION VERSION_LESS 0.25.4)
-  target_compile_definitions(behavior_path_planner_node PRIVATE
-    DEFINE_LEGACY_FUNCTION
-  )
-endif()
 
 target_include_directories(behavior_path_planner_node SYSTEM PUBLIC
   ${EIGEN3_INCLUDE_DIR}

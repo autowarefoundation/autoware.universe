@@ -55,6 +55,7 @@ These colors and shapes are assigned to the message as follows:
 | Name              | Type | Description                                 |
 | ----------------- | ---- | ------------------------------------------- |
 | `classifier_type` | int  | if the value is `1`, cnn_classifier is used |
+| `data_path`       | str  | packages data and artifacts directory path  |
 
 ### Core Parameters
 
@@ -146,6 +147,8 @@ DATASET_ROOT
 ### Installation
 
 #### Prerequisites
+
+<!-- cspell:ignore Miniconda -->
 
 **Step 1.** Download and install Miniconda from the [official website](https://mmpretrain.readthedocs.io/en/latest/get_started.html).
 
@@ -294,7 +297,7 @@ python tools/train.py configs/mobilenet_v2/mobilenet-v2_8xb32_custom.py
 
 Training logs and weights will be saved in the `work_dirs/mobilenet-v2_8xb32_custom` folder.
 
-### Convert PyTorh model to ONNX model
+### Convert PyTorch model to ONNX model
 
 #### Install mmdeploy
 

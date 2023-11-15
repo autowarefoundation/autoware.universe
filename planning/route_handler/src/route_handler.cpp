@@ -14,6 +14,7 @@
 
 #include "route_handler/route_handler.hpp"
 
+#include <autoware_utils/math/normalization.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/route_checker.hpp>
@@ -855,12 +856,11 @@ bool RouteHandler::getNextLaneletWithinRoute(
     return false;
   }
 
-  lanelet::ConstLanelet start_lanelet;
-  const bool flag_check = getClosestLaneletWithinRoute(route_ptr_->start_pose, &start_lanelet);
+  const auto start_lane_id = route_ptr_->segments.front().preferred_primitive.id;
 
   const auto following_lanelets = routing_graph_ptr_->following(lanelet);
   for (const auto & llt : following_lanelets) {
-    if (!(flag_check && start_lanelet.id() == llt.id()) && exists(route_lanelets_, llt)) {
+    if (start_lane_id != llt.id() && exists(route_lanelets_, llt)) {
       *next_lanelet = llt;
       return true;
     }
@@ -2128,10 +2128,24 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   double shortest_path_length2d = std::numeric_limits<double>::max();
 
   for (const auto & st_llt : start_lanelets) {
+    // check if the angle difference between start_checkpoint and start lanelet center line
+    // orientation is in yaw_threshold range
+    double yaw_threshold = M_PI / 2.0;
+    bool is_proper_angle = false;
+    {
+      double lanelet_angle = lanelet::utils::getLaneletAngle(st_llt, start_checkpoint.position);
+      double pose_yaw = tf2::getYaw(start_checkpoint.orientation);
+      double angle_diff = std::abs(autoware_utils::normalize_radian(lanelet_angle - pose_yaw));
+
+      if (angle_diff <= std::abs(yaw_threshold)) {
+        is_proper_angle = true;
+      }
+    }
+
     optional_route = routing_graph_ptr_->getRoute(st_llt, goal_lanelet, 0);
-    if (!optional_route) {
+    if (!optional_route || !is_proper_angle) {
       RCLCPP_ERROR_STREAM(
-        logger_, "Failed to find a proper path!"
+        logger_, "Failed to find a proper route!"
                    << std::endl
                    << " - start checkpoint: " << toString(start_checkpoint) << std::endl
                    << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl

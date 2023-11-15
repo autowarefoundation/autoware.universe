@@ -15,12 +15,10 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_
 
-#include "behavior_path_planner/marker_utils/lane_change/debug.hpp"
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <route_handler/route_handler.hpp>
@@ -32,10 +30,7 @@
 
 #include <lanelet2_core/Forward.h>
 
-#include <memory>
 #include <string>
-#include <unordered_map>
-#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::utils::lane_change
@@ -52,6 +47,7 @@ using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
+using path_safety_checker::CollisionCheckDebugMap;
 using route_handler::Direction;
 using tier4_autoware_utils::Polygon2d;
 
@@ -170,7 +166,8 @@ bool isParkedObject(
 bool passParkedObject(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
   const std::vector<ExtendedPredictedObject> & objects, const double minimum_lane_change_length,
-  const bool is_goal_in_route, const LaneChangeParameters & lane_change_parameters);
+  const bool is_goal_in_route, const LaneChangeParameters & lane_change_parameters,
+  CollisionCheckDebugMap & object_debug);
 
 boost::optional<size_t> getLeadingStaticObjectIdx(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
@@ -186,5 +183,24 @@ ExtendedPredictedObject transform(
 
 bool isCollidedPolygonsInLanelet(
   const std::vector<Polygon2d> & collided_polygons, const lanelet::ConstLanelets & lanes);
+
+/**
+ * @brief Generates expanded lanelets based on the given direction and offsets.
+ *
+ * Expands the provided lanelets in either the left or right direction based on
+ * the specified direction. If the direction is 'LEFT', the lanelets are expanded
+ * using the left_offset; if 'RIGHT', they are expanded using the right_offset.
+ * Otherwise, no expansion occurs.
+ *
+ * @param lanes The lanelets to be expanded.
+ * @param direction The direction of expansion: either LEFT or RIGHT.
+ * @param left_offset The offset value for left expansion.
+ * @param right_offset The offset value for right expansion.
+ * @return lanelet::ConstLanelets A collection of expanded lanelets.
+ */
+lanelet::ConstLanelets generateExpandedLanelets(
+  const lanelet::ConstLanelets & lanes, const Direction direction, const double left_offset,
+  const double right_offset);
+
 }  // namespace behavior_path_planner::utils::lane_change
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__UTILS_HPP_

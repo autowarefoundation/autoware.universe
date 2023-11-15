@@ -14,7 +14,6 @@
 
 #include "behavior_path_planner/planner_manager.hpp"
 
-#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 #include "tier4_autoware_utils/ros/debug_publisher.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
@@ -29,13 +28,15 @@
 
 namespace behavior_path_planner
 {
-PlannerManager::PlannerManager(rclcpp::Node & node, const bool verbose)
+PlannerManager::PlannerManager(
+  rclcpp::Node & node, const size_t max_iteration_num, const bool verbose)
 : logger_(node.get_logger().get_child("planner_manager")),
   clock_(*node.get_clock()),
+  max_iteration_num_{max_iteration_num},
   verbose_{verbose}
 {
   processing_time_.emplace("total_time", 0.0);
-  debug_publisher_ptr_ = std::make_unique<DebugPublisher>(&node, "behavior_planner_manager/debug");
+  debug_publisher_ptr_ = std::make_unique<DebugPublisher>(&node, "~/debug");
 }
 
 BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & data)
@@ -82,7 +83,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       return output;
     }
 
-    while (rclcpp::ok()) {
+    for (size_t itr_num = 1;; ++itr_num) {
       /**
        * STEP1: get approved modules' output
        */
@@ -128,8 +129,17 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       addApprovedModule(highest_priority_module);
       clearCandidateModules();
       debug_info_.emplace_back(highest_priority_module, Action::ADD, "To Approval");
+
+      if (itr_num >= max_iteration_num_) {
+        RCLCPP_WARN_THROTTLE(
+          logger_, clock_, 1000, "Reach iteration limit (max: %ld). Output current result.",
+          max_iteration_num_);
+        processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
+        return candidate_modules_output;
+      }
     }
-    return BehaviorModuleOutput{};
+
+    return BehaviorModuleOutput{};  // something wrong.
   }();
 
   std::for_each(
@@ -886,11 +896,17 @@ void PlannerManager::print() const
     string_stream << std::right << "[" << std::setw(max_string_num + 1) << std::left << t.first
                   << ":" << std::setw(4) << std::right << t.second << "ms]\n"
                   << std::setw(21);
-    std::string name = std::string("processing_time/") + t.first;
-    debug_publisher_ptr_->publish<DebugDoubleMsg>(name, t.second);
   }
 
   RCLCPP_INFO_STREAM(logger_, string_stream.str());
+}
+
+void PlannerManager::publishProcessingTime() const
+{
+  for (const auto & t : processing_time_) {
+    std::string name = t.first + std::string("/processing_time_ms");
+    debug_publisher_ptr_->publish<DebugDoubleMsg>(name, t.second);
+  }
 }
 
 std::shared_ptr<SceneModuleVisitor> PlannerManager::getDebugMsg()

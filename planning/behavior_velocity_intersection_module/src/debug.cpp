@@ -173,18 +173,18 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
       &debug_marker_array);
   }
 
+  if (debug_data_.occlusion_attention_area) {
+    appendMarkerArray(
+      createLaneletPolygonsMarkerArray(
+        debug_data_.occlusion_attention_area.value(), "occlusion_attention_area", lane_id_, 0.917,
+        0.568, 0.596),
+      &debug_marker_array);
+  }
+
   if (debug_data_.adjacent_area) {
     appendMarkerArray(
       createLaneletPolygonsMarkerArray(
         debug_data_.adjacent_area.value(), "adjacent_area", lane_id_, 0.913, 0.639, 0.149),
-      &debug_marker_array);
-  }
-
-  if (debug_data_.intersection_area) {
-    appendMarkerArray(
-      debug::createPolygonMarkerArray(
-        debug_data_.intersection_area.value(), "intersection_area", lane_id_, now, 0.3, 0.0, 0.0,
-        0.0, 1.0, 0.0),
       &debug_marker_array);
   }
 
@@ -227,7 +227,29 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
 
   appendMarkerArray(
     debug::createObjectsMarkerArray(
+      debug_data_.amber_ignore_targets, "amber_ignore_targets", module_id_, now, 0.0, 1.0, 0.0),
+    &debug_marker_array, now);
+
+  appendMarkerArray(
+    debug::createObjectsMarkerArray(
+      debug_data_.red_overshoot_ignore_targets, "red_overshoot_ignore_targets", module_id_, now,
+      0.0, 1.0, 0.0),
+    &debug_marker_array, now);
+
+  appendMarkerArray(
+    debug::createObjectsMarkerArray(
       debug_data_.stuck_targets, "stuck_targets", module_id_, now, 0.99, 0.99, 0.2),
+    &debug_marker_array, now);
+
+  appendMarkerArray(
+    debug::createObjectsMarkerArray(
+      debug_data_.yield_stuck_targets, "stuck_targets", module_id_, now, 0.4, 0.99, 0.2),
+    &debug_marker_array, now);
+
+  appendMarkerArray(
+    debug::createObjectsMarkerArray(
+      debug_data_.blocking_attention_objects, "blocking_attention_objects", module_id_, now, 0.99,
+      0.99, 0.6),
     &debug_marker_array, now);
 
   /*
@@ -265,27 +287,41 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
 
 motion_utils::VirtualWalls IntersectionModule::createVirtualWalls()
 {
-  // TODO(Mamoru Sobue): collision stop pose depends on before/after occlusion clearance
   motion_utils::VirtualWalls virtual_walls;
   motion_utils::VirtualWall wall;
-  wall.style = motion_utils::VirtualWallType::stop;
 
   if (debug_data_.collision_stop_wall_pose) {
+    wall.style = motion_utils::VirtualWallType::stop;
     wall.text = "intersection";
     wall.ns = "intersection" + std::to_string(module_id_) + "_";
     wall.pose = debug_data_.collision_stop_wall_pose.value();
     virtual_walls.push_back(wall);
   }
   if (debug_data_.occlusion_first_stop_wall_pose) {
+    wall.style = motion_utils::VirtualWallType::stop;
     wall.text = "intersection";
     wall.ns = "intersection_occlusion_first_stop" + std::to_string(module_id_) + "_";
     wall.pose = debug_data_.occlusion_first_stop_wall_pose.value();
     virtual_walls.push_back(wall);
   }
   if (debug_data_.occlusion_stop_wall_pose) {
+    wall.style = motion_utils::VirtualWallType::stop;
     wall.text = "intersection_occlusion";
+    if (debug_data_.static_occlusion_with_traffic_light_timeout) {
+      std::stringstream timeout;
+      timeout << std::setprecision(2)
+              << debug_data_.static_occlusion_with_traffic_light_timeout.value();
+      wall.text += "(" + timeout.str() + ")";
+    }
     wall.ns = "intersection_occlusion" + std::to_string(module_id_) + "_";
     wall.pose = debug_data_.occlusion_stop_wall_pose.value();
+    virtual_walls.push_back(wall);
+  }
+  if (debug_data_.absence_traffic_light_creep_wall) {
+    wall.style = motion_utils::VirtualWallType::slowdown;
+    wall.text = "intersection_occlusion";
+    wall.ns = "intersection_occlusion" + std::to_string(module_id_) + "_";
+    wall.pose = debug_data_.absence_traffic_light_creep_wall.value();
     virtual_walls.push_back(wall);
   }
   return virtual_walls;

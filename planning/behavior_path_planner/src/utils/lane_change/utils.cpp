@@ -14,13 +14,14 @@
 
 #include "behavior_path_planner/utils/lane_change/utils.hpp"
 
+#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_path.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 #include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -39,7 +40,6 @@
 
 #include <algorithm>
 #include <limits>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -236,6 +236,9 @@ lanelet::BasicPolygon2d getTargetNeighborLanesPolygon(
 {
   const auto target_neighbor_lanelets =
     utils::lane_change::getTargetNeighborLanes(route_handler, current_lanes, type);
+  if (target_neighbor_lanelets.empty()) {
+    return {};
+  }
   const auto target_neighbor_preferred_lane_poly = lanelet::utils::getPolygonFromArcLength(
     target_neighbor_lanelets, 0, std::numeric_limits<double>::max());
 
@@ -296,6 +299,15 @@ std::optional<LaneChangePath> constructCandidatePath(
     RCLCPP_DEBUG(
       rclcpp::get_logger("behavior_path_planner").get_child("util").get_child("lane_change"),
       "failed to generate shifted path.");
+  }
+
+  // TODO(Zulfaqar Azmi): have to think of a more feasible solution for points being remove by path
+  // shifter.
+  if (shifted_path.path.points.size() < shift_line.end_idx + 1) {
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("behavior_path_planner").get_child("utils").get_child(__func__),
+      "path points are removed by PathShifter.");
+    return std::nullopt;
   }
 
   const auto & prepare_length = lane_change_length.prepare;
@@ -592,8 +604,8 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
 {
   const auto shift_intervals =
     route_handler.getLateralIntervalsToPreferredLane(current_lanes.back(), direction);
-  const double minimum_lane_change_length =
-    utils::calcMinimumLaneChangeLength(common_param, shift_intervals);
+  const double minimum_lane_change_length = utils::calcMinimumLaneChangeLength(
+    common_param, shift_intervals, common_param.backward_length_buffer_for_end_of_lane);
   const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
   if (abort_plus_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     return false;
@@ -927,7 +939,8 @@ bool isParkedObject(
 bool passParkedObject(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
   const std::vector<ExtendedPredictedObject> & objects, const double minimum_lane_change_length,
-  const bool is_goal_in_route, const LaneChangeParameters & lane_change_parameters)
+  const bool is_goal_in_route, const LaneChangeParameters & lane_change_parameters,
+  CollisionCheckDebugMap & object_debug)
 {
   const auto & object_check_min_road_shoulder_width =
     lane_change_parameters.object_check_min_road_shoulder_width;
@@ -950,6 +963,7 @@ bool passParkedObject(
   }
 
   const auto & leading_obj = objects.at(*leading_obj_idx);
+  auto debug = marker_utils::createObjectDebug(leading_obj);
   const auto leading_obj_poly =
     tier4_autoware_utils::toPolygon2d(leading_obj.initial_pose.pose, leading_obj.shape);
   if (leading_obj_poly.outer().empty()) {
@@ -973,6 +987,8 @@ bool passParkedObject(
 
   // If there are still enough length after the target object, we delay the lane change
   if (min_dist_to_end_of_current_lane > minimum_lane_change_length) {
+    debug.second.unsafe_reason = "delay lane change";
+    marker_utils::updateCollisionCheckDebugMap(object_debug, debug, false);
     return true;
   }
 
@@ -1103,5 +1119,14 @@ bool isCollidedPolygonsInLanelet(
   };
 
   return std::any_of(collided_polygons.begin(), collided_polygons.end(), is_in_lanes);
+}
+
+lanelet::ConstLanelets generateExpandedLanelets(
+  const lanelet::ConstLanelets & lanes, const Direction direction, const double left_offset,
+  const double right_offset)
+{
+  const auto left_extend_offset = (direction == Direction::LEFT) ? left_offset : 0.0;
+  const auto right_extend_offset = (direction == Direction::RIGHT) ? -right_offset : 0.0;
+  return lanelet::utils::getExpandedLanelets(lanes, left_extend_offset, right_extend_offset);
 }
 }  // namespace behavior_path_planner::utils::lane_change
