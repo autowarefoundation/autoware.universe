@@ -14,10 +14,11 @@
 
 #include "scene.hpp"
 
-#include "motion_utils/motion_utils.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "util.hpp"
 
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace behavior_velocity_planner

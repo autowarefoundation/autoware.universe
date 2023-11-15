@@ -27,17 +27,30 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string & fi
   YAML::Node data = YAML::LoadFile(filename);
 
   tier4_map_msgs::msg::MapProjectorInfo msg;
-  msg.type = data["type"].as<std::string>();
-  if (msg.type == "MGRS") {
+  msg.projector_type = data["projector_type"].as<std::string>();
+  if (msg.projector_type == tier4_map_msgs::msg::MapProjectorInfo::MGRS) {
+    msg.vertical_datum = data["vertical_datum"].as<std::string>();
     msg.mgrs_grid = data["mgrs_grid"].as<std::string>();
-  } else if (msg.type == "UTM") {
+
+  } else if (msg.projector_type == tier4_map_msgs::msg::MapProjectorInfo::LOCAL_CARTESIAN_UTM) {
+    msg.vertical_datum = data["vertical_datum"].as<std::string>();
     msg.map_origin.latitude = data["map_origin"]["latitude"].as<double>();
     msg.map_origin.longitude = data["map_origin"]["longitude"].as<double>();
-  } else if (msg.type == "local") {
+    msg.map_origin.altitude = data["map_origin"]["altitude"].as<double>();
+
+  } else if (msg.projector_type == tier4_map_msgs::msg::MapProjectorInfo::TRANSVERSE_MERCATOR) {
+    msg.vertical_datum = data["vertical_datum"].as<std::string>();
+    msg.map_origin.latitude = data["map_origin"]["latitude"].as<double>();
+    msg.map_origin.longitude = data["map_origin"]["longitude"].as<double>();
+    msg.map_origin.altitude = data["map_origin"]["altitude"].as<double>();
+
+  } else if (msg.projector_type == tier4_map_msgs::msg::MapProjectorInfo::LOCAL) {
     ;  // do nothing
+
   } else {
     throw std::runtime_error(
-      "Invalid map projector type. Currently supported types: MGRS, UTM, and local");
+      "Invalid map projector type. Currently supported types: MGRS, LocalCartesianUTM, "
+      "TransverseMercator, and local");
   }
   return msg;
 }

@@ -22,7 +22,6 @@
 #include <euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <shape_estimation/shape_estimator.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
@@ -40,6 +39,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include "utils/utils.hpp"
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -47,7 +48,6 @@
 #include <map>
 #include <memory>
 #include <vector>
-
 class TrackerHandler
 {
 private:
@@ -82,7 +82,7 @@ private:
   std::map<uint8_t, int> max_search_distance_for_merger_;
   std::map<uint8_t, int> max_search_distance_for_divider_;
 
-  bool ignore_unknown_tracker_;
+  utils::TrackerIgnoreLabel tracker_ignore_;
 
   void setMaxSearchRange();
 

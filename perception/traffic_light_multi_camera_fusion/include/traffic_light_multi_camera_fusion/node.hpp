@@ -15,8 +15,6 @@
 #ifndef TRAFFIC_LIGHT_MULTI_CAMERA_FUSION__NODE_HPP_
 #define TRAFFIC_LIGHT_MULTI_CAMERA_FUSION__NODE_HPP_
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -25,7 +23,7 @@
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 #include <tier4_perception_msgs/msg/traffic_signal_array.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/Forward.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
@@ -113,7 +111,7 @@ private:
   /*
   the mapping from traffic light id (instance id) to regulatory element id (group id)
   */
-  std::map<lanelet::Id, lanelet::Id> traffic_light_id_to_regulatory_ele_id_;
+  std::map<lanelet::Id, std::vector<lanelet::Id>> traffic_light_id_to_regulatory_ele_id_;
   /*
   save record arrays by increasing timestamp order.
   use multiset in case there are multiple cameras publishing images at exactly the same time

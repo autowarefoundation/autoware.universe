@@ -19,7 +19,8 @@
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/resample/resample.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/interpolation.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <tf2/utils.h>
 
@@ -223,7 +224,7 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
   const double max_time = std::numeric_limits<double>::max();
   const double max_distance = std::numeric_limits<double>::max();
-  if (path.shift_length.empty()) {
+  if (path.shift_length.size() < shift_line.end_idx + 1) {
     return std::make_pair(turn_signal, max_distance);
   }
   const auto base_link2front = common_parameter.base_link2front;
@@ -418,6 +419,7 @@ void correctDividedPathVelocity(std::vector<PathWithLaneId> & divided_paths)
 {
   for (auto & path : divided_paths) {
     const auto is_driving_forward = motion_utils::isDrivingForward(path.points);
+    // If the number of points in the path is less than 2, don't correct the velocity
     if (!is_driving_forward) {
       continue;
     }
@@ -556,5 +558,35 @@ PathWithLaneId calcCenterLinePath(
   centerline_path.header = route_handler->getRouteHeader();
 
   return centerline_path;
+}
+
+PathWithLaneId combinePath(const PathWithLaneId & path1, const PathWithLaneId & path2)
+{
+  if (path1.points.empty()) {
+    return path2;
+  }
+  if (path2.points.empty()) {
+    return path1;
+  }
+
+  PathWithLaneId path{};
+  path.points.insert(path.points.end(), path1.points.begin(), path1.points.end());
+
+  // skip overlapping point
+  path.points.insert(path.points.end(), next(path2.points.begin()), path2.points.end());
+
+  PathWithLaneId filtered_path = path;
+  filtered_path.points = motion_utils::removeOverlapPoints(filtered_path.points);
+  return filtered_path;
+}
+
+boost::optional<Pose> getFirstStopPoseFromPath(const PathWithLaneId & path)
+{
+  for (const auto & p : path.points) {
+    if (std::abs(p.point.longitudinal_velocity_mps) < 0.01) {
+      return p.point.pose;
+    }
+  }
+  return boost::none;
 }
 }  // namespace behavior_path_planner::utils

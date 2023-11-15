@@ -59,6 +59,27 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
     return package_path + "/config/" + module + ".param.yaml";
   };
 
+  std::vector<std::string> module_names;
+  module_names.emplace_back("behavior_velocity_planner::CrosswalkModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::WalkwayModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::TrafficLightModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::IntersectionModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::MergeFromPrivateModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::BlindSpotModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::DetectionAreaModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::VirtualTrafficLightModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::NoStoppingAreaModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::StopLineModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::OcclusionSpotModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::RunOutModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::SpeedBumpModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::OutOfLaneModulePlugin");
+  module_names.emplace_back("behavior_velocity_planner::NoDrivableLaneModulePlugin");
+
+  std::vector<rclcpp::Parameter> params;
+  params.emplace_back("launch_modules", module_names);
+  node_options.parameter_overrides(params);
+
   test_utils::updateNodeOptions(
     node_options,
     {planning_test_utils_dir + "/config/test_common.param.yaml",
@@ -79,7 +100,8 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
      get_behavior_velocity_module_config("stop_line"),
      get_behavior_velocity_module_config("traffic_light"),
      get_behavior_velocity_module_config("virtual_traffic_light"),
-     get_behavior_velocity_module_config("out_of_lane")});
+     get_behavior_velocity_module_config("out_of_lane"),
+     get_behavior_velocity_module_config("no_drivable_lane")});
 
   // TODO(Takagi, Isamu): set launch_modules
   // TODO(Kyoichi Sugahara) set to true launch_virtual_traffic_light

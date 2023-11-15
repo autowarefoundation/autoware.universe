@@ -43,11 +43,11 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using marker_utils::CollisionCheckDebugMap;
 using route_handler::Direction;
 using tier4_autoware_utils::StopWatch;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
@@ -107,7 +107,7 @@ public:
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
     const double threshold) const = 0;
 
-  virtual bool getAbortPath() = 0;
+  virtual bool calcAbortPath() = 0;
 
   virtual bool specialRequiredCheck() const { return false; }
 
@@ -152,6 +152,11 @@ public:
   const CollisionCheckDebugMap & getAfterApprovalDebugData() const
   {
     return object_debug_after_approval_;
+  }
+
+  const LaneChangeTargetObjects & getDebugFilteredObjects() const
+  {
+    return debug_filtered_objects_;
   }
 
   const Pose & getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
@@ -209,6 +214,10 @@ public:
     return direction_;
   }
 
+  boost::optional<Pose> getStopPose() const { return lane_change_stop_pose_; }
+
+  void resetStopPose() { lane_change_stop_pose_ = boost::none; }
+
 protected:
   virtual lanelet::ConstLanelets getCurrentLanes() const = 0;
 
@@ -221,7 +230,8 @@ protected:
   virtual bool getLaneChangePaths(
     const lanelet::ConstLanelets & original_lanelets,
     const lanelet::ConstLanelets & target_lanelets, Direction direction,
-    LaneChangePaths * candidate_paths, const bool check_safety) const = 0;
+    LaneChangePaths * candidate_paths, const utils::path_safety_checker::RSSparams rss_params,
+    const bool is_stuck, const bool check_safety) const = 0;
 
   virtual TurnSignalInfo calcTurnSignalInfo() = 0;
 
@@ -244,6 +254,7 @@ protected:
   PathWithLaneId prev_module_path_{};
   DrivableAreaInfo prev_drivable_area_info_{};
   TurnSignalInfo prev_turn_signal_info_{};
+  boost::optional<Pose> lane_change_stop_pose_{boost::none};
 
   PathWithLaneId prev_approved_path_{};
 
@@ -257,8 +268,12 @@ protected:
   mutable LaneChangePaths debug_valid_path_{};
   mutable CollisionCheckDebugMap object_debug_{};
   mutable CollisionCheckDebugMap object_debug_after_approval_{};
+  mutable LaneChangeTargetObjects debug_filtered_objects_{};
   mutable double object_debug_lifetime_{0.0};
   mutable StopWatch<std::chrono::milliseconds> stop_watch_;
+
+  rclcpp::Logger logger_ = rclcpp::get_logger("lane_change");
+  mutable rclcpp::Clock clock_{RCL_ROS_TIME};
 };
 }  // namespace behavior_path_planner
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__BASE_CLASS_HPP_

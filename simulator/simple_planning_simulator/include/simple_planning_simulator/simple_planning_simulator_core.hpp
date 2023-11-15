@@ -22,6 +22,7 @@
 
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "autoware_auto_geometry_msgs/msg/complex32.hpp"
+#include "autoware_auto_mapping_msgs/msg/had_map_bin.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/control_mode_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/control_mode_report.hpp"
@@ -47,6 +48,7 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "tier4_external_api_msgs/srv/initialize_pose.hpp"
 
+#include <lanelet2_core/geometry/Lanelet.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -62,6 +64,7 @@ namespace simple_planning_simulator
 
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_geometry_msgs::msg::Complex32;
+using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 using autoware_auto_vehicle_msgs::msg::Engage;
@@ -143,6 +146,7 @@ private:
   rclcpp::Subscription<VehicleControlCommand>::SharedPtr sub_vehicle_cmd_;
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_ackermann_cmd_;
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_manual_ackermann_cmd_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_init_pose_;
   rclcpp::Subscription<TwistStamped>::SharedPtr sub_init_twist_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
@@ -160,40 +164,43 @@ private:
   rcl_interfaces::msg::SetParametersResult on_parameter(
     const std::vector<rclcpp::Parameter> & parameters);
 
+  lanelet::ConstLanelets road_lanelets_;
+
   /* tf */
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
   /* received & published topics */
-  PoseWithCovarianceStamped::ConstSharedPtr initial_pose_;
-  TwistStamped initial_twist_;
-  VelocityReport current_velocity_;
-  Odometry current_odometry_;
-  SteeringReport current_steer_;
-  AckermannControlCommand current_ackermann_cmd_;
-  AckermannControlCommand current_manual_ackermann_cmd_;
-  GearCommand current_gear_cmd_;
-  GearCommand current_manual_gear_cmd_;
-  TurnIndicatorsCommand::ConstSharedPtr current_turn_indicators_cmd_ptr_;
-  HazardLightsCommand::ConstSharedPtr current_hazard_lights_cmd_ptr_;
-  Trajectory::ConstSharedPtr current_trajectory_ptr_;
-  bool simulate_motion_;  //!< stop vehicle motion simulation if false
-  ControlModeReport current_control_mode_;
+  PoseWithCovarianceStamped::ConstSharedPtr initial_pose_{};
+  TwistStamped initial_twist_{};
+  VelocityReport current_velocity_{};
+  Odometry current_odometry_{};
+  SteeringReport current_steer_{};
+  AckermannControlCommand current_ackermann_cmd_{};
+  AckermannControlCommand current_manual_ackermann_cmd_{};
+  GearCommand current_gear_cmd_{};
+  GearCommand current_manual_gear_cmd_{};
+  TurnIndicatorsCommand::ConstSharedPtr current_turn_indicators_cmd_ptr_{};
+  HazardLightsCommand::ConstSharedPtr current_hazard_lights_cmd_ptr_{};
+  Trajectory::ConstSharedPtr current_trajectory_ptr_{};
+  bool simulate_motion_ = true;  //!< stop vehicle motion simulation if false
+  ControlModeReport current_control_mode_{};
+  bool enable_road_slope_simulation_ = true;
 
   /* frame_id */
-  std::string simulated_frame_id_;  //!< @brief simulated vehicle frame id
-  std::string origin_frame_id_;     //!< @brief map frame_id
+  std::string simulated_frame_id_ = "";  //!< @brief simulated vehicle frame id
+  std::string origin_frame_id_ = "";     //!< @brief map frame_id
 
   /* flags */
-  bool is_initialized_;         //!< @brief flag to check the initial position is set
-  bool add_measurement_noise_;  //!< @brief flag to add measurement noise
+  bool is_initialized_ = false;         //!< @brief flag to check the initial position is set
+  bool add_measurement_noise_ = false;  //!< @brief flag to add measurement noise
 
-  DeltaTime delta_time_;  //!< @brief to calculate delta time
+  DeltaTime delta_time_{};  //!< @brief to calculate delta time
 
-  MeasurementNoiseGenerator measurement_noise_;  //!< @brief for measurement noise
+  MeasurementNoiseGenerator measurement_noise_{};  //!< @brief for measurement noise
 
-  double x_stddev_;  //!< @brief x standard deviation for dummy covariance in map coordinate
-  double y_stddev_;  //!< @brief y standard deviation for dummy covariance in map coordinate
+  double x_stddev_ = 0.0;  //!< @brief x standard deviation for dummy covariance in map coordinate
+  double y_stddev_ = 0.0;  //!< @brief y standard deviation for dummy covariance in map coordinate
 
   /* vehicle model */
   enum class VehicleModelType {
@@ -214,7 +221,7 @@ private:
   /**
    * @brief set input steering, velocity, and acceleration of the vehicle model
    */
-  void set_input(const AckermannControlCommand & cmd);
+  void set_input(const AckermannControlCommand & cmd, const double acc_by_slope);
 
   /**
    * @brief set current_vehicle_state_ with received message
@@ -225,6 +232,11 @@ private:
    * @brief set current_vehicle_state_ with received message
    */
   void on_hazard_lights_cmd(const HazardLightsCommand::ConstSharedPtr msg);
+
+  /**
+   * @brief subscribe lanelet map
+   */
+  void on_map(const HADMapBin::ConstSharedPtr msg);
 
   /**
    * @brief set initial pose for simulation with received message
@@ -257,7 +269,7 @@ private:
    * @brief ControlModeRequest server
    */
   void on_control_mode_request(
-    const ControlModeCommand::Request::SharedPtr request,
+    const ControlModeCommand::Request::ConstSharedPtr request,
     const ControlModeCommand::Response::SharedPtr response);
 
   /**
@@ -275,6 +287,12 @@ private:
    * @return transform from parent frame to child frame
    */
   TransformStamped get_transform_msg(const std::string parent_frame, const std::string child_frame);
+
+  /**
+   * @brief calculate ego pitch angle from trajectory
+   * @return ego pitch angle
+   */
+  double calculate_ego_pitch() const;
 
   /**
    * @brief timer callback for simulation with loop_rate

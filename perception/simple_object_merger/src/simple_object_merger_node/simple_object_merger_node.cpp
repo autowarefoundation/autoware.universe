@@ -14,6 +14,8 @@
 
 #include "simple_object_merger/simple_object_merger_node.hpp"
 
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -168,7 +170,7 @@ void SimpleObjectMergerNode::onTimer()
   output_objects.header.frame_id = node_param_.new_frame_id;
 
   for (size_t i = 0; i < input_topic_size; i++) {
-    double time_diff = (this->get_clock()->now()).seconds() -
+    double time_diff = rclcpp::Time(objects_data_.at(i)->header.stamp).seconds() -
                        rclcpp::Time(objects_data_.at(0)->header.stamp).seconds();
     if (std::abs(time_diff) < node_param_.timeout_threshold) {
       transform_ = transform_listener_->getTransform(
