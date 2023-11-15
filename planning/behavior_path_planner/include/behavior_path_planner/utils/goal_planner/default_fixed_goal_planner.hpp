@@ -29,8 +29,12 @@ class DefaultFixedGoalPlanner : public FixedGoalPlannerBase
 public:
   DefaultFixedGoalPlanner() = default;
   BehaviorModuleOutput plan(const std::shared_ptr<const PlannerData> & planner_data) const override;
-  bool isPathValid(const PathWithLaneId & refined_path, const std::shared_ptr<const PlannerData> & planner_data) const;
-  lanelet::ConstLanelets extractLaneletsFromPath(const PathWithLaneId & refined_path, const std::shared_ptr<const PlannerData> & planner_data) const;
+  bool isPathValid(
+    const PathWithLaneId & refined_path,
+    const std::shared_ptr<const PlannerData> & planner_data) const;
+  lanelet::ConstLanelets extractLaneletsFromPath(
+    const PathWithLaneId & refined_path,
+    const std::shared_ptr<const PlannerData> & planner_data) const;
 
 protected:
   PathWithLaneId modifyPathForSmoothGoalConnection(
