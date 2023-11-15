@@ -27,7 +27,6 @@
 #include <tf2/utils.h>
 
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -37,6 +36,24 @@ namespace behavior_path_planner::utils::path_safety_checker
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
+
+/**
+ * @brief Filters objects based on object centroid position.
+ *
+ * @param objects The predicted objects to filter.
+ * @param lanelet
+ * @return result.
+ */
+bool isCentroidWithinLanelet(const PredictedObject & object, const lanelet::ConstLanelet & lanelet);
+
+/**
+ * @brief Filters objects based on object polygon overlapping with lanelet.
+ *
+ * @param objects The predicted objects to filter.
+ * @param lanelet
+ * @return result.
+ */
+bool isPolygonOverlapLanelet(const PredictedObject & object, const lanelet::ConstLanelet & lanelet);
 
 /**
  * @brief Filters objects based on various criteria.
@@ -117,14 +134,16 @@ void filterObjectsByClass(
  * lanelet.
  */
 std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
+  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets,
+  const std::function<bool(const PredictedObject, const lanelet::ConstLanelet)> & condition);
 
 /**
  * @brief Separate the objects into two part based on whether the object is within lanelet.
  * @return Objects pair. first objects are in the lanelet, and second others are out of lanelet.
  */
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
+  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets,
+  const std::function<bool(const PredictedObject, const lanelet::ConstLanelet)> & condition);
 
 /**
  * @brief Get the predicted path from an object.

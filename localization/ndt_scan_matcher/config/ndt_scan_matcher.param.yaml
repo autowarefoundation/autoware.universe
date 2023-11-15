@@ -41,7 +41,12 @@
     converged_param_nearest_voxel_transformation_likelihood: 2.3
 
     # The number of particles to estimate initial pose
-    initial_estimate_particles_num: 100
+    initial_estimate_particles_num: 200
+
+    # The number of initial random trials in the TPE (Tree-Structured Parzen Estimator).
+    # This value should be equal to or less than 'initial_estimate_particles_num' and more than 0.
+    # If it is equal to 'initial_estimate_particles_num', the search will be the same as a full random search.
+    n_startup_trials: 20
 
     # Tolerance of timestamp difference between current time and sensor pointcloud. [sec]
     lidar_topic_timeout_sec: 1.0
@@ -66,6 +71,14 @@
         0.0,   0.0,   0.0,   0.0,      0.000625, 0.0,
         0.0,   0.0,   0.0,   0.0,      0.0,      0.000625,
       ]
+
+    # 2D Real-time covariance estimation with multiple searches (output_pose_covariance is the minimum value)
+    use_covariance_estimation: false
+
+    # Offset arrangement in covariance estimation [m]
+    # initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.
+    initial_pose_offset_model_x: [0.0, 0.0, 0.5, -0.5, 1.0, -1.0]
+    initial_pose_offset_model_y: [0.5, -0.5, 0.0, 0.0, 0.0, 0.0]
 
     # Regularization switch
     regularization_enabled: false

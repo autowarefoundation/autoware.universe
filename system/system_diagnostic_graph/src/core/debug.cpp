@@ -14,9 +14,9 @@
 
 #include "debug.hpp"
 
-#include "node.hpp"
+#include "graph.hpp"
 #include "types.hpp"
-#include "update.hpp"
+#include "units.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -32,11 +32,13 @@ const std::unordered_map<DiagnosticLevel, std::string> level_names = {
   {DiagnosticStatus::ERROR, "ERROR"},
   {DiagnosticStatus::STALE, "STALE"}};
 
-void DiagGraph::debug()
+void Graph::debug()
 {
   std::vector<DiagDebugData> lines;
-  for (const auto & node : graph_.nodes()) {
-    lines.push_back(node->debug());
+  for (const auto & node : nodes_) {
+    const auto level_name = level_names.at(node->level());
+    const auto index_name = std::to_string(node->index());
+    lines.push_back({"unit", index_name, level_name, node->path(), "-----"});
   }
 
   std::array<size_t, diag_debug_size> widths = {};
@@ -55,21 +57,6 @@ void DiagGraph::debug()
     }
     std::cout << "|" << std::endl;
   }
-}
-
-DiagDebugData UnitNode::debug() const
-{
-  const auto & level = node_.status.level;
-  const auto & name = node_.status.name;
-  return DiagDebugData{std::to_string(index()), "unit", name, "-----", level_names.at(level)};
-}
-
-DiagDebugData DiagNode::debug() const
-{
-  const auto & level = node_.status.level;
-  const auto & name = node_.status.name;
-  const auto & hardware = node_.status.hardware_id;
-  return DiagDebugData{std::to_string(index()), "diag", name, hardware, level_names.at(level)};
 }
 
 }  // namespace system_diagnostic_graph

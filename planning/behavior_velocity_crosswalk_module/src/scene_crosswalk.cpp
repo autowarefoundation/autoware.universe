@@ -176,20 +176,20 @@ tier4_debug_msgs::msg::StringStamped createStringStampedMessage(
 }  // namespace
 
 CrosswalkModule::CrosswalkModule(
-  rclcpp::Node & node, const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
-  const PlannerParam & planner_param, const bool use_regulatory_element,
+  rclcpp::Node & node, const int64_t module_id, const std::optional<int64_t> & reg_elem_id,
+  const lanelet::LaneletMapPtr & lanelet_map_ptr, const PlannerParam & planner_param,
   const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   module_id_(module_id),
   planner_param_(planner_param),
-  use_regulatory_element_(use_regulatory_element)
+  use_regulatory_element_(reg_elem_id)
 {
   velocity_factor_.init(VelocityFactor::CROSSWALK);
   passed_safety_slow_point_ = false;
 
   if (use_regulatory_element_) {
     const auto reg_elem_ptr = std::dynamic_pointer_cast<const lanelet::autoware::Crosswalk>(
-      lanelet_map_ptr->regulatoryElementLayer.get(module_id));
+      lanelet_map_ptr->regulatoryElementLayer.get(*reg_elem_id));
     stop_lines_ = reg_elem_ptr->stopLines();
     crosswalk_ = reg_elem_ptr->crosswalkLanelet();
   } else {
@@ -299,8 +299,7 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> CrosswalkModule::get
     const auto p_stop_lines = getLinestringIntersects(
       ego_path, lanelet::utils::to2D(stop_line).basicLineString(), ego_pos, 2);
     if (!p_stop_lines.empty()) {
-      return std::make_pair(
-        p_stop_lines.front(), -planner_param_.stop_distance_from_object - base_link2front);
+      return std::make_pair(p_stop_lines.front(), -base_link2front);
     }
   }
 
