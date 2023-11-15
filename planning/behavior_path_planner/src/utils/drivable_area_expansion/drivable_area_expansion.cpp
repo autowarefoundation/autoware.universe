@@ -71,16 +71,15 @@ void reuse_previous_poses(
     if (first_idx && deviation < params.max_reuse_deviation) {
       LineString2d path_ls;
       for (const auto & p : path.points) path_ls.push_back(convert_point(p.point.pose.position));
-      PointDistance closest_projection;
-      closest_projection.distance = std::numeric_limits<double>::max();
       for (auto idx = *first_idx; idx < prev_poses.size(); ++idx) {
+        double lateral_offset = std::numeric_limits<double>::max();
         for (auto segment_idx = 0LU; segment_idx + 1 < path_ls.size(); ++segment_idx) {
           const auto projection = point_to_line_projection(
             convert_point(prev_poses[idx].position), path_ls[segment_idx],
             path_ls[segment_idx + 1]);
-          if (projection.distance < closest_projection.distance) closest_projection = projection;
+          lateral_offset = std::min(projection.distance, lateral_offset);
         }
-        if (closest_projection.distance > params.max_reuse_deviation) break;
+        if (lateral_offset > params.max_reuse_deviation) break;
         cropped_poses.push_back(prev_poses[idx]);
         cropped_curvatures.push_back(prev_curvatures[idx]);
       }
