@@ -60,10 +60,10 @@ void reuse_previous_poses(
   for (const auto & p : path.right_bound) right_bound.push_back(convert_point(p));
   LineString2d prev_poses_ls;
   for (const auto & p : prev_poses) prev_poses_ls.push_back(convert_point(p.position));
-  auto prev_poses_accross_bounds = boost::geometry::intersects(left_bound, prev_poses_ls) ||
-                                   boost::geometry::intersects(right_bound, prev_poses_ls);
+  auto prev_poses_across_bounds = boost::geometry::intersects(left_bound, prev_poses_ls) ||
+                                  boost::geometry::intersects(right_bound, prev_poses_ls);
 
-  if (!ego_is_behind && !ego_is_far && prev_poses.size() > 1 && !prev_poses_accross_bounds) {
+  if (!ego_is_behind && !ego_is_far && prev_poses.size() > 1 && !prev_poses_across_bounds) {
     const auto first_idx =
       motion_utils::findNearestSegmentIndex(prev_poses, path.points.front().point.pose);
     const auto deviation =
