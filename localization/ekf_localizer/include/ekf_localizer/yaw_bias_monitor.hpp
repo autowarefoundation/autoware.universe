@@ -26,6 +26,14 @@
 class YawBiasEstimator : public Simple1DFilter
 {
 public:
+    YawBiasEstimator(): 
+      Simple1DFilter(),
+      speed_lower_limit(2),
+      rotation_speed_upper_limit(0.01),
+      distance_upper_limit(10),
+      distance_lower_limit(0.1)
+    {};
+
   void update(
     const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
     const geometry_msgs::msg::TwistWithCovarianceStamped & twist, double obs_variance = 0.1)
@@ -49,7 +57,10 @@ public:
     double speed = std::abs(twist.twist.twist.linear.x);
     double rotation_speed = std::abs(twist.twist.twist.angular.z);
     previous_ndt_pose_ = pose;
-    if ((speed < 2) || (rotation_speed > 0.01) || (distance > 10) || (distance < 0.1)) {
+    if ((speed < speed_lower_limit) ||
+        (rotation_speed > rotation_speed_upper_limit) ||
+        (distance > distance_upper_limit) ||
+        (distance < distance_lower_limit)) {
       return;  // ignore when speed is low or rotation speed is high
     }
     Simple1DFilter::update(yaw_bias, obs_variance, pose.header.stamp);
@@ -57,6 +68,10 @@ public:
 
 private:
   geometry_msgs::msg::PoseWithCovarianceStamped previous_ndt_pose_;
+  double speed_lower_limit;
+  double rotation_speed_upper_limit;
+  double distance_upper_limit;
+  double distance_lower_limit;
 };
 
 #endif  // EKF_LOCALIZER__YAW_BIAS_MONITOR_HPP_
