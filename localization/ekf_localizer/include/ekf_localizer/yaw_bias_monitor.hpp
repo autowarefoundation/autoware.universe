@@ -12,51 +12,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EKF_LOCALIZER__YAW_BIAS_ESTIMATOR_HPP_
-#define EKF_LOCALIZER__YAW_BIAS_ESTIMATOR_HPP_
+#ifndef EKF_LOCALIZER__YAW_BIAS_MONITOR_HPP_
+#define EKF_LOCALIZER__YAW_BIAS_MONITOR_HPP_
 
 #include "ekf_localizer/simple_filter_base.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <string>
+
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 
-class YawBiasEstimator: public Simple1DFilter
+#include <string>
+
+class YawBiasEstimator : public Simple1DFilter
 {
 public:
-    void update(const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
-                const geometry_msgs::msg::TwistWithCovarianceStamped & twist,
-                double obs_variance = 0.1)
-    {
-        double dx = pose.pose.pose.position.x - previous_ndt_pose_.pose.pose.position.x;
-        double dy = pose.pose.pose.position.y - previous_ndt_pose_.pose.pose.position.y;
-        double distance = std::sqrt(dx * dx + dy * dy);
-        double estimated_yaw = std::atan2(dy, dx);
-        double measured_yaw = std::atan2(pose.pose.pose.orientation.z, pose.pose.pose.orientation.w) * 2;
+  void update(
+    const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
+    const geometry_msgs::msg::TwistWithCovarianceStamped & twist, double obs_variance = 0.1)
+  {
+    double dx = pose.pose.pose.position.x - previous_ndt_pose_.pose.pose.position.x;
+    double dy = pose.pose.pose.position.y - previous_ndt_pose_.pose.pose.position.y;
+    double distance = std::sqrt(dx * dx + dy * dy);
+    double estimated_yaw = std::atan2(dy, dx);
+    double measured_yaw =
+      std::atan2(pose.pose.pose.orientation.z, pose.pose.pose.orientation.w) * 2;
 
-        double yaw_bias = measured_yaw - estimated_yaw;
+    double yaw_bias = measured_yaw - estimated_yaw;
 
-        while (yaw_bias > M_PI / 2) {
-            yaw_bias -= M_PI;
-        }
-        while (yaw_bias < -M_PI / 2) {
-            yaw_bias += M_PI;
-        }  // normalize to -pi/2 ~ pi/2
-
-        double speed = std::abs(twist.twist.twist.linear.x);
-        double rotation_speed = std::abs(twist.twist.twist.angular.z);
-        previous_ndt_pose_ = pose;
-        if ((speed < 2) || (rotation_speed > 0.01) || (distance > 10) || (distance < 0.1)) {
-            return; // ignore when speed is low or rotation speed is high
-        }
-        Simple1DFilter::update(yaw_bias, obs_variance, pose.header.stamp);
+    while (yaw_bias > M_PI / 2) {
+      yaw_bias -= M_PI;
     }
+    while (yaw_bias < -M_PI / 2) {
+      yaw_bias += M_PI;
+    }  // normalize to -pi/2 ~ pi/2
+
+    double speed = std::abs(twist.twist.twist.linear.x);
+    double rotation_speed = std::abs(twist.twist.twist.angular.z);
+    previous_ndt_pose_ = pose;
+    if ((speed < 2) || (rotation_speed > 0.01) || (distance > 10) || (distance < 0.1)) {
+      return;  // ignore when speed is low or rotation speed is high
+    }
+    Simple1DFilter::update(yaw_bias, obs_variance, pose.header.stamp);
+  }
 
 private:
   rclcpp::Node * node_;
-    geometry_msgs::msg::PoseWithCovarianceStamped previous_ndt_pose_;
+  geometry_msgs::msg::PoseWithCovarianceStamped previous_ndt_pose_;
 };
 
-#endif  // EKF_LOCALIZER__YAW_BIAS_ESTIMATOR_HPP_
+#endif  // EKF_LOCALIZER__YAW_BIAS_MONITOR_HPP_

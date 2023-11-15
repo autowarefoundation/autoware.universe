@@ -19,7 +19,6 @@
 
 #include <string>
 
-
 class Simple1DFilter
 {
 public:
