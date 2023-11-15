@@ -47,9 +47,10 @@ $ ExactPointTime = TimeStamp + TimeOffset $
 
 ## Assumptions / Known limits
 
-When setting the parameter `update_azimuth_and_distance` to True, the node will calculate the azimuth value based on the undistorted XYZ by using cv::fastAtan2, which will return the azimuth value with the coordinate system that the x-axis is 0 degrees and the y-axis is 90 degrees. Please make sure the frame coordinate of the input pointcloud is the same as the coordinate system mentioned above. For autoware users, when you launch the pointcloud preprocessor, the frame_id of input pointcloud is base_link, which the coordinate system is the same as the coordinate system mentioned above, therefore it won't cause any issues. 
+When setting the parameter `update_azimuth_and_distance` to True, the node will calculate the azimuth value based on the undistorted XYZ by using cv::fastAtan2, which will return the azimuth value with the coordinate system that the x-axis is 0 degrees and the y-axis is 90 degrees. Please make sure the frame coordinate of the input pointcloud is the same as the coordinate system mentioned above. For autoware users, when you launch the pointcloud preprocessor, the frame_id of input pointcloud is base_link, which the coordinate system is the same as the coordinate system mentioned above, therefore it won't cause any issues.
 
 Please also note that by setting the parameter `update_azimuth_and_distance` to True, the time will increase by around 13% and there is the **possibility of changing beam order for high azimuth resolution LiDAR**.
 
 ## References/External links
-https://docs.opencv.org/3.4/db/de0/group__core__utils.html#ga7b356498dd314380a0c386b059852270
+
+<https://docs.opencv.org/3.4/db/de0/group__core__utils.html#ga7b356498dd314380a0c386b059852270>
