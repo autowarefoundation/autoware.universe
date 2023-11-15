@@ -432,53 +432,12 @@ void EKFLocalizer::updateSimple1DFilters(
   z_filter_.update(z, z_dev, pose.header.stamp);
   roll_filter_.update(rpy.x, roll_dev, pose.header.stamp);
   pitch_filter_.update(rpy.y, pitch_dev, pose.header.stamp);
-
   if (twist_queue_.size() > 0) {
     auto twist = twist_queue_.back();
-    double yaw_bias, obs_variance;
-    simpleEstimateYawBias(pose, *twist, yaw_bias, obs_variance);
-    if (obs_variance < 100) {
-      diagnostic_yaw_bias_filter_.update(yaw_bias, obs_variance, pose.header.stamp);
-    }
-    previous_ndt_pose_ = pose;
+    diagnostic_yaw_bias_filter_.update(pose, *twist, 0.1);
     DEBUG_INFO(
-      get_logger(), "[1DEKF] yaw_bias = %f; [1DEKF] filtered_yaw_bias = %f", yaw_bias,
+      get_logger(), "[1DEKF] filtered_yaw_bias = %f",
       diagnostic_yaw_bias_filter_.get_x());
-  }
-}
-
-void EKFLocalizer::simpleEstimateYawBias(
-  const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
-  const geometry_msgs::msg::TwistWithCovarianceStamped & twist, double & yaw_bias,
-  double & obs_variance)
-{
-  double dx = pose.pose.pose.position.x - previous_ndt_pose_.pose.pose.position.x;
-  double dy = pose.pose.pose.position.y - previous_ndt_pose_.pose.pose.position.y;
-  double distance = std::sqrt(dx * dx + dy * dy);
-  double estimated_yaw = std::atan2(dy, dx);
-  double measured_yaw = std::atan2(pose.pose.pose.orientation.z, pose.pose.pose.orientation.w) * 2;
-
-  yaw_bias = measured_yaw - estimated_yaw;
-
-  while (yaw_bias > M_PI / 2) {
-    yaw_bias -= M_PI;
-  }
-  while (yaw_bias < -M_PI / 2) {
-    yaw_bias += M_PI;
-  }  // normalize to -pi/2 ~ pi/2
-
-  double speed = std::abs(twist.twist.twist.linear.x);
-  double rotation_speed = std::abs(twist.twist.twist.angular.z);
-
-  DEBUG_INFO(
-    get_logger(),
-    "[1DEKF] dx = %f, dy = %f, yaw0 = %f, yaw1 = %f; speed = %f; rotation_speed = %f; ", dx, dy,
-    estimated_yaw, measured_yaw, speed, rotation_speed);
-
-  if ((speed > 2) && (rotation_speed < 0.01) && (distance < 10) && (distance > 0.1)) {
-    obs_variance = 0.1;
-  } else {
-    obs_variance = 999;
   }
 }
 

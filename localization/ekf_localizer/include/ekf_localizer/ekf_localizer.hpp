@@ -15,6 +15,8 @@
 #ifndef EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 #define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
+#include "ekf_localizer/simple_filter_base.hpp"
+#include "ekf_localizer/yaw_bias_monitor.hpp"
 #include "ekf_localizer/aged_object_queue.hpp"
 #include "ekf_localizer/ekf_module.hpp"
 #include "ekf_localizer/hyper_parameters.hpp"
@@ -49,55 +51,6 @@
 #include <string>
 #include <vector>
 
-class Simple1DFilter
-{
-public:
-  Simple1DFilter()
-  {
-    initialized_ = false;
-    x_ = 0;
-    dev_ = 1e9;
-    proc_dev_x_c_ = 0.0;
-    return;
-  };
-  void init(const double init_obs, const double obs_dev, const rclcpp::Time time)
-  {
-    x_ = init_obs;
-    dev_ = obs_dev;
-    latest_time_ = time;
-    initialized_ = true;
-    return;
-  };
-  void update(const double obs, const double obs_dev, const rclcpp::Time time)
-  {
-    if (!initialized_) {
-      init(obs, obs_dev, time);
-      return;
-    }
-
-    // Prediction step (current stddev_)
-    double dt = (time - latest_time_).seconds();
-    double proc_dev_x_d = proc_dev_x_c_ * dt * dt;
-    dev_ = dev_ + proc_dev_x_d;
-
-    // Update step
-    double kalman_gain = dev_ / (dev_ + obs_dev);
-    x_ = x_ + kalman_gain * (obs - x_);
-    dev_ = (1 - kalman_gain) * dev_;
-
-    latest_time_ = time;
-    return;
-  };
-  void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
-  double get_x() const { return x_; }
-
-private:
-  bool initialized_;
-  double x_;
-  double dev_;
-  double proc_dev_x_c_;
-  rclcpp::Time latest_time_;
-};
 
 class EKFLocalizer : public rclcpp::Node
 {
@@ -152,7 +105,7 @@ private:
   Simple1DFilter z_filter_;
   Simple1DFilter roll_filter_;
   Simple1DFilter pitch_filter_;
-  Simple1DFilter diagnostic_yaw_bias_filter_;
+  YawBiasEstimator diagnostic_yaw_bias_filter_;
 
   const HyperParameters params_;
 
@@ -172,7 +125,6 @@ private:
 
   AgedObjectQueue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr> pose_queue_;
   AgedObjectQueue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> twist_queue_;
-  geometry_msgs::msg::PoseWithCovarianceStamped previous_ndt_pose_;  //!< @brief previous ndt pose
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
@@ -229,14 +181,6 @@ private:
    */
   void updateSimple1DFilters(
     const geometry_msgs::msg::PoseWithCovarianceStamped & pose, const size_t smoothing_step);
-
-  /**
-   * @brief estimate yaw bias
-   */
-  void simpleEstimateYawBias(
-    const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
-    const geometry_msgs::msg::TwistWithCovarianceStamped & twist, double & yaw_bias,
-    double & obs_variance);
 
   /**
    * @brief initialize simple1DFilter
