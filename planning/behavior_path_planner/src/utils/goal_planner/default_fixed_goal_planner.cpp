@@ -16,20 +16,19 @@
 
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
+#include "lanelet2_core/LaneletMap.h"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
-#include <memory>
+#include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 
 #include <boost/geometry.hpp>
 
-
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
-#include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
-
 #include <lanelet2_core/geometry/Polygon.h>
-#include "lanelet2_core/LaneletMap.h"
+
+#include <memory>
 
 namespace behavior_path_planner
 {
@@ -58,12 +57,13 @@ bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2
   return false;
 }
 
-bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
-                          const lanelet::ConstLanelets &candidate_lanelets) {
+bool isAllPointsInAnyLane(
+  const PathWithLaneId & refined_path, const lanelet::ConstLanelets & candidate_lanelets)
+{
   Point2d path_point_point2D;
 
   for (size_t i = 0; i < refined_path.points.size(); ++i) {
-    const PathPointWithLaneId& path_point = refined_path.points[i];
+    const PathPointWithLaneId & path_point = refined_path.points[i];
     path_point_point2D.x() = path_point.point.pose.position.x;
     path_point_point2D.y() = path_point.point.pose.position.y;
     bool is_point_in_any_lanelet = isInAnyLane(candidate_lanelets, path_point_point2D);
@@ -74,28 +74,34 @@ bool isAllPointsInAnyLane(const PathWithLaneId &refined_path,
   return true;
 }
 
-lanelet::ConstLanelets DefaultFixedGoalPlanner::extractLaneletsFromPath(const PathWithLaneId& refined_path, const std::shared_ptr<const PlannerData> & planner_data) const {
-    const auto & rh = planner_data->route_handler;
-    lanelet::ConstLanelets refined_path_lanelets;
-    for (size_t i = 0; i < refined_path.points.size(); ++i) {
-        const PathPointWithLaneId& path_point = refined_path.points[i];
-        int64_t lane_id = path_point.lane_ids[0];
-        lanelet::ConstLanelet lanelet = rh->getLaneletsFromId(lane_id);
-        bool is_unique = true;
-        for (const lanelet::ConstLanelet& existing_lanelet : refined_path_lanelets) {
-            if (lanelet == existing_lanelet) {
-                is_unique = false;
-                break;
-            }
-        }
-        if (is_unique) {
-            refined_path_lanelets.push_back(lanelet);
-        }
+lanelet::ConstLanelets DefaultFixedGoalPlanner::extractLaneletsFromPath(
+  const PathWithLaneId & refined_path,
+  const std::shared_ptr<const PlannerData> & planner_data) const
+{
+  const auto & rh = planner_data->route_handler;
+  lanelet::ConstLanelets refined_path_lanelets;
+  for (size_t i = 0; i < refined_path.points.size(); ++i) {
+    const PathPointWithLaneId & path_point = refined_path.points[i];
+    int64_t lane_id = path_point.lane_ids[0];
+    lanelet::ConstLanelet lanelet = rh->getLaneletsFromId(lane_id);
+    bool is_unique = true;
+    for (const lanelet::ConstLanelet & existing_lanelet : refined_path_lanelets) {
+      if (lanelet == existing_lanelet) {
+        is_unique = false;
+        break;
+      }
     }
-    return refined_path_lanelets;
+    if (is_unique) {
+      refined_path_lanelets.push_back(lanelet);
+    }
+  }
+  return refined_path_lanelets;
 }
 
-bool DefaultFixedGoalPlanner::isPathValid(const PathWithLaneId &refined_path, const std::shared_ptr<const PlannerData> & planner_data) const {
+bool DefaultFixedGoalPlanner::isPathValid(
+  const PathWithLaneId & refined_path,
+  const std::shared_ptr<const PlannerData> & planner_data) const
+{
   const lanelet::ConstLanelets lanelets = extractLaneletsFromPath(refined_path, planner_data);
   return isAllPointsInAnyLane(refined_path, lanelets);
 }
@@ -114,20 +120,20 @@ PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
       refined_goal = goal;
     }
   }
-  double goal_search_radius {planner_data->parameters.refine_goal_search_radius_range};
-  const double range_reduce_by {1}; // set a reasonable value, 10% - 20% of the refine_goal_search_radius_range is recommended
-  int path_is_valid {0};
+  double goal_search_radius{planner_data->parameters.refine_goal_search_radius_range};
+  const double range_reduce_by{
+    1};  // set a reasonable value, 10% - 20% of the refine_goal_search_radius_range is recommended
+  int path_is_valid{0};
   autoware_auto_planning_msgs::msg::PathWithLaneId refined_path;
-  while(goal_search_radius >= 0 && !path_is_valid) {
-      refined_path = utils::refinePathForGoal(
-      goal_search_radius, M_PI * 0.5, path, refined_goal,
-      goal_lane_id);
+  while (goal_search_radius >= 0 && !path_is_valid) {
+    refined_path =
+      utils::refinePathForGoal(goal_search_radius, M_PI * 0.5, path, refined_goal, goal_lane_id);
     if (isPathValid(refined_path, planner_data)) {
       path_is_valid = 1;
-    } 
-    goal_search_radius -= range_reduce_by; 
+    }
+    goal_search_radius -= range_reduce_by;
   }
-  return refined_path; 
+  return refined_path;
 }
 
 }  // namespace behavior_path_planner
