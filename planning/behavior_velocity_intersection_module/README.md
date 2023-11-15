@@ -86,13 +86,32 @@ The parameters `collision_detection.collision_start_margin_time` and `collision_
 
 If collision is detected, the state transits to "STOP" immediately. On the other hand, the state does not transit to "GO" unless safe judgement continues for a certain period `collision_detection.state_transit_margin` to prevent the chattering of decisions.
 
+Currently, the intersection module uses `motion_velocity_smoother` feature to precisely calculate ego vehicle velocity profile along the intersection lane under longitudinal/lateral constraints. If the flag `collision_detection.use_upstream_velocity` is true, the target velocity profile of the original path is used. Otherwise the target velocity is set to `common.intersection_velocity`. In the trajectory smoothing process the target velocity at/before ego trajectory points are set to ego current velocity. The smoothed trajectory is then converted to an array of (time, distance) which indicates the arrival time to each trajectory point on the path from current ego position. You can visualize this array by adding the lane id to `debug.ttc` and running
+
+```bash
+ros2 run behavior_velocity_intersection_module ttc.py --lane_id <lane_id>
+```
+
+![ego ttc profile](./docs/ttc.gif)
+
 #### Stop Line Automatic Generation
 
 If a stopline is associated with the intersection lane on the map, that line is used as the stopline for collision detection. Otherwise the path is interpolated at a certain intervals (=`common.path_interpolation_ds`), and the point which is `stop_line_margin` meters behind the attention area is defined as the position of the stop line for the vehicle front.
 
 #### Pass Judge Line
 
-To avoid sudden braking, if deceleration and jerk more than a threshold (`behavior_velocity_planner.max_accel` and `behavior_velocity_planner.max_jerk`) is required to stop just in front of the attention area, this module does not insert stopline after passing the default stopline position.
+To avoid sudden braking, if deceleration and jerk more than a threshold (`behavior_velocity_planner.max_accel` and `behavior_velocity_planner.max_jerk`) is required to stop just in front of the attention area, namely the `first_attention_stop_line`, this module does not insert stopline after it passed the `default stop_line` position.
+
+The position of the pass judge line depends on the occlusion detection configuration and the existence of the associated traffic light of the intersection lane.
+
+- If `occlusion.enable` is false, the pass judge line before the `first_attention_stop_line` by the braking distance $v_{ego}^{2} / 2a_{max}$.
+- If `occlusion.enable` is true and:
+  - if there are associated traffic lights, the pass judge line is at the `occlusion_peeking_stop_line` in order to continue peeking/collision detection while occlusion is detected.
+  - if there are no associated traffic lights and:
+    - if occlusion is detected, pass judge line is at the `occlusion_wo_tl_pass_judge_line` to continue peeking.
+    - if occlusion is not detected, pass judge line is at the same place at the case where `occlusion.enable` is false.
+
+![data structure](./docs/data-structure.drawio.svg)
 
 ### Occlusion detection
 
@@ -161,8 +180,6 @@ entity IntersectionStopLines {
 }
 @enduml
 ```
-
-![data structure](./docs/data-structure.drawio.svg)
 
 ### Module Parameters
 
