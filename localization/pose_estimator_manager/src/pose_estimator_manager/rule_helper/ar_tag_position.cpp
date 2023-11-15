@@ -63,11 +63,11 @@ void ArTagPosition::init(HADMapBin::ConstSharedPtr msg)
   const std::vector<landmark_manager::Landmark> landmarks =
     landmark_manager::parse_landmarks(msg, "apriltag_16h5", logger_);
 
-  // auto & landmark_map = impl_->landmark_map;
-  // landmark_map.clear();
-  // for (const landmark_manager::Landmark & landmark : landmarks) {
-  //   landmark_map[landmark.id] = landmark.pose;
-  // }
+  auto & landmark_map = impl_->landmark_map;
+  landmark_map.clear();
+  for (const landmark_manager::Landmark & landmark : landmarks) {
+    landmark_map[landmark.id] = landmark.pose;
+  }
 }
 
 bool ArTagPosition::vector_map_initialized() const

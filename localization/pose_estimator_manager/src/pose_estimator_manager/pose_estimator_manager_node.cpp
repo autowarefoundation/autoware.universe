@@ -14,8 +14,13 @@
 
 #include "pose_estimator_manager/pose_estimator_manager.hpp"
 
+#include <glog/logging.h>
+
 int main(int argc, char * argv[])
 {
+  google::InitGoogleLogging(argv[0]);
+  google::InstallFailureSignalHandler();
+
   rclcpp::init(argc, argv);
   auto node = std::make_shared<pose_estimator_manager::PoseEstimatorManager>();
   rclcpp::executors::MultiThreadedExecutor executor;

@@ -40,14 +40,16 @@ MapBasedRule::MapBasedRule(
 
 bool MapBasedRule::eagleye_is_available() const
 {
+  if (running_estimator_list_.count(PoseEstimatorName::eagleye) == 0) {
+    return false;
+  }
+  // Below this line, eagleye_area is guaranteed not to be nullptr.
+  assert(eagleye_area_ != nullptr);
+
   if (shared_data_->vector_map.has_value()) {
     if (!eagleye_area_->vector_map_initialized()) {
       eagleye_area_->init(shared_data_->vector_map());
     }
-  }
-
-  if (running_estimator_list_.count(PoseEstimatorName::eagleye) == 0) {
-    return false;
   }
 
   if (!shared_data_->eagleye_output_pose_cov.has_value()) {
@@ -98,14 +100,16 @@ MapBasedRule::MarkerArray MapBasedRule::debug_marker_array()
 
 bool MapBasedRule::artag_is_available() const
 {
+  if (running_estimator_list_.count(PoseEstimatorName::artag) == 0) {
+    return false;
+  }
+  // Below this line, ar_tag_position_ is guaranteed not to be nullptr.
+  assert(ar_tag_position_ != nullptr);
+
   if (shared_data_->vector_map.has_value()) {
     if (!ar_tag_position_->vector_map_initialized()) {
       ar_tag_position_->init(shared_data_->vector_map());
     }
-  }
-
-  if (running_estimator_list_.count(PoseEstimatorName::artag) == 0) {
-    return false;
   }
 
   if (!shared_data_->localization_pose_cov.has_value()) {

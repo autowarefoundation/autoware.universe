@@ -4,6 +4,8 @@ project(pose_estimator_manager)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(glog REQUIRED)
+
 ament_auto_add_library(switch_rule
   SHARED
   src/pose_estimator_manager/switch_rule/map_based_rule.cpp
@@ -20,7 +22,7 @@ ament_auto_add_executable(${PROJECT_NAME}
 )
 target_include_directories(${PROJECT_NAME} PUBLIC src)
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${PCL_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} switch_rule)
+target_link_libraries(${PROJECT_NAME} switch_rule glog::glog)
 
 # ==============================
 function(add_testcase filepath)
