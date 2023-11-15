@@ -108,7 +108,7 @@ void EKFLocalizer::measureLapTime()
       double current_ekf_dt_ = (current_time - last_predict_time_).seconds();
       DEBUG_INFO(get_logger(), "[EKF] timer callback lap time = %f [sec]", current_ekf_dt_);
     }
-  } 
+  }
   last_predict_time_ = current_time;
 }
 
@@ -132,14 +132,21 @@ void EKFLocalizer::timerCallback()
   /* predict model in EKF */
   stop_watch_.tic();
   DEBUG_INFO(get_logger(), "------------------------- start prediction -------------------------");
-  DEBUG_INFO(get_logger(), "[EKF] accumulated_time = %lf [s] (before prediction)", accumulated_lap_time_.seconds());
+  DEBUG_INFO(
+    get_logger(), "[EKF] accumulated_time = %lf [s] (before prediction)",
+    accumulated_lap_time_.seconds());
   size_t prediction_times = static_cast<int>(accumulated_lap_time_.seconds() / params_.ekf_dt);
   for (size_t i = 0; i < prediction_times; ++i) {
     ekf_module_->predictWithDelay(params_.ekf_dt);
   }
-  accumulated_lap_time_ = accumulated_lap_time_ - rclcpp::Duration::from_seconds(params_.ekf_dt * prediction_times);
-  DEBUG_INFO(get_logger(), "[EKF] predictKinematicsModel calc time = %f [ms] (predicted %d times)", stop_watch_.toc(), static_cast<int>(prediction_times));
-  DEBUG_INFO(get_logger(), "[EKF] accumulated_time = %lf [s] (after prediction)", accumulated_lap_time_.seconds());
+  accumulated_lap_time_ =
+    accumulated_lap_time_ - rclcpp::Duration::from_seconds(params_.ekf_dt * prediction_times);
+  DEBUG_INFO(
+    get_logger(), "[EKF] predictKinematicsModel calc time = %f [ms] (predicted %d times)",
+    stop_watch_.toc(), static_cast<int>(prediction_times));
+  DEBUG_INFO(
+    get_logger(), "[EKF] accumulated_time = %lf [s] (after prediction)",
+    accumulated_lap_time_.seconds());
   DEBUG_INFO(get_logger(), "------------------------- end prediction -------------------------\n");
 
   /* pose measurement update */
@@ -161,7 +168,8 @@ void EKFLocalizer::timerCallback()
     const size_t n = pose_queue_.size();
     for (size_t i = 0; i < n; ++i) {
       const auto pose = pose_queue_.pop_increment_age();
-      bool is_updated = ekf_module_->measurementUpdatePose(*pose, params_.ekf_dt, t_curr, pose_diag_info_);
+      bool is_updated =
+        ekf_module_->measurementUpdatePose(*pose, params_.ekf_dt, t_curr, pose_diag_info_);
       if (is_updated) {
         pose_is_updated = true;
 
