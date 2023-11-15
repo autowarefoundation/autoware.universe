@@ -30,6 +30,7 @@
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -147,12 +148,18 @@ private:
 
   void updateDebugMarkers();
 
+  void prepareConstraints(
+    sampler_common::Constraints & constraints,
+    const PredictedObjects::ConstSharedPtr & predicted_objects,
+    const std::vector<geometry_msgs::msg::Point> & left_bound,
+    const std::vector<geometry_msgs::msg::Point> & right_bound);
+
   frenet_planner::SamplingParameters prepareSamplingParameters(
     const sampler_common::State & initial_state,
     const sampler_common::transform::Spline2D & path_spline,
     const SamplingPlannerInternalParameters & internal_params_);
 
-  PathWithLaneId convertFrenetPathToPlanResult(
+  PathWithLaneId convertFrenetPathToPathWithLaneID(
     const frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
     const double velocity);
   // member

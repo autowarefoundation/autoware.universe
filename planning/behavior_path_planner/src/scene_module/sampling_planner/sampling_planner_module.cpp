@@ -69,7 +69,7 @@ SamplingPlannerData SamplingPlannerModule::createPlannerData(const PlanResult & 
   return data;
 }
 
-PathWithLaneId SamplingPlannerModule::convertFrenetPathToPlanResult(
+PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
   const frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
   const double velocity)
 {
@@ -118,6 +118,36 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPlanResult(
   return path;
 }
 
+void SamplingPlannerModule::prepareConstraints(
+  sampler_common::Constraints & constraints,
+  const PredictedObjects::ConstSharedPtr & predicted_objects,
+  const std::vector<geometry_msgs::msg::Point> & left_bound,
+  const std::vector<geometry_msgs::msg::Point> & right_bound)
+{
+  constraints.obstacle_polygons = sampler_common::MultiPolygon2d();
+  for (const auto & o : predicted_objects->objects)
+    if (o.kinematics.initial_twist_with_covariance.twist.linear.x < 0.5)  // TODO(Maxime): param
+      constraints.obstacle_polygons.push_back(tier4_autoware_utils::toPolygon2d(o));
+
+  constraints.dynamic_obstacles = {};  // TODO(Maxime): not implemented
+
+  // TODO(Maxime): directly use lines instead of polygon
+
+  sampler_common::Polygon2d drivable_area_polygon;
+  for (const auto & p : right_bound) {
+    drivable_area_polygon.outer().emplace_back(p.x, p.y);
+  }
+  for (auto it = left_bound.rbegin(); it != left_bound.rend(); ++it)
+    drivable_area_polygon.outer().emplace_back(it->x, it->y);
+
+  if (drivable_area_polygon.outer().size() < 1) {
+    return;
+  }
+  drivable_area_polygon.outer().push_back(drivable_area_polygon.outer().front());
+
+  constraints.drivable_polygons = {drivable_area_polygon};
+}
+
 BehaviorModuleOutput SamplingPlannerModule::plan()
 {
   // const auto refPath = getPreviousModuleOutput().reference_path;
@@ -154,14 +184,17 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   frenet_planner::SamplingParameters sampling_parameters =
     prepareSamplingParameters(initial_state, reference_spline, *internal_params_);
 
+  const auto sampling_planner_data = createPlannerData(planner_data_->prev_output_path);
+
+  prepareConstraints(
+    internal_params_->constraints, planner_data_->dynamic_object, sampling_planner_data.left_bound,
+    sampling_planner_data.right_bound);
+
   frenet_planner::FrenetState frenet_initial_state;
   frenet_initial_state.position = initial_state.frenet;
 
   auto frenet_paths =
     frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
-  // After path generation we do pruning we then select the optimal path based on obstacles and
-  // drivable area and copy to the expected output and finally copy the velocities from the ref path
-  // RCLCPP_INFO(getLogger(), "Generated paths %ld", frenet_paths.size());
 
   debug_data_.footprints.clear();
   for (auto & path : frenet_paths) {
@@ -184,9 +217,23 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   debug_data_.obstacles = internal_params_->constraints.obstacle_polygons;
   updateDebugMarkers();
 
-  if (frenet_paths.size() < 1) {
-    auto p = getPreviousModuleOutput().reference_path;
+  const auto best_path_idx = [](const auto & paths) {
+    auto min_cost = std::numeric_limits<double>::max();
+    size_t best_path_idx = 0;
+    for (auto i = 0LU; i < paths.size(); ++i) {
+      if (paths[i].constraint_results.isValid() && paths[i].cost < min_cost) {
+        best_path_idx = i;
+        min_cost = paths[i].cost;
+      }
+    }
+    return min_cost < std::numeric_limits<double>::max() ? std::optional<size_t>(best_path_idx)
+                                                         : std::nullopt;
+  };
+  const auto selected_path_idx = best_path_idx(frenet_paths);
+
+  if (!selected_path_idx) {
     BehaviorModuleOutput out;
+    const auto p = getPreviousModuleOutput().reference_path;
     out.path = p;
     out.reference_path = p;
     out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
@@ -194,14 +241,16 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   }
 
   BehaviorModuleOutput out;
-  const double velocity = 0.5;
+  const double velocity = 1.5;
   const double max_length = *std::max_element(
     internal_params_->sampling.target_lengths.begin(),
     internal_params_->sampling.target_lengths.end());
   const auto road_lanes = utils::getExtendedCurrentLanes(planner_data_, 0, max_length, false);
-  auto out_path = convertFrenetPathToPlanResult(frenet_paths[0], road_lanes, velocity);
+
+  const auto best_path = frenet_paths[*selected_path_idx];
+  const auto out_path = convertFrenetPathToPathWithLaneID(best_path, road_lanes, velocity);
   out.path = std::make_shared<PathWithLaneId>(out_path);
-  auto p = getPreviousModuleOutput().reference_path;
+  const auto p = getPreviousModuleOutput().reference_path;
   out.reference_path = p;
   out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
   return out;
