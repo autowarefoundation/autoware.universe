@@ -26,13 +26,12 @@
 class YawBiasEstimator : public Simple1DFilter
 {
 public:
-    YawBiasEstimator(): 
-      Simple1DFilter(),
-      speed_lower_limit(2),
-      rotation_speed_upper_limit(0.01),
-      distance_upper_limit(10),
-      distance_lower_limit(0.1)
-    {};
+  YawBiasEstimator()
+  : Simple1DFilter(),
+    speed_lower_limit(2),
+    rotation_speed_upper_limit(0.01),
+    distance_upper_limit(10),
+    distance_lower_limit(0.1){};
 
   void update(
     const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
@@ -57,10 +56,9 @@ public:
     double speed = std::abs(twist.twist.twist.linear.x);
     double rotation_speed = std::abs(twist.twist.twist.angular.z);
     previous_ndt_pose_ = pose;
-    if ((speed < speed_lower_limit) ||
-        (rotation_speed > rotation_speed_upper_limit) ||
-        (distance > distance_upper_limit) ||
-        (distance < distance_lower_limit)) {
+    if (
+      (speed < speed_lower_limit) || (rotation_speed > rotation_speed_upper_limit) ||
+      (distance > distance_upper_limit) || (distance < distance_lower_limit)) {
       return;  // ignore when speed is low or rotation speed is high
     }
     Simple1DFilter::update(yaw_bias, obs_variance, pose.header.stamp);
