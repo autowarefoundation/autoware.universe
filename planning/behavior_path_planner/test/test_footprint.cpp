@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 
-TEST(BehaviorPathPlanningPolygon2d, Polygon2D)
+TEST(BehaviorPathPlanningFootprint, Polygon2dTranslation)
 {
     
     drivable_area_expansion::Polygon2d polygon;
@@ -51,3 +51,85 @@ TEST(BehaviorPathPlanningPolygon2d, Polygon2D)
     
     
     } 
+
+    TEST(BehaviorPathPlanningPolygon2d, Polygon2dCreateFootprint)
+    {
+        drivable_area_expansion::Polygon2d base_footprint;
+        geometry_msgs::msg::Pose pose;
+
+        base_footprint.outer()= {{0.0, 0.0},{1.0, 3.0}, {3.0, 3.0}, {3.0, 1.0}, {0.0, 0.0}};
+
+        //considering it in 2D
+        pose.position.x = 1.0;
+        pose.position.y = 1.0;
+        pose.position.z = 0.0;
+        pose.orientation.w = 0.0;
+        
+        drivable_area_expansion::Polygon2d footprint = drivable_area_expansion::create_footprint(pose, base_footprint);
+        EXPECT_EQ(footprint.outer()[0].x(), base_footprint.outer()[0].x()+1.0);
+        EXPECT_EQ(footprint.outer()[0].y(), base_footprint.outer()[0].y()+1.0);
+
+        EXPECT_EQ(footprint.outer()[1].x(), base_footprint.outer()[1].x()+1.0);
+        EXPECT_EQ(footprint.outer()[1].y(), base_footprint.outer()[1].y()+1.0);
+
+        EXPECT_EQ(footprint.outer()[2].x(), base_footprint.outer()[2].x()+1.0);
+        EXPECT_EQ(footprint.outer()[2].y(), base_footprint.outer()[2].y()+1.0);
+
+        EXPECT_EQ(footprint.outer()[3].x(), base_footprint.outer()[3].x()+1.0);
+        EXPECT_EQ(footprint.outer()[3].y(), base_footprint.outer()[3].y()+1.0);
+
+        EXPECT_EQ(footprint.outer()[4].x(), base_footprint.outer()[4].x()+1.0);
+        EXPECT_EQ(footprint.outer()[4].y(), base_footprint.outer()[4].y()+1.0);
+
+
+        //new position
+        pose.position.x = 1.0;
+        pose.position.y = 2.0;
+        pose.position.z = 1.0;
+        pose.orientation.w = 30.0;
+        
+        footprint = drivable_area_expansion::create_footprint(pose, base_footprint);
+        EXPECT_EQ(footprint.outer()[0].x(), base_footprint.outer()[0].x()+1.0);
+        EXPECT_EQ(footprint.outer()[0].y(), base_footprint.outer()[0].y()+2.0);
+
+        EXPECT_EQ(footprint.outer()[1].x(), base_footprint.outer()[1].x()+1.0);
+        EXPECT_EQ(footprint.outer()[1].y(), base_footprint.outer()[1].y()+2.0);
+
+        EXPECT_EQ(footprint.outer()[2].x(), base_footprint.outer()[2].x()+1.0);
+        EXPECT_EQ(footprint.outer()[2].y(), base_footprint.outer()[2].y()+2.0);
+
+        EXPECT_EQ(footprint.outer()[3].x(), base_footprint.outer()[3].x()+1.0);
+        EXPECT_EQ(footprint.outer()[3].y(), base_footprint.outer()[3].y()+2.0);
+
+        EXPECT_EQ(footprint.outer()[4].x(), base_footprint.outer()[4].x()+1.0);
+        EXPECT_EQ(footprint.outer()[4].y(), base_footprint.outer()[4].y()+2.0);
+
+
+        //changing base_footprint
+        base_footprint.outer() = {{2.0, 4.0},{2.0, 7.0}, {5.0, 7.0}, {3.0, 4.0}, {2.0, 4.0}};
+        
+        //new pose
+        pose.position.x = 3.0;
+        pose.position.y = 3.0;
+        pose.position.z = 0.0;
+        pose.orientation.w = 0.0;
+
+        footprint = drivable_area_expansion::create_footprint(pose, base_footprint);
+        EXPECT_EQ(footprint.outer()[0].x(), base_footprint.outer()[0].x()+3.0);
+        EXPECT_EQ(footprint.outer()[0].y(), base_footprint.outer()[0].y()+3.0);
+
+        EXPECT_EQ(footprint.outer()[1].x(), base_footprint.outer()[1].x()+3.0);
+        EXPECT_EQ(footprint.outer()[1].y(), base_footprint.outer()[1].y()+3.0);
+        
+        EXPECT_EQ(footprint.outer()[2].x(), base_footprint.outer()[2].x()+3.0);
+        EXPECT_EQ(footprint.outer()[2].y(), base_footprint.outer()[2].y()+3.0);
+        
+        EXPECT_EQ(footprint.outer()[3].x(), base_footprint.outer()[3].x()+3.0);
+        EXPECT_EQ(footprint.outer()[3].y(), base_footprint.outer()[3].y()+3.0);
+        
+        EXPECT_EQ(footprint.outer()[4].x(), base_footprint.outer()[4].x()+3.0);
+        EXPECT_EQ(footprint.outer()[4].y(), base_footprint.outer()[4].y()+3.0);
+
+    }
+
+    
