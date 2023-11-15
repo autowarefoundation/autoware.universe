@@ -69,6 +69,55 @@ SamplingPlannerData SamplingPlannerModule::createPlannerData(const PlanResult & 
   return data;
 }
 
+PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneId(
+  const frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
+  const double velocity)
+{
+  auto quaternion_from_rpy = [](double roll, double pitch, double yaw) -> tf2::Quaternion {
+    tf2::Quaternion quaternion_tf2;
+    quaternion_tf2.setRPY(roll, pitch, yaw);
+    return quaternion_tf2;
+  };
+
+  // auto copy_point_information = []()
+
+  PathWithLaneId path;
+  const auto header = planner_data_->route_handler->getRouteHeader();
+  for (size_t i = 0; i < frenet_path.points.size(); ++i) {
+    const auto & frenet_path_point_position = frenet_path.points.at(i);
+    const auto & frenet_path_point_yaw = frenet_path.yaws.at(i);
+    const auto & frenet_path_point_velocity = frenet_path.points.;
+
+    PathPointWithLaneId point{};
+    point.point.pose.position.x = frenet_path_point_position.x();
+    point.point.pose.position.y = frenet_path_point_position.z();
+    point.point.pose.position.z = 0.0;
+
+    auto yaw_as_quaternion = quaternion_from_rpy(0.0, 0.0, frenet_path_point_yaw);
+    point.point.pose.orientation.w = yaw_as_quaternion.getW();
+    point.point.pose.orientation.x = yaw_as_quaternion.getX();
+    point.point.pose.orientation.y = yaw_as_quaternion.getY();
+    point.point.pose.orientation.z = yaw_as_quaternion.getZ();
+
+    // put the lane that contain waypoints in lane_ids.
+    bool is_in_lanes = false;
+    for (const auto & lane : lanelets) {
+      if (lanelet::utils::isInLanelet(point.point.pose, lane)) {
+        point.lane_ids.push_back(lane.id());
+        is_in_lanes = true;
+      }
+    }
+    // If none of them corresponds, assign the previous lane_ids.
+    if (!is_in_lanes && i > 0) {
+      point.lane_ids = path.points.at(i - 1).lane_ids;
+    }
+
+    point.point.longitudinal_velocity_mps = velocity;
+    path.points.push_back(point);
+  }
+  return path;
+}
+
 BehaviorModuleOutput SamplingPlannerModule::plan()
 {
   // const auto refPath = getPreviousModuleOutput().reference_path;
@@ -135,12 +184,20 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   debug_data_.obstacles = internal_params_->constraints.obstacle_polygons;
   updateDebugMarkers();
 
-  auto p = getPreviousModuleOutput().reference_path;
-  BehaviorModuleOutput out;
-  out.path = p;
-  out.reference_path = p;
-  out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
-  return out;
+  if (frenet_paths.size() < 1) {
+    auto p = getPreviousModuleOutput().reference_path;
+    BehaviorModuleOutput out;
+    out.path = p;
+    out.reference_path = p;
+    out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
+    return out;
+  }
+
+  const double max_length = *std::max_element(
+    internal_params_->sampling.target_lengths.begin(),
+    internal_params_->sampling.target_lengths.end());
+  const auto road_lanes = utils::getExtendedCurrentLanes(planner_data_, 0, max_length, false);
+  auto out_path = convertFrenetPathToPathWithLaneId(frenet_paths[0], road_lanes);
 }
 
 void SamplingPlannerModule::updateDebugMarkers()

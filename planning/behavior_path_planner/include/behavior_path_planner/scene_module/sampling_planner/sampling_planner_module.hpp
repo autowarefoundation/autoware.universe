@@ -23,6 +23,7 @@
 #include "behavior_path_planner/utils/utils.hpp"
 #include "bezier_sampler/bezier_sampling.hpp"
 #include "frenet_planner/frenet_planner.hpp"
+#include "lanelet2_extension/utility/utilities.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/constraints/soft_constraint.hpp"
@@ -151,6 +152,9 @@ private:
     const sampler_common::transform::Spline2D & path_spline,
     const SamplingPlannerInternalParameters & internal_params_);
 
+  PathWithLaneId convertFrenetPathToPathWithLaneId(
+    const frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
+    const double velocity);
   // member
   // std::shared_ptr<SamplingPlannerParameters> params_;
   std::shared_ptr<SamplingPlannerInternalParameters> internal_params_;
