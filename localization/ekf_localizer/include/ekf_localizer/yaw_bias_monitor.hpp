@@ -17,10 +17,12 @@
 
 #include "ekf_localizer/simple_filter_base.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
-#include <rclcpp/rclcpp.hpp>
+
 #include <string>
 
 class YawBiasEstimator : public Simple1DFilter
@@ -34,10 +36,10 @@ public:
     distance_upper_limit(10),
     distance_lower_limit(0.1){};
 
-  void update(
-    const geometry_msgs::msg::PoseWithCovarianceStamped & pose, double obs_variance = 0.1)
+  void update(const geometry_msgs::msg::PoseWithCovarianceStamped & pose, double obs_variance = 0.1)
   {
-    auto pose_time_diff = rclcpp::Time(pose.header.stamp) - rclcpp::Time(previous_ndt_pose_.header.stamp);
+    auto pose_time_diff =
+      rclcpp::Time(pose.header.stamp) - rclcpp::Time(previous_ndt_pose_.header.stamp);
     double time_diff = pose_time_diff.seconds();
 
     std::cout << "1DKF: time_diff: " << time_diff << std::endl;
@@ -78,7 +80,8 @@ private:
   double distance_upper_limit;
   double distance_lower_limit;
 
-  double normalize_angle_diff(double angle_difference){
+  double normalize_angle_diff(double angle_difference)
+  {
     while (angle_difference > M_PI) {
       angle_difference -= 2 * M_PI;
     }
