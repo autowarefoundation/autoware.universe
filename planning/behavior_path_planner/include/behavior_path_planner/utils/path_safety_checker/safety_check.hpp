@@ -16,7 +16,6 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__PATH_SAFETY_CHECKER__SAFETY_CHECK_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/marker_utils/utils.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
@@ -35,7 +34,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::utils::path_safety_checker
@@ -51,8 +49,6 @@ using tier4_autoware_utils::calcYawDeviation;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using vehicle_info_util::VehicleInfo;
-
-namespace bg = boost::geometry;
 
 bool isTargetObjectOncoming(
   const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose);
@@ -111,10 +107,6 @@ bool checkCollision(
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
   const double hysteresis_factor, CollisionCheckDebug & debug);
 
-std::vector<Polygon2d> generatePolygonsWithStoppingAndInertialMargin(
-  const PathWithLaneId & ego_path, const double base_to_front, const double base_to_rear,
-  const double width, const double maximum_deceleration, const double max_extra_stopping_margin);
-
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
@@ -137,13 +129,9 @@ std::vector<Polygon2d> getCollidedPolygons(
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
   const double hysteresis_factor, CollisionCheckDebug & debug);
 
-/**
- * @brief Check collision between ego polygons with margin and objects.
- * @return Has collision or not
- */
-bool checkCollisionWithMargin(
-  const std::vector<Polygon2d> & ego_polygons, const PredictedObjects & dynamic_objects,
-  const double collision_check_margin);
+bool checkPolygonsIntersects(
+  const std::vector<Polygon2d> & polys_1, const std::vector<Polygon2d> & polys_2);
+
 }  // namespace behavior_path_planner::utils::path_safety_checker
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__PATH_SAFETY_CHECKER__SAFETY_CHECK_HPP_

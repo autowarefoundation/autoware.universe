@@ -15,7 +15,9 @@
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include "behavior_path_planner/utils/drivable_area_expansion/drivable_area_expansion.hpp"
+#include "behavior_path_planner/utils/path_shifter/path_shifter.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
+#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -23,9 +25,6 @@
 #include <motion_utils/resample/resample.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
-
-#include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
-#include "autoware_auto_perception_msgs/msg/predicted_path.hpp"
 
 #include <boost/geometry/algorithms/is_valid.hpp>
 
@@ -975,6 +974,11 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
     shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
 
+  // Insert zero velocity to each point in the path.
+  for (auto & point : reference_path.points) {
+    point.point.longitudinal_velocity_mps = 0.0;
+  }
+
   output.path = std::make_shared<PathWithLaneId>(reference_path);
   output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
   output.drivable_area_info.drivable_lanes = drivable_lanes;
@@ -1539,7 +1543,7 @@ void generateDrivableArea(
   }
   const auto & expansion_params = planner_data->drivable_area_expansion_parameters;
   if (expansion_params.enabled) {
-    drivable_area_expansion::expandDrivableArea(path, planner_data, transformed_lanes);
+    drivable_area_expansion::expand_drivable_area(path, planner_data);
   }
 
   // make bound longitudinally monotonic
@@ -2012,6 +2016,11 @@ void makeBoundLongitudinallyMonotonic(
     std::vector<Point> ret = bound;
     auto itr = std::next(ret.begin());
     while (std::next(itr) != ret.end()) {
+      if (itr == ret.begin()) {
+        itr++;
+        continue;
+      }
+
       const auto p1 = *std::prev(itr);
       const auto p2 = *itr;
       const auto p3 = *std::next(itr);
@@ -2025,11 +2034,20 @@ void makeBoundLongitudinallyMonotonic(
       const auto dist_3to2 = tier4_autoware_utils::calcDistance3d(p3, p2);
 
       constexpr double epsilon = 1e-3;
-      if (std::cos(M_PI_4) < product / dist_1to2 / dist_3to2 + epsilon) {
-        itr = ret.erase(itr);
-      } else {
-        itr++;
+
+      // Remove overlapped point.
+      if (dist_1to2 < epsilon || dist_3to2 < epsilon) {
+        itr = std::prev(ret.erase(itr));
+        continue;
       }
+
+      // If the angle between the points is sharper than 45 degrees, remove the middle point.
+      if (std::cos(M_PI_4) < product / dist_1to2 / dist_3to2 + epsilon) {
+        itr = std::prev(ret.erase(itr));
+        continue;
+      }
+
+      itr++;
     }
 
     return ret;
@@ -2274,62 +2292,6 @@ double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLan
   const auto & arc_coordinates = lanelet::utils::getArcCoordinates(lanelets, current_pose);
   const double lanelet_length = lanelet::utils::getLaneletLength3d(lanelets);
   return lanelet_length - arc_coordinates.length;
-}
-
-double getDistanceToNextTrafficLight(
-  const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
-{
-  lanelet::ConstLanelet current_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(lanelets, current_pose, &current_lanelet)) {
-    return std::numeric_limits<double>::infinity();
-  }
-
-  const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(current_pose.position);
-  const auto to_object = lanelet::geometry::toArcCoordinates(
-    lanelet::utils::to2D(current_lanelet.centerline()),
-    lanelet::utils::to2D(lanelet_point).basicPoint());
-
-  for (const auto & element : current_lanelet.regulatoryElementsAs<lanelet::TrafficLight>()) {
-    lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().get();
-
-    const auto to_stop_line = lanelet::geometry::toArcCoordinates(
-      lanelet::utils::to2D(current_lanelet.centerline()),
-      lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
-
-    const auto distance_object_to_stop_line = to_stop_line.length - to_object.length;
-
-    if (distance_object_to_stop_line > 0.0) {
-      return distance_object_to_stop_line;
-    }
-  }
-
-  double distance = lanelet::utils::getLaneletLength3d(current_lanelet);
-
-  bool found_current_lane = false;
-  for (const auto & llt : lanelets) {
-    if (llt.id() == current_lanelet.id()) {
-      found_current_lane = true;
-      continue;
-    }
-
-    if (!found_current_lane) {
-      continue;
-    }
-
-    for (const auto & element : llt.regulatoryElementsAs<lanelet::TrafficLight>()) {
-      lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().get();
-
-      const auto to_stop_line = lanelet::geometry::toArcCoordinates(
-        lanelet::utils::to2D(llt.centerline()),
-        lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
-
-      return distance + to_stop_line.length - to_object.length;
-    }
-
-    distance += lanelet::utils::getLaneletLength3d(llt);
-  }
-
-  return std::numeric_limits<double>::infinity();
 }
 
 double getDistanceToNextIntersection(
@@ -2693,6 +2655,17 @@ Polygon2d toPolygon2d(const lanelet::ConstLanelet & lanelet)
   return tier4_autoware_utils::isClockwise(polygon)
            ? polygon
            : tier4_autoware_utils::inverseClockwise(polygon);
+}
+
+Polygon2d toPolygon2d(const lanelet::BasicPolygon2d & polygon)
+{
+  Polygon2d ret;
+  for (const auto & p : polygon) {
+    ret.outer().emplace_back(p.x(), p.y());
+  }
+  ret.outer().push_back(ret.outer().front());
+
+  return tier4_autoware_utils::isClockwise(ret) ? ret : tier4_autoware_utils::inverseClockwise(ret);
 }
 
 std::vector<Polygon2d> getTargetLaneletPolygons(
@@ -3068,48 +3041,85 @@ lanelet::ConstLanelets getCurrentLanesFromPath(
 
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(reference_lanes, current_pose, &current_lane);
-
-  return route_handler->getLaneletSequence(
+  auto current_lanes = route_handler->getLaneletSequence(
     current_lane, current_pose, p.backward_path_length, p.forward_path_length);
+
+  // Extend the 'current_lanes' with previous lanes until it contains 'front_lane_ids'
+  // if the extended prior lanes is in same lane sequence with current lanes
+  const auto front_lane_ids = path.points.front().lane_ids;
+  auto have_front_lanes = [front_lane_ids](const auto & lanes) {
+    return std::any_of(lanes.begin(), lanes.end(), [&](const auto & lane) {
+      return std::find(front_lane_ids.begin(), front_lane_ids.end(), lane.id()) !=
+             front_lane_ids.end();
+    });
+  };
+  auto extended_lanes = current_lanes;
+  while (rclcpp::ok()) {
+    const size_t pre_extension_size = extended_lanes.size();  // Get existing size before extension
+    extended_lanes = extendPrevLane(route_handler, extended_lanes, true);
+    if (extended_lanes.size() == pre_extension_size) break;
+    if (have_front_lanes(extended_lanes)) {
+      current_lanes = extended_lanes;
+      break;
+    }
+  }
+
+  return current_lanes;
 }
 
 lanelet::ConstLanelets extendNextLane(
-  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes,
+  const bool only_in_route)
 {
+  if (lanes.empty()) return lanes;
+
   auto extended_lanes = lanes;
 
   // Add next lane
   const auto next_lanes = route_handler->getNextLanelets(extended_lanes.back());
   if (!next_lanes.empty()) {
+    boost::optional<lanelet::ConstLanelet> target_next_lane;
+    if (!only_in_route) {
+      target_next_lane = next_lanes.front();
+    }
     // use the next lane in route if it exists
-    auto target_next_lane = next_lanes.front();
     for (const auto & next_lane : next_lanes) {
       if (route_handler->isRouteLanelet(next_lane)) {
         target_next_lane = next_lane;
       }
     }
-    extended_lanes.push_back(target_next_lane);
+    if (target_next_lane) {
+      extended_lanes.push_back(*target_next_lane);
+    }
   }
 
   return extended_lanes;
 }
 
 lanelet::ConstLanelets extendPrevLane(
-  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes,
+  const bool only_in_route)
 {
+  if (lanes.empty()) return lanes;
+
   auto extended_lanes = lanes;
 
   // Add previous lane
   const auto prev_lanes = route_handler->getPreviousLanelets(extended_lanes.front());
   if (!prev_lanes.empty()) {
+    boost::optional<lanelet::ConstLanelet> target_prev_lane;
+    if (!only_in_route) {
+      target_prev_lane = prev_lanes.front();
+    }
     // use the previous lane in route if it exists
-    auto target_prev_lane = prev_lanes.front();
     for (const auto & prev_lane : prev_lanes) {
       if (route_handler->isRouteLanelet(prev_lane)) {
         target_prev_lane = prev_lane;
       }
     }
-    extended_lanes.insert(extended_lanes.begin(), target_prev_lane);
+    if (target_prev_lane) {
+      extended_lanes.insert(extended_lanes.begin(), *target_prev_lane);
+    }
   }
   return extended_lanes;
 }
@@ -3260,7 +3270,7 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
 
 double calcMinimumLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
-  const double length_to_intersection)
+  const double backward_buffer, const double length_to_intersection)
 {
   if (shift_intervals.empty()) {
     return 0.0;
@@ -3278,8 +3288,7 @@ double calcMinimumLaneChangeLength(
       PathShifter::calcShiftTimeFromJerk(shift_interval, lateral_jerk, max_lateral_acc);
     accumulated_length += vel * t + finish_judge_buffer;
   }
-  accumulated_length +=
-    common_param.backward_length_buffer_for_end_of_lane * (shift_intervals.size() - 1.0);
+  accumulated_length += backward_buffer * (shift_intervals.size() - 1.0);
 
   return accumulated_length;
 }

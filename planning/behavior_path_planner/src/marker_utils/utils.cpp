@@ -17,8 +17,8 @@
 #include "behavior_path_planner/marker_utils/colors.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
-#include "behavior_path_planner/utils/utils.hpp"
 
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
@@ -46,6 +46,7 @@ CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj)
 {
   CollisionCheckDebug debug;
   debug.current_obj_pose = obj.initial_pose.pose;
+  debug.extended_obj_polygon = tier4_autoware_utils::toPolygon2d(obj.initial_pose.pose, obj.shape);
   debug.current_twist = obj.initial_twist.twist;
   return {tier4_autoware_utils::toHexString(obj.uuid), debug};
 }

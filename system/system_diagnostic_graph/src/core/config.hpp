@@ -18,50 +18,92 @@
 #include <yaml-cpp/yaml.h>
 
 #include <memory>
-#include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace system_diagnostic_graph
 {
 
-struct ConfigError : public std::runtime_error
+struct ConfigData
 {
-  using runtime_error::runtime_error;
+  explicit ConfigData(const std::string & file);
+  ConfigData load(YAML::Node yaml);
+  ConfigData type(const std::string & name) const;
+  ConfigData node(const size_t index) const;
+
+  std::string take_text(const std::string & name);
+  std::string take_text(const std::string & name, const std::string & fail);
+  std::vector<YAML::Node> take_list(const std::string & name);
+
+  std::string file;
+  std::string mark;
+  std::unordered_map<std::string, YAML::Node> object;
 };
 
-struct NodeConfig_
+struct BaseConfig
 {
-  std::string path;
-  std::string name;
-  YAML::Node yaml;
+  explicit BaseConfig(const ConfigData & data) : data(data) {}
+  ConfigData data;
 };
 
-struct FileConfig_
+struct PathConfig : public BaseConfig
 {
+  using SharedPtr = std::shared_ptr<PathConfig>;
+  using BaseConfig::BaseConfig;
+  std::string original;
+  std::string resolved;
+};
+
+struct UnitConfig : public BaseConfig
+{
+  using SharedPtr = std::shared_ptr<UnitConfig>;
+  using BaseConfig::BaseConfig;
+  std::string type;
   std::string path;
-  std::vector<std::shared_ptr<FileConfig_>> files;
-  std::vector<std::shared_ptr<NodeConfig_>> nodes;
+  std::vector<UnitConfig::SharedPtr> children;
+};
+
+struct FileConfig : public BaseConfig
+{
+  using SharedPtr = std::shared_ptr<FileConfig>;
+  using BaseConfig::BaseConfig;
+  std::vector<PathConfig::SharedPtr> paths;
+  std::vector<UnitConfig::SharedPtr> nodes;
+};
+
+struct RootConfig
+{
+  std::vector<FileConfig::SharedPtr> files;
+  std::vector<UnitConfig::SharedPtr> nodes;
 };
 
 template <class T>
-T take(YAML::Node yaml, const std::string & field)
+T error(const std::string & text, const ConfigData & data)
 {
-  const auto result = yaml[field].as<T>();
-  yaml.remove(field);
-  return result;
+  const auto hint = data.mark.empty() ? data.file : data.mark + ":" + data.file;
+  return T(text + " (" + hint + ")");
 }
 
-using NodeConfig = std::shared_ptr<NodeConfig_>;
-using FileConfig = std::shared_ptr<FileConfig_>;
-ConfigError create_error(const FileConfig & config, const std::string & message);
-ConfigError create_error(const NodeConfig & config, const std::string & message);
-std::vector<NodeConfig> load_config_file(const std::string & path);
+template <class T>
+T error(const std::string & text)
+{
+  return T(text);
+}
 
-NodeConfig parse_config_node(YAML::Node yaml, const FileConfig & scope);
-FileConfig parse_config_path(YAML::Node yaml, const FileConfig & scope);
-FileConfig parse_config_path(const std::string & path, const FileConfig & scope);
-FileConfig parse_config_file(const std::string & path);
+template <class T>
+T error(const std::string & text, const std::string & value, const ConfigData & data)
+{
+  return error<T>(text + ": " + value, data);
+}
+
+template <class T>
+T error(const std::string & text, const std::string & value)
+{
+  return error<T>(text + ": " + value);
+}
+
+RootConfig load_root_config(const std::string & path);
 
 }  // namespace system_diagnostic_graph
 

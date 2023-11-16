@@ -18,8 +18,10 @@
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
@@ -35,6 +37,9 @@
 
 namespace behavior_path_planner
 {
+using autoware_auto_perception_msgs::msg::PredictedPath;
+using tier4_autoware_utils::Polygon2d;
+
 struct MinMaxValue
 {
   double min_value{0.0};
@@ -268,29 +273,9 @@ public:
     parameters_ = std::any_cast<std::shared_ptr<DynamicAvoidanceParameters>>(parameters);
   }
 
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] BehaviorModuleOutput run() override
-  {
-    updateData();
-
-    if (!isWaitingApproval()) {
-      return plan();
-    }
-
-    // module is waiting approval. Check it.
-    if (isActivated()) {
-      RCLCPP_DEBUG(getLogger(), "Was waiting approval, and now approved. Do plan().");
-      return plan();
-    } else {
-      RCLCPP_DEBUG(getLogger(), "keep waiting approval... Do planCandidate().");
-      return planWaitingApproval();
-    }
-  }
-
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   // TODO(someone): remove this, and use base class function
-  [[deprecated]] ModuleStatus updateState() override;
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -310,7 +295,7 @@ private:
     const double min_lon_offset;
   };
 
-  bool canTransitSuccessState() override { return false; }
+  bool canTransitSuccessState() override;
 
   bool canTransitFailureState() override { return false; }
 
