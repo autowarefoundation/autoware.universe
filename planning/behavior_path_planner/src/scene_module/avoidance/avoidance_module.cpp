@@ -222,6 +222,19 @@ bool AvoidanceModule::canTransitSuccessState()
   const bool has_base_offset =
     std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_avoid_check_threshold;
 
+  // If the vehicle is on the shift line, keep RUNNING.
+  {
+    const size_t idx = planner_data_->findEgoIndex(path_shifter_.getReferencePath().points);
+    const auto within = [](const auto & line, const size_t idx) {
+      return line.start_idx < idx && idx < line.end_idx;
+    };
+    for (const auto & shift_line : path_shifter_.getShiftLines()) {
+      if (within(shift_line, idx)) {
+        return false;
+      }
+    }
+  }
+
   // Nothing to do. -> EXIT.
   if (!has_avoidance_target) {
     if (!has_shift_point && !has_base_offset) {
@@ -997,13 +1010,13 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
       desire_shift_length > 0.0 ? feasible_relative_shift_length + current_ego_shift
                                 : -1.0 * feasible_relative_shift_length + current_ego_shift;
 
-    const auto feasible =
+    const auto infeasible =
       std::abs(feasible_shift_length - object.overhang_dist) <
       0.5 * planner_data_->parameters.vehicle_width + object_parameter.safety_buffer_lateral;
-    if (feasible) {
+    if (infeasible) {
       RCLCPP_WARN_THROTTLE(
         getLogger(), *clock_, 1000, "feasible shift length is not enough to avoid. ");
-      object.reason = AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN;
+      object.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
       return boost::none;
     }
 
@@ -2025,13 +2038,16 @@ PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & orig
     planner_data_->parameters.backward_path_length, longest_dist_to_shift_point + extra_margin);
 
   const size_t orig_ego_idx = planner_data_->findEgoIndex(original_path.points);
-  const size_t prev_ego_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+  const auto prev_ego_idx = motion_utils::findNearestSegmentIndex(
     previous_path.points, getPose(original_path.points.at(orig_ego_idx)),
     std::numeric_limits<double>::max(), planner_data_->parameters.ego_nearest_yaw_threshold);
+  if (!prev_ego_idx) {
+    return original_path;
+  }
 
   size_t clip_idx = 0;
   for (size_t i = 0; i < prev_ego_idx; ++i) {
-    if (backward_length > calcSignedArcLength(previous_path.points, clip_idx, prev_ego_idx)) {
+    if (backward_length > calcSignedArcLength(previous_path.points, clip_idx, *prev_ego_idx)) {
       break;
     }
     clip_idx = i;
@@ -2041,7 +2057,7 @@ PathWithLaneId AvoidanceModule::extendBackwardLength(const PathWithLaneId & orig
   {
     extended_path.points.insert(
       extended_path.points.end(), previous_path.points.begin() + clip_idx,
-      previous_path.points.begin() + prev_ego_idx);
+      previous_path.points.begin() + *prev_ego_idx);
   }
 
   // overwrite backward path velocity by latest one.
