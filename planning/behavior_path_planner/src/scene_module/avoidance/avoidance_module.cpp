@@ -920,8 +920,9 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
   const auto & base_link2rear = planner_data_->parameters.base_link2rear;
 
   // Calculate feasible shift length
-  const auto get_shift_profile = [&](auto & object, const auto & desire_shift_length)
-    -> boost::optional<std::pair<double, double>> {
+  const auto get_shift_profile =
+    [&](
+      auto & object, const auto & desire_shift_length) -> std::optional<std::pair<double, double>> {
     // use each object param
     const auto object_type = utils::getHighestProbLabel(object.object.classification);
     const auto object_parameter = parameters_->object_parameters.at(object_type);
@@ -981,7 +982,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
     // prepare distance is not enough. unavoidable.
     if (remaining_distance < 1e-3) {
       object.reason = AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
-      return boost::none;
+      return std::nullopt;
     }
 
     // calculate lateral jerk.
@@ -996,7 +997,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
     // avoidance distance is not enough. unavoidable.
     if (!isBestEffort(parameters_->policy_deceleration)) {
       object.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
-      return boost::none;
+      return std::nullopt;
     }
 
     // output avoidance path under lateral jerk constraints.
@@ -1005,7 +1006,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
 
     if (std::abs(feasible_relative_shift_length) < parameters_->lateral_execution_threshold) {
       object.reason = "LessThanExecutionThreshold";
-      return boost::none;
+      return std::nullopt;
     }
 
     const auto feasible_shift_length =
@@ -1019,7 +1020,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
       RCLCPP_WARN_THROTTLE(
         getLogger(), *clock_, 1000, "feasible shift length is not enough to avoid. ");
       object.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
-      return boost::none;
+      return std::nullopt;
     }
 
     {
@@ -1065,7 +1066,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
     const auto object_parameter = parameters_->object_parameters.at(object_type);
     const auto feasible_shift_profile = get_shift_profile(o, desire_shift_length);
 
-    if (!feasible_shift_profile) {
+    if (!feasible_shift_profile.has_value()) {
       if (o.avoid_required && is_forward_object(o)) {
         break;
       } else {
@@ -1075,7 +1076,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
 
     // use absolute dist for return-to-center, relative dist from current for avoiding.
     const auto feasible_return_distance =
-      helper_.getMaxAvoidanceDistance(feasible_shift_profile.get().first);
+      helper_.getMaxAvoidanceDistance(feasible_shift_profile.value().first);
 
     AvoidLine al_avoid;
     {
@@ -1092,14 +1093,14 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
       // start point (use previous linear shift length as start shift length.)
       al_avoid.start_longitudinal = [&]() {
         const auto nearest_avoid_distance =
-          std::max(to_shift_end - feasible_shift_profile.get().second, 1e-3);
+          std::max(to_shift_end - feasible_shift_profile.value().second, 1e-3);
 
         if (data.to_start_point > to_shift_end) {
           return nearest_avoid_distance;
         }
 
         const auto minimum_avoid_distance =
-          helper_.getMinAvoidanceDistance(feasible_shift_profile.get().first - current_ego_shift);
+          helper_.getMinAvoidanceDistance(feasible_shift_profile.value().first - current_ego_shift);
         const auto furthest_avoid_distance = std::max(to_shift_end - minimum_avoid_distance, 1e-3);
 
         return std::clamp(data.to_start_point, nearest_avoid_distance, furthest_avoid_distance);
@@ -1111,7 +1112,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
       al_avoid.start_shift_length = helper_.getLinearShift(al_avoid.start.position);
 
       // end point
-      al_avoid.end_shift_length = feasible_shift_profile.get().first;
+      al_avoid.end_shift_length = feasible_shift_profile.value().first;
       al_avoid.end_longitudinal = to_shift_end;
 
       // misc
@@ -1126,7 +1127,7 @@ AvoidOutlines AvoidanceModule::generateAvoidOutline(
       const auto to_shift_start = o.longitudinal + offset;
 
       // start point
-      al_return.start_shift_length = feasible_shift_profile.get().first;
+      al_return.start_shift_length = feasible_shift_profile.value().first;
       al_return.start_longitudinal = to_shift_start;
 
       // end point
