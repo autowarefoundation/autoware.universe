@@ -164,34 +164,6 @@ void LidarMarkerLocalizer::points_callback(
   //   ex.what());
   // }
 
-  // TODO transform sensor_frame to base_link
-
-  sensor_msgs::msg::PointCloud2 sensor_points_msg_on_base_link = *points_msg_ptr;
-  ;
-  // convert to XYZIR point cloud
-  PointCloudXYZIR points[128];
-  for (size_t i = 0;
-       i < sensor_points_msg_on_base_link.data.size() / sensor_points_msg_on_base_link.point_step;
-       i++) {
-    PointXYZIR point;
-    point.point.x = *(float *)&sensor_points_msg_on_base_link.data
-                       [i * sensor_points_msg_on_base_link.point_step +
-                        sensor_points_msg_on_base_link.fields[0].offset];
-    point.point.y = *(float *)&sensor_points_msg_on_base_link.data
-                       [i * sensor_points_msg_on_base_link.point_step +
-                        sensor_points_msg_on_base_link.fields[1].offset];
-    point.point.z = *(float *)&sensor_points_msg_on_base_link.data
-                       [i * sensor_points_msg_on_base_link.point_step +
-                        sensor_points_msg_on_base_link.fields[2].offset];
-    point.intensity = *(float *)&sensor_points_msg_on_base_link.data
-                         [i * sensor_points_msg_on_base_link.point_step +
-                          sensor_points_msg_on_base_link.fields[3].offset];
-    point.ring = *(unsigned short *)&sensor_points_msg_on_base_link.data
-                    [i * sensor_points_msg_on_base_link.point_step +
-                     sensor_points_msg_on_base_link.fields[4].offset];
-
-    points[point.ring].push_back(point);
-  }
 
   pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr points_ptr(
     new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
@@ -199,6 +171,7 @@ void LidarMarkerLocalizer::points_callback(
 
   std::vector<pcl::PointCloud<autoware_point_types::PointXYZIRADRT>> ring_points;
   ring_points.resize(128);
+
   double min_x = 100.0;
   double max_x = -100.0;
   for (const auto & point : points_ptr->points) {
@@ -213,82 +186,74 @@ void LidarMarkerLocalizer::points_callback(
     }
   }
 
-  // initialize variables
-  int vote[400];
-  double feature_sum[400];
-  double distance[400];
-  for (size_t i = 0; i < 400; i++) {
-    vote[i] = 0;
-    distance[i] = 100;
-    feature_sum[i] = 0;
-  }
-
-  // Eigen::Vector4f min_p, max_p;
-  // Get the minimum and maximum dimensions
-  // pcl::getMinMax3D<autoware_point_types::PointXYZIRADRT> (*points_ptr, min_p, max_p);  // TODO
-  // need only x
-
   // Check that the leaf size is not too small, given the size of the data
   const double resolution = 0.05;
-  int64_t dx = static_cast<int64_t>((max_x - min_x) * (1 / resolution) + 1);
+  int dx = static_cast<int>((max_x - min_x) * (1 / resolution) + 1);
   std::cerr << "dx " << dx << std::endl;
 
-  // for target rings
-  for (size_t target_ring = 5; target_ring < 45; target_ring++) {
-    // initialize intensity line image
-    double intensity_line_image[400];
-    int intensity_line_image_num[400];
-    for (size_t i = 0; i < 400; i++) {
-      intensity_line_image[i] = 0;
-      intensity_line_image_num[i] = 0;
-    }
+  // initialize variables
+  std::vector<int> vote(dx, 0);
+  std::vector<double> feature_sum(dx, 0);
+  std::vector<double> distance(dx, 100);
 
-    //
-    for (size_t i = 0; i < points[target_ring].size(); i++) {
-      PointXYZIR point;
-      point = points[target_ring][i];
-      if (point.point.y > 0 && point.point.y < 7.5) {
-        int ix;
-        ix = point.point.x / 0.05 + 200;
-        if (ix >= 0 && ix < 400) {
-          intensity_line_image[ix] += point.intensity;
-          intensity_line_image_num[ix]++;
-          if (distance[ix] > point.point.y) distance[ix] = point.point.y;
-        }
+  // for target rings
+  for (size_t target_ring = 0; target_ring < ring_points.size(); target_ring++) {
+    // initialize intensity line image
+    std::vector<double> intensity_line_image(dx, 0);
+    std::vector<int> intensity_line_image_num(dx, 0);
+
+    for (size_t i = 0; i < ring_points[target_ring].size(); i++) {
+      autoware_point_types::PointXYZIRADRT point;
+      point = ring_points[target_ring].points[i];
+      int ix = (point.x - min_x) * (1 / resolution);
+      intensity_line_image[ix] += point.intensity;
+      intensity_line_image_num[ix]++;
+      if (distance[ix] > point.y) {
+        distance[ix] = point.y;
       }
     }
 
     // average
-    for (size_t i = 0; i < 400; i++) {
+    for (int i = 0; i < dx; i++) {
       if (intensity_line_image_num[i] > 0)
         intensity_line_image[i] /= (double)intensity_line_image_num[i];
     }
 
     // filter
-    for (size_t i = 10; i < 400 - 10; i++) {
+    const int filter_window_size = 5;
+    // const double marker_width = 0.2;
+    // const int positive_window_size = marker_width / resolution;
+    const int positive_window_size = 2;
+    const int negative_window_size = filter_window_size - positive_window_size;
+
+    const int intensity_difference_threshold = 20;
+    const int positive_vote_threshold = 3;
+    const int negative_vote_threshold = 3;
+
+    for (int i = filter_window_size*2; i < dx - filter_window_size*2; i++) {
       double pos = 0;
       double neg = 0;
       double max = -1;
       double min = 1000;
 
       // find max_min
-      for (int j = -5; j <= 5; j++) {
+      for (int j = -filter_window_size; j <= filter_window_size; j++) {
         if (max < intensity_line_image[i + j]) max = intensity_line_image[i + j];
         if (min > intensity_line_image[i + j]) min = intensity_line_image[i + j];
       }
 
       if (max > min) {
         double median = (max - min) / 2.0 + min;
-        for (int j = -2; j <= 2; j++) {
-          if (median + 20 < intensity_line_image[i + j]) pos += 1;
+        for (int j = -positive_window_size; j <= positive_window_size; j++) {
+          if (median + intensity_difference_threshold < intensity_line_image[i + j]) pos += 1;
         }
-        for (int j = -5; j <= -4; j++) {
-          if (median - 20 > intensity_line_image[i + j]) neg += 1;
+        for (int j = -filter_window_size; j <= -negative_window_size; j++) {
+          if (median - intensity_difference_threshold > intensity_line_image[i + j]) neg += 1;
         }
-        for (int j = 4; j <= 5; j++) {
-          if (median - 20 > intensity_line_image[i + j]) neg += 1;
+        for (int j = negative_window_size; j <= filter_window_size; j++) {
+          if (median - intensity_difference_threshold > intensity_line_image[i + j]) neg += 1;
         }
-        if (pos >= 3 && neg >= 3) {
+        if (pos >= positive_vote_threshold && neg >= negative_vote_threshold) {
           vote[i]++;
           feature_sum[i] += (max - min);
         }
@@ -298,12 +263,15 @@ void LidarMarkerLocalizer::points_callback(
 
   // extract feature points
   std::vector<geometry_msgs::msg::PoseStamped> marker_pose_on_base_link_array;
-  for (int i = 10; i < 400 - 10; i++) {
-    if (vote[i] > 20) {
+  const int vote_threshold_for_detect_marker = 20;
+  const int filter_window_size = 5;  // TODO duplicated parameter
+
+  for (int i = filter_window_size*2; i < dx - filter_window_size*2; i++) {
+    if (vote[i] > vote_threshold_for_detect_marker) {
       geometry_msgs::msg::PoseStamped marker_pose_on_base_link;
       marker_pose_on_base_link.header.stamp = sensor_ros_time;
       marker_pose_on_base_link.header.frame_id = "base_link";
-      marker_pose_on_base_link.pose.position.x = (i - 200) * 0.05;
+      marker_pose_on_base_link.pose.position.x = (i - dx / 2) * resolution;
       marker_pose_on_base_link.pose.position.y = distance[i];
       marker_pose_on_base_link.pose.position.z = 0.2 + 1.75 / 2.0;  // TODO
       marker_pose_on_base_link.pose.orientation =

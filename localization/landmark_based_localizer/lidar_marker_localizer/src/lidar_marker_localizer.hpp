@@ -49,13 +49,6 @@ class LidarMarkerLocalizer : public rclcpp::Node
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
 public:
-  struct PointXYZIR
-  {
-    pcl::PointXYZ point;
-    float intensity;
-    unsigned short ring;  // ring number if available
-  };
-  typedef std::vector<PointXYZIR> PointCloudXYZIR;
 
   LidarMarkerLocalizer();
 
