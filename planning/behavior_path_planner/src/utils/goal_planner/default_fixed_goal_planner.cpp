@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "behavior_path_planner/utils/goal_planner/default_fixed_goal_planner.hpp"
-
+#include "behavior_path_planner/utils/utils.hpp"
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "lanelet2_core/LaneletMap.h"
@@ -47,16 +47,6 @@ BehaviorModuleOutput DefaultFixedGoalPlanner::plan(
   return output;
 }
 
-bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes)
-{
-  for (const auto & lane : lanes) {
-    if (lanelet::utils::isInLanelet(pose, lane)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 lanelet::ConstLanelets DefaultFixedGoalPlanner::extractLaneletsFromPath(
   const PathWithLaneId & refined_path,
   const std::shared_ptr<const PlannerData> & planner_data) const
@@ -88,7 +78,7 @@ bool DefaultFixedGoalPlanner::isPathValid(
   const lanelet::ConstLanelets lanelets = extractLaneletsFromPath(refined_path, planner_data);
   for (size_t i = 0; i < refined_path.points.size(); ++i) {
     const PathPointWithLaneId & path_point = refined_path.points[i];
-    if (!isInLanelets(path_point.point.pose, lanelets)) {
+    if (!utils::isInLanelets(path_point.point.pose, lanelets)) {
       return false;  // at least one path_point falls outside any lanelet
     }
   }
