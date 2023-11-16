@@ -56,16 +56,18 @@ bool SamplingPlannerModule::isExecutionReady() const
   return true;
 }
 
-SamplingPlannerData SamplingPlannerModule::createPlannerData(const PlanResult & path)
+SamplingPlannerData SamplingPlannerModule::createPlannerData(
+  const PlanResult & path, const std::vector<geometry_msgs::msg::Point> & left_bound,
+  const std::vector<geometry_msgs::msg::Point> & right_bound)
 {
   // create planner data
   SamplingPlannerData data;
   // planner_data.header = path.header;
   auto points = path->points;
-  data.left_bound = path->left_bound;
-  data.right_bound = path->right_bound;
+  data.left_bound = left_bound;
+  data.right_bound = right_bound;
   data.ego_pose = planner_data_->self_odometry->pose.pose;
-  data.ego_vel = 0;
+  data.ego_vel = planner_data_->self_odometry->twist.twist.linear.x;
   // data.ego_vel = ego_state_ptr_->twist.twist.linear.x;
   return data;
 }
@@ -185,7 +187,14 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   frenet_planner::SamplingParameters sampling_parameters =
     prepareSamplingParameters(initial_state, reference_spline, *internal_params_);
 
-  const auto sampling_planner_data = createPlannerData(planner_data_->prev_output_path);
+  const auto drivable_lanes = getPreviousModuleOutput().drivable_area_info.drivable_lanes;
+  const auto left_bound =
+    (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, true));
+  const auto right_bound =
+    (utils::calcBound(planner_data_->route_handler, drivable_lanes, false, false, false));
+
+  const auto sampling_planner_data =
+    createPlannerData(planner_data_->prev_output_path, left_bound, right_bound);
 
   prepareConstraints(
     internal_params_->constraints, planner_data_->dynamic_object, sampling_planner_data.left_bound,
@@ -198,13 +207,28 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
 
   debug_data_.footprints.clear();
+  bool checks_drivable = false;
+  bool checks_collision = false;
+  bool checks_curvature = false;
+
   for (auto & path : frenet_paths) {
     const auto footprint =
       sampler_common::constraints::checkHardConstraints(path, internal_params_->constraints);
     debug_data_.footprints.push_back(footprint);
     sampler_common::constraints::calculateCost(
       path, internal_params_->constraints, reference_spline);
+    checks_drivable = checks_drivable || path.constraint_results.drivable_area;
+    checks_collision = checks_collision || path.constraint_results.collision;
+    checks_curvature = checks_curvature || path.constraint_results.curvature;
   }
+  std::string pass_driveable = checks_drivable ? "PASSED drivable \n" : " NOT PASSED drivable\n";
+  std::cerr << pass_driveable;
+
+  std::string pass_collsion = checks_collision ? "PASSED collision \n" : " NOT PASSED collided\n";
+  std::cerr << pass_collsion;
+  std::string pass_curvature = checks_curvature ? "PASSED curves\n" : " NOT PASSED curves\n";
+  std::cerr << pass_curvature;
+
   std::vector<sampler_common::Path> candidate_paths;
   const auto move_to_paths = [&candidate_paths](auto & paths_to_move) {
     candidate_paths.insert(

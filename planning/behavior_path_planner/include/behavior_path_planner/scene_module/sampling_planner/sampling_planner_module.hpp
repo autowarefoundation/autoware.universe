@@ -136,7 +136,9 @@ public:
   SamplingPlannerDebugData debug_data_;
 
 private:
-  SamplingPlannerData createPlannerData(const PlanResult & path);
+  SamplingPlannerData createPlannerData(
+    const PlanResult & path, const std::vector<geometry_msgs::msg::Point> & left_bound,
+    const std::vector<geometry_msgs::msg::Point> & right_bound);
 
   PlanResult generatePath();
 
