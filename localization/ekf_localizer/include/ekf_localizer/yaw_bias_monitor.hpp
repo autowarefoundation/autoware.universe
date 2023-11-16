@@ -30,11 +30,13 @@ class YawBiasEstimator : public Simple1DFilter
 public:
   YawBiasEstimator()
   : Simple1DFilter(),
-    time_lower_limit(0.03),
-    speed_lower_limit(2),
-    rotation_speed_upper_limit(0.01),
-    distance_upper_limit(10),
-    distance_lower_limit(0.1){};
+    time_lower_limit_(0.03),
+    speed_lower_limit_(2),
+    rotation_speed_upper_limit_(0.01),
+    distance_upper_limit_(10),
+    distance_lower_limit_(0.1)
+  {
+  }
 
   void update(const geometry_msgs::msg::PoseWithCovarianceStamped & pose, double obs_variance = 0.1)
   {
@@ -43,7 +45,7 @@ public:
     double time_diff = pose_time_diff.seconds();
 
     std::cout << "1DKF: time_diff: " << time_diff << std::endl;
-    if (time_diff < time_lower_limit) {
+    if (time_diff < time_lower_limit_) {
       return;
     }
 
@@ -65,8 +67,8 @@ public:
 
     previous_ndt_pose_ = pose;
     if (
-      (speed < speed_lower_limit) || (rotation_speed > rotation_speed_upper_limit) ||
-      (distance > distance_upper_limit) || (distance < distance_lower_limit)) {
+      (speed < speed_lower_limit_) || (rotation_speed > rotation_speed_upper_limit_) ||
+      (distance > distance_upper_limit_) || (distance < distance_lower_limit_)) {
       return;  // ignore when speed is low or rotation speed is high
     }
     Simple1DFilter::update(yaw_bias, obs_variance, pose.header.stamp);
@@ -74,11 +76,11 @@ public:
 
 private:
   geometry_msgs::msg::PoseWithCovarianceStamped previous_ndt_pose_;
-  double time_lower_limit;
-  double speed_lower_limit;
-  double rotation_speed_upper_limit;
-  double distance_upper_limit;
-  double distance_lower_limit;
+  const double time_lower_limit_;
+  const double speed_lower_limit_;
+  const double rotation_speed_upper_limit_;
+  const double distance_upper_limit_;
+  const double distance_lower_limit_;
 
   double normalize_angle_diff(double angle_difference)
   {
