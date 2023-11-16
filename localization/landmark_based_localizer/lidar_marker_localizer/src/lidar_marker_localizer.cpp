@@ -270,7 +270,7 @@ void LidarMarkerLocalizer::points_callback(
       geometry_msgs::msg::PoseStamped marker_pose_on_base_link;
       marker_pose_on_base_link.header.stamp = sensor_ros_time;
       marker_pose_on_base_link.header.frame_id = "base_link";
-      marker_pose_on_base_link.pose.position.x = (i - dx / 2) * resolution;
+      marker_pose_on_base_link.pose.position.x = i * resolution + min_x;
       marker_pose_on_base_link.pose.position.y = distance[i];
       marker_pose_on_base_link.pose.position.z = 0.2 + 1.75 / 2.0;  // TODO
       marker_pose_on_base_link.pose.orientation =
