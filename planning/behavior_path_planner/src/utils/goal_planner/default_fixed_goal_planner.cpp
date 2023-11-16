@@ -47,15 +47,15 @@ BehaviorModuleOutput DefaultFixedGoalPlanner::plan(
   return output;
 }
 
- bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes) 
- { 
-   for (const auto & lane : lanes) { 
-     if (lanelet::utils::isInLanelet(pose, lane)) { 
-       return true; 
-     } 
-   } 
-   return false; 
- } 
+bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes)
+{
+  for (const auto & lane : lanes) {
+    if (lanelet::utils::isInLanelet(pose, lane)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 lanelet::ConstLanelets DefaultFixedGoalPlanner::extractLaneletsFromPath(
   const PathWithLaneId & refined_path,
