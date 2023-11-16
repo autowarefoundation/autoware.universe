@@ -720,7 +720,6 @@ void StartPlannerModule::updatePullOutStatus()
 
   if (isBackwardDrivingComplete()) {
     updateStatusAfterBackwardDriving();
-    // should be moved to transition state
   } else {
     status_.backward_path = start_planner_utils::getBackwardPath(
       *route_handler, pull_out_lanes, current_pose, status_.pull_out_start_pose,
@@ -732,6 +731,7 @@ void StartPlannerModule::updateStatusAfterBackwardDriving()
 {
   status_.driving_forward = true;
   status_.backward_driving_complete = true;
+  incrementPathIndex();
   // request start_planner approval
   waitApproval();
   // To enable approval of the forward path, the RTC status is removed.
