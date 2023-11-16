@@ -305,8 +305,6 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     motion_utils::calcSignedArcLength(planner_data.traj_points, 0, ego_segment_idx) +
     closest_stop_obstacle->dist_to_collide;
 
-  // If behavior stop point is ahead of the closest_obstacle_stop point within a certain margin
-  // we set closest_obstacle_stop_distance to closest_behavior_stop_distance
   const double margin_from_obstacle_considering_behavior_module = [&]() {
     const double margin_from_obstacle =
       calculateMarginFromObstacleOnCurve(planner_data, *closest_stop_obstacle);
