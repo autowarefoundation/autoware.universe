@@ -22,6 +22,7 @@ else()
   endif()
 endif()
 
+find_package(glog REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io registration)
 include_directories(${PCL_INCLUDE_DIRS})
 
@@ -29,25 +30,18 @@ ament_auto_add_executable(ndt_scan_matcher
   src/debug.cpp
   src/ndt_scan_matcher_node.cpp
   src/ndt_scan_matcher_core.cpp
-  src/util_func.cpp
-  src/pose_array_interpolator.cpp
-  src/tf2_listener_module.cpp
   src/map_module.cpp
   src/map_update_module.cpp
-  src/tree_structured_parzen_estimator.cpp
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
-target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES})
+target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES} glog::glog)
 
 if(BUILD_TESTING)
-  find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(test_tpe
-    test/test_tpe.cpp
-    src/tree_structured_parzen_estimator.cpp
+  add_launch_test(
+    test/test_ndt_scan_matcher_launch.py
+    TIMEOUT "30"
   )
-  target_include_directories(test_tpe PRIVATE include)
-  target_link_libraries(test_tpe)
 endif()
 
 ament_auto_package(

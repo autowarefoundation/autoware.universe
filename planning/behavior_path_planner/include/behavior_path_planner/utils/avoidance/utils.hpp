@@ -18,11 +18,8 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner/utils/path_safety_checker/safety_check.hpp"
 
-#include <algorithm>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -41,6 +38,9 @@ bool isVehicleTypeObject(const ObjectData & object);
 bool isWithinCrosswalk(
   const ObjectData & object,
   const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
+
+bool isWithinIntersection(
+  const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler);
 
 bool isTargetObjectType(
   const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters);
@@ -167,10 +167,20 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data,
   const AvoidancePlanningData & data, const std::shared_ptr<AvoidanceParameters> & parameters,
-  const bool is_running, DebugData & debug);
+  const double object_check_forward_distance, const bool is_running, DebugData & debug);
 
 DrivableLanes generateExpandDrivableLanes(
   const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
+
+double calcDistanceToReturnDeadLine(
+  const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
+
+double calcDistanceToAvoidStartLine(
+  const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,
+  const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 }  // namespace behavior_path_planner::utils::avoidance
 
