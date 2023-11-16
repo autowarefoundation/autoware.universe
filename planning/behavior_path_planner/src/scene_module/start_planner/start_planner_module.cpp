@@ -114,12 +114,6 @@ void StartPlannerModule::updateData()
 {
   bool time_has_passed_from_last_path_update = true;
 
-  if (isBackwardDrivingComplete()) {
-    updateStatusAfterBackwardDriving();
-  } else {
-    status_.backward_driving_complete = false;
-  }
-
   // skip updating if enough time has not passed for preventing chattering between back and
   // start_planner
   if (receivedNewRoute()) {
@@ -139,6 +133,19 @@ void StartPlannerModule::updateData()
   if (time_has_passed_from_last_path_update && !status_.found_pull_out_path) {
     planPathFromStartPose();
   }
+
+  const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
+    planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
+
+  if (isBackwardDrivingComplete()) {
+    updateStatusAfterBackwardDriving();
+  } else {
+    status_.backward_path = start_planner_utils::getBackwardPath(
+      *planner_data_->route_handler, pull_out_lanes,
+      planner_data_->route_handler->getOriginalStartPose(), status_.pull_out_start_pose,
+      parameters_->backward_velocity);
+  }
+
   behavior_path_planner::utils::start_goal_planner_common::logPullOutStatus(
     status_, getLogger(), rclcpp::Logger::Level::Error);
 }
@@ -289,8 +296,17 @@ BehaviorModuleOutput StartPlannerModule::plan()
 
   PathWithLaneId path;
 
+  std::cerr << "status_.driving_forward: " << status_.driving_forward << std::endl;
+  std::cerr << "status_.backward_driving_complete: " << status_.backward_driving_complete
+            << std::endl;
+  std::cerr << "hasFinishedCurrentPath(): " << hasFinishedCurrentPath() << std::endl;
+  std::cerr << "status_.is_safe_dynamic_objects: " << status_.is_safe_dynamic_objects << std::endl;
+  std::cerr << "isWaitingApproval(): " << isWaitingApproval() << std::endl;
+  std::cerr << "status_.has_stop_point: " << status_.has_stop_point << std::endl;
+  std::cerr << "isStopped(): " << isStopped() << std::endl;
+
   // Check if backward motion is finished
-  if (status_.driving_forward) {
+  if (status_.driving_forward || status_.backward_driving_complete) {
     // Increment path index if the current path is finished
     if (hasFinishedCurrentPath()) {
       RCLCPP_INFO(getLogger(), "Increment path index");
@@ -605,6 +621,7 @@ void StartPlannerModule::updateStatusWithNextPath(
   const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
   const behavior_path_planner::PlannerType & planner_type)
 {
+  std::cerr << "\n\n\n\n updateStatusWithNextPath \n\n\n\n" << std::endl;
   const std::lock_guard<std::mutex> lock(mutex_);
   status_.backward_path_is_enabled = true;
   status_.stop_path = PathWithLaneId{};
@@ -743,7 +760,6 @@ void StartPlannerModule::updateStatusAfterBackwardDriving()
 {
   status_.driving_forward = true;
   status_.backward_driving_complete = true;
-  incrementPathIndex();
   // request start_planner approval
   waitApproval();
   // To enable approval of the forward path, the RTC status is removed.

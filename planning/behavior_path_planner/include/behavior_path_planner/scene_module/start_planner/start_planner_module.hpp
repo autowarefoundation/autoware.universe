@@ -61,7 +61,7 @@ struct PullOutStatus
   PathWithLaneId stop_path{};
   PathWithLaneId backward_path{};
   bool found_pull_out_path{false};       // pull out path is found
-  bool is_safe_dynamic_objects{false};   // current path is safe against dynamic objects
+  bool is_safe_dynamic_objects{true};    // current path is safe against dynamic objects
   bool backward_path_is_enabled{false};  // If true, backward path is enabled
   bool driving_forward{false};           // if ego is driving on backward path, this is set to false
   bool backward_driving_complete{
