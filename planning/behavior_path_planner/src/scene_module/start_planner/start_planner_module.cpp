@@ -259,7 +259,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
   PathWithLaneId path;
 
   // Check if backward motion is finished
-  if (status_.driving_forward) {
+  if (status_.driving_forward || status_.backward_driving_complete) {
     // Increment path index if the current path is finished
     if (hasFinishedCurrentPath()) {
       RCLCPP_INFO(getLogger(), "Increment path index");
@@ -731,7 +731,6 @@ void StartPlannerModule::updateStatusAfterBackwardDriving()
 {
   status_.driving_forward = true;
   status_.backward_driving_complete = true;
-  incrementPathIndex();
   // request start_planner approval
   waitApproval();
   // To enable approval of the forward path, the RTC status is removed.
