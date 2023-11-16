@@ -91,10 +91,16 @@ public:
     return std::max(getEgoSpeed(), values.at(idx));
   }
 
+  double getMinimumPrepareDistance() const
+  {
+    const auto & p = parameters_;
+    return std::max(getEgoSpeed() * p->min_prepare_time, p->min_prepare_distance);
+  }
+
   double getNominalPrepareDistance() const
   {
     const auto & p = parameters_;
-    return std::max(getEgoSpeed() * p->prepare_time, p->min_prepare_distance);
+    return std::max(getEgoSpeed() * p->max_prepare_time, p->min_prepare_distance);
   }
 
   double getNominalAvoidanceDistance(const double shift_length) const
@@ -185,7 +191,8 @@ public:
       max_shift_length, getLateralMinJerkLimit(), getEgoSpeed());
 
     return std::clamp(
-      1.5 * dynamic_distance, parameters_->object_check_min_forward_distance,
+      1.5 * dynamic_distance + getNominalPrepareDistance(),
+      parameters_->object_check_min_forward_distance,
       parameters_->object_check_max_forward_distance);
   }
 
