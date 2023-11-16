@@ -448,7 +448,10 @@ bool AvoidanceModule::canYieldManeuver(const AvoidancePlanningData & data) const
     const auto to_shift_start_point = calcSignedArcLength(
       path_shifter_.getReferencePath().points, idx, registered_lines.front().start_idx);
     if (to_shift_start_point < helper_.getMinimumPrepareDistance()) {
-      RCLCPP_DEBUG(getLogger(), "Distance to shift start point is less than minimum prepare distance. The distance is not enough.");
+      RCLCPP_DEBUG(
+        getLogger(),
+        "Distance to shift start point is less than minimum prepare distance. The distance is not "
+        "enough.");
       return false;
     }
   }
