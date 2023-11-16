@@ -47,32 +47,15 @@ BehaviorModuleOutput DefaultFixedGoalPlanner::plan(
   return output;
 }
 
-bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2d & point)
-{
-  for (const auto & ll : candidate_lanelets) {
-    if (boost::geometry::covered_by(point, ll.polygon2d().basicPolygon())) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool isAllPointsInAnyLane(
-  const PathWithLaneId & refined_path, const lanelet::ConstLanelets & candidate_lanelets)
-{
-  Point2d path_point_point2D;
-
-  for (size_t i = 0; i < refined_path.points.size(); ++i) {
-    const PathPointWithLaneId & path_point = refined_path.points[i];
-    path_point_point2D.x() = path_point.point.pose.position.x;
-    path_point_point2D.y() = path_point.point.pose.position.y;
-    bool is_point_in_any_lanelet = isInAnyLane(candidate_lanelets, path_point_point2D);
-    if (!is_point_in_any_lanelet) {
-      return false;  // at least one path_point falls outside any lanelet
-    }
-  }
-  return true;
-}
+ bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes) 
+ { 
+   for (const auto & lane : lanes) { 
+     if (lanelet::utils::isInLanelet(pose, lane)) { 
+       return true; 
+     } 
+   } 
+   return false; 
+ } 
 
 lanelet::ConstLanelets DefaultFixedGoalPlanner::extractLaneletsFromPath(
   const PathWithLaneId & refined_path,
@@ -103,7 +86,13 @@ bool DefaultFixedGoalPlanner::isPathValid(
   const std::shared_ptr<const PlannerData> & planner_data) const
 {
   const lanelet::ConstLanelets lanelets = extractLaneletsFromPath(refined_path, planner_data);
-  return isAllPointsInAnyLane(refined_path, lanelets);
+  for (size_t i = 0; i < refined_path.points.size(); ++i) {
+    const PathPointWithLaneId & path_point = refined_path.points[i];
+    if (!isInLanelets(path_point.point.pose, lanelets)) {
+      return false;  // at least one path_point falls outside any lanelet
+    }
+  }
+  return true;
 }
 
 PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
