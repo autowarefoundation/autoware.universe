@@ -176,8 +176,7 @@
         "steer_time_delay",
         "steer_time_constant",
         "x_stddev",
-        "y_stddev",
-        "vehicle_characteristics"
+        "y_stddev"
       ]
     }
   },
@@ -189,8 +188,10 @@
           "$ref": "#/definitions/simple_planning_simulator"
         }
       },
-      "required": ["ros__parameters"]
+      "required": ["ros__parameters"],
+      "additionalProperties": false
     }
   },
-  "required": ["/**"]
+  "required": ["/**"],
+  "additionalProperties": false
 }
