@@ -207,28 +207,13 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
 
   debug_data_.footprints.clear();
-  bool checks_drivable = false;
-  bool checks_collision = false;
-  bool checks_curvature = false;
-
   for (auto & path : frenet_paths) {
     const auto footprint =
       sampler_common::constraints::checkHardConstraints(path, internal_params_->constraints);
     debug_data_.footprints.push_back(footprint);
     sampler_common::constraints::calculateCost(
       path, internal_params_->constraints, reference_spline);
-    checks_drivable = checks_drivable || path.constraint_results.drivable_area;
-    checks_collision = checks_collision || path.constraint_results.collision;
-    checks_curvature = checks_curvature || path.constraint_results.curvature;
   }
-  std::string pass_driveable = checks_drivable ? "PASSED drivable \n" : " NOT PASSED drivable\n";
-  std::cerr << pass_driveable;
-
-  std::string pass_collsion = checks_collision ? "PASSED collision \n" : " NOT PASSED collided\n";
-  std::cerr << pass_collsion;
-  std::string pass_curvature = checks_curvature ? "PASSED curves\n" : " NOT PASSED curves\n";
-  std::cerr << pass_curvature;
-
   std::vector<sampler_common::Path> candidate_paths;
   const auto move_to_paths = [&candidate_paths](auto & paths_to_move) {
     candidate_paths.insert(

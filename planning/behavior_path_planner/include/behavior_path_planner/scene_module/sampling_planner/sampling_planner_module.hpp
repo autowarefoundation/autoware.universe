@@ -97,7 +97,7 @@ public:
       user_params_->lateral_deviation_weight;
     internal_params_->constraints.soft.length_weight = user_params_->length_weight;
     internal_params_->constraints.soft.curvature_weight = user_params_->curvature_weight;
-    internal_params_->constraints.ego_footprint = vehicle_info_.createFootprint();
+    internal_params_->constraints.ego_footprint = vehicle_info_.createFootprint(0.5);
     internal_params_->constraints.ego_width = vehicle_info_.vehicle_width_m;
     internal_params_->constraints.ego_length = vehicle_info_.vehicle_length_m;
     // Sampling
