@@ -24,6 +24,37 @@
 
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
+
+#define debug(var)                                                      \
+  do {                                                                  \
+    std::cerr << __func__ << ": " << __LINE__ << ", " << #var << " : "; \
+    view(var);                                                          \
+  } while (0)
+template <typename T>
+void view(T e)
+{
+  std::cerr << e << std::endl;
+}
+template <typename T>
+void view(const std::vector<T> & v)
+{
+  for (const auto & e : v) {
+    std::cerr << e << " ";
+  }
+  std::cerr << std::endl;
+}
+template <typename T>
+void view(const std::vector<std::vector<T>> & vv)
+{
+  for (const auto & v : vv) {
+    view(v);
+  }
+}
+#define line()                                                                         \
+  {                                                                                    \
+    std::cerr << "(" << __FILE__ << ") " << __func__ << ": " << __LINE__ << std::endl; \
+  }
+
 namespace
 {
 StopSpeedExceeded createStopSpeedExceededMsg(
@@ -38,6 +69,7 @@ StopSpeedExceeded createStopSpeedExceededMsg(
 tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
   const rclcpp::Time & current_time, const geometry_msgs::msg::Pose & stop_pose,
   const StopObstacle & stop_obstacle)
+
 {
   // create header
   std_msgs::msg::Header header;
@@ -257,8 +289,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     "stop planning");
 
   // Get Closest Stop Obstacle
-  const auto closest_stop_obstacle =
-    obstacle_cruise_utils::getClosestStopObstacle(planner_data.traj_points, stop_obstacles);
+  const auto closest_stop_obstacle = obstacle_cruise_utils::getClosestStopObstacle(stop_obstacles);
   if (!closest_stop_obstacle) {
     // delete marker
     const auto markers =
@@ -269,113 +300,85 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     return planner_data.traj_points;
   }
 
-  // Get Closest Obstacle Stop Distance
-  const double closest_obstacle_dist = motion_utils::calcSignedArcLength(
-    planner_data.traj_points, 0, closest_stop_obstacle->collision_point);
-
   const auto ego_segment_idx =
     ego_nearest_param_.findSegmentIndex(planner_data.traj_points, planner_data.ego_pose);
-  const auto negative_dist_to_ego = motion_utils::calcSignedArcLength(
-    planner_data.traj_points, planner_data.ego_pose.position, ego_segment_idx, 0);
-  const double dist_to_ego = -negative_dist_to_ego;
+  double dist_to_collide_on_ref_traj =
+    motion_utils::calcSignedArcLength(planner_data.traj_points, 0, ego_segment_idx) +
+    closest_stop_obstacle->dist_to_collide;
 
-  const double margin_from_obstacle =
-    calculateMarginFromObstacleOnCurve(planner_data, *closest_stop_obstacle);
+  double candidate_margin_from_obstacle = longitudinal_info_.safe_distance_margin;
+  if (enable_approaching_on_curve_) {
+    candidate_margin_from_obstacle =
+      calculateMarginFromObstacleOnCurve(planner_data, *closest_stop_obstacle);
+  }
+
+  // Use terminal margin (terminal_safe_distance_margin) for obstacle stop
+  const auto ref_traj_length = motion_utils::calcSignedArcLength(
+    planner_data.traj_points, 0, planner_data.traj_points.size() - 1);
+  if (dist_to_collide_on_ref_traj > ref_traj_length) {
+    candidate_margin_from_obstacle = longitudinal_info_.terminal_safe_distance_margin;
+  }
 
   // If behavior stop point is ahead of the closest_obstacle_stop point within a certain margin
   // we set closest_obstacle_stop_distance to closest_behavior_stop_distance
-  const double margin_from_obstacle_considering_behavior_module = [&]() {
-    const size_t nearest_segment_idx =
-      findEgoSegmentIndex(planner_data.traj_points, planner_data.ego_pose);
-    const auto closest_behavior_stop_idx =
-      motion_utils::searchZeroVelocityIndex(planner_data.traj_points, nearest_segment_idx + 1);
-
-    if (!closest_behavior_stop_idx) {
-      return margin_from_obstacle;
+  const auto closest_behavior_stop_idx =
+    motion_utils::searchZeroVelocityIndex(planner_data.traj_points, ego_segment_idx + 1);
+  if (closest_behavior_stop_idx) {
+    const double closest_behavior_stop_dist_on_ref_traj =
+      motion_utils::calcSignedArcLength(planner_data.traj_points, 0, *closest_behavior_stop_idx);
+    const double stop_dist_diff = closest_behavior_stop_dist_on_ref_traj -
+                                  (dist_to_collide_on_ref_traj - candidate_margin_from_obstacle);
+    if (0.0 < stop_dist_diff && stop_dist_diff < candidate_margin_from_obstacle) {
+      candidate_margin_from_obstacle = min_behavior_stop_margin_;
     }
-
-    const double closest_behavior_stop_dist_from_ego = motion_utils::calcSignedArcLength(
-      planner_data.traj_points, planner_data.ego_pose.position, nearest_segment_idx,
-      *closest_behavior_stop_idx);
-
-    if (*closest_behavior_stop_idx == planner_data.traj_points.size() - 1) {
-      // Closest behavior stop point is the end point
-      const double closest_obstacle_stop_dist_from_ego =
-        closest_obstacle_dist - dist_to_ego - longitudinal_info_.terminal_safe_distance_margin -
-        abs_ego_offset;
-      const double stop_dist_diff =
-        closest_behavior_stop_dist_from_ego - closest_obstacle_stop_dist_from_ego;
-      if (stop_dist_diff < margin_from_obstacle) {
-        // Use terminal margin (terminal_safe_distance_margin) for obstacle stop
-        return longitudinal_info_.terminal_safe_distance_margin;
-      }
-    } else {
-      const double closest_obstacle_stop_dist_from_ego =
-        closest_obstacle_dist - dist_to_ego - margin_from_obstacle - abs_ego_offset;
-      const double stop_dist_diff =
-        closest_behavior_stop_dist_from_ego - closest_obstacle_stop_dist_from_ego;
-      if (0.0 < stop_dist_diff && stop_dist_diff < margin_from_obstacle) {
-        // Use shorter margin (min_behavior_stop_margin) for obstacle stop
-        return min_behavior_stop_margin_;
-      }
-    }
-    return margin_from_obstacle;
-  }();
-
-  const auto [stop_margin_from_obstacle, will_collide_with_obstacle] = [&]() {
-    // Check feasibility to stop
-    if (suppress_sudden_obstacle_stop_) {
-      const double closest_obstacle_stop_dist =
-        closest_obstacle_dist - margin_from_obstacle_considering_behavior_module - abs_ego_offset;
-
-      // Calculate feasible stop margin (Check the feasibility)
-      const double feasible_stop_dist = calcMinimumDistanceToStop(
-                                          planner_data.ego_vel, longitudinal_info_.limit_max_accel,
-                                          longitudinal_info_.limit_min_accel) +
-                                        dist_to_ego;
-
-      if (closest_obstacle_stop_dist < feasible_stop_dist) {
-        const auto feasible_margin_from_obstacle =
-          margin_from_obstacle_considering_behavior_module -
-          (feasible_stop_dist - closest_obstacle_stop_dist);
-        return std::make_pair(feasible_margin_from_obstacle, true);
-      }
-    }
-    return std::make_pair(margin_from_obstacle_considering_behavior_module, false);
-  }();
+  }
 
   // Generate Output Trajectory
-  const double zero_vel_dist = [&]() {
-    const double current_zero_vel_dist =
-      std::max(0.0, closest_obstacle_dist - abs_ego_offset - stop_margin_from_obstacle);
+  double candidate_zero_vel_dist =
+    std::max(0.0, dist_to_collide_on_ref_traj - candidate_margin_from_obstacle);
 
-    // Hold previous stop distance if necessary
-    if (
-      std::abs(planner_data.ego_vel) < longitudinal_info_.hold_stop_velocity_threshold &&
-      prev_stop_distance_info_) {
-      // NOTE: We assume that the current trajectory's front point is ahead of the previous
-      // trajectory's front point.
-      const size_t traj_front_point_prev_seg_idx =
-        motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-          prev_stop_distance_info_->first, planner_data.traj_points.front().pose);
-      const double diff_dist_front_points = motion_utils::calcSignedArcLength(
-        prev_stop_distance_info_->first, 0, planner_data.traj_points.front().pose.position,
-        traj_front_point_prev_seg_idx);
+  // Check feasibility to stop
+  bool will_collide_with_obstacle = false;
+  if (suppress_sudden_obstacle_stop_) {
+    // Calculate feasible stop margin (Check the feasibility)
+    const double feasible_stop_dist =
+      calcMinimumDistanceToStop(
+        planner_data.ego_vel, longitudinal_info_.limit_max_accel,
+        longitudinal_info_.limit_min_accel) +
+      motion_utils::calcSignedArcLength(
+        planner_data.traj_points, 0, planner_data.ego_pose.position);
 
-      const double prev_zero_vel_dist = prev_stop_distance_info_->second - diff_dist_front_points;
-      if (
-        std::abs(prev_zero_vel_dist - current_zero_vel_dist) <
-        longitudinal_info_.hold_stop_distance_threshold) {
-        return prev_zero_vel_dist;
-      }
+    if (candidate_zero_vel_dist < feasible_stop_dist) {
+      will_collide_with_obstacle = true;
+      candidate_zero_vel_dist = feasible_stop_dist;
     }
+  }
 
-    return current_zero_vel_dist;
-  }();
+  // Hold previous stop distance if necessary
+  if (
+    std::abs(planner_data.ego_vel) < longitudinal_info_.hold_stop_velocity_threshold &&
+    prev_stop_distance_info_) {
+    // NOTE: We assume that the current trajectory's front point is ahead of the previous
+    // trajectory's front point.
+    const size_t traj_front_point_prev_seg_idx =
+      motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        prev_stop_distance_info_->first, planner_data.traj_points.front().pose);
+    const double diff_dist_front_points = motion_utils::calcSignedArcLength(
+      prev_stop_distance_info_->first, 0, planner_data.traj_points.front().pose.position,
+      traj_front_point_prev_seg_idx);
+
+    const double prev_zero_vel_dist = prev_stop_distance_info_->second - diff_dist_front_points;
+    if (
+      std::abs(prev_zero_vel_dist - candidate_zero_vel_dist) <
+      longitudinal_info_.hold_stop_distance_threshold) {
+      candidate_zero_vel_dist = prev_zero_vel_dist;
+    }
+  }
 
   // Insert stop point
   auto output_traj_points = planner_data.traj_points;
-  const auto zero_vel_idx = motion_utils::insertStopPoint(0, zero_vel_dist, output_traj_points);
+  const auto zero_vel_idx =
+    motion_utils::insertStopPoint(0, candidate_zero_vel_dist, output_traj_points);
   if (zero_vel_idx) {
     // virtual wall marker for stop obstacle
     const auto markers = motion_utils::createStopVirtualWallMarker(
@@ -396,17 +399,17 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
       createStopSpeedExceededMsg(planner_data.current_time, will_collide_with_obstacle);
     stop_speed_exceeded_pub_->publish(stop_speed_exceeded_msg);
 
-    prev_stop_distance_info_ = std::make_pair(output_traj_points, zero_vel_dist);
+    prev_stop_distance_info_ = std::make_pair(output_traj_points, candidate_zero_vel_dist);
   }
 
   stop_planning_debug_info_.set(
     StopPlanningDebugInfo::TYPE::STOP_CURRENT_OBSTACLE_DISTANCE,
-    closest_obstacle_dist - abs_ego_offset);  // TODO(murooka)
+    closest_stop_obstacle->dist_to_collide);  // TODO(murooka)
   stop_planning_debug_info_.set(
     StopPlanningDebugInfo::TYPE::STOP_CURRENT_OBSTACLE_VELOCITY, closest_stop_obstacle->velocity);
 
   stop_planning_debug_info_.set(
-    StopPlanningDebugInfo::TYPE::STOP_TARGET_OBSTACLE_DISTANCE, stop_margin_from_obstacle);
+    StopPlanningDebugInfo::TYPE::STOP_TARGET_OBSTACLE_DISTANCE, candidate_margin_from_obstacle);
   stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_VELOCITY, 0.0);
   stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_ACCELERATION, 0.0);
 
@@ -421,10 +424,6 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
 double PlannerInterface::calculateMarginFromObstacleOnCurve(
   const PlannerData & planner_data, const StopObstacle & stop_obstacle) const
 {
-  if (!enable_approaching_on_curve_) {
-    return longitudinal_info_.safe_distance_margin;
-  }
-
   const double abs_ego_offset = planner_data.is_driving_forward
                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
@@ -721,8 +720,8 @@ PlannerInterface::calculateDistanceToSlowDownWithConstraints(
     }
 
     // NOTE: This min_relative_vel forces the relative velocity positive if the ego velocity is
-    // lower than the obstacle velocity. Without this, the slow down feature will flicker where the
-    // ego velocity is very close to the obstacle velocity.
+    // lower than the obstacle velocity. Without this, the slow down feature will flicker where
+    // the ego velocity is very close to the obstacle velocity.
     constexpr double min_relative_vel = 1.0;
     const double time_to_collision = (dist_to_front_collision - dist_to_ego - abs_ego_offset) /
                                      std::max(min_relative_vel, relative_vel);
