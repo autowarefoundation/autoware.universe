@@ -30,7 +30,8 @@ SamplingPlannerModule::SamplingPlannerModule(
   const std::string & name, rclcpp::Node & node,
   const std::shared_ptr<SamplingPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map}
+: SceneModuleInterface{name, node, rtc_interface_ptr_map},
+  vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
   internal_params_ =
     std::shared_ptr<SamplingPlannerInternalParameters>(new SamplingPlannerInternalParameters{});
@@ -285,21 +286,27 @@ void SamplingPlannerModule::updateDebugMarkers()
     info_marker_.markers.push_back(m);
     ++m.id;
   }
-  // m.ns = "footprint";
-  // m.id = 0UL;
-  // m.type = m.POINTS;
-  // m.points.clear();
-  // m.color.r = 1.0;
-  // m.color.g = 0.0;
-  // m.color.b = 1.0;
-  // m.scale.y = 0.02;
-  // if (!debug_data_.footprints.empty()) {
-  //   m.action = m.ADD;
-  //   for (const auto & p : debug_data_.footprints[debug_data_.footprints.size()])
-  //     m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
-  // } else {
-  //   m.action = m.DELETE;
-  // }
+  m.ns = "footprint";
+  m.id = 0UL;
+  m.type = m.POINTS;
+  m.points.clear();
+  m.color.a = 1.0;
+  m.color.r = 1.0;
+  m.color.g = 0.0;
+  m.color.b = 1.0;
+  m.scale.y = 0.2;
+  if (!debug_data_.footprints.empty()) {
+    m.action = m.ADD;
+    for (const auto & p : debug_data_.footprints[0]) {
+      m.points.push_back(geometry_msgs::msg::Point().set__x(p.x()).set__y(p.y()));
+    }
+
+  } else {
+    m.action = m.DELETE;
+  }
+  debug_marker_.markers.push_back(m);
+  info_marker_.markers.push_back(m);
+  ++m.id;
   // m.ns = "debug_path";
   // m.id = 0UL;
   // m.type = m.POINTS;
