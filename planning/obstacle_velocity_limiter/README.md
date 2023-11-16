@@ -153,7 +153,7 @@ For example a value of `1` means all trajectory points will be evaluated while a
 | `~/input/obstacle_pointcloud` | `sensor_msgs/PointCloud2`                        | Pointcloud containing only obstacle points         |
 | `~/input/dynamic_obstacles`   | `autoware_auto_perception_msgs/PredictedObjects` | Dynamic objects                                    |
 | `~/input/odometry`            | `nav_msgs/Odometry`                              | Odometry used to retrieve the current ego velocity |
-| `~/input/map`                 | `autoware_auto_mapping_msgs/HADMapBin`           | Vector map used to retrieve static obstacles       |
+| `~/input/map`                 | `autoware_map_msgs/LaneletMapBin`           | Vector map used to retrieve static obstacles       |
 
 ### Outputs
 

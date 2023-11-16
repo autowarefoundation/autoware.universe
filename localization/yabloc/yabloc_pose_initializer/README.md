@@ -49,7 +49,7 @@ Converted model URL
 | ------------------- | -------------------------------------------- | ------------------------ |
 | `input/camera_info` | `sensor_msgs::msg::CameraInfo`               | undistorted camera info  |
 | `input/image_raw`   | `sensor_msgs::msg::Image`                    | undistorted camera image |
-| `input/vector_map`  | `autoware_auto_mapping_msgs::msg::HADMapBin` | vector map               |
+| `input/vector_map`  | `autoware_map_msgs::msg::LaneletMapBin` | vector map               |
 
 #### Output
 

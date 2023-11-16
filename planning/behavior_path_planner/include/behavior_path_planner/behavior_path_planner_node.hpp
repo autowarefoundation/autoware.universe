@@ -23,7 +23,7 @@
 
 #include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -51,7 +51,7 @@
 namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::OperationModeState;
-using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
@@ -87,7 +87,7 @@ public:
 
 private:
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_subscriber_;
-  rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
+  rclcpp::Subscription<LaneletMapBin>::SharedPtr vector_map_subscriber_;
   rclcpp::Subscription<Odometry>::SharedPtr velocity_subscriber_;
   rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acceleration_subscriber_;
   rclcpp::Subscription<Scenario>::SharedPtr scenario_subscriber_;
@@ -116,7 +116,7 @@ private:
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   Scenario::SharedPtr current_scenario_{nullptr};
 
-  HADMapBin::ConstSharedPtr map_ptr_{nullptr};
+  LaneletMapBin::ConstSharedPtr map_ptr_{nullptr};
   LaneletRoute::ConstSharedPtr route_ptr_{nullptr};
   bool has_received_map_{false};
   bool has_received_route_{false};
@@ -139,7 +139,7 @@ private:
   void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
   void onCostMap(const OccupancyGrid::ConstSharedPtr msg);
   void onTrafficSignals(const TrafficSignalArray::ConstSharedPtr msg);
-  void onMap(const HADMapBin::ConstSharedPtr map_msg);
+  void onMap(const LaneletMapBin::ConstSharedPtr map_msg);
   void onRoute(const LaneletRoute::ConstSharedPtr route_msg);
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
   void onLateralOffset(const LateralOffset::ConstSharedPtr msg);

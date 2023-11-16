@@ -14,7 +14,7 @@ If no point cloud is received or all point clouds have very large stamp differen
 
 | Name                 | Type                                                | Description              |
 | -------------------- | --------------------------------------------------- | ------------------------ |
-| `~input/vector_map`  | autoware_auto_mapping_msgs::HADMapBin               | vector map               |
+| `~input/vector_map`  | autoware_map_msgs::msg::LaneletMapBin               | vector map               |
 | `~/input/rois`       | autoware_auto_perception_msgs::TrafficLightRoiArray | traffic light detections |
 | `~input/camera_info` | sensor_msgs::CameraInfo                             | target camera parameter  |
 | `~/input/cloud`      | sensor_msgs::PointCloud2                            | LiDAR point cloud        |

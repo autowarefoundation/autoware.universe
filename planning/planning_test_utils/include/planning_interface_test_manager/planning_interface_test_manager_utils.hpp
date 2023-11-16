@@ -26,7 +26,7 @@
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
@@ -57,7 +57,7 @@
 
 namespace test_utils
 {
-using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
@@ -148,18 +148,18 @@ lanelet::LaneletMapPtr loadMap(const std::string & lanelet2_filename)
   return nullptr;
 }
 
-HADMapBin convertToMapBinMsg(
+LaneletMapBin convertToMapBinMsg(
   const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
 {
   std::string format_version{}, map_version{};
   lanelet::io_handlers::AutowareOsmParser::parseVersions(
     lanelet2_filename, &format_version, &map_version);
 
-  HADMapBin map_bin_msg;
+  LaneletMapBin map_bin_msg;
   map_bin_msg.header.stamp = now;
   map_bin_msg.header.frame_id = "map";
-  map_bin_msg.format_version = format_version;
-  map_bin_msg.map_version = map_version;
+  map_bin_msg.version_map_format = format_version;
+  map_bin_msg.version_map = map_version;
   lanelet::utils::conversion::toBinMsg(map, &map_bin_msg);
 
   return map_bin_msg;
@@ -194,7 +194,7 @@ OccupancyGrid makeCostMapMsg(size_t width = 150, size_t height = 150, double res
   return costmap_msg;
 }
 
-HADMapBin makeMapBinMsg()
+LaneletMapBin makeMapBinMsg()
 {
   const auto planning_test_utils_dir =
     ament_index_cpp::get_package_share_directory("planning_test_utils");
@@ -203,7 +203,7 @@ HADMapBin makeMapBinMsg()
   // load map from file
   const auto map = loadMap(lanelet2_path);
   if (!map) {
-    return autoware_auto_mapping_msgs::msg::HADMapBin_<std::allocator<void>>{};
+    return autoware_map_msgs::msg::LaneletMapBin_<std::allocator<void>>{};
   }
 
   // overwrite centerline
@@ -404,7 +404,7 @@ void createPublisherWithQoS(
     custom_qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
     custom_qos_profile.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
     publisher = rclcpp::create_publisher<T>(test_node, topic_name, custom_qos_profile);
-  } else if constexpr (std::is_same_v<T, HADMapBin>) {
+  } else if constexpr (std::is_same_v<T, LaneletMapBin>) {
     rclcpp::QoS qos(rclcpp::KeepLast(1));
     qos.reliable();
     qos.transient_local();

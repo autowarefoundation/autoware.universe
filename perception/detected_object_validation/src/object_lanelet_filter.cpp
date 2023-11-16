@@ -45,7 +45,7 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
   filter_target_.PEDESTRIAN = declare_parameter<bool>("filter_target_label.PEDESTRIAN", false);
 
   // Set publisher/subscriber
-  map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+  map_sub_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&ObjectLaneletFilterNode::mapCallback, this, _1));
   object_sub_ = this->create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
@@ -55,7 +55,7 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
 }
 
 void ObjectLaneletFilterNode::mapCallback(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr map_msg)
+  const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr map_msg)
 {
   lanelet_frame_id_ = map_msg->header.frame_id;
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();

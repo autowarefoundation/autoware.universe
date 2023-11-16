@@ -132,13 +132,13 @@ std::string toString(const geometry_msgs::msg::Pose & pose)
 
 namespace route_handler
 {
-RouteHandler::RouteHandler(const HADMapBin & map_msg)
+RouteHandler::RouteHandler(const LaneletMapBin & map_msg)
 {
   setMap(map_msg);
   route_ptr_ = nullptr;
 }
 
-void RouteHandler::setMap(const HADMapBin & map_msg)
+void RouteHandler::setMap(const LaneletMapBin & map_msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(

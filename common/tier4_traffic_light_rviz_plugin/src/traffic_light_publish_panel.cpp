@@ -221,7 +221,7 @@ void TrafficLightPublishPanel::onInitialize()
   pub_traffic_signals_ = raw_node_->create_publisher<TrafficSignalArray>(
     "/perception/traffic_light_recognition/traffic_signals", rclcpp::QoS(1));
 
-  sub_vector_map_ = raw_node_->create_subscription<HADMapBin>(
+  sub_vector_map_ = raw_node_->create_subscription<LaneletMapBin>(
     "/map/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&TrafficLightPublishPanel::onVectorMap, this, _1));
   createWallTimer();
@@ -361,7 +361,7 @@ void TrafficLightPublishPanel::onTimer()
   traffic_table_->update();
 }
 
-void TrafficLightPublishPanel::onVectorMap(const HADMapBin::ConstSharedPtr msg)
+void TrafficLightPublishPanel::onVectorMap(const LaneletMapBin::ConstSharedPtr msg)
 {
   if (received_vector_map_) return;
   // NOTE: examples from map_loader/lanelet2_map_visualization_node.cpp

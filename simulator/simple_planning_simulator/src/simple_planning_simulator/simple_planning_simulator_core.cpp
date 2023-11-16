@@ -108,7 +108,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   using std::placeholders::_1;
   using std::placeholders::_2;
 
-  sub_map_ = create_subscription<HADMapBin>(
+  sub_map_ = create_subscription<LaneletMapBin>(
     "input/vector_map", rclcpp::QoS(10).transient_local(),
     std::bind(&SimplePlanningSimulator::on_map, this, _1));
   sub_init_pose_ = create_subscription<PoseWithCovarianceStamped>(
@@ -384,7 +384,7 @@ void SimplePlanningSimulator::on_timer()
   publish_tf(current_odometry_);
 }
 
-void SimplePlanningSimulator::on_map(const HADMapBin::ConstSharedPtr msg)
+void SimplePlanningSimulator::on_map(const LaneletMapBin::ConstSharedPtr msg)
 {
   auto lanelet_map_ptr = std::make_shared<lanelet::LaneletMap>();
 

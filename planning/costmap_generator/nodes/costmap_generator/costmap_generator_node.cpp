@@ -201,7 +201,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
   sub_points_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/points_no_ground", rclcpp::SensorDataQoS(),
     std::bind(&CostmapGenerator::onPoints, this, _1));
-  sub_lanelet_bin_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+  sub_lanelet_bin_map_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&CostmapGenerator::onLaneletMapBin, this, _1));
   sub_scenario_ = this->create_subscription<tier4_planning_msgs::msg::Scenario>(
@@ -263,7 +263,7 @@ void CostmapGenerator::loadParkingAreasFromLaneletMap(
 }
 
 void CostmapGenerator::onLaneletMapBin(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
+  const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg)
 {
   lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_);

@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
@@ -83,7 +83,7 @@ private:
     const CamInfoType::ConstSharedPtr cam_info_msg, const RoiArrayType::ConstSharedPtr roi_msg,
     const SignalArrayType::ConstSharedPtr signal_msg);
 
-  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr input_msg);
+  void mapCallback(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr input_msg);
 
   void multiCameraFusion(std::map<IdType, FusionRecord> & fused_record_map);
 
@@ -105,7 +105,7 @@ private:
   std::vector<std::unique_ptr<mf::Subscriber<CamInfoType>>> cam_info_subs_;
   std::vector<std::unique_ptr<ExactSync>> exact_sync_subs_;
   std::vector<std::unique_ptr<ApproximateSync>> approximate_sync_subs_;
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
+  rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr map_sub_;
 
   rclcpp::Publisher<NewSignalArrayType>::SharedPtr signal_pub_;
   /*

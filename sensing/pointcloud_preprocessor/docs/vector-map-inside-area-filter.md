@@ -22,7 +22,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, so please 
 | Name                 | Type                                         | Description                          |
 | -------------------- | -------------------------------------------- | ------------------------------------ |
 | `~/input`            | `sensor_msgs::msg::PointCloud2`              | input points                         |
-| `~/input/vector_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | vector map used for filtering points |
+| `~/input/vector_map` | `autoware_map_msgs::msg::LaneletMapBin` | vector map used for filtering points |
 
 ### Output
 

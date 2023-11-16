@@ -21,7 +21,7 @@
 
 #include <autoware_adapi_v1_msgs/srv/set_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <lanelet2_core/geometry/LineString.h>
@@ -100,7 +100,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
     std::bind(&MissionPlanner::on_reroute_availability, this, std::placeholders::_1));
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
-  sub_vector_map_ = create_subscription<HADMapBin>(
+  sub_vector_map_ = create_subscription<LaneletMapBin>(
     "input/vector_map", durable_qos,
     std::bind(&MissionPlanner::on_map, this, std::placeholders::_1));
   sub_modified_goal_ = create_subscription<PoseWithUuidStamped>(
@@ -169,7 +169,7 @@ void MissionPlanner::on_reroute_availability(const RerouteAvailability::ConstSha
   reroute_availability_ = msg;
 }
 
-void MissionPlanner::on_map(const HADMapBin::ConstSharedPtr msg)
+void MissionPlanner::on_map(const LaneletMapBin::ConstSharedPtr msg)
 {
   map_ptr_ = msg;
 }

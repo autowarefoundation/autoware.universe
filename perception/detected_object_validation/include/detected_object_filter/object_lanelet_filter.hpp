@@ -20,7 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -43,10 +43,10 @@ public:
 
 private:
   void objectCallback(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr);
-  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr);
+  void mapCallback(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr);
 
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr object_pub_;
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
+  rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr map_sub_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr object_sub_;
 
   lanelet::LaneletMapPtr lanelet_map_ptr_;

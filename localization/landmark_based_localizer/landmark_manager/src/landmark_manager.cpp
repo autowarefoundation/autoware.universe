@@ -26,12 +26,12 @@ namespace landmark_manager
 {
 
 std::vector<Landmark> parse_landmarks(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
+  const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr & msg,
   const std::string & target_subtype, const rclcpp::Logger & logger)
 {
-  RCLCPP_INFO_STREAM(logger, "msg->format_version: " << msg->format_version);
-  RCLCPP_INFO_STREAM(logger, "msg->map_format: " << msg->map_format);
-  RCLCPP_INFO_STREAM(logger, "msg->map_version: " << msg->map_version);
+  RCLCPP_INFO_STREAM(logger, "msg->format_version: " << msg->version_map_format);
+  RCLCPP_INFO_STREAM(logger, "msg->map_format: " << msg->name_map);
+  RCLCPP_INFO_STREAM(logger, "msg->map_version: " << msg->version_map);
   RCLCPP_INFO_STREAM(logger, "msg->data.size(): " << msg->data.size());
   lanelet::LaneletMapPtr lanelet_map_ptr{std::make_shared<lanelet::LaneletMap>()};
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_ptr);

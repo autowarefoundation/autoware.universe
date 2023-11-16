@@ -11,7 +11,7 @@
 
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_geometry_msgs</depend>
-  <depend>autoware_auto_mapping_msgs</depend>
+  <depend>autoware_map_msgs</depend>
   <depend>autoware_auto_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>

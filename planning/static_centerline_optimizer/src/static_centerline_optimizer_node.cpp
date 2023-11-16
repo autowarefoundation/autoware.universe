@@ -192,7 +192,7 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
 : Node("static_centerline_optimizer", node_options)
 {
   // publishers
-  pub_map_bin_ = create_publisher<HADMapBin>("lanelet2_map_topic", create_transient_local_qos());
+  pub_map_bin_ = create_publisher<LaneletMapBin>("lanelet2_map_topic", create_transient_local_qos());
   pub_raw_path_with_lane_id_ =
     create_publisher<PathWithLaneId>("input_centerline", create_transient_local_qos());
   pub_raw_path_ = create_publisher<Path>("debug/raw_centerline", create_transient_local_qos());
@@ -247,7 +247,7 @@ void StaticCenterlineOptimizerNode::run()
 void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_file_path)
 {
   // load map by the map_loader package
-  map_bin_ptr_ = [&]() -> HADMapBin::ConstSharedPtr {
+  map_bin_ptr_ = [&]() -> LaneletMapBin::ConstSharedPtr {
     // load map
     lanelet::LaneletMapPtr map_ptr;
     tier4_map_msgs::msg::MapProjectorInfo map_projector_info;
@@ -261,7 +261,7 @@ void StaticCenterlineOptimizerNode::load_map(const std::string & lanelet2_input_
     const auto map_bin_msg =
       Lanelet2MapLoaderNode::create_map_bin_msg(map_ptr, lanelet2_input_file_path, now());
 
-    return std::make_shared<HADMapBin>(map_bin_msg);
+    return std::make_shared<LaneletMapBin>(map_bin_msg);
   }();
 
   // check if map_bin_ptr_ is not null pointer

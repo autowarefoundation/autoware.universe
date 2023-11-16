@@ -51,7 +51,7 @@
 #include <memory>
 #include <string>
 
-using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_auto_perception_msgs::msg::DetectedObject;
 using autoware_auto_perception_msgs::msg::DetectedObjects;
 using autoware_auto_perception_msgs::msg::TrackedObject;
@@ -69,7 +69,7 @@ private:
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_object_sub_;
   rclcpp::TimerBase::SharedPtr publish_timer_;          // publish timer
-  rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;  // map subscriber
+  rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;  // map subscriber
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
@@ -81,7 +81,7 @@ private:
   void onMeasurement(
     const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg);
   void onTimer();
-  void onMap(const HADMapBin::ConstSharedPtr map_msg);
+  void onMap(const LaneletMapBin::ConstSharedPtr map_msg);
 
   std::string world_frame_id_;  // tracking frame
   std::string tracker_config_directory_;

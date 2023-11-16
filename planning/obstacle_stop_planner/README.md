@@ -17,7 +17,7 @@
 | --------------------------- | ----------------------------------------------- | ------------------- |
 | `~/input/pointcloud`        | sensor_msgs::PointCloud2                        | obstacle pointcloud |
 | `~/input/trajectory`        | autoware_auto_planning_msgs::Trajectory         | trajectory          |
-| `~/input/vector_map`        | autoware_auto_mapping_msgs::HADMapBin           | vector map          |
+| `~/input/vector_map`        | autoware_map_msgs::msg::LaneletMapBin           | vector map          |
 | `~/input/odometry`          | nav_msgs::Odometry                              | vehicle velocity    |
 | `~/input/dynamic_objects`   | autoware_auto_perception_msgs::PredictedObjects | dynamic objects     |
 | `~/input/expand_stop_range` | tier4_planning_msgs::msg::ExpandStopRange       | expand stop range   |

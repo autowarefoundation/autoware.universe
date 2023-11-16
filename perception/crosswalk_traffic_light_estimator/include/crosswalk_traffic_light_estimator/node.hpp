@@ -19,7 +19,7 @@
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
@@ -42,7 +42,7 @@
 namespace traffic_light
 {
 
-using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletRoute;
 using tier4_autoware_utils::DebugPublisher;
 using tier4_autoware_utils::StopWatch;
@@ -59,7 +59,7 @@ public:
   explicit CrosswalkTrafficLightEstimatorNode(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
+  rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<LaneletRoute>::SharedPtr sub_route_;
   rclcpp::Subscription<TrafficSignalArray>::SharedPtr sub_traffic_light_array_;
   rclcpp::Publisher<TrafficSignalArray>::SharedPtr pub_traffic_light_array_;
@@ -71,7 +71,7 @@ private:
 
   lanelet::ConstLanelets conflicting_crosswalks_;
 
-  void onMap(const HADMapBin::ConstSharedPtr msg);
+  void onMap(const LaneletMapBin::ConstSharedPtr msg);
   void onRoute(const LaneletRoute::ConstSharedPtr msg);
   void onTrafficLightArray(const TrafficSignalArray::ConstSharedPtr msg);
 
