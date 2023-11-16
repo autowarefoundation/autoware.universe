@@ -84,12 +84,12 @@ void ByteTrackNode::on_rect(
   for (const auto & tracked_object : objects) {
     tier4_perception_msgs::msg::DetectedObjectWithFeature object;
     // fit xy offset to 0 if roi is outside of image
-    const int outside_x = 0 - tracked_object.x_offset;
-    const int outside_y = 0 - tracked_object.y_offset;
+    const int outside_x = std::max(-tracked_object.x_offset, 0);
+    const int outside_y = std::max(-tracked_object.y_offset, 0);
     const int32_t output_x = std::max(tracked_object.x_offset, 0);
     const int32_t output_y = std::max(tracked_object.y_offset, 0);
-    const int32_t output_width = tracked_object.width - std::max(outside_x, 0);
-    const int32_t output_height = tracked_object.height - std::max(outside_y, 0);
+    const int32_t output_width = tracked_object.width - outside_x;
+    const int32_t output_height = tracked_object.height - outside_y;
     // convert int32 to uint32
     object.feature.roi.x_offset = static_cast<uint32_t>(output_x);
     object.feature.roi.y_offset = static_cast<uint32_t>(output_y);
