@@ -158,7 +158,7 @@ def generate_launch_description():
         "simulator_model_param_file",
         [
             FindPackageShare("simple_planning_simulator"),
-            "/config/simple_planning_simulator_default.param.yaml",
+            "/config/simple_planning_simulator.param.yaml",
         ],
         "path to config file for simulator_model",
     )
