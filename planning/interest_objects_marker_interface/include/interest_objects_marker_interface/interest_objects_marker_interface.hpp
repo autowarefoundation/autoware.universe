@@ -19,6 +19,7 @@
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -28,6 +29,7 @@
 
 namespace interest_objects_marker_interface
 {
+using autoware_auto_perception_msgs::msg::Shape;
 using geometry_msgs::msg::Pose;
 using tier4_autoware_utils::Polygon2d;
 using visualization_msgs::msg::Marker;
@@ -36,8 +38,7 @@ using visualization_msgs::msg::MarkerArray;
 struct ObjectStatus
 {
   Pose pose{};
-  Polygon2d polygon{};
-  double height{0.0};
+  Shape shape{};
   bool safe{false};
 };
 
@@ -45,17 +46,18 @@ class InterestObjectsMarkerInterface
 {
 public:
   InterestObjectsMarkerInterface(rclcpp::Node * node, const std::string & name);
-  void insertObjectStatus(
-    const Pose & pose, const Polygon2d & polygon, const double obj_height, const bool safe);
+  void insertObjectStatus(const Pose & pose, const Shape & shape, const bool safe);
   void publishMarkerArray();
+  void setHeightOffset(const double offset);
 
 private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
+  double height_offset_{0.0};
   std::vector<ObjectStatus> obj_status_array_;
 
   std::string name_;
-  std::string topic_namespace_ = "/planning/interest_objects_marker";
+  std::string topic_namespace_ = "/planning/debug/interest_objects_marker";
 };
 
 }  // namespace interest_objects_marker_interface

@@ -52,17 +52,21 @@ ColorRGBA getColor(const bool safe, const float alpha)
   return createMarkerColor(r, g, b, alpha);
 }
 
-Marker createArrowMarker(const size_t & id, const ObjectStatus & status, const std::string & name)
+Marker createArrowMarker(
+  const size_t & id, const ObjectStatus & status, const std::string & name,
+  const double height_offset, const double arrow_length = 1.0)
 {
   Marker marker = createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name, id, Marker::ARROW,
     createMarkerScale(0.25, 0.5, 0.5), getColor(status.safe, 0.95f));
 
+  const double height = 0.5 * status.shape.dimensions.z;
+
   Point src, dst;
   src = status.pose.position;
-  src.z += status.height + 1.0;
+  src.z += height + height_offset + arrow_length;
   dst = status.pose.position;
-  dst.z += status.height;
+  dst.z += height + height_offset;
 
   marker.points.push_back(src);
   marker.points.push_back(dst);
@@ -71,11 +75,14 @@ Marker createArrowMarker(const size_t & id, const ObjectStatus & status, const s
 }
 
 Marker createCircleMarker(
-  const size_t & id, const ObjectStatus & status, const std::string & name, const double radius)
+  const size_t & id, const ObjectStatus & status, const std::string & name, const double radius,
+  const double height_offset)
 {
   Marker marker = createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name, id, Marker::LINE_STRIP,
     createMarkerScale(0.1, 0.0, 0.0), getColor(status.safe, 0.951f));
+
+  const double height = 0.5 * status.shape.dimensions.z;
 
   constexpr size_t num_points = 20;
   std::vector<Point> points;
@@ -86,7 +93,7 @@ Marker createCircleMarker(
     const double theta = 2 * pi * ratio;
     points.at(i).x = status.pose.position.x + radius * cos(theta);
     points.at(i).y = status.pose.position.y + radius * sin(theta);
-    points.at(i).z = status.pose.position.z + status.height + 0.75;
+    points.at(i).z = status.pose.position.z + height + height_offset;
     marker.points.push_back(points.at(i));
   }
   marker.points.push_back(points.front());
@@ -95,12 +102,15 @@ Marker createCircleMarker(
 }
 
 MarkerArray createTargetMarker(
-  const size_t & id, const ObjectStatus & status, const std::string & name)
+  const size_t & id, const ObjectStatus & status, const std::string & name,
+  const double height_offset)
 {
   MarkerArray marker_array;
-  marker_array.markers.push_back(createArrowMarker(id, status, name + "_arrow"));
-  marker_array.markers.push_back(createCircleMarker(id, status, name + "_circle1", 0.5));
-  marker_array.markers.push_back(createCircleMarker(id, status, name + "_circle2", 0.75));
+  marker_array.markers.push_back(createArrowMarker(id, status, name + "_arrow", height_offset));
+  marker_array.markers.push_back(
+    createCircleMarker(id, status, name + "_circle1", 0.5, height_offset + 0.75));
+  marker_array.markers.push_back(
+    createCircleMarker(id, status, name + "_circle2", 0.75, height_offset + 0.75));
 
   return marker_array;
 }
@@ -112,19 +122,18 @@ namespace interest_objects_marker_interface
 
 InterestObjectsMarkerInterface::InterestObjectsMarkerInterface(
   rclcpp::Node * node, const std::string & name)
-: name_{name}
+: height_offset_{0.5}, name_{name}
 {
   // Publisher
   pub_marker_ = node->create_publisher<MarkerArray>(topic_namespace_ + "/" + name, 1);
 }
 
 void InterestObjectsMarkerInterface::insertObjectStatus(
-  const Pose & pose, const Polygon2d & polygon, double obj_height, const bool safe)
+  const Pose & pose, const Shape & shape, const bool safe)
 {
   ObjectStatus status;
   status.pose = pose;
-  status.polygon = polygon;
-  status.height = obj_height;
+  status.shape = shape;
   status.safe = safe;
 
   obj_status_array_.push_back(status);
@@ -135,13 +144,18 @@ void InterestObjectsMarkerInterface::publishMarkerArray()
   MarkerArray marker_array;
   for (size_t i = 0; i < obj_status_array_.size(); ++i) {
     const auto obj = obj_status_array_.at(i);
-    const MarkerArray target_marker = createTargetMarker(i, obj, name_);
+    const MarkerArray target_marker = createTargetMarker(i, obj, name_, height_offset_);
     marker_array.markers.insert(
       marker_array.markers.end(), target_marker.markers.begin(), target_marker.markers.end());
   }
 
   pub_marker_->publish(marker_array);
   obj_status_array_.clear();
+}
+
+void InterestObjectsMarkerInterface::setHeightOffset(const double offset)
+{
+  height_offset_ = offset;
 }
 
 }  // namespace interest_objects_marker_interface

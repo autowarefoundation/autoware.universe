@@ -320,7 +320,7 @@ void LaneChangeInterface::setObjectDebugVisualizationTmp(const bool is_approved)
     is_approved ? module_type_->getAfterApprovalDebugData() : module_type_->getDebugData();
   for (const auto & [uuid, data] : debug_data) {
     interest_objects_marker_interface_.insertObjectStatus(
-      data.current_obj_pose, data.extended_obj_polygon, 1.5, data.is_safe);
+      data.current_obj_pose, data.obj_shape, data.is_safe);
   }
   return;
 }
