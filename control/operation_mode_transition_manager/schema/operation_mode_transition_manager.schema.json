@@ -118,19 +118,18 @@
             "speed_upper_threshold": {
               "type": "number",
               "description": "The velocity deviation between control command and ego vehicle must be within this threshold to complete Autonomous transition.",
-              "default": "2.0",
-              "minimum": 0.0
+              "default": "2.0"
             },
             "speed_lower_threshold": {
               "type": "number",
               "description": "The velocity deviation between control command and ego vehicle must be within this threshold to complete Autonomous transition.",
-              "default": "-2.0",
-              "INSERT_BOUND_CONDITION(S)": "INSERT_BOUND_VALUE(S)"
+              "default": "-2.0"
             },
             "yaw_threshold": {
               "type": "number",
               "description": "The yaw angle between trajectory and ego vehicle must be within this threshold to complete Autonomous transition.",
-              "default": "0,262"
+              "default": "0,262",
+              "minimum": -3.142
             }
           },
           "required": [
