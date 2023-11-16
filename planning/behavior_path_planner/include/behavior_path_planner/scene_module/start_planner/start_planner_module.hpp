@@ -90,7 +90,6 @@ public:
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
-  // TODO(someone): remove this, and use base class function
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
