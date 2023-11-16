@@ -112,7 +112,7 @@
     <push-ros-namespace namespace="perception"/>
 
     <!-- Object segmentation module -->
-    <group>
+    <!-- <group>
       <push-ros-namespace namespace="obstacle_segmentation"/>
       <include file="$(find-pkg-share tier4_perception_launch)/launch/obstacle_segmentation/ground_segmentation/ground_segmentation.launch.py">
         <arg name="base_frame" value="base_link"/>
@@ -122,10 +122,10 @@
         <arg name="container_name" value="$(var pointcloud_container_name)"/>
         <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       </include>
-    </group>
+    </group> -->
 
     <!-- Occupancy grid map module -->
-    <group>
+    <!-- <group>
       <push-ros-namespace namespace="occupancy_grid_map"/>
       <include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/probabilistic_occupancy_grid_map.launch.xml">
         <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/single_frame/pointcloud_raw"/>
@@ -140,7 +140,7 @@
         <arg name="occupancy_grid_map_updater" value="$(var occupancy_grid_map_updater)"/>
         <arg name="occupancy_grid_map_updater_param_path" value="$(var occupancy_grid_map_updater_param_path)"/>
       </include>
-    </group>
+    </group> -->
 
     <!-- Object recognition module -->
     <group unless="$(var use_empty_dynamic_object_publisher)">
@@ -148,7 +148,120 @@
       <!-- Detection module -->
       <group>
         <push-ros-namespace namespace="detection"/>
-        <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detection.launch.xml">
+        <let name="yolox-model-name" value="yolox-sPlus-opt"/>
+        <let name="yolox_data_path" value="$(env HOME)/autoware_data"/>
+        <let name="yolox_output_base" value="/perception/object_recognition/detection"/>
+        <let name="bytetrack_output_base" value="/perception/object_recognition/detection/tracked"/>
+
+        <!-- camera0 -->
+        <group>
+          <push-ros-namespace namespace="camera0"/>
+          <!-- yolox module-->
+          <include file="$(find-pkg-share tensorrt_yolox)/launch/yolox.launch.xml">
+            <arg name="input/image" value="/sensing/camera/camera0/image_rect_color"/>
+            <arg name="output/objects" value="$(var yolox_output_base)/rois0"/>
+            <arg name="model_name" value="$(var yolox-model-name)"/>
+            <arg name="data_path" value="$(var yolox_data_path)"/>
+          </include>
+          <!-- bytetrack module -->
+          <include file="$(find-pkg-share bytetrack)/launch/bytetrack.launch.xml">
+            <arg name="detection_rect" value="$(var yolox_output_base)/rois0"/>
+            <arg name="tracked_rect" value="$(var bytetrack_output_base)/rois0"/>
+            <arg name="enable_visualizer" value="false"/>
+          </include>
+        </group>
+
+        <!-- camera1 -->
+        <group>
+          <push-ros-namespace namespace="camera1"/>
+          <!-- yolox module-->
+          <include file="$(find-pkg-share tensorrt_yolox)/launch/yolox.launch.xml">
+            <arg name="input/image" value="/sensing/camera/camera1/image_rect_color"/>
+            <arg name="output/objects" value="$(var yolox_output_base)/rois1"/>
+            <arg name="model_name" value="$(var yolox-model-name)"/>
+            <arg name="data_path" value="$(var yolox_data_path)"/>
+          </include>
+          <!-- bytetrack module -->
+          <include file="$(find-pkg-share bytetrack)/launch/bytetrack.launch.xml">
+            <arg name="detection_rect" value="$(var yolox_output_base)/rois1"/>
+            <arg name="tracked_rect" value="$(var bytetrack_output_base)/rois1"/>
+            <arg name="enable_visualizer" value="false"/>
+          </include>
+        </group>
+
+        <!-- camera2 -->
+        <group>
+          <push-ros-namespace namespace="camera2"/>
+          <!-- yolox module-->
+          <include file="$(find-pkg-share tensorrt_yolox)/launch/yolox.launch.xml">
+            <arg name="input/image" value="/sensing/camera/camera2/image_rect_color"/>
+            <arg name="output/objects" value="$(var yolox_output_base)/rois2"/>
+            <arg name="model_name" value="$(var yolox-model-name)"/>
+            <arg name="data_path" value="$(var yolox_data_path)"/>
+          </include>
+          <!-- bytetrack module -->
+          <include file="$(find-pkg-share bytetrack)/launch/bytetrack.launch.xml">
+            <arg name="detection_rect" value="$(var yolox_output_base)/rois2"/>
+            <arg name="tracked_rect" value="$(var bytetrack_output_base)/rois2"/>
+            <arg name="enable_visualizer" value="false"/>
+          </include>
+        </group>
+
+        <!-- camera3 -->
+        <group>
+          <push-ros-namespace namespace="camera3"/>
+          <!-- yolox module-->
+          <include file="$(find-pkg-share tensorrt_yolox)/launch/yolox.launch.xml">
+            <arg name="input/image" value="/sensing/camera/camera3/image_rect_color"/>
+            <arg name="output/objects" value="$(var yolox_output_base)/rois3"/>
+            <arg name="model_name" value="$(var yolox-model-name)"/>
+            <arg name="data_path" value="$(var yolox_data_path)"/>
+          </include>
+          <!-- bytetrack module -->
+          <include file="$(find-pkg-share bytetrack)/launch/bytetrack.launch.xml">
+            <arg name="detection_rect" value="$(var yolox_output_base)/rois3"/>
+            <arg name="tracked_rect" value="$(var bytetrack_output_base)/rois3"/>
+            <arg name="enable_visualizer" value="false"/>
+          </include>
+        </group>
+
+        <!-- camera4 -->
+        <group>
+          <push-ros-namespace namespace="camera4"/>
+          <!-- yolox module-->
+          <include file="$(find-pkg-share tensorrt_yolox)/launch/yolox.launch.xml">
+            <arg name="input/image" value="/sensing/camera/camera4/image_rect_color"/>
+            <arg name="output/objects" value="$(var yolox_output_base)/rois4"/>
+            <arg name="model_name" value="$(var yolox-model-name)"/>
+            <arg name="data_path" value="$(var yolox_data_path)"/>
+          </include>
+          <!-- bytetrack module -->
+          <include file="$(find-pkg-share bytetrack)/launch/bytetrack.launch.xml">
+            <arg name="detection_rect" value="$(var yolox_output_base)/rois4"/>
+            <arg name="tracked_rect" value="$(var bytetrack_output_base)/rois4"/>
+            <arg name="enable_visualizer" value="false"/>
+          </include>
+        </group>
+
+        <!-- camera5 -->
+        <group>
+          <push-ros-namespace namespace="camera5"/>
+          <!-- yolox module-->
+          <include file="$(find-pkg-share tensorrt_yolox)/launch/yolox.launch.xml">
+            <arg name="input/image" value="/sensing/camera/camera5/image_rect_color"/>
+            <arg name="output/objects" value="$(var yolox_output_base)/rois5"/>
+            <arg name="model_name" value="$(var yolox-model-name)"/>
+            <arg name="data_path" value="$(var yolox_data_path)"/>
+          </include>
+          <!-- bytetrack module -->
+          <include file="$(find-pkg-share bytetrack)/launch/bytetrack.launch.xml">
+            <arg name="detection_rect" value="$(var yolox_output_base)/rois5"/>
+            <arg name="tracked_rect" value="$(var bytetrack_output_base)/rois5"/>
+            <arg name="enable_visualizer" value="false"/>
+          </include>
+        </group>
+
+        <!-- <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detection.launch.xml">
           <arg name="mode" value="$(var mode)"/>
           <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
           <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
@@ -185,11 +298,11 @@
           <arg name="fusion_distance" value="$(var fusion_distance)"/>
           <arg name="trust_object_distance" value="$(var trust_object_distance)"/>
           <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
-        </include>
+        </include> -->
       </group>
 
       <!-- Tracking module -->
-      <group>
+      <!-- <group>
         <push-ros-namespace namespace="tracking"/>
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/tracking/tracking.launch.xml">
           <arg name="mode" value="$(var mode)"/>
@@ -202,15 +315,15 @@
           <arg name="object_recognition_tracking_object_merger_data_association_matrix_param_path" value="$(var object_recognition_tracking_object_merger_data_association_matrix_param_path)"/>
           <arg name="object_recognition_tracking_object_merger_node_param_path" value="$(var object_recognition_tracking_object_merger_node_param_path)"/>
         </include>
-      </group>
+      </group> -->
 
       <!-- Prediction module -->
-      <group>
+      <!-- <group>
         <push-ros-namespace namespace="prediction"/>
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/prediction/prediction.launch.xml">
           <arg name="use_vector_map" value="$(var use_vector_map)"/>
         </include>
-      </group>
+      </group> -->
     </group>
 
     <group if="$(var use_empty_dynamic_object_publisher)">
