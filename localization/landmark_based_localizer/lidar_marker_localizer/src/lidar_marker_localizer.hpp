@@ -49,7 +49,6 @@ class LidarMarkerLocalizer : public rclcpp::Node
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
 public:
-
   LidarMarkerLocalizer();
 
 private:

@@ -164,7 +164,6 @@ void LidarMarkerLocalizer::points_callback(
   //   ex.what());
   // }
 
-
   pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr points_ptr(
     new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
   pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
@@ -230,7 +229,7 @@ void LidarMarkerLocalizer::points_callback(
     const int positive_vote_threshold = 3;
     const int negative_vote_threshold = 3;
 
-    for (int i = filter_window_size*2; i < dx - filter_window_size*2; i++) {
+    for (int i = filter_window_size * 2; i < dx - filter_window_size * 2; i++) {
       double pos = 0;
       double neg = 0;
       double max = -1;
@@ -266,7 +265,7 @@ void LidarMarkerLocalizer::points_callback(
   const int vote_threshold_for_detect_marker = 20;
   const int filter_window_size = 5;  // TODO duplicated parameter
 
-  for (int i = filter_window_size*2; i < dx - filter_window_size*2; i++) {
+  for (int i = filter_window_size * 2; i < dx - filter_window_size * 2; i++) {
     if (vote[i] > vote_threshold_for_detect_marker) {
       geometry_msgs::msg::PoseStamped marker_pose_on_base_link;
       marker_pose_on_base_link.header.stamp = sensor_ros_time;
