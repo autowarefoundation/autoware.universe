@@ -85,7 +85,7 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/simple_planning_simulator"
+          "$ref": "#/definitions/vehicle_characteristics"
         }
       },
       "required": ["ros__parameters"]
