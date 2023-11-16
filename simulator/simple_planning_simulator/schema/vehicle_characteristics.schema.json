@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Vehicle Characteristics in Simple Planning Simulator Node",
+  "type": "object",
+  "definitions": {
+    "vehicle_characteristics": {
+      "type": "object",
+      "properties": {
+        "cg_to_front_m": {
+          "type": "number",
+          "description": "center of gravity to vehicle front [m]",
+          "default": "1.228",
+          "minimum": 0.0
+        },
+        "cg_to_rear_m": {
+          "type": "number",
+          "description": "center of gravity to vehicle rear [m]",
+          "default": "1.5618",
+          "minimum": 0.0
+        },
+        "front_corner_stiffness": {
+          "type": "number",
+          "description": "stiffness of vehicle front corner",
+          "default": "17000.0",
+          "minimum": 0.0
+        },
+        "rear_corner_stiffness": {
+          "type": "number",
+          "description": "stiffness of vehicle rear corner",
+          "default": "20000.0",
+          "minimum": 0.0
+        },
+        "mass_kg": {
+          "type": "number",
+          "description": "vehicle weight [kg]",
+          "default": "1460.0",
+          "minimum": 0.0
+        },
+        "yaw_inertia_kgm2": {
+          "type": "number",
+          "description": "yaw inertia [kgm2]",
+          "default": "2170.0",
+          "minimum": 0.0
+        },
+        "width_m": {
+          "type": "number",
+          "description": "vehicle width [m]",
+          "default": "2.0",
+          "minimum": 0.0
+        },
+        "front_overhang_m": {
+          "type": "number",
+          "description": "front overhang [m]",
+          "default": "0.5",
+          "minimum": 0.0
+        },
+        "rear_overhang_m": {
+          "type": "number",
+          "description": "rear overhang [m]",
+          "default": "0.5",
+          "minimum": 0.0
+        },
+        "max_steer_angle": {
+          "type": "number",
+          "description": "max angle of steer [rad]",
+          "default": "0.70"
+        }
+      },
+      "required": [
+        "cg_to_front_m",
+        "cg_to_rear_m",
+        "front_corner_stiffness",
+        "rear_corner_stiffness",
+        "mass_kg",
+        "yaw_inertia_kgm2",
+        "width_m",
+        "front_overhang_m",
+        "rear_overhang_m",
+        "max_steer_angle"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/simple_planning_simulator"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
