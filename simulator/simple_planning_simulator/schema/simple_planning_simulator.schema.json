@@ -139,6 +139,25 @@
           "default": "0.1",
           "minimum": 0.0
         },
+        "steer_dead_band": {
+          "type": "number",
+          "description": "dead band for steering angle [rad]",
+          "default": "0.0",
+          "maximum": 3.142,
+          "minimum": -3.142
+        },
+        "debug_acc_scaling_factor": {
+          "type": "number",
+          "description": "scaling factor for accel command",
+          "default": "1.0",
+          "minimum": 0.0
+        },
+        "debug_steer_scaling_factor": {
+          "type": "number",
+          "description": "scaling factor for steer command",
+          "default": "1.0",
+          "minimum": 0.0
+        },
         "x_stddev": {
           "type": "number",
           "description": "x standard deviation for dummy covariance in map coordinate",
@@ -251,6 +270,9 @@
         "vel_time_constant",
         "steer_time_delay",
         "steer_time_constant",
+        "steer_dead_band",
+        "debug_acc_scaling_factor",
+        "debug_steer_scaling_factor",
         "x_stddev",
         "y_stddev",
         "vehicle_characteristics"

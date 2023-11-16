@@ -59,7 +59,6 @@ struct PullOutStatus
   size_t current_path_idx{0};
   PlannerType planner_type{PlannerType::NONE};
   PathWithLaneId backward_path{};
-  lanelet::ConstLanelets pull_out_lanes{};
   bool found_pull_out_path{false};      // current path is safe against static objects
   bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
   bool driving_forward{false};          // if ego is driving on backward path, this is set to false
@@ -132,6 +131,12 @@ private:
 
   void initializeSafetyCheckParameters();
 
+  bool isModuleRunning() const;
+  bool isCurrentPoseOnMiddleOfTheRoad() const;
+  bool isCloseToOriginalStartPose() const;
+  bool hasArrivedAtGoal() const;
+  bool isMoving() const;
+
   PriorityOrder determinePriorityOrder(
     const std::string & search_priority, const size_t candidates_size);
   bool findPullOutPath(
@@ -171,8 +176,9 @@ private:
   std::mutex mutex_;
 
   PathWithLaneId getFullPath() const;
-  PathWithLaneId calcStartPoseCandidatesBackwardPath() const;
-  std::vector<Pose> searchPullOutStartPoses(const PathWithLaneId & start_pose_candidates) const;
+  PathWithLaneId calcBackwardPathFromStartPose() const;
+  std::vector<Pose> searchPullOutStartPoseCandidates(
+    const PathWithLaneId & back_path_from_start_pose) const;
 
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
@@ -189,9 +195,8 @@ private:
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   void updateStatusAfterBackwardDriving();
-  static bool isOverlappedWithLane(
-    const lanelet::ConstLanelet & candidate_lanelet,
-    const tier4_autoware_utils::LinearRing2d & vehicle_footprint);
+  PredictedObjects filterStopObjectsInPullOutLanes(
+    const lanelet::ConstLanelets & pull_out_lanes, const double velocity_threshold) const;
   bool hasFinishedPullOut() const;
   bool isBackwardDrivingComplete() const;
   bool isStopped();

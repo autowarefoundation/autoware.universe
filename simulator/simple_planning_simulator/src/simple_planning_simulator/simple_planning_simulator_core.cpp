@@ -210,7 +210,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
 
   // control mode
   current_control_mode_.mode = ControlModeReport::AUTONOMOUS;
-  current_manual_gear_cmd_.command = GearCommand::DRIVE;
+  current_manual_gear_cmd_.command = GearCommand::PARK;
 }
 
 void SimplePlanningSimulator::initialize_vehicle_model()
@@ -229,6 +229,9 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const double vel_time_constant = declare_parameter<double>("vel_time_constant");
   const double steer_time_delay = declare_parameter<double>("steer_time_delay");
   const double steer_time_constant = declare_parameter<double>("steer_time_constant");
+  const double steer_dead_band = declare_parameter<double>("steer_dead_band");
+  const double debug_acc_scaling_factor = declare_parameter<double>("debug_acc_scaling_factor");
+  const double debug_steer_scaling_factor = declare_parameter<double>("debug_steer_scaling_factor");
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   const double wheelbase = vehicle_info.wheel_base_m;
 
@@ -245,17 +248,19 @@ void SimplePlanningSimulator::initialize_vehicle_model()
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_VEL;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerVel>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-      vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant);
+      vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant, steer_dead_band);
   } else if (vehicle_model_type_str == "DELAY_STEER_ACC") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant);
+      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_dead_band,
+      debug_acc_scaling_factor, debug_steer_scaling_factor);
   } else if (vehicle_model_type_str == "DELAY_STEER_ACC_GEARED") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_GEARED;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAccGeared>(
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant);
+      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_dead_band,
+      debug_acc_scaling_factor, debug_steer_scaling_factor);
   } else {
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
@@ -325,9 +330,9 @@ void SimplePlanningSimulator::on_timer()
   }
 
   // calculate longitudinal acceleration by slope
-  const double ego_pitch_angle = calculate_ego_pitch();
-  const double acc_by_slope =
-    enable_road_slope_simulation_ ? -9.81 * std::sin(ego_pitch_angle) : 0.0;
+  constexpr double gravity_acceleration = -9.81;
+  const double ego_pitch_angle = enable_road_slope_simulation_ ? calculate_ego_pitch() : 0.0;
+  const double acc_by_slope = gravity_acceleration * std::sin(ego_pitch_angle);
 
   // update vehicle dynamics
   {

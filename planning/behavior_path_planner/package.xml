@@ -18,7 +18,10 @@
   <maintainer email="takamasa.horibe@tier4.jp">Takamasa Horibe</maintainer>
   <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
   <!-- turn signal decider -->
-  <maintainer email="yutaka.shimizu@tier4.jp">Yutaka Shimizu</maintainer>
+  <maintainer email="zulfaqar.azmi@tier4.jp">Zulfaqar Azmi</maintainer>
+  <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
+  <maintainer email="mamoru.sobue@tier4.jp">Mamoru Sobue</maintainer>
+
   <!-- drivable area generation-->
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
 
@@ -46,6 +49,7 @@
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_tf2</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_perception_msgs</depend>
   <depend>behaviortree_cpp_v3</depend>
   <depend>freespace_planning_algorithms</depend>
   <depend>geometry_msgs</depend>
