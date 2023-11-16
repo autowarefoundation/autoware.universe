@@ -17,6 +17,36 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
+#define debug(var)                                                      \
+  do {                                                                  \
+    std::cerr << __func__ << ": " << __LINE__ << ", " << #var << " : "; \
+    view(var);                                                          \
+  } while (0)
+template <typename T>
+void view(T e)
+{
+  std::cerr << e << std::endl;
+}
+template <typename T>
+void view(const std::vector<T> & v)
+{
+  for (const auto & e : v) {
+    std::cerr << e << " ";
+  }
+  std::cerr << std::endl;
+}
+template <typename T>
+void view(const std::vector<std::vector<T>> & vv)
+{
+  for (const auto & v : vv) {
+    view(v);
+  }
+}
+#define line()                                                                         \
+  {                                                                                    \
+    std::cerr << "(" << __FILE__ << ") " << __func__ << ": " << __LINE__ << std::endl; \
+  }
+
 namespace
 {
 void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point & geom_point)
@@ -132,6 +162,25 @@ Polygon2d createOneStepPolygon(
   bg::convex_hull(polygon, hull_polygon);
 
   return hull_polygon;
+}
+
+std::optional<double> calcCollisionDistanceForStopObstacle(
+  const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
+  const Obstacle & obstacle)
+{
+  auto obstacle_polygon = tier4_autoware_utils::toPolygon2d(obstacle.pose, obstacle.shape);
+  for (size_t col_i = 0; col_i < traj_polys.size(); ++col_i) {
+    if (boost::geometry::intersects(traj_polys.at(col_i), obstacle_polygon)) {
+      try {
+        double prev_index_dist =
+          boost::geometry::distance(traj_polys.at(col_i - 1), obstacle_polygon);
+        return motion_utils::calcSignedArcLength(traj_points, 0, col_i - 1) + prev_index_dist;
+      } catch (std::out_of_range & ex) {
+        return 0.0;
+      }
+    }
+  }
+  return std::nullopt;
 }
 
 std::optional<geometry_msgs::msg::Point> getCollisionPoint(

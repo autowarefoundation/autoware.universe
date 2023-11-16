@@ -70,6 +70,9 @@ private:
   std::optional<geometry_msgs::msg::Point> createCollisionPointForStopObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle) const;
+  std::optional<double> calcCollisionDistanceForStopObstacle(
+    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
+    const Obstacle & obstacle) const;
   std::optional<CruiseObstacle> createCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle, const double precise_lat_dist);
@@ -91,7 +94,7 @@ private:
 
   void checkConsistency(
     const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
-    const std::vector<TrajectoryPoint> & traj_points, std::vector<StopObstacle> & stop_obstacles);
+    std::vector<StopObstacle> & stop_obstacles);
   void publishVelocityLimit(
     const std::optional<VelocityLimit> & vel_limit, const std::string & module_name);
   void publishDebugMarker() const;
