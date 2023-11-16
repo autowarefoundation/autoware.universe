@@ -192,7 +192,8 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
 : Node("static_centerline_optimizer", node_options)
 {
   // publishers
-  pub_map_bin_ = create_publisher<LaneletMapBin>("lanelet2_map_topic", create_transient_local_qos());
+  pub_map_bin_ =
+    create_publisher<LaneletMapBin>("lanelet2_map_topic", create_transient_local_qos());
   pub_raw_path_with_lane_id_ =
     create_publisher<PathWithLaneId>("input_centerline", create_transient_local_qos());
   pub_raw_path_ = create_publisher<Path>("debug/raw_centerline", create_transient_local_qos());

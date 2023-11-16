@@ -21,8 +21,8 @@
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 

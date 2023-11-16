@@ -185,8 +185,7 @@ void ScenarioSelectorNode::updateCurrentScenario()
   }
 }
 
-void ScenarioSelectorNode::onMap(
-  const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg)
+void ScenarioSelectorNode::onMap(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(

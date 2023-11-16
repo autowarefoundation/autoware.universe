@@ -45,10 +45,10 @@ Converted model URL
 
 #### Input
 
-| Name                | Type                                         | Description              |
-| ------------------- | -------------------------------------------- | ------------------------ |
-| `input/camera_info` | `sensor_msgs::msg::CameraInfo`               | undistorted camera info  |
-| `input/image_raw`   | `sensor_msgs::msg::Image`                    | undistorted camera image |
+| Name                | Type                                    | Description              |
+| ------------------- | --------------------------------------- | ------------------------ |
+| `input/camera_info` | `sensor_msgs::msg::CameraInfo`          | undistorted camera info  |
+| `input/image_raw`   | `sensor_msgs::msg::Image`               | undistorted camera image |
 | `input/vector_map`  | `autoware_map_msgs::msg::LaneletMapBin` | vector map               |
 
 #### Output

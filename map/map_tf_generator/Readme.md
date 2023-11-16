@@ -25,8 +25,8 @@ The following are the supported methods to calculate the position of the `viewer
 
 #### vector_map_tf_generator
 
-| Name              | Type                                         | Description                                                   |
-| ----------------- | -------------------------------------------- | ------------------------------------------------------------- |
+| Name              | Type                                    | Description                                                   |
+| ----------------- | --------------------------------------- | ------------------------------------------------------------- |
 | `/map/vector_map` | `autoware_map_msgs::msg::LaneletMapBin` | Subscribe vector map to calculate position of `viewer` frames |
 
 ### Output

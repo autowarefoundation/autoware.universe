@@ -40,10 +40,10 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 
 ### Subscriptions
 
-| Name                  | Type                                 | Description            |
-| --------------------- | ------------------------------------ | ---------------------- |
+| Name                  | Type                                | Description            |
+| --------------------- | ----------------------------------- | ---------------------- |
 | `input/vector_map`    | autoware_map_msgs/msg/LaneletMapBin | vector map of Lanelet2 |
-| `input/modified_goal` | geometry_msgs/PoseWithUuidStamped    | modified goal pose     |
+| `input/modified_goal` | geometry_msgs/PoseWithUuidStamped   | modified goal pose     |
 
 ### Publications
 

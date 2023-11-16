@@ -17,8 +17,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>

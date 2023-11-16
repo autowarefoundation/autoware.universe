@@ -51,11 +51,11 @@
 #include <memory>
 #include <string>
 
-using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_auto_perception_msgs::msg::DetectedObject;
 using autoware_auto_perception_msgs::msg::DetectedObjects;
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
+using autoware_map_msgs::msg::LaneletMapBin;
 
 class RadarObjectTrackerNode : public rclcpp::Node
 {
@@ -68,7 +68,7 @@ private:
     tracked_objects_pub_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_object_sub_;
-  rclcpp::TimerBase::SharedPtr publish_timer_;          // publish timer
+  rclcpp::TimerBase::SharedPtr publish_timer_;              // publish timer
   rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;  // map subscriber
 
   tf2_ros::Buffer tf_buffer_;

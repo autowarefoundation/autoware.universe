@@ -36,8 +36,7 @@ public:
   void trafficSignalsCallback(
     const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr
       input_traffic_signals_msg);
-  void binMapCallback(
-    const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr input_map_msg);
+  void binMapCallback(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr input_map_msg);
 
 private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr light_marker_pub_;

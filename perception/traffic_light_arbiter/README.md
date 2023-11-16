@@ -14,7 +14,7 @@ A node that merges traffic light/signal state from image recognition and externa
 
 | Name                             | Type                                              | Description                                              |
 | -------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
-| ~/sub/vector_map                 | autoware_map_msgs::msg::LaneletMapBin        | The vector map to get valid traffic signal ids.          |
+| ~/sub/vector_map                 | autoware_map_msgs::msg::LaneletMapBin             | The vector map to get valid traffic signal ids.          |
 | ~/sub/perception_traffic_signals | autoware_perception_msgs::msg::TrafficSignalArray | The traffic signals from the image recognition pipeline. |
 | ~/sub/external_traffic_signals   | autoware_perception_msgs::msg::TrafficSignalArray | The traffic signals from an external system.             |
 
