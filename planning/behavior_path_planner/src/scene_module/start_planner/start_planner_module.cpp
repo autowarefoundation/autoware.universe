@@ -259,25 +259,12 @@ bool StartPlannerModule::isExecutionReady() const
 
 bool StartPlannerModule::canTransitSuccessState()
 {
-  return hasFinishedPullOut() || status_.backward_driving_complete;
+  return hasFinishedPullOut();
 }
 
-void StartPlannerModule::updateCurrentState()
+bool StartPlannerModule::canTransitIdleToRunningState()
 {
-  RCLCPP_DEBUG(getLogger(), "START_PLANNER updateCurrentState");
-
-  const auto print = [this](const auto & from, const auto & to) {
-    RCLCPP_DEBUG(getLogger(), "[start_planner] Transit from %s to %s.", from.data(), to.data());
-  };
-
-  const auto & from = current_state_;
-  // current_state_ = updateState();
-
-  if (isActivated() && !isWaitingApproval()) {
-    current_state_ = ModuleStatus::RUNNING;
-  } else {
-    current_state_ = ModuleStatus::IDLE;
-  }
+  return isActivated() && !isWaitingApproval();
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()
@@ -744,7 +731,6 @@ void StartPlannerModule::updatePullOutStatus()
   if (isBackwardDrivingComplete()) {
     updateStatusAfterBackwardDriving();
     // should be moved to transition state
-    current_state_ = ModuleStatus::SUCCESS;  // for breaking loop
   } else {
     status_.backward_path = start_planner_utils::getBackwardPath(
       *route_handler, pull_out_lanes, current_pose, status_.pull_out_start_pose,
@@ -756,6 +742,7 @@ void StartPlannerModule::updateStatusAfterBackwardDriving()
 {
   status_.driving_forward = true;
   status_.backward_driving_complete = true;
+  incrementPathIndex();
   // request start_planner approval
   waitApproval();
   // To enable approval of the forward path, the RTC status is removed.
