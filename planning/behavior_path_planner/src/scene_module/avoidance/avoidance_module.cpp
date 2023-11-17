@@ -2312,8 +2312,7 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(const AvoidLineArray & candidat
 
     // new shift points must exist in front of Ego
     // this value should be larger than -eps consider path shifter calculation error.
-    const double eps = 0.01;
-    if (candidate.start_longitudinal < -eps) {
+    if (candidate.start_idx < avoid_data_.ego_closest_path_index) {
       break;
     }
 
