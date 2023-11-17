@@ -120,52 +120,91 @@ double calculate_minimum_lane_width(
   return (a * a + 2.0 * a * l + 2.0 * k * w + l * l + w * w) / (2.0 * k + w);
 }
 
-std::vector<double> calculate_minimum_expansions(
-  const std::vector<Pose> & path_poses, const std::vector<Point> bound,
-  const std::vector<double> curvatures, const Side side,
+void calculate_bound_index_mappings(Expansion & expansion,
+  const std::vector<Pose> & path_poses, const std::vector<Point> & bound,
+  const Side side)
+{
+  size_t lb_idx = 0;
+  auto & bound_indexes =
+    (side == LEFT ? expansion.left_bound_indexes : expansion.right_bound_indexes);
+  auto & bound_intersections =
+    (side == LEFT ? expansion.left_bound_intersections : expansion.right_bound_intersections);
+  auto & distances =
+    (side == LEFT ? expansion.left_original_distances : expansion.right_distances);
+  bound_indexes.resize(bound.size());
+  bound_intersections.resize(bound.size());
+  // TODO(Maxime): /!\ probably not good to use max() here
+  distances.resize(bound.size(), std::numeric_limits<double>::max());
+  for (auto path_idx = 0UL; path_idx < path_poses.size(); ++path_idx) {
+    const auto min_bound_distance =
+      expansion.min_lane_widths[path_idx] / 2.0 * (side == LEFT ? 1.0 : -1.0);
+    const auto offset_point = tier4_autoware_utils::calcOffsetPose(
+      path_poses[path_idx], 0.0, min_bound_distance, 0.0).position;
+    for (auto bound_idx = lb_idx; bound_idx + 1 < bound.size(); ++bound_idx) {
+      const auto & prev_p = bound[bound_idx];
+      const auto & next_p = bound[bound_idx + 1];
+      const auto intersection_point = tier4_autoware_utils::intersect(
+        offset_point, path_poses[path_idx].position, prev_p, next_p);
+      if (intersection_point) {
+        lb_idx = bound_idx;
+        const auto dist = tier4_autoware_utils::calcDistance2d(*intersection_point, offset_point);
+        if(dist < distances[bound_idx]) {
+          bound_indexes[path_idx] = bound_idx;
+          bound_intersections[path_idx] = intersection_point;
+          distances[bound_idx] = dist;
+        }
+        distances[bound_idx + 1] = std::min(distances[bound_idx + 1], dist);
+      }
+    }
+  }
+}
+
+void apply_extra_arc_length(Expansion & expansion, const std::vector<Point> & bound, const double extra_arc_length, const Side side) {
+  auto & bound_indexes =
+    (side == LEFT ? expansion.left_bound_indexes : expansion.right_bound_indexes);
+  auto & bound_intersections =
+    (side == LEFT ? expansion.left_bound_intersections : expansion.right_bound_intersections);
+  auto & distances =
+    (side == LEFT ? expansion.left_original_distances : expansion.right_distances);
+  for (auto path_idx = 0UL; path_idx < bound_indexes.size(); ++path_idx) {
+      if(bound_intersections[path_idx]) {
+        const auto bound_idx = bound_indexes[path_idx];
+        auto arc_length =
+          tier4_autoware_utils::calcDistance2d(*bound_intersections[path_idx], bound[bound_idx + 1]);
+        for (auto up_bound_idx = bound_idx + 2; up_bound_idx < bound.size(); ++up_bound_idx) {
+          arc_length +=
+            tier4_autoware_utils::calcDistance2d(bound[up_bound_idx - 1], bound[up_bound_idx]);
+          if (arc_length > extra_arc_length) break;
+          distances[up_bound_idx] = std::max(distances[up_bound_idx], distances[bound_idx]);
+        }
+        arc_length = tier4_autoware_utils::calcDistance2d(*bound_intersections[path_idx], bound[bound_idx]);
+        for (auto down_offset_idx = 1LU; down_offset_idx < bound_idx; ++down_offset_idx) {
+          const auto idx = bound_idx - down_offset_idx;
+          arc_length += tier4_autoware_utils::calcDistance2d(bound[idx - 1], bound[idx]);
+          if (arc_length > extra_arc_length) break;
+          distances[idx] = std::max(distances[idx], distances[bound_idx]);
+        }
+      }
+  }
+}
+
+Expansion calculate_expansion(
+  const std::vector<Pose> & path_poses, const std::vector<Point> & left_bound,
+  const std::vector<Point> & right_bound,
+  const std::vector<double> & curvatures,
   const DrivableAreaExpansionParameters & params)
 {
-  std::vector<double> minimum_expansions(bound.size());
-  size_t lb_idx = 0;
+  Expansion expansion;
+  expansion.min_lane_widths.resize(path_poses.size(), 0.0);
   for (auto path_idx = 0UL; path_idx < path_poses.size(); ++path_idx) {
     const auto & path_pose = path_poses[path_idx];
     if (curvatures[path_idx] == 0.0) continue;
     const auto curvature_radius = 1 / curvatures[path_idx];
-    const auto min_lane_width = calculate_minimum_lane_width(curvature_radius, params);
-    const auto side_distance = min_lane_width / 2.0 * (side == LEFT ? 1.0 : -1.0);
-    const auto offset_point =
-      tier4_autoware_utils::calcOffsetPose(path_pose, 0.0, side_distance, 0.0).position;
-    for (auto bound_idx = lb_idx; bound_idx + 1 < bound.size(); ++bound_idx) {
-      const auto & prev_p = bound[bound_idx];
-      const auto & next_p = bound[bound_idx + 1];
-      const auto intersection_point =
-        tier4_autoware_utils::intersect(offset_point, path_pose.position, prev_p, next_p);
-      if (intersection_point) {
-        lb_idx = bound_idx;
-        const auto dist = tier4_autoware_utils::calcDistance2d(*intersection_point, offset_point);
-        minimum_expansions[bound_idx] = std::max(minimum_expansions[bound_idx], dist);
-        minimum_expansions[bound_idx + 1] = std::max(minimum_expansions[bound_idx + 1], dist);
-        // apply the expansion to all bound points within the extra arc length
-        auto arc_length =
-          tier4_autoware_utils::calcDistance2d(*intersection_point, bound[bound_idx + 1]);
-        for (auto up_bound_idx = bound_idx + 2; up_bound_idx < bound.size(); ++up_bound_idx) {
-          arc_length +=
-            tier4_autoware_utils::calcDistance2d(bound[up_bound_idx - 1], bound[up_bound_idx]);
-          if (arc_length > params.extra_arc_length) break;
-          minimum_expansions[up_bound_idx] = std::max(minimum_expansions[up_bound_idx], dist);
-        }
-        arc_length = tier4_autoware_utils::calcDistance2d(*intersection_point, bound[bound_idx]);
-        for (auto down_offset_idx = 1LU; down_offset_idx < bound_idx; ++down_offset_idx) {
-          const auto idx = bound_idx - down_offset_idx;
-          arc_length += tier4_autoware_utils::calcDistance2d(bound[idx - 1], bound[idx]);
-          if (arc_length > params.extra_arc_length) break;
-          minimum_expansions[idx] = std::max(minimum_expansions[idx], dist);
-        }
-        break;
-      }
-    }
+    expansion.min_lane_widths[path_idx] = calculate_minimum_lane_width(curvature_radius, params);
   }
-  return minimum_expansions;
+  calculate_bound_index_mappings(expansion, path_poses, left_bound, LEFT);
+  calculate_bound_index_mappings(expansion, path_poses, right_bound, RIGHT);
+  return expansion;
 }
 
 void apply_bound_change_rate_limit(
@@ -303,10 +342,8 @@ void expand_drivable_area(
   const auto first_new_point_idx = curvatures.size();
   curvatures.insert(
     curvatures.end(), new_curvatures.begin() + first_new_point_idx, new_curvatures.end());
-  auto left_expansions =
-    calculate_minimum_expansions(path_poses, path.left_bound, curvatures, LEFT, params);
-  auto right_expansions =
-    calculate_minimum_expansions(path_poses, path.right_bound, curvatures, RIGHT, params);
+  auto expansion =
+    calculate_expansion(path_poses, path.left_bound, path.right_bound, curvatures, params);
   const auto curvature_expansion_ms = stop_watch.toc("curvatures_expansion");
 
   stop_watch.tic("max_dist");
@@ -314,21 +351,24 @@ void expand_drivable_area(
     path_poses, path.left_bound, uncrossable_segments, uncrossable_polygons, params);
   const auto max_right_expansions = calculate_maximum_distance(
     path_poses, path.right_bound, uncrossable_segments, uncrossable_polygons, params);
-  for (auto i = 0LU; i < left_expansions.size(); ++i)
-    left_expansions[i] = std::min(left_expansions[i], max_left_expansions[i]);
-  for (auto i = 0LU; i < right_expansions.size(); ++i)
-    right_expansions[i] = std::min(right_expansions[i], max_right_expansions[i]);
+  for (auto i = 0LU; i < expansion.left_distances.size(); ++i)
+    expansion.left_distances[i] = std::min(expansion.left_distances[i], max_left_expansions[i]);
+  for (auto i = 0LU; i < expansion.right_distances.size(); ++i)
+    expansion.right_distances[i] = std::min(expansion.right_distances[i], max_right_expansions[i]);
   const auto max_dist_ms = stop_watch.toc("max_dist");
 
   stop_watch.tic("smooth");
-  apply_bound_change_rate_limit(left_expansions, path.left_bound, params.max_bound_rate);
-  apply_bound_change_rate_limit(right_expansions, path.right_bound, params.max_bound_rate);
+  apply_bound_change_rate_limit(expansion.left_distances, path.left_bound, params.max_bound_rate);
+  apply_bound_change_rate_limit(expansion.right_distances, path.right_bound, params.max_bound_rate);
   const auto smooth_ms = stop_watch.toc("smooth");
 
   // TODO(Maxime): limit the distances based on the total width (left + right < min_lane_width)
+  // if(params.limit_total_width)
+
+
   stop_watch.tic("expand");
-  expand_bound(path.left_bound, path_poses, left_expansions);
-  expand_bound(path.right_bound, path_poses, right_expansions);
+  expand_bound(path.left_bound, path_poses, expansion.left_distances);
+  expand_bound(path.right_bound, path_poses, expansion.right_distances);
   const auto expand_ms = stop_watch.toc("expand");
 
   const auto total_ms = stop_watch.toc("overall");
