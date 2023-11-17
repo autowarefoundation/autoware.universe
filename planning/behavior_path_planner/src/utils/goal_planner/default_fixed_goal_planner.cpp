@@ -55,8 +55,8 @@ lanelet::ConstLanelets DefaultFixedGoalPlanner::extractLaneletsFromPath(
   const auto & rh = planner_data->route_handler;
   lanelet::ConstLanelets refined_path_lanelets;
   for (size_t i = 0; i < refined_path.points.size(); ++i) {
-    const PathPointWithLaneId & path_point = refined_path.points[i];
-    int64_t lane_id = path_point.lane_ids[0];
+    const auto & path_point = refined_path.points.at(i);
+    int64_t lane_id = path_point.lane_ids.at(0);
     lanelet::ConstLanelet lanelet = rh->getLaneletsFromId(lane_id);
     bool is_unique = true;
     for (const lanelet::ConstLanelet & existing_lanelet : refined_path_lanelets) {
@@ -78,7 +78,7 @@ bool DefaultFixedGoalPlanner::isPathValid(
 {
   const lanelet::ConstLanelets lanelets = extractLaneletsFromPath(refined_path, planner_data);
   for (size_t i = 0; i < refined_path.points.size(); ++i) {
-    const PathPointWithLaneId & path_point = refined_path.points[i];
+    const auto & path_point = refined_path.points.at(i);
     if (!utils::isInLanelets(path_point.point.pose, lanelets)) {
       return false;  // at least one path_point falls outside any lanelet
     }
