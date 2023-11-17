@@ -50,20 +50,20 @@ class LidarMarkerLocalizer : public rclcpp::Node
 
   struct Param
   {
-      double resolution;
-      int filter_window_size;
-      int intensity_difference_threshold;
-      int positive_window_size;
-      int negative_window_size;
-      int positive_vote_threshold;
-      int negative_vote_threshold;
-      int vote_threshold_for_detect_marker;
+    double resolution;
+    int filter_window_size;
+    int intensity_difference_threshold;
+    int positive_window_size;
+    int negative_window_size;
+    int positive_vote_threshold;
+    int negative_vote_threshold;
+    int vote_threshold_for_detect_marker;
 
-      double self_pose_timeout_sec;
-      double self_pose_distance_tolerance_m;
+    double self_pose_timeout_sec;
+    double self_pose_distance_tolerance_m;
 
-      double limit_distance_from_self_pose_to_marker_from_lanelet2;
-      double limit_distance_from_self_pose_to_marker;
+    double limit_distance_from_self_pose_to_marker_from_lanelet2;
+    double limit_distance_from_self_pose_to_marker;
   };
 
 public:

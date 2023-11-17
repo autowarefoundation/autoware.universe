@@ -36,16 +36,26 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
 
   param_.resolution = static_cast<double>(this->declare_parameter<double>("resolution"));
   param_.filter_window_size = static_cast<int>(this->declare_parameter<int>("filter_window_size"));
-  param_.intensity_difference_threshold = static_cast<int>(this->declare_parameter<int>("intensity_difference_threshold"));
-  param_.positive_window_size = static_cast<int>(this->declare_parameter<int>("positive_window_size"));
-  param_.negative_window_size = static_cast<int>(this->declare_parameter<int>("negative_window_size"));
-  param_.positive_vote_threshold = static_cast<int>(this->declare_parameter<int>("positive_vote_threshold"));
-  param_.negative_vote_threshold = static_cast<int>(this->declare_parameter<int>("negative_vote_threshold"));
-  param_.vote_threshold_for_detect_marker = static_cast<int>(this->declare_parameter<int>("vote_threshold_for_detect_marker"));
-  param_.self_pose_timeout_sec = static_cast<double>(this->declare_parameter<double>("self_pose_timeout_sec"));
-  param_.self_pose_distance_tolerance_m = static_cast<double>(this->declare_parameter<double>("self_pose_distance_tolerance_m"));
-  param_.limit_distance_from_self_pose_to_marker_from_lanelet2 = static_cast<double>(this->declare_parameter<double>("limit_distance_from_self_pose_to_marker_from_lanelet2"));
-  param_.limit_distance_from_self_pose_to_marker = static_cast<double>(this->declare_parameter<double>("limit_distance_from_self_pose_to_marker"));
+  param_.intensity_difference_threshold =
+    static_cast<int>(this->declare_parameter<int>("intensity_difference_threshold"));
+  param_.positive_window_size =
+    static_cast<int>(this->declare_parameter<int>("positive_window_size"));
+  param_.negative_window_size =
+    static_cast<int>(this->declare_parameter<int>("negative_window_size"));
+  param_.positive_vote_threshold =
+    static_cast<int>(this->declare_parameter<int>("positive_vote_threshold"));
+  param_.negative_vote_threshold =
+    static_cast<int>(this->declare_parameter<int>("negative_vote_threshold"));
+  param_.vote_threshold_for_detect_marker =
+    static_cast<int>(this->declare_parameter<int>("vote_threshold_for_detect_marker"));
+  param_.self_pose_timeout_sec =
+    static_cast<double>(this->declare_parameter<double>("self_pose_timeout_sec"));
+  param_.self_pose_distance_tolerance_m =
+    static_cast<double>(this->declare_parameter<double>("self_pose_distance_tolerance_m"));
+  param_.limit_distance_from_self_pose_to_marker_from_lanelet2 = static_cast<double>(
+    this->declare_parameter<double>("limit_distance_from_self_pose_to_marker_from_lanelet2"));
+  param_.limit_distance_from_self_pose_to_marker =
+    static_cast<double>(this->declare_parameter<double>("limit_distance_from_self_pose_to_marker"));
 
   rclcpp::CallbackGroup::SharedPtr points_callback_group;
   points_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -246,13 +256,16 @@ void LidarMarkerLocalizer::points_callback(
       if (max > min) {
         double median = (max - min) / 2.0 + min;
         for (int j = -param_.positive_window_size; j <= param_.positive_window_size; j++) {
-          if (median + param_.intensity_difference_threshold < intensity_line_image[i + j]) pos += 1;
+          if (median + param_.intensity_difference_threshold < intensity_line_image[i + j])
+            pos += 1;
         }
         for (int j = -param_.filter_window_size; j <= -param_.negative_window_size; j++) {
-          if (median - param_.intensity_difference_threshold > intensity_line_image[i + j]) neg += 1;
+          if (median - param_.intensity_difference_threshold > intensity_line_image[i + j])
+            neg += 1;
         }
         for (int j = param_.negative_window_size; j <= param_.filter_window_size; j++) {
-          if (median - param_.intensity_difference_threshold > intensity_line_image[i + j]) neg += 1;
+          if (median - param_.intensity_difference_threshold > intensity_line_image[i + j])
+            neg += 1;
         }
         if (pos >= param_.positive_vote_threshold && neg >= param_.negative_vote_threshold) {
           vote[i]++;
@@ -460,8 +473,8 @@ void LidarMarkerLocalizer::points_callback(
   double diff_position_from_self_position_to_lanelet2_map_norm = std::hypot(
     diff_position_from_self_position_to_lanelet2_map.x,
     diff_position_from_self_position_to_lanelet2_map.y);
-  bool is_exist_marker_within_lanelet2_map =
-    diff_position_from_self_position_to_lanelet2_map_norm < param_.limit_distance_from_self_pose_to_marker;
+  bool is_exist_marker_within_lanelet2_map = diff_position_from_self_position_to_lanelet2_map_norm <
+                                             param_.limit_distance_from_self_pose_to_marker;
 
   if (!is_exist_marker_within_lanelet2_map) {
     RCLCPP_WARN_STREAM_THROTTLE(
