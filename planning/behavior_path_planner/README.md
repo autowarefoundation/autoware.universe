@@ -222,6 +222,12 @@ The `TurnIndicatorsCommand` message structure has a command field that can take 
 
     For more in-depth information, refer to [Turn Signal Design](./docs/behavior_path_planner_turn_signal_design.md) document.
 
+## Rerouting
+
+!!! warning
+
+    Rerouting is a feature that was still under progress. Further information will be included on a later date.
+
 ## Parameters and Configuration
 
 The [configuration files](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner) are organized in a hierarchical directory structure for ease of navigation and management. Each subdirectory contains specific configuration files relevant to its module. The root directory holds general configuration files that apply to the overall behavior of the planner. The following is an overview of the directory structure with the respective configuration files.
