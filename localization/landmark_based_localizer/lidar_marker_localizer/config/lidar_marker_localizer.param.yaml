@@ -1,0 +1,20 @@
+/**:
+  ros__parameters:
+
+    # for marker detection algorithm
+    resolution: 0.05
+    filter_window_size: 5
+    intensity_difference_threshold: 20
+    positive_window_size: 2
+    negative_window_size: 3
+    positive_vote_threshold: 3
+    negative_vote_threshold: 3
+    vote_threshold_for_detect_marker: 20
+
+    # for interpolate algorithm
+    self_pose_timeout_sec: 1.0
+    self_pose_distance_tolerance_m: 1.0
+
+    # for avoiding miss detection
+    limit_distance_from_self_pose_to_marker_from_lanelet2: 5.0
+    limit_distance_from_self_pose_to_marker: 2.0

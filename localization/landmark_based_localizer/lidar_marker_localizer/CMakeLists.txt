@@ -19,5 +19,6 @@ target_link_libraries(lidar_marker_localizer
 )
 
 ament_auto_package(INSTALL_TO_SHARE
+  config
   launch
 )

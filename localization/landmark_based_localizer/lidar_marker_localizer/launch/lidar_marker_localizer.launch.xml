@@ -10,6 +10,8 @@
   <!-- option -->
   <arg name="use_intra_process" default="true" description="use ROS 2 component container communication"/>
 
+  <arg name="param_file" default="$(find-pkg-share lidar_marker_localizer)/config/lidar_marker_localizer.param.yaml"/>
+
   <!-- <arg name="param_file" default="$(find-pkg-share lidar_marker_localizer)/config/lidar_marker_localizer.param.yaml"/> -->
 
   <group>
@@ -25,5 +27,7 @@
   <node pkg="lidar_marker_localizer" exec="lidar_marker_localizer" name="lidar_marker_localizer" output="log">
     <!-- <param from="$(var param_file)"/> -->
     <remap from="input/pointcloud_ex" to="ring_filter/pointcloud_ex"/>
+
+    <param from="$(var param_file)"/>
   </node>
 </launch>

@@ -34,6 +34,19 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
 {
   using std::placeholders::_1;
 
+  param_.resolution = static_cast<double>(this->declare_parameter<double>("resolution"));
+  param_.filter_window_size = static_cast<int>(this->declare_parameter<int>("filter_window_size"));
+  param_.intensity_difference_threshold = static_cast<int>(this->declare_parameter<int>("intensity_difference_threshold"));
+  param_.positive_window_size = static_cast<int>(this->declare_parameter<int>("positive_window_size"));
+  param_.negative_window_size = static_cast<int>(this->declare_parameter<int>("negative_window_size"));
+  param_.positive_vote_threshold = static_cast<int>(this->declare_parameter<int>("positive_vote_threshold"));
+  param_.negative_vote_threshold = static_cast<int>(this->declare_parameter<int>("negative_vote_threshold"));
+  param_.vote_threshold_for_detect_marker = static_cast<int>(this->declare_parameter<int>("vote_threshold_for_detect_marker"));
+  param_.self_pose_timeout_sec = static_cast<double>(this->declare_parameter<double>("self_pose_timeout_sec"));
+  param_.self_pose_distance_tolerance_m = static_cast<double>(this->declare_parameter<double>("self_pose_distance_tolerance_m"));
+  param_.limit_distance_from_self_pose_to_marker_from_lanelet2 = static_cast<double>(this->declare_parameter<double>("limit_distance_from_self_pose_to_marker_from_lanelet2"));
+  param_.limit_distance_from_self_pose_to_marker = static_cast<double>(this->declare_parameter<double>("limit_distance_from_self_pose_to_marker"));
+
   rclcpp::CallbackGroup::SharedPtr points_callback_group;
   points_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   auto points_sub_opt = rclcpp::SubscriptionOptions();
@@ -186,8 +199,7 @@ void LidarMarkerLocalizer::points_callback(
   }
 
   // Check that the leaf size is not too small, given the size of the data
-  const double resolution = 0.05;
-  int dx = static_cast<int>((max_x - min_x) * (1 / resolution) + 1);
+  int dx = static_cast<int>((max_x - min_x) * (1 / param_.resolution) + 1);
   std::cerr << "dx " << dx << std::endl;
 
   // initialize variables
@@ -204,7 +216,7 @@ void LidarMarkerLocalizer::points_callback(
     for (size_t i = 0; i < ring_points[target_ring].size(); i++) {
       autoware_point_types::PointXYZIRADRT point;
       point = ring_points[target_ring].points[i];
-      int ix = (point.x - min_x) * (1 / resolution);
+      int ix = (point.x - min_x) * (1 / param_.resolution);
       intensity_line_image[ix] += point.intensity;
       intensity_line_image_num[ix]++;
       if (distance[ix] > point.y) {
@@ -219,40 +231,30 @@ void LidarMarkerLocalizer::points_callback(
     }
 
     // filter
-    const int filter_window_size = 5;
-    // const double marker_width = 0.2;
-    // const int positive_window_size = marker_width / resolution;
-    const int positive_window_size = 2;
-    const int negative_window_size = filter_window_size - positive_window_size;
-
-    const int intensity_difference_threshold = 20;
-    const int positive_vote_threshold = 3;
-    const int negative_vote_threshold = 3;
-
-    for (int i = filter_window_size * 2; i < dx - filter_window_size * 2; i++) {
+    for (int i = param_.filter_window_size * 2; i < dx - param_.filter_window_size * 2; i++) {
       double pos = 0;
       double neg = 0;
       double max = -1;
       double min = 1000;
 
       // find max_min
-      for (int j = -filter_window_size; j <= filter_window_size; j++) {
+      for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
         if (max < intensity_line_image[i + j]) max = intensity_line_image[i + j];
         if (min > intensity_line_image[i + j]) min = intensity_line_image[i + j];
       }
 
       if (max > min) {
         double median = (max - min) / 2.0 + min;
-        for (int j = -positive_window_size; j <= positive_window_size; j++) {
-          if (median + intensity_difference_threshold < intensity_line_image[i + j]) pos += 1;
+        for (int j = -param_.positive_window_size; j <= param_.positive_window_size; j++) {
+          if (median + param_.intensity_difference_threshold < intensity_line_image[i + j]) pos += 1;
         }
-        for (int j = -filter_window_size; j <= -negative_window_size; j++) {
-          if (median - intensity_difference_threshold > intensity_line_image[i + j]) neg += 1;
+        for (int j = -param_.filter_window_size; j <= -param_.negative_window_size; j++) {
+          if (median - param_.intensity_difference_threshold > intensity_line_image[i + j]) neg += 1;
         }
-        for (int j = negative_window_size; j <= filter_window_size; j++) {
-          if (median - intensity_difference_threshold > intensity_line_image[i + j]) neg += 1;
+        for (int j = param_.negative_window_size; j <= param_.filter_window_size; j++) {
+          if (median - param_.intensity_difference_threshold > intensity_line_image[i + j]) neg += 1;
         }
-        if (pos >= positive_vote_threshold && neg >= negative_vote_threshold) {
+        if (pos >= param_.positive_vote_threshold && neg >= param_.negative_vote_threshold) {
           vote[i]++;
           feature_sum[i] += (max - min);
         }
@@ -262,15 +264,13 @@ void LidarMarkerLocalizer::points_callback(
 
   // extract feature points
   std::vector<geometry_msgs::msg::PoseStamped> marker_pose_on_base_link_array;
-  const int vote_threshold_for_detect_marker = 20;
-  const int filter_window_size = 5;  // TODO duplicated parameter
 
-  for (int i = filter_window_size * 2; i < dx - filter_window_size * 2; i++) {
-    if (vote[i] > vote_threshold_for_detect_marker) {
+  for (int i = param_.filter_window_size * 2; i < dx - param_.filter_window_size * 2; i++) {
+    if (vote[i] > param_.vote_threshold_for_detect_marker) {
       geometry_msgs::msg::PoseStamped marker_pose_on_base_link;
       marker_pose_on_base_link.header.stamp = sensor_ros_time;
       marker_pose_on_base_link.header.frame_id = "base_link";
-      marker_pose_on_base_link.pose.position.x = i * resolution + min_x;
+      marker_pose_on_base_link.pose.position.x = i * param_.resolution + min_x;
       marker_pose_on_base_link.pose.position.y = distance[i];
       marker_pose_on_base_link.pose.position.z = 0.2 + 1.75 / 2.0;  // TODO
       marker_pose_on_base_link.pose.orientation =
@@ -328,18 +328,14 @@ void LidarMarkerLocalizer::points_callback(
   std::vector<geometry_msgs::msg::TransformStamped> transform_marker_on_map_array;
 
   // get self-position on map
-
-  const double self_pose_timeout_sec_ = 1.0;           // TODO
-  const double self_pose_distance_tolerance_m_ = 1.0;  // TODO
-
   std::unique_lock<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
   if (self_pose_msg_ptr_array_.size() <= 1) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
     return;
   }
   PoseArrayInterpolator interpolator(
-    this, sensor_ros_time, self_pose_msg_ptr_array_, self_pose_timeout_sec_,
-    self_pose_distance_tolerance_m_);
+    this, sensor_ros_time, self_pose_msg_ptr_array_, param_.self_pose_timeout_sec,
+    param_.self_pose_distance_tolerance_m);
   if (!interpolator.is_success()) return;
   pop_old_pose(self_pose_msg_ptr_array_, sensor_ros_time);
   self_pose_array_mtx_.unlock();
@@ -363,17 +359,16 @@ void LidarMarkerLocalizer::points_callback(
             << marker_pose_on_base_link_from_lanele2_map.y << " "
             << marker_pose_on_base_link_from_lanele2_map.z << std::endl;
 
-  const double limit_distance_from_self_pose_to_marker_from_lanelet2 = 5.0;
   // is_exist_marker_within_self_pose_ = distance_from_self_pose_to_marker <
-  // limit_distance_from_self_pose_to_marker_from_lanelet2;
+  // param_.limit_distance_from_self_pose_to_marker_from_lanelet2;
   is_exist_marker_within_self_pose_ = std::fabs(marker_pose_on_base_link_from_lanele2_map.x) <
-                                      limit_distance_from_self_pose_to_marker_from_lanelet2;
+                                      param_.limit_distance_from_self_pose_to_marker_from_lanelet2;
   if (!is_exist_marker_within_self_pose_) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1,
       "The distance from self-pose to the nearest marker of lanelet2 is too far("
         << marker_pose_on_base_link_from_lanele2_map.x << "). The limit is "
-        << limit_distance_from_self_pose_to_marker_from_lanelet2 << ".");
+        << param_.limit_distance_from_self_pose_to_marker_from_lanelet2 << ".");
     // return;
   }
 
@@ -462,19 +457,18 @@ void LidarMarkerLocalizer::points_callback(
             << diff_position_from_self_position_to_lanelet2_map.x << " "
             << diff_position_from_self_position_to_lanelet2_map.y << std::endl;
 
-  const double limit_distance_from_self_pose_to_marker = 2.0;
   double diff_position_from_self_position_to_lanelet2_map_norm = std::hypot(
     diff_position_from_self_position_to_lanelet2_map.x,
     diff_position_from_self_position_to_lanelet2_map.y);
   bool is_exist_marker_within_lanelet2_map =
-    diff_position_from_self_position_to_lanelet2_map_norm < limit_distance_from_self_pose_to_marker;
+    diff_position_from_self_position_to_lanelet2_map_norm < param_.limit_distance_from_self_pose_to_marker;
 
   if (!is_exist_marker_within_lanelet2_map) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1,
       "The distance from lanelet2 to the detect marker is too far("
         << diff_position_from_self_position_to_lanelet2_map_norm << "). The limit is "
-        << limit_distance_from_self_pose_to_marker << ".");
+        << param_.limit_distance_from_self_pose_to_marker << ".");
     return;
   }
 
