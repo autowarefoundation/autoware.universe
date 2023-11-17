@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 
+
 TEST(BehaviorPathPlanningFootprint, Polygon2dTranslation)
 {
     
@@ -132,4 +133,83 @@ TEST(BehaviorPathPlanningFootprint, Polygon2dTranslation)
 
     }
 
-    
+    TEST(BehaviorPathPlanningPolygon2d, Polygon2dCreateObjectFootprint)
+    {
+        drivable_area_expansion::MultiPolygon2d object_footprint;// params;
+        drivable_area_expansion::MultiPolygon2d footprints;
+        drivable_area_expansion::MultiPolygon2d footprints1;
+        drivable_area_expansion::Polygon2d base_footprint;
+        drivable_area_expansion::DrivableAreaExpansionParameters params;
+        autoware_auto_perception_msgs::msg::PredictedObjects objects;
+        autoware_auto_perception_msgs::msg::PredictedObject object;
+        autoware_auto_perception_msgs::msg::PredictedPath predicted_path;
+        autoware_auto_perception_msgs::msg::PredictedObjectKinematics kinematics;
+        geometry_msgs::msg::Pose pose;
+        geometry_msgs::msg::Pose pose1;
+
+
+        //considering it in 2D
+        pose.position.x = 0.0;
+        pose.position.y = 0.0;
+        pose.position.z = 0.0;
+        pose.orientation.w = 0.0;
+
+        params.avoid_dynamic_objects = true;
+        object.shape.dimensions.x = 1.0;
+        object.shape.dimensions.y = 1.0;
+             
+        params.dynamic_objects_extra_front_offset = 0.1;
+        params.dynamic_objects_extra_rear_offset = 0.1;
+        params.dynamic_objects_extra_left_offset = 0.1;
+        params.dynamic_objects_extra_right_offset = 0.1;  
+
+        const auto front = object.shape.dimensions.x / 2 + params.dynamic_objects_extra_front_offset;
+        const auto rear = -object.shape.dimensions.x / 2 - params.dynamic_objects_extra_rear_offset;
+        const auto left = object.shape.dimensions.y / 2 + params.dynamic_objects_extra_left_offset;
+        const auto right = -object.shape.dimensions.y / 2 - params.dynamic_objects_extra_right_offset;   
+
+        base_footprint.outer() = {{front, left}, {front, right}, {rear, right}, {rear, left}, {front, left}}; 
+        footprints.push_back(drivable_area_expansion::create_footprint(pose, base_footprint));
+        
+        ASSERT_EQ(footprints.size(), 1UL);
+
+        drivable_area_expansion::Polygon2d expected_footprint;
+        expected_footprint.outer() = {{-0.6, 0.6}, {0.6, 0.6}, {0.6, -0.6}, {-0.6, -0.6}, {-0.6, 0.6}}; //{{-1, 1}, {1, 1}, {1, -1}, {-1, -1}, {-1, 1}};
+
+        EXPECT_TRUE(boost::geometry::equals(footprints[0], expected_footprint));
+
+        std::cout << "Base Footprint coordinates:" << std::endl;
+    for (const auto& point : footprints[0].outer()) {
+        std::cout << "x: " << point.x() << ", y: " << point.y() << std::endl;
+    }
+    //     std::cout << "Footprint coordinates:" << std::endl;
+    // for (const auto& point : footprints[0].outer()) {
+    //     std::cout << "x: " << point.x() << ", y: " << point.y() << std::endl;
+    // }
+
+    //new objects
+        // object.shape.dimensions.x = 2.0;
+        // object.shape.dimensions.y = 2.0; 
+
+        drivable_area_expansion::Polygon2d expected_footprint1;
+        base_footprint.outer() = {{front, left}, {front, right}, {rear, right}, {rear, left}, {front, left}}; 
+
+        
+        footprints1.push_back(drivable_area_expansion::create_footprint(pose1, base_footprint));
+        expected_footprint1.outer() = {{0.6, 1.1}, {0.6, -1.1}, {-0.6, -1.1}, {-0.6, 1.1}, {0.6, 1.1}};
+        printf("front2: %f",object.shape.dimensions.y );
+
+        std::cout << ">>>>>>>>>>Footprint coordinates:" << std::endl;
+    for (const auto& point : footprints1[0].outer()) {
+        std::cout << "x: " << point.x() << ", y: " << point.y() << std::endl;
+    }
+        
+        EXPECT_TRUE(boost::geometry::equals(footprints1[0], expected_footprint1));
+
+
+
+
+
+
+    }
+
