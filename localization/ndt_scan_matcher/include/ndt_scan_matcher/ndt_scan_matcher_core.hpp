@@ -132,7 +132,7 @@ private:
     const rclcpp::Time & sensor_ros_time);
   void add_regularization_pose(const rclcpp::Time & sensor_ros_time);
 
-  void timer_diagnostic();
+  void publish_diagnostic();
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
@@ -203,12 +203,11 @@ private:
   std::mutex ndt_ptr_mtx_;
   std::mutex initial_pose_array_mtx_;
 
-  std::thread diagnostic_thread_;
-
   // variables for regularization
-  const bool regularization_enabled_;
+  const bool regularization_enabled_;  // whether to use longitudinal regularization
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
-    regularization_pose_msg_ptr_array_;
+    regularization_pose_msg_ptr_array_;  // queue for storing regularization base poses
+  std::mutex regularization_mutex_;      // mutex for regularization_pose_msg_ptr_array_
 
   bool is_activated_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
