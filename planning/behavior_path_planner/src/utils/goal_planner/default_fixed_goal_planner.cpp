@@ -17,17 +17,9 @@
 #include "behavior_path_planner/utils/goal_planner/util.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
-#include "lanelet2_core/LaneletMap.h"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
-
-#include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
-
-#include <boost/geometry.hpp>
-
-#include <lanelet2_core/geometry/Polygon.h>
 
 #include <memory>
 
