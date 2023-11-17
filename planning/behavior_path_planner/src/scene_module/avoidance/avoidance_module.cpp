@@ -1996,7 +1996,7 @@ bool AvoidanceModule::isSafePath(
     avoid_data_, planner_data_, parameters_, is_right_shift.value());
 
   for (const auto & object : safety_check_target_objects) {
-    auto current_debug_data = marker_utils::createObjectDebug(object);
+    auto current_debug_data = utils::path_safety_checker::createObjectDebug(object);
 
     const auto obj_polygon =
       tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape);
@@ -2025,14 +2025,15 @@ bool AvoidanceModule::isSafePath(
       if (!utils::path_safety_checker::checkCollision(
             shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
             hysteresis_factor, current_debug_data.second)) {
-        marker_utils::updateCollisionCheckDebugMap(
+        utils::path_safety_checker::updateCollisionCheckDebugMap(
           debug.collision_check, current_debug_data, false);
 
         safe_count_ = 0;
         return false;
       }
     }
-    marker_utils::updateCollisionCheckDebugMap(debug.collision_check, current_debug_data, true);
+    utils::path_safety_checker::updateCollisionCheckDebugMap(
+      debug.collision_check, current_debug_data, true);
   }
 
   safe_count_++;
