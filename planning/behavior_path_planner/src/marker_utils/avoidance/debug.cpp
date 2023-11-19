@@ -17,6 +17,7 @@
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <magic_enum.hpp>
+#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <lanelet2_core/primitives/LineString.h>
 #include <tf2/utils.h>
@@ -509,14 +510,16 @@ std::string toStrInfo(const behavior_path_planner::AvoidLineArray & ap_arr)
 }
 std::string toStrInfo(const behavior_path_planner::AvoidLine & ap)
 {
+  using tier4_autoware_utils::toHexString;
+
   std::stringstream pids;
   for (const auto pid : ap.parent_ids) {
-    pids << pid << ", ";
+    pids << toHexString(pid) << ", ";
   }
   const auto & ps = ap.start.position;
   const auto & pe = ap.end.position;
   std::stringstream ss;
-  ss << "id = " << ap.id << ", shift length: " << ap.end_shift_length
+  ss << "id = " << toHexString(ap.id) << ", shift length: " << ap.end_shift_length
      << ", start_idx: " << ap.start_idx << ", end_idx: " << ap.end_idx
      << ", start_dist = " << ap.start_longitudinal << ", end_dist = " << ap.end_longitudinal
      << ", start_shift_length: " << ap.start_shift_length << ", start: (" << ps.x << ", " << ps.y
