@@ -24,7 +24,6 @@
 
 #include <boost/geometry/index/rtree.hpp>
 
-#include <limits>
 #include <optional>
 #include <vector>
 
@@ -49,14 +48,14 @@ using SegmentRtree = boost::geometry::index::rtree<Segment2d, boost::geometry::i
 
 struct PointDistance
 {
-  Point2d point;
-  double distance;
+  Point2d point{};
+  double distance{};
 };
 struct Projection
 {
-  Point2d projected_point;
-  double distance = std::numeric_limits<double>::max();
-  double arc_length;
+  Point2d projected_point{};
+  double distance{};
+  double arc_length{};
 };
 enum Side { LEFT, RIGHT };
 struct Expansion
@@ -64,13 +63,11 @@ struct Expansion
   // mappings from bound index
   std::vector<double> left_distances;
   std::vector<double> right_distances;
-  std::vector<double> left_original_distances;
-  std::vector<double> right_original_distances;
   // mappings from path index
   std::vector<size_t> left_bound_indexes;
   std::vector<PointDistance> left_projections;
   std::vector<size_t> right_bound_indexes;
-  std::vector<PointDistance> right_projection;
+  std::vector<PointDistance> right_projections;
   std::vector<double> min_lane_widths;
 };
 }  // namespace drivable_area_expansion

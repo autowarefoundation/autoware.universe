@@ -30,6 +30,15 @@
 
 #include <limits>
 
+// for writing the svg file
+#include <fstream>
+#include <iostream>
+// for the geometry types
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+// for the svg mapper
+#include <boost/geometry/io/svg/svg_mapper.hpp>
+#include <boost/geometry/io/svg/write.hpp>
+
 namespace drivable_area_expansion
 {
 
@@ -124,15 +133,20 @@ void calculate_bound_index_mappings(
   Expansion & expansion, const std::vector<Pose> & path_poses, const std::vector<Point> & bound,
   const Side side)
 {
+  // Declare a stream and an SVG mapper
+  std::ofstream svg(
+    "/home/mclement/Pictures/projections" + std::string(side == LEFT ? "_left" : "_right") +
+    ".svg");  // /!\ CHANGE PATH
+  boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
+  for (const auto & p : path_poses) mapper.add(convert_point(p.position));
+  for (const auto & p : bound) mapper.add(convert_point(p));
   size_t lb_idx = 0;
   auto & bound_indexes =
     (side == LEFT ? expansion.left_bound_indexes : expansion.right_bound_indexes);
   auto & bound_projections =
-    (side == LEFT ? expansion.left_projections : expansion.right_projection);
-  auto & distances = (side == LEFT ? expansion.left_original_distances : expansion.right_distances);
-  bound_indexes.resize(bound.size());
-  bound_projections.resize(bound.size());
-  distances.resize(bound.size(), std::numeric_limits<double>::max());
+    (side == LEFT ? expansion.left_projections : expansion.right_projections);
+  bound_indexes.resize(path_poses.size(), 0LU);
+  bound_projections.resize(path_poses.size(), {{}, std::numeric_limits<double>::max()});
   for (auto path_idx = 0UL; path_idx < path_poses.size(); ++path_idx) {
     const auto path_p = convert_point(path_poses[path_idx].position);
     for (auto bound_idx = lb_idx; bound_idx + 1 < bound.size(); ++bound_idx) {
@@ -146,6 +160,17 @@ void calculate_bound_index_mappings(
     }
     lb_idx = bound_indexes[path_idx];
   }
+
+  for (auto path_idx = 0UL; path_idx < path_poses.size(); ++path_idx) {
+    mapper.map(
+      Segment2d{convert_point(path_poses[path_idx].position), bound_projections[path_idx].point},
+      "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2");
+  }
+  for (const auto & p : path_poses)
+    mapper.map(
+      convert_point(p.position), "fill-opacity:0.3;fill:black;stroke:black;stroke-width:2", 1);
+  for (const auto & p : bound)
+    mapper.map(convert_point(p), "fill-opacity:0.3;fill:blue;stroke:blue;stroke-width:2", 1);
 }
 
 void apply_extra_arc_length(
@@ -155,8 +180,7 @@ void apply_extra_arc_length(
   auto & bound_indexes =
     (side == LEFT ? expansion.left_bound_indexes : expansion.right_bound_indexes);
   auto & bound_projections =
-    (side == LEFT ? expansion.left_projections : expansion.right_projection);
-  auto & distances = (side == LEFT ? expansion.left_original_distances : expansion.right_distances);
+    (side == LEFT ? expansion.left_projections : expansion.right_projections);
   for (auto path_idx = 0UL; path_idx < bound_indexes.size(); ++path_idx) {
     const auto bound_idx = bound_indexes[path_idx];
     auto arc_length = boost::geometry::distance(
@@ -165,7 +189,6 @@ void apply_extra_arc_length(
       arc_length +=
         tier4_autoware_utils::calcDistance2d(bound[up_bound_idx - 1], bound[up_bound_idx]);
       if (arc_length > extra_arc_length) break;
-      distances[up_bound_idx] = std::max(distances[up_bound_idx], distances[bound_idx]);
     }
     arc_length =
       boost::geometry::distance(bound_projections[path_idx].point, convert_point(bound[bound_idx]));
@@ -173,7 +196,6 @@ void apply_extra_arc_length(
       const auto idx = bound_idx - down_offset_idx;
       arc_length += tier4_autoware_utils::calcDistance2d(bound[idx - 1], bound[idx]);
       if (arc_length > extra_arc_length) break;
-      distances[idx] = std::max(distances[idx], distances[bound_idx]);
     }
   }
 }
@@ -254,8 +276,7 @@ void expand_bound(
     if (expansions[idx] > 0.0) {
       const auto bound_p = convert_point(bound[idx]);
       const auto projection = point_to_linestring_projection(bound_p, path_ls);
-      const auto expansion_ratio =
-        (expansions[idx] + std::abs(projection.distance)) / std::abs(projection.distance);
+      const auto expansion_ratio = (expansions[idx] + projection.distance) / projection.distance;
       const auto & path_p = projection.projected_point;
       const auto expanded_p = lerp_point(path_p, bound_p, expansion_ratio);
       bound[idx].x = expanded_p.x();
@@ -301,13 +322,13 @@ void calculate_expansion_distances(
   Expansion & expansion, const std::vector<double> & max_left_expansions,
   const std::vector<double> & max_right_expansions)
 {
-  expansion.left_distances.resize(expansion.left_original_distances.size(), 0.0);
-  expansion.right_distances.resize(expansion.right_original_distances.size(), 0.0);
+  expansion.left_distances.resize(max_left_expansions.size(), 0.0);
+  expansion.right_distances.resize(max_right_expansions.size(), 0.0);
   for (auto path_idx = 0UL; path_idx < expansion.min_lane_widths.size(); ++path_idx) {
     const auto left_bound_idx = expansion.left_bound_indexes[path_idx];
     const auto right_bound_idx = expansion.right_bound_indexes[path_idx];
-    const auto original_width =
-      expansion.left_projections[path_idx].distance + expansion.right_projection[path_idx].distance;
+    const auto original_width = expansion.left_projections[path_idx].distance +
+                                expansion.right_projections[path_idx].distance;
     const auto expansion_dist = expansion.min_lane_widths[path_idx] - original_width;
     if (expansion_dist > 0.0) {
       const auto left_limit =
@@ -326,10 +347,8 @@ void calculate_expansion_distances(
         const auto compensation_dist = expansion_dist / 2.0 - right_limit;
         expansion.left_distances[left_bound_idx] =
           std::min(left_limit, expansion_dist / 2.0 + compensation_dist);
-        ;
         expansion.left_distances[left_bound_idx + 1] =
           std::min(left_limit, expansion_dist / 2.0 + compensation_dist);
-        ;
         expansion.right_distances[right_bound_idx] = right_limit;
         expansion.right_distances[right_bound_idx + 1] = right_limit;
       } else {
