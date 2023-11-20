@@ -156,238 +156,242 @@ void LidarMarkerLocalizer::self_pose_callback(
 
 void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & points_msg_ptr)
 {
-  std::string sensor_frame = points_msg_ptr->header.frame_id;
-  auto sensor_ros_time = points_msg_ptr->header.stamp;
-  // get sensor_frame pose to base_link
-  // TransformStamped transform_sensor_to_base_link;
-  // try
-  // {
-  //   transform_sensor_to_base_link = tf_buffer_->lookupTransform(
-  //   "base_link", sensor_frame, tf2::TimePointZero);
-  // }
-  // catch (tf2::TransformException & ex)
-  // {
-  //   RCLCPP_WARN(get_logger(), "cannot get base_link to %s transform. %s", sensor_frame,
-  //   ex.what());
-  // }
+  const builtin_interfaces::msg::Time sensor_ros_time = points_msg_ptr->header.stamp;
+  std_msgs::msg::Header header;
+  header.stamp = sensor_ros_time;
+  header.frame_id = "map";
 
-  pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr points_ptr(
-    new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
-  pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
-
-  std::vector<pcl::PointCloud<autoware_point_types::PointXYZIRADRT>> ring_points;
-  ring_points.resize(128);
-
-  double min_x = 100.0;
-  double max_x = -100.0;
-  for (const auto & point : points_ptr->points) {
-    ring_points[point.ring].push_back(point);
-
-    if (min_x > point.x) {
-      min_x = point.x;
+  // ----------------- //
+  // (1) Get Self Pose //
+  // ----------------- //
+  Pose self_pose;
+  {
+    // get self-position on map
+    std::unique_lock<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
+    if (self_pose_msg_ptr_array_.size() <= 1) {
+      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
+      return;
     }
-
-    if (max_x < point.x) {
-      max_x = point.x;
+    PoseArrayInterpolator interpolator(
+      this, sensor_ros_time, self_pose_msg_ptr_array_, param_.self_pose_timeout_sec,
+      param_.self_pose_distance_tolerance_m);
+    if (!interpolator.is_success()) {
+      return;
     }
+    pop_old_pose(self_pose_msg_ptr_array_, sensor_ros_time);
+    self_pose = interpolator.get_current_pose().pose.pose;
   }
 
-  // Check that the leaf size is not too small, given the size of the data
-  int dx = static_cast<int>((max_x - min_x) * (1 / param_.resolution) + 1);
+  // ---------------------------------- //
+  // (2) Get marker_pose_from_detection //
+  // ---------------------------------- //
+  Pose marker_pose_from_detection;
+  {
+    const std::string sensor_frame = points_msg_ptr->header.frame_id;
+    // get sensor_frame pose to base_link
+    // TransformStamped transform_sensor_to_base_link;
+    // try
+    // {
+    //   transform_sensor_to_base_link = tf_buffer_->lookupTransform(
+    //   "base_link", sensor_frame, tf2::TimePointZero);
+    // }
+    // catch (tf2::TransformException & ex)
+    // {
+    //   RCLCPP_WARN(get_logger(), "cannot get base_link to %s transform. %s", sensor_frame,
+    //   ex.what());
+    // }
 
-  // initialize variables
-  std::vector<int> vote(dx, 0);
-  std::vector<double> feature_sum(dx, 0);
-  std::vector<double> distance(dx, 100);
+    pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr points_ptr(
+      new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
+    pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
 
-  // for target rings
-  for (size_t target_ring = 0; target_ring < ring_points.size(); target_ring++) {
-    // initialize intensity line image
-    std::vector<double> intensity_line_image(dx, 0);
-    std::vector<int> intensity_line_image_num(dx, 0);
+    std::vector<pcl::PointCloud<autoware_point_types::PointXYZIRADRT>> ring_points;
+    ring_points.resize(128);
 
-    for (size_t i = 0; i < ring_points[target_ring].size(); i++) {
-      autoware_point_types::PointXYZIRADRT point;
-      point = ring_points[target_ring].points[i];
-      int ix = (point.x - min_x) * (1 / param_.resolution);
-      intensity_line_image[ix] += point.intensity;
-      intensity_line_image_num[ix]++;
-      if (distance[ix] > point.y) {
-        distance[ix] = point.y;
+    double min_x = 100.0;
+    double max_x = -100.0;
+    for (const auto & point : points_ptr->points) {
+      ring_points[point.ring].push_back(point);
+
+      if (min_x > point.x) {
+        min_x = point.x;
+      }
+
+      if (max_x < point.x) {
+        max_x = point.x;
       }
     }
 
-    // average
-    for (int i = 0; i < dx; i++) {
-      if (intensity_line_image_num[i] > 0)
-        intensity_line_image[i] /= (double)intensity_line_image_num[i];
+    // Check that the leaf size is not too small, given the size of the data
+    int dx = static_cast<int>((max_x - min_x) * (1 / param_.resolution) + 1);
+
+    // initialize variables
+    std::vector<int> vote(dx, 0);
+    std::vector<double> feature_sum(dx, 0);
+    std::vector<double> distance(dx, 100);
+
+    // for target rings
+    for (size_t target_ring = 0; target_ring < ring_points.size(); target_ring++) {
+      // initialize intensity line image
+      std::vector<double> intensity_line_image(dx, 0);
+      std::vector<int> intensity_line_image_num(dx, 0);
+
+      for (size_t i = 0; i < ring_points[target_ring].size(); i++) {
+        autoware_point_types::PointXYZIRADRT point;
+        point = ring_points[target_ring].points[i];
+        int ix = (point.x - min_x) * (1 / param_.resolution);
+        intensity_line_image[ix] += point.intensity;
+        intensity_line_image_num[ix]++;
+        if (distance[ix] > point.y) {
+          distance[ix] = point.y;
+        }
+      }
+
+      // average
+      for (int i = 0; i < dx; i++) {
+        if (intensity_line_image_num[i] > 0)
+          intensity_line_image[i] /= (double)intensity_line_image_num[i];
+      }
+
+      // filter
+      for (int i = param_.filter_window_size * 2; i < dx - param_.filter_window_size * 2; i++) {
+        double pos = 0;
+        double neg = 0;
+        double max = -1;
+        double min = 1000;
+
+        // find max_min
+        for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
+          if (max < intensity_line_image[i + j]) max = intensity_line_image[i + j];
+          if (min > intensity_line_image[i + j]) min = intensity_line_image[i + j];
+        }
+
+        if (max > min) {
+          double median = (max - min) / 2.0 + min;
+          for (int j = -param_.positive_window_size; j <= param_.positive_window_size; j++) {
+            if (median + param_.intensity_difference_threshold < intensity_line_image[i + j])
+              pos += 1;
+          }
+          for (int j = -param_.filter_window_size; j <= -param_.negative_window_size; j++) {
+            if (median - param_.intensity_difference_threshold > intensity_line_image[i + j])
+              neg += 1;
+          }
+          for (int j = param_.negative_window_size; j <= param_.filter_window_size; j++) {
+            if (median - param_.intensity_difference_threshold > intensity_line_image[i + j])
+              neg += 1;
+          }
+          if (pos >= param_.positive_vote_threshold && neg >= param_.negative_vote_threshold) {
+            vote[i]++;
+            feature_sum[i] += (max - min);
+          }
+        }
+      }
     }
 
-    // filter
+    // extract feature points
+    std::vector<Pose> marker_pose_on_base_link_array;
+
     for (int i = param_.filter_window_size * 2; i < dx - param_.filter_window_size * 2; i++) {
-      double pos = 0;
-      double neg = 0;
-      double max = -1;
-      double min = 1000;
-
-      // find max_min
-      for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
-        if (max < intensity_line_image[i + j]) max = intensity_line_image[i + j];
-        if (min > intensity_line_image[i + j]) min = intensity_line_image[i + j];
-      }
-
-      if (max > min) {
-        double median = (max - min) / 2.0 + min;
-        for (int j = -param_.positive_window_size; j <= param_.positive_window_size; j++) {
-          if (median + param_.intensity_difference_threshold < intensity_line_image[i + j])
-            pos += 1;
-        }
-        for (int j = -param_.filter_window_size; j <= -param_.negative_window_size; j++) {
-          if (median - param_.intensity_difference_threshold > intensity_line_image[i + j])
-            neg += 1;
-        }
-        for (int j = param_.negative_window_size; j <= param_.filter_window_size; j++) {
-          if (median - param_.intensity_difference_threshold > intensity_line_image[i + j])
-            neg += 1;
-        }
-        if (pos >= param_.positive_vote_threshold && neg >= param_.negative_vote_threshold) {
-          vote[i]++;
-          feature_sum[i] += (max - min);
-        }
+      if (vote[i] > param_.vote_threshold_for_detect_marker) {
+        Pose marker_pose_on_base_link;
+        marker_pose_on_base_link.position.x = i * param_.resolution + min_x;
+        marker_pose_on_base_link.position.y = distance[i];
+        marker_pose_on_base_link.position.z = 0.2 + 1.75 / 2.0;  // TODO
+        marker_pose_on_base_link.orientation =
+          tier4_autoware_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO
+        marker_pose_on_base_link_array.push_back(marker_pose_on_base_link);
       }
     }
-  }
 
-  // extract feature points
-  std::vector<PoseStamped> marker_pose_on_base_link_array;
-
-  for (int i = param_.filter_window_size * 2; i < dx - param_.filter_window_size * 2; i++) {
-    if (vote[i] > param_.vote_threshold_for_detect_marker) {
-      PoseStamped marker_pose_on_base_link;
-      marker_pose_on_base_link.header.stamp = sensor_ros_time;
-      marker_pose_on_base_link.header.frame_id = "base_link";
-      marker_pose_on_base_link.pose.position.x = i * param_.resolution + min_x;
-      marker_pose_on_base_link.pose.position.y = distance[i];
-      marker_pose_on_base_link.pose.position.z = 0.2 + 1.75 / 2.0;  // TODO
-      marker_pose_on_base_link.pose.orientation =
-        tier4_autoware_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO
-      marker_pose_on_base_link_array.push_back(marker_pose_on_base_link);
+    is_detected_marker_ = !marker_pose_on_base_link_array.empty();
+    if (!is_detected_marker_) {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        this->get_logger(), *this->get_clock(), 1, "Could not detect marker");
+      return;
     }
-  }
 
-  // get self-position on map
-  std::unique_lock<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
-  if (self_pose_msg_ptr_array_.size() <= 1) {
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
-    return;
-  }
-  PoseArrayInterpolator interpolator(
-    this, sensor_ros_time, self_pose_msg_ptr_array_, param_.self_pose_timeout_sec,
-    param_.self_pose_distance_tolerance_m);
-  if (!interpolator.is_success()) return;
-  pop_old_pose(self_pose_msg_ptr_array_, sensor_ros_time);
-  self_pose_array_mtx_.unlock();
+    // get marker_pose on base_link
+    const Pose marker_pose_on_base_link = marker_pose_on_base_link_array.at(0);  // TODO
 
-  const auto self_pose_msg = interpolator.get_current_pose();
+    // get marker pose on map using self-pose
+    const Vector3 self_pose_rpy = tier4_autoware_utils::getRPY(self_pose.orientation);
+    const double self_pose_yaw = self_pose_rpy.z;
 
-  // get nearest marker pose on map
-  const auto marker_pose_on_map_from_lanelet2_map = *std::min_element(
-    std::begin(marker_pose_on_map_array_), std::end(marker_pose_on_map_array_),
-    [&self_pose_msg](const auto & lhs, const auto & rhs) {
-      return tier4_autoware_utils::calcDistance3d(lhs.position, self_pose_msg.pose.pose.position) <
-             tier4_autoware_utils::calcDistance3d(rhs.position, self_pose_msg.pose.pose.position);
-    });
-
-  const auto marker_pose_on_base_link_from_lanele2_map =
-    tier4_autoware_utils::inverseTransformPoint(
-      marker_pose_on_map_from_lanelet2_map.position, self_pose_msg.pose.pose);
-
-  is_exist_marker_within_self_pose_ = std::fabs(marker_pose_on_base_link_from_lanele2_map.x) <
-                                      param_.limit_distance_from_self_pose_to_marker_from_lanelet2;
-  if (!is_exist_marker_within_self_pose_) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1,
-      "The distance from self-pose to the nearest marker of lanelet2 is too far("
-        << marker_pose_on_base_link_from_lanele2_map.x << "). The limit is "
-        << param_.limit_distance_from_self_pose_to_marker_from_lanelet2 << ".");
-    // return;
-  }
-
-  // if(!is_detected_marker_ || !is_exist_marker_within_self_pose_) {
-  //   return;
-  // }
-
-  is_detected_marker_ = !marker_pose_on_base_link_array.empty();
-  if (!is_detected_marker_) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1, "Could not detect marker");
-    return;
-  }
-
-  // get marker_pose on base_link
-  PoseStamped marker_pose_on_base_link;
-  marker_pose_on_base_link = marker_pose_on_base_link_array.at(0);  // TODO
-
-  // get marker pose on map using self-pose
-  const auto self_pose_rpy = tier4_autoware_utils::getRPY(self_pose_msg.pose.pose.orientation);
-  const double self_pose_yaw = self_pose_rpy.z;
-
-  PoseStamped marker_pose_on_map_from_self_pose;
-  marker_pose_on_map_from_self_pose.header.stamp = sensor_ros_time;
-  marker_pose_on_map_from_self_pose.header.frame_id = "map";
-  marker_pose_on_map_from_self_pose.pose.position.x =
-    marker_pose_on_base_link.pose.position.x * std::cos(self_pose_yaw) -
-    marker_pose_on_base_link.pose.position.y * std::sin(self_pose_yaw) +
-    self_pose_msg.pose.pose.position.x;
-  marker_pose_on_map_from_self_pose.pose.position.y =
-    marker_pose_on_base_link.pose.position.x * std::sin(self_pose_yaw) +
-    marker_pose_on_base_link.pose.position.y * std::cos(self_pose_yaw) +
-    self_pose_msg.pose.pose.position.y;
-  marker_pose_on_map_from_self_pose.pose.position.z =
-    marker_pose_on_base_link.pose.position.z + self_pose_msg.pose.pose.position.z;
-  marker_pose_on_map_from_self_pose.pose.orientation =
-    tier4_autoware_utils::createQuaternionFromRPY(
+    // calculate marker_pose_from_detection
+    marker_pose_from_detection.position.x =
+      marker_pose_on_base_link.position.x * std::cos(self_pose_yaw) -
+      marker_pose_on_base_link.position.y * std::sin(self_pose_yaw) + self_pose.position.x;
+    marker_pose_from_detection.position.y =
+      marker_pose_on_base_link.position.x * std::sin(self_pose_yaw) +
+      marker_pose_on_base_link.position.y * std::cos(self_pose_yaw) + self_pose.position.y;
+    marker_pose_from_detection.position.z =
+      marker_pose_on_base_link.position.z + self_pose.position.z;
+    marker_pose_from_detection.orientation = tier4_autoware_utils::createQuaternionFromRPY(
       self_pose_rpy.x + M_PI_2, self_pose_rpy.y, self_pose_rpy.z);
-  pub_marker_pose_on_map_from_self_pose_->publish(marker_pose_on_map_from_self_pose);
 
-  if (!is_detected_marker_ || !is_exist_marker_within_self_pose_) {
-    return;
+    // publish
+    PoseStamped marker_pose_from_detection_stamped;
+    marker_pose_from_detection_stamped.header = header;
+    marker_pose_from_detection_stamped.pose = marker_pose_from_detection;
+    pub_marker_pose_on_map_from_self_pose_->publish(marker_pose_from_detection_stamped);
   }
 
-  Vector3 diff_position_from_self_position_to_lanelet2_map;
-  diff_position_from_self_position_to_lanelet2_map.x =
-    marker_pose_on_map_from_lanelet2_map.position.x -
-    marker_pose_on_map_from_self_pose.pose.position.x;
-  diff_position_from_self_position_to_lanelet2_map.y =
-    marker_pose_on_map_from_lanelet2_map.position.y -
-    marker_pose_on_map_from_self_pose.pose.position.y;
+  // ---------------------------- //
+  // (3) Get marker_pose_from_map //
+  // ---------------------------- //
+  Pose marker_pose_from_map;
+  {
+    // get nearest marker pose on map
+    marker_pose_from_map = *std::min_element(
+      std::begin(marker_pose_on_map_array_), std::end(marker_pose_on_map_array_),
+      [&self_pose](const Pose & lhs, const Pose & rhs) {
+        return tier4_autoware_utils::calcDistance3d(lhs.position, self_pose.position) <
+               tier4_autoware_utils::calcDistance3d(rhs.position, self_pose.position);
+      });
 
-  double diff_position_from_self_position_to_lanelet2_map_norm = std::hypot(
-    diff_position_from_self_position_to_lanelet2_map.x,
-    diff_position_from_self_position_to_lanelet2_map.y);
-  bool is_exist_marker_within_lanelet2_map = diff_position_from_self_position_to_lanelet2_map_norm <
-                                             param_.limit_distance_from_self_pose_to_marker;
+    const auto marker_pose_on_base_link_from_map =
+      tier4_autoware_utils::inverseTransformPoint(marker_pose_from_map.position, self_pose);
+
+    is_exist_marker_within_self_pose_ =
+      std::fabs(marker_pose_on_base_link_from_map.x) <
+      param_.limit_distance_from_self_pose_to_marker_from_lanelet2;
+    if (!is_exist_marker_within_self_pose_) {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        this->get_logger(), *this->get_clock(), 1,
+        "The distance from self-pose to the nearest marker of lanelet2 is too far("
+          << marker_pose_on_base_link_from_map.x << "). The limit is "
+          << param_.limit_distance_from_self_pose_to_marker_from_lanelet2 << ".");
+      return;
+    }
+  }
+
+  // --------------------- //
+  // (4) Compare two poses //
+  // --------------------- //
+  const double diff_x = marker_pose_from_map.position.x - marker_pose_from_detection.position.x;
+  const double diff_y = marker_pose_from_map.position.y - marker_pose_from_detection.position.y;
+
+  const double diff_norm = std::hypot(diff_x, diff_y);
+  const bool is_exist_marker_within_lanelet2_map =
+    diff_norm < param_.limit_distance_from_self_pose_to_marker;
 
   if (!is_exist_marker_within_lanelet2_map) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1,
       "The distance from lanelet2 to the detect marker is too far("
-        << diff_position_from_self_position_to_lanelet2_map_norm << "). The limit is "
-        << param_.limit_distance_from_self_pose_to_marker << ".");
+        << diff_norm << "). The limit is " << param_.limit_distance_from_self_pose_to_marker
+        << ".");
     return;
   }
 
   Pose result_base_link_on_map;
-  result_base_link_on_map.position.x =
-    self_pose_msg.pose.pose.position.x + diff_position_from_self_position_to_lanelet2_map.x;
-  result_base_link_on_map.position.y =
-    self_pose_msg.pose.pose.position.y + diff_position_from_self_position_to_lanelet2_map.y;
-  result_base_link_on_map.position.z = self_pose_msg.pose.pose.position.z;
-  result_base_link_on_map.orientation = self_pose_msg.pose.pose.orientation;
+  result_base_link_on_map.position.x = self_pose.position.x + diff_x;
+  result_base_link_on_map.position.y = self_pose.position.y + diff_y;
+  result_base_link_on_map.position.z = self_pose.position.z;
+  result_base_link_on_map.orientation = self_pose.orientation;
 
   PoseWithCovarianceStamped base_link_pose_with_covariance_on_map;
-  base_link_pose_with_covariance_on_map.header.stamp = sensor_ros_time;
-  base_link_pose_with_covariance_on_map.header.frame_id = "map";
+  base_link_pose_with_covariance_on_map.header = header;
   base_link_pose_with_covariance_on_map.pose.pose = result_base_link_on_map;
 
   // TODO transform covariance on base_link to map frame
