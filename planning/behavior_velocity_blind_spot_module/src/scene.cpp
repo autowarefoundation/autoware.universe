@@ -385,36 +385,64 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
 
   const auto areas_opt = generateBlindSpotPolygons(
     lanelet_map_ptr, routing_graph_ptr, path, closest_idx, stop_line_pose);
-  if (!!areas_opt) {
-    debug_data_.detection_areas_for_blind_spot = areas_opt.value().detection_areas;
-    debug_data_.conflict_areas_for_blind_spot = areas_opt.value().conflict_areas;
+  if (areas_opt) {
+    const auto & detection_areas = areas_opt.value().detection_areas;
+    const auto & conflict_areas = areas_opt.value().conflict_areas;
+    const auto & opposite_detection_areas = areas_opt.value().opposite_detection_areas;
+    const auto & opposite_conflict_areas = areas_opt.value().opposite_conflict_areas;
+    debug_data_.detection_areas = detection_areas;
+    debug_data_.conflict_areas = conflict_areas;
+    debug_data_.detection_areas.insert(
+      debug_data_.detection_areas.end(), opposite_detection_areas.begin(),
+      opposite_detection_areas.end());
+    debug_data_.conflict_areas.insert(
+      debug_data_.conflict_areas.end(), opposite_conflict_areas.begin(),
+      opposite_conflict_areas.end());
 
     autoware_auto_perception_msgs::msg::PredictedObjects objects = *objects_ptr;
     cutPredictPathWithDuration(&objects, planner_param_.max_future_movement_time);
 
     // check objects in blind spot areas
-    bool obstacle_detected = false;
     for (const auto & object : objects.objects) {
       if (!isTargetObjectType(object)) {
         continue;
       }
 
-      const auto & detection_areas = areas_opt.value().detection_areas;
-      const auto & conflict_areas = areas_opt.value().conflict_areas;
+      // right direction
       const bool exist_in_detection_area =
         std::any_of(detection_areas.begin(), detection_areas.end(), [&object](const auto & area) {
           return bg::within(
             to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
             lanelet::utils::to2D(area));
         });
+      if (!exist_in_detection_area) {
+        continue;
+      }
       const bool exist_in_conflict_area =
         isPredictedPathInArea(object, conflict_areas, planner_data_->current_odometry->pose);
       if (exist_in_detection_area && exist_in_conflict_area) {
-        obstacle_detected = true;
         debug_data_.conflicting_targets.objects.push_back(object);
+        return true;
+      }
+      // opposite direction
+      const bool exist_in_opposite_detection_area = std::any_of(
+        opposite_detection_areas.begin(), opposite_detection_areas.end(),
+        [&object](const auto & area) {
+          return bg::within(
+            to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
+            lanelet::utils::to2D(area));
+        });
+      if (!exist_in_opposite_detection_area) {
+        continue;
+      }
+      const bool exist_in_opposite_conflict_area = isPredictedPathInArea(
+        object, opposite_conflict_areas, planner_data_->current_odometry->pose);
+      if (exist_in_opposite_detection_area && exist_in_opposite_conflict_area) {
+        debug_data_.conflicting_targets.objects.push_back(object);
+        return true;
       }
     }
-    return obstacle_detected;
+    return false;
   } else {
     return false;
   }
@@ -504,6 +532,37 @@ lanelet::ConstLanelet BlindSpotModule::generateExtendedAdjacentLanelet(
   return new_lanelet;
 }
 
+lanelet::ConstLanelet BlindSpotModule::generateExtendedOppositeAdjacentLanelet(
+  const lanelet::ConstLanelet lanelet, const TurnDirection direction) const
+{
+  const auto centerline = lanelet.centerline2d();
+  const auto width =
+    boost::geometry::area(lanelet.polygon2d().basicPolygon()) / boost::geometry::length(centerline);
+  const double extend_width =
+    std::min<double>(planner_param_.opposite_adjacent_extend_width, width);
+  const auto left_bound_ =
+    direction == TurnDirection::RIGHT
+      ? lanelet.rightBound().invert()
+      : lanelet::utils::getCenterlineWithOffset(lanelet.invert(), -width / 2 + extend_width);
+  const auto right_bound_ =
+    direction == TurnDirection::RIGHT
+      ? lanelet::utils::getCenterlineWithOffset(lanelet.invert(), width / 2 - extend_width)
+      : lanelet.leftBound().invert();
+  lanelet::Points3d lefts, rights;
+  for (const auto & pt : left_bound_) {
+    lefts.push_back(lanelet::Point3d(pt));
+  }
+  for (const auto & pt : right_bound_) {
+    rights.push_back(lanelet::Point3d(pt));
+  }
+  const auto left_bound = lanelet::LineString3d(lanelet::InvalId, std::move(lefts));
+  const auto right_bound = lanelet::LineString3d(lanelet::InvalId, std::move(rights));
+  auto new_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
+  const auto new_centerline = lanelet::utils::generateFineCenterline(new_lanelet, 5.0);
+  new_lanelet.setCenterline(new_centerline);
+  return new_lanelet;
+}
+
 std::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   [[maybe_unused]] lanelet::routing::RoutingGraphPtr routing_graph_ptr,
@@ -512,18 +571,18 @@ std::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
 {
   std::vector<int64_t> lane_ids;
   lanelet::ConstLanelets blind_spot_lanelets;
+  lanelet::ConstLanelets blind_spot_opposite_lanelets;
   /* get lane ids until intersection */
   for (const auto & point : path.points) {
     bool found_intersection_lane = false;
     for (const auto lane_id : point.lane_ids) {
-      // make lane_ids unique
-      if (std::find(lane_ids.begin(), lane_ids.end(), lane_id) == lane_ids.end()) {
-        lane_ids.push_back(lane_id);
-      }
-
       if (lane_id == lane_id_) {
         found_intersection_lane = true;
         break;
+      }
+      // make lane_ids unique
+      if (std::find(lane_ids.begin(), lane_ids.end(), lane_id) == lane_ids.end()) {
+        lane_ids.push_back(lane_id);
       }
     }
     if (found_intersection_lane) break;
@@ -537,26 +596,46 @@ std::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
 
   // additional detection area on left/right side
   lanelet::ConstLanelets adjacent_lanelets;
+  lanelet::ConstLanelets opposite_adjacent_lanelets;
   for (const auto i : lane_ids) {
     const auto lane = lanelet_map_ptr->laneletLayer.get(i);
-    const auto adj = std::invoke([&]() -> std::optional<lanelet::ConstLanelet> {
-      if (turn_direction_ == TurnDirection::INVALID) {
+    const auto adj =
+      turn_direction_ == TurnDirection::LEFT
+        ? (routing_graph_ptr->adjacentLeft(lane))
+        : (turn_direction_ == TurnDirection::RIGHT ? (routing_graph_ptr->adjacentRight(lane))
+                                                   : boost::none);
+    const std::optional<lanelet::ConstLanelet> opposite_adj =
+      [&]() -> std::optional<lanelet::ConstLanelet> {
+      if (!!adj) {
         return std::nullopt;
       }
-      const auto adj_lane = (turn_direction_ == TurnDirection::LEFT)
-                              ? routing_graph_ptr->adjacentLeft(lane)
-                              : routing_graph_ptr->adjacentRight(lane);
-
-      if (adj_lane) {
-        return *adj_lane;
+      if (turn_direction_ == TurnDirection::LEFT) {
+        // this should exist in right-hand traffic
+        const auto adjacents = lanelet_map_ptr->laneletLayer.findUsages(lane.leftBound().invert());
+        if (adjacents.empty()) {
+          return std::nullopt;
+        }
+        return adjacents.front();
       }
-
-      return std::nullopt;
-    });
-
+      if (turn_direction_ == TurnDirection::RIGHT) {
+        // this should exist in left-hand traffic
+        const auto adjacents = lanelet_map_ptr->laneletLayer.findUsages(lane.rightBound().invert());
+        if (adjacents.empty()) {
+          return std::nullopt;
+        }
+        return adjacents.front();
+      } else {
+        return std::nullopt;
+      }
+    }();
     if (adj) {
       const auto half_lanelet = generateExtendedAdjacentLanelet(adj.value(), turn_direction_);
       adjacent_lanelets.push_back(half_lanelet);
+    }
+    if (opposite_adj) {
+      const auto half_lanelet =
+        generateExtendedOppositeAdjacentLanelet(opposite_adj.get(), turn_direction_);
+      opposite_adjacent_lanelets.push_back(half_lanelet);
     }
   }
 
@@ -586,6 +665,24 @@ std::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
         adjacent_lanelets, detection_area_start_length_adj, stop_line_arc_adj);
       blind_spot_polygons.conflict_areas.emplace_back(std::move(conflicting_area_adj));
       blind_spot_polygons.detection_areas.emplace_back(std::move(detection_area_adj));
+    }
+    // additional detection area on left/right opposite lane side
+    if (!opposite_adjacent_lanelets.empty()) {
+      const auto stop_line_arc_opposite_adj =
+        lanelet::utils::getLaneletLength3d(opposite_adjacent_lanelets);
+      const auto current_arc_opposite_adj =
+        stop_line_arc_opposite_adj - (stop_line_arc_ego - current_arc_ego);
+      const auto detection_area_start_length_opposite_adj =
+        stop_line_arc_opposite_adj - planner_param_.backward_length;
+      auto conflicting_area_opposite_adj = lanelet::utils::getPolygonFromArcLength(
+        opposite_adjacent_lanelets, current_arc_opposite_adj, stop_line_arc_opposite_adj);
+      auto detection_area_opposite_adj = lanelet::utils::getPolygonFromArcLength(
+        opposite_adjacent_lanelets, detection_area_start_length_opposite_adj,
+        stop_line_arc_opposite_adj);
+      blind_spot_polygons.opposite_conflict_areas.emplace_back(
+        std::move(conflicting_area_opposite_adj));
+      blind_spot_polygons.opposite_detection_areas.emplace_back(
+        std::move(detection_area_opposite_adj));
     }
     return blind_spot_polygons;
   } else {
