@@ -292,54 +292,6 @@ void LidarMarkerLocalizer::points_callback(
     }
   }
 
-  // -------------------
-  // for debug
-  // get base_link pose on map frame
-  // geometry_msgs::msg::TransformStamped transform_base_link_to_map;
-  // try
-  // {
-  //   transform_base_link_to_map = tf_buffer_->lookupTransform(
-  //     "map", "base_link", sensor_ros_time, rclcpp::Duration::from_seconds(0.1));
-  // }
-  // catch (tf2::TransformException & ex)
-  // {
-  //   RCLCPP_WARN(get_logger(), "cannot get map to base_link transform. %s", ex.what());
-  // }
-
-  // pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZI>> sensor_points_on_base_link_ptr(
-  //   new pcl::PointCloud<pcl::PointXYZI>);
-  // pcl::fromROSMsg(sensor_points_msg_on_base_link, *sensor_points_on_base_link_ptr);
-
-  // geometry_msgs::msg::PoseStamped sensor_pose_on_map;
-  // sensor_pose_on_map = tier4_autoware_utils::transform2pose(transform_base_link_to_map);
-  // sensor_pose_on_map.header.stamp = sensor_ros_time;
-  // sensor_pose_on_map.header.frame_id = "map";
-
-  // Eigen::Affine3d sensor_pose_on_map_eigen_affine;
-  // tf2::fromMsg(sensor_pose_on_map.pose, sensor_pose_on_map_eigen_affine);
-  // Eigen::Matrix4f sensor_pose_on_map_eigen_matrix =
-  // sensor_pose_on_map_eigen_affine.matrix().cast<float>();
-
-  // pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZI>> sensor_points_on_map_ptr(
-  //   new pcl::PointCloud<pcl::PointXYZI>);
-  // pcl::transformPointCloud(
-  //   *sensor_points_on_base_link_ptr, *sensor_points_on_map_ptr, sensor_pose_on_map_eigen_matrix);
-
-  // sensor_msgs::msg::PointCloud2 sensor_points_on_map_msg;
-  // pcl::toROSMsg(*sensor_points_on_map_ptr, sensor_points_on_map_msg);
-  // sensor_points_on_map_msg.header = sensor_pose_on_map.header;
-  // pub_sensor_points_on_map_->publish(sensor_points_on_map_msg);
-
-  // --------------------------
-
-  //-----
-  // get marker pose array on map using lanelet2 map
-  std::vector<std::string> marker_name_array = {"tag_0",  "tag_1",  "tag_2",  "tag_3",  "tag_4",
-                                                "tag_5",  "tag_6",  "tag_7",  "tag_8",  "tag_9",
-                                                "tag_10", "tag_11", "tag_12", "tag_13", "tag_14",
-                                                "tag_15", "tag_16", "tag_17", "tag_18"};
-  std::vector<geometry_msgs::msg::TransformStamped> transform_marker_on_map_array;
-
   // get self-position on map
   std::unique_lock<std::mutex> self_pose_array_lock(self_pose_array_mtx_);
   if (self_pose_msg_ptr_array_.size() <= 1) {
