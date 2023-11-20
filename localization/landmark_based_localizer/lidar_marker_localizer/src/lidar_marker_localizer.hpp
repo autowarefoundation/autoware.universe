@@ -23,10 +23,10 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-#include <vector>
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
