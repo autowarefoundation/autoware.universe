@@ -1,10 +1,14 @@
 # Behavior Path Planner
 
-The Behavior Path Planner's main objective is to significantly enhances the safety of autonomous vehicles by minimizing the risk of accidents. It improves driving efficiency through time conservation and underpins reliability with its rule-based approach. Additionally, it allows users to integrate their own custom behavior modules or use it with different types of vehicles, such as cars, buses, and delivery robots, as well as in various environments, from busy urban streets to open highways.
+The Behavior Path Planner's main objective is to significantly enhance the safety of autonomous vehicles by minimizing the risk of accidents. It improves driving efficiency through time conservation and underpins reliability with its rule-based approach. Additionally, it allows users to integrate their own custom behavior modules or use it with different types of vehicles, such as cars, buses, and delivery robots, as well as in various environments, from busy urban streets to open highways.
 
-The module begins by thoroughly analyzing the ego vehicle's current situation, including position, speed, and surrounding environment, leading to essential driving decisions about lane changes or stopping, and subsequently generates a path that is both safe and efficient, considering road geometry, traffic rules, and dynamic conditions, while also incorporating obstacle avoidance to respond to static and dynamic obstacles such as other vehicles, pedestrians, or unexpected roadblocks, ensuring safe navigation.
+The module begins by thoroughly analyzing the ego vehicle's current situation, including its position, speed, and surrounding environment. This analysis leads to essential driving decisions about lane changes or stopping and subsequently generates a path that is both safe and efficient. It considers road geometry, traffic rules, and dynamic conditions while also incorporating obstacle avoidance to respond to static and dynamic obstacles such as other vehicles, pedestrians, or unexpected roadblocks, ensuring safe navigation.
 
 Moreover, the planner actively interacts with other traffic participants, predicting their actions and accordingly adjusting the vehicle's path. This ensures not only the safety of the autonomous vehicle but also contributes to smooth traffic flow. Its adherence to traffic laws, including speed limits and traffic signals, further guarantees lawful and predictable driving behavior. The planner is also designed to minimize sudden or abrupt maneuvers, aiming for a comfortable and natural driving experience.
+
+!!! note
+
+    The [Planning Component Design](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/planning/) Document outlines the foundational philosophy guiding the design and future development of the Behavior Path Planner module. We strongly encourage readers to consult this document to understand the rationale behind its current configuration and the direction of its ongoing development.
 
 ## Purpose / Use Cases
 
@@ -67,9 +71,9 @@ All scene modules are implemented by inheriting base class `scene_module_interfa
 
 The Planner Manager's responsibilities include:
 
-1. Activating the relevant scene module in response to the specific situation faced by the autonomous vehicle. For example, when a parked vehicle block ego vehicle's driving lane, the manager would engage the avoidance module.
-2. Managing the execution order of when multiple modules are running at the same time. If, for instance, both lane-changing and avoidance modules are operational, the manager decides which should take precedence.
-3. When multiple modules are activated simultaneously and each generates its own path, the manager merges these into a single functional path.
+1. Activating the relevant scene module in response to the specific situation faced by the autonomous vehicle. For example, when a parked vehicle blocks the ego vehicle's driving lane, the manager would engage the avoidance module.
+2. Managing the execution order when multiple modules are running simultaneously. For instance, if both the lane-changing and avoidance modules are operational, the manager decides which should take precedence.
+3. Merging paths from multiple modules when they are activated simultaneously and each generates its own path, thereby creating a single functional path.
 
 !!! note
 
@@ -137,6 +141,10 @@ The `default_preset.yaml` file acts as a configuration file for enabling or disa
 - `launch_avoidance_module`: Set to `true` to enable the avoidance module, or `false` to disable it.
 - `use_experimental_lane_change_function`: Set to `true` to enable experimental features in the lane change module.
 
+!!! note
+
+    Click [here](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/preset/default_preset.yaml) to view the `default_preset.yaml`.
+
 The `behavior_path_planner.launch.xml` file references the settings defined in `default_preset.yaml` to apply the configurations when the behavior path planner's node is running. For instance, the parameter `avoidance.enable_module` in
 
 ```xml
@@ -153,11 +161,11 @@ A sophisticated methodology is used for path generation, particularly focusing o
 
 The design involves complex mathematical formulations for calculating the lateral shift of the vehicle's path over time. These calculations include determining lateral displacement, velocity, and acceleration, while considering the vehicle's lateral acceleration and velocity limits. This is essential for ensuring that the vehicle's movements remain safe and manageable.
 
-The `ShiftLine` struct (see [here](https://github.com/autowarefoundation/autoware.universe/blob/9000f430c937764c14e43109539302f1f878ed70/planning/behavior_path_planner/include/behavior_path_planner/utils/path_shifter/path_shifter.hpp#L35-L48) for the actual data structure) is utilized to represent points along the path where the lateral shift starts and ends. It includes details like the start and end points in absolute coordinates, the relative shift lengths at these points compared to the reference path, and the associated indexes on the reference path. This struct is integral to managing the path shifts, as it allows the path planner to dynamically adjust the trajectory based on the vehicle's current position and planned maneuver.
+The `ShiftLine` struct (as seen [here](https://github.com/autowarefoundation/autoware.universe/blob/9000f430c937764c14e43109539302f1f878ed70/planning/behavior_path_planner/include/behavior_path_planner/utils/path_shifter/path_shifter.hpp#L35-L48)) is utilized to represent points along the path where the lateral shift starts and ends. It includes details like the start and end points in absolute coordinates, the relative shift lengths at these points compared to the reference path, and the associated indexes on the reference path. This struct is integral to managing the path shifts, as it allows the path planner to dynamically adjust the trajectory based on the vehicle's current position and planned maneuver.
 
-Furthermore, the design and its implementation incorporate various equations and mathematical models to calculate essential parameters for the path shift. These include the total distance of lateral shift, the maximum allowable lateral acceleration and jerk, and the total time required for the shift. Practical considerations are also noted, such as simplifying assumptions in the absence of a specific time interval for most lane change and avoidance cases.
+Furthermore, the design and its implementation incorporate various equations and mathematical models to calculate essential parameters for the path shift. These include the total distance of the lateral shift, the maximum allowable lateral acceleration and jerk, and the total time required for the shift. Practical considerations are also noted, such as simplifying assumptions in the absence of a specific time interval for most lane change and avoidance cases.
 
-The shifted path generation logic allows behavior path planner to dynamically generate safe and efficient paths, precisely controlling the vehicle’s lateral movements to ensure smooth execution of lane changes and avoidance maneuvers. This careful planning and execution adhere to the vehicle's dynamic capabilities and safety constraints, maximizing efficiency and safety in autonomous vehicle navigation.
+The shifted path generation logic enables the behavior path planner to dynamically generate safe and efficient paths, precisely controlling the vehicle’s lateral movements to ensure the smooth execution of lane changes and avoidance maneuvers. This careful planning and execution adhere to the vehicle's dynamic capabilities and safety constraints, maximizing efficiency and safety in autonomous vehicle navigation.
 
 !!! note
 
@@ -165,15 +173,17 @@ The shifted path generation logic allows behavior path planner to dynamically ge
 
 ## Collision Assessment / Safety check
 
-The collision assessment function's purpose in the Behavior Path Planner is to evaluate the potential for collisions with target objects across all modules. It is utilized in two scenarios. The first event occurs during candidate path generation to ensure that the generated candidate path is collision-free. The second occurs when the path is approved by the manager, and the ego vehicle is executing the current module. If the current situation is unsafe, depending on each module's requirements, the planner will either cancel the execution or opt to execute another module.
+The purpose of the collision assessment function in the Behavior Path Planner is to evaluate the potential for collisions with target objects across all modules. It is utilized in two scenarios:
 
-The function operates under the assumption that accurate data on the position, velocity, and shape of both the ego vehicle (the autonomous vehicle) and any target objects are available. It also relies on the yaw angle of each point in the predicted paths of these objects, which is expected to point towards the next path point.
+1. During candidate path generation, to ensure that the generated candidate path is collision-free.
+2. When the path is approved by the manager, and the ego vehicle is executing the current module. If the current situation is deemed unsafe, depending on each module's requirements, the planner will either cancel the execution or opt to execute another module.
+   This function operates under the assumption that accurate data on the position, velocity, and shape of both the ego vehicle (the autonomous vehicle) and any target objects are available. It also relies on the yaw angle of each point in the predicted paths of these objects, which is expected to point towards the next path point.
 
 The safety check process involves several steps. Initially, it obtains the pose of the target object at a specific time, typically through interpolation of the predicted path. It then checks for any overlap between the ego vehicle and the target object at this time. If an overlap is detected, the path is deemed unsafe. The function also identifies which vehicle is in front by using the arc length along the given path.
 
-A critical part of the safety check is the calculation of the RSS (Responsibility-Sensitive Safety) distance-inspired algorithm. This algorithm takes into account reaction time, safety time margin, and the velocities and decelerations of both vehicles. Extended object polygons are then created for both the ego and target vehicles. Notably, the rear object’s polygon is extended by the RSS distance longitudinally and by a lateral margin. The function finally checks for overlap between this extended rear object polygon and the front object polygon. Any overlap indicates a potential unsafe situation.
+A critical part of the safety check is the calculation of the RSS (Responsibility-Sensitive Safety) distance-inspired algorithm. This algorithm considers factors such as reaction time, safety time margin, and the velocities and decelerations of both vehicles. Extended object polygons are created for both the ego and target vehicles. Notably, the rear object’s polygon is extended by the RSS distance longitudinally and by a lateral margin. The function finally checks for overlap between this extended rear object polygon and the front object polygon. Any overlap indicates a potential unsafe situation.
 
-The module does have a limitation concerning the yaw angle of each point in the predicted paths of target objects, which may not always accurately point to the next point, leading to potential inaccuracies in some edge cases.
+However, the module does have a limitation concerning the yaw angle of each point in the predicted paths of target objects, which may not always accurately point to the next point, leading to potential inaccuracies in some edge cases.
 
 !!! note
 
@@ -273,4 +283,3 @@ preset
 
 1. Goal Planner module cannot be simultaneously executed together with other modules.
 2. Module is not designed as plugin. Integrating custom module is not straightforward and user have to modify some part of the behavior path planner main code.
-3.
