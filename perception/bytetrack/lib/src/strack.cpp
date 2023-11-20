@@ -40,10 +40,12 @@
 
 #include <boost/uuid/uuid_generators.hpp>
 
-STrack::STrack(std::vector<float> tlwh_, float score, int label)
+#include <yaml-cpp/yaml.h>
+
+STrack::STrack(std::vector<float> input_tlwh, float score, int label)
 {
-  _tlwh.resize(4);
-  _tlwh.assign(tlwh_.begin(), tlwh_.end());
+  original_tlwh.resize(4);
+  original_tlwh.assign(input_tlwh.begin(), input_tlwh.end());
 
   is_activated = false;
   track_id = 0;
@@ -52,49 +54,46 @@ STrack::STrack(std::vector<float> tlwh_, float score, int label)
   tlwh.resize(4);
   tlbr.resize(4);
 
-  static_tlwh();
-  static_tlbr();
+  static_tlwh();  // update object size
+  static_tlbr();  // update object size
   frame_id = 0;
   tracklet_len = 0;
   this->score = score;
   start_frame = 0;
   this->label = label;
+
+  // load static kf parameters: initialized once in program
+  std::string sample_path =
+    "/home/byte/Documents/byte_tracker/src/byte_tracker/byte_tracker_lib/config/kalman_filter.yaml";
+  if (!_parameters_loaded) {
+    load_parameters(sample_path);
+    _parameters_loaded = true;
+  }
 }
 
 STrack::~STrack()
 {
 }
 
-void STrack::activate(byte_kalman::KalmanFilter & kalman_filter, int frame_id)
+/** init a tracklet */
+void STrack::activate(int frame_id)
 {
-  this->kalman_filter = kalman_filter;
   this->track_id = this->next_id();
   this->unique_id = boost::uuids::random_generator()();
 
   std::vector<float> _tlwh_tmp(4);
-  _tlwh_tmp[0] = this->_tlwh[0];
-  _tlwh_tmp[1] = this->_tlwh[1];
-  _tlwh_tmp[2] = this->_tlwh[2];
-  _tlwh_tmp[3] = this->_tlwh[3];
+  _tlwh_tmp[0] = this->original_tlwh[0];
+  _tlwh_tmp[1] = this->original_tlwh[1];
+  _tlwh_tmp[2] = this->original_tlwh[2];
+  _tlwh_tmp[3] = this->original_tlwh[3];
   std::vector<float> xyah = tlwh_to_xyah(_tlwh_tmp);
-  DETECTBOX xyah_box;
-  xyah_box[0] = xyah[0];
-  xyah_box[1] = xyah[1];
-  xyah_box[2] = xyah[2];
-  xyah_box[3] = xyah[3];
-  auto mc = this->kalman_filter.initiate(xyah_box);
-  this->mean = mc.first;
-  this->covariance = mc.second;
+  // TODO(me): init kf
 
   static_tlwh();
   static_tlbr();
 
   this->tracklet_len = 0;
   this->state = TrackState::Tracked;
-  // if (frame_id == 1)
-  // {
-  //   this->is_activated = true;
-  // }
   this->is_activated = true;
   this->frame_id = frame_id;
   this->start_frame = frame_id;
@@ -103,14 +102,7 @@ void STrack::activate(byte_kalman::KalmanFilter & kalman_filter, int frame_id)
 void STrack::re_activate(STrack & new_track, int frame_id, bool new_id)
 {
   std::vector<float> xyah = tlwh_to_xyah(new_track.tlwh);
-  DETECTBOX xyah_box;
-  xyah_box[0] = xyah[0];
-  xyah_box[1] = xyah[1];
-  xyah_box[2] = xyah[2];
-  xyah_box[3] = xyah[3];
-  auto mc = this->kalman_filter.update(this->mean, this->covariance, xyah_box);
-  this->mean = mc.first;
-  this->covariance = mc.second;
+  // TODO(me): write kf update
 
   static_tlwh();
   static_tlbr();
@@ -132,15 +124,9 @@ void STrack::update(STrack & new_track, int frame_id)
   this->tracklet_len++;
 
   std::vector<float> xyah = tlwh_to_xyah(new_track.tlwh);
-  DETECTBOX xyah_box;
-  xyah_box[0] = xyah[0];
-  xyah_box[1] = xyah[1];
-  xyah_box[2] = xyah[2];
-  xyah_box[3] = xyah[3];
 
-  auto mc = this->kalman_filter.update(this->mean, this->covariance, xyah_box);
-  this->mean = mc.first;
-  this->covariance = mc.second;
+  // update
+  // TODO(me): write update
 
   static_tlwh();
   static_tlbr();
@@ -154,21 +140,18 @@ void STrack::update(STrack & new_track, int frame_id)
 void STrack::static_tlwh()
 {
   if (this->state == TrackState::New) {
-    tlwh[0] = _tlwh[0];
-    tlwh[1] = _tlwh[1];
-    tlwh[2] = _tlwh[2];
-    tlwh[3] = _tlwh[3];
+    tlwh[0] = original_tlwh[0];
+    tlwh[1] = original_tlwh[1];
+    tlwh[2] = original_tlwh[2];
+    tlwh[3] = original_tlwh[3];
     return;
   }
 
-  tlwh[0] = mean[0];
-  tlwh[1] = mean[1];
-  tlwh[2] = mean[2];
-  tlwh[3] = mean[3];
+  // TODO(me): put kf state to tlwh
 
-  tlwh[2] *= tlwh[3];
-  tlwh[0] -= tlwh[2] / 2;
-  tlwh[1] -= tlwh[3] / 2;
+  // tlwh[2] *= tlwh[3];
+  // tlwh[0] -= tlwh[2] / 2;
+  // tlwh[1] -= tlwh[3] / 2;
 }
 
 void STrack::static_tlbr()
@@ -222,15 +205,32 @@ int STrack::end_frame()
   return this->frame_id;
 }
 
-void STrack::multi_predict(
-  std::vector<STrack *> & stracks, byte_kalman::KalmanFilter & kalman_filter)
+void STrack::multi_predict(std::vector<STrack *> & stracks)
 {
   for (size_t i = 0; i < stracks.size(); i++) {
     if (stracks[i]->state != TrackState::Tracked) {
-      stracks[i]->mean[7] = 0;
+      // not tracked
     }
-    kalman_filter.predict(stracks[i]->mean, stracks[i]->covariance);
+    // prediction
+    // TODO(me): write prediction
     stracks[i]->static_tlwh();
     stracks[i]->static_tlbr();
   }
+}
+
+void STrack::load_parameters(const std::string & path)
+{
+  YAML::Node config = YAML::LoadFile(path);
+  // initialize ekf params
+  _kf_parameters.dim_x = config["dim_x"].as<int>();
+  _kf_parameters.q_cov_x = config["q_cov_x"].as<float>();
+  _kf_parameters.q_cov_y = config["q_cov_y"].as<float>();
+  _kf_parameters.q_cov_vx = config["q_cov_vx"].as<float>();
+  _kf_parameters.q_cov_vy = config["q_cov_vy"].as<float>();
+  _kf_parameters.r_cov_x = config["r_cov_x"].as<float>();
+  _kf_parameters.r_cov_y = config["r_cov_y"].as<float>();
+  _kf_parameters.p0_cov_x = config["p0_cov_x"].as<float>();
+  _kf_parameters.p0_cov_y = config["p0_cov_y"].as<float>();
+  _kf_parameters.p0_cov_vx = config["p0_cov_vx"].as<float>();
+  _kf_parameters.p0_cov_vy = config["p0_cov_vy"].as<float>();
 }
