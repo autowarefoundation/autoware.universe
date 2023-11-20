@@ -62,7 +62,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   points_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   auto points_sub_opt = rclcpp::SubscriptionOptions();
   points_sub_opt.callback_group = points_callback_group;
-  sub_points_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  sub_points_ = this->create_subscription<PointCloud2>(
     "input/pointcloud_ex", rclcpp::QoS(1).best_effort(),
     std::bind(&LidarMarkerLocalizer::points_callback, this, _1), points_sub_opt);
 
@@ -71,24 +71,23 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
     this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   auto self_pose_sub_opt = rclcpp::SubscriptionOptions();
   points_sub_opt.callback_group = self_pose_callback_group;
-  sub_self_pose_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  sub_self_pose_ = this->create_subscription<PoseWithCovarianceStamped>(
     "/localization/pose_twist_fusion_filter/biased_pose_with_covariance", rclcpp::QoS(1),
     std::bind(&LidarMarkerLocalizer::self_pose_callback, this, _1), points_sub_opt);
   sub_map_bin_ = this->create_subscription<HADMapBin>(
     "/map/vector_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
     std::bind(&LidarMarkerLocalizer::map_bin_callback, this, std::placeholders::_1));
 
-  pub_marker_pose_on_map_from_self_pose_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-    "marker_pose_on_map_from_self_pose", 10);
-  pub_base_link_pose_with_covariance_on_map_ =
-    this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "/localization/pose_estimator/pose_with_covariance", 10);
+  pub_marker_pose_on_map_from_self_pose_ =
+    this->create_publisher<PoseStamped>("marker_pose_on_map_from_self_pose", 10);
+  pub_base_link_pose_with_covariance_on_map_ = this->create_publisher<PoseWithCovarianceStamped>(
+    "/localization/pose_estimator/pose_with_covariance", 10);
   rclcpp::QoS qos_marker = rclcpp::QoS(rclcpp::KeepLast(10));
   qos_marker.transient_local();
   qos_marker.reliable();
   pub_marker_ = this->create_publisher<MarkerArray>("~/debug/marker", qos_marker);
 
-  service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
+  service_trigger_node_ = this->create_service<SetBool>(
     "trigger_node_srv",
     std::bind(
       &LidarMarkerLocalizer::service_trigger_node, this, std::placeholders::_1,
@@ -116,7 +115,7 @@ void LidarMarkerLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & ms
 }
 
 void LidarMarkerLocalizer::self_pose_callback(
-  const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & self_pose_msg_ptr)
+  const PoseWithCovarianceStamped::ConstSharedPtr & self_pose_msg_ptr)
 {
   // TODO
   // if (!is_activated_) return;
@@ -135,14 +134,14 @@ void LidarMarkerLocalizer::self_pose_callback(
   if (self_pose_msg_ptr->header.frame_id == "map") {
     self_pose_msg_ptr_array_.push_back(self_pose_msg_ptr);
   } else {
-    geometry_msgs::msg::TransformStamped transform_self_pose_frame_to_map;
+    TransformStamped transform_self_pose_frame_to_map;
     try {
       transform_self_pose_frame_to_map = tf_buffer_->lookupTransform(
         "map", self_pose_msg_ptr->header.frame_id, self_pose_msg_ptr->header.stamp,
         rclcpp::Duration::from_seconds(0.1));
 
       // transform self_pose_frame to map_frame
-      auto self_pose_on_map_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
+      auto self_pose_on_map_ptr = std::make_shared<PoseWithCovarianceStamped>();
       self_pose_on_map_ptr->pose.pose = tier4_autoware_utils::transformPose(
         self_pose_msg_ptr->pose.pose, transform_self_pose_frame_to_map);
       // self_pose_on_map_ptr->pose.covariance;  // TODO
@@ -157,13 +156,12 @@ void LidarMarkerLocalizer::self_pose_callback(
   }
 }
 
-void LidarMarkerLocalizer::points_callback(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr)
+void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & points_msg_ptr)
 {
   std::string sensor_frame = points_msg_ptr->header.frame_id;
   auto sensor_ros_time = points_msg_ptr->header.stamp;
   // get sensor_frame pose to base_link
-  // geometry_msgs::msg::TransformStamped transform_sensor_to_base_link;
+  // TransformStamped transform_sensor_to_base_link;
   // try
   // {
   //   transform_sensor_to_base_link = tf_buffer_->lookupTransform(
@@ -263,11 +261,11 @@ void LidarMarkerLocalizer::points_callback(
   }
 
   // extract feature points
-  std::vector<geometry_msgs::msg::PoseStamped> marker_pose_on_base_link_array;
+  std::vector<PoseStamped> marker_pose_on_base_link_array;
 
   for (int i = param_.filter_window_size * 2; i < dx - param_.filter_window_size * 2; i++) {
     if (vote[i] > param_.vote_threshold_for_detect_marker) {
-      geometry_msgs::msg::PoseStamped marker_pose_on_base_link;
+      PoseStamped marker_pose_on_base_link;
       marker_pose_on_base_link.header.stamp = sensor_ros_time;
       marker_pose_on_base_link.header.frame_id = "base_link";
       marker_pose_on_base_link.pose.position.x = i * param_.resolution + min_x;
@@ -329,14 +327,14 @@ void LidarMarkerLocalizer::points_callback(
   }
 
   // get marker_pose on base_link
-  geometry_msgs::msg::PoseStamped marker_pose_on_base_link;
+  PoseStamped marker_pose_on_base_link;
   marker_pose_on_base_link = marker_pose_on_base_link_array.at(0);  // TODO
 
   // get marker pose on map using self-pose
   const auto self_pose_rpy = tier4_autoware_utils::getRPY(self_pose_msg.pose.pose.orientation);
   const double self_pose_yaw = self_pose_rpy.z;
 
-  geometry_msgs::msg::PoseStamped marker_pose_on_map_from_self_pose;
+  PoseStamped marker_pose_on_map_from_self_pose;
   marker_pose_on_map_from_self_pose.header.stamp = sensor_ros_time;
   marker_pose_on_map_from_self_pose.header.frame_id = "map";
   marker_pose_on_map_from_self_pose.pose.position.x =
@@ -358,7 +356,7 @@ void LidarMarkerLocalizer::points_callback(
     return;
   }
 
-  geometry_msgs::msg::Vector3 diff_position_from_self_position_to_lanelet2_map;
+  Vector3 diff_position_from_self_position_to_lanelet2_map;
   diff_position_from_self_position_to_lanelet2_map.x =
     marker_pose_on_map_from_lanelet2_map.position.x -
     marker_pose_on_map_from_self_pose.pose.position.x;
@@ -381,7 +379,7 @@ void LidarMarkerLocalizer::points_callback(
     return;
   }
 
-  geometry_msgs::msg::PoseStamped result_base_link_on_map;
+  PoseStamped result_base_link_on_map;
   result_base_link_on_map.header.stamp = sensor_ros_time;
   result_base_link_on_map.header.frame_id = "map";
   result_base_link_on_map.pose.position.x =
@@ -391,7 +389,7 @@ void LidarMarkerLocalizer::points_callback(
   result_base_link_on_map.pose.position.z = self_pose_msg.pose.pose.position.z;
   result_base_link_on_map.pose.orientation = self_pose_msg.pose.pose.orientation;
 
-  geometry_msgs::msg::PoseWithCovarianceStamped base_link_pose_with_covariance_on_map;
+  PoseWithCovarianceStamped base_link_pose_with_covariance_on_map;
   base_link_pose_with_covariance_on_map.header.stamp = sensor_ros_time;
   base_link_pose_with_covariance_on_map.header.frame_id = "map";
   base_link_pose_with_covariance_on_map.pose.pose = result_base_link_on_map.pose;
@@ -409,24 +407,20 @@ void LidarMarkerLocalizer::update_diagnostics(diagnostic_updater::DiagnosticStat
   stat.add("detected_marker", is_detected_marker_ ? "Yes" : "No");
 
   if (is_exist_marker_within_self_pose_ & is_detected_marker_) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "OK. Detect a marker");
+    stat.summary(DiagnosticStatus::OK, "OK. Detect a marker");
   } else if (is_exist_marker_within_self_pose_ & !is_detected_marker_) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "NG. Could not detect a marker");
+    stat.summary(DiagnosticStatus::ERROR, "NG. Could not detect a marker");
   } else if (!is_exist_marker_within_self_pose_ & is_detected_marker_) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "OK. Detect a not marker-object");
+    stat.summary(DiagnosticStatus::OK, "OK. Detect a not marker-object");
   } else if (!is_exist_marker_within_self_pose_ & !is_detected_marker_) {
-    stat.summary(
-      diagnostic_msgs::msg::DiagnosticStatus::OK,
-      "OK. There are no markers within the range of self-pose");
+    stat.summary(DiagnosticStatus::OK, "OK. There are no markers within the range of self-pose");
   } else {
-    stat.summary(
-      diagnostic_msgs::msg::DiagnosticStatus::ERROR, "NG. This message should not be displayed.");
+    stat.summary(DiagnosticStatus::ERROR, "NG. This message should not be displayed.");
   }
 }
 
 void LidarMarkerLocalizer::service_trigger_node(
-  const std_srvs::srv::SetBool::Request::SharedPtr req,
-  std_srvs::srv::SetBool::Response::SharedPtr res)
+  const SetBool::Request::SharedPtr req, SetBool::Response::SharedPtr res)
 {
   is_activated_ = req->data;
   if (is_activated_) {

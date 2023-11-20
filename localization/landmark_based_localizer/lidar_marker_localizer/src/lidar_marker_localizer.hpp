@@ -48,6 +48,14 @@ class LidarMarkerLocalizer : public rclcpp::Node
 {
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
+  using Pose = geometry_msgs::msg::Pose;
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
+  using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  using TransformStamped = geometry_msgs::msg::TransformStamped;
+  using Vector3 = geometry_msgs::msg::Vector3;
+  using PointCloud2 = sensor_msgs::msg::PointCloud2;
+  using SetBool = std_srvs::srv::SetBool;
+  using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
   struct Param
   {
@@ -72,27 +80,24 @@ public:
   LidarMarkerLocalizer();
 
 private:
-  void self_pose_callback(
-    const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & self_pose_msg_ptr);
-  void points_callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr);
+  void self_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & self_pose_msg_ptr);
+  void points_callback(const PointCloud2::ConstSharedPtr & points_msg_ptr);
   void map_bin_callback(const HADMapBin::ConstSharedPtr & msg);
   void update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
   void service_trigger_node(
-    const std_srvs::srv::SetBool::Request::SharedPtr req,
-    std_srvs::srv::SetBool::Response::SharedPtr res);
+    const SetBool::Request::SharedPtr req, SetBool::Response::SharedPtr res);
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
 
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_points_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_self_pose_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_points_;
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_self_pose_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_bin_;
 
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
-    pub_marker_pose_on_map_from_self_pose_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+  rclcpp::Publisher<PoseStamped>::SharedPtr pub_marker_pose_on_map_from_self_pose_;
+  rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr
     pub_base_link_pose_with_covariance_on_map_;
-  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
+  rclcpp::Service<SetBool>::SharedPtr service_trigger_node_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
   diagnostic_updater::Updater diag_updater_;
@@ -102,10 +107,9 @@ private:
   bool is_detected_marker_;
   bool is_exist_marker_within_self_pose_;
   std::mutex self_pose_array_mtx_;
-  std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
-    self_pose_msg_ptr_array_;
+  std::deque<PoseWithCovarianceStamped::ConstSharedPtr> self_pose_msg_ptr_array_;
 
-  std::vector<geometry_msgs::msg::Pose> marker_pose_on_map_array_;
+  std::vector<Pose> marker_pose_on_map_array_;
 };
 
 #endif  // LIDAR_MARKER_LOCALIZER_HPP_
