@@ -150,8 +150,8 @@
         <push-ros-namespace namespace="detection"/>
         <let name="yolox-model-name" value="yolox-sPlus-opt"/>
         <let name="yolox_data_path" value="$(env HOME)/autoware_data"/>
-        <let name="yolox_output_base" value="/perception/object_recognition/detection"/>
-        <let name="bytetrack_output_base" value="/perception/object_recognition/detection/tracked"/>
+        <let name="yolox_output_base" value="/perception/object_recognition/detection/yolo"/>
+        <let name="bytetrack_output_base" value="/perception/object_recognition/detection/"/>
 
         <!-- camera0 -->
         <group>
