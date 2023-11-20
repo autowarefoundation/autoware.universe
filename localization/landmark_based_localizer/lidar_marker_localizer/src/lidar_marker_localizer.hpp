@@ -23,6 +23,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <vector>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -64,6 +65,7 @@ class LidarMarkerLocalizer : public rclcpp::Node
 
     double limit_distance_from_self_pose_to_marker_from_lanelet2;
     double limit_distance_from_self_pose_to_marker;
+    std::vector<double> base_covariance_;
   };
 
 public:

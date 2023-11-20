@@ -56,6 +56,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
     this->declare_parameter<double>("limit_distance_from_self_pose_to_marker_from_lanelet2"));
   param_.limit_distance_from_self_pose_to_marker =
     static_cast<double>(this->declare_parameter<double>("limit_distance_from_self_pose_to_marker"));
+  param_.base_covariance_ = this->declare_parameter<std::vector<double>>("base_covariance");
+
 
   rclcpp::CallbackGroup::SharedPtr points_callback_group;
   points_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -508,12 +510,9 @@ void LidarMarkerLocalizer::points_callback(
   base_link_pose_with_covariance_on_map.pose.pose = result_base_link_on_map.pose;
 
   // TODO transform covariance on base_link to map frame
-  base_link_pose_with_covariance_on_map.pose.covariance[0 * 6 + 0] = 0.2 * 0.2;        // TODO
-  base_link_pose_with_covariance_on_map.pose.covariance[1 * 6 + 1] = 0.2 * 0.2;        // TODO
-  base_link_pose_with_covariance_on_map.pose.covariance[2 * 6 + 2] = 0.1 * 0.1;        // TODO
-  base_link_pose_with_covariance_on_map.pose.covariance[3 * 6 + 3] = 0.0087 * 0.0087;  // TODO
-  base_link_pose_with_covariance_on_map.pose.covariance[4 * 6 + 4] = 0.0087 * 0.0087;  // TODO
-  base_link_pose_with_covariance_on_map.pose.covariance[5 * 6 + 5] = 0.0175 * 0.0175;  // TODO
+  for (int i = 0; i < 36; i++) {
+    base_link_pose_with_covariance_on_map.pose.covariance[i] = param_.base_covariance_[i];
+  }
   pub_base_link_pose_with_covariance_on_map_->publish(base_link_pose_with_covariance_on_map);
 }
 

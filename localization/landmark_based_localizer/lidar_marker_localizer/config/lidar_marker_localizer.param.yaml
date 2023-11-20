@@ -18,3 +18,12 @@
     # for avoiding miss detection
     limit_distance_from_self_pose_to_marker_from_lanelet2: 5.0
     limit_distance_from_self_pose_to_marker: 2.0
+
+    # base_covariance
+    # [TBD] This value is dynamically scaled according to the distance at which markers are detected.
+    base_covariance: [0.04, 0.0,  0.0,  0.0,        0.0,        0.0,
+                      0.0,  0.04, 0.0,  0.0,        0.0,        0.0,
+                      0.0,  0.0,  0.01, 0.0,        0.0,        0.0,
+                      0.0,  0.0,  0.0,  0.00007569, 0.0,        0.0,
+                      0.0,  0.0,  0.0,  0.0,        0.00007569, 0.0,
+                      0.0,  0.0,  0.0,  0.0,        0.0,        0.00030625]
