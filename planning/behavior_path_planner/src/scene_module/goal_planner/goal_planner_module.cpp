@@ -1730,14 +1730,14 @@ bool GoalPlannerModule::checkSafetyWithRSS(
 
     return std::any_of(
       obj_predicted_paths.begin(), obj_predicted_paths.end(), [&](const auto & obj_path) {
-        const bool is_collision = !utils::path_safety_checker::checkCollision(
+        const bool has_collision = !utils::path_safety_checker::checkCollision(
           planned_path, ego_predicted_path, object, obj_path, planner_data_->parameters,
           safety_check_params_->rss_params, hysteresis_factor, current_debug_data.second);
 
         marker_utils::updateCollisionCheckDebugMap(
-          goal_planner_data_.collision_check, current_debug_data, !is_collision);
+          goal_planner_data_.collision_check, current_debug_data, !has_collision);
 
-        return is_collision;
+        return has_collision;
       });
   });
 
