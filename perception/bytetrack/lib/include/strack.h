@@ -110,6 +110,8 @@ private:
     float p0_cov_y;
     float p0_cov_vx;
     float p0_cov_vy;
+    // other parameters
+    float dt;  // sampling time
   };
   static KfParams _kf_parameters;
   static bool _parameters_loaded;

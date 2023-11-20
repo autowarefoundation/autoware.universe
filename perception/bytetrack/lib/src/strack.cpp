@@ -38,6 +38,8 @@
 
 #include "strack.h"
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
+
 #include <boost/uuid/uuid_generators.hpp>
 
 #include <yaml-cpp/yaml.h>
@@ -63,10 +65,12 @@ STrack::STrack(std::vector<float> input_tlwh, float score, int label)
   this->label = label;
 
   // load static kf parameters: initialized once in program
-  std::string sample_path =
-    "/home/byte/Documents/byte_tracker/src/byte_tracker/byte_tracker_lib/config/kalman_filter.yaml";
+  const std::string package_share_directory =
+    ament_index_cpp::get_package_share_directory("bytetrack");
+  const std::string default_config_path =
+    package_share_directory + "/config/bytetracker.param.yaml";
   if (!_parameters_loaded) {
-    load_parameters(sample_path);
+    load_parameters(default_config_path);
     _parameters_loaded = true;
   }
 }
