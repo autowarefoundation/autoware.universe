@@ -98,6 +98,17 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   is_roi_overlap_segment_ = declare_parameter<bool>("is_roi_overlap_segment");
   is_publish_color_mask_ = declare_parameter<bool>("is_publish_color_mask");
   overlap_roi_score_threshold_ = declare_parameter<float>("overlap_roi_score_threshold");
+  roi_overlay_segment_labels_.UNKNOWN =
+    declare_parameter<bool>("roi_overlay_segment_label.UNKNOWN");
+  roi_overlay_segment_labels_.CAR = declare_parameter<bool>("roi_overlay_segment_label.CAR");
+  roi_overlay_segment_labels_.TRUCK = declare_parameter<bool>("roi_overlay_segment_label.TRUCK");
+  roi_overlay_segment_labels_.BUS = declare_parameter<bool>("roi_overlay_segment_label.BUS");
+  roi_overlay_segment_labels_.MOTORCYCLE =
+    declare_parameter<bool>("roi_overlay_segment_label.MOTORCYCLE");
+  roi_overlay_segment_labels_.BICYCLE =
+    declare_parameter<bool>("roi_overlay_segment_label.BICYCLE");
+  roi_overlay_segment_labels_.PEDESTRIAN =
+    declare_parameter<bool>("roi_overlay_segment_label.PEDESTRIAN");
   replaceLabelMap();
 
   tensorrt_common::BuildConfig build_config(
@@ -106,7 +117,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
 
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
     model_path, precision, color_map_path, label_map_.size(), score_threshold, nms_threshold,
-    build_config, preprocess_on_gpu, is_publish_color_mask_, calibration_image_list_path);
+    build_config, preprocess_on_gpu, calibration_image_list_path);
 
   timer_ =
     rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&TrtYoloXNode::onConnect, this));
@@ -163,6 +174,7 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     return;
   }
   auto & mask = masks.at(0);
+  // TODO(badai-nguyen): change to postprocess on gpu option
   cv::resize(
     mask, mask, cv::Size(in_image_ptr->image.cols, in_image_ptr->image.rows), 0, 0,
     cv::INTER_NEAREST);
@@ -192,6 +204,7 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       overlapSegmentByRoi(yolox_object, mask);
     }
   }
+  // TODO(badai-nguyen): consider to change to 4bits data transfer
   sensor_msgs::msg::Image::SharedPtr out_mask_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::MONO8, mask)
       .toImageMsg();
@@ -250,23 +263,10 @@ void TrtYoloXNode::replaceLabelMap()
 
 int TrtYoloXNode::mapRoiLabel2SegLabel(const int32_t roi_label_index)
 {
-  switch (roi_label_index) {
-    case 0:
-      return 5;
-    case 1:
-      return 13;
-    case 2:
-      return 14;
-    case 3:
-      return 15;
-    case 4:
-      return 18;
-    case 5:
-      return 17;
-    case 6:
-      return 11;
-    default:
-      return -1;
+  if (roi_overlay_segment_labels_.isTarget(static_cast<uint8_t>(roi_label_index))) {
+    std::string label = label_map_[roi_label_index];
+
+    return remap_roi_to_semantic_[label];
   }
   return -1;
 }

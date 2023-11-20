@@ -78,7 +78,6 @@ public:
    * @param[in] build_config configuration including precision, calibration method, DLA, remaining
    * fp16 for first layer,  remaining fp16 for last layer and profiler for builder
    * @param[in] use_gpu_preprocess whether use cuda gpu for preprocessing
-   * @param[in] publish_color_mask whether publish color_mask for debugging and visualization
    * @param[in] calibration_image_list_file path for calibration files (only require for
    * quantization)
    * @param[in] norm_factor scaling factor for preprocess
@@ -91,9 +90,8 @@ public:
     const std::string & color_map_path, const int num_class = 8, const float score_threshold = 0.3,
     const float nms_threshold = 0.7,
     const tensorrt_common::BuildConfig build_config = tensorrt_common::BuildConfig(),
-    const bool use_gpu_preprocess = false, const bool publish_color_mask = false,
-    std::string calibration_image_list_file = std::string(), const double norm_factor = 1.0,
-    [[maybe_unused]] const std::string & cache_dir = "",
+    const bool use_gpu_preprocess = false, std::string calibration_image_list_file = std::string(),
+    const double norm_factor = 1.0, [[maybe_unused]] const std::string & cache_dir = "",
     const tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
     const size_t max_workspace_size = (1 << 30));
   /**
@@ -153,7 +151,7 @@ public:
    * @param[in] index multitask index
    * @param[in] colormap colormap for masks
    */
-    void getColorizedMask(
+  void getColorizedMask(
     const std::vector<tensorrt_yolox::Colormap> & colormap, const cv::Mat & mask,
     cv::Mat & colorized_mask);
   inline std::vector<Colormap> getColorMap() { return sematic_color_map_; }
@@ -313,10 +311,6 @@ private:
   // device buffer for argmax postprocessing  on GPU
   CudaUniquePtr<unsigned char[]> argmax_buf_d_;
   std::vector<tensorrt_yolox::Colormap> sematic_color_map_;
-  // flag whether overlay segmentation by roi
-  bool roi_overlap_segment_;
-  // flag where publish color mask for debugging and visualization
-  bool publish_color_mask_;
 };
 
 }  // namespace tensorrt_yolox
