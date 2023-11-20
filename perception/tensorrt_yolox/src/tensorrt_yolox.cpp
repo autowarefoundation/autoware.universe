@@ -157,7 +157,7 @@ namespace tensorrt_yolox
 TrtYoloX::TrtYoloX(
   const std::string & model_path, const std::string & precision, const std::string & color_map_path,
   const int num_class, const float score_threshold, const float nms_threshold,
-  tensorrt_common::BuildConfig build_config, const bool use_gpu_preprocess, bool publish_color_mask,
+  tensorrt_common::BuildConfig build_config, const bool use_gpu_preprocess,
   std::string calibration_image_list_path, const double norm_factor,
   [[maybe_unused]] const std::string & cache_dir, const tensorrt_common::BatchConfig & batch_config,
   const size_t max_workspace_size)
@@ -168,7 +168,6 @@ TrtYoloX::TrtYoloX(
   batch_size_ = batch_config[2];
   multitask_ = 0;
   sematic_color_map_ = get_seg_colormap(color_map_path);
-  publish_color_mask_ = publish_color_mask;
   if (precision == "int8") {
     if (build_config.clip_value <= 0.0) {
       if (calibration_image_list_path.empty()) {
@@ -1281,7 +1280,10 @@ void TrtYoloX::getColorizedMask(
 {
   int width = mask.cols;
   int height = mask.rows;
-  // TODO: check size of mask and cmask
+  if ((cmask.cols != mask.cols) || (cmask.rows != mask.rows)) {
+    throw std::runtime_error("input and output image have difference size.");
+    return;
+  }
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
       unsigned char id = mask.at<unsigned char>(y, x);

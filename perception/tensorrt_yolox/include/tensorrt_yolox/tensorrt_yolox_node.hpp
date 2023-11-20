@@ -15,6 +15,9 @@
 #ifndef TENSORRT_YOLOX__TENSORRT_YOLOX_NODE_HPP_
 #define TENSORRT_YOLOX__TENSORRT_YOLOX_NODE_HPP_
 
+#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "utils/utils.hpp"
+
 #include <image_transport/image_transport.hpp>
 #include <opencv2/opencv.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -68,6 +71,18 @@ private:
   bool is_roi_overlap_segment_;
   bool is_publish_color_mask_;
   float overlap_roi_score_threshold_;
+  // TODO(badai-nguyen): change to function
+  std::map<std::string, int> remap_roi_to_semantic_ = {
+    {"UNKNOWN", 19},     // other
+    {"ANIMAL", 19},      // other
+    {"PEDESTRIAN", 11},  // person
+    {"CAR", 13},         // car
+    {"TRUCK", 14},       // truck
+    {"BUS", 15},         // bus
+    {"BICYCLE", 18},     // bicycle
+    {"MOTORBIKE", 17},   // motorcycle
+  };
+  utils::FilterTargetLabel roi_overlay_segment_labels_;
 };
 
 }  // namespace tensorrt_yolox

@@ -1,5 +1,25 @@
 /**:
   ros__parameters:
+    # refine segmentation mask by overlay roi class
+    # disable when sematic segmentation accuracy is good enough
+    is_roi_overlap_segment: true
+
+    # minimum existence_probability of detected roi considered to replace segmentation
+    overlap_roi_score_threshold: 0.3
+
+    # publish color mask for result visualization
+    is_publish_color_mask: false
+
+    roi_overlay_segment_label:
+      UNKNOWN : true
+      CAR : true
+      TRUCK : true
+      BUS : true
+      MOTORCYCLE : true
+      BICYCLE : true
+      PEDESTRIAN : true
+/**:
+  ros__parameters:
     model_path: "$(var data_path)/tensorrt_yolox/$(var model_name).onnx"
     label_path: "$(var data_path)/tensorrt_yolox/label.txt"
     score_threshold: 0.35

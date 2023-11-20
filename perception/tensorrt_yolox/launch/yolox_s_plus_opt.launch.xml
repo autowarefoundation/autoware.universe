@@ -32,9 +32,7 @@
   <arg name="calibration_image_list_path" default="" description="Path to a file which contains path to images. Those images will be used for int8 quantization."/>
   <arg name="use_decompress" default="true" description="use image decompress"/>
   <arg name="build_only" default="false" description="exit after trt engine is built"/>
-  <arg name="is_roi_overlap_segment" default="true" description="refine segmentation mask by overlay roi class, disable when sematic segmentation accuracy is good enough"/>
-  <arg name="is_publish_color_mask" default="false" description="publish color mask for result visualization"/>
-  <arg name="overlap_roi_score_threshold" default="0.3" description="the roi object existance probability threshold that consider to replace segmentation"/>
+  <arg name="yolox_s_plus_opt_param_path" default="$(find-pkg-share tensorrt_yolox)/config/yolox_s_plus_opt.param.yaml"/>
   <node pkg="image_transport_decompressor" exec="image_transport_decompressor_node" name="image_transport_decompressor_node" if="$(var use_decompress)">
     <remap from="~/input/compressed_image" to="$(var input/image)/compressed"/>
     <remap from="~/output/raw_image" to="$(var input/image)"/>
@@ -47,8 +45,6 @@
     <param from="$(var yolox_param_path)" allow_substs="true"/>
     <param name="build_only" value="$(var build_only)"/>
     <param name="color_map_path" value="$(var model_path)/semseg_color_map.csv"/>
-    <param name="is_roi_overlap_segment" value="$(var is_roi_overlap_segment)"/>
-    <param name="is_publish_color_mask" value="$(var is_publish_color_mask)"/>
-    <param name="overlap_roi_score_threshold" value="$(var overlap_roi_score_threshold)"/>
+    <param from="$(var yolox_s_plus_opt_param_path)"/>
   </node>
 </launch>
