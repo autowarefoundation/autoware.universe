@@ -379,20 +379,18 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
     return;
   }
 
-  PoseStamped result_base_link_on_map;
-  result_base_link_on_map.header.stamp = sensor_ros_time;
-  result_base_link_on_map.header.frame_id = "map";
-  result_base_link_on_map.pose.position.x =
+  Pose result_base_link_on_map;
+  result_base_link_on_map.position.x =
     self_pose_msg.pose.pose.position.x + diff_position_from_self_position_to_lanelet2_map.x;
-  result_base_link_on_map.pose.position.y =
+  result_base_link_on_map.position.y =
     self_pose_msg.pose.pose.position.y + diff_position_from_self_position_to_lanelet2_map.y;
-  result_base_link_on_map.pose.position.z = self_pose_msg.pose.pose.position.z;
-  result_base_link_on_map.pose.orientation = self_pose_msg.pose.pose.orientation;
+  result_base_link_on_map.position.z = self_pose_msg.pose.pose.position.z;
+  result_base_link_on_map.orientation = self_pose_msg.pose.pose.orientation;
 
   PoseWithCovarianceStamped base_link_pose_with_covariance_on_map;
   base_link_pose_with_covariance_on_map.header.stamp = sensor_ros_time;
   base_link_pose_with_covariance_on_map.header.frame_id = "map";
-  base_link_pose_with_covariance_on_map.pose.pose = result_base_link_on_map.pose;
+  base_link_pose_with_covariance_on_map.pose.pose = result_base_link_on_map;
 
   // TODO transform covariance on base_link to map frame
   for (int i = 0; i < 36; i++) {
