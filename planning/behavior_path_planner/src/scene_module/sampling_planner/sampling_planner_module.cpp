@@ -207,9 +207,11 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
     frenet_planner::generatePaths(reference_spline, frenet_initial_state, sampling_parameters);
 
   debug_data_.footprints.clear();
+
   for (auto & path : frenet_paths) {
     const auto footprint =
       sampler_common::constraints::checkHardConstraints(path, internal_params_->constraints);
+    path.constraint_results.curvature = true;
     debug_data_.footprints.push_back(footprint);
     sampler_common::constraints::calculateCost(
       path, internal_params_->constraints, reference_spline);
