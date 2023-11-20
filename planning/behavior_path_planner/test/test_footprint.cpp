@@ -12,10 +12,8 @@ TEST(BehaviorPathPlanningFootprint, Polygon2dTranslation)
     drivable_area_expansion::Polygon2d translated_polygon= drivable_area_expansion::translate_polygon(polygon, 0.0, 0.0);
     EXPECT_EQ(translated_polygon.outer()[0].x(), 0.0);
     EXPECT_EQ(translated_polygon.outer()[0].y(), 0.0);
-    // printf("translated once: %f\n", translated_polygon.outer()[3].x());
 
     translated_polygon = drivable_area_expansion::translate_polygon(polygon, 1.0, 2.0);
-    // printf("translated 2nd: %f\n", translated_polygon.outer()[0].x());
     EXPECT_EQ(translated_polygon.outer()[0].x(), 1.0);
     EXPECT_EQ(translated_polygon.outer()[0].y(), 2.0);
 
@@ -145,12 +143,11 @@ TEST(BehaviorPathPlanningFootprint, Polygon2dTranslation)
         autoware_auto_perception_msgs::msg::PredictedPath predicted_path;
         autoware_auto_perception_msgs::msg::PredictedObjectKinematics kinematics;
         geometry_msgs::msg::Pose pose;
-        geometry_msgs::msg::Pose pose1;
 
 
         //considering it in 2D
-        pose.position.x = 0.0;
-        pose.position.y = 0.0;
+        pose.position.x = 1.0;
+        pose.position.y = 2.0;
         pose.position.z = 0.0;
         pose.orientation.w = 0.0;
 
@@ -174,41 +171,18 @@ TEST(BehaviorPathPlanningFootprint, Polygon2dTranslation)
         ASSERT_EQ(footprints.size(), 1UL);
 
         drivable_area_expansion::Polygon2d expected_footprint;
-        expected_footprint.outer() = {{-0.6, 0.6}, {0.6, 0.6}, {0.6, -0.6}, {-0.6, -0.6}, {-0.6, 0.6}}; //{{-1, 1}, {1, 1}, {1, -1}, {-1, -1}, {-1, 1}};
+        expected_footprint.outer() = {{0.6, 0.6}, {0.6, -0.6}, {-0.6, -0.6}, {-0.6, 0.6}, {0.6, 0.6}}; 
 
         EXPECT_TRUE(boost::geometry::equals(footprints[0], expected_footprint));
 
-        std::cout << "Base Footprint coordinates:" << std::endl;
-    for (const auto& point : footprints[0].outer()) {
-        std::cout << "x: " << point.x() << ", y: " << point.y() << std::endl;
-    }
-    //     std::cout << "Footprint coordinates:" << std::endl;
-    // for (const auto& point : footprints[0].outer()) {
-    //     std::cout << "x: " << point.x() << ", y: " << point.y() << std::endl;
-    // }
-
-    //new objects
-        // object.shape.dimensions.x = 2.0;
-        // object.shape.dimensions.y = 2.0; 
-
-        drivable_area_expansion::Polygon2d expected_footprint1;
-        base_footprint.outer() = {{front, left}, {front, right}, {rear, right}, {rear, left}, {front, left}}; 
-
+        //new objects
+        object.shape.dimensions.x = 2.0;
+        object.shape.dimensions.y = 2.0; 
         
-        footprints1.push_back(drivable_area_expansion::create_footprint(pose1, base_footprint));
-        expected_footprint1.outer() = {{0.6, 1.1}, {0.6, -1.1}, {-0.6, -1.1}, {-0.6, 1.1}, {0.6, 1.1}};
-        printf("front2: %f",object.shape.dimensions.y );
-
-        std::cout << ">>>>>>>>>>Footprint coordinates:" << std::endl;
-    for (const auto& point : footprints1[0].outer()) {
-        std::cout << "x: " << point.x() << ", y: " << point.y() << std::endl;
-    }
+        footprints.push_back(drivable_area_expansion::create_footprint(pose, base_footprint));
+        expected_footprint.outer() = {{0.6, 1.1}, {0.6, -1.1}, {-0.6, -1.1}, {-0.6, 1.1}, {0.6, 1.1}};
         
-        EXPECT_TRUE(boost::geometry::equals(footprints1[0], expected_footprint1));
-
-
-
-
+        EXPECT_TRUE(boost::geometry::equals(footprints[0], expected_footprint));
 
 
     }
