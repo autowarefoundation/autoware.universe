@@ -120,84 +120,72 @@ double calculate_minimum_lane_width(
   return (a * a + 2.0 * a * l + 2.0 * k * w + l * l + w * w) / (2.0 * k + w);
 }
 
-void calculate_bound_index_mappings(Expansion & expansion,
-  const std::vector<Pose> & path_poses, const std::vector<Point> & bound,
+void calculate_bound_index_mappings(
+  Expansion & expansion, const std::vector<Pose> & path_poses, const std::vector<Point> & bound,
   const Side side)
 {
   size_t lb_idx = 0;
   auto & bound_indexes =
     (side == LEFT ? expansion.left_bound_indexes : expansion.right_bound_indexes);
-  auto & bound_intersections =
-    (side == LEFT ? expansion.left_bound_intersections : expansion.right_bound_intersections);
-  auto & distances =
-    (side == LEFT ? expansion.left_original_distances : expansion.right_distances);
+  auto & bound_projections =
+    (side == LEFT ? expansion.left_projections : expansion.right_projection);
+  auto & distances = (side == LEFT ? expansion.left_original_distances : expansion.right_distances);
   bound_indexes.resize(bound.size());
-  bound_intersections.resize(bound.size());
-  // TODO(Maxime): /!\ probably not good to use max() here
+  bound_projections.resize(bound.size());
   distances.resize(bound.size(), std::numeric_limits<double>::max());
   for (auto path_idx = 0UL; path_idx < path_poses.size(); ++path_idx) {
-    const auto min_bound_distance =
-      expansion.min_lane_widths[path_idx] / 2.0 * (side == LEFT ? 1.0 : -1.0);
-    const auto offset_point = tier4_autoware_utils::calcOffsetPose(
-      path_poses[path_idx], 0.0, min_bound_distance, 0.0).position;
+    const auto path_p = convert_point(path_poses[path_idx].position);
     for (auto bound_idx = lb_idx; bound_idx + 1 < bound.size(); ++bound_idx) {
-      const auto & prev_p = bound[bound_idx];
-      const auto & next_p = bound[bound_idx + 1];
-      const auto intersection_point = tier4_autoware_utils::intersect(
-        offset_point, path_poses[path_idx].position, prev_p, next_p);
-      if (intersection_point) {
-        lb_idx = bound_idx;
-        const auto dist = tier4_autoware_utils::calcDistance2d(*intersection_point, offset_point);
-        if(dist < distances[bound_idx]) {
-          bound_indexes[path_idx] = bound_idx;
-          bound_intersections[path_idx] = intersection_point;
-          distances[bound_idx] = dist;
-        }
-        distances[bound_idx + 1] = std::min(distances[bound_idx + 1], dist);
+      const auto prev_p = convert_point(bound[bound_idx]);
+      const auto next_p = convert_point(bound[bound_idx + 1]);
+      const auto projection = point_to_segment_projection(path_p, prev_p, next_p);
+      if (projection.distance < bound_projections[path_idx].distance) {
+        bound_indexes[path_idx] = bound_idx;
+        bound_projections[path_idx] = projection;
       }
     }
+    lb_idx = bound_indexes[path_idx];
   }
 }
 
-void apply_extra_arc_length(Expansion & expansion, const std::vector<Point> & bound, const double extra_arc_length, const Side side) {
+void apply_extra_arc_length(
+  Expansion & expansion, const std::vector<Point> & bound, const double extra_arc_length,
+  const Side side)
+{
   auto & bound_indexes =
     (side == LEFT ? expansion.left_bound_indexes : expansion.right_bound_indexes);
-  auto & bound_intersections =
-    (side == LEFT ? expansion.left_bound_intersections : expansion.right_bound_intersections);
-  auto & distances =
-    (side == LEFT ? expansion.left_original_distances : expansion.right_distances);
+  auto & bound_projections =
+    (side == LEFT ? expansion.left_projections : expansion.right_projection);
+  auto & distances = (side == LEFT ? expansion.left_original_distances : expansion.right_distances);
   for (auto path_idx = 0UL; path_idx < bound_indexes.size(); ++path_idx) {
-      if(bound_intersections[path_idx]) {
-        const auto bound_idx = bound_indexes[path_idx];
-        auto arc_length =
-          tier4_autoware_utils::calcDistance2d(*bound_intersections[path_idx], bound[bound_idx + 1]);
-        for (auto up_bound_idx = bound_idx + 2; up_bound_idx < bound.size(); ++up_bound_idx) {
-          arc_length +=
-            tier4_autoware_utils::calcDistance2d(bound[up_bound_idx - 1], bound[up_bound_idx]);
-          if (arc_length > extra_arc_length) break;
-          distances[up_bound_idx] = std::max(distances[up_bound_idx], distances[bound_idx]);
-        }
-        arc_length = tier4_autoware_utils::calcDistance2d(*bound_intersections[path_idx], bound[bound_idx]);
-        for (auto down_offset_idx = 1LU; down_offset_idx < bound_idx; ++down_offset_idx) {
-          const auto idx = bound_idx - down_offset_idx;
-          arc_length += tier4_autoware_utils::calcDistance2d(bound[idx - 1], bound[idx]);
-          if (arc_length > extra_arc_length) break;
-          distances[idx] = std::max(distances[idx], distances[bound_idx]);
-        }
-      }
+    const auto bound_idx = bound_indexes[path_idx];
+    auto arc_length = boost::geometry::distance(
+      bound_projections[path_idx].point, convert_point(bound[bound_idx + 1]));
+    for (auto up_bound_idx = bound_idx + 2; up_bound_idx < bound.size(); ++up_bound_idx) {
+      arc_length +=
+        tier4_autoware_utils::calcDistance2d(bound[up_bound_idx - 1], bound[up_bound_idx]);
+      if (arc_length > extra_arc_length) break;
+      distances[up_bound_idx] = std::max(distances[up_bound_idx], distances[bound_idx]);
+    }
+    arc_length =
+      boost::geometry::distance(bound_projections[path_idx].point, convert_point(bound[bound_idx]));
+    for (auto down_offset_idx = 1LU; down_offset_idx < bound_idx; ++down_offset_idx) {
+      const auto idx = bound_idx - down_offset_idx;
+      arc_length += tier4_autoware_utils::calcDistance2d(bound[idx - 1], bound[idx]);
+      if (arc_length > extra_arc_length) break;
+      distances[idx] = std::max(distances[idx], distances[bound_idx]);
+    }
   }
 }
 
 Expansion calculate_expansion(
   const std::vector<Pose> & path_poses, const std::vector<Point> & left_bound,
-  const std::vector<Point> & right_bound,
-  const std::vector<double> & curvatures,
+  const std::vector<Point> & right_bound, const std::vector<double> & curvatures,
   const DrivableAreaExpansionParameters & params)
 {
   Expansion expansion;
   expansion.min_lane_widths.resize(path_poses.size(), 0.0);
   for (auto path_idx = 0UL; path_idx < path_poses.size(); ++path_idx) {
-    const auto & path_pose = path_poses[path_idx];
     if (curvatures[path_idx] == 0.0) continue;
     const auto curvature_radius = 1 / curvatures[path_idx];
     expansion.min_lane_widths[path_idx] = calculate_minimum_lane_width(curvature_radius, params);
@@ -309,6 +297,50 @@ std::vector<double> calculate_smoothed_curvatures(
   }
   return smoothed_curvatures;
 }
+void calculate_expansion_distances(
+  Expansion & expansion, const std::vector<double> & max_left_expansions,
+  const std::vector<double> & max_right_expansions)
+{
+  expansion.left_distances.resize(expansion.left_original_distances.size(), 0.0);
+  expansion.right_distances.resize(expansion.right_original_distances.size(), 0.0);
+  for (auto path_idx = 0UL; path_idx < expansion.min_lane_widths.size(); ++path_idx) {
+    const auto left_bound_idx = expansion.left_bound_indexes[path_idx];
+    const auto right_bound_idx = expansion.right_bound_indexes[path_idx];
+    const auto original_width =
+      expansion.left_projections[path_idx].distance + expansion.right_projection[path_idx].distance;
+    const auto expansion_dist = expansion.min_lane_widths[path_idx] - original_width;
+    if (expansion_dist > 0.0) {
+      const auto left_limit =
+        std::min(max_left_expansions[left_bound_idx], max_left_expansions[left_bound_idx + 1]);
+      const auto right_limit =
+        std::min(max_right_expansions[right_bound_idx], max_right_expansions[right_bound_idx + 1]);
+      if (expansion_dist / 2.0 >= left_limit) {
+        const auto compensation_dist = expansion_dist / 2.0 - left_limit;
+        expansion.left_distances[left_bound_idx] = left_limit;
+        expansion.left_distances[left_bound_idx + 1] = left_limit;
+        expansion.right_distances[right_bound_idx] =
+          std::min(right_limit, expansion_dist / 2.0 + compensation_dist);
+        expansion.right_distances[right_bound_idx + 1] =
+          std::min(right_limit, expansion_dist / 2.0 + compensation_dist);
+      } else if (expansion_dist / 2.0 >= right_limit) {
+        const auto compensation_dist = expansion_dist / 2.0 - right_limit;
+        expansion.left_distances[left_bound_idx] =
+          std::min(left_limit, expansion_dist / 2.0 + compensation_dist);
+        ;
+        expansion.left_distances[left_bound_idx + 1] =
+          std::min(left_limit, expansion_dist / 2.0 + compensation_dist);
+        ;
+        expansion.right_distances[right_bound_idx] = right_limit;
+        expansion.right_distances[right_bound_idx + 1] = right_limit;
+      } else {
+        expansion.left_distances[left_bound_idx] = expansion_dist / 2.0;
+        expansion.left_distances[left_bound_idx + 1] = expansion_dist / 2.0;
+        expansion.right_distances[right_bound_idx] = expansion_dist / 2.0;
+        expansion.right_distances[right_bound_idx + 1] = expansion_dist / 2.0;
+      }
+    }
+  }
+}
 
 void expand_drivable_area(
   PathWithLaneId & path,
@@ -351,20 +383,21 @@ void expand_drivable_area(
     path_poses, path.left_bound, uncrossable_segments, uncrossable_polygons, params);
   const auto max_right_expansions = calculate_maximum_distance(
     path_poses, path.right_bound, uncrossable_segments, uncrossable_polygons, params);
-  for (auto i = 0LU; i < expansion.left_distances.size(); ++i)
-    expansion.left_distances[i] = std::min(expansion.left_distances[i], max_left_expansions[i]);
-  for (auto i = 0LU; i < expansion.right_distances.size(); ++i)
-    expansion.right_distances[i] = std::min(expansion.right_distances[i], max_right_expansions[i]);
   const auto max_dist_ms = stop_watch.toc("max_dist");
+
+  calculate_expansion_distances(expansion, max_left_expansions, max_right_expansions);
+  apply_extra_arc_length(expansion, path.left_bound, params.extra_arc_length, LEFT);
+  apply_extra_arc_length(expansion, path.right_bound, params.extra_arc_length, RIGHT);
 
   stop_watch.tic("smooth");
   apply_bound_change_rate_limit(expansion.left_distances, path.left_bound, params.max_bound_rate);
   apply_bound_change_rate_limit(expansion.right_distances, path.right_bound, params.max_bound_rate);
   const auto smooth_ms = stop_watch.toc("smooth");
-
-  // TODO(Maxime): limit the distances based on the total width (left + right < min_lane_width)
-  // if(params.limit_total_width)
-
+  // reapply expansion limits that may have been broken by the previous smoothing
+  for (auto i = 0LU; i < expansion.left_distances.size(); ++i)
+    expansion.left_distances[i] = std::min(expansion.left_distances[i], max_left_expansions[i]);
+  for (auto i = 0LU; i < expansion.right_distances.size(); ++i)
+    expansion.right_distances[i] = std::min(expansion.right_distances[i], max_right_expansions[i]);
 
   stop_watch.tic("expand");
   expand_bound(path.left_bound, path_poses, expansion.left_distances);
