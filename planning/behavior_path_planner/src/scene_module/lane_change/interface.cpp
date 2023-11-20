@@ -319,8 +319,10 @@ void LaneChangeInterface::setObjectDebugVisualizationTmp(const bool is_approved)
   const auto debug_data =
     is_approved ? module_type_->getAfterApprovalDebugData() : module_type_->getDebugData();
   for (const auto & [uuid, data] : debug_data) {
-    interest_objects_marker_interface_.insertObjectStatus(
-      data.current_obj_pose, data.obj_shape, data.is_safe);
+    const auto color = data.is_safe ? interest_objects_marker_interface::ColorName::GREEN
+                                    : interest_objects_marker_interface::ColorName::RED;
+    interest_objects_marker_interface_.insertObjectData(
+      data.current_obj_pose, data.obj_shape, color);
   }
   return;
 }

@@ -18,15 +18,13 @@
 #include <tier4_autoware_utils/math/constants.hpp>
 #include <tier4_autoware_utils/math/trigonometry.hpp>
 
-#include <std_msgs/msg/color_rgba.hpp>
-
 namespace
 {
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Transform;
 using geometry_msgs::msg::Vector3;
-using interest_objects_marker_interface::ObjectStatus;
+using interest_objects_marker_interface::ObjectMarkerData;
 using std_msgs::msg::ColorRGBA;
 using tier4_autoware_utils::Polygon2d;
 using visualization_msgs::msg::Marker;
@@ -34,7 +32,6 @@ using visualization_msgs::msg::MarkerArray;
 
 using tier4_autoware_utils::calcAzimuthAngle;
 using tier4_autoware_utils::createDefaultMarker;
-using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createQuaternionFromRPY;
 using tier4_autoware_utils::createTranslation;
@@ -44,28 +41,20 @@ using tier4_autoware_utils::getRPY;
 using tier4_autoware_utils::pi;
 using tier4_autoware_utils::sin;
 
-ColorRGBA getColor(const bool safe, const float alpha)
-{
-  const float r = safe ? 0.0f : 214.0 / 255.0;
-  const float g = safe ? 211.0 / 255.0 : 0.0f;
-  const float b = safe ? 141.0 / 255.0 : 77.0 / 255.0;
-  return createMarkerColor(r, g, b, alpha);
-}
-
 Marker createArrowMarker(
-  const size_t & id, const ObjectStatus & status, const std::string & name,
+  const size_t & id, const ObjectMarkerData & data, const std::string & name,
   const double height_offset, const double arrow_length = 1.0)
 {
   Marker marker = createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name, id, Marker::ARROW,
-    createMarkerScale(0.25, 0.5, 0.5), getColor(status.safe, 0.95f));
+    createMarkerScale(0.25, 0.5, 0.5), data.color);
 
-  const double height = 0.5 * status.shape.dimensions.z;
+  const double height = 0.5 * data.shape.dimensions.z;
 
   Point src, dst;
-  src = status.pose.position;
+  src = data.pose.position;
   src.z += height + height_offset + arrow_length;
-  dst = status.pose.position;
+  dst = data.pose.position;
   dst.z += height + height_offset;
 
   marker.points.push_back(src);
@@ -75,42 +64,40 @@ Marker createArrowMarker(
 }
 
 Marker createCircleMarker(
-  const size_t & id, const ObjectStatus & status, const std::string & name, const double radius,
+  const size_t & id, const ObjectMarkerData & data, const std::string & name, const double radius,
   const double height_offset)
 {
   Marker marker = createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name, id, Marker::LINE_STRIP,
-    createMarkerScale(0.1, 0.0, 0.0), getColor(status.safe, 0.951f));
+    createMarkerScale(0.1, 0.0, 0.0), data.color);
 
-  const double height = 0.5 * status.shape.dimensions.z;
+  const double height = 0.5 * data.shape.dimensions.z;
 
   constexpr size_t num_points = 20;
-  std::vector<Point> points;
-  points.resize(num_points);
-
   for (size_t i = 0; i < num_points; ++i) {
+    Point point;
     const double ratio = static_cast<double>(i) / static_cast<double>(num_points);
     const double theta = 2 * pi * ratio;
-    points.at(i).x = status.pose.position.x + radius * cos(theta);
-    points.at(i).y = status.pose.position.y + radius * sin(theta);
-    points.at(i).z = status.pose.position.z + height + height_offset;
-    marker.points.push_back(points.at(i));
+    point.x = data.pose.position.x + radius * cos(theta);
+    point.y = data.pose.position.y + radius * sin(theta);
+    point.z = data.pose.position.z + height + height_offset;
+    marker.points.push_back(point);
   }
-  marker.points.push_back(points.front());
+  marker.points.push_back(marker.points.front());
 
   return marker;
 }
 
 MarkerArray createTargetMarker(
-  const size_t & id, const ObjectStatus & status, const std::string & name,
+  const size_t & id, const ObjectMarkerData & data, const std::string & name,
   const double height_offset)
 {
   MarkerArray marker_array;
-  marker_array.markers.push_back(createArrowMarker(id, status, name + "_arrow", height_offset));
+  marker_array.markers.push_back(createArrowMarker(id, data, name + "_arrow", height_offset));
   marker_array.markers.push_back(
-    createCircleMarker(id, status, name + "_circle1", 0.5, height_offset + 0.75));
+    createCircleMarker(id, data, name + "_circle1", 0.5, height_offset + 0.75));
   marker_array.markers.push_back(
-    createCircleMarker(id, status, name + "_circle2", 0.75, height_offset + 0.75));
+    createCircleMarker(id, data, name + "_circle2", 0.75, height_offset + 0.75));
 
   return marker_array;
 }
@@ -128,34 +115,56 @@ InterestObjectsMarkerInterface::InterestObjectsMarkerInterface(
   pub_marker_ = node->create_publisher<MarkerArray>(topic_namespace_ + "/" + name, 1);
 }
 
-void InterestObjectsMarkerInterface::insertObjectStatus(
-  const Pose & pose, const Shape & shape, const bool safe)
+void InterestObjectsMarkerInterface::insertObjectData(
+  const Pose & pose, const Shape & shape, const ColorName & color_name)
 {
-  ObjectStatus status;
-  status.pose = pose;
-  status.shape = shape;
-  status.safe = safe;
+  insertObjectDataWithColor(pose, shape, getColor(color_name));
+}
 
-  obj_status_array_.push_back(status);
+void InterestObjectsMarkerInterface::insertObjectDataWithColor(
+  const Pose & pose, const Shape & shape, const ColorRGBA & color)
+{
+  ObjectMarkerData data;
+  data.pose = pose;
+  data.shape = shape;
+  data.color = color;
+
+  obj_marker_data_array_.push_back(data);
 }
 
 void InterestObjectsMarkerInterface::publishMarkerArray()
 {
   MarkerArray marker_array;
-  for (size_t i = 0; i < obj_status_array_.size(); ++i) {
-    const auto obj = obj_status_array_.at(i);
-    const MarkerArray target_marker = createTargetMarker(i, obj, name_, height_offset_);
+  for (size_t i = 0; i < obj_marker_data_array_.size(); ++i) {
+    const auto data = obj_marker_data_array_.at(i);
+    const MarkerArray target_marker = createTargetMarker(i, data, name_, height_offset_);
     marker_array.markers.insert(
       marker_array.markers.end(), target_marker.markers.begin(), target_marker.markers.end());
   }
 
   pub_marker_->publish(marker_array);
-  obj_status_array_.clear();
+  obj_marker_data_array_.clear();
 }
 
 void InterestObjectsMarkerInterface::setHeightOffset(const double offset)
 {
   height_offset_ = offset;
+}
+
+ColorRGBA InterestObjectsMarkerInterface::getColor(const ColorName & color_name, const float alpha)
+{
+  switch (color_name) {
+    case ColorName::GREEN:
+      return coloring::getGreen(alpha);
+    case ColorName::AMBER:
+      return coloring::getAmber(alpha);
+    case ColorName::RED:
+      return coloring::getRed(alpha);
+    case ColorName::WHITE:
+      return coloring::getWhite(alpha);
+    default:
+      return coloring::getWhite(alpha);
+  }
 }
 
 }  // namespace interest_objects_marker_interface

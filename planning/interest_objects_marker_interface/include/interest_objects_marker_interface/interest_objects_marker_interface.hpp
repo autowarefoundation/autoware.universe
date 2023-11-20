@@ -14,16 +14,18 @@
 
 #ifndef INTEREST_OBJECTS_MARKER_INTERFACE__INTEREST_OBJECTS_MARKER_INTERFACE_HPP_
 #define INTEREST_OBJECTS_MARKER_INTERFACE__INTEREST_OBJECTS_MARKER_INTERFACE_HPP_
-#include "rclcpp/rclcpp.hpp"
+#include "interest_objects_marker_interface/coloring.hpp"
+#include "interest_objects_marker_interface/marker_data.hpp"
 
+#include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <std_msgs/msg/color_rgba.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <mutex>
 #include <string>
 #include <vector>
 
@@ -31,30 +33,26 @@ namespace interest_objects_marker_interface
 {
 using autoware_auto_perception_msgs::msg::Shape;
 using geometry_msgs::msg::Pose;
+using std_msgs::msg::ColorRGBA;
 using tier4_autoware_utils::Polygon2d;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
-
-struct ObjectStatus
-{
-  Pose pose{};
-  Shape shape{};
-  bool safe{false};
-};
 
 class InterestObjectsMarkerInterface
 {
 public:
   InterestObjectsMarkerInterface(rclcpp::Node * node, const std::string & name);
-  void insertObjectStatus(const Pose & pose, const Shape & shape, const bool safe);
+  void insertObjectData(const Pose & pose, const Shape & shape, const ColorName & color_name);
+  void insertObjectDataWithColor(const Pose & pose, const Shape & shape, const ColorRGBA & color);
   void publishMarkerArray();
   void setHeightOffset(const double offset);
+  static ColorRGBA getColor(const ColorName & color_name, const float alpha = 0.99f);
 
 private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
   double height_offset_{0.0};
-  std::vector<ObjectStatus> obj_status_array_;
+  std::vector<ObjectMarkerData> obj_marker_data_array_;
 
   std::string name_;
   std::string topic_namespace_ = "/planning/debug/interest_objects_marker";

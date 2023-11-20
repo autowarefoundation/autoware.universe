@@ -13,6 +13,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 ament_auto_add_library(interest_objects_marker_interface SHARED
+  src/coloring.cpp
   src/interest_objects_marker_interface.cpp
 )
 
