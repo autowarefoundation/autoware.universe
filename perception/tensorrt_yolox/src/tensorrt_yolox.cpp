@@ -918,7 +918,6 @@ bool TrtYoloX::feedforwardAndDecode(
   for (size_t i = 0; i < batch_size; ++i) {
     auto image_size = images[i].size();
     auto & out_mask = out_masks[i];
-    auto & color_mask = color_masks[i];
     float * batch_prob = out_prob_h_.get() + (i * out_elem_num_per_batch_);
     ObjectArray object_array;
     decodeOutputs(batch_prob, object_array, scales_[i], image_size);
@@ -957,13 +956,7 @@ bool TrtYoloX::feedforwardAndDecode(
       continue;
     }
     // Assume semantic segmentation is first task
-    // This should remove when the segmentation accuracy is high
     out_mask = segmentation_masks_.at(0);
-
-    // publish color mask for visualization
-    if (publish_color_mask_) {
-      color_mask = getColorizedMask(0, sematic_color_map_);
-    }
   }
   return true;
 }
@@ -1283,13 +1276,12 @@ int TrtYoloX::getMultitaskNum(void)
   return multitask_;
 }
 
-cv::Mat TrtYoloX::getColorizedMask(int index, std::vector<Colormap> & colormap)
+void TrtYoloX::getColorizedMask(
+  const std::vector<tensorrt_yolox::Colormap> & colormap, const cv::Mat & mask, cv::Mat & cmask)
 {
-  cv::Mat mask;
-  mask = segmentation_masks_[index];
   int width = mask.cols;
   int height = mask.rows;
-  cv::Mat cmask = cv::Mat::zeros(height, width, CV_8UC3);
+  // TODO: check size of mask and cmask
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
       unsigned char id = mask.at<unsigned char>(y, x);
@@ -1298,7 +1290,6 @@ cv::Mat TrtYoloX::getColorizedMask(int index, std::vector<Colormap> & colormap)
       cmask.at<cv::Vec3b>(y, x)[2] = colormap[id].color[0];
     }
   }
-  return cmask;
 }
 
 }  // namespace tensorrt_yolox

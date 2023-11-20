@@ -187,6 +187,7 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       in_image_ptr->image, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
       8, 0);
     // Refine mask: replacing segmentation mask by roi class
+    // This should remove when the segmentation accuracy is high
     if (is_roi_overlap_segment_) {
       overlapSegmentByRoi(yolox_object, mask);
     }
@@ -202,10 +203,9 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
   objects_pub_->publish(out_objects);
 
   if (is_publish_color_mask_) {
-    auto & color_mask = color_masks.at(0);
-    cv::resize(
-      color_mask, color_mask, cv::Size(in_image_ptr->image.cols, in_image_ptr->image.rows), 0, 0,
-      cv::INTER_NEAREST);
+    cv::Mat color_mask =
+      cv::Mat::zeros(in_image_ptr->image.rows, in_image_ptr->image.cols, CV_8UC3);
+    trt_yolox_->getColorizedMask(trt_yolox_->getColorMap(), mask, color_mask);
     sensor_msgs::msg::Image::SharedPtr output_color_mask_msg =
       cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::BGR8, color_mask)
         .toImageMsg();
@@ -250,18 +250,23 @@ void TrtYoloXNode::replaceLabelMap()
 
 int TrtYoloXNode::mapRoiLabel2SegLabel(const int32_t roi_label_index)
 {
-  auto & roi_label = label_map_[roi_label_index];
-  if (roi_label == "CAR" || roi_label == "BUS" || roi_label == "TRUCK") {
-    return static_cast<int>(roi_label_index + 11);
-  }
-  if (roi_label == "PEDESTRIAN") {
-    return 11;  // person index in segment_color_map
-  }
-  if (roi_label == "MOTORCYCLE") {
-    return 17;  // motocycle index in segment_color_map
-  }
-  if (roi_label == "BICYCLE") {
-    return 18;  // bicycle index in segment_color_map
+  switch (roi_label_index) {
+    case 0:
+      return 5;
+    case 1:
+      return 13;
+    case 2:
+      return 14;
+    case 3:
+      return 15;
+    case 4:
+      return 18;
+    case 5:
+      return 17;
+    case 6:
+      return 11;
+    default:
+      return -1;
   }
   return -1;
 }
@@ -269,12 +274,13 @@ int TrtYoloXNode::mapRoiLabel2SegLabel(const int32_t roi_label_index)
 void TrtYoloXNode::overlapSegmentByRoi(const tensorrt_yolox::Object & roi_object, cv::Mat & mask)
 {
   if (roi_object.score < overlap_roi_score_threshold_) return;
-  cv::Mat submat = mask.colRange(roi_object.x_offset, roi_object.width)
-                     .rowRange(roi_object.y_offset, roi_object.height);
   int seg_class_index = mapRoiLabel2SegLabel(roi_object.type);
   if (seg_class_index < 0) return;
-  cv::Mat replace_roi(cv::Size(), mask.type(), seg_class_index);
-  replace_roi.copyTo(submat);
+  cv::Mat replace_roi(
+    cv::Size(roi_object.width, roi_object.height), mask.type(),
+    static_cast<uint8_t>(seg_class_index));
+  replace_roi.copyTo(mask.colRange(roi_object.x_offset, roi_object.x_offset + roi_object.width)
+                       .rowRange(roi_object.y_offset, roi_object.y_offset + roi_object.height));
 }
 
 }  // namespace tensorrt_yolox
