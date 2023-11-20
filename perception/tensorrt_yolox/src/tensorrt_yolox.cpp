@@ -109,7 +109,7 @@ std::vector<tensorrt_yolox::Colormap> get_seg_colormap(const std::string & filen
   std::vector<tensorrt_yolox::Colormap> seg_cmap;
   if (filename != "not-specified") {
     std::vector<std::string> color_list = loadListFromTextFile(filename);
-    for (int i = 0; i < (int)color_list.size(); i++) {
+    for (int i = 0; i < static_cast<int>(color_list.size()); i++) {
       if (i == 0) {
         // Skip header
         continue;
@@ -120,7 +120,7 @@ std::vector<tensorrt_yolox::Colormap> get_seg_colormap(const std::string & filen
       size_t npos = colormapString.find_first_of(',');
       assert(npos != std::string::npos);
       std::string substr = colormapString.substr(0, npos);
-      int id = (int)std::stoi(trim(substr));
+      int id = static_cast<int>(std::stoi(trim(substr)));
       colormapString.erase(0, npos + 1);
 
       npos = colormapString.find_first_of(',');
@@ -157,7 +157,7 @@ namespace tensorrt_yolox
 TrtYoloX::TrtYoloX(
   const std::string & model_path, const std::string & precision, const std::string & color_map_path,
   const int num_class, const float score_threshold, const float nms_threshold,
-  tensorrt_common::BuildConfig build_config, const bool use_gpu_preprocess,
+  tensorrt_common::BuildConfig build_config, const bool use_gpu_preprocess, bool publish_color_mask,
   std::string calibration_image_list_path, const double norm_factor,
   [[maybe_unused]] const std::string & cache_dir, const tensorrt_common::BatchConfig & batch_config,
   const size_t max_workspace_size)
@@ -167,7 +167,8 @@ TrtYoloX::TrtYoloX(
   norm_factor_ = norm_factor;
   batch_size_ = batch_config[2];
   multitask_ = 0;
-  color_map_ = get_seg_colormap(color_map_path);
+  sematic_color_map_ = get_seg_colormap(color_map_path);
+  publish_color_mask_ = publish_color_mask;
   if (precision == "int8") {
     if (build_config.clip_value <= 0.0) {
       if (calibration_image_list_path.empty()) {
@@ -388,13 +389,14 @@ void TrtYoloX::initPreprocessBuffer(int width, int height)
       for (int m = 0; m < multitask_; m++) {
         const auto output_dims =
           trt_common_->getBindingDimensions(m + 2);  // 0 : input, 1 : output for detections
-        const float scale =
-          std::min(output_dims.d[3] / float(width), output_dims.d[2] / float(height));
-        int out_w = (int)(width * scale);
-        int out_h = (int)(height * scale);
-        //	size_t out_elem_num = std::accumulate(
+        const float scale = std::min(
+          output_dims.d[3] / static_cast<float>(width),
+          output_dims.d[2] / static_cast<float>(height));
+        int out_w = static_cast<int>(width * scale);
+        int out_h = static_cast<int>(height * scale);
+        // size_t out_elem_num = std::accumulate(
         // output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
-        //	out_elem_num = out_elem_num * batch_size_;
+        // out_elem_num = out_elem_num * batch_size_;
         size_t out_elem_num = out_w * out_h * batch_size_;
         argmax_out_elem_num += out_elem_num;
       }
@@ -468,8 +470,9 @@ void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
       for (int m = 0; m < multitask_; m++) {
         const auto output_dims =
           trt_common_->getBindingDimensions(m + 2);  // 0: input, 1: output for detections
-        const float scale =
-          std::min(output_dims.d[3] / float(image.cols), output_dims.d[2] / float(image.rows));
+        const float scale = std::min(
+          output_dims.d[3] / static_cast<float>(image.cols),
+          output_dims.d[2] / static_cast<float>(image.rows));
         int out_w = static_cast<int>(image.cols * scale);
         int out_h = static_cast<int>(image.rows * scale);
         argmax_out_elem_num += out_w * out_h * batch_size;
@@ -545,8 +548,8 @@ void TrtYoloX::preprocess(const std::vector<cv::Mat> & images)
 }
 
 bool TrtYoloX::doInference(
-  const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & mask,
-  [[maybe_unused]] cv::Mat & color_mask)
+  const std::vector<cv::Mat> & images, ObjectArrays & objects, std::vector<cv::Mat> & masks,
+  [[maybe_unused]] std::vector<cv::Mat> & color_masks)
 {
   if (!trt_common_->isInitialized()) {
     return false;
@@ -559,7 +562,7 @@ bool TrtYoloX::doInference(
   }
 
   if (needs_output_decode_) {
-    return feedforwardAndDecode(images, objects, mask, color_mask);
+    return feedforwardAndDecode(images, objects, masks, color_masks);
   } else {
     return feedforward(images, objects);
   }
@@ -799,8 +802,8 @@ void TrtYoloX::multiScalePreprocess(const cv::Mat & image, const std::vector<cv:
 bool TrtYoloX::doInferenceWithRoi(
   const std::vector<cv::Mat> & images, ObjectArrays & objects, const std::vector<cv::Rect> & rois)
 {
-  cv::Mat mask;
-  cv::Mat color_mask;
+  std::vector<cv::Mat> masks;
+  std::vector<cv::Mat> color_masks;
   if (!trt_common_->isInitialized()) {
     return false;
   }
@@ -811,7 +814,7 @@ bool TrtYoloX::doInferenceWithRoi(
   }
 
   if (needs_output_decode_) {
-    return feedforwardAndDecode(images, objects, mask, color_mask);
+    return feedforwardAndDecode(images, objects, masks, color_masks);
   } else {
     return feedforward(images, objects);
   }
@@ -890,8 +893,8 @@ bool TrtYoloX::feedforward(const std::vector<cv::Mat> & images, ObjectArrays & o
 }
 
 bool TrtYoloX::feedforwardAndDecode(
-  const std::vector<cv::Mat> & images, ObjectArrays & objects, cv::Mat & out_mask,
-  [[maybe_unused]] cv::Mat & color_mask)
+  const std::vector<cv::Mat> & images, ObjectArrays & objects, std::vector<cv::Mat> & out_masks,
+  [[maybe_unused]] std::vector<cv::Mat> & color_masks)
 {
   std::vector<void *> buffers = {input_d_.get(), out_prob_d_.get()};
   if (multitask_) {
@@ -914,16 +917,20 @@ bool TrtYoloX::feedforwardAndDecode(
 
   for (size_t i = 0; i < batch_size; ++i) {
     auto image_size = images[i].size();
+    auto & out_mask = out_masks[i];
+    auto & color_mask = color_masks[i];
     float * batch_prob = out_prob_h_.get() + (i * out_elem_num_per_batch_);
     ObjectArray object_array;
     decodeOutputs(batch_prob, object_array, scales_[i], image_size);
+    // add refine mask using object
     objects.emplace_back(object_array);
     if (multitask_) {
       segmentation_masks_.clear();
       float * segmentation_results =
         segmentation_out_prob_h_.get() + (i * segmentation_out_elem_num_per_batch_);
       size_t counter = 0;
-      int batch = (int)(segmentation_out_elem_num_ / segmentation_out_elem_num_per_batch_);
+      int batch =
+        static_cast<int>(segmentation_out_elem_num_ / segmentation_out_elem_num_per_batch_);
       for (int m = 0; m < multitask_; m++) {
         const auto output_dims =
           trt_common_->getBindingDimensions(m + 2);  // 0 : input, 1 : output for detections
@@ -931,9 +938,10 @@ bool TrtYoloX::feedforwardAndDecode(
           output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
         out_elem_num = out_elem_num * batch;
         const float scale = std::min(
-          output_dims.d[3] / float(image_size.width), output_dims.d[2] / float(image_size.height));
-        int out_w = (int)(image_size.width * scale);
-        int out_h = (int)(image_size.height * scale);
+          output_dims.d[3] / static_cast<float>(image_size.width),
+          output_dims.d[2] / static_cast<float>(image_size.height));
+        int out_w = static_cast<int>(image_size.width * scale);
+        int out_h = static_cast<int>(image_size.height * scale);
         cv::Mat mask;
         if (use_gpu_preprocess_) {
           float * d_segmentation_results =
@@ -945,8 +953,16 @@ bool TrtYoloX::feedforwardAndDecode(
         segmentation_masks_.push_back(mask);
         counter += out_elem_num;
       }
-      out_mask = segmentation_masks_.at(0);
-      color_mask = getColorizedMask(0, color_map_);
+    } else {
+      continue;
+    }
+    // Assume semantic segmentation is first task
+    // This should remove when the segmentation accuracy is high
+    out_mask = segmentation_masks_.at(0);
+
+    // publish color mask for visualization
+    if (publish_color_mask_) {
+      color_mask = getColorizedMask(0, sematic_color_map_);
     }
   }
   return true;

@@ -94,6 +94,10 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
     RCLCPP_ERROR(this->get_logger(), "Could not find label file");
     rclcpp::shutdown();
   }
+
+  is_roi_overlap_segment_ = declare_parameter<bool>("is_roi_overlap_segment");
+  is_publish_color_mask_ = declare_parameter<bool>("is_publish_color_mask");
+  overlap_roi_score_threshold_ = declare_parameter<float>("overlap_roi_score_threshold");
   replaceLabelMap();
 
   tensorrt_common::BuildConfig build_config(
@@ -102,7 +106,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
 
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
     model_path, precision, color_map_path, label_map_.size(), score_threshold, nms_threshold,
-    build_config, preprocess_on_gpu, calibration_image_list_path);
+    build_config, preprocess_on_gpu, is_publish_color_mask_, calibration_image_list_path);
 
   timer_ =
     rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&TrtYoloXNode::onConnect, this));
@@ -150,13 +154,19 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
   const auto height = in_image_ptr->image.rows;
 
   tensorrt_yolox::ObjectArrays objects;
-  cv::Mat mask(cv::Size(height, width), CV_8UC1, cv::Scalar(0));
-  cv::Mat color_mask(cv::Size(height, width), CV_8UC3, cv::Scalar(0, 0, 0));
+  std::vector<cv::Mat> masks = {cv::Mat(cv::Size(height, width), CV_8UC1, cv::Scalar(0))};
+  std::vector<cv::Mat> color_masks = {
+    cv::Mat(cv::Size(height, width), CV_8UC3, cv::Scalar(0, 0, 0))};
 
-  if (!trt_yolox_->doInference({in_image_ptr->image}, objects, mask, color_mask)) {
+  if (!trt_yolox_->doInference({in_image_ptr->image}, objects, masks, color_masks)) {
     RCLCPP_WARN(this->get_logger(), "Fail to inference");
     return;
   }
+  auto & mask = masks.at(0);
+  cv::resize(
+    mask, mask, cv::Size(in_image_ptr->image.cols, in_image_ptr->image.rows), 0, 0,
+    cv::INTER_NEAREST);
+
   for (const auto & yolox_object : objects.at(0)) {
     tier4_perception_msgs::msg::DetectedObjectWithFeature object;
     object.feature.roi.x_offset = yolox_object.x_offset;
@@ -176,29 +186,32 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     cv::rectangle(
       in_image_ptr->image, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
       8, 0);
+    // Refine mask: replacing segmentation mask by roi class
+    if (is_roi_overlap_segment_) {
+      overlapSegmentByRoi(yolox_object, mask);
+    }
   }
-  cv::resize(
-    mask, mask, cv::Size(in_image_ptr->image.cols, in_image_ptr->image.rows), 0, 0,
-    cv::INTER_NEAREST);
   sensor_msgs::msg::Image::SharedPtr out_mask_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::MONO8, mask)
       .toImageMsg();
   out_mask_msg->header = msg->header;
   mask_pub_.publish(out_mask_msg);
 
-  cv::resize(
-    color_mask, color_mask, cv::Size(in_image_ptr->image.cols, in_image_ptr->image.rows), 0, 0,
-    cv::INTER_NEAREST);
-  sensor_msgs::msg::Image::SharedPtr output_color_mask_msg =
-    cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::BGR8, color_mask)
-      .toImageMsg();
-  output_color_mask_msg->header = msg->header;
-  color_mask_pub_.publish(output_color_mask_msg);
-
   image_pub_.publish(in_image_ptr->toImageMsg());
-
   out_objects.header = msg->header;
   objects_pub_->publish(out_objects);
+
+  if (is_publish_color_mask_) {
+    auto & color_mask = color_masks.at(0);
+    cv::resize(
+      color_mask, color_mask, cv::Size(in_image_ptr->image.cols, in_image_ptr->image.rows), 0, 0,
+      cv::INTER_NEAREST);
+    sensor_msgs::msg::Image::SharedPtr output_color_mask_msg =
+      cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::BGR8, color_mask)
+        .toImageMsg();
+    output_color_mask_msg->header = msg->header;
+    color_mask_pub_.publish(output_color_mask_msg);
+  }
 }
 
 bool TrtYoloXNode::readLabelFile(const std::string & label_path)
@@ -233,6 +246,35 @@ void TrtYoloXNode::replaceLabelMap()
       label = "UNKNOWN";
     }
   }
+}
+
+int TrtYoloXNode::mapRoiLabel2SegLabel(const int32_t roi_label_index)
+{
+  auto & roi_label = label_map_[roi_label_index];
+  if (roi_label == "CAR" || roi_label == "BUS" || roi_label == "TRUCK") {
+    return static_cast<int>(roi_label_index + 11);
+  }
+  if (roi_label == "PEDESTRIAN") {
+    return 11;  // person index in segment_color_map
+  }
+  if (roi_label == "MOTORCYCLE") {
+    return 17;  // motocycle index in segment_color_map
+  }
+  if (roi_label == "BICYCLE") {
+    return 18;  // bicycle index in segment_color_map
+  }
+  return -1;
+}
+
+void TrtYoloXNode::overlapSegmentByRoi(const tensorrt_yolox::Object & roi_object, cv::Mat & mask)
+{
+  if (roi_object.score < overlap_roi_score_threshold_) return;
+  cv::Mat submat = mask.colRange(roi_object.x_offset, roi_object.width)
+                     .rowRange(roi_object.y_offset, roi_object.height);
+  int seg_class_index = mapRoiLabel2SegLabel(roi_object.type);
+  if (seg_class_index < 0) return;
+  cv::Mat replace_roi(cv::Size(), mask.type(), seg_class_index);
+  replace_roi.copyTo(submat);
 }
 
 }  // namespace tensorrt_yolox
