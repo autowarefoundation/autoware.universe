@@ -10,29 +10,29 @@ The Emergency goal manager is responsible for coordinating the goal poses for em
 
 ### Input
 
-| Name                                 | Type                                                       | Description                                                                                                                   |
-| ------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-|                                      |                                                            |                                                                                                                               |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+|      |      |             |
 
 ### Output
 
-| Name                                      | Type                                                       | Description            |
-| ----------------------------------------- | ---------------------------------------------------------- | ---------------------- |
-|                                           |                                                            |                        |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+|      |      |             |
 
 ## Parameters
 
 ### Node Parameters
 
-| Name        | Type | Default value | Explanation                   |
-| ----------- | ---- | ------------- | ----------------------------- |
-|             |      |               |                               |
+| Name | Type | Default value | Explanation |
+| ---- | ---- | ------------- | ----------- |
+|      |      |               |             |
 
 ### Core Parameters
 
-| Name                | Type   | Default value | Explanation                                    |
-| ------------------- | ------ | ------------- | ---------------------------------------------- |
-|                     |        |               |                                                |
+| Name | Type | Default value | Explanation |
+| ---- | ---- | ------------- | ----------- |
+|      |      |               |             |
 
 ## Assumptions / Known limits
 

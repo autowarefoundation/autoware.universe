@@ -2,7 +2,6 @@
 
 ## Purpose
 
-
 ## Inner-workings / Algorithms
 
 ### State Transitions
@@ -11,17 +10,13 @@
 
 ### Input
 
-
 ### Output
-
 
 ## Parameters
 
 ### Node Parameters
 
-
 ### Core Parameters
-
 
 ## Assumptions / Known limits
 

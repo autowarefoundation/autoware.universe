@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EMERGENCY_GOAL_MANAGER__EMERGENCY_GOAL_MANAGER_CORE_HPP_
-#define EMERGENCY_GOAL_MANAGER__EMERGENCY_GOAL_MANAGER_CORE_HPP_
+#ifndef EMERGENCY_GOAL_MANAGER_CORE_HPP_
+#define EMERGENCY_GOAL_MANAGER_CORE_HPP_
 
 // Autoware
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
@@ -21,13 +21,14 @@
 #include <tier4_system_msgs/msg/emergency_goals_stamped.hpp>
 
 // ROS 2 core
-#include <geometry_msgs/msg/pose.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include <geometry_msgs/msg/pose.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
-#include <unordered_map>
 #include <queue>
 #include <string>
+#include <unordered_map>
 
 namespace emergency_goal_manager
 {
@@ -40,10 +41,11 @@ private:
   using SetRoutePoints = autoware_adapi_v1_msgs::srv::SetRoutePoints;
 
   // Subscriber
-  rclcpp::Subscription<tier4_system_msgs::msg::EmergencyGoalsStamped>::SharedPtr sub_emergency_goals_;
+  rclcpp::Subscription<tier4_system_msgs::msg::EmergencyGoalsStamped>::SharedPtr
+    sub_emergency_goals_;
   rclcpp::Subscription<tier4_system_msgs::msg::EmergencyGoalsClearCommand>::SharedPtr
     sub_emergency_goals_clear_command_;
-  
+
   void onEmergencyGoals(const tier4_system_msgs::msg::EmergencyGoalsStamped::SharedPtr msg);
   void onEmergencyGoalsClearCommand(
     const tier4_system_msgs::msg::EmergencyGoalsClearCommand::SharedPtr msg);
@@ -63,4 +65,4 @@ private:
 };
 }  // namespace emergency_goal_manager
 
-#endif  // EMERGENCY_GOAL_MANAGER__EMERGENCY_GOAL_MANAGER_CORE_HPP_
+#endif  // EMERGENCY_GOAL_MANAGER_CORE_HPP_

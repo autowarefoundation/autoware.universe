@@ -24,26 +24,26 @@ EmergencyGoalManager::EmergencyGoalManager() : Node("emergency_goal_manager")
     std::bind(&EmergencyGoalManager::onEmergencyGoals, this, std::placeholders::_1));
   sub_emergency_goals_clear_command_ =
     create_subscription<tier4_system_msgs::msg::EmergencyGoalsClearCommand>(
-    "~/input/emergency_goals_clear_command", rclcpp::QoS{1},
-    std::bind(&EmergencyGoalManager::onEmergencyGoalsClearCommand, this, std::placeholders::_1));
+      "~/input/emergency_goals_clear_command", rclcpp::QoS{1},
+      std::bind(&EmergencyGoalManager::onEmergencyGoalsClearCommand, this, std::placeholders::_1));
 
   // Client
   client_set_mrm_route_points_callback_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_set_mrm_route_points_ = create_client<SetRoutePoints>(
     "/planning/mission_planning/mission_planner/srv/set_mrm_route",
-    rmw_qos_profile_services_default,
-    client_set_mrm_route_points_callback_group_);
+    rmw_qos_profile_services_default, client_set_mrm_route_points_callback_group_);
   client_clear_mrm_route_callback_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_clear_mrm_route_ = create_client<std_srvs::srv::Trigger>(
     "/planning/mission_planning/mission_planner/srv/clear_mrm_route",
-    rmw_qos_profile_services_default,
-    client_clear_mrm_route_callback_group_);
+    rmw_qos_profile_services_default, client_clear_mrm_route_callback_group_);
 
   // Initialize
-  while (!client_set_mrm_route_points_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {}
-  while (!client_clear_mrm_route_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {}
+  while (!client_set_mrm_route_points_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
+  }
+  while (!client_clear_mrm_route_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
+  }
 }
 
 void EmergencyGoalManager::onEmergencyGoals(
@@ -52,13 +52,13 @@ void EmergencyGoalManager::onEmergencyGoals(
   if (!emergency_goals_map_.empty()) {
     emergency_goals_map_.clear();
   }
-  
+
   std::queue<geometry_msgs::msg::Pose> emergency_goals_queue;
   for (const auto & goal : msg->goals) {
     emergency_goals_queue.push(goal);
   }
   emergency_goals_map_.emplace(msg->sender, emergency_goals_queue);
-  
+
   callSetMrmRoutePoints();
 }
 
@@ -71,7 +71,7 @@ void EmergencyGoalManager::onEmergencyGoalsClearCommand(
 
   if (msg->command) {
     emergency_goals_map_.erase(msg->sender);
-    
+
     if (emergency_goals_map_.empty()) {
       callClearMrmRoute();
     } else {

@@ -13,14 +13,14 @@
 
   <!-- TODO -->
   <depend>autoware_auto_system_msgs</depend>
+  <depend>lanelet2_extension</depend>
   <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>route_handler</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>tier4_system_msgs</depend>
-  <depend>lanelet2_extension</depend>
-  <depend>route_handler</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
