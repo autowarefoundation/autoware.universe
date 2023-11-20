@@ -211,7 +211,6 @@ void LidarMarkerLocalizer::points_callback(
 
   // Check that the leaf size is not too small, given the size of the data
   int dx = static_cast<int>((max_x - min_x) * (1 / param_.resolution) + 1);
-  std::cerr << "dx " << dx << std::endl;
 
   // initialize variables
   std::vector<int> vote(dx, 0);
@@ -368,11 +367,6 @@ void LidarMarkerLocalizer::points_callback(
     tier4_autoware_utils::inverseTransformPoint(
       marker_pose_on_map_from_lanelet2_map.position, self_pose_msg.pose.pose);
 
-  std::cerr << "marker_pose_on_base_link_from_lanele2_map "
-            << marker_pose_on_base_link_from_lanele2_map.x << " "
-            << marker_pose_on_base_link_from_lanele2_map.y << " "
-            << marker_pose_on_base_link_from_lanele2_map.z << std::endl;
-
   // is_exist_marker_within_self_pose_ = distance_from_self_pose_to_marker <
   // param_.limit_distance_from_self_pose_to_marker_from_lanelet2;
   is_exist_marker_within_self_pose_ = std::fabs(marker_pose_on_base_link_from_lanele2_map.x) <
@@ -401,9 +395,6 @@ void LidarMarkerLocalizer::points_callback(
   // get marker_pose on base_link
   geometry_msgs::msg::PoseStamped marker_pose_on_base_link;
   marker_pose_on_base_link = marker_pose_on_base_link_array.at(0);  // TODO
-  std::cerr << "marker_pose_on_base_link " << marker_pose_on_base_link.pose.position.x << " "
-            << marker_pose_on_base_link.pose.position.y << " "
-            << marker_pose_on_base_link.pose.position.z << std::endl;
 
   pub_marker_pose_on_base_link_->publish(marker_pose_on_base_link);
 
@@ -427,10 +418,6 @@ void LidarMarkerLocalizer::points_callback(
   marker_pose_on_map_from_self_pose.pose.orientation =
     tier4_autoware_utils::createQuaternionFromRPY(
       self_pose_rpy.x + M_PI_2, self_pose_rpy.y, self_pose_rpy.z);
-  std::cerr << "marker_pose_on_map_from_self_pose "
-            << marker_pose_on_map_from_self_pose.pose.position.x << " "
-            << marker_pose_on_map_from_self_pose.pose.position.y << " "
-            << marker_pose_on_map_from_self_pose.pose.position.z << std::endl;
   pub_marker_pose_on_map_from_self_pose_->publish(marker_pose_on_map_from_self_pose);
   //-----
 
@@ -467,9 +454,6 @@ void LidarMarkerLocalizer::points_callback(
   diff_position_from_self_position_to_lanelet2_map.y =
     marker_pose_on_map_from_lanelet2_map.position.y -
     marker_pose_on_map_from_self_pose.pose.position.y;
-  std::cerr << "diff_position_from_self_position_to_lanelet2_map "
-            << diff_position_from_self_position_to_lanelet2_map.x << " "
-            << diff_position_from_self_position_to_lanelet2_map.y << std::endl;
 
   double diff_position_from_self_position_to_lanelet2_map_norm = std::hypot(
     diff_position_from_self_position_to_lanelet2_map.x,
