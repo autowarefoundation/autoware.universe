@@ -51,7 +51,8 @@ private:
   void onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg);
   bool readLabelFile(const std::string & label_path);
   void replaceLabelMap();
-
+  void overlapSegmentByRoi(const tensorrt_yolox::Object & object, cv::Mat & mask);
+  int mapRoiLabel2SegLabel(const int32_t roi_label_index);
   image_transport::Publisher image_pub_;
   image_transport::Publisher mask_pub_;
   image_transport::Publisher color_mask_pub_;
@@ -64,6 +65,9 @@ private:
 
   LabelMap label_map_;
   std::unique_ptr<tensorrt_yolox::TrtYoloX> trt_yolox_;
+  bool is_roi_overlap_segment_;
+  bool is_publish_color_mask_;
+  float overlap_roi_score_threshold_;
 };
 
 }  // namespace tensorrt_yolox
