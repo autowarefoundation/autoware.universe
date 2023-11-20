@@ -58,10 +58,12 @@ struct PullOutStatus
   PullOutPath pull_out_path{};
   size_t current_path_idx{0};
   PlannerType planner_type{PlannerType::NONE};
+  PathWithLaneId stop_path{};
   PathWithLaneId backward_path{};
-  bool found_pull_out_path{false};      // current path is safe against static objects
-  bool is_safe_dynamic_objects{false};  // current path is safe against dynamic objects
-  bool driving_forward{false};          // if ego is driving on backward path, this is set to false
+  bool found_pull_out_path{false};       // pull out path is found
+  bool is_safe_dynamic_objects{true};    // current path is safe against dynamic objects
+  bool backward_path_is_enabled{false};  // If true, backward path is enabled
+  bool driving_forward{false};           // if ego is driving on backward path, this is set to false
   bool backward_driving_complete{
     false};  // after backward driving is complete, this is set to true (warning: this is set to
              // false at next cycle after backward driving is complete)
@@ -85,9 +87,6 @@ public:
   {
     parameters_ = std::any_cast<std::shared_ptr<StartPlannerParameters>>(parameters);
   }
-
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] BehaviorModuleOutput run() override;
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -129,6 +128,9 @@ private:
 
   void initializeSafetyCheckParameters();
 
+  bool receivedNewRoute() const;
+  void planPathFromStartPose();
+
   bool isModuleRunning() const;
   bool isCurrentPoseOnMiddleOfTheRoad() const;
   bool isCloseToOriginalStartPose() const;
@@ -144,10 +146,13 @@ private:
   void updateStatusWithCurrentPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
     const behavior_path_planner::PlannerType & planner_type);
+
+  // this function is called when the pull out path from behind of ego position is found
   void updateStatusWithNextPath(
     const behavior_path_planner::PullOutPath & path, const Pose & start_pose,
     const behavior_path_planner::PlannerType & planner_type);
   void updateStatusIfNoSafePathFound();
+  void updateStatusWithStopPath();
 
   std::shared_ptr<StartPlannerParameters> parameters_;
   mutable std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;

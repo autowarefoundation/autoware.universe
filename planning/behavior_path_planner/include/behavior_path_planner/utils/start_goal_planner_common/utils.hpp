@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__UTILS__START_GOAL_PLANNER_COMMON__UTILS_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/scene_module/start_planner/start_planner_module.hpp"
 #include "behavior_path_planner/utils/goal_planner/goal_planner_parameters.hpp"
 #include "behavior_path_planner/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner/utils/start_goal_planner_common/common_module_data.hpp"
@@ -31,6 +32,7 @@
 namespace behavior_path_planner::utils::start_goal_planner_common
 {
 
+using behavior_path_planner::PullOutStatus;
 using behavior_path_planner::StartPlannerParameters;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
@@ -102,6 +104,9 @@ std::optional<PathWithLaneId> generateFeasibleStopPath(
   PathWithLaneId & current_path, std::shared_ptr<const PlannerData> planner_data,
   geometry_msgs::msg::Pose & stop_pose, const double maximum_deceleration,
   const double maximum_jerk);
+
+void logPullOutStatus(
+  const PullOutStatus & status, rclcpp::Logger logger, rclcpp::Logger::Level log_level);
 
 }  // namespace behavior_path_planner::utils::start_goal_planner_common
 
