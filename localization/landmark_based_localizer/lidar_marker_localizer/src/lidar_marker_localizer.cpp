@@ -33,6 +33,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   is_exist_marker_within_self_pose_(false)
 {
   using std::placeholders::_1;
+  using std::placeholders::_2;
 
   param_.resolution = static_cast<double>(this->declare_parameter<double>("resolution"));
   param_.filter_window_size = static_cast<int>(this->declare_parameter<int>("filter_window_size"));
@@ -76,7 +77,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
     std::bind(&LidarMarkerLocalizer::self_pose_callback, this, _1), points_sub_opt);
   sub_map_bin_ = this->create_subscription<HADMapBin>(
     "/map/vector_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
-    std::bind(&LidarMarkerLocalizer::map_bin_callback, this, std::placeholders::_1));
+    std::bind(&LidarMarkerLocalizer::map_bin_callback, this, _1));
 
   pub_marker_pose_on_map_from_self_pose_ =
     this->create_publisher<PoseStamped>("marker_pose_on_map_from_self_pose", 10);
@@ -88,10 +89,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   pub_marker_ = this->create_publisher<MarkerArray>("~/debug/marker", qos_marker);
 
   service_trigger_node_ = this->create_service<SetBool>(
-    "trigger_node_srv",
-    std::bind(
-      &LidarMarkerLocalizer::service_trigger_node, this, std::placeholders::_1,
-      std::placeholders::_2),
+    "trigger_node_srv", std::bind(&LidarMarkerLocalizer::service_trigger_node, this, _1, _2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(),
     points_callback_group);  // TODO refactor points_callback_group
 
