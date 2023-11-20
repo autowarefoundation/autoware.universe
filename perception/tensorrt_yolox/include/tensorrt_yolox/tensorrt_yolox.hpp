@@ -153,7 +153,10 @@ public:
    * @param[in] index multitask index
    * @param[in] colormap colormap for masks
    */
-  cv::Mat getColorizedMask(int index, std::vector<Colormap> & colormap);
+    void getColorizedMask(
+    const std::vector<tensorrt_yolox::Colormap> & colormap, const cv::Mat & mask,
+    cv::Mat & colorized_mask);
+  inline std::vector<Colormap> getColorMap() { return sematic_color_map_; }
 
 private:
   /**
