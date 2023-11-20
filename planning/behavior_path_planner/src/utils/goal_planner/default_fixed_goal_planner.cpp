@@ -50,13 +50,7 @@ lanelet::ConstLanelets DefaultFixedGoalPlanner::extractLaneletsFromPath(
     const auto & path_point = refined_path.points.at(i);
     int64_t lane_id = path_point.lane_ids.at(0);
     lanelet::ConstLanelet lanelet = rh->getLaneletsFromId(lane_id);
-    bool is_unique = true;
-    for (const lanelet::ConstLanelet & existing_lanelet : refined_path_lanelets) {
-      if (lanelet == existing_lanelet) {
-        is_unique = false;
-        break;
-      }
-    }
+    bool is_unique = std::find(refined_path_lanelets.begin(),refined_path_lanelets.end(),lanelet) == refined_path_lanelets.end();
     if (is_unique) {
       refined_path_lanelets.push_back(lanelet);
     }
