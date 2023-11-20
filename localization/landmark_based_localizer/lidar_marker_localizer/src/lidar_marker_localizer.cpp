@@ -78,24 +78,11 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
     "/map/vector_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
     std::bind(&LidarMarkerLocalizer::map_bin_callback, this, std::placeholders::_1));
 
-  pub_marker_points_on_base_link_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "marker_points_on_base_link", 10);  // rclcpp::SensorDataQoS().keep_last(5));
-  // pub_sensor_points_on_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-  //   "sensor_points_on_map", 10);  // rclcpp::SensorDataQoS().keep_last(5));
-  pub_marker_pose_on_velodyne_top_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-    "marker_pose_on_velodyne_top", 10);  // rclcpp::SensorDataQoS().keep_last(5));
   pub_marker_pose_on_map_from_self_pose_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-    "marker_pose_on_map_from_self_pose", 10);  // rclcpp::SensorDataQoS().keep_last(5));
-  pub_marker_pose_on_base_link_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-    "marker_pose_on_base_link", 10);  // rclcpp::SensorDataQoS().keep_last(5));
-  pub_initial_base_link_on_map_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-    "initial_base_link_on_map", 10);  // rclcpp::SensorDataQoS().keep_last(5));
-  pub_result_base_link_on_map_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-    "result_base_link_on_map", 10);  // rclcpp::SensorDataQoS().keep_last(5));
+    "marker_pose_on_map_from_self_pose", 10);
   pub_base_link_pose_with_covariance_on_map_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "/localization/pose_estimator/pose_with_covariance",
-      10);  // rclcpp::SensorDataQoS().keep_last(5));
+      "/localization/pose_estimator/pose_with_covariance", 10);
   rclcpp::QoS qos_marker = rclcpp::QoS(rclcpp::KeepLast(10));
   qos_marker.transient_local();
   qos_marker.reliable();
@@ -319,8 +306,6 @@ void LidarMarkerLocalizer::points_callback(
     tier4_autoware_utils::inverseTransformPoint(
       marker_pose_on_map_from_lanelet2_map.position, self_pose_msg.pose.pose);
 
-  // is_exist_marker_within_self_pose_ = distance_from_self_pose_to_marker <
-  // param_.limit_distance_from_self_pose_to_marker_from_lanelet2;
   is_exist_marker_within_self_pose_ = std::fabs(marker_pose_on_base_link_from_lanele2_map.x) <
                                       param_.limit_distance_from_self_pose_to_marker_from_lanelet2;
   if (!is_exist_marker_within_self_pose_) {
@@ -336,7 +321,6 @@ void LidarMarkerLocalizer::points_callback(
   //   return;
   // }
 
-  //-----
   is_detected_marker_ = !marker_pose_on_base_link_array.empty();
   if (!is_detected_marker_) {
     RCLCPP_WARN_STREAM_THROTTLE(
@@ -347,8 +331,6 @@ void LidarMarkerLocalizer::points_callback(
   // get marker_pose on base_link
   geometry_msgs::msg::PoseStamped marker_pose_on_base_link;
   marker_pose_on_base_link = marker_pose_on_base_link_array.at(0);  // TODO
-
-  pub_marker_pose_on_base_link_->publish(marker_pose_on_base_link);
 
   // get marker pose on map using self-pose
   const auto self_pose_rpy = tier4_autoware_utils::getRPY(self_pose_msg.pose.pose.orientation);
@@ -371,34 +353,11 @@ void LidarMarkerLocalizer::points_callback(
     tier4_autoware_utils::createQuaternionFromRPY(
       self_pose_rpy.x + M_PI_2, self_pose_rpy.y, self_pose_rpy.z);
   pub_marker_pose_on_map_from_self_pose_->publish(marker_pose_on_map_from_self_pose);
-  //-----
-
-  // get base_link pose on map
-  // geometry_msgs::msg::PoseStamped base_link_on_map;
-  // base_link_on_map.header.stamp = sensor_ros_time;
-  // base_link_on_map.header.frame_id = "map";
-  // // base_link_on_map.pose =
-  // tier4_autoware_utils::inverseTransformPose(marker_pose_on_map_from_lanelet2_map.pose,
-  // marker_pose_on_base_link.pose);
-
-  // const auto map_to_marker_pose = marker_pose_on_map_from_lanelet2_map;
-  // Eigen::Affine3d eigen_map_to_marker_pose =
-  // tf2::transformToEigen(tier4_autoware_utils::pose2transform(map_to_marker_pose.pose));
-
-  // const auto base_link_to_marker_pose = marker_pose_on_base_link;
-  // Eigen::Affine3d eigen_base_link_to_marker_pose =
-  // tf2::transformToEigen(tier4_autoware_utils::pose2transform(base_link_to_marker_pose.pose));
-  // Eigen::Affine3d eigen_marker_pose_to_base_link = eigen_base_link_to_marker_pose.inverse();
-
-  // Eigen::Affine3d map_to_base_link = eigen_map_to_marker_pose * eigen_marker_pose_to_base_link;
-  // base_link_on_map.pose = tf2::toMsg(map_to_base_link);
-  // pub_base_link_on_map_->publish(base_link_on_map);
 
   if (!is_detected_marker_ || !is_exist_marker_within_self_pose_) {
     return;
   }
 
-  //
   geometry_msgs::msg::Vector3 diff_position_from_self_position_to_lanelet2_map;
   diff_position_from_self_position_to_lanelet2_map.x =
     marker_pose_on_map_from_lanelet2_map.position.x -
@@ -422,12 +381,6 @@ void LidarMarkerLocalizer::points_callback(
     return;
   }
 
-  geometry_msgs::msg::PoseStamped initial_base_link_on_map;
-  initial_base_link_on_map.header.stamp = sensor_ros_time;
-  initial_base_link_on_map.header.frame_id = "map";
-  initial_base_link_on_map.pose = self_pose_msg.pose.pose;
-  pub_initial_base_link_on_map_->publish(initial_base_link_on_map);
-
   geometry_msgs::msg::PoseStamped result_base_link_on_map;
   result_base_link_on_map.header.stamp = sensor_ros_time;
   result_base_link_on_map.header.frame_id = "map";
@@ -437,7 +390,6 @@ void LidarMarkerLocalizer::points_callback(
     self_pose_msg.pose.pose.position.y + diff_position_from_self_position_to_lanelet2_map.y;
   result_base_link_on_map.pose.position.z = self_pose_msg.pose.pose.position.z;
   result_base_link_on_map.pose.orientation = self_pose_msg.pose.pose.orientation;
-  pub_result_base_link_on_map_->publish(result_base_link_on_map);
 
   geometry_msgs::msg::PoseWithCovarianceStamped base_link_pose_with_covariance_on_map;
   base_link_pose_with_covariance_on_map.header.stamp = sensor_ros_time;

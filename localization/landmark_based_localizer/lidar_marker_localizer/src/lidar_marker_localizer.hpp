@@ -88,14 +88,8 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_self_pose_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_bin_;
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_marker_points_on_base_link_;
-  // rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_sensor_points_on_map_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_marker_pose_on_velodyne_top_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
     pub_marker_pose_on_map_from_self_pose_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_marker_pose_on_base_link_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_initial_base_link_on_map_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_result_base_link_on_map_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     pub_base_link_pose_with_covariance_on_map_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
