@@ -52,10 +52,10 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-PLOT_MIN_ARCLENGTH = -1 #Redit1
+PLOT_MIN_ARCLENGTH = -1  # Redit1
 
 if args.length is None:
-    PLOT_MAX_ARCLENGTH = 140    #Redit2
+    PLOT_MAX_ARCLENGTH = 140  # Redit2
 else:
     PLOT_MAX_ARCLENGTH = int(args.length)
 print("max arclength = " + str(PLOT_MAX_ARCLENGTH))
@@ -72,7 +72,7 @@ else:
 print("plot type = " + PLOT_TYPE)
 
 if args.max_velocity is None:
-    MAX_VELOCITY = 10                   #Redit3
+    MAX_VELOCITY = 10  # Redit3
 else:
     MAX_VELOCITY = args.max_velocity
 
