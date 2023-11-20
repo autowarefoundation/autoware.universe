@@ -177,10 +177,11 @@ void apply_extra_arc_length(
   Expansion & expansion, const std::vector<Point> & bound, const double extra_arc_length,
   const Side side)
 {
-  auto & bound_indexes =
-    (side == LEFT ? expansion.left_bound_indexes : expansion.right_bound_indexes);
-  auto & bound_projections =
-    (side == LEFT ? expansion.left_projections : expansion.right_projections);
+  const auto & bound_indexes =
+    side == LEFT ? expansion.left_bound_indexes : expansion.right_bound_indexes;
+  const auto & bound_projections =
+    side == LEFT ? expansion.left_projections : expansion.right_projections;
+  auto & bound_expansions = side == LEFT ? expansion.left_distances : expansion.right_distances;
   for (auto path_idx = 0UL; path_idx < bound_indexes.size(); ++path_idx) {
     const auto bound_idx = bound_indexes[path_idx];
     auto arc_length = boost::geometry::distance(
@@ -189,6 +190,7 @@ void apply_extra_arc_length(
       arc_length +=
         tier4_autoware_utils::calcDistance2d(bound[up_bound_idx - 1], bound[up_bound_idx]);
       if (arc_length > extra_arc_length) break;
+      bound_expansions[up_bound_idx] = bound_expansions[bound_idx];
     }
     arc_length =
       boost::geometry::distance(bound_projections[path_idx].point, convert_point(bound[bound_idx]));
@@ -196,6 +198,7 @@ void apply_extra_arc_length(
       const auto idx = bound_idx - down_offset_idx;
       arc_length += tier4_autoware_utils::calcDistance2d(bound[idx - 1], bound[idx]);
       if (arc_length > extra_arc_length) break;
+      bound_expansions[idx] = bound_expansions[bound_idx];
     }
   }
 }
