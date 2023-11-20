@@ -69,13 +69,12 @@ bool DefaultFixedGoalPlanner::isPathValid(
   const std::shared_ptr<const PlannerData> & planner_data) const
 {
   const lanelet::ConstLanelets lanelets = extractLaneletsFromPath(refined_path, planner_data);
-  for (size_t i = 0; i < refined_path.points.size(); ++i) {
-    const auto & path_point = refined_path.points.at(i);
-    if (!utils::isInLanelets(path_point.point.pose, lanelets)) {
-      return false;  // at least one path_point falls outside any lanelet
+  // std::any_of detects whether any point lies outside lanelets
+  bool anyPointOutsideLanelets = std::any_of(refined_path.points.begin(), refined_path.points.end(), [&lanelets](const auto &refined_path_point) {
+      return !utils::isInLanelets(refined_path_point.point.pose, lanelets);
     }
-  }
-  return true;
+  );
+  return !anyPointOutsideLanelets; // NOT anyPointOutsideLanelets --> isPathValid
 }
 
 PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
