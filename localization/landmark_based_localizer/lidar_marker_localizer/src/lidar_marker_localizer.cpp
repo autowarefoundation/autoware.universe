@@ -25,6 +25,8 @@
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <string>
+
 LidarMarkerLocalizer::LidarMarkerLocalizer()
 : Node("lidar_marker_localizer"),
   diag_updater_(this),
@@ -91,7 +93,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   service_trigger_node_ = this->create_service<SetBool>(
     "trigger_node_srv", std::bind(&LidarMarkerLocalizer::service_trigger_node, this, _1, _2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(),
-    points_callback_group);  // TODO refactor points_callback_group
+    points_callback_group);  // TODO(YamatoAndo) refactor points_callback_group
 
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, this, false);
@@ -115,7 +117,7 @@ void LidarMarkerLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & ms
 void LidarMarkerLocalizer::self_pose_callback(
   const PoseWithCovarianceStamped::ConstSharedPtr & self_pose_msg_ptr)
 {
-  // TODO
+  // TODO(YamatoAndo)
   // if (!is_activated_) return;
 
   // lock mutex for initial pose
@@ -142,10 +144,9 @@ void LidarMarkerLocalizer::self_pose_callback(
       auto self_pose_on_map_ptr = std::make_shared<PoseWithCovarianceStamped>();
       self_pose_on_map_ptr->pose.pose = tier4_autoware_utils::transformPose(
         self_pose_msg_ptr->pose.pose, transform_self_pose_frame_to_map);
-      // self_pose_on_map_ptr->pose.covariance;  // TODO
+      // self_pose_on_map_ptr->pose.covariance;  // TODO(YamatoAndo)
       self_pose_on_map_ptr->header.stamp = self_pose_msg_ptr->header.stamp;
       self_pose_msg_ptr_array_.push_back(self_pose_on_map_ptr);
-
     } catch (tf2::TransformException & ex) {
       RCLCPP_WARN(
         get_logger(), "cannot get map to %s transform. %s",
@@ -250,7 +251,7 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
       // average
       for (int i = 0; i < dx; i++) {
         if (intensity_line_image_num[i] > 0)
-          intensity_line_image[i] /= (double)intensity_line_image_num[i];
+          intensity_line_image[i] /= static_cast<double>(intensity_line_image_num[i]);
       }
 
       // filter
@@ -296,9 +297,9 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
         Pose marker_pose_on_base_link;
         marker_pose_on_base_link.position.x = i * param_.resolution + min_x;
         marker_pose_on_base_link.position.y = distance[i];
-        marker_pose_on_base_link.position.z = 0.2 + 1.75 / 2.0;  // TODO
+        marker_pose_on_base_link.position.z = 0.2 + 1.75 / 2.0;  // TODO(YamatoAndo)
         marker_pose_on_base_link.orientation =
-          tier4_autoware_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO
+          tier4_autoware_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO(YamatoAndo)
         marker_pose_on_base_link_array.push_back(marker_pose_on_base_link);
       }
     }
@@ -311,7 +312,7 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
     }
 
     // get marker_pose on base_link
-    const Pose marker_pose_on_base_link = marker_pose_on_base_link_array.at(0);  // TODO
+    const Pose marker_pose_on_base_link = marker_pose_on_base_link_array.at(0);  // TODO(YamatoAndo)
 
     // get marker pose on map using self-pose
     const Vector3 self_pose_rpy = tier4_autoware_utils::getRPY(self_pose.orientation);
@@ -394,7 +395,7 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
   base_link_pose_with_covariance_on_map.header = header;
   base_link_pose_with_covariance_on_map.pose.pose = result_base_link_on_map;
 
-  // TODO transform covariance on base_link to map frame
+  // TODO(YamatoAndo) transform covariance on base_link to map frame
   for (int i = 0; i < 36; i++) {
     base_link_pose_with_covariance_on_map.pose.covariance[i] = param_.base_covariance_[i];
   }
@@ -429,5 +430,4 @@ void LidarMarkerLocalizer::service_trigger_node(
   } else {
   }
   res->success = true;
-  return;
 }
