@@ -56,6 +56,12 @@ struct TrafficSignalStamped
   autoware_perception_msgs::msg::TrafficSignal signal;
 };
 
+struct TrafficSignalTimeToRedStamped
+{
+  builtin_interfaces::msg::Time stamp;
+  double time_to_red;
+};
+
 using Pose = geometry_msgs::msg::Pose;
 using Point2d = tier4_autoware_utils::Point2d;
 using LineString2d = tier4_autoware_utils::LineString2d;

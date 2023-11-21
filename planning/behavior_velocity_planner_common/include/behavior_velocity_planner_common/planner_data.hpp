@@ -79,7 +79,7 @@ struct PlannerData
   // other internal data
   std::map<int, TrafficSignalStamped> traffic_light_id_map;
   std::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
-  std::map<int, double> traffic_light_time_to_red_id_map;
+  std::map<int, TrafficSignalTimeToRedStamped> traffic_light_time_to_red_id_map;
   tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states;
 
   // velocity smoother
@@ -135,7 +135,7 @@ struct PlannerData
     return std::make_shared<TrafficSignalStamped>(traffic_light_id_map.at(id));
   }
 
-  std::optional<double> getRestTimeToRedSignal(const int id) const
+  std::optional<TrafficSignalTimeToRedStamped> getRestTimeToRedSignal(const int id) const
   {
     try {
       return traffic_light_time_to_red_id_map.at(id);

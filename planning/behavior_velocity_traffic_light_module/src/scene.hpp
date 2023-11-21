@@ -112,6 +112,8 @@ private:
 
   void updateTrafficSignal();
 
+  bool isDataTimeout(const rclcpp::Time & data_time) const;
+
   // Lane id
   const int64_t lane_id_;
 
