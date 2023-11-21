@@ -40,7 +40,6 @@
 #include "tf2_msgs/msg/tf_message.hpp"
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
-#include <chrono>
 #include <deque>
 #include <memory>
 #include <optional>
