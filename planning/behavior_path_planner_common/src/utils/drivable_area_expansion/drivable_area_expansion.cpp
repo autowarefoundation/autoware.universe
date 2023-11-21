@@ -30,15 +30,6 @@
 
 #include <limits>
 
-// for writing the svg file
-#include <fstream>
-#include <iostream>
-// for the geometry types
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-// for the svg mapper
-#include <boost/geometry/io/svg/svg_mapper.hpp>
-#include <boost/geometry/io/svg/write.hpp>
-
 namespace drivable_area_expansion
 {
 
@@ -133,13 +124,6 @@ void calculate_bound_index_mappings(
   Expansion & expansion, const std::vector<Pose> & path_poses, const std::vector<Point> & bound,
   const Side side)
 {
-  // Declare a stream and an SVG mapper
-  std::ofstream svg(
-    "/home/mclement/Pictures/projections" + std::string(side == LEFT ? "_left" : "_right") +
-    ".svg");  // /!\ CHANGE PATH
-  boost::geometry::svg_mapper<tier4_autoware_utils::Point2d> mapper(svg, 400, 400);
-  for (const auto & p : path_poses) mapper.add(convert_point(p.position));
-  for (const auto & p : bound) mapper.add(convert_point(p));
   size_t lb_idx = 0;
   auto & bound_indexes =
     (side == LEFT ? expansion.left_bound_indexes : expansion.right_bound_indexes);
@@ -160,17 +144,6 @@ void calculate_bound_index_mappings(
     }
     lb_idx = bound_indexes[path_idx];
   }
-
-  for (auto path_idx = 0UL; path_idx < path_poses.size(); ++path_idx) {
-    mapper.map(
-      Segment2d{convert_point(path_poses[path_idx].position), bound_projections[path_idx].point},
-      "fill-opacity:0.3;fill:red;stroke:red;stroke-width:2");
-  }
-  for (const auto & p : path_poses)
-    mapper.map(
-      convert_point(p.position), "fill-opacity:0.3;fill:black;stroke:black;stroke-width:2", 1);
-  for (const auto & p : bound)
-    mapper.map(convert_point(p), "fill-opacity:0.3;fill:blue;stroke:blue;stroke-width:2", 1);
 }
 
 void apply_extra_arc_length(
