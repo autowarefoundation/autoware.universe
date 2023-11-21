@@ -19,8 +19,6 @@
 #include "interest_objects_marker_interface/marker_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <geometry_msgs/msg/pose.hpp>
