@@ -20,6 +20,16 @@ the number of false negatives is expected to decrease by using it.
 - This package is ported version toward Autoware from [this repository](https://github.com/ifzhang/ByteTrack/tree/main/deploy/TensorRT/cpp)
   (The C++ implementation by the ByteTrack's authors)
 
+### 2d tracking modification from original codes
+
+The paper just says that the 2d tracking algorithm is a simple Kalman filter.
+Original codes use the `top-left-corner` and `aspect ratio` and `size` as the state vector.
+
+This is sometimes unstable because the aspectratio can be changed by the occlusion.
+So, we use the `top-left` and `size` as the state vector.
+
+Kalman filter settings can be controlled by the parameters in `config/bytetrack_node.param.yaml`.
+
 ## Inputs / Outputs
 
 ### bytetrack_node
