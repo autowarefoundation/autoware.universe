@@ -213,7 +213,6 @@ std::vector<double> calculate_maximum_distance(
   const SegmentRtree & uncrossable_segments, const std::vector<Polygon2d> & uncrossable_polygons,
   const DrivableAreaExpansionParameters & params)
 {
-  // TODO(Maxime): improve performances (dont use bg::distance ? use rtree ?)
   std::vector<double> maximum_distances(bound.size(), std::numeric_limits<double>::max());
   LineString2d path_ls;
   LineString2d bound_ls;
@@ -346,7 +345,6 @@ void expand_drivable_area(
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("overall");
   stop_watch.tic("preprocessing");
-  // crop first/last non deviating path_poses
   const auto & params = planner_data->drivable_area_expansion_parameters;
   const auto & route_handler = *planner_data->route_handler;
   const auto uncrossable_segments = extract_uncrossable_segments(

@@ -35,14 +35,14 @@ void expand_drivable_area(
   PathWithLaneId & path,
   const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data);
 
-/// @brief prepare path poses and try to reuse their previously calculated curvatures
+/// @brief try to reuse the previous path poses and their previously calculated curvatures
 /// @details poses are reused if they do not deviate too much from the current path
 /// @param [in] path input path
 /// @param [inout] prev_poses previous poses to reuse
 /// @param [inout] prev_curvatures previous curvatures to reuse
 /// @param [in] ego_point current ego point
 /// @param [in] params parameters for reuse criteria and resampling interval
-void update_path_poses_and_previous_curvatures(
+void reuse_previous_poses(
   const PathWithLaneId & path, std::vector<Pose> & prev_poses,
   std::vector<double> & prev_curvatures, const Point & ego_point,
   const DrivableAreaExpansionParameters & params);
@@ -56,6 +56,36 @@ void update_path_poses_and_previous_curvatures(
 /// @return minimum lane width
 double calculate_minimum_lane_width(
   const double curvature_radius, const DrivableAreaExpansionParameters & params);
+
+/// @brief calculate mappings between path poses and the given drivable area bound
+/// @param [inout] expansion expansion data to update with the mapping
+/// @param [in] path_poses path poses
+/// @param [in] bound drivable area bound
+/// @param [in] Side left or right side
+void calculate_bound_index_mappings(
+  Expansion & expansion, const std::vector<Pose> & path_poses, const std::vector<Point> & bound,
+  const Side side);
+
+/// @brief apply expansion distances to all bound points within the given arc length
+/// @param [inout] expansion expansion data to update
+/// @param [in] bound drivable area bound
+/// @param [in] extra_arc_length [m] extra arc length to apply around each expansion
+/// @param [in] Side left or right side
+void apply_extra_arc_length(
+  Expansion & expansion, const std::vector<Point> & bound, const double extra_arc_length,
+  const Side side);
+
+/// @brief calculate mappings between path poses and the given drivable area bound
+/// @param [in] path_poses path poses
+/// @param [in] left_bound left drivable area bound
+/// @param [in] right_bound right drivable area bound
+/// @param [in] curvatures curvatures at each path point
+/// @param [in] params parameters with the vehicle dimensions used to calculate the min lane width
+/// @return expansion data (path->bound mappings, min lane widths, ...)
+Expansion calculate_expansion(
+  const std::vector<Pose> & path_poses, const std::vector<Point> & left_bound,
+  const std::vector<Point> & right_bound, const std::vector<double> & curvatures,
+  const DrivableAreaExpansionParameters & params);
 
 /// @brief smooth the bound by applying a limit on its rate of change
 /// @details rate of change is the lateral distance from the path over the arc length along the path
@@ -84,6 +114,14 @@ std::vector<double> calculate_maximum_distance(
 void expand_bound(
   std::vector<Point> & bound, const std::vector<Pose> & path_poses,
   const std::vector<double> & distances);
+
+/// @brief calculate the expansion distances of the left and right drivable area bounds
+/// @param [inout] expansion expansion data to be updated with the left/right expansion distances
+/// @param [in] max_left_expansions maximum left expansion distances
+/// @param [in] max_right_expansions maximum right expansion distances
+void calculate_expansion_distances(
+  Expansion & expansion, const std::vector<double> & max_left_expansions,
+  const std::vector<double> & max_right_expansions);
 
 /// @brief calculate smoothed curvatures
 /// @details smoothing is done using a moving average
