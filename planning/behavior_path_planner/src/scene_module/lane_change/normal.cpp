@@ -88,13 +88,13 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
   LaneChangePaths valid_paths{};
   const bool is_stuck = isVehicleStuck(current_lanes);
   bool found_safe_path = getLaneChangePaths(
-    current_lanes, target_lanes, direction_, &valid_paths, lane_change_parameters_->rss_params,
-    is_stuck);
+    current_lanes, target_lanes, direction_, &valid_paths,
+    lane_change_parameters_->safety_check.rss_params_for_execution, is_stuck);
   // if no safe path is found and ego is stuck, try to find a path with a small margin
   if (!found_safe_path && is_stuck) {
     found_safe_path = getLaneChangePaths(
       current_lanes, target_lanes, direction_, &valid_paths,
-      lane_change_parameters_->rss_params_for_stuck, is_stuck);
+      lane_change_parameters_->safety_check.rss_params_for_stuck, is_stuck);
   }
 
   debug_valid_path_ = valid_paths;
@@ -288,7 +288,7 @@ void NormalLaneChange::insertStopPoint(
     // consider rss distance when the LC need to avoid obstacles
     const auto rss_dist = calcRssDistance(
       0.0, planner_data_->parameters.minimum_lane_changing_velocity,
-      lane_change_parameters_->rss_params);
+      lane_change_parameters_->safety_check.rss_params_for_execution);
     const double lane_change_buffer_for_blocking_object = utils::calcMinimumLaneChangeLength(
       getCommonParam(), shift_intervals,
       getCommonParam().backward_length_buffer_for_blocking_object, 0.0);
@@ -782,7 +782,7 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
   const auto & common_parameters = planner_data_->parameters;
   auto objects = *planner_data_->dynamic_object;
   utils::path_safety_checker::filterObjectsByClass(
-    objects, lane_change_parameters_->object_types_to_check);
+    objects, lane_change_parameters_->safety_check.object_filtering.object_types_to_check);
 
   // get backward lanes
   const auto backward_length = lane_change_parameters_->backward_lane_length;
@@ -845,8 +845,8 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
   const auto current_polygon =
     utils::lane_change::createPolygon(current_lanes, 0.0, std::numeric_limits<double>::max());
   const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
-    target_lanes, direction_, lane_change_parameters_->lane_expansion_left_offset,
-    lane_change_parameters_->lane_expansion_right_offset);
+    target_lanes, direction_, lane_change_parameters_->safety_check.lane_expansion_left_offset,
+    lane_change_parameters_->safety_check.lane_expansion_right_offset);
   const auto target_polygon = utils::lane_change::createPolygon(
     expanded_target_lanes, 0.0, std::numeric_limits<double>::max());
   const auto dist_ego_to_current_lanes_center =
@@ -1415,7 +1415,8 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
   CollisionCheckDebugMap debug_data;
   const bool is_stuck = isVehicleStuck(current_lanes);
   const auto safety_status = isLaneChangePathSafe(
-    path, target_objects, lane_change_parameters_->rss_params_for_abort, is_stuck, debug_data);
+    path, target_objects, lane_change_parameters_->safety_check.rss_params_for_abort, is_stuck,
+    debug_data);
   {
     // only for debug purpose
     object_debug_.clear();
@@ -1700,13 +1701,17 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
   auto collision_check_objects = target_objects.target_lane;
   const auto current_lanes = getCurrentLanes();
 
-  if (lane_change_parameters_->check_objects_on_current_lanes || is_stuck) {
+  if (
+    lane_change_parameters_->safety_check.object_filtering.object_lane_configuration
+      .check_current_lane ||
+    is_stuck) {
     collision_check_objects.insert(
       collision_check_objects.end(), target_objects.current_lane.begin(),
       target_objects.current_lane.end());
   }
 
-  if (lane_change_parameters_->check_objects_on_other_lanes) {
+  if (lane_change_parameters_->safety_check.object_filtering.object_lane_configuration
+        .check_other_lane) {
     collision_check_objects.insert(
       collision_check_objects.end(), target_objects.other_lane.begin(),
       target_objects.other_lane.end());
@@ -1714,13 +1719,13 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
 
   const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
     lane_change_path.info.target_lanes, direction_,
-    lane_change_parameters_->lane_expansion_left_offset,
-    lane_change_parameters_->lane_expansion_right_offset);
+    lane_change_parameters_->safety_check.lane_expansion_left_offset,
+    lane_change_parameters_->safety_check.lane_expansion_right_offset);
 
   for (const auto & obj : collision_check_objects) {
     auto current_debug_data = marker_utils::createObjectDebug(obj);
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
-      obj, lane_change_parameters_->use_all_predicted_path);
+      obj, lane_change_parameters_->safety_check.object_filtering.check_all_predicted_path);
     auto is_safe = true;
     for (const auto & obj_path : obj_predicted_paths) {
       const auto collided_polygons = utils::path_safety_checker::getCollidedPolygons(
@@ -1827,7 +1832,7 @@ bool NormalLaneChange::isVehicleStuck(const lanelet::ConstLanelets & current_lan
   const auto max_lane_change_length = calcMaximumLaneChangeLength(current_lanes.back(), max_acc);
   const auto rss_dist = calcRssDistance(
     0.0, planner_data_->parameters.minimum_lane_changing_velocity,
-    lane_change_parameters_->rss_params);
+    lane_change_parameters_->safety_check.rss_params_for_execution);
 
   // It is difficult to define the detection range. If it is too short, the stuck will not be
   // determined, even though you are stuck by an obstacle. If it is too long,

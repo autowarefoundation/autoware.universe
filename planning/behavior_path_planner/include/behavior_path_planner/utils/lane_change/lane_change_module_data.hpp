@@ -21,9 +21,33 @@
 
 #include <vector>
 
+namespace behavior_path_planner::lane_change
+{
+struct PathSafetyStatus
+{
+  bool is_safe{true};
+  bool is_object_coming_from_rear{false};
+};
+
+struct SafetyCheck
+{
+  bool allow_loose_check_for_cancel{true};
+  utils::path_safety_checker::RSSparams rss_params_for_execution{};
+  utils::path_safety_checker::RSSparams rss_params_for_abort{};
+  utils::path_safety_checker::RSSparams rss_params_for_stuck{};
+
+  utils::path_safety_checker::ObjectsFilteringParams object_filtering{};
+
+  double velocity_threshold_to_ignore{1.0};
+  bool check_during_prepare_segment{true};
+
+  double lane_expansion_left_offset{0.0};
+  double lane_expansion_right_offset{0.0};
+};
+}  // namespace behavior_path_planner::lane_change
+
 namespace behavior_path_planner
 {
-
 struct LaneChangeCancelParameters
 {
   bool enable_on_prepare_phase{true};
@@ -53,14 +77,7 @@ struct LaneChangeParameters
   double min_longitudinal_acc{-1.0};
   double max_longitudinal_acc{1.0};
 
-  // collision check
-  bool enable_prepare_segment_collision_check{true};
-  double prepare_segment_ignore_object_velocity_thresh{0.1};
-  bool check_objects_on_current_lanes{true};
-  bool check_objects_on_other_lanes{true};
-  bool use_all_predicted_path{false};
-  double lane_expansion_left_offset{0.0};
-  double lane_expansion_right_offset{0.0};
+  lane_change::SafetyCheck safety_check{};
 
   // regulatory elements
   bool regulate_on_crosswalk{false};
@@ -70,15 +87,6 @@ struct LaneChangeParameters
   // ego vehicle stuck detection
   double stop_velocity_threshold{0.1};
   double stop_time_threshold{3.0};
-
-  // true by default for all objects
-  utils::path_safety_checker::ObjectTypesToCheck object_types_to_check;
-
-  // safety check
-  bool allow_loose_check_for_cancel{true};
-  utils::path_safety_checker::RSSparams rss_params{};
-  utils::path_safety_checker::RSSparams rss_params_for_abort{};
-  utils::path_safety_checker::RSSparams rss_params_for_stuck{};
 
   // abort
   LaneChangeCancelParameters cancel{};
@@ -157,14 +165,5 @@ struct AvoidanceByLCParameters : public AvoidanceParameters
   bool execute_only_when_lane_change_finish_before_object{false};
 };
 }  // namespace behavior_path_planner
-
-namespace behavior_path_planner::data::lane_change
-{
-struct PathSafetyStatus
-{
-  bool is_safe{true};
-  bool is_object_coming_from_rear{false};
-};
-}  // namespace behavior_path_planner::data::lane_change
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILS__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_

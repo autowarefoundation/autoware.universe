@@ -1076,10 +1076,10 @@ ExtendedPredictedObject transform(
 
   const auto & time_resolution = lane_change_parameters.prediction_time_resolution;
   const auto & check_at_prepare_phase =
-    lane_change_parameters.enable_prepare_segment_collision_check;
+    lane_change_parameters.safety_check.check_during_prepare_segment;
   const auto & prepare_duration = common_parameters.lane_change_prepare_duration;
   const auto & velocity_threshold =
-    lane_change_parameters.prepare_segment_ignore_object_velocity_thresh;
+    lane_change_parameters.safety_check.object_filtering.ignore_object_velocity_threshold;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
   const double obj_vel_norm = std::hypot(
     extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
