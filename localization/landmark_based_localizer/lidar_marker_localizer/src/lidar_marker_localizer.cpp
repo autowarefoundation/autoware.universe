@@ -25,6 +25,8 @@
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <algorithm>
+#include <limits>
 #include <string>
 
 LidarMarkerLocalizer::LidarMarkerLocalizer()
@@ -92,8 +94,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
 
   service_trigger_node_ = this->create_service<SetBool>(
     "trigger_node_srv", std::bind(&LidarMarkerLocalizer::service_trigger_node, this, _1, _2),
-    rclcpp::ServicesQoS().get_rmw_qos_profile(),
-    points_callback_group);  // TODO(YamatoAndo) refactor points_callback_group
+    rclcpp::ServicesQoS().get_rmw_qos_profile(), points_callback_group);
 
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, this, false);
@@ -206,85 +207,88 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
       new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
     pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
 
-    std::vector<pcl::PointCloud<autoware_point_types::PointXYZIRADRT>> ring_points;
-    ring_points.resize(128);
+    if (points_ptr->empty()) {
+      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No points!");
+      is_detected_marker_ = false;
+      return;
+    }
 
-    double min_x = 100.0;
-    double max_x = -100.0;
+    std::vector<pcl::PointCloud<autoware_point_types::PointXYZIRADRT>> ring_points(128);
+
+    float min_x = std::numeric_limits<float>::max();
+    float max_x = std::numeric_limits<float>::lowest();
     for (const auto & point : points_ptr->points) {
       ring_points[point.ring].push_back(point);
-
-      if (min_x > point.x) {
-        min_x = point.x;
-      }
-
-      if (max_x < point.x) {
-        max_x = point.x;
-      }
+      min_x = std::min(min_x, point.x);
+      max_x = std::max(max_x, point.x);
     }
 
     // Check that the leaf size is not too small, given the size of the data
-    int dx = static_cast<int>((max_x - min_x) * (1 / param_.resolution) + 1);
+    const int bin_num = static_cast<int>((max_x - min_x) / param_.resolution + 1);
 
     // initialize variables
-    std::vector<int> vote(dx, 0);
-    std::vector<double> feature_sum(dx, 0);
-    std::vector<double> distance(dx, 100);
+    std::vector<int> vote(bin_num, 0);
+    std::vector<float> min_y(bin_num, std::numeric_limits<float>::max());
 
     // for target rings
     for (size_t target_ring = 0; target_ring < ring_points.size(); target_ring++) {
       // initialize intensity line image
-      std::vector<double> intensity_line_image(dx, 0);
-      std::vector<int> intensity_line_image_num(dx, 0);
+      std::vector<double> intensity_sum(bin_num, 0.0);
+      std::vector<int> intensity_num(bin_num, 0);
 
       for (size_t i = 0; i < ring_points[target_ring].size(); i++) {
-        autoware_point_types::PointXYZIRADRT point;
-        point = ring_points[target_ring].points[i];
-        int ix = (point.x - min_x) * (1 / param_.resolution);
-        intensity_line_image[ix] += point.intensity;
-        intensity_line_image_num[ix]++;
-        if (distance[ix] > point.y) {
-          distance[ix] = point.y;
-        }
-      }
-
-      // average
-      for (int i = 0; i < dx; i++) {
-        if (intensity_line_image_num[i] > 0)
-          intensity_line_image[i] /= static_cast<double>(intensity_line_image_num[i]);
+        autoware_point_types::PointXYZIRADRT point = ring_points[target_ring].points[i];
+        const int bin_index = (point.x - min_x) / param_.resolution;
+        intensity_sum[bin_index] += point.intensity;
+        intensity_num[bin_index]++;
+        min_y[bin_index] = std::min(min_y[bin_index], point.y);
       }
 
       // filter
-      for (int i = param_.filter_window_size * 2; i < dx - param_.filter_window_size * 2; i++) {
-        double pos = 0;
-        double neg = 0;
-        double max = -1;
-        double min = 1000;
+      for (int i = param_.filter_window_size; i < bin_num - param_.filter_window_size; i++) {
+        int64_t pos = 0;
+        int64_t neg = 0;
+        double min_intensity = std::numeric_limits<double>::max();
+        double max_intensity = std::numeric_limits<double>::lowest();
 
         // find max_min
         for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
-          if (max < intensity_line_image[i + j]) max = intensity_line_image[i + j];
-          if (min > intensity_line_image[i + j]) min = intensity_line_image[i + j];
+          if (intensity_num[i + j] == 0) {
+            continue;
+          }
+          const double & average = intensity_sum[i + j] / intensity_num[i + j];
+          min_intensity = std::min(min_intensity, average);
+          max_intensity = std::max(max_intensity, average);
         }
 
-        if (max > min) {
-          double median = (max - min) / 2.0 + min;
-          for (int j = -param_.positive_window_size; j <= param_.positive_window_size; j++) {
-            if (median + param_.intensity_difference_threshold < intensity_line_image[i + j])
-              pos += 1;
+        if (max_intensity <= min_intensity) {
+          continue;
+        }
+
+        const double center_intensity = (max_intensity - min_intensity) / 2.0 + min_intensity;
+
+        for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
+          if (intensity_num[i + j] == 0) {
+            continue;
           }
-          for (int j = -param_.filter_window_size; j <= -param_.negative_window_size; j++) {
-            if (median - param_.intensity_difference_threshold > intensity_line_image[i + j])
-              neg += 1;
+          const double & average = intensity_sum[i + j] / intensity_num[i + j];
+          if (std::abs(j) >= param_.negative_window_size) {
+            // check negative
+            if (average < center_intensity - param_.intensity_difference_threshold) {
+              neg++;
+            }
+          } else if (std::abs(j) <= param_.positive_window_size) {
+            // check positive
+            if (average > center_intensity + param_.intensity_difference_threshold) {
+              pos++;
+            }
+          } else {
+            // ignore
           }
-          for (int j = param_.negative_window_size; j <= param_.filter_window_size; j++) {
-            if (median - param_.intensity_difference_threshold > intensity_line_image[i + j])
-              neg += 1;
-          }
-          if (pos >= param_.positive_vote_threshold && neg >= param_.negative_vote_threshold) {
-            vote[i]++;
-            feature_sum[i] += (max - min);
-          }
+        }
+
+        if (pos >= param_.positive_vote_threshold && neg >= param_.negative_vote_threshold) {
+          vote[i]++;
         }
       }
     }
@@ -292,11 +296,11 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
     // extract feature points
     std::vector<Pose> marker_pose_on_base_link_array;
 
-    for (int i = param_.filter_window_size * 2; i < dx - param_.filter_window_size * 2; i++) {
+    for (int i = param_.filter_window_size; i < bin_num - param_.filter_window_size; i++) {
       if (vote[i] > param_.vote_threshold_for_detect_marker) {
         Pose marker_pose_on_base_link;
         marker_pose_on_base_link.position.x = i * param_.resolution + min_x;
-        marker_pose_on_base_link.position.y = distance[i];
+        marker_pose_on_base_link.position.y = min_y[i];
         marker_pose_on_base_link.position.z = 0.2 + 1.75 / 2.0;  // TODO(YamatoAndo)
         marker_pose_on_base_link.orientation =
           tier4_autoware_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO(YamatoAndo)
