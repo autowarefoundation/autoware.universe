@@ -135,7 +135,9 @@ protected:
 
   void setObjectDebugVisualization() const;
 
-  void setObjectDebugVisualizationTmp(const bool is_approved);
+  void setInterestObjectsData(const bool is_approved);
+
+  void publishInterestObjectsData() { interest_objects_marker_interface_.publishMarkerArray(); }
 
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
 

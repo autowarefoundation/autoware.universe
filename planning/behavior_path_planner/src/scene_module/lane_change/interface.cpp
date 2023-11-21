@@ -199,8 +199,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
   stop_pose_ = module_type_->getStopPose();
 
-  setObjectDebugVisualizationTmp(true);
-  interest_objects_marker_interface_.publishMarkerArray();
+  setInterestObjectsData(true);
+  publishInterestObjectsData();
 
   updateSteeringFactorPtr(output);
   clearWaitingApproval();
@@ -224,8 +224,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
     getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
   module_type_->updateLaneChangeStatus();
   setObjectDebugVisualization();
-  setObjectDebugVisualizationTmp(false);
-  interest_objects_marker_interface_.publishMarkerArray();
+  setInterestObjectsData(false);
+  publishInterestObjectsData();
 
   // change turn signal when the vehicle reaches at the end of the path for waiting lane change
   out.turn_signal_info = getCurrentTurnSignalInfo(*out.path, out.turn_signal_info);
@@ -314,7 +314,7 @@ void LaneChangeInterface::setObjectDebugVisualization() const
   }
 }
 
-void LaneChangeInterface::setObjectDebugVisualizationTmp(const bool is_approved)
+void LaneChangeInterface::setInterestObjectsData(const bool is_approved)
 {
   const auto debug_data =
     is_approved ? module_type_->getAfterApprovalDebugData() : module_type_->getDebugData();
