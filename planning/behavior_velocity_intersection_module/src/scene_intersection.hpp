@@ -239,7 +239,7 @@ public:
     size_t collision_stopline_idx{0};
     size_t occlusion_stopline_idx{0};
   };
-  struct TrafficLightArrowSolidOn
+  struct FullyPrioritized
   {
     bool collision_detected{false};
     size_t closest_idx{0};
@@ -256,7 +256,7 @@ public:
     OccludedCollisionStop,        // occlusion and collision are both detected
     OccludedAbsenceTrafficLight,  // occlusion is detected in the absence of traffic light
     Safe,                         // judge as safe
-    TrafficLightArrowSolidOn      // only detect vehicles violating traffic rules
+    FullyPrioritized              // only detect vehicles violating traffic rules
     >;
 
   IntersectionModule(

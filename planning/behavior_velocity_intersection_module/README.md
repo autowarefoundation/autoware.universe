@@ -43,9 +43,9 @@ The set of lanes whose color is almost always the same as lane L1 is called the 
 Ideally RightOfWay tag is unnecessary if ego has perfect knowledge of all traffic signal information because:
 
 - it can distinguish which conflicting lanes should be checked because they are GREEN currently and possible collision occur with the vehicles on those lanes
-- it can distinguish which conflicting lanes can be ignored because they are RED currently and there is no chance of collision with the vehicles on on those lanes unless they violate the traffic rule
+- it can distinguish which conflicting lanes can be ignored because they are RED currently and there is no chance of collision with the vehicles on those lanes unless they violate the traffic rule
 
-That allows ego to generate the attention area dynamically using the real time traffic signal information. However this ideal condition rarely holds unless the traffic signal information is provided through the infrastructure. Also there maybe be vary complicated/bad intersection maps where multiple lanes overlap in a complex manner.
+That allows ego to generate the attention area dynamically using the real time traffic signal information. However this ideal condition rarely holds unless the traffic signal information is provided through the infrastructure. Also there maybe be very complicated/bad intersection maps where multiple lanes overlap in a complex manner.
 
 - If there is an perfect access to entire traffic light signal, then you can set `common.use_map_right_of_way` to false and there is no need to set RightOfWay tag on the map. The intersection module will generate the attention area by checking traffic signal and corresponding conflicting lanes. This feature is not implemented yet.
 - If traffic signal information is not perfect, then set `common.use_map_right_of_way` to true. If you do not want to detect vehicles on the anti-phase signal group lanes, set them as yield_lane for ego lane.
@@ -53,7 +53,7 @@ That allows ego to generate the attention area dynamically using the real time t
 
 To help the intersection module care only a set of limited lanes, RightOfWay tag needs to be properly set.
 
-Following table shows an **example** of how to set yield_lanes to each lane in a intersection w/o traffic lights. Straight lanes with traffic lights are exceptionally handled to detect no lanes because commonly it has priority over all the other lanes, so no RightOfWay setting is required.
+Following table shows an **example** of how to set yield_lanes to each lane in a intersection w/o traffic lights. It is not apparent how to determine signal phase group for a set of intersection lanes in geometric/topological manner, so yield_lane need to be set manually. Straight lanes with traffic lights are exceptionally handled to detect no lanes because commonly it has priority over all the other lanes, so no RightOfWay setting is required.
 
 | turn direction of right_of_way | yield_lane(with traffic light)                                                              | yield_lane(without traffic light)                  |
 | ------------------------------ | ------------------------------------------------------------------------------------------- | -------------------------------------------------- |
@@ -108,17 +108,17 @@ Objects that satisfy all of the following conditions are considered as target ob
 
 There are several behaviors depending on the scene.
 
-| behavior                 | scene                                                                                             | action                                                                            |
-| ------------------------ | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Safe                     | Ego detected no occlusion and collsion                                                            | Ego passes the intersection                                                       |
-| StuckStop                | The exit of the intersection is blocked by traffic jam                                            | Ego stops before the intersection or the boundary of attention area               |
-| YieldStuck               | Another vehicle stops to yield ego                                                                | Ego stops before the intersection or the boundary of attention area               |
-| NonOccludedCollisionStop | Ego detects no occlusion but detects collision                                                    | Ego stops at the default_stop_line                                                |
-| FirstWaitBeforeOcclusion | Ego detected occlusion when entering the intersection                                             | Ego stops at the default_stop_line at first                                       |
-| PeekingTowardOcclusion   | Ego detected occlusion and but no collision within the FOV (after FirstWaitBeforeOcclusion)       | Ego approaches the boundary of the attention area slowly                          |
-| OccludedCollisionStop    | Ego detected both occlusion and collision (after FirstWaitBeforeOcclusion)                        | Ego stops immediately                                                             |
-| TrafficLightArrowSolidOn | Ego is fully prioritized by the RED/Arrow signal                                                  | Ego only cares vehicles still runnng inside the intersection. Occlusion is ignore |
-| OverPassJudgeLine        | Ego is already inside the attention area and/or cannot stop before the boundary of attention area | Ego does not detect collision/occlusion anymore and passes the intersection       |
+| behavior                 | scene                                                                                             | action                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Safe                     | Ego detected no occlusion and collision                                                           | Ego passes the intersection                                                        |
+| StuckStop                | The exit of the intersection is blocked by traffic jam                                            | Ego stops before the intersection or the boundary of attention area                |
+| YieldStuck               | Another vehicle stops to yield ego                                                                | Ego stops before the intersection or the boundary of attention area                |
+| NonOccludedCollisionStop | Ego detects no occlusion but detects collision                                                    | Ego stops at the default_stop_line                                                 |
+| FirstWaitBeforeOcclusion | Ego detected occlusion when entering the intersection                                             | Ego stops at the default_stop_line at first                                        |
+| PeekingTowardOcclusion   | Ego detected occlusion and but no collision within the FOV (after FirstWaitBeforeOcclusion)       | Ego approaches the boundary of the attention area slowly                           |
+| OccludedCollisionStop    | Ego detected both occlusion and collision (after FirstWaitBeforeOcclusion)                        | Ego stops immediately                                                              |
+| FullyPrioritized         | Ego is fully prioritized by the RED/Arrow signal                                                  | Ego only cares vehicles still running inside the intersection. Occlusion is ignore |
+| OverPassJudgeLine        | Ego is already inside the attention area and/or cannot stop before the boundary of attention area | Ego does not detect collision/occlusion anymore and passes the intersection        |
 
 ```plantuml
 @startuml
@@ -147,8 +147,8 @@ state Safe
 State "Prioritized by traffic light" as Prioritized {
 state check_collision_prioritized <<choice>>
 check_tl_priority --> check_collision_prioritized: IF prioritized
-State TrafficLightArrowSolidOn
-check_collision_prioritized --> TrafficLightArrowSolidOn: IF collision detected
+State FullyPrioritized
+check_collision_prioritized --> FullyPrioritized: IF collision detected
 check_collision_prioritized --> Safe: ELSE
 }
 
@@ -180,7 +180,7 @@ OccludedCollisionStop --> PeekingTowardOcclusion: IF not collision detected
 
 ## Stuck Vehicle Detection
 
-If there is any object on the path inside the intersection and at the exit of the intersection (up to `stuck_vehicle.stuck_vehicle_detect_dist`) lane and its velocity is less than the threshold (`stuck_vehicle.stuck_vehicle_velocity_threshold`), the object is regarded as a stuck vehicle. If stuck vehicles exist, this module inserts a stopline a certain distance (=`default_stopline_margin`) before the overlapped region with other lanes. The stuck vehicle detection area is generated based on the vehicle path, so the stuck vehicle stopline is not inserted if the upstream module generated an avoidance path.
+If there is any object on the path inside the intersection and at the exit of the intersection (up to `stuck_vehicle.stuck_vehicle_detect_dist`) lane and its velocity is less than the threshold (`stuck_vehicle.stuck_vehicle_velocity_threshold`), the object is regarded as a stuck vehicle. If stuck vehicles exist, this module inserts a stopline a certain distance (=`default_stopline_margin`) before the overlapped region with other lanes. The stuck vehicle detection area is generated based on the planned path, so the stuck vehicle stopline is not inserted if the upstream module generated an avoidance path.
 
 ![stuck_vehicle_detection](./docs/stuck-vehicle.drawio.svg)
 

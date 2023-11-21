@@ -336,11 +336,11 @@ void prepareRTCByDecisionResult(
 
 template <>
 void prepareRTCByDecisionResult(
-  const IntersectionModule::TrafficLightArrowSolidOn & result,
+  const IntersectionModule::FullyPrioritized & result,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
   double * default_distance, bool * occlusion_safety, double * occlusion_distance)
 {
-  RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "TrafficLightArrowSolidOn");
+  RCLCPP_DEBUG(rclcpp::get_logger("prepareRTCByDecisionResult"), "FullyPrioritized");
   const auto closest_idx = result.closest_idx;
   const auto collision_stopline_idx = result.collision_stopline_idx;
   const auto occlusion_stopline_idx = result.occlusion_stopline_idx;
@@ -774,14 +774,14 @@ void reactRTCApprovalByDecisionResult(
 template <>
 void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved,
-  const IntersectionModule::TrafficLightArrowSolidOn & decision_result,
+  const IntersectionModule::FullyPrioritized & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   StopReason * stop_reason, VelocityFactorInterface * velocity_factor, util::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
-    "TrafficLightArrowSolidOn, approval = (default: %d, occlusion: %d)", rtc_default_approved,
+    "FullyPrioritized, approval = (default: %d, occlusion: %d)", rtc_default_approved,
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
@@ -861,8 +861,8 @@ static std::string formatDecisionResult(const IntersectionModule::DecisionResult
   if (std::holds_alternative<IntersectionModule::OccludedAbsenceTrafficLight>(decision_result)) {
     return "OccludedAbsenceTrafficLight";
   }
-  if (std::holds_alternative<IntersectionModule::TrafficLightArrowSolidOn>(decision_result)) {
-    return "TrafficLightArrowSolidOn";
+  if (std::holds_alternative<IntersectionModule::FullyPrioritized>(decision_result)) {
+    return "FullyPrioritized";
   }
   return "";
 }
@@ -1249,7 +1249,7 @@ IntersectionModule::DecisionResult IntersectionModule::modifyPathVelocityDetail(
     collision_state_machine_.getState() == StateMachine::State::STOP;
 
   if (is_prioritized) {
-    return TrafficLightArrowSolidOn{
+    return FullyPrioritized{
       has_collision_with_margin, closest_idx, collision_stopline_idx, occlusion_stopline_idx};
   }
 
