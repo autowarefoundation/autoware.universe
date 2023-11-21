@@ -19,7 +19,7 @@
   <arg name="input/pointcloud" default="/sensing/lidar/top/outlier_filtered/pointcloud"/>
   <arg name="output/pointcloud" default="output/pointcloud"/>
   <arg name="sync_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/roi_sync.param.yaml"/>
-
+  <arg name="semantic_segmentation_based_filter_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/segmentation_pointcloud_fusion.param.yaml"/>
   <!-- debug -->
   <!-- cspell: ignore minx, maxx, miny, maxy, minz, maxz  -->
   <arg name="debug_mode" default="false"/>
@@ -42,6 +42,7 @@
   <group>
     <node pkg="image_projection_based_fusion" exec="segmentation_pointcloud_fusion_node" name="segmentation_pointcloud_fusion" output="screen">
       <param name="rois_number" value="$(var input/camera_number)"/>
+      <param from="$(var semantic_segmentation_based_filter_param_path)"/>
       <param from="$(var sync_param_path)"/>
       <remap from="input" to="$(var input/pointcloud)"/>
       <remap from="output" to="$(var output/pointcloud)"/>

@@ -30,6 +30,9 @@ namespace image_projection_based_fusion
 SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<PointCloud2, PointCloud2, Image>("segmentation_pointcloud_fusion", options)
 {
+  filter_distance_threshold_ = declare_parameter<float>("filter_distance_threshold");
+  filter_semantic_label_target_ =
+    declare_parameter<std::vector<bool>>("filter_semantic_label_target");
 }
 
 void SegmentPointCloudFusionNode::preprocess(__attribute__((unused)) PointCloud2 & pointcloud_msg)
@@ -91,10 +94,12 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
        iter_orig_z(input_pointcloud_msg, "z");
        iter_x != iter_x.end();
        ++iter_x, ++iter_y, ++iter_z, ++iter_orig_x, ++iter_orig_y, ++iter_orig_z) {
-    if (*iter_z <= 0.0) {
+    // skip filtering pointcloud behind the camera or too far from camera
+    if (*iter_z <= 0.0 || *iter_z > filter_distance_threshold_) {
       output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
       continue;
     }
+
     Eigen::Vector4d projected_point = projection * Eigen::Vector4d(*iter_x, *iter_y, *iter_z, 1.0);
     Eigen::Vector2d normalized_projected_point = Eigen::Vector2d(
       projected_point.x() / projected_point.z(), projected_point.y() / projected_point.z());
@@ -106,12 +111,16 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
       output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
       continue;
     }
-    // TODO(badai-nguyen): replace single road class to a list of outlier classes
-    bool is_keep_class = mask.at<uint8_t>(
-                           static_cast<uint16_t>(normalized_projected_point.y()),
-                           static_cast<uint16_t>(normalized_projected_point.x())) > 10;
 
-    if (is_keep_class) {
+    // skip filtering pointcloud where semantic id out of the defined list
+    uint8_t semantic_id = mask.at<uint8_t>(
+      static_cast<uint16_t>(normalized_projected_point.y()),
+      static_cast<uint16_t>(normalized_projected_point.x()));
+    if (static_cast<size_t>(semantic_id) >= filter_semantic_label_target_.size()) {
+      output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
+      continue;
+    }
+    if (!filter_semantic_label_target_.at(semantic_id)) {
       output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
     }
   }

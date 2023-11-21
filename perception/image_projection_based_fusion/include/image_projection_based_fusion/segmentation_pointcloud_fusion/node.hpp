@@ -32,6 +32,8 @@ class SegmentPointCloudFusionNode : public FusionNode<PointCloud2, PointCloud2, 
 {
 private:
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_pointcloud_ptr_;
+  std::vector<bool> filter_semantic_label_target_;
+  float filter_distance_threshold_;
   /* data */
 public:
   explicit SegmentPointCloudFusionNode(const rclcpp::NodeOptions & options);
