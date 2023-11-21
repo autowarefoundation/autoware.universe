@@ -313,8 +313,10 @@ void BehaviorVelocityPlannerNode::onTrafficSignalsRawV2I(
 
   for (const auto & car_light : msg->car_lights) {
     for (const auto & state : car_light.states) {
-      planner_data_.traffic_light_time_to_red_id_map[state.traffic_signal_id] =
-        car_light.min_rest_time_to_red;
+      TrafficSignalTimeToRedStamped time_to_red;
+      time_to_red.stamp = msg->header.stamp;
+      time_to_red.time_to_red = car_light.min_rest_time_to_red;
+      planner_data_.traffic_light_time_to_red_id_map[state.traffic_signal_id] = time_to_red;
     }
   }
 }

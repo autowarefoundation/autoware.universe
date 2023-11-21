@@ -225,11 +225,13 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
     first_ref_stop_path_point_index_ = stop_line_point_idx;
 
-    const std::optional<double> rest_time_to_red_signal =
+    const auto rest_time_to_red_signal =
       planner_data_->getRestTimeToRedSignal(traffic_light_reg_elem_.id());
-    if (planner_param_.v2i_use_rest_time && rest_time_to_red_signal) {
+    if (
+      planner_param_.v2i_use_rest_time && rest_time_to_red_signal &&
+      !isDataTimeout(rest_time_to_red_signal->stamp)) {
       const double rest_time_allowed_to_go_ahead =
-        rest_time_to_red_signal.value() - planner_param_.v2i_last_time_allowed_to_pass;
+        rest_time_to_red_signal->time_to_red - planner_param_.v2i_last_time_allowed_to_pass;
 
       const double ego_v = planner_data_->current_velocity->twist.linear.x;
       if (ego_v >= planner_param_.v2i_velocity_threshold) {
@@ -457,6 +459,19 @@ bool TrafficLightModule::hasTrafficLightShape(
     [&lamp_shape](const auto & x) { return x.shape == lamp_shape; });
 
   return it_lamp != tl_state.elements.end();
+}
+
+bool TrafficLightModule::isDataTimeout(const rclcpp::Time & data_time) const
+{
+  const auto now = clock_->now();
+  const bool is_data_timeout = (now - data_time).seconds() > planner_param_.tl_state_timeout;
+  if (is_data_timeout) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      logger_, *clock_, 5000 /* ms */,
+      "data is timeout. time diff: " << (now - data_time).seconds());
+  }
+
+  return is_data_timeout;
 }
 
 }  // namespace behavior_velocity_planner

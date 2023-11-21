@@ -85,6 +85,12 @@ struct TrafficSignalStamped
   autoware_perception_msgs::msg::TrafficSignal signal;
 };
 
+struct TrafficSignalTimeToRedStamped
+{
+  builtin_interfaces::msg::Time stamp;
+  double time_to_red;
+};
+
 using geometry_msgs::msg::Pose;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 using Polygons2d = std::vector<Polygon2d>;
