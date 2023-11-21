@@ -18,6 +18,7 @@
   <arg name="fusion_distance" default="100.0"/>
   <arg name="trust_object_distance" default="100.0"/>
   <arg name="use_roi_based_cluster" default="false"/>
+  <arg name="use_image_segmentation_filter" default="false" description="use image sematic segmentation based pointcloud filter"/>
 
   <!-- Camera parameters -->
   <arg name="image_raw0" default="/image_raw" description="image raw topic name"/>
@@ -45,7 +46,6 @@
   <arg name="camera_info7" default="/camera_info7"/>
   <arg name="detection_rois7" default="/perception/object_recognition/detection/rois7"/>
   <arg name="image_number" default="1" description="choose image raw number(1-8)"/>
-  <arg name="use_image_segmentation_filter" default="false"/>
 
   <!-- Jetson AGX -->
   <!-- <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">

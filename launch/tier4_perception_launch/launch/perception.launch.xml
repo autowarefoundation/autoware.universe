@@ -63,6 +63,7 @@
   <arg name="use_low_height_cropbox" default="true" description="use low height crop filter in clustering"/>
   <arg name="use_object_filter" default="true" description="use object filter"/>
   <arg name="use_roi_based_cluster" default="true" description="use roi_based_cluster in clustering"/>
+  <arg name="use_image_segmentation_filter" default="false" description="use image sematic segmentation based pointcloud filter"/>
   <arg
     name="use_empty_dynamic_object_publisher"
     default="false"
