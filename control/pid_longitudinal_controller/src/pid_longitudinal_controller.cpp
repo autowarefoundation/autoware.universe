@@ -100,6 +100,8 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
     const double lpf_vel_error_gain{node.declare_parameter<double>("lpf_vel_error_gain")};
     m_lpf_vel_error = std::make_shared<LowpassFilter1d>(0.0, lpf_vel_error_gain);
 
+    m_enable_integration_at_low_speed =
+      node.declare_parameter<bool>("enable_integration_at_low_speed");
     m_current_vel_threshold_pid_integrate =
       node.declare_parameter<double>("current_vel_threshold_pid_integration");  // [m/s]
 
@@ -972,7 +974,9 @@ double PidLongitudinalController::applyVelocityFeedback(
   const bool vehicle_is_moving = std::abs(current_vel) > m_current_vel_threshold_pid_integrate;
   const double time_under_control = getTimeUnderControl();
   const bool vehicle_is_stuck =
-    !vehicle_is_moving && time_under_control > m_time_threshold_before_pid_integrate;
+    m_enable_integration_at_low_speed
+      ? !vehicle_is_moving && time_under_control > m_time_threshold_before_pid_integrate
+      : false;
 
   const bool enable_integration = (vehicle_is_moving || vehicle_is_stuck) && is_under_control;
   const double error_vel_filtered = m_lpf_vel_error->filter(diff_vel);

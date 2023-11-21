@@ -149,6 +149,7 @@ private:
   // drive
   PIDController m_pid_vel;
   std::shared_ptr<LowpassFilter1d> m_lpf_vel_error{nullptr};
+  bool m_enable_integration_at_low_speed;
   double m_current_vel_threshold_pid_integrate;
   double m_time_threshold_before_pid_integrate;
   bool m_enable_brake_keeping_before_stop;
