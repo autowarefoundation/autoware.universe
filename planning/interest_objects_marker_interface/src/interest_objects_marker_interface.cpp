@@ -18,98 +18,17 @@
 #include <tier4_autoware_utils/math/constants.hpp>
 #include <tier4_autoware_utils/math/trigonometry.hpp>
 
-namespace
+namespace interest_objects_marker_interface
 {
-using geometry_msgs::msg::Point;
+using autoware_auto_perception_msgs::msg::Shape;
 using geometry_msgs::msg::Pose;
-using geometry_msgs::msg::Transform;
-using geometry_msgs::msg::Vector3;
-using interest_objects_marker_interface::ObjectMarkerData;
 using std_msgs::msg::ColorRGBA;
-using tier4_autoware_utils::Polygon2d;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
-using tier4_autoware_utils::calcAzimuthAngle;
-using tier4_autoware_utils::createDefaultMarker;
-using tier4_autoware_utils::createMarkerScale;
-using tier4_autoware_utils::createQuaternionFromRPY;
-using tier4_autoware_utils::createTranslation;
-
-using tier4_autoware_utils::cos;
-using tier4_autoware_utils::getRPY;
-using tier4_autoware_utils::pi;
-using tier4_autoware_utils::sin;
-
-Marker createArrowMarker(
-  const size_t & id, const ObjectMarkerData & data, const std::string & name,
-  const double height_offset, const double arrow_length = 1.0)
-{
-  Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name, id, Marker::ARROW,
-    createMarkerScale(0.25, 0.5, 0.5), data.color);
-
-  const double height = 0.5 * data.shape.dimensions.z;
-
-  Point src, dst;
-  src = data.pose.position;
-  src.z += height + height_offset + arrow_length;
-  dst = data.pose.position;
-  dst.z += height + height_offset;
-
-  marker.points.push_back(src);
-  marker.points.push_back(dst);
-
-  return marker;
-}
-
-Marker createCircleMarker(
-  const size_t & id, const ObjectMarkerData & data, const std::string & name, const double radius,
-  const double height_offset)
-{
-  Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name, id, Marker::LINE_STRIP,
-    createMarkerScale(0.1, 0.0, 0.0), data.color);
-
-  const double height = 0.5 * data.shape.dimensions.z;
-
-  constexpr size_t num_points = 20;
-  for (size_t i = 0; i < num_points; ++i) {
-    Point point;
-    const double ratio = static_cast<double>(i) / static_cast<double>(num_points);
-    const double theta = 2 * pi * ratio;
-    point.x = data.pose.position.x + radius * cos(theta);
-    point.y = data.pose.position.y + radius * sin(theta);
-    point.z = data.pose.position.z + height + height_offset;
-    marker.points.push_back(point);
-  }
-  marker.points.push_back(marker.points.front());
-
-  return marker;
-}
-
-MarkerArray createTargetMarker(
-  const size_t & id, const ObjectMarkerData & data, const std::string & name,
-  const double height_offset)
-{
-  MarkerArray marker_array;
-  marker_array.markers.push_back(createArrowMarker(id, data, name + "_arrow", height_offset));
-  marker_array.markers.push_back(
-    createCircleMarker(id, data, name + "_circle1", 0.5, height_offset + 0.75));
-  marker_array.markers.push_back(
-    createCircleMarker(id, data, name + "_circle2", 0.75, height_offset + 0.75));
-
-  return marker_array;
-}
-
-}  // namespace
-
-namespace interest_objects_marker_interface
-{
-
 InterestObjectsMarkerInterface::InterestObjectsMarkerInterface(
   rclcpp::Node * node, const std::string & name)
-: height_offset_{0.5}, name_{name}
+: name_{name}
 {
   // Publisher
   pub_marker_ = node->create_publisher<MarkerArray>(topic_namespace_ + "/" + name, 1);
@@ -118,10 +37,10 @@ InterestObjectsMarkerInterface::InterestObjectsMarkerInterface(
 void InterestObjectsMarkerInterface::insertObjectData(
   const Pose & pose, const Shape & shape, const ColorName & color_name)
 {
-  insertObjectDataWithColor(pose, shape, getColor(color_name));
+  insertObjectDataWithCustomColor(pose, shape, getColor(color_name));
 }
 
-void InterestObjectsMarkerInterface::insertObjectDataWithColor(
+void InterestObjectsMarkerInterface::insertObjectDataWithCustomColor(
   const Pose & pose, const Shape & shape, const ColorRGBA & color)
 {
   ObjectMarkerData data;
@@ -137,11 +56,11 @@ void InterestObjectsMarkerInterface::publishMarkerArray()
   MarkerArray marker_array;
   for (size_t i = 0; i < obj_marker_data_array_.size(); ++i) {
     const auto data = obj_marker_data_array_.at(i);
-    const MarkerArray target_marker = createTargetMarker(i, data, name_, height_offset_);
+    const MarkerArray target_marker =
+      marker_utils::createTargetMarker(i, data, name_, height_offset_);
     marker_array.markers.insert(
       marker_array.markers.end(), target_marker.markers.begin(), target_marker.markers.end());
   }
-
   pub_marker_->publish(marker_array);
   obj_marker_data_array_.clear();
 }
@@ -161,9 +80,9 @@ ColorRGBA InterestObjectsMarkerInterface::getColor(const ColorName & color_name,
     case ColorName::RED:
       return coloring::getRed(alpha);
     case ColorName::WHITE:
-      return coloring::getWhite(alpha);
+      return coloring::getGray(alpha);
     default:
-      return coloring::getWhite(alpha);
+      return coloring::getGray(alpha);
   }
 }
 

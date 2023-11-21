@@ -14,37 +14,41 @@
 
 #include "interest_objects_marker_interface/coloring.hpp"
 
+namespace
+{
+std_msgs::msg::ColorRGBA convertFromColorCode(const uint64_t code, const float alpha)
+{
+  const float r = static_cast<int>(code >> 16) / 255.0;
+  const float g = static_cast<int>((code << 48) >> 56) / 255.0;
+  const float b = static_cast<int>((code << 56) >> 56) / 255.0;
+
+  return tier4_autoware_utils::createMarkerColor(r, g, b, alpha);
+}
+}  // namespace
+
 namespace interest_objects_marker_interface::coloring
 {
 std_msgs::msg::ColorRGBA getGreen(const float alpha)
 {
-  const float r = 0.0f;
-  const float g = 211.0 / 255.0;
-  const float b = 141.0 / 255.0;
-  return tier4_autoware_utils::createMarkerColor(r, g, b, alpha);
+  constexpr uint64_t code = 0x00e676;
+  return convertFromColorCode(code, alpha);
 }
 
 std_msgs::msg::ColorRGBA getAmber(const float alpha)
 {
-  const float r = 0.0f;
-  const float g = 211.0 / 255.0;
-  const float b = 141.0 / 255.0;
-  return tier4_autoware_utils::createMarkerColor(r, g, b, alpha);
+  constexpr uint64_t code = 0xffea00;
+  return convertFromColorCode(code, alpha);
 }
 
 std_msgs::msg::ColorRGBA getRed(const float alpha)
 {
-  const float r = 214.0 / 255.0;
-  const float g = 0.0f;
-  const float b = 77.0 / 255.0;
-  return tier4_autoware_utils::createMarkerColor(r, g, b, alpha);
+  constexpr uint64_t code = 0xff3d00;
+  return convertFromColorCode(code, alpha);
 }
 
-std_msgs::msg::ColorRGBA getWhite(const float alpha)
+std_msgs::msg::ColorRGBA getGray(const float alpha)
 {
-  const float r = 1.0f;
-  const float g = 1.0f;
-  const float b = 1.0f;
-  return tier4_autoware_utils::createMarkerColor(r, g, b, alpha);
+  constexpr uint64_t code = 0xbdbdbd;
+  return convertFromColorCode(code, alpha);
 }
 }  // namespace interest_objects_marker_interface::coloring

@@ -16,6 +16,7 @@
 #define INTEREST_OBJECTS_MARKER_INTERFACE__INTEREST_OBJECTS_MARKER_INTERFACE_HPP_
 #include "interest_objects_marker_interface/coloring.hpp"
 #include "interest_objects_marker_interface/marker_data.hpp"
+#include "interest_objects_marker_interface/marker_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
@@ -31,27 +32,58 @@
 
 namespace interest_objects_marker_interface
 {
-using autoware_auto_perception_msgs::msg::Shape;
-using geometry_msgs::msg::Pose;
-using std_msgs::msg::ColorRGBA;
-using tier4_autoware_utils::Polygon2d;
-using visualization_msgs::msg::Marker;
-using visualization_msgs::msg::MarkerArray;
-
 class InterestObjectsMarkerInterface
 {
 public:
+  /**
+   * @brief Constructor
+   * @param node Node that publishes marker
+   * @param name Module name
+   */
   InterestObjectsMarkerInterface(rclcpp::Node * node, const std::string & name);
-  void insertObjectData(const Pose & pose, const Shape & shape, const ColorName & color_name);
-  void insertObjectDataWithColor(const Pose & pose, const Shape & shape, const ColorRGBA & color);
+
+  /**
+   * @brief Insert object data to visualize
+   * @param pose Object pose
+   * @param shape Object shape
+   * @param color_name Color name
+   */
+  void insertObjectData(
+    const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape,
+    const ColorName & color_name);
+
+  /**
+   * @brief Insert object data to visualize with custom color data
+   * @param pose Object pose
+   * @param shape Object shape
+   * @param color Color data with alpha
+   */
+  void insertObjectDataWithCustomColor(
+    const geometry_msgs::msg::Pose & pose, const autoware_auto_perception_msgs::msg::Shape & shape,
+    const std_msgs::msg::ColorRGBA & color);
+
+  /**
+   * @brief Publish interest objects marker
+   */
   void publishMarkerArray();
+
+  /**
+   * @brief Set height offset of markers
+   * @param offset Height offset of markers
+   */
   void setHeightOffset(const double offset);
-  static ColorRGBA getColor(const ColorName & color_name, const float alpha = 0.99f);
+
+  /**
+   * @brief Get color data from color name
+   * @param color_name Color name
+   * @param alpha Alpha
+   */
+  static std_msgs::msg::ColorRGBA getColor(const ColorName & color_name, const float alpha = 0.99f);
 
 private:
-  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_marker_;
 
-  double height_offset_{0.0};
+  double height_offset_{0.5};
   std::vector<ObjectMarkerData> obj_marker_data_array_;
 
   std::string name_;

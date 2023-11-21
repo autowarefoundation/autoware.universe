@@ -25,7 +25,7 @@ namespace interest_objects_marker_interface::coloring
 std_msgs::msg::ColorRGBA getGreen(const float alpha);
 std_msgs::msg::ColorRGBA getAmber(const float alpha);
 std_msgs::msg::ColorRGBA getRed(const float alpha);
-std_msgs::msg::ColorRGBA getWhite(const float alpha);
+std_msgs::msg::ColorRGBA getGray(const float alpha);
 }  // namespace interest_objects_marker_interface::coloring
 
 #endif  // INTEREST_OBJECTS_MARKER_INTERFACE__COLORING_HPP_
