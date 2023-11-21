@@ -181,6 +181,7 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".occlusion.attention_lane_curvature_calculation_ds");
   ip.occlusion.static_occlusion_with_traffic_light_timeout = getOrDeclareParameter<double>(
     node, ns + ".occlusion.static_occlusion_with_traffic_light_timeout");
+  ip.debug.ttc = getOrDeclareParameter<std::vector<int64_t>>(node, ns + ".debug.ttc");
 }
 
 void IntersectionModuleManager::launchNewModules(
@@ -192,6 +193,7 @@ void IntersectionModuleManager::launchNewModules(
   const auto lanelets =
     planning_utils::getLaneletsOnPath(path, lanelet_map, planner_data_->current_odometry->pose);
   // run occlusion detection only in the first intersection
+  // TODO(Mamoru Sobue): remove `enable_occlusion_detection` variable
   const bool enable_occlusion_detection = intersection_param_.occlusion.enable;
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);

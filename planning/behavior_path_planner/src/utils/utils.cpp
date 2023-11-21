@@ -974,6 +974,11 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
     shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
 
+  // Insert zero velocity to each point in the path.
+  for (auto & point : reference_path.points) {
+    point.point.longitudinal_velocity_mps = 0.0;
+  }
+
   output.path = std::make_shared<PathWithLaneId>(reference_path);
   output.reference_path = std::make_shared<PathWithLaneId>(reference_path);
   output.drivable_area_info.drivable_lanes = drivable_lanes;
@@ -1928,21 +1933,32 @@ void makeBoundLongitudinallyMonotonic(
     return ret;
   };
 
-  const auto is_monotonic =
-    [&](const auto & p1, const auto & p2, const auto & p3, const auto is_points_left) {
-      const auto p1_to_p2 = calcAzimuthAngle(p1, p2);
-      const auto p2_to_p3 = calcAzimuthAngle(p2, p3);
+  const auto is_non_monotonic = [&](
+                                  const auto & base_pose, const auto & point,
+                                  const auto is_points_left, const auto is_reverse) {
+    const auto p_transformed = tier4_autoware_utils::inverseTransformPoint(point, base_pose);
+    if (p_transformed.x < 0.0 && p_transformed.y > 0.0) {
+      return is_points_left && !is_reverse;
+    }
 
-      const auto theta = normalizeRadian(p1_to_p2 - p2_to_p3);
+    if (p_transformed.x < 0.0 && p_transformed.y < 0.0) {
+      return !is_points_left && !is_reverse;
+    }
 
-      return (is_points_left && 0 < theta) || (!is_points_left && theta < 0);
-    };
+    if (p_transformed.x > 0.0 && p_transformed.y > 0.0) {
+      return is_points_left && is_reverse;
+    }
+
+    if (p_transformed.x > 0.0 && p_transformed.y < 0.0) {
+      return !is_points_left && is_reverse;
+    }
+
+    return false;
+  };
 
   // define a function to remove non monotonic point on bound
   const auto remove_non_monotonic_point = [&](const auto & bound_with_pose, const bool is_reverse) {
     std::vector<Pose> monotonic_bound;
-
-    const bool is_points_left = is_reverse ? !is_bound_left : is_bound_left;
 
     size_t bound_idx = 0;
     while (true) {
@@ -1956,13 +1972,12 @@ void makeBoundLongitudinallyMonotonic(
       // opposite.
       const double lat_offset = is_bound_left ? 100.0 : -100.0;
 
-      const auto p_bound_1 = getPoint(bound_with_pose.at(bound_idx));
-      const auto p_bound_2 = getPoint(bound_with_pose.at(bound_idx + 1));
+      const auto p_bound_1 = getPose(bound_with_pose.at(bound_idx));
+      const auto p_bound_2 = getPose(bound_with_pose.at(bound_idx + 1));
 
-      const auto p_bound_offset =
-        calcOffsetPose(getPose(bound_with_pose.at(bound_idx)), 0.0, lat_offset, 0.0);
+      const auto p_bound_offset = calcOffsetPose(p_bound_1, 0.0, lat_offset, 0.0);
 
-      if (!is_monotonic(p_bound_1, p_bound_2, p_bound_offset.position, is_points_left)) {
+      if (!is_non_monotonic(p_bound_1, p_bound_2.position, is_bound_left, is_reverse)) {
         bound_idx++;
         continue;
       }
@@ -1970,7 +1985,7 @@ void makeBoundLongitudinallyMonotonic(
       // skip non monotonic points
       for (size_t i = bound_idx + 1; i < bound_with_pose.size() - 1; ++i) {
         const auto intersect_point = intersect(
-          p_bound_1, p_bound_offset.position, bound_with_pose.at(i).position,
+          p_bound_1.position, p_bound_offset.position, bound_with_pose.at(i).position,
           bound_with_pose.at(i + 1).position);
 
         if (intersect_point) {
@@ -2287,62 +2302,6 @@ double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLan
   const auto & arc_coordinates = lanelet::utils::getArcCoordinates(lanelets, current_pose);
   const double lanelet_length = lanelet::utils::getLaneletLength3d(lanelets);
   return lanelet_length - arc_coordinates.length;
-}
-
-double getDistanceToNextTrafficLight(
-  const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
-{
-  lanelet::ConstLanelet current_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(lanelets, current_pose, &current_lanelet)) {
-    return std::numeric_limits<double>::infinity();
-  }
-
-  const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(current_pose.position);
-  const auto to_object = lanelet::geometry::toArcCoordinates(
-    lanelet::utils::to2D(current_lanelet.centerline()),
-    lanelet::utils::to2D(lanelet_point).basicPoint());
-
-  for (const auto & element : current_lanelet.regulatoryElementsAs<lanelet::TrafficLight>()) {
-    lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().get();
-
-    const auto to_stop_line = lanelet::geometry::toArcCoordinates(
-      lanelet::utils::to2D(current_lanelet.centerline()),
-      lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
-
-    const auto distance_object_to_stop_line = to_stop_line.length - to_object.length;
-
-    if (distance_object_to_stop_line > 0.0) {
-      return distance_object_to_stop_line;
-    }
-  }
-
-  double distance = lanelet::utils::getLaneletLength3d(current_lanelet);
-
-  bool found_current_lane = false;
-  for (const auto & llt : lanelets) {
-    if (llt.id() == current_lanelet.id()) {
-      found_current_lane = true;
-      continue;
-    }
-
-    if (!found_current_lane) {
-      continue;
-    }
-
-    for (const auto & element : llt.regulatoryElementsAs<lanelet::TrafficLight>()) {
-      lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().get();
-
-      const auto to_stop_line = lanelet::geometry::toArcCoordinates(
-        lanelet::utils::to2D(llt.centerline()),
-        lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
-
-      return distance + to_stop_line.length - to_object.length;
-    }
-
-    distance += lanelet::utils::getLaneletLength3d(llt);
-  }
-
-  return std::numeric_limits<double>::infinity();
 }
 
 double getDistanceToNextIntersection(
@@ -2706,6 +2665,17 @@ Polygon2d toPolygon2d(const lanelet::ConstLanelet & lanelet)
   return tier4_autoware_utils::isClockwise(polygon)
            ? polygon
            : tier4_autoware_utils::inverseClockwise(polygon);
+}
+
+Polygon2d toPolygon2d(const lanelet::BasicPolygon2d & polygon)
+{
+  Polygon2d ret;
+  for (const auto & p : polygon) {
+    ret.outer().emplace_back(p.x(), p.y());
+  }
+  ret.outer().push_back(ret.outer().front());
+
+  return tier4_autoware_utils::isClockwise(ret) ? ret : tier4_autoware_utils::inverseClockwise(ret);
 }
 
 std::vector<Polygon2d> getTargetLaneletPolygons(

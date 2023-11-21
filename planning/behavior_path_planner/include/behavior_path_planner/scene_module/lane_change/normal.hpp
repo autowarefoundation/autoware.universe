@@ -72,7 +72,7 @@ public:
 
   TurnSignalInfo updateOutputTurnSignal() override;
 
-  bool getAbortPath() override;
+  bool calcAbortPath() override;
 
   PathSafetyStatus isApprovedPathSafe() const override;
 
@@ -133,6 +133,9 @@ protected:
     const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
 
   bool hasEnoughLengthToIntersection(
+    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
+
+  bool hasEnoughLengthToTrafficLight(
     const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
 
   bool getLaneChangePaths(

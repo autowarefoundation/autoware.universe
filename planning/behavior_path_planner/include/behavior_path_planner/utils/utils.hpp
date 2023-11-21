@@ -45,6 +45,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::utils
@@ -129,9 +130,6 @@ std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets);
 double l2Norm(const Vector3 vector);
 
 double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
-
-double getDistanceToNextTrafficLight(
-  const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
 
 double getDistanceToNextIntersection(
   const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
@@ -329,6 +327,8 @@ std::optional<double> getSignedDistanceFromBoundary(
 // misc
 
 Polygon2d toPolygon2d(const lanelet::ConstLanelet & lanelet);
+
+Polygon2d toPolygon2d(const lanelet::BasicPolygon2d & polygon);
 
 std::vector<Polygon2d> getTargetLaneletPolygons(
   const lanelet::ConstLanelets & lanelets, const Pose & pose, const double check_length,
