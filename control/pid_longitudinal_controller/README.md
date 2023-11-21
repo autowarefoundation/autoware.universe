@@ -207,8 +207,8 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 | max_d_effort                          | double | max value of acceleration with d gain                                                                                                                              | 0.0           |
 | min_d_effort                          | double | min value of acceleration with d gain                                                                                                                              | 0.0           |
 | lpf_vel_error_gain                    | double | gain of low-pass filter for velocity error                                                                                                                         | 0.9           |
-| current_vel_threshold_pid_integration | double | Velocity error is integrated for I-term only when the absolute value of current velocity is larger than this parameter. [m/s]
-| time_threshold_before_pid_integration  | double | How much time without the vehicle moving must past to enable PID error integration. [s]                                     | 5.0          |
+| current_vel_threshold_pid_integration | double | Velocity error is integrated for I-term only when the absolute value of current velocity is larger than this parameter. [m/s]                                      |
+| time_threshold_before_pid_integration | double | How much time without the vehicle moving must past to enable PID error integration. [s]                                                                            | 5.0           |
 | brake_keeping_acc                     | double | If `enable_brake_keeping_before_stop` is true, a certain acceleration is kept during DRIVE state before the ego stops [m/s^2] See [Brake keeping](#brake-keeping). | 0.2           |
 
 ### STOPPING Parameter (smooth stop)
