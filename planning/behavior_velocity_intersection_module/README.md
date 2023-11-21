@@ -36,7 +36,7 @@ The terms "in-phase signal group" and "anti-phase signal group" are introduced t
 
 ![phase signal group](./docs/signal-phase-group.drawio.svg)
 
-The set of lanes whose color is almost always the same as lane L1 is called the in-phase signal group of L1, and the set of lanes whose color is almost always the opposite of L1 is called the anti-phase signal group.
+The set of intersection lanes whose color is in sync with lane L1 is called the in-phase signal group of L1, and the set of remaining lanes is called the anti-phase signal group.
 
 ### How-to/Why set RightOfWay tag
 
@@ -53,15 +53,15 @@ That allows ego to generate the attention area dynamically using the real time t
 
 To help the intersection module care only a set of limited lanes, RightOfWay tag needs to be properly set.
 
-Following table shows an **example** of how to set yield_lanes to each lane in a intersection w/o traffic lights. It is not apparent how to determine signal phase group for a set of intersection lanes in geometric/topological manner, so yield_lane need to be set manually. Straight lanes with traffic lights are exceptionally handled to detect no lanes because commonly it has priority over all the other lanes, so no RightOfWay setting is required.
+Following table shows an **example** of how to set yield_lanes to each lane in a intersection w/o traffic lights. Since it is not apparent how to determine signal phase group for a set of intersection lanes in geometric/topological manner, yield_lane needs to be set manually. Straight lanes with traffic lights are exceptionally handled to detect no lanes because commonly it has priority over all the other lanes, so no RightOfWay setting is required.
 
-| turn direction of right_of_way | yield_lane(with traffic light)                                                              | yield_lane(without traffic light)                  |
-| ------------------------------ | ------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| straight                       | not need to set yield_lane(this case is special)                                            | left/right conflicting lanes of the in-phase group |
-| left(Left hand traffic)        | all conflicting lanes of the anti-phase group and right conflicting lanes of in-phase group | right conflicting lanes of the in-phase group      |
-| right(Left hand traffic)       | all conflicting lanes of the anti-phase group                                               | no yield_lane                                      |
-| left(Right hand traffic)       | all conflicting lanes of the anti-phase group                                               | no yield_lane                                      |
-| right(Right hand traffic)      | all conflicting lanes of the anti-phase group and right conflicting lanes of in-phase group | left conflicting lanes of the in-phase group       |
+| turn direction of right_of_way | yield_lane(with traffic light)                                                              | yield_lane(without traffic light)              |
+| ------------------------------ | ------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| straight                       | not need to set yield_lane(this case is special)                                            | left/right conflicting lanes of in-phase group |
+| left(Left hand traffic)        | all conflicting lanes of the anti-phase group and right conflicting lanes of in-phase group | right conflicting lanes of in-phase group      |
+| right(Left hand traffic)       | all conflicting lanes of the anti-phase group                                               | no yield_lane                                  |
+| left(Right hand traffic)       | all conflicting lanes of the anti-phase group                                               | no yield_lane                                  |
+| right(Right hand traffic)      | all conflicting lanes of the anti-phase group and right conflicting lanes of in-phase group | left conflicting lanes of in-phase group       |
 
 This setting gives the following `attention_area` configurations.
 
@@ -108,17 +108,17 @@ Objects that satisfy all of the following conditions are considered as target ob
 
 There are several behaviors depending on the scene.
 
-| behavior                 | scene                                                                                             | action                                                                             |
-| ------------------------ | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Safe                     | Ego detected no occlusion and collision                                                           | Ego passes the intersection                                                        |
-| StuckStop                | The exit of the intersection is blocked by traffic jam                                            | Ego stops before the intersection or the boundary of attention area                |
-| YieldStuck               | Another vehicle stops to yield ego                                                                | Ego stops before the intersection or the boundary of attention area                |
-| NonOccludedCollisionStop | Ego detects no occlusion but detects collision                                                    | Ego stops at the default_stop_line                                                 |
-| FirstWaitBeforeOcclusion | Ego detected occlusion when entering the intersection                                             | Ego stops at the default_stop_line at first                                        |
-| PeekingTowardOcclusion   | Ego detected occlusion and but no collision within the FOV (after FirstWaitBeforeOcclusion)       | Ego approaches the boundary of the attention area slowly                           |
-| OccludedCollisionStop    | Ego detected both occlusion and collision (after FirstWaitBeforeOcclusion)                        | Ego stops immediately                                                              |
-| FullyPrioritized         | Ego is fully prioritized by the RED/Arrow signal                                                  | Ego only cares vehicles still running inside the intersection. Occlusion is ignore |
-| OverPassJudgeLine        | Ego is already inside the attention area and/or cannot stop before the boundary of attention area | Ego does not detect collision/occlusion anymore and passes the intersection        |
+| behavior                 | scene                                                                                             | action                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Safe                     | Ego detected no occlusion and collision                                                           | Ego passes the intersection                                                         |
+| StuckStop                | The exit of the intersection is blocked by traffic jam                                            | Ego stops before the intersection or the boundary of attention area                 |
+| YieldStuck               | Another vehicle stops to yield ego                                                                | Ego stops before the intersection or the boundary of attention area                 |
+| NonOccludedCollisionStop | Ego detects no occlusion but detects collision                                                    | Ego stops at the default_stop_line                                                  |
+| FirstWaitBeforeOcclusion | Ego detected occlusion when entering the intersection                                             | Ego stops at the default_stop_line at first                                         |
+| PeekingTowardOcclusion   | Ego detected occlusion and but no collision within the FOV (after FirstWaitBeforeOcclusion)       | Ego approaches the boundary of the attention area slowly                            |
+| OccludedCollisionStop    | Ego detected both occlusion and collision (after FirstWaitBeforeOcclusion)                        | Ego stops immediately                                                               |
+| FullyPrioritized         | Ego is fully prioritized by the RED/Arrow signal                                                  | Ego only cares vehicles still running inside the intersection. Occlusion is ignored |
+| OverPassJudgeLine        | Ego is already inside the attention area and/or cannot stop before the boundary of attention area | Ego does not detect collision/occlusion anymore and passes the intersection         |
 
 ```plantuml
 @startuml
@@ -225,15 +225,23 @@ If the nearest occlusion cell value is below the threshold, occlusion is detecte
 
 ### Occlusion source estimation at intersection with traffic light
 
-At intersection with traffic light, the whereabout of occlusion is estimated by checking if there are any objects between ego and the nearest occlusion cell. While the occlusion is estimated to be caused by some object (DYNAMICALLY occluded), intersection_wall is at all times. If no objects are found between ego and the nearest occlusion cell (STATICALLY occluded), after ego stopped for the duration of `occlusion.static_occlusion_with_traffic_light_timeout` plus `occlusion.occlusion_detection_hold_time`, occlusion is intentionally ignored to avoid stuck. The remaining time is visualized on the intersection_occlusion virtual wall(TODO: add image).
+At intersection with traffic light, the whereabout of occlusion is estimated by checking if there are any objects between ego and the nearest occlusion cell. While the occlusion is estimated to be caused by some object (DYNAMICALLY occluded), intersection_wall is at all times. If no objects are found between ego and the nearest occlusion cell (STATICALLY occluded), after ego stopped for the duration of `occlusion.static_occlusion_with_traffic_light_timeout` plus `occlusion.occlusion_detection_hold_time`, occlusion is intentionally ignored to avoid stuck.
 
 ![occlusion_detection](./docs/occlusion-with-tl.drawio.svg)
+
+The remaining time is visualized on the intersection_occlusion virtual wall.
+
+![static-occlusion-timeout](./docs/static-occlusion-timeout.png)
 
 ### Occlusion handling at intersection without traffic light
 
 At intersection without traffic light, if occlusion is detected, ego makes a brief stop at the default_stopline and first_attention_stopline respectively. After stopping at the first_attention_area_stopline this module inserts `occlusion.absence_traffic_light.creep_velocity` velocity between ego and occlusion_wo_tl_pass_judge_line while occlusion is not cleared. If collision is detected, ego immediately stops. Once the occlusion is cleared or ego has passed occlusion_wo_tl_pass_judge_line this module does not detect collision and occlusion because ego footprint is already inside the intersection.
 
 ![occlusion_detection](./docs/occlusion-without-tl.drawio.svg)
+
+While ego is creeping, yellow intersection_wall appears in front ego.
+
+![occlusion-wo-tl-creeping](./docs/occlusion-wo-tl-creeping.png)
 
 ## Traffic signal specific behavior
 
@@ -417,11 +425,23 @@ entity TargetObject {
 | `.creep_velocity_without_traffic_light`        | double   | [m/s] creep velocity to occlusion_wo_tl_pass_judge_line                                     |
 | `.static_occlusion_with_traffic_light_timeout` | double   | [s] the timeout duration for ignoring static occlusion at intersection with traffic light   |
 
-## How to turn parameters
-
-WIP
-
 ## Trouble shooting
+
+### Intersection module stops against unrelated vehicles
+
+In this case, first visualize `/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection` topic and check the `attention_area` polygon. Intersection module performs collision checking for vehicles running on this polygon, so if it extends to uninteded lanes, it needs to have [RightOfWay tag](#how-towhy-set-rightofway-tag).
+
+By lowering `common.attention_area_length` you can check which lanes are conflicting with the intersection lane. Then set part of the conflicting lanes as the yield_lane.
+
+### The stop line of intersection is chattering
+
+The parameter `collision_detection.collision_detection_hold_time` suppresses the chattering by keeping UNSAFE decision for this duration until SAFE decision is finally made. By increasing this value you can suppress the chattering. If the chattering arises from the acceleration/deceleration of target vehicles, increase `collision_detection.collision_detection.collision_end_margin_time` and/or `collision_detection.collision_detection.collision_end_margin_time`.
+
+### The stop lines is released too fast/slow
+
+If the intersection wall appears too fast, or ego tends to stop too conservatively, lower the parameter `collision_detection.collision_detection.collision_start_margin_time`. If it lasts too long after the target vehicle passed, then lower the parameter `collision_detection.collision_detection.collision_end_margin_time`.
+
+TODO: occlusion detection, occupancy grid map
 
 ## Flowchart
 
