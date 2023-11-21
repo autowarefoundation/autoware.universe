@@ -66,11 +66,14 @@ public:
   void mark_removed();
   int next_id();
   int end_frame();
+  void init_kalman_filter();
+  void update_kalman_filter(const Eigen::MatrixXd & measurement);
+  void reflect_state();
 
   void activate(int frame_id);
   void re_activate(STrack & new_track, int frame_id, bool new_id = false);
   void update(STrack & new_track, int frame_id);
-  void predict(float dt);
+  void predict(const int frame_id);
 
   void load_parameters(const std::string & filename);
 
@@ -97,6 +100,7 @@ private:
   {
     // dimension
     char dim_x = 8;
+    char dim_z = 4;
     // system noise
     float q_cov_x;
     float q_cov_y;
@@ -115,4 +119,5 @@ private:
   };
   static KfParams _kf_parameters;
   static bool _parameters_loaded;
+  enum IDX { X1 = 0, Y1 = 1, X2 = 2, Y2 = 3, VX1 = 4, VY1 = 5, VX2 = 6, VY2 = 7 };
 };
