@@ -111,11 +111,13 @@ public:
   explicit AEB(const rclcpp::NodeOptions & node_options);
 
   // subscriber
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_;        // shared pointer to point cloud
-  rclcpp::Subscription<VelocityReport>::SharedPtr sub_velocity_;        // shared pointer to velocity
-  rclcpp::Subscription<Imu>::SharedPtr sub_imu_;                        // shared pointer to imu
-  rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_traj_;      // shared pointer to predicted trajectory
-  rclcpp::Subscription<AutowareState>::SharedPtr sub_autoware_state_;   // shared pointer to autoware state
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_;  // shared pointer to point cloud
+  rclcpp::Subscription<VelocityReport>::SharedPtr sub_velocity_;  // shared pointer to velocity
+  rclcpp::Subscription<Imu>::SharedPtr sub_imu_;                  // shared pointer to imu
+  rclcpp::Subscription<Trajectory>::SharedPtr
+    sub_predicted_traj_;  // shared pointer to predicted trajectory
+  rclcpp::Subscription<AutowareState>::SharedPtr
+    sub_autoware_state_;  // shared pointer to autoware state
 
   // publisher
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
@@ -157,7 +159,7 @@ public:
 
   void addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers);
 
-  // callback data 
+  // callback data
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
   Vector3::SharedPtr angular_velocity_ptr_{nullptr};
