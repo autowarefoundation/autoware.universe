@@ -97,7 +97,7 @@ public:
       user_params_->lateral_deviation_weight;
     internal_params_->constraints.soft.length_weight = user_params_->length_weight;
     internal_params_->constraints.soft.curvature_weight = user_params_->curvature_weight;
-    internal_params_->constraints.ego_footprint = vehicle_info_.createFootprint(0.0);
+    internal_params_->constraints.ego_footprint = vehicle_info_.createFootprint(0.5);
     internal_params_->constraints.ego_width = vehicle_info_.vehicle_width_m;
     internal_params_->constraints.ego_length = vehicle_info_.vehicle_length_m;
     // Sampling
@@ -165,11 +165,18 @@ private:
     const frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
     const double velocity);
 
-  void extendOutputDrivableArea(BehaviorModuleOutput & output);
   // member
   // std::shared_ptr<SamplingPlannerParameters> params_;
   std::shared_ptr<SamplingPlannerInternalParameters> internal_params_;
   vehicle_info_util::VehicleInfo vehicle_info_{};
+
+  // move to utils
+
+  void extendOutputDrivableArea(BehaviorModuleOutput & output);
+  bool isEndPointsConnected(
+    const lanelet::ConstLanelet & left_lane, const lanelet::ConstLanelet & right_lane);
+  DrivableLanes generateExpandDrivableLanes(
+    const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data);
 };
 
 }  // namespace behavior_path_planner
