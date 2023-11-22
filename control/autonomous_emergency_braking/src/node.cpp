@@ -362,6 +362,7 @@ bool AEB::hasCollision(
   const double & t = t_response_;
   for (const auto & obj : objects) {
     const double & obj_v = obj.velocity;
+    // If we move in opposite directions, is this calculation correct?
     const double rss_dist = current_v * t + (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
                             obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
     const double dist_ego_to_object =
@@ -372,6 +373,7 @@ bool AEB::hasCollision(
       ObjectData collision_data = obj;
       collision_data.rss = rss_dist;
       collision_data.distance_to_object = dist_ego_to_object;
+      // store collision point and exit searching
       collision_data_keeper_.update(collision_data);
       return true;
     }
@@ -486,10 +488,12 @@ void AEB::createObjectData(
     obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
     obj.velocity = 0.0;
     const Point2d obj_point(point.x, point.y);
+    // rough filtering
     const double lat_dist = motion_utils::calcLateralOffset(ego_path, obj.position);
     if (lat_dist > 5.0) {
       continue;
     }
+    // rigorous filtering
     for (const auto & ego_poly : ego_polys) {
       if (bg::within(obj_point, ego_poly)) {
         objects.push_back(obj);

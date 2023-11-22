@@ -111,14 +111,14 @@ public:
   explicit AEB(const rclcpp::NodeOptions & node_options);
 
   // subscriber
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_;
-  rclcpp::Subscription<VelocityReport>::SharedPtr sub_velocity_;
-  rclcpp::Subscription<Imu>::SharedPtr sub_imu_;
-  rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_traj_;
-  rclcpp::Subscription<AutowareState>::SharedPtr sub_autoware_state_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_;        // shared pointer to point cloud
+  rclcpp::Subscription<VelocityReport>::SharedPtr sub_velocity_;        // shared pointer to velocity
+  rclcpp::Subscription<Imu>::SharedPtr sub_imu_;                        // shared pointer to imu
+  rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_traj_;      // shared pointer to predicted trajectory
+  rclcpp::Subscription<AutowareState>::SharedPtr sub_autoware_state_;   // shared pointer to autoware state
 
   // publisher
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_ego_path_publisher_;  // debug
 
   // timer
@@ -132,6 +132,7 @@ public:
   void onPredictedTrajectory(const Trajectory::ConstSharedPtr input_msg);
   void onAutowareState(const AutowareState::ConstSharedPtr input_msg);
 
+  // checks whether data has been received
   bool isDataReady();
 
   // main function
@@ -156,12 +157,14 @@ public:
 
   void addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers);
 
+  // callback data 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
   Vector3::SharedPtr angular_velocity_ptr_{nullptr};
   Trajectory::ConstSharedPtr predicted_traj_ptr_{nullptr};
   AutowareState::ConstSharedPtr autoware_state_{nullptr};
 
+  // transform
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
@@ -188,6 +191,8 @@ public:
   double imu_prediction_time_interval_;
   double mpc_prediction_time_horizon_;
   double mpc_prediction_time_interval_;
+
+  // data life management
   CollisionDataKeeper collision_data_keeper_;
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
