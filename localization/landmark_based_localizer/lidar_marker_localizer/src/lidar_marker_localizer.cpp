@@ -256,7 +256,7 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
           if (intensity_num[i + j] == 0) {
             continue;
           }
-          const double & average = intensity_sum[i + j] / intensity_num[i + j];
+          const double average = intensity_sum[i + j] / intensity_num[i + j];
           min_intensity = std::min(min_intensity, average);
           max_intensity = std::max(max_intensity, average);
         }
@@ -271,7 +271,7 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
           if (intensity_num[i + j] == 0) {
             continue;
           }
-          const double & average = intensity_sum[i + j] / intensity_num[i + j];
+          const double average = intensity_sum[i + j] / intensity_num[i + j];
           if (std::abs(j) >= param_.negative_window_size) {
             // check negative
             if (average < center_intensity - param_.intensity_difference_threshold) {
