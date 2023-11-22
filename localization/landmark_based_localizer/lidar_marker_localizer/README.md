@@ -8,20 +8,20 @@
 
 #### Input
 
-| Name                   | Type                                            | Description                                                                                                                                                                                                                                                               |
-| :--------------------- | :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `~/input/lanelet2_map` | `autoware_auto_mapping_msgs::msg::HADMapBin`    | Data of lanelet2                                                                                                                                                                                                                                                          |
-| `~/input/pointcloud`        | `sensor_msgs::msg::PointCloud2`                       | PointCloud                                                                                                                                                                                                                                                              |
-| `~/input/ekf_pose`     | `geometry_msgs::msg::PoseWithCovarianceStamped` | EKF Pose  |
+| Name                   | Type                                            | Description      |
+| :--------------------- | :---------------------------------------------- | :--------------- |
+| `~/input/lanelet2_map` | `autoware_auto_mapping_msgs::msg::HADMapBin`    | Data of lanelet2 |
+| `~/input/pointcloud`   | `sensor_msgs::msg::PointCloud2`                 | PointCloud       |
+| `~/input/ekf_pose`     | `geometry_msgs::msg::PoseWithCovarianceStamped` | EKF Pose         |
 
 #### Output
 
-| Name                            | Type                                            | Description                                                                               |
-| :------------------------------ | :---------------------------------------------- | :---------------------------------------------------------------------------------------- |
-| `~/output/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Estimated Pose                                                                            |
-| `~/debug/result`                | `sensor_msgs::msg::Image`                       | [debug topic]  |
-| `~/debug/marker`                | `visualization_msgs::msg::MarkerArray`          | [debug topic] Loaded landmarks to visualize in Rviz as thin boards                        |
-| `/diagnostics`                  | `diagnostic_msgs::msg::DiagnosticArray`         | Diagnostics outputs                                                                       |
+| Name                            | Type                                            | Description                                                        |
+| :------------------------------ | :---------------------------------------------- | :----------------------------------------------------------------- |
+| `~/output/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Estimated Pose                                                     |
+| `~/debug/result`                | `sensor_msgs::msg::Image`                       | [debug topic]                                                      |
+| `~/debug/marker`                | `visualization_msgs::msg::MarkerArray`          | [debug topic] Loaded landmarks to visualize in Rviz as thin boards |
+| `/diagnostics`                  | `diagnostic_msgs::msg::DiagnosticArray`         | Diagnostics outputs                                                |
 
 ## How to launch
 
