@@ -217,7 +217,7 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
 
     float min_x = std::numeric_limits<float>::max();
     float max_x = std::numeric_limits<float>::lowest();
-    for (const auto & point : points_ptr->points) {
+    for (const autoware_point_types::PointXYZIRADRT & point : points_ptr->points) {
       ring_points[point.ring].push_back(point);
       min_x = std::min(min_x, point.x);
       max_x = std::max(max_x, point.x);
@@ -230,14 +230,12 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
     std::vector<int> vote(bin_num, 0);
     std::vector<float> min_y(bin_num, std::numeric_limits<float>::max());
 
-    // for target rings
-    for (size_t target_ring = 0; target_ring < ring_points.size(); target_ring++) {
-      // initialize intensity line image
+    // for each ring
+    for (const pcl::PointCloud<autoware_point_types::PointXYZIRADRT> & one_ring : ring_points) {
       std::vector<double> intensity_sum(bin_num, 0.0);
       std::vector<int> intensity_num(bin_num, 0);
 
-      for (size_t i = 0; i < ring_points[target_ring].size(); i++) {
-        autoware_point_types::PointXYZIRADRT point = ring_points[target_ring].points[i];
+      for (const autoware_point_types::PointXYZIRADRT & point : one_ring.points) {
         const int bin_index = (point.x - min_x) / param_.resolution;
         intensity_sum[bin_index] += point.intensity;
         intensity_num[bin_index]++;
