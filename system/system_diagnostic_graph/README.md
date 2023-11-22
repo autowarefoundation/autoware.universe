@@ -32,7 +32,7 @@ This feature breaks the generality of the graph and may be changed to a plugin o
 - /autoware/operation/comfortable-stop
 - /autoware/operation/pull-over
 
-## Interface
+## Interfaces
 
 | Interface Type | Interface Name                        | Data Type                                         | Description        |
 | -------------- | ------------------------------------- | ------------------------------------------------- | ------------------ |
@@ -49,6 +49,16 @@ This feature breaks the generality of the graph and may be changed to a plugin o
 | `input_qos_depth` | `uint`    | QoS depth of input array topic.            |
 | `graph_qos_depth` | `uint`    | QoS depth of output graph topic.           |
 
+## Examples
+
+- [example1.yaml](./example/example_0.yaml)
+- [example2.yaml](./example/example_1.yaml)
+- [example2.yaml](./example/example_2.yaml)
+
+```bash
+ros2 launch system_diagnostic_graph example.launch.xml
+```
+
 ## Graph file format
 
 - [GraphFile](./doc/format/graph-file.md)
@@ -58,12 +68,3 @@ This feature breaks the generality of the graph and may be changed to a plugin o
   - [Unit](./doc/format/unit.md)
   - [And](./doc/format/and.md)
   - [Or](./doc/format/or.md)
-
-## Example
-
-- [example1.yaml](./example/example1.yaml)
-- [example2.yaml](./example/example2.yaml)
-
-```bash
-ros2 launch system_diagnostic_graph example.launch.xml
-```
