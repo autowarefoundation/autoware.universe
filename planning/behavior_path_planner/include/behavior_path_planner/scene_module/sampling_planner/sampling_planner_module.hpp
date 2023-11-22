@@ -164,6 +164,8 @@ private:
   PathWithLaneId convertFrenetPathToPathWithLaneID(
     const frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
     const double velocity);
+
+  void extendOutputDrivableArea(BehaviorModuleOutput & output);
   // member
   // std::shared_ptr<SamplingPlannerParameters> params_;
   std::shared_ptr<SamplingPlannerInternalParameters> internal_params_;

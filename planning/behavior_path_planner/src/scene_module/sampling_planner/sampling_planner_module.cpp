@@ -358,6 +358,29 @@ void SamplingPlannerModule::updateDebugMarkers()
   // }
 }
 
+lanelet::ConstLanelets NormalLaneChange::getCurrentLanes() const
+{
+  return utils::getCurrentLanesFromPath(prev_module_path_, planner_data_);
+}
+
+void SamplingPlannerModule::extendOutputDrivableArea(BehaviorModuleOutput & output)
+{
+  const auto & dp = planner_data_->drivable_area_expansion_parameters;
+
+  const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
+    *planner_data_->route_handler, status_.current_lanes, status_.target_lanes);
+  const auto shorten_lanes = utils::cutOverlappedLanes(*output.path, drivable_lanes);
+  const auto expanded_lanes = utils::expandLanelets(
+    shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+    dp.drivable_area_types_to_skip);
+
+  // for new architecture
+  DrivableAreaInfo current_drivable_area_info;
+  current_drivable_area_info.drivable_lanes = expanded_lanes;
+  output.drivable_area_info =
+    utils::combineDrivableAreaInfo(current_drivable_area_info, prev_drivable_area_info_);
+}
+
 CandidateOutput SamplingPlannerModule::planCandidate() const
 {
   return {};
