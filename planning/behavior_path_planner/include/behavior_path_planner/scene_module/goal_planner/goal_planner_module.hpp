@@ -245,12 +245,14 @@ struct PreviousPullOverData
     stop_path_after_approval = nullptr;
     found_path = false;
     safety_status = SafetyStatus{};
+    has_decided_path = false;
   }
 
   std::shared_ptr<PathWithLaneId> stop_path{nullptr};
   std::shared_ptr<PathWithLaneId> stop_path_after_approval{nullptr};
   bool found_path{false};
   SafetyStatus safety_status{};
+  bool has_decided_path{false};
 };
 
 class GoalPlannerModule : public SceneModuleInterface
