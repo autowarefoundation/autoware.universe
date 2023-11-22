@@ -13,7 +13,7 @@ The objects only inside of the vector map will be published.
 
 | Name               | Type                                                  | Description            |
 | ------------------ | ----------------------------------------------------- | ---------------------- |
-| `input/vector_map` | `autoware_auto_mapping_msgs::msg::HADMapBin`          | vector map             |
+| `input/vector_map` | `autoware_map_msgs::msg::LaneletMapBin`               | vector map             |
 | `input/object`     | `autoware_auto_perception_msgs::msg::DetectedObjects` | input detected objects |
 
 ### Output

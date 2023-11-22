@@ -200,7 +200,7 @@ RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_
     std::bind(&RadarObjectTrackerNode::onMeasurement, this, std::placeholders::_1));
   tracked_objects_pub_ =
     create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
-  sub_map_ = this->create_subscription<HADMapBin>(
+  sub_map_ = this->create_subscription<LaneletMapBin>(
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&RadarObjectTrackerNode::onMap, this, std::placeholders::_1));
 
@@ -271,7 +271,7 @@ RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_
 }
 
 // load map information to node parameter
-void RadarObjectTrackerNode::onMap(const HADMapBin::ConstSharedPtr msg)
+void RadarObjectTrackerNode::onMap(const LaneletMapBin::ConstSharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "[Radar Object Tracker]: Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();

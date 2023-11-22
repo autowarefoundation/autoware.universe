@@ -21,9 +21,9 @@
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
@@ -90,7 +90,6 @@ struct PredictedRefPath
 
 using LaneletsData = std::vector<LaneletData>;
 using ManeuverProbability = std::unordered_map<Maneuver, float>;
-using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjectKinematics;
@@ -99,6 +98,7 @@ using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_perception_msgs::msg::TrackedObject;
 using autoware_auto_perception_msgs::msg::TrackedObjectKinematics;
 using autoware_auto_perception_msgs::msg::TrackedObjects;
+using autoware_map_msgs::msg::LaneletMapBin;
 using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::StringStamped;
 
@@ -113,7 +113,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_markers_;
   rclcpp::Publisher<StringStamped>::SharedPtr pub_calculation_time_;
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
-  rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
+  rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;
 
   // Object History
   std::unordered_map<std::string, std::deque<ObjectData>> objects_history_;
@@ -163,7 +163,7 @@ private:
   StopWatch<std::chrono::milliseconds> stop_watch_;
 
   // Member Functions
-  void mapCallback(const HADMapBin::ConstSharedPtr msg);
+  void mapCallback(const LaneletMapBin::ConstSharedPtr msg);
   void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
 
   bool doesPathCrossAnyFence(const PredictedPath & predicted_path);

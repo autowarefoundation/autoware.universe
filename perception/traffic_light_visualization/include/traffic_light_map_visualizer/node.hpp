@@ -18,7 +18,7 @@
 #include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -36,13 +36,12 @@ public:
   void trafficSignalsCallback(
     const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr
       input_traffic_signals_msg);
-  void binMapCallback(
-    const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr input_map_msg);
+  void binMapCallback(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr input_map_msg);
 
 private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr light_marker_pub_;
   rclcpp::Subscription<autoware_perception_msgs::msg::TrafficSignalArray>::SharedPtr tl_state_sub_;
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr vector_map_sub_;
+  rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr vector_map_sub_;
 
   std::vector<lanelet::AutowareTrafficLightConstPtr> aw_tl_reg_elems_;
 };

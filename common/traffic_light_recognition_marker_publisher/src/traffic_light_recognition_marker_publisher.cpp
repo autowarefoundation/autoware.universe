@@ -26,7 +26,7 @@ TrafficLightRecognitionMarkerPublisher::TrafficLightRecognitionMarkerPublisher(
 {
   using std::placeholders::_1;
 
-  sub_map_ptr_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+  sub_map_ptr_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "~/input/lanelet2_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&TrafficLightRecognitionMarkerPublisher::onMap, this, _1));
   sub_tlr_ptr_ = this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
@@ -36,7 +36,7 @@ TrafficLightRecognitionMarkerPublisher::TrafficLightRecognitionMarkerPublisher(
     this->create_publisher<visualization_msgs::msg::MarkerArray>("~/output/marker", rclcpp::QoS{1});
 }
 
-void TrafficLightRecognitionMarkerPublisher::onMap(const HADMapBin::ConstSharedPtr msg_ptr)
+void TrafficLightRecognitionMarkerPublisher::onMap(const LaneletMapBin::ConstSharedPtr msg_ptr)
 {
   is_map_ready_ = false;
   lanelet::LaneletMapPtr viz_lanelet_map(new lanelet::LaneletMap);

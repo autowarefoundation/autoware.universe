@@ -10,7 +10,7 @@
 
 | Name                                 | Type                                             | Description        |
 | ------------------------------------ | ------------------------------------------------ | ------------------ |
-| `~/input/vector_map`                 | `autoware_auto_mapping_msgs::msg::HADMapBin`     | vector map         |
+| `~/input/vector_map`                 | `autoware_map_msgs::msg::LaneletMapBin`          | vector map         |
 | `~/input/route`                      | `autoware_planning_msgs::msg::LaneletRoute`      | route              |
 | `~/input/classified/traffic_signals` | `tier4_perception_msgs::msg::TrafficSignalArray` | classified signals |
 

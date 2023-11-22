@@ -17,8 +17,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -47,7 +47,7 @@ class ScenarioSelectorNode : public rclcpp::Node
 public:
   explicit ScenarioSelectorNode(const rclcpp::NodeOptions & node_options);
 
-  void onMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+  void onMap(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg);
   void onRoute(const autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr msg);
   void onOdom(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void onParkingState(const std_msgs::msg::Bool::ConstSharedPtr msg);
@@ -67,7 +67,7 @@ public:
 private:
   rclcpp::TimerBase::SharedPtr timer_;
 
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_map_;
+  rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_map_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr sub_route_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr

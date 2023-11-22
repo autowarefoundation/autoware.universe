@@ -45,7 +45,7 @@ using PoseStamped = geometry_msgs::msg::PoseStamped;
 using PoseWithUuidStamped = autoware_planning_msgs::msg::PoseWithUuidStamped;
 using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
 using LaneletPrimitive = autoware_planning_msgs::msg::LaneletPrimitive;
-using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+using LaneletMapBin = autoware_map_msgs::msg::LaneletMapBin;
 using MarkerArray = visualization_msgs::msg::MarkerArray;
 using ClearRoute = planning_interface::ClearRoute;
 using SetRoutePoints = planning_interface::SetRoutePoints;
@@ -74,15 +74,15 @@ private:
   PoseStamped transform_pose(const PoseStamped & input);
 
   rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
-  rclcpp::Subscription<HADMapBin>::SharedPtr sub_vector_map_;
+  rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_vector_map_;
   rclcpp::Subscription<RerouteAvailability>::SharedPtr sub_reroute_availability_;
   rclcpp::Subscription<PoseWithUuidStamped>::SharedPtr sub_modified_goal_;
 
   Odometry::ConstSharedPtr odometry_;
-  HADMapBin::ConstSharedPtr map_ptr_;
+  LaneletMapBin::ConstSharedPtr map_ptr_;
   RerouteAvailability::ConstSharedPtr reroute_availability_;
   void on_odometry(const Odometry::ConstSharedPtr msg);
-  void on_map(const HADMapBin::ConstSharedPtr msg);
+  void on_map(const LaneletMapBin::ConstSharedPtr msg);
   void on_reroute_availability(const RerouteAvailability::ConstSharedPtr msg);
   void on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr msg);
 

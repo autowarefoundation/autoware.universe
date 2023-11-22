@@ -85,7 +85,7 @@ CrosswalkTrafficLightEstimatorNode::CrosswalkTrafficLightEstimatorNode(
   use_last_detect_color_ = declare_parameter<bool>("use_last_detect_color");
   last_detect_color_hold_time_ = declare_parameter<double>("last_detect_color_hold_time");
 
-  sub_map_ = create_subscription<HADMapBin>(
+  sub_map_ = create_subscription<LaneletMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&CrosswalkTrafficLightEstimatorNode::onMap, this, _1));
   sub_route_ = create_subscription<LaneletRoute>(
@@ -100,7 +100,7 @@ CrosswalkTrafficLightEstimatorNode::CrosswalkTrafficLightEstimatorNode(
   pub_processing_time_ = std::make_shared<DebugPublisher>(this, "~/debug");
 }
 
-void CrosswalkTrafficLightEstimatorNode::onMap(const HADMapBin::ConstSharedPtr msg)
+void CrosswalkTrafficLightEstimatorNode::onMap(const LaneletMapBin::ConstSharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "[CrosswalkTrafficLightEstimatorNode]: Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();

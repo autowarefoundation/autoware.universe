@@ -36,12 +36,12 @@
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
@@ -75,11 +75,11 @@
 namespace planning_test_utils
 {
 using autoware_adapi_v1_msgs::msg::OperationModeState;
-using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_perception_msgs::msg::TrafficSignalArray;
 using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
@@ -193,7 +193,7 @@ private:
   rclcpp::Publisher<ExpandStopRange>::SharedPtr expand_stop_range_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr occupancy_grid_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr cost_map_pub_;
-  rclcpp::Publisher<HADMapBin>::SharedPtr map_pub_;
+  rclcpp::Publisher<LaneletMapBin>::SharedPtr map_pub_;
   rclcpp::Publisher<Scenario>::SharedPtr scenario_pub_;
   rclcpp::Publisher<Scenario>::SharedPtr parking_scenario_pub_;
   rclcpp::Publisher<Scenario>::SharedPtr lane_driving_scenario_pub_;

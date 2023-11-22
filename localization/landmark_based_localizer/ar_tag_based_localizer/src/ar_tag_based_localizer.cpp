@@ -113,7 +113,7 @@ bool ArTagBasedLocalizer::setup()
   /*
     Subscribers
   */
-  map_bin_sub_ = this->create_subscription<HADMapBin>(
+  map_bin_sub_ = this->create_subscription<LaneletMapBin>(
     "~/input/lanelet2_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
     std::bind(&ArTagBasedLocalizer::map_bin_callback, this, std::placeholders::_1));
 
@@ -146,7 +146,7 @@ bool ArTagBasedLocalizer::setup()
   return true;
 }
 
-void ArTagBasedLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
+void ArTagBasedLocalizer::map_bin_callback(const LaneletMapBin::ConstSharedPtr & msg)
 {
   const std::vector<landmark_manager::Landmark> landmarks =
     landmark_manager::parse_landmarks(msg, "apriltag_16h5", this->get_logger());
