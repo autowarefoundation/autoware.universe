@@ -348,7 +348,17 @@
           "type": "string",
           "description": "select the label for debug footprint",
           "default": "car",
-          "enum": ["pointcloud", "unknown", "car", "truck", "bus", "trailer", "motorcycle", "bicycle", "pedestrian"]
+          "enum": [
+            "pointcloud",
+            "unknown",
+            "car",
+            "truck",
+            "bus",
+            "trailer",
+            "motorcycle",
+            "bicycle",
+            "pedestrian"
+          ]
         }
       },
       "required": [
@@ -378,14 +388,10 @@
           "$ref": "#/definitions/surround_obstacle_checker"
         }
       },
-      "required": [
-        "ros__parameters"
-      ],
+      "required": ["ros__parameters"],
       "additionalProperties": false
     }
   },
-  "required": [
-    "/**"
-  ],
+  "required": ["/**"],
   "additionalProperties": false
 }
