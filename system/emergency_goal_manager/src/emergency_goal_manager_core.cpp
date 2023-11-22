@@ -104,13 +104,16 @@ void EmergencyGoalManager::callSetMrmRoutePoints()
     auto future = client_set_mrm_route_points_->async_send_request(request);
     const auto duration = std::chrono::duration<double, std::ratio<1>>(10);
     if (future.wait_for(duration) != std::future_status::ready) {
+      RCLCPP_WARN(get_logger(), "MRM Route service timeout.");
       continue;
-    }
-    if (future.get()->status.success == true) {
-      RCLCPP_INFO(get_logger(), "MRM route has been successfully sent.");
-      return;
     } else {
-      continue;
+      if (future.get()->status.success) {
+        RCLCPP_INFO(get_logger(), "MRM Route has been successfully sent.");
+        return;
+      } else {
+        RCLCPP_WARN(get_logger(), "MRM Route service has failed.");
+        continue;
+      }
     }
   }
 
@@ -120,6 +123,23 @@ void EmergencyGoalManager::callSetMrmRoutePoints()
 void EmergencyGoalManager::callClearMrmRoute()
 {
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-  client_clear_mrm_route_->async_send_request(request);
+  const auto duration = std::chrono::duration<double, std::ratio<1>>(10);
+
+  while (true) {
+    auto future = client_clear_mrm_route_->async_send_request(request);
+
+    if (future.wait_for(duration) != std::future_status::ready) {
+      RCLCPP_WARN(get_logger(), "Clear MRM Route service timeout.");
+      return;
+    } else {
+      if (future.get()->success) {
+        RCLCPP_INFO(get_logger(), "Clear MRM Route has been successfully sent.");
+        return;
+      } else {
+        RCLCPP_WARN(get_logger(), "Clear MRM Route has failed.");
+        continue;
+      }
+    }
+  }
 }
 }  // namespace emergency_goal_manager
