@@ -189,124 +189,11 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
   // ---------------------------------- //
   Pose marker_pose_from_detection;
   {
-    const std::string sensor_frame = points_msg_ptr->header.frame_id;
-    // get sensor_frame pose to base_link
-    // TransformStamped transform_sensor_to_base_link;
-    // try
-    // {
-    //   transform_sensor_to_base_link = tf_buffer_->lookupTransform(
-    //   "base_link", sensor_frame, tf2::TimePointZero);
-    // }
-    // catch (tf2::TransformException & ex)
-    // {
-    //   RCLCPP_WARN(get_logger(), "cannot get base_link to %s transform. %s", sensor_frame,
-    //   ex.what());
-    // }
+    // detect marker
+    const std::vector<landmark_manager::Landmark> detected_landmarks =
+      detect_landmarks(points_msg_ptr);
 
-    pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr points_ptr(
-      new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
-    pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
-
-    if (points_ptr->empty()) {
-      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No points!");
-      is_detected_marker_ = false;
-      return;
-    }
-
-    std::vector<pcl::PointCloud<autoware_point_types::PointXYZIRADRT>> ring_points(128);
-
-    float min_x = std::numeric_limits<float>::max();
-    float max_x = std::numeric_limits<float>::lowest();
-    for (const autoware_point_types::PointXYZIRADRT & point : points_ptr->points) {
-      ring_points[point.ring].push_back(point);
-      min_x = std::min(min_x, point.x);
-      max_x = std::max(max_x, point.x);
-    }
-
-    // Check that the leaf size is not too small, given the size of the data
-    const int bin_num = static_cast<int>((max_x - min_x) / param_.resolution + 1);
-
-    // initialize variables
-    std::vector<int> vote(bin_num, 0);
-    std::vector<float> min_y(bin_num, std::numeric_limits<float>::max());
-
-    // for each ring
-    for (const pcl::PointCloud<autoware_point_types::PointXYZIRADRT> & one_ring : ring_points) {
-      std::vector<double> intensity_sum(bin_num, 0.0);
-      std::vector<int> intensity_num(bin_num, 0);
-
-      for (const autoware_point_types::PointXYZIRADRT & point : one_ring.points) {
-        const int bin_index = (point.x - min_x) / param_.resolution;
-        intensity_sum[bin_index] += point.intensity;
-        intensity_num[bin_index]++;
-        min_y[bin_index] = std::min(min_y[bin_index], point.y);
-      }
-
-      // filter
-      for (int i = param_.filter_window_size; i < bin_num - param_.filter_window_size; i++) {
-        int64_t pos = 0;
-        int64_t neg = 0;
-        double min_intensity = std::numeric_limits<double>::max();
-        double max_intensity = std::numeric_limits<double>::lowest();
-
-        // find max_min
-        for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
-          if (intensity_num[i + j] == 0) {
-            continue;
-          }
-          const double average = intensity_sum[i + j] / intensity_num[i + j];
-          min_intensity = std::min(min_intensity, average);
-          max_intensity = std::max(max_intensity, average);
-        }
-
-        if (max_intensity <= min_intensity) {
-          continue;
-        }
-
-        const double center_intensity = (max_intensity - min_intensity) / 2.0 + min_intensity;
-
-        for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
-          if (intensity_num[i + j] == 0) {
-            continue;
-          }
-          const double average = intensity_sum[i + j] / intensity_num[i + j];
-          if (std::abs(j) >= param_.negative_window_size) {
-            // check negative
-            if (average < center_intensity - param_.intensity_difference_threshold) {
-              neg++;
-            }
-          } else if (std::abs(j) <= param_.positive_window_size) {
-            // check positive
-            if (average > center_intensity + param_.intensity_difference_threshold) {
-              pos++;
-            }
-          } else {
-            // ignore
-          }
-        }
-
-        if (pos >= param_.positive_vote_threshold && neg >= param_.negative_vote_threshold) {
-          vote[i]++;
-        }
-      }
-    }
-
-    // extract feature points
-    std::vector<Pose> marker_pose_on_base_link_array;
-
-    for (int i = param_.filter_window_size; i < bin_num - param_.filter_window_size; i++) {
-      if (vote[i] > param_.vote_threshold_for_detect_marker) {
-        Pose marker_pose_on_base_link;
-        marker_pose_on_base_link.position.x = i * param_.resolution + min_x;
-        marker_pose_on_base_link.position.y = min_y[i];
-        marker_pose_on_base_link.position.z = 0.2 + 1.75 / 2.0;  // TODO(YamatoAndo)
-        marker_pose_on_base_link.orientation =
-          tier4_autoware_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO(YamatoAndo)
-        marker_pose_on_base_link_array.push_back(marker_pose_on_base_link);
-      }
-    }
-
-    is_detected_marker_ = !marker_pose_on_base_link_array.empty();
+    is_detected_marker_ = !detected_landmarks.empty();
     if (!is_detected_marker_) {
       RCLCPP_WARN_STREAM_THROTTLE(
         this->get_logger(), *this->get_clock(), 1, "Could not detect marker");
@@ -314,7 +201,7 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
     }
 
     // get marker_pose on base_link
-    const Pose marker_pose_on_base_link = marker_pose_on_base_link_array.at(0);  // TODO(YamatoAndo)
+    const Pose marker_pose_on_base_link = detected_landmarks.at(0).pose;  // TODO(YamatoAndo)
 
     // get marker pose on map using self-pose
     const Vector3 self_pose_rpy = tier4_autoware_utils::getRPY(self_pose.orientation);
@@ -432,4 +319,127 @@ void LidarMarkerLocalizer::service_trigger_node(
   } else {
   }
   res->success = true;
+}
+
+std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
+  const PointCloud2::ConstSharedPtr & points_msg_ptr)
+{
+  const std::string sensor_frame = points_msg_ptr->header.frame_id;
+  // get sensor_frame pose to base_link
+  // TransformStamped transform_sensor_to_base_link;
+  // try
+  // {
+  //   transform_sensor_to_base_link = tf_buffer_->lookupTransform(
+  //   "base_link", sensor_frame, tf2::TimePointZero);
+  // }
+  // catch (tf2::TransformException & ex)
+  // {
+  //   RCLCPP_WARN(get_logger(), "cannot get base_link to %s transform. %s", sensor_frame,
+  //   ex.what());
+  // }
+
+  pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr points_ptr(
+    new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
+  pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
+
+  if (points_ptr->empty()) {
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No points!");
+    is_detected_marker_ = false;
+    return std::vector<landmark_manager::Landmark>{};
+  }
+
+  std::vector<pcl::PointCloud<autoware_point_types::PointXYZIRADRT>> ring_points(128);
+
+  float min_x = std::numeric_limits<float>::max();
+  float max_x = std::numeric_limits<float>::lowest();
+  for (const autoware_point_types::PointXYZIRADRT & point : points_ptr->points) {
+    ring_points[point.ring].push_back(point);
+    min_x = std::min(min_x, point.x);
+    max_x = std::max(max_x, point.x);
+  }
+
+  // Check that the leaf size is not too small, given the size of the data
+  const int bin_num = static_cast<int>((max_x - min_x) / param_.resolution + 1);
+
+  // initialize variables
+  std::vector<int> vote(bin_num, 0);
+  std::vector<float> min_y(bin_num, std::numeric_limits<float>::max());
+
+  // for each ring
+  for (const pcl::PointCloud<autoware_point_types::PointXYZIRADRT> & one_ring : ring_points) {
+    std::vector<double> intensity_sum(bin_num, 0.0);
+    std::vector<int> intensity_num(bin_num, 0);
+
+    for (const autoware_point_types::PointXYZIRADRT & point : one_ring.points) {
+      const int bin_index = (point.x - min_x) / param_.resolution;
+      intensity_sum[bin_index] += point.intensity;
+      intensity_num[bin_index]++;
+      min_y[bin_index] = std::min(min_y[bin_index], point.y);
+    }
+
+    // filter
+    for (int i = param_.filter_window_size; i < bin_num - param_.filter_window_size; i++) {
+      int64_t pos = 0;
+      int64_t neg = 0;
+      double min_intensity = std::numeric_limits<double>::max();
+      double max_intensity = std::numeric_limits<double>::lowest();
+
+      // find max_min
+      for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
+        if (intensity_num[i + j] == 0) {
+          continue;
+        }
+        const double average = intensity_sum[i + j] / intensity_num[i + j];
+        min_intensity = std::min(min_intensity, average);
+        max_intensity = std::max(max_intensity, average);
+      }
+
+      if (max_intensity <= min_intensity) {
+        continue;
+      }
+
+      const double center_intensity = (max_intensity - min_intensity) / 2.0 + min_intensity;
+
+      for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
+        if (intensity_num[i + j] == 0) {
+          continue;
+        }
+        const double average = intensity_sum[i + j] / intensity_num[i + j];
+        if (std::abs(j) >= param_.negative_window_size) {
+          // check negative
+          if (average < center_intensity - param_.intensity_difference_threshold) {
+            neg++;
+          }
+        } else if (std::abs(j) <= param_.positive_window_size) {
+          // check positive
+          if (average > center_intensity + param_.intensity_difference_threshold) {
+            pos++;
+          }
+        } else {
+          // ignore
+        }
+      }
+
+      if (pos >= param_.positive_vote_threshold && neg >= param_.negative_vote_threshold) {
+        vote[i]++;
+      }
+    }
+  }
+
+  std::vector<landmark_manager::Landmark> detected_landmarks;
+
+  for (int i = param_.filter_window_size; i < bin_num - param_.filter_window_size; i++) {
+    if (vote[i] > param_.vote_threshold_for_detect_marker) {
+      Pose marker_pose_on_base_link;
+      marker_pose_on_base_link.position.x = i * param_.resolution + min_x;
+      marker_pose_on_base_link.position.y = min_y[i];
+      marker_pose_on_base_link.position.z = 0.2 + 1.75 / 2.0;  // TODO(YamatoAndo)
+      marker_pose_on_base_link.orientation =
+        tier4_autoware_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO(YamatoAndo)
+      detected_landmarks.push_back(
+        landmark_manager::Landmark{"lidar_marker", marker_pose_on_base_link});
+    }
+  }
+
+  return detected_landmarks;
 }

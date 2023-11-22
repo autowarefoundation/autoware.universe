@@ -87,6 +87,9 @@ private:
   void service_trigger_node(
     const SetBool::Request::SharedPtr req, SetBool::Response::SharedPtr res);
 
+  std::vector<landmark_manager::Landmark> detect_landmarks(
+    const PointCloud2::ConstSharedPtr & points_msg_ptr);
+
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
 
