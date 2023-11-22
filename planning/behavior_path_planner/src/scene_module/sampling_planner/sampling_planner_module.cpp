@@ -105,6 +105,10 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
     // put the lane that contain waypoints in lane_ids.
     bool is_in_lanes = false;
     for (const auto & lane : lanelets) {
+      const auto closest_point =
+        lanelet::utils::getClosestCenterPose(lane, point.point.pose.position);
+      point.point.pose.position.z = closest_point.position.z;
+
       if (lanelet::utils::isInLanelet(point.point.pose, lane)) {
         point.lane_ids.push_back(lane.id());
         is_in_lanes = true;
@@ -176,6 +180,9 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   }();
 
   const auto pose = planner_data_->self_odometry->pose.pose;
+  lanelet::ConstLanelet closest_lanelet;
+  planner_data_->route_handler->getClosestLaneletWithinRoute(pose, &closest_lanelet);
+
   sampler_common::State initial_state;
   Point2d initial_state_pose{pose.position.x, pose.position.y};
   const auto rpy =
