@@ -8,6 +8,16 @@ Diagnostic status dependencies will be directed acyclic graph (DAG).
 
 ![overview](./doc/overview.drawio.svg)
 
+## Diagnostics graph message
+
+The diagnostics graph that this node outputs is a combination of diagnostic status and connections between them.
+This graph consists of an array of diagnostic nodes, and each node has a status and links.
+This link contains an index indicating the position of the node in the graph.
+Therefore, the graph can be reconstructed from the array of nodes using links.
+The following is an example of a message representing the graph in the overview section.
+
+![message](./doc/message.drawio.svg)
+
 ## Operation mode availability
 
 For MRM, this node publishes the status of the top-level functional units in the dedicated message.
