@@ -40,17 +40,13 @@ LidarMarkerLocalizer::LidarMarkerLocalizer()
   using std::placeholders::_2;
 
   param_.resolution = static_cast<double>(this->declare_parameter<double>("resolution"));
-  param_.filter_window_size = static_cast<int>(this->declare_parameter<int>("filter_window_size"));
-  param_.intensity_difference_threshold =
-    static_cast<int>(this->declare_parameter<int>("intensity_difference_threshold"));
-  param_.positive_window_size =
-    static_cast<int>(this->declare_parameter<int>("positive_window_size"));
-  param_.negative_window_size =
-    static_cast<int>(this->declare_parameter<int>("negative_window_size"));
-  param_.positive_vote_threshold =
-    static_cast<int>(this->declare_parameter<int>("positive_vote_threshold"));
-  param_.negative_vote_threshold =
-    static_cast<int>(this->declare_parameter<int>("negative_vote_threshold"));
+  param_.intensity_pattern = this->declare_parameter<std::vector<int64_t>>("intensity_pattern");
+  param_.match_intensity_difference_threshold =
+    static_cast<int>(this->declare_parameter<int>("match_intensity_difference_threshold"));
+  param_.positive_match_num_threshold =
+    static_cast<int>(this->declare_parameter<int>("positive_match_num_threshold"));
+  param_.negative_match_num_threshold =
+    static_cast<int>(this->declare_parameter<int>("negative_match_num_threshold"));
   param_.vote_threshold_for_detect_marker =
     static_cast<int>(this->declare_parameter<int>("vote_threshold_for_detect_marker"));
   param_.self_pose_timeout_sec =
@@ -378,14 +374,14 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
     }
 
     // filter
-    for (int i = param_.filter_window_size; i < bin_num - param_.filter_window_size; i++) {
+    for (size_t i = 0; i < bin_num - param_.intensity_pattern.size(); i++) {
       int64_t pos = 0;
       int64_t neg = 0;
       double min_intensity = std::numeric_limits<double>::max();
       double max_intensity = std::numeric_limits<double>::lowest();
 
       // find max_min
-      for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
+      for (size_t j = 0; j < param_.intensity_pattern.size(); j++) {
         if (intensity_num[i + j] == 0) {
           continue;
         }
@@ -400,27 +396,31 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
 
       const double center_intensity = (max_intensity - min_intensity) / 2.0 + min_intensity;
 
-      for (int j = -param_.filter_window_size; j <= param_.filter_window_size; j++) {
+      for (size_t j = 0; j < param_.intensity_pattern.size(); j++) {
         if (intensity_num[i + j] == 0) {
           continue;
         }
+
         const double average = intensity_sum[i + j] / intensity_num[i + j];
-        if (std::abs(j) >= param_.negative_window_size) {
-          // check negative
-          if (average < center_intensity - param_.intensity_difference_threshold) {
-            neg++;
-          }
-        } else if (std::abs(j) <= param_.positive_window_size) {
+
+        if (param_.intensity_pattern[j] == 1) {
           // check positive
-          if (average > center_intensity + param_.intensity_difference_threshold) {
+          if (average > center_intensity + param_.match_intensity_difference_threshold) {
             pos++;
           }
-        } else {
-          // ignore
+        }
+        else if (param_.intensity_pattern[j] == -1) {
+          // check negative
+          if (average < center_intensity - param_.match_intensity_difference_threshold) {
+            neg++;
+          }
+        }
+        else {
+          // ignore param_.intensity_pattern[j] == 0
         }
       }
 
-      if (pos >= param_.positive_vote_threshold && neg >= param_.negative_vote_threshold) {
+      if (pos >= param_.positive_match_num_threshold && neg >= param_.negative_match_num_threshold) {
         vote[i]++;
       }
     }

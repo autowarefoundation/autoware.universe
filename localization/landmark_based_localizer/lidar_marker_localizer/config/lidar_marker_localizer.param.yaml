@@ -3,12 +3,12 @@
 
     # for marker detection algorithm
     resolution: 0.05
-    filter_window_size: 5
-    intensity_difference_threshold: 20
-    positive_window_size: 2
-    negative_window_size: 3
-    positive_vote_threshold: 3
-    negative_vote_threshold: 3
+    # A sequence of low/high intensity to perform pattern matching.
+    # -1: low intensity, 0: not consider, 1: high intensity
+    intensity_pattern: [-1, -1, 0, 1, 1, 1, 1, 1, 0, -1, -1]
+    match_intensity_difference_threshold: 20
+    positive_match_num_threshold: 3
+    negative_match_num_threshold: 3
     vote_threshold_for_detect_marker: 20
 
     # for interpolate algorithm
