@@ -430,7 +430,7 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   for (size_t i = 0; i < bin_num - param_.intensity_pattern.size(); i++) {
     if (vote[i] > param_.vote_threshold_for_detect_marker) {
       Pose marker_pose_on_base_link;
-      marker_pose_on_base_link.position.x = i * param_.resolution + param_.resolution / 2.0 + min_x;
+      marker_pose_on_base_link.position.x = (i + param_.intensity_pattern.size() / 2.0) * param_.resolution + min_x;
       marker_pose_on_base_link.position.y = min_y[i];
       marker_pose_on_base_link.position.z = 0.2 + 1.75 / 2.0;  // TODO(YamatoAndo)
       marker_pose_on_base_link.orientation =
