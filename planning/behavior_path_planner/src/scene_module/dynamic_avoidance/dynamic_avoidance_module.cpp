@@ -14,6 +14,7 @@
 
 #include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
 
+#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
@@ -251,7 +252,7 @@ bool DynamicAvoidanceModule::isExecutionRequested() const
   }
 
   // check if the planner is already running
-  if (current_state_ == ModuleStatus::RUNNING) {
+  if (getCurrentStatus() == ModuleStatus::RUNNING) {
     return true;
   }
 
@@ -279,15 +280,9 @@ void DynamicAvoidanceModule::updateData()
   }
 }
 
-ModuleStatus DynamicAvoidanceModule::updateState()
+bool DynamicAvoidanceModule::canTransitSuccessState()
 {
-  const bool has_avoidance_target = !target_objects_.empty();
-
-  if (!has_avoidance_target) {
-    return ModuleStatus::SUCCESS;
-  }
-
-  return ModuleStatus::RUNNING;
+  return target_objects_.empty();
 }
 
 BehaviorModuleOutput DynamicAvoidanceModule::plan()
