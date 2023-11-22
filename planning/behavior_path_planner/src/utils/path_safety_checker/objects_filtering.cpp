@@ -35,7 +35,7 @@ bool velocity_filter(const PredictedObject & object, double velocity_threshold, 
 }
 
 bool position_filter(
-  PredictedObject & object, const std::vector<PathPointWithLaneId> & path_points,
+  const PredictedObject & object, const std::vector<PathPointWithLaneId> & path_points,
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance)
 {
