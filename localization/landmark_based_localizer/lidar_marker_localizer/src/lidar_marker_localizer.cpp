@@ -408,19 +408,18 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
           if (average > center_intensity + param_.match_intensity_difference_threshold) {
             pos++;
           }
-        }
-        else if (param_.intensity_pattern[j] == -1) {
+        } else if (param_.intensity_pattern[j] == -1) {
           // check negative
           if (average < center_intensity - param_.match_intensity_difference_threshold) {
             neg++;
           }
-        }
-        else {
+        } else {
           // ignore param_.intensity_pattern[j] == 0
         }
       }
 
-      if (pos >= param_.positive_match_num_threshold && neg >= param_.negative_match_num_threshold) {
+      if (
+        pos >= param_.positive_match_num_threshold && neg >= param_.negative_match_num_threshold) {
         vote[i]++;
       }
     }
