@@ -1,4 +1,4 @@
-# Kalman filter parmeters for 2d tracking
+# Kalman filter parameters for 2d tracking
 dt: 0.1           # time step[s]
 dim_x: 8          # tlbr + velocity
 dim_z: 4          # tlbr
