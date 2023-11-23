@@ -6,7 +6,7 @@ The core algorithm, named `ByteTrack`, mainly aims to perform multi-object track
 Because the algorithm associates almost every detection box including ones with low detection scores,
 the number of false negatives is expected to decrease by using it.
 
-[demo video](https://user-images.githubusercontent.com/3022416/225920856-745a3bb7-6b35-403d-87b0-6e5085952d70.mp4)
+[demo video](https://github.com/YoshiRi/autoware.universe/assets/3022416/40f4c158-657e-48e1-81c2-8ac39152892d)
 
 ## Inner-workings / Algorithms
 
