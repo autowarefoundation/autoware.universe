@@ -105,13 +105,10 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
     // put the lane that contain waypoints in lane_ids.
     bool is_in_lanes = false;
     for (const auto & lane : lanelets) {
-      const auto closest_point =
-        lanelet::utils::getClosestCenterPose(lane, point.point.pose.position);
-      point.point.pose.position.z = closest_point.position.z;
-
       if (lanelet::utils::isInLanelet(point.point.pose, lane)) {
         point.lane_ids.push_back(lane.id());
         is_in_lanes = true;
+        std::cerr << "IS IN LANES\n";
       }
     }
     // If none of them corresponds, assign the previous lane_ids.
@@ -274,10 +271,23 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   const double max_length = *std::max_element(
     internal_params_->sampling.target_lengths.begin(),
     internal_params_->sampling.target_lengths.end());
-  const auto road_lanes = utils::getExtendedCurrentLanes(planner_data_, 0, max_length, false);
+  const auto road_lanes =
+    utils::getExtendedCurrentLanes(planner_data_, max_length, max_length, false);
 
   const auto best_path = frenet_paths[*selected_path_idx];
-  const auto out_path = convertFrenetPathToPathWithLaneID(best_path, road_lanes, velocity);
+  auto out_path = convertFrenetPathToPathWithLaneID(best_path, road_lanes, velocity);
+  const auto goal_pose = planner_data_->route_handler->getGoalPose();
+  for (auto & p : out_path.points) {
+    // lanelet::ConstLanelet closest_lanelet{};
+    // if (!planner_data_->route_handler->getClosestLaneletWithinRoute(
+    //       p.point.pose, &closest_lanelet)) {
+    //   continue;
+    // }
+    // const auto lane_pose =
+    //   lanelet::utils::getClosestCenterPose(closest_lanelet, p.point.pose.position);
+    p.point.pose.position.z = goal_pose.position.z;
+  }
+
   out.path = std::make_shared<PathWithLaneId>(out_path);
   const auto p = getPreviousModuleOutput().reference_path;
   out.reference_path = p;
