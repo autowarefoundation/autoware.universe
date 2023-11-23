@@ -20,14 +20,6 @@
 
 {{ json_to_markdown("vehicle/raw_vehicle_cmd_converter/schema/raw_vehicle_cmd_converter.schema.json") }}
 
-| Parameter                  | Type   | Description                                                                     |
-| -------------------------- | ------ | ------------------------------------------------------------------------------- |
-| `update_rate`              | double | timer's update rate                                                             |
-| `th_max_message_delay_sec` | double | threshold time of input messages' maximum delay                                 |
-| `th_arrived_distance_m`    | double | threshold distance to check if vehicle has arrived at the trajectory's endpoint |
-| `th_stopped_time_sec`      | double | threshold time to check if vehicle is stopped                                   |
-| `th_stopped_velocity_mps`  | double | threshold velocity to check if vehicle is stopped                               |
-
 ## Limitation
 
 The current feed back implementation is only applied to steering control.
