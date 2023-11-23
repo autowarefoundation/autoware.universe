@@ -30,20 +30,7 @@
   <arg name="behavior_velocity_planner_param_file" default="$(find-pkg-share behavior_velocity_planner)/config/behavior_velocity_planner.param.yaml"/>
 
   <node pkg="behavior_velocity_planner" exec="behavior_velocity_planner_node" name="behavior_velocity_planner" output="screen">
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/blind_spot.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/crosswalk.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/walkway.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/detection_area.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/intersection.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/stop_line.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/traffic_light.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/virtual_traffic_light.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/occlusion_spot.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/no_stopping_area.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/speed_bump.param.yaml"/>
-    <param from="$(find-pkg-share behavior_velocity_planner)/config/no_drivable_lane.param.yaml"/>
-
-    <param from="$(var vehicle_info_param_file)"/>
+    <!-- topic remap -->
     <remap from="~/input/path_with_lane_id" to="path_with_lane_id"/>
     <remap from="~/input/vector_map" to="/map/vector_map"/>
     <remap from="~/input/vehicle_odometry" to="/localization/kinematic_state"/>
