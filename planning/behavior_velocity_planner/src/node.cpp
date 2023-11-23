@@ -138,14 +138,12 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Parameters
   forward_path_length_ = declare_parameter<double>("forward_path_length");
   backward_path_length_ = declare_parameter<double>("backward_path_length");
-  planner_data_.stop_line_extend_length =
-    declare_parameter<double>("stop_line_extend_length");
+  planner_data_.stop_line_extend_length = declare_parameter<double>("stop_line_extend_length");
 
   // nearest search
   planner_data_.ego_nearest_dist_threshold =
     declare_parameter<double>("ego_nearest_dist_threshold");
-  planner_data_.ego_nearest_yaw_threshold =
-    declare_parameter<double>("ego_nearest_yaw_threshold");
+  planner_data_.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
