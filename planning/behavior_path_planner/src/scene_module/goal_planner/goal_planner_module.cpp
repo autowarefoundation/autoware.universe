@@ -121,7 +121,7 @@ GoalPlannerModule::GoalPlannerModule(
       goal_planner_data_.collision_check);
   }
 
-  status_.reset();
+  prev_data_.reset();
 }
 
 // This function is needed for waiting for planner_data_
@@ -174,6 +174,7 @@ void GoalPlannerModule::onTimer()
     auto pull_over_path = planner->plan(goal_candidate.goal_pose);
     if (pull_over_path && isCrossingPossible(*pull_over_path)) {
       pull_over_path->goal_id = goal_candidate.id;
+      pull_over_path->id = path_candidates.size();
       path_candidates.push_back(*pull_over_path);
       // calculate closest pull over start pose for stop path
       const double start_arc_length =
@@ -240,7 +241,7 @@ void GoalPlannerModule::onFreespaceParkingTimer()
 
 void GoalPlannerModule::updateData()
 {
-  if (getCurrentStatus() == ModuleStatus::IDLE) {
+  if (getCurrentStatus() == ModuleStatus::IDLE && !isExecutionRequested()) {
     return;
   }
 
@@ -259,11 +260,14 @@ void GoalPlannerModule::updateData()
 
   updateOccupancyGrid();
 
-  generateGoalCandidates();
+  // update goal searcher and generate goal candidates
+  if (thread_safe_data_.get_goal_candidates().empty()) {
+    goal_searcher_->setPlannerData(planner_data_);
+    goal_searcher_->setReferenceGoal(
+      calcRefinedGoal(planner_data_->route_handler->getOriginalGoalPose()));
+    thread_safe_data_.set_goal_candidates(generateGoalCandidates());
+  }
 
-  // Only after the path is decided, approval is allowed and the module is Activated.
-  // The path index is not incremented until after deciding the path.
-  // So return here,
   if (!isActivated()) {
     return;
   }
@@ -308,7 +312,7 @@ void GoalPlannerModule::processOnExit()
   resetPathCandidate();
   resetPathReference();
   debug_marker_.markers.clear();
-  status_.reset();
+  prev_data_.reset();
   last_approval_data_.reset();
 }
 
@@ -530,7 +534,15 @@ bool GoalPlannerModule::canReturnToLaneParking()
   }
 
   const PathWithLaneId path = thread_safe_data_.get_lane_parking_pull_over_path()->getFullPath();
-  if (checkCollision(path)) {
+
+  if (
+    parameters_->use_object_recognition &&
+    checkObjectsCollision(path, parameters_->object_recognition_collision_check_margin)) {
+    return false;
+  }
+
+  if (
+    parameters_->use_occupancy_grid_for_path_collision_check && checkOccupancyGridCollision(path)) {
     return false;
   }
 
@@ -545,33 +557,24 @@ bool GoalPlannerModule::canReturnToLaneParking()
   return true;
 }
 
-void GoalPlannerModule::generateGoalCandidates()
+GoalCandidates GoalPlannerModule::generateGoalCandidates() const
 {
-  if (!thread_safe_data_.get_goal_candidates().empty()) {
-    return;
-  }
-
   // calculate goal candidates
   const auto & route_handler = planner_data_->route_handler;
-  const Pose goal_pose = route_handler->getOriginalGoalPose();
-  status_.set_refined_goal_pose(calcRefinedGoal(goal_pose));
   if (goal_planner_utils::isAllowedGoalModification(route_handler)) {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    goal_searcher_->setPlannerData(planner_data_);
-    goal_searcher_->setReferenceGoal(status_.get_refined_goal_pose());
-    thread_safe_data_.set_goal_candidates(goal_searcher_->search());
-    status_.set_closest_goal_candidate_pose(
-      goal_searcher_->getClosetGoalCandidateAlongLanes(thread_safe_data_.get_goal_candidates())
-        .goal_pose);
-  } else {
-    GoalCandidate goal_candidate{};
-    goal_candidate.goal_pose = goal_pose;
-    goal_candidate.distance_from_original_goal = 0.0;
-    GoalCandidates goal_candidates{};
-    goal_candidates.push_back(goal_candidate);
-    thread_safe_data_.set_goal_candidates(goal_candidates);
-    status_.set_closest_goal_candidate_pose(goal_pose);
+    return goal_searcher_->search();
   }
+
+  // NOTE:
+  // currently since pull over is performed only when isAllowedGoalModification is true,
+  // never be in the following process.
+  GoalCandidate goal_candidate{};
+  goal_candidate.goal_pose = route_handler->getOriginalGoalPose();
+  goal_candidate.distance_from_original_goal = 0.0;
+  GoalCandidates goal_candidates{};
+  goal_candidates.push_back(goal_candidate);
+
+  return goal_candidates;
 }
 
 BehaviorModuleOutput GoalPlannerModule::plan()
@@ -603,6 +606,48 @@ std::vector<PullOverPath> GoalPlannerModule::sortPullOverPathCandidatesByGoalPri
       return goal_id_to_index[a.goal_id] < goal_id_to_index[b.goal_id];
     });
 
+  if (parameters_->use_object_recognition) {
+    // Create a map of PullOverPath pointer to largest collision check margin
+    auto calcLargestMargin = [&](const PullOverPath & pull_over_path) {
+      // check has safe goal
+      const auto goal_candidate_it = std::find_if(
+        goal_candidates.begin(), goal_candidates.end(),
+        [pull_over_path](const auto & goal_candidate) {
+          return goal_candidate.id == pull_over_path.goal_id;
+        });
+      if (goal_candidate_it != goal_candidates.end() && !goal_candidate_it->is_safe) {
+        return 0.0;
+      }
+      // calc largest margin
+      std::vector<double> scale_factors{3.0, 2.0, 1.0};
+      const double margin = parameters_->object_recognition_collision_check_margin;
+      const auto resampled_path =
+        utils::resamplePathWithSpline(pull_over_path.getParkingPath(), 0.5);
+      for (const auto & scale_factor : scale_factors) {
+        if (!checkObjectsCollision(resampled_path, margin * scale_factor)) {
+          return margin * scale_factor;
+        }
+      }
+      return 0.0;
+    };
+
+    // Create a map of PullOverPath pointer to largest collision check margin
+    std::map<size_t, double> path_id_to_margin_map;
+    for (const auto & path : sorted_pull_over_path_candidates) {
+      path_id_to_margin_map[path.id] = calcLargestMargin(path);
+    }
+
+    // sorts in descending order so the item with larger margin comes first
+    std::stable_sort(
+      sorted_pull_over_path_candidates.begin(), sorted_pull_over_path_candidates.end(),
+      [&path_id_to_margin_map](const PullOverPath & a, const PullOverPath & b) {
+        if (std::abs(path_id_to_margin_map[a.id] - path_id_to_margin_map[b.id]) < 0.01) {
+          return false;
+        }
+        return path_id_to_margin_map[a.id] > path_id_to_margin_map[b.id];
+      });
+  }
+
   // Sort pull_over_path_candidates based on the order in efficient_path_order
   if (parameters_->path_priority == "efficient_path") {
     std::stable_sort(
@@ -620,7 +665,7 @@ std::vector<PullOverPath> GoalPlannerModule::sortPullOverPathCandidatesByGoalPri
 
 std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectPullOverPath(
   const std::vector<PullOverPath> & pull_over_path_candidates,
-  const GoalCandidates & goal_candidates) const
+  const GoalCandidates & goal_candidates, const double collision_check_margin) const
 {
   for (const auto & pull_over_path : pull_over_path_candidates) {
     // check if goal is safe
@@ -633,10 +678,20 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
       continue;
     }
 
-    // check if path is valid and safe
+    if (!hasEnoughDistance(pull_over_path)) {
+      continue;
+    }
+
+    const auto resampled_path = utils::resamplePathWithSpline(pull_over_path.getParkingPath(), 0.5);
     if (
-      !hasEnoughDistance(pull_over_path) ||
-      checkCollision(utils::resamplePathWithSpline(pull_over_path.getParkingPath(), 0.5))) {
+      parameters_->use_object_recognition &&
+      checkObjectsCollision(resampled_path, collision_check_margin, true /*update_debug_data*/)) {
+      continue;
+    }
+
+    if (
+      parameters_->use_occupancy_grid_for_path_collision_check &&
+      checkOccupancyGridCollision(resampled_path)) {
       continue;
     }
 
@@ -695,14 +750,14 @@ void GoalPlannerModule::setOutput(BehaviorModuleOutput & output) const
 
 void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output) const
 {
-  if (status_.get_prev_found_path() || !status_.get_prev_stop_path()) {
+  if (prev_data_.found_path || !prev_data_.stop_path) {
     // safe -> not_safe or no prev_stop_path: generate new stop_path
     output.path = std::make_shared<PathWithLaneId>(generateStopPath());
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path, generate stop path");
   } else {
     // not_safe -> not_safe: use previous stop path
-    output.path = status_.get_prev_stop_path();
+    output.path = prev_data_.stop_path;
     // stop_pose_ is removed in manager every loop, so need to set every loop.
     stop_pose_ = utils::getFirstStopPoseFromPath(*output.path);
     RCLCPP_WARN_THROTTLE(
@@ -713,7 +768,7 @@ void GoalPlannerModule::setStopPath(BehaviorModuleOutput & output) const
 void GoalPlannerModule::setStopPathFromCurrentPath(BehaviorModuleOutput & output) const
 {
   // safe or not safe(no feasible stop_path found) -> not_safe: try to find new feasible stop_path
-  if (status_.get_prev_is_safe() || !status_.get_prev_stop_path_after_approval()) {
+  if (prev_data_.is_safe || !prev_data_.stop_path_after_approval) {
     auto current_path = thread_safe_data_.get_pull_over_path()->getCurrentPath();
     const auto stop_path =
       behavior_path_planner::utils::start_goal_planner_common::generateFeasibleStopPath(
@@ -721,7 +776,6 @@ void GoalPlannerModule::setStopPathFromCurrentPath(BehaviorModuleOutput & output
         parameters_->maximum_jerk_for_stop);
     if (stop_path) {
       output.path = std::make_shared<PathWithLaneId>(*stop_path);
-      // status_.set_prev_stop_path_after_approval(output.path);
       RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, generate stop path");
     } else {
       output.path =
@@ -730,10 +784,9 @@ void GoalPlannerModule::setStopPathFromCurrentPath(BehaviorModuleOutput & output
         getLogger(), *clock_, 5000,
         "Collision detected, no feasible stop path found, cannot stop.");
     }
-    // status_.set_last_path_update_time(std::make_shared<rclcpp::Time>(clock_->now()));
   } else {
     // not_safe safe(no feasible stop path found) -> not_safe: use previous stop path
-    output.path = status_.get_prev_stop_path_after_approval();
+    output.path = prev_data_.stop_path_after_approval;
     // stop_pose_ is removed in manager every loop, so need to set every loop.
     stop_pose_ = utils::getFirstStopPoseFromPath(*output.path);
     RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Collision detected, use previous stop path");
@@ -806,6 +859,12 @@ bool GoalPlannerModule::hasDecidedPath() const
 {
   // if path is not safe, not decided
   if (!thread_safe_data_.foundPullOverPath()) {
+    return false;
+  }
+
+  // If it is dangerous before approval, do not determine the path.
+  // This eliminates a unsafe path to be approved
+  if (parameters_->safety_check_params.enable_safety_check && !isSafePath() && !isActivated()) {
     return false;
   }
 
@@ -896,7 +955,9 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
       thread_safe_data_.get_pull_over_path_candidates(), goal_candidates);
 
     // select pull over path which is safe against static objects and get it's goal
-    const auto path_and_goal_opt = selectPullOverPath(pull_over_path_candidates, goal_candidates);
+    const auto path_and_goal_opt = selectPullOverPath(
+      pull_over_path_candidates, goal_candidates,
+      parameters_->object_recognition_collision_check_margin);
 
     // update thread_safe_data_
     if (path_and_goal_opt) {
@@ -934,7 +995,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
   path_candidate_ =
     std::make_shared<PathWithLaneId>(thread_safe_data_.get_pull_over_path()->getFullPath());
 
-  updateStatus(output);
+  updatePreviousData(output);
 
   return output;
 }
@@ -961,17 +1022,16 @@ void GoalPlannerModule::postProcess()
   setStopReason(StopReason::GOAL_PLANNER, thread_safe_data_.get_pull_over_path()->getFullPath());
 }
 
-void GoalPlannerModule::updateStatus(const BehaviorModuleOutput & output)
+void GoalPlannerModule::updatePreviousData(const BehaviorModuleOutput & output)
 {
-  if (status_.get_prev_found_path() || !status_.get_prev_stop_path()) {
-    status_.set_prev_stop_path(output.path);
+  if (prev_data_.found_path || !prev_data_.stop_path) {
+    prev_data_.stop_path = output.path;
   }
 
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
-  status_.set_prev_found_path(thread_safe_data_.foundPullOverPath());
-  status_.set_prev_is_safe(
-    parameters_->safety_check_params.enable_safety_check ? isSafePath() : true);
+  prev_data_.found_path = thread_safe_data_.foundPullOverPath();
+  prev_data_.is_safe = parameters_->safety_check_params.enable_safety_check ? isSafePath() : true;
 
   if (!isActivated()) {
     return;
@@ -979,15 +1039,15 @@ void GoalPlannerModule::updateStatus(const BehaviorModuleOutput & output)
 
   if (
     !parameters_->safety_check_params.enable_safety_check || isSafePath() ||
-    (!status_.get_prev_is_safe() && status_.get_prev_stop_path_after_approval())) {
+    (!prev_data_.is_safe && prev_data_.stop_path_after_approval)) {
     return;
   }
-  status_.set_prev_is_safe(false);
+  prev_data_.is_safe = false;
   const bool is_stop_path = std::any_of(
     output.path->points.begin(), output.path->points.end(),
     [](const auto & point) { return point.point.longitudinal_velocity_mps == 0.0; });
   if (is_stop_path) {
-    status_.set_prev_stop_path_after_approval(output.path);
+    prev_data_.stop_path_after_approval = output.path;
   }
 }
 
@@ -1061,8 +1121,10 @@ PathWithLaneId GoalPlannerModule::generateStopPath() const
   // calculate search start offset pose from the closest goal candidate pose with
   // approximate_pull_over_distance_ ego vehicle decelerates to this position. or if no feasible
   // stop point is found, stop at this position.
+  const auto closest_goal_candidate =
+    goal_searcher_->getClosetGoalCandidateAlongLanes(thread_safe_data_.get_goal_candidates());
   const auto decel_pose = calcLongitudinalOffsetPose(
-    reference_path.points, status_.get_closest_goal_candidate_pose().position,
+    reference_path.points, closest_goal_candidate.goal_pose.position,
     -approximate_pull_over_distance_);
 
   // if not approved stop road lane.
@@ -1136,6 +1198,7 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath() const
     planner_data_, parameters_->backward_goal_search_length,
     parameters_->forward_goal_search_length,
     /*forward_only_in_route*/ false);
+
   const auto s_current = lanelet::utils::getArcCoordinates(current_lanes, current_pose).length;
   const double s_start = std::max(0.0, s_current - common_parameters.backward_path_length);
   const double s_end = s_current + common_parameters.forward_path_length;
@@ -1211,7 +1274,21 @@ bool GoalPlannerModule::isStuck()
     return false;
   }
 
-  return checkCollision(thread_safe_data_.get_pull_over_path()->getCurrentPath());
+  if (
+    parameters_->use_object_recognition &&
+    checkObjectsCollision(
+      thread_safe_data_.get_pull_over_path()->getCurrentPath(),
+      parameters_->object_recognition_collision_check_margin)) {
+    return true;
+  }
+
+  if (
+    parameters_->use_occupancy_grid_for_path_collision_check &&
+    checkOccupancyGridCollision(thread_safe_data_.get_pull_over_path()->getCurrentPath())) {
+    return true;
+  }
+
+  return false;
 }
 
 bool GoalPlannerModule::hasFinishedCurrentPath()
@@ -1303,18 +1380,19 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo() const
   return turn_signal;
 }
 
-bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
+bool GoalPlannerModule::checkOccupancyGridCollision(const PathWithLaneId & path) const
 {
-  if (parameters_->use_occupancy_grid_for_path_collision_check && occupancy_grid_map_) {
-    const bool check_out_of_range = false;
-    if (occupancy_grid_map_->hasObstacleOnPath(path, check_out_of_range)) {
-      return true;
-    }
-  }
-  if (!parameters_->use_object_recognition) {
+  if (!occupancy_grid_map_) {
     return false;
   }
+  const bool check_out_of_range = false;
+  return occupancy_grid_map_->hasObstacleOnPath(path, check_out_of_range);
+}
 
+bool GoalPlannerModule::checkObjectsCollision(
+  const PathWithLaneId & path, const double collision_check_margin,
+  const bool update_debug_data) const
+{
   const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
     *(planner_data_->route_handler), left_side_parking_, parameters_->backward_goal_search_length,
     parameters_->forward_goal_search_length);
@@ -1329,7 +1407,30 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
     obj_polygons.push_back(tier4_autoware_utils::toPolygon2d(object));
   }
 
-  std::vector<Polygon2d> ego_polygons_expanded;
+  /* Expand ego collision check polygon
+   *   - `collision_check_margin` in all directions
+   *   - `extra_stopping_margin` in the moving direction
+   *   - `extra_lateral_margin` in external direction of path curve
+   *
+   *
+   *                                        ^ moving direction
+   *                                        x
+   *                                        x
+   *                                        x
+   *          +----------------------+------x--+
+   *          |                      |      x  |
+   *          |   +---------------+  |    xx   |
+   *          |   |               |  |  xx     |
+   *          |   | ego footprint |xxxxx       |
+   *          |   |               |  |         |
+   *          |   +---------------+  | extra_stopping_margin
+   *          |       margin         |         |
+   *          +----------------------+         |
+   *          |       extra_lateral_margin     |
+   *          +--------------------------------+
+   *
+   */
+  std::vector<Polygon2d> ego_polygons_expanded{};
   const auto curvatures = motion_utils::calcCurvature(path.points);
   for (size_t i = 0; i < path.points.size(); ++i) {
     const auto p = path.points.at(i);
@@ -1347,16 +1448,16 @@ bool GoalPlannerModule::checkCollision(const PathWithLaneId & path) const
       tier4_autoware_utils::calcOffsetPose(p.point.pose, 0.0, extra_lateral_margin / 2.0, 0.0);
     const auto ego_polygon = tier4_autoware_utils::toFootprint(
       lateral_offset_pose,
-      planner_data_->parameters.base_link2front +
-        parameters_->object_recognition_collision_check_margin + extra_stopping_margin,
-      planner_data_->parameters.base_link2rear +
-        parameters_->object_recognition_collision_check_margin,
-      planner_data_->parameters.vehicle_width +
-        parameters_->object_recognition_collision_check_margin * 2.0 +
+      planner_data_->parameters.base_link2front + collision_check_margin + extra_stopping_margin,
+      planner_data_->parameters.base_link2rear + collision_check_margin,
+      planner_data_->parameters.vehicle_width + collision_check_margin * 2.0 +
         std::abs(extra_lateral_margin));
     ego_polygons_expanded.push_back(ego_polygon);
   }
-  debug_data_.ego_polygons_expanded = ego_polygons_expanded;
+
+  if (update_debug_data) {
+    debug_data_.ego_polygons_expanded = ego_polygons_expanded;
+  }
 
   return utils::path_safety_checker::checkPolygonsIntersects(ego_polygons_expanded, obj_polygons);
 }
@@ -1432,8 +1533,10 @@ double GoalPlannerModule::calcSignedArcLengthFromEgo(
 void GoalPlannerModule::deceleratePath(PullOverPath & pull_over_path) const
 {
   // decelerate before the search area start
+  const auto closest_goal_candidate =
+    goal_searcher_->getClosetGoalCandidateAlongLanes(thread_safe_data_.get_goal_candidates());
   const auto decel_pose = calcLongitudinalOffsetPose(
-    pull_over_path.getFullPath().points, status_.get_closest_goal_candidate_pose().position,
+    pull_over_path.getFullPath().points, closest_goal_candidate.goal_pose.position,
     -approximate_pull_over_distance_);
   auto & first_path = pull_over_path.partial_paths.front();
   if (decel_pose) {
@@ -1619,6 +1722,34 @@ void GoalPlannerModule::updateSafetyCheckTargetObjectsData(
   goal_planner_data_.ego_predicted_path = ego_predicted_path;
 }
 
+bool GoalPlannerModule::checkSafetyWithRSS(
+  const PathWithLaneId & planned_path,
+  const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
+  const std::vector<ExtendedPredictedObject> & objects, const double hysteresis_factor) const
+{
+  // Check for collisions with each predicted path of the object
+  const bool is_safe = !std::any_of(objects.begin(), objects.end(), [&](const auto & object) {
+    auto current_debug_data = marker_utils::createObjectDebug(object);
+
+    const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
+      object, objects_filtering_params_->check_all_predicted_path);
+
+    return std::any_of(
+      obj_predicted_paths.begin(), obj_predicted_paths.end(), [&](const auto & obj_path) {
+        const bool has_collision = !utils::path_safety_checker::checkCollision(
+          planned_path, ego_predicted_path, object, obj_path, planner_data_->parameters,
+          safety_check_params_->rss_params, hysteresis_factor, current_debug_data.second);
+
+        marker_utils::updateCollisionCheckDebugMap(
+          goal_planner_data_.collision_check, current_debug_data, !has_collision);
+
+        return has_collision;
+      });
+  });
+
+  return is_safe;
+}
+
 bool GoalPlannerModule::isSafePath() const
 {
   const auto pull_over_path = thread_safe_data_.get_pull_over_path()->getCurrentPath();
@@ -1654,49 +1785,21 @@ bool GoalPlannerModule::isSafePath() const
       ego_seg_idx, is_object_front, limit_to_max_velocity);
 
   // filtering objects with velocity, position and class
-  const auto & filtered_objects = utils::path_safety_checker::filterObjects(
+  const auto filtered_objects = utils::path_safety_checker::filterObjects(
     dynamic_object, route_handler, pull_over_lanes, current_pose.position,
     objects_filtering_params_);
 
   // filtering objects based on the current position's lane
-  const auto & target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
+  const auto target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
     pull_over_lanes, route_handler, filtered_objects, objects_filtering_params_);
-
-  const double hysteresis_factor =
-    status_.get_prev_is_safe() ? 1.0 : parameters_->hysteresis_factor_expand_rate;
 
   utils::start_goal_planner_common::updateSafetyCheckTargetObjectsData(
     goal_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
 
-  bool is_safe_dynamic_objects = true;
-  // Check for collisions with each predicted path of the object
-  for (const auto & object : target_objects_on_lane.on_current_lane) {
-    auto current_debug_data = marker_utils::createObjectDebug(object);
-
-    bool is_safe_dynamic_object = true;
-
-    const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
-      object, objects_filtering_params_->check_all_predicted_path);
-
-    // If a collision is detected, mark the object as unsafe and break the loop
-    for (const auto & obj_path : obj_predicted_paths) {
-      if (!utils::path_safety_checker::checkCollision(
-            pull_over_path, ego_predicted_path, object, obj_path, planner_data_->parameters,
-            safety_check_params_->rss_params, hysteresis_factor, current_debug_data.second)) {
-        marker_utils::updateCollisionCheckDebugMap(
-          goal_planner_data_.collision_check, current_debug_data, false);
-        is_safe_dynamic_objects = false;
-        is_safe_dynamic_object = false;
-        break;
-      }
-    }
-    if (is_safe_dynamic_object) {
-      marker_utils::updateCollisionCheckDebugMap(
-        goal_planner_data_.collision_check, current_debug_data, is_safe_dynamic_object);
-    }
-  }
-
-  return is_safe_dynamic_objects;
+  const double hysteresis_factor =
+    prev_data_.is_safe ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+  return checkSafetyWithRSS(
+    pull_over_path, ego_predicted_path, target_objects_on_lane.on_current_lane, hysteresis_factor);
 }
 
 void GoalPlannerModule::setDebugData()
@@ -1727,7 +1830,7 @@ void GoalPlannerModule::setDebugData()
     // Visualize pull over areas
     const auto color = hasDecidedPath() ? createMarkerColor(1.0, 1.0, 0.0, 0.999)   // yellow
                                         : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
-    const double z = status_.get_refined_goal_pose().position.z;
+    const double z = planner_data_->route_handler->getGoalPose().position.z;
     add(goal_planner_utils::createPullOverAreaMarkerArray(
       goal_searcher_->getAreaPolygons(), header, color, z));
 
@@ -1859,7 +1962,7 @@ void GoalPlannerModule::printParkingPositionError() const
 bool GoalPlannerModule::checkOriginalGoalIsInShoulder() const
 {
   const auto & route_handler = planner_data_->route_handler;
-  const Pose & goal_pose = route_handler->getOriginalGoalPose();
+  const Pose goal_pose = route_handler->getOriginalGoalPose();
 
   const lanelet::ConstLanelets pull_over_lanes = goal_planner_utils::getPullOverLanes(
     *(route_handler), left_side_parking_, parameters_->backward_goal_search_length,
