@@ -17,7 +17,7 @@ Some examples of No Drivable Lanes
 
 A lanelet becomes invalid by adding a new tag under the relevant lanelet in the map file `<tag k="no_drivable_lane" v="yes"/>`.
 
-The target of this module is to stop the vehicle before entering the no drivable lane (with configurable stop margin) or keep the vehicle stationary if autonomous mode started inside a no drivable lane. Then ask the human driver to take the responsibility of the driving task (Takeover Request / Request to Intervene)
+The target of this module is to stop the vehicle before entering the no drivable lane (with configurable stop margin) or keep the vehicle stationary if autonomous mode started inside a no drivable lane. Then ask the human driver to take the responsibility of the driving task (Request to Intervene)
 
 ### Activation Timing
 
