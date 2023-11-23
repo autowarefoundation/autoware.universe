@@ -17,6 +17,8 @@
 
 #include "planning_validator/debug_marker.hpp"
 #include "planning_validator/msg/planning_validator_status.hpp"
+#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -25,6 +27,7 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
 #include <memory>
 #include <string>
@@ -37,6 +40,8 @@ using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 using nav_msgs::msg::Odometry;
 using planning_validator::msg::PlanningValidatorStatus;
+using tier4_autoware_utils::StopWatch;
+using tier4_debug_msgs::msg::Float64Stamped;
 
 struct ValidationParams
 {
@@ -80,6 +85,7 @@ private:
 
   void validate(const Trajectory & trajectory);
 
+  void publishProcessingTime(const double processing_time_ms);
   void publishTrajectory();
   void publishDebugInfo();
   void displayStatus();
@@ -90,6 +96,7 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr sub_traj_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_traj_;
   rclcpp::Publisher<PlanningValidatorStatus>::SharedPtr pub_status_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr pub_processing_time_ms_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
 
   // system parameters
@@ -102,7 +109,7 @@ private:
   int diag_error_count_threshold_ = 0;
   bool display_on_terminal_ = true;
 
-  Updater diag_updater_{this};
+  std::shared_ptr<Updater> diag_updater_ = nullptr;
 
   PlanningValidatorStatus validation_status_;
   ValidationParams validation_params_;  // for thresholds
@@ -117,6 +124,10 @@ private:
   Odometry::ConstSharedPtr current_kinematics_;
 
   std::shared_ptr<PlanningValidatorDebugMarkerPublisher> debug_pose_publisher_;
+
+  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  StopWatch<std::chrono::milliseconds> stop_watch_;
 };
 }  // namespace planning_validator
 

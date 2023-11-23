@@ -16,10 +16,12 @@ ament_auto_find_build_dependencies()
 ament_auto_add_library(ekf_localizer_lib SHARED
   src/ekf_localizer.cpp
   src/covariance.cpp
+  src/diagnostics.cpp
   src/mahalanobis.cpp
   src/measurement.cpp
   src/state_transition.cpp
   src/warning_message.cpp
+  src/ekf_module.cpp
 )
 
 target_link_libraries(ekf_localizer_lib Eigen3::Eigen)
@@ -41,11 +43,11 @@ function(add_testcase filepath)
 endfunction()
 
 if(BUILD_TESTING)
-  add_ros_test(
+  add_launch_test(
     test/test_ekf_localizer_launch.py
     TIMEOUT "30"
   )
-  add_ros_test(
+  add_launch_test(
     test/test_ekf_localizer_mahalanobis.py
     TIMEOUT "30"
   )

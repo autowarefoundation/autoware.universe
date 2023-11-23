@@ -72,7 +72,7 @@ public:
 
   TurnSignalInfo updateOutputTurnSignal() override;
 
-  bool getAbortPath() override;
+  bool calcAbortPath() override;
 
   PathSafetyStatus isApprovedPathSafe() const override;
 
@@ -108,7 +108,7 @@ protected:
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
-  double calcPrepareDuration(
+  std::vector<double> calcPrepareDuration(
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
@@ -129,9 +129,19 @@ protected:
     const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes, const Direction direction = Direction::NONE) const;
 
+  bool hasEnoughLengthToCrosswalk(
+    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
+
+  bool hasEnoughLengthToIntersection(
+    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
+
+  bool hasEnoughLengthToTrafficLight(
+    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
+
   bool getLaneChangePaths(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
     Direction direction, LaneChangePaths * candidate_paths,
+    const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
     const bool check_safety = true) const override;
 
   TurnSignalInfo calcTurnSignalInfo() override;
@@ -140,16 +150,37 @@ protected:
 
   PathSafetyStatus isLaneChangePathSafe(
     const LaneChangePath & lane_change_path, const LaneChangeTargetObjects & target_objects,
-    const utils::path_safety_checker::RSSparams & rss_params,
+    const utils::path_safety_checker::RSSparams & rss_params, const bool is_stuck,
     CollisionCheckDebugMap & debug_data) const;
 
   LaneChangeTargetObjectIndices filterObject(
-    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+    const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes,
     const lanelet::ConstLanelets & target_backward_lanes) const;
+
+  std::vector<ExtendedPredictedObject> filterObjectsInTargetLane(
+    const LaneChangeTargetObjects & objects, const lanelet::ConstLanelets & target_lanes) const;
+
+  //! @brief Check if the ego vehicle is in stuck by a stationary obstacle.
+  //! @param obstacle_check_distance Distance to check ahead for any objects that might be
+  //! obstructing ego path. It makes sense to use values like the maximum lane change distance.
+  bool isVehicleStuck(
+    const lanelet::ConstLanelets & current_lanes, const double obstacle_check_distance) const;
+
+  bool isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const;
+
+  double calcMaximumLaneChangeLength(
+    const lanelet::ConstLanelet & current_terminal_lanelet, const double max_acc) const;
+
+  std::pair<double, double> calcCurrentMinMaxAcceleration() const;
 
   void setStopPose(const Pose & stop_pose);
 
-  rclcpp::Logger logger_ = rclcpp::get_logger("lane_change").get_child(getModuleTypeStr());
+  void updateStopTime();
+
+  double getStopTime() const { return stop_time_; }
+
+  double stop_time_{0.0};
 };
 }  // namespace behavior_path_planner
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__NORMAL_HPP_
