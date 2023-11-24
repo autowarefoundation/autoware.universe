@@ -22,23 +22,29 @@ current default value at autoware.universe for TIER IV Robotaxi are: - input_off
 ![roi_sync_image2](./docs/images/roi_sync_2.png)
 
 The subscription status of the message is signed with 'O'.
+
 1.if a pointcloud message is subscribed under the below condition:
-| | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
+
+|                     | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
 | :-----------------: | :--------: | :-------: | :-------: | :-------: |
-| subscription status | | O | O | O |
+| subscription status |            |     O     |     O     |     O     |
 
 If the roi msgs can be matched, fuse them and postprocess the pointcloud message.
 Otherwise, fuse the matched roi msgs and cache the pointcloud.
+
 2.if a pointcloud message is subscribed under the below condition:
-| | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
+
+|                     | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
 | :-----------------: | :--------: | :-------: | :-------: | :-------: |
-| subscription status | | O | O | |
+| subscription status |            |     O     |     O     |           |
 
 if the roi msgs can be matched, fuse them and cache the pointcloud.
+
 3.if a pointcloud message is subscribed under the below condition:
-| | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
+
+|                     | pointcloud | roi msg 1 | roi msg 2 | roi msg 3 |
 | :-----------------: | :--------: | :-------: | :-------: | :-------: |
-| subscription status | O | O | O | |
+| subscription status |     O      |     O     |     O     |           |
 
 If the roi msg 3 is subscribed before the next pointcloud message coming or timeout, fuse it if matched, otherwise wait for the next roi msg 3.
 If the roi msg 3 is not subscribed before the next pointcloud message coming or timeout, postprocess the pointcloud message as it is.
@@ -58,3 +64,4 @@ The rclcpp::TimerBase timer could not break a for loop, therefore even if time i
 | roi_cluster_fusion         | Overwrite a classification label of clusters by that of ROIs from a 2D object detector.         | [link](./docs/roi-cluster-fusion.md)         |
 | roi_detected_object_fusion | Overwrite a classification label of detected objects by that of ROIs from a 2D object detector. | [link](./docs/roi-detected-object-fusion.md) |
 | pointpainting_fusion       | Paint the point cloud with the ROIs from a 2D object detector and feed to a 3D object detector. | [link](./docs/pointpainting-fusion.md)       |
+| roi_pointcloud_fusion      | Matching pointcloud with ROIs from a 2D object detector to detect unknown-labeled objects       | [link](./docs/roi-pointcloud-fusion.md)      |

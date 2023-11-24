@@ -16,9 +16,6 @@
 
 #include "control_validator/utils.hpp"
 
-#include <motion_utils/motion_utils.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -163,7 +160,9 @@ void ControlValidator::publishDebugInfo()
 void ControlValidator::validate(const Trajectory & predicted_trajectory)
 {
   if (predicted_trajectory.points.size() < 2) {
-    RCLCPP_ERROR(get_logger(), "predicted_trajectory size is less than 2. Cannot validate.");
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 1000,
+      "predicted_trajectory size is less than 2. Cannot validate.");
     return;
   }
 
@@ -204,7 +203,9 @@ void ControlValidator::displayStatus()
 
   const auto & s = validation_status_;
 
-  warn(s.is_valid_max_distance_deviation, "planning trajectory is too far from ego!!");
+  warn(
+    s.is_valid_max_distance_deviation,
+    "predicted trajectory is too far from planning trajectory!!");
 }
 
 }  // namespace control_validator

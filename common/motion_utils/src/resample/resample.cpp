@@ -14,8 +14,15 @@
 
 #include "motion_utils/resample/resample.hpp"
 
+#include "interpolation/interpolation_utils.hpp"
+#include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
+#include "interpolation/zero_order_hold.hpp"
 #include "motion_utils/resample/resample_utils.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/geometry/pose_deviation.hpp"
+#include "tier4_autoware_utils/math/constants.hpp"
 
 namespace motion_utils
 {
@@ -109,13 +116,16 @@ std::vector<geometry_msgs::msg::Point> resamplePointVector(
 }
 
 std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
-  const std::vector<geometry_msgs::msg::Pose> & points,
+  const std::vector<geometry_msgs::msg::Pose> & points_raw,
   const std::vector<double> & resampled_arclength, const bool use_akima_spline_for_xy,
   const bool use_lerp_for_z)
 {
+  // Remove overlap points for resampling
+  const auto points = motion_utils::removeOverlapPoints(points_raw);
+
   // validate arguments
   if (!resample_utils::validate_arguments(points, resampled_arclength)) {
-    return points;
+    return points_raw;
   }
 
   std::vector<geometry_msgs::msg::Point> position(points.size());

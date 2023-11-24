@@ -1,10 +1,9 @@
 {
   "ignorePaths": [
     "**/perception/**",
-    "**/planning/**",
-    "**/sensing/**",
+    "sensing/tier4_pcl_extensions/include/**",
     "perception/bytetrack/lib/**"
   ],
   "ignoreRegExpList": [],
-  "words": []
+  "words": ["dltype", "tvmgen", "quantizer", "imageio", "mimsave"]
 }

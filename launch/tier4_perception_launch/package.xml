@@ -12,6 +12,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <exec_depend>cluster_merger</exec_depend>
   <exec_depend>compare_map_segmentation</exec_depend>
   <exec_depend>crosswalk_traffic_light_estimator</exec_depend>
   <exec_depend>detected_object_feature_remover</exec_depend>
@@ -38,6 +39,7 @@
   <exec_depend>shape_estimation</exec_depend>
   <exec_depend>tensorrt_yolo</exec_depend>
   <exec_depend>topic_tools</exec_depend>
+  <exec_depend>tracking_object_merger</exec_depend>
   <exec_depend>traffic_light_arbiter</exec_depend>
   <exec_depend>traffic_light_classifier</exec_depend>
   <exec_depend>traffic_light_fine_detector</exec_depend>

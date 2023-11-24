@@ -15,17 +15,18 @@
 #include "map_based_prediction/path_generator.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
-#include <motion_utils/motion_utils.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <algorithm>
 
 namespace map_based_prediction
 {
 PathGenerator::PathGenerator(
-  const double time_horizon, const double sampling_time_interval,
+  const double time_horizon, const double lateral_time_horizon, const double sampling_time_interval,
   const double min_crosswalk_user_velocity)
 : time_horizon_(time_horizon),
+  lateral_time_horizon_(lateral_time_horizon),
   sampling_time_interval_(sampling_time_interval),
   min_crosswalk_user_velocity_(min_crosswalk_user_velocity)
 {
@@ -70,7 +71,7 @@ PredictedPath PathGenerator::generatePathToTargetPoint(
 }
 
 PredictedPath PathGenerator::generatePathForCrosswalkUser(
-  const TrackedObject & object, const EntryPoint & reachable_crosswalk) const
+  const TrackedObject & object, const CrosswalkEdgePoints & reachable_crosswalk) const
 {
   PredictedPath predicted_path{};
   const double ep = 0.001;
@@ -79,10 +80,11 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
   const auto & obj_vel = object.kinematics.twist_with_covariance.twist.linear;
 
   const Eigen::Vector2d pedestrian_to_entry_point(
-    reachable_crosswalk.first.x() - obj_pos.x, reachable_crosswalk.first.y() - obj_pos.y);
+    reachable_crosswalk.front_center_point.x() - obj_pos.x,
+    reachable_crosswalk.front_center_point.y() - obj_pos.y);
   const Eigen::Vector2d entry_to_exit_point(
-    reachable_crosswalk.second.x() - reachable_crosswalk.first.x(),
-    reachable_crosswalk.second.y() - reachable_crosswalk.first.y());
+    reachable_crosswalk.back_center_point.x() - reachable_crosswalk.front_center_point.x(),
+    reachable_crosswalk.back_center_point.y() - reachable_crosswalk.front_center_point.y());
   const auto velocity = std::max(std::hypot(obj_vel.x, obj_vel.y), min_crosswalk_user_velocity_);
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
@@ -98,10 +100,10 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
       predicted_path.path.push_back(world_frame_pose);
     } else {
       world_frame_pose.position.x =
-        reachable_crosswalk.first.x() +
+        reachable_crosswalk.front_center_point.x() +
         velocity * entry_to_exit_point.normalized().x() * (dt - arrival_time);
       world_frame_pose.position.y =
-        reachable_crosswalk.first.y() +
+        reachable_crosswalk.front_center_point.y() +
         velocity * entry_to_exit_point.normalized().y() * (dt - arrival_time);
       world_frame_pose.position.z = obj_pos.z;
       world_frame_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
@@ -212,18 +214,25 @@ FrenetPath PathGenerator::generateFrenetPath(
 {
   FrenetPath path;
   const double duration = time_horizon_;
+  const double lateral_duration = lateral_time_horizon_;
 
   // Compute Lateral and Longitudinal Coefficients to generate the trajectory
-  const Eigen::Vector3d lat_coeff = calcLatCoefficients(current_point, target_point, duration);
+  const Eigen::Vector3d lat_coeff =
+    calcLatCoefficients(current_point, target_point, lateral_duration);
   const Eigen::Vector2d lon_coeff = calcLonCoefficients(current_point, target_point, duration);
 
   path.reserve(static_cast<size_t>(duration / sampling_time_interval_));
   for (double t = 0.0; t <= duration; t += sampling_time_interval_) {
-    const double d_next = current_point.d + current_point.d_vel * t + 0 * 2 * std::pow(t, 2) +
-                          lat_coeff(0) * std::pow(t, 3) + lat_coeff(1) * std::pow(t, 4) +
-                          lat_coeff(2) * std::pow(t, 5);
-    const double s_next = current_point.s + current_point.s_vel * t + 2 * 0 * std::pow(t, 2) +
-                          lon_coeff(0) * std::pow(t, 3) + lon_coeff(1) * std::pow(t, 4);
+    const double current_acc =
+      0.0;  // Currently we assume the object is traveling at a constant speed
+    const double d_next_ = current_point.d + current_point.d_vel * t +
+                           current_acc * 2.0 * std::pow(t, 2) + lat_coeff(0) * std::pow(t, 3) +
+                           lat_coeff(1) * std::pow(t, 4) + lat_coeff(2) * std::pow(t, 5);
+    // t > lateral_duration: 0.0, else d_next_
+    const double d_next = t > lateral_duration ? 0.0 : d_next_;
+    const double s_next = current_point.s + current_point.s_vel * t +
+                          2.0 * current_acc * std::pow(t, 2) + lon_coeff(0) * std::pow(t, 3) +
+                          lon_coeff(1) * std::pow(t, 4);
     if (s_next > max_length) {
       break;
     }

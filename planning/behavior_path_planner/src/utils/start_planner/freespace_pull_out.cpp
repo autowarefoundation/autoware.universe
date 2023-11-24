@@ -44,7 +44,7 @@ FreespacePullOut::FreespacePullOut(
   }
 }
 
-boost::optional<PullOutPath> FreespacePullOut::plan(const Pose start_pose, const Pose end_pose)
+boost::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const Pose & end_pose)
 {
   const auto & route_handler = planner_data_->route_handler;
   const double backward_path_length = planner_data_->parameters.backward_path_length;
@@ -86,7 +86,7 @@ boost::optional<PullOutPath> FreespacePullOut::plan(const Pose start_pose, const
   }
 
   // push back generate road lane path between end pose and goal pose to last path
-  const auto & goal_pose = route_handler->getGoalPose();
+  const Pose goal_pose = route_handler->getGoalPose();
   constexpr double offset_from_end_pose = 1.0;
   const auto arc_position_end = lanelet::utils::getArcCoordinates(road_lanes, end_pose);
   const double s_start = std::max(arc_position_end.length + offset_from_end_pose, 0.0);
@@ -96,7 +96,8 @@ boost::optional<PullOutPath> FreespacePullOut::plan(const Pose start_pose, const
   const bool path_terminal_is_goal = path_end_info.second;
 
   const auto road_center_line_path = route_handler->getCenterLinePath(road_lanes, s_start, s_end);
-  last_path = start_planner_utils::combineReferencePath(last_path, road_center_line_path);
+  last_path = utils::resamplePathWithSpline(
+    utils::combinePath(last_path, road_center_line_path), parameters_.center_line_path_interval);
 
   const double original_terminal_velocity = last_path.points.back().point.longitudinal_velocity_mps;
   utils::correctDividedPathVelocity(partial_paths);
