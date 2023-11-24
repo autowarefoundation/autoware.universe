@@ -157,6 +157,7 @@ private:
 
   double ekf_rate_;
   double ekf_dt_;
+  std::vector<double> X_delay_times_;
 
   /* process noise variance for discrete model */
   double proc_cov_yaw_d_;       //!< @brief  discrete yaw process noise

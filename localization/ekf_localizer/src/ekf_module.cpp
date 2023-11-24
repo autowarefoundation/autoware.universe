@@ -131,6 +131,32 @@ double EKFModule::getYawBias() const
   return kalman_filter_.getLatestX()(IDX::YAWB);
 }
 
+
+size_t EKFModule::find_closest_index(double target_value, const std::vector<double>& sorted_values) const {
+  if (sorted_values.empty()) {
+    throw std::invalid_argument("Durations vector is empty.");
+  }
+
+  auto lower = std::lower_bound(sorted_values.begin(), sorted_values.end(), target_value);
+
+  // If the lower bound is the first element, return its index.
+  if (lower == sorted_values.begin()) {
+    return 0;
+  }
+  // If the lower bound is beyond the last element, return the last index.
+  else if (lower == sorted_values.end()) {
+    return sorted_values.size() - 1;
+  }
+
+  // Compare the target with the lower bound and the previous element.
+  auto prev = lower - 1;
+  bool is_closer_to_prev = target_value - *prev < *lower - target_value;
+
+  // Return the index of the closer element.
+  return is_closer_to_prev ? std::distance(sorted_values.begin(), prev) : std::distance(sorted_values.begin(), lower);
+}
+
+
 void EKFModule::predictWithDelay(const double dt)
 {
   const Eigen::MatrixXd X_curr = kalman_filter_.getLatestX();

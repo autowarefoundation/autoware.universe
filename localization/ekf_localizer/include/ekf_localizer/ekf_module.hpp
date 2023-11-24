@@ -75,6 +75,7 @@ public:
   double getYawBias() const;
   std::array<double, 36> getCurrentPoseCovariance() const;
   std::array<double, 36> getCurrentTwistCovariance() const;
+  size_t find_closest_index(double target_value, const std::vector<double> & sorted_values) const;
 
   void predictWithDelay(const double dt);
   bool measurementUpdatePose(
