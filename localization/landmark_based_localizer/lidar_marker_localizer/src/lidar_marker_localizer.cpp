@@ -312,7 +312,7 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
     std::vector<int> intensity_num(bin_num, 0);
 
     for (const autoware_point_types::PointXYZIRADRT & point : one_ring.points) {
-      const int bin_index = (point.x - min_x) / param_.resolution;
+      const int bin_index = static_cast<int>((point.x - min_x) / param_.resolution);
       intensity_sum[bin_index] += point.intensity;
       intensity_num[bin_index]++;
       min_y[bin_index] = std::min(min_y[bin_index], point.y);
@@ -374,9 +374,10 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
 
   for (size_t i = 0; i < bin_num - param_.intensity_pattern.size(); i++) {
     if (vote[i] > param_.vote_threshold_for_detect_marker) {
+      const double bin_position =
+        static_cast<double>(i) + static_cast<double>(param_.intensity_pattern.size()) / 2.0;
       Pose marker_pose_on_base_link;
-      marker_pose_on_base_link.position.x =
-        (i + param_.intensity_pattern.size() / 2.0) * param_.resolution + min_x;
+      marker_pose_on_base_link.position.x = bin_position * param_.resolution + min_x;
       marker_pose_on_base_link.position.y = min_y[i];
       marker_pose_on_base_link.position.z = 0.2 + 1.75 / 2.0;  // TODO(YamatoAndo)
       marker_pose_on_base_link.orientation =
