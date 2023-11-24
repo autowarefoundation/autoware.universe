@@ -17,14 +17,9 @@
 
 #include "map_based_prediction/path_generator.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -35,12 +30,9 @@
 #include <tier4_debug_msgs/msg/string_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_core/geometry/BoundingBox.h>
-#include <lanelet2_core/geometry/Lanelet.h>
-#include <lanelet2_core/geometry/Point.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include <lanelet2_core/Forward.h>
+#include <lanelet2_routing/Forward.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
 
 #include <deque>
 #include <memory>
@@ -143,10 +135,12 @@ private:
   // Parameters
   bool enable_delay_compensation_;
   double prediction_time_horizon_;
+  double lateral_control_time_horizon_;
   double prediction_time_horizon_rate_for_validate_lane_length_;
   double prediction_sampling_time_interval_;
   double min_velocity_for_map_based_prediction_;
   double min_crosswalk_user_velocity_;
+  double max_crosswalk_user_delta_yaw_threshold_for_lanelet_;
   double debug_accumulated_time_;
   double dist_threshold_for_searching_lanelet_;
   double delta_yaw_threshold_for_searching_lanelet_;
@@ -172,6 +166,14 @@ private:
   void mapCallback(const HADMapBin::ConstSharedPtr msg);
   void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
 
+  bool doesPathCrossAnyFence(const PredictedPath & predicted_path);
+  bool doesPathCrossFence(
+    const PredictedPath & predicted_path, const lanelet::ConstLineString3d & fence_line);
+  lanelet::BasicLineString2d convertToFenceLine(const lanelet::ConstLineString3d & fence);
+  bool isIntersecting(
+    const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2,
+    const lanelet::ConstPoint3d & point3, const lanelet::ConstPoint3d & point4);
+
   PredictedObjectKinematics convertToPredictedKinematics(
     const TrackedObjectKinematics & tracked_object);
 
@@ -183,8 +185,7 @@ private:
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
-    const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object,
-    const bool check_distance = true);
+    const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object);
   float calculateLocalLikelihood(
     const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const;
   void updateObjectData(TrackedObject & object);

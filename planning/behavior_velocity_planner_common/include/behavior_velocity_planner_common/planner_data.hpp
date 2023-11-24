@@ -17,14 +17,13 @@
 
 #include "route_handler/route_handler.hpp"
 
-#include <motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
+#include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_velocity_smoother/smoother/smoother_base.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
-#include <autoware_auto_perception_msgs/msg/traffic_signal_stamped.hpp>
+#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -38,13 +37,8 @@
 
 #include <boost/optional.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_routing/RoutingGraphContainer.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
 #include <deque>
@@ -83,7 +77,7 @@ struct PlannerData
   double ego_nearest_yaw_threshold;
 
   // other internal data
-  std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> traffic_light_id_map;
+  std::map<int, TrafficSignalStamped> traffic_light_id_map;
   boost::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
   tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states;
 
@@ -132,14 +126,12 @@ struct PlannerData
     return true;
   }
 
-  std::shared_ptr<autoware_auto_perception_msgs::msg::TrafficSignalStamped> getTrafficSignal(
-    const int id) const
+  std::shared_ptr<TrafficSignalStamped> getTrafficSignal(const int id) const
   {
     if (traffic_light_id_map.count(id) == 0) {
       return {};
     }
-    return std::make_shared<autoware_auto_perception_msgs::msg::TrafficSignalStamped>(
-      traffic_light_id_map.at(id));
+    return std::make_shared<TrafficSignalStamped>(traffic_light_id_map.at(id));
   }
 };
 }  // namespace behavior_velocity_planner

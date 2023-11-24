@@ -24,7 +24,6 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
-#include <vector>
 
 namespace behavior_path_planner
 {
@@ -41,7 +40,7 @@ public:
 
   PlannerType getPlannerType() override { return PlannerType::FREESPACE; }
 
-  boost::optional<PullOutPath> plan(Pose start_pose, Pose end_pose) override;
+  boost::optional<PullOutPath> plan(const Pose & start_pose, const Pose & end_pose) override;
 
 protected:
   std::unique_ptr<AbstractPlanningAlgorithm> planner_;

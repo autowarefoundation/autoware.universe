@@ -14,6 +14,7 @@
 
 #include "motion_velocity_smoother/motion_velocity_smoother_node.hpp"
 
+#include "motion_utils/marker/marker_helper.hpp"
 #include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 #include "motion_velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
 #include "motion_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
@@ -39,8 +40,9 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   using std::placeholders::_1;
 
   // set common params
-  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   wheelbase_ = vehicle_info.wheel_base_m;
+  base_link2front_ = vehicle_info.max_longitudinal_offset_m;
   initCommonParam();
   over_stop_velocity_warn_thr_ = declare_parameter<double>("over_stop_velocity_warn_thr");
 
@@ -49,6 +51,7 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
 
   // publishers, subscribers
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
+  pub_virtual_wall_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
   pub_velocity_limit_ = create_publisher<VelocityLimit>(
     "~/output/current_velocity_limit_mps", rclcpp::QoS{1}.transient_local());
   pub_dist_to_stopline_ = create_publisher<Float32Stamped>("~/distance_to_stopline", 1);
@@ -79,7 +82,7 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   debug_closest_acc_ = create_publisher<Float32Stamped>("~/closest_acceleration", 1);
   debug_closest_jerk_ = create_publisher<Float32Stamped>("~/closest_jerk", 1);
   debug_closest_max_velocity_ = create_publisher<Float32Stamped>("~/closest_max_velocity", 1);
-  debug_calculation_time_ = create_publisher<Float32Stamped>("~/calculation_time", 1);
+  debug_calculation_time_ = create_publisher<Float32Stamped>("~/debug/processing_time_ms", 1);
   pub_trajectory_raw_ = create_publisher<Trajectory>("~/debug/trajectory_raw", 1);
   pub_trajectory_vel_lim_ =
     create_publisher<Trajectory>("~/debug/trajectory_external_velocity_limited", 1);
@@ -99,6 +102,8 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   pub_velocity_limit_->publish(max_vel_msg);
 
   clock_ = get_clock();
+
+  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
 
 void MotionVelocitySmootherNode::setupSmoother(const double wheelbase)
@@ -165,6 +170,9 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
 
   {
     auto & p = node_param_;
+    update_param_bool("enable_lateral_acc_limit", p.enable_lateral_acc_limit);
+    update_param_bool("enable_steering_rate_limit", p.enable_steering_rate_limit);
+
     update_param("max_velocity", p.max_velocity);
     update_param(
       "margin_to_insert_external_velocity_limit", p.margin_to_insert_external_velocity_limit);
@@ -266,6 +274,9 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
 void MotionVelocitySmootherNode::initCommonParam()
 {
   auto & p = node_param_;
+  p.enable_lateral_acc_limit = declare_parameter<bool>("enable_lateral_acc_limit");
+  p.enable_steering_rate_limit = declare_parameter<bool>("enable_steering_rate_limit");
+
   p.max_velocity = declare_parameter<double>("max_velocity");  // 72.0 kmph
   p.margin_to_insert_external_velocity_limit =
     declare_parameter<double>("margin_to_insert_external_velocity_limit");
@@ -320,6 +331,9 @@ void MotionVelocitySmootherNode::calcExternalVelocityLimit()
   if (!external_velocity_limit_ptr_) {
     return;
   }
+
+  // sender
+  external_velocity_limit_.sender = external_velocity_limit_ptr_->sender;
 
   // on the first time, apply directly
   if (prev_output_.empty() || !current_closest_point_from_prev_output_) {
@@ -572,12 +586,17 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   // Lateral acceleration limit
   constexpr bool enable_smooth_limit = true;
   constexpr bool use_resampling = true;
-  const auto traj_lateral_acc_filtered = smoother_->applyLateralAccelerationFilter(
-    input, initial_motion.vel, initial_motion.acc, enable_smooth_limit, use_resampling);
+  const auto traj_lateral_acc_filtered =
+    node_param_.enable_lateral_acc_limit
+      ? smoother_->applyLateralAccelerationFilter(
+          input, initial_motion.vel, initial_motion.acc, enable_smooth_limit, use_resampling)
+      : input;
 
   // Steering angle rate limit (Note: set use_resample = false since it is resampled above)
   const auto traj_steering_rate_limited =
-    smoother_->applySteeringRateLimit(traj_lateral_acc_filtered, false);
+    node_param_.enable_steering_rate_limit
+      ? smoother_->applySteeringRateLimit(traj_lateral_acc_filtered, false)
+      : traj_lateral_acc_filtered;
 
   // Resample trajectory with ego-velocity based interval distance
   auto traj_resampled = smoother_->resampleTrajectory(
@@ -876,6 +895,14 @@ void MotionVelocitySmootherNode::applyExternalVelocityLimit(TrajectoryPoints & t
   // apply external velocity limit from the inserted point
   trajectory_utils::applyMaximumVelocityLimit(
     *inserted_index, traj.size(), external_velocity_limit_.velocity, traj);
+
+  // create virtual wall
+  if (std::abs(external_velocity_limit_.velocity) < 1e-3) {
+    const auto virtual_wall_marker = motion_utils::createStopVirtualWallMarker(
+      traj.at(*inserted_index).pose, external_velocity_limit_.sender, this->now(), 0,
+      base_link2front_);
+    pub_virtual_wall_->publish(virtual_wall_marker);
+  }
 
   RCLCPP_DEBUG(
     get_logger(), "externalVelocityLimit : limit_vel = %.3f", external_velocity_limit_.velocity);

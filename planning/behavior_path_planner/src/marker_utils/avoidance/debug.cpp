@@ -14,11 +14,11 @@
 
 #include "behavior_path_planner/marker_utils/avoidance/debug.hpp"
 
-#include "behavior_path_planner/utils/path_utils.hpp"
 #include "behavior_path_planner/utils/utils.hpp"
 
 #include <magic_enum.hpp>
 
+#include <lanelet2_core/primitives/LineString.h>
 #include <tf2/utils.h>
 
 #include <string>
@@ -27,7 +27,6 @@
 namespace marker_utils::avoidance_marker
 {
 
-using behavior_path_planner::AvoidLine;
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
@@ -414,12 +413,6 @@ MarkerArray createOtherObjectsMarkerArray(const ObjectDataArray & objects, const
     &msg);
 
   return msg;
-}
-
-MarkerArray createUnsafeObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns)
-{
-  return createObjectsCubeMarkerArray(
-    objects, ns + "_cube", createMarkerScale(3.2, 1.7, 2.0), createMarkerColor(0.0, 0.0, 1.0, 0.8));
 }
 
 MarkerArray makeOverhangToRoadShoulderMarkerArray(

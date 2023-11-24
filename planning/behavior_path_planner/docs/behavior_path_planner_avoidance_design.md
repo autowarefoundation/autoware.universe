@@ -192,7 +192,7 @@ The avoidance target should be limited to stationary objects (you should not avo
 Not only the length from the centerline, but also the length from the road shoulder is calculated and used for the filtering process. It calculates the ratio of _the actual length between the the object's center and the center line_ `shift_length` and _the maximum length the object can shift_ `shiftable_length`.
 
 $$
-l_D = l_a - \frac{width}{2} \\
+l_D = l_a - \frac{width}{2}, \\
 ratio =  \frac{l_d}{l_D}
 $$
 
@@ -201,13 +201,156 @@ $$
 - $l_a$ : distance between centerline and most left boundary.
 - $width$ : object width
 
-The closer the object is to the shoulder, the larger the value of $ratio$ (theoretical max value is 1.0), and it compares the value and `object_check_shiftable_ratio` to determine whether the object is a parked-car.
+The closer the object is to the shoulder, the larger the value of $ratio$ (theoretical max value is 1.0), and it compares the value and `object_check_shiftable_ratio` to determine whether the object is a parked-car. If the road has no road shoulders, it uses `object_check_min_road_shoulder_width` as a road shoulder width virtually.
 
 ![fig2](../image/avoidance/parked-car-detection.svg)
 
 ### Compensation for detection lost
 
 In order to prevent chattering of recognition results, once an obstacle is targeted, it is hold for a while even if it disappears. This is effective when recognition is unstable. However, since it will result in over-detection (increase a number of false-positive), it is necessary to adjust parameters according to the recognition accuracy (if `object_last_seen_threshold = 0.0`, the recognition result is 100% trusted).
+
+### Flowchart
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam noteTextAlignment left
+
+title object filtering flowchart
+start
+
+if(object is satisfied with common target condition ?) then (yes)
+if(vehicle can pass by the object without avoidance ?) then (yes)
+:return false;
+stop
+else (\n no)
+endif
+else (\n no)
+:return false;
+stop
+endif
+
+if(object is vehicle type ?) then (yes)
+if(object is satisfied with vehicle type target condition ?) then (yes)
+else (\n no)
+:return false;
+stop
+endif
+else (\n no)
+if(object is satisfied with non-vehicle type target condition ?) then (yes)
+else (\n no)
+:return false;
+stop
+endif
+endif
+
+#FF006C :return true;
+stop
+@enduml
+```
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam noteTextAlignment left
+
+title filtering flow for all types object
+start
+
+partition isSatisfiedWithCommonCondition() {
+if(object is avoidance target type ?) then (yes)
+if(object is moving more than threshold time ?) then (yes)
+:return false;
+stop
+else (\n no)
+if(object is farther than forward distance threshold ?) then (yes)
+:return false;
+stop
+else (\n no)
+If(object is farther than backward distance threshold ?) then (yes)
+:return false;
+stop
+else (\n no)
+endif
+endif
+endif
+else (\n no)
+:return false;
+stop
+endif
+#FF006C :return true;
+stop
+}
+
+@enduml
+```
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam noteTextAlignment left
+
+title filtering flow for vehicle type objects
+start
+
+partition isSatisfiedWithVehicleCodition() {
+if(object is force avoidance target ?) then (yes)
+#FF006C :return true;
+stop
+else (\n no)
+if(object is nearer lane centerline than threshold ?) then (yes)
+:return false;
+stop
+else (\n no)
+if(object is on same lane for ego ?) then (yes)
+if(object is shifting right or left side road shoulder more than threshold ?) then (yes)
+#FF006C :return true;
+stop
+else (\n no)
+:return false;
+stop
+endif
+else (\n no)
+if(object is in intersection ?) then (no)
+#FF006C :return true;
+stop
+else (\n yes)
+if(object pose is paralell to ego lane ?) then (no)
+#FF006C :return true;
+stop
+else (\n yes)
+:return false;
+stop
+endif
+endif
+endif
+endif
+endif
+}
+
+@enduml
+```
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam noteTextAlignment left
+
+title filtering flow for non-vehicle type objects
+start
+
+partition isSatisfiedWithNonVehicleCodition() {
+if(object is nearer crosswalk than threshold ?) then (yes)
+:return false;
+stop
+else (\n no)
+endif
+#FF006C :return true;
+stop
+}
+
+@enduml
+```
 
 ## Overview of algorithm for avoidance path generation
 
@@ -692,7 +835,7 @@ namespace: `avoidance.target_filtering.`
 | object_check_backward_distance                        | [m]  | double | Backward distance to search the avoidance target.                                                                                                                                                                                      | 2.0           |
 | object_check_goal_distance                            | [m]  | double | Backward distance to search the avoidance target.                                                                                                                                                                                      | 20.0          |
 | object_check_shiftable_ratio                          | [m]  | double | Vehicles around the center line within this distance will be excluded from avoidance target.                                                                                                                                           | 0.6           |
-| object_check_min_road_shoulder_width                  | [m]  | double | Vehicles around the center line within this distance will be excluded from avoidance target.                                                                                                                                           | 0.5           |
+| object_check_min_road_shoulder_width                  | [m]  | double | Width considered as a road shoulder if the lane does not have a road shoulder target.                                                                                                                                                  | 0.5           |
 | object_last_seen_threshold                            | [s]  | double | For the compensation of the detection lost. The object is registered once it is observed as an avoidance target. When the detection loses, the timer will start and the object will be un-registered when the time exceeds this limit. | 2.0           |
 
 ### Safety check parameters

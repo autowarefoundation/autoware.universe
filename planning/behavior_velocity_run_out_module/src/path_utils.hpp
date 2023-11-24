@@ -15,7 +15,8 @@
 #ifndef PATH_UTILS_HPP_
 #define PATH_UTILS_HPP_
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <geometry_msgs/msg/point.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -29,24 +30,10 @@ namespace behavior_velocity_planner
 namespace run_out_utils
 {
 
-template <class T>
 geometry_msgs::msg::Point findLongitudinalNearestPoint(
-  const T & points, const geometry_msgs::msg::Point & src_point,
-  const std::vector<geometry_msgs::msg::Point> & target_points)
-{
-  float min_dist = std::numeric_limits<float>::max();
-  geometry_msgs::msg::Point min_dist_point{};
-
-  for (const auto & p : target_points) {
-    const float dist = motion_utils::calcSignedArcLength(points, src_point, p);
-    if (dist < min_dist) {
-      min_dist = dist;
-      min_dist_point = p;
-    }
-  }
-
-  return min_dist_point;
-}
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Point & src_point,
+  const std::vector<geometry_msgs::msg::Point> & target_points);
 
 }  // namespace run_out_utils
 }  // namespace behavior_velocity_planner

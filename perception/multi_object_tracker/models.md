@@ -2,6 +2,8 @@
 
 ## Tracking model
 
+<!-- cspell:ignore CTRV -->
+
 ### CTRV model [1]
 
 CTRV model is a model that assumes constant turn rate and velocity magnitude.
@@ -65,6 +67,18 @@ $$
 \end{array}\right]
 $$
 
+#### remarks on the output twist
+
+Remarks that the velocity $v_{k}$ is the norm of velocity of vehicle, not the longitudinal velocity.
+So the output twist in the object coordinate $(x,y)$ is calculated as follows.
+
+$$
+\begin{aligned}
+v_{x} &= v_{k} \cos \left(\beta_{k}\right) \\
+v_{y} &= v_{k} \sin \left(\beta_{k}\right)
+\end{aligned}
+$$
+
 ## Anchor point based estimation
 
 To separate the estimation of the position and the shape, we use anchor point based position estimation.
@@ -94,5 +108,10 @@ In other words, the offset value must be adjusted so that the input BBOX and the
 
 ## References
 
-[1] Schubert, Robin & Richter, Eric & Wanielik, Gerd. (2008). Comparison and evaluation of advanced motion models for vehicle tracking. 1 - 6. 10.1109/ICIF.2008.4632283.  
+<!-- cspell:ignore Wanielik, Gerd, ICIF -->
+
+[1] Schubert, Robin & Richter, Eric & Wanielik, Gerd. (2008). Comparison and evaluation of advanced motion models for vehicle tracking. 1 - 6. 10.1109/ICIF.2008.4632283.
+
+<!-- cspell:ignore Pfeiffer, Schildbach, Georg, Borrelli, Francesco -->
+
 [2] Kong, Jason & Pfeiffer, Mark & Schildbach, Georg & Borrelli, Francesco. (2015). Kinematic and dynamic vehicle models for autonomous driving control design. 1094-1099. 10.1109/IVS.2015.7225830.
