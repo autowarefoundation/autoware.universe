@@ -47,7 +47,16 @@
           "description": "If true, the node will ignore the tracker if its label is TRAILER."
         }
       },
-      "required": ["tracker_ignore_label.UNKNOWN", "tracker_ignore_label.CAR", "tracker_ignore_label.PEDESTRIAN", "tracker_ignore_label.BICYCLE", "tracker_ignore_label.MOTORCYCLE", "tracker_ignore_label.BUS", "tracker_ignore_label.TRUCK", "tracker_ignore_label.TRAILER"]
+      "required": [
+        "tracker_ignore_label.UNKNOWN",
+        "tracker_ignore_label.CAR",
+        "tracker_ignore_label.PEDESTRIAN",
+        "tracker_ignore_label.BICYCLE",
+        "tracker_ignore_label.MOTORCYCLE",
+        "tracker_ignore_label.BUS",
+        "tracker_ignore_label.TRUCK",
+        "tracker_ignore_label.TRAILER"
+      ]
     }
   },
   "properties": {
