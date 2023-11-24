@@ -200,7 +200,6 @@ void MultiCameraFusion::trafficSignalRoiCallback(
 
   NewSignalArrayType msg_out;
   convertOutputMsg(grouped_record_map, msg_out);
-  removeDuplicateIds(msg_out);
   msg_out.stamp = cam_info_msg->header.stamp;
   signal_pub_->publish(msg_out);
 }
@@ -239,20 +238,6 @@ void MultiCameraFusion::convertOutputMsg(
     }
     msg_out.signals.push_back(signal_out);
   }
-}
-
-void MultiCameraFusion::removeDuplicateIds(NewSignalArrayType & signal_array) const
-{
-  auto & signals = signal_array.signals;
-  std::sort(signals.begin(), signals.end(), [](const auto & s1, const auto & s2) {
-    return s1.traffic_signal_id < s2.traffic_signal_id;
-  });
-
-  signals.erase(
-    std::unique(
-      signals.begin(), signals.end(),
-      [](const auto & s1, const auto s2) { return s1.traffic_signal_id == s2.traffic_signal_id; }),
-    signals.end());
 }
 
 void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fused_record_map)

@@ -90,8 +90,6 @@ private:
   void convertOutputMsg(
     const std::map<IdType, FusionRecord> & grouped_record_map, NewSignalArrayType & msg_out);
 
-  void removeDuplicateIds(NewSignalArrayType & signal_array) const;
-
   void groupFusion(
     std::map<IdType, FusionRecord> & fused_record_map,
     std::map<IdType, FusionRecord> & grouped_record_map);
