@@ -155,13 +155,8 @@ void LidarMarkerLocalizer::self_pose_callback(
 void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & points_msg_ptr)
 {
   const builtin_interfaces::msg::Time sensor_ros_time = points_msg_ptr->header.stamp;
-  std_msgs::msg::Header header;
-  header.stamp = sensor_ros_time;
-  header.frame_id = "map";
 
-  // ----------------- //
-  // (1) Get Self Pose //
-  // ----------------- //
+  // (1) Get Self Pose
   Pose self_pose;
   {
     // get self-position on map
@@ -180,82 +175,32 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
     self_pose = interpolator.get_current_pose().pose.pose;
   }
 
-  // ---------------------------------- //
-  // (2) Get marker_pose_from_detection //
-  // ---------------------------------- //
-  Pose marker_pose_from_detection;
-  {
-    // detect marker
-    const std::vector<landmark_manager::Landmark> detected_landmarks =
-      detect_landmarks(points_msg_ptr);
+  // (1') alterative way to get current self pose from tf
+  // TransformStamped transform_base_link_to_map;
+  // try {
+  //   transform_base_link_to_map =
+  //     tf_buffer_->lookupTransform("map", "base_link", sensor_ros_time);
+  // } catch (tf2::TransformException & ex) {
+  //   RCLCPP_WARN(get_logger(), "cannot get map to base_link transform. %s", ex.what());
+  //   return;
+  // }
 
-    is_detected_marker_ = !detected_landmarks.empty();
-    if (!is_detected_marker_) {
-      RCLCPP_WARN_STREAM_THROTTLE(
-        this->get_logger(), *this->get_clock(), 1, "Could not detect marker");
-      return;
-    }
+  // (2) detect marker
+  const std::vector<landmark_manager::Landmark> detected_landmarks =
+    detect_landmarks(points_msg_ptr);
 
-    // get marker_pose on base_link
-    const Pose marker_pose_on_base_link = detected_landmarks.at(0).pose;  // TODO(YamatoAndo)
-
-    // get marker pose on map using self-pose
-    const Vector3 self_pose_rpy = tier4_autoware_utils::getRPY(self_pose.orientation);
-    const double self_pose_yaw = self_pose_rpy.z;
-
-    // calculate marker_pose_from_detection
-    marker_pose_from_detection.position.x =
-      marker_pose_on_base_link.position.x * std::cos(self_pose_yaw) -
-      marker_pose_on_base_link.position.y * std::sin(self_pose_yaw) + self_pose.position.x;
-    marker_pose_from_detection.position.y =
-      marker_pose_on_base_link.position.x * std::sin(self_pose_yaw) +
-      marker_pose_on_base_link.position.y * std::cos(self_pose_yaw) + self_pose.position.y;
-    marker_pose_from_detection.position.z =
-      marker_pose_on_base_link.position.z + self_pose.position.z;
-    marker_pose_from_detection.orientation = tier4_autoware_utils::createQuaternionFromRPY(
-      self_pose_rpy.x + M_PI_2, self_pose_rpy.y, self_pose_rpy.z);
-
-    // publish
-    PoseStamped marker_pose_from_detection_stamped;
-    marker_pose_from_detection_stamped.header = header;
-    marker_pose_from_detection_stamped.pose = marker_pose_from_detection;
-    pub_marker_pose_on_map_from_self_pose_->publish(marker_pose_from_detection_stamped);
+  is_detected_marker_ = !detected_landmarks.empty();
+  if (!is_detected_marker_) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1, "Could not detect marker");
+    return;
   }
 
-  // ---------------------------- //
-  // (3) Get marker_pose_from_map //
-  // ---------------------------- //
-  Pose marker_pose_from_map;
-  {
-    // get nearest marker pose on map
-    marker_pose_from_map = *std::min_element(
-      std::begin(marker_pose_on_map_array_), std::end(marker_pose_on_map_array_),
-      [&self_pose](const Pose & lhs, const Pose & rhs) {
-        return tier4_autoware_utils::calcDistance3d(lhs.position, self_pose.position) <
-               tier4_autoware_utils::calcDistance3d(rhs.position, self_pose.position);
-      });
+  // (3) calculate diff pose
+  const Pose diff_pose = calculate_diff_pose(detected_landmarks, self_pose);
 
-    const auto marker_pose_on_base_link_from_map =
-      tier4_autoware_utils::inverseTransformPoint(marker_pose_from_map.position, self_pose);
-
-    is_exist_marker_within_self_pose_ =
-      std::fabs(marker_pose_on_base_link_from_map.x) <
-      param_.limit_distance_from_self_pose_to_marker_from_lanelet2;
-    if (!is_exist_marker_within_self_pose_) {
-      RCLCPP_WARN_STREAM_THROTTLE(
-        this->get_logger(), *this->get_clock(), 1,
-        "The distance from self-pose to the nearest marker of lanelet2 is too far("
-          << marker_pose_on_base_link_from_map.x << "). The limit is "
-          << param_.limit_distance_from_self_pose_to_marker_from_lanelet2 << ".");
-      return;
-    }
-  }
-
-  // --------------------- //
-  // (4) Compare two poses //
-  // --------------------- //
-  const double diff_x = marker_pose_from_map.position.x - marker_pose_from_detection.position.x;
-  const double diff_y = marker_pose_from_map.position.y - marker_pose_from_detection.position.y;
+  const double diff_x = diff_pose.position.x;
+  const double diff_y = diff_pose.position.y;
 
   const double diff_norm = std::hypot(diff_x, diff_y);
   const bool is_exist_marker_within_lanelet2_map =
@@ -270,21 +215,21 @@ void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & p
     return;
   }
 
-  Pose result_base_link_on_map;
-  result_base_link_on_map.position.x = self_pose.position.x + diff_x;
-  result_base_link_on_map.position.y = self_pose.position.y + diff_y;
-  result_base_link_on_map.position.z = self_pose.position.z;
-  result_base_link_on_map.orientation = self_pose.orientation;
-
-  PoseWithCovarianceStamped base_link_pose_with_covariance_on_map;
-  base_link_pose_with_covariance_on_map.header = header;
-  base_link_pose_with_covariance_on_map.pose.pose = result_base_link_on_map;
+  // (4) Apply diff pose to self pose
+  // only x and y is changed
+  PoseWithCovarianceStamped result;
+  result.header.stamp = sensor_ros_time;
+  result.header.frame_id = "map";
+  result.pose.pose.position.x = self_pose.position.x + diff_x;
+  result.pose.pose.position.y = self_pose.position.y + diff_y;
+  result.pose.pose.position.z = self_pose.position.z;
+  result.pose.pose.orientation = self_pose.orientation;
 
   // TODO(YamatoAndo) transform covariance on base_link to map frame
   for (int i = 0; i < 36; i++) {
-    base_link_pose_with_covariance_on_map.pose.covariance[i] = param_.base_covariance_[i];
+    result.pose.covariance[i] = param_.base_covariance_[i];
   }
-  pub_base_link_pose_with_covariance_on_map_->publish(base_link_pose_with_covariance_on_map);
+  pub_base_link_pose_with_covariance_on_map_->publish(result);
 }
 
 void LidarMarkerLocalizer::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -442,4 +387,57 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   }
 
   return detected_landmarks;
+}
+
+geometry_msgs::msg::Pose LidarMarkerLocalizer::calculate_diff_pose(
+  const std::vector<landmark_manager::Landmark> & detected_landmarks, const Pose & self_pose)
+{
+  Pose min_diff_pose;
+  double min_distance = std::numeric_limits<double>::max();
+
+  for (const landmark_manager::Landmark & landmark : detected_landmarks) {
+    // Firstly, landmark pose is base_link
+    const Pose & detected_marker_on_base_link = landmark.pose;
+
+    // convert base_link to map
+    const Pose detected_marker_on_map =
+      tier4_autoware_utils::transformPose(detected_marker_on_base_link, self_pose);
+
+    // match to nearest marker on map
+    const Pose mapped_marker_on_map = *std::min_element(
+      std::begin(marker_pose_on_map_array_), std::end(marker_pose_on_map_array_),
+      [&detected_marker_on_map](const Pose & lhs, const Pose & rhs) {
+        return tier4_autoware_utils::calcDistance3d(lhs.position, detected_marker_on_map.position) <
+               tier4_autoware_utils::calcDistance3d(rhs.position, detected_marker_on_map.position);
+      });
+
+    // check distance
+    const double curr_distance = tier4_autoware_utils::calcDistance3d(
+      mapped_marker_on_map.position, detected_marker_on_map.position);
+    if (curr_distance > min_distance) {
+      continue;
+    }
+
+    // initialize inverse to get relative orientation
+    Pose diff_pose =
+      tier4_autoware_utils::inverseTransformPose(mapped_marker_on_map, detected_marker_on_map);
+
+    // recalculate position diff on map
+    diff_pose.position.x = mapped_marker_on_map.position.x - detected_marker_on_map.position.x;
+    diff_pose.position.y = mapped_marker_on_map.position.y - detected_marker_on_map.position.y;
+    diff_pose.position.z = mapped_marker_on_map.position.z - detected_marker_on_map.position.z;
+
+    // update
+    min_distance = curr_distance;
+    min_diff_pose = diff_pose;
+
+    // for debug
+    PoseStamped pose_to_publish;
+    pose_to_publish.header.frame_id = "map";
+    pose_to_publish.header.stamp = this->now();
+    pose_to_publish.pose = detected_marker_on_map;
+    pub_marker_pose_on_map_from_self_pose_->publish(pose_to_publish);
+  }
+
+  return min_diff_pose;
 }
