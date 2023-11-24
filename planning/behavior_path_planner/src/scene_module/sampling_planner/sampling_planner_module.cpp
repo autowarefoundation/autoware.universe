@@ -108,7 +108,6 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
       if (lanelet::utils::isInLanelet(point.point.pose, lane)) {
         point.lane_ids.push_back(lane.id());
         is_in_lanes = true;
-        std::cerr << "IS IN LANES\n";
       }
     }
     // If none of them corresponds, assign the previous lane_ids.
@@ -259,7 +258,7 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
 
   if (!selected_path_idx) {
     BehaviorModuleOutput out;
-    const auto p = getPreviousModuleOutput().reference_path;
+    const auto p = getPreviousModuleOutput().path;
     out.path = p;
     out.reference_path = p;
     out.drivable_area_info = getPreviousModuleOutput().drivable_area_info;
@@ -278,13 +277,6 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   auto out_path = convertFrenetPathToPathWithLaneID(best_path, road_lanes, velocity);
   const auto goal_pose = planner_data_->route_handler->getGoalPose();
   for (auto & p : out_path.points) {
-    // lanelet::ConstLanelet closest_lanelet{};
-    // if (!planner_data_->route_handler->getClosestLaneletWithinRoute(
-    //       p.point.pose, &closest_lanelet)) {
-    //   continue;
-    // }
-    // const auto lane_pose =
-    //   lanelet::utils::getClosestCenterPose(closest_lanelet, p.point.pose.position);
     p.point.pose.position.z = goal_pose.position.z;
   }
 
