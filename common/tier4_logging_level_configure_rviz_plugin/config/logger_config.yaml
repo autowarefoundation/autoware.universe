@@ -102,3 +102,7 @@ Common:
       logger_name: tier4_autoware_utils
     - node_name: /planning/scenario_planning/motion_velocity_smoother
       logger_name: tier4_autoware_utils
+    - node_name: /control/trajectory_follower/controller_node_exe
+      logger_name: tier4_autoware_utils
+    - node_name: /control/vehicle_cmd_gate
+      logger_name: tier4_autoware_utils
