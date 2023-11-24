@@ -22,6 +22,7 @@ else()
   endif()
 endif()
 
+find_package(glog REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io registration)
 include_directories(${PCL_INCLUDE_DIRS})
 
@@ -37,7 +38,7 @@ ament_auto_add_executable(ndt_scan_matcher
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
-target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES})
+target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES} glog::glog)
 
 ament_auto_package(
   INSTALL_TO_SHARE
