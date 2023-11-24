@@ -271,9 +271,9 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
 
   const auto ego_segment_idx =
     ego_nearest_param_.findSegmentIndex(planner_data.traj_points, planner_data.ego_pose);
-  double dist_to_collide_on_ref_traj =
+  const double dist_to_collide_on_ref_traj =
     motion_utils::calcSignedArcLength(planner_data.traj_points, 0, ego_segment_idx) +
-    closest_stop_obstacle->dist_to_collide;
+    closest_stop_obstacle->dist_to_collide_on_decimated_traj;
 
   const double margin_from_obstacle_considering_behavior_module = [&]() {
     const double margin_from_obstacle =
@@ -373,7 +373,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
 
   stop_planning_debug_info_.set(
     StopPlanningDebugInfo::TYPE::STOP_CURRENT_OBSTACLE_DISTANCE,
-    closest_stop_obstacle->dist_to_collide);  // TODO(murooka)
+    closest_stop_obstacle->dist_to_collide_on_decimated_traj);
   stop_planning_debug_info_.set(
     StopPlanningDebugInfo::TYPE::STOP_CURRENT_OBSTACLE_VELOCITY, closest_stop_obstacle->velocity);
 

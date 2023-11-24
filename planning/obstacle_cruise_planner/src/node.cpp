@@ -1038,20 +1038,15 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
     traj_points, vehicle_info_, ego_odom_ptr_->pose.pose, p.max_lat_margin_for_stop);
 
   const auto collision_point = polygon_utils::getCollisionPoint(
-    traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_);
+    traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_, vehicle_info_);
   if (!collision_point) {
     return std::nullopt;
   }
 
-  const auto dist_to_collide = polygon_utils::calcCollisionDistanceForStopObstacle(
-    traj_points, traj_polys_with_lat_margin, obstacle);
-  if (!dist_to_collide) {
-    return std::nullopt;
-  }
-
   const auto [tangent_vel, normal_vel] = projectObstacleVelocityToTrajectory(traj_points, obstacle);
-  return StopObstacle{obstacle.uuid, obstacle.stamp, obstacle.pose,    obstacle.shape,
-                      tangent_vel,   normal_vel,     *collision_point, *dist_to_collide};
+  return StopObstacle{
+    obstacle.uuid, obstacle.stamp, obstacle.pose,          obstacle.shape,
+    tangent_vel,   normal_vel,     collision_point->first, collision_point->second};
 }
 
 std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacle(

@@ -16,6 +16,37 @@
 
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+
+#define debug(var)                                                      \
+  do {                                                                  \
+    std::cerr << __func__ << ": " << __LINE__ << ", " << #var << " : "; \
+    view(var);                                                          \
+  } while (0)
+template <typename T>
+void view(T e)
+{
+  std::cerr << e << std::endl;
+}
+template <typename T>
+void view(const std::vector<T> & v)
+{
+  for (const auto & e : v) {
+    std::cerr << e << " ";
+  }
+  std::cerr << std::endl;
+}
+template <typename T>
+void view(const std::vector<std::vector<T>> & vv)
+{
+  for (const auto & v : vv) {
+    view(v);
+  }
+}
+#define line()                                                                         \
+  {                                                                                    \
+    std::cerr << "(" << __FILE__ << ") " << __func__ << ": " << __LINE__ << std::endl; \
+  }
 
 namespace
 {
@@ -134,38 +165,54 @@ Polygon2d createOneStepPolygon(
   return hull_polygon;
 }
 
-std::optional<double> calcCollisionDistanceForStopObstacle(
-  const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-  const Obstacle & obstacle)
-{
-  auto obstacle_polygon = tier4_autoware_utils::toPolygon2d(obstacle.pose, obstacle.shape);
-  for (size_t col_i = 0; col_i < traj_polys.size(); ++col_i) {
-    if (boost::geometry::intersects(traj_polys.at(col_i), obstacle_polygon)) {
-      try {
-        double prev_index_dist =
-          boost::geometry::distance(traj_polys.at(col_i - 1), obstacle_polygon);
-        return motion_utils::calcSignedArcLength(traj_points, 0, col_i - 1) + prev_index_dist;
-      } catch (std::out_of_range & ex) {
-        return 0.0;
-      }
-    }
-  }
-  return std::nullopt;
-}
+// std::optional<double> calcCollisionDistanceForStopObstacle(
+//   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
+//   const Obstacle & obstacle)
+// {
+//   auto obstacle_polygon = tier4_autoware_utils::toPolygon2d(obstacle.pose, obstacle.shape);
+//   for (size_t col_i = 0; col_i < traj_polys.size(); ++col_i) {
+//     if (boost::geometry::intersects(traj_polys.at(col_i), obstacle_polygon)) {
+//       try {
+//         double prev_index_dist =
+//           boost::geometry::distance(traj_polys.at(col_i - 1), obstacle_polygon);
+//         return motion_utils::calcSignedArcLength(traj_points, 0, col_i - 1) + prev_index_dist;
+//       } catch (std::out_of_range & ex) {
+//         return 0.0;
+//       }
+//     }
+//   }
+//   return std::nullopt;
+// }
 
-std::optional<geometry_msgs::msg::Point> getCollisionPoint(
+std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const Obstacle & obstacle, const bool is_driving_forward)
+  const Obstacle & obstacle, const bool is_driving_forward,
+  const vehicle_info_util::VehicleInfo & vehicle_info)
 {
   const auto collision_info =
     getCollisionIndex(traj_points, traj_polygons, obstacle.pose, obstacle.stamp, obstacle.shape);
-  if (collision_info) {
-    const auto nearest_collision_point = calcNearestCollisionPoint(
-      collision_info->first, collision_info->second, traj_points, is_driving_forward);
-    return nearest_collision_point.point;
+  if (!collision_info) {
+    return std::nullopt;
   }
 
-  return std::nullopt;
+  const auto x_diff_to_bumper = is_driving_forward ? vehicle_info.max_longitudinal_offset_m
+                                                   : vehicle_info.min_longitudinal_offset_m;
+
+  const auto bumper_pose = tier4_autoware_utils::calcOffsetPose(
+    traj_points.at(collision_info->first).pose, x_diff_to_bumper, 0.0, 0.0);
+
+  std::optional<double> nearest_dist = std::nullopt;
+  std::optional<geometry_msgs::msg::Point> nearest_point = std::nullopt;
+  for (const auto & collision_point : collision_info->second) {
+    double dist = tier4_autoware_utils::inverseTransformPoint(collision_point.point, bumper_pose).x;
+    if (!nearest_dist || std::abs(dist) > std::abs(*nearest_dist)) {
+      nearest_dist = dist;
+      nearest_point = collision_point.point;
+    }
+  }
+  return std::make_pair(
+    *nearest_point,
+    motion_utils::calcSignedArcLength(traj_points, 0, collision_info->first) + *nearest_dist);
 }
 
 // NOTE: max_lat_dist is used for efficient calculation to suppress boost::geometry's polygon
