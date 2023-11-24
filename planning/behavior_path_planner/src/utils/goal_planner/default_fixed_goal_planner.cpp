@@ -79,6 +79,7 @@ PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
 {
   const auto goal = planner_data->route_handler->getGoalPose();
   const auto goal_lane_id = planner_data->route_handler->getGoalLaneId();
+
   Pose refined_goal{};
   {
     lanelet::ConstLanelet goal_lanelet;
@@ -89,6 +90,7 @@ PathWithLaneId DefaultFixedGoalPlanner::modifyPathForSmoothGoalConnection(
     }
   }
   double goal_search_radius{planner_data->parameters.refine_goal_search_radius_range};
+  // TODO(shen): define in the parameter
   constexpr double range_reduce_by{1.0};  // set a reasonable value, 10% - 20% of the
                                           // refine_goal_search_radius_range is recommended
   bool is_valid_path{false};
