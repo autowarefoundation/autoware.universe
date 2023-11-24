@@ -974,11 +974,9 @@ double PidLongitudinalController::applyVelocityFeedback(
   const bool vehicle_is_moving = std::abs(current_vel) > m_current_vel_threshold_pid_integrate;
   const double time_under_control = getTimeUnderControl();
   const bool vehicle_is_stuck =
-    m_enable_integration_at_low_speed
-      ? !vehicle_is_moving && time_under_control > m_time_threshold_before_pid_integrate
-      : false;
+     !vehicle_is_moving && time_under_control > m_time_threshold_before_pid_integrate;
 
-  const bool enable_integration = (vehicle_is_moving || vehicle_is_stuck) && is_under_control;
+  const bool enable_integration = (vehicle_is_moving || (m_enable_integration_at_low_speed && vehicle_is_stuck)) && is_under_control;
   const double error_vel_filtered = m_lpf_vel_error->filter(diff_vel);
 
   std::vector<double> pid_contributions(3);
