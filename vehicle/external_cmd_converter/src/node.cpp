@@ -47,7 +47,7 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
   // Parameter for Hz check
   const double timer_rate = declare_parameter<number>("timer_rate");
   wait_for_first_topic_ = declare_parameter<boolean>("wait_for_first_topic");
-  control_command_timeout_ = declare_parameter<number>("control_command_timeout");
+  control_command_timeout_ = declare_parameter<double>("control_command_timeout");
   emergency_stop_timeout_ = declare_parameter<number>("emergency_stop_timeout");
 
   const auto period_ns = rclcpp::Rate(timer_rate).period();
