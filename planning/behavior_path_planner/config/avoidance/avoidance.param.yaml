@@ -9,7 +9,6 @@
 
       # avoidance module common setting
       enable_bound_clipping: false
-      enable_force_avoidance_for_stopped_vehicle: false
       enable_yield_maneuver: true
       enable_yield_maneuver_during_shifting: false
       enable_cancel_maneuver: false
@@ -120,11 +119,6 @@
 
       # For target object filtering
       target_filtering:
-        # params for avoidance of not-parked objects
-        threshold_time_force_avoidance_for_stopped_vehicle: 10.0    # [s]
-        object_ignore_section_traffic_light_in_front_distance: 30.0 # [m]
-        object_ignore_section_crosswalk_in_front_distance: 30.0     # [m]
-        object_ignore_section_crosswalk_behind_distance: 30.0       # [m]
         # detection range
         object_check_goal_distance: 20.0                # [m]
         # filtering parking objects
@@ -140,6 +134,17 @@
           min_forward_distance: 50.0                     # [m]
           max_forward_distance: 150.0                    # [m]
           backward_distance: 10.0                        # [m]
+
+        # params for avoidance of vehicle type objects that are ambiguous as to whether they are parked.
+        force_avoidance:
+          enable: false                                  # [-]
+          time_threshold: 1.0                            # [s]
+          ignore_area:
+            traffic_light:
+              front_distance: 100.0                      # [m]
+            crosswalk:
+              front_distance: 30.0                       # [m]
+              behind_distance: 30.0                      # [m]
 
       # For safety check
       safety_check:
@@ -185,12 +190,20 @@
           max_deviation_from_lane: 0.5                  # [m]
         # avoidance distance parameters
         longitudinal:
-          prepare_time: 2.0                             # [s]
-          remain_buffer_distance: 30.0                  # [m]
+          min_prepare_time: 1.0                         # [s]
+          max_prepare_time: 2.0                         # [s]
           min_prepare_distance: 1.0                     # [m]
           min_slow_down_speed: 1.38                     # [m/s]
           buf_slow_down_speed: 0.56                     # [m/s]
           nominal_avoidance_speed: 8.33                 # [m/s]
+        # return dead line
+        return_dead_line:
+          goal:
+            enable: true                                # [-]
+            buffer: 30.0                                # [m]
+          traffic_light:
+            enable: true                                # [-]
+            buffer: 3.0                                 # [m]
 
       # For yield maneuver
       yield:

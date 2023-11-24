@@ -22,6 +22,7 @@
 #include "behavior_path_planner/scene_module/lane_change/manager.hpp"
 #include "behavior_path_planner/scene_module/side_shift/manager.hpp"
 #include "behavior_path_planner/scene_module/start_planner/manager.hpp"
+#include "behavior_path_planner/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner/utils/path_utils.hpp"
 
 #include <tier4_autoware_utils/ros/update_param.hpp>
@@ -106,6 +107,10 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   costmap_subscriber_ = create_subscription<OccupancyGrid>(
     "~/input/costmap", 1, std::bind(&BehaviorPathPlannerNode::onCostMap, this, _1),
     createSubscriptionOptions(this));
+  traffic_signals_subscriber_ =
+    this->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
+      "~/input/traffic_signals", 1, std::bind(&BehaviorPathPlannerNode::onTrafficSignals, this, _1),
+      createSubscriptionOptions(this));
   lateral_offset_subscriber_ = this->create_subscription<LateralOffset>(
     "~/input/lateral_offset", 1, std::bind(&BehaviorPathPlannerNode::onLateralOffset, this, _1),
     createSubscriptionOptions(this));
@@ -277,6 +282,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 
   p.verbose = declare_parameter<bool>("verbose");
   p.max_iteration_num = declare_parameter<int>("max_iteration_num");
+  p.traffic_light_signal_timeout = declare_parameter<double>("traffic_light_signal_timeout");
 
   const auto get_scene_module_manager_param = [&](std::string && ns) {
     ModuleConfigParameters config;
@@ -340,6 +346,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   // lane change parameters
   p.backward_length_buffer_for_end_of_lane =
     declare_parameter<double>("lane_change.backward_length_buffer_for_end_of_lane");
+  p.backward_length_buffer_for_blocking_object =
+    declare_parameter<double>("lane_change.backward_length_buffer_for_blocking_object");
   p.lane_changing_lateral_jerk =
     declare_parameter<double>("lane_change.lane_changing_lateral_jerk");
   p.lane_change_prepare_duration = declare_parameter<double>("lane_change.prepare_duration");
@@ -931,6 +939,17 @@ void BehaviorPathPlannerNode::onCostMap(const OccupancyGrid::ConstSharedPtr msg)
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->costmap = msg;
+}
+void BehaviorPathPlannerNode::onTrafficSignals(const TrafficSignalArray::ConstSharedPtr msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_pd_);
+
+  for (const auto & signal : msg->signals) {
+    TrafficSignalStamped traffic_signal;
+    traffic_signal.stamp = msg->stamp;
+    traffic_signal.signal = signal;
+    planner_data_->traffic_light_id_map[signal.traffic_signal_id] = traffic_signal;
+  }
 }
 void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
