@@ -82,6 +82,7 @@ private:
   bool wait_for_first_topic_;
   double control_command_timeout_;
   double emergency_stop_timeout_;
+  bool auto_brake_hold_;
 
   // Diagnostics
   diagnostic_updater::Updater updater_{this};

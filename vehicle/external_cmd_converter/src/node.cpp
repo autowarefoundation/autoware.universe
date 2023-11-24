@@ -49,6 +49,7 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
   wait_for_first_topic_ = declare_parameter("wait_for_first_topic", true);
   control_command_timeout_ = declare_parameter("control_command_timeout", 1.0);
   emergency_stop_timeout_ = declare_parameter("emergency_stop_timeout", 3.0);
+  auto_brake_hold_ = declare_parameter("auto_brake_hold", true);
 
   const auto period_ns = rclcpp::Rate(timer_rate).period();
   rate_check_timer_ = rclcpp::create_timer(
@@ -120,14 +121,7 @@ void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::Const
 
   // Calculate reference velocity and acceleration
   const double sign = getShiftVelocitySign(*current_shift_cmd_);
-  const double ref_acceleration = calculateAcc(*cmd_ptr, std::fabs(*current_velocity_ptr_));
-
-  if (ref_acceleration > 0.0 && sign == 0.0) {
-    RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-      "Target acceleration is positive, but the gear is not appropriate. accel: %f, gear: %d",
-      ref_acceleration, current_shift_cmd_->command);
-  }
+  double ref_acceleration = calculateAcc(*cmd_ptr, std::fabs(*current_velocity_ptr_));
 
   double ref_velocity = *current_velocity_ptr_ + ref_acceleration * ref_vel_gain_ * sign;
   if (current_shift_cmd_->command == GearCommand::REVERSE) {
@@ -139,6 +133,20 @@ void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::Const
   } else {
     ref_velocity = 0.0;
     // TODO(Hiroki OTA): ref_acceleration also must be correct value for stopping.
+  }
+
+  // for auto brake hold (keep brake when stopped)
+  constexpr auto stop_velocity_thr = 0.1;
+  if (auto_brake_hold_ && std::abs(*current_velocity_ptr_) < stop_velocity_thr) {
+    ref_velocity = 0.0;
+    ref_acceleration = -1.5;  // TODO(Horibe): parametrize hold brake
+  }
+
+  if (ref_acceleration > 0.0 && sign == 0.0) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      "Target acceleration is positive, but the gear is not appropriate. accel: %f, gear: %d",
+      ref_acceleration, current_shift_cmd_->command);
   }
 
   // Publish ControlCommand
