@@ -48,7 +48,7 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
   const double timer_rate = declare_parameter<number>("timer_rate");
   wait_for_first_topic_ = declare_parameter<boolean>("wait_for_first_topic");
   control_command_timeout_ = declare_parameter<double>("control_command_timeout");
-  emergency_stop_timeout_ = declare_parameter<number>("emergency_stop_timeout");
+  emergency_stop_timeout_ = declare_parameter<double>("emergency_stop_timeout");
 
   const auto period_ns = rclcpp::Rate(timer_rate).period();
   rate_check_timer_ = rclcpp::create_timer(
