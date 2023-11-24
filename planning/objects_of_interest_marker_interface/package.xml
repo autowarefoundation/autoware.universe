@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>interest_objects_marker_interface</name>
+  <name>objects_of_interest_marker_interface</name>
   <version>0.1.0</version>
-  <description>The interest_objects_marker_interface package</description>
+  <description>The objects_of_interest_marker_interface package</description>
 
   <maintainer email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</maintainer>
 

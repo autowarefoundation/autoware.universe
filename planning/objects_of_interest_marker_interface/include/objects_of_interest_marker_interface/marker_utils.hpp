@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTEREST_OBJECTS_MARKER_INTERFACE__MARKER_UTILS_HPP_
-#define INTEREST_OBJECTS_MARKER_INTERFACE__MARKER_UTILS_HPP_
-#include "interest_objects_marker_interface/marker_data.hpp"
+#ifndef OBJECTS_OF_INTEREST_MARKER_INTERFACE__MARKER_UTILS_HPP_
+#define OBJECTS_OF_INTEREST_MARKER_INTERFACE__MARKER_UTILS_HPP_
+#include "objects_of_interest_marker_interface/marker_data.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -29,7 +29,7 @@
 
 #include <string>
 
-namespace interest_objects_marker_interface::marker_utils
+namespace objects_of_interest_marker_interface::marker_utils
 {
 /**
  * @brief Create arrow marker from object marker data
@@ -68,6 +68,6 @@ visualization_msgs::msg::Marker createCircleMarker(
 visualization_msgs::msg::MarkerArray createTargetMarker(
   const size_t id, const ObjectMarkerData & data, const std::string & name,
   const double height_offset, const double arrow_length = 1.0, const double line_width = 0.1);
-}  // namespace interest_objects_marker_interface::marker_utils
+}  // namespace objects_of_interest_marker_interface::marker_utils
 
-#endif  // INTEREST_OBJECTS_MARKER_INTERFACE__MARKER_UTILS_HPP_
+#endif  // OBJECTS_OF_INTEREST_MARKER_INTERFACE__MARKER_UTILS_HPP_

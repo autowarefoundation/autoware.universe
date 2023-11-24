@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interest_objects_marker_interface/interest_objects_marker_interface.hpp"
+#include "objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
 #include <tier4_autoware_utils/math/trigonometry.hpp>
 
-namespace interest_objects_marker_interface
+namespace objects_of_interest_marker_interface
 {
 using autoware_auto_perception_msgs::msg::Shape;
 using geometry_msgs::msg::Pose;
@@ -26,7 +26,7 @@ using std_msgs::msg::ColorRGBA;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
-InterestObjectsMarkerInterface::InterestObjectsMarkerInterface(
+ObjectsOfInterestMarkerInterface::ObjectsOfInterestMarkerInterface(
   rclcpp::Node * node, const std::string & name)
 : name_{name}
 {
@@ -34,13 +34,13 @@ InterestObjectsMarkerInterface::InterestObjectsMarkerInterface(
   pub_marker_ = node->create_publisher<MarkerArray>(topic_namespace_ + "/" + name, 1);
 }
 
-void InterestObjectsMarkerInterface::insertObjectData(
+void ObjectsOfInterestMarkerInterface::insertObjectData(
   const Pose & pose, const Shape & shape, const ColorName & color_name)
 {
   insertObjectDataWithCustomColor(pose, shape, getColor(color_name));
 }
 
-void InterestObjectsMarkerInterface::insertObjectDataWithCustomColor(
+void ObjectsOfInterestMarkerInterface::insertObjectDataWithCustomColor(
   const Pose & pose, const Shape & shape, const ColorRGBA & color)
 {
   ObjectMarkerData data;
@@ -51,7 +51,7 @@ void InterestObjectsMarkerInterface::insertObjectDataWithCustomColor(
   obj_marker_data_array_.push_back(data);
 }
 
-void InterestObjectsMarkerInterface::publishMarkerArray()
+void ObjectsOfInterestMarkerInterface::publishMarkerArray()
 {
   MarkerArray marker_array;
   for (size_t i = 0; i < obj_marker_data_array_.size(); ++i) {
@@ -65,12 +65,13 @@ void InterestObjectsMarkerInterface::publishMarkerArray()
   obj_marker_data_array_.clear();
 }
 
-void InterestObjectsMarkerInterface::setHeightOffset(const double offset)
+void ObjectsOfInterestMarkerInterface::setHeightOffset(const double offset)
 {
   height_offset_ = offset;
 }
 
-ColorRGBA InterestObjectsMarkerInterface::getColor(const ColorName & color_name, const float alpha)
+ColorRGBA ObjectsOfInterestMarkerInterface::getColor(
+  const ColorName & color_name, const float alpha)
 {
   switch (color_name) {
     case ColorName::GREEN:
@@ -86,4 +87,4 @@ ColorRGBA InterestObjectsMarkerInterface::getColor(const ColorName & color_name,
   }
 }
 
-}  // namespace interest_objects_marker_interface
+}  // namespace objects_of_interest_marker_interface

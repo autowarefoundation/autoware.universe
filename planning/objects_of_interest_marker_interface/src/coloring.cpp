@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interest_objects_marker_interface/coloring.hpp"
+#include "objects_of_interest_marker_interface/coloring.hpp"
 
 namespace
 {
@@ -26,7 +26,7 @@ std_msgs::msg::ColorRGBA convertFromColorCode(const uint64_t code, const float a
 }
 }  // namespace
 
-namespace interest_objects_marker_interface::coloring
+namespace objects_of_interest_marker_interface::coloring
 {
 std_msgs::msg::ColorRGBA getGreen(const float alpha)
 {
@@ -51,4 +51,4 @@ std_msgs::msg::ColorRGBA getGray(const float alpha)
   constexpr uint64_t code = 0xbdbdbd;
   return convertFromColorCode(code, alpha);
 }
-}  // namespace interest_objects_marker_interface::coloring
+}  // namespace objects_of_interest_marker_interface::coloring

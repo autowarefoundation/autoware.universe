@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(interest_objects_marker_interface)
+project(objects_of_interest_marker_interface)
 
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)
@@ -12,9 +12,9 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_library(interest_objects_marker_interface SHARED
+ament_auto_add_library(objects_of_interest_marker_interface SHARED
   src/coloring.cpp
-  src/interest_objects_marker_interface.cpp
+  src/objects_of_interest_marker_interface.cpp
   src/marker_utils.cpp
 )
 

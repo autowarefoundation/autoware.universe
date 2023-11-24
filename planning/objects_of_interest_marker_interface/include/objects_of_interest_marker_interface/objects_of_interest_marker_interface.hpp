@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTEREST_OBJECTS_MARKER_INTERFACE__INTEREST_OBJECTS_MARKER_INTERFACE_HPP_
-#define INTEREST_OBJECTS_MARKER_INTERFACE__INTEREST_OBJECTS_MARKER_INTERFACE_HPP_
-#include "interest_objects_marker_interface/coloring.hpp"
-#include "interest_objects_marker_interface/marker_data.hpp"
-#include "interest_objects_marker_interface/marker_utils.hpp"
+#ifndef OBJECTS_OF_INTEREST_MARKER_INTERFACE__OBJECTS_OF_INTEREST_MARKER_INTERFACE_HPP_
+#define OBJECTS_OF_INTEREST_MARKER_INTERFACE__OBJECTS_OF_INTEREST_MARKER_INTERFACE_HPP_
+#include "objects_of_interest_marker_interface/coloring.hpp"
+#include "objects_of_interest_marker_interface/marker_data.hpp"
+#include "objects_of_interest_marker_interface/marker_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -28,9 +28,9 @@
 #include <string>
 #include <vector>
 
-namespace interest_objects_marker_interface
+namespace objects_of_interest_marker_interface
 {
-class InterestObjectsMarkerInterface
+class ObjectsOfInterestMarkerInterface
 {
 public:
   /**
@@ -38,7 +38,7 @@ public:
    * @param node Node that publishes marker
    * @param name Module name
    */
-  InterestObjectsMarkerInterface(rclcpp::Node * node, const std::string & name);
+  ObjectsOfInterestMarkerInterface(rclcpp::Node * node, const std::string & name);
 
   /**
    * @brief Insert object data to visualize
@@ -85,9 +85,9 @@ private:
   std::vector<ObjectMarkerData> obj_marker_data_array_;
 
   std::string name_;
-  std::string topic_namespace_ = "/planning/debug/interest_objects_marker";
+  std::string topic_namespace_ = "/planning/debug/objects_of_interest";
 };
 
-}  // namespace interest_objects_marker_interface
+}  // namespace objects_of_interest_marker_interface
 
-#endif  // INTEREST_OBJECTS_MARKER_INTERFACE__INTEREST_OBJECTS_MARKER_INTERFACE_HPP_
+#endif  // OBJECTS_OF_INTEREST_MARKER_INTERFACE__OBJECTS_OF_INTEREST_MARKER_INTERFACE_HPP_

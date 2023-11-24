@@ -1,4 +1,4 @@
-# Interest Objects Marker Interface
+# Objects Of Interest Marker Interface
 
 !!! warning
 

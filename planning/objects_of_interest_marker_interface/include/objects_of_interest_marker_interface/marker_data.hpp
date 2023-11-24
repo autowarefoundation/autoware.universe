@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTEREST_OBJECTS_MARKER_INTERFACE__MARKER_DATA_HPP_
-#define INTEREST_OBJECTS_MARKER_INTERFACE__MARKER_DATA_HPP_
+#ifndef OBJECTS_OF_INTEREST_MARKER_INTERFACE__MARKER_DATA_HPP_
+#define OBJECTS_OF_INTEREST_MARKER_INTERFACE__MARKER_DATA_HPP_
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <std_msgs/msg/color_rgba.hpp>
 
-namespace interest_objects_marker_interface
+namespace objects_of_interest_marker_interface
 {
 struct ObjectMarkerData
 {
@@ -29,6 +29,6 @@ struct ObjectMarkerData
 };
 
 enum class ColorName { GRAY, GREEN, AMBER, RED };
-}  // namespace interest_objects_marker_interface
+}  // namespace objects_of_interest_marker_interface
 
-#endif  // INTEREST_OBJECTS_MARKER_INTERFACE__MARKER_DATA_HPP_
+#endif  // OBJECTS_OF_INTEREST_MARKER_INTERFACE__MARKER_DATA_HPP_

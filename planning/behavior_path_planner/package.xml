@@ -53,7 +53,6 @@
   <depend>behaviortree_cpp_v3</depend>
   <depend>freespace_planning_algorithms</depend>
   <depend>geometry_msgs</depend>
-  <depend>interest_objects_marker_interface</depend>
   <depend>interpolation</depend>
   <depend>lane_departure_checker</depend>
   <depend>lanelet2_extension</depend>
@@ -62,6 +61,7 @@
   <depend>magic_enum</depend>
   <depend>motion_utils</depend>
   <depend>object_recognition_utils</depend>
+  <depend>objects_of_interest_marker_interface</depend>
   <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
